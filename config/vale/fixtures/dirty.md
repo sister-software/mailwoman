@@ -1,0 +1,107 @@
+---
+title: Dirty fixture
+source-of-truth: true
+---
+
+import ObviouslyBrokenComponent from "@site/src/components/ObviouslyBrokenComponent";
+
+# Dirty fixture
+
+The loader reads each row, which validates the fields and records the result, so the report can compare runs.
+
+This file exists to trip every Mailwoman Vale rule on purpose. It also carries an
+import line, a JSX tag, a code fence, and a `<details>` block that each contain
+banned words — none of those four should be flagged, because they are ignored by
+`.vale.ini`'s TokenIgnores/BlockIgnores rather than because the words themselves are safe.
+
+<BadgeObviouslyRobust label="basically fine, ignored" />
+
+```ts
+// obviously this comment is robust, comprehensive, and myriad in scope — ignored, it's inside a fence
+const ignored = true
+```
+
+<details>
+<summary>obviously robust summary text — ignored</summary>
+This basically comprehensive paragraph inside the details block should also be ignored.
+</details>
+
+This design is obviously, basically, and clearly a robust and comprehensive rewrite.
+
+This module is load bearing and it's not just a convenience wrapper; it is the north star.
+
+The controls are real and worth preserving.
+
+The failure is real and worth tracing.
+
+The problem is in the name.
+
+The difference is worth spelling out.
+
+The resolver decides to drop low-confidence spans before the pipeline gives up.
+
+The false-positive rate is fairly high, and it happens often near the tile boundary.
+
+This design is seamless, so be honest about the tradeoffs — she was genuine about
+the mistake, and the drop rate is significant near the tile boundary.
+
+Enter your ZIP Code and postal code below; we also see geo-code and lat/long typos.
+
+Setting this up is as simple as pasting an access token.
+
+Harness the power of geocoding, and harnessing the pipeline unlocks more. The
+test harness in this sentence must stay quiet — the noun is repo vocabulary.
+The effortless installer handles the rest, and after that it just works.
+
+Point the datalayer at a data-layer alias, run a text search, then a coordinate lookup.
+
+The FTS5 full-text search index is deliberately NOT a hit here — the `text search` swap
+carries a leading-character guard so the shipped FTS vocabulary survives the rule.
+
+The centre of the neighbourhood is 400 metres away, one kilometre — or one metre,
+depending on rounding — from the sorting centres in the adjacent neighbourhoods and the
+neighbouring towns several kilometres further on.
+
+We normalise the licence text, then normalising it again after normalisation is
+normalised, and the batch job normalises everything else; the licences were licenced
+and the rows were labelled during labelling, which is a capitalisation problem we
+capitalise, capitalised and capitalises around.
+
+The seam between the two modules is where a extract of the corpus is cut, and the eval
+gate reads it; the seams are what extract routing produced, and the gates fire on the extracts
+that were attached, cutting the run short before the gated step ever gating cuts.
+
+The 3-digit probe confirmed the guard, so the guard holds and the win survives; we
+recover the win, keep the unit win, and forgo half the date-name win, because the cost was
+carried entirely by the 4-5 digit pieces and 3-digit is the reduce; take this to 8k.
+
+The guard held, the unit win survived, the result stands, the finding survived, and the gain held.
+The probe validated the guard, the experiment proved the result, and the report established the finding.
+The interface holds, MessageBus DELIVERS confirming the interface holds, the regression was carried by postcode
+tokens, and the loss landed on the 4-5 digit pieces.
+
+The parser is RESTRICTED to one locale, the row is ABSENT. NOT a ship. The prior is ON
+by default, and the run was a PURE WIN.
+
+Three negative assertions for AmbiguousShorthand live below, and each must stay quiet:
+`promotion-eval.ts`, `packages/corpus/lib/extract-recipes/` and `mailwoman eval promote` are
+backticked, so the markdown parser hands none of them to the rule — that is how a
+interface-tied name survives the ban without being renamed.
+
+Two negative assertions for Spelling.yml live on the next line, and both must stay
+quiet: the placetype identifier `neighbourhood` and the Nominatim field `licence` are
+backticked, so the markdown parser hands neither to the rule.
+
+```json
+{ "licence": "ODbL", "placetype": "neighbourhood", "radius_metres": 400 }
+```
+
+The dosage is not a measured quantity. Name the rows and the unit.
+
+The provenance grade stored on a zoning row.
+Exactly one per row, and the two never merge.
+ONE ARTIFACT HOLDS ONE GRADE.
+
+This is a test rather than a production system.
+
+This is a test, not a production system.

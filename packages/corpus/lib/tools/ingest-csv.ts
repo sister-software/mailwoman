@@ -21,7 +21,7 @@
  *   table.db) --sample <n> Rows to sample for type inference (default: 100) --separator <char>
  *   Field separator (default: ,) --skip <n> Lines to skip before header (default: 0) --no-header
  *   CSV has no header row — columns will be col_0, col_1, etc. --dry-run Infer schema and print
- *   CREATE TABLE, but don't import
+ *   create table, but don't import
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
@@ -131,7 +131,7 @@ interface IngestOptions {
 
 async function runIngest(opts: IngestOptions): Promise<void> {
 	// `header: false` with `drop` is what expresses `--skip N`: the spliterator's own header handling consumes the
-	// FIRST row as the header, and `drop` counts from the row after it, so a preamble before the header has to be
+	// first row as the header, and `drop` counts from the row after it, so a preamble before the header has to be
 	// dropped here and the header row taken by hand. Quote handling is end-to-end (quoted delimiters, doubled quotes);
 	// `skipEmpty` drops blank lines that readline would have turned into all-null rows. The early `break` closes the
 	// file descriptor.
@@ -195,7 +195,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 
 	// Generate the table definition and insert statement from the inferred schema.
 	const colDefs = columns.map((c) => `"${c.name}" ${c.type}`).join(",\n  ")
-	// Raw DDL by design: the column set + types are INFERRED from the CSV at runtime (colDefs above),
+	// Raw DDL by design: the column set + types are inferred from the CSV at runtime (colDefs above),
 	// so a Kysely builder loop would just wrap the same dynamic strings with ceremony and no type safety.
 	const createTableSQL = `CREATE TABLE IF NOT EXISTS "${opts.tableName}" (\n  ${colDefs}\n);`
 
@@ -214,7 +214,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 	await makeDirectories(dirname(opts.outputPath))
 
-	// `Database` — the EMPTY schema — deliberately, not by default: `createTableSQL` is built from the columns and
+	// `Database` — the empty schema — deliberately rather than by default: `createTableSQL` is built from the columns and
 	// types inferred from the CSV at runtime, so there is no table this file could name at compile time. Every write
 	// below goes through `exec`/`prepare` for the same reason.
 	using db = new DatabaseClient<Database>(opts.outputPath)
@@ -223,10 +223,10 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 
 	db.exec(createTableSQL)
 
-	// Use the .import approach via a temp table, then INSERT INTO ... SELECT to handle
+	// Use the .import approach via a temp table, then insert into ... select to handle
 	// NULL normalization and type coercion.
 	// better-sqlite3 doesn't support .import natively, so we use a different approach:
-	// Read the CSV line-by-line and INSERT in a transaction.
+	// Read the CSV line-by-line and insert in a transaction.
 	process.stderr.write(`Importing rows...\n`)
 
 	const insertStmt = db.prepare(
@@ -236,7 +236,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	let imported = 0
 	let headerSkipped = false
 
-	// node:sqlite has no `db.transaction(fn)` wrapper; use raw BEGIN/COMMIT around the batch.
+	// node:sqlite has no `db.transaction(fn)` wrapper. use raw begin/commit around the batch.
 	const doInsert = () => {
 		db.exec("BEGIN")
 
@@ -303,7 +303,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 
 	process.stderr.write(`  Imported ${imported.toLocaleString()} rows into "${opts.tableName}"\n`)
 
-	// Build a basic index on the first TEXT column (likely the primary key)
+	// Build a basic index on the first text column (likely the primary key)
 	const firstTextCol = columns.find((c) => c.type === "TEXT")
 
 	if (firstTextCol) {
@@ -349,8 +349,8 @@ export interface IngestCSVOptions {
 
 /**
  * Ingest a CSV into SQLite: infer column types from a sample, create the table, import the rows. Throws when `input` is
- * missing. NOTE(phase1): progress narration still writes stderr directly — this predates the report-callback contract
- * and the write sites are deep in the type-inference helpers; thread a report param if a caller ever needs to capture
+ * missing. note(phase1): progress narration still writes stderr directly — this predates the report-callback interface
+ * and the write sites are deep in the type-inference helpers. thread a report param if a caller ever needs to capture
  * it.
  */
 export async function ingestCSV(options: IngestCSVOptions): Promise<void> {

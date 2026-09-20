@@ -4,7 +4,7 @@
 /**
  * @file The own-name variant predicate (#1882) — every measured contest from the census, pinned so the threshold
  *   cannot drift past the cases it was chosen on. The comparator choice is itself a pinned decision: Jaro-Winkler's
- *   common-prefix bonus scored `chanchun`/`cancun` at 0.925 — ABOVE the real positives — so the predicate uses edit
+ *   common-prefix bonus scored `chanchun`/`cancun` at 0.925 — above the real positives — so the predicate uses edit
  *   similarity, where the same pair reads 0.75.
  */
 
@@ -33,17 +33,17 @@ describe("isOwnNameVariant — the measured census contests", () => {
 		// Changchun's Turkish exonym "Çançun" folds to `cancun` — the required negative: the query
 		// means Cancún, Mexico, and the penalty must keep protecting it.
 		expect(isOwnNameVariant("чанчунь", "cancun")).toBe(false)
-		// Augsburg's Latin name `augusta` is a different name, not an orthography of "Augsburg".
+		// Augsburg's Latin name `augusta` is a different name rather than an orthography of "Augsburg".
 		expect(isOwnNameVariant("augsburg", "augusta")).toBe(false)
 		// West Bay, Cayman Islands carrying alias "West End" — different name.
 		expect(isOwnNameVariant("west bay", "west end")).toBe(false)
 	})
 
 	it("refuses the near-identical DIFFERENT places (Liévin vs Levin) and the dual-name class (Derry/Londonderry)", () => {
-		// Liévin, France vs Levin, New Zealand — 0.833, just under the floor; the panel's
+		// Liévin, France vs Levin, New Zealand — 0.833, just under the floor. the panel's
 		// `41 Weraroa Road, Levin` row needs Levin NZ to keep winning the primary side.
 		expect(isOwnNameVariant("lievin", "levin")).toBe(false)
-		// Derry/Londonderry is a dual name, not a variant — its own follow-up on #1882.
+		// Derry/Londonderry is a dual name rather than a variant — its own follow-up on #1882.
 		expect(isOwnNameVariant("derry", "londonderry")).toBe(false)
 	})
 

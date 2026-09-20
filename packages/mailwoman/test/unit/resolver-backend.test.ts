@@ -31,7 +31,7 @@ test("wofExtractPaths: builds the admin + postcode + tail + intl + NL-PC6 + NI-O
 		"/data/wof/postalcode-intl.db",
 		"/data/wof/postalcode-nl-pc6.db",
 		// Build-local (ODbL): present only on the machine that built it, which is exactly why it can be
-		// listed unconditionally — every caller filters with `existsSync`, and that filter IS the tier.
+		// listed unconditionally — every caller filters with `existsSync`, and that filter is the tier.
 		"/data/wof/postalcode-ni-osm.db",
 	])
 })
@@ -106,7 +106,7 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 		.prepare("INSERT INTO capital (country, latitude, longitude, level, keys) VALUES (?, ?, ?, ?, ?)")
 		.run("CR", 9.9333, -84.0833, "national", stringifyJSON(["san jose"]))
 
-	// A repo-style file carrying a DIFFERENT entry (GD), so which source served is observable.
+	// A repo-style file carrying a different entry (GD), so which source served is observable.
 	const repoPath = join(dir, "capitals-v1.json")
 
 	await writeLocalJSONFile(
@@ -123,7 +123,7 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 	expect(fromArtifact!.levelOfPlace("San José", "CR", 9.93, -84.08)).toBe(2)
 	expect(fromArtifact!.levelOfPlace("St. Georges", "GD", 12.05, -61.75)).toBe(0)
 
-	// An artifact WITHOUT the table falls through to the repo file.
+	// An artifact without the table falls through to the repo file.
 	const barePath = join(dir, "bare.db")
 
 	new DatabaseClient<CandidateDatabase>(barePath).destroy()
@@ -131,17 +131,17 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 
 	expect(fromRepo!.levelOfPlace("St. Georges", "GD", 12.05, -61.75)).toBe(2)
 
-	// Neither source: the explicitly-asked-for key must fail loudly, not no-op.
+	// Neither source: the explicitly-asked-for key must fail loudly rather than no-op.
 	await expect(loadCapitalIndex({ candidateDB: barePath, path: join(dir, "missing.json") })).rejects.toThrow(
 		/capital_tier/
 	)
 
-	// The DEFAULT-ON path degrades on the same absence instead of failing session construction.
+	// The default-on path degrades on the same absence instead of failing session construction.
 	expect(
 		await loadCapitalIndex({ candidateDB: barePath, path: join(dir, "missing.json"), missing: "degrade" })
 	).toBeUndefined()
 
-	// A reference that EXISTS but is malformed throws under BOTH modes — corruption is a defect, never an absence.
+	// A reference that exists but is malformed throws under both modes — corruption is a defect, never an absence.
 	const corruptPath = join(dir, "corrupt.json")
 
 	await writeLocalJSONFile({ version: 99, entries: [] }, corruptPath)

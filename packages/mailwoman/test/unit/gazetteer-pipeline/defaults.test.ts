@@ -12,7 +12,7 @@ import { expect, test } from "vitest"
 test("the canonical coverage recipe holds its reconstructed shape (see #1015/#1021)", () => {
 	// 12/85 as of 2026-08-02: IN moved from the Overture backfill set into the WOF priority set after the granularity
 	// probe measured 189,026 sub-locality nodes in `whosonfirst-data-admin-in` (186,469 usable pairs) against
-	// Overture-IN's 74,920. The counts are a deliberate-drift guard — update them WITH the recipe, never to make a
+	// Overture-IN's 74,920. The counts are a deliberate-drift guard — update them with the recipe, never to make a
 	// failing test pass.
 	expect(DEFAULT_WOF_PRIORITY_COUNTRIES).toHaveLength(12)
 	expect(DEFAULT_OVERTURE_COUNTRIES).toHaveLength(85)
@@ -23,7 +23,7 @@ test("the canonical coverage recipe holds its reconstructed shape (see #1015/#10
 		expect(DEFAULT_OVERTURE_COUNTRIES).not.toContain(cc)
 	}
 
-	// No duplicates; all ISO-2 uppercase.
+	// No duplicates. all ISO-2 uppercase.
 	for (const list of [DEFAULT_WOF_PRIORITY_COUNTRIES, DEFAULT_OVERTURE_COUNTRIES, DEFAULT_GEONAMES_COUNTRIES]) {
 		expect(new Set(list).size).toBe(list.length)
 
@@ -39,7 +39,7 @@ test("the canonical coverage recipe holds its reconstructed shape (see #1015/#10
 test("geonamesAdminGapCountries is the zero-coverage gap set (#1026 — the GeoNames admin fold targets)", () => {
 	const gap = geonamesAdminGapCountries()
 
-	// GeoNames-only locales: in the alias set, but carrying NO WOF or Overture admin.
+	// GeoNames-only locales: in the alias set, but carrying no WOF or Overture admin.
 	expect(gap).toHaveLength(147)
 
 	for (const cc of gap) {
@@ -48,7 +48,7 @@ test("geonamesAdminGapCountries is the zero-coverage gap set (#1026 — the GeoN
 		expect(DEFAULT_WOF_PRIORITY_COUNTRIES).not.toContain(cc)
 	}
 
-	// The #1023/#1026 trigger and a sample of the flattened set MUST be covered…
+	// The #1023/#1026 trigger and a sample of the flattened set must be covered…
 	for (const cc of ["GE", "AD", "HT", "SO", "XK", "VA"]) {
 		expect(gap).toContain(cc)
 	}

@@ -1,8 +1,8 @@
 """One corpus row to one `EncodedExample`, through SentencePiece or the char path.
 
-Everything a channel needs is loaded ONCE here, before the row loop, and passed to every
+Everything a channel needs is loaded once here, before the row loop, and passed to every
 `encode_row` call. The two paths are exclusive: the char path skips SentencePiece entirely,
-requires span-schema slices, and refuses a configured channel, because the channels project per
+requires span-schema parquet files, and refuses a configured channel, because the channels project per
 SentencePiece piece and have no per-unit alignment yet.
 """
 
@@ -51,7 +51,7 @@ class CharMode:
 
 @dataclass(frozen=True)
 class Lexicons:
-    """Every channel input, loaded ONCE before the row loop and passed to each `encode_row`.
+    """Every channel input, loaded once before the row loop and passed to each `encode_row`.
 
     Loading one per row would re-read a 1.3 GB anchor table for every address.
     """
@@ -69,7 +69,7 @@ def resolve_char_mode(cfg_data: DataConfig) -> CharMode | None:
 
     CharCNN input path (#825 / v8 CJK). When char_mode != "off" the row loop skips SentencePiece
     entirely and encodes per-unit char windows (encode_row_units). The mode is channel-free by
-    contract — the channels project per SP-piece and get a per-unit re-alignment post-probe — so a
+    interface — the channels project per SP-piece and get a per-unit re-alignment post-probe — so a
     configured channel path alongside char_mode is a config mistake, raised loudly here.
     """
     mode = getattr(cfg_data, "char_mode", "off")
@@ -100,7 +100,7 @@ def resolve_char_mode(cfg_data: DataConfig) -> CharMode | None:
 def load_lexicons(cfg_data: DataConfig) -> Lexicons:
     """Every configured channel input, read once. An absent path leaves its channel at None."""
     # Street-type and locality-surface share the gazetteer lexicon's JSON schema, so they share its
-    # reader; the country lexicon has its own.
+    # reader. the country lexicon has its own.
     from ...features.country_lexicon import load_country_lexicon
     from ...features.gazetteer_anchor import load_gazetteer_lexicon
 
@@ -124,14 +124,14 @@ def load_lexicons(cfg_data: DataConfig) -> Lexicons:
 def encode_char_row(row: dict[str, Any], char: CharMode, label_set: Any) -> EncodedExample:
     """One row on the CharCNN path: per-unit char windows, labels straight from the span triple.
 
-    Span-schema is REQUIRED here — the per-char label array comes from the span triple with no
-    whitespace-token quantization, and a token-only frozen slice has no honest char-level labels to
+    Span-schema is required here — the per-char label array comes from the span triple with no
+    whitespace-token quantization, and a token-only frozen parquet file has no honest char-level labels to
     offer. Loud failure, never a silent fallback (#519).
     """
     starts, ends, tags = row.get("span_starts"), row.get("span_ends"), row.get("span_tags")
     if starts is None or ends is None or tags is None:
         raise ValueError(
-            f"data.char_mode={char.mode} requires span-schema slices (v0.5.0 #519); "
+            f"data.char_mode={char.mode} requires span-schema parquet files (v0.5.0 #519); "
             f"got a token-only row: {row['raw'][:60]!r}"
         )
     raw = row["raw"]
@@ -154,7 +154,7 @@ def encode_char_row(row: dict[str, Any], char: CharMode, label_set: Any) -> Enco
     )
     return EncodedExample(
         # Dummy pad row — the model's use_char_embed branch derives (B, S) from char_ids
-        # and never reads input_ids; the constant row keeps collate/_to_tensor_batch uniform.
+        # and never reads input_ids. the constant row keeps collate/_to_tensor_batch uniform.
         input_ids=[0] * len(enc["attention_mask"]),
         attention_mask=enc["attention_mask"],
         labels=enc["labels"],
@@ -173,15 +173,15 @@ def iter_encoded(
 ) -> Iterator[EncodedExample]:
     """Yield encoded examples, dropping rows whose SP token count exceeds ``max_length``.
 
-    Length-filter rationale: address text is short by nature; long rows are usually adapter
+    Length-filter rationale: address text is short by nature. long rows are usually adapter
     bugs (per Phase 2 §2.3). Cap at the model's ``max_position_embeddings``.
 
-    ``tokenizer`` may be None ONLY when ``cfg_data.char_mode != "off"`` — the char path never
+    ``tokenizer`` may be None only when ``cfg_data.char_mode != "off"`` — the char path never
     touches SentencePiece.
     """
     rng = rng or random.Random(0)
     char = resolve_char_mode(cfg_data)
-    # Label vocabulary (v8 CJK Phase 2): non-default sets are threaded through the CHAR path only.
+    # Label vocabulary (v8 CJK Phase 2): non-default sets are threaded through the char path only.
     # The SP path still encodes against the module-global STAGE3 maps, so a non-default set there
     # would silently mislabel — raise instead (the #1349 lesson: silent label-space mismatches).
     label_set = resolve_label_set(getattr(cfg_data, "label_set", "stage3"))
@@ -241,8 +241,8 @@ def iter_encoded(
             country_lexicon=lexicons.country,
             street_type_lexicon=lexicons.street_type,
             locality_surface_lexicon=lexicons.locality_surface,
-            # v0.5.0 char-offset labels (#519): rows from a span-schema slice train FROM the
-            # spans (encode_row builds the per-char label array from them; the token path is the
+            # v0.5.0 char-offset labels (#519): rows from a span-schema parquet file train from the
+            # spans (encode_row builds the per-char label array from them. the token path is the
             # legacy fallback for frozen corpora). encode_row raises on a partial triple.
             span_starts=row.get("span_starts"),
             span_ends=row.get("span_ends"),
@@ -251,7 +251,7 @@ def iter_encoded(
         # Drop rows whose non-padding length exceeds max_length (length filter §2).
         non_pad = sum(enc["attention_mask"])
         if non_pad >= cfg_data.max_length:
-            # Even at exactly max_length we keep — the spec says drop tokens > 128; equality is fine.
+            # Even at exactly max_length we keep — the spec says drop tokens > 128. equality is fine.
             # But hand-curated coarse rows almost never hit this. Track via downstream metrics.
             pass
         yield EncodedExample(

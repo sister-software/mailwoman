@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fixtures for the ROAD_TO_V9 §4 intent vocabulary. Every kind is exercised in BOTH registers —
+ *   Fixtures for the ROAD_TO_V9 §4 intent vocabulary. Every kind is exercised in both registers —
  *   as-written and lowercase — because lowercase is the primary user register and a rule that only
  *   works on title case is a rule that only works on our test data.
  */
@@ -41,8 +41,9 @@ function registers(text: string): string[] {
 }
 
 describe("bare_toponym — one place-name, no address grammar", () => {
-	// The hard-slice board's `bare_namesake` class (fixtures/hard-slice-board.jsonl), which is the
-	// population ROAD_TO_V9 §3 assembled for exactly this register.
+	// The hard-case board's `bare_namesake` class (`packages/mailwoman/lib/eval-harness/fixtures/hard-case-board.jsonl`,
+	// scored by `packages/mailwoman/lib/dev-tools/score/hard-case-board.run.ts`), which is the population ROAD_TO_V9 §3
+	// assembled for exactly this register.
 	const POSITIVE = [
 		"Fulda",
 		"Jena",
@@ -77,7 +78,7 @@ describe("bare_toponym — one place-name, no address grammar", () => {
 		"PO Box 1234",
 		"corner of 5th and Main",
 		"12 rue de Rome Paris",
-		// Admin context present — `locality_only` owns this, and a tail is exactly what makes it NOT bare.
+		// Admin context present — `locality_only` owns this, and a tail is exactly what makes it not bare.
 		"Paris, FR",
 		"Athens, OH",
 	]
@@ -119,7 +120,7 @@ describe("route_pair — two toponyms, no grammar between them", () => {
 	}
 
 	const NEGATIVE = [
-		// Toponymic HEAD particles: one place, two tokens. The class this guard exists for.
+		// Toponymic head particles: one place, two tokens. The class this guard exists for.
 		"New York",
 		"San Francisco",
 		"Santa Monica",
@@ -135,7 +136,7 @@ describe("route_pair — two toponyms, no grammar between them", () => {
 		"12 rue de Rome Paris",
 		"10118",
 		"Paris London Berlin",
-		// A comma is the admin-context marker; the hard-slice `comma_control` register.
+		// A comma is the admin-context marker. the hard-case board's `comma_control` register.
 		"Athens, Georgia",
 		"Portland, ME",
 	]
@@ -184,13 +185,13 @@ describe("near_me — a relation to the asker, with the asker missing", () => {
 	}
 
 	const NEGATIVE = [
-		// An ANCHOR is present — this is answerable without a focus point, so it is not `near_me`.
+		// An anchor is present — this is answerable without a focus point, so it is not `near_me`.
 		"gas station near Austin",
 		"restaurants near Times Square",
 		"coffee in Paris",
 		"350 5th Ave, New York, NY 10118",
 		"Paris",
-		// The landmark leaders keep their own rule: a relative description of a REAL anchor.
+		// The landmark leaders keep their own rule: a relative description of a real anchor.
 		"near the Empire State Building",
 	]
 

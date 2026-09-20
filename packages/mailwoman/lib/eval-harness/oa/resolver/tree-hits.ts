@@ -12,7 +12,7 @@ import { mostSpecificResolved } from "@mailwoman/resolver"
 /**
  * A resolver-attributed node: the WOF place it landed on, that place's name/placetype, and its coordinate.
  *
- * `value` is the PARSED span, kept beside the resolver's own `name` because ranking a `postalcode` needs both — a full
+ * `value` is the parsed span, kept beside the resolver's own `name` because ranking a `postalcode` needs both — a full
  * unit shape the resolver answered with a coarser stem is area-grade, whatever the user typed.
  */
 export interface Resolved {
@@ -56,7 +56,7 @@ export function findInterpolatedHit(tree: AddressTree): { lat: number; lon: numb
 }
 
 /**
- * Collect ALL resolver-attributed nodes (we want per-placetype names, not just the most-specific).
+ * Collect all resolver-attributed nodes (we want per-placetype names rather than just the most-specific).
  */
 export function collectResolved(tree: AddressTree): Resolved[] {
 	const out: Resolved[] = []
@@ -79,7 +79,7 @@ export function collectResolved(tree: AddressTree): Resolved[] {
 		}
 
 		// Multi-role completion (#415/#416): a dual-role region carries extra roles (e.g. `locality`) as
-		// INTERPRETATIONS on the same node, not separate children. Surface each resolved interpretation as
+		// interpretations on the same node rather than separate children. Surface each resolved interpretation as
 		// its own Resolved so the eval finds the completed locality (placetype/coord/name come from the
 		// interpretation).
 		for (const interp of (n.interpretations ?? []) as ReadonlyArray<{
@@ -125,7 +125,7 @@ export function collectResolved(tree: AddressTree): Resolved[] {
  *
  * Delegates to `@mailwoman/resolver`'s ranking so the grade tracks what result assembly actually returns. A flat
  * `PLACETYPE_SPECIFICITY` sort promoted every resolved `postalcode` over the locality, which is production's ladder on
- * ONE arm and its opposite on the other.
+ * one arm and its opposite on the other.
  */
 export function mostSpecific(rs: Resolved[]): Resolved | null {
 	return mostSpecificResolved(rs, (r) => ({
@@ -137,7 +137,7 @@ export function mostSpecific(rs: Resolved[]): Resolved | null {
 }
 
 /**
- * True when the tree carries BOTH a street and a house number — the precondition the street-level tiers need before a
+ * True when the tree carries both a street and a house number — the precondition the street-level tiers need before a
  * miss can be read as a database gap rather than a parse gap.
  */
 export function hasStreetHouseNumber(tree: AddressTree | null): boolean {

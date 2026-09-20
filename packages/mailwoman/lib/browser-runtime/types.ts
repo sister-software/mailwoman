@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The structural contracts the browser runtime composes over. Each `…Like` mirrors a package type by shape so a host
+ *   The structural interfaces the browser runtime composes over. Each `…Like` mirrors a package type by shape so a host
  *   bundle can name the classifier, the FST matcher and the parse trace without importing the packages that define
- *   them; the packages stay dynamic imports on the load path. `AssetLoadProgress` is what a loader reports through
+ *   them. the packages stay dynamic imports on the load path. `AssetLoadProgress` is what a loader reports through
  *   while it fetches one release's assets.
  */
 
@@ -25,13 +25,13 @@ export interface FSTMatcherLike {
 		wofID: number
 		placetype: string
 		/**
-		 * The REFERENTIAL likelihood (population-anchored) the decoder bias reads — see ROAD_TO_V9 §2. Was `importance`
+		 * The referential likelihood (population-anchored) the decoder bias reads — see ROAD_TO_V9 §2. Was `importance`
 		 * through FST format v4, where the same float could be either score with nothing to say which.
 		 */
 		referential: number
 		/**
 		 * Encyclopedic (Wikipedia) importance, when the artifact is v5+ and this place has an article. Displayed, never
-		 * ranked on; `undefined` is absence, not 0.
+		 * ranked on; `undefined` is absence rather than 0.
 		 */
 		encyclopedic?: number
 	}>
@@ -102,15 +102,15 @@ export interface ParseTraceLike {
 
 /**
  * How a release loader reports progress to its host while assets arrive. `@mailwoman/react`'s `AssetsLoadContext`
- * satisfies it structurally; a host without a UI passes no-op setters.
+ * satisfies it structurally. a host without a UI passes no-op setters.
  */
 export interface AssetLoadProgress {
 	/**
-	 * Aborts when this load is superseded or the host goes away; the loader stops handing back a lookup once it fires.
+	 * Aborts when this load is superseded or the host goes away. the loader stops handing back a lookup once it fires.
 	 */
 	signal: AbortSignal
 	/**
-	 * Force the CPU/WASM backend instead of WebGPU for this load.
+	 * Force the CPU/wasm backend instead of WebGPU for this load.
 	 */
 	forceWASM: boolean
 	setProgress: (progress: string) => void
@@ -119,7 +119,7 @@ export interface AssetLoadProgress {
 	setBackend: (backend: string) => void
 	/**
 	 * Bytes received over bytes expected for the artifact downloading right now, in [0, 1]; `null` once nothing is in
-	 * flight. Optional so a host that predates it still satisfies this contract.
+	 * flight. Optional so a host that predates it still satisfies this interface.
 	 *
 	 * The step index cannot report the model: it is fetched before the first step is entered, so a step-derived bar holds
 	 * one value for the whole of a 38 MB transfer.

@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Contract tests for the Stage 2.7 span proposer (M2 + M3). Essential properties: unbalanced
- *   delimiters NEVER propose; annotation confidence follows content shape (trailing-country groups
- *   stay below consumer floors); dual-path numeric readings emit BOTH alternatives under one group;
+ *   Interface tests for the Stage 2.7 span proposer (M2 + M3). Essential properties: unbalanced
+ *   delimiters never propose. annotation confidence follows content shape (trailing-country groups
+ *   stay below consumer floors). dual-path numeric readings emit both alternatives under one group.
  *   designator proposals are codex-conditioned and suppressed inside confident annotations.
  */
 
@@ -23,7 +23,7 @@ const LEXICON: SpanProposerLexicon = {
 	unitDesignators: new Set(["apt", "apartment", "suite", "ste", "unit", "rm", "room", "bldg", "building"]),
 	levelDesignators: new Set(["fl", "floor", "bsmt", "basement"]),
 	weakDesignators: new Set(["bldg", "building"]),
-	// Empty here on purpose: this fixture models the POSTAL vocabulary, and the venue-structure split is exercised in
+	// Empty here on purpose: this fixture models the postal vocabulary, and the venue-structure split is exercised in
 	// its own describe below. A fixture that quietly carried both would make every assertion above ambiguous about
 	// which provenance produced the proposal.
 	venueStructureDesignators: new Set<string>(),
@@ -228,12 +228,12 @@ describe("venue-structure provenance", () => {
 	})
 
 	it("does not fire on a confound: the word must be a standalone token", () => {
-		// "Briggate" is one token. The GB `-gate` street names are the confound class this protects.
+		// "Briggate" is one token. The GB `-gate` street names are the confound class this guards.
 		expect(proposeSpans("12 Briggate, Leeds, LS1 6ER", withVenueStructure)).toEqual([])
 	})
 
 	it("does not fire on a confound: the designator needs a SHORT identifier after it", () => {
-		// "Gate House" / "Terminal Industrial Estate" — the next token is a word, not an identifier.
+		// "Gate House" / "Terminal Industrial Estate" — the next token is a word rather than an identifier.
 		expect(proposeSpans("Gate House, 1 Farringdon Street, London, EC4M 7LG", withVenueStructure)).toEqual([])
 		expect(proposeSpans("Terminal Industrial Estate, Portsmouth, PO3 5PA", withVenueStructure)).toEqual([])
 	})
@@ -245,7 +245,7 @@ describe("modifier + venue-interior designator", () => {
 		unitDesignators: new Set([...LEXICON.unitDesignators, "wing", "concourse", "terminal", "gate"]),
 		venueStructureDesignators: new Set(["wing", "concourse", "terminal", "gate"]),
 		venueStructureModifiers: new Set(["north", "south", "east", "west", "upper", "main"]),
-		// `gate` is deliberately absent: "East Gate" is a street, not a sub-venue.
+		// `gate` is deliberately absent: "East Gate" is a street rather than a sub-venue.
 		modifierEligibleStructureDesignators: new Set(["wing", "concourse", "terminal"]),
 	}
 
@@ -259,7 +259,7 @@ describe("modifier + venue-interior designator", () => {
 	})
 
 	it("scores BELOW the designator+identifier form", () => {
-		// A qualifier before a designator is a shape ordinary street names also take; an identifier after one
+		// A qualifier before a designator is a shape ordinary street names also take. an identifier after one
 		// is nearly unambiguous. The weaker evidence must lose to a confident encoder more readily.
 		const [modifierSpan] = proposeSpans("West Wing, St Thomas' Hospital, London", withModifiers)
 		const [identifierSpan] = proposeSpans("Wing B, St Thomas' Hospital, London", withModifiers)

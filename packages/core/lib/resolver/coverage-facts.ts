@@ -3,8 +3,8 @@
 
 /**
  *   What a loaded gazetteer artifact declares about its own country coverage, and the one derivation the
- *   reader and the build share. A country ABSENT from a coverage map was never measured — never measured and
- *   failed; the failed case is present with `hardFilterSafe: false`.
+ *   reader and the build share. A country absent from a coverage map was never measured — never measured and
+ *   failed. the failed case is present with `hardFilterSafe: false`.
  */
 
 /**
@@ -12,8 +12,8 @@
  * live IN the artifact (the `country_coverage` table the gazetteer build emits) — code constants are only the fallback
  * for artifacts that predate the manifest.
  *
- * Meaning-of-zero discipline: a country ABSENT from the coverage map was never measured — never "measured and failed".
- * A measured-and-failed country is PRESENT with `hardFilterSafe: false` (e.g. FI at 69.5% hard-resolve), so the
+ * Meaning-of-zero discipline: a country absent from the coverage map was never measured — never "measured and failed".
+ * A measured-and-failed country is present with `hardFilterSafe: false` (e.g. FI at 69.5% hard-resolve), so the
  * negative result is a first-class record, distinguishable from ignorance.
  */
 export interface CountryCoverageFact {
@@ -22,10 +22,10 @@ export interface CountryCoverageFact {
 	 */
 	country: string
 	/**
-	 * The promotion-eval VERDICT: hard-filtering this country is a pure win (a hard-filter miss is almost always a
-	 * genuine non-match, not a coverage gap). Stored as a verdict — not re-derived from `hardResolveRate` at read time —
-	 * because the check is a judgment over a panel, not a pure rate function (CA cleared at the #928 promote on the
-	 * postcode-format-prior rationale despite a sub-95% panel resolve rate).
+	 * The promotion-eval verdict: hard-filtering this country is a pure win (a hard-filter miss is almost always a
+	 * genuine non-match rather than a coverage gap). Stored as a verdict — not re-derived from `hardResolveRate` at read
+	 * time — because the check is a judgment over a panel rather than a pure rate function (CA cleared at the #928
+	 * promote on the postcode-format-prior rationale despite a sub-95% panel resolve rate).
 	 */
 	hardFilterSafe: boolean
 	/**
@@ -72,11 +72,11 @@ export interface CountryBBoxFact {
  */
 export interface GazetteerArtifactCoverage {
 	/**
-	 * Country → measured coverage fact. ABSENCE = never measured (meaning-of-zero), never "failed".
+	 * Country → measured coverage fact. absence = never measured (meaning-of-zero), never "failed".
 	 */
 	countryCoverage: ReadonlyMap<string, CountryCoverageFact>
 	/**
-	 * Country → guard-B bbox. ABSENCE = no box → the plausibility guard fails open for that country.
+	 * Country → guard-B bbox. absence = no box → the plausibility guard fails open for that country.
 	 */
 	countryBBoxes: ReadonlyMap<string, CountryBBoxFact>
 	/**
@@ -86,7 +86,7 @@ export interface GazetteerArtifactCoverage {
 }
 
 /**
- * Derive the hard-country safelist from coverage facts — the ONE derivation both the reader and the build share.
+ * Derive the hard-country safelist from coverage facts — the one derivation both the reader and the build share.
  */
 export function hardCountrySafelistFromCoverage(facts: Iterable<CountryCoverageFact>): ReadonlySet<string> {
 	const out = new Set<string>()

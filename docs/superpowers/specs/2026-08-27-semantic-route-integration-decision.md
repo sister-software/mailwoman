@@ -11,7 +11,7 @@ for).
 
 Stop condition 2 says a large downstream phase needs a concrete product requirement on its own
 evidence, and that a recorded GO is not one. This record supplies that requirement, states the
-strength the evidence actually carries, and decides the surface, the dependency direction, the
+strength the evidence carries, and decides the surface, the dependency direction, the
 default posture, the bar any default change must clear, and the rollback story. It implements
 nothing.
 
@@ -34,7 +34,7 @@ alphabetical order.
    The boundary record's §6 constraint on `@mailwoman/core` is **left standing, unamended** (§3.2,
    §10). The `devDependency` becomes a real dependency only in a change published by the same
    coordinated release that moves `@mailwoman/geographic-model` off `0.0.0` (§3.3).
-4. **The default posture is OFF, and a default change is NOT authorized by this record.** The D-rule
+4. **The default posture is off, and a default change is not authorized by this record.** The D-rule
    admits three routes for a mechanism with unmeasured effect on a tier-1 locale — repair it, admit
    it per locale, or ship it opt-in. This record takes the third (§4).
 5. **A supported opt-in surface is authorized**, conditional on the four prerequisites in §8. Two of
@@ -95,10 +95,10 @@ advance for this probe.
 Three absences, each stated so that nobody later reads it as a null result.
 
 - **Prevalence.** No committed input set holds an activity-shaped query that predates the probe
-  (§5.5's first bound), and no traffic census exists anywhere in the repository. How often a real
-  caller types an activity-phrased POI query is **unknown**, not zero.
+  (§5.5's first bound), and no traffic census exists anywhere in the repository. How frequently a real
+  caller types an activity-phrased POI query is **unknown** rather than zero.
 - **Recognition breadth.** Ten phrases, four of them registered, six never graded against anything.
-  §11's positive control shows two of the six ungraded phrasings — "buy medicine" and "collect a
+  §11's positive control shows two of the six ungraded phrasings — "purchase medicine" and "collect a
   prescription" — firing and claiming a subject. Breadth is untested by design, which is #1962's
   scope.
 - **The 3/4 ceiling is structural.** `sem-act-fr-01` is unreachable by this route without changing
@@ -169,7 +169,7 @@ That asymmetry decides the posture, and it is worth stating because it is the wh
 of this record. A capability nobody can reach is a defensible thing to ship for the callers who ask
 for it. Changing what every caller gets is a different claim, and it needs the denominator that does
 not exist. So the requirement is admitted **at opt-in strength**: enough to make the route a
-supported surface, not enough to change the default answer for inputs nobody has counted.
+supported surface rather than enough to change the default answer for inputs nobody has counted.
 
 Stop condition 2 is satisfied by the first paragraph. It is not satisfied for a default change, and
 this record does not pretend otherwise.
@@ -180,7 +180,7 @@ this record does not pretend otherwise.
 
 ### 3.1 The consuming surface
 
-**`createRuntimePipeline`'s `poiSemanticLookup` option, unchanged in position and contract.** The
+**`createRuntimePipeline`'s `poiSemanticLookup` option, unchanged in position and interface.** The
 subject lookup stays three rungs and the order is frozen by this record:
 
 1. `poiTaxonomyLookup` — the committed category lexicon.
@@ -209,12 +209,12 @@ obligation #1960 carries.
 **`mailwoman` → `@mailwoman/geographic-model`. One direction, no cycle, and no new fan-out.**
 
 - The POI branch already lives in `mailwoman`: `poi-intent.ts`, `poi-executor.ts`, and the pipeline
-  factory itself. `@mailwoman/core` holds the contract types (`POIIntent`, `POIResult`,
+  factory itself. `@mailwoman/core` keeps the interface valid types (`POIIntent`, `POIResult`,
   `POIIntentOutcome`) and nothing that would need world semantics.
 - `@mailwoman/kind-classifier` calls the lexicon, but takes it **injected** — `createKindClassifier({
 poiLexicon })`. It needs no dependency either.
 - `@mailwoman/geographic-model` already depends on `@mailwoman/poi-taxonomy`, which `mailwoman`
-  already depends on. The edge adds one package to `mailwoman`'s graph, not a subtree.
+  already depends on. The edge adds one package to `mailwoman`'s graph rather than a subtree.
 
 **The boundary record's §6 constraint — no `@mailwoman/core` dependency on
 `@mailwoman/geographic-model` without a later integration decision — is left STANDING.** This record
@@ -239,9 +239,9 @@ Measured on 2026-08-27:
 | Its dependencies                           | `@mailwoman/poi-taxonomy@9.2.0`, `type-fest@^5.8.0`                                                                                 |
 | `mailwoman` version / edge today           | `9.2.0` / `devDependencies: { "@mailwoman/geographic-model": "workspace:*" }`                                                       |
 
-So the published `0.0.0` is a functioning package, not a name reservation: it carries compiled
+So the published `0.0.0` is a functioning package rather than a name reservation: it carries compiled
 JavaScript, type declarations and the compiled artifact. What makes a runtime dependency unsafe
-**today** is the version number, not the contents. `yarn pack` freezes `workspace:*` to whatever the
+**today** is the version number rather than the contents. `yarn pack` freezes `workspace:*` to whatever the
 sibling reads at pack time, so a `mailwoman` packed before the next coordinated release would pin
 `0.0.0` permanently — a version that will never be republished once the workspace is in the bump
 set, which is the frozen-workspace hazard `AGENTS.md` describes from the other side.
@@ -275,14 +275,14 @@ address path; with the route on, an input ending in a declared activity phrase t
 instead. The population that change would newly touch is every non-POI input carrying such a phrase,
 and §1.3 says nobody has counted it. A default change against an uncounted population is not a
 measured regression, which is precisely why it is not admissible: the D-rule's bar is cleared by
-measurement, not by the absence of one.
+measurement rather than by the absence of one.
 
 §11's census is the first measurement of that population, and its answer for the merged route is
 **zero changes over 9,324 committed inputs**. That is a real and reassuring number. It is also a
 statement about ten authored phrases and a corpus written for other purposes, and #1962 will replace
 the first while nothing changes the second.
 
-### 4.2 The admission shape is presence, not a boolean
+### 4.2 The admission shape is presence rather than a boolean
 
 **Decided: the caller constructs the route and hands it in. There is no `semanticRoute: true` flag.**
 
@@ -319,8 +319,8 @@ prerequisite.
 implementation bound both to the caller. Recognition is the caller's: a phrase's locale scope says who
 uses that wording, so it is read against the caller's locale. Semantics are the place's: an
 assertion's `countries` says where the establishments it describes exist, so it is judged against the
-country the ANCHOR resolved to — the caller's locale is a lens through which the phrase is read, not a
-definition of where the claim holds. Under the caller binding an `en-US` caller asking about
+country the ANCHOR resolved to — the caller's locale is a lens through which the phrase is read rather than a
+definition of where the condition is true. Under the caller binding an `en-US` caller asking about
 Garancières admitted the US-scoped `drugstore` claim into a French search (#1996's receipts, #1998's
 three refusals). The route now returns every reached kind with the assertion's scope on the match
 (`POIPhraseMatch.countryScope`); `createPOIIntentStage` binds it after the anchor parse and records
@@ -341,7 +341,7 @@ None of them is satisfied by inference from another.
 
 | #     | Check                              | How                                                        | Bar                                                                                                                                                                                                                                                                                         |
 | ----- | ---------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **1** | The promoted POI board family      | `mailwoman eval poi-board --enforce`                       | The three reachable rows at `status: pass` and **counted**, not tracked; `sem-act-fr-01` no worse than its committed `known_fail`; all three floors met over the re-registered composition, arithmetic stated                                                                               |
+| **1** | The promoted POI board family      | `mailwoman eval poi-board --enforce`                       | The three reachable rows at `status: pass` and **counted** rather than tracked; `sem-act-fr-01` no worse than its committed `known_fail`; all three floors met over the re-registered composition, arithmetic stated                                                                        |
 | **2** | The full regression board          | `mailwoman eval gauntlet` — regression **and** metamorphic | No new violation beyond the tracked expected failures, in either layer                                                                                                                                                                                                                      |
 | **3** | The five conformance laws          | `mailwoman eval conformance`                               | Every decided row holds; tracked and unmeasured counts unchanged or reduced. **Plus new rows**: the route normalizes NFKC, case and whitespace, so the case-folding, whitespace and punctuation laws each have a claim to make about an activity phrase and no committed row makes it today |
 | **4** | The parse promotion eval           | `mailwoman eval promote`                                   | **The D-rule.** No regression against the shipped model on any tier-1 locale. Measured on the address side: a query-kind change moves inputs off the address path, and the POI board cannot see that                                                                                        |
@@ -365,9 +365,9 @@ that can be waived; it is the reason the default posture is what it is.
 
 **While opt-in.** Rollback is removing the argument at the one call site. A consumer who never
 passed `poiSemanticLookup` is unaffected by any of this program's work, which is the property the
-posture buys. No republish is required of anyone.
+posture provides. No republish is required of anyone.
 
-**After a hypothetical default change.** The suppression must exist before the change, not after —
+**After a hypothetical default change.** The suppression must exist before the change rather than after —
 `poiSemanticLookup: false`, added in the same commit, with its own test (§4.2). A default change
 whose rollback needs a patch release has no rollback.
 
@@ -395,7 +395,7 @@ route hands them out through a `takeObservations()` drain the harness owns, and
 `POIIntentOutcome` has no field for them. A consumer of `createRuntimePipeline` gets the category
 and none of the authority behind it.
 
-There is an existing contract shaped for exactly this. `QueryKindResult.intentMarkers` carries
+There is an existing interface shaped for exactly this. `QueryKindResult.intentMarkers` carries
 `QueryIntentMarker`, whose own docstring states that a marker never changes which answer wins — it
 is additive, attributed, and always accompanied by the ordinary result — with `mechanism` naming the
 rule that produced it in a `family:rule` form and `evidence` carrying the measurement so the marker
@@ -411,7 +411,7 @@ opt-in surface regardless of the phase-2 verdict, and #1965's absence observatio
 place to ride — which is why §8.3 lists it as a prerequisite rather than a fallback.
 
 **A stop-strength outcome** — controls regressing, or the false-claim census turning up
-unadjudicable claims — ends the opt-in surface too, not merely the default change. The route then
+unadjudicable claims — ends the opt-in surface too rather than merely the default change. The route then
 reverts to what it is today: experiment implementation behind a frozen pre-registration, with the
 compiled artifact and its conformance instruments retained as the durable product of the phase.
 
@@ -459,7 +459,7 @@ returns zero rows, `drugstore` returns two, and the union answers `drugstore` at
 
 `reachKinds` must read `RelationAssertion.countries`, and the route's `lookup` must take and use its
 `locale` argument. Both are one-line absences today with no test that would notice; each needs a row
-that stays silent outside its scope, per §5 row 7. This is a prerequisite for #1963, not for the
+that stays silent outside its scope, per §5 row 7. This is a prerequisite for #1963 rather than for the
 surface — a scoped assertion authored against a route that ignores scope is a record that means
 something different from what it says.
 
@@ -468,7 +468,7 @@ the route's `lookup`, the country scope in the POI intent stage against the anch
 country. The row for §5 row 7 is `abs-c-02` in the absence probe (a US anchor keeps `drugstore`, so
 the searched set exceeds the surveyed class and the route refuses `category_not_surveyed`) beside
 `abs-t-02`/`abs-t-05` (a French anchor drops it, and the observation fires); the probe registers the
-searched set per row so the binding is graded, not inferred.
+searched set per row so the binding is graded rather than inferred.
 
 ### 8.3 Observations must reach the caller
 
@@ -481,7 +481,7 @@ avoid. #1965's coverage-qualified absence observations need the same route to th
 
 Per §3.1 the builder moves out of the eval harness into the runtime tree with a real export subpath.
 Per §3.3 its header's release-list reasoning is now false in both halves and must be rewritten to
-state the version constraint that actually binds, not the membership one that no longer does. The
+state the version constraint that binds rather than the membership one that no longer does. The
 probe's definition and freeze record show an empty diff across the move.
 
 ---
@@ -511,7 +511,7 @@ later integration decision".
 
 **This is that decision, and §6 is left standing, unamended.** `@mailwoman/core` gains no dependency
 on `@mailwoman/geographic-model`, now or as a consequence of anything §8 authorizes. The reason §6
-gives — core ships the pipeline contract and roughly 9 MB of reference data to every consumer, so a
+gives — core ships the pipeline interface and roughly 9 MB of reference data to every consumer, so a
 world-semantics dependency there is one every drop-in API inherits whether it asked or not — is
 unweakened by this record, and §3.2 shows the integration needs nothing from core anyway: the POI
 branch lives in `mailwoman`, and `@mailwoman/kind-classifier` takes its lexicon injected.
@@ -550,7 +550,7 @@ same zero as a real absence:
 "where can i pick up a prescription near Denver CO"  (no subject) → where can i pick up a prescription → pharmacy
 "prescription near Denver CO"                        (no subject) → prescription → pharmacy
 "i need my prescription refilled near Tijuana"       (no subject) → i need my prescription refilled → pharmacy
-"buy medicine near Chicago IL"                       (no subject) → buy medicine → pharmacy
+"purchase medicine near Chicago IL"                      (no subject) → purchase medicine → pharmacy
 "collect a prescription near London"                 (no subject) → collect a prescription → pharmacy
 ```
 
@@ -567,11 +567,11 @@ one `poi-taxonomy` mapping to external id `drugstore` — the wave-1 set exactly
 The route was built over the modified artifact with
 `createSemanticObservationRoute({ model })` and queried through `matchPOISubject`. Output in §1.4.
 
-**Read directly, not measured.** The release-list and npm figures in §3.3 (`.release-it.json`'s
+**Read directly rather than measured.** The release-list and npm figures in §3.3 (`.release-it.json`'s
 workspaces array; `npm view @mailwoman/geographic-model`; the `0.0.0` tarball's own file list). The
 conformance row counts — 189 committed across five files, which is the 182 decided plus 6 tracked
 plus 1 unmeasured that PR #1955's inertness receipt reports. The board figures — 51 rows at 96.1%
 with two pre-existing failures, and PR #1969's proposed 55-row composition with four tracked. The
 `poi.db` row counts in §1.1 are the boundary record's §5.3 measurement at manifest `2026-07-22.0`,
-carried forward; §4.1's own re-measurement instruction binds them and is #1963's obligation, not
+carried forward; §4.1's own re-measurement instruction binds them and is #1963's obligation rather than
 this record's.

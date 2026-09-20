@@ -1,6 +1,6 @@
 # 2026-07-02 — lab session postmortem: #884 ship evidence + the #885 measurement re-anchor
 
-Lab session off `HANDOFF-825-rev.md` (the re-railing sprint's Tracks 2 + 4 lab slice). CPU-only
+Lab session off `HANDOFF-825-rev.md` (the re-railing sprint's Tracks 2 + 4 lab share). CPU-only
 as briefed; one Modal call (int8 quantize, ~seconds); no training, no promotion.
 
 ## What shipped
@@ -20,12 +20,12 @@ as briefed; one Modal call (int8 quantize, ~seconds); no training, no promotion.
 
 | check (pre-registered before each measurement) | result                                                                      |
 | ---------------------------------------------- | --------------------------------------------------------------------------- |
-| US-2k ni, int8 feed parity                     | PASS — candidate row dump **byte-identical** to shipped v193a3 int8         |
-| CZ-1k improve                                  | PASS — wrong-city 22.4→14.8% (CI [−10.3,−5.1]pp), resolved-p50 3.29→2.73 km |
-| PL-1k improve                                  | PASS — wrong-city 27.9→7.9% (CI [−22.7,−17.4]pp), resolved-p50 2.07→1.33 km |
+| US-2k ni, int8 feed parity                     | pass — candidate row dump **byte-identical** to shipped v193a3 int8         |
+| CZ-1k improve                                  | pass — wrong-city 22.4→14.8% (CI [−10.3,−5.1]pp), resolved-p50 3.29→2.73 km |
+| PL-1k improve                                  | pass — wrong-city 27.9→7.9% (CI [−22.7,−17.4]pp), resolved-p50 2.07→1.33 km |
 | int8 size                                      | 33.8 MB, **+3.8 MB over the ~30 MB browser SLO** (operator fallback call)   |
 | WASM latency (Node, 1-thread bound)            | flat ~41–44 ms p50/p95 both models; load 66→85 ms                           |
-| #885 re-score                                  | 17/17 floors PASS; fp32↔int8 max delta 0.8pp                                |
+| #885 re-score                                  | 17/17 floors pass; fp32↔int8 max delta 0.8pp                                |
 
 ## What went well
 
@@ -33,7 +33,7 @@ as briefed; one Modal call (int8 quantize, ~seconds); no training, no promotion.
   newly-wrong rows) turned an aggregate win into a mechanism: candidate parses are structurally
   better; the flips are a pre-existing locality-truncation→namesake residual the baseline won by
   fluke. That nuance is now in the promote record instead of surfacing post-ship.
-- **The int8 U.S. result is the strongest possible form** — byte-identical row dumps, not just
+- **The int8 U.S. result is the strongest possible form** — byte-identical row dumps, only
   CI-bounded non-inferiority. The embedding-growth quantization-scale worry was pre-registered
   and measured dead.
 - **Salvage-first held**: every grading tool existed; the only new code is two small flags and
@@ -56,7 +56,7 @@ as briefed; one Modal call (int8 quantize, ~seconds); no training, no promotion.
   gave ~1 municipality per bucket (CZ file head: 2 cities in 4k rows), which under-disperses the
   exact metric (wrong-city%) the sets exist to power. Default path proven byte-identical.
 - Graded the shipped int8 as the #885 artifact (with fp32 delta legs) and md5-verified it against
-  the published npm tarball first — treating "the shipped line" as bytes, not a version label.
+  the published npm tarball first — treating "the shipped line" as bytes rather than a version label.
 - Framed the browser-SLO breach, ledger fate, and re-score cadence as operator decisions
   (review addendum Track 3) — evidence supplied, no bar moved.
 
@@ -74,7 +74,7 @@ as briefed; one Modal call (int8 quantize, ~seconds); no training, no promotion.
   release-prep PR (model-card: new `tokenizer_version`, OA CZ/PL attribution) → `mailwoman-release`.
 - #887 is a bounded night-shift chore (wire `overrides.anchor=false` through `oa-resolver-eval`).
 - #296-residual: CZ 14.8%/PL 7.9% wrong-city is decode-boundary/namesake + coverage now — name-key
-  or span changes, not vocab.
+  or span changes rather than vocab.
 
 ## Ledger
 

@@ -2,35 +2,35 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Split-conformal confidence wrapper for the STREET-LEVEL coordinate tier (#374, heuristic-radius
+ *   Split-conformal confidence wrapper for the street-level coordinate tier (#374, heuristic-radius
  *   variant). The interpolation tier stamps an `uncertainty_m` radius on each hit (half the matched
- *   TIGER segment length) and the exact address-point tier stamps no radius — it is a real situs
+ *   tiger segment length) and the exact address-point tier stamps no radius — it is a real situs
  *   point, assigned a fixed 10 m floor (building-centroid precision).
  *
- *   The heuristic radius is a PRIOR, not a guarantee. This script turns it into a provably-calibrated
+ *   The heuristic radius is a prior rather than a guarantee. This script turns it into a provably-calibrated
  *   interval: the conformal threshold Q̂ tells you "multiply the claimed radius by Q̂ and you now
  *   have a 90% coverage guarantee on held-out data."
  *
- *   RECIPE (DeepSeek scope, #374):
+ *   recipe (DeepSeek scope, #374):
  *
  *   1. Run the full cascade (parser → resolver with situs + interp extracts) on a holdout set. For each
- *        RESOLVED street-level row capture: (a) coordinate error in METERS (haversine to the true
- *        lat/lon) (b) claimed radius in METERS (uncertainty_m for interp hits; 10 m fixed floor for
+ *        resolved street-level row capture: (a) coordinate error in meters (haversine to the true
+ *        lat/lon) (b) claimed radius in meters (uncertainty_m for interp hits. 10 m fixed floor for
  *        situs hits)
  *   2. Nonconformity score per row: s_i = error_m / claimed_radius_m
  *   3. Conformal threshold Q̂ = the ⌈(n_cal + 1) × 0.9⌉ / n_cal empirical quantile of {s_i} over a
- *        CALIBRATION split (split the holdout ≈50/50, deterministic seed).
+ *        calibration split (split the holdout ≈50/50, deterministic seed).
  *   4. Calibrated 90% interval at inference = claimed_radius × Q̂.
- *   5. VALIDATE on the test split: empirical coverage = fraction where error_m ≤ calibrated_radius.
+ *   5. validate on the test split: empirical coverage = fraction where error_m ≤ calibrated_radius.
  *        Target ≈ 90%.
  *
- *   CALIBRATION DATA (pre-built, Texas E-911 Travis County):
+ *   calibration data (pre-built, Texas E-911 Travis County):
  *
  *   - Holdout : /tmp/ood-truth.jsonl (1965 rows, {input, lat, lon, …})
  *   - Situs : /tmp/tx-situs.db (--address-points)
  *   - Interp : /tmp/tx-metro-interp.db (--interpolation)
  *
- *   OUTPUT: threshold Q̂, empirical 90% coverage, median calibrated radius per tier, plus a 3-line
+ *   output: threshold Q̂, empirical 90% coverage, median calibrated radius per tier, plus a 3-line
  *   calibration summary.
  *
  *   Run (no pre-compile needed — : node packages/mailwoman/lib/dev-tools/conformal-calibrate.run.ts\
@@ -43,7 +43,7 @@
  *   [--wof $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db,…]\
  *   [--cal-frac 0.5] [--alpha 0.9] [--seed 20260614]
  *
- *   DO NOT change the resolver or parser — this script only READS stamped metadata.
+ *   Do not change the resolver or parser — this script only reads stamped metadata.
  */
 
 import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
@@ -131,8 +131,8 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
 	const out = [...arr]
 	const step = makeGlibcLcgFloat64((seed * 2_654_435_761 + 1) & 0xff_ff_ff_ff)
 
-	// The sampler takes the raw state MODULO the bound rather than scaling a float, which is why this reaches for
-	// `shuffleBy` and not `shuffleWith`. Both are the same walk; the published conformal thresholds were selected under
+	// The sampler takes the raw state modulo the bound rather than scaling a float, which is why this reaches for
+	// `shuffleBy` and not `shuffleWith`. Both are the same walk. the published conformal thresholds were selected under
 	// this sampler, so it stays exactly as it is.
 	shuffleBy(out, (bound) => step() % bound)
 
@@ -266,7 +266,7 @@ async function main(): Promise<void> {
 	const seed = Number(values["seed"] || "20260614")
 
 	// Load the held-out rows before running the calibration cascade.
-	const rows: HoldoutRow[] = await Array.fromAsync(JSONSpliterator.fromAsync<HoldoutRow>(holdoutPath))
+	const rows: HoldoutRow[] = await JSONSpliterator.fromAsync<HoldoutRow>(holdoutPath).toArray()
 
 	console.error(`[conformal-calibrate] ${rows.length} holdout rows from ${holdoutPath}`)
 	console.error(`[conformal-calibrate] situs: ${addressPointsDB}  interp: ${interpolationDB}`)
@@ -360,16 +360,16 @@ async function main(): Promise<void> {
 		byTier[r.tier].push(r)
 	}
 
-	// Median calibrated radius = median(claimedRadiusM) × Q  per tier on ALL resolved rows
+	// Median calibrated radius = median(claimedRadiusM) × Q  per tier on all resolved rows
 	const tierStats = tiers.map((t) => {
 		const innerRows = byTier[t]
 
 		if (!innerRows.length)
 			return { tier: t, n: 0, medianClaimedM: Number.NaN, medianCalibratedM: Number.NaN, medianErrorM: Number.NaN }
 
-		// innerRows, not the outer holdout `rows` — the previous lax scripts tsconfig let the wrong
+		// innerRows rather than the outer holdout `rows` — the previous lax scripts tsconfig let the wrong
 		// array through and the per-tier medians silently printed NaN (the headline Q/coverage were
-		// computed on the correct splits; only this breakdown was dead).
+		// computed on the correct splits. only this breakdown was dead).
 		const claimedMeds = median(innerRows.map((r) => r.claimedRadiusM)) ?? Number.NaN
 		const errMeds = median(innerRows.map((r) => r.errorM)) ?? Number.NaN
 
@@ -479,7 +479,7 @@ async function main(): Promise<void> {
 	console.log(hr)
 
 	// Print the concise three-line calibration summary.
-	// Characterise the dominant tier (address_point here; interp may lack sufficient rows).
+	// Characterise the dominant tier (address_point here. interp may lack sufficient rows).
 	const situsTC = tierConformal.find((x) => x.tier === "address_point")!
 	const interpTC = tierConformal.find((x) => x.tier === "interpolated")!
 

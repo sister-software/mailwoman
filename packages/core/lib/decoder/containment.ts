@@ -6,7 +6,7 @@
  *
  *   Each tag lists permitted parents in priority order (most-preferred first). The tree builder
  *   resolves each span's parent by walking this list and picking the first tag that has at least
- *   one labeled span; if multiple spans share that tag, the one nearest to this span in char
+ *   one labeled span. if multiple spans share that tag, the one nearest to this span in char
  *   distance wins. Spans whose tag is absent from this map (or has no labeled parent) become
  *   roots.
  *
@@ -43,27 +43,27 @@ export const WESTERN_PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>> = 
 	postcode: ["locality", "subregion", "region", "country"],
 	cedex: ["postcode", "locality"],
 
-	// Street-level — street nests inside locality; house_number/unit/intersections nest inside street.
+	// Street-level — street nests inside locality. house_number/unit/intersections nest inside street.
 	street: ["locality_unit", "dependent_locality", "locality", "subregion", "region"],
 	street_prefix: ["street"],
 	street_prefix_particle: ["street_prefix", "street"],
 	street_suffix: ["street"],
 	// A CN production team can carry a house number with no street at all (`古北口村南关生产队6号`).
 	house_number: ["street", "locality_unit"],
-	// `venue` is here for the SUB-VENUE case — `Terminal 5` of `Heathrow Airport`, `Gate 12` of `Manchester Airport`.
+	// `venue` is here for the SUB-venue case — `Terminal 5` of `Heathrow Airport`, `Gate 12` of `Manchester Airport`.
 	// The table modelled `attention: ["venue"]` but not a unit of a venue, so `validateTree` reported a correct,
-	// passing parse (gb-subvenue-heathrow-terminal) as a stranded dependent: the contract was narrower than the
+	// passing parse (gb-subvenue-heathrow-terminal) as a stranded dependent: the interface was narrower than the
 	// capability the board already tests.
 	unit: ["street", "house_number", "venue"],
 	intersection_a: ["street", "locality"],
 	intersection_b: ["street", "locality"],
 
-	// Venue / mailing — separate top-level concepts; attach to street if labeled.
+	// Venue / mailing — separate top-level concepts. attach to street if labeled.
 	venue: ["street", "locality"],
 	attention: ["venue"],
 	po_box: ["locality", "subregion", "region"],
 
-	// JP — declared for forward-compat; mapping is provisional and will be revisited in Phase 6, when
+	// JP — declared for forward-compat. mapping is provisional and will be revisited in Phase 6, when
 	// a dedicated `japanese` system map likely supersedes these entries with a no-street hierarchy.
 	prefecture: ["country"],
 	municipality: ["prefecture"],
@@ -91,6 +91,6 @@ export function containmentFor(_system?: AddressSystem): Partial<Record<Componen
 
 /**
  * Backwards-compatible alias for the default (Western) containment map. Prefer `containmentFor()` in new code so the
- * system parameter threads through; this export remains for existing call sites.
+ * system parameter threads through. this export remains for existing call sites.
  */
 export const PARENT_OF = WESTERN_PARENT_OF

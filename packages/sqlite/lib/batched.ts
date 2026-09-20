@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Batched bulk-write transactions — the `COMMIT`/`BEGIN` cadence every streaming ingest repeats around its
+ *   Batched bulk-write transactions — the `commit`/`begin` cadence every streaming ingest repeats around its
  *   raw prepared-statement loop.
  */
 
@@ -11,7 +11,7 @@
  */
 export interface BatchedTransaction {
 	/**
-	 * Record one written row. Every `rowsPerCommit` rows the open transaction is committed and a new one opened; answers
+	 * Record one written row. Every `rowsPerCommit` rows the open transaction is committed and a new one opened. answers
 	 * `true` on the call that committed, so a caller can hang a progress report off the boundary.
 	 */
 	rowWritten(): boolean
@@ -20,9 +20,9 @@ export interface BatchedTransaction {
 	 */
 	commit(): void
 	/**
-	 * Best-effort `ROLLBACK`, and it must never replace the real error: a build runs with the journal off (nothing is
-	 * ever published without the swap), so SQLite may refuse to unwind. What matters is that the caller sees WHY the
-	 * ingest stopped, not that a scratch file was tidied.
+	 * Best-effort `rollback`, and it must never replace the real error: a build runs with the journal off (nothing is
+	 * ever published without the swap), so SQLite may refuse to unwind. What matters is that the caller sees why the
+	 * ingest stopped rather than that a scratch file was tidied.
 	 */
 	rollbackQuietly(): void
 }

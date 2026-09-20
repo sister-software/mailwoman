@@ -6,8 +6,8 @@
  *   localities (varying populations) + postcodes + a non-US locality, then asserts that the slim
  *   output keeps only what the selection policy promises.
  *
- *   The fixture mirrors the PRODUCTION source shape: `spr` + `names` + a pre-built `place_population`
- *   aux table, and NO `geojson` table. `scripts/build-unified-wof.ts` extracts `wof:population`
+ *   The fixture mirrors the production source shape: `spr` + `names` + a pre-built `place_population`
+ *   aux table, and no `geojson` table. `scripts/build-unified-wof.ts` extracts `wof:population`
  *   into `place_population` at ingest and never persists geojson, so the slim builder reads
  *   population straight from that table.
  */
@@ -124,14 +124,14 @@ describe("buildSlimWOFDatabase", () => {
 			.all()
 			.map((r) => (r as { id: number }).id)
 
-		// Top-1 locality = Chicago (200); ancestors 100/101; postcodes 300/301.
+		// Top-1 locality = Chicago (200). ancestors 100/101. postcodes 300/301.
 		expect(nameIDs).toEqual([100, 200, 300])
 		// Paris (400) and Mascoutah (202) names must be gone.
 		expect(nameIDs).not.toContain(400)
 		expect(nameIDs).not.toContain(202)
 
 		// place_population is filtered to surviving spr ids: ancestors 100/101 + top-1 locality 200.
-		// Postcodes (300/301) have no population row; trimmed places (202/400) are gone.
+		// Postcodes (300/301) have no population row. trimmed places (202/400) are gone.
 		const popIDs = slim
 			.prepare(`SELECT id FROM place_population ORDER BY id`)
 			.all()
@@ -142,7 +142,7 @@ describe("buildSlimWOFDatabase", () => {
 		expect(popIDs).not.toContain(202)
 
 		// The slim DB never carries a geojson table — production source has none, and the builder
-		// reads population from place_population, not geojson.
+		// reads population from place_population rather than geojson.
 		const geojsonExists = slim.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'geojson'`).get()
 		expect(geojsonExists).toBeUndefined()
 	})
@@ -170,7 +170,7 @@ describe("buildSlimWOFDatabase", () => {
 		const output = scratch.resolve("slim.db")
 		buildFixtureWOF(adminSource)
 		// Postcode extract: same schema, only contributes postcodes (here, re-use the admin fixture's
-		// postcode rows to verify INSERT OR IGNORE actually de-dupes on id).
+		// postcode rows to verify insert or ignore actually de-dupes on id).
 		buildFixtureWOF(postcodeSource)
 
 		const result = await buildSlimWOFDatabase({
@@ -198,7 +198,7 @@ describe("buildSlimWOFDatabase", () => {
 		const namesExists = slim.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'names'`).get()
 		expect(namesExists).toBeUndefined()
 
-		// place_search is a self-contained FTS5, so name MATCH still works with names gone.
+		// place_search is a self-contained FTS5, so name `match` still works with names gone.
 		const hit = slim.prepare(`SELECT wof_id FROM place_search WHERE place_search MATCH 'Chicago'`).get() as
 			| { wof_id: number }
 			| undefined
@@ -212,7 +212,7 @@ describe("buildSlimWOFDatabase", () => {
 		buildFixtureWOF(source)
 
 		// Both the demo plugin and build-demo-assets.ts pass `--in ""` when the custom postcode DB
-		// isn't built yet. The empty path must be skipped, not treated as a missing file.
+		// isn't built yet. The empty path must be skipped rather than treated as a missing file.
 		const result = await buildSlimWOFDatabase({ inputs: ["", source, ""], output, topLocalitiesPerCountry: 1 })
 		expect(result.rowCounts.spr).toBe(5) // 1 country + 1 region + 1 locality + 2 postcodes
 	})
@@ -249,13 +249,13 @@ describe("buildSlimWOFDatabase", () => {
 		s.exec(`INSERT INTO names (id, language, name) VALUES (101, 'abbr', 'IL')`) // Illinois (region) — survives
 		s.exec(`INSERT INTO names (id, language, name) VALUES (202, 'abbr', 'MZ')`) // Mascoutah (locality) — trimmed
 
-		// top-2 keeps Springfield, drops Mascoutah; dropNames removes the source names table afterward.
+		// top-2 keeps Springfield, drops Mascoutah. dropNames removes the source names table afterward.
 		await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2, dropNames: true })
 
 		using slim = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 		const rows = slim.prepare(`SELECT id, abbr FROM place_abbr ORDER BY abbr`).all()
-		// Illinois keeps its abbr; the trimmed locality's is gone (names was pre-filtered to surviving
+		// Illinois keeps its abbr. the trimmed locality's is gone (names was pre-filtered to surviving
 		// ids). And place_abbr persists even though dropNames removed the source `names` table.
 		expect(rows).toEqual([{ id: 101, abbr: "IL" }])
 		expect(slim.prepare(`SELECT 1 FROM sqlite_master WHERE name='names'`).get()).toBeUndefined()

@@ -49,7 +49,7 @@ Both emit country posteriors; they must not double-count.
 - **Off by default → byte-identical.** Like `resolve`/`fst`, absent the stage the pipeline is unchanged.
   PR-and-flag; promotion to default is a separate, evidence-conditional step.
 
-## Threshold ~0.9 (and why the soft framing earns it)
+## Threshold ~0.9 (and why the soft framing warrants it)
 
 `abstainBelow = 0.9` (vs the code default 0.5). Below 0.9 → `abstained` → **no posterior** → byte-stable.
 
@@ -68,14 +68,14 @@ country search). So the asymmetry favors a high threshold, and **~0.9** sits whe
 (~85%) while the only thing we "lose" on in-map is some boosts we'd have applied — not correctness. (A
 _hard_-check design would force ~0.85 to keep in-map routing >90%; the soft design removes that pressure.)
 
-## Validation — grade the ASSEMBLED pipeline, not the model
+## Validation — grade the ASSEMBLED pipeline rather than the model
 
 Per the reconcile-retirement lesson (grade the pipeline against truth, never a component's intrinsic F1):
 
 - **Primary metric:** on a country-disambiguation eval (ambiguous namesakes — Berlin DE/US, Plauen, bare
   region abbreviations "VT"/"ME" — plus off-map addresses), measure the geocoder's **right-country rate**
-  WITH vs WITHOUT the coarse-placer posterior. Must improve the ambiguous/off-map cases at **no in-map
-  regression** (reuse the honest-eval harness + the #369 namesake set).
+  with vs without the coarse-placer posterior. Must improve the ambiguous/off-map cases at **no in-map
+  regression** (reuse the direct-eval harness + the #369 namesake set).
 - **Byte-stability check:** with the stage off, output is byte-identical (CI-assertable).
 - Check promotion-to-default on a measured net-positive here, exactly as #584/#590 were conditional.
 

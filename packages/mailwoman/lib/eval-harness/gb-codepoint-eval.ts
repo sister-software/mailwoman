@@ -5,22 +5,22 @@
  *   GB postcode-resolution evaluation against OS Code-Point Open — the first UK accuracy measurement this project can
  *   run without licensed data, and the measurement's own limits stated up front:
  *
- *   1. **The truth and the gazetteer share a source.** Our GB postcode tier is built FROM Code-Point Open
+ *   1. **The truth and the gazetteer share a source.** Our GB postcode tier is built from Code-Point Open
  *      (`codepoint-database.ts`), so grading against Code-Point centroids does not measure independent coordinate
- *      accuracy. What it DOES measure is the pipeline end-to-end: does a messy, real-shaped postcode string come back
- *      as the right unit-postcode point through parse → retrieval → resolution? That is the engine's claim; the
+ *      accuracy. What it does measure is the pipeline end-to-end: does a messy, real-shaped postcode string come back
+ *      as the right unit-postcode point through parse → retrieval → resolution? That is the engine's claim. the
  *      data's accuracy is Ordnance Survey's.
  *   2. **The coordinate conversion cancels.** Truth is converted OSGB36 → WGS84 by the same `@mailwoman/spatial`
  *      routine the database build uses, so a systematic conversion bias would be invisible here. The conversion is
- *      pinned against the OSTN15 test set in its own suite; this eval adds nothing to that claim.
- *   3. **Premise-level accuracy is out of reach.** A unit postcode is tens of houses; there is no open GB register
+ *      pinned against the OSTN15 test set in its own suite. this eval adds nothing to that claim.
+ *   3. **Premise-level accuracy is out of reach.** A unit postcode is tens of houses. there is no open GB register
  *      to grade a rooftop answer against. The distance thresholds below are therefore postcode-scale (≤1 km) rather
  *      than rooftop-scale.
  *
  *   Sample: a seeded, stratified draw across every Code-Point area file (every area contributes equally, so London
  *   does not drown Orkney). Rows with positional-quality 90 (no coordinate available) are skipped, matching the
- *   database build. Each sampled postcode runs THREE input legs — as published ("SW10 0AA"), lowercased and unspaced
- *   ("sw100aa", the user register), and country-suffixed ("SW10 0AA, UK") — under TWO locales: the production
+ *   database build. Each sampled postcode runs three input legs — as published ("SW10 0AA"), lowercased and unspaced
+ *   ("sw100aa", the user register), and country-suffixed ("SW10 0AA, UK") — under two locales: the production
  *   default and en-GB.
  *
  *   Contains OS data © Crown copyright and database right 2026 (Code-Point Open, OGL v3).
@@ -65,14 +65,14 @@ const PQ_NO_COORDINATE = 90
 
 /**
  * Every postcode in the acquisition, folded to unspaced-uppercase — the existence oracle for the typo leg. A mutated
- * final letter frequently lands on a REAL neighbouring unit ("AB55 4BD" → "AB55 4BE"), and resolving those is correct
- * behavior; only a mutant absent from the register demands abstention. Reasoning "the mutant almost never exists" was
+ * final letter frequently lands on a real neighbouring unit ("AB55 4BD" → "AB55 4BE"), and resolving those is correct
+ * behavior. only a mutant absent from the register demands abstention. Reasoning "the mutant almost never exists" was
  * measured wrong on the first run (346/600 resolved), which is why this set exists.
  */
 async function allPostcodes(csvDir: string): Promise<Set<string>> {
 	const out = new Set<string>()
 
-	for await (const file of Globerator.files("csv", { cwd: csvDir, absolute: false })) {
+	for await (const file of Globerator.files("csv", { cwd: csvDir, absolute: false, recursive: false })) {
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- bounded input, one pass
 		for (const line of (await readLocalTextFile(join(csvDir, file))).split("\n")) {
 			const pc = line.split(",")[0]?.replaceAll('"', "").trim()
@@ -90,14 +90,14 @@ async function samplePostcodes(csvDir: string, perArea: number, seed: number): P
 	const random = mulberry32(seed)
 	const out: SampledPostcode[] = []
 
-	for (const file of await Globerator.files("csv", { cwd: csvDir, absolute: false }).toSorted()) {
+	for (const file of await Globerator.files("csv", { cwd: csvDir, absolute: false, recursive: false }).toSorted()) {
 		const rows: SampledPostcode[] = []
 
 		// Code-Point area files are small (the largest ~90k rows); whole-file split is bounded here.
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- bounded input, one pass
 		for (const line of (await readLocalTextFile(join(csvDir, file))).split("\n")) {
 			if (!line) continue
-			// Columns: PC,PQ,EA,NO,… — quoted postcode, then numerics. Code-Point carries no embedded
+			// Columns: PC,PQ,EA,no,… — quoted postcode, then numerics. Code-Point carries no embedded
 			// commas inside quotes, so a plain split is faithful to this source.
 			const cols = line.split(",")
 			const pq = Number(cols[1])
@@ -130,17 +130,17 @@ function legsFor(postcode: string): Array<{ leg: string; input: string }> {
 		{ leg: "as_published", input: postcode },
 		{ leg: "lower_unspaced", input: postcode.toLowerCase().replaceAll(" ", "") },
 		{ leg: "uk_suffixed", input: `${postcode}, UK` },
-		// The leg that CAN fail, with the pass condition depending on whether the mutant EXISTS: a real
-		// neighbouring unit must resolve like any postcode; a mutant absent from the register demands
-		// ABSTENTION — a "corrected" postcode is a DIFFERENT postcode (the BT3 9QQ → S3 9QQ trap class).
+		// The leg that can fail, with the pass condition depending on whether the mutant exists: a real
+		// neighbouring unit must resolve like any postcode. a mutant absent from the register demands
+		// abstention — a "corrected" postcode is a different postcode (the BT3 9QQ → S3 9QQ trap class).
 		{ leg: "typo", input: mutateFinalLetter(postcode) },
 	]
 }
 
 /**
  * Deterministically swap the final letter for its alphabet successor (Z→A), skipping letters GB unit postcodes never
- * use in final position (C, I, K, M, O, V are excluded from the alphabet there — stepping INTO one guarantees the
- * mutant is invalid, which is fine; the pass condition is abstention either way).
+ * use in final position (C, I, K, M, O, V are excluded from the alphabet there — stepping into one guarantees the
+ * mutant is invalid, which is fine. the pass condition is abstention either way).
  */
 function mutateFinalLetter(postcode: string): string {
 	const last = postcode.at(-1)!

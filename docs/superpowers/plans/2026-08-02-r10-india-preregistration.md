@@ -16,14 +16,14 @@ tree, so the figure could not be audited — only re-derived. Re-derived through
 | **live only** (`is_current != 0 AND is_deprecated = 0`) | **86,754**  |
 | live + parent-alias expansion (shipped)                 | **175,744** |
 
-**53.4% of India's borough/neighbourhood nodes carry `edtf:deprecated`** — 100,860 of 189,002 —
+**53.4% of India's borough/neighborhood nodes carry `edtf:deprecated`** — 100,860 of 189,002 —
 against 0.0% (DE), 0.1% (GB, FR) and 2.5% (US). India is a dramatic outlier, and a raw-repo count
 therefore overstates its usable yield by roughly 2×. The operator's instinct that our WOF implementation
 already handled deprecation is what surfaced this; the implementation existed and the pair extraction
-simply was not using it (fixed separately, #1411).
+only was not using it (fixed separately, #1411).
 
 So India is **not** 6× GB. Live and alias-expanded it is 175,744 against GB's 30,825 — still the
-campaign's largest instance, and still worth the rebuild, but the honest multiple is ~5.7× on a
+campaign's largest instance, and still worth the rebuild, but the direct multiple is ~5.7× on a
 number that includes aliases and ~2.8× without them.
 
 ## Parent-alias expansion, and why India alone
@@ -38,7 +38,7 @@ shape most likely to collide with an unrelated word.
 
 **Enabled for India only, deliberately.** Applied globally it took the US index from 47,878 to
 101,560 — more than double, on surfaces no board has ever graded. Every increment in this campaign
-cleared a venue-confound board before shipping, and a 2× expansion of the flagship locale earns its
+cleared a venue-confound board before shipping, and a 2× expansion of the flagship locale warrants its
 own board rather than riding in on India's evidence. The existing surface-expansion probe
 (`pair-index-hierarchy-probe.ts`) checks on `official = 1`; that is right for name-exactness and too
 strict here, because the rows a rename leaves behind are exactly the non-official ones.
@@ -50,7 +50,7 @@ strict here, because the rows a rename leaves behind are exactly the non-officia
 - **B-R10.2 PASS** — 70-row confound board (40 directional-class surfaces from 665 available + 30
   others, each opening an Indian venue name): **0/70 false positives**.
 - **B-R10.3 PASS** — 60-row positive board: 60/60 emit, **59/60 tag-correct (98.3%)**. The single
-  miss is a trailing period (`Pimpale Bk` vs `Pimpale Bk.`) — a tokenization artifact, not a
+  miss is a trailing period (`Pimpale Bk` vs `Pimpale Bk.`) — a tokenization artifact rather than a
   retrieval failure.
 - **D-R10.4** — before/after on real addresses: `12 MG Road, Indiranagar, Bengaluru, Karnataka
 560038` fused the locality as `"Indiranagar Bengaluru Karnataka"` and emitted no dependent

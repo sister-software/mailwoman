@@ -8,15 +8,13 @@
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
-import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "Autocomplete ladder (#2154) — first-hit rung, stability, latency and abstention per prefix"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "autocomplete",
@@ -36,19 +34,9 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	country?: string
-	limit?: number
-	weightsCache?: string
-	candidateDB?: string
-	fstDir?: string
-	adminDB?: string
-	out?: string
-	json: boolean
-}
-
-const EvalAutocomplete: ParsedCommandComponent<Options> = ({ options }) => {
-	const state = useCommandTask(async () => {
+const EvalAutocomplete = harnessCommand(
+	spec,
+	async (options) => {
 		const { printAutocompleteLadder, runAutocompleteLadder } = await import("#eval-harness/autocomplete-ladder")
 
 		const report = await runAutocompleteLadder({
@@ -70,15 +58,8 @@ const EvalAutocomplete: ParsedCommandComponent<Options> = ({ options }) => {
 		}
 
 		return { report }
-	})
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	if (options.json) {
-		return <Text>{prettyJSON(state.result.report)}</Text>
-	}
-
-	return null
-}
+	},
+	{ json: ({ report }, options) => (options.json ? report : undefined) }
+)
 
 export default EvalAutocomplete

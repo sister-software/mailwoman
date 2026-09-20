@@ -7,7 +7,7 @@ refuse — a config that sets `char_mode` without `use_char_embed`, a freeze tha
 parameter, an EWC lambda with no Fisher artifact — and a refusal should name the stage it came
 from rather than a line number in a 400-line function.
 
-ORDER IS LOAD-BEARING in exactly one place, and it is marked where it happens: the live learning
+ORDER IS required in exactly one place, and it is marked where it happens: the live learning
 rates are captured before any checkpoint load, and re-stamped after both of them, because either
 load silently overwrites them with the checkpoint's saved values.
 """
@@ -38,8 +38,8 @@ class Optimization:
 
     optimizer: AdamW
     scheduler: LambdaLR
-    #: Captured BEFORE any resume load: `optim.load_state_dict()` overwrites every param-group's
-    #: `lr`/`initial_lr` with the CHECKPOINT's values, so these are the only surviving live ones.
+    #: Captured before any resume load: `optim.load_state_dict()` overwrites every param-group's
+    #: `lr`/`initial_lr` with the checkpoint's values, so these are the only surviving live ones.
     live_group_lrs: list[float]
     live_group_labels: list[str]
 
@@ -109,16 +109,16 @@ def load_or_build_model(
     else:
         model = build_model(
             cfg,
-            # Char mode never reads the SP token-embedding table; vocab_size=2 keeps the unused
+            # Char mode never reads the SP token-embedding table. vocab_size=2 keeps the unused
             # table at minimum width (an nn.Embedding needs >= pad_token_id + 1 rows).
             vocab_size=tokenizer.vocab_size if tokenizer is not None else 2,
             pad_token_id=tokenizer.pad_id if tokenizer is not None else 0,
             char_vocab_size=char_vocab_size,
         )
-        # Fine-tune from a pre-trained encoder: load MODEL weights only (no optimizer/scheduler/
+        # Fine-tune from a pre-trained encoder: load model weights only (no optimizer/scheduler/
         # step, unlike resume), so the supervised run starts fresh on the MLM-pretrained encoder.
         # The pretrain checkpoint's state_dict is key-identical (tied MLM head adds no params), so
-        # this loads cleanly; strict=False surfaces any head mismatch instead of raising.
+        # this loads cleanly. strict=False surfaces any head mismatch instead of raising.
         init_from = getattr(cfg.train, "init_from", "")
         if init_from:
             sd = torch.load(Path(init_from) / "pytorch_model.bin", map_location="cpu", weights_only=True)
@@ -143,7 +143,7 @@ def apply_freezes(cfg: Config, model: nn.Module) -> None:
     `build_optimizer` filters on `requires_grad`, so flipping the flag here is the whole hand-off —
     no explicit parameter list travels onward. Each setting raises rather than training nothing.
     """
-    # #492 frozen-encoder probe: freeze everything except the affix head; the optimizer sees
+    # #492 frozen-encoder probe: freeze everything except the affix head. the optimizer sees
     # only head params (a frozen param in AdamW is harmless but a filtered list is explicit).
     if getattr(cfg.train, "freeze_encoder", False):
         frozen = trainable = 0
@@ -158,7 +158,7 @@ def apply_freezes(cfg: Config, model: nn.Module) -> None:
             raise RuntimeError("freeze_encoder=True but no affix_head params found — set model.use_affix_head: true")
         print(f"[freeze_encoder] frozen={frozen:,} trainable={trainable:,} (affix head only)")
 
-    # #901 v2.1.3: freeze ONLY the token-embedding table (the mean-init surgery rows). Mirrors
+    # #901 v2.1.3: freeze only the token-embedding table (the mean-init surgery rows). Mirrors
     # the freeze_encoder idiom — explicit filtered param list, loud count print.
     if getattr(cfg.train, "freeze_token_embeddings", False):
         frozen = 0
@@ -172,7 +172,7 @@ def apply_freezes(cfg: Config, model: nn.Module) -> None:
         print(f"[freeze_token_embeddings] frozen={frozen:,} trainable={live:,}")
 
     # 2026-07-22 cRT probe (census-bias plan "Parallel training-side experiment"): classifier-only
-    # retraining with a frozen encoder — every param NOT matching a listed prefix is frozen, every
+    # retraining with a frozen encoder — every param not matching a listed prefix is frozen, every
     # match stays trainable. Mirrors the freeze_encoder idiom above (explicit filtered param list,
     # loud count print, raise-if-empty). Mutually exclusive with freeze_encoder/freeze_token_embeddings:
     # all three exclude parts of the encoder from training, and combining them would make "which
@@ -210,8 +210,8 @@ def build_optimization(cfg: Config, model: nn.Module) -> Optimization:
         span_head_learning_rate=getattr(cfg.train, "span_head_learning_rate", None),
         classifier_learning_rate=getattr(cfg.train, "classifier_learning_rate", None),
     )
-    # Captured BEFORE any resume load. `optim.load_state_dict()` (in `restore_training_state`)
-    # silently overwrites every param-group's `lr`/`initial_lr` with the CHECKPOINT's saved values,
+    # Captured before any resume load. `optim.load_state_dict()` (in `restore_training_state`)
+    # silently overwrites every param-group's `lr`/`initial_lr` with the checkpoint's saved values,
     # so these live-config LRs — plus `live_group_labels` above, both sourced directly from
     # `build_optimizer`'s own return — are the only place the live values (and their group
     # attribution) survive resume. See `restamp_resume_lrs`.
@@ -258,7 +258,7 @@ def restore_training_state(cfg: Config, resume_from: str | Path | None, optimiza
         # scheduler so LR is correct for the resumed step. ``scheduler.step()`` is cheap.
         for _ in range(resume_step):
             scheduler.step()
-    # Re-stamp the live config's LRs — must run AFTER both loads above, since either one
+    # Re-stamp the live config's LRs — must run after both loads above, since either one
     # (optim.load_state_dict or scheduler.load_state_dict) can clobber them back to the
     # checkpoint's saved values. See `restamp_resume_lrs`.
     restamp_resume_lrs(optim, scheduler, optimization.live_group_lrs, optimization.live_group_labels)
@@ -270,7 +270,7 @@ def _report_resume_drift(cfg: Config, saved_cfg: dict[str, Any]) -> None:
     """Print every config field that differs from the checkpoint's stamped state (#480).
 
     Deliberate resume-with-changes is the campaign's setting pattern (Run A/C); UNNOTICED drift is
-    the Run-B-class confound. Visibility, not prohibition.
+    the Run-B-class confound. Visibility rather than prohibition.
     """
     live_cfg = {"data": asdict(cfg.data), "model": asdict(cfg.model), "train": asdict(cfg.train)}
     drift: list[str] = []
@@ -293,7 +293,7 @@ def _report_resume_drift(cfg: Config, saved_cfg: dict[str, Any]) -> None:
 def build_regularizers(cfg: Config, model: nn.Module, device: torch.device) -> Regularizers:
     """Fisher capture + EWC (v8.3.0 Phase 1 — fisher.py has the design pointers).
 
-    Capture is armed for the FINAL window of the run; EWC loads the artifact + reference once, up
+    Capture is armed for the FINAL window of the run. EWC loads the artifact + reference once, up
     front, loudly.
     """
     out = Regularizers()

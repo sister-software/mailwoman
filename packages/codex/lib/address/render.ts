@@ -11,11 +11,11 @@
  *
  *   This is the one render. `formatAddress` is the join over it, and the alignment a caller used to recover by
  *   searching the output string for each value is now a fact the render already holds: {@linkcode AddressRendering}
- *   says which tags it PLACED and names the ones it could not, where a substring search cannot tell a component the
+ *   says which tags it placed and names the ones it could not, where a substring search cannot tell a component the
  *   layout dropped from one whose value happens to sit inside another.
  *
- *   ONE RULE, from `@mailwoman/codex/address-layout`: a node that renders nothing removes itself, and its connector
- *   goes with it. A connector between two slots needs a rendered slot on each side; a connector at a line's edge has
+ *   one rule, from `@mailwoman/codex/address-layout`: a node that renders nothing removes itself, and its connector
+ *   goes with it. A connector between two slots needs a rendered slot on each side. a connector at a line's edge has
  *   one side, so it binds to the slot it touches. Adjacent survivors collapse to the first, so the layout's stronger
  *   separator wins — an absent region gives `New York, 10118`, which is what the engine this replaces produced.
  */
@@ -35,6 +35,11 @@ export type ComponentDict = Partial<Record<ComponentTag, string>>
 export interface AddressPiece {
 	readonly tag: ComponentTag | null
 	readonly text: string
+	/**
+	 * Set on a line break the layout marked soft — one that collapses to a space on a single line rather than taking the
+	 * system's join. Absent on every other piece, so a reader testing `text === "\n"` still sees every break.
+	 */
+	readonly softBreak?: true
 }
 
 /**
@@ -50,7 +55,7 @@ export interface AddressRendering {
 	 */
 	readonly placed: readonly ComponentTag[]
 	/**
-	 * Tags the dict carried a value for that the layout has no slot for — NAMED rather than silently dropped. France
+	 * Tags the dict carried a value for that the layout has no slot for — named rather than silently dropped. France
 	 * absorbing a region into its postcode line is the common case, and a caller aligning components against the output
 	 * needs to know the difference between "not printed" and "not supplied".
 	 */
@@ -94,9 +99,9 @@ function evaluateAtom(atom: AddressAtom, components: ComponentDict): readonly Ad
  * Which of a run of surviving connectors to print.
  *
  * A run forms when the slots between two connectors all render nothing, so what is left is several separators with no
- * values between them. The STRONGEST wins: a connector carrying punctuation is a harder boundary than a space, and
+ * values between them. The strongest wins: a connector carrying punctuation is a harder boundary than a space, and
  * printing the space would join two values the layout meant to separate. `Calle Mayor, 12` keeps its comma when the
- * street suffix is absent, and `New York, 10118` keeps its comma when the region is; the space forms of both would read
+ * street suffix is absent, and `New York, 10118` keeps its comma when the region is. the space forms of both would read
  * as one value.
  */
 function strongestConnector(run: readonly string[]): string {
@@ -120,7 +125,7 @@ function evaluateLine(atoms: readonly AddressAtom[], components: ComponentDict):
 			const left = results.slice(0, index)
 			const right = results.slice(index + 1)
 
-			// A connector at an edge binds to the one slot it touches; between slots it needs one on each side.
+			// A connector at an edge binds to the one slot it touches. between slots it needs one on each side.
 			const survives = !left.length
 				? rendered(results[index + 1] ?? null)
 				: !right.length
@@ -147,9 +152,21 @@ function evaluateLine(atoms: readonly AddressAtom[], components: ComponentDict):
 }
 
 function evaluateLines(layout: AddressLayout, components: ComponentDict): readonly AddressPiece[] {
-	const lines = layout.lines.map((line) => evaluateLine(line, components)).filter((line) => line.length > 0)
+	// The layout index travels with the line, because `softBreakBefore` names the line a break precedes and the filter
+	// below renumbers whatever survives it.
+	const lines = layout.lines
+		.map((line, index) => ({ index, pieces: evaluateLine(line, components) }))
+		.filter((line) => line.pieces.length)
 
-	return lines.flatMap((line, index) => (index > 0 ? [{ tag: null, text: "\n" }, ...line] : line))
+	return lines.flatMap((line, position) => {
+		if (position === 0) return line.pieces
+
+		const before: AddressPiece = layout.softBreakBefore?.has(line.index)
+			? { tag: null, text: "\n", softBreak: true }
+			: { tag: null, text: "\n" }
+
+		return [before, ...line.pieces]
+	})
 }
 
 /**
@@ -169,7 +186,17 @@ export function renderAddress(layout: AddressLayout, components: ComponentDict):
 
 /**
  * Join a rendering into one string, replacing its line breaks with `separator`.
+ *
+ * `softSeparator` replaces a break the layout marked soft. It defaults to `separator`, so a caller that does not know
+ * about soft breaks gets what it always got, and a multi-line render passes `"\n"` for both because a soft break is a
+ * real break down the page.
  */
-export function joinRendering(rendering: AddressRendering, separator = "\n"): string {
-	return rendering.pieces.map((piece) => (piece.tag === null && piece.text === "\n" ? separator : piece.text)).join("")
+export function joinRendering(rendering: AddressRendering, separator = "\n", softSeparator = separator): string {
+	return rendering.pieces
+		.map((piece) => {
+			if (piece.tag !== null || piece.text !== "\n") return piece.text
+
+			return piece.softBreak ? softSeparator : separator
+		})
+		.join("")
 }

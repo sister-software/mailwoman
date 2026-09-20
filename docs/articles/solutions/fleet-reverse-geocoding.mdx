@@ -20,7 +20,7 @@ boundary against a polygon sidecar; the first polygon containing the point wins.
 the rate is bounded by disk and CPU rather than by a quota, and `reverseGeocodeSync` does the same
 work on the calling thread for an ingest path that is already synchronous.
 
-Every result carries a `containment` field reading `polygon` or `approximate`, which is how you tell
+Every result includes a `containment` field reading `polygon` or `approximate`, which is how you tell
 a boundary-confirmed answer from a nearest-centroid one before anything downstream acts on it.
 
 ## What you still carry

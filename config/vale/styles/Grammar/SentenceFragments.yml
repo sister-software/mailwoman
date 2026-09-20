@@ -1,0 +1,11 @@
+## Reject a noun phrase presented as a complete sentence.
+##
+## This targets the sentence-shaped reduced-relative form that hides the
+## predicate in a participle: "The provenance grade stored on a zoning row."
+## It does not ban dependent clauses attached to a complete proposition.
+extends: existence
+message: "'%s' is a noun phrase presented as a sentence — state the proposition with an explicit finite verb."
+level: error
+ignorecase: true
+tokens:
+  - '\bthe provenance grade stored on a zoning row\b'

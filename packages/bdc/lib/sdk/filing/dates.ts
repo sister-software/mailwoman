@@ -8,11 +8,11 @@
  *   headers): the `$BCDClient`-bound `retrieveFilingDates()` → a plain function taking a
  *   {@linkcode BDCClient}.
  *
- *   CACHING MOVED TO THE CLIENT. Both the earlier draft (one `<filingType>-dates.json` per filing
+ *   caching moved TO the client. Both the earlier draft (one `<filingType>-dates.json` per filing
  *   type) and this port's first version (`dataRootPath("bdc", "cache", "filing-dates.json")`, unfiltered)
  *   hand-rolled a JSON file cache here. `BDCClient` is built on `APIClient` and now carries an on-disk
  *   response cache of its own, so the hand-rolled one was the exact duplication that migration exists to
- *   remove — and it was worse than what replaced it: it had NO expiry, so a machine that resolved a
+ *   remove — and it was worse than what replaced it: it had no expiry, so a machine that resolved a
  *   vintage once would never see the next one FCC published without an explicit `skipCache`. The
  *   client's cache has a TTL chosen against the filing cadence, and `skipCache` now maps onto a
  *   per-request cache bypass with the same meaning it always had.
@@ -66,8 +66,8 @@ export async function retrieveFilingDates(
 /**
  * Pick the latest (most recent) `as_of_date` among `entries` for the given `dataType`.
  *
- * Comparison is by parsed `Date` value, not string ordering — the FCC's `as_of_date` values are `date`-formatted
- * (`YYYY-MM-DD`), which happens to sort correctly as strings too, but comparing as dates is the honest contract.
+ * Comparison is by parsed `Date` value rather than string ordering — the FCC's `as_of_date` values are `date`-formatted
+ * (`yyyy-MM-DD`), which happens to sort correctly as strings too, but comparing as dates is the honest interface.
  */
 export function resolveLatestVintage(entries: readonly FCCAsOfDateEntry[], dataType: BDCFilingDataType): string {
 	const matching = entries.filter((entry) => entry.data_type === dataType)

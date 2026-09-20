@@ -20,7 +20,7 @@ This module ships a thin, ONNX-friendly ``MailwomanCoarseEncoder`` that:
 - Linear classifier head over ``num_labels``.
 
 Compatibility with the older ``BertForTokenClassification.from_pretrained`` checkpoints is
-intentionally NOT preserved — the smoke artifacts from the previous (CPU) iteration are
+intentionally not preserved — the smoke artifacts from the previous (CPU) iteration are
 replaced wholesale.
 """
 
@@ -258,12 +258,18 @@ class MailwomanCoarseEncoder(
 
         h = self.final_ln(h)
 
-        # PR3 self-conditioning: infer a locale posterior from the WHOLE sequence, then let it
-        # reshape the per-token reps before the BIO head. This is the "globally, before per-token
-        # labels" step the design calls for — and the reason it earns its keep is the probe: the
-        # postcode alone settles the country <50% of the time, so the model has to read the city
-        # and street to know where it is, then condition on that. Runs at inference too (predict()
-        # routes through here), so the conditioning shapes real emissions, not just the loss.
+        # PR3 self-conditioning. One pooled sequence representation feeds two independent
+        # projections: ``locale_head`` predicts the country logits, and ``locale_film`` derives the
+        # FiLM scale and shift that reshape the per-token reps before the BIO head. The posterior
+        # does not enter ``locale_film`` — no softmax, no selected locale id. What couples them is
+        # the auxiliary locale loss, which pushes country information into the pooled vector both
+        # projections read. This is therefore self-conditioning on a representation trained to carry
+        # locale, rather than parameter selection keyed on a locale verdict.
+        #
+        # The design reason for conditioning globally before per-token labels is the probe: the
+        # postcode alone settles the country under half the time, so the model has to read the
+        # locality and street to place the input. Runs at inference too (predict() routes through
+        # here), so the modulation shapes emissions rather than only the loss.
         locale_logits: torch.Tensor | None = None
         if self.use_locale_conditioning and self.locale_head is not None and self.locale_film is not None:
             # Mean-pool over real (non-pad) tokens. fp32 reduction on principle — the v0.6.0 CRF
@@ -278,7 +284,7 @@ class MailwomanCoarseEncoder(
             # FiLM modulation: scale by (1 + gamma) and shift by beta, both predicted from the
             # pooled locale rep. gamma/beta start at 0 (zero-init film) so this begins as identity.
             # Split via two slices rather than ``.chunk(2)``: chunk exports to an opset-18
-            # ``Split(num_outputs=2)`` node that onnxruntime-node (and the WASM/WebGPU web runtime)
+            # ``Split(num_outputs=2)`` node that onnxruntime-node (and the wasm/WebGPU web runtime)
             # reject as "Unrecognized attribute: num_outputs"; explicit slicing emits plain Slice
             # ops every runtime accepts. Mathematically identical — same trained weights.
             film = self.locale_film(pooled)
@@ -294,13 +300,13 @@ class MailwomanCoarseEncoder(
             if gaz is None:
                 gaz = torch.zeros(bsz, seq, self.gazetteer_feature_dim or 5, dtype=h.dtype, device=h.device)
             affix_logits = self.affix_head(torch.cat([h, gaz.to(h.dtype)], dim=-1))
-            # Merge: the head OWNS the affix columns (classes 1..4 -> the 4 affix label ids).
+            # Merge: the head owns the affix columns (classes 1..4 -> the 4 affix label ids).
             logits = logits.clone()
             logits[:, :, self.affix_label_ids] = affix_logits[:, :, 1:]
 
         if self.use_deploc_head:
-            # The separate dep-loc head OWNS the B/I-dependent_locality columns (classes 1..2), same
-            # merge-in-forward contract as the affix head so the exported inference graph carries it.
+            # The separate dep-loc head owns the B/I-dependent_locality columns (classes 1..2), same
+            # merge-in-forward interface as the affix head so the exported inference graph carries it.
             deploc_logits = self.deploc_head(h)
             logits = logits.clone()
             logits[:, :, self.deploc_label_ids] = deploc_logits[:, :, 1:]

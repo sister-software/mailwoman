@@ -3,7 +3,7 @@
 
 /**
  *   Tests for {@link nearestInfrastructure} (decision 7). The fixture `poi.db` is built via
- *   the rows injection point directly against `poi-schema.ts` — the SAME idiom
+ *   the rows injection point directly against `poi-schema.ts` — the same idiom
  *   `resolver-wof-sqlite/poi-lookup.test.ts` uses (a tiny hand-built `poi`/`poi_category_codes` fixture,
  *   no DuckDB/network) — rather than `mailwoman/gazetteer-pipeline/poi/build-poi.ts`'s
  *   `buildPOIDatabase`: `bdc` cannot depend on the `mailwoman` workspace (the top-level CLI package
@@ -16,15 +16,15 @@
  *
  *   - Two rows a few hundred meters from a Springfield, IL center (`TELECOM_EXCHANGE_NEAR` closer,
  *     `TOWER_COMMS_NEAR` further).
- *   - One `telecom_exchange` row at EXACTLY res-9 gridDistance 20 from the center — inside this module's
- *     32-ring default (covers gridDistance ≤ 31) but OUTSIDE `POILookup`'s own internal default of 16
+ *   - One `telecom_exchange` row at exactly res-9 gridDistance 20 from the center — inside this module's
+ *     32-ring default (covers gridDistance ≤ 31) but outside `POILookup`'s own internal default of 16
  *     rings (covers gridDistance ≤ 15). This is the direct acceptance test for this module's `maxRings`
  *     default of 32 overriding `POILookup`'s own — see `nearest-infrastructure.ts`'s docstring.
  *   - A `cafe` row (non-telecom) right next to the near rows, proving `categoryIDs` filtering isn't
  *     accidentally permissive.
  *
- *   `contractDB` fixtures are separate, minimal `LayerContractDatabase`-only databases (no `poi` table at
- *   all) — proving the coverage join runs against WHATEVER database the caller passes, not poi.db's own
+ *   `schemadb` fixtures are separate, minimal `layerschemadatabase`-only databases (no `poi` table at
+ *   all) — proving the coverage join runs against whatever database the caller passes rather than poi.db's own
  *   coverage. One fixture's `layer_coverage` is left completely empty (every hit must report
  *   `coverage: undefined`, the meaning-of-zero rule); another has coverage written for exactly the res-6
  *   cells the hits actually land in (computed via the same `res9ShortCellToRes6Parent`
@@ -43,7 +43,7 @@ import {
 	readLayerCoverage,
 	writeLayerCoverage,
 	writeLayerManifest,
-	type LayerContractDatabase,
+	type layerschemadatabase,
 } from "@mailwoman/core/layers"
 import { CoverageBasis } from "@mailwoman/evidence"
 import {
@@ -71,7 +71,7 @@ const SPRINGFIELD_CENTER = {
 	coordinates: [SPRINGFIELD.longitude, SPRINGFIELD.latitude] as [number, number],
 }
 
-// A REMOTE center, ~280 km from Springfield — far outside even this module's 32-ring (~11 km) default,
+// A remote center, ~280 km from Springfield — far outside even this module's 32-ring (~11 km) default,
 // and with no fixture rows anywhere nearby. The sparse-result acceptance case.
 const REMOTE = { latitude: 41.8781, longitude: -87.6298 }
 
@@ -114,7 +114,7 @@ const TELECOM_EXCHANGE_MID_RING: FixtureRow = {
 }
 
 // A non-telecom row right next to the near rows — proves categoryIDs filtering isn't accidentally
-// permissive (a plain nearest-POI scan would surface this; nearestInfrastructure must not).
+// permissive (a plain nearest-POI scan would surface this. nearestInfrastructure must not).
 const CAFE_TRAP: FixtureRow = {
 	name: "Cafe Not Infrastructure",
 	category: "cafe",
@@ -136,7 +136,7 @@ function cellFor(latitude: number, longitude: number): number {
 }
 
 /**
- * Builds a minimal poi.db fixture straight against `poi-schema.ts` (the `poi-lookup.test.ts` idiom) — NOT
+ * Builds a minimal poi.db fixture straight against `poi-schema.ts` (the `poi-lookup.test.ts` idiom) — not
  * `buildPOIDatabase`, see this file's header docstring for why.
  */
 async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promise<void> {
@@ -185,11 +185,11 @@ async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promi
 }
 
 /**
- * A minimal `LayerContractDatabase`-only fixture — NOT poi.db's own coverage table. Proves the coverage join runs
- * against whatever database the caller passes, independent of poi.db's own coverage.
+ * A minimal `layerschemadatabase`-only fixture — not poi.db's own coverage table. Proves the coverage join runs against
+ * whatever database the caller passes, independent of poi.db's own coverage.
  */
-async function openEmptyContractDB(): Promise<DatabaseClient<LayerContractDatabase>> {
-	const kdb = DatabaseClient.temp<LayerContractDatabase>()
+async function openemptyschemadb(): Promise<DatabaseClient<layerschemadatabase>> {
+	const kdb = DatabaseClient.temp<layerschemadatabase>()
 
 	await createLayerManifestTable(kdb)
 	await createLayerCoverageTable(kdb)
@@ -227,18 +227,18 @@ afterAll(() => scratch[Symbol.asyncDispose]())
 describe("nearestInfrastructure", () => {
 	it("returns telecom infrastructure nearest-first, excluding non-telecom categories", async () => {
 		using poiLookup = new POILookup({ databasePath: poiDBPath })
-		using contractDB = await openEmptyContractDB()
+		using schemadb = await openemptyschemadb()
 
-		const hits = await nearestInfrastructure(poiLookup, contractDB, {
+		const hits = await nearestInfrastructure(poiLookup, schemadb, {
 			center: SPRINGFIELD_CENTER,
 			categoryIDs: TELECOM_CATEGORY_IDS,
 		})
 
-		// The cafe trap must never surface — categoryIDs filtering, not a plain nearest-POI scan.
+		// The cafe trap must never surface — categoryIDs filtering rather than a plain nearest-POI scan.
 		expect(hits.every((h) => TELECOM_CATEGORY_IDS.includes(h.categoryID))).toBe(true)
 		expect(hits.some((h) => h.name === CAFE_TRAP.name)).toBe(false)
 
-		// Nearest-first: NEAR (~30 m) < TOWER (~370 m) < MID_RING (gridDistance 20, several km).
+		// Nearest-first: near (~30 m) < tower (~370 m) < MID_RING (gridDistance 20, several km).
 		expect(hits.map((h) => h.name)).toEqual([
 			TELECOM_EXCHANGE_NEAR.name,
 			TOWER_COMMS_NEAR.name,
@@ -256,9 +256,9 @@ describe("nearestInfrastructure", () => {
 
 	it("reports coverage: undefined for every hit when the layer has never surveyed anywhere (meaning-of-zero)", async () => {
 		using poiLookup = new POILookup({ databasePath: poiDBPath })
-		using contractDB = await openEmptyContractDB()
+		using schemadb = await openemptyschemadb()
 
-		const hits = await nearestInfrastructure(poiLookup, contractDB, {
+		const hits = await nearestInfrastructure(poiLookup, schemadb, {
 			center: SPRINGFIELD_CENTER,
 			categoryIDs: TELECOM_CATEGORY_IDS,
 		})
@@ -269,12 +269,12 @@ describe("nearestInfrastructure", () => {
 
 	it("pairs each hit with the coverage cell it actually falls in, once the layer has surveyed it", async () => {
 		using poiLookup = new POILookup({ databasePath: poiDBPath })
-		using contractDB = await openEmptyContractDB()
+		using schemadb = await openemptyschemadb()
 
-		// Discover which res-6 cells the hits land in (via the SAME reconstruction nearestInfrastructure
+		// Discover which res-6 cells the hits land in (via the same reconstruction nearestInfrastructure
 		// itself uses), then write coverage for exactly those cells — robust regardless of whether the
 		// fixture's near/mid rows happen to share one res-6 parent or straddle a boundary.
-		const uncoveredHits = await nearestInfrastructure(poiLookup, contractDB, {
+		const uncoveredHits = await nearestInfrastructure(poiLookup, schemadb, {
 			center: SPRINGFIELD_CENTER,
 			categoryIDs: TELECOM_CATEGORY_IDS,
 		})
@@ -282,11 +282,11 @@ describe("nearestInfrastructure", () => {
 		const res6Cells = [...new Set(uncoveredHits.map((h) => res9ShortCellToRes6Parent(h.h3Cell)))]
 
 		await writeLayerCoverage(
-			contractDB,
+			schemadb,
 			res6Cells.map((h3Cell) => ({ h3Cell, completeness: 0.75, observedRows: 42 }))
 		)
 
-		const coveredHits = await nearestInfrastructure(poiLookup, contractDB, {
+		const coveredHits = await nearestInfrastructure(poiLookup, schemadb, {
 			center: SPRINGFIELD_CENTER,
 			categoryIDs: TELECOM_CATEGORY_IDS,
 		})
@@ -305,24 +305,24 @@ describe("nearestInfrastructure", () => {
 				observedRows: 42,
 			})
 
-			// Cross-check against a direct readLayerCoverage call, not just the wrapper's own math.
-			const direct = await readLayerCoverage(contractDB, res9ShortCellToRes6Parent(hit.h3Cell))
+			// Cross-check against a direct readLayerCoverage call rather than just the wrapper's own math.
+			const direct = await readLayerCoverage(schemadb, res9ShortCellToRes6Parent(hit.h3Cell))
 			expect(hit.coverage).toEqual(direct)
 		}
 	})
 
 	it("maxRings default (32) reaches the gridDistance-20 hit that POILookup's own internal default (16) would miss", async () => {
 		using poiLookup = new POILookup({ databasePath: poiDBPath })
-		using contractDB = await openEmptyContractDB()
+		using schemadb = await openemptyschemadb()
 
-		const withDefault = await nearestInfrastructure(poiLookup, contractDB, {
+		const withDefault = await nearestInfrastructure(poiLookup, schemadb, {
 			center: SPRINGFIELD_CENTER,
 			categoryIDs: ["telecom_exchange"],
 		})
 
 		expect(withDefault.map((h) => h.name)).toContain(TELECOM_EXCHANGE_MID_RING.name)
 
-		const withExplicit16 = await nearestInfrastructure(poiLookup, contractDB, {
+		const withExplicit16 = await nearestInfrastructure(poiLookup, schemadb, {
 			center: SPRINGFIELD_CENTER,
 			categoryIDs: ["telecom_exchange"],
 			maxRings: 16,
@@ -336,9 +336,9 @@ describe("nearestInfrastructure", () => {
 
 	it("limit is respected", async () => {
 		using poiLookup = new POILookup({ databasePath: poiDBPath })
-		using contractDB = await openEmptyContractDB()
+		using schemadb = await openemptyschemadb()
 
-		const hits = await nearestInfrastructure(poiLookup, contractDB, {
+		const hits = await nearestInfrastructure(poiLookup, schemadb, {
 			center: SPRINGFIELD_CENTER,
 			categoryIDs: TELECOM_CATEGORY_IDS,
 			limit: 1,
@@ -350,9 +350,9 @@ describe("nearestInfrastructure", () => {
 
 	it("a center far from every telecom row returns [] rather than throwing (sparse case)", async () => {
 		using poiLookup = new POILookup({ databasePath: poiDBPath })
-		using contractDB = await openEmptyContractDB()
+		using schemadb = await openemptyschemadb()
 
-		const hits = await nearestInfrastructure(poiLookup, contractDB, {
+		const hits = await nearestInfrastructure(poiLookup, schemadb, {
 			center: { type: "Point", coordinates: [REMOTE.longitude, REMOTE.latitude] },
 			categoryIDs: TELECOM_CATEGORY_IDS,
 		})
@@ -362,9 +362,9 @@ describe("nearestInfrastructure", () => {
 
 	it("an empty categoryIDs array returns [] rather than throwing", async () => {
 		using poiLookup = new POILookup({ databasePath: poiDBPath })
-		using contractDB = await openEmptyContractDB()
+		using schemadb = await openemptyschemadb()
 
-		const hits = await nearestInfrastructure(poiLookup, contractDB, {
+		const hits = await nearestInfrastructure(poiLookup, schemadb, {
 			center: SPRINGFIELD_CENTER,
 			categoryIDs: [],
 		})
@@ -374,9 +374,9 @@ describe("nearestInfrastructure", () => {
 
 	it("categoryIDs the dictionary doesn't carry are a clean miss, not a throw", async () => {
 		using poiLookup = new POILookup({ databasePath: poiDBPath })
-		using contractDB = await openEmptyContractDB()
+		using schemadb = await openemptyschemadb()
 
-		const hits = await nearestInfrastructure(poiLookup, contractDB, {
+		const hits = await nearestInfrastructure(poiLookup, schemadb, {
 			center: SPRINGFIELD_CENTER,
 			categoryIDs: ["zoo", "aquarium"],
 		})

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Tests for the Form 499 XLSX reader.
+ * @file Tests for the Form 499 xlsx reader.
  *
  *   The fixture is four real rows lifted verbatim from the FCC's 2025-12-07 filer database, with the
  *   workbook's own 122-column header — not a hand-authored sheet. They were chosen to cover the shapes the
@@ -95,7 +95,7 @@ describe("parseForm499Workbook — lifecycle and footprint", () => {
 	it("distinguishes 'the FCC said nothing' from 'this source cannot say'", async () => {
 		const [otelco] = await readFixture()
 
-		// A workbook row with blank notes yields an EMPTY lifecycle, never undefined. Undefined is
+		// A workbook row with blank notes yields an empty lifecycle, never undefined. Undefined is
 		// reserved for the TSV path, which has no note columns at all.
 		expect(otelco?.lifecycle).toEqual({ notes: [], reasons: [], unrecognized: 0 })
 		expect(otelco?.lifecycle).toBeDefined()
@@ -121,7 +121,7 @@ describe("parseForm499Workbook — lifecycle and footprint", () => {
 
 describe("assertWorkbookHeader", () => {
 	it("accepts the real workbook's header", async () => {
-		// Reading the fixture at all exercises this; asserted directly so a failure names the guard.
+		// Reading the fixture at all exercises this. asserted directly so a failure names the guard.
 		await expect(readFixture()).resolves.toHaveLength(4)
 	})
 
@@ -184,7 +184,7 @@ describe("readOperatingStates", () => {
 
 describe("the fixture itself", () => {
 	it("is a real workbook, not a hand-authored one", async () => {
-		// XLSX is a ZIP; the magic bytes are the cheapest proof the file was not stubbed out.
+		// xlsx is a ZIP. the magic bytes are the cheapest proof the file was not stubbed out.
 		expect((await readLocalBuffer(WORKBOOK_PATH)).subarray(0, 2).toString("latin1")).toBe("PK")
 	})
 })

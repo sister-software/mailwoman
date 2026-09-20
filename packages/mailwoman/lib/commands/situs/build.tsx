@@ -2,32 +2,32 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman situs build` — national ADDRESS-POINT (situs) database build driver. The situs
+ *   `mailwoman situs build` — national address-point (situs) database build driver. The situs
  *   counterpart to `mailwoman situs interpolation`, but downloadless: every US address point
  *   already lives in one pinned Overture parquet, so this fans the per-state `mailwoman situs
  *   address-points` command out across every covered state.
  *
- *   PARALLELISM: states build concurrently via spliterator's `parallelMap` (the house
+ *   parallelism: states build concurrently via spliterator's `parallelMap` (the house
  *   bounded-concurrency primitive — same one `build-unified-wof` uses to fan out file reads behind
  *   a single writer). Each state is an isolated child process (its own DuckDB + SQLite heap), so N
  *   states run at once with no shared-memory risk. To avoid oversubscribing cores, each child's
  *   DuckDB scan is capped at `--threads` (default: cores / concurrency), so concurrency × threads ≈
- *   cores. The per-state steady-state bottleneck is the single-threaded SQLite insert loop, not the
- *   scan, so N concurrent inserts is the real win. Sequentialise via `--concurrency 1`.
+ *   cores. The per-state steady-state bottleneck is the single-threaded SQLite insert loop rather than the
+ *   scan, so N concurrent inserts is where the wall-clock saving comes from. Sequentialise via `--concurrency 1`.
  *
- *   Each per-state CHILD owns its own DB's atomic write; this driver only spawns children (skipping
- *   COMPLETE databases) and writes the small `ATTRIBUTION.json` manifest incrementally — so there is
+ *   Each per-state child owns its own DB's atomic write. this driver only spawns children (skipping
+ *   complete databases) and writes the small `attribution.json` manifest incrementally — so there is
  *   no national-DB temp-then-rename here, the large-artifact atomicity lives one level down in the
- *   database builder. Progress streams to stderr; the final summary lands on stdout.
+ *   database builder. Progress streams to stderr. the final summary lands on stdout.
  *
- *   LICENSING (measured 2026-06-14): US Overture addresses are NAD (68%, US public domain) +
- *   OpenAddresses (32%, government open data) with ZERO OpenStreetMap/ODbL rows. So the default is
- *   NO license filter — `--license-filter NAD` would drop a third of coverage for no benefit. The
- *   only obligation is ATTRIBUTION: the per-row `overture:<dataset>` provenance is summarized into
- *   `<out-dir>/ATTRIBUTION.json`. Pass `--license-filter <datasets>` to build a narrowed database.
+ *   licensing (measured 2026-06-14): US Overture addresses are NAD (68%, US public domain) +
+ *   OpenAddresses (32%, government open data) with zero OpenStreetMap/ODbL rows. So the default is
+ *   no license filter — `--license-filter NAD` would drop a third of coverage for no benefit. The
+ *   only obligation is attribution: the per-row `overture:<dataset>` provenance is summarized into
+ *   `<out-dir>/attribution.json`. Pass `--license-filter <datasets>` to build a narrowed database.
  *
- *   IDEMPOTENCY: a state is skipped only if its database is COMPLETE — non-empty `address_point` table
- *   AND the `idx_ap_streetkey` index present. A half-built database (data inserted, indexing/VACUUM
+ *   idempotency: a state is skipped only if its database is complete — non-empty `address_point` table
+ *   and the `idx_ap_streetkey` index present. A half-built database (data inserted, indexing/vacuum
  *   not reached — e.g. a killed run) is detected as incomplete and rebuilt. `--force` rebuilds
  *   regardless.
  */
@@ -46,15 +46,15 @@ import { join } from "path-ts"
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	positiveInteger,
-	splitUpperList,
+	splitUSStateCodes,
 	stripAnsi,
 	useCommandTask,
 } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "build",
@@ -70,19 +70,9 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	outDir?: string
-	release: string
-	states?: string
-	licenseFilter?: string
-	concurrency: number
-	threads?: number
-	force: boolean
-}
-
 /**
  * Coverage-ranked (largest first, from the 2026-05-20.0 parquet probe). NH + HI carry zero Overture address coverage in
- * this release, so they're absent — interpolation-only states. VI (territory) included for completeness; harmless if
+ * this release, so they're absent — interpolation-only states. VI (territory) included for completeness. harmless if
  * the parser's region→slug map skips it.
  */
 const STATES_BY_COVERAGE = [
@@ -154,22 +144,22 @@ interface StateManifestEntry {
 	datasets?: Record<string, number>
 }
 
-const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
+const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { scriptEntryPath } = await import("@mailwoman/core/scripting/utils")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 
 		const outDir = options.outDir ?? dataRootPath("address-points")
 
-		const states = options.states ? splitUpperList(options.states) : [...STATES_BY_COVERAGE]
+		const states = options.states ? splitUSStateCodes(options.states) : [...STATES_BY_COVERAGE]
 
 		await makeDirectories(outDir)
 
 		const concurrency = Math.max(1, options.concurrency || 4)
 		const cores = availableParallelism()
 		const threads = Math.max(1, options.threads || Math.floor(cores / concurrency))
-		// The per-state ADDRESS-POINT builder is now the sibling `situs address-points` command (the
-		// old `scripts/build-address-point-database.ts` was migrated into the CLI). Re-invoke the SAME CLI
+		// The per-state address-point builder is now the sibling `situs address-points` command (the
+		// old `scripts/build-address-point-database.ts` was migrated into the CLI). Re-invoke the same CLI
 		// entry this process was started from, so dev + published installs both resolve correctly.
 		const cliEntry = scriptEntryPath()
 
@@ -181,8 +171,8 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 		// command tree (e.g. `mailwoman --help`) doesn't pull it at module-eval.
 		const { parallelMap } = await import("spliterator")
 
-		// A database is COMPLETE iff its address_point table has rows AND the streetkey index exists — the
-		// index is the last build step, so its presence means insert + index + VACUUM all finished.
+		// A database is complete iff its address_point table has rows and the streetkey index exists — the
+		// index is the last build step, so its presence means insert + index + vacuum all finished.
 		const isComplete = async (dbPath: string): Promise<boolean> => {
 			if (!(await pathExists(dbPath))) return false
 
@@ -257,8 +247,8 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const attributionPath = join(outDir, "ATTRIBUTION.json")
 
-		// parallelMap yields results AS THEY COMPLETE (out of order), capped at `concurrency` in
-		// flight. Each result carries its own state, so out-of-order is fine for the state-keyed
+		// parallelMap yields results AS they complete (out of order), capped at `concurrency` in
+		// flight. Each result includes its own state, so out-of-order is fine for the state-keyed
 		// manifest.
 		for await (const r of parallelMap(states, buildOneState, { concurrency })) {
 			if (r.skipped) {
@@ -280,7 +270,7 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 			}
 
 			// The child's parse-relevant facts span its Ink summary (stdout) + plain progress (stderr) —
-			// combine + strip ANSI, then match WITHOUT line anchors so the summary's "✓ "/"  " render
+			// combine + strip ansi, then match without line anchors so the summary's "✓ "/"  " render
 			// prefixes don't defeat the regex.
 			const text = stripAnsi(`${r.out ?? ""}\n${r.err ?? ""}`)
 			const pts = Number(text.match(/(\d+) points →/)?.[1] ?? 0)

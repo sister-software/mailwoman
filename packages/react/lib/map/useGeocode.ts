@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `useGeocode` — the parse+resolve state machine for the geocoder map. It REUSES the pipeline's
+ *   `useGeocode` — the parse+resolve state machine for the geocoder map. It reuses the pipeline's
  *   `useParsePipeline` (text / busy / stage / result / candidate selection) and layers on the two map-only
  *   concerns the geocoder adds over the base explorer:
  *

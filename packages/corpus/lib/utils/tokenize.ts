@@ -24,7 +24,7 @@
  */
 export interface TokenSpan {
 	/**
-	 * The token text, possibly normalized (case unchanged here; tokenizers may differ).
+	 * The token text, possibly normalized (case unchanged here. tokenizers may differ).
 	 */
 	text: string
 
@@ -51,7 +51,7 @@ export interface Tokenizer {
  *
  * Tokens are maximal runs of unicode word characters (`\p{L}` letters, `\p{N}` digits, `\p{M}` marks, plus `'`, `-`,
  * `_`). Everything else — whitespace, punctuation, symbols — is treated as a separator and **not** emitted as a token.
- * The resulting spans cover the original string only on token regions; in-between regions belong to no token.
+ * The resulting spans cover the original string only on token regions. in-between regions belong to no token.
  *
  * This is intentionally lossy at the edges (alignment can still label every meaningful span). A future SentencePiece
  * tokenizer will preserve all bytes via byte-fallback.
@@ -83,9 +83,9 @@ export function whitespaceTokenizer(): Tokenizer {
 const HAN = /\p{Script=Han}/u
 
 /**
- * Whitespace tokenizer for Latin runs, ONE TOKEN PER CHARACTER for Han runs.
+ * Whitespace tokenizer for Latin runs, one token PER character for Han runs.
  *
- * The CJK sibling model is character-level (CharCNN), so a per-character token is the unit it labels; the Latin tail of
+ * The CJK sibling model is character-level (CharCNN), so a per-character token is the unit it labels. the Latin tail of
  * a mixed row (`赵光三分场二十九队, Heilongjiang, China`) keeps the word tokens the Latin aligner has always used. Spans still
  * come back as `[start, end)` offsets over the source string, so the aligner's span-overlap rule needs no change.
  */
@@ -104,7 +104,7 @@ export function cjkAwareTokenizer(): Tokenizer {
 				}
 
 				// A Han run may carry Latin letters or digits inside it (`3分场2队`); those stay glued to their neighbours
-				// only if they are Han too, so every code point of a Han-bearing token becomes its own token.
+				// only if they are Han too, so every code point of a Han-containing token becomes its own token.
 				let offset = token.start
 
 				for (const codePoint of token.text) {

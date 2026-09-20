@@ -3,7 +3,7 @@
 
 /**
  * @file Ambient declarations for the stylesheet side-effect imports the browser-mode test setup makes.
- *   Vite resolves them at runtime; TypeScript needs to be told they exist, or the setup file cannot be
+ *   Vite resolves them at runtime. TypeScript needs to be told they exist, or the setup file cannot be
  *   type-checked at all.
  */
 

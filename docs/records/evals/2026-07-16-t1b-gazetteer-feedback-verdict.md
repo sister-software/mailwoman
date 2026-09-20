@@ -22,21 +22,21 @@ Walking the shipped FST over the 63 fixtures returns **43 distinct surfaces, 37 
 emission bias** (`PLACETYPE_TO_BIO` covers country/region/locality/postalcode; `impBias = importance *
 biasScale * maxBias`).
 
-| surface                  | placetype : importance                | note                        |
-| ------------------------ | ------------------------------------- | --------------------------- |
-| `rue`                    | localadmin 0.145, neighbourhood 0.149 | the designator is a place   |
-| `boulevard`              | neighbourhood 0.167                   | so is this one              |
-| `place`                  | neighbourhood 0.169                   | and this one                |
-| `la`                     | locality **0.850**                    | a particle, inside a street |
-| `du`                     | region **0.650**                      | likewise                    |
-| `de`                     | county 0.192                          | likewise                    |
-| `londres`                | region 0.937, locality 0.936          | exonym, near-max importance |
-| `paris`                  | region 0.789                          |                             |
-| `temple`                 | locality 0.468                        |                             |
-| `saintgermain`           | locality 0.386                        |                             |
-| `rome`                   | locality 0.378                        | the `Rue de Rome` archetype |
-| `hugo`                   | locality 0.295                        | `Avenue Victor Hugo`        |
-| `12`, `2`, `14`, `21`, … | localadmin 0.05–0.15                  | bare house numbers          |
+| surface                  | placetype : importance               | note                        |
+| ------------------------ | ------------------------------------ | --------------------------- |
+| `rue`                    | localadmin 0.145, neighborhood 0.149 | the designator is a place   |
+| `boulevard`              | neighborhood 0.167                   | so is this one              |
+| `place`                  | neighborhood 0.169                   | and this one                |
+| `la`                     | locality **0.850**                   | a particle, inside a street |
+| `du`                     | region **0.650**                     | likewise                    |
+| `de`                     | county 0.192                         | likewise                    |
+| `londres`                | region 0.937, locality 0.936         | exonym, near-max importance |
+| `paris`                  | region 0.789                         |                             |
+| `temple`                 | locality 0.468                       |                             |
+| `saintgermain`           | locality 0.386                       |                             |
+| `rome`                   | locality 0.378                       | the `Rue de Rome` archetype |
+| `hugo`                   | locality 0.295                       | `Avenue Victor Hugo`        |
+| `12`, `2`, `14`, `21`, … | localadmin 0.05–0.15                 | bare house numbers          |
 
 Three findings worth naming:
 
@@ -75,18 +75,18 @@ FIXED [contextful/multi-class] "12 Rue du Chat-qui-Pêche, Paris"
     off="Rue du Chat-qui-Pêche, Paris"  on="Rue du Chat-qui-Pêche"
 ```
 
-The one break is on-thesis (the `boulevard` neighbourhood entry eats the prefix); the one fix is the
+The one break is on-thesis (the `boulevard` neighborhood entry eats the prefix); the one fix is the
 prior doing its actual job (`Paris` is a locality, so stop calling it street). Net zero on n=63 is
-consistent with noise in both directions, not with a systematic drag.
+consistent with noise in both directions rather than with a systematic drag.
 
 ## 3. What this closes and what it opens
 
 **Closes:** the feedback loop is not the cause of the bare-fragment failures. Every Paris and parity
-number in the arc was measured with this prior OFF (see below), and turning it ON does not rescue the
+number in the arc was measured with this prior off (see below), and turning it on does not rescue the
 class. `Rue Montmartre → locality` is the model's own prior, learned from a corpus where bare street
 fragments are rare and bare localities are not.
 
-**This is a positive result for the plan, not a null one.** It removes the last inference-time
+**This is a positive result for the plan rather than a null one.** It removes the last inference-time
 explanation standing between the evidence and the training-distribution hypothesis. T2 (the BAN
 bare-street extract) was already ranked highest-EV by all three reviewers; it is now the only live
 explanation with a change attached.
@@ -104,18 +104,18 @@ explanation with a change attached.
 So the standing parity floors and the whole span-head arc grade a configuration production does not
 run. On this fixture the FST half of that gap measures **+0**, which bounds the concern for Paris —
 but it is unmeasured for parity and every other locale. Tracked as its own item; the fix is a
-measurement, not a guess.
+measurement rather than a guess.
 
 Note the shape of the miss: this is the #718 channel-starvation class one layer up. Phase 1's +7.9pp
 headline was corrected for channel starvation in the _Python_ harness; the "channels fed" JS harness
 that replaced it is itself missing two priors production has. A registered baseline
 (`baselines.json`) cannot catch this — a baseline registered against the starved config is
-self-consistent. **The registry pins reproducibility, not validity.**
+self-consistent. **The registry pins reproducibility rather than validity.**
 
 ## 4. Also worth a look later
 
 `applyBias` collects `allPieceIndices` across every word group and applies the winning per-tag bias to
-**all of them** — the bias is global to the input, not positional. That may be why 37 firing surfaces
+**all of them** — the bias is global to the input rather than positional. That may be why 37 firing surfaces
 move two fixtures. Not chased here; noted because it bears on whether the FST prior is doing anything
 useful at all, which is a different question from whether it is doing harm.
 

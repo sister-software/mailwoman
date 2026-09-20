@@ -54,7 +54,7 @@ So `confidence: 0` means **either**:
 - `27` is not a postcode at all, **or**
 - `75008` absolutely is a postcode, and it exists in most countries that the posterior is uniform.
 
-Those are opposite claims. The first says "ignore this token"; the second says "this IS a postcode,
+Those are opposite claims. The first says "ignore this token"; the second says "this is a postcode,
 just don't trust the country."
 
 The type already carries the discriminator — `matchType: "exact" | "outward" | "fuzzy" | "none"`,

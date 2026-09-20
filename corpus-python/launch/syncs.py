@@ -1,7 +1,7 @@
 """Staging assets from R2 onto the training volume, container-side.
 
 Container-side is not a preference. On this volume the CLI write -> container read path is broken:
-files written by `modal volume put` are visible to `modal volume ls/get` but NOT to a mounted
+files written by `modal volume put` are visible to `modal volume ls/get` but not to a mounted
 container, and `vol.reload()` does not bridge it. Container-side writes plus `vol.commit()` do
 propagate, so every asset routes local -> R2 -> here.
 
@@ -12,14 +12,14 @@ Two entry points, and the difference is whether the transfer is NAMED:
 
 `sync` runs a row of `launch/corpora.py`, which records what that version stages and what must be
 on the volume afterwards. `sync_assets` takes the paths on the command line and records nothing.
-Reach for `sync_assets` while a corpus is still being tried; add the row when it becomes a run
+Reach for `sync_assets` while a corpus is still being tried. add the row when it becomes a run
 somebody will repeat, because a transfer nobody can enumerate is a corpus that quietly stops being
 staged. Fifty-line clones — one per version, differing only in path strings — is how this file once
 reached fifty-seven of them.
 
-An overlay corpus ships only its own new slices; its MANIFEST names the base version's slices by
+An overlay corpus ships only its own new parquet files. its MANIFEST names the base version's files by
 absolute `/data/...` path, so the base must already be on the volume. Neither entry point checks
-that — `audit_epoch_mixture` does, and it reports which slice is missing.
+that — `audit_epoch_mixture` does, and it reports which file is missing.
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ def _run_transfers(transfers: list[Transfer]) -> None:
     """Run each transfer, and refuse one that moved nothing.
 
     rclone EXITS 0 WHEN THE SOURCE PREFIX IS EMPTY. Without the file count the caller reads a clean
-    run and a training job fails much later on a missing slice, with nothing pointing back here.
+    run and a training job fails much later on a missing parquet file, with nothing pointing back here.
     """
     import subprocess
 
@@ -154,14 +154,14 @@ def sync_assets(
 ) -> None:
     """Pull named corpus versions, a tokenizer, the training code and arbitrary extra files from R2.
 
-    Layout contract, matching what `mailwoman corpus upload` writes:
+    Layout interface, matching what `mailwoman corpus upload` writes:
 
         :s3:{BUCKET}/corpus/<version>/  ->  {VOL_MOUNT}/corpus/versioned/<version>/corpus-<version>/
 
     Args:
         corpus_versions: comma-separated version names, e.g. ``v0.24.0-trailing-region-structured``.
         tokenizer: tokenizer subdirectory under ``models/tokenizer/``; empty syncs the flat directory.
-        code: sync ``corpus-python/src/`` (default true -- a run reads the volume's copy, not git).
+        code: sync ``corpus-python/src/`` (default true -- a run reads the volume's copy rather than git).
         extras: comma-separated ``<r2-path>><vol-subdir>`` pairs for gazetteer files, eval fixtures.
 
     Usage:

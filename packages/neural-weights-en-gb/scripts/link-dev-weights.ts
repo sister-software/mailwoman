@@ -7,18 +7,18 @@
  *   `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`; this file is the manifest plus the one step no manifest
  *   expresses, the card-conditional GB postcode binary.
  *
- *   A single multilingual model serves both en-us and en-gb (byte-identical artifact; en-gb carries its own retrieval
- *   data on top), so this overlay links the SAME pair the base does and holds it to en-us's `model-card.json`
+ *   A single multilingual model serves both en-us and en-gb (byte-identical artifact. en-gb carries its own retrieval
+ *   data on top), so this overlay links the same pair the base does and holds it to en-us's `model-card.json`
  *   `files_md5` — one truth for the one artifact (en-gb's own card carries no `files_md5` block).
  *
  *   The evidence lexicons (`street_type`, `locality_surface`, #1511) are linked by the generation this overlay's card
  *   names under `requires.<channel>.lexicon`: the card claims its `requires` block is a verbatim copy of the base's,
- *   and the base model is trained WITH both channels, so an overlay without them runs a GB parse with the channels
+ *   and the base model is trained with both channels, so an overlay without them runs a GB parse with the channels
  *   off on a model that expects them.
  *
  *   `pair-index-gb.bin` is derived from the HM Land Registry PPD tuples CSV + the WOF admin DB + three checked-in pairs
- *   JSONLs, through the shared `buildPairIndexOverlay`, whose freshness guard compares the format, EVERY calibrated
- *   magnitude, and EVERY source md5 (sidecar-cached — the PPD CSV is ~25.6M rows and a cold build is ~4–5 min, while
+ *   JSONLs, through the shared `buildPairIndexOverlay`, whose freshness guard compares the format, every calibrated
+ *   magnitude, and every source md5 (sidecar-cached — the PPD CSV is ~25.6M rows and a cold build is ~4–5 min, while
  *   `weights.test.ts` invokes this script on every `yarn test`). The shipped bundle's δ is 10 (#1269).
  */
 
@@ -38,14 +38,14 @@ import { resolvePath } from "path-ts"
 
 /**
  * Secondary pair sources (campaign R2/R3/R4b). Named here rather than inline at the call site because the freshness
- * guard has to md5 the SAME files the build reads — when those two lists drift apart the guard silently blesses a stale
+ * guard has to md5 the same files the build reads — when those two lists drift apart the guard silently blesses a stale
  * artifact.
  */
 const PPD_SOURCE_CSV = String(dataRootPath("ppd", "2026-07-22", "gb-tuples.csv"))
 const BOROUGH_DB = String(dataRootPath("wof", "admin-global-priority.db"))
 const LONDON_PAIRS_JSONL = String(repoRootPath("data", "gazetteer", "london-pairs-v2.jsonl"))
 /**
- * Northern Ireland neighbourhood pairs (campaign R7). A SEPARATE file rather than merged into the London one, so each
+ * Northern Ireland neighbourhood pairs (campaign R7). A separate file rather than merged into the London one, so each
  * source keeps its own provenance md5 in the header and the freshness guard can tell which of them moved.
  */
 const NI_PAIRS_JSONL = String(repoRootPath("data", "gazetteer", "ni-pairs-v1.jsonl"))
@@ -55,8 +55,8 @@ const NI_PAIRS_JSONL = String(repoRootPath("data", "gazetteer", "ni-pairs-v1.jso
  */
 const GB_REGIONS_JSONL = String(repoRootPath("data", "gazetteer", "gb-regions-v1.jsonl"))
 
-// Hierarchy campaign R2+R3: the WOF borough pairs + the checked-in ONSPD London ward pairs join the
-// build — without these flags a dev rebuild would silently DROP them. The `sources` list is what the
+// Hierarchy campaign R2+R3: the WOF borough pairs + the checked-in onspd London ward pairs join the
+// build — without these flags a dev rebuild would silently drop them. The `sources` list is what the
 // shared freshness guard md5s, in the order the build records them (CSV, borough DB, pairs JSONLs).
 const softFeed = await committedSoftFeedLinks()
 
@@ -87,35 +87,35 @@ const overlay = await materializeDevOverlay({
 
 // Build postcode-gb.bin only when the model card declares a compatible anchor channel.
 //
-// The GB anchor binary is the one artifact whose correctness depends on WHICH MODEL is loaded, so it
+// The GB anchor binary is the one artifact whose correctness depends on which model is loaded, so it
 // is built only when the card says the model can use it.
 //
 // The history in one paragraph. This script used to build the bin unconditionally. #1467 removed it,
 // because the encoder's GB anchor slot (slot 4 of `LOCALE_ORDER`, `neural/anchor-inference.ts`) had
 // taken no gradient — every recipe's `anchor_lookup_path` was `pilot-anchor-lookup.json`, 67,708 keys,
-// zero letter-bearing, US/DE/FR only. Feeding slot 4 on a model that never trained it cost 24 exact
-// postcodes on the 120-row gb-golden board (294/318 anchor-ON vs 318/318 anchor-OFF). Then a bare
+// zero letter-containing, US/DE/FR only. Feeding slot 4 on a model that never trained it cost 24 exact
+// postcodes on the 120-row gb-golden board (294/318 anchor-on vs 318/318 anchor-off). Then a bare
 // `existsSync` skip turned out to be worse than never building: a bin left by an older checkout is
 // found package-dir-relative and silently re-enables the regression with no warning, because a present
 // artifact is exactly what the loader expects.
 //
-// The check that resolves both states is the CARD's `requires.anchor.span_mode`. `shaped` is declared
-// only by a model trained against a lookup with letter-bearing keys (`pilot-anchor-lookup-v2` and
-// after), and that is precisely the model for which the bin helps. So: declared `shaped` → build it;
+// The check that resolves both states is the card's `requires.anchor.span_mode`. `shaped` is declared
+// only by a model trained against a lookup with letter-containing keys (`pilot-anchor-lookup-v2` and
+// after), and that is precisely the model for which the bin helps. So: declared `shaped` → build it.
 // anything else → remove any stale copy, loudly. No flag, no lockstep constant to forget — the same
 // card the loader reads decides.
 //
-// Receipts either way: `docs/records/evals/2026-08-05-en-gb-anchor-off.md` (the anchor-OFF mitigation)
-// and `docs/records/evals/2026-08-05-v420-base-anchor-v2-run-b.md` (the retrain that earns it back).
+// Receipts either way: `docs/records/evals/2026-08-05-en-gb-anchor-off.md` (the anchor-off mitigation)
+// and `docs/records/evals/2026-08-05-v420-base-anchor-v2-run-b.md` (the retrain that warrants it back).
 
 /**
- * Where the GB anchor binary lives when the card earns it.
+ * Where the GB anchor binary lives when the card warrants it.
  */
 const POSTCODE_BIN_DEST = resolvePath(overlay.destDir, "postcode-gb.bin")
 
 /**
  * The licence-clean GB postcode source: Ordnance Survey Code-Point Open (OGL v3.0), 1,746,976 units, every one placed.
- * The retired GeoNames-lineage `postalcode-gb.db` is NOT it. Coverage gap, measured: zero Northern Ireland (`BT`) codes
+ * The retired GeoNames-lineage `postalcode-gb.db` is not it. Coverage gap, measured: zero Northern Ireland (`BT`) codes
  * — the shaped keyer's outward fallback is what carries those rows.
  */
 const GB_POSTCODE_EXTRACT = "postalcode-gb-codepoint.db"

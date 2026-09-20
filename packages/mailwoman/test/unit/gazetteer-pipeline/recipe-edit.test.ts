@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The recipe editor, including the case it must REFUSE.
+ *   The recipe editor, including the case it must refuse.
  *
  *   The property that matters is that prose survives. `defaults.ts` is reviewed like code and its entries
  *   carry measurements — `IN` is five lines recording 189,026 sub-locality nodes at 98.6% conversion and

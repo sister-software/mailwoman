@@ -10,11 +10,11 @@
  *   bundler config.
  *
  *   Dynamic imports stay external, which is webpack's view of a `webpackIgnore` import and the view every bundler gets
- *   once the imported specifier carries a `browser` condition. A dynamic import of a builtin is tolerated ONLY when a
- *   row lists it with a reason; the list is the whole allowance, and a new one is an error until it is removed or
+ *   once the imported specifier carries a `browser` condition. A dynamic import of a builtin is tolerated only when a
+ *   row lists it with a reason. the list is the whole allowance, and a new one is an error until it is removed or
  *   listed.
  *
- *   Resolution goes to `out/`, which is what a consumer bundles, so the check refuses an uncompiled tree rather than
+ *   Resolution goes to `out/`. It is what a consumer bundles. Therefore, the check refuses an uncompiled tree rather than
  *   grading the source under a condition no consumer has.
  */
 
@@ -47,7 +47,7 @@ export interface BundleRow {
 	external?: readonly string[]
 	/**
 	 * Follow dynamic imports into the bundle instead of leaving them external. A row that asserts what a lazily imported
-	 * specifier resolves to under the row's conditions needs this; every other row grades the static graph alone.
+	 * specifier resolves to under the row's conditions needs this. every other row grades the static graph alone.
 	 */
 	followDynamicImports?: boolean
 	allowedDynamicImports?: readonly AllowedDynamicImport[]
@@ -148,7 +148,7 @@ const BUNDLE_ROWS: readonly BundleRow[] = [
 
 /**
  * The bare builtin names a dependency reaches without the `node:` prefix (graceful-fs, spliterator and unzipper do). A
- * `node:`-prefixed path is recognised by prefix; this list only has to cover the unprefixed spellings.
+ * `node:`-prefixed path is recognised by prefix. this list only has to cover the unprefixed spellings.
  */
 const BARE_BUILTINS = new Set([
 	"assert",
@@ -181,7 +181,7 @@ const CORE_FS_HOME = /packages\/core\/(?:lib|out)\/fs\//u
 /**
  * A builtin stays external so the metafile records the edge onto it with the file that made it and the import kind,
  * instead of esbuild refusing to resolve it under the browser platform. A dynamic import stays external unless the row
- * follows them, so the metafile is the STATIC graph: what a bundler compiles once each dynamic specifier resolves under
+ * follows them, so the metafile is the static graph: what a bundler compiles once each dynamic specifier resolves under
  * its own condition or is left to run time.
  */
 function edgePolicy(row: BundleRow): Plugin {
@@ -235,7 +235,7 @@ async function bundleRow(row: BundleRow, repoRoot: string): Promise<Metafile | D
 
 		return result.metafile
 	} catch (error) {
-		// A static reach past a builtin can fail to RESOLVE under the browser platform before a metafile exists; each
+		// A static reach past a builtin can fail to resolve under the browser platform before a metafile exists. each
 		// resolution error is the finding, named by the file that made the import.
 		const failure = error as BuildFailure
 

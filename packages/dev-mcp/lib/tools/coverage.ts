@@ -3,65 +3,21 @@
 
 /**
  *   The `mwdev_coverage` tool definition — the description an agent reads, the input schema, and the handler wiring.
- *   The census itself lives in `../coverage-census.ts`; this file is the CONTRACT.
+ *   The census itself lives in `../coverage-census.ts`; this file is the interface.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { censusCoverage, type CountryCoverage, type CoverageReport } from "mailwoman/coverage"
-import { Globerator } from "spliterator/node/fs"
+import { readScopeConfig } from "@mailwoman/core/scope-config"
+import {
+	censusCoverage,
+	type CountryCoverage,
+	type CoverageReport,
+	newestManifest,
+	resolveTrainingConfig,
+} from "mailwoman/coverage"
 import { z } from "zod"
 
 import type { DevTool, DevToolDeps } from "#tool-kit"
-
-/**
- * The training config whose `country_weights` decides admission, chosen by MODIFICATION TIME.
- *
- * Not by filename. The version scheme does not sort lexically and does not sort numerically either — `v8-leg2-sp.yaml`
- * wins both against `v4.8.0-trailing-region-placement-8k.yaml`, because `v8` was a corpus-line experiment and `v4.x` is
- * the current model line. Measured: the filename sort picked `v8-leg2-sp` and reported every country as DROPPED, which
- * reads as a catastrophic finding rather than as the wrong file.
- *
- * Mtime is a proxy and can be wrong after a checkout, so the report always names the config it used. Pass one
- * explicitly when the answer matters.
- */
-async function newestConfig(repoRoot: string): Promise<string> {
-	const dir = `${repoRoot}/corpus-python/src/mailwoman_train/configs`
-
-	if (!(await pathExists(dir))) return ""
-
-	const named = (
-		await Globerator.files("yaml", { cwd: dir, absolute: false })
-			.filter((name) => !name.includes("smoke"))
-			.parallelMap(async (name) => ({ name, at: (await statPath(`${dir}/${name}`)).mtimeMs }))
-			.toArray()
-	).toSorted((a, b) => b.at - a.at)
-
-	return named.length ? `${dir}/${named[0]!.name}` : ""
-}
-
-/**
- * The newest corpus manifest, by MODIFICATION TIME.
- *
- * Not by directory name. Corpus versions are `v0.9.9-si-bare-village`, `v0.26.0-trailing-region-leftcontext`,
- * `v8-jp-full-…` — a set that sorts neither lexically (`v0.9.9` beats `v0.26.0`, because `9` > `2`) nor numerically
- * (`v8` beats both). Measured: the name sort picked `v0.9.9` and reported the coverage of a corpus nine versions old,
- * with nothing in the output to say it had. The report always names the manifest it used.
- */
-async function newestManifest(): Promise<string> {
-	const root = String(dataRootPath("corpus", "versioned"))
-
-	if (!(await pathExists(root))) return ""
-
-	const found: Array<{ path: string; at: number }> = []
-
-	for await (const candidate of Globerator.from("*/*/MANIFEST.json", { cwd: root })) {
-		found.push({ path: candidate, at: (await statPath(candidate)).mtimeMs })
-	}
-
-	return found.toSorted((a, b) => b.at - a.at)[0]?.path ?? ""
-}
 
 /**
  * One country as a line a reader can act on. Parse and geocode stay in separate columns because they are separate
@@ -120,11 +76,17 @@ export const coverageTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 			.string()
 			.optional()
 			.describe(
-				"Training config path whose `country_weights` decides admission. Defaults to the newest non-smoke one."
+				"Training config path whose `country_weights` decides admission. Defaults to the config `scope.config.json` " +
+					"records for the Latin family's shipped graph, which admits 25 countries. The v5.9.0 in-flight config " +
+					"admits 135, so name it when the question is what a next run would train."
 			),
 	}),
 	handler: async (args) => {
-		const configPath = (args["config"] as string | undefined) ?? (await newestConfig(String(repoRootPath())))
+		const config = resolveTrainingConfig(await readScopeConfig(), {
+			requested: args["config"] as string | undefined,
+		})
+
+		const configPath = config.path
 		const manifestPath = await newestManifest()
 
 		if (!configPath || !manifestPath) {
@@ -152,7 +114,7 @@ export const coverageTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 /**
  * Project a {@linkcode CoverageReport} into the tool's response shape.
  *
- * Pure and exported so the projection can be TESTED. It builds its result field by field, which means a field the
+ * Pure and exported so the projection can be tested. It builds its result field by field, which means a field the
  * report grows and this function does not name is dropped in silence — and the consumer reads that as the field not
  * existing. The corpus-mismatch guard shipped inert for exactly that reason: the census computed it, fifteen tests
  * passed, and the first live call showed nothing, because this function did not carry it.
@@ -176,6 +138,9 @@ export function projectCoverage(report: CoverageReport, wantedCountries?: string
 		corpus_rows_total: report.corpusRowsTotal,
 		corpus_census_taken_at: report.corpusCensusTakenAt ?? "just now (recounted)",
 		config: report.configPath,
+		// This tool takes no manifest argument, so the corpus was chosen rather than named. Saying so lets a reader tell
+		// a census of the corpus they meant from a census of whichever one was written to most recently (#2349).
+		manifest_chosen_by: "newest modification time under the data root",
 		n_trained: trained.length,
 		n_trained_with_street_data: withStreet.length,
 		n_geocodable: report.countries.filter((c) => c.gazetteerPlaces > 0).length,
@@ -184,7 +149,7 @@ export function projectCoverage(report: CoverageReport, wantedCountries?: string
 		...(missing.length ? { requested_but_absent_everywhere: missing } : {}),
 		mismatches: report.mismatches,
 		summary:
-			// A mismatch LEADS. A caller reads the first sentence, and every count after it is about a corpus the run
+			// A mismatch leads. A caller reads the first sentence, and every count after it is about a corpus the run
 			// does not read.
 			(report.corpusMismatch ? `CORPUS MISMATCH — ${report.corpusMismatch} ` : "") +
 			`${trained.length} countries train (${withStreet.length} with street-level rows); ` +

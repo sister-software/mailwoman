@@ -2,6 +2,8 @@
 
     modal run -m launch.train_remote::audit_epoch_mixture --config-name <recipe>.yaml
     modal run -m launch.train_remote::census_opening_token --config-name <recipe>.yaml
+    modal run -m launch.train_remote::census_region_code_token --config-name <recipe>.yaml
+    modal run -m launch.train_remote::census_comma_segment_number --config-name <recipe>.yaml
     modal run -m launch.train_remote::audit_suffix_feed --config-name <recipe>.yaml
 
 Each is a thin wrapper: the audit itself lives in `mailwoman_train.audits`, where it is unit-tested
@@ -107,6 +109,69 @@ def census_opening_token(config_name: str = "v5.6.0-bare-postcode-60k.yaml", dra
     timeout=7200,
     memory=16384,
 )
+def census_region_code_token(config_name: str = "v5.6.0-bare-postcode-60k.yaml", draws: int = 0) -> None:
+    """Count what a two-letter uppercase token teaches: a country, or a region.
+
+    Settles which reading of a contested code the mixture attests more — `NL` is a Canadian province
+    and the Netherlands, `PE` a Canadian province and Peru — so an exposure meant to outweigh the country
+    attestations has a count to be set against. No code list is typed: every two-letter uppercase
+    token is counted, and the contested set falls out of the data.
+
+    The emitted pass matters more than usual here, because `augment_region_prob` writes region
+    surfaces onto rows that did not carry one.
+    """
+    import sys
+    from pathlib import Path
+
+    vol.reload()
+    sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
+
+    config_path = _config_path(config_name)
+
+    from mailwoman_train.audits.region_code_token import run
+
+    json_path = Path(f"{AUDITS}/region-code-token-{config_path.stem}.json")
+    run(config_path, json_path=json_path, draws=draws or None)
+    vol.commit()
+    print(f"\nCensus committed to volume: {json_path}")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    timeout=7200,
+    memory=16384,
+)
+def census_comma_segment_number(config_name: str = "v5.6.0-bare-postcode-60k.yaml", draws: int = 0) -> None:
+    """Count what a bare number standing alone between commas teaches.
+
+    `301 College Ave, 101, Athens, GA 30601` is the surface #2298 proposes to teach as a unit, and it
+    carries no token that decides the reading — the same surface is already attested as a house
+    number and as a postcode. Leading and later positions are counted apart, because only the later
+    one is in competition with the proposed unit.
+    """
+    import sys
+    from pathlib import Path
+
+    vol.reload()
+    sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
+
+    config_path = _config_path(config_name)
+
+    from mailwoman_train.audits.comma_segment_number import run
+
+    json_path = Path(f"{AUDITS}/comma-segment-number-{config_path.stem}.json")
+    run(config_path, json_path=json_path, draws=draws or None)
+    vol.commit()
+    print(f"\nCensus committed to volume: {json_path}")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    timeout=7200,
+    memory=16384,
+)
 def audit_suffix_feed(
     config_name: str = "v4.3.3-suffix-boundary-base-60k.yaml",
     relabel_lexicon: str = "/data/gazetteer/affix-relabel-lexicon-v2.json",
@@ -138,6 +203,47 @@ def audit_suffix_feed(
         rows=rows,
         seed=seed,
         json_path=json_path,
+    )
+    vol.commit()
+    print(f"\nAudit committed to volume: {json_path}")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    timeout=3600,
+    memory=16384,
+)
+def audit_validation_coverage(
+    config_name: str = "v5.9.0-locality-shape-60k.yaml",
+    countries: str = "US,FR,DE,GB",
+) -> None:
+    """Which countries the validation and test splits hold rows for, and how many carry a street.
+
+    The two splits are five parquet files holding roughly 1.9 million rows each, so this reads the
+    whole population rather than sampling it the way the rest of this module has to. The nearest
+    measured figure is 12 s and 9 s for a scan of those same files filtered to one country, which
+    is a different operation: that one skipped row groups by their `country` statistics and this one
+    reads every row. Treat that as a lower bound until this function reports its own duration.
+
+    The reading it exists to surface: GB held 0 rows in both splits of `v0.32.0-locality-shape`
+    while US held 1,839,635 in each, and no number a run prints today says so (#2353).
+    """
+    import sys
+    from pathlib import Path
+
+    vol.reload()
+    sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
+
+    config_path = _config_path(config_name)
+
+    from mailwoman_train.audits.validation_coverage import run
+
+    json_path = Path(f"{AUDITS}/validation-coverage-{config_path.stem}.json")
+    run(
+        config_path,
+        json_path=json_path,
+        countries=tuple(code.strip().upper() for code in countries.split(",") if code.strip()),
     )
     vol.commit()
     print(f"\nAudit committed to volume: {json_path}")

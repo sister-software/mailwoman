@@ -11,7 +11,7 @@
  *
  *   Concurrency is fixed at 1 and says so. `session.run()` in `onnxruntime-node` blocks the thread it is on, and
  *   `geocode-stream.ts` records the measurement that settles the rest: on a shared multi-GB WOF SQLite, throughput
- *   peaked at 2 workers (~1.4×) and DEGRADED beyond, because memory bandwidth and the shared database are the ceiling.
+ *   peaked at 2 workers (~1.4×) and degraded beyond, because memory bandwidth and the shared database are the ceiling.
  *   A single-threaded number is the honest one to quote.
  */
 
@@ -20,7 +20,7 @@ import { percentile } from "@mailwoman/core/stats"
 export interface LatencyReading {
 	n: number
 	/**
-	 * Nearest-rank percentiles. `percentile` takes `p` in **[0, 100]**, not a fraction — AGENTS.md flags the unit because
+	 * Nearest-rank percentiles. `percentile` takes `p` in **[0, 100]**, not a fraction — agents.md flags the unit because
 	 * local copies elsewhere took a fraction, and a careless swap silently changes the number by orders of magnitude.
 	 */
 	p50_ms: number | null
@@ -29,7 +29,7 @@ export interface LatencyReading {
 	max_ms: number | null
 	mean_ms: number | null
 	/**
-	 * Derived from the MEAN rather than from the wall clock, so a run whose samples were interleaved with anything else
+	 * Derived from the mean rather than from the wall clock, so a run whose samples were interleaved with anything else
 	 * reports the per-call rate rather than a figure the surrounding work inflated.
 	 */
 	throughput_per_s: number | null
@@ -68,7 +68,7 @@ export interface BenchReading {
 /**
  * Why every benchmark here is single-threaded, carried on the result rather than left to a reader to know.
  *
- * Two measurements, not a preference: `session.run()` in `onnxruntime-node` blocks its calling thread, and
+ * Two measurements rather than a preference: `session.run()` in `onnxruntime-node` blocks its calling thread, and
  * `geocode-stream.ts` recorded throughput on a shared multi-GB WOF SQLite peaking at 2 workers (~1.4x) and degrading
  * beyond it.
  */

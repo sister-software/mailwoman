@@ -4,7 +4,7 @@
 /**
  *   The body's app: the host check first, then the route. A production host serving the other body's build renders
  *   the error rather than the other world, so a misconfigured Workers Builds project is visible on its first load.
- *   The selection IS the route: a click pushes `/feature/<id>`, a deep link restores the feature from the search
+ *   The selection is the route: a click pushes `/feature/<id>`, a deep link restores the feature from the search
  *   artifact, and the browser's back button is the close button.
  */
 
@@ -74,11 +74,11 @@ export function App() {
 	const config = BODY_CONFIGS[body]
 
 	const [route, setRoute] = useState<PlanetaryRoute | null>(() => routeForPath(location.pathname))
-	// The feature most recently picked from a click or a search hit. A click carries the archive's whole record,
-	// which the artifact does not, so it is kept beside the route rather than re-read from the artifact.
+	// The feature most recently picked from a click or a search hit. A click carries the archive's whole record.
+	// The artifact lacks that record, so it is kept beside the route rather than re-read from the artifact.
 	const [picked, setPicked] = useState<SelectedFeature | null>(null)
 	const search = useSearchIndex(config.artifacts.searchIndexURL)
-	// The globe's handle, published by `<PlanetaryMap>` once it exists, so the compass can read the bearing.
+	// The globe's handle, published by `<PlanetaryMap>` once it exists, so the compass can read the direction.
 	const [map, setMap] = useState<MapInstance | null>(null)
 	const [aboutOpen, setAboutOpen] = useState(false)
 
@@ -109,7 +109,7 @@ export function App() {
 
 	const close = useCallback(() => navigate({ kind: "map" }), [navigate])
 
-	// A chip carries a feature NAME, which is what the artifact indexes; the first hit for an exact name is that
+	// A chip carries a feature name, which is what the artifact indexes. the first hit for an exact name is that
 	// feature. A name the artifact does not carry selects nothing rather than framing the closest other feature.
 	const pickByName = useCallback(
 		(name: string) => {

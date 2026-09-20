@@ -2,29 +2,31 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build the national FR ROOFTOP address-point extract from the BAN `adresses-<dept>.csv` dumps
- *   (adresse.data.gouv.fr), on the SHARED situs schema (`@mailwoman/resolver-wof-sqlite/address-point-schema`)
+ *   Build the national FR rooftop address-point extract from the BAN `adresses-<dept>.csv` dumps
+ *   (adresse.data.gouv.fr), on the shared situs schema (`@mailwoman/resolver-wof-sqlite/address-point-schema`)
  *   so the existing `AddressPointSqliteLookup` reads it with zero changes (#1012). BAN is a structured
  *   government register — every row carries `numero`/`nom_voie`/`code_postal`/`nom_commune`/`lon`/`lat`,
  *   so there is no OSM-style association gap: we write the exact source coordinate for every valid row.
  *
  *   The `rep` (repetition: bis/ter/…) is folded into the house-number key (`"8 bis"`), so a parsed
- *   `"8 bis Rue X"` matches; plain-number rows are keyed on the bare number, unchanged. Keying uses THE
+ *   `"8 bis Rue X"` matches. plain-number rows are keyed on the bare number, unchanged. Keying uses the
  *   shared FR normalizer (`normalizeStreetForKeyLocale(street, "fr")`) — the identical function the
  *   lookup tier applies at query time, so build-side and probe-side can't drift.
  *
- *   Build discipline (house rules): stream → positional prepared INSERT (batched) → indexes → ANALYZE →
- *   atomic swap into place → SEAL 0444 → record md5 + provenance in `ban/ATTRIBUTION.json`. The output
- *   is a NEW, purely-additive artifact (`ban/address-points-fr.db`); it never touches the OSM extract.
+ *   Build discipline (house rules): stream → positional prepared insert (batched) → indexes → analyze →
+ *   atomic swap into place → seal 0444 → record md5 + provenance in `ban/attribution.json`. The output
+ *   is a new, purely-additive artifact (`ban/address-points-fr.db`); it never touches the OSM extract.
  *
- *   BAN is published under the Licence Ouverte / Etalab 2.0 (attribution, NO share-alike), so the built
+ *   BAN is published under the Licence Ouverte / Etalab 2.0 (attribution, no share-alike), so the built
  *   extract ships under the same terms as the permissive core — no ODbL counsel sign-off. `source = "ban:fr"`.
  *
  *   Usage:
- *     node ban/out/scripts/build-address-point-extract.js \
+ *     node packages/ban/lib/scripts/build/address-point-database.ts \
  *       --csv-dir $MAILWOMAN_DATA_ROOT/corpus/sources/ban --release 2026-05-18
  *     # validate on a few départements first:
- *     node ban/out/scripts/build-address-point-extract.js --depts 48,2A,05 --out /tmp/ban-sample.db
+ *     node packages/ban/lib/scripts/build/address-point-database.ts --depts 48,2A,05 --out /tmp/ban-sample.db
+ *     # from an installed package, through the `./scripts/*` export:
+ *     node node_modules/@mailwoman/ban/out/scripts/build/address-point-database.js --help
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -32,7 +34,7 @@ import { pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { prettyJSON } from "@mailwoman/core/json"
-import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { extractDelimited, parseArguments } from "@mailwoman/core/scripting/arguments"
 import {
 	ADDRESS_POINT_COLUMNS,
 	type AddressPointDatabase,
@@ -82,12 +84,7 @@ async function parse(): Promise<BuildArgs> {
 	const release = values.release ?? "2026-05-18"
 	const output = resolvePath(values.out ?? dataRootPath("ban", `address-points-${country}.db`))
 
-	const depts = values.depts
-		? values.depts
-				.split(",")
-				.map((d) => d.trim())
-				.filter((d) => d.length > 0)
-		: null
+	const depts = values.depts ? extractDelimited(values.depts) : null
 
 	return { country, csvDir, release, output, depts }
 }
@@ -183,7 +180,7 @@ async function main(): Promise<void> {
 					null,
 					rec.postcode,
 					// Arrondissement communes fold to the base city ("paris 13e arrondissement" → "paris") —
-					// the SAME both-sides discipline the #1042 street-centroid key uses, so a query's
+					// the same both-sides discipline the #1042 street-centroid key uses, so a query's
 					// "Paris" hits directly (fr-chevaleret-bare). No-op for every other commune.
 					rec.city ? stripArrondissement(normalizeLocalityForKey(rec.city)) : null,
 					rec.street,
@@ -224,7 +221,7 @@ async function main(): Promise<void> {
 	const md5 = await md5File(args.output)
 	const bytes = (await statPath(args.output)).size
 
-	// Provenance manifest — additive, written at creation (house discipline). Only for a FULL national build
+	// Provenance manifest — additive, written at creation (house discipline). Only for a full national build
 	// (the fast --depts validation builds are transient and don't rewrite the record).
 	if (!args.depts) {
 		const attributionPath = dataRootPath("ban", "ATTRIBUTION.json")

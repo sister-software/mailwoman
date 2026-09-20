@@ -2,25 +2,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The refinement-monotonicity law: a query that says MORE must not make a candidate the coarser query could
+ *   The refinement-monotonicity law: a query that says more must not make a candidate the coarser query could
  *   reach unreachable, unless the added information contradicts it. Pure — no model, no I/O beyond reading the
  *   committed suite. The reading itself lives in `candidate-admissibility.ts`; this module owns the row
  *   vocabulary and the refusal.
  *
- *   WHY IT IS A PRODUCT COMMITMENT. Refinement is what a person does when the answer was wrong: they type
+ *   why IT is A product commitment. Refinement is what a person does when the answer was wrong: they type
  *   `Springfield`, get Missouri, and add `IL`. If adding the state can push the Illinois Springfield out of
  *   reach, the one repair a user knows how to make is the one that cannot be relied on. Every other law in
- *   this directory states that a rewrite of the SAME information changes nothing; this one is the only law
- *   about information being ADDED and the axis those four cannot see.
+ *   this directory states that a rewrite of the same information changes nothing. this one is the only law
+ *   about information being added and the axis those four cannot see.
  *
- *   THE BASE IS DERIVED, NOT AUTHORED — AND THE DERIVATION RUNS BACKWARD. The other four laws take a
- *   committed board row as the `base` and derive the `variant` from it. Here the committed row is the FULLEST
+ *   the base is derived rather than authored — and the derivation runs backward. The other four laws take a
+ *   committed board row as the `base` and derive the `variant` from it. Here the committed row is the fullest
  *   query, so it is the `variant`, and each `base` is that row's own text with one named piece removed. A
  *   hand-typed base would let a row quietly become an address nobody geocodes, and the law would then measure
  *   a query the corpus never attested. {@linkcode REFINEMENT_DERIVATION_BY_STEP} is the source every base is
  *   re-derived from, and {@linkcode auditRefinementSuite} re-derives it.
  *
- *   A CHAIN IS A SEQUENCE OF PAIRS. `Springfield` → `Springfield, IL` → `Springfield, IL, USA` is two rows
+ *   A chain is A sequence OF pairs. `Springfield` → `Springfield, IL` → `Springfield, IL, USA` is two rows
  *   sharing one `rowRef`, each stating one link. The audit checks the links join: within a `rowRef` group,
  *   every fixture but one has its `variant` appear as another fixture's `base`, and that one is the chain's
  *   TIP — the query the committed row actually holds. Nothing here can check the tip against the corpus (this
@@ -45,7 +45,7 @@ export const REFINEMENT_MONOTONICITY_LAW = "refinement-monotonicity"
 /**
  * The closed set of named coarsenings a row may state, and the only three a committed row may name.
  *
- * Each REMOVES information, so the surviving text is a query the fuller one strictly contains. That direction is what
+ * Each removes information, so the surviving text is a query the fuller one strictly contains. That direction is what
  * makes the pair a refinement at all: the variant says everything the base says and one thing more.
  *
  * - `drop-leading-segment` — remove the first comma-delimited part. Peels a venue or a street line off the front of a
@@ -67,11 +67,11 @@ function segmentsOf(text: string): string[] {
 	return text
 		.split(",")
 		.map((part) => part.trim())
-		.filter((part) => part.length > 0)
+		.filter((part) => part.length)
 }
 
 /**
- * Each step's derivation: given the FULLER query, return the coarser one, or `null` when the step has nothing to
+ * Each step's derivation: given the fuller query, return the coarser one, or `null` when the step has nothing to
  * remove.
  *
  * `null` rather than the input unchanged, because a step that removed nothing has not stated the law — the pair would
@@ -103,7 +103,7 @@ export const REFINEMENT_DERIVATION_BY_STEP: Record<RefinementStep, (text: string
  * Derived from the pair rather than stored on the fixture, on the canonical-form law's own reasoning: a stored step
  * name is a second copy of something the two strings already say, and the copy is what goes stale.
  *
- * The steps are tried in {@linkcode REFINEMENT_STEPS} order and the FIRST match wins. Two steps can agree on a pair — a
+ * The steps are tried in {@linkcode REFINEMENT_STEPS} order and the first match wins. Two steps can agree on a pair — a
  * two-token single-segment query is reachable by both a segment step and the numeric one — and the order determines the
  * result rather than leaving the name to whichever branch ran last.
  */
@@ -203,7 +203,7 @@ export function refinementChains(fixtures: readonly ConformanceFixture[]): Refin
 /**
  * How much of the population this law states a link over.
  *
- * Counted in COMMITTED ROWS, like the canonical-form law's own coverage: the denominator is rows a step can be stated
+ * Counted in committed rows, like the canonical-form law's own coverage: the denominator is rows a step can be stated
  * over at all, and a row carrying a three-link chain would otherwise read as three rows of coverage.
  */
 export interface RefinementCoverage {
@@ -224,9 +224,9 @@ export interface RefinementCoverage {
 	 */
 	links: number
 	/**
-	 * Eligible rows by the step that can act on them. A row several steps reach is counted under each, so these do NOT
-	 * sum to {@linkcode eligible} — the question the breakdown answers is which arms the population can state, not how the
-	 * rows partition.
+	 * Eligible rows by the step that can act on them. A row several steps reach is counted under each, so these do not
+	 * sum to {@linkcode eligible} — the question the breakdown answers is which arms the population can state rather than
+	 * how the rows partition.
 	 */
 	eligibleByStep: Record<RefinementStep, number>
 }
@@ -289,7 +289,7 @@ export function describeRefinementCoverage(
  * Returns one message per problem, each naming the fixture. Empty means the suite states this law and only this law.
  *
  * The `caseCountry` requirement is the canonical-form law's, for the same reason: a row graded with no country routes
- * through the BASE en-US weights package rather than its own overlay, so a violation would be reported for an
+ * through the base en-US weights package rather than its own overlay, so a violation would be reported for an
  * instrument that was never pointed at the row's locale.
  */
 export function auditRefinementSuite(fixtures: readonly ConformanceFixture[]): string[] {

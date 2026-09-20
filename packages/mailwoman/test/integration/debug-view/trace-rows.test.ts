@@ -21,6 +21,7 @@ const TEXT = "3215 SE Clinton St"
 function queryShapeOf(knownFormats: GeocodeTrace["queryShape"]["knownFormats"] = []): GeocodeTrace["queryShape"] {
 	return {
 		characterClass: "alphanumeric",
+		scripts: [],
 		tokenClasses: [],
 		segments: [],
 		knownFormats,

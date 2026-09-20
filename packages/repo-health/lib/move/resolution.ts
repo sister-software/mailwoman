@@ -8,13 +8,13 @@
  *   Two behaviours of `ts.resolveModuleName` shape this file. Every workspace's subpath maps put `types` first, so a
  *   specifier resolves to `packages/corpus/out/recipes/nl-postcode.d.ts` in a built checkout and to
  *   `packages/corpus/lib/recipes/nl-postcode.ts` in a clean one — one specifier, two answers, decided by whether
- *   anyone had run `tsc`. Worse mid-move: `out/` still holds declarations emitted from the OLD paths, so the resolver
+ *   anyone had run `tsc`. Worse mid-move: `out/` still holds declarations emitted from the old paths, so the resolver
  *   reading the tree as it stands and the resolver reading it as it will be answer different files for the same
  *   import, and every such disagreement reads as a specifier nobody can repoint. The host therefore reports every
  *   `<package>/out/**` path as absent, which is not a workaround but the operation's subject: a module move is a
  *   source-tree change, and build output is not evidence about it.
  *
- *   The second behaviour is that resolution reads the filesystem, so proving a replacement BEFORE anything moves
+ *   The second behaviour is that resolution reads the filesystem, so proving a replacement before anything moves
  *   needs a host that reports the destination as present and the origin as gone. That is what
  *   {@linkcode createMoveResolver} builds from the moves.
  */
@@ -78,7 +78,7 @@ export function createMoveResolver(
 	 *
 	 * A workspace is reached as `node_modules/@mailwoman/x/…`, which is a different string for the same file — and for a
 	 * file the plan has not written yet, `realpath` cannot answer at all, because nothing is there to resolve. So the
-	 * walk trims trailing segments until it reaches something that exists, resolves THAT, and puts the trimmed segments
+	 * walk trims trailing segments until it reaches something that exists, resolves that, and puts the trimmed segments
 	 * back. Every overlay entry is keyed by a real path, and this is what lets a probe find one.
 	 */
 	const canonical = (path: string): string => {

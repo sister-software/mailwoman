@@ -5,12 +5,12 @@
  *   `usgov-nad`: US DOT National Address Database — ~97M structured address-point records.
  *
  *   The single largest US address source available — federal aggregation of state + local 911-grade
- *   address points (every addressable location). Compared to TIGER ADDRFEAT (~20M segment-level, no
+ *   address points (every addressable location). Compared to tiger addrfeat (~20M segment-level, no
  *   city/locality) and NPPES (~7M provider-centric venues), NAD covers the entire residential +
  *   commercial address space with full structured components.
  *
- *   The adapter consumes NDJSON slices produced by `fetch-nad.ts`'s featureserver mode (operator
- *   pre-downloads via `mailwoman corpus fetch nad`). Each slice is per-OID-range
+ *   The adapter consumes ndjson files produced by `fetch-nad.ts`'s featureserver mode (operator
+ *   pre-downloads via `mailwoman corpus fetch nad`). Each file is per-OID-range
  *   `oids_<start>-<end>.ndjson` with a sibling `.manifest.json`. Adapter iterates every `.ndjson`
  *   in the input directory, skipping the `quarantined-bash-bug/` subdir (legacy of the bash-
  *   fetcher's silent-page-failure bug).
@@ -23,7 +23,7 @@
  *       - St_PosDir + St_PosMod composition
  *   - Locality: `Post_City` > `Inc_Muni` > `Census_Plc` > `Uninc_Comm` (first non-empty)
  *   - Region: `State` (2-char USPS code, including territories: PR, GU, VI, AS, MP)
- *   - Postcode: `Zip_Code` + `Plus_4` (joined as `XXXXX-NNNN` when both present)
+ *   - Postcode: `Zip_Code` + `Plus_4` (joined as `xxxxx-nnnn` when both present)
  *   - Venue: `LandmkName` (typically a park, school, hospital, named facility — when present)
  *
  *   License: stamped `"Public Domain"` per 17 U.S.C. § 105 (US federal works).
@@ -36,7 +36,7 @@ import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 
 /**
  * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
@@ -67,7 +67,7 @@ interface NADRecord {
 	St_PosDir?: string | null
 	St_PosMod?: string | null
 	StNam_Full?: string | null
-	// Sub-address (carried as part of street for now; Phase 1 has no unit/floor labels)
+	// Sub-address (carried as part of street for now. Phase 1 has no unit/floor labels)
 	Building?: string | null
 	Floor?: string | null
 	Unit?: string | null
@@ -225,6 +225,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 	return {
 		id: USGOV_NAD_ADAPTER_ID,
 		defaultLicense: USGOV_NAD_DEFAULT_LICENSE,
+		addressRole: AddressRole.Premise,
 		description:
 			"US DOT National Address Database — ~97M structured US address points (911-grade). Single largest US source.",
 
@@ -233,19 +234,23 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 				throw new Error(`usgov-nad adapter: only US supported, got country=${opts.country}`)
 			}
 
-			// inputPath is a directory of NDJSON slices (per fetch-nad.ts featureserver output).
+			// inputPath is a directory of ndjson files (per fetch-nad.ts featureserver output).
 			// Single-file inputs (e.g. a bulk-extracted CSV) are not currently supported — the
-			// featureserver slice pattern is the primary distribution.
-			const slices = await Globerator.files("ndjson", { cwd: opts.inputPath, absolute: false }).toSorted()
+			// featureserver per-OID-range file pattern is the primary distribution.
+			const files = await Globerator.files("ndjson", {
+				cwd: opts.inputPath,
+				absolute: false,
+				recursive: false,
+			}).toSorted()
 
 			let emitted = 0
-			outer: for (const slice of slices) {
+			outer: for (const file of files) {
 				if (opts.signal?.aborted) break
-				// TextSpliterator streams string lines; the per-line tryParsingJSON below keeps the reader
+				// TextSpliterator streams string lines. the per-line tryParsingJSON below keeps the reader
 				// tolerant of malformed rows (skip silently), so TextSpliterator + a non-throwing parse —
 				// not JSONSpliterator, which would throw. The path string lets the lib own + dispose each
-				// slice's file handle, including on the `break outer` early exit.
-				const lines = TextSpliterator.fromAsync(join(opts.inputPath, slice))
+				// file's handle, including on the `break outer` early exit.
+				const lines = TextSpliterator.fromAsync(join(opts.inputPath, file))
 
 				for await (const line of lines) {
 					if (opts.signal?.aborted) break outer
@@ -297,7 +302,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 
 					const sourceID = record.UUID
 						? `${USGOV_NAD_ADAPTER_ID}-${record.UUID}`
-						: `${USGOV_NAD_ADAPTER_ID}-${record.OBJECTID ?? `${slice}:${emitted}`}`
+						: `${USGOV_NAD_ADAPTER_ID}-${record.OBJECTID ?? `${file}:${emitted}`}`
 
 					yield {
 						raw,

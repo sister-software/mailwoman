@@ -3,7 +3,7 @@
 
 /**
  *   The health route: the report's five words, the no-store header, and the email word turning on a failure that has
- *   outlived the hour, not on a fresh one.
+ *   outlived the hour rather than on a fresh one.
  */
 
 import { createLicenseWorkerApp } from "@mailwoman/license-worker/app"
@@ -83,6 +83,6 @@ test("the email word turns failing on a failed email older than an hour, and sta
 
 	expect(await (await app().request("/health")).json()).toMatchObject({ email: "failing" })
 
-	// The same ledger read two hours later says the fresh one has aged into the alert too; one is enough either way.
+	// The same ledger read two hours later says the fresh one has aged into the alert too. one is enough either way.
 	expect(await (await app(() => NOW + 2 * HOUR).request("/health")).json()).toMatchObject({ email: "failing" })
 })

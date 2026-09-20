@@ -3,9 +3,9 @@
 
 /**
  *   Gauntlet regression runner — the conditional, curated layer (the executable bug log). Loads `regression.db`,
- *   runs every `status=pass` case through the FULL pipeline, and asserts the ASSEMBLED output: coordinate
+ *   runs every `status=pass` case through the full pipeline, and asserts the assembled output: coordinate
  *   within tolerance, resolution tier, resolved place identity, and admin components (case-insensitive). A
- *   fixed bug must STAY fixed — any drift fails the run. This corpus is DELIBERATELY SMALL (curated-set
+ *   fixed bug must stay fixed — any drift fails the run. This corpus is deliberately small (curated-set
  *   capture is the Pelias trap); the metamorphic + held-out layers carry breadth.
  *
  *   The grading itself lives in `check-case.ts` (pure, unit-tested); the freshness refusal that runs before
@@ -31,7 +31,7 @@ import type { GauntletDatabase } from "#eval-harness/gauntlet/schema"
 /**
  * Candidate-model selection shared by the regression + metamorphic layers.
  *
- * `tokenizer`/`card`: a tokenizer-SPLICE candidate (#444/#884/#912) needs its new vocab paired with the model, or the
+ * `tokenizer`/`card`: a tokenizer-splice candidate (#444/#884/#912) needs its new vocab paired with the model, or the
  * new embedding rows stay dormant (shipped tokenizer emits no ids for them) and the splice is invisible to the layer.
  * Model-only bumps omit them.
  */
@@ -40,6 +40,14 @@ export interface GauntletLayerOptions {
 	 * Candidate ONNX. Omit to self-check the shipped default.
 	 */
 	model?: string
+	/**
+	 * Override the card's near-postcode gazetteer choreography.
+	 *
+	 * A declared ablation. The choreography pairs with the train-time half, so a board run under `false` measures what
+	 * the channel is worth on every tag at once — which is the only way to price the locality it recovers against the
+	 * postcode it was added to guard.
+	 */
+	suppressGazetteerNearPostcode?: boolean
 	/**
 	 * Candidate tokenizer (tokenizer-splice candidates only).
 	 */
@@ -55,7 +63,7 @@ export interface GauntletLayerOptions {
 	 */
 	weightsCacheRoot?: string
 	/**
-	 * RESOLVER-side pin pins (#42's `postcodeCountryCoherence` today) — the resolver counterpart to the model swaps
+	 * Resolver-side pin pins (#42's `postcodeCountryCoherence` today) — the resolver counterpart to the model swaps
 	 * above, so a resolver pin can be graded by the standard eval instead of by a bespoke probe. Omitted → production
 	 * defaults.
 	 */
@@ -69,7 +77,12 @@ export interface GauntletLayerOptions {
  * of the ladder, which is exactly the shape that drifts.
  */
 export function layerDepsOptions(options: GauntletLayerOptions): GauntletDepsOptions {
-	const pins = options.pins ? { pins: options.pins } : {}
+	const pins = {
+		...(options.pins ? { pins: options.pins } : {}),
+		...(options.suppressGazetteerNearPostcode === undefined
+			? {}
+			: { suppressGazetteerNearPostcode: options.suppressGazetteerNearPostcode }),
+	}
 
 	if (options.weightsCacheRoot) return { weightsCacheRoot: options.weightsCacheRoot, ...pins }
 
@@ -90,7 +103,7 @@ export function layerDepsOptions(options: GauntletLayerOptions): GauntletDepsOpt
  */
 export async function runRegressionLayer(options: GauntletLayerOptions = {}): Promise<{ pass: boolean }> {
 	using kdb = new DatabaseClient<GauntletDatabase>(dataRootPath("gauntlet", "regression.db"), { readOnly: true })
-	// Before a single address is graded: does this DB hold the corpus that is committed RIGHT NOW? A check
+	// Before a single address is graded: does this DB hold the corpus that is committed right now? A check
 	// reading a stale artifact reports a verdict about a corpus nobody has — see corpus-stamp.ts.
 	await assertCorpusStampFresh(kdb)
 	const cases = await kdb.selectFrom("gauntlet_case").selectAll().execute()
@@ -104,13 +117,13 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 	// separately, because the pass is not attributable to the production path (#2223).
 	const withheld: string[] = []
 	let counted = 0
-	// #42 firing receipts. An unchanged verdict means "harmless" only if the mechanism actually ran on some row;
+	// #42 firing receipts. An unchanged verdict means "harmless" only if the mechanism actually ran on some row.
 	// otherwise it means "never reached", and the two are indistinguishable without this count.
 	const overrides: string[] = []
 
 	for (const c of cases) {
 		// caseCountry selects the per-locale weights overlay (GB → en-GB's pair-index) — see harness.ts.
-		// A row carrying `locale` runs under THAT locale's overlay instead of the truth country's: a
+		// A row carrying `locale` runs under that locale's overlay instead of the truth country's: a
 		// #1585 locale-arm row like `Paris` under `en-US` is an FR row (country=FR pins the truth) whose
 		// production route goes through the US register. The region subtag is the overlay key.
 		const overlayCountry = routeCountry(c)
@@ -172,9 +185,9 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 		}
 	}
 
-	// Printed whenever the pass could have fired — i.e. unless it is explicitly pinned OFF. Keying this on the ON
-	// PIN was right while the library default was OFF and wrong the moment it flipped (2026-08-05): the standard
-	// unpinned run is now the ON configuration and the run whose firing count a reader needs.
+	// Printed whenever the pass could have fired — i.e. unless it is explicitly pinned off. Keying this on the
+	// enabled pin was right while the library default was off and wrong the moment it flipped (2026-08-05): the
+	// standard unpinned run now has the pass enabled, and that is the run whose firing count a reader needs.
 	if (options.pins?.postcodeCountryCoherence !== false) {
 		console.log(`\npostcode-country coherence fired on ${overrides.length}/${cases.length} cases:`)
 

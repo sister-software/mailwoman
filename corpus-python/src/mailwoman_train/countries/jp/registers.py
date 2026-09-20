@@ -1,8 +1,8 @@
 """The National Tax Agency's corporate-number register (法人番号公表サイト 全件データ) as a NOISY corpus source (#2204 §5).
 
-The nationwide CSV carries 30 columns per corporation; the address is FIELDED into three — 国内所在地 as 都道府県,
+The nationwide CSV carries 30 columns per corporation. the address is FIELDED into three — 国内所在地 as 都道府県,
 市区町村 and 丁目番地等 — plus a seven-digit 郵便番号. The first two are register names and align to the Overture-JP
-admin ladder by exact lookup; the third is the typed part (``柏木町４－７``, ``沖見町２丁目``, ``霞が関３丁目１番１号``,
+admin ladder by exact lookup. the third is the typed part (``柏木町４－７``, ``沖見町２丁目``, ``霞が関３丁目１番１号``,
 ``末広町１８４ ビル名 ３Ｆ``): full-width digits and hyphens, the chōme as kanji or full-width digits, then a number in
 whichever register the filer used, then a building name and floor.
 

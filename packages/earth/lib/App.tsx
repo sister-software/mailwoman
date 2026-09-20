@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Route → view. The geocoder and the debug view mount the same page; the debug view opens the decode-path drawer
+ *   Route → view. The geocoder and the debug view mount the same page. the debug view opens the decode-path drawer
  *   by default, and the trace view mounts the live model visualizer over the same runtime. The page mounts the real
  *   runtime; `?runtime=fake` mounts the canned one the shell smoke and the stories use, so a deployment can be
  *   checked without a model download.
@@ -43,7 +43,7 @@ function NotFound({ pathname }: { pathname: string }) {
 }
 
 /**
- * The real geocoder, with the host panels. The map renders at the default centre at once; the geolocation answer moves
+ * The real geocoder, with the host panels. The map renders at the default centre at once. the geolocation answer moves
  * the bias when it arrives, so nothing waits on the network before the first paint.
  */
 function RealGeocoder({ route, query }: { route: Route; query: string | null }) {
@@ -100,8 +100,8 @@ function writeQueryToURL(query: string): void {
 
 /**
  * The app's identity and source credits. They belong to the page rather than to the runtime, so the canned runtime the
- * smoke and the stories mount shows the same footer the real one does — the SAME component the real panels use, not a
- * second copy of it, which is how the commit link came to render here and nowhere a visitor could see it.
+ * smoke and the stories mount shows the same footer the real one does — the same component the real panels use rather
+ * than a second copy of it, which is how the commit link came to render here and nowhere a visitor could see it.
  */
 const IDENTITY_PANELS: GeocoderPanels = {
 	footer: <EarthFooter />,

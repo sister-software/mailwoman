@@ -2,28 +2,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman dev lint corpus-database --database <parquet> --stats <stats.json>` — corpus linter:
- *   compares a new database against pre-computed corpus statistics (see `mailwoman corpus stats`) and
- *   flags the v0.6.2 "5th Avenue Theatre" class of poisoning patterns. Markdown report on stdout;
- *   exits 1 when any error-severity flag fires (warnings don't check).
+ *   `mailwoman dev lint corpus-slice --database <parquet> --stats <stats.json>` — corpus linter:
+ *   compares a new recipe-output parquet against pre-computed corpus statistics (see `mailwoman corpus
+ *   stats`) and flags the v0.6.2 "5th Avenue Theatre" class of poisoning patterns. Markdown report on
+ *   stdout. exits 1 when any error-severity flag fires (warnings don't check).
+ *
+ *   The command keeps its name: the router resolves a command by its file path, and a renamed command has no
+ *   `deprecatedName` the way a flag does, so the scripts and runbooks that type it would break silently.
  */
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	reportToStderr,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, reportToStderr, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
-	name: "corpus-database",
-	description: "Lint a corpus database against pre-computed statistics.",
+	name: "corpus-slice",
+	description: "Lint a recipe-output parquet against pre-computed corpus statistics.",
 	options: {
-		database: { type: "string", required: true, description: "The new database parquet to lint" },
+		database: { type: "string", required: true, description: "The recipe-output parquet to lint" },
 		stats: { type: "string", required: true, description: "Pre-computed corpus stats JSON" },
 		rules: { type: "string", description: "Anti-pattern rules JSON (default: the bundled lint-rules.json)" },
 		"out-md": { type: "string", description: "Write the markdown report here as well as stdout" },
@@ -31,22 +28,14 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	database: string
-	stats: string
-	rules?: string
-	outMd?: string
-	outJSON?: string
-}
-
-const DevLintCorpusDatabase: ParsedCommandComponent<Options> = ({ options }) => {
+const DevLintCorpusRecipeOutput: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { lintCorpusSlice } = await import("@mailwoman/corpus/tools")
+			const { lintRecipeOutput } = await import("@mailwoman/corpus/tools")
 
-			return lintCorpusSlice(
+			return lintRecipeOutput(
 				{
-					slicePath: options.database,
+					recipeOutputPath: options.database,
 					statsPath: options.stats,
 					rulesPath: options.rules,
 					outMd: options.outMd,
@@ -64,4 +53,4 @@ const DevLintCorpusDatabase: ParsedCommandComponent<Options> = ({ options }) => 
 	return null
 }
 
-export default DevLintCorpusDatabase
+export default DevLintCorpusRecipeOutput

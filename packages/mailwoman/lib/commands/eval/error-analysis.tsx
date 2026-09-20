@@ -3,17 +3,17 @@
 
 /**
  *   `mailwoman eval error-analysis` — categorized failure report over the golden eval set (the
- *   pre-publish 2pp promote eval; night-shift skill). Builds the classifier via `createScorer` in
- *   STRICT ship-config mode so a `--model` candidate is graded in-distribution (#566/#685 trap);
+ *   pre-publish 2pp promote eval. night-shift skill). Builds the classifier via `createScorer` in
+ *   strict ship-config mode so a `--model` candidate is graded in-distribution (#566/#685 trap);
  *   `--no-strict` warns-and-continues for legacy pre-anchor models.
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "Categorized golden-set failure report (the pre-publish 2pp promote check)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "error-analysis",
@@ -37,30 +37,15 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	golden?: string
-	model?: string
-	tokenizer?: string
-	modelCard?: string
-	postcodeRepair: boolean
-	wordConsistency: boolean
-	strict: boolean
-}
+// The analysis prints its own markdown report on stdout, so no `json`.
+const EvalErrorAnalysis = harnessCommand(
+	spec,
+	async (options) => {
+		const { evalErrorAnalysis } = await import("#eval-harness/error-analysis")
 
-const EvalErrorAnalysis: ParsedCommandComponent<Options> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { evalErrorAnalysis } = await import("#eval-harness/error-analysis")
-
-			return evalErrorAnalysis(options)
-		},
-		(exitCode) => exitCode
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	// The analysis prints its own markdown report on stdout.
-	return null
-}
+		return evalErrorAnalysis(options)
+	},
+	{ exitCode: (exitCode) => exitCode }
+)
 
 export default EvalErrorAnalysis

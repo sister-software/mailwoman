@@ -3,7 +3,7 @@
 
 /**
  *   `mailwoman dev generate country-reference` — regenerate `codex/country/reference-data.ts` (the
- *   per-country calling code + currency table) from mledoze/countries. Network codegen; the output
+ *   per-country calling code + currency table) from mledoze/countries. Network codegen. the output
  *   is committed for provenance.
  */
 
@@ -12,7 +12,7 @@ import { Text } from "ink"
 import { type CommandSpec, CommandTaskResult, reportToStderr, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "country-reference",

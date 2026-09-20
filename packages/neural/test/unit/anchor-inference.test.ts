@@ -13,7 +13,7 @@ import {
 } from "@mailwoman/neural/anchor-inference"
 import type { TokenizedPiece } from "@mailwoman/neural/tokenizer"
 /**
- *   Cross-language guard for the inference-side anchor features (#239/#240). The feature layout MUST
+ *   Cross-language guard for the inference-side anchor features (#239/#240). The feature layout must
  *   match the Python training pipeline (`mailwoman_train/tokenizer.py::anchor_feature_vector`), or
  *   the model is fed garbage at inference. These vectors are pinned to values emitted by the Python
  *   function — if the TS drifts (locale order, centroid scale, renormalization), this fails.
@@ -81,10 +81,10 @@ describe("buildAnchorFeatures — alignment onto SP pieces", () => {
 /**
  * The 2026-08-05 train-parity fix (`docs/records/evals/2026-08-05-en-gb-anchor-off.md`). Two obligations:
  *
- * 1. The DEFAULT stays byte-identical to the pre-fix scan — graded against a verbatim copy of it, not against a hash, so
- *    the oracle is readable;
+ * 1. The default stays byte-identical to the pre-fix scan — graded against a verbatim copy of it rather than against a
+ *    hash, so the oracle is readable.
  * 2. `spanMode: "shaped"` keys a span exactly the way `mailwoman_train/tokenizer.py::_paint_anchor_chars` does
- *    (`raw[begin:end].replace(" ", "").upper()`) and paints the span's FULL extent.
+ *    (`raw[begin:end].replace(" ", "").upper()`) and paints the span's full extent.
  */
 describe("buildAnchorFeatures — span modes", () => {
 	/**
@@ -150,7 +150,7 @@ describe("buildAnchorFeatures — span modes", () => {
 	}
 
 	/**
-	 * A v2-shaped lookup: the five-digit pilot keys PLUS the letter-bearing ones only a widened build produces.
+	 * A v2-shaped lookup: the five-digit pilot keys plus the letter-containing ones only a widened build produces.
 	 */
 	const V2: AnchorLookup = new Map<string, AnchorEntry>([
 		["10115", { posterior: { DE: 0.5, US: 0.5 }, lat: 52.5323, lon: 13.3846 }],
@@ -205,7 +205,7 @@ describe("buildAnchorFeatures — span modes", () => {
 		const { features, confidence } = buildAnchorFeatures(text, pieces, V2, { spanMode: "shaped" })
 		const gb = anchorFeatureVector({ GB: 1 }, 51.50354, -0.1277)
 
-		// The unit key won, not the outward key — the outward centroid differs, so this distinguishes them.
+		// The unit key won rather than the outward key — the outward centroid differs, so this distinguishes them.
 		pieces.forEach((p, i) => {
 			const inside = p.start >= spanStart && p.end <= spanEnd
 
@@ -213,7 +213,7 @@ describe("buildAnchorFeatures — span modes", () => {
 			expect(features[i]).toEqual(inside ? gb : new Array(ANCHOR_FEATURE_DIM).fill(0))
 		})
 
-		// Both halves of the unit are painted — the outward-only paint the default produces is 2 pieces, not 4.
+		// Both halves of the unit are painted — the outward-only paint the default produces is 2 pieces rather than 4.
 		expect(confidence.filter((c) => c === 1)).toHaveLength(4)
 	})
 
@@ -230,7 +230,7 @@ describe("buildAnchorFeatures — span modes", () => {
 	})
 
 	it("(c) an unknown GB unit falls back to its outward district, painting the WHOLE unit span", () => {
-		// SW1A 1AA is not in V2; its outward SW1A is. NI codes behave the same way — Code-Point Open has none.
+		// SW1A 1AA is not in V2. its outward SW1A is. NI codes behave the same way — Code-Point Open has none.
 		const text = "London SW1A 1AA"
 		const spanStart = text.indexOf("SW1A 1AA")
 		const pieces = piecesFor(text)
@@ -309,7 +309,7 @@ describe("buildAnchorFeatures — shaped mode case-folds before shape detection 
 
 	it("the fold is LENGTH-PRESERVING, so a `ß` upstream cannot shift the painted span", () => {
 		// `"ß".toUpperCase()` is "SS" — a naive uppercase here would slide every later offset by one and
-		// paint the wrong pieces. ASCII-only folding cannot.
+		// paint the wrong pieces. ascii-only folding cannot.
 		const text = "straße 1, amsterdam 1012 lg"
 		const pieces = piecesFor(text)
 		const { confidence } = buildAnchorFeatures(text, pieces, V2, { spanMode: "shaped" })
@@ -334,7 +334,7 @@ describe("buildAnchorFeatures — shaped mode case-folds before shape detection 
 })
 
 /**
- * A2 of ROAD_TO_V9 §1 — the SHIP OBLIGATION check. A lookup carrying keys only the shaped keyer can reach, next to a
+ * A2 of ROAD_TO_V9 §1 — the ship obligation check. A lookup carrying keys only the shaped keyer can reach, next to a
  * card that does not declare `span_mode: "shaped"`, is a channel that loads clean and feeds zeros on every row it
  * exists for.
  */

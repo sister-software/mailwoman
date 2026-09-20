@@ -2,25 +2,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build a CJK postcode → WOF locality table by AUTHORITATIVE NAME-MATCH (#292, Direction E).
+ *   Build a CJK postcode → WOF locality table by authoritative name-match (#292, Direction E).
  *
  *   WOF admin geometry in CJK (JP/KR/TW) is point-based at the municipality/locality level — there
- *   are no municipality POLYGONS — so the European point-in-polygon coordinate-first build
+ *   are no municipality polygons — so the European point-in-polygon coordinate-first build
  *   (build-postcode-locality.ts) is structurally inapplicable. This is the CJK substitute:
  *
- *   Postcode --(national postal authority)--> municipality NAME (romanized) postcode --(GeoNames)-->
+ *   Postcode --(national postal authority)--> municipality name (romanized) postcode --(GeoNames)-->
  *   point municipality name + point --(cross-placetype name+proximity match)--> WOF place id
  *
- *   The match searches ALL the municipality-ish WOF placetypes (locality + county + localadmin +
+ *   The match searches all the municipality-ish WOF placetypes (locality + county + localadmin +
  *   borough), because CJK municipalities are split across them (regular cities → locality, wards →
  *   county/localadmin, Tokyo special wards → borough). Matching a single placetype was the 52/60%
- *   trap; cross-placetype is 94.3%.
+ *   trap. cross-placetype is 94.3%.
  *
  *   Output is the standard `postcode_locality` table, so the existing `postcode_area_resolution`
  *   resolver strategy consumes it unchanged (is_containing=1 for the name-matched municipality).
  *   Build-from-source: the authoritative names come from the national postal file (JP = KEN_ALL,
  *   Japan Post), points from GeoNames (already an in-project source for DE/ES/IT/NL); both are
- *   source material, not prebuilt dumps.
+ *   source material rather than prebuilt dumps.
  *
  *   Usage (JP): node scripts/build-postcode-locality-cjk.ts --country JP\
  *   --postal-names $MAILWOMAN_DATA_ROOT/KEN_ALL_ROME/KEN_ALL_ROME.CSV\
@@ -28,10 +28,10 @@
  *   --admin-db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db\
  *   --output $MAILWOMAN_DATA_ROOT/wof/postcode-locality-jp.db
  *
- *   PORT NOTE (from scripts/build-postcode-locality-cjk.py): faithful TypeScript port. No polygons
+ *   port note (from scripts/build-postcode-locality-cjk.py): faithful TypeScript port. No polygons
  *   here, so there is no PIP — matching is name + haversine proximity, via `@mailwoman/spatial`'s
- *   `haversineKm` (asin form, matching Python). The output is written DIRECTLY to `--output` (the Python
- *   `DROP TABLE …` + `CREATE TABLE` full single-country rebuild), preserving the original's
+ *   `haversineKm` (asin form, matching Python). The output is written directly to `--output` (the Python
+ *   `drop table …` + `create table` full single-country rebuild), preserving the original's
  *   behavior.
  */
 
@@ -57,7 +57,7 @@ import {
 } from "#gazetteer-pipeline/postcode/locality/schema"
 
 /**
- * Digit at which a fractional remainder is exactly half. Above it the value rounds up; at it the tie is broken toward
+ * Digit at which a fractional remainder is exactly half. Above it the value rounds up. at it the tie is broken toward
  * even, which is what keeps repeated centroid rounding unbiased.
  */
 /**
@@ -84,7 +84,7 @@ function norm(s: string): string {
 
 /**
  * The WOF place name (suffix-stripped) appears as a token in the authoritative municipality string (which carries
- * city+ward, e.g. 'SAPPORO SHI CHUO KU').
+ * city+ward, e.g. 'sapporo SHI chuo KU').
  */
 function nameMatches(wofName: string, postalMuni: string): boolean {
 	const nw = norm(wofName).replace(SUFFIX, "")
@@ -93,18 +93,18 @@ function nameMatches(wofName: string, postalMuni: string): boolean {
 }
 
 /**
- * JP KEN_ALL_ROME (CP932): col0=postcode(7-digit), col5=municipality romaji → {NNN-NNNN: muni}.
+ * JP KEN_ALL_ROME (CP932): col0=postcode(7-digit), col5=municipality romaji → {NNN-nnnn: muni}.
  */
 async function loadKenall(path: string): Promise<Map<string, string>> {
 	const out = new Map<string, string>()
 
-	// `cp932` through iconv, not `TextDecoder("shift_jis")`. Japan Post ships CP932, and Node's WHATWG `shift_jis` reads
+	// `cp932` through iconv rather than `TextDecoder("shift_jis")`. Japan Post ships CP932, and Node's whatwg `shift_jis` reads
 	// 801 of CP932's 20,296 two-byte sequences differently — silently, since most yield a different character rather than
-	// a replacement. MEASURED on the 2026 edition: the file contains ZERO of those 801, in any column, so this changes no
+	// a replacement. Measured on the 2026 edition: the file contains zero of those 801, in any column, so this changes no
 	// value today. It is here because the file is reissued monthly and the next edition is not measured.
 	const text = decodeBytes(await readLocalBuffer(path), "cp932")
 
-	// Decode CP932 once, then let the CSV reader handle quoted fields and CRLF. KEN_ALL has no header row.
+	// Decode CP932 once, then let the CSV reader handle quoted fields and crlf. KEN_ALL has no header row.
 	for (const f of CSVSpliterator.from<string[]>(text, { header: false })) {
 		if (f.length >= MIN_KEN_ALL_COLUMNS && f[0]!.length === JIS_CODE_LENGTH && /^[0-9]+$/.test(f[0]!)) {
 			out.set(`${f[0]!.slice(0, 3)}-${f[0]!.slice(3)}`, f[5]!)
@@ -115,7 +115,7 @@ async function loadKenall(path: string): Promise<Map<string, string>> {
 }
 
 /**
- * GeoNames postal file → {postcode (NNN-NNNN): [lat, lon]} (last row for a postcode wins).
+ * GeoNames postal file → {postcode (NNN-nnnn): [lat, lon]} (last row for a postcode wins).
  */
 async function loadGeonamesPoints(path: string): Promise<Map<string, [number, number]>> {
 	const out = new Map<string, [number, number]>()

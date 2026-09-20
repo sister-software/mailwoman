@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tree-SHAPE predicates over an `AddressTree` — the one stack walk behind the pipeline's bare-tree
+ *   Tree-shape predicates over an `AddressTree` — the one stack walk behind the pipeline's bare-tree
  *   guards and the "lone bare toponym" conditions. Two quantifiers cover every consumer:
  *
- *   - {@link isBareTreeOf} — every value-bearing node carries the given tag (several allowed). The
+ *   - {@link isBareTreeOf} — every value-containing node carries the given tag (several allowed). The
  *     #912 / #1589 posture guards (`isBareLocalityTree`, `isBarePostcodeTree`) are this with the tag
  *     bound.
- *   - {@link loneValueBearingNode} — the tree has EXACTLY one value-bearing node. The street-miss
+ *   - {@link loneValueNode} — the tree has exactly one value-containing node. The street-miss
  *     fallback and the resolver's bare-country race bind the tag at the call site.
  *
  *   The distinction is required: a two-segment parse can satisfy the first and never the second,
@@ -22,9 +22,9 @@ import { walkNodes } from "#decoder/tree/walk"
 import type { AddressNode, AddressTree } from "#decoder/types"
 
 /**
- * True when every node in the tree either carries `tag` or bears no value — i.e. the only EVIDENCE in the parse is
+ * True when every node in the tree either carries `tag` or bears no value — i.e. the only evidence in the parse is
  * `tag`-shaped. A tag-matching node counts even when its value is empty (the guard asks "did the parser emit this
- * shape", not "is the span non-blank"); any OTHER tag with a non-empty value disqualifies. False for a tree with no
+ * shape", not "is the span non-blank"); any other tag with a non-empty value disqualifies. False for a tree with no
  * `tag` node at all.
  */
 export function isBareTreeOf(tree: AddressTree, tag: ComponentTag): boolean {
@@ -40,10 +40,10 @@ export function isBareTreeOf(tree: AddressTree, tag: ComponentTag): boolean {
 }
 
 /**
- * The tree's single value-bearing node, or null when the tree holds none or more than one. Callers check on the
- * returned node's `tag` — the quantifier ("this is the WHOLE query") is what this walk answers.
+ * The tree's single value-containing node, or null when the tree holds none or more than one. Callers check on the
+ * returned node's `tag` — the quantifier ("this is the whole query") is what this walk answers.
  */
-export function loneValueBearingNode(tree: AddressTree): AddressNode | null {
+export function loneValueNode(tree: AddressTree): AddressNode | null {
 	let lone: AddressNode | null = null
 
 	for (const node of walkNodes(tree.roots)) {
@@ -80,8 +80,8 @@ export interface FlatTreeNode {
 	 * The resolver's answer for this span, when one won.
 	 *
 	 * Carried for the same reason `source` is: a projection that keeps only the text and the tag cannot tell a span that
-	 * resolved to a DIFFERENT place from one that did not move at all, and those are a ranking problem and a non-event
-	 * respectively. `alternatives` is reduced to its LENGTH — the retrieval breadth is what a consumer reads, and handing
+	 * resolved to a different place from one that did not move at all, and those are a ranking problem and a non-event
+	 * respectively. `alternatives` is reduced to its length — the retrieval breadth is what a consumer reads, and handing
 	 * over the candidate objects invites a walk this projection exists to have already done.
 	 */
 	placeID?: string
@@ -91,7 +91,7 @@ export interface FlatTreeNode {
 }
 
 /**
- * Flatten a tree to its nodes in SOURCE order — sorted by `start`, the same order `decodeAsTuples` means by it.
+ * Flatten a tree to its nodes in source order — sorted by `start`, the same order `decodeAsTuples` means by it.
  *
  * A traversal-order walk (depth-first onto a stack, then reversed) is the obvious implementation and is wrong here: it
  * coincides with source order only while every parent's span precedes its children's, and the decoder does not promise

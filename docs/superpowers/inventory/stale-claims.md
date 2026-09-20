@@ -33,11 +33,11 @@ Verified against the code at `/home/lab/Projects/mailwoman` on 2026-07-14. Scope
 
 ## Finding 1 — CRF "learns" transitions; dual-loss training presented as current
 
-**Claim:** "A CRF fixes this by: 1. Learning a transition score for every pair of adjacent labels... 2. At decode time, finding the highest-scoring whole sequence" and, further down, "What the CRF learns... These soft priors get baked into the transition matrix during training," followed by "How training works with a CRF": "Backpropagation through the forward algorithm trains both the encoder weights AND the CRF transition scores."
+**Claim:** "A CRF fixes this by: 1. Learning a transition score for every pair of adjacent labels... 2. At decode time, finding the highest-scoring whole sequence" and, further down, "What the CRF learns... These soft priors get baked into the transition matrix during training," followed by "How training works with a CRF": "Backpropagation through the forward algorithm trains both the encoder weights and the CRF transition scores."
 
 **Where:** `docs/articles/concepts/crf-decoder.mdx:21-26`, `:75-85`, `:87-100`
 
-**Ground truth:** Training has been CE-only (`crf_loss_weight: 0.0`) in every config since v0.5.0. `model.py:708` — `if self.crf is not None and attention_mask is not None and self.crf_loss_weight > 0:` — this branch, which computes the CRF NLL and backpropagates into the transition matrix, never fires under the shipped recipe. `model.py:748` — `else: loss = ce_loss` is what actually runs. The shipped model card states this outright: `neural-weights-en-us/model-card.json:33` — `"crf_at_training": false`.
+**Ground truth:** Training has been CE-only (`crf_loss_weight: 0.0`) in every config since v0.5.0. `model.py:708` — `if self.crf is not None and attention_mask is not None and self.crf_loss_weight > 0:` — this branch, which computes the CRF NLL and backpropagates into the transition matrix, never fires under the shipped recipe. `model.py:748` — `else: loss = ce_loss` is what runs. The shipped model card states this outright: `neural-weights-en-us/model-card.json:33` — `"crf_at_training": false`.
 
 **Evidence:** `corpus-python/src/mailwoman_train/model.py:708-748`; `corpus-python/src/mailwoman_train/configs/v0_5_0-classifier-ce-only-full.yaml:58` through `v2.9.0-country-counterweight.yaml:89` (every intervening config); `neural-weights-en-us/model-card.json:33`.
 
@@ -49,7 +49,7 @@ Verified against the code at `/home/lab/Projects/mailwoman` on 2026-07-14. Scope
 
 **Where:** `docs/articles/concepts/crf-decoder.mdx:102-112`
 
-**Ground truth:** CRF training was reactivated post-v0.4.0 and diverged three more times before being permanently disabled. `corpus-python/src/mailwoman_train/configs/v0_6_0-stage3.yaml:66-76` — comment: "`crf_loss_weight: 0.0` after THREE divergence attempts: attempt 1 (lr=1.5e-4, crf=0.5): NaN at step 950 / attempt 2 (lr=1.0e-4, crf=0.1): NaN at step 1700 ... v0.5.4 used crf_loss_weight=0.0 (CE-only) and trained fine — match that." A subsequent fp32 diagnostic (`v0_6_2-crf-fp32-diagnostic.yaml`) tested whether bf16 precision was the cause; the next config in the lineage, `v0_6_3-house-venue.yaml:122`, is back to `crf_loss_weight: 0.0`, and every config after it stays at 0.0 through the current `v2.9.0`.
+**Ground truth:** CRF training was reactivated post-v0.4.0 and diverged three more times before being permanently disabled. `corpus-python/src/mailwoman_train/configs/v0_6_0-stage3.yaml:66-76` — comment: "`crf_loss_weight: 0.0` after three divergence attempts: attempt 1 (lr=1.5e-4, crf=0.5): NaN at step 950 / attempt 2 (lr=1.0e-4, crf=0.1): NaN at step 1700 ... v0.5.4 used crf_loss_weight=0.0 (CE-only) and trained fine — match that." A subsequent fp32 diagnostic (`v0_6_2-crf-fp32-diagnostic.yaml`) tested whether bf16 precision was the cause; the next config in the lineage, `v0_6_3-house-venue.yaml:122`, is back to `crf_loss_weight: 0.0`, and every config after it stays at 0.0 through the current `v2.9.0`.
 
 **Evidence:** `corpus-python/src/mailwoman_train/configs/v0_6_0-stage3.yaml:66-76`; `v0_6_2-crf-fp32-diagnostic.yaml:1-20`; `v0_6_3-house-venue.yaml:122`.
 
@@ -73,7 +73,7 @@ Verified against the code at `/home/lab/Projects/mailwoman` on 2026-07-14. Scope
 
 **Where:** `docs/articles/concepts/crf-decoder.mdx:85`
 
-**Ground truth:** The current active label set is 33 labels (`16 tags × {B-,I-} + O`), not 21. `corpus-python/src/mailwoman_train/labels.py:14` — "`STAGE3_BIO_LABELS` (33) — v0.6.0 ship, the CURRENT active set"; `labels.py:84-135` defines it; `neural-weights-en-us/model-card.json:31` — `"num_labels": 33`. The correct transition-matrix size is 33×33+33+33 = 1155 scalars. Params: `model-card.json:32` — `"params": "33.9M"`, not 8.87M. A sibling doc already has the correct label count: `concepts/how-the-model-reasons.mdx:160` — `raw emission logits per token × 33 labels`.
+**Ground truth:** The current active label set is 33 labels (`16 tags × {B-,I-} + O`) rather than 21. `corpus-python/src/mailwoman_train/labels.py:14` — "`STAGE3_BIO_LABELS` (33) — v0.6.0 ship, the CURRENT active set"; `labels.py:84-135` defines it; `neural-weights-en-us/model-card.json:31` — `"num_labels": 33`. The correct transition-matrix size is 33×33+33+33 = 1155 scalars. Params: `model-card.json:32` — `"params": "33.9M"` rather than 8.87M. A sibling doc already has the correct label count: `concepts/how-the-model-reasons.mdx:160` — `raw emission logits per token × 33 labels`.
 
 **Evidence:** `corpus-python/src/mailwoman_train/labels.py:14,84-135`; `neural-weights-en-us/model-card.json:31-32`; `concepts/how-the-model-reasons.mdx:160` (internal inconsistency within the same docs tree).
 
@@ -97,7 +97,7 @@ Verified against the code at `/home/lab/Projects/mailwoman` on 2026-07-14. Scope
 
 **Where:** `docs/articles/concepts/neural-classification.mdx:32-39, 43-55`
 
-**Ground truth:** `neural-weights-en-us/model-card.json:25,27-28,31-32` — `hidden_size: 384`, `num_attention_heads: 6`, `intermediate_size: 1536`, `num_labels: 33`, `params: "33.9M"`. Every one of the five geometry numbers in the doc's table is wrong (not just the label count from Findings 4-5) — the model has grown considerably (nsplice vocab embedding growth, more heads/width) since this table was last updated.
+**Ground truth:** `neural-weights-en-us/model-card.json:25,27-28,31-32` — `hidden_size: 384`, `num_attention_heads: 6`, `intermediate_size: 1536`, `num_labels: 33`, `params: "33.9M"`. Every one of the five geometry numbers in the doc's table is wrong (notthe label count from Findings 4-5) — the model has grown considerably (nsplice vocab embedding growth, more heads/width) since this table was last updated.
 
 **Evidence:** `neural-weights-en-us/model-card.json:25-32`.
 
@@ -109,7 +109,7 @@ Verified against the code at `/home/lab/Projects/mailwoman` on 2026-07-14. Scope
 
 **Where:** `docs/articles/concepts/tokenization.mdx:44,49,53-54,108`
 
-**Ground truth:** The currently shipped weights bundle's tokenizer is two generations past both versions named in the doc. `neural-weights-en-us/model-card.json:10,30` — `"tokenizer_version": "0.8.0-fr-nsplice"`, `"vocab_size": 66319` — 4x the "shipping" figure and 38% larger than the "validated, pending" A1 figure the doc describes as not-yet-shipped. `neural-weights-en-us/model-card.json:110` independently describes the tokenizer as "SentencePiece unigram, byte_fallback=true, vocab_size=66319 (v0.8.0-fr-nsplice = v0.7.1-nsplice + 2406 FR diacritic pieces; ships WITH the model)."
+**Ground truth:** The currently shipped weights bundle's tokenizer is two generations past both versions named in the doc. `neural-weights-en-us/model-card.json:10,30` — `"tokenizer_version": "0.8.0-fr-nsplice"`, `"vocab_size": 66319` — 4x the "shipping" figure and 38% larger than the "validated, pending" A1 figure the doc describes as not-yet-shipped. `neural-weights-en-us/model-card.json:110` independently describes the tokenizer as "SentencePiece unigram, byte_fallback=true, vocab_size=66319 (v0.8.0-fr-nsplice = v0.7.1-nsplice + 2406 FR diacritic pieces; ships with the model)."
 
 **Evidence:** `neural-weights-en-us/model-card.json:10,30,110`.
 
@@ -127,7 +127,7 @@ Ground truth restated: `.github/workflows/publish.yml:129-131` — `# fr-fr shar
 
 **Where:** `docs/articles/understanding/our-approach/from-pelias-to-mailwoman.mdx:44`
 
-**Ground truth:** Both packages ship the identical `model.onnx` (copied, not independently produced). "One per locale" reads as "one trained artifact per locale," which is false.
+**Ground truth:** Both packages ship the identical `model.onnx` (copied rather than independently produced). "One per locale" reads as "one trained artifact per locale," which is false.
 
 **Evidence:** `.github/workflows/publish.yml:129-131`.
 
@@ -187,7 +187,7 @@ Ground truth restated: `.github/workflows/publish.yml:129-131` — `# fr-fr shar
 
 **Where:** `docs/articles/sotm-2026-talk-proposal.mdx:20, 25`
 
-**Ground truth:** The shipped int8 bundle is ~36.8 MB, not 50 KB — off by roughly three orders of magnitude. `neural-weights-en-us/model.onnx` is 36,787,564 bytes on disk; `neural-weights-en-us/model-card.json:114` — `"int8_size_mb": 36.8`. Not strictly a locale-sharing claim (it would be wrong even if fr-fr had its own model), but it repeats the same "per locale" framing on the same page as Finding 12, so flagged alongside it.
+**Ground truth:** The shipped int8 bundle is ~36.8 MB rather than 50 KB — off by roughly three orders of magnitude. `neural-weights-en-us/model.onnx` is 36,787,564 bytes on disk; `neural-weights-en-us/model-card.json:114` — `"int8_size_mb": 36.8`. Not strictly a locale-sharing claim (it would be wrong even if fr-fr had its own model), but it repeats the same "per locale" framing on the same page as Finding 12, so flagged alongside it.
 
 **Evidence:** `neural-weights-en-us/model-card.json:113-114`; `ls -la neural-weights-en-us/model.onnx` (36,787,564 bytes, dereferenced through the dev symlink).
 
@@ -197,9 +197,9 @@ Ground truth restated: `.github/workflows/publish.yml:129-131` — `# fr-fr shar
 
 ## Notes on scope discipline
 
-- `docs/articles/plan/phases/PHASE_2_training.mdx:161` and `PHASE_6_japan.mdx:57` discuss per-locale vs. shared-model tradeoffs as **open roadmap questions**, not claims about current state — not flagged.
+- `docs/articles/plan/phases/PHASE_2_training.mdx:161` and `PHASE_6_japan.mdx:57` discuss per-locale vs. shared-model tradeoffs as **open roadmap questions** rather than claims about current state — not flagged.
 - `docs/articles/concepts/language-support.mdx` (the locale-support page) was read in full and is carefully hedged throughout — it never claims separate trained weights beyond en-US/French, and its "coordinate-paneled" tier language is consistent with one shared model evaluated per locale. Not flagged.
-- `docs/articles/concepts/how-the-model-reasons.mdx:134` hedges learned-CRF-transitions correctly ("If learned CRF transitions are present (v0.6.4+ with `crf_fp32=true`)...") and already uses the correct 33-label count (line 160) — cited above as the accurate contrast, not flagged as a finding.
-- `docs/articles/concepts/attention-and-bidirectional-context.mdx:83-84` and `concepts/what-mailwoman-is.mdx:30` mention BiLSTM/LSTM only as historical NLP lineage comparisons ("the CLOSEST formal analog in classical NLP is... BiLSTM-CRF → BERT token classification → this"), not as claims about Mailwoman's own architecture — not flagged.
-- `evals/` and `retrospectives/` excluded per task scope (dated, point-in-time). `reviews/` was not excluded by the task but is also dated/point-in-time by construction; its few "locale-specific weight packages" mentions were reviewed and judged low-signal (feature-name references, not architecture claims) and not written up.
+- `docs/articles/concepts/how-the-model-reasons.mdx:134` hedges learned-CRF-transitions correctly ("If learned CRF transitions are present (v0.6.4+ with `crf_fp32=true`)...") and already uses the correct 33-label count (line 160) — cited above as the accurate contrast rather than flagged as a finding.
+- `docs/articles/concepts/attention-and-bidirectional-context.mdx:83-84` and `concepts/what-mailwoman-is.mdx:30` mention BiLSTM/LSTM only as historical NLP lineage comparisons ("the CLOSEST formal analog in classical NLP is... BiLSTM-CRF → BERT token classification → this") rather than as claims about Mailwoman's own architecture — not flagged.
+- `evals/` and `retrospectives/` excluded per task scope (dated, point-in-time). `reviews/` was not excluded by the task but is also dated/point-in-time by construction; its few "locale-specific weight packages" mentions were reviewed and judged low-signal (feature-name references rather than architecture claims) and not written up.
 - Did not chase the "677-million-row corpus" figure (`understanding/our-approach/from-pelias-to-mailwoman.mdx:41`) — no authoritative row-count field exists in `model-card.json`'s `training` block to cheaply verify it against; out of the "cheap to check" bound for the item-3 sweep.

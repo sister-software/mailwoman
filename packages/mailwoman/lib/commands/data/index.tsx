@@ -16,18 +16,12 @@
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { resolvePath } from "path-ts"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	useCommandTask,
-	writeRawStdout,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
 import { BUNDLES, PUBLIC_BUCKET_BASE_URL } from "#data/bundles"
 
 /**
  * Shown at the top of `mailwoman data --help`. Commander reuses it in the root command listing, so it is held to two
- * sentences; the long-form "why" lives in {@link overview}, which is what a bare `mailwoman data` prints.
+ * sentences. the long-form "why" lives in {@link overview}, which is what a bare `mailwoman data` prints.
  */
 export const description =
 	"Fetch the reference databases geocoding needs — far too large to ship inside the npm package. `data --list` " +
@@ -35,7 +29,7 @@ export const description =
 	"`mailwoman doctor` names the one you are missing."
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "data",
@@ -44,10 +38,6 @@ export const spec = {
 		list: { type: "boolean", default: false, description: "List every downloadable bundle" },
 	},
 } as const satisfies CommandSpec
-
-interface Options {
-	list: boolean
-}
 
 /**
  * The per-bundle table `--list` prints: name, artifact count, total size, destination, and the one-line description
@@ -108,7 +98,7 @@ function overview(dataRoot: string): string {
 	].join("\n")
 }
 
-const DataIndex: ParsedCommandComponent<Options> = ({ options }) => {
+const DataIndex: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { mailwomanDataRoot } = await import("@mailwoman/core/utils")
 

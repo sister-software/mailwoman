@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman corpus run <adapter-id> --input <path> --output <dir> [--country XX] [--limit N]`
+ *   `mailwoman corpus run <adapter-id> --input <path> --out <dir> [--country XX] [--limit N]`
  *
  *   CLI shim around `runAdapter` from `@mailwoman/corpus`. Resolves `<adapter-id>` against the
- *   default registry; refuses with a clear, non-zero exit if the id isn't known (and lists the
+ *   default registry. refuses with a clear, non-zero exit if the id isn't known (and lists the
  *   registered ids). On success, prints a one-line summary and the path to the manifest file.
  */
 
@@ -18,13 +18,13 @@ import { useState } from "react"
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	positiveIntegerOption,
 	useCommandTask,
 } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "run",
@@ -32,7 +32,7 @@ export const spec = {
 	positionals: [{ name: "adapter-id", required: true, description: "Adapter id" }],
 	options: {
 		input: { type: "string", required: true, description: "Adapter input" },
-		output: { type: "string", required: true, description: "Output root" },
+		out: { type: "string", required: true, description: "Output root", deprecatedName: "output" },
 		country: {
 			type: "string",
 			validate: (value) => /^[A-Z]{2}$/u.test(value),
@@ -45,16 +45,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	input: string
-	output: string
-	country?: string
-	limit?: number
-	corpusVersion: string
-	progressEvery: number
-}
-
-const CorpusRun: ParsedCommandComponent<Options, [string]> = ({ options, args }) => {
+const CorpusRun: CommandComponent<typeof spec, [string]> = ({ options, args }) => {
 	const [progress, setProgress] = useState<{ yielded: number; written: number; bytes: number }>({
 		yielded: 0,
 		written: 0,
@@ -80,12 +71,12 @@ const CorpusRun: ParsedCommandComponent<Options, [string]> = ({ options, args })
 			adapter,
 			adapterOptions: {
 				inputPath: options.input,
-				outputDir: options.output,
+				outputDir: options.out,
 				country: options.country,
 				limit: options.limit,
 				signal: ac.signal,
 			},
-			outputDir: options.output,
+			outputDir: options.out,
 			corpusVersion: options.corpusVersion,
 			progressEvery: options.progressEvery,
 			onProgress: (snap) => {

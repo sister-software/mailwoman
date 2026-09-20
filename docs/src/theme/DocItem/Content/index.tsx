@@ -7,14 +7,14 @@
  *   superseded one without the page author hand-editing a banner.
  *
  *   Docs with a `status:` frontmatter field from the maintained vocabulary (`active-decision`,
- *   `superseded`) render a status line; an optional `superseded-by:` field (a site-relative URL, or
+ *   `superseded`) render a status line. an optional `superseded-by:` field (a site-relative URL, or
  *   an external URL such as a GitHub blob link for a page that has left the published tree) renders
  *   as a link when present. Free-text `status:` values deliberately render nothing.
  *
  *   The second branch this file used to carry — an automatic "Historical record" banner for docs in
  *   the `archive` sidebar, dated from the doc id or a `date:` field — went with the sidebar. The
  *   docs-reorg Task 4 tree surgery moved every archived page to `docs/records/`, which is outside
- *   the Docusaurus content root, so no published doc can be in an `archive` sidebar any more and
+ *   the Docusaurus content root. Therefore, no published doc can be in an `archive` sidebar any more and
  *   the branch was unreachable. Task 5 removed it along with the date derivation it was the only
  *   caller of. Bring both back from git history if a published archive door ever returns.
  */
@@ -45,7 +45,7 @@ const STATUS_TAGLINES: Record<string, string> = {
 
 function DocRecordChrome(): ReactNode {
 	const { frontMatter } = useDoc()
-	// `DocFrontMatter` types only the Docusaurus-owned fields; the record-class fields are
+	// `DocFrontMatter` types only the Docusaurus-owned fields. the record-class fields are
 	// site-specific pass-throughs, so they're read as `unknown` and narrowed.
 	const status: unknown = (frontMatter as Record<string, unknown>).status
 

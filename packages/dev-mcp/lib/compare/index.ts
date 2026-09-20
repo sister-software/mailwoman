@@ -11,7 +11,7 @@
  *   the pre-registered 1/5/25 km protocol). Merging the two into one grader would mean either grading mailwoman on the
  *   thinner axis everywhere, or inventing a component mapping for engines that never agreed to one.
  *
- *   What the two paths DO share is everything about honest reporting, and they share it by calling the same functions:
+ *   What the two paths do share is everything about honest reporting, and they share it by calling the same functions:
  *   the input set and its denominators, {@link describeObservedRate}'s bound-carrying sentence, the bucketing behind
  *   the strata, the provenance block. A number that differs between the paths differs because the measurement does.
  */
@@ -111,7 +111,7 @@ const ABORT_AFTER_CONSECUTIVE_FAILURES = 5
  *
  * The coarsest of the three, and matched to {@link EQUIVALENCE_THRESHOLD_KM} so the graded axis is the one the parity
  * claim is made on. It is also the only defensible default for a set whose truth points are mostly city centroids:
- * grading at one kilometre against a 25 km-tolerance truth row measures the truth's precision, not the arm's.
+ * grading at one kilometre against a 25 km-tolerance truth row measures the truth's precision rather than the arm's.
  */
 const DEFAULT_GRADE_THRESHOLD_KM = EQUIVALENCE_THRESHOLD_KM
 
@@ -132,7 +132,7 @@ export interface CompareDeps {
 	 * How an external arm's client is built.
 	 *
 	 * The transport interface, and the only one: a test replaces the Axios adapter through this, so the real client, its
-	 * pacing and its response parsing all still run against a scripted wire. A test that stubbed the ANSWER instead would
+	 * pacing and its response parsing all still run against a scripted wire. A test that stubbed the answer instead would
 	 * be asserting its own hypothesis about the protocol.
 	 */
 	createExternalClient?: (arm: ExternalArm) => ExternalGeocoderClient
@@ -269,7 +269,7 @@ async function compareMailwomanArms(
 		ungradeable: rows.filter((row) => row.grade === "ungradeable").length,
 	}
 
-	// A diff is not a verdict (§5.5). With no truth anywhere in the set, the change count is ALL this can say.
+	// A diff is not a verdict (§5.5). With no truth anywhere in the set, the change count is all this can say.
 	const mode = resolveGradeMode(options.grade, gradeable.length > 0, "no row in this set carries expectations")
 
 	const test = significance(
@@ -289,7 +289,7 @@ async function compareMailwomanArms(
 	// §5.4, learned the hard way on 2026-08-16: this tool's first real run reported "0 of 558 differed —
 	// tight enough to read as a real absence" for a pin that was never reaching a decode at all
 	// (`geocode-session`'s parseDeps omitted `fst`, and the path parses once up front). A zero-difference
-	// result has TWO readings and the number cannot separate them, so it must not be relayed as one.
+	// result has two readings and the number cannot separate them, so it must not be relayed as one.
 	const zeroDifferenceCaveat = !differed.length
 		? "A zero here has two readings — the pin moved nothing, or the pin never ran. This comparison " +
 			"cannot separate them. Confirm participation with mwdev_trace on an input the pin should move " +
@@ -309,7 +309,7 @@ async function compareMailwomanArms(
 		isolationSentence(confounds, zeroDifferenceCaveat),
 		set.why ? `Hand-picked because: ${set.why}` : "",
 	]
-		.filter((sentence) => sentence.length > 0)
+		.filter((sentence) => sentence.length)
 		.join(" ")
 
 	// Both arms are recorded under distinct labels: they are two configurations of the same engine, so `mailwoman` alone
@@ -362,7 +362,7 @@ async function compareMailwomanArms(
 		significance: test,
 		power: changeReading,
 		...(options.stratifyBy ? { strata: stratify(rows, options.stratifyBy) } : {}),
-		// Complete, never truncated. The 837-row FST run produced 24 changed rows; that is the evidence, and a
+		// Complete, never truncated. The 837-row FST run produced 24 changed rows. that is the evidence, and a
 		// "first 30" cap would have hidden the tail on a larger one.
 		rows_changed: differed,
 		warnings: confounds.warnings,
@@ -394,7 +394,7 @@ async function mailwomanRunner(
 /**
  * A mailwoman result as an arm answer.
  *
- * Reads the GAUNTLET projection rather than the raw `GeocodeResult`, so the two-mailwoman path — which already holds
+ * Reads the gauntlet projection rather than the raw `GeocodeResult`, so the two-mailwoman path — which already holds
  * `GauntletResult`s — and the cross-engine path answer through one function. Two projections of the same run is how a
  * recorded arm and the live arm it was recorded from stop agreeing.
  */
@@ -462,13 +462,13 @@ function oracleRunner(
 /**
  * A stored run replayed row by row.
  *
- * MATCHED BY INPUT STRING, not by row id. A row id is only meaningful inside the corpus that minted it, and a recorded
- * arm exists to compare across time — the board may have gained rows, or the comparison may be against a different set
- * entirely. The input string is the one key that means the same thing in both runs.
+ * Matched BY input string rather than by row id. A row id is only meaningful inside the corpus that minted it, and a
+ * recorded arm exists to compare across time — the board may have gained rows, or the comparison may be against a
+ * different set entirely. The input string is the one key that means the same thing in both runs.
  *
  * A row the stored run does not carry is a no-result with that reason rather than a throw, so a set that grew by three
- * rows is still readable on the rest. How many were missing is counted BEFORE the run and warned about, not discovered
- * from the miss rate afterwards.
+ * rows is still readable on the rest. How many were missing is counted before the run and warned about rather than
+ * discovered from the miss rate afterwards.
  */
 async function recordedRunner(spec: RecordedArm, set: ResolvedInputSet, dir: PathBuilderLike): Promise<ArmRunner> {
 	const run = await getRun(spec.runID, dir)
@@ -484,7 +484,7 @@ async function recordedRunner(spec: RecordedArm, set: ResolvedInputSet, dir: Pat
 	const byInput = new Map([...replayIndex(run, spec.arm).values()].map((answer) => [answer.input, answer]))
 	const missing = set.inputs.filter((item) => !byInput.has(item.input)).length
 
-	// The confound guard is not relaxed for a recorded arm: comparing across a tree change IS comparing across a tree
+	// The confound guard is not relaxed for a recorded arm: comparing across a tree change is comparing across a tree
 	// change, and `tree_fingerprint` has to be a declared variable for the isolation reading to be `clean`.
 	const warnings = [
 		`This arm is a replay of run ${run.run_id}, recorded at ${run.created_at} against tree ` +
@@ -559,7 +559,7 @@ async function externalRunner(
  * A comparison with at least one arm that is not mailwoman.
  *
  * Everything here is the pre-registered protocol and nothing here is a choice made after seeing the numbers: the same
- * raw query to both arms, top-1, haversine, 1/5/25 km, and a no-result — empty OR failed — a miss at every threshold.
+ * raw query to both arms, top-1, haversine, 1/5/25 km, and a no-result — empty or failed — a miss at every threshold.
  */
 async function compareAcrossEngines(
 	registry: EngineRegistryLike,
@@ -657,7 +657,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 				)
 			}
 
-			// The protocol counts a query failure as a miss at every threshold. It stays a miss WITH its reason
+			// The protocol counts a query failure as a miss at every threshold. It stays a miss with its reason
 			// attached, and the error list keeps the count separately, so a reader can see how much of a miss rate is
 			// failure rather than absence.
 			return { lat: null, lon: null, label: null, resultType: null, noResultReason: `query failed: ${message}` }
@@ -671,7 +671,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 	for (const item of set.inputs) {
 		const a = await ask(runnerA, "a", item)
 		const b = await ask(runnerB, "b", item)
-		// The unified field, not `seed.expectLat`: only the board has a SeedCase, and a panel row's truth would
+		// The unified field rather than `seed.expectLat`: only the board has a SeedCase, and a panel row's truth would
 		// otherwise be invisible here. `input-sets.ts` populates it for every corpus that carries one.
 		const truthLat = item.truthLat ?? null
 		const truthLon = item.truthLon ?? null
@@ -686,9 +686,9 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 			address_kind: item.addressKind,
 			status: item.status,
 			differed: armsDiffered(a, b, distanceA, distanceB, hasTruth, item.toleranceM ?? null),
-			// Tri-state, and separate from `differed` ON PURPOSE: identity comparison runs only when BOTH
+			// Tri-state, and separate from `differed` on purpose: identity comparison runs only when both
 			// arms state a place-identity chain (absent = incomparable, never "same"), and it does not feed
-			// `arms_differed_on` — a battery pinned on the coordinate-level zero-diff contract keeps its
+			// `arms_differed_on` — a battery pinned on the coordinate-level zero-diff interface keeps its
 			// meaning, while a wrong-instance swap under a stable coordinate becomes visible beside it.
 			...(a.place_ids && b.place_ids ? { identity_differed: a.place_ids.join(">") !== b.place_ids.join(">") } : {}),
 			...(tierDiffered(a, b) === undefined ? {} : { tier_differed: tierDiffered(a, b) }),
@@ -706,7 +706,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 
 	const graded = rows.filter((row) => row.grade !== "ungradeable")
 	const differed = rows.filter((row) => row.differed)
-	// The emitted change list also carries identity-only and tier-only rows (differed stays coordinate-level; the
+	// The emitted change list also carries identity-only and tier-only rows (differed stays coordinate-level. the
 	// row's own identity_differed / tier_differed flag says which kind of change a reader is looking at).
 	const changedRows = rows.filter((row) => row.differed || row.identity_differed === true || row.tier_differed === true)
 
@@ -781,7 +781,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 		confounds.warnings.join(" "),
 		set.why ? `Hand-picked because: ${set.why}` : "",
 	]
-		.filter((sentence) => sentence.length > 0)
+		.filter((sentence) => sentence.length)
 		.join(" ")
 
 	const run: StoredRun = {
@@ -883,7 +883,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 			ungradeable: rows.filter((row) => row.grade === "ungradeable").length,
 		},
 		thresholds,
-		// A significance test and an equivalence claim are both VERDICTS, so a diff-only result carries neither. Emitting
+		// A significance test and an equivalence claim are both verdicts, so a diff-only result includes neither. Emitting
 		// them over an empty graded set would print a test at n = 0, which reads as a test that was run.
 		significance: mode === "truth" ? test : null,
 		equivalence: mode === "truth" ? equivalence : null,

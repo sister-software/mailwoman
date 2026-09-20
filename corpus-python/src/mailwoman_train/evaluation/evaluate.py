@@ -116,7 +116,7 @@ def golden_to_bio_labels(
 def decode_components(pieces: list[PieceSpan], pred_label_ids: list[int], raw: str) -> dict[str, str]:
     """Convert a per-piece predicted label sequence into a {tag: surface_string} dict.
 
-    For each contiguous run of ``B-TAG`` + ``I-TAG`` pieces, slice ``raw`` from the run's
+    For each contiguous run of ``B-TAG`` + ``I-TAG`` pieces, take the substring of ``raw`` from the run's
     first char_begin to last char_end. Returns the first occurrence per tag (consistent with
     the golden set's single-value-per-tag schema).
     """
@@ -189,8 +189,8 @@ def run_eval(
         probs = torch.softmax(logits, dim=-1)
         # Confidences come from emission softmax regardless of decoder. With CRF, the
         # decoded sequence may diverge from per-token argmax — confidence here reflects
-        # the model's per-token belief, not the path's marginal likelihood. That's the
-        # historical eval semantic; calibration plots stay comparable across v0.2.0 +
+        # the model's per-token belief rather than the path's marginal likelihood. That's the
+        # historical eval semantic. calibration plots stay comparable across v0.2.0 +
         # v0.3.0 with this read.
         pred_confs = probs.max(dim=-1).values.tolist()
 

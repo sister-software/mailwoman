@@ -4,12 +4,12 @@
 /**
  *   Read a promotion-eval run's own artifacts.
  *
- *   Unlike the gauntlet, the eval writes STRUCTURED output: `verdict.json` carries every floor with its reading, and
+ *   Unlike the gauntlet, the eval writes structured output: `verdict.json` carries every floor with its reading, and
  *   `provenance.txt` records each graded artifact's md5 and dynamic-quant fingerprint. So nothing here parses prose for
  *   a number — the log is read only for the two things that exist nowhere else, the lore-guard refusal and the
  *   pre-filled ledger command.
  *
- *   This module adds no metric and moves no floor. The eval is the release authority; a floor relaxed here would be the
+ *   This module adds no metric and moves no floor. The eval is the release authority. a floor relaxed here would be the
  *   silent eval drift the eval discipline exists to catch.
  */
 
@@ -26,7 +26,7 @@ export interface FloorReading {
 	/**
 	 * The measured value, or `null` when the battery produced none.
 	 *
-	 * `null` is NOT zero and not a failure to clear the bar — it is a metric that was never measured, and the eval marks
+	 * `null` is not zero and not a failure to clear the bar — it is a metric that was never measured, and the eval marks
 	 * it failing precisely so an unmeasured floor cannot pass by default. Reported separately from `pass` so a reader can
 	 * tell "missed the bar" from "never ran".
 	 */
@@ -41,12 +41,12 @@ export interface FloorReading {
 
 export interface EvalReport {
 	/**
-	 * `PASS` / `FAIL` from `verdict.json`, or `null` when the file is absent — a run that crashed before assembling one.
+	 * `pass` / `fail` from `verdict.json`, or `null` when the file is absent — a run that crashed before assembling one.
 	 */
 	verdict: string | null
 	label: string | null
 	/**
-	 * WHICH ARTIFACT the floors were read from, verbatim from the verdict.
+	 * Which artifact the floors were read from, verbatim from the verdict.
 	 *
 	 * Surfaced at the top rather than buried because it is a documented confound: a package-shaped cache's `model.onnx`
 	 * is whatever the package ships — int8, in every shipped weights package — and the verdict said `fp32` for a
@@ -62,9 +62,9 @@ export interface EvalReport {
 	 */
 	provenance: string | null
 	/**
-	 * The pre-filled `eval ledger-append` command the eval prints on a PASS, or `null`.
+	 * The pre-filled `eval ledger-append` command the eval prints on a pass, or `null`.
 	 *
-	 * Surfaced, never RUN. Appending to the ledger is a repo write and a claim about a shipped version; the eval runs on
+	 * Surfaced, never RUN. Appending to the ledger is a repo write and a claim about a shipped version. the eval runs on
 	 * candidates that may never ship. See {@link EvalReport.ledger_note}.
 	 */
 	ledger_command: string | null
@@ -157,7 +157,7 @@ export async function readEvalReport(outDir: string, stdout: string, stderr: str
 
 	for (const [index, line] of lines.entries()) {
 		if (!ledgerCommand && line.includes(LEDGER_MARKER)) {
-			// The command spans a couple of continued lines; take them until one does not end in a backslash.
+			// The command spans a couple of continued lines. take them until one does not end in a backslash.
 			const collected = [line.trim()]
 
 			for (let next = index + 1; next < lines.length && collected.at(-1)!.endsWith("\\"); next++) {
@@ -223,7 +223,7 @@ export function summarizeEvalReport(report: EvalReport): string {
  * Artifacts the card itself declares, beyond the three the layout check covers.
  *
  * Read from `files_md5` rather than from a list here, so a card that starts declaring a new sibling is checked without
- * anyone remembering to update this file. `$comment` is a documentation key, not an artifact.
+ * anyone remembering to update this file. `$comment` is a documentation key rather than an artifact.
  */
 async function declaredArtifacts(packageDir: PathBuilderLike): Promise<string[]> {
 	const cardPath = resolvePath(packageDir, "model-card.json")
@@ -243,15 +243,15 @@ async function declaredArtifacts(packageDir: PathBuilderLike): Promise<string[]>
  * Check that a `--weights-cache` root has the layout the eval expects, and say what is missing when it does not.
  *
  * The eval's own failure here is deliberate and stays in place: `promotion-eval.ts` names the package directory rather
- * than calling `resolveWeights({cacheRoot})` precisely so a mis-staged candidate dies on an ENOENT instead of falling
- * through to the installed workspace package — which in this repo always resolves, and would grade the SHIPPED model
- * under the candidate's label. This check runs BEFORE the spawn only so the reader learns the expected shape from a
- * sentence rather than from a stack trace; it never substitutes for that guard.
+ * than calling `resolveWeights({cacheRoot})` precisely so a mis-staged candidate dies on an enoent instead of falling
+ * through to the installed workspace package — which in this repo always resolves, and would grade the shipped model
+ * under the candidate's label. This check runs before the spawn only so the reader learns the expected shape from a
+ * sentence rather than from a stack trace. it never substitutes for that guard.
  *
  * The layout comes from `weightsCachePackageDir`, the resolver's own function, rather than a re-typed
  * `node_modules/@mailwoman/…` literal — the 2026-08-06 triage lesson recorded at the eval's own call site.
  *
- * @returns `kind` distinguishes a wrong-shaped root from a correctly-shaped one that is under-staged; the two need
+ * @returns `kind` distinguishes a wrong-shaped root from a correctly-shaped one that is under-staged. the two need
  *   different fixes and one message for both sends the reader to the wrong place. `paths` is empty when well-formed.
  */
 export async function missingWeightsCacheArtifacts(
@@ -274,7 +274,7 @@ export async function missingWeightsCacheArtifacts(
 	// Without a card there is nothing to check the rest against, and the caller already has a fatal answer.
 	if (missingRequired.length) return { kind: "wrong-shape", paths: missingRequired }
 
-	// A cache that has the three required files but is missing what its OWN card declares is the #1516 failure with no
+	// A cache that has the three required files but is missing what its own card declares is the #1516 failure with no
 	// signal of its own: the channel resolves off, the run scores several cases lower, and the operator reads a model
 	// regression. Measured here on 2026-08-16 — a hand-staged three-file cache graded to completion and reported
 	// `us.country_homograph_f1` at 0.0 against a 64.8 floor, which reads exactly like a collapsed country channel.

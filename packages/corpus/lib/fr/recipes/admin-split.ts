@@ -2,31 +2,31 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `fr-admin-split` slice recipe — the FR admin-split coverage slice (night 2026-06-19,
- *   surpass-v1.5.0). Teaches the model to SPLIT the département out of the locality on
+ *   `fr-admin-split` recipe — the FR admin-split coverage recipe (night 2026-06-19,
+ *   surpass-v1.5.0). Teaches the model to split the département out of the locality on
  *   bare/space/comma-delimited French place rows — the admin-deciding failure class the pre-GPU
  *   self-validation proved moves the resolved coordinate (collision communes −61%; see
- *   docs/articles/evals/experiments/2026-06-19-fr-admin-split-prevalidation.md). Ported from
- *   scripts/build-fr-admin-split-slice.mjs.
+ *   docs/articles/evals/experiments/2026-06-19-fr-admin-split-prevalidation.md). Ported from the
+ *   root build script it replaced.
  *
  *   Failure shapes (the model currently mis-handles all of these):
  *
  *   - `Thauron, Creuse` → région dropped to null (the comma+full-name miss)
  *   - `Montredon, Lozère` → région = "ère" (the diacritic subword split, #727)
- *   - (AU analog) `CANBERRA ACT` → the space-delimited admin fuse
+ *   - (AU analog) `canberra ACT` → the space-delimited admin fuse
  *
  *   The département is the essential admin unit for FR postal geography and maps to the `region`
- *   component tag in our schema. We derive it DETERMINISTICALLY from the real postcode via codex
+ *   component tag in our schema. We derive it deterministically from the real postcode via codex
  *   `departementForCodePostal` (first two digits = département) — salvage-first, no re-derived
  *   table.
  *
- *   Data (`--communes`, opts.communes): REAL BAN (Base Adresse Nationale) commune+postcode+coord
+ *   Data (`--communes`, opts.communes): real BAN (Base Adresse Nationale) commune+postcode+coord
  *   tuples, one per line, TAB-separated `commune <TAB> postcode <TAB> lon <TAB> lat`. Build the
- *   input TSV once from the BAN staging CSV (see the legacy script header). Anchor-ON by
- *   construction: rows carry a REAL postcode token in `raw` + a `postcode` component, so the
+ *   input TSV once from the BAN staging CSV (see the legacy script header). Anchor-on by
+ *   construction: rows carry a real postcode token in `raw` + a `postcode` component, so the
  *   training loader paints the anchor feature onto that span automatically. The trailing-postcode
- *   anchor REINFORCES the FR split (FR postcode is trailing, unlike German PLZ-leading — the v0.9.2
- *   scar is positional, not universal).
+ *   anchor reinforces the FR split (FR postcode is trailing, unlike German PLZ-leading — the v0.9.2
+ *   scar is positional rather than universal).
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -71,7 +71,7 @@ async function readCommunes(path: string): Promise<CommuneRow[]> {
 	const rows: CommuneRow[] = []
 
 	// The TSV is headerless — every line is a commune tuple — so `header: false` keeps row 1 instead of
-	// spending it on column names. Source is repo-generated (LF); even under CRLF only the trailing `lat`
+	// spending it on column names. Source is repo-generated (LF); even under crlf only the trailing `lat`
 	// column carries a CR, and it's consumed via `Number()` (whitespace-trimming), so it stays harmless.
 	for await (const [commune, postcode, lon, lat] of CSVSpliterator.fromAsync(path, {
 		columnDelimiter: Delimiters.Tab,
@@ -100,8 +100,8 @@ const CANONICAL_PC_FIRST_CUTOFF = 0.85
 const APPEND_COUNTRY_SHARE = 0.2
 
 /**
- * Render one admin-split variant. The CORE teaching signal: the département, even as a full word after a comma or a
- * space, is `region` — never folded into `locality`. Variants 1-3 are the failure class; 4-5 are canonical-FR
+ * Render one admin-split variant. The core teaching signal: the département, even as a full word after a comma or a
+ * space, is `region` — never folded into `locality`. Variants 1-3 are the failure class. 4-5 are canonical-FR
  * preservation so the model doesn't over-fire region on every trailing token (and the bare commune still resolves).
  */
 function render(random: () => number, c: CommuneRow): AdminSplitVariant {
@@ -112,30 +112,30 @@ function render(random: () => number, c: CommuneRow): AdminSplitVariant {
 	let out: AdminSplitVariant
 
 	if (r < BARE_COMMA_CUTOFF) {
-		// 1. bare comma, NO postcode — the Thauron/#727 shape (anchor off)
+		// 1. bare comma, no postcode — the Thauron/#727 shape (anchor off)
 		out = { raw: `${loc}, ${dep}`, components: { locality: loc, region: dep }, order: "bare-comma" }
 	} else if (r < BARE_COMMA_PC_CUTOFF) {
-		// 2. bare comma + postcode — anchor ON
+		// 2. bare comma + postcode — anchor on
 		out = {
 			raw: `${loc}, ${dep} ${pc}`,
 			components: { locality: loc, region: dep, postcode: pc },
 			order: "bare-comma-pc",
 		}
 	} else if (r < SPACE_PC_CUTOFF) {
-		// 3. space-delimited admin (the AU `CANBERRA ACT` fuse applied to FR) — anchor ON
+		// 3. space-delimited admin (the AU `canberra ACT` fuse applied to FR) — anchor on
 		out = { raw: `${loc} ${dep} ${pc}`, components: { locality: loc, region: dep, postcode: pc }, order: "space-pc" }
 	} else if (r < CANONICAL_PC_FIRST_CUTOFF) {
-		// 4. canonical FR postcode-first (NO département) — preservation, anchor ON
+		// 4. canonical FR postcode-first (no département) — preservation, anchor on
 		out = { raw: `${pc} ${loc}`, components: { postcode: pc, locality: loc }, order: "canonical-pc-first" }
 	} else {
-		// 5. commune + postcode (NO département) — preservation, anchor ON
+		// 5. commune + postcode (no département) — preservation, anchor on
 		out = { raw: `${loc} ${pc}`, components: { locality: loc, postcode: pc }, order: "commune-pc" }
 	}
 
-	// fr.country preservation (the v1.8.0 #728 finding): the v1.8.0 slice's bare rows carried NO country
+	// fr.country preservation (the v1.8.0 #728 finding): the v1.8.0 recipe output's bare rows carried no country
 	// token, so the model under-emitted country on FR (fr.country −3.5pp). ~20% of rows now append an
-	// explicit "France" + a `country` component — the model relearns to emit country WHEN the token is
-	// present without over-firing it on the (still-majority) country-less rows. Substring invariant holds.
+	// explicit "France" + a `country` component — the model relearns to emit country when the token is
+	// present without over-firing it on the (still-majority) country-less rows. Substring all values satisfy the required relationship.
 	if (random() < APPEND_COUNTRY_SHARE) {
 		out = {
 			raw: `${out.raw}, France`,
@@ -148,8 +148,8 @@ function render(random: () => number, c: CommuneRow): AdminSplitVariant {
 }
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const frAdminSplitRecipe: CorpusRecipe = {
 	name: "fr-admin-split",
@@ -159,7 +159,7 @@ export const frAdminSplitRecipe: CorpusRecipe = {
 		{ flag: "--communes <tsv>", description: "BAN commune+postcode+coord TSV. Default /tmp/reg/fr-communes.tsv" },
 	],
 	async run(opts, write) {
-		// Legacy build-fr-admin-split-slice.mjs seeded `mulberry32(opts.seed)`.
+		// The legacy build script seeded `mulberry32(opts.seed)`.
 		const random = makeMulberry32(opts.seed)
 		const count = opts.count ?? 60_000
 		const source = opts.sourceName ?? "synth-fr-admin-split"
@@ -193,7 +193,7 @@ export const frAdminSplitRecipe: CorpusRecipe = {
 			}
 
 			if (opts.golden) {
-				// Held-out eval slice for the centroid check — carries the truth coordinate.
+				// Held-out eval set for the centroid check — carries the truth coordinate.
 				write(stringifyJSON({ raw, components, country: "FR", lat: Number(base.lat), lon: Number(base.lon) }))
 
 				emitted++

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The license message's copy, once, as sections: the text body and the HTML body render the same list, so neither
+ *   The license message's copy, once, as sections: the text body and the html body render the same list, so neither
  *   can say something the other does not. It walks the buyer from the key to what comes after it: install it on each
  *   machine, let the subscription renew and fetch the renewed key, change the card or cancel at the portal, and where
  *   to write. It never names an amount or a Stripe id.
@@ -37,7 +37,7 @@ export function licenseEmailPreview(message: LicenseEmail): string {
 
 /**
  * The command that installs the key on a machine: with the secret on the first message, so renewals can be fetched from
- * there; the token alone after.
+ * there. the token alone after.
  */
 export function adoptCommand(message: LicenseEmail): string {
 	return message.refreshSecret

@@ -5,14 +5,15 @@
  *   `mailwoman placer eval <kind>` — the coarse placer (#244) eval suite, one enum command. Kinds:
  *   `in-distribution` (accuracy + per-class + ECE + multi-script abstention), `openset` (the M2
  *   post-hoc open-set score Pareto), `latin-offmap` (the M3 Latin off-map handled-rate), and
- *   `quant-compare` (int8 vs fp32 check). Every kind emits its report to stdout; all need the
- *   dataset + model artifacts locally — operator-run, not CI.
+ *   `quant-compare` (int8 vs fp32 check). Every kind emits its report to stdout. all need the
+ *   dataset + model artifacts locally — operator-run rather than CI.
  */
 
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
+	type OptionsOf,
 	reportToStderr,
 	useCommandTask,
 } from "#cli-kit"
@@ -22,7 +23,7 @@ export const description = "Evaluate the coarse placer (#244): in-distribution |
 const kinds = ["in-distribution", "openset", "latin-offmap", "quant-compare"] as const
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "eval",
@@ -39,15 +40,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	model?: string
-	data?: string
-	abstain?: number
-	fitPerClass?: number
-	outMd?: string
-	fp32?: string
-	int8?: string
-}
+type Options = OptionsOf<typeof spec>
 
 type Kind = (typeof kinds)[number]
 
@@ -87,7 +80,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 	}
 }
 
-const PlacerEval: ParsedCommandComponent<Options, [Kind]> = ({ options, args }) => {
+const PlacerEval: CommandComponent<typeof spec, [Kind]> = ({ options, args }) => {
 	const state = useCommandTask(async () => await runKind(args[0], options))
 
 	return <CommandTaskResult state={state} />

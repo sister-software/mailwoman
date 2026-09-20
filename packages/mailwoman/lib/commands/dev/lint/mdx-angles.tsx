@@ -3,7 +3,7 @@
 
 /**
  *   `mailwoman dev lint mdx-angles [files...]` — raw-angle-bracket MDX lint. A bare `<55` or
- *   `{word` in docs prose is a build-breaking MDX-JSX parse error. Checks STAGED docs markdown by
+ *   `{word` in docs prose is a build-breaking MDX-JSX parse error. Checks staged docs markdown by
  *   default (the pre-commit mode), or the explicit paths when given. Exits 1 when any file is
  *   flagged.
  */
@@ -19,7 +19,7 @@ import {
 } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "mdx-angles",

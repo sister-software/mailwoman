@@ -7,10 +7,10 @@
  *   the postcode up in the databases, take the centroid for that country, and measure the haversine
  *   distance to the true point.
  *
- *   This measures the parent-borrow backfill, not rooftop accuracy. A backfilled centroid is the
- *   parent LOCALITY's centre, so the expected distance is "how far is this address from the middle
+ *   This measures the parent-borrow backfill rather than rooftop accuracy. A backfilled centroid is the
+ *   parent locality's centre, so the expected distance is "how far is this address from the middle
  *   of its town" — a few km in a city, more in a large rural postcode. That is exactly the
- *   resolution a "which city/region" anchor needs; the eval just confirms the borrow lands in the
+ *   resolution a "which city/region" anchor needs. the eval just confirms the borrow lands in the
  *   right town.
  *
  *   Run: node packages/mailwoman/lib/dev-tools/postcode/anchor-accuracy.run.ts\
@@ -69,7 +69,7 @@ function parseArgs(): Args {
 
 /**
  * One eval row as this probe reads it. The three postcode spellings and the top-level coordinates are all optional
- * because the eval files it runs against were written by different generations of the harness; the loop skips a row
+ * because the eval files it runs against were written by different generations of the harness. the loop skips a row
  * that carries none of them.
  */
 interface EvalRow {

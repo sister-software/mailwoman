@@ -6,14 +6,14 @@
  *   hash, the freeze-record loader that refuses a ruler whose hash has moved, and the artifact-identity
  *   readers every probe receipt carries.
  *
- *   ONE LOADER, THREE RULERS. Each pre-registration keeps its own definition type, its own audit and its
- *   own committed JSON, but the refusal ladder is the contract they share: the freeze record must name
+ *   one loader, three rulers. Each pre-registration keeps its own definition type, its own audit and its
+ *   own committed JSON, but the refusal ladder is the interface they share: the freeze record must name
  *   this definition and version, the definition's content hash must equal the frozen hash, and the audit
  *   must be clean. A caller never receives a definition it may only partly trust.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { sha256Hex } from "@mailwoman/core/hash"
+import { md5File, sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
@@ -32,7 +32,7 @@ export function preregistrationPath(directory: string, name: string): string {
 /**
  * Canonical JSON for hashing: keys sorted at every depth, array order preserved, no insignificant whitespace.
  *
- * The hash covers CONTENT rather than bytes so a formatter pass cannot break the freeze and a reordered key cannot slip
+ * The hash covers content rather than bytes so a formatter pass cannot break the freeze and a reordered key cannot slip
  * past it. Array order is meaningful — row order is reported order — so it is never sorted.
  */
 export function canonicalJSON(value: unknown): string {
@@ -56,7 +56,7 @@ export function definitionContentHash(definition: unknown): string {
 
 /**
  * The freeze record every pre-registration commits beside its definition: the definition's identity and the content
- * hash that pins it. The identity field's NAME varies per ruler (`probeID`, `decisionID`), so the loader takes it as a
+ * hash that pins it. The identity field's name varies per ruler (`probeID`, `decisionID`), so the loader takes it as a
  * parameter rather than declaring it here.
  */
 export interface FrozenDefinitionFreezeRecord {
@@ -79,7 +79,7 @@ export interface LoadFrozenDefinitionOptions<T> {
 	 */
 	idField: keyof T & string
 	/**
-	 * The definition's own executability audit; any problem refuses the load.
+	 * The definition's own executability audit. any problem refuses the load.
 	 */
 	audit: (definition: T) => string[]
 }
@@ -208,6 +208,12 @@ interface ModelCard {
  */
 export interface WeightsIdentity {
 	weightsLocale: string
+	/**
+	 * Md5 of the resolved `model.onnx`, which is what distinguishes two arms. A staged candidate's `model-card.json` can
+	 * be a symlink into the shared data root, so two caches holding different graphs read the same `weightsVersion`; the
+	 * bytes never do.
+	 */
+	weightsModelMD5: string
 	weightsModelPath: string
 	weightsVersion: string
 }
@@ -221,14 +227,20 @@ export async function readWeightsIdentity(options: WeightsIdentityOptions): Prom
 	const locale = options.locale ?? "en-US"
 	const resolved = await resolveWeights({ locale, cacheRoot: options.weightsCacheRoot })
 	const cardPath = resolved.modelCardPath ?? resolved.baseModelCardPath
+	const weightsModelMD5 = await md5File(resolved.modelPath)
 
 	if (!cardPath) {
-		return { weightsLocale: locale, weightsModelPath: resolved.modelPath, weightsVersion: "no model-card resolved" }
+		return {
+			weightsLocale: locale,
+			weightsModelMD5,
+			weightsModelPath: resolved.modelPath,
+			weightsVersion: "no model-card resolved",
+		}
 	}
 
 	const card = await readLocalJSONFile<ModelCard>(cardPath)
 
-	return { weightsLocale: locale, weightsModelPath: resolved.modelPath, weightsVersion: card.version }
+	return { weightsLocale: locale, weightsModelMD5, weightsModelPath: resolved.modelPath, weightsVersion: card.version }
 }
 
 /**

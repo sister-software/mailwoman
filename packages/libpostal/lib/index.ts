@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `@mailwoman/libpostal` — a libpostal-compatible parse/expand HTTP API over Mailwoman's neural
+ *   `@mailwoman/libpostal` — a libpostal-compatible parse/expand http API over Mailwoman's neural
  *   address parser. The lowest-dependency drop-in: `/parse` is a serializer over the BIO tagger's
  *   labeled spans, no gazetteer or resolver needed.
  *

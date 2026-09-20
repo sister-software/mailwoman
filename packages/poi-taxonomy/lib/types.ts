@@ -3,8 +3,8 @@
 
 /**
  *   Types for the POI category taxonomy. Categories come from two namespaces: the Overture Places
- *   `taxonomy` snapshot (shipped-tier data; the old `categories` property is dead as of Overture's
- *   Sept 2026 release, so ONLY the new property is modeled), and the `mailwoman-infra` extension
+ *   `taxonomy` snapshot (shipped-tier data. the old `categories` property is dead as of Overture's
+ *   Sept 2026 release, so only the new property is modeled), and the `mailwoman-infra` extension
  *   for street-furniture/infrastructure classes that exist only in ODbL sources (fire hydrants,
  *   post boxes) — recognized by the lexicon even when no build-local layer is present.
  */
@@ -28,7 +28,7 @@ export function toPOICategoryID(id: string): POICategoryID {
  */
 export const CategorySource = {
 	/**
-	 * The Overture Places `taxonomy` snapshot (CDLA-Permissive-2.0).
+	 * The Overture Places `taxonomy` snapshot (cdla-Permissive-2.0).
 	 */
 	Overture: "overture",
 	/**
@@ -49,7 +49,7 @@ export interface CategoryRecord {
 	 */
 	label: string
 	/**
-	 * Ordered ancestry, top level first, ENDING with this category's own id.
+	 * Ordered ancestry, top level first, ending with this category's own id.
 	 */
 	hierarchy: POICategoryID[]
 	/**
@@ -58,15 +58,15 @@ export interface CategoryRecord {
 	basicLabel: string | null
 	/**
 	 * The OSM tag this category maps to, `key=value` form (e.g. `amenity=hospital`) — consumed by the OverpassQL export
-	 * emitter. Curated alongside the category; NOT an Overture field.
+	 * emitter. Curated alongside the category. not an Overture field.
 	 */
 	osmTag?: string
 	source: CategorySource
 	/**
-	 * Overture `taxonomy.primary` LEAF ids that roll up into this canonical category — i.e. the values a built `poi.db`
+	 * Overture `taxonomy.primary` leaf ids that roll up into this canonical category — i.e. the values a built `poi.db`
 	 * actually stores. The seed taxonomy keys categories by curated ids (`supermarket`, `trail`), but the db stores
 	 * Overture leaves (`grocery_store`, `hiking_trail`, …); this is the one-to-many translation layer between the two
-	 * namespaces. Omitted/empty ⇒ the id IS its own probe id (identity — 21 of 23 seeds rely on that, e.g. `hospital` =
+	 * namespaces. Omitted/empty ⇒ the id is its own probe id (identity — 21 of 23 seeds rely on that, e.g. `hospital` =
 	 * Overture `hospital`). `mailwoman-infra` categories carry no Overture leaf and abstain build-local, so they leave
 	 * this omitted too.
 	 */
@@ -101,7 +101,7 @@ export interface SynonymEntry {
 export interface POITaxonomyTable {
 	version: string
 	/**
-	 * Overture release the category snapshot was taken from; null until Plan 3 lands the full snapshot.
+	 * Overture release the category snapshot was taken from. null until Plan 3 lands the full snapshot.
 	 */
 	overtureRelease: string | null
 	categories: CategoryRecord[]
@@ -165,7 +165,7 @@ export interface POIBrandSourceLayer {
  */
 export interface POIBrandTable {
 	/**
-	 * The brand TABLE's own schema/data version — independent of {@link POIBrandSourceLayer.version}.
+	 * The brand table's own schema/data version — independent of {@link POIBrandSourceLayer.version}.
 	 */
 	version: string
 	sourceLayer: POIBrandSourceLayer

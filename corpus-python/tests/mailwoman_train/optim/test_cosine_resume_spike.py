@@ -7,7 +7,7 @@ Under cosine, the first resumed optimizer step runs at PEAK LR before the next
 ``scheduler.step()`` restores the tail value: measured 8.808e-06 → 5.000e-04 → 8.805e-06 at
 step 55k on v4.3.3 — a 56.8× one-step spike into a nearly-converged model.
 
-Contract pinned here (the repair): after restamp, the group's current LR equals the live
+Interface pinned here (the repair): after restamp, the group's current LR equals the live
 base times the SCHEDULE MULTIPLIER AT THE RESUMED STEP — i.e. an unchanged config resumes at
 exactly the checkpoint's tail LR, and a deliberate base-LR change scales the tail
 proportionally. The restamp must never hand the raw base to the next optimizer step mid-run.
@@ -65,8 +65,8 @@ def _resume(tmp_path, live_lr: float) -> tuple[torch.optim.AdamW, object, float]
 
 
 def test_unchanged_config_resumes_at_the_checkpoint_tail_lr(tmp_path) -> None:
-    """Same config on both sides: the FIRST resumed optimizer step must run at the LR an
-    uninterrupted run would use — the checkpoint's tail value, not the peak."""
+    """Same config on both sides: the first resumed optimizer step must run at the LR an
+    uninterrupted run would use — the checkpoint's tail value rather than the peak."""
     optim2, _sched2, checkpoint_lr = _resume(tmp_path, live_lr=PEAK_LR)
 
     assert checkpoint_lr < PEAK_LR / 10  # sanity: we really are deep in the tail

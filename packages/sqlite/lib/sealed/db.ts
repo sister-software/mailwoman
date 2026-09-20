@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The sealed-artifact invariant: every SQLite DB a build produces is a READ-ONLY asset. `sealDatabase`
+ *   The sealed-artifact invariant: every SQLite DB a build produces is a read-only asset. `sealDatabase`
  *   is the last step of every builder — checkpoint, freeze the journal, chmod 0444. `openBuiltClient`
- *   (`@mailwoman/sqlite/sealed`) is how anything opens a data artifact; a write-mode open of a sealed
- *   file throws a NAMED error pointing at the rebuild command instead of a cryptic SQLITE_READONLY. Unsealing is deliberate and
+ *   (`@mailwoman/sqlite/sealed`) is how anything opens a data artifact. a write-mode open of a sealed
+ *   file throws a named error pointing at the rebuild command instead of a cryptic SQLITE_READONLY. Unsealing is deliberate and
  *   manual (`chmod u+w`), never programmatic — rebuild, don't mutate.
  *
- *   `swapDatabaseIntoPlace` is the other half of that invariant — the atomic publish step AGENTS.md
+ *   `swapDatabaseIntoPlace` is the other half of that invariant — the atomic publish step agents.md
  *   specifies in prose ("build it successfully, then move the previous version to a temp directory,
  *   and then move the new version into place"). It lives here because this module already owns the
  *   built-artifact lifecycle, and because a rule the project states in prose and implements more than
@@ -19,7 +19,7 @@ import type { DatabaseSync } from "node:sqlite"
 
 import { pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { changeMode, movePath, removePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { basename } from "path-ts"
+import { basename, type PathBuilderLike } from "path-ts"
 
 /**
  * The one capability {@link assertDatabaseIntegrity} needs. Narrowing to it rather than naming a handle type lets a
@@ -41,7 +41,7 @@ function sqlite(): typeof import("node:sqlite") {
  * A write-mode open was attempted on a sealed (0444) data artifact.
  */
 export class SealedArtifactError extends Error {
-	constructor(path: string) {
+	constructor(path: PathBuilderLike) {
 		super(
 			`${basename(path)} is a sealed read-only artifact — rebuild it via \`mailwoman gazetteer build …\`, ` +
 				`don't mutate it. (Deliberate unseal: chmod u+w — but prefer a rebuild.)`
@@ -54,15 +54,15 @@ export class SealedArtifactError extends Error {
 /**
  * True when the artifact exists and carries no write bits (the sealed state {@link sealDatabase} leaves).
  */
-export async function isSealed(path: string): Promise<boolean> {
+export async function isSealed(path: PathBuilderLike): Promise<boolean> {
 	return (await pathExists(path)) && ((await statPath(path)).mode & 0o222) === 0
 }
 
 /**
- * Finalize a built DB: WAL-checkpoint → `journal_mode = DELETE` → remove `-wal`/`-shm` sidecars → `chmod 0o444`.
+ * Finalize a built DB: WAL-checkpoint → `journal_mode = delete` → remove `-wal`/`-shm` sidecars → `chmod 0o444`.
  * Idempotent. Throws if the checkpoint cannot complete (another writer holds the DB).
  */
-export async function sealDatabase(path: string): Promise<void> {
+export async function sealDatabase(path: PathBuilderLike): Promise<void> {
 	// A previously sealed artifact needs the write bit back for the journal-mode switch.
 	if (await isSealed(path)) {
 		await changeMode(path, 0o644)
@@ -71,7 +71,7 @@ export async function sealDatabase(path: string): Promise<void> {
 	let mode: { journal_mode: string }
 
 	{
-		using db = new (sqlite().DatabaseSync)(path)
+		using db = new (sqlite().DatabaseSync)(path.toString())
 		const checkpoint = db.prepare("PRAGMA wal_checkpoint(TRUNCATE)").get() as { busy: number }
 
 		if (checkpoint.busy !== 0) {
@@ -104,7 +104,7 @@ export async function sealDatabase(path: string): Promise<void> {
  *
  * @throws When the database reports anything other than `ok`, naming the artifact and what SQLite said.
  */
-export function assertDatabaseIntegrity(db: IntegrityProbe, artifact: string): void {
+export function assertDatabaseIntegrity(db: IntegrityProbe, artifact: PathBuilderLike): void {
 	const row = db.prepare("PRAGMA integrity_check").get() as { integrity_check: string } | undefined
 	const verdict = row?.integrity_check
 
@@ -123,7 +123,7 @@ export function assertDatabaseIntegrity(db: IntegrityProbe, artifact: string): v
  *
  * @throws {SealedArtifactError} When `path` is sealed.
  */
-export async function assertUnsealedForWrite(path: string): Promise<void> {
+export async function assertUnsealedForWrite(path: PathBuilderLike): Promise<void> {
 	if (await isSealed(path)) throw new SealedArtifactError(path)
 }
 
@@ -132,37 +132,39 @@ export async function assertUnsealedForWrite(path: string): Promise<void> {
  *
  * The build writes to a temp path, so a mid-build crash never leaves a half-written DB at `finalPath`. This moves any
  * prior version aside, slots the new one in, then drops the old — the previous file stays intact until the replacement
- * is committed, and the `-wal`/`-shm` siblings of BOTH paths are cleared so a stale journal can never be paired with a
+ * is committed, and the `-wal`/`-shm` siblings of both paths are cleared so a stale journal can never be paired with a
  * new main file.
  *
- * Sealing (`sealDatabase`) happens on the temp file BEFORE the swap: a sealed artifact is what gets published, and 0444
+ * Sealing (`sealDatabase`) happens on the temp file before the swap: a sealed artifact is what gets published, and 0444
  * does not prevent a rename.
  */
-export async function swapDatabaseIntoPlace(tmpPath: string, finalPath: string): Promise<void> {
-	const aside = `${finalPath}.old-${process.pid}`
+export async function swapDatabaseIntoPlace(tmpPath: PathBuilderLike, finalPath: PathBuilderLike): Promise<void> {
+	const tmpPathString = tmpPath.toString()
+	const finalPathString = finalPath.toString()
+	const aside = `${finalPathString}.old-${process.pid}`
 
-	if (await pathExists(finalPath)) {
-		await movePath(finalPath, aside)
+	if (await pathExists(finalPathString)) {
+		await movePath(finalPathString, aside)
 	}
 
 	for (const sfx of ["-wal", "-shm"]) {
-		await removePathIfPresent(finalPath + sfx)
+		await removePathIfPresent(finalPathString + sfx)
 	}
 
 	try {
-		await movePath(tmpPath, finalPath)
+		await movePath(tmpPathString, finalPathString)
 	} catch (error) {
 		// The prior version is already aside at this point — a failed forward rename must not leave
 		// the slot empty while a restorable artifact sits one rename away.
-		if ((await pathExists(aside)) && !(await pathExists(finalPath))) {
-			await movePath(aside, finalPath)
+		if ((await pathExists(aside)) && !(await pathExists(finalPathString))) {
+			await movePath(aside, finalPathString)
 		}
 
 		throw error
 	}
 
 	for (const sfx of ["-wal", "-shm"]) {
-		await removePathIfPresent(tmpPath + sfx)
+		await removePathIfPresent(tmpPathString + sfx)
 	}
 
 	await removePathIfPresent(aside)

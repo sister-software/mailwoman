@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `fr-fragment` slice recipe (#727 T2) — the HOUSE-NUMBER-LICENCE change.
+ *   `fr-fragment` recipe (#727 T2) — the house-number-licence change.
  *
  *   The measured problem (T1c, `2026-07-16-t1c-fragment-board-verdict.md`): the shipped model scores
- *   **0.925** on `<n> Rue X` and **0.215** on `Rue X`. Same streets, same model; the only difference
- *   is a leading number. It has learned that a house number LICENSES a street reading at all — strip
+ *   **0.925** on `<n> Rue X` and **0.215** on `Rue X`. Same streets, same model. the only difference
+ *   is a leading number. It has learned that a house number licenses a street reading at all — strip
  *   it and a designator-led phrase parses as a locality, designator included:
  *
  *   ```
@@ -14,65 +14,65 @@
  *   "Allee Poque"           -> locality="Allee Poque"
  *   ```
  *
- *   `Rue` can only mean street in French. The model is not mislabelling an ambiguous toponym; it is
+ *   `Rue` can only mean street in French. The model is not mislabelling an ambiguous toponym. it is
  *   mislabelling `Rue`.
  *
- *   WHY THE EXISTING RECIPE DOESN'T COVER THIS. {@link frBareStreetRecipe} (#251) mints
- *   `<n> Rue <name>, <City>` — the bare COMMA form, no postcode. It targets postcode-anchoring
- *   imbalance, and every row it emits still carries a house number AND a locality. It cannot teach
+ *   why the existing recipe doesn'T cover this. {@link frBareStreetRecipe} (#251) mints
+ *   `<n> Rue <name>, <City>` — the bare comma form, no postcode. It targets postcode-anchoring
+ *   imbalance, and every row it emits still carries a house number and a locality. It cannot teach
  *   the class above, because it never shows the model a street standing alone.
  *
- *   WHAT THIS MINTS. Five street forms — the first three carry NO house number and NO locality, which
+ *   what this mints. Five street forms — the first three carry no house number and no locality, which
  *   is the whole point — plus the counter-distribution:
  *
  *   1. `bare-street`         "Rue Montmartre"
  *   2. `street-particle`     "Rue de la Paix"
  *   3. `date-name`           "Allee du 11 Novembre 1918"
- *   4. `street-housenumber`  "12 Rue Montmartre"     — the anchor, so the licence isn't UNLEARNED
+ *   4. `street-housenumber`  "12 Rue Montmartre"     — the anchor, so the licence isn't unlearned
  *   5. `alnum-housenumber`   "12 bis Rue Montmartre"
- *   6. `bare-locality`       "Mery-sur-Oise"         — NEGATIVE: a bare toponym that IS a locality
+ *   6. `bare-locality`       "Mery-sur-Oise"         — negative: a bare toponym that is a locality
  *
- *   The **admin/street homonym** class (`Rue de Rome`) is deliberately NOT a separate form. Homonym
- *   streets are already in the register and fall into 1–3 naturally; there is nothing different to
+ *   The **admin/street homonym** class (`Rue de Rome`) is deliberately not a separate form. Homonym
+ *   streets are already in the register and fall into 1–3 naturally. there is nothing different to
  *   teach about them, because the lesson is identical — the designator makes it a street. The
- *   fragment board scores them separately (they need measuring, not minting), and the recipe would
+ *   fragment board scores them separately (they need measuring rather than minting), and the recipe would
  *   need a second pass over the commune set to label them, buying a `synth_method` string and no
  *   training signal.
  *
- *   FORM 7 IS NOT OPTIONAL. T1c's standing prediction: the board's `bare-locality` cell reads 0.980
- *   for the WRONG REASON — the model calls everything without a house number a locality, and on bare
+ *   form 7 is not optional. T1c's standing prediction: the board's `bare-locality` cell reads 0.980
+ *   for the wrong reason — the model calls everything without a house number a locality, and on bare
  *   localities that is accidentally right. Teach bare streets alone and the model has every incentive
- *   to flip that default rather than learn the distinction, trading a 0.215 for a 0.980. The slice
- *   must show BOTH bare forms so the discriminating evidence is the designator, which is the only
+ *   to flip that default rather than learn the distinction, trading a 0.215 for a 0.980. The recipe
+ *   must show both bare forms so the discriminating evidence is the designator, which is the only
  *   thing that actually distinguishes them. This is the same counter-distribution principle
  *   {@link noStreetRecipe} established after synth-street pushed the model into "decompose mode".
  *
- *   SPLIT. `--exclude-surfaces` takes the fragment board's reserved surface list
+ *   split. `--exclude-surfaces` takes the fragment board's reserved surface list
  *   (`mailwoman/eval-harness/fixtures/ban-fragments-fr.surfaces.txt`). Every listed surface is
- *   skipped — source-disjoint by normalized street SURFACE, never by record row. Row-disjoint leaks
+ *   skipped — source-disjoint by normalized street surface, never by record row. Row-disjoint leaks
  *   the surface across the boundary and measures memorization of `Rue de Rivoli` while claiming
- *   generalization to unseen streets. The recipe REFUSES to run without the list rather than
- *   silently minting a contaminated slice.
+ *   generalization to unseen streets. The recipe refuses to run without the list rather than
+ *   silently minting a contaminated recipe output.
  *
- *   MIX. The slice is ~145K rows off a 120K-tuple draw; the intended corpus mix is **5–10%**, set at
- *   assembly time by slice weight rather than by row count. Keep the cap: a slice that fixes fragments
- *   by degrading full addresses has moved the failure, not fixed it — which is what
+ *   MIX. The recipe output is ~145K rows off a 120K-tuple draw. the intended corpus mix is **5–10%**,
+ *   set at assembly time by source weight rather than by row count. Keep the cap: a recipe output that
+ *   fixes fragments by degrading full addresses has moved the failure rather than fixed it — which is what
  *   `street-housenumber` / `alnum-housenumber` on the fragment board and the global parity floor are
- *   there to catch. `date-name` is ~0.5% of the slice because BAN only holds ~1,418 date-name streets
- *   after filtering and the tuple extractor already takes every one; if that class needs more, the
- *   change is slice weight, not invented data.
+ *   there to catch. `date-name` is ~0.5% of the output because BAN only holds ~1,418 date-name streets
+ *   after filtering and the tuple extractor already takes every one. if that class needs more, the
+ *   change is source weight rather than invented data.
  *
- *   ⚠ Convention loss-mask: like {@link frBareStreetRecipe}, this recipe TEACHES FR `street_prefix`.
+ *   ⚠ Convention loss-mask: like {@link frBareStreetRecipe}, this recipe teaches FR `street_prefix`.
  *   The conventions loss-mask forbids it for FR and will `-inf` these gold labels (the v1.6.0 ~7M-loss
- *   blow-up). Disable that mask for any run including this slice.
+ *   blow-up). Disable that mask for any run including this recipe's output.
  */
 
+import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
 import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
-import { alignAndWrite, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
-import { pick } from "#synthesizers/utils"
+import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 
 /**
  * House numbers, weighted toward the small values that dominate real BAN rows.
@@ -83,12 +83,12 @@ const HOUSE_NUMBERS = [
 ]
 
 /**
- * FR alphanumeric house-number forms. `bis`/`ter` are separated; a bare letter is suffixed.
+ * FR alphanumeric house-number forms. `bis`/`ter` are separated. a bare letter is suffixed.
  */
 const ALNUM_SUFFIXES = ["bis", "ter", "A", "B"]
 
-// Recipe-fidelity: this accent-STRIPPING fold is the surface key every committed fr-fragment slice and the fragment
-// board's reserved list were built with — not the diacritic-KEEPING `foldNOSurface` the Norwegian slices share.
+// Recipe-fidelity: this accent-stripping fold is the surface key every committed fr-fragment recipe output and the
+// fragment board's reserved list were built with — not the diacritic-keeping `foldNOSurface` the Norwegian recipes share.
 const norm = (value: string): string =>
 	value
 		.normalize("NFD")
@@ -101,10 +101,10 @@ const norm = (value: string): string =>
  * French commune convention: capitalize each element, leave the joining particles lowercase. `saint-jean-de-luz` →
  * `Saint-Jean-de-Luz`, not `Saint-Jean-De-Luz`.
  *
- * Needed because BAN's sliced DBs keep only `locality_base` — normalized, lowercase, accent-stripped. Emitting that
- * verbatim would teach the counter-distribution that a lowercase accent-stripped string is a locality, which is not a
- * fact about French and would not match the fragment board (which reconstructs the same casing). The accents are gone
- * from the source and cannot be recovered here; the casing can.
+ * Needed because BAN's per-region extract databases keep only `locality_base` — normalized, lowercase, accent-stripped.
+ * Emitting that verbatim would teach the counter-distribution that a lowercase accent-stripped string is a locality,
+ * which is not a fact about French and would not match the fragment board (which reconstructs the same casing). The
+ * accents are gone from the source and cannot be recovered here. the casing can.
  */
 const FR_LOWER = new Set([
 	"le",
@@ -154,8 +154,8 @@ const DATEISH =
 const ALNUM_HOUSE_NUMBER_SHARE = 0.25
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const frFragmentRecipe: CorpusRecipe = {
 	name: "fr-fragment",
@@ -183,7 +183,7 @@ export const frFragmentRecipe: CorpusRecipe = {
 		if (!excludePath) {
 			throw new Error(
 				"fr-fragment: --exclude-surfaces is REQUIRED. Pass the fragment board's reserved list " +
-					"(mailwoman/eval-harness/fixtures/ban-fragments-fr.surfaces.txt) or this slice trains on its own eval set. " +
+					"(mailwoman/eval-harness/fixtures/ban-fragments-fr.surfaces.txt) or this recipe trains on its own eval set. " +
 					"Source-disjoint by street SURFACE is the split discipline; there is no safe default."
 			)
 		}
@@ -227,7 +227,7 @@ export const frFragmentRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// THE SPLIT. A surface on the fragment board never enters training.
+			// the split. A surface on the fragment board never enters training.
 			if (excluded.has(norm(fullStreet))) {
 				contaminated++
 
@@ -250,9 +250,9 @@ export const frFragmentRecipe: CorpusRecipe = {
 			let klass = DATEISH.test(street) ? "date-name" : PARTICLE.test(street) ? "street-particle" : "bare-street"
 
 			if (carriesNumber) {
-				const number = pick(HOUSE_NUMBERS, random)
+				const number = sample(HOUSE_NUMBERS, random)
 				const alnum = random() < ALNUM_HOUSE_NUMBER_SHARE
-				const suffix = pick(ALNUM_SUFFIXES, random)
+				const suffix = sample(ALNUM_SUFFIXES, random)
 
 				const houseNumber = alnum
 					? suffix === "bis" || suffix === "ter"
@@ -265,7 +265,7 @@ export const frFragmentRecipe: CorpusRecipe = {
 				klass = alnum ? "alnum-housenumber" : "street-housenumber"
 			}
 
-			const sourceID = sliceSourceID("synth-fr-fragment", { ...components, v: String(read) })
+			const sourceID = recipeSourceID("synth-fr-fragment", { ...components, v: String(read) })
 
 			if (
 				alignAndWrite(
@@ -297,10 +297,10 @@ export const frFragmentRecipe: CorpusRecipe = {
 		const wanted = Math.round((emitted / Math.max(1, 1 - bareLocalityProb)) * bareLocalityProb)
 
 		for (let i = 0; i < wanted && pool.length; i++) {
-			// BAN gives `locality_base` normalized; restore the casing the fragment board also
+			// BAN gives `locality_base` normalized. restore the casing the fragment board also
 			// reconstructs, so train and eval show the model the same shape of French.
-			const name = frTitleCase(pick(pool, random))
-			const sourceID = sliceSourceID("synth-fr-fragment", { locality: name, v: `neg-${i}` })
+			const name = frTitleCase(sample(pool, random))
+			const sourceID = recipeSourceID("synth-fr-fragment", { locality: name, v: `neg-${i}` })
 
 			if (
 				alignAndWrite(

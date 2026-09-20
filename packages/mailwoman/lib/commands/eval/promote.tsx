@@ -3,20 +3,20 @@
 
 /**
  *   `mailwoman eval promote` — `promotion-eval.ts` (#479): runs the standard eval battery against a
- *   candidate model, checks every number against an eval spec contract
+ *   candidate model, checks every number against an eval spec interface
  *   (`mailwoman/eval-harness/specs/*.json`), and emits `<out-dir>/verdict.json`. Exit 0 = every
- *   floor met AND the mask-regression lock held; exit 1 = any miss; exit 2 = usage / lore-guard
- *   refusal. On PASS it prints the pre-filled `eval ledger-append` command (#885). The module
+ *   floor met and the mask-regression lock held. exit 1 = any miss. exit 2 = usage / lore-guard
+ *   refusal. On `pass` it prints the pre-filled `eval ledger-append` command (#885). The module
  *   narrates everything (provenance, battery legs, verdict lines) — this wrapper only owns argv +
  *   the exit code.
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "Promotion check (#479) — eval battery + check-spec floors → verdict.json"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "check",
@@ -35,33 +35,16 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	model?: string
-	int8?: string
-	check?: string
-	tokenizer?: string
-	card?: string
-	gazetteerLexicon?: string
-	weightsCache?: string
-	int8WeightsCache?: string
-	outDir?: string
-	profileJSON?: string
-}
+// `promotion-eval.ts` narrates its own verdict lines, so no `json` — rendering anything here would pollute the
+// captured report.
+const EvalPromote = harnessCommand(
+	spec,
+	async (options) => {
+		const { runPromotionEval } = await import("#eval-harness/promotion/eval/index")
 
-const EvalPromote: ParsedCommandComponent<Options> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { runPromotionEval } = await import("#eval-harness/promotion/eval/index")
-
-			return await runPromotionEval(options)
-		},
-		(exitCode) => exitCode
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	// `promotion-eval.ts` narrates its own verdict lines — rendering anything here would pollute the captured report.
-	return null
-}
+		return await runPromotionEval(options)
+	},
+	{ exitCode: (exitCode) => exitCode }
+)
 
 export default EvalPromote

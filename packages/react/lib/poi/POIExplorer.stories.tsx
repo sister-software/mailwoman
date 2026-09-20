@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Composed POIExplorer stories with a MOCK taxonomy runtime + mock live probe — no taxonomy load,
+ *   Composed POIExplorer stories with a mock taxonomy runtime + mock live probe — no taxonomy load,
  *   no httpvfs, no network.
  */
 

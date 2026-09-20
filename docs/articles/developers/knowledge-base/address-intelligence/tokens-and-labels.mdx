@@ -29,7 +29,7 @@ The fix is the printer's type case rather than the dictionary. Keep a fixed inve
 and spell every word out of them. Rare words cost more fragments; unseen words still get spelled.
 Nothing is unrepresentable.
 
-## Pieces, not words
+## Pieces rather than words
 
 Mailwoman spells input with [SentencePiece](https://github.com/google/sentencepiece), an
 open-source subword tokenizer. The inventory holds 73,143 pieces, chosen by a unigram language-model
@@ -119,15 +119,14 @@ states per model which are reachable.
 **Boundaries are implicit, so they inherit label errors.** The model has no separate boundary head:
 a span begins where a `B-` label lands. That means it cannot hold a confident view of where a street
 ends while remaining unsure what the street is — boundary confusion is downstream of label confusion,
-always. When a house number gets absorbed into a street name, the fix is evidence about the label,
-not a boundary rule.
+always. When a house number gets absorbed into a street name, the fix is evidence about the label rather than a boundary rule.
 
 **Fragmentation is uneven across languages.** A language whose text is thin in the training corpus
 spells into more pieces per word, and more pieces per word means a longer sequence, more chances for
 two pieces of one word to disagree, and less of the fixed 128-piece input window left for the rest of
 the address. The cost of thin coverage shows up here first, before it shows up as a wrong label.
 
-**The vote is per word, not per name.** The consistency pass keeps one word internally coherent and
+**The vote is per word rather than per name.** The consistency pass keeps one word internally coherent and
 deliberately stops there. Multi-word names are left to the decoder and the priors, because a rule
 that forced agreement across a whitespace boundary would merge a locality into the street in front of
 it.

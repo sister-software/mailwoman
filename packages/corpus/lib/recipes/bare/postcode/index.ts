@@ -2,25 +2,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `bare-postcode` — a postcode standing ALONE, in the form its country writes.
+ *   `bare-postcode` — a postcode standing alone, in the form its country writes.
  *
  *   The shape is absent from the corpus. A census of the 685,187,151 rows the v0.29.0 mixture reads
- *   found ZERO two-token rows of `NNN NN` and one of `NNNN LL`, so `100 00` and `1012 LG` are out of
+ *   found zero two-token rows of `NNN NN` and one of `nnnn LL`, so `100 00` and `1012 LG` are out of
  *   distribution and every model's answer for them is generalization off longer lines. That
  *   generalization is what moved: held-out CZ/SK codes read 31/32 as a postcode under v5.0.0, v5.2.0
- *   AND v5.3.0 — a seed pair agreeing, so not training noise — and 0/32 under v5.4.0, whose added
+ *   and v5.3.0 — a seed pair agreeing, so not training noise — and 0/32 under v5.4.0, whose added
  *   OpenStreetMap PK/BD/VN rows raise the leading-digit-is-a-house-number evidence at that opening
  *   from 393 to 444 samples per epoch.
  *
  *   Neither existing repair reaches it. `nl-postcode` and `cz-pcfirst-preposition` teach the same
- *   postcodes IN CONTEXT — every row they emit carries a street, a number and a city — and the
+ *   postcodes IN context — every row they emit carries a street, a number and a city — and the
  *   12,759 in-context `NNN NN` rows do not transfer to the bare input. The deterministic half,
  *   `buildEmissionPriors`, caps near 0.95 at the default `biasScale` against a measured 1.67-to-3.78
  *   nat deficit.
  *
- *   So this recipe emits the postcode and NOTHING else, which is the one thing no sibling does.
+ *   So this recipe emits the postcode and nothing else, which is the one thing no sibling does.
  *
- *   VERIFIED AGAINST THE PRIOR, NOT MERELY MATCHED TO IT. Every surface is run through
+ *   verified against the prior rather than merely matched TO IT. Every surface is run through
  *   `detectKnownFormats` and refused unless the detector calls it a postcode. The recipe's rendering
  *   table and `known-formats.ts`'s patterns have to agree, and matched constants would not prove
  *   they do — the trained surface and the prior that boosts it come from one check.
@@ -34,14 +34,15 @@ import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
 import { join, type PathBuilderLike } from "path-ts"
 
 import { isReservedBarePostcode } from "#recipes/bare/postcode/eval"
-import { alignAndWrite, type CorpusRecipe, readCSVRecords, sliceSourceID } from "#recipes/scaffold"
+import { alignAndWrite, type CorpusRecipe, readCSVRecords, recipeSourceID } from "#recipes/scaffold"
+import { normalizeGauntletSurface, readGauntletInputs } from "#tools/gauntlet-inputs"
 
 /**
  * One country's postcodes: the CSV under the extracted OpenAddresses tree, and the country it covers.
  *
  * `openaddresses/extracted/` rather than a cached zip, because the extracted tree is what survives on this lab and its
  * paths mirror the archive's member paths exactly (`cz/countrywide.csv`). Sweden publishes per municipality, so SE is
- * sixteen files; CZ, SK and NL are one countrywide file each.
+ * sixteen files. CZ, SK and NL are one countrywide file each.
  */
 interface PostcodeSource {
 	csv: PathBuilderLike
@@ -52,7 +53,7 @@ const EXTRACTED = dataRootPath("openaddresses", "extracted")
 
 /**
  * Read from the archive rather than guessed: `readZippedCSVRecords` throws on a member that is not there, and
- * OpenAddresses keeps the Swedish spelling on two of these (`savsjö`, `Österåker`) while folding the rest to ASCII.
+ * OpenAddresses keeps the Swedish spelling on two of these (`savsjö`, `Österåker`) while folding the rest to ascii.
  */
 const SWEDISH_MUNICIPALITIES = [
 	"alingsas",
@@ -74,7 +75,7 @@ const SWEDISH_MUNICIPALITIES = [
 ]
 
 /**
- * GREECE IS ABSENT ON PURPOSE. `gr/b/municipality_of_kalamaria.csv` is the archive's only Greek member and it declares
+ * Greece is absent on purpose. `gr/b/municipality_of_kalamaria.csv` is the archive's only Greek member and it declares
  * a `postcode` column carrying nothing: 0 values in 10,877 rows. `gr_postcode` shares `NNN NN` with the three below, so
  * a Greek reader is served by what they teach until a Greek source with postcodes exists — but no row here claims to be
  * Greek.
@@ -96,7 +97,7 @@ const SOURCES: PostcodeSource[] = [
  * the spaced form first where one exists, because that is the failing one. A country whose written form is the source's
  * form answers a single entry.
  *
- * Only countries whose bare postcode COLLIDES with a house number are here: an all-digit or digits-then-letters opening
+ * Only countries whose bare postcode collides with a house number are here: an all-digit or digits-then-letters opening
  * is what the model reads as `house_number`. `SW1A 1AA` opens with letters and was never in doubt, so GB is
  * deliberately absent.
  */
@@ -107,7 +108,7 @@ const WRITTEN_FORMS: ReadonlyMap<string, { locale: string; render: (compact: str
 	["SK", { locale: "sk-SK", render: spacedThree }],
 	["SE", { locale: "sv-SE", render: spacedThree }],
 	["GR", { locale: "el-GR", render: spacedThree }],
-	// `NNNN LL`. Both spellings are attested and the spaced one is what fails.
+	// `nnnn LL`. Both spellings are attested and the spaced one is what fails.
 	[
 		"NL",
 		{
@@ -120,7 +121,7 @@ const WRITTEN_FORMS: ReadonlyMap<string, { locale: string; render: (compact: str
 
 /**
  * `10000` → `["100 00", "10000"]`. Sweden and Greece write five digits with the space after the third, exactly as
- * Czechia and Slovakia do; the compact form rides along because sources store it that way and a reader types it both
+ * Czechia and Slovakia do. the compact form rides along because sources store it that way and a reader types it both
  * ways.
  */
 function spacedThree(compact: string): string[] {
@@ -132,7 +133,7 @@ function spacedThree(compact: string): string[] {
 /**
  * Choose distinct postcodes without inheriting the publisher's row order.
  *
- * Sorting first makes the result independent of input-file order; the seeded sample then gives a reproducible spread
+ * Sorting first makes the result independent of input-file order. the seeded sample then gives a reproducible spread
  * across the complete set instead of taking the first municipality or numeric prefix that happens to fill the cap.
  */
 export function selectPostcodes(codes: Iterable<string>, limit: number, seed: number): string[] {
@@ -160,7 +161,7 @@ export async function findMissingPostcodeSources(
  * country or the code does not fit the one it carries.
  *
  * Exported because it is the half of the recipe a test can reach: `run` reads a 500 MB archive from the data root, and
- * the contract worth pinning — that every surface this renders is one {@linkcode detectedAsPostcode} accepts — needs
+ * the interface worth pinning — that every surface this renders is one {@linkcode detectedAsPostcode} accepts — needs
  * neither.
  */
 export function renderBarePostcode(country: string, postcode: string): string[] {
@@ -184,12 +185,13 @@ export function detectedAsPostcode(surface: string): boolean {
 }
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const barePostcodeRecipe: CorpusRecipe = {
 	name: "bare-postcode",
-	description: "A postcode alone, in its country's written form — the shape no slice carries (CZ/SK/SE/NL)",
+	description:
+		"A postcode alone, in its country's written form — the shape no other recipe output carries (CZ/SK/SE/NL)",
 	mode: "generate",
 	options: [
 		{
@@ -215,14 +217,21 @@ export const barePostcodeRecipe: CorpusRecipe = {
 			)
 		}
 
-		// A PER-COUNTRY budget, because supply is wildly uneven and the shortage is where the capability
-		// broke: the Netherlands publishes ~460,000 distinct `NNNN LL` codes against Czechia's 2,669 and
+		// A PER-country budget, because supply is wildly uneven and the shortage is where the capability
+		// broke: the Netherlands publishes ~460,000 distinct `nnnn LL` codes against Czechia's 2,669 and
 		// Slovakia's 1,059, so an uncapped pass emits 98.9% Dutch rows and teaches the `NNN NN` countries —
 		// the ones reading 0/32 — almost nothing. Equal shares, each country keeping whatever it can fill.
 		const countries = [...new Set(SOURCES.map((source) => source.country))]
 		const budget = opts.count ? Math.ceil(opts.count / countries.length) : Number.POSITIVE_INFINITY
 		const perCountry = new Map(countries.map((country) => [country, 0]))
 		const codesByCountry = new Map(countries.map((country) => [country, new Set<string>()]))
+
+		// The second held-out register. `BARE_POSTCODE_EVAL_CASES` reserves the strings this recipe's author knew
+		// about. the gauntlet boards are older and separate, and `cz/bare-postcode.jsonl` was authored before this
+		// recipe existed. `100 00` and `110 00` reached the v0.30.0 parquet through that gap, after which those two
+		// board rows measured recall of two strings rather than the capability.
+		const boardInputs = await readGauntletInputs()
+		let boardRefused = 0
 
 		for (const source of SOURCES) {
 			const form = WRITTEN_FORMS.get(source.country)
@@ -240,6 +249,17 @@ export const barePostcodeRecipe: CorpusRecipe = {
 				const countryCodes = codesByCountry.get(source.country)!
 
 				if (!compact || isReservedBarePostcode(compact) || countryCodes.has(compact)) {
+					skipped++
+
+					continue
+				}
+
+				// A board row is refused on any of its written forms, so the check runs over each surface the recipe
+				// would emit rather than over the compact code alone: the board spells it `100 00` and the recipe
+				// holds `10000`, and `normalizeGauntletSurface` is what makes those one string.
+				if (form.render(compact).some((surface) => boardInputs.has(normalizeGauntletSurface(surface)))) {
+					boardRefused++
+
 					skipped++
 
 					continue
@@ -283,7 +303,7 @@ export const barePostcodeRecipe: CorpusRecipe = {
 						country,
 						locale: form.locale,
 						source: "synth-bare-postcode",
-						source_id: sliceSourceID("synth-bare-postcode", {
+						source_id: recipeSourceID("synth-bare-postcode", {
 							...components,
 							c: country,
 						}),
@@ -302,7 +322,7 @@ export const barePostcodeRecipe: CorpusRecipe = {
 			}
 		}
 
-		// A surface this table renders and the detector refuses is a contract break, not a data quirk: every
+		// A surface this table renders and the detector refuses is a interface failure rather than a data quirk: every
 		// form here is one `known-formats.ts` declares a pattern for, so the count is expected to be zero and
 		// a non-zero one names which side moved.
 		if (unrecognized > 0) {
@@ -312,7 +332,7 @@ export const barePostcodeRecipe: CorpusRecipe = {
 			)
 		}
 
-		// AN EMPTY BUILD IS A FAILURE, NOT AN EMPTY ANSWER. Required files were preflighted above, so zero
+		// an empty build is A failure rather than an empty answer. Required files were preflighted above, so zero
 		// rows here means their postcode columns or the written-form rules no longer provide usable data.
 		if (emitted === 0) {
 			throw new Error(
@@ -320,6 +340,14 @@ export const barePostcodeRecipe: CorpusRecipe = {
 					"The postcode columns or the written-form rules changed."
 			)
 		}
+
+		// Reported rather than folded into `skipped`, so a board that grows is visible: a rising count means new rows
+		// were being trained on until this build, and a count of zero where the boards hold postcodes is the check
+		// having stopped reaching them.
+		console.error(
+			`  bare-postcode: ${boardRefused.toLocaleString()} rows refused as gauntlet board inputs ` +
+				`(${boardInputs.size.toLocaleString()} inputs read)`
+		)
 
 		return { read, emitted, skipped }
 	},

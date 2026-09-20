@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The shared headless-Chromium harness behind the `registry viz` renderers (an internal helper,
- *   not a command). The WebGL consumers (Plotly 3D, MapLibre) get no GPU in headless Chromium, so
- *   the browser launches on ANGLE's SwiftShader software rasterizer (`--use-gl=angle
+ *   The shared headless-Chromium harness behind the `registry viz` renderers (an internal helper rather than a command). The WebGL consumers (Plotly 3D, MapLibre) get no GPU in headless Chromium, so
+ *   the browser launches on angle's SwiftShader software rasterizer (`--use-gl=angle
  *   --use-angle=swiftshader --enable-unsafe-swiftshader`); each caller owns its own navigation +
  *   wait strategy and screenshots inside the callback.
  *

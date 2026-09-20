@@ -42,7 +42,7 @@ describe("buildStreetMorphologyFST", () => {
 		expect(ave.accepting[0]?.wofID).toBe(avenue.accepting[0]!.wofID)
 		expect(aven.accepting[0]?.wofID).toBe(avenue.accepting[0]!.wofID)
 
-		// Demonstrate the length filter — 'av' should NOT match under default opts.
+		// Demonstrate the length filter — 'av' should not match under default opts.
 		const av = matcher.query("av")
 		expect(av.accepting).toHaveLength(0)
 	})
@@ -53,7 +53,7 @@ describe("buildStreetMorphologyFST", () => {
 		const rue = matcher.query("rue")
 		expect(rue.accepting.some((e) => e.name === "rue" && e.placetype === "street_affix")).toBe(true)
 
-		// `straße` normalizes via NFKC + lowercase. Verify the canonical is reachable.
+		// `straße` normalizes via nfkc + lowercase. Verify the canonical is reachable.
 		const strasse = matcher.query("straße")
 		expect(strasse.accepting.some((e) => e.placetype === "street_affix")).toBe(true)
 	})

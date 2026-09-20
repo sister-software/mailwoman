@@ -3,12 +3,12 @@
 # Trains a 6-layer / 256-hidden / 4-head encoder on coarse address components only:
 # country, region, locality, dependent_locality, postcode, subregion, cedex (+ O).
 #
-# Stages 2 (street-level) and 3 (venue-level) are future phases — do NOT widen the
+# Stages 2 (street-level) and 3 (venue-level) are future phases — do not widen the
 # label set here without an explicit phase plan.
 
 data:
-  # corpus-v0.2.0 (synth-ON, 263.7M rows, 10 adapters, locality-holdout splits).
-  # Built 2026-05-18 nightshift. Full BAN (102 départements), full TIGER (all US),
+  # corpus-v0.2.0 (synth-on, 263.7M rows, 10 adapters, locality-holdout splits).
+  # Built 2026-05-18 nightshift. Full BAN (102 départements), full tiger (all US),
   # NPPES, IMLS, HRSA, and state sources included.
   corpus_dir: /data/corpus/versioned/v0.2.0/corpus-v0.2.0
   tokenizer_dir: /data/models/tokenizer/v0.1.0

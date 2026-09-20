@@ -21,7 +21,7 @@ source-of-truth: self
 
 ## Section order
 
-1. `# Title` — the noun, not a slogan.
+1. `# Title` — the noun rather than a slogan.
 2. **Definition.** One or two sentences. A reader should be able to repeat it to a colleague.
 3. **Routes.** Two to four `## I want to …` sections, each ending in one link.
 4. **One worked example.** A single concrete case, complete on this page.

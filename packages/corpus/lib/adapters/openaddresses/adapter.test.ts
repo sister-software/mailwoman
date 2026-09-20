@@ -29,7 +29,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		// Default-include (2026-06-19 flip): the CC-BY-SA-4.0 row is KEPT — exclusion is a deliberate
+		// Default-include (2026-06-19 flip): the CC-BY-SA-4.0 row is kept — exclusion is a deliberate
 		// build-level act now (`--exclude-share-alike`), not a silent adapter default (#26) → 6 rows.
 		expect(manifest.yielded).toBe(6)
 		const rows = await loadRows()
@@ -250,8 +250,8 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 	})
 
 	it("INCLUDES share-alike by default; drops only on explicit allowShareAlike:false (#26 exclusion is deliberate)", async () => {
-		// Default-include (2026-06-19 flip): the CC-BY-SA-4.0 row (e5f6…) is PRESENT — no silent drop.
-		// Exclusion is now a deliberate BUILD-level act (`--exclude-share-alike`), not an adapter default.
+		// Default-include (2026-06-19 flip): the CC-BY-SA-4.0 row (e5f6…) is present — no silent drop.
+		// Exclusion is now a deliberate build-level act (`--exclude-share-alike`), not an adapter default.
 		await runAdapter({
 			adapter: createOpenaddressesAdapter(),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
@@ -261,7 +261,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 
 		expect((await loadRows()).find((r) => r.source_id === "openaddresses-e5f6071829304152")).toBeDefined()
 
-		// The explicit adapter-scoped drop still works (vestigial fallback; build-level is the norm).
+		// The explicit adapter-scoped drop still works (vestigial fallback. build-level is the norm).
 		await runAdapter({
 			adapter: createOpenaddressesAdapter({ allowShareAlike: false }),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },

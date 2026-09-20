@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Train the production learned-scorer model (#603). Builds the SAME NPI-keyed record set the dedup
- *   benchmark + the clustering A/B use (the SHARED `buildNPPESSample`: real registry + name-drift +
- *   address-variation), geocodes it, blocks → candidate pairs, featurizes each pair with the SHARED
+ *   Train the production learned-scorer model (#603). Builds the same NPI-keyed record set the dedup
+ *   benchmark + the clustering A/B use (the shared `buildNPPESSample`: real registry + name-drift +
+ *   address-variation), geocodes it, blocks → candidate pairs, featurizes each pair with the shared
  *   `createMatchFeaturizer` (so train ≡ inference), labels by held-out NPI, and fits the
  *   gradient-boosted-tree model. Writes the model as a committed TS module
  *   (`registry/models/dedup-gbt-en-us.ts`) that ships in the package.
  *
- *   Unlike the eval, this trains on ALL sampled NPIs (no held-out split) — the held-out F1 is the
- *   eval's job; this produces the shipped artifact. The eval (`learned-scorer-clustering-eval.ts`)
+ *   Unlike the eval, this trains on all sampled NPIs (no held-out split) — the held-out F1 is the
+ *   eval's job. this produces the shipped artifact. The eval (`learned-scorer-clustering-eval.ts`)
  *   then re-measures generalization against the FS baseline.
  *
  *   Run: `mailwoman registry train-scorer gbt [--state TX] [--npis 3000] [--wof <admin.db>]
@@ -40,7 +40,7 @@ import { scoreEntities } from "#tools/nppes/scoring"
 import { stateOption, uniqueQuantiles } from "#tools/shared"
 
 /**
- * Share of entities assigned to fit; the rest are held out.
+ * Share of entities assigned to fit. the rest are held out.
  */
 const FIT_SPLIT_FRACTION = 0.8
 
@@ -73,7 +73,7 @@ export interface TrainDedupGBTOptions {
 	 */
 	locale?: string
 	/**
-	 * Cost-sensitive training (#625): up-weight the NEGATIVE (distinct-pair) class by this factor so the model is more
+	 * Cost-sensitive training (#625): up-weight the negative (distinct-pair) class by this factor so the model is more
 	 * conservative about merging — directly trades recall for precision to reduce over-merge. 1 = the symmetric
 	 * class-balanced default; >1 penalizes a false merge more than a missed one.
 	 */
@@ -114,7 +114,7 @@ export async function trainDedupGBT(
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
 
-	// mapping.id = "npi" → record.id IS the NPI label (multiple records share an NPI, the ground truth).
+	// mapping.id = "npi" → record.id is the NPI label (multiple records share an NPI, the ground truth).
 	const mapping: ColumnMapping = {
 		id: "npi",
 		name: "name",
@@ -139,17 +139,17 @@ export async function trainDedupGBT(
 	const X = pairs.map(([a, b]) => featurize(a, b))
 	const Y = pairs.map(([a, b]) => (a.id === b.id ? 1 : 0))
 	const posRate = Y.reduce<number>((s, v) => s + v, 0) / Math.max(1, Y.length)
-	const W = Y.map((y) => (y === 1 ? 1 - posRate : posRate * COST)) // class-balanced; COST up-weights negatives
+	const W = Y.map((y) => (y === 1 ? 1 - posRate : posRate * COST)) // class-balanced. COST up-weights negatives
 	const hyperparams = { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 }
 
 	if (COST !== 1) {
 		report?.(`    cost-sensitive: negative class weighted ×${COST} (penalize over-merge)`)
 	}
 
-	// Calibrate the default link threshold; the GBT logit is not in FS-weight units.
+	// Calibrate the default link threshold. the GBT logit is not in FS-weight units.
 	// trained with class-balanced weights, so logit 0 (the balanced boundary) ignores the ~1% match base
 	// rate and over-merges. Split the NPIs 80/20, fit a calibration GBT on the 80%, and sweep the
-	// CLUSTERING threshold on the held-out 20% (the metric resolveEntities actually optimizes) for F1-max.
+	// clustering threshold on the held-out 20% (the metric resolveEntities actually optimizes) for F1-max.
 	// The shipped full-data model has near-identical logit calibration, so the threshold transfers. ---
 	report?.("[E] calibrating the default link threshold on a held-out NPI split…")
 	const rnd = makeLcg(20_260_615)
@@ -202,7 +202,7 @@ export async function trainDedupGBT(
 	report?.(`    ${pairs.length} pairs (${(100 * posRate).toFixed(1)}% positive), ${model.trees.length} trees`)
 
 	// Emit the model as a committed TypeScript module with a prettier-stable literal.
-	// retrain produces a clean one-line diff, not a thousand reformatted lines. ---
+	// retrain produces a clean one-line diff rather than a thousand reformatted lines. ---
 	const meta = {
 		version: "1.0.0",
 		locale: LOCALE,

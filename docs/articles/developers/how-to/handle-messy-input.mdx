@@ -69,7 +69,7 @@ more letters while leaving one- and two-letter runs shouting, so `DC` stays `DC`
 long runs, uppercase the short ones, so `dc` becomes `DC`. Both rewrites are length-preserving, and
 mixed-case or non-Latin input passes through byte-identically.
 
-## 2. Read offsets against your string, not against the tree's
+## 2. Read offsets against your string rather than against the tree's
 
 Case normalization has one consequence that surprises people, and it is worth ten seconds now rather
 than an afternoon later:
@@ -88,7 +88,7 @@ tree.raw: "1275 Pennsylvania Ave NW, Washington, DC 20004"
 ```
 
 The input to that run was all lowercase. `tree.raw` and every `value` come back in the normalized
-casing, not the casing you sent. Because the rewrite preserves length, `start` and `end` still index
+casing rather than the casing you sent. Because the rewrite preserves length, `start` and `end` still index
 your original string — so `yourInput.slice(node.start, node.end)` gives you your bytes back whenever you
 need to echo the user's own text.
 
@@ -174,7 +174,7 @@ or a match key, run the stage first.
   `offsetMap` that maps normalized positions back to raw positions for exactly this reason. If you
   normalize and then parse, map through it rather than assuming the indexes line up.
 - **Case normalization is pure-ASCII only.** Accented and non-Latin input is left alone, because
-  changing case there can change length (`ß` becomes `SS`) and break the offset guarantee everything
+  changing case there can change length (`ß` becomes `SS`) and violate the offset requirement everything
   above rests on. An all-caps French address does not get the all-caps fix.
 - **Abbreviation expansion is a small safe set at `locale: "und"`.** Passing a real locale widens it.
   It is not a general address-standardization pass, and it is not USPS Publication 28.

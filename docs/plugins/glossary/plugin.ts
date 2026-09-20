@@ -6,7 +6,7 @@
  *   component (`@theme/GlossaryTerm`), client modules, and remark auto-linking — but replaces the
  *   `/glossary` route with our own page component. The upstream plugin hard-codes its route
  *   component to a path inside the package (not a `@theme/*` component), so swizzling can't reach
- *   it; overriding the lifecycle hooks is the supported extension-free alternative to vendoring.
+ *   it. overriding the lifecycle hooks is the supported extension-free alternative to vendoring.
  *
  *   On top of the upstream data model this wrapper:
  *
@@ -38,7 +38,7 @@ import { resolvePath } from "path-ts"
 import { isSuppressedSurface } from "./remark.ts"
 
 /**
- * Upstream's options plus the `noAutoLink` surface list this wrapper's homonym guard reads. Passed to BOTH this plugin
+ * Upstream's options plus the `noAutoLink` surface list this wrapper's homonym guard reads. Passed to both this plugin
  * and the remark plugin from docusaurus.config.ts, from one shared constant, so the linker and the backlink scan cannot
  * disagree about which surfaces link.
  */
@@ -108,7 +108,7 @@ interface DocsPluginContent {
 }
 
 /**
- * Backlinks shown per term card; the rest is summarized as "+N more".
+ * Backlinks shown per term card. the rest is summarized as "+N more".
  */
 const MAX_BACKLINKS_PER_TERM = 8
 
@@ -242,7 +242,7 @@ export default function mailwomanGlossaryPlugin(context: LoadContext, options: M
 					count: counts.get(key) ?? 0,
 				}))
 
-			// Upstream also writes this file; preserved in case a future package version reads it back.
+			// Upstream also writes this file. preserved in case a future package version reads it back.
 			await createData("remark-glossary-data.json", stringifyJSON({ terms: glossary.terms ?? [], routePath }))
 
 			// Same shape upstream publishes — the tooltip theme component reads it via usePluginData.

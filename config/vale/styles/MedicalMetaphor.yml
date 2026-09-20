@@ -1,0 +1,11 @@
+## Mailwoman house style: describe engineering changes without medical metaphors.
+##
+## A model change, a diagnostic result, or a release decision is not a patient.
+## Name the observed behavior, the changed constraint, or the next operation.
+##
+extends: existence
+message: "'%s' is a medical metaphor — name the concrete operation, observation, or result."
+level: error
+ignorecase: true
+tokens:
+  - '\b(?:dose|doses|dosage|remedy|remedies|cure|cures)\b'

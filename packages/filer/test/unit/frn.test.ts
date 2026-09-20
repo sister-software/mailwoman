@@ -3,7 +3,7 @@
 
 /**
  * @file Tests for {@linkcode toFRN}/{@linkcode isFRN} — the zero-padded 10-digit FRN branded string
- *   (decision 3: NOT the earlier-draft `Tagged<number>` shape, which silently drops leading zeros).
+ *   (decision 3: not the earlier-draft `Tagged<number>` shape, which silently drops leading zeros).
  */
 
 import { isFRN, toFRN } from "@mailwoman/filer/frn"

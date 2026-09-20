@@ -4,7 +4,7 @@
 	"locale": "it-IT",
 	"license": "AGPL-3.0",
 	"requires": {
-		"$comment": "Copy of the base card's requires block — same trained ship-config, same fail-closed contract via createScorer. This overlay shares the base model.onnx byte-for-byte, so the channels it was trained against are the base's; keep in lockstep with neural-weights-en-us/model-card.json on every base ship. Without this block the loader inferred the channels from the ONNX graph and resolved the evidence lexicons by legacy filename, which fed street_type by guess and left locality_surface OFF (v6 sought, v7 shipped); a consumer of the published tarball, which carried no lexicon at all, ran gazetteer, country and both evidence channels OFF against a model trained with them (#1668, #2115). Measured before shipping: locality_surface ON vs OFF, 0 of 49 board rows differ (DE 12, ES 25, IT 12).",
+		"$comment": "Copy of the base card's requires block — same trained ship-config, same fail-closed interface via createScorer. This overlay shares the base model.onnx byte-for-byte, so the channels it was trained against are the base's; keep in lockstep with neural-weights-en-us/model-card.json on every base ship. Without this block the loader inferred the channels from the ONNX graph and resolved the evidence lexicons by legacy filename, which fed street_type by guess and left locality_surface OFF (v6 sought, v7 shipped); a consumer of the published tarball, which carried no lexicon at all, ran gazetteer, country and both evidence channels OFF against a model trained with them (#1668, #2115). Measured before shipping: locality_surface ON vs OFF, 0 of 49 board rows differ (DE 12, ES 25, IT 12).",
 		"anchor": {
 			"required": true,
 			"span_mode": "shaped",

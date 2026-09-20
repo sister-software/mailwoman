@@ -22,7 +22,7 @@ geo.reverse((38.8977, -77.0365))
 
 ## Endpoints
 
-| Endpoint        | Nominatim contract                                            | Status  |
+| Endpoint        | Nominatim interface                                           | Status  |
 | --------------- | ------------------------------------------------------------- | ------- |
 | `/`             | HTML landing page (endpoint index + example queries)          | ✓       |
 | `/search`       | free-text `q` + structured forward geocoding                  | ✓       |
@@ -50,8 +50,8 @@ Browser-embedded geocoder clients call this cross-origin, so the server sends pe
 
 ## Annotations
 
-Every result carries an OpenCage-style `annotations` block — coordinate formats (DMS, MGRS, geohash,
-Maidenhead, Mercator), qibla bearing, sun times, country flag, calling code, and currency, plus the IANA
+The API returns an OpenCage-style `annotations` block — coordinate formats (DMS, MGRS, geohash,
+Maidenhead, Mercator), qibla direction, sun times, country flag, calling code, and currency, plus the IANA
 timezone, UN/LOCODE, and EU NUTS codes when their data bundles are present. Plain Nominatim returns none
 of these.
 
@@ -85,7 +85,7 @@ Nominatim-compatible field — the newest build date across the databases this p
 ```
 
 Every date comes out of the artifact itself — the `layer_manifest` row its builder wrote before sealing it — never
-from a file's timestamp or a record kept alongside. An artifact built before that contract carries no manifest, and
+from a file's timestamp or a record kept alongside. An artifact built without a manifest, and
 says so (`"manifest": "absent"`) rather than being left out; when none of them carries one, `data_updated` is omitted
 instead of guessed. A Nominatim client ignores the `mailwoman` key.
 

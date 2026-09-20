@@ -6,9 +6,9 @@
  *
  *   The third point on the morphology spectrum the codex now spans:
  *
- *   - US — the type is a TRAILING word with a standardized abbreviation (`Main Street` → `ST`).
- *   - German — the type is a fused TRAILING suffix (`Hauptstraße`).
- *   - French — the type is a LEADING standalone word (`Rue de la Paix`, `Avenue des Champs-Élysées`).
+ *   - US — the type is a trailing word with a standardized abbreviation (`Main Street` → `ST`).
+ *   - German — the type is a fused trailing suffix (`Hauptstraße`).
+ *   - French — the type is a leading standalone word (`Rue de la Paix`, `Avenue des Champs-Élysées`).
  *       It carries common abbreviations (`bd`, `av`, `pl`) but no single national standard like
  *       USPS Pub-28.
  *
@@ -25,7 +25,7 @@ import { foldToken } from "#normalize"
 export const FR_VOIE_TYPES = {
 	rue: ["r"],
 	avenue: ["av", "ave"],
-	boulevard: ["bd", "boul"],
+	boulevard: ["bd", "bld", "bvd", "boul"],
 	place: ["pl"],
 	impasse: ["imp"],
 	allée: ["all"],
@@ -33,10 +33,10 @@ export const FR_VOIE_TYPES = {
 	chemin: ["ch", "che"],
 	quai: [],
 	cours: ["crs"],
-	passage: ["pass", "psg"],
+	passage: ["pass", "psg", "pas"],
 	square: ["sq"],
 	route: ["rte"],
-	sentier: ["sen"],
+	sentier: ["sen", "sente"],
 	villa: [],
 	cité: [],
 	esplanade: ["espl"],
@@ -81,7 +81,7 @@ const VOIE_TOKEN_SET: ReadonlySet<string> = (() => {
 
 /**
  * True when a token is a French voie type word or abbreviation (case- and accent-insensitive) — `Rue`, `BD`, `Allée`,
- * `impasse`. Matches the WHOLE token (French types lead the street name, they are not fused suffixes), so a city or
+ * `impasse`. Matches the whole token (French types lead the street name, they are not fused suffixes), so a city or
  * surname is not caught the way a suffix test might.
  */
 export function isFrenchStreetWord(token: unknown): boolean {

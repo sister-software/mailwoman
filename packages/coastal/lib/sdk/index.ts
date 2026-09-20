@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The acquisition + build surface for the EA coastal-erosion layer. The READER is the package root.
+ * @file The acquisition + build surface for the EA coastal-erosion layer. The reader is the package root.
  */
 
 export * from "#sdk/build-coastal"

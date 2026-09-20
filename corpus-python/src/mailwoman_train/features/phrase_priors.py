@@ -7,9 +7,9 @@ Stage 2.7 of the v0.5.0 pipeline (the phrase grouper, Thread E) emits ``PhrasePr
 
 This module defines:
 
-- ``PHRASE_KINDS``: the 7-kind taxonomy mirrored from the TS contract
+- ``PHRASE_KINDS``: the 7-kind taxonomy mirrored from the TS interface
   (``core/pipeline/types.ts``'s ``PhraseKind`` union). The Python-side enum is a tuple
-  in declaration order; the order MUST match the TS union — the i-th kind in this tuple
+  in declaration order. the order must match the TS union — the i-th kind in this tuple
   is the same kind as the i-th branch of ``PhraseKind`` in TS, because that's the same
   index used to one-hot encode per-token features.
 
@@ -18,9 +18,9 @@ This module defines:
   Total width = ``len(_BIE) + len(PHRASE_KINDS) = 3 + 7 = 10``.
 
 Why mirror the TS taxonomy here instead of importing? The classifier trains in Python
-on parquet slices that don't carry the TS-side ``PhraseProposal`` value type. The corpus
-build (forthcoming, alongside corpus-v0.4.0) is what produces per-token feature tensors;
-its bridge to the TS-side phrase grouper lives there, not here. This file is just the
+on parquet files that don't carry the TS-side ``PhraseProposal`` value type. The corpus
+build (forthcoming, alongside corpus-v0.4.0) is what produces per-token feature tensors.
+its bridge to the TS-side phrase grouper lives there rather than here. This file is just the
 shared vocabulary.
 
 Drift check: if a new ``PhraseKind`` branch lands in ``core/pipeline/types.ts`` (or vice
@@ -34,7 +34,7 @@ from dataclasses import dataclass
 from typing import Final
 
 # Mirror of the TS-side ``PhraseKind`` union (see core/pipeline/types.ts in Thread E).
-# Order is the encoding contract; never reorder, only append.
+# Order is the encoding interface. never reorder, only append.
 PHRASE_KINDS: Final[tuple[str, ...]] = (
     "NUMERIC",
     "STREET_PHRASE",
@@ -71,7 +71,7 @@ class PhraseFeatureEncoding:
     Tokens not covered by any phrase proposal: all-zero feature vector.
     Tokens covered by multiple overlapping proposals (the plan's "possibilities not
     constraints" cases like ``Saint Petersburg`` being both one ``LOCALITY_PHRASE`` and
-    two ``LOCALITY_PHRASE``s): the encoder consumes ONE feature row per token, so the
+    two ``LOCALITY_PHRASE``s): the encoder consumes one feature row per token, so the
     corpus build picks the highest-confidence proposal covering that token. Downstream
     Stage 5 reconcile (Thread D) re-introduces the multi-proposal ambiguity from the
     grouper's raw output.
@@ -86,7 +86,7 @@ class PhraseFeatureEncoding:
 
 
 def phrase_kind_id(kind: str) -> int:
-    """Look up a ``PhraseKind`` by name; raises ``KeyError`` on unknown kinds.
+    """Look up a ``PhraseKind`` by name. raises ``KeyError`` on unknown kinds.
 
     Unknown kinds are a corpus-version skew (TS-side added a kind, Python-side didn't).
     Fail loudly here rather than silently mapping to a default — the resulting model

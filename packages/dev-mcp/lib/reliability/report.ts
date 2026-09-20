@@ -5,7 +5,7 @@
  *   `mwdev_reliability`'s measurement: pick a surface, collect graded confidences, curve them, and say what an eval on
  *   them would buy.
  *
- *   The report deliberately answers TWO questions that get conflated. "Is the number honest?" is the curve — ECE, MCE,
+ *   The report deliberately answers two questions that get conflated. "Is the number honest?" is the curve — ECE, MCE,
  *   the per-bin gap. "Is it worth filtering on?" is the threshold table, and a well-calibrated surface can still fail it,
  *   because the admitted-error count at every useful recall can be too high for the downstream cost. A tool that
  *   returned only ECE would let a caller conclude the second from the first.
@@ -28,7 +28,8 @@ import { provenanceFor } from "#tool-kit"
 
 /**
  * The confidence surfaces this tool can grade. Each is a distinct head over distinct features — they share a
- * reliability diagram and nothing else — so adding one means adding a sample function, not widening an existing one.
+ * reliability diagram and nothing else — so adding one means adding a sample function rather than widening an existing
+ * one.
  */
 export const ReliabilitySurface = {
 	Decode: "decode",
@@ -40,14 +41,14 @@ export type ReliabilitySurface = (typeof ReliabilitySurface)[keyof typeof Reliab
 /**
  * Where the coarse placer's held-out split lives, relative to the repo root.
  *
- * NOT tracked in git — the surface reports its absence rather than substituting another split, because `val` and
+ * Not tracked in git — the surface reports its absence rather than substituting another split, because `val` and
  * `train` load identically and produce a curve that is the temperature fit reporting on itself.
  */
 const PLACER_TEST_SPLIT = ["data", "coarse-placer", "test.jsonl"] as const
 
 /**
  * The eval positions the placer work actually argued over, so a reader comparing against that record does not have to
- * re-derive the rows. A caller may pass their own; these are a starting table, not a claim about where the eval
+ * re-derive the rows. A caller may pass their own. these are a starting table rather than a claim about where the eval
  * belongs.
  */
 const DEFAULT_THRESHOLDS = [0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 0.99] as const
@@ -123,7 +124,7 @@ export async function runReliability(registry: EngineRegistryLike, args: Record<
 async function decodeRun(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<SurfaceRun> {
 	const set = await resolveInputSet((args["inputs"] as InputSetRef | undefined) ?? { kind: "board" })
 	const config = (args["config"] as EngineConfig | undefined) ?? {}
-	// The per-token softmax IS the measurement, so tracing is forced on regardless of what the caller passed.
+	// The per-token softmax is the measurement, so tracing is forced on regardless of what the caller passed.
 	const engine = await registry.acquire({ ...config, trace: true })
 	const limit = args["limit"] as number | undefined
 	const selected = limit ? set.inputs.slice(0, limit) : set.inputs
@@ -139,9 +140,9 @@ async function decodeRun(registry: EngineRegistryLike, args: Record<string, unkn
 		sample,
 		provenance: provenanceFor(engine, set),
 		nRequested: selected.length,
-		// A `limit` makes a full board a slice, and reporting the set's own selection would let a 20-row probe carry a
+		// A `limit` makes a full board a subset, and reporting the set's own selection would let a 20-row probe carry a
 		// full board's confidence wording.
-		selection: limit && limit < set.inputs.length ? "slice" : set.selection,
+		selection: limit && limit < set.inputs.length ? "subset" : set.selection,
 		eventLabel: "incorrect component",
 	}
 }
@@ -153,7 +154,7 @@ async function placerRun(registry: EngineRegistryLike, args: Record<string, unkn
 	return {
 		sample,
 		// No engine and no input set: the placer is loaded from its own bundle and graded against a corpus on disk, so
-		// the standard provenance block would be a shape with every field empty. The two facts that DO identify this
+		// the standard provenance block would be a shape with every field empty. The two facts that do identify this
 		// measurement are the corpus and the tree.
 		provenance: {
 			corpus,
@@ -192,7 +193,7 @@ function summarize(
 	const excludedTotal = sample.excluded.reduce((total, entry) => total + entry.n, 0)
 	const excludedSentence = excludedTotal ? ` ${excludedTotal} rows were excluded and are itemized.` : ""
 
-	// Named in the sentence, not just in a field: the curve covers only the components truth asserted, and a reader
+	// Named in the sentence rather than just in a field: the curve covers only the components truth asserted, and a reader
 	// who does not know how much output sat outside it will read the ECE as covering the parse.
 	const unassertedSentence = sample.unasserted?.n
 		? ` A further ${sample.unasserted.n} produced components were not asserted by any truth row (mean confidence ` +

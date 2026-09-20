@@ -3,8 +3,8 @@
 
 /**
  *   Evaluate the #244 coarse-placer: in-distribution accuracy + per-class + calibration (ECE) on the
- *   held-out test split, AND the abstention story on the multi-script set — off-map scripts
- *   (Cyrillic, Arabic, Thai, …, none of them in the 11 trained countries) SHOULD draw low
+ *   held-out test split, and the abstention story on the multi-script set — off-map scripts
+ *   (Cyrillic, Arabic, Thai, …, none of them in the 11 trained countries) should draw low
  *   confidence → abstain, which is the "probably off my loaded map" behavior the design wants.
  *
  *   Run: `mailwoman placer eval in-distribution [--model <dir>] [--abstain 0.5]`
@@ -194,7 +194,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 
 				if (isOffMapHandled(p)) {
 					missOk++
-				} // a latin/cjk in-map input mis-routed to OTHER = a false abstention
+				} // a latin/cjk in-map input mis-routed to other = a false abstention
 			}
 		}
 

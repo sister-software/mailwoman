@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file An on-disk `axios-cache-interceptor` storage adapter, so a client gets a durable HTTP cache by
- *   CONFIGURATION rather than by hand-rolling one.
+ * @file An on-disk `axios-cache-interceptor` storage adapter, so a client gets a durable http cache by
+ *   configuration rather than by hand-rolling one.
  *
- *   NODE ONLY, and deliberately NOT re-exported from `./index.ts`: `core/api` reaches a browser bundle
+ *   Node only, and deliberately not re-exported from `./index.ts`: `core/api` reaches a browser bundle
  *   (`docs`'s `DashboardMap` → `@mailwoman/cartographer` → `tiles/api.ts` → `@mailwoman/core/api`),
  *   and webpack refuses to resolve `node:fs/promises` for the web target. Import this through its own
  *   `@mailwoman/core/api/disk-storage` subpath.
@@ -13,12 +13,12 @@
  *   Two rules here are required, both carried over from the bespoke cache this replaces
  *   (`98c4dda1:filer/sdk/sec-client.ts`), both learned the hard way:
  *
- *     1. VALIDATE BEFORE WRITING. A response that can't be read back — an unparseable body, a
+ *     1. validate before writing. A response that can't be read back — an unparseable body, a
  *        non-finite TTL — must never reach disk. A permanently-cached entry has no self-healing path
  *        short of hand-deleting a hash-named file.
- *     2. ATOMIC WRITE, UNIQUE TEMP NAME. Write-then-rename, with a temp name unique per write. A
- *        DETERMINISTIC temp name (`${final}.building`) made two clients writing one URL collide: the
- *        first `rename()` moved the shared temp file away and the second got a raw `ENOENT` for a
+ *     2. atomic write, unique temp name. Write-then-rename, with a temp name unique per write. A
+ *        deterministic temp name (`${final}.building`) made two clients writing one URL collide: the
+ *        first `rename()` moved the shared temp file away and the second got a raw `enoent` for a
  *        response that had already succeeded (reproduced 6/6), and at multi-MB bodies the two writers'
  *        bytes interleaved into a corrupt-but-parseable entry.
  */
@@ -42,11 +42,11 @@ export interface DiskStorageOptions {
 	 */
 	directory: PathBuilderLike
 	/**
-	 * An additional, domain-specific check run against every entry BEFORE it is written. Return `false` (or throw) to
-	 * drop the write; the entry is removed rather than persisted, so the next request re-fetches.
+	 * An additional, domain-specific check run against every entry before it is written. Return `false` (or throw) to
+	 * drop the write. the entry is removed rather than persisted, so the next request re-fetches.
 	 *
-	 * This is the hook for "a 200 whose body isn't what this API is supposed to return". Some upstreams (SEC EDGAR among
-	 * them) serve an HTML error page with a 200 status; persisting one under a permanent TTL poisons that URL forever.
+	 * This is the hook for "a 200 whose body isn't what this API is supposed to return". Some upstreams (SEC edgar among
+	 * them) serve an html error page with a 200 status. persisting one under a permanent TTL poisons that URL forever.
 	 * The structural checks below (serializable, finite `createdAt`/`ttl`) always run regardless.
 	 */
 	validate?: (value: NotEmptyStorageValue) => boolean
@@ -66,8 +66,8 @@ function isPersistableState(value: NotEmptyStorageValue): boolean {
 }
 
 /**
- * The structural half of the validate-before-write rule: an entry must survive a JSON round trip WITH ITS MEANING
- * INTACT.
+ * The structural half of the validate-before-write rule: an entry must survive a JSON round trip with its meaning
+ * intact.
  *
  * `createdAt` and `ttl` get an explicit finite check because `JSON.stringify(Infinity)` is the string `null`, and
  * `null` reads back as `0` in the interceptor's `createdAt + ttl < Date.now()` expiry test. An `Infinity` TTL — the
@@ -86,10 +86,10 @@ function hasFiniteTiming(value: NotEmptyStorageValue): boolean {
  *
  * An in-process overlay Map sits in front of the files, and it is required for two reasons:
  *
- * 1. `loading` markers live there INSTEAD of on disk. That keeps the interceptor's stampede guard working (a concurrent
+ * 1. `loading` markers live there instead of on disk. That keeps the interceptor's stampede guard working (a concurrent
  *    second request for the same key sees `loading` and waits on the first) without a file write per request, and
  *    without an interrupted process leaving a `loading` marker on disk forever.
- * 2. A value being WRITTEN stays there until its `rename` lands. Without that, `set()` clearing the `loading` marker
+ * 2. A value being written stays there until its `rename` lands. Without that, `set()` clearing the `loading` marker
  *    before the file exists opens a window where the key is in neither place, and a concurrent reader gets `empty` for
  *    a response that is already in hand — measured as 3 dispatches for 3 concurrent requests to one URL, i.e. the
  *    stampede guard fully defeated.
@@ -161,7 +161,7 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 			const parsed = tryParsingJSON<StorageValue>(raw)
 
 			if (parsed === null) {
-				// A truncated or hand-edited entry is a miss, not a crash — re-fetching is always safe.
+				// A truncated or hand-edited entry is a miss rather than a crash — re-fetching is always safe.
 				logger.warn(`Discarding an unreadable cache entry for ${key}.`)
 
 				await removeEntry(key)
@@ -189,14 +189,14 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 				return
 			}
 
-			// Publish to the overlay BEFORE the write and clear it only once the rename has landed, so the
+			// Publish to the overlay before the write and clear it only once the rename has landed, so the
 			// key is continuously visible: the `loading` marker is replaced by the real value in the same
 			// synchronous step, never by a gap.
 			overlay.set(key, value)
 
 			const finalPath = entryPath(key)
 			// Unique per write — `process.pid` separates processes, `randomUUID()` separates concurrent
-			// writes inside one. A deterministic name here is the ENOENT/interleaving bug in the file header.
+			// writes inside one. A deterministic name here is the enoent/interleaving bug in the file header.
 			const buildingPath = `${finalPath}.${process.pid}.${crypto.randomUUID()}.building`
 
 			try {
@@ -204,16 +204,15 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 				await writeLocalFile(serialized, buildingPath)
 				await movePath(buildingPath, finalPath)
 			} catch (error) {
-				// A CACHE WRITE IS A SIDE EFFECT OF A SUCCESSFUL REQUEST, AND A FAILED SIDE EFFECT MUST NOT
-				// FAIL THE REQUEST.
+				// A cache write follows a successful request. If the write fails, the request still succeeds.
 				//
 				// `axios-cache-interceptor` awaits `set()` inside its response `onFulfilled`, so throwing
-				// from here rejects a request whose HTTP response ALREADY SUCCEEDED — the body is discarded.
+				// from here rejects a request whose http response already succeeded — the body is discarded.
 				// Worse, it escapes as a bare `Error`: no `status`, so `isTransientResourceError` reads it as
-				// FALSE and a caller following the documented contract is told never to retry. ANY
-				// filesystem failure does this: `EACCES` on a directory whose mode changed (reproduced with
+				// false and a caller following the documented interface is told never to retry. Any
+				// filesystem failure does this: `eacces` on a directory whose mode changed (reproduced with
 				// a `0o500` parent, which also showed three concurrent gets yielding one rejection and two
-				// successes for the SAME response), `EMFILE` under a concurrent crawl, a rename race, a
+				// successes for the same response), `emfile` under a concurrent crawl, a rename race, a
 				// transient I/O error. Not being able to cache is a cache miss.
 				logger.warn(`Could not persist ${key} (continuing as a cache miss): ${errorMessage(error)}`)
 

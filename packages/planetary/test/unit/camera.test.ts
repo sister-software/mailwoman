@@ -21,11 +21,11 @@ test.each([
 
 /**
  * The clamp exists because framing past the terrain archive's depth is what turned a selected crater into a grey blur:
- * Tycho earns zoom 7 against an archive that stops at 5, and an unclamped small feature asks for 9.
+ * Tycho warrants zoom 7 against an archive that stops at 5, and an unclamped small feature asks for 9.
  */
 test.each([
 	// [diameterKm, maxTerrainZoom, expected]
-	[85.29, 5, 6], // Tycho on a zoom-5 archive: one level of over-zoom, not two
+	[85.29, 5, 6], // Tycho on a zoom-5 archive: one level of over-zoom rather than two
 	[85.29, 6, 7], // the same feature on a deeper archive keeps its earned zoom
 	[1.2, 5, 6], // a small crater cannot ask for 9
 	[1.2, 6, 7],

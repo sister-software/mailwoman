@@ -7,13 +7,13 @@
  *
  *   It is plain data: parser components + the formatter's match key + an optional resolved geocode,
  *   composed into one object. No ORM, no decorators, no schema-generation implementation — if we need a
- *   database we reach for Kysely at the call site, not a model layer here.
+ *   database we reach for Kysely at the call site rather than a model layer here.
  *
  *   The geocode fields mirror mailwoman's `GeocodeResult` (tier + calibrated uncertainty + hierarchy)
  *   on purpose: that is the location signal the Fellegi-Sunter scorer weights its distance evidence
- *   by — two records sharing a `address_point` coordinate is strong agreement; sharing an
- *   `interpolated` centroid is weak; a PO-box / multi-unit coordinate is barely location agreement
- *   at all (the NAACCR precedent, see the geocode-first record-matching concept doc).
+ *   by — two records sharing a `address_point` coordinate is strong agreement. sharing an
+ *   `interpolated` centroid is weak. a PO-box / multi-unit coordinate is barely location agreement
+ *   at all (the naaccr precedent, see the geocode-first record-matching concept doc).
  */
 
 import { type ComponentDict, type FormatAddressOptions, formatAddress } from "@mailwoman/codex/address-format"
@@ -29,7 +29,7 @@ export interface GeoCoordinate {
 
 /**
  * The resolution tier that produced a coordinate, mirroring mailwoman's geocoder (`address_point` > `interpolated` >
- * `street` > `admin`). Kept as a local plain union so this package stays decoupled from the heavy geocoder runtime; a
+ * `street` > `admin`). Kept as a local plain union so this package stays decoupled from the heavy geocoder runtime. a
  * `GeocodeResult.resolution_tier` maps in directly. (`street` = a street centroid for a street-only query, #1042 —
  * coarser than a house-number estimate, finer than an admin centroid.)
  */
@@ -59,7 +59,7 @@ export interface AddressGeocode {
 	 */
 	hierarchy?: HierarchyNode[]
 	/**
-	 * A delivery point, not a building — weakens location agreement even at a precise coordinate.
+	 * A delivery point rather than a building — weakens location agreement even at a precise coordinate.
 	 */
 	poBox?: boolean
 	/**

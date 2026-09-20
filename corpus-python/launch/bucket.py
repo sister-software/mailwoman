@@ -1,6 +1,6 @@
 """Reading the bucket against the table: what is stored, what is staged, and what neither reaches.
 
-The table says what a sync COPIES. It cannot say what the bucket HOLDS, and the difference is
+The table says what a sync copies. It cannot say what the bucket holds, and the difference is
 invisible from either side on its own — a row naming a prefix that is not there stages nothing and
 rclone exits 0, and a prefix no row names is storage no launch can reach. Both have happened.
 
@@ -30,7 +30,7 @@ def _prefixes(path: str) -> list[str]:
     )
     names: list[str] = []
     for line in result.stdout.splitlines():
-        # `lsd` prints size, count, date, time, then the name; only the name is wanted.
+        # `lsd` prints size, count, date, time, then the name. only the name is wanted.
         parts = line.split(maxsplit=4)
         if len(parts) == 5:
             names.append(parts[4])

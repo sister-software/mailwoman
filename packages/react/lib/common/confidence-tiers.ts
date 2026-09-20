@@ -4,7 +4,7 @@
 /**
  * @file Confidence banding shared by every component that colours a span by confidence.
  *
- *   It is a presentation choice, not a model one: the parser emits a continuous confidence and these
+ *   It is a presentation choice rather than a model one: the parser emits a continuous confidence and these
  *   bounds only decide which colour a span is drawn in, so they live here rather than anywhere the
  *   pipeline can see them.
  */
@@ -15,7 +15,7 @@
 export const HIGH_CONFIDENCE_MIN = 0.8
 
 /**
- * At or above this the span is drawn as medium-confidence; below it, low.
+ * At or above this the span is drawn as medium-confidence. below it, low.
  */
 export const MID_CONFIDENCE_MIN = 0.5
 

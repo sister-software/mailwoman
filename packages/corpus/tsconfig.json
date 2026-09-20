@@ -14,6 +14,7 @@
 		{ "path": "../sqlite" },
 		{ "path": "../core" },
 		{ "path": "../codex" },
+		{ "path": "../evidence" },
 		{ "path": "../query-shape" }
 	]
 }

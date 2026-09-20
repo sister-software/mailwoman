@@ -17,12 +17,12 @@ with a different `--arm`; it changes no row, no comparator, no metric and no thr
 Route (a) of the boundaries record §5.5 — commit the target rows first, graded on outcomes only.
 
 Route (b) pre-registers on the §5.3 recall gap, and it cannot be executed against the frozen
-vertical slice: reaching the 7,168 `drugstore` rows the shipped `pharmacy` query cannot see needs a
+first increment: reaching the 7,168 `drugstore` rows the shipped `pharmacy` query cannot see needs a
 **second** establishment class asserting the affordance, which §4 forbids ("no sibling class is
 minted") and stop condition 5 makes an explicit amendment rather than a probe. It would also need a
 recall metric the committed grader does not have (§5.5's second bound). Route (a) needs neither: the
 comparator already exists and is committed, the anchors and expectations are copied byte-for-byte
-from committed board rows, and the semantic arm is reachable from the frozen slice alone — activity
+from committed board rows, and the semantic arm is reachable from the frozen increment alone — activity
 phrase → `obtain_medication` → the concepts that afford it → POI category `pharmacy` through the
 committed mapping.
 
@@ -56,7 +56,7 @@ only thing that varies.
 | `cat-us-05`  | `same_category` | `pharmacy near Denver CO` | the venue-noun form at two target rows' anchor     |
 | `cat-mx-02`  | `same_category` | `pharmacy near Tijuana`   | the venue-noun form at `sem-act-mx-01`'s anchor    |
 | `cat-fr-03`  | `same_category` | `pharmacy near Toulouse`  | the venue-noun form at `sem-act-fr-01`'s anchor    |
-| `syn-01`     | `adjacent`      | `er near Denver CO`       | a different healthcare category at the SAME anchor |
+| `syn-01`     | `adjacent`      | `er near Denver CO`       | a different healthcare category at the same anchor |
 | `cat-us-04`  | `adjacent`      | `bank near Seattle WA`    | an unrelated category at an unrelated anchor       |
 | `abstain-05` | `adjacent`      | `hospital`                | a bare category — an arm must not invent an anchor |
 
@@ -123,7 +123,7 @@ branch, and the reason is not the category lexicon: `matchPOISubject` returns `n
 answers a clothing store 211.75 km from Toulouse.
 
 That makes this row's baseline a confident wrong answer rather than a miss, which is a worse starting
-point than the other three, not a better one. The row is kept: its form is attested in §5.1, and
+point than the other three rather than a better one. The row is kept: its form is attested in §5.1, and
 swapping it out after measuring would be exactly the row selection this pre-registration exists to
 prevent. It is the reason the diagnostic baseline is 1 rather than 0, and therefore the reason the
 diagnostic delta bar is +2 rather than +3.

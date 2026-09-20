@@ -40,13 +40,31 @@ with the snapshot, and Overture leaves already absorbed by a curated record's `o
 standalone records (so a curated synonym like `coffee shop` → `cafe` is never shadowed by the `coffee_shop` snapshot
 leaf). To edit the curated layer, change `curated-overlay.json` and regenerate.
 
+## `brands.json` — the chain-brand table aggregated from `poi.db`
+
+Produced by `mailwoman gazetteer build poi-brands`, whose aggregation lives in
+`packages/mailwoman/lib/gazetteer-pipeline/poi/build/brands.ts`. **Do not hand-edit.** It reads a built
+`poi.db` read-only and groups its `(brand_wikidata, name)` pairs into one record per Wikidata QID,
+carrying the most frequently observed name plus the alias spellings that clear a noise floor.
+
+The committed copy declares `version` `0.2.0` over source layer `poi` at vintage `2026-05-20.0`, which
+is the field a reader checks it against.
+
+A rebuild against the same `poi.db` is byte-identical. Every ordering decision is an explicit tie-break
+rather than SQL row order or `Map` iteration order: brands by row count descending then QID ascending,
+the modal name by count descending then name ascending, aliases alphabetical.
+
+```bash
+node packages/mailwoman/out/cli/index.js gazetteer build poi-brands
+```
+
 ## `venue-word-hints.json` — the mined single-token venue-class hint table
 
 Produced by `scripts/build-venue-word-hints.ts` from the f6 venue-word survey artifact
 (`$MAILWOMAN_DATA_ROOT/derived/venue-word-lexicon-f6.json`, md5 `a2ae6f4b29ee0ee45870273487d86e79`).
 **Do not hand-edit.** The survey compared token rates across 13.68M Overture poi names (the poi.db
 build corpus, CDLA-Permissive-2.0) against 4.8M candidate-gazetteer primary place names; the
-committed slice keeps the 2,249 tokens that clear the composed bars recorded in the file's own
+committed subset keeps the 2,249 tokens that clear the composed bars recorded in the file's own
 provenance block (venue ratio ≥ 0.9 at ≥ 100 poi occurrences, top CLASS share ≥ 0.7 excluding
 `other`, place rate ≤ 5 ppm — the toponym suppressor). Generated 2026-08-12. Regenerate with:
 

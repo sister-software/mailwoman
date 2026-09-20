@@ -2,15 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `@mailwoman/un-locode-lookup` — place → UN/LOCODE (UNECE Code for Trade and Transport Locations).
+ *   `@mailwoman/un-locode-lookup` — place → UN/locode (unece Code for Trade and Transport Locations).
  *   Two ways in: by country + place name (exact, diacritic-folded), or by nearest coordinate (for
- *   the ~⅓ of entries that carry one). Backed by a `node:sqlite` table built from the UNECE code
+ *   the ~⅓ of entries that carry one). Backed by a `node:sqlite` table built from the unece code
  *   list. An `@mailwoman/annotations` `Annotator`.
  */
 
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import type { UNLocodeDatabase } from "#schema"
 
@@ -27,7 +28,7 @@ export function foldName(name: string): string {
 }
 
 /**
- * Parse a UN/LOCODE coordinate (`"4923N 01522E"`) to decimal degrees, or null if absent/malformed.
+ * Parse a UN/locode coordinate (`"4923N 01522E"`) to decimal degrees, or null if absent/malformed.
  */
 export function parseUNLocodeCoords(raw: string): { lat: number; lon: number } | null {
 	const m = raw.trim().match(/^(\d{2})(\d{2})([NS])\s+(\d{3})(\d{2})([EW])$/)
@@ -40,19 +41,19 @@ export function parseUNLocodeCoords(raw: string): { lat: number; lon: number } |
 }
 
 /**
- * A UN/LOCODE lookup over a built `node:sqlite` table.
+ * A UN/locode lookup over a built `node:sqlite` table.
  */
 export class UNLocodeLookup implements Disposable {
 	#db: DatabaseClient<UNLocodeDatabase>
 	/**
-	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal cannot reach it —
 	 * ownership is membership rather than a flag a later branch has to check.
 	 */
 	readonly #resources = new DisposableStack()
 	#byName: ReturnType<DatabaseClient["prepare"]>
 	#byBox: ReturnType<DatabaseClient["prepare"]>
 
-	constructor(opts: { databasePath: string } | { db: DatabaseClient<UNLocodeDatabase> }) {
+	constructor(opts: { databasePath: PathBuilderLike } | { db: DatabaseClient<UNLocodeDatabase> }) {
 		this.#db =
 			"db" in opts
 				? opts.db
@@ -68,7 +69,7 @@ export class UNLocodeLookup implements Disposable {
 	}
 
 	/**
-	 * The UN/LOCODE (`"US NYC"`) for a country + place name, or null.
+	 * The UN/locode (`"US NYC"`) for a country + place name, or null.
 	 */
 	byName(country: string, name: string): string | null {
 		const row = this.#byName.get(country.toUpperCase(), foldName(name)) as
@@ -79,7 +80,7 @@ export class UNLocodeLookup implements Disposable {
 	}
 
 	/**
-	 * The nearest coordinate-bearing UN/LOCODE within `maxKm`, or null.
+	 * The nearest coordinate-containing UN/locode within `maxKm`, or null.
 	 */
 	nearest(lat: number, lon: number, maxKm = 25): string | null {
 		const dLat = maxKm / 111

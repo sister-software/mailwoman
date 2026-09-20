@@ -7,7 +7,7 @@
  *   The first member of Phase 1.6's "adversarial sources" class. BDC ships the public-domain US
  *   broadband-serviceable-location (BSL) fabric: ~120M addresses keyed by stable `location_id`,
  *   carrying `address_primary` + `city` + `state` + `zip` + `zip_suffix`. Compared to the clean
- *   gazetteer rows from WOF / TIGER / BAN, BDC carries the chaos of address data that has passed
+ *   gazetteer rows from WOF / tiger / BAN, BDC carries the chaos of address data that has passed
  *   through several layers of human entry + automated geocoding + revision: abbreviation drift,
  *   inconsistent unit designators, "RR" / "HC" / "PSC" rural-route shapes, embedded apartment /
  *   suite numbers that did not survive the address parser cleanly. This is the highest-signal,
@@ -18,18 +18,18 @@
  *   host-side pipeline. The mailwoman side does not download or parse the raw CSV/ZIP distribution
  *   directly — that keeps the adapter narrow and the BDC ingest pluggable.
  *
- *   The SQLite schema is documented in README.md and modeled after `NTIARecord`
+ *   The SQLite schema is documented in readme.md and modeled after `NTIARecord`
  *   (`earlier-draft/fcc/bdc/data-collection.ts`): one row per `location_id`. The adapter splits
  *   `address_primary` into `house_number` (leading numeric prefix, if any) + `street` (everything
  *   after), and combines `zip` + `zip_suffix` into the canonical USPS `postcode` slot.
  *
  *   One CanonicalRow per fabric record. Unlike `tiger` (multiple postcode variants per segment) or
  *   `wof-admin` (multiple hierarchy variants per place), BDC records already represent fully
- *   specified addresses; no fan-out is warranted. Adversarial composition (Phase 1.6 §2.1) is the
+ *   specified addresses. no fan-out is warranted. Adversarial composition (Phase 1.6 §2.1) is the
  *   mechanism for deriving multiple training rows per BDC record.
  *
  *   License: stamped `"Public Domain"` per the BDC fabric's US federal-government distribution terms.
- *   The CostQuest Fabric source data has its own license; consumers who substitute that path should
+ *   The CostQuest Fabric source data has its own license. consumers who substitute that path should
  *   re-stamp accordingly.
  */
 
@@ -38,7 +38,7 @@ import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { splitStreetLine } from "#adapters/utils"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
@@ -96,6 +96,7 @@ export function createFccBdcAdapter(): CorpusAdapter {
 	return {
 		id: FCC_BDC_ADAPTER_ID,
 		defaultLicense: FCC_BDC_DEFAULT_LICENSE,
+		addressRole: AddressRole.Premise,
 		description:
 			"FCC Broadband Data Collection — Fabric-derived BSL addresses (public-domain); SQLite DB the operator builds via the earlier-draft BDC ETL.",
 

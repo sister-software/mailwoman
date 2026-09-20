@@ -3,24 +3,24 @@
 
 /**
  *   `mailwoman gazetteer polygons` — build the crisp-polygon sibling for the demo's map. (The slim
- *   `wof-hot.db` points source is RETIRED 2026-06-20 — the admin tier resolves against the
- *   candidate table now; build polygons with `--admin` below, keyed by the same WOF spr ids the
- *   candidate table returns.) The demo's map draws the WOF RECTANGLE (`place_bbox`) today; this
+ *   `wof-hot.db` points source is retired 2026-06-20 — the admin tier resolves against the
+ *   candidate table now. build polygons with `--admin` below, keyed by the same WOF spr ids the
+ *   candidate table returns.) The demo's map draws the WOF rectangle (`place_bbox`) today. this
  *   packs the real admin geometry — simplified — so the demo can draw an actual boundary, loaded
  *   lazily only when a result is shown.
  *
  *   Source: the per-id WOF GeoJSON repos at
  *   `<repos>/whosonfirst-data-admin-<cc>/data/<id-per-region>/<id>.geojson`, where the database path is
- *   the id split into 3-char chunks (101909779 → 101/909/779/101909779.geojson). Only ADMIN
- *   placetypes carry polygons; postcodes resolve to a point marker, so they're skipped. We pull the
+ *   the id split into 3-char chunks (101909779 → 101/909/779/101909779.geojson). Only admin
+ *   placetypes carry polygons. postcodes resolve to a point marker, so they're skipped. We pull the
  *   in-scope ids straight from the already-built points/admin DB so the two stay in lockstep.
  *
  *   Each ring is Douglas-Peucker simplified (default tol ~0.004° ≈ 400 m) to keep the file shippable
- *   — admin polygons are huge at full resolution. Output: `polygons(id INTEGER PRIMARY KEY, geom
- *   TEXT)` where geom is a GeoJSON geometry the demo feeds straight into a MapLibre source.
+ *   — admin polygons are huge at full resolution. Output: `polygons(id integer primary KEY, geom
+ *   text)` where geom is a GeoJSON geometry the demo feeds straight into a MapLibre source.
  *
  *   Source modes: `--points <wof-hot.db>` keeps the demo sidecar in lockstep with the slim points DB
- *   (small, shippable). `--admin <admin-global-priority.db>` instead pulls EVERY admin row from the
+ *   (small, shippable). `--admin <admin-global-priority.db>` instead pulls every admin row from the
  *   full gazetteer (optionally `--countries US,DE`) — the broad-coverage build the node-side
  *   reverse geocoder (#484) wants: the slim DB excludes localadmin, which is where US town polygons
  *   actually live (VT: 255/255 localadmin have real polygons, 0 reached the demo sidecar).
@@ -39,13 +39,7 @@ import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Box, Text } from "ink"
 import { resolvePath } from "path-ts"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	splitUpperList,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, splitCountryCodes, useCommandTask } from "#cli-kit"
 
 /**
  * Vertices below which a ring cannot be simplified further without collapsing it.
@@ -60,7 +54,7 @@ const MIN_CLOSED_RING_VERTICES = 4
 const ADMIN_PLACETYPES = new Set(["locality", "localadmin", "region", "county", "borough", "macroregion", "country"])
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "polygons",
@@ -78,15 +72,6 @@ export const spec = {
 		},
 	},
 } as const satisfies CommandSpec
-
-interface Options {
-	points?: string
-	admin?: string
-	countries?: string
-	out: string
-	tol: number
-	repos: string
-}
 
 type Position = number[]
 
@@ -107,7 +92,7 @@ interface RawGeometry {
 /**
  * Where a country's admin record sits under a repositories root.
  *
- * `--repos` defaults to the OWNER directory (`<data-root>/wof/repos/whosonfirst-data`), so the repository name is
+ * `--repos` defaults to the owner directory (`<data-root>/wof/repos/whosonfirst-data`), so the repository name is
  * appended flat to whatever root the caller gave. The id-to-path rule itself belongs to `wofIDPathSegments`.
  */
 function geojsonPath(repos: string, country: string, id: number): string {
@@ -129,7 +114,7 @@ function segDist(p: Position, a: Position, b: Position): number {
 }
 
 /**
- * Douglas-Peucker on a ring of [lon,lat]. Keeps endpoints; preserves closure.
+ * Douglas-Peucker on a ring of [lon,lat]. Keeps endpoints. preserves closure.
  */
 function dp(ring: LinearRing, tol: number): LinearRing | null {
 	if (ring.length <= MIN_RING_VERTICES) return ring
@@ -169,7 +154,7 @@ function dp(ring: LinearRing, tol: number): LinearRing | null {
 }
 
 /**
- * Simplify a Polygon / MultiPolygon geometry; drop rings that collapse. Returns null if nothing left.
+ * Simplify a Polygon / MultiPolygon geometry. drop rings that collapse. Returns null if nothing left.
  */
 function simplify(geom: RawGeometry, tol: number): RawGeometry | null {
 	const ringSet = (poly: LinearRing[]): LinearRing[] =>
@@ -190,7 +175,7 @@ function simplify(geom: RawGeometry, tol: number): RawGeometry | null {
 	return null // Points / lines: no polygon to draw.
 }
 
-const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerPolygons: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 		const { createPolygonsTable } = await import("@mailwoman/resolver-wof-sqlite/polygon-schema")
@@ -210,7 +195,7 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 			throw new CommandError("provide exactly one source: --points <wof-hot.db> OR --admin <admin.db>")
 		}
 
-		const countries = options.countries ? splitUpperList(options.countries) : null
+		const countries = options.countries ? splitCountryCodes(options.countries) : null
 
 		const repos = options.repos
 		const tol = options.tol
@@ -227,9 +212,9 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 			...(countries ?? [])
 		).filter((r) => ADMIN_PLACETYPES.has(r.placetype))
 
-		// Build to a temp sibling, then atomically swap into place (scripts/AGENTS.md: a DB is a
+		// Build to a temp sibling, then atomically swap into place (scripts/agents.md: a DB is a
 		// readonly artifact — never write the live path in case the build dies halfway). The
-		// original .mjs wrote `out` directly; this hardens it without changing the result.
+		// original .mjs wrote `out` directly. this hardens it without changing the result.
 		const tmpOut = `${out}.tmp-${process.pid}`
 
 		for (const stale of [tmpOut, `${tmpOut}-wal`, `${tmpOut}-shm`, `${tmpOut}-journal`]) {
@@ -239,7 +224,7 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 		}
 
 		const kdb = new DatabaseClient<PolygonDatabase>(tmpOut)
-		// DDL via the Kysely schema-builder; the hot INSERT loop below stays on the raw `kdb` handle.
+		// DDL via the Kysely schema-builder. the hot insert loop below stays on the raw `kdb` handle.
 
 		await createPolygonsTable(kdb)
 

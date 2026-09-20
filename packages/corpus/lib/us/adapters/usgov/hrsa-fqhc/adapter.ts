@@ -7,7 +7,7 @@
  *   Federally Qualified Health Centers (FQHCs) are HRSA-funded community health programs that
  *   self-report site addresses to the HRSA Data Warehouse. The published CSV (`data.hrsa.gov`)
  *   carries the site name, the postal-formatted street address, and the locality/region/postcode
- *   quad. The source earns its place on adversarial-value-per-row (#22): every facility name is a
+ *   quad. The source warrants its place on adversarial-value-per-row (#22): every facility name is a
  *   human-typed venue string and the addresses pass through enough hands to accumulate the
  *   abbreviation drift + suite designator chaos that pure gazetteer data does not.
  *
@@ -15,12 +15,12 @@
  *   single national CSV (~10K rows), small enough that the operator can re-fetch on every corpus
  *   rebuild without an intermediate SQLite step. Column names below match the HRSA Data Warehouse's
  *   "Health Center Service Delivery Site" public dataset. Operators substituting the
- *   closely-related "Site Address" or "Health Center" public extracts may need to remap columns;
- *   the README documents the expected set.
+ *   closely-related "Site Address" or "Health Center" public extracts may need to remap columns.
+ *   the readme documents the expected set.
  *
  *   Output: one row per CSV record, with `venue` component carrying the site name and the address
  *   quad on `(house_number, street, locality, region, postcode)`. Component order is critical:
- *   `venue` is inserted FIRST so alignment claims its surface span before `locality` searches for
+ *   `venue` is inserted first so alignment claims its surface span before `locality` searches for
  *   its own (the kryptonite case "Buffalo Health Clinic, …, Buffalo, NY" relies on `venue`
  *   consuming the first "Buffalo" so locality lands on the second).
  *
@@ -32,7 +32,7 @@ import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
@@ -49,7 +49,7 @@ export const USGOV_HRSA_FQHC_DEFAULT_LICENSE = "Public Domain"
 /**
  * Subset of HRSA "Health Center Service Delivery Site Locations" CSV columns consulted by the adapter. Column names
  * match the canonical HRSA Data Warehouse export header. Operators substituting a closely-related extract should rename
- * columns to match; the README has the mapping cheatsheet.
+ * columns to match. the readme has the mapping cheatsheet.
  */
 interface HRSASiteRow {
 	"Site Name": string
@@ -69,14 +69,15 @@ interface HRSASiteRow {
  *
  * Suite / Apt / Unit designators stay on `street` — Mailwoman's `unit` component exists but the address-formatter does
  * not have a clean slot for it, and HRSA addresses do not separate the suite into its own column. Leaving the surface
- * form intact in `street` preserves the adversarial training signal (the model learns that a trailing "Suite 4" is part
- * of the road line in this distribution).
+ * form intact in `street` keeps the adversarial training signal (the model learns that a trailing "Suite 4" is part of
+ * the road line in this distribution).
  */
 
 export function createUSGovHRSAFQHCAdapter(): CorpusAdapter {
 	return {
 		id: USGOV_HRSA_FQHC_ADAPTER_ID,
 		defaultLicense: USGOV_HRSA_FQHC_DEFAULT_LICENSE,
+		addressRole: AddressRole.Facility,
 		description:
 			"HRSA Federally Qualified Health Center site locations (public-domain). Adversarial source: venue + address co-occurrence, hand-entered.",
 

@@ -1,6 +1,6 @@
 # #727 stage-2 Phase 2 — ONNX export of the span scores + the #378 SLO check
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax.
+> **For agentic workers:** required sub-skill: Use superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax.
 
 **Goal:** The v301 span scorer's outputs become consumable outside torch: `span_scores` as a named
 ONNX output, the segment-transition table as a JSON sidecar, and a measured verdict on the #378
@@ -10,17 +10,17 @@ browser SLO (size + latency). Phase 3's JS decoder consumes both.
 `with_spans` toggle — outputs are fetched **by name**, so appending `span_scores` is
 backward-compatible (a consumer that never asks for it pays nothing; ORT prunes unfetched graph
 branches). The transition table follows the `export_crf_transitions` JSON-sidecar precedent —
-transitions are decode-time data, not graph.
+transitions are decode-time data rather than graph.
 
 **Check (pre-registered):**
 
 1. ONNX `span_scores` ≈ torch `span_scores` (atol 1e-3 fp32) on random inputs — parity or no ship.
 2. int8 size delta vs v264's 39.8 MB within +1 MB (the head is 101k params ≈ +0.1 MB int8).
 3. Fetching ONLY `logits` from the span-enabled graph costs ≤5% latency vs the v264 graph — the
-   browser must not pay for spans it doesn't decode. (5% is noise floor, not a tuned number.)
+   browser must not pay for spans it doesn't decode. (5% is noise floor rather than a tuned number.)
 
 **Non-goals:** JS decode (Phase 3), rerank/option-C (Phase 4), any promotion — v301 is a probe
-checkpoint; this phase proves the _path_, not the artifact.
+checkpoint; this phase proves the _path_ rather than the artifact.
 
 ## Global constraints
 

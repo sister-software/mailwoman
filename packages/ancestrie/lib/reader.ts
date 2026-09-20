@@ -56,7 +56,7 @@ export class Ancestrie implements AncestrieReaderLike {
 	}
 
 	/**
-	 * Open a sealed artifact. Validates magic, version, and that the buffer covers the layout the header declares; throws
+	 * Open a sealed artifact. Validates magic, version, and that the buffer covers the layout the header declares. throws
 	 * rather than reading past either.
 	 */
 	static from(data: Uint8Array): Ancestrie {
@@ -96,7 +96,7 @@ export class Ancestrie implements AncestrieReaderLike {
 		if (offset === 0 || offset >= this.view.byteLength) return undefined
 		const length = this.view.getUint32(offset, true)
 
-		// oxlint-disable-next-line no-restricted-properties -- zero-dependency leaf: reaching @mailwoman/core for parseJSONStrict would pull its ~11 MB of shipped data behind this browser-safe reader (the nuts-lookup precedent), and a throw on corrupt bytes IS this reader's contract.
+		// oxlint-disable-next-line no-restricted-properties -- zero-dependency leaf: reaching @mailwoman/core for parseJSONStrict would pull its ~11 MB of shipped data behind this browser-safe reader (the nuts-lookup precedent), and a throw on corrupt bytes is this reader's interface.
 		return JSON.parse(UTF8_DECODER.decode(this.bytes.subarray(offset + 4, offset + 4 + length))) as JSONValue
 	}
 
@@ -129,7 +129,7 @@ export class Ancestrie implements AncestrieReaderLike {
 
 	/**
 	 * The entries accepting at a state, highest rank first (the stored order — no query-time sort). `limit` caps how many
-	 * are decoded; an out-of-range state yields `[]`.
+	 * are decoded. an out-of-range state yields `[]`.
 	 */
 	entriesAt(stateID: number, limit?: number): AncestrieRecord[] {
 		if (stateID < 0 || stateID >= this.header.stateCount) return []
@@ -184,7 +184,7 @@ export class Ancestrie implements AncestrieReaderLike {
 
 	/**
 	 * The primary-parent lineage of an entry, nearest parent first. Every id resolves within the artifact except possibly
-	 * the LAST: a declared-but-absent primary parent is included, then the chain stops (it cannot be walked further). An
+	 * the last: a declared-but-absent primary parent is included, then the chain stops (it cannot be walked further). An
 	 * unknown `id` yields `[]`.
 	 */
 	ancestorsOf(id: number): number[] {
@@ -224,7 +224,7 @@ export class Ancestrie implements AncestrieReaderLike {
 
 	/**
 	 * O(1) containment over the primary-parent forest: is `descendantID` inside `ancestorID`'s subtree? An entry contains
-	 * itself. Secondary (non-primary) parent edges do NOT contribute — see the DAG-canonicalization rule in `format.ts`.
+	 * itself. Secondary (non-primary) parent edges do not contribute — see the DAG-canonicalization rule in `format.ts`.
 	 * Unknown ids answer `false`.
 	 */
 	contains(ancestorID: number, descendantID: number): boolean {
@@ -343,7 +343,7 @@ export class Ancestrie implements AncestrieReaderLike {
 
 			record.payload =
 				(flags & ENTRY_FLAG_PAYLOAD_JSON) === ENTRY_FLAG_PAYLOAD_JSON
-					? // oxlint-disable-next-line no-restricted-properties -- zero-dependency leaf (see the metadata() note): core's JSON helpers cost ~11 MB of shipped data, and corrupt payload bytes should throw, not soft-fail.
+					? // oxlint-disable-next-line no-restricted-properties -- zero-dependency leaf (see the metadata() note): core's JSON helpers cost ~11 MB of shipped data, and corrupt payload bytes should throw rather than soft-fail.
 						(JSON.parse(UTF8_DECODER.decode(payloadBytes)) as JSONValue)
 					: payloadBytes
 		}

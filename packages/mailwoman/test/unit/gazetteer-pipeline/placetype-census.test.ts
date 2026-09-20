@@ -81,7 +81,7 @@ describe("PLACETYPE_PROJECTION", () => {
 	})
 
 	it("distinguishes a deliberately-uncounted placetype from an unmapped one", () => {
-		// Present with a null value: in the vocabulary, not projected.
+		// Present with a null value: in the vocabulary rather than projected.
 		expect("metroarea" in PLACETYPE_PROJECTION).toBe(true)
 		expect(PLACETYPE_PROJECTION.metroarea).toBeNull()
 		// Absent entirely: the builder must report it rather than count it.
@@ -98,7 +98,7 @@ describe("PLACETYPE_PROJECTION", () => {
 	it("leaves the multi-span and record placetypes deliberately unprojected", () => {
 		// `intersection` is a two-span construct (intersection_a + intersection_b) — no single tag fits.
 		expect(PLACETYPE_PROJECTION.intersection).toBeNull()
-		// A WOF `address` is a whole address record, not a span role.
+		// A WOF `address` is a whole address record rather than a span role.
 		expect(PLACETYPE_PROJECTION.address).toBeNull()
 	})
 })
@@ -113,7 +113,7 @@ describe("buildPlacetypeCensus", () => {
 
 		const london = result.nodes.find((node) => node.parent === "London")
 
-		// Shoreditch (neighbourhood) + Camden (borough) project onto one tag; the IE child and the metroarea do not count.
+		// Shoreditch (neighbourhood) + Camden (borough) project onto one tag. the IE child and the metroarea do not count.
 		expect(london?.counts.dependent_locality).toBe(2)
 		expect(london?.total).toBe(2)
 	})

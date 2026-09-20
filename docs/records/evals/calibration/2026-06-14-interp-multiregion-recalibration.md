@@ -14,7 +14,7 @@ evidence, ships a seed calibration table + reusable tooling, and flags the wirin
 #569 turned the heuristic interp radius (half the matched TIGER segment length) into a conformally
 calibrated 90%-coverage interval: multiply the claimed radius by Q̂ = 1.70 and you cover 90% of
 held-out error. But that Q̂ came from a single region. A confidence interval calibrated on Austin and
-shipped nationwide is only honest if the factor generalizes — and there's a physical reason to doubt it
+shipped nationwide is only direct if the factor generalizes — and there's a physical reason to doubt it
 does: TIGER segment geometry and address-point spacing differ between Manhattan and rural Montana, so
 the _ratio_ of true error to segment length (what Q̂ captures) may differ too.
 
@@ -60,15 +60,15 @@ A **2.2× spread** (DC 1.44 → AZ 3.12), monotonic with rurality. The five-stat
 fluke — it's the real shape. The seed table (`data/calibration/interp-radius-conformal.json`) carries all
 twelve; the full 50 is a turn-key follow-up (mind the heat ceiling on a sustained sweep).
 
-## What the shipped 1.70 actually does off-Texas
+## What the shipped 1.70 does off-Texas
 
 A single nationwide 1.70× is wrong in both directions, and one direction is dangerous:
 
 - **Rural states are overconfident.** MT needs 2.85× for 90%; at 1.70× the radius claims a precision it
   doesn't have — a user is told "90% within R" and gets materially less. Overconfidence is the failure
-  mode honest confidence exists to prevent.
+  mode direct confidence exists to prevent.
 - **Dense cities are over-conservative.** NY needs only 1.53×; at 1.70× the radius is wider than it
-  needs to be — honest, but it throws away precision the data supports.
+  needs to be — direct, but it throws away precision the data supports.
 
 Texas (1.70) sits in the middle, which is exactly why a single-region calibration looked fine and
 shipped — the artifact is the regional mean masquerading as a constant.
@@ -83,12 +83,12 @@ shipped — the artifact is the regional mean masquerading as a constant.
    `geocode-core` would load the factor by parsed region instead of the hardcoded 1.70. Cheap; the full
    50-state table is a turn-key follow-up (the tooling is committed — ~2 min/state).
 2. **Per-segment-length bucket (the principled refinement).** The real driver is segment length /
-   local density, not the state line — a state like CA holds both dense LA and rural North State. A Q̂
+   local density rather than the state line — a state like CA holds both dense LA and rural North State. A Q̂
    indexed on the claimed radius (segment-length bucket) would generalize within a state and to
    unmeasured states. More work; the better long-term answer. Recommended as the follow-up to the seed
    table.
 
-**Flagged, not auto-wired.** Loading a per-region factor changes the shipped `uncertainty_m` on every
+**Flagged rather than auto-wired.** Loading a per-region factor changes the shipped `uncertainty_m` on every
 interpolated geocode — a behavior change. Per the merge-wall discipline this is PR-and-flag: the seed
 table + this evidence land; the operator decides whether to wire per-region now (table) or hold for the
 per-segment-length version. The single 1.70 stays the default until then — with this report on record

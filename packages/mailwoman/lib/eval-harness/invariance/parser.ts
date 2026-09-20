@@ -47,7 +47,7 @@ export interface ModelSelectOptions {
 }
 
 /**
- * The suite's fixture rows are keyed by ISO country code; the production pipeline wants a BCP-47 locale tag. These are
+ * The suite's fixture rows are keyed by ISO country code. the production pipeline wants a BCP-47 locale tag. These are
  * the tags for the four countries `suite.jsonl` carries (DE, FR, GB, US), and nothing more: the gauntlet's
  * `OVERLAY_LOCALE_BY_COUNTRY` lists the overlay locales (GB, NZ, DE, IN, ES, IT) and this table lists the suite's, and
  * they overlap on GB and DE only. An unlisted country falls back to en-US, so a row added for a country that ships an
@@ -90,14 +90,14 @@ async function buildClassifier(opts: ModelSelectOptions): Promise<NeuralAddressC
 /**
  * Build a `ParseFn` from model-select options. Exported so `--baseline` can build a second, independent classifier.
  *
- * Routing (#1516): every parse runs through the PRODUCTION path — `createRuntimePipeline` — not the raw
+ * Routing (#1516): every parse runs through the production path — `createRuntimePipeline` — not the raw
  * `classifier.parse` the old runner used. That is the point of the probe: the release Gauntlet measures the
  * user-visible pipeline, and a metamorphic probe that bypasses it (no #690 case normalization, no locale-hint, no
  * kind/grouping stages, no weights-package FST auto-load) manufactures violations the shipped path never exhibits — and
- * misses the D-rule regressions that DO ride the pipeline stages. With a `weightsCache` classifier this is fully
+ * misses the D-rule regressions that do ride the pipeline stages. With a `weightsCache` classifier this is fully
  * production-faithful: `loadFromWeights` surfaces `fstPath`, which `createRuntimePipeline`'s `autoLoadWeightsFST` uses
  * to load the locale FST from the weights package. The `--model` scorer path carries no FST (matching the gauntlet's
- * legacy `createScorer` modes — the FST belongs to the weights package, not the scorer).
+ * legacy `createScorer` modes — the FST belongs to the weights package rather than the scorer).
  */
 export async function buildParseFn(opts: ModelSelectOptions): Promise<ParseFn> {
 	const classifier = await buildClassifier(opts)

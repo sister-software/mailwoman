@@ -4,7 +4,7 @@
 /**
  *   Deterministic compilation of a validated {@link GeographicModelDocument} into the runtime artifact.
  *
- *   The compiler validates by DELEGATION: `parseGeographicModelDocument` is the only thing that
+ *   The compiler validates by delegation: `parseGeographicModelDocument` is the only thing that
  *   decides whether a document is well formed, and it throws with every violation before a single byte
  *   is computed. There is no second validator here, and no partial artifact on failure — a compile
  *   either produces the whole artifact or produces nothing.
@@ -19,8 +19,8 @@
  *      derivation read. Without this a consumer would still be traversing — the closure alone tells it
  *      which concepts to go and read, which is the traversal it was supposed to be spared.
  *
- *   A relation declaring `transitive` or `inverse` is NOT closed over. Those fields are vocabulary
- *   describing what the relation means; materializing them is a reasoning step no executable need has
+ *   A relation declaring `transitive` or `inverse` is not closed over. Those fields are vocabulary
+ *   describing what the relation means. materializing them is a reasoning step no executable need has
  *   asked for, and the boundary record excludes general reasoning from this package. The day one is
  *   needed it arrives as its own named derivation beside this one.
  *
@@ -56,7 +56,7 @@ export const DERIVATION_ISA_INHERITANCE = "isa-assertion-inheritance"
  * Every way compilation can refuse a document the validator accepted.
  *
  * Both are discovered while writing derived records, which is why the validator cannot report them: they are properties
- * of what the compiler is about to write, not of what the author wrote.
+ * of what the compiler is about to write rather than of what the author wrote.
  */
 export const CompileIssueCode = {
 	/**
@@ -99,7 +99,7 @@ export class GeographicModelCompileError extends Error {
 }
 
 /**
- * The order derivation inputs are listed in. Grouping by table first keeps a long input list readable; the identifier
+ * The order derivation inputs are listed in. Grouping by table first keeps a long input list readable. the identifier
  * breaks ties inside a table.
  */
 const DERIVATION_INPUT_ORDER: readonly DerivationInputKind[] = [
@@ -113,7 +113,7 @@ const DERIVATION_INPUT_ORDER: readonly DerivationInputKind[] = [
 
 /**
  * The separator for the compound keys this module groups by. `U+0000` cannot appear in a readable identifier without
- * being visible in it, so two different key tuples cannot collapse onto one string. The derived IDENTIFIERS written
+ * being visible in it, so two different key tuples cannot collapse onto one string. The derived identifiers written
  * into the artifact use readable separators instead, and are checked for collisions once they are all built.
  */
 const KEY_SEPARATOR = "\u0000"
@@ -157,7 +157,7 @@ function ancestorsOfConcept(
 
 /**
  * One derived fact under construction. Drafts are keyed by the proposition they state, so two ancestors asserting the
- * same thing produce ONE fact naming both of them as inputs, while two ancestors asserting the same triple under
+ * same thing produce one fact naming both of them as inputs, while two ancestors asserting the same triple under
  * different modality produce two facts — a contradiction a consumer can see, rather than a silent choice between them.
  */
 interface DerivedDraft {
@@ -233,7 +233,7 @@ function deriveInheritedFacts(
 			const ancestor = conceptByID.get(String(ancestorID))
 
 			// Validation refuses an `isA` naming an undeclared concept, and an assertion naming an undeclared relation,
-			// so both resolve for any document that reached the compiler. The guards keep the walk total; they do not
+			// so both resolve for any document that reached the compiler. The guards keep the walk total. they do not
 			// describe a state the artifact can hold.
 			if (!ancestor) continue
 

@@ -37,7 +37,7 @@ interface SurfaceHit {
 
 const TEST_FILE = /\.(?:test|spec)\.(?:ts|tsx)$/u
 /**
- * A closed section-divider comment in either rule character, ASCII or box-drawing has a label between its two rules.
+ * A closed section-divider comment in either rule character, ascii or box-drawing has a label between its two rules.
  * Both runs are two characters or longer, and a comment whose text continues on the next line carries no trailing run
  * and is not a divider.
  */
@@ -126,7 +126,7 @@ function surfaceHits(sourceFile: ts.SourceFile, surface: ModuleSurface): Surface
 }
 
 /**
- * AST-backed reading-surface heuristic. Warnings name the declaration kind that crossed its threshold; they do not
+ * AST-backed reading-surface heuristic. Warnings name the declaration kind that crossed its threshold. they do not
  * claim a decomposition boundary on the checker's behalf.
  */
 export const moduleSurfaceCheck: RepoCheck = {

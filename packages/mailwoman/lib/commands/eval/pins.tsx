@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman eval pins` — the board-pin contract's CLI (#1895). Bare: print the measured pins
+ *   `mailwoman eval pins` — the board-pin interface's CLI (#1895). Bare: print the measured pins
  *   under the constant names `load.test.ts` pins them as. `--check`: compare measured against the
  *   committed constants and exit nonzero with the exact replacement values. `--update`: rewrite
- *   ONLY the three constants (the test's dated history comments survive byte-identically), then
+ *   only the three constants (the test's dated history comments survive byte-identically), then
  *   re-check. `--report-issue` is `--check` for the main-branch audit: on drift it additionally
- *   opens or updates ONE deduplicated issue through `gh` — the backstop for a stale pin reaching
+ *   opens or updates one deduplicated issue through `gh` — the backstop for a stale pin reaching
  *   `main` through an admin-merge that bypassed `mailwoman release merge-admin` or a web edit. The
  *   calculation lives in `eval-harness/gauntlet/cases/pins.ts` so the admin-merge command calls it
  *   without Ink.
@@ -19,12 +19,12 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import { Box, Text } from "ink"
 import { $ } from "zx"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Measure, check, or update the regression board's pins (row count, corpus hash, board id)."
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "pins",
@@ -48,12 +48,6 @@ export const spec = {
 		},
 	},
 } as const satisfies CommandSpec
-
-interface Options {
-	check?: boolean
-	update?: boolean
-	reportIssue?: boolean
-}
 
 /**
  * The title the audit searches for, so a second drift updates the open issue rather than opening a sibling.
@@ -86,7 +80,7 @@ async function reportStalePins(drift: string, testPath: string): Promise<string>
 	return "opened the audit issue"
 }
 
-const EvalPins: ParsedCommandComponent<Options> = ({ options }) => {
+const EvalPins: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { checkBoardPins, measureBoardPins, updateBoardPins, PIN_TEST_PATH } =
 			await import("#eval-harness/gauntlet/cases/pins")

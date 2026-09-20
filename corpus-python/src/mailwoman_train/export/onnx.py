@@ -6,9 +6,9 @@ Per Phase 2 §7:
 - Dynamic axes for ``batch`` and ``sequence``.
 - Verify ONNX inference matches PyTorch inference within 1e-4 on a 1000-sample probe.
 - Output: ``/data/models/onnx/model-v0.1.0-en-us.onnx`` (and per spec, the same weights are
-  exported per-locale; Phase 3 may split them if size or load behavior demands).
+  exported per-locale. Phase 3 may split them if size or load behavior demands).
 
-`graph.py` decides WHAT gets exported — which channels the model carries, whether that combination
+`graph.py` decides what gets exported — which channels the model carries, whether that combination
 is exportable, and the wrapper and example inputs it needs. This module runs the export and checks
 the result against PyTorch.
 """
@@ -42,7 +42,7 @@ def export_to_onnx(
     graph that took them would bind the runtime to a SentencePiece vocabulary the model does not have.
     ``char_window`` is the training config's ``max_unit_width`` (the unit plus its context characters), a
     data-side constant the model does not carry, so the caller must pass it; ``max_length`` is
-    ``max_units``. The char path is channel-free by contract (D5), so none of the anchor, gazetteer or
+    ``max_units``. The char path is channel-free by interface (D5), so none of the anchor, gazetteer or
     lexicon inputs are exported for it.
 
     Always exports from CPU. torch.onnx.export on a ROCm/HIP device on gfx1103 has been
@@ -94,7 +94,7 @@ def verify_parity(
 ) -> dict[str, Any]:
     """Compare ONNX logits to PyTorch logits over a sample. Returns a metrics dict.
 
-    Logs the max absolute diff across samples; raises if any exceeds ``atol``.
+    Logs the max absolute diff across samples. raises if any exceeds ``atol``.
     """
     import onnxruntime as ort
 

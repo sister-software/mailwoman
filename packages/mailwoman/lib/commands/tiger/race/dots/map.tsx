@@ -4,7 +4,7 @@
 /**
  *   `mailwoman tiger race-dots-map` — render a race-dots PMTiles tileset as a standalone MapLibre
  *   page (Protomaps basemap under the dot layer). `--serve` also serves the output directory with
- *   HTTP Range support (PMTiles reads via Range) and holds the process open — the long-running
+ *   http Range support (PMTiles reads via Range) and holds the process open — the long-running
  *   posture of `mailwoman serve`.
  */
 
@@ -12,16 +12,10 @@ import { tempRootPath } from "@mailwoman/core/data-root"
 import { Box, Text } from "ink"
 import { useState } from "react"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	reportToStderr,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, reportToStderr, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "race-dots-map",
@@ -43,19 +37,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	pmtilesUrl: string
-	out: string
-	per: number
-	title?: string
-	lng: number
-	lat: number
-	zoom: number
-	serve: boolean
-	port: number
-}
-
-const TIGERRaceDotsMap: ParsedCommandComponent<Options> = ({ options }) => {
+const TIGERRaceDotsMap: CommandComponent<typeof spec> = ({ options }) => {
 	const [serving, setServing] = useState<{ dir: string; port: number } | null>(null)
 
 	const state = useCommandTask(async () => {
@@ -91,7 +73,7 @@ const TIGERRaceDotsMap: ParsedCommandComponent<Options> = ({ options }) => {
 			setServing({ dir, port: options.port })
 
 			// Long-running: mirror `mailwoman serve` — keep the task pending so useCommandTask never
-			// exits; Ctrl-C stops the server.
+			// exits. Ctrl-C stops the server.
 			await new Promise<never>(() => {})
 		}
 

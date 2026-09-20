@@ -3,7 +3,7 @@
 
 /**
  *   The crisp-polygon database opener the geocoder runtime hands to `@mailwoman/react/map`'s declarative overlays.
- *   Nothing here touches React; the resolved-place geometry math lives in `@mailwoman/react/map/geometry`.
+ *   Nothing here touches React. the resolved-place geometry math lives in `@mailwoman/react/map/geometry`.
  */
 
 /**
@@ -21,7 +21,7 @@ export interface PolygonDB {
 }
 
 /**
- * Open the crisp-polygon DB via sql.js-httpvfs: a single `SELECT geom WHERE id=?` touches about one page, so the
+ * Open the crisp-polygon DB via sql.js-httpvfs: a single `select geom where id=?` touches about one page, so the
  * browser fetches a few KB of the 19 MB file rather than the whole thing. The same range-load path as the resolver DB.
  */
 export async function loadPolygonDB(url: string, sqljsBaseURL: string): Promise<PolygonDB> {

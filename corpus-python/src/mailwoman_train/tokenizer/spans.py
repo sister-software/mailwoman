@@ -1,7 +1,7 @@
 """Turning a row's labels into a per-piece BIO array.
 
 Two label sources reach the same projection. A pre-v0.5.0 row carries whitespace tokens with a
-parallel BIO list; a v0.5.0 row carries char-offset spans. Both build a per-character array and
+parallel BIO list. a v0.5.0 row carries char-offset spans. Both build a per-character array and
 both hand it to `project_char_labels_to_pieces`, so the two generations cannot drift in how a
 label lands on a piece — only in which characters carry one.
 """
@@ -17,7 +17,7 @@ from ..types import PieceSpan
 def whitespace_spans(raw: str, tokens: Sequence[str]) -> list[tuple[int, int]]:
     """Return the (char_begin, char_end) span of each whitespace token in ``raw``.
 
-    Scans left-to-right; for each token, finds it at-or-after the previous end. The corpus
+    Scans left-to-right. for each token, finds it at-or-after the previous end. The corpus
     tokens come from ``packages/corpus/lib/tokenize.ts`` (whitespace split + Unicode-aware),
     so the surface forms are guaranteed to be substrings of ``raw`` in order.
     """
@@ -26,7 +26,7 @@ def whitespace_spans(raw: str, tokens: Sequence[str]) -> list[tuple[int, int]]:
     for tok in tokens:
         idx = raw.find(tok, cursor)
         if idx < 0:
-            # Should not happen if the corpus invariant holds; raise so callers see corruption.
+            # Should not happen if the corpus all values satisfy the required relationship. raise so callers see corruption.
             raise ValueError(f"token {tok!r} not found in raw starting from offset {cursor}: {raw!r}")
         end = idx + len(tok)
         spans.append((idx, end))
@@ -98,9 +98,9 @@ def project_char_labels_to_pieces(
 ) -> list[str]:
     """Project a per-character BIO label array onto SP pieces.
 
-    THE projection — both label paths (token-quantized and char-span) flow through this single
+    The projection — both label paths (token-quantized and char-span) flow through this single
     function, so the two cannot drift. Each SP piece gets the label of the first non-whitespace
-    char it covers; B/I semantics are recomputed per piece: only the leading piece of a contiguous
+    char it covers. B/I semantics are recomputed per piece: only the leading piece of a contiguous
     entity gets ``B-``, subsequent pieces get ``I-``.
     """
     out: list[str] = []
@@ -153,7 +153,7 @@ def realign_spans_to_pieces(
     """Project char-offset label spans onto SP pieces (#519, the v0.5.0 path).
 
     Same projection as ``realign_labels_to_pieces`` (shared ``project_char_labels_to_pieces``);
-    only the per-char array construction differs — built FROM the spans, so every covered char
+    only the per-char array construction differs — built from the spans, so every covered char
     (punctuation included) carries its span's label.
     """
     return project_char_labels_to_pieces(

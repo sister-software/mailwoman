@@ -6,7 +6,7 @@
  *   `mailwoman-photon` — boot a Photon-compatible autocomplete endpoint via the `serve` command.
  *   Usage
  *
- *   - Examples live in the package README.
+ *   - Examples live in the package readme.
  *
  *   Wires the real engine: `/api` over `geocodeAddress` (parse → resolve), `/reverse` over
  *   `WOFReverseGeocoder`, projecting results into Photon's GeoJSON FeatureCollection. The FST
@@ -57,7 +57,7 @@ const PLACETYPE_TO_KEY: Record<string, keyof PhotonProperties> = {
 }
 
 /**
- * A real address fits comfortably; longer is malformed input (and would exceed the model's window).
+ * A real address fits comfortably. longer is malformed input (and would exceed the model's window).
  */
 const MAX_QUERY_LEN = 512
 
@@ -69,7 +69,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			port: { type: "string", default: "2322" },
 			host: { type: "string", default: "0.0.0.0" },
 			"candidate-db": { type: "string" },
-			// Permissive CORS is on by default (upstream Photon parity — browser widgets need it). `--no-cors`
+			// Permissive cors is on by default (upstream Photon parity — browser widgets need it). `--no-cors`
 			// turns it off for deployments where a reverse proxy already sets the headers.
 			cors: { type: "boolean", default: true },
 		},
@@ -97,16 +97,16 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 
 	const engine: PhotonEngine = {
 		async search(params) {
-			// Empty/whitespace → no query; absurdly long → not an address (and would blow the model's input).
+			// Empty/whitespace → no query. absurdly long → not an address (and would blow the model's input).
 			const query = params.q?.trim()
 
 			if (!query || query.length > MAX_QUERY_LEN) return photonCollection([])
-			// #1016: forward the client's viewport/user location as a proximity bias — a SOFT re-rank the resolver
+			// #1016: forward the client's viewport/user location as a proximity bias — a soft re-rank the resolver
 			// folds into candidate scoring (Springfield near the map center wins). Only when both coords are present.
 			const bias = params.lat != null && params.lon != null ? [{ lat: params.lat, lon: params.lon }] : undefined
 
 			// No country constraint: the default-on #244 placer routes the query's country (Berlin→DE,
-			// Boston→US). Forcing "US" here is a HARD override (geocode-core.ts:102) that resolved every
+			// Boston→US). Forcing "US" here is a hard override (geocode-core.ts:102) that resolved every
 			// non-US query to its US namesake — wrong for a global autocomplete front.
 			const result = await geocodeAddress(query, {
 				classifier,
@@ -119,13 +119,13 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			})
 
 			if (result.lat == null || result.lon == null) return photonCollection([])
-			// #1014: decorate from the RESOLVED gazetteer place — proper-cased ancestry names (`hierarchy[].name`,
+			// #1014: decorate from the resolved gazetteer place — proper-cased ancestry names (`hierarchy[].name`,
 			// not the parsed span) + the resolved country (ISO2 → canonical name via codex) + osm_key/value/type so
 			// Photon clients don't TypeError. The candidate backend fills only the locality (no ancestors() table),
 			// so state/county come through only on an ancestry-capable backend — country still lands from the code.
 			const country = matchCountry(result.countryCode)
 
-			// #1041: a rooftop (`address_point`) or house-number-estimate (`interpolated`) tier is HOUSE-GRADE — carry the
+			// #1041: a rooftop (`address_point`) or house-number-estimate (`interpolated`) tier is house-grade — carry the
 			// parsed housenumber + street so photonForwardProperties decorates it `type: house` (matching upstream Photon)
 			// instead of inheriting the admin locality's `type: city`. The admin tier (a locality centroid) never does.
 			const houseGrade =
@@ -133,15 +133,15 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				result.resolution_tier === "interpolated" ||
 				result.resolution_tier === "plus_code"
 
-			// #1050: the street-centroid tier is STREET-GRADE — full assembled street name in `name`,
+			// #1050: the street-centroid tier is street-grade — full assembled street name in `name`,
 			// highway/street osm tags (the parallel of the #1041 house treatment).
 			const streetGrade = result.resolution_tier === "street"
 
 			// The register row's own scope tags (result.rooftop) decorate a house-grade answer whose
-			// hierarchy carries no locality/postcode — the register ATTESTS the rooftop's commune and
+			// hierarchy carries no locality/postcode — the register attests the rooftop's commune and
 			// postcode even when the query never named them, and #1014's decorate-from-the-resolved-place
 			// doctrine covers register attestations exactly as it covers gazetteer rows. The key form is
-			// normalized; title-case it for display (the extracts store no display-cased locality).
+			// normalized. title-case it for display (the extracts store no display-cased locality).
 			const places = result.hierarchy.map((h) => ({ tag: h.tag, name: h.name }))
 
 			if (result.rooftop?.localityNorm && !places.some((p) => p.tag === "locality")) {
@@ -150,9 +150,9 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				places.push({ tag: "locality", name: pyTitle(result.rooftop.localityNorm) })
 			}
 
-			// Locality→postcode enrichment: an admin answer for a place whose CONTAINING postcode is
+			// Locality→postcode enrichment: an admin answer for a place whose containing postcode is
 			// unambiguous (exactly one) carries that postcode — the register/WOF attests it, the query
-			// simply never said it. Multi-postcode cities (Paris) get NOTHING: the exactly-one rule is
+			// simply never said it. Multi-postcode cities (Paris) get nothing: the exactly-one rule is
 			// the abstention, per the registry doctrine. Keyed by the resolved place's WOF id, so no
 			// name matching is involved.
 			let enrichedPostcode: string | undefined
@@ -177,7 +177,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				...(streetGrade ? { street: { name: result.street } } : {}),
 			}
 
-			// #1016: candidates[0] is the primary itself; its ranked alternatives (Springfield MA/IL/…) become the
+			// #1016: candidates[0] is the primary itself. its ranked alternatives (Springfield MA/IL/…) become the
 			// extra features, up to the requested `limit`. Each alternative is a single resolved place.
 			const alternatives = result.candidates.slice(1).map((c) => {
 				const cc = matchCountry(c.countryCode)

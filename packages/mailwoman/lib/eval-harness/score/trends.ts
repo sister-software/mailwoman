@@ -55,7 +55,7 @@ const G_PRECISION = 6
 
 /**
  * `%g`'s lower crossover exponent. C switches to scientific notation below 1e-4 and at or above `10 ** G_PRECISION`;
- * both bounds come from the format, not from anything about eval scores.
+ * both bounds come from the format rather than from anything about eval scores.
  */
 const G_MIN_FIXED_EXPONENT = -4
 
@@ -199,7 +199,7 @@ export async function buildScoreTrends(options: ScoreTrendsOptions = {}): Promis
 
 		if (!Object.keys(scores).length) continue
 
-		// One row per version: the LAST ledger entry for a version wins (re-measurements supersede).
+		// One row per version: the last ledger entry for a version wins (re-measurements supersede).
 		if (seenVersions.has(version)) {
 			rows = rows.filter(([seen]) => seen !== version)
 		}

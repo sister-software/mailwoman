@@ -7,7 +7,7 @@ corpus cannot feed trains a model that answers the question nobody asked.
 
 The binding is what stops a passing audit from being reused. It digests the config and the corpus
 MANIFEST together, so a GPU run must present a token derived from the same bytes the CPU preflight
-read. A receipt audit against a different corpus is not a weaker check; it is a check of something
+read. A receipt audit against a different corpus is not a weaker check. it is a check of something
 else.
 """
 
@@ -49,7 +49,7 @@ def verify_corpus_receipt_binding(
     required_receipts: list[CorpusReceiptConfig],
     token: str,
 ) -> None:
-    """Refuse a receipt-bearing GPU run unless the CPU audit bound these bytes."""
+    """Refuse a receipt-containing GPU run unless the CPU audit bound these bytes."""
     if not required_receipts:
         return
     if token != corpus_receipt_binding(config_path, corpus_dir):
@@ -83,7 +83,7 @@ def component_sequence(labels: list[str]) -> list[str]:
     """Collapse BIO token labels to their ordered component-span sequence.
 
     A malformed or orphan label RAISES rather than being skipped: a receipt counted over labels the
-    reader could not parse reports a shortfall that is the reader's, not the corpus's.
+    reader could not parse reports a shortfall that is the reader's rather than the corpus's.
     """
     sequence: list[str] = []
     active: str | None = None

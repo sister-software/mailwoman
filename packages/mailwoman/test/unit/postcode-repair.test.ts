@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   #1735 pins. The rung's whole contract is its checks: it fires on the recorded contradiction (letter-digit postcode
- *   span, ≥0.9 shape confidence, only misread-family nodes wholly inside it) and on NOTHING else. The veto cases are
+ *   #1735 pins. The rung's whole interface is its checks: it fires on the recorded contradiction (letter-digit postcode
+ *   span, ≥0.9 shape confidence, only misread-family nodes wholly inside it) and on nothing else. The veto cases are
  *   the tests that matter — each one is an input the rung must leave byte-identical.
  */
 
@@ -53,7 +53,7 @@ describe("repairPostcodeContradiction (#1735)", () => {
 	})
 
 	it("is vetoed by a non-misread node overlapping the span", () => {
-		// A locality reading over the span means the parse holds a PLAUSIBLE alternative, not a misread.
+		// A locality reading over the span means the parse holds a plausible alternative rather than a misread.
 		const t = tree("KT2 6AB", [node("locality", "KT2 6AB", 0, 7)])
 
 		expect(repairPostcodeContradiction(t, computeQueryShape("KT2 6AB"))).toBe(false)

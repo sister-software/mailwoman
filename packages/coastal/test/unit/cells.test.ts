@@ -4,7 +4,7 @@
 /**
  *   The per-feature cell rows and the per-scenario measurement.
  *
- *   THE MEASUREMENT MUST STAY SPLIT BY SCENARIO. Twelve layers cover the same frontages with different
+ *   the measurement must stay split BY scenario. Twelve layers cover the same frontages with different
  *   extents, so a pooled `partial` share averages a present-day designation together with a 2105 projection
  *   and describes neither. The test below folds two scenarios into one index and asserts they come back
  *   apart.
@@ -52,7 +52,7 @@ describe("featureCellRows", () => {
 			expect(row.resolution).toBeGreaterThan(0)
 		}
 
-		// A compacted whole row can be coarser than the index resolution; a partial row never is.
+		// A compacted whole row can be coarser than the index resolution. a partial row never is.
 		const partial = rows.filter((row) => row.containment === "partial")
 
 		expect(partial.every((row) => row.resolution === classified.resolution)).toBe(true)
@@ -61,7 +61,7 @@ describe("featureCellRows", () => {
 	it("indexes a polygon smaller than a cell rather than returning nothing", () => {
 		const rows = featureCellRows(classifyFeatureCells(sliver, 9, "sliver", "test"))
 
-		// Cell-touches-polygon, not centre-in-polygon: a polyfill keyed on centres returns zero cells here, and a feature
+		// Cell-touches-polygon rather than centre-in-polygon: a polyfill keyed on centres returns zero cells here, and a feature
 		// indexed to nothing reads downstream as an absence. It touches two cells rather than one at this coordinate,
 		// because a 5.5 m square that straddles a cell boundary is in both — which is the answer overlapping containment
 		// is supposed to give.
@@ -92,7 +92,7 @@ describe("CoastalCellIndex", () => {
 		expect(nfi!.features).toBe(1)
 		expect(smp!.features).toBe(1)
 
-		// The band has an interior; the sliver is entirely fringe. So the two scenarios' partial shares are genuinely
+		// The band has an interior. the sliver is entirely fringe. So the two scenarios' partial shares are genuinely
 		// different numbers — and a pooled report would have averaged them into one that describes neither. The pooled
 		// value sits strictly between them, which is exactly why it cannot be read as either.
 		expect(nfi!.partialShare).toBeLessThan(1)
@@ -110,7 +110,7 @@ describe("CoastalCellIndex", () => {
 		const measurement = index.finish()
 		const [first, second] = measurement.perScenario
 
-		// The same ground under two scenarios is two claims and therefore two rows, not one.
+		// The same ground under two scenarios is two claims and therefore two rows rather than one.
 		expect(measurement.storedCellRows).toBe(
 			first!.compactedWholeCells + first!.partialCells + second!.compactedWholeCells + second!.partialCells
 		)

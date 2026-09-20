@@ -4,7 +4,7 @@
 /**
  *   Public types for the ancestrie — a materialized trie over an ancestry graph. Domain-agnostic on
  *   purpose: entries are token sequences carrying a numeric id, a rank, parent edges, and an opaque
- *   payload. Nothing in this contract knows about placetypes, gazetteers, or geocoding — those live
+ *   payload. Nothing in this interface knows about placetypes, gazetteers, or geocoding — those live
  *   in the consumer's payload and tokenizer.
  */
 
@@ -15,7 +15,7 @@ export type JSONValue = string | number | boolean | null | JSONValue[] | { [key:
 
 /**
  * A caller-supplied per-token normalizer (case folding, diacritic stripping, script folding — the consumer's domain).
- * This is the tokenizer-normalization boundary: the SAME function must be applied on the build side ({@link
+ * This is the tokenizer-normalization boundary: the same function must be applied on the build side ({@link
  * AncestrieBuilderOptions.normalizeToken}) and the query side ({@link AutocompleteOptions.normalizeToken}), or queries
  * will silently miss — the package never normalizes on its own.
  */
@@ -28,7 +28,7 @@ export type TokenNormalizer = (token: string) => string
  */
 export interface AncestrieEntry {
 	/**
-	 * The lexical surface as a token sequence, already tokenized by the caller. At least one token; tokens must be
+	 * The lexical surface as a token sequence, already tokenized by the caller. At least one token. tokens must be
 	 * non-empty after normalization.
 	 */
 	tokens: readonly string[]
@@ -39,19 +39,19 @@ export interface AncestrieEntry {
 	id: number
 
 	/**
-	 * Direct parents in the ancestry graph, as entry ids. Empty for a root. The FIRST element is the PRIMARY parent:
-	 * interval containment (`contains`, `descendantsOf`) answers over the primary-parent forest only; the full list is
+	 * Direct parents in the ancestry graph, as entry ids. Empty for a root. The first element is the primary parent:
+	 * interval containment (`contains`, `descendantsOf`) answers over the primary-parent forest only. the full list is
 	 * preserved and surfaced verbatim.
 	 */
 	parentIDs: readonly number[]
 
 	/**
-	 * Ranking score, higher = surfaced first. Stored as an IEEE-754 float32, so values round-trip at f32 precision.
+	 * Ranking score, higher = surfaced first. Stored as an ieee-754 float32, so values round-trip at f32 precision.
 	 */
 	rank: number
 
 	/**
-	 * Optional per-entry cargo: raw bytes are returned verbatim; any other value is serialized as JSON at build time and
+	 * Optional per-entry cargo: raw bytes are returned verbatim. any other value is serialized as JSON at build time and
 	 * parsed back on read.
 	 */
 	payload?: Uint8Array | JSONValue
@@ -110,7 +110,7 @@ export interface AncestrieSuggestion<TPayload = Uint8Array | JSONValue> {
 	tokens: string[]
 
 	/**
-	 * The tokens beyond what was typed. Empty for an exact match; for a partial last token the first element is the
+	 * The tokens beyond what was typed. Empty for an exact match. for a partial last token the first element is the
 	 * completed token ("yor" → "york").
 	 */
 	completionTokens: string[]
@@ -147,7 +147,7 @@ export interface AutocompleteOptions<TPayload = Uint8Array | JSONValue> {
 
 	/**
 	 * Collapse suggestions sharing a key to the single highest-ranked one. `true` keys by the full token path (the
-	 * generalization of same-NAME dedupe: distinct entries at the same surface — New York the city vs the county —
+	 * generalization of same-name dedupe: distinct entries at the same surface — New York the city vs the county —
 	 * collapse to one); a function supplies the key itself. Off by default, so a caller surfacing distinct same-surface
 	 * entries sees them all.
 	 */
@@ -174,16 +174,16 @@ export interface AutocompleteResult<TPayload = Uint8Array | JSONValue> {
 
 /**
  * The storage interface: what the algorithm half of this package ({@link autocomplete}) requires of a reader. The
- * sealed {@link Ancestrie} class is the canonical implementation; a consumer whose entries live in its own structure —
+ * sealed {@link Ancestrie} class is the canonical implementation. a consumer whose entries live in its own structure —
  * an in-memory trie, a different binary format — supplies an adapter instead of re-implementing the algorithm
  * (`@mailwoman/resolver-wof-sqlite`'s FST gazetteer is the worked example: its `FST\0` artifacts predate this package
- * and stay in their own format, so its `fst-autocomplete` wraps the matcher in this contract).
+ * and stay in their own format, so its `fst-autocomplete` wraps the matcher in this interface).
  *
- * Order contracts the algorithm observes:
+ * Order interfaces the algorithm observes:
  *
- * - `entriesAt(stateID)` with no limit answers EVERY accepting entry, in the reader's stored order.
+ * - `entriesAt(stateID)` with no limit answers every accepting entry, in the reader's stored order.
  * - `entriesAt(stateID, limit)` answers the top-`limit` entries by rank, descending. A sealed artifact serves a prefix of
- *   its rank-sorted storage; an adapter over unsorted storage must select by rank itself. Order among rank TIES is the
+ *   its rank-sorted storage. an adapter over unsorted storage must select by rank itself. Order among rank ties is the
  *   reader's own, and is observable in suggestion order — two readers over the same entries may legitimately differ
  *   there.
  * - `ancestorsOf` decorates suggestions' `chain`. A reader that materializes lineage per entry may serve it from its
@@ -201,7 +201,7 @@ export interface AncestrieReaderLike<TPayload = Uint8Array | JSONValue> {
  */
 export interface AncestrieBuilderOptions {
 	/**
-	 * Applied to every token on `add`. See {@link TokenNormalizer} for the must-agree contract with the query side.
+	 * Applied to every token on `add`. See {@link TokenNormalizer} for the must-agree interface with the query side.
 	 */
 	normalizeToken?: TokenNormalizer
 }

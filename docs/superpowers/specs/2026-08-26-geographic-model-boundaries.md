@@ -1,6 +1,6 @@
-# Geographic-model boundaries and the pharmacy first slice
+# Geographic-model boundaries and the pharmacy first increment
 
-**Date:** 2026-08-26 · **Status:** design of record; the first slice has since landed · **Issue:** #1917 ·
+**Date:** 2026-08-26 · **Status:** design of record; the first increment has since landed · **Issue:** #1917 ·
 **Epic:** #1916 (program parent #1680) · **Companions:** #1683 (empirical activity-affordance
 vector), #1928 (the semantic-utility probe this record supplies a target for).
 
@@ -12,7 +12,7 @@ closing note). **Companion decision:**
 
 This record does two things and nothing else. It **names the current owner** of every boundary the
 world-model program would otherwise re-create, each against a path that exists on HEAD; and it
-**freezes one vertical slice** — `pharmacy affords obtain_medication` — so that every later issue in
+**freezes one end-to-end increment** — `pharmacy affords obtain_medication` — so that every later issue in
 the program has a fixed target to be judged against.
 
 No package was created by this record. `@mailwoman/geographic-model` appeared throughout as a
@@ -29,7 +29,7 @@ the responsibilities named in §3 and nothing beyond them.
 ## 1. Why an inventory comes first
 
 The repository already holds a POI category vocabulary, a phrase→category lexicon, a POI intent and
-execution path, a per-cell coverage contract with an exclusion predicate, a committed POI board, and
+execution path, a per-cell coverage interface with an exclusion predicate, a committed POI board, and
 a mechanism-account vocabulary. Every one of those is a boundary a semantic layer is tempted to
 duplicate, and two of them (`@mailwoman/poi-taxonomy`, `@mailwoman/core/layers`) are close enough to
 "world knowledge" that an implementer could reasonably grow one into a general ontology without
@@ -64,7 +64,7 @@ needs:
    id. It is **containment within one vocabulary**, authored by Overture. `pharmacy` reads
    `health_and_medical > pharmacy`; `drugstore` reads `retail > drugstore`.
 2. **`CategoryRecord.overtureCategories`** — a **namespace translation**, curated seed id → the
-   Overture `taxonomy.primary` leaf ids a built `poi.db` actually stores. Six of 2,113 categories
+   Overture `taxonomy.primary` leaf ids a built `poi.db` stores. Six of 2,113 categories
    declare one (`bank`, `cafe`, `place_of_worship`, `school`, `supermarket`, `trail`). Absent means
    identity: the seed id is its own probe id.
 3. **`SynonymEntry`** — one phrase, **one** `categoryID`, optionally locale-hintd
@@ -86,10 +86,10 @@ single-valued synonym cannot hold a set. This is the gap the program opens, and 
 
 | What                                 | Where                                                                                                              |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
-| Contract tables + DDL                | `packages/core/lib/layers/schema.ts` (`LayerManifestTable`, `LayerCoverageTable`, `LayerTier`, `CoverageBasis`)    |
+| Interface tables + DDL               | `packages/core/lib/layers/schema.ts` (`LayerManifestTable`, `LayerCoverageTable`, `LayerTier`, `CoverageBasis`)    |
 | Parsed face + read/write + the check | `packages/core/lib/layers/manifest.ts` (`LayerManifest`, `CoverageCell`, `supportsExclusion`, `readLayerCoverage`) |
 | Barrel                               | `packages/core/lib/layers/index.ts`                                                                                |
-| Contract prose for layer authors     | `docs/engineering/reference/layer-contract.mdx`                                                                    |
+| Interface prose for layer authors    | `docs/engineering/reference/layer-interface.mdx`                                                                   |
 | Cell-vs-scope coverage design        | `docs/superpowers/specs/2026-08-11-coverage-register-design.md`                                                    |
 
 `supportsExclusion(cell)` returns true only for `CoverageBasis.Designated` or
@@ -102,12 +102,12 @@ means unmapped, never surveyed-and-empty.
 **every one at `basis = source_present`**, `completeness` min and max both `1.0`. The writer says so
 in place — `packages/mailwoman/lib/gazetteer-pipeline/poi/build-poi.ts` sets
 `basis: CoverageBasis.SourcePresent` on both the rows-derived and the override coverage sets, with a
-comment stating that the `1.0` means "Overture returned rows here", not "everything here is known".
+comment stating that the `1.0` means "Overture returned rows here" rather than "everything here is known".
 
-The consequence binds the slice in §4: **`supportsExclusion` is false for every cell of the shipped
+The consequence binds the increment in §4: **`supportsExclusion` is false for every cell of the shipped
 POI layer today.** Any coverage-aware negative fact the program authors is therefore inert against
-`poi.db` until that register is rebuilt with an earned basis. That is the correct behavior, not a
-defect to route around, and it is why the slice states the coverage rule as a check rather than as a
+`poi.db` until that register is rebuilt with an earned basis. That is the correct behavior rather than a
+defect to route around, and it is why the increment states the coverage rule as a check rather than as a
 capability.
 
 ### 2.4 Execution — the runtime POI branch
@@ -119,14 +119,14 @@ capability.
 | Intent execution              | `packages/mailwoman/lib/poi-executor.ts` (`createPOIExecutor`)                                                               |
 | Backend probe                 | `packages/resolver-wof-sqlite/lib/poi-lookup.ts` (`POILookup.search`, `#searchKRing`)                                        |
 | Wiring                        | `packages/mailwoman/lib/runtime-pipeline.ts` (`poiQueryKind`, default-on)                                                    |
-| Contract types                | `packages/core/lib/pipeline/types.ts` (`POIIntent`, `POIResult`, `POIIntentOutcome`)                                         |
+| Interface types               | `packages/core/lib/pipeline/types.ts` (`POIIntent`, `POIResult`, `POIIntentOutcome`)                                         |
 | Layer build                   | `packages/mailwoman/lib/gazetteer-pipeline/poi/build-poi.ts`                                                                 |
 | Committed board + fixtures    | `packages/mailwoman/lib/eval-harness/poi-board.ts`, `packages/mailwoman/lib/eval-harness/fixtures/poi-board.jsonl` (51 rows) |
 
 The path is: `matchPOISubject` splits the input at the first anchor separator whose prefix hits the
 injected lexicon (subject ≤ 8 tokens) → `poiTaxonomyLookup` probes exact phrase, then a small English
 singularization, then locale-normalized, then one-edit typo, then brand, then regional brand alias →
-the executor resolves an anchor centre and probes `poi.db` over
+the executor resolves an anchor center and probes `poi.db` over
 `resolveOvertureCategories(subject.categoryID)`, re-tagging every hit back to the canonical seed id.
 
 Two properties of that path matter to §5. The lexicon probe is **positive evidence only**: a miss
@@ -144,12 +144,12 @@ The abstain vocabulary is small and already structured: `POIIntentOutcome` is
 | What                           | Where                                                                                                                                        |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | Decode-time grammar + tree     | `packages/core/lib/decoder/` (`build-tree.ts`, `validate-tree.ts`, `types.ts`)                                                               |
-| Grammar contract               | `docs/engineering/reference/decoder-grammar.mdx`                                                                                             |
+| Grammar interface              | `docs/engineering/reference/decoder-grammar.mdx`                                                                                             |
 | Inference + decode-time priors | `packages/neural/` (`scorer.ts`, `viterbi.ts`, `semi-markov-decode.ts`, `placetype-pair-prior.ts`, `fst-prior.ts`, `gazetteer-inference.ts`) |
 | Candidate ordering             | `packages/resolver/lib/toponym-prior.ts` (`rankByImportance`), `packages/resolver/lib/admin-containment.ts`                                  |
 
 This is the boundary the program must not reach into. The standing doctrine is that registries are soft
-priors supplying **positive evidence only**, and the decoder grammar contract states which terms the
+priors supplying **positive evidence only**, and the decoder grammar interface states which terms the
 shipped decoder maximizes. A world-model record that emitted a boost, a penalty, or a candidate order
 would be authoring policy at the one place where the system is supposed to learn its own.
 
@@ -162,7 +162,7 @@ would be authoring policy at the one place where the system is supposed to learn
 | Warm-engine measuring tools                                       | `packages/dev-mcp/lib/tools/`                                              |
 | Mechanism-account shapes                                          | `packages/dev-mcp/lib/diagnose.ts` (`DIAGNOSE_SHAPES`, `SHAPE_PREDICATES`) |
 | Diagnosis conventions                                             | `docs/superpowers/specs/2026-08-17-mechanism-accounts.md`                  |
-| Conformance-law fixture contract (#1918)                          | `packages/mailwoman/lib/eval-harness/conformance/`                         |
+| Conformance-law fixture interface (#1918)                         | `packages/mailwoman/lib/eval-harness/conformance/`                         |
 | Law-suite register (what a default run covers)                    | `packages/mailwoman/lib/eval-harness/conformance/suites.ts`                |
 | Law-suite runner (`mailwoman eval conformance`)                   | `packages/mailwoman/lib/eval-harness/conformance/command.ts`               |
 
@@ -171,7 +171,7 @@ would be authoring policy at the one place where the system is supposed to learn
 in that directory: `case-folding`, `whitespace`, `punctuation`, `nfc-nfd` (the canonical-form law) and
 `refinement-monotonicity`. The last of those reads the resolver's own candidate tables through
 `packages/mailwoman/lib/eval-harness/conformance/candidate-admissibility.ts` (#1923), which is a set of
-candidate accounts rather than a sixth suite. The paragraph below describes the fixture contract, and
+candidate accounts rather than a sixth suite. The paragraph below describes the fixture interface, and
 it is unchanged.
 
 The conformance module is the boundary a law suite plugs into: a fixture names a base query, one context, a
@@ -179,7 +179,7 @@ variant query, a law, one of five closed outcome comparators, and the relation t
 stand in. A row also carries a `status`: `pass` checks the run, `known_fail` / `improvement_target`
 report without blocking, following the Gauntlet regression layer's own three-way reading — a violated
 row is tracked rather than deleted, and never re-stated as `expect: diverges`, which would make the
-suite assert the defect. Each law declares an APPLICABILITY contract beside its transformations, so an
+suite assert the defect. Each law declares an APPLICABILITY interface beside its transformations, so an
 arm absent from a row names the rule that refuses it rather than going missing: case folding excludes a
 locale-conditional casing (Turkish dotted/dotless `i`), whitespace excludes a space that belongs to a
 structured identifier (`N7 0BT`). Its `mechanism_shape` comparator reads the `DIAGNOSE_SHAPES` vocabulary in the row above but
@@ -210,15 +210,15 @@ by it.
 Two dependency rules follow, and both are required:
 
 - **`@mailwoman/core` must not depend on `@mailwoman/geographic-model`** without a later integration
-  decision that demonstrates the direction is necessary. Core ships the pipeline contract and ~9 MB of
+  decision that demonstrates the direction is necessary. Core ships the pipeline interface and ~9 MB of
   reference data to every consumer; a world-semantics dependency there is a dependency every drop-in
   API inherits whether or not it asked for one.
-- **The geographic model and #1683 share identifiers, not statistics.** The geographic model owns
+- **The geographic model and #1683 share identifiers rather than statistics.** The geographic model owns
   `obtain_medication` as a stable identifier with provenance; #1683 owns whatever numbers get fitted
   against it. Neither re-declares the other's half. That split is what keeps an authored relationship
   from turning into a weight by adjacency.
-- **The ownership row states a category of record, not a licence to author freely** (added 2026-08-27,
-  #1961). Which concepts, activities, assertions and mappings the compiled model may actually carry is
+- **The ownership row states a category of record rather than a license to author freely** (added 2026-08-27,
+  #1961). Which concepts, activities, assertions and mappings the compiled model may carry is
   the frozen set in §4 plus whatever an amendment to it admits — today that is §4.1's wave-1 set and
   nothing else. A record outside both widens this table in passing, which stop condition 5 refuses.
 
@@ -228,10 +228,10 @@ contradiction, or a coverage-qualified absence. It may not create an imperative.
 
 ---
 
-## 4. The frozen vertical slice
+## 4. The frozen increment
 
 Verbatim from #1917. Every Phase B–F issue in the program is judged against this block, and any change
-to it is an explicit amendment to this record, not a widening in passing.
+to it is an explicit amendment to this record rather than a widening in passing.
 
 ```text
 entity kind: pharmacy
@@ -245,7 +245,7 @@ ranking behavior: unchanged
 
 What each line binds:
 
-- **entity kind: `pharmacy`** — the only establishment class the first slice requires. No sibling
+- **entity kind: `pharmacy`** — the only establishment class the first increment requires. No sibling
   class is minted to make the proposition read better.
 - **activity: `obtain_medication`** — the only activity. It is an identifier the geographic model
   owns; #1683 may later fit statistics against it, and this record does not.
@@ -259,10 +259,10 @@ What each line binds:
   relation stay unminted until an executable need names one.
 - **coverage rule** — a missing expected observation becomes negative evidence only where
   `supportsExclusion(...)` from `packages/core/lib/layers/manifest.ts` permits it. As measured in §2.3,
-  that permits nothing against today's `poi.db`; the rule is written as a check so the first slice
+  that permits nothing against today's `poi.db`; the rule is written as a check so the first increment
   cannot accidentally ship an exclusion the data does not support.
 - **ranking behavior: unchanged** — no ordering, score term, boost, or penalty changes anywhere in
-  `packages/resolver/` or `packages/neural/` as a consequence of this slice. First production
+  `packages/resolver/` or `packages/neural/` as a consequence of this increment. First production
   integration is diagnostic and observational only.
 
 Deferred by name, even where convenient during implementation: roads, utilities and electrification,
@@ -277,7 +277,7 @@ category above **and §4.1's wave-1 set**, and any production decoder integratio
 §4 froze one proposition. #1930 recorded GO, which allows mapping breadth to be _proposed_; stop
 condition 5 requires the boundary to be widened here, in a reviewed change, before a record is authored
 against it. This section is that widening, and it is exhaustive. #1963 may author what the admitted
-table names and nothing else; a later entry arrives as amendment 2, not as a second row appearing in
+table names and nothing else; a later entry arrives as amendment 2 rather than as a second row appearing in
 the data.
 
 Stop condition 4 binds every admitted row individually. Each names an attested target — a committed
@@ -301,7 +301,7 @@ expresses it with no new field**: one activity, two establishment concepts, one 
 assertion each. `ExternalMappingRecord` gains nothing multi-valued, and no field states a preference
 between `pharmacy` and `drugstore` — the schema has none to state one with.
 
-`drugstore` is a kind of `establishment` **directly**, not of `healthcare_facility`. The external
+`drugstore` is a kind of `establishment` **directly** rather than of `healthcare_facility`. The external
 hierarchy puts it under `retail`, disjoint from `health_and_medical`; `healthcare_facility` is defined
 as premises that exist to provide healthcare, which retail premises with a dispensing counter do not;
 and placing it there would give every later healthcare class a retail ancestor.
@@ -334,7 +334,7 @@ amendment admits that change. Three things about it:
   it does not materialize. The correction changes what the record means to a reader and to a reviewer,
   and changes no compiled byte beyond the field itself.
 
-#### What the closed vocabularies do NOT need
+#### What the closed vocabularies do not need
 
 - **`ConceptKind` gains no member, and `packages/geographic-model/lib/schema.ts` is not touched by this
   review.** `drugstore` is a class of premises a person can go to, which is `establishment` — already the
@@ -351,7 +351,7 @@ amendment admits that change. Three things about it:
 | Candidate                                                            | Excluded because                                                                                                                                                                                                                                                                                                                         |
 | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | A second activity, any                                               | No committed input set holds an activity-phrased query for any activity but `obtain_medication`; the four rows that exist (`sem-act-us-01`, `sem-act-us-02`, `sem-act-fr-01`, `sem-act-mx-01`) all register that one. §5.5's first bound therefore still stands for every other activity: there is nothing committed to measure against. |
-| Concept `hospital`, from board row `syn-01` (`er near Denver CO`)    | The row **passes** today. A passing row is a control, not a target — stop condition 4 wants a mechanism the observation can address, and nothing measures a missing `obtain_medication` affordance for a hospital.                                                                                                                       |
+| Concept `hospital`, from board row `syn-01` (`er near Denver CO`)    | The row **passes** today. A passing row is a control rather than a target — stop condition 4 wants a mechanism the observation can address, and nothing measures a missing `obtain_medication` affordance for a hospital.                                                                                                                |
 | Concept `chemist` for en-GB / en-AU / en-NZ                          | Not a class. `curated-overlay.json` carries `{ "phrase": "chemist", "categoryID": "pharmacy", "locales": ["en-GB", "en-AU", "en-NZ"] }`, and §5.2 measured `chemist near London` under `en-GB` reaching `cat=pharmacy` at confidence 1. The existing `pharmacy` concept and W1-3's sibling mapping already carry it.                     |
 | `chemist` with no locale supplied — §5.2 measured `NO SUBJECT MATCH` | A real measured gap and not a semantic one. The phrase index is locale-scoped and the miss is in recognition; the phrase surface belongs to `@mailwoman/poi-taxonomy` and to #1962. Minting a concept would not change that result.                                                                                                      |
 | Concepts `supermarket` / `convenience_store` as further afforders    | Plausible and unattested. Both ids exist in the table; neither has a committed row, a measurement, or a filed defect saying a dispensing counter is unreachable. Plausibility is the thing stop condition 4 exists to refuse.                                                                                                            |
@@ -361,8 +361,8 @@ amendment admits that change. Three things about it:
 | Board row `brand-us-02` (`applebee's near Dallas TX`) as a target    | The other pre-existing failure, also without affordance content. `docs/records/evals/2026-07-20-poi-query-board-v1.1-brand-lexicon.md` traces it: subject match and anchor both succeed, and the miss is `#searchKRing`'s `DEFAULT_MAX_RINGS = 12` (≈ 4 km) against a nearest matching row at 13.2 km. A reader search radius.           |
 | Probe row `sem-act-fr-01` as a target for new semantics              | Its blocker is not semantic. #1930's caveat 1 and #1039 both record it: a `poi.db` entry named `Somewhere` claims the prefix before the `near` split is considered, so `matchPOISubject` never reaches the activity phrase. No concept, assertion or mapping changes that.                                                               |
 | A second relation — `isa` as a relation record, `partOf`, `sells`    | §4 keeps relations unminted until an executable need names one. Wave 1's need is one further asserting concept under the relation that already exists.                                                                                                                                                                                   |
-| A second external vocabulary — Wikidata QIDs, OSM tags               | The board's `brandWikidata` values identify **brands**, not concept classes, and the one brand row that fails does so on search radius. No attested target, and the member addition is a schema revision.                                                                                                                                |
-| Concept `retail_establishment` as an intermediate above `drugstore`  | Symmetry with `healthcare_facility` is not a target. That intermediate exists because §4's frozen slice named one; nothing names this one, and an intermediate carrying no assertion adds a review obligation and states nothing.                                                                                                        |
+| A second external vocabulary — Wikidata QIDs, OSM tags               | The board's `brandWikidata` values identify **brands** rather than concept classes, and the one brand row that fails does so on search radius. No attested target, and the member addition is a schema revision.                                                                                                                         |
+| Concept `retail_establishment` as an intermediate above `drugstore`  | Symmetry with `healthcare_facility` is not a target. That intermediate exists because §4's frozen increment named one; nothing names this one, and an intermediate carrying no assertion adds a review obligation and states nothing.                                                                                                    |
 
 #### What this amendment does not change
 
@@ -376,7 +376,7 @@ amendment admits that change. Three things about it:
   evidence only where `supportsExclusion(...)` permits, which §2.3 measured as nothing against today's
   `poi.db`.
 - **The default path.** #1930's caveat 3 verified the semantic route is default-off everywhere. Wave 1
-  changes what the compiled artifact carries, not what the shipped pipeline reads.
+  changes what the compiled artifact carries rather than what the shipped pipeline reads.
 
 #### Re-measure before authoring
 
@@ -460,7 +460,7 @@ activity phrase, so anchor resolution is held constant and the subject is the on
 - `i need my prescription refilled near Tijuana`
 - `prescription near Denver CO`
 
-### 5.2 What the baseline actually does — measured, not reasoned
+### 5.2 What the baseline does — measured rather than reasoned
 
 Running the shipped `matchPOISubject` against the shipped `poiTaxonomyLookup`:
 
@@ -528,7 +528,7 @@ affordance edge over a _set_ rather than a missing phrase.
 > Which entity kinds afford `obtain_medication`, in which country, with what modality, and on whose
 > authority.
 
-That is a one-activity-to-many-kinds edge carrying scope and provenance. Nothing on HEAD can hold it:
+That is a one-activity-to-several-kinds edge carrying scope and provenance. Nothing on HEAD can hold it:
 `SynonymEntry.categoryID` is single-valued and relation-free; `CategoryRecord.hierarchy` is
 containment; `CategoryRecord.overtureCategories` is a namespace translation authored per seed, with no
 relation type, no country scope and no per-assertion provenance.
@@ -541,8 +541,7 @@ relation type, no country scope and no per-assertion provenance.
   met for §5.1 as the corpora stand. #1928 must either commit the rows to the POI board first (graded
   on OUTCOMES only, per the anti-Pelias commitment in
   `docs/superpowers/specs/2026-08-17-mechanism-accounts.md` §2), or pre-register on the §5.3 recall
-  gap, whose control rows are already committed. Manufacturing a passing fixture is a stop condition,
-  not a workaround.
+  gap, whose control rows are already committed. Manufacturing a passing fixture is a stop condition rather than a workaround.
 - **The board's grader cannot see the §5.3 gap.** `gradeCase` checks `results[0].categoryID` and the
   nearest distance; it never measures recall. `cat-us-05` passes today and would pass unchanged with
   every `drugstore` row missing. A probe on §5.3 needs a recall metric of its own.
@@ -555,12 +554,12 @@ relation type, no country scope and no per-assertion provenance.
 
 ## 6. Exclusions and stop conditions
 
-**Architectural exclusions.** These are properties of the program, not of a phase:
+**Architectural exclusions.** These are properties of the program rather than of a phase:
 
 - No OWL/DL reasoner, SPARQL endpoint, triplestore, or general-purpose knowledge-graph service.
 - No query-time traversal of authoring JSON, and no runtime dependency on thousands of authoring
   records. Authored records are source material compiled into deterministic runtime artifacts —
-  artifacts, not services.
+  artifacts rather than services.
 - No authored relevance weights, boosts, penalties, or candidate-ordering APIs anywhere in the
   geographic model.
 - No `@mailwoman/core` dependency on `@mailwoman/geographic-model` without a later integration
@@ -593,7 +592,7 @@ statistics, water/land compatibility, coverage inference, spatial statistics, ma
 3. **DIAGNOSTIC-ONLY requires a pre-registered structured metric.** A free-form claim of better
    diagnosis or better abstention does not satisfy the check.
 4. **No real target, no probe.** If no defensible target exposes a mechanism the first affordance
-   observation can address, record that the first slice lacks one and choose a different observation or
+   observation can address, record that the first increment lacks one and choose a different observation or
    stop — do not author a fixture whose only purpose is to pass.
 5. **This record's boundary is amended explicitly.** A change that needs a second relation, a second
    activity, a second entity kind, or a `@mailwoman/core` dependency amends §3 or §4 in a reviewed
@@ -610,7 +609,7 @@ statistics, water/land compatibility, coverage inference, spatial statistics, ma
 - Where the runtime join between candidates, layer evidence, and world facts lives. §3 assigns it to
   the runtime and resolver; the integration point is a later decision.
 - Whether the `poi.db` coverage register gets an earned basis, and by what measurement. §2.3 records
-  only that it has none today, which is what makes the slice's coverage rule a check rather than a
+  only that it has none today, which is what makes the increment's coverage rule a check rather than a
   capability.
 - The `drugstore`/`pharmacy` retrieval split in §5.3. It is recorded as evidence. Ranking and retrieval
   behavior are unchanged by this record, and any repair is separate work with its own D-rule

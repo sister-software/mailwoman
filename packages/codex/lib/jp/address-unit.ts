@@ -17,12 +17,12 @@
  *   - {@link JP_ADMIN_SUFFIXES} — the kanji that close an administrative-area name (都/道/府/県 at the
  *       prefecture level, then 市/区/郡/町/村 for city / ward / district / town / village). These are
  *       the Japanese equivalent of a US street suffix in the parsing sense: the token-final marker
- *       that tells you what KIND of unit the preceding name is.
+ *       that tells you what kind of unit the preceding name is.
  *   - {@link JP_BLOCK_MARKERS} — the markers that close the numbered tail (丁目 / 番地 / 番 / 号), the part
  *       that actually does the "house number" job in the absence of streets.
  *
- *   Note the reverse field order: the admin suffixes appear FIRST in the string (prefecture leads),
- *   and the block markers LAST — the mirror image of a US line, where the house number leads and
+ *   Note the reverse field order: the admin suffixes appear first in the string (prefecture leads),
+ *   and the block markers last — the mirror image of a US line, where the house number leads and
  *   the ZIP trails. See `postal-code.ts` for why, with no street name, the postcode is the primary
  *   anchor.
  */
@@ -30,10 +30,10 @@
 /**
  * The kanji suffixes that close an administrative-area name, largest unit to smallest:
  *
- * - 都 (to) — metropolis; only Tokyo.
- * - 道 (dō) — circuit; only Hokkaido.
- * - 府 (fu) — urban prefecture; Osaka and Kyoto.
- * - 県 (ken) — prefecture; the other 43.
+ * - 都 (to) — metropolis. only Tokyo.
+ * - 道 (dō) — circuit. only Hokkaido.
+ * - 府 (fu) — urban prefecture. Osaka and Kyoto.
+ * - 県 (ken) — prefecture. the other 43.
  * - 市 (shi) — city.
  * - 区 (ku) — ward (a subdivision of a designated city, e.g. Tokyo's 23 special wards).
  * - 郡 (gun) — district / county (rural grouping of towns and villages).

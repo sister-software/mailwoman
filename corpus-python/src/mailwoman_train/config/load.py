@@ -33,7 +33,7 @@ def merge_into(
 
     ``strict=False`` is the override: unknown keys are silently skipped (the
     historical hasattr-check behavior). Reserved for tooling that intentionally
-    consumes a partial view of a config; never for training entrypoints.
+    consumes a partial view of a config. never for training entrypoints.
     """
     for k, v in src.items():
         dotted = f"{_path}.{k}" if _path else str(k)

@@ -25,17 +25,17 @@ intuitive answer**, which is why they are written down rather than acted on.
    and the migration must ship with the enforcement rule in the same PR (§3).
 3. **Do not build `layer-kit` for de-duplication.** The four layer packages share eight filenames and
    **0.18% of their lines**. There is almost nothing to de-duplicate; a shared package would be imposing one
-   abstraction over four genuinely different implementations (§4).
-4. **A shared package may still be worth building for a different reason** — a single tested contract for the
+   abstraction over four in fact different implementations (§4).
+4. **A shared package may still be worth building for a different reason** — a single tested interface for the
    ingest stages — but that is a design argument that must be made on its own evidence, and this record does
    not make it (§4.3).
 
 ---
 
-## 1. What is actually there
+## 1. What is there
 
 Eleven packages had `lib/sdk/`; `spatial` no longer does. The ten that remain are all dataset packages, and
-no runtime package has one — so the concept is real, and the audit's premise held.
+no runtime package has one — so the concept is real, and the audit's assumption was supported.
 
 ```bash
 for d in packages/*/lib/sdk; do [ -d "$d" ] && echo "$d: $(ls "$d" | tr '\n' ' ')"; done
@@ -61,9 +61,9 @@ plus 88 breaking subpath changes.
 
 ## 2. Why the rename is not the fix
 
-The audit that prompted this work proposed the rename as the remedy for drift. Two things argue against it.
+The audit that prompted this work proposed the rename as the action for drift. Two things argue against it.
 
-**The remedy has already been tried, and it decayed.** The 2026-07-09 regroup moved `mailwoman/sdk/{cli,test}`
+**The action has already been tried, and it decayed.** The 2026-07-09 regroup moved `mailwoman/sdk/{cli,test}`
 to `cli-kit/` and `test-kit/`, added the one-line `AGENTS.md` rule, and stated that "`sdk` submodule meaning
 is restored: data acquisition only." By 2026-09-01 `filer/lib/sdk/` and `bdc/lib/sdk/` held domain analysis
 again. A directory name cannot enforce itself, and a second rename would be the same treatment applied to the
@@ -72,11 +72,11 @@ same patient.
 **Neither real defect was a naming defect.** The audit found three violations. Measured:
 
 - `spatial/lib/sdk/` held a WKT/WKB codec and an `ogrinfo` shell-out. Real, and fixed — but it was a
-  LOCATION defect. Nothing imported it wrongly; it simply sat in the wrong folder. No dependency rule could
+  LOCATION defect. Nothing imported it wrongly; it only sat in the wrong folder. No dependency rule could
   have caught it, and none did.
 - `filer`/`bdc` "drift" was largely a mis-measurement. The audit's table of external importers
   (`frn` 6, `form499` 5, `common` 5) counts `#sdk/*` specifiers **inside the owning package**.
-- The one genuine architectural violation was invisible to the naming argument and was found by an edge
+- The one actual architectural violation was invisible to the naming argument and was found by an edge
   check: `mcp/lib/cli.ts` took four symbols from `@mailwoman/filer/sdk`, a barrel that `export *`s
   seventeen modules, so an MCP request path carried the SEC and CORES HTTP clients and the EDGAR ingest to
   reach three functions. Fixed by moving those three modules to the filer package root — not by a rename.
@@ -91,7 +91,7 @@ identity instead.
 
 ## 3. If it is renamed anyway
 
-`acquire/`, not `ingest/`. `soil/lib/sdk/acquire.ts` already picked the word, and `ingest` is taken: seven of
+`acquire/` rather than `ingest/`. `soil/lib/sdk/acquire.ts` already picked the word, and `ingest` is taken: seven of
 the ten packages have an `ingest.ts` INSIDE `sdk/`, so `ingest/ingest.ts` would be the result.
 
 Conditions, all three or none:
@@ -121,15 +121,15 @@ where wave 2 of #2041 had already extracted the common code: the four ogr harnes
 `read*SourceIdentity` readers, nine batched-commit loops, four ingest-chunk runners, four two-phase build
 handles, four manifest blocks, four byte-identical `#readCoverage` methods, the CKAN reader pair and the five
 identical client factories now live in `core/layers`, `core/api`, `spatial` and `sqlite`. So 0.18% is evidence
-that **the extraction worked**, not that these packages were never duplicated. Anyone re-running this after a
+that **the extraction worked** rather than that these packages were never duplicated. Anyone re-running this after a
 future extraction should expect the same shape and draw the same care.
 
 Two limits on the instrument, both of which reduce against over-reading it:
 
 - `--min-lines 20` cannot see the 5–15-line idioms that were the actual duplication class here — a batched
-  commit loop, a manifest block. The number is a floor on duplication, not a measure of it.
-- "same filename, 2.1× size" measures VOLUME, not shared structure. Two files can differ in length and still
-  share a control-flow skeleton; the table below is evidence against a copy, not evidence against a contract.
+  commit loop, a manifest block. The number is a floor on duplication rather than a measure of it.
+- "same filename, 2.1× size" measures VOLUME rather than shared structure. Two files can differ in length and still
+  share a control-flow skeleton; the table below is evidence against a copy rather than evidence against a interface.
 
 And the same-named files are not the same size:
 
@@ -143,43 +143,43 @@ And the same-named files are not the same size:
 
 ### 4.2 What that means
 
-**The four packages share a VOCABULARY, not an implementation.** `ingest.ts` differing by 2.1× between
+**The four packages share a VOCABULARY rather than an implementation.** `ingest.ts` differing by 2.1× between
 `coastal` and `flood` is not two copies of one function that drifted; it is two different ingests that were
 given the same filename because they occupy the same stage. Extracting `layer-kit` would therefore remove
 almost no code. It would instead require inventing an abstraction general enough to cover all four, and the
 line counts say that abstraction does not exist yet.
 
 This is the inverse of the usual finding, and it is the reason the audit's instinct ("the larger prize") should
-not be taken on sight. `@mailwoman/core/layers`, which all four already share, is what the genuinely common
+not be taken on sight. `@mailwoman/core/layers`, which all four already share, is what the in fact common
 part looks like — and it is already extracted.
 
-### 4.3 The contract question already has a home — and it is not a new package
+### 4.3 The interface question already has a home — and it is not a new package
 
-`@mailwoman/core/layers` **is** the contract package. A fifth layer today already inherits
+`@mailwoman/core/layers` **is** the interface package. A fifth layer today already inherits
 `runIngestChunkScript`, `buildSealedArtifact`, `polygonLayerManifest`, `designatedCoverageCells`,
 `assertNoNegativeClaim` and `areaAgreementFrom` (with its witness type). So the question is not "should one
 exist" but "what is still missing from the one that does" — which makes `layer-kit` the wrong shape twice
 over: it would duplicate an existing home as well as failing the de-duplication test in §4.1.
 
-The unextracted contract pieces are known and few. Three were deferred **with reasons** during #2041, and the
+The unextracted interface pieces are known and few. Three were deferred **with reasons** during #2041, and the
 fourth is tracked:
 
-| piece                                           | why it was left                        | the difference that blocks a naive merge                              |
-| ----------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------- |
-| the `measureCellResolutions` driver             | per-product control flow               | coastal measures per scenario; zoning narrows                         |
-| the coastal/zoning `resolveDesignations` bodies | one substantive difference, not a copy | —                                                                     |
-| the verify-driver skeleton                      | tolerance is a product constant        | agree/disagree tally is shared; soil's tolerance is 1 m against 0.5 m |
-| the `schema-columns` rewire (#2046)             | adoption shifts stored column order    | four layer `schema.ts` files unrewired                                |
+| piece                                           | why it was left                               | the difference that blocks a naive merge                              |
+| ----------------------------------------------- | --------------------------------------------- | --------------------------------------------------------------------- |
+| the `measureCellResolutions` driver             | per-product control flow                      | coastal measures per scenario; zoning narrows                         |
+| the coastal/zoning `resolveDesignations` bodies | one substantive difference rather than a copy | —                                                                     |
+| the verify-driver skeleton                      | tolerance is a product constant               | agree/disagree tally is shared; soil's tolerance is 1 m against 0.5 m |
+| the `schema-columns` rewire (#2046)             | adoption shifts stored column order           | four layer `schema.ts` files unrewired                                |
 
-**"What does a fifth layer cost?" is therefore a countable question, not a survey**: build the list of stages
-a new layer must supply, and count how many of them it must RE-DERIVE rather than inherit — today that is the
+**"What does a fifth layer cost?" is therefore a countable question rather than a survey**: build the list of stages
+a new layer must supply, and count how several of them it must RE-DERIVE rather than inherit — today that is the
 four rows above and nothing else. If that count is judged too high, the work is to extract those four into
 `core/layers`, each behind the difference named in its row (a tolerance parameter, a per-scenario driver
 hook). It is not to create a package.
 
 ## 5. Ordered plan, if §0.1 is overruled
 
-1. Write the enforcement rule for the new name and prove it FAILS before and passes after (the shipped rule's
+1. Write the enforcement rule for the new name and prove it fails before and passes after (the shipped rule's
    `tile-worker` probe is the pattern).
 2. `ban`, `tiger` — smallest, one commit each.
 3. `geocode-oracle`, `osm`, `coastal`, `zoning`, `flood`.
@@ -207,18 +207,18 @@ instead: those four subpaths moved with their modules, each recorded in CHANGELO
 That leaves the `sdk/` rename holding a release of its own, for 83 subpaths and no other passenger — which
 strengthens §0.1 rather than weakening it. Bundle it with the next breaking change that has to happen anyway.
 
-### 6.1 The completion criterion, and what it cost to state honestly
+### 6.1 The completion criterion, and what it cost to state directly
 
 **Done: zero occurrences, enforced.** `repo-health`'s `bannedVocabulary` counter holds the tree there, with an
 allow-list that carries a reason beside every entry. Three findings are worth keeping, because each one is a
 trap for the next vocabulary removal:
 
-1. **The instrument must read NUL-bearing files.** Five tracked sources carry raw NUL bytes (#2018), which
-   `grep` treats as binary and skips SILENTLY — 3,481 occurrences with `-a` against 3,427 without. A
+1. **The instrument must read NUL-containing files.** Five tracked sources carry raw NUL bytes (#2018), which
+   `grep` treats as binary and skips silently — 3,481 occurrences with `-a` against 3,427 without. A
    `grep`-based ratchet would have certified zero with 54 still standing. The counter reads through Node
    instead, which has no such blind spot.
-2. **A ratchet written in the language it polices is inside its own blast radius.** The case-preserving sweep
-   renamed the counter AND rewrote the pattern it counts with, so the check silently began measuring the
+2. **A ratchet written in the language it polices is inside its own scope.** The case-preserving sweep
+   renamed the counter and rewrote the pattern it counts with, so the check silently began measuring the
    REPLACEMENT word while still reporting a falling number. It stayed green throughout. The counter is now
    named neutrally, its term lives in one constant, and `scripts/repo-health.ts` excludes itself — otherwise
    the count can never reach zero, because the pattern has to spell what it bans.
@@ -232,7 +232,7 @@ in the libpostal dictionaries, and dated notes inside committed board rows. Rena
 data to satisfy a style rule.
 
 One open item: those board-row notes are inside `SEED_CASE_KEY_ORDER`, so they are part of the pinned corpus
-content hash. Editing one is a deliberate re-pin, not a sweep.
+content hash. Editing one is a deliberate re-pin rather than a sweep.
 
 ## 7. Reproducing every number here
 

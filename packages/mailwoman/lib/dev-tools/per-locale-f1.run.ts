@@ -6,7 +6,7 @@
  */
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { extractDelimited, parseArguments } from "@mailwoman/core/scripting/arguments"
 
 import { perLocaleF1 } from "#eval-harness/per/locale-f1"
 
@@ -33,7 +33,7 @@ async function main(): Promise<void> {
 		allowPositionals: true,
 	})
 
-	// The old parseArgs() only ASSIGNED a field when the flag was present (`!= null`), leaving the
+	// The old parseArgs() only assigned a field when the flag was present (`!= null`), leaving the
 	// module's own default in place otherwise — and the boolean flags were set to `true` on presence
 	// regardless of value. Spreading conditionally here reproduces both behaviors exactly: an absent
 	// flag must not arrive as `undefined` where that would override a default.
@@ -41,10 +41,7 @@ async function main(): Promise<void> {
 		...(values["golden-dir"] != null ? { goldenDir: values["golden-dir"] as string } : {}),
 		...(values["files"] != null
 			? {
-					files: (values["files"] as string)
-						.split(",")
-						.map((s) => s.trim())
-						.filter((file) => file.length > 0),
+					files: extractDelimited(values["files"]),
 				}
 			: {}),
 		...(values["weights-cache"] != null ? { weightsCache: values["weights-cache"] as string } : {}),

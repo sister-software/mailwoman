@@ -3,7 +3,7 @@
 
 /**
  *   `mailwoman tiger redistricting --state <FIPS>` — download a state's Census 2020 P.L. 94-171 block
- *   race counts (table P2) into the `pl_block` table, keyed on the same block GEOID as `tiger
+ *   race counts (table P2) into the `pl_block` table, keyed on the same block geoid as `tiger
  *   fetch`'s `tabblock20`. Join the two for block-level race + geometry.
  *
  *   Idempotent: a valid cached ZIP is reused, and re-running a state (or `--county`) replaces its
@@ -15,10 +15,10 @@ import { CommandError } from "@mailwoman/core/scripting/command"
 import { Box, Text } from "ink"
 import { useState } from "react"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "redistricting",
@@ -37,14 +37,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	state: string
-	vintage: number
-	county?: string
-	out?: string
-}
-
-const TIGERRedistricting: ParsedCommandComponent<Options> = ({ options }) => {
+const TIGERRedistricting: CommandComponent<typeof spec> = ({ options }) => {
 	const [status, setStatus] = useState("Starting…")
 
 	const state = useCommandTask(async () => {

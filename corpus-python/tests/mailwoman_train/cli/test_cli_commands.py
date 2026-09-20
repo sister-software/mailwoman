@@ -6,7 +6,7 @@ every other command shared, and reading one command meant finding its flags a hu
 its body.
 
 A command is now a module exporting `NAME`, `add_parser` and `run`, and `COMMANDS` is the list.
-`build_parser` loops it. These tests read the registry, not argparse's private attributes, so they
+`build_parser` loops it. These tests read the registry rather than argparse's private attributes, so they
 say what a command owes rather than how argparse happens to store it.
 """
 

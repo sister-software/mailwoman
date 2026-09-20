@@ -172,6 +172,11 @@
 			"node": "./lib/runner.ts",
 			"default": "./out/runner.js"
 		},
+		"./source-register": {
+			"types": "./out/source-register/index.d.ts",
+			"node": "./lib/source-register/index.ts",
+			"default": "./out/source-register/index.js"
+		},
 		"./build": {
 			"types": "./out/build.d.ts",
 			"node": "./lib/build.ts",
@@ -207,10 +212,10 @@
 			"node": "./lib/tools/index.ts",
 			"default": "./out/tools/index.js"
 		},
-		"./utils/parquet": {
-			"types": "./out/utils/parquet.d.ts",
-			"node": "./lib/utils/parquet.ts",
-			"default": "./out/utils/parquet.js"
+		"./parquet/*": {
+			"types": "./out/parquet/*.d.ts",
+			"node": "./lib/parquet/*.ts",
+			"default": "./out/parquet/*.js"
 		},
 		"./tools/postcode-triples": {
 			"types": "./out/tools/postcode-triples.d.ts",
@@ -221,6 +226,11 @@
 			"types": "./out/tools/audit.d.ts",
 			"node": "./lib/tools/audit.ts",
 			"default": "./out/tools/audit.js"
+		},
+		"./tools/gauntlet-inputs": {
+			"types": "./out/tools/gauntlet-inputs.d.ts",
+			"node": "./lib/tools/gauntlet-inputs.ts",
+			"default": "./out/tools/gauntlet-inputs.js"
 		},
 		"./tools/gb-title-case": {
 			"types": "./out/tools/gb-title-case.d.ts",
@@ -301,6 +311,7 @@
 		"@mailwoman/bdc": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/evidence": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/record": "workspace:*",
@@ -310,14 +321,14 @@
 		"apache-arrow": "^21.2.0",
 		"fastest-levenshtein": "^1.0.16",
 		"parquet-wasm": "0.7.2",
-		"path-ts": "^2.3.0",
+		"path-ts": "^2.4.1",
 		"read-excel-file": "^9.3.10",
-		"spliterator": "^7.7.1",
+		"spliterator": "^7.11.0",
 		"zod": "^4.5.4"
 	},
 	"devDependencies": {
 		"@types/node": "^26.4.1",
-		"adm-zip": "^0.6.0",
+		"adm-zip": "^0.6.1",
 		"kysely": "^0.29.5",
 		"write-excel-file": "^4.1.1"
 	}

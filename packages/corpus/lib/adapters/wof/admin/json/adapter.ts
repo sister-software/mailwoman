@@ -8,7 +8,7 @@
  *   `packages/corpus/lib/adapters/wof-admin/`, removed in this same change) was replaced by this
  *   one because the SQLite distribution path was unworkable for the real corpus build:
  *
- *   1. `dist.whosonfirst.org/sqlite/` is dead (NXDOMAIN); the Geocode-Earth mirror is the only one.
+ *   1. `dist.whosonfirst.org/sqlite/` is dead (nxdomain); the Geocode-Earth mirror is the only one.
  *   2. The Geocode-Earth-hosted postalcode DB tags every row `mz:is_current = -1` ("unknown but treated
  *        as active"); the SQLite adapter's `is_current = 1` predicate emitted zero rows.
  *   3. The `names` table in the SQLite distribution is empty — localized `name:*` variants live in a
@@ -19,7 +19,7 @@
  *   Input: a directory containing one or more cloned `whosonfirst-data-admin-<cc>` GitHub repos. Each
  *   repo has `data/XXX/YYY/ZZZ/<wof-id>.geojson` files; `**\/*.geojson` walks the tree recursively.
  *   Alternate-geometry siblings (`-alt-*`) are skipped — they're separate exports of the same
- *   record, not new records.
+ *   record rather than new records.
  *
  *   Per record, the adapter emits one row per `(name-variant, hierarchy-variant)` pair:
  *
@@ -48,14 +48,14 @@ import {
 	nameSlotsFor as wofNameSlotsFor,
 	type WOFVariantSpec,
 } from "#adapters/wof/json-rows"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 import { buildAncestryIndex, walkFeatures, type WOFRecord } from "#utils"
 
 /**
  * Map a WOF placetype to a Mailwoman `ComponentTag`, or `undefined` to skip.
  *
- * Per-adapter deliberately (the postalcode adapter carries its own): each table is a record FILTER for its adapter's
- * emission set, not a shared vocabulary.
+ * Per-adapter deliberately (the postalcode adapter carries its own): each table is a record filter for its adapter's
+ * emission set rather than a shared vocabulary.
  */
 function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag | undefined {
 	switch (placetype) {
@@ -85,7 +85,7 @@ function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag 
  * Compute the hierarchy variants for a record given its ancestry chain and the chosen `selfName`.
  *
  * `selfName` is the surface form to use for the record's own component (locality / region / country / subregion).
- * Callers pass the canonical `wof:name` for the `"default"` slot and a `name:*` localized value for variant slots;
+ * Callers pass the canonical `wof:name` for the `"default"` slot and a `name:*` localized value for variant slots.
  * ancestor names always come from the ancestor's canonical `wof:name`.
  *
  * Country variants substitute `COUNTRY_DISPLAY_NAME` for the default slot so the OpenCage template produces the
@@ -188,7 +188,7 @@ export function nameSlotsFor(rec: WOFRecord): Array<{ key: string; value: string
 export const WOF_ADMIN_ADAPTER_ID = "wof-admin"
 
 /**
- * Construct the wof-admin JSON-bundle adapter. The adapter is stateless across runs; calling this twice with the same
+ * Construct the wof-admin JSON-bundle adapter. The adapter is stateless across runs. calling this twice with the same
  * input directory produces byte-identical `canonical.jsonl` (records are emitted in sorted `wof:id` order to be
  * insensitive to filesystem walk ordering).
  */
@@ -196,6 +196,7 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 	return {
 		id: WOF_ADMIN_ADAPTER_ID,
 		defaultLicense: "CC0-1.0",
+		addressRole: AddressRole.Premise,
 		description:
 			"Who's On First admin GeoJSON bundles (countries, regions, counties, localities) — multi-name variants per record.",
 
@@ -204,7 +205,7 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 			// We keep only records whose placetype maps to a ComponentTag — irrelevant placetypes
 			// (campus, county-region hybrids on which Mailwoman has no opinion) are dropped here so
 			// they don't inflate the ancestry index. Country-filtered runs prune to the matching
-			// country code too; the ancestors of a same-country record live in the same admin repo.
+			// country code too. the ancestors of a same-country record live in the same admin repo.
 			const byID = new Map<number, WOFRecord>()
 
 			for await (const rec of walkFeatures(opts.inputPath, { signal: opts.signal })) {
@@ -218,7 +219,7 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 
 			const ancestry = buildAncestryIndex(byID)
 
-			// Pass 2: emit rows in sorted-id order for deterministic JSONL.
+			// Pass 2: emit rows in sorted-id order for deterministic jsonl.
 			yield* emitWOFJSONRows({
 				records: byID,
 				ancestry,

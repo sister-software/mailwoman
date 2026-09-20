@@ -32,7 +32,7 @@ interface FixturePlace {
 	 */
 	alt_names?: string[]
 	/**
-	 * Ancestor chain (NOT including self). Used to seed the `ancestors` table.
+	 * Ancestor chain (not including self). Used to seed the `ancestors` table.
 	 */
 	ancestor_ids?: number[]
 }
@@ -102,7 +102,7 @@ const FIXTURE: FixturePlace[] = [
 	// Localities
 	{
 		id: 101_751_119,
-		parent_id: 85_683_033, // FR region (not in fixture; irrelevant for the assertions)
+		parent_id: 85_683_033, // FR region (not in fixture. irrelevant for the assertions)
 		name: "Paris",
 		placetype: "locality",
 		country: "FR",
@@ -157,7 +157,7 @@ const FIXTURE: FixturePlace[] = [
 		id: 101_748_449,
 		parent_id: 85_682_077,
 		name: "London",
-		placetype: "borough", // intentionally NOT locality — to test the placetype filter
+		placetype: "borough", // intentionally not locality — to test the placetype filter
 		country: "CA",
 		lat: 42.98,
 		lon: -81.25,
@@ -174,7 +174,7 @@ const FIXTURE: FixturePlace[] = [
 		ancestor_ids: [85_633_723],
 	},
 
-	// The Brooklyn pair: WOF files Brooklyn-the-borough (NYC, pop 2.5M) as placetype `borough`, NOT
+	// The Brooklyn pair: WOF files Brooklyn-the-borough (NYC, pop 2.5M) as placetype `borough`, not
 	// `locality`. A locality query must still reach it via the shared placetype expansion
 	// (core/resolver PLACETYPE_FILTER_GROUPS) — otherwise the only locality-typed match is the fuzzy
 	// "Brooklyn Park" and the resolver mislocates to Minnesota.
@@ -204,7 +204,7 @@ const FIXTURE: FixturePlace[] = [
 
 	// Alias-bag boundary fixture (#523): two aliases whose concatenation straddles the phrase
 	// "York New". The exact tier must never promote this place for that straddling query, while
-	// each alias on its own ("New City") still earns the exact tier.
+	// each alias on its own ("New City") still warrants the exact tier.
 	{
 		id: 999_000_001,
 		parent_id: 85_633_147,
@@ -222,7 +222,7 @@ function buildFixtureDB(path = ":memory:"): DatabaseClient<WOFDatabase> {
 	const db = new DatabaseClient<WOFDatabase>(path)
 
 	// Schema mirrors the real WOF SQLite distribution at data.geocode.earth (subset of columns we
-	// actually read; full schema is documented in `schema.ts`). WOF lifecycle: both `is_current = -1`
+	// actually read. full schema is documented in `schema.ts`). WOF lifecycle: both `is_current = -1`
 	// (modern) and `is_current = 1` (legacy) mean current; `0` means not current. See #91.
 	db.exec(`
 		CREATE TABLE spr (
@@ -254,7 +254,7 @@ function buildFixtureDB(path = ":memory:"): DatabaseClient<WOFDatabase> {
 		);
 	`)
 
-	// Fixture places store centroid lat/lon; for bbox tests we use a small ~10 km square around each
+	// Fixture places store centroid lat/lon. for bbox tests we use a small ~10 km square around each
 	// centroid so R*Tree intersection queries have something realistic to bite on.
 	const insertSpr = db.prepare(
 		`INSERT INTO spr (
@@ -312,7 +312,7 @@ afterEach(() => {
 
 describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 	test('"Paris" with no country/parent filter returns both Paris,FR and Paris,US as localities', async () => {
-		// Without a popularity signal (real WOF has wof:population; v0.1 doesn't model it) the
+		// Without a popularity signal (real WOF has wof:population. v0.1 doesn't model it) the
 		// resolver has no reason to prefer one Paris over the other — both are valid candidates.
 		// Callers disambiguate via country / parentID / alt-name match.
 		const candidates = await lookup.findPlace({ text: "Paris" })
@@ -368,8 +368,8 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 	})
 
 	test("length penalty: short name beats long name for short query", async () => {
-		// Compare the ALIAS-FREE pair (Paris,US vs Paris-l'Hôpital,FR — both have empty alt_names
-		// bags) so this guards the NAME-column length penalty in isolation. Paris,FR is no longer a
+		// Compare the alias-free pair (Paris,US vs Paris-l'Hôpital,FR — both have empty alt_names
+		// bags) so this guards the name-column length penalty in isolation. Paris,FR is no longer a
 		// clean subject: its four aliases now carry four ALIAS_SEPARATOR tokens (#523), and that
 		// alias-doc length inflation drags its raw BM25 below the alias-free l'Hôpital row — the
 		// known shared-length-stats problem (#189), not the name-length penalty under test.
@@ -403,7 +403,7 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 	})
 
 	test("query with special characters is sanitized — `St. (Petersburg)` does not throw", async () => {
-		// No such place in the fixture; we only assert no SQL syntax error.
+		// No such place in the fixture. we only assert no SQL syntax error.
 		await expect(lookup.findPlace({ text: "St. (Petersburg)" })).resolves.toEqual([])
 	})
 
@@ -428,8 +428,8 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 	})
 
 	test("alias-bag boundary: a query straddling two aliases is never exact on a names-less DB (#523)", async () => {
-		// "York New" straddles the bag "Old York <sep> New City": its tokens AND-match the row, but
-		// the exact tier must NOT promote it. Pre-#523 the bag was space-joined and the padded
+		// "York New" straddles the bag "Old York <sep> New City": its tokens and-match the row, but
+		// the exact tier must not promote it. Pre-#523 the bag was space-joined and the padded
 		// containment check (' old york new city ' ⊇ ' york new ') false-promoted exactly this shape.
 		const db = buildFixtureDB()
 		const withFTS = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
@@ -440,7 +440,7 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 		try {
 			const straddle = await lookup2.findPlace({ text: "York New", placetype: "locality" })
 			expect(straddle.some((c) => c.exactMatch === true)).toBe(false)
-			// A single alias still earns the exact tier from the bag alone.
+			// A single alias still warrants the exact tier from the bag alone.
 			const alias = await lookup2.findPlace({ text: "New City", placetype: "locality" })
 			expect(alias[0]).toMatchObject({ id: 999_000_001, exactMatch: true })
 		} finally {
@@ -480,8 +480,8 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 	})
 
 	test("SMOKE: a sealed 0444 on-disk extract opens and still answers FTS queries end-to-end", async () => {
-		// SMOKE test, not the regression guard: SQLite silently downgrades a write-mode open to read-only on
-		// an owned 0444 file, so this passes under the old `readOnly: false` too — it does NOT distinguish old
+		// smoke test rather than the regression guard: SQLite silently downgrades a write-mode open to read-only on
+		// an owned 0444 file, so this passes under the old `readOnly: false` too — it does not distinguish old
 		// from new code. It proves a genuinely sealed file resolves end-to-end. The real invariant (the open
 		// mode chosen per `buildFTS` — read-only on every query path, read-write only for the FTS build) is
 		// enforced by the DatabaseSync construction spy in `lookup-readonly-open.test.ts`.
@@ -489,7 +489,7 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 		const dir = dirDirectory.path
 		const dbPath = join(dir, "admin-fixture.db")
 
-		// Build the fixture ON DISK with its FTS index, then seal the file 0444 to mimic a shipped extract.
+		// Build the fixture on disk with its FTS index, then seal the file 0444 to mimic a shipped extract.
 		{
 			await using disk = buildFixtureDB(dbPath)
 			const builder = new WOFSQLitePlaceLookup({ database: disk, buildFTS: true })
@@ -501,7 +501,7 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 
 		try {
 			// The real code path: databasePath → `new DatabaseClient<WOFDatabase>(path, { readOnly: !opts.buildFTS })`.
-			// With buildFTS omitted this opens the 0444 file read-only; a write-mode open would throw here.
+			// With buildFTS omitted this opens the 0444 file read-only. a write-mode open would throw here.
 			ro = new WOFSQLitePlaceLookup({ databasePath: dbPath })
 			const candidates = await ro.findPlace({ text: "Paris", country: "US" })
 			expect(candidates.length).toBeGreaterThan(0)

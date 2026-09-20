@@ -5,7 +5,7 @@
  *   The #1726 centroid pin: the WOF ingest prefers the label centroid over the math centroid, and never mixes the two.
  *
  *   The math centroid is wrong exactly where a point matters most — a multipolygon spanning overseas territories pulls
- *   it off the mainland (France's `geom:` point is 42.19, -2.74, inside Spain; its `lbl:` point is 46.71, 2.46,
+ *   it off the mainland (France's `geom:` point is 42.19, -2.74, inside Spain. its `lbl:` point is 46.71, 2.46,
  *   metropolitan France). Both fixtures below are shaped from that real record.
  */
 
@@ -53,7 +53,7 @@ await writeLocalFile(
 // No label centroid: the math centroid remains the fallback.
 await writeLocalFile(feature(2, { "geom:latitude": 10.5, "geom:longitude": 20.25 }), join(DATA_DIR, "2.geojson"))
 
-// A lone lbl:latitude with no longitude must NOT produce a mixed point — geom: wins as a pair.
+// A lone lbl:latitude with no longitude must not produce a mixed point — geom: wins as a pair.
 await writeLocalFile(
 	feature(3, { "geom:latitude": 30, "geom:longitude": 40, "lbl:latitude": 55 }),
 	join(DATA_DIR, "3.geojson")
@@ -163,7 +163,7 @@ describe("ingestWOF adjudication scope (#1905)", () => {
 		await makeDirectories(dataDir)
 
 		// Modeled on wof:85688753 (Texas): lbl at the label placement, geom at the polygon centroid,
-		// and the GeoNames admin1 record sitting near the CENTROID — the anchor premise inverted.
+		// and the GeoNames admin1 record sitting near the centroid — the anchor premise inverted.
 		await writeLocalFile(
 			feature(8, {
 				"wof:placetype": "region",

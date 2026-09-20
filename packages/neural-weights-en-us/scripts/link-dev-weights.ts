@@ -3,22 +3,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Materialize the en-us overlay's dev artifacts — the BASE package: the model + tokenizer every other overlay
+ *   Materialize the en-us overlay's dev artifacts — the base package: the model + tokenizer every other overlay
  *   inherits, the soft-feed lexicons, the US postcode binary, the FSTs, and the US placetype-pair index. The steps
  *   themselves live in `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`; this file is the manifest.
  *
  *   `neural/test/integration/weights.test.ts` runs this on every `yarn test`, so the model pair is held to this
  *   package's `model-card.json` `files_md5` (the #397 drift guard): the linked default bytes must match the digests the
  *   release re-verifies against the published tarball, and a mismatch fails loud instead of grading an eval shift
- *   against the wrong weights. ON SHIP, bump `release.config.json`'s `weights.model` / `weights.tokenizer` and the
+ *   against the wrong weights. on ship, bump `release.config.json`'s `weights.model` / `weights.tokenizer` and the
  *   card's `files_md5` in lockstep — a path bumped without the card, or the reverse, fails here.
  *
- *   The evidence lexicons (`street_type`, `locality_surface`) are linked by the generation the card names, not by a
+ *   The evidence lexicons (`street_type`, `locality_surface`) are linked by the generation the card names rather than by a
  *   literal in this file, so a card bump moves the artifact with it. `postcode-us.bin` is derived from the WOF US
- *   postcode extract and built skip-if-present; without it a fresh worktree parses anchor-OFF ("Paris, TX" resolving
- *   to Paris, France on a fresh checkout was this gap). The pair index has NO source CSV — the US has no postal register
+ *   postcode extract and built skip-if-present. without it a fresh worktree parses anchor-off ("Paris, TX" resolving
+ *   to Paris, France on a fresh checkout was this gap). The pair index has no source CSV — the US has no postal register
  *   carrying dependent localities (USPS routes city/state/ZIP), so every pair comes from the shared WOF admin database
- *   — and `PAIR_INDEX_PARENT_DELTA` is the whole-edge parent bias (#46), default-on for US; receipt
+ *   — and `PAIR_INDEX_PARENT_DELTA` is the whole-edge parent bias (#46), default-on for US. receipt
  *   `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`.
  */
 

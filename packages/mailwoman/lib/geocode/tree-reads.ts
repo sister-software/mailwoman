@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Readers over the resolved tree's METADATA STAMPS — the receipts resolver mechanisms leave on nodes
+ *   Readers over the resolved tree's metadata stamps — the receipts resolver mechanisms leave on nodes
  *   (`resolver_country`, the #42/#1735 scope stamps, the #1880 capital promotion). Extracted from
  *   `geocode-core.ts` as one unit: each is a walk that answers the first stamp it meets, each stamp's
  *   absence means "the mechanism never spoke", and none of them ranks anything.
@@ -74,7 +74,7 @@ export function treePostcodeValue(tree: AddressTree): string | undefined {
 }
 
 /**
- * Retag a WHOLE-INPUT span the model read as something else when the string is an unambiguous postcode — the
+ * Retag a whole-input span the model read as something else when the string is an unambiguous postcode — the
  * bare-postcode class (#22).
  *
  * `mailwoman geocode --locale en-GB "N7 0BT"` parses to `{ street: "N7 0BT" }` and returns no coordinate, while the
@@ -85,9 +85,9 @@ export function treePostcodeValue(tree: AddressTree): string | undefined {
  *
  * The check is deliberately the narrowest one that fixes the class:
  *
- * - The tree carries NO postcode node already (never second-guess a parse that found one),
- * - The retagged node is the ONLY value-bearing node in the tree, and
- * - Its value matches a format that is UNFORGEABLE across the systems we resolve ({@link POSTCODE_FORMAT_COUNTRY} —
+ * - The tree carries no postcode node already (never second-guess a parse that found one),
+ * - The retagged node is the only value-containing node in the tree, and
+ * - Its value matches a format that is unforgeable across the systems we resolve ({@link POSTCODE_FORMAT_COUNTRY} —
  *   GB/CA/IE, the same table #928 already trusts to name a country outright).
  *
  * So it fires on `N7 0BT` and `K2P 1L4` and on nothing that is also a plausible street, venue or city name. A US ZIP is

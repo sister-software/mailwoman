@@ -55,12 +55,12 @@ export function candidateFromSearchRow(
 	const extraLen = Math.max(0, row.name.length - queryLen - 3)
 	score -= (weights.lengthPenaltyWeight * extraLen) / 10
 
-	// Proximity boost: only applied when the query carries `near` AND the candidate has real
+	// Proximity boost: only applied when the query carries `near` and the candidate has real
 	// coordinates. The formula decays smoothly with distance so close-but-not-exact hits
-	// still benefit; tunable via proximityBoost + proximityScaleKm.
+	// still benefit. tunable via proximityBoost + proximityScaleKm.
 	let distanceKm: number | undefined
 	// The best decayed-distance term over `near` + every `bias` point (each point's term is
-	// scaled by its weight; the MAX wins — a candidate near ANY hint is "nearby"). Carried
+	// scaled by its weight. the maximum wins — a candidate near any hint is "nearby"). Carried
 	// into the exact-tier prominence sort below when hints are present.
 	let proximityTerm = 0
 
@@ -98,7 +98,7 @@ export function candidateFromSearchRow(
 	score += popTerm
 
 	// Combined prominence for the exact-tier sort when proximity hints are present: population
-	// and nearness in the SAME additive units, so the map view / the user's location can win a
+	// and nearness in the same additive units, so the map view / the user's location can win a
 	// cross-country postcode tie without a hard filter.
 	const prominence = popTerm + proximityTerm
 
@@ -120,7 +120,7 @@ export function candidateFromSearchRow(
 
 	if (row.population !== null && row.population > 0) {
 		candidate.population = row.population
-		// The named ranking key (ROAD_TO_V9 §2). DERIVED, not stored — a pure function of the
+		// The named ranking key (ROAD_TO_V9 §2). derived rather than stored — a pure function of the
 		// population already on this row, so it cannot drift from what the ordering uses.
 		candidate.referential = referentialFromPopulation(row.population)
 	}
@@ -130,7 +130,7 @@ export function candidateFromSearchRow(
 		candidate.encyclopedic = row.encyclopedic
 	}
 
-	// Candidate bbox — parity with the WASM lookup (resolver-wof-wasm/lookup.ts), whose
+	// Candidate bbox — parity with the wasm lookup (resolver-wof-wasm/lookup.ts), whose
 	// consumers (the demo cascade's region constraint) read it. Without this the Node
 	// backend's region→bbox constraint is dead and disambiguation falls to population
 	// ranking (the Springfield-IL→MO failure the #524 smoke eval caught).
@@ -147,7 +147,7 @@ export function candidateFromSearchRow(
 }
 
 /**
- * Order `candidates` IN PLACE — the exact-match tier first when the extract can answer the name probes, otherwise plain
+ * Order `candidates` IN place — the exact-match tier first when the extract can answer the name probes, otherwise plain
  * weighted-score order. Every candidate is stamped with its `exactMatch` flag on the way through.
  */
 export function rankCandidates<DB>(
@@ -161,12 +161,12 @@ export function rankCandidates<DB>(
 ): void {
 	const { db, schemaName, query, weights } = options
 
-	// Exact-match tiering: a candidate whose name OR any alias equals the query text (case-folded)
+	// Exact-match tiering: a candidate whose name or any alias equals the query text (case-folded)
 	// ranks above any partial match, with the weighted-sum score (incl. population) breaking ties
-	// WITHIN a tier. See the RankingWeights.exactMatchTiering docstring for why this aligns the
+	// within a tier. See the RankingWeights.exactMatchTiering docstring for why this aligns the
 	// population prior rather than overriding it. One cheap indexed lookup over the candidate ids.
-	// Runs even for a SINGLE candidate so `exactMatch` is stamped consistently (parity with the
-	// WASM lookup) — a sole alias hit ("New York City" → New York) must still carry the flag the
+	// Runs even for a single candidate so `exactMatch` is stamped consistently (parity with the
+	// wasm lookup) — a sole alias hit ("New York City" → New York) must still carry the flag the
 	// demo cascade / #369 re-rank read.
 	if (weights.exactMatchTiering && candidates.length) {
 		const exactIDs = exactMatchIDs(
@@ -178,32 +178,32 @@ export function rankCandidates<DB>(
 
 		// Stamp the tier onto every candidate (not just when the tiering sort fires) so a downstream
 		// re-rank — #369's postcode-anchor country pin in `resolveTree` — can keep the country pin from
-		// crossing the exact/partial boundary ("ME" → Maine, not the more-populous Missouri).
+		// crossing the exact/partial boundary ("ME" → Maine rather than the more-populous Missouri).
 		for (const c of candidates) {
 			c.exactMatch = exactIDs.has(c.id as number)
 		}
 
 		if (exactIDs.size) {
-			// #905: WITHIN the exact tier, population is the PRIMARY key and the weighted score
+			// #905: within the exact tier, population is the primary key and the weighted score
 			// only breaks population ties. Exactness saturates text relevance, and the bm25
 			// residue inside `score` is length-noise (see the fetch-site comment), so letting it
 			// order the tier is what sent unscoped "Paris" to an Ohio township. The partial tier
 			// keeps score order — text relevance still means something there. This makes the
 			// exactMatchTiering docstring literal: match quality primary, prominence within.
 			//
-			// #912 sub-tier: a NAME-exact candidate (spr.name equals the query) outranks an
-			// ALIAS-exact one ('Paris' the place beats 'Paris Township' held via alias 'Paris').
+			// #912 sub-tier: a name-exact candidate (spr.name equals the query) outranks an
+			// alias-exact one ('Paris' the place beats 'Paris Township' held via alias 'Paris').
 			// The place's own name is a stronger identity claim than an alias — aliases exist to
-			// widen recall, not to tie primaries. ME→Maine is untouched: 'ME' name-exact-matches
+			// widen recall rather than to tie primaries. ME→Maine is untouched: 'ME' name-exact-matches
 			// nothing, so the alias sub-tier still decides there. Population orders within each
 			// sub-tier as before.
 			const needle = foldQueryText(query.text)
 
-			// #936 option 3: an OFFICIAL name (preferred form in an official language of the place's
+			// #936 option 3: an official name (preferred form in an official language of the place's
 			// country, `names.official = 1`) counts as the place's own name for the sub-tier — "Åbo" is
-			// Turku's name, not merely its alias. Floor-conditioned on the holder's population (see the
+			// Turku's name rather than merely its alias. Floor-conditioned on the holder's population (see the
 			// RankingWeights docstring for the measured 100k boundary). officialIDs ⊆ exactIDs by
-			// construction (official rows are names rows), so only the sub-tier KIND changes.
+			// construction (official rows are names rows), so only the sub-tier kind changes.
 			const officialIDs = weights.officialNameExact
 				? officialNameIDs(
 						db,
@@ -225,15 +225,15 @@ export function rankCandidates<DB>(
 
 			// With proximity hints (near/bias), prominence (population + nearness, same units)
 			// replaces raw population as the within-tier key — the 48026 rule: the map view or
-			// the user's location breaks a cross-country postcode tie. Without hints, REFERENTIAL
+			// the user's location breaks a cross-country postcode tie. Without hints, referential
 			// ordering decides.
 			//
 			// ROAD_TO_V9 §2: this is the site that "orders namesakes", so it is the site that has to
-			// say what it orders by. `compareReferential` is referential DESC with raw population as
-			// the tiebreak, which is provably the SAME ORDER as the `(b.population ?? 0) - (a.population ?? 0)`
+			// say what it orders by. `compareReferential` is referential desc with raw population as
+			// the tiebreak, which is provably the same order as the `(b.population ?? 0) - (a.population ?? 0)`
 			// it replaces — referential is strictly increasing in population below saturation and
 			// constant above it, and the tiebreak restores the order in the saturated tail. Measured
-			// zero-delta, not assumed: see `place-importance-schema.test.ts` and `resolver-referential-ranking.test.ts`.
+			// zero-delta rather than assumed: see `place-importance-schema.test.ts` and `resolver-referential-ranking.test.ts`.
 			// Encyclopedic importance is not, and must not become, an input here.
 			const hasHints = !!query.near || (query.bias?.length ?? 0) > 0
 

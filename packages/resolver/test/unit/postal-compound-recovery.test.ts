@@ -88,7 +88,7 @@ function failingTree(): AddressTree {
 }
 
 describe("postcodeCodeSubset", () => {
-	it("extracts digit-bearing tokens", () => {
+	it("extracts digit-containing tokens", () => {
 		expect(postcodeCodeSubset("1382 Kožljek")).toBe("1382")
 		expect(postcodeCodeSubset("SW1A 1AA London")).toBe("SW1A 1AA")
 		expect(postcodeCodeSubset("Kožljek")).toBe("")
@@ -191,7 +191,7 @@ describe("postal-compound recovery (#942)", () => {
 		const out = await resolver.resolveTree(failingTree(), { postalCompoundRecovery: true })
 		const locality = out.roots.find((n) => n.tag === "locality" && n.placeID)
 
-		// Both candidates surface; the check keeps only the SI one.
+		// Both candidates surface. the check keeps only the SI one.
 		expect(locality).toBeDefined()
 		expect(locality!.lat).toBeCloseTo(45.8, 1)
 	})
@@ -200,7 +200,7 @@ describe("postal-compound recovery (#942)", () => {
 describe("#961 joint country recovery — the locale-default trap", () => {
 	// The CLI's en-US locale default scoped both the anchor and the village probe to US, so the SI
 	// floor never fired through geocode-core. The joint pass probes spans unscoped and verifies each
-	// candidate against the postcode resolved in the CANDIDATE's own country — cross-country
+	// candidate against the postcode resolved in the candidate's own country — cross-country
 	// promotion only postcode-verified, never unrestricted.
 	it("recovers under a WRONG defaultCountry via the postcode-verified joint pass", async () => {
 		const resolver = createWOFResolver(await makeBackend())
@@ -214,7 +214,7 @@ describe("#961 joint country recovery — the locale-default trap", () => {
 
 	it("rejects a cross-country namesake whose own country cannot verify the postcode", async () => {
 		// The HR decoy shares the name but HR holds no postcode "1382" → the joint pass must not
-		// promote it; with the SI row removed the tree stays unresolved rather than guessing.
+		// promote it. with the SI row removed the tree stays unresolved rather than guessing.
 		const resolver = createWOFResolver(
 			await makeBackend(PLACES.filter((p) => !(p.placetype === "locality" && p.country === "SI")))
 		)

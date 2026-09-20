@@ -2,20 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `RemoteResolver` — the `Resolver` interface (`resolveTree`) over HTTP. The adapter the interface
+ *   `RemoteResolver` — the `Resolver` interface (`resolveTree`) over http. The adapter the interface
  *   docstring anticipated (Phase 4.4): a client POSTs a parsed `AddressTree` + the serializable
  *   `ResolveOpts` to a resolver service, which owns the gazetteer + situs/interpolation extracts,
  *   runs the cascade, and returns the resolved tree. Two payoffs:
  *
- *   1. **Multi-instance** — stateless parser nodes (the ~30 MB ONNX model) talk to ONE resolver service
+ *   1. **Multi-instance** — stateless parser nodes (the ~30 MB ONNX model) talk to one resolver service
  *        (the multi-GB gazetteer + extracts). `parse` locally, `new RemoteResolver(...).resolveTree`
  *        remotely — same interface the in-process `WOFResolver` satisfies, so it's a drop-in.
  *   2. **Canary** — point it at a second resolver build (or an adapter fronting Pelias/Nominatim/BAN)
- *        and diff the resolved trees through the identical contract.
+ *        and diff the resolved trees through the identical interface.
  *
  *   Pure transport: `fetch` only, no node-specific deps (runs in the browser too). The
- *   `addressPoints` / `interpolation` opts are LIVE SQLite handles — not serializable — so they're
- *   stripped before the POST; the resolver service supplies its own from the tree's region (the
+ *   `addressPoints` / `interpolation` opts are live SQLite handles — not serializable — so they're
+ *   stripped before the post. the resolver service supplies its own from the tree's region (the
  *   data lives server-side, which is the whole point). All other opts (defaultCountry, calibration,
  *   hierarchyCompletion, …) ride along.
  */
@@ -30,7 +30,7 @@ import type { ResolveOpts, Resolver } from "@mailwoman/core/resolver"
 export type SerializableResolveOpts = Omit<ResolveOpts, "addressPoints" | "interpolation">
 
 /**
- * Strip the live lookup handles from `ResolveOpts` so the rest can be JSON-serialized over HTTP.
+ * Strip the live lookup handles from `ResolveOpts` so the rest can be JSON-serialized over http.
  */
 export function serializableResolveOpts(opts?: ResolveOpts): SerializableResolveOpts | undefined {
 	if (!opts) return undefined
@@ -68,7 +68,7 @@ export interface RemoteResolverOpts {
 }
 
 /**
- * The wire request body `POST <endpoint>` expects (and the matching server handler parses).
+ * The wire request body `post <endpoint>` expects (and the matching server handler parses).
  */
 export interface ResolveTreeRequest {
 	tree: AddressTree

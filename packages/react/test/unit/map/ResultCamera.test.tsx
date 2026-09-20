@@ -10,9 +10,9 @@
  *   start position. Any resolved place that produced a `bounds` target — every admin place with a crisp polygon or a
  *   real-extent bbox — hit it, in every browser, since the phase-2 overlays landed (#1232).
  *
- *   Nothing caught it because the camera is the one thing the map tests turn OFF: `Geocoder.test.tsx` and
+ *   Nothing caught it because the camera is the one thing the map tests turn off: `Geocoder.test.tsx` and
  *   `overlays.test.tsx` both pass `applyCamera=false`, and their comments blame "a zero-size headless canvas" for the
- *   NaN LngLat. The canvas was innocent. So the guard here mounts the camera ON, with a bounds target, and lets a
+ *   NaN LngLat. The canvas was innocent. So the guard here mounts the camera on, with a bounds target, and lets a
  *   thrown RAF frame fail the run.
  */
 
@@ -71,7 +71,7 @@ test("an animated fitBounds omits the duration KEY — passing it as undefined i
 	const animated = fitBoundsOptionsFor(40, true)
 
 	// `duration: undefined` would satisfy maplibre's `'duration' in options` test and coerce to NaN. The key must be
-	// absent, not merely undefined — `toBeUndefined()` on the value would pass against the bug.
+	// absent rather than merely undefined — `toBeUndefined()` on the value would pass against the bug.
 	expect(Object.hasOwn(animated, "duration")).toBe(false)
 	expect(animated.padding).toBe(40)
 
@@ -97,7 +97,7 @@ test("a bounds target drives the live map to the box without a NaN ease frame", 
 
 	expect(container.querySelector(".mw-demo-map")).not.toBeNull()
 
-	// GL surface — best-effort, as in the sibling map tests. Its absence means no software WebGL here, not a fault.
+	// GL surface — best-effort, as in the sibling map tests. Its absence means no software WebGL here rather than a fault.
 	const mapEl = await settle(() => container.querySelector(".maplibregl-map"))
 
 	if (!mapEl) return
@@ -105,7 +105,7 @@ test("a bounds target drives the live map to the box without a NaN ease frame", 
 	// Read the ref lazily: it is assigned in a callback TypeScript cannot see, so reading it directly narrows to `never`.
 	const getMap = () => mapRef?.getMap()
 
-	// The map must actually ARRIVE. Under the bug the flight throws on frame 1 and the camera never leaves (0, 51.5) —
+	// The map must actually arrive. Under the bug the flight throws on frame 1 and the camera never leaves (0, 51.5) —
 	// so a moved center is the assertion, and the thrown RAF frame surfaces as an unhandled error besides.
 	const arrived = await settle(() => {
 		const center = getMap()?.getCenter()

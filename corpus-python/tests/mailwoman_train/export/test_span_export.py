@@ -1,6 +1,6 @@
 """#727 stage-2 Phase 2 — span-score export.
 
-Two contracts: (1) `span_scores` rides the ONNX graph as a NAMED output and matches torch;
+Two interfaces: (1) `span_scores` rides the ONNX graph as a NAMED output and matches torch;
 (2) the segment-transition table ships as a JSON-able sidecar whose axis comes from the file,
 never hardcoded (the PLACETYPE_ORDER dual-maintenance class).
 """
@@ -65,7 +65,7 @@ def test_spanless_model_export_is_unchanged(tmp_path):
 
 
 def test_fetching_only_logits_from_a_span_graph_works(tmp_path):
-    # The browser path: never asks for span_scores; must be able to ignore it entirely.
+    # The browser path: never asks for span_scores. must be able to ignore it entirely.
     from mailwoman_train.export.onnx import export_to_onnx
 
     torch.manual_seed(5)

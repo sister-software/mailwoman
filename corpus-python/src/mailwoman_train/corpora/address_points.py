@@ -14,7 +14,7 @@ from pathlib import Path
 AddressPoint = tuple[str, str, str, str]
 
 #: Probes per requested row before giving up. A rowid range is sparse after deletes, so some probes
-#: miss; without a ceiling a small table with a large MAX(rowid) spins.
+#: miss. without a ceiling a small table with a large MAX(rowid) spins.
 PROBE_BUDGET = 8
 
 

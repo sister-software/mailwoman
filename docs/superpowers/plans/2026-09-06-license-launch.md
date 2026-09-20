@@ -1,6 +1,6 @@
 # License Launch Plan
 
-> **For agentic workers:** this plan is a runbook with an owner per step, not a sequence of code tasks. The code steps use checkbox (`- [ ]`) syntax; the operator steps are marked and stay open until the operator reports them done.
+> **For agentic workers:** this plan is a runbook with an owner per step rather than a sequence of code tasks. The code steps use checkbox (`- [ ]`) syntax; the operator steps are marked and stay open until the operator reports them done.
 
 **Goal:** Sell the first self-service commercial license: the sandbox proves the whole path on Stripe test mode, then production issues under a key a released mailwoman trusts.
 
@@ -74,7 +74,7 @@ yarn workspace @mailwoman/license-worker wrangler secret put STRIPE_WEBHOOK_SECR
 
 ### Task 3: the sandbox end to end
 
-- [x] **Step 1:** open the test-mode monthly Payment Link from the provisioning report in a browser, pay with card `4242 4242 4242 4242`, any future expiry, any CVC, a licensee legal name in the custom field, accept the terms. Stripe redirects to `https://mailwoman.ai/license/issued?session_id=cs_test_…`; the deployed site runs #2162's page and polls `license.mailwoman.ai`, which does not exist yet, so read the session id from the URL and claim it from the sandbox by hand:
+- [x] **Step 1:** open the test-mode monthly Payment Link from the provisioning report in a browser, pay with card `4242 4242 4242 4242`, any future expiry, any CVC, a licensee legal name in the custom field, accept the terms. Stripe redirects to `https://mailwoman.ai/license/issued?session_id=cs_test_…`; the deployed site runs #2162's page and polls `license.mailwoman.ai`, which is still missing. Therefore, read the session id from the URL and claim it from the sandbox by hand:
 
 ```bash
 curl -s https://mailwoman-license-sandbox.<account>.workers.dev/v1/checkout-sessions/cs_test_…/license
@@ -134,7 +134,7 @@ every event itself; nothing was replayed or signed by hand.
 | `wrangler d1 create`, migrations `--remote`, three secrets, `deploy --env sandbox` | D1 `8c9f596d-1597-4f04-90a2-f1a8d2d6f82f`; `0001_ledger.sql` applied; `/health` `{"issuance":false,"liveMode":false,"signing":"ok","ledger":"ok","email":"ok"}`                                                          |
 | `mwops shop provision --mode test --apply --worker-origin …`                       | every object `exists`; webhook `we_1UCeYaANyI6tE9BzxHOYBzva` created; its secret stored with `wrangler secret put` and scrubbed from the report                                                                          |
 | Issuance on, redeploy                                                              | `/health` reads `"issuance":true`                                                                                                                                                                                        |
-| Monthly Payment Link paid, claim read ten seconds after the redirect               | `issued`, `lic_sPBnGqLDGKzPkdejQ0vhvg`, `expires 2026-10-20`, `refresh_secret` once; the second claim carries no secret, `Access-Control-Allow-Origin: https://mailwoman.ai`                                             |
+| Monthly Payment Link paid, claim read ten seconds after the redirect               | `issued`, `lic_sPBnGqLDGKzPkdejQ0vhvg`, `expires 2026-10-20`, `refresh_secret` once; the second claim includes no secret, `Access-Control-Allow-Origin: https://mailwoman.ai`                                            |
 | `license verify --key … --online` on the shipped register and the sandbox          | `unknown_key`; `mailwoman.ai: unlisted` from the live register; `license lic_…: active` from the sandbox                                                                                                                 |
 | `license refresh --lid … --secret …`                                               | `Not written: this release does not trust key id v9-ac522cf3`, exit 1, no key file                                                                                                                                       |
 | Wrong secret on the refresh route; status route                                    | 404; `{"status":"active"}`                                                                                                                                                                                               |
@@ -145,7 +145,7 @@ every event itself; nothing was replayed or signed by hand.
 
 A defect the cron surfaced: the two older invoices it minted were the local run's purchases, which this ledger had
 never seen, and one of them (`in_1UCW4vANyI6tE9BzaAvybZrc`) had been fully refunded during that run. The drift sweep
-read only the subscription's status, which a refund leaves `active`, so the ledger issued `lic_cPAjF5Rawybt-3rDURvvMQ`
+read only the subscription's status, which a refund leaves `active`. Therefore, the ledger issued `lic_cPAjF5Rawybt-3rDURvvMQ`
 for a refunded payment and reported nothing to correct. The sweep now reads the charge behind each active license's
 current token and revokes on a full refund, the same rule the `charge.refunded` handler applies; the deployed sandbox
 corrects that license at the next pass after the fix deploys.
@@ -166,7 +166,7 @@ owns that setting, so Task 7 confirms it does not refuse the CLI.
 
 - [ ] The clickwrap agreement as `docs/src/pages/license/terms/commercial-2026-10.mdx`, never edited after publication; a new version is a new page and a new `AGREEMENT_VERSION` in `lib/shop/catalog.ts`.
 - [ ] The Stripe account's legal name matches the licensor the terms name; the terms URL under the account's public details.
-- [ ] `MAILWOMAN_STRIPE_LIVE_SECRET_KEY` in the lab `.env`, then `yarn mwops shop provision --mode live --apply`, which writes the production Price ids into `wrangler.toml` and the Payment Links into `packages/license-worker/lib/sdk/constants.ts`, which the site reads. Commit both; the Buy section renders on the next site deploy. Add `BILLING_PORTAL_URL` (the no-code portal's login link from the dashboard) to `constants.ts` by hand: it is not an API object.
+- [ ] `MAILWOMAN_STRIPE_LIVE_SECRET_KEY` in the lab `.env`, then `yarn mwops shop provision --mode live --apply`, which writes the production Price ids into `wrangler.toml` and the Payment Links into `packages/license-worker/lib/sdk/constants.ts`, which the site reads. Commit both; the Purchase section renders on the next site deploy. Add `BILLING_PORTAL_URL` (the no-code portal's login link from the dashboard) to `constants.ts` by hand: it is not an API object.
 
 ### Task 6 (operator): the email account
 

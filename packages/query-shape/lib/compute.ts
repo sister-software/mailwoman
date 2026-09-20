@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { classifyToken, foldInputClass, tokenizeForClass } from "#character-class"
+import { classifyTokens, foldInputClass, foldInputScripts } from "#character-class"
 import { detectKnownFormats } from "#known-formats"
 import { detectRegionAbbreviations } from "#region-abbreviations"
 import { segment } from "#segmentation"
@@ -13,7 +13,7 @@ function detectWhitespacePattern(text: string): WhitespacePattern {
 	let hasSingle = false
 	let prevSpace = false
 
-	// oxlint-disable-next-line typescript/prefer-for-of -- for…of yields code POINTS; this walks code units
+	// oxlint-disable-next-line typescript/prefer-for-of -- for…of yields code points. this walks code units
 	for (let i = 0; i < text.length; i++) {
 		const ch = text[i]
 
@@ -56,22 +56,18 @@ export function computeQueryShape(input: string | NormalizedInputLite, opts?: Co
 	const text = typeof input === "string" ? input : input.normalized
 	const locale = opts?.locale ?? (typeof input === "string" ? undefined : input.appliedLocale)
 
-	const tokenSpans = tokenizeForClass(text)
-
-	const tokenClasses: TokenClass[] = tokenSpans.map((span) => ({
-		span,
-		class: classifyToken(span.body),
-		length: span.end - span.start,
-	}))
+	const tokenClasses: TokenClass[] = classifyTokens(text)
 
 	const segments = segment(text, locale)
 	const knownFormats = detectKnownFormats(text, tokenClasses)
 	const regionAbbreviations = detectRegionAbbreviations(tokenClasses, segments)
 	const characterClass = foldInputClass(tokenClasses)
+	const scripts = foldInputScripts(text)
 	const whitespacePattern = detectWhitespacePattern(text)
 
 	return Object.freeze({
 		characterClass,
+		scripts: Object.freeze(scripts) as typeof scripts,
 		tokenClasses: Object.freeze(tokenClasses) as TokenClass[],
 		segments: Object.freeze(segments) as typeof segments,
 		knownFormats: Object.freeze(knownFormats) as typeof knownFormats,

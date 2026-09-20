@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The two-score split's contract (ROAD_TO_V9 §2 R1): the referential derivation, the ordering
+ *   The two-score split's interface (ROAD_TO_V9 §2 R1): the referential derivation, the ordering
  *   equivalence that makes the split a zero-delta change for the resolver, and the legacy
  *   reconstruction the read-only 2026-08-05 staging database needs.
  */
@@ -25,7 +25,7 @@ import { describe, expect, it } from "vitest"
 describe("referentialFromPopulation", () => {
 	it("reproduces the FST builder's population fallback exactly", () => {
 		// The formula the shipped fst-per-locale binaries were built with. Any drift here changes every
-		// decode bias in the gazetteer, so it is pinned against the literal expression, not a constant.
+		// decode bias in the gazetteer, so it is pinned against the literal expression rather than a constant.
 		for (const pop of [1, 418, 1000, 96_128, 171_589, 472_465, 8_336_817]) {
 			expect(referentialFromPopulation(pop)).toBe(Math.min(1, Math.log2(1 + pop / 1000) / 14))
 		}
@@ -57,7 +57,7 @@ describe("referentialFromPopulation", () => {
 
 describe("compareReferential — the zero-delta guarantee", () => {
 	/**
-	 * The whole D-rule claim for the resolver half of §2 R1: ordering by referential must be the SAME ORDER as ordering
+	 * The whole D-rule claim for the resolver half of §2 R1: ordering by referential must be the same order as ordering
 	 * by population, on every input including the saturated tail. A bare `b.referential - a.referential` would not be —
 	 * that is precisely the bug the population tiebreak exists to prevent.
 	 */
@@ -102,7 +102,7 @@ describe("compareReferential — the zero-delta guarantee", () => {
 	})
 
 	it("takes no encyclopedic input at all", () => {
-		// Ranking on encyclopedic is what §2 forbids; the comparator cannot express it.
+		// Ranking on encyclopedic is what §2 forbids. the comparator cannot express it.
 		const aude = { population: 418, referential: referentialFromPopulation(418), encyclopedic: 0.5683 }
 		const suburb = { population: 96_128, referential: referentialFromPopulation(96_128), encyclopedic: 0.1173 }
 
@@ -119,7 +119,7 @@ describe("splitLegacyImportance", () => {
 	})
 
 	it("attributes a value one ULP off the curve to the fallback — the cross-runtime log2 case", () => {
-		// MEASURED (2026-08-06): CPython's math.log2 and V8's Math.log2 disagree by one ULP on 33,542 of
+		// measured (2026-08-06): CPython's math.log2 and V8's Math.log2 disagree by one ULP on 33,542 of
 		// the 1.5 M rows in the 2026-08-05 build. wof 85803233, population 21,299: stored
 		// 0.31992193633838988953, CPython 0.31992193633838994504. A bit-equality rule would have called
 		// all 33,542 of them Wikipedia scores in any runtime but the one that wrote them.
@@ -186,7 +186,7 @@ describe("loadImportanceSplit", () => {
 		expect(split.source).toBe(IMPORTANCE_SPLIT_SOURCES.splitColumns)
 		expect(split.referential.get(1)).toBe(0.25)
 		expect(split.encyclopedic.get(1)).toBe(0.1173)
-		// NULL encyclopedic is ABSENT, not 0.
+		// A NULL encyclopedic score is absent from the map rather than a 0 entry.
 		expect(split.encyclopedic.has(2)).toBe(false)
 	})
 

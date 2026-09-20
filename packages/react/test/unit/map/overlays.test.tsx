@@ -4,12 +4,12 @@
 /**
  *   Browser-mode render test for the declarative overlays. Mounts `<MapCanvas>` (offline stub style) with a
  *   `<ResolvedPlaceLayers>` (built from a fixture render spec) + an `<OverlayLayers>` (a host geojson
- *   overlay) as children, then asserts the outputs on the LIVE map: the resolved-place fill/line layers
+ *   overlay) as children, then asserts the outputs on the live map: the resolved-place fill/line layers
  *   and the host overlay layer exist in the style, and the marker element is in the DOM.
  *
- *   Same GL posture as `MapCanvas.test.tsx`: the component TREE (`.mw-demo-map`) is asserted synchronously;
+ *   Same GL posture as `MapCanvas.test.tsx`: the component tree (`.mw-demo-map`) is asserted synchronously.
  *   everything that needs the WebGL surface (layers via the map ref, the marker element) is awaited
- *   BEST-EFFORT so a Chromium without software WebGL skips those asserts rather than flaking.
+ *   best-effort so a Chromium without software WebGL skips those asserts rather than flaking.
  */
 
 import { MapCanvas, type MapCanvasStyle } from "@mailwoman/react/map/MapCanvas"
@@ -95,7 +95,7 @@ test("ResolvedPlaceLayers + OverlayLayers render marker + fill/line/overlay laye
 	// Component tree — synchronous, independent of WebGL.
 	expect(container.querySelector(".mw-demo-map")).not.toBeNull()
 
-	// GL surface — best-effort. Its absence means no software WebGL here, not a component fault.
+	// GL surface — best-effort. Its absence means no software WebGL here rather than a component fault.
 	const mapEl = await settle(() => container.querySelector(".maplibregl-map"))
 
 	if (!mapEl) return

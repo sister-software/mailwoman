@@ -6,21 +6,21 @@
  *   implementation, per the 2026-06-11 scoping notes:
  *
  *   1. **Candidate fetch** — the admin DB's `place_bbox` R*Tree (built by `fts.ts`) for places whose
- *        bbox contains the point, smallest-area-first (so the FIRST polygon confirmation is the
+ *        bbox contains the point, smallest-area-first (so the first polygon confirmation is the
  *        deepest).
  *   2. **PIP confirmation** — ray-cast (geo.ts, the canonical TS port of
  *        `scripts/eval/pip-containment.py`) against the polygon sidecar DB (`wof-polygons.db`,
  *        `polygons(id, geom)` with GeoJSON text — built by `scripts/build-wof-polygons.mjs` for the
- *        demo map). A candidate whose polygon EXISTS but rejects the point is a bbox false positive
- *        and is dropped entirely; a candidate with no polygon row stays eligible for the
+ *        demo map). A candidate whose polygon exists but rejects the point is a bbox false positive
+ *        and is dropped entirely. a candidate with no polygon row stays eligible for the
  *        approximate fallback.
  *   3. **Approximate descent** — WOF carries point geometry for most localities (#292: ~99% of JP
  *        municipalities; ~half of US localities have degenerate bboxes too), so the polygon walk
  *        usually bottoms out at county level. We then descend tier-by-tier (county → localadmin →
- *        locality → …) through the winner's DESCENDANTS (the `ancestors` table, reversed), taking
+ *        locality → …) through the winner's descendants (the `ancestors` table, reversed), taking
  *        the PIP-confirmed child when a polygon exists and the nearest-centroid child otherwise —
  *        the latter flagged `containment: "approximate"`, the demo's honesty convention.
- *   4. **Hierarchy assembly** — the deepest place's ancestor chain via the SAME walk forward resolution
+ *   4. **Hierarchy assembly** — the deepest place's ancestor chain via the same walk forward resolution
  *        uses (`ancestry.ts`, #404), so consumers get a symmetric tree.
  *
  *   Reverse quality is country-dependent (polygon coverage: see the #292 JP finding); `containment`
@@ -50,8 +50,8 @@ const MAX_ABS_LONGITUDE = 180
 /**
  * How the deepest returned place was confirmed:
  *
- * - `"polygon"` — the point ray-cast INSIDE the place's real (DP-simplified) admin boundary.
- * - `"approximate"` — the place has no polygon on record; it won by nearest-centroid among the candidates whose bbox (or
+ * - `"polygon"` — the point ray-cast inside the place's real (DP-simplified) admin boundary.
+ * - `"approximate"` — the place has no polygon on record. it won by nearest-centroid among the candidates whose bbox (or
  *   parent) contains the point. The same honesty convention as the demo's approximate circles — country-dependent data
  *   reality, surfaced instead of hidden.
  */
@@ -59,13 +59,13 @@ export type ContainmentKind = "polygon" | "approximate"
 
 export interface ReverseGeocodeResult {
 	/**
-	 * The containment chain, DEEPEST-FIRST (`[0]` is the winning place, then its ancestors up to country) — the same tree
+	 * The containment chain, deepest-first (`[0]` is the winning place, then its ancestors up to country) — the same tree
 	 * shape forward resolution attaches via `includeAncestors`. Empty when no candidate's bbox contains the point (open
 	 * ocean, or outside the gazetteer's coverage).
 	 */
 	hierarchy: PlaceCandidate[]
 	/**
-	 * Containment kind of the DEEPEST place in `hierarchy` (see {@link ContainmentKind}).
+	 * Containment kind of the deepest place in `hierarchy` (see {@link ContainmentKind}).
 	 */
 	containment: ContainmentKind
 }
@@ -81,7 +81,7 @@ export interface WOFReverseGeocoderOpts {
 	 */
 	adminDatabase?: DatabaseClient<WOFDatabase>
 	/**
-	 * Path to the polygon sidecar DB (`wof-polygons.db`, table `polygons(id, geom)`). OPTIONAL — without it every result
+	 * Path to the polygon sidecar DB (`wof-polygons.db`, table `polygons(id, geom)`). optional — without it every result
 	 * is `containment: "approximate"` (centroid-only mode). Mutually exclusive with `polygonDatabase`.
 	 */
 	polygonDBPath?: string
@@ -114,8 +114,8 @@ const DEFAULT_MAX_CANDIDATES = 128
 const DEFAULT_MAX_APPROXIMATE_KM = 25
 
 /**
- * The tier ladder for the approximate descent, coarsest-first. Each tier is attempted among the CURRENT winner's
- * descendants; a tier with no rows is skipped (e.g. counties without localadmins jump straight to locality).
+ * The tier ladder for the approximate descent, coarsest-first. Each tier is attempted among the current winner's
+ * descendants. a tier with no rows is skipped (e.g. counties without localadmins jump straight to locality).
  */
 const DESCENT_TIERS: readonly WOFPlacetype[] = [
 	"county",
@@ -166,7 +166,7 @@ export class WOFReverseGeocoder implements Disposable {
 	/**
 	 * Parsed-geometry cache. Reverse queries cluster geographically (an eval run hits the same ~15 county polygons 1400
 	 * times), so caching the JSON.parse pays for itself immediately. Bounded — cleared wholesale at the cap rather than
-	 * LRU-tracked; the polygons are DP-simplified and small, the cap exists only to keep a long-lived server process
+	 * LRU-tracked. the polygons are DP-simplified and small, the cap exists only to keep a long-lived server process
 	 * honest.
 	 */
 	readonly #geometryCache = new Map<number, ParsedGeometry | null>()
@@ -194,7 +194,7 @@ export class WOFReverseGeocoder implements Disposable {
 
 		this.#ownsPolygons = !opts.polygonDatabase && Boolean(opts.polygonDBPath)
 
-		// Fail loudly up front — the R*Tree is a build artifact, not part of the upstream WOF
+		// Fail loudly up front — the R*Tree is a build artifact rather than part of the upstream WOF
 		// distribution, and a missing index would otherwise surface as an opaque SQL error per query.
 		if (!tableExists(this.#admin, PLACE_BBOX_TABLE)) {
 			throw new Error(
@@ -221,9 +221,9 @@ export class WOFReverseGeocoder implements Disposable {
 
 	/**
 	 * Synchronous core of {@link reverseGeocode} — every step underneath is already sync `node:sqlite`, so this is the
-	 * REAL implementation; the async method above exists only for call-site symmetry with `PlaceLookup.findPlace`.
+	 * real implementation. the async method above exists only for call-site symmetry with `PlaceLookup.findPlace`.
 	 * Exposed directly for callers that can't await mid-call (e.g. `mailwoman/poi-executor.ts`'s `createPOIExecutor`,
-	 * whose `POIIntentOutcome` return type is synchronous by contract — see `poi-intent.ts`'s `deps.execute`).
+	 * whose `POIIntentOutcome` return type is synchronous by interface — see `poi-intent.ts`'s `deps.execute`).
 	 */
 	reverseGeocodeSync(lat: number, lon: number, opts: ReverseGeocodeOpts = {}): ReverseGeocodeResult {
 		if (
@@ -317,7 +317,7 @@ export class WOFReverseGeocoder implements Disposable {
 				currentConfirmed = nextConfirmed
 				currentDistanceKm = nextKm
 			}
-			// An empty tier is NOT terminal — counties without localadmins jump straight to locality.
+			// An empty tier is not terminal — counties without localadmins jump straight to locality.
 		}
 
 		// Hierarchy assembly via the shared ancestor walk. If the descent crossed an ancestry gap
@@ -396,7 +396,7 @@ export class WOFReverseGeocoder implements Disposable {
 	/**
 	 * Descendants of `parentID` at one placetype tier, pre-filtered to a centroid window around the query point (a
 	 * generous 4× the approximate cap — polygon-holding children may legitimately have far centroids, e.g. a sprawling
-	 * consolidated city; the precise cap is applied per-candidate in the caller, and only to centroid-fallback steps).
+	 * consolidated city. the precise cap is applied per-candidate in the caller, and only to centroid-fallback steps).
 	 */
 	#descendants(
 		parentID: number,

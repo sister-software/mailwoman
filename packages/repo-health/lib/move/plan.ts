@@ -4,14 +4,14 @@
 /**
  * @file Planning a module move: which specifiers stop naming what they named, and what each becomes.
  *
- *   A specifier is claimed by RESOLUTION, never by its text. Two files can spell one module three ways — `#recipes/x`,
+ *   A specifier is claimed by resolution, never by its text. Two files can spell one module three ways — `#recipes/x`,
  *   `@mailwoman/corpus/recipes/x`, `./x.ts` — and a text sweep finds whichever spelling it was told to look for. So
  *   every candidate replacement is resolved against a filesystem where the move has already happened, and it is
  *   written only if it lands on the moved file. A specifier with no candidate that lands there is reported unresolved,
  *   and an unresolved specifier refuses the whole plan: this operation has no way to guess that is better than the
  *   author's next reading of the diff.
  *
- *   Text is used for ONE thing, and only to save work: a file whose source contains no spelling of a moved module is
+ *   Text is used for one thing, and only to save work: a file whose source contains no spelling of a moved module is
  *   not parsed. The probes are the moved file's own basename plus every specifier its package's maps can express for
  *   it, so a file that references it through a subpath key is read even when the key hides the filename.
  */
@@ -145,7 +145,7 @@ export async function planModuleMoves(context: RepoContext, moves: readonly Modu
 	const manifests = await readPackageManifests(context)
 	const destinations = new Map(moves.map((move) => [move.from, move.to]))
 
-	// The manifest edits come first: the overlay the replacements are proven against has to be the tree the WHOLE
+	// The manifest edits come first: the overlay the replacements are proven against has to be the tree the whole
 	// plan leaves behind, subpath targets included.
 	const manifestRewrites = await planManifestRewrites(
 		context.repoRoot,
@@ -168,7 +168,7 @@ export async function planModuleMoves(context: RepoContext, moves: readonly Modu
 		)
 	}
 
-	// Candidates are derived from the maps the plan LEAVES, not the ones it found: a target that has moved would
+	// Candidates are derived from the maps the plan leaves rather than the ones it found: a target that has moved would
 	// otherwise offer a replacement naming the old path, or none at all.
 	const planned = manifests.map((manifest) => {
 		const text = rewrittenManifests.get(`${manifest.dir}/package.json`)

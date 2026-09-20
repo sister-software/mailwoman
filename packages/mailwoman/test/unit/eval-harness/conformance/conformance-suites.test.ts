@@ -4,12 +4,12 @@
 /**
  *   The register of law suites, checked against the directory it claims to describe.
  *
- *   THE CHECK THAT MATTERS IS THE DIRECTORY WALK. Everything else here restates something a suite's own test
- *   already asserts; the walk is the only one that can see a suite file nobody registered, and an unregistered
+ *   the check that matters is the directory walk. Everything else here restates something a suite's own test
+ *   already asserts. the walk is the only one that can see a suite file nobody registered, and an unregistered
  *   suite does not run unaudited — it never runs at all, which reports as an absence rather than a failure.
  *   That is the shape a law suite exists to refuse, so the register gets the same treatment.
  *
- *   Artifact-free by construction: the register imports the law modules and the fixture contract, never the
+ *   Artifact-free by construction: the register imports the law modules and the fixture interface, never the
  *   Gauntlet harness, so this leg runs wherever the repo does.
  */
 
@@ -26,7 +26,12 @@ import { describe, expect, it } from "vitest"
 
 describe("the conformance suite register", () => {
 	it("names every committed suite file in its own directory", async () => {
-		const committed = await Globerator.files("jsonl", { cwd: CONFORMANCE_SUITE_DIR, absolute: false }).toArray()
+		const committed = await Globerator.files("jsonl", {
+			cwd: CONFORMANCE_SUITE_DIR,
+			absolute: false,
+			recursive: false,
+		}).toArray()
+
 		const registered = new Set(CONFORMANCE_SUITES.map((suite) => basename(suite.path)))
 
 		expect(committed.length).toBeGreaterThan(0)

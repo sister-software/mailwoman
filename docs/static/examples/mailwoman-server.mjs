@@ -11,20 +11,20 @@ import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import { geocodeAddress } from "mailwoman/geocode-core"
 import { resolveCandidateDBPath } from "mailwoman/resolver-backend"
 
-// This file is served at /examples/mailwoman-server.mjs and runs in a READER's project, where
+// This file is served at /examples/mailwoman-server.mjs and runs in a reader's project, where
 // `@mailwoman/core/env` — the blessed env helper inside this repo — is not a dependency. A raw read is
 // the correct shape here, and it is the only one in the file: the gazetteer path below goes through
-// `resolveCandidateDBPath`, which IS reachable from a reader's install.
+// `resolveCandidateDBPath`, which is reachable from a reader's install.
 // oxlint-disable-next-line sister-software/no-process-globals -- shipped doc asset; runs outside this repo
 const PORT = Number(process.env.PORT ?? 3000)
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 
-// Geocoding is opt-in on a gazetteer being THERE, not on anything being configured.
+// Geocoding is opt-in on a gazetteer being there, not on anything being configured.
 // `resolveCandidateDBPath` is the shipped helper for exactly this: it tries an explicit path, then
 // `$MAILWOMAN_CANDIDATE_DB`, then `<data-root>/wof/candidate.db`, and returns undefined unless one of
 // them is a file that exists. That last position is why an image needs only its volume mount, and the
-// existence check is why a first run WITHOUT one still boots: a truthiness check on the variable would
+// existence check is why a first run without one still boots: a truthiness check on the variable would
 // open a file that is not there and kill the process with SQLITE_CANTOPEN before it bound a port.
 // Same guard the published image's server.mjs uses.
 const candidateDB = resolveCandidateDBPath()

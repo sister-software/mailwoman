@@ -3,7 +3,7 @@
 This evaluation measures whether two registrants land in the same corporate family and how much of that answer depends
 on a disclosed holding company. Predictions come from the shipped `familyRollup` reader over `filer_family`, where
 corporate-family membership actually lives. `filer_cluster` is intentionally not used: it answers whether identifiers
-refer to the same legal entity, not whether two entities share ownership.
+refer to the same legal entity rather than whether two entities share ownership.
 
 Two builds run over the same authored corpus:
 

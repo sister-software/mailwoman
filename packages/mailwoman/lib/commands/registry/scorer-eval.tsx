@@ -7,8 +7,8 @@
  *   `cross-state` (the learned-scorer evals), `dedup-ceiling` (the #625 Bayes-error measurement —
  *   also its own `registry dedup-ceiling` command), `nppes-benchmark` (#617), and the cross-dataset
  *   family (`coverage-reconciliation`, `cross-dataset`, `threshold-sweep`) plus the geocoder probes
- *   (`namesake-probe`, `vs-provided-coords`). Every kind emits its report to stdout; most need the
- *   record-matcher source files + weights + WOF/database data locally — operator-run, not CI.
+ *   (`namesake-probe`, `vs-provided-coords`). Every kind emits its report to stdout. most need the
+ *   record-matcher source files + weights + WOF/database data locally — operator-run rather than CI.
  */
 
 import type { EvalGeocodeStream } from "@mailwoman/registry/tools"
@@ -16,8 +16,9 @@ import type { EvalGeocodeStream } from "@mailwoman/registry/tools"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	numberOption,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	reportToStderr,
 	stringOption,
 	useCommandTask,
@@ -39,7 +40,7 @@ const kinds = [
 type Kind = (typeof kinds)[number]
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "scorer-eval",
@@ -81,35 +82,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	sources?: string
-	wof?: string
-	dataRoot?: string
-	outMd?: string
-	state?: string
-	npis?: number
-	cap?: number
-	max?: number
-	maxNpis?: number
-	tau?: number
-	seed?: number
-	seeds?: number
-	split?: number
-	trainState?: string
-	evalState?: string
-	trainEm: boolean
-	legacyJoin: boolean
-	candidate?: string
-	dumpOvermerges?: string
-	h3Res?: number
-	parallelGeocode: boolean
-	geoConcurrency?: number
-	model?: string
-	tokenizer?: string
-	modelCard?: string
-	corpusFrequency: boolean
-	outGeojson?: string
-}
+type Options = OptionsOf<typeof spec>
 
 async function runKind(kind: Kind, options: Options): Promise<string> {
 	const {
@@ -261,7 +234,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 	}
 }
 
-const RegistryScorerEval: ParsedCommandComponent<Options, [Kind]> = ({ options, args }) => {
+const RegistryScorerEval: CommandComponent<typeof spec, [Kind]> = ({ options, args }) => {
 	const state = useCommandTask(async () => await runKind(args[0], options))
 
 	return <CommandTaskResult state={state} />

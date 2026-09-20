@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `useGeocoderRuntime` — the app's runtime assembly. It builds the REAL {@link GeocoderRuntime} that
+ *   `useGeocoderRuntime` — the app's runtime assembly. It builds the real {@link GeocoderRuntime} that
  *   `@mailwoman/react/map`'s geocoder consumes, wiring the browser runtime's async fetchers and factories into the
  *   fully client-side geocoder.
  *
@@ -105,7 +105,7 @@ export interface GeocoderRuntimeHandle {
 	 */
 	releases: ReleaseInfo[]
 	/**
-	 * Whether the CPU/WASM backend is forced (threaded into the host compare classifier load).
+	 * Whether the CPU/wasm backend is forced (threaded into the host compare classifier load).
 	 */
 	forceWASM: boolean
 	/**
@@ -143,6 +143,15 @@ export interface GeocoderRuntimeOptions {
  * orchestration, then wraps the loaded assets with the map surface (style / overlays / bias-aware parse / autocomplete
  * / calibrator / map-place enricher).
  */
+
+/**
+ * Give a superseded bundle's native memory back. Module scope rather than a `useCallback`: it closes over nothing, so a
+ * stable identity costs nothing and it cannot churn the hook's effect.
+ */
+function disposeAssets(assets: ReleaseAssets): Promise<void> {
+	return assets.release()
+}
+
 export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOptions): GeocoderRuntimeHandle {
 	const { sqljsBaseURL } = config
 
@@ -158,9 +167,9 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		[sqljsBaseURL]
 	)
 
-	const rt = useReleaseRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets })
+	const rt = useReleaseRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets, disposeAssets })
 
-	// The service worker keeps one release's gazetteer chunks; tell it which.
+	// The service worker keeps one release's gazetteer chunks. tell it which.
 	useEffect(() => {
 		if (rt.selectedVersion) {
 			pruneDBRangeCache(rt.selectedVersion)
@@ -175,16 +184,20 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		[config.basemapTileJSONURL]
 	)
 
-	// Stable parse and enrich callbacks read these refs without taking stale closures.
-	const assetsRef = useRef<ReleaseAssets | null>(rt.assets)
-	const releaseRef = useRef<ReleaseInfo | null>(rt.selectedRelease)
-	const versionRef = useRef<string | null>(rt.selectedVersion)
-
-	useEffect(() => {
-		assetsRef.current = rt.assets
-		releaseRef.current = rt.selectedRelease
-		versionRef.current = rt.selectedVersion
-	}, [rt.assets, rt.selectedRelease, rt.selectedVersion])
+	/*
+	 * the parse callbacks depend on the bundle they parse with. There is no mirror.
+	 *
+	 * They used to read `rt.assets` out of a ref so their identity could stay fixed across a load, and the ref was
+	 * written in an effect — which lost a race it could not win. React runs effects child-first, and `runtime.ready`
+	 * is derived from the same `rt.assets`, so a descendant effect reacting to `ready` flipping true ran before this
+	 * parent's effect had written the mirror: `?q=` answered "Classifier not ready" on a page whose classifier had
+	 * loaded fine. Writing the mirror during render instead closed the window and broke a different rule — a ref
+	 * written in render is a value React is entitled to discard.
+	 *
+	 * Naming the values as dependencies has neither problem. A callback that parses with a bundle is not the same
+	 * callback once the bundle changes, and saying so is what keeps every consumer in step without a second copy of
+	 * the truth. The identity churns once per release load, which is the only moment it means anything.
+	 */
 
 	const geoBias = useGeoBias()
 
@@ -192,7 +205,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 	const extrasRef = useRef<WeakMap<ResolvedPlaceView, CandidateExtras>>(new WeakMap())
 	// Lazy street-tier situs/interp lookups, cached by parsed state/country slug (in-flight promise dedup).
 	const streetLookupsRef = useRef<Map<string, Promise<StreetLookups>>>(new Map())
-	// Lazy crisp-polygon DB + per-id cache. The cache is STATE (not a ref) so a landed polygon rebuilds
+	// Lazy crisp-polygon DB + per-id cache. The cache is state (not a ref) so a landed polygon rebuilds
 	// `resolveMapPlace` → the runtime → `useGeocode`'s mapPlace memo, drawing the geometry. Cache value:
 	// `undefined` = unfetched, `null` = fetched-absent (fall through to bbox), geometry = present.
 	const polygonDBRef = useRef<Promise<PolygonDB> | null>(null)
@@ -245,7 +258,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 	// ── The bias-aware parse+resolve — the god-component `onSubmit` re-expressed as a pure ParseResult factory. ──
 	const runParseWithBias = useCallback(
 		async (input: string, bias: MapBias | null, hooks: { onStage: (stage: number) => void }): Promise<ParseResult> => {
-			const assets = assetsRef.current
+			const assets = rt.assets
 			const classifier = assets?.classifier
 
 			if (!classifier) throw new Error("Classifier not ready")
@@ -265,7 +278,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 				{ onClassifierStart: () => hooks.onStage(1) }
 			)
 
-			// `city`, `state`, `postal_code` and `house_number_prefix` are libpostal vocabulary, not `ComponentTag`s,
+			// `city`, `state`, `postal_code` and `house_number_prefix` are libpostal vocabulary rather than `ComponentTag`s,
 			// so the `|| n.tag === "…"` arms that used to sit on these four finds could never match. They compiled
 			// only while the flattener returned `{ tag: string }`; against the real tag union they are type errors.
 			const localityNode = nodes.find((n) => n.tag === "locality")
@@ -276,7 +289,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 			const postcodeNode = nodes.find((n) => n.tag === "postcode")
 
-			// ── Street tier (#377): exact situs point / TIGER interpolation, ahead of the admin cascade. ──
+			// ── Street tier (#377): exact situs point / tiger interpolation, ahead of the admin cascade. ──
 			let streetResolution: StreetResolution | null = null
 
 			const streetParts = nodes
@@ -343,8 +356,8 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			hooks.onStage(2)
 
 			// Open the polygon DB now (no await) so its worker spawn overlaps the cascade below.
-			const release = releaseRef.current
-			const version = versionRef.current
+			const release = rt.selectedRelease
+			const version = rt.selectedVersion
 
 			if (release?.hasPolygons && version && !polygonDBRef.current) {
 				const loading = loadPolygonDB(assetURL(DEFAULT_LOCALE, version, "wof-polygons.db"), sqljsBaseURL)
@@ -357,7 +370,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 				})
 			}
 
-			// Viewport bias (#938): the map center as a SOFT proximity hint. The library's decay is population-ceilinged.
+			// Viewport bias (#938): the map center as a soft proximity hint. The library's decay is population-ceilinged.
 			// The device location (when granted via the "Use my location" button) joins as a weaker second hint.
 			const resolveBias: ResolveBias = []
 
@@ -437,7 +450,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 				dualRoles: dualRoles as ParseResult["dualRoles"],
 			}
 		},
-		[ensureStreetLookups, geoBias.locationRef, sqljsBaseURL]
+		[ensureStreetLookups, geoBias.locationRef, sqljsBaseURL, rt.assets, rt.selectedRelease, rt.selectedVersion]
 	)
 
 	const runParse = useCallback(
@@ -448,24 +461,27 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 	/**
 	 * FST autocomplete, the combobox's injected fetcher.
 	 */
-	const autocomplete = useCallback(async (query: string): Promise<Suggestion[]> => {
-		const fst = assetsRef.current?.fstMatcher
+	const autocomplete = useCallback(
+		async (query: string): Promise<Suggestion[]> => {
+			const fst = rt.assets?.fstMatcher
 
-		if (!fst) return []
+			if (!fst) return []
 
-		try {
-			const { autocomplete: fstAutocomplete } = await import("@mailwoman/resolver-wof-sqlite/fst/autocomplete")
+			try {
+				const { autocomplete: fstAutocomplete } = await import("@mailwoman/resolver-wof-sqlite/fst/autocomplete")
 
-			const res = fstAutocomplete(fst as Parameters<typeof fstAutocomplete>[0], query, {
-				maxSuggestions: 6,
-				dedupeByName: true,
-			})
+				const res = fstAutocomplete(fst as Parameters<typeof fstAutocomplete>[0], query, {
+					maxSuggestions: 6,
+					dedupeByName: true,
+				})
 
-			return res.suggestions.map((s) => ({ value: s.name, placetype: s.placetype }))
-		} catch {
-			return []
-		}
-	}, [])
+				return res.suggestions.map((s) => ({ value: s.name, placetype: s.placetype }))
+			} catch {
+				return []
+			}
+		},
+		[rt.assets]
+	)
 
 	/**
 	 * Map-place enricher: candidate → ResolvedMapPlace (bbox / tier / lazily-fetched crisp polygon).
@@ -482,10 +498,10 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			}
 
 			// Crisp admin polygon (like `_app.tsx`): only for a real WOF place with no precise street tier. The pure
-			// `computeMapPlaceRenderSpec` cascade prefers `geometry` when present; the async fetch stays here (a runtime
+			// `computeMapPlaceRenderSpec` cascade prefers `geometry` when present. the async fetch stays here (a runtime
 			// concern), populating a cache + bumping a nonce so the enricher re-runs with the geometry in hand.
-			const release = releaseRef.current
-			const version = versionRef.current
+			const release = rt.selectedRelease
+			const version = rt.selectedVersion
 
 			if (!place.tier && candidate.id && release?.hasPolygons && version) {
 				const cached = polygonCache.get(candidate.id)
@@ -518,21 +534,24 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 			return place
 		},
-		[sqljsBaseURL, polygonCache]
+		[sqljsBaseURL, polygonCache, rt.selectedRelease, rt.selectedVersion]
 	)
 
 	// ── Decode-path trace (dev-mode ModelVisualizer): trace the current input through the loaded classifier. ──
-	const traceParse = useCallback(async (input: string): Promise<ParseTraceLike | null> => {
-		const classifier = assetsRef.current?.classifier
+	const traceParse = useCallback(
+		async (input: string): Promise<ParseTraceLike | null> => {
+			const classifier = rt.assets?.classifier
 
-		if (!classifier?.traceParse) return null
+			if (!classifier?.traceParse) return null
 
-		try {
-			return await classifier.traceParse(input, { addressSystemConventions: "auto" })
-		} catch {
-			return null
-		}
-	}, [])
+			try {
+				return await classifier.traceParse(input, { addressSystemConventions: "auto" })
+			} catch {
+				return null
+			}
+		},
+		[rt.assets]
+	)
 
 	// ── Coverage "fog of war" overlay: the XYZ vector source + default-off fill layers, handed to the package's
 	// declarative `<OverlayLayers>`. Default-off (`visible: false`); the LayerToggleControl (injected via
@@ -550,7 +569,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		[config.tileWorkerURL]
 	)
 
-	// ── Version + backend surface (mirror the loader state; the picker/backend controls drive these) ─────────
+	// ── Version + backend surface (mirror the loader state. the picker/backend controls drive these) ─────────
 	const availableVersions = useMemo(
 		() => (rt.manifest?.releases ?? []).map((r) => ({ version: r.version, label: r.label })),
 		[rt.manifest]

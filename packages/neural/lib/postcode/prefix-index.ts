@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   PFX1 postcode-prefix index (postcode-structure arc, mechanism 3 — B3-1). A postcode PREFIX is a
+ *   PFX1 postcode-prefix index (postcode-structure arc, mechanism 3 — B3-1). A postcode prefix is a
  *   partial code that still encodes ancestry: the GB outward code (`SW1A`), the US 3-digit sectional
  *   centre (`941`), the NI district (`BT9`). This artifact is the enumeration of those prefixes for
- *   one country, each carrying the admin ancestry it asserts and — WHEN THE SOURCE CAN HONESTLY
- *   SUPPORT ONE — a centroid with its own measured dispersion.
+ *   one country, each carrying the admin ancestry it asserts and — when the source can honestly
+ *   support one — a centroid with its own measured dispersion.
  *
  *   It exists to answer the abstention #1480 introduced. A unit postcode the gazetteer has never
- *   seen contributes nothing today; with PFX1 the UNIT still abstains and the PREFIX still speaks.
+ *   seen contributes nothing today. with PFX1 the unit still abstains and the prefix still speaks.
  *
- *   This file owns BOTH ends of the format — `serializePostcodePrefixIndex` (Node, build tooling)
+ *   This file owns both ends of the format — `serializePostcodePrefixIndex` (Node, build tooling)
  *   and `PostcodePrefixIndexResolver` (browser and server alike) — the same single-file discipline
  *   as `pair-index-resolver.ts`, `postcode-binary-resolver.ts` and `placetype-census.ts`, so the
  *   layout can never drift between writer and reader. The reader imports nothing from Node.
@@ -34,7 +34,7 @@
  *     }
  *   ```
  *
- *   Nodes are sorted by `prefix` in UTF-16 code-unit order. Ancestors live in a shared DICTIONARY
+ *   Nodes are sorted by `prefix` in UTF-16 code-unit order. Ancestors live in a shared dictionary
  *   because a country's prefixes assert a handful of distinct admin surfaces between them — GB's
  *   2,863 outward codes reference five entries — so per-node inlining would be almost all repetition.
  *   `wofID` is an f64 rather than a u32 because WOF IDs are not bounded by 2^32 (the NI extract's own
@@ -42,16 +42,16 @@
  *
  *   ## Three properties, each earned by a measurement, each enforced here rather than documented
  *
- *   **`radiusP95Km` is MANDATORY whenever a coordinate is present, and meaningless without one.**
+ *   **`radiusP95Km` is mandatory whenever a coordinate is present, and meaningless without one.**
  *   A US 1-digit band and a GB outward code are both "a prefix with a centroid" and they differ by
  *   200× (M-3: 695.8 km median p95 vs M-2's 3.24 km). An artifact that ships the coordinate without
  *   the radius invites a consumer to treat them alike, so {@link serializePostcodePrefixIndex}
  *   throws in both directions: a coordinate without a radius, and a radius without a coordinate.
  *
- *   **The coordinate is OPTIONAL and its absence is MEANINGFUL** — the ancestry-only tier. It is
+ *   **The coordinate is optional and its absence is meaningful** — the ancestry-only tier. It is
  *   carried in a flags bit, never as a `0,0` sentinel, because a magnitude never carries its own
  *   absence. Northern Ireland is the standing case: 80 BT districts whose only permissively-licensed
- *   coordinate source attests 9.5% of the units, where a centroid would describe the SAMPLE and not
+ *   coordinate source attests 9.5% of the units, where a centroid would describe the sample and not
  *   the district.
  *
  *   **`radiusP95Km` uses the house nearest-rank percentile** (`core/utils/stats.ts`, index
@@ -62,12 +62,12 @@
  *
  *   ## Where a consumer lives
  *
- *   Mechanism 3's first consumer is the RESOLVER, which does not depend on `@mailwoman/neural`. It
+ *   Mechanism 3's first consumer is the resolver, independent of `@mailwoman/neural`. It
  *   should reach this artifact through {@link PostcodePrefixIndexLike} — a structural interface, the
  *   same `…Like` convention `PairIndexLike` and `PlacetypeCensusLike` use — rather than a package
  *   dependency. The format lives here because PFX1 is the fourth member of the PCB1/PIX1/PCN1 family
  *   and a reader's second consumer is the decode-time consumer in `postcode-anchor.ts`; splitting the
- *   family across two workspaces would buy one import and cost the single-file guarantee.
+ *   family across two workspaces would provide one import and cost the single-file guarantee.
  */
 
 import { readFramedHeader, writeFramedHeader } from "#binary-frame"
@@ -119,36 +119,36 @@ export interface PostcodePrefixAncestor {
 export interface PostcodePrefixNode {
 	/**
 	 * The prefix in the sanitized-query token shape (#920) — every non-letter/number stripped, uppercased for the
-	 * letter-bearing systems: `"941"`, `"SW1A"`, `"BT9"`.
+	 * letter-containing systems: `"941"`, `"SW1A"`, `"BT9"`.
 	 */
 	prefix: string
 	/**
-	 * Admin ancestry the prefix asserts, COARSEST-FIRST. Empty when the prefix asserts none — which is a real answer, not
-	 * a build failure: a GB outward code in one of the two documented border-straddling postcode areas asserts the United
-	 * Kingdom and nothing finer.
+	 * Admin ancestry the prefix asserts, coarsest-first. Empty when the prefix asserts none — which is a real answer
+	 * rather than a build failure: a GB outward code in one of the two documented border-straddling postcode areas
+	 * asserts the United Kingdom and nothing finer.
 	 */
 	ancestors: readonly PostcodePrefixAncestor[]
 	/**
-	 * Centroid latitude. ABSENT (with {@link PostcodePrefixNode.lon}) for the ancestry-only tier. Never `0`-as-absent.
+	 * Centroid latitude. Absent (with {@link PostcodePrefixNode.lon}) for the ancestry-only tier. Never `0`-as-absent.
 	 */
 	lat?: number
 	lon?: number
 	/**
 	 * The measured p95 great-circle distance, in km, from this prefix's centroid to the units observed under it — the
-	 * prior's own confidence, shipped rather than assumed. MANDATORY whenever a coordinate is present, and forbidden
+	 * prior's own confidence, shipped rather than assumed. mandatory whenever a coordinate is present, and forbidden
 	 * without one.
 	 */
 	radiusP95Km?: number
 	/**
-	 * Units OBSERVED under this prefix at build time — the denominator behind `radiusP95Km`, and, for a partial source,
+	 * Units observed under this prefix at build time — the denominator behind `radiusP95Km`, and, for a partial source,
 	 * the number that says how partial. It is an observation, never a claim about how many units exist.
 	 */
 	unitCount: number
 }
 
 /**
- * Coverage tier of the source the index was built from, in the sense `docs/engineering/reference/layer-contract.mdx`
- * uses. Not part of the arc document's preregistered header; added because the NI source is ODbL and a share-alike
+ * Coverage tier of the source the index was built from, in the sense `docs/engineering/reference/layer-interface.mdx`
+ * uses. Not part of the arc document's preregistered header. added because the NI source is ODbL and a share-alike
  * obligation that does not travel with the artifact is a licensing defect waiting for the first consumer.
  */
 export type PostcodePrefixTier = "shipped" | "build-local"
@@ -160,7 +160,7 @@ export interface PostcodePrefixHeader {
 	country: string
 	/**
 	 * Sub-national scope slug, because a country's prefixes can come from more than one numbering register with different
-	 * licences and different coverage: `"gb-esw"` is Code-Point Open (England, Scotland, Wales — NO Northern Ireland),
+	 * licences and different coverage: `"gb-esw"` is Code-Point Open (England, Scotland, Wales — no Northern Ireland),
 	 * `"gb-ni"` is the BT districts. Two files may therefore share a `country`; this is what tells them apart, and it is
 	 * the filename suffix. Not in the arc document's preregistered header — added because folding the two GB registers
 	 * into one file would have merged an OGL artifact with an ODbL one.
@@ -172,9 +172,10 @@ export interface PostcodePrefixHeader {
 	 */
 	levels: readonly string[]
 	/**
-	 * The NUMBERING AUTHORITY the prefixes came from, NOT the gazetteer they were joined to. M-3 is the receipt: 7.9% of
-	 * US ZIPs disagree with their own gazetteer parent's state because a firm/unique ZIP names an organization's mail
-	 * processor rather than the code's range, so an index derived from `spr.parent_id` bakes that misattribution in.
+	 * The numbering authority the prefixes came from rather than the gazetteer they were joined to. M-3 is the receipt:
+	 * 7.9% of US ZIPs disagree with their own gazetteer parent's state because a firm/unique ZIP names an organization's
+	 * mail processor rather than the code's range, so an index derived from `spr.parent_id` bakes that misattribution
+	 * in.
 	 */
 	source: string
 	/**
@@ -195,15 +196,15 @@ export interface PostcodePrefixHeader {
 	 */
 	attribution: string
 	/**
-	 * What a MISS means for this file — the meaning-of-zero statement, mandatory. A prefix absent from a complete
-	 * register does not exist; a prefix absent from a partial one may simply be unattested, and a consumer that cannot
+	 * What a miss means for this file — the meaning-of-zero statement, mandatory. A prefix absent from a complete
+	 * register does not exist. a prefix absent from a partial one may simply be unattested, and a consumer that cannot
 	 * tell the two apart will read coverage as fact.
 	 */
 	coverageNote: string
 	/**
-	 * OPTIONAL soft-prior bias magnitude. ABSENT until a calibration task measures one — a defaulted number here would
+	 * Optional soft-prior bias magnitude. Absent until a calibration task measures one — a defaulted number here would
 	 * let an uncalibrated bias reach the decoder unnoticed (PCN1's rule, verbatim). B3-1 ships data + loader + offline
-	 * probe with NO decode wiring, so nothing reads this yet.
+	 * probe with no decode wiring, so nothing reads this yet.
 	 */
 	delta?: number
 }
@@ -497,7 +498,7 @@ export class PostcodePrefixIndexResolver implements PostcodePrefixIndexLike {
 	}
 
 	/**
-	 * Every node, in the file's sorted order. The round-trip verification reads this; a runtime consumer wants
+	 * Every node, in the file's sorted order. The round-trip verification reads this. a runtime consumer wants
 	 * {@link PostcodePrefixIndexResolver.probe}.
 	 */
 	nodes(): IterableIterator<PostcodePrefixNode> {
@@ -505,8 +506,8 @@ export class PostcodePrefixIndexResolver implements PostcodePrefixIndexLike {
 	}
 
 	/**
-	 * Look up one prefix. Returns `null` when the index has no node for it — ABSENCE IS NOT EVIDENCE. Read the header's
-	 * `coverageNote` before treating a miss as anything but neutral: for a partial register a miss means UNATTESTED, and
+	 * Look up one prefix. Returns `null` when the index has no node for it — absence is not evidence. Read the header's
+	 * `coverageNote` before treating a miss as anything but neutral: for a partial register a miss means unattested, and
 	 * for a complete one it means the prefix is not in the numbering plan.
 	 */
 	probe(prefix: string): PostcodePrefixNode | null {

@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fetch Singapore's ACRA corporate-entity register from data.gov.sg: 27 monthly CSVs (one per first
- *   letter of the entity name plus "others"), 53 columns, the registered address FIELDED — `Block`,
+ *   Fetch Singapore's acra corporate-entity register from data.gov.sg: 27 monthly CSVs (one per first
+ *   letter of the entity name plus "others"), 53 columns, the registered address fielded — `Block`,
  *   `Street Name`, `Level No`, `Unit No`, `Building Name`, `Postal Code` — which is the NPPES shape,
  *   so the corpus adapter renders the string and the spans fall out by construction. A Singapore
  *   postcode names one building, so the postcode column is also the join to the OneMap/Overture rows.
  *
- *   License: Singapore Open Data Licence version 1.0 (attribution; commercial use, modification and
- *   adaptation permitted; no share-alike). The prescribed attribution sentence goes in the manifest.
+ *   License: Singapore Open Data Licence version 1.0 (attribution. commercial use, modification and
+ *   adaptation permitted. no share-alike). The prescribed attribution sentence goes in the manifest.
  *
  *   data.gov.sg serves a dataset in two calls: `initiate-download` prepares a signed URL and
  *   `poll-download` answers it once the export is ready.

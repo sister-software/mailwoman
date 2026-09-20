@@ -13,13 +13,13 @@
  *
  *   Scope + honesty (per the name-canonicalization research pass):
  *
- *   - Western / romanized names only. Cultural given-family ORDER variation (East-Asian family-first)
+ *   - Western / romanized names only. Cultural given-family order variation (East-Asian family-first)
  *       and transliteration are not handled here — a documented follow-up.
- *   - Nickname → canonical-root mapping is intentionally NOT done at parse time: it is lossy and
+ *   - Nickname → canonical-root mapping is intentionally not done at parse time: it is lossy and
  *       gendered (Bobbie → Robert _or_ Roberta), so equivalence belongs in the matcher as a fuzzy
- *       agreement level, not a destructive rewrite. We only _extract_ a parenthetical/quoted
+ *       agreement level rather than a destructive rewrite. We only _extract_ a parenthetical/quoted
  *       nickname.
- *   - A CRF parser (probablepeople) is the gold-standard reference but too heavy to port; this
+ *   - A CRF parser (probablepeople) is the gold-standard reference but too heavy to port. this
  *       positional parser covers the documented hard cases (inversion, particles, generational +
  *       professional suffixes) without a model.
  */
@@ -243,7 +243,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 		}
 	}
 
-	const tokens = working.split(/\s+/).filter((value) => value.length > 0)
+	const tokens = working.split(/\s+/).filter((value) => value.length)
 
 	if (!tokens.length) return Object.keys(result).length ? result : null
 
@@ -271,7 +271,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 
 	if (!tokens.length) return result
 
-	// 5. Locate the surname particle run; everything from it onward is the (particled) surname.
+	// 5. Locate the surname particle run. everything from it onward is the (particled) surname.
 	let particleStart = -1
 
 	for (let i = 0; i < tokens.length; i++) {
@@ -326,7 +326,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 }
 
 /**
- * The ORDER a person name prints in. Western / romanized only, the same scope {@linkcode parsePersonName} declares: a
+ * The order a person name prints in. Western / romanized only, the same scope {@linkcode parsePersonName} declares: a
  * family-first system is not this order reversed, and inventing one here would be worse than having none.
  */
 const NAME_ORDER: readonly (keyof PersonName)[] = ["prefix", "given", "middle", "familyParticle", "family", "suffix"]
@@ -349,7 +349,7 @@ export type PersonNameStyle = "full" | "short"
  * rather than an addition to it. `"short"` prints what a person is addressed by, which is the form a display label and
  * a match key want.
  *
- * The particle travels WITH the surname in both styles. The parser stores it separately so the matcher can compare
+ * The particle travels with the surname in both styles. The parser stores it separately so the matcher can compare
  * `Vega` independently of `de la`; printing them apart would produce a name nobody wrote.
  */
 export function formatPersonName(name: PersonName | null | undefined, style: PersonNameStyle = "full"): string {

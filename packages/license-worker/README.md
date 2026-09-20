@@ -32,7 +32,7 @@ production only an `active` entry of the shipped register passes the self-test.
 | `SITE_ORIGIN`                                        | var        | the one CORS origin the claim route admits                                                                                                                                        |
 | `EMAIL_FROM`                                         | var        | the sender address                                                                                                                                                                |
 | `LICENSE_LEDGER`                                     | D1         | the ledger: `licenses`, `license_tokens`, `stripe_events` (`migrations/0001_ledger.sql`)                                                                                          |
-| `CLAIM_LIMITER`, `REFRESH_LIMITER`, `STATUS_LIMITER` | rate limit | per client address for claims; per lid AND per client address, independently, for refresh and status                                                                              |
+| `CLAIM_LIMITER`, `REFRESH_LIMITER`, `STATUS_LIMITER` | rate limit | per client address for claims; per lid and per client address, independently, for refresh and status                                                                              |
 
 A production var still reading `REPLACE` makes `readEnv` refuse every request with 503, so an unfilled deploy never
 mints. Secrets arrive only through `wrangler secret put`; `.dev.vars.example` names the four for local `wrangler dev`.
@@ -57,7 +57,7 @@ the installed release does not trust is a token no installation accepts, which i
    `MAILWOMAN_STRIPE_LIVE_SECRET_KEY` and refuses any other prefix. Both write `lib/shop/ids.json`, the one file that
    names the Price ids the worker allowlists, the Payment Links the site renders, and the portal's login address the
    site and the email hand a customer. A Payment Link is created only with consent collection; if Stripe
-   refuses it, the report reads `blocked` and the remedy is the terms-of-service URL under the account's public details
+   refuses it, the report reads `blocked` and the action is the terms-of-service URL under the account's public details
    in the dashboard. The run is idempotent: a second run reads `exists` everywhere and creates nothing. An object that
    differs from the catalog is reported under `drift`; `--apply` updates what an update can change (a link's promotion
    codes, a webhook's events), deactivates and recreates a Payment Link whose agreement or consent collection differs,
@@ -102,7 +102,7 @@ The same steps with `-c wrangler.sandbox.toml` stand up the sandbox on a key pai
 `/health` reads `signing: ok`, and a Payment Link in Stripe test mode runs the whole path: checkout, webhook, claim,
 email, refresh. Verify a sandbox token with `verifyLicenseKey` against the sandbox public key; no release trusts it.
 
-The renewal path needs a customer on a Stripe test clock, which a Payment Link cannot create, so the rehearsal builds
+The renewal path needs a customer on a Stripe test clock, which a Payment Link cannot create. Therefore, the rehearsal builds
 the Checkout Session itself with the same collection the Link carries (`checkoutCollection` in `lib/shop/catalog.ts`):
 
 ```bash
@@ -133,8 +133,7 @@ only; one item's failure is recorded against it and never stops the sweep for th
 
 What it recovers: every license in the ledger is read whole each pass, and its subscription's latest paid invoice is
 minted if no token holds it, however old. A subscription the ledger has never seen (its `checkout.session.completed`
-lost and its success page never visited) is found only through Stripe's invoice list, which filters by creation time,
-so it is recovered while its first invoice was created within the last week; past that, resend the invoice's
+lost and its success page never visited) is found only through Stripe's invoice list, which filters by creation time. Therefore, it is recovered while its first invoice was created within the last week; past that, resend the invoice's
 `invoice.paid` from the Stripe dashboard. A resend through Cloudflare's binding can deliver twice when the ledger fails
 to record an accepted send; Resend deduplicates on the invoice id.
 
@@ -180,5 +179,5 @@ per run. The root Vitest sweep excludes these files; CI runs them as their own s
 imports `@mailwoman/core` through its `default` export condition, which names `out/`.
 
 The worker runs without `nodejs_compat`: the `bundle-graph` health check holds the license subpaths free of Node
-builtins, so the remedy for a hit is at the import's source, never a compatibility flag. Secrets never enter the
+builtins, so the action for a hit is at the import's source, never a compatibility flag. Secrets never enter the
 bundle: each is a Wrangler secret binding, and `upload_source_maps` stays unset. Measured at 2.7 MB before compression, 0.4 MB gzipped.

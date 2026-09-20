@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Render a self-contained Plotly HTML to a PNG via headless Chromium — the shared renderer behind
- *   the `registry viz` figures (an internal helper, not a command).
+ *   Render a self-contained Plotly html to a PNG via headless Chromium — the shared renderer behind
+ *   the `registry viz` figures (an internal helper rather than a command).
  *
  *   Plotly 3D (`surface`/`scatter3d`) needs a real WebGL context, which the shared harness
- *   (`./browser.ts`) provides through SwiftShader; 2D traces (`contour`/`heatmap`) render on the 2D
+ *   (`./browser.ts`) provides through SwiftShader. 2D traces (`contour`/`heatmap`) render on the 2D
  *   canvas regardless. We wait for Plotly's `plotly_afterplot` to fire on every graph div rather
  *   than a fixed sleep, so the screenshot can't race the (async) WebGL paint.
  */
@@ -21,7 +21,7 @@ import { withChromiumPage } from "#tools/viz/browser"
  */
 export interface RenderPlotlyOptions {
 	/**
-	 * The self-contained Plotly HTML file.
+	 * The self-contained Plotly html file.
 	 */
 	inHTML: string
 	/**
@@ -39,7 +39,7 @@ export interface RenderPlotlyOptions {
 }
 
 /**
- * Screenshot a Plotly HTML page after every graph div's `plotly_afterplot` fires.
+ * Screenshot a Plotly html page after every graph div's `plotly_afterplot` fires.
  */
 export async function renderPlotlyHTMLToPNG(
 	options: RenderPlotlyOptions,
@@ -53,7 +53,7 @@ export async function renderPlotlyHTMLToPNG(
 			// Resolve once every Plotly graph div has fired plotly_afterplot (3D paints land async, after
 			// newPlot's promise resolves), with a per-div fallback so an already-painted div can't hang us.
 			await page.evaluate(async () => {
-				// Runs in the BROWSER — reach DOM/Plotly globals via globalThis so the script needs no DOM lib.
+				// Runs in the browser — reach DOM/Plotly globals via globalThis so the script needs no DOM lib.
 				interface PlotlyDiv {
 					_fullLayout?: unknown
 					on?: (event: string, cb: () => void) => void

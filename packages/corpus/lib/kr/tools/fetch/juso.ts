@@ -3,7 +3,8 @@
 
 /**
  *   Fetch the Korean road-name address register (도로명주소 주소DB) from the ministry's address-industry
- *   portal, business.juso.go.kr. This is the LABEL source for Korean addresses: about 6,000,000
+ *   portal, business.juso.go.kr. The ministry assigns the road names and building numbers it publishes, so
+ *   this source asserts `address` on `premise` rows: about 6,000,000
  *   road-name addresses and 8,000,000 lot-number (지번) records, split by the publisher into four
  *   pipe-delimited CP949 text files per region (도로명코드 / 주소 / 지번 / 부가정보), with the postcode in
  *   the supplementary file. No coordinates. The public-data portal labels it "이용허락범위 제한 없음"
@@ -11,7 +12,7 @@
  *   distinction that matters against the ministry's entrance-coordinate products, which are provided
  *   only after a purpose-of-use review (`docs/superpowers/plans/counsel-dossier.md` §4).
  *
- *   The portal is a single-page app; the file behind it is reached in two calls. `selectAttrbDBDwldList`
+ *   The portal is a single-page app. the file behind it is reached in two calls. `selectAttrbDBDwldList`
  *   lists the monthly full files for one product (`rtlDtaDtlSn` 8 is the 주소DB, 2 the English
  *   road-name DB), and `/api/jst/download` streams one by the parameters the listing carried. The
  *   English DB rides along because it is the Latin-script half of the same register.
@@ -68,7 +69,7 @@ interface ListResponse {
 
 export interface FetchJusoKROptions extends BaseFetchOptions {
 	/**
-	 * The month to fetch as `YYYYMM`. Defaults to the latest month the portal lists as present.
+	 * The month to fetch as `yyyymm`. Defaults to the latest month the portal lists as present.
 	 */
 	month?: string
 }

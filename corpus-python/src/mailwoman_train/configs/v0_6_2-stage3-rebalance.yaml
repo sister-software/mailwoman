@@ -4,20 +4,21 @@
 #
 #   1. synth-street weight 2.0 → 0.5
 #      Reduces the "decompose mode" gradient pressure that v0.6.1 picked up.
-#      NOT going lower than 0.5 — the model still needs to learn legitimate US
-#      street decomposition. Counter-distribution comes from #2, not from
+#      not going lower than 0.5 — the model still needs to learn legitimate US
+#      street decomposition. Counter-distribution comes from #2 rather than from
 #      depressing the synth-street signal further.
 #
-#   2. NEW synth-no-street slice at weight 1.0 (122K rows)
+#   2. New `synth-no-street` source at weight 1.0 (122K rows)
 #      Counter-example training data: 112K US + 10K DE/GB rows where every
-#      address has venue + admin tags but NO street-side BIO labels. 35% are
+#      address has venue + admin tags but no street-side BIO labels. 35% are
 #      "venue-adversarial" (Wall Street Industries, 5th Avenue Theatre,
 #      Memorial Drive Medical Center) — explicit B-venue/I-venue labels on
 #      tokens like Street/Avenue/Drive that the model previously mis-tagged
-#      via decompose-mode. The bilingual slice gives a whisper of non-US
+#      via decompose-mode. The bilingual subset gives a whisper of non-US
 #      anti-decompose signal without committing to full v0.7 locale expansion.
 #      Build pipeline: corpus/src/synthesize-no-street.ts +
-#      scripts/build-no-street-slice.mjs + scripts/extract-tuples-de-gb.py +
+#      the no-street recipe (its script has since been retired. no `packages/corpus/lib/recipes/`
+#      module carries it today) + scripts/extract-tuples-de-gb.py +
 #      scripts/jsonl-to-parquet.py.
 #
 #   3. CRF stays disabled (CE-only) per NaN protocol's "one variable at a time"
@@ -33,7 +34,7 @@
 #   5. Early-eval check at 20K steps: if dep_loc hallucinations > 100 against
 #      the v0.6.0 baseline JSON, abort and bump synth-no-street row count
 #      (don't drop synth-street further). The eval pipeline must run against
-#      a 20K checkpoint, not just 100K.
+#      a 20K checkpoint rather than just 100K.
 #
 # Promotion decision tree at 100K:
 #
@@ -41,8 +42,8 @@
 #   | -------------- | ------------------------- | ---------------------------- |
 #   | Pass           | ≥ 25%                     | Promote to default (HF)      |
 #   | Pass           | 15-24%                    | Ship as experimental         |
-#   | Pass           | ≤ 14.4% (v0.6.0 baseline) | HOLD (sidegrade not release) |
-#   | Fail           | any                       | HOLD                         |
+#   | Pass           | ≤ 14.4% (v0.6.0 baseline) | hold (sidegrade not release) |
+#   | Fail           | any                       | hold                         |
 #
 # Cost: ~5h on A100 at v0.6.0 throughput.
 #
@@ -80,7 +81,7 @@ data:
     # street decomposition entirely. The 4:1 anti-decompose ratio that would
     # come from 0.25 here would overcorrect (per DeepSeek turn 7).
     synth-street: 0.5
-    # NEW. 122K-row counter-example slice. Weight 1.0 paired with synth-street
+    # new. 122K-row counter-example source. Weight 1.0 paired with synth-street
     # at 0.5 gives a 2:1 anti-decompose-to-decompose ratio after the
     # row-count-weighted contribution shakes out (100K × 1.0 ≈ 100K effective
     # steps vs 100K × 0.5 = 50K).

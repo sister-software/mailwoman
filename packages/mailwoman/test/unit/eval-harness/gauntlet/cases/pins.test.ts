@@ -20,7 +20,7 @@ import { describe, expect, it } from "vitest"
 
 const realTestText = await readLocalTextFile(resolvePath(String(repoRootPath()), PIN_TEST_PATH))
 
-describe("the committed-pin read/write contract", () => {
+describe("the committed-pin read/write interface", () => {
 	it("reads the three constants out of the real pin test", () => {
 		const pins = readCommittedPins(realTestText)
 

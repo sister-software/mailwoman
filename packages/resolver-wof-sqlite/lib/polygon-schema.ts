@@ -3,10 +3,10 @@
 
 /**
  *   Typed schema for the polygon sidecar (`wof-polygons.db`) — the one table `WOFReverseGeocoder` probes for a
- *   place's geometry. The interface is the read/write contract and {@link createPolygonsTable} creates the table, so a
+ *   place's geometry. The interface is the read/write interface and {@link createPolygonsTable} creates the table, so a
  *   column added to one is a compile error against the other.
  *
- *   The sidecar is OPTIONAL to the reverse geocoder: without it every result falls back to a centroid, so the reader
+ *   The sidecar is optional to the reverse geocoder: without it every result falls back to a centroid, so the reader
  *   checks for the table's presence rather than assuming it.
  */
 
@@ -29,7 +29,7 @@ export interface PolygonDatabase {
 }
 
 /**
- * The slice of a Kysely handle the polygon DDL touches. Kysely is invariant in its schema parameter, so naming only
+ * The subset of a Kysely handle the polygon DDL touches. Kysely is invariant in its schema parameter, so naming only
  * `schema` lets a builder holding a wider handle pass it without a cast.
  */
 export type PolygonSchemaHandle = Pick<Kysely<PolygonDatabase>, "schema">

@@ -6,11 +6,11 @@
  *
  *   `@mailwoman/activity-lexicon` declares zero dependencies, so it can check that a derived form's base is
  *   present and that a citation is not empty, and nothing more. The claims that matter most are the ones
- *   pointing OUTSIDE it: a committed query row, a synonym in the committed POI taxonomy, a clause of the
+ *   pointing outside it: a committed query row, a synonym in the committed POI taxonomy, a clause of the
  *   compiled concept's own description. Those are checked here, where all three artifacts are held.
  *
  *   An attestation nobody can check is indistinguishable from an invented one, which is the whole reason the
- *   lexicon replaced a table whose provenance read `AUTHORED FOR ONE EXPERIMENT`.
+ *   lexicon replaced a table whose provenance read `authored FOR one experiment`.
  */
 
 import { readActivityLexicon } from "@mailwoman/activity-lexicon"
@@ -23,9 +23,7 @@ import { describe, expect, it } from "vitest"
 
 const lexicon = await readActivityLexicon()
 
-const board = new Map(
-	(await Array.fromAsync(JSONSpliterator.fromAsync<POIBoardFixture>(POI_BOARD_FIXTURES))).map((row) => [row.id, row])
-)
+const board = await JSONSpliterator.fromAsync<POIBoardFixture>(POI_BOARD_FIXTURES).toMap((row) => [row.id, row])
 
 const { readCompiledGeographicModel } = await import("@mailwoman/geographic-model/scripts/build-artifact")
 const model: CompiledGeographicModel = await readCompiledGeographicModel()

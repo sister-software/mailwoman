@@ -1,18 +1,18 @@
-"""Probe 1 (parity campaign): synthesize the fragment/autocomplete slice from REAL address parts.
+"""Probe 1 (parity campaign): synthesize the fragment/autocomplete recipe output from real address parts.
 
 Row types (the measured failure classes, night-1 postmortem):
   bare_street      "Vestre Haugen"        -> B-street [I-street ...]
   street_number    "Vestre Haugen 74"     -> street tokens + B-house_number   (EURO locales only —
-                                             the trailing-number-tagged-postcode failure class;
+                                             the trailing-number-tagged-postcode failure class.
                                              leading-number en-* forms are already base-dominant)
 
 Sources: OpenAddresses extracts (STREET/NUMBER columns — real names, real number formats, per
 locale), plus bare US/AU/NZ streets lifted from an existing corpus parquet's street spans (no local
-OA `us` extract). Labels are by construction; spans are char offsets over the rendered text.
+OA `us` extract). Labels are by construction. spans are char offsets over the rendered text.
 
-ASSAY TOOLING: if the assay confirms the data change, the production slice graduates to the
-`corpus/` TS generator convention (CONTRIBUTING_MODEL_WORK §Adding a slice). A 10% deterministic
-holdout is written as JSONL (fragment-dev) for the read-out — NEVER into the trained slice.
+ASSAY TOOLING: if the assay confirms the data change, the production recipe graduates to the
+`corpus/` TS generator convention (CONTRIBUTING_MODEL_WORK §Adding a recipe). A 10% deterministic
+holdout is written as JSONL (fragment-dev) for the read-out — NEVER into the trained rows.
 
 `push` stamps every row with the same provenance block and a running `source_id`, so the ORDER
 these blocks run in is baked into the ids and into the 10% holdout the final shuffle separates. Adding
@@ -63,7 +63,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     ap.add_argument(
         "--famous-localities-file",
         default="",
-        help="Slice-v4: newline list of top-population locality names (deterministic famous-city "
+        help="Fragment recipe v4: newline list of top-population locality names (deterministic famous-city "
         "twins — closes the Dublin/Melbourne sampling-lottery class; build from the candidate "
         "gazetteer, population-ranked).",
     )
@@ -82,7 +82,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 def push_oa_locale_rows(args: argparse.Namespace, push: Push) -> None:
     """Every row a locale's OpenAddresses extract yields, in the order the registers are listed.
 
-    Locales are visited in sorted order so the ids are stable across runs; within a locale the
+    Locales are visited in sorted order so the ids are stable across runs. within a locale the
     blocks run bare street, street with number, bare locality, locality with postcode, unit,
     comma-free context, then the country counterweight.
     """
@@ -106,7 +106,7 @@ def push_oa_locale_rows(args: argparse.Namespace, push: Push) -> None:
         for unit, number, street in units:
             push(render_unit(unit, number, street), country, locale, license_note)
 
-        # Slice-v4: comma-free context rows (the census headline class — 71/143 street misses were
+        # Fragment recipe v4: comma-free context rows (the census headline class — 71/143 street misses were
         # unpunctuated street<->admin boundaries). Alternate rows carry the English country name.
         for index, (street, number, city) in enumerate(triples):
             push(
@@ -116,9 +116,9 @@ def push_oa_locale_rows(args: argparse.Namespace, push: Push) -> None:
                 license_note,
             )
 
-        # Slice-v6 (#1104): COUNTRY counterweight — the slice-v5 mass is country-sparse, which eroded
-        # country recall 88.6%→82.0% on the fragment lineage. Emit a full address ENDING in the country
-        # token per triple, BOTH comma'd and comma-free (golden has both), rotating the codex surface
+        # Fragment recipe v6 (#1104): country counterweight — the recipe-v5 mass is country-sparse, which eroded
+        # country recall 88.6%→82.0% on the fragment lineage. Emit a full address ending in the country
+        # token per triple, both comma'd and comma-free (golden has both), rotating the codex surface
         # forms, so the fine-tune keeps the country class alive without touching the fragment gains.
         surfaces = COUNTRY_SURFACES.get(country, [])
 
@@ -155,8 +155,8 @@ def push_corpus_harvest_rows(
     counterweight block below zips them against street surfaces rather than re-reading the corpus.
     """
     corpus_streets = span_rows_from_corpus(args.corpus_parquet_glob, {"US"}, args.per_locale_cap, max_parts=30)
-    # Slice-v3: GLOBAL bare-locality twins (all countries; cap/4 each) — the gauntlet
-    # global-dublin-bare regression showed famous cities outside the OA slice locales lose their
+    # Fragment recipe v3: global bare-locality twins (all countries. cap/4 each) — the gauntlet
+    # global-dublin-bare regression showed famous cities outside the recipe's OA locales lose their
     # locality reading once fragment street-mass grows. Harvested from real corpus locality spans.
     if args.famous_localities_file:
         famous = [line.strip() for line in open(args.famous_localities_file, encoding="utf-8") if line.strip()]
@@ -171,7 +171,7 @@ def push_corpus_harvest_rows(
 
         print(f"famous-locality twins: {len(famous)}")
 
-    # Slice-v5 (#1102): US admin-context pairs + directional-prefixed locality twin boost.
+    # Fragment recipe v5 (#1102): US admin-context pairs + directional-prefixed locality twin boost.
     admin_pairs = admin_pairs_from_corpus(args.corpus_parquet_glob, args.per_locale_cap)
 
     for locality, region in admin_pairs:
@@ -242,23 +242,23 @@ def push_country_counterweight_rows(
 ) -> None:
     """The #1104 country rows: a tail-position block and a leading-position one.
 
-    Both draw from `country_rng`, which is seeded separately from the slice's own shuffle, so this
+    Both draw from `country_rng`. It is seeded separately from the recipe's own shuffle. Therefore, this
     block's numbers do not move when a block before it changes size.
     """
-    # Slice-v6 (#1104): country counterweight. The golden country classes are US + FR heavy, and NEITHER
-    # is an OA_LOCALES locale, so those tails had ZERO signal — the country-sparse fine-tune eroded
+    # Fragment recipe v6 (#1104): country counterweight. The golden country classes are US + FR heavy, and neither
+    # is an OA_LOCALES locale, so those tails had zero signal — the country-sparse fine-tune eroded
     # recall 88.6%→82.0%. The corpus rarely co-locates street+locality in one row (WOF-admin-heavy), so
-    # synthesize by ZIPPING separate street + locality pools (both DO exist in the corpus) with a codex
-    # country surface tail (COUNTRY_SURFACES, sourced from @mailwoman/codex), comma'd AND comma-free.
+    # synthesize by zipping separate street + locality pools (both do exist in the corpus) with a codex
+    # country surface tail (COUNTRY_SURFACES, sourced from @mailwoman/codex), comma'd and comma-free.
     _country_note = (
         "Synthetic — fragment-assay; #1104 country counterweight (corpus street × locality + codex surface tail)"
     )
     # US is the biggest golden country class (us.jsonl) and the corpus's US streets (tiger/nad) are what
-    # --corpus-parquet-glob points at. FR streets live in a DIFFERENT source block (BAN) that this glob
-    # doesn't cover, so seed US only here; FR/DE ride the 16 OA-locale country rows + a later BAN pass if
-    # still short. A modest cap keeps country from dominating the slice.
+    # --corpus-parquet-glob points at. FR streets live in a different source block (BAN) that this glob
+    # doesn't cover, so seed US only here. FR/DE ride the 16 OA-locale country rows + a later BAN pass if
+    # still short. A modest cap keeps country from dominating the recipe output.
     country_seed_countries = {"US"}
-    number_first = {"US", "GB", "CA", "FR"}  # NUMBER STREET; the rest (DE/IT/ES/AT/…) are STREET NUMBER
+    number_first = {"US", "GB", "CA", "FR"}  # NUMBER STREET. the rest (DE/IT/ES/AT/…) are STREET NUMBER
     country_cap = min(args.per_locale_cap, 1500)
     country_seed_streets = span_rows_from_corpus(
         args.corpus_parquet_glob, country_seed_countries, country_cap, tag="street", max_parts=40
@@ -266,9 +266,9 @@ def push_country_counterweight_rows(
     country_rng = random.Random(f"{SEED}:countryrows")
     country_rows = 0
 
-    # US localities: the NAD admin pairs (English city names), NOT corpus_localities — the wof-admin
+    # US localities: the NAD admin pairs (English city names), not corpus_localities — the wof-admin
     # locality harvest carries alternate-language surfaces ("Сельма"/"п'єдмонт"), which would teach a
-    # nonsense "English-street cyrillic-city USA" tail. ASCII-filter as a safety net for any locale.
+    # nonsense "English-street cyrillic-city USA" tail. ascii-filter as a safety net for any locale.
     country_localities: dict[str, list[str]] = {"US": [loc for loc, _ in admin_pairs]}
 
     for c in sorted(country_seed_countries):
@@ -301,19 +301,19 @@ def push_country_counterweight_rows(
             )
             country_rows += 2
 
-    # v2.9.1 (#1104): LEADING-position country rows — "United States of America, Wyoming, Лорейн"
-    # (country FIRST). The v290 tail-only counterweight recovered tail cases but MISSED this WOF-admin
+    # v2.9.1 (#1104): leading-position country rows — "United States of America, Wyoming, Лорейн"
+    # (country first). The v290 tail-only counterweight recovered tail cases but missed this WOF-admin
     # distribution (12/60 golden misses, all leading-position + non-Latin locality). Regions from NAD
-    # admin_pairs; localities from corpus_localities["US"] INCLUDING non-Latin (the point — teach country
+    # admin_pairs. localities from corpus_localities["US"] including non-Latin (the point — teach country
     # when the locality context is non-Latin). Rotate the codex surfaces (the golden favors the long
     # "United States of America" form here).
     us_regions = [reg for _, reg in admin_pairs]
     us_localities_all = corpus_localities.get("US", [])
     us_surfaces = COUNTRY_SURFACES.get("US", [])
-    # v2.9.2 (#1104): weight the LEADING surfaces to the MULTI-WORD forms ("United States of America",
-    # "United States"). The v291 probe pinned the residual EXACTLY there: short leading forms ("USA, AZ,
-    # …" → country=USA) already parse; only the long form fails ("United States of America, …" → the
-    # 4-token phrase reads as a STREET). Rotating all 6 surfaces gave the long form only ~1/6 of leading
+    # v2.9.2 (#1104): weight the leading surfaces to the multi-word forms ("United States of America",
+    # "United States"). The v291 probe pinned the residual exactly there: short leading forms ("USA, AZ,
+    # …" → country=USA) already parse. only the long form fails ("United States of America, …" → the
+    # 4-token phrase reads as a street). Rotating all 6 surfaces gave the long form only ~1/6 of leading
     # rows. Bias to the multi-word forms so the model gets enough signal to stop reading them as street.
     leading_surfaces = [s for s in us_surfaces if len(s.split()) >= 2] or us_surfaces
     leading_rows = 0
@@ -330,7 +330,7 @@ def push_country_counterweight_rows(
     print(f"#1104 country counterweight: {country_rows} tail + {leading_rows} leading rows")
 
 
-def write_slice(args: argparse.Namespace, rows: list[dict[str, Any]], rng: random.Random) -> None:
+def write_output(args: argparse.Namespace, rows: list[dict[str, Any]], rng: random.Random) -> None:
     """Shuffle once, separate the first tenth as the dev holdout, and write both.
 
     The holdout is read, never trained, so the shuffle is what decides which rows a read-out can
@@ -348,7 +348,7 @@ def write_slice(args: argparse.Namespace, rows: list[dict[str, Any]], rng: rando
         for row in dev:
             fh.write(json.dumps(row, ensure_ascii=False) + "\n")
 
-    print(f"slice: {len(train)} rows -> {args.out_parquet}")
+    print(f"train: {len(train)} rows -> {args.out_parquet}")
     print(f"dev:   {len(dev)} rows -> {args.out_dev}")
 
 
@@ -375,4 +375,4 @@ def main() -> None:
     push_oa_locale_rows(args, push)
     admin_pairs, corpus_localities = push_corpus_harvest_rows(args, push)
     push_country_counterweight_rows(args, push, admin_pairs, corpus_localities)
-    write_slice(args, rows, rng)
+    write_output(args, rows, rng)

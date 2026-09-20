@@ -7,7 +7,7 @@
  *
  *   The split is required. ESM evaluates every static import before a module's own body runs, so a preamble
  *   written in a statically imported command graph would execute after that graph had already initialized. Only
- *   `node:module` is imported statically here; command code arrives through dynamic imports after this body.
+ *   `node:module` is imported statically here. command code arrives through dynamic imports after this body.
  *
  *   So keep this file at one static import: anything added to the top of it is compiled before the cache exists and,
  *   if it reaches React, pins the development build.
@@ -18,7 +18,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 // The CLI compiles ~16 MB of source per invocation, and the loader/compiler/GC are ~85% of a `--help` run. V8's
 // on-disk code cache removes most of it: `--help` 1.34 s → 0.99 s, `parse` 2.95 s → 2.63 s. The cache is
-// content-addressed and self-invalidating, so a stale entry is not a failure mode; an unwritable cache directory is,
+// content-addressed and self-invalidating, so a stale entry is not a failure mode. an unwritable cache directory is,
 // and a CLI that cannot cache its compilation is a slow CLI rather than a broken one.
 try {
 	enableCompileCache()
@@ -36,7 +36,7 @@ process.env.NODE_ENV ??= "production"
 // profiling dependency in this deliberately tiny launcher.
 globalThis.__mailwomanCLIStartedAt = performance.now()
 
-// `strict: false` is required, not a relaxation: the launcher cannot enumerate the union of every command's flags, and
+// `strict: false` is required rather than a relaxation: the launcher cannot enumerate the union of every command's flags, and
 // a strict parse rejects the first one it has not heard of — `--json`, `--locale`, `--debug` — before dispatch, which
 // is the whole CLI rather than one command. Unknown options stay in the vector for the command router to interpret.
 const { values, positionals } = parseArguments({
@@ -49,7 +49,7 @@ const { values, positionals } = parseArguments({
 	allowPositionals: true,
 })
 
-// A ROOT version request, which is why the positional count is required: `--version` reached from anywhere in the
+// A root version request, which is why the positional count is required: `--version` reached from anywhere in the
 // vector would make the launcher answer `mw geocode --version` itself, swallowing a flag that belongs to the command.
 const rootVersionRequest = values.version === true && !positionals.length
 
@@ -96,7 +96,7 @@ function dispatchCommand(): Promise<number> {
 const exitCode = await (rootVersionRequest ? printVersion() : dispatchCommand())
 
 // The notice is the last thing written, for every command and every exit code, and it never changes the exit code: a
-// failure to build it is reported on stderr and the command's own result stands. Only the cluster primary prints it —
+// failure to build it is reported on stderr and the command's own result is returned. Only the cluster primary prints it —
 // `mailwoman serve` forks workers that run this same file, and one notice per process would be one per CPU. A builtin
 // reached through `process.getBuiltinModule` keeps this file at its one static import.
 if (process.getBuiltinModule("node:cluster").isPrimary) {

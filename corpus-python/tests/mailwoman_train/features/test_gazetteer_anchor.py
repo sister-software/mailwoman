@@ -99,7 +99,7 @@ def test_po_box_and_cedex_clues():
     words = painted_words("PO Box 1234, Springfield")
     assert words["PO"] == BITS["po_box"]
     assert words["Box"] == BITS["po_box"]
-    # The clue fires on "Box Canyon Rd" too — by design. The model reads context; the clue only
+    # The clue fires on "Box Canyon Rd" too — by design. The model reads context. the clue only
     # marks lexicon membership (model-first: a hint, never a verdict).
     assert painted_words("12 Box Canyon Rd")["Box"] == BITS["po_box"]
     assert painted_words("75008 PARIS CEDEX 02")["CEDEX"] == BITS["cedex"]
@@ -114,7 +114,7 @@ def test_choreography_zeros_clue_adjacent_to_postcode_anchor():
     # The CA clue (index 1) is adjacent to the postcode anchor (index 2) → zeroed.
     assert out_f[1] == [0, 0, 0, 0, 0]
     assert out_c[1] == 0.0
-    # A clue NOT adjacent to a postcode anchor is untouched.
+    # A clue not adjacent to a postcode anchor is untouched.
     feats2 = [[1, 1, 0, 0, 1], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]
     confs2 = [1.0, 0.0, 0.0]
     anchor2 = [0.0, 0.0, 1.0]  # postcode 2 pieces away from the clue

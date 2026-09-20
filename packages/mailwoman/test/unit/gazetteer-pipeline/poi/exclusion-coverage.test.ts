@@ -11,7 +11,7 @@ import {
 	createLayerCoverageTable,
 	readLayerCoverage,
 	writeLayerCoverage,
-	type LayerContractDatabase,
+	type layerschemadatabase,
 } from "@mailwoman/core/layers"
 import { CoverageBasis, supportsExclusion } from "@mailwoman/evidence"
 import {
@@ -133,9 +133,9 @@ describe("buildExclusionCoverage", () => {
 	})
 })
 
-describe("the layer contract's read of these cells", () => {
+describe("the layer interface's read of these cells", () => {
 	async function openCoverageDB() {
-		const db = DatabaseClient.temp<LayerContractDatabase>()
+		const db = DatabaseClient.temp<layerschemadatabase>()
 		await createLayerCoverageTable(db)
 
 		return db

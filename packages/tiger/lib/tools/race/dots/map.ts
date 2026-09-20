@@ -8,8 +8,8 @@
  *   category. The dots PMTiles is read client-side via the `pmtiles` protocol.
  *
  *   Each dot is one of `per` people of a category, placed at random inside its Census block — a
- *   representation, not a record about any address. Serve over localhost (the house tile server
- *   CORS-restricts to localhost + the docs domains) — `mailwoman tiger race-dots-map --serve` wires
+ *   representation rather than a record about any address. Serve over localhost (the house tile server
+ *   cors-restricts to localhost + the docs domains) — `mailwoman tiger race-dots-map --serve` wires
  *   {@linkcode serveWithRangeSupport} for exactly this.
  *
  *   Run: `mailwoman tiger race-dots-map --pmtiles-url
@@ -29,7 +29,7 @@ export interface RaceDotsMapOptions {
 	 */
 	pmtilesURL?: string
 	/**
-	 * Output HTML path. Default `/tmp/race-dots-oc.html`.
+	 * Output html path. Default `/tmp/race-dots-oc.html`.
 	 */
 	out?: string
 	/**

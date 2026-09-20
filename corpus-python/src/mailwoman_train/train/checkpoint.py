@@ -18,6 +18,19 @@ from typing import Any, cast
 
 import torch
 
+CHECKPOINT_STEP_DIGITS = 6
+
+
+def checkpoint_dir_name(step: int | str) -> str:
+    """The directory name a checkpoint at ``step`` is written under: ``step-000500``, ``step-060000``.
+
+    One name for the writer and every reader. The writer zero-padded and `export_onnx` interpolated the step
+    verbatim, so its own documented `--step=60000` looked for `step-60000` and raised FileNotFoundError against a
+    directory called `step-060000`; `--step=060000` worked. A step reaches a Modal entry point as a STRING, which is
+    why this takes either.
+    """
+    return f"step-{int(step):0{CHECKPOINT_STEP_DIGITS}d}"
+
 
 def save_checkpoint(
     model: torch.nn.Module,
@@ -34,8 +47,8 @@ def save_checkpoint(
     Everything is written into a temp directory the ``step-*`` discovery glob cannot see,
     ``training_state.json`` last, then renamed into place.
     """
-    ck = output_dir / f"step-{step:06d}"
-    tmp = output_dir / f".tmp-step-{step:06d}"
+    ck = output_dir / checkpoint_dir_name(step)
+    tmp = output_dir / f".tmp-{checkpoint_dir_name(step)}"
     if tmp.exists():
         shutil.rmtree(tmp)
     tmp.mkdir(parents=True)
@@ -50,7 +63,7 @@ def save_checkpoint(
             torch.save(scheduler.state_dict(), tmp / "scheduler.pt")
         if rng_state is not None:
             torch.save(rng_state, tmp / "rng_state.pt")
-        # Written LAST: its presence is the completeness marker find_latest_checkpoint trusts.
+        # Written last: its presence is the completeness marker find_latest_checkpoint trusts.
         (tmp / "training_state.json").write_text(json.dumps(extras, indent=2) + "\n", encoding="utf-8")
     except BaseException:
         shutil.rmtree(tmp, ignore_errors=True)

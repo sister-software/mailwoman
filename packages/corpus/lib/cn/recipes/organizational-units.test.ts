@@ -11,11 +11,11 @@ import {
 	cnOrganizationalUnitsRecipe,
 	labelCNOrganizationalRow,
 } from "@mailwoman/corpus/cn/recipes/organizational-units"
-import { sliceRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
+import { recipeRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { cjkAwareTokenizer } from "@mailwoman/corpus/utils/tokenize"
 import { describe, expect, it } from "vitest"
 
-const run = sliceRunner("cn-units", cnOrganizationalUnitsRecipe, 11)
+const run = recipeRunner("cn-units", cnOrganizationalUnitsRecipe, 11)
 
 describe("labelCNOrganizationalRow", () => {
 	it("labels the farm ladder under a province and a city", () => {
@@ -67,7 +67,7 @@ describe("labelCNOrganizationalRow", () => {
 		expect(labelCNOrganizationalRow("苗辽林场 Zhejiang China")).toBeNull()
 		expect(labelCNOrganizationalRow("红卫大队 Zhejiang")).toBeNull()
 		expect(labelCNOrganizationalRow("淮海农场梁庄分场")).toBeNull()
-		// A NAMED team (`机耕队`, the machine-tillage team) under a named brigade: no ordinal, so no chain.
+		// A named team (`机耕队`, the machine-tillage team) under a named brigade: no ordinal, so no chain.
 		expect(labelCNOrganizationalRow("胜利大队机耕队, Inner Mongolia")).toBeNull()
 	})
 
@@ -77,7 +77,7 @@ describe("labelCNOrganizationalRow", () => {
 })
 
 describe("the recipe", () => {
-	it("emits one per-character BIO row per chain-bearing CN string and counts the rest as skipped", async () => {
+	it("emits one per-character BIO row per chain-containing CN string and counts the rest as skipped", async () => {
 		const { stats, rows } = await run(
 			[
 				{ raw: "赵光三分场二十九队, Heilongjiang, China", country: "CN" },
@@ -139,7 +139,7 @@ describe("cjkAwareTokenizer", () => {
 		expect(tokens).toEqual(["赵", "光", "三", "分", "场", "Heilongjiang"])
 	})
 
-	it("keeps offsets that slice the source back out", () => {
+	it("keeps offsets that read the source back out as substrings", () => {
 		const source = "六连 Xinjiang"
 
 		for (const token of cjkAwareTokenizer().tokenize(source)) {

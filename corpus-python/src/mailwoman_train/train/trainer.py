@@ -30,8 +30,8 @@ from pathlib import Path
 import torch
 
 from ..config import Config
-from ..data.dose import format_derivation, resolve_config_doses
 from ..data.loader import IGNORE_INDEX, iter_batches
+from ..data.source_reps import format_derivation, resolve_config_reps
 from ..evaluation.metrics import cross_pollution, token_f1
 from ..nn.encoder import force_math_sdpa
 from ..protocols import TrainCallback
@@ -71,7 +71,7 @@ def _eval_val(
     cross-pollution regression check and the aux locale-head accuracy when self-conditioning is on.
 
     ``tokenizer`` is None on the char path (``char_mode: char`` skips SentencePiece entirely) and
-    ``iter_batches`` encodes per character in that case; the val eval runs there like the train loop
+    ``iter_batches`` encodes per character in that case. the val eval runs there like the train loop
     does. A guard that refused a None tokenizer here stopped every char-mode run at its first eval."""
     model.eval()
     loss_total = 0.0
@@ -128,20 +128,20 @@ def train(
     callbacks: list[TrainCallback] | None = None,
 ) -> None:
     _set_seed(cfg.train.seed)
-    # MLM pre-training is a different objective + loop; route there (lazy import avoids a
+    # MLM pre-training is a different objective + loop. route there (lazy import avoids a
     # train<->pretrain module cycle). pretrain() writes from_pretrained-loadable checkpoints.
     if getattr(cfg.train, "objective", "supervised") == "mlm":
         from .pretrain import pretrain
 
         pretrain(cfg, resume_from=resume_from)
         return
-    # Mandatory on gfx1103 — flash/mem-efficient SDPA paths crash bf16 on this GPU.
+    # Mandatory on gfx1103 — flash/mem-efficient sdpa paths crash bf16 on this GPU.
     force_math_sdpa()
-    # #1677: a dosed source's weight is derived here, from the corpus's row counts and this run's samples, so
-    # the mixture the loader samples is the one the config named in reps per row.
-    derived_doses = resolve_config_doses(cfg)
-    if derived_doses:
-        print(format_derivation(derived_doses), flush=True)
+    # #1677: a reps-targeted source's weight is derived here, from the corpus's row counts and this run's
+    # samples, so the mixture the loader samples is the one the config named in reps per row.
+    derived_reps = resolve_config_reps(cfg)
+    if derived_reps:
+        print(format_derivation(derived_reps), flush=True)
     output_dir = Path(cfg.train.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 

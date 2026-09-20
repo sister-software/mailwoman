@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Unit cover for {@link buildBoundarySQL} — the OGRSQL string builder. No `ogr2ogr` is spawned; the
- *   extraction itself needs a real `.osm.pbf` and GDAL on the path.
+ *   Unit cover for {@link buildBoundarySQL} — the ogrsql string builder. No `ogr2ogr` is spawned. the
+ *   extraction itself needs a real `.osm.pbf` and gdal on the path.
  */
 
 import { buildBoundarySQL, extractOSMBoundary } from "@mailwoman/osm/sdk/extract/boundary"

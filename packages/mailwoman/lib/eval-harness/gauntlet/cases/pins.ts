@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The board-pin contract as a script API (#1895): measure the committed corpus's three pins, read
+ *   The board-pin interface as a script API (#1895): measure the committed corpus's three pins, read
  *   the constants the pin test carries, compare them, and rewrite exactly those constants. The Ink
- *   command (`mailwoman eval pins`) formats this; the admin-merge wrapper and the cheap CI check
- *   call it directly. Loads ONLY the committed JSONL — no model, no gazetteer, no warm engine —
+ *   command (`mailwoman eval pins`) formats this. the admin-merge wrapper and the cheap CI check
+ *   call it directly. Loads only the committed jsonl — no model, no gazetteer, no warm engine —
  *   measured at ~2 s on the 651-row corpus.
  *
- *   The committed constants stay a deliberate review regression check: check mode compares MEASURED against
- *   COMMITTED, never deriving both sides from the live corpus, and update mode rewrites only the
+ *   The committed constants stay a deliberate review regression check: check mode compares measured against
+ *   committed, never deriving both sides from the live corpus, and update mode rewrites only the
  *   three constant lines so the pin test's dated history comments survive byte-identically.
  */
 
@@ -57,7 +57,7 @@ const PIN_PATTERNS: Record<keyof BoardPins, RegExp> = {
 
 /**
  * Read the committed constants out of the pin test's source. Throws when a constant is missing or duplicated — a
- * reshaped test file needs a human, not a guess.
+ * reshaped test file needs a human rather than a guess.
  */
 export function readCommittedPins(testText: string): BoardPins {
 	const read = (key: keyof BoardPins): string => {

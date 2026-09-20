@@ -4,14 +4,14 @@
 /**
  * @file Tests for {@linkcode createGoogleGeocoderClient}.
  *
- *   Every test drives the stub Axios ADAPTER from `@mailwoman/core/api/test-transport` and, where
- *   timing matters, an injected `ClockLike` from `@mailwoman/core/api/test-clocks`. NO TEST HERE
- *   PERFORMS A LIVE NETWORK CALL OR A REAL SLEEP, and on this client the first half is not merely
+ *   Every test drives the stub Axios adapter from `@mailwoman/core/api/test-transport` and, where
+ *   timing matters, an injected `ClockLike` from `@mailwoman/core/api/test-clocks`. no test here
+ *   performs A live network call or A real sleep, and on this client the first half is not merely
  *   hygiene: every uncached Google request is billed, so a suite that reached the network would charge
  *   the operator's card on every CI run.
  *
- *   The interesting assertions are the ones about Google's IN-BAND error channel — statuses that
- *   arrive under HTTP 200 and are therefore invisible to every check `core/api` provides — and about
+ *   The interesting assertions are the ones about Google's IN-band error channel — statuses that
+ *   arrive under http 200 and are therefore invisible to every check `core/api` provides — and about
  *   the API key, which must not reach a log, a cache key or a filename.
  */
 
@@ -25,8 +25,8 @@ import { join } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-// `$private` is a LIVE getter over `{ ...dotEnv, ...process.env }`, and `dotEnv` is read from the repo's
-// real `.env` once at module load — which on this machine DOES carry a `GOOGLE_MAPS_API_KEY`. A
+// `$private` is a live getter over `{ ...dotEnv, ...process.env }`, and `dotEnv` is read from the repo's
+// real `.env` once at module load — which on this machine does carry a `GOOGLE_MAPS_API_KEY`. A
 // `vi.stubEnv(..., undefined)` cannot hide it: the merge falls back to `dotEnv` regardless of what the
 // test puts on `process.env`. Mocking the module is the only way to make the missing-key test test
 // anything. (`bdc/sdk/client.test.ts` learned this the first time real FCC credentials landed in `.env`.)
@@ -37,7 +37,7 @@ vi.mock("@mailwoman/geocode-oracle/env", async (importOriginal) => {
 })
 
 // Shared-graph guard: the root vitest config runs `isolate: false`, so `./google-client.ts` may already
-// sit in the worker's cache — evaluated WITHOUT this file's env mock by an earlier file. Reset on the
+// sit in the worker's cache — evaluated without this file's env mock by an earlier file. Reset on the
 // way in so the chain re-evaluates against the mock, and on the way out so the next file in this fork
 // does not inherit it.
 vi.resetModules()
@@ -46,7 +46,7 @@ afterAll(() => vi.resetModules())
 const { createGoogleGeocoderClient, geocodeCacheKey, isCacheableGoogleBody } =
 	await import("@mailwoman/geocode-oracle/sdk/google-client")
 
-// Also imported AFTER the reset, so the `ResourceError` this file compares against is the same class
+// Also imported after the reset, so the `ResourceError` this file compares against is the same class
 // identity the client under test throws — a `vi.resetModules()` mints a fresh module registry, and a
 // statically-imported class from the old one would fail every `toBeInstanceOf`.
 const { isTransientResourceError } = await import("@mailwoman/core/api")
@@ -219,7 +219,7 @@ describe("in-band status mapping", () => {
 		const error = await captureError(client.geocodeAddress("anywhere"))
 
 		expect(error.status).toBe(429)
-		// A STATED CEILING: the caller requeues, the client does not spin.
+		// A stated ceiling: the caller requeues, the client does not spin.
 		expect(isTransientResourceError(error)).toBe(true)
 		expect(transport.calls).toHaveLength(2)
 	})
@@ -235,7 +235,7 @@ describe("the response cache", () => {
 		await client.geocodeAddress("1600 Amphitheatre Parkway")
 
 		expect(transport.calls).toHaveLength(1)
-		expect(await Globerator.files("json", { cwd: cacheDir }).toArray()).toHaveLength(1)
+		expect(await Globerator.files("json", { cwd: cacheDir, recursive: false }).toArray()).toHaveLength(1)
 	})
 
 	it("never writes the API key to disk, nor into a filename", async () => {
@@ -245,7 +245,7 @@ describe("the response cache", () => {
 
 		await client.geocodeAddress("1600 Amphitheatre Parkway")
 
-		const entries = await Globerator.files("json", { cwd: cacheDir, absolute: false }).toArray()
+		const entries = await Globerator.files("json", { cwd: cacheDir, absolute: false, recursive: false }).toArray()
 
 		expect(entries).toHaveLength(1)
 
@@ -264,7 +264,7 @@ describe("the response cache", () => {
 
 		// A REQUEST_DENIED cached under a 30-day TTL would make an unbilled key look like a permanently
 		// broken address, self-healing only by hand-deleting a hash-named file.
-		expect(await Globerator.files("json", { cwd: cacheDir }).toArray()).toHaveLength(0)
+		expect(await Globerator.files("json", { cwd: cacheDir, recursive: false }).toArray()).toHaveLength(0)
 	})
 
 	it("does persist ZERO_RESULTS as a stable answer", async () => {
@@ -343,7 +343,7 @@ describe("input dispatch", () => {
 		expect(transport.calls).toHaveLength(0)
 	})
 
-	it("treats a bare coordinate STRING as an address, not a point", async () => {
+	it("treats a bare coordinate STRING as an address rather than a point", async () => {
 		// Deliberate. `"48.85, 2.29"` means latitude-then-longitude to Google's `latlng` parameter and
 		// longitude-then-latitude to GeoJSON, and `GeoPoint.from` resolves that as GeoJSON without a
 		// heuristic — so reading the string as a point would silently reverse-geocode Somalia for
@@ -401,8 +401,8 @@ describe("pacing", () => {
 
 		await Promise.all([client.geocodeAddress("a"), client.geocodeAddress("b"), client.geocodeAddress("c")])
 
-		// 60000 / 60 = 1000ms. `requestsPerMinute` ALONE would have let all three go out at once — it is
-		// a budget, not a rate. See `bdc/sdk/client.ts` for the measurement.
+		// 60000 / 60 = 1000ms. `requestsPerMinute` alone would have let all three go out at once — it is
+		// a budget rather than a rate. See `bdc/sdk/client.ts` for the measurement.
 		expect(transport.dispatchTimes).toEqual([0, 1000, 2000])
 	})
 })

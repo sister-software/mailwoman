@@ -11,8 +11,8 @@ import {
  *   #475 postal-city alias integration. Two layers:
  *
  *   1. The reader ({@link WOFPostalCityAliasLookup}) — a postcode-scoped probe that returns only the
- *        DIVERGENT rows (postal name ≠ geographic name), the rows that carry alias signal.
- *   2. The coordinate-first scorer wiring — a user-typed POSTAL city ("Antioch", postcode 37013) becomes
+ *        divergent rows (postal name ≠ geographic name), the rows that carry alias signal.
+ *   2. The coordinate-first scorer wiring — a user-typed postal city ("Antioch", postcode 37013) becomes
  *        a name-match alias for the geographic locality the postcode sits in ("Nashville"), so the
  *        right place tiers over a same-named distractor in another state. Default-off: without the
  *        reader the resolver is byte-identical (the byte-stability test pins this).
@@ -28,7 +28,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
  */
 async function buildAliasDB(): Promise<DatabaseClient<PostalCityAliasDatabase>> {
 	const kdb = DatabaseClient.temp<PostalCityAliasDatabase>()
-	// `kdb` wraps `db` for the DDL; the test owns `db`'s lifecycle (reader.destroy()/aliasDB.destroy()),
+	// `kdb` wraps `db` for the DDL. the test owns `db`'s lifecycle (reader.destroy()/aliasDB.destroy()),
 	// so we don't destroy `kdb`.
 
 	await createPostalCityAliasTable(kdb)
@@ -41,7 +41,7 @@ async function buildAliasDB(): Promise<DatabaseClient<PostalCityAliasDatabase>> 
 	ins.run("37013", "Antioch", "Nashville", 47_389, 1, "overture:US", "2026-04")
 	// A second postcode, another alias (Woodbridge → Prince William County).
 	ins.run("22191", "Woodbridge", "Prince William County", 30_975, 1, "overture:US", "2026-04")
-	// A non-divergent row (postal name == geo name) — must NEVER surface as an alias.
+	// A non-divergent row (postal name == geo name) — must never surface as an alias.
 	ins.run("90210", "Beverly Hills", "Beverly Hills", 12_000, 0, "overture:US", "2026-04")
 
 	return kdb
@@ -72,7 +72,7 @@ function buildMainDB(): DatabaseClient<WOFDatabase> {
 	// Antioch, CA — a same-named distractor ~3000 km away the bare name-match would otherwise win.
 	spr.run(2, 0, "Antioch", "locality", "US", 38, -121.8, 37.9, 38.1, -121.9, -121.7)
 	db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`).run(1, 700_000)
-	// 37013's centroid sits in Nashville (containing); the parsed name "Antioch" does NOT match it.
+	// 37013's centroid sits in Nashville (containing); the parsed name "Antioch" does not match it.
 	db.prepare(`INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)`).run("37013", "US", 1, "Nashville", "", 0, 1)
 
 	return db

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file CORES registration document lookup.
+ * @file cores registration document lookup.
  */
 
 import { ResourceError } from "@mailwoman/core/errors"
@@ -14,9 +14,9 @@ import { parseCORESRegistration, type CORESRegistration } from "#sdk/cores/regis
 const CORES_BASE_URL = "https://apps.fcc.gov"
 
 /**
- * The slice of {@linkcode CORESClient} a caller needs to fetch one registration — one method, so a test can substitute a
- * trivial stub instead of building an axios harness. Mirrors `exhibit21.ts`'s `SECDocumentClient` precedent, and a real
- * `createCORESClient()` instance satisfies it structurally.
+ * The subset of {@linkcode CORESClient} a caller needs to fetch one registration — one method, so a test can substitute
+ * a trivial stub instead of building an axios harness. Mirrors `exhibit21.ts`'s `SECDocumentClient` precedent, and a
+ * real `createCORESClient()` instance satisfies it structurally.
  */
 export interface CORESDocumentClient {
 	getDocument(input: string | URL): Promise<string>
@@ -30,7 +30,7 @@ export function coresDetailURL(frn: FRN): string {
 }
 
 /**
- * Fetch and parse one FRN's registration. `null` when CORES has no record to state — see
+ * Fetch and parse one FRN's registration. `null` when cores has no record to state — see
  * {@linkcode parseCORESRegistration} for when that happens and why it is not an error.
  */
 export async function fetchCORESRegistration(client: CORESDocumentClient, frn: FRN): Promise<CORESRegistration | null> {

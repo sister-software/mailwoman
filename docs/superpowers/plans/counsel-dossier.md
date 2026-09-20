@@ -2,9 +2,9 @@
 
 **Purpose:** the project has no counsel on retainer; this dossier is the operator's best-effort
 collection of every standing legal question (operator, 2026-07-30: "do your best and I'll forward
-it over when the project actually pays for one"). Each item carries the question, the facts we
+it over when the project pays for one"). Each item carries the question, the facts we
 verified ourselves, and what we're doing in the meantime. Items are ordered by how much shipped
-product they check. This file is the single source — new legal questions land HERE, not in
+product they check. This file is the single source — new legal questions land here rather than in
 scattered plan docs.
 
 ## 1. ODbL — the osm/ workspace publish-block + OSM-derived corpus quarantine
@@ -16,7 +16,7 @@ built databases) ODbL derivative databases subject to share-alike?
 **Facts:** the osm/ workspace is complete but publish-blocked (its README records the posture);
 OSM-derived corpus extracts are quarantined into their own license bucket at build time
 (`.notes/data-sources.md` build sheet); poi.db ships ODbL-attributed as a **build-local** artifact
-on the layer contract's tiers.
+on the layer interface's tiers.
 
 **Interim posture:** publish-block holds; quarantine discipline holds; poi.db stays build-local.
 The KR framework (item 4) reuses this exact posture.
@@ -76,14 +76,14 @@ the Interior`. The source definition (`sources/kr/11/provincewide.json`) points 
   clear license". The file inside is the building-entrance point file (`entrc_<region>.txt`).
 - What that product is at the source: the ministry's 도로명주소 위치정보 요약DB (entrance coordinates) and
   도로명주소 전자지도. On data.go.kr both carry 공공누리 제1유형 (attribution; commercial use and
-  derivatives permitted) AND the note that they are provided only after a separate application and a
+  derivatives permitted) and the note that they are provided only after a separate application and a
   purpose-of-use review by the local government or the ministry (시행령 제46조, 시행규칙 제53조,
   별지 제32호서식). Nobody in the chain above applied. The application form's wording is unread.
 - The export rule: 도로명주소법 제25조 제10항 forbids taking a 주소정보기본도 or 주소정보안내도 that contains
   disclosure-restricted spatial information out of Korea without the minister's permission (up to two
   years or 20,000,000 won). Whether entrance coordinates count as restricted is unread.
 - The unrestricted products: the 도로명주소 한글 주소DB (시도, 시군구, 읍면동, 도로명, 건물본번·부번, 우편번호,
-  the 지번 file beside it; no coordinates) and the 영문 주소DB are direct downloads labelled
+  the 지번 file beside it; no coordinates) and the 영문 주소DB are direct downloads labeled
   "이용허락범위 제한 없음" on data.go.kr, no application. Every field the weights learned from, and every
   name in the register, is in those products.
 - KOGL's AI type (2026-01-28, 문화체육관광부 + 과학기술정보통신부): permits training and commercial use of
@@ -110,7 +110,7 @@ the table file; sourcing the equivalences from GREEN data instead avoids it.
 ## 6. Taiwan (green with mechanics)
 
 OGDL-Taiwan-1.0 on the municipal 門牌 data: attribution failure voids the license **ab initio**,
-and agencies may withdraw data (§5.2). Mechanics, not questions: ship the ~21-entry per-agency
+and agencies may withdraw data (§5.2). Mechanics rather than questions: ship the ~21-entry per-agency
 attribution manifest in the package and pin/archive the snapshots. Chunghwa Post 3+3 postcodes
 are RED (no distribution/adaptation grant) — we do not ship them; flag if a TW postcode feature
 is ever wanted.
@@ -126,7 +126,7 @@ nothing closes self-serve — but the text should be first in line when counsel 
 
 The AU G-NAF EULA bars compiling mailing lists without deliverability verification. Fine for
 parser training; becomes live only if a customer uses output for mailing-list generation —
-a terms-of-use rider on OUR license docs, not a blocker.
+a terms-of-use rider on OUR license docs rather than a blocker.
 
 ## 9. Lite artifact line (GTM D1 — the six L-markers)
 
@@ -138,12 +138,12 @@ on the free channel) and marks every point where an instrument would be needed.
    so it is a personal-data collection. Notice text at point of collection, retention period for
    the download log, and whether the privacy page's "architecturally does not collect" framing
    needs a written carve-out. Checks the form going up.
-2. **L2 — the instrument the Lite key is issued under.** Not the AGPL (that governs our code, not
+2. **L2 — the instrument the Lite key is issued under.** Not the AGPL (that governs our code rather than
    a compiled database) and not the commercial license. Needs a short data-use notice carrying the
    attribution condition and sitting correctly on top of the upstream licenses.
 3. **L3 — can we condition a compiled artifact whose inputs are public domain?** The working
-   assumption is that the attribution condition rides the download agreement, not a copyright
-   claim over facts; EU database-compilation right vs US contract likely differ. **This is the
+   assumption is that the attribution condition rides the download agreement rather than a copyright
+   claim over facts; EU database-compilation right vs US interface likely differ. **This is the
    required question for the whole Lite line.**
 4. **L4 — the WOF license, and it is fact-finding first.** The repo contradicts itself: the
    licensing pages say CC0, `resolver-wof-sqlite/README.md` and the HF dataset card say CC-BY 4.0,

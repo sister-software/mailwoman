@@ -8,7 +8,7 @@ prerequisites: "@mailwoman/un-locode-lookup (server-side, node:sqlite); the UNEC
 verified-with: mailwoman v6.1.0
 ---
 
-A **UN/LOCODE** is the UNECE's code for a trade-and-transport location — `US NYC` for New York, `NL RTM` for Rotterdam. If you're moving freight, filing customs, or matching a shipping record to a place, you need these codes, and you usually have either a place name or a coordinate to start from. The [`@mailwoman/un-locode-lookup`](https://www.npmjs.com/package/@mailwoman/un-locode-lookup) package goes both ways, over the UNECE code list in a `node:sqlite` database.
+A **UN/LOCODE** is the UNECE's code for a trade-and-transport location — `US NYC` for New York, `NL RTM` for Rotterdam. If you're moving freight, filing customs, or matching a shipping record to a place, you need these codes, and you typically have either a place name or a coordinate to start from. The [`@mailwoman/un-locode-lookup`](https://www.npmjs.com/package/@mailwoman/un-locode-lookup) package goes both ways, over the UNECE code list in a `node:sqlite` database.
 
 Like the timezone lookup, it's **server-side** and you build the database once before the first query.
 

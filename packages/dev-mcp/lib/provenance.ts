@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   WHAT AM I MEASURING AGAINST — the provenance of the artifacts under the engine, before any number is believed.
+ *   what AM I measuring against — the provenance of the artifacts under the engine, before any number is believed.
  *
  *   Every other tool here answers a question about behaviour. This one answers the question that decides whether those
  *   answers mean anything, because a gazetteer artifact carries no complaint when it is wrong: `ingestWOF` globs a
@@ -11,13 +11,13 @@
  *
  *   Three failures from one evening, none of which any measurement would have surfaced:
  *
- *   - The admin build's Overture pin named a release Overture had PRUNED. The build ran the full 2.9M-record WOF ingest
+ *   - The admin build's Overture pin named a release Overture had pruned. The build ran the full 2.9M-record WOF ingest
  *       and then failed at `fold-overture` with `IO Error: No files found`, which reads as a network fault.
  *   - `inspect sync` could only ever clone upstream, so a sync on any machine would have pulled upstream data straight
  *       over 35 records we correct — successfully, silently.
  *   - The repos root's vintages ranged from 2026-03 to **2017-12**, and no build step could see it.
  *
- *   REPORTS, NEVER REPAIRS. The repairs live in `gazetteer repos-sync` and `gazetteer inspect sync`, which are opt-in
+ *   reports, never repairs. The repairs live in `gazetteer repos-sync` and `gazetteer inspect sync`, which are opt-in
  *   because they change what the next build ingests. A read-only answer is safe to ask at any moment, including in the
  *   middle of someone else's build.
  */
@@ -34,7 +34,7 @@ interface ArtifactState {
 	bytes: number | null
 	modified: string | null
 	/**
-	 * The link target when the path is a symlink. `candidate.db` is a POINTER by design — `gazetteer promote` swaps it —
+	 * The link target when the path is a symlink. `candidate.db` is a pointer by design — `gazetteer promote` swaps it —
 	 * so the target name carries the build's identity and the path alone does not.
 	 */
 	linkTarget: string | null
@@ -59,7 +59,7 @@ export interface ProvenanceReport {
 	artifacts: ArtifactState[]
 	/**
 	 * Read from the stamp `gazetteer repos-sync` writes. Absent when that has never been run here — which is reported as
-	 * absence, not as "the repos are current".
+	 * absence rather than as "the repos are current".
 	 */
 	repos: RepoVintage[] | null
 	reposStampPath: string
@@ -100,7 +100,7 @@ export interface ProvenanceOptions {
 }
 
 /**
- * Assemble the provenance report. Every field is READ; nothing is derived from a convention that might not hold, which
+ * Assemble the provenance report. Every field is read. nothing is derived from a convention that might not hold, which
  * is why an absent file is reported as absent rather than defaulted.
  */
 export async function runProvenance(options: ProvenanceOptions = {}): Promise<ProvenanceReport> {
@@ -146,7 +146,7 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 
 	if (await pathExists(buildLogPath)) {
 		try {
-			// The build appends to `notes` — verified against the committed file, not assumed from the key's name. Each
+			// The build appends to `notes` — verified against the committed file rather than assumed from the key's name. Each
 			// entry is one dated line carrying the record counts, the Overture release and whether it was swapped live.
 			const log = (await readLocalJSONFile(buildLogPath)) as { notes?: unknown }
 			const entries = Array.isArray(log.notes) ? log.notes.filter((n): n is string => typeof n === "string") : []

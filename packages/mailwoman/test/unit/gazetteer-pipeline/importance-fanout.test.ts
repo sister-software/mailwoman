@@ -6,14 +6,14 @@
  *
  *   The four named fixtures are the real groups the 2026-08-05 survey pulled out of
  *   `admin-global-priority.db`, coordinates and populations included — one per branch of the rule, so
- *   a change to the rule that breaks a real case breaks a test rather than a rebuild.
+ *   a change to the rule that fails a real input fails a test rather than a rebuild.
  */
 
 import { FANOUT_SPREAD_EPSILON_KM, resolveConcordanceFanout } from "mailwoman/gazetteer-pipeline/importance-fanout"
 import { describe, expect, it } from "vitest"
 
 /**
- * Q61 — Washington DC as WOF models it: one place carrying three placetypes at one point. NOT an error, and the reason
+ * Q61 — Washington DC as WOF models it: one place carrying three placetypes at one point. Not an error, and the reason
  * the guard cannot simply drop every fanned-out id.
  */
 const Q61 = [
@@ -33,7 +33,7 @@ const Q18125 = [
 
 /**
  * Q1794 — Frankfurt am Main, attached to both the city and a neighbourhood 12 km out. Beyond the coincidence radius, so
- * population decides; the city wins, which is also what stops the two from carrying IDENTICAL importance and blurring
+ * population decides. the city wins, which is also what stops the two from carrying identical importance and blurring
  * the placetype signal.
  */
 const Q1794 = [
@@ -42,7 +42,7 @@ const Q1794 = [
 ]
 
 /**
- * Q340 — Montréal, CANADA, attached to two French communes 182 km apart, neither with a population row. No evidence to
+ * Q340 — Montréal, canada, attached to two French communes 182 km apart, neither with a population row. No evidence to
  * pick between them and both are wrong, so the id is dropped whole.
  */
 const Q340 = [
@@ -116,7 +116,7 @@ describe("resolveConcordanceFanout", () => {
 	})
 
 	it("measures spread across the WHOLE group, not just the first pair", () => {
-		// First two are coincident; the third is 6,000 km away. A pairwise-first implementation would
+		// First two are coincident. the third is 6,000 km away. A pairwise-first implementation would
 		// call this coincident and keep the outlier.
 		const straggler = [
 			{ id: 1, placetype: "locality", lat: 50, lon: 8, population: 100 },

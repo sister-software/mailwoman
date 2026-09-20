@@ -9,7 +9,7 @@ tags:
 
 # Landmark queries
 
-A landmark query names a specific, usually unique, place. The user doesn't want the nearest instance of a category — they want **the** Eiffel Tower, **the** Golden Check Bridge, **the** Empire State Building. The geocoder's job is to recognize the landmark name and resolve it to a single coordinate or small candidate set.
+A landmark query names a specific, typically unique, place. The user doesn't want the nearest instance of a category — they want **the** Eiffel Tower, **the** Golden Check Bridge, **the** Empire State Building. The geocoder's job is to recognize the landmark name and resolve it to a single coordinate or small candidate set.
 
 ## What landmark queries look like
 
@@ -25,7 +25,7 @@ A landmark query names a specific, usually unique, place. The user doesn't want 
 | Grand Central Terminal | Named transit + landmark — unique, transit hub                |
 | Central Park           | Named area — large, multiple entrances                        |
 | The High Line          | Named linear feature — spans a distance                       |
-| The Las Vegas Strip    | Named area — not a single point, not a polygon                |
+| The Las Vegas Strip    | Named area — not a single point rather than a polygon         |
 | Stonehenge             | Named landmark — remote, well-known                           |
 | Mount Everest          | Natural feature — summit vs base camp are different locations |
 
@@ -41,7 +41,7 @@ The complication: some named structures have the same name in multiple cities. T
 
 ### Named natural features
 
-Mountains, rivers, lakes, forests: Mount Everest, the Amazon, Lake Tahoe, Central Park. These are areas or linear features, not points. A geocode for "Central Park" could be the park's centroid, the main entrance, or the Park's visitor center — all different coordinates. A geocode for "the Amazon" is meaningless as a point — the Amazon rainforest spans 5.5 million square kilometers across 9 countries.
+Mountains, rivers, lakes, forests: Mount Everest, the Amazon, Lake Tahoe, Central Park. These are areas or linear features rather than points. A geocode for "Central Park" could be the park's centroid, the main entrance, or the Park's visitor center — all different coordinates. A geocode for "the Amazon" is meaningless as a point — the Amazon rainforest spans 5.5 million square kilometers across 9 countries.
 
 The geocoder should return the feature's centroid for map display and the most relevant entrance or access point for navigation. Which one to return depends on the use case, and the geocoder cannot know the use case from the query alone.
 
@@ -51,13 +51,13 @@ Stadiums, theaters, museums, arenas: Wrigley Field, Sydney Opera House, the Louv
 
 ### Named areas
 
-Neighborhoods, districts, informal regions: SoHo, Shibuya, the French Quarter, Silicon Valley. These are areas, not points, with fuzzy boundaries that change over time and vary by who you ask. A geocode for "SoHo" places a pin at an arbitrary point within a neighborhood whose boundaries are contested.
+Neighborhoods, districts, informal regions: SoHo, Shibuya, the French Quarter, Silicon Valley. These are areas rather than points, with fuzzy boundaries that change over time and vary by who you ask. A geocode for "SoHo" places a pin at an arbitrary point within a neighborhood whose boundaries are contested.
 
 WOF models neighborhoods as `neighbourhood` placetypes with a representative coordinate and a parent chain (Soho → Manhattan → New York City → New York → United States). The coordinate is approximate. The boundary is not modeled. This is acceptable for most use cases — "find SoHo on a map" — but not for use cases that need boundary-level precision (delivery zones, real estate searches, neighborhood statistics).
 
 ### Named linear features
 
-Trails, parkways, pedestrian paths: the High Line, the Appalachian Trail, Route 66, the Las Vegas Strip. These are paths, not points. A geocode at the midpoint of the High Line places the pin in the middle of the park — useful for map display, useless for navigation (the nearest entrance might be a mile away). Linear features need a **point-set representation** (the path as a polyline) and a way to answer "where is the nearest access point?"
+Trails, parkways, pedestrian paths: the High Line, the Appalachian Trail, Route 66, the Las Vegas Strip. These are paths rather than points. A geocode at the midpoint of the High Line places the pin in the middle of the park — useful for map display, useless for navigation (the nearest entrance might be a mile away). Linear features need a **point-set representation** (the path as a polyline) and a way to answer "where is the nearest access point?"
 
 ## How traditional geocoders handle landmark queries
 
@@ -73,7 +73,7 @@ Mailwoman's resolver indexes WOF administrative places plus a limited set of WOF
 
 The parser handles landmark queries as venue queries: a query with no address-format tokens (no numbers, no street suffixes, no state abbreviations) and a known venue name is classified as `kind=venue` and routed to the venue resolver. The F1 ≈ 0.39 figure once cited here was measured in v0.4.0, three model generations back, and no longer reflects the current classifier — a venue-fragment retrain is spec'd but not yet run. Treat the venue classifier's quality as unmeasured until that retrain lands rather than trusting either the old number or an assumed improvement.
 
-**Landmark queries are partially in scope**, and partially overlap with the newer category-query path: a landmark that also matches a POI-taxonomy category (a hospital, a named park) can resolve through `poi.db` the way [amenity queries](./amenity-queries.mdx) do. Bare landmark names that aren't categories ("Eiffel Tower") still depend on the venue classifier and WOF venue records, where the limits are data coverage (WOF's venue catalogue is not comprehensive) and the unretrained classifier described above.
+**Landmark queries are partially in scope**, and partially overlap with the newer category-query path: a landmark that also matches a POI-taxonomy category (a hospital, a named park) can resolve through `poi.db` the way [amenity queries](./amenity-queries.mdx) do. Bare landmark names that aren't categories ("Eiffel Tower") still depend on the venue classifier and WOF venue records, where the limits are data coverage (WOF's venue catalogue is not complete) and the unretrained classifier described above.
 
 ## See also
 

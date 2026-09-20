@@ -53,10 +53,10 @@ import { canonicalizeOrganizationName, type CanonicalizeOrgOpts } from "@mailwom
 - **Plain data, no classes.** Records are plain TypeScript objects with
   branded types where needed.
 - **Address-first.** The `PostalAddress` is the canonical record — the geocode-first
-  matcher resolves places, not strings.
+  matcher resolves places rather than strings.
 - **Domain-scoped.** Organization canonicalization supports jurisdiction and
   domain context (e.g., `{jurisdiction: "ID"}` for Indonesian legal designations,
-  `{domain: "healthcare"}` to protect PT/SCA from collision with medical
+  `{domain: "healthcare"}` to guard PT/SCA from collision with medical
   abbreviations).
 - **Lean dependencies.** Only depends on `@mailwoman/formatter` for the
   canonical key.
@@ -70,4 +70,4 @@ import { canonicalizeOrganizationName, type CanonicalizeOrgOpts } from "@mailwom
 
 ## License
 
-[AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html)
+[AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html)

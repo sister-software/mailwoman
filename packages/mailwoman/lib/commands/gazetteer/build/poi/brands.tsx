@@ -3,24 +3,24 @@
 
 /**
  *   `mailwoman gazetteer build poi-brands` — the POI brand lexicon builder, part 1 of 2 (part 2 wires
- *   `lookupPOIBrand` into the runtime pipeline; no pipeline wiring here). Thin wiring only: the read +
+ *   `lookupPOIBrand` into the runtime pipeline. no pipeline wiring here). Thin wiring only: the read +
  *   aggregate + write logic lives in `gazetteer-pipeline/poi/build-brands.ts`, mirroring `build/poi.tsx`'s
- *   thin-command style. Reads a BUILT `poi.db` READ-ONLY — never writes one.
+ *   thin-command style. Reads a built `poi.db` read-only — never writes one.
  *
  *   `writeBrandTable`'s plain `JSON.stringify` doesn't collapse short primitive arrays onto one line the
  *   way `oxfmt` does (e.g. `"aliases": ["Foo"]` vs a 3-line array) — the process-y bit (shelling out, like
- *   `poi.tsx`'s own `git rev-parse`) belongs at the command layer, not in the pure/testable builder. Runs
+ *   `poi.tsx`'s own `git rev-parse`) belongs at the command layer rather than in the pure/testable builder. Runs
  *   `oxfmt` on the output here so the emitted file is commit-ready without a manual format pass.
  */
 
 import { runFileSync } from "@mailwoman/core/process"
 import { Box, Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "#gazetteer-pipeline/poi/defaults"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "poi-brands",
@@ -33,14 +33,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	db?: string
-	out?: string
-	minRows?: number
-	dominance?: number
-}
-
-const GazetteerBuildPOIBrands: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildPOIBrands: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildBrandTable, defaultBrandTableOutPath, defaultPOIDatabasePath, writeBrandTable } =
 			await import("#gazetteer-pipeline/poi/build/brands")
@@ -57,7 +50,7 @@ const GazetteerBuildPOIBrands: ParsedCommandComponent<Options> = ({ options }) =
 		console.error(`▸ writing ${out}`)
 
 		await writeBrandTable(table, out)
-		runFileSync("yarn", ["oxfmt", out])
+		runFileSync("yarn", ["oxfmt", out.toString()])
 
 		const top5 = table.brands
 			.slice(0, 5)

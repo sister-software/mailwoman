@@ -27,7 +27,7 @@ itself (geocoder callers → `", "` + #690) cascades to a dedup-GBT re-train →
 
 The ES/IT postcode-anchor "gap" is largely OBE — a GeoNames backfill already closed it (ES 98.5% / IT 90%
 placed). Overture ES adds a marginal +1.5% at equal accuracy; IT/TW Overture-blocked (0% postcode fill).
-**Meta-finding (#470):** Overture's value is the address-POINT layer, not the postcode/postal-city aux
+**Meta-finding (#470):** Overture's value is the address-POINT layer rather than the postcode/postal-city aux
 tables (geography-dependent fill). Reusable extractor shipped (#701).
 
 ### 4. The #1 parser change — boundary-instability extract (#375, the capstone)
@@ -89,7 +89,7 @@ nothing. Two **pre-existing** hygiene issues surfaced (not introduced this shift
 
 - `lint:prettier:check` fails on ~49 files (mostly pre-existing: `docs/src/shared/*`, `harness-v0-neural`,
   etc., plus a few of mine) — a `prettier --write .` (with the `@sister.software/prettier-config`) clears
-  it. I did NOT bulk-reformat (it would touch unrelated files + my direct `prettier --write` hit a config
+  it. I did not bulk-reformat (it would touch unrelated files + my direct `prettier --write` hit a config
   mismatch that malformed a comment — reverted).
 - eslint scans the stale `.claude/worktrees/` leaked copies and errors on them — add `.claude/worktrees/`
   to `.eslintignore` (the errors are not in the live tree).

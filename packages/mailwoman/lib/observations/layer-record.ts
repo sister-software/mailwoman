@@ -5,9 +5,9 @@
  *   The two records every layer designation carries on its way to a caller: which artifact answered, and what
  *   the coverage row said.
  *
- *   SHARED BY ALL FOUR LAYER ROUTES, because they are provenance rather than product. A reader holding a
+ *   shared BY all four layer routes, because they are provenance rather than product. A reader holding a
  *   designation and not the artifact's identity cannot check the claim, and a reader holding a coverage
- *   magnitude without its BASIS cannot tell a cell an authority declares complete from one where a source
+ *   magnitude without its basis cannot tell a cell an authority declares complete from one where a source
  *   happened to return rows. Four routes writing the same mapping is four places for one to drop the basis.
  */
 
@@ -34,7 +34,7 @@ export interface ObservationLayerRecord {
  * The coverage side of a designation, flattened for a marker's evidence.
  *
  * `basis` travels as a plain string because a marker's evidence is JSON a caller reads rather than a typed value it
- * branches on — but it is NEVER omitted: `completeness` alone is a magnitude, and the whole point of the contract's
+ * branches on — but it is never omitted: `completeness` alone is a magnitude, and the whole point of the interface's
  * `basis` column is that a magnitude cannot be acted on without it.
  */
 export interface ObservationCoverageRecord {
@@ -67,7 +67,7 @@ export function observationLayerRecord(manifest: LayerManifest): ObservationLaye
 /**
  * A reader's coverage row as the record a designation carries, or nothing where the reading had none.
  *
- * ABSENT RATHER THAN ZEROED where the layer holds no coverage row for the cell: a missing row means UNKNOWN, and a
+ * Absent rather than zeroed where the layer holds no coverage row for the cell: a missing row means unknown, and a
  * record reading `completeness: 0` would say the opposite.
  */
 export function observationCoverageRecord(
@@ -144,9 +144,9 @@ export interface CreateDesignationRouteOptions<Reading, Observation, Refusal ext
 }
 
 /**
- * The factory frame every designation route shares: the nullable-coordinate refusal (a geocode result carries
- * `lat`/`lon` as nullable, and a coordinate-less answer is a named refusal here rather than a caller's problem), the
- * reading-shaped refusal, and the disposal that closes the lookup.
+ * The factory frame every designation route shares: the nullable-coordinate refusal (a geocode result has `lat`/`lon`
+ * as nullable, and a coordinate-less answer is a named refusal here rather than a caller's problem), the reading-shaped
+ * refusal, and the disposal that closes the lookup.
  */
 export function createDesignationRoute<Identity, Reading, Observation, Refusal extends string>(
 	lookup: { identity: Identity } & Disposable,

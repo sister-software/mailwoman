@@ -3,9 +3,9 @@
 
 /**
  *   The venue-word hint table's integrity check. The table is mined, so the committed artifact — not
- *   the generator — is what ships; these tests hold the committed rows to the bars the provenance
+ *   the generator — is what ships. these tests hold the committed rows to the bars the provenance
  *   block declares, and pin the exclusion families the composed measure exists to kill. A regenerate
- *   that widens a bar or leaks a toponym fails here, not in a consumer.
+ *   that widens a bar or leaks a toponym fails here rather than in a consumer.
  */
 
 import { readPackagedTable } from "@mailwoman/poi-taxonomy/packaged-data"
@@ -67,7 +67,7 @@ describe("venue-word-hints table integrity", () => {
 	})
 
 	it("the table is the size the survey measured, within regeneration drift", () => {
-		// 2,249 at the committed bars. A regenerate against a NEW survey artifact may move this — move
+		// 2,249 at the committed bars. A regenerate against a new survey artifact may move this — move
 		// the pin with the provenance sourceMD5, deliberately.
 		expect(venueWordHintCount()).toBe(2249)
 		expect(venueWordHintProvenance().sourceMD5).toBe("a2ae6f4b29ee0ee45870273487d86e79")

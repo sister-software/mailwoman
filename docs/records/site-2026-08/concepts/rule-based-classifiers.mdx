@@ -34,7 +34,7 @@ Each classifier:
 
 ## A worked example — the postcode classifier
 
-Probably the simplest classifier. Postcodes are a regex problem, not a machine learning problem.
+Probably the simplest classifier. Postcodes are a regex problem rather than a machine learning problem.
 
 ```ts
 const US_POSTCODE = /^\d{5}(-\d{4})?$/  // 10118 or 10118-1234
@@ -99,7 +99,7 @@ classify(tokens: Token[], context: Context): ClassificationProposal[] {
 
 Notes:
 
-- **Confidence is moderate** (0.6) because dictionary hits can be misleading. "New" is the start of many city names, so a 1-token match on "New" is weaker than a 3-token match on "New York City".
+- **Confidence is moderate** (0.6) because dictionary hits can be misleading. "New" is the start of several city names, so a 1-token match on "New" is weaker than a 3-token match on "New York City".
 - **N-gram sweep** is how multi-word cities work. The classifier tries spans of length 1, 2, and 3 and emits a proposal for each match.
 - **No exclusion logic.** If "New York" matches as a locality and "New" matches as a different component, both proposals exist; the solver picks one self-consistent combination.
 
@@ -107,7 +107,7 @@ Notes:
 
 - **Determinism.** Same input, same output, every time. No retraining, no random initialization.
 - **Easy to fix.** A bug in a regex is one line. A bug in a neural model is a retraining run.
-- **No data required.** A rule classifier ships in code. The dictionary classifiers ship a few MB of dictionaries, not a multi-GB model.
+- **No data required.** A rule classifier ships in code. The dictionary classifiers ship a few MB of dictionaries rather than a multi-GB model.
 - **Fast.** Pattern matching is microseconds per address. The whole parse runs in milliseconds.
 - **Explainable.** Every proposal carries a `source_id`. A consumer that sees `rule:postcode:us` on a wrong proposal knows exactly where to look.
 
@@ -134,7 +134,7 @@ const policy: ClassifierPolicy[] = [
 ]
 ```
 
-This is the Ship-of-Theseus pattern. The neural classifier earns each component one at a time. If a neural model regresses, flipping back to `rule_only` is one line of config.
+This is the Ship-of-Theseus pattern. The neural classifier warrants each component one at a time. If a neural model regresses, flipping back to `rule_only` is one line of config.
 
 ## Where this lives in the code
 

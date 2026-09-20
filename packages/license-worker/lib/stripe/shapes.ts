@@ -3,7 +3,7 @@
 
 /**
  *   The three reads of a Stripe object this worker makes more than once, under the pinned API version. An expandable
- *   field is a string id or the object; every caller wants the id.
+ *   field is a string id or the object. every caller wants the id.
  */
 
 import type Stripe from "stripe"

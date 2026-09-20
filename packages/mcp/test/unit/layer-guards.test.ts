@@ -48,7 +48,7 @@ async function emptySqliteFile(name: string): Promise<string> {
 }
 
 /**
- * A minimal REAL poi.db — same fixture idiom as `bdc/sdk/nearest-infrastructure.test.ts`'s `buildPOIFixture`.
+ * A minimal real poi.db — same fixture idiom as `bdc/sdk/nearest-infrastructure.test.ts`'s `buildPOIFixture`.
  * `POILookup`'s constructor eagerly prepares statements against `poi`/`poi_search` and queries `poi_category_codes`
  * (see `poi-lookup.ts`), so an arbitrary empty file won't do — `openPlausibilityPOIDeps`'s "file present" branch needs
  * these tables to actually exist.
@@ -92,15 +92,15 @@ describe("openPlausibilityPOIDeps", () => {
 		expect(await openPlausibilityPOIDeps("/nonexistent/path/poi.db")).toBeUndefined()
 	})
 
-	it("opens a lookup + contractDB pair sharing one handle when the file is present", async () => {
+	it("opens a lookup + schemadb pair sharing one handle when the file is present", async () => {
 		const path = await poiFixtureFile("poi.db")
 		const poi = await openPlausibilityPOIDeps(path)
 
 		expect(poi).toBeDefined()
 		expect(poi?.lookup).toBeDefined()
-		expect(poi?.contractDB).toBeDefined()
+		expect(poi?.schemadb).toBeDefined()
 
-		await poi?.contractDB.destroy()
+		await poi?.schemadb.destroy()
 	})
 })
 

@@ -1,6 +1,6 @@
 # Phase 0 — Foundation
 
-**Goal:** lock the contracts (schema, classifier interface, policy, locale) before writing any model code. Refactor existing rule classifiers to use the new interface with zero behavior change.
+**Goal:** lock the interfaces (schema, classifier interface, policy, locale) before writing any model code. Refactor existing rule classifiers to use the new interface with zero behavior change.
 
 **Duration estimate:** 1 week.
 
@@ -37,7 +37,7 @@ Implement `reference/SCHEMA.md` in code.
   - `BioLabel` type narrows correctly
 - [ ] Export from `packages/core/src/index.ts`.
 
-**Success:** schema is the single source of truth, importable as `import { ComponentTag } from '@mailwoman/core'`.
+**Success:** schema is the single authoritative record, importable as `import { ComponentTag } from '@mailwoman/core'`.
 
 ### 3. ClassificationProposal and Classifier interfaces
 
@@ -86,10 +86,10 @@ Implement `LocaleProfile` and `LocaleRegistry`.
 
 ### 8. Forward-compat sanity check
 
-Before declaring Phase 0 done, verify the design handles Phase 6 (Japan) cleanly:
+Before declaring Phase 0 done, verify the design handles Phase 6 (Japan) directly:
 
 - [ ] Mentally add a `ja-JP` `LocaleProfile` with `componentsSupported: ['prefecture', 'municipality', 'district', 'block', 'sub_block', 'building_number', 'building_name', 'country', 'postcode']` (no `street`, no `house_number`).
-- [ ] Does any core code break? It shouldn't. If it does, the abstraction is wrong — fix it now, not in Phase 6.
+- [ ] Does any core code break? It shouldn't. If it does, the abstraction is wrong — fix it now rather than in Phase 6.
 - [ ] Verify by running the test suite with a hypothetical JP profile registered (you don't need actual JP classifiers; just verify the registration doesn't throw and the type system is happy).
 
 ## Success criteria checklist

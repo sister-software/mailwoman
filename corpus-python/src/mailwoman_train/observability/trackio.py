@@ -5,12 +5,12 @@ experiment tracker. We mirror the metrics already written to ``train_log.csv`` i
 Trackio project so training curves and cross-version eval metrics show up on a
 self-hosted Hugging Face Space dashboard (free CPU-basic tier) instead of only living
 in a CSV. With ``space_id`` set, Trackio deploys/syncs the dashboard Space and persists
-every run to a backing HF Dataset; with no ``space_id`` it logs to a local dashboard
+every run to a backing HF Dataset. with no ``space_id`` it logs to a local dashboard
 (``~/.cache/huggingface/trackio``).
 
-Design rule — tracking must NEVER crash training. An A100 run costs real money and the
-night-shift workflow runs unattended; a metrics upload that 401s, a missing package, or
-an API drift must degrade to CSV-only, not take the run down with it. So:
+Design rule — tracking must never crash training. An A100 run costs real money and the
+night-shift workflow runs unattended. a metrics upload that 401s, a missing package, or
+an API drift must degrade to CSV-only rather than take the run down with it. So:
 
   * the whole thing no-ops when ``cfg.train.trackio_enabled`` is False (the default), or
     when the ``trackio`` package isn't installed (plain tokenizer-only installs don't
@@ -19,7 +19,7 @@ an API drift must degrade to CSV-only, not take the run down with it. So:
   * every ``log``/``finish`` call swallows exceptions behind a one-line warning.
 
 Auth: Trackio uploads to the Space using the HF cached login or ``HF_TOKEN``. On Modal,
-``HF_TOKEN`` is injected via the ``hf_secret`` in launch/train_remote.py; locally
+``HF_TOKEN`` is injected via the ``hf_secret`` in launch/train_remote.py. locally
 it uses your ``hf auth login`` token. No token -> Space upload fails -> CSV-only.
 """
 
@@ -136,7 +136,7 @@ def _run_config(cfg: Any) -> dict[str, Any]:
     return {
         # Human-readable legend shown in the run's config panel — so a viewer who isn't
         # steeped in the metrics knows how to read the charts (esp. the blank/gap ones).
-        # NB: the key must NOT start with "_" — current trackio reserves the "_" prefix and
+        # NB: the key must not start with "_" — current trackio reserves the "_" prefix and
         # raises "Config key '_legend' is reserved" from init(), which trackio_logging.py catches
         # and silently downgrades the whole run to CSV-only (no Space dashboard). Plain "legend".
         "legend": (

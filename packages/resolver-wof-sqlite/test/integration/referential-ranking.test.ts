@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   SAINT-DENIS — the canonical test for ROAD_TO_V9 §2's ratified policy: **the geocoder ranks by
- *   referential likelihood; encyclopedic importance is data, never the ranking key.**
+ *   saint-denis — the canonical test for ROAD_TO_V9 §2's ratified policy: **the geocoder ranks by
+ *   referential likelihood. encyclopedic importance is data, never the ranking key.**
  *
- *   THE CASE, with the real numbers from `wof/fst-staging-2026-08-05/admin-global-priority-importance.db`
+ *   the case, with the real numbers from `wof/fst-staging-2026-08-05/admin-global-priority-importance.db`
  *   (read 2026-08-06):
  *
  *   | place                             | wof         | population | encyclopedic |
@@ -15,15 +15,15 @@
  *
  *   Encyclopedic importance ranks the 418-person Aude hamlet **4.8x above** the Paris suburb of 96,128.
  *   A geocoder that ranked on it would answer a bare "Saint-Denis" with a hamlet nobody means. The
- *   fixture below carries BOTH scores in the gazetteer — the suburb's disadvantage on the encyclopedic
+ *   fixture below carries both scores in the gazetteer — the suburb's disadvantage on the encyclopedic
  *   column isn't withheld and asserts the suburb still wins.
  *
  *   The suburb wins because referential likelihood is what the ranking reads.
  * 	 There is no hand-written rule, pin, or safelist anywhere in the path.
  *
  *   The second half of the file is the D-rule measurement for the split (§2 R1's "expected resolver
- *   delta is ZERO"): every ranking assertion is run against a gazetteer WITHOUT the encyclopedic
- *   column and one WITH it, and the two answer identically. If carrying the score could move a rank,
+ *   delta is zero"): every ranking assertion is run against a gazetteer without the encyclopedic
+ *   column and one with it, and the two answer identically. If carrying the score could move a rank,
  *   this is where it would show.
  */
 
@@ -175,7 +175,7 @@ describe("Saint-Denis — ranking is referential", () => {
 		const results = await lookup.findPlace({ text: "Saint-Denis" })
 		const suburb = results.find((r) => r.id === 101_751_155)!
 
-		// The winner is the one with the LOWER encyclopedic score. Both facts on one object is the whole
+		// The winner is the one with the lower encyclopedic score. Both facts on one object is the whole
 		// policy: the score is visible to consumers and inert to the ranking.
 		expect(suburb.encyclopedic).toBeCloseTo(0.1173, 4)
 		expect(suburb.referential).toBeCloseTo(referentialFromPopulation(96_128), 6)
@@ -186,16 +186,16 @@ describe("Saint-Denis — ranking is referential", () => {
 	})
 
 	it("a FOURTH bearer the policy text does not name — Réunion — wins on the same rule, and that is correct", async () => {
-		// FOUND WHILE MEASURING (2026-08-06), and recorded rather than smoothed over. §2 names two
+		// found while measuring (2026-08-06), and recorded rather than smoothed over. §2 names two
 		// bearers, but the live gazetteer's referentially dominant "Saint-Denis" is neither: it is the
 		// capital of Réunion (wof 9000000590797, pop 154,765 — a French overseas department, so
 		// `country = FR` too). Ranked referentially, an unscoped bare "Saint-Denis" answers Réunion.
 		//
-		// That is the policy behaving exactly as specified, not failing. What it exposes is an
+		// That is the policy behaving exactly as specified rather than failing. What it exposes is an
 		// assumption in the ROAD_TO_V9 §3 board row `fr-wpc-saint-denis-suburb`, which pins the
 		// Seine-Saint-Denis suburb as truth: that row encodes "Metropolitan France", which is a
 		// different claim from "referentially dominant". The row fails identically under all four FST
-		// arms including no-FST, so it is a board-authoring question for §3, not a regression here —
+		// arms including no-FST, so it is a board-authoring question for §3 rather than a regression here —
 		// but a test that quietly omitted Réunion would be asserting a world that does not exist.
 		const withReunion: FixturePlace[] = [
 			...SAINT_DENIS,
@@ -234,9 +234,9 @@ describe("Saint-Denis — ranking is referential", () => {
 
 describe("D-rule — carrying the encyclopedic score moves no rank", () => {
 	/**
-	 * §2 R1 predicts a resolver delta of ZERO: the split is schema + plumbing + a carry, and the ranking key it names
+	 * §2 R1 predicts a resolver delta of zero: the split is schema + plumbing + a carry, and the ranking key it names
 	 * (population) is the one the resolver already used. Predicted is not measured, so this measures it — every query
-	 * runs against a pre-split gazetteer and a post-split one, and the returned id ORDER must be identical.
+	 * runs against a pre-split gazetteer and a post-split one, and the returned id order must be identical.
 	 */
 	const QUERIES: ReadonlyArray<{ label: string; text: string }> = [
 		{ label: "bare namesake", text: "Saint-Denis" },

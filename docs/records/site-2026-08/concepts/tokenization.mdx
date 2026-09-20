@@ -9,7 +9,7 @@ tags:
 
 # Tokenization
 
-Tokenization is the step that turns an input string into a list of small pieces called **tokens**. Every downstream component — rule classifiers, the neural classifier, the solver, the resolver — works with tokens, not with raw strings.
+Tokenization is the step that turns an input string into a list of small pieces called **tokens**. Every downstream component — rule classifiers, the neural classifier, the solver, the resolver — works with tokens rather than with raw strings.
 
 Mailwoman uses **two tokenizers** for two different jobs.
 
@@ -29,7 +29,7 @@ The character-offset preservation matters. When the parser says "10010 is a `pos
 
 The word tokenizer also pre-processes:
 
-- **Lowercase normalization** — usually applied selectively. "NY" stays "NY", but "AVENUE" becomes "Avenue".
+- **Lowercase normalization** — typically applied selectively. "NY" stays "NY", but "AVENUE" becomes "Avenue".
 - **Punctuation splitting** — `"Apt.4B"` becomes `[Apt, ., 4B]` so each piece can be classified independently.
 - **Abbreviation expansion** — optional. `"St."` can be expanded to `"Street"` for classification, then collapsed back for the output.
 
@@ -46,7 +46,7 @@ Why subwords? Two reasons:
 
 Mailwoman uses [SentencePiece](https://github.com/google/sentencepiece), an open-source subword tokenizer library originally from Google. The specific algorithm is **unigram language model** tokenization, which tends to produce slightly more linguistically-aware splits than the BPE alternative.
 
-Mailwoman's tokenizer started from a from-scratch SentencePiece unigram build. Since then it has grown through targeted vocabulary splices rather than full retrains: new diacritic-bearing pieces are trained on the affected locale's own corpus, then spliced into the existing vocabulary. Every spliced piece contains a codepoint absent from the base languages' text, so it can never match an English or French span; splicing in new coverage can't silently change how an already-shipping locale tokenizes. The added embedding rows are mean-initialized from their old-tokenizer constituents before a short fine-tune gives them real gradient.
+Mailwoman's tokenizer started from a from-scratch SentencePiece unigram build. Since then it has grown through targeted vocabulary splices rather than full retrains: new diacritic-containing pieces are trained on the affected locale's own corpus, then spliced into the existing vocabulary. Every spliced piece contains a codepoint absent from the base languages' text, so it can never match an English or French span; splicing in new coverage can't silently change how an already-shipping locale tokenizes. The added embedding rows are mean-initialized from their old-tokenizer constituents before a short fine-tune gives them real gradient.
 
 The **shipping tokenizer is v0.9.0-multisplice** (73,143 pieces, byte fallback on): the base vocabulary plus a French diacritic splice (v0.8.0-fr-nsplice, +2,406 pieces) and a further splice adding Czech, Polish, Slovak, and Slovenian diacritic coverage among other locales ([#884](https://github.com/sister-software/mailwoman/issues/884), shipped v5.1.0). See [Which languages Mailwoman handles well](./language-support.mdx) for the fertility story that made the splice necessary; French's accent fragmentation is the canonical example.
 
@@ -59,7 +59,7 @@ flowchart LR
     B --> C["['▁350', '▁5', 'th', '▁Ave', ',', '▁New', '▁York', ',', '▁NY', '▁101', '18']"]
 ```
 
-Each subword piece is mapped to an integer ID — that is what the model actually consumes. The mapping is fixed; the tokenizer is part of the model package (`tokenizer.model`).
+Each subword piece is mapped to an integer ID — that is what the model consumes. The mapping is fixed; the tokenizer is part of the model package (`tokenizer.model`).
 
 ## The span-realignment problem
 
@@ -80,7 +80,7 @@ The character offsets:
 'Ave'  → chars 8..11
 ```
 
-If the model labels `'▁5'` and `'th'` both as `B-house_number`, the consumer needs to know the combined span covers all of characters 4..7 of the original string, not either piece on its own.
+If the model labels `'▁5'` and `'th'` both as `B-house_number`, the consumer needs to know the combined span covers all of characters 4..7 of the original string rather than either piece on its own.
 
 Mailwoman's tokenizer wrapper handles this with `EncodeAsImmutableProto` (a SentencePiece API that returns piece-by-piece spans), then walks the pieces in order to compute the character range each label covers. The result is the consumer sees character spans, never has to know subword pieces exist.
 
@@ -101,7 +101,7 @@ The byte fallback comes from SentencePiece's `byte_fallback: true` setting in th
 
 - **Word tokenizer (rules):** the v1 core, around `core/tokenization/`
 - **Subword tokenizer (neural):** `neural/tokenizer.ts` + the trained model at `neural-weights-en-us/tokenizer.model`
-- **Training:** `corpus-python/src/mailwoman_train/tokenizer_splice.py` (the shipping tokenizer is built by splicing new diacritic coverage into the existing vocab, not a full retrain); output lives under `$MAILWOMAN_DATA_ROOT/models/tokenizer/v0.9.0-multisplice/`
+- **Training:** `corpus-python/src/mailwoman_train/tokenizer/splice.py` (the shipping tokenizer is built by splicing new diacritic coverage into the existing vocab rather than a full retrain); output lives under `$MAILWOMAN_DATA_ROOT/models/tokenizer/v0.9.0-multisplice/`
 
 ## See it in action
 
@@ -116,6 +116,6 @@ Expand the **Subword tokens & pipeline stages** section to see per-stage word to
 
 ## See also
 
-- [What is an address?](../understanding/the-problem/what-is-an-address.mdx) — what tokens get labelled
+- [What is an address?](../understanding/the-problem/what-is-an-address.mdx) — what tokens get labeled
 - [BIO labels](./bio-labels.mdx) — how subword-level labels become character-level spans
 - [How the model reasons](./how-the-model-reasons.mdx) — what the model does with tokens

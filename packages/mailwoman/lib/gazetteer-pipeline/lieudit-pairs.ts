@@ -6,17 +6,17 @@
  *   pair-index entry shape. The French instance of the dependent-locality prior.
  *
  *   Why BAN and not WOF, when the US instance (R5) took WOF: the source has to be whatever the
- *   POSTAL FORMAT carries. WOF's French neighbourhood records are Paris quartiers ("Des Halles",
+ *   postal format carries. WOF's French neighbourhood records are Paris quartiers ("Des Halles",
  *   "Palais Royal") — cartographic subdivisions that never appear in a French postal address, since
- *   the arrondissement is encoded in the postcode (75001 = 1er). The line that DOES appear is the
+ *   the arrondissement is encoded in the postcode (75001 = 1er). The line that does appear is the
  *   lieu-dit, written alone between the street and the commune (La Poste's line 5). Indexing
  *   quartiers would be technically valid and practically wrong: a prior pushing toward spans real
  *   addresses never contain.
  *
- *   Filtering is NOT reimplemented here. `@mailwoman/ban/sdk`'s `cleanLieuDit` already owns it
+ *   Filtering is not reimplemented here. `@mailwoman/ban/sdk`'s `cleanLieuDit` already owns it
  *   (header leaks, placeholders, `ancienne commune` prefixes, and rows whose lieu-dit merely repeats
  *   the commune — 5.0% of filled values), and it is the same filter the `synth-fr-lieudit` training
- *   database reads through, so the index and the database agree on what a lieu-dit IS by construction.
+ *   database reads through, so the index and the database agree on what a lieu-dit is by construction.
  */
 
 import { extractBANAddrPoints } from "@mailwoman/ban/sdk"
@@ -61,7 +61,7 @@ export interface LieuDitExtractResult {
  *
  * Excludes the `merged`/`france` aggregates (they duplicate the per-département rows, so counting them would inflate
  * every frequency) and prefers an uncompressed `.csv` when both forms exist for the same département — a stale-refetch
- * artifact observed on disk for 13/2A/48/69/75. Mirrors `corpus/src/database-recipes/fr-lieudit.ts`'s enumeration; the
+ * artifact observed on disk for 13/2A/48/69/75. Mirrors `corpus/src/database-recipes/fr-lieudit.ts`'s enumeration. the
  * two must agree or the index and the training database would read different populations.
  */
 export async function enumerateBANDeptFiles(banDir: string): Promise<string[]> {
@@ -90,8 +90,8 @@ export async function enumerateBANDeptFiles(banDir: string): Promise<string[]> {
 /**
  * Stream every département file and collect distinct (lieu-dit, commune) pairs.
  *
- * Reads the full national dump (~26M rows), so this is minutes, not seconds — the caller is a build command, never a
- * request path.
+ * Reads the full national dump (~26M rows), so this is minutes rather than seconds — the caller is a build command,
+ * never a request path.
  */
 export async function extractLieuDitPairs(banDir: string): Promise<LieuDitExtractResult> {
 	const files = await enumerateBANDeptFiles(banDir)

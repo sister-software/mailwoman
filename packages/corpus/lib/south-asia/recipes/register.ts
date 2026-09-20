@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `pk-register` and `bd-register` slice recipes — the typed forms of Pakistan and Bangladesh the country templates do
- *   not render, over the OpenStreetMap corpus JSONL the `osm` adapter reads (#1744, the F8 family). The adapter's own
+ *   `pk-register` and `bd-register` recipes — the typed forms of Pakistan and Bangladesh the country templates do
+ *   not render, over the OpenStreetMap corpus jsonl the `osm` adapter reads (#1744, the F8 family). The adapter's own
  *   rows carry the template shape (`4 38th Street, DHA Phase 6, Karachi`; `24 Road 104, Dhaka - 1207`); these two carry
  *   the register:
  *
- *   - the HOUSE line, `House 4, Street 25, F-7/2, Islamabad` and `House 34, Road 4, Sector 9, Uttara, Dhaka 1230` —
+ *   - the house line, `House 4, Street 25, F-7/2, Islamabad` and `House 34, Road 4, Sector 9, Uttara, Dhaka 1230` —
  *     `House` in front of the number (untagged, the same rule as Singapore's `Blk`), the numbered street, the scheme or
  *     sector as the dependent locality, the city;
- *   - the PLAIN line with the trailing postcode and no dash, `58 Kalabagan 1st Ln, Dhaka 1205` — what a person types,
+ *   - the plain line with the trailing postcode and no dash, `58 Kalabagan 1st Ln, Dhaka 1205` — what a person types,
  *     where the template writes `Dhaka - 1205`.
  *
  *   Islamabad's sector codes (`F-7/2`, `G-10/3`) are the one synthesized value: the register carries them on a handful
@@ -27,7 +27,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { componentsForOSMRow, OSM_LICENSE, sameName } from "#adapters/osm/adapter"
-import { alignAndWrite, type CorpusRecipe, readTuples, type SliceRecipeOpts, sliceSourceID } from "#recipes/scaffold"
+import { alignAndWrite, type CorpusRecipe, readTuples, type RecipeOptions, recipeSourceID } from "#recipes/scaffold"
 import type { CanonicalRow } from "#types"
 
 /**
@@ -39,7 +39,7 @@ const ISLAMABAD_SECTOR_COLUMNS = [6, 7, 8, 9, 10, 11] as const
 const ISLAMABAD_SUB_SECTORS = [1, 2, 3, 4] as const
 
 /**
- * Share of rows rendered in the house register; the rest take the plain line.
+ * Share of rows rendered in the house register. the rest take the plain line.
  */
 const P_HOUSE = 0.55
 
@@ -123,7 +123,7 @@ function makeRecipe(name: string, country: "PK" | "BD", locale: string, descript
 				description: `The OpenStreetMap ${country} corpus JSONL (osm-${country.toLowerCase()}.corpus.jsonl)`,
 			},
 		],
-		async run(opts: SliceRecipeOpts, write) {
+		async run(opts: RecipeOptions, write) {
 			if (!opts.input) {
 				throw new Error(`${name}: --input <osm-${country.toLowerCase()}.corpus.jsonl> is required`)
 			}
@@ -167,7 +167,7 @@ function makeRecipe(name: string, country: "PK" | "BD", locale: string, descript
 						country,
 						locale,
 						source: sourceName,
-						source_id: sliceSourceID(sourceName, { raw: rendering.raw }),
+						source_id: recipeSourceID(sourceName, { raw: rendering.raw }),
 						corpus_version: "0.1.0",
 						license: OSM_LICENSE,
 					},

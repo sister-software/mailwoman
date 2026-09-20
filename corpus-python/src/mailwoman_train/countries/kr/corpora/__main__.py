@@ -1,4 +1,4 @@
-"""Build the Korea slices.
+"""Build the Korea corpora.
 
 Usage:
     python -m mailwoman_train.countries.kr.corpora \\

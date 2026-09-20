@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `street` slice recipe — synthetic street-decomposition rows for Stage 3 (US-only): tuples →
- *   {@link synthesizeStreetRow} → aligned LabeledRow. Ported from scripts/build-street-slice.mjs.
+ *   `street` recipe — synthetic street-decomposition rows for Stage 3 (US-only): tuples →
+ *   {@link synthesizeStreetRow} → aligned LabeledRow. Ported from the root build script it replaced.
  */
 
 import { makeLcg } from "@mailwoman/core/utils"
@@ -13,8 +13,8 @@ import { alignAndWrite, readTuples, type CorpusRecipe } from "#recipes/scaffold"
 import { synthesizeStreetRow, type StreetBaseTuple } from "#synthesizers/street"
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const streetRecipe: CorpusRecipe = {
 	name: "street",

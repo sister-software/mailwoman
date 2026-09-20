@@ -14,7 +14,7 @@
  *
  *   The thesis it grades: two rows reading `123 Main St` and `123 Main Street Apt 2` — different
  *   strings — collapse to one entity because they resolve to the same place. Blocking is
- *   geographic, not textual. Needs the weights + databases in hand, so the real run is
+ *   geographic rather than textual. Needs the weights + databases in hand, so the real run is
  *   operator-verifiable (not CI).
  */
 
@@ -32,7 +32,13 @@ import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/registry/tool
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 import { resolverDefaultCountry } from "#country-scope"
 import type { RegionDatabaseResolver } from "#geocode/regions"
 /**
@@ -40,10 +46,10 @@ import type { RegionDatabaseResolver } from "#geocode/regions"
  */
 export const isDefault = true
 
-//#region CLI contract — args + options
+//#region CLI interface — args + options
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "run",
@@ -73,23 +79,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	mapping?: string
-	inferMapping: boolean
-	sources?: string
-	out?: string
-	mapOut?: string
-	trainEm: boolean
-	threshold: number
-	maxBlockSize?: number
-	reconcile: boolean
-	source?: string
-	locale: string
-	defaultCountry?: string
-	placeCountry: boolean
-	resolveDB?: string
-	dataRoot: string
-}
+type Options = OptionsOf<typeof spec>
 
 //#endregion
 
@@ -98,7 +88,7 @@ interface Options {
 /**
  * Built-in best-effort mapping for tidy contact/org CSVs. Multi-column fields are joined (so a CSV that splits the
  * address across columns composes one string). Real datasets with bespoke headers (e.g. NPPES "Provider First Line
- * Business Practice Location Address") pass an explicit --mapping; inferring it from the header is the #603
+ * Business Practice Location Address") pass an explicit --mapping. inferring it from the header is the #603
  * fast-follow.
  */
 export const DEFAULT_MAPPING: ColumnMapping = {
@@ -183,7 +173,7 @@ async function buildGeocoder(options: Options): Promise<{ geocodeAddress: Geocod
 		throw new CommandError("registry requires `@mailwoman/resolver-wof-sqlite` to be installed.")
 	}
 
-	// $MAILWOMAN_CANDIDATE_DB → the demo-parity candidate backend; else FTS over wofPath.
+	// $MAILWOMAN_CANDIDATE_DB → the demo-parity candidate backend. else FTS over wofPath.
 	const lookup = await createResolverBackend(mod, { wofPaths: wofPath })
 	const regionDatabaseProvider = await RegionDatabaseProvider.create(mod, options.dataRoot)
 	const databases: RegionDatabaseResolver = regionDatabaseProvider.for
@@ -230,7 +220,7 @@ export interface EvalGeocoderFlags {
 	 */
 	locale?: string
 	/**
-	 * Model-swap overrides (`nppes-benchmark` multi-version curves). `modelCardPath` is MANDATORY with `modelPath`.
+	 * Model-swap overrides (`nppes-benchmark` multi-version curves). `modelCardPath` is mandatory with `modelPath`.
 	 */
 	modelPath?: string
 	tokenizerPath?: string
@@ -239,7 +229,7 @@ export interface EvalGeocoderFlags {
 
 /**
  * Build the {@link EvalGeocoderFactory} the `@mailwoman/registry/tools` record-matcher tools take. This is the eval
- * scripts' historical construction, preserved exactly: a plain `WOFSQLitePlaceLookup` over an explicit WOF path (NOT
+ * scripts' historical construction, preserved exactly: a plain `WOFSQLitePlaceLookup` over an explicit WOF path (not
  * the candidate-table backend {@link buildGeocoder} uses), `defaultCountry: "US"`, `placeCountry: false`, and
  * `postcodeRepair: true` at the parse — so migrated evals reproduce the retired scripts' numbers. Shared by the
  * `registry train-scorer` and `registry scorer-eval` commands.
@@ -336,7 +326,7 @@ export async function loadSources(option: string): Promise<MultiSourceSpec[]> {
 }
 
 /**
- * Write the artifacts requested via `--out` (GeoJSON) and/or `--map-out` (standalone HTML map), returning the lines to
+ * Write the artifacts requested via `--out` (GeoJSON) and/or `--map-out` (standalone html map), returning the lines to
  * append to the run summary. Returns `null` when neither is set — the signal to dump GeoJSON to stdout (the original
  * default). Shared by both pipeline paths.
  */
@@ -367,8 +357,8 @@ async function writeOutputs(
 }
 
 /**
- * Multi-source mode (#618): stream each dataset under its own mapping + provenance label into ONE combined record set,
- * geocode, resolve, and report the entities that span ≥2 sources — the cross-dataset links. No shared key required;
+ * Multi-source mode (#618): stream each dataset under its own mapping + provenance label into one combined record set,
+ * geocode, resolve, and report the entities that span ≥2 sources — the cross-dataset links. No shared key required.
  * geography is the join.
  */
 async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promise<string> {
@@ -416,7 +406,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 		perSource.push(`${label} ${recs.length}`)
 	}
 
-	// learnedScorer:false — multi-source is CROSS-dataset link discovery (recall-oriented): the same
+	// learnedScorer:false — multi-source is cross-dataset link discovery (recall-oriented): the same
 	// facility under different operational names across sources is the signal we want. The default GBT is
 	// dedup-calibrated and rejects exactly that (it learned "same place + name drift = distinct"), so the
 	// cross-dataset path uses the FS spine. (Single-CSV dedup below keeps the GBT default.)
@@ -430,7 +420,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 	const geocoded = records.filter((r) => r.address?.geocode).length
 
 	// Reconciliation mode (#621): classify entities by eligibility/funding role membership, via the
-	// SAME @mailwoman/registry library as `registry scorer-eval coverage-reconciliation`.
+	// same @mailwoman/registry library as `registry scorer-eval coverage-reconciliation`.
 	if (options.reconcile) {
 		const labelOf = (s: MultiSourceSpec) => s.source ?? s.path
 		const eligibilitySources = specs.filter((s) => s.role === "eligibility").map(labelOf)
@@ -492,7 +482,7 @@ async function runRegistry(csvPath: string, options: Options): Promise<string> {
 	}
 
 	const rows = await Array.fromAsync(streamRows(csvPath))
-	// --infer-mapping reads the header (the first row's keys) and guesses the mapping; an explicit --mapping
+	// --infer-mapping reads the header (the first row's keys) and guesses the mapping. an explicit --mapping
 	// still merges on top of it. Otherwise the base is the built-in default.
 	const base = options.inferMapping && rows[0] ? inferMapping(Object.keys(rows[0])) : DEFAULT_MAPPING
 	const mapping = await loadMapping(options.mapping, options.source, base)

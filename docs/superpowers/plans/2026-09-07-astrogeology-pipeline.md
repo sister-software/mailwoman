@@ -1,10 +1,10 @@
 # Astrogeology Pipeline Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** A private workspace, `packages/astrogeology`, that turns the USGS nomenclature gazetteer and the LOLA and MOLA global DEMs into `moon.pmtiles`, `moon-hillshade.pmtiles`, `mars.pmtiles`, `mars-hillshade.pmtiles`, a search artifact per body and a build manifest with checksums, and publishes them through `mailwoman tiles publish`. CI builds the same chain over tiny fixtures with no network.
 
-**Architecture:** Fetchers under `lib/sdk/` cache pinned sources under `$MAILWOMAN_DATA_ROOT/astrogeology/<body>/source/`. `normalize.ts` turns a source row into a `PlanetaryNomenclatureFeature` with east-positive longitude in −180..180, a bounding box that survives the 0/360 wrap, and the stable id from the source's `link` column. The vector build writes NDJSON with tippecanoe hints and runs `tippecanoe`; the hillshade build runs `gdaldem` on the source grid with the body's metres-per-degree, then warps the shaded image for XYZ tiling and converts MBTiles to PMTiles with `pmtiles convert`. `pmtiles edit` injects the `mailwoman:*` metadata. A `zod` manifest is the reproducibility record. `@mailwoman/spatial` gains a body radius before any distance is computed.
+**Architecture:** Fetchers under `lib/sdk/` cache pinned sources under `$MAILWOMAN_DATA_ROOT/astrogeology/<body>/source/`. `normalize.ts` turns a source row into a `PlanetaryNomenclatureFeature` with east-positive longitude in −180..180, a bounding box that survives the 0/360 wrap, and the stable id from the source's `link` column. The vector build writes NDJSON with tippecanoe hints and runs `tippecanoe`; the hillshade build runs `gdaldem` on the source grid with the body's meters-per-degree, then warps the shaded image for XYZ tiling and converts MBTiles to PMTiles with `pmtiles convert`. `pmtiles edit` injects the `mailwoman:*` metadata. A `zod` manifest is the reproducibility record. `@mailwoman/spatial` gains a body radius before any distance is computed.
 
 **Tech Stack:** TypeScript under Node; `zod`; GDAL (`ogr2ogr`, `gdaldem`, `gdalwarp`, `gdal_translate`, `gdaladdo`), `tippecanoe` 2.80, the `pmtiles` CLI, all present on the lab; `@mailwoman/ancestrie` for the search artifact; `mailwoman/cli-kit` for the bin; vitest.
 
@@ -19,7 +19,7 @@
 - No pin drifts silently: a cached source whose size or SHA-256 differs from the lock file fails the build naming both values.
 - A test imports the package through its public exports; every module a test names gets an `exports` entry.
 - The fixture build runs under `test/integration/` (the `unit-slow` leg runs on the lab's self-hosted runners, which carry GDAL, tippecanoe and pmtiles; a missing tool fails the test with the tool's name).
-- Comments state invariants; the measurements below go in the source table, not in prose.
+- Comments state invariants; the measurements below go in the source table rather than in prose.
 - Branch: `git fetch origin main && git checkout -b feat/astrogeology origin/main`.
 
 ## Sources, measured 2026-09-07
@@ -242,7 +242,7 @@ Expected: the absence count is one more than before this branch; `publishCount` 
 
 **Interfaces:**
 
-- Produces: `PlanetaryBody` records `BODIES.moon`, `BODIES.mars` with `id`, `name`, `iauTargetName`, `meanRadiusKm` (from `BODY_RADII_KM`), `shape: "sphere" | "ellipsoid"`, `coordinates: PlanetaryCoordinateMetadata` (`longitudeDirection: "east"`, `longitudeRange: "0..360"`, `latitudeType: "planetocentric"`, `referenceBody`, `controlNetwork`), `metresPerDegree` (2πR/360, in metres: Moon 30,323.0, Mars 59,159.1 from the mean radius); `normalizeLongitude(lon): number`; `normalizeBBox({ minLon, maxLon, minLat, maxLat }): BBox` (wrap-aware); `featureIDFromLink(link): string`; `approvalDateFromSource("2006/01/01 00:00:00"): "2006-01-01"`; `featureFromSourceRow(body, row): PlanetaryNomenclatureFeature`; the zod `PlanetaryNomenclatureFeatureSchema`.
+- Produces: `PlanetaryBody` records `BODIES.moon`, `BODIES.mars` with `id`, `name`, `iauTargetName`, `meanRadiusKm` (from `BODY_RADII_KM`), `shape: "sphere" | "ellipsoid"`, `coordinates: PlanetaryCoordinateMetadata` (`longitudeDirection: "east"`, `longitudeRange: "0..360"`, `latitudeType: "planetocentric"`, `referenceBody`, `controlNetwork`), `metersPerDegree` (2πR/360, in meters: Moon 30,323.0, Mars 59,159.1 from the mean radius); `normalizeLongitude(lon): number`; `normalizeBBox({ minLon, maxLon, minLat, maxLat }): BBox` (wrap-aware); `featureIDFromLink(link): string`; `approvalDateFromSource("2006/01/01 00:00:00"): "2006-01-01"`; `featureFromSourceRow(body, row): PlanetaryNomenclatureFeature`; the zod `PlanetaryNomenclatureFeatureSchema`.
 
 - [ ] **Step 1: Tests**
 
@@ -604,7 +604,7 @@ git commit -m "feat(astrogeology): bodies, the nomenclature feature schema, and 
 grep -n "fetch(\|pipeline(\|movePath\|tmp" packages/core/lib/utils/geodatabase-archive.ts packages/tiger/lib/sdk/download.ts packages/osm/lib/sdk/fetch.ts | head -20
 ```
 
-Three fetchers stream a response to a `.tmp` sibling and rename. If `packages/core/lib/utils/geodatabase-archive.ts` already exposes that half as a function taking `(url, dest)`, import it; if all three inline it, extract `downloadToFile(url, dest, { onProgress? })` into `packages/core/lib/fs/download.ts` (exported as `@mailwoman/core/fs/download`, the one module allowed to hold the stream-to-disk shape, using `openWriteStream` from `#fs/streams` and `movePath` from `#fs/writers`), make the three fetchers call it, and add a `HELPER_HOMES` row for the `Readable.fromWeb(res.body)` shape. The tiger fetcher keeps its zip-integrity check around the call; that is its own contract.
+Three fetchers stream a response to a `.tmp` sibling and rename. If `packages/core/lib/utils/geodatabase-archive.ts` already exposes that half as a function taking `(url, dest)`, import it; if all three inline it, extract `downloadToFile(url, dest, { onProgress? })` into `packages/core/lib/fs/download.ts` (exported as `@mailwoman/core/fs/download`, the one module allowed to hold the stream-to-disk shape, using `openWriteStream` from `#fs/streams` and `movePath` from `#fs/writers`), make the three fetchers call it, and add a `HELPER_HOMES` row for the `Readable.fromWeb(res.body)` shape. The tiger fetcher keeps its zip-integrity check around the call; that is its own interface.
 
 - [ ] **Step 2: The source table and the lock**
 
@@ -705,7 +705,7 @@ node packages/astrogeology/out/cli.js fetch --body mars --kind nomenclature
 cat packages/astrogeology/sources.lock.json
 ```
 
-Expected: two entries with today's snapshot date, byte counts near 23,842,450 and 5,413,387 (a nightly archive moves by a few kilobytes), and 64-character hashes. The DEMs are fetched in Task 6 (8.5 GB and 2.1 GB; run on the lab, not in CI). The `fetch` command is written in Task 7; for this step, a three-line `node -e` over `downloadPinned` is acceptable if the command does not exist yet, but the lock content is what gets committed.
+Expected: two entries with today's snapshot date, byte counts near 23,842,450 and 5,413,387 (a nightly archive moves by a few kilobytes), and 64-character hashes. The DEMs are fetched in Task 6 (8.5 GB and 2.1 GB; run on the lab rather than in CI). The `fetch` command is written in Task 7; for this step, a three-line `node -e` over `downloadPinned` is acceptable if the command does not exist yet, but the lock content is what gets committed.
 
 ```bash
 git add packages/astrogeology
@@ -751,7 +751,7 @@ The declutter rule the spec asks for, as tippecanoe per-feature `minzoom`: a fea
 ```ts
 /**
  * The zoom at which a feature first appears, from its diameter in kilometres: ≥300 km at 0, ≥100 at 2, ≥30 at 4,
- * ≥10 at 6, everything else at 8. Cartographic decluttering, not ranking; a feature with no diameter (a region, a
+ * ≥10 at 6, everything else at 8. Cartographic decluttering rather than ranking; a feature with no diameter (a region, a
  * landing site) appears at 2.
  */
 export function minZoomForDiameter(diameterKm: number | undefined): number {
@@ -979,7 +979,7 @@ git commit -m "feat(astrogeology): hillshade build — gdaldem in the body's met
 
 - Produces: `buildSearchIndex(features, outPath): Promise<void>` writing an ancestrie artifact whose entries are feature names and aliases with the feature id as payload; `emitManifest({ body, sources, outputs, transformations }, outPath)`.
 
-- [ ] **Step 1: Read the ancestrie builder's contract, then write the index**
+- [ ] **Step 1: Read the ancestrie builder's interface, then write the index**
 
 ```bash
 sed -n 1,80p packages/ancestrie/README.md

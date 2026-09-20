@@ -2,22 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the `no-fragment` slice (Track B — the NO house-number-licence change).
+ *   Tests for the `no-fragment` recipe (Track B — the Norwegian house-number-licence change).
  *
  *   Two invariants, both required (the fr-fragment lesson, transplanted):
  *
- *   1. THE SPLIT with a DIACRITIC surface. The board keeps diacritics; a diacritic-stripping norm
+ *   1. the split with a diacritic surface. The board keeps diacritics. a diacritic-stripping norm
  *      would leak `Tømmerlien` silently. Pinned in both directions.
- *   2. THE COUNTER-DISTRIBUTION. Teaching bare `{street} {number}` alone lets the model flip its
+ *   2. the counter-distribution. Teaching bare `{street} {number}` alone lets the model flip its
  *      default from "bare -> locality" to "bare -> street", and stop emitting postcode to win the
- *      digit. The bare-LOCALITY and bare-POSTCODE counter rows must both exist and carry no street.
+ *      digit. The bare-locality and bare-postcode counter rows must both exist and carry no street.
  */
 
 import { noFragmentRecipe } from "@mailwoman/corpus/no/recipes/fragment"
-import { scratch, sliceRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
+import { scratch, recipeRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
 
-const run = sliceRunner("no-fragment", noFragmentRecipe, 901)
+const run = recipeRunner("no-fragment", noFragmentRecipe, 901)
 
 const TUPLES = [
 	{ street: "Tømmerlien", locality: "dokka", number: "3", postcode: "2870" },
@@ -49,8 +49,8 @@ describe("no-fragment", () => {
 	})
 
 	it("emits the SIGNAL — a street with NO postcode/locality partner", async () => {
-		// counterProb 0 so every non-reserved row is a street fragment; bareStreetProb 0 so it carries
-		// its number. The point of the slice: the street stands alone.
+		// counterProb 0 so every non-reserved row is a street fragment. bareStreetProb 0 so it carries
+		// its number. The point of the recipe: the street stands alone.
 		const { rows } = await run(TUPLES, ["nonexistent-surface"], { counterProb: 0, bareProb: 0 })
 		const signal = rows.filter((r) => r.components!.street)
 
@@ -59,7 +59,7 @@ describe("no-fragment", () => {
 		for (const r of signal) {
 			const c = r.components!
 
-			// A signal row has a street and MAY have a house_number, but NEVER a postcode or locality —
+			// A signal row has a street and may have a house_number, but never a postcode or locality —
 			// that is the whole licence: read the street without its partners.
 			expect(c.postcode).toBeUndefined()
 			expect(c.locality).toBeUndefined()
@@ -82,7 +82,7 @@ describe("no-fragment", () => {
 		expect(kinds.has("loc")).toBe(true)
 		expect(kinds.has("pc")).toBe(true)
 
-		// A counter row NEVER carries a street — else it is not a counter.
+		// A counter row never carries a street — else it is not a counter.
 		for (const r of rows) {
 			expect(r.components!.street).toBeUndefined()
 		}

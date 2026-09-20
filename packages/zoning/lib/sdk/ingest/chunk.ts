@@ -3,31 +3,31 @@
 
 /**
  *   The streaming pass — every feature into `zoning_area` and into `zoning_cell` — as a unit of work that can
- *   run over PART of the source.
+ *   run over part of the source.
  *
- *   WHY THIS IS A CHUNK RATHER THAN THE WHOLE FILE. h3's WASM heap cannot be reset from JavaScript, and it
+ *   why this is A chunk rather than the whole file. h3's wasm heap cannot be reset from JavaScript, and it
  *   does not survive an unbounded number of polyfill calls: over a sibling product, runs died after roughly
  *   510,000 and 798,000 features on geometry that classifies in milliseconds in a fresh process. A build that
  *   completes only when fragmentation happens to stay low is not a reproducible build, so the classification
- *   is bounded BY CONSTRUCTION — one process per range of the authority's own feature ids. This product's
- *   85,330 features fit inside the default bound; the bound ships anyway, because determinism by construction
+ *   is bounded BY construction — one process per range of the authority's own feature ids. This product's
+ *   85,330 features fit inside the default bound. the bound ships anyway, because determinism by construction
  *   is not the same fact as determinism by luck.
  *
- *   THE VOCABULARY IS A CENSUS, NOT A CHECK. The declared generic-type domain is closed and the source
- *   already breaks it — `N/A` appears on 4 rows and in no domain — so an undeclared value is RECORDED as
+ *   the vocabulary is A census rather than A check. The declared generic-type domain is closed and the source
+ *   already breaks it — `N/A` appears on 4 rows and in no domain — so an undeclared value is recorded as
  *   observed-but-undeclared rather than throwing. That is the opposite of the sibling layers' rule and it is
- *   the publisher's own doing: refusing here would refuse the Department's own data. What DOES throw is a
+ *   the publisher's own doing: refusing here would refuse the Department's own data. What does throw is a
  *   blank local code, because the local code is the claim.
  *
- *   THE CROSSWALK PAIRS ARE COUNTED HERE BECAUSE THEY ARE THE ARGUMENT FOR THE SCHEMA. If a local code
+ *   the crosswalk pairs are counted here because they are the argument FOR the schema. If a local code
  *   determined a generic type, the mapping could ship as an edge table and the local column would be
  *   redundant. It does not: measured nationally, 52 of 795 (authority, local code) pairs take more than one
  *   generic type. The chunk reports the pairs it saw and the build refuses to write an edge table while any
  *   such pair exists, so the empty `zoning_crosswalk_edge` is a checked consequence rather than an omission.
  *
- *   THE CHUNK OWNS NO ARTIFACT. It appends rows to a database the parent created and will seal, and returns
+ *   the chunk owns no artifact. It appends rows to a database the parent created and will seal, and returns
  *   counts the parent adds up. Chunks run one at a time against that file, so there is no concurrent writer
- *   and no locking to reason about. The jurisdiction, plan and vocabulary rows are RETURNED rather than
+ *   and no locking to reason about. The jurisdiction, plan and vocabulary rows are returned rather than
  *   written: they are per-chunk partials that have to be merged before insertion, and 30 authorities, 63
  *   plans and about 880 vocabulary rows cross a process boundary for nothing.
  */
@@ -90,7 +90,7 @@ export interface ZoningChunkResult {
 	observedByCoverageCell: Array<[number, number]>
 	/**
 	 * Square metres. `signed` is the raw ring sum as published; `nested` is the per-polygon hole-aware reading;
-	 * `allExterior` is what the same rings say read WITHOUT their holes.
+	 * `allExterior` is what the same rings say read without their holes.
 	 */
 	area: { signedM2: number; nestedM2: number; allExteriorM2: number }
 	/**
@@ -103,7 +103,7 @@ export interface ZoningChunkResult {
 		nestedHoles: number
 		adjacentHoles: number
 		/**
-		 * Features whose exterior was chosen by MAGNITUDE because no ring read as one by orientation — measured at one of
+		 * Features whose exterior was chosen by magnitude because no ring read as one by orientation — measured at one of
 		 * 85,330. See `ResolvedRingRoles.exteriorByMagnitude`.
 		 */
 		exteriorByMagnitude: number
@@ -159,7 +159,7 @@ export async function ingestZoningChunk(
 	const jurisdictions = new Map<string, string>()
 	const plans = new Map<string, ZoningChunkResult["plans"][number]>()
 
-	// KEYED ON A NUL-JOINED PAIR AND NEVER SPLIT BACK APART. A local code is free text that routinely contains spaces —
+	// keyed on A NUL-joined pair and never split back apart. A local code is free text that routinely contains spaces —
 	// `Special Policy Area`, `RA - Rural Area` — so a key a reader had to re-split would mangle exactly the vocabulary
 	// this layer exists to carry verbatim. The parts ride on the value instead.
 	const vocabulary = new Map<string, { scheme: string; code: string; label: string; rows: number }>()
@@ -180,7 +180,7 @@ export async function ingestZoningChunk(
 	let adjacentHoles = 0
 
 	/**
-	 * Record one observed vocabulary value. The FIRST label wins, because a later row's description is the publisher's
+	 * Record one observed vocabulary value. The first label wins, because a later row's description is the publisher's
 	 * word for the same code and choosing between them would be this package editing the publisher's vocabulary.
 	 */
 	const observe = (scheme: string, code: string, label: string): void => {
@@ -224,7 +224,7 @@ export async function ingestZoningChunk(
 				feature.crosswalkCode === null ? null : GZT_CROSSWALK_SCHEME,
 				feature.crosswalkDescription,
 				feature.crosswalkRollup,
-				// ONE GRADE PER CLAIM. Every row of THIS artifact is `authoritative` — a government department republishing
+				// one grade PER claim. Every row of this artifact is `authoritative` — a government department republishing
 				// local authorities' adopted plans — and an observed land-use layer is a different database with a different
 				// `layer_manifest.name`, never a row with a second grade in this table.
 				GZT_PROVENANCE_GRADE,
@@ -258,7 +258,7 @@ export async function ingestZoningChunk(
 				}
 			}
 
-			// COVERAGE IS DERIVED FROM THE UNCOMPACTED CLASSIFICATION, not from the stored rows. A compacted parent spans
+			// coverage is derived from the uncompacted classification rather than from the stored rows. A compacted parent spans
 			// several coverage cells and `addCoverageCells` handles that, but the fringe is where this product's cells almost
 			// all are — so counting off the stored rows and counting off the classification agree here, and the classification
 			// is the one that cannot be changed by a compaction decision.
@@ -290,7 +290,7 @@ export async function ingestZoningChunk(
 				})
 			}
 
-			// The local vocabulary is per AUTHORITY, because the codes collide across them: `Residential` means one thing in
+			// The local vocabulary is per authority, because the codes collide across them: `Residential` means one thing in
 			// Cork County Council's plan and another in Westmeath's.
 			observe(localSchemeFor(feature.authorityCode), feature.localCode, feature.localDescription ?? feature.localCode)
 

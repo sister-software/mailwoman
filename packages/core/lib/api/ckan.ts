@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The data.gov.uk CKAN catalogue read the Environment Agency layer products share.
+ *   The data.gov.uk ckan catalogue read the Environment Agency layer products share.
  *
  *   A catalogue entry is the readable primary source for a product's ISO reference dates, its licence field
  *   and its direct file URLs — the EA's own dataset landing pages are client-side applications that return
- *   only their shell to a fetch. The download URL is READ FROM HERE rather than assembled, because the EA's
+ *   only their shell to a fetch. The download URL is read from here rather than assembled, because the EA's
  *   file service keys on an opaque `fileDataSetId` that has no relationship to the dataset id: a hard-coded
  *   URL survives a republish by pointing at a file that is no longer the product.
  */

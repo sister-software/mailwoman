@@ -4,7 +4,7 @@
 /**
  *   `mailwoman gazetteer build coincident-roles <admin.db>... [--no-drop]` — derive the
  *   `coincident_roles` relation (dual-role places: city-states, capital-seat provinces, consolidated
- *   city-counties — #403/#402) into one or more admin gazetteers. Additive + idempotent; rebuilds by
+ *   city-counties — #403/#402) into one or more admin gazetteers. Additive + idempotent. rebuilds by
  *   default so the relation reflects the current spr/ancestors (`--no-drop` appends — incremental
  *   tests only). Absorbs the retired `mailwoman-wof-build-coincident-roles` bin.
  */
@@ -18,12 +18,12 @@ import {
 	CheckList,
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	useCommandTask,
 } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "coincident-roles",
@@ -32,11 +32,7 @@ export const spec = {
 	options: { drop: { type: "boolean", default: true, description: "Rebuild the relation; --no-drop appends" } },
 } as const satisfies CommandSpec
 
-interface Options {
-	drop: boolean
-}
-
-const GazetteerBuildCoincidentRoles: ParsedCommandComponent<Options> = ({ options, args }) => {
+const GazetteerBuildCoincidentRoles: CommandComponent<typeof spec> = ({ options, args }) => {
 	const state = useCommandTask(
 		async () => {
 			const { buildCoincidentRoles } = await import("@mailwoman/resolver-wof-sqlite/coincident-roles")

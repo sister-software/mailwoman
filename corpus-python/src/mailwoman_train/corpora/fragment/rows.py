@@ -33,12 +33,12 @@ COUNTRY_NAMES = {
     "NZ": "New Zealand",
 }
 
-# Country surfaces come from @mailwoman/codex (COUNTRY_SURFACE_FORMS + ISO2_TO_NAME), NOT re-derived
+# Country surfaces come from @mailwoman/codex (COUNTRY_SURFACE_FORMS + ISO2_TO_NAME), not re-derived
 # here — the codex is the single source of truth. `codex/tools/export-country-surfaces.ts` snapshots it
 # across the TS→Python boundary into the data file below (regenerate it when the codex changes). Filter
-# to word-forms (len ≥ 3) so an address TAIL is "USA" / "United States", never the bare "US" alpha-2
-# code (ambiguous with a US state code at the tail). Golden gold IS the surface, e.g.
-# "6220 SE Salmon St, Portland, OR 97215, USA" → country="USA".
+# to word-forms (len ≥ 3) so an address tail is "USA" / "United States", never the bare "US" alpha-2
+# code (ambiguous with a US state code at the tail). Golden gold is the surface, e.g.
+# "6220 SE Salmon St, Portland, or 97215, USA" → country="USA".
 _COUNTRY_SURFACES_RAW = json.loads(package_path("data", "country-surfaces.json").read_text(encoding="utf-8"))[
     "surfaces"
 ]
@@ -79,7 +79,7 @@ def render(surface: str, number: str | None, tag: str = "street") -> dict[str, A
 
 
 def render_locality_postcode(city: str, postcode: str) -> dict[str, Any]:
-    """Slice-v2 (v251 read-out): the "Eight Mile Plains 4113" class — locality + trailing postcode."""
+    """Fragment recipe v2 (v251 read-out): the "Eight Mile Plains 4113" class — locality + trailing postcode."""
     tokens = city.split() + [postcode]
     labels = ["B-locality"] + ["I-locality"] * (len(city.split()) - 1) + ["B-postcode"]
     text = f"{city} {postcode}"
@@ -97,7 +97,7 @@ def render_locality_postcode(city: str, postcode: str) -> dict[str, Any]:
 def render_context(
     street: str, number: str, city: str, country: str, trailing: bool, with_country: bool
 ) -> dict[str, Any]:
-    """Slice-v4: COMMA-FREE context rows — the failure-census headline class (71/143 street misses
+    """Fragment recipe v4: COMMA-FREE context rows — the failure-census headline class (71/143 street misses
     were unpunctuated street<->admin boundaries: "Rue Henri Barbusse Paris France"). Euro order
     STREET NUMBER CITY [COUNTRY]; en order NUMBER STREET CITY [COUNTRY]. No punctuation anywhere."""
     parts: list[tuple[str, str]] = []  # (tag, text)
@@ -139,7 +139,7 @@ def render_context(
 
 
 def render_unit(unit: str, number: str, street: str) -> dict[str, Any]:
-    """Slice-v2: AU compact unit rows — "UNIT 711 139 BOUVERIE STREET" (unit, house_number, street)."""
+    """Fragment recipe v2: AU compact unit rows — "UNIT 711 139 BOUVERIE STREET" (unit, house_number, street)."""
     unit_tokens, street_tokens = unit.split(), street.split()
     tokens = unit_tokens + [number] + street_tokens
     labels = (
@@ -188,8 +188,8 @@ def render_admin_pair(locality: str, region: str) -> dict[str, Any]:
 def render_country_context(
     street: str, number: str, city: str, country_name: str, trailing: bool, comma: bool
 ) -> dict[str, Any]:
-    """#1104 country counterweight: a full address ENDING in a country token, comma'd OR comma-free, so the
-    fine-tune keeps the country class alive — the slice-v5 mass (bare streets/localities/admin pairs) is
+    """#1104 country counterweight: a full address ENDING in a country token, comma'd or comma-free, so the
+    fine-tune keeps the country class alive — the recipe-v5 mass (bare streets/localities/admin pairs) is
     country-SPARSE and eroded country recall 88.6%→82.0%. Fields are groups (number+street space-joined as
     one unit); groups are joined by ", " (comma'd) or " " (comma-free). Cursor-tracks char-offset spans."""
     groups: list[list[tuple[str, str]]] = (
@@ -238,10 +238,10 @@ def render_country_context(
 
 def render_country_leading(surface: str, region: str, locality: str) -> dict[str, Any]:
     """#1104 v2.9.1: a LEADING-position country admin row — "United States of America, Wyoming, Лорейн"
-    (country FIRST, then region, then locality). This is the golden WOF-admin distribution the v290
-    tail-only counterweight missed; the locality may be NON-Latin (transliterated WOF alt-names), which
+    (country first, then region, then locality). This is the golden WOF-admin distribution the v290
+    tail-only counterweight missed. the locality may be NON-Latin (transliterated WOF alt-names), which
     is the point — it teaches country recognition when the locality context is non-Latin. Comma-joined
-    single-token-per-field groups; cursor-tracked spans."""
+    single-token-per-field groups. cursor-tracked spans."""
     fields = [("country", surface), ("region", region), ("locality", locality)]
     tokens: list[str] = []
     labels: list[str] = []

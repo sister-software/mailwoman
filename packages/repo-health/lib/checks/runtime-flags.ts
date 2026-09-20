@@ -11,11 +11,11 @@
  *   The sweep that motivated it found two register entries with zero test files, and they had decayed in opposite
  *   directions — which is exactly why the two readings both have to stay open: one flag restricted a union with a parser
  *   deleted two majors earlier (removal), and one reached ~1,850 lines of well-tested implementation through a switch
- *   nothing tested (missing testing — of the switch, not the switched).
+ *   nothing tested (missing testing — of the switch rather than the switched).
  *
- *   MATCHING IS DELIBERATELY LOOSE. A flag name appearing anywhere in a test file counts, including in prose. A stricter
+ *   matching is deliberately loose. A flag name appearing anywhere in a test file counts, including in prose. A stricter
  *   check (the flag passed as an option, say) would be more meaningful and far more fragile, and this check's job is to
- *   catch a flag with NO connection to the suite at all, not to grade the quality of the coverage it finds.
+ *   catch a flag with no connection to the suite at all rather than to grade the quality of the coverage it finds.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -33,7 +33,7 @@ const REGISTER = "docs/engineering/reference/runtime-flags.mdx"
 const PLAUSIBLE_REGISTER_SIZE = 20
 
 /**
- * Register rows name their flag in leading backticks. A STRUCK row (`~~`flag`~~`) is a record of something that no
+ * Register rows name their flag in leading backticks. A struck row (`~~`flag`~~`) is a record of something that no
  * longer exists and is skipped — striking is how a removed flag keeps its measurement without claiming to be live.
  */
 export function registerFlags(markdown: string): string[] {
@@ -54,8 +54,8 @@ export function registerFlags(markdown: string): string[] {
 }
 
 /**
- * Flags with no test, each with the reason it is allowed to have none. An entry here is a DEBT with a name, not an
- * exemption — the point of the list is that it is short enough to read and every line carries who owes what.
+ * Flags with no test, each with the reason it is allowed to have none. An entry here is a debt with a name rather than
+ * an exemption — the point of the list is that it is short enough to read and every line carries who owes what.
  */
 const UNCOVERED_ALLOWLIST: Record<string, string> = {}
 

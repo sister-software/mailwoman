@@ -7,7 +7,7 @@
  *   Covers all 50 states + DC + the five primary territories (PR, GU, VI, MP, AS).
  *
  *   The data is public-domain US Census reference (FIPS PUB 5-2, withdrawn but still the canonical
- *   numeric ID used by every TIGER product). It is reproduced here so the TIGER adapter can resolve
+ *   numeric ID used by every tiger product). It is reproduced here so the tiger adapter can resolve
  *   `statefp` columns (e.g. `"50"`) into a `region` component (e.g. `"VT"`) without an extra DB
  *   join.
  */
@@ -22,7 +22,7 @@ export interface USStateInfo {
 
 /**
  * FIPS state-or-territory code → `{ abbreviation, name }`. Includes all 50 states, DC, and the five primary territories
- * (PR, GU, VI, MP, AS). Codes are two-digit zero-padded strings to match TIGER column `statefp`.
+ * (PR, GU, VI, MP, AS). Codes are two-digit zero-padded strings to match tiger column `statefp`.
  */
 export const US_FIPS_STATE: Readonly<Record<string, USStateInfo>> = Object.freeze({
 	"01": { abbreviation: "AL", name: "Alabama" },
@@ -102,7 +102,7 @@ export const US_STATE_BY_ABBREVIATION: Readonly<Record<string, USStateInfo>> = O
 )
 
 /**
- * Lookup helper for adapters carrying 2-char USPS abbreviations (`"CA"`, `"VT"`). Case-folded; null for any value
+ * Lookup helper for adapters carrying 2-char USPS abbreviations (`"CA"`, `"VT"`). Case-folded. null for any value
  * outside the 50 states + DC + the five primary territories.
  */
 export function lookupStateAbbreviation(abbreviation: string | null | undefined): USStateInfo | null {

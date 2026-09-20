@@ -19,7 +19,7 @@ export interface CategoryMatch {
 	 */
 	matchedPhrase: string
 	/**
-	 * 1.0 = unrestricted or exact-locale; 0.5 = language-only locale match.
+	 * 1.0 = unrestricted or exact-locale. 0.5 = language-only locale match.
 	 */
 	confidence: number
 	/**
@@ -95,7 +95,7 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 
 	/**
 	 * Exact-phrase category lookup. `locale` selects locale-restricted synonyms with the variant-aliases semantics
-	 * (`@mailwoman/variant-aliases`' `resolveLocaleScope` owns that rule; the copies here stay local to keep this package
+	 * (`@mailwoman/variant-aliases`' `resolveLocaleScope` owns that rule. the copies here stay local to keep this package
 	 * dependency-free): exact locale 1.0, language-only 0.5, otherwise no match. unrestricted phrases always match at
 	 * 1.0. Deduplicated by category (best confidence wins), sorted by confidence descending, and at equal confidence a
 	 * curated synonym before an identity phrase ({@link CategoryMatch.phraseSource}). Without that tie-break a synonym
@@ -189,7 +189,7 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 
 	/**
 	 * One-edit recovery over the same locale-restricted phrase index. Returns a result only when the best edit distance
-	 * maps to exactly one category; ambiguity is an abstention. Short inputs are excluded because one edit is too
+	 * maps to exactly one category. ambiguity is an abstention. Short inputs are excluded because one edit is too
 	 * permissive.
 	 */
 	function lookupPOICategoryTypo(text: string, locale?: string): CategoryMatch[] {

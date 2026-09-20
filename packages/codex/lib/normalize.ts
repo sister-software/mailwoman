@@ -10,13 +10,14 @@
  *   a codex table already depends on it. Putting the folding rules next to the tables they fold
  *   means a lookup and its table can never disagree about what counts as the same name.
  *
+ *   TODO: Not true, or at least should not be true if importing a specific export from core.
  */
 
 /**
- * Fold a name to its ASCII match key: lower-cased, accents stripped, every run of non-alphanumerics collapsed to a
+ * Fold a name to its ascii match key: lower-cased, accents stripped, every run of non-alphanumerics collapsed to a
  * single space.
  *
- * This is the aggressive fold used to match a user's surface form against a codex table — `"Québec"` and `"QUEBEC"` and
+ * This is the aggressive fold used to match a user's surface form against a codex table — `"Québec"` and `"quebec"` and
  * `"quebec"` all become `"quebec"`. It is lossy by design and never used to render anything back to a user.
  */
 export function foldName(s: string): string {
@@ -40,7 +41,7 @@ export function wordNorm(s: string): string {
 	return s
 		.split(/\s+/)
 		.map((w) => w.replaceAll(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
-		.filter((w) => w.length > 0)
+		.filter((w) => w.length)
 		.join(" ")
 }
 

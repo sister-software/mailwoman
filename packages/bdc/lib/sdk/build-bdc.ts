@@ -14,35 +14,35 @@
  *   1. **A staging-dedup pass.** BDC's per-provider CSVs can carry exact-duplicate rows (repeat
  *      filings, overlapping re-downloads); poi's Overture rows never needed this. `bdc_stage` is a
  *      plain Kysely-built table (not part of the public {@link BDCDatabase} — it never survives to the
- *      sealed artifact) carrying a composite PRIMARY KEY on the natural key
+ *      sealed artifact) carrying a composite primary KEY on the natural key
  *      `(geoid, provider_id, technology_code, location_id)`. Rows load via a RAW prepared
- *      `INSERT OR IGNORE` — the AGENTS.md "hot bulk write" carve-out, same discipline as the
+ *      `insert or ignore` — the agents.md "hot bulk write" carve-out, same discipline as the
  *      candidate-gazetteer builder — which is the direct replacement for the Redis
  *      set-membership check the earlier draft's `sync/commands/bdc/infer-locations.ts` used for this exact
- *      dedup (dedup semantics only; the earlier draft's Redis-backed location inference itself has no analog
- *      here). `h3_cell` is computed only AFTER staging, per distinct geoid, against the deduped set —
+ *      dedup (dedup semantics only. The earlier draft's Redis-backed location inference itself has no analog
+ *      here). `h3_cell` is computed only after staging, per distinct geoid, against the deduped set —
  *      so a duplicate row is never charged twice against `unknownGeoids` or `layer_coverage` either.
- *      The natural key's `location_id` component means the SAME (geoid, provider_id, technology_code)
+ *      The natural key's `location_id` component means the same (geoid, provider_id, technology_code)
  *      triple legitimately survives staging once per distinct BSL — correct when `includeLocationIDs`
- *      is true. The default (NULL `location_id`) mode collapses at MATERIALIZE time via `SELECT DISTINCT`
- *      over every column EXCEPT `location_id` — that is, to one row per distinct (geoid, provider_id,
+ *      is true. The default (NULL `location_id`) mode collapses at materialize time via `select distinct`
+ *      over every column except `location_id` — that is, to one row per distinct (geoid, provider_id,
  *      technology_code, max_advertised_download_speed, max_advertised_upload_speed, low_latency,
- *      business_residential_code) TUPLE, NOT one row per (geoid, provider_id, technology_code) triple.
+ *      business_residential_code) tuple rather than one row per (geoid, provider_id, technology_code) triple.
  *      When every BSL in a block shares identical speeds/flags for a given provider/technology (the
  *      common case), those two are the same thing and the collapse yields exactly one row per triple.
- *      But when BSLs at the SAME triple carry DIFFERENT speeds/flags (a real, accepted FCC filing
+ *      But when BSLs at the same triple carry different speeds/flags (a real, accepted FCC filing
  *      pattern — a provider filing different advertised speeds at different addresses in one block),
  *      the distinct rows survive collapse as multiple NULL-`location_id` rows at that one triple. This
- *      is deliberate, matches the FCC source data's own granularity, and is NOT a bug to fix — see
+ *      is deliberate, matches the FCC source data's own granularity, and is not a bug to fix — see
  *      `filing-landscape.ts`'s module docstring for the read-side consequence (the same provider/tech
  *      can surface in more than one `speed_bucket` for one queried block).
- *   2. **Temp-path build + move-aside-first swap**, per AGENTS.md's database house rule ("build
+ *   2. **Temp-path build + move-aside-first swap**, per agents.md's database house rule ("build
  *      successfully, then move the previous version to a temp directory, and then move the new
  *      version into place... ensures the database is always in a consistent state, even if the build
  *      script fails halfway through"): build lands at `${out}.building`, seals there, then
- *      `${out}` (if present) is renamed to `${out}.prev` BEFORE the sealed build takes its place —
+ *      `${out}` (if present) is renamed to `${out}.prev` before the sealed build takes its place —
  *      mirroring `mailwoman/eval-harness/gauntlet/build-regression-db.ts`'s swap. `build-poi.ts`
- *      instead writes `out` directly (removing any stale file first) and records ITS OWN deviation
+ *      instead writes `out` directly (removing any stale file first) and records its own deviation
  *      from an even older staging-suffix convention — see that file's docstring. This builder takes
  *      the opposite fork on purpose: a from-scratch nationwide BDC ingest is long enough that a
  *      mid-build crash mustn't cost the previously-good artifact, which is exactly the failure mode
@@ -62,10 +62,10 @@ import {
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
 import type { FilerDatabase } from "@mailwoman/filer"
-// `pickPrimaryFRN`/`readFRNFilingCandidates` are loaded via a LAZY `await import("@mailwoman/filer/filer-lookup")`
+// `pickPrimaryFRN`/`readFRNFilingCandidates` are loaded via a lazy `await import("@mailwoman/filer/filer-lookup")`
 // inside `populateBDCProviderTable`, not a top-level runtime import — see that function's docstring
 //
-// Only the TYPES are imported here; `import type` is fully erased.
+// Only the types are imported here; `import type` is fully erased.
 import type { FRN } from "@mailwoman/filer/frn"
 import type { ProviderListRow } from "@mailwoman/filer/sdk"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
@@ -92,14 +92,15 @@ import { readAvailabilityRows, type BDCAvailabilityRow } from "#sdk/parsing"
 export { createTIGERBlockCentroidLookup, geometryCentroid } from "#sdk/geometry"
 
 /**
- * Rows committed per `BEGIN`/`COMMIT` batch during both the staging load and the materialize pass — matches
+ * Rows committed per `begin`/`commit` batch during both the staging load and the materialize pass — matches
  * `build-poi.ts`'s `STAGE_BATCH_SIZE` discipline.
  */
 const STAGE_BATCH_SIZE = 10_000
 
 /**
  * The manifest's `attribution` — names the FCC as the source, then copies the Fabric-boundary sentence verbatim from
- * `bdc/README.md`'s "CostQuest Fabric boundary" section (backticks stripped — this is plain prose, not markdown).
+ * `bdc/readme.md`'s "CostQuest Fabric boundary" section (backticks stripped — this is plain prose rather than
+ * markdown).
  */
 export const BDC_ATTRIBUTION =
 	"FCC Broadband Data Collection. This workspace never ingests, ships, or derives data from the Fabric: " +
@@ -107,7 +108,7 @@ export const BDC_ATTRIBUTION =
 
 export interface BuildBDCOptions {
 	/**
-	 * Injected row source — the TEST INJECTION POINT (mirrors `BuildPOIOptions.rows`). When given, `csvPaths` is ignored
+	 * Injected row source — the test injection point (mirrors `BuildPOIOptions.rows`). When given, `csvPaths` is ignored
 	 * and no filesystem read happens.
 	 */
 	rows?: Iterable<BDCAvailabilityRow> | AsyncIterable<BDCAvailabilityRow>
@@ -123,31 +124,31 @@ export interface BuildBDCOptions {
 	 */
 	out: string
 	/**
-	 * The FCC filing's `as_of_date` (e.g. from `resolveLatestVintage`) — becomes the manifest's `sourceVintage` AND
+	 * The FCC filing's `as_of_date` (e.g. from `resolveLatestVintage`) — becomes the manifest's `sourceVintage` and
 	 * `version` (BDC has no independent layer versioning yet, same deferral `build-poi.ts` makes for `release`).
 	 */
 	asOfDate: string
 	/**
-	 * `git rev-parse --short HEAD` — passed in by the command, not read from the repo here.
+	 * `git rev-parse --short head` — passed in by the command rather than read from the repo here.
 	 */
 	buildSHA: string
 	/**
-	 * Populate `bdc_availability.location_id` (the opaque BSL join key — spec §2.2, NEVER resolved against the Fabric).
+	 * Populate `bdc_availability.location_id` (the opaque BSL join key — spec §2.2, never resolved against the Fabric).
 	 * Default `false`: the column stays `NULL` unless a caller explicitly opts in.
 	 */
 	includeLocationIDs?: boolean
 	/**
-	 * Resolve a 15-char census block GEOID to its centroid. Injected so tests supply a small fixture `Map` lookup instead
-	 * of touching a real TIGER database; the real (CLI-wired) implementation is
-	 * {@linkcode createTIGERBlockCentroidLookup}, which reads `tabblock20.GEOID` (uppercase — `TIGERBlockTable`) block
+	 * Resolve a 15-char census block geoid to its centroid. Injected so tests supply a small fixture `Map` lookup instead
+	 * of touching a real tiger database. the real (CLI-wired) implementation is
+	 * {@linkcode createTIGERBlockCentroidLookup}, which reads `tabblock20.geoid` (uppercase — `TIGERBlockTable`) block
 	 * geometry. Returning `undefined` for an unknown geoid is required: the materialize pass counts it in `unknownGeoids`
-	 * and skips the row — it must NEVER guess a cell.
+	 * and skips the row — it must never guess a cell.
 	 */
 	blockCentroids: (geoid: string) => { lat: number; lon: number } | undefined
 	onProgress?: (message: string) => void
 	/**
 	 * Provider-list rows ({@link ProviderListRow}, `@mailwoman/filer/sdk`'s `parseProviderList`) — the test/CLI injection
-	 * point for populating `bdc_provider` (2a decision 8 / 3a decision 6). When ABSENT (the default), `bdc_provider`
+	 * point for populating `bdc_provider` (2a decision 8 / 3a decision 6). When absent (the default), `bdc_provider`
 	 * stays empty and the rest of the build is untouched: every code path this option touches is conditioned behind `if
 	 * (options.providers)`, so omitting it changes nothing. When present, `buildBDCDatabase` groups rows by `providerID`
 	 * and inserts one `bdc_provider` row per distinct provider — see {@link BuildBDCOptions.filerDB} for how the primary
@@ -156,12 +157,12 @@ export interface BuildBDCOptions {
 	 */
 	providers?: Iterable<ProviderListRow> | AsyncIterable<ProviderListRow>
 	/**
-	 * Filer.db handle (`@mailwoman/filer`) used to resolve a multi-FRN provider's PRIMARY FRN via
+	 * Filer.db handle (`@mailwoman/filer`) used to resolve a multi-FRN provider's primary FRN via
 	 * `readFRNFilingCandidates` + `pickPrimaryFRN` (`@mailwoman/filer/sdk`, decision 6) — imported rather than
-	 * reimplemented, because the candidate query needs BOTH halves of the half-open `valid_from`/`valid_to` predicate and
-	 * a second implementation here would be a second place to drop the `valid_to` half. Only actually QUERIED for a
+	 * reimplemented, because the candidate query needs both halves of the half-open `valid_from`/`valid_to` predicate and
+	 * a second implementation here would be a second place to drop the `valid_to` half. Only actually queried for a
 	 * `provider_id` whose rows carry more than one distinct `frn` — a single-FRN provider needs no lookup, since its lone
-	 * FRN is already primary by construction. Required whenever `providers` is given AND at least one `provider_id` turns
+	 * FRN is already primary by construction. Required whenever `providers` is given and at least one `provider_id` turns
 	 * out to be multi-FRN; `buildBDCDatabase` throws a descriptive error naming the offending `provider_id` if it's
 	 * needed but missing, rather than silently picking an arbitrary FRN.
 	 */
@@ -178,10 +179,10 @@ export interface BuildBDCResult {
 	out: string
 	/**
 	 * Rows materialized into `bdc_availability` (post-dedup, post-unknown-geoid-skip). In the default
-	 * (`includeLocationIDs: false`) mode this is per DISTINCT (geoid, provider_id, technology_code, speeds, low_latency,
-	 * business_residential_code) tuple, not per BSL — multiple BSLs at the same (geoid, provider_id, technology_code)
-	 * triple collapse to one row ONLY when their speeds/flags also match; BSLs at the same triple with differing
-	 * speeds/flags survive as separate rows (see the module docstring).
+	 * (`includeLocationIDs: false`) mode this is per distinct (geoid, provider_id, technology_code, speeds, low_latency,
+	 * business_residential_code) tuple rather than per BSL — multiple BSLs at the same (geoid, provider_id,
+	 * technology_code) triple collapse to one row only when their speeds/flags also match. BSLs at the same triple with
+	 * differing speeds/flags survive as separate rows (see the module docstring).
 	 */
 	rows: number
 	/**
@@ -208,13 +209,13 @@ export interface BuildBDCResult {
 }
 
 /**
- * Create the build-only `bdc_stage` table — deliberately NOT part of the public {@link BDCDatabase} interface (it's
+ * Create the build-only `bdc_stage` table — deliberately not part of the public {@link BDCDatabase} interface (it's
  * dropped before the artifact seals, so it never appears in the shipped schema). Built via Kysely's schema builder per
- * the AGENTS.md DDL convention (`createTable` takes any string table name — it doesn't need to be a `keyof DB` to
+ * the agents.md DDL convention (`createTable` takes any string table name — it doesn't need to be a `keyof DB` to
  * type-check); all of `bdc_stage`'s actual reads/writes below go through raw `.prepare()` on the shared `DatabaseSync`
  * instead, per the "hot bulk write" carve-out.
  *
- * The composite PRIMARY KEY on the natural key is what makes `INSERT OR IGNORE` a dedup: SQLite silently drops any
+ * The composite primary KEY on the natural key is what makes `insert or ignore` a dedup: SQLite silently drops any
  * insert whose key already exists rather than raising the constraint violation.
  */
 async function createBDCStageTable(db: Kysely<BDCDatabase>): Promise<void> {
@@ -234,7 +235,7 @@ async function createBDCStageTable(db: Kysely<BDCDatabase>): Promise<void> {
 
 /**
  * A `bdc_stage` row, as read back by the materialize pass. When `includeLocationIDs` is true, `location_id` is
- * populated (one row per distinct BSL). When false (default), the materialize query collapses on every column EXCEPT
+ * populated (one row per distinct BSL). When false (default), the materialize query collapses on every column except
  * `location_id` (see {@linkcode buildBDCDatabase}'s materialize step), so `location_id` is simply absent from that
  * query and never read.
  */
@@ -252,17 +253,17 @@ interface BDCStageRow {
 /**
  * Peek the constant `provider_id` column (index 1) off an FCC BDC availability CSV's first data row.
  *
- * Production per-provider files carry the SAME `provider_id` in every row (the FCC partitions availability files per
+ * Production per-provider files carry the same `provider_id` in every row (the FCC partitions availability files per
  * provider) — `parsing.ts`'s `takeAvailabilityLine` already assumes this, taking `providerID` as a parameter rather
  * than re-slicing column 1 per row. This reads it once, directly off the raw bytes, rather than threading a parallel
  * `providerID` array alongside `csvPaths` through the public options shape.
  *
- * `csvPath` is optional and used ONLY to name the offending file in a thrown error (the direct-buffer unit tests call
+ * `csvPath` is optional and used only to name the offending file in a thrown error (the direct-buffer unit tests call
  * this without one; {@linkcode readAvailabilityRowsFromCSVPaths} always supplies it). The `Number.isSafeInteger` guard
- * below is required, not defensive dressing: `bdc_stage.provider_id` is `INTEGER NOT NULL`, and a bare
+ * below is required rather than defensive dressing: `bdc_stage.provider_id` is `integer not NULL`, and a bare
  * `Number.parseInt` on a non-numeric field (a malformed/re-headered/truncated CSV) silently produces `NaN`. `NaN` binds
- * to that NOT NULL column as SQLite `NULL`, `INSERT OR IGNORE` then drops the row without a constraint error, and every
- * dropped row gets counted as `deduped` — the ENTIRE file's rows vanish silently, misreported as ordinary dedup. A
+ * to that not NULL column as SQLite `NULL`, `insert or ignore` then drops the row without a constraint error, and every
+ * dropped row gets counted as `deduped` — the entire file's rows vanish silently, misreported as ordinary dedup. A
  * malformed CSV must be loud, never silently absorbed, so this throws instead.
  */
 export function peekProviderID(csvBuffer: Buffer, csvPath?: string): ProviderID {
@@ -303,15 +304,15 @@ export function peekProviderID(csvBuffer: Buffer, csvPath?: string): ProviderID 
  * row is ~110 bytes, so this is three orders of magnitude of slack. A file shorter than this simply reads short —
  * {@linkcode peekProviderID} already reports a header-only or empty file by message.
  *
- * `provider_id` is a constant per file, so establishing it needs the first data row and nothing else; a whole-file read
+ * `provider_id` is a constant per file, so establishing it needs the first data row and nothing else. a whole-file read
  * was resident-loading 920 MB (one state × technology) to read one column of one row.
  */
 const PROVIDER_ID_PEEK_BYTES = 64 * 1024
 
 /**
  * Peeks each file's `provider_id` off its head ({@linkcode peekProviderID}, passing the path through so a malformed
- * file's error names it), then STREAMS every row via `readAvailabilityRows` — the file is never resident. This is the
- * production counterpart to the TEST INJECTION POINT's injected `rows` — exercised by `build-bdc.test.ts` only for the
+ * file's error names it), then streams every row via `readAvailabilityRows` — the file is never resident. This is the
+ * production counterpart to the test injection point's injected `rows` — exercised by `build-bdc.test.ts` only for the
  * malformed-provider-id rejection path, same as `build-poi.ts`'s Parquet reader.
  */
 async function* readAvailabilityRowsFromCSVPaths(csvPaths: readonly string[]): AsyncIterable<BDCAvailabilityRow> {
@@ -323,15 +324,15 @@ async function* readAvailabilityRowsFromCSVPaths(csvPaths: readonly string[]): A
 }
 
 /**
- * Rows per `INSERT` batch when populating `bdc_provider`. Far smaller than {@link STAGE_BATCH_SIZE}: that constant
+ * Rows per `insert` batch when populating `bdc_provider`. Far smaller than {@link STAGE_BATCH_SIZE}: that constant
  * tunes `bdc_availability`'s multi-million-row raw-prepared-statement path, whereas `bdc_provider` is a small
- * per-provider dictionary (thousands of rows, not millions) inserted through Kysely's typed `insertInto` — this batches
- * only to stay comfortably under SQLite's bound-parameter ceiling, not for throughput.
+ * per-provider dictionary (thousands of rows rather than millions) inserted through Kysely's typed `insertInto` — this
+ * batches only to stay comfortably under SQLite's bound-parameter ceiling rather than for throughput.
  */
 const PROVIDER_INSERT_BATCH_SIZE = 500
 
 /**
- * Groups `providers` by `providerID`. `parseProviderList` yields one {@link ProviderListRow} PER LINE of the source
+ * Groups `providers` by `providerID`. `parseProviderList` yields one {@link ProviderListRow} PER line of the source
  * CSV, preserving cardinality (never folded, never last-wins — see that module's docstring) — so a `provider_id`
  * appearing on N rows arrives here as N separate rows, exactly as decision 6 requires downstream.
  */
@@ -357,17 +358,17 @@ async function groupProviderListRows(
  * Populate `bdc_provider` from `options.providers` (2a decision 8 / 3a decision 6) — see `schema.ts`'s
  * `BDCProviderTable` docstring for the full lossy-denormalization rationale. For each distinct `provider_id`:
  *
- * - Exactly one `frn` among its rows → that FRN is primary by construction; no `filerDB` query needed at all.
+ * - Exactly one `frn` among its rows → that FRN is primary by construction. no `filerDB` query needed at all.
  * - More than one distinct `frn` → `readFRNFilingCandidates` (`@mailwoman/filer/sdk`, lazily imported — see below) reads
- *   each FRN's own most recent IN-FORCE `form-499` filing edge from `filerDB`, `asOf` the given date, and
+ *   each FRN's own most recent IN-force `form-499` filing edge from `filerDB`, `asOf` the given date, and
  *   `pickPrimaryFRN` picks the winner (decision 6: most recent 499 filing date wins). A `provider_id` whose FRNs carry
- *   NO 499 filing to rank by inserts `frn: NULL` rather than guessing — `pickPrimaryFRN` throws on empty input, so this
+ *   no 499 filing to rank by inserts `frn: NULL` rather than guessing — `pickPrimaryFRN` throws on empty input, so this
  *   checks `candidates.length` first, mirroring `filerLookup`'s own `primary_frn: null` handling of the same case.
- * - `filerDB` is REQUIRED the instant a multi-FRN `provider_id` is encountered; its absence throws immediately, naming
+ * - `filerDB` is required the instant a multi-FRN `provider_id` is encountered. its absence throws immediately, naming
  *   the offending `provider_id`, rather than silently picking an arbitrary FRN.
- * - `holding_company` gets the IDENTICAL single-distinct-value shortcut `frn` gets: exactly one distinct non-null
+ * - `holding_company` gets the identical single-distinct-value shortcut `frn` gets: exactly one distinct non-null
  *   `holdingCompany` across a provider's rows means there's no conflict to resolve, so it's populated directly, no rule
- *   needed. Two or more distinct values IS the real conflict decision 6 refuses to paper over with last-wins — that
+ *   needed. Two or more distinct values is the real conflict decision 6 refuses to paper over with last-wins — that
  *   case inserts NULL, and every value stays recoverable from `filer.db`. A `null` `holdingCompany` on some rows
  *   doesn't count as a competing value (a row simply not stating it isn't a conflicting assertion) — only distinct
  *   NON-NULL strings are compared.
@@ -377,13 +378,13 @@ async function groupProviderListRows(
  *
  * **Lazy `@mailwoman/filer/filer-lookup` import.** `readFRNFilingCandidates`/`pickPrimaryFRN` are loaded via `await
  * import("@mailwoman/filer/filer-lookup")`, memoized in `filerSDK` below, rather than a top-level static import. The
- * cost this avoids is smaller than it was: the specifier used to be the `@mailwoman/filer/sdk` BARREL, which `export
+ * cost this avoids is smaller than it was: the specifier used to be the `@mailwoman/filer/sdk` barrel, which `export
  * *`s `cluster-filers.ts` and so pulls `@mailwoman/match`/`record`/`registry` in behind it — a top-level import of that
- * barrel regressed `@mailwoman/bdc`'s import time ~32% for EVERY consumer, including ones that never populate
+ * barrel regressed `@mailwoman/bdc`'s import time ~32% for every consumer, including ones that never populate
  * providers. `filer-lookup.ts` alone imports only `@mailwoman/sqlite/client`, `#schema` and `#frn` (measured
  * 2026-09-01), so the heavy graph is no longer on this path at all. The laziness is kept because it also defers opening
  * the filer database, and a static import here is now a viable simplification if someone wants to measure it — but it
- * is no longer load-bearing for import time.
+ * is no longer required for import time.
  */
 async function populateBDCProviderTable(
 	db: DatabaseClient<BDCDatabase>,
@@ -460,8 +461,8 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 
 	await makeDirectories(dirname(options.out))
 
-	// A crash inside a PRIOR run's swap can leave the slot empty while the previous version sits
-	// parked aside — restore it before building, so a failure in THIS run still leaves an artifact
+	// A crash inside a prior run's swap can leave the slot empty while the previous version sits
+	// parked aside — restore it before building, so a failure in this run still leaves an artifact
 	// serving. Both aside spellings: this builder's old `.prev` and swapDatabaseIntoPlace's `.old-<pid>`.
 	if (!(await pathExists(options.out))) {
 		const base = basename(options.out)
@@ -483,7 +484,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 	// Build-tuning pragmas — identical to build-poi.ts's discipline.
 	db.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
 
-	// Assigned at the end of the try — the tallies live inside its scope; the seal + swap do not.
+	// Assigned at the end of the try — the tallies live inside its scope. the seal + swap do not.
 	let result: BuildBDCResult
 
 	try {
@@ -553,17 +554,17 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 		)
 
-		// The FCC's per-provider CSVs are per-BSL: the SAME (geoid, provider_id, technology_code, speeds, low_latency,
+		// The FCC's per-provider CSVs are per-BSL: the same (geoid, provider_id, technology_code, speeds, low_latency,
 		// business_residential_code) tuple can repeat once per Broadband Serviceable Location within that block (a
 		// dense urban block can carry ~100 BSLs) — `bdc_stage`'s natural key includes `location_id`, so those BSL rows
 		// all survive the staging dedup as distinct staged rows. In `includeLocationIDs` mode that's correct: every BSL
 		// is a real, distinct row the caller asked to keep. In the default (NULL `location_id`) mode, when those BSLs
-		// ALSO share identical speeds/flags, they'd otherwise materialize as byte-identical rows, inflating `result.rows`
-		// and `layer_coverage.observed_rows` by the BSL count (~100x at real scale) — `SELECT DISTINCT`
-		// over every column EXCEPT `location_id` collapses those byte-identical BSL duplicates down to one row.
-		// IMPORTANT — this is NOT a guarantee of one row per (geoid, provider_id, technology_code) triple: BSLs at the
-		// same triple with DIFFERING speeds/flags are NOT the same tuple, so `SELECT DISTINCT` does not merge them —
-		// they survive as multiple NULL-`location_id` rows at that one triple. Accepted, not a bug; see the module
+		// also share identical speeds/flags, they'd otherwise materialize as byte-identical rows, inflating `result.rows`
+		// and `layer_coverage.observed_rows` by the BSL count (~100x at real scale) — `select distinct`
+		// over every column except `location_id` collapses those byte-identical BSL duplicates down to one row.
+		// important — this is not a guarantee of one row per (geoid, provider_id, technology_code) triple: BSLs at the
+		// same triple with differing speeds/flags are not the same tuple, so `select distinct` does not merge them —
+		// they survive as multiple NULL-`location_id` rows at that one triple. Accepted rather than a bug. see the module
 		// docstring and `filing-landscape.ts`'s docstring for the read-side consequence.
 		const stageStmt = options.includeLocationIDs
 			? db.prepare(
@@ -591,12 +592,12 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 
 				resolved = centroid
 					? (() => {
-							// Coverage cell MUST be derived as the res-9 cell's H3 hierarchy parent — NOT a second,
+							// Coverage cell must be derived as the res-9 cell's H3 hierarchy parent — not a second,
 							// independent `latLngToCell(centroid, 6)` call. H3's cell hierarchy is not geometrically
 							// exact: a point's directly-indexed res-6 cell and its res-9 cell's `cellToParent(…, 6)`
-							// disagree for a real fraction of points (~6% empirically over CONUS — hexagon/pentagon
+							// disagree for a real fraction of points (~6% empirically over conus — hexagon/pentagon
 							// boundary artifacts). Deriving both `h3_cell` and the coverage cell from
-							// the SAME full res-9 index is what lets `filing-landscape.ts`'s reader reconstruct this
+							// the same full res-9 index is what lets `filing-landscape.ts`'s reader reconstruct this
 							// exact coverage cell from nothing but the stored `h3_cell` (its `res9ShortCellToRes6Parent`
 							// applies `cellToParent` to the reconstructed res-9 cell) — builder and reader must derive
 							// the res-6 parent identically, or a genuinely-surveyed block can read back as unknown.
@@ -652,7 +653,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		progress("geoid index (index-after-load — see schema.ts)")
 		await createBDCGeoidIndex(db)
 
-		// Coverage is SOURCE-LEVEL, not survey completeness — same convention build-poi.ts documents: a res-6 cell we
+		// Coverage is source-level rather than survey completeness — same convention build-poi.ts documents: a res-6 cell we
 		// have availability rows in is recorded at completeness 1.0. A cell absent from `layer_coverage` means no rows
 		// were observed there at all (the meaning-of-zero rule — missing = unknown, never `{completeness: 0}`).
 		const coverageCells = sourcePresentCoverageCells(coverage)
@@ -697,8 +698,8 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 
 		progress("finalize: ANALYZE + VACUUM")
 		db.exec("ANALYZE")
-		// page_size MUST be set right before VACUUM — node:sqlite initializes the file at the 4096 default on
-		// `new DatabaseSync`, so the earlier pragma is a no-op until a VACUUM rebuilds at the new size (build-poi.ts's
+		// page_size must be set right before vacuum — node:sqlite initializes the file at the 4096 default on
+		// `new DatabaseSync`, so the earlier pragma is a no-op until a vacuum rebuilds at the new size (build-poi.ts's
 		// same discipline).
 		db.exec("PRAGMA page_size=8192")
 		db.exec("VACUUM")
@@ -730,7 +731,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 	progress("seal")
 	await sealDatabase(buildingPath)
 
-	// Atomic move-into-place via the shared helper (the AGENTS.md database house rule): prior
+	// Atomic move-into-place via the shared helper (the agents.md database house rule): prior
 	// version aside first, forward rename restored on failure so the slot is never left empty.
 	await swapDatabaseIntoPlace(buildingPath, options.out)
 

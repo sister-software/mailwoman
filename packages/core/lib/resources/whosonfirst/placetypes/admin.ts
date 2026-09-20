@@ -25,7 +25,7 @@ export interface WOFBaseProperties {
 	"wof:concordances"?: Record<string, string | number>
 	/**
 	 * Every ancestor chain the place belongs to, coarsest key first — `[{ country_id, region_id, locality_id }, …]`. More
-	 * than one entry means the place has multiple parents, which is what `wof:parent_id` records as the `-4` sentinel;
+	 * than one entry means the place has multiple parents, which is what `wof:parent_id` records as the `-4` sentinel.
 	 * the keys present vary by branch, so a missing rung is absent rather than null.
 	 */
 	"wof:hierarchy"?: Array<Record<string, number>>
@@ -42,8 +42,8 @@ export interface WOFBaseProperties {
 	"lbl:latitude"?: number
 	"lbl:longitude"?: number
 	/**
-	 * `"minLon,minLat,maxLon,maxLat"` — WOF writes the bbox as a comma-joined string, not an array. Read by the gazetteer
-	 * ingest for the resolver's point-in-box proximity.
+	 * `"minLon,minLat,maxLon,maxLat"` — WOF writes the bbox as a comma-joined string rather than an array. Read by the
+	 * gazetteer ingest for the resolver's point-in-box proximity.
 	 */
 	"geom:bbox"?: string
 	"gn:population"?: number

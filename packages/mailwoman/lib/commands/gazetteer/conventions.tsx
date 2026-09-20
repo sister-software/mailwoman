@@ -2,21 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer conventions` — build the **convention asset** (#290, Direction E) FROM
- *   SOURCE: compile the authored convention profiles in `data/conventions/conventions.json` into a
+ *   `mailwoman gazetteer conventions` — build the **convention asset** (#290, Direction E) from
+ *   source: compile the authored convention profiles in `data/conventions/conventions.json` into a
  *   read-only, provenance-stamped sqlite asset (`address_convention` keyed by WOF polygon id + a
  *   `meta` row), the same distributable-asset shape as `postcode-locality-intl.db`.
  *
  *   The authored JSON is the human-editable source of truth (diffable, code-reviewed); the `.db` is
- *   the queryable, immutable compiled form the resolver reads ON DEMAND (one indexed lookup per id,
- *   not the whole table paged into memory). Per the provenance-first design value: every row
+ *   the queryable, immutable compiled form the resolver reads on demand (one indexed lookup per id rather than the whole table paged into memory). Per the provenance-first design value: every row
  *   carries `source` provenance, and a convention that names a strategy this build doesn't register
- *   is rejected HERE, loudly, rather than silently no-opping at runtime.
+ *   is rejected here, loudly, rather than silently no-opping at runtime.
  *
  *   Authored entry shape (each element of the JSON array): { "wof_id": 85633111, "source": "…why this
  *   row exists…", "convention": { …Convention… } }
  *
- *   The build writes the asset DIRECTLY to `--output` (the original `scripts/build-conventions.ts`
+ *   The build writes the asset directly to `--output` (the original `scripts/build-conventions.ts`
  *   behavior); it then VACUUMs + integrity-checks before returning. Progress is quiet — only the
  *   final summary lands on stdout.
  */
@@ -24,8 +23,8 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
-// resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman; its runtime value `BUILTIN_STRATEGY_NAMES`
-// is imported DYNAMICALLY inside the command (the gazetteer-pipeline convention) so merely loading the
+// resolver-wof-sqlite is an optional peer dep of mailwoman. its runtime value `BUILTIN_STRATEGY_NAMES`
+// is imported dynamically inside the command (the gazetteer-pipeline convention) so merely loading the
 // commands (e.g. `mailwoman --help`) doesn't fault when the peer is absent. `Convention` is type-only.
 import type { Convention } from "@mailwoman/resolver-wof-sqlite"
 import {
@@ -36,24 +35,19 @@ import {
 import { Box, Text } from "ink"
 import { resolvePath } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "conventions",
 	description: "Compile authored convention profiles",
 	options: {
 		src: { type: "string", default: "data/conventions/conventions.json", description: "Authored convention profiles" },
-		output: { type: "string", description: "Compiled SQLite path" },
+		out: { type: "string", description: "Compiled SQLite path", deprecatedName: "output" },
 	},
 } as const satisfies CommandSpec
-
-interface Options {
-	src: string
-	output?: string
-}
 
 interface AuthoredConvention {
 	wof_id: number
@@ -64,7 +58,7 @@ interface AuthoredConvention {
 const WEIGHT_KEYS = new Set(["pc", "name", "pop"])
 
 /**
- * Reject malformed or code-incoherent conventions at BUILD time (loud), so the runtime never has to.
+ * Reject malformed or code-incoherent conventions at build time (loud), so the runtime never has to.
  */
 function validate(rows: AuthoredConvention[], known: Set<string>): void {
 	const errors: string[] = []
@@ -107,7 +101,7 @@ function validate(rows: AuthoredConvention[], known: Set<string>): void {
 	if (errors.length) throw new CommandError(`convention validation failed:\n  - ${errors.join("\n  - ")}`)
 }
 
-const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerConventions: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
@@ -117,7 +111,7 @@ const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
 		const KNOWN = new Set<string>(BUILTIN_STRATEGY_NAMES)
 
 		const src = options.src
-		const output = resolvePath(options.output ?? dataRootPath("wof", "conventions.db"))
+		const output = resolvePath(options.out ?? dataRootPath("wof", "conventions.db"))
 
 		const rows = await readLocalJSONFile<AuthoredConvention[]>(src)
 
@@ -125,7 +119,7 @@ const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
 		validate(rows, KNOWN)
 
 		const kdb = new DatabaseClient<ConventionDatabase>(output)
-		// DDL via the Kysely schema-builder; the row INSERTs below stay on the raw `kdb` handle.
+		// DDL via the Kysely schema-builder. the row INSERTs below stay on the raw `kdb` handle.
 		await kdb.schema.dropTable("address_convention").ifExists().execute()
 		await kdb.schema.dropTable("meta").ifExists().execute()
 
@@ -145,7 +139,7 @@ const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
 			description: "Geographic Rule Engine convention profiles, keyed by WOF polygon id (Direction E)",
 			schema_version: "1",
 			source:
-				"Authored profiles compiled from data/conventions/conventions.json (built from source, not a prebuilt dump)",
+				"Authored profiles compiled from data/conventions/conventions.json (built from source rather than a prebuilt dump)",
 			rows: String(rows.length),
 			strategies_known: [...KNOWN].join(","),
 		}
@@ -156,7 +150,7 @@ const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
 			insMeta.run(k, v)
 		}
 
-		kdb.exec("PRAGMA journal_mode = DELETE") // no -wal/-shm sidecar; the .db is self-contained
+		kdb.exec("PRAGMA journal_mode = DELETE") // no -wal/-shm sidecar. the .db is self-contained
 		kdb.exec("ANALYZE")
 		assertDatabaseIntegrity(kdb, output)
 		kdb.exec("VACUUM")

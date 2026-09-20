@@ -6,7 +6,7 @@ fixture exactly.
 
 The critical properties: the LONG leading form ("united states of america") paints every word as an
 UNAMBIGUOUS country surface (the #1104 WOF-admin case the tagger reads as a leading street);
-homographs ("georgia", "CA") fire country_surface AND country_ambiguous symmetrically (the model
+homographs ("georgia", "CA") fire country_surface and country_ambiguous symmetrically (the model
 disambiguates via context); short codes match uppercase-only ("us" the word ≠ "US"); and the
 char→piece projection mirrors the anchor's first-non-ws rule.
 """
@@ -67,8 +67,8 @@ def test_long_leading_form_paints_every_word_unambiguous():
     assert w["United"] == S
     assert w["States"] == S
     assert w["of"] == S
-    assert w["America"] == S  # inside the phrase → NOT the standalone ambiguous "america"
-    assert w["Wyoming"] == 0  # a US region, not a country surface
+    assert w["America"] == S  # inside the phrase → not the standalone ambiguous "america"
+    assert w["Wyoming"] == 0  # a US region rather than a country surface
     assert w["Cheyenne"] == 0
 
 

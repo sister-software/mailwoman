@@ -80,7 +80,7 @@ export interface ModuleMovePlan {
 	moves: ModuleMove[]
 	rewrites: SpecifierRewrite[]
 	/**
-	 * `exports`/`imports` targets the moves invalidate. A subpath KEY never changes: it is the package's contract, and a
+	 * `exports`/`imports` targets the moves invalidate. A subpath KEY never changes: it is the package's interface, and a
 	 * file moving underneath it is not a consumer's business.
 	 */
 	manifestRewrites: ManifestRewrite[]
@@ -92,7 +92,7 @@ export interface ModuleMovePlan {
 	unresolved: UnresolvedSpecifier[]
 	/**
 	 * Files read to find the rewrites, against the tracked-source total they were drawn from. The pre-filter in `plan.ts`
-	 * is what separates the two numbers; a reader comparing them can see whether it did any work.
+	 * is what separates the two numbers. a reader comparing them can see whether it did any work.
 	 */
 	scanned: { read: number; tracked: number }
 }

@@ -22,7 +22,7 @@ def test_whitespace_spans_handles_repeats():
     raw = "Buffalo Health Clinic, 123 Main St, Buffalo, NY 14201"
     tokens = ["Buffalo", "Health", "Clinic,", "123", "Main", "St,", "Buffalo,", "NY", "14201"]
     spans = whitespace_spans(raw, tokens)
-    # First "Buffalo" is at index 0; second is the trailing "Buffalo," token.
+    # First "Buffalo" is at index 0. second is the trailing "Buffalo," token.
     assert spans[0] == (0, 7)
     # The "Buffalo," span: locate it explicitly from the raw to keep the test independent of
     # changes in upstream whitespace handling.
@@ -49,7 +49,7 @@ def test_realign_labels_preserves_bio_continuity():
     # Every piece that lands inside the "Burlington" span should be locality-tagged,
     # and only the first should be B-, rest I-.
     assert aligned[0].startswith("B-") or aligned[0] == "O"
-    # The piece(s) that fall on "VT" should be region; first one is B-region.
+    # The piece(s) that fall on "VT" should be region. first one is B-region.
     region_indices = [i for i, lab in enumerate(aligned) if lab.endswith("-region")]
     if region_indices:
         first = region_indices[0]
@@ -66,7 +66,7 @@ def test_encode_row_pads_and_masks_correctly():
     assert len(enc["input_ids"]) == 16
     assert len(enc["attention_mask"]) == 16
     assert len(enc["labels"]) == 16
-    # Non-pad section is short; the rest is pad + IGNORE_INDEX.
+    # Non-pad section is short. the rest is pad + IGNORE_INDEX.
     non_pad = sum(enc["attention_mask"])
     assert 1 <= non_pad <= 4
     for i in range(non_pad, 16):

@@ -4,7 +4,7 @@
 /**
  * @file A forward geocode result as Nominatim's address block: the parse's named slots first, then the resolved
  *   ancestry labelled by tag the way Nominatim labels each ancestor by its address rank — a Japanese municipality is
- *   `city`, a prefecture `state`, a 大字 / 町名 `suburb`. The native `locality` / `region` slots stay what the parse said;
+ *   `city`, a prefecture `state`, a 大字 / 町名 `suburb`. The native `locality` / `region` slots stay what the parse said.
  *   only this compatibility surface reads the JP tiers into the Latin keys.
  */
 
@@ -27,7 +27,7 @@ export const TAG_TO_KEY: Record<string, keyof NominatimAddressDetails> = {
 }
 
 function joinNonEmpty(...parts: Array<string | undefined>): string {
-	return parts.filter((part) => part !== undefined && part.length > 0).join(", ")
+	return parts.filter((part) => part !== undefined && part.length).join(", ")
 }
 
 /**
@@ -48,7 +48,7 @@ export function forwardToResolved(r: GeocodeResult): ResolvedAddress {
 		address.postcode = r.postcode
 	}
 
-	// The resolved ancestry fills what the slots did not: a JP result carries `municipality` and `prefecture` in
+	// The resolved ancestry fills what the slots did not: a JP result includes `municipality` and `prefecture` in
 	// `hierarchy` and nothing in `locality` / `region`. Most specific first, so the first name per key wins.
 	for (const h of r.hierarchy) {
 		const key = TAG_TO_KEY[h.tag]

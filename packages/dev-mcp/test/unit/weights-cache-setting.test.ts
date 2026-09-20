@@ -4,10 +4,10 @@
 /**
  *   The candidate-weights setting, and the guard that keeps it from measuring the shipped model.
  *
- *   `resolveWeights` treats an explicit `cacheRoot` as authoritative ONLY when that directory actually holds the
- *   binaries; a cache missing them falls through to the installed workspace package, which in this repo always
- *   resolves. So a typo in a cache path does not fail — it grades the SHIPPED model and labels the answer with the
- *   candidate's name. That is the failure this file pins: the engine refuses BEFORE the multi-second session build,
+ *   `resolveWeights` treats an explicit `cacheRoot` as authoritative only when that directory actually holds the
+ *   binaries. a cache missing them falls through to the installed workspace package, which in this repo always
+ *   resolves. So a typo in a cache path does not fail — it grades the shipped model and labels the answer with the
+ *   candidate's name. That is the failure this file pins: the engine refuses before the multi-second session build,
  *   and it refuses differently for a wrong-shaped root than for a correctly-shaped one that is under-staged.
  */
 
@@ -114,7 +114,7 @@ describe("weights_cache — the guard", () => {
 
 	it("separates under-staged from wrong-shape", async () => {
 		// The two need different fixes — restage the bundle vs copy the siblings the card declares — and the #1516
-		// failure they prevent looks like a model regression, not a missing file. One message for both sends the
+		// failure they prevent looks like a model regression rather than a missing file. One message for both sends the
 		// reader to the wrong place.
 		const root = await stageCache("under-staged", ["fst-en-us.bin", "postcode-en-us.bin"])
 
@@ -136,7 +136,7 @@ describe("weights_cache — the guard", () => {
 		await expect(registry.acquire({ weights_cache: "/nonexistent/v999-cache" })).rejects.toThrow(/v999-cache/)
 
 		// The measurable half: a refusal that happened after a 1.4 s build would still be correct and would still cost
-		// the build. Nothing resident means it refused on the path, not on the artifacts.
+		// the build. Nothing resident means it refused on the path rather than on the artifacts.
 		expect(registry.size).toBe(0)
 	})
 })

@@ -58,10 +58,10 @@ describe("three-law selectivity — pure units", () => {
 
 	it("law-3 guard: parent prominence never launders a person-name surface", () => {
 		// A neighbourhood named "Joseph" inside a metropolis (parent 0.9) is still the Rue-Joseph
-		// hazard — only OWN metropolis-tier importance clears a person-name surface.
+		// hazard — only own metropolis-tier importance clears a person-name surface.
 		expect(clearsProminenceFloor("joseph", 0.1, personNames, 0.9)).toBe(false)
 		expect(clearsProminenceFloor("joseph", PERSON_NAME_IMPORTANCE_FLOOR, personNames, 0)).toBe(true)
-		// Non-name neighbourhoods DO inherit parent prominence (the Montmartre-class fix).
+		// Non-name neighbourhoods do inherit parent prominence (the Montmartre-class fix).
 		expect(clearsProminenceFloor("belleville", 0, personNames, 0.9)).toBe(true)
 		expect(clearsProminenceFloor("obscureplace", 0, personNames, 0.1)).toBe(false)
 	})
@@ -88,7 +88,7 @@ describe("three-law selectivity — pure units", () => {
 			expect(directionals.has(s), s).toBe(true)
 		}
 
-		// The set stays out of the shipped FST policy — loadDegenerateSurfaces alone must NOT carry
+		// The set stays out of the shipped FST policy — loadDegenerateSurfaces alone must not carry
 		// "northeast" (policy separation: degenerate-surface-exclusion v1.1 is baked into FST trailers).
 		expect((await loadDegenerateSurfaces(undefined, painterFold)).surfaces.has("northeast")).toBe(false)
 	})
@@ -96,7 +96,7 @@ describe("three-law selectivity — pure units", () => {
 	it("law 4 (v5): US region vocabulary carries the census flip surfaces", () => {
 		const region = loadUSRegionVocabulary()
 
-		// The evidence→REGION rotation rows: Washington DC, Missouri Break Ln, Frannie Wyoming, Vermont 05454.
+		// The evidence→region rotation rows: Washington DC, Missouri Break Ln, Frannie Wyoming, Vermont 05454.
 		for (const s of ["washington", "wyoming", "vermont", "missouri", "wy", "ct", "dc", "north dakota"]) {
 			expect(region.has(s), s).toBe(true)
 		}
@@ -181,12 +181,12 @@ describe("street-type lexicon build", () => {
 		expect(built.skippedRegionVocabulary).toBeGreaterThanOrEqual(4)
 		const j = await readLocalJSONFile<StreetTypeLexicon>(tmp)
 
-		// "MOUNTAIN WAY WY 82601" / "SUSIE CT WY 83101" — the state token must carry NO street evidence.
+		// "mountain WAY WY 82601" / "susie CT WY 83101" — the state token must carry no street evidence.
 		for (const code of ["WY", "CT", "KY", "MT", "PR"]) {
 			expect(j.code_entries[code], code).toBeUndefined()
 		}
 
-		// Directional codes stay (single-letter CA forms; none collide with a state).
+		// Directional codes stay (single-letter CA forms. none collide with a state).
 		expect(j.code_entries.N).toBe(1)
 		expect(j.code_entries.W).toBe(1)
 		// The canonical words behind the dropped codes are untouched.

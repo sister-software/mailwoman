@@ -18,17 +18,17 @@
 
 import { CommandError } from "@mailwoman/core/scripting/command"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "postcode-locality",
 	description: "Build a postcode-to-locality table.",
 	options: {
 		recipe: { type: "string", required: true, choices: ["base", "jp", "kr", "tw"], description: "Build recipe" },
-		output: { type: "string", required: true, description: "Output database" },
+		out: { type: "string", required: true, description: "Output database", deprecatedName: "output" },
 		country: { type: "string", description: "ISO-2 country" },
 		"admin-repo": { type: "string", description: "WOF admin repo" },
 		"postcode-db": { type: "string", description: "Postcode database" },
@@ -43,23 +43,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	recipe: "base" | "jp" | "kr" | "tw"
-	output: string
-	country?: string
-	adminRepo?: string
-	postcodeDB?: string
-	radiusKM?: number
-	maxCandidates?: number
-	finalize: boolean
-	postalNames?: string
-	geonames?: string
-	adminDB?: string
-	postalXML?: string
-	divisions?: string
-}
-
-const GazetteerBuildPostcodeLocality: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildPostcodeLocality: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const need = (name: string, v: string | undefined): string => {
 			if (!v) throw new CommandError(`--${name} is required for --recipe ${options.recipe}`)
@@ -73,7 +57,7 @@ const GazetteerBuildPostcodeLocality: ParsedCommandComponent<Options> = ({ optio
 					await import("#gazetteer/postcode/locality/base")
 
 				if (options.finalize) {
-					await finalizePostcodeLocality(options.output)
+					await finalizePostcodeLocality(options.out)
 
 					break
 				}
@@ -82,7 +66,7 @@ const GazetteerBuildPostcodeLocality: ParsedCommandComponent<Options> = ({ optio
 					country: need("country", options.country),
 					adminRepo: need("admin-repo", options.adminRepo),
 					postcodeDB: need("postcode-db", options.postcodeDB),
-					output: options.output,
+					output: options.out,
 					radiusKM: options.radiusKM ?? 10,
 					maxCandidates: options.maxCandidates ?? 4,
 					finalize: false,
@@ -98,7 +82,7 @@ const GazetteerBuildPostcodeLocality: ParsedCommandComponent<Options> = ({ optio
 					postalNames: need("postal-names", options.postalNames),
 					geonames: need("geonames", options.geonames),
 					adminDB: need("admin-db", options.adminDB),
-					output: options.output,
+					output: options.out,
 				})
 
 				break
@@ -109,7 +93,7 @@ const GazetteerBuildPostcodeLocality: ParsedCommandComponent<Options> = ({ optio
 				await buildPostcodeLocalityKR({
 					geonames: need("geonames", options.geonames),
 					adminDB: need("admin-db", options.adminDB),
-					output: options.output,
+					output: options.out,
 				})
 
 				break
@@ -121,14 +105,14 @@ const GazetteerBuildPostcodeLocality: ParsedCommandComponent<Options> = ({ optio
 					postalXML: need("postal-xml", options.postalXML),
 					divisions: need("divisions", options.divisions),
 					adminDB: need("admin-db", options.adminDB),
-					output: options.output,
+					output: options.out,
 				})
 
 				break
 			}
 		}
 
-		return `postcode-locality (${options.recipe}): ${options.output} — sealed 0444`
+		return `postcode-locality (${options.recipe}): ${options.out} — sealed 0444`
 	})
 
 	return <CommandTaskResult state={state} />

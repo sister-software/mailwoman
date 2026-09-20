@@ -1,6 +1,6 @@
 # Land arability and soils as a spatial layer — source survey and two-consumer design
 
-Design record for #1984. A survey, not a builder: it settles which authorities publish land-capability
+Design record for #1984. A survey rather than a builder: it settles which authorities publish land-capability
 and soils data we could carry, what each one's own words permit and forbid, what a layer built from one
 would be allowed to claim, and which single source and region the first build should take. The builder
 is a follow-up issue, outlined in §7 and not filed here.
@@ -11,9 +11,9 @@ activity-affordance vector wants a per-cell signal that can sit beside light, dw
 density. Acquiring the same national datasets twice, with two aggregation choices that can never be
 reconciled cell for cell, is the outcome §4 exists to prevent.
 
-The consuming implementation already exists, so nothing below proposes new architecture. The layer contract
+The consuming implementation already exists, so nothing below proposes new architecture. The layer interface
 (`layer_manifest` / `layer_coverage` on the H3 spine) is specified in
-[`../../engineering/reference/layer-contract.mdx`](../../engineering/reference/layer-contract.mdx);
+[`../../engineering/reference/layer-interface.mdx`](../../engineering/reference/layer-interface.mdx);
 `packages/bdc` is the worked federal-provider shape; the exclusion-grade coverage pilot
 ([`2026-08-27-exclusion-grade-coverage-pilot.md`](./2026-08-27-exclusion-grade-coverage-pilot.md)) is
 the basis discipline; the flood survey
@@ -22,7 +22,7 @@ template; and `packages/mailwoman/lib/observations/absence-route.ts` plus its `Q
 deliver an additive, provenance-carrying advisory without touching ranking.
 
 **Every external claim below carries its URL and the date it was read.** Measurements taken from this
-lab are labeled as measurements and give the command's answer, not a summary of it. Where a fact could
+lab are labeled as measurements and give the command's answer rather than a summary of it. Where a fact could
 not be established from a primary source it is in §8 as unverified, with what was tried. Nothing in §8
 was filled in with a plausible reading.
 
@@ -39,7 +39,7 @@ picks from that measurement**; §4.4 establishes only that no affordable resolut
 the spine-key declaration for a polygon-derived cell layer (§4.7, the same open question the flood
 survey left, and the same answer will serve both); whether the observation's advisory code extends
 the existing query-intent vocabulary or widens the carrier (§5.5, likewise shared with the flood
-survey); and the fitting question of whether an arability signal carries information beyond the signals
+survey); and the fitting question of whether the result information beyond the signals
 #1683 already names, which is #1684's measurement and not this record's.
 
 Out of scope by the issue and kept out: the builder itself; any fitting work; and any authored land-use
@@ -66,7 +66,7 @@ did in the flood survey. **The USDA soil hosts do not.** Measured from this lab 
 | `nrcs.app.box.com`               | HTTP 302                              |
 | `www.nrcs.usda.gov`              | needs browser headers — see below     |
 
-`www.nrcs.usda.gov` is the one soft spot and it is the content site, not a distribution host. It first
+`www.nrcs.usda.gov` is the one soft spot and it is the content site rather than a distribution host. It first
 looked intermittent — an HTTP/2 request returned 200 on retry while `--http1.1` timed out at 25 s,
 against an Akamai edge (`e11492.dscb.akamaiedge.net`, 184.87.188.132) — but the behavior is
 deterministic once the cause is named: **the host requires a browser-like header set** (a normal
@@ -85,7 +85,7 @@ the same role the EA's WFS plays in the flood survey's ladder.
 
 Three measured traps for whoever writes the client:
 
-- **Failures come back as XML, not JSON.** A timeout, a bad column and a blocked query all return an
+- **Failures come back as XML rather than JSON.** A timeout, a bad column and a blocked query all return an
   OGC `ServiceExceptionReport` document. Observed messages: `"Your query timed out."` (a `GROUP BY` over
   `cointerp`), `"Invalid query: Invalid column name 'tabularversion'."` (HTTP 400), and
   `"Invalid query - access denied."`. A client that assumes JSON on a 200 will mis-read the first two.
@@ -96,7 +96,7 @@ Three measured traps for whoever writes the client:
   `cointerp`'s ~12 M rows exceeded it; the same aggregate narrowed by `mrulename` and `rulename`
   succeeded.
 
-**License — a genuine public-information statement, and it comes from the metadata rather than from
+**License — an actual public-information statement, and it comes from the metadata rather than from
 data.gov.** This is the section where the naive reading and the verified one differ, in the opposite
 direction from FEMA.
 
@@ -108,7 +108,7 @@ embedded JSON-LD. **That URL is not a grant.** It redirects to
 [usa.gov/government-copyright](https://www.usa.gov/government-copyright), the same page the flood survey
 found behind FEMA's license field, which declines a blanket grant: a government work is "something
 created by a U.S. government officer or employee as part of their official duties", but "Content on
-federal websites may include protected intellectual property used with the right holder's permission",
+federal websites may include guarded intellectual property used with the right holder's permission",
 and the reader is told to "Check with the federal agency or program that manages the website to make
 sure the materials are not restricted before using them."
 
@@ -174,7 +174,7 @@ date.** NRCS states the schedule in its own words on the
 > "The most recent ASR made new and updated data available on October 1, 2025."
 
 and it says how much moves: "approximately 10 to 20 percent of soil survey areas will have more
-significant changes". The 2025 refresh added 41,974,803 acres of new soil data, 116,727 new polygons and
+measured changes". The 2025 refresh added 41,974,803 acres of new soil data, 116,727 new polygons and
 2,227 new map units.
 
 The measurement agrees with the statement, which is the useful part. Grouping `sacatalog` by
@@ -196,7 +196,7 @@ underlying survey is far older. Measured on one real survey area — Polk County
 | SSURGO database for Polk County, Iowa   | —        | 1998, 2009 |
 
 **The field survey behind a polygon republished in 2025 was published in 1960.** The dataset's own
-`<enddate>` is `20250909`, which is the refresh, so a consumer reading the time-period-of-content as
+`<enddate>` is `20250909`, which is the refresh. Therefore, a consumer reading the time-period-of-content as
 survey currency reads it wrong. The manifest's `source_vintage` must be the refresh; the per-survey-area
 survey date is a separate fact the metadata carries and the layer should carry too.
 
@@ -223,7 +223,7 @@ template database.** Confirmed on a second area: `wss_SSA_IA015_soildb_IA_2003_[
 form; and `wss_SSA_TX299_[2025-09-04].zip` is 13,455,641 bytes with 97 files and no `.mdb` at all. **A
 builder wants the bare form** — the template is an empty Access container for a workflow we do not use.
 
-A wrong date returns HTTP 400, not 404. The square brackets need `--globoff` or `%5B`/`%5D`. The archive holds
+A wrong date returns HTTP 400 rather than 404. The square brackets need `--globoff` or `%5B`/`%5D`. The archive holds
 ESRI shapefiles under `spatial/` (`soilmu_a` map-unit polygons, `soilmu_l`/`soilmu_p` lines and points,
 `soilsa_a` survey-area outline, `soilsf_*` special features), the full NASIS tabular export as
 pipe-delimited `.txt` under `tabular/`, and both `.txt` and `.xml` FGDC metadata. The projection file
@@ -234,8 +234,7 @@ One acquisition trap, and it is the same one the flood survey found on the Envir
 **`HEAD` returns HTTP 405 (`allow: GET`) and `Range` is ignored.** A request with `Range: bytes=0-0`
 returned HTTP 200 and transferred the whole 27,598,377 bytes in 7.23 s at 3.8 MB/s. A builder cannot
 probe freshness by content length — but here it does not need to, because `sacatalog.saverest` answers
-the freshness question directly through the tabular service. The `Range` behavior is **path-specific**,
-not host-wide: the `/DataAvailability/` path does honour it (HTTP 206), so a client must probe per path
+the freshness question directly through the tabular service. The `Range` behavior is **path-specific** rather than host-wide: the `/DataAvailability/` path does honour it (HTTP 206), so a client must probe per path
 rather than conclude from one. The server is `Microsoft-IIS/10.0` behind an AWS load balancer.
 
 **The arability attributes, with their measured shape.** Column names verified by querying them
@@ -248,7 +247,7 @@ irrigated` (10,833), `Farmland of local importance` (5,481). **The vocabulary is
   long tail reads `Prime farmland if drained and either protected from flooding or not frequently
 flooded during the growing season`, `Prime farmland if irrigated and reclaimed of excess salts and
 sodium`, `Prime farmland if subsoiled, completely removing the root inhibiting soil layer`. A boolean
-  `arable` column would be this record's invention, not the authority's statement.
+  `arable` column would be this record's invention rather than the authority's statement.
 - `component.nirrcapcl` / `component.nirrcapscl` — nonirrigated Land Capability Class (`"1"`…`"8"`) and
   subclass (`c`, `e`, `s`, `w`). **NULL on 220,013 of 1,288,808 components (17.1%).**
 - `component.irrcapcl` / `component.irrcapscl` — the irrigated rating. **NULL on 1,097,370 components
@@ -256,13 +255,13 @@ sodium`, `Prime farmland if subsoiled, completely removing the root inhibiting s
   statement about the rating's applicability rather than about the land.
 - `component.comppct_r` — the component's percentage of the map unit. This is the weight §4.4 uses.
 - `muaggatt.niccdcd` / `muaggatt.niccdcdpct` — NRCS's **own** aggregation of the capability class to the
-  map unit by dominant condition, **shipped with the share that class actually covers**. §4.4 adopts
+  map unit by dominant condition, **shipped with the share that class covers**. §4.4 adopts
   this pattern; it is the single most useful precedent in the source.
 - `cointerp` — the National Commodity Crop Productivity Index. Measured rule names and row counts:
   `NCCPI - National Commodity Crop Productivity Index (Ver 3.0)` (7,111,314), plus submodels for small
   grains (1,386,363), soybeans (1,190,601), corn (1,188,834), cotton (307,715) and an
-  `Irrigated National Commodity Crop Productivity Index` (1,091,490). The v3.0 overall rule holds
-  1,185,219 rows with `interphr` ranging **0.001 to 0.991** — an index in [0, 1], not a percentage.
+  `Irrigated National Commodity Crop Productivity Index` (1,091,490). The v3.0 overall condition is true
+  1,185,219 rows with `interphr` ranging **0.001 to 0.991** — an index in [0, 1] rather than a percentage.
 
 **The Farmland Classification vocabulary is federal regulation for two of its categories and state or
 local discretion for the others**, which decides whether it can be compared across the country. From
@@ -283,7 +282,7 @@ rock-fragment content. Unique farmland is likewise nationally defined. But:
 **So `Farmland of statewide importance` in Iowa and in Georgia are not the same claim**, and a layer
 that pooled them into one rank would be doing what the EU flood viewer warns against between member
 states. Prime and Unique travel; statewide and local importance do not. That distinction has to survive
-into the stored vocabulary, not only into this document.
+into the stored vocabulary rather than only into this document.
 
 **The raster and coarse siblings, and why the pilot does not take them.** The SSURGO survey-area download
 plus SDA is a complete acquisition path that was exercised, so none of the following is needed — but each
@@ -334,7 +333,7 @@ web-service host does not.
   question better than silence would have.** On 443, TCP accepts in 0.085 s and the TLS handshake never
   completes: `openssl s_client -connect 129.174.131.7:443` timed out at 30 s (exit 124) having received
   **zero bytes**, and three `curl` attempts each timed out at 20 s. Port 80 answers HTTP 302 — into that
-  same dead 443, a closed loop. DNS resolves cleanly. This is a silent TLS stall, not a reset and not a
+  same dead 443, a closed loop. DNS resolves directly. This is a silent TLS stall rather than a reset and not a
   resolution failure, and it is a **George Mason University** host rather than a federal one.
 
   But **port 8080 is alive**: the Axis2 SOAP container serves the CropScape `CDLService` WSDL at
@@ -352,11 +351,10 @@ CreateProcess error=267, The directory name is invalid`. All seven were exercise
   missing Windows-side executable (`gdal_getvalue.exe`, `C:/GDAL/ogrinfo.exe`,
   `C:/GnuWin32/bin/bat/wget.bat`), except `GetCDLPDF`, which fails schema validation. The service
   dispatches, validates schemas, and enforces its own year range before the process launch fails — a
-  blocked port cannot produce a `CreateProcess` fault string, so **the failure is genuinely the backend,
-  not this network**. And the year range is its own answer: out-of-range years are rejected with
+  blocked port cannot produce a `CreateProcess` fault string, so **the failure is in fact the backend rather than this network**. And the year range is its own answer: out-of-range years are rejected with
   `"Error: The year must be between 1997 and 2019."` — **six crop years behind the shipped 2025 CDL**,
   even if the backend were repaired. The WSDL's own SOAP binding address names port 80, which redirects
-  into the dead 443, so the only working entry is the explicit `:8080`.
+  into the dead 443. Therefore, the only working entry is the explicit `:8080`.
 
   **Treat the CropScape API as unavailable for data retrieval** — not because it cannot be reached, but
   because it answers and fails. NASS publishes no decommissioning statement (a checked absence; the FAQ,
@@ -366,7 +364,7 @@ CreateProcess error=267, The directory name is invalid`. All seven were exercise
   unaffected and is the only acquisition route a builder should plan on.**
 
 **License — CC0, and unlike SSURGO it stands on its own.** The NASS data.gov entry
-([catalog.data.gov/dataset/cropland-data-layer](https://catalog.data.gov/dataset/cropland-data-layer),
+([catalog.data.gov/dataset/cropland-data layer](https://catalog.data.gov/dataset/cropland-data-layer),
 identifier `USDA-NASS-00004`, publisher National Agricultural Statistics Service, `datePublished`
 2026-02-27, `dateModified` 2026-05-04) carries
 `"license": "http://creativecommons.org/publicdomain/zero/1.0/"` in its embedded JSON-LD. That URL
@@ -423,22 +421,22 @@ records. The reason is structural, and it is worth stating as a shape rather tha
 splits what SSURGO unifies. The open, redistributable products carry no soil; the soil products are not
 redistributable.**
 
-**Copernicus Land Monitoring Service — genuinely open, and carries no soil-quality product.** The prior
+**Copernicus Land Monitoring Service — in fact open, and carries no soil-quality product.** The prior
 finding this survey was asked to test holds, with one precision added. The data policy
 ([land.copernicus.eu/en/data-policy](https://land.copernicus.eu/en/data-policy), HTTP 200) states that
 products are available "on a principle of full, open and free access, as established by the Commission
 Delegated Regulation (EU) No 1159/2013 of 12 July 2013", and the page names **no Creative Commons
-licence at all**. The Regulation's own text
+license at all**. The Regulation's own text
 ([EUR-Lex CELEX:32013R1159](https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32013R1159),
-HTTP 200) grants what an open licence grants and imposes conditions in the same shape — Article 7
+HTTP 200) grants what an open license grants and imposes conditions in the same shape — Article 7
 permits "reproduction", "distribution", "communication to the public", "adaptation, modification and
 combination with other data and information", "worldwide without limitations in time"; Article 8
 requires that users "inform the public of the source", "make sure not to convey the impression to the
-public that the user's activities are officially endorsed by the Union", and "clearly state" any
-adaptation; Article 9 disclaims all warranty. **It is an open-licence-like bespoke EU instrument, not
-CC BY**, and a manifest that recorded it as CC BY would be recording a licence nobody granted.
+public that the user's activities are officially endorsed by the Union", and "the result shows state" any
+adaptation; Article 9 disclaims all warranty. **It is an open-license-like bespoke EU instrument rather than
+CC BY**, and a manifest that recorded it as CC BY would be recording a license nobody granted.
 
-The precision: the login requirement is **mandated by the Regulation**, not an implementation choice.
+The precision: the login requirement is **mandated by the Regulation** rather than an implementation choice.
 Article 18(1) — "To access download services, users shall register online … Registration shall be free
 of charge"; Article 18(2) — "**No registration shall be required for discovery services and view
 services.**" That split was measured exactly: anonymous `@search` returns HTTP 200 and the CLC2018
@@ -446,9 +444,9 @@ ArcGIS view service returns HTTP 200, while `@datarequest_post`, `@projections` 
 `@format_conversion_table` each return **HTTP 401** `{"message": "You are not authorized to access this
 resource."}`. Registration is EU Login, and downloads are a request-then-poll flow carrying a bearer
 token. **An unattended anonymous bulk pull is not available**, which is a builder constraint of a
-different kind from a licence problem.
+different kind from a license problem.
 
-What CLMS actually holds: CORINE Land Cover in **five editions only — 1990, 2000, 2006, 2012, 2018**
+What CLMS holds: CORINE Land Cover in **five editions only — 1990, 2000, 2006, 2012, 2018**
 (CLC2024 is "scheduled for publication in Q3 2026", the current quarter, and is not in the catalogue),
 44 level-3 classes, **25 ha minimum mapping unit** and 100 m minimum width, 5 ha for change layers,
 EPSG:3035, thematic accuracy "≥ 85%". The arable family is **2.1 Arable land** — 211 Non-irrigated
@@ -475,12 +473,12 @@ page exists** (18 candidate URLs each returned HTTP 404), because the operative 
   measured on local soil samples." Its terms: "**under no circumstances are these data passed to third
   parties. Moreover they must not be used in any way for commercial gain.**"
 - **LUCAS Topsoil** is the real measured survey — 19,967 samples in 2009, 21,859 in 2015, 18,984 in
-  2018, 31,054 in 2022 (public release pending). Its licence: "a **personal, non transferable**,
-  perpetual, and non exclusive right … **No sub-licence is allowed**", accessible "only to the Licensee
+  2018, 31,054 in 2022 (public release pending). Its license: "a **personal, non transferable**,
+  perpetual, and non exclusive right … **No sub-license is allowed**", accessible "only to the Licensee
   and staff working for the Licensee's Organization", with map display permitted only "as far as the
   geographical location of the soil samples is not detectable". Roughly one point per 150–250 km²: a
-  point set, not a surface.
-- **The 500 m property maps are models**, not surveys — MARS and Gaussian-process regressions fitted to
+  point set rather than a surface.
+- **The 500 m property maps are models** rather than surveys — MARS and Gaussian-process regressions fitted to
   LUCAS 2009, with per-property fit disclosed down to "CEC (R2= 0.35)" — and carry the same
   no-third-parties clause (while permitting commercial use).
 - The nearest thing to a capability product is **Soil Biomass Productivity** (1 km, a unitless 0–10
@@ -490,30 +488,30 @@ page exists** (18 candidate URLs each returned HTTP 404), because the operative 
 
 **The permissive route to LUCAS does not carry the soil measurements.** Eurostat publishes LUCAS survey
 microdata for 2006–2022 with anonymous per-country CSV downloads under terms that authorise reuse
-"provided the source is acknowledged", with "no special procedure or requirement for a written licence".
+"provided the source is acknowledged", with "no special procedure or requirement for a written license".
 But Eurostat says in its own words: "Soil data — The datasets for the LUCAS topsoil module are available
-from the European soil data centre (ESDAC)." Verified against the files themselves: the 2022 (306
+from the European soil data center (ESDAC)." Verified against the files themselves: the 2022 (306
 columns) and 2018 (97 columns) country CSVs carry soil _sampling metadata only_ — no pH, no organic
 carbon, no N/P/K, no texture. **The open route yields coordinates, land cover and a join key, and
 nothing about what is in the soil.**
 
 One live contradiction, reported rather than resolved: data.europa.eu labels "LUCAS 2018 TOPSOIL data"
 **CC BY 4.0**, while the record's only distribution link points back at the ESDAC page carrying the
-restrictive contract above. The European Commission's legal notice resolves the hierarchy in ESDAC's
+restrictive interface above. The European Commission's legal notice resolves the hierarchy in ESDAC's
 favour — "**Unless otherwise indicated** (e.g. in individual copyright notices), content owned by the
 EU … is licensed under … CC BY 4.0" — and a per-dataset Notification is exactly such an individual
 notice. That reading is stated as a reading (§8); no authority states it for this dataset. The portal
 label must not be relied on.
 
 **EEA** publishes no independent pan-EU soil-capability layer. Its soil holdings are hosted JRC/ESDAC
-copies (carrying ESDAC's terms, not CC BY), hosted CLMS products, and a handful of EEA-original
+copies (carrying ESDAC's terms rather than CC BY), hosted CLMS products, and a handful of EEA-original
 soil-themed 1 km layers — soil-biodiversity potential, heavy metals and nutrients in agricultural soils,
 soil-moisture deficit — which do carry "License CC-BY 4.0 … Copyright holder: European Environment
 Agency (EEA)". None is a capability product.
 
-**The global fallback tier**, verified only for licence, resolution and access, because that is all it
+**The global fallback tier**, verified only for license, resolution and access, because that is all it
 is used for here. **SoilGrids 250 m v2.0** (ISRIC) is **CC BY 4.0** with anonymous WCS/WMS and WebDAV
-bulk download, but it is explicitly a machine-learning prediction from the WoSIS profile database, not a
+bulk download, but it is explicitly a machine-learning prediction from the WoSIS profile database rather than a
 survey. **GAEZ v5** (FAO/IIASA, launched April 2025) publishes crop suitability as a 0–10,000 index at
 30 arc-seconds for more than 70 crops under rain-fed and irrigated conditions, **CC BY 4.0**, anonymous
 download. **HWSD v2.0/v2.01** (FAO/IIASA, 30 arc-second) is the outlier: **CC BY-NC-SA 4.0** —
@@ -523,14 +521,14 @@ it. Noted and not reconciled: GAEZ v5 is derived from HWSD v2 and is nonetheless
 
 **The consequence for this program.** A published European arability layer must be either derived from
 CLMS land-cover and cropland products plus open global soil models, with the Regulation's attribution
-conditions carried in the manifest — which yields cover and modelled properties, not a survey's
+conditions carried in the manifest — which yields cover and modelled properties rather than a survey's
 capability rating — or built on ESDAC data and **never redistributed**, because the third-party clauses
 forbid shipping it. Neither is the same product as the US pilot, and neither should be presented as one.
 There is no European shortcut, which is the same answer the flood survey reached by a different route.
 
 ### 2.4 Deliberately not surveyed
 
-- **State and county soil or farmland-protection layers.** Many US states publish their own important-
+- **State and county soil or farmland-protection layers.** several US states publish their own important-
   farmland mapping under their own terms. None was verified and none is claimed; 7 CFR 657.5(c) makes
   clear that the state criteria differ by construction, so pooling them would pool incompatible
   vocabularies.
@@ -538,26 +536,26 @@ There is no European shortcut, which is the same answer the flood survey reached
   of scope and this record keeps it out. The layer's value is that it repeats an authority; a modeled
   suitability score would be a different product with different obligations.
 - **Crop-yield and productivity statistics.** NASS publishes county-level yield series; those are
-  statistics about production, not a statement about a location, and they do not key to the spine.
+  statistics about production rather than a statement about a location, and they do not key to the spine.
 
 ### 2.5 The inventory, side by side
 
-|                         | **NRCS — SSURGO (+ Soil Data Access)**                                                   | **NASS — Cropland Data Layer**                                   | **EU level**                                                                       |
-| ----------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| authority               | USDA Natural Resources Conservation Service                                              | USDA National Agricultural Statistics Service                    | none for soil — CLMS for cover, JRC/ESDAC for soil                                 |
-| what it is              | a field soil survey — land **capability**                                                | a classified satellite raster — observed **cover in one season** | land cover (open) and soil models (restricted); **no capability survey**           |
-| license                 | **"This is public information"** in the shipped FGDC metadata; acknowledgement requested | **CC0 1.0**, and the link resolves to the real deed              | CLMS: **Reg. (EU) 1159/2013**, not CC BY. ESDAC: "**not passed to third parties**" |
-| extent                  | 3,380 survey areas, 61 state/territory prefixes; genuine gaps (§3.2)                     | 18 CONUS years, 2008–2025                                        | EEA39 for CLC; EU for ESDAC                                                        |
-| vocabulary              | LCC 1–8 + subclass c/e/s/w; 23 Farmland Classification values, **conditional**           | crop classes per pixel (class table unverified, §8)              | CLC 44 classes, arable = 211/212/213; no capability vocabulary anywhere            |
-| resolution / scale      | source scales 1:12,000–1:15,840; median delineation 24,863 m² (§4.4)                     | 30 m pixels                                                      | CLC **25 ha** minimum unit; ESDB **1:1,000,000**; property maps 500 m models       |
-| vintage                 | refresh 2025 for 3,323 of 3,380 areas; **field survey far older — 1960 for `IA153`**     | one file per season; 2025 current                                | CLC2018 current; **CLC2024 scheduled, not published**                              |
-| cadence                 | one coordinated annual refresh; metadata says `As needed`                                | annual, published the following calendar year                    | CLC roughly six-yearly; ESDAC ad hoc                                               |
-| format                  | shapefile + pipe-delimited tabular, **WGS84**; `IA153` = 25.5 MB / 27.6 MB               | 30 m raster zip; 2025 = 1.89 GB (measured)                       | CLC raster/vector EPSG:3035; ESDAC per-request archives                            |
-| acquisition             | WSS download service (date from SDA) **+ live SQL and spatial SDA**                      | direct file URL on `www.nass.usda.gov`                           | CLMS **EU Login + request-and-poll**; ESDAC **request form**                       |
-| `HEAD` / `Range`        | `HEAD` 405, **`Range` ignored** — full transfer                                          | **`Range` honoured** (HTTP 206)                                  | not applicable — both require an account                                           |
-| reachable from this lab | **yes** — every distribution host answered; SDA measured at 0.374 s                      | **bulk yes**; CropScape API answers on `:8080` and **fails 500** | yes, but anonymous download refused **HTTP 401** by design (Art. 18(1))            |
-| in-repo ingest path     | vector — `ogr2ogr` already used here                                                     | **raster — no raster tooling exists in this repository**         | mixed                                                                              |
-| usable for this layer   | **yes — the pilot**                                                                      | yes later, as a different observation with a different meaning   | **no** — the open half has no soil, the soil half may not be redistributed         |
+|                         | **NRCS — SSURGO (+ Soil Data Access)**                                                   | **NASS — Cropland Data Layer**                                   | **EU level**                                                                              |
+| ----------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| authority               | USDA Natural Resources Conservation Service                                              | USDA National Agricultural Statistics Service                    | none for soil — CLMS for cover, JRC/ESDAC for soil                                        |
+| what it is              | a field soil survey — land **capability**                                                | a classified satellite raster — observed **cover in one season** | land cover (open) and soil models (restricted); **no capability survey**                  |
+| license                 | **"This is public information"** in the shipped FGDC metadata; acknowledgement requested | **CC0 1.0**, and the link resolves to the real deed              | CLMS: **Reg. (EU) 1159/2013** rather than CC BY. ESDAC: "**not passed to third parties**" |
+| extent                  | 3,380 survey areas, 61 state/territory prefixes; actual gaps (§3.2)                      | 18 CONUS years, 2008–2025                                        | EEA39 for CLC; EU for ESDAC                                                               |
+| vocabulary              | LCC 1–8 + subclass c/e/s/w; 23 Farmland Classification values, **conditional**           | crop classes per pixel (class table unverified, §8)              | CLC 44 classes, arable = 211/212/213; no capability vocabulary anywhere                   |
+| resolution / scale      | source scales 1:12,000–1:15,840; median delineation 24,863 m² (§4.4)                     | 30 m pixels                                                      | CLC **25 ha** minimum unit; ESDB **1:1,000,000**; property maps 500 m models              |
+| vintage                 | refresh 2025 for 3,323 of 3,380 areas; **field survey far older — 1960 for `IA153`**     | one file per season; 2025 current                                | CLC2018 current; **CLC2024 scheduled rather than published**                              |
+| cadence                 | one coordinated annual refresh; metadata says `As needed`                                | annual, published the following calendar year                    | CLC roughly six-yearly; ESDAC ad hoc                                                      |
+| format                  | shapefile + pipe-delimited tabular, **WGS84**; `IA153` = 25.5 MB / 27.6 MB               | 30 m raster zip; 2025 = 1.89 GB (measured)                       | CLC raster/vector EPSG:3035; ESDAC per-request archives                                   |
+| acquisition             | WSS download service (date from SDA) **+ live SQL and spatial SDA**                      | direct file URL on `www.nass.usda.gov`                           | CLMS **EU Login + request-and-poll**; ESDAC **request form**                              |
+| `HEAD` / `Range`        | `HEAD` 405, **`Range` ignored** — full transfer                                          | **`Range` honoured** (HTTP 206)                                  | not applicable — both require an account                                                  |
+| reachable from this lab | **yes** — every distribution host answered; SDA measured at 0.374 s                      | **bulk yes**; CropScape API answers on `:8080` and **fails 500** | yes, but anonymous download refused **HTTP 401** by design (Art. 18(1))                   |
+| in-repo ingest path     | vector — `ogr2ogr` already used here                                                     | **raster — no raster tooling exists in this repository**         | mixed                                                                                     |
+| usable for this layer   | **yes — the pilot**                                                                      | yes later, as a different observation with a different meaning   | **no** — the open half has no soil, the soil half may not be redistributed                |
 
 ## 3. Coverage honesty per source
 
@@ -570,7 +568,7 @@ others.
 ### 3.1 The claim a coverage row is allowed to make
 
 `CoverageBasis.Designated` means "An authority declares the set complete for this cell". The set NRCS
-declares complete inside a published survey area is **its own soil mapping at its own scale**, not a
+declares complete inside a published survey area is **its own soil mapping at its own scale** rather than a
 site-specific determination. So the strongest claim this layer can support is:
 
 > the soil survey assigns this capability class to the map unit covering this location
@@ -640,11 +638,10 @@ inferred:
 
 1. **Non-uniform survey vintage inside one uniform refresh.** 3,323 of 3,380 survey areas carry a 2025
    version date while the field survey behind them may be decades older — 1960 for `IA153`. This is a
-   currency limit, not a coverage gap: those areas are mapped, to an old survey. The manifest's single
+   currency limit rather than a coverage gap: those areas are mapped, to an old survey. The manifest's single
    `source_vintage` is the refresh; the per-survey-area source date is available in each area's metadata
    and the layer should carry it per area rather than pretend to one national vintage.
-2. **The scale the map may be read at.** The metadata's enlargement caveat is a limit on the consumer,
-   not on the data, and no column expresses it. §4.4 turns it into a measured number, which is the only
+2. **The scale the map may be read at.** The metadata's enlargement caveat is a limit on the consumer rather than on the data, and no column expresses it. §4.4 turns it into a measured number, which is the only
    form in which a builder can act on it.
 
 ### 3.3 The Cropland Data Layer — a different question, and its zero means something else
@@ -671,7 +668,7 @@ This is the section the issue asked for, and it is the one place this survey goe
 survey's shape. The flood layer had one consumer. This layer has two, and they want different things
 from the same bytes.
 
-### 4.1 The two consumers, and what each actually needs
+### 4.1 The two consumers, and what each needs
 
 **Consumer A — the result-level observation.** A caller geocodes an address; after the resolver has a
 coordinate, the layer answers "what does the soil survey assign here". It wants **one reading with its
@@ -706,15 +703,15 @@ coercing it to a nearest neighbour or to NULL converts "the source changed" into
 here".
 
 For Consumer B this matters more than it looks. #1683's vector needs a numeric axis, and the temptation
-is to store one. The resolution is that **the projection to a number is the consumer's, not the
+is to store one. The resolution is that **the projection to a number is the consumer's rather than the
 layer's**: the layer stores class shares, and the signal consumer chooses the projection its fit needs.
-That keeps the layer honest under a later change of mind about the projection, and it keeps the
+That keeps the layer direct under a later change of mind about the projection, and it keeps the
 observation consumer reading the authority rather than reading our arithmetic.
 
 ### 4.3 Which shape each source takes
 
 Two storage shapes are settled for this layer stack, and **which one applies is decided by the source's
-own geometry, not by the layer's subject.** Stating it per source is this section's first job.
+own geometry rather than by the layer's subject.** Stating it per source is this section's first job.
 
 | source                                         | geometry                     | shape that applies                                                                                     |
 | ---------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------ |
@@ -767,7 +764,7 @@ Undifferentiated group — so **128,499 map units (38.0 %) are not consociations
 NRCS's statement that two or more soils are intermingled and _cannot be separated at the mapping scale_.
 The mixture is not our loss; it is the survey's finding.
 
-**Second, the largest component is often a minority.** Bucketing each map unit by its maximum
+**Second, the largest component is frequently a minority.** Bucketing each map unit by its maximum
 `comppct_r`:
 
 | dominant component covers | map units | share  |
@@ -803,7 +800,7 @@ job is to report it rather than to hide it.**
 
 **And NRCS itself already solves it this way, which is the strongest argument available.** The
 `muaggatt` table carries `niccdcd`, the capability class by dominant condition, **beside `niccdcdpct`,
-the share of the map unit that class actually covers.** Measured over all 339,191 rows:
+the share of the map unit that class covers.** Measured over all 339,191 rows:
 
 | `niccdcdpct` |  map units | share     |
 | ------------ | ---------: | --------- |
@@ -820,7 +817,7 @@ the paragraph:
 
 1. **Sub-cell spatial arrangement is gone.** After aggregation the layer knows that 40 % of a cell is
    class 2 and 60 % is class 6; it does not know _where_ within the cell. A caller whose coordinate
-   falls in the class-6 part gets the cell's distribution, not that part's class. This is the loss that
+   falls in the class-6 part gets the cell's distribution rather than that part's class. This is the loss that
    NRCS's enlargement caveat warns about, and the reason §3.1 forbids a point-level determination.
 2. **Component arrangement inside a map unit was already gone before we touched it.** In a complex the
    survey did not record where each component lies, so no aggregation of ours could preserve it. Our
@@ -868,7 +865,7 @@ the two is claimed.
 
 ### 4.6 Tables
 
-Six domain tables plus the two contract tables, written as Kysely schema modules with the typed
+Six domain tables plus the two interface tables, written as Kysely schema modules with the typed
 interface co-located with its `createXTable`, per the house database discipline. The pilot is
 polygon-shaped, so §4.3's polygon rule governs: `soil_map_unit_area` is the truth, `soil_map_unit_cell`
 is the containment summary above it, and `soil_capability_cell` is the reduction both consumers read.
@@ -922,24 +919,24 @@ soil_capability_cell       -- THE SHARED ARTIFACT BOTH CONSUMERS READ, WITHOUT R
   weighting        TEXT      -- which weighting produced the shares (§4.4 loss 2)
   PRIMARY KEY (h3_cell)
 
-soil_survey_area           -- the authority's mapped footprint, NOT the union of rated polygons
+soil_survey_area           -- the authority's mapped footprint rather than the union of rated polygons
   areasymbol       TEXT PRIMARY KEY
   areaname         TEXT
   saverest         TEXT      -- the refresh date — the manifest's vintage
   survey_source_date TEXT?   -- the FIELD survey date from the area's own metadata (1960 for IA153)
   source_scale     INTEGER?  -- 15840 for IA153's original survey
 
-layer_manifest / layer_coverage   -- the contract tables, from @mailwoman/core/layers
+layer_manifest / layer_coverage   -- the interface tables, from @mailwoman/core/layers
 ```
 
 `WITHOUT ROWID` on `soil_map_unit_cell` and `soil_capability_cell` and not on `soil_map_unit_area`
-follows the contract's own guidance — small fixed-width rows probed by their exact primary key belong in
+follows the interface's own guidance — small fixed-width rows probed by their exact primary key belong in
 the B-tree; a row carrying a geometry blob does not.
 
-**The three cell-facing tables are one pipeline, not three sources.** `soil_map_unit_area` holds what
+**The three cell-facing tables are one pipeline rather than three sources.** `soil_map_unit_area` holds what
 the authority drew. `soil_map_unit_cell` says which cells each delineation reaches and whether it fills
 them. `soil_capability_cell` is that index reduced once, at build time, into the per-cell distribution.
-A `partial` cell's contribution to the reduction is weighted by the area it actually covers, which is
+A `partial` cell's contribution to the reduction is weighted by the area it covers, which is
 why the truth table must keep unsimplified rings: simplify them and the weights change silently, and
 the reduction is the thing both consumers read.
 
@@ -967,7 +964,7 @@ the failure two separate acquisitions would guarantee.
 | `build_cmd` / `build_sha`   | the invocation and the commit that produced it                                    |
 | `freshness_policy`          | `versioned-refresh` — NRCS re-issues annually under the same product              |
 | `spine_keys`                | `{ h3: { column: "h3_cell", resolution: … } }` — see below and §1                 |
-| `created_at`                | caller-supplied, per the contract                                                 |
+| `created_at`                | caller-supplied, per the interface                                                |
 
 **The resolution is a measurement the pilot takes, and §4.4 has already bounded it. Run the
 `partial`-share measurement at res 7, 8, 9 and 10** — four candidates, on the pilot region, over the
@@ -980,7 +977,7 @@ candidate, because they answer different questions:
    ray-cast is the common path.
 2. **The share of cells whose top class holds less than half the cell** — the cell-grain analogue of the
    `niccdcdpct` distribution in §4.4. This decides whether the layer is answering or hedging, and it is
-   what Consumer B's fit will actually feel.
+   what Consumer B's fit will feel.
 
 **Expect the `partial` share to invert relative to the flood layer, and design for that rather than be
 surprised by it.** The flood layer's polygons are large against its cells, so most cells fall wholly
@@ -1015,8 +1012,8 @@ Five reasons, in the order they bind.
    SDA returned a tabular answer in 0.374 s and a point-intersection answer in 1.807 s; a real 25.5 MB
    survey-area archive was downloaded and opened. The issue asked whether USDA hosts behave like FEMA's.
    Measured: they do not. The one host that stalls — `nassgeodata.gmu.edu`, zero bytes in 30 s — belongs
-   to the CDL, not to the soil survey, and it is a university host rather than a federal one.
-2. **The license is verified from the producing agency's own shipped metadata**, not from a catalog
+   to the CDL rather than to the soil survey, and it is a university host rather than a federal one.
+2. **The license is verified from the producing agency's own shipped metadata** rather than from a catalog
    field that points at a page declining to grant anything. "This is public information" plus an
    acknowledgement request plus a liability clause contemplating distribution is the posture a `shipped`
    layer needs.
@@ -1031,7 +1028,7 @@ Five reasons, in the order they bind.
    dominant-condition share drops to 2 %. A schema that survives SSURGO will survive the simpler layers.
 
 The Cropland Data Layer stays in the inventory as the natural second layer — CC0, measured, and
-answering a genuinely different question — once a raster path exists and its accuracy caveats are read.
+answering a in fact different question — once a raster path exists and its accuracy caveats are read.
 
 ### 5.2 The region
 
@@ -1082,7 +1079,7 @@ batches at `COVERAGE_INSERT_BATCH`, and a builder that hand-rolls its own insert
 of SDA with `SDA_Get_Mukey_from_intersection_with_WktWgs84`, with the agreement rate reported. Same
 authority, different distribution channel — which is what makes it a check on our conversion rather than
 on the authority. Measured at 1.807 s per point, a few hundred points is minutes. Its negative half
-matters as much: a sample of points in a neighbouring state with no artifact rows, confirming the layer
+matters as much: a sample of points in a neighboring state with no artifact rows, confirming the layer
 returns **no coverage row** rather than a low capability reading.
 
 That last check is the one that would catch the class of defect §3 is about, and it is cheap.
@@ -1114,7 +1111,7 @@ the signal path share the data and share nothing else, so neither constrains the
 ### 5.5 The carrier, and the one place it does not fit
 
 `QueryIntentMarker` is the carrier, for the same reasons and with the same reservation the flood survey
-records. Its contract is already the requirement: additive, attributed, always accompanied by the
+records. Its interface is already the requirement: additive, attributed, always accompanied by the
 ordinary answer, never changing which answer wins, carrying `mechanism` in the `family:rule` form and an
 `evidence` record where everything above goes.
 
@@ -1157,7 +1154,7 @@ full paragraph, including the **bless-package obligation for a brand-new npm nam
 `AGENTS.md`. Re-run the release-list arithmetic afterwards and confirm every absent name still has a
 reason someone can state.
 
-**Acquisition.** The rule binds where it actually draws its line. SDA queries and `sacatalog` freshness
+**Acquisition.** The rule binds where it draws its line. SDA queries and `sacatalog` freshness
 reads are API requests and go through `APIClient` — small bodies, repeated calls, a service with a
 server-side timeout. The survey-area archives are file transfers and keep raw `fetch`, saying so in
 place, as `osm/sdk/fetch.ts` and `tiger/sdk/download.ts` do. Two behaviors to write into the client:
@@ -1172,7 +1169,7 @@ comes from `sacatalog.saverest` rather than from a length probe.
 resolutions and record `whole` or `partial` per cell in `soil_map_unit_cell`, running `compactCells`
 over uniform interiors. Reduce that index once into `soil_capability_cell`: the per-cell area-weighted
 class distribution plus the four absence shares of §4.5, weighting each `partial` cell by the area it
-actually covers, and recording which weighting produced the shares. Derive `soil_survey_area` from the
+covers, and recording which weighting produced the shares. Derive `soil_survey_area` from the
 survey-area outline and each area's own metadata rather than from the rated polygons. Write
 `layer_coverage` at `basis = designated`, `completeness = 1.0` for cells inside a published, digitized
 survey area and **no row** outside — absence is no row here and in every table. Write the manifest; seal
@@ -1210,7 +1207,7 @@ gone and its search does not answer.** `GET /api/3/action/package_search` and `/
 both return HTTP 404 with `{"detail":{},"message":"Not Found"}`; `/dataset?q=SSURGO` returns HTTP 301 to
 the site root, discarding the query. The site itself serves (HTTP 200) and **individual dataset pages
 still work** — `/dataset/soil-survey-geographic-database-ssurgo` and `/dataset/cropland-data-layer` both
-returned 200 and carry usable embedded JSON-LD, which is where §2's licence fields came from. So a
+returned 200 and carry usable embedded JSON-LD, which is where §2's license fields came from. So a
 builder can read a known slug and cannot discover one. The flood survey's data.gov method still works;
 its search half does not.
 
@@ -1219,11 +1216,11 @@ its search half does not.
 - **gSSURGO and gNATSGO file sizes were not measured over HTTP** — Box returns HTTP 403 to anonymous
   programmatic download, so every size in §2.1 for those products is Box's own `itemSize` metadata and is
   labeled as such. Their shipped FGDC metadata was likewise not read (it is inside the archive), and
-  **gSSURGO has no data.gov dataset page** — 13 candidate slugs each returned 404 — so its licence rests
+  **gSSURGO has no data.gov dataset page** — 13 candidate slugs each returned 404 — so its license rests
   on SSURGO's rather than on a statement of its own. Whether their terms differ from SSURGO's is
   therefore **unverified**.
 - **Whether gSSURGO CONUS is one file or several** — the product page says it "has been split into
-  smaller files" while the distribution folder holds a single 24.44 GB archive. Reported, not resolved.
+  smaller files" while the distribution folder holds a single 24.44 GB archive. Reported rather than resolved.
 - **The complete Box folder listings** — pagination stopped at roughly 20 of about 50 state files.
 - **The Geospatial Data Gateway's ordering mechanism** — the host answers HTTP 301 and was not driven.
 - **The SSURGO Portal's own page** timed out on six attempts; the Portal is verified only indirectly,
@@ -1241,7 +1238,7 @@ its search half does not.
   date. §2.1 infers it from the contrast between a 2025 `saverest` and the 1960 source citation inside
   the same survey area's metadata — strong evidence, but the Data Dictionary's own definition of the
   column was not read.
-- **The per-survey-area metadata was read for one area (`IA153`).** The licence text is boilerplate
+- **The per-survey-area metadata was read for one area (`IA153`).** The license text is boilerplate
   repeated across SSURGO and is safe to generalize; the 1960 source date is specific to Polk County and
   the national distribution of survey vintages was not measured.
 - **The complete declared domain for `nirrcapcl` / `nirrcapscl` and the NRCS prose definitions of
@@ -1278,8 +1275,8 @@ its search half does not.
 
 **EU.**
 
-- **Which licence prevails for LUCAS 2018 topsoil** between data.europa.eu's CC BY 4.0 label and ESDAC's
-  restrictive per-dataset contract. The European Commission legal notice's "unless otherwise indicated"
+- **Which license prevails for LUCAS 2018 topsoil** between data.europa.eu's CC BY 4.0 label and ESDAC's
+  restrictive per-dataset interface. The European Commission legal notice's "unless otherwise indicated"
   carve-out points to ESDAC's terms, but **that is a reading and no authority states it for this
   dataset.** Recorded as a contradiction rather than resolved.
 - **Whether a site-wide ESDAC data policy exists** under an unguessed URL. Eighteen candidate URLs each
@@ -1287,7 +1284,7 @@ its search half does not.
   per-dataset finding is positively evidenced by the Notification blocks differing between datasets; the
   absence of a site-wide page is checked at those URLs and not proven in general.
 - **ESDAC's request flow end to end** — the form fields and the binding-acceptance wording were read;
-  the form was not submitted, so what a granted request actually delivers is unconfirmed.
+  the form was not submitted, so what a granted request delivers is unconfirmed.
 - **CLC2024's publication** — "scheduled for publication in Q3 2026", which is the current quarter, and
   it is not in the catalogue.
 - **HRL Croplands' class count** — the same dataset record says both 17 and 19 crop-type classes.
@@ -1297,9 +1294,9 @@ its search half does not.
 - **LUCAS 2022 topsoil availability** — its page states "Registration is requested: No", "you will need
   to register", and a third-quarter-2026 public release, simultaneously, with no data link present.
 - **Why GAEZ v5 is CC BY 4.0 while the HWSD v2 it derives from is CC BY-NC-SA 4.0** — no reconciling
-  document found. Flagged, not inferred.
+  document found. Flagged rather than inferred.
 - **A whole-product DOI for SoilGrids 2.0** — only per-layer DOIs and the method paper's DOI were found.
-- **GAEZ v4's licence and access** — the v4 portal renders only under JavaScript. Everything stated
+- **GAEZ v4's license and access** — the v4 portal renders only under JavaScript. Everything stated
   about GAEZ here is v5.
 - **The EEA Datahub as a search surface** — a JavaScript application with no findable search endpoint;
   the EEA census was run against the SDI GeoNetwork API instead.
@@ -1308,6 +1305,6 @@ its search half does not.
 
 - **Whether the res-8/res-9 choice survives at national scale** is not settled and cannot be settled by
   this record. §4.4's delineation-size distribution is measured on **one county in Iowa**, which is dense
-  prime farmland and therefore finely delineated. A rangeland or forest county will have larger
+  prime farmland and. Therefore, finely delineated. A rangeland or forest county will have larger
   delineations and a different mixture share, and §4.7's measurement must be taken per region rather than
   assumed from `IA153`.

@@ -74,7 +74,7 @@
 			"label": "healthcare facility",
 			"provenance": {
 				"authoredAt": "2026-08-26",
-				"notes": "The one intermediate class the frozen slice names between `pharmacy` and `establishment`. It carries no assertion of its own: a claim authored here would be inherited by every later healthcare class, which is breadth the program has not decided on.",
+				"notes": "The one intermediate class the frozen record set names between `pharmacy` and `establishment`. It carries no assertion of its own: a claim authored here would be inherited by every later healthcare class, which is breadth the program has not decided on.",
 				"source": "mailwoman-curated",
 				"sourceRecord": "docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md §4",
 				"sourceURL": "https://github.com/sister-software/mailwoman/issues/1927"
@@ -90,7 +90,7 @@
 			"label": "obtaining medication",
 			"provenance": {
 				"authoredAt": "2026-08-26",
-				"notes": "The frozen slice's activity, and a stable identifier this package owns. Issue #1683 may later fit empirical statistics against it; nothing numeric about it is authored here.",
+				"notes": "The frozen record set's activity, and a stable identifier this package owns. Issue #1683 may later fit empirical statistics against it; nothing numeric about it is authored here.",
 				"source": "mailwoman-curated",
 				"sourceRecord": "docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md §4",
 				"sourceURL": "https://github.com/sister-software/mailwoman/issues/1927"
@@ -104,7 +104,7 @@
 					"modality": "necessary",
 					"provenance": {
 						"authoredAt": "2026-08-26",
-						"notes": "The proposition the first slice exists to state. `necessary` because dispensing medication to the public is what makes premises a pharmacy rather than a neighbouring retail class — a counter-example falsifies this record instead of qualifying it. The relation is `defeasible`, which says whether `affords` assertions admit exceptions at all and is what lets a `strongly_expected` record sit beside this one coherently; it does not weaken this claim. No `countries` scope: the country-conditional part of the question is which OTHER establishment classes afford the activity, and each of those carries its own scope.",
+						"notes": "The proposition the first record set exists to state. `necessary` because dispensing medication to the public is what makes premises a pharmacy rather than a neighbouring retail class — a counter-example falsifies this record instead of qualifying it. The relation is `defeasible`, which says whether `affords` assertions admit exceptions at all and is what lets a `strongly_expected` record sit beside this one coherently; it does not weaken this claim. No `countries` scope: the country-conditional part of the question is which OTHER establishment classes afford the activity, and each of those carries its own scope.",
 						"source": "mailwoman-curated",
 						"sourceRecord": "docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md §4",
 						"sourceURL": "https://github.com/sister-software/mailwoman/issues/1927"
@@ -120,7 +120,7 @@
 			"label": "pharmacy",
 			"provenance": {
 				"authoredAt": "2026-08-26",
-				"notes": "The frozen slice's entity kind. Mapped into `@mailwoman/poi-taxonomy`'s `pharmacy` category by `mappings.json`; the mapping carries the external identifier, and this record carries what the class affords.",
+				"notes": "The frozen record set's entity kind. Mapped into `@mailwoman/poi-taxonomy`'s `pharmacy` category by `mappings.json`; the mapping carries the external identifier, and this record carries what the class affords.",
 				"source": "mailwoman-curated",
 				"sourceRecord": "docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md §4",
 				"sourceURL": "https://github.com/sister-software/mailwoman/issues/1927"
@@ -136,7 +136,7 @@
 			"label": "place",
 			"provenance": {
 				"authoredAt": "2026-08-26",
-				"notes": "The class an establishment is sited in. Authored because the frozen slice's entity kind needs one, and no wider upper ontology is authored around it.",
+				"notes": "The class an establishment is sited in. Authored because the frozen record set's entity kind needs one, and no wider upper ontology is authored around it.",
 				"source": "mailwoman-curated",
 				"sourceRecord": "docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md §4",
 				"sourceURL": "https://github.com/sister-software/mailwoman/issues/1927"

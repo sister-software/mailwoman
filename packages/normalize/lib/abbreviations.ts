@@ -3,11 +3,11 @@
 
 /**
  *   Abbreviation expansion — a small bounded dictionary per locale: en-US street suffixes +
- *   directional prefixes, fr-FR and es-* street types, plus a locale-UNKNOWN set for the geocode path,
+ *   directional prefixes, fr-FR and es-* street types, plus a locale-unknown set for the geocode path,
  *   which has to expand before the parse that would establish the locale. Others added as needed.
  *
- *   This is the INVERSE of the corpus synthesis pass (which produces `Ave` from `Avenue` for
- *   augmentation). Both sides should eventually share dictionaries; for v1 this dict is duplicated
+ *   This is the inverse of the corpus synthesis pass (which produces `Ave` from `Avenue` for
+ *   augmentation). Both sides should eventually share dictionaries. for v1 this dict is duplicated
  *   intentionally — refactoring sharing is a separate task.
  */
 
@@ -55,7 +55,7 @@ const FR_FR_DICT: ReadonlyArray<AbbreviationEntry> = [
 
 const ES_ES_DICT: ReadonlyArray<AbbreviationEntry> = [
 	// Spanish writes Avenida short as `Av.`, `Avda.` or `Avd.`. English never abbreviates it `Av` (it
-	// uses `Ave`), so there is no en collision — but FRENCH does, and there it means Avenue. That
+	// uses `Ave`), so there is no en collision — but french does, and there it means Avenue. That
 	// collision is why this table has to exist rather than the entry being folded into a shared set:
 	// the same three letters resolve to different words, and only the locale can decide which.
 	{ from: "Av", to: "Avenida" },
@@ -64,19 +64,19 @@ const ES_ES_DICT: ReadonlyArray<AbbreviationEntry> = [
 ]
 
 /**
- * #1002: the locale-UNKNOWN expansion set — the entries safe to apply when the input's locale hasn't been established
- * yet (the geocode path expands BEFORE the parse, which is what determines the locale). Safe = multi-char,
+ * #1002: the locale-unknown expansion set — the entries safe to apply when the input's locale hasn't been established
+ * yet (the geocode path expands before the parse, which is what determines the locale). Safe = multi-char,
  * collision-free across the locale dictionaries, and never a plausible standalone token in the other locale (FR
- * `Bd`/`Bvd`/`Imp` have no EN reading). Deliberately EXCLUDED: the FR single letters (`R` → Rue would fire on
+ * `Bd`/`Bvd`/`Imp` have no EN reading). Deliberately excluded: the FR single letters (`R` → Rue would fire on
  * Washington DC's literal "R St") and the EN suffixes (`St`, `Ave`, `Dr`, … — the model is trained-robust on those, and
  * `St`/`Dr` are ambiguous with Saint/Doctor).
  *
- * `Av` VIOLATES that criterion and is here anyway — a tracked defect, not an oversight. It was admitted on the claim
- * that it "reads Avenue in both", which is true of en/fr and false of es/pt, where it is Avenida. So Spanish input
- * through the geocode path acquires an ENGLISH street type: the 2026-08-05 gauntlet batch caught "Av. Los Meros" →
- * "Avenue Los Meros" and "Av. Aurelio Ortega" → "Avenue Aurelio Ortega", and both rows
+ * `Av` violates that criterion and is here anyway — a tracked defect rather than an oversight. It was admitted on the
+ * claim that it "reads Avenue in both", which is true of en/fr and false of es/pt, where it is Avenida. So Spanish
+ * input through the geocode path acquires an english street type: the 2026-08-05 gauntlet batch caught "Av. Los Meros"
+ * → "Avenue Los Meros" and "Av. Aurelio Ortega" → "Avenue Aurelio Ortega", and both rows
  * (`pr-op3-place-at-the-sea-ponce`, `mx-op3-san-miguel-canada-zapopan`) had to leave `street` unasserted because of it.
- * Dropping the entry is NOT a table edit: `fr-op3-halles-market-bonneuil` is a passing row that asserts street "Avenue
+ * Dropping the entry is not a table edit: `fr-op3-halles-market-bonneuil` is a passing row that asserts street "Avenue
  * de la Convention" and an `address_point` tier, so it pins the current behaviour and a removal has to be measured on a
  * resolver-gauntlet run. The real repair is upstream — the geocode path hardcodes `locale: "und"` because Stage 1
  * precedes the parse, and `@mailwoman/locale-hint` cannot presently detect Spanish (it scores script class + known
@@ -93,7 +93,7 @@ const LOCALE_UNKNOWN_DICT: ReadonlyArray<AbbreviationEntry> = [
 function getDictionary(locale: string | undefined): ReadonlyArray<AbbreviationEntry> {
 	const lc = (locale ?? "en-US").toLowerCase()
 
-	// BCP-47 "und" (undetermined) — the caller knows it does NOT know the locale yet (the geocode path
+	// BCP-47 "und" (undetermined) — the caller knows it does not know the locale yet (the geocode path
 	// expands before the parse). Only the collision-free multi-locale set applies; `undefined` keeps its
 	// historical en-US default.
 	if (lc === "und") return LOCALE_UNKNOWN_DICT
@@ -109,7 +109,7 @@ function getDictionary(locale: string | undefined): ReadonlyArray<AbbreviationEn
 }
 
 /**
- * The per-locale abbreviation table (short↔long), exposed so consumers can reuse the SAME data instead of duplicating
+ * The per-locale abbreviation table (short↔long), exposed so consumers can reuse the same data instead of duplicating
  * it. The metamorphic gauntlet inverts this table to generate expanded→abbreviated perturbations (`Avenue`→`Ave`); the
  * "no required trivia" rule means that data lives in exactly one place — here.
  */
@@ -179,7 +179,7 @@ export function expandAbbreviations(input: string, locale?: string): Abbreviatio
 			continue
 		}
 
-		// Emit expansion; map every char back to start of source token.
+		// Emit expansion. map every char back to start of source token.
 		for (let k = 0; k < expansion.length; k++) {
 			out.push(expansion[k]!)
 			map.push(start + Math.min(k, token.length - 1))

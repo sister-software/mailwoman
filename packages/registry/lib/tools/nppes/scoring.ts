@@ -32,9 +32,9 @@ export interface Score {
 /**
  * Score recovered clusters against a truth labelling.
  *
- * Pairwise, not set-matching: a true pair is two records carrying the same `labelOf`, a predicted pair is two records
- * in the same entity. `totalRecords` is the labelled population and only feeds the adjusted-Rand expectation, so it
- * must be the whole record set rather than the clustered subset — a smaller value inflates ARI.
+ * Pairwise rather than set-matching: a true pair is two records carrying the same `labelOf`, a predicted pair is two
+ * records in the same entity. `totalRecords` is the labelled population and only feeds the adjusted-Rand expectation,
+ * so it must be the whole record set rather than the clustered subset — a smaller value inflates ARI.
  */
 export function scoreEntities(
 	entities: readonly ResolvedEntity[],

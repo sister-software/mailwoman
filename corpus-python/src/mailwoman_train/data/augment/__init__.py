@@ -12,7 +12,7 @@ Seven augmentations, applied independently with configurable probability:
 
 3. **Ordinal-street swap**: "5th" ↔ "Fifth" on street-family tokens only.
 
-4. **Region+postcode glue** (#513): "NY 14201" → "NY14201" in ``raw`` ONLY — the
+4. **Region+postcode glue** (#513): "NY 14201" → "NY14201" in ``raw`` only — the
    ``tokens`` + ``labels`` lists stay split. ``whitespace_spans`` locates tokens by
    substring search (no whitespace requirement), so the char-offset piece projection
    still lands B-region on the letter pieces and B/I-postcode on the digit pieces of

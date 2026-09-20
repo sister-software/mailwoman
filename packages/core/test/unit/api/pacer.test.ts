@@ -4,7 +4,7 @@
 /**
  * @file Tests for {@linkcode RequestPacer} — the strict minimum-interval pacer.
  *
- *   Every timing assertion runs against an injected clock; nothing here sleeps on the wall clock.
+ *   Every timing assertion runs against an injected clock. nothing here sleeps on the wall clock.
  */
 
 import type { ClockLike } from "@mailwoman/core/api"
@@ -87,7 +87,7 @@ describe("RequestPacer", () => {
 		const pending = Array.from({ length: TOTAL_CALLS }, () => recordedAcquire())
 
 		// The first call resolves without sleeping, but awaiting an already-resolved promise still defers
-		// its `push` to the microtask queue. Flush it HERE, before driving the clock — otherwise
+		// its `push` to the microtask queue. Flush it here, before driving the clock — otherwise
 		// `advance()`'s own first internal await would flush it, by which point `now()` has left t=0.
 		await drainMicrotasks()
 
@@ -117,7 +117,7 @@ describe("RequestPacer", () => {
 
 		// `VirtualClock.advance` mutates `now()` before its first internal await flushes the microtask
 		// queue, so an already-resolved `acquire()` whose continuation is still queued would record the
-		// POST-advance time. Flush to quiescence first, at every point where that could happen.
+		// post-advance time. Flush to quiescence first, at every point where that could happen.
 		for (let i = 0; i < SERIAL_CALLS; i++) {
 			const pending = recordedAcquire()
 

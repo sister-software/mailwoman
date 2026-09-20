@@ -15,14 +15,14 @@ const moduleDir = import.meta.dirname
  * Absolute path to `data/<filename>`.
  *
  * `data/` sits at the package root (it is a `files` entry), and this module sits either at that root — running from
- * source — or under `out/` when compiled. So there are exactly two places to look, not three.
+ * source — or under `out/` when compiled. So there are exactly two places to look rather than three.
  *
- * The probe tests for the FILE. Probing by attempting a parse, as the per-table loaders used to, folds two different
+ * The probe tests for the file. Probing by attempting a parse, as the per-table loaders used to, folds two different
  * failures into one: a corrupt `taxonomy.json` throws, gets swallowed as "not this candidate", and the package reports
  * a missing table it is in fact looking straight at.
  *
  * A local copy of `@mailwoman/core/module/packaged-data`'s `resolvePackagedDataPath`, kept here to preserve this
- * package's zero-dependency contract.
+ * package's zero-dependency interface.
  */
 async function resolvePackagedDataPath(filename: string): Promise<string> {
 	const candidates = [resolvePath(moduleDir, "data", filename), resolvePath(moduleDir, "..", "data", filename)]
@@ -49,6 +49,6 @@ export async function readPackagedTable<T>(filename: string): Promise<T> {
 
 	// A corrupt shipped table is a broken build, and the SyntaxError names the offset. `poi-taxonomy` declares zero
 	// dependencies, so `@mailwoman/core`'s parse wrappers are deliberately out of reach.
-	// oxlint-disable-next-line no-restricted-properties -- zero-dependency leaf; corrupt shipped data must throw with its offset
+	// oxlint-disable-next-line no-restricted-properties -- zero-dependency leaf. corrupt shipped data must throw with its offset
 	return (await readLocalJSONFile(path)) as T
 }

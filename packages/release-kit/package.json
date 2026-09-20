@@ -49,6 +49,11 @@
 			"node": "./lib/release/stage.ts",
 			"default": "./out/release/stage.js"
 		},
+		"./release/verify-metadata": {
+			"types": "./out/release/verify-metadata.d.ts",
+			"node": "./lib/release/verify-metadata.ts",
+			"default": "./out/release/verify-metadata.js"
+		},
 		"./release/smoke-get-started": {
 			"types": "./out/release/smoke/get-started.d.ts",
 			"node": "./lib/release/smoke/get-started.ts",
@@ -93,6 +98,21 @@
 			"types": "./out/weights/weights-recipe.d.ts",
 			"node": "./lib/weights/weights-recipe.ts",
 			"default": "./out/weights/weights-recipe.js"
+		},
+		"./weights/rights/files": {
+			"types": "./out/weights/rights/files.d.ts",
+			"node": "./lib/weights/rights/files.ts",
+			"default": "./out/weights/rights/files.js"
+		},
+		"./weights/rights/record": {
+			"types": "./out/weights/rights/record.d.ts",
+			"node": "./lib/weights/rights/record.ts",
+			"default": "./out/weights/rights/record.js"
+		},
+		"./weights/rights/write": {
+			"types": "./out/weights/rights/write.d.ts",
+			"node": "./lib/weights/rights/write.ts",
+			"default": "./out/weights/rights/write.js"
 		}
 	},
 	"dependencies": {
@@ -100,9 +120,9 @@
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"mailwoman": "workspace:*",
-		"path-ts": "^2.3.0",
+		"path-ts": "^2.4.1",
 		"semver": "^7.8.5",
-		"spliterator": "^7.7.1",
+		"spliterator": "^7.11.0",
 		"zod": "^4.5.4",
 		"zx": "^8.8.5"
 	},

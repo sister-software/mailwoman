@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman-un-locode` — build the lookup DB, or look up a UN/LOCODE by name or coordinate.
+ *   `mailwoman-un-locode` — build the lookup DB, or look up a UN/locode by name or coordinate.
  *
  *   ```sh
  *   mailwoman-un-locode build --csv code-list.csv --out un-locode.db

@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman release merge-admin` — the ONE sanctioned `gh pr merge --admin` route (#1895). The
+ *   `mailwoman release merge-admin` — the one sanctioned `gh pr merge --admin` route (#1895). The
  *   bypass stays available for the nights the lab fleet is slow, but it runs the sub-second guards
  *   the skipped checks would have, synchronously, and refuses to merge over a failure.
  *
- *   Contract: the LOCAL checkout must be at the PR's head commit — the guards measure the tree they
+ *   Interface: the local checkout must be at the PR's head commit — the guards measure the tree they
  *   run in, and measuring a different tree than the one being merged answers a question nobody
  *   asked. The command verifies the SHA and refuses with the checkout command otherwise.
  */
@@ -17,18 +17,12 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import { Box, Text } from "ink"
 import { $ } from "zx"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	CLIUsageError,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, CLIUsageError, type CommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Admin-merge a pull request after running the sub-second guards the skipped checks carry."
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "merge-admin",
@@ -38,10 +32,6 @@ export const spec = {
 		method: { type: "string", default: "merge", description: "Merge method: merge, squash, or rebase" },
 	},
 } as const satisfies CommandSpec
-
-interface Options {
-	method: string
-}
 
 const MERGE_METHODS = ["merge", "squash", "rebase"] as const
 
@@ -123,7 +113,7 @@ async function mergeAdmin(prNumber: string, method: string): Promise<MergeAdminR
 	return { prNumber, title: pr.title, method, ranChecks, mergeOutput: merged.stdout.trim() }
 }
 
-const ReleaseMergeAdmin: ParsedCommandComponent<Options, [string]> = ({ options, args }) => {
+const ReleaseMergeAdmin: CommandComponent<typeof spec, [string]> = ({ options, args }) => {
 	const state = useCommandTask(() => mergeAdmin(args[0], options.method))
 
 	if (state.status !== "done") {

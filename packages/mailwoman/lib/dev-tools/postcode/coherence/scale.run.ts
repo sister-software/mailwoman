@@ -2,29 +2,29 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   #42 scale probe: run `findPostcodeCountryScope` over a whole (postcode, locality) panel on a CHOSEN backend, and
- *   report the outcome BY REGIME.
+ *   #42 scale probe: run `findPostcodeCountryScope` over a whole (postcode, locality) panel on a chosen backend, and
+ *   report the outcome BY regime.
  *
  *   The 2026-08-04 landing record measured 28,000 pair evaluations this way but only on the candidate table, and the two
  *   backends demonstrably disagree about the one predicate the pass is built on: `exactMatch`. The FTS tier does not
- *   fold `ü`→`u`, so `Munchen`→`München` is exact on the candidate table and NOT exact on FTS — which changes the
+ *   fold `ü`→`u`, so `Munchen`→`München` is exact on the candidate table and not exact on FTS — which changes the
  *   firing rate of a mechanism proposed for default-on. Hence a probe you can point at either backend, running the same
  *   protocol, so the two tables are comparable line for line.
  *
  *   Three legs per panel, and the regime split is the required part:
  *
- *   - `domestic`  — the panel's own country as `defaultCountry`. Any override is a border crossing, i.e. a FALSE
- *       POSITIVE, because the address really is in the panel's country.
+ *   - `domestic`  — the panel's own country as `defaultCountry`. Any override is a border crossing, i.e. a false
+ *       positive, because the address really is in the panel's country.
  *   - `rescue`    — a deliberately mis-scoped `defaultCountry` (the demo/CLI reality: locale `en-US` → `US` on every
- *       query). An override BACK to the panel's country is the win; an override anywhere else is a false positive.
+ *       query). An override back to the panel's country is a correct rescue. an override anywhere else is a false positive.
  *   - `regime`    — the same pass under an impossible default (`ZZ`), which forces step 1 to fail and reports what the
  *       alternative countries alone decide. A row whose regime probe returns the panel country was coherent under its
- *       own default and would have taken the cheap exit in the domestic leg; everything else FELL THROUGH and had every
+ *       own default and would have taken the cheap exit in the domestic leg. everything else fell through and had every
  *       candidate country actually tried. Without that column a zero false-positive count means nothing — it reads the
  *       same whether the mechanism refused to cross a border or never ran.
  *
- *   The regime probe OVER-counts fall-through: a pair coherent in two countries returns null under `ZZ` (the tie rule)
- *   although the domestic leg would have exited cheaply. It errs toward claiming MORE at-risk rows than there were,
+ *   The regime probe over-counts fall-through: a pair coherent in two countries returns null under `ZZ` (the tie rule)
+ *   although the domestic leg would have exited cheaply. It errs toward claiming more at-risk rows than there were,
  *   which is the safe direction for the argument it supports.
  *
  *   Run from the repo root:
@@ -35,7 +35,7 @@
  *     backend  fts | candidate
  *
  *   Emits a markdown row per leg on stdout plus the per-case false-positive list, which is the number the D-rule cares
- *   about — every FP is printed with its pair, so a finding is never a bare count.
+ *   about — every FP is printed with its pair. Therefore, a finding is never a bare count.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
@@ -92,8 +92,8 @@ const PANELS: Record<string, { path: string; country: string; misScope: string; 
 }
 
 /**
- * The impossible default the regime probe pins. Not an ISO-3166 assignment, so no codex slice can claim it and step 1
- * always fails — which is the point: it isolates what the ALTERNATIVE countries decide.
+ * The impossible default the regime probe pins. Not an ISO-3166 assignment, so no codex address system can claim it and
+ * step 1 always fails — which is the point: it isolates what the alternative countries decide.
  */
 const IMPOSSIBLE_DEFAULT = "ZZ"
 
@@ -112,7 +112,7 @@ if (!panel || (backendName !== "fts" && backendName !== "candidate")) {
 const limit = limitArg ? Number(limitArg) : Infinity
 
 /**
- * The two roots the pass reads. The real tree carries a street too; it is never consulted here (the pass keys on the
+ * The two roots the pass reads. The real tree carries a street too. it is never consulted here (the pass keys on the
  * postcode string the caller passes plus the first locality node), so the minimal pair is faithful.
  */
 function rootsFor(pair: Pair): AddressNode[] {
@@ -133,8 +133,8 @@ async function makeBackend(): Promise<ResolverBackend> {
 		return new WOFCandidateTableLookup({ databasePath: path })
 	}
 
-	// The PRODUCTION database set, exactly as `wofExtractPaths()` orders it — the point of the FTS leg is to measure what a
-	// default-on mechanism would see in production, not what a hand-picked database list can be made to show.
+	// The production database set, exactly as `wofExtractPaths()` orders it — the point of the FTS leg is to measure what a
+	// default-on mechanism would see in production rather than what a hand-picked database list can be made to show.
 	const paths = await existingWOFDatabasePaths()
 
 	console.error(`[probe] FTS backend over ${paths.length} databases: ${paths.join(", ")}`)
@@ -189,7 +189,7 @@ const domestic = await leg(panel.country)
 const rescue = await leg(panel.misScope)
 const regime = await leg(IMPOSSIBLE_DEFAULT)
 
-// A regime probe that returns the panel country means the pair is coherent under its OWN country — the cheap exit.
+// A regime probe that returns the panel country means the pair is coherent under its own country — the cheap exit.
 const coherentDefault = regime.rescued
 const fellThrough = pairs.length - coherentDefault
 

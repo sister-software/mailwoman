@@ -18,7 +18,7 @@ import type { TruthLabel } from "#tools/nppes/truth-grains"
  */
 export interface OvermergePacketInput {
 	/**
-	 * The clusters to inspect — the SHIPPED config's, since the packet exists to adjudicate what production produces.
+	 * The clusters to inspect — the shipped config's, since the packet exists to adjudicate what production produces.
 	 */
 	entities: readonly ResolvedEntity[]
 	/**

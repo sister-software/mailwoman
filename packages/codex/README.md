@@ -100,7 +100,7 @@ formatAddressRow({ locality: "Paris", region: "Île-de-France", postcode: "75008
 // → {
 //     raw: "75008 Paris",
 //     components: { postcode: "75008", locality: "Paris" },
-//     unplaced: ["region"],            // France absorbs the region — named, not silently dropped
+//     unplaced: ["region"],            // France absorbs the region — named rather than silently dropped
 //   }
 ```
 
@@ -126,7 +126,7 @@ canonicalKey({
 // → "123|main|st|portland|or|97201"
 ```
 
-Venue and attention are excluded on purpose: those carry organization identity, not address
+Venue and attention are excluded on purpose: those carry organization identity rather than address
 identity.
 
 ### `renderAddress(layout, components)`
@@ -150,7 +150,7 @@ ${locality}, ${region} ${postcode}
 ${country}`,
 ```
 
-Checking a country means looking at the shape of an address from there, not at a nested call.
+Checking a country means looking at the shape of an address from there rather than at a nested call.
 The line skeletons are derived from [libaddressinput](https://github.com/google/libaddressinput),
 Google's address metadata (Apache-2.0); 186 countries are generated from it and the 11 locales
 this project publishes models for are hand-authored and checked against real addresses on a
@@ -180,7 +180,7 @@ import { us, fr } from "@mailwoman/codex"
 us.lookupStreetSuffix("PKWY") // → { primary: "Parkway", standard: "Parkway", … }
 fr.postcodePattern // → /^\d{5}$/
 
-const zip: us.ZipCode = "94043" // branded, not string alone
+const zip: us.ZipCode = "94043" // branded rather than string alone
 ```
 
 | System   | Scope                                                                                |
@@ -201,7 +201,7 @@ candidateSystemsForPostcode("94043") // → ["us", "de", "fr"]
 candidateSystemsForPostcode("SW1A 1AA") // → ["gb"]
 ```
 
-Note the first answer. This is a **shape** test, not a gazetteer membership test, and
+Note the first answer. This is a **shape** test rather than a gazetteer membership test, and
 returning all three is the correct answer rather than a hedge — the caller's country scope is
 what narrows it. Picking one locale here would be a guess wearing a fact's clothes.
 
@@ -212,7 +212,7 @@ single address; an Australian postcode names a locality. Between them sit most o
 and the distinction that changes an answer is narrower: **is this code finer than the locality
 that contains it?**
 
-That is a fact about a country's _administrative_ geography, not its postal system, and code
+That is a fact about a country's _administrative_ geography rather than its postal system, and code
 length does not predict it. France and Germany are both five digits and land on opposite
 sides.
 
@@ -237,6 +237,44 @@ locality's 929 m and is excluded — and Canada Post already marks the differenc
 the second character, so the code says which before any lookup runs. The pooled Canadian
 number reads 0.10 km and looks like a uniform win; it is two populations, and a tier claim
 that averages two granularities is exactly what these tables exist to prevent.
+
+## Layout and convention coverage
+
+The layouts and the parsing conventions cover different numbers of places, and the gap is
+deliberate rather than a backlog.
+
+| Table                                                         | Keyed by     | Coverage                                         |
+| ------------------------------------------------------------- | ------------ | ------------------------------------------------ |
+| `ADDRESS_LAYOUTS` (`./address-layouts`)                       | country code | 197 countries; 55 of 252 records carry no layout |
+| `ADDRESS_SYSTEM_CONVENTIONS` (`./address-system-conventions`) | `SystemCode` | two rows: `fr`, `gb`                             |
+| `SystemCode` (`./postcode-systems`)                           | —            | ten: `us de fr es it ca gb jp au nz`             |
+
+A layout says how to print an address, so a country needs one to be served at all. A conventions
+row says what is ungrammatical in that system, and the decoder applies it as a hard mask before
+Viterbi — so a wrong row destroys parses that currently work. Each row therefore carries the
+measurement that earned it, and an absent row means "no constraints known", never "no constraints
+exist". Adding a country to the layouts is ordinary work; adding a conventions row requires a
+measured receipt.
+
+### Postal regimes the country code does not name
+
+Three families need a unit finer or other than the ISO country code. codex cannot express any of
+them today ([#2323](https://github.com/sister-software/mailwoman/issues/2323)):
+
+- **One code, several postal regimes.** `SH` covers Saint Helena, Ascension Island and Tristan da
+  Cunha, which address differently.
+- **Routing that is not geography.** BFPO identifiers are routing instructions rather than a GB locality
+  plus postcode. The American half of this family is modeled — see `lib/us/military-address.ts`
+  for APO/FPO/DPO and the `AA`/`AE`/`AP` pseudo-states — and the British half is not.
+- **Narrative addresses.** Costa Rica, Nicaragua and parts of Panama and the Caribbean build an
+  address from landmark, direction and distance. That is a different grammar rather than a variant of the
+  street grammar the layouts assume.
+
+### Out of scope
+
+Research state, source URLs and license terms for address data do not belong here. Whether this
+project has verified an open national address register for Chile is a fact about the data backlog rather than about how Chileans write an address. That register lives in
+[`@mailwoman/corpus`](../corpus#source-provenance).
 
 ## What this package does not do
 
@@ -285,4 +323,4 @@ tables.
 
 ## License
 
-[AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html)
+[AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html)

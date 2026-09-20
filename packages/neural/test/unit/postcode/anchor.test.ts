@@ -39,7 +39,7 @@ const RESOLVER = new FakeResolver({
 		{ country: "FR", lat: 48.862, lon: 2.336 },
 		{ country: "US", lat: 35.9, lon: -90.7 },
 	],
-	// known postcode with NO centroid (admin parent absent) — membership only
+	// known postcode with no centroid (admin parent absent) — membership only
 	"80144": [{ country: "IT", lat: 0, lon: 0 }],
 	// German code (would be backfilled in the real extract)
 	"68161": [{ country: "DE", lat: 49.48, lon: 8.46 }],
@@ -229,7 +229,7 @@ describe("gbOutwardCode", () => {
 })
 
 describe("extractPostcodeAnchors — GB outward fallback", () => {
-	// The GB gazetteer is aggregated to outward codes; a unit postcode resolves via its outward.
+	// The GB gazetteer is aggregated to outward codes. a unit postcode resolves via its outward.
 	const GB = new FakeResolver({ SW1A: [{ country: "GB", lat: 51.501, lon: -0.142 }] })
 
 	it("resolves a GB unit to its outward district, tagged matchType 'outward', full confidence", () => {

@@ -47,7 +47,7 @@ export function decorateNode(
 	node.source = "resolver"
 	node.sourceID = `${resolved.placetype}:${resolved.id}`
 
-	// `0,0` is the gazetteer's UNLOCATED sentinel, not a location in the Gulf of Guinea. Extracts carry a lot of it —
+	// `0,0` is the gazetteer's unlocated sentinel rather than a location in the Gulf of Guinea. Extracts carry a lot of it —
 	// 48,216 of 142,604 JP postcodes, 86,377 GB, 9,708 intl, 414 US — and stamping it produces a node that answers
 	// "yes" to every `lat != null` guard downstream, including the admin ladder's. Absence is the representable form
 	// (`AddressNode.lat` is optional and {@link isResolvedWithCoord} already reads the sentinel this way), so the
@@ -65,18 +65,18 @@ export function decorateNode(
 		delete node.lon
 	}
 
-	node.placeID = `wof:${resolved.id}` // v1: only WOF resolvers; the URI scheme stays this simple
-	// Record the resolver's ranking score AND the resolved place's CANONICAL name. The name is the
+	node.placeID = `wof:${resolved.id}` // v1: only WOF resolvers. the URI scheme stays this simple
+	// Record the resolver's ranking score and the resolved place's canonical name. The name is the
 	// gazetteer's truth for the place we picked — distinct from `node.value` (the raw input span). It
 	// lets consumers display the canonical name and lets the end-to-end eval check the resolver chose
-	// the right PLACE (gazetteer-name vs ground-truth) rather than merely echoing the parser's text.
+	// the right place (gazetteer-name vs ground-truth) rather than merely echoing the parser's text.
 	node.metadata = { ...node.metadata, resolver_score: resolved.score, resolver_name: resolved.name }
 
-	// The winner's PROMINENCE, when the backend computed one. `alternatives` below are full `ResolvedPlace`s and
-	// already carry theirs; without this stamp the WINNER's is the one value in the ranked list that gets dropped,
+	// The winner's prominence, when the backend computed one. `alternatives` below are full `ResolvedPlace`s and
+	// already carry theirs. without this stamp the winner's is the one value in the ranked list that gets dropped,
 	// which makes a top-1-vs-top-2 margin uncomputable from the tree — and that margin is what
 	// `mailwoman/query-intent.ts` reads to decide whether a bare-toponym answer was a clear win. Additive metadata
-	// only; nothing in the resolve reads it back.
+	// only. nothing in the resolve reads it back.
 	if (resolved.prominence !== undefined) {
 		node.metadata["resolver_prominence"] = resolved.prominence
 	}
@@ -88,7 +88,7 @@ export function decorateNode(
 		node.metadata["resolver_country"] = resolved.country
 	}
 
-	// The score-channel carries (ROAD_TO_V9 §2 + #28). Written ONLY when the backend actually has a
+	// The score-channel carries (ROAD_TO_V9 §2 + #28). Written only when the backend actually has a
 	// value: an absent score means "unmeasured" or "pre-split gazetteer", and a `resolver_*: 0` on the
 	// node would assert a measurement nobody made. Nothing in the resolve path reads these keys back —
 	// they exist for annotation / API surfaces downstream. `resolver_importance` is the blended #28
@@ -115,7 +115,7 @@ export function decorateNode(
 
 	// Fallback-observability (#718): a broader admin tier (macroregion/macrocounty) stood in for the
 	// true region/county because no exact-type candidate existed. Additive annotation only — the
-	// resolved coordinate/identity above is untouched; this just lets a consumer / QA pass see it.
+	// resolved coordinate/identity above is untouched. this just lets a consumer / QA pass see it.
 	if (resolved.resolutionQuality) {
 		node.metadata["resolution_quality"] = resolved.resolutionQuality
 	}

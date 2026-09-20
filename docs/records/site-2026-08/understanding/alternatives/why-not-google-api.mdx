@@ -1,6 +1,6 @@
 ---
 sidebar_position: 3
-title: Why not just use Google's API?
+title: Why notuse Google's API?
 tags:
   - domain
   - hubris
@@ -9,9 +9,9 @@ tags:
   - international
 ---
 
-# Why not just use Google's API?
+# Why notuse Google's API?
 
-Google's Geocoding API is the default choice for geocoding. It is fast, globally comprehensive, and returns results in milliseconds. For many applications, calling Google is the right move. For applications that need to own their address data, audit their results, or operate at scale, it is the expensive kind of cheap.
+Google's Geocoding API is the default choice for geocoding. It is fast, globally complete, and returns results in milliseconds. For several applications, calling Google is the right move. For applications that need to own their address data, audit their results, or operate at scale, it is the expensive kind of cheap.
 
 ## What you get
 
@@ -33,10 +33,10 @@ Google claims coverage in 250+ countries and territories. Quality varies dramati
 | Region type                          | Quality                                                              |
 | ------------------------------------ | -------------------------------------------------------------------- |
 | US, Western Europe, Japan, Australia | Excellent — precise to rooftop or building entrance                  |
-| India, Brazil, Southeast Asia        | Good — municipality or neighborhood level, not building-level        |
-| Sub-Saharan Africa, Central Asia     | Variable — region or locality level, significant gaps in rural areas |
+| India, Brazil, Southeast Asia        | Good — municipality or neighborhood level rather than building-level |
+| Sub-Saharan Africa, Central Asia     | Variable — region or locality level, measured gaps in rural areas    |
 
-The uneven coverage is not Google's fault — it reflects the quality of the underlying data sources in each country. But it means the API's "global" label masks significant regional variation.
+The uneven coverage is not Google's fault — it reflects the quality of the underlying data sources in each country. But it means the API's "global" label masks measured regional variation.
 
 ## What you give up
 
@@ -64,11 +64,11 @@ You are renting a black box. When the black box is wrong, your only option is to
 
 ### Your query data is Google's training data
 
-Google's privacy policy does not guarantee that your geocoding queries are not used to improve Google's services. For most applications, this is acceptable — address data is not sensitive in the way that medical records or financial transactions are. For applications that deal with protected addresses (domestic violence shelters, witness protection, military facilities), sending address queries to a third party is a privacy violation.
+Google's privacy policy does not guarantee that your geocoding queries are not used to improve Google's services. For most applications, this is acceptable — address data is not sensitive in the way that medical records or financial transactions are. For applications that deal with guarded addresses (domestic violence shelters, witness protection, military facilities), sending address queries to a third party is a privacy violation.
 
 ### You are locked into Google's ontology
 
-Google's address component types (route, sublocality, administrative_area_level_1, etc.) are Google's taxonomy. They do not always map cleanly to other address schemas:
+Google's address component types (route, sublocality, administrative_area_level_1, etc.) are Google's taxonomy. They do not always map directly to other address schemas:
 
 | Google component              | Mailwoman equivalent | Notes                         |
 | ----------------------------- | -------------------- | ----------------------------- |
@@ -84,7 +84,7 @@ If your application uses a different address model, you must translate Google's 
 
 Despite these limitations, Google's API is the right choice for:
 
-- **Prototypes and MVPs.** You need geocoding working today, not in six months. The API cost is negligible at prototype scale.
+- **Prototypes and MVPs.** You need geocoding working today rather than in six months. The API cost is negligible at prototype scale.
 - **One-shot batch processing.** You have a fixed set of addresses to geocode once. The one-time cost is lower than building infrastructure.
 - **Global coverage without a data team.** You do not have the resources to source and maintain gazetteers for 100+ countries.
 - **Integration with Google Maps.** If you are already rendering results on Google Maps, using Google's geocoder avoids coordinate-system mismatches.
@@ -97,11 +97,11 @@ Owning your parser is the right choice when:
 
 - **You geocode the same addresses repeatedly.** A one-time geocoding cost, cached locally, amortizes the infrastructure investment over time.
 - **You need auditable results.** When correctness matters (delivery routing, emergency services, government compliance), being able to trace a geocode back to its source data is non-negotiable.
-- **You operate in regions where Google is weak.** If a significant fraction of your addresses are in countries where Google's coverage is at the locality level, a regional gazetteer may outperform Google.
+- **You operate in regions where Google is weak.** If a measured fraction of your addresses are in countries where Google's coverage is at the locality level, a regional gazetteer may outperform Google.
 - **You need a specific address model.** If your downstream systems use ISO 19160 address components or a custom schema, translating Google's components is a recurring development cost.
-- **You handle protected addresses.** If privacy regulations or internal policy prohibit sending addresses to third-party APIs, you need an in-house solution.
+- **You handle guarded addresses.** If privacy regulations or internal policy prohibit sending addresses to third-party APIs, you need an in-house solution.
 
-Mailwoman targets the "own your parser" niche — an alternative for applications where Google's terms, pricing, or opacity make the API unsuitable, not a Google competitor.
+Mailwoman targets the "own your parser" niche — an alternative for applications where Google's terms, pricing, or opacity make the API unsuitable rather than a Google competitor.
 
 ## See also
 

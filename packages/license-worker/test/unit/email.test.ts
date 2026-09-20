@@ -3,7 +3,7 @@
 
 /**
  *   The Cloudflare provider over a scripted binding: the message goes out from the configured sender to the buyer with
- *   the shared subject, text and HTML, the invoice id rides as a header, and the binding's message id is the one
+ *   the shared subject, text and html, the invoice id rides as a header, and the binding's message id is the one
  *   recorded. The two bodies render the same sections, so each is held to what the buyer needs from it.
  */
 
@@ -73,7 +73,7 @@ describe("the license message", () => {
 		const text = renderLicenseEmail(first, site)
 		const html = renderLicenseEmailHTML(first, site, "licenses@mailwoman.ai")
 
-		// React escapes quotes in text nodes; the command is read back as a person copies it.
+		// React escapes quotes in text nodes. the command is read back as a person copies it.
 		const unescaped = html.replaceAll("&quot;", '"').replaceAll("&#x27;", "'")
 
 		for (const body of [text, unescaped]) {

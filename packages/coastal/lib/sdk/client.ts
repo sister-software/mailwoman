@@ -5,22 +5,22 @@
  *   The Environment Agency's catalogue entry, ISO record and spatial services, read through
  *   {@linkcode APIClient}.
  *
- *   THESE ARE API REQUESTS AND THEY GO THROUGH `APIClient`. Small bodies, repeated calls, a third-party
+ *   these are API requests and they GO through `APIClient`. Small bodies, repeated calls, a third-party
  *   host — the pacing, bounded retry, response caching and `ResourceError` mapping are exactly what they
- *   need. The 70 MB geodatabase is NOT one of them: it is a file transfer, it streams to disk on raw
+ *   need. The 70 MB geodatabase is not one of them: it is a file transfer, it streams to disk on raw
  *   `fetch`, and `download.ts` says so in place.
  *
- *   THREE MEASURED CLIENT BEHAVIORS ARE ENCODED HERE RATHER THAN WRITTEN DOWN SOMEWHERE ELSE.
+ *   three measured client behaviors are encoded here rather than written down somewhere else.
  *
- *   1. THE OGC SERVICE SLUG IS A MISSPELLING OF THE PRODUCT. `ncerm-national-2024` answers HTTP 404;
- *      `ncern-national-2024` answers HTTP 200 with 110,478 bytes of `GetCapabilities`. Correcting the
+ *   1. the OGC service slug is A misspelling OF the product. `ncerm-national-2024` answers http 404;
+ *      `ncern-national-2024` answers http 200 with 110,478 bytes of `GetCapabilities`. Correcting the
  *      spelling loses the service half of the two-path verification and reports a clean run while doing it,
  *      so the misspelling is a named constant in `vocabulary.ts` and never assembled from the product name.
- *   2. FRESHNESS CANNOT BE PROBED BY CONTENT LENGTH. The download host answers `HEAD` with HTTP 405 and
- *      IGNORES `Range` — a ranged GET returns 200 with the whole 70,296,882-byte body — so a size probe
+ *   2. freshness cannot be probed BY content length. The download host answers `head` with http 405 and
+ *      ignores `Range` — a ranged GET returns 200 with the whole 70,296,882-byte body — so a size probe
  *      starts a real transfer. {@linkcode EANCERMClient.readCatalogueRecord} reads the ISO revision date out
  *      of the catalogue entry instead, which is the authority's own statement about what changed.
- *   3. THE ATTRIBUTION COMES FROM THE STRUCTURED LICENCE FIELD. The abstract carries the statement TWICE and
+ *   3. the attribution comes from the structured licence field. The abstract carries the statement twice and
  *      the first copy — inherited from the superseded 2018–2021 record — has no year. The ISO record carries
  *      no `gmd:credit` element at all. {@linkcode parseAttributionStatement} refuses the yearless copy, so a
  *      reader that falls back to the abstract cannot take the wrong one.
@@ -43,7 +43,7 @@ import { NCERM_ATTRIBUTION, NCERM_CATALOGUE_PACKAGE_ID, NCERM_DATASET_ID, NCERM_
 // Re-exported so a caller branching on this client's failures needs exactly one import.
 
 /**
- * The EA's spatial-data service root for NCERM. Built on the MISSPELLED slug — see this file's header.
+ * The EA's spatial-data service root for ncerm. Built on the misspelled slug — see this file's header.
  */
 export const EA_NCERM_SPATIAL_BASE_URL = `https://environment.data.gov.uk/spatialdata/${NCERM_SERVICE_SLUG}`
 
@@ -60,7 +60,7 @@ export const EA_CSW_URL = "https://environment.data.gov.uk/discover/ea/csw"
 /**
  * Minimum spacing between EA requests, in milliseconds.
  *
- * The EA publishes no rate limit for these services and its WFS `GetCapabilities` reports `<ows:Fees>NONE`, so this is
+ * The EA publishes no rate limit for these services and its WFS `GetCapabilities` reports `<ows:Fees>none`, so this is
  * courtesy pacing rather than a published ceiling — stated as such rather than dressed up as a measured limit. Two
  * requests a second is far below anything a public OGC endpoint is provisioned for and costs a build nothing: the
  * acquisition path makes single-digit numbers of calls, and the verification a few dozen.
@@ -72,7 +72,7 @@ export const EA_MIN_REQUEST_INTERVAL_MS = 500
  *
  * Six hours, chosen against the product's cadence rather than a wall-clock intuition. The ISO
  * `MD_MaintenanceFrequencyCode` is `annually` and no prose names a publication month, so the revision date moves at
- * most once a year. A shorter TTL buys nothing.
+ * most once a year. A shorter TTL adds nothing.
  */
 const EA_CACHE_TTL_MS = 6 * 60 * 60 * 1000
 
@@ -102,19 +102,19 @@ const YEAR_PATTERN = /\b\d{4}\b/u
 /**
  * The attribution statement carrying a year, taken from a block of text that may hold the statement more than once.
  *
- * THE FIRST COPY IS THE WRONG ONE, MEASURED. The 2024 record's abstract ends "…© Environment Agency copyright and/or
+ * The first copy is the wrong one, measured. The 2024 record's abstract ends "…© Environment Agency copyright and/or
  * database right Attribution statement: © Environment Agency copyright and/or database right 2025. All rights reserved.
  * " — two copies, the first inherited from the superseded record and carrying no year. A parse that took the first
  * match would ship an attribution naming no year, which is a licence condition stated incorrectly rather than a
  * cosmetic slip.
  *
- * INDEX SCANS RATHER THAN A REGEX, AND THAT IS A CORRECTNESS CHOICE RATHER THAN A SPEED ONE. The obvious form —
+ * Index scans rather than A regex, and that is A correctness choice rather than A speed one. The obvious form —
  * `/Attribution statement:\s*([^<]*?)(?=Attribution statement:|<|$)/g` — backtracks polynomially, because the `\s*` and
  * the lazy run overlap on whitespace and the lookahead's `$` alternative makes every position a candidate end. The
  * input here is a 27,643-byte document that arrived over the network, so "a pathological one cannot happen" is not a
  * claim this reader gets to make. Two `indexOf` calls per copy answer the same question in one pass.
  *
- * EACH COPY ENDS AT THE NEXT MARKER OR THE NEXT TAG, whichever comes first. The statement sits inside a
+ * Each copy ends AT the next marker or the next TAG, whichever comes first. The statement sits inside a
  * `gco:CharacterString`, so a scan that ran to the end of the document would return several kilobytes of XML that
  * happens to contain a year.
  *
@@ -136,7 +136,7 @@ export function parseAttributionStatement(text: string): string {
 		const nextTag = text.indexOf("<", from)
 
 		// `Math.min` over the two ends, with an absent end reading as the end of the string rather than as `-1` — which
-		// would sort BELOW every real index and truncate every statement to nothing.
+		// would sort below every real index and truncate every statement to nothing.
 		const end = Math.min(nextMarker === -1 ? text.length : nextMarker, nextTag === -1 ? text.length : nextTag)
 		const statement = text.slice(from, end).trim()
 
@@ -166,7 +166,7 @@ export class EANCERMClient extends APIClient<APIClientConfig> {
 	/**
 	 * The catalogue entry: reference dates, licence, and the direct file URLs.
 	 *
-	 * The download URL is READ FROM HERE rather than assembled, because the EA's file service keys on an opaque
+	 * The download URL is read from here rather than assembled, because the EA's file service keys on an opaque
 	 * `fileDataSetId` that has no relationship to the dataset id — a hard-coded URL survives a republish by pointing at a
 	 * file that is no longer the product.
 	 *
@@ -213,7 +213,7 @@ export class EANCERMClient extends APIClient<APIClientConfig> {
 	 * The feature count the WFS reports for one layer — `resultType=hits`, which returns the count without a single
 	 * geometry.
 	 *
-	 * This is the SECOND path in the build's two-path agreement check: the same authority, a different distribution
+	 * This is the second path in the build's two-path agreement check: the same authority, a different distribution
 	 * channel. A geodatabase whose feature count disagrees with the live service is not a file this build should be
 	 * writing into a sealed artifact.
 	 */

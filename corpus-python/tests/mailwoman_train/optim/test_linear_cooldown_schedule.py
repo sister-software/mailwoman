@@ -1,11 +1,11 @@
 """The WSD-style cooldown branch (2026-08-10 recipe review, change 11).
 
-Every v4.3.3 checkpoint was graded mid-cosine at 26–93% of peak LR; the schedule literature
-(Chinchilla schedule-matching; Hägele et al. 2024; MiniCPM) says such reads systematically
+Every v4.3.3 checkpoint was graded mid-cosine at 26–93% of peak LR. the schedule literature
+(Chinchilla schedule-matching. Hägele et al. 2024. MiniCPM) says such reads systematically
 understate the finished model, and that decaying a mid-run checkpoint's LR to zero over a
 short branch recovers approximately the matched-schedule endpoint.
 
-Contract pinned here: ``lr_schedule: linear_cooldown`` with ``cooldown_start_step`` holds
+Interface pinned here: ``lr_schedule: linear_cooldown`` with ``cooldown_start_step`` holds
 multiplier 1.0 through the resume point and decays linearly to zero at ``max_steps``. The
 config's ``learning_rate`` is set to the parent checkpoint's CURRENT (tail) LR, so with the
 schedule-aware restamp the first resumed optimizer step continues exactly where the parent
@@ -98,7 +98,7 @@ def test_branch_resume_continues_the_parent_tail_exactly(tmp_path) -> None:
 
 
 def test_strict_config_accepts_cooldown_start_step(tmp_path) -> None:
-    """#1248 strict config: the new key must be a declared TrainConfig field, not an unknown."""
+    """#1248 strict config: the new key must be a declared TrainConfig field rather than an unknown."""
     from mailwoman_train.config import TrainConfig
 
     assert hasattr(TrainConfig(), "cooldown_start_step")

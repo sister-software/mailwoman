@@ -9,7 +9,7 @@
  *   `dependent_locality` tier in 11 of 244 countries. Read-only, no network, no model — three
  *   grouped queries over `spr`/`ancestors` and a markdown render.
  *
- *   The report is a COMMITTED artifact (the `fill-rates.md` precedent), so the source md5 and the
+ *   The report is a committed artifact (the `fill-rates.md` precedent), so the source md5 and the
  *   parent-coverage floor are pinned in its header. Re-running against a rebuilt gazetteer and
  *   diffing the report is the intended workflow.
  */
@@ -18,11 +18,11 @@ import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import { DEFAULT_COVERAGE_FLOOR } from "#gazetteer-pipeline/defaults"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "granularity",
@@ -38,13 +38,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	out: string
-	source?: string
-	floor: number
-}
-
-const GazetteerGranularity: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerGranularity: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath, md5File } = await import("@mailwoman/core/utils")
 		const { bottomsOutAt, buildGranularityLadder } = await import("#gazetteer-pipeline/granularity/index")
@@ -58,7 +52,7 @@ const GazetteerGranularity: ParsedCommandComponent<Options> = ({ options }) => {
 		}
 
 		const markdown = renderGranularityReport(rows, {
-			// Display the portable form; never bake the resolved lab path into a committed artifact.
+			// Display the portable form. never bake the resolved lab path into a committed artifact.
 			sourcePath: "$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db",
 			sourceMD5: await md5File(sourcePath),
 			buildDate: new Date().toISOString(),

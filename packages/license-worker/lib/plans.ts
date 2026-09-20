@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The closed plan catalog: code, not Stripe metadata and not client input. A Price outside it mints nothing. The Price
+ *   The closed plan catalog: code rather than Stripe metadata and not client input. A Price outside it mints nothing. The Price
  *   ids come from `shop/ids.json` by the environment's Stripe mode, since sandbox and production hold different Stripe
  *   objects for the same two plans.
  */

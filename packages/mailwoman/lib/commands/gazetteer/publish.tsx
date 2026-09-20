@@ -7,7 +7,7 @@
  *   `docs/scripts/publish-demo-assets-to-r2.py` (boto3 + the R2 cache-control gotchas). The version
  *   defaults to today's date + `a` (e.g. `2026-06-27a`), the immutable convention.
  *
- *   Creds: `RCLONE_S3_PUBLIC_*` must be in the process env — `set -a; . ./.env; set +a` first. This
+ *   Creds: `RCLONE_S3_PUBLIC_*` must be in the process env — `set -a. . ./.env. set +a` first. This
  *   is an in-repo operator command (it needs the upload script + the demo's resources file).
  */
 
@@ -15,17 +15,11 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	phaseReporter,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReporter, useCommandTask } from "#cli-kit"
 import { DEFAULT_CANDIDATE_OUT } from "#gazetteer-pipeline/defaults"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "publish",
@@ -42,15 +36,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	gazetteerVersion?: string
-	bucket?: string
-	prefix: string
-	dryRun: boolean
-	bumpDemo: boolean
-}
-
-const GazetteerPublish: ParsedCommandComponent<Options> = ({ options, args }) => {
+const GazetteerPublish: CommandComponent<typeof spec> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
 		const { mailwomanDataRoot, repoRootPathBuilder } = await import("@mailwoman/core/utils")
 		const { defaultGazetteerVersion, publishGazetteer, wofDir } = await import("#gazetteer-pipeline")

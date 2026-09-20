@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Runtime pipeline result contract.
+ * @file Runtime pipeline result interface.
  */
 
 import type { AddressTree } from "#decoder/types"
@@ -21,8 +21,8 @@ import type {
 /**
  * One stage crash the coordinator caught and degraded past.
  *
- * A fault is NOT an error return: `runPipeline` still resolves, and `tree` still carries whatever the remaining stages
- * could prove. What the fault buys the caller is the ability to tell "the model faulted and the rule-based stages
+ * A fault is not an error return: `runPipeline` still resolves, and `tree` still carries whatever the remaining stages
+ * could prove. What the fault provides the caller is the ability to tell "the model faulted and the rule-based stages
  * filled the tree back in" apart from "the model ran and found nothing" — which, before #40, was impossible from the
  * outside. See the `safeClassify` docstring for the measured failure this was written against.
  */
@@ -30,13 +30,13 @@ export interface PipelineFault {
 	stage: PipelineFaultStage
 	/**
 	 * The thrown value's `name` (`TypeError`, `RangeError`, …), or `"Error"` when something that isn't an `Error` was
-	 * thrown. Machine-stable enough to branch on; the `cause` carries the rest.
+	 * thrown. Machine-stable enough to branch on. the `cause` carries the rest.
 	 */
 	name: string
 	message: string
 	/**
 	 * The value the stage threw, verbatim — kept so a caller can rethrow it or read its stack. Not JSON-serializable in
-	 * the useful sense; serialize `stage`/`name`/`message` when you need this on a wire.
+	 * the useful sense. serialize `stage`/`name`/`message` when you need this on a wire.
 	 */
 	cause: unknown
 }
@@ -52,7 +52,7 @@ export interface PipelineResult {
 	kind: QueryKindResult
 	/**
 	 * Stage 2.7 phrase proposals when a grouper was wired. Empty array when the coordinator ran with no grouper
-	 * (pre-v0.5.0 callers) or when the fast-path skipped Stage 2.7. Stage 3 consumes this as conditioning; Stage 5
+	 * (pre-v0.5.0 callers) or when the fast-path skipped Stage 2.7. Stage 3 consumes this as conditioning. Stage 5
 	 * consumes it as boundary candidates.
 	 */
 	phraseProposals: PhraseProposal[]
@@ -65,7 +65,7 @@ export interface PipelineResult {
 	/**
 	 * Every stage crash the coordinator caught and degraded past, in the order they happened. **Always present** — an
 	 * empty array is the coordinator stating that no stage faulted, which is a different claim from a missing field.
-	 * Non-empty means the tree you are holding was produced with at least one stage down; see {@link PipelineFault}.
+	 * Non-empty means the tree you are holding was produced with at least one stage down. see {@link PipelineFault}.
 	 */
 	faults: PipelineFault[]
 	/**

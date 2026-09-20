@@ -57,19 +57,19 @@ except ImportError:
 # Versioned assets live under en-us/<version>/ and never change → immutable, long-lived
 # (Cloudflare edge-caches the byte ranges sql.js-httpvfs reads).
 CACHE_CONTROL = "public, max-age=604800, immutable"
-# EXCEPTION: releases.json is the MUTABLE version pointer the demo reads to pick
-# defaultVersion. It must NOT be immutable — otherwise a `defaultVersion` flip never
+# exception: releases.json is the mutable version pointer the demo reads to pick
+# defaultVersion. It must not be immutable — otherwise a `defaultVersion` flip never
 # reaches returning visitors (they stay pinned to the old version's assets for up to a
 # week, which on mobile Safari surfaces as a stale/torn cached DB → "database disk image
 # is malformed"). Short max-age + must-revalidate so flips propagate within ~a minute.
 MUTABLE_CACHE_CONTROL = "public, max-age=60, must-revalidate"
 # Basenames served with MUTABLE_CACHE_CONTROL instead of the immutable default.
 MUTABLE_FILES = {"releases.json"}
-# Top-level dirs whose objects MUST sit under a generation segment
+# Top-level dirs whose objects must sit under a generation segment
 # (`<dir>/<generation>/<file>`), never directly at the dir root.
 #
 # `pair-index` earned this the hard way: the binaries were uploaded flat at
-# `mailwoman/pair-index/pair-index-<cc>.bin` and then OVERWRITTEN IN PLACE for the
+# `mailwoman/pair-index/pair-index-<cc>.bin` and then overwritten IN place for the
 # PIX schema-3 rebuilt (2026-08-04). CACHE_CONTROL says immutable, so Cloudflare
 # kept serving the schema-1 bytes — which the site's reader rejects outright
 # (`schemaVersion 1 predates the typed parent record`) — until a manual purge.
@@ -80,7 +80,7 @@ MUTABLE_FILES = {"releases.json"}
 # a dated segment by convention and are not listed — add one here only after it
 # has a version constant on the demo side to match.
 VERSIONED_DIRS = {"pair-index"}
-# Content-Type by extension. The DBs/model/binaries MUST be octet-stream so Cloudflare
+# Content-Type by extension. The DBs/model/binaries must be octet-stream so Cloudflare
 # doesn't gzip them (gzipped ranges break sql.js-httpvfs).
 CONTENT_TYPE = {
     ".db": "application/octet-stream",
@@ -116,7 +116,7 @@ def main() -> None:
     if not files:
         sys.exit(f"no files under {src}")
 
-    # Layout guard BEFORE the credential read, so a mis-staged tree fails the same
+    # Layout guard before the credential read, so a mis-staged tree fails the same
     # way with or without the .env sourced (and under --dry-run).
     unversioned = [
         r

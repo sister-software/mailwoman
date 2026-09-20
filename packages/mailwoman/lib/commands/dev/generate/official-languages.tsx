@@ -9,16 +9,10 @@
 
 import { Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	reportToStderr,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, reportToStderr, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "official-languages",
@@ -36,12 +30,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	cldrDir?: string
-	cldrVersion: string
-}
-
-const DevGenerateOfficialLanguages: ParsedCommandComponent<Options> = ({ options }) => {
+const DevGenerateOfficialLanguages: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { generateOfficialLanguages } = await import("#dev-tools/codex/official-languages")
 

@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the `no-street-led` slice's board split (#901 family / Track B, 2026-07-16).
+ *   Tests for the `no-street-led` recipe's board split (#901 family / Track B, 2026-07-16).
  *
  *   This recipe existed for a year before it could train on anything — the YAML Norway problem
- *   (`NO:` -> boolean false) dropped every Norwegian row (#1145). Now that it CAN train, it must not
+ *   (`no:` -> boolean false) dropped every Norwegian row (#1145). Now that it can train, it must not
  *   train on its own eval set. The one invariant that is not "nice to have":
  *
- *   THE DIACRITIC SPLIT. The NO digit board keeps diacritics in its surface key (`tømmerlien`).
- *   fr-fragment's normalizer strips them. If this recipe had reused fr-fragment's `norm`, the slice
+ *   the diacritic split. The Norwegian digit board keeps diacritics in its surface key (`tømmerlien`).
+ *   fr-fragment's normalizer strips them. If this recipe had reused fr-fragment's `norm`, the recipe
  *   would fold `Tømmerlien` -> `tommerlien`, never match the board's reserved `tømmerlien`, and leak
  *   the surface into training while every check reported success. That failure is invisible
  *   downstream — the board just reads high. So it gets a test with a diacritic surface specifically.
@@ -17,10 +17,10 @@
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { noStreetLedRecipe } from "@mailwoman/corpus/no/recipes/street/led"
-import { scratch, sliceRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
+import { scratch, recipeRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
 
-const run = sliceRunner("no-street-led", noStreetLedRecipe, 901)
+const run = recipeRunner("no-street-led", noStreetLedRecipe, 901)
 
 const TUPLES = [
 	{ street: "Tømmerlien", locality: "dokka", number: "3", postcode: "2870" },
@@ -57,7 +57,7 @@ describe("no-street-led board split", () => {
 	})
 
 	it("skips a reserved surface — KEEPING diacritics (the whole hazard)", async () => {
-		// The board writes lowercased-NFC surfaces. `tømmerlien` with the ø INTACT.
+		// The board writes lowercased-NFC surfaces. `tømmerlien` with the ø intact.
 		const { stats, rows } = await run(TUPLES, ["tømmerlien"])
 
 		expect(stats.contaminated).toBe(1)
@@ -69,7 +69,7 @@ describe("no-street-led board split", () => {
 
 	it("does NOT skip when the reserved surface differs only by a stripped diacritic", async () => {
 		// If this recipe ever regresses to fr-fragment's diacritic-stripping norm, `tommerlien`
-		// (no ø) would match `Tømmerlien` and this row would be wrongly excluded. It must NOT be.
+		// (no ø) would match `Tømmerlien` and this row would be wrongly excluded. It must not be.
 		const { stats } = await run(TUPLES, ["tommerlien"])
 
 		expect(stats.contaminated).toBe(0)

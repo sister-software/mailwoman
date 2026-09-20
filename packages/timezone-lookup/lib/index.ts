@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `@mailwoman/timezone-lookup` — coordinate → IANA timezone, server-side. Point-in-polygon over the
+ *   `@mailwoman/timezone-lookup` — coordinate → iana timezone, server-side. Point-in-polygon over the
  *   timezone-boundary-builder polygons stored in a `node:sqlite` DB (bbox-prefilter + ray-cast),
  *   mirroring the resolver's PIP pattern. The UTC offset comes from `Intl.DateTimeFormat` — no tz
  *   database dependency. Build the DB with `mailwoman-timezone build` (see `./build.ts`).
@@ -11,6 +11,7 @@
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import type { TimezoneDatabase } from "#schema"
 
@@ -22,14 +23,14 @@ export type MultiPolygonCoords = number[][][][]
 /**
  * Ray-cast point-in-ring (even-odd rule). `ring` is `[[lon, lat], …]`.
  *
- * DELIBERATE DUPLICATE of `@mailwoman/spatial`'s `pointInRing`, kept local on purpose. This package has exactly one
+ * Deliberate duplicate of `@mailwoman/spatial`'s `pointInRing`, kept local on purpose. This package has exactly one
  * dependency — zero-dep `@mailwoman/annotations` — and importing spatial to reach a fifteen-line ray cast would pull
  * `@mailwoman/core` with it, whose published tarball carries ~11 MB of libpostal/WOF/chromium-i18n data. Eleven
  * megabytes for fifteen lines is the wrong trade for a leaf lookup package. If this package ever gains a real spatial
  * dependency, delete these and import them.
  *
  * Repo-health-ignore private-name-shadows-export -- kept local so a leaf lookup package stays off @mailwoman/core's ~11
- * MB of shipped data; see the docstring
+ * MB of shipped data. see the docstring
  */
 function pointInRing(lon: number, lat: number, ring: number[][]): boolean {
 	let inside = false
@@ -52,7 +53,7 @@ function pointInRing(lon: number, lat: number, ring: number[][]): boolean {
  * Inside the outer ring and outside every hole.
  *
  * Repo-health-ignore private-name-shadows-export -- kept local so a leaf lookup package stays off @mailwoman/core's ~11
- * MB of shipped data; see the docstring
+ * MB of shipped data. see the docstring
  */
 function pointInPolygon(lon: number, lat: number, polygon: number[][][]): boolean {
 	if (!polygon[0] || !pointInRing(lon, lat, polygon[0])) return false
@@ -70,7 +71,7 @@ export function pointInMultiPolygon(lon: number, lat: number, polygons: MultiPol
 }
 
 /**
- * The current UTC offset (seconds) for an IANA timezone, via `Intl` (no tz-db dependency). Returns `undefined` if the
+ * The current UTC offset (seconds) for an iana timezone, via `Intl` (no tz-db dependency). Returns `undefined` if the
  * runtime can't resolve the zone.
  */
 export function offsetSecForTimezone(tzid: string, date: Date = new Date()): number | undefined {
@@ -96,19 +97,19 @@ export function offsetSecForTimezone(tzid: string, date: Date = new Date()): num
 export class TimezoneLookup implements Disposable {
 	#db: DatabaseClient<TimezoneDatabase>
 	/**
-	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal cannot reach it —
 	 * ownership is membership rather than a flag a later branch has to check.
 	 */
 	readonly #resources = new DisposableStack()
 	#stmt: ReturnType<DatabaseClient["prepare"]>
 
-	constructor(opts: { databasePath: string } | { database: DatabaseClient<TimezoneDatabase> }) {
+	constructor(opts: { databasePath: PathBuilderLike } | { database: DatabaseClient<TimezoneDatabase> }) {
 		this.#db =
 			"database" in opts
 				? opts.database
 				: this.#resources.use(new DatabaseClient<TimezoneDatabase>(opts.databasePath, { readOnly: true }))
 
-		// Candidate features whose bbox contains the point; PIP picks the exact one.
+		// Candidate features whose bbox contains the point. PIP picks the exact one.
 		this.#stmt = this.#db.prepare(
 			`SELECT tzid, geom FROM timezone_polygons
 			 WHERE minLat <= ? AND maxLat >= ? AND minLon <= ? AND maxLon >= ?`
@@ -116,7 +117,7 @@ export class TimezoneLookup implements Disposable {
 	}
 
 	/**
-	 * The IANA timezone id containing `(lat, lon)`, or `null` if none (shouldn't happen with oceans).
+	 * The iana timezone id containing `(lat, lon)`, or `null` if none (shouldn't happen with oceans).
 	 */
 	explore(lat: number, lon: number): string | null {
 		const rows = this.#stmt.all(lat, lat, lon, lon) as Array<{ tzid: string; geom: string }>
@@ -142,7 +143,7 @@ export class TimezoneLookup implements Disposable {
  */
 export function makeTimezoneAnnotator(lookup: TimezoneLookup): Annotator {
 	return ({ lat, lon, date }): Partial<AnnotationSet> => {
-		// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe, not Array#find
+		// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe rather than Array#find
 		const name = lookup.explore(lat, lon)
 
 		if (!name) return {}

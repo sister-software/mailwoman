@@ -33,7 +33,7 @@ Fields per row: `{raw, country, edge_class, standardized, source}`.
 
 ### `postal-cases.jsonl` (38 labeled, in-scope subset)
 
-The labeled, runnable cut of the catalog: the 38 in-scope English-Latin
+The labeled, runnable subset of the catalog: the 38 in-scope English-Latin
 addresses (US/GB/CA/AU/NZ/IE — excludes the non-Latin/RTL/Japan-block rows,
 which are out of the en-US/fr-FR model's scope, and the USPS `##` format
 templates, which aren't real addresses). Labeled into our schema
@@ -58,7 +58,7 @@ Frank's guide / UPU instead.
 different architecture from Pelias. Its `test/test_parser.c` (~60
 hand-curated, deliberately adversarial cases: house-number ranges `912-914`,
 `92-10`; `Mc Carroll` splits; `apt. 3a`/`#104`/`6th Floor` sub-premise;
-venue+org prefixes; multilingual) is NOT in our suite and converts mechanically
+venue+org prefixes; multilingual) is absent from our suite and converts mechanically
 to `{input, expected}` with a tag remap:
 
 | libpostal                                         | ours                       |
@@ -117,11 +117,11 @@ produces — `locality`/`region`/`postcode` (no street geometry).
 
 ### Sampling method
 
-- Only a **handful of specific OA source files** are downloaded (NOT the
+- Only a **selected set of specific OA source files** is downloaded rather than the
   multi-GB US collection), stratified across dense-urban / suburban / rural so
   no single state dominates.
 - Each source is streamed out of its zip (`unzip -p`, no full extraction),
-  normalized, then **filtered**: drop rows missing city OR postcode (resolver
+  normalized, then **filtered**: drop rows missing city or postcode (resolver
   is admin-level), drop a house-number-with-no-street, drop streets that are
   purely numeric, drop points outside a US lat/lon sanity box, and require a
   house number in the rendered string. Postcodes are normalized to 5-digit ZIP
@@ -150,7 +150,7 @@ CSV with header `LON,LAT,NUMBER,STREET,UNIT,CITY,DISTRICT,REGION,POSTCODE,ID,HAS
 | `us/sd/statewide`                  | SD    | rural-plains           | 8 MB     | South Dakota county GIS                          | (Unknown in zip; SD open gov)                                       |
 
 **Rejected (documented in the script's `SOURCES` comment):** `us/ca/san_francisco`
-and `us/wy/statewide` carry NO city/place column — every row drops on the city
+and `us/wy/statewide` carry no city/place column — every row drops on the city
 filter — so SF was replaced by Berkeley+Marin and Wyoming was omitted.
 
 ### License / attribution
@@ -191,7 +191,8 @@ Two German sets from OpenAddresses Berlin + Saxony support the multi-locale work
   same `ingest-openaddresses.ts`, selected with `--sources de/berlin,de/sn/statewide`.
 - **`openaddresses-de-golden.jsonl`** (1,500 records, held-out seed 7) is the
   _parser_ eval set (`{raw, components}` with street + house_number), rendered in
-  idiomatic German order. Built by `build-german-slice.mjs --golden`.
+  idiomatic German order. Built by the root script `build-german-shard.mjs --golden`, since deleted;
+  the recipe that replaced it is `packages/corpus/lib/de/recipes/locale.ts`.
 
 Two changes make non-US OpenAddresses usable here:
 
@@ -199,16 +200,16 @@ Two changes make non-US OpenAddresses usable here:
    defaulted to a continental-US box (lon −180..−60), which silently dropped every
    German point. Non-US sources now set their own `bbox` (DE: lat 47..56, lon 5..16).
 2. **`--default-country`** on `oa-resolver-eval.ts`. The resolver applies the
-   default as a HARD country filter, so hardcoding `"US"` sent every German address
+   default as a hard country filter, so hardcoding `"US"` sent every German address
    to a US namesake (`Berlin` resolved to a 20k-pop US Berlin, coord ~5,940 km). Pass
    `--default-country DE` (or `none`) for non-US data and the coord drops to ~10 km.
 
-The German _training_ slice (`synth-german`, `corpus/lib/synthesize-german.ts`)
+The German _training_ recipe output (`synth-german`, now `packages/corpus/lib/de/recipes/locale.ts`)
 renders these real DE tuples in German order via the OpenCage `DE` template, so the
 model learns house-number-after-street and postcode-before-city. Run the German
 before/after with `node scripts/eval-de-coverage.ts <model> <tokenizer> <model-card>`.
 
-## ES/IT/NL — order-slice goldens (#241, 2026-07-02)
+## ES/IT/NL — field-order goldens (#241, 2026-07-02)
 
 Per-locale held-out parser goldens mirroring the German pattern above —
 `{raw, components, country, order}` rows rendered from REAL OpenAddresses
@@ -217,7 +218,7 @@ tuples by the `locale` recipe's `--golden` mode
 
 - **`openaddresses-es-golden.jsonl`** / **`openaddresses-it-golden.jsonl`** /
   **`openaddresses-nl-golden.jsonl`** (1,500 records each, held-out seed 7 vs
-  the training slices' seed 42 — the same seed split the DE golden used).
+  the training rows' seed 42 — the same seed split the DE golden used).
   ~60% native order (house-after-street, postcode-before-city), ~40%
   international; the `order` field stratifies them.
 - Surface diversity matches the observed eval forms: ES rows mix the

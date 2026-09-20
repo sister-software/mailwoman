@@ -8,7 +8,7 @@
  *   and this terminal's stdio, so npm prints its `https://www.npmjs.com/auth/cli/…` approval URL
  *   here and polls while you approve it elsewhere. That is what makes a hardware security key work
  *   over SSH: the key never has to be attached to the machine running this operation — open the URL
- *   wherever the key lives and touch it there. If the account's second factor is still TOTP, npm
+ *   wherever the key lives and touch it there. If the account's second factor is still totp, npm
  *   prompts for the code on stdin instead. Either way this operation does not broker it.
  *
  *   To save you moving that URL by hand, it is also pushed to the terminal's clipboard over OSC 52
@@ -27,6 +27,7 @@ import { $, type ProcessPromise } from "zx"
 
 import { packWorkspaceForPublish } from "#pack/pack-workspace"
 import { formatTarballAudit, verifyTarball } from "#pack/verify-tarball"
+import { assertWorkspacePublishable } from "#release/stage"
 
 /**
  * The npm CLI approval URL, printed when a write op needs a second factor.
@@ -53,7 +54,7 @@ export interface BlessPackageOptions {
 	env?: string
 	provider: string
 	/**
-	 * Publish only; configure trust separately.
+	 * Publish only. configure trust separately.
 	 */
 	noTrust: boolean
 	dryRun: boolean
@@ -80,7 +81,7 @@ const npmWrite = $({ stdio: ["inherit", "inherit", "pipe"] })
  * Inside tmux this needs `set-clipboard on`. The default, `external`, sets the clipboard from tmux's own copy-mode but
  * silently discards sequences that applications emit — the copy appears to work and nothing arrives.
  *
- * Returns whether the sequence was written; the terminal on the other end may still ignore it, which is not detectable
+ * Returns whether the sequence was written. the terminal on the other end may still ignore it, which is not detectable
  * from here.
  */
 function copyToTerminalClipboard(text: string): boolean {
@@ -172,7 +173,7 @@ async function packAndPublish(dir: string, options: BlessPackageOptions): Promis
 	const pkg = await readPkg(dir)
 
 	if (options.version) {
-		// npm's default follows the bump with an arborist install of the workspace ROOT,
+		// npm's default follows the bump with an arborist install of the workspace root,
 		// which cannot parse the yarn-only protocol `workspace:*`
 		// `--no-workspaces-update` prevents it.
 
@@ -191,7 +192,7 @@ async function packAndPublish(dir: string, options: BlessPackageOptions): Promis
 
 	const tgz = `/tmp/${pkg.name.replaceAll(/[@/]/g, "-")}.tgz`
 
-	// Pack through the SAME helper the release path uses, rather than a bare `yarn pack`. That buys
+	// Pack through the same helper the release path uses, rather than a bare `yarn pack`. That buys
 	// three things this path previously went without: symlinked `files` entries are dereferenced
 	// (the registry rejects tarballs containing symlinks outright), the dev `exports` map is
 	// transformed for consumers (a bare pack ships `node → .ts`, which no consumer can resolve), and
@@ -253,7 +254,7 @@ async function trust(dir: string, options: BlessPackageOptions): Promise<boolean
 	// There is no cheap way to ask whether trust is already on file: `npm trust list` needs the same
 	// second factor as the write, and reading it under `.quiet()` would swallow npm's approval URL —
 	// which it prints to stderr — leaving the operator staring at a silent process. So attempt the
-	// write unconditionally and let npm arbitrate. Failure never blocks the publishes; npm has already
+	// write unconditionally and let npm arbitrate. Failure never blocks the publishes. npm has already
 	// printed the reason to this terminal, so only the retry command needs restating.
 	try {
 		await runNPMWrite(npmWrite`npm ${args}`, log)
@@ -263,7 +264,7 @@ async function trust(dir: string, options: BlessPackageOptions): Promise<boolean
 		return true
 	} catch (error) {
 		// The create endpoint is not idempotent: a package that already carries a trust config answers
-		// 409 whatever that config SAYS, so a stale one (wrong workflow file, wrong repo) is
+		// 409 whatever that config says, so a stale one (wrong workflow file, wrong repo) is
 		// indistinguishable from a correct one here. Name that case, because the repair is a revoke
 		// rather than a retry — retrying returns 409 forever.
 		const stderr = String((error as { stderr?: string } | undefined)?.stderr ?? error)
@@ -287,6 +288,12 @@ async function trust(dir: string, options: BlessPackageOptions): Promise<boolean
 export async function blessPackages(options: BlessPackageOptions): Promise<BlessPackageReport> {
 	if (!options.dirs.length) {
 		throw new Error("bless-package: --dirs <dir>[,<dir>…] is required")
+	}
+
+	// Every directory is checked before the first one publishes. A first publish is the path that would reach a held-out
+	// workspace, because it is the one operation that exists for a package the release list does not yet name.
+	for (const dir of options.dirs) {
+		assertWorkspacePublishable(dir)
 	}
 
 	$.verbose = true

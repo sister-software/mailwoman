@@ -3,23 +3,17 @@
 
 /**
  *   `mailwoman eval oa-resolver` — the OpenAddresses real-point resolver eval (the non-circular
- *   accuracy track + the neural-vs-Pelias head-to-head). Markdown report on stdout; self-emits via
+ *   accuracy track + the neural-vs-Pelias head-to-head). Markdown report on stdout. self-emits via
  *   `--out-md` (eval figures are never hand-typed into docs). See the eval-harness module docstring
  *   for the two-tier metric and every arm's rationale.
  */
 
-import {
-	booleanOption,
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { booleanOption, type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "OpenAddresses real-point resolver eval — non-circular, neural vs v0 (Pelias)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "oa-resolver",
@@ -41,6 +35,14 @@ export const spec = {
 		"admin-coherence-off": booleanOption("Force admin coherence off"),
 		"postcode-country-coherence": booleanOption("Force postcode-country coherence on"),
 		"postcode-country-coherence-off": booleanOption("Force postcode-country coherence off"),
+		"postcode-consistency-off": booleanOption("Force postcode-disambiguated locality selection off"),
+		"postcode-max-move-km": { type: "number", description: "Cap how far the postcode fallback may move a coordinate" },
+		"span-rescore-require-context-remainder": booleanOption("A sub-span may drop context, never a word of the name"),
+		"span-rescore-weak-resolution": {
+			type: "string",
+			choices: ["score", "containment", "either"],
+			description: "Which reading of a weak resolution lifts the #685 brake",
+		},
 		"hierarchy-completion": booleanOption("Enable hierarchy completion"),
 		"postcode-anchor": booleanOption("Add anchor-coordinate arm"),
 		"postcode-databases": { type: "string", description: "Postcode databases" },
@@ -67,68 +69,31 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	eval?: string
-	limit?: number
-	model?: string
-	tokenizer?: string
-	modelCard?: string
-	modelAnchorLookup?: string
-	wof?: string
-	defaultCountry?: string
-	ablateToAnchor: boolean
-	anchorOff: boolean
-	normalizeCase: boolean
-	rawCase: boolean
-	adminCoherence: boolean
-	adminCoherenceOff: boolean
-	postcodeCountryCoherence: boolean
-	postcodeCountryCoherenceOff: boolean
-	hierarchyCompletion: boolean
-	postcodeAnchor: boolean
-	postcodeDatabases?: string
-	anchorMinConf?: number
-	anchorRerank: boolean
-	addressPoints?: string
-	interpolation?: string
-	cascade: boolean
-	dataRoot?: string
-	candidateDB?: string
-	postalCityAliasDB?: string
-	assembled: boolean
-	adminFst?: string
-	placeCountry: boolean
-	placeCountryHard: boolean
-	placeCountryHardAll: boolean
-	outMd?: string
-	outJSON?: string
-	errorsJSON?: string
-	outResolved?: string
-	outRows?: string
-	lookupMemo: boolean
-	profileJSON?: string
-}
+// The eval prints its own markdown report on stdout, so no `json`.
+const EvalOAResolver = harnessCommand(spec, async (options) => {
+	const {
+		adminCoherenceOff,
+		adminFst,
+		postcodeConsistencyOff,
+		postcodeCountryCoherenceOff,
+		postcodeMaxMoveKM,
+		...rest
+	} = options
 
-const EvalOAResolver: ParsedCommandComponent<Options> = ({ options }) => {
-	const { adminCoherenceOff, adminFst, postcodeCountryCoherenceOff, ...rest } = options
+	const { oaResolverEval } = await import("#eval-harness/oa/resolver/eval")
 
-	const state = useCommandTask(async () => {
-		const { oaResolverEval } = await import("#eval-harness/oa/resolver/eval")
-
-		return await oaResolverEval({
-			...rest,
-			noAdminCoherence: adminCoherenceOff,
-			noPostcodeCountryCoherence: postcodeCountryCoherenceOff,
-			// CLI kebab derivation forces the lowercase-acronym prop above; the harness option keeps
-			// the house spelling, so the rename happens here rather than in the eval's own contract.
-			...(adminFst ? { adminFST: adminFst } : {}),
-		})
+	return await oaResolverEval({
+		...rest,
+		noAdminCoherence: adminCoherenceOff,
+		noPostcodeConsistency: postcodeConsistencyOff,
+		noPostcodeCountryCoherence: postcodeCountryCoherenceOff,
+		// CLI kebab derivation forces the lowercase-acronym prop above. the harness option keeps
+		// the house spelling, so the rename happens here rather than in the eval's own interface.
+		...(adminFst ? { adminFST: adminFst } : {}),
+		// Same derivation, and the same rename — `--postcode-max-move-km` names #2301's cap, whose option spells the
+		// pass it caps. Spreading the derived name instead reaches no field, so the cap is accepted and never applied.
+		...(postcodeMaxMoveKM === undefined ? {} : { postcodeConsistencyMaxMoveKm: postcodeMaxMoveKM }),
 	})
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	// The eval prints its own markdown report on stdout.
-	return null
-}
+})
 
 export default EvalOAResolver

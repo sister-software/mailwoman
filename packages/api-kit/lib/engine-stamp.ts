@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The engine stamp on the HTTP side: the zod schema every app documents it with, the two headers every response
+ *   The engine stamp on the http side: the zod schema every app documents it with, the two headers every response
  *   carries, and the helper that attaches the body field. The stamp itself is built by the `mailwoman` package and
  *   arrives as an option value: an app factory (`lib/app.ts`, `lib/routes.ts`, `lib/schema.ts`) is engine-agnostic and
  *   must not import `mailwoman`; the bin (`lib/cli.ts`) is the wiring layer that resolves the stamp and passes it in.
@@ -28,7 +28,7 @@ export const EngineStampSchema = z
 
 /**
  * A route's response schema once the route attaches the stamp: the body schema intersected with the optional `engine`
- * field. Applied at the ROUTE, never on an outcome schema, so an outcome schema keeps describing what the engine
+ * field. Applied at the route, never on an outcome schema, so an outcome schema keeps describing what the engine
  * produces (the schema drift pin in `mailwoman` depends on that) and the OpenAPI document references the outcome
  * component through `allOf` instead of cloning it.
  *
@@ -60,7 +60,7 @@ export function engineHeaders(stamp: EngineStamp): MiddlewareHandler {
 }
 
 /**
- * Attach the `engine` field when a stamp is configured. The field goes LAST, so a body that already spells a key of the
+ * Attach the `engine` field when a stamp is configured. The field goes last, so a body that already spells a key of the
  * same name keeps the stamp's value.
  */
 export function withEngineStamp<T extends object>(

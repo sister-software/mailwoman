@@ -12,7 +12,7 @@
  *   - It is written **largest-to-smallest**: prefecture → city/ward → district → block → lot (`東京都 千代田区
  *       千代田 1-1`), the reverse of the US smallest-to-largest line order.
  *   - There are **essentially no street names**. Outside a few Kyoto-style exceptions, you do not
- *       navigate by named streets; you navigate by nested administrative areas and numbered
+ *       navigate by named streets. you navigate by nested administrative areas and numbered
  *       blocks/lots (丁目 / 番地 / 号 — see `address-unit.ts`).
  *
  *   With no street name to anchor on and a reverse field order, the **postcode is the single most
@@ -36,12 +36,12 @@ import type { Tagged } from "type-fest"
 export type PostalCode = Tagged<string, "JpPostalCode">
 
 /**
- * The postal-code shape: `NNN-NNNN`, the hyphen optional on input (`1000001` or `100-0001`).
+ * The postal-code shape: `NNN-nnnn`, the hyphen optional on input (`1000001` or `100-0001`).
  */
 export const JP_POSTAL_CODE_PATTERN = /^\d{3}-?\d{4}$/
 
 /**
- * Normalize a postal-code surface form to the canonical hyphenated `NNN-NNNN`: strip a leading 〒 mark and any
+ * Normalize a postal-code surface form to the canonical hyphenated `NNN-nnnn`: strip a leading 〒 mark and any
  * whitespace, then re-insert the hyphen if the input gave the bare seven digits (`〒100-0001` → `100-0001`, `1000001` →
  * `100-0001`). Returns null if the result is not seven digits.
  */
@@ -65,10 +65,10 @@ export function isJpPostalCode(input: unknown): input is PostalCode {
 /**
  * First digit of the postcode → a coarse region label. Japan Post's numbering grows roughly outward from Tokyo (`1xx`)
  * and is **approximate** at this granularity — a single leading digit spans large, irregular areas and the boundaries
- * are postal-routing, not administrative. Use it as a weak prior, never as a hard region assignment; the full code is
- * what actually anchors the address.
+ * are postal-routing rather than administrative. Use it as a weak prior, never as a hard region assignment. the full
+ * code is what actually anchors the address.
  *
- * Approximate — the labels below are illustrative routing regions, not precise prefecture sets.
+ * Approximate — the labels below are illustrative routing regions rather than precise prefecture sets.
  */
 export const JP_FIRST_DIGIT_REGION: Record<string, string> = {
 	"0": "Hokkaido & northern Tōhoku",

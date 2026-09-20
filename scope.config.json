@@ -1,0 +1,36 @@
+{
+	"$comment": "The locale scope declaration as DATA. `docs/engineering/SCOPE.mdx` carries the prose and the evidence behind every tier; this file carries the MEMBERSHIP, so a program can ask which countries a tier holds without a human reading a markdown table. `repo-health`'s `locale-scope` check refuses a disagreement between the two in either direction, which is the whole reason the file exists: the hand-written list that drifted from the table it claimed to encode was `D_RULE_COUNTRIES`, and a second hand-written list would drift the same way. Read through `@mailwoman/core/scope-config`; like `release.config.json` this is a repository file and a package that reached it from a published tarball would find nothing.",
+	"$comment_tiers": "Membership is MULTI-VALUED, and that is a property of the declaration rather than an encoding accident. Tiers 1 through 3 grade the strength of a claim; tiers 4 and 5 name a delivery mechanism — the diacritic tokenizer splice and the character path. So CZ and PL hold a tier-2 and a tier-4 membership at once, and neither supersedes the other. A faceted replacement for this axis is the address-topology work (#2276); until it lands the register mirrors the declaration rather than improving on it.",
+	"tiers": {
+		"1": ["FR", "US"],
+		"2": ["AT", "AU", "BE", "CH", "CZ", "DE", "DK", "ES", "FI", "HR", "IT", "NL", "PL", "PT"],
+		"3": ["NO", "SE"],
+		"4": ["CZ", "PL", "SI", "SK"],
+		"5": ["JP", "KR", "TW"]
+	},
+	"$comment_dRuleProtected": "Protection the graded arc applies BEYOND iron rule 6's own floor. Rule 6 protects tier 1 unconditionally and needs no entry here; an entry names a country the arc blocks on anyway, and states why. The list it replaced was `[\"FR\", \"GB\", \"DE\"]` — three countries with no recorded reason and, between them, one tier-1 locale missing (#2278).",
+	"dRuleProtected": {
+		"DE": "Tier 2, with a coordinate panel behind the claim and a data-only overlay in the release list. Its board is thin — 8 of its 16 rows check rather than track — so a DE regression is cheap to miss, which is a reason to block on one rather than a reason to stop watching for it.",
+		"GB": "The most detectable locale on the board: 106 of its 152 rows check, more checking rows than any other country holds. `@mailwoman/neural-weights-en-gb` ships with a trained postcode anchor slot and the Code-Point Open postcode binary, so a GB regression is both likely to be seen and expensive."
+	},
+	"$comment_trainingConfigs": "The training config that produced each shipped model graph, named rather than discovered. `country_weights` in one of these files is a hard admission filter, so which file a coverage report reads decides every admission number it prints. The reader this replaces picked by modification time; `git checkout` writes all 225 configs at one timestamp, the sort was a total tie, and the pick was whatever the glob returned first — one run selected a config admitting 2 countries and the report said 2 of 250 with nothing to say the file had been guessed (#2349). There is also no single newest config to find: the two shipped graphs train from two configs at once, and their `country_weights` name 25 countries and 4 countries respectively. `readFrom` records which model-card field the path was read out of, because the two cards disagree about which of their own fields is current — `neural-weights-en-us` 9.1.0 carries a `model_lineage` head naming 9.1.0 and a `training.recipe` still naming the 6.7.0-era v3.24.0 file, while `neural-weights-cjk` 0.0.3 carries a `model_lineage` head naming 0.0.2 and a `training.run` naming the path in full.",
+	"trainingConfigs": {
+		"en-us": {
+			"config": "corpus-python/src/mailwoman_train/configs/v4.4.0-suffix-boundary-v2-base-60k.yaml",
+			"graphPackage": "@mailwoman/neural-weights-en-us",
+			"readFrom": "model_lineage"
+		},
+		"cjk": {
+			"config": "corpus-python/src/mailwoman_train/configs/v8-cjk-regs.yaml",
+			"graphPackage": "@mailwoman/neural-weights-cjk",
+			"readFrom": "training.run"
+		}
+	},
+	"$comment_untieredShippingLocales": "A country whose weights package ships while SCOPE's tier table places it in no tier. Each entry is a DEBT with a stated reason, not an exemption — `locale-scope` refuses a shipping country that is neither tiered nor named here, and refuses an entry here that has since been tiered or has stopped shipping. GB, IN and NZ share one history — the tier table was declared before their overlays shipped. CN is the other kind: it was tiered and came out, because the tier asserted an evidence level it did not hold.",
+	"untieredShippingLocales": {
+		"CN": "Ships `@mailwoman/neural-weights-zh-cn` over the CJK base, and is untiered because SCOPE admits a claim only where a coordinate-graded eval exists. CN has 126 labeled rows in total, 14 of them on a board carrying no coordinate by design, against JP's 2,000,000 and KR's 6,424,089 — a number, not a claim. Held tier 5 until this entry, where it read as parity with those two. The blocker is the SOURCE rather than the work: `overture/2026-06-17.0/addresses-cn.parquet` holds 0 rows, the following release carries no Chinese file at all, and no open national register is acquirable on the terms JP, KR and TW used (#2294). Serving is unaffected — a Han-script query still routes to the CJK weights.",
+		"GB": "Ships `@mailwoman/neural-weights-en-gb` and holds the largest checking board of any country (106 of 152 rows). SCOPE names GB only under Blocked/queued, which is about the OSM corpus license and says nothing about the claim. Tiering it needs the evidence column written, not a code change (#2278).",
+		"IN": "Ships `@mailwoman/neural-weights-en-in` with the IN placetype-pair index, against 2 checking board rows of 3 — the widest distance in the tree between gazetteer coverage and board power (#2277).",
+		"NZ": "Ships `@mailwoman/neural-weights-en-nz`, country scope only: no postcode binary, because no WOF NZ postcode extract exists, and no pair index. Carries 13 checking board rows of 14."
+	}
+}

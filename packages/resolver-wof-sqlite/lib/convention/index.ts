@@ -10,8 +10,8 @@
  *   region → … → locality, most-specific winning — and the backend dispatches the named strategies
  *   in `candidateStrategies`, first to return candidates wins.
  *
- *   This module is the backend-agnostic core: the convention TYPES, the deep-merge, and the seed
- *   source. The strategy IMPLEMENTATIONS are SQL-bound and live in `lookup.ts`, registered by
+ *   This module is the backend-agnostic core: the convention types, the deep-merge, and the seed
+ *   source. The strategy implementations are SQL-bound and live in `lookup.ts`, registered by
  *   name.
  *
  *   For the existing EU locales (DE/FR/GB/NL) the seed source is empty, so every query resolves to
@@ -33,12 +33,12 @@ export interface ScoringWeights {
 
 /**
  * A geographically-scoped resolution profile. Namespaced sections grow per phase; #289 ships the dispatch + scoring
- * slice (`candidateStrategies` + `scoringWeights`). Later phases add `fieldMapping` (locale semantics for `locator[]`),
- * `tokenNormalization`, etc.
+ * sections (`candidateStrategies` + `scoringWeights`). Later phases add `fieldMapping` (locale semantics for
+ * `locator[]`), `tokenNormalization`, etc.
  */
 export interface Convention {
 	/**
-	 * Ordered strategy names the dispatcher runs; the first to return a non-null result wins.
+	 * Ordered strategy names the dispatcher runs. the first to return a non-null result wins.
 	 */
 	candidateStrategies?: string[]
 	/**
@@ -59,7 +59,7 @@ export interface ResolvedConvention {
 
 /**
  * The base layer every ancestor chain starts from. Reproduces the pre-engine coordinate-first behavior exactly: try
- * `postcode_area_resolution`, else fall back to fuzzy name match; soft-score weights 0.6 / 0.3 / 0.1. Changing these
+ * `postcode_area_resolution`, else fall back to fuzzy name match. soft-score weights 0.6 / 0.3 / 0.1. Changing these
  * changes EU behavior — don't, without a byte-stability run.
  */
 export const WORLD_DEFAULT: ResolvedConvention = {
@@ -82,7 +82,7 @@ export const ADDRESS_CONVENTION_TABLE = "address_convention"
 
 /**
  * A named resolution primitive. Returns `null` to abstain (condition unmet / no data) → the dispatcher tries the next
- * strategy; returns an array (possibly empty) to claim the result.
+ * strategy. returns an array (possibly empty) to claim the result.
  */
 export type Strategy = (query: FindPlaceQuery, convention: ResolvedConvention) => Promise<PlaceCandidate[] | null>
 
@@ -137,7 +137,7 @@ export function mergeConventions(base: Convention, ...overrides: Array<Conventio
 }
 
 /**
- * Resolve the effective convention for a place given its ancestor chain, ordered MOST-GENERAL → MOST-SPECIFIC (country,
+ * Resolve the effective convention for a place given its ancestor chain, ordered most-general → most-specific (country,
  * region, …, locality). Starts from `WORLD_DEFAULT` so every field is defined regardless of which (if any) ancestors
  * carry an override.
  */

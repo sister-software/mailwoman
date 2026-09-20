@@ -1,7 +1,7 @@
-# v3.13 — two-phase classifier-LR recipe (pre-registered proposal, OPERATOR-CONDITIONAL, NOT LAUNCHED)
+# v3.13 — two-phase classifier-LR recipe (pre-registered proposal, OPERATOR-CONDITIONAL rather than LAUNCHED)
 
 **Date:** 2026-07-23 (night #2) · **Status:** proposal — the stop rule ended the v3.12 lineage;
-this is the dossier's **option B** written out so the morning decision is a green-light, not a
+this is the dossier's **option B** written out so the morning decision is a green-light rather than a
 drafting session. **Nothing here has run.**
 
 ## Why B, mechanistically (the cRT diagnostic)
@@ -18,7 +18,7 @@ Both facts point at the same change: **keep the hot classifier LR only for the w
 it, then anneal to base** — never yet tried in this arc (every run held classifier LR at 0.001
 for all 8k steps).
 
-## The run (ONE variable vs v3.12.0-comma-robust)
+## The run (one variable vs v3.12.0-comma-resilient)
 
 Clone `v3.12.0-comma-robust.yaml` verbatim (NZ allowlist stays; punct-drop 0.6 stays — it did no
 harm and the matched share is principled) + the single change:
@@ -36,7 +36,7 @@ Cost: about 25 min A100 (about $1.50) + the standard grade.
 
 ## Pre-registered acceptance (inherited verbatim from v3.12 — no reinterpretation)
 
-1. PRIMARY: a gauntlet-clean checkpoint exists; invariance suite (`--baseline v385`) shows NO new
+1. PRIMARY: a gauntlet-clean checkpoint exists; invariance suite (`--baseline v385`) shows no new
    violation class at the selected checkpoint; **checked at every checkpoint, odd included**.
 2. GB dep-loc board with prior @ δ=5.0 ≥ 69/69 emit / ≥ 66 tag-correct; FP 0 on gb-golden's own
    no-dependent_locality rows (the venue-confound floor stays a separately-reported number).
@@ -46,12 +46,12 @@ Cost: about 25 min A100 (about $1.50) + the standard grade.
    flowing); dep-loc raw-BIO trajectory across phase 2 (does the anneal hold the resurrection, or
    does re-burial resume at base LR? — either answer is information the window theory needs).
 5. STOP RULE: one run (= one phase-1 + one phase-2 resume; the phase boundary is part of the
-   recipe, not an iteration). No checkpoint clean ⇒ back to the redesign table with the
+   recipe rather than an iteration). No checkpoint clean ⇒ back to the redesign table with the
    accumulation hypothesis falsified too — no anneal-point sweeps, no third phase.
 
 ## Open parameter the operator may want to move before launch
 
 The phase boundary (2000) is taken from the checkpoint-sweep's resurrection-window measurement
 (~2k) and cRT's clean-through-6k read. If the operator prefers more margin, 3000 is defensible
-(cRT was still clean at 4k and 6k); the pre-registration above assumes 2000. Pick ONE before
+(cRT was still clean at 4k and 6k); the pre-registration above assumes 2000. Pick one before
 launch — the boundary is not sweepable inside this registration.

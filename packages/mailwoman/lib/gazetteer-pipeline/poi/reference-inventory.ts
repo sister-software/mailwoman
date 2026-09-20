@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Read ONE POI class out of an already-sealed POI layer, as the second inventory a capture-recapture
+ *   Read one POI class out of an already-sealed POI layer, as the second inventory a capture-recapture
  *   estimate needs. Read-only by construction: the handle is opened `readOnly`, so pointing this at the
  *   shipped `poi.db` cannot reopen or patch it.
  *
  *   The category is named, never numbered. `poi.category_id` is a per-build dictionary code — `pharmacy`
  *   is 72 in the 2026-07-22 build and carries no promise of being 72 in the next one — so the lookup goes
- *   through `poi_category_codes` and REFUSES a class the artifact does not hold. A numeric literal would
+ *   through `poi_category_codes` and refuses a class the artifact does not hold. A numeric literal would
  *   read some other class's rows under this class's name, which no downstream check could catch.
  */
 
@@ -29,7 +29,7 @@ export interface ReferenceInventoryQuery {
 	 */
 	category: string
 	/**
-	 * Coarse pre-clip. Must CONTAIN the region of interest — the caller clips exactly, on the H3 cell set.
+	 * Coarse pre-clip. Must contain the region of interest — the caller clips exactly, on the H3 cell set.
 	 */
 	bbox: BBox
 }

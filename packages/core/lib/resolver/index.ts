@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The resolver TYPE CONTRACT — `ResolverBackend`, `Resolver`, `ResolveOpts`, `ResolvedPlace`, the
- *   lookup interfaces, the placetype map. Pure types + tiny helpers; NO implementation, so `core`
+ *   The resolver type interface — `ResolverBackend`, `Resolver`, `ResolveOpts`, `ResolvedPlace`, the
+ *   lookup interfaces, the placetype map. Pure types + tiny helpers. no implementation, so `core`
  *   stays a dependency-free leaf and `core/pipeline` can compose the resolver structurally without
- *   a cycle. The IMPLEMENTATION (`createWOFResolver`, `RemoteResolver`, span-rescore) lives in
+ *   a cycle. The implementation (`createWOFResolver`, `RemoteResolver`, span-rescore) lives in
  *   `@mailwoman/resolver` (#215), which depends on this + `@mailwoman/spatial` +
  *   `@mailwoman/codex`.
  */
@@ -67,4 +67,5 @@ export type {
 	ResolverBackend,
 	StreetCentroidHit,
 	StreetCentroidLookup,
+	WeakResolutionReading,
 } from "#resolver/types"

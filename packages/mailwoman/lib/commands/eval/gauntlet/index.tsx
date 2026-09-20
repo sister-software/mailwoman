@@ -2,28 +2,30 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman eval gauntlet` — THE Gauntlet eval: all three layers, one combined verdict (the
+ *   `mailwoman eval gauntlet` — the Gauntlet eval: all three layers, one combined verdict (the
  *   full-pipeline integration net a model ship checks on; #566 lesson). No flags = self-check on the
  *   shipped default (regression + metamorphic); `--candidate` adds the held-out candidate-vs-prod
  *   z-test; `--layer` runs a single layer with the old standalone semantics (its own verdict + exit
- *   code). A non-zero exit blocks the ship (RELEASING.md).
+ *   code). A non-zero exit blocks the ship (releasing.md).
  *
- *   `--layer ablation` is the exception: it is a MEASUREMENT, not a check. It deletes each asserted
+ *   `--layer ablation` is the exception: it is a measurement rather than a check. It deletes each asserted
  *   component from each corpus row and reports what the deletion cost per (component, locale) — the
  *   required map. It never joins the combined verdict and cannot block a ship.
  *
- *   Since 2026-08-05 that measurement is NORMATIVE: each variant is graded against a per-row
+ *   Since 2026-08-05 that measurement is normative: each variant is graded against a per-row
  *   graceful-degradation ladder rather than against the undeleted anchor, so coarsening to a rung the
- *   surviving components still justify PASSES, abstaining under untenable ambiguity PASSES, and a
+ *   surviving components still justify passes, abstaining under untenable ambiguity passes, and a
  *   substitution fails at every rung. See `eval-harness/gauntlet/ablation-expectation.ts`.
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
+
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "The Gauntlet check — regression + metamorphic + held-out, one verdict"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "gauntlet",
@@ -53,70 +55,77 @@ export const spec = {
 			default: false,
 			description: "Force the containment rerank off",
 		},
+		"span-rescore-require-context-remainder": {
+			type: "boolean",
+			default: false,
+			description: "A span-rescore sub-span may drop context, never a word of the name",
+		},
+		"span-rescore-require-context-remainder-off": {
+			type: "boolean",
+			default: false,
+			description: "Force that refusal off",
+		},
+		"span-rescore-weak-resolution": {
+			type: "string",
+			choices: ["score", "containment", "either"],
+			description: "Which reading of a weak resolution lifts the #685 brake",
+		},
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	candidate?: string
-	source: string
-	tokenizer?: string
-	card?: string
-	weightsCache?: string
-	layer?: "regression" | "metamorphic" | "holdout" | "ablation"
-	n: number
-	out?: string
-	components?: string
-	limit?: number
-	postcodeCountryCoherence: boolean
-	postcodeCountryCoherenceOff: boolean
-	gazetteerPrior: boolean
-	gazetteerPriorOff: boolean
-	adminContainmentRerank: boolean
-	adminContainmentRerankOff: boolean
-}
+// The layers narrate their own verdict lines on stdout, so no `json`.
+const EvalGauntlet = harnessCommand(
+	spec,
+	async (options) => {
+		// The `*Off` names are CLI-only spellings of the off half of a tri-state. they are destructured out so neither
+		// ever reaches `runGauntlet` as a field of its own.
+		const {
+			postcodeCountryCoherenceOff,
+			gazetteerPriorOff,
+			adminContainmentRerankOff,
+			spanRescoreRequireContextRemainderOff,
+			components,
+			...rest
+		} = options
 
-const EvalGauntlet: ParsedCommandComponent<Options> = ({ options }) => {
-	// The `*Off` names are CLI-only spellings of the OFF half of a tri-state; they are destructured out so neither
-	// ever reaches `runGauntlet` as a field of its own.
-	const { postcodeCountryCoherenceOff, gazetteerPriorOff, adminContainmentRerankOff, components, ...rest } = options
+		const { runGauntlet } = await import("#eval-harness/gauntlet/run")
 
-	const state = useCommandTask(
-		async () => {
-			const { runGauntlet } = await import("#eval-harness/gauntlet/run")
-
-			return (
-				await runGauntlet({
-					...rest,
-					weightsCacheRoot: options.weightsCache,
-					// ablation only. An absent flag must stay absent (→ every ablatable tag), so an empty string
-					// never becomes an empty filter — which would silently measure nothing and print a map of one
-					// header row.
-					...(components ? { components: splitList(components) } : {}),
-					// An UNSET flag must stay unset, not become an explicit pin either way. The schema supplies its
-					// `false` default for BOTH halves, and forwarding one verbatim would pin the change forever — which is
-					// exactly how the 2026-08-05 default-on flip could have gone unnoticed by the standard eval. Neither
-					// flag set keeps "no flag" meaning "grade whatever production does".
-					postcodeCountryCoherence: options.postcodeCountryCoherence
-						? true
-						: postcodeCountryCoherenceOff
-							? false
-							: undefined,
-					// #1497: two-sided since the 2026-08-16 default-on promotion. There IS a production default to
-					// preserve now, so an unset flag must stay unset rather than pinning the change either way.
-					gazetteerPrior: options.gazetteerPrior ? true : gazetteerPriorOff ? false : undefined,
-					// #1717 stage 2: two-sided from day one (the #1706 one-sided-forwarding class) — the OFF pin
-					// grades the production default explicitly, and no flag stays "grade whatever production does".
-					adminContainmentRerank: options.adminContainmentRerank ? true : adminContainmentRerankOff ? false : undefined,
-				})
-			).exitCode
-		},
-		(exitCode) => exitCode
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	// The layers narrate their own verdict lines on stdout.
-	return null
-}
+		return (
+			await runGauntlet({
+				...rest,
+				weightsCacheRoot: options.weightsCache,
+				// ablation only. An absent flag must stay absent (→ every ablatable tag), so an empty string
+				// never becomes an empty filter — which would silently measure nothing and print a map of one
+				// header row.
+				...(components ? { components: extractDelimited(components) } : {}),
+				// An unset flag must stay unset rather than become an explicit pin either way. The schema supplies its
+				// `false` default for both halves, and forwarding one verbatim would pin the change forever — which is
+				// exactly how the 2026-08-05 default-on flip could have gone unnoticed by the standard eval. Neither
+				// flag set keeps "no flag" meaning "grade whatever production does".
+				postcodeCountryCoherence: options.postcodeCountryCoherence
+					? true
+					: postcodeCountryCoherenceOff
+						? false
+						: undefined,
+				// #1497: two-sided since the 2026-08-16 default-on promotion. There is a production default to
+				// preserve now, so an unset flag must stay unset rather than pinning the change either way.
+				gazetteerPrior: options.gazetteerPrior ? true : gazetteerPriorOff ? false : undefined,
+				// #1717 stage 2: two-sided from day one (the #1706 one-sided-forwarding class) — the off pin
+				// grades the production default explicitly, and no flag stays "grade whatever production does".
+				adminContainmentRerank: options.adminContainmentRerank ? true : adminContainmentRerankOff ? false : undefined,
+				// #2266: two-sided from day one, same as the two above.
+				spanRescoreRequireContextRemainder: options.spanRescoreRequireContextRemainder
+					? true
+					: spanRescoreRequireContextRemainderOff
+						? false
+						: undefined,
+				// #2264: three readings rather than two states, so there is no off spelling — an absent flag is the
+				// production default, which is to take a `placeID` at face value and never lift the brake.
+				...(options.spanRescoreWeakResolution ? { spanRescoreWeakResolution: options.spanRescoreWeakResolution } : {}),
+			})
+		).exitCode
+	},
+	{ exitCode: (exitCode) => exitCode }
+)
 
 export default EvalGauntlet

@@ -4,14 +4,14 @@
 /**
  *   Geographic distance as a scoring feature — the other half of geocode-first matching.
  *
- *   Blocking uses geography to _propose_ candidates; this scores them on it. The research is explicit
- *   that an address must be matched as a SPATIAL attribute, not by string similarity (a
+ *   Blocking uses geography to _propose_ candidates. this scores them on it. The research is explicit
+ *   that an address must be matched as a spatial attribute rather than by string similarity (a
  *   one-character edit can be 650 m apart), and that distance measurably helps as a comparison
  *   feature. So we bucket the great-circle distance between two records' coordinates into ordered
  *   Fellegi-Sunter agreement levels (Splink's `DistanceInKMAtThresholds`): "same building" / "same
  *   block" / "same area" / far, each with its own m/u and weight.
  *
- *   Calibrate the bucket boundaries to the geocoder's OWN error, which is heavy-tailed and density-
+ *   Calibrate the bucket boundaries to the geocoder's own error, which is heavy-tailed and density-
  *   dependent (≈38 m urban, ≈200 m rural). A weakening of this evidence by geocode quality (a
  *   shared interpolated centroid is softer than a shared rooftop point) is the documented
  *   refinement.
@@ -32,7 +32,7 @@ export const haversineKm = (a: LatLon, b: LatLon): number =>
 
 /**
  * A geo-distance comparison: bucket the great-circle distance between two records' coordinates into ordered agreement
- * levels. Levels must be ordered NEAREST first by `maxKm`, the last acting as the `far` catch-all (`maxKm` omitted →
+ * levels. Levels must be ordered nearest first by `maxKm`, the last acting as the `far` catch-all (`maxKm` omitted →
  * unbounded). A missing/invalid coordinate on either side yields no evidence.
  */
 export function distanceComparison<R>(config: {
@@ -75,21 +75,21 @@ export const DEFAULT_DISTANCE_LEVELS: ComparisonLevel[] = [
 ]
 
 /**
- * The collapsed spatial-agreement comparison — ONE non-redundant geographic signal.
+ * The collapsed spatial-agreement comparison — one non-redundant geographic signal.
  *
- * The first matcher carried TWO spatial comparisons: canonical-address-key similarity AND great-circle distance. They
+ * The first matcher carried two spatial comparisons: canonical-address-key similarity and great-circle distance. They
  * double-count — an exact key match implies distance ≈ 0, so a co-located pair banked the same evidence twice, and the
  * redundant vote is exactly what over-merges distinct providers at a shared clinic address. This folds them into one
  * comparison:
  *
- * - **level 0 `same-key`** — an EXACT canonical-key match: the strongest tier, and the one the inverse-address-frequency
+ * - **level 0 `same-key`** — an exact canonical-key match: the strongest tier, and the one the inverse-address-frequency
  *   adjustment rides ({@link withTermFrequency} on level 0), so agreement on a crowded shared key is down-weighted
  *   toward worthless while a rare one keeps full weight.
- * - **levels 1…n** — great-circle distance buckets for pairs whose keys DIFFER, so "123 Main St" vs "123 Main Street Apt
- *   2" that geocode to the same rooftop still earns near-agreement (the geo-first point of the whole design).
+ * - **levels 1…n** — great-circle distance buckets for pairs whose keys differ, so "123 Main St" vs "123 Main Street Apt
+ *   2" that geocode to the same rooftop still warrants near-agreement (the geo-first point of the whole design).
  * - Keys differ and no usable coordinate → no evidence.
  *
- * Exactly one spatial vote, no redundancy. Pass {@link DEFAULT_SPATIAL_LEVELS} or your own; index 0 must be the
+ * Exactly one spatial vote, no redundancy. Pass {@link DEFAULT_SPATIAL_LEVELS} or your own. index 0 must be the
  * exact-key tier, indices 1…n the distance buckets nearest → far by `maxKm` (last = `far`).
  */
 export function spatialComparison<R>(config: {
@@ -128,7 +128,7 @@ export function spatialComparison<R>(config: {
 
 /**
  * Default levels for {@link spatialComparison}: an exact same-key tier on top of the distance buckets. `m`/`u` are
- * EM-estimable seeds (m decreasing, u increasing down the tiers; each column ≈ sums to 1).
+ * EM-estimable seeds (m decreasing, u increasing down the tiers. each column ≈ sums to 1).
  */
 export const DEFAULT_SPATIAL_LEVELS: ComparisonLevel[] = [
 	{ label: "same-key", m: 0.85, u: 0.01 },

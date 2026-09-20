@@ -5,7 +5,7 @@
  *   Fixture-scale guard for the GeoNames-postal tail reproducer. The real check is per-country row-count
  *   parity against the frozen 946 MB artifact (see the module docstring); this holds the three things
  *   that eval cannot express cheaply — the #920 name law survives a rebuild, a country with no dump is
- *   REPORTED rather than silently zeroed, and the provenance `meta` table actually reaches the sealed
+ *   reported rather than silently zeroed, and the provenance `meta` table actually reaches the sealed
  *   artifact carrying source md5s.
  */
 
@@ -35,8 +35,8 @@ beforeAll(async () => {
 	postalDir = root.resolve("geonames-postal")
 	await makeDirectories(postalDir)
 
-	// CZ: one code written in the SPACED display form, across three settlements — exercises both #920
-	// laws at once (normalization to `11000`, and a medoid that must land ON one of the three points).
+	// CZ: one code written in the spaced display form, across three settlements — exercises both #920
+	// laws at once (normalization to `11000`, and a medoid that must land on one of the three points).
 	await writeLocalTextFile(
 		[
 			row("CZ", "110 00", "Praha 1", 50.1, 14.1),
@@ -65,17 +65,17 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 
 	expect(result.inserted).toBe(3)
 	expect(result.byCountry).toEqual({ CZ: 2, PL: 1 })
-	// The meaning-of-zero rule: a country with no dump is a NAMED absence, not a zero row.
+	// The meaning-of-zero rule: a country with no dump is a named absence rather than a zero row.
 	expect(result.missing).toEqual(["ZZ"])
 	expect(result.sources.map((s) => s.country)).toEqual(["CZ", "PL"])
 	expect(result.sources.every((s) => /^[0-9a-f]{32}$/.test(s.md5))).toBe(true)
-	// Sealed 0444 — the artifact is read-only from the moment it exists (mode bits, not accessSync:
+	// Sealed 0444 — the artifact is read-only from the moment it exists (mode bits rather than accessSync:
 	// root.path ignores the permission and would pass a W_OK probe on a sealed file).
 	expect((await statPath(out)).mode & 0o222).toBe(0)
 
 	await using db = new DatabaseClient<WOFDatabase>(out, { readOnly: true })
 
-	// Name law: `spr.name` is the sanitized-query token shape; the display form is an alt `names` row.
+	// Name law: `spr.name` is the sanitized-query token shape. the display form is an alt `names` row.
 	const names = db.prepare("SELECT name FROM spr WHERE country='CZ' ORDER BY name").all() as Array<{ name: string }>
 	expect(names.map((n) => n.name)).toEqual(["11000", "12000"])
 
@@ -120,8 +120,37 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 	expect(parseJSONStrict<unknown[]>(meta.get("source_files")!)).toHaveLength(2)
 })
 
-test("DEFAULT_GEONAMES_TAIL_COUNTRIES: the frozen artifact's ten, in its ingest order", () => {
-	// Order is recovered from the frozen database's per-country spr.id ranges and is what makes a rebuild
-	// id-comparable to it. GB last, and PRESENT — the docstrings that said eight or nine were wrong.
-	expect([...DEFAULT_GEONAMES_TAIL_COUNTRIES]).toEqual(["FI", "CZ", "SK", "SI", "DK", "NO", "HR", "PL", "SE", "BE"])
+test("DEFAULT_GEONAMES_TAIL_COUNTRIES: the frozen artifact's ten lead, in its ingest order", () => {
+	// `ingestGeonamesPostal` allocates ids from one counter in list order, so a country's id range is its
+	// position. Appending is therefore safe and reordering is not: these ten were recovered from the frozen
+	// artifact's per-country spr.id ranges, and a rebuild stays id-comparable to it only while they lead.
+	// Everything after them is coverage added since, which the frozen artifact never held an id for.
+	expect([...DEFAULT_GEONAMES_TAIL_COUNTRIES].slice(0, 10)).toEqual([
+		"FI",
+		"CZ",
+		"SK",
+		"SI",
+		"DK",
+		"NO",
+		"HR",
+		"PL",
+		"SE",
+		"BE",
+	])
+})
+
+test("DEFAULT_GEONAMES_TAIL_COUNTRIES: every entry is a distinct upper-case ISO-3166 alpha-2", () => {
+	// A duplicate would ingest a country twice under two id ranges, and a lower-case entry would miss its
+	// `<CC>.txt` and be reported missing — both silent, since neither stops the build.
+	const list = [...DEFAULT_GEONAMES_TAIL_COUNTRIES]
+
+	expect(list.filter((cc) => !/^[A-Z]{2}$/.test(cc))).toEqual([])
+	expect(list).toHaveLength(new Set(list).size)
+})
+
+test("DEFAULT_GEONAMES_TAIL_COUNTRIES: the UAE is absent — Makani codes are not postcodes", () => {
+	// GeoNames publishes AE's 10-digit Makani building geocodes in the postal dump. They are a building
+	// reference rather than a postal code, and folding them stored 178,171 rows under a placetype that means
+	// something else.
+	expect([...DEFAULT_GEONAMES_TAIL_COUNTRIES]).not.toContain("AE")
 })

@@ -81,7 +81,7 @@ containment: approximate
 
 That chain is correct, and it still reads `approximate` — because the deepest entry is a `neighbourhood`
 with no polygon in the sidecar, so it won on nearest centroid at 0.3 km. The county, region and country
-above it are not in question. `approximate` is a statement about the last step, not about the whole
+above it are not in question. `approximate` is a statement about the last step rather than about the whole
 chain.
 
 The mechanism: the geocoder pulls every place whose bounding box contains the point from the
@@ -148,7 +148,7 @@ The guard is in the result:
 
 When `containment === "approximate"`, `hierarchy[0].distanceKm` is how far the point sat from the
 winning place's centroid. Threshold it. The top-level fallback has no distance cap of its own —
-`maxApproximateKm` bounds the descent into finer tiers, not the initial pick — so a coordinate outside
+`maxApproximateKm` bounds the descent into finer tiers rather than the initial pick — so a coordinate outside
 every boundary you hold polygons for gets an answer regardless.
 
 ## Limits

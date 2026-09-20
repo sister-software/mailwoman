@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The opening zoom, against correctly-ordered hierarchies. `GeocodeResult.hierarchy` is MOST SPECIFIC FIRST, and
+ *   The opening zoom, against correctly-ordered hierarchies. `GeocodeResult.hierarchy` is most specific first, and
  *   reading the other end is a silent defect of exactly this shape: every value it returns is a legal zoom, the map
  *   still renders, and the only symptom is that a resolved city opens on a view of the continent.
  */
@@ -28,7 +28,7 @@ describe("initialZoomForTier", () => {
 	})
 
 	it("reads the DEEPEST admin node, not the country at the far end", () => {
-		// "Portland, Oregon" resolved to its locality: z11, not the whole-country z4 the tail read gave.
+		// "Portland, Oregon" resolved to its locality: z11 rather than the whole-country z4 the tail read gave.
 		expect(initialZoomForTier(resultOf("admin", ["locality", "region", "country"]))).toBe(11)
 		expect(initialZoomForTier(resultOf("admin", ["dependent_locality", "locality", "region", "country"]))).toBe(11)
 

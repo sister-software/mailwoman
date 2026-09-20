@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Pins what a coverage fact licenses: a hard country filter is safe only where a fact says it was measured AND
+ *   Pins what a coverage fact licenses: a hard country filter is safe only where a fact says it was measured and
  *   passed. Measured-and-failed and never-measured are separate readings, and neither may read as safe.
  */
 
@@ -21,7 +21,7 @@ describe("hardCountrySafelistFromCoverage", () => {
 		const safelist = hardCountrySafelistFromCoverage([FACT("US", true), FACT("FI", false)])
 
 		expect(safelist.has("US")).toBe(true)
-		// Measured and FAILED is a first-class record, and it must not read as safe.
+		// Measured and failed is a first-class record, and it must not read as safe.
 		expect(safelist.has("FI")).toBe(false)
 	})
 

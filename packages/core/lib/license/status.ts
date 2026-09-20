@@ -4,7 +4,7 @@
 /**
  *   The client for the license worker's two customer routes: the per-license status a lid answers, and the refresh that
  *   trades a lid and its secret for the current token. Kept outside the `license` barrel like `publication.ts`, because
- *   it carries the HTTP client and the barrel sits on the CLI launcher's path. `unreachable` is a network answer, not a
+ *   it carries the http client and the barrel sits on the CLI launcher's path. `unreachable` is a network answer rather than a
  *   verdict: offline verification stands, and every caller says so.
  */
 
@@ -58,7 +58,7 @@ const HTTP_NOT_FOUND = 404
 const STATUS_WORDS: ReadonlySet<string> = new Set<LicenseStatusAnswer>(["active", "lapsed", "revoked", "unknown"])
 
 /**
- * A POST with the interceptor's per-request cache switch off: neither route's answer may be served from a cache.
+ * A post with the interceptor's per-request cache switch off: neither route's answer may be served from a cache.
  */
 function uncachedPost(url: string, data: unknown): CacheRequestConfig {
 	return { url, method: "POST", data, cache: false }
@@ -67,7 +67,7 @@ function uncachedPost(url: string, data: unknown): CacheRequestConfig {
 function client(options: LicenseWorkerClientOptions): APIClient {
 	return new APIClient({
 		displayName: "license-worker",
-		// The doctor and `license refresh --json` own stdout; the client's request line must not land in the document.
+		// The doctor and `license refresh --json` own stdout. the client's request line must not land in the document.
 		logger: silentLogger(),
 		axios: {
 			baseURL: licenseWorkerURL(options.url),
@@ -104,7 +104,7 @@ export async function checkLicenseStatus(
 
 /**
  * Trade a lid and its secret for the current token. The worker answers the same 404 for an unknown lid and a wrong
- * secret, which is `not_found` here; the caller verifies the token offline before writing it anywhere.
+ * secret, which is `not_found` here. the caller verifies the token offline before writing it anywhere.
  */
 export async function refreshLicenseKey(
 	credentials: { lid: string; secret: string },

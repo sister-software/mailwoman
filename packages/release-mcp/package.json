@@ -37,7 +37,7 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/release-kit": "workspace:*",
 		"@modelcontextprotocol/sdk": "^1.30.0",
-		"path-ts": "^2.3.0",
+		"path-ts": "^2.4.1",
 		"zod": "^4.5.4"
 	}
 }

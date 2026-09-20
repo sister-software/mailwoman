@@ -8,9 +8,9 @@
  *   network in the loop. Mirrors `poi.tsx`'s progress (stderr) / summary (stdout) split.
  *
  *   First version wires Fixed Broadband provider availability only (the primary wireline dataset) — mobile
- *   broadband/voice subcategories are a future flag, not a scope gap in this command's shape.
+ *   broadband/voice subcategories are a future flag rather than a scope gap in this command's shape.
  *
- *   `--provider-list-path` (decision 6) opts INTO populating `bdc_provider` —
+ *   `--provider-list-path` (decision 6) opts into populating `bdc_provider` —
  *   `bdc_availability` itself is unaffected either way. When given, `parseProviderList`
  *   (`@mailwoman/filer/sdk`) streams the FCC provider-list CSV as `BuildBDCOptions.providers`, and
  *   filer.db (`--filer-db-path`, default `<data-root>/filer/filer.db`) is opened read-only to resolve
@@ -18,11 +18,11 @@
  *   rather than reimplemented — see `build-bdc.ts`'s `BuildBDCOptions.filerDB` docstring). Omitting
  *   `--provider-list-path` leaves `bdc_provider` empty.
  *
- *   Both paths are `existsSync`-guarded BEFORE any download/build work starts:
+ *   Both paths are `existsSync`-guarded before any download/build work starts:
  *   `populateBDCProviderTable` only runs after `writeLayerManifest`, i.e. at the very END
- *   of a full build — an unguarded typo'd `--provider-list-path` would otherwise surface as a raw ENOENT
+ *   of a full build — an unguarded typo'd `--provider-list-path` would otherwise surface as a raw enoent
  *   only after a nationwide availability ingest had already finished, discarding hours of work.
- *   `--filer-db-path` given without `--provider-list-path` is a loud error, not a silent no-op:
+ *   `--filer-db-path` given without `--provider-list-path` is a loud error rather than a silent no-op:
  *   filer.db is only ever read to resolve a multi-FRN primary FRN, so it does nothing without a provider
  *   list to resolve FRNs FOR.
  */
@@ -34,11 +34,11 @@ import type { DatabaseClient as DatabaseClientHandle } from "@mailwoman/sqlite/c
 import { Box, Text } from "ink"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "bdc",
@@ -58,16 +58,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	state: string
-	asOfDate?: string
-	out?: string
-	includeLocationIDs: boolean
-	providerListPath?: string
-	filerDBPath?: string
-}
-
-const GazetteerBuildBDC: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const {
 			BDCFileCategory,
@@ -87,8 +78,8 @@ const GazetteerBuildBDC: ParsedCommandComponent<Options> = ({ options }) => {
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 		const { parseProviderList } = await import("@mailwoman/filer/sdk")
 
-		// Fail-fast guards — checked BEFORE any network/download work
-		// starts. `populateBDCProviderTable` only runs after the availability ingest AND writeLayerManifest, so
+		// Fail-fast guards — checked before any network/download work
+		// starts. `populateBDCProviderTable` only runs after the availability ingest and writeLayerManifest, so
 		// without this, a typo'd --provider-list-path would surface only at the very end of a full national
 		// build, discarding hours of work for a check that costs microseconds up front.
 		if (options.filerDBPath && !options.providerListPath) {
@@ -159,7 +150,7 @@ const GazetteerBuildBDC: ParsedCommandComponent<Options> = ({ options }) => {
 
 		// --provider-list-path (decision 6) opts into populating bdc_provider — omitted, `providers`/
 		// `filerDB` stay undefined and buildBDCDatabase runs its default path. Both paths were already
-		// existsSync-validated above, so this can't ENOENT.
+		// existsSync-validated above, so this can't enoent.
 		let filerDB: DatabaseClientHandle<FilerDatabase> | undefined
 
 		if (filerDBPath) {

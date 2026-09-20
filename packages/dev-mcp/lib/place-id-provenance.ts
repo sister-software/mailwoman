@@ -2,18 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Which SOURCE a gazetteer place id came from, and therefore whether it is a real Who's On First id.
+ *   Which source a gazetteer place id came from, and therefore whether it is a real Who's On First id.
  *
  *   `spr` is WOF's own table name — Standard Place Response, the flat one-row-per-place projection they ship
- *   beside the GeoJSON — and we keep their schema, so `spr.id` IS the WOF id for a WOF-sourced row. It is not
- *   for the rest: the Overture and GeoNames folds mint SYNTHETIC ids in reserved ranges above every real WOF
+ *   beside the GeoJSON — and we keep their schema, so `spr.id` is the WOF id for a WOF-sourced row. It is not
+ *   for the rest: the Overture and GeoNames folds mint synthetic ids in reserved ranges above every real WOF
  *   id, and those look exactly like WOF ids while resolving to nothing on spelunker.
  *
  *   Every place row a maintainer tool emits therefore carries {@link PlaceIDProvenance}, because the failure
  *   this prevents is silent: an id is pasted into spelunker, 404s, and reads as "our gazetteer invented a
  *   place" rather than "this place came from Overture". Turkey's `Of` is the case that prompted it —
  *   8114738869649 and 8837168432019 are Overture divisions, while WOF's own `Of` is 890463199 and carries a
- *   DIFFERENT population (31,951 against Overture's 44,212 on both rows).
+ *   different population (31,951 against Overture's 44,212 on both rows).
  */
 
 import {
@@ -31,7 +31,7 @@ export const PlaceIDSource = {
 	 */
 	WOF: "wof",
 	/**
-	 * Minted by the Overture `divisions` backfill for a locale with no WOF repo (`assignSyntheticIDs` hashes the GERS id
+	 * Minted by the Overture `divisions` backfill for a locale with no WOF repo (`assignSyntheticIDs` hashes the gers id
 	 * into the reserved span). Not a WOF id.
 	 */
 	Overture: "overture",
@@ -40,7 +40,7 @@ export const PlaceIDSource = {
 	 */
 	GeoNames: "geonames",
 	/**
-	 * Minted by the GeoNames POSTAL fold, which reserves its own span above the alias fold. Not a WOF id.
+	 * Minted by the GeoNames postal fold, which reserves its own span above the alias fold. Not a WOF id.
 	 */
 	GeoNamesPostal: "geonames-postal",
 } as const

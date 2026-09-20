@@ -108,7 +108,7 @@ interface AddressNode {
 }
 ```
 
-A node usually plays one role (its `tag`). A **dual-role place** plays several on one span: `Berlin` is both a region and a locality. The extra roles ride in `interpretations` (each a `{ tag, placeId, lat, lon, … }`), and the flat projections surface every role — `decodeAsJSON` emits both `region` and `locality`, `decodeAsXML` lists `roles="region locality"`. See [concepts/dual-role-places.md](./concepts/dual-role-places.mdx).
+A node typically plays one role (its `tag`). A **dual-role place** plays several on one span: `Berlin` is both a region and a locality. The extra roles ride in `interpretations` (each a `{ tag, placeId, lat, lon, … }`), and the flat projections surface every role — `decodeAsJSON` emits both `region` and `locality`, `decodeAsXML` lists `roles="region locality"`. See [concepts/dual-role-places.md](./concepts/dual-role-places.mdx).
 
 ### `AddressAlternative`
 
@@ -215,7 +215,7 @@ The demo at [`/demo`](https://mailwoman.ai/demo) is the reference browser integr
 
 ## Component tags
 
-The full [`ComponentTag` union](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/SCHEMA.mdx) (source of truth: `core/types/component.ts`):
+The full [`ComponentTag` union](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/SCHEMA.mdx) (authoritative record: `core/types/component.ts`):
 
 | Tag                  | Description            | Example            |
 | -------------------- | ---------------------- | ------------------ |
@@ -241,7 +241,7 @@ The current neural model (v0.4.0) emits 10 of these: country, region, locality, 
 
 ## Drop-in server specifications (OpenAPI 3.1)
 
-The three HTTP drop-ins — plus the native `/v1/*` surface `mailwoman serve` ships — each expose a machine-readable [OpenAPI 3.1](https://spec.openapis.org/oas/v3.1.0.html) specification: the endpoints, query parameters, response shapes, the schema.org `jsonld` variants, and (for the drop-ins) the documented divergences from each upstream. Point Swagger UI, Redoc, a client generator, or a contract test at them.
+The three HTTP drop-ins — plus the native `/v1/*` surface `mailwoman serve` ships — each expose a machine-readable [OpenAPI 3.1](https://spec.openapis.org/oas/v3.1.0.html) specification: the endpoints, query parameters, response shapes, the schema.org `jsonld` variants, and (for the drop-ins) the documented divergences from each upstream. Point Swagger UI, Redoc, a client generator, or a interface test at them.
 
 | Drop-in                                                                      | Endpoints                                                                                                 | Specification                                        |
 | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
@@ -250,10 +250,10 @@ The three HTTP drop-ins — plus the native `/v1/*` surface `mailwoman serve` sh
 | [`@mailwoman/libpostal`](https://www.npmjs.com/package/@mailwoman/libpostal) | `/parse`, `/expand`                                                                                       | [libpostal.json](pathname:///openapi/libpostal.json) |
 | `mailwoman serve` (native `/v1/*` surface)                                   | `/v1/parse`, `/v1/geocode`, `/v1/batch`, `/v1/resolve`, `/v1/format`, `/v1/reload`, `/health`, `/metrics` | [mailwoman.json](pathname:///openapi/mailwoman.json) |
 
-The source of truth is the route table, not a checked-in file. Every surface builds its OpenAPI 3.1 document from the same `@hono/zod-openapi` route definitions that serve the requests. There are two ways to get the document, both derived from that identical route table, and nothing to keep in sync by hand:
+The authoritative record is the route table rather than a checked-in file. Every surface builds its OpenAPI 3.1 document from the same `@hono/zod-openapi` route definitions that serve the requests. There are two ways to get the document, both derived from that identical route table, and nothing to keep in sync by hand:
 
 - **At runtime**, from a running server — `GET /openapi.json`.
-- **Ahead of time**, from each surface's own CLI — `mailwoman-photon openapi`, `mailwoman-nominatim openapi`, `mailwoman-libpostal openapi`, `mailwoman openapi` — which prints the document to stdout (or `--out <path>`) without booting the real engine or opening a data root. This is what stamps the four JSON files linked above: the docs site's `prebuild` script runs all four emitters into `static/openapi/` before every build, so those copies are a build product, not a file to hand-edit.
+- **Ahead of time**, from each surface's own CLI — `mailwoman-photon openapi`, `mailwoman-nominatim openapi`, `mailwoman-libpostal openapi`, `mailwoman openapi` — which prints the document to stdout (or `--out <path>`) without booting the real engine or opening a data root. This is what stamps the four JSON files linked above: the docs site's `prebuild` script runs all four emitters into `static/openapi/` before every build, so those copies are a build product rather than a file to hand-edit.
 
 To lint a running server's document with [Redocly CLI](https://redocly.com/docs/cli), fetch it to a temp file first (Redocly's `lint` doesn't read stdin) — or skip the server and lint the CLI's own output directly:
 
@@ -286,11 +286,11 @@ progenitor-diet 3.0.3 — `openapiv3`, which progenitor depends on, only underst
 `openapi-python-client` once per surface to assemble a Python package
 (`mailwoman_client.{photon,nominatim,libpostal,mailwoman}`), vendors the 3.0 documents into a Rust
 crate whose four modules each expand `progenitor::generate_api!` at compile time, then **verifies**
-both actually build: `uv build` the Python package + import-check the wheel in an ephemeral
+both build: `uv build` the Python package + import-check the wheel in an ephemeral
 environment, `cargo check --examples` the crate. Nothing generated is committed — regenerate any time
 the specs change.
 
-**Not yet published.** Both packages build and verify cleanly on every `mailwoman clients generate`
+**Not yet published.** Both packages build and verify directly on every `mailwoman clients generate`
 run, but neither has shipped to a registry yet — that's blocked behind an operator step (provisioning a
 PyPI account and a crates.io account, each with a publish token) documented in the repo's
 `RELEASING.md`. Once provisioned, the same generation pipeline runs inside a conditional CI job: it always

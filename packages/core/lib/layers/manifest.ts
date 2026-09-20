@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Read/write helpers over the layer-contract tables. The parsed {@link LayerManifest} is the
- *   camelCase face of `layer_manifest`; validation happens at BOTH ends so a hand-built or
+ *   Read/write helpers over the layer-interface tables. The parsed {@link LayerManifest} is the
+ *   camelCase face of `layer_manifest`; validation happens at both ends so a hand-built or
  *   corrupted layer fails loudly at open time rather than misbehaving downstream.
  */
 
 import { supportsExclusion, CoverageBasis } from "@mailwoman/evidence"
 
 import { parseJSONStrict, stringifyJSON } from "#json"
-import { LayerFreshnessPolicy, LayerTier, type LayerContractHandle } from "#layers/schema"
+import { LayerFreshnessPolicy, LayerTier, type layerschemahandle } from "#layers/schema"
 import { assertAdmissibleLicenseExpression } from "#license/obligations"
 
 /**
@@ -27,11 +27,11 @@ export interface SpineKeys {
 	 */
 	addressID?: string
 	/**
-	 * The normalized-street column a extract is probed by, for layers keyed by STREET rather than by cell or id.
+	 * The normalized-street column a extract is probed by, for layers keyed by street rather than by cell or id.
 	 *
-	 * Added because the contract's first three keys describe the two layer shapes that existed when it was written — a
+	 * Added because the interface's first three keys describe the two layer shapes that existed when it was written — a
 	 * cellular one (`poi.db`, H3) and an id-joined one — and the situs extracts are a third. `address_point` and
-	 * `street_segment` carry no H3 cell, no WOF id and no address-id; they are probed on `(postcode | locality,
+	 * `street_segment` carry no H3 cell, no WOF id and no address-id. they are probed on `(postcode | locality,
 	 * street_norm, number)`. Declaring one of the other three for them would name a column that does not exist, in the
 	 * field a consumer uses to join.
 	 */
@@ -72,7 +72,7 @@ export interface CoverageCell {
 const BASES = new Set<string>(Object.values(CoverageBasis))
 
 /**
- * Reject a malformed coverage cell at BOTH ends, the way {@link assertManifestInvariants} does for the manifest.
+ * Reject a malformed coverage cell at both ends, the way {@link assertManifestInvariants} does for the manifest.
  *
  * The magnitudes here are read as epistemics, so a well-formed wrong one is worse than a throw: a `completeness` above
  * 1 or an unknown `basis` reaching {@link supportsExclusion} turns into confident negative evidence, and a negative
@@ -136,12 +136,12 @@ export interface CoverageRow {
 /**
  * A stored coverage row as the parsed {@link CoverageCell}, with the cell's own index and resolution beside it.
  *
- * SHARED BY EVERY POLYGON LAYER'S READER, and the reason is the second line of it. A NULL `basis` is an artifact built
- * before the column existed; it was recording source presence, so that is what it must read back as — never a stronger
+ * Shared BY every polygon layer'S reader, and the reason is the second line of it. A NULL `basis` is an artifact built
+ * before the column existed. it was recording source presence, so that is what it must read back as — never a stronger
  * basis than the builder actually had. Four readers writing that rule separately is four places for one of them to
  * write `?? CoverageBasis.Designated` and license an exclusion nobody measured.
  *
- * `undefined` in, `undefined` out: a cell with no coverage row is UNKNOWN, never `{completeness: 0}`.
+ * `undefined` in, `undefined` out: a cell with no coverage row is unknown, never `{completeness: 0}`.
  */
 export function toCoverageCell(
 	row: CoverageRow | undefined,
@@ -182,9 +182,9 @@ export function singleManifestRow(
 /**
  * One `layer_manifest` row as a synchronous reader gets it back, mapped onto {@link LayerManifest}.
  *
- * SHARED BY EVERY LAYER READER, AND SEPARATE FROM THE IDENTITY CHECK ON PURPOSE. `readLayerManifest` above is the
- * Kysely path; a reader that opens the artifact with `node:sqlite` for its own synchronous probes reads the same single
- * row and needs the same mapping. What such readers do NOT share is how they recognize their own layer — most match a
+ * Shared BY every layer reader, and separate from the identity check on purpose. `readLayerManifest` above is the
+ * Kysely path. a reader that opens the artifact with `node:sqlite` for its own synchronous probes reads the same single
+ * row and needs the same mapping. What such readers do not share is how they recognize their own layer — most match a
  * fixed name, and a layer whose name carries a build's region suffix matches a prefix instead — so the mapping lives
  * here and the assertion stays with the caller. {@link parseManifestRows} is the fixed-name case, wired for the callers
  * that have one.
@@ -214,7 +214,7 @@ export function toLayerManifest(row: Record<string, string | number | null>): La
 }
 
 /**
- * The manifest of a layer whose name is FIXED, checked against `expectedName`.
+ * The manifest of a layer whose name is fixed, checked against `expectedName`.
  *
  * @param rows Every row of `layer_manifest`.
  * @param context Names the caller in every refusal.
@@ -238,12 +238,12 @@ export function parseManifestRows(
 }
 
 /**
- * Refuse an artifact whose coverage would license a claim that the thing asked for is NOT there.
+ * Refuse an artifact whose coverage would license a claim that the thing asked for is not there.
  *
- * A CONDITION RATHER THAN A CONVENTION, and shared because the rule is the contract's rather than any product's: a
+ * A condition rather than A convention, and shared because the rule is the interface's rather than any product's: a
  * layer whose source publishes no footprint may record presence and nothing else, and the day someone writes a stronger
  * basis without settling the footprint question the layer must refuse to open rather than answer confidently. Checked
- * over the DISTINCT bases, so the cost is one query however large the table.
+ * over the distinct bases, so the cost is one query however large the table.
  *
  * @param bases Every distinct `basis` in `layer_coverage`, NULL included.
  * @param reason The layer's own sentence saying why its coverage licenses no negative claim.
@@ -277,13 +277,13 @@ export function assertCoverageLicensesNoExclusion(
  */
 export interface PolygonLayerBuildStamp {
 	/**
-	 * The product vintage — `layer_manifest.version` AND `source_vintage`.
+	 * The product vintage — `layer_manifest.version` and `source_vintage`.
 	 */
 	sourceVintage: string
 	buildCmd: string
 	buildSHA: string
 	/**
-	 * ISO-8601, supplied by the caller. Never generated here: the contract says so, and a library-generated timestamp
+	 * ISO-8601, supplied by the caller. Never generated here: the interface says so, and a library-generated timestamp
 	 * makes two builds of the same inputs differ.
 	 */
 	createdAt: string
@@ -337,7 +337,7 @@ export function polygonLayerManifest(
 /**
  * Insert the single manifest row. Call exactly once, from the layer's build script.
  */
-export async function writeLayerManifest(db: LayerContractHandle, manifest: LayerManifest): Promise<void> {
+export async function writeLayerManifest(db: layerschemahandle, manifest: LayerManifest): Promise<void> {
 	assertManifestInvariants(manifest)
 
 	await db
@@ -363,7 +363,7 @@ export async function writeLayerManifest(db: LayerContractHandle, manifest: Laye
 /**
  * Read + validate the manifest. Throws if the table is empty, multi-row, or invalid.
  */
-export async function readLayerManifest(db: LayerContractHandle): Promise<LayerManifest> {
+export async function readLayerManifest(db: layerschemahandle): Promise<LayerManifest> {
 	const rows = await db.selectFrom("layer_manifest").selectAll().execute()
 
 	if (rows.length !== 1) {
@@ -394,17 +394,17 @@ export async function readLayerManifest(db: LayerContractHandle): Promise<LayerM
 }
 
 /**
- * Rows per INSERT statement (4 bound params/row = 16,000 params/statement), kept safely under SQLite's default 32,766
+ * Rows per insert statement (4 bound params/row = 16,000 params/statement), kept safely under SQLite's default 32,766
  * bound-variable ceiling — a continental-scale build's res-6 coverage cell count blows past that limit in a single
  * `.values()` call (found 2026-07-19).
  */
 export const COVERAGE_INSERT_BATCH = 5000
 
 /**
- * Bulk-insert coverage cells (build-time; cold path, so Kysely inserts are fine), chunked to stay under SQLite's
+ * Bulk-insert coverage cells (build-time. cold path, so Kysely inserts are fine), chunked to stay under SQLite's
  * bound-variable limit.
  */
-export async function writeLayerCoverage(db: LayerContractHandle, cells: CoverageCell[]): Promise<void> {
+export async function writeLayerCoverage(db: layerschemahandle, cells: CoverageCell[]): Promise<void> {
 	if (!cells.length) return
 
 	for (const cell of cells) {
@@ -429,10 +429,10 @@ export async function writeLayerCoverage(db: LayerContractHandle, cells: Coverag
 }
 
 /**
- * Look up coverage for one short H3 cell. `undefined` = the cell was never surveyed (UNKNOWN) — callers must not
+ * Look up coverage for one short H3 cell. `undefined` = the cell was never surveyed (unknown) — callers must not
  * conflate this with `{completeness: 0}`.
  */
-export async function readLayerCoverage(db: LayerContractHandle, h3Cell: number): Promise<CoverageCell | undefined> {
+export async function readLayerCoverage(db: layerschemahandle, h3Cell: number): Promise<CoverageCell | undefined> {
 	const row = await db.selectFrom("layer_coverage").selectAll().where("h3_cell", "=", h3Cell).executeTakeFirst()
 
 	if (!row) return undefined

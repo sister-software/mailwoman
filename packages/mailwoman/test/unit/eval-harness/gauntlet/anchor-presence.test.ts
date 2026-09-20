@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The grading environment's artifact-presence contract (#1516, second half).
+ *   The grading environment's artifact-presence interface (#1516, second half).
  *
  *   The failure being guarded is silent by construction: a weights package missing its `postcode-<cc>.bin`
- *   throws nothing, resolves the anchor channel OFF, and costs the run 3-4 baseline cases — which reads as a
- *   model regression. The guard must fire on THAT, and must stay quiet for the packages that ship no binary on
+ *   throws nothing, resolves the anchor channel off, and costs the run 3-4 baseline cases — which reads as a
+ *   model regression. The guard must fire on that, and must stay quiet for the packages that ship no binary on
  *   purpose (en-gb under the #1476 mitigation, en-nz for want of a WOF NZ postcode database), which is why the
  *   expectation is read from each package's own card instead of a list in the harness.
  *
- *   Fixture packages, not the workspace ones: "declared and missing" cannot be posed against the real
+ *   Fixture packages rather than the workspace ones: "declared and missing" cannot be posed against the real
  *   neural-weights-* dirs without deleting an artifact out from under every other test in the run.
  */
 
@@ -76,9 +76,9 @@ describe("the anchor-artifact presence assertion", () => {
 	})
 
 	it("stays silent for a package that declares no anchor artifact — the #1476 en-gb posture", async () => {
-		// Verbatim shape of the en-gb card: `requires.anchor.required` is TRUE (a fact about the shared encoder)
+		// Verbatim shape of the en-gb card: `requires.anchor.required` is true (a fact about the shared encoder)
 		// while `files` carries only a comment where the binary key would be. A guard keyed on `requires` calls
-		// this broken; a guard keyed on `files` calls it what it is.
+		// this broken. a guard keyed on `files` calls it what it is.
 		const root = await fixtureWeights("zz-zz", {
 			requires: { anchor: { required: true } },
 			files: { $comment_postcode_anchor: "NONE — this overlay ships no postcode-zz.bin (deliberate)" },

@@ -17,21 +17,21 @@
  * Each worker rebuilds the classifier / WOF lookup / resolver / databases from {@link GeocodeStreamConfig}
  * (paths + locale) at startup — nothing but config crosses out, only the enriched record crosses back.
  * Records arrive in completion order. Worth threading only because geocoding is ms-scale per row
- * (~23ms measured) — far above the cross-thread cost; for light normalization, stop after normalizeCSV.
+ * (~23ms measured) — far above the cross-thread cost. for light normalization, stop after normalizeCSV.
  *
- * **Concurrency is low on purpose.** Geocoding is latency/memory-bound, not CPU-bound: each row makes
+ * **Concurrency is low on purpose.** Geocoding is latency/memory-bound rather than CPU-bound: each row makes
  * random reads into the multi-GB WOF SQLite, and the classifier already uses several cores per inference.
  * A measured NPPES sweep (single 4 GB DB, 16-core box) peaked at **2 workers (~1.4×)** and *degraded* from
- * there — 4 workers ≈ baseline, 6 ≈ no gain — because the shared DB + memory bandwidth is the ceiling, not
+ * there — 4 workers ≈ baseline, 6 ≈ no gain — because the shared DB + memory bandwidth is the ceiling rather than
  * the core count. So the default is small, and more is usually worse. Sweep it for your data/box rather
  * than reaching for `availableParallelism()`.
  *
  * **Threads are the only change, and `parallelMapWorkers` is the whole pool.** `onnxruntime-node`'s `session.run()`
  * blocks the JS thread instead of releasing to the libuv pool, and `node:sqlite` reads are synchronous —
  * so concurrency *within* one runtime measures 1.00× flat from 1 to 16 (`plan/reference/performance.mdx`).
- * A separate runtime per row is the only thing that buys anything, which is what a worker is. That also
+ * A separate runtime per row is the only thing that provides anything, which is what a worker is. That also
  * bounds what a richer pool implementation could be worth here: the scarce resource is DB and memory
- * bandwidth at a concurrency of ~2, not task-dispatch implementation.
+ * bandwidth at a concurrency of ~2 rather than task-dispatch implementation.
  */
 
 import { availableParallelism } from "@mailwoman/core/utils/system"
@@ -86,7 +86,7 @@ export interface GeocodeStreamOptions {
 /**
  * The compiled worker, resolved whether this runs from `out/` (prod) or `.ts` source (tests).
  *
- * ONE SPELLING SERVES BOTH, because `lib/` and `out/` are siblings: this module is `lib/geocode-stream.ts` in source
+ * One spelling serves both, because `lib/` and `out/` are siblings: this module is `lib/geocode-stream.ts` in source
  * and `out/geocode-stream.js` compiled, so `../` is the package root either way. The `import.meta.url` branch this
  * replaced existed only because source used to sit one level shallower than its own output.
  */

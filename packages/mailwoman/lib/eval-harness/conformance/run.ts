@@ -4,24 +4,24 @@
 /**
  *   Running a conformance-law suite, and saying what a violation was.
  *
- *   NO SECOND HARNESS. A fixture is graded by running the SAME pipeline the Gauntlet runs, through an
+ *   no second harness. A fixture is graded by running the same pipeline the Gauntlet runs, through an
  *   observer the caller supplies — `gauntletObserver` wraps `buildGauntletDeps`'s own `geocode` and projects
  *   it with `toGauntletResult`, the projection the board's grader and the warm-engine tools already share. A
- *   law suite is therefore a Gauntlet layer's worth of implementation plus a fixture file, not a parallel runner
+ *   law suite is therefore a Gauntlet layer's worth of implementation plus a fixture file rather than a parallel runner
  *   with its own model loading, its own weights ladder and its own idea of what a result is.
  *
- *   BOTH SIDES ARE OBSERVED, EVERY TIME. Nothing here caches by query, because a fixture whose base and
+ *   both sides are observed, every time. Nothing here caches by query, because a fixture whose base and
  *   variant are the same string is the identity law — two independent runs that must agree — and answering
  *   the second one from a cache would turn the strongest available nondeterminism check into a tautology.
  *
- *   `undecidable` IS A VIOLATION. A comparator that could not read its axis has not found a law holding; it
+ *   `undecidable` is A violation. A comparator that could not read its axis has not found a law holding. it
  *   has found nothing, and a suite that counted it as a pass would report the same total as a suite that
  *   genuinely held.
  *
- *   `unmeasured` IS NEITHER, AND LEAVES THE DENOMINATOR. It is the reading of a comparator that DID read its
+ *   `unmeasured` is neither, and leaves the denominator. It is the reading of a comparator that did read its
  *   axis and found the observation too small to decide — `candidate_admissibility` is the only one that can
  *   report it, when a candidate left a table already sitting at its fetch window. Counting it as a failure
- *   would report the observer's blind spot as the pipeline's defect; counting it as a hold would report a
+ *   would report the observer's blind spot as the pipeline's defect. counting it as a hold would report a
  *   blind spot as evidence. So {@linkcode summarizeConformanceRun} puts it in its own bucket, removes it from
  *   the row count the verdict is stated over, and a suite that can measure nothing at all reports `pass:
  *   false` for the same reason an empty suite does.
@@ -37,7 +37,7 @@ import { toGauntletResult } from "#eval-harness/gauntlet/harness"
 /**
  * Produce one side of a law: run `query` under `context` and return what the comparators read.
  *
- * The hook exists so a caller that can say MORE about a run than the assembled result — `@mailwoman/dev-mcp`, which
+ * The hook exists so a caller that can say more about a run than the assembled result — `@mailwoman/dev-mcp`, which
  * holds the trace and the mechanism-account predicates — attaches its shapes here rather than this module reaching for
  * a private workspace it must not depend on.
  */
@@ -73,7 +73,7 @@ export function gauntletObserver(geocode: GauntletDeps["geocode"]): ConformanceO
  * The same observer with the resolver's interior attached — one trace record per backend lookup, which is what
  * `candidate_admissibility` reads.
  *
- * A SECOND observer rather than a flag on the first, because the walk's trace bookkeeping is a real cost the four
+ * A second observer rather than a flag on the first, because the walk's trace bookkeeping is a real cost the four
  * answer-axis laws have no use for. `command.ts` chooses between them by reading the comparators the loaded rows
  * actually name, so a run that states no candidate law pays nothing.
  */
@@ -136,7 +136,7 @@ export interface ConformanceSummary {
 	 */
 	unmeasured: ConformanceFinding[]
 	/**
-	 * How many rows were ADMITTED and DECIDED — the denominator a reader needs before the pass count means anything.
+	 * How many rows were admitted and decided — the denominator a reader needs before the pass count means anything.
 	 */
 	decided: number
 	pass: boolean
@@ -145,7 +145,7 @@ export interface ConformanceSummary {
 /**
  * Split a run by row status, mirroring the Gauntlet regression layer's own three-way reading.
  *
- * `pass` is false on an EMPTY findings list for the same reason {@linkcode runConformanceFixtures} refuses an empty
+ * `pass` is false on an empty findings list for the same reason {@linkcode runConformanceFixtures} refuses an empty
  * suite, and false on a suite with no enforcing rows at all: a run whose every row is tracked has measured nothing that
  * could fail, and reporting it as a pass is how a suite quietly stops holding anything.
  */
@@ -159,7 +159,7 @@ export function summarizeConformanceRun(findings: readonly ConformanceFinding[])
 	for (const finding of findings) {
 		const blocking = (finding.fixture.status ?? "pass") === "pass"
 
-		// Read BEFORE the status split, and on tracked rows too: a tracked row that went unmeasured has not started
+		// Read before the status split, and on tracked rows too: a tracked row that went unmeasured has not started
 		// holding, and printing it as a promotion instruction would ask someone to promote a row nobody measured.
 		if (finding.reading.observed === "unmeasured") {
 			unmeasured.push(finding)
@@ -188,7 +188,7 @@ export function summarizeConformanceRun(findings: readonly ConformanceFinding[])
  *
  * Names, in this order: the law, the fixture id, the committed row it was drawn from when it has one, the comparator,
  * the expected and observed relations, both queries, what the comparator read, and every difference it found. A
- * violation reported without the row it came from is a claim about a synthetic pair; with it, a reader can go back to
+ * violation reported without the row it came from is a claim about a synthetic pair. with it, a reader can go back to
  * the population and ask how common the shape is.
  */
 export function formatConformanceFinding(finding: ConformanceFinding): string {

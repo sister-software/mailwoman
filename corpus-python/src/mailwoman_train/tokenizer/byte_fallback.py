@@ -29,7 +29,7 @@ def detect_script(text: str) -> str:
     ``arabic``, ``greek``, ``hebrew``, ``devanagari``, ``thai``, ``mixed``, or ``other``.
 
     Used to bucket the byte-fallback eval into per-script rates so the model card surfaces
-    *where* the tokenizer hits byte fallback, not just the overall headline number.
+    *where* the tokenizer hits byte fallback rather than just the overall headline number.
     """
     blocks: Counter[str] = Counter()
     for ch in text:
@@ -84,7 +84,7 @@ def measure_byte_fallback(sp: spm.SentencePieceProcessor, lines: Iterable[str]) 
           }
         }
 
-    The "rate" denominator is piece count, not line count — a byte-fallback piece is a
+    The "rate" denominator is piece count rather than line count — a byte-fallback piece is a
     *piece*, not a *line*, so the rate that matters for downstream model wastage is the
     fraction of pieces that landed on the byte block.
     """

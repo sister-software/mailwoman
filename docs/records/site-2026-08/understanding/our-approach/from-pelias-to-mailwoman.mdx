@@ -17,8 +17,8 @@ A short lineage for readers who already know Pelias.
 
 [Pelias](https://github.com/pelias/pelias) is an open-source geocoder. It takes an input string like `"350 5th Ave, New York, NY 10118"` and returns a structured place. Under the hood, Pelias splits this into two jobs:
 
-- **Parsing** — turn the string into labelled parts (`house_number=350`, `street=5th Ave`, `locality=New York`, `region=NY`, `postcode=10118`). For this, Pelias uses [`libpostal`](https://github.com/openvenues/libpostal), a C library trained on OpenStreetMap data.
-- **Resolving** — look up the parsed place in a gazetteer (a large place database, often [Who's On First](https://whosonfirst.org/)) and return coordinates plus IDs.
+- **Parsing** — turn the string into labeled parts (`house_number=350`, `street=5th Ave`, `locality=New York`, `region=NY`, `postcode=10118`). For this, Pelias uses [`libpostal`](https://github.com/openvenues/libpostal), a C library trained on OpenStreetMap data.
+- **Resolving** — look up the parsed place in a gazetteer (a large place database, frequently [Who's On First](https://whosonfirst.org/)) and return coordinates plus IDs.
 
 The two-job split is important. If we get a great parser but a weak gazetteer, results are still bad. If we get a great gazetteer but a weak parser, the gazetteer never sees the right query. Both halves have to be strong.
 
@@ -32,13 +32,13 @@ Mailwoman v1 was an effort to **replace `libpostal`** with a TypeScript-native p
 
 Mailwoman v1 used **rule classifiers**: hand-written code that looks at each token (word) of the input and decides what kind of address component it is. A rule like "if it starts with 5 digits, it is a US postcode" is one classifier. There are dozens of them, one per component type. They run in parallel, vote, and a solver picks the best combination. See [`how-it-used-to-work.md`](./how-it-used-to-work.mdx) for the full story.
 
-This worked, but it ran into the same limit every rule-based parser hits: the long tail. Real-world addresses have shapes the rules do not know about. "Saint Petersburg, FL" is two words but one city. "Mt Tabor Park" is a venue, not a street. Rules can describe these cases, but writing them all out is a never-ending project.
+This worked, but it ran into the same limit every rule-based parser hits: the long tail. Real-world addresses have shapes the rules do not know about. "Saint Petersburg, FL" is two words but one city. "Mt Tabor Park" is a venue rather than a street. Rules can describe these cases, but writing them all out is a never-ending project.
 
 ## What changed in 2026
 
 Mailwoman v2 — what you are reading docs for — keeps the rule classifiers but adds a **neural classifier** alongside them. Both run; both produce candidate labels; a per-component **policy** decides which one's vote counts more for each address component type. The migration is gradual on purpose: rules stay until the neural classifier's metrics prove it does better.
 
-The neural classifier is a small transformer model (about 29M parameters in the current weights — see [`concepts/how-mailwoman-parses-an-address.md`](../../concepts/how-mailwoman-parses-an-address.mdx)) trained on a corpus built from many open data sources and rebuilt many times over — see [`concepts/training-pipeline.md`](../../concepts/training-pipeline.mdx) for how it's constructed. It ships in two pieces:
+The neural classifier is a small transformer model (about 29M parameters in the current weights — see [`concepts/how-mailwoman-parses-an-address.md`](../../concepts/how-mailwoman-parses-an-address.mdx)) trained on a corpus built from several open data sources and rebuilt several times over — see [`concepts/training-pipeline.md`](../../concepts/training-pipeline.mdx) for how it's constructed. It ships in two pieces:
 
 - `@mailwoman/neural` — the runtime that loads the model and runs inference (works in Node.js and the browser).
 - `@mailwoman/neural-weights-en-us` and `@mailwoman/neural-weights-fr-fr` — the model files. Two npm packages, but one trained model today: the publish workflow copies the en-us artifacts into the fr-fr package. Locale-specific weights are future work.

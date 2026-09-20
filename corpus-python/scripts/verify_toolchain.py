@@ -2,7 +2,7 @@
 
 A dependency drift is what broke int8 quantization for mobile-Safari once already (2026-06-09:
 unpinned ``>=`` let transformers→5.x / onnx→1.21 in, and the dynamo exporter started writing
-stale ``value_info`` the quantizer choked on). The pins now live in THREE places that must agree,
+stale ``value_info`` the quantizer choked on). The pins now live in three places that must agree,
 or a local export silently differs from the browser-shipped graph:
 
 1. ``corpus-python/pyproject.toml`` ``[project.optional-dependencies].train`` — the local toolchain.
@@ -21,11 +21,11 @@ The ruff pin has the same shape and one more copy: ``pyproject.toml``'s ``[dev]`
 version a developer's venv installs, and three shell call sites (``package.json``'s ``lint:python``
 and ``fix:python``, ``.husky/pre-commit``) name the version ``uvx`` fetches. A bump that moves the
 pin without the call sites leaves a local ruff that lints differently from the one CI runs, which is
-the failure the pyproject comment warns about — and it happened, so this script now checks all four.
+the failure the pyproject comment warns about — and it happened. Therefore, this script now checks all four.
 
 This script asserts they agree, and (when the heavy ML deps are actually installed) that the
 installed versions match the pins too. It needs none of torch/onnx to run the cross-file checks, so
-it is a cheap CI guard — run it in the lint/CI lane, not just on a train machine.
+it is a cheap CI guard — run it in the lint/CI lane rather than just on a train machine.
 
 Run: ``python corpus-python/scripts/verify_toolchain.py`` (exit 0 = consistent, 1 = drift).
 """
@@ -40,7 +40,7 @@ import tomllib
 from pathlib import Path
 
 # The export/quant deps whose version is required for the shipped ONNX graph. datasets/tqdm/
-# trackio are loose by design (they don't touch the graph), so they are NOT guarded here.
+# trackio are loose by design (they don't touch the graph), so they are not guarded here.
 #
 # `onnxscript` was absent from this list while five graph pins existed, so pyproject read 0.7.1
 # against the Modal image's 0.7.0 and this check still printed that the two agree. It is the dynamo
@@ -49,7 +49,7 @@ from pathlib import Path
 INVARIANT_DEPS = ("torch", "transformers", "onnx", "onnxruntime", "onnxscript")
 MAX_OPSET = 17
 
-# `onnxruntime` is the only guarded dep with a SECOND implementation outside this directory: the
+# `onnxruntime` is the only guarded dep with a second implementation outside this directory: the
 # browser executes the graph through `onnxruntime-web`, and Python quantizes it through
 # `onnxruntime`. A gap there means the artifact is validated by a runtime that is not the one
 # serving it — measured at up to ~1e-1 on a logit between 1.26.0 and 1.29.0 on the same bytes. The
@@ -88,7 +88,7 @@ PROJECT_VENV = REPO_ROOT / "corpus-python" / ".venv" / "bin" / "python3"
 def _installed_versions() -> dict[str, str]:
     """Installed versions of the guarded deps, read from the project venv where there is one.
 
-    The pre-commit hook invokes this script with a bare `python3`, so reading THIS interpreter
+    The pre-commit hook invokes this script with a bare `python3`, so reading this interpreter
     reports whatever the system Python happens to carry — a stray global copy of one dep made the
     check disagree with the venv that actually runs the export. Falls back to this interpreter when
     no venv exists, which is the lint-only checkout the skip note describes.
@@ -125,6 +125,34 @@ def _pins_from_modal() -> dict[str, str]:
     return out
 
 
+def _requirement_name(spec: str) -> str:
+    """The package name of a requirement string, normalized the way pip compares names."""
+    name = re.split(r"[\[=><!~;\s]", spec.strip(), maxsplit=1)[0]
+
+    return name.lower().replace("_", ".").replace(".", "-")
+
+
+def _base_requirements() -> set[str]:
+    """The names under `[project] dependencies` — what merely importing `mailwoman_train` needs."""
+    data = tomllib.loads(PYPROJECT.read_text())
+
+    return {_requirement_name(spec) for spec in data["project"]["dependencies"]}
+
+
+def _modal_packages() -> set[str]:
+    """Every package the Modal image installs, pinned or floored.
+
+    Comment lines are stripped before the string literals are read: the pin block's prose quotes
+    version specifiers in passing, and a package name read out of a comment would make a missing
+    install look present.
+    """
+    text = MODAL_IMAGE.read_text()
+    block = text[text.index(".pip_install(") : text.index(".add_local_python_source")]
+    code = "\n".join(line for line in block.splitlines() if not line.lstrip().startswith("#"))
+
+    return {_requirement_name(m.group(1)) for m in re.finditer(r'"([A-Za-z0-9_.-]+[^"]*)"', code)}
+
+
 def _ruff_dev_pin() -> str | None:
     data = tomllib.loads(PYPROJECT.read_text())
     for spec in data["project"]["optional-dependencies"]["dev"]:
@@ -137,7 +165,7 @@ def _ruff_dev_pin() -> str | None:
 def _ruff_call_site_versions() -> dict[Path, set[str]]:
     """Every ruff version each call site asks `uvx` for. A file naming none is reported by its caller.
 
-    A file with no match is a real finding, not a skip: it means the call site moved or the command
+    A file with no match is a real finding rather than a skip: it means the call site moved or the command
     was respelled, and this check would then pass over a copy it no longer reads.
     """
     return {path: set(RUFF_UVX_RE.findall(path.read_text())) for path in RUFF_CALL_SITES}
@@ -182,6 +210,17 @@ def main() -> int:
             problems.append(f"{dep}: pyproject pins =={py} but Modal image pins =={md}")
         elif py and md is None:
             problems.append(f"{dep}: pinned =={py} in pyproject but absent from the Modal image pins")
+
+    # Every base requirement must be installed in the image. A missing one raises inside the
+    # container at the first import that reaches it, which for `platformdirs` was the anchor painter
+    # — hours of queue and a GPU allocation past the point where a startup failure would have shown.
+    missing_from_image = sorted(_base_requirements() - _modal_packages())
+    if missing_from_image:
+        problems.append(
+            "the Modal image does not install "
+            + ", ".join(missing_from_image)
+            + " — `mailwoman_train` imports these, so a run fails inside the container rather than here"
+        )
 
     # 3: the export opset must hold the <= 17 mobile-Safari invariant.
     opset = _export_opset()

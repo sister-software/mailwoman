@@ -8,19 +8,19 @@ YAML 1.1 resolves the bare token ``NO`` to the boolean ``false``. Every config i
 which produced ``{False: 1.0}``. ``DataConfig.country_weights`` is annotated ``dict[str, float]``
 and Python enforces nothing, so the loader's
 
-    weight = country_weights.get(country)   # .get("NO") -> None
+    weight = country_weights.get(country)   # .get("no") -> None
     if weight is None or weight <= 0: continue
 
 dropped every Norwegian row. Silently, in 44 configs, from v1.9.0-multilocale through the shipped
 v264 (6.3.0) and v310 (6.4.0). Measured cost at the time of the fix: 25,126 Norwegian rows present
 in the corpus and reaching the model zero times — 12,000 of them from ``synth-no-street-led``, a
-Norwegian phenomenon slice carrying source weight 12.0, the maximum targeted-fix tier. A slice built
+Norwegian phenomenon source carrying weight 12.0, the maximum targeted-fix tier. A recipe output built
 to fix a Norwegian defect had never contributed a single row.
 
 ``NO`` is the only ISO-3166-1 alpha-2 code that collides with a YAML 1.1 boolean, which is exactly
 why it hid: one country, no pattern, and the config text reads correctly.
 
-These tests pin BOTH halves — the guard that rejects the retyped key, and the shipped configs that
+These tests pin both halves — the guard that rejects the retyped key, and the shipped configs that
 must stay quoted. A config-only fix would rot the moment someone adds a country.
 """
 
@@ -63,7 +63,7 @@ def test_dataconfig_accepts_a_quoted_country_key():
 
 @pytest.mark.parametrize("config_path", sorted(CONFIG_DIR.glob("*.yaml")), ids=lambda p: p.name)
 def test_every_shipped_config_has_string_country_keys(config_path):
-    """The 44-config sweep, pinned. Parsed, not grepped — the text always looked right."""
+    """The 44-config sweep, pinned. Parsed rather than grepped — the text always looked right."""
     cfg = yaml.safe_load(config_path.read_text())
     weights = ((cfg or {}).get("data") or {}).get("country_weights") or {}
     offenders = [k for k in weights if not isinstance(k, str)]

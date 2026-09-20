@@ -38,10 +38,10 @@
 			"node": "./lib/shop/operations.ts",
 			"default": "./out/shop/operations.js"
 		},
-		"./claim-contract": {
-			"types": "./out/claim-contract.d.ts",
-			"node": "./lib/claim-contract.ts",
-			"default": "./out/claim-contract.js"
+		"./claim-interface": {
+			"types": "./out/claim-interface.d.ts",
+			"node": "./lib/claim-interface.ts",
+			"default": "./out/claim-interface.js"
 		},
 		"./env": {
 			"types": "./out/env.d.ts",

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Train the ORG-LEVEL cross-source link scorer (#655 follow-on, 2026-07-06). The practitioner
+ *   Train the ORG-level cross-source link scorer (#655 follow-on, 2026-07-06). The practitioner
  *   cross-source GBT does not transfer to organization records (its person-name features go dark),
  *   so the org-level cross-dataset flows pin the FS baseline. The org anchor: **CMS Provider of
  *   Services joins Care Compare by CCN** — the same facility in two separately-maintained CMS
@@ -11,8 +11,8 @@
  *   system-vs-facility / acquisition class the org objective exists for.
  *
  *   Pipeline: national CCN join → one record per source per facility (Phases A/B here), then the
- *   SHARED `trainCrossSourceModel` runs Phases C–F — geocode → block the UNION, keep only
- *   CROSS-source pairs → the SHARED featurizer → label by CCN → held-out-CCN calibration (max
+ *   shared `trainCrossSourceModel` runs Phases C–F — geocode → block the union, keep only
+ *   cross-source pairs → the shared featurizer → label by CCN → held-out-CCN calibration (max
  *   recall s.t. precision ≥ bar) → train on all pairs → emit
  *   `registry/models/org-crosssource-gbt-en-us.ts`.
  *
@@ -27,6 +27,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { isoDate } from "@mailwoman/core/utils"
+import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { addressFrequencyKey, streamRows } from "#index"
 import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
@@ -43,7 +44,7 @@ export interface TrainOrgCrossSourceGBTOptions {
 	/**
 	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
 	 */
-	sources?: string
+	sources?: PathBuilderLike
 	/**
 	 * Care Compare facilities sampled. Default 6000.
 	 */
@@ -67,14 +68,14 @@ export interface TrainOrgCrossSourceGBTOptions {
 }
 
 /**
- * Train + emit the org-level cross-source link GBT — see the module doc. The CCN is the cross-system facility key; it
+ * Train + emit the org-level cross-source link GBT — see the module doc. The CCN is the cross-system facility key. it
  * rides {@link CrossSourceRow.npi} → `record.id` as the held-out label.
  */
 export async function trainOrgCrossSourceGBT(
 	options: TrainOrgCrossSourceGBTOptions,
 	report?: (line: string) => void
 ): Promise<{ out: string; pairs: number; recommendedThreshold: number }> {
-	const SOURCES = options.sources || String(dataRootPath("record-matcher", "sources"))
+	const SOURCES = resolvePath(options.sources ?? dataRootPath("record-matcher", "sources"))
 	const CAP = options.cap ?? 6000
 	const OUT = options.out || "packages/registry/lib/models/org-crosssource-gbt-en-us.ts"
 	const LOCALE = options.locale || "en-US"

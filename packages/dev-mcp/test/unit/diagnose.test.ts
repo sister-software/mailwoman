@@ -3,7 +3,7 @@
 
 /**
  *   The account assembly and the shape predicates, driven off hand-built facts so no weights load and no gazetteer
- *   opens. Every case here is a claim about WHAT A PREDICATE MEANS — the point of a v1 classifier is that its
+ *   opens. Every case here is a claim about what A predicate means — the point of a v1 classifier is that its
  *   definitions are readable, so the tests are where the definitions are pinned.
  */
 
@@ -116,7 +116,7 @@ const ITEM: ResolvedInput = { id: "row-1", input: "Weimar, Thüringen", country:
 
 describe("collectParseFacts — known formats against the parse", () => {
 	it("matches a postcode hit against the postcode component under a different offset frame", () => {
-		// The detector's spans are offsets into the NORMALIZED input, component values are sliced from the RAW one, so
+		// The detector's spans are offsets into the normalized input, component values are taken from the RAW one, so
 		// the comparison folds both to characters. "SW1A 1AA" vs "sw1a1aa" is the same assertion.
 		const facts = collectParseFacts(
 			traceOf({ queryShape: { knownFormats: [{ format: "uk_postcode", confidence: 1, span: { body: "SW1A 1AA" } }] } }),
@@ -178,7 +178,7 @@ describe("collectRetrievalFacts — ranks and the flip stage", () => {
 	})
 
 	it("keeps a trace with no resolver records apart from a walk that performed no lookups", () => {
-		// One is a trace that predates the records; the other is the walk stating it had nothing resolvable. Folding
+		// One is a trace that predates the records. the other is the walk stating it had nothing resolvable. Folding
 		// them together would let an old trace read as a retrieval failure.
 		expect(collectRetrievalFacts(undefined).lookups).toBeNull()
 		expect(collectRetrievalFacts([]).lookups).toEqual([])
@@ -371,7 +371,7 @@ describe("assembleAccount — the terminal states", () => {
 
 	it("refines unclassified to mis_tag_in_vocabulary when an expected component's value sits verbatim in the input", () => {
 		// The bd-op2-london-college class: the expectation names locality "Dhaka" and postcode "1205", the input
-		// carries both surfaces, and the parse produced NEITHER tag — the decode assigned in-vocabulary text elsewhere.
+		// carries both surfaces, and the parse produced neither tag — the decode assigned in-vocabulary text elsewhere.
 		const item: ResolvedInput = {
 			id: "row-bd",
 			input: "58 Kalabagan 1st Ln, Dhaka 1205, Bangladesh",
@@ -452,7 +452,7 @@ describe("assembleAccount — the terminal states", () => {
 		)
 
 		expect(resolved.resolved_without_recorded_lookup).toBe(true)
-		// An abstention with no lookups is the ordinary reading of an empty list, not a coverage gap.
+		// An abstention with no lookups is the ordinary reading of an empty list rather than a coverage gap.
 		expect(abstained.resolved_without_recorded_lookup).toBe(false)
 		expect(renderAccount(resolved)).toContain("NO recorded lookup")
 	})
@@ -612,7 +612,7 @@ function evidenceOf(channels: Partial<NeuralParseTrace>) {
 describe("rows_cap", () => {
 	it("caps the emitted rows non-clean-first while the aggregates cover every row", async () => {
 		// Structural: exercise the partition + cap arithmetic without an engine — the pure tail of
-		// runDiagnose is not separable, so this pins the partition helper's contract by construction.
+		// runDiagnose is not separable, so this pins the partition helper's interface by construction.
 		const rows = [
 			{ id: "a", shapes: ["clean"] },
 			{ id: "b", shapes: ["evidence_starved"] },

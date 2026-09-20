@@ -3,7 +3,7 @@
 
 /**
  *   Emit `build.json` beside a Vite bundle: the static deployment record a production smoke fetches instead of a
- *   health endpoint. The revision is the repository's HEAD at build; Workers Builds checks out the commit it deploys.
+ *   health endpoint. The revision is the repository's head at build. Workers Builds checks out the commit it deploys.
  */
 
 import { gitHead } from "@mailwoman/core/git"

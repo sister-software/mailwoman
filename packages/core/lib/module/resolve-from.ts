@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Locate a package from the CALLER's location: every helper takes `base`, the caller's `import.meta.url`, so a
+ *   Locate a package from the caller's location: every helper takes `base`, the caller's `import.meta.url`, so a
  *   package resolves through the graph of the workspace that declares it rather than through `@mailwoman/core`'s. The
  *   sibling `resolvers.ts` anchors on this module instead, which is the right answer for core's own files and for
  *   anything visible from core, and the wrong one for a dependency only a docs plugin or a hook carries.

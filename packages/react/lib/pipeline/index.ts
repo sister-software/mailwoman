@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Pipeline explorer components, visualizers, hooks, and contracts.
+ * @file Pipeline explorer components, visualizers, hooks, and interfaces.
  */
 
 export { About } from "../common/About.tsx"

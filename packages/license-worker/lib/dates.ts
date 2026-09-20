@@ -8,7 +8,7 @@
  */
 
 export function calendarDateUTC(unixSeconds: number): string {
-	// oxlint-disable-next-line mailwoman/prefer-home -- the home reaches node:os through core/env; the worker cannot
+	// oxlint-disable-next-line mailwoman/prefer-home -- the home reaches node:os through core/env. the worker cannot
 	return new Date(unixSeconds * 1000).toISOString().slice(0, 10)
 }
 
@@ -22,6 +22,6 @@ export function todayUTC(now: () => number = Date.now): string {
 export function plusDays(date: string, days: number): string {
 	const [year, month, day] = date.split("-").map(Number) as [number, number, number]
 
-	// oxlint-disable-next-line mailwoman/prefer-home -- the home reaches node:os through core/env; the worker cannot
+	// oxlint-disable-next-line mailwoman/prefer-home -- the home reaches node:os through core/env. the worker cannot
 	return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10)
 }

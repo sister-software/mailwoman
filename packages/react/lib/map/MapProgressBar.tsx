@@ -4,14 +4,14 @@
 /**
  *   `<MapProgressBar>` — the loading bar pinned across the top of the viewport.
  *
- *   Loading a 38 MB model is a page-level event, not a control-level one, so it reports at the page's edge rather than
+ *   Loading a 38 MB model is a page-level event rather than a control-level one, so it reports at the page's edge rather than
  *   inside the search field: a spinner in the field resizes the one control a visitor is trying to type into, and a
  *   staged list in the result sheet claims the space an answer will need.
  *
- *   It reports a FRACTION when the loader names its steps and runs indeterminate when it does not, because a bar that
+ *   It reports a fraction when the loader names its steps and runs indeterminate when it does not, because a bar that
  *   invents a percentage is worse than one that admits it is only saying "still working".
  *
- *   NODE-SAFE: pure React, no maplibre.
+ *   node-safe: pure React, no maplibre.
  */
 
 import type { ReactNode } from "react"

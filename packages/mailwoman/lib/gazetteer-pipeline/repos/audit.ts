@@ -6,19 +6,19 @@
  *
  *   `country-plan` reads the built artifact, which answers "what source serves this country". It cannot
  *   answer "what is on disk waiting to be built", and for the WOF leg those are different questions:
- *   `ingestWOF` globs `**\/data\/**\/*.geojson` over the repos root and reads no list, so THE DIRECTORY IS
- *   THE RECIPE. A clone that landed is coverage the next build will pick up whether or not anyone declared
+ *   `ingestWOF` globs `**\/data\/**\/*.geojson` over the repos root and reads no list, so the directory is
+ *   the recipe. A clone that landed is coverage the next build will pick up whether or not anyone declared
  *   it, and a declaration with no clone is coverage that will silently not appear.
  *
- *   TWO LAYOUTS COEXIST, and a repo present in both is one of two DIFFERENT things — which is why this
+ *   two layouts coexist, and a repo present in both is one of two different things — which is why this
  *   distinguishes them rather than counting paths. Measured 2026-08-17 in the lab root:
  *
- *   - `admin-jp` and `admin-kr` are two INDEPENDENT checkouts, at identical commits today.
- *   - `admin-us` is one checkout reachable twice: the nested path is a SYMLINK to the flat one. Comparing
+ *   - `admin-jp` and `admin-kr` are two independent checkouts, at identical commits today.
+ *   - `admin-us` is one checkout reachable twice: the nested path is a symlink to the flat one. Comparing
  *       `ls` output calls this a duplicate, and it is not — a directory cannot diverge from itself.
  *
- *   Only the INDEPENDENT copies carry the further hazard. The moment they diverge — one pulled, one not —
- *   the ingested value is LAST-WRITER-WINS over filesystem enumeration order, which nobody stated and
+ *   Only the independent copies carry the further hazard. The moment they diverge — one pulled, one not —
+ *   the ingested value is last-writer-wins over filesystem enumeration order, which nobody stated and
  *   `verifyAdmin` cannot catch because it tests floors. An alias can never reach that state, so reporting
  *   the two as one number would either overstate the risk or hide it.
  */
@@ -48,13 +48,13 @@ export interface ClonedRepo {
 	name: string
 	layouts: CloneLayout[]
 	/**
-	 * True when the layouts resolve to the SAME directory — a symlink, not a second checkout. The ingest does not follow
-	 * the alias, and one directory can never diverge from itself.
+	 * True when the layouts resolve to the same directory — a symlink rather than a second checkout. The ingest does not
+	 * follow the alias, and one directory can never diverge from itself.
 	 */
 	aliased: boolean
 	/**
-	 * `HEAD` per layout, so a duplicate can be reported as SAME or DIVERGED rather than merely as duplicated. Absent for
-	 * a directory that is not a git checkout.
+	 * `head` per layout, so a duplicate can be reported as same-commit or diverged rather than merely as duplicated.
+	 * Absent for a directory that is not a git checkout.
 	 */
 	commits: Partial<Record<CloneLayout, string>>
 	/**
@@ -68,7 +68,7 @@ export interface ReposAudit {
 	root: PathBuilderLike
 	repos: ClonedRepo[]
 	/**
-	 * Repos present in both layouts as INDEPENDENT checkouts. Named separately because the count is the finding.
+	 * Repos present in both layouts as independent checkouts. Named separately because the count is the finding.
 	 */
 	duplicated: ClonedRepo[]
 	/**
@@ -77,7 +77,7 @@ export interface ReposAudit {
 	 */
 	aliased: ClonedRepo[]
 	/**
-	 * Duplicated repos whose two copies are at DIFFERENT commits — the state where the ingest's result depends on
+	 * Duplicated repos whose two copies are at different commits — the state where the ingest's result depends on
 	 * enumeration order. Empty is the good case and is reported as such.
 	 */
 	diverged: ClonedRepo[]
@@ -97,7 +97,7 @@ export function parseRepoName(name: string): { theme?: string; country?: string 
 }
 
 /**
- * `HEAD` for a checkout, or `undefined` when the directory is not one.
+ * `head` for a checkout, or `undefined` when the directory is not one.
  *
  * A clone with no git metadata is not an error here — it is a directory someone extracted from an archive, and
  * reporting the vintage as absent is more useful than refusing to audit the root.
@@ -129,7 +129,7 @@ export async function auditReposRoot(
 
 		existing.layouts.push(layout)
 
-		// `realpath` is what separates a second checkout from a second PATH to the first. Comparing directory
+		// `realpath` is what separates a second checkout from a second path to the first. Comparing directory
 		// listings cannot: both shapes look identical from `ls`.
 		try {
 			realPaths.set(name, [...(realPaths.get(name) ?? []), await realPath(dir)])
@@ -169,7 +169,7 @@ export async function auditReposRoot(
 			continue
 		}
 
-		// An owner directory. Its children are the nested layout; a name that is itself a repo was handled above.
+		// An owner directory. Its children are the nested layout. a name that is itself a repo was handled above.
 		for await (const child of Globerator.from("*", { cwd: full, withFileTypes: true, onlyFiles: false })) {
 			const childPath = join(full, child.name)
 

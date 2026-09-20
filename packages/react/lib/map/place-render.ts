@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `computeMapPlaceRenderSpec` — the PURE core that replaces the docs demo's ~100-line imperative
- *   marker/bbox/camera redraw effect (`_app.tsx:601-705`). It takes an ALREADY-RESOLVED place (the async
+ *   `computeMapPlaceRenderSpec` — the pure core that replaces the docs demo's ~100-line imperative
+ *   marker/bbox/camera redraw effect (`_app.tsx:601-705`). It takes an already-resolved place (the async
  *   polygon-DB fetch is a host/runtime concern — a later phase — so a crisp polygon arrives pre-fetched
  *   as `place.geometry`) and returns a declarative render spec: the marker position(s), the outline
  *   geometry to draw, and the camera target. No map instance, no DOM, no `react-map-gl` — so it is
  *   node-testable (see `place-render.node.test.ts`). The declarative components in this folder render
- *   the spec; a controlled-viewport consumer applies the camera.
+ *   the spec. a controlled-viewport consumer applies the camera.
  *
  *   The decision cascade is a faithful, side-effect-free transcription of the imperative effect:
  *     1. street tier (situs / interp)  → exact-radius circle, fly to a tight zoom
@@ -29,14 +29,14 @@ import type { BoundsTuple, PlaceBBox, PlaceGeometry } from "#map/geometry"
 export type LngLat = [number, number]
 
 /**
- * The street-level resolution tier (#377): `address_point` = exact building; `interpolated` = TIGER estimate.
+ * The street-level resolution tier (#377): `address_point` = exact building; `interpolated` = tiger estimate.
  */
 export type PlaceTier = "address_point" | "interpolated"
 
 /**
  * The resolved-place shape the map render consumes — the pipeline {@link ResolvedPlaceView} plus the map-only extras the
- * demo's `ResolvedHit` carries (bbox, street tier + uncertainty), and an optional PRE-FETCHED crisp polygon. Extending
- * `ResolvedPlaceView` keeps the map render aligned with the shared parse result; the extras are additive.
+ * demo's `ResolvedHit` carries (bbox, street tier + uncertainty), and an optional PRE-fetched crisp polygon. Extending
+ * `ResolvedPlaceView` keeps the map render aligned with the shared parse result. the extras are additive.
  */
 export interface ResolvedMapPlace extends ResolvedPlaceView {
 	/**
@@ -48,20 +48,20 @@ export interface ResolvedMapPlace extends ResolvedPlaceView {
 	 */
 	tier?: PlaceTier
 	/**
-	 * Honest uncertainty radius in meters for a street-level tier (10 m situs floor; calibrated interp).
+	 * Honest uncertainty radius in meters for a street-level tier (10 m situs floor. calibrated interp).
 	 */
 	uncertaintyM?: number
 	/**
-	 * The crisp admin polygon, when the host has ALREADY fetched it from the sibling polygon DB. Its presence drives the
-	 * polygon path; the async fetch itself stays out of this pure function (a runtime concern in a later phase).
+	 * The crisp admin polygon, when the host has already fetched it from the sibling polygon DB. Its presence drives the
+	 * polygon path. the async fetch itself stays out of this pure function (a runtime concern in a later phase).
 	 */
 	geometry?: PlaceGeometry
 }
 
 /**
- * The camera target the render computes. `center` (fly to a point at a zoom) HAS a declarative equivalent — a consumer
+ * The camera target the render computes. `center` (fly to a point at a zoom) has a declarative equivalent — a consumer
  * can feed it to a controlled `viewState` (see {@link cameraToViewState}). `bounds` (fit a box with pixel padding) does
- * NOT — `fitBounds` needs the map's pixel dimensions, so it is applied imperatively by `<ResultCamera>`.
+ * not — `fitBounds` needs the map's pixel dimensions, so it is applied imperatively by `<ResultCamera>`.
  */
 export type MapCameraTarget =
 	| { kind: "center"; center: LngLat; zoom: number }
@@ -72,7 +72,7 @@ export type MapCameraTarget =
  */
 export interface MapPlaceRenderSpec {
 	/**
-	 * Marker position(s) as `[lon, lat]`. Single-element today; an array leaves room for multi-marker later.
+	 * Marker position(s) as `[lon, lat]`. Single-element today. an array leaves room for multi-marker later.
 	 */
 	markers: LngLat[]
 	/**
@@ -86,7 +86,7 @@ export interface MapPlaceRenderSpec {
 }
 
 /**
- * Zoom levels the imperative effect flew to, kept named so the cascade reads as intent, not magic numbers.
+ * Zoom levels the imperative effect flew to, kept named so the cascade reads as intent rather than magic numbers.
  */
 const ZOOM = {
 	addressPoint: 17,
@@ -146,7 +146,7 @@ export function computeMapPlaceRenderSpec(place: ResolvedMapPlace): MapPlaceRend
 		}
 	}
 
-	// 4. A bbox with real extent — draw an approximate CIRCLE sized from the bbox (a rectangle would read as a wrong,
+	// 4. A bbox with real extent — draw an approximate circle sized from the bbox (a rectangle would read as a wrong,
 	//    real boundary) and fit the bbox.
 	const bbox = place.bbox
 
@@ -167,9 +167,9 @@ export function computeMapPlaceRenderSpec(place: ResolvedMapPlace): MapPlaceRend
 }
 
 /**
- * The DECLARATIVE camera path: reshape a `center` target into a `viewState` patch a controlled `<MapCanvas viewState>`
+ * The declarative camera path: reshape a `center` target into a `viewState` patch a controlled `<MapCanvas viewState>`
  * can apply directly (a hard jump, no animation). Returns `null` for a `bounds` target — fitting a box to the viewport
- * needs the map's pixel dimensions, which only the live map has, so that case is applied imperatively by
+ * needs the map's pixel dimensions. It only the live map has. Therefore, that case is applied imperatively by
  * `<ResultCamera>`. Pure + node-testable.
  */
 export function cameraToViewState(

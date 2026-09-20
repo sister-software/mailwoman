@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The synthetic-corpus SLICE RECIPE registry. Each recipe ({@link CorpusRecipe}) is what one legacy
- *   `build-*-slice.mjs` script used to be; the `mailwoman corpus slice <recipe>` command dispatches
- *   to them. A new slice is a new entry here, not a new script.
+ *   The synthetic-corpus recipe registry. Each recipe ({@link CorpusRecipe}) is what one root-level
+ *   build script used to be. the `mailwoman corpus slice <recipe>` command dispatches to them. A new
+ *   recipe is a new entry here rather than a new script.
  */
 
 import { cnOrganizationalUnitsRecipe } from "#cn/recipes/organizational-units"
@@ -86,18 +86,18 @@ const RECIPES: readonly CorpusRecipe[] = [
 /**
  * Recipe name → recipe.
  */
-export const SLICE_RECIPES: ReadonlyMap<string, CorpusRecipe> = new Map(RECIPES.map((r) => [r.name, r]))
+export const RECIPES_BY_NAME: ReadonlyMap<string, CorpusRecipe> = new Map(RECIPES.map((r) => [r.name, r]))
 
 /**
  * Look up a recipe by its `<recipe>` name.
  */
-export function getSliceRecipe(name: string): CorpusRecipe | undefined {
-	return SLICE_RECIPES.get(name)
+export function getRecipe(name: string): CorpusRecipe | undefined {
+	return RECIPES_BY_NAME.get(name)
 }
 
 /**
  * All recipes (for `--list` / help).
  */
-export function listSliceRecipes(): readonly CorpusRecipe[] {
+export function listRecipes(): readonly CorpusRecipe[] {
 	return RECIPES
 }

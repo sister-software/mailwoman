@@ -1,7 +1,7 @@
 # Typed evidence and derivation — design spec
 
 **Status:** implemented 2026-09-04/05 (plan Tasks 1–10; receipts below). **Written:** 2026-08-21.
-**Public companion:** [`docs/superpowers/plans/2026-08-08-inferential-resolution.md`](../plans/2026-08-08-inferential-resolution.md) — the design record this implements the first slice of.
+**Public companion:** [`docs/superpowers/plans/2026-08-08-inferential-resolution.md`](../plans/2026-08-08-inferential-resolution.md) — the design record this implements the first increment of.
 **Related:** #1571 (inferential resolution), #1685 (coverage basis, landed), #1756 (`parent_fallback_retry` inert).
 
 A pure leaf workspace holding the typed-evidence vocabulary, the epistemic-status axis, the
@@ -66,7 +66,7 @@ bdc.db      build writes basis = source_present
 
 street-centroids-fr.db   ban:fr, release 2026-05-18
             2,195,655 streets across 32,539 communes
-            NO layer_coverage table at all — predates the contract
+            NO layer_coverage table at all — predates the interface
 ```
 
 So the blocking condition is not a missing layer. It is an unwired one.
@@ -81,7 +81,7 @@ date-name class. Its docstring states the exact assumption that designated cover
 > incompleteness is the default state of the world)**, so the policy always fails open.
 
 The parenthetical is true in general and false inside a `designated` cell. The negative half is
-therefore a coverage-qualified mode on an interface that already exists, not a new subsystem.
+therefore a coverage-qualified mode on an interface that already exists rather than a new subsystem.
 
 ---
 
@@ -105,7 +105,7 @@ Reading the 96 locality-band rows is what this spec turns on. They are **not one
 
 | Class                                                                                                                                                                                                   | Rows       | Would an exclusion be correct?                                        |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------------------------------------------------------------- |
-| Street fragment mis-tagged `locality` — `locality=Avenida` ← `Avenida Corrientes`; `locality=de Catalunya` ← `Rambla de Catalunya`; `locality=Turner St` ← `…Garrod Building, Turner St, London E1 2AD` | many       | **Yes.** Same shape as the FR date-name class that earned the +6.0 pp |
+| Street fragment mis-tagged `locality` — `locality=Avenida` ← `Avenida Corrientes`; `locality=de Catalunya` ← `Rambla de Catalunya`; `locality=Turner St` ← `…Garrod Building, Turner St, London E1 2AD` | several    | **Yes.** Same shape as the FR date-name class that earned the +6.0 pp |
 | POI mis-tagged `locality` — `locality=Statue of Liberty`; `locality=Great Mosque of Niamey`                                                                                                             | some       | Yes; poi.db may also hold them                                        |
 | Junk span — `locality=New` ← `New Territories, Hong Kong`; `locality=near NAFTI`                                                                                                                        | few        | Yes                                                                   |
 | **Fold / surface-form miss** — `locality=Tel Aviv-Yafo`; `locality=São Paulo - SP`; `locality=Co. Westmeath`; `locality=ХУД - 15 хороо`                                                                 | unmeasured | **No. This is the trap.**                                             |
@@ -150,7 +150,7 @@ would drag core's ~11 MB of shipped data behind every leaf consumer — the same
 them.** Evidence cannot depend on core, and the alternative — each declaring its own copy of the same
 three strings — is the arrangement AGENTS.md records as a defect generator: _when two copies must
 agree, share the FUNCTION; sharing the constants proves nothing_. The #861 literals matched for the
-contract's whole life while the formula diverged. The `layer_coverage` schema and its IO stay in
+interface's whole life while the formula diverged. The `layer_coverage` schema and its IO stay in
 core; only the vocabulary and the check move.
 
 **Registration:** a new workspace joins four registers, and only the first fails loudly — the root
@@ -203,7 +203,7 @@ null when:
   · the country is outside the probe's scope
 ```
 
-Only `designated` and `surveyed` pass. **Fold parity is a precondition, not a footnote:** the probe
+Only `designated` and `surveyed` pass. **Fold parity is a precondition rather than a footnote:** the probe
 must import the same fold function the layer's builder wrote (`foldStreetSurface`,
 `normalizeLocalityForKey`), and the check takes it as an argument so a mismatch is a compile-time
 concern rather than a silent miss.
@@ -225,15 +225,15 @@ Removal power is revisitable once §6's falsifier has a number, and not before.
 
 ## 4. Four arms
 
-Ordered by what is buildable today, not by expected value.
+Ordered by what is buildable today rather than by expected value.
 
 ### 4.1 GB spatial existence — `designated`, ready now
 
-`uprn.db` carries designated coverage and no names, so the GB probe is spatial, not lexical: _does
+`uprn.db` carries designated coverage and no names, so the GB probe is spatial rather than lexical: _does
 any designated address point exist within R of this candidate?_ A candidate landing in a designated
-cell with no UPRN inside R earns one negative bit.
+cell with no UPRN inside R warrants one negative bit.
 
-No new artifact. `R` is a parameter with a measured default, not a tuned weight.
+No new artifact. `R` is a parameter with a measured default rather than a tuned weight.
 
 ### 4.2 US block completeness — `surveyed`, three columns
 
@@ -259,16 +259,16 @@ tiger-oc.db   tabblock20  26,734   pl_block  26,734
 So this arm is: three columns on `PLBlockTable`, one additional segment read, a re-run.
 `completeness = min(1, address_points_in_block ÷ H1_001N)`, written with `basis: surveyed`.
 
-Public domain. No licence check.
+Public domain. No license check.
 
 ### 4.3 `plausibilityCheck` re-expressed — no behaviour change
 
 `filing` → `Observation`; `physical_plant` → `Observation`; `abstain` → the absence of evidence plus
-a `coverage_confidence` that already degrades honestly. `coverage_confidence` and `block_resolution`
+a `coverage_confidence` that already degrades directly. `coverage_confidence` and `block_resolution`
 stay the stable public surface of that module.
 
 **Acceptance is that its existing test suite passes unchanged.** This arm ships no new capability;
-it exists to prove the vocabulary is claim-type-agnostic rather than geocode-shaped.
+it exists to show that the vocabulary accepts any record type rather than geocode-shaped.
 
 ### 4.4 FR lexical negative mode — probe-conditional
 
@@ -293,7 +293,7 @@ probe's output is a per-commune basis assignment or a decision that BAN supports
 - `epistemic_status: EpistemicStatus` — always present.
 - `derivation?: DerivationProjection` — opt-in, naming each constraint and its contribution.
 
-The graph is **projected from the existing `ResolveNodeTrace`** (#1721), not newly recorded. That
+The graph is **projected from the existing `ResolveNodeTrace`** (#1721) rather than newly recorded. That
 recorder already has the three properties this needs, and its tests pin them: no sink means no
 bookkeeping and a byte-identical walk; the per-stage rank vector attributes loss; every exit path
 emits, because "an absent record is indistinguishable from a lookup that never ran."
@@ -309,14 +309,14 @@ independent likelihoods manufactures confidence.
 
 ## 6. Falsifiers
 
-Run before building the arms, not after.
+Run before building the arms rather than after.
 
 1. **The 187 decomposition.** Of the coverage-class misses on the board, what is the split between
    mis-tag (an exclusion would be correct) and fold failure (an exclusion would be wrong)? The
    denominator is 187 and `mwdev_constraints` already produces the rows. **If fold failures
    dominate, fold repair ships before negative evidence does** — and this spec has falsified its own
    first arm, which is the intended outcome in that case.
-2. **GB arm on the board.** Negative mode on vs off, demote-only. Bar is the strata table, not a
+2. **GB arm on the board.** Negative mode on vs off, demote-only. Bar is the strata table rather than a
    pooled headline.
 3. **Gauntlet 369:** no regression.
 4. **`plausibilityCheck` suite:** passes unchanged, proving §4.3 is lossless.
@@ -327,16 +327,16 @@ Run before building the arms, not after.
 
 ## 7. Prohibitions
 
-- **Never emit an inferred point as though retrieved.** `epistemic_status` is mandatory, not optional
+- **Never emit an inferred point as though retrieved.** `epistemic_status` is mandatory rather than optional
   decoration.
 - **Soft priors never exclude.** Only a typed `Exclusion` from `requireExclusionBasis` may demote on
   absence.
-- **No exclusion without fold parity.** A fold mismatch is a fold failure, not a coverage fact.
+- **No exclusion without fold parity.** A fold mismatch is a fold failure rather than a coverage fact.
 - **Never sum reachability and coverage.** They call for opposite work.
 - **A bounded region with stated confidence, never a fabricated coordinate.**
 - **Honesty is not a premium feature.** Provenance, epistemic status, uncertainty and abstention are
   in the AGPL surface. No tier hides them.
-- **Every assertion keeps its source and licence through projection.** A permissive output is not
+- **Every assertion keeps its source and license through projection.** A permissive output is not
   earned by permissive combining code.
 
 ---
@@ -348,7 +348,7 @@ Run before building the arms, not after.
   block aggregate_ and has a materially different posture from address-level records; that
   distinction is worth putting to counsel as its own narrow question, and neither ships here.
 - **Removal-power exclusions.** Demote-only until §6.2 has a number.
-- **Central place theory, naming families, terrain masks.** Companion plan, later slices.
+- **Central place theory, naming families, terrain masks.** Companion plan, later increments.
 - **`filer_cluster` being empty.** Real, unrelated.
 
 ---
@@ -361,7 +361,7 @@ Run before building the arms, not after.
 | Exclusion power | demote only, one bit                           | bounds the worst case at the model's own ranking                          |
 | Core home       | new `@mailwoman/evidence` workspace            | three consumers, two of them leaf; core's data weight is the blocker      |
 | First arm       | GB spatial                                     | the only designated artifact that exists                                  |
-| US basis        | `surveyed`, not `designated`                   | no public designated US address register; H1 is the independent reference |
+| US basis        | `surveyed` rather than `designated`            | no public designated US address register; H1 is the independent reference |
 | FR arm          | probe-conditional                              | a blanket per-commune designation claim would be false                    |
 
 ## Receipts (2026-09-05)

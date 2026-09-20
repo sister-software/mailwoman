@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The JS k-best decode is verified against BRUTE-FORCE enumeration of every valid segmentation, the
+ *   The JS k-best decode is verified against brute-force enumeration of every valid segmentation, the
  *   same discipline the python side got (`tests/mailwoman_train/test_span_scorer.py`). A DP that is
  *   subtly wrong still returns plausible-looking spans — the oracle is the point.
  */
@@ -178,7 +178,7 @@ describe("decodeSegmentationsKBest", () => {
 	})
 
 	it("respects a maxSpan narrower than the score tensor", () => {
-		// Grammar says 1; the tensor offers 3. Nothing longer than 1 may be emitted.
+		// Grammar says 1. the tensor offers 3. Nothing longer than 1 may be emitted.
 		for (const h of decodeSegmentationsKBest(scores(4, 3, 17), 4, grammar({ maxSpan: 1 }), 4)) {
 			for (const s of h.segments) {
 				expect(s).toHaveLength(1)

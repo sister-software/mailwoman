@@ -51,7 +51,7 @@ export type SameDataArm = (typeof SAME_DATA_ARMS)[number]
 
 /**
  * One stratum's registered rule. `correctIsAbstention` is the only per-stratum scoring difference, and it exists
- * because a stratum whose gold is withheld from the fixture has no correct SELECTION by construction.
+ * because a stratum whose gold is withheld from the fixture has no correct selection by construction.
  */
 export interface SameDataStratumDefinition {
 	id: SameDataStratum
@@ -66,7 +66,7 @@ export interface SameDataArmDefinition {
 	id: SameDataArm
 	description: string
 	/**
-	 * The `ResolveOpts` the arm pins. Present on the ablation arm; absent on the arms that run library defaults, where an
+	 * The `ResolveOpts` the arm pins. Present on the ablation arm. absent on the arms that run library defaults, where an
 	 * empty object and "the defaults" would be indistinguishable.
 	 */
 	resolveOpts?: Record<string, boolean>
@@ -101,7 +101,7 @@ export interface SameDataBenchmarkDefinition {
 		seed: number
 		order: string
 		/**
-		 * The TARGET row count per stratum. A stratum whose eligible pool cannot reach it is reported at its achieved n.
+		 * The target row count per stratum. A stratum whose eligible pool cannot reach it is reported at its achieved n.
 		 */
 		rowsPerStratum: number
 		/**
@@ -140,7 +140,7 @@ export const SAME_DATA_DEFINITION_PATH = preregistrationPath("same-data", "bench
 export const SAME_DATA_FREEZE_PATH = preregistrationPath("same-data", "benchmark-freeze.json")
 
 /**
- * The fields a fixture must NOT carry, read from the frozen definition rather than re-typed here: a second copy of the
+ * The fields a fixture must not carry, read from the frozen definition rather than re-typed here: a second copy of the
  * list would let the fixture builder and the ruler disagree about what equal evidence means.
  */
 export function withheldFixtureFields(definition: SameDataBenchmarkDefinition): ReadonlySet<string> {

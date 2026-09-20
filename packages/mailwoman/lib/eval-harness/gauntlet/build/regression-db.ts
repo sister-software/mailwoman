@@ -6,9 +6,9 @@
  *   committed seed (`cases/<cc>/*.jsonl`). Build-on-copy: write a temp DB, then swap it into place.
  *
  *   Row order in the DB is the loader's order (country dir, then case id) — not the pre-2026-08-05
- *   chronological array order. Checked, not assumed: the regression runner reads every row; the ablation
- *   layer's `SELECT` carries `.orderBy("id")`, so `--limit N` samples the same N rows either way; and
- *   `ablationBoardID` hashes a SORTED fingerprint. What changes is the order the regression runner PRINTS its
+ *   chronological array order. Checked rather than assumed: the regression runner reads every row. the ablation
+ *   layer's `select` carries `.orderBy("id")`, so `--limit N` samples the same N rows either way. and
+ *   `ablationBoardID` hashes a sorted fingerprint. What changes is the order the regression runner prints its
  *   per-case lines in, which is why the migration's graded receipt sorted before diffing.
  *
  *   Run: mailwoman eval gauntlet-build regression-db
@@ -32,7 +32,7 @@ import {
 } from "#eval-harness/gauntlet/schema"
 
 /**
- * Where to read the corpus from and where to write the DB. Both default to the real ones; a test overrides them to
+ * Where to read the corpus from and where to write the DB. Both default to the real ones. a test overrides them to
  * build a fixture-scale artifact without going near `$MAILWOMAN_DATA_ROOT`.
  */
 export interface BuildRegressionDBOptions {
@@ -75,7 +75,7 @@ export async function buildRegressionDB(options: BuildRegressionDBOptions = {}):
 			insert.run(...GAUNTLET_CASE_COLUMNS.map((column) => row[column]))
 		}
 
-		// The stamp goes in LAST and inside the same handle: an artifact that reached the swap without one would be
+		// The stamp goes in last and inside the same handle: an artifact that reached the swap without one would be
 		// exactly the unattributable DB this guard exists to abolish.
 		await writeCorpusStamp(kdb, cases)
 	}

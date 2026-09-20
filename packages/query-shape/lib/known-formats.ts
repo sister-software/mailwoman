@@ -5,9 +5,8 @@ import type { KnownFormat, KnownFormatHit, TokenClass } from "#types"
 
 /**
  * Universal postcode + PO-box patterns. Each entry is a regex that matches a token (or a small sequence of tokens
- * joined by a single space) and the format it represents.
- *
- * Bitter-lesson-safe boundary: this set grows ~1 pattern per new locale, not 50K dictionary entries.
+ * joined by a single space) and the format it represents. Keep these patterns structural. place-name dictionaries
+ * belong elsewhere.
  */
 interface FormatPattern {
 	format: KnownFormat
@@ -29,18 +28,19 @@ const PATTERNS: ReadonlyArray<FormatPattern> = [
 	// Unambiguous single-token patterns first.
 	{ format: "us_zip4", pattern: /^\d{5}-\d{4}$/, tokenSpan: 1, confidence: 0.95 },
 	{ format: "ca_postcode", pattern: /^[A-Z]\d[A-Z]\d[A-Z]\d$/i, tokenSpan: 1, confidence: 0.95 },
-	{ format: "jp_postcode", pattern: /^\d{3}-\d{4}$/, tokenSpan: 1, confidence: 0.95 },
+	// The leading 〒 (U+3012 POSTAL MARK) is optional because it is how a Japanese postcode is ordinarily written, and
+	// the tokenizer keeps it attached to the digits. Anchoring without it read `〒150-0001 Tokyo, Shibuya` as carrying
+	// no known format at all while the same address written `Tokyo 150-0001` scored `jp_postcode` at 0.95 — the more
+	// explicitly Japanese spelling was the one the detector could not see.
+	{ format: "jp_postcode", pattern: /^〒?\d{3}-\d{4}$/, tokenSpan: 1, confidence: 0.95 },
 	// UK postcode is 2 tokens when split on space (e.g. "SW1A 1AA"), 1 token otherwise.
 	{ format: "uk_postcode", pattern: /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/i, tokenSpan: 1, confidence: 0.9 },
 	{ format: "uk_postcode", pattern: /^[A-Z]{1,2}\d[A-Z\d]? \d[A-Z]{2}$/i, tokenSpan: 2, confidence: 0.9 },
 	{ format: "ca_postcode", pattern: /^[A-Z]\d[A-Z] \d[A-Z]\d$/i, tokenSpan: 2, confidence: 0.9 },
-	// NL postcode is 4 digits + 2 letters ("1012 LG"), 2 tokens spaced / 1 unspaced. WITHOUT this the
-	// model fragments it as house_number(1012) + street(LG) and the street context pulls the locality
-	// into the US situs tier (#924: "1012 LG Amsterdam" → Amsterdam, NY). The `\d{4} [A-Z]{2}` shape is
-	// unambiguous — no house-number+street pair reads this way — so it's a high-confidence postcode prior.
+	// NL postcode: four digits followed by two letters.
 	{ format: "nl_postcode", pattern: /^\d{4} [A-Z]{2}$/i, tokenSpan: 2, confidence: 0.9 },
 	{ format: "nl_postcode", pattern: /^\d{4}[A-Z]{2}$/i, tokenSpan: 1, confidence: 0.9 },
-	// Ambiguous 5-digit (US/FR/DE). Tag as us_zip with reduced confidence; caller disambiguates by
+	// Ambiguous 5-digit (US/FR/DE). Tag as us_zip with reduced confidence. caller disambiguates by
 	// locale prior. Multiple format hits on the same span are possible.
 	{ format: "us_zip", pattern: /^\d{5}$/, tokenSpan: 1, confidence: 0.6 },
 	{ format: "fr_postcode", pattern: /^\d{5}$/, tokenSpan: 1, confidence: 0.6 },
@@ -58,11 +58,11 @@ const PATTERNS: ReadonlyArray<FormatPattern> = [
 const PO_BOX_LEADERS = new Set(["po", "p.o.", "p.o", "box", "bp", "b.p.", "b.p", "casilla", "apartado"])
 
 /**
- * Whether a known-format name names a postcode shape. Every entry in {@link PATTERNS} is one, and the names follow one
+ * Whether a known-format name names a postcode shape. Every entry in {@link patterns} is one, and the names follow one
  * convention — `us_zip`, `us_zip4`, or `<cc>_postcode` — which is what this reads, so a format added to the table is a
  * postcode to every consumer the moment it is named that way. The convention rather than a set, because
- * `@mailwoman/core`'s runtime pipeline cannot depend on this package and reads the same names; the test over
- * {@link PATTERNS} pins every table entry to it. `us_zip4` is the trap a naive `endsWith("_zip")` would miss.
+ * `@mailwoman/core`'s runtime pipeline cannot depend on this package and reads the same names. the test over
+ * {@link patterns} pins every table entry to it. `us_zip4` is the trap a naive `endsWith("_zip")` would miss.
  */
 export function isPostcodeFormat(format: string): boolean {
 	return format === "us_zip" || format === "us_zip4" || format.endsWith("_postcode")

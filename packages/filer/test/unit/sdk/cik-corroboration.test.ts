@@ -4,7 +4,7 @@
 /**
  * @file Tests for the CIK corroboration check.
  *
- *   Every CIK and SIC below was pulled live from EDGAR's submissions API on 2026-08-03/07, including both
+ *   Every CIK and SIC below was pulled live from edgar's submissions API on 2026-08-03/07, including both
  *   false matches the check exists to reject.
  */
 
@@ -82,7 +82,7 @@ describe("corroborateCIK — pins", () => {
 
 describe("corroborateCIK — abstention is not denial", () => {
 	it("reports a missing SIC as its own basis, distinct from a rejecting one", () => {
-		// EDGAR published nothing to corroborate against. That is a gap in the source, not a judgment
+		// edgar published nothing to corroborate against. That is a gap in the source rather than a judgment
 		// about the company, and a caller reporting a run must be able to tell the two apart.
 		for (const absent of [null, undefined, "", "   "]) {
 			expect(corroborateCIK(cik("0000018926"), absent)).toEqual({
@@ -106,7 +106,7 @@ describe("the allowlist itself", () => {
 	it("is enumerated, not a 48xx prefix test — 4899 is in, 4813 is in, 4899's neighbours are not", () => {
 		expect(TELECOM_SIC_CODES.has("4813")).toBe(true)
 		expect(TELECOM_SIC_CODES.has("4899")).toBe(true)
-		// A prefix test would admit these; each entry above is a decision someone made.
+		// A prefix test would admit these. each entry above is a decision someone made.
 		expect(TELECOM_SIC_CODES.has("4800")).toBe(false)
 		expect(TELECOM_SIC_CODES.has("4890")).toBe(false)
 	})

@@ -285,8 +285,8 @@ const prescriptionLookup = (phrase: string): ReadonlyArray<POIPhraseMatch> =>
 	phrase === "prescription" ? PRESCRIPTION_SET : []
 
 describe("the place binding of a country-scoped claim (#1999)", () => {
-	// The US-scoped drugstore claim is about US establishments; a French anchor is where the search looks, so the claim
-	// falls out there and the receipt says so. The caller's locale is en-US throughout — it is the lens, not the place.
+	// The US-scoped drugstore claim is about US establishments. a French anchor is where the search looks, so the claim
+	// falls out there and the receipt says so. The caller's locale is en-US throughout — it is the lens rather than the place.
 	it("drops a scoped category at an anchor outside its scope, and records what fell out", async () => {
 		const stage = createPOIIntentStage({
 			lookup: prescriptionLookup,
@@ -386,7 +386,7 @@ describe("the place binding of a country-scoped claim (#1999)", () => {
 		expect(outcome.intent.subject).not.toHaveProperty("countryBinding")
 	})
 
-	// A category two authorities reach stays when EITHER holds at the anchor; the scope is on the claim, not the id.
+	// A category two authorities reach stays when either holds at the anchor. the scope is on the claim rather than the id.
 	it("bindCountryScope keeps a category that an unscoped hit also reaches", () => {
 		const scoped: POIPhraseMatch = { ...PRESCRIPTION_SET[1]!, countryScope: ["US"] }
 
@@ -398,7 +398,7 @@ describe("the place binding of a country-scoped claim (#1999)", () => {
 
 		expect(bindCountryScope([PRESCRIPTION_SET[1]!], "FR")).toBeNull()
 
-		// The scope's own casing is folded; the anchor country arrives upper-case from `resolvePOIAnchorCountry`.
+		// The scope's own casing is folded. the anchor country arrives upper-case from `resolvePOIAnchorCountry`.
 		const lowerScoped: POIPhraseMatch = { ...PRESCRIPTION_SET[0]!, countryScope: ["us"] }
 
 		expect(bindCountryScope([lowerScoped], "US")?.categoryIDs).toEqual(["drugstore"])
@@ -406,11 +406,11 @@ describe("the place binding of a country-scoped claim (#1999)", () => {
 })
 
 // placeCountry/streetEvidence lazy-load bundled data on first call — off for hermetic tests
-// (fresh worktrees may lack linked dev weights; the poi arc doesn't touch either stage).
+// (fresh worktrees may lack linked dev weights. the poi arc doesn't touch either stage).
 const HERMETIC = { placeCountry: false as const, streetEvidence: false as const }
 
 describe("createRuntimePipeline poiQueryKind flag", () => {
-	// #1177: default-ON since 2026-07-20 (promotion battery: 0/4,507 golden misroutes, 6/6 demo presets
+	// #1177: default-on since 2026-07-20 (promotion battery: 0/4,507 golden misroutes, 6/6 demo presets
 	// byte-identical — docs/articles/evals/2026-07-20-poi-promotion-battery.md). `undefined` behaves like
 	// `true` (intent-only mode) without the caller opting in.
 	it("ON by default: a category phrase takes the poi path without opting in", async () => {
@@ -622,9 +622,9 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 		expect(result.poiIntent).toEqual({ type: "abstain", reason: "requires_build_local_layer" })
 	})
 
-	// Placed BEFORE the "poi db missing" test below on purpose: `loadDefaultReverseGeocoder` caches its
+	// Placed before the "poi db missing" test below on purpose: `loadDefaultReverseGeocoder` caches its
 	// result for the process/module lifetime (see default-reverse-geocoder.ts), so this test needs to be
-	// the FIRST thing in this file to touch it — otherwise a later call could observe an already-resolved
+	// the first thing in this file to touch it — otherwise a later call could observe an already-resolved
 	// promise from an earlier call made under the ambient (non-stubbed) env.
 	it("object form: reverse-geocoder degrade is hermetic — no throw, intent outcome, results (if any) carry no ancestry", async () => {
 		// Pin an empty data directory so the reverse-geocoder probe takes its missing-data branch.
@@ -666,7 +666,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 		if (first.poiIntent?.type !== "intent") throw new Error("unreachable")
 
 		expect(first.poiIntent.results).toBeUndefined()
-		// Second call must not throw either (lazy resolve happens once; degrade is sticky).
+		// Second call must not throw either (lazy resolve happens once. degrade is sticky).
 		const second = await pipeline("hospital near Springfield")
 		expect(second.poiIntent?.type).toBe("intent")
 	})

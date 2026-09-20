@@ -5,7 +5,7 @@ import { camelCase, capitalCase, snakeCase } from "change-case"
 import type { CamelCase, SnakeCase } from "type-fest"
 
 /**
- * Any character that is not a letter, a digit, or an underscore, in ANY script.
+ * Any character that is not a letter, a digit, or an underscore, in any script.
  *
  * `\W` cannot serve: it is `[^A-Za-z0-9_]` in JavaScript with or without the `u` flag, so every character of a
  * non-Latin name is "non-word" and the name is replaced rather than kept.
@@ -70,7 +70,7 @@ export function smartCapitalCase(input: string): string {
  * Python `str.isupper()`: at least one cased character, and every cased character uppercase.
  *
  * Distinct from {@link isUniformlyCased}, which reports `true` for a string with no cased characters at all — `"123"` is
- * uniformly cased and is NOT `isupper()`. Ports that condition on a titlecase on the Python predicate need this one.
+ * uniformly cased and is not `isupper()`. Ports that condition on a titlecase on the Python predicate need this one.
  */
 export function pyIsUpper(input: string): boolean {
 	let hasCased = false
@@ -107,7 +107,7 @@ export function pyTitle(input: string): string {
 }
 
 /**
- * Titlecase a SHOUTED string, leave anything else alone — the shape source dumps use when a field arrives ALL CAPS.
+ * Titlecase a shouted string, leave anything else alone — the shape source dumps use when a field arrives all caps.
  */
 export function titlecaseIfUpper(input: string): string {
 	return pyIsUpper(input) ? pyTitle(input) : input

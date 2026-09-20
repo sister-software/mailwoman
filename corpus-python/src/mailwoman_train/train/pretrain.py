@@ -42,7 +42,7 @@ from .checkpoint import find_latest_checkpoint, save_checkpoint
 
 @torch.no_grad()
 def _mlm_eval(cfg: Config, model: Any, tokenizer: Tokenizer, device: Any, *, mask_token_id: int) -> dict[str, Any]:
-    """MLM cross-entropy + perplexity over a bounded slice of the val split."""
+    """MLM cross-entropy + perplexity over a bounded sample of the val split."""
     was_training = model.training
     model.eval()
     gen = torch.Generator().manual_seed(cfg.train.seed)
@@ -84,7 +84,7 @@ def load_pretrain_model(cfg: Config, tokenizer: Tokenizer, device: torch.device,
     model.to(device)
     amp_dtype = precision_to_dtype(cfg.train.precision, device)
     if amp_dtype is not None and device.type == "cuda":
-        model.to(dtype=amp_dtype)  # explicit cast, not autocast (gfx1103 hang — see train.py)
+        model.to(dtype=amp_dtype)  # explicit cast rather than autocast (gfx1103 hang — see train.py)
     return model
 
 
@@ -190,9 +190,14 @@ def run_pretrain_loop(
                 lr = float(scheduler.get_last_lr()[0])
                 ppl = math.exp(min(20.0, avg))
                 elapsed = time.time() - started
+                # Steps this process ran over the seconds it ran them; `started` is this process's clock, so the
+                # absolute step over it credits a resumed run with a previous process's work.
+                ran = step - resume_step
+                rate = ran / elapsed if elapsed > 0 else 0.0
+                span = f" over {ran:,} since step {resume_step:,}" if resume_step else ""
                 print(
                     f"[pretrain] step {step}/{cfg.train.max_steps} mlm_loss={avg:.4f} "
-                    f"ppl={ppl:.1f} lr={lr:.6f} rate={step / elapsed:.2f}/s"
+                    f"ppl={ppl:.1f} lr={lr:.6f} rate={rate:.2f}/s{span}"
                 )
                 tracker.log(
                     {"mlm_train_loss": avg, "mlm_train_perplexity": ppl, "lr": lr, "wall_seconds": elapsed},
@@ -212,7 +217,7 @@ def run_pretrain_loop(
 
 
 def pretrain(cfg: Config, *, resume_from: str | Path | None = None) -> None:
-    """Run MLM pre-training; write encoder checkpoints to ``cfg.train.output_dir``."""
+    """Run MLM pre-training. write encoder checkpoints to ``cfg.train.output_dir``."""
     if cfg.train.objective != "mlm":
         raise ValueError(f"pretrain() needs objective='mlm', got {cfg.train.objective!r}")
     force_math_sdpa()

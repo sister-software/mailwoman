@@ -172,9 +172,8 @@ mailwoman_filer_family
 }
 ```
 
-That transcript is from a standalone `npm install @mailwoman/mcp` in an empty directory, not from this
-repository, so it is what a stranger gets. The `[resolver]` line arrives on stderr — the client's log,
-not the protocol stream. The tier is `admin` because that data root holds only the candidate gazetteer;
+That transcript is from a standalone `npm install @mailwoman/mcp` in an empty directory rather than from this
+repository, so it is what a stranger gets. The `[resolver]` line arrives on stderr — the client's log rather than the protocol stream. The tier is `admin` because that data root holds only the candidate gazetteer;
 with per-state address-point databases mounted the same call reaches `address_point`.
 
 ## 4. Know which tools need what
@@ -196,7 +195,7 @@ Nine tools, and they fall into three groups by what has to be on disk.
 `mailwoman_overpass_export` is in the first group even though it never executes a query. It renders a
 POI query as OverpassQL, and finding the subject and the anchor to render means parsing the input first.
 
-The model and the gazetteer load on the first call that needs them, not at startup. So a client with no
+The model and the gazetteer load on the first call that needs them rather than at startup. So a client with no
 data still connects and lists all nine tools; the failure arrives inside the first call:
 
 ```
@@ -217,9 +216,9 @@ data still connects and lists all nine tools; the failure arrives inside the fir
   Works without it: mailwoman_layer_manifest, mailwoman_bdc_filing_landscape, mailwoman_filer_lookup, mailwoman_filer_family
 ```
 
-It arrives as a tool error with `isError: true`, not as a crash, so the agent reads it and can act on it.
+It arrives as a tool error with `isError: true` rather than as a crash, so the agent reads it and can act on it.
 That last pair of lines is there because an agent in the middle of a task needs to know what it can still
-do, not only what broke.
+do rather than only what broke.
 
 ## Verify
 

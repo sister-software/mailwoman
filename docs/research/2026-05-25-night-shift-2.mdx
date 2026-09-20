@@ -59,7 +59,7 @@ A few things jump out:
 
 **The neural model hallucinates components it shouldn't.** On the golden set, it invented a `dependent_locality` — a sub-city neighborhood — 956 times where none existed. Two explanations look tempting, and both lead nowhere. Calibration? These predictions come out at high confidence; the model commits hard to the wrong answer. Decoding? Viterbi with the structural mask is already running. What's left is training: cross-entropy treats every mislabeling equally, so the model never learned that `dependent_locality` is rare and should be emitted sparingly. Class-weighted CE — which was blocked in v0.4.0 because it destabilized the dual-loss training — puts a thumb on the scale: mislabeling a rare tag costs more. Now that CE-only training is proven stable, this change is unlocked.
 
-**Hybrid mode shows identical numbers to neural alone.** The hybrid mode fuses rule classifications with neural output, but in this iteration the raw neural decoder's overconfidence drowns out the rules, hence the identical numbers. The reconciler (hybrid-joint) is the mode that actually disciplines the merge.
+**Hybrid mode shows identical numbers to neural alone.** The hybrid mode fuses rule classifications with neural output, but in this iteration the raw neural decoder's overconfidence drowns out the rules, hence the identical numbers. The reconciler (hybrid-joint) is the mode that disciplines the merge.
 
 **The reconciler fixes the honesty problem.** It drops overconfident-wrong from 54.5% to 0.1% by checking whether parsed components form a coherent real-world hierarchy. It also eliminates empty parses entirely (0.0% vs rules' 6.3%): it always produces something, even if conservative.
 
@@ -72,7 +72,7 @@ The overnight session could have been a write-off. A GPU that crashes every 90 m
 - **Corpus on R2** means any GPU provider can pull it at datacenter speed. Upload once, train anywhere.
 - **Modal's per-second billing** means we paid $0 for data upload, $0 for debugging, and ~$5 for the actual GPU compute.
 - **Checkpoints every 500 steps** on the Modal Volume means even if a Modal preemption happened (it didn't), we'd lose at most 7 minutes of work.
-- **The same training script** ran locally (for smoke tests) and remotely (for the full run) without modification: the config just points at `/data/`, which is either the local mount or the Modal Volume.
+- **The same training script** ran locally (for smoke tests) and remotely (for the full run) without modification: the configpoints at `/data/`, which is either the local mount or the Modal Volume.
 
 The local iGPU still has a role: smoke tests, gradient probes, quick 50-step experiments. The expensive runs go to the cloud. The separation happened naturally once we accepted that the hardware wall was real and not worth engineering around.
 

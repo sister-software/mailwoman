@@ -13,13 +13,12 @@
  *       source data has no native primary key (CSV, GeoJSON).
  *   - `HOUSE_NUMBER_PREFIX` + `splitStreetLine(line)`: the one house-number/street split every
  *       US CSV adapter uses.
- *   - `composeRaw(parts)`: the envelope-style raw line every US CSV adapter renders.
  *   - `canonicalDedupKey(row)`: normalized signature used to drop near-identical rows during a run.
- *       Adapter-internal dedup; cross-adapter dedup is the runner's job.
- *   - `streamingSha256()`: thin wrapper around `node:crypto` so the runner can hash JSONL output as it
- *       streams (avoids re-reading the slice for the manifest checksum).
+ *       Adapter-internal dedup. cross-adapter dedup is the runner's job.
+ *   - `streamingSha256()`: thin wrapper around `node:crypto` so the runner can hash jsonl output as it
+ *       streams (avoids re-reading the jsonl for the manifest checksum).
  *   - `loadLibpostalDictionary(language, filename)`: the curated libpostal dictionary reader the
- *       street-decompose modules share — the one read this module performs; everything else here is
+ *       street-decompose modules share — the one read this module performs. everything else here is
  *       pure, and other side-effecting code goes in `./runner.ts`.
  */
 
@@ -27,7 +26,6 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { sha256Hex, createHash, type Hash } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
 import { resourceDictionaryPath } from "@mailwoman/core/paths"
 import { TextSpliterator } from "spliterator"
 
@@ -36,7 +34,7 @@ import type { CanonicalRow, CorpusAdapter } from "#types"
 /**
  * Lookup table for corpus adapters.
  *
- * The CLI's `npx mailwoman corpus run <adapter-id>` resolves `<adapter-id>` against this registry; the same registry is
+ * The CLI's `npx mailwoman corpus run <adapter-id>` resolves `<adapter-id>` against this registry. the same registry is
  * iterated by the `corpus build` pipeline. Adapters do not self-register at module load — they're added explicitly so
  * the dependency graph stays traceable.
  */
@@ -63,7 +61,7 @@ export interface AdapterRegistry {
 }
 
 /**
- * Default in-memory registry. The runner constructs one per invocation; the CLI re-uses a shared singleton
+ * Default in-memory registry. The runner constructs one per invocation. the CLI re-uses a shared singleton
  * (`defaultAdapterRegistry`) populated by `./adapters/index.ts` as adapters come online.
  */
 export class InMemoryAdapterRegistry implements AdapterRegistry {
@@ -91,7 +89,7 @@ export class InMemoryAdapterRegistry implements AdapterRegistry {
 }
 
 /**
- * Process-wide default registry. Populated by `./adapters/index.ts` as adapters are built; imported by the CLI. Tests
+ * Process-wide default registry. Populated by `./adapters/index.ts` as adapters are built. imported by the CLI. Tests
  * should construct their own `InMemoryAdapterRegistry` to avoid cross-test pollution.
  */
 export const defaultAdapterRegistry = new InMemoryAdapterRegistry()
@@ -113,7 +111,7 @@ export function stableSourceID(adapterID: string, components: Partial<Record<Com
 
 /**
  * {@link stableSourceID} over arbitrary disambiguator keys — a variant index, a slot number, anything that is not a
- * `ComponentTag`. Every key handed in is sorted and hashed either way; only the key vocabulary differs, and the narrow
+ * `ComponentTag`. Every key handed in is sorted and hashed either way. only the key vocabulary differs, and the narrow
  * signature above is what stops an adapter hashing a misspelled component name.
  */
 export function stableSourceIDFromParts(
@@ -122,8 +120,8 @@ export function stableSourceIDFromParts(
 ): string {
 	const sortedKeys = Object.keys(parts).toSorted()
 	const payload = sortedKeys.map((k) => `${k}=${parts[k] ?? ""}`).join("\u001F")
-	// One `update` over the joined string, not three chained ones — identical byte stream either way,
-	// but the separator has to stay inline or every id in every slice changes.
+	// One `update` over the joined string rather than three chained ones — identical byte stream either way,
+	// but the separator has to stay inline or every id in every built corpus changes.
 	const digest = sha256Hex(`${adapterID}\u001E${payload}`)
 
 	return `${adapterID}-${digest.slice(0, 12)}`
@@ -136,10 +134,10 @@ export function stableSourceIDFromParts(
  * This decides where the house number ends and the street begins for every US CSV adapter, so an edge case fixed here
  * is fixed for all of them.
  *
- * The remainder must stay `(\S.*)` and must NOT become `(.+)`: `\s+` and `.` both match a tab, so `\s+(.+)$` lets the
+ * The remainder must stay `(\S.*)` and must not become `(.+)`: `\s+` and `.` both match a tab, so `\s+(.+)$` lets the
  * engine split a run of tabs between the two groups every possible way before failing — quadratic backtracking on
  * attacker-shaped input. Requiring a non-space start removes the overlap. Group 2 is trimmed by the caller either way,
- * so the two forms are indistinguishable on real input; only the failure cost differs.
+ * so the two forms are indistinguishable on real input. only the failure cost differs.
  */
 export const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(\S.*)$/
 
@@ -156,13 +154,13 @@ export interface SplitStreetLine {
  *
  * The US CSV sources follow USPS Publication 28 conventions with hand-entry drift. The leading digit run is the house
  * number (`"123 Main St"`, `"6450 W Indian School Rd"`), and the regex tolerates one trailing letter (`"123A Main St"`)
- * plus an optional hyphenated half (`"40-12 Bell Blvd"`, common in NYC and suburban garden-apartment numbering; Hawaii
+ * plus an optional hyphenated half (`"40-12 Bell Blvd"`, common in NYC and suburban garden-apartment numbering. Hawaii
  * uses it island-wide — `"47-470 Hui Aeko Place"`).
  *
  * Returns `null` for blank input. Anything that does not match the prefix shape (`"PO Box 1234"`, `"RR 2 Box 67"`, `"HC
  * 1"`) becomes a single `street` value rather than being mangled — the model sees the original surface form and
  * downstream classifiers pick it up. Callers that need those forms recognized as something other than a street (see
- * `usgov-irs-bmf`) test for them BEFORE calling this.
+ * `usgov-irs-bmf`) test for them before calling this.
  */
 export function splitStreetLine(line: string): SplitStreetLine | null {
 	const trimmed = line.trim()
@@ -177,50 +175,11 @@ export function splitStreetLine(line: string): SplitStreetLine | null {
 }
 
 /**
- * Parts of the envelope-style raw line {@link composeRaw} renders. Every field is dropped when empty, so a caller only
- * supplies what its source carries.
- */
-export interface ComposeRawParts {
-	venue?: string
-	houseNumber?: string
-	street?: string
-	/**
-	 * A street line already joined by the caller (e.g. a PO-box phrase) — used INSTEAD of `houseNumber`/`street`/`unit`
-	 * when present.
-	 */
-	streetLine?: string
-	unit?: string
-	locality: string
-	region?: string
-	postcode: string
-}
-
-/**
- * Compose the envelope-style raw address line the US CSV adapters share:
- *
- * `"<venue>, <house> <street> <unit>, <city>, <state> <postcode>"`
- *
- * The venue leads (US conventional addressee-then-address ordering) so a downstream model sees the
- * venue-prefix-then-address shape users actually type into geocoders. Empty segments drop out rather than leaving a
- * dangling separator.
- */
-export function composeRaw(parts: ComposeRawParts): string {
-	const streetLine =
-		parts.streetLine ?? [parts.houseNumber, parts.street, parts.unit].filter(isPresent).join(" ").trim()
-
-	const tail = [parts.locality.trim(), [parts.region, parts.postcode].filter(isPresent).join(" ").trim()]
-		.filter(isPresent)
-		.join(", ")
-
-	return [parts.venue, streetLine || undefined, tail].filter(isPresent).join(", ")
-}
-
-/**
  * Load one curated libpostal dictionary (`core/data/libpostal/dictionaries/<language>/<filename>`) as a lower-cased
  * form set. libpostal format: `canonical|abbr|abbr|...` — every form is indexed.
  *
  * `resourceDictionaryPath` already resolves both layouts — `core/data/...` from source and from the packaged `out/`
- * tree. The candidate list this replaced named it TWICE and then guessed a third path off `process.cwd()`, and
+ * tree. The candidate list this replaced named it twice and then guessed a third path off `process.cwd()`, and
  * swallowed every error while probing, so a corrupt dictionary reported as a missing one.
  *
  * The largest libpostal dictionary is 8.4 KB, and each caller runs this once per process at module load.
@@ -268,8 +227,8 @@ export function canonicalDedupKey(row: CanonicalRow): string {
 /**
  * Streaming SHA-256 hasher.
  *
- * The runner feeds every JSONL line into one of these so the per-slice checksum can be recorded in `MANIFEST.json`
- * without a second pass over the slice. Implementation is a one-line wrapper, but giving it a name keeps the runner's
+ * The runner feeds every jsonl line into one of these so the per-adapter checksum can be recorded in `manifest.json`
+ * without a second pass over the jsonl. Implementation is a one-line wrapper, but giving it a name keeps the runner's
  * hash-tracking intent obvious.
  */
 export interface StreamingHasher {
@@ -283,7 +242,7 @@ export interface StreamingHasher {
 /**
  * @see {@link StreamingHasher} — this is the incremental counterpart to `sha256Hex`, not a copy of
  *   it. `@mailwoman/core/utils` exposes one-shot digests (`sha256Hex`) and whole-file digests
- *   (`sha256File`); the runner needs neither, because it hashes JSONL lines as they stream past.
+ *   (`sha256File`); the runner needs neither, because it hashes jsonl lines as they stream past.
  */
 export function streamingSha256(): StreamingHasher {
 	const h: Hash = createHash("sha256")

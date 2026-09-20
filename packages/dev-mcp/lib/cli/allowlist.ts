@@ -8,7 +8,7 @@
  *   CLI's surface is larger than this server's and will stay that way, so a passthrough is worth having — but a
  *   passthrough with no allowlist would hand back every build, publish and ledger write the boundary excludes.
  *
- *   ALLOW-list rather than deny-list, on purpose. A deny-list is wrong by default: the day someone adds
+ *   allow-list rather than deny-list, on purpose. A deny-list is wrong by default: the day someone adds
  *   `mw gazetteer nuke`, a deny-list permits it and an allow-list does not. The cost is that a new read-only verb has
  *   to be added here before it can be used, which is the correct direction for the mistake to point.
  */
@@ -31,7 +31,7 @@ const ALLOWED_PREFIXES: readonly string[][] = [
  * Denied even though a prefix above would otherwise admit them.
  *
  * `eval ledger-append` is the one that matters and the reason this list exists at all: it is nested under an allowed
- * verb and it WRITES `evals/scores-by-version.json`, the score ledger. `mwdev_promotion_eval` deliberately reports that
+ * verb and it writes `evals/scores-by-version.json`, the score ledger. `mwdev_promotion_eval` deliberately reports that
  * command rather than running it, and this stops the passthrough from becoming the back door around that decision.
  */
 const DENIED_PREFIXES: readonly string[][] = [
@@ -66,7 +66,7 @@ function matchesPrefix(args: readonly string[], prefix: readonly string[]): bool
 export interface AllowlistVerdict {
 	allowed: boolean
 	/**
-	 * Why, in the words a caller needs. Populated on a refusal AND on an allow, so a log of calls records the boundary
+	 * Why, in the words a caller needs. Populated on a refusal and on an allow, so a log of calls records the boundary
 	 * that was applied rather than only the ones that tripped it.
 	 */
 	reason: string

@@ -5,8 +5,8 @@
  *   The three decisions `--debug`'s two surfaces have to agree on: which zoom the map pane opens at, which flag
  *   combinations are a usage error, and how small a frame is too small to render. Both the static capture
  *   (`command.tsx`) and the interactive session (`DebugSessionApp.tsx`) enforce all three, and they enforce them
- *   differently — the static path rejects a bad `--debug-size`, the session degrades a too-small TERMINAL to a note —
- *   so the shared part is the verdict, not the reaction to it.
+ *   differently — the static path rejects a bad `--debug-size`, the session degrades a too-small terminal to a note —
+ *   so the shared part is the verdict rather than the reaction to it.
  *
  *   Their own module because the alternative is a cycle: the session is imported BY the command module and would have
  *   to import these back OUT of it, which `import/no-cycle` refuses. Pure and JSX-free, so it type-strips under bare
@@ -22,14 +22,14 @@ import type { GeocodeResult } from "#geocode/result"
 
 /**
  * The map pane's initial zoom for a freshly-geocoded result, before any interactive pan/zoom. Tight for a house-grade
- * fix; progressively wider for whatever admin tier the resolve actually reached, so an admin-only fallback doesn't open
+ * fix. progressively wider for whatever admin tier the resolve actually reached, so an admin-only fallback doesn't open
  * on a single-building zoom over a whole region or country.
  */
 export function initialZoomForTier(result: GeocodeResult): number {
 	if (result.resolution_tier === "address_point" || result.resolution_tier === "interpolated") return 15
 
-	// `hierarchy` is ordered MOST SPECIFIC FIRST (`GeocodeResult.hierarchy`: "locality → country"), so the head is the
-	// finest place the resolver decorated. Reading `.at(-1)` took the COUNTRY instead and opened every admin-tier
+	// `hierarchy` is ordered most specific first (`GeocodeResult.hierarchy`: "locality → country"), so the head is the
+	// finest place the resolver decorated. Reading `.at(-1)` took the country instead and opened every admin-tier
 	// answer at the whole-country zoom 4: a bare "Portland, Oregon" resolved its locality and then showed North
 	// America.
 	const leaf = result.hierarchy.at(0)?.tag
@@ -48,8 +48,8 @@ export function initialZoomForTier(result: GeocodeResult): number {
 /**
  * `--debug` is its own rendered surface (a captured Ink frame) — combining it with a `--format` shorthand, or with an
  * explicit non-default `--format` value, has no defensible reading. Thrown with {@link CommandError} so it reports
- * through the standard error state (exit code 1) on the static path; the interactive session runs the same guard as the
- * FIRST statement of its mount effect, before it takes the alternate screen, matching `resolveFormat`'s
+ * through the standard error state (exit code 1) on the static path. the interactive session runs the same guard as the
+ * first statement of its mount effect, before it takes the alternate screen, matching `resolveFormat`'s
  * two-shorthands-at-once check in `cli-native/commands/geocode.ts`.
  */
 export function assertDebugFormatSanity(options: GeocodeCommandOptions): void {
@@ -76,14 +76,14 @@ export function assertDebugFormatSanity(options: GeocodeCommandOptions): void {
  *
  * The row floor is `DebugFrame`'s fixed chrome plus the 6 map rows that were the smallest legible pane: input area 9 +
  * footer 1 + MapPane's own 4 = 14, so 20. (It was 14 while the input area was 4 rows and there was no footer — the
- * evidence rows and the key hints moved the floor, not a change of mind about how small a map may be.)
+ * evidence rows and the key hints moved the floor rather than a change of mind about how small a map may be.)
  */
 const MIN_DEBUG_COLUMNS = 60
 const MIN_DEBUG_ROWS = 20
 
 /**
  * A COLSxROWS pair's floor violation as reportable text, or null when it clears the floor. One function decides the
- * verdict AND names the minimum, so the two surfaces that report it can never disagree about where the floor sits: the
+ * verdict and names the minimum, so the two surfaces that report it can never disagree about where the floor sits: the
  * static path prefixes `--debug-size` and rejects, while the interactive session prefixes `terminal` and degrades the
  * map pane to a note — a live terminal below the floor is something the user can fix by resizing.
  */

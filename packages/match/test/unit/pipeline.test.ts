@@ -3,8 +3,8 @@
 
 /**
  *   Capstone: the whole matcher, block → score → cluster, on a tiny synthetic set. The point it
- *   proves is the thesis — two records with DIFFERENT address strings but the same location and
- *   name resolve to one entity, because blocking is geographic, not textual.
+ *   proves is the thesis — two records with different address strings but the same location and
+ *   name resolve to one entity, because blocking is geographic rather than textual.
  */
 
 import { type LatLon, block, geoCellKey } from "@mailwoman/match/blocking"
@@ -41,7 +41,7 @@ const model: FellegiSunterModel<Clinic> = {
 describe("block → score → cluster", () => {
 	it("links two records at the same place despite different address strings, and isolates a third", () => {
 		const records: Clinic[] = [
-			// Same person/place — note the address STRINGS differ; only the location agrees.
+			// Same person/place — note the address strings differ. only the location agrees.
 			{
 				id: "1",
 				given: "Robert",

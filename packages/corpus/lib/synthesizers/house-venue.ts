@@ -2,32 +2,37 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   House-number + venue + street co-occurrence synthesizer. The v0.6.3 corrective slice.
+ *   House-number + venue + street co-occurrence synthesizer. The v0.6.3 corrective source.
  *
  *   The v0.6.2 step-20K diagnostic showed that adding synth-no-street counter-distribution regressed
  *   house_number recall by ~4-5pp. DeepSeek's turn-8 root-cause:
  *
  *   1. Direct: `5th Avenue Theatre`-style adversarial venues teach the model that tokens like "5th"
- *        belong to venues, not house_numbers. (Fixed in `no-street.ts` by removing
+ *        belong to venues rather than house_numbers. (Fixed in `no-street.ts` by removing
  *        digit+ordinal venue patterns.)
  *   2. Distributional dilution: synth-no-street adds 122K rows where house_number is absent. The model's
  *        training distribution shifts toward "house_number is rare," and it under-emits the tag at
  *        inference.
  *
- *   This synthesizer fixes #2 directly. Each emitted row has ALL of: house_number, street, venue,
+ *   This synthesizer fixes #2 directly. Each emitted row has all of: house_number, street, venue,
  *   locality, region, postcode — a counter-example to "house_number is rare." Used as a companion
- *   slice to synth-no-street; the v0.6.3 config weights synth-no-street at 0.5 and
+ *   source to synth-no-street. the v0.6.3 config weights synth-no-street at 0.5 and
  *   synth-house-venue at 1.0 to recover the lost house_number signal.
  *
  *   Real-world shape: business cards, mailing labels, store directories — `"123 Main St, Sunrise
  *   Bakery, Springfield, IL 62701"` is a perfectly ordinary address form.
  *
  *   Venue pool: PLAIN_VENUES from `no-street.ts` (re-exported here). Adversarial venues
- *   are deliberately NOT used here — the point is to teach co-occurrence, not to re-introduce
+ *   are deliberately not used here — the point is to teach co-occurrence rather than to re-introduce
  *   decompose-mode pressure.
  */
 
-import { countryToLocale, pick } from "#synthesizers/utils"
+/* oxlint-disable mailwoman/prefer-home -- the four admin tails below are hand-written on purpose. the comment at the
+   `tail` assignment names the GB surface a layout cannot currently write and the counts behind it. */
+
+import { sample } from "@mailwoman/core/random"
+
+import { countryToLocale } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 
 export interface HouseVenueBaseTuple {
@@ -60,8 +65,8 @@ export interface SynthesizedHouseVenueRow {
 //#region Venue pool
 
 /**
- * PLAIN venue names, carrying no street-typing tokens. This slice teaches house_number + venue coexistence, NOT
- * decompose-mode pressure — adversarial venue names live in `no-street.ts`.
+ * Plain venue names, carrying no street-typing tokens. This recipe output teaches house_number + venue coexistence
+ * rather than decompose-mode pressure — adversarial venue names live in `no-street.ts`.
  */
 const PLAIN_VENUES: ReadonlyArray<string> = [
 	"Bob's Pizza",
@@ -99,9 +104,9 @@ const PLAIN_VENUES: ReadonlyArray<string> = [
 
 /**
  * GB-flavored venue names (#1366): institutional forms (Club/Centre/House/Arms/Station), the "Ye" archaic register, and
- * brand–dash–place compounds — INCLUDING directional-led names, because the target class is venues that open with
+ * brand–dash–place compounds — including directional-led names, because the target class is venues that open with
  * compass words ("New North Health Centre", "Southfields Station") and the base model reads those as locality/street
- * evidence. The six #1366 gauntlet fixtures' own venue names are deliberately ABSENT — the fixtures stay held-out.
+ * evidence. The six #1366 gauntlet fixtures' own venue names are deliberately absent — the fixtures stay held-out.
  */
 const GB_VENUES: ReadonlyArray<string> = [
 	"Ye Olde Cheshire Cheese",
@@ -165,7 +170,7 @@ const FALLBACK_STREETS: ReadonlyArray<string> = [
 
 function randomHouseNumber(random: () => number): string {
 	// Generate a plain numeric house number 1-9999. No fractions/ranges — those land in
-	// `data/eval/falsehoods/numbers.jsonl` as known edge cases, not training material.
+	// `data/eval/falsehoods/numbers.jsonl` as known edge cases rather than training material.
 	const digits = Math.floor(random() * 4) + 1
 	const max = Math.pow(10, digits)
 	const n = Math.floor(random() * max) + 1
@@ -186,15 +191,15 @@ const GB_VENUE_POOL_RATE = 0.7
 
 /**
  * Fraction of GB rows whose house number widens into a range ("287-293"). Real GB venue addresses frequently span
- * buildings; 0.15 keeps ranges a minority register — pre-registered in the #1366 memo.
+ * buildings. 0.15 keeps ranges a minority register — pre-registered in the #1366 memo.
  */
 const GB_RANGE_NUMBER_RATE = 0.15
 
 /**
- * Fraction of rows (EVERY template order) rendered with a trailing country surface, tagged `country`. The 2026-08-01
- * operator probe set proved the mechanism: the FR control row ("…, 75004 Paris, France") fails on a model trained only
- * on country-less venue rows while its country-less twin passes — a trailing country makes the whole template OOD
- * (Addendum 3 of the #1366 pre-registration). 0.3 keeps the country-less register dominant.
+ * Fraction of rows (every template order) rendered with a trailing country surface, tagged `country`. The 2026-08-01
+ * operator probe set showed that the implementation worked: the FR control row ("…, 75004 Paris, France") fails on a
+ * model trained only on country-less venue rows while its country-less twin passes — a trailing country makes the whole
+ * template OOD (Addendum 3 of the #1366 pre-registration). 0.3 keeps the country-less register dominant.
  */
 const COUNTRY_APPEND_RATE = 0.3
 
@@ -218,36 +223,30 @@ export function synthesizeHouseVenueRow(
 	const locale = countryToLocale(base.country)
 	const template = opts.forceTemplate ?? (random() < 0.5 ? "venue-after-street" : "venue-before-street")
 
-	// FR renders postcode-before-locality with NO region ("MR & MRS CRAB, 20 Rue de la Huchette,
+	// FR renders postcode-before-locality with no region ("MR & MRS crab, 20 Rue de la Huchette,
 	// 75005 Paris" — the v4.0.0 gauntlet's venue-led failure family, the run-2 contingency's exact
-	// target shape). GB (#1366) renders locality-then-postcode with NO region and NO comma between
-	// them ("Ye Three Lords, 27 Minories, London EC3N 1DE" — the third tail the slice must teach).
-	// VE (#1821) renders locality-then-postcode and KEEPS the region after it. Every other country
-	// keeps the original US-order tail, which is itself the `after_region` surface — `Springfield, IL
-	// 02101` and `Bengaluru, Karnataka 560038` are the same shape.
+	// target shape). GB (#1366) renders locality-then-postcode with no region and no comma between
+	// them ("Ye Three Lords, 27 Minories, London EC3N 1DE" — the third tail the recipe output must teach).
 	const frOrder = base.country === "FR"
 	const gbOrder = base.country === "GB"
-	// VE writes the code on the LOCALITY segment with the region still after it — `…, Barcelona 6001, Anzoátegui,
-	// Venezuela`, the four `ve_city_postcode_trailing_state` board rows. That is neither GB's form (which drops the
-	// region) nor the default (which puts the region before the code), so it needs its own branch.
-	//
-	// It belongs HERE rather than in a standalone admin slice, and that is measured: three trailing-region slices
-	// carrying only admin segments all graded DO-NOT-SHIP, and the way they failed was by damaging the classes they did
-	// not contain — v4.8.0 turned `Ye Three Lords, 27 Minories, London EC3N 1DE` into `locality: "Ye Three Lords"`,
-	// losing the venue and the street. Every row this synthesizer emits carries a venue, a street AND a house number,
-	// so the surface is taught with the alternatives present rather than against them.
 	const veOrder = base.country === "VE"
 
+	// An admin surface belongs here rather than in a standalone admin recipe, and that is measured: three
+	// trailing-region recipe outputs carrying only admin segments all graded do-not-ship, and the way they failed was by
+	// damaging the classes they did not contain — v4.8.0 turned `Ye Three Lords, 27 Minories, London EC3N 1DE` into
+	// `locality: "Ye Three Lords"`, losing the venue and the street. Every row this synthesizer emits carries a venue, a
+	// street and a house number, so the surface is taught with the alternatives present rather than against them.
+
 	// GB rows draw from the GB pool 70% of the time (institutional/archaic/brand-dash-place forms,
-	// incl. directional-led names — the #1366 target class) and the shared pool otherwise; real GB
+	// incl. directional-led names — the #1366 target class) and the shared pool otherwise. real GB
 	// registers mix both. Other locales keep the shared pool (which already carries the FR flavor).
-	const venue = gbOrder && random() < GB_VENUE_POOL_RATE ? pick(GB_VENUES, random) : pick(PLAIN_VENUES, random)
-	const street = base.street ?? pick(FALLBACK_STREETS, random)
+	const venue = gbOrder && random() < GB_VENUE_POOL_RATE ? sample(GB_VENUES, random) : sample(PLAIN_VENUES, random)
+	const street = base.street ?? sample(FALLBACK_STREETS, random)
 	let houseNumber = base.houseNumber ?? randomHouseNumber(random)
 
 	// GB range numbers ("287-293 New N Rd"): real GB venue addresses frequently span buildings.
 	// 15% of GB rows widen the number into a range (same parity, small span — the register's real
-	// shape). Pre-registered in the #1366 memo; the base pool's no-ranges stance stays for other
+	// shape). Pre-registered in the #1366 memo. the base pool's no-ranges stance stays for other
 	// locales.
 	if (gbOrder && random() < GB_RANGE_NUMBER_RATE && /^\d+$/.test(houseNumber)) {
 		const start = Number.parseInt(houseNumber, 10)
@@ -256,6 +255,8 @@ export function synthesizeHouseVenueRow(
 		houseNumber = `${start}-${start + span}`
 	}
 
+	// The admin tail is the country's own, from codex's layout table, and the row carries the components that layout
+	// printed — France and Great Britain write no region, so emitting one would label text that is not in `raw`.
 	const components: CanonicalRow["components"] = {
 		house_number: houseNumber,
 		street,
@@ -265,6 +266,11 @@ export function synthesizeHouseVenueRow(
 		postcode: base.postcode,
 	}
 
+	// The four tails are still hand-written, and the reason they were is gone. GB's layout now marks the break before
+	// its postcode soft, so `formatAddress(…, { singleLine: true })` answers `27 Minories, London EC3N 1DE` — the form
+	// #1366 pinned and three tests assert — while the multi-line render keeps the post town and the postcode on their
+	// own lines. Migrating these four to `formatAddress` changes what the recipe emits for every locale it covers, so
+	// it is a measured change of its own rather than a consequence of the layout decision (#2313).
 	let tail = frOrder
 		? `${base.postcode} ${base.locality}`
 		: gbOrder
@@ -273,11 +279,11 @@ export function synthesizeHouseVenueRow(
 				? `${base.locality} ${base.postcode}, ${base.region}`
 				: `${base.locality}, ${base.region} ${base.postcode}`
 
-	// Trailing country surface (Addendum 3): appended AFTER the tail in every order, tagged.
+	// Trailing country surface (Addendum 3): appended after the tail in every order, tagged.
 	const countrySurfaces = COUNTRY_SURFACES[base.country]
 
 	if (countrySurfaces && random() < COUNTRY_APPEND_RATE) {
-		const countrySurface = pick(countrySurfaces, random)
+		const countrySurface = sample(countrySurfaces, random)
 		components.country = countrySurface
 		tail = `${tail}, ${countrySurface}`
 	}
@@ -297,7 +303,7 @@ export function synthesizeHouseVenueRow(
 }
 
 /**
- * Contract: every synthesized row carries BOTH house_number AND venue (the co-occurrence signal that synth-no-street's
+ * Interface: every synthesized row carries both house_number and venue (the co-occurrence signal that synth-no-street's
  * distributional shift cost the model). Used by tests + downstream consumers.
  */
 export function hasHouseNumberAndVenue(components: CanonicalRow["components"]): boolean {

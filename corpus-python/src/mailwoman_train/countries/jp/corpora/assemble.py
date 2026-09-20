@@ -1,8 +1,8 @@
-"""Assembling the Japan slice: survey, select, render, write, report.
+"""Assembling the Japan corpus: survey, select, render, write, report.
 
-ONE `random.Random` runs through every stage below — the exact-selection masks, the shuffle, the
+One `random.Random` runs through every stage below — the exact-selection masks, the shuffle, the
 register draw, and each per-row fraction. They share a stream, so the ORDER these stages run in and
-the order of the draws inside them decide what the slice contains.
+the order of the draws inside them decide what the corpus contains.
 `tests/mailwoman_train/countries/test_jp_build_parity.py` pins the emitted rows for that reason.
 
 Two passes over the source rather than one: pass 1 counts eligible rows per prefecture so the
@@ -44,7 +44,7 @@ from .rows import (
 )
 from .sources import ADMIN_DB_PARTS, KENALL_PARTS, PARQUET_PARTS, KenAllIndex, iter_source_rows, load_kenall_postcodes
 
-# Municipality bucket split, IDENTICAL to the probe (md5 of the NFC space-stripped kanji, mod 100,
+# Municipality bucket split, identical to the probe (md5 of the NFC space-stripped kanji, mod 100,
 # board at >= 97). Keeping the rule byte-identical means the probe's held-out board municipalities
 # stay held out here — a Phase-4 model can be graded on the Leg-1 board without leakage.
 BOARD_BUCKET_MIN = 97
@@ -91,8 +91,8 @@ def survey_source(parquet: Path, args: argparse.Namespace) -> SourceSurvey:
             pool_counts[prefecture] += 1
     print(f"pass 1: {scanned:,} eligible rows · {len(pool_counts)} prefectures · board pool {board_count:,}")
     print(f"pass 1: dropped {dict(dropped)}")
-    # A drop rate this filter was not designed for means the source changed shape, not that the tail
-    # got longer — surface it rather than quietly shipping a differently-composed slice.
+    # A drop rate this filter was not designed for means the source changed shape rather than that the tail
+    # got longer — surface it rather than quietly shipping a differently-composed corpus.
     drop_rate = sum(dropped.values()) / max(scanned + sum(dropped.values()), 1)
     if drop_rate > 0.02:
         raise RuntimeError(
@@ -103,8 +103,8 @@ def survey_source(parquet: Path, args: argparse.Namespace) -> SourceSurvey:
     cap = water_fill(pool_counts, target)
     quotas = {prefecture: min(cap, count) for prefecture, count in pool_counts.items()}
     shortfall = target - sum(quotas.values())
-    # Water-filling lands at or below target; hand the remainder to the prefectures with headroom so
-    # the slice hits its row count exactly rather than "about".
+    # Water-filling lands at or below target. hand the remainder to the prefectures with headroom so
+    # the corpus hits its row count exactly rather than "about".
     if shortfall > 0:
         for prefecture in sorted(pool_counts, key=lambda p: pool_counts[p] - quotas[p], reverse=True):
             headroom = pool_counts[prefecture] - quotas[prefecture]
@@ -135,9 +135,9 @@ def select_rows(parquet: Path, args: argparse.Namespace, rng: random.Random, sur
     train_source = selected[: args.train_rows]
     val_source = selected[args.train_rows : args.train_rows + args.val_rows]
 
-    # Attested-row weight (#2178): a municipality NAME shape the head under-serves — 市 inside a 町 / 村 name
+    # Attested-row weight (#2178): a municipality name shape the head under-serves — 市 inside a 町 / 村 name
     # (市川三郷町, 市貝町, 余市町, 高市郡…) — is five municipalities and 21,043 of 19,587,889 source rows, about 0.1% of
-    # train after selection. `--upweight-pattern REGEX:K` appends K-1 further copies of every selected train row
+    # train after selection. `--upweight-pattern regex:K` appends K-1 further copies of every selected train row
     # whose municipality matches, each rendered in its own draw of register, so the shape reaches the head at
     # K× its natural share without a synthetic name. Val and the board are untouched, so the read stays honest.
     upweighted = 0
@@ -292,7 +292,7 @@ def write_board(out_dir: Path, selection: Selection, encoder: RowEncoder) -> lis
 
 
 def check_stratification(args: argparse.Namespace, selection: Selection) -> tuple[set[str], set[str]]:
-    """Violations RAISE; a slice that fails one is not a slice. Returns (train prefectures, board municipalities)."""
+    """Violations RAISE. a corpus that fails one is not a corpus. Returns (train prefectures, board municipalities)."""
     train_prefectures = {row[0] for row in selection.train}
     if args.max_row_groups is None and len(train_prefectures) != 47:
         raise RuntimeError(f"train covers {len(train_prefectures)} prefectures, expected 47 — stratification broken")
@@ -319,14 +319,14 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
     out_dir = Path(args.out_dir)
     if out_dir.exists() and any(out_dir.iterdir()) and not args.force:
         raise SystemExit(
-            f"{out_dir} exists and is non-empty — pass --force to overwrite (a slice is a read-only artifact)"
+            f"{out_dir} exists and is non-empty — pass --force to overwrite (a built corpus is a read-only artifact)"
         )
 
     splits = write_splits(out_dir, args, selection, encoder)
     board_records = write_board(out_dir, selection, encoder)
     train_prefectures, board_munis = check_stratification(args, selection)
 
-    # Char vocab (D2): sealed, rebuilt from the TRAIN split only, min_count=2.
+    # Char vocab (D2): sealed, rebuilt from the train split only, min_count=2.
     def train_raws() -> Iterator[str]:
         for path in sorted((out_dir / "train").glob("*.parquet")):
             table = pq.read_table(path, columns=["raw"])
@@ -391,7 +391,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--variant-hyphen-fraction", type=float, default=0.05)
     parser.add_argument("--max-field-chars", type=int, default=MAX_FIELD_CHARS)
     parser.add_argument(
-        "--max-row-groups", type=int, default=None, help="smoke slice: read only the first N row groups"
+        "--max-row-groups", type=int, default=None, help="smoke build: read only the first N row groups"
     )
     parser.add_argument(
         "--upweight-pattern",

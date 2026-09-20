@@ -6,7 +6,7 @@
  *   `/parse` endpoint, diffed span by span.
  *
  *   Two refusals carry over from `external-arm.ts` unchanged, and the second is sharper here than anywhere else in
- *   this server. Nothing is ever started: an endpoint that is not up is a refusal with the reason, not a run where
+ *   this server. Nothing is ever started: an endpoint that is not up is a refusal with the reason rather than a run where
  *   every row records libpostal as silent. And an arm's identity is never inferred from a port, because
  *   `@mailwoman/libpostal` answers this exact path with this exact shape — pointing at the wrong port compares
  *   mailwoman against mailwoman and produces a beautifully high agreement rate.
@@ -40,7 +40,7 @@ export async function runParseCompare(registry: EngineRegistryLike, args: Record
 	if (!version) {
 		throw new Error(
 			"mwdev_parse_compare needs `version` — your claim about what is running at that endpoint. " +
-				"`@mailwoman/libpostal` serves the identical /parse contract, so a URL and a port are not evidence of " +
+				"`@mailwoman/libpostal` serves the identical /parse interface, so a URL and a port are not evidence of " +
 				"which parser answers there, and a mailwoman-against-mailwoman run reads as near-total agreement."
 		)
 	}
@@ -88,7 +88,7 @@ export async function runParseCompare(registry: EngineRegistryLike, args: Record
 	const reading = describeObservedRate({
 		events: differing.length,
 		n: answered.length,
-		selection: limit && limit < set.inputs.length ? "slice" : set.selection,
+		selection: limit && limit < set.inputs.length ? "subset" : set.selection,
 		eventLabel: "row read differently",
 	})
 

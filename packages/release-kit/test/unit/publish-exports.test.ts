@@ -10,7 +10,7 @@ import {
 import { describe, expect, it } from "vitest"
 
 // Source lives under `lib/`, so a real dev map's `node` condition names `./lib/…` while its `default`/`types`
-// name `./out/…` WITHOUT that segment — `rootDir: "./lib"` strips it from the emit. The expectations below are
+// name `./out/…` without that segment — `rootDir: "./lib"` strips it from the emit. The expectations below are
 // therefore also the assertion that the segment is dropped rather than carried through.
 const DEV_MAP = {
 	"./package.json": "./package.json",
@@ -89,7 +89,7 @@ describe("transformExportsForPublish", () => {
 	})
 
 	it("rewrites every source-targeting condition, not only node", () => {
-		// A map whose Node target and browser target are different FILES, both source in the dev map. Rewriting only
+		// A map whose Node target and browser target are different files, both source in the dev map. Rewriting only
 		// `node` shipped browser and worker bundlers a raw `.ts`.
 		const result = transformExportsForPublish({
 			"./fs": {

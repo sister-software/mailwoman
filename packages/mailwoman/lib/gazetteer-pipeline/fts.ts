@@ -5,7 +5,7 @@
  *   FTS step of the gazetteer pipeline — `place_search` (FTS5) + `place_bbox` (R*Tree, the reverse
  *   geocoder's candidate index). A thin wrapper over the canonical
  *   `@mailwoman/resolver-wof-sqlite/fts` builder so the pipeline's phases share one signature shape.
- *   MUST run AFTER `enrichAdmin` — `place_search` concatenates the `names` rows, abbreviations included.
+ *   Must run after `enrichAdmin` — `place_search` concatenates the `names` rows, abbreviations included.
  */
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -27,7 +27,7 @@ export interface BuildFTSResult {
  * Build `place_search` + `place_bbox` on an open (unsealed) admin DB.
  */
 export async function buildFTS<DB>(db: DatabaseClient<DB>, opts: BuildFTSOptions = {}): Promise<BuildFTSResult> {
-	// resolver-wof-sqlite is an OPTIONAL peer of mailwoman — lazy import (the gazetteer-pipeline convention).
+	// resolver-wof-sqlite is an optional peer of mailwoman — lazy import (the gazetteer-pipeline convention).
 	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite/fts")
 
 	const result = buildPlaceSearchFTS(db, {

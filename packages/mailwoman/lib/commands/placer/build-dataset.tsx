@@ -4,15 +4,16 @@
 /**
  *   `mailwoman placer build-dataset` — assemble the coarse placer (#244) training dataset: the
  *   stratified per-country corpus/Overture sample (plain run), or `--outliers
- *   <exposure|latin|oa>` to append OTHER-class outlier-exposure rows (WOF non-Latin scripts,
- *   Overture Latin off-map, or OpenAddresses leave-one-family-out). Run the plain build first; the
+ *   <exposure|latin|oa>` to append other-class outlier-exposure rows (WOF non-Latin scripts,
+ *   Overture Latin off-map, or OpenAddresses leave-one-family-out). Run the plain build first. the
  *   outlier builders append to its splits.
  */
 
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
+	type OptionsOf,
 	reportToStderr,
 	useCommandTask,
 } from "#cli-kit"
@@ -20,7 +21,7 @@ import {
 export const description = "Assemble the coarse placer (#244) dataset (--outliers appends OTHER exposure)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "build-dataset",
@@ -40,15 +41,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	outliers?: "exposure" | "latin" | "oa"
-	data?: string
-	perCountry?: number
-	perLang?: number
-	wof?: string
-	overture?: string
-	oaDir?: string
-}
+type Options = OptionsOf<typeof spec>
 
 async function run(options: Options): Promise<string> {
 	const { buildDataset, buildOutlierExposure, buildOutlierLatin, buildOutlierOA } =
@@ -87,7 +80,7 @@ async function run(options: Options): Promise<string> {
 	}
 }
 
-const PlacerBuildDataset: ParsedCommandComponent<Options> = ({ options }) => {
+const PlacerBuildDataset: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => run(options))
 
 	return <CommandTaskResult state={state} />

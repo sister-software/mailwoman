@@ -10,21 +10,22 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { formatGeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite/geonames"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	phaseReporter,
-	splitUpperList,
+	splitCountryCodes,
 	useCommandTask,
 } from "#cli-kit"
 import { DEFAULT_FOLD_COUNTRIES } from "#gazetteer-pipeline/defaults"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "release",
@@ -44,18 +45,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	admin?: string
-	out?: string
-	countries?: string
-	fold: boolean
-	promote: boolean
-	publish: boolean
-	gazetteerVersion?: string
-	dryRun: boolean
-}
-
-const GazetteerRelease: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { mailwomanDataRoot, repoRootPathBuilder } = await import("@mailwoman/core/utils")
 
@@ -75,7 +65,7 @@ const GazetteerRelease: ParsedCommandComponent<Options> = ({ options }) => {
 		const adminIn = options.admin ?? join(wofDir(root), DEFAULT_ADMIN_DB)
 		const out = options.out ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
 
-		const countries = options.countries ? splitUpperList(options.countries) : DEFAULT_FOLD_COUNTRIES
+		const countries = options.countries ? splitCountryCodes(options.countries) : DEFAULT_FOLD_COUNTRIES
 
 		const lines: string[] = []
 
@@ -90,8 +80,7 @@ const GazetteerRelease: ParsedCommandComponent<Options> = ({ options }) => {
 				adminIn,
 				adminOut: foldOut,
 				countries,
-				onCountry: (e) =>
-					console.error(`  ${e.country}: ${e.skipped ? "(skipped)" : `${e.places.toLocaleString()} places`}`),
+				onCountry: (e) => console.error(`  ${formatGeonamesIngestProgress(e)}`),
 				onPhase: phaseReporter(),
 			})
 

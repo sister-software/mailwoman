@@ -12,7 +12,7 @@ import { describe, expect, test } from "vitest"
 
 const fixture = {
 	name: "probe",
-	description: "Exercise the native CLI contract.",
+	description: "Exercise the native CLI interface.",
 	positionals: [{ name: "input", description: "Probe input." }],
 	options: {
 		feature: { type: "boolean", default: true, description: "Feature switch." },
@@ -109,5 +109,60 @@ describe("native CLI spec", () => {
 		expect(help).toContain("Usage: mw probe [input] [options]")
 		expect(help).toContain("--[no-]feature")
 		expect(help).toContain("--count <number>")
+	})
+})
+
+describe("a renamed option keeps its old spelling working", () => {
+	const renamed = {
+		name: "probe",
+		description: "Exercise the deprecated-alias interface.",
+		options: {
+			out: { type: "string", description: "Destination.", deprecatedName: "output" },
+			mode: { type: "string", default: "fast", description: "Mode.", deprecatedName: "style" },
+		},
+	} as const satisfies CommandSpec
+
+	test("the old flag lands on the new key and never survives under its own", () => {
+		const parsed = parseCommand(renamed, ["--output", "/tmp/x.json"])
+
+		expect(parsed.values.out).toBe("/tmp/x.json")
+		// A command reads `options.out`; leaving the retired key readable gives one value two homes, and a command that
+		// reaches for the old one keeps working past the removal it was warned about.
+		expect(parsed.values.output).toBeUndefined()
+	})
+
+	test("the new flag wins with no notice and no interference", () => {
+		expect(parseCommand(renamed, ["--out", "/tmp/y.json"]).values.out).toBe("/tmp/y.json")
+	})
+
+	test("passing both is a usage error rather than a precedence rule", () => {
+		// The caller meant one of them and the command cannot tell which.
+		expect(() => parseCommand(renamed, ["--out", "/tmp/y.json", "--output", "/tmp/x.json"])).toThrow(
+			/old name for --out/u
+		)
+	})
+
+	test("an option's own DEFAULT does not read as the new flag being passed", () => {
+		// The retired flag must still win over a default the caller never typed. comparing against the value alone would
+		// make `--style` a usage error on every command whose current flag has one.
+		expect(parseCommand(renamed, ["--style", "slow"]).values.mode).toBe("slow")
+	})
+
+	test("the retired spelling carries no default of its own", () => {
+		expect(parseCommand(renamed, []).values.out).toBeUndefined()
+		expect(parseCommand(renamed, []).values.mode).toBe("fast")
+	})
+
+	test("refuses a spec that retires a name it also declares", () => {
+		const invalid = {
+			name: "probe",
+			description: "Invalid.",
+			options: {
+				out: { type: "string", description: "Destination.", deprecatedName: "output" },
+				output: { type: "string", description: "Also declared." },
+			},
+		} as CommandSpec
+
+		expect(() => parseCommand(invalid, [])).toThrow(/old spelling/u)
 	})
 })

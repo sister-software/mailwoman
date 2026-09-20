@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The pty fixture behind `input.pty.test.ts`: the REAL {@link QueryInput}, wired the way
+ *   The pty fixture behind `input.pty.test.ts`: the real {@link QueryInput}, wired the way
  *   `DebugSessionApp` wires it (a parent `useInput` owning escape, the field owning everything else), plus a plain
- *   `VALUE=[…]` echo the test asserts against.
+ *   `value=[…]` echo the test asserts against.
  *
  *   JSX-free `createElement`, like the component it renders, because bare node strips types but does not transform
  *   JSX — and running the shipped source under a real terminal is the whole point of the probe. A fixture that
@@ -49,6 +49,6 @@ function Probe(): ReactElement {
 }
 
 // Ink resolves `interactive` from `is-in-ci` and `stdout.isTTY`, so a CI environment variable makes it
-// non-interactive even under a real pty — and a non-interactive Ink writes ONLY the final frame at unmount.
+// non-interactive even under a real pty — and a non-interactive Ink writes only the final frame at unmount.
 // The test reads the field's edit history out of the pty capture, so the frames have to be forced on.
 render(h(Probe), { interactive: true })

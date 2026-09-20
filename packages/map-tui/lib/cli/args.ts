@@ -8,7 +8,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 /**
  * Argument parsing for the `map-tui` bin.
  *
- * `parseCLIArgs` is pure: it takes the argv slice and an environment record, and answers with a discriminated result
+ * `parseCLIArgs` is pure: it takes the argv array and an environment record, and answers with a discriminated result
  * (`help` / `version` / `browse`) or throws {@link CLIArgsError}. Reading `process.argv` / `process.env` is the bin's
  * job (./cli.ts), which keeps every rejection path testable without a subprocess.
  */
@@ -35,13 +35,13 @@ const DEFAULT_ZOOM = 2
 const MIN_ZOOM = 0
 
 /**
- * Deepest zoom the Web-Mercator tile pyramid is defined for. The archive's own `maxZoom` clamps further at runtime;
+ * Deepest zoom the Web-Mercator tile pyramid is defined for. The archive's own `maxZoom` clamps further at runtime.
  * this is only the range a flag value must fall inside to be meaningful at all.
  */
 const MAX_ZOOM = 24
 
-// True geographic bounds, not Web-Mercator's ±85.05113: the flag accepts any real latitude, and the browser clamps
-// the CENTER to the projection's MERCATOR_LATITUDE_LIMIT itself (see ./browser.ts) — rejecting 87 here would refuse a
+// True geographic bounds rather than Web-Mercator's ±85.05113: the flag accepts any real latitude, and the browser clamps
+// the center to the projection's MERCATOR_LATITUDE_LIMIT itself (see ./browser.ts) — rejecting 87 here would refuse a
 // value the viewport handles fine.
 const MIN_LAT = -90
 const MAX_LAT = 90
@@ -69,7 +69,7 @@ export interface BrowseArgs {
 export type CLIArgs = { mode: "help" } | { mode: "version" } | BrowseArgs
 
 /**
- * A rejected command line. The message is user-facing: it says what was wrong AND what to pass instead, since the bin
+ * A rejected command line. The message is user-facing: it says what was wrong and what to pass instead, since the bin
  * prints it verbatim to stderr.
  */
 export class CLIArgsError extends Error {
@@ -176,7 +176,7 @@ interface ParsedFlags {
 }
 
 /**
- * `node:util`'s own rejections (unknown flag, missing value) name the flag but not the remedy, so they're re-thrown as
+ * `node:util`'s own rejections (unknown flag, missing value) name the flag but not the action, so they're re-thrown as
  * a {@link CLIArgsError} pointing at `--help`.
  */
 function readFlags(argv: readonly string[]): ParsedFlags {

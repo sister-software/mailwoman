@@ -4,10 +4,10 @@
 /**
  *   `geonames`: GeoNames populated-places consumer (https://www.geonames.org/, CC-BY-4.0).
  *
- *   GeoNames is a global gazetteer of ~12M features. This adapter ingests the POPULATED PLACES
+ *   GeoNames is a global gazetteer of ~12M features. This adapter ingests the populated places
  *   (`feature_class = "P"`, excluding historical/abandoned/destroyed variants) from a per-country
  *   dump file — global locality coverage, including the small towns and villages a coarser admin
- *   gazetteer (WOF) lacks. It's the cheapest path to broadening the corpus's LOCALE coverage.
+ *   gazetteer (WOF) lacks. It's the cheapest path to broadening the corpus's locale coverage.
  *
  *   Input: a per-country tab-separated dump (e.g. `US.txt` from
  *   `https://download.geonames.org/export/dump/`, 19 columns, no header). Two sibling files in the
@@ -28,12 +28,12 @@
  */
 
 import { componentsPresentIn } from "@mailwoman/codex/address-format"
+import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { dirname, join } from "path-ts"
-import { TSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 
 /**
  * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
@@ -47,7 +47,7 @@ export const GEONAMES_ADAPTER_ID = "geonames"
 export const GEONAMES_DEFAULT_LICENSE = "CC-BY-4.0"
 
 /**
- * GeoNames main-table column indices (0-based; see the export README).
+ * GeoNames main-table column indices (0-based. see the export readme).
  *
  * Exported because the register's layout is one fact with more than one reader — `@mailwoman/mailwoman`'s same-data
  * benchmark panel reads `cities15000.txt`, which is the same table filtered by population. A second hand-typed copy
@@ -70,7 +70,7 @@ export const GEONAMES_MAIN_COLUMNS = {
 const COL = GEONAMES_MAIN_COLUMNS
 
 /**
- * Populated-place feature codes that are NOT current real places — skip them.
+ * Populated-place feature codes that are not current real places — skip them.
  */
 const NON_CURRENT_PPL = new Set(["PPLH", "PPLQ", "PPLW", "PPLCH"])
 
@@ -84,7 +84,7 @@ async function loadAdmin1(dir: string): Promise<Map<string, string>> {
 	if (!(await pathExists(fp))) return map
 
 	// `header: false` — the file is headerless, and the spliterator eats row 1 as a header otherwise.
-	for await (const cols of TSVSpliterator.fromAsync(fp, { header: false })) {
+	for await (const cols of readUnquotedTSV(fp)) {
 		if (cols[0] && cols[1]) {
 			map.set(cols[0], cols[1])
 		}
@@ -102,9 +102,9 @@ async function loadCountries(dir: string): Promise<Map<string, string>> {
 
 	if (!(await pathExists(fp))) return map
 
-	// `header: false` — the file's header IS a `#` comment, so it falls out with the other comments
+	// `header: false` — the file's header is a `#` comment, so it falls out with the other comments
 	// rather than being consumed as column names.
-	for await (const cols of TSVSpliterator.fromAsync(fp, { header: false })) {
+	for await (const cols of readUnquotedTSV(fp)) {
 		if (cols[0]?.startsWith("#")) continue
 
 		// ISO(0), ISO3(1), iso-numeric(2), fips(3), Country(4), ...
@@ -120,6 +120,7 @@ export function createGeonamesAdapter(): CorpusAdapter {
 	return {
 		id: GEONAMES_ADAPTER_ID,
 		defaultLicense: GEONAMES_DEFAULT_LICENSE,
+		addressRole: AddressRole.Premise,
 		description:
 			"GeoNames populated places (CC-BY-4.0) — global locality coverage incl. small towns, with region/country names from the sibling admin1/countryInfo files.",
 
@@ -129,7 +130,7 @@ export function createGeonamesAdapter(): CorpusAdapter {
 			const countries = await loadCountries(dir)
 
 			// `header: false` — the per-country dump is headerless.
-			const rows = TSVSpliterator.fromAsync(opts.inputPath, { header: false })
+			const rows = readUnquotedTSV(opts.inputPath)
 
 			let emitted = 0
 

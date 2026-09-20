@@ -12,6 +12,12 @@
  *   Output: one row per contractor with `venue` (business name) and address quad `(house_number,
  *   street, locality, region, postcode)`.
  *
+ *   The id spells the publisher's own word for the trade. Iowa titles the dataset `IA Active
+ *   Construction Contractor Registrations`, and the root instructions preserve an external name. The
+ *   id is also stored as data: it is the `source` string on every row of a built corpus and the key a
+ *   training config's `source_weights` map addresses, so renaming it strands every corpus built
+ *   before the rename.
+ *
  *   License: stamped `"Public Domain"` per Iowa state government open-data terms.
  */
 
@@ -20,7 +26,7 @@ import { isPresent } from "@mailwoman/core/objects"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
@@ -50,6 +56,7 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 	return {
 		id: STATE_IA_CONTRACTORS_ADAPTER_ID,
 		defaultLicense: STATE_IA_CONTRACTORS_DEFAULT_LICENSE,
+		addressRole: AddressRole.RegisteredOffice,
 		description:
 			"Iowa Active Construction Contractor Registrations — business name + full street address (public-domain).",
 

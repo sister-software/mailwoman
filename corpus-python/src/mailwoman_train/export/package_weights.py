@@ -85,7 +85,7 @@ def build_model_card(
         "components_supported": list(ACTIVE_TAGS),
         # BIO label vocabulary in the exact order the model emits logits. The JS-side
         # `@mailwoman/neural` loader reads this at runtime so it never has to guess
-        # the active stage's label space; missing field => loader falls back to its
+        # the active stage's label space. missing field => loader falls back to its
         # compile-time default (STAGE2_BIO_LABELS), preserving back-compat with the
         # v3.0.0 published card which predates this field.
         "labels": list(ACTIVE_BIO_LABELS),
@@ -138,7 +138,7 @@ def export_crf_transitions(model: torch.nn.Module, *, crf_loss_weight: float = 0
 def export_semi_crf_transitions(model: torch.nn.Module) -> dict[str, Any] | None:
     """#727 stage-2: the segment-transition table, as a JSON sidecar for the Phase-3 JS decoder.
 
-    Transitions are DECODE-TIME data, not graph — same contract as ``export_crf_transitions`` above.
+    Transitions are DECODE-TIME data rather than graph — same interface as ``export_crf_transitions`` above.
     The ``segment_types`` axis ships IN the file so the JS decoder reads it rather than hardcoding it
     (the PLACETYPE_ORDER dual-maintenance class: a retrained head that reorders types would otherwise
     silently mislabel every downstream decode). Returns None for a span-less model.
@@ -197,7 +197,7 @@ def render_package_json(locale: str, *, package_version: str = "0.1.0") -> dict[
     }
 
 
-# Per-component F1 floors. Coarse targets are the original Phase 2 §6 0.95 contract.
+# Per-component F1 floors. Coarse targets are the original Phase 2 §6 0.95 interface.
 # Stage 2 fine labels carry the v0.3.0 issue-spec floors: 0.6 venue, 0.7 street,
 # 0.8 house_number (issue #57 "per-iteration success metric"). Tags absent from
 # ACTIVE_TAGS are silently skipped at status-line time.

@@ -8,7 +8,7 @@
  *   unattributed, so a question like "where do the nine minutes go" is answered by extrapolating row counts, which is
  *   how the de-order row count came to be wrong by 6,000 rows in an earlier triage.
  *
- *   The recorder writes nothing unless a path is given, and the path must name somewhere OUTSIDE the promotion output
+ *   The recorder writes nothing unless a path is given, and the path must name somewhere outside the promotion output
  *   directory: `comparePromotionOutputs` reads every file under it byte-for-byte, and a wall time differs between two
  *   runs of the same artifact.
  */
@@ -38,7 +38,7 @@ export class LegProfile implements AsyncDisposable {
 	readonly #path: string
 
 	/**
-	 * @param path Where to write the ledger. An EMPTY path writes nothing, which is the default for every run that did
+	 * @param path Where to write the ledger. An empty path writes nothing, which is the default for every run that did
 	 *   not ask to be profiled. A non-empty one must sit outside the battery's output directory — see the file header.
 	 */
 	constructor(path: string) {
@@ -64,7 +64,7 @@ export class LegProfile implements AsyncDisposable {
 	}
 
 	/**
-	 * Write the ledger, or nothing when the path is empty. `total_ms` sums the legs, which is LESS than the run's wall
+	 * Write the ledger, or nothing when the path is empty. `total_ms` sums the legs, which is less than the run's wall
 	 * clock: the untimed remainder is the verdict assembly, the spec read, and whatever else sits between legs.
 	 */
 	async [Symbol.asyncDispose](): Promise<void> {

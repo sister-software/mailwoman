@@ -4,9 +4,9 @@
 import type { CIK, SECGetClient } from "#sdk/edgar/cik"
 
 /**
- * Uses `cik` ZERO-PADDED (`CIK` is always the 10-digit padded form — see the type's own docstring) — this is SEC's
+ * Uses `cik` zero-padded (`CIK` is always the 10-digit padded form — see the type's own docstring) — this is SEC's
  * documented submissions API shape (`CIK0000320193.json`, never `CIK320193.json`). Contrast
- * {@linkcode accessionArchiveURL} below, whose archive paths use the UNPADDED form instead; both conventions are real
+ * {@linkcode accessionArchiveURL} below, whose archive paths use the unpadded form instead. both conventions are real
  * and both appear in this file.
  */
 export function submissionsURL(cik: CIK): string {
@@ -15,7 +15,7 @@ export function submissionsURL(cik: CIK): string {
 
 /**
  * The one form type {@linkcode fetchTenKFilings} keeps. 10-K/A amendments are a distinct filing this task's scope
- * doesn't need — deliberately excluded, not an oversight.
+ * doesn't need — deliberately excluded rather than an oversight.
  */
 const TEN_K_FORM = "10-K"
 
@@ -27,7 +27,7 @@ export interface TenKFiling {
 	accessionNumber: string
 	filingDate: string
 	/**
-	 * The filing's primary document filename (e.g. `"aapl-20230930.htm"`) — the 10-K itself, NOT the Exhibit 21
+	 * The filing's primary document filename (e.g. `"aapl-20230930.htm"`) — the 10-K itself rather than the Exhibit 21
 	 * (`exhibit21.ts`'s concern), which is a separate document within the same accession's archive folder.
 	 */
 	primaryDocument: string
@@ -51,8 +51,8 @@ interface RawSubmissionsPayload {
 /**
  * Validates + extracts every 10-K filing from a raw submissions payload for `cik`. Throws a descriptive error naming
  * `cik` on a structural mismatch (missing `filings.recent`, or its parallel arrays disagreeing in length) — decision
- * 8's "malformed input must be loud" discipline; this is SEC's own documented API shape, so either failure means the
- * upstream contract changed, not a row worth silently dropping.
+ * 8's "malformed input must be loud" discipline. this is SEC's own documented API shape, so either failure means the
+ * upstream interface changed rather than a row worth silently dropping.
  */
 export function parseTenKFilings(cik: CIK, raw: unknown): TenKFiling[] {
 	const recent = (raw as RawSubmissionsPayload | null | undefined)?.filings?.recent

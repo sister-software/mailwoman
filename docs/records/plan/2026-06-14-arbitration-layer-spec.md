@@ -7,7 +7,7 @@ design, and — the critical correction — the check the reconcile retirement p
 
 ## Why this matters (unchanged)
 
-Parity is a **pipeline property, not a model property**. The arena scorecard's `v0-only` column (whole
+Parity is a **pipeline property rather than a model property**. The arena scorecard's `v0-only` column (whole
 parses the old rules system gets that the neural pipeline drops) is the gap. Calibrated per-component
 arbitration closes it **by construction** — the pipeline keeps whichever source is right per component,
 so it can't score below v0 on any component v0 wins.
@@ -26,7 +26,7 @@ so it can't score below v0 on any component v0 wins.
 - **`parse()` vs `parseWithLogits()` divergence** (deep-dive §2.1): `parseWithLogits` (what reconcile
   consumes) skips the postcode/unit repair that `parse()` runs, so reconcile sees **unrepaired** labels.
   This must land first — a shared `buildTokens()` so both paths repair identically. **Still open.**
-- **The grouper bundled the house number** (#565): FIXED this session. The grouper now proposes the bare
+- **The grouper bundled the house number** (#565): fixed this session. The grouper now proposes the bare
   street phrase, so reconcile separates street + house_number (US precondition 20% → 91.7%). Reconcile is
   viable again — but it is **OFF by default** (#566) until the check below clears.
 
@@ -43,7 +43,7 @@ never the assembled pipeline. That is the single most important input to this sp
 
 So #478's pre-registered check, as originally written (arena re-run), is necessary but **not sufficient** —
 it must run the assembled pipeline, and it must include the non-circular precondition/coordinate metrics
-the geocoder campaign added, not just per-tag F1.
+the geocoder campaign added, notper-tag F1.
 
 ## The design
 
@@ -54,15 +54,15 @@ priored by input shape, decided on calibrated confidence, with abstention as a f
    coarse-placer adds (script, coarse-region, OOD-abstain). The prior sets per-component default modes:
    - _clean structured address_ → `rule_preferred` (v0's home turf).
    - _noisy / OOD-script / low rule-confidence_ → `neural_preferred`.
-   - _both sources weak OR coarse-placer abstains_ → **abstain** to the resolver/admin tier (the
-     geocoder's honest-radius downgrade, #244 + the interp calibration #569) rather than emit a confident
+   - _both sources weak or coarse-placer abstains_ → **abstain** to the resolver/admin tier (the
+     geocoder's direct-radius downgrade, #244 + the interp calibration #569) rather than emit a confident
      wrong parse.
 2. **Policy registry (the per-component decision).** The router's prior is overlaid by the loadable
    `from-config` policy (per-locale per-tag `mode` + `confidence_threshold`), so a tag can be A/B'd
    without code edits. `applyPreferenceFilters` is the dedup core — keep the preferred source when it has
    a survivor, fall back otherwise.
 3. **Reconcile (the span-level joint decode).** With #565 landed and the repair-divergence fix, reconcile
-   is a _candidate-producing_ stage feeding the registry, not a silent default. Its value is OOD locales
+   is a _candidate-producing_ stage feeding the registry rather than a silent default. Its value is OOD locales
    (it keeps a mangled street string intact); its danger is the US fusion (now fixed).
 4. **Calibrated confidence (the currency).** All cross-source comparison uses the calibrated posterior
    (#59 isotonic), never raw logits — the only way rule-confidence and neural-confidence are comparable.
@@ -97,7 +97,7 @@ original re-check (#427) omitted.
 
 No retrain. No new classifiers. Wiring + tests + config over implementation that exists. The coarse-placer
 (#244) is the one new model and it is already built (M1+M2); here it is consumed as a routing
-signal, not trained.
+signal rather than trained.
 
 _References: `2026-06-10-DEEP-DIVE-REVIEW.md` §2; the reconcile retirement
 `docs/articles/evals/2026-06-14-reconcile-retirement.md`; the interp calibration

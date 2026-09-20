@@ -3,17 +3,17 @@
 
 /**
  *   `mailwoman corpus golden expand` — generate golden-set candidate entries by LLM-driven
- *   surface-form synthesis from verified-label seeds in a corpus test slice. Candidates land in
- *   `data/eval/golden/candidates/` for operator review; promote with `corpus golden promote`.
+ *   surface-form synthesis from verified-label seeds in a corpus test parquet file. Candidates land in
+ *   `data/eval/golden/candidates/` for operator review. promote with `corpus golden promote`.
  *   Requires `DEEPSEEK_API_KEY` (or `ANTHROPIC_API_KEY` with `--provider anthropic`).
  */
 
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "expand",
@@ -21,12 +21,14 @@ export const spec = {
 	options: {
 		corpus: {
 			type: "string",
-			description: "Corpus test slice path(s), comma-separated (default: the v0.2.0 test slice under the data root)",
+			description:
+				"Corpus test parquet path(s), comma-separated (default: the v0.2.0 test parquet under the data root)",
 		},
 		count: { type: "number", default: 100, description: "Total seeds to process" },
 		variants: { type: "number", default: 5, description: "Variants requested per seed" },
-		output: {
+		out: {
 			type: "string",
+			deprecatedName: "output",
 			description: "JSONL output path (default data/eval/golden/candidates/expand-<ts>.jsonl)",
 		},
 		provider: { type: "string", choices: ["deepseek", "anthropic"], default: "deepseek", description: "LLM provider" },
@@ -36,18 +38,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	corpus?: string
-	count: number
-	variants: number
-	output?: string
-	provider: "deepseek" | "anthropic"
-	model?: string
-	concurrency: number
-	includeSources?: string
-}
-
-const CorpusGoldenExpand: ParsedCommandComponent<Options> = ({ options }) => {
+const CorpusGoldenExpand: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { expandGolden } = await import("@mailwoman/corpus/tools")
 
@@ -56,7 +47,7 @@ const CorpusGoldenExpand: ParsedCommandComponent<Options> = ({ options }) => {
 				corpus: options.corpus,
 				count: options.count,
 				variants: options.variants,
-				output: options.output,
+				output: options.out,
 				provider: options.provider,
 				model: options.model,
 				concurrency: options.concurrency,

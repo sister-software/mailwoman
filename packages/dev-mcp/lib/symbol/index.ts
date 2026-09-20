@@ -16,8 +16,8 @@ const FUNCTION_PATTERN = /^(?:export\s+)?(?:async\s+)?function\s+(\w+)/gm
  * A constant whose value is a function. The optional `(?::.*?)?` absorbs a type annotation, and it must be lazy so a
  * `const f: (a: number) => number = …` annotation surrenders the `=>` inside it and lets the real assignment match.
  *
- * Requiring the right-hand side to open with `function`, `(` or a type parameter is what keeps a duplicated LOOKUP
- * TABLE out of the results: a table is a different problem with a different answer, and reporting one buries the
+ * Requiring the right-hand side to open with `function`, `(` or a type parameter is what keeps a duplicated lookup
+ * table out of the results: a table is a different problem with a different answer, and reporting one buries the
  * duplicated logic this exists to surface.
  */
 const FUNCTION_CONSTANT_PATTERN =
@@ -62,7 +62,7 @@ export interface DeclarationSite {
 export interface FindDeclarationsOptions {
 	cwd: string
 	/**
-	 * The ripgrep executable. Injectable so the missing-binary path is testable; nothing in production overrides it.
+	 * The ripgrep executable. Injectable so the missing-binary path is testable. nothing in production overrides it.
 	 */
 	binary?: string
 	/**
@@ -72,7 +72,7 @@ export interface FindDeclarationsOptions {
 }
 
 /**
- * `rg` exits 1 to mean "searched fine, matched nothing" — the common case here, not a failure.
+ * `rg` exits 1 to mean "searched fine, matched nothing" — the common case here rather than a failure.
  */
 const RIPGREP_NO_MATCH = 1
 
@@ -107,7 +107,7 @@ function nameComponents(name: string): string[] {
  *
  * One-component runs are the vocabulary of the tree — `read`, `build`, `file`, `parse` — so a floor of one reports
  * nearly every name against nearly every other. Of the 2,950 exported function names under `packages/`, the count that
- * are a longer spelling of another exported name is 417 at a floor of one, 130 at two, and 45 at three; across
+ * are a longer spelling of another exported name is 417 at a floor of one, 130 at two, and 45 at three. across
  * different files, 348, 67 and 20. Two keeps the motivating case (`readWorkspaceDirectories` over
  * `workspaceDirectories`) while dropping the vocabulary, and it is why this constant takes an argument: the floor is
  * measurable rather than asserted.
@@ -118,13 +118,13 @@ const COMPONENT_FLOOR = 2
  * The names a new name would be a longer spelling of: every contiguous run of at least {@link COMPONENT_FLOOR} of its
  * components, shorter than the whole.
  *
- * WHY THIS EXISTS. Exact-name matching finds a duplicate only for an author who already guessed the existing name,
+ * Why this exists. Exact-name matching finds a duplicate only for an author who already guessed the existing name,
  * which is the one thing a duplicating author does not know. A duplicate arrives as an existing name plus an affix —
  * `readWorkspaceDirectories` over `workspaceDirectories`, `readPackageJSONFile` over `readPackageJSON` — and the exact
  * rule is silent for every one of them. A contiguous run is what an affix leaves behind, so searching for the runs
  * finds the shorter home from the longer name.
  *
- * The relation is ONE-DIRECTIONAL. It answers "is there a shorter name inside this one", never the reverse, so writing
+ * The relation is one-directional. It answers "is there a shorter name inside this one", never the reverse, so writing
  * the shorter name while the longer already exists still reports nothing.
  */
 export function containedNameCandidates(name: string, floor = COMPONENT_FLOOR): string[] {
@@ -189,7 +189,7 @@ export function findDeclarations(
 
 /**
  * The two declaration shapes, with `nameExpression` spliced in as the name to match. Callers supply either an
- * alternation of exact names or a substring expression; both are built from `\w`, which needs no regex escaping.
+ * alternation of exact names or a substring expression. both are built from `\w`, which needs no regex escaping.
  */
 function declarationPatterns(nameExpression: string): string[] {
 	return [
@@ -266,7 +266,7 @@ function runRipgrep(
 		"--no-heading",
 		"--color",
 		"never",
-		// NOT `--type ts`: ripgrep's `ts` type covers `*.tsx` as well, and a React component is a different reuse
+		// Not `--type ts`: ripgrep's `ts` type covers `*.tsx` as well, and a React component is a different reuse
 		// question with a different answer. Inclusion first, exclusions after — a later glob wins.
 		"--glob",
 		"*.ts",
@@ -314,15 +314,15 @@ export interface SelectReportableOptions {
 /**
  * Narrow raw declaration sites to the ones worth interrupting an author over.
  *
- * The rule is that a name must already be EXPORTED somewhere else. It is structural rather than a curated stoplist, and
- * that is the whole point: a stoplist has to be maintained, and the curated list of shared homes in `AGENTS.md` covers
+ * The rule is that a name must already be exported somewhere else. It is structural rather than a curated stoplist, and
+ * that is the whole point: a stoplist has to be maintained, and the curated list of shared homes in `agents.md` covers
  * a few dozen of several thousand exported names, which is how duplicates get written in the first place. Deriving the
  * rule from export status instead means the generic names — `main`, `run`, `visit`, `load` — fall out on their own,
  * because none of them is importable, while a name with a real home always survives.
  *
- * A name with no exported declaration is NOT necessarily fine. It may be a utility that deserves a home and does not
- * have one yet. Reporting those belongs to a census, not to a write-time hint, because there is nothing here for the
- * author to import.
+ * A name with no exported declaration is not necessarily fine. It may be a utility that deserves a home and does not
+ * have one yet. Reporting those belongs to a census rather than to a write-time hint, because there is nothing here for
+ * the author to import.
  */
 export function selectReportable(
 	found: Map<string, DeclarationSite[]>,
@@ -387,7 +387,7 @@ export function readWriteIntent(payload: unknown): WriteIntent | null {
  * Render findings as the note an author reads before writing.
  *
  * It reports and does not prescribe, and the reason is on the page in `packages/api-kit/lib/metrics.ts`: that file's
- * `percentile` takes a FRACTION where `@mailwoman/core/stats` takes [0, 100], and its docstring explains that the
+ * `percentile` takes a fraction where `@mailwoman/core/stats` takes [0, 100], and its docstring explains that the
  * divergence is deliberate. Phrased as an instruction ("use the existing one"), this note would talk an author into
  * adding a workspace dependency and silently changing a unit. The signature and the export status are what settle the
  * question, so both travel with every site.

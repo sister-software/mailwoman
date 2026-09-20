@@ -1,6 +1,6 @@
 # Hono API surface, Phase 4b: the cutover — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Reduce `mailwoman serve` over to `@mailwoman/api` with a fully wired engine, delete `mailwoman/server/` and the last express dependency, repoint the RemoteResolver protocol to `/v1/resolve`, re-stamp the three drop-in documents with full info (redocly-clean), and true up the docs (AGENTS.md workspace table, spec amendments).
 
@@ -10,14 +10,14 @@
 
 ## Global Constraints
 
-- **Wire notes:** the native surface is ours — `/v1/*` replaces `/parse` + `/api/*`. `RemoteResolver` reads only `res.ok` + `json.tree.roots` (verified in the 4a final review), so the repoint is config/docs, not code: its docstring example, any env-schema description, and any default endpoint strings change from `/api/resolve-tree` to `/v1/resolve`. `RemoteResolver` itself is caller-configured — DO NOT change its class code.
+- **Wire notes:** the native surface is ours — `/v1/*` replaces `/parse` + `/api/*`. `RemoteResolver` reads only `res.ok` + `json.tree.roots` (verified in the 4a final review), so the repoint is config/docs rather than code: its docstring example, any env-schema description, and any default endpoint strings change from `/api/resolve-tree` to `/v1/resolve`. `RemoteResolver` itself is caller-configured — DO NOT change its class code.
 - **Deletions are final** (no shims): `mailwoman/server/` (all routers, metrics.ts + its test, `static/` — the old Pelias-debug pages), `express` from `mailwoman/package.json`. `mailwoman/server`'s subpath export in `mailwoman/package.json` (check both exports maps) goes too — breaking, next-major train continues.
 - **Engine behaviors carried from express** (the 4a handoff notes in `api/routes.ts` + ledger): batch rows trimmed before geocode; per-row batch metrics (`recordTimed` per row with the row's tier); resolve-tree records the street node's stamped tier (`collectStreetTier` port, `"admin"` fallback, `"error"` on throw); geocode's `defaultCountry` heuristic (candidate backend → undefined, FTS → "US"); interp calibration threading; `MAILWOMAN_BATCH_CONCURRENCY`/`MAILWOMAN_BATCH_MAX` env reads via `$public` stay in the engine/serve layer (never raw env).
 - **Boot preflight:** `mailwoman serve` fails friendly at boot when neural/resolver deps or WOF data are missing (message shape mirrors the drop-ins' #1009 block, pointing at `MAILWOMAN_WOF_DB` + the gazetteer fetch), instead of express's lazy 503s. The `/health` endpoint still answers even when degraded (health data provider ports from `HealthRouter` — model card read, extract counts, release manifest).
 - **Graceful shutdown** (spec's deferred house flag, landing now): the serve command handles SIGINT/SIGTERM → `server.close()` → exit; cluster primary forwards to workers. Keep the Pastel/Ink cluster UI structure (ClusterManager/WorkerStatus untouched except the boot swap in ChildThread).
 - **Drop-in doc re-stamp:** the three drop-in `app.ts` files pass full `OpenAPIDocInfo` (license AGPL-3.0-only OR LicenseRef-Commercial + identifier, contact Sister Software + site, externalDocs → their switching pages, servers with host/port template vars matching each CLI's defaults, `security: []`, tags matching their route tags). Receipt: redocly lint each emitted document — zero errors ×3.
-- **Docs trued up:** AGENTS.md workspace table gains `api-kit/` + `api/` rows (count 34→36 workspaces, publishable 33→35) and the `mailwoman` row's description drops the express server mention; spec gets TWO annotated amendments (endpoint sketch → the implemented set incl. POST-only + batch/reload/metrics; serve-mounting → native-only with the cycle rationale + compose-your-own pointer).
-- Tests: the three `mailwoman/test/*-router.test.ts` files port to the wired engine (same skip-if-stack checks: error paths unconditional via `createMailwomanAPI(wiredEngine)`… note error paths need NO stack — use the engine factory's preflight-bypassed form or fixture engines; success paths check on WOF+extracts as today). `server/metrics.test.ts` dies with its module (api-kit's port owns the coverage — verify api-kit/metrics.test.ts covers every assertion the old file had before deleting; anything missing moves over).
+- **Docs trued up:** AGENTS.md workspace table gains `api-kit/` + `api/` rows (count 34→36 workspaces, publishable 33→35) and the `mailwoman` row's description drops the express server mention; spec gets two annotated amendments (endpoint sketch → the implemented set incl. POST-only + batch/reload/metrics; serve-mounting → native-only with the cycle rationale + compose-your-own pointer).
+- Tests: the three `mailwoman/test/*-router.test.ts` files port to the wired engine (same skip-if-stack checks: error paths unconditional via `createMailwomanAPI(wiredEngine)`… note error paths need no stack — use the engine factory's preflight-bypassed form or fixture engines; success paths check on WOF+extracts as today). `server/metrics.test.ts` dies with its module (api-kit's port owns the coverage — verify api-kit/metrics.test.ts covers every assertion the old file had before deleting; anything missing moves over).
 - Standing rules: `erasableSyntaxOnly`; `.ts` imports; acronym casing; both exports maps when touched; lockfile with its change; compile before `out/`; oxfmt; one `--dir` per vitest run; exact-PID kills; git ops sequential.
 
 ---
@@ -32,7 +32,7 @@
 
 **Interfaces:**
 
-- Produces: `createServeEngine(): Promise<ServeEngine>` where `ServeEngine = { engine: MailwomanAPIEngine; preflight: { ok: true } | { ok: false; message: string } }` — builds the shared stack ONCE (classifier, resolver backend from `wofPaths()`/candidate detection, `RegionDatabaseProvider`, parser) mirroring `GeocodeRouter.getDeps` + `AddressRouter`'s parser + `HealthRouter`'s health data; wires every `MailwomanAPIEngine` method:
+- Produces: `createServeEngine(): Promise<ServeEngine>` where `ServeEngine = { engine: MailwomanAPIEngine; preflight: { ok: true } | { ok: false; message: string } }` — builds the shared stack once (classifier, resolver backend from `wofPaths()`/candidate detection, `RegionDatabaseProvider`, parser) mirroring `GeocodeRouter.getDeps` + `AddressRouter`'s parser + `HealthRouter`'s health data; wires every `MailwomanAPIEngine` method:
   - `parse` — `createAddressParser().parse(address, { verbose: true })` → the `ParseOutcome` shape (input span + serialized solutions + optional diagnostic report when `debug`), ported from `AddressRouter`.
   - `geocode` — `oneGeocode` port (geocodeAddress with classifier/resolver/extracts/defaultCountry/interpCalibration). Route records the whole-call metric already; the engine records nothing extra here.
   - `batch` — ported worker-pool (bounded by `$public.MAILWOMAN_BATCH_CONCURRENCY`), rows TRIMMED, per-row `recordTimed(rowLatency, rowTier)` with `"error"` rows recorded and isolated to `{ input, error }` slots. Cap enforcement stays in the route (`batchMax` from `$public.MAILWOMAN_BATCH_MAX` is passed by serve when creating the app).
@@ -42,7 +42,7 @@
   - Deps missing → `preflight.ok: false` with the #1009-style message; the engine object then carries ONLY `parse` (parser needs no gazetteer) + `health` — serve decides whether to boot (flag) or die friendly.
 - Tests: port every assertion from `geocode-router.test.ts` / `resolve-router.test.ts` / `health-router.test.ts` onto `createMailwomanAPI((await createServeEngine()).engine)` + `app.request()` — error paths unconditional (fixture-level: the 400s come from the routes and need no stack; assert them against a `createMailwomanAPI({})`-with-wired-parse variant where stack is absent), success paths behind the SAME `describeIfStack`/`describeIfWOF` checks and equivalent assertions (geocode Austin TX success shape, batch order + isolation, resolve-tree roots, health/metrics shapes). Old `/api/resolve` XML-endpoint tests DO NOT port (endpoint retired with the debug pages — note it in the commit).
 
-- [ ] Steps: read the three test files fully; write `api-engine.ts`; write the ported test file; `yarn vitest run --dir ./mailwoman` (new tests green, old router tests still green — they're deleted in Task 2, not here); `yarn compile`; oxfmt; commit `feat(mailwoman): wired MailwomanAPIEngine (api-engine) — the express router behaviors, engine-side`.
+- [ ] Steps: read the three test files fully; write `api-engine.ts`; write the ported test file; `yarn vitest run --dir ./mailwoman` (new tests green, old router tests still green — they're deleted in Task 2 rather than here); `yarn compile`; oxfmt; commit `feat(mailwoman): wired MailwomanAPIEngine (api-engine) — the express router behaviors, engine-side`.
 
 ---
 
@@ -52,7 +52,7 @@
 
 - Modify: `mailwoman/commands/serve.tsx` (ChildThread boot swap + preflight + graceful shutdown; ClusterManager/WorkerStatus untouched)
 - Delete: `mailwoman/server/` (entire directory incl. `static/` + `metrics.test.ts`), `mailwoman/test/geocode-router.test.ts`, `mailwoman/test/health-router.test.ts`, `mailwoman/test/resolve-router.test.ts`
-- Modify: `mailwoman/package.json` (drop `express`; remove the `./server` subpath from BOTH exports maps if present; lockfile)
+- Modify: `mailwoman/package.json` (drop `express`; remove the `./server` subpath from both exports maps if present; lockfile)
 - Modify: `resolver/remote-resolver.ts` (docstring endpoint example only), plus every `/api/resolve-tree` reference found by `grep -rn "api/resolve-tree" --include="*.ts" --include="*.mdx"` (env-schema descriptions, docs) → `/v1/resolve`
 - Verify-only: `mailwoman/commands/geocode.tsx` and any other `../server/` importer compiles clean after deletion (grep first; migrate stragglers to the api equivalents)
 

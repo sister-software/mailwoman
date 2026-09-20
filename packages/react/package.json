@@ -178,6 +178,11 @@
 			"node": "./lib/map/geometry.ts",
 			"default": "./out/map/geometry.js"
 		},
+		"./map/graticule": {
+			"types": "./out/map/graticule.d.ts",
+			"node": "./lib/map/graticule.ts",
+			"default": "./out/map/graticule.js"
+		},
 		"./map/OverlayLayers": {
 			"types": "./out/map/OverlayLayers.d.ts",
 			"node": "./lib/map/OverlayLayers.tsx",
@@ -328,7 +333,8 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/kind-classifier": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",
-		"@mailwoman/query-shape": "workspace:*"
+		"@mailwoman/query-shape": "workspace:*",
+		"@types/geojson": "^7946.0.16"
 	},
 	"devDependencies": {
 		"@storybook/addon-docs": "^10.6.0",

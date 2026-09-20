@@ -13,21 +13,19 @@
  *   A blocked lane is printed with what it will measure once unblocked and is scored nowhere. Mapping
  *   breadth is blocked by #1980 today, so every run prints `coverage partial`.
  *
- *   Report-only by design: the exit code is non-zero only when the HARNESS broke — a moved ruler, an
- *   instrument that could not run, a missing database. A recorded decision is a result, not a failure, and
- *   the RECORDING itself is the operator's.
+ *   Report-only by design: the exit code is non-zero only when the harness broke — a moved ruler, an
+ *   instrument that could not run, a missing database. A recorded decision is a result rather than a failure, and
+ *   the recording itself is the operator's.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
-import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "Pre-registered phase-2 decision ruler (#1967)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "phase-2-decision",
@@ -44,51 +42,31 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	locale: string
-	weightsCache?: string
-	db?: string
-	resolveDB?: string
-	candidateDB?: string
-	coverage?: string
-	out?: string
-	json: boolean
-}
+const EvalPhase2Decision = harnessCommand(
+	spec,
+	async (options) => {
+		const { printPhase2Receipt, runPhase2Decision } = await import("#eval-harness/phase-2-decision/run")
 
-const EvalPhase2Decision: ParsedCommandComponent<Options> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { printPhase2Receipt, runPhase2Decision } = await import("#eval-harness/phase-2-decision/run")
+		const receipt = await runPhase2Decision({
+			locale: options.locale,
+			weightsCacheRoot: options.weightsCache,
+			db: options.db,
+			resolveDB: options.resolveDB,
+			candidateDB: options.candidateDB,
+			coverageDatabasePath: options.coverage,
+		})
 
-			const receipt = await runPhase2Decision({
-				locale: options.locale,
-				weightsCacheRoot: options.weightsCache,
-				db: options.db,
-				resolveDB: options.resolveDB,
-				candidateDB: options.candidateDB,
-				coverageDatabasePath: options.coverage,
-			})
+		if (options.out) {
+			await writeLocalJSONFile(receipt, options.out)
+		}
 
-			if (options.out) {
-				await writeLocalJSONFile(receipt, options.out)
-			}
+		if (!options.json) {
+			printPhase2Receipt(receipt)
+		}
 
-			if (!options.json) {
-				printPhase2Receipt(receipt)
-			}
-
-			return { receipt }
-		},
-		() => 0
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	if (options.json && state.status === "done") {
-		return <Text>{prettyJSON(state.result.receipt)}</Text>
-	}
-
-	return null
-}
+		return { receipt }
+	},
+	{ exitCode: () => 0, json: ({ receipt }, options) => (options.json ? receipt : undefined) }
+)
 
 export default EvalPhase2Decision

@@ -5,8 +5,6 @@
  *   Regional variant alias lookup. Given a token (or short phrase) and a detected locale, return the
  *   canonical amenity category or brand it refers to.
  *
- *   This is the data-side foundation for #166 (variant alias table + locale-restricted category matching).
- *   The runtime integration into the kind classifier is v0.6.0+ work.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -82,7 +80,7 @@ export function resolveLocaleScope(
  *   weaker because regional variants are by definition regional.
  * - No match when neither holds.
  *
- * Returns ALL matches sorted by confidence descending. Multi-locale variants (like "petrol station" →
+ * Returns all matches sorted by confidence descending. Multi-locale variants (like "petrol station" →
  * en-GB/en-AU/en-NZ/en-ZA) return one entry per locale list — the caller picks.
  */
 export function lookupVariantAliases(text: string, locale: string): AliasLookupResult[] {

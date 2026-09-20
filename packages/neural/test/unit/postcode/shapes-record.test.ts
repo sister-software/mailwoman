@@ -9,11 +9,11 @@
  *
  *   The table is now data, authored once in `@mailwoman/codex`. The trainer cannot import that package (a Modal
  *   container receives only `corpus-python/src`), so it carries a byte-identical copy. The Python suite checks that
- *   copy against the authored one; this checks the same equality from the TypeScript side, so an edit made here is
+ *   copy against the authored one. this checks the same equality from the TypeScript side, so an edit made here is
  *   caught by `yarn test` rather than only by a suite somebody may not run.
  *
- *   It lives in this package, not in codex, because codex is deliberately zero-dependency and the check needs a repo
- *   root resolver. The consumer is the right home for a cross-language contract the consumer depends on.
+ *   It lives in this package rather than in codex, because codex is deliberately zero-dependency and the check needs a repo
+ *   root resolver. The consumer is the right home for a cross-language interface the consumer depends on.
  */
 
 import { POSTCODE_SHAPES, POSTCODE_SHAPES_VERSION } from "@mailwoman/codex/postcode-shapes"
@@ -39,7 +39,7 @@ describe("the postcode shape record", () => {
 		expect(POSTCODE_SHAPES.length).toBeGreaterThanOrEqual(12)
 		expect(POSTCODE_SHAPES_VERSION).toBe("postcode-shapes-v1")
 
-		// Priority IS the index, so the catch-all has to stay last or it claims the spans the specific rows exist for.
+		// Priority is the index, so the catch-all has to stay last or it claims the spans the specific rows exist for.
 		expect(POSTCODE_SHAPES.at(-1)?.label).toBe("NUM5")
 
 		for (const shape of POSTCODE_SHAPES) {

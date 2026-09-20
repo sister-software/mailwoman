@@ -1,4 +1,4 @@
-# Publish the generated API clients — build ONCE, publish per registry from
+# Publish the generated API clients — build once, publish per registry from
 # the same artifact.
 #
 # Three jobs: `generate` runs the receipt-verified pipeline once and uploads
@@ -8,9 +8,9 @@
 # dispatch inputs (default true), so a single-registry retry (e.g. crates.io's
 # verified-email check on the first attempt) republishes in seconds.
 #
-# AUTH — two different mechanisms, both environment-bound:
-# - PyPI: Trusted Publishing (OIDC). PyPI's publisher config binds to THIS
-#   FILENAME (`.github/workflows/publish-clients.yml`) + the `pypi`
+# auth — two different mechanisms, both environment-bound:
+# - PyPI: Trusted Publishing (OIDC). PyPI's publisher config binds to this
+#   filename (`.github/workflows/publish-clients.yml`) + the `pypi`
 #   environment. Renaming this file (or the environment) breaks the OIDC
 #   exchange until the PyPI-side config is updated to match. (This file
 #   superseded `publish-python.yml` — the PyPI publisher config was migrated
@@ -19,10 +19,10 @@
 #   environment — the job's `environment: cargo` declaration is what makes it
 #   resolvable.
 #
-# SEQUENCING: the generated clients stamp `mailwoman/package.json`'s version —
-# ALWAYS dispatch AFTER the npm release they should match (both registries
-# permanently burn published version numbers; a client-only fix rides the next
-# release train — RELEASING.md "Client packages"). Joins the `publish`
+# sequencing: the generated clients stamp `mailwoman/package.json`'s version —
+# always dispatch after the npm release they should match (both registries
+# permanently burn published version numbers. a client-only fix rides the next
+# release train — releasing.md "Client packages"). Joins the `publish`
 # concurrency group so a dispatch can't race an in-flight npm release into
 # generating at a mid-bump version.
 name: Publish API clients
@@ -89,7 +89,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     # The GitHub environment PyPI's Trusted Publisher config expects in the OIDC claims. No secrets
-    # live in it — the trust IS the credential.
+    # live in it — the trust is the credential.
     environment: pypi
     permissions:
       contents: read
@@ -99,7 +99,7 @@ jobs:
       - name: Setup uv
         uses: astral-sh/setup-uv@v7
         with:
-          # Pinned to the lab host's uv (keep in lockstep — bump deliberately, not via "latest").
+          # Pinned to the lab host's uv (keep in lockstep — bump deliberately rather than via "latest").
           version: "0.11.16"
 
       - name: Download Python client artifact
@@ -108,7 +108,7 @@ jobs:
           name: mailwoman-client-python
           path: dist
 
-      # Publishes the EXACT bytes the generate job verified — no regeneration. `--trusted-publishing
+      # Publishes the exact bytes the generate job verified — no regeneration. `--trusted-publishing
       # always` fails loud if the OIDC exchange doesn't happen (e.g. the PyPI-side publisher config
       # drifted from this file/environment name).
       - name: Publish to PyPI (Trusted Publishing)

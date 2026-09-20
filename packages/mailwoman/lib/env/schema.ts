@@ -22,18 +22,18 @@ const RuntimeEnvSchema = z.object({
 			description: "BCP-47 locale override used when a request supplies no locale.",
 			examples: ["en-US", "fr-FR"],
 		}),
-	// Geocode server batch row cap (`POST /v1/batch`).
+	// Geocode server batch row cap (`post /v1/batch`).
 	//
-	// `MAILWOMAN_BATCH_CONCURRENCY` was REMOVED — it was inert. In-process concurrency cannot overlap a geocode:
+	// `MAILWOMAN_BATCH_CONCURRENCY` was removed — it was inert. In-process concurrency cannot overlap a geocode:
 	// `onnxruntime-node`'s `session.run()` blocks the JS thread instead of releasing to the libuv pool, and
 	// `node:sqlite` reads are synchronous. Measured 1.00x flat from 1→16 workers on both parse and full geocode. Don't
-	// reintroduce it without re-measuring; worker threads (see `mailwoman/geocode-stream.ts`) are the only change that
+	// reintroduce it without re-measuring. worker threads (see `mailwoman/geocode-stream.ts`) are the only change that
 	// moves this in Node. Receipts: `docs/engineering/reference/performance.mdx`.
 	MAILWOMAN_BATCH_MAX: blankAsAbsent(z.coerce.number().int().positive().default(1000)).meta({
 		title: "Batch row limit",
 		description: "Maximum rows accepted by `POST /v1/batch` when running `mailwoman serve`.",
 	}),
-	// The informal-standard color kill switch (no-color.org). chalk/Ink honor it on their own; declared here because the
+	// The informal-standard color kill switch (no-color.org). chalk/Ink honor it on their own. declared here because the
 	// debug view's map pane emits raw SGR and must consult it itself — the schema strips unlisted vars.
 	NO_COLOR: z.string().optional().meta({
 		title: "Disable color",

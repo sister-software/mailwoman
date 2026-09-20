@@ -18,7 +18,7 @@
 #   v0.4.0:  CE_weighted × ~1.3 (class-mean) + per_token_NLL × 1.0
 #            ≈ ~1.3× unit-scale, still well below the lr=3e-4 unstable band
 #
-# Separate output_dir; keeps the lr=3e-4 step-750 best checkpoint preserved as a
+# Separate output_dir. keeps the lr=3e-4 step-750 best checkpoint preserved as a
 # secondary fallback.
 
 data:

@@ -2,23 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `country-balanced` slice recipe — the BALANCED, MODEL-FIRST country-coverage slice (#464). The
- *   shipped model is STARVED on `country` (P=R=F1=0 on the homograph eval), so this fills the void
- *   the way the `unit` slice did, but built to AVOID over-firing "trailing token ⇒ country". Three
- *   ingredients, ported faithfully from scripts/build-country-slice-balanced.mjs:
+ *   `country-balanced` recipe — the balanced, model-first country-coverage recipe (#464). The
+ *   shipped model is starved on `country` (P=R=F1=0 on the homograph eval), so this fills the void
+ *   the way the `unit` recipe did, but built to avoid over-firing "trailing token ⇒ country". Three
+ *   ingredients, ported faithfully from the root build script it replaced:
  *
  *   1. Breadth/recall — real OA skeletons (US/DE/FR/IT/NL) with a country token in a varied surface form
- *        from `@mailwoman/codex/country` (canonical / endonym / ISO code), + ~30% country-ABSENT
+ *        from `@mailwoman/codex/country` (canonical / endonym / ISO code), + ~30% country-absent
  *        negatives (teach O-emission, the precision floor).
- *   2. Homograph CONTRAST pairs — each true country-name homograph (Georgia, Jordan, Lebanon, Mexico,
- *        Peru, Turkey) rendered BOTH ways: as `country` (foreign-city context) AND as the US
- *        `region`/`locality` (US-ZIP context). Teaches that the label is CONTEXTUAL, not
+ *   2. Homograph contrast pairs — each true country-name homograph (Georgia, Jordan, Lebanon, Mexico,
+ *        Peru, Turkey) rendered both ways: as `country` (foreign-city context) and as the US
+ *        `region`/`locality` (US-ZIP context). Teaches that the label is contextual rather than
  *        positional.
  *   3. Code-as-region negatives — 2-letter codes that are both a US state abbrev and an ISO country code
  *        (CA/GA/IN/MA/PA/AL) in US-ZIP context → must read as `region`, never `country`.
  *
  *   `--golden` emits a held-out synthetic val over the VT (US) + Berlin (DE) holdouts. This is a
- *   `generate`-mode recipe that still reads REAL tuples off disk — `--count` bounds the OUTPUT, not
+ *   `generate`-mode recipe that still reads real tuples off disk — `--count` bounds the output rather than
  *   the input. The passed `random` (the framework LCG) is consumed in the exact call order the
  *   legacy script used.
  */
@@ -28,16 +28,16 @@ import { COUNTRY_SURFACE_FORMS, CountryNames } from "@mailwoman/codex/country"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
+import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
 import { readOATuples, type CorpusRecipe } from "#recipes/scaffold"
-import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
-// v2: the country TOKEN is decoupled from the skeleton's locale and drawn from a BROAD pool — every
+// v2: the country token is decoupled from the skeleton's locale and drawn from a broad pool — every
 // ISO canonical name + every curated surface form (endonyms/abbrevs). Surface forms are over-weighted
 // so endonyms/abbrevs ("Deutschland","USA","NL") get strong signal.
 
@@ -50,7 +50,7 @@ const COUNTRY_FORM_POOL = (() => {
 })()
 
 /**
- * Negatives: rows with NO country token → teach golden precision.
+ * Negatives: rows with no country token → teach golden precision.
  */
 const COUNTRY_ABSENT_PROB = 0.3
 
@@ -106,7 +106,7 @@ const SOURCES: readonly CountrySource[] = [
 		region: "",
 		order: "fr",
 	},
-	// ES uses the Spanish IGN schema, not the OA standard columns — skipped here (codex still recognizes
+	// ES uses the Spanish IGN schema rather than the OA standard columns — skipped here (codex still recognizes
 	// "España"/"Spain"). A dedicated IGN adapter is a follow-up.
 	{
 		zip: dataRootPath("oa-cache", "it__countrywide.zip"),
@@ -171,21 +171,21 @@ async function readTuples(source: CountrySource, limit: number): Promise<Country
 const SURFACE_FORM_SHARE = 0.6
 
 /**
- * Pick a country token from the BROAD pool, or null (a country-absent negative). v2.
+ * Pick a country token from the broad pool, or null (a country-absent negative). v2.
  */
 function pickCountry(random: () => number): string | null {
 	if (random() < COUNTRY_ABSENT_PROB) return null // negative — teaches "trailing token != always country"
 	const pool = random() < SURFACE_FORM_SHARE ? COUNTRY_FORM_POOL.surface : COUNTRY_FORM_POOL.names
 
-	return pick(pool, random)
+	return sample(pool, random)
 }
 
-// Country-bearing rows: 80% full, 12% full-nl, 8% bare.
+// country-containing rows: 80% full, 12% full-nl, 8% bare.
 const FULL_CUTOFF = 0.8
 const FULL_NEWLINE_CUTOFF = 0.92
 
 /**
- * Render the address body in native-ish order. `country` null → a country-ABSENT negative row.
+ * Render the address body in native-ish order. `country` null → a country-absent negative row.
  */
 function renderCountry(
 	random: () => number,
@@ -209,7 +209,7 @@ function renderCountry(
 		const regPc = [reg, pc].filter(isPresent).join(" ")
 		body = `${hn} ${street}, ${loc}${regPc ? ", " + regPc : ""}`
 	} else if (order === "fr") {
-		// French is NUMBER-street, postcode-city: "84 Route de la Fontaine, 75008 Paris".
+		// French is number-street, postcode-city: "84 Route de la Fontaine, 75008 Paris".
 		body = `${hn} ${street}, ${[pc, loc].filter(isPresent).join(" ")}`
 	} else {
 		// DE/IT/NL: street-number, postcode-city: "Pariser Platz 1, 10117 Berlin".
@@ -218,8 +218,8 @@ function renderCountry(
 	}
 
 	if (!country) {
-		// Negative: a normal address, NO country token/component. Teaches that a trailing region/city/
-		// postcode is NOT a country (counters the v1 golden over-firing).
+		// Negative: a normal address, no country token/component. Teaches that a trailing region/city/
+		// postcode is not a country (counters the v1 golden over-firing).
 		return { fmt: "negative", raw: body, components }
 	}
 
@@ -239,8 +239,8 @@ function renderCountry(
 }
 
 // ── Homograph contrast (the model-first addition) ───────────────────────────────────────────────
-// True country-name homographs: the surface form is BOTH a country AND a US state/locality. Rendering
-// each BOTH ways (foreign-city → country; US-ZIP → region/locality) is what teaches the CONTEXTUAL
+// True country-name homographs: the surface form is both a country and a US state/locality. Rendering
+// each both ways (foreign-city → country. US-ZIP → region/locality) is what teaches the contextual
 // distinction. role: how the surface reads in US context.
 interface Homograph {
 	surface: string
@@ -288,7 +288,7 @@ const HOMOGRAPHS: readonly Homograph[] = [
 	},
 ]
 
-// 2-letter codes that are BOTH a US state abbrev AND an ISO country code → must read as region in US ctx.
+// 2-letter codes that are both a US state abbrev and an ISO country code → must read as region in US ctx.
 interface AbbrevRegion {
 	code: string
 	localities: readonly string[]
@@ -323,8 +323,8 @@ const houseNo = (random: () => number): string => String(1 + Math.floor(random()
 const HOMOGRAPH_WITH_STREET_SHARE = 0.6
 
 /**
- * A homograph CONTRAST row: ~half render the surface as `country` (foreign city), half as the US `region`/`locality`
- * (US ZIP, NO country). Returns iso2 for provenance.
+ * A homograph contrast row: ~half render the surface as `country` (foreign city), half as the US `region`/`locality`
+ * (US ZIP, no country). Returns iso2 for provenance.
  */
 function renderHomograph(random: () => number): {
 	fmt: string
@@ -332,13 +332,13 @@ function renderHomograph(random: () => number): {
 	components: Partial<Record<ComponentTag, string>>
 	iso2: string
 } {
-	const h = pick(HOMOGRAPHS, random)
+	const h = sample(HOMOGRAPHS, random)
 
 	const hn = houseNo(random),
-		street = pick(STREET_POOL, random)
+		street = sample(STREET_POOL, random)
 
 	if (random() < 0.5) {
-		const city = pick(h.cities, random)
+		const city = sample(h.cities, random)
 		const withStreet = random() < HOMOGRAPH_WITH_STREET_SHARE
 		const raw = withStreet ? `${hn} ${street}, ${city}, ${h.surface}` : `${city}, ${h.surface}`
 
@@ -349,10 +349,10 @@ function renderHomograph(random: () => number): {
 		return { fmt: "homograph-country", raw, components, iso2: h.iso2 }
 	}
 
-	const pc = pick(h.us.postcodes, random)
+	const pc = sample(h.us.postcodes, random)
 
 	if (h.us.role === "region") {
-		// surface is the US STATE: "123 Oak Ave, Atlanta, Georgia 30309" → region, no country
+		// surface is the US state: "123 Oak Ave, Atlanta, Georgia 30309" → region, no country
 		return {
 			fmt: "homograph-us-region",
 			raw: `${hn} ${street}, ${h.us.locality}, ${h.surface} ${pc}`,
@@ -361,7 +361,7 @@ function renderHomograph(random: () => number): {
 		}
 	}
 
-	// surface is the US CITY: "123 Oak Ave, Lebanon, TN 37087" → locality, no country
+	// surface is the US city: "123 Oak Ave, Lebanon, TN 37087" → locality, no country
 	return {
 		fmt: "homograph-us-locality",
 		raw: `${hn} ${street}, ${h.surface}, ${h.us.region} ${pc}`,
@@ -371,7 +371,7 @@ function renderHomograph(random: () => number): {
 }
 
 /**
- * An abbrev-as-region negative: "123 Main St, Los Angeles, CA 90012" → region CA, NO country.
+ * An abbrev-as-region negative: "123 Main St, Los Angeles, CA 90012" → region CA, no country.
  */
 function renderAbbrevRegion(random: () => number): {
 	fmt: string
@@ -379,12 +379,12 @@ function renderAbbrevRegion(random: () => number): {
 	components: Partial<Record<ComponentTag, string>>
 	iso2: string
 } {
-	const a = pick(ABBREV_REGIONS, random)
+	const a = sample(ABBREV_REGIONS, random)
 
 	const hn = houseNo(random),
-		street = pick(STREET_POOL, random),
-		locality = pick(a.localities, random),
-		postcode = pick(a.postcodes, random)
+		street = sample(STREET_POOL, random),
+		locality = sample(a.localities, random),
+		postcode = sample(a.postcodes, random)
 
 	return {
 		fmt: "abbrev-region",
@@ -404,22 +404,22 @@ const HOMOGRAPH_FRAC = 0.22
 const ABBREV_FRAC = 0.08
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const countryBalancedRecipe: CorpusRecipe = {
 	name: "country-balanced",
 	description: "Balanced model-first country rows (#464): OA skeletons + ISO surface forms + homograph contrast pairs",
 	mode: "generate",
-	options: [{ flag: "--golden", description: "Emit the held-out VT+Berlin eval slice" }],
+	options: [{ flag: "--golden", description: "Emit the held-out VT+Berlin eval set" }],
 	async run(opts, write) {
 		if (opts.count == null) throw new Error("country-balanced recipe requires --count <N>")
 		const count = opts.count
-		// Legacy build-country-slice-balanced.mjs seeded mulberry32 with the raw seed: `const random = mulberry32(opts.seed)`.
+		// The root build script this recipe replaced seeded mulberry32 with the raw seed: `const random = mulberry32(opts.seed)`.
 		const random = makeMulberry32(opts.seed)
 		const source = opts.sourceName ?? "synth-country"
 		const sources = opts.golden ? EVAL_SOURCES : SOURCES
-		const perSource = Math.ceil((count * 3) / sources.length) // over-read; balance locales
+		const perSource = Math.ceil((count * 3) / sources.length) // over-read. balance locales
 
 		const pool: CountryTuple[] = []
 

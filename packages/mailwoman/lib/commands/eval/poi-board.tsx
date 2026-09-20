@@ -4,29 +4,26 @@
 /**
  *   `mailwoman eval poi-board` — the curated POI query board (spec §3.6, exotic-POI arc). Runs the
  *   real `createRuntimePipeline({ poiQueryKind: { poiDatabasePath } })` surface against every
- *   committed fixture and grades the ASSEMBLED answer (matched category + coordinate), not label F1.
+ *   committed fixture and grades the assembled answer (matched category + coordinate), not label F1.
  *
  *   Floors (spec §3.6, set off the v1 baseline): `overall ≥ 90%`, `abstain = 100%`, `address = 100%`.
- *   They are graded and printed on EVERY run. Pass `--enforce` to turn a breach into a non-zero exit
+ *   They are graded and printed on every run. Pass `--enforce` to turn a breach into a non-zero exit
  *   (the CI-check mode). Without `--enforce` the command stays report-only — it exits 0 on case
- *   failures, and a non-zero exit means the HARNESS broke (missing fixtures, missing db, a pipeline
+ *   failures, and a non-zero exit means the harness broke (missing fixtures, missing db, a pipeline
  *   construction error), never a graded case failing.
  *
  *   `--semantic-observation` injects `mailwoman/observations`' semantic route as an additional phrase
- *   rung, which is the only arm the committed activity-phrased rows are reachable in. It is OFF by
- *   default and the floors are registered against the OFF arm: the board grades the construction that
+ *   rung, which is the only arm the committed activity-phrased rows are reachable in. It is off by
+ *   default and the floors are registered against the off arm: the board grades the construction that
  *   ships.
  */
 
-import { prettyJSON } from "@mailwoman/core/json"
-import { Text } from "ink"
-
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "POI query board (spec §3.6) — graded on the assembled answer, v1 report-only"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "poi-board",
@@ -48,48 +45,27 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	locale: string
-	weightsCache?: string
-	fixtures?: string
-	db?: string
-	resolveDB?: string
-	candidateDB?: string
-	semanticObservation: boolean
-	json: boolean
-	enforce: boolean
-}
+// Without `--json` the runner narrates its table on stdout directly.
+const EvalPoiBoard = harnessCommand(
+	spec,
+	async (options) => {
+		const { runPOIBoard } = await import("#eval-harness/poi/board")
 
-const EvalPoiBoard: ParsedCommandComponent<Options> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { runPOIBoard } = await import("#eval-harness/poi/board")
+		const { report, exitCode } = await runPOIBoard({
+			locale: options.locale,
+			weightsCacheRoot: options.weightsCache,
+			fixturesPath: options.fixtures,
+			db: options.db,
+			resolveDB: options.resolveDB,
+			candidateDB: options.candidateDB,
+			semanticObservation: options.semanticObservation,
+			quiet: options.json,
+			enforce: options.enforce,
+		})
 
-			const { report, exitCode } = await runPOIBoard({
-				locale: options.locale,
-				weightsCacheRoot: options.weightsCache,
-				fixturesPath: options.fixtures,
-				db: options.db,
-				resolveDB: options.resolveDB,
-				candidateDB: options.candidateDB,
-				semanticObservation: options.semanticObservation,
-				quiet: options.json,
-				enforce: options.enforce,
-			})
-
-			return { report, exitCode }
-		},
-		({ exitCode }) => exitCode
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	if (options.json && state.status === "done") {
-		return <Text>{prettyJSON(state.result.report)}</Text>
-	}
-
-	// Non-json mode: the runner narrates its table on stdout directly.
-	return null
-}
+		return { report, exitCode }
+	},
+	{ exitCode: ({ exitCode }) => exitCode, json: ({ report }, options) => (options.json ? report : undefined) }
+)
 
 export default EvalPoiBoard

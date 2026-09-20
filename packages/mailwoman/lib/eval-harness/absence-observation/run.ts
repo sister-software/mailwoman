@@ -3,20 +3,20 @@
 
 /**
  *   The live half of the absence-observation probe (#1965): load the frozen row set, run every row through
- *   the SAME pipeline construction the POI board uses, ask the negative-evidence route what it makes of
+ *   the same pipeline construction the POI board uses, ask the negative-evidence route what it makes of
  *   each answer, and emit a receipt.
  *
- *   THIS MODULE DECIDES NOTHING IT DID NOT READ. Every row and its registered outcome come from
+ *   this module decides nothing IT did not read. Every row and its registered outcome come from
  *   `probe-definition.json`, which {@linkcode loadAbsenceProbeDefinition} refuses to hand over if its
  *   content hash has moved. The runner adds the measurements and the artifact identity.
  *
- *   THE PIPELINE IS UNCHANGED, AND THAT IS THE POINT. No route is injected into the runtime pipeline for
+ *   the pipeline is unchanged, and that is the point. No route is injected into the runtime pipeline for
  *   the absence work: the pipeline answers, and the route reads the finished answer afterwards. The one
  *   route this runner does inject is the semantic phrase route (#1929), and only because the
  *   activity-phrased rows cannot reach a category without it — a row that never formed a POI intent would
  *   record a silence the absence route never caused.
  *
- *   THE RECEIPT CARRIES BOTH IDENTITIES. A silence over an unnamed coverage layer is not reproducible, and
+ *   The receipt records both identities. A silence over an unnamed coverage layer is not reproducible, and
  *   neither is a firing. So the receipt records the coverage layer's own manifest, the recovered coverage
  *   resolution, the exclusion-grade empty cell count, the compiled model version, the poi.db the executor
  *   queried, the resolver backend that answered and the weights version — and when one of those cannot be
@@ -99,7 +99,7 @@ export interface AbsenceProbeOptions extends POIBoardOptions {
 	 */
 	coverageDatabasePath?: string
 	/**
-	 * Commit sha recorded in the receipt. Defaults to the checkout's own short HEAD.
+	 * Commit sha recorded in the receipt. Defaults to the checkout's own short head.
 	 */
 	gitCommit?: string
 }
@@ -107,7 +107,7 @@ export interface AbsenceProbeOptions extends POIBoardOptions {
 /**
  * Run the probe.
  *
- * The POI database the executor queries DEFAULTS to the coverage layer itself, and that default is required: an absence
+ * The POI database the executor queries defaults to the coverage layer itself, and that default is required: an absence
  * qualified by one layer's coverage while the answer came out of a different layer is a claim about two artifacts that
  * were never compared. Pass `db` explicitly only to measure that mismatch on purpose.
  */
@@ -172,7 +172,7 @@ async function gradeRow(
 	const runOpts: PipelineOpts = row.locale ? { locale: row.locale } : {}
 	const result = await pipeline(row.query, runOpts)
 
-	// The semantic route records a firing per probe of its lexicon rung; draining keeps one row's firings from being
+	// The semantic route records a firing per probe of its lexicon rung. draining keeps one row's firings from being
 	// attributed to the next. This probe does not report them — #1928's receipt owns that — but leaving them to
 	// accumulate would grow unbounded across a run.
 	semanticRoute?.takeObservations()

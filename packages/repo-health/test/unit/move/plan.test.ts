@@ -4,7 +4,7 @@
 /**
  * @file A module move over a scratch workspace that reproduces the shapes a corpus recipe move meets: a package
  *   whose `imports` map answers `#recipes/*`, an `exports` map a test file reaches through, a relative import from a
- *   third file, and a relative import INSIDE a moved file, whose depth changes under it.
+ *   third file, and a relative import inside a moved file, whose depth changes under it.
  *
  *   The workspace is a real git checkout because `applyModuleMoves` renames with `git mv`, and a rename the index
  *   knows about is the difference between a reviewer reading a moved file and reading a deletion beside an addition.
@@ -82,7 +82,7 @@ async function fixture() {
 	await runFile("git", ["init", "--quiet"], { cwd: repoRoot, encoding: "utf8" })
 	await runFile("git", ["add", "-A", "--", "packages", "package.json"], { cwd: repoRoot, encoding: "utf8" })
 
-	// A rename is detected against a commit, not against an empty index: with no HEAD, `git mv` still moves the file
+	// A rename is detected against a commit rather than against an empty index: with no head, `git mv` still moves the file
 	// but `git status` reports an addition.
 	await runFile(
 		"git",

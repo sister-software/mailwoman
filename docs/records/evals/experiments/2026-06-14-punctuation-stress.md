@@ -1,10 +1,10 @@
-# Punctuation-stress + paired-delimiter eval — the span proposer doesn't earn its revival (2026-06-14)
+# Punctuation-stress + paired-delimiter eval — the span proposer doesn't warrant its revival (2026-06-14)
 
 _Closes the measurement half of #518. The question was narrow and conditional: our eval surfaces (OA/NAD/golden)
 are government data, punctuation-poor by construction, so neither engine had ever been graded on the
 quadrant where real user input lives — quoted venue names, parenthetical annotations, `c/o` lines,
 unbalanced delimiters. #518 said: measure the class first, and only revive the abandoned Stage 2.7
-paired-delimiter span proposer if the numbers say it earns its keep. They don't._
+paired-delimiter span proposer if the numbers say it warrants its keep. They don't._
 
 ## What was measured
 
@@ -23,7 +23,7 @@ fails every component, which is exactly what the unbalanced-delimiter rows exist
 - **neural** — the shipped int8 model (`model-v140-step-40000-int8`, package v4.6.0; tokenizer `v0.6.0-a0`),
   full ship config (anchor + gazetteer + convention auto + punctuation-gap bridge). Graded on the **folded
   gold view** (affixes joined into `street`) for an apples-to-apples head-to-head with v0.
-- **neural + span proposer** — the Stage 2.7 paired-delimiter proposer (`--span-proposer`, default-off, NOT
+- **neural + span proposer** — the Stage 2.7 paired-delimiter proposer (`--span-proposer`, default-off rather than
   ship config), at three bias settings.
 
 ## Results
@@ -46,7 +46,7 @@ fails every component, which is exactly what the unbalanced-delimiter rows exist
 
 `*` = paired-delimiter classes (the proposer's target). Component accuracy %, 200 rows, folded gold.
 
-## Verdict: the span proposer does not earn its revival (as implemented)
+## Verdict: the span proposer does not warrant its revival (as implemented)
 
 At **every** bias tested, the Stage 2.7 span proposer is a no-op or a regression on the paired-delimiter
 classes it was built for:
@@ -61,9 +61,9 @@ classes it was built for:
   of stripping it.
 
 So the abandoned Chevrotain-style proposer isn't a drop-in win waiting to be switched on. Its annotation
-semantics need a **fix** (the bias has the wrong sign — it should suppress, not absorb), not a parameter
+semantics need a **fix** (the bias has the wrong sign — it should suppress rather than absorb) rather than a parameter
 sweep. Reviving it as-is would regress the very class it targets. **Recommendation: do not revive on these
-numbers; if pursued, treat it as new design work, not a flag flip.** (Caveat: three bias configs are not an
+numbers; if pursued, treat it as new design work rather than a flag flip.** (Caveat: three bias configs are not an
 exhaustive sweep — but a feature that's a no-op at default and net-negative at the two non-trivial settings
 has not cleared the bar #518 set.)
 
@@ -71,7 +71,7 @@ has not cleared the bar #518 set.)
 
 The head-to-head is the real takeaway:
 
-- **Neural beats v0 overall (77.3 vs 75.7) and is categorically more robust — 0 parse deaths vs 2.** On the
+- **Neural beats v0 overall (77.3 vs 75.7) and is categorically more resilient — 0 parse deaths vs 2.** On the
   unbalanced-delimiter rows that exist to test "degrade, don't die," neural degrades gracefully (82.5%) while
   v0 throws on the malformed input.
 - **The two engines fail differently.** v0 **shatters on quotes and poisons neighbors**: `"Big Company HQ"`
@@ -87,7 +87,7 @@ The head-to-head is the real takeaway:
 The implication for the roadmap: the highest-changeage punctuation-stress change is **not** a new span
 proposer — it's reducing neural's span **over-extension at delimiters** (a boundary/decode problem, kin to
 the Saint-Albans fragmentation and the #555 `locateSpan` over-run). That's where the paired-delimiter rows
-actually break, and it's a sharper, cheaper target than reviving Stage 2.7.
+break, and it's a sharper, cheaper target than reviving Stage 2.7.
 
 ## Reproduce
 
@@ -109,5 +109,5 @@ node scripts/eval/score-punctuation-stress.ts \
   view of identical gold (stated in the scorer header).
 - Neural numbers are the shipped int8 v140 / `v0.6.0-a0` tokenizer. Don't compare these absolute figures
   across tokenizer versions — the head-to-head and the span-proposer deltas are what matter here.
-- Three span-proposer bias configs, not an exhaustive sweep. The verdict is "doesn't clear the #518 bar as
+- Three span-proposer bias configs rather than an exhaustive sweep. The verdict is "doesn't clear the #518 bar as
   implemented," not "no parameterization could ever help."

@@ -9,13 +9,13 @@
  *   file catches it. So the comparison is mechanical — re-derive each skeleton from the dataset and require the
  *   committed layout to print the same fields in the same order with the same line breaks.
  *
- *   It reads the dataset through `@mailwoman/core`, which is legal for a TEST and not for `lib/`: `@mailwoman/core`
- *   imports `@mailwoman/codex`, so a source file here reaching back would close that loop. This file lives under
+ *   It reads the dataset through `@mailwoman/core`, which is legal for a test and not for `lib/`: `@mailwoman/core`
+ *   imports `@mailwoman/codex`. Therefore, a source file here reaching back would close that loop. This file lives under
  *   `test/`, which nothing imports, and codex's own manifest stays free of core. The former home was
  *   `@mailwoman/core`, and `@mailwoman/core` imports `@mailwoman/codex`. A codex test reading the dataset would close
- *   that loop; this package already depends on both.
+ *   that loop. this package already depends on both.
  *
- *   The eleven hand-authored countries are NOT compared here. Those depart from the dataset on purpose, and
+ *   The eleven hand-authored countries are not compared here. Those depart from the dataset on purpose, and
  *   `@mailwoman/codex`'s own test pins each departure against its reason.
  */
 
@@ -48,24 +48,25 @@ const FIELD: Readonly<Record<string, string>> = {
 /**
  * The skeleton a layout prints: field names per line, street line collapsed to one marker.
  *
- * Two single-slot lines drop out. Both are AUTHORED rather than transcribed, so comparing them against the source would
- * report every country carrying one as a departure and say nothing:
+ * Two slots drop out. Both are authored rather than transcribed, so comparing them against the source would report
+ * every country carrying one as a departure and say nothing:
  *
  * - `country`, because `%R` is absent from nearly every `fmt` — libaddressinput's consumers add the destination country
  *   themselves.
  * - `dependent_locality`, for the 47 countries measured as printing one; `%D` appears in 14 of the 197 shipped `fmt`
- *   strings, and a country that really has the line still needs it.
+ *   strings, and a country that really has the line still needs it. It takes a line of its own beside the locality, or
+ *   a place inside the locality's line where that line also carries the street, so it is dropped wherever it sits
+ *   rather than only as a line. where the generator put it is what `address-layouts.test.ts` checks.
  */
-const AUTHORED_LINES = new Set(["country", "dependent_locality"])
+const AUTHORED_SLOTS = new Set(["country", "dependent_locality"])
 
 function skeletonOfLayout(layout: AddressLayout, source: readonly string[][]): string[][] {
-	// A line counts as authored only when the SOURCE does not name its slot. The 14 `fmt` strings that carry `%D` are
+	// A slot counts as authored only when the source does not name it. The 14 `fmt` strings that carry `%D` are
 	// compared like any other line, so a transcription error there still fails.
 	const inSource = new Set(source.flat())
+	const transcribed = (name: string): boolean => !AUTHORED_SLOTS.has(name) || inSource.has(name)
 
-	return layout.lines
-		.map((line) => line.flatMap(nameOf))
-		.filter((line) => !(line.length === 1 && AUTHORED_LINES.has(line[0]!) && !inSource.has(line[0]!)))
+	return layout.lines.map((line) => line.flatMap(nameOf).filter(transcribed)).filter((line) => line.length)
 }
 
 function nameOf(atom: AddressAtom): string[] {
@@ -85,7 +86,7 @@ function skeletonOfFormat(fmt: string): string[][] {
 	return fmt
 		.split("%n")
 		.map((line) => [...line.matchAll(/%([A-Z])/g)].flatMap(([, code]) => (FIELD[code!] ? [FIELD[code!]!] : [])))
-		.filter((line) => line.length > 0)
+		.filter((line) => line.length)
 }
 
 const specsDirectory = resolvePackagePath("@mailwoman/core", "data", "chromium-i18n", "ssl-address")
@@ -93,7 +94,11 @@ const specsDirectory = resolvePackagePath("@mailwoman/core", "data", "chromium-i
 const countryFormats = await (async () => {
 	const out = new Map<string, string | null>()
 
-	for (const file of await Globerator.files("json", { cwd: specsDirectory, absolute: false }).toSorted()) {
+	for (const file of await Globerator.files("json", {
+		cwd: specsDirectory,
+		absolute: false,
+		recursive: false,
+	}).toSorted()) {
 		const metadata = await readLocalJSONFile<{ fmt?: string }>(join(specsDirectory, file))
 
 		out.set(file.replace(/\.json$/, ""), metadata.fmt ?? null)

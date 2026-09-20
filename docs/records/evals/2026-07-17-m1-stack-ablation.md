@@ -11,7 +11,7 @@ sweeps CPU-only.
 Reading note: ablating a channel the model was TRAINED with is deliberate out-of-distribution
 input (#566/#685), so a channel delta reads "what this channel is worth to the trained model" —
 not "what a model trained without it would score." That is the right question for the
-consolidation ledger (P2): it prices what each layer earns at inference time today.
+consolidation ledger (P2): it prices what each layer warrants at inference time today.
 
 ## Micro-F1 deltas vs the full production config
 
@@ -31,7 +31,7 @@ consolidation ledger (P2): it prices what each layer earns at inference time tod
 
 ## The four findings
 
-**1. The gazetteer channel IS the stack.** Removing it costs −10.4 micro on golden-us and
+**1. The gazetteer channel is the stack.** Removing it costs −10.4 micro on golden-us and
 collapses the country tag everywhere (−66.5 us / −60.0 fr / −63.4 parity — country is carried
 almost entirely by the atlas feed), with locality −21.6 and region −16.6 on US riding with it. The
 raw-model rows confirm it: of the ~9-point total stack value on us/fr/parity, nearly all of it is
@@ -52,9 +52,9 @@ Follow-up filed: either fix the locality interaction or make the check score the
 0.0 everywhere; and `suppressGazetteerNearPostcode` (the #956-era near-postcode choreography) is
 **+0.6 on golden-us when removed** (house_number +1.9, postcode +1.2) — a repair built for an older
 model era that now slightly hurts the current one. All three are P2 consolidation-ledger
-candidates: retire, or show a arena where they earn their keep.
+candidates: retire, or show a arena where they warrant their keep.
 
-**4. The word-consistency heal and the postcode anchor earn their keep — asymmetrically.** The
+**4. The word-consistency heal and the postcode anchor warrant their keep — asymmetrically.** The
 heal is worth +0.6/+0.8/+2.6 (us/fr/parity — largest exactly where input is hostile; keep,
 default-ON vindicated). The anchor channel is worth +1.6 on FR (house_number +5.7 — FR leans on
 it) but reads −0.8 on golden-us, i.e. mildly counterproductive on clean US input. Not actionable

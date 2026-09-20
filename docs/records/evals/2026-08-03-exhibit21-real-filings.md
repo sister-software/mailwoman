@@ -9,7 +9,7 @@ time. Across the 21 filings it reached, the parser emitted **245 subsidiaries fr
 that state roughly 2,640**. Ten of the 21 yielded nothing at all. Several of the 245 were not
 subsidiaries.
 
-This page records what the filings actually contain, what the parser did with them, and what
+This page records what the filings contain, what the parser did with them, and what
 it does now.
 
 ## How the corpus was built
@@ -21,7 +21,7 @@ then the most recent 10-K's Exhibit 21.
 Three names produced no document to parse, all for ordinary reasons: Frontier Communications
 Parent has no 10-K on file under that CIK; Consolidated Communications and United States
 Cellular each filed a most-recent 10-K carrying no Exhibit 21. A filing without one is
-common, not an error.
+common rather than an error.
 
 The other 21 documents were fetched and parsed. Thirteen of them — chosen to cover every
 distinct layout in the set, and all under 25 KB — are vendored at
@@ -98,10 +98,10 @@ vocabulary: a jurisdiction column repeats (Charter, 9 distinct values over 135 r
 5). The test is now a table-level one requiring both a designation majority and high
 distinctness.
 
-Abstaining when a labelled name column is blank looks safe until you meet an indented
+Abstaining when a labeled name column is blank looks safe until you meet an indented
 corporate tree. Telephone and Data Systems indents each subsidiary one column to the right of
 its parent, and 132 of its 183 subsidiaries sit on such rows. Taking the first non-blank
-column between the labelled name column and the labelled jurisdiction column recovers them.
+column between the labeled name column and the labeled jurisdiction column recovers them.
 The nesting depth is discarded, which costs nothing here — an Exhibit 21 row becomes a
 registrant→subsidiary edge either way.
 
@@ -133,7 +133,7 @@ parser (`filer/test-fixtures/edgar/reference-oracle.py`, kept so the numbers can
 re-derived), read line by line against the source documents.
 
 That distinction is the whole point of this exercise. An `expected.json` generated from the
-parser would have recorded, as the contract, the eight zero-yield documents and the eighteen
+parser would have recorded, as the interface, the eight zero-yield documents and the eighteen
 fabricated names — all of which the hand-written fixture suite was perfectly happy with.
 
 ## Name resolution is not solved, and is out of scope here
@@ -153,7 +153,7 @@ is not part of this change.
 A related defect was measured and is worth stating separately: `company_tickers.json` carries
 one row per _ticker_, so a registrant with several share classes appears several times under
 one CIK. Resolving "Liberty Broadband Corporation" returned the same CIK four times, each at
-1.0, and the tie rule — which exists to stop a caller narrowing a genuine collision between
+1.0, and the tie rule — which exists to stop a caller narrowing an actual collision between
 two different companies — reported a four-way tie. The same phantom tie appeared for Comcast,
 AT&T, T-Mobile and Telephone and Data Systems.
 
@@ -187,4 +187,4 @@ Lumen's manifest is vendored for that test. It carries 161 `<DOCUMENT>` blocks w
 
 Beyond that: the CIK corroboration rule, the share-class collapse, and the orchestrator that
 walks corroborated registrants into `filer_family` rows. Until those land, nothing from EDGAR
-reaches `filer.db` in production — this change makes the parser correct, not the ingest live.
+reaches `filer.db` in production — this change makes the parser correct rather than the ingest live.

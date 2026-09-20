@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Composed PipelineExplorer stories against a MOCK runtime — no ONNX, no gazetteer. The `Ready`
+ *   Composed PipelineExplorer stories against a mock runtime — no ONNX, no gazetteer. The `Ready`
  *   story returns a fixed parse; `Loading` shows the bundle-load state.
  */
 

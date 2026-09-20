@@ -3,26 +3,26 @@
 
 /**
  *   OpenAddresses Latin-off-map outlier exposure for the #244 coarse-placer (milestone 3, breadth).
- *   The successor to build-outlier-latin.ts (Overture): Overture's ALPHA addresses theme only
- *   carries real rows for ~7 off-map countries, so a model trained on them MEMORIZED rather than
+ *   The successor to build-outlier-latin.ts (Overture): Overture's alpha addresses theme only
+ *   carries real rows for ~7 off-map countries, so a model trained on them memorized rather than
  *   learned an "off-map" boundary (night-15 finding). OpenAddresses covers far more countries —
  *   this assembles address strings from OA's per-country CSVs and appends them as `country:
- *   "OTHER"`.
+ *   "other"`.
  *
  *   Discipline (per the #244 scoping note + DeepSeek consult):
  *
- *   - LEAVE-ONE-LANGUAGE-FAMILY-OUT, not random: whole families are held out (Nordic, Baltic, …) so a
- *       trained sibling's shared n-grams can't rescue the generalization metric. TRAIN families
- *       feed train/val/test(indist); HELDOUT families go ONLY to the dedicated test file.
+ *   - leave-one-language-family-OUT rather than random: whole families are held out (Nordic, Baltic, …) so a
+ *       trained sibling's shared n-grams can't rescue the generalization metric. train families
+ *       feed train/val/test(indist); heldout families go only to the dedicated test file.
  *   - Schema variance: read via DuckDB read_csv_auto(..., union_by_name) so differing per-source OA
- *       schemas align; assemble to the SAME format the in-map rows use (build-outlier-latin's
+ *       schemas align. assemble to the same format the in-map rows use (build-outlier-latin's
  *       assemble).
- *   - Dedup (per country) + per-country CAP (downsample): PL/CZ dwarf others, so cap so OTHER isn't
+ *   - Dedup (per country) + per-country CAP (downsample): PL/CZ dwarf others, so cap so `other` isn't
  *       "mostly Polish".
- *   - Country filter: only OFF-MAP countries (never the 11 in-map); the in-map test.jsonl is untouched.
+ *   - Country filter: only off-MAP countries (never the 11 in-map); the in-map test.jsonl is untouched.
  *
- *   Run AFTER build-dataset + the exposure outliers (it APPENDS). Re-runnable: rewrites the
- *   dedicated test file and appends fresh OTHER rows — rebuild train/val before re-running.
+ *   Run after build-dataset + the exposure outliers (it appends). Re-runnable: rewrites the
+ *   dedicated test file and appends fresh `other` rows — rebuild train/val before re-running.
  *
  *   Run: `mailwoman placer build-dataset --outliers oa --oa-dir <extracted-OA-root> [--per-country
  *   6000]`
@@ -59,7 +59,7 @@ export interface BuildOutlierOAOptions {
 	 */
 	perCountry?: number
 	/**
-	 * Dataset dir the OTHER rows append to. Default `<repo>/data/coarse-placer`.
+	 * Dataset dir the `other` rows append to. Default `<repo>/data/coarse-placer`.
 	 */
 	data?: PathBuilderLike
 }
@@ -76,13 +76,13 @@ export interface BuildOutlierOAResult {
 }
 
 /**
- * The in-map countries the coarse-placer routes to — never appear in OTHER.
+ * The in-map countries the coarse-placer routes to — never appear in `other`.
  */
 const IN_MAP = new Set<string>(COUNTRIES)
 
 /**
- * Language/region families for the leave-one-family-out split. Off-map countries OA's europe+asia zips plausibly carry;
- * the actual TRAIN/HELDOUT set is intersected with what's on disk at runtime. HELDOUT families are the generalization
+ * Language/region families for the leave-one-family-out split. Off-map countries OA's europe+asia zips plausibly carry.
+ * the actual train/heldout set is intersected with what's on disk at runtime. heldout families are the generalization
  * probe (the model never sees a single row from them). Off-map families, intersected at runtime with what OA's
  * europe+asia zips actually carry (verified on disk: ae at au be cz dk ee fi gr il is kw kz lt lu lv nc nz pl pt qa ro
  * sa se sg si sk).
@@ -101,7 +101,7 @@ const FAMILIES: Record<string, string[]> = {
 }
 
 /**
- * Leave-one-language-FAMILY-out probe (DeepSeek): hold out WHOLE families the model never sees a row from — Baltic
+ * Leave-one-language-family-out probe (DeepSeek): hold out whole families the model never sees a row from — Baltic
  * (Latin, distinct), Oceania (English-Latin, distinct), Middle-East (romanized non-Latin).
  */
 const HELDOUT_FAMILIES = new Set(["baltic", "oceania", "middle_east"])
@@ -138,12 +138,12 @@ export async function buildOutlierOA(
 
 		try {
 			res = await duck.runAndReadAll(
-				// union_by_name aligns the differing per-source schemas; LOWER the header access so NUMBER /
+				// union_by_name aligns the differing per-source schemas. lower the header access so number /
 				// number both resolve. Pull a generous superset, dedup+cap in JS.
 				`SELECT COLUMNS('(?i)^(number|street|city|postcode)$') FROM read_csv_auto('${glob}', union_by_name=true, ignore_errors=true, sample_size=-1) LIMIT ${PER * 8}`
 			)
 		} catch (error) {
-			// oxlint-disable-next-line mailwoman/prefer-spliterator -- An in-memory error message, not a file.
+			// oxlint-disable-next-line mailwoman/prefer-spliterator -- An in-memory error message rather than a file.
 			report?.(`  ${cc}: SKIP (${errorMessage(error).split("\n")[0]})`)
 
 			return []
@@ -151,7 +151,7 @@ export async function buildOutlierOA(
 
 		const out = collectOutlierRows(
 			res.getRowObjects().map((r) => {
-				// COLUMNS() preserves source-case keys; normalize to lowercase access.
+				// columns() preserves source-case keys. normalize to lowercase access.
 				const row: Record<string, unknown> = {}
 
 				for (const [k, v] of Object.entries(r)) {
@@ -168,7 +168,7 @@ export async function buildOutlierOA(
 
 	const trainAppend: string[] = []
 	const valAppend: string[] = []
-	const testRows: OaTestRow[] = [] // {raw, country:"OTHER", group, srcCountry, family}
+	const testRows: OaTestRow[] = [] // {raw, country:"other", group, srcCountry, family}
 	let trainCC = 0
 	let heldCC = 0
 

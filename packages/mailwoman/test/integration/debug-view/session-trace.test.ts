@@ -3,7 +3,7 @@
 
 /**
  *   The `trace: true` session, against the real classifier: what it records, and — the required half — that
- *   recording it changes no answer. The debug view is an INSPECTION surface; the moment its extra decode could move a
+ *   recording it changes no answer. The debug view is an inspection surface. the moment its extra decode could move a
  *   coordinate, every reading taken through it would be about a different pipeline than the one that ships.
  *
  *   Guarded on the same prerequisites as `static.test.ts` (weights + a WOF admin distribution), and skipping for the
@@ -47,7 +47,7 @@ describe.skipIf(!(hasWOFDB && hasWeights))("geocode session tracing", () => {
 				const without = await plain.geocode(ADDRESS)
 
 				// The answer is the answer, traced or not. The one field a trace adds is the derivation projected from the
-				// records the sink received; it is absent, not empty, on the untraced path.
+				// records the sink received. it is absent rather than empty, on the untraced path.
 				const { derivation, ...tracedResult } = withTrace.result
 
 				expect(derivation).toBeDefined()
@@ -55,14 +55,14 @@ describe.skipIf(!(hasWOFDB && hasWeights))("geocode session tracing", () => {
 				expect(tracedResult).toEqual(without.result)
 				expect(withTrace.tree).toEqual(without.tree)
 
-				// An untraced session records no trace — absent, not an empty one.
+				// An untraced session records no trace — absent rather than an empty one.
 				expect(without.trace).toBeUndefined()
 
 				const trace = withTrace.trace
 
 				if (!trace) throw new Error("expected a trace from a session opened with trace: true")
 
-				// The trace is about the SAME text the tree was built from (post Stage-1 normalize).
+				// The trace is about the same text the tree was built from (post Stage-1 normalize).
 				expect(trace.parse.text).toBe(withTrace.tree.raw)
 				expect(trace.parse.pieces.length).toBeGreaterThan(0)
 				expect(trace.parse.tokens).toHaveLength(trace.parse.pieces.length)

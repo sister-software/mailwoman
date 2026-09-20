@@ -1,6 +1,6 @@
 # License Key on WebCrypto Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task, inline in one session. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:executing-plans to implement this plan task-by-task, inline in one session. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** The license key format in `@mailwoman/core` signs and verifies on WebCrypto, gains the `lid` and `agreement` fields, reads its trusted keys from one typed register that also produces the well-known JSON, and is importable by a Cloudflare Worker through `@mailwoman/core/license/key` and `@mailwoman/core/license/register` with no `node:` specifier in the bundle.
 
@@ -19,7 +19,7 @@
 - Comments state invariants; no dates, PR numbers, or "now"/"added".
 - Acronym casing: `PEM`, `DER`, `URL`, `ID` as whole components: `publicKeyDER`, `licenseKeyID`, `toBase64URL`.
 - Wire keys snake_case; the payload fields `lid` and `agreement` are lower-case words.
-- Every existing hand-issued token stays valid: the signature covers `mwl1.<payload>` bytes and the WebCrypto verifier must accept a token the `node:crypto` signer produced. Task 0 captures that fixture BEFORE the swap.
+- Every existing hand-issued token stays valid: the signature covers `mwl1.<payload>` bytes and the WebCrypto verifier must accept a token the `node:crypto` signer produced. Task 0 captures that fixture before the swap.
 - Run `yarn compile` before any test that spawns the compiled CLI. Pre-commit runs the compiled CLI too.
 - Commit messages end with `Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg`.
 - Work happens on branch `docs/license-shop-design` in the worktree `.claude/worktrees/license-posture`; rename it to `feat/license-key-webcrypto` at Task 0. Never `cd` to the main checkout.
@@ -40,7 +40,7 @@
 | `packages/core/lib/license/trusted-keys.ts` (delete)                                    | replaced by the register                                                                                                                      |
 | `packages/core/lib/license/configured.ts` (modify)                                      | async; reads the register                                                                                                                     |
 | `packages/core/lib/license/publication.ts` (modify)                                     | imports `PublishedLicenseKeys` from the register                                                                                              |
-| `packages/core/lib/license/index.ts` (modify)                                           | exports the register, not trusted-keys                                                                                                        |
+| `packages/core/lib/license/index.ts` (modify)                                           | exports the register rather than trusted-keys                                                                                                 |
 | `packages/core/package.json` (modify)                                                   | `./license/key`, `./license/register` exports; `esbuild` devDependency                                                                        |
 | `packages/core/test/unit/crypto/ed25519.test.ts`, `base64url.test.ts` (create)          | the primitives                                                                                                                                |
 | `packages/core/test/unit/license/key.test.ts`, `register.test.ts` (modify/create)       | async key tests, the legacy fixture, the register derivations                                                                                 |
@@ -240,7 +240,7 @@ describe("Ed25519 on WebCrypto", () => {
 		expect(await verifyEd25519(new Uint8Array([1]), pair.publicKeyPEM, signature)).toBe(false)
 	})
 
-	it("answers false, not a throw, for a signature of the wrong length", async () => {
+	it("answers false rather than a throw, for a signature of the wrong length", async () => {
 		expect(await verifyEd25519(bytes, fixture.publicKeyPEM, new Uint8Array(3))).toBe(false)
 	})
 
@@ -915,7 +915,7 @@ export interface PublishedLicenseKeys {
 }
 
 const WELL_KNOWN_COMMENT =
-	"The public halves of the commercial license signing keys, by key id, with each key's status. `mailwoman doctor --online` and `mailwoman license verify --online` read this to confirm a configured key's id is still active; offline verification uses the same keys shipped in @mailwoman/core/license. This file is derived from packages/core/lib/license/register.ts by `mailwoman license register --write`; edit the register, not this file."
+	"The public halves of the commercial license signing keys, by key id, with each key's status. `mailwoman doctor --online` and `mailwoman license verify --online` read this to confirm a configured key's id is still active; offline verification uses the same keys shipped in @mailwoman/core/license. This file is derived from packages/core/lib/license/register.ts by `mailwoman license register --write`; edit the register rather than this file."
 
 export function publishedLicenseKeys(): PublishedLicenseKeys {
 	return {
@@ -1131,7 +1131,7 @@ Check that `makeTemporaryDirectory` is the name `@mailwoman/core/fs/temporary` e
 - [ ] **Step 2: Run to verify it fails**
 
 Run: `yarn compile && yarn vitest run packages/mailwoman/test/integration/license-cli.test.ts`
-Expected: the `register` test FAILS (unknown action); the other two may fail on the compile of `license.ts` against the async API. Fix compile first: it is the next step.
+Expected: the `register` test fails (unknown action); the other two may fail on the compile of `license.ts` against the async API. Fix compile first: it is the next step.
 
 - [ ] **Step 3: Update the command**
 
@@ -1355,7 +1355,7 @@ test("@mailwoman/core/license/key and /register bundle for a Worker with no node
 
 Run: `yarn workspace @mailwoman/core add -D esbuild@0.28.2 && yarn vitest run packages/core/test/integration/worker-bundle.test.ts`
 
-Expected: PASS if Tasks 1 to 3 left the graph clean, FAIL naming the module otherwise. If it names `packages/core/lib/objects.ts` reaching `spliterator` and that in turn reaching `node:`, the fix is a `#json/strict.ts` module holding `parseJSONStrict` alone (the function has no Node dependency; the shelf it sits on does) and `key.ts` importing that. If it names `#errors/schema`, the same move. Record the module the test named in the commit message.
+Expected: pass if Tasks 1 to 3 left the graph clean, fail naming the module otherwise. If it names `packages/core/lib/objects.ts` reaching `spliterator` and that in turn reaching `node:`, the fix is a `#json/strict.ts` module holding `parseJSONStrict` alone (the function has no Node dependency; the shelf it sits on does) and `key.ts` importing that. If it names `#errors/schema`, the same move. Record the module the test named in the commit message.
 
 - [ ] **Step 3: Commit**
 

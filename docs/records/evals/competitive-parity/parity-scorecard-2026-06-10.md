@@ -1,7 +1,7 @@
 # Parity Scorecard — 2026-06-10 (baseline: v4.2.0, the consolidation flag-plant)
 
 Supersedes [2026-06-09](./parity-scorecard-2026-06-09.md). Same two lenses, same rules:
-arena head-to-head is whole-parse-strict (honest, understates per-tag wins); per-tag F1 is
+arena head-to-head is whole-parse-strict (direct, understates per-tag wins); per-tag F1 is
 what the campaign moves; real-OOD columns are the truth for campaign tags. Self-emitted
 from `external-arenas.sh` + `per-locale-f1.ts` + the real-OOD scorers — do not hand-edit.
 

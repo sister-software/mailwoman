@@ -116,7 +116,7 @@ def test_augment_row_region_only_expands_region_labeled():
     results = list(augment_row(row, rng, directional_prob=0.0, region_prob=1.0))
     assert len(results) == 2
     augmented = results[1]
-    # PA (labeled B-street) should NOT be expanded — only DC (B-region) should
+    # PA (labeled B-street) should not be expanded — only DC (B-region) should
     assert augmented["tokens"][0] == "PA"
     assert "District" in augmented["tokens"]
 
@@ -178,7 +178,7 @@ def test_glue_fuses_last_token_of_multi_token_region():
 
 def test_glue_requires_digit_leading_postcode():
     # GB-style letter-leading postcode: fusing would create a letter→letter boundary
-    # SentencePiece may not split — must NOT fire.
+    # SentencePiece may not split — must not fire.
     row = {
         "raw": "London England SW1A 1AA",
         "tokens": ["London", "England", "SW1A", "1AA"],
@@ -206,7 +206,7 @@ def test_glue_requires_adjacency():
 
 def test_glue_default_off_preserves_rng_stream():
     # glue_prob=0 must not consume an rng draw — existing recipes stay bit-identical.
-    # (directional + region each always draw once; glue must not add a third.)
+    # (directional + region each always draw once. glue must not add a third.)
     ref = random.Random(7)
     ref.random(), ref.random()
     expected = ref.random()
@@ -245,12 +245,12 @@ def test_glued_raw_projects_split_labels_onto_pieces():
 
 # region Char-offset span re-target (#519)
 
-# Every augmented COPY must carry spans consistent with ITS raw — the mutation-upstream hazard
-# this slice exists to close.
+# Every augmented copy must carry spans consistent with its raw — the mutation-upstream hazard
+# this section exists to close.
 
 
-def _slices(row: dict) -> list[tuple[str, str]]:
-    """(tag, raw slice) pairs for a row's span triple."""
+def _span_texts(row: dict) -> list[tuple[str, str]]:
+    """(tag, span text) pairs for a row's span triple."""
     return [
         (t, row["raw"][s:e]) for s, e, t in zip(row["span_starts"], row["span_ends"], row["span_tags"], strict=True)
     ]
@@ -284,7 +284,7 @@ def test_expansion_splices_raw_and_retargets_spans():
     assert len(results) == 2
     augmented = results[1]
     assert augmented["raw"] == "350 5th Ave Northwest"
-    assert _slices(augmented) == [("house_number", "350"), ("street", "5th Ave Northwest")]
+    assert _span_texts(augmented) == [("house_number", "350"), ("street", "5th Ave Northwest")]
     _assert_span_invariants(augmented)
 
 
@@ -322,7 +322,7 @@ def test_glue_shifts_spans_with_the_splice():
     }
     fused = glue_region_postcode(row, 4)
     assert fused["raw"] == "123 Main St Buffalo NY14201"
-    assert _slices(fused) == [
+    assert _span_texts(fused) == [
         ("house_number", "123"),
         ("street", "Main St"),
         ("locality", "Buffalo"),
@@ -371,8 +371,8 @@ def test_punct_drop_removes_separator_commas_and_retargets_spans():
     dropped = drop_separator_punct(_punct_row())
     assert dropped is not None
     assert dropped["raw"] == "123 Main St Portland OR 97214"
-    # The critical property: every span still slices its ORIGINAL entity text in the mutated raw.
-    assert _slices(dropped) == [
+    # The critical property: every span still covers its original entity text in the mutated raw.
+    assert _span_texts(dropped) == [
         ("house_number", "123"),
         ("street", "Main St"),
         ("locality", "Portland"),
@@ -387,7 +387,7 @@ def test_punct_drop_removes_separator_commas_and_retargets_spans():
 
 
 def test_punct_drop_preserves_interior_apostrophe():
-    """A gap comma is dropped; an apostrophe INSIDE the venue span is kept (drop is gap-only)."""
+    """A gap comma is dropped. an apostrophe inside the venue span is kept (drop is gap-only)."""
     row = {
         "raw": "Ben & Jerry's, Burlington",
         "tokens": ["Ben", "&", "Jerry's,", "Burlington"],
@@ -399,12 +399,12 @@ def test_punct_drop_preserves_interior_apostrophe():
     dropped = drop_separator_punct(row)
     assert dropped is not None
     assert dropped["raw"] == "Ben & Jerry's Burlington"
-    assert _slices(dropped) == [("venue", "Ben & Jerry's"), ("locality", "Burlington")]
+    assert _span_texts(dropped) == [("venue", "Ben & Jerry's"), ("locality", "Burlington")]
     _assert_span_invariants(dropped)
 
 
 def test_punct_drop_removes_standalone_punct_token():
-    """A comma that is its OWN whitespace token is dropped from tokens/labels, not left empty."""
+    """A comma that is its own whitespace token is dropped from tokens/labels rather than left empty."""
     row = {
         "raw": "Portland , OR",
         "tokens": ["Portland", ",", "OR"],
@@ -415,10 +415,10 @@ def test_punct_drop_removes_standalone_punct_token():
     }
     dropped = drop_separator_punct(row)
     assert dropped is not None
-    assert dropped["raw"] == "Portland  OR"  # the comma char removed; its surrounding spaces remain
+    assert dropped["raw"] == "Portland  OR"  # the comma char removed. its surrounding spaces remain
     assert dropped["tokens"] == ["Portland", "OR"]
     assert dropped["labels"] == ["B-locality", "B-region"]
-    assert _slices(dropped) == [("locality", "Portland"), ("region", "OR")]
+    assert _span_texts(dropped) == [("locality", "Portland"), ("region", "OR")]
 
 
 def test_punct_drop_strips_wrapping_quotes():
@@ -433,7 +433,7 @@ def test_punct_drop_strips_wrapping_quotes():
     dropped = drop_separator_punct(row)
     assert dropped is not None
     assert dropped["raw"] == "350 5th Ave"
-    assert _slices(dropped) == [("house_number", "350"), ("street", "5th Ave")]
+    assert _span_texts(dropped) == [("house_number", "350"), ("street", "5th Ave")]
     assert dropped["tokens"] == ["350", "5th", "Ave"]
 
 
@@ -482,14 +482,14 @@ def test_punct_drop_fires_via_augment_row():
 # The expansions must never rebuild raw via " ".join(tokens): the join destroys whitespace
 # geometry (newlines, double spaces) and re-quantizing spans to token boundaries absorbs
 # punctuation the v0.5.0 spans deliberately exclude. The canonical probe is a dotted P.O. Box
-# beside a comma-bearing token.
+# beside a comma-containing token.
 
 
 def _dotted_po_box_row() -> dict:
     # raw:  P.O. Box 123, Buffalo NY 14201
     #       0         1         2
     #       0123456789012345678901234567890
-    # The po_box span [0, 12) excludes the trailing comma; the comma rides inside the "123,"
+    # The po_box span [0, 12) excludes the trailing comma. the comma rides inside the "123,"
     # whitespace token. A token-label re-derive would absorb it into the span.
     return {
         "raw": "P.O. Box 123, Buffalo NY 14201",
@@ -505,13 +505,13 @@ def _dotted_po_box_row() -> dict:
 
 def test_expansion_preserves_intra_span_punctuation():
     """The dotted P.O. Box survives the region expansion verbatim — dots inside the span,
-    trailing comma still outside it — and every offset addresses the NEW raw exactly."""
+    trailing comma still outside it — and every offset addresses the new raw exactly."""
     rng = random.Random(42)
     results = list(augment_row(_dotted_po_box_row(), rng, directional_prob=0.0, region_prob=1.0))
     assert len(results) == 2
     augmented = results[1]
     assert augmented["raw"] == "P.O. Box 123, Buffalo New York 14201"
-    assert _slices(augmented) == [
+    assert _span_texts(augmented) == [
         ("po_box", "P.O. Box 123"),
         ("locality", "Buffalo"),
         ("region", "New York"),
@@ -538,7 +538,7 @@ def test_expansion_preserves_whitespace_geometry():
     rng = random.Random(42)
     augmented = list(augment_row(row, rng, directional_prob=1.0, region_prob=0.0))[1]
     assert augmented["raw"] == "350 5th  Ave Northwest\nBuffalo"
-    assert _slices(augmented) == [
+    assert _span_texts(augmented) == [
         ("house_number", "350"),
         ("street", "5th  Ave Northwest"),
         ("locality", "Buffalo"),
@@ -598,7 +598,7 @@ def test_expansion_then_glue_compose_still_verifies():
     assert expanded["raw"] == "350 5th Ave Northwest Buffalo, NY 14201"
     fused = glue_region_postcode(expanded, 5)
     assert fused["raw"] == "350 5th Ave Northwest Buffalo, NY14201"
-    assert _slices(fused) == [
+    assert _span_texts(fused) == [
         ("house_number", "350"),
         ("street", "5th Ave Northwest"),
         ("locality", "Buffalo"),
@@ -609,7 +609,7 @@ def test_expansion_then_glue_compose_still_verifies():
 
 
 def test_lowercase_row_preserves_labels_and_spans():
-    # Lowercasing is length-preserving, so labels + char-offset spans pass through UNCHANGED.
+    # Lowercasing is length-preserving, so labels + char-offset spans pass through unchanged.
     row = {
         "raw": "350 5th Ave NW",
         "tokens": ["350", "5th", "Ave", "NW"],
@@ -665,7 +665,7 @@ def test_augment_row_case_prob_zero_is_bit_identical():
 
 
 def test_upper_case_row_preserves_labels_and_spans():
-    # Upper-casing is length-preserving (guarded), so labels + char-offset spans pass through UNCHANGED.
+    # Upper-casing is length-preserving (guarded), so labels + char-offset spans pass through unchanged.
     row = {
         "raw": "350 5th Ave nw",
         "tokens": ["350", "5th", "Ave", "nw"],

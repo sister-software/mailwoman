@@ -3,7 +3,7 @@
 WHY THIS EXISTS. A claim that one reading of an opening outweighs another is a claim about counts, and a
 count is only comparable when its definition and its sampling level travel with it. A figure of 443.7
 rows per pass was carried through three documents with neither, which is what this module replaces: it
-counts both readings under definitions stated here, at both levels, so the comparison rests on stated
+counts both readings under definitions stated here, at both levels. Therefore, the comparison rests on stated
 terms rather than a remembered convention.
 
 WHAT IT FOUND, and why the narrow definitions matter. Reading "that opening" more or less narrowly does
@@ -42,9 +42,9 @@ from pathlib import Path
 from typing import Any
 
 from ..config import load_config
-from ..data.dose import resolve_config_doses
 from ..data.emit import EmitPolicy, emit_row
 from ..data.loader import _raw_row_stream
+from ..data.source_reps import resolve_config_reps
 
 
 def _digits(token: str) -> bool:
@@ -52,7 +52,7 @@ def _digits(token: str) -> bool:
 
 
 def _opening_counts(tokens: list[str], labels: list[str]) -> list[str]:
-    """Name every opening the row matches. A row can match more than one — they are nested, not rival."""
+    """Name every opening the row matches. A row can match more than one — they are nested rather than rival."""
     if not tokens or not labels:
         return []
 
@@ -62,7 +62,7 @@ def _opening_counts(tokens: list[str], labels: list[str]) -> list[str]:
 
     three_then_two = len(tokens) >= 2 and len(first) == 3 and _digits(tokens[1]) and len(tokens[1]) == 2
 
-    # A row of EXACTLY two tokens is the shape the failing input has and the corpus never carried: the
+    # A row of exactly two tokens is the shape the failing input has and the corpus never carried: the
     # opening is shared with every in-context row that starts on its postcode, so an opening count alone
     # cannot separate `100 00` from `100 00 Praha, Czechia`. Row length is what separates them.
     whole_row = len(tokens) == 2
@@ -118,7 +118,7 @@ def census(
     ``augment_exclude_sources`` is honoured because both passes run `emit.emit_row`, the same function
     the trainer runs: a listed source bypasses augmentation entirely, so it emits exactly what it drew
     while its neighbours expand. `audit_epoch_mixture` reimplemented that step and omitted the
-    exclusion until #2243; all three now share one function.
+    exclusion until #2243. all three now share one function.
     """
 
     def stream(rng: random.Random) -> Iterator[dict[str, Any]]:
@@ -207,7 +207,7 @@ def run(config_path: Path, *, json_path: Path | None = None, draws: int | None =
     """Load a training config, count both levels over one epoch, print the table and return the report."""
     cfg = load_config(config_path)
     corpus_dir = Path(cfg.data.corpus_dir)
-    resolve_config_doses(cfg, corpus_dir)
+    resolve_config_reps(cfg, corpus_dir)
 
     # Raise rather than fall back to a default epoch length: a census counted over a different number
     # of rows than the audit reports is not comparable with it, and nothing downstream would say so.

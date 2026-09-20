@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Tests for the assembled EDGAR chain.
+ * @file Tests for the assembled edgar chain.
  *
- *   The Exhibit 21 documents are real vendored filings; the submissions payloads are minimal stubs carrying
+ *   The Exhibit 21 documents are real vendored filings. the submissions payloads are minimal stubs carrying
  *   only what this module reads. No test performs a live request — the client is an object literal
  *   satisfying {@link SECIngestClient}.
  */
@@ -63,7 +63,7 @@ async function stubClient(
 		},
 		getDocument: (input: string | URL): Promise<string> => {
 			const url = String(input)
-			// The URL's filename comes from the scripted document manifest, not from the fixture name, so
+			// The URL's filename comes from the scripted document manifest rather than from the fixture name, so
 			// match on the CIK in the archive path instead.
 			const bare = /edgar\/data\/(\d+)\//.exec(url)?.[1] ?? ""
 			const entry = Object.values(script).find((candidate) => candidate.cikPath === bare) ?? Object.values(script)[0]
@@ -157,7 +157,7 @@ describe("collectEdgarSubsidiaryRows — the check cannot be bypassed", () => {
 	})
 
 	it("corroborates every candidate, not only the top-scoring one", async () => {
-		// The top name match is uncorroborated; a lower-scoring candidate is the real carrier. Scoring
+		// The top name match is uncorroborated. a lower-scoring candidate is the real carrier. Scoring
 		// alone would stop at the first and report nothing.
 		const tickers: CompanyTickerEntry[] = [
 			{ cik: WIDEPOINT, ticker: "WYY", title: "Cable One Holdings" },
@@ -193,7 +193,7 @@ describe("collectEdgarSubsidiaryRows — the check cannot be bypassed", () => {
 
 		const { rows, report } = await collectEdgarSubsidiaryRows(client, ["American Broadband"], tickers)
 
-		// Picking one here would relocate the false-identity-link decision, not avoid it.
+		// Picking one here would relocate the false-identity-link decision rather than avoid it.
 		expect(rows).toHaveLength(0)
 		expect(report.skipped[EdgarSkipReason.AmbiguousCIK]).toBe(1)
 	})

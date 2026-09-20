@@ -51,7 +51,7 @@ describe("variantsFor (pure)", () => {
 	})
 
 	it("country uses the OpenCage-canonical name for the default slot value", () => {
-		// Caller is expected to pass COUNTRY_DISPLAY_NAME's value for the default slot; we just
+		// Caller is expected to pass COUNTRY_DISPLAY_NAME's value for the default slot. we just
 		// verify the variant uses whatever selfName was passed.
 		const v = variantsFor(rec({ name: "United States", placetype: "country" }), [], "United States of America")
 		expect(v).toHaveLength(1)
@@ -129,7 +129,7 @@ describe("wof-admin-json adapter against fixture", () => {
 
 		const rows = await loadRows()
 
-		// Phase 1.5.1 invariant: BOTH the canonical and the colloquial name produce training rows
+		// Phase 1.5.1 invariant: both the canonical and the colloquial name produce training rows
 		// for the same WOF id. This was the failure mode the SQLite path could not address even with
 		// the is_current predicate loosened — the `names` table was empty in the WOF SQLite distro.
 		const stPete = rows.filter((r) => r.source_id.startsWith("wof-admin-1021-"))
@@ -196,7 +196,7 @@ describe("wof-admin-json adapter against fixture", () => {
 		})
 
 		const rows = await loadRows()
-		// The country US record carries mz:is_current = -1 in the fixture; it must still be emitted.
+		// The country US record carries mz:is_current = -1 in the fixture. it must still be emitted.
 		expect(rows.some((r) => r.source_id.startsWith("wof-admin-1001-"))).toBe(true)
 		// The deprecated "Old Place" (mz:is_current = 0) must be absent.
 		expect(rows.some((r) => r.raw.includes("Old Place"))).toBe(false)

@@ -5664,7 +5664,7 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/variant-aliases": "workspace:*"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
   languageName: unknown
   linkType: soft
 
@@ -5728,9 +5728,9 @@ __metadata:
     "@mailwoman/spatial": "workspace:*"
     ink: "npm:^7.1.1"
     mailwoman: "workspace:*"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     react: "npm:^19.2.8"
-    spliterator: "npm:^7.7.1"
+    spliterator: "npm:^7.11.0"
     wrangler: "npm:^4.129.0"
     zod: "npm:^4.5.4"
   bin:
@@ -5749,8 +5749,8 @@ __metadata:
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
     h3-js: "npm:^4.5.0"
-    path-ts: "npm:^2.3.0"
-    spliterator: "npm:^7.7.1"
+    path-ts: "npm:^2.4.1"
+    spliterator: "npm:^7.11.0"
   languageName: unknown
   linkType: soft
 
@@ -5766,8 +5766,8 @@ __metadata:
     "@mailwoman/sqlite": "workspace:*"
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.5"
-    path-ts: "npm:^2.3.0"
-    spliterator: "npm:^7.7.1"
+    path-ts: "npm:^2.4.1"
+    spliterator: "npm:^7.11.0"
     type-fest: "npm:^5.9.0"
     zod: "npm:^4.5.4"
   languageName: unknown
@@ -5823,7 +5823,7 @@ __metadata:
     "@types/d3-scale-chromatic": "npm:^3.1.0"
     "@types/trusted-types": "npm:^2.0.7"
     "@types/yauzl-promise": "npm:^4.0.1"
-    adm-zip: "npm:^0.6.0"
+    adm-zip: "npm:^0.6.1"
     async-init: "npm:^1.0.0"
     axios: "npm:^1.20.0"
     axios-cache-interceptor: "npm:^1.12.3"
@@ -5840,10 +5840,10 @@ __metadata:
     iconv-lite: "npm:^0.7.3"
     isomorphic-dompurify: "npm:^4.1.0"
     kysely: "npm:^0.29.5"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     pino: "npm:^10.3.1"
     regenerate: "npm:^1.4.2"
-    spliterator: "npm:^7.7.1"
+    spliterator: "npm:^7.11.0"
     trusted-types: "npm:^2.0.0"
     type-fest: "npm:^5.9.0"
     yauzl-promise: "npm:^4.0.0"
@@ -5859,6 +5859,7 @@ __metadata:
     "@mailwoman/bdc": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/evidence": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/record": "workspace:*"
@@ -5866,14 +5867,14 @@ __metadata:
     "@mailwoman/sqlite": "workspace:*"
     "@mailwoman/tiger": "workspace:*"
     "@types/node": "npm:^26.4.1"
-    adm-zip: "npm:^0.6.0"
+    adm-zip: "npm:^0.6.1"
     apache-arrow: "npm:^21.2.0"
     fastest-levenshtein: "npm:^1.0.16"
     kysely: "npm:^0.29.5"
     parquet-wasm: "npm:0.7.2"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     read-excel-file: "npm:^9.3.10"
-    spliterator: "npm:^7.7.1"
+    spliterator: "npm:^7.11.0"
     write-excel-file: "npm:^4.1.1"
     zod: "npm:^4.5.4"
   languageName: unknown
@@ -5895,8 +5896,8 @@ __metadata:
     "@modelcontextprotocol/sdk": "npm:^1.30.0"
     "@vvago/vale": "npm:^3.20.0"
     mailwoman: "workspace:*"
-    path-ts: "npm:^2.3.0"
-    spliterator: "npm:^7.7.1"
+    path-ts: "npm:^2.4.1"
+    spliterator: "npm:^7.11.0"
     typescript: "npm:@typescript/typescript6@^6.0.2"
     zod: "npm:^4.5.4"
   bin:
@@ -5936,27 +5937,24 @@ __metadata:
     "@types/react-map-gl": "npm:^6.1.10"
     "@typescript/native": "npm:typescript@^7.0.2"
     "@vitejs/plugin-react": "npm:^6.1.1"
-    "@vvago/vale": "npm:^3.20.0"
-    classnames: "npm:^2.5.1"
     clsx: "npm:^2.1.1"
     docusaurus-plugin-glossary: "npm:^3.3.4"
-    js-yaml: "npm:^5.4.1"
+    js-yaml: "npm:^5.4.2"
     mailwoman: "workspace:*"
     maplibre-gl: "npm:^6.7.0"
     onnxruntime-web: "npm:1.29.0"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     prism-react-renderer: "npm:^2.4.1"
     react: "npm:^19.2.8"
     react-dom: "npm:^19.2.8"
     react-map-gl: "npm:^8.1.3"
-    spliterator: "npm:^7.7.1"
+    spliterator: "npm:^7.11.0"
     storybook: "npm:^10.6.0"
     typescript: "npm:@typescript/typescript6@^6.0.2"
     unist: "npm:^0.0.1"
     unist-util-visit: "npm:^5.1.0"
     vite: "npm:^8.2.2"
     webpack: "npm:^5.110.3"
-    zx: "npm:^8.8.5"
   languageName: unknown
   linkType: soft
 
@@ -6022,9 +6020,9 @@ __metadata:
     "@mailwoman/registry": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
     kysely: "npm:^0.29.5"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     read-excel-file: "npm:^9.3.10"
-    spliterator: "npm:^7.7.1"
+    spliterator: "npm:^7.11.0"
     type-fest: "npm:^5.9.0"
     write-excel-file: "npm:^4.1.1"
     zod: "npm:^4.5.4"
@@ -6054,7 +6052,7 @@ __metadata:
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/tiger": "workspace:*"
     "@types/node": "npm:^26.4.1"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     zod: "npm:^4.5.4"
   languageName: unknown
   linkType: soft
@@ -6065,7 +6063,7 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/poi-taxonomy": "workspace:*"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     type-fest: "npm:^5.9.0"
   languageName: unknown
   linkType: soft
@@ -6226,7 +6224,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
   languageName: unknown
   linkType: soft
 
@@ -6316,9 +6314,9 @@ __metadata:
     esbuild: "npm:0.28.2"
     onnxruntime-node: "npm:^1.29.0"
     onnxruntime-web: "npm:1.29.0"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     playwright: "npm:^1.63.0"
-    spliterator: "npm:^7.7.1"
+    spliterator: "npm:^7.11.0"
     zod: "npm:^4.5.4"
   peerDependencies:
     onnxruntime-node: ^1.26.0
@@ -6352,8 +6350,8 @@ __metadata:
     "@mailwoman/un-locode-lookup": "workspace:*"
     hono: "npm:^4.13.7"
     mailwoman: "workspace:*"
-    path-ts: "npm:^2.3.0"
-    spliterator: "npm:^7.7.1"
+    path-ts: "npm:^2.4.1"
+    spliterator: "npm:^7.11.0"
     zod: "npm:^4.5.4"
   bin:
     nominatim: ./out/cli.js
@@ -6402,8 +6400,8 @@ __metadata:
     "@mailwoman/sqlite": "workspace:*"
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.5"
-    path-ts: "npm:^2.3.0"
-    spliterator: "npm:^7.7.1"
+    path-ts: "npm:^2.4.1"
+    spliterator: "npm:^7.11.0"
   languageName: unknown
   linkType: soft
 
@@ -6436,7 +6434,6 @@ __metadata:
   dependencies:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
-    "@mailwoman/normalize": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
   languageName: unknown
   linkType: soft
@@ -6473,8 +6470,8 @@ __metadata:
   resolution: "@mailwoman/poi-taxonomy@workspace:packages/poi-taxonomy"
   dependencies:
     "@mailwoman/core": "workspace:*"
-    path-ts: "npm:^2.3.0"
-    spliterator: "npm:^7.7.1"
+    path-ts: "npm:^2.4.1"
+    spliterator: "npm:^7.11.0"
   languageName: unknown
   linkType: soft
 
@@ -6499,6 +6496,7 @@ __metadata:
     "@styleframe/loader": "npm:^3.0.4"
     "@styleframe/plugin": "npm:^3.4.1"
     "@styleframe/transpiler": "npm:^3.4.2"
+    "@types/geojson": "npm:^7946.0.16"
     "@types/react": "npm:^19.2.18"
     "@types/react-dom": "npm:^19.2.7"
     "@vitejs/plugin-react": "npm:^6.1.1"
@@ -6550,9 +6548,9 @@ __metadata:
     "@protomaps/basemaps": "npm:^5.7.2"
     "@types/node": "npm:^26.4.1"
     h3-js: "npm:^4.5.0"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     playwright: "npm:^1.63.0"
-    spliterator: "npm:^7.7.1"
+    spliterator: "npm:^7.11.0"
   languageName: unknown
   linkType: soft
 
@@ -6565,9 +6563,9 @@ __metadata:
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@types/semver": "npm:^7.8.0"
     mailwoman: "workspace:*"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     semver: "npm:^7.8.5"
-    spliterator: "npm:^7.7.1"
+    spliterator: "npm:^7.11.0"
     zod: "npm:^4.5.4"
     zx: "npm:^8.8.5"
   languageName: unknown
@@ -6580,7 +6578,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/release-kit": "workspace:*"
     "@modelcontextprotocol/sdk": "npm:^1.30.0"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     zod: "npm:^4.5.4"
   bin:
     mwrelease-mcp: ./lib/cli.ts
@@ -6592,11 +6590,13 @@ __metadata:
   resolution: "@mailwoman/repo-health@workspace:packages/repo-health"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/neural": "workspace:*"
     "@mailwoman/release-kit": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
     "@vvago/vale": "npm:^3.20.0"
     esbuild: "npm:0.28.2"
-    path-ts: "npm:^2.3.0"
-    spliterator: "npm:^7.7.1"
+    path-ts: "npm:^2.4.1"
+    spliterator: "npm:^7.11.0"
     typescript: "npm:@typescript/typescript6@^6.0.2"
   languageName: unknown
   linkType: soft
@@ -6615,8 +6615,8 @@ __metadata:
     "@mailwoman/sqlite": "workspace:*"
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.5"
-    path-ts: "npm:^2.3.0"
-    spliterator: "npm:^7.7.1"
+    path-ts: "npm:^2.4.1"
+    spliterator: "npm:^7.11.0"
     type-fest: "npm:^5.9.0"
     zod: "npm:^4.5.4"
   languageName: unknown
@@ -6646,8 +6646,9 @@ __metadata:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/evidence": "workspace:*"
+    "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
   languageName: unknown
   linkType: soft
 
@@ -6664,7 +6665,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/resolver-wof-wasm": "workspace:*"
     "@playwright/test": "npm:^1.63.0"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     vite: "npm:^8.2.2"
     vite-plugin-pwa: "npm:^1.3.0"
   languageName: unknown
@@ -6679,8 +6680,8 @@ __metadata:
     "@mailwoman/sqlite": "workspace:*"
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.5"
-    path-ts: "npm:^2.3.0"
-    spliterator: "npm:^7.7.1"
+    path-ts: "npm:^2.4.1"
+    spliterator: "npm:^7.11.0"
   languageName: unknown
   linkType: soft
 
@@ -6710,7 +6711,7 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     kysely: "npm:^0.29.5"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
   languageName: unknown
   linkType: soft
 
@@ -6724,8 +6725,8 @@ __metadata:
     "@protomaps/basemaps": "npm:^5.7.2"
     "@turf/boolean-contains": "npm:^7.4.0"
     kysely: "npm:^0.29.5"
-    path-ts: "npm:^2.3.0"
-    spliterator: "npm:^7.7.1"
+    path-ts: "npm:^2.4.1"
+    spliterator: "npm:^7.11.0"
     type-fest: "npm:^5.9.0"
   languageName: unknown
   linkType: soft
@@ -6763,7 +6764,7 @@ __metadata:
     "@mailwoman/annotations": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
-    spliterator: "npm:^7.7.1"
+    spliterator: "npm:^7.11.0"
   bin:
     un-locode-lookup: ./out/cli.js
   languageName: unknown
@@ -6793,10 +6794,10 @@ __metadata:
     onnxruntime-web: "npm:1.29.0"
     oxfmt: "npm:0.66.0"
     oxlint: "npm:1.81.0"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     release-it: "npm:^19.2.4"
     sherif: "npm:^1.13.0"
-    spliterator: "npm:^7.7.1"
+    spliterator: "npm:^7.11.0"
     ts-morph: "npm:^28.0.0"
     typescript: "npm:@typescript/typescript6@^6.0.2"
     vitest: "npm:4.1.11"
@@ -6822,8 +6823,8 @@ __metadata:
     "@mailwoman/sqlite": "workspace:*"
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.5"
-    path-ts: "npm:^2.3.0"
-    spliterator: "npm:^7.7.1"
+    path-ts: "npm:^2.4.1"
+    spliterator: "npm:^7.11.0"
   languageName: unknown
   linkType: soft
 
@@ -10054,107 +10055,107 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@swc/html-darwin-arm64@npm:1.15.43":
-  version: 1.15.43
-  resolution: "@swc/html-darwin-arm64@npm:1.15.43"
+"@swc/html-darwin-arm64@npm:1.16.2":
+  version: 1.16.2
+  resolution: "@swc/html-darwin-arm64@npm:1.16.2"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@swc/html-darwin-x64@npm:1.15.43":
-  version: 1.15.43
-  resolution: "@swc/html-darwin-x64@npm:1.15.43"
+"@swc/html-darwin-x64@npm:1.16.2":
+  version: 1.16.2
+  resolution: "@swc/html-darwin-x64@npm:1.16.2"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@swc/html-linux-arm-gnueabihf@npm:1.15.43":
-  version: 1.15.43
-  resolution: "@swc/html-linux-arm-gnueabihf@npm:1.15.43"
+"@swc/html-linux-arm-gnueabihf@npm:1.16.2":
+  version: 1.16.2
+  resolution: "@swc/html-linux-arm-gnueabihf@npm:1.16.2"
   conditions: os=linux & cpu=arm
   languageName: node
   linkType: hard
 
-"@swc/html-linux-arm64-gnu@npm:1.15.43":
-  version: 1.15.43
-  resolution: "@swc/html-linux-arm64-gnu@npm:1.15.43"
+"@swc/html-linux-arm64-gnu@npm:1.16.2":
+  version: 1.16.2
+  resolution: "@swc/html-linux-arm64-gnu@npm:1.16.2"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@swc/html-linux-arm64-musl@npm:1.15.43":
-  version: 1.15.43
-  resolution: "@swc/html-linux-arm64-musl@npm:1.15.43"
+"@swc/html-linux-arm64-musl@npm:1.16.2":
+  version: 1.16.2
+  resolution: "@swc/html-linux-arm64-musl@npm:1.16.2"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"@swc/html-linux-ppc64-gnu@npm:1.15.43":
-  version: 1.15.43
-  resolution: "@swc/html-linux-ppc64-gnu@npm:1.15.43"
+"@swc/html-linux-ppc64-gnu@npm:1.16.2":
+  version: 1.16.2
+  resolution: "@swc/html-linux-ppc64-gnu@npm:1.16.2"
   conditions: os=linux & cpu=ppc64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@swc/html-linux-s390x-gnu@npm:1.15.43":
-  version: 1.15.43
-  resolution: "@swc/html-linux-s390x-gnu@npm:1.15.43"
+"@swc/html-linux-s390x-gnu@npm:1.16.2":
+  version: 1.16.2
+  resolution: "@swc/html-linux-s390x-gnu@npm:1.16.2"
   conditions: os=linux & cpu=s390x & libc=glibc
   languageName: node
   linkType: hard
 
-"@swc/html-linux-x64-gnu@npm:1.15.43":
-  version: 1.15.43
-  resolution: "@swc/html-linux-x64-gnu@npm:1.15.43"
+"@swc/html-linux-x64-gnu@npm:1.16.2":
+  version: 1.16.2
+  resolution: "@swc/html-linux-x64-gnu@npm:1.16.2"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@swc/html-linux-x64-musl@npm:1.15.43":
-  version: 1.15.43
-  resolution: "@swc/html-linux-x64-musl@npm:1.15.43"
+"@swc/html-linux-x64-musl@npm:1.16.2":
+  version: 1.16.2
+  resolution: "@swc/html-linux-x64-musl@npm:1.16.2"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"@swc/html-win32-arm64-msvc@npm:1.15.43":
-  version: 1.15.43
-  resolution: "@swc/html-win32-arm64-msvc@npm:1.15.43"
+"@swc/html-win32-arm64-msvc@npm:1.16.2":
+  version: 1.16.2
+  resolution: "@swc/html-win32-arm64-msvc@npm:1.16.2"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@swc/html-win32-ia32-msvc@npm:1.15.43":
-  version: 1.15.43
-  resolution: "@swc/html-win32-ia32-msvc@npm:1.15.43"
+"@swc/html-win32-ia32-msvc@npm:1.16.2":
+  version: 1.16.2
+  resolution: "@swc/html-win32-ia32-msvc@npm:1.16.2"
   conditions: os=win32 & cpu=ia32
   languageName: node
   linkType: hard
 
-"@swc/html-win32-x64-msvc@npm:1.15.43":
-  version: 1.15.43
-  resolution: "@swc/html-win32-x64-msvc@npm:1.15.43"
+"@swc/html-win32-x64-msvc@npm:1.16.2":
+  version: 1.16.2
+  resolution: "@swc/html-win32-x64-msvc@npm:1.16.2"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
 
 "@swc/html@npm:^1.15.40":
-  version: 1.15.43
-  resolution: "@swc/html@npm:1.15.43"
+  version: 1.16.2
+  resolution: "@swc/html@npm:1.16.2"
   dependencies:
     "@swc/counter": "npm:^0.1.3"
-    "@swc/html-darwin-arm64": "npm:1.15.43"
-    "@swc/html-darwin-x64": "npm:1.15.43"
-    "@swc/html-linux-arm-gnueabihf": "npm:1.15.43"
-    "@swc/html-linux-arm64-gnu": "npm:1.15.43"
-    "@swc/html-linux-arm64-musl": "npm:1.15.43"
-    "@swc/html-linux-ppc64-gnu": "npm:1.15.43"
-    "@swc/html-linux-s390x-gnu": "npm:1.15.43"
-    "@swc/html-linux-x64-gnu": "npm:1.15.43"
-    "@swc/html-linux-x64-musl": "npm:1.15.43"
-    "@swc/html-win32-arm64-msvc": "npm:1.15.43"
-    "@swc/html-win32-ia32-msvc": "npm:1.15.43"
-    "@swc/html-win32-x64-msvc": "npm:1.15.43"
+    "@swc/html-darwin-arm64": "npm:1.16.2"
+    "@swc/html-darwin-x64": "npm:1.16.2"
+    "@swc/html-linux-arm-gnueabihf": "npm:1.16.2"
+    "@swc/html-linux-arm64-gnu": "npm:1.16.2"
+    "@swc/html-linux-arm64-musl": "npm:1.16.2"
+    "@swc/html-linux-ppc64-gnu": "npm:1.16.2"
+    "@swc/html-linux-s390x-gnu": "npm:1.16.2"
+    "@swc/html-linux-x64-gnu": "npm:1.16.2"
+    "@swc/html-linux-x64-musl": "npm:1.16.2"
+    "@swc/html-win32-arm64-msvc": "npm:1.16.2"
+    "@swc/html-win32-ia32-msvc": "npm:1.16.2"
+    "@swc/html-win32-x64-msvc": "npm:1.16.2"
   dependenciesMeta:
     "@swc/html-darwin-arm64":
       optional: true
@@ -10180,7 +10181,7 @@ __metadata:
       optional: true
     "@swc/html-win32-x64-msvc":
       optional: true
-  checksum: 10/333b96d119ea4cd65f8525beaa34059097a8408523afdd46d61b1025bae35a7bfda1ce1758e3a1a89449d80903f75918eca547f74f06da6ad0216aa4a6af3ceb
+  checksum: 10/f786ad7ebbf2263cfdf9f947c84aa6c95f883869590cd160edb0807be9669eccc84d4c635f43eff3118da83d7fb2fec32d091b1022d970f8d94e2a08b9405e81
   languageName: node
   linkType: hard
 
@@ -12070,6 +12071,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"adm-zip@npm:^0.6.1":
+  version: 0.6.1
+  resolution: "adm-zip@npm:0.6.1"
+  checksum: 10/072af04891b33a68aba6b6979d6eec56cbe8d5bca9a349c2e78f86cc64e872e75faf56341e20541c6ffd7bcfb931187157c24f141b97ad1f18ebd8bfacbcf437
+  languageName: node
+  linkType: hard
+
 "agent-base@npm:6":
   version: 6.0.2
   resolution: "agent-base@npm:6.0.2"
@@ -13327,13 +13335,6 @@ __metadata:
   version: 1.2.3
   resolution: "cjs-module-lexer@npm:1.2.3"
   checksum: 10/f96a5118b0a012627a2b1c13bd2fcb92509778422aaa825c5da72300d6dcadfb47134dd2e9d97dfa31acd674891dd91642742772d19a09a8adc3e56bd2f5928c
-  languageName: node
-  linkType: hard
-
-"classnames@npm:^2.5.1":
-  version: 2.5.1
-  resolution: "classnames@npm:2.5.1"
-  checksum: 10/58eb394e8817021b153bb6e7d782cfb667e4ab390cb2e9dac2fc7c6b979d1cc2b2a733093955fc5c94aa79ef5c8c89f11ab77780894509be6afbb91dddd79d15
   languageName: node
   linkType: hard
 
@@ -16244,9 +16245,9 @@ __metadata:
   linkType: hard
 
 "fast-uri@npm:^3.0.0, fast-uri@npm:^3.0.1":
-  version: 3.1.7
-  resolution: "fast-uri@npm:3.1.7"
-  checksum: 10/6d62ea818841e1b460f60482fd31582faa23ea9d9b33f856412b24c42da11fd72bd003be6696390ec896dbe4e9e78d3bb8d93bf70a511c7f69e5e807ac9b284f
+  version: 3.1.8
+  resolution: "fast-uri@npm:3.1.8"
+  checksum: 10/d3dfa29fd2e5fa2371833699f3f78c975b79f65e52e0ce37604db10dffb85b5b448b5075e93453272cb95fb1c6a759495164e60649ffd69e59ec43f20d44f791
   languageName: node
   linkType: hard
 
@@ -17691,11 +17692,11 @@ __metadata:
   linkType: hard
 
 "image-size@npm:^2.0.2":
-  version: 2.0.2
-  resolution: "image-size@npm:2.0.2"
+  version: 2.0.4
+  resolution: "image-size@npm:2.0.4"
   bin:
     image-size: bin/image-size.js
-  checksum: 10/d15203279fe7ada01252d8c56ba97516385d6d5ac2cbf3d734580fc88db4f5272b9b3f7f378ad63abc7d06b5500c43b90d9f84626e2bda1cab403c16eb469592
+  checksum: 10/a9db27f55c77869fad3420e6e614b64ab1af3fb425e4c3136c5dbb4fefd9346864fa69a1ff1706acab54ea766b01fb015cd2cbed90b122d2dbaa20f785a90e2f
   languageName: node
   linkType: hard
 
@@ -18778,15 +18779,15 @@ __metadata:
   linkType: hard
 
 "joi@npm:^17.9.2":
-  version: 17.13.4
-  resolution: "joi@npm:17.13.4"
+  version: 17.13.8
+  resolution: "joi@npm:17.13.8"
   dependencies:
     "@hapi/hoek": "npm:^9.3.0"
     "@hapi/topo": "npm:^5.1.0"
     "@sideway/address": "npm:^4.1.5"
     "@sideway/formula": "npm:^3.0.1"
     "@sideway/pinpoint": "npm:^2.0.0"
-  checksum: 10/0e407d4cc6cb0830b93c2d107f8b85113338473296025c31a931589359b58883e61fd183dd7532d3ab1ee014a01a20830a8fca90d9f0217d0c0894ee2cbf9ff5
+  checksum: 10/7d8ccb06cee958516748519cb46430b1bf5b732f54428a5daf8f8630290c928be1abb7d3c3c2506d68ba76d1c1abe480e087255c34b839aae47b2ee2c76f587d
   languageName: node
   linkType: hard
 
@@ -18822,14 +18823,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"js-yaml@npm:^5.4.1":
-  version: 5.4.1
-  resolution: "js-yaml@npm:5.4.1"
+"js-yaml@npm:^5.4.2":
+  version: 5.4.2
+  resolution: "js-yaml@npm:5.4.2"
   dependencies:
     argparse: "npm:^2.0.1"
   bin:
     js-yaml: bin/js-yaml.mjs
-  checksum: 10/6fff9ee00bd59aeb7e1484b4281f5e927b117cbfbf3ffa6c0fef0c58519317eb61527e93c4aa70f417709229bc1eeed63cba773913577a64405975a72fba7180
+  checksum: 10/f2461abd1d6268fb226733f0a0e0aa48004bb824116e3dfa75f1a1279001936343b672066dfecdb852ac3ca883452706c383a760aa90430cb68ba395aa2cbc84
   languageName: node
   linkType: hard
 
@@ -19644,9 +19645,9 @@ __metadata:
     ink: "npm:^7.1.1"
     kysely: "npm:^0.29.5"
     onnxruntime-node: "npm:^1.29.0"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     react: "npm:^19.2.8"
-    spliterator: "npm:^7.7.1"
+    spliterator: "npm:^7.11.0"
     zod: "npm:^4.5.4"
     zx: "npm:^8.8.5"
   peerDependencies:
@@ -22228,10 +22229,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"path-ts@npm:^2.1.0, path-ts@npm:^2.3.0":
-  version: 2.3.0
-  resolution: "path-ts@npm:2.3.0"
-  checksum: 10/a74238a106cbf4a0f7884dbd216d67e008f20e1cdc36b561095186aecdcd952e56505db4157f1192a7247f105618f2652ed7c68a28de5f748d6ab35f812fc81d
+"path-ts@npm:^2.4.1":
+  version: 2.4.1
+  resolution: "path-ts@npm:2.4.1"
+  checksum: 10/281c31af1489f4e775c0bf694e0712203dd77d608a6f2d467eae144ce29583786aeecb3384718cf0eb41c19752746b361ddb9ae87ec6723e362b3149da26e2b7
   languageName: node
   linkType: hard
 
@@ -25825,12 +25826,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"spliterator@npm:^7.7.1":
-  version: 7.7.1
-  resolution: "spliterator@npm:7.7.1"
+"spliterator@npm:^7.11.0":
+  version: 7.11.0
+  resolution: "spliterator@npm:7.11.0"
   dependencies:
     change-case: "npm:^5.4.4"
-    path-ts: "npm:^2.1.0"
     type-fest: "npm:^5.8.0"
   peerDependencies:
     read-excel-file: ^9.3.5
@@ -25842,7 +25842,7 @@ __metadata:
       optional: true
   bin:
     spliterator: out/node/cli/index.js
-  checksum: 10/e29de6f791885a1ef4da69647c222564e41359307b94e814e3c761bc959aeb5809ed11a9db8c5f67f77c7e3ea2aad53eb9e598c52ec93da806725eb85f6f9b53
+  checksum: 10/a4cc0b31be9ccf1b47d38b62562410ac023ffb3c1c04829763113024a605f5e59a5ca07f0a42c4eee95989d0ee33749744b0b3f44ed7d4bdfd655d72dfac8699
   languageName: node
   linkType: hard
 

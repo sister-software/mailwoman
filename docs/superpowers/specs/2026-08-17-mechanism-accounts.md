@@ -1,6 +1,6 @@
 # Mechanism accounts — diagnosis implementation for mailwoman
 
-**Date:** 2026-08-17 · **Status:** design of record; first slices landed (see §8) · **Epic:** #1716
+**Date:** 2026-08-17 · **Status:** design of record; first increments landed (see §8) · **Epic:** #1716
 **Origin:** the 2026-08-16 design conversation, the #1711 investigation that motivated it, and two
 claim-tagged research reports (`docs/records/research/2026-08-16-*.md`).
 
@@ -57,10 +57,10 @@ winner:     Weimar TX  (admin tier)
 smallest counterfactual: apply the region constraint → order inverts
 ```
 
-The interiority boundary, stated honestly: inside the weights there are no reasons to recover.
+The interiority boundary, stated directly: inside the weights there are no reasons to recover.
 Accounts live at the boundaries — what was fed, retrieved, conditional, ranked — and when one bottoms out at
-"the model chose X with margin m and every channel silent," that IS the class (the model flew
-blind), and the fix is evidence, not archaeology in the logits.
+"the model chose X with margin m and every channel silent," that is the class (the model flew
+blind), and the fix is evidence rather than archaeology in the logits.
 
 ## 4. Shapes and confidence
 
@@ -89,7 +89,7 @@ test that asserts outcomes:
 
 | check                                                 | asserts                                                   | catches                                                                                 | status                                                                           |
 | ----------------------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| **mailfail** (`eval-harness/fixtures/mailfail.jsonl`) | must NOT activate (no-component / no-resolve / no-throw)  | garbage handled as garbage                                                              | shipped 2026-08-02                                                               |
+| **mailfail** (`eval-harness/fixtures/mailfail.jsonl`) | must not activate (no-component / no-resolve / no-throw)  | garbage handled as garbage                                                              | shipped 2026-08-02                                                               |
 | **activation census** (#1719, `mwdev_census`)         | must activate SOMEWHERE (L0 ran / L1 signaled / L2 moved) | inert mechanisms — the house's most-repeated failure class (#1699, #1703, #1349, R5)    | L0/L1 shipped; first run found 2 inert, both verified deliberate and allowlisted |
 | **fragile-pass ledger** (#1720)                       | activated for the RIGHT reason                            | compensated defects (XOR signature: fixing one of a canceling pair turns the board red) | designed; needs accounts                                                         |
 
@@ -118,7 +118,7 @@ accept/review/reject band already exists as Fellegi–Sunter's clerical band in 
   the BIO masking infrastructure — only for coherence the hierarchy cannot express, and only if it
   beats the rung-1 baseline in an eval. ("Autodecoder" investigated and rejected — right intuition,
   wrong rung; coherence report §1.)
-- **Echo-chamber guard, structural**: any checker trains on gazetteer + labeled corpus ONLY;
+- **Echo-chamber guard, structural**: any checker trains on gazetteer + labeled corpus only;
   resolver outputs are scored, never supervision. Standing audits: round-trip fixpoint through
   `@mailwoman/formatter`, and adversarial validation (real-vs-assembled classifier; AUC ≫ 0.5 is
   itself a defect meter).
@@ -136,7 +136,7 @@ attention-as-explanation.
 
 ## 8. What is already landed (as of 2026-08-17)
 
-- `variable_isolation` rename — the confound check now claims setup hygiene, not causation
+- `variable_isolation` rename — the confound check now claims setup hygiene rather than causation
   (the vocabulary bug beneath it was #1715).
 - `evidence.ts` — absent / silent / fired channel states + the starvation flag; on every
   `mwdev_trace` row (#1718).
@@ -148,7 +148,7 @@ attention-as-explanation.
 - `mwdev_diagnose` v1 (#1722) — per-row accounts over the parse / evidence / retrieval / outcome
   boundaries, seven mechanism-state shapes as documented predicates, the five-change counterfactual sweep,
   and `by_shape` aggregation. v1 reports the SET of matching shapes with each predicate attached and
-  `calibration: "none"`, not the normalized posterior §4 describes — the scoring layer arrives with
+  `calibration: "none"` rather than the normalized posterior §4 describes — the scoring layer arrives with
   the v2 conformal calibration, which is what a posterior's numbers would have to mean.
   Coverage bound found while building it: the resolver-interior trace (#1721) records the walk's own
   `#lookupAndPick` only, so a row answered by the post-walk span-rescore carries a resolved

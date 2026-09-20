@@ -5,7 +5,7 @@
  *   The derived-weights store's content key.
  *
  *   The 2026-08-02 currency-filter incident is why this has its own test: the workflow cache key
- *   hashed `release.config.json` + `data/gazetteer/*` only, so a change to the EXTRACTOR produced new
+ *   hashed `release.config.json` + `data/gazetteer/*` only, so a change to the extractor produced new
  *   artifacts while the cache served the old ones, and the pair-index↔card parity guard failed with
  *   `expected 47878 to be 49033`. A key that omits the code generating the cached thing is a
  *   stale-artifact machine.
@@ -74,7 +74,7 @@ describe("derivedWeightsKeyFrom", () => {
 		await writeLocalTextFile("export const delta = 1", generator)
 		const before = await derivedWeightsKeyFrom([at(config), at(generator)])
 
-		// The config is untouched; only the code that produces the binaries changed.
+		// The config is untouched. only the code that produces the binaries changed.
 		await writeLocalTextFile("export const delta = 2", generator)
 
 		expect(await derivedWeightsKeyFrom([at(config), at(generator)])).not.toBe(before)

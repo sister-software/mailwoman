@@ -3,7 +3,7 @@
 
 /**
  *   Typed schema for the convention asset — the `address_convention` table `SqliteConventionSource` probes, plus the
- *   `meta` provenance row every sealed artifact here carries. The interface is the read/write contract and
+ *   `meta` provenance row every sealed artifact here carries. The interface is the read/write interface and
  *   {@link createAddressConventionTable} creates the table, so a column added to one is a compile error against the
  *   other.
  */
@@ -41,7 +41,7 @@ export interface ConventionDatabase {
 }
 
 /**
- * The slice of a Kysely handle the convention DDL touches. Kysely is invariant in its schema parameter, so naming only
+ * The subset of a Kysely handle the convention DDL touches. Kysely is invariant in its schema parameter, so naming only
  * `schema` lets a builder holding a wider handle pass it without a cast.
  */
 export type ConventionSchemaHandle = Pick<Kysely<ConventionDatabase>, "schema">

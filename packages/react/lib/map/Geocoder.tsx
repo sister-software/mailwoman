@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `<Geocoder>` — the WHOLE geocoder, composed. It is the map analogue of `PipelineExplorer`
- *   and takes the SAME DI shape: an injected {@link GeocoderRuntime} (the host owns ONNX / httpvfs / R2 /
+ *   `<Geocoder>` — the whole geocoder, composed. It is the map analogue of `PipelineExplorer`
+ *   and takes the same DI shape: an injected {@link GeocoderRuntime} (the host owns ONNX / httpvfs / R2 /
  *   the composed map style) plus a {@link GeocoderPanels} bag (the host's ModelVisualizer / VersionCompare /
  *   About / Permalink). Everything here is composition + a `ClientOnly` boundary:
  *
@@ -14,7 +14,7 @@
  *       {@link usePlaceAutocomplete}, {@link useCompareState}.
  *
  *   Because it pulls {@link MapCanvas} (→ `react-map-gl` → `maplibre-gl`, WebGL + DOM at import), it lives on
- *   the `@mailwoman/react/map` subpath ONLY — never the package root. The whole thing renders in Storybook
+ *   the `@mailwoman/react/map` subpath only — never the package root. The whole thing renders in Storybook
  *   over a fake runtime (offline stub style + canned geocode) with no network, no ONNX, no gazetteer.
  */
 
@@ -30,6 +30,7 @@ import { usePlaceAutocomplete } from "#map/usePlaceAutocomplete"
 import { ClientOnly } from "../common/ClientOnly.tsx"
 import type { Preset } from "../common/PresetChips.tsx"
 import { GeocoderControls } from "./GeocoderControls.tsx"
+import { GraticuleLayer } from "./GraticuleLayer.tsx"
 import { MapCanvas } from "./MapCanvas.tsx"
 import { OverlayLayers } from "./OverlayLayers.tsx"
 import { ResolvedPlaceLayers } from "./ResolvedPlaceLayers.tsx"
@@ -51,7 +52,7 @@ export interface GeocoderProps {
 	 * A query that arrived with the page — a permalink's `?q=`, say — to run once as soon as the runtime is ready.
 	 *
 	 * Distinct from {@link GeocoderProps.defaultAddress}, and deliberately so: a cold visit pre-fills the demo address but
-	 * must NOT spend a visitor's first seconds resolving an address they did not ask for, while a link someone was sent
+	 * must not spend a visitor's first seconds resolving an address they did not ask for, while a link someone was sent
 	 * has to answer on arrival. Without this, a permalink pre-filled the field and then sat on a world view with the
 	 * address never run, which made "Copy link" produce a link that did not reproduce the result.
 	 */
@@ -104,20 +105,30 @@ function GeocoderInner({
 	onSubmitQuery,
 }: GeocoderInnerProps): ReactNode {
 	const mapRef = useRef<MapRef>(null)
-	// The chrome sits OUTSIDE `<MapCanvas>`, so it cannot take the handle from `useMap()`. A ref alone does not
+	// The chrome sits outside `<MapCanvas>`, so it cannot take the handle from `useMap()`. A ref alone does not
 	// re-render the compass or the layer control when the map arrives, so the same poll that publishes the test
 	// handle also puts it in state — one poll, two consumers.
 	const [map, setMap] = useState<ReturnType<MapRef["getMap"]> | null>(null)
 
-	// The map announces itself; nothing polls for it. `onLoad` carries the instance, so the compass and the layer
+	// The map announces itself. nothing polls for it. `onLoad` carries the instance, so the compass and the layer
 	// control render on the frame the map is ready rather than up to an interval later.
 	//
-	// TEST INJECTION POINT: the e2e viewport-bias suite drives the REAL map (pan + zoom past the bias threshold)
+	// Test injection point: the e2e viewport-bias suite drives the real map (pan + zoom past the bias threshold)
 	// before submitting, and a browser test cannot reach a React ref — so the same handle is republished on
 	// `globalThis.__mailwomanMapCanvas`, and cleared on unmount so a torn-down geocoder leaves no stale handle.
+	// The id of the lowest basemap layer that draws data — where the graticule is inserted, so the grid sits under the
+	// map rather than over it. Read from the loaded style rather than hardcoded: the basemap is a published artifact
+	// and its first layer is its business rather than ours. `background` is skipped because inserting before it would put the
+	// grid behind an opaque fill and show nothing at all.
+	const [baseLayerID, setBaseLayerID] = useState<string | undefined>(undefined)
+
 	const onMapLoad = useCallback((event: { target: ReturnType<MapRef["getMap"]> }) => {
 		;(globalThis as { __mailwomanMapCanvas?: ReturnType<MapRef["getMap"]> }).__mailwomanMapCanvas = event.target
 		setMap(event.target)
+
+		const layers = event.target.getStyle()?.layers ?? []
+
+		setBaseLayerID(layers.find((layer) => layer.type !== "background")?.id)
 	}, [])
 
 	useEffect(
@@ -179,6 +190,7 @@ function GeocoderInner({
 					// maplibre wordmark logo.
 					mapProps={{ attributionControl: { compact: true }, maplibreLogo: false, onLoad: onMapLoad }}
 				>
+					<GraticuleLayer beforeID={baseLayerID} />
 					<OverlayLayers overlays={runtime.overlays} />
 					<ResolvedPlaceLayers spec={spec} applyCamera={applyResultCamera} />
 					{panels.mapControls}

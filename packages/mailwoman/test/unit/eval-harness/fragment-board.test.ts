@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the fragment board's interval math and fixture contract (#727 stage-2, Tier 1c).
+ *   Tests for the fragment board's interval math and fixture interface (#727 stage-2, Tier 1c).
  *
  *   The interval is the whole reason this board exists — it is what turns "3/15" into "somewhere
  *   between 4% and 48%, so stop quoting it". If the math is wrong the board is worse than no board,
@@ -14,7 +14,7 @@ import { FRAGMENT_BOARD_FIXTURES, type FragmentFixture, wilson } from "mailwoman
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
-const fixtures = await Array.fromAsync(JSONSpliterator.fromAsync<FragmentFixture>(FRAGMENT_BOARD_FIXTURES))
+const fixtures = await JSONSpliterator.fromAsync<FragmentFixture>(FRAGMENT_BOARD_FIXTURES).toArray()
 
 describe("wilson", () => {
 	it("brackets the point estimate", () => {
@@ -37,7 +37,7 @@ describe("wilson", () => {
 	})
 
 	it("stays inside [0,1] at the extremes, where the normal approximation breaks", () => {
-		// 0/400: the normal approximation gives a NEGATIVE lower bound and zero width.
+		// 0/400: the normal approximation gives a negative lower bound and zero width.
 		const zero = wilson(0, 400)
 
 		expect(zero.low).toBe(0)
@@ -80,7 +80,7 @@ describe("the FR fragment board fixture", () => {
 
 		expect(negative.length).toBeGreaterThan(100)
 
-		// A negative row must NOT carry a street gold, or the positive scorer would pick it up.
+		// A negative row must not carry a street gold, or the positive scorer would pick it up.
 		for (const row of negative) {
 			expect(row.expect.street, `${row.id} is negative but carries a street gold`).toBeUndefined()
 		}
@@ -108,13 +108,13 @@ describe("the FR fragment board fixture", () => {
 		const bare = fixtures.filter((f) => f.klass === "bare-street")
 
 		for (const row of bare.slice(0, 50)) {
-			// Input IS the street on this class, so gold must equal the input verbatim.
+			// The input is the street on this class, so gold must equal the input verbatim.
 			expect(row.expect.street!.join(" ")).toBe(row.input)
 		}
 
 		const particle = fixtures.filter((f) => f.klass === "street-particle")
 
-		// The particle must live INSIDE the street span, never be split out.
+		// The particle must live inside the street span, never be split out.
 		for (const row of particle.slice(0, 50)) {
 			expect(row.expect.street!.join(" ")).toBe(row.input)
 		}
@@ -150,7 +150,7 @@ describe("the FR fragment board fixture", () => {
 
 	it("never repeats a street surface across classes", () => {
 		// A surface appearing in two classes would correlate the cells and break the intervals.
-		const surfaces = fixtures.map((f) => f.surface).filter((surface) => surface != null && surface.length > 0)
+		const surfaces = fixtures.map((f) => f.surface).filter((surface) => surface != null && surface.length)
 
 		expect(new Set(surfaces).size).toBe(surfaces.length)
 	})

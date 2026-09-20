@@ -71,10 +71,10 @@ export interface GoldenReport {
 }
 
 /**
- * Parse a single JSONL line into a `GoldenEntry`. Throws on schema violations.
+ * Parse a single jsonl line into a `GoldenEntry`. Throws on schema violations.
  */
 export function parseGoldenLine(line: string): GoldenEntry {
-	// The throw IS the result: `validateGoldenFile` catches it and records the message against the line
+	// The throw is the result: `validateGoldenFile` catches it and records the message against the line
 	// number, so a tolerant parse would report a corrupt row as valid.
 	const obj = parseJSONStrict<Partial<GoldenEntry> & Record<string, unknown>>(line)
 
@@ -112,9 +112,9 @@ export function parseGoldenLine(line: string): GoldenEntry {
 /**
  * Check that every component in `entry` appears in `entry.raw`.
  *
- * A golden entry's `raw` is hand-written ground truth, not a render, so the question here really is containment: does
- * this labeled span occur in the string a person typed. That is the weaker of the two reconciliations, and the right
- * one for a string no layout produced.
+ * A golden entry's `raw` is hand-written ground truth rather than a render, so the question here really is containment:
+ * does this labeled span occur in the string a person typed. That is the weaker of the two reconciliations, and the
+ * right one for a string no layout produced.
  */
 export function unreachableComponents(entry: GoldenEntry): ComponentTag[] {
 	const present = componentsPresentIn(entry.components, entry.raw)
@@ -132,14 +132,14 @@ export function unreachableComponents(entry: GoldenEntry): ComponentTag[] {
 /**
  * Validate one `.jsonl` file end-to-end, returning a list of issues.
  *
- * Parses line by line over `TextSpliterator` rather than `JSONSpliterator`: every issue this returns carries the LINE
- * NUMBER it was found on, and a malformed line has to be REPORTED rather than thrown. `JSONSpliterator` parses each row
+ * Parses line by line over `TextSpliterator` rather than `JSONSpliterator`: every issue this returns carries the line
+ * number it was found on, and a malformed line has to be reported rather than thrown. `JSONSpliterator` parses each row
  * for you and throws on the first bad one — correct for consumers that want the rows, wrong for the validator whose
  * whole job is locating the bad ones.
  */
 export async function validateGoldenFile(path: string): Promise<GoldenIssue[]> {
 	const issues: GoldenIssue[] = []
-	// Counted over EVERY row including blanks, so the number matches what an editor shows.
+	// Counted over every row including blanks, so the number matches what an editor shows.
 	let lineNumber = 0
 
 	for await (const raw of TextSpliterator.fromAsync(path, { skipEmpty: false })) {
@@ -172,7 +172,7 @@ export async function validateGoldenFile(path: string): Promise<GoldenIssue[]> {
  * Validate every `.jsonl` in a golden directory.
  */
 export async function validateGoldenDir(dir: string): Promise<GoldenReport> {
-	const files = await Globerator.files("jsonl", { cwd: dir, absolute: false }).toSorted()
+	const files = await Globerator.files("jsonl", { cwd: dir, absolute: false, recursive: false }).toSorted()
 	const issues: GoldenIssue[] = []
 	let entries = 0
 

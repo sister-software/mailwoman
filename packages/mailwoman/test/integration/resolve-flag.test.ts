@@ -25,7 +25,7 @@ const cliBin = await mailwomanCLIPath()
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 const hasWOFDB = await pathExists(wofPath)
-// oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe; the title and callback arrive where it is invoked
+// oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe. the title and callback arrive where it is invoked
 const describeIfWOF = describe.skipIf(!hasWOFDB)
 
 describe("--resolve option validation", () => {
@@ -46,7 +46,7 @@ describe("npx mailwoman parse --resolve error paths", () => {
 	test("--resolve with no gazetteer at all exits non-zero with a clear message", async () => {
 		// As of the pipeline-default flip, --resolve works without --neural — the runtime pipeline
 		// handles classification + resolution end-to-end. The remaining error path is "no gazetteer
-		// available", which means BOTH backends unreachable: no WOF database AND no candidate.db.
+		// available", which means both backends unreachable: no WOF database and no candidate.db.
 		// `MAILWOMAN_CANDIDATE_DB=none` is what pins the second one off — leaving it unset lets the
 		// convention path answer, and on any machine that has run `data pull candidate` the command
 		// then succeeds and this test's premise is gone.
@@ -80,7 +80,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 
 	test("respects --resolve-db explicit path override (matches env default)", async () => {
 		// Use the same input as the first test — the neural classifier needs enough context to tag
-		// component spans; bare single-token names like "Houston" alone often parse to nothing.
+		// component spans. bare single-token names like "Houston" alone often parse to nothing.
 		const result = await runFile(
 			"node",
 			[cliBin, "parse", "--neural", "--resolve", "--resolve-db", wofPath, "--format", "xml", "Springfield, Illinois"],
@@ -105,7 +105,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 
 	test("--candidates surfaces runner-up resolutions in XML", async () => {
 		// "Springfield, Illinois" — the region qualifier helps the model produce a resolvable tag.
-		// WOF returns multiple Springfields (OR, PA, MA, etc.). With --candidates 5 we expect at
+		// WOF returns multiple Springfields (or, PA, MA, etc.). With --candidates 5 we expect at
 		// least one <alternative> element on the resolved node.
 		const result = await runFile(
 			"node",
@@ -127,7 +127,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 			{ env: childEnv({ MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" }), maxBuffer: 4 * 1024 * 1024 }
 		)
 
-		// JSON with --candidates dumps the full AddressTree, not the libpostal-flat projection.
+		// JSON with --candidates dumps the full AddressTree rather than the libpostal-flat projection.
 		// The tree carries `roots` with nodes that have `alternatives` (possibly on nested children
 		// in containment-nesting trees like region → locality).
 		const tree = parseJSONStrict<Record<string, unknown>>(stripAnsiSpinner(result.stdout))
@@ -142,7 +142,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 		const findAlternatives = (nodes: TreeNode[]): boolean =>
 			nodes.some(
 				(n) =>
-					(Array.isArray(n.alternatives) && n.alternatives.length > 0) ||
+					(Array.isArray(n.alternatives) && n.alternatives.length) ||
 					(Array.isArray(n.children) && findAlternatives(n.children))
 			)
 
@@ -163,7 +163,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 })
 
 /**
- * Strip ANSI escape sequences + ink spinner frames so the JSON parser can consume CLI stdout.
+ * Strip ansi escape sequences + ink spinner frames so the JSON parser can consume CLI stdout.
  */
 function stripAnsiSpinner(stdout: string): string {
 	const ansi = /\[[0-9;]*[a-zA-Z]/gu

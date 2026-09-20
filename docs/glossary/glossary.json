@@ -352,7 +352,7 @@
 		},
 		{
 			"term": "composition window",
-			"definition": "The W dimension of the char path's (S,W) contract: the characters describing one label unit — a whole word for Latin char-word mode, the character ± ctx neighbors for CJK (ctx 3 → W 7, giving the CNN local n-gram context for designators like 丁目).",
+			"definition": "The W dimension of the char path's (S,W) interface: the characters describing one label unit — a whole word for Latin char-word mode, the character ± ctx neighbors for CJK (ctx 3 → W 7, giving the CNN local n-gram context for designators like 丁目).",
 			"tags": ["model", "cjk"],
 			"aliases": [],
 			"relatedTerms": ["char path"]
@@ -392,7 +392,7 @@
 		},
 		{
 			"term": "conventions mask",
-			"definition": "A decode-time constraint layer keyed by the model's own address-system detection (the exported locale head): tags that are ungrammatical in the detected system are removed from the Viterbi vocabulary, and the system's postcode shape arms a snap-only repair pass. The first slice forbids USPS street-affix decomposition for French. Same knowledge-outside-the-weights property as the gazetteer anchor — add a codex conventions row, no retrain.",
+			"definition": "A decode-time constraint layer keyed by the model's own address-system detection (the exported locale head): tags that are ungrammatical in the detected system are removed from the Viterbi vocabulary, and the system's postcode shape arms a snap-only repair pass. The first increment forbids USPS street-affix decomposition for French. Same knowledge-outside-the-weights property as the gazetteer anchor — add a codex conventions row, no retrain.",
 			"tags": ["hybrid", "neural"],
 			"relatedTerms": ["Viterbi decoding", "gazetteer anchor", "locale check"]
 		},
@@ -1078,7 +1078,7 @@
 		{
 			"term": "JSEP",
 			"abbreviation": "JavaScript Execution Provider",
-			"definition": "onnxruntime-web's older WebGPU backend. A kernel bug on slice operations with axis reversal corrupted int8 dequantization in the browser; it has been superseded by the native WebGPU execution provider.",
+			"definition": "onnxruntime-web's older WebGPU backend. A bug in its Slice kernel when reversing a tensor along an axis corrupted int8 dequantization in the browser; it has been superseded by the native WebGPU execution provider.",
 			"tags": ["infrastructure"],
 			"relatedTerms": ["execution provider fallback", "ONNX", "int8 quantization"]
 		},

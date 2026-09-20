@@ -2,38 +2,38 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build the COUNTRY-SURFACE LEXICON for the country-lexicon soft-feed channel (#1104). This is the
+ *   Build the country-surface lexicon for the country-lexicon soft-feed channel (#1104). This is the
  *   third atlas channel, a sibling of the postcode anchor (#239/#240) and the gazetteer anchor
- *   (#464): a per-token multi-hot clue the neural GRAMMAR conditions on but never obeys. Country is a
- *   CLOSED, ENUMERABLE class (~250 surfaces) — atlas, not grammar — so a dictionary phrase-lookup
+ *   (#464): a per-token multi-hot clue the neural grammar conditions on but never obeys. Country is a
+ *   closed, enumerable class (~250 surfaces) — atlas rather than grammar — so a dictionary phrase-lookup
  *   recovers the WOF-admin / resolver hierarchy case ("United States of America, Wyoming, <locality>")
- *   the learned tagger reads as a leading STREET. Pelias handled the same class the same way
+ *   the learned tagger reads as a leading street. Pelias handled the same class the same way
  *   (`WhosOnFirstClassifier extends PhraseClassifier`); this is the model-first analogue.
  *
- *   WHY A DEDICATED LEXICON (not just the gazetteer's `country` slot): the gazetteer already carries
+ *   why A dedicated lexicon (not just the gazetteer's `country` slot): the gazetteer already carries
  *   these surfaces in slot 0, and the shipped model already consumes them — yet the WOF-admin case
  *   still fails (model-card #1104: golden country recall 82.0% vs 88.6%). The country bit is one of a
- *   5-hot vector sharing ONE learned projection with region/po_box/cedex/homograph, and it is ZEROED
+ *   5-hot vector sharing one learned projection with region/po_box/cedex/homograph, and it is zeroed
  *   adjacent to a postcode by `suppress_gazetteer_near_postcode` (exactly where a trailing "…12345
  *   USA" sits). A dedicated channel de-entangles the country signal (its own projection + confidence
  *   weight) and is immune to that suppression. See
  *   docs/superpowers/plans/2026-07-14-country-lexicon-channel.md.
  *
- *   The matcher REUSES the gazetteer's phrase-scan (longest-first n-gram over whitespace words,
+ *   The matcher reuses the gazetteer's phrase-scan (longest-first n-gram over whitespace words,
  *   case-insensitive `entries` + uppercase-exact `code_entries`, char→piece projection) — one tested
  *   algorithm, two vocabularies. Only the vocabulary + the emitted feature differ. The emitted
  *   feature is 2-dim per piece: `[country_surface, country_ambiguous]`.
  *
  *   - `country_surface` (bit 1): the piece is part of a recognized country surface phrase.
- *   - `country_ambiguous` (bit 2): the SURFACE is a homograph (also a US region) or a common-word
- *     name ("Georgia", "America", "England", "IN") — a SOFT version of Pelias's hard blacklist. The
+ *   - `country_ambiguous` (bit 2): the surface is a homograph (also a US region) or a common-word
+ *     name ("Georgia", "America", "England", "IN") — a soft version of Pelias's hard blacklist. The
  *     model learns to trust `surface & !ambiguous` (unambiguous long/code forms) strongly and
  *     `surface & ambiguous` weakly, using context — model-first, never a hard drop, so recall on
  *     "Republic of Georgia" is preserved.
  *
- *   Source of truth: `@mailwoman/codex` (COUNTRY_SURFACE_FORMS + ISO2_TO_NAME) — the SAME data the
+ *   Source of truth: `@mailwoman/codex` (COUNTRY_SURFACE_FORMS + ISO2_TO_NAME) — the same data the
  *   corpus-python bridge `country-surfaces.json` is generated from (codex-export-country-surfaces.ts), so
- *   the channel and the corpus extract synthesizer cannot diverge on what a country surface IS.
+ *   the channel and the corpus extract synthesizer cannot diverge on what a country surface is.
  *
  *   Output: data/gazetteer/country-surface-lexicon-v1.json (small, committed, provenance-tracked).
  *   Regenerate: `node packages/mailwoman/lib/dev-tools/codex/country/surface-lexicon.ts`
@@ -66,8 +66,8 @@ const SLOTS = ["country_surface", "country_ambiguous"]
 const OUTPUT = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
 /**
- * THE shared word-normalization rule (identical to build-gazetteer-anchor-lexicon.mjs and mirrored in
- * gazetteer_char_paint on both sides): per whitespace-word, strip LEADING/TRAILING characters that are not Unicode
+ * The one shared word-normalization rule (identical to build-gazetteer-anchor-lexicon.mjs and mirrored in
+ * gazetteer_char_paint on both sides): per whitespace-word, strip leading/trailing characters that are not Unicode
  * letters or digits (keep internal ones: "u.s.a", "timor-leste"), rejoin single-spaced. Entry keys and scanned tokens
  * both pass through it, so "U.S.A." ≡ "u.s.a".
  */
@@ -80,7 +80,7 @@ const isShortCode = (s: string): boolean => {
 	return letters.length > 0 && letters.length <= MAX_ABBREVIATION_LETTERS && /^[\p{L}.\s]+$/u.test(s)
 }
 
-// Homograph set: a single-word country surface that is ALSO a US region (name or abbreviation) reads
+// Homograph set: a single-word country surface that is also a US region (name or abbreviation) reads
 // ambiguously (Georgia the country vs the state, IN = India vs Indiana). Computed from codex so it
 // tracks the US region table, never hand-maintained.
 const usStateNames = new Set(US_STATE_NAMES.map((n) => n.toLowerCase()))
@@ -88,7 +88,7 @@ const usStateAbbrevs = new Set<string>(US_STATE_ABBREVIATIONS as readonly string
 
 /**
  * Curated common-word country surfaces — single tokens that appear far more often as ordinary street/venue/locality
- * words than as a trailing country. A SOFT flag (the model still decides), the model-first analogue of Pelias's
+ * words than as a trailing country. A soft flag (the model still decides), the model-first analogue of Pelias's
  * blacklist (north/south/east/west/street/city/king). Tunable.
  */
 const COMMON_WORD_AMBIGUOUS = new Set(["america", "england", "britain", "turkey", "chad", "jordan", "jersey", "guinea"])
@@ -121,7 +121,7 @@ function add(surface: string): void {
 	if (!key) return
 	const words = key.split(" ")
 	maxNgram = Math.max(maxNgram, words.length)
-	// Multi-word phrases are unambiguous by construction; single tokens consult the homograph +
+	// Multi-word phrases are unambiguous by construction. single tokens consult the homograph +
 	// common-word rule.
 	const ambiguous = words.length === 1 && isAmbiguousName(key)
 	const bits = BIT.country_surface | (ambiguous ? BIT.country_ambiguous : 0)

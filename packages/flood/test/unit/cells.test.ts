@@ -38,7 +38,7 @@ const TINY_REAL_FEATURE = [
 describe("classifyFeatureCells", () => {
 	it("indexes a polygon smaller than a cell, which a centre-containment polyfill drops entirely", () => {
 		for (const resolution of [7, 8, 9, 10]) {
-			// The trap, stated as a measurement rather than a worry: h3's default polyfill keeps a cell whose CENTRE is
+			// The trap, stated as a measurement rather than a worry: h3's default polyfill keeps a cell whose centre is
 			// inside, and this real feature contains no cell centre at any of these resolutions.
 			expect(polygonToCells(TINY_REAL_FEATURE[0] as number[][][], resolution, true)).toHaveLength(0)
 
@@ -86,7 +86,7 @@ describe("classifyFeatureCells", () => {
 	})
 
 	it("still indexes a ring collapsed to a single point, because overlapping containment touches its cell", () => {
-		// Recorded rather than assumed: the zero-cell guard above does NOT fire on a degenerate ring, so a source that
+		// Recorded rather than assumed: the zero-cell guard above does not fire on a degenerate ring, so a source that
 		// published one would be indexed to the cell containing it rather than dropped.
 		const collapsed = [
 			[

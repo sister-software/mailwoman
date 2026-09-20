@@ -42,7 +42,7 @@ describe("blendImportance", () => {
 
 	it("never lets a weak article demote a population-attested place: Saint-Denis", () => {
 		// The Seine-Saint-Denis suburb: pop 96,128 (referential 0.4716), article 0.1173. Under the old
-		// COALESCE the article REPLACED the referential score and a 418-person hamlet outranked it.
+		// coalesce the article replaced the referential score and a 418-person hamlet outranked it.
 		expect(blendImportance(0.4716, 0.1173)).toBe(0.4716)
 	})
 

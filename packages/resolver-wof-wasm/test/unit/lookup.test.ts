@@ -125,7 +125,7 @@ afterAll(async () => {
 
 describe("WOFWasmPlaceLookup", () => {
 	test("coincidentLocalitiesFor reads the relation carried into the slim DB (#402)", async () => {
-		// End-to-end: the fixture source had coincident_roles → build-slim carried it → the WASM lookup reads it.
+		// End-to-end: the fixture source had coincident_roles → build-slim carried it → the wasm lookup reads it.
 		const { db } = await loadSlimWOFDatabase({ source: slimBytes })
 		const lookup = new WOFWasmPlaceLookup({ db })
 
@@ -227,7 +227,7 @@ describe("WOFWasmPlaceLookup", () => {
 		try {
 			// Live-demo bug (2026-06-11): a strict placetype='locality' filter excluded the borough, so
 			// "Brooklyn" resolved to Brooklyn Park, MN. The shared expansion (locality → locality +
-			// borough + localadmin) makes the exact-named borough reachable; exact tiering puts it first.
+			// borough + localadmin) makes the exact-named borough reachable. exact tiering puts it first.
 			const matches = await lookup.findPlace({ text: "Brooklyn", placetype: "locality", limit: 5 })
 			expect(matches[0]).toMatchObject({ id: 230, name: "Brooklyn", placetype: "borough" })
 			expect(matches[0]?.exactMatch).toBe(true)
@@ -242,7 +242,7 @@ describe("WOFWasmPlaceLookup", () => {
 
 		try {
 			// Mirrors "brooklyn, new york, ny": the parsed region's bbox constrains the locality lookup.
-			// Pre-expansion this returned NOTHING (the borough was filtered out, Brooklyn Park is outside
+			// Pre-expansion this returned nothing (the borough was filtered out, Brooklyn Park is outside
 			// the bbox), and the cascade silently fell back to the unconstrained — wrong — hit.
 			const matches = await lookup.findPlace({
 				text: "Brooklyn",
@@ -278,12 +278,12 @@ describe("WOFWasmPlaceLookup", () => {
 		try {
 			// "York New" token-matches both Twin Hamlet (bag "Old York <sep> New City") and New York
 			// (name + alias "New York City"). Pre-#523, the space-joined bags let the padded containment
-			// check false-promote BOTH (' old york new city ' and ' new york new york city ' each
+			// check false-promote both (' old york new city ' and ' new york new york city ' each
 			// contain ' york new '). With the separator, no candidate may claim the exact tier.
 			const straddle = await lookup.findPlace({ text: "York New", placetype: "locality", limit: 5 })
 			expect(straddle.length).toBeGreaterThan(0) // still token-reachable…
 			expect(straddle.some((m) => m.exactMatch === true)).toBe(false) // …but never exact
-			// A single alias still earns the exact tier from the bag alone.
+			// A single alias still warrants the exact tier from the bag alone.
 			const alias = await lookup.findPlace({ text: "New City", placetype: "locality", limit: 5 })
 			expect(alias[0]).toMatchObject({ id: 240, name: "Twin Hamlet" })
 			expect(alias[0]?.exactMatch).toBe(true)

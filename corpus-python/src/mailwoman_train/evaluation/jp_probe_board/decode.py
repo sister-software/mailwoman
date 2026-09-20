@@ -55,14 +55,14 @@ def decode_all_spans(raw: str, label_ids: Sequence[int], id_to_label: Mapping[in
 
     A tag can legitimately occur more than once in one row: the KR ladder puts 읍/면 and the 리 below it, or the
     road-form's parenthetical 동, on the same ``dependent_locality`` tag (``신림면 구학리``), and ``수원시 장안구`` is two
-    ``subregion`` spans. The per-tag read scores each gold span against this full list; collapsing to one span per
+    ``subregion`` spans. The per-tag read scores each gold span against this full list. collapsing to one span per
     tag guaranteed a miss on every such row, whatever the model emitted.
 
     The whitespace-joined surfaces are there for the multi-token spans the typed registries carry: the permit
     register's ``1층 141호`` is one ``unit`` field, and the model labels every character of it ``unit`` except the
     space, which it reads as ``O`` the way it does for every space in the 5,200,000 LABEL rows. The served projection
     joins adjacent same-tag runs with the raw's own whitespace and reports ``unit: "1층 141호"``, so the read does the
-    same; on the aligned KR permit board the space alone accounted for 196 of 396 ``unit`` misses.
+    same. on the aligned KR permit board the space alone accounted for 196 of 396 ``unit`` misses.
     """
     runs = decode_runs(raw, label_ids, id_to_label)
     spans: dict[str, list[str]] = {}

@@ -1,34 +1,34 @@
-# v5.0.0 — FROM-SCRATCH BASE, every tail convention at once (#1748 / #1821)
+# v5.0.0 — from-scratch base, every tail convention at once (#1748 / #1821)
 #
-# This is v4.4.0's own base recipe — the one that produced the SHIPPED model — pointed at a corpus
+# This is v4.4.0's own base recipe — the one that produced the shipped model — pointed at a corpus
 # that contains the trailing tails, and admitting 134 countries instead of 25. No init_from, no EWC.
 #
-# WHY FROM SCRATCH, measured rather than preferred. Eight fine-tunes of the v4.4.0 base were graded
+# why from scratch, measured rather than preferred. Eight fine-tunes of the v4.4.0 base were graded
 # against it on the 649-row board. Every change an additive fine-tune has was isolated:
 #
 #   run       change                                  net    regressed
-#   v4.8.0    admin slice @ 9.4%                     -18    25
+#   v4.8.0    admin source @ 9.4%                    -18    25
 #   v4.9.0    + dependent locality                   -20    31
-#   v4.10.0   dose -> 3.1%                           -13    22
-#   v4.11.0   venue-bearing, no new source or dose   -13    18
+#   v4.10.0   exposure -> 3.1%                       -13    22
+#   v4.11.0   venue-containing, no new source or weight -13    18
 #   v4.12.0   EWC brake x10                          -12    19
 #   v4.14.0   steps -> 1,000                          -6    10
 #   v4.13.0   NULL — no added data at all             -5    10
 #
 # The NULL is the best arm. A plain fine-tune of that base costs ten rows before any data is involved,
 # and the tax is paid in the first 1,000 steps and flat to 4,000 — it is not proportional to distance
-# travelled, it is a fixed cost of touching the base. It is charged BEFORE the slice is read, so no
-# slice-side change can avoid it, and every arm that adds data is worse than adding none.
+# travelled, it is a fixed cost of touching the base. It is charged before the added source is read, so no
+# corpus-side change can avoid it, and every arm that adds data is worse than adding none.
 #
 # The harness was verified before trusting any of that: the shipped model staged through the identical
 # candidate path and graded against itself gave 0 of 649 rows differing, upper bound 0.5%. The
 # regressions are real.
 #
-# So the surface has to be LEARNED rather than grafted, which means a base that sees every tail at
+# So the surface has to be learned rather than grafted, which means a base that sees every tail at
 # once. That is this run.
 #
-# WHAT CHANGES from v4.4.0's base recipe, and nothing else:
-#   corpus_dir       v0.19.0 -> v0.27.0 (adds house-venue INTL: 18,000 IN/PT/MX rows, REAL postcodes,
+# What changes from v4.4.0's base recipe, and nothing else:
+#   corpus_dir       v0.19.0 -> v0.27.0 (adds house-venue intl: 18,000 IN/PT/MX rows, real postcodes,
 #                    venue 100% / street 100% / house_number 100%, under the existing
 #                    synth-house-venue source at its established weight 2.0)
 #   country_weights  25 -> 134 (the shipped 25 + IN + every gauntlet-board country + KR/TW). Measured
@@ -38,16 +38,16 @@
 # Everything else — 60,000 steps, batch 128, lr 5e-4, warmup 1,000, no init, no brake — is the recipe
 # that produced the model currently in production.
 #
-# CHECK, against the SHIPPED model on the 649-row board:
+# Check, against the shipped model on the 649-row board:
 #   1. net improved-minus-regressed >= 0;
 #   2. FR, GB and DE show no regression anywhere (D-rule, iron rule 6);
 #   3. the venue-led rows the fine-tunes broke must hold — gb-venue-ye-three-lords,
 #      gb-lex-cafe-st-marys, gb-op2-four-seasons-cjk;
-#   4. IMPROVEMENT metric, not check: the 4 ve_city_postcode_trailing_state rows and in_structured.
+#   4. improvement metric rather than check: the 4 ve_city_postcode_trailing_state rows and in_structured.
 #
-# A from-scratch run is not guaranteed to beat a tuned production model, and this one has ONE seed and
+# A from-scratch run is not guaranteed to beat a tuned production model, and this one has one seed and
 # no hyperparameter search. If it grades negative, the finding is that the recipe needs work the
-# corpus cannot supply, and that is a scoping answer rather than another slice.
+# corpus cannot supply, and that is a scoping answer rather than another recipe.
 
 data:
   corpus_dir: /data/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl

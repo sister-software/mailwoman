@@ -48,9 +48,9 @@ export const ADMIN_TAG_DEPTH = [
 const COUNTRY_PLACETYPES = new Set(["country", "dependency", "disputed"])
 
 /**
- * The similarity floor below which the baseline abstains rather than selecting its best partial match. Registered, not
- * tuned: a resolver that always answers cannot be measured on abstention, and a floor chosen after results would be the
- * decision rule moving.
+ * The similarity floor below which the baseline abstains rather than selecting its best partial match. Registered
+ * rather than tuned: a resolver that always answers cannot be measured on abstention, and a floor chosen after results
+ * would be the decision rule moving.
  */
 export const BASELINE_SIMILARITY_FLOOR = 0.9
 
@@ -99,7 +99,7 @@ export interface BaselineSelection {
 }
 
 /**
- * The weights, registered. Exact agreement outranks any qualifier; a qualifier outranks similarity; similarity breaks
+ * The weights, registered. Exact agreement outranks any qualifier. a qualifier outranks similarity. similarity breaks
  * what remains, and the pool's canonical order breaks an exact tie.
  */
 const WEIGHT = { exact: 4, countryQualifier: 2, regionQualifier: 1, similarity: 1 } as const
@@ -107,7 +107,7 @@ const WEIGHT = { exact: 4, countryQualifier: 2, regionQualifier: 1, similarity: 
 function adminValues(tree: AddressTree): Map<string, string[]> {
 	const byTag = new Map<string, string[]>()
 
-	for (const node of collectNodes(tree.roots, (candidate) => candidate.value.trim().length > 0)) {
+	for (const node of collectNodes(tree.roots, (candidate) => candidate.value.trim())) {
 		const bucket = byTag.get(node.tag) ?? []
 
 		bucket.push(node.value.trim())

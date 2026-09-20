@@ -3,7 +3,7 @@
 
 /**
  *   The locality-ranking weights and their shipped defaults. Its own module because every value here is
- *   a measured tuning decision with its rationale attached — the block reads as a reference table, not
+ *   a measured tuning decision with its rationale attached — the block reads as a reference table rather than
  *   as part of the lookup's control flow, and the tests import it directly to pin one change at a time.
  */
 
@@ -44,9 +44,9 @@ export interface RankingWeights {
 	 */
 	proximityBoost: number
 	/**
-	 * Magnitude of the bias-hint term inside the exact-tier PROMINENCE sort (the `bias`/viewport path). Deliberately
+	 * Magnitude of the bias-hint term inside the exact-tier prominence sort (the `bias`/viewport path). Deliberately
 	 * population-scale (default = populationBoost) so a candidate near the map view / the user beats a distant-but-bigger
-	 * namesake — "the map view wins" is the feature; same-region ties (all candidates far from every hint) still fall to
+	 * namesake — "the map view wins" is the feature. same-region ties (all candidates far from every hint) still fall to
 	 * population.
 	 */
 	biasBoost: number
@@ -67,18 +67,18 @@ export interface RankingWeights {
 	 */
 	populationScaleLog10: number
 	/**
-	 * Tier candidates with an EXACT name/alias match above candidates that only match partially, BEFORE the weighted-sum
+	 * Tier candidates with an exact name/alias match above candidates that only match partially, before the weighted-sum
 	 * score is consulted. Default true.
 	 *
-	 * Why this is needed (and why it ALIGNS with — rather than overrides — the population/importance signal): the
+	 * Why this is needed (and why it aligns with — rather than overrides — the population/importance signal): the
 	 * weighted sum adds population as a large additive boost (`populationBoost`, up to +4) so that famous places surface
 	 * for unambiguous full-name queries. But population is a _prominence prior_ — its job is to break ties among
-	 * candidates that match the query EQUALLY WELL (e.g. "Springfield" → Springfield IL over Springfield MA, both exact
-	 * name matches). It was never meant to promote a place that matches the query WORSE. For a 2-letter region
-	 * abbreviation that backfires: querying "ME" returns Maine (which has the exact alias `ME`) AND Missouri/
+	 * candidates that match the query equally well (e.g. "Springfield" → Springfield IL over Springfield MA, both exact
+	 * name matches). It was never meant to promote a place that matches the query worse. For a 2-letter region
+	 * abbreviation that backfires: querying "ME" returns Maine (which has the exact alias `ME`) and Missouri/
 	 * Michigan/etc. (which do not), and Missouri's larger population (+4) overcomes Maine's bm25 edge — so "Portland, ME"
 	 * resolves its region to Missouri and the locality then cascades to the wrong state. Tiering restores the intended
-	 * ordering: **match quality is the primary key, prominence (population) the secondary key WITHIN a tier.**
+	 * ordering: **match quality is the primary key, prominence (population) the secondary key within a tier.**
 	 * Springfield-IL-over-MA still works (both exact → same tier → population decides); ME→Maine now works (only Maine is
 	 * exact → higher tier → population never gets to override it). See
 	 * docs/articles/evals/resolver-geo/2026-05-30-resolver-exact-match.md.
@@ -89,9 +89,9 @@ export interface RankingWeights {
 	 */
 	exactMatchTiering: boolean
 	/**
-	 * #936 option 3 — official-language names ARE names. When true, a candidate holding the query as an OFFICIAL name
+	 * #936 option 3 — official-language names are names. When true, a candidate holding the query as an official name
 	 * (`names.official = 1`: a preferred-form name in an official language of its country, stamped at ingest) joins the
-	 * NAME-exact sub-tier rather than the alias-exact one, provided its population clears {@link officialNameExactFloor}.
+	 * name-exact sub-tier rather than the alias-exact one, provided its population clears {@link officialNameExactFloor}.
 	 * Fixes unscoped "Åbo" → Turku (its official Swedish name) over a hamlet literally named Åbo; population still orders
 	 * within the sub-tier, so Paris → Paris FR is untouched.
 	 *
@@ -103,16 +103,16 @@ export interface RankingWeights {
 	officialNameExact: boolean
 	/**
 	 * Minimum population for a candidate's official names to join the name-exact sub-tier. The #936 review's no-floor
-	 * census measured the boundary: ≥100k holders are the famous-exonym class (757 flips, intent-correct; 7 collisions,
+	 * census measured the boundary: ≥100k holders are the famous-exonym class (757 flips, intent-correct. 7 collisions,
 	 * none harmful) while 10k–100k holders are junk-dominated (3,481 flips led by short-form mis-tags — Villeneuve-Loubet
-	 * carrying "villeneuve" would bury five real villages of that name). Rank-time knob: tunable without re-ingest;
+	 * carrying "villeneuve" would bury five real villages of that name). Rank-time knob: tunable without re-ingest.
 	 * below-floor official names simply stay alias-tier (today's behavior).
 	 */
 	officialNameExactFloor: number
 }
 
 /**
- * The shipped weights. Every value is a measured decision — change one and re-run the resolver eval; the per-field docs
+ * The shipped weights. Every value is a measured decision — change one and re-run the resolver eval. the per-field docs
  * on {@link RankingWeights} say what each change moves and what motivated its current value.
  */
 export const DEFAULT_WEIGHTS: RankingWeights = {
@@ -133,15 +133,15 @@ export const DEFAULT_WEIGHTS: RankingWeights = {
 	// RankingWeights override.
 	//
 	// Note: this resolver uses `place_population` directly. The separate `place_importance` table
-	// (Wikipedia-derived) is consumed by the FST layer, not here. See
-	// docs/articles/concepts/importance-vs-population.md for the two-signal contract.
+	// (Wikipedia-derived) is consumed by the FST layer rather than here. See
+	// docs/articles/concepts/importance-vs-population.md for the two-signal interface.
 	populationBoost: 4,
 	populationScaleLog10: 6,
 	// Exact name/alias match outranks partial match before the weighted sum (incl. population) is
-	// consulted — keeps population as an intra-tier prominence tiebreaker, not a cross-tier promoter.
-	// Fixes the 2-letter-region-abbrev bug ("ME" → Maine, not the more-populous Missouri).
+	// consulted — keeps population as an intra-tier prominence tiebreaker rather than a cross-tier promoter.
+	// Fixes the 2-letter-region-abbrev bug ("ME" → Maine rather than the more-populous Missouri).
 	exactMatchTiering: true,
-	// #936 option 3 — promoted default-ON 2026-07-03 (eval battery PASS; see the RankingWeights docstring).
+	// #936 option 3 — promoted to on by default 2026-07-03, the eval battery passing. see the RankingWeights docstring.
 	officialNameExact: true,
 	officialNameExactFloor: 100_000,
 }
@@ -163,7 +163,7 @@ export function populationScaleTerm(
 /**
  * The additive population boost: `populationBoost * populationScaleTerm(...)`, capped at `populationBoost` magnitude at
  * `10^populationScaleLog10` people. Missing population contributes 0 — never a penalty. The one formula behind the Node
- * weighted sum and the WASM re-rank, so the two backends cannot drift.
+ * weighted sum and the wasm re-rank, so the two backends cannot drift.
  */
 export function populationBoostTerm(
 	population: number | null | undefined,

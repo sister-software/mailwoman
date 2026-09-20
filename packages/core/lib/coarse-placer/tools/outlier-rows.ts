@@ -4,24 +4,19 @@
 /**
  *   Shared plumbing for the Latin off-map outlier builders (`build-outlier-latin.ts` — Overture,
  *   `build-outlier-oa.ts` — OpenAddresses): the address-string assembler and its shape variants,
- *   the dedup/cap loop, and the OTHER-row JSONL encoding. The builders differ only in where the
+ *   the dedup/cap loop, and the other-row jsonl encoding. The builders differ only in where the
  *   locality comes from and in OA's PO-box guard, so both are parameters here.
  */
 
 import { hashFNV1a } from "#coarse-placer/fnv-hash"
 import { toLinesText } from "#fs/writers"
 import { stringifyJSON } from "#json"
+import { isPresent } from "#objects"
 
 /**
- * Shortest raw string worth keeping as an outlier example; below it there is nothing to learn from.
+ * Shortest raw string worth keeping as an outlier example. below it there is nothing to learn from.
  */
 const MIN_OUTLIER_LENGTH = 6
-
-/**
- * Address parts are joined positionally; an absent field arrives as the empty string and must not become a stray
- * separator.
- */
-const nonEmpty = (part: string): boolean => part.length > 0
 
 /**
  * How {@link assembleOutlierRow} varies per source.
@@ -53,16 +48,16 @@ export function assembleOutlierRow(row: Record<string, unknown>, options: Assemb
 
 	if (options.requireLetterLocality && !street && !/[a-z]/i.test(locality)) return null
 
-	const head = [num, street].filter(nonEmpty).join(" ")
+	const head = [num, street].filter(isPresent).join(" ")
 	const h = hashFNV1a(`${num}|${street}|${pc}|${locality}`)
 
 	switch (h % 3) {
 		case 0:
-			return [head, [pc, locality].filter(nonEmpty).join(" ")].filter(nonEmpty).join(", ")
+			return [head, [pc, locality].filter(isPresent).join(" ")].filter(isPresent).join(", ")
 		case 1:
-			return [head, locality, pc].filter(nonEmpty).join(", ").trim()
+			return [head, locality, pc].filter(isPresent).join(", ").trim()
 		default:
-			return [head, [locality, pc].filter(nonEmpty).join(" ")].filter(nonEmpty).join(", ")
+			return [head, [locality, pc].filter(isPresent).join(" ")].filter(isPresent).join(", ")
 	}
 }
 
@@ -85,7 +80,7 @@ export function collectOutlierRows(candidates: Iterable<string | null>, cap = In
 }
 
 /**
- * Encode rows as `{raw, country: "OTHER"}` JSONL (trailing newline included).
+ * Encode rows as `{raw, country: "other"}` jsonl (trailing newline included).
  */
 export function otherRowsJSONL(rows: string[]): string {
 	return toLinesText(rows.map((raw) => stringifyJSON({ raw, country: "OTHER" })))

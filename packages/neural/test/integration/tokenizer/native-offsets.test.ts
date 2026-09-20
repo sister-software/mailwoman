@@ -5,18 +5,18 @@
  *   Convention pins for the SP 0.2.2 native-offsets runtime (task #26 — the
  *   `@mailwoman/sentencepiece-wasm` swap). Three behaviors are pinned:
  *
- *   1. **Non-BMP correctness** — the old reconstruction's DEFERRED hazard ("surrogate-pair
+ *   1. **Non-BMP correctness** — the old reconstruction's deferred hazard ("surrogate-pair
  *      codepoints would need `Array.from(s).length` accounting"): a piece following a non-BMP
  *      character now lands on the correct UTF-16 range, and alignment holds for the rest of the
  *      input. This was wrong before the swap, by one code unit per preceding non-BMP char.
  *   2. **Whitespace-trim of ▁ spans** — SentencePiece's native span for a `▁`-prefixed piece
- *      includes the whitespace the sentinel consumed; the TS layer trims to the word start,
- *      preserving the decoder contract the shipped model was decoded with. The bare-`▁` piece
+ *      includes the whitespace the sentinel consumed. the TS layer trims to the word start,
+ *      keeping decoder behavior compatible the shipped model was decoded with. The bare-`▁` piece
  *      collapses to the zero-width-after-space range the word grouper expects.
- *   3. **Normalizer-granular alignment is the TRAINING convention, not a bug** — on inputs where
- *      the model's normalizer aligns coarsely (the ALL-CAPS class: `CALLE` → `▁C`[0,0) +
+ *   3. **Normalizer-granular alignment is the training convention rather than a bug** — on inputs where
+ *      the model's normalizer aligns coarsely (the all-caps class: `calle` → `▁C`[0,0) +
  *      `AL`[0,3)), the native offsets match what `EncodeAsImmutableProto` fed the trainer
- *      (corpus-python/src/mailwoman_train/tokenizer.py builds BIO gold from the SAME proto
+ *      (corpus-python/src/mailwoman_train/tokenizer.py builds BIO gold from the same proto
  *      spans). The old TS reconstruction disagreed with training on exactly this class — 102 of
  *      1,066 rows in the swap's parity battery, every one offset-only (pieces + ids were
  *      byte-identical across all 1,066).
@@ -28,7 +28,7 @@ import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { describe, expect, test } from "vitest"
 
 // The dev tokenizer, same source link-dev-weights pins (v0.9.0-multisplice) — resolved via the
-// data root; skip cleanly on hosts without it.
+// data root. skip cleanly on hosts without it.
 const TOKENIZER_PATH = String(dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model"))
 const haveTokenizer = await pathExists(TOKENIZER_PATH)
 
@@ -38,12 +38,12 @@ describe("MailwomanTokenizer — native offsets (SP 0.2.2)", () => {
 		const text = "12 𝔘nicode St"
 		const { pieces } = tokenizer.encode(text)
 
-		// 𝔘 (U+1D518) is two UTF-16 code units; the piece containing it spans them exactly…
+		// 𝔘 (U+1D518) is two UTF-16 code units. the piece containing it spans them exactly…
 		const un = pieces.find((p) => p.piece === "▁Un")
 		expect(un).toBeDefined()
 		expect(text.slice(un!.start, un!.end)).toBe("𝔘n")
 
-		// …and the rest of the input does NOT desync (the old reconstruction drifted by one code
+		// …and the rest of the input does not desync (the old reconstruction drifted by one code
 		// unit per preceding non-BMP char).
 		const st = pieces.at(-1)!
 		expect(st.piece).toBe("▁St")
@@ -55,7 +55,7 @@ describe("MailwomanTokenizer — native offsets (SP 0.2.2)", () => {
 		const text = "«12» Main St"
 		const { pieces } = tokenizer.encode(text)
 
-		// ▁Main starts at "M" (index 5), not at the preceding space — the decoder contract.
+		// ▁Main starts at "M" (index 5), not at the preceding space — the decoder interface.
 		const main = pieces.find((p) => p.piece === "▁Main")!
 		expect(text.slice(main.start, main.end)).toBe("Main")
 
@@ -74,7 +74,7 @@ describe("MailwomanTokenizer — native offsets (SP 0.2.2)", () => {
 
 			// EncodeAsImmutableProto attributes "CAL" to the second piece on this input (verified
 			// against Python sentencepiece on the same model bytes) — the spans BIO gold was built
-			// from. Pinning it here keeps runtime and trainer on one convention; do NOT "fix" this
+			// from. Pinning it here keeps runtime and trainer on one convention. do not "fix" this
 			// back to per-char intuition without re-deriving training gold.
 			expect(pieces[0]!.piece).toBe("▁C")
 			expect(pieces[0]!.start).toBe(pieces[0]!.end)

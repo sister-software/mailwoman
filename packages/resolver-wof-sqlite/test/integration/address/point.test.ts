@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The address-point reader's probe contract, pinned over a fixture extract — the scope ladder and
+ *   The address-point reader's probe interface, pinned over a fixture extract — the scope ladder and
  *   the range-surface fallback ("385-387 Esplanade" keys the register's `385`; an exact range key,
  *   where a source carries one verbatim, is never second-guessed).
  */
@@ -60,7 +60,7 @@ beforeAll(async () => {
 		null
 	)
 
-	// A source that carries the range VERBATIM — the exact key must win over the low-end retry.
+	// A source that carries the range verbatim — the exact key must win over the low-end retry.
 	insert.run(
 		"osborne drive",
 		"osborne drive",
@@ -79,7 +79,7 @@ beforeAll(async () => {
 
 	insert.run("forest road", "forest road", "19", null, "7250", "trevallyn", "Forest Road", -41.4316, 147.1185, "t", "r")
 	// BAN-style space-separated letter suffix — the spacing-variant fallback's fixture. The key comes
-	// from the SHARED normalizer so this fixture can never drift from the probe side's derivation.
+	// from the shared normalizer so this fixture can never drift from the probe side's derivation.
 	const egliseKey = normalizeStreetForKey("Rue de l'Église")
 
 	insert.run(egliseKey, egliseKey, "3 a", null, "67530", "boersch", "Rue de l'Église", 48.4771, 7.4433, "t", "r")
@@ -108,10 +108,10 @@ beforeAll(async () => {
 	const teichKey = normalizeStreetForKey("Teichstraße")
 	insert.run(teichKey, teichKey, "3", null, "04509", "werlitzsch", "Teichstraße", 51.4367, 12.1958, "osm", "r")
 	insert.run(teichKey, teichKey, "3", null, "04509", "krensitz", "Teichstraße", 51.52, 12.45, "osm", "r")
-	// An OSM-shaped row with NO scope of its own — the case the bbox rung exists for.
+	// An OSM-shaped row with no scope of its own — the case the bbox rung exists for.
 	insert.run("mill lane", "mill lane", "7", null, null, null, "Mill Lane", 51.5, -0.1, "osm", "r")
-	// A NAD-shaped US row whose city field is ABBREVIATED — the Texas extract writes `addi` for Addison on 5,174 rows. The
-	// board's `us-addison-zip-75001` (status pass) is this row; a locality check that reads the truncation as a
+	// A NAD-shaped US row whose city field is abbreviated — the Texas extract writes `addi` for Addison on 5,174 rows. The
+	// board's `us-addison-zip-75001` (status pass) is this row. a locality check that reads the truncation as a
 	// different place loses it to interpolation.
 	const airportKey = normalizeStreetForKey("Airport Pkwy")
 
@@ -166,8 +166,8 @@ describe("AddressPointSqliteLookup", () => {
 		expect(lookup.find({ street: "Rue de l'Église", number: "4a", postcode: "67530" })).toBeNull()
 	})
 
-	it("never range-splits or suffix-folds the unit-bearing and box shapes", () => {
-		// AU slash convention: '5/7' is unit 5 of house 7 — NOT a range. The ladder must not derive '5'.
+	it("never range-splits or suffix-folds the unit-containing and box shapes", () => {
+		// AU slash convention: '5/7' is unit 5 of house 7 — not a range. The ladder must not derive '5'.
 		expect(lookup.find({ street: "Osborne Drive", number: "5/32", postcode: "4505" })).toBeNull()
 		// Fractional house numbers survive untouched — '32 1/2' is neither a spaced suffix nor a range.
 		expect(lookup.find({ street: "Osborne Drive", number: "32 1/2", postcode: "4505" })).toBeNull()
@@ -179,16 +179,16 @@ describe("AddressPointSqliteLookup", () => {
 	})
 
 	it("unit siblings share the building coordinate through every rung", () => {
-		// The fixture has unit rows for 32 (unit 6 etc. in the real register; here the plain row) — a
-		// range surface resolving through the low-end rung lands the SAME building coordinate the
-		// plain-number probe returns, so a unit-bearing query can never be worse than its base.
+		// The fixture has unit rows for 32 (unit 6 etc. in the real register. here the plain row) — a
+		// range surface resolving through the low-end rung lands the same building coordinate the
+		// plain-number probe returns, so a unit-containing query can never be worse than its base.
 		const base = lookup.find({ street: "Osborne Drive", number: "32", postcode: "4505" })
 		const viaRange = lookup.find({ street: "Osborne Drive", number: "32-36", postcode: "4505" })
 
 		expect(base?.lat).toBeDefined()
 
 		// The verbatim '32-36' fixture row wins for the range surface (precedence pin, again from the
-		// unit angle): the low-end rung only ever fires when NO row carries the surface as written.
+		// unit angle): the low-end rung only ever fires when no row carries the surface as written.
 		expect(viaRange?.lat).toBe(-27.9999)
 	})
 
@@ -249,7 +249,7 @@ describe("the postcode rung's locality contradiction (#1631)", () => {
 	})
 
 	// `us-addison-zip-75001`: the US extract's key is the NAD abbreviation `addi`, the query says Addison. An abbreviated
-	// key steers the choice among same-postcode rows but never refuses one, so the postcode-only row answers at rooftop;
+	// key steers the choice among same-postcode rows but never refuses one, so the postcode-only row answers at rooftop.
 	// exact comparison sent this row to interpolation 198 m away.
 	it("never refuses on the locality under the US extract, whose keys are abbreviated (#1631 follow-up)", () => {
 		const hit = lookup.find({ street: "Airport Pkwy", number: "4900", postcode: "75001", locality: "Addison" })

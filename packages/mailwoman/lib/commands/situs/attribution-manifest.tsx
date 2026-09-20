@@ -2,17 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman situs attribution-manifest` — regenerate a COMPLETE situs attribution manifest from
+ *   `mailwoman situs attribution-manifest` — regenerate a complete situs attribution manifest from
  *   the address-point databases on disk. The national build driver (`mailwoman situs build`) only
  *   records the states it built in a given run, so after incremental / resumed builds its
- *   `ATTRIBUTION.json` undercounts. This reads every `address-points-us-*.db` in the directory and
+ *   `attribution.json` undercounts. This reads every `address-points-us-*.db` in the directory and
  *   aggregates the per-row `source` (`overture:<dataset>`) provenance into a full ledger — the
  *   document we owe consumers for the OpenAddresses attribution obligation (NAD is US public
- *   domain; the named OA sources want credit).
+ *   domain. the named OA sources want credit).
  *
  *   This regenerates a small JSON manifest from read-only databases (it builds no large DB), so — as in
- *   the original script — `ATTRIBUTION.json` is written directly in place. Per-database progress
- *   streams to stderr; the summary lands on stdout.
+ *   the original script — `attribution.json` is written directly in place. Per-database progress
+ *   streams to stderr. the summary lands on stdout.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -24,10 +24,10 @@ import { Box, Text } from "ink"
 import { join } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "attribution-manifest",
@@ -45,11 +45,6 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	outDir?: string
-	release: string
-}
-
 interface StateLedger {
 	ok: boolean
 	error?: string
@@ -57,7 +52,7 @@ interface StateLedger {
 	datasets?: Record<string, number>
 }
 
-const SitusAttributionManifest: ParsedCommandComponent<Options> = ({ options }) => {
+const SitusAttributionManifest: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 
@@ -66,7 +61,7 @@ const SitusAttributionManifest: ParsedCommandComponent<Options> = ({ options }) 
 		// Canonical per-state databases only: address-points-us-<2-letter-slug>.db. Excludes county-scoped
 		// dev artifacts (e.g. address-points-us-il-cook.db) that overlap a state database and the CLI never
 		// selects.
-		const databaseFiles = (await Globerator.files("db", { cwd: outDir, absolute: false }).toArray())
+		const databaseFiles = (await Globerator.files("db", { cwd: outDir, absolute: false, recursive: false }).toArray())
 			.filter((f) => /^address-points-us-[a-z]{2}\.db$/.test(f))
 			.toSorted()
 

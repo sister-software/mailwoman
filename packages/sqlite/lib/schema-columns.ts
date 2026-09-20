@@ -3,13 +3,13 @@
 
 /**
  *   The column groups every polygon layer's schema repeats, as schema-builder helpers — so the
- *   `WITHOUT ROWID`-versus-blob discipline is stated once, beside the columns it governs.
+ *   `without rowid`-versus-blob discipline is stated once, beside the columns it governs.
  */
 
 import type { CreateTableBuilder, Kysely } from "kysely"
 
 /**
- * The slice of a Kysely handle a schema module's DDL touches. Kysely is invariant in its schema parameter, so naming
+ * The subset of a Kysely handle a schema module's DDL touches. Kysely is invariant in its schema parameter, so naming
  * only the member the builders call lets a caller pass its own wider handle.
  */
 export type SchemaHandle<DB> = Pick<Kysely<DB>, "schema">
@@ -33,7 +33,7 @@ export function addBoundingBoxColumns<TB extends string, C extends string>(
  * layer stores its own ring-derived columns between the box and the blob, and the stored column order of a sealed
  * artifact is part of what its readers see.
  *
- * A table taking this stays a PLAIN rowid table, never `WITHOUT ROWID`: the `rings` blob is exactly the payload
+ * A table taking this stays a plain rowid table, never `without rowid`: the `rings` blob is exactly the payload
  * clustering into the B-tree penalizes — every index page becomes a geometry page.
  */
 export function addRingsColumn<TB extends string, C extends string>(
@@ -57,7 +57,7 @@ export function addRingGeometryColumns<TB extends string, C extends string>(
  * (a short cell does not name its own, and a mixed-resolution table cannot be probed without it), the key columns the
  * row names — one, or several in the order given, for a layer whose rows are keyed per scenario — and its containment.
  *
- * Small fixed-width rows probed by their exact primary key are the `WITHOUT ROWID` shape — the caller adds its own
+ * Small fixed-width rows probed by their exact primary key are the `without rowid` shape — the caller adds its own
  * primary-key constraint and the raw `without rowid` modifier, because the key differs per layer.
  */
 export function addCellIndexColumns<TB extends string, C extends string, K extends string>(

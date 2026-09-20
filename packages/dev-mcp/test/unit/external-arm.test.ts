@@ -4,7 +4,7 @@
 /**
  *   The external client against a scripted wire — the real parsing, the real refusals, no network.
  *
- *   The bodies below are shortened captures of what the three engines actually answer, not shapes invented from their
+ *   The bodies below are shortened captures of what the three engines actually answer rather than shapes invented from their
  *   documentation. A parser tested against its author's idea of the format is a parser tested against nothing.
  */
 
@@ -163,7 +163,7 @@ describe("ExternalGeocoderClient.probeIdentity", () => {
 
 describe("ExternalGeocoderClient pacing", () => {
 	it("spaces dispatches at the configured interval, which is the check that actually holds a rate", async () => {
-		// Asserted rather than assumed: `requestsPerMinute` alone does NOT deliver N requests per minute (AGENTS.md
+		// Asserted rather than assumed: `requestsPerMinute` alone does not deliver N requests per minute (agents.md
 		// records 100/min measured against a budget of 10), so the claim that this client is paced rests entirely on
 		// the interval limit being the one configured.
 		const clock = createFakeClock()

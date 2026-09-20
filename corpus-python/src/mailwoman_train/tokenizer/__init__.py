@@ -15,7 +15,7 @@ Why not a HuggingFace fast tokenizer? Two reasons:
 - We don't have a ``tokenizer.json`` for this SP model — only ``tokenizer.model``. Converting
   is doable (PreTrainedTokenizerFast supports loading SP via slow→fast bridge) but adds a
   fragile build step. Going direct is simpler and the offsets are exact.
-- We need labels aligned at *training-data prep* time, not inference time. The training loop
+- We need labels aligned at *training-data prep* time rather than inference time. The training loop
   consumes pre-aligned ``(input_ids, label_ids)`` tensors, so we don't need a HF tokenizer
   object at all once labels are baked.
 
@@ -100,7 +100,7 @@ class Tokenizer:
             proto = self.sp.encode(raw, out_type=cast(Any, "immutable_proto"))
         except ValueError:
             # sentencepiece ≥0.2.2 renamed the proto out_type (Modal's pinned image keeps the old
-            # spelling; local dev venvs track newer). Identical pieces/offsets either way.
+            # spelling. local dev venvs track newer). Identical pieces/offsets either way.
             proto = self.sp.encode(raw, out_type=cast(Any, "proto"))
         # Build a byte→char index for the original raw string so we can map proto byte offsets.
         raw_bytes = raw.encode("utf-8")

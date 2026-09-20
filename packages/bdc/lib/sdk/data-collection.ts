@@ -23,7 +23,7 @@ export type FCCStateID = string
 /**
  * Code indicating confidence in the association between the textual address and the location.
  *
- * @category NTIA
+ * @category Ntia
  * @category FCC
  */
 export const AddressConfidenceCode = {
@@ -34,7 +34,7 @@ export const AddressConfidenceCode = {
 } as const
 
 /**
- * @category NTIA
+ * @category Ntia
  * @category FCC
  */
 export type AddressConfidenceCode = (typeof AddressConfidenceCode)[keyof typeof AddressConfidenceCode]
@@ -42,7 +42,7 @@ export type AddressConfidenceCode = (typeof AddressConfidenceCode)[keyof typeof 
 /**
  * A modeled land use designation estimated from assembled county assessor information.
  *
- * @category NTIA
+ * @category Ntia
  * @category FCC
  */
 export const LandUseCode = {
@@ -65,7 +65,7 @@ export const LandUseCode = {
 } as const
 
 /**
- * @category NTIA
+ * @category Ntia
  * @category FCC
  */
 export type LandUseCode = (typeof LandUseCode)[keyof typeof LandUseCode]
@@ -81,10 +81,10 @@ export const BSLFlag = {
 export type BSLFlag = (typeof BSLFlag)[keyof typeof BSLFlag]
 
 /**
- * Interface representing a record from the NTIA data dictionary.
+ * Interface representing a record from the ntia data dictionary.
  *
- * @category NTIA
- * @title NTIA Record
+ * @category Ntia
+ * @title ntia Record
  */
 export interface NTIARecord {
 	/**
@@ -203,12 +203,12 @@ export interface NTIARecord {
 	address_confidence_code: AddressConfidenceCode
 
 	/**
-	 * 5-digit TIGER 2020 identifier for the county based on the latitude and longitude.
+	 * 5-digit tiger 2020 identifier for the county based on the latitude and longitude.
 	 *
 	 * @example
 	 * 	06075
 	 *
-	 * @title County GEOID
+	 * @title County geoid
 	 */
 	county_geoid: string
 
@@ -218,7 +218,7 @@ export interface NTIARecord {
 	 * @example
 	 * 	060750001000123
 	 *
-	 * @title Block GEOID
+	 * @title Block geoid
 	 */
 	block_geoid: string
 

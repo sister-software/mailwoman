@@ -11,8 +11,8 @@ Upgrade Mailwoman's existing WOF SQLite build path. This is **not a greenfield s
 Repo entry points:
 
 - `scripts/build-unified-wof.ts` - current GeoJSON -> SQLite builder.
-- `resolver-wof-sqlite/unified-schema.ts` - current schema/index helper. Use or extend this as the source of truth.
-- `resolver-wof-sqlite/schema.ts` - downstream Kysely contract for WOF-style tables.
+- `resolver-wof-sqlite/unified-schema.ts` - current schema/index helper. Use or extend this as the authoritative record.
+- `resolver-wof-sqlite/schema.ts` - downstream Kysely interface for WOF-style tables.
 - `resolver-wof-sqlite/fts.ts` and `resolver-wof-sqlite/build-fts-cli.ts` - downstream FTS5/R\*Tree/population index lifecycle.
 
 The pipeline should:
@@ -39,7 +39,7 @@ The output is a static asset. Treat it like a search index: expensive to build, 
 ### Why Piscina?
 
 - Built-in `worker_threads` works, but Piscina handles pool lifecycle, queueing, and `destroy()` semantics.
-- Workers are useful for reading and parsing many tiny GeoJSON files.
+- Workers are useful for reading and parsing several tiny GeoJSON files.
 - SQLite still allows one writer at a time, even in WAL mode. Do not assume Piscina creates parallel writes. Keep write transactions short.
 
 ### Why WAL during ingest but not at rest?
@@ -299,7 +299,7 @@ export default async function ingestBatch({ dbPath, paths }: { dbPath: string; p
 }
 ```
 
-`prepareWofInsertStatements` / `insertWofRows` should target WOF-compatible tables, not a custom `geojson`-only table. If `geojson` is emitted, use an upstream-compatible shape such as `id INTEGER PRIMARY KEY, body TEXT, source TEXT, is_alt INTEGER, alt_label TEXT, lastmodified INTEGER`, or explicitly model alt geometries in the official `geometries` table. Do **not** use `PRIMARY KEY (id, alt_label) WITHOUT ROWID` while inserting `NULL` `alt_label`; `WITHOUT ROWID` primary-key columns are implicitly `NOT NULL`.
+`prepareWofInsertStatements` / `insertWofRows` should target WOF-compatible tables rather than a custom `geojson`-only table. If `geojson` is emitted, use an upstream-compatible shape such as `id INTEGER PRIMARY KEY, body TEXT, source TEXT, is_alt INTEGER, alt_label TEXT, lastmodified INTEGER`, or explicitly model alt geometries in the official `geometries` table. Do **not** use `PRIMARY KEY (id, alt_label) WITHOUT ROWID` while inserting `NULL` `alt_label`; `WITHOUT ROWID` primary-key columns are implicitly `NOT NULL`.
 
 ### Consumer side
 
@@ -325,7 +325,7 @@ const row = db.prepare("SELECT name, latitude, longitude FROM spr WHERE id = ?")
 
 Mailwoman's resolver expects WOF-style tables (`spr`, `names`, `concordances`, and optional `geojson` / `ancestors` / derived FTS/R\*Tree/population tables). The official WOF SQLite distributions use these table names. Mirror them unless there is a documented reason not to.
 
-### `BEGIN IMMEDIATE` after parsing, not before
+### `BEGIN IMMEDIATE` after parsing rather than before
 
 A plain `BEGIN` starts a deferred transaction. If two workers both try to upgrade to writer, one can get `SQLITE_BUSY` mid-transaction. `BEGIN IMMEDIATE` grabs the writer lock upfront, so other workers wait.
 
@@ -335,7 +335,7 @@ But don't grab that lock while reading files or parsing JSON. The writer lock sh
 
 Use `Promise.allSettled(...)`, then `await pool.destroy()`, then rethrow the first failure. `Promise.all(...)` rejects on the first failure while other tasks may still be running. The freeze phase must not start until every worker task has returned and the pool is destroyed.
 
-### `journal_mode` is per-file, not per-connection
+### `journal_mode` is per-file rather than per-connection
 
 Once WAL is set on the file, every connection from every process sees WAL. Set it once on the main thread before spawning workers. Verify the returned value when switching back to `DELETE`.
 
@@ -365,15 +365,15 @@ Do not put the ingest DB on NFS, SMB, or another network mount. WAL's shared-mem
 
 ### macOS fsync caveat
 
-If durability across power loss matters on macOS, consider `PRAGMA fullfsync = ON`. For this pipeline, re-ingest is usually cheaper.
+If durability across power loss matters on macOS, consider `PRAGMA fullfsync = ON`. For this pipeline, re-ingest is typically cheaper.
 
 ---
 
 ## 7. Design decisions — resolved 2026-05-28
 
-Reviewed with DeepSeek, grounded in existing codebase behavior and downstream consumer contracts.
+Reviewed with DeepSeek, grounded in existing codebase behavior and downstream consumer interfaces.
 
-### 1. Table contract
+### 1. Table interface
 
 **Ship: `spr`, `names`, `concordances`, `place_population`, `ancestors`. `geojson` ephemeral only. No `geometries`.**
 
@@ -407,7 +407,7 @@ For ~1M global files, a lightweight manifest (JSONL: `{path, wof_id, mtime, stat
 
 **Workers return parsed data to a single main-thread writer.**
 
-This is the fix for the database lock bug that blocked the current `wof/prepare` command. Workers read files + parse JSON in parallel, return `ParsedFeature` structs to the main thread. The main thread runs INSERTs in batched transactions (~500 rows). WAL mode allows concurrent readers during writes, but concurrent writers still serialize — lean into that constraint. The bottleneck is file I/O, not SQLite writes.
+This is the fix for the database lock bug that blocked the current `wof/prepare` command. Workers read files + parse JSON in parallel, return `ParsedFeature` structs to the main thread. The main thread runs INSERTs in batched transactions (~500 rows). WAL mode allows concurrent readers during writes, but concurrent writers still serialize — lean into that constraint. The bottleneck is file I/O rather than SQLite writes.
 
 ---
 
@@ -415,7 +415,7 @@ This is the fix for the database lock bug that blocked the current `wof/prepare`
 
 - **Current builder:** `scripts/build-unified-wof.ts`.
 - **Current schema helper:** `resolver-wof-sqlite/unified-schema.ts`.
-- **Downstream resolver contract:** `resolver-wof-sqlite/schema.ts`, `resolver-wof-sqlite/lookup.ts`, `resolver-wof-sqlite/fts.ts`.
+- **Downstream resolver interface:** `resolver-wof-sqlite/schema.ts`, `resolver-wof-sqlite/lookup.ts`, `resolver-wof-sqlite/fts.ts`.
 - **WOF official SQLite bundles:** [https://dist.whosonfirst.org/sqlite/](https://dist.whosonfirst.org/sqlite/) or [https://www.whosonfirst.org/download/](https://www.whosonfirst.org/download/). Download one and run `.schema` on it.
 - **`whosonfirst/go-whosonfirst-sqlite-features`:** [https://github.com/whosonfirst/go-whosonfirst-sqlite-features](https://github.com/whosonfirst/go-whosonfirst-sqlite-features). Reference schema/table builders.
 - **Node.js `node:sqlite` docs:** [https://nodejs.org/api/sqlite.html](https://nodejs.org/api/sqlite.html).

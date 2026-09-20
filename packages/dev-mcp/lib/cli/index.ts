@@ -3,31 +3,31 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mwdev-mcp` — the never-stale shim. Speaks MCP stdio to the client; every tool call is forwarded over IPC to a
+ *   `mwdev-mcp` — the never-stale shim. Speaks MCP stdio to the client. every tool call is forwarded over IPC to a
  *   forked worker (`worker.ts`) that holds the actual mailwoman module graph.
  *
- *   THE SPLIT IS THE FEATURE. Node cannot evict an imported ES module, so the old single-process server had to refuse
- *   after any source edit until the OPERATOR restarted the client — which locked the person developing the measurement
+ *   the split is the feature. Node cannot evict an imported ES module, so the old single-process server had to refuse
+ *   after any source edit until the operator restarted the client — which locked the person developing the measurement
  *   tools out of them precisely while the tree was moving (measured cost: most of two working days routed through
- *   scratch scripts, 2026-08-16..18). This file therefore imports NOTHING from the repo's runtime — Node builtins and
+ *   scratch scripts, 2026-08-16..18). This file therefore imports nothing from the repo's runtime — Node builtins and
  *   the MCP SDK only — and `mwdev_restart` kills and re-forks the worker: a fresh module graph, new source live, no
- *   client restart. A change to the shim itself (rare by design) still needs the client restart; keep it boring.
+ *   client restart. A change to the shim itself (rare by design) still needs the client restart. keep it boring.
  *
  *   Tools are registered from the worker's handshake as plain JSON Schema — the low-level `Server` API, deliberately,
  *   because the high-level one wants zod shapes and zod schemas live on the stale side of the boundary. After a
  *   restart the shim diffs the tool list and emits `notifications/tools/list_changed`, so a client that honors the
  *   capability re-lists.
  *
- *   Engines stay LAZY end to end: forking the worker imports modules but builds nothing; the first call that needs an
- *   engine builds it, per the registry's own contract.
+ *   Engines stay lazy end to end: forking the worker imports modules but builds nothing. the first call that needs an
+ *   engine builds it, per the registry's own interface.
  *
- *   PRIOR ART + THE REJECTED ALTERNATIVE (verified 2026-08-18): the MCP ecosystem converged on exactly this
+ *   prior ART + the rejected alternative (verified 2026-08-18): the MCP ecosystem converged on exactly this
  *   proxy+restartable-child shape — mizchi/mcp-reloader and cameroncooke/reloaderoo wrap a child MCP process and
- *   restart it; mcp-hmr (Python) reloads modules in place; all emit `tools/list_changed` after a swap. The genuinely
+ *   restart it. mcp-hmr (Python) reloads modules in place. all emit `tools/list_changed` after a swap. The genuinely
  *   newer primitive, `process.execve` (re-exec preserving only stdio), was considered and rejected: it discards the
- *   initialized MCP SESSION along with the module graph, so the fresh image receives post-`initialize` traffic cold —
+ *   initialized MCP session along with the module graph, so the fresh image receives post-`initialize` traffic cold —
  *   and no surviving code exists to bridge the boundary or emit list_changed. The shim keeps the session in a process
- *   that cannot go stale, and a child PROCESS (not a worker thread) is what guarantees the sqlite mmaps and ORT
+ *   that cannot go stale, and a child process (not a worker thread) is what guarantees the sqlite mmaps and ORT
  *   native sessions are actually released on restart.
  */
 
@@ -49,7 +49,7 @@ const { values } = parseArguments({
 	},
 })
 
-// NOT a `..` walk from this file. It was one — `resolvePath(shimDir, "..", "..")` — and when source moved under
+// Not a `..` walk from this file. It was one — `resolvePath(shimDir, "..", "..")` — and when source moved under
 // `lib/` the walk landed on `<repo>/packages`, which fingerprinted zero files and refused to boot. The comment
 // beside it had been updated to say `lib/` while the arithmetic still said two, which is precisely the drift a
 // counted walk invites. `repoRootPath()` owns this arithmetic in one place. Not `cwd`, because an MCP client
@@ -57,14 +57,14 @@ const { values } = parseArguments({
 const repoRoot = values["repo-root"] ? resolvePath(values["repo-root"]) : String(repoRootPath())
 
 const host = new WorkerHost({
-	// Anchored at the PACKAGE, not at this file's directory: `shimDir` is a statement about where the shim sits, and
+	// Anchored at the package rather than at this file's directory: `shimDir` is a statement about where the shim sits, and
 	// moving the shim one level down silently pointed it at a worker that was never there.
 	workerPath: String(resolvePackagePath("@mailwoman/dev-mcp", "lib", "worker", "index.ts")),
 	workerArgs: ["--repo-root", repoRoot, ...(values["max-resident"] ? ["--max-resident", values["max-resident"]] : [])],
 })
 
 /**
- * The one tool the SHIM owns, so it exists whatever state the worker is in — including crashed, degraded, or holding a
+ * The one tool the shim owns, so it exists whatever state the worker is in — including crashed, degraded, or holding a
  * tree so broken the worker cannot boot (start() failures surface here as the restart error, stderr tail included).
  */
 const RESTART_TOOL = {
@@ -74,8 +74,11 @@ const RESTART_TOOL = {
 		"disk, so edited code goes live WITHOUT restarting the MCP client. Run it after any merge or source edit the " +
 		"daemon's staleness guard complains about. Costs: in-flight tool calls are rejected (they ran against the old " +
 		"graph), background jobs die with the worker, and engines rebuild lazily on the next call. The result names " +
-		"both boot fingerprints and whether the tool list changed. Also the deliberate recovery path when the worker " +
-		"is degraded after repeated crashes.",
+		"both boot fingerprints, whether the tool list changed, and `killed_jobs` — every job that was still running, " +
+		"with the command to relaunch it, read before the kill because afterwards its id resolves to nothing. A " +
+		"`killed_jobs_note` means the list could not be read, which is not the same as nothing having been running. " +
+		"Check `mwdev_job list` first when a long check is in flight. Also the deliberate recovery path when the " +
+		"worker is degraded after repeated crashes.",
 	inputSchema: { type: "object", properties: {}, additionalProperties: false } as Record<string, unknown>,
 }
 

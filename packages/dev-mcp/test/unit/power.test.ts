@@ -3,7 +3,7 @@
 
 /**
  *   A 10-input probe saw no differences and published "zero effect".
- * These tests pin the arithmetic AND the sentence because the sentence is the part that travels.
+ * These tests pin the arithmetic and the sentence because the sentence is the part that travels.
  */
 
 import { describeObservedRate, wilsonInterval, zeroEventUpperBound } from "@mailwoman/dev-mcp/power"
@@ -52,7 +52,7 @@ describe("describeObservedRate", () => {
 
 		expect(reading.supportsAbsenceClaim).toBe(false)
 		expect(reading.sentence).toContain("CANNOT support a claim of no effect")
-		// The bound and the denominator are IN the sentence, not only in a field a relay can drop.
+		// The bound and the denominator are IN the sentence rather than only in a field a relay can drop.
 		expect(reading.sentence).toContain("25.9%")
 		expect(reading.sentence).toContain("out of 837 available")
 	})

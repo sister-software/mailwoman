@@ -3,7 +3,7 @@
 // open-truth-three-arm — the scorer + query harness behind the 2026-08-18 open-truth three-arm
 // record (docs/records/evals/competitive-parity/2026-08-18-open-truth-three-arm.md).
 //
-// WHAT THIS MEASURES, AND WHAT IT DOES NOT
+// what this measures, and what IT does not
 //
 // Three geocoders — Mailwoman, Pelias, Photon — are asked the same raw query strings, top-1 result
 // only, and each answer is graded by haversine distance against a reference coordinate drawn from an
@@ -17,7 +17,7 @@
 // as "does the engine reproduce the register's rooftop", partly recall-of-own-data for Mailwoman and
 // Pelias, and as an OSM-coverage measure for Photon. The record states this beside the tables.
 //
-// TWO MODES
+// two modes
 //
 //   score (default)  Recompute every table in the record from the committed per-row results file.
 //                    Deterministic, no network. The paired bootstrap (mulberry32, seed 20260807,
@@ -27,7 +27,7 @@
 //                    CLI. Data footprints are yours to build; the record documents what the original
 //                    run used.
 //
-// USAGE
+// usage
 //
 //   node open-truth-three-arm.mjs                       # score the committed results
 //   node open-truth-three-arm.mjs --results other.jsonl # score a different results file
@@ -38,7 +38,7 @@
 //     --out results.jsonl
 //
 // The panel and results default to the committed copies beside this script. This script is
-// standalone on purpose (node builtins only, no monorepo install), so the PRNG and haversine are
+// standalone on purpose (node builtins only, no monorepo install), so the prng and haversine are
 // local copies of the shared implementations.
 
 // oxlint-disable-next-line typescript/no-restricted-imports -- standalone script (node builtins only, no monorepo install)
@@ -106,7 +106,7 @@ async function readJSONL(path) {
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- standalone script; the committed panel is small and bounded
 	const rawLines = (await readFile(path, "utf8")).trim().split("\n")
 
-	// oxlint-disable-next-line no-restricted-properties -- standalone script (no monorepo install); a throw on a corrupt committed file is the contract
+	// oxlint-disable-next-line no-restricted-properties -- standalone script (no monorepo install); a throw on a corrupt committed file is the interface
 	return rawLines.map((l) => JSON.parse(l))
 }
 
@@ -232,7 +232,7 @@ const LOCALE_MAP = {
 }
 
 /**
- * Bounded retry for the HTTP arms — transient failures only; the third failure is recorded as a no-result, which the
+ * Bounded retry for the http arms — transient failures only; the third failure is recorded as a no-result, which the
  * protocol scores as a miss at every threshold.
  */
 const QUERY_ATTEMPTS = 3
@@ -366,7 +366,7 @@ async function run() {
 
 	await Promise.all(Array.from({ length: concurrency }, () => worker()))
 
-	// The writers helper this replaced created the parent directory first — keep that contract.
+	// The writers helper this replaced created the parent directory first — keep that interface.
 	await mkdir(dirname(flags.out), { recursive: true })
 	await writeFile(flags.out, results.map((r) => JSON.stringify(r)).join("\n") + "\n")
 

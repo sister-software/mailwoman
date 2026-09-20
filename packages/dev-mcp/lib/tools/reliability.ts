@@ -3,7 +3,7 @@
 
 /**
  *   The `mwdev_reliability` tool definition — the description an agent reads, the input schema, and the handler
- *   wiring. The measurement lives in `../reliability-report.ts`.
+ *   wiring. The measurement lives in `#reliability/report`.
  */
 
 import { z } from "zod"

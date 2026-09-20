@@ -13,8 +13,13 @@ that each concern fires more than once, and asserts three things a rewrite must 
 - the final weights, per parameter, which pins the optimizer trajectory itself.
 
 The weight checksums come from `train-loop-reference.json` beside this file. Regenerate it with
-`uv run python tests/mailwoman_train/test_train_loop_trace.py` and read the diff: a change there is
-a change to what the model learns, never a formatting detail.
+`PYTHONPATH=. uv run python tests/mailwoman_train/train/test_train_loop_trace.py` and read the diff: a change
+there is a change to what the model learns, never a formatting detail.
+
+BOTH ROWS SIT IN ONE PARQUET FILE, AND THEY CARRY DIFFERENT SOURCES. That makes this fixture a multi-source file,
+which the loader has to index under both — `coarse-placer-cn-units` and `overture-jp` — for the train split to see
+two rows. It read one for as long as the source index took a file's first row as the whole file's, and the
+trajectory pinned below was the trajectory of a one-row train over a corpus this docstring calls two-row.
 """
 
 from __future__ import annotations
@@ -83,8 +88,8 @@ def _probe_config(root: Path) -> Config:
     save_char_vocab(vocab, vocab_path)
 
     cfg = load_config(PROBE_2K)
-    # The shipped weights name the full corpus's sources; a two-row stand-in has none of those
-    # slices, and the loader refuses a positive weight with nothing behind it. Sampling the two
+    # The shipped weights name the full corpus's sources. a two-row stand-in has none of those
+    # rows, and the loader refuses a positive weight with nothing behind it. Sampling the two
     # rows uniformly is what this test wants anyway.
     cfg.data.source_weights = None
     cfg.data.corpus_dir = str(corpus)
@@ -116,7 +121,7 @@ def _events(output: str) -> list[str]:
 
 #: How far a rebuilt checksum may sit from the committed one and still count as unmoved.
 #:
-#: NOT exact equality, which is what this compared first and why it passed on the machine that wrote
+#: Not exact equality, which is what this compared first and why it passed on the machine that wrote
 #: the reference and failed on CI: a fp32 training step lands on a different last digit under a
 #: different CPU's kernels, and seventeen of the fifty tensors here differed only there. Exact
 #: equality pins the HOST alongside the code, and the failure then names the trajectory rather than
@@ -140,7 +145,7 @@ def test_the_loop_emits_its_events_in_order(tmp_path: Path, capsys: Any) -> None
 
     # The progress line, then the checkpoint, then the eval. The checkpoint and the eval both
     # observe the same weights at a step where their intervals coincide — the eval takes no
-    # gradient — so their relative order is a property of the log, not of the run.
+    # gradient — so their relative order is a property of the log rather than of the run.
     assert events == ["log:2", "save:2", "eval", "log:4", "save:4", "eval"], events
     assert Path(cfg.train.output_dir, "step-000004").is_dir()
 
@@ -166,7 +171,7 @@ def test_the_csv_carries_a_log_row_and_an_eval_row_per_interval(tmp_path: Path) 
         *(f"f1.{t}" for t in tags),
     ]
 
-    # A log row leaves the val cells blank; an eval row fills them. Both exist for steps 2 and 4.
+    # A log row leaves the val cells blank. an eval row fills them. Both exist for steps 2 and 4.
     by_kind = [(row[0], "eval" if row[4] else "log") for row in rows]
     assert by_kind == [("2", "log"), ("2", "eval"), ("4", "log"), ("4", "eval")], by_kind
     for row in rows:

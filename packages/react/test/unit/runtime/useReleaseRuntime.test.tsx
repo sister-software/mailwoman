@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Direct hook test for `useReleaseRuntime` — driven through a tiny harness with a FAKE injected loader
+ *   Direct hook test for `useReleaseRuntime` — driven through a tiny harness with a fake injected loader
  *   (no network, no ONNX, no httpvfs). Exercises the state machine: mount → manifest → default version
- *   → assets → ready; a version switch reloads the bundle; `forceWASM` reloads with the flag set; a
- *   rejecting `loadAssets` surfaces `errorMessage` and keeps `ready` false; and the staged
+ *   → assets → ready. a version switch reloads the bundle. `forceWASM` reloads with the flag set. a
+ *   rejecting `loadAssets` surfaces `errorMessage` and keeps `ready` false. and the staged
  *   progress/step channel is reported through `ctx`.
  */
 
@@ -137,7 +137,7 @@ test("a null manifest leaves nothing selected and never readies", async () => {
 	const nullManifest = async () => null
 	const { container } = renderComponent(<Harness manifestLoader={nullManifest} />)
 
-	// Give the mount effect a tick; the version stays unselected and the bundle never loads.
+	// Give the mount effect a tick. the version stays unselected and the bundle never loads.
 	await vi.waitFor(() => expect(text(container, ".version")).toBe("none"), { timeout: 2000 })
 	expect(text(container, ".ready")).toBe("no")
 })

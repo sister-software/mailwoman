@@ -5,7 +5,7 @@
  *   Tests for `NeuralAddressClassifier.traceParse` (spec:
  *   docs/superpowers/specs/2026-07-03-parse-trace-model-visualizer-design.md).
  *
- *   The required assertion is PARITY: the trace's tokens must build the same AddressTree
+ *   The required assertion is parity: the trace's tokens must build the same AddressTree
  *   `parse()` returns under identical opts — proving trace retention never forked the decode
  *   path (#481). Uses a fake `NeuralRunner` so the suite runs in milliseconds.
  */
@@ -119,8 +119,8 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 		expect(queryShapePrior).toEqual({ kind: "queryShape", applied: false })
 
-		// The span proposer is default-ON; whether it fires depends on the text. The contract is
-		// EVERY kind, in application order — asserted against the exported constant, so a new prior
+		// The span proposer is default-on. whether it fires depends on the text. The interface is
+		// every kind, in application order — asserted against the exported constant, so a new prior
 		// added to #decode without its participation record fails here instead of silently vanishing
 		// from traces.
 		expect(bare.priors.map((p) => p.kind)).toEqual([...TRACE_PRIOR_KINDS])
@@ -228,12 +228,12 @@ describe("NeuralAddressClassifier.traceParse", () => {
 	it("records repair passes as before/after label sequences", async () => {
 		const tokenizer = await loadTokenizer()
 		// A GB alphanumeric postcode: the repair pass's ADD path creates a span over all-O labels
-		// (numeric shapes like a bare ZIP are SNAP-only and never fire from all-O — see
+		// (numeric shapes like a bare ZIP are snap-only and never fire from all-O — see
 		// postcode-repair.ts precision guards).
 		const text = "London SW1A 1AA"
 		const { pieces } = tokenizer.encode(text)
 
-		// Everything decodes O; the postcode-repair pass should add the "SW1A 1AA" postcode span.
+		// Everything decodes O. the postcode-repair pass should add the "SW1A 1AA" postcode span.
 		const logits = pieces.map(() => {
 			const row = Array.from<number>({ length: STAGE2_BIO_LABELS.length }).fill(0)
 			row[STAGE2_BIO_LABELS.indexOf("O")] = 2
@@ -291,20 +291,20 @@ describe("NeuralAddressClassifier.traceParse", () => {
 			return row
 		})
 
-		// WITHOUT the pin (pre-#1275 en-gb reality): the eval never opens, the clip stands.
+		// Without the pin (pre-#1275 en-gb reality): the eval never opens, the clip stands.
 		const unpinned = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
 		const clippedTrace = await unpinned.traceParse(text, { spanProposer: false })
-		// The subject here is the POSTCODE check: unpinned, the codex gb row is never consulted, so the snap
+		// The subject here is the postcode check: unpinned, the codex gb row is never consulted, so the snap
 		// path never runs and the clip stands. Assert that specifically rather than `repairs === []` — the
 		// blanket form silently also pinned "word-consistency never fires", which was true only while that
-		// repair was default-OFF on the classifier, and broke the moment the default matched the pipeline's.
+		// repair was default-off on the classifier, and broke the moment the default matched the pipeline's.
 		expect(clippedTrace.repairs.filter((r) => r.pass === "postcodeRepair")).toEqual([])
 		const clipped = (await unpinned.parseJSON(text)) as { postcode?: string }
 		expect(clipped.postcode).toBeDefined()
 		expect(clipped.postcode).not.toBe("SK11 9PD")
 		expect("SK11 9PD".endsWith(clipped.postcode!)).toBe(true)
 
-		// WITH the pin (what the en-gb card now declares): pinned system → codex gb row → repair check
+		// With the pin (what the en-gb card now declares): pinned system → codex gb row → repair check
 		// opens → the snap path relabels the whole raw-text match as one postcode span.
 		const pinned = new NeuralAddressClassifier({
 			tokenizer,
@@ -368,15 +368,15 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		const tokenizer = await loadTokenizer()
 		// "P.O. Box" fragments: label the alphanumeric pieces street (a STAGE2 tag — the fake
 		// classifier runs the 21-label set, and the bridge is tag-agnostic), leave the dot pieces O.
-		// The bridge merges the fragments across the unlabeled intra-token punctuation, DROPPING
-		// tokens; the trace contract still promises per-piece before/after (char-offset projection).
+		// The bridge merges the fragments across the unlabeled intra-token punctuation, dropping
+		// tokens. the trace interface still promises per-piece before/after (char-offset projection).
 		const text = "P.O. Box 123"
 		const { pieces } = tokenizer.encode(text)
 		const oIdx = STAGE2_BIO_LABELS.indexOf("O")
 		const bIdx = STAGE2_BIO_LABELS.indexOf("B-street")
 		const iIdx = STAGE2_BIO_LABELS.indexOf("I-street")
 
-		// Each fragment STARTS with B- (O → I- is an illegal BIO transition the viterbi mask forbids);
+		// Each fragment starts with B- (O → I- is an illegal BIO transition the viterbi mask forbids);
 		// only a contiguous continuation piece gets I-. The dots decode O — the gaps the bridge crosses.
 		const logits = pieces.map((p, idx) => {
 			const row = Array.from<number>({ length: STAGE2_BIO_LABELS.length }).fill(0)
@@ -425,7 +425,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		expect(trace.anchor).toBeDefined()
 		expect(trace.anchor!.confidence).toHaveLength(pieces.length)
 		expect(trace.anchor!.features).toHaveLength(pieces.length)
-		// The ZIP's pieces carry the anchor hit; leading pieces don't.
+		// The ZIP's pieces carry the anchor hit. leading pieces don't.
 		expect(Math.max(...trace.anchor!.confidence)).toBeGreaterThan(0)
 		// Serializable by construction: a JSON round-trip preserves the channel byte-for-byte.
 		expect(structuredClone(trace.anchor)).toEqual(trace.anchor)

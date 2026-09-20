@@ -40,7 +40,7 @@ Databases are `ATTACH`ed by a schema name **derived from the filename**, and que
 - The name does not route. `postcode-ca-overture.db` derives `postcode_ca_overture`, and the router tests `startsWith("postalcode_")` — **"postcode" is not "postalcode"**. It held 843,739 Canadian codes and answered every query with zero hits, which is indistinguishable from "this country has no places".
 - The database carries `spr` but no `place_search`. It routes, then dies mid-`SELECT`.
 
-The predicate is the **table, not the filename**: a database carrying `spr` is claiming to be a place database, and every lookup path here reaches the FTS index. A relation-table database like `postcode-locality-<cc>.db` carries no `spr`, never makes that claim, and is exempt — which is what keeps the documented default database list working.
+The predicate is the **table rather than the filename**: a database carrying `spr` is claiming to be a place database, and every lookup path here reaches the FTS index. A relation-table database like `postcode-locality-<cc>.db` carries no `spr`, never makes that claim, and is exempt — which is what keeps the documented default database list working.
 
 ```
 WOFSQLitePlaceLookup: …/postcode-ca-overture.db carries "spr" but no "place_search" table, so it
@@ -240,8 +240,8 @@ are all stripped safely before going to FTS5. Per-token rules:
 - **Trailing `*`** (`"627*"`, `"Pari*"`) becomes FTS5 **prefix syntax**: `627*` matches every
   postcode starting with 627, `Pari*` matches Paris / Parishville / etc. The caller explicitly
   signals "prefix"; bare tokens stay phrase-matched for safety.
-- **Multiple tokens** join with implicit AND: `"Pari* TX"` matches places whose name contains
-  both a `Pari*`-prefixed word AND the word `TX`.
+- **Multiple tokens** join with an implicit `AND`: `"Pari* TX"` matches places whose name contains
+  both a `Pari*`-prefixed word and the word `TX`.
 
 Example: `findPlace({ text: "902*", placetype: "postalcode" })` returns 90201, 90210, 90211, …
 matching the Los Angeles ZIP corridor.

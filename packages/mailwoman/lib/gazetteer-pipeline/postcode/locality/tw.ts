@@ -2,29 +2,29 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build the TW postcode → WOF admin table by AUTHORITATIVE NAME + POLYGON BRIDGE (#473, unblocks
+ *   Build the TW postcode → WOF admin table by authoritative name + polygon bridge (#473, unblocks
  *   #294 — Direction E / the CJK arena).
  *
  *   This is the Taiwan sibling of `build-postcode-locality-cjk.ts` (JP) and
- *   `build-postcode-locality-kr.ts` (KR). It emits the SAME `postcode_locality` table, so the
+ *   `build-postcode-locality-kr.ts` (KR). It emits the same `postcode_locality` table, so the
  *   existing `postcode_area_resolution` resolver strategy consumes it unchanged — one strategy,
  *   many builds. TW's data shape differs from both siblings:
  *
- *   - Overture's addresses theme carries ZERO postcodes for TW (0/9,732,009 on release 2026-06-17.0,
+ *   - Overture's addresses theme carries zero postcodes for TW (0/9,732,009 on release 2026-06-17.0,
  *       re-verified after the 2026-05-20.0 probe on #473 — the issue's original "group Overture by
- *       postcode" plan is structurally impossible), and GeoNames has NO TW postal file (the original
+ *       postcode" plan is structurally impossible), and GeoNames has no TW postal file (the original
  *       #294 blocker). The keying source is therefore the national postal authority directly:
- *       Chunghwa Post's 3-digit postal-code → administrative-district table WITH official district
- *       center coordinates (data.gov.tw dataset 25489, `1050812_行政區經緯度(toPost).xml`, OGDL v1).
- *   - The 3-digit code IS the admin-granularity key: TW's "3+3" system appends a road-segment /
+ *       Chunghwa Post's 3-digit postal-code → administrative-district table with official district
+ *       center coordinates (data.gov.tw dataset 25489, `1050812_行政區經緯度(toPost).xml`, ogdl v1).
+ *   - The 3-digit code is the admin-granularity key: TW's "3+3" system appends a road-segment /
  *       delivery-point tail below district level (and the full 3+3 file is account-conditional at
  *       fpp.post.gov.tw since 2025). A resolver that answers "which district" needs exactly the
  *       3-digit table. Queries carrying a full 3+3 code need a prefix-truncation normalization
- *       upstream (noted on #473; not this table's concern).
- *   - NAME-ONLY matching (the JP/KR recipe) tops out at 63% here: WOF models TW districts across
+ *       upstream (noted on #473. not this table's concern).
+ *   - name-only matching (the JP/KR recipe) tops out at 63% here: WOF models TW districts across
  *       `county` (direct-municipality districts), `localadmin`, and `locality`, and the `county`
- *       rows carry NO Chinese names at all (eng/fra only — verified against both admin-tw.db and
- *       the shipped admin-global-priority.db). The bridge is GEOMETRIC instead: the postal row's
+ *       rows carry no Chinese names at all (eng/fra only — verified against both admin-tw.db and
+ *       the shipped admin-global-priority.db). The bridge is geometric instead: the postal row's
  *       official district center → the Overture `divisions` district polygon that contains it
  *       (Chinese full-form names, fetched release-pinned by `scripts/eval/
  *       fetch-tw-division-polygons.ts`) → the WOF district-tier row whose point falls inside that
@@ -86,14 +86,14 @@ const NEARBY_KEEP = 2
 const FALLBACK_RADIUS_KM = 20
 /**
  * Cross-placetype spread, one wider than JP/KR: TW districts land on `county` (direct-municipality districts),
- * `localadmin`, `locality` (county-administered townships/cities), AND `neighbourhood` (the Kaohsiung/Taichung inner
- * districts — 前金/苓雅/三民/… are `neighbourhood` in WOF). Neighbourhood rows are only ever accepted NAME-CONDITIONAL (their
+ * `localadmin`, `locality` (county-administered townships/cities), and `neighbourhood` (the Kaohsiung/Taichung inner
+ * districts — 前金/苓雅/三民/… are `neighbourhood` in WOF). Neighbourhood rows are only ever accepted name-conditional (their
  * Chinese name must match the postal district), never as bare geometric fallback — 1,450 TW neighbourhoods would
  * otherwise swallow the district tier.
  */
 const PLACETYPES = ["locality", "county", "localadmin", "borough", "neighbourhood"] as const
 /**
- * District-tier placetypes — the rows that ARE the 區/鄉/鎮/市 tier when present inside the polygon.
+ * District-tier placetypes — the rows that are the 區/鄉/鎮/市 tier when present inside the polygon.
  */
 const DISTRICT_TIER = new Set(["county", "localadmin"])
 const DISTRICT_SUFFIX = /[區鄉鎮市]$/
@@ -104,7 +104,7 @@ const DISTRICT_SUFFIX = /[區鄉鎮市]$/
 const COUNTY_PREFIX_LENGTH = 3
 
 /**
- * Fold the 臺/台 orthographic variants (both are current; sources disagree row-by-row).
+ * Fold the 臺/台 orthographic variants (both are current. sources disagree row-by-row).
  */
 export function normHan(s: string): string {
 	return s
@@ -151,7 +151,7 @@ export interface PostalDistrict {
 }
 
 /**
- * Parse Chunghwa Post's `行政區經緯度(toPost).xml` (data.gov.tw dataset 25489). The document is flat and regular; entries
+ * Parse Chunghwa Post's `行政區經緯度(toPost).xml` (data.gov.tw dataset 25489). The document is flat and regular. entries
  * carry 行政區名 / 3碼郵遞區號 / 中心點經度 / 中心點緯度.
  */
 export async function loadPostalDistricts(path: string): Promise<PostalDistrict[]> {
@@ -202,7 +202,7 @@ export interface DivisionPolygon {
 }
 
 /**
- * Load the district polygons fetched from the Overture divisions theme (subtype=locality slice).
+ * Load the district polygons fetched from the Overture divisions theme (the subtype=locality rows).
  */
 export async function loadDistrictPolygons(path: string): Promise<DivisionPolygon[]> {
 	const out: DivisionPolygon[] = []
@@ -218,7 +218,7 @@ export async function loadDistrictPolygons(path: string): Promise<DivisionPolygo
 	for await (const row of JSONSpliterator.fromAsync<DivisionRow>(path)) {
 		if (row.subtype !== "locality") continue
 
-		// DuckDB's JSON writer emits ST_AsGeoJSON output as a nested JSON object; tolerate a string too.
+		// DuckDB's JSON writer emits ST_AsGeoJSON output as a nested JSON object. tolerate a string too.
 		const geometry = typeof row.geometry === "string" ? parseJSONStrict<ParsedGeometry>(row.geometry) : row.geometry
 
 		let minLon = Infinity
@@ -302,7 +302,7 @@ interface AdminPlace {
  * Chinese/romanized name forms, the region tier (the 22 直轄市/縣/市 that back the containing-city fallback), the Wikidata
  * concordance bridge, and a 0.5°-cell proximity grid behind `nearby`.
  *
- * The database handle is closed before returning — everything downstream reads these indexes, not SQL.
+ * The database handle is closed before returning — everything downstream reads these indexes rather than SQL.
  */
 function loadAdminIndexes(args: { adminDB: string }) {
 	using admin = new DatabaseClient<PostcodeLocalityDatabase>(args.adminDB)
@@ -332,7 +332,7 @@ function loadAdminIndexes(args: { adminDB: string }) {
 		})
 	}
 
-	// Chinese name forms (zho + Han-bearing und) and romanized eng variants; canonical spr.name is romanized.
+	// Chinese name forms (zho + Han-containing und) and romanized eng variants. canonical spr.name is romanized.
 	for (const row of admin
 		.prepare(
 			`SELECT n.id, n.name, n.language FROM names n JOIN spr s ON s.id = n.id
@@ -375,7 +375,7 @@ function loadAdminIndexes(args: { adminDB: string }) {
 		})
 	}
 
-	// Wikidata concordances — the bridge for districts whose WOF point sits OUTSIDE its own polygon
+	// Wikidata concordances — the bridge for districts whose WOF point sits outside its own polygon
 	// (Wanhua's is ~5 km west) and whose `county`-tier row carries no Chinese names to match on.
 	const placesByQID = new Map<string, AdminPlace[]>()
 
@@ -471,7 +471,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 				hanMatches(p) || (enStem.length >= MIN_ENGLISH_STEM_LENGTH && p.engNames.has(enStem))
 
 			// 1. The district polygon: name match (full Chinese form), disambiguated by whether it contains
-			//    the OFFICIAL district center (中正區 exists in both Taipei and Keelung; each official
+			//    the official district center (中正區 exists in both Taipei and Keelung. each official
 			//    center falls in exactly its own polygon).
 			const namesakes = polygonsByName.get(districtHan) ?? []
 
@@ -481,9 +481,9 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 					: namesakes.find((p) => geometryContains(p.geometry, d.lon, d.lat) === true)
 
 			// 2. The WOF row, tiered:
-			//    a. district-tier (county/localadmin) point inside the polygon — real containment;
+			//    a. district-tier (county/localadmin) point inside the polygon — real containment.
 			//    b. wikidata concordance (division.wikidata ↔ WOF wd:id) — identity survives a sloppy WOF
-			//       point that fell outside its own polygon;
+			//       point that fell outside its own polygon.
 			//    c. Chinese-name match inside the polygon (locality/neighbourhood tiers);
 			//    d. no-polygon fallback: JP/KR-style authoritative-name + proximity net.
 			let hit: { d: number; place: AdminPlace } | undefined
@@ -503,14 +503,14 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 
 				inside.sort((a, b) => a.d - b.d || a.place.pid - b.place.pid)
 
-				// Name-confirmed district-tier first: sloppy WOF points put a NEIGHBORING district's row
+				// Name-confirmed district-tier first: sloppy WOF points put a neighboring district's row
 				// inside this polygon (Zhongshan's point sits in 中正區), so bare containment alone picks
 				// the wrong namesake when both are inside. Bare containment stays as the in-tier backup and
-				// OUTRANKS the wikidata bridge — measured, not assumed: promoting wd above bare containment
+				// outranks the wikidata bridge — measured rather than assumed: promoting wd above bare containment
 				// dropped eval PIP 86.4→85.2% (2026-07-02, n=3000 seed 42), because WOF's TW wd
-				// concordances are themselves misattached (890468273 "Zhongzheng Qu" carries KEELUNG's
+				// concordances are themselves misattached (890468273 "Zhongzheng Qu" carries keelung's
 				// Q712871 while its point sits in Taipei). A point inside the polygon is at least
-				// coordinate-correct; a wrong-side concordance is wrong everywhere.
+				// coordinate-correct. a wrong-side concordance is wrong everywhere.
 				hit =
 					inside.find((c) => DISTRICT_TIER.has(c.place.placetype) && nameMatches(c.place)) ??
 					inside.find((c) => DISTRICT_TIER.has(c.place.placetype))
@@ -550,9 +550,9 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 
 			if (!hit) {
 				// No polygon (or nothing usable in it): the JP/KR-style authoritative-name + proximity net.
-				// The en stem also rescues district rows whose WOF point fell OUTSIDE their own polygon
+				// The en stem also rescues district rows whose WOF point fell outside their own polygon
 				// (Wanhua sits ~5 km west of 萬華區, in New Taipei). Neighbourhood rows only qualify through
-				// the name check, never by bare proximity — see the PLACETYPES note.
+				// the name check, never by bare proximity — see the placetypes note.
 				const cands = nearby(d.lat, d.lon, FALLBACK_RADIUS_KM)
 				const districtTierNameHit = cands.find((c) => DISTRICT_TIER.has(c.place.placetype) && nameMatches(c.place))
 				const nameHit = districtTierNameHit ?? cands.find((c) => nameMatches(c.place))
@@ -562,9 +562,9 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 					hit = nameHit
 					extras = cands.filter((c) => c.place.pid !== nameHit.place.pid && c.place.placetype !== "neighbourhood")
 				} else {
-					// 5. Containing-city (region) fallback: WOF has NO row for this district at all (the
+					// 5. Containing-city (region) fallback: WOF has no row for this district at all (the
 					//    Kaohsiung/Taichung/Tainan urban-core gaps, the offshore islands). The county-prefix
-					//    region row is a TRUE container — coarser granularity, honestly recorded (the meta
+					//    region row is a true container — coarser granularity, honestly recorded (the meta
 					//    counts it separately), and the city coordinate beats a wrong-district neighbor.
 					const region = regionsByHan.get(normHan(d.county))
 					unmatched.push(d.name)

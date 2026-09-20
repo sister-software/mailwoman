@@ -3,7 +3,7 @@
 
 /**
  *   Tests for the placetype specificity scale. The required case is the one that created the file: a
- *   `neighbourhood` must NOT count as covering a `locality`, because reading a surviving child as covering its own
+ *   `neighbourhood` must not count as covering a `locality`, because reading a surviving child as covering its own
  *   dead parent is what #1746 was.
  */
 
@@ -50,9 +50,9 @@ describe("isAtLeastAsSpecific", () => {
 
 	it("puts a borough BELOW localadmin rather than level with it", () => {
 		// This pair was tied on the reasoning that WOF uses both for the same tier in different countries, which is
-		// true — an Alaska borough IS county-tier — but a tie is not a neutral answer. It made each cover the other,
+		// true — an Alaska borough is county-tier — but a tie is not a neutral answer. It made each cover the other,
 		// and one rung up that same tie let a live NYC-shaped borough cover its own dead parent locality. WOF's own
-		// containment ladder commits to sub-locality; a scale that has to pick one answer picks that one, and the
+		// containment ladder commits to sub-locality. a scale that has to pick one answer picks that one, and the
 		// Alaska reading stays wrong either way.
 		expect(isAtLeastAsSpecific("borough", "localadmin")).toBe(true)
 		expect(isAtLeastAsSpecific("localadmin", "borough")).toBe(false)
@@ -72,14 +72,14 @@ describe("isAtLeastAsSpecific", () => {
 describe("isStrictlyFiner", () => {
 	it("separates a child rung from the SAME rung — the distinction a negated isAtLeastAsSpecific loses", () => {
 		expect(isStrictlyFiner("neighbourhood", "locality")).toBe(true)
-		// The equal case is the one that matters: a live locality covers a dead locality, so it is NOT strictly finer.
+		// The equal case is the one that matters: a live locality covers a dead locality, so it is not strictly finer.
 		expect(isStrictlyFiner("locality", "locality")).toBe(false)
 		expect(isStrictlyFiner("region", "locality")).toBe(false)
 	})
 
 	it("checks differently from a negated isAtLeastAsSpecific at the EQUAL rung — the 955-row conflation", () => {
 		// The currency backfill blocks a resurrection when a live row covers the dead one. Written the wrong way round
-		// it reads "block when the live row is strictly COARSER", which stops a live locality from blocking a dead
+		// it reads "block when the live row is strictly coarser", which stops a live locality from blocking a dead
 		// locality of the same name. Measured on the real artifact that took blocked rows 973 → 18.
 		const wrong = (live: string, dead: string) => isAtLeastAsSpecific(live, dead) !== true
 		const right = (live: string, dead: string) => isStrictlyFiner(live, dead) !== true
@@ -121,11 +121,11 @@ describe("the table", () => {
 })
 
 /**
- * The admin ladder, coarsest first — a copy of `resolver-wof-sqlite/ancestry.ts`'s `PLACETYPE_DEPTH` ORDER, and the
+ * The admin ladder, coarsest first — a copy of `resolver-wof-sqlite/ancestry.ts`'s `PLACETYPE_DEPTH` order, and the
  * only place in `core` allowed to know it.
  *
  * `core` cannot import from `resolver-wof-sqlite` (the dependency runs the other way), so the two tables cannot be
- * derived from one another and this list is what keeps them honest. It records the ORDER only: the scales differ in
+ * derived from one another and this list is what keeps them honest. It records the order only: the scales differ in
  * offset by design, and `PLACETYPE_DEPTH` additionally maps an unranked placetype to 0 where this one answers
  * `undefined`.
  */

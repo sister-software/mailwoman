@@ -125,7 +125,7 @@ describe("buildPlaceSearchFTS", () => {
 		// Two aliases whose concatenation forms a third phrase: the bag "York <sep> New City" must
 		// not phrase-match "york new". Without the separator token, FTS5 assigns the aliases' tokens
 		// consecutive positions and the cross-boundary phrase falsely matches (see the ALIAS_SEPARATOR
-		// probe table in fts.ts — punctuation separators do NOT fix this; only an indexed token does).
+		// probe table in fts.ts — punctuation separators do not fix this. only an indexed token does).
 		db.exec(`
 			INSERT INTO spr VALUES (5, NULL, 'Twin Hamlet', 'locality', 'US', 40.0, -80.0, 39.9, 40.1, -80.1, -79.9, -1, 0);
 			INSERT INTO names (id, language, name) VALUES (5, 'eng', 'York');
@@ -160,7 +160,7 @@ describe("buildPlaceSearchFTS", () => {
 			alt_names: string
 		}
 
-		// Flattened to a space — ONE alias (plus the trailing format marker), no forged boundary.
+		// Flattened to a space — one alias (plus the trailing format marker), no forged boundary.
 		expect(row.alt_names).toBe(`Evil Name ${ALIAS_SEPARATOR}`)
 		expect(aliasBagExactMatch(row.alt_names, "evil", false)).toBe(false) // fragment ≠ exact
 		expect(aliasBagExactMatch(row.alt_names, "evil name", false)).toBe(true)
@@ -257,7 +257,7 @@ describe("buildPlaceSearchFTS", () => {
 		expect(result.indexedRows).toBe(4)
 
 		// 3 modern + 1 legacy
-		// MATCH against the new row to confirm it's actually queryable.
+		// `match` against the new row to confirm it's actually queryable.
 		const hit = db.prepare(`SELECT wof_id FROM place_search WHERE place_search MATCH ?`).get("Legacy Place") as
 			| { wof_id: number }
 			| undefined

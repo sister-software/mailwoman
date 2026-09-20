@@ -3,15 +3,15 @@
 
 /**
  *   `mailwoman eval fragment-dev` — probe-1 separator metrics on the held-out fragment split
- *   (span-exact vs tag-accuracy; trailing-number→postcode rate). See eval-harness/fragment-dev.ts.
+ *   (span-exact vs tag-accuracy. trailing-number→postcode rate). See eval-harness/fragment-dev.ts.
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "Fragment-dev read-out — probe-1 separator metrics (span-exact vs tag accuracy)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "fragment-dev",
@@ -34,30 +34,17 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	locale: string
-	weightsCache?: string
-	fixtures: string
-	limit: number
-}
+const EvalFragmentDev = harnessCommand(spec, async (options) => {
+	const { runFragmentDev } = await import("#eval-harness/fragment/dev")
 
-const EvalFragmentDev: ParsedCommandComponent<Options> = ({ options }) => {
-	const state = useCommandTask(async () => {
-		const { runFragmentDev } = await import("#eval-harness/fragment/dev")
-
-		await runFragmentDev({
-			locale: options.locale,
-			weightsCacheRoot: options.weightsCache,
-			fixturesPath: options.fixtures,
-			limit: options.limit,
-		})
-
-		return 0
+	await runFragmentDev({
+		locale: options.locale,
+		weightsCacheRoot: options.weightsCache,
+		fixturesPath: options.fixtures,
+		limit: options.limit,
 	})
 
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	return null
-}
+	return 0
+})
 
 export default EvalFragmentDev

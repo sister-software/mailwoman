@@ -1,0 +1,41 @@
+## Mailwoman chat style: avoid money metaphors for non-money costs.
+##
+## This Vale existence rule catches phrases like "the fine-tune tax", "nearly free", and "costs nothing".
+##
+## Nothing is free: every decision uses time, rows, dollars, or opportunity.
+## Say what the cost is, and name the unit. A real dollar amount ("$29 of the $40 Modal budget") is fine.
+##
+## `price` as a verb has the same problem. Phrases like "price that ratio" and
+## "price the change first" tell readers to weigh something without saying by what measure.
+## Name the measure instead: "run the census over all 241" or "measure the label ratio in `suffix-boundary-v2.jsonl`".
+##
+## Nouns are not banned per se. `cost` with a unit is the fix this rule asks for.
+## `Price` with a capital P is also allowed when it names the Stripe AP object.
+## Blocking those uses would block correct writing and force a long exemption list.
+extends: existence
+message: "'%s' is a monetary metaphor — state the actual cost and its unit (rows regressed, minutes, dollars of which budget)."
+level: error
+ignorecase: true
+tokens:
+  # `tax` in ANY form.
+  # There is no non-metaphorical tax in this project: every one of the 116 word-boundary occurrences in the tree is the metaphor.
+  # - The word boundary protects `taxonomy`/`taxonomies` in (`@mailwoman/poi-taxonomy`) and the `tax` inside `syntax`.
+  #- A real sales tax would be a Stripe concern and would arrive as a dollar figure,
+  - tax(?:es|ed|ing)?
+  - '\w+[- ]tax\b'
+  - pay(s|ing)? the tax
+  - paid the tax
+  - nearly free
+  - for free
+  - costs? (?:approximately |almost )?nothing
+  - free lunch
+  - free win
+  - cheap win
+  # `price` as a verb: weighing something without naming the unit or the measurement.
+  - pric(?:e|es|ed|ing) (?:the|that|this|a|an|it|them|its|their|each|every|what)\b
+  - pric(?:e|es|ed|ing) (?:in|out|up)\b
+  - worth the (?:cost|price|spend)
+  - pays? for (?:itself|themselves)
+  - paid for itself
+  - at (?:zero|no) cost
+  - buys?

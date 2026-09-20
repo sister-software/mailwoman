@@ -10,11 +10,11 @@
  *   handed `Brixton` and finds a different place 300 km away, while the correct record sits under a name the parse
  *   never asks for.
  *
- *   `validate-tree.ts` has NAMED this shape since v0.7 task #37 — `stranded-dependent`, "a `street_suffix` floating
+ *   `validate-tree.ts` has named this shape since v0.7 task #37 — `stranded-dependent`, "a `street_suffix` floating
  *   with no `street` anywhere" — and nothing ever consumed it; `validateTree` is called only by its own test. So the
  *   diagnosis was written down years before the repair, which is the argument for the repair rather than against it.
  *
- *   ADJACENCY IS THE WHOLE GUARD, and it is what keeps this from being a guess. The suffix must be contiguous with the
+ *   adjacency is the whole guard, and it is what keeps this from being a guess. The suffix must be contiguous with the
  *   locality — whitespace only between the spans — so `12 Hill, London` (a genuine one-word street, suffix nowhere
  *   near the locality) is untouched, while `Brixton Hill` and `Notting Hill` reunite. A stranded suffix that neighbours
  *   nothing is left exactly as it is: this pass fixes a split, it does not delete evidence.
@@ -23,13 +23,13 @@
 import { type AddressNode, type AddressTree, collectNodes } from "@mailwoman/core/decoder"
 
 /**
- * Affix tags that cannot stand without a `street`. `house_number` is deliberately NOT here: a bare `12, London` is a
+ * Affix tags that cannot stand without a `street`. `house_number` is deliberately not here: a bare `12, London` is a
  * degenerate-but-honest parse, and absorbing a number into a place name would invent a name that was never written.
  */
 const STRANDED_AFFIX_TAGS: ReadonlySet<string> = new Set(["street_suffix", "street_prefix"])
 
 /**
- * Tags a stranded affix may be absorbed into — name-bearing place tags whose surface can legitimately end in a
+ * Tags a stranded affix may be absorbed into — name-containing place tags whose surface can legitimately end in a
  * street-type word: `Brixton Hill` the locality, `Bishop's Stortford` the venue, `Hythe Marina Village` the dependent
  * locality.
  *
@@ -50,7 +50,7 @@ const ABSORBING_TAGS: ReadonlySet<string> = new Set(["locality", "venue", "depen
 export function repairStrandedAffix(tree: AddressTree): boolean {
 	const all = collectNodes(tree.roots, () => true)
 
-	// A `street` ANYWHERE means the affix has a legitimate owner, whether or not the tree builder attached it.
+	// A `street` anywhere means the affix has a legitimate owner, whether or not the tree builder attached it.
 	if (all.some((node) => node.tag === "street")) return false
 
 	const stranded = all.filter((node) => STRANDED_AFFIX_TAGS.has(node.tag))

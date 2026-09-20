@@ -2,29 +2,29 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `fr-order` slice recipe — French reversed-order coverage (#560). Reads REAL OpenAddresses FR
+ *   `fr-order` recipe — French reversed-order coverage (#560). Reads real OpenAddresses FR
  *   tuples (`fr/countrywide.csv` from the cached zip), then for each row picks — by
- *   `--reversed-fraction` (default 0.5) — whether to render in CANONICAL French order
- *   (number-street, postcode-city) or one of four REVERSED / postcode-first variants the
+ *   `--reversed-fraction` (default 0.5) — whether to render in canonical French order
+ *   (number-street, postcode-city) or one of four reversed / postcode-first variants the
  *   v4.4.0→v0.5.0 regression exposed (the model misses house_number in every reversed one):
  *
  *   - A: "47110 Sainte-Livrade-sur-Lot, 69 Allée du Bugatel" (postcode city, HN street)
  *   - B: "Sainte-Livrade-sur-Lot, 47110, 619 Impasse de la Rose" (city, postcode, HN street)
- *   - C: "Sainte-Livrade-sur-Lot 59 bis Rue des Ecuries 47110" (city HN street postcode — NO commas)
+ *   - C: "Sainte-Livrade-sur-Lot 59 bis Rue des Ecuries 47110" (city HN street postcode — no commas)
  *   - D: "47110, 6 rue de la république, Sainte-Livrade-sur-Lot" (postcode, HN street, city)
  *
  *   Sub-modes ride alongside order: `bis`/`ter`/`quater` ordinal suffixes in house_number, and
- *   ALL-CAPS locality. `--golden` emits a held-out reversed-order eval slice with a different
+ *   all-caps locality. `--golden` emits a held-out reversed-order eval set with a different
  *   seed.
  *
  *   The inline synthesis (the OA-CSV reader, the ordinal/all-caps tables, the canonical + reversed
- *   renderers) is ported faithfully from scripts/build-fr-order-slice.mjs. This is a
- *   `generate`-mode recipe that still reads REAL tuples off disk — `--count` bounds the OUTPUT, not
+ *   renderers) is ported faithfully from the root build script it replaced. This is a
+ *   `generate`-mode recipe that still reads real tuples off disk — `--count` bounds the output rather than
  *   the input. The passed `random` (the framework LCG) is consumed in the exact call order the
  *   legacy script used.
  *
- *   NOT ported (diagnostic-only, no effect on emitted bytes): the post-run `runSpanCheck` self-check
- *   (it reads the finished file back with a separate PRNG and prints to stderr; the recipe's output
+ *   Not ported (diagnostic-only, no effect on emitted bytes): the post-run `runSpanCheck` self-check
+ *   (it reads the finished file back with a separate prng and prints to stderr. the recipe's output
  *   stream is still open during `run`), and the dead `renderReversed` helper (the legacy `main`
  *   inlined the variant logic and never called it).
  */
@@ -33,11 +33,11 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
+import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "#adapters/utils"
 import { readOATuples, type CorpusRecipe } from "#recipes/scaffold"
-import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
@@ -52,7 +52,7 @@ const ORDINAL_SUFFIXES: readonly string[] = ["bis", "ter", "quater"]
  */
 const ORDINAL_PROB = 0.12
 /**
- * Probability that a locality renders ALL-CAPS (another sub-mode: "SAINTE-LIVRADE-SUR-LOT").
+ * Probability that a locality renders all-caps (another sub-mode: "sainte-livrade-SUR-LOT").
  */
 const ALLCAPS_PROB = 0.1
 
@@ -69,7 +69,7 @@ interface FrTuple {
 /**
  * Stream FR tuples out of the cached OA zip. The countrywide extract is GB-scale, so this reads only as far as `limit`
  * distinct tuples — the `break` closes the reader and releases the archive. Only keeps rows with a house_number (the
- * slice's core signal) and a postcode (required for reversed-order rendering to be meaningful; it is also part of this
+ * recipe's core signal) and a postcode (required for reversed-order rendering to be meaningful. it is also part of this
  * recipe's dedup key).
  */
 async function readTuples(limit: number): Promise<FrTuple[]> {
@@ -87,14 +87,14 @@ async function readTuples(limit: number): Promise<FrTuple[]> {
  */
 function maybeAddOrdinal(random: () => number, house_number: string): string {
 	if (random() >= ORDINAL_PROB) return house_number
-	const suffix = pick(ORDINAL_SUFFIXES, random)
+	const suffix = sample(ORDINAL_SUFFIXES, random)
 
 	// Vary suffix case: "bis" (lower) vs "BIS" (upper) — a real-world split in the golden.
 	return `${house_number} ${random() < 0.5 ? suffix : suffix.toUpperCase()}`
 }
 
 /**
- * Render a tuple in CANONICAL French order: "9 Rue de la Promenade, 01200 Villes".
+ * Render a tuple in canonical French order: "9 Rue de la Promenade, 01200 Villes".
  */
 function renderCanonical(
 	hn: string,
@@ -107,15 +107,15 @@ function renderCanonical(
 	return { raw, components: { house_number: hn, street, postcode, locality } }
 }
 
-// Reversed layouts, a quarter each: A postcode+city then HN+street; B city, postcode, HN+street; C run-together;
+// Reversed layouts, a quarter each: A postcode+city then HN+street. B city, postcode, HN+street. C run-together.
 // D postcode, HN+street, city.
 const REVERSED_VARIANT_A_CUTOFF = 0.25
 const REVERSED_VARIANT_B_CUTOFF = 0.5
 const REVERSED_VARIANT_C_CUTOFF = 0.75
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const frOrderRecipe: CorpusRecipe = {
 	name: "fr-order",
@@ -123,12 +123,12 @@ export const frOrderRecipe: CorpusRecipe = {
 	mode: "generate",
 	options: [
 		{ flag: "--reversed-fraction <p>", description: "Fraction rendered reversed-order. Default 0.5" },
-		{ flag: "--golden", description: "Emit the held-out reversed-order eval slice" },
+		{ flag: "--golden", description: "Emit the held-out reversed-order eval set" },
 	],
 	async run(opts, write) {
 		if (opts.count == null) throw new Error("fr-order recipe requires --count <N>")
 		const count = opts.count
-		// Legacy build-fr-order-slice.mjs seeded mulberry32 with the raw seed: `const random = mulberry32(opts.seed)`.
+		// The legacy build script seeded mulberry32 with the raw seed: `const random = mulberry32(opts.seed)`.
 		// (The omitted diagnostic runSpanCheck used a separate mulberry32(opts.seed + 1) — not part of generation.)
 		const random = makeMulberry32(opts.seed)
 		const source = opts.sourceName ?? "synth-fr-order"

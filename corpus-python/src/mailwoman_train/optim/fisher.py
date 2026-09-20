@@ -5,19 +5,19 @@ Design: docs/superpowers/plans/2026-07-30-fisher-capture-design.md. Two halves:
 - :class:`FisherAccumulator` — the capture side. During the final N optimizer steps of a base run
   it accumulates the squared per-parameter gradient (the diagonal empirical Fisher
   ``F_i = E[(∂L/∂θ_i)²]``, estimated in the converged regime EWC's quadratic approximation
-  assumes). It only ever READS ``p.grad`` — the training trajectory is byte-identical with the
-  flag on or off (the rng/byte-stability rule every curriculum obeys; pinned by test). The
+  assumes). It only ever reads ``p.grad`` — the training trajectory is byte-identical with the
+  flag on or off (the rng/byte-stability rule every curriculum obeys. pinned by test). The
   artifact is ``fisher-diag-v1.npz`` (param name → fp32 array, state-dict keying) plus a
   ``fisher-diag-v1.json`` provenance sidecar — the lexicon discipline.
 
 - :class:`EWCPenalty` — the consumption side (the fine-tune recipe template). Adds
   ``λ/2 · Σ F_i (θ_i − θ*_i)²`` to the loss against the base checkpoint ``θ*``. Parameters
   absent from the Fisher artifact (fresh heads) are unpenalized by construction — a fine-tune is
-  free to LEARN new capability; the brake is on FORGETTING the base's. λ is calibrated once on
+  free to LEARN new capability. the brake is on FORGETTING the base's. λ is calibrated once on
   our own next fine-tune (largest λ that leaves the increment's target within noise of λ=0) and
   becomes the template default.
 
-The gradient is read at the accumulation boundary BEFORE clipping: the empirical Fisher is defined
+The gradient is read at the accumulation boundary before clipping: the empirical Fisher is defined
 on ∂L/∂θ, and the clipped surrogate would understate curvature exactly where it is largest.
 """
 
@@ -78,7 +78,7 @@ class FisherAccumulator:
 class EWCPenalty:
     """``λ/2 · Σ F_i (θ_i − θ*_i)²`` against a base checkpoint, computed in fp32.
 
-    Keys present in BOTH the Fisher artifact and the reference state dict are penalized; anything
+    Keys present in both the Fisher artifact and the reference state dict are penalized. anything
     else (fresh heads, resized rows) is skipped silently — that asymmetry is the design: new
     capability trains freely, base capability is braked.
     """
@@ -118,7 +118,7 @@ class EWCPenalty:
             term = (f * (p.to(torch.float32) - self._theta_star[name]) ** 2).sum()
             total = term if total is None else total + term
         if total is None:
-            # A model that shares NO parameter names with the artifact is a wiring error (wrong
-            # base, renamed modules) — silence here would ship an unbraked "protected" fine-tune.
+            # A model that shares no parameter names with the artifact is a wiring error (wrong
+            # base, renamed modules) — silence here would ship an unbraked "guarded" fine-tune.
             raise ValueError("EWC: model shares no parameter names with the Fisher artifact")
         return (self.lam / 2.0) * total

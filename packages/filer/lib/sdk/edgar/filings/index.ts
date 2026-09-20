@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file SEC EDGAR filing discovery.
+ * @file SEC edgar filing discovery.
  */
 
 export * from "#sdk/edgar/cik"

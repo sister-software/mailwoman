@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   #1510 — the evidence-bundle lexicons resolve from the model-card, not a hard-coded filename.
+ *   #1510 — the evidence-bundle lexicons resolve from the model-card rather than a hard-coded filename.
  *
  *   The defect: `resolveWeights` probed the literal `locality-surface-lexicon-v6.json` while both the
- *   shipped v4.0.1 recipe and the v4.2.0 candidate TRAIN against v7. Serving fed the channel a
+ *   shipped v4.0.1 recipe and the v4.2.0 candidate train against v7. Serving fed the channel a
  *   different lexicon generation than training painted, and nothing said so — the v6 file exists, the
- *   channel loads, the parse works. The Run B check had to stage v7's CONTENT under the v6 FILENAME to
+ *   channel loads, the parse works. The Run B check had to stage v7's content under the v6 filename to
  *   score faithfully.
  *
  *   These tests build synthetic package layouts under a `cacheRoot.path` (the same injection point
@@ -91,7 +91,7 @@ describe("resolveWeights — evidence lexicons resolve from the card (#1510)", (
 
 	test("a card naming a lexicon against a package shipping NONE of the family is plain absence, not a mismatch", async () => {
 		// `neural-weights-base-latn` is the live example: it symlinks en-us's card and ships no lexicons.
-		// createScorer's declared-required fail-closed is what covers this case, not a resolution throw.
+		// createScorer's declared-required fail-closed is what covers this case rather than a resolution throw.
 		await stagePackage(cardDeclaring("locality-surface-lexicon-v7.json"), [])
 
 		expect(

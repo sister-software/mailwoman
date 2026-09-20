@@ -1,16 +1,16 @@
 # #727 phase 4c — `StreetLocalityEvidence`: street-name existence as the k-best arbiter signal
 
-Status: SPEC (measured design, not yet implemented). Author: night-4 autonomous shift, 2026-07-17.
+Status: SPEC (measured design rather than yet implemented). Author: night-4 autonomous shift, 2026-07-17.
 Prereqs: PR #1154 (the span-decode surface on main). Companion receipts:
 `docs/articles/evals/2026-07-17-phase4-name-evidence-rerank.md` (the measurement) and PR #1152
 (P1's design doc, which specified this evidence source independently the same day).
 
 ## The one-paragraph case
 
-The span head's k-best list contains the right street parse far more often than rank 1 shows it
+The span head's k-best list contains the right street parse far more frequently than rank 1 shows it
 (oracle@5 0.723 vs seg@1 0.577 on parity). Phase 4a measured the planned arbiter signal —
 full-geocode resolution tier — at exactly **zero** collected headroom: the failing class is
-context-free fragments, which never reach rooftop layers, so every hypothesis ties at admin tier
+context-free fragments, which never reach rooftop layers. Therefore, every hypothesis ties at admin tier
 (evidence rate 3.4%). The corrected signal is **street-NAME existence**: "does this hypothesis's
 street surface exist as a street name in the national register?" — queryable for fragments, and
 measured on the FR fragment board (n=1600) at **street@1 0.619 → 0.711 (+9.3pp), bare-street
@@ -20,7 +20,7 @@ measured on the FR fragment board (n=1600) at **street@1 0.619 → 0.711 (+9.3pp
 
 Rerank rule, applied only when rank-1's street is not the evidence pick:
 
-> Pick the first hypothesis in parse-score order whose street surface passes ALL of:
+> Pick the first hypothesis in parse-score order whose street surface passes all of:
 >
 > 1. **Exists** in the street-name index (fold: NFD strip-diacritics, lowercase, whitespace-collapse).
 > 2. **G1 — not pure type vocabulary**: the surface contains at least one token that is not a
@@ -34,19 +34,19 @@ Rerank rule, applied only when rank-1's street is not the evidence pick:
 
 This stays inside the anti-Pelias rule from `resolver/rerank.ts`: one bit of evidence, no score
 blending, model order preserved among candidates with equal evidence. G1 is a lexicon fact
-(libpostal street-type dictionaries), not a tuned weight; G2's 2.5 is the one scalar — it must be
+(libpostal street-type dictionaries) rather than a tuned weight; G2's 2.5 is the one scalar — it must be
 re-fit (or replaced by the isotonic ambiguity check the plan pre-registered) when the span head
 retrains, since raw score margins are not calibrated across models.
 
 Residual per-class notes from the board: street-housenumber dips 0.922 → 0.912 under G2 (the cap
 blocks a few legitimate deep picks); date-name stays hard (0.100 → 0.180 — most failures are not
-in the top 5 at all, that class is a model problem, not an arbiter problem).
+in the top 5 at all, that class is a model problem rather than an arbiter problem).
 
 > **SUBSTRATE CORRECTION (2026-07-17, v3.10.1 8k):** the numbers above were measured on the v301
-> phase-1 head. Re-measured on the 8k ship-recipe substrate (the model phase-4c actually decodes),
+> phase-1 head. Re-measured on the 8k ship-recipe substrate (the model phase-4c decodes),
 > the rerank collects **+6.0pp overall (0.791 → 0.851), 96 fixes / 3 breaks (32:1)** — and the value
 > has MOVED. The ship-recipe model already nails bare-street (0.905, rerank +4.5pp); **date-name is
-> now the primary beneficiary (+16.7pp)**. Phase-4c's pitch is date-name + the long tail, not
+> now the primary beneficiary (+16.7pp)**. Phase-4c's pitch is date-name + the long tail rather than
 > bare-street. See `docs/articles/evals/2026-07-17-v3101-span-head-8k-result.md`.
 
 ## Interface
@@ -78,22 +78,22 @@ Index backends, in build order:
 3. **PT/RO/NO/…** — per the registry-backed-structured-prediction doctrine tiers; each new index
    is data work only, no code change.
 
-Fold parity is a CONTRACT: the index builder and the runtime prober must share the fold function
+Fold parity is a INTERFACE: the index builder and the runtime prober must share the fold function
 (export it beside the interface). The 4 original G2 breaks were fold mismatches (`pillet-will`
-stored unhyphenated); the builder should normalize hyphens/apostrophes to spaces on BOTH sides —
+stored unhyphenated); the builder should normalize hyphens/apostrophes to spaces on both sides —
 re-measure the 3 residual breaks after that change, it likely reduces them further.
 
-## What phase 4c does NOT do
+## What phase 4c does not do
 
 - No changes to the model, the decoder, or parse scores (one probability space, untouched).
-- No global vetoes: absence of a name is NEVER evidence against a parse (index incompleteness is
+- No global vetoes: absence of a name is never evidence against a parse (index incompleteness is
   the default state of the world). Only presence promotes.
 - No per-class weights, no score blending — the moment a second scalar appears beside G2's margin,
   stop and re-read the rerank.ts header.
 - No production wiring until a span-head model ships. The v3.10.1 8k model (step-4, 2026-07-17) is
   the substrate: it exports spanScores + the semi-crf-transitions sidecar and is staged at
   `scratchpad/v3101-cache`. The rerank rides that model behind a flag, with the golden check +
-  gauntlet battery (run WITH the rerank active) as the promotion bar.
+  gauntlet battery (run with the rerank active) as the promotion bar.
 
 ## Measured-read pre-registration for the implementation PR
 

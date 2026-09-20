@@ -18,7 +18,7 @@ def normalize_text(text: str) -> str:
     """NFC with every whitespace removed, interior included.
 
     No CJK address component carries an interior space. 135 JP street values hold an ideographic
-    space (``西与賀町　字今津乙``) as a rendering artifact of the source; the written form closes it
+    space (``西与賀町　字今津乙``) as a rendering artifact of the source. the written form closes it
     up, and leaving it in put a U+3000 inside a ``district`` span.
     """
     return "".join(unicodedata.normalize("NFC", text).split())

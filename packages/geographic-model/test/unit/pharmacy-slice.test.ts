@@ -2,27 +2,27 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The authored records — the frozen pharmacy slice and the wave-1 set amended onto it — read through
+ *   The authored records — the frozen pharmacy record set and the wave-1 set amended onto it — read through
  *   the artifact a consumer would read.
  *
- *   Every assertion below is made against the COMMITTED artifact or against a fresh compile of the
+ *   Every assertion below is made against the committed artifact or against a fresh compile of the
  *   committed authoring files — never against a fixture built in this file. A fixture would prove that
- *   the compiler works, which `compile.test.ts` already covers; what is unproven until here is that the
- *   records someone actually authored say what the frozen slice says they say.
+ *   the compiler works, which `compile.test.ts` already covers. what is unproven until here is that the
+ *   records someone actually authored say what the frozen record set says they say.
  *
- *   WAVE 1 IS COMPLETE. All three records are authored — the `drugstore` concept, its US-scoped
+ *   wave 1 is complete. All three records are authored — the `drugstore` concept, its US-scoped
  *   assertion, and the `poi-taxonomy` mapping that was held back until the POI branch could search a
  *   union rather than narrow to one id (#1980). So `obtain_medication` reaches two mapped kinds, and the
- *   tests below assert that the SECOND one is reachable through the same external-identifier lookup the
+ *   tests below assert that the second one is reachable through the same external-identifier lookup the
  *   first is: a mapping nothing can translate through would state the semantics and reach no rows.
  *
- *   The freshness check compares PARSED values rather than bytes. A committed artifact is the
- *   generator's output run through `oxfmt`, which inlines short arrays, so a byte comparison against
+ *   The freshness check compares parsed values rather than bytes. A committed artifact is the
+ *   generator's output run through `oxfmt`. It inlines short arrays. Therefore, a byte comparison against
  *   `serializeCompiledModel` would fail on formatting the repository itself applies. Byte determinism
  *   is asserted where it is meaningful instead: between two compiles, and between the committed
  *   artifact and a fresh compile once both are canonically serialized.
  *
- *   Frozen slice: `docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md` §4 (#1917); wave-1
+ *   Frozen record set: `docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md` §4 (#1917); wave-1
  *   amendment: the same record's §4.1 (#1961), authored by #1963.
  */
 
@@ -57,7 +57,7 @@ const OBTAIN_MEDICATION = toConceptID("obtain_medication")
 const AFFORDS = toRelationID("affords")
 
 /**
- * The external category the slice maps into. The mapping names it as a string; this is the same string, resolved
+ * The external category the record set maps into. The mapping names it as a string. this is the same string, resolved
  * through the package that owns the vocabulary.
  */
 const POI_CATEGORY = toPOICategoryID("pharmacy")
@@ -89,9 +89,9 @@ describe("the authored pharmacy records", () => {
 		])
 	})
 
-	// `defeasible` is the wave-1 vocabulary correction, and it is a statement about the RELATION: whether `affords`
+	// `defeasible` is the wave-1 vocabulary correction, and it is a statement about the relation: whether `affords`
 	// assertions admit exceptions at all. Under `hard` semantics an exception is a defect in the record set, which is a
-	// claim only `necessary` and `prohibited` make — so a `strongly_expected` assertion had no defined reading beside a
+	// claim only `necessary` and `prohibited` make . Therefore, a `strongly_expected` assertion had no defined reading beside a
 	// `necessary` one until this moved.
 	it("declares `affords` as a defeasible establishment→activity relation", async () => {
 		const relation = (await compileAuthoredGeographicModel()).relations.find((entry) => entry.id === AFFORDS)
@@ -168,7 +168,7 @@ describe("the committed artifact", () => {
 		).toBe(serializeCompiledModel(await compileAuthoredGeographicModel()))
 	})
 
-	it("carries the ancestry the slice states", async () => {
+	it("carries the ancestry the record set states", async () => {
 		const closure = new Map(
 			(await readCompiledGeographicModel()).inheritanceClosure.map((entry) => [String(entry.concept), entry.ancestors])
 		)
@@ -176,7 +176,7 @@ describe("the committed artifact", () => {
 		expect(closure.get(String(PHARMACY))).toEqual(["establishment", "healthcare_facility", "place"])
 		expect(closure.get(String(OBTAIN_MEDICATION))).toEqual(["activity"])
 
-		// `drugstore` is a kind of `establishment` DIRECTLY. The external hierarchy puts it under `retail`, disjoint
+		// `drugstore` is a kind of `establishment` directly. The external hierarchy puts it under `retail`, disjoint
 		// from `health_and_medical`, and `healthcare_facility` is premises that exist to provide healthcare — which
 		// retail premises with a dispensing counter do not. Placing it there would give every later healthcare class
 		// a retail ancestor.
@@ -186,9 +186,9 @@ describe("the committed artifact", () => {
 
 	it("derives nothing, because no ancestor asserts anything", async () => {
 		// Both affordances are authored on leaves — `pharmacy` and `drugstore` have no descendants — and the only
-		// ancestor either of them has that COULD assert (`establishment`) asserts nothing, deliberately: a claim
+		// ancestor either of them has that could assert (`establishment`) asserts nothing, deliberately: a claim
 		// authored there would be inherited by every later establishment class. So `isA` inheritance has nothing to
-		// materialize. An empty table here is the truthful answer, not an unread one — `compile.test.ts` exercises
+		// materialize. An empty table here is the truthful answer rather than an unread one — `compile.test.ts` exercises
 		// the derivation itself.
 		const model = await readCompiledGeographicModel()
 		const everyAncestor = new Set(model.inheritanceClosure.flatMap((entry) => entry.ancestors.map(String)))
@@ -224,7 +224,7 @@ describe("the wave-1 records", () => {
 		expect(assertion?.id).toBe("drugstore-affords-obtain-medication")
 		expect(assertion?.target).toBe(OBTAIN_MEDICATION)
 
-		// Not `necessary`: the attested material says a US drugstore CHARACTERISTICALLY dispenses, and neither a
+		// Not `necessary`: the attested material says a US drugstore characteristically dispenses, and neither a
 		// locale-scoped synonym nor a row count is a census of dispensing.
 		expect(assertion?.modality).toBe(Modality.StronglyExpected)
 
@@ -259,7 +259,7 @@ describe("the wave-1 records", () => {
 	})
 })
 
-describe("reading the slice through the runtime lookups", () => {
+describe("reading the record set through the runtime lookups", () => {
 	it("answers the proposition from the external category id, with provenance", async () => {
 		const index = createGeographicModelIndex(await readCompiledGeographicModel())
 		const concepts = index.conceptsForExternalID(ExternalVocabulary.POITaxonomy, POI_CATEGORY)
@@ -286,7 +286,7 @@ describe("reading the slice through the runtime lookups", () => {
 	it("distinguishes a concept it carries from one it has never heard of", async () => {
 		const index = createGeographicModelIndex(await readCompiledGeographicModel())
 
-		// The model carries `pharmacy` and has derived nothing about it; it does not carry `chemist` at all, which
+		// The model carries `pharmacy` and has derived nothing about it. it does not carry `chemist` at all, which
 		// is a different answer and stays a different answer.
 		expect(index.derivedFactsAbout(PHARMACY)).toEqual([])
 		expect(index.derivedFactsAbout(toConceptID("chemist"))).toBeUndefined()
@@ -294,8 +294,8 @@ describe("reading the slice through the runtime lookups", () => {
 
 	// The empty answer and the two non-empty ones asserted together, because `derivedFactsAbout` returning `[]` reads
 	// like the external lookup returning `[]` and a reader meeting one alone would take it for the other. The model
-	// CARRIES the concept and states what it affords, its external identifier DOES translate into it since W1-3
-	// landed, and nothing has been DERIVED about it — which is an empty derivation, not an unmapped class.
+	// carries the concept and states what it affords, its external identifier does translate into it since W1-3
+	// landed, and nothing has been derived about it — which is an empty derivation rather than an unmapped class.
 	it("carries `drugstore`, translates its external identifier, and has derived nothing about it", async () => {
 		const index = createGeographicModelIndex(await readCompiledGeographicModel())
 
@@ -306,7 +306,7 @@ describe("reading the slice through the runtime lookups", () => {
 	})
 
 	// The two kinds `obtain_medication` reaches, read off the committed artifact rather than off the route. Each
-	// external identifier translates into ITS OWN concept and not into the other: the mapping table states which id
+	// external identifier translates into its own concept and not into the other: the mapping table states which id
 	// names which class, and nothing in it states a preference between the two.
 	it("reaches two mapped kinds for one activity, each from its own external identifier", async () => {
 		const index = createGeographicModelIndex(await readCompiledGeographicModel())

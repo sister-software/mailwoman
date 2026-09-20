@@ -6,16 +6,17 @@
  *   failure classes with confidence intervals, sampled from BAN (Tier A). The second of the two
  *   standing boards; `eval parity` is the first (the global "do no harm" floor).
  *
- *   A change ships when parity HOLDS and this board MOVES. Neither is a verdict alone.
+ *   A change ships when the `eval parity` floors still pass and this board's failure-class rates
+ *   improve. Neither is a verdict alone.
  *   Informational (always exits 0) — the standing floors stay on `eval parity`.
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "FR fragment board — bare-street / particle / homonym / date-name classes with CIs (#727)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "fragment-board",
@@ -31,34 +32,22 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	locale: string
-	weightsCache?: string
-	fixtures?: string
-	klass?: string
-}
+// The runner narrates its table on stdout, so no `json`.
+const EvalFragmentBoard = harnessCommand(
+	spec,
+	async (options) => {
+		const { runFragmentBoard } = await import("#eval-harness/fragment/board")
 
-const EvalFragmentBoard: ParsedCommandComponent<Options> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { runFragmentBoard } = await import("#eval-harness/fragment/board")
-
-			return (
-				await runFragmentBoard({
-					locale: options.locale,
-					weightsCacheRoot: options.weightsCache,
-					fixturesPath: options.fixtures,
-					klass: options.klass,
-				})
-			).exitCode
-		},
-		(exitCode) => exitCode
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	// The runner narrates its table on stdout.
-	return null
-}
+		return (
+			await runFragmentBoard({
+				locale: options.locale,
+				weightsCacheRoot: options.weightsCache,
+				fixturesPath: options.fixtures,
+				klass: options.klass,
+			})
+		).exitCode
+	},
+	{ exitCode: (exitCode) => exitCode }
+)
 
 export default EvalFragmentBoard

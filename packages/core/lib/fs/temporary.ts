@@ -25,8 +25,9 @@ import { makeDirectories } from "#fs/writers"
  * ```
  *
  * {@linkcode move} answers this same shape rather than a bare `AsyncDisposableStack`, which is what a factory needs:
- * the stack's own `move()` drops `path`, so every caller would rebuild it by hand afterwards. {@linkcode moveWith} does
- * that transfer and attaches what the caller asked for, so a fixture builder is one statement.
+ * the stack's own `move()` drops `path`. Therefore, every caller would rebuild it by hand afterwards.
+ * {@linkcode moveWith} does that transfer and attaches what the caller asked for, so a fixture builder is one
+ * statement.
  */
 export interface TemporaryDirectory extends AsyncDisposable {
 	/**

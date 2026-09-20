@@ -1,6 +1,6 @@
 # Earth Runtime Launch Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** `packages/earth` runs the real browser geocoder with parity to today's docs page, the "demo" names in `@mailwoman/react/map` become product names, the browser test suite moves to the app, the docs site redirects `/demo`, `/debug` and `/trace` to `earth.mailwoman.ai`, and the geocoder page, its runtime assembly, its service worker and its dependencies leave `docs/`. Done includes the removal.
 
@@ -14,7 +14,7 @@
 
 - Lands after the shell plan and the runtime-homes plan; rebase onto both.
 - A moved or renamed name gets no compatibility re-export.
-- Behaviour parity, not redesign: the seven browser specs that pass on the docs page pass on the app, on the real assets, before the docs page is retired.
+- Behaviour parity rather than redesign: the seven browser specs that pass on the docs page pass on the app, on the real assets, before the docs page is retired.
 - `packages/earth` never imports `@mailwoman/docs` or `docs/**`; `packages/**` never imports `@mailwoman/docs`.
 - Docs keep working after every task: `cd docs && yarn build` exits 0.
 - `process.env` never read directly; `node:*` only under `core/lib/fs`.
@@ -113,7 +113,7 @@ const { runtime, releases, forceWASM, geoBias, calibrator, traceParse, supportsT
 })
 ```
 
-Render the map immediately at `DEFAULT_CENTER` and let the geolocation answer move the bias, which is the spec's non-blocking rule; `DEFAULT_CENTER` is the contiguous-US centre the hook already carries. The fake runtime stays reachable behind `?runtime=fake` for the shell smoke and Storybook parity, read in `routes.ts` as `runtimeModeFromSearch(search): "real" | "fake"` with a unit test.
+Render the map immediately at `DEFAULT_CENTER` and let the geolocation answer move the bias, which is the spec's non-blocking rule; `DEFAULT_CENTER` is the contiguous-US center the hook already carries. The fake runtime stays reachable behind `?runtime=fake` for the shell smoke and Storybook parity, read in `routes.ts` as `runtimeModeFromSearch(search): "real" | "fake"` with a unit test.
 
 - [ ] **Step 5: Build and run the real thing**
 
@@ -123,7 +123,7 @@ yarn workspace @mailwoman/earth build > /tmp/earth-build.log 2>&1; echo "EXIT=$?
 yarn workspace @mailwoman/earth preview
 ```
 
-Open `http://localhost:7780/?q=Chicago,%20IL`: the model loads from `public.mailwoman.ai`, the query resolves to the Chicago locality with a marker. A Vite "externalized for browser compatibility" warning names a `node:` specifier on the static graph; `yarn mwops health bundle-graph` says which package, and the fix is a condition there, not an alias here.
+Open `http://localhost:7780/?q=Chicago,%20IL`: the model loads from `public.mailwoman.ai`, the query resolves to the Chicago locality with a marker. A Vite "externalized for browser compatibility" warning names a `node:` specifier on the static graph; `yarn mwops health bundle-graph` says which package, and the fix is a condition there rather than an alias here.
 
 ```bash
 git add packages/earth packages/site-kit docs
@@ -296,7 +296,7 @@ Expected: pass on the real deployment. The parity list from the spec's definitio
 
 - [ ] **Step 1: The redirects**
 
-Docusaurus deploys to GitHub Pages, which serves no server-side redirect, so each retired route is a page that forwards on the client and keeps the query:
+Docusaurus deploys to GitHub Pages, which serves no server-side redirect. Therefore, each retired route is a page that forwards on the client and keeps the query:
 
 ```tsx
 /**

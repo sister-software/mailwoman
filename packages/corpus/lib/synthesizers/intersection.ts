@@ -6,21 +6,25 @@
  *
  *   The 2026-05-29 harness diagnostic found the neural model emits `intersection_a`/`intersection_b`
  *   with ~0.0001 probability on canonical intersections ("Broadway & W 42nd St") — it never learned
- *   the tags, because the corpus has NO intersection training signal (no generator, and real-data
+ *   the tags, because the corpus has no intersection training signal (no generator, and real-data
  *   adapters don't emit intersection-formatted rows). Intersections are 65 of the 376 harness
  *   assertions (17%), all 0% neural. This generator produces the missing signal as a small targeted
- *   supplement slice (synthesis-as-supplement discipline: weight < 0.25, one-and-done).
+ *   supplement source (synthesis-as-supplement discipline: weight < 0.25, one-and-done).
  *
  *   Output is a `CanonicalRow` ({raw, components}); the corpus aligner turns it into BIO labels
  *   (B-/I-intersection_a, O on the connector, B-/I-intersection_b). Surface forms of both streets
- *   MUST occur verbatim in `raw` so alignment lands.
+ *   must occur verbatim in `raw` so alignment lands.
  *
  *   US-idiomatic only (the harness intersection cases are US: "X & Y, City, ST ZIP").
  */
 
-import type { DirectionalAbbreviation } from "@mailwoman/codex/us"
+/* oxlint-disable mailwoman/prefer-home -- the admin tails below are written as US templates because this synthesizer
+   refuses a non-US tuple outright (`if (base.country !== "US") return null`). A layout call would answer the same
+   string for the only country that reaches it, and would read as though the file served more. */
 
-import { pick } from "#synthesizers/utils"
+import type { DirectionalAbbreviation } from "@mailwoman/codex/us"
+import { sample } from "@mailwoman/core/random"
+
 import type { CanonicalRow } from "#types"
 
 /**
@@ -33,7 +37,7 @@ import type { CanonicalRow } from "#types"
 const MAX_DISTINCT_STREET_TRIES = 8
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
-   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
    output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
    extracted as named constants above. */
@@ -64,7 +68,7 @@ const STREET_CORES = [
 ] as const
 
 /**
- * Bare proper-noun streets that idiomatically take NO suffix.
+ * Bare proper-noun streets that idiomatically take no suffix.
  */
 const BARE_NAMES = ["Broadway", "Wall", "Bourbon", "Esplanade", "Riverside", "Lakeshore"] as const
 
@@ -86,8 +90,8 @@ const ORDINALS = [
 
 const SUFFIXES = ["St", "Ave", "Blvd", "Rd", "Dr", "Ln", "Way", "Pl", "Ct", "Pkwy", "Ter", "Cir"] as const
 
-// Vocabulary compile-checked against the codex; the ORDER stays this literal's. `Object.values(DirectionalAbbreviation)`
-// runs N,E,S,W,… — deriving the array from it would re-map every pick() draw and change shipped slice bytes.
+// Vocabulary compile-checked against the codex. the order stays this literal's. `Object.values(DirectionalAbbreviation)`
+// runs N,E,S,W,… — deriving the array from it would re-map every sample() draw and change shipped recipe-output bytes.
 const DIRECTIONALS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"] as const satisfies readonly DirectionalAbbreviation[]
 
 /**
@@ -121,16 +125,16 @@ export interface IntersectionSynthesisOpts {
  */
 function buildStreetName(random: () => number): string {
 	// ~20% bare proper-noun street (no suffix), else directional? + core/ordinal + suffix.
-	if (random() < 0.2) return pick(BARE_NAMES, random)
+	if (random() < 0.2) return sample(BARE_NAMES, random)
 
 	const parts: string[] = []
 
 	if (random() < 0.35) {
-		parts.push(pick(DIRECTIONALS, random))
+		parts.push(sample(DIRECTIONALS, random))
 	}
 
-	parts.push(random() < 0.45 ? pick(ORDINALS, random) : pick(STREET_CORES, random))
-	parts.push(pick(SUFFIXES, random))
+	parts.push(random() < 0.45 ? sample(ORDINALS, random) : sample(STREET_CORES, random))
+	parts.push(sample(SUFFIXES, random))
 
 	return parts.join(" ")
 }
@@ -158,13 +162,13 @@ export function synthesizeIntersectionRow(
 
 	if (b === a || a.includes(b) || b.includes(a)) return null
 
-	const connector = pick(CONNECTORS, random)
+	const connector = sample(CONNECTORS, random)
 	// "corner of" prefix variant (~20%) — still labels the two streets identically.
 	const cornerPrefix = random() < 0.2 ? "corner of " : ""
 
 	const components: CanonicalRow["components"] = { intersection_a: a, intersection_b: b }
 
-	// v0.7.2: ~60% BARE (no locality tail). v0.7.1 always appended ", City, ST", so the model learned
+	// v0.7.2: ~60% bare (no locality tail). v0.7.1 always appended ", City, ST", so the model learned
 	// to read post-intersection text as a locality and fumbled the harness's bare "X & Y" cases
 	// (mislabeling the second street as a locality). Match the eval distribution.
 	const bare = random() < 0.6
@@ -192,7 +196,7 @@ export function synthesizeIntersectionRow(
 }
 
 /**
- * A small built-in US city/region/zip pool for standalone slice generation + tests.
+ * A small built-in US city/region/zip pool for standalone recipe-output generation + tests.
  */
 export const DEFAULT_US_BASES: ReadonlyArray<IntersectionBaseTuple> = [
 	{ locality: "New York", region: "NY", postcode: "10036", country: "US" },

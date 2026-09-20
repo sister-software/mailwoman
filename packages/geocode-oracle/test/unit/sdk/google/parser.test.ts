@@ -4,8 +4,8 @@
 /**
  * @file Tests for the Google `address_components` → `ComponentTag` mapping.
  *
- *   Fixtures are hand-built from real Geocoding API response shapes; nothing here touches the network.
- *   The cases are chosen to pin the four decisions that are NOT mechanical — the GB `postal_town`
+ *   Fixtures are hand-built from real Geocoding API response shapes. nothing here touches the network.
+ *   The cases are chosen to pin the four decisions that are not mechanical — the GB `postal_town`
  *   fall-through, the region short/long split, the ZIP+4 join, and the `GEOMETRIC_CENTER` tier
  *   disambiguation — plus the two deliberate divergences from the earlier draft (no uppercasing,
  *   no coordinate rounding).
@@ -54,7 +54,7 @@ describe("buildGoogleComponents", () => {
 
 		expect(components).toEqual({
 			house_number: "1600",
-			// `route` takes the LONG name — the abbreviation is Google's display convenience, not the
+			// `route` takes the long name — the abbreviation is Google's display convenience rather than the
 			// form a parser sees in input.
 			street: "Amphitheatre Parkway",
 			locality: "Mountain View",
@@ -237,7 +237,7 @@ describe("parseGoogleGeocodeResult", () => {
 	})
 
 	it("mints an address ID that its own parser can read back", () => {
-		// The guard on the `state` prefix: `Île-de-France` is not a two-letter code, so it must NOT be
+		// The guard on the `state` prefix: `Île-de-France` is not a two-letter code, so it must not be
 		// interpolated into the key. Without the guard this ID is `île-de-france.<cell>.<hash>` and
 		// `isPostalAddressID` rejects it.
 		expect(parseGoogleGeocodeResult(paris).addressID).toMatch(/^[a-z]{2}\.[0-9a-f]+\.[0-9a-f]{16}$/)

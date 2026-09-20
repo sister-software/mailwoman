@@ -9,7 +9,7 @@
  *   See: https://github.com/google/libaddressinput/wiki/AddressValidationMetadata
  *
  *   Replaces the bash `ssl-address-download.sh` (curl + jq). The country list lives at
- *   `…/ssl-address/data` as a `~`-delimited `.countries` string; each country's record is then
+ *   `…/ssl-address/data` as a `~`-delimited `.countries` string. each country's record is then
  *   fetched from `…/ssl-address/data/<CC>` and written to `<out-dir>/<CC>.json`.
  *
  *   ## Usage
@@ -20,8 +20,8 @@
  *
  *   ## Flags
  *
- *   - `--out-dir <path>` — destination directory; default `./ssl-address` (next to this script)
- *   - `--concurrency <n>` — parallel per-country fetches; default `8`
+ *   - `--out-dir <path>` — destination directory. default `./ssl-address` (next to this script)
+ *   - `--concurrency <n>` — parallel per-country fetches. default `8`
  */
 
 import { join } from "path-ts"
@@ -35,7 +35,7 @@ const BASE_URL = "https://chromium-i18n.appspot.com/ssl-address/data"
 /**
  * One host, ~250 small records, fetched `concurrency`-wide.
  *
- * Retry is the point: a throttle or a dropped connection on ONE country previously counted as a permanent failure for
+ * Retry is the point: a throttle or a dropped connection on one country previously counted as a permanent failure for
  * that country, and the run reported `written: 249, failed: 1` — indistinguishable from a country the source does not
  * carry. No `minRequestIntervalMs`: the concurrency-wide burst is what this tool has always done and the host has not
  * objected, and inventing a rate limit no measurement supports would only make a working tool slower.
@@ -66,7 +66,7 @@ export interface DownloadSSLAddressOptions {
 async function fetchCountryCodes(): Promise<string[]> {
 	const data = await sslAddressClient.fetch<{ countries?: string }>({ url: BASE_URL }).then(pluckResponseData)
 
-	return (data.countries ?? "").split("~").filter((code) => code.length > 0)
+	return (data.countries ?? "").split("~").filter((code) => code.length)
 }
 
 /**

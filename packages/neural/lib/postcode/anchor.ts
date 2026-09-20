@@ -9,7 +9,7 @@
  *   places a query on Earth far more cheaply than the rest of the parse. This module lifts the
  *   postcode out of the BIO sequence-labelling problem and treats it as a structured anchor. It
  *   runs the same per-country shape regexes the decoder repair pass uses ({@link collectMatches}),
- *   resolves each shaped span against a postcode gazetteer, and returns a SOFT signal: a country
+ *   resolves each shaped span against a postcode gazetteer, and returns a soft signal: a country
  *   posterior plus a calibrated confidence. It never decides a postcode's identity on its own — it
  *   reports "this string is (or is not) a real postcode, in these countries, near here", and leaves
  *   the parser to weigh that against the surrounding tokens.
@@ -17,11 +17,11 @@
  *   Two design rules carried from the DeepSeek consult
  *   (`.agents/skills/deepseek-consult/ds-pc-turn{1,2}-postcode-anchor.txt`):
  *
- *   - The country posterior is UNIFORM over the countries a string actually exists in. We never weight
+ *   - The country posterior is uniform over the countries a string actually exists in. We never weight
  *       by per-country postcode volume, because that skews "75001" toward whichever country owns
  *       more 5-digit codes — the exact bias the anchor exists to avoid. Disambiguation is the
  *       parser's job, using script, city tokens, and user locale.
- *   - Confidence combines gazetteer MEMBERSHIP with country AMBIGUITY. A string that matches a postcode
+ *   - Confidence combines gazetteer membership with country ambiguity. A string that matches a postcode
  *       regex but exists in no gazetteer (a bare `27`, or a 5-digit house number that is not a real
  *       code) gets confidence 0, so the parser treats it as a house number. A real-but-ambiguous
  *       code (`75001` in FR and US) gets moderate confidence. A real, single-country code gets
@@ -47,7 +47,7 @@ export interface PostcodePlace {
 /**
  * The minimal surface the anchor needs from a gazetteer. Implementations: an in-memory fake (tests) or a SQLite-backed
  * lookup over the `postalcode-*.db` extracts (`@mailwoman/resolver-wof-sqlite`). Keeping this boundary narrow lets a
- * future FST/WASM resolver drop in without touching the anchor logic.
+ * future FST/wasm resolver drop in without touching the anchor logic.
  */
 export interface PostcodeResolver {
 	/**
@@ -66,7 +66,7 @@ export interface PostcodeAnchor {
 	 */
 	normalized: string
 	/**
-	 * Coordinate-bearing gazetteer hits — best-effort centroid(s), one representative per country.
+	 * Coordinate-containing gazetteer hits — best-effort centroid(s), one representative per country.
 	 */
 	candidates: PostcodePlace[]
 	/**
@@ -114,8 +114,8 @@ const FUZZY_PENALTY = 0.6
 /**
  * Class-aware edit-distance-1 variants of a postcode string: deletions, same-class substitutions (digit↔digit,
  * letter↔letter), same-class insertions, and adjacent transpositions. Restricting substitutions/insertions to the
- * character's class mirrors how humans mistype or OCR a postcode (a digit becomes another digit, not a letter) and
- * keeps the candidate set small.
+ * character's class mirrors how humans mistype or OCR a postcode (a digit becomes another digit rather than a letter)
+ * and keeps the candidate set small.
  */
 export function editDistance1Variants(s: string): string[] {
 	const classOf = (ch: string): string =>
@@ -167,7 +167,7 @@ export function normalizePostcode(raw: string): string {
 		s = s.replace(" ", "")
 	}
 
-	// Dutch: gazetteer stores 1012LM, not 1012 LM
+	// Dutch: gazetteer stores 1012LM rather than 1012 LM
 	return s
 }
 
@@ -186,7 +186,7 @@ export function gbOutwardCode(normalized: string): string | null {
 }
 
 /**
- * `1 - log2(k)/log2(MAX_COUNTRIES)`, clamped to [0, 1]. k=1 → 1.0; k=2 → ~0.70; k≥MAX_COUNTRIES → 0.
+ * `1 - log2(k)/log2(MAX_COUNTRIES)`, clamped to [0, 1]. k=1 → 1.0. k=2 → ~0.70. k≥MAX_COUNTRIES → 0.
  */
 function confidenceFromCountryCount(k: number): number {
 	if (k <= 0) return 0
@@ -202,15 +202,15 @@ function confidenceFromCountryCount(k: number): number {
  * postcode are the same shape, so membership alone can't separate `12345 Main St` (house number that happens to be a
  * real ZIP elsewhere) from `San Francisco 94105` (postcode). The structural tell is cheap and locale-general: house
  * numbers sit beside the street, postcodes beside the city. We scale rather than zero — the gazetteer still vouches for
- * the shape, so a lone code in a street-only line stays usable; the penalty just lets a real trailing postcode out-rank
+ * the shape, so a lone code in a street-only line stays usable. the penalty just lets a real trailing postcode out-rank
  * it.
  */
 const HOUSE_NUMBER_PENALTY = 0.2
 
 /**
- * Standalone street-type words for the locales without a codex slice yet (ES/IT). US comes from `@mailwoman/codex/us`,
- * German from `@mailwoman/codex/de`, French from `@mailwoman/codex/fr`; the Dutch compound suffixes are still inline
- * below pending a `codex/nl` slice.
+ * Standalone street-type words for the locales without a codex address system yet (ES/IT). US comes from
+ * `@mailwoman/codex/us`, German from `@mailwoman/codex/de`, French from `@mailwoman/codex/fr`; the Dutch compound
+ * suffixes are still inline below pending a `codex/nl` address system.
  */
 const NON_US_STREET_WORDS = new Set([
 	// Spanish
@@ -234,19 +234,19 @@ const NON_US_STREET_WORDS = new Set([
 ])
 
 /**
- * Dutch compound street suffixes — matched against a token's tail (pending a `codex/nl` slice).
+ * Dutch compound street suffixes — matched against a token's tail (pending a `codex/nl` address system).
  */
 const NL_STREET_SUFFIXES = ["straat", "laan", "plein", "gracht", "kade", "dijk", "steeg", "dreef"]
 
 /**
  * True when a token denotes a street. US suffixes come from the USPS Pub-28 table in `@mailwoman/codex/us` (complete,
- * so `Trl`/`Holw`/`Xing` all match), EXCEPT the abbreviations that collide with a state code — `KY` (Key vs Kentucky),
+ * so `Trl`/`Holw`/`Xing` all match), except the abbreviations that collide with a state code — `KY` (Key vs Kentucky),
  * `PR` (Prairie vs Puerto Rico) — which sit in the postcode's own `City, ST ZIP` segment. German compounds come from
  * `@mailwoman/codex/de` ({@link isGermanStreetToken}), whose suffix set already excludes the place-name endings
  * (`-berg`, `-burg`, `-dorf`) that would otherwise flag a city token. French voie words come from `@mailwoman/codex/fr`
  * ({@link isFrenchStreetWord}). ES/IT and Dutch fall back to the inline lists.
  *
- * `systems` RESTRICTS which vocabularies are consulted — only the systems the postcode plausibly belongs to (its
+ * `systems` restricts which vocabularies are consulted — only the systems the postcode plausibly belongs to (its
  * gazetteer membership, e.g. a US-only ZIP restricts to `{us}` and never checks the German or French vocab). This is
  * what lets the check scale to 15-20 systems without a cross-locale collision (German `-ring` vs English `spring`): an
  * unrelated system's vocabulary is simply never asked. The restriction carries lowercase system/locale tags (`us`,
@@ -313,7 +313,7 @@ export function extractPostcodeAnchors(
 		const spanText = text.slice(match.start, match.end)
 		const normalized = normalizePostcode(spanText)
 
-		// Exact first; then the GB outward fallback (structural, not a guess); then edit-distance-1.
+		// Exact first. then the GB outward fallback (structural rather than a guess). then edit-distance-1.
 		let hits = resolver.lookup(normalized)
 		let matchType: PostcodeAnchor["matchType"] = hits.length ? "exact" : "none"
 
@@ -346,7 +346,7 @@ export function extractPostcodeAnchors(
 		}
 
 		// Membership: distinct countries the postcode exists in (regardless of whether we have a centroid).
-		// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
+		// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 		const countries = [...new Set(hits.map((h) => h.country))].sort()
 		const k = countries.length
 
@@ -356,7 +356,7 @@ export function extractPostcodeAnchors(
 			posterior[c] = 1 / k
 		}
 
-		// Placement: one representative coordinate-bearing hit per country (the first with real coords).
+		// Placement: one representative coordinate-containing hit per country (the first with real coords).
 		const candidates: PostcodePlace[] = []
 
 		for (const c of countries) {
@@ -369,7 +369,7 @@ export function extractPostcodeAnchors(
 
 		// Restrict the street-word check to the systems this code plausibly belongs to: its gazetteer
 		// membership when known (precise — a US-only ZIP never checks the German vocab), else the
-		// format-shape candidates from codex (for a code in no gazetteer; its confidence is 0 anyway).
+		// format-shape candidates from codex (for a code in no gazetteer. its confidence is 0 anyway).
 		const systems = countries.length
 			? new Set(countries.map((c) => c.toLowerCase()))
 			: new Set<string>(candidateSystemsForPostcode(normalized))

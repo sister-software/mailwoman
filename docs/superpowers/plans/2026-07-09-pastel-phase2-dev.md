@@ -1,6 +1,6 @@
 # Pastel Arc Phase 2: `mailwoman dev` Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** The codegen/lint scripts leave `scripts/` for owning-workspace tool modules behind a new `mailwoman dev` command group; the two dead scripts die.
 

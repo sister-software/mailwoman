@@ -6,7 +6,7 @@
  */
 
 /**
- * The UTC calendar date as `YYYY-MM-DD`.
+ * The UTC calendar date as `yyyy-MM-DD`.
  */
 export function isoDate(now: Date = new Date()): string {
 	return now.toISOString().slice(0, 10)

@@ -19,7 +19,7 @@ const scratch = useScratchDir("ov")
 const loadRows = () => readCanonicalRows(scratch.path, OVERTURE_ADAPTER_ID)
 
 /**
- * Write a per-country Overture corpus JSONL fixture (the shape `ingest-overture-addresses.ts --corpus-jsonl` emits).
+ * Write a per-country Overture corpus jsonl fixture (the shape `ingest-overture-addresses.ts --corpus-jsonl` emits).
  */
 async function writeFixture(rows: Record<string, unknown>[]): Promise<string> {
 	const p = join(scratch.path, "overture-es.corpus.jsonl")
@@ -35,7 +35,7 @@ const ES = [
 ]
 
 describe("unitFieldIsDesignator", () => {
-	it("keeps a digit-bearing or one-word unit and drops a name or NIL", () => {
+	it("keeps a digit-containing or one-word unit and drops a name or NIL", () => {
 		expect(unitFieldIsDesignator("2A")).toBe(true)
 		expect(unitFieldIsDesignator("#05-67")).toBe(true)
 		expect(unitFieldIsDesignator("EG")).toBe(true)
@@ -115,7 +115,7 @@ describe("overture adapter", () => {
 
 		expect(julan?.raw).toContain("38914")
 		expect(julan?.raw).toContain("El Pinar de El Hierro")
-		// street_prefix is NOT split here — that's the downstream affix-relabel's job.
+		// street_prefix is not split here — that's the downstream affix-relabel's job.
 		expect(julan?.components.street_prefix).toBeUndefined()
 	})
 

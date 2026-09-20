@@ -21,7 +21,7 @@ import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
@@ -49,6 +49,7 @@ export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
 	return {
 		id: USGOV_IMLS_PLS_ADAPTER_ID,
 		defaultLicense: USGOV_IMLS_PLS_DEFAULT_LICENSE,
+		addressRole: AddressRole.Facility,
 		description: "IMLS Public Libraries Survey — ~17K library outlets with venue+address (public-domain).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
@@ -92,7 +93,7 @@ export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
 					postcode: zip,
 					// #552: no subregion — US postal addresses don't surface the county, so emitting
 					// subregion creates a phantom component with no raw-span to align to, quarantining
-					// ~21% of rows. The county is still available in the source CSV; it just isn't
+					// ~21% of rows. The county is still available in the source CSV. it just isn't
 					// a postal-surface component here.
 				}
 

@@ -1,6 +1,6 @@
 """A deferred intra-package import may not dodge an import cycle.
 
-A deferred import is legitimate when it buys startup weight: `cli.py` defers 32 of them and keeps
+A deferred import is legitimate when it provides startup weight: `cli.py` defers 32 of them and keeps
 torch's 1.46 s off every `--help` (measured — `mailwoman_train.cli` imports in 22,340 us against
 `mailwoman_train.train`'s 1,458,740 us). It is a defect when the target module imports this one back,
 because then the deferral is hiding a circular graph and an ImportError surfaces at first call rather
@@ -32,7 +32,7 @@ def _module_name(path: Path) -> str:
 def _resolve(module: str | None, level: int, holder: str, *, is_package: bool) -> str:
     """The absolute module a `from ... import` names, given the module holding it.
 
-    Inside a package's `__init__.py` a single dot means that package; inside a plain module it means
+    Inside a package's `__init__.py` a single dot means that package. inside a plain module it means
     the package containing it. Conflating the two makes `from .x` in `a/b/__init__.py` resolve to
     `a.x`, and if `a.x` happens to exist the check passes over a broken import.
     """
@@ -110,7 +110,7 @@ def test_every_deferred_import_names_a_module_that_exists() -> None:
     """A deferred import is not checked until it runs, and most of them never run under test.
 
     Moving a module one directory deeper re-levels every relative import inside it. A module-level
-    import that survives the move wrong fails at import; a deferred one fails at first call, on a
+    import that survives the move wrong fails at import. a deferred one fails at first call, on a
     branch a config has to enable. Four of these pointed at `mailwoman_train.data.gazetteer_anchor`
     after the data move and the whole suite stayed green.
     """
@@ -123,7 +123,7 @@ def test_every_deferred_import_names_a_module_that_exists() -> None:
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         for target, lineno in sorted(_imports(tree, holder, deferred=True, is_package=path.name == "__init__.py")):
             if target not in known:
-                offenders.append(f"{path.relative_to(SOURCE_ROOT)}:{lineno} defers {target}, which does not exist")
+                offenders.append(f"{path.relative_to(SOURCE_ROOT)}:{lineno} defers {target} and the target is absent")
 
     assert offenders == [], "deferred imports naming a missing module:\n" + "\n".join(offenders)
 
@@ -151,10 +151,10 @@ def _declared_names(tree: ast.Module) -> set[str]:
 def test_an_import_names_the_module_that_declares_it() -> None:
     """Importing a name from a module that only re-imported it pins the wrong file.
 
-    A plain module's import list is its own business, not a public surface: ``trainer`` imports
+    A plain module's import list is its own business rather than a public surface: ``trainer`` imports
     ``build_optimizer`` so it can call it, and a test that took the name from there kept passing
     after the function moved to ``optim.groups`` — so the move looked complete while six call sites
-    still named the old file. A package ``__init__`` is the exception: re-exporting IS what it is
+    still named the old file. A package ``__init__`` is the exception: re-exporting is what it is
     for, and so is an explicit ``__all__``.
     """
     modules: dict[str, ast.Module] = {}

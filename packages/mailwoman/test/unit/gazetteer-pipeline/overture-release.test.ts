@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the Overture release pre-flight. The required case is the UNREACHABLE bucket: this check exists to
+ *   Tests for the Overture release pre-flight. The required case is the unreachable bucket: this check exists to
  *   turn a slow failure into a fast one, so letting its own network trouble block a build would be a worse trade than
  *   the problem it solves. It must proceed, and must not claim the release was verified.
  */

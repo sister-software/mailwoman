@@ -55,7 +55,7 @@ export interface NPPESReportInput {
 	geocoded: number
 	trainEM: boolean
 	/**
-	 * The corpus-wide table the progression was fed; only its `total`/`distinct` are reported.
+	 * The corpus-wide table the progression was fed. only its `total`/`distinct` are reported.
 	 */
 	addressFrequency: TermFrequencyTable
 	/**
@@ -130,7 +130,7 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 	} = input
 
 	const baseline = progression[0]! // no settings — the prior-prior behaviour
-	// The LAST progression row — the whole A1–A5 stack, never compared on F1 against the others. Named for what it
+	// The last progression row — the whole A1–A5 stack, never compared on F1 against the others. Named for what it
 	// is: a row called `best` invites reading a stack-wide delta as one setting's marginal effect, which is how the
 	// authorized-official sentence below came to quote a five-setting number.
 	const fullStack = progression.at(-1)!
@@ -148,7 +148,7 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 		"",
 		`**Headline — org-name truth (the honest grain):** the shipped ` +
 			`matcher resolves these records at **F1 ${pct(gbtOrg.f1)}%** against org-name entity-truth — not the NPI-level ` +
-			`${pct(gbtNPI.f1)}%, which mostly measures NPI over-segmentation (one organization holds many subpart NPIs, so ` +
+			`${pct(gbtNPI.f1)}%. It mostly measures NPI over-segmentation (one organization holds many subpart NPIs. Therefore, ` +
 			`correct co-located merges are scored as errors). Same clusters, three rulers: ` +
 			`**NPI ${pct(gbtNPI.f1)}% → site ${pct(gbtEntity.f1)}% → org-name ${pct(gbtOrg.f1)}%** ` +
 			`(${keptNpis} NPI → ${entityCount} site → ${orgCount} org-name classes); the climb is the yardstick getting honest, ` +
@@ -189,7 +189,7 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 			`**${pct(defaultOutOfBox.f1)}%** on this sample — essentially the baseline. The default auto-computes the ` +
 			`address-frequency table over the INPUT records, and this benchmark deliberately sub-samples ${N} records, so ` +
 			`that table is too sparse to carry the inverse-frequency signal (a corpus statistic you can't synthesize from a ` +
-			`slice). It's **not a regression** (≥ baseline, no over-merge added) — it's the honest floor when the input isn't ` +
+			`sample). It's **not a regression** (≥ baseline, no over-merge added) — it's the honest floor when the input isn't ` +
 			`corpus-scale. Fed the corpus-wide table (the \`+ inverse-address-frequency\` row above, what the CLI builds from ` +
 			`the full source files) the SAME default reaches the **${pct(progression[2]!.score.f1)}%** baseline. On a full-dataset ` +
 			`dedup the input IS the corpus, so zero-config reaches the baseline on its own.`
@@ -214,7 +214,7 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 	lines.push(
 		best.t === 0
 			? `Best F1 is at the **default threshold** (${pct(base.score.f1)}%): raising it only trades recall away faster ` +
-					`than it buys precision. So the threshold knob alone can't separate co-located distinct providers — the ` +
+					`than it provides precision. So the threshold knob alone can't separate co-located distinct providers — the ` +
 					`over-merge is structural, in the comparison model, not the cutoff.`
 			: `Best F1 **${pct(best.score.f1)}%** (ARI ${best.score.ari.toFixed(3)}) at threshold ${best.t}, vs **${pct(base.score.f1)}%** at the ` +
 					`default — the threshold knob moves it ${(100 * (best.score.f1 - base.score.f1)).toFixed(0)}pp. Higher thresholds trade recall for precision.`
@@ -334,7 +334,7 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 	lines.push(
 		`Caveats: the programmatic site-truth is CONSERVATIVE (collapses only NPPES-flagged subparts; unflagged same-org pairs still ` +
 			`read as over-merge), so it understates the subpart correction. A hand-adjudicated gold set on the ambiguous co-located + ` +
-			`two-site slice is the next refinement (#625).`
+			`two-site stratum is the next refinement (#625).`
 	)
 
 	lines.push("")

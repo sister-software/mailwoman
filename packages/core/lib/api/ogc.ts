@@ -14,7 +14,7 @@ import { rootAttribute } from "#html/document"
 import { stringifyJSON } from "#json"
 
 /**
- * The error an OGC `ServiceExceptionReport` becomes. The report arrives on an HTTP 200, so nothing upstream maps it: a
+ * The error an OGC `ServiceExceptionReport` becomes. The report arrives on an http 200, so nothing upstream maps it: a
  * caller that does not ask reads the exception body as an empty answer.
  */
 export class OGCServiceError extends Error {
@@ -41,11 +41,11 @@ export class OGCServiceError extends Error {
 const EXCEPTION_OPEN = "<ServiceException"
 
 /**
- * The inner text of the first real `<ServiceException>` element. INDEX SCANS RATHER THAN A REGEX. The obvious form —
+ * The inner text of the first real `<ServiceException>` element. index scans rather than A regex. The obvious form —
  * `/<ServiceException(?:\s[^>]*)?>([\s\S]*?)<\/ServiceException>/` — backtracks polynomially on a body whose opening
  * tag has no closing partner, and this body is whatever a network service returned. Two more things it has to get
  * right, both of which cost nothing here: the tag name must END at the match, because `<ServiceExceptionReport
- * xmlns="…">` shares the prefix and taking it captures the entire report as the message; and an unclosed element reads
+ * xmlns="…">` shares the prefix and taking it captures the entire report as the message. and an unclosed element reads
  * as unreadable rather than as empty.
  */
 function exceptionText(body: string): string | undefined {
@@ -60,7 +60,7 @@ function exceptionText(body: string): string | undefined {
 
 		cursor = after
 
-		// `>` closes a bare tag; whitespace introduces attributes. Anything else continues the tag NAME, which means this
+		// `>` closes a bare tag. whitespace introduces attributes. Anything else continues the tag name, which means this
 		// is `ServiceExceptionReport` or a sibling and not the element being read.
 		if (!/^[\s>]/u.test(body.slice(after, after + 1))) continue
 
@@ -91,7 +91,7 @@ export function readOGCServiceException(body: string): string | undefined {
 
 /**
  * Refuse a text body that is an OGC exception report. Every OGC text read a layer product makes goes through this
- * before it parses, because the report shares the HTTP 200 a real answer arrives on.
+ * before it parses, because the report shares the http 200 a real answer arrives on.
  */
 export function assertNoOGCServiceException(body: string, context: string): void {
 	const exception = readOGCServiceException(body)
@@ -103,7 +103,7 @@ export function assertNoOGCServiceException(body: string, context: string): void
 
 /**
  * Ordinates in a CRS84 bounding box: `minLon, minLat, maxLon, maxLat`. A shorter array is a 3D extent this reader does
- * not understand, not a 2D one with something missing.
+ * not understand rather than a 2D one with something missing.
  */
 const BBOX_ORDINATES = 4
 
@@ -126,7 +126,7 @@ export interface CreateOGCFeaturesBBoxReaderOptions {
 /**
  * A reader answering an OGC API Features bbox query around a point.
  *
- * The service answers a BBOX, not a point, so this returns what it published nearby and the containment decision
+ * The service answers a bbox rather than a point, so this returns what it published nearby and the containment decision
  * belongs to the caller, against the returned rings — comparing a verdict against a bare "the service returned
  * something here" would pass on any polygon within the probe's width.
  */
@@ -205,7 +205,7 @@ export async function readWFSFeatureCount(
 
 	assertNoOGCServiceException(data, options.context)
 
-	// The ROOT element's attribute, not the first match anywhere in the body: the count describes the collection,
+	// The root element's attribute rather than the first match anywhere in the body: the count describes the collection,
 	// and a regex cannot tell that apart from the same attribute repeated on a nested member.
 	const numberMatched = rootAttribute(data, "numberMatched", { xml: true })
 	const subject = options.subject === undefined ? "" : ` for ${options.subject}`

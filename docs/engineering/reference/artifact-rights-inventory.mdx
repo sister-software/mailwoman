@@ -1,0 +1,361 @@
+---
+title: Artifact and rights inventory
+description: What every published package ships, whose rights govern it, and which provenance questions are unresolved.
+---
+
+# Artifact and rights inventory
+
+What each published package ships, which party grants rights to it, and where the record is
+incomplete. Observed on `main` on 2026-09-20 by reading manifests, model cards and rights documents
+in the checkout.
+
+Three records are kept apart throughout, because conflating them is how a corpus measurement becomes
+a claim about a released model:
+
+1. **Current corpus composition** — what the corpus on the training volume contains today.
+2. **Historical training inputs** — which records trained a particular released checkpoint.
+3. **Runtime datasets and dependencies** — what an operator downloads separately.
+
+Only the first is measured here. The second is unresolved for every published package, and this
+document states that rather than implying otherwise.
+
+## Rights chain
+
+| role                | party                                            | stated in                                                                       |
+| ------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------- |
+| Copyright holder    | Teffen Ellis (DBA Sister Software)               | `LICENSE.md` line 3                                                             |
+| Commercial licensor | Teffen Ellis (DBA Sister Software)               | `COMMERCIAL-LICENSE.md` line 15, `commercial-2026-10.mdx` line 24               |
+| Services operator   | Nirrus LLC, a Delaware limited liability company | `docs/src/pages/privacy/index.mdx`, `docs/src/pages/terms-of-service/index.mdx` |
+
+The licensor and the services operator are different parties, and the repository states both
+consistently. Nirrus LLC appears in the website Terms and Privacy Policy and in no rights document.
+Operating the services does not make it the copyright holder.
+
+Two commercial documents exist and each says which it is. `COMMERCIAL-LICENSE.md` opens with a
+template notice stating it does not execute. `commercial-2026-10.mdx` states that acceptance is
+recorded by Stripe Checkout when a buyer ticks the box, and that the page is not edited after
+publication.
+
+**Repaired on the page.** `docs/src/pages/license.mdx` said `COMMERCIAL-LICENSE.md` "carries the same
+terms in the repository". The two differ in execution mechanism, so the page overstated their
+relationship. The page now names `commercial-2026-10` as the agreement that binds and describes
+`COMMERCIAL-LICENSE.md` as the reference template its own opening notice says it is. Neither
+agreement was edited.
+
+**Repaired in the template.** `COMMERCIAL-LICENSE.md` section 4 waived attribution without saying whose: "Attribution
+is not required in end-user-facing software unless mutually agreed in writing." Section 2 of the same document says
+third-party obligations continue to apply, so the two are consistent read together and section 4 is not read alone. The
+template now scopes the waiver to the licensor's own attribution and states that the licensor has no power to waive an
+upstream one. The checkout agreement records acceptance and is never edited after publication, so it is unchanged.
+
+**Already correct, and now propagated:** `COMMERCIAL-LICENSE.md` line 31 limits the grant's scope.
+
+> This grant covers only the code and model artifacts authored by Licensor. It does not extend to
+> third-party components bundled with Mailwoman … Any attribution, share-alike, or other obligations
+> attaching to those third-party components continue to apply and are not waived or relicensed by
+> this Agreement.
+
+The public license page carried no equivalent sentence. It now carries a section stating that the
+commercial grant covers the code and model artifacts Sister Software authors, that third-party
+components stay under their own licenses, that attribution and share-alike obligations attaching to
+them continue to apply, and that separately downloaded reference data carries the terms of whoever
+published it.
+
+## Published packages
+
+Thirteen `neural-weights-*` workspaces. Twelve publish; `base-latn` is private.
+
+| package     | manifest | model card | SPDX field                               | declared artifacts | recorded digests | attribution entries | base    |
+| ----------- | -------- | ---------- | ---------------------------------------- | -----------------: | ---------------: | ------------------: | ------- |
+| `base-latn` | 7.8.1    | —          | `AGPL-3.0-only OR LicenseRef-Commercial` |                  8 |                0 |                   0 | —       |
+| `cjk`       | 10.0.0   | 0.0.3      | `AGPL-3.0-only OR LicenseRef-Commercial` |                  4 |                2 |                   6 | —       |
+| `de-de`     | 10.0.0   | 7.0.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |                  7 |                0 |                   0 | `en-us` |
+| `en-au`     | 10.0.0   | 9.0.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |                  6 |                0 |                   0 | `en-us` |
+| `en-gb`     | 10.0.0   | 9.0.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |                 10 |                0 |                   0 | `en-us` |
+| `en-in`     | 10.0.0   | 7.0.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |                  7 |                0 |                   0 | `en-us` |
+| `en-nz`     | 10.0.0   | 6.6.3      | `AGPL-3.0-only OR LicenseRef-Commercial` |                  8 |                0 |                   0 | `en-us` |
+| `en-us`     | 10.0.0   | 9.1.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |                 14 |                4 |                  10 | —       |
+| `es-es`     | 10.0.0   | 7.0.0      | **`AGPL-3.0`**                           |                  7 |                0 |                   0 | `en-us` |
+| `fr-fr`     | 10.0.0   | 6.5.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |                 10 |                0 |                   0 | `en-us` |
+| `it-it`     | 10.0.0   | 7.0.0      | **`AGPL-3.0`**                           |                  7 |                0 |                   0 | `en-us` |
+| `ja-jp`     | 10.0.0   | 7.0.0      | **`AGPL-3.0`**                           |                  3 |                0 |                   0 | `cjk`   |
+| `zh-cn`     | 10.0.0   | 7.0.0      | **`AGPL-3.0`**                           |                  3 |                0 |                   0 | `cjk`   |
+
+### Four packages omit the commercial branch
+
+`es-es`, `it-it`, `ja-jp` and `zh-cn` declare `AGPL-3.0`. The other nine, and every other workspace
+in the repository including `@mailwoman/core` and `@mailwoman/codex`, declare
+`AGPL-3.0-only OR LicenseRef-Commercial`.
+
+Two defects in one field. `AGPL-3.0` is a deprecated SPDX identifier, superseded by `AGPL-3.0-only`
+and `AGPL-3.0-or-later`, so it does not state which. And `docs/src/pages/license.mdx` line 11 says
+"every release ships under both", which those four manifests contradict.
+
+The repository's own admissibility function already refuses the identifier. Measured on this tree:
+`assertAdmissibleLicenseExpression("AGPL-3.0")` throws, and `summarizeLicense("AGPL-3.0")` returns
+`recognized: false` with `unrecognized: ["AGPL-3.0"]` and an empty obligation list. That function
+guarded spatial-layer manifests and nothing had applied it to a package manifest.
+
+**Repaired.** The four fields now read `AGPL-3.0-only OR LicenseRef-Commercial`, `docs/package.json`
+gained the field it lacked, and the `package-license` repository check refuses a workspace manifest
+that declares no license, declares an identifier the obligations table does not know, or declares an
+expression other than the root's. The four packages have not been republished, so the versions on npm
+still carry the old field.
+
+### Twelve model cards carry a version their manifest does not, and the card says which series it is
+
+Every published package's model-card version differs from its manifest version, `fr-fr` most widely
+at 6.5.0 against 10.0.0.
+
+**Correcting an earlier reading in this document.** The first version of this section called all
+twelve a release-engineering defect. For the graph packages that reading is wrong. Two version series
+exist by design and `docs/records/site-2026-08/releases.mdx` states them, with the current row reading
+`**10.0.0** (current) · model 9.1.0 (unchanged)` — a code-only release over unchanged model bytes.
+`mwops release verify-metadata` keys its three surface checks off the card version rather than the npm
+version for exactly that reason, and `fetch-hf-weights` names the Hugging Face directory
+`<family>/v<card version>/`. Forcing the numbers equal would break both.
+
+What the cards did not state is which series a given number belongs to. Two packages ship a model
+graph: `en-us` at card 9.1.0 and `cjk` at card 0.0.3. Ten are data-only overlays declaring
+`mailwoman.baseWeights`, and an overlay's card version names that overlay's own artifacts while the
+graph its rows decode through is the base package's. Nothing in a published tarball said which of the
+two a reader was holding.
+
+**Repaired.** Each published package's generated `PROVENANCE.json` carries `version_series`, derived
+from `mailwoman.baseWeights` rather than asserted, together with a sentence stating what that series
+means and how it relates to `package_version`. The numbers are left free to differ.
+
+### Artifact digests are recorded for 6 of about 100 shipped artifacts
+
+`en-us` records four in `files_md5` — `model.onnx`, `tokenizer.model`,
+`street-type-lexicon-v3.json`, `locality-surface-lexicon-v7.json` — of fourteen declared artifacts.
+`cjk` records two. The remaining eleven packages record none.
+
+`en-us` ships artifacts with separate lineages: a trained model, a SentencePiece tokenizer, two
+lexicon files, a US postcode binary, a placetype-pair index built from the Who's On First admin
+hierarchy, and two FST binaries. One `data_attribution` list covers the package.
+
+### Two packages carry training attribution, under two different keys
+
+`en-us` has ten entries at `training.data_attribution`. `cjk` has six at a top-level `attribution`.
+Those are the two packages that ship a model graph. The ten overlays record none, which is consistent
+with inheriting a graph and says nothing about the artifacts each overlay ships itself.
+
+The table above counted `en-us` alone, because the first reading of these cards looked at
+`training.data_attribution` and stopped. Reading one spelling reports the other package as recording
+nothing.
+
+One of those ten entries attributes an artifact that ships in a different package. Entry 1 names
+`pair-index-gb.bin` in `neural-weights-en-gb`, attributing it to HM Land Registry Price Paid Data
+under OGL v3.0 with Crown copyright and attribution required. `neural-weights-en-gb`'s own card has no
+`training` section at all. A consumer who installs the overlay alone receives the binary and no
+attribution.
+
+No package shipped a `LICENSE.md`.
+
+**Repaired.** Every published weights package now carries two generated files, written by
+`mwops release write-rights-files` and held current by the `weights-rights` repository check.
+`LICENSE.md` states the terms this repository grants, that the commercial grant covers only the code
+and model artifacts Sister Software authors, and that third-party obligations continue to apply.
+`PROVENANCE.json` records each declared artifact with its digest or `unrecorded`, each attribution
+entry with the license it names or `null`, and an `unresolved` list. A package whose card records no
+attribution reads `none-recorded-in-this-package` rather than reading as a package with nothing to
+attribute. The cross-package case above appears in `en-gb`'s record under
+`attribution_recorded_in_another_package`, found by matching each package's artifact filenames against
+every other package's attribution text rather than by hand.
+
+Generating the files does not discharge the obligation. `pair-index-gb.bin`'s attribution is still
+recorded in another package's card, and the repair for that is to put the entry where the artifact
+ships.
+
+## Attributed sources for `en-us`, as recorded
+
+Eight of ten entries name a license. Reproduced as stated in the card, without interpretation.
+
+|   # | source                                     | license as named                          |
+| --: | ------------------------------------------ | ----------------------------------------- |
+|   1 | HM Land Registry — Price Paid Data         | OGL v3.0                                  |
+|   2 | LINZ-derived OpenAddresses NZ              | CC-BY 4.0                                 |
+|   3 | OpenAddresses ES tuples                    | CC-BY per OA source                       |
+|   4 | BAN — Base Adresse Nationale (DINUM / IGN) | Licence Ouverte 2.0                       |
+|   5 | Overture Maps Foundation — Addresses theme | CDLA-Permissive-2.0                       |
+|   6 | OpenAddresses CZ — ČÚZK RÚIAN              | CC-BY 4.0                                 |
+|   7 | OpenAddresses PL — GUGiK / PRG             | **none named** — "public, BDOT-derived"   |
+|   8 | OpenAddresses SK — MINV/ZBGIS              | CC-0/CC-BY per OA source                  |
+|   9 | OpenAddresses SI — GURS                    | CC-BY per OA source                       |
+|  10 | OpenAddresses / GeoNames / Who's On First  | **a pointer** to `THIRD_PARTY_NOTICES.md` |
+
+Entry 10 resolves to statements that do not name a single license. Excerpted verbatim from
+`THIRD_PARTY_NOTICES.md`, in a fenced block so the prose checks grade this document's own writing
+rather than the file it quotes:
+
+```text
+OpenAddresses. Per-source licenses differ; many require attribution and share-alike.
+OpenStreetMap — ODbL. OpenStreetMap data (via Who's On First and Overture) is licensed under ODbL.
+Who's On First. WOF data draws on several sources with their own licenses.
+```
+
+So one attribution entry covers three source families whose per-record licenses the notices
+describe as differing.
+
+## Corpus composition, measured
+
+Full scans of `v0.32.0-locality-shape` on the training volume, 2026-09-20. **This is record 1. It
+describes the corpus on the volume today and states nothing about which records trained a released
+checkpoint.**
+
+| locale |  train rows | `wof-*` rows | share | `overture` |
+| ------ | ----------: | -----------: | ----: | ---------: |
+| GB     |  15,644,707 |   14,812,000 | 94.7% |          0 |
+| DE     |   2,891,912 |    2,503,713 | 86.6% |    150,000 |
+| FR     | 149,866,617 |    4,233,176 |  2.8% |          0 |
+
+Who's On First supplies most rows for GB and DE in this corpus.
+
+**What this does not establish.** It does not show that any OSM-derived record is present, because
+Who's On First is mixed-provenance and our own notices say it draws on several sources. It does not
+show that any of these rows trained a published checkpoint. It does not classify a `wof-*` row as
+ODbL, and it does not classify one as unrestricted.
+
+Resolving it needs record-level lineage on the training extracts: the source files, their lineage
+fields and license metadata, and the transformations applied. Where lineage cannot be recovered, the
+correct record is unresolved.
+
+### Who's On First record-level lineage, measured
+
+Full scan of the four bundles in the local data root — `whosonfirst-data-admin-us`,
+`whosonfirst-data-admin-fr`, `whosonfirst-data-postalcode-us`, `whosonfirst-data-postalcode-fr` —
+on 2026-09-20. 485,498 records after the `**/*-alt-*.geojson` exclusion `walkFeatures` applies. Zero
+unreadable, zero unparseable, zero without properties.
+
+Two fields answer two different questions, and running them together is what made the lineage look
+unrecoverable.
+
+**Where a record's geometry came from.** `src:geom` is present on 484,537 of 485,498 records, 99.80%.
+42 distinct values across the four bundles.
+
+| `src:geom`        | records | share |
+| ----------------- | ------: | ----: |
+| `geonames`        | 137,456 | 28.3% |
+| `frgov`           |  76,599 | 15.8% |
+| `qs_pg`           |  71,164 | 14.7% |
+| `mz`              |  40,578 |  8.4% |
+| `uscensus`        |  36,473 |  7.5% |
+| `uszcta`          |  32,988 |  6.8% |
+| `geoplanet`       |  30,397 |  6.3% |
+| `quattroshapes`   |  28,399 |  5.8% |
+| `whosonfirst`     |  21,955 |  4.5% |
+| `zetashapes`      |   4,182 |  0.9% |
+| 32 further values |   5,346 |  1.1% |
+| absent            |     961 |  0.2% |
+
+**Where the strings the corpus carries came from.** The adapters emit `wof:name`, the `name:*`
+localized variants and ancestor names. They emit no geometry, so the table above describes a field no
+corpus row carries.
+
+Who's On First's own `LICENSE.md`, shipped in each bundle, gives `name:chi_p`, `name:ger_p` and
+`name:kor_p` as its examples of a localized name sourced from GeoPlanet, the `_p` suffix marking it.
+Zero of 7,189,494 `name:*` variant keys across the four bundles carry that suffix. Both postalcode
+bundles carry no `name:*` variant at all: the admin bundles carry only `_x_preferred` and `_x_variant`
+forms, on 195,165 of 293,572 US records (66.5%) and 97,891 of 122,485 FR records (79.9%).
+
+**No record in any bundle declares `src:geom: osm`.** The search was verified with a control that
+found `geonames` records using the same pattern, against the on-disk form `"src:geom":"frgov"`.
+`THIRD_PARTY_NOTICES.md` states that OpenStreetMap data reaches us "via Who's On First and Overture".
+These four bundles do not support the Who's On First half of that sentence. The Overture half is a
+separate adapter and is unmeasured here.
+
+**Lineage is recoverable.** `source_id` is `wof-<adapter>-<wof_id>-<slot>-<variant>`, so every
+`wof-*` corpus row carries the id of the Who's On First record it came from, and that record carries
+`src:geom`. `WOFRecord` in `packages/corpus/lib/utils/wof-json.ts` projects a feature to id, parent,
+name, placetype, country and name variants, which is where the provenance properties stop travelling.
+
+**What the adapters assert.** `packages/corpus/lib/adapters/wof/admin/json/adapter.ts` and
+`packages/corpus/lib/adapters/wof/postalcode-json/adapter.ts` both set
+`defaultLicense: "CC0-1.0"`, so every `wof-*` row carries that label, and
+`packages/core/lib/license/obligations.ts` reads `CC0-1.0` as carrying no obligation. The bundles'
+`LICENSE.md` says Creative Commons Zero covers Mapzen's original work, that the dataset is also a
+modification of existing open data, that some of those projects do require attribution, and that
+"linking back to this License is required". Whether the emitted strings fall inside the original-work
+part is a reading this document does not make.
+
+**Scope.** Only the US and FR bundles are in the local data root. GB and DE, the two locales whose
+corpus rows are most `wof-*`, are not measured here.
+
+## Publication control
+
+`packages/corpus/lib/utils/license.ts` states the posture:
+
+> exclusion is a deliberate act rather than a silent default. The build includes every row an
+> adapter yields … Nothing is dropped on a license string unless the operator named it.
+
+`build.ts` line 238 is `const excludeLicenses = opts.excludeLicenses ?? []`, and no caller in the
+repository passes it. `--exclude-share-alike` is an opt-in build flag.
+
+The flag is neither necessary nor sufficient as evidence about a released model. It does not record
+which sources contributed, and passing it does not establish that an indirectly included or
+misclassified source was caught. A release control needs a reproducible source manifest and an
+explicit eligibility decision per input, including inherited checkpoints and auxiliary artifacts.
+
+### The one workspace held for a rights reason had no enforced hold
+
+`packages/osm` is held out of the release pending ODbL counsel sign-off. It is not `private`, and it
+declares `publishConfig.access: public`. The hold was membership in `SANCTIONED_RELEASE_ABSENCES` in
+`packages/release-kit/lib/release/stage.ts`, a record that `checkReleaseListIdentity` reads so a
+missing workspace fails with its name. Nothing on the publish path read it. Running
+`mwops release publish-workspace --allow-unplanned` against that directory, or `npm publish` by
+hand, would have published it.
+
+**Repaired.** `assertWorkspacePublishable` refuses any workspace the record names, quoting the
+recorded reason, and both publish paths call it: `publishWorkspace` before it packs, and
+`blessPackages` across every named directory before the first publish. Publishing a held-out
+workspace now means deleting its entry, which a reviewer sees in the diff. Every entry is refused
+rather than the rights-held ones alone, so one rule cannot drift from a classification it does not
+carry.
+
+**What this control does not do.** It refuses a workspace by name. It does not decide whether an
+artifact's inputs permit publication, and it does not read a provenance record, because no frozen
+training manifest exists to read.
+
+### A model upload states its training sources or it does not go out
+
+`mailwoman release hf` in `packages/mailwoman/lib/release-tools/publish-hf.ts` uploads `model.onnx`,
+`tokenizer.model`, `model-card.json` and the FST and postcode binaries. It read those files' sizes and
+nothing else about them. Uploading is publication, and attribution and share-alike conditions attach
+to a source and survive redistribution, so the moment to establish that a record exists is before the
+bytes leave.
+
+**Repaired.** `verifyTrainingProvenance` runs after the artifact checks and refuses a card whose
+`training.data_attribution` is absent or empty, naming the card and saying to record the sources the
+run trained on in it. Entries that name no
+license are printed with their text rather than refused, so the operator sees which source is
+unaccounted for at the moment of publication. Missing evidence about a source is a gap to record,
+while a finding against a source is a conclusion somebody has to reach, and a release control is not
+the place to reach it.
+
+**Correcting a false absence this control first reported.** The first version read
+`training.data_attribution` alone and refused `neural-weights-cjk` as recording nothing. That card
+records six entries under a top-level `attribution` key instead, naming the Overture CDLA terms, the
+National Tax Agency's 利用規約, KOGL Type 1 for the Korean road-name address database, the Korean
+permit registry's 이용허락범위 제한 없음, and the Taiwanese Open Government Data License v1.0 together
+with the fifteen civil affairs bureaux whose 顯名聲明 that license makes a condition of the grant.
+
+Two spellings exist because the two graph packages were written apart, and both are read. A control
+that answers a false absence refuses a release nobody needed to block, and the absence it reports
+cannot be told from a real one.
+
+Both graph packages pass. `en-us` records ten entries, eight naming a license; the two that do not are
+the OpenAddresses PL entry, whose parenthetical reads `public, BDOT-derived`, and the pointer to
+`THIRD_PARTY_NOTICES.md`. `cjk` records six, four naming a license; the two that do not state their
+terms outside a parenthetical rather than stating none.
+
+## What the record leaves open
+
+Each published package's `PROVENANCE.json` carries the questions that bear on it, so the record
+travels with the tarball rather than staying in this document. A package with no recorded training
+attribution reads `none-recorded-in-this-package`. An artifact with no recorded digest reads
+`unrecorded`.
+
+No package is recorded as cleared. Missing evidence is recorded as missing, and it is neither evidence
+of compliance nor evidence of infringement. Which license a given upstream value implies, and which
+obligations follow from it, are readings this document does not make.

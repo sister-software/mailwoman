@@ -1,6 +1,6 @@
 # Re-railing retrospective — 2026-07-04
 
-**Date:** 2026-07-04 · **Scope:** what actually happened against the
+**Date:** 2026-07-04 · **Scope:** what happened against the
 [2026-07-01 trajectory review](./2026-07-01-claude-trajectory-review.md)'s risks, tracks, and
 success criteria — written three days after that review set a **four-week** bar. Companion to it,
 same method: git history + the dated eval/check records, direction not code quality.
@@ -13,7 +13,7 @@ The review's four-week success state was reached in three days, and then exceede
 the review didn't anticipate: the measurement system it asked us to repair started **finding
 shipped defects on its own** — including one (#949) that the model line's newest release existed
 to create, and which the next release (v5.3.0, reduce today) exists to fix. The re-railing worked
-not because the plan was executed line by line, but because the two disciplines it protected —
+not because the plan was executed line by line, but because the two disciplines it guarded —
 pre-registered checks and coordinate-first grading — compounded once the record-keeping around
 them was repaired.
 
@@ -35,8 +35,8 @@ model-independent resolver floor covering that residual.
 
 **R1 — metric substitution without a re-anchor: CLOSED, and the backstop has already fired.**
 The #885 re-score ran (17/17 floors, first full scorecard since 06-11), the ledger was revived
-with an **automated** append (`ledger-append.ts`, invoked from the promotion check's PASS output —
-the fix targeted why it froze, not just that it froze), and the cadence rule is in
+with an **automated** append (`ledger-append.ts`, invoked from the promotion check's pass output —
+the fix targeted why it froze, notthat it froze), and the cadence rule is in
 CONTRIBUTING_MODEL_WORK as a check. Evidence it works: the re-score surfaced two unsigned drifts
 (fr.cedex_real −6.7, libpostal clean arena −6); the zero-margin postcode floor it documented
 fired on the very next candidate (v2.2.0's fr.postcode −0.1) and was **adjudicated at a fork
@@ -61,10 +61,10 @@ shared path), the demo default tracks the npm line, and introspection went from 
 not yet wired.
 
 **R4 — operator-conditional decision backlog: DRAINED by folding decisions into evidence.** The
-review's Track 3 imagined a decision sitting; what actually worked was presenting each decision
+review's Track 3 imagined a decision sitting; what worked was presenting each decision
 as a pre-framed fork at the moment its evidence completed (the SLO overage, the ledger's fate,
 the re-score cadence, the v220 promote). Every fork resolved within hours of being posed. The
-open queue is now genuinely externally-blocked-or-owned items, not re-triage fodder.
+open queue is now in fact externally-blocked-or-owned items rather than re-triage fodder.
 
 **R5 — the record of record is stale: CLOSED, and now self-correcting.** releases.mdx is current
 through 5.3.0; SCOPE.mdx exists (locale tiers, two workstreams, five invariants); the
@@ -73,7 +73,7 @@ discipline rather than a one-time cleanup: the 5.2.0 reduce (made under time pre
 session) skipped its releases.mdx row and left release.config.json stale — and the 5.3.0 prep
 **caught and repaired both** as a matter of course.
 
-**R6 — breaking sweeps mid-campaign: HELD.** No breaking cosmetic batch landed mid-campaign;
+**R6 — breaking sweeps mid-campaign: held.** No breaking cosmetic batch landed mid-campaign;
 #875 stays parked for the next major. The tax of the earlier sweep kept surfacing as key-rot
 (`postcodeDBByCountry` silently skipping postcode binaries at 5.1.0 prep) — each instance
 repaired on contact, reinforcing the ship-whole-or-wait rule.
@@ -91,7 +91,7 @@ repaired on contact, reinforcing the ship-whole-or-wait rule.
 | 5 — scope re-declaration  | half a day     | SCOPE.mdx + the flag register (which found two default split-brains, #895) + plan/README marked historical.                                                                                                                                                                   |
 
 The review's "what not to do" held on all four counts: no resolver micro-changes past the frontier
-(the residual went to a _typed floor_, not a change), no breaking sweeps, no new locales before
+(the residual went to a _typed floor_ rather than a change), no breaking sweeps, no new locales before
 the coordinated bump (the freeze lifted exactly when designed), no new workstreams before 1–3.
 
 ---
@@ -109,18 +109,18 @@ the coordinated bump (the freeze lifted exactly when designed), no new workstrea
    replaced a training run: the tokenizer probe replaced the #825 retrain class entirely, and
    the v220 re-check replaced a same-shape rerun. Both were pre-registered _before_ measurement,
    with explicit falsified-by-copy branches. "No GPU while an archived artifact dominates the
-   target class" is now a demonstrated rule, not a slogan.
+   target class" is now a measured behavior rather than a slogan.
 
 3. **The checks catch real things at both ends of the lifecycle.** Pre-ship: the v2.2.0 wall
    held under the old calculus and the SI bar failed as-registered under the new one (then went
    to a fork, by the book). Post-ship: the standing 40-row FR harness — re-run only because a
    retrain directive triggered salvage-first — caught #949 on the _shipped_ line. The gap it
    exposed (no fr.street-class floor; golden-dev FR is postcode-anchored canonical) is the next
-   check-spec improvement, and it rhymes with the review's R1 exactly: the blind spot was a slice
+   check-spec improvement, and it rhymes with the review's R1 exactly: the blind spot was a subset
    nobody re-measured.
 
 4. **Introspection as a product surface.** #941's parse-trace + visualizer turns the decode path
-   into something a visitor can watch. Its review hardened the trace's _contract_ (per-piece
+   into something a visitor can watch. Its review hardened the trace's _interface_ (per-piece
    repair alignment through token merges, effect-semantics for priors, a self-describing
    locale axis) — the kind of precision that matters precisely because the tool's job is to be
    believed.
@@ -152,22 +152,22 @@ byte-level verification buys.
 
 ---
 
-## What's genuinely open
+## What's in fact open
 
 - **#949's structural fix**: an fr.street-class floor (or the bare-street-intact rate itself) in
   the check spec — the incident's lesson, distinct from its instance.
 - **#894** (demo version-lag CI check) and **#895** (the D1/D2 default flips) — both unblocked,
   both small.
 - **#897** residual wrong-city mechanics (span truncation → namesake binding) — the next
-  model-side question, now cleanly separated from everything the splices fixed.
+  model-side question, now directly separated from everything the splices fixed.
 - **Calibration re-fit** — the carried isotonic tables now sit under from-scratch weights; the
   standing recommendation has real force for the first time.
 - **#727 span-head / CharCNN** — the two architecture directions, both still correctly parked
   behind evidence they'd need.
 
-## The honest caveats
+## The direct caveats
 
-Three days is a sprint, not a trend; the four-releases-in-four-days cadence is sustainable only
+Three days is a sprint rather than a trend; the four-releases-in-four-days cadence is sustainable only
 because three of the four shipped pre-existing artifacts. The SI trade shipped today is real
 (−1.5pp resolve, +2.7pp wrong-city at the model level) and its floor is a resolver behavior —
 if #942 ever regresses, SI regresses with it, which is why the insurance leg belongs in the
@@ -177,8 +177,8 @@ dependency retires.
 
 ---
 
-_The 2026-07-01 review closed by defining "back on rails" as pointed where it is going, not
-faster. Three days later the honest summary is: both — and the speed came from the rails._
+_The 2026-07-01 review closed by defining "back on rails" as pointed where it is going rather than
+faster. Three days later the direct summary is: both — and the speed came from the rails._
 
 ---
 
@@ -206,7 +206,7 @@ had been silently degraded since July 1** — three stacked failures, each maski
 
 The repair kept the house naming and migrated the wire (operator direction): one tolerant
 boundary (`normalizeReleasesManifest`), the publisher on house keys, the R2 manifest migrated
-after the tolerant reader deployed, and contract tests pinning all of it. Verified live via
+after the tolerant reader deployed, and interface tests pinning all of it. Verified live via
 Playwright: an address-point rooftop hit and an SI village through the browser cascade, markers
 on both — all three tiers working together in production **for the first time since July 1**.
 
@@ -218,9 +218,9 @@ for a dependency; they are overdue.
 ### The v5.2.0 grading claim this document inherits is also wrong
 
 The model-line table and the release notes carry v5.2.0's "14/14 per-locale non-inferiority
-PASS." The #945 investigation found that **9 of the 16 release-grading baselines were byte-copies
+pass." The #945 investigation found that **9 of the 16 release-grading baselines were byte-copies
 of the v1 candidate's dumps** — never re-run against the artifact that shipped. Eight copies were
-benign; the ninth was FR, the one leg where v2 truly differed, and it was a regression
+benign; the ninth was FR, the one leg where v2 in fact differed, and it was a regression
 (resolved-p50 2.64 → 4.12) whose root cause predates every model: the FTS sanitizer has fused
 intra-token punctuation since #95, unmatchable for every hyphenated name, masked for years by
 tokenizers that never emitted hyphen-preserved values. The fix (#948) shipped inside v5.3.0;
@@ -243,7 +243,7 @@ measurement, which is the discipline working exactly as this review describes it
 ### The open list, re-scored at day's end
 
 - **#894** — correction upon checking: closed on 07-02 (#902, `version-parity.yml` + daily
-  schedule; verified passing against the live surfaces today). What the demo outage actually
+  schedule; verified passing against the live surfaces today). What the demo outage
   exposes is the adjacent gap: version parity is checked, **functional** parity is not — a
   scheduled live-demo Playwright smoke is the missing structural check, filed in today's triage.
 - **The #942 insurance leg in the standing battery** — this review recommended it; still to land.

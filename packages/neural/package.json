@@ -68,6 +68,11 @@
 			"node": "./lib/weights/index.ts",
 			"default": "./out/weights/index.js"
 		},
+		"#weights/families": {
+			"types": "./out/weights/families.d.ts",
+			"node": "./lib/weights/families.ts",
+			"default": "./out/weights/families.js"
+		},
 		"#*": {
 			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
@@ -141,6 +146,11 @@
 			"types": "./out/weights/index.d.ts",
 			"node": "./lib/weights/index.ts",
 			"default": "./out/weights/index.js"
+		},
+		"./weights-families": {
+			"types": "./out/weights/families.d.ts",
+			"node": "./lib/weights/families.ts",
+			"default": "./out/weights/families.js"
 		},
 		"./browser": {
 			"types": "./out/browser.d.ts",
@@ -262,8 +272,8 @@
 		"@mailwoman/locale-hint": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/sentencepiece-wasm": "workspace:*",
-		"path-ts": "^2.3.0",
-		"spliterator": "^7.7.1",
+		"path-ts": "^2.4.1",
+		"spliterator": "^7.11.0",
 		"zod": "^4.5.4"
 	},
 	"devDependencies": {

@@ -36,7 +36,7 @@ export function tokenizeWords(input: string): WordToken[] {
 	const words: WordToken[] = []
 	let i = 0
 
-	// `charAt` answers "" past the end, which no whitespace test matches, so both walks stop at the input's length.
+	// `charAt` answers "" past the end. It no whitespace test matches. Therefore, both walks stop at the input's length.
 	while (i < input.length) {
 		let ws = ""
 

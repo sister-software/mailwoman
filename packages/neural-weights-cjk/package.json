@@ -12,6 +12,8 @@
 		"model.onnx",
 		"char-vocab.json",
 		"model-card.json",
+		"LICENSE.md",
+		"PROVENANCE.json",
 		"README.md"
 	],
 	"exports": {

@@ -4,7 +4,7 @@
 /**
  * @file Whether a GeoNames fold output predates the admin database it was folded from.
  *
- *   A fold output (`<admin>-geonames.db`) is a COPY of the admin database with the alias fold applied, and a candidate
+ *   A fold output (`<admin>-geonames.db`) is a copy of the admin database with the alias fold applied, and a candidate
  *   table built from it inherits every coordinate the copy carried. When the admin database is later rebuilt or
  *   adjudicated in place (the #1905 label-point pass moved 222 localities), the standing fold keeps the old points, and
  *   a build that reads the fold directly reproduces them — silently, because the fold is a valid admin database. A
@@ -31,7 +31,7 @@ export interface FoldStaleness {
 }
 
 /**
- * The staleness verdict for a fold output: the admin database it derives from was modified AFTER the fold was written.
+ * The staleness verdict for a fold output: the admin database it derives from was modified after the fold was written.
  * Null when the fold is at least as new as its source, or when `adminModified` is absent (no source found).
  */
 export function foldStaleness(
@@ -46,7 +46,7 @@ export function foldStaleness(
 }
 
 /**
- * The refusal a build prints for a stale fold: both timestamps and the remedy, since the fix is a flag on the same
+ * The refusal a build prints for a stale fold: both timestamps and the action, since the fix is a flag on the same
  * command.
  */
 export function foldStalenessMessage(staleness: FoldStaleness): string {

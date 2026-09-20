@@ -9,20 +9,20 @@
  *
  *   - `numero` → `house_number`
  *   - `rep` → repetition index ("bis", "ter") appended to house_number
- *   - `nom_voie` → `street` (full road name; includes the prefix "Rue", "Avenue", etc.)
+ *   - `nom_voie` → `street` (full road name. includes the prefix "Rue", "Avenue", etc.)
  *   - `code_postal` → `postcode`
  *   - `nom_commune` → `locality`
  *
- *   `region` and `country` are not in BAN. The adapter stamps `country: "FR"` on every row; region is
- *   left for the wof-postalcode + wof-admin cross-reference at corpus build time (a future pass;
+ *   `region` and `country` are not in BAN. The adapter stamps `country: "FR"` on every row. region is
+ *   left for the wof-postalcode + wof-admin cross-reference at corpus build time (a future pass.
  *   for Phase 1 the row's region is simply absent).
  *
- *   License: the official BAN (adresse.data.gouv.fr) is DUAL-licensed — Licence Ouverte 2.0 (Etalab,
- *   attribution-only) OR ODbL (share-alike). We ELECT Licence Ouverte 2.0 (issue #26 Tier B:
- *   allowed for training with attribution; the ODbL option's share-alike obligation would defeat
- *   the proprietary-weights goal). Stamped onto every row as `Licence Ouverte 2.0` — NOT the older
+ *   License: the official BAN (adresse.data.gouv.fr) is dual-licensed — Licence Ouverte 2.0 (Etalab,
+ *   attribution-only) or ODbL (share-alike). We elect Licence Ouverte 2.0 (issue #26 Tier B:
+ *   allowed for training with attribution. the ODbL option's share-alike obligation would defeat
+ *   the proprietary-weights goal). Stamped onto every row as `Licence Ouverte 2.0` — not the older
  *   conservative `ODbL-1.0` label, which wrongly read as Tier-C-denied in the corpus license audit.
- *   The model card MUST carry the BAN attribution (Tier B obligation).
+ *   The model card must carry the BAN attribution (Tier B obligation).
  *
  *   The adapter is streaming-aware: `CSVSpliterator.fromAsync` reads the `;`-delimited dump row by
  *   row, so a 25M-row file never sits in memory. Honors `opts.limit` for fixture / smoke runs,
@@ -35,7 +35,7 @@ import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
 import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 
 /**
  * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
@@ -44,7 +44,7 @@ import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 export const BAN_ADAPTER_ID = "ban"
 
 /**
- * Subset of BAN CSV columns the adapter consults. Everything else is ignored; declaring the shape explicitly catches
+ * Subset of BAN CSV columns the adapter consults. Everything else is ignored. declaring the shape explicitly catches
  * column-name drift early if BAN evolves its schema.
  */
 interface BanRow {
@@ -73,6 +73,7 @@ export function createBanAdapter(): CorpusAdapter {
 	return {
 		id: BAN_ADAPTER_ID,
 		defaultLicense: "Licence Ouverte 2.0",
+		addressRole: AddressRole.Premise,
 		description: "Base Adresse Nationale (FR): house-number-level street addresses (~25M rows).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {

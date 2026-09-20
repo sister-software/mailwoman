@@ -9,7 +9,7 @@
  */
 
 /**
- * True for TypeScript SOURCE (`.ts`/`.tsx`) — declaration files (`.d.ts`) are legitimate publish targets.
+ * True for TypeScript source (`.ts`/`.tsx`) — declaration files (`.d.ts`) are legitimate publish targets.
  */
 function isTypeScriptSource(path: string): boolean {
 	return /\.tsx?$/.test(path) && !path.endsWith(".d.ts")
@@ -18,9 +18,9 @@ function isTypeScriptSource(path: string): boolean {
 /**
  * Map a dev-map TypeScript target to the JavaScript `tsc` actually emits for it.
  *
- * THE `lib/` SEGMENT IS DROPPED, and that is the whole subtlety. Source lives under `lib/` and every workspace sets
- * `"rootDir": "./lib"`, which STRIPS that segment from the emit — `./lib/utils/index.ts` compiles to
- * `./out/utils/index.js`, NOT `./out/lib/utils/index.js`. A map that keeps the segment points every consumer at a path
+ * The `lib/` segment is dropped, and that is the whole subtlety. Source lives under `lib/` and every workspace sets
+ * `"rootDir": "./lib"`, which strips that segment from the emit — `./lib/utils/index.ts` compiles to
+ * `./out/utils/index.js`, not `./out/lib/utils/index.js`. A map that keeps the segment points every consumer at a path
  * the tarball does not contain, and {@link assertNoSourceTargets} does not catch it, because the target it produced is
  * no longer TypeScript — it is well-formed JavaScript at an address that does not exist. That is the same failure shape
  * as the hand-maintained duplication this module replaced, which shipped a fully-broken v7.2.0.
@@ -36,13 +36,13 @@ function emittedTargetFor(target: string): string {
  * Rewrite the packed manifest's `exports` for consumers, in place inside the tarball.
  *
  * The dev map points at `.ts` source wherever the repo runs source directly (`node` everywhere, and any `browser` or
- * `worker` condition that names a source file); published packages ship only `out/`. This rewrites EVERY such condition
+ * `worker` condition that names a source file); published packages ship only `out/`. This rewrites every such condition
  * to its emitted JavaScript counterpart, reorders each entry `types`-first, and strips any legacy
  * `publishConfig.exports`. The conditions themselves are kept: a Node target and a browser target may be different
  * files.
  *
- * The rewrite is keyed on the TARGET being TypeScript source, not on the condition name — a condition-name rule only
- * covers the conditions someone thought of. {@link assertNoSourceTargets} refuses whatever this misses.
+ * The rewrite is keyed on the target being TypeScript source rather than on the condition name — a condition-name rule
+ * only covers the conditions someone thought of. {@link assertNoSourceTargets} refuses whatever this misses.
  */
 export function transformExportsForPublish(exports: unknown): unknown {
 	if (typeof exports !== "object" || exports === null) return exports
@@ -130,7 +130,7 @@ export function assertNoSourceTargets(label: string, transformed: unknown): void
 }
 
 /**
- * Walk a transformed exports map; return every concrete (non-pattern) file target.
+ * Walk a transformed exports map. return every concrete (non-pattern) file target.
  */
 export function collectExportTargets(exports: unknown): string[] {
 	const targets: string[] = []

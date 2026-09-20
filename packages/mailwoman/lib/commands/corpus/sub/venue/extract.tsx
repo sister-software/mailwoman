@@ -3,11 +3,11 @@
 
 /**
  *   `mailwoman corpus sub-venue-extract` — run the sub-venue structure extractor over one Geofabrik
- *   `.osm.pbf` and write the rows as JSONL, the input `mailwoman corpus sub-venue-lexicon` reads.
+ *   `.osm.pbf` and write the rows as jsonl, the input `mailwoman corpus sub-venue-lexicon` reads.
  *
  *   Wave 1 did this with an ad-hoc script because it ran once. Wave 2 runs it per locale, and the
  *   country stamp is an argument nobody can infer from the file — a Geofabrik extract's country is a
- *   property of the invocation, not of a feature — so it belongs behind a flag rather than in shell
+ *   property of the invocation rather than of a feature — so it belongs behind a flag rather than in shell
  *   history.
  *
  *   ```sh
@@ -17,16 +17,16 @@
  *     --country JP
  *   ```
  *
- *   Needs `ogr2ogr` on PATH (GDAL 3.8.4 on the lab box). Runtime is dominated by GDAL: 44 s for a
+ *   Needs `ogr2ogr` on path (gdal 3.8.4 on the lab box). Runtime is dominated by gdal: 44 s for a
  *   340 MB extract, 371 s for Japan's 2.5 GB.
  */
 
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "sub-venue-extract",
@@ -38,16 +38,10 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	pbf: string
-	out: string
-	country?: string
-}
-
-const CorpusSubVenueExtract: ParsedCommandComponent<Options> = ({ options }) => {
+const CorpusSubVenueExtract: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		// @mailwoman/osm is a devDependency ONLY — it is unpublished (ODbL counsel sign-off pending,
-		// see osm/README.md), so a static import here breaks every clean install of the published
+		// @mailwoman/osm is a devDependency only — it is unpublished (ODbL counsel sign-off pending,
+		// see osm/readme.md), so a static import here breaks every clean install of the published
 		// CLI (the 2026-08-05 smoke failure). Lazy-load it and fail with provenance when absent.
 		const { writeSubVenueJSONL } = await import("@mailwoman/osm/sdk").catch(() => {
 			throw new Error(

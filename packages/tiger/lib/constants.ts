@@ -19,7 +19,7 @@ import type { FIPSStateCode } from "#state"
 /**
  * A code indicating the classification of the block, i.e. urban or rural.
  *
- * @title TIGER Geographic Classification
+ * @title tiger Geographic Classification
  *
  * @minLength 1
  * @maxLength 1
@@ -51,7 +51,7 @@ export const LandWaterBlockType = {
 export type LandWaterBlockType = (typeof LandWaterBlockType)[keyof typeof LandWaterBlockType]
 
 /**
- * @title TIGER Property
+ * @title tiger Property
  */
 export const TIGERProperty = {
 	/**
@@ -103,7 +103,7 @@ export const TIGERProperty = {
 	 */
 	LegalStatisticalAreaDescription: "legal_statistical_area_description",
 	/**
-	 * @title MAF/TIGER Feature Class Code
+	 * @title MAF/tiger Feature Class Code
 	 */
 	ClassCode: "class_code",
 } as const
@@ -201,7 +201,7 @@ export interface TIGERPropertyRecord<GeoID extends string = string> {
 	/**
 	 * The tabulated block's housing unit count.
 	 *
-	 * Note: This is the number of housing units in the block, not the number of people.
+	 * Note: This is the number of housing units in the block rather than the number of people.
 	 *
 	 * @type {integer}
 	 * @title Housing Units
@@ -224,7 +224,7 @@ export interface TIGERPropertyRecord<GeoID extends string = string> {
 	[TIGERProperty.LegalStatisticalAreaDescription]: LegalStatisticalAreaDescription
 
 	/**
-	 * @title MAF/TIGER Feature Class Code
+	 * @title MAF/tiger Feature Class Code
 	 */
 	[TIGERProperty.ClassCode]: TIGERClassCode
 

@@ -4,7 +4,7 @@
 
 **Read it with two lenses — they disagree on purpose:**
 
-1. **Arena head-to-head (whole-address-strict):** the 3 unbiased capability arenas (`scripts/eval/external-arenas.sh`, `--symmetric-match --postcode-repair`). A row counts only if the WHOLE parse matches. This is the honest "does the system produce a usable parse" lens — but it **understates per-tag wins** (a unit-perfect parse scores 0 if any other tag slips). Example below: postal-arena `secondary-unit` reads 0% here while per-tag `unit` is 92%.
+1. **Arena head-to-head (whole-address-strict):** the 3 unbiased capability arenas (`scripts/eval/external-arenas.sh`, `--symmetric-match --postcode-repair`). A row counts only if the whole parse matches. This is the direct "does the system produce a usable parse" lens — but it **understates per-tag wins** (a unit-perfect parse scores 0 if any other tag slips). Example below: postal-arena `secondary-unit` reads 0% here while per-tag `unit` is 92%.
 2. **Per-tag F1:** `per-locale-f1.ts` on golden dev (US/FR) + the curated real-OOD evals. The granular tag-health lens — this is what the parity campaign moves.
 
 Self-emitted (`scripts/eval/external-arenas.sh` + `per-locale-f1.ts`); do not hand-edit numbers.
@@ -21,28 +21,28 @@ Self-emitted (`scripts/eval/external-arenas.sh` + `per-locale-f1.ts`); do not ha
 
 **Routing truth (unchanged since #15):** rules win on clean/canonical, neural wins decisively on noisy/degraded (+21pp), both are weak on edge formats (PO-box/military/rural-route). The resolver should route by input shape.
 
-Postal-arena edge classes where BOTH are 0% (the parity frontier): `po-box` (4), `military-apofpo` (3), `rural-route` (1), `directional` (2). `secondary-unit` reads 0% whole-match here despite 92% per-tag (lens caveat).
+Postal-arena edge classes where both are 0% (the parity frontier): `po-box` (4), `military-apofpo` (3), `rural-route` (1), `directional` (2). `secondary-unit` reads 0% whole-match here despite 92% per-tag (lens caveat).
 
 ---
 
 ## Lens 2 — per-tag F1 (golden dev, v4.1.0 int8, anchor-on)
 
-| Tag                    |   US |   FR | status                                                                |
-| ---------------------- | ---: | ---: | --------------------------------------------------------------------- |
-| postcode               | 98.3 | 99.4 | ✅ healthy                                                            |
-| house_number           | 96.2 | 91.2 | ✅ healthy                                                            |
-| venue                  | 90.2 |  0.0 | ✅ US / ❌ FR (#330)                                                  |
-| street                 | 78.5 | 60.1 | ◐ (street-eats-affix boundary)                                        |
-| region                 | 78.4 | 27.8 | ◐ US / ❌ FR (#330)                                                   |
-| locality               | 60.1 | 69.7 | ◐                                                                     |
-| country                | 35.2 | 46.5 | ❌ starved → **deterministic tagger, not retrain (#464)** — see below |
-| street_prefix          |  0.0 |  0.0 | ❌ starved → **affix retrain in flight (v0.9.8)**                     |
-| street_suffix          |  0.0 |    — | ❌ starved → **affix retrain in flight**                              |
-| street_prefix_particle |    — |  0.0 | ❌ starved (FR)                                                       |
-| unit                   | 6.3¹ |  0.0 | ✅ FIXED (92.3 real-OOD; golden has ~no unit rows)                    |
-| po_box                 | ~18² |    — | ✅ deterministic tagger = 100% real-OOD (#464)                        |
-| intersection_a/b       |  0.0 |    — | ❌ starved (experimental, regressed before)                           |
-| dependent_locality     |  0.0 |  0.0 | (intentionally down-weighted — WOF-schema artifact)                   |
+| Tag                    |   US |   FR | status                                                                       |
+| ---------------------- | ---: | ---: | ---------------------------------------------------------------------------- |
+| postcode               | 98.3 | 99.4 | ✅ healthy                                                                   |
+| house_number           | 96.2 | 91.2 | ✅ healthy                                                                   |
+| venue                  | 90.2 |  0.0 | ✅ US / ❌ FR (#330)                                                         |
+| street                 | 78.5 | 60.1 | ◐ (street-eats-affix boundary)                                               |
+| region                 | 78.4 | 27.8 | ◐ US / ❌ FR (#330)                                                          |
+| locality               | 60.1 | 69.7 | ◐                                                                            |
+| country                | 35.2 | 46.5 | ❌ starved → **deterministic tagger rather than retrain (#464)** — see below |
+| street_prefix          |  0.0 |  0.0 | ❌ starved → **affix retrain in flight (v0.9.8)**                            |
+| street_suffix          |  0.0 |    — | ❌ starved → **affix retrain in flight**                                     |
+| street_prefix_particle |    — |  0.0 | ❌ starved (FR)                                                              |
+| unit                   | 6.3¹ |  0.0 | ✅ FIXED (92.3 real-OOD; golden has ~no unit rows)                           |
+| po_box                 | ~18² |    — | ✅ deterministic tagger = 100% real-OOD (#464)                               |
+| intersection_a/b       |  0.0 |    — | ❌ starved (experimental, regressed before)                                  |
+| dependent_locality     |  0.0 |  0.0 | (intentionally down-weighted — WOF-schema artifact)                          |
 
 ¹ golden dev carries ~no unit rows; the real-OOD eval is the truth (92.3%). ² from the #15 assessment.
 
@@ -68,26 +68,26 @@ Postal-arena edge classes where BOTH are 0% (the parity frontier): `po-box` (4),
 
 ## Parity verdict (v4.1.0)
 
-Common tags (postcode/house_number/street/locality/region/venue-US) are at usable parity. The gap is a small set of **starved long-tail tags** — `unit` is now FIXED (the first campaign win), `street_prefix`/`street_suffix` are in flight (v0.9.8), `country` and `po_box` have a measured deterministic path (P=R=F1=100, #464 — not a retrain), and `intersection`/FR-`venue`/`cedex` remain. **Not yet at 90% macro parity**; the campaign is the path. Each change is compounding (covering a tag sharpens its neighbors — unit lifted US street +3pp), and the change-shape taxonomy below now routes each remaining tag to the right tool (retrain vs deterministic matcher).
+Common tags (postcode/house_number/street/locality/region/venue-US) are at usable parity. The gap is a small set of **starved long-tail tags** — `unit` is now fixed (the result), `street_prefix`/`street_suffix` are in flight (v0.9.8), `country` and `po_box` have a measured deterministic path (P=R=F1=100, #464 — not a retrain), and `intersection`/FR-`venue`/`cedex` remain. **Not yet at 90% macro parity**; the campaign is the path. Each change is compounding (covering a tag sharpens its neighbors — unit lifted US street +3pp), and the change-shape taxonomy below now routes each remaining tag to the right tool (retrain vs deterministic matcher).
 
 ## Campaign status
 
-| Change         | tag(s)               | status                                                                                                                                                                                                                                                                                                                                                                                             |
-| -------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| unit           | unit                 | ✅ shipped v4.1.0 (0→92%)                                                                                                                                                                                                                                                                                                                                                                          |
-| **affix**      | street_prefix/suffix | ✅ **CONDITIONAL v0.9.8: 0→78/67 (P=100), US net-positive, negative-space street +2.1.** FR postcode −3.9 (US-extract dilution) trips the >2pp check → promote DEFERRED to operator (#462; DeepSeek recommends promote-with-annotation). int8 ship-ready.                                                                                                                                          |
-| **country**    | country              | ✅ **RESOLVED — deterministic, not retrain.** The synth extract makes the model over-fire (v1 country-real 49 F1, golden precision 23% — it learns "trailing token = country"). A deterministic `matchCountry` tagger on the trailing comma-segment scores **P=R=F1=100** on country-real. Change moves to a post-parse `ProposalClassifier` (#464); model path kept as exploration record (#463). |
-| **po_box**     | po_box               | ✅ **RESOLVED — deterministic** (probe measured this shift): `matchPOBox` per comma-segment = **P=R=F1=100** on po-box-real (n=25, 7 negatives, 0 FP). Same closed-vocab shape as country → joins #464 as a `ProposalClassifier`, not a retrain.                                                                                                                                                   |
-| **cedex** (FR) | cedex                | ✅ **RESOLVED — deterministic** (probe this shift): `CEDEX` regex in-segment = **P=R=F1=100** on cedex-real (n=15, 5 negatives, 0 FP). Different locale + match shape than country/po_box, same taxonomy → joins #464.                                                                                                                                                                             |
-| intersection   | intersection_a/b     | ⏳ (conditional — regressed before)                                                                                                                                                                                                                                                                                                                                                                |
-| FR             | venue/region         | ⏳ (#330; cedex now resolved deterministically above)                                                                                                                                                                                                                                                                                                                                              |
-| consolidation  | —                    | ⏳ v1.0 (bake winners + full regression check) — **needs > 20k steps**: see dilution note                                                                                                                                                                                                                                                                                                          |
+| Change         | tag(s)               | status                                                                                                                                                                                                                                                                                                                                                                                                    |
+| -------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| unit           | unit                 | ✅ shipped v4.1.0 (0→92%)                                                                                                                                                                                                                                                                                                                                                                                 |
+| **affix**      | street_prefix/suffix | ✅ **CONDITIONAL v0.9.8: 0→78/67 (P=100), US net-positive, negative-space street +2.1.** FR postcode −3.9 (US-extract dilution) trips the >2pp check → promote DEFERRED to operator (#462; DeepSeek recommends promote-with-annotation). int8 ship-ready.                                                                                                                                                 |
+| **country**    | country              | ✅ **RESOLVED — deterministic rather than retrain.** The synth extract makes the model over-fire (v1 country-real 49 F1, golden precision 23% — it learns "trailing token = country"). A deterministic `matchCountry` tagger on the trailing comma-segment scores **P=R=F1=100** on country-real. Change moves to a post-parse `ProposalClassifier` (#464); model path kept as exploration record (#463). |
+| **po_box**     | po_box               | ✅ **RESOLVED — deterministic** (probe measured this shift): `matchPOBox` per comma-segment = **P=R=F1=100** on po-box-real (n=25, 7 negatives, 0 FP). Same closed-vocab shape as country → joins #464 as a `ProposalClassifier` rather than a retrain.                                                                                                                                                   |
+| **cedex** (FR) | cedex                | ✅ **RESOLVED — deterministic** (probe this shift): `CEDEX` regex in-segment = **P=R=F1=100** on cedex-real (n=15, 5 negatives, 0 FP). Different locale + match shape than country/po_box, same taxonomy → joins #464.                                                                                                                                                                                    |
+| intersection   | intersection_a/b     | ⏳ (conditional — regressed before)                                                                                                                                                                                                                                                                                                                                                                       |
+| FR             | venue/region         | ⏳ (#330; cedex now resolved deterministically above)                                                                                                                                                                                                                                                                                                                                                     |
+| consolidation  | —                    | ⏳ v1.0 (bake winners + full regression check) — **needs > 20k steps**: see dilution note                                                                                                                                                                                                                                                                                                                 |
 
 > **CUMULATIVE-DILUTION LESSON (critical for consolidation):** stacking synth extracts into one 20k-step run dilutes each tag vs its solo run — the country run (base+unit+affix+country) dropped affix street_suffix 67→59 and street_prefix 78→75 while still under-serving country. Each added extract spreads a fixed step budget thinner. **Prove each change solo, then consolidate with a larger step budget** (the v2-vs-v3 unit lesson, re-confirmed). Don't read a cumulative run's per-tag number as that change's ceiling.
 
 ### Change-shape taxonomy (why not everything is a retrain)
 
-> **Correction (reviewed later same day):** the "closed-vocab → deterministic post-parse override" conclusion below was **reversed**. The over-firing was a training-distribution artifact (a trailing-country-only extract), and the "deterministic = 100%" was measured on a no-homograph eval — an unfair comparison. The corrected decision is **model-first with a soft gazetteer anchor** (the lexicon informs, never overrides), and the matchers become feature-sources, not a `ProposalClassifier` override. The deterministic-match P=R=F1=100 numbers below stand as _matcher-accuracy_ evidence (good feature-sources), not as a justification to override the model. See [Closed-vocab fields: model-first](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/closed-vocab-fields-model-first.mdx).
+> **Correction (reviewed later same day):** the "closed-vocab → deterministic post-parse override" conclusion below was **reversed**. The over-firing was a training-distribution artifact (a trailing-country-only extract), and the "deterministic = 100%" was measured on a no-homograph eval — an unfair comparison. The corrected decision is **model-first with a soft gazetteer anchor** (the lexicon informs, never overrides), and the matchers become feature-sources rather than a `ProposalClassifier` override. The deterministic-match P=R=F1=100 numbers below stand as _matcher-accuracy_ evidence (good feature-sources) rather than as a justification to override the model. See [Closed-vocab fields: model-first](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/closed-vocab-fields-model-first.mdx).
 
 The campaign has surfaced two tag shapes that want different tools:
 

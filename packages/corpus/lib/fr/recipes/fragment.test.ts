@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the `fr-fragment` slice recipe (#727 T2).
+ *   Tests for the `fr-fragment` recipe (#727 T2).
  *
  *   Two invariants here are not "nice to have":
  *
- *   1. **The split.** A slice that trains on its own eval set measures memorization, and NOTHING
+ *   1. **The split.** A recipe output that trains on its own eval set measures memorization, and nothing
  *      downstream can detect it — the board just reads high and everyone celebrates. The recipe must
  *      refuse to run without the exclusion list and must skip every reserved surface.
  *   2. **The counter-distribution.** Teaching bare streets alone lets the model satisfy every row by
@@ -16,10 +16,10 @@
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { frFragmentRecipe, frTitleCase } from "@mailwoman/corpus/fr/recipes/fragment"
-import { scratch, sliceRunner, type SliceRow } from "@mailwoman/corpus/test-kit/corpus-recipe"
+import { scratch, recipeRunner, type RecipeRow } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
 
-const run = sliceRunner("fr-fragment", frFragmentRecipe, 727)
+const run = recipeRunner("fr-fragment", frFragmentRecipe, 727)
 
 const TUPLES = [
 	{ street: "Rue Montmartre", locality: "paris", postcode: "75002" },
@@ -43,7 +43,7 @@ describe("frTitleCase", () => {
 })
 
 describe("fr-fragment: the split", () => {
-	it("REFUSES to run without an exclusion list rather than mint a contaminated slice", async () => {
+	it("REFUSES to run without an exclusion list rather than mint a contaminated recipe output", async () => {
 		await using inputs = await scratch("fr-fragment", TUPLES, [])
 
 		await expect(
@@ -64,7 +64,7 @@ describe("fr-fragment: the split", () => {
 	})
 
 	it("skips every reserved surface, accent- and case-insensitively", async () => {
-		// The list is normalized; the tuple is not. They must still match.
+		// The list is normalized. the tuple is not. They must still match.
 		const { rows } = await run(TUPLES, ["rue montmartre", "allee du 11 novembre 1918"])
 		const streets = rows.map((r) => String(r.raw))
 
@@ -137,7 +137,7 @@ describe("fr-fragment: the counter-distribution", () => {
 		const none = await run(TUPLES, ["nothing"], { bareProb: 0 })
 		const lots = await run(TUPLES, ["nothing"], { bareProb: 0.5 })
 
-		const count = (r: { rows: SliceRow[] }) =>
+		const count = (r: { rows: RecipeRow[] }) =>
 			r.rows.filter((x) => String(x.synth_method) === "fr-fragment:bare-locality").length
 
 		expect(count(none)).toBe(0)

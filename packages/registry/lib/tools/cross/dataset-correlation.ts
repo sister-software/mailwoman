@@ -2,17 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Cross-dataset correlation (#618) — the marquee proof: resolve ONE record set across datasets that
- *   share NO key. NPPES (the national provider registry), FCC Rural Health Care filings, and TX
- *   HHSC facility registries each describe overlapping physical entities under different names,
+ *   Cross-dataset correlation (#618) — the marquee proof: resolve one record set across datasets that
+ *   share no key. NPPES (the national provider registry), FCC Rural Health Care filings, and TX
+ *   hhsc facility registries each describe overlapping physical entities under different names,
  *   formats, and schemas. Geo-first blocking is what makes resolving them tractable.
  *
- *   We ingest each source under its own {@link ColumnMapping} + a `source` provenance label into ONE
+ *   We ingest each source under its own {@link ColumnMapping} + a `source` provenance label into one
  *   combined record set, geocode every address through mailwoman's real parser + resolver, resolve
  *   to canonical entities, and report the entities whose members span ≥2 sources — those are the
- *   cross-dataset links. We surface the correlation; interpretation is the consumer's.
+ *   cross-dataset links. We surface the correlation. interpretation is the consumer's.
  *
- *   Tractable slice: TX-scoped, capped per source. Streams the 4.8 GB NPPES registry via `streamRows`.
+ *   Tractable sample: TX-scoped, capped per source. Streams the 4.8 GB NPPES registry via `streamRows`.
  *
  *   Run: `mailwoman registry scorer-eval cross-dataset [--cap 300] [--wof <admin.db>]
  *   [--data-root <dir>] [--out-md docs/articles/evals/matcher-dedup/<date>-...md]`
@@ -61,8 +61,8 @@ export interface CrossDatasetCorrelationOptions {
 	 */
 	state?: string
 	/**
-	 * The inverse-address-frequency change is a CORPUS statistic — it can't be synthesized from the geocoded sample. By
-	 * default we scan the FULL files (cheap, parse-free) for an in-state corpus-wide frequency table and feed it to the
+	 * The inverse-address-frequency change is a corpus statistic — it can't be synthesized from the geocoded sample. By
+	 * default we scan the full files (cheap, parse-free) for an in-state corpus-wide frequency table and feed it to the
 	 * matcher, so the proven #617 change actually bites on a sub-sampled run. The scan adds a full pass over the 4.8 GB
 	 * NPPES file (~5 min); `--no-corpus-frequency` skips it and falls back to resolveEntities' zero-config input-scoped
 	 * default (#86). Default true.
@@ -95,7 +95,7 @@ function composeAddress(row: Record<string, string>, columns: string | string[] 
 }
 
 /**
- * FCC RHC funding commitments — TWO addressable entities per row (a Filing HCP and a Participating HCP), each exploded
+ * FCC RHC funding commitments — two addressable entities per row (a Filing HCP and a Participating HCP), each exploded
  * into its own record (the #618 B1 two-entity-per-row case). Composed after the shared {@link buildSpecs} trio, which
  * this probe correlates against.
  */
@@ -152,8 +152,8 @@ export async function crossDatasetCorrelation(
 	const SPECS = [...buildSpecs(`${SOURCES}`, STATE), commitmentsSpec(`${SOURCES}`, STATE)]
 
 	// Stream each source, filter Texas rows, and retain the first capped rows for geocoding.
-	// (when --corpus-frequency, the default) count EVERY in-state address into a corpus-wide table. The
-	// sample is the matched set; the frequency table reflects the full TX population, so the proven
+	// (when --corpus-frequency, the default) count every in-state address into a corpus-wide table. The
+	// sample is the matched set. the frequency table reflects the full TX population, so the proven
 	// inverse-frequency change down-weights a genuinely-crowded shared campus even when it appears once in
 	// the geocoded sample. ---
 	const rawBySource = new Map<string, Record<string, string>[]>()
@@ -233,7 +233,7 @@ export async function crossDatasetCorrelation(
 	for (const spec of SPECS) {
 		const rows = rawBySource.get(spec.source)!
 		// Per-source geocode-rate snapshot (#694 diagnostic): the boundary counters are global, so delta
-		// them across each source to see WHERE nulls concentrate in the aggregate run.
+		// them across each source to see where nulls concentrate in the aggregate run.
 		const g0 = geo
 		const t0 = total
 		const recs = await ingestRows(rows, spec.mapping, { geocodeAddress: geocodeForIngest })
@@ -253,13 +253,13 @@ export async function crossDatasetCorrelation(
 	report?.(`    ${records.length} records; geocoded ${geo}/${total} (${((100 * geo) / total).toFixed(1)}%)`)
 
 	// Resolve records to canonical entities using the default-on proven changes.
-	// spatial (A1) + inverse-address-frequency. We feed the corpus-wide table when we built one; otherwise
+	// spatial (A1) + inverse-address-frequency. We feed the corpus-wide table when we built one. otherwise
 	// resolveEntities auto-computes the input-scoped default. ---
 	report?.("[D] resolving across sources…")
 
-	// learnedScorer:false — the GBT default is calibrated for same-dataset DEDUP, where "same address +
-	// different name" means distinct co-located providers (reject). CROSS-dataset linkage is the opposite
-	// objective: "same address + different name" is the prototypical signal of the SAME facility under a
+	// learnedScorer:false — the GBT default is calibrated for same-dataset dedup, where "same address +
+	// different name" means distinct co-located providers (reject). cross-dataset linkage is the opposite
+	// objective: "same address + different name" is the prototypical signal of the same facility under a
 	// different operational name across sources. The dedup GBT rejects exactly those true cross-source
 	// links (measured: cross-source 219→166, triple-source 10→1), so this flow uses the recall-appropriate
 	// FS baseline. (A cross-objective GBT threshold is the documented follow-up — #655.)
@@ -406,7 +406,7 @@ export async function crossDatasetCorrelation(
 
 	// Emit a GeoJSON FeatureCollection for every resolved entity.
 	// carries `sources` + `sourceIDs` (so an analyst filters the cross-dataset links by `sources` length ≥ 2)
-	// and the geocode tier. QGIS-ready; this is the operator-verifiable output of the matcher. ---
+	// and the geocode tier. QGIS-ready. this is the operator-verifiable output of the matcher. ---
 	if (OUT_GEOJSON) {
 		const fc = toGeoJSON(entities)
 		await writeLocalJSONFile(fc, OUT_GEOJSON)

@@ -15,7 +15,7 @@
  *   The WOF adapters export their canonical ids — `wof-admin` and `wof-postalcode` — so existing
  *   `mailwoman corpus build` callsites do not need to change despite the Phase 1.5.1 SQLite →
  *   JSON-bundle pivot (`./wof-admin-json/` and `./wof-postalcode-json/` directories hold the
- *   implementations; the registered ids are unchanged).
+ *   implementations. the registered ids are unchanged).
  */
 
 import { geonamesAdapter } from "#adapters/geonames/adapter"
@@ -43,13 +43,13 @@ import { usgovNPPESAdapter } from "#us/adapters/usgov/nppes/adapter"
 
 /**
  * Built-in adapters. Order is significant: `corpus build` iterates this list to drive every adapter in turn.
- * Coarse-first (admin → postcode), then street-level (BAN FR, TIGER US, OpenAddresses global), then adversarial-source
- * (FCC BDC US, HRSA FQHC US).
+ * Coarse-first (admin → postcode), then street-level (BAN FR, tiger US, OpenAddresses global), then adversarial-source
+ * (FCC BDC US, HRSA fqhc US).
  *
- * The `usgov-samhsa-treatment-locator` adapter is intentionally absent from this list — the SAMHSA Open Data Foundry
+ * The `usgov-samhsa-treatment-locator` adapter is intentionally absent from this list — the samhsa Open Data Foundry
  * bulk CSV the adapter was written against is no longer publicly distributed (see issue #33, 2026-05-17 investigation).
  * The factory + named export remain available so the adapter can be hand-registered if an operator obtains a compatible
- * CSV (FOIA, partner channel, upstream restoration). Re-add it here once a stable public source returns.
+ * CSV (foia, partner channel, upstream restoration). Re-add it here once a stable public source returns.
  */
 export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	wofAdminAdapter,

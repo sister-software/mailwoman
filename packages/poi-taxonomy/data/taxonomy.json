@@ -1668,13 +1668,6 @@
 			"source": "overture"
 		},
 		{
-			"id": "bearing_supplier",
-			"label": "Bearing supplier",
-			"hierarchy": ["business_to_business", "business_manufacturing_and_supply", "bearing_supplier"],
-			"basicLabel": null,
-			"source": "overture"
-		},
-		{
 			"id": "beauty_and_spa",
 			"label": "Beauty and spa",
 			"hierarchy": ["beauty_and_spa"],
@@ -8808,6 +8801,14 @@
 			"hierarchy": ["professional_services", "construction_services", "engineering_services", "mechanical_engineers"],
 			"basicLabel": null,
 			"source": "overture"
+		},
+		{
+			"id": "mechanical_parts_supplier",
+			"label": "Mechanical parts supplier",
+			"hierarchy": ["business_to_business", "business_manufacturing_and_supply", "mechanical_parts_supplier"],
+			"basicLabel": null,
+			"source": "mailwoman",
+			"overtureCategories": ["bearing_supplier"]
 		},
 		{
 			"id": "media_agency",

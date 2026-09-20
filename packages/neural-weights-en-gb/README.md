@@ -1,5 +1,5 @@
 ---
-license: agpl-3.0
+license: AGPL-3.0
 language:
   - en
 library_name: onnx
@@ -31,7 +31,7 @@ own; it is loaded at inference time by `@mailwoman/neural`.
 > built from the HM Land Registry PPD tuples — see _Evaluation_ below), plus
 > the shared gazetteer/country lexicons.
 
-> **The postcode-anchor channel runs OFF for en-gb** (2026-08-05). This bundle
+> **The postcode-anchor channel runs off for en-gb** (2026-08-05). This bundle
 > used to ship an outward-code `postcode-gb.bin`; it no longer does. The shared
 > encoder's anchor input reserves one slot per country, and the GB slot was
 > never trained — every training recipe fed the same US/DE/FR-only lookup — so
@@ -48,13 +48,13 @@ microlanguage** — coupled to a gazetteer that resolves its output to
 coordinates. This bundle is the GB-facing half of the retrieval side: the
 en-us encoder's soft gazetteer + placetype-pair channels, fed with UK-specific
 data so the model never has to memorize GB place names — that knowledge
-arrives at inference as a retrieval, not a weight.
+arrives at inference as a retrieval rather than a weight.
 
 - **Base model:** none of its own — see `@mailwoman/neural-weights-en-us`.
 - **Postcode anchor:** not shipped, deliberately — see the note above and
   `model-card.json`'s `gb_artifacts.no_postcode_bin`. The neural parser and
   the gazetteer resolver still handle full unit-postcode text; what is absent
-  is the soft anchor feature, not postcode support.
+  is the soft anchor feature rather than postcode support.
 - **Placetype-pair index:** a retrieval-augmented `dependent_locality` prior
   built from real (child, parent) place-name pairs (e.g. "Fishburn" is a real
   child of "Stockton-on-Tees") — a soft decode-time bias, restricted to GB
@@ -65,7 +65,7 @@ arrives at inference as a retrieval, not a weight.
 Parsing free-text UK postal addresses into structured components (country,
 region, locality, dependent_locality, postcode, street, house_number, …) for
 **geocoding** — resolving a parsed address to coordinates via a
-gazetteer/resolver. The model is the parsing front-end of that pipeline, not a
+gazetteer/resolver. The model is the parsing front-end of that pipeline rather than a
 standalone geocoder.
 
 ## Ship-config requirement (read before using)
@@ -74,12 +74,12 @@ The Mailwoman model expects its soft channels fed at inference. Running them
 off is out-of-distribution and silently collapses the admin tags
 (country/region/locality/postcode). Construct the scorer through
 `@mailwoman/neural`'s `createScorer` (the canonical `ProductionScorer`), which
-reads the bundle's `requires`/channel contract and **fails closed** if a
+reads the bundle's `requires`/channel interface and **fails closed** if a
 declared channel isn't fed. Do not hand-wire the raw ONNX session with an
 input zero-filled.
 
 The postcode anchor is the one channel where GB deviates, and it is worth
-being precise about why the general rule doesn't apply. That rule holds when
+being precise about why the general rule doesn't apply. That condition is true when
 the channel was trained: zeroing a trained input is out-of-distribution. The
 GB anchor slot was never trained, so there is no distribution to leave —
 zeroing it is what the encoder saw for every GB example it has ever been shown,
@@ -94,21 +94,21 @@ no GB-specific numbers existed. That has changed: the base encoder was
 fine-tuned on a `dependent_locality`-feed corpus that includes a real GB
 subset, and this package's own `pair-index-gb.bin` supplies a calibrated
 retrieval prior on top. Full-pipeline `dependent_locality` recall, GB golden
-board (69 rows carrying the tag), prior ON at the calibrated δ=5.0: **69/69
+board (69 rows carrying the tag), prior on at the calibrated δ=5.0: **69/69
 emission, 67/69 tag-correct (97.1%)**. The two misses are pre-existing,
-independently characterized parser-level cases, not prior artifacts. A
+independently characterized parser-level cases rather than prior artifacts. A
 three-way ablation shows this recall is carried almost entirely by the
-**prior**, not the fine-tuned checkpoint's own classifier row — see
+**prior** rather than the fine-tuned checkpoint's own classifier row — see
 `model-card.json`'s `notes` and `eval` blocks for the full breakdown,
 including the δ-calibration sweep, the venue-confound false-positive rate
 (0.738% at δ=5.0), and the comma-stripped-input trade (fully inert by design
 in the current probe mode).
 
-**The base encoder itself is a STAGED candidate, not yet promoted** — see
+**The base encoder itself is a STAGED candidate rather than yet promoted** — see
 `@mailwoman/neural-weights-en-us`'s `model-card.json` `phase` field for the
 open ship blocker (a Gauntlet metamorphic-layer regression, unrelated to GB).
 Until that resolves, treat the numbers above as graded-but-unshipped: real
-measurements against the actual candidate artifact, not yet the production
+measurements against the actual candidate artifact rather than yet the production
 default. [`docs/articles/evals/`](https://mailwoman.ai) carries
 the full scorecard once promoted.
 
@@ -128,7 +128,7 @@ output is byte-stable when calibration is omitted.
 - **Placetype-pair prior is comma-segment-scoped** — it matches whole
   comma-delimited input segments only (the "segment" probe mode, default
   since d2a1242f), so comma-stripped GB input gets no boost from this channel
-  (fully inert, not degraded — a documented v1 trade, not a bug). It is also
+  (fully inert rather than degraded — a documented v1 trade rather than a bug). It is also
   restricted to GB: it structurally cannot fire on non-GB input.
 - **All-caps / shouting input degrades** the admin tags (mixed-case training);
   `@mailwoman/neural`'s `normalizeCase` opt recovers detected all-caps ASCII.
@@ -137,9 +137,9 @@ output is byte-stable when calibration is omitted.
 
 ## License & links
 
-- **License:** [AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html).
+- **License:** [AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html).
 - **Docs & concepts:** https://mailwoman.ai
 - **Loader / scorer API:** `@mailwoman/neural` (`createScorer`).
-- The functional contract for this bundle is `model-card.json` (added
+- The functional interface for this bundle is `model-card.json` (added
   2026-07-23, now that a GB-graded checkpoint exists); this `README.md` is the
   HuggingFace-facing card.

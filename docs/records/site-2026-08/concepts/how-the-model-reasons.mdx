@@ -17,8 +17,8 @@ each label?
 
 This doc lays out the central theory in one place. It exists because the answer
 is interesting and surprisingly hard to pin down. The model is a layered
-transducer with soft-fusion priors — not a context-free grammar, not a
-context-sensitive grammar, not pure pattern matching, and not "the model just
+transducer with soft-fusion priors — not a context-free grammar rather than a
+context-sensitive grammar rather than pure pattern matching, and not "the model just
 figures it out." That distinction has practical consequences for everything from
 training-corpus design to inference performance.
 
@@ -42,7 +42,7 @@ Six stages. Steps 1, 2, 3, and 6 are deterministic transformations. Steps 4
 (the additive priors), 5 (Viterbi), and the encoder itself are where the
 interesting reasoning happens.
 
-## The encoder is a transducer, not a grammar
+## The encoder is a transducer rather than a grammar
 
 The closest formal analogy is a **neural conditional random field**: a
 transformer encoder produces per-token emission distributions, additive priors
@@ -64,7 +64,7 @@ context-dependent biases without explicit grammar rules.
 **The model is a learned soft transducer over the full input, anchored by
 world-knowledge priors, with structural validity enforced by Viterbi.**
 
-## Where context-sensitivity actually lives
+## Where context-sensitivity lives
 
 When the operator asks "are the right-side discovered placetypes influencing
 the left-side specificity?" — yes, in three different places:
@@ -103,7 +103,7 @@ knows this is a place, here's negative evidence against the alternatives."
 The morphology FST does the symmetric thing for street-typing affixes. When
 `Avenue` matches the libpostal street-types dictionary, the prior boosts
 B/I-street_suffix on `Avenue` AND boosts B/I-street on the adjacent name
-token AND suppresses B/I-dependent_locality on the adjacent name token.
+token and suppresses B/I-dependent_locality on the adjacent name token.
 
 The priors are **additive logit biases** capped at 3.0 logits, composed with
 the encoder's emissions via `addEmissionMatrix`:
@@ -125,7 +125,7 @@ can only follow `B-X` or another `I-X`; you can't go from `B-locality` to
 chosen, the next token's label space is constrained.
 
 This is structural context-sensitivity at the label level. The encoder's
-per-token decision for `OR` doesn't just depend on `OR`'s context; it
+per-token decision for `OR` doesn'tdepend on `OR`'s context; it
 depends on whether the previous token was labeled `B-locality` (in which
 case `I-locality` is a candidate but B-region is too) or labeled something
 else.
@@ -186,7 +186,7 @@ output is what you'd expect.
 
 The model output is per-token BIO labels. A span begins at the first token
 that gets a `B-X` label, and ends at the last token that gets `I-X` before
-something else. The boundary is implicit in the BIO sequence, not produced
+something else. The boundary is implicit in the BIO sequence rather than produced
 by a separate "boundary detection" head.
 
 This has consequences. **The model can't have a strong opinion about

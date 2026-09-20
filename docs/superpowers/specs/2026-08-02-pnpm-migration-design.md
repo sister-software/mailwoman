@@ -4,7 +4,7 @@
 **Status:** DEFERRED 2026-08-02 — design approved and kept warm, but not scheduled. Deferred to keep
 the test-suite performance work focused; the two are independent except for step (e1) there, which is
 deferred alongside it. Circle back when the performance ladder is done.
-**Driver:** operator direction — pnpm is where the ecosystem is going. This is a **direction call, not
+**Driver:** operator direction — pnpm is where the ecosystem is going. This is a **direction call rather than
 a performance claim**; see "What this is not" below.
 **Deliverable:** the repo installs, builds, tests, packs, and publishes under pnpm, with the publish
 pipeline verified against a real tarball before anything else lands.
@@ -22,17 +22,17 @@ pnpm the package manager, which is a different mechanism: its own resolver, lock
 machine-wide content-addressed store with hardlinks rather than a per-project `.store`.
 
 So this migration is not justified on speed, and should not be sold as such. Any speed it delivers
-is a bonus, and (e1) in the sibling spec is the change that actually removes install from the
+is a bonus, and (e1) in the sibling spec is the change that removes install from the
 critical path either way.
 
 ## What was measured before designing
 
-### Finding 1 — strict resolution costs three packages, not a long tail
+### Finding 1 — strict resolution costs three packages rather than a long tail
 
 The predicted blocker was phantom dependencies: pnpm's default layout is non-hoisted, so any module
 importing a package it does not declare breaks. Full scan of every workspace's `.ts`/`.tsx` bare
 imports against that workspace's declared deps (`docs/` excluded — its `@theme/*`, `@docusaurus/*`,
-`@site/*` and `#e2e` specifiers are build-time aliases, not packages):
+`@site/*` and `#e2e` specifiers are build-time aliases rather than packages):
 
 | package            | workspaces importing it undeclared |
 | ------------------ | ---------------------------------: |
@@ -47,7 +47,7 @@ holding the line.
 
 Fix is mechanical: add the three to the workspaces that use them, or one `public-hoist-pattern` for
 `vitest`. Preference is declaring them — it is what the strictness is for, and it keeps
-`smoke-clean-install.ts` honest.
+`smoke-clean-install.ts` direct.
 
 ### Finding 2 — the publish pipeline is the risk
 
@@ -136,12 +136,11 @@ specified against whichever layout this migration lands, and is not built until 
 ## Acceptance criteria
 
 - A packed `core` tarball under pnpm is byte-equivalent in manifest `exports` and file list to the
-  yarn-packed one. Verified against a real tarball, not documentation.
+  yarn-packed one. Verified against a real tarball rather than documentation.
 - `yarn verify-tarball` equivalent and `smoke-clean-install.ts` pass against pnpm-packed tarballs for
   every workspace they currently cover.
 - `pnpm install --frozen-lockfile` → `compile` → `ci:test:fast` → `ci:test:slow` all green, with no
-  `public-hoist-pattern` override in place for `vitest` (i.e. the three packages are declared,
-  not hoisted around).
+  `public-hoist-pattern` override in place for `vitest` (i.e. the three packages are declared rather than hoisted around).
 - All 5 workflows green.
 - A dry-run release completes end to end.
 - Install and cold-compile timings recorded against the control, and published in this spec whether
@@ -162,7 +161,7 @@ specified against whichever layout this migration lands, and is not built until 
   worktree isolation is a known-sensitive area here.
 - **No speed win.** A plausible outcome: `2026-08-02-test-suite-performance-design.md` § Finding 3
   shows Fetch is already 0.6s on a warm CI cache, and the local control measured 0.4s. Accepted going
-  in; the driver is direction, not speed. Step 8 records the result either way rather than quietly
+  in; the driver is direction rather than speed. Step 8 records the result either way rather than without output
   dropping it if it regresses.
 
 ## Non-goals

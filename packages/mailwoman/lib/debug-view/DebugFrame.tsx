@@ -13,28 +13,28 @@
  *   moved those emissions are named on the decode row instead. The row vocabulary lives in `trace-rows.ts`, the output
  *   pane's line list in `output-lines.ts`; both are pure and unit-tested without a render.
  *
- *   Layout arithmetic (explicit, not measured after the fact — see AGENTS.md's "no post-hoc measurement" rule):
+ *   Layout arithmetic (explicit rather than measured after the fact — see agents.md's "no post-hoc measurement" rule):
  *
  *   - Input area height is a fixed {@link INPUT_ROW_HEIGHT} (9): two border rows plus seven content rows — the input
  *     line, the span ribbon, then the five evidence rows (system, locale head, tokens, channels, decode). Each
- *     evidence row is ONE `<Text wrap="truncate">`: a row that wrapped would push the box past its declared height,
- *     which Ink resolves by silently dropping a row (see the marker-fill note below), so truncation is what keeps the
+ *     evidence row is one `<Text wrap="truncate">`: a row that wrapped would push the box past its declared height.
+ *     Ink resolves that case by silently dropping a row (see the marker-fill note below). Truncation keeps the
  *     arithmetic true at any width.
  *   - The footer takes {@link FOOTER_ROW_HEIGHT} (1) off the bottom.
  *   - The two panes get the remainder: `rows - INPUT_ROW_HEIGHT - FOOTER_ROW_HEIGHT`.
  *   - The output pane takes `floor(columns / 2)`; the map pane takes what's left, so the two always sum to `columns`
  *     regardless of parity.
  *   - {@link mapPaneCellSize} hands a caller (the live command, sizing the actual map-tui renderer viewport) the map
- *     pane's usable CONTENT cell budget: pane width minus its own two border columns
+ *     pane's usable content cell budget: pane width minus its own two border columns
  *     ({@link MAP_PANE_CHROME_COLUMNS}); pane height minus MapPane's own four chrome rows — top+bottom border, the
  *     title line, and the attribution line ({@link MAP_PANE_CHROME_ROWS}) — so a frame built to exactly these
- *     dimensions fills MapPane without any row getting clipped. Measured 2026-08-13: Ink does NOT grow a `Box` past a
- *     fixed `height` when its children need more room — it silently DROPS rows (observed: the title line disappeared
+ *     dimensions fills MapPane without any row getting clipped. Measured 2026-08-13: Ink does not grow a `Box` past a
+ *     fixed `height` when its children need more room — it silently drops rows (observed: the title line disappeared
  *     first, then a trailing frame line) rather than overflowing the terminal output, so an undercounted chrome budget
  *     is invisible to a plain output-line-count check. Verified in `DebugFrame.test.tsx` by filling every frame cell
  *     with a marker character and counting marked lines against `cellSize.rows`, plus asserting the title and
  *     attribution both still appear.
- *   - The output pane slices its own line list to what fits ({@link outputPaneCapacity}) rather than letting Ink drop
+ *   - The output pane trims its own line list to what fits ({@link outputPaneCapacity}) rather than letting Ink drop
  *     the overflow, for the same reason: a dropped row is invisible, and this one scrolls.
  */
 
@@ -50,7 +50,7 @@ import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "#de
 import type { GeocodeResult } from "#geocode/result"
 import type { GeocodeTrace } from "#geocode/session"
 
-//#region Contract
+//#region Interface
 
 export type DebugPane = "input" | "output" | "map"
 
@@ -89,13 +89,13 @@ export interface DebugFrameProps {
 	inputField?: React.ReactNode
 	busy?: boolean
 	/**
-	 * A failed re-run's message, rendered red at the top of the output pane. The interactive session keeps the PREVIOUS
-	 * result on screen when a geocode rejects — the failure is one line of news, not a reason to blank three panes — so
-	 * the note needs a home that is neither the result nor the map. Static renders pass nothing.
+	 * A failed re-run's message, rendered red at the top of the output pane. The interactive session keeps the previous
+	 * result on screen when a geocode rejects — the failure is one line of news rather than a reason to blank three panes
+	 * — so the note needs a home that is neither the result nor the map. Static renders pass nothing.
 	 */
 	errorNote?: string | null
 	/**
-	 * First visible line of the output pane's list. The pane owns the slice so the caller's `data` identity stays stable
+	 * First visible line of the output pane's list. The pane owns the window so the caller's `data` identity stays stable
 	 * across a scroll — which is what keeps the map frame from re-rendering on an arrow key.
 	 */
 	scrollOffset?: number
@@ -189,7 +189,7 @@ function paneTitle(label: string, pane: DebugPane, focused: DebugPane | null): s
 type Tag = AddressNode["tag"]
 
 /**
- * Per-character tag ownership over `tree.raw`: for every index some node covers, the tag of the DEEPEST node whose span
+ * Per-character tag ownership over `tree.raw`: for every index some node covers, the tag of the deepest node whose span
  * contains it — a child's tag overrides its ancestor's on the range they share, so a leaf's tag wins where one exists,
  * and a parent's own text that no child covers still gets the parent's tag rather than falling through to "no owner".
  * Indices no node covers at all stay `undefined` (the `losslessSegments` `unknown` runs).
@@ -283,7 +283,7 @@ function confidenceColor(confidence: number): string {
 //#region Input area
 
 /**
- * One evidence row: a dim fixed-width label and the value, truncated as ONE text so the row can never wrap.
+ * One evidence row: a dim fixed-width label and the value, truncated as one text so the row can never wrap.
  */
 const EVIDENCE_LABEL_WIDTH = 12
 
@@ -362,7 +362,7 @@ const InputBar = memo(function InputBar(props: {
 //#region Output pane
 
 /**
- * The label column of a field row, INCLUDING its trailing space — a component nested three deep (` house_number`) is 18
+ * The label column of a field row, including its trailing space — a component nested three deep (` house_number`) is 18
  * characters, so a narrower pad would run the label into its value.
  */
 const OUTPUT_LABEL_WIDTH = 19
@@ -371,7 +371,7 @@ function OutputRow(props: { line: OutputLine }): React.ReactElement {
 	const { line } = props
 
 	if (line.kind === "error") {
-		// `@inkjs/ui`'s StatusMessage would be the natural fit and is deliberately NOT used: its message `<Text>`
+		// `@inkjs/ui`'s StatusMessage would be the natural fit and is deliberately not used: its message `<Text>`
 		// carries no wrap mode, so a long resolver error wraps to a second row and pushes a row out of a
 		// fixed-height pane — the silent-drop failure this file's header measures. Same figure, one row, truncated.
 		return (
@@ -393,9 +393,9 @@ function OutputRow(props: { line: OutputLine }): React.ReactElement {
 		<Text wrap="truncate">
 			<Text color={line.tag ? tagColor(line.tag) : undefined}>{`${line.label} `.padEnd(OUTPUT_LABEL_WIDTH)}</Text>
 			{line.badge ? (
-				// The badge's text is wrapped in a `<Text>` because `Badge` UPPERCASES a plain-string child, and these
+				// The badge's text is wrapped in a `<Text>` because `Badge` uppercases a plain-string child, and these
 				// two badges carry machine values (`address_point`, `structured_address`) a reader copies into a flag
-				// or a gauntlet row. The chip is the improvement; the shouting is not.
+				// or a gauntlet row. The chip is the improvement. the shouting is not.
 				<Badge color={line.badgeColor ?? "cyan"}>
 					<Text>{line.badge}</Text>
 				</Badge>
@@ -413,7 +413,7 @@ function OutputRow(props: { line: OutputLine }): React.ReactElement {
 /**
  * Takes the four fields it reads rather than the whole {@link DebugData} bag, for the same reason {@link MapPane} does:
  * `data` gets a new identity on every rendered map frame, and a pane that re-renders on someone else's pan is a `memo`
- * that buys nothing.
+ * that adds nothing.
  */
 const OutputPane = memo(function OutputPane(props: {
 	result: GeocodeResult
@@ -475,8 +475,8 @@ const OutputPane = memo(function OutputPane(props: {
  * The expensive pane, and the one that depends on nothing the input row changes — so it takes the fields it reads
  * rather than the shared {@link DebugData} bag, which is what lets `memo` see stable props across a keystroke.
  *
- * Know what this buys and what it does not. It removes React's reconciliation of the 28 `<Text>` rows: worth 2.3 ms of
- * the 12.9 ms keystroke against React's DEVELOPMENT build, and inside the noise floor against its production build
+ * Know what this provides and what it does not. It removes React's reconciliation of the 28 `<Text>` rows: worth 2.3 ms
+ * of the 12.9 ms keystroke against React's development build, and inside the noise floor against its production build
  * (measured 2026-08-13, 120×36, six interleaved pairs each). It cannot touch the dominant cost, because Ink's
  * `render-node-to-output` walks the whole yoga tree and re-serializes it every frame no matter which subtrees React
  * skipped — that is what `incrementalRendering` is for, and the two are complementary rather than redundant.

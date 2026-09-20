@@ -5,7 +5,7 @@ layer: acquisition, the `flood.db` build, and the reader that answers what the a
 assigns at a coordinate.
 
 Design record: [`docs/superpowers/specs/2026-08-27-flood-layer-survey.md`](../../docs/superpowers/specs/2026-08-27-flood-layer-survey.md).
-Contract: [`docs/engineering/reference/layer-contract.mdx`](../../docs/engineering/reference/layer-contract.mdx).
+Interface: [`docs/engineering/reference/layer-interface.mdx`](../../docs/engineering/reference/layer-interface.mdx).
 
 ## What it reports, and what it refuses to
 
@@ -14,12 +14,12 @@ Three readings, and keeping them apart is the whole job:
 | reading              | what it means                                                                             |
 | -------------------- | ----------------------------------------------------------------------------------------- |
 | `designated`         | the authority's map assigns a zone here — `FZ2` or `FZ3`, in the authority's own spelling |
-| `designated_absence` | the authority determined here and assigns NO zone. Inside England that IS Flood Zone 1    |
+| `designated_absence` | the authority determined here and assigns no zone. Inside England that is Flood Zone 1    |
 | `unknown`            | no coverage row. Unmapped by this authority, and never a low-hazard reading               |
 
 Readings 2 and 3 are the same empty answer from the geometry and opposite answers from the reader.
 Zone 1 is defined by the Planning Practice Guidance as "all land outside Zones 2, 3a and 3b" — an
-absence, not a polygon — so inside England a location with no polygon is a designation, while
+absence rather than a polygon — so inside England a location with no polygon is a designation, while
 outside England the same emptiness is unknown. Wales, Scotland and Northern Ireland each have a
 different authority and a different zone scheme; Wales's four-zone TAN15 scheme is not
 interchangeable with England's.
@@ -53,9 +53,9 @@ which is why the index has to handle both ends: a center-containment polyfill lo
 column entirely, and a fixed fine resolution overruns h3's allocator on the last.
 
 **The rings are stored as `float64` pairs, unsimplified — 16 bytes a vertex, so the geometry tier
-is about 5.3 GB before SQLite's own overhead.** That is the size the two-tier contract accepts:
+is about 5.3 GB before SQLite's own overhead.** That is the size the two-tier interface accepts:
 geometry is the truth table, and a rooftop answer at a zone boundary has no cheaper defensible source.
-A fixed-point encoding at 1e-7° would halve it, and is deliberately NOT done here — the source
+A fixed-point encoding at 1e-7° would halve it, and is deliberately not done here — the source
 publishes 0.1 mm precision and quantizing to 11 mm is a change to the authority's data, which needs
 its own measurement rather than a size argument.
 
@@ -107,16 +107,16 @@ and the build is bounded by construction.
 
 ## Traps this package exists to have already hit
 
-- **The published `flood_zone` values are `FZ2` and `FZ3`**, not "Flood Zone 2" / "Flood Zone 3".
+- **The published `flood_zone` values are `FZ2` and `FZ3`** rather than "Flood Zone 2" / "Flood Zone 3".
   The metadata prose describes the column the second way; the shipped geodatabase declares it as a
   3-character string. Measured over the whole file: 540,282 `FZ2`, 273,345 `FZ3`, 813,627 together.
   A builder written against the prose finds nothing.
-- **The source is EPSG:27700, not WGS84.** OSGB36 / British National Grid, in meters. Read as
+- **The source is EPSG:27700 rather than WGS84.** OSGB36 / British National Grid, in meters. Read as
   degrees it lands in the Gulf of Guinea. The ingest asserts the declared authority code and then
   asserts every reprojected vertex against the collection's own declared extent, which is what
   catches a coordinate-order mistake the projection check cannot see.
 - **A center-containment polyfill drops most of this product.** The first feature is a 128 m²
-  square, and `polygonToCells` returns ZERO cells for it at resolutions 7, 8, 9 and 10 alike. The
+  square, and `polygonToCells` returns zero cells for it at resolutions 7, 8, 9 and 10 alike. The
   index takes overlapping containment, and a feature that reaches no cell fails the build — a
   dropped feature reads downstream as an absence, which is the one answer this layer must never
   invent.
@@ -188,7 +188,7 @@ The finding every polygon builder on this spine inherits, stated with what it co
 **The mechanism.** h3's WASM heap cannot be reset from JavaScript, and it does not survive an
 unbounded number of `polygonToCells` calls. h3-js frees every buffer it allocates, so what
 accumulates is fragmentation across millions of interleaved tiny and large allocations. What makes it
-dangerous is HOW it fails: `polygonToCellsExperimental` sizes its output with `_calloc`, a failing
+dangerous is how it fails: `polygonToCellsExperimental` sizes its output with `_calloc`, a failing
 `_calloc` returns the null pointer, and in WASM address zero is ordinary writable memory — so the
 call reports success and the reader hands back an array of zeros. **An exhausted allocator answers
 "no cells" rather than raising an error.**
@@ -199,7 +199,7 @@ through 4 in a fresh process. A fourth died at feature 798284 after 798,000. Bot
 features. Neither failure is a property of the geometry.
 
 **The invariant, and where it lives.** A part with a non-degenerate bounding box touches at least one
-cell, so zero is not an answer it can have. `classifyFeatureCells` checks that **per part**, not per
+cell, so zero is not an answer it can have. `classifyFeatureCells` checks that **per part** rather than per
 feature: a per-feature check passes any multi-part feature whose other parts answered, and indexes it
 short with no error anywhere — the silent-absence shape this layer exists to refuse.
 
@@ -210,7 +210,7 @@ call-removal shortcuts — a part inside one cell, a part too narrow to contain 
 faster and are **not** what makes it correct. A build that completed only when fragmentation happened
 to stay low would not be reproducible.
 
-**Both live in `@mailwoman/spatial`, not here.** `classifyFeatureCells`, the zero-cell guard and the
+**Both live in `@mailwoman/spatial` rather than here.** `classifyFeatureCells`, the zero-cell guard and the
 ring blob under it are properties of h3-js and of byte layout rather than of this product, and
 `@mailwoman/soil` needs them unchanged — so they moved, and `sdk/cells.ts` and `rings.ts` re-export
 them. What stays in this package is what is zone-shaped: `FloodCellIndex` accumulates per zone code,
@@ -219,7 +219,7 @@ because the question asked of this layer is about the ZONE.
 ## License
 
 The layer ships at `tier: shipped` because OGL v3.0 permits redistribution with a named
-acknowledgement. The attribution string is the license condition, not decoration, and rides in
+acknowledgement. The attribution string is the license condition rather than decoration, and rides in
 `layer_manifest.attribution`:
 
 > © Environment Agency copyright and/or database right 2025. All rights reserved.

@@ -9,8 +9,8 @@
  *   and oxlint holds the rest to a no-`node:*` rule.
  *
  *   The soft-feature channels below are not optional decoration. A gazetteer-, country-, or
- *   pair-trained model REQUIRES its channel fed at inference; a zero-filled clue is a train/inference
- *   mismatch, not a neutral default (see CONTRIBUTING_MODEL_WORK.mdx, "zero-fill trap"). A browser
+ *   pair-trained model requires its channel fed at inference. a zero-filled clue is a train/inference
+ *   mismatch rather than a neutral default (see CONTRIBUTING_MODEL_WORK.mdx, "zero-fill trap"). A browser
  *   caller fetches each lexicon alongside the model and feeds it.
  */
 
@@ -19,7 +19,7 @@ export * from "#classifier/index"
 export * from "#country-inference"
 export * from "#gazetteer-inference"
 export * from "#labels"
-// Resolution, not curation: the `browser` condition on this subpath serves a counterpart whose every
+// Resolution rather than curation: the `browser` condition on this subpath serves a counterpart whose every
 // entry point throws, so the value exports below are safe to name from a bundle.
 export * from "#onnx-runner"
 export * from "#pair/index/resolver"

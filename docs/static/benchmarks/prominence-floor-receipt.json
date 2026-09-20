@@ -1,0 +1,19 @@
+{
+	"benchmarkID": "prominence-floor-v1",
+	"definitionVersion": "1.0.0",
+	"recordedAt": "2026-09-13T23:30:51Z",
+	"gitHead": "7044682582c833553e1726a9de64e9279d4f6f65",
+	"weights": {
+		"weightsLocale": "en-US",
+		"weightsModelPath": "/mnt/playpen/mailwoman-data/weights/en-us/model.onnx",
+		"weightsVersion": "9.1.0"
+	},
+	"backendPath": "/mnt/playpen/mailwoman-data/wof/candidate.db",
+	"countries": ["FR", "DE", "GB", "JP"],
+	"rows": 1000,
+	"fixtureDigest": "626e4f6f4192f1c04e40eb681bc44ac81b9f64ca2beae2fba8ea9f133a047fb0",
+	"lookupsTotal": 2688,
+	"candidatesTotal": 2773,
+	"goldCandidatesRemoved": 2330,
+	"rowsWithRecordingError": 0
+}

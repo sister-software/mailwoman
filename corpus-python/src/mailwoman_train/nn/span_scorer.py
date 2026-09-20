@@ -1,12 +1,12 @@
 """#727 stage-2 — the semi-Markov span scorer.
 
-The flat BIO head decodes T independent token choices, so "these k tokens are ONE street" is an
+The flat BIO head decodes T independent token choices, so "these k tokens are one street" is an
 emergent property of token votes rather than a scored decision. This module makes a segmentation a
 first-class hypothesis: every span up to ``max_span`` tokens gets a per-type score, a segment-level
 transition table carries the address grammar (the level at which "must not follow" is well-posed —
-5-8 segments, not 40 subwords), and the whole segmentation is scored jointly.
+5-8 segments rather than 40 subwords), and the whole segmentation is scored jointly.
 
-Phase 1 scope: scoring + loss + decode, evaluated in Python. Export/JS/rerank are later phases; see
+Phase 1 scope: scoring + loss + decode, evaluated in Python. Export/JS/rerank are later phases. see
 docs/superpowers/plans/2026-07-15-727-stage2-kbest-plan.md and the phase-1 plan beside it.
 
 fp32 discipline: the forward algorithm exponentiates sums over exponentially many segmentations. The
@@ -83,7 +83,7 @@ class SpanScorer(nn.Module):
     over a full bilinear because Phase 3 re-implements it in JS per candidate span — one add, one tanh,
     one matmul, no dynamic-shape ONNX op.
 
-    Spans that run past the sequence end are scored against a zero end-vector; the DP masks them out,
+    Spans that run past the sequence end are scored against a zero end-vector. the DP masks them out,
     so their value is never read.
     """
 
@@ -118,7 +118,7 @@ class SemiMarkovCRF(nn.Module):
     The linear-chain CRF this project abandoned (v0.5.0, bf16 NaN) modelled transitions between
     SUBWORD tags — mostly noise ("must `1` follow `▁8`" is not grammar). At segment granularity the
     same table is well-posed: house_number -> street, one postcode per reading, venue before locality.
-    Sequences are 5-8 segments, not 40 subwords.
+    Sequences are 5-8 segments rather than 40 subwords.
 
     All DP is fp32 (see module docstring). ``O`` segments are length 1 by construction: every
     non-entity token is its own O segment, which keeps the DP small and matches the word-level O
@@ -158,7 +158,7 @@ class SemiMarkovCRF(nn.Module):
                 cands.append(prev + seg)
             alpha = alpha.clone()
             alpha[:, j, :] = torch.logsumexp(torch.stack(cands, dim=0), dim=0)
-        # Read each row at its OWN length, then close with the end transitions.
+        # Read each row at its own length, then close with the end transitions.
         idx = lengths.to(alpha.device).view(batch, 1, 1).expand(batch, 1, num_types)
         final = alpha.gather(1, idx).squeeze(1)  # (B,T)
         return torch.logsumexp(final + self.end_transitions.float().unsqueeze(0), dim=1)

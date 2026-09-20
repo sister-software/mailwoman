@@ -22,19 +22,19 @@ For a command line, this is exactly right. You type a whole word, you hit tab, y
 
 A search box does not hand you whole words. It hands you `New Yor`. It hands you `Chic`. It hands you the front half of a word and asks what you meant.
 
-To walk a token trie you need tokens, and `Yor` is not a token — it's the beginning of one. The walk steps through `New`, reaches for an edge labeled `Yor`, finds nothing, and fails. That part is forgivable; a trie can't match a fragment. What was not forgivable was the fallback: a fuzzy text search over the gazetteer that did its earnest best and returned the nearest fuzzy match it could find. For `New Yor`, that was Denver. We do not know why Denver — whether the fuzzy distance metric weighted string length unexpectedly, or whether token boundaries threw the scoring off, or something else. We did not investigate, because the right answer was not to fix the fallback. It was to stop needing one.
+To walk a token trie you need tokens, and `Yor` is not a token — it's the beginning of one. The walk steps through `New`, reaches for an edge labeled `Yor`, finds nothing, and fails. That part is forgivable; a trie can't match a fragment. What was not forgivable was the fallback: a fuzzyforward geocoding over the gazetteer that did its earnest best and returned the nearest fuzzy match it could find. For `New Yor`, that was Denver. We do not know why Denver — whether the fuzzy distance metric weighted string length unexpectedly, or whether token boundaries threw the scoring off, or something else. We did not investigate, because the right answer was not to fix the fallback. It was to stop needing one.
 
 ## It was worse than Denver
 
 So we fed it whole tokens, expecting relief, and got `New` → New London. Four times.
 
-Two problems, stacked. The first was duplicate collapse: New London the city, New London the county, and a couple of smaller New Londons each took a slot, so the dropdown was four rows of the same name before it offered anything else. The second was subtler and worse. The `New` node has 311 children. The walk collects completions breadth-first under a budget, and a dense branch — all those New Londons — filled the budget before the search ever reached `New York`. The autocomplete knew New York perfectly well. It just never got there. The most prominent place a person could possibly mean, starved out by smaller ones that happened to sort first.
+Two problems, stacked. The first was duplicate collapse: New London the city, New London the county, and a couple of smaller New Londons each took a slot, so the dropdown was four rows of the same name before it offered anything else. The second was subtler and worse. The `New` node has 311 children. The walk collects completions breadth-first under a budget, and a dense branch — all those New Londons — filled the budget before the search ever reached `New York`. The autocomplete knew New York perfectly well. Itnever got there. The most prominent place a person could possibly mean, starved out by smaller ones that happened to sort first.
 
 ## The fix
 
 When the walk fails on a partial last token, don't fall back to fuzzy search. Walk the _complete_ prefix instead — `New` — then filter that node's outgoing edges by the fragment: keep every edge whose token starts with `yor`. `york` survives. `london` doesn't. You've completed the word using the trie you already have, no fuzzy search, no Denver.
 
-Then cap how many places any single branch can contribute, so one dense `New London` branch cannot crowd out `New York` before the search reaches it. Collapse same-name places to the most prominent one. Three changes — character-level completion via edge filtering, a per-branch cap, name dedup — and `New Yor` becomes New York, `Chic` becomes Chicago, `San Fr` becomes San Francisco. The search box finishes your word.
+Then cap how several places any single branch can contribute, so one dense `New London` branch cannot crowd out `New York` before the search reaches it. Collapse same-name places to the most prominent one. Three changes — character-level completion via edge filtering, a per-branch cap, name dedup — and `New Yor` becomes New York, `Chic` becomes Chicago, `San Fr` becomes San Francisco. The search box finishes your word.
 
 ## Two problems wearing one name
 

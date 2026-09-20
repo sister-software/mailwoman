@@ -1,6 +1,6 @@
 """What a staged Taiwanese corpus must contain before a run can read it.
 
-The launcher stages files; this says whether what landed is usable. It lives here for the same
+The launcher stages files. this says whether what landed is usable. It lives here for the same
 reason Korea's does: the part count, the board and the district centroids are Taiwanese facts.
 """
 

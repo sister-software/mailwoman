@@ -44,9 +44,9 @@ trace JSON ───┼─ mailwoman parse --trace json|mermaid        … need 
     `buildSoftFeatures`): forks the feed choreography — the exact train/inference drift class the
     codebase forbids.
   - _Overloading `parseWithLogits`:_ muddies its documented purpose (per-span logit aggregation
-    for joint-reconcile) and perturbs existing callers' contract.
+    for joint-reconcile) and perturbs existing callers' interface.
 
-## 1. Trace contract
+## 1. Trace interface
 
 Types live where their producers live; the envelope composes them.
 
@@ -57,7 +57,7 @@ formed or overridden:
 
 | Field             | Source in `#decode`              | Notes                                                                                                                                |
 | ----------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `text`            | `modelText` after case-normalize | the string the model actually saw                                                                                                    |
+| `text`            | `modelText` after case-normalize | the string the model saw                                                                                                             |
 | `caseNormalized`  | `normalizeInputCase` applied?    | boolean                                                                                                                              |
 | `pieces`          | tokenizer `encode`               | `{ piece, start, end }[]`                                                                                                            |
 | `ids`             | tokenizer `encode`               | `number[]`                                                                                                                           |
@@ -66,8 +66,8 @@ formed or overridden:
 | `logits`          | runner output                    | raw, pre-prior — the model's emissions                                                                                               |
 | `localeLogits?`   | runner output                    | 9-wide, `LOCALE_COUNTRIES` order                                                                                                     |
 | `detectedSystem?` | `detectAddressSystem`            | `SystemCode \| null` + whether pinned vs auto                                                                                        |
-| `priors`          | prior-builder calls              | list of `{ kind, applied }` for queryShape / fst / streetMorphology / spanProposer / conventionsMask — which actually fired          |
-| `emissions`       | post-prior matrix                | what viterbi actually decoded over                                                                                                   |
+| `priors`          | prior-builder calls              | list of `{ kind, applied }` for queryShape / fst / streetMorphology / spanProposer / conventionsMask — which fired                   |
+| `emissions`       | post-prior matrix                | what viterbi decoded over                                                                                                            |
 | `labels`          | `this.labels`                    | the 33-label vocabulary, for axis labeling                                                                                           |
 | `path`            | viterbi / argmax                 | label indices + per-token confidence                                                                                                 |
 | `repairs`         | repair passes                    | ordered `{ pass, before, after }` token diffs for wordConsistency / postcodeRepair / unitRepair / spanBridge — empty entries omitted |
@@ -144,14 +144,14 @@ Each increment is independently shippable; 2 and 3 are parallel once 1 lands.
 - Models without the locale head: `localeLogits`/`detectedSystem` absent, renderer hides the gauge.
 - Channel-off classifiers (no anchor lookup / lexicon configured): `anchor`/`gazetteer` absent;
   renderer shows the channel band as "not fed" rather than zeros — an unfed channel is a
-  diagnostic fact (the #566/#685 OOD class), not an empty one.
+  diagnostic fact (the #566/#685 OOD class) rather than an empty one.
 - CLI `--trace` on a pipeline whose classifier lacks `traceParse` (stale compiled tree, foreign
   classifier): envelope ships without the `neural` key + a stderr note — never a crash.
 
 ## Testing
 
 - **Parity (the required test):** for a corpus of addresses, `traceParse(text).tokens` must
-  deep-equal `parse(text)`'s tokens under identical opts — proves the no-fork invariant.
+  deep-equal `parse(text)`'s tokens under identical opts — checks that both paths produce the same tokens.
 - **Byte-stability:** existing `parse`/`parseWithLogits` suites unchanged and green.
 - **Schema snapshot:** one serialized trace committed as a fixture; drift fails the test and
   forces a conscious `schemaVersion` decision.
@@ -166,5 +166,5 @@ Each increment is independently shippable; 2 and 3 are parallel once 1 lands.
 - Resolver/gazetteer candidate traces (increment 4 reserves the key; design when it lands).
 - Any change to training-side Python or the ONNX export.
 - Exposing attention weights or other _inside-the-graph_ tensors — the trace covers the model's
-  I/O contract and the decode pipeline around it, not transformer internals. (Netron already
+  I/O interface and the decode pipeline around it rather than transformer internals. (Netron already
   serves the op-graph view; revisit only if a concrete need appears.)

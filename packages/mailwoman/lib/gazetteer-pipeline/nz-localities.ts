@@ -4,24 +4,24 @@
 /**
  *   Build `localities-nz-linz.db` — the NZ suburb/locality database (#1564, the NZ lane's coverage
  *   gap; #1585's data half). The candidate gazetteer carries NZ's region + major-locality tiers but
- *   NO suburb tier, so `Stanmore Bay` (a ~6k-person Auckland suburb) has no row and the resolver
+ *   no suburb tier, so `Stanmore Bay` (a ~6k-person Auckland suburb) has no row and the resolver
  *   can only mis-answer or abstain.
  *
- *   SOURCE + LICENSE: the LINZ-derived OpenAddresses NZ countrywide extract
- *   (`<data-root>/openaddresses/extracted/nz/countrywide.csv`) — upstream is LINZ "NZ Street
+ *   source + LICENSE: the linz-derived OpenAddresses NZ countrywide extract
+ *   (`<data-root>/openaddresses/extracted/nz/countrywide.csv`) — upstream is linz "NZ Street
  *   Address" via OpenAddresses, CC-BY 4.0 with attribution to Land Information New Zealand (the
- *   same lane the country-evidence runbook already ships pair-index data from). NOT derived from
+ *   same lane the country-evidence runbook already ships pair-index data from). Not derived from
  *   any Nominatim import — the ODbL comparison arm stays a comparison arm. The build refuses to run
  *   unless the source's md5 sidecar matches, and stamps source md5 + vintage into the database's
  *   `database_meta` table so provenance travels with the artifact.
  *
- *   SHAPE: one `spr` row per (CITY, DISTRICT) group — the CITY column is the address's
+ *   shape: one `spr` row per (city, district) group — the city column is the address's
  *   suburb/locality line, and 49 names span more than one district (`Hillsborough` is both an
- *   Auckland and a Christchurch suburb), so the group key is the pair. Coordinates are the MEDIAN
+ *   Auckland and a Christchurch suburb), so the group key is the pair. Coordinates are the median
  *   address point (robust against depot-coded outliers); the bbox is the group's p5–p95 envelope.
  *   Placetype is `locality`: that is the tier NZ addressing puts the suburb on, and the tier a bare
  *   parsed toponym queries — a `neighbourhood` row would be invisible to the locality filter group,
- *   and widening THAT group is a global ranking change this database must not smuggle in. Population
+ *   and widening that group is a global ranking change this database must not smuggle in. Population
  *   is deliberately 0/unmeasured (meaning-of-zero: an address-point count is not a population), so
  *   a database row ranks behind any populated namesake and wins only where its key is the answer.
  *
@@ -36,11 +36,12 @@ import { NZ_LOCALITY_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-range
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
+import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 /**
- * Minimum address points a (CITY, DISTRICT) group needs before it earns a database row. Below this the "centroid" is a
- * handful of rural delivery points and the name is as likely a farm check as a locality; 5 keeps 3,000-odd real
+ * Minimum address points a (city, district) group needs before it warrants a database row. Below this the "centroid" is
+ * a handful of rural delivery points and the name is as likely a farm check as a locality. 5 keeps 3,000-odd real
  * localities and drops the tail of one-off strings.
  */
 const MIN_GROUP_POINTS = 5
@@ -57,18 +58,18 @@ const NZ_LON_MAX = 180
 
 export interface BuildNZLocalitiesOptions {
 	/**
-	 * The LINZ-derived OpenAddresses NZ countrywide CSV. Default
+	 * The linz-derived OpenAddresses NZ countrywide CSV. Default
 	 * `<data-root>/openaddresses/extracted/nz/countrywide.csv`.
 	 */
-	csvPath?: string
+	csvPath?: PathBuilderLike
 	/**
 	 * Output database. Default `<data-root>/wof/localities-nz-linz.db`.
 	 */
-	out?: string
+	out?: PathBuilderLike
 }
 
 /**
- * Title-case comparison surface for the CSV's already-title-cased CITY values — the database stores the display form
+ * Title-case comparison surface for the CSV's already-title-cased city values — the database stores the display form
  * verbatim and lets `normalizeLocalityForKey` (at candidate-build time) own the key.
  */
 function cleanName(raw: string | undefined): string {
@@ -76,14 +77,14 @@ function cleanName(raw: string | undefined): string {
 }
 
 /**
- * The p-th percentile of a SORTED numeric array (nearest-rank, p in [0, 100]).
+ * The p-th percentile of a sorted numeric array (nearest-rank, p in [0, 100]).
  *
- * DELIBERATELY NOT `@mailwoman/core/utils`'s `percentileSorted`: this copy uses the ceil-based nearest rank
+ * Deliberately not `@mailwoman/core/utils`'s `percentileSorted`: this copy uses the ceil-based nearest rank
  * (`ceil(p/100 · n) − 1`) the shipped NZ label points were computed with, where core floors (`floor(p/100 · n)`) —
  * swapping conventions moves a percentile by up to one member row and with it every derived label point.
  *
  * Repo-health-ignore private-name-shadows-export -- the ceil-based nearest rank the shipped NZ label points were
- * computed with; core floors
+ * computed with. core floors
  */
 function percentileSorted(sorted: readonly number[], p: number): number {
 	const idx = Math.min(sorted.length - 1, Math.max(0, Math.ceil((p / 100) * sorted.length) - 1))
@@ -92,7 +93,7 @@ function percentileSorted(sorted: readonly number[], p: number): number {
 }
 
 /**
- * Build the sealed NZ locality database. NOT re-exported from a barrel — the command lazy-imports it (optional-peer
+ * Build the sealed NZ locality database. Not re-exported from a barrel — the command lazy-imports it (optional-peer
  * discipline, same as the NL PC6 builder).
  */
 export async function buildNZLocalitiesDatabase(
@@ -100,8 +101,8 @@ export async function buildNZLocalitiesDatabase(
 ): Promise<{ out: string; inserted: number; skippedGroups: number; sourceMD5: string }> {
 	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
-	const csvPath = opts.csvPath ?? String(dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv"))
-	const outPath = opts.out ?? String(dataRootPath("wof", "localities-nz-linz.db"))
+	const csvPath = (opts.csvPath ?? dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv")).toString()
+	const outPath = (opts.out ?? dataRootPath("wof", "localities-nz-linz.db")).toString()
 	const tmpPath = `${outPath}.tmp`
 
 	// Provenance check: the md5 sidecar must exist and match. A database whose source cannot be named is
@@ -114,7 +115,7 @@ export async function buildNZLocalitiesDatabase(
 		throw new Error(`source md5 mismatch: computed ${sourceMD5}, sidecar ${sidecar} — re-verify the extract`)
 	}
 
-	// Pass 1 — aggregate (CITY, DISTRICT) → coordinate lists. ~2.1M rows; two float arrays per group.
+	// Pass 1 — aggregate (city, district) → coordinate lists. ~2.1M rows. two float arrays per group.
 	const groups = new Map<string, { city: string; district: string; lats: number[]; lons: number[] }>()
 	let header: string[] | undefined
 

@@ -1,6 +1,6 @@
 """What a staged Korean corpus must contain before a run can read it.
 
-The launcher stages files; this says whether what landed is usable. It lives here because the answer
+The launcher stages files. this says whether what landed is usable. It lives here because the answer
 is Korean knowledge — how many numbered parts the Juso build writes, that the board and the sigungu
 centroids travel with it, that the permit register is a separate corpus — and a launcher that knew
 any of it would be a launcher one country's release schedule could break.

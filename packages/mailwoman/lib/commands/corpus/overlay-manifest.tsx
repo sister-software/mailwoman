@@ -5,12 +5,13 @@
  *   Generate a corpus overlay manifest.
  */
 
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "overlay-manifest",
@@ -21,35 +22,30 @@ export const spec = {
 		"modal-root": {
 			type: "string",
 			required: true,
-			description: "Modal volume root the manifest paths are relative to",
+			description: "Remote path of --new-dir, e.g. /data/corpus/versioned/<version>/corpus-<version>",
 		},
 		"corpus-version": { type: "string", required: true, description: "New corpus version" },
-		"slice-parquet": { type: "string", required: true, description: "Slice parquets to add, comma-separated" },
+		parquet: {
+			type: "string",
+			required: true,
+			description: "Parquet files to add, comma-separated",
+			deprecatedName: "slice-parquet",
+		},
 		source: { type: "string", required: true, description: "Source label per parquet, comma-separated" },
 		note: { type: "string", required: true, description: "Manifest note" },
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	base: string
-	newDir: string
-	modalRoot: string
-	corpusVersion: string
-	sliceParquet: string
-	source: string
-	note: string
-}
-
-const Cmd: ParsedCommandComponent<Options> = ({ options }) => {
+const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { assembleOverlayManifest } = await import("@mailwoman/corpus/tools")
 
-		const parquets = splitList(options.sliceParquet)
-		const sources = splitList(options.source)
+		const parquets = extractDelimited(options.parquet)
+		const sources = extractDelimited(options.source)
 
 		if (parquets.length !== sources.length) {
 			throw new CommandError(
-				`--slice-parquet names ${parquets.length} parquets and --source ${sources.length} labels; one label per parquet`
+				`--parquet names ${parquets.length} parquet files and --source ${sources.length} labels; one label per file`
 			)
 		}
 
@@ -58,7 +54,7 @@ const Cmd: ParsedCommandComponent<Options> = ({ options }) => {
 			newDir: options.newDir,
 			modalRoot: options.modalRoot,
 			version: options.corpusVersion,
-			slices: parquets.map((parquet, index) => ({ parquet, source: sources[index]! })),
+			files: parquets.map((parquet, index) => ({ parquet, source: sources[index]! })),
 			note: options.note,
 		})
 

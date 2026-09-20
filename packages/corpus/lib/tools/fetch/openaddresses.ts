@@ -6,10 +6,10 @@ import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
  *   Fetch an OpenAddresses country collection from batch.openaddresses.io.
  *
  *   Source: https://batch.openaddresses.io
- *   License: MIXED — OpenAddresses aggregates hundreds of upstream sources with per-source licenses
- *   (CC-BY, CC0, PDDL, ODbL, CC-BY-SA, and proprietary attribution-only). The per-row LICENSE filter
+ *   License: mixed — OpenAddresses aggregates hundreds of upstream sources with per-source licenses
+ *   (CC-BY, CC0, pddl, ODbL, CC-BY-SA, and proprietary attribution-only). The per-row LICENSE filter
  *   in the openaddresses adapter is essential for proprietary-weights training: Tier-C rows (ODbL,
- *   CC-BY-SA, CC-SA) are dropped at ingest by default. This module downloads the raw collection; the
+ *   CC-BY-SA, CC-SA) are dropped at ingest by default. This module downloads the raw collection. the
  *   adapter does the license filtering.
  *
  *   Native `fetch` streams the download to disk (no curl + Python subprocess tax);
@@ -28,7 +28,7 @@ import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
  *
  *   The collection URL pattern (verified 2026-05-18):
  *
- *   - `POST /api/login {username, password}` → `{token}`
+ *   - `post /api/login {username, password}` → `{token}`
  *   - `GET  /api/job/{job_id}/output/source.geojson.gz?token={token}`
  *
  *   Collections are downloaded as a combined GeoJSON.gz via:
@@ -51,7 +51,7 @@ import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
  *   ```
  */
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
-   procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
+   procedure rather than sections of declarations. A region there folds nothing a reader wants folded. */
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { openWriteStream, pipeline } from "@mailwoman/core/fs/streams"
@@ -71,20 +71,20 @@ import { streamDownload, writeManifest } from "#tools/fetch/download/index"
  * than data.
  */
 /**
- * A successful fetch; anything else is an error page or a redirect we did not follow.
+ * A successful fetch. anything else is an error page or a redirect we did not follow.
  */
 const HTTP_OK = 200
 
 /**
- * Smallest plausible OpenAddresses slice. Below 10 KiB the file is a stub or an error body.
+ * Smallest plausible OpenAddresses country archive. Below 10 KiB the file is a stub or an error body.
  */
-const MIN_PLAUSIBLE_SLICE_BYTES = 10_240
+const MIN_PLAUSIBLE_ARCHIVE_BYTES = 10_240
 
 const OA_BASE = "https://batch.openaddresses.io"
 
 /**
  * Collection IDs known as of 2026-05-18 (discovered via `GET /api/collections`). OA assigns stable integer IDs to each
- * country collection; re-check `GET /api/collections` if a new country is needed and the ID is unknown.
+ * country collection. re-check `GET /api/collections` if a new country is needed and the ID is unknown.
  *
  * TODO: Move this to a config file or the OA adapter
  */
@@ -179,14 +179,14 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 	if (collectionID === undefined) {
 		report?.(`Unknown country code '${country}'. Fetching collection list to find ID...`)
 
-		// The collections API only. The COLLECTION ARCHIVES stay on raw `fetch` — they stream multi-gigabyte
+		// The collections API only. The collection archives stay on raw `fetch` — they stream multi-gigabyte
 		// bodies straight to disk, where response caching is nonsense and axios would buffer them in memory.
 		const res = await new APIClient({
 			displayName: "openaddresses-api",
 			retry: true,
 			axios: { headers: { Authorization: `Bearer ${token}`, "Accept-Encoding": "gzip, br" } },
 		})
-			// `validateStatus` keeps a non-2xx as a RESPONSE rather than a throw: the caller reports the status and
+			// `validateStatus` keeps a non-2xx as a response rather than a throw: the caller reports the status and
 			// returns `fail(country)`, a graceful path this must not turn into an exception.
 			.fetch<OaCollection[]>({
 				url: `${OA_BASE}/api/collections`,
@@ -286,7 +286,7 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 		report?.(`  WARNING: Downloaded file type is '${fileMagic.trim()}' — may need manual decompression.`)
 	}
 
-	// MARK: Verify + write MANIFEST
+	// MARK: Verify + write manifest
 
 	if (!(await pathExists(outputFile))) {
 		report?.(`ERROR: Output file not found at ${outputFile} after download.`)
@@ -296,7 +296,7 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 
 	const size = (await statPath(outputFile)).size
 
-	if (size < MIN_PLAUSIBLE_SLICE_BYTES) {
+	if (size < MIN_PLAUSIBLE_ARCHIVE_BYTES) {
 		report?.(`ERROR: File is suspiciously small (${size} bytes) — likely an error response.`)
 
 		return fail(country)

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The shared column runs are pinned by the STORED column order they produce, because that order is part of what a
+ *   The shared column runs are pinned by the stored column order they produce, because that order is part of what a
  *   sealed layer artifact carries and what its readers see.
  */
 

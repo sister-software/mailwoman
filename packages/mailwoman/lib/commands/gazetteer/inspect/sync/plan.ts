@@ -10,9 +10,8 @@
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { WOF_DATA_OWNER, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
-
-import { splitList } from "#cli-kit"
 
 /**
  * The GitHub organization holding the country data repositories.
@@ -26,7 +25,7 @@ export interface DiscoveredRepo {
 	name: string
 	url: string
 	/**
-	 * GitHub's reported size. It UNDER-states the checkout by roughly 7×: GitHub reports the packed size, and these repos
+	 * GitHub's reported size. It under-states the checkout by roughly 7×: GitHub reports the packed size, and these repos
 	 * unpack to millions of small GeoJSON files. Measured on a `--countries tr` sync: three repositories reported as 83.4
 	 * MB occupied 633 MB once cloned.
 	 */
@@ -34,9 +33,9 @@ export interface DiscoveredRepo {
 }
 
 /**
- * A repository NAME, as opposed to a path that happens to contain one.
+ * A repository name, as opposed to a path that happens to contain one.
  *
- * `whosonfirst-data` alone is excluded: that is the owner directory this command writes into, not a repository.
+ * `whosonfirst-data` alone is excluded: that is the owner directory this command writes into rather than a repository.
  */
 const REPO_NAME_PATTERN = /^whosonfirst(?:-data)?-[a-z0-9-]+$/
 
@@ -65,7 +64,7 @@ export function assertDestinationNotARepoName(destination: string): void {
  * roughly double the transfer for data no build on the parse path consumes.
  */
 export function countryRepoNames(raw: string | undefined): string[] {
-	return splitList(raw).flatMap((code) => [wofRepoName("admin", code), wofRepoName("postalcode", code)])
+	return extractDelimited(raw).flatMap((code) => [wofRepoName("admin", code), wofRepoName("postalcode", code)])
 }
 
 export interface SelectReposOptions {
@@ -130,7 +129,7 @@ export function selectRepos(discovered: readonly DiscoveredRepo[], options: Sele
 
 	// An explicitly named repository must exist. Before this check an unmatched name filtered the list to nothing and
 	// the command reported a successful sync of the placetypes repo alone, so a typo read as a completed job.
-	for (const name of splitList(options.repos)) {
+	for (const name of extractDelimited(options.repos)) {
 		if (!byName.has(name)) {
 			const suggestion = nearestName(name, discovered)
 
@@ -147,9 +146,9 @@ export function selectRepos(discovered: readonly DiscoveredRepo[], options: Sele
 		wanted.add(name)
 	}
 
-	// A country expands to the repositories it MIGHT have; only a country with none at all is an error. Most countries
+	// A country expands to the repositories it might have. only a country with none at all is an error. Most countries
 	// carry an admin repository and no postalcode one, so requiring both would refuse the common case.
-	for (const code of splitList(options.countries)) {
+	for (const code of extractDelimited(options.countries)) {
 		const candidates = countryRepoNames(code).filter((name) => byName.has(name))
 
 		if (!candidates.length) {

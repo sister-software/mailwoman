@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Source row → feature, once, at build. The USGS products use east longitude in 0..360 with bounding boxes that may
+ *   Source row → feature, once, at build. The usgs products use east longitude in 0..360 with bounding boxes that may
  *   run past 360 (a feature on the prime meridian reads 359.2..360.16); rendering wants −180..180. Every conversion is
  *   here so a consumer never guesses the source convention.
  */
@@ -76,8 +76,8 @@ export function normalizeLongitude(lon: number): number {
 const clampLat = (lat: number): number => Math.max(-90, Math.min(90, lat))
 
 export function normalizeBBox(box: { minLon: number; maxLon: number; minLat: number; maxLat: number }): NormalizedBBox {
-	// A box that runs past 360 wraps to the prime meridian; a box that runs past 180 wraps to the antimeridian. Both
-	// arrive as minLon < maxLon in source units; only the second one crosses ±180 after normalization.
+	// A box that runs past 360 wraps to the prime meridian. a box that runs past 180 wraps to the antimeridian. Both
+	// arrive as minLon < maxLon in source units. only the second one crosses ±180 after normalization.
 	const minLon = normalizeLongitude(box.minLon > FULL_TURN_DEGREES ? box.minLon - FULL_TURN_DEGREES : box.minLon)
 	const maxLon = normalizeLongitude(box.maxLon > FULL_TURN_DEGREES ? box.maxLon - FULL_TURN_DEGREES : box.maxLon)
 

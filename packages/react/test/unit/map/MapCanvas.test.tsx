@@ -3,13 +3,13 @@
 
 /**
  *   `<MapCanvas>` mounts a real `react-map-gl/maplibre` map over an offline stub style (one `background`
- *   layer, no network). The HARD assertion is on the component TREE — the `.mw-demo-map` wrapper and
- *   react-map-gl's container `<div>` render synchronously, without throwing. The WebGL SURFACE (the
- *   `<canvas>`) and the child slot only appear AFTER react-map-gl's async mount effect (a dynamic
- *   `import("maplibre-gl")` + map creation), so they're awaited BEST-EFFORT: `vitest.config.ts` routes
+ *   layer, no network). The hard assertion is on the component tree — the `.mw-demo-map` wrapper and
+ *   react-map-gl's container `<div>` render synchronously, without throwing. The WebGL surface (the
+ *   `<canvas>`) and the child slot only appear after react-map-gl's async mount effect (a dynamic
+ *   `import("maplibre-gl")` + map creation), so they're awaited best-effort: `vitest.config.ts` routes
  *   GL through SwiftShader so they normally do appear, but if a future headless Chromium can't provide
  *   software WebGL the map never initializes and those assertions are skipped — the tree assertion still
- *   proves the component renders. That keeps this a component-mount test, not a GPU test.
+ *   proves the component renders. That keeps this a component-mount test rather than a GPU test.
  */
 
 import { MapCanvas, type MapCanvasStyle } from "@mailwoman/react/map/MapCanvas"
@@ -66,7 +66,7 @@ test("MapCanvas mounts a map container over an offline stub style", async () => 
 	expect(wrapper?.firstElementChild).not.toBeNull()
 
 	// GL surface — best-effort (SwiftShader normally provides it). Its absence means no software WebGL in
-	// this Chromium, not a component fault.
+	// this Chromium rather than a component fault.
 	const mapEl = await settle(() => container.querySelector(".maplibregl-map"))
 
 	if (mapEl) {

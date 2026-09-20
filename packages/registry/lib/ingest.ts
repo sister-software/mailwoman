@@ -8,17 +8,17 @@
  *   Two concerns, kept separate:
  *
  *   1. **Column mapping + normalization** (this is pure): a {@link ColumnMapping} says which column(s)
- *        hold the name, organization, address, phone, email; each row is normalized with
+ *        hold the name, organization, address, phone, email. each row is normalized with
  *        `@mailwoman/record` (parse the person name, canonicalize the org). This is deterministic
  *        and testable with no heavy runtime.
  *   2. **Geocoding** (the heavy part) is an injected dependency — a {@link GeocodeAddress} the caller provides.
- *        Ingest never imports the neural parser, the resolver, or the extracts; it just calls the
+ *        Ingest never imports the neural parser, the resolver, or the extracts. it just calls the
  *        call per address. {@link geocodeAddressVia} builds that geocoder from mailwoman's real parse +
  *        geocode primitives (which the CLI constructs with the model + data in hand), so the wiring
  *        is concrete and testable without pinning the heavy runtime into this package.
  *
  *   LLM-assisted column mapping (infer the mapping from a header + samples) is a documented
- *   fast-follow; the mapping is an explicit input here.
+ *   fast-follow. the mapping is an explicit input here.
  */
 
 import { isPresent } from "@mailwoman/core/objects"
@@ -70,7 +70,7 @@ export function streamRows(
 ): AsyncSequence<Record<string, string>> {
 	return CSVSpliterator.fromAsync<Record<string, string>>(source, {
 		columnDelimiter: COLUMN_DELIMITERS[opts.delimiter ?? delimiterFor(source)],
-		// A {@linkcode ColumnMapping} names columns in the PUBLISHER's spelling — `Facility Name`, not
+		// A {@linkcode ColumnMapping} names columns in the publisher's spelling — `Facility Name`, not
 		// `facility_name` — so the keys must arrive as the file writes them. The reader's default normalizes.
 		normalizeKeys: false,
 	})
@@ -175,7 +175,7 @@ export interface IngestOptions {
 	 */
 	geocodeAddress?: GeocodeAddress
 	/**
-	 * Separator for joining a multi-column ADDRESS mapping (name/org always join with a space). Default `" "`. Pass `",
+	 * Separator for joining a multi-column address mapping (name/org always join with a space). Default `" "`. Pass `",
 	 * "` to give the parser delimited input (`"214 Main St, Austin, TX 78701"`) instead of a concatenated run (`"214 Main
 	 * St Austin TX 78701"`) — the latter strips the parser's segmentation boundaries and is partly OOD (it also breaks
 	 * all-caps case-normalization; #694). **Default `", "` (#694 flip, validated).** Comma-join is the correct shape for
@@ -320,7 +320,7 @@ export interface TwoStepGeocodeDeps extends GeocodeDepsBase {
 }
 
 /**
- * Parse the address ONCE and answer both the components and the geocode. Use this when the parse is the expensive step
+ * Parse the address once and answer both the components and the geocode. Use this when the parse is the expensive step
  * you'd rather not pay for twice (e.g. share `parseForGeocode`'s tree between the PostalAddress and `geocodeAddress`'s
  * `parsedTree`). ~1.3× over the two-call shape on a real geocode pipeline.
  */

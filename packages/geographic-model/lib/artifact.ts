@@ -5,7 +5,7 @@
  *   The compiled runtime artifact: its shape, its canonical bytes, and the reader that turns those
  *   bytes back into a typed value.
  *
- *   A runtime consumer reads THIS and never the authored records. That is the whole point of the
+ *   A runtime consumer reads this and never the authored records. That is the whole point of the
  *   artifact, and it is why the shape carries every table plus the materialized `isA` closure: a
  *   consumer that had to walk `concepts[].isA` to answer a question about one concept would be doing
  *   query-time traversal, which the boundary record excludes.
@@ -16,8 +16,8 @@
  *      canonicalizes by itself beats a hand-kept field order, which drifts the first time the schema
  *      gains a field.
  *   2. **Every table is ordered by identifier**, under {@link compareIdentifiers} — code point, never
- *      `localeCompare`, whose answer depends on the machine's collation. Arrays INSIDE a record keep
- *      the order they were authored in; the compiler writes the tables, so it orders those.
+ *      `localeCompare`, whose answer depends on the machine's collation. Arrays inside a record keep
+ *      the order they were authored in. the compiler writes the tables, so it orders those.
  *
  *   Nothing here records when compilation ran. `modelVersion` is the authored document's own version,
  *   so two builds of one document are byte-identical, and a clock in the artifact would make every
@@ -40,7 +40,7 @@ import type {
 } from "#schema"
 
 /**
- * The artifact FORMAT version — incremented by hand when the compiled shape changes, so a reader meeting an artifact it
+ * The artifact format version — incremented by hand when the compiled shape changes, so a reader meeting an artifact it
  * was not written for says so instead of quietly reading fields that moved.
  *
  * It is not data about the world, which is why a number is allowed here and nowhere in `./schema.ts`.
@@ -120,8 +120,8 @@ function canonicalize(value: unknown): unknown {
  *
  * Tab indentation and the trailing newline match the repository's other committed JSON tables (`taxonomy.json`,
  * `brands.json`). A committed copy of these bytes is the generator's output run through `oxfmt`, which inlines short
- * arrays — so a freshness check compares the PARSED artifact against a fresh compile, and a byte comparison compares
- * two compiles.
+ * arrays . Therefore, a freshness check compares the parsed artifact against a fresh compile, and a byte comparison
+ * compares two compiles.
  */
 export function serializeCompiledModel(model: CompiledGeographicModel): string {
 	return prettyJSON(canonicalize(model))
@@ -154,7 +154,7 @@ const ARTIFACT_TABLES = [
 /**
  * Why `value` is not a compiled artifact, or nothing when it is one.
  *
- * Kept separate from {@link parseCompiledGeographicModel} so the reader casts the value it was HANDED, still typed
+ * Kept separate from {@link parseCompiledGeographicModel} so the reader casts the value it was handed, still typed
  * `unknown`, rather than a narrowed shape it would have to launder through a second cast to widen again.
  */
 function artifactProblem(value: unknown): string | undefined {
@@ -179,8 +179,8 @@ function artifactProblem(value: unknown): string | undefined {
  * Read a parsed artifact — the value `JSON.parse` produced from the compiled bytes — as a
  * {@link CompiledGeographicModel}.
  *
- * It checks the format version and the presence of every table, and does NOT re-validate the records. An artifact is
- * generated from a document that `parseGeographicModelDocument` already accepted; re-checking every record here would
+ * It checks the format version and the presence of every table, and does not re-validate the records. An artifact is
+ * generated from a document that `parseGeographicModelDocument` already accepted. re-checking every record here would
  * be a second validator, and the version check is what catches the failure this reader can actually meet — an artifact
  * written by a different compiler.
  */

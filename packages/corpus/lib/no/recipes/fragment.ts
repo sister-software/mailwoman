@@ -5,42 +5,42 @@
  *   `no-fragment` — the Norwegian house-number-licence change (Track B, 2026-07-16). The mirror of
  *   `fr-fragment`, which earned +50pp on the same defect shape in French.
  *
- *   WHY THIS EXISTS AND `no-street-led` DOES NOT SUFFICE. Board 3 (the NO digit board) measured that
- *   `synth-no-street-led`'s three forms — all carrying postcode+city — are ALREADY at 0.940-0.968 on
- *   a model with zero Norwegian rows. The headroom is in the forms that slice never emits:
+ *   why this exists and `no-street-led` does not suffice. Board 3 (the Norwegian digit board) measured that
+ *   `synth-no-street-led`'s three forms — all carrying postcode+city — are already at 0.940-0.968 on
+ *   a model with zero Norwegian rows. The headroom is in the forms that recipe never emits:
  *
  *     bare-street-hn   "Hallingrudveien 32"     0.693   — no postcode competing, still fails 31%
- *     slash-hn         "Øvrabø 124/1"           0.650   — cadastral gnr/bnr, ONE component
+ *     slash-hn         "Øvrabø 124/1"           0.650   — cadastral gnr/bnr, one component
  *
- *   THE MECHANISM the board exposed: `Hallingrudveien 32` -> locality + postcode, while
+ *   the mechanism the board exposed: `Hallingrudveien 32` -> locality + postcode, while
  *   `Hallingrudveien 32, 3370 Vikersund` parses perfectly. The street loses its street reading and
- *   the digit loses its anchor TOGETHER. That is Track A's bare-street LICENCE in Norwegian — the
+ *   the digit loses its anchor together. That is Track A's bare-street licence in Norwegian — the
  *   model will not read a street without its postcode/locality partner — not a digit-ownership prior.
- *   fr-fragment fixed exactly this in French by teaching the street WITHOUT its partners.
+ *   fr-fragment fixed exactly this in French by teaching the street without its partners.
  *
- *   THE COUNTER-DISTRIBUTION IS THE POINT (fr-fragment's lesson, and board 2's bare-locality guard).
+ *   the counter-distribution is the point (fr-fragment's lesson, and board 2's bare-locality guard).
  *   Teaching bare `{street} {number}` alone lets the model satisfy every row by flipping its default
  *   from "bare toponym -> locality" to "bare toponym -> street", trading one broken prior for
  *   another. Two counter-classes hold the line:
- *     - bare LOCALITIES (no street) so "bare -> street" is not free.
- *     - bare POSTCODES so the model does not learn to stop emitting postcode to win the digit — the
- *       board 3 bare-pc negative class (1.000) must HOLD.
+ *     - bare localities (no street) so "bare -> street" is not free.
+ *     - bare postcodes so the model does not learn to stop emitting postcode to win the digit — the
+ *       board 3 bare-pc negative class must stay at 1.000.
  *
- *   SLASH HAZARD, pinned deliberately: NO `124/1` is ONE house_number (cadastral gnr/bnr). AU
- *   `12/345` is TWO (unit + house_number). This slice teaches the Norwegian reading; a future AU
- *   intra-word-split slice (B5) must not generalize over it. The two are locale-restricted by design.
+ *   slash hazard, pinned deliberately: Norwegian `124/1` is one house_number (cadastral gnr/bnr). AU
+ *   `12/345` is two (unit + house_number). This recipe teaches the Norwegian reading. a future AU
+ *   intra-word-split recipe (B5) must not generalize over it. The two are locale-restricted by design.
  *
- *   SPLIT: `--exclude-surfaces` REQUIRED (throws otherwise) — the digit board's reserved surface
- *   list. Diacritic-KEEPING normalizer, matching the board (see the norm docstring).
+ *   split: `--exclude-surfaces` is required (the recipe throws without it) — the digit board's reserved surface
+ *   list. Diacritic-keeping normalizer, matching the board (see the norm docstring).
  */
 
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
-import { alignAndWrite, foldNOSurface, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
+import { alignAndWrite, foldNOSurface, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 
 /**
- * Title-case a Kartverket ALL-CAPS locality (HELLVIK -> Hellvik); #690, all-caps is OOD.
+ * Title-case a Kartverket all-caps locality (hellvik -> Hellvik); #690, all-caps is OOD.
  */
 const titleNO = (value: string): string =>
 	value
@@ -49,8 +49,8 @@ const titleNO = (value: string): string =>
 		.join(" ")
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const noFragmentRecipe: CorpusRecipe = {
 	name: "no-fragment",
@@ -88,7 +88,7 @@ export const noFragmentRecipe: CorpusRecipe = {
 		if (!excludePath) {
 			throw new Error(
 				"no-fragment: --exclude-surfaces is REQUIRED. Pass the NO digit board's reserved list " +
-					"(mailwoman/eval-harness/fixtures/no-digits.surfaces.txt) or this slice trains on its own eval set. " +
+					"(mailwoman/eval-harness/fixtures/no-digits.surfaces.txt) or this recipe trains on its own eval set. " +
 					"Source-disjoint by street SURFACE is the split discipline; there is no safe default."
 			)
 		}
@@ -110,7 +110,7 @@ export const noFragmentRecipe: CorpusRecipe = {
 		const longNumberBoost = Math.max(1, Math.floor(opts.longNumberBoost ?? 1))
 		const longNumberMinDigits = opts.longNumberMinDigits ?? 3
 
-		// Harvested from the tuples — every NO row carries its locality and postcode, so the two
+		// Harvested from the tuples — every Norwegian row carries its locality and postcode, so the two
 		// counter-classes need no second source.
 		const localities = new Set<string>()
 		const postcodes = new Set<string>()
@@ -124,7 +124,7 @@ export const noFragmentRecipe: CorpusRecipe = {
 		const emit = (raw: string, components: Record<string, string>, klass: string): void => {
 			// emitSeq keeps every emit distinct — knob 3 emits N copies of one long-number row, and
 			// (components, read) alone would collide their source_id and let downstream dedup drop the boost.
-			const source_id = sliceSourceID("synth-no-fragment", { ...components, k: klass, v: `${read}:${emitSeq++}` })
+			const source_id = recipeSourceID("synth-no-fragment", { ...components, k: klass, v: `${read}:${emitSeq++}` })
 
 			const canonical = {
 				raw,
@@ -165,14 +165,14 @@ export const noFragmentRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// THE SPLIT. A surface on the digit board never enters training.
+			// the split. A surface on the digit board never enters training.
 			if (excluded.has(foldNOSurface(street))) {
 				contaminated++
 
 				continue
 			}
 
-			// COUNTER-DISTRIBUTION — drawn from the harvested pools, not this row's street. Half bare
+			// counter-distribution — drawn from the harvested pools rather than this row's street. Half bare
 			// localities (so "bare -> street" is not free), half bare postcodes (so the model does not
 			// stop emitting postcode to win the digit — board 3's bare-pc must hold).
 			if (random() < counterProb) {
@@ -189,14 +189,14 @@ export const noFragmentRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// THE SIGNAL. A street with NO postcode/locality partner. Either bare, or street+number —
+			// the signal. A street with no postcode/locality partner. Either bare, or street+number —
 			// both are the forms board 3 measured as the headroom (bare-street-hn 0.693, slash-hn 0.650).
 			if (!number || random() < bareStreetProb) {
 				emit(street, { street }, "bare-street")
 			} else {
 				const klass = number.includes("/") ? "slash-hn" : "street-hn"
-				// knob 3: the failing class is street + LONG number (Leppdalsvegen 1285 -> postcode). The
-				// digit count, not the slash, is what tips the length prior toward postcode. Oversample
+				// knob 3: the failing class is street + long number (Leppdalsvegen 1285 -> postcode). The
+				// digit count rather than the slash, is what tips the length prior toward postcode. Oversample
 				// those rows to fight the prior with volume and teach the street/number boundary directly.
 				const digits = (number.match(/\d/g) ?? []).length
 				const copies = digits >= longNumberMinDigits ? longNumberBoost : 1

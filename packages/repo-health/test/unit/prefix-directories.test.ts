@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The sibling-prefix contract: three or more children sharing a hyphen prefix become a directory, and the two
- *   kinds of name that are contracts rather than layout stay put.
+ * @file The sibling-prefix interface: three or more children sharing a hyphen prefix become a directory, and the two
+ *   kinds of name that are interfaces rather than layout stay put.
  */
 
 import { collectRepoContext } from "@mailwoman/repo-health"
@@ -162,7 +162,7 @@ describe("prefixDirectoriesCheck", () => {
 		expect(diagnostics).toEqual([
 			expect.objectContaining({
 				severity: "error",
-				// A directory member's diagnostic names the directory, not a file inside it.
+				// A directory member's diagnostic names the directory rather than a file inside it.
 				file: `${ADAPTERS}/state-hi-schools`,
 				message: expect.stringContaining(`${ADAPTERS}/state/`),
 			}),

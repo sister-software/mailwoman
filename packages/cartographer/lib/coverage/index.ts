@@ -2,18 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The "fog of war" address-COVERAGE overlay. An H3 hexbin tileset (built by `mailwoman coverage
+ *   The "fog of war" address-coverage overlay. An H3 hexbin tileset (built by `mailwoman coverage
  *   build`) shading "where do we need data" at a glance. Two layers in one tileset: the US rooftop
- *   fine map (address-point density, street/block detail) and a GLOBAL "work to do" layer — populated
+ *   fine map (address-point density, street/block detail) and a global "work to do" layer — populated
  *   places (WOF, importance-weighted) we can't geocode yet show as gray-fog holes, and postcode/rooftop
  *   coverage clears them. Covered → clear (basemap shows through), uncovered civilization → gray fog.
  *
- *   Each cell carries TWO baked fog values in [0,1] (0 = covered, 1 = empty), so the same tiles drive
+ *   Each cell carries two baked fog values in [0,1] (0 = covered, 1 = empty), so the same tiles drive
  *   either reading without a rebuild:
  *     • `fog_opt` — optimistic: partial coverage lifted toward clear, so a region "looks covered" when
  *       zoomed out and the gaps only surface on zoom-in.
  *     • `fog`     — honest: true coverage fraction, so the gap is visible even at low zoom.
- *   We expose each as its OWN default-off fill layer (`coverage-opt-fog`, `coverage-honest-fog`) so the
+ *   We expose each as its own default-off fill layer (`coverage-opt-fog`, `coverage-honest-fog`) so the
  *   demo's LayerToggleControl gives each its own checkbox — pick the reading you want, no extra UI.
  *
  *   Served as XYZ vector tiles by the tile worker from `mailwoman-tiles/tiles/coverage-v5.pmtiles` (same
@@ -25,6 +25,12 @@ import type { FillLayerSpecification, VectorSourceSpecification } from "@maplibr
 
 import { TileSetSourceID } from "#styles/sources"
 
+/**
+ * The MapLibre source id the address-coverage overlay is registered under.
+ *
+ * The `-v5` suffix is part of the id rather than a version to bump casually: a style and the PMTiles archive
+ * it points at agree by this string, so changing it orphans every layer that names the old one.
+ */
 export const CoverageTileSetID = TileSetSourceID("coverage-v5")
 
 /**
@@ -66,11 +72,11 @@ function fogFill(id: string, fogProperty: "fog" | "fog_opt"): FillLayerSpecifica
 		type: "fill",
 		source: CoverageTileSetID,
 		"source-layer": COVERAGE_SOURCE_LAYER,
-		// Default OFF — an overlay, surfaced via the layer toggle, never on by default.
+		// Default off — an overlay, surfaced via the layer toggle, never on by default.
 		layout: { visibility: "none" },
 		paint: {
 			"fill-color": COVERAGE_FOG_COLOR,
-			// Opacity tracks the cell's fog value; coalesce guards a missing prop to 0 (fully clear).
+			// Opacity tracks the cell's fog value. coalesce guards a missing prop to 0 (fully clear).
 			"fill-opacity": ["*", ["coalesce", ["to-number", ["get", fogProperty]], 0], COVERAGE_MAX_FOG_OPACITY],
 		},
 	}

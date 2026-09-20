@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Worker export. `readEnv` runs per request and is cheap; a placeholder var answers 503 for every request rather
+ *   The Worker export. `readEnv` runs per request and is cheap. a placeholder var answers 503 for every request rather
  *   than letting one route work while another mints. The ledger, the email provider and the signing self-test are built
- *   once per isolate: the self-test signs and verifies a probe token, which is worth doing once, not per request.
+ *   once per isolate: the self-test signs and verifies a probe token, which is worth doing once rather than per request.
  */
 
 import type { ExportedHandler } from "@cloudflare/workers-types"
@@ -95,7 +95,7 @@ const handler: ExportedHandler<LicenseWorkerBindings> = {
 		const state = isolateState(env)
 		const selfTest = await state.selfTest
 
-		// A worker that would refuse to mint over HTTP refuses to mint on a schedule too; the report says why.
+		// A worker that would refuse to mint over http refuses to mint on a schedule too. the report says why.
 		if (selfTest.status !== "ok") {
 			console.error(stringifyJSON({ reconcile: "skipped", reason: selfTest.reason }))
 

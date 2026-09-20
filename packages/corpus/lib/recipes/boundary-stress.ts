@@ -2,26 +2,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `boundary-stress` slice recipe (#375) — the boundary-instability augmentation. Self-generates
+ *   `boundary-stress` recipe (#375) — the boundary-instability augmentation. Self-generates
  *   `--count` rows from {@link synthesizeBoundaryStressRow}'s weighted template mix (the v1.7.0,
- *   DeepSeek-tuned 2026-06-18 composition), aligns each to BIO, and emits a labeled JSONL. The
- *   change for the taxonomy's #1 parser family (the boundary-wobble class). Ported from
- *   scripts/build-boundary-stress-slice.mjs.
+ *   DeepSeek-tuned 2026-06-18 composition), aligns each to BIO, and emits a labeled jsonl. The
+ *   change for the taxonomy's #1 parser family (the boundary-wobble class). Ported from the root
+ *   build script it replaced.
  *
- *   `synthesizeBoundaryStressRow` is NOT re-exported from the corpus index — imported directly here.
+ *   `synthesizeBoundaryStressRow` is not re-exported from the corpus index — imported directly here.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
-import { type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
+import { type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 import { type BoundaryStressTemplate, synthesizeBoundaryStressRow } from "#synthesizers/boundary-stress"
 import { alignRow } from "#utils"
 
 /**
  * Revised composition (v1.7.0, DeepSeek-tuned 2026-06-18): `bare-locality` ~11% (recover the 84% locality drop on bare
- * "City, STATE" rows WITHOUT becoming a locality-first majority), and house-number-before:after = 7:3 (FR's dominant
- * order is number-BEFORE; 30% after breaks the order-bias shortcut without risking FR hn-before accuracy). The three
+ * "City, state" rows without becoming a locality-first majority), and house-number-before:after = 7:3 (FR's dominant
+ * order is number-before. 30% after breaks the order-bias shortcut without risking FR hn-before accuracy). The three
  * original non-number shapes keep the bulk. Weights sum to 1.0. Key order is required — it drives the cumulative
  * thresholds below.
  */
@@ -51,15 +51,15 @@ function pickTemplate(r: () => number): BoundaryStressTemplate {
 }
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const boundaryStressRecipe: CorpusRecipe = {
 	name: "boundary-stress",
 	description: "Boundary-instability rows (#375): weighted template mix → synthesizeBoundaryStressRow → aligned BIO",
 	mode: "generate",
 	async run(opts, write) {
-		// Emit PRNG: the legacy build-boundary-stress-slice.mjs seeded mulberry32(opts.seed).
+		// Emit prng: the root build script this recipe replaced seeded mulberry32(opts.seed).
 		const random = makeMulberry32(opts.seed)
 		const count = opts.count ?? 20_000
 		let emitted = 0
@@ -68,7 +68,7 @@ export const boundaryStressRecipe: CorpusRecipe = {
 		for (let i = 0; i < count; i++) {
 			const row = synthesizeBoundaryStressRow(undefined, { random, forceTemplate: pickTemplate(random) })
 			const country = row.locale.split("-")[1] ?? "US"
-			const source_id = sliceSourceID("synth-boundary-stress", { ...row.components, v: String(i) })
+			const source_id = recipeSourceID("synth-boundary-stress", { ...row.components, v: String(i) })
 
 			const canonical = {
 				raw: row.raw,
@@ -89,7 +89,7 @@ export const boundaryStressRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// Match the base corpus parquet schema: flat synth_method / synth_base_id, not a nested `synth`.
+			// Match the base corpus parquet schema: flat synth_method / synth_base_id rather than a nested `synth`.
 			write(stringifyJSON({ ...aligned.row, synth_method: `boundary-stress:${row.template}`, synth_base_id: null }))
 
 			emitted++

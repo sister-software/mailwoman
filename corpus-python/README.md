@@ -25,7 +25,7 @@ fail. `launch/train_remote.py`'s docstring is the table of what each module owns
 
 The JSONL → Parquet conversion that lived here in Phase 1 was deleted alongside the JS-native
 Parquet writer (`@dsnp/parquetjs`-based) that landed in `packages/corpus/lib/parquet.ts` —
-`mailwoman corpus build` now writes `.parquet` slices directly with no Python in the loop.
+`mailwoman corpus build` now writes the `.parquet` files directly with no Python in the loop.
 
 ## Install
 
@@ -158,6 +158,6 @@ SentencePiece is a native binary dep without a maintained Node bindings story fo
 Keeping the Python side standalone:
 
 - Lets the TS pipeline build / test / ship without a Python toolchain on every CI runner.
-- Cleanly factors training (slow, GPU-bound) away from the streaming corpus build (fast, JS).
+- Separates training (slow, GPU-bound) from the streaming corpus build (fast, JS).
 
 See `DECISIONS.md` for the formal rationale on each call.

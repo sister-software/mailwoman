@@ -4,37 +4,37 @@
 /**
  *   Telecom-infrastructure POI extractor (decisions 2/3) — stream OSM telecom features
  *   (telephone exchanges, street cabinets, communications masts, data centers) out of a Geofabrik
- *   `.osm.pbf` extract via GDAL/ogr2ogr, matched against an AND/OR tag-rule table, and yielded as
+ *   `.osm.pbf` extract via gdal/ogr2ogr, matched against an and/or tag-rule table, and yielded as
  *   {@link POISourceRow}s ready for `buildPOIDatabase`'s injected `rows` point
  *   (`mailwoman/gazetteer-pipeline/poi/build-poi.ts:341`) — DuckDB bypassed entirely (decision 3).
- *   Mirrors `extract.ts`'s process-spawn + GeoJSONSeq-over-stdout idiom exactly; the two differences
- *   are the predicate (telecom tags, not `addr:housenumber`) and the match fan-out (a feature can only
- *   satisfy the FIRST rule in table order — `man_made` alone appears in four rules and `telecom` in
- *   two, but every rule sharing a key requires a DIFFERENT value for it, so a real feature, which
+ *   Mirrors `extract.ts`'s process-spawn + GeoJSONSeq-over-stdout idiom exactly. the two differences
+ *   are the predicate (telecom tags rather than `addr:housenumber`) and the match fan-out (a feature can only
+ *   satisfy the first rule in table order — `man_made` alone appears in four rules and `telecom` in
+ *   two, but every rule sharing a key requires a different value for it, so a real feature, which
  *   carries one value per key, can satisfy at most one rule regardless of table order).
  *
- *   Tag disjunctions/conjunctions live HERE, not in the taxonomy (decision 2): `CategoryRecord.osmTag`
+ *   Tag disjunctions/conjunctions live here rather than in the taxonomy (decision 2): `CategoryRecord.osmTag`
  *   is a single scalar the Overpass emitter consumes (`poi-taxonomy/overpass.ts` hard-splits on one
- *   `=`), so an OR across two tags (telephone exchange) or an AND with a qualifier tag (street
- *   cabinet, comms mast) can't live there. {@link OSMPOITagRule.all} is a conjunction (AND) of
- *   `[key, value]` pairs; OR is expressed as multiple rules sharing a `categoryID` — see
+ *   `=`), so a disjunction across two tags (telephone exchange) or a conjunction with a qualifier tag
+ *   (street cabinet, comms mast) can't live there. {@link OSMPOITagRule.all} is a conjunction of
+ *   `[key, value]` pairs. a disjunction is expressed as multiple rules sharing a `categoryID` — see
  *   {@link TELECOM_TAG_RULES}.
  *
- *   Promoted vs. hstore tag columns: GDAL's default `osmconf.ini` (`/usr/share/gdal/osmconf.ini` on
- *   this box) promotes a DIFFERENT key list per layer to real OGR fields — selected as bare columns —
+ *   Promoted vs. hstore tag columns: gdal's default `osmconf.ini` (`/usr/share/gdal/osmconf.ini` on
+ *   this box) promotes a different key list per layer to real OGR fields — selected as bare columns —
  *   and drops each promoted key from that layer's `other_tags` hstore. `name` and `man_made` are on
  *   both lists; `amenity`, `shop` and `building` are on `multipolygons` only. Keys on neither list
  *   (`telecom`, `street_cabinet`, `tower:type`) are read via `hstore_get_value`, exactly as
  *   `extract.ts` reads `addr:*`. {@link PROMOTED_KEYS_BY_LAYER} carries both lists, because reading a
  *   promoted key through `hstore_get_value` returns NULL for every feature of that layer — a silent
  *   empty result rather than an error. A custom `OSM_CONFIG_FILE` that un-promotes a key on either
- *   list would break the bare-column assumption; not a concern for the shipped default.
+ *   list would break the bare-column assumption. not a concern for the shipped default.
  *
- *   `POISourceRow` is declared LOCALLY here (structurally identical to the exported interface of the
+ *   `POISourceRow` is declared locally here (structurally identical to the exported interface of the
  *   same name in `mailwoman/gazetteer-pipeline/poi/build-poi.ts`) rather than imported: `@mailwoman/osm`
  *   is a dependency OF the top-level `mailwoman` package (which owns the gazetteer pipeline), never the
  *   reverse — importing it here would invert the workspace dependency graph. `build-poi.ts`'s `--source osm`
- *   build branch sits on the correct side of that edge; TS structural typing
+ *   build branch sits on the correct side of that edge. TS structural typing
  *   accepts this row with no cast, so the two are wired together directly.
  *
  *   `country` has no representation on a bare OSM feature (a Geofabrik extract's country isn't a
@@ -73,8 +73,8 @@ export interface POISourceRow {
 }
 
 /**
- * One telecom-category match rule: `categoryID` wins when EVERY `[key, value]` pair in `all` is present on the feature
- * (AND within a rule). OR across tags is expressed as multiple rules sharing the same `categoryID` — see
+ * One telecom-category match rule: `categoryID` wins when every `[key, value]` pair in `all` is present on the feature
+ * (a conjunction within a rule). A disjunction across tags is expressed as multiple rules sharing a `categoryID` — see
  * {@link TELECOM_TAG_RULES}'s two `telecom_exchange` rules and two `data_center` rules.
  */
 export interface OSMPOITagRule {
@@ -85,12 +85,12 @@ export interface OSMPOITagRule {
 /**
  * Telecom-infrastructure tag rules (decision 2), category ids matching `poi-taxonomy` exactly:
  *
- * - `telecom_exchange` ← `man_made=telephone_exchange` OR `telecom=exchange`
- * - `telecom_cabinet` ← `man_made=street_cabinet` AND `street_cabinet=telecom`
- * - `tower_comms` ← `man_made=mast` AND `tower:type=communication`
- * - `data_center` ← `man_made=data_center` OR `telecom=data_center`
+ * - `telecom_exchange` ← `man_made=telephone_exchange` or `telecom=exchange`
+ * - `telecom_cabinet` ← `man_made=street_cabinet` and `street_cabinet=telecom`
+ * - `tower_comms` ← `man_made=mast` and `tower:type=communication`
+ * - `data_center` ← `man_made=data_center` or `telecom=data_center`
  *
- * Rule order only matters in that the FIRST matching rule wins per feature; `man_made` alone appears in four rules and
+ * Rule order only matters in that the first matching rule wins per feature; `man_made` alone appears in four rules and
  * `telecom` in two, but every rule sharing a key requires a different value for it, so a real-world feature — which
  * carries one value per key — can match at most one rule regardless of order.
  */
@@ -138,10 +138,10 @@ export function tagRuleFromOSMTag(categoryID: string, osmTag: string): OSMPOITag
 const POI_LAYERS = ["points", "multipolygons"] as const
 
 /**
- * Tag keys GDAL's default `osmconf.ini` promotes to real OGR fields, PER LAYER — selected as bare columns rather than
+ * Tag keys gdal's default `osmconf.ini` promotes to real OGR fields, PER layer — selected as bare columns rather than
  * via `hstore_get_value`. See the module docstring's "Promoted vs. hstore tag columns" note.
  *
- * The two lists differ, and the difference is not cosmetic: a promoted key is REMOVED from `other_tags`, so reading it
+ * The two lists differ, and the difference is not cosmetic: a promoted key is removed from `other_tags`, so reading it
  * with `hstore_get_value` on a layer that promotes it returns NULL for every feature — a whole layer of real matches
  * reported as an empty result. Measured on the Île-de-France extract with `amenity=pharmacy` (promoted on
  * `multipolygons`, hstore on `points`): the hstore expression answered 0 on `multipolygons` where the bare column
@@ -185,10 +185,10 @@ function distinctPredicateKeys(rules: readonly OSMPOITagRule[]): string[] {
 }
 
 /**
- * Build the OGRSQL SELECT+WHERE for one layer: an OR of the rule table's AND-groups over promoted-column/`other_tags`
+ * Build the ogrsql select+where for one layer: an `or` of the rule table's and-groups over promoted-column/`other_tags`
  * tag values, projecting `name` plus every referenced key so {@link extractOSMPOIs} can re-derive the matched category
- * in JS via {@link matchOSMPOITagRule} — the belt to this predicate's suspenders. A GDAL OGRSQL dialect quirk could
- * only narrow, never widen, what this WHERE matches, and the JS-side matcher re-checks the same rule table before a row
+ * in JS via {@link matchOSMPOITagRule} — the belt to this predicate's suspenders. A gdal ogrsql dialect quirk could
+ * only narrow, never widen, what this where matches, and the JS-side matcher re-checks the same rule table before a row
  * is ever yielded, so no false positive can slip through even if the pushdown predicate were imprecise.
  *
  * Throws via {@link assertSafeTagRules} if `rules` contains a key/value outside the OSM tag-token allowlist — `rules`
@@ -213,7 +213,7 @@ export function buildTelecomPOISQL(layer: string, rules: readonly OSMPOITagRule[
 }
 
 /**
- * PURE tag-rule matcher (decision 2): the FIRST rule whose `all` conjunction is fully satisfied by `tags` wins, `null`
+ * Pure tag-rule matcher (decision 2): the first rule whose `all` conjunction is fully satisfied by `tags` wins, `null`
  * when none match. `tags` is a plain key -> value dict (a decoded feature's promoted-column/`other_tags` values) — no
  * OGR/ogr2ogr involved, so this is unit-testable over synthetic dicts alone.
  */

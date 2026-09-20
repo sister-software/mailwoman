@@ -531,6 +531,11 @@
 			"node": "./lib/release-config.ts",
 			"default": "./out/release-config.js"
 		},
+		"./scope-config": {
+			"types": "./out/scope-config.d.ts",
+			"node": "./lib/scope-config.ts",
+			"default": "./out/scope-config.js"
+		},
 		"./workspaces": {
 			"types": "./out/workspaces.d.ts",
 			"node": "./lib/workspaces.ts",
@@ -604,7 +609,7 @@
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/evidence": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"adm-zip": "^0.6.0",
+		"adm-zip": "^0.6.1",
 		"async-init": "^1.0.0",
 		"axios": "^1.20.0",
 		"axios-cache-interceptor": "^1.12.3",
@@ -621,10 +626,10 @@
 		"iconv-lite": "^0.7.3",
 		"isomorphic-dompurify": "^4.1.0",
 		"kysely": "^0.29.5",
-		"path-ts": "^2.3.0",
+		"path-ts": "^2.4.1",
 		"pino": "^10.3.1",
 		"regenerate": "^1.4.2",
-		"spliterator": "^7.7.1",
+		"spliterator": "^7.11.0",
 		"trusted-types": "^2.0.0",
 		"type-fest": "^5.9.0",
 		"yauzl-promise": "^4.0.0",

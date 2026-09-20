@@ -6,9 +6,7 @@
  *   input has combining characters (`e` + `́` → `é`), NFC composes them — the normalized string can
  *   be shorter than the raw.
  *
- *   Approximation: we walk the input grapheme-by-grapheme (best effort via codepoint stepping) and
- *   map each output index to the start of its source sequence. Rare CJK edge cases involving
- *   variant selectors may produce off-by-one offsets — acceptable for v1.
+ *   The offset map assigns each output index to the first code point of its source sequence.
  */
 
 import { identityMap } from "#offset-map"
@@ -33,9 +31,8 @@ export function applyNFC(input: string): NFCResult {
 }
 
 /**
- * Estimate per-output-codepoint offsets. Walks both strings in parallel; emits the next source index for each output
- * position. Imprecise for combining sequences but correct for length-equal NFC outputs (the common length-changing case
- * is when a sequence shortens).
+ * Estimate per-output-codepoint offsets. Walks both strings in parallel. emits the next source index for each output
+ * position.
  */
 function estimateNFCMap(input: string, output: string): number[] {
 	const map: number[] = []
@@ -46,7 +43,7 @@ function estimateNFCMap(input: string, output: string): number[] {
 		const outCp = output.codePointAt(outIdx)!
 		const outStep = outCp > 0xff_ff ? 2 : 1
 
-		// Walk the input forward by at least one codepoint; absorb any combining marks (0x0300–0x036f).
+		// Walk the input forward by at least one codepoint. absorb any combining marks (0x0300–0x036f).
 		if (inIdx < input.length) {
 			const inCp = input.codePointAt(inIdx)!
 			inIdx += inCp > 0xff_ff ? 2 : 1

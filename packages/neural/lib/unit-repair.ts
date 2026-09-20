@@ -4,28 +4,28 @@
 /**
  *   Secondary-unit regex repair pass — parser-improvement backlog (2026-05-30).
  *
- *   The three-arena capability eval surfaced a persistent neural weakness: the model DROPS secondary
- *   units. "123 Main St Apt 456" → no unit label; the postal-standards secondary-unit edge class
+ *   The three-arena capability eval surfaced a persistent neural weakness: the model drops secondary
+ *   units. "123 Main St Apt 456" → no unit label. the postal-standards secondary-unit edge class
  *   scored 0% neural. Units have a rigid surface shape (a designator keyword + an identifier), so —
  *   exactly like the postcode-repair pass (#35) — we can detect them deterministically and repair
- *   the BIO labels AFTER decode but BEFORE `buildAddressTree`. The model is untouched; this is a
+ *   the BIO labels after decode but before `buildAddressTree`. The model is untouched. this is a
  *   decoder-side correction, the same "lowest risk" change family as postcode-repair.
  *
- *   PRECISION GUARDS (mirror postcode-repair — never regress a confident parse):
+ *   precision guards (mirror postcode-repair — never regress a confident parse):
  *
- *   - We only fire on EXPLICIT designators (Apt, Ste, Suite, Unit, Rm, Floor, Bldg, Flat, … + bare
+ *   - We only fire on explicit designators (Apt, Ste, Suite, Unit, Rm, Floor, Bldg, Flat, … + bare
  *       "#<n>"). Ambiguous tokens are deliberately excluded: "Box" (that's po_box), bare "F"/"No"
  *       (too greedy), "Space"/"Stop" (common words).
- *   - ADD path (model emitted no unit over the matched run): allowed ONLY over `O` tokens — never over
+ *   - ADD path (model emitted no unit over the matched run): allowed only over `O` tokens — never over
  *       house_number / street* / postcode / po_box / a geographic container. So a
  *       confidently-labeled street or number is safe.
- *   - SNAP path: when the model already started a unit span inside the match, we expand/clip it to the
+ *   - snap path: when the model already started a unit span inside the match, we expand/clip it to the
  *       full detected shape.
  *   - Local smear-clip: unit tokens immediately flanking a snapped run are cleared (mirrors
  *       postcode-repair) so "Apt 4 Springfield" can't leave a stray I-unit on "Springfield".
  *
  *   Opt-in via `ParseOpts.unitRepair` (postcode-repair earned default-on only after a measured
- *   +135/0; unit-repair stays opt-in until the v0.7.2 arena re-run quantifies its delta).
+ *   +135/0. unit-repair stays opt-in until the v0.7.2 arena re-run quantifies its delta).
  */
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
@@ -80,7 +80,7 @@ const OUTSIDE = "O" as DecoderToken["label"]
 
 /**
  * Tags a unit span is allowed to overwrite on the ADD path. The v0.7.2 arena showed the dominant failure for bare
- * designator-led units ("Flat 2 14 Smith St", "APT 2 …") is the model labeling the WHOLE designator+identifier run as
+ * designator-led units ("Flat 2 14 Smith St", "APT 2 …") is the model labeling the whole designator+identifier run as
  * `locality` — not leaving it `O`. An explicit designator + identifier is a high-confidence "this is a unit" shape (a
  * real locality/suburb name never has that form), so — exactly like postcode-repair's ADD_OVER_TAGS — we let it reclaim
  * a `locality`/`dependent_locality` span. Structural tags (house_number, street*, postcode, po_box, region, country,
@@ -96,7 +96,7 @@ function collectMatches(text: string): UnitMatch[] {
 }
 
 /**
- * Repair secondary-unit label spans in a decoded token sequence using designator regexes. Returns a NEW token array
+ * Repair secondary-unit label spans in a decoded token sequence using designator regexes. Returns a new token array
  * (inputs are not mutated) plus a change count.
  */
 export function repairUnitLabels(text: string, input: readonly DecoderToken[]): RepairResult {
@@ -120,7 +120,7 @@ export function repairUnitLabels(text: string, input: readonly DecoderToken[]): 
 		// po_box/region/country/venue.
 		if (!hasUnit && !isAddSafe(tokens, overlap, ADD_OVER_TAGS)) continue
 
-		// SNAP/ADD: relabel the matched run as a single unit span.
+		// snap/ADD: relabel the matched run as a single unit span.
 		overlap.forEach((i, k) => setLabel(i, k === 0 ? UNIT_B : UNIT_I))
 
 		// Local smear clip: clear unit tokens immediately flanking the snapped run.

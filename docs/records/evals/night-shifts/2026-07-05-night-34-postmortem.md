@@ -13,7 +13,7 @@ $30 Modal ceiling — **spent $0**. Promotion WALLED (v5.4.0 shipped today).
 (two normalizer changes), and **three stale hypotheses killed by measurement** (#965/#942/#985). Every
 win was a preprocessing change or a measurement; zero GPU. The recurring lesson: **characterize the
 failure before declaring the well dry — the diagnostic is where the change hides** (the GB #928 fix was
-found by characterizing the GB namesake tail, not by planning it).
+found by characterizing the GB namesake tail rather than by planning it).
 
 ## What shipped
 
@@ -27,16 +27,16 @@ found by characterizing the GB namesake tail, not by planning it).
   ZERO retrain, cleared the metamorphic INV[lower] class (34/35 held, was ~6 failing) + promoted
   `fr-chevaleret-bare` to a counted pass (24/24). **The conditional GPU probe (#84) was obviated** —
   the change left no model-level residual, so $0 of the $30 Modal budget spent.
-- **#942** (measured, not built) — the SI no-street class now resolves at **99.6%** (p50 0.73 km) via
+- **#942** (measured rather than built) — the SI no-street class now resolves at **99.6%** (p50 0.73 km) via
   the shipped `postalCompoundRecovery` + v5.4.0 + #829, vs the 55 rows lost by v2.2.0 that spawned it.
   The proposed postal-city fallback rung is redundant; the residual is the intra-SI namesake p90 tail
   (#370 territory). Reported + recommended re-scope. **Didn't build a change the data said was moot.**
 - **#981** (filed) — the geocode-core query-shape-prior gap (parse path applies `buildEmissionPriors`,
   geocode path doesn't). Filed with the assessment that wiring it is behavior-affecting + low-value
-  (0.9 log-odds nudge, model usually already right) — a documented gap, not a rushed change.
+  (0.9 log-odds nudge, model typically already right) — a documented gap rather than a rushed change.
 - **trailing-punct trim** (PR #982, merged, bonus) — the whitespace stage now strips a trailing
   `.`/`,`/`;`/`:` (a trailing dot dropped the street tier: `…DC.` → admin). Offset-map-safe,
-  trailing-only, conservative set. Cleared the LAST metamorphic xfail: **INV is now 35/35 with ZERO
+  trailing-only, conservative set. Cleared the last metamorphic xfail: **INV is now 35/35 with ZERO
   xfails** — combined with #829, the whole invariance layer is green for the first time.
 - **#937 GB panel** (PR #983, bonus) — `build-osm-coord-golden.ts` (OSM→golden adapter over the
   existing GDAL `extractAddrPoints`) + `oa-gb-coord-1k.jsonl` (1000 rows / 183 buckets from 5.0M OSM
@@ -55,7 +55,7 @@ found by characterizing the GB namesake tail, not by planning it).
 
 - **Salvage-first paid twice**: #963's scheduled functional smoke already existed (only needed the NL
   case), and #829 reused #690's exact hook shape.
-- **Measure-don't-guess killed THREE stale hypotheses** — the night's headline: #965 (epoch1 3 km was a
+- **Measure-don't-guess killed three stale hypotheses** — the night's headline: #965 (epoch1 3 km was a
   different harness; FI tail is intra-country), #942 (SI already 99.6%, change redundant), #985 (safelist
   moot for HU — the placer never emits HU@conf≥0.9). Each was a plausible target that measurement
   refuted before a line of "fix" was written. The `--hard-country-safelist` flag was built _to run_ the
@@ -72,13 +72,13 @@ found by characterizing the GB namesake tail, not by planning it).
   by shipped work but were still cited as open targets. Re-measuring first is cheap; a standing "re-baseline
   before building the fix" habit would have caught both without the investigation detour.
 - **The `&`-backgrounded merge watchers kept dying on branch switches** — had to merge several PRs by
-  hand. A watcher that survives `git checkout` (or just merging inline when checks are green) is cleaner.
-- The GB/HU **p90 namesake tails** (582 / 1330 km) are the honest limit of tonight's changes — they need
-  the namesake binder (#370) or a safelist decision, not a normalizer. Filed as the next change, not forced.
+  hand. A watcher that survives `git checkout` (ormerging inline when checks are green) is cleaner.
+- The GB/HU **p90 namesake tails** (582 / 1330 km) are the direct limit of tonight's changes — they need
+  the namesake binder (#370) or a safelist decision rather than a normalizer. Filed as the next change rather than forced.
 
 ## Decisions made autonomously
 
-- **#965 approach — mirror geocode-core, don't re-derive.** Threaded the SAME production scoping
+- **#965 approach — mirror geocode-core, don't re-derive.** Threaded the same production scoping
   (`loadDefaultPlaceCountry` → `anchorPosterior`/`anchorWeight` + `hardCountryFor`) behind a
   `--hard-country` flag so the two paths can't drift. Also swept two `recognizeUsRegions` acronym
   stragglers (#875 gap) failing `typecheck:scripts`.
@@ -87,14 +87,14 @@ found by characterizing the GB namesake tail, not by planning it).
   but running it revealed the issue's headline ("harness overstates FI production error; hard scoping
   → 3 km") is wrong:
   - `HARD_PLACE_COUNTRY_SAFELIST = {US, ES, IT, NL, DE, FR}`. **FI, SI, CZ — the exact locales the
-    issue cited — are NOT safelisted**, so production `geocode-core` doesn't hard-filter them either.
+    issue cited — are not safelisted**, so production `geocode-core` doesn't hard-filter them either.
     The soft-prior harness was already production-faithful for them.
   - The FI p90 tail is **intra-country** (worst rows ~700–974 km, all < Finland's ~1160 km span) —
     wrong-FI-town error, which no country change (soft prior, `anchorPosterior`, or `hardCountry`)
     can address. `--hard-country` moved FI p90 262→264 km (scoped) and 307→307 km (unscoped): a
     legitimate no-op, because production is a no-op there too.
   - The epoch1 3.15 km came from a **different harness** (the baseline MANIFEST already flagged it
-    unreproducible). It was never production. The harness numbers are honest; the epoch1 _comparison_
+    unreproducible). It was never production. The harness numbers are direct; the epoch1 _comparison_
     was the error.
   - **The fix still lands** — for safelisted countries with cross-border namesakes on the unscoped
     legs, `--hard-country` DOES bite: FR unscoped mean 144→119 km (−17%; wrong-country outliers

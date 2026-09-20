@@ -19,14 +19,14 @@
  *       Phase 4.3 overlays resolver provenance (`resolver:wof-admin:101751119`).
  *   - `lat` / `lon` — resolver-supplied centroid (Phase 4.3). Emitted only when both are set.
  *   - `place` — resolver-supplied normalized place URI like `wof:101751119` (Phase 4.3). Emitted only
- *       when `node.placeID` is set; distinct from `src` so callers that want the bare place id
+ *       when `node.placeID` is set. distinct from `src` so callers that want the bare place id
  *       without the vendor prefix have a direct attribute to read.
  *   - Root `<address>` carries `raw` — the full input string for round-trip.
  *
  *   ⚠ DOM failure mode: `element.textContent` on a mixed-content node returns the concatenation of all
  *   descendant text (parent value + children values). Use `Array.from(el.childNodes).filter(n =>
  *   n.nodeType === 3).map(n => n.nodeValue).join('').trim()` or XPath `text()` to get just the
- *   parent's own value. Documented in the package README.
+ *   parent's own value. Documented in the package readme.
  */
 
 import type { AddressNode, AddressTree } from "#decoder/types"
@@ -74,7 +74,7 @@ export interface SerializeXMLOpts {
 }
 
 /**
- * Deliberately NOT `escapeHTML` (`#strings/escape`): every attribute this serializer emits is double-quoted, so `'`
+ * Deliberately not `escapeHTML` (`#strings/escape`): every attribute this serializer emits is double-quoted, so `'`
  * needs no escape, and adding `&#39;` would change shipped serialization bytes.
  */
 function escapeXml(s: string): string {
@@ -182,7 +182,7 @@ function serializeNode(node: AddressNode, indent: string, opts: Required<Seriali
 	}
 
 	const childrenStr = node.children.map((c) => serializeNode(c, childIndent, opts)).join(nl)
-	const inner = [childrenStr, altsBlock].filter((part) => part.length > 0).join(nl)
+	const inner = [childrenStr, altsBlock].filter((part) => part.length).join(nl)
 
 	return `${indent}<${node.tag}${a}>${text}${nl}${inner}${nl}${indent}</${node.tag}>`
 }

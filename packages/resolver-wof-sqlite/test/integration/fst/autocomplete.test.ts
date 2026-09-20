@@ -75,7 +75,7 @@ describe.skipIf(!HAS_WOF)("FST autocomplete — integration", () => {
 
 // Synthetic-FST unit tests (no WOF DB needed → always run in CI). Cover the #587 char-level
 // partial-last-token completion + dedupeByName. The trie:
-//   root --new--> [york -> New York; london -> New London ×2 (city+county)]
+//   root --new--> [york -> New York. london -> New London ×2 (city+county)]
 //        --san--> [francisco -> San Francisco]
 //        --chicago--> Chicago
 describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
@@ -124,7 +124,7 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 
 	it("a complete-token walk must not SHADOW the partial interpretation: 'chic' with a real place named Chic still reaches Chicago", () => {
 		// The live en-us artifact holds a place literally named "Chic" — with it, the typed prefix is
-		// BOTH a complete edge and a partial of "chicago", and the walk's success silently dropped
+		// both a complete edge and a partial of "chicago", and the walk's success silently dropped
 		// every longer completion (the prod typeahead offered only "Chic" for "Chic").
 		const shadowed = new FSTMatcher([
 			{
@@ -194,7 +194,7 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 		expect(r.suggestions[0]?.name).toBe("Gotham")
 	})
 
-	// Robustness contract for the demo typeahead (#190/#585): the box feeds raw, half-typed input on
+	// Robustness interface for the demo typeahead (#190/#585): the box feeds raw, half-typed input on
 	// every keystroke, so the function must never throw and must return [] (not garbage) for input it
 	// can't complete. These lock that in so a future refactor can't reintroduce the "Denver for New
 	// Yor" class of bug.

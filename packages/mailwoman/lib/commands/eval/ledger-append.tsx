@@ -4,16 +4,16 @@
 /**
  *   `mailwoman eval ledger-append` — turn a promotion-eval out-dir into one row of
  *   `evals/scores-by-version.json` (#885). `eval promote` prints this command pre-filled on every
- *   PASS. Refuses duplicates without `--replace` and refuses un-excepted FAIL verdicts; exit codes
+ *   `pass`. Refuses duplicates without `--replace` and refuses un-excepted `fail` verdicts. exit codes
  *   mirror the retired script (0 appended, 1 refused, 2 usage).
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "Append a promotion-eval run to evals/scores-by-version.json (#885)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "ledger-append",
@@ -47,33 +47,15 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	outDir?: string
-	modelVersion?: string
-	runId?: string
-	modelPath?: string
-	card: string
-	ledger: string
-	trainedAt?: string
-	notes: string
-	replace: boolean
-	operatorException?: string[]
-}
+// `ledgerAppend` narrates its own ✓/✗ lines, so no `json`.
+const EvalLedgerAppend = harnessCommand(
+	spec,
+	async (options) => {
+		const { ledgerAppend } = await import("#eval-harness/ledger-append")
 
-const EvalLedgerAppend: ParsedCommandComponent<Options> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { ledgerAppend } = await import("#eval-harness/ledger-append")
-
-			return await ledgerAppend(options)
-		},
-		(exitCode) => exitCode
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	// ledgerAppend narrates its own ✓/✗ lines.
-	return null
-}
+		return await ledgerAppend(options)
+	},
+	{ exitCode: (exitCode) => exitCode }
+)
 
 export default EvalLedgerAppend

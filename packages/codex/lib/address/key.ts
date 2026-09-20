@@ -12,10 +12,10 @@
  *   blocking stage wants as one cheap, high-precision candidate signal (alongside geographic
  *   proximity, which carries the real weight — see the geocode-first record-matching concept doc).
  *
- *   Deliberately NOT done yet (follow-ups, all conditioned on `@mailwoman/codex`): expanding street
+ *   Deliberately not done yet (follow-ups, all conditioned on `@mailwoman/codex`): expanding street
  *   suffixes (`Ave` → `avenue`) and directionals (`N` → `north`) to a canonical form, and
  *   USPS-style standardization. This first version is pure normalization with no dictionary expansion,
- *   so the key is stable and explainable; expansion is an additive refinement, not a rewrite.
+ *   so the key is stable and explainable. expansion is an additive refinement rather than a rewrite.
  */
 
 import type { ComponentDict } from "#address/format"
@@ -73,7 +73,7 @@ export interface FoldForKeyOptions {
 }
 
 /**
- * The shared fold behind every match key: NFKD-decompose and strip combining marks (so `é` → `e`), lowercase, delete
+ * The shared fold behind every match key: nfkd-decompose and strip combining marks (so `é` → `e`), lowercase, delete
  * intra-token punctuation, expand or flatten connective punctuation per {@linkcode FoldForKeyOptions}, space every
  * remaining non-alphanumeric, and collapse whitespace. Deterministic — the same input and options always yield the same
  * output.
@@ -81,7 +81,7 @@ export interface FoldForKeyOptions {
 export function foldForKey(input: string, options: FoldForKeyOptions): string {
 	const folded = input
 		.normalize("NFKD")
-		// strip combining marks (U+0300–U+036F) left by NFKD decomposition, so "é" → "e"
+		// strip combining marks (U+0300–U+036F) left by nfkd decomposition, so "é" → "e"
 		.replaceAll(/[\u0300-\u036F]/g, "")
 		.toLowerCase()
 		// apostrophes are intra-word (possessives, "O'Brien") — delete so the token stays whole

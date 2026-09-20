@@ -59,7 +59,7 @@ except ImportError:
     raise SystemExit(2)
 
 
-# Curated inputs covering: ASCII baseline, multi-word, numerics, hyphenation,
+# Curated inputs covering: ascii baseline, multi-word, numerics, hyphenation,
 # Latin diacritics, mixed scripts, punctuation. Every entry is a hand-vetted
 # real-world or close-to-real-world address fragment.
 CURATED_INPUTS: list[str] = [

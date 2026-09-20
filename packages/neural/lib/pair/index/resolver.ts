@@ -8,7 +8,7 @@
  *   encoder's own judgment, following the same PCB1 single-file writer+reader pattern as
  *   `postcode-binary-resolver.ts` so the layout can never drift between the two ends.
  *
- *   This file owns BOTH ends of the format — `serializePairIndex` (run in Node by the extract-build
+ *   This file owns both ends of the format — `serializePairIndex` (run in Node by the extract-build
  *   tooling) and `PairIndexResolver` (run in the browser and server alike) — with zero Node imports
  *   in the reader path.
  *
@@ -19,19 +19,19 @@
  *   u16 childLen, child utf8[childLen], u16 parentLen, parent utf8[parentLen], u8 tagIdx, u8 parentTagIdx
  *   ```
  *
- *   sorted by (child, parent) UTF-16 code-unit order. `tagIdx` and `parentTagIdx` BOTH index the
- *   header's `tagTable` — the copy of `COMPONENT_TAGS` embedded at serialize time (schema 3; u8 caps
+ *   sorted by (child, parent) UTF-16 code-unit order. `tagIdx` and `parentTagIdx` both index the
+ *   header's `tagTable` — the copy of `COMPONENT_TAGS` embedded at serialize time (schema 3. u8 caps
  *   at 256 tags, asserted at serialize — the table is nowhere near that today), so the binary is
  *   self-describing and immune to reordering of the runtime tag union. Normative outside-contributor
  *   spec: `docs/engineering/reference/pix1.ksy` (kept honest by the layout-conformance test).
  *
- *   A record is a TYPED EDGE, and both ends are recorded. Schema 2 wrote only the child's tag and the
+ *   A record is a typed edge, and both ends are recorded. Schema 2 wrote only the child's tag and the
  *   decode side derived the parent's from `WESTERN_PARENT_OF` — which cannot express the edges the
- *   builders actually extract (the US WOF source emits a `dependent_locality` under a BOROUGH, itself
+ *   builders actually extract (the US WOF source emits a `dependent_locality` under a borough, itself
  *   a `dependent_locality`; containment says a `dependent_locality`'s only parent is `locality`). One
- *   byte per pair buys the source's own answer instead of a re-derived guess.
+ *   byte per pair provides the source's own answer instead of a re-derived guess.
  *
- *   This departs from PCB1's fixed-width key table on purpose: postcodes are bounded (~7 ASCII
+ *   This departs from PCB1's fixed-width key table on purpose: postcodes are bounded (~7 ascii
  *   chars), but place names vary widely in byte length, so a fixed-width key would either truncate
  *   long names or waste space padding short ones. A `u16`-length-prefixed UTF-8 string per field
  *   costs 2 extra bytes per pair — irrelevant at the ~20k-entry scale this index targets — in
@@ -40,11 +40,11 @@
  *   `record[i]` addressing awkward, and 20k entries is small enough that the Map's O(n) build cost
  *   and memory footprint are non-issues.
  *
- *   `child`/`parent` are expected to already be folded (NFKC-lowered, punctuation-stripped — see
+ *   `child`/`parent` are expected to already be folded (nfkc-lowered, punctuation-stripped — see
  *   `normalizeFSTToken` in `fst-prior.ts`) by the caller; `foldVersion` in the header records which
  *   fold the entries were built against, so a consumer can detect a stale index if the fold changes.
  *
- *   Duplicate-tolerance is explicitly NOT a serializer concern: `serializePairIndex` asserts its
+ *   Duplicate-tolerance is explicitly not a serializer concern: `serializePairIndex` asserts its
  *   input is already deduped by (child, parent) and throws otherwise. Building the extract is where
  *   duplicates should be resolved (e.g. picking the higher-confidence tag) — silently last-write-wins
  *   or first-write-wins at serialize time would hide a extract-build bug.
@@ -65,16 +65,16 @@ const MAX_TAGS_PER_BYTE = 256
 const MAGIC = 0x31_58_49_50
 
 /**
- * Schema 3 (2026-08-04): every record carries a second tag byte — the PARENT's `ComponentTag` — so a pair asserts the
- * WHOLE typed edge rather than half of it. Schema 2 (the tag table moving into the header, same day) is refused rather
- * than read: a v2 record stops after `tagIdx`, so decoding one as v3 would swallow the NEXT record's `childLen` as a
+ * Schema 3 (2026-08-04): every record carries a second tag byte — the parent's `ComponentTag` — so a pair asserts the
+ * whole typed edge rather than half of it. Schema 2 (the tag table moving into the header, same day) is refused rather
+ * than read: a v2 record stops after `tagIdx`, so decoding one as v3 would swallow the next record's `childLen` as a
  * parent tag. Both breaks are deliberate (operator-ruled): the release pipeline rebuilds pair indexes anyway
  * (`copy-weights` → `gazetteer pair-index`), and a tolerant fallback would keep a wrong-by-construction artifact
  * alive.
  *
- * Why the parent tag is RECORDED and not derived. The #46 preregistration derived it from `WESTERN_PARENT_OF`, on the
- * argument that containment already owns the fact. It does not: containment maps a child tag to the parents the TREE
- * BUILDER will accept, which is a different question from what the extraction actually observed. The US borough source
+ * Why the parent tag is recorded and not derived. The #46 preregistration derived it from `WESTERN_PARENT_OF`, on the
+ * argument that containment already owns the fact. It does not: containment maps a child tag to the parents the tree
+ * builder will accept, which is a different question from what the extraction actually observed. The US borough source
  * emits (`Park Slope`, `Brooklyn`) — a `dependent_locality` under a `dependent_locality` — and containment's
  * `dependent_locality: ["locality"]` can never say that. Deriving also spends the bias across every allowed parent when
  * the set has more than one, so a `locality` child biased `subregion`/`region`/`country` alike and moved nothing.
@@ -91,11 +91,11 @@ export interface PairIndexEntry {
 	 */
 	parent: string
 	/**
-	 * The `ComponentTag` this (child, parent) pair resolves the CHILD to.
+	 * The `ComponentTag` this (child, parent) pair resolves the child to.
 	 */
 	tag: ComponentTag
 	/**
-	 * The `ComponentTag` the same pair resolves the PARENT to — the other half of the asserted edge (schema 3). Required:
+	 * The `ComponentTag` the same pair resolves the parent to — the other half of the asserted edge (schema 3). Required:
 	 * {@link serializePairIndex} refuses an entry that omits it or names something outside `COMPONENT_TAGS`. A builder
 	 * that cannot state its parent's tag from its source's own semantics must not guess one — see
 	 * `mailwoman/gazetteer-pipeline/borough-pairs.ts` for the worked case (the WOF parent row's placetype, projected
@@ -109,8 +109,8 @@ export interface PairIndexEntry {
  * half of a two-ended assertion is exactly the defect schema 3 exists to close, and a caller that only wants the child
  * reads `.tag` visibly rather than silently getting a half-answer.
  *
- * Instances are INTERNED per resolver (there are a handful of distinct (tag, parentTag) combinations across even the
- * 199k-entry FR artifact), so the probe map costs one pointer per entry, not one object per entry.
+ * Instances are interned per resolver (there are a handful of distinct (tag, parentTag) combinations across even the
+ * 199k-entry FR artifact), so the probe map costs one pointer per entry rather than one object per entry.
  */
 export interface PairEdge {
 	readonly tag: ComponentTag
@@ -130,8 +130,8 @@ export interface PairIndexHeader {
 	/**
 	 * The tag universe `tagIdx` and `parentTagIdx` index into, embedded at serialize time (a copy of `COMPONENT_TAGS` as
 	 * of the build). Makes the binary self-describing — an outside reader decodes tags with no mailwoman import — and
-	 * decouples every shipped artifact from the ORDER of the runtime tag union. The reader resolves each record's name
-	 * against the runtime's known tags and throws on a referenced unknown; unknown names no record references are
+	 * decouples every shipped artifact from the order of the runtime tag union. The reader resolves each record's name
+	 * against the runtime's known tags and throws on a referenced unknown. unknown names no record references are
 	 * tolerated, so a binary built after the union grows still loads on an older reader as long as the new tag is
 	 * unused.
 	 */
@@ -149,26 +149,26 @@ export interface PairIndexHeader {
 	 */
 	buildDate: string
 	/**
-	 * OPTIONAL per-country transition-bonus magnitude (TRANSITION-BETA build, 2026-07-24): on a pair hit, the prior emits
-	 * a position-scoped decoder adjustment of `+transitionBeta` on every transition INTO `B-<tag>` at the child span's
+	 * Optional per-country transition-bonus magnitude (transition-beta build, 2026-07-24): on a pair hit, the prior emits
+	 * a position-scoped decoder adjustment of `+transitionBeta` on every transition into `B-<tag>` at the child span's
 	 * first piece — the path-fusion recovery change the task-8 transition-level probe measured (β=5: 13/17 comma-free GB
-	 * misses recovered, zero measured collateral on 47 correct rows + 200 venue-confound rows). ABSENT = no transition
+	 * misses recovered, zero measured collateral on 47 correct rows + 200 venue-confound rows). Absent = no transition
 	 * term at all (today's emission-only behavior) — backward compatible (old binaries lack the field and keep working)
-	 * AND forward compatible (old readers parse the header JSON and simply never consult the extra key; optional fields
-	 * ride the JSON header without a schema bump). Calibrated per country like `delta`: the GB artifact ships 5; the NZ
-	 * artifact deliberately ships WITHOUT it (unmeasured there, and comma-free NZ is already at 99.2%).
+	 * and forward compatible (old readers parse the header JSON and simply never consult the extra key. optional fields
+	 * ride the JSON header without a schema bump). Calibrated per country like `delta`: the GB artifact ships 5. the NZ
+	 * artifact deliberately ships without it (unmeasured there, and comma-free NZ is already at 99.2%).
 	 */
 	transitionBeta?: number
 	/**
-	 * OPTIONAL per-country WHOLE-EDGE bias magnitude (#46, default-on 2026-08-04): on a pair hit, the prior ALSO writes
-	 * `+parentDelta` onto the record's `parentTag` over the parent window, not just `+delta` onto the child. ABSENT = no
-	 * parent bias at all (the child-only behaviour every artifact carried before this) — absence-tolerant in the same
-	 * sense as {@link transitionBeta}, and absence means OFF, never 0-as-a-default.
+	 * Optional per-country whole-edge bias magnitude (#46, default-on 2026-08-04): on a pair hit, the prior also writes
+	 * `+parentDelta` onto the record's `parentTag` over the parent window rather than just `+delta` onto the child.
+	 * Absent = no parent bias at all (the child-only behaviour every artifact carried before this) — absence-tolerant in
+	 * the same sense as {@link transitionBeta}, and absence means off, never 0-as-a-default.
 	 *
-	 * Calibrated per country, and only where it was MEASURED. `us`/`gb`/`nz`/`fr` ship 5 — the smallest δ that saturates
+	 * Calibrated per country, and only where it was measured. `us`/`gb`/`nz`/`fr` ship 5 — the smallest δ that saturates
 	 * bar B-2's brooklyn-class sub-board, flat from there through 20
-	 * (`docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`). `de`/`in`/`es`/`it` ship WITHOUT it: no board has
-	 * graded the parent side there, and the D-rule's answer to an unmeasured locale is a per-locale check, not an
+	 * (`docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`). `de`/`in`/`es`/`it` ship without it: no board has
+	 * graded the parent side there, and the D-rule's answer to an unmeasured locale is a per-locale check rather than an
 	 * inherited magnitude.
 	 *
 	 * Overridable at decode: `PlacetypePairPriorOpts.parentDelta` (which `MAILWOMAN_PAIR_PARENT_DELTA` feeds) wins over
@@ -179,8 +179,8 @@ export interface PairIndexHeader {
 
 /**
  * The caller-supplied half of {@link PairIndexHeader}: everything except the two format-owned fields (`schemaVersion`,
- * `tagTable`), which {@link serializePairIndex} stamps itself — the format version is the serializer's fact, not the
- * builder's claim.
+ * `tagTable`), which {@link serializePairIndex} stamps itself — the format version is the serializer's fact rather than
+ * the builder's claim.
  */
 export type PairIndexHeaderInput = Omit<PairIndexHeader, "schemaVersion" | "tagTable">
 
@@ -196,7 +196,7 @@ function pairKey(child: string, parent: string): string {
 
 /**
  * Serialize (header, entries) into the PIX1 flat binary. Entries are sorted by (child, parent) so the format is
- * deterministic regardless of input order. Run in Node; consumed by {@link PairIndexResolver}.
+ * deterministic regardless of input order. Run in Node. consumed by {@link PairIndexResolver}.
  *
  * Throws if `entries` contains a duplicate (child, parent) pair (dedupe upstream — see the file-header note on why this
  * isn't silently resolved here), if a child/parent string exceeds the u16 length prefix (65,535 UTF-8 bytes — no real
@@ -217,7 +217,7 @@ export function serializePairIndex(header: PairIndexHeaderInput, entries: readon
 
 	const tagIndex = new Map<ComponentTag, number>(COMPONENT_TAGS.map((tag, i) => [tag, i]))
 
-	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 	const sorted = [...entries].sort((a, b) =>
 		a.child < b.child ? -1 : a.child > b.child ? 1 : a.parent < b.parent ? -1 : a.parent > b.parent ? 1 : 0
 	)
@@ -299,9 +299,9 @@ export function serializePairIndex(header: PairIndexHeaderInput, entries: readon
  * Read just the magic + header block (no entry parsing, no Map build) — the same validation the constructor does
  * (bad-magic throw, future-schema throw) but stops the instant the header JSON is decoded. Lets a caller inspect
  * `country`/`delta`/`sourceMD5s` etc. before paying for the full entry parse — e.g.
- * `NeuralAddressClassifier.loadFromWeights`'s hard country restriction (`classifier.ts`) reads this FIRST and only
+ * `NeuralAddressClassifier.loadFromWeights`'s hard country restriction (`classifier.ts`) reads this first and only
  * constructs a `PairIndexResolver` (which walks every entry to build the probe `Map`) when the header's country matches
- * the resolved locale; a mismatch skips construction entirely rather than paying the full parse just to discard the
+ * the resolved locale. a mismatch skips construction entirely rather than paying the full parse just to discard the
  * result.
  */
 export function peekPairIndexHeader(bytes: Uint8Array): PairIndexHeader {
@@ -310,7 +310,7 @@ export function peekPairIndexHeader(bytes: Uint8Array): PairIndexHeader {
 
 /**
  * Shared magic+header decode used by both {@link peekPairIndexHeader} and the {@link PairIndexResolver} constructor, so
- * the two can never drift on what counts as a valid header. Returns the parsed header AND the byte offset immediately
+ * the two can never drift on what counts as a valid header. Returns the parsed header and the byte offset immediately
  * following it, so the constructor can resume entry parsing from exactly where this left off without re-decoding.
  */
 function readHeaderBlock(bytes: Uint8Array): { header: PairIndexHeader; cursor: ByteCursor } {
@@ -351,7 +351,7 @@ export class PairIndexResolver {
 		const decoder = new TextDecoder()
 		const map = new Map<string, PairEdge>()
 
-		// Decode through the EMBEDDED table, validated per-record against the runtime's known tags:
+		// Decode through the embedded table, validated per-record against the runtime's known tags:
 		// a referenced unknown name (or an out-of-range tagIdx/parentTagIdx) is a hard error, while unknown
 		// table entries no record references are tolerated — see the tagTable docstring.
 		const knownTags = new Set<string>(COMPONENT_TAGS)
@@ -400,7 +400,7 @@ export class PairIndexResolver {
 
 	/**
 	 * Look up the typed edge a folded (child, parent) pair asserts, or `undefined` if the index has no entry for it.
-	 * Returns BOTH tags — a caller that only wants the child's reads `.tag`. See {@link PairEdge} for why this is not the
+	 * Returns both tags — a caller that only wants the child's reads `.tag`. See {@link PairEdge} for why this is not the
 	 * bare child tag.
 	 */
 	probe(childFolded: string, parentFolded: string): PairEdge | undefined {
@@ -427,7 +427,7 @@ export class PairIndexResolver {
 	/**
 	 * Exposes the optional transition-bonus magnitude (see {@link PairIndexHeader.transitionBeta}) so the resolver
 	 * conforms to {@link PairIndexLike}. `undefined` on a binary built without the field — the prior then emits no
-	 * transition adjustments (the pre-TRANSITION-BETA behavior, exactly).
+	 * transition adjustments (the pre-transition-beta behavior, exactly).
 	 */
 	get transitionBeta(): number | undefined {
 		return this.header.transitionBeta
@@ -444,11 +444,11 @@ export class PairIndexResolver {
 }
 
 /**
- * Minimal subset of `PairIndexResolver` a prior module consumes — structural typing so callers depend on the shape, not
- * the class (the `query-shape-prior.ts` "…Like" convention). `delta` is optional because a hand-built test double may
- * omit it; a real index's header carries the authoritative value. `transitionBeta` is optional in BOTH senses: a test
- * double may omit it, and a real header legitimately lacks it (see {@link PairIndexHeader.transitionBeta} — absent means
- * no transition term, not a default).
+ * Minimal subset of `PairIndexResolver` a prior module consumes — structural typing so callers depend on the shape
+ * rather than the class (the `query-shape-prior.ts` "…Like" convention). `delta` is optional because a hand-built test
+ * double may omit it. a real index's header carries the authoritative value. `transitionBeta` is optional in both
+ * senses: a test double may omit it, and a real header legitimately lacks it (see {@link PairIndexHeader.transitionBeta}
+ * — absent means no transition term rather than a default).
  */
 export interface PairIndexLike {
 	probe(child: string, parent: string): PairEdge | undefined
@@ -462,7 +462,7 @@ export interface PairIndexLike {
 	readonly parentDelta?: number
 	/**
 	 * The index header's ISO country code (lowercase, e.g. `"gb"`/`"nz"`). Optional for the same two reasons as `delta`
-	 * and `transitionBeta`: a hand-built test double may omit it, and it drives an OPTIONAL behavior — the segment path's
+	 * and `transitionBeta`: a hand-built test double may omit it, and it drives an optional behavior — the segment path's
 	 * country-aware trailing-postcode strip (see `placetype-pair-prior.ts`'s `segmentParentPostcodeShape`). Absent, or a
 	 * country with no known postcode shape → no strip (byte-stable).
 	 */

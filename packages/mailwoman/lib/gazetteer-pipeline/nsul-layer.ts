@@ -2,51 +2,51 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build `nsul.db` — the GB **UPRN → unit-postcode register**: the ONS National Statistics UPRN Lookup
- *   (NSUL) joined to the WGS84 point OS Open UPRN publishes for the same UPRN. Schema + the compact
+ *   Build `nsul.db` — the GB **uprn → unit-postcode register**: the ONS National Statistics uprn Lookup
+ *   (nsul) joined to the WGS84 point OS Open uprn publishes for the same uprn. Schema + the compact
  *   postcode derivation live in `@mailwoman/resolver-wof-sqlite/nsul`; the Node reader is `NSULLookup`
  *   in the same subpath. This is the GB artifact the physical-constraint design record decided on
  *   (`docs/superpowers/specs/2026-09-03-physical-constraint-prior-design.md`, section 2): the register
  *   is open, and the `PO`-area measurement on #1975 showed no reconstruction from centroids and
- *   footprints comes close to it, so the register is stored, not inferred.
+ *   footprints comes close to it, so the register is stored rather than inferred.
  *
  *   ## Acquisition
  *
- *   NSUL is published on the ONS Open Geography portal as an ArcGIS Hub "CSV Collection" item — a zip
- *   holding one CSV per NSUL region (eleven for Great Britain) plus the user guide and code lists.
+ *   nsul is published on the ONS Open Geography portal as an ArcGIS Hub "CSV Collection" item — a zip
+ *   holding one CSV per nsul region (eleven for Great Britain) plus the user guide and code lists.
  *   There is no download step here: the item is acquired by hand into a vintage-dated
- *   `$MAILWOMAN_DATA_ROOT/nsul/<YYYY-MM>/` directory holding the zip, its `.md5` sidecar and the
+ *   `$MAILWOMAN_DATA_ROOT/nsul/<yyyy-MM>/` directory holding the zip, its `.md5` sidecar and the
  *   portal's `item.json` record, and the builder reads provenance from those three files. A missing
  *   sidecar is recorded in words (the Code-Point discipline), never as an empty string.
  *
  *   ## Streaming
  *
- *   The eleven CSVs total 10.2 GB uncompressed; each is streamed straight out of the archive
+ *   The eleven CSVs total 10.2 GB uncompressed. each is streamed straight out of the archive
  *   (`readZipEntry` → `TextSpliterator`) with nothing but the inflate window and one line in memory, so
  *   the build never extracts to disk and never holds a region file whole.
  *
  *   ## Coordinates come from `uprn.db`, never from the grid reference
  *
- *   Each NSUL row carries an OSGB36 grid reference (`GRIDGB1E`/`GRIDGB1N`). The build ignores it and
- *   joins the row's UPRN to `uprn.db`, copying OS's own WGS84 `lat`/`lon` and the res-9 `h3_cell`
+ *   Each nsul row carries an OSGB36 grid reference (`GRIDGB1E`/`GRIDGB1N`). The build ignores it and
+ *   joins the row's uprn to `uprn.db`, copying OS's own WGS84 `lat`/`lon` and the res-9 `h3_cell`
  *   verbatim — the same reason `uprn-layer.ts` takes OS's WGS84 columns over a Helmert reprojection.
- *   A UPRN absent from `uprn.db` is counted `skipped-no-coordinate` and not written; a row whose
- *   `PCDS` is empty (a postcode not in Code-Point Open) is counted `skipped-no-postcode` and not
+ *   A uprn absent from `uprn.db` is counted `skipped-no-coordinate` and not written. a row whose
+ *   `pcds` is empty (a postcode not in Code-Point Open) is counted `skipped-no-postcode` and not
  *   written.
  *
  *   ## Restricting
  *
- *   The archive md5 against the sidecar; an exact header match on every region file (schema drift
+ *   The archive md5 against the sidecar. an exact header match on every region file (schema drift
  *   fails loudly); the region set exactly the eleven GB regions (a missing or extra file fails loudly);
  *   the accounting identity `read = inserted + malformed + duplicate + no-postcode + no-coordinate`
- *   with malformed and duplicate expected ZERO; and a row floor (`NSUL_MINIMUM_PLAUSIBLE_ROWS`).
+ *   with malformed and duplicate expected zero. and a row floor (`NSUL_MINIMUM_PLAUSIBLE_ROWS`).
  *
  *   ## Coverage
  *
- *   GB only. ONS designates the register complete for GB (every UPRN in AddressBase whose postcode is
+ *   GB only. ONS designates the register complete for GB (every uprn in AddressBase whose postcode is
  *   in Code-Point Open), so every res-6 cell holding rows is written `basis: designated,
  *   completeness: 1` — the same cells and basis `uprn.db` writes, so the two layers' coverage tables
- *   describe the same ground. Cells with no rows are left ABSENT: without a GB polygon the builder
+ *   describe the same ground. Cells with no rows are left absent: without a GB polygon the builder
  *   cannot tell empty moorland from Northern Ireland or open sea, so per the meaning-of-zero rule it
  *   claims nothing there.
  */
@@ -79,7 +79,7 @@ import { Globerator } from "spliterator/node/fs"
 
 import { UNKNOWN_PROVENANCE } from "#gazetteer-pipeline/database-lifecycle"
 /**
- * SPDX id for the Open Government Licence v3.0 — the `layer_manifest.license` form.
+ * Spdx id for the Open Government Licence v3.0 — the `layer_manifest.license` form.
  */
 export const NSUL_LICENSE = "OGL-UK-3.0"
 
@@ -100,8 +100,8 @@ export const NSUL_LICENSE_INFO_URL = "https://www.ons.gov.uk/methodology/geograp
 export const NSUL_PORTAL_URL = "https://geoportal.statistics.gov.uk"
 
 /**
- * The four attribution statements the NSUL User Guide requires of anyone redistributing an address product derived from
- * AddressBase, in the guide's wording and order. `year` is the copyright year of the data, not the build year.
+ * The four attribution statements the nsul User Guide requires of anyone redistributing an address product derived from
+ * AddressBase, in the guide's wording and order. `year` is the copyright year of the data rather than the build year.
  */
 export function nsulAttribution(year: number): string {
 	return (
@@ -114,7 +114,7 @@ export function nsulAttribution(year: number): string {
 
 /**
  * The exact CSV header of every region file, verified against Epoch 127 (June 2026). A drifted header fails the build
- * loudly rather than silently mapping `PCDS` by position.
+ * loudly rather than silently mapping `pcds` by position.
  */
 export const NSUL_HEADER =
 	"UPRN,GRIDGB1E,GRIDGB1N,PCDS,OA21CD,CTY25CD,CED25CD,LAD25CD,WD25CD,HLTH19CD,CTRY25CD,RGN25CD,PCON24CD,EER20CD," +
@@ -134,7 +134,7 @@ const UPRN_COLUMN = 0
 const PCDS_COLUMN = 3
 
 /**
- * The eleven NSUL region files that together are Great Britain: the nine English regions, Scotland and Wales. The
+ * The eleven nsul region files that together are Great Britain: the nine English regions, Scotland and Wales. The
  * archive is refused when its `Data/` members are not exactly this set — a missing region is a truncated Britain and an
  * extra one is a product change, and neither may pass as a smaller or larger row count.
  */
@@ -144,7 +144,7 @@ export type NSULRegion = (typeof NSUL_REGIONS)[number]
 
 /**
  * Row floor for {@link buildNSULLayer}'s truncation guard. Epoch 127 writes 40,833,043 rows from 41,546,385 lines (the
- * rest have no Code-Point postcode or no Open UPRN point) and the register only grows, so a full-source build under
+ * rest have no Code-Point postcode or no Open uprn point) and the register only grows, so a full-source build under
  * this floor read a truncated archive. Fixture builds pass their own.
  */
 export const NSUL_MINIMUM_PLAUSIBLE_ROWS = 35_000_000
@@ -159,7 +159,7 @@ export const NSUL_COVERAGE_NOTE =
 	"AND OS Open UPRN publishes a coordinate for it; the two skipped counts are in nsul_meta.quality_drops."
 
 /**
- * A unit postcode as NSUL writes it: outward code (area letters, district digit, optional sub-district), one space,
+ * A unit postcode as nsul writes it: outward code (area letters, district digit, optional sub-district), one space,
  * inward code (sector digit, two unit letters). `GIR 0AA` is the one non-geographic code Code-Point Open carries.
  */
 const PCDS_SHAPE = /^(?:[A-Z]{1,2}\d[A-Z\d]? \d[A-Z]{2}|GIR 0AA)$/
@@ -193,7 +193,7 @@ const MONTHS: Record<string, { number: string; name: string }> = {
 }
 
 /**
- * What one NSUL data line is, for the accounting identity. Exactly one class per line, so the five counters sum to the
+ * What one nsul data line is, for the accounting identity. Exactly one class per line, so the five counters sum to the
  * lines read.
  */
 export type NSULLineClass =
@@ -202,12 +202,12 @@ export type NSULLineClass =
 	| { kind: "malformed" }
 
 /**
- * Classify one data line of an NSUL region file.
+ * Classify one data line of an nsul region file.
  *
- * CRLF-terminated in the wild: the `\r` is stripped at the reader boundary or the LAST column carries it into every
- * value (the G-NAF lesson). A line is malformed when its field count is not {@link NSUL_COLUMN_COUNT}, when `UPRN` is
- * not a literal digit string within the safe-integer range, or when a non-empty `PCDS` does not have a unit-postcode
- * shape — a postcode-shaped column holding anything else is a defect to be counted, not a key to be stored.
+ * Crlf-terminated in the wild: the `\r` is stripped at the reader boundary or the last column carries it into every
+ * value (the G-NAF lesson). A line is malformed when its field count is not {@link NSUL_COLUMN_COUNT}, when `uprn` is
+ * not a literal digit string within the safe-integer range, or when a non-empty `pcds` does not have a unit-postcode
+ * shape — a postcode-shaped column holding anything else is a defect to be counted rather than a key to be stored.
  */
 export function classifyNSULLine(line: string): NSULLineClass {
 	const parts = (line.endsWith("\r") ? line.slice(0, -1) : line).split(",")
@@ -232,7 +232,7 @@ export function classifyNSULLine(line: string): NSULLineClass {
 }
 
 /**
- * Strip the header line's CRLF terminator and compare it to {@link NSUL_HEADER}. Returns the header as found when it
+ * Strip the header line's crlf terminator and compare it to {@link NSUL_HEADER}. Returns the header as found when it
  * drifts, `null` when it matches.
  */
 export function nsulHeaderDrift(rawLine: string): string | null {
@@ -242,12 +242,12 @@ export function nsulHeaderDrift(rawLine: string): string | null {
 }
 
 /**
- * The vintage an NSUL archive name encodes: `NSUL_E127_JUN_2026.zip` → epoch 127, `2026-06`.
+ * The vintage an nsul archive name encodes: `NSUL_E127_JUN_2026.zip` → epoch 127, `2026-06`.
  */
 export interface NSULVintage {
 	epoch: number
 	/**
-	 * `YYYY-MM`.
+	 * `yyyy-MM`.
 	 */
 	month: string
 	/**
@@ -261,7 +261,7 @@ export interface NSULVintage {
 }
 
 /**
- * Parse the vintage out of an archive (or region file) name, or `null` when the name is not NSUL's.
+ * Parse the vintage out of an archive (or region file) name, or `null` when the name is not nsul's.
  */
 export function parseNSULVintage(name: string): NSULVintage | null {
 	const match = ARCHIVE_NAME.exec(name) ?? REGION_ENTRY.exec(name)
@@ -376,8 +376,8 @@ export async function openNSULArchive(sourceDir: string): Promise<{
 }
 
 /**
- * The newest vintage directory under `<data-root>/nsul/` holding an NSUL archive — the default source when the caller
- * names none. Vintage directories are `YYYY-MM`, so lexical order is chronological order.
+ * The newest vintage directory under `<data-root>/nsul/` holding an nsul archive — the default source when the caller
+ * names none. Vintage directories are `yyyy-MM`, so lexical order is chronological order.
  */
 export async function resolveLatestNSULSourceDir(root = String(dataRootPath("nsul"))): Promise<string> {
 	const candidates = await Globerator.from("*", {
@@ -423,7 +423,7 @@ export interface BuildNSULLayerOptions {
 	 */
 	now?: Date
 	/**
-	 * ISO-8601 `layer_manifest.created_at`. Caller-supplied per the layer contract; defaults to `now`.
+	 * ISO-8601 `layer_manifest.created_at`. Caller-supplied per the layer interface. defaults to `now`.
 	 */
 	createdAt?: string
 	/**
@@ -435,7 +435,7 @@ export interface BuildNSULLayerOptions {
 	 */
 	minimumPlausibleRows?: number
 	/**
-	 * Injected region sources plus the vintage they carry — the fixture path. Skips the archive entirely; provenance
+	 * Injected region sources plus the vintage they carry — the fixture path. Skips the archive entirely. provenance
 	 * still comes from `sourceDir`'s sidecars when present.
 	 */
 	sources?: { vintage: NSULVintage; regions: NSULRegionSource[] }
@@ -454,19 +454,19 @@ export interface BuildNSULLayerResult {
 	 */
 	inserted: number
 	/**
-	 * Lines {@link classifyNSULLine} refused — expected ZERO; any are reported in `mismatches`.
+	 * Lines {@link classifyNSULLine} refused — expected zero. any are reported in `mismatches`.
 	 */
 	skippedMalformed: number
 	/**
-	 * Lines whose UPRN collided with an already-written row — expected ZERO (UPRN is the register's own key).
+	 * Lines whose uprn collided with an already-written row — expected zero (uprn is the register's own key).
 	 */
 	skippedDuplicate: number
 	/**
-	 * Lines whose `PCDS` is empty — the postcode is not in Code-Point Open. Expected non-zero; recorded, never a defect.
+	 * Lines whose `pcds` is empty — the postcode is not in Code-Point Open. Expected non-zero. recorded, never a defect.
 	 */
 	skippedNoPostcode: number
 	/**
-	 * Lines whose UPRN `uprn.db` holds no point for. Expected small and non-zero (the two products are extracted from
+	 * Lines whose uprn `uprn.db` holds no point for. Expected small and non-zero (the two products are extracted from
 	 * AddressBase at different dates); recorded, never a defect.
 	 */
 	skippedNoCoordinate: number
@@ -485,7 +485,7 @@ export interface BuildNSULLayerResult {
 	 */
 	uprnLayerVersion: string
 	/**
-	 * Every violated check, in words. Empty on a clean build; the caller decides whether to fail on them.
+	 * Every violated check, in words. Empty on a clean build. the caller decides whether to fail on them.
 	 */
 	mismatches: string[]
 	durationMs: number
@@ -531,11 +531,11 @@ export interface NSULIngestCounts {
 interface IngestNSULSourcesOptions {
 	sources: NSULRegionSource[]
 	/**
-	 * `uprn.db`'s point for a UPRN, or `undefined` when it holds none.
+	 * `uprn.db`'s point for a uprn, or `undefined` when it holds none.
 	 */
 	coordinateOf: (uprn: number) => NSULCoordinateRow | undefined
 	/**
-	 * Write one row; `false` when the UPRN was already written (the `INSERT OR IGNORE` duplicate path).
+	 * Write one row; `false` when the uprn was already written (the `insert or ignore` duplicate path).
 	 */
 	write: (line: Extract<NSULLineClass, { kind: "row" }>, point: NSULCoordinateRow) => boolean
 	/**
@@ -551,7 +551,7 @@ interface IngestNSULSourcesOptions {
 
 /**
  * The ingest loop: stream every region, classify every line, join the coordinate, write, and account. Throws on header
- * drift; the caller owns the transaction and rolls it back.
+ * drift. the caller owns the transaction and rolls it back.
  */
 async function ingestNSULSources(options: IngestNSULSourcesOptions): Promise<NSULIngestCounts> {
 	const { sources, coordinateOf, write, parentCell, checkpoint, phase } = options
@@ -731,7 +731,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	const itemRaw = await readLocalTextFile(String(join(sourceDir, "item.json"))).catch(() => null)
 	const item = itemRaw ? tryParsingJSON<NSULItemRecord>(itemRaw) : null
 
-	// resolver-wof-sqlite is an OPTIONAL peer — lazy import (the gazetteer-pipeline convention).
+	// resolver-wof-sqlite is an optional peer — lazy import (the gazetteer-pipeline convention).
 	const {
 		createUPRNPostcodeTable,
 		createNSULMetaTable,
@@ -743,7 +743,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	const { UPRN_H3_RESOLUTION } = await import("@mailwoman/resolver-wof-sqlite/uprn")
 
 	// Read the coordinate source and record its manifest version in metadata.
-	// Open UPRN release each coordinate is from.
+	// Open uprn release each coordinate is from.
 	using uprnDB = new DatabaseClient<UPRNDatabase>(uprnDatabasePath, { readOnly: true })
 	const uprnLayerVersion = (await readLayerManifest(uprnDB)).version
 	const coordinateProbe = uprnDB.prepare("SELECT lat, lon, h3_cell FROM uprn WHERE uprn = ?")
@@ -775,8 +775,8 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	await createLayerManifestTable(kdb)
 	await createLayerCoverageTable(kdb)
 
-	// Hot positional INSERT — raw prepared statement, per the AGENTS.md bulk-load carve-out. OR IGNORE so a
-	// source-side duplicate UPRN is COUNTED (via `changes === 0`) rather than aborting a 40M-row load; the
+	// Hot positional insert — raw prepared statement, per the agents.md bulk-load carve-out. or ignore so a
+	// source-side duplicate uprn is counted (via `changes === 0`) rather than aborting a 40M-row load. the
 	// accounting check then reports any as a defect.
 	const insert = kdb.prepare(
 		"INSERT OR IGNORE INTO uprn_postcode (uprn, pcds, pcds_compact, lat, lon, h3_cell) VALUES (?, ?, ?, ?, ?, ?)"
@@ -832,7 +832,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	phase("coverage", `${coverage.size.toLocaleString()} res-${NSUL_COVERAGE_H3_RESOLUTION} cells`)
 
 	// ONS designates the register complete for GB, so observed cells are `designated`/1.0 — a miss inside one is
-	// evidence of absence. Unobserved cells stay ABSENT (unknown), per the meaning-of-zero rule.
+	// evidence of absence. Unobserved cells stay absent (unknown), per the meaning-of-zero rule.
 	await writeLayerCoverage(
 		kdb,
 		[...coverage.entries()]

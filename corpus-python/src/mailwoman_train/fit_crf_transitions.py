@@ -4,7 +4,7 @@ The shipped decoder applies ``crf-transitions.json`` when the weights package ca
 (``neural/weights.ts`` ``readCrfTransitions`` -> ``classifier.ts`` Viterbi potentials), but CRF
 TRAINING diverged long ago (``crf_loss_weight=0.0`` since v0.5.0) and no bundle ships the file —
 decode runs on the structural BIO mask alone. This fits transitions the cheap way: Laplace-smoothed
-bigram counts over a training corpus's gold ``labels`` sequences, emitted in the EXACT label order
+bigram counts over a training corpus's gold ``labels`` sequences, emitted in the exact label order
 of a model-card's ``labels`` array (index-aligned with the model's logit heads).
 
 Usage:
@@ -15,7 +15,7 @@ Usage:
         [--temperature 1.0]
 
 ``--temperature`` scales the log-probs (the emissions were not trained against these potentials, so
-the relative magnitude is a free parameter; 1.0 = raw log-probs).
+the relative magnitude is a free parameter. 1.0 = raw log-probs).
 """
 
 from __future__ import annotations
@@ -69,7 +69,7 @@ def fit(parquet_files: list[str], labels: list[str], temperature: float) -> dict
         total = sum(row)
         logs = [math.log(c / total) for c in row]
         # Row-max centering: the decoder's structural mask uses 0 = permitted, so bolt-on potentials
-        # must be RELATIVE penalties (best transition = 0), not absolute log-probs — raw logP puts
+        # must be relative penalties (best transition = 0), not absolute log-probs — raw logP puts
         # -2..-16 on every step and swamps the emissions the model was calibrated for.
         peak = max(logs)
 

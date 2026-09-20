@@ -1,5 +1,10 @@
+# The root file routes specialized work to scoped instructions. This limit covers the longest
+# root-to-directory instruction chain and makes unexpected growth visible before it crowds out a
+# nested file.
+project_doc_max_bytes = 32768
+
 [mcp_servers]
 [mcp_servers.mailwoman-dev]
 command = "node"
 args = ["packages/dev-mcp/lib/cli/index.ts"]
-
+cwd = ".."

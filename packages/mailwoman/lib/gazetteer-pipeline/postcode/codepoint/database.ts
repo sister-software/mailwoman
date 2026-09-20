@@ -8,34 +8,34 @@
  *
  *   ## Why a separate builder rather than a source mode on `geonames-tail.ts`
  *
- *   Folding this in was considered and rejected on the code, not on taste. `geonames-tail.ts` is a
- *   REPRODUCER: its docstring pins it to a frozen 946 MB artifact, its country order is required
+ *   Folding this in was considered and rejected on the code rather than on taste. `geonames-tail.ts` is a
+ *   reproducer: its docstring pins it to a frozen 946 MB artifact, its country order is required
  *   because `ingestGeonamesPostal` allocates ids from one counter so a rebuild stays id-comparable,
  *   and it is conditioned on per-country row-count parity against that artifact. Code-Point Open shares none
- *   of its inputs — different coordinate system (OSGB36 eastings/northings, not degrees), different row
+ *   of its inputs — different coordinate system (OSGB36 eastings/northings rather than degrees), different row
  *   grain (one row per unit postcode, so no medoid collapse), different licence block, and a row count
- *   that is SUPPOSED to differ from the frozen GB figure. Adding it as a mode would put a source that
+ *   that is supposed to differ from the frozen GB figure. Adding it as a mode would put a source that
  *   must change the numbers inside the one file whose job is to keep them identical.
  *
- *   What IS shared is shared: the unified schema, `normalizePostcodeName` (the #920 name law),
+ *   What is shared is shared: the unified schema, `normalizePostcodeName` (the #920 name law),
  *   `populateAncestors`, `buildFTS`, `sealDatabase`. Only the read side is new.
  *
  *   ## The #920 name law still governs
  *
- *   `spr.name` is the SANITIZED form — every non-letter/number stripped, so `SW1A 1AA` is stored as
+ *   `spr.name` is the sanitized form — every non-letter/number stripped, so `SW1A 1AA` is stored as
  *   `SW1A1AA` — because that is what `sanitizeFTSQuery` reduces a parsed postcode token to at lookup
  *   time. The display form `SW1A 1AA` rides along as an extra `names` row. Storing the spaced form as
- *   the primary name is the mistake that measured WORSE than no coverage at all on CZ (#920); it is
+ *   the primary name is the mistake that measured worse than no coverage at all on CZ (#920); it is
  *   not a cosmetic choice.
  *
  *   ## Coverage
  *
- *   England, Scotland and Wales. NOT Northern Ireland — see `CODEPOINT_COVERAGE_NOTE`. The `BT` hole is
+ *   England, Scotland and Wales. not Northern Ireland — see `CODEPOINT_COVERAGE_NOTE`. The `BT` hole is
  *   permanent for this source and is recorded in the artifact's `meta` so a consumer reads it at open.
  *
  *   ## Licence
  *
- *   OGL v3 with a mandatory three-line attribution block naming OS, Royal Mail AND National Statistics.
+ *   OGL v3 with a mandatory three-line attribution block naming OS, Royal Mail and National Statistics.
  *   Baked into `meta` verbatim, alongside the source md5 and OS's own `Doc/licence.txt`.
  */
 
@@ -46,7 +46,7 @@ import { isoDate } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
-import { join } from "path-ts"
+import { join, type PathBuilderLike } from "path-ts"
 
 import {
 	applyStagingPragmas,
@@ -74,7 +74,7 @@ import {
 import { createDatabaseMetaTable, writeMetaRows } from "#gazetteer-pipeline/postcode/geonames/tail"
 
 /**
- * ISO-3166-1 alpha-2 stamped on every row. Code-Point Open is a GB-only product; the ONS country code distinguishing
+ * ISO-3166-1 alpha-2 stamped on every row. Code-Point Open is a GB-only product. the ONS country code distinguishing
  * England/Scotland/Wales is carried separately on the parsed record and is not what `spr.country` means.
  */
 const COUNTRY = "GB"
@@ -82,14 +82,14 @@ const COUNTRY = "GB"
 export interface BuildPostcodeCodePointOptions {
 	/**
 	 * Acquisition directory holding (or to hold) `codepo_gb.zip` and its extracted `Data/CSV` tree. Default
-	 * `<data-root>/codepoint/<YYYY-MM-DD>` — a NEW dated directory per acquisition.
+	 * `<data-root>/codepoint/<yyyy-MM-DD>` — a new dated directory per acquisition.
 	 */
-	sourceDir?: string
+	sourceDir?: PathBuilderLike
 	/**
-	 * Output artifact. Default `<data-root>/wof/postalcode-gb-codepoint-<YYYY-MM-DD>.db` — a NEW dated path every build.
+	 * Output artifact. Default `<data-root>/wof/postalcode-gb-codepoint-<yyyy-MM-DD>.db` — a new dated path every build.
 	 * Promoting it into `DEFAULT_POSTCODE_DATABASES` is a deliberate, separate swap.
 	 */
-	out?: string
+	out?: PathBuilderLike
 	/**
 	 * Skip the network entirely and use whatever is already in `sourceDir`. Fails if the CSVs are not there.
 	 */
@@ -118,7 +118,7 @@ export interface BuildPostcodeCodePointResult {
 	 */
 	metadata: CodePointMetadata
 	/**
-	 * Areas whose parsed count differs from the manifest, as `AREA: manifest→parsed`. Empty when every area agrees after
+	 * Areas whose parsed count differs from the manifest, as `area: manifest→parsed`. Empty when every area agrees after
 	 * accounting for the no-coordinate drops.
 	 */
 	manifestMismatches: string[]
@@ -147,15 +147,15 @@ export async function buildPostcodeCodePoint(
 	const phase = options.onPhase ?? (() => {})
 	const now = options.now ?? new Date()
 	const stamp = isoDate(now)
-	const sourceDir = options.sourceDir ?? String(dataRootPath("codepoint", stamp))
-	const out = options.out ?? String(dataRootPath("wof", `postalcode-gb-codepoint-${stamp}.db`))
+	const sourceDir = (options.sourceDir ?? dataRootPath("codepoint", stamp)).toString()
+	const out = (options.out ?? dataRootPath("wof", `postalcode-gb-codepoint-${stamp}.db`)).toString()
 
 	// Acquire the Code-Point source archive.
 	//
-	// An OFFLINE build must not silently produce an artifact with blank provenance. `downloadCodePointOpen`
+	// An offline build must not silently produce an artifact with blank provenance. `downloadCodePointOpen`
 	// leaves an `acquisition.json` sidecar next to the archive precisely so a later offline rebuild can
-	// recover the release label and md5 it would otherwise have to invent; when even that is missing, the
-	// meta records the ABSENCE in words rather than an empty string, because "" reads as "no release" to
+	// recover the release label and md5 it would otherwise have to invent. when even that is missing, the
+	// meta records the absence in words rather than an empty string, because "" reads as "no release" to
 	// anyone grepping it.
 	let archiveMD5: string
 	let osVersion: string
@@ -177,7 +177,7 @@ export async function buildPostcodeCodePoint(
 		osVersion = download.version
 	}
 
-	const archivePath = String(join(sourceDir, "codepo_gb.zip"))
+	const archivePath = join(sourceDir, "codepo_gb.zip")
 	const extracted = await extractCodePointOpen({ archivePath, destDir: sourceDir, onPhase: phase })
 
 	phase(
@@ -185,7 +185,7 @@ export async function buildPostcodeCodePoint(
 		`${extracted.metadata.totalRows.toLocaleString()} rows claimed across ${extracted.csvPaths.length} areas`
 	)
 
-	// resolver-wof-sqlite is an OPTIONAL peer — lazy import (the gazetteer-pipeline convention).
+	// resolver-wof-sqlite is an optional peer — lazy import (the gazetteer-pipeline convention).
 	const { createUnifiedSchema, createUnifiedIndexes, populateAncestors } =
 		await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 
@@ -209,7 +209,7 @@ export async function buildPostcodeCodePoint(
 
 		await createUnifiedSchema(db)
 
-		// Hot positional INSERTs — raw prepared statements, per the AGENTS.md bulk-load carve-out.
+		// Hot positional INSERTs — raw prepared statements, per the agents.md bulk-load carve-out.
 		const sprInsert = db.prepare(
 			`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, -1, ?, 'postalcode', '${COUNTRY}', ?, ?, ?, ?, ?, ?, 1, 0, 0, 0, 0, 0)`
 		)
@@ -223,11 +223,11 @@ export async function buildPostcodeCodePoint(
 
 		for (const csvPath of extracted.csvPaths) {
 			for await (const record of readCodePointCSV(csvPath, stats)) {
-				// The #920 name law: sanitized form is the NAME, display form is an alt.
+				// The #920 name law: sanitized form is the name, display form is an alt.
 				const name = normalizePostcodeName(record.postcode)
 				const id = CODEPOINT_ID_BASE + inserted
 
-				// Degenerate bbox — a unit postcode is a point in this product, not a polygon.
+				// Degenerate bbox — a unit postcode is a point in this product rather than a polygon.
 				sprInsert.run(
 					id,
 					name,
@@ -252,11 +252,11 @@ export async function buildPostcodeCodePoint(
 		db.exec("COMMIT")
 		phase("ingest", `${inserted.toLocaleString()} unit postcodes`)
 
-		// Check the archive's own manifest; codepoint/extract.ts explains this oracle.
+		// Check the archive's own manifest. codepoint/extract.ts explains this oracle.
 
-		// Every row's parent_id is -1 (Code-Point carries no hierarchy), so this writes the SELF row per place
+		// Every row's parent_id is -1 (Code-Point carries no hierarchy), so this writes the self row per place
 		// and nothing else. Not decorative: the resolver's parent-constraint scopes a lookup with
-		// `spr.id IN (SELECT id FROM ancestors WHERE ancestor_id = ?)`, and a place absent from `ancestors`
+		// `spr.id IN (select id from ancestors where ancestor_id = ?)`, and a place absent from `ancestors`
 		// can never satisfy it.
 		phase("ancestors")
 		ancestorRows = populateAncestors(db)
@@ -311,14 +311,14 @@ export async function buildPostcodeCodePoint(
 /**
  * Compare per-area parsed counts against the archive's `Doc/metadata.txt` manifest.
  *
- * The manifest counts ROWS IN THE FILE, which includes the positional-quality-90 rows we deliberately drop, so the
+ * The manifest counts rows IN the file. It includes the positional-quality-90 rows we deliberately drop. Therefore, the
  * identity being checked is `manifest[area] === parsed[area] + noCoordinateDrops[area]`.
  *
- * THE TOLERANCE MUST NOT INCLUDE MALFORMED ROWS, and the first version of this function got that wrong in a way worth
+ * The tolerance must not include malformed rows, and the first version of this function got that wrong in a way worth
  * recording: it set `tolerance = skippedNoCoordinate + skippedMalformed`, so when a CSV-parsing bug rejected all
- * 1,746,976 coordinate-bearing rows, the tolerance grew to 1.75 M and every area "reconciled" against a database
- * holding ZERO postcodes. A check whose slack is derived from the size of the failure it is meant to catch cannot catch
- * it. The tolerance is now the no-coordinate drops ALONE — a deliberate, bounded, understood exclusion — and any
+ * 1,746,976 coordinate-containing rows, the tolerance grew to 1.75 M and every area "reconciled" against a database
+ * holding zero postcodes. A check whose slack is derived from the size of the failure it is meant to catch cannot catch
+ * it. The tolerance is now the no-coordinate drops alone — a deliberate, bounded, understood exclusion — and any
  * malformed row at all is reported separately as a defect by {@link buildPostcodeCodePoint}'s caller.
  */
 function compareAgainstManifest(metadata: CodePointMetadata, stats: CodePointParseStats): string[] {
@@ -367,9 +367,9 @@ interface DatabaseMetaInput {
 }
 
 /**
- * Bake the provenance record into the staging DB (pre-VACUUM, pre-seal — a shipped DB is never patched).
+ * Bake the provenance record into the staging DB (pre-vacuum, pre-seal — a shipped DB is never patched).
  *
- * The attribution year comes from OS's own `COPYRIGHT DATE`, not from the build clock: republishing a 2026 extract in
+ * The attribution year comes from OS's own `copyright date`, not from the build clock: republishing a 2026 extract in
  * 2027 still attributes the 2026 data. Both dates are stored so the distinction stays visible.
  */
 async function writeDatabaseMeta(db: DatabaseClient<WOFDatabase>, input: DatabaseMetaInput): Promise<void> {

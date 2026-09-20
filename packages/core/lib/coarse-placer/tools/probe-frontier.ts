@@ -2,18 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   #822 PLACER-FRONTIER PROBE (night 2026-06-28, Phase A) — for the placer-recoverable countries (a
- *   country hint resolves them, so growing the placer captures the win), measure whether the DEPLOYED
+ *   #822 placer-frontier probe (night 2026-06-28, Phase A) — for the placer-recoverable countries (a
+ *   country hint resolves them, so growing the placer is what would recover them), measure whether the deployed
  *   coarse placer can actually emit that country. Per query (`<City>, <Country>` from cities15000):
  *
  *   - `in_class_set`  — is the true country even in the placer's class set? (a class the model can't
- *                       represent can't be recovered by any threshold change — that's a DATA gap)
+ *                       represent can't be recovered by any threshold change — that's a data gap)
  *   - `top1_correct`  — did the placer's argmax land on the true country?
  *   - `prob_1`        — the calibrated top-class confidence (vs `HARD_PLACE_COUNTRY_MIN_CONF` = 0.9)
  *
- *   Branch (plan Phase 2): `in_class_set` false >5% → DATA GAP, defer to a class-set-widening retrain.
- *   in-set + top1>80% + median prob_1 < 0.9 → UNDER-CONFIDENT, M2 mass-rule fix. in-set + top1<80% →
- *   low-quality signal, defer. The probe is a LINEAR model (no ONNX), so it is heat-safe.
+ *   Branch (plan Phase 2): `in_class_set` false >5% → data GAP, defer to a class-set-widening retrain.
+ *   in-set + top1>80% + median prob_1 < 0.9 → under-confident, M2 mass-rule fix. in-set + top1<80% →
+ *   low-quality signal, defer. The probe is a linear model (no ONNX), so it is heat-safe.
  *
  *   Run: `mailwoman placer probe-frontier [--model <dir>] [--n 2000] [--out <md>]`
  */
@@ -42,7 +42,7 @@ const MIN_IN_CLASS_TOP1 = 0.8
  */
 export interface ProbeFrontierOptions {
 	/**
-	 * Model artifact dir. Default: the DEPLOYED placer bundled in `@mailwoman/core` (`core/data/coarse-placer`), NOT the
+	 * Model artifact dir. Default: the deployed placer bundled in `@mailwoman/core` (`core/data/coarse-placer`), not the
 	 * `$MAILWOMAN_DATA_ROOT` training output — match the runtime.
 	 */
 	model?: string
@@ -122,14 +122,14 @@ export async function probeFrontier(
 	options: ProbeFrontierOptions = {},
 	report?: (line: string) => void
 ): Promise<ProbeFrontierResult> {
-	// Deliberately the shipped bundle, not defaultModelDir(): the probe grades what the runtime loads.
-	const modelDir = options.model || shippedModelDir()
+	// Deliberately the shipped bundle rather than defaultModelDir(): the probe grades what the runtime loads.
+	const modelDir = (options.model ?? shippedModelDir()).toString()
 	const maxN = options.n ?? 2000
 
 	// `@mailwoman/codex` is a devDependency of core (operator tooling) — lazy-imported inside the fn.
 	const { ISO2_TO_NAME } = await import("@mailwoman/codex/country")
 
-	const meta = await readLocalJSONFile<CoarsePlacerMeta>(join(String(modelDir), "meta.json"))
+	const meta = await readLocalJSONFile<CoarsePlacerMeta>(join(modelDir, "meta.json"))
 	// The deployed bundle is int8-per-row quantized — fromArtifactDir dequantizes via meta.scales.
 	const placer = await CoarsePlacer.fromArtifactDir(modelDir, { abstainBelow: 0 })
 	const classSet = new Set(meta.classes)

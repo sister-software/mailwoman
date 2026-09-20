@@ -76,7 +76,7 @@ test("Composer: partial light/sky options merge over the defaults", () => {
 // Terrain + DEM-source tests parked (mobile performance): the `terrain` getter and the terrain DEM
 // source are commented out in `composition.ts`. Re-enable the code and these tests together when DEM
 // is reconsidered. (The hillshade DEM source is still injected.)
-/* oxlint-disable vitest/no-commented-out-tests -- parked deliberately; see the note above */
+/* oxlint-disable vitest/no-commented-out-tests -- parked deliberately. see the note above */
 /*
 test("Composer: terrain source defaults to the terrain tileset id", () => {
 	const composer = new StyleSpecificationComposer({ sources: {} })
@@ -208,7 +208,7 @@ test("Composer: two instances from the shared BaseLayers have independent layer 
 	const a = new StyleSpecificationComposer({ sources: {} })
 	const baseCount = a.layers.length
 	const b = new StyleSpecificationComposer({ sources: {} })
-	expect(b.layers).toHaveLength(baseCount) // b built a full list, not a corrupted remnant
+	expect(b.layers).toHaveLength(baseCount) // b built a full list rather than a corrupted remnant
 	expect(a.layers).toHaveLength(baseCount) // a's list wasn't mutated by b's construction
 })
 

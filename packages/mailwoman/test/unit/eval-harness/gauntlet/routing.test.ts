@@ -47,7 +47,7 @@ describe("gradedBaseOnly (#2223)", () => {
 	})
 
 	it("reports EVERY country routing to a failed overlay, not only the first one graded", () => {
-		// The harness memoizes its fallback per LOCALE, so a second country sharing an overlay never re-enters the
+		// The harness memoizes its fallback per locale, so a second country sharing an overlay never re-enters the
 		// failure path. Keyed by country, that country would silently read as production-true.
 		const shared = Object.entries(OVERLAY_LOCALE_BY_COUNTRY)
 			.filter(([, locale]) => locale === "en-GB")

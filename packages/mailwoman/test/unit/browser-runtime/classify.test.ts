@@ -4,7 +4,7 @@
 /**
  *   Unit tests for the demo's admin resolution (`runCascade`, #861: the shared `resolveTree` over
  *   a candidate-style lookup via `CandidateResolverBackend`) against a stub lookup that mimics the
- *   byte-range candidate table: name/country/bbox/placetype filters, population-first ordering, NO
+ *   byte-range candidate table: name/country/bbox/placetype filters, population-first ordering, no
  *   `parentID` support (the adapter translates parent scopes to country/bbox — that translation is
  *   what these tests exercise, alongside pin extraction and the cross-country postcode check). The
  *   coherence passes themselves are tested in `resolver/admin-coherence.test.ts`; integration
@@ -29,7 +29,7 @@ const AT_BBOX = { minLat: 46.4, maxLat: 49, minLon: 9.5, maxLon: 17.2 }
 
 /**
  * A candidate-table-shaped stub: exact normalized-name match (candidate rows are always `exactMatch`), score-ordered
- * (population-first), honoring country/bbox/placetype filters and IGNORING parentID (the table has none — the adapter
+ * (population-first), honoring country/bbox/placetype filters and ignoring parentID (the table has none — the adapter
  * must translate).
  */
 function stubLookup(places: StubPlace[]): MailwomanLookupLike {
@@ -109,7 +109,7 @@ describe("runCascade (shared resolveTree over the candidate lookup)", () => {
 			{ id: 12, name: "Austria", placetype: "country", country: "AT", lat: 47.6, lon: 14.1, score: 2, bbox: AT_BBOX },
 		])
 
-		// The country token is the locality's admin CONTEXT — the parse tree nests it above the
+		// The country token is the locality's admin context — the parse tree nests it above the
 		// locality (same shape the phrase-grouper emits), which is what arms the pass.
 		const hits = await runCascade(
 			lookup,
@@ -169,7 +169,7 @@ describe("runCascade (shared resolveTree over the candidate lookup)", () => {
 
 	test("cross-country postcode check: a foreign postcode match cannot out-pin the parsed city", async () => {
 		// "10115"-class: the postcode string resolves to a DE row, the city is a US locality — the
-		// locality wins the pin; the postcode stays in the hit list.
+		// locality wins the pin. the postcode stays in the hit list.
 		const lookup = stubLookup([
 			{ id: 30, name: "10115", placetype: "postalcode", country: "DE", lat: 52.53, lon: 13.38, score: 2 },
 			{ id: 31, name: "New York", placetype: "locality", country: "US", lat: 40.71, lon: -74, score: 9 },

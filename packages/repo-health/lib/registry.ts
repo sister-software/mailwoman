@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The registry of repository health checks — the ONLY executable entry point of this package, and the file knip
+ *   The registry of repository health checks — the only executable entry point of this package, and the file knip
  *   treats as such. A check that is not listed here is dead code and knip reports it. `mwops health <id>` and
  *   `mwops health all` iterate this array.
  */
@@ -10,25 +10,34 @@
 import type { RepoCheck } from "#check"
 import { bundleGraphCheck } from "#checks/bundle-graph"
 import { cliFlagPropertiesCheck } from "#checks/cli-flag-properties"
+import { dataProvenanceCheck } from "#checks/data-provenance"
 import { debtCheck } from "#checks/debt"
 import { docLinkTargetsCheck } from "#checks/doc-link-targets"
 import { exportNameAffixCheck } from "#checks/export-name-affix"
 import { exportsCheck } from "#checks/exports"
 import { licenseRegisterCheck } from "#checks/license-register"
+import { localeScopeCheck } from "#checks/locale/scope"
+import { localeTablesCheck } from "#checks/locale/tables"
 import { manifestTargetsCheck } from "#checks/manifest-targets"
 import { moduleCohesionCheck } from "#checks/module/cohesion"
 import { moduleSurfaceCheck } from "#checks/module/surface"
 import { noRootScriptsCheck } from "#checks/no-root-scripts"
 import { nodeModulesReacharoundCheck } from "#checks/node-modules-reacharound"
+import { packageLicenseCheck } from "#checks/package-license"
 import { prefixDirectoriesCheck } from "#checks/prefix-directories"
 import { privateNameShadowsCheck } from "#checks/private-name-shadows"
 import { pythonPrefixDirectoriesCheck } from "#checks/python-prefix-directories"
+import { rightsChainCheck } from "#checks/rights-chain"
 import { runtimeFlagsCheck } from "#checks/runtime-flags"
-import { stylesheetContractCheck } from "#checks/stylesheet-contract"
-import { testContractCheck } from "#checks/test-contract"
+import { stalePathLiteralsCheck } from "#checks/stale-path-literals"
+import { stylesheetCheck } from "#checks/stylesheet-check"
+import { testLayoutCheck } from "#checks/test-layout"
 import { typecheckTestsCheck } from "#checks/typecheck-tests"
 import { versionSyncCheck } from "#checks/version-sync"
 import { vocabCensusCheck } from "#checks/vocab-census"
+import { weightsFamilyCheck } from "#checks/weights/family"
+import { weightsReconciliationCheck } from "#checks/weights/reconciliation"
+import { weightsRightsCheck } from "#checks/weights/rights"
 
 /**
  * Every health check, in the order `mwops health all` runs them: the ones that only read files first, then the ones
@@ -36,8 +45,16 @@ import { vocabCensusCheck } from "#checks/vocab-census"
  */
 export const checks: ReadonlyArray<RepoCheck> = [
 	versionSyncCheck,
+	packageLicenseCheck,
+	rightsChainCheck,
 	licenseRegisterCheck,
-	testContractCheck,
+	localeTablesCheck,
+	localeScopeCheck,
+	weightsFamilyCheck,
+	weightsRightsCheck,
+	weightsReconciliationCheck,
+	dataProvenanceCheck,
+	testLayoutCheck,
 	nodeModulesReacharoundCheck,
 	noRootScriptsCheck,
 	manifestTargetsCheck,
@@ -49,8 +66,9 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	pythonPrefixDirectoriesCheck,
 	exportNameAffixCheck,
 	docLinkTargetsCheck,
-	stylesheetContractCheck,
+	stylesheetCheck,
 	runtimeFlagsCheck,
+	stalePathLiteralsCheck,
 	debtCheck,
 	bundleGraphCheck,
 	vocabCensusCheck,

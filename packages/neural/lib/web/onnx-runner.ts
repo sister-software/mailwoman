@@ -2,22 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Browser ONNX inference wrapper. Implements the same `NeuralRunner` contract `@mailwoman/neural`'s
- *   classifier consumes, but backed by `onnxruntime-web` (WASM + optional WebGPU) instead of
+ *   Browser ONNX inference wrapper. Implements the same `NeuralRunner` interface `@mailwoman/neural`'s
+ *   classifier consumes, but backed by `onnxruntime-web` (wasm + optional WebGPU) instead of
  *   `onnxruntime-node`.
  *
  *   Execution provider strategy:
  *
- *   - Try WebGPU first when `useWebGPU !== false`. ~10× faster than WASM on supported devices, but
- *       availability depends on browser (Chromium 113+, Safari Tech Preview) AND hardware. The
+ *   - Try WebGPU first when `useWebGPU !== false`. ~10× faster than wasm on supported devices, but
+ *       availability depends on browser (Chromium 113+, Safari Tech Preview) and hardware. The
  *       runtime surfaces a clean error when WebGPU is unavailable, so the constructor falls back to
- *       WASM automatically.
- *   - WASM (SIMD when available) is the universal fallback. ~2× slower than WebGPU on the same model
+ *       wasm automatically.
+ *   - wasm (simd when available) is the universal fallback. ~2× slower than WebGPU on the same model
  *       but works everywhere onnxruntime-web does — including in Node, which is how the test
  *       harness exercises this file.
  *
- *   Tensor shape + I/O contract matches `ONNXRunner` exactly: the packing and the output decode are
- *   the SAME functions (`ort-feeds.ts`), so the two hosts cannot drift; only the `ort.Tensor`
+ *   Tensor shape + I/O interface matches `ONNXRunner` exactly: the packing and the output decode are
+ *   the same functions (`ort-feeds.ts`), so the two hosts cannot drift. only the `ort.Tensor`
  *   construction is host-specific.
  */
 
@@ -47,7 +47,7 @@ export interface WebONNXRunnerOpts {
 	fixedSeqLen?: number
 	/**
 	 * Optional override for where onnxruntime-web should load its `.wasm` assets from. Defaults to the package's CDN
-	 * paths; bundlers usually want to point this at a self-hosted copy.
+	 * paths. bundlers usually want to point this at a self-hosted copy.
 	 *
 	 * Example: `setWASMPaths("/static/ort/")` and put the .wasm files at /static/ort/.
 	 */
@@ -63,7 +63,7 @@ export const DEFAULT_FIXED_SEQ_LEN = 128
 /**
  * Fetch a URL into bytes, throwing on any non-OK status.
  *
- * Raw `fetch`: this is the BROWSER runtime. `APIClient` carries axios, which has no place in the client bundle, and the
+ * Raw `fetch`: this is the browser runtime. `APIClient` carries axios, which has no place in the client bundle, and the
  * platform primitive is what the browser already has.
  */
 export async function fetchBytes(url: string, fetchImpl: typeof fetch = fetch): Promise<Uint8Array> {
@@ -85,7 +85,8 @@ function configureWASMPaths(root: string | undefined): void {
 }
 
 /**
- * The `{data, dims}` view `decodeInferOutput` reads. The float32 dtype is the export contract's, not a runtime check.
+ * The `{data, dims}` view `decodeInferOutput` reads. The float32 dtype is the export interface's rather than a runtime
+ * check.
  */
 function outputTensor(tensor: ort.Tensor): OutputTensor {
 	return { data: tensor.data as Float32Array, dims: tensor.dims }
@@ -101,11 +102,21 @@ export class WebONNXRunner implements NeuralRunner {
 	public diagnostics: WebONNXRunnerDiagnostics | null = null
 	#session: ort.InferenceSession | null = null
 	#loadPromise: Promise<ort.InferenceSession> | null = null
-	private readonly modelBytes: Uint8Array
+	/**
+	 * The model source, dropped the moment a session owns it. `InferenceSession.create` copies the graph into the
+	 * runtime's own heap, so holding this afterwards keeps a second full copy of the model alive for the life of the page
+	 * — 38 MB for the shipped int8 bundle, on top of the runtime's.
+	 */
+	#modelBytes: Uint8Array | null
+	/**
+	 * Kept because `diagnostics` reports it and the bytes themselves are released.
+	 */
+	readonly #modelByteLength: number
 	private readonly opts: WebONNXRunnerOpts
 
 	private constructor(modelBytes: Uint8Array, opts: WebONNXRunnerOpts) {
-		this.modelBytes = modelBytes
+		this.#modelBytes = modelBytes
+		this.#modelByteLength = modelBytes.byteLength
 		this.opts = opts
 		this.fixedSeqLen = opts.fixedSeqLen ?? DEFAULT_FIXED_SEQ_LEN
 	}
@@ -132,37 +143,80 @@ export class WebONNXRunner implements NeuralRunner {
 
 		if (!this.#loadPromise) {
 			this.#loadPromise = (async () => {
+				const modelBytes = this.#modelBytes
+
+				if (!modelBytes) throw new Error("the ONNX runner has been released")
+
 				const wantWebGPU = this.opts.useWebGPU !== false
 
 				if (wantWebGPU) {
 					try {
-						const session = await ort.InferenceSession.create(this.modelBytes, {
+						const session = await ort.InferenceSession.create(modelBytes, {
 							executionProviders: ["webgpu", "wasm"],
 							graphOptimizationLevel: "all",
 						})
 
 						this.#session = session
-						this.diagnostics = { backend: "webgpu", modelBytes: this.modelBytes.byteLength }
+						this.diagnostics = { backend: "webgpu", modelBytes: this.#modelByteLength }
+						// The session owns the graph now. A retry cannot happen either way — `#loadPromise` caches the
+						// rejection — so there is nothing left for these bytes to do.
+						this.#modelBytes = null
 
 						return session
 					} catch {
-						// WebGPU probe failed — fall through to WASM
+						// WebGPU probe failed — fall through to wasm
 					}
 				}
 
-				const session = await ort.InferenceSession.create(this.modelBytes, {
+				const session = await ort.InferenceSession.create(modelBytes, {
 					executionProviders: ["wasm"],
 					graphOptimizationLevel: "all",
 				})
 
 				this.#session = session
-				this.diagnostics = { backend: "wasm", modelBytes: this.modelBytes.byteLength }
+				this.diagnostics = { backend: "wasm", modelBytes: this.#modelByteLength }
+				this.#modelBytes = null
 
 				return session
 			})()
 		}
 
 		return this.#loadPromise
+	}
+
+	/**
+	 * Free the session's native memory.
+	 *
+	 * An `InferenceSession` holds its weights and arenas in the wasm heap (or on the GPU), which the JavaScript garbage
+	 * collector does not own and cannot reclaim — dropping the last reference to a runner frees the wrapper and leaves
+	 * the model resident. `release()` is the only thing that gives it back, and before this it was called nowhere in the
+	 * repository.
+	 *
+	 * That matters because a release bundle is reloaded whenever the version or the backend force changes, so picking a
+	 * different model version, toggling "Force wasm", or entering compare mode each added a model's worth of native
+	 * memory that never came back. Safari is the first browser to complain, because it kills a tab on memory pressure
+	 * rather than swapping.
+	 *
+	 * Safe to call more than once, and safe to call while a load is still in flight — the in-flight session is awaited
+	 * and then released, so an aborted load does not leak the session it was part-way through building.
+	 */
+	async release(): Promise<void> {
+		this.#modelBytes = null
+
+		const pending = this.#loadPromise
+
+		this.#loadPromise = null
+		this.#session = null
+
+		if (!pending) return
+
+		try {
+			const session = await pending
+
+			await session.release()
+		} catch {
+			// A session that failed to build holds nothing to free.
+		}
 	}
 
 	/**

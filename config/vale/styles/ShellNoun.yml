@@ -1,0 +1,102 @@
+## Reject prose that packages an observation or hypothesis into an abstract
+## object and then reports the object's "state" instead of stating what happened.
+##
+## Two related failures appear repeatedly in model-written engineering prose:
+##
+## 1. IMPLICIT PROPOSITION ACCOMMODATION / ENCAPSULATION
+##
+##    A proposition is compressed into a definite noun such as "the guard",
+##    "the win", "the contract", or "the cost". The noun may summarize earlier
+##    text, or it may be introduced as though the reader already knows what
+##    proposition it denotes.
+##
+## 2. EPISTEMIC INFLATION
+##
+##    The compressed noun is then given a truth, persistence, or structural
+##    predicate such as HOLDS, STANDS, SURVIVES, or CARRIES. This makes a local
+##    observation sound like a general property or established result without
+##    adding evidence.
+##
+## Replace the compressed object with the proposition itself. State behavior,
+## scope, metric, and value where applicable:
+##
+##   REJECTED: "the probe confirmed the guard"
+##      -> "the probe showed that excluding 4-5 digit tokens keeps parity
+##          postcode at 0.986"
+##
+##   REJECTED: "guard HOLDS + date-name UP"
+##      -> "parity postcode stays at 0.986 and FR date-name rises above 0.367"
+##
+##   REJECTED: "MessageBus DELIVERS confirming the contract holds"
+##      -> "MessageBus delivered the message, and the test suite now passes"
+##
+##   REJECTED: "recover the win" / "keep the unit win"
+##      -> "recover the 2-digit half of the FR date-name rise" /
+##         "keep `unit` at or above 88%"
+##
+##   REJECTED: "the cost was carried entirely by the 4-5 digit pieces"
+##      -> "the 4-5 digit pieces account for the whole postcode drop (-9.7pp)"
+##
+##   REJECTED: "the name carries the contract"
+##      -> "`statPath` raises ENOENT where `tryStat` answers null; the `try`
+##          prefix is the only difference between the two names, and it is what
+##          tells a reader which one forgives"
+##
+##      The object form reads as a maxim rather than as a claim, so a reader
+##      cannot tell which contract, or what it requires. Both directions are
+##      refused: an abstract noun as the SUBJECT of `carries` and as its OBJECT.
+##
+##   REJECTED: "3-digit is the reduce"
+##      -> "the 100-999 range is the one to keep"
+##
+##   REJECTED: "take THIS to 8k"
+##      -> "train this config to 8,000 steps"
+##
+## Apply this rule even when the noun names a real implementation detail.
+## Replace the noun with the check, input, output, condition, or measured value
+## that the sentence means. A reader must be able to identify the operation and
+## its scope without expanding a label into an unstated proposition.
+##
+## `win` as a verb ("the higher score wins") is also ordinary English. The
+## definite `win` patterns below may still catch subjects such as "the
+## hand-authored entries win"; rewrite those rare cases as "take precedence".
+extends: existence
+message: "'%s' hides the observed proposition behind an abstract noun or stronger state claim — state the behavior/result directly, with scope and metric/value where applicable."
+level: error
+ignorecase: true
+tokens:
+  # THE SHELL NOUNS. One list, repeated in each token below, because Vale's
+  # existence extension takes plain regex with no way to share an alternation.
+  # Widen it HERE and in every token, or the rule catches the noun in one
+  # grammatical position and admits it in the others — which is how
+  # `carries the cost` came to be refused while `carries the contract` passed.
+  #
+  #   guard gate contract invariant rule constraint guarantee property
+  #   win gain lift improvement regression loss cost delta
+  #   result finding signal case story effect mechanism behaviour
+  #   takeaway lesson insight conclusion claim premise picture
+  #
+  # Confirmation or proof applied to an accommodated/encapsulated object.
+  - '\b(?:confirm(?:s|ed|ing)?|validat(?:e|es|ed|ing)|prov(?:e|es|ed|ing)|establish(?:es|ed|ing)?|demonstrat(?:e|es|ed|ing)|verif(?:y|ies|ied|ying)|settl(?:e|es|ed|ing)|vindicat(?:e|es|ed|ing)|bear(?:s|ing)? out|bore out) (?:the |this |that |a |its |their )?(?:[\w-]+ ){0,2}(?:guard|gate|contract|invariant|rule|constraint|guarantee|property|win|gain|lift|improvement|regression|loss|cost|delta|result|finding|signal|case|story|effect|mechanism|behaviou?r|takeaway|lesson|insight|conclusion|claim|premise|picture)\b'
+  # Truth/stability predicates, with the shell noun as the SUBJECT.
+  - '\b(?:the |this |that |its |their )?(?:[\w-]+ ){0,2}(?:guard|gate|contract|invariant|rule|constraint|guarantee|property|win|gain|lift|improvement|regression|loss|cost|delta|result|finding|signal|case|story|effect|mechanism|behaviou?r|takeaway|lesson|insight|conclusion|claim|premise|picture) (?:holds?|held|stands?|stood|survives?|survived|sticks?|stuck|carries|carried|lands?|landed|persists?|persisted|transfers?|transferred|generali[sz]es?|generali[sz]ed|remains?(?: intact)?|remained(?: intact)?|(?:is|was) intact|breaks?|broke|gives? way|gave way)\b'
+  # The same nouns as the OBJECT of a structural verb. `carries the contract`
+  # reads as a maxim rather than as a claim: a reader cannot tell which contract
+  # or what it requires, and the sentence states no scope, metric or value.
+  - '\b(?:carr(?:y|ies|ied)|hold(?:s|ing)?|held|uphold(?:s|ing)?|upheld|preserv(?:e|es|ed|ing)|maintain(?:s|ed|ing)?|captur(?:e|es|ed|ing)|encod(?:e|es|ed|ing)|express(?:es|ed|ing)?|embod(?:y|ies|ied|ying)|restor(?:e|es|ed|ing)|break(?:s|ing)?|broke|violat(?:e|es|ed|ing)) the (?:[\w-]+ ){0,2}(?:guard|gate|contract|invariant|rule|constraint|guarantee|property|win|gain|lift|improvement|regression|loss|cost|delta|result|finding|signal|case|story|effect|mechanism|behaviou?r|takeaway|lesson|insight|conclusion|claim|premise|picture)\b'
+  # The passive, which names the predicate and drops the agent as well.
+  - '\b(?:guard|gate|contract|invariant|rule|constraint|guarantee|property|win|gain|lift|improvement|regression|loss|cost|delta|result|finding|signal|case|story|effect|mechanism|behaviou?r|takeaway|lesson|insight|conclusion|claim|premise|picture) (?:is|was|are|were|gets?|got) (?:carried|held|upheld|preserved|maintained|captured|encoded|expressed|embodied|restored|broken|violated|established|confirmed|borne out)\b'
+  # Definite result nouns that usually hide the actual metric/result.
+  - '\b(?:the|its|their|half the|half of the) (?:[\w-]+ ){0,2}(?:win|gain|lift)\b'
+  - '\b(?:the|a|this|that) reduce\b'
+  - '\bwin absent\b'
+  # "Cost"/regression language that replaces a measured delta with a metaphor.
+  # The first of these is also reachable through the passive token above. Both
+  # stay: a token kept is free, and coverage that rests on one pattern happening
+  # to subsume another breaks silently the next time either is edited.
+  - '\b(?:cost|loss|regression) (?:was|is|were|are) carried\b'
+  - '\bcarried entirely by\b'
+  # Training shorthand that omits the actual operation.
+  - '\btake (?:this|it|that|the [\w-]+) to \d+k\b'
+  # Protection language hides the concrete behavior or invariant being maintained.
+  - '\bprotect(?:s|ed)?\b'

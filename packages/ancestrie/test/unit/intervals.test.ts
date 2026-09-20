@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Containment contract: the pre/post interval truth table (ancestor / descendant / sibling / self
+ *   Containment interface: the pre/post interval truth table (ancestor / descendant / sibling / self
  *   / disjoint), descendant range scans, the DAG primary-parent rule, declared-but-absent parents,
  *   and cycle rejection at seal.
  */

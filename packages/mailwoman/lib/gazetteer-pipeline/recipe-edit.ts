@@ -4,16 +4,16 @@
 /**
  *   Add or remove a country in one of `defaults.ts`'s coverage lists, as a text transformation.
  *
- *   WHY TEXT AND NOT AN AST REWRITE. The lists are `as const` string arrays whose VALUE a codemod could
- *   reproduce exactly and whose COMMENTS it would not. The `IN` entry is five lines recording 189,026
+ *   why text and not an AST rewrite. The lists are `as const` string arrays whose value a codemod could
+ *   reproduce exactly and whose comments it would not. The `IN` entry is five lines recording 189,026
  *   sub-locality nodes at 98.6% conversion, six times the shipped GB pair index, and the instruction to
  *   remove IN from the Overture list in the same change. That prose is the reason the entry is defensible,
  *   and #1015 is what happens when the recipe stops being reviewed like code.
  *
- *   WHY IT REFUSES RATHER THAN GUESSES. Adding is mechanical: a new entry has no prose yet, and sorted
+ *   why IT refuses rather than guesses. Adding is mechanical: a new entry has no prose yet, and sorted
  *   insertion is unambiguous. Removing is not — an entry with a comment block above it cannot be deleted
  *   without deciding what becomes of the measurement, and no rule this module could carry would decide
- *   that correctly. So a commented removal is REFUSED with the lines quoted, and a person moves them.
+ *   that correctly. So a commented removal is refused with the lines quoted, and a person moves them.
  *
  *   Nothing here writes to disk. The caller gets the new source and decides whether to apply it, which is
  *   what keeps an irreversible-looking step reviewable as a diff.
@@ -54,8 +54,8 @@ function bodyLines(body: string): string[] {
 /**
  * Comment lines immediately above `index`, walking upward until a non-comment line.
  *
- * Blank lines stop the walk: a comment separated from an entry by a blank line belongs to the list, not to the entry,
- * and treating it as attached would refuse removals that are perfectly safe.
+ * Blank lines stop the walk: a comment separated from an entry by a blank line belongs to the list rather than to the
+ * entry, and treating it as attached would refuse removals that are perfectly safe.
  */
 function attachedComment(lines: readonly string[], index: number): string[] {
 	const out: string[] = []
@@ -81,8 +81,8 @@ const entryPattern = (country: string): RegExp => new RegExp(`^\\s*"${country}",
  * Add a country to a list, in sorted position.
  *
  * Sorted rather than appended because every list is sorted today, and an appended entry reads as an afterthought in a
- * file whose whole purpose is to be reviewed. Adding a country that is already present is a NO-OP reported as such, not
- * an error: a caller running the same plan twice should get the same tree.
+ * file whose whole purpose is to be reviewed. Adding a country that is already present is a no-OP reported as such
+ * rather than an error: a caller running the same plan twice should get the same tree.
  */
 export function addCountry(source: string, listName: string, country: string): RecipeEditResult {
 	const cc = country.toUpperCase()
@@ -98,7 +98,7 @@ export function addCountry(source: string, listName: string, country: string): R
 	}
 
 	// The first entry that sorts after the new one. Comment lines are skipped as sort keys but stay attached to
-	// whatever follows them, so inserting BEFORE a comment block would separate it from its entry.
+	// whatever follows them, so inserting before a comment block would separate it from its entry.
 	let insertAt = lines.length
 
 	for (const [i, line] of lines.entries()) {

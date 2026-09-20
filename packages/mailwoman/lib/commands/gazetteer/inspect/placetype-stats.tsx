@@ -8,7 +8,7 @@
  *   Motivation (the `dependent_locality` dead-tag investigation): the trained model struggles with rare
  *   sub-locality tags because they have almost no WOF grounding, and we underuse WOF's statistical counts
  *   + parent/ancestor relationship chains. This surfaces, per placetype: the global row count, the
- *   distribution of its PARENT placetype (how the type relates upward), and its modal ANCESTOR-placetype
+ *   distribution of its parent placetype (how the type relates upward), and its modal ancestor-placetype
  *   chain. Read-only. The `--json` payload is shaped to feed an "effective placetype" soft-prior later.
  */
 
@@ -19,7 +19,7 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Row count below which a trained placetype is flagged as thin relative to its peers.
@@ -27,7 +27,7 @@ import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCo
 const UNDERTRAINED_PLACETYPE_COUNT = 200_000
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "placetype-stats",
@@ -42,12 +42,6 @@ export const spec = {
 		json: { type: "boolean", description: "Emit raw JSON" },
 	},
 } as const satisfies CommandSpec
-
-interface Options {
-	db?: string
-	country?: string
-	json?: boolean
-}
 
 interface PlacetypeStat {
 	placetype: string
@@ -68,7 +62,7 @@ interface PlacetypeStat {
 }
 
 /**
- * WOF placetype -> mailwoman ComponentTag (mirrors core/types/mapping.ts; only the admin-hierarchy ones).
+ * WOF placetype -> mailwoman ComponentTag (mirrors core/types/mapping.ts. only the admin-hierarchy ones).
  */
 const PLACETYPE_TO_TAG: Record<string, string> = {
 	country: "country",
@@ -82,7 +76,7 @@ const PLACETYPE_TO_TAG: Record<string, string> = {
 	localadmin: "subregion",
 }
 
-const GazetteerPlacetypeStats: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerPlacetypeStats: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { COMPONENT_TAGS } = await import("@mailwoman/codex/component")
 		const { dataRootPath } = await import("@mailwoman/core/utils")

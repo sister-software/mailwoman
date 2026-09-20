@@ -2,21 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   PCN1 placetype census (hierarchy-evidence campaign, R4c). Per gazetteer PARENT surface, the
- *   distribution of its children's PROJECTED `ComponentTag`s — "this parent has 33 boroughs and 642
+ *   PCN1 placetype census (hierarchy-evidence campaign, R4c). Per gazetteer parent surface, the
+ *   distribution of its children's projected `ComponentTag`s — "this parent has 33 boroughs and 642
  *   neighbourhoods, i.e. 675 dependent-locality-class children". The general form of the shipped
- *   PIX1 pair index: where PIX1 answers "is THIS child known under THIS parent?", PCN1 answers "does
- *   this parent have children of this KIND at all?" — the conditional prior that turns a globally
+ *   PIX1 pair index: where PIX1 answers "is this child known under this parent?", PCN1 answers "does
+ *   this parent have children of this kind at all?" — the conditional prior that turns a globally
  *   rare tag into a conditionally common one (see plan/reference/placetype-evidence.mdx).
  *
  *   Why both artifacts exist, rather than folding the census's links into the pair index: a pair
- *   entry ASSERTS a surface is a dependent locality, so every batch of them needs a venue-confound
+ *   entry asserts a surface is a dependent locality, so every batch of them needs a venue-confound
  *   board before it ships (the law-1 directional class — "East Acton" opening a venue name). A
- *   census node asserts nothing about any surface; it can only tilt a reading the model already
+ *   census node asserts nothing about any surface. it can only tilt a reading the model already
  *   entertains under a parent it already identified. That makes the census the safe way to cover
  *   the long tail the pair batches will never individually clear.
  *
- *   This file owns BOTH ends of the format — `serializePlacetypeCensus` (Node, build tooling) and
+ *   This file owns both ends of the format — `serializePlacetypeCensus` (Node, build tooling) and
  *   `PlacetypeCensusResolver` (browser and server alike) — the same single-file discipline as
  *   `pair-index-resolver.ts` and `postcode-binary-resolver.ts`, so the layout can never drift
  *   between writer and reader.
@@ -60,7 +60,7 @@ export interface PlacetypeCensusNode {
 	 */
 	parent: string
 	/**
-	 * Child counts by PROJECTED tag — the placetype→`ComponentTag` projection is the BUILDER's job (see
+	 * Child counts by projected tag — the placetype→`ComponentTag` projection is the builder's job (see
 	 * `gazetteer-pipeline/placetype-census.ts`), so this artifact never carries a placetype vocabulary of its own.
 	 */
 	counts: Partial<Record<ComponentTag, number>>
@@ -90,16 +90,16 @@ export interface PlacetypeCensusHeader {
 	 */
 	buildDate: string
 	/**
-	 * GLOBAL share of each projected tag across every counted child in the country — the denominator a consumer needs to
-	 * turn a node's share into a LIFT (`nodeShare / baseRate`). Shipped in the header rather than recomputed by the
-	 * consumer because the base rate is a property of the BUILD (which placetypes were counted, over which source), and a
+	 * Global share of each projected tag across every counted child in the country — the denominator a consumer needs to
+	 * turn a node's share into a lift (`nodeShare / baseRate`). Shipped in the header rather than recomputed by the
+	 * consumer because the base rate is a property of the build (which placetypes were counted, over which source), and a
 	 * consumer re-deriving it from the node table would silently get a different number: the node table only carries
 	 * parents that cleared the build's inclusion rule, so its totals are not the country's totals.
 	 */
 	baseRates: Partial<Record<ComponentTag, number>>
 	/**
-	 * OPTIONAL soft-prior bias magnitude a census hit contributes at decode time. ABSENT until a calibration task
-	 * measures one — the census ships as a probeable artifact first (R4c is data + loader + offline probe, NO decode
+	 * Optional soft-prior bias magnitude a census hit contributes at decode time. Absent until a calibration task
+	 * measures one — the census ships as a probeable artifact first (R4c is data + loader + offline probe, no decode
 	 * wiring), and a defaulted number here would let an uncalibrated bias reach the decoder unnoticed.
 	 */
 	delta?: number
@@ -190,10 +190,11 @@ export function serializePlacetypeCensus(header: PlacetypeCensusHeader, nodes: r
 
 /**
  * Minimal subset of {@link PlacetypeCensusResolver} a consumer module reads — structural typing so callers depend on
- * the shape, not the class (the same `…Like` convention as `PairIndexLike` / `QueryShapeLike`). The observability rung
- * (`placetype-pair-prior.ts`'s census probe) needs exactly these two: presence (`probe`) and magnitude (`lift`).
+ * the shape rather than the class (the same `…Like` convention as `PairIndexLike` / `QueryShapeLike`). The
+ * observability rung (`placetype-pair-prior.ts`'s census probe) needs exactly these two: presence (`probe`) and
+ * magnitude (`lift`).
  *
- * `share` is deliberately NOT on this interface. Within-parent share was measured at ~100% for the dominant class
+ * `share` is deliberately not on this interface. Within-parent share was measured at ~100% for the dominant class
  * everywhere, so a share-proportional consumer reads a constant — `lift` (share ÷ the country base rate) is the only
  * one of the two that varies with the parent, and naming just it keeps a future consumer from reaching for the flat
  * one.
@@ -275,9 +276,9 @@ export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 	}
 
 	/**
-	 * Look up one folded parent surface. Returns `null` when the parent has no census node — ABSENCE IS NOT EVIDENCE (the
+	 * Look up one folded parent surface. Returns `null` when the parent has no census node — absence is not evidence (the
 	 * meaning-of-zero rule): a missing node means the gazetteer has no counted children there, which is usually coverage,
-	 * so a consumer must treat `null` as neutral and never as a prohibition.
+	 * . Therefore, a consumer must treat `null` as neutral and never as a prohibition.
 	 */
 	probe(parent: string): PlacetypeCensusNode | null {
 		return this.#nodes.get(parent) ?? null
@@ -296,7 +297,7 @@ export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 	}
 
 	/**
-	 * `share(parent, tag)` divided by the country's global base rate for `tag` — how much MORE likely this tag is under
+	 * `share(parent, tag)` divided by the country's global base rate for `tag` — how much more likely this tag is under
 	 * this parent than under a parent drawn at random. `1` means "no different from the country at large", `0` means no
 	 * support. Returns `0` (not `Infinity`) when the base rate is absent, so a missing denominator can never manufacture
 	 * unbounded evidence.

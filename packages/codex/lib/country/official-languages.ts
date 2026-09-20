@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   GENERATED — do not edit by hand. Official languages per ISO 3166-1 territory, derived from
+ *   generated — do not edit by hand. Official languages per ISO 3166-1 territory, derived from
  *   Unicode CLDR 47.0.0 supplemental territoryInfo (`_officialStatus`). `official` merges
  *   CLDR's `official` + `de_facto_official`; `regional` is `official_regional` (kept separate —
  *   the #936 probe showed it pulls in cross-border quirks like Korean-in-CN, so consumers opt in).
- *   Every language appears under each ISO-639 spelling CLDR aliases to it (fi AND fin) so WOF
+ *   Every language appears under each ISO-639 spelling CLDR aliases to it (fi and fin) so WOF
  *   639-3 tags, Overture BCP-47 keys, and GeoNames codes all match without mapping.
  *   Regenerate with: mailwoman dev generate official-languages
  */

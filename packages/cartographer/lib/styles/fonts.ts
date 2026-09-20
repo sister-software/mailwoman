@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The glyph stacks a symbol layer may name. MapLibre draws NO text at all when a glyph range answers 404 — not a
+ *   The glyph stacks a symbol layer may name. MapLibre draws no text at all when a glyph range answers 404 — not a
  *   fallback face, nothing — so a `text-font` naming an absent stack blanks every label in the style at every zoom,
  *   with no console error a reader would connect to the missing labels.
  *

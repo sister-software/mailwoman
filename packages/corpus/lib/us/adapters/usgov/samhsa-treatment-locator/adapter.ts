@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `usgov-samhsa-treatment-locator`: SAMHSA Behavioral Health Treatment Services Locator CSV
+ *   `usgov-samhsa-treatment-locator`: samhsa Behavioral Health Treatment Services Locator CSV
  *   consumer.
  *
- *   SAMHSA's Treatment Locator (`findtreatment.gov`) is the federal directory of substance-use and
+ *   samhsa's Treatment Locator (`findtreatment.gov`) is the federal directory of substance-use and
  *   mental-health treatment facilities. The published CSV carries the facility name, an optional
  *   secondary name (typically the organizational parent), and the postal address quad split into
  *   primary + secondary street lines. Phase 1.6 §1.2 (#22) selects this source for the same reason
@@ -13,17 +13,17 @@
  *   enough human + system hands to accumulate the suite-designator + sub-tenant chaos ("Suite C,
  *   behind main building") that pure gazetteer data does not.
  *
- *   SAMHSA's two-line address shape is the key adapter-specific concern. `street1` typically carries
+ *   samhsa's two-line address shape is the key adapter-specific concern. `street1` typically carries
  *   the canonical postal address (`"123 Main St"`); `street2` carries the suite / unit / "second
  *   floor" surface form. The adapter joins them with `", "` into a single `street` component (Phase
  *   1 keeps `unit` as a deferred slot since the OpenCage template doesn't have a clean rendering
  *   for it). Operators wanting a different join policy can subclass the factory.
  *
- *   Column names below match the canonical SAMHSA Behavioral Health Treatment Services Locator CSV
- *   export header. Operators substituting a closely-related extract should rename columns to match;
- *   the README has the mapping cheatsheet.
+ *   Column names below match the canonical samhsa Behavioral Health Treatment Services Locator CSV
+ *   export header. Operators substituting a closely-related extract should rename columns to match.
+ *   the readme has the mapping cheatsheet.
  *
- *   License: stamped `"Public Domain"` per the SAMHSA Open Data Foundry's federal-government
+ *   License: stamped `"Public Domain"` per the samhsa Open Data Foundry's federal-government
  *   distribution terms.
  */
 
@@ -31,7 +31,7 @@ import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
@@ -46,7 +46,7 @@ export const USGOV_SAMHSA_ADAPTER_ID = "usgov-samhsa-treatment-locator"
 export const USGOV_SAMHSA_DEFAULT_LICENSE = "Public Domain"
 
 /**
- * Subset of SAMHSA Treatment Locator CSV columns consulted by the adapter. Column names match the canonical SAMHSA Open
+ * Subset of samhsa Treatment Locator CSV columns consulted by the adapter. Column names match the canonical samhsa Open
  * Data Foundry export header. `name1` is the venue; `name2` is optional and folded into the venue when present.
  */
 interface SamhsaSiteRow {
@@ -64,7 +64,7 @@ interface SamhsaSiteRow {
 }
 
 /**
- * Join the SAMHSA two-line street: primary street + optional secondary line (suite / unit / floor / "behind main
+ * Join the samhsa two-line street: primary street + optional secondary line (suite / unit / floor / "behind main
  * building") on `", "`. The combined value is the `street` component surface form. Phase 1 does not break this out into
  * the `unit` component — see the file-level comment.
  */
@@ -82,7 +82,7 @@ function joinTwoLineStreet(street1: string, street2: string | undefined): string
 }
 
 /**
- * Combine `name1` + optional `name2` into a single venue surface form. SAMHSA conventions:
+ * Combine `name1` + optional `name2` into a single venue surface form. samhsa conventions:
  *
  * - `name1` is the program / clinic name ("Mountain Plains Counseling Services").
  * - `name2` is the parent organization ("Catholic Charities of Wyoming"), if any.
@@ -107,6 +107,7 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 	return {
 		id: USGOV_SAMHSA_ADAPTER_ID,
 		defaultLicense: USGOV_SAMHSA_DEFAULT_LICENSE,
+		addressRole: AddressRole.Facility,
 		description:
 			"SAMHSA Behavioral Health Treatment Services Locator (public-domain). Adversarial source: venue + two-line address co-occurrence, hand-entered.",
 

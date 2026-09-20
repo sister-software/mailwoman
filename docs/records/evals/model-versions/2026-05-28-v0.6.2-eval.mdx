@@ -9,7 +9,7 @@ authors: [playpen-agent]
 The v0.6.2 release fixes the
 [v0.6.1 dependent_locality regression](./v0.6.1-error-analysis.mdx) via the corpus rebalance
 recipe documented in
-[street-supplement-architecture.md](../../concepts/street-supplement-architecture.mdx). This
+[street-supplement-architecture.md](../../site-2026-08/concepts/street-supplement-architecture.mdx). This
 doc captures the empirical results.
 
 This page is a **draft template** — the TBD fields land when the v0.6.2 100K eval
@@ -39,7 +39,7 @@ pipeline (`scripts/eval-v062-checkpoint.sh`) completes.
 | dep_locality hallucinations  | 0          | 1066 ❌           | **TBD (target ≤100)** | —           |
 | street_suffix hallucinations | 0          | 198               | **TBD**               | —           |
 | v0-vs-neural harness pass    | 14.4%      | (≈14.4%)          | **TBD**               | —           |
-| Pre-publish 2D eval check    | (baseline) | FAIL ❌           | **TBD (target PASS)** | —           |
+| Pre-publish 2D eval check    | (baseline) | FAIL ❌           | **TBD (target pass)** | —           |
 
 ## Per-tag breakdown (TBD)
 
@@ -87,8 +87,8 @@ Apply DeepSeek turn 7's promotion decision tree:
 | Check | Harness pass | Action                                |
 | ----- | ------------ | ------------------------------------- |
 | Pass  | ≥ 25%        | Promote v0.6.2 to default on HF       |
-| Pass  | 15-24%       | Ship as experimental — do NOT promote |
-| Pass  | ≤ 14.4%      | HOLD — sidegrade not release          |
+| Pass  | 15-24%       | Ship as experimental — do not promote |
+| Pass  | ≤ 14.4%      | hold — sidegrade not release          |
 | Fail  | any          | HOLD                                  |
 
 **Verdict: TBD**
@@ -110,7 +110,7 @@ Apply DeepSeek turn 7's promotion decision tree:
 
 ## See also
 
-- [Street-supplement architecture](../../concepts/street-supplement-architecture.mdx)
+- [Street-supplement architecture](../../site-2026-08/concepts/street-supplement-architecture.mdx)
 - [Layer 1 morphology FST eval](../experiments/2026-05-28-layer-1-morphology-fst.mdx)
 - [v0-vs-neural harness](./2026-05-28-v0-vs-neural-harness.mdx)
 - [fp32-CRF diagnostic](./2026-05-28-fp32-crf-diagnostic.mdx)

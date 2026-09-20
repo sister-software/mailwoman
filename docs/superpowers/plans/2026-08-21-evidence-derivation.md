@@ -1,6 +1,6 @@
 # Typed Evidence and Derivation Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Give the repository one vocabulary for typed evidence and epistemic status, wire the coverage-basis exclusion check that already exists and has never been called, and project a derivation into the geocode result.
 
@@ -14,7 +14,7 @@
 
 - **`erasableSyntaxOnly: true`** — no `enum` (use `const X = {…} as const` + `type X = (typeof X)[keyof typeof X]`), no constructor parameter properties, no runtime namespaces.
 - **Relative imports use explicit `.ts` extensions.** Each workspace tsconfig sets `rewriteRelativeImportExtensions: true`.
-- **`@mailwoman/evidence` has ZERO runtime dependencies.** Not `@mailwoman/core`, not `@mailwoman/spatial`. Adding one defeats the reason the workspace exists.
+- **`@mailwoman/evidence` has zero runtime dependencies.** Not `@mailwoman/core` rather than `@mailwoman/spatial`. Adding one defeats the reason the workspace exists.
 - **Acronym casing:** whole camelCase components — `parseJSON`, `readID`, `POILookup`. `ID` never `Id`. Enforced by `sister-software/no-title-case-acronym` in `yarn lint:oxlint`.
 - **No raw `process.env` / `process.argv`** — CI-enforced. Use `core/env/schema.ts` + `env-paths`.
 - **Data-root paths go through `@mailwoman/core/utils`** (`dataRootPath`, `mailwomanDataRoot`). Never hard-code `/mnt/playpen/mailwoman-data`.
@@ -30,7 +30,7 @@
 
 **Files:**
 
-- Create: `scratchpad/2026-08-21-coverage-miss-decomposition.md` (the verdict — a record, not code)
+- Create: `scratchpad/2026-08-21-coverage-miss-decomposition.md` (the verdict — a record rather than code)
 - Read only: `packages/dev-mcp/lib/constraint-census.ts`
 
 **Interfaces:**
@@ -76,7 +76,7 @@ Classify by hand — this is a judgement the measurement cannot make. The classe
 
 `fold_failure` is not one class. `normalizeLocalityForKey` — the fold `constraint-census` keys with — was
 measured correct (NFKD, strip combining marks, lowercase, strip `.,'’`, collapse whitespace), so the
-denominator is NOT contaminated by a diacritic bug. What it does do is keep hyphens and drop periods, and
+denominator is not contaminated by a diacritic bug. What it does do is keep hyphens and drop periods, and
 that produces three distinct failures. Record which one each row is:
 
 | Sub-mechanism       | Board row        | Folds to         | Register likely holds |
@@ -85,7 +85,7 @@ that produces three distinct failures. Record which one each row is:
 | `fold_admin_suffix` | `São Paulo - SP` | `sao paulo - sp` | `sao paulo`           |
 | `fold_designator`   | `Co. Westmeath`  | `co westmeath`   | `westmeath`           |
 
-For every row you classify `fold_failure`, confirm it by probing the gazetteer for the same place under a repaired surface. Use the `mwdev_lookup` MCP tool. A row you cannot confirm is `unknown`, not `fold_failure` — a magnitude never carries its own absence.
+For every row you classify `fold_failure`, confirm it by probing the gazetteer for the same place under a repaired surface. Use the `mwdev_lookup` MCP tool. A row you cannot confirm is `unknown` rather than `fold_failure` — a magnitude never carries its own absence.
 
 - [ ] **Step 5: Write the verdict**
 
@@ -199,7 +199,7 @@ Create `packages/evidence/package.json`:
 {
 	"name": "@mailwoman/evidence",
 	"version": "9.1.0",
-	"description": "The typed-evidence contract — observation, exclusion, relation and prior, the epistemic-status axis, the coverage-basis exclusion check, and the derivation graph. Pure, zero-runtime-dep: the shared home every claim-type package reaches for.",
+	"description": "The typed-evidence interface — observation, exclusion, relation and prior, the epistemic-status axis, the coverage-basis exclusion check, and the derivation graph. Pure, zero-runtime-dep: the shared home every claim-type package reaches for.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
 		"type": "git",
@@ -265,7 +265,7 @@ Create `packages/evidence/status.ts`:
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The epistemic axis — WHAT MAY BE CLAIMED about a value, kept strictly separate from the mechanism that
+ *   The epistemic axis — what may be claimed about a value, kept strictly separate from the mechanism that
  *   produced it. A geocode result's `resolution_tier` answers "how was this coordinate produced"
  *   (`address_point`, `interpolated`, …); this answers "what does the evidence permit us to say". A rooftop
  *   matched against a national register the authority declares complete is `designated`; the same rooftop
@@ -282,7 +282,7 @@ export const EpistemicStatus = {
 	Derived: "derived",
 	/** No row matched; the value is the intersection of stated constraints. Never presentable as retrieved. */
 	Inferred: "inferred",
-	/** The evidence does not support a claim. The honest answer, not a failure to try. */
+	/** The evidence does not support a claim. The honest answer rather than a failure to try. */
 	Unresolved: "unresolved",
 } as const
 
@@ -363,7 +363,7 @@ export function relation(input: {
 }): Relation {
 	if (input.assertion === Assertion.Authoritative && input.score !== undefined) {
 		throw new Error(
-			`authoritative relation cannot carry a score (${input.relationship} from ${input.source}): a score means the link was concluded, not stated`
+			`authoritative relation cannot carry a score (${input.relationship} from ${input.source}): a score means the link was concluded rather than stated`
 		)
 	}
 
@@ -400,7 +400,7 @@ Create `packages/evidence/index.ts`:
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The typed-evidence contract. Zero runtime dependencies BY DESIGN: `@mailwoman/bdc`,
+ *   The typed-evidence interface. Zero runtime dependencies BY DESIGN: `@mailwoman/bdc`,
  *   `@mailwoman/resolver`, `@mailwoman/filer` and `@mailwoman/match` all consume this, and two of them are
  *   leaves. Routing it through `@mailwoman/core` would drag core's shipped data behind every one of them —
  *   the same cost that makes `nuts-lookup` and `timezone-lookup` re-implement a ray cast rather than depend
@@ -585,7 +585,7 @@ Create `packages/evidence/coverage.ts`:
  *   the only one with no public constructor: {@link requireExclusionBasis} is the sole way to make one, and
  *   it refuses far more often than it admits.
  *
- *   FOLD PARITY IS A PRECONDITION, not a detail. A key that "exists nowhere" may simply exist under a
+ *   fold parity is a precondition rather than a detail. A key that "exists nowhere" may simply exist under a
  *   surface we did not probe. The 2026-08-21 board decomposition found this class directly — `Tel Aviv-Yafo`,
  *   `São Paulo - SP`, `Co. Westmeath` are all real places reported as coverage misses — and it is
  *   indistinguishable from a true absence at the decision point. `street-evidence.ts` carries the same scar
@@ -752,9 +752,9 @@ yarn compile
 yarn vitest run packages/core/lib/layers
 ```
 
-Expected: PASS. `packages/core/lib/layers/schema.test.ts` already asserts `supportsExclusion` admits `Designated`/`Surveyed` and refuses `SourcePresent`/absent — those assertions must still pass unchanged, now against the moved implementation.
+Expected: pass. `packages/core/lib/layers/schema.test.ts` already asserts `supportsExclusion` admits `Designated`/`Surveyed` and refuses `SourcePresent`/absent — those assertions must still pass unchanged, now against the moved implementation.
 
-- [ ] **Step 9: Add `foldIdentity` — a fold is identified by what it computes, not what it is called**
+- [ ] **Step 9: Add `foldIdentity` — a fold is identified by what it computes rather than what it is called**
 
 Three packages export a function named `foldName` and no two agree. Measured:
 
@@ -794,7 +794,7 @@ export const FOLD_PROBE_CORPUS: readonly string[] = [
  * Identify a fold by its BEHAVIOUR over {@link FOLD_PROBE_CORPUS} — a name cannot do this job.
  *
  * Two folds that compute the same answers are interchangeable and share an identity, which is the property
- * the exclusion check needs: it is asking "was this key built by a fold equivalent to mine", not "were these
+ * the exclusion check needs: it is asking "was this key built by a fold equivalent to mine" rather than "were these
  * two functions written in the same file".
  *
  * Deliberately NOT a cryptographic hash: the string is meant to be readable in a derivation and a diff, so a
@@ -890,7 +890,7 @@ yarn compile
 yarn vitest run packages/bdc packages/spatial
 ```
 
-Expected: PASS. `filing-landscape`'s existing parity test asserts this derivation agrees cell-for-cell with
+Expected: pass. `filing-landscape`'s existing parity test asserts this derivation agrees cell-for-cell with
 `build-bdc.ts`'s own coverage-cell derivation — that test is the regression net for this move and must not
 be edited.
 
@@ -931,7 +931,7 @@ yarn compile
 yarn vitest run packages/bdc/lib/sdk/plausibility.test.ts
 ```
 
-Expected: PASS. Record the test count — it must be identical after the change. **The whole acceptance criterion of this task is that this file's assertions never change.**
+Expected: pass. Record the test count — it must be identical after the change. **The whole acceptance criterion of this task is that this file's assertions never change.**
 
 - [ ] **Step 2: Add the dependency**
 
@@ -981,7 +981,7 @@ yarn compile
 yarn vitest run packages/bdc/lib/sdk/plausibility.test.ts
 ```
 
-Expected: PASS with the same test count as Step 1, and **zero edits to the test file**. If a test needed changing, the re-expression changed behaviour and must be redone.
+Expected: pass with the same test count as Step 1, and **zero edits to the test file**. If a test needed changing, the re-expression changed behaviour and must be redone.
 
 - [ ] **Step 6: Commit**
 
@@ -1006,7 +1006,7 @@ The probe already exists. `packages/resolver-wof-sqlite/lib/uprn-lookup.ts` ship
 capped at `UPRN_MAX_NEAREST_RADIUS_M = 10_000`, with an integration test. Its own docstring already states
 this task's requirement:
 
-> callers building negative evidence must consult `readLayerCoverage`, not this reader alone.
+> callers building negative evidence must consult `readLayerCoverage` rather than this reader alone.
 
 So this task does not build a probe. It does the consult, and it puts the answer in the type so a caller
 cannot skip it.
@@ -1023,7 +1023,7 @@ cannot skip it.
 - Consumes: `requireExclusionBasis`, `foldIdentity`, `CoverageBasis`, `Exclusion` from Task 3; `shortCellToParentInt` from Task 3 step 11; the existing `UPRNLookup`, `UPRN_H3_RESOLUTION`, `UPRN_COVERAGE_H3_RESOLUTION`, `uprnH3Cell`
 - Produces:
   - `const UPRN_EXISTENCE_FOLD: string` — the identity of the point-keying used by both builder and probe
-  - `function uprnAbsenceAt(input: { lookup: UPRNLookup; contractDB: Kysely<LayerContractDatabase>; latitude: number; longitude: number; radiusM: number; country?: string }): Promise<Exclusion | null>`
+  - `function uprnAbsenceAt(input: { lookup: UPRNLookup; schemadb: Kysely<layerschemadatabase>; latitude: number; longitude: number; radiusM: number; country?: string }): Promise<Exclusion | null>`
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1113,7 +1113,7 @@ describe("uprnAbsenceAt", () => {
 		expect(await uprnAbsenceAt({ ...deps(lookup), ...EDINBURGH, radiusM: 250 })).toBeNull()
 	})
 
-	it("a point outside any covered cell yields null — unsurveyed is unknown, not absence", async () => {
+	it("a point outside any covered cell yields null — unsurveyed is unknown rather than absence", async () => {
 		using lookup = new UPRNLookup(fixture("outside.db", CoverageBasis.Designated))
 
 		expect(await uprnAbsenceAt({ ...deps(lookup), ...NEW_YORK, radiusM: 250 })).toBeNull()
@@ -1149,7 +1149,7 @@ search, `readLayerCoverage` does the coverage read, `requireExclusionBasis` does
  * @author Teffen Ellis, et al.
  *
  *   The consult `uprn-lookup.ts`'s docstring instructs: "callers building negative evidence must consult
- *   `readLayerCoverage`, not this reader alone." A bare `null` from `nearestUPRN` is two different facts —
+ *   `readLayerCoverage` rather than this reader alone." A bare `null` from `nearestUPRN` is two different facts —
  *   no UPRN here, or nobody surveyed here — and this is the only place that separates them.
  *
  *   `radiusM` is a CALLER'S parameter with no default. There is no radius that is correct for both "which
@@ -1160,7 +1160,7 @@ search, `readLayerCoverage` does the coverage read, `requireExclusionBasis` does
 export const UPRN_EXISTENCE_FOLD = foldIdentity((s) => s)
 ```
 
-`UPRN_EXISTENCE_FOLD` uses the identity fold deliberately: this probe keys on a COORDINATE, not a name, so
+`UPRN_EXISTENCE_FOLD` uses the identity fold deliberately: this probe keys on a COORDINATE rather than a name, so
 there is no string folding to disagree about. Passing the same identity as both `probeFold` and `layerFold`
 records that the fold axis is not in play here, rather than silently omitting the check. Say so in the
 comment — a future reader will otherwise read it as a stub.
@@ -1168,9 +1168,9 @@ comment — a future reader will otherwise read it as a stub.
 The function:
 
 1. `const cell = uprnH3Cell(latitude, longitude)` then `shortCellToParentInt(cell, UPRN_H3_RESOLUTION, UPRN_COVERAGE_H3_RESOLUTION)`.
-2. `const coverage = await readLayerCoverage(contractDB, coverageCell)` — `undefined` means absent.
+2. `const coverage = await readLayerCoverage(schemadb, coverageCell)` — `undefined` means absent.
 3. `if (lookup.nearestUPRN(latitude, longitude, radiusM)) return null` — a hit is presence; nothing to say.
-4. `const manifest = await readLayerManifest(contractDB)` for `source` and `sourceVintage`, read once by the caller and passed in if this is hot.
+4. `const manifest = await readLayerManifest(schemadb)` for `source` and `sourceVintage`, read once by the caller and passed in if this is hot.
 5. `return requireExclusionBasis({ layer: manifest.name, source: manifest.source, vintage: manifest.sourceVintage, h3Cell: coverageCell, cell: coverage, probeFold: UPRN_EXISTENCE_FOLD, layerFold: UPRN_EXISTENCE_FOLD, country, countries: new Set(["GB"]) })`.
 
 - [ ] **Step 5: Run the test to verify it passes**
@@ -1182,7 +1182,7 @@ Expected: PASS, 5 tests.
 
 `uprn.db` is build-local, so this is a manual check rather than a test. Confirm the two cases the fixture
 cannot: a real GB postcode centroid inside coverage returns `null` (points exist there), and a Northern
-Ireland coordinate returns `null` for the OTHER reason (NI is outside OS Open UPRN coverage — the
+Ireland coordinate returns `null` for the other reason (NI is outside OS Open UPRN coverage — the
 `uprn-lookup.ts` docstring names it). If NI returns an exclusion, the coverage read is wrong.
 
 - [ ] **Step 7: Commit**
@@ -1321,7 +1321,7 @@ Add to `StreetEvidencePick`:
 	demoted: number[]
 ```
 
-In the body: build the demoted index set first, then run the existing G1/G2 loop over the un-excluded candidates in their original order; if that finds no pick, run it again over the excluded ones; if still none, return rank-1. **Do not blend the exclusion into `score`** — the anti-Pelias rule is one bit, not a weight.
+In the body: build the demoted index set first, then run the existing G1/G2 loop over the un-excluded candidates in their original order; if that finds no pick, run it again over the excluded ones; if still none, return rank-1. **Do not blend the exclusion into `score`** — the anti-Pelias rule is one bit rather than a weight.
 
 - [ ] **Step 5: Run the test to verify it passes**
 
@@ -1387,7 +1387,7 @@ describe("epistemic_status", () => {
 })
 ```
 
-Use the fixture helpers already present in that file; if none matches, build the result through the same path the neighbouring tests use rather than inventing a new harness.
+Use the fixture helpers already present in that file; if none matches, build the result through the same path the neighboring tests use rather than inventing a new harness.
 
 - [ ] **Step 2: Run the test to verify it fails**
 
@@ -1400,7 +1400,7 @@ In `packages/mailwoman/lib/geocode-core.ts`, add to `GeocodeResult` immediately 
 
 ```ts
 /**
- * WHAT MAY BE CLAIMED about this coordinate, orthogonal to {@link resolution_tier}, which says how it was
+ * what may be claimed about this coordinate, orthogonal to {@link resolution_tier}, which says how it was
  * PRODUCED. A rooftop matched against a register its authority declares complete is `designated`; the same
  * rooftop matched against a crowdsourced extract is `observed`. Same tier, different authority — and
  * reporting only the tier silently upgrades one into the other.
@@ -1670,7 +1670,7 @@ export function parseH1(fields: string[]): { housing_units: number; occupied: nu
 }
 ```
 
-Extract `seg2Path` beside `seg1Path` (`${fileAbbr}00002${vintage}.pl`), then add a pass that reads segment 2 into a `Map<string, ReturnType<typeof parseH1>>` keyed by GEOID before the existing segment-1 loop, and spread the H1 fields into each `batch.push({...})`. A LOGRECNO present in segment 1 but absent from segment 2 gets zeros — and the loader must `yield` a count of those, because a silent zero here is indistinguishable from a genuinely empty block.
+Extract `seg2Path` beside `seg1Path` (`${fileAbbr}00002${vintage}.pl`), then add a pass that reads segment 2 into a `Map<string, ReturnType<typeof parseH1>>` keyed by GEOID before the existing segment-1 loop, and spread the H1 fields into each `batch.push({...})`. A LOGRECNO present in segment 1 but absent from segment 2 gets zeros — and the loader must `yield` a count of those, because a silent zero here is indistinguishable from a in fact empty block.
 
 - [ ] **Step 5: Run the test to verify it passes**
 
@@ -1683,7 +1683,7 @@ Expected: PASS, 2 tests.
 node packages/tiger/out/scripts/... # use the CLI: mailwoman tiger redistricting --state 06 --county 037
 ```
 
-Then confirm the invariant across every loaded block:
+Then check the required relationship across every loaded block:
 
 ```bash
 node -e "const {DatabaseSync}=require('node:sqlite');const db=new DatabaseSync(process.env.MAILWOMAN_DATA_ROOT+'/tiger/tiger.db',{readOnly:true});console.log(db.prepare('select count(*) bad from pl_block where occupied + vacant != housing_units').get())"
@@ -1707,7 +1707,7 @@ the ingester, the GEOID join and the cache were already here."
 
 ## Task 10: FR probe — does BAN support a per-commune designation claim?
 
-**This task's deliverable is an answer, not a coverage table.** Do not write `layer_coverage` onto `street-centroids-fr.db` inside this task.
+**This task's deliverable is an answer rather than a coverage table.** Do not write `layer_coverage` onto `street-centroids-fr.db` inside this task.
 
 **Files:**
 
@@ -1734,10 +1734,10 @@ Read `packages/ban/lib/sdk/fetch.ts` and `packages/ban/lib/sdk/extract.ts` for f
 
 Write `scratchpad/2026-08-21-ban-designation-probe.md` stating one of:
 
-- **DESIGNATED, per commune** — the signal exists and is carried or recoverable. Name the field, the communes it covers, and the ones it does not. A follow-up task writes `layer_coverage` with `basis: designated` for the covered communes only, and NO row for the rest (absent is unknown; never a zero-completeness row).
+- **DESIGNATED, per commune** — the signal exists and is carried or recoverable. Name the field, the communes it covers, and the ones it does not. A follow-up task writes `layer_coverage` with `basis: designated` for the covered communes only, and no row for the rest (absent is unknown; never a zero-completeness row).
 - **SOURCE_PRESENT only** — no per-commune signal exists. The FR lexical arm does not ship. Record this as a closed negative result so it is not re-proposed.
 
-Either verdict must state what was measured, not what was assumed.
+Either verdict must state what was measured rather than what was assumed.
 
 - [ ] **Step 4: Commit**
 
@@ -1758,13 +1758,13 @@ whether that is true of the data or only of the sentence."
 
 **Type consistency.** `requireExclusionBasis` takes `RequireExclusionInput` in Tasks 3, 5 and 8 with the same field names. `Exclusion.scope` is `CoverageScope` throughout. `pickByStreetEvidence` keeps its existing name; `StreetEvidencePick.demoted` is `number[]` in both the test and the interface. `EpistemicStatus` values are lower-case strings in every assertion.
 
-**Codebase survey, 2026-08-21 — what this plan does NOT build because it already exists.** `UPRNLookup`
+**Codebase survey, 2026-08-21 — what this plan does not build because it already exists.** `UPRNLookup`
 (`resolver-wof-sqlite/uprn-lookup.ts`) already does the bounded nearest-point search Task 5 was going to
 write, and already names the coverage consult as the caller's obligation. `res9ShortCellToRes6Parent`
 already exists in `bdc/sdk/filing-landscape.ts` and moves rather than being re-derived.
 `normalizeLocalityForKey`'s fold was verified correct, so Task 1's denominator stands.
 `eval-harness/fragment-board.ts` is the board falsifier 2 will run on. `match/fellegi-sunter.ts` supplies
-`scorePair` / `decide` for the relation side when a later slice needs them.
+`scorePair` / `decide` for the relation side when a later increment needs them.
 
 **Out of scope, found during the same survey.** `packages/resolver/lib/fold-name.ts`'s `foldName` claims to be
 diacritic-insensitive and is not — it maps each combining mark to a space, so 6 of 9 French commune pairs

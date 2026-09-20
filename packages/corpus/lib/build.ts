@@ -7,7 +7,7 @@
  *   `buildCorpus(opts)` orchestrates every stage of the pipeline:
  *
  *   1. **Adapter runs** — drives every adapter in turn (via `runAdapter`), writing
- *        `<intermediate>/<adapter.id>/canonical.jsonl` slices.
+ *        `<intermediate>/<adapter.id>/canonical.jsonl` files.
  *   2. **Synthesis** — optional. For each canonical row, every applicable augmentation in the row's
  *        country-default policy emits an augmented row alongside the original.
  *   3. **Alignment** — every row (original + augmented) is aligned via `alignRow`. Successes go to
@@ -15,34 +15,34 @@
  *   4. **Splits** — `splitRows` partitions labeled `source_id`s into train/val/test by locality holdout.
  *        Manifest written to `splits/SPLIT_MANIFEST.json` + per-split `train.txt` / `val.txt` /
  *        `test.txt`.
- *   5. **Parquet slices** — `writeSlices` streams labeled rows into 1M-row `.parquet` slices per split
- *        under `corpus-v<version>/{train,val,test}/part-NNNN.parquet` (SNAPPY-compressed, 50k-row
- *        row groups), with per-slice checksums + per-stage manifest in
- *        `corpus-v<version>/MANIFEST.json`.
- *   6. **Top-level manifest** — `<outputDir>/MANIFEST.json` ties every per-stage manifest together with
+ *   5. **Parquet files** — `writeParquetSplits` streams labeled rows into 1M-row `.parquet` files per split
+ *        under `corpus-v<version>/{train,val,test}/part-nnnn.parquet` (snappy-compressed, 50k-row
+ *        row groups), with per-file checksums + per-stage manifest in
+ *        `corpus-v<version>/manifest.json`.
+ *   6. **Top-level manifest** — `<outputDir>/manifest.json` ties every per-stage manifest together with
  *        a top-level corpus_version, built_at, and aggregate counts.
  *
  *   Output layout:
  *
  *   ```
  *   <outputDir>/
- *   MANIFEST.json
+ *   manifest.json
  *   intermediate/
  *     <adapter.id>/canonical.jsonl   # one per adapter
- *     labeled.jsonl                  # post-alignment, pre-slice
+ *     labeled.jsonl                  # post-alignment, pre-parquet
  *     quarantine.jsonl               # rows that failed alignment
  *   splits/
  *     SPLIT_MANIFEST.json
  *     train.txt / val.txt / test.txt
  *   corpus-v<version>/
- *     MANIFEST.json
- *     train/part-NNNN.parquet
- *     val/part-NNNN.parquet
- *     test/part-NNNN.parquet
+ *     manifest.json
+ *     train/part-nnnn.parquet
+ *     val/part-nnnn.parquet
+ *     test/part-nnnn.parquet
  * ```
  *
- *   The intermediate files live alongside the final slices for reproducibility + debugging. Operators
- *   can `rm -rf intermediate/` after the build if disk is tight; the final `corpus-v<version>/` is
+ *   The intermediate files live alongside the final parquet files for reproducibility + debugging. Operators
+ *   can `rm -rf intermediate/` after the build if disk is tight. the final `corpus-v<version>/` is
  *   self-contained.
  */
 
@@ -55,12 +55,14 @@ import { JSONSpliterator } from "spliterator"
 
 import { defaultAdapterRegistry } from "#adapters/utils"
 import { $public } from "#env"
+import { type ParquetManifest, writeParquetSplits } from "#parquet/writers"
 import { once, runAdapter, type AdapterRunManifest } from "#runner"
+import { ingestEligibilityProblems, readAddressSourceRegister, type LicenseDecision } from "#source-register/index"
+import { freezeTrainingManifest } from "#source-register/training-manifest"
 import { defaultAugmentationsForCountry, synthesizeRow } from "#synthesizers/utils"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter, LabeledRow } from "#types"
 import { alignRow } from "#utils/align"
 import { licenseExcluded } from "#utils/license"
-import { writeSlices, type SliceManifest } from "#utils/parquet"
 import {
 	defaultHoldouts,
 	splitForRow,
@@ -72,7 +74,12 @@ import {
 /**
  * Stage tags surfaced to `onProgress`.
  */
-export type BuildStage = "adapter-run" | "align" | "split" | "slice" | "manifest"
+export type BuildStage = "adapter-run" | "align" | "split" | "parquet" | "manifest"
+
+/**
+ * The frozen source record's filename, beside the build's own `MANIFEST.json`.
+ */
+export const TRAINING_MANIFEST_FILE = "TRAINING_SOURCES.json"
 
 /**
  * Per-invocation options for `buildCorpus`.
@@ -106,9 +113,9 @@ export interface BuildCorpusOptions {
 	synthesize?: boolean
 
 	/**
-	 * Forwarded to `writeSlices`. Default 1_000_000.
+	 * Max rows per `.parquet` file, forwarded to `writeParquetSplits`. Default 1_000_000.
 	 */
-	rowsPerSlice?: number
+	rowsPerFile?: number
 
 	/**
 	 * Progress hook. Errors thrown abort the build.
@@ -116,12 +123,74 @@ export interface BuildCorpusOptions {
 	onProgress?: (stage: BuildStage, message: string) => void
 
 	/**
-	 * License kinds to PURPOSELY exclude from this build (#26). Compiled patterns (see `compileLicenseExcludes` /
+	 * License kinds to purposely exclude from this build (#26). Compiled patterns (see `compileLicenseExcludes` /
 	 * `SHARE_ALIKE_PATTERN` in `license.ts`); a row whose `license` matches any is dropped at ingest. Default (omitted)
-	 * includes EVERYTHING — exclusion is a deliberate act, not a silent default. A proprietary-weights build passes the
-	 * share-alike set (`--exclude-share-alike`).
+	 * includes everything — exclusion is a deliberate act rather than a silent default. A proprietary-weights build
+	 * passes the share-alike set (`--exclude-share-alike`).
 	 */
 	excludeLicenses?: readonly RegExp[]
+	/**
+	 * What this corpus is being built for. Defaults to {@linkcode BuildProfile.Exploratory}.
+	 */
+	profile?: BuildProfile
+}
+
+/**
+ * What a corpus build is for, which decides whether a source has to be eligible before its rows enter.
+ *
+ * The two differ in one place and it is the place that matters. An exploratory build answers whether a source is worth
+ * having and must be able to read a source nobody has reviewed. A release-eligible build produces rows that reach a
+ * published model, so every source in it has to carry an elected grant permitting the acts ingest performs.
+ *
+ * Splitting them keeps the second from resting on the first's permissiveness. `excludeLicenses` is unchanged and
+ * orthogonal: it drops a row whose license string matches a pattern an operator named, which is a refusal rather than a
+ * positive eligibility.
+ */
+export const BuildProfile = {
+	/**
+	 * Include every row an adapter yields. What the build has always done, and the profile a measurement runs under.
+	 */
+	Exploratory: "exploratory",
+	/**
+	 * Include a row only when the register says its source is eligible for ingest. A source whose terms nobody read is
+	 * refused here, which is the state all 389 register sources are in today.
+	 */
+	ReleaseEligible: "release-eligible",
+} as const
+
+export type BuildProfile = (typeof BuildProfile)[keyof typeof BuildProfile]
+
+/**
+ * Every register source's ingest-eligibility reasons, keyed by the adapter id its rows carry.
+ *
+ * Read once per build rather than per row. An empty array means eligible, and that is the only value a caller may read
+ * as permission — a source the map does not carry is one the register never named, which the caller refuses rather than
+ * admits.
+ *
+ * The join is on the register's `sourceID`, which is what an adapter stamps into a row's `source`. A register source
+ * whose id no adapter emits contributes nothing here and is not an error: the register lists sources that have been
+ * researched, and most have no adapter yet.
+ */
+async function readSourceEligibility(): Promise<ReadonlyMap<string, readonly string[]>> {
+	const register = await readAddressSourceRegister()
+
+	return new Map(register.sources.map((source) => [source.sourceID, ingestEligibilityProblems(source, register)]))
+}
+
+/**
+ * The register's license decisions keyed by the label a row carries, for freezing into the training manifest.
+ *
+ * Keyed on the decision's `licenseID` because that is what a register source's `license` field holds. An adapter
+ * stamping its own label — `CC0-1.0`, `Public Domain` — matches no key, and the frozen record says so with a `null`
+ * decision rather than inventing one.
+ *
+ * Read even under the exploratory profile, since the manifest records what was known at build time whichever profile
+ * ran, and a build that recorded nothing would be indistinguishable from one whose sources had no decisions.
+ */
+async function readRegisterDecisions(): Promise<ReadonlyMap<string, LicenseDecision>> {
+	const register = await readAddressSourceRegister()
+
+	return new Map(register.licenses.map((decision) => [decision.licenseID, decision]))
 }
 
 /**
@@ -133,28 +202,48 @@ export interface BuildCorpusManifest {
 	adapters: AdapterRunManifest[]
 	skipped_adapters: string[]
 	splits: { counts: SplitManifest["counts"]; holdouts: SplitManifest["holdouts"] }
-	slices: { counts: SliceManifest["counts"]; total_rows: number }
+	slices: { counts: ParquetManifest["counts"]; total_rows: number }
 	quarantine_count: number
 	total_aligned_rows: number
 	/**
-	 * Resolved license set across all INCLUDED rows (license string → row count), + the count dropped by
+	 * Resolved license set across all included rows (license string → row count), + the count dropped by
 	 * `excludeLicenses` (#26). The model card derives its data-attribution table from `licenses`.
 	 */
 	licenses: Record<string, number>
 	excluded_by_license: number
+	/**
+	 * The profile this build ran under, so a consumer reading the manifest can tell a corpus whose sources were checked
+	 * from one whose sources were not. Absent from a manifest written before profiles existed.
+	 */
+	profile: BuildProfile
+	/**
+	 * Rows dropped because the register does not call their source eligible. Always zero under
+	 * {@linkcode BuildProfile.Exploratory}, which asks nothing of the register.
+	 */
+	excluded_by_eligibility: number
+	/**
+	 * Every source refused under {@linkcode BuildProfile.ReleaseEligible}, with the reasons the register gave, so a
+	 * blocked build says what to fix rather than only that it stopped.
+	 */
+	ineligible_sources: Record<string, readonly string[]>
+	/**
+	 * The `contentDigest` of the `TRAINING_SOURCES.json` written beside this manifest, which is the frozen record of
+	 * which sources contributed and under which terms.
+	 */
+	training_manifest_digest: string
 }
 
 /**
  * Drive the full corpus build to completion.
  *
- * Memory profile: the function maintains an in-memory `Map<source_id, SplitName>` to bridge the align → slice hand-off.
- * For Phase 1 fixture-scale runs (≤ 10⁴ rows) this is trivial. For real 5M+ runs, the map fits comfortably in a few
- * hundred MB; the canonical.jsonl and labeled.jsonl payloads stream and never sit in memory.
+ * Memory profile: the function maintains an in-memory `Map<source_id, SplitName>` to bridge the align → parquet
+ * hand-off. For Phase 1 fixture-scale runs (≤ 10⁴ rows) this is trivial. For real 5M+ runs, the map fits comfortably in
+ * a few hundred MB. the canonical.jsonl and labeled.jsonl payloads stream and never sit in memory.
  */
 export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpusManifest> {
 	const adapters = opts.adapters ?? defaultAdapterRegistry.list()
 	const synthesize = opts.synthesize ?? true
-	const rowsPerSlice = opts.rowsPerSlice ?? 1_000_000
+	const rowsPerFile = opts.rowsPerFile ?? 1_000_000
 	const built_at = new Date().toISOString()
 
 	await makeDirectories(opts.outputDir)
@@ -175,9 +264,9 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 			continue
 		}
 
-		// Opt-in resume (MAILWOMAN_RESUME=1): if a complete per-adapter canonical.jsonl + MANIFEST.json
-		// already exist, reuse them instead of re-emitting. The MANIFEST is written only after the
-		// canonical is fully flushed, so its presence guarantees completeness; row order is identical,
+		// Opt-in resume (MAILWOMAN_RESUME=1): if a complete per-adapter canonical.jsonl + manifest.json
+		// already exist, reuse them instead of re-emitting. The manifest is written only after the
+		// canonical is fully flushed, so its presence guarantees completeness. row order is identical,
 		// so downstream holdout-split determinism is preserved. Recovers an align-phase crash without
 		// redoing the (expensive) emit phase. Default (unset) re-emits, preserving correctness. (2026-06-12.)
 		const adapterDir = join(intermediateDir, adapter.id)
@@ -208,9 +297,9 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	}
 
 	// 2 + 3. Synthesis + alignment: stream every canonical.jsonl, optionally augment, align,
-	// and route each labeled row directly to its split-specific JSONL (`labeled-{train,val,test}.
+	// and route each labeled row directly to its split-specific jsonl (`labeled-{train,val,test}.
 	// jsonl`). Memory cost is O(1) — the prior in-memory `splitInputs` array + `splitByIDMap`
-	// + `SplitManifest.{train,val,test}` arrays are gone; per-row split is decided inline via
+	// + `SplitManifest.{train,val,test}` arrays are gone. per-row split is decided inline via
 	// `splitForRow` (a pure function of source_id + region + holdout policy).
 	const labeledPaths: Record<SplitName, string> = {
 		train: join(intermediateDir, "labeled-train.jsonl"),
@@ -233,10 +322,42 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	const holdouts = defaultHoldouts()
 	// License accounting + the deliberate exclusion filter (#26). `licenseCounts` is the resolved
 	// license set (→ manifest + model-card attribution); `excludeLicenses` (empty by default → include
-	// everything) is the operator's PURPOSEFUL exclusion, never a silent drop.
+	// everything) is the operator's purposeful exclusion, never a silent drop.
 	const excludeLicenses = opts.excludeLicenses ?? []
 	const licenseCounts = new Map<string, number>()
 	let excludedByLicense = 0
+
+	const profile = opts.profile ?? BuildProfile.Exploratory
+	const eligibility = profile === BuildProfile.ReleaseEligible ? await readSourceEligibility() : null
+	const rowsBySource = new Map<string, { rows: number; license: string }>()
+	const registerDecisions = await readRegisterDecisions()
+	const ineligibleSources = new Map<string, readonly string[]>()
+	let excludedByEligibility = 0
+
+	/**
+	 * Why a row's source may not enter a release-eligible corpus, or `null` when it may.
+	 *
+	 * Keyed on the adapter id the row carries. A source the register does not name at all is refused rather than
+	 * admitted: the register is the record of what has been reviewed, and a name absent from it is a source nobody
+	 * reviewed.
+	 */
+	const ineligibleBecause = (row: CanonicalRow): readonly string[] | null => {
+		if (!eligibility) return null
+
+		const cached = ineligibleSources.get(row.source)
+
+		if (cached) return cached
+
+		const problems = eligibility.get(row.source) ?? [
+			`the register names no source ${stringifyJSON(row.source)}, so nothing has been reviewed for it`,
+		]
+
+		if (!problems.length) return null
+
+		ineligibleSources.set(row.source, problems)
+
+		return problems
+	}
 
 	const writeQuarantine = (row: CanonicalRow, reason: string): void => {
 		quarantineStream.write(`${stringifyJSON({ row, reason })}\n`)
@@ -248,15 +369,34 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		for await (const row of streamJSONL<CanonicalRow>(adapterRun.jsonl_path)) {
 			licenseCounts.set(row.license, (licenseCounts.get(row.license) ?? 0) + 1)
 
-			// Deliberate license exclusion (#26): drop a row ONLY when the operator named its license
+			// Deliberate license exclusion (#26): drop a row only when the operator named its license
 			// kind via `excludeLicenses`. Default (no patterns) keeps everything — exclusion is a
-			// purposeful act, not a silent default. Counted BEFORE the drop so the manifest's license
-			// set reflects what the corpus actually CONTAINED, and `excluded_by_license` what was removed.
+			// purposeful act rather than a silent default. Counted before the drop so the manifest's license
+			// set reflects what the corpus actually contained, and `excluded_by_license` what was removed.
 			if (licenseExcluded(row.license, excludeLicenses)) {
 				excludedByLicense++
 
 				continue
 			}
+
+			// Positive eligibility, and it runs before augmentation on purpose. A synthetic row carries its ancestor's
+			// `source`, so refusing the ancestor here refuses every row fanned from it. Checking after the fan-out would
+			// let an ineligible source re-enter as the base of a synthesized row.
+			const ineligible = ineligibleBecause(row)
+
+			if (ineligible) {
+				excludedByEligibility++
+
+				writeQuarantine(row, `source-ineligible:${ineligible.join("; ")}`)
+
+				continue
+			}
+
+			// Counted after both refusals, so the frozen manifest records what a source contributed rather than what it
+			// offered. A source dropped entirely appears under `refused` with its reasons instead.
+			const contributed = rowsBySource.get(row.source)
+
+			rowsBySource.set(row.source, { rows: (contributed?.rows ?? 0) + 1, license: row.license })
 
 			const fanned: CanonicalRow[] = [row]
 
@@ -273,8 +413,8 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 					result = alignRow(r)
 				} catch (error) {
 					// Last-resort robustness (2026-06-12): no single row may crash a multi-hour build.
-					// alignRow's targeted paths normalize/quarantine known issues with specific reasons;
-					// this catches any UNKNOWN throw (e.g. assertSpanInvariants on an unforeseen span
+					// alignRow's targeted paths normalize/quarantine known issues with specific reasons.
+					// this catches any unknown throw (e.g. assertSpanInvariants on an unforeseen span
 					// shape) → quarantine + continue. A spike in `align-threw` reasons is a finding.
 					writeQuarantine(r, `align-threw:${(error as Error).message.slice(0, 160)}`)
 
@@ -306,7 +446,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	quarantineStream.end()
 	await Promise.all([...Object.values(labeledStreams).map((s) => once(s, "close")), once(quarantineStream, "close")])
 
-	// 4. Splits — manifest derived by streaming the per-split labeled files; no in-memory
+	// 4. Splits — manifest derived by streaming the per-split labeled files. no in-memory
 	// source-id arrays. `sort(1)` from coreutils produces the deterministic per-split .txt
 	// manifests with disk spill for splits that exceed in-memory thresholds.
 	opts.onProgress?.("split", `splitting ${aligned} aligned rows`)
@@ -320,11 +460,11 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		holdouts,
 	})
 
-	// 5. Parquet slices — per-split labeled JSONL streams in, sliced `.parquet` out. The prior
+	// 5. Parquet files — per-split labeled jsonl streams in, `.parquet` files out. The prior
 	// `splitFor(source_id)` callback (and the `Map<source_id, SplitName>` behind it) is gone.
-	opts.onProgress?.("slice", "writing parquet slices")
+	opts.onProgress?.("parquet", "writing parquet files")
 
-	const sliceManifest = await writeSlices(
+	const parquetManifest = await writeParquetSplits(
 		{
 			train: streamJSONL<LabeledRow>(labeledPaths.train),
 			val: streamJSONL<LabeledRow>(labeledPaths.val),
@@ -333,7 +473,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		{
 			outputDir: opts.outputDir,
 			corpusVersion: opts.corpusVersion,
-			rowsPerSlice,
+			rowsPerFile,
 		}
 	)
 
@@ -349,8 +489,21 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 				: " | NO license exclusion applied (all rows kept)")
 	)
 
-	// 6. Top-level manifest.
+	// 6. Top-level manifest, and the frozen source record beside it.
 	opts.onProgress?.("manifest", "writing top-level MANIFEST.json")
+
+	// Frozen from what this build observed rather than re-derived from the register later. The register moves as
+	// somebody reviews terms, and a record re-derived tomorrow would describe a build that never happened.
+	const trainingManifest = freezeTrainingManifest({
+		corpusVersion: opts.corpusVersion,
+		builtAt: built_at,
+		profile,
+		rowsBySource,
+		decisionsByLicense: registerDecisions,
+		refused: ineligibleSources,
+	})
+
+	await writeLocalJSONFile(trainingManifest, opts.outputDir, TRAINING_MANIFEST_FILE)
 
 	const manifest: BuildCorpusManifest = {
 		corpus_version: opts.corpusVersion,
@@ -358,11 +511,19 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		adapters: adapterRuns,
 		skipped_adapters: skipped,
 		splits: { counts: splitCounts, holdouts },
-		slices: { counts: sliceManifest.counts, total_rows: sliceManifest.total_rows },
+		slices: { counts: parquetManifest.counts, total_rows: parquetManifest.total_rows },
 		quarantine_count: quarantined,
 		total_aligned_rows: aligned,
 		licenses: Object.fromEntries(licenseSummary),
 		excluded_by_license: excludedByLicense,
+		profile,
+		excluded_by_eligibility: excludedByEligibility,
+		ineligible_sources: Object.fromEntries(ineligibleSources),
+		/**
+		 * The digest of the frozen source record written beside this manifest. A consumer quotes it to say which build's
+		 * sources it is talking about.
+		 */
+		training_manifest_digest: trainingManifest.contentDigest,
 	}
 
 	await writeLocalJSONFile(manifest, opts.outputDir, "MANIFEST.json")

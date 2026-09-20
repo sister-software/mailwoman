@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Korean permit registry (지방행정인허가데이터) as a NOISY corpus source: reading the delivered CSVs, and turning
- *   an aligned string into a corpus row (#2204 §5).
+ *   The Korean permit registry (지방행정인허가데이터) as an `observation` source: reading the delivered CSVs, and
+ *   turning an aligned string into a corpus row (#2204 §5).
  *
  *   The publisher delivers CP949, one file per business category, with both address systems typed by a clerk plus a
- *   planar coordinate in EPSG:5174 and both postcodes. Reading is separated from ALIGNING so the alignment rate per
+ *   planar coordinate in epsg:5174 and both postcodes. Reading is separated from aligning so the alignment rate per
  *   file can be measured before any row enters a corpus.
  */
 
@@ -23,7 +23,7 @@ import type { Aligned } from "#kr/adapters/localdata/align"
 export const SOURCE = "localdata-kr"
 
 /**
- * Every permit in this registry is Korean; the publisher issues no others.
+ * Every permit in this registry is Korean. the publisher issues no others.
  */
 export const COUNTRY = "KR"
 
@@ -129,7 +129,7 @@ export async function* readPermitDirectory(
 	directory: PathBuilderLike,
 	options: ReadPermitOptions = {}
 ): AsyncGenerator<PermitRow> {
-	const files = await Globerator.files("csv", { cwd: directory, absolute: false }).toSorted()
+	const files = await Globerator.files("csv", { cwd: directory, absolute: false, recursive: false }).toSorted()
 
 	for (const name of files) {
 		yield* readPermitFile(join(directory, name), options)
@@ -137,13 +137,13 @@ export async function* readPermitDirectory(
 }
 
 /**
- * One aligned string as a row in the CJK slice schema.
+ * One aligned string as a row in the CJK corpus schema.
  *
- * The token labels are derived from the spans rather than carried beside them: a token is `B-<tag>` when its FIRST
+ * The token labels are derived from the spans rather than carried beside them: a token is `B-<tag>` when its first
  * character falls inside a span, `O` otherwise. A span covering several tokens therefore labels only the token it
  * starts in, which is what the char-path trainer reads the spans for.
  */
-export function alignedToSliceRow(aligned: Aligned): Record<string, unknown> {
+export function alignedToCJKRow(aligned: Aligned): Record<string, unknown> {
 	const raw = aligned.raw
 	const tokens: string[] = []
 	const labels: string[] = []

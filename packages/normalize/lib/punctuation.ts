@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Punctuation normalization — fancy quotes / dashes to ASCII equivalents. Identity-length: every
- *   fancy character is a single codepoint that maps to a single ASCII char.
+ *   Punctuation normalization — fancy quotes / dashes to ascii equivalents. Identity-length: every
+ *   fancy character is a single codepoint that maps to a single ascii char.
  */
 
 import { identityMap } from "#offset-map"
@@ -19,7 +19,7 @@ const REPLACEMENTS = new Map<string, string>([
 	["−", "-"], // − U+2212 minus sign — Japanese IMEs emit this as the block separator (1−2−3)
 	["―", "-"], // ― U+2015 horizontal bar — another common JP block separator
 	["﹣", "-"], // ﹣ U+FE63 small hyphen-minus
-	["…", "..."], // … expands; tracked specially
+	["…", "..."], // … expands. tracked specially
 	[" ", " "], // non-breaking space
 ])
 

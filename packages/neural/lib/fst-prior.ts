@@ -10,7 +10,7 @@
  *   semantics.
  *
  *   SentencePiece ↔ FST bridge: SentencePiece pieces are grouped into whitespace words (by the ▁
- *   sentinel), normalized through the same pipeline as FST edges (NFKC, lowercase, strip
+ *   sentinel), normalized through the same pipeline as FST edges (nfkc, lowercase, strip
  *   non-alnum), and walked through the FST as contiguous subpaths.
  *
  *   Uses structural typing for the FST input so this module has zero dependencies on
@@ -39,8 +39,8 @@ const SPACE_SENTINEL = "▁"
 
 /**
  * A SentencePiece byte-fallback piece (`<0xHH>`) — the vocab's override for a character with no direct token (curly
- * quotes “”‘’, guillemets «», braces {} all hit this even on an otherwise-Latin-script vocab; see `tokenizer.ts`'s doc
- * comment). The placeholder TEXT itself ("<0x7B>") contains hex digits and letters that `/[\p{L}\p{N}]/u` would misread
+ * quotes “”‘’, guillemets «», braces {} all hit this even on an otherwise-Latin-script vocab. see `tokenizer.ts`'s doc
+ * comment). The placeholder text itself ("<0x7B>") contains hex digits and letters that `/[\p{L}\p{N}]/u` would misread
  * as real alnum content — without this guard, a byte-fallback piece's placeholder text leaks into `fstToken` as garbage
  * ("0x7bblock" instead of "block"), silently corrupting the FST/pair-index probe key for any place name written with
  * one of these characters (paired-punctuation audit, `.superpowers/sdd/task-9-audit-report.md`). Matched against the
@@ -71,13 +71,13 @@ export interface FSTPlaceEntryLike {
 	wofID: number
 	placetype: string
 	/**
-	 * REFERENTIAL likelihood in [0, 1] — population-anchored. The ONLY score the decoder bias reads (ROAD_TO_V9 §2,
+	 * Referential likelihood in [0, 1] — population-anchored. The only score the decoder bias reads (ROAD_TO_V9 §2,
 	 * ratified 2026-08-06: "the importance of a knowledge-base article is not the probability that this is the place the
 	 * user means").
 	 *
-	 * The structural type deliberately does NOT name `encyclopedic`. The FST entries the matcher hands over carry it, and
-	 * a bias that could see it would eventually use it — so the type boundary is where the policy is enforced, not a
-	 * comment.
+	 * The structural type deliberately does not name `encyclopedic`. The FST entries the matcher hands over carry it, and
+	 * a bias that could see it would eventually use it — so the type boundary is where the policy is enforced rather than
+	 * a comment.
 	 */
 	referential: number
 }
@@ -96,21 +96,21 @@ export interface FSTMatcherLike {
  * The only placetypes that reach a BIO tag.
  *
  * Exported because a probe that reports "what bias would the decoder get for this surface" has to collapse the FST's
- * accepting entries the SAME way {@link applyBias} does, and a second copy of this map makes the probe answer a
+ * accepting entries the same way {@link applyBias} does, and a second copy of this map makes the probe answer a
  * question about a decoder that does not exist. A `county` or `borough` entry is walked, deduped, and dropped without
  * ever touching the emission matrix — no attested board row licenses a tag for those tiers, and `region` would be a
  * guess.
  *
  * `localadmin` and `neighbourhood` map to `locality` (the C4 census's one attested covering-surface class, #1747):
- * `Biggin Hill, United Kingdom` is accepted by the GB FST as a NEIGHBOURHOOD entry, and dropping it left the covering
+ * `Biggin Hill, United Kingdom` is accepted by the GB FST as a neighbourhood entry, and dropping it left the covering
  * surface with zero bias while the sub-span reading fragmented the parse (`locality: Biggin` + a stranded
  * `street_suffix: Hill`). `localadmin` is WOF's administrative twin of a locality — the resolver's placetype filter
  * groups already treat the pair as one contest class. The bias stays soft (referential-scaled), so a dependent-locality
  * reading can still win where the model's own emissions say so.
  *
- * The two mapped tiers carry ONE surface-conditional exception (#1903): a street-shaped surface — see
+ * The two mapped tiers carry one surface-conditional exception (#1903): a street-shaped surface — see
  * {@link isStreetShapedSurface} — draws no locality bias from a neighbourhood/localadmin entry. Direct `locality`
- * entries are never suppressed; a real locality named after a street keeps its bias.
+ * entries are never suppressed. a real locality named after a street keeps its bias.
  */
 export const PLACETYPE_TO_BIO: ReadonlyMap<string, string> = new Map([
 	["country", "country"],
@@ -136,7 +136,8 @@ const MAPPED_TIER_PLACETYPES: ReadonlySet<string> = new Set(["localadmin", "neig
  * generic+directional ("King Street East" is a Hamilton, Ontario neighbourhood), 442 hard-generic-final, 235
  * square-final ("Madison Square") — 756 surfaces, 0.27% of the mapped class. The covering-surface classes the mapping
  * exists for are untouched: `hill`-final alone is 866 surfaces ("Biggin Hill") and no other generic (`green`, `park`,
- * `common`, …) is in the list. Tokens arrive FST-normalized (lowercase), so the match is exact, not case-folded here.
+ * `common`, …) is in the list. Tokens arrive FST-normalized (lowercase), so the match is exact rather than case-folded
+ * here.
  */
 export function isStreetShapedSurface(tokens: readonly string[]): boolean {
 	if (!tokens.length) return false
@@ -148,7 +149,7 @@ export function isStreetShapedSurface(tokens: readonly string[]): boolean {
 		last -= 1
 	}
 
-	// The generic must not be the whole surface: a bare "square" or "street" token is not a street NAME.
+	// The generic must not be the whole surface: a bare "square" or "street" token is not a street name.
 	return last > 0 && STREET_SHAPE_GENERICS.has(tokens[last]!)
 }
 
@@ -170,15 +171,15 @@ export interface FSTEntryLike {
 /**
  * Collapse accepting entries to `max(importance)` PER BIO TAG — the only shape {@link applyBias} acts on.
  *
- * The per-place ranking INSIDE a name is invisible to the decoder; only the per-tag max is not. A caller reporting
+ * The per-place ranking inside a name is invisible to the decoder. only the per-tag max is not. A caller reporting
  * anything finer would overstate what an importance change can do.
  *
- * `surfaceTokens` is the FST-normalized matched surface, and it is REQUIRED because the collapse is
+ * `surfaceTokens` is the FST-normalized matched surface, and it is required because the collapse is
  * surface-conditional: a street-shaped surface draws nothing from the mapped tiers ({@link isStreetShapedSurface},
  * #1903). A probe that omitted it would answer for a decoder that does not exist — the same hazard this function's
  * export guards against for the placetype map.
  *
- * An EMPTY result is not a zero bias: it means the surface was accepted but carries no BIO-mapped placetype, so the
+ * An empty result is not a zero bias: it means the surface was accepted but carries no BIO-mapped placetype, so the
  * decoder sees nothing. A caller must keep that apart from "the FST does not accept this surface at all", which is
  * absence, and from a tag present with value `0`, which is a measured zero.
  */
@@ -296,8 +297,8 @@ const SUPPRESS_WHEN_PLACE: readonly string[] = ["B-street", "I-street", "B-house
 /**
  * Match-length scaling mode for the importance bias (#1142). A single-token place match is weak evidence (a place name
  * that is also a surname / street head / common word); a multi-token match is reliable. `both` scales the positive
- * locality bias AND the street suppression by match length; `suppression` scales only the suppression (leaving the
- * positive bias intact — safe for the bare-fragment regime where the positive gazetteer bias earns its keep); `off`
+ * locality bias and the street suppression by match length; `suppression` scales only the suppression (leaving the
+ * positive bias intact — safe for the bare-fragment regime where the positive gazetteer bias warrants its keep); `off`
  * disables it.
  */
 export type ImportanceLengthScaleMode = "off" | "suppression" | "both"
@@ -306,15 +307,15 @@ export type ImportanceLengthScaleMode = "off" | "suppression" | "both"
  * Street-context check for the positive FST bias (#1142, street-context check — the FR-fragment complement to #1173's
  * suppression length-scaling).
  *
- * Washington/Madison/Jackson are simultaneously the highest-importance US place names AND the commonest US street
+ * Washington/Madison/Jackson are simultaneously the highest-importance US place names and the commonest US street
  * names, so a positive locality/region bias must be withheld when the matched span sits in a syntactically
- * street-headed position — conditioned on SYNTAX (street-type adjacency, house-number-left), NEVER on the importance
- * value (`importance²` magnitude sharpening was measured and REJECTED: it re-imports exactly this collision).
- * Positive-evidence-only: the check can only scale the positive bias DOWN when street context is present; its absence
+ * street-headed position — conditioned on syntax (street-type adjacency, house-number-left), never on the importance
+ * value (`importance²` magnitude sharpening was measured and rejected: it re-imports exactly this collision).
+ * Positive-evidence-only: the check can only scale the positive bias down when street context is present. its absence
  * never penalizes, and a parse with no street context is byte-identical to the unrestricted path.
  *
  * The street-type signal source is the street-morphology FST (`fst-street-morphology.bin`, locale-general — catches
- * prefix locales like "Rue de Rivoli", the FR −3), NOT codex `us/street-suffix.ts` (US-only — using it re-introduces an
+ * prefix locales like "Rue de Rivoli", the FR −3), not codex `us/street-suffix.ts` (US-only — using it re-introduces an
  * FR regression).
  */
 export interface StreetContextRequirementOpts {
@@ -323,7 +324,7 @@ export interface StreetContextRequirementOpts {
 	 */
 	fst: FSTMatcherLike
 	/**
-	 * Multiplier applied to the positive `impBias` when the check fires. Default 0.25 (tune 0.15–0.4). Deliberately NOT
+	 * Multiplier applied to the positive `impBias` when the check fires. Default 0.25 (tune 0.15–0.4). Deliberately not
 	 * zero — "New York Ave" still deserves some admin mass for the semi-markov decoder.
 	 */
 	positiveScale?: number
@@ -337,7 +338,7 @@ export interface FSTPriorOpts {
 	maxBias?: number
 	suppressionScale?: number
 	/**
-	 * See {@link ImportanceLengthScaleMode}. Default `suppression` (measured best; see the caller).
+	 * See {@link ImportanceLengthScaleMode}. Default `suppression` (measured best. see the caller).
 	 */
 	importanceLengthScaleMode?: ImportanceLengthScaleMode
 	/**
@@ -369,7 +370,7 @@ export function buildFSTEmissionPriors(
 	const seenWOFIDs = new Set<number>()
 	const maxBias = opts.maxBias ?? 3
 	const suppressionScale = opts.suppressionScale ?? 1.5
-	// Default `suppression` (#1142, measured 2026-07-18): scaling ONLY the street-suppression term by
+	// Default `suppression` (#1142, measured 2026-07-18): scaling only the street-suppression term by
 	// match length is a broad win (US golden +35, admin-street-homonym fragments +50, bare-locality −2),
 	// and it leaves the positive locality bias untouched so the bare-fragment regime is safe. Scaling the
 	// positive term too (`both`) measured strictly worse (US +26, FR −9). See docs/…/the-meaning-of-zero.
@@ -450,25 +451,25 @@ export function buildFSTEmissionPriors(
  * Group SentencePiece pieces into whitespace-delimited words. Each word's literal text is reconstructed by
  * concatenating pieces (minus leading ▁), then normalized through the same pipeline the FST builder uses.
  *
- * **The word boundary is `▁` (the SentencePiece space sentinel) — and ONLY `▁`.** The loop carries one piece of state,
- * `current: WordGroup | null` — the word presently being assembled, or `null` when a word is PENDING (nothing is open,
+ * **The word boundary is `▁` (the SentencePiece space sentinel) — and only `▁`.** The loop carries one piece of state,
+ * `current: WordGroup | null` — the word presently being assembled, or `null` when a word is pending (nothing is open,
  * and the next real content should start one fresh, whatever piece it arrives on). Three kinds of piece, crossed with
  * that state, is the whole state machine:
  *
  * 1. **`▁`-prefixed, with alnum content** (a genuine new word, e.g. `"▁Stock"`, `"▁Tyne"`): always closes whatever
  *    `current` holds (pushing it to `groups`) and opens a fresh one. This is the only case that unconditionally starts
  *    a word — every other case below is conditioned on whether one is already open or pending.
- * 2. **`▁`-prefixed, NO alnum content** (a bare `"▁"` — a lone space tokenized as its own piece with nothing attached — or
+ * 2. **`▁`-prefixed, no alnum content** (a bare `"▁"` — a lone space tokenized as its own piece with nothing attached — or
  *    a punctuation piece the tokenizer fused with its own leading space): closes whatever `current` holds, same as case
- *    1, but does NOT open a new word — it also gets its own empty placeholder group (`{ fstToken: "", pieceIndices: [i]
- *    }`, preserving index alignment) and leaves the state PENDING (`current = null`) for whatever piece comes next.
+ *    1, but does not open a new word — it also gets its own empty placeholder group (`{ fstToken: "", pieceIndices: [i]
+ *    }`, preserving index alignment) and leaves the state pending (`current = null`) for whatever piece comes next.
  * 3. **Not `▁`-prefixed** (interior to whatever's already true — nothing here is itself a boundary):
  *
  *    - **Alnum** (a SentencePiece subword split, e.g. `"ton"` after `"▁Stock"`): if a word is open (`current` is non-null),
- *      this is an ordinary continuation — appended onto it. If a word is PENDING (`current` is `null` — because the last
+ *      this is an ordinary continuation — appended onto it. If a word is pending (`current` is `null` — because the last
  *      piece was case 2's bare `▁`, or a run of case-3-punctuation with nothing to attach to, or this is the very first
  *      piece), this piece is the actual start of the pending word: nothing else marks the boundary, so it opens `current`
- *      fresh here instead of being dropped. **Opening on a non-`▁` piece is required, not a nicety**: restrict
+ *      fresh here instead of being dropped. **Opening on a non-`▁` piece is required rather than a nicety**: restrict
  *      word-opening to `▁`-prefixed pieces (or `i === 0`) and a pending word whose first piece happens to lack its own `▁`
  *      vanishes silently — that is the exact shape a SentencePiece vocab produces for a short/common word never learned as
  *      a merged `"▁word"` token (`"on"`, `"upon"`, `"super"`, bare `"IL"` after a lone `"▁"` before it — all observed on
@@ -476,8 +477,8 @@ export function buildFSTEmissionPriors(
  *    - **Punctuation-only** (`"-"`, `"'"`, a bare `","`): if a word is open, it's interior punctuation — absorbed into
  *      `current.pieceIndices` (contributing nothing to `fstToken`; `normalizeFSTToken` strips punctuation anyway) but
  *      never resetting it, so the pieces that follow still have a `current` to land on ("Stockton-on-Tees", "Bishop's
- *      Stortford"). If a word is PENDING, this punctuation piece has nothing to attach to either — same empty-placeholder
- *      treatment as case 2 — and the state stays PENDING; the punctuation doesn't consume or clear the pending word, it
+ *      Stortford"). If a word is pending, this punctuation piece has nothing to attach to either — same empty-placeholder
+ *      treatment as case 2 — and the state stays pending. the punctuation doesn't consume or clear the pending word, it
  *      just has nothing of its own to open.
  *
  * The pending state is what keeps `"Stockton , Lancashire"` from fusing "Stockton" and "Lancashire" into one group:
@@ -488,7 +489,7 @@ export function buildFSTEmissionPriors(
  *
  * Exported (alongside {@linkcode normalizeFSTToken} and the {@linkcode WordGroup} type) so consumers like the
  * street-morphology prior can reuse the same piece-grouping/normalization pipeline without duplication. Internal helper
- * signature; not part of the public neural API.
+ * signature. not part of the public neural API.
  */
 export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): WordGroup[] {
 	const groups: WordGroup[] = []
@@ -506,7 +507,7 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
 
 			if (!hasAlnum) {
 				// Case 2: a bare ▁ (or a ▁-fused punctuation piece) — close current, emit its own placeholder, and
-				// leave `current === null` as the PENDING signal for whatever piece follows.
+				// leave `current === null` as the pending signal for whatever piece follows.
 				groups.push({ fstToken: "", pieceIndices: [i] })
 				current = null
 
@@ -516,7 +517,7 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
 			const literal = p.piece.startsWith(SPACE_SENTINEL) ? p.piece.slice(SPACE_SENTINEL.length) : p.piece
 			current = { fstToken: literal, pieceIndices: [i] }
 		} else if (!hasAlnum) {
-			// Case 3, punctuation: interior (absorbed) if a word is open; otherwise it has nothing to attach to and
+			// Case 3, punctuation: interior (absorbed) if a word is open. otherwise it has nothing to attach to and
 			// stands alone — the pending state (if any) is left untouched for the next piece.
 			if (current) {
 				current.pieceIndices.push(i)
@@ -528,7 +529,7 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
 			current.pieceIndices.push(i)
 			current.fstToken += p.piece
 		} else {
-			// Case 3, alnum, PENDING (current === null): this piece is the pending word's actual start — it has no
+			// Case 3, alnum, pending (current === null): this piece is the pending word's actual start — it has no
 			// leading ▁ of its own, but nothing else could possibly claim it, so it opens `current` fresh rather than
 			// being dropped. See the docstring's numbered case 3 for the production-tokenizer motivation.
 			current = { fstToken: p.piece, pieceIndices: [i] }
@@ -549,16 +550,16 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
 }
 
 /**
- * Normalize a whitespace word to FST-index form: NFKC → lowercase → strip punctuation and symbols.
+ * Normalize a whitespace word to FST-index form: nfkc → lowercase → strip punctuation and symbols.
  *
- * NFKC (compatibility decomposition + canonical composition) unifies ligatures, superscripts, and other decomposable
- * forms; it does NOT strip diacritics ("Álava" stays "álava", not "alava"). Both the FST builder and this runtime fold
- * use the same pipeline, so any index built from either is consistent — that consistency is the guarantee, not the
- * specific form (indexed and query surfaces agree on diacritics).
+ * Nfkc (compatibility decomposition + canonical composition) unifies ligatures, superscripts, and other decomposable
+ * forms. it does not strip diacritics ("Álava" stays "álava", not "alava"). Both the FST builder and this runtime fold
+ * use the same pipeline, so any index built from either is consistent — that consistency is the guarantee rather than
+ * the specific form (indexed and query surfaces agree on diacritics).
  *
  * The regex `\p{P}\p{S}` strips all Unicode punctuation and symbols (categories P and S), leaving spaces intact — space
- * (U+0020) is Unicode category Zs (separator), NOT matched by `\p{P}` or `\p{S}`. So this function preserves spaces
- * within the token string ("Stockton on Tees" → "stockton on tees"). The hyphen/space EQUIVALENCE that produces
+ * (U+0020) is Unicode category Zs (separator), not matched by `\p{P}` or `\p{S}`. So this function preserves spaces
+ * within the token string ("Stockton on Tees" → "stockton on tees"). The hyphen/space equivalence that produces
  * "stocktonontees" is a property of the caller's split-then-join pipeline in `groupPiecesIntoWords` — each word is
  * normalized separately, then words are joined with no separator.
  */
@@ -596,7 +597,7 @@ function adjacentNonEmptyIndex(groups: WordGroup[], from: number, direction: 1 |
 
 /**
  * Street-context check (#1142): returns the positive-bias multiplier for a matched span at word-groups
- * `[startIdx..endIdx]` — `streetContext.positiveScale` (default 0.25) when EITHER syntactic condition holds, else 1.0
+ * `[startIdx..endIdx]` — `streetContext.positiveScale` (default 0.25) when either syntactic condition holds, else 1.0
  * (byte-identical to the unrestricted path):
  *
  * 1. **Street-type adjacency** — the word-group immediately after (suffix locales: "Washington Blvd") or before (prefix
@@ -605,7 +606,7 @@ function adjacentNonEmptyIndex(groups: WordGroup[], from: number, direction: 1 |
  *    "500 Washington" is street-headed, #1143). A house number before a street-type prefix ("500 rue …") needs no extra
  *    case: the prefix itself already satisfies condition 1.
  *
- * Composes with #1173's length-scaling inside {@linkcode applyBias} (length = weak lone match; context = strong match
+ * Composes with #1173's length-scaling inside {@linkcode applyBias} (length = weak lone match. context = strong match
  * in a street position); the suppression path is untouched.
  */
 function streetContextScale(
@@ -635,8 +636,8 @@ function streetContextScale(
 
 /**
  * The per-run bias knobs — fixed for the whole of one `buildFSTEmissionPriors` call, so they travel as one bundle
- * rather than five positional arguments. `seenWOFIDs` is deliberately shared, not copied: it is the run-wide dedupe set
- * that keeps one WOF place from biasing the matrix twice.
+ * rather than five positional arguments. `seenWOFIDs` is deliberately shared rather than copied: it is the run-wide
+ * dedupe set that keeps one WOF place from biasing the matrix twice.
  */
 interface BiasTuning {
 	biasScale: number
@@ -666,7 +667,7 @@ function applyBias(
 	// match ("New York", "Saint Louis") is far more reliable. Without this, real gazetteer importance
 	// pulls the leading token of a bare/comma-free street into locality ("Sweeney Ranch Road" → loc
 	// "Sweeney"; measured US golden −22, the no-anchor comma-free class). `suppression` scales only the
-	// street-suppression term (safe for the bare-fragment regime where the positive bias earns its keep);
+	// street-suppression term (safe for the bare-fragment regime where the positive bias warrants its keep);
 	// `both` also scales the positive locality bias; `off` disables. Locale-general — no word list.
 	const matchLen = groups.length
 	const lengthScale = FST_MATCH_LENGTH_SCALE.get(matchLen) ?? FULL_FST_MATCH_SCALE

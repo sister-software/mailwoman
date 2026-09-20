@@ -1,6 +1,6 @@
 # #655 option 2 — a cross-source weak-label scorer has no non-circular anchor (the check is blocked)
 
-_Feasibility analysis, not a measurement. #655 option 2 proposes a learned cross-source link scorer
+_Feasibility analysis rather than a measurement. #655 option 2 proposes a learned cross-source link scorer
 trained on a weak-label pipeline. Before building it, we check the check it was explicitly conditioned
 on — "can we build cross-source weak labels?" — and find we cannot, for a structural reason in the
 data. This documents why, so the idea isn't re-tread without a new data source._
@@ -14,10 +14,10 @@ by design (#664 showed a re-thresholded GBT can't beat it there). Option 2 asks:
 pipeline manufacture enough signal to train a cross-source scorer anyway?
 
 A weak-label pipeline is only useful if the labels come from a signal **independent** of the features
-the scorer will use. Otherwise it is circular — the scorer just learns to imitate whatever produced
+the scorer will use. Otherwise it is circular — the scorerlearns to imitate whatever produced
 the labels.
 
-## What the sources actually share
+## What the sources share
 
 Inspecting the raw headers of every source in the matcher's catalog:
 
@@ -40,18 +40,17 @@ across all sources reduce to: **organization name**, **address / geocode**, and 
   GBT, re-thresholded over the FS feature vector, has nothing independent to add cross-source.
 - **Phone** — shared across all sources, and the one candidate _independent_ signal. But #625
   established NPPES phone is an **unreliable** secondary identifier: institutional switchboard lines
-  are shared by many distinct providers, so phone agreement over-links. A scorer trained on
-  phone-anchored weak labels would learn to over-link on the switchboard noise — worse than FS, not
+  are shared by several distinct providers, so phone agreement over-links. A scorer trained on
+  phone-anchored weak labels would learn to over-link on the switchboard noise — worse than FS rather than
   better.
 - **An external crosswalk** (an NPI↔HCP or EIN↔license table) — would give clean labels, but none
-  exists in the data we hold, and sourcing one is a data-acquisition task, not a modeling one.
+  exists in the data we hold, and sourcing one is a data-acquisition task rather than a modeling one.
 
 ## Conclusion
 
 **The check #655 option 2 was conditioned on does not open with the current data.** There is no
 cross-source signal that is both _strong enough_ to label and _independent_ of the features a scorer
-would use. So FS stays pinned for cross-source — that is a property of the data (no shared clean key),
-not a modeling shortfall. The honest move is to record this rather than run a circular experiment that
+would use. So FS stays pinned for cross-source — that is a property of the data (no shared clean key) rather than a modeling shortfall. The direct move is to record this rather than run a circular experiment that
 would post a misleadingly-positive number.
 
 **What would change the answer:** a new source carrying a shared strong identifier (an NPI or EIN that

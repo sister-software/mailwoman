@@ -96,12 +96,12 @@ def iter_rows(
     affix_relabel_lexicon: AffixRelabelLexicon | None = None,
     shuffle_buffer: int = 131072,
 ) -> Iterator[dict[str, Any]]:
-    """Yield rows from parquet slices, filtered + shuffled.
+    """Yield rows from parquet files, filtered + shuffled.
 
     Shuffling is done at three levels:
 
-    1. Slice order (per-epoch): slices visited in random order.
-    2. Row-group order within slice: row-groups visited in random order.
+    1. File order (per-epoch): parquet files visited in random order.
+    2. Row-group order within a file: row-groups visited in random order.
     3. Within row-group: row indices permuted before scan.
 
     Then a reservoir-style ``shuffle_buffer`` of size ``shuffle_buffer`` rows mixes
@@ -118,15 +118,15 @@ def iter_rows(
     both to survive. When ``source_weights`` is ``None`` (default), all sources pass.
 
     Memory: each buffered row is a dict of {raw: str, tokens: list[str], labels: list[str],
-    country: str, source: str}. For Stage 1 coarse rows, that's ~1 KB per row; default
+    country: str, source: str}. For Stage 1 coarse rows, that's ~1 KB per row. default
     131072 buffer is ~128 MB resident, well within budget. The v0.1.1 default of 16384
-    was sized for a 22M-row corpus; v0.2.0 ships 263M rows so the same 16k buffer would
-    sample only 0.006% per shuffle — within-slice order would dominate. 128k buffer
+    was sized for a 22M-row corpus. v0.2.0 ships 263M rows so the same 16k buffer would
+    sample only 0.006% per shuffle — within-file order would dominate. 128k buffer
     samples 0.05% which restores effective randomness without meaningful RAM impact.
     """
     if not country_weights:
         raise ValueError("country_weights must be non-empty")
-    # TRAIN-ONLY policy stays out of held-out streams (2026-08-09 P0). See `TrainOnlyPolicy`.
+    # train-only policy stays out of held-out streams (2026-08-09 P0). See `TrainOnlyPolicy`.
     policy = neutralized_for(
         split,
         TrainOnlyPolicy(

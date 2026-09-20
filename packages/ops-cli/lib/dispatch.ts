@@ -4,13 +4,13 @@
 /**
  *   `mwops`: the private operator CLI. Two verbs, each a view over a registry — `release <operation>` over
  *   `@mailwoman/release-kit` and `health <check>|all` over `@mailwoman/repo-health`. It parses arguments, hands them to
- *   the registered capability, and prints the result; every decision about WHAT happens belongs to the operation or the
+ *   the registered capability, and prints the result. every decision about what happens belongs to the operation or the
  *   check. Kept free of `process` so it is unit-testable: the bin wrapper supplies argv, stdout, and the exit code.
  *
  *   The health verb performs two mutations, and neither is a check: `health baseline debt` rewrites
  *   `packages/repo-health/baseline.json` from the current readings, and `health fix <check>` applies the mechanical
  *   repair a check's diagnostics describe. Both are exported by repo-health and left out of the check registry, whose
- *   type admits nothing that writes; this is the only caller of either.
+ *   type admits nothing that writes. this is the only caller of either.
  */
 
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
@@ -20,10 +20,12 @@ import {
 	applyModuleMoves,
 	checkPassed,
 	checks,
+	DEFAULT_TRIAGE_DATABASE,
 	findCheck,
 	findFix,
 	fixes,
 	planModuleMoves,
+	runCommentInventory,
 	type Diagnostic,
 	type RepoContext,
 	writeBaseline,
@@ -83,6 +85,7 @@ function usage(io: DispatchIO): number {
 			"  mwops health <check>|all [--json]",
 			"  mwops health baseline debt        (rewrite packages/repo-health/baseline.json from the current readings)",
 			"  mwops health fix <check> [--dry-run] [--json]",
+			"  mwops health comments [path]      (rebuild the source-comment inventory and its review leads)",
 			"",
 			`release operations: ${operations.length ? operations.map((operation) => `${operation.id} (${operation.effect})`).join(", ") : "(none registered yet)"}`,
 			`shop operations:    ${shopOperations.map((operation) => `${operation.id} (${operation.effect})`).join(", ")}`,
@@ -97,7 +100,7 @@ function usage(io: DispatchIO): number {
 
 /**
  * Run one operation of a registry: the release registry under `mwops release`, the shop's under `mwops shop`. The
- * contract is the same object, so the view is one function.
+ * interface is the same object, so the view is one function.
  */
 async function runOperation(
 	verb: "release" | "shop",
@@ -153,7 +156,7 @@ async function runOperation(
 
 /**
  * `mwops health baseline <counter-set>` — rewrite a baseline from the current readings. `debt` is the only counter set
- * with a baseline; the target is named so a second one has a place to go.
+ * with a baseline. the target is named so a second one has a place to go.
  */
 async function runBaseline(
 	targets: readonly string[],
@@ -179,6 +182,31 @@ async function runBaseline(
 		}
 
 		io.stdout(`Updated ${written.file}\n`)
+	}
+
+	return 0
+}
+
+/**
+ * `mwops health comments [path]` — rebuild the source-comment inventory and its heuristic review leads.
+ *
+ * Not a check: it answers a report about the tree rather than a verdict on it, and its leads are for a human reviewer
+ * to confirm. It sits under `health` for the same reason `baseline` does — it reads the same tracked-file context every
+ * check gets, and CI runs a registered entry point rather than a path into a package's `lib/`.
+ */
+async function runComments(
+	targets: readonly string[],
+	options: Record<string, string | boolean>,
+	io: DispatchIO
+): Promise<number> {
+	const context: RepoContext = { repoRoot: io.repoRoot, trackedFiles: await io.trackedFiles() }
+	const report = await runCommentInventory(context, targets[0] ?? DEFAULT_TRIAGE_DATABASE)
+
+	if (options.json === true) {
+		io.stdout(prettyJSON(report))
+	} else {
+		io.stdout(`${report.comments} comment(s) and ${report.leads} lead(s) over ${report.files} file(s)\n`)
+		io.stdout(`Wrote ${report.databasePath}\n`)
 	}
 
 	return 0
@@ -212,7 +240,7 @@ async function runFix(
 
 	// A fix can create work for itself: moving `build-outlier-oa.ts` into `build/` leaves `outlier-oa.ts` beside two
 	// siblings that now share `outlier-`. So the plan is re-taken until the check has nothing left to say. The bound is
-	// a guard against a rule that never settles, not an expected number of passes — the repository's deepest family
+	// a guard against a rule that never settles rather than an expected number of passes — the repository's deepest family
 	// took two.
 	for (let pass = 0; pass < MAXIMUM_FIX_PASSES; pass++) {
 		const context: RepoContext = { repoRoot: io.repoRoot, trackedFiles: await io.trackedFiles() }
@@ -282,6 +310,8 @@ async function runHealth(args: readonly string[], io: DispatchIO): Promise<numbe
 
 	if (id === "fix") return await runFix(rest.slice(1), options, io)
 
+	if (id === "comments") return await runComments(rest.slice(1), options, io)
+
 	const selected = id === "all" ? checks : [findCheck(id)].filter((check) => check !== undefined)
 
 	if (id === "all" && !checks.length) {
@@ -325,7 +355,7 @@ async function runHealth(args: readonly string[], io: DispatchIO): Promise<numbe
 }
 
 /**
- * Route one invocation. Returns the exit code; never touches `process`.
+ * Route one invocation. Returns the exit code. never touches `process`.
  */
 export async function dispatch(args: readonly string[], io: DispatchIO): Promise<number> {
 	const [verb, ...rest] = args

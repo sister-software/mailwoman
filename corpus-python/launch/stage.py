@@ -22,7 +22,7 @@ from .syncs import verify_staged
 
 #: The corpora this path stages, READ OFF the row the bucket path would have transferred. Retyping
 #: the list here is how the two spellings come to disagree, and the disagreement is silent: a
-#: corpus this list forgets is simply never copied, and the run fails later on a missing slice.
+#: corpus this list forgets is simply never copied, and the run fails later on a missing parquet file.
 V8CJK_REGS_CORPORA = tuple(corpus_versions(CORPUS_VERSIONS["v8cjk_regs"]))
 
 _LOCAL_DATA_ROOT = os.environ.get("MAILWOMAN_DATA_ROOT", "")
@@ -45,7 +45,7 @@ if _LOCAL_DATA_ROOT:
     timeout=3600,
 )
 def stage_v8cjk_regs() -> None:
-    """Copy the mounted local corpora and training code into the volume and commit; verify like the sync would."""
+    """Copy the mounted local corpora and training code into the volume and commit. verify like the sync would."""
     import shutil
 
     vol.reload()

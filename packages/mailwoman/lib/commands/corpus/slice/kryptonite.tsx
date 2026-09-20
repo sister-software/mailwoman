@@ -2,51 +2,47 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman corpus slice kryptonite` — build a parquet slice from the DeepSeek-generated
- *   kryptonite JSONL and emit the combined corpus MANIFEST (base slices + the new slice). See
- *   docs/engineering/reference/CORPUS_V0_4_0_GENERATION.md for the reproducibility contract.
+ *   `mailwoman corpus slice kryptonite` — build a parquet file from the DeepSeek-generated
+ *   kryptonite jsonl and emit the combined corpus manifest (the base parquet files + the new one). See
+ *   docs/engineering/reference/CORPUS_V0_4_0_GENERATION.md for the reproducibility interface.
  */
 
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "kryptonite",
-	description: "Build a corpus slice from canonical kryptonite JSONL.",
+	description: "Build a corpus parquet file from canonical kryptonite JSONL.",
 	options: {
-		jsonl: { type: "string", required: true, description: "Canonical kryptonite JSONL to slice" },
+		jsonl: { type: "string", required: true, description: "Canonical kryptonite JSONL to convert" },
 		"base-manifest": {
 			type: "string",
 			required: true,
-			description: "Base corpus MANIFEST.json whose slices carry forward",
+			description: "Base corpus MANIFEST.json whose parquet files carry forward",
 		},
 		"out-dir": {
 			type: "string",
 			required: true,
-			description: "Output directory (slices land under corpus-v<version>/)",
+			description: "Output directory (parquet files land under corpus-v<version>/)",
 		},
 		"corpus-version": { type: "string", default: "0.4.0", description: "Corpus version stamped into rows + MANIFEST" },
-		source: { type: "string", default: "deepseek-kryptonite", description: "Source tag stamped on the new slice(s)" },
+		source: {
+			type: "string",
+			default: "deepseek-kryptonite",
+			description: "Source tag stamped on the new parquet file(s)",
+		},
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	jsonl: string
-	baseManifest: string
-	outDir: string
-	corpusVersion: string
-	source: string
-}
-
-const CorpusSliceKryptonite: ParsedCommandComponent<Options> = ({ options }) => {
+const CorpusKryptoniteParquet: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildKryptoniteSlice } = await import("@mailwoman/corpus/tools")
+		const { buildKryptoniteOverlay } = await import("@mailwoman/corpus/tools")
 
-		await buildKryptoniteSlice(
+		await buildKryptoniteOverlay(
 			{
 				jsonl: options.jsonl,
 				baseManifest: options.baseManifest,
@@ -60,9 +56,9 @@ const CorpusSliceKryptonite: ParsedCommandComponent<Options> = ({ options }) => 
 
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
-	if (state.status === "done") return <Text color="green">✓ kryptonite slice built → {options.outDir}</Text>
+	if (state.status === "done") return <Text color="green">✓ kryptonite parquet built → {options.outDir}</Text>
 
 	return null
 }
 
-export default CorpusSliceKryptonite
+export default CorpusKryptoniteParquet

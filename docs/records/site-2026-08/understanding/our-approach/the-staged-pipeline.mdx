@@ -38,7 +38,7 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 
 ## Stage 1 — Normalize (deterministic)
 
-**What it does.** Takes the raw input string and applies a fixed sequence of normalisation rules: Unicode NFC, case folding (locale-aware where applicable), abbreviation expansion, whitespace collapse, punctuation normalisation.
+**What it does.** Takes the raw input string and applies a fixed sequence of normalization rules: Unicode NFC, case folding (locale-aware where applicable), abbreviation expansion, whitespace collapse, punctuation normalization.
 
 **Failures it owns.**
 
@@ -51,7 +51,7 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 
 ## Stage 2 — Locale check (small ML)
 
-**What it does.** Looks at the normalized input and decides which downstream weights to load and which normalisation rules to keep applying. The decision could be a tiny character-level classifier ("Latin / Cyrillic / CJK / Arabic / mixed?") followed by a per-script locale guess.
+**What it does.** Looks at the normalized input and decides which downstream weights to load and which normalization rules to keep applying. The decision could be a tiny character-level classifier ("Latin / Cyrillic / CJK / Arabic / mixed?") followed by a per-script locale guess.
 
 **Failures it owns.**
 
@@ -79,17 +79,17 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 **What it does.** Two sub-pieces:
 
 - **CRF** ([CRF decoder](../../concepts/crf-decoder.mdx)) — enforces BIO structural validity at decode time. Today.
-- **Span re-reader** — when stage 3 emits a span with low confidence, or two overlapping high-confidence proposals, re-run the encoder on that span alone with extra structural conditioning (the neighbouring labels as additional context). Adds new alternatives rather than narrowing existing ones — graceful-failure-friendly. Future.
+- **Span re-reader** — when stage 3 emits a span with low confidence, or two overlapping high-confidence proposals, re-run the encoder on that span alone with extra structural conditioning (the neighboring labels as additional context). Adds new alternatives rather than narrowing existing ones — graceful-failure-friendly. Future.
 
 **Failures it owns.**
 
 - Ambiguous locality names ([#1](../why-its-hard/addresses-that-break-geocoders.mdx#1-ambiguous-locality-names)) — the re-reader gives the model a second look at `"Paris"` with structural priors that the next token is a region/country.
 - Repeated admin names ([#2](../why-its-hard/addresses-that-break-geocoders.mdx#2-repeated-admin-names)) — BIO structure + re-reader together handle `"New York, New York"` as two adjacent localities.
-- Numeric chaos ([#5](../why-its-hard/addresses-that-break-geocoders.mdx#5-numeric-chaos)) — the CRF prevents structurally-impossible label combinations; the re-reader can revisit `"12345 123rd St"` after the rest of the sequence is labelled.
+- Numeric chaos ([#5](../why-its-hard/addresses-that-break-geocoders.mdx#5-numeric-chaos)) — the CRF prevents structurally-impossible label combinations; the re-reader can revisit `"12345 123rd St"` after the rest of the sequence is labeled.
 
 **Today.** Viterbi decoder shipped to JavaScript runtime 2026-05-23 — `neural/viterbi.ts` with the BIO structural transition mask. Orphan-`I-*` sequences are now structurally impossible at JS runtime, even on the v3.0.0 weights (the structural mask is built from the labels list, no retraining required). Composes additively with learned CRF transitions when a future weights release ships them. The span re-reader is not built; v0.6.0 candidate.
 
-**Future.** The re-reader can be a fine-tuned head on the same encoder (cheap) or a small dedicated model (more expensive, higher ceiling). Either way it stays additive: it can only propose new alternatives, never delete existing ones. Constraint-based, not narrowing.
+**Future.** The re-reader can be a fine-tuned head on the same encoder (cheap) or a small dedicated model (more expensive, higher ceiling). Either way it stays additive: it can only propose new alternatives, never delete existing ones. Constraint-based rather than narrowing.
 
 ## Stage 5 — Cross-component reconcile (solver, deterministic today)
 
@@ -106,13 +106,13 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 
 ## Stage 6 — Resolve with candidates (deterministic + retrieval)
 
-**What it does.** Takes the final component bundle and queries the WOF gazetteer. Returns a ranked list of candidates, not a single point.
+**What it does.** Takes the final component bundle and queries the WOF gazetteer. Returns a ranked list of candidates rather than a single point.
 
 **Failures it owns.**
 
-- Administrative nightmares ([#8](../why-its-hard/addresses-that-break-geocoders.mdx#8-administrative-nightmares)) — `"Springfield"` with no region produces 41 candidates. The right answer is to surface the list, not pretend one is correct.
+- Administrative nightmares ([#8](../why-its-hard/addresses-that-break-geocoders.mdx#8-administrative-nightmares)) — `"Springfield"` with no region produces 41 candidates. The right answer is to surface the list rather than pretend one is correct.
 
-**Today.** [Resolver and Who's On First](../../concepts/resolver-and-wof.mdx) decorates each resolved `AddressNode` with the top candidate (placeId / lat / lon) AND surfaces runner-ups via the new `alternatives` field — shipped 2026-05-23. Springfield-class disambiguation is now visible to consumers without changing the `resolveTree` return type.
+**Today.** [Resolver and Who's On First](../../concepts/resolver-and-wof.mdx) decorates each resolved `AddressNode` with the top candidate (placeId / lat / lon) and surfaces runner-ups via the new `alternatives` field — shipped 2026-05-23. Springfield-class disambiguation is now visible to consumers without changing the `resolveTree` return type.
 
 **Future.** Add language-prior + user-location-prior factors to the candidate scoring (today's scoring is match × population only). `regionalPriorFromLanguage` + `regionalPriorFromUserLocation` slots reserved in the scoreBreakdown.
 
@@ -132,7 +132,7 @@ Six stages give us a different shape:
 - each stage can be rolled back independently — a bad stage-4 ship doesn't force a stage-3 rollback
 - smaller stages can run in environments that cannot host the encoder (a CLI normalizer is microseconds; the encoder is milliseconds)
 
-The cost: each handoff is a place signal can be dropped, an interface that needs versioning, a contract that has to hold across model upgrades. Six stages mean six model cards, six eval reports, six rollback dials.
+The cost: each handoff is a place signal can be dropped, an interface that needs versioning, a interface that has to hold across model upgrades. Six stages mean six model cards, six eval reports, six rollback dials.
 
 ## Mapping stages to Mailwoman versions
 
@@ -142,7 +142,7 @@ The cost: each handoff is a place signal can be dropped, an interface that needs
 | 2 — Locale check                      | Caller-trust stub today. QueryShape sub-system + kind classifier (Stage 2.5) shipped. Future: small detector model (v0.6.0+).                        |
 | 3 — Token classify                    | v3.0.0 today. v0.4.0 improves CE/CRF balance; v0.5.0 expands vocabulary.                                                                             |
 | 4 — Sequence correct (CRF)            | Viterbi shipped to JS runtime 2026-05-23 (structural mask). Learned transitions pending a future weights release.                                    |
-| 4 — Sequence correct (span re-reader) | Future. Earliest v0.6.0; needs ambiguity-annotated corpus slice.                                                                                     |
+| 4 — Sequence correct (span re-reader) | Future. Earliest v0.6.0; needs an ambiguity-annotated corpus recipe.                                                                                 |
 | 5 — Cross-component reconcile         | Shipped in v1.                                                                                                                                       |
 | 6 — Resolve with candidates           | Alternatives shipped 2026-05-23 (`AddressNode.alternatives`). Coordinator (`@mailwoman/core/pipeline` + `createRuntimePipeline`) shipped 2026-05-23. |
 
@@ -153,5 +153,5 @@ The point of this table is to make it visible that several future ships are each
 - [Addresses that break geocoders](../why-its-hard/addresses-that-break-geocoders.mdx) — the failure catalogue this article responds to
 - [How it works now](./how-it-works-now.mdx) — the current pipeline in plainer language
 - [How it will work](./how-it-will-work.mdx) — the v0.4.0 work in plainer language
-- [The pipeline contract](../../concepts/staged-pipeline-contract.mdx) — the runtime mechanics behind this narrative sketch
+- [The pipeline interface](../../concepts/staged-pipeline-interface.mdx) — the runtime mechanics behind this narrative sketch
 - [Implementation plan](https://github.com/sister-software/mailwoman/blob/main/docs/records/plan/README.mdx) — phase-by-phase development plan

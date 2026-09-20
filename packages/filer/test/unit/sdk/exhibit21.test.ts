@@ -5,7 +5,7 @@
  * @file Tests for {@linkcode parseExhibit21}/{@linkcode fetchExhibit21} (§7-3b decision 6, criterion 3).
  *
  *   Criterion 3 first (TDD order): the mangled fixture's zero-subsidiaries/non-zero-unparseable/no-throw
- *   contract is the required test in this file. The other three fixtures (clean table, nested list,
+ *   interface is the required test in this file. The other three fixtures (clean table, nested list,
  *   plain text) each pin a correct extraction for their own shape.
  *
  *   Six document shapes are known to tempt an extractor into emitting a subsidiary name that appears
@@ -13,7 +13,7 @@
  *   3-column row, an inline tag inside a `<li>`, a nested layout table, and `<td>`-tagged
  *   header/decoration rows — and each has a fixture here. The substring invariant asserted at the bottom
  *   of this file is what covers all six at once: every emitted `name`/`jurisdiction`, across every fixture
- *   AND every crafted malformed case, must be a literal substring of the document once tags are stripped,
+ *   and every crafted malformed case, must be a literal substring of the document once tags are stripped,
  *   entities decoded, and whitespace collapsed.
  */
 
@@ -169,10 +169,10 @@ describe("parseExhibit21 — clean HTML table", () => {
 
 describe("parseExhibit21 — header-mapped columns and the indented corporate tree", () => {
 	/**
-	 * Telephone and Data Systems indents each subsidiary one column to the RIGHT of its parent, and 132 of its 183
+	 * Telephone and Data Systems indents each subsidiary one column to the right of its parent, and 132 of its 183
 	 * subsidiaries sit on such a row. The name is not in doubt on those rows — the header says the jurisdiction is to its
 	 * right, so the only non-blank column between the two is the name — and the nesting depth is discarded, since an
-	 * Exhibit 21 row is a registrant→subsidiary edge either way. TDS's own filing is 176 KB and is not vendored; this is
+	 * Exhibit 21 row is a registrant→subsidiary edge either way. TDS's own filing is 176 KB and is not vendored. this is
 	 * its shape.
 	 */
 	it("reads an indented child row's name from the column between the header's name and jurisdiction columns", () => {
@@ -291,9 +291,9 @@ describe("fetchExhibit21", () => {
 
 /**
  * The required invariant this fabrication-audit fix is held to (module docstring): a name is only emitted if it appears
- * in the input as a contiguous string. `normalizedDocument` reproduces the SAME normalization every parse strategy
+ * in the input as a contiguous string. `normalizedDocument` reproduces the same normalization every parse strategy
  * applies before comparing/emitting text — strip tags, decode entities, collapse whitespace — so "appears in the input"
- * is checked on the same basis the parser itself reasons on, not against the raw (still-tagged) source.
+ * is checked on the same basis the parser itself reasons on rather than against the raw (still-tagged) source.
  */
 function normalizedDocument(html: string): string {
 	return normalizeWhitespace(htmlToLayoutText(html))
@@ -301,7 +301,7 @@ function normalizedDocument(html: string): string {
 
 /**
  * Every case the fabrication audit found (C1-C4, I1, I2), preserved here so the substring-invariant test below runs
- * across them alongside the four fixture files — this is what makes the invariant test "required": mutating any ONE of
+ * across them alongside the four fixture files — this is what makes the invariant test "required": mutating any one of
  * the tightenings above regresses at least one of these back to a name that fails the check.
  */
 const FABRICATION_AUDIT_CASES: Record<string, string> = {
@@ -327,13 +327,13 @@ const FIXTURE_FILES = [
 ]
 
 /**
- * The six C1-C4/I1/I2 findings above are all CONCATENATION/mis-segmentation bugs — merging two real fragments, or
+ * The six C1-C4/I1/I2 findings above are all concatenation/mis-segmentation bugs — merging two real fragments, or
  * truncating at the wrong boundary. Every fragment they fabricate remains, structurally, a literal substring of the
- * SAME normalized whole document (it's built from real source text via the identical strip/decode/collapse pipeline the
- * invariant check itself uses) — so the substring check alone does not independently catch any of those six; the
+ * same normalized whole document (it's built from real source text via the identical strip/decode/collapse pipeline the
+ * invariant check itself uses) — so the substring check alone does not independently catch any of those six. the
  * case-specific behavioral tests above do (mutation-proven: reverting `htmlToLayoutText`'s adjacent-whitespace check
  * kills the C4 test, reverting the plain-text block-boundary line-break kills the C2 test). What the substring
- * invariant DOES catch is the other real risk it's meant to guard against: a jurisdiction/name fabricated from nothing
+ * invariant does catch is the other real risk it's meant to guard against: a jurisdiction/name fabricated from nothing
  * — synthesized, defaulted, or otherwise not derived from the input at all — which requires a name-only shape (no
  * jurisdiction column/parenthetical/comma) actually present in the swept set to have something to violate.
  */

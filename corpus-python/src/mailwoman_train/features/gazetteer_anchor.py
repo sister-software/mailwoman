@@ -10,10 +10,10 @@ docs/articles/plan/reference/closed-vocab-fields-model-first.mdx).
 and unlike the postcode anchor: features are computed from the RAW SURFACE ONLY —
 never from gold labels — so the exact same computation runs at train and inference time (no leak,
 no skew). The matching rules live in the lexicon JSON (``rules``) and are mirrored verbatim here
-and in the TS inference matcher; the JSON is the single source both consumers load, so the two
+and in the TS inference matcher. the JSON is the single source both consumers load, so the two
 implementations cannot drift (the PLACETYPE_ORDER lesson).
 
-Char→piece projection mirrors ``realign_anchor_to_pieces`` EXACTLY (each piece inherits the value
+Char→piece projection mirrors ``realign_anchor_to_pieces`` exactly (each piece inherits the value
 of the first non-whitespace char it covers) so the clue lands on precisely the sub-tokens the
 labels do.
 """
@@ -28,7 +28,7 @@ from dataclasses import dataclass
 from ..types import PieceSpan
 
 # Leading/trailing strip: chars that are not Unicode letters/digits. Mirrors the builder's
-# /^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu — Python's \w with re.UNICODE covers [\p{L}\p{N}_]; underscore
+# /^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu — Python's \w with re.unicode covers [\p{L}\p{N}_]; underscore
 # never borders our surfaces, so strip on "not alphanumeric" via str.isalnum per char.
 _WS_RE = re.compile(r"\S+")
 
@@ -53,7 +53,7 @@ class GazetteerLexicon:
     max_ngram: int
     entries: dict[str, int]  # word_norm lowercased → bitmask (case-insensitive)
     code_entries: dict[str, int]  # word_norm UPPERCASED → bitmask (exact, 1-gram only)
-    # v3.23 digit guard (``rules.digit_guard``): a matched span paints NOTHING when any span word or
+    # v3.23 digit guard (``rules.digit_guard``): a matched span paints nothing when any span word or
     # the nearest non-empty neighbor word carries a decimal digit — evidence next to a house number
     # swallowed the digit into the span (P0 alnum-hn −0.325 lower+heal on the v385-feed base). The
     # flag rides the lexicon so train/inference stay symmetric by construction. False on pre-v3.23
@@ -88,7 +88,7 @@ def gazetteer_char_paint(raw: str, lexicon: GazetteerLexicon) -> tuple[list[int]
     """
     char_bits = [0] * len(raw)
     words = [(m.start(), m.end(), m.group()) for m in _WS_RE.finditer(raw)]
-    # Per-word normalized forms + their char extents AFTER stripping (paint only the kept chars).
+    # Per-word normalized forms + their char extents after stripping (paint only the kept chars).
     # Stripping removes only leading/trailing chars, so the kept run is contiguous in the original.
     norm_words: list[tuple[int, int, str]] = []
     for start, _end, surface in words:
@@ -116,15 +116,15 @@ def gazetteer_char_paint(raw: str, lexicon: GazetteerLexicon) -> tuple[list[int]
             key = " ".join(parts).lower()
             bits = lexicon.entries.get(key, 0)
             if n == 1:
-                # code_entries is CASE-SENSITIVE: the surface must already BE uppercase ("IN" the
-                # state code, not "in" the English word). Keys are uppercase; compare the raw
+                # code_entries is case-sensitive: the surface must already be uppercase ("IN" the
+                # state code rather than "in" the English word). Keys are uppercase. compare the raw
                 # word_norm without folding case.
                 bits |= lexicon.code_entries.get(parts[0], 0)
             if bits:
                 matched_n, matched_bits = n, bits
                 break
         if matched_n:
-            # Digit guard (``rules.digit_guard``): a guarded match CONSUMES its span (no sub-ngram
+            # Digit guard (``rules.digit_guard``): a guarded match consumes its span (no sub-ngram
             # re-matching — the TS painter mirrors this exactly) but paints nothing. Digit test is
             # str.isdecimal ↔ TS \p{Nd} — the strict Unicode-Nd parity pair (isdigit would also
             # accept superscripts that \p{Nd} rejects).
@@ -169,11 +169,11 @@ def suppress_gazetteer_near_postcode(
     feature_dim: int,
     window: int = 1,
 ) -> tuple[list[list[float]], list[float]]:
-    """TRAIN-TIME channel choreography (#464, v0.9.13 postcode fix; DeepSeek 2026-06-10) — the mirror
+    """TRAIN-TIME channel choreography (#464, v0.9.13 postcode fix. DeepSeek 2026-06-10) — the mirror
     of TS ``suppressGazetteerNearPostcode``. Zero the gazetteer clue on pieces within ``window`` of a
-    postcode-anchor hit (``anchor_confidence[i] > 0``) so the model never LEARNS the biased
-    region->postcode CRF transition (the inference-only fix can't undo a weight-baked transition; the
-    cure is applying this at TRAIN time, keyed off the SAME anchor signal inference uses, so the two
+    postcode-anchor hit (``anchor_confidence[i] > 0``) so the model never learns the biased
+    region->postcode CRF transition (the inference-only fix can't undo a weight-baked transition. the
+    fix is applying this at train time, keyed off the same anchor signal inference uses, so the two
     stay consistent). Returns new (feats, confs); does not mutate.
     """
     n = len(confs)

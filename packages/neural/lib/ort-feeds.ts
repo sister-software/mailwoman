@@ -4,7 +4,7 @@
 /**
  *   Pure channel packing + output decode shared by the two ONNX runners (`onnx-runner.ts`,
  *   `web-onnx-runner.ts`). Both hosts feed the same fixed-length tensors and read the same
- *   `logits`/`locale_logits`/`span_scores` outputs; this module owns that contract once so the two
+ *   `logits`/`locale_logits`/`span_scores` outputs. this module owns that interface once so the two
  *   cannot drift — the #727 span read was previously duplicated across hosts and held together only
  *   by a parity test. No `onnxruntime-*` import: the runners construct their own `ort.Tensor`s from
  *   the packed `{data, dims}` pairs, which is the only host-specific step.
@@ -32,12 +32,12 @@ export interface InferEvidenceChannels {
 }
 
 /**
- * THE `infer()` signature — one exported type for the three call surfaces that previously restated it
- * (`ONNXRunner.infer`, `WebONNXRunner.infer`, and the classifier's `NeuralRunner` contract).
+ * The `infer()` signature — one exported type for the three call surfaces that previously restated it
+ * (`ONNXRunner.infer`, `WebONNXRunner.infer`, and the classifier's `NeuralRunner` interface).
  *
  * @param tokenIDs The id sequence produced by the tokenizer (no special tokens added).
  * @param anchor Optional postcode-anchor channel (#239/#240) — fed only when the graph declares the anchor inputs.
- * @param gazetteer Optional gazetteer-anchor channel (#464) — same feed contract as the postcode anchor.
+ * @param gazetteer Optional gazetteer-anchor channel (#464) — same feed interface as the postcode anchor.
  * @param country Optional country-lexicon channel (#1104).
  * @param evidence Optional evidence-bundle channels (Option-A).
  */
@@ -77,7 +77,7 @@ export interface InferResult {
 	 * tokens, typed `SEGMENT_TYPES[segmentTypeIdx]` (that axis ships in the weights bundle's `semi-crf-transitions.json`,
 	 * never hardcoded — the PLACETYPE_ORDER class).
 	 *
-	 * Absent on every pre-v3 bundle, so consumers MUST treat undefined as "no span decode available" and fall back to the
+	 * Absent on every pre-v3 bundle, so consumers must treat undefined as "no span decode available" and fall back to the
 	 * BIO path. Fetching it costs ~0.75 ms (CPU, S=128); a runtime that never reads it pays nothing (ORT prunes the
 	 * unfetched branch) — measured in `docs/articles/evals/2026-07-15-v301-phase2-export.md`.
 	 */
@@ -98,7 +98,7 @@ export interface PackedFeed<Data extends Float32Array | BigInt64Array = Float32A
 
 /**
  * The `{data, dims}` view of an output tensor `decodeInferOutput` reads — structurally satisfied by an `ort.Tensor`
- * whose float32 dtype the export contract guarantees.
+ * whose float32 dtype the export interface guarantees.
  */
 export interface OutputTensor {
 	readonly data: Float32Array
@@ -107,7 +107,7 @@ export interface OutputTensor {
 
 /**
  * Pack the token ids into the fixed-length `input_ids`/`attention_mask` pair: pad to `fixedSeqLen` with id 0 + mask 0,
- * truncate if longer. `seqLen` is the real (unpadded) length every downstream read slices to.
+ * truncate if longer. `seqLen` is the real (unpadded) length every downstream read trims to.
  */
 export function packTokenFeed(
 	tokenIDs: number[],
@@ -131,7 +131,7 @@ export function packTokenFeed(
 
 /**
  * Pack a char-path encoding (`char_ids (S, W)` + `attention_mask (S)`, already S-padded by the encoder) into the two
- * int64 tensors the char graph declares. `seqLen` is the count of real units, what the logits are sliced back to.
+ * int64 tensors the char graph declares. `seqLen` is the count of real units, what the logits are trimmed back to.
  */
 export function packCharFeed(
 	charIDs: ReadonlyArray<readonly number[]>,
@@ -198,13 +198,13 @@ function packChannelFeed(
 }
 
 /**
- * Pack every soft-feed channel the graph declares, in feed-name order. EVERY channel is conditioned on the graph's
+ * Pack every soft-feed channel the graph declares, in feed-name order. Every channel is conditioned on the graph's
  * declared inputs: a supplied channel the graph does not declare is never fed (an undeclared feed crashes ORT), and a
  * declared channel the caller did not supply gets the zero-fill confidence=0 identity so the session never throws on a
  * missing required input. The anchor channel historically skipped the declared-input check on the supplied path — an
  * undeclared feed — and now takes the same check as every other channel.
  *
- * `supplied` dims read the channel's own rows; the fallback dim covers the zero-fill path (and, for the evidence
+ * `supplied` dims read the channel's own rows. the fallback dim covers the zero-fill path (and, for the evidence
  * channels, a supplied channel with no rows).
  */
 export function packSoftChannelFeeds(
@@ -249,7 +249,7 @@ export function packSoftChannelFeeds(
 }
 
 /**
- * Decode a session's outputs into an {@link InferResult}, sliced to the real `seqLen` (the pad tail is never real).
+ * Decode a session's outputs into an {@link InferResult}, trimmed to the real `seqLen` (the pad tail is never real).
  * `localeLogits` and `spanScores` are optional exactly as the exports are — absent tensors yield absent fields.
  */
 export function decodeInferOutput(
@@ -279,7 +279,7 @@ export function decodeInferOutput(
 	// Locale head (#511 Tier A): present on v1.1.0+ exports, absent (and optional) before.
 	const localeLogits = output.localeLogits ? Array.from(output.localeLogits.data) : undefined
 
-	// Span head (#727 stage-2): present on v3.x+ exports. Same optional contract as the locale head
+	// Span head (#727 stage-2): present on v3.x+ exports. Same optional interface as the locale head
 	// — a pre-v3 bundle simply has no `span_scores` output and the BIO path is unaffected.
 	const spanTensor = output.spanScores
 	let spanScores: number[][][] | undefined
@@ -293,7 +293,7 @@ export function decodeInferOutput(
 		maxSpan = spanLen
 		spanScores = []
 
-		// Only the first `seqLen` token rows are real; the rest is the fixed-length pad tail.
+		// Only the first `seqLen` token rows are real. the rest is the fixed-length pad tail.
 		for (let t = 0; t < seqLen; t++) {
 			const perLength: number[][] = new Array(spanLen)
 
@@ -323,9 +323,9 @@ export function decodeInferOutput(
 /**
  * Back-compat inference of the required soft-feature channels from an ONNX model's declared input names (#718). A model
  * that exports `anchor_features` / `gazetteer_features` declared those channels mandatory at train time — feeding zeros
- * is the channel-off identity, but a model TRAINED with the channel is OOD when scored without it. Cards without a
- * `requires` block (every pre-#718 bundle) route through here so the fail-closed guard still protects them.
- * Conventions/bridge are NOT graph-observable (no dedicated input), so they're left undeclared here — only the card
+ * is the channel-off identity, but a model trained with the channel is OOD when scored without it. Cards without a
+ * `requires` block (every pre-#718 bundle) route through here so the fail-closed guard still guards them.
+ * Conventions/bridge are not graph-observable (no dedicated input), so they're left undeclared here — only the card
  * declares them.
  */
 export function inferRequiredChannelsFromInputs(inputNames: readonly string[]): RequiredChannels {

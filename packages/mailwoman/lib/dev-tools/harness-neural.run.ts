@@ -6,14 +6,14 @@
  *   battery. Reads the 30+ `mailwoman/test/address.*.test.ts` files (and sibling
  *   intersection/venue/compound_street tests), extracts every `assert(input, ...expected)` call via
  *   TS AST, and grades each input's neural parse (`NeuralAddressClassifier`) against the expected
- *   records. `--falsehoods <dir>` adds JSONL row files (the external arena fixtures).
+ *   records. `--falsehoods <dir>` adds jsonl row files (the external arena fixtures).
  *
- *   LINEAGE: ported neural-only from `harness-v0-neural.ts` at the `legacy-rules-final` seal tag.
- *   The v7 excision (#1151) deleted the rule-based parser, which was that harness's second arm; the
- *   three-bucket v0-vs-neural comparison it existed for closed with the capability map. The NEURAL
+ *   lineage: ported neural-only from `harness-v0-neural.ts` at the `legacy-rules-final` seal tag.
+ *   The v7 excision (#1151) deleted the rule-based parser, which was that harness's second arm. the
+ *   three-bucket v0-vs-neural comparison it existed for closed with the capability map. The neural
  *   arm here is semantically unchanged — same tag fold, same loose any-expected matcher — so neural
  *   pass rates remain comparable with historical arena reports. The `--assembled` arm (#478, grade
- *   `runPipeline` alongside raw neural) also survives; only the v0 arm and its buckets are gone.
+ *   `runPipeline` alongside raw neural) also survives. only the v0 arm and its buckets are gone.
  *
  *   Output: a markdown report on stdout + a JSON sidecar (`--out-json`) per-assertion containing
  *   `{ file, locale, input, expected, neural_pass, neural_actual, ... }` so downstream scripts
@@ -24,7 +24,7 @@
  *   --out-json /tmp/harness.json\
  *   [--model <onnx>] [--tokenizer <spm>] [--model-card <json>]\
  *   [--admin-fst <bin>] [--morphology-fst <bin> | --no-morphology]\
- *   [--falsehoods data/eval/falsehoods] # extra JSONL row files to include
+ *   [--falsehoods data/eval/falsehoods] # extra jsonl row files to include
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -73,7 +73,7 @@ interface Args {
 	postcodeRepair: boolean
 	unitRepair: boolean
 	/**
-	 * #478: also grade the ASSEMBLED runtime pipeline (`createRuntimePipeline` — normalize → kind/ fast-path → grouper →
+	 * #478: also grade the assembled runtime pipeline (`createRuntimePipeline` — normalize → kind/ fast-path → grouper →
 	 * reconcile → classify), not just the raw neural classifier. This is the #566-lesson eval: a pipeline regression
 	 * (e.g. a reconcile/arbitration change) is invisible when the eval grades raw neural. Off by default → the existing
 	 * raw-neural report is byte-stable.
@@ -91,7 +91,7 @@ function parseArgs(): Args {
 
 	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated — including the
 	// retired `--symmetric-match` (only ever governed the deleted v0 arm's scoring) and the retired
-	// `--arbitrate` (#478 inc 3; the `arbitrate` PipelineOpt no longer exists)).
+	// `--arbitrate` (#478 inc 3. the `arbitrate` PipelineOpt no longer exists)).
 	const { values } = parseArguments({
 		options: {
 			"admin-fst": { type: "string" },
@@ -422,7 +422,7 @@ function neuralTreeToVisibleRecord(flat: Partial<Record<ComponentTag, string>>):
 //#region Comparison — case-insensitive superset match
 
 /**
- * Pass if every tag in `expected` is present in `actual` AND the actual value (string-equality, case-folded, trimmed)
+ * Pass if every tag in `expected` is present in `actual` and the actual value (string-equality, case-folded, trimmed)
  * contains the expected value. We accept `actual` being a superset because the neural parser may emit extra components
  * the test doesn't pin down (e.g. it labels a country when the test only asserted street).
  */
@@ -432,7 +432,7 @@ function expectedMatchesActual(expected: ClassificationRecord, actual: Classific
 
 		if (!actualValues || !expectedValues) return false
 
-		// For multi-value tags (intersection: ["Main St", "Second Ave"]) we require ALL of the
+		// For multi-value tags (intersection: ["Main St", "Second Ave"]) we require all of the
 		// expected values to appear in actual, order-sensitive.
 		if (expectedValues.length !== actualValues.length) return false
 
@@ -440,7 +440,7 @@ function expectedMatchesActual(expected: ClassificationRecord, actual: Classific
 			if (normLoose(expectedValues[i]!) !== normLoose(actualValues[i]!)) {
 				// Allow substring containment in either direction — the neural parser sometimes
 				// over- or under-spans (e.g. "5th Avenue" vs "Avenue"). The fixture suite is the
-				// authority on the EXPECTED span; we count a substring match as a partial pass.
+				// authority on the expected span. we count a substring match as a partial pass.
 				const exp = normLoose(expectedValues[i]!)
 				const act = normLoose(actualValues[i]!)
 
@@ -487,8 +487,8 @@ async function runAssertion(
 	parseOpts: Parameters<NeuralAddressClassifier["parse"]>[1],
 	pipeline?: ReturnType<typeof createRuntimePipeline>
 ): Promise<AssertionResult> {
-	// neural — one tree, loose semantics: pass if ANY of the expected solutions is matched by
-	// the top-1 neural output. This is the natural reading for a single-result parser; the
+	// neural — one tree, loose semantics: pass if any of the expected solutions is matched by
+	// the top-1 neural output. This is the natural reading for a single-result parser. the
 	// fixtures' multi-solution structure came from the retired multi-hypothesis rules API.
 	const tree = await neuralClassifier.parse(a.input, parseOpts)
 	const flat = decodeAsJSON(tree)
@@ -539,7 +539,7 @@ interface FalsehoodRow {
 async function loadFalsehoods(dir: string): Promise<ExtractedAssertion[]> {
 	const out: ExtractedAssertion[] = []
 
-	for await (const entry of Globerator.files("jsonl", { cwd: dir, absolute: false })) {
+	for await (const entry of Globerator.files("jsonl", { cwd: dir, absolute: false, recursive: false })) {
 		const file = basename(entry, ".jsonl")
 
 		for await (const line of TextSpliterator.fromAsync(join(dir, entry))) {
@@ -623,7 +623,7 @@ function printReport(results: AssertionResult[]): void {
 	)
 	console.log("")
 
-	// #478 assembled-pipeline arm (only when --assembled): what the ASSEMBLED pipeline (grouper +
+	// #478 assembled-pipeline arm (only when --assembled): what the assembled pipeline (grouper +
 	// reconcile + fast-path) gains or loses against raw neural on the same assertions.
 	const hasAssembled = results.some((r) => r.assembled_pass !== undefined)
 
@@ -718,9 +718,9 @@ async function main(): Promise<void> {
 			ONNXRunner.create(args.modelPath),
 		])
 
-		// Gaz-trained models (v4.2.0+) MUST be fed the lexicon + the postcode-anchor lookup with
+		// Gaz-trained models (v4.2.0+) must be fed the lexicon + the postcode-anchor lookup with
 		// near-postcode suppression — zero-filled clues depress country recall and fake an affix
-		// crash (the ship config; see CONTRIBUTING_MODEL_WORK eval invariants).
+		// crash (the ship config. see CONTRIBUTING_MODEL_WORK eval invariants).
 		let gazetteerLexicon: GazetteerLexicon | undefined
 
 		if (args.gazetteerLexiconPath) {
@@ -784,7 +784,7 @@ async function main(): Promise<void> {
 	} as Parameters<NeuralAddressClassifier["parse"]>[1]
 
 	// #478: the assembled runtime pipeline (reuses the neural classifier + admin FST). No resolver —
-	// the arena grades COMPONENT parses (Stage 3 / grouper / reconcile), not coordinates.
+	// the arena grades component parses (Stage 3 / grouper / reconcile), not coordinates.
 	const pipeline = args.assembled
 		? createRuntimePipeline({ classifier: neural, ...(adminFST ? { fst: adminFST } : {}) })
 		: undefined

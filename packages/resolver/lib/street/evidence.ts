@@ -2,43 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   #727 stage-2 phase 4c — street-NAME existence as the k-best arbiter signal.
- *
- *   Phase 4a measured the planned arbiter (full-geocode resolution tier) at exactly ZERO collected
- *   headroom: the failing class is context-free fragments, which never reach rooftop layers, so
- *   every hypothesis ties at admin tier. The corrected signal is street-NAME existence — "does this
- *   hypothesis's street surface exist as a street name in the national register?" — which IS
- *   queryable for a bare fragment. Measured on the FR fragment board over the v3.10.1 8k span model:
- *   the rerank collects +6.0pp street@1 (0.791 → 0.851), 96 fixes / 3 breaks (32:1), the value
- *   concentrated on the date-name class (+16.7pp). Receipts:
- *   `docs/articles/evals/2026-07-17-v3101-span-head-8k-result.md`, spec
- *   `docs/superpowers/specs/2026-07-17-727-phase4c-street-name-evidence.md`.
- *
- *   THE ANTI-PELIAS RULE (shared with `rerank.ts`): ONE bit of evidence, not a score. We do NOT
- *   blend the name signal into the parse scores — those already share a partition function and rank
- *   fine within an input. The reranker's only job is to prefer a sibling hypothesis whose street the
- *   world confirms exists, over a rank-1 whose street it does not. Positive evidence only: the
- *   ABSENCE of a name is never evidence against a parse (index incompleteness is the default state
- *   of the world), so the policy always fails open to the model's own ranking.
- *
- *   This module is PURE — the interface + the fold + the measured pick policy, no SQLite. The FR BAN
- *   backend lives in `@mailwoman/resolver-wof-sqlite` (`SQLiteStreetNameLookup`); callers inject it,
- *   mirroring the `PlaceLookup` pattern.
+ *   Street-name existence is positive-only evidence for choosing between sibling parses. It never
+ *   changes the model score and a missing lookup result leaves the model ranking unchanged.
  */
 
 import type { Exclusion } from "@mailwoman/evidence"
 
 /**
- * A street-name existence probe. Backend-agnostic; the FR instance is BAN street-centroids, a future US instance is
- * TIGER, etc. (per the registry-backed-structured-prediction doctrine tiers).
+ * A street-name existence probe. Backend-agnostic. the FR instance is BAN street-centroids, a future US instance is
+ * tiger, etc. (per the registry-backed-structured-prediction doctrine tiers).
  */
 export interface StreetLocalityEvidence {
 	/**
 	 * True when `streetSurface` exists as a street name — optionally scoped to a locality or postcode when the hypothesis
-	 * carries one (fragments usually don't; unscoped is the measured mode). The implementation is responsible for folding
+	 * carries one (fragments usually don't. unscoped is the measured mode). The implementation is responsible for folding
 	 * the surface with {@link foldStreetSurface} so the caller passes raw text.
 	 *
-	 * POSITIVE EVIDENCE ONLY: return `false` on any doubt — a missing index, an unsupported country, a read error — so
+	 * Positive evidence only: return `false` on any doubt — a missing index, an unsupported country, a read error — so
 	 * {@link pickByStreetEvidence} fails open to the model's ranking. Absence is never a veto.
 	 */
 	hasStreetName(streetSurface: string, scope?: StreetEvidenceScope): boolean
@@ -54,9 +34,7 @@ export interface StreetEvidenceScope {
 }
 
 /**
- * The fold CONTRACT — the index builder and every runtime prober MUST share this exact function, or lookups silently
- * miss (the 4 v1-policy breaks were fold mismatches: `pillet-will` stored unhyphenated). NFD strip-diacritics,
- * lowercase, hyphen/apostrophe → space, whitespace-collapse. Import this beside the interface; never re-implement it.
+ * Shared index-build and lookup fold: strip diacritics, lowercase, replace hyphens and apostrophes, and collapse space.
  */
 export function foldStreetSurface(surface: string): string {
 	return surface
@@ -69,10 +47,10 @@ export function foldStreetSurface(surface: string): string {
 }
 
 /**
- * FR street-type + particle vocabulary — the G1 guard. A street surface made ONLY of these words carries no NAME (bare
- * `rue`/`chemin` is a truncation, and it IS in the index), so it earns no evidence credit. Folded forms (particles are
- * pre-folded: `l'` → `l`). Kept small and lexical — it is a dictionary fact, not a tuned weight (the anti-Pelias
- * line).
+ * FR street-type + particle vocabulary — the G1 guard. A street surface made only of these words carries no name (bare
+ * `rue`/`chemin` is a truncation, and it is in the index), so it warrants no evidence credit. Folded forms (particles
+ * are pre-folded: `l'` → `l`). Kept small and lexical — it is a dictionary fact rather than a tuned weight (the
+ * anti-Pelias line).
  */
 const FR_STREET_TYPE_WORDS: ReadonlySet<string> = new Set([
 	"rue",
@@ -114,7 +92,7 @@ const FR_STREET_TYPE_WORDS: ReadonlySet<string> = new Set([
  * True when the folded surface contains no token outside {@link FR_STREET_TYPE_WORDS} — i.e. it is pure type/particle.
  */
 export function isPureTypeVocabulary(foldedSurface: string): boolean {
-	const tokens = foldedSurface.split(" ").filter((value) => value.length > 0)
+	const tokens = foldedSurface.split(" ").filter((value) => value.length)
 
 	if (!tokens.length) return true
 
@@ -126,11 +104,11 @@ export function isPureTypeVocabulary(foldedSurface: string): boolean {
  */
 export interface StreetCandidate<T = unknown> {
 	/**
-	 * The candidate's street surface (raw; folded internally). Empty string = no street parsed → never the evidence pick.
+	 * The candidate's street surface (raw. folded internally). Empty string = no street parsed → never the evidence pick.
 	 */
 	streetSurface: string
 	/**
-	 * The parse score, comparable to its siblings from the SAME input. Higher is better.
+	 * The parse score, comparable to its siblings from the same input. Higher is better.
 	 */
 	score: number
 	/**
@@ -147,13 +125,13 @@ export interface PickByStreetEvidenceOpts {
 	/**
 	 * G2 — the margin cap. A candidate whose score is more than this far below rank-1 is never promoted by evidence
 	 * (without it, evidence reaches deep down the list and moves off correct rank-1 parses). Default 2.5 — the value the
-	 * v2 board measured (148 fixes / 3 breaks). UNCALIBRATED across models: re-fit when the span head retrains, since raw
+	 * v2 board measured (148 fixes / 3 breaks). uncalibrated across models: re-fit when the span head retrains, since raw
 	 * score margins are not comparable across models. (Plan #1134 pre-registers an isotonic ambiguity check to replace
 	 * it.)
 	 */
 	marginCap?: number
 	/**
-	 * One entry per candidate, positionally aligned. A non-null entry DEMOTES that candidate by one bit — it is
+	 * One entry per candidate, positionally aligned. A non-null entry demotes that candidate by one bit — it is
 	 * considered only after every un-excluded sibling. It is never removed: with every candidate excluded the pick is
 	 * still rank-1, because the worst case this policy accepts is the model's own ranking.
 	 *
@@ -172,7 +150,7 @@ export interface StreetEvidencePick<T = unknown> {
 	 */
 	index: number
 	/**
-	 * True when evidence MOVED the pick off rank-1 (a rank-2-beats-rank-1 correction — loggable training signal).
+	 * True when evidence moved the pick off rank-1 (a rank-2-beats-rank-1 correction — loggable training signal).
 	 */
 	moved: boolean
 	/**
@@ -183,14 +161,14 @@ export interface StreetEvidencePick<T = unknown> {
 }
 
 /**
- * The measured v2 rerank policy. Given candidates in PARSE-SCORE order (rank-1 first) and an evidence probe, return the
- * first candidate whose street surface passes ALL of: (1) exists in the index, (2) G1 — not pure type vocabulary, (3)
- * G2 — within `marginCap` of rank-1. If none passes, return rank-1 (fail-open). Positive evidence only; the model's
+ * The measured v2 rerank policy. Given candidates in parse-score order (rank-1 first) and an evidence probe, return the
+ * first candidate whose street surface passes all of: (1) exists in the index, (2) G1 — not pure type vocabulary, (3)
+ * G2 — within `marginCap` of rank-1. If none passes, return rank-1 (fail-open). Positive evidence only. the model's
  * order is preserved among equal-evidence candidates. This is the `resolver/rerank.ts` anti-Pelias discipline applied
  * to the name signal: one bit, no blending. `opts.exclusions` adds one more bit in the same fold: a coverage-licensed
  * absence demotes its candidate behind every un-excluded sibling and never removes it.
  *
- * @param candidates Parse candidates, rank-1 FIRST (the caller sorts by score descending).
+ * @param candidates Parse candidates, rank-1 first (the caller sorts by score descending).
  */
 export function pickByStreetEvidence<T>(
 	candidates: ReadonlyArray<StreetCandidate<T>>,
@@ -216,7 +194,7 @@ export function pickByStreetEvidence<T>(
 		}
 	}
 
-	// An excluded candidate is considered only after every un-excluded sibling; it is never dropped.
+	// An excluded candidate is considered only after every un-excluded sibling. it is never dropped.
 	const order = demoted.length ? [...considered, ...demoted] : considered
 
 	for (const i of order) {

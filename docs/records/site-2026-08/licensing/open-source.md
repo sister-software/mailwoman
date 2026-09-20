@@ -8,7 +8,7 @@ hide_footer: true
 
 # Open Source Usage
 
-Mailwoman is open-source software and distributed under the [AGPL-3.0 license](https://www.gnu.org/licenses/agpl-3.0.html).
+Mailwoman is open-source software and distributed under the [AGPL-3.0 license](https://www.gnu.org/licenses/AGPL-3.0.html).
 You can be released from the requirements of the license by purchasing a commercial license.
 
 Under the AGPL, you can alter, duplicate redistribute, and incorporate our source code into your application for free,

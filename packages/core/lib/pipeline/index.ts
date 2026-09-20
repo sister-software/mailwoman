@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Runtime pipeline coordinator — see `STAGES.md` for the full contract.
+ *   Runtime pipeline coordinator — see `stages.md` for the full interface.
  */
 
 export {

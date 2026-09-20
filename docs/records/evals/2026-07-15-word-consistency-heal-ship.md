@@ -1,4 +1,4 @@
-# Word-consistency heal: re-diagnosis, contract fix, ship default-ON (night-3)
+# Word-consistency heal: re-diagnosis, interface fix, ship default-ON (night-3)
 
 **Model:** v264 (v6.3.0 shipped weights) — no retrain; every change is decode-side library code.
 **Change set:** PR #1132. **Check revision (explicit):** the parity check now grades the ship-config
@@ -11,18 +11,18 @@ default-OFF at the 2026-06-19 check: street −12.6 on the adversarial golden, a
 confidence-weighted vote amplifies noise on byte-soup rows," with a confidence-conditional variant named
 as the path to a clean win.
 
-Night-3 re-diagnosis: the regression was **two defects in the heal**, not vote noise —
+Night-3 re-diagnosis: the regression was **two defects in the heal** rather than vote noise —
 
-1. **Contract bug.** The vote re-decoded words whose pieces already AGREED in type whenever local
+1. **Interface bug.** The vote re-decoded words whose pieces already AGREED in type whenever local
    type-mass preferred another type, silently overriding viterbi's global decision. Single-piece
    `▁Broadway` (B-street) flipped to O; all-street `Gamle` rewrote to locality. The module docstring
    had always claimed "a word whose pieces already agree is left byte-identical" — the code only
-   honored that when the vote happened to agree. Now enforced structurally: the vote runs ONLY on
+   honored that when the vote happened to agree. Now enforced structurally: the vote runs only on
    words whose pieces disagree in type.
 2. **Grouping bug.** Punctuation continuation pieces joined the preceding word's vote group
    (`Ave` + `,` — the comma piece carries no `▁` sentinel), and their `O` mass manufactured a fake
    intra-word disagreement that killed the real span. This is the whole ordinal-street golden class
-   (`1st Ave, ND`: the street dies at the comma, not at the ordinal). Fixed by
+   (`1st Ave, ND`: the street dies at the comma rather than at the ordinal). Fixed by
    `splitOnPunctuation`: punctuation-only pieces separate vote groups like whitespace — which also
    rescues slash compounds (`Unit 12/345` keeps unit ≠ house_number).
 
@@ -44,15 +44,15 @@ street ≥ 0.90; golden 2pp per-tag promote check; demo presets 6/6.
 | fr          | 42.2 → **51.5**   | 90.8 → **91.8**    |
 | adversarial | 66.0 → **66.5**   | 85.7 → 85.7        |
 
-The historical −12.6 street regression is not just neutralized — every file improves or holds.
+The historical −12.6 street regression is notneutralized — every file improves or holds.
 
 ### Parity floors (triaged corpus, 321 live, canonical `eval parity`)
 
 | label        | off    | on (ship)  | floor | verdict           |
 | ------------ | ------ | ---------- | ----- | ----------------- |
-| house_number | 0.7671 | **0.8082** | 0.97  | FAIL (arc target) |
+| house_number | 0.7671 | **0.8082** | 0.97  | fail (arc target) |
 | postcode     | 0.9722 | **0.9861** | 0.97  | **PASS**          |
-| street       | 0.5431 | **0.5730** | 0.90  | FAIL (arc target) |
+| street       | 0.5431 | **0.5730** | 0.90  | fail (arc target) |
 
 ### Golden error-analysis (2pp promote check): PASS
 
@@ -64,7 +64,7 @@ exact-match 24.5% → 25.5%. Full tables: `scratchpad/ea-wc-{off,on}.md` (sessio
 6/6 both modes, zero grouper-audit nodes. The `Pier 39` unit-tag quirk (conf 0.03) is pre-existing
 v264 behavior — identical with the heal off.
 
-### Diacritic locales (parity subset, heal ON — the "visibility, not regression" check)
+### Diacritic locales (parity subset, heal ON — the "visibility rather than regression" check)
 
 | locale | street-tag exact | resolve-locality |
 | ------ | ---------------- | ---------------- |

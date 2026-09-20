@@ -11,11 +11,11 @@
  *
  *   OS ships a per-area expected row count inside the archive:
  *
- *     ORDNANCE SURVEY
- *     PRODUCT: OS CODE-POINT_03.02
- *     DATASET VERSION NUMBER: 2026.2.0
- *     COPYRIGHT DATE: 20260420
- *     RM UPDATE DATE: 20260417
+ *     ordnance survey
+ *     product: OS code-POINT_03.02
+ *     dataset version number: 2026.2.0
+ *     copyright date: 20260420
+ *     RM update date: 20260417
  *           AB      17403
  *           AL       7789
  *            B      41835
@@ -27,7 +27,7 @@
  *   carries it forward. Verified against the 2026-05 extract: the manifest sums to 1,747,841 and the CSVs
  *   hold exactly 1,747,841 rows.
  *
- *   Extraction is to disk rather than streamed in memory because the dated acquisition directory IS the
+ *   Extraction is to disk rather than streamed in memory because the dated acquisition directory is the
  *   cache — a rebuild re-reads the CSVs instead of re-downloading, and a human debugging a postcode can
  *   `grep` the same bytes the builder saw.
  */
@@ -54,16 +54,16 @@ const DOC_ENTRY_PREFIX = "Doc/"
  */
 export interface CodePointMetadata {
 	/**
-	 * `OS CODE-POINT_03.02` — the product/spec version.
+	 * `OS code-POINT_03.02` — the product/spec version.
 	 */
 	product: string
 	/**
-	 * `2026.2.0` — the internal dataset version. Distinct from the Downloads API's `2026-05` release label; both are
+	 * `2026.2.0` — the internal dataset version. Distinct from the Downloads API's `2026-05` release label. both are
 	 * recorded in the database's provenance because they move independently.
 	 */
 	datasetVersion: string
 	/**
-	 * `20260420` — the OS copyright date, and the source of the YEAR that must appear in the attribution block.
+	 * `20260420` — the OS copyright date, and the source of the year that must appear in the attribution block.
 	 */
 	copyrightDate: string
 	/**
@@ -85,7 +85,7 @@ export interface CodePointMetadata {
  *
  * The format is positional and undocumented, so this is defensive: the four header fields are located by their `KEY:`
  * label rather than by line number, and the count table is every remaining line that looks like `<area> <integer>`. A
- * line that does not is skipped rather than fatal — OS has added header fields before (the `RM UPDATE DATE` row is
+ * line that does not is skipped rather than fatal — OS has added header fields before (the `RM update date` row is
  * newer than the product), and a new one must not break the build.
  */
 export function parseCodePointMetadata(text: string): CodePointMetadata {
@@ -145,9 +145,9 @@ export interface ExtractCodePointResult {
 	 * `Doc/licence.txt` verbatim, so the database's provenance quotes OS's own words rather than ours.
 	 *
 	 * Decoded as **Latin-1**, and that is required rather than fussy. The archive declares no encoding, and the file's
-	 * only non-ASCII byte is `0xA9` — Latin-1 `©`, which is not valid UTF-8 on its own. Reading it as UTF-8 turns every
-	 * copyright symbol into U+FFFD, so the first build baked `Contains Ordnance Survey data � Crown copyright` into the
-	 * database's `meta`. Mojibake in a decorative string is cosmetic; mojibake in the attribution text a redistributor is
+	 * only non-ascii byte is `0xA9` — Latin-1 `©`, which is not valid UTF-8 on its own. Reading it as UTF-8 turns every
+	 * copyright symbol into U+fffd, so the first build baked `Contains Ordnance Survey data � Crown copyright` into the
+	 * database's `meta`. Mojibake in a decorative string is cosmetic. mojibake in the attribution text a redistributor is
 	 * legally required to carry is not.
 	 */
 	licenseText: string

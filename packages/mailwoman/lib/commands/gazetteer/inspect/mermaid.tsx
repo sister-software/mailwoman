@@ -19,14 +19,14 @@ import { availableParallelism } from "@mailwoman/core/utils/system"
 import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, parseRoles, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, parseRoles, useCommandTask } from "#cli-kit"
 
 const BATCH_SIZE = availableParallelism()
 
 /**
  * Auto-discover d3-scale-chromatic's sequential interpolators so callers can pass e.g. `--interpolator viridis` and we
- * map it to `interpolateViridis`. Categorical scales (`scheme*`) are deliberately excluded — they're string[]s, not
- * (t)=>string.
+ * map it to `interpolateViridis`. Categorical scales (`scheme*`) are deliberately excluded — they're string[]s rather
+ * than (t)=>string.
  */
 async function loadD3Interpolators(): Promise<Record<string, InterpolateColorCallback>> {
 	const d3Chromatic = await import("d3-scale-chromatic")
@@ -41,7 +41,7 @@ async function loadD3Interpolators(): Promise<Record<string, InterpolateColorCal
 }
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "mermaid",
@@ -52,19 +52,17 @@ export const spec = {
 	],
 	options: {
 		roles: { type: "string", description: `Comma-separated role filter: ${PlacetypeRoles.join(", ")}` },
-		output: { type: "string", description: "Path to write the Mermaid markup to. Defaults to stdout." },
+		out: {
+			type: "string",
+			description: "Path to write the Mermaid markup to. Defaults to stdout.",
+			deprecatedName: "output",
+		},
 		interpolator: {
 			type: "string",
 			description: "d3-scale-chromatic sequential interpolator, such as viridis or turbo",
 		},
 	},
 } as const satisfies CommandSpec
-
-interface Options {
-	roles?: string
-	output?: string
-	interpolator?: string
-}
 
 async function resolveInterpolator(raw: string | undefined): Promise<InterpolateColorCallback | undefined> {
 	if (!raw) return undefined
@@ -81,7 +79,7 @@ async function resolveInterpolator(raw: string | undefined): Promise<Interpolate
 	return fn
 }
 
-const WOFMermaid: ParsedCommandComponent<Options, [string, string]> = ({ args, options }) => {
+const WOFMermaid: CommandComponent<typeof spec, [string, string]> = ({ args, options }) => {
 	const placetypeName = args[1]
 
 	const state = useCommandTask(async () => {
@@ -112,8 +110,8 @@ const WOFMermaid: ParsedCommandComponent<Options, [string, string]> = ({ args, o
 
 		const chart = generateMermaidMarkup(placetype, { roles, edgeInterpolator: interpolator })
 
-		if (options.output) {
-			await writeLocalFile(chart + "\n", options.output)
+		if (options.out) {
+			await writeLocalFile(chart + "\n", options.out)
 		} else {
 			// Write Mermaid directly to stdout so long classDef / linkStyle lines aren't
 			// word-wrapped by Ink's <Text> renderer — Mermaid won't parse a broken line.
@@ -125,17 +123,17 @@ const WOFMermaid: ParsedCommandComponent<Options, [string, string]> = ({ args, o
 
 	if (state.status !== "done") return <CommandTaskResult state={state} running={<Spinner />} />
 
-	if (options.output) {
+	if (options.out) {
 		return (
 			<Box flexDirection="column">
 				<Text>
-					Wrote Mermaid markup for placetype <Text bold>{placetypeName!}</Text> to <Text bold>{options.output}</Text>.
+					Wrote Mermaid markup for placetype <Text bold>{placetypeName!}</Text> to <Text bold>{options.out}</Text>.
 				</Text>
 			</Box>
 		)
 	}
 
-	// Stdout path: markup is written above via process.stdout.write; render nothing through Ink.
+	// Stdout path: markup is written above via process.stdout.write. render nothing through Ink.
 	return null
 }
 

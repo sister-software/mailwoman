@@ -2,22 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The authority's MAPPED FOOTPRINT, and the cells a `designated` coverage claim may be written to.
+ *   The authority's mapped footprint, and the cells a `designated` coverage claim may be written to.
  *
- *   THE FOOTPRINT IS THE COVERAGE STATEMENT, NEVER THE POLYGON UNION. The EA states that the Flood Zone
+ *   the footprint is the coverage statement, never the polygon union. The EA states that the Flood Zone
  *   mapping "covers all of England". Zone 1 is defined as the land outside Zones 2 and 3, so the union of
- *   the hazard polygons is the mapped area MINUS Zone 1 — a footprint taken from the polygons would report
+ *   the hazard polygons is the mapped area minus Zone 1 — a footprint taken from the polygons would report
  *   every Zone 1 location as unmapped, which inverts the one reading this layer exists to get right.
  *
- *   THE FLOOD AUTHORITY DOES NOT PUBLISH WHERE ENGLAND IS, so a second authority's artifact is needed to
+ *   the flood authority does not publish where england is, so a second authority's artifact is needed to
  *   turn its sentence into a cell set — the national statistical authority's country boundary. Which
  *   artifact that was is written into `flood_map_extent` rather than left implicit, because the coverage
  *   claim is only as good as the outline it was clipped to.
  *
- *   THE CLIP IS CONSERVATIVE AND THAT ASYMMETRY IS DELIBERATE. `interiorCoverageCellSet` keeps only cells
- *   lying WHOLLY inside the outline, so the England–Wales and England–Scotland border strips get no
+ *   the clip is conservative and that asymmetry is deliberate. `interiorCoverageCellSet` keeps only cells
+ *   lying wholly inside the outline, so the England–Wales and England–Scotland border strips get no
  *   coverage row at all. A point there reads unknown, which is the honest answer for a location the EA's
- *   statement may or may not reach; a cell wrongly called interior would state that an authority
+ *   statement may or may not reach. a cell wrongly called interior would state that an authority
  *   determined a location it never looked at.
  */
 
@@ -43,7 +43,7 @@ export const EA_EXTENT_ID = "ea-england"
 /**
  * `flood_map_extent.status` for a footprint an authority states it has mapped.
  *
- * A source publishing its own availability categories writes those instead — FEMA's availability layer distinguishes
+ * A source publishing its own availability categories writes those instead — fema's availability layer distinguishes
  * "Digital Data Available", "No Digital Data Available" and "Unmapped", and folding three published categories into one
  * would discard the distinction that makes its coverage rows meaningful.
  */
@@ -105,7 +105,7 @@ export interface RealizeExtentOptions {
  * Pull the outline out of whatever a boundary file actually holds: a bare geometry, a `Feature` wrapping one, or a
  * `FeatureCollection`.
  *
- * A COLLECTION MUST HOLD EXACTLY ONE FEATURE. Every export tool writes a `FeatureCollection`, so refusing the shape
+ * A collection must contain exactly one feature. Every export tool writes a `FeatureCollection`, so refusing the shape
  * outright would refuse the ordinary case — but taking the first of several would silently choose which country the
  * coverage claim is about, and the claim is only as good as the outline it was clipped to.
  *

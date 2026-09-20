@@ -4,13 +4,13 @@
 /**
  *   Types for the geocoder map surface. Mirrors the pipeline boundary: the package owns the UI state
  *   machine + the declarative map, while the host injects a {@link GeocoderRuntime} that owns ONNX / httpvfs
- *   / R2 and the composed map style. {@link GeocoderRuntime} EXTENDS {@link PipelineRuntime} so the shared
- *   `runParse` / `parseStageLabels` / `loading` contract is reused, and adds the map-specific surface
+ *   / R2 and the composed map style. {@link GeocoderRuntime} extends {@link PipelineRuntime} so the shared
+ *   `runParse` / `parseStageLabels` / `loading` interface is reused, and adds the map-specific surface
  *   (style, overlays, initial center, viewport bias, backend/version selection). Phase 4 adds the
  *   `resolveMapPlace` enricher, the {@link GeocoderPanels} injection bag, and the {@link CompareContext}.
  *
  *   The map-spec types are imported type-only from `react-map-gl/maplibre`; nothing here loads maplibre at
- *   runtime, so this module stays node-safe (its concrete-value CONSUMERS — `MapCanvas`, `Geocoder` —
+ *   runtime, so this module stays node-safe (its concrete-value consumers — `MapCanvas`, `Geocoder` —
  *   are the ones behind the `@mailwoman/react/map` subpath).
  */
 
@@ -46,7 +46,7 @@ export interface MapBias {
 
 /**
  * A host-supplied overlay: one map `<Source>` plus one or more `<Layer>`s laid over the basemap (coverage "fog of war",
- * race-dots, …). The host composes the specs; the package renders them declaratively in a later phase.
+ * race-dots, …). The host composes the specs. the package renders them declaratively in a later phase.
  */
 export interface OverlaySpec {
 	/**
@@ -98,7 +98,7 @@ export interface VersionOption {
 	 */
 	version: string
 	/**
-	 * Display label; falls back to `version`.
+	 * Display label. falls back to `version`.
 	 */
 	label?: string
 }
@@ -136,8 +136,8 @@ export interface GeocoderRuntime extends PipelineRuntime {
 
 	// ── Parse extras layered over PipelineRuntime.runParse ──────────────────
 	/**
-	 * A bias-aware parse. The geocoder feeds the current viewport center as a soft prior; when absent the host falls back
-	 * to the base {@link PipelineRuntime.runParse}. Kept separate so the shared `runParse` contract is unchanged.
+	 * A bias-aware parse. The geocoder feeds the current viewport center as a soft prior. when absent the host falls back
+	 * to the base {@link PipelineRuntime.runParse}. Kept separate so the shared `runParse` interface is unchanged.
 	 */
 	runParseWithBias?: (
 		input: string,
@@ -156,7 +156,7 @@ export interface GeocoderRuntime extends PipelineRuntime {
 	 * Enrich the selected candidate into the richer {@link ResolvedMapPlace} the declarative map render consumes (bbox,
 	 * street tier + uncertainty, a pre-fetched crisp polygon) — the fields that live on the host's `ResolvedHit` but not
 	 * on the shared {@link ResolvedPlaceView}. The host owns this because those extras (and the async polygon fetch in the
-	 * real runtime) are host/gazetteer concerns; the package keeps {@link ParseResult} unpolluted. Absent → the candidate
+	 * real runtime) are host/gazetteer concerns. the package keeps {@link ParseResult} unpolluted. Absent → the candidate
 	 * renders as a bare point (marker + a mid-zoom fly-to). Returning `null` also renders nothing.
 	 */
 	resolveMapPlace?: (candidate: ResolvedPlaceView, result: ParseResult) => ResolvedMapPlace | null
@@ -179,11 +179,11 @@ export interface GeocoderRuntime extends PipelineRuntime {
 	 */
 	activeBackend?: string
 	/**
-	 * Whether the CPU/WASM backend is currently forced (the controlled value for the backend toggle).
+	 * Whether the CPU/wasm backend is currently forced (the controlled value for the backend toggle).
 	 */
 	forceWASM?: boolean
 	/**
-	 * Force the WASM backend (opt out of WebGPU), for the backend toggle.
+	 * Force the wasm backend (opt out of WebGPU), for the backend toggle.
 	 */
 	setForceWASM?: (forceWASM: boolean) => void
 }
@@ -208,9 +208,9 @@ export interface CompareContext {
 }
 
 /**
- * The state a {@link GeocoderPanels.result} render-prop receives, so a host can render its OWN result block (a
+ * The state a {@link GeocoderPanels.result} render-prop receives, so a host can render its own result block (a
  * `<ResultPanel>` with its span-highlight / timing / hierarchy / precision detail) in place of the package's default
- * {@link ResultPanel}. Everything the default panel needs is passed through; the candidate-selection state stays owned
+ * {@link ResultPanel}. Everything the default panel needs is passed through. the candidate-selection state stays owned
  * by the package (`useGeocode`).
  */
 export interface ResultContext {
@@ -262,7 +262,7 @@ export interface GeocoderPanels {
 	 */
 	extras?: (result: ParseResult) => ReactNode
 	/**
-	 * Rendered just above the result block (present or empty), for content that reads on THIS answer.
+	 * Rendered just above the result block (present or empty), for content that reads on this answer.
 	 *
 	 * A control that reads on the model rather than on an address belongs in {@link developerExtras}: above the result it
 	 * is the first thing a visitor meets, and on a phone it pushes the answer below the fold.
@@ -290,7 +290,7 @@ export interface GeocoderPanels {
 	compare?: (context: CompareContext) => ReactNode
 	/**
 	 * The model-visualizer / debug drawer, mounted beside the map (host's ModelVisualizer). A render-prop so the host can
-	 * trace the CURRENT result (its input) — the package passes the live parse result; the host decides on its own
+	 * trace the current result (its input) — the package passes the live parse result. the host decides on its own
 	 * dev-mode state and returns `null` when the drawer is closed.
 	 */
 	debugDrawer?: (context: { result: ParseResult | null }) => ReactNode

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The classifier's configuration + per-parse option contracts, split from `classifier.ts` when that file hit its
+ *   The classifier's configuration + per-parse option interfaces, split from `classifier.ts` when that file hit its
  *   max-lines ceiling for the third time in one day — these are pure types with zero behavior, and the class file
  *   re-exports them so every existing import keeps working.
  */
@@ -13,7 +13,7 @@ import type { SpanProposerLexicon } from "@mailwoman/core/pipeline"
 import type { PathBuilderLike } from "path-ts"
 
 import type { AnchorLookup, AnchorSpanMode } from "#anchor-inference"
-import type { CharEncoderContract, CharVocabulary } from "#char-encoder"
+import type { CharEncoderInterface, CharVocabulary } from "#char-encoder"
 import type { NeuralRunner } from "#classifier/index"
 import type { CountryLexicon } from "#country-inference"
 import type { FSTMatcherLike, ImportanceLengthScaleMode } from "#fst-prior"
@@ -34,10 +34,10 @@ export interface NeuralAddressClassifierConfig {
 	 */
 	tokenizer?: MailwomanTokenizer
 	/**
-	 * The char-path encoder (#2164): the sealed character vocabulary and the (S, W, ctx) contract the model was trained
+	 * The char-path encoder (#2164): the sealed character vocabulary and the (S, W, ctx) interface the model was trained
 	 * under. The runner must carry `inferChars`.
 	 */
-	charEncoder?: { vocabulary: CharVocabulary; contract: CharEncoderContract }
+	charEncoder?: { vocabulary: CharVocabulary; interface: CharEncoderInterface }
 	runner: NeuralRunner
 	/**
 	 * Label vocabulary in the order the model emits them. Defaults to Stage 2 (v0.3.0). Stage 2 strictly extends Stage 1
@@ -56,7 +56,7 @@ export interface NeuralAddressClassifierConfig {
 	decode?: "viterbi" | "argmax"
 	/**
 	 * Optional learned CRF transition scores. Square matrix of size `labels.length × labels.length`. Added on top of the
-	 * structural BIO mask. Future weights releases ship this; today's v3.0.0 weights don't, so the structural mask alone
+	 * structural BIO mask. Future weights releases ship this. today's v3.0.0 weights don't, so the structural mask alone
 	 * is used.
 	 */
 	transitions?: number[][]
@@ -70,30 +70,30 @@ export interface NeuralAddressClassifierConfig {
 	endTransitions?: number[]
 	/**
 	 * #727 stage-2: the parsed semi-Markov segment-transition grammar (`semi-crf-transitions.json`), for the span head's
-	 * k-best decode. `loadFromWeights` populates it when the bundle ships the sidecar; exposed as `spanGrammar` so the
+	 * k-best decode. `loadFromWeights` populates it when the bundle ships the sidecar. exposed as `spanGrammar` so the
 	 * phase-4c name-evidence rerank can consume it without re-reading the file. Absent on a pre-v3 bundle.
 	 */
 	semiCRFGrammar?: SemiCRFTransitions
 	/**
 	 * Path to the per-locale FST gazetteer binary shipped in the resolved weights package (`fst-<locale>.bin`), surfaced
-	 * verbatim from {@link resolveWeights} — PATH ONLY (neural has no resolver-wof-sqlite dependency; the caller's layer
+	 * verbatim from {@link resolveWeights} — path only (neural has no resolver-wof-sqlite dependency. the caller's layer
 	 * deserializes). Exposed via {@link NeuralAddressClassifier.fstPath} so the mailwoman runtime pipeline can auto-load
 	 * the gazetteer into `opts.fst` at pipeline construction.
 	 */
 	fstPath?: PathBuilderLike
 	/**
 	 * Path to the locale-general street-morphology FST binary shipped beside the resolved weights
-	 * (`fst-street-morphology.bin`), surfaced verbatim from {@link resolveWeights} — PATH ONLY, same posture as
+	 * (`fst-street-morphology.bin`), surfaced verbatim from {@link resolveWeights} — path only, same posture as
 	 * {@link NeuralAddressClassifierConfig.fstPath}. Exposed via {@link NeuralAddressClassifier.streetMorphologyPath} so
 	 * the runtime pipeline's street-context check (#1315) deserializes the sealed artifact instead of rebuilding it from
 	 * the libpostal dictionaries per process.
 	 */
 	streetMorphologyPath?: string
 	/**
-	 * Path to the `model.onnx` this instance actually loaded, surfaced verbatim from {@link resolveWeights} — PATH ONLY,
+	 * Path to the `model.onnx` this instance actually loaded, surfaced verbatim from {@link resolveWeights} — path only,
 	 * same posture as {@link NeuralAddressClassifierConfig.fstPath}. Exposed via {@link NeuralAddressClassifier.modelPath}.
 	 *
-	 * Resolution walks several rungs and an unusable rung is SKIPPED rather than reported, so which model answered is not
+	 * Resolution walks several rungs and an unusable rung is skipped rather than reported, so which model answered is not
 	 * derivable from the options a caller passed: `resolveWeights` honours an explicit `cacheRoot` only when that
 	 * directory holds the binaries, and otherwise falls through to the installed workspace package. A caller grading a
 	 * candidate therefore cannot tell a graded candidate from a graded default without reading this back.
@@ -114,8 +114,8 @@ export interface NeuralAddressClassifierConfig {
 	postcodeAnchorLookup?: AnchorLookup
 	/**
 	 * Which substrings the anchor channel looks up (`AnchorSpanMode`, 2026-08-05). Defaults to `alnum-run`,
-	 * byte-identical to every parse before that date; `shaped` is PAIRED like `suppressGazetteerNearPostcode` and belongs
-	 * only to a model trained against a lookup with letter-bearing keys. Read from `requires.anchor.span_mode`.
+	 * byte-identical to every parse before that date; `shaped` is paired like `suppressGazetteerNearPostcode` and belongs
+	 * only to a model trained against a lookup with letter-containing keys. Read from `requires.anchor.span_mode`.
 	 */
 	postcodeAnchorSpanMode?: AnchorSpanMode
 	/**
@@ -131,7 +131,7 @@ export interface NeuralAddressClassifierConfig {
 	 * country_ambiguous]`) from the text + this lexicon and feeds them to the runner — for models trained with the
 	 * country channel (exported with the `country_features`/`country_confidence` ONNX inputs). Omit for plain models.
 	 * Load via `parseCountryLexicon` from `./country-inference.js`. Unlike the gazetteer country slot, this channel is
-	 * NOT zeroed by `suppressGazetteerNearPostcode`.
+	 * not zeroed by `suppressGazetteerNearPostcode`.
 	 */
 	countryLexicon?: CountryLexicon
 	/**
@@ -149,20 +149,20 @@ export interface NeuralAddressClassifierConfig {
 	 * postcode-anchor hit (needs both `gazetteerLexicon` and `postcodeAnchorLookup`). Targets the region-clue→postcode
 	 * CRF interference (~3pp US postcode).
 	 *
-	 * PAIRING IS ESSENTIAL: set this IFF the model was TRAINED with the matching train-time choreography
-	 * (`data.gazetteer_choreography`). The 2026-06-10 diagnostic showed the harm is WEIGHT-BAKED — applying this at
-	 * inference on a model trained _without_ train-choreography does NOT recover postcode and adds train/inference skew.
+	 * Pairing is essential: set this IFF the model was trained with the matching train-time choreography
+	 * (`data.gazetteer_choreography`). The 2026-06-10 diagnostic showed the harm is weight-baked — applying this at
+	 * inference on a model trained _without_ train-choreography does not recover postcode and adds train/inference skew.
 	 * Only enable for a consolidation-era model trained with the train-time half.
 	 */
 	suppressGazetteerNearPostcode?: boolean
 	/**
 	 * Default address-system conventions mode for every parse (see `ParseOpts.addressSystemConventions` for semantics —
-	 * `"auto"` reads the model's locale head; a `SystemCode` pins it). Per-parse opts override this. Omit for the
+	 * `"auto"` reads the model's locale head. a `SystemCode` pins it). Per-parse opts override this. Omit for the
 	 * byte-stable pre-#511 default (no detection, no mask).
 	 */
 	addressSystemConventions?: "auto" | SystemCode
 	/**
-	 * Punctuation-gap span bridging (the v4.4.0 corrective; see `span-bridge.ts`). The corpus label format cannot express
+	 * Punctuation-gap span bridging (the v4.4.0 corrective. see `span-bridge.ts`). The corpus label format cannot express
 	 * punctuation inside a span, so dotted surfaces ("P.O. Box", "C.P.") decode as fragments. When true, adjacent
 	 * same-tag spans separated only by short punctuation gaps are merged after decode. Per-parse opts override. Omit for
 	 * the byte-stable pre-v4.4.0 behavior.
@@ -171,12 +171,12 @@ export interface NeuralAddressClassifierConfig {
 	/**
 	 * Stage 2.7 span proposer (M2+M3 from the punctuation survey, #518). When set, every parse runs `proposeSpans`
 	 * (`@mailwoman/core/pipeline`) over the raw text and consumes the typed proposals two ways: (a) as additive emission
-	 * priors — the phrase-prior path; the classifier conditions on the boundary hypotheses and can still disagree — and
-	 * (b) ANNOTATION/QUOTED span boundaries feed the span bridge as merge-crossing constraints (no same-tag merge may
+	 * priors — the phrase-prior path. the classifier conditions on the boundary hypotheses and can still disagree — and
+	 * (b) annotation/quoted span boundaries feed the span bridge as merge-crossing constraints (no same-tag merge may
 	 * straddle a structural delimiter). Build the lexicon with `buildCodexSpanLexicon` (`./span-proposer-lexicon.js`).
 	 * Per-parse opts override.
 	 *
-	 * DEFAULT ON (operator ruling 2026-06-12, after the #518 measurement closed both v0-win quadrants with no class
+	 * Default on (operator ruling 2026-06-12, after the #518 measurement closed both v0-win quadrants with no class
 	 * down): omitting this builds the codex lexicon lazily with the frozen measured scales (biasScale 5.0 /
 	 * annotationBiasScale 12.0). Pass `false` for the proposer-free baseline (the pre-2026-06-12 byte-stable default).
 	 */
@@ -184,9 +184,9 @@ export interface NeuralAddressClassifierConfig {
 
 	/**
 	 * Default placetype-pair index (placetype-pair-prior arc — see `ParseOpts.placetypePair` for the full matching
-	 * contract, including the probe-mode default). Set by `loadFromWeights` when the resolved weights package ships a
+	 * interface, including the probe-mode default). Set by `loadFromWeights` when the resolved weights package ships a
 	 * country-matching `pair-index-<cc>.bin` (the hard country restriction — see that method). Per-parse
-	 * `opts.placetypePair` overrides this default; omitting both is the byte-stable no-prior default (undefined → zero
+	 * `opts.placetypePair` overrides this default. omitting both is the byte-stable no-prior default (undefined → zero
 	 * matrix). `#decode` always injects the current parse's `inputText` into whichever object wins (config default or
 	 * per-parse override) — see `placetype-pair-prior.ts`'s `PlacetypePairPriorOpts.inputText` — so neither this field
 	 * nor a per-parse override needs to carry its own text.
@@ -194,9 +194,9 @@ export interface NeuralAddressClassifierConfig {
 	placetypePair?: PlacetypePairPriorOpts
 
 	/**
-	 * Default PCN1 placetype census — OBSERVABILITY ONLY. Set by `loadFromWeights` when the build-local artifact exists
+	 * Default PCN1 placetype census — observability only. Set by `loadFromWeights` when the build-local artifact exists
 	 * for the resolved locale's country (`loadPlacetypeCensus`, which documents why it is build-local and not a weights
-	 * sibling). It rides the placetype-pair prior's parent-candidate probes and its ONLY effect is a `placetypeCensus`
+	 * sibling). It rides the placetype-pair prior's parent-candidate probes and its only effect is a `placetypeCensus`
 	 * record on `traceParse`'s prior list: no emission bias, no transition adjustment, no decode change, present or
 	 * absent. Consequently it does nothing when the pair prior itself is off (no index → no parent candidates to probe
 	 * alongside) and nothing on a plain `parse()` (no trace to write into). Per-parse `opts.placetypeCensus` overrides;
@@ -206,8 +206,8 @@ export interface NeuralAddressClassifierConfig {
 
 	/**
 	 * Per-word BIO consistency repair (#727 + the admin-token fragmentation class). Default off → byte-identical. When
-	 * enabled, every `▁`-delimited word's pieces are forced to ONE tag by a confidence-weighted vote over the post-prior
-	 * emissions (see word-consistency.ts). Pass a `WordConsistencyOpts` object to enable WITH the #727 confidence
+	 * enabled, every `▁`-delimited word's pieces are forced to one tag by a confidence-weighted vote over the post-prior
+	 * emissions (see word-consistency.ts). Pass a `WordConsistencyOpts` object to enable with the #727 confidence
 	 * thresholds (floor / byte-fallback skip / slash grouping); `true` = the unrestricted vote. Per-parse
 	 * `ParseOptions.enforceWordConsistency` overrides this default.
 	 */
@@ -250,12 +250,12 @@ export interface ParseOpts {
 	 */
 	queryShapeBiasScale?: number
 	/**
-	 * The input register (operator Decision A, 2026-07-28; canonical docs on `@mailwoman/core/pipeline`'s `InputMode`).
-	 * `formatted` runs the evidence-bundle channels (street_type/locality_surface) deliberately OFF — the trained absence
-	 * identity, a DECLARED ablation, not a missing feed — because the bundle lifts fragments and damages full-address
-	 * parses. Default `"fragmented"` for bare library calls (today's feed-when-configured semantics); the production
-	 * pipeline always passes the mode explicitly (kind-classifier-derived when the caller didn't set one). Typed
-	 * structurally — no runtime dependency on `@mailwoman/core`.
+	 * The input register (operator Decision A, 2026-07-28. canonical docs on `@mailwoman/core/pipeline`'s `InputMode`).
+	 * `formatted` runs the evidence-bundle channels (street_type/locality_surface) deliberately off — the trained absence
+	 * identity, a declared ablation rather than a missing feed — because the bundle lifts fragments and damages
+	 * full-address parses. Default `"fragmented"` for bare library calls (today's feed-when-configured semantics); the
+	 * production pipeline always passes the mode explicitly (kind-classifier-derived when the caller didn't set one).
+	 * Typed structurally — no runtime dependency on `@mailwoman/core`.
 	 */
 	inputMode?: "fragmented" | "formatted"
 	/**
@@ -266,28 +266,28 @@ export interface ParseOpts {
 	 * Bias magnitude for FST gazetteer matches. Default 1.0.
 	 *
 	 * @internal Instrument knob (D3, ROAD_TO_MAILWOMAN_V8_1_0 §5.3) — exists so the eval harnesses can decompose the
-	 *   FST channel, NOT consumer configuration. The shipped calibration is the default; `createRuntimePipeline`
+	 *   FST channel rather than consumer configuration. The shipped calibration is the default; `createRuntimePipeline`
 	 *   consumers never set this.
 	 */
 	fstBiasScale?: number
 	/**
 	 * Match-length scaling mode for the FST importance bias (#1142). Default `suppression`.
 	 *
-	 * @internal Instrument knob (D3) — measurement decomposition only; the default IS the shipped calibration.
+	 * @internal Instrument knob (D3) — measurement decomposition only. the default is the shipped calibration.
 	 */
 	fstImportanceLengthScaleMode?: ImportanceLengthScaleMode
 	/**
 	 * Positive-bias multiplier for the FST street-context check (#1142) — applied when a matched place name sits in a
-	 * syntactically street-headed position (street-type adjacency / house-number-left). Only consulted when BOTH `fst`
-	 * and `fstStreetMorphology` are provided. Classifier-level default 0.25; the PIPELINE ships 0 (full suppression — D2
+	 * syntactically street-headed position (street-type adjacency / house-number-left). Only consulted when both `fst`
+	 * and `fstStreetMorphology` are provided. Classifier-level default 0.25. the pipeline ships 0 (full suppression — D2
 	 * remediation, measured 2026-07-26: homonym at exact P0 parity, golden + every other board identical to 0.25).
 	 *
 	 * @internal Instrument knob (D3) — measurement decomposition only; `createRuntimePipeline` pins the shipped value.
 	 */
 	fstStreetContextPositiveScale?: number
 	/**
-	 * Master switch for the street-context check (#1142). Default true — the check is active whenever BOTH `fst` and
-	 * `fstStreetMorphology` are provided. Pass `false` to run the morphology emission prior WITHOUT the check (the
+	 * Master switch for the street-context check (#1142). Default true — the check is active whenever both `fst` and
+	 * `fstStreetMorphology` are provided. Pass `false` to run the morphology emission prior without the check (the
 	 * behavior that preceded it); used to decompose the two channels in measurement.
 	 *
 	 * @internal Instrument knob (D3) — measurement decomposition only.
@@ -295,8 +295,8 @@ export interface ParseOpts {
 	fstStreetContextRequirement?: boolean
 	/**
 	 * Pre-built street-morphology FST matcher. When provided, street-type affixes (Avenue, rue, Calle, Straße, …) produce
-	 * additive emission biases toward `street_prefix`/`street_suffix` on the matched tokens AND toward `street` / away
-	 * from `dependent_locality` on the adjacent name tokens. Closes the v0.6.1 dependent_locality vacuum; see
+	 * additive emission biases toward `street_prefix`/`street_suffix` on the matched tokens and toward `street` / away
+	 * from `dependent_locality` on the adjacent name tokens. Closes the v0.6.1 dependent_locality vacuum. see
 	 * `docs/articles/concepts/street-supplement-architecture.md` for the layered design.
 	 */
 	fstStreetMorphology?: FSTMatcherLike
@@ -328,11 +328,11 @@ export interface ParseOpts {
 	 */
 	unitRepair?: boolean
 	/**
-	 * When true AND the input is detected ALL-CAPS (registry/compliance data like `214 JONES RD, ELKHART, TX 75839`),
+	 * When true and the input is detected all-caps (registry/compliance data like `214 jones RD, elkhart, TX 75839`),
 	 * title-case the input before the model sees it. The model trains on mixed-case text, so all-caps is partly OOD — it
-	 * drops/mis-bounds tokens (#690: `PALESTINE` → locality `ALESTINE`; all-caps locality 3/5 vs title-case 5/5).
-	 * Conditioned on detection, so MIXED-case input is untouched (byte-stable). Off by default. On all-caps input the
-	 * output values are title-cased (the SHOUTING is normalized away — better, and the resolver name-matches
+	 * drops/mis-bounds tokens (#690: `palestine` → locality `alestine`; all-caps locality 3/5 vs title-case 5/5).
+	 * Conditioned on detection, so mixed-case input is untouched (byte-stable). Off by default. On all-caps input the
+	 * output values are title-cased (the shouting is normalized away — better, and the resolver name-matches
 	 * case-insensitively regardless).
 	 */
 	normalizeCase?: boolean
@@ -353,9 +353,9 @@ export interface ParseOpts {
 	 */
 	spanProposer?: boolean
 	/**
-	 * Address-system conventions enforcement (#511 Tier A / #478's rules-as-constraints slice).
+	 * Address-system conventions enforcement (#511 Tier A / the rules-as-constraints part of #478).
 	 *
-	 * - `"auto"` — detect the system from the model's locale head (`locale_logits` output, v1.1.0+ exports; silently no-ops
+	 * - `"auto"` — detect the system from the model's locale head (`locale_logits` output, v1.1.0+ exports. silently no-ops
 	 *   on models without it) and apply that system's codex conventions: forbidden tags become a hard emission mask
 	 *   before Viterbi, and a conventions postcode shape enables the snap-only postcode repair pass.
 	 * - A `SystemCode` (`"fr"`, `"us"`, …) — apply that system's conventions unconditionally (callers that already know the
@@ -370,10 +370,10 @@ export interface ParseOpts {
 
 	/**
 	 * Per-call override for the config-level `placetypePair` default (see
-	 * {@link NeuralAddressClassifierConfig.placetypePair}). Explicit `false` disables an AUTO-WIRED config default for
+	 * {@link NeuralAddressClassifierConfig.placetypePair}). Explicit `false` disables an auto-wired config default for
 	 * this one call — the same typed-disable shape as {@link spanProposer} above (`SpanProposerConfig | false` at the
 	 * config level; `false` per-call), applied here to the object-valued config instead of a boolean flag. The typed
-	 * `false` is the ONLY real disable signal: an object-only field leaves a caller substituting a never-matching
+	 * `false` is the only real disable signal: an object-only field leaves a caller substituting a never-matching
 	 * `PairIndexLike` stub (`neural/test/weights.test.ts`'s `NO_MATCH_PAIR_INDEX` idiom) — functionally equivalent but
 	 * not type-checkable as intent. `opts?.placetypePair ?? this.cfg.placetypePair` (see `#decode`) resolves `false`
 	 * correctly with no special case: `??` only falls through on `null`/`undefined`, never on `false`, so an explicit
@@ -381,7 +381,7 @@ export interface ParseOpts {
 	 *
 	 * Placetype-pair emission bias (placetype-pair-prior arc). When provided, candidates are probed against a PIX1 pair
 	 * index of (child, parent) place-name pairs harvested from a real address register (the GB extract: PPD
-	 * `CITY`/`DISTRICT`). A candidate that resolves against some OTHER, disjoint candidate anywhere in the input gets an
+	 * `city`/`district`). A candidate that resolves against some other, disjoint candidate anywhere in the input gets an
 	 * additive bias toward the pair's resolved `ComponentTag` — e.g. "Shoreditch" biased toward `dependent_locality` when
 	 * "London" also appears in the input, because the index has recorded ("shoreditch", "london") →
 	 * `dependent_locality`.
@@ -390,8 +390,8 @@ export interface ParseOpts {
 	 * How a "candidate" is built matters a great deal. The default `"auto"` chain (v1.1, 2026-07-24 anchored
 	 * adjacent-pair design) runs the segment path when the input has ≥2 comma-delimited segments — byte-identical to
 	 * explicit `"segment"` there, by construction — and the anchored-adjacent path on comma-free input (where segment
-	 * mode is deterministically inert; any anchored bias is strictly additive against that zero baseline). `"segment"`
-	 * (the v1 default) restricts candidates to WHOLE comma-delimited segments; `"window"` mode (contiguous 1..3-word
+	 * mode is deterministically inert. any anchored bias is strictly additive against that zero baseline). `"segment"`
+	 * (the v1 default) restricts candidates to whole comma-delimited segments; `"window"` mode (contiguous 1..3-word
 	 * sliding sub-segments — see `placetype-pair-prior.ts`'s `WINDOW_MAX_WORDS` docstring for the measured distribution
 	 * that set that ceiling) is opt-in only. Window mode is not a default because, measured against a 6,500-row
 	 * venue-confound falsifier board (real UK business names that embed a real place name — "Bitterne Charcoal Grill"
@@ -399,23 +399,23 @@ export interface ParseOpts {
 	 * a pre-registered FP=0 bar: a sub-segment window has no venue-boundary awareness and fires just as readily inside a
 	 * longer venue/business phrase as it does on a bare place name. Segment mode structurally can't make that mistake —
 	 * "Bitterne Charcoal Grill" has no internal comma, so its only candidate key is the 3-word fold, which never equals a
-	 * 1-word census entry. See `placetype-pair-prior.ts`'s module docstring ("Probe mode" section) for the full contract,
-	 * both modes' measured trade-offs, and the re-enablement bar for window mode as a default.
+	 * 1-word census entry. See `placetype-pair-prior.ts`'s module docstring ("Probe mode" section) for the full
+	 * interface, both modes' measured trade-offs, and the re-enablement bar for window mode as a default.
 	 *
 	 * Country-agnostic at the API surface: this module does not restrict by country itself — the caller is responsible
 	 * for passing the index built for the input's locale (a GB-built index probed against a US address will simply never
 	 * match, composing harmlessly).
 	 *
-	 * Default resolution: **an omitted field does NOT unconditionally mean "no prior".** `#decode` resolves this as
+	 * Default resolution: **an omitted field does not unconditionally mean "no prior".** `#decode` resolves this as
 	 * `opts?.placetypePair ?? this.cfg.placetypePair` — when `loadFromWeights` auto-wired a config-level default (the
-	 * country-restricted construction for en-gb-shaped caches), an omitted per-call field falls through to THAT default
-	 * and the prior fires. The no-prior path holds only when NEITHER this field NOR the config default is set (e.g.
+	 * country-restricted construction for en-gb-shaped caches), an omitted per-call field falls through to that default
+	 * and the prior fires. The no-prior path holds only when neither this field nor the config default is set (e.g.
 	 * `loadFromWeights({ locale: "en-us" })`, which ships no `pair-index-*.bin` sibling to auto-wire). Pass explicit
 	 * `false` to force the prior off for one call regardless of an auto-wired config default (see this field's own doc
-	 * comment above for the typed-disable contract). Evidence: the rung-3 promotion eval (2026-07-22) measured 100%
+	 * comment above for the typed-disable interface). Evidence: the rung-3 promotion eval (2026-07-22) measured 100%
 	 * recall / 0.0% false-positive rate at δ=6.0 on the curated probe set that motivated this prior. **Superseded by the
 	 * shipped δ calibration** (2026-07-22): the real `pair-index-gb.bin` artifact ships δ=5.0 (a held-out register-row +
-	 * venue-confound sweep, feed-8k's calibrated optimum; feed-2k calibrates to 4.5 but fails the FR-fragment
+	 * venue-confound sweep, feed-8k's calibrated optimum. feed-2k calibrates to 4.5 but fails the FR-fragment
 	 * bare-locality bar) in its header, so `biasScale` below exists only as a fallback for a hand-built `PairIndexLike`
 	 * test double that omits `delta`.
 	 */
@@ -425,7 +425,7 @@ export interface ParseOpts {
 	 * Per-call override for the config-level `placetypeCensus` default (see
 	 * {@link NeuralAddressClassifierConfig.placetypeCensus}) — same typed-disable shape as {@link placetypePair}.
 	 *
-	 * OBSERVABILITY ONLY: whichever way this resolves, the decode is byte-identical. It selects whether `traceParse`'s
+	 * Observability only: whichever way this resolves, the decode is byte-identical. It selects whether `traceParse`'s
 	 * `placetypeCensus` prior record carries census observations, nothing more, which is exactly what makes `false`
 	 * useful — it is how a test parses the same input twice, once with the census wired and once without, and asserts the
 	 * emissions/path/tokens didn't move (`placetype-census-observability.test.ts`).

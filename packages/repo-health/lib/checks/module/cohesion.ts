@@ -6,7 +6,7 @@
  *
  *   The companion to {@link ./surface.ts}, which counts declarations. A count answers "is this module
  *   large"; this one answers "is this module two modules", which is a property of the reference graph and not of any
- *   total. A module that reads one table and returns a value stays one community however long it grows; a module whose
+ *   total. A module that reads one table and returns a value stays one community however long it grows. a module whose
  *   pure transform and whose filesystem walker never call each other is two, at any size.
  */
 
@@ -27,7 +27,7 @@ export const MODULE_COHESION_THRESHOLDS = {
 	 */
 	modularity: 0.35,
 	/**
-	 * Members a community needs before it counts toward a reported pair. A lone declaration is a helper, not a
+	 * Members a community needs before it counts toward a reported pair. A lone declaration is a helper rather than a
 	 * responsibility.
 	 */
 	communityMembers: 2,
@@ -304,7 +304,7 @@ function describe(community: DeclarationCommunity): string {
 
 /**
  * Advisory partition of a module's declaration graph. A warning names the two groups and the dependencies that separate
- * them; it proposes which declarations move together and does not claim the module is wrong.
+ * them. it proposes which declarations move together and does not claim the module is wrong.
  */
 export const moduleCohesionCheck: RepoCheck = {
 	id: "module-cohesion",

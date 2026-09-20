@@ -4,11 +4,11 @@
 /**
  *   Street-level (situs + interpolation) lookups over a sql.js-httpvfs worker — the browser twins of
  *   `@mailwoman/resolver-wof-sqlite`'s `AddressPointSqliteLookup` (#476) and `StreetInterpolator`
- *   (#483). They run the SAME SQL + the SAME shared normalizer (`street-normalize.ts`) as the node
- *   classes, just ASYNC over the Comlink-proxied worker's `db.exec` (the demo resolves async on the
- *   main thread; see the architecture spec, 2026-06-14-client-side-geocoder-demo-spec.md). The
+ *   (#483). They run the same SQL + the same shared normalizer (`street-normalize.ts`) as the node
+ *   classes, just async over the Comlink-proxied worker's `db.exec` (the demo resolves async on the
+ *   main thread. see the architecture spec, 2026-06-14-client-side-geocoder-demo-spec.md). The
  *   parity preference and range scoping in `HTTPVFSInterpolator` still mirror `StreetInterpolator`
- *   by hand — KEEP THOSE IN LOCKSTEP (the same contract the WOF resolvers hold). The polyline
+ *   by hand — keep those IN lockstep (the same interface the WOF resolvers hold). The polyline
  *   geometry no longer needs it: both now call `pointAlong` from `@mailwoman/spatial`.
  *
  *   These power the demo's street tier against byte-ranged per-state situs/interp databases: a lookup
@@ -60,7 +60,7 @@ export class HTTPVFSAddressPointLookup {
 	#locale: StreetLocale
 
 	/**
-	 * `streetLocale` must match the extract's build locale (the node class's contract) — default "us".
+	 * `streetLocale` must match the extract's build locale (the node class's interface) — default "us".
 	 */
 	constructor(worker: HTTPVFSDB, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#worker = worker
@@ -130,7 +130,7 @@ export interface StreetInterpHit {
 }
 
 /**
- * TIGER-range interpolation — async twin of `StreetInterpolator`. Postcode-scoped; abstains on cross-ZIP ambiguity.
+ * Tiger-range interpolation — async twin of `StreetInterpolator`. Postcode-scoped. abstains on cross-ZIP ambiguity.
  */
 export class HTTPVFSInterpolator {
 	#worker: HTTPVFSDB
@@ -220,7 +220,7 @@ export interface StreetResolution {
 	lon: number
 	tier: "address_point" | "interpolated"
 	/**
-	 * Calibrated uncertainty radius in meters (10 m situs floor; interp = uncertaintyM × the region factor).
+	 * Calibrated uncertainty radius in meters (10 m situs floor. interp = uncertaintyM × the region factor).
 	 */
 	uncertaintyM: number
 }
@@ -246,7 +246,7 @@ interface InterpLike {
 }
 
 /**
- * Street tier: exact situs point first (10 m floor), then TIGER interpolation (honest calibrated radius), else null so
+ * Street tier: exact situs point first (10 m floor), then tiger interpolation (honest calibrated radius), else null so
  * the caller falls back to the admin cascade ({@link runCascade}). Mirrors the node `geocode-core` tier order
  * (address_point > interpolated > admin) — but async, on the main thread, over the demo's httpvfs handles.
  * `interpRadiusCalibration` is the per-region conformal factor (#374 / data/calibration/interp-radius-conformal.json);

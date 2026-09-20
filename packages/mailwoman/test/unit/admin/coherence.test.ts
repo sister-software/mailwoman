@@ -4,7 +4,7 @@
 /**
  *   Unit coverage for the #1717 stage-1 admin-coherence verdicts: all four verdicts per component,
  *   the shared-fold matching behavior (case + diacritics — asserted against what
- *   `normalizeLocalityForKey` actually does, not what one might assume), the stated v1 bound
+ *   `normalizeLocalityForKey` actually does rather than what one might assume), the stated v1 bound
  *   (variant forms read `contradicted`), and the additive threading through `toGauntletResult`.
  */
 
@@ -14,7 +14,7 @@ import type { GeocodeResult } from "mailwoman/geocode"
 import { describe, expect, it } from "vitest"
 
 /**
- * The #1717 shape: a locality winner from the candidate tier — carries a `resolver_country` stamp but NO ancestor chain
+ * The #1717 shape: a locality winner from the candidate tier — carries a `resolver_country` stamp but no ancestor chain
  * (candidate.db has no ancestors table).
  */
 const weimarTexas: AdminCoherenceWinner = { tag: "locality", countryCode: "US" }
@@ -27,12 +27,12 @@ describe("assessAdminCoherence — region verdicts", () => {
 
 	it("unverifiable when the winner carries no region-class ancestry (the candidate-tier finding)", () => {
 		// `Weimar, Thüringen` → Weimar TX: the qualifier was parsed, the winner has no ancestry of
-		// that class to check it against. This must NOT read as confirmed or contradicted.
+		// that class to check it against. This must not read as confirmed or contradicted.
 		expect(assessAdminCoherence({ region: "Thüringen" }, weimarTexas).region).toBe("unverifiable")
 	})
 
 	it("confirmed on a fold-equal region ancestor — case and diacritics are folded", () => {
-		// The shared fold lowercases and strips diacritics: "Thüringen" ≡ "thuringen" ≡ "THÜRINGEN".
+		// The shared fold lowercases and strips diacritics: "Thüringen" ≡ "thuringen" ≡ "THÜringen".
 		const winner: AdminCoherenceWinner = {
 			tag: "locality",
 			countryCode: "DE",
@@ -56,7 +56,7 @@ describe("assessAdminCoherence — region verdicts", () => {
 	it("contradicted on a cross-language variant form — the stated v1 bound", () => {
 		// "Thüringen" folds to "thuringen", the stored exonym "Thuringia" to "thuringia": fold
 		// equality cannot bridge the variant, and v1 deliberately does not consult the gazetteer's
-		// alias table. Documented in the module docstring; this test pins the bound.
+		// alias table. Documented in the module docstring. this test pins the bound.
 		const winner: AdminCoherenceWinner = {
 			tag: "locality",
 			countryCode: "DE",
@@ -104,7 +104,7 @@ describe("assessAdminCoherence — region verdicts", () => {
 	it("the mislabel bridge: a COUNTRY name in the region slot confirms against country-class evidence", () => {
 		// "Batumi, Georgia" parses region="Georgia" and resolves Batumi GE — the region band (Adjara)
 		// cannot match, but the winner's country-class evidence can, and `contradicted` would be the
-		// wrong claim about the geography. The bridge runs through the SAME winnerCountryKeys the
+		// wrong claim about the geography. The bridge runs through the same winnerCountryKeys the
 		// country verdict reads, so the two verdicts can never disagree about country evidence.
 		const batumi: AdminCoherenceWinner = {
 			tag: "locality",
@@ -147,7 +147,7 @@ describe("assessAdminCoherence — region verdicts", () => {
 
 		expect(assessAdminCoherence({ region: "Penang" }, georgetownTexas).region).toBe("contradicted")
 
-		// And with NO region-class ancestry and no country match, the faithful verdict stays
+		// And with no region-class ancestry and no country match, the faithful verdict stays
 		// unverifiable — the bridge never converts an unanswerable question into a decided one.
 		const bare: AdminCoherenceWinner = { tag: "locality", countryCode: "US" }
 
@@ -280,7 +280,7 @@ describe("regionVerdict — the fold-bound closures (2026-08-18)", () => {
 			{ tag: "locality", countryCode: "US", ancestry: [{ placetype: "region", name: "Western Australia" }] }
 		)
 
-		// A US winner whose ancestry claims Western Australia is genuinely incoherent; the scoped table must not
+		// A US winner whose ancestry claims Western Australia is genuinely incoherent. the scoped table must not
 		// bridge it.
 		expect(report.region).toBe("contradicted")
 	})

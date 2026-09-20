@@ -5,16 +5,16 @@
  *   The four pre-registered 3a acceptance criteria (`describe("§7-3a criteria")` below — see
  *   `docs/superpowers/plans/2026-07-31-filer-3a-plan.md`'s "Acceptance criteria (§7-3a…)" section for the
  *   criteria verbatim), plus {@linkcode filerLookup}'s
- *   general reader-contract tests and {@linkcode pickPrimaryFRN}'s direct unit tests.
+ *   general reader-interface tests and {@linkcode pickPrimaryFRN}'s direct unit tests.
  *
  *   Fixtures are built directly against an in-memory `filer.db` (nodes/edges/attributes/cluster rows inserted
- *   straight through Kysely) — the same convention `schema.test.ts` and `cluster-filers.test.ts` use — EXCEPT
+ *   straight through Kysely) — the same convention `schema.test.ts` and `cluster-filers.test.ts` use — except
  *   for criterion 1's builder-guard sub-tests, which go through {@linkcode buildFilerDatabase} on purpose (the
- *   guards under test live there, not in the schema).
+ *   guards under test live there rather than in the schema).
  *
  *   Criterion 2 in particular is a fixture built by hand (filer_cluster rows written directly, never via
  *   `cluster-filers.ts`'s `clusterAuthoritativeComponents`/`clusterInferredLinks`) — per the task brief, this
- *   suite asserts {@linkcode filerLookup}'s OWN reading contract (does it keep `cluster` and `inferred_links`
+ *   suite asserts {@linkcode filerLookup}'s own reading interface (does it keep `cluster` and `inferred_links`
  *   apart?), not clustering internals, which `cluster-filers.test.ts` already covers.
  */
 
@@ -74,7 +74,7 @@ async function createAllTables(db: DatabaseClient<FilerDatabase>): Promise<void>
 const MANIFEST: FilerManifestTable = {
 	name: "filer",
 	version: "2026-Q1",
-	// 2, not 1 — filerLookup now unconditionally queries filer_family and refuses
+	// 2 rather than 1 — filerLookup now unconditionally queries filer_family and refuses
 	// a manifest reporting a schema_version that predates it (see the dedicated schema-version-guard test below).
 	schema_version: 2,
 	source: "form-499,bdc-provider-list",
@@ -103,7 +103,7 @@ function authoritativeEdge(
 }
 
 /**
- * Opens a REAL (on-disk, sealed) `filer.db` read-only — mirrors `build-filer.test.ts`'s own `openFilerDB` helper. Used
+ * Opens a real (on-disk, sealed) `filer.db` read-only — mirrors `build-filer.test.ts`'s own `openFilerDB` helper. Used
  * only by the tests that go through {@linkcode buildFilerDatabase} itself (criterion 1's builder-guard sub-tests, and
  * the fixture-blindness-closing criterion 4 test below) rather than the in-memory hand-written fixtures the rest of
  * this suite uses.
@@ -138,10 +138,10 @@ function minimalForm499Row(overrides: Partial<Form499Row> = {}): Form499Row {
 describe("§7-3a criteria", () => {
 	describe("1. Provenance completeness (required)", () => {
 		/**
-		 * STRUCTURAL half of the criterion (the established idiom — see `bdc/sdk/plausibility.test.ts`): an exhaustive
+		 * Structural half of the criterion (the established idiom — see `bdc/sdk/plausibility.test.ts`): an exhaustive
 		 * `satisfies Record<keyof FilerEdgeInsert, true>` pin over `filer_edge`'s insert shape. `FilerEdgeTable` carries no
 		 * `Generated<>`-wrapped columns (`schema.ts`'s own docstring), so Kysely's `Insertable<FilerEdgeTable>` already
-		 * requires every field on insert — this pin's job is making sure that guarantee can't silently erode: a field ADDED
+		 * requires every field on insert — this pin's job is making sure that guarantee can't silently erode: a field added
 		 * to `FilerEdgeTable` that this literal doesn't also list fails `satisfies` (excess-property / missing-property
 		 * checking on an object literal assigned via `satisfies`), forcing a reviewer to touch this file and consciously
 		 * answer "is the new field also required provenance?" Only `tsc` (`yarn typecheck:tests`) checks the `satisfies`
@@ -370,7 +370,7 @@ describe("§7-3a criteria", () => {
 				])
 				.execute()
 
-			// The would-be bridge: an INFERRED edge directly connecting the two otherwise-separate authoritative
+			// The would-be bridge: an inferred edge directly connecting the two otherwise-separate authoritative
 			// components — exactly the shape criterion 2 exists to keep out of `cluster`.
 			await db
 				.insertInto("filer_edge")
@@ -389,8 +389,8 @@ describe("§7-3a criteria", () => {
 				.execute()
 
 			// Fixture-built directly — exactly as `clusterAuthoritativeComponents` would leave it, two
-			// SEPARATE authoritative clusters — never via cluster-filers.ts itself, so this test asserts
-			// filerLookup's OWN reading contract, not clustering internals (already covered by cluster-filers.test.ts).
+			// separate authoritative clusters — never via cluster-filers.ts itself, so this test asserts
+			// filerLookup's own reading interface rather than clustering internals (already covered by cluster-filers.test.ts).
 			await db
 				.insertInto("filer_cluster")
 				.values([
@@ -404,7 +404,7 @@ describe("§7-3a criteria", () => {
 			const resultA = await filerLookup(db, { form499ID: "1000", asOf: "2026-06-01" })
 
 			expect(resultA.cluster).toEqual({ cluster_id: "authoritative:A", members: [FRN_A, FORM_A].toSorted() })
-			// CRITERION 2: the inferred edge that WOULD bridge A and B is reported separately, never inside `cluster`.
+			// criterion 2: the inferred edge that would bridge A and B is reported separately, never inside `cluster`.
 			expect(resultA.inferred_links).toEqual([{ to: FORM_B, score: -5, source: "cluster-filers" }])
 
 			const resultB = await filerLookup(db, { form499ID: "2000", asOf: "2026-06-01" })
@@ -442,8 +442,8 @@ describe("§7-3a criteria", () => {
 				])
 				.execute()
 
-			// Fixture-built directly, exactly as clusterAuthoritativeComponents WOULD leave it — filer_cluster carries
-			// NO temporal columns of its own (schema.ts), so this snapshot alone can't distinguish "asOf 2020" from
+			// Fixture-built directly, exactly as clusterAuthoritativeComponents would leave it — filer_cluster carries
+			// no temporal columns of its own (schema.ts), so this snapshot alone can't distinguish "asOf 2020" from
 			// "asOf 2026".
 			await db
 				.insertInto("filer_cluster")
@@ -453,31 +453,31 @@ describe("§7-3a criteria", () => {
 				])
 				.execute()
 
-			// Probe: asOf BEFORE the connecting edge's valid_from — identifiers is already empty here...
+			// Probe: asOf before the connecting edge's valid_from — identifiers is already empty here...
 			const before = await filerLookup(db, { form499ID: "3000", asOf: "2020-01-01" })
 			expect(before.identifiers).toEqual([])
-			// ...and cluster must NOT contradict that by asserting full present-day membership anyway.
+			// ...and cluster must not contradict that by asserting full present-day membership anyway.
 			expect(before.cluster).toBeNull()
 
-			// asOf AFTER the edge's valid_from — both identifiers and cluster agree the relationship holds.
+			// asOf after the edge's valid_from — both identifiers and cluster agree the relationship holds.
 			const after = await filerLookup(db, { form499ID: "3000", asOf: "2026-06-01" })
 			expect(after.identifiers.length).toBeGreaterThan(0)
 			expect(after.cluster).toEqual({ cluster_id: "authoritative:C", members: [FRN_C, FORM_C].toSorted() })
 		})
 
 		/**
-		 * CRITERION 2 ON `filer_family` — the half of this criterion that lives outside `filer_edge`. Everything above is
+		 * Criterion 2 on `filer_family` — the half of this criterion that lives outside `filer_edge`. Everything above is
 		 * enforced on `filer_edge` only: `cluster` vs `inferred_links` are two disjoint `filer_edge` reads, so the
 		 * criterion reaches them and nothing else. `families`/`familyRollup` answer from `filer_family` alone, so without
-		 * `assertion`/`match_score` on THAT table an INFERRED family membership — the EDGAR ingest writes the repo's first
+		 * `assertion`/`match_score` on that table an inferred family membership — the edgar ingest writes the repo's first
 		 * — would reach the product surface byte-identical to an authoritative one.
 		 *
-		 * The fixture is the sharpest available shape: TWO rows agreeing on `(node_id, family_id, naming_node_id,
-		 * relationship)` and differing ONLY in `assertion`/`match_score` (and the `source` that separates them under the
-		 * PK). One is a Form 499 filing that names the filer's own holding company; the other is a matcher's conclusion
+		 * The fixture is the sharpest available shape: two rows agreeing on `(node_id, family_id, naming_node_id,
+		 * relationship)` and differing only in `assertion`/`match_score` (and the `source` that separates them under the
+		 * PK). One is a Form 499 filing that names the filer's own holding company. the other is a matcher's conclusion
 		 * about the same membership. Drop either field from `filerLookup`'s projection and `.distinct()` folds the two into
-		 * a single entry — this test then dies on the length assertion, not just on a field comparison, which is what makes
-		 * it an assertion rather than a shape snapshot.
+		 * a single entry — this test then dies on the length assertion rather than just on a field comparison, which is
+		 * what makes it an assertion rather than a shape snapshot.
 		 */
 		it("filerLookup.families reports an INFERRED family membership separately from an AUTHORITATIVE one for the same family — never folded together (criterion 2, on filer_family)", async () => {
 			using db = openMemory()
@@ -525,7 +525,7 @@ describe("§7-3a criteria", () => {
 
 			const result = await filerLookup(db, { frn: toFRN("8080808080")!, asOf: "2026-06-01" })
 
-			// THE ASSERTION: two entries, not one. A caller can tell the filed disclosure from the guess.
+			// the assertion: two entries rather than one. A caller can tell the filed disclosure from the guess.
 			expect(result.families).toEqual([
 				{
 					family_id: FAMILY_CHECK2,
@@ -565,7 +565,7 @@ describe("§7-3a criteria", () => {
 				},
 			])
 
-			// distinct_member_count counts member NODES, never rows or gradings — one filer, two claims about it.
+			// distinct_member_count counts member nodes, never rows or gradings — one filer, two claims about it.
 			expect(rollup[0]?.distinct_member_count).toBe(1)
 		})
 	})
@@ -595,7 +595,7 @@ describe("§7-3a criteria", () => {
 			await db
 				.insertInto("filer_edge")
 				.values([
-					// The provider_id carries TWO FRN edges — decision 6's cardinality.
+					// The provider_id carries two FRN edges — decision 6's cardinality.
 					authoritativeEdge({
 						from_node_id: PROVIDER_NODE,
 						to_node_id: FRN_EARLY,
@@ -610,7 +610,7 @@ describe("§7-3a criteria", () => {
 						source_vintage: "2026-Q2",
 						valid_from: "2026-06-30",
 					}),
-					// Each FRN's own most recent form-499 filing — FRN_LATE's is the LATER filing date.
+					// Each FRN's own most recent form-499 filing — FRN_LATE's is the later filing date.
 					authoritativeEdge({
 						from_node_id: FRN_EARLY,
 						to_node_id: FORM_EARLY,
@@ -754,7 +754,7 @@ describe("§7-3a criteria", () => {
 				.insertInto("filer_edge")
 				.values([
 					// Provider↔FRN edges dated well before either test's asOf — the primary-FRN cardinality (>1 FRN
-					// identifier) must already be visible in `identifiers` at both query points; only the two
+					// identifier) must already be visible in `identifiers` at both query points. only the two
 					// form-499 filing edges below vary between "still open" and "closed" across the two asOf values.
 					authoritativeEdge({
 						from_node_id: PROVIDER_NODE,
@@ -770,7 +770,7 @@ describe("§7-3a criteria", () => {
 						source_vintage: "2026-01-01",
 						valid_from: "2026-01-01",
 					}),
-					// FRN_IN_FORCE: filed EARLIER, but STILL IN FORCE (valid_to null) at every asOf used below.
+					// FRN_IN_FORCE: filed earlier, but still IN force (valid_to null) at every asOf used below.
 					authoritativeEdge({
 						from_node_id: FRN_IN_FORCE,
 						to_node_id: FORM_IN_FORCE,
@@ -778,7 +778,7 @@ describe("§7-3a criteria", () => {
 						source_vintage: "2026-02-01",
 						valid_from: "2026-02-01",
 					}),
-					// FRN_CLOSED: filed LATER, but superseded/CLOSED (valid_to set) before the "after closing" asOf.
+					// FRN_CLOSED: filed later, but superseded/closed (valid_to set) before the "after closing" asOf.
 					{
 						...authoritativeEdge({
 							from_node_id: FRN_CLOSED,
@@ -823,15 +823,15 @@ describe("§7-3a criteria", () => {
 
 	describe("4. Temporal scoping", () => {
 		/**
-		 * Closes criterion 4's own fixture blindness: every OTHER criterion-4 fixture above hand-writes ISO `valid_from`
-		 * directly into `filer_edge`, so none of them could ever catch a builder that writes a NON-ISO vintage LABEL into
+		 * Closes criterion 4's own fixture blindness: every other criterion-4 fixture above hand-writes ISO `valid_from`
+		 * directly into `filer_edge`, so none of them could ever catch a builder that writes a NON-ISO vintage label into
 		 * `valid_from` — exactly what `buildFilerDatabase` did pre-fix for provider-list edges
-		 * (`source_vintage`/`valid_from` both took `options.sourceVintage` verbatim). This test goes through the REAL
+		 * (`source_vintage`/`valid_from` both took `options.sourceVintage` verbatim). This test goes through the real
 		 * builder instead, with `sourceVintage: "2026-Q2"` — the realistic provider-list vintage shape
 		 * `cluster-filers.ts`'s own module docstring names, and the exact shape 20 of this branch's pre-fix tests passed
-		 * under — plus a SEPARATE, always-ISO `validFrom`. If the ISO guard (or the sourceVintage/validFrom split) is ever
-		 * reverted, `valid_from` reverts to the literal string `"2026-Q2"`, which sorts LEXICOGRAPHICALLY ABOVE
-		 * `"2026-12-31"` (`"Q"` > any ASCII digit) — the `asOf`-scoped read below would then silently exclude the edge, and
+		 * under — plus a separate, always-ISO `validFrom`. If the ISO guard (or the sourceVintage/validFrom split) is ever
+		 * reverted, `valid_from` reverts to the literal string `"2026-Q2"`, which sorts lexicographically above
+		 * `"2026-12-31"` (`"Q"` > any ascii digit) — the `asOf`-scoped read below would then silently exclude the edge, and
 		 * this test would fail.
 		 */
 		it("REAL builder path: a non-ISO sourceVintage never leaks into valid_from — a provider-list edge built via buildFilerDatabase stays findable asOf a real date", async () => {
@@ -865,11 +865,11 @@ describe("§7-3a criteria", () => {
 
 			expect(frnValues).toEqual(["0006000001"])
 
-			// identifiers is relationship: same_entity ONLY now — a
+			// identifiers is relationship: same_entity only now — a
 			// HoldingCompanyName never surfaces here regardless of how findable its edge is asOf this date.
 			expect(holdingValues).toEqual([])
 
-			// The holding-company relationship itself is STILL correctly asOf-scoped (this test's whole point —
+			// The holding-company relationship itself is still correctly asOf-scoped (this test's whole point —
 			// the non-ISO sourceVintage never leaking into valid_from) — just surfaced via `families`, not
 			// `identifiers`, now that the two rollups are kept apart.
 			expect(result.families).toHaveLength(1)
@@ -968,17 +968,17 @@ describe("§7-3a criteria", () => {
 
 /**
  * The two §7-3b criteria. See `docs/superpowers/plans/2026-07-31-filer-3b-plan.md`'s "Acceptance criteria (§7-3b…)"
- * section for the criteria verbatim; both extend to EDGAR-sourced families, covered by the second describe block
+ * section for the criteria verbatim. both extend to edgar-sourced families, covered by the second describe block
  * below.
  */
 describe("§7-3b criteria", () => {
 	describe("1. Family and entity cluster are never conflated (required)", () => {
 		/**
-		 * STRUCTURAL half: {@link FilerLookupCluster} (`cluster_id`/`members`) and {@link FilerLookupFamily}
-		 * (`family_id`/`relationship`) are shapes with NO field in common — assigning one to a variable typed as the other
+		 * Structural half: {@link FilerLookupCluster} (`cluster_id`/`members`) and {@link FilerLookupFamily}
+		 * (`family_id`/`relationship`) are shapes with no field in common — assigning one to a variable typed as the other
 		 * is a compile error (`@ts-expect-error` below asserts exactly that). Only `tsc` (`yarn typecheck:tests`) checks
 		 * this — `yarn vitest run` alone (esbuild, types stripped) skips the `@ts-expect-error` line entirely, so the
-		 * RUNTIME half in the next test is what actually fails if the two rollups ever get folded together.
+		 * runtime half in the next test is what actually fails if the two rollups ever get folded together.
 		 */
 		it("FilerLookupCluster and FilerLookupFamily are structurally incompatible types", () => {
 			const clusterShaped: FilerLookupCluster = { cluster_id: "authoritative:x", members: ["a", "b"] }
@@ -991,8 +991,8 @@ describe("§7-3b criteria", () => {
 		})
 
 		/**
-		 * RUNTIME half, mutation-provable: FRN_CLUSTER_A and FRN_CLUSTER_B share an authoritative entity cluster (same
-		 * filer, two identifiers). FRN_CLUSTER_A is ALSO a member of a corporate family alongside FRN_FAMILY_ONLY — a
+		 * Runtime half, mutation-provable: FRN_CLUSTER_A and FRN_CLUSTER_B share an authoritative entity cluster (same
+		 * filer, two identifiers). FRN_CLUSTER_A is also a member of a corporate family alongside FRN_FAMILY_ONLY — a
 		 * completely different filer that shares nothing with FRN_CLUSTER_B. If a future edit ever folds family membership
 		 * into `cluster` (e.g. widening `deriveClusterMembersAsOf`'s reachability to also walk `filer_family`),
 		 * FRN_FAMILY_ONLY would leak into `resultA.cluster.members` and this test dies. If a future edit ever folds cluster
@@ -1018,7 +1018,7 @@ describe("§7-3b criteria", () => {
 				])
 				.execute()
 
-			// Entity cluster: A and B are the SAME filer under two identifiers — an authoritative edge plus a
+			// Entity cluster: A and B are the same filer under two identifiers — an authoritative edge plus a
 			// filer_cluster snapshot, exactly as cluster-filers.ts would leave it.
 			await db
 				.insertInto("filer_edge")
@@ -1041,7 +1041,7 @@ describe("§7-3b criteria", () => {
 				])
 				.execute()
 
-			// Corporate family: A and FAMILY_ONLY share a holding company — a DIFFERENT filer, never part of A's
+			// Corporate family: A and FAMILY_ONLY share a holding company — a different filer, never part of A's
 			// entity cluster.
 			await db
 				.insertInto("filer_family")
@@ -1073,10 +1073,10 @@ describe("§7-3b criteria", () => {
 
 			const resultA = await filerLookup(db, { frn: toFRN("1010101010")!, asOf: "2026-06-01" })
 
-			// CRITERION 1: cluster stays EXACTLY {A, B} — the family-only mate never leaks in.
+			// criterion 1: cluster stays exactly {A, B} — the family-only mate never leaks in.
 			expect(resultA.cluster).toEqual({ cluster_id: "authoritative:AB", members: [FRN_CLUSTER_A, FRN_CLUSTER_B] })
 
-			// CRITERION 1: families stays EXACTLY the one family fact — no cluster-shaped data leaks in, and B (a cluster
+			// criterion 1: families stays exactly the one family fact — no cluster-shaped data leaks in, and B (a cluster
 			// mate with no family row of its own) never appears here. display_names is [] here because this fixture
 			// never writes a matching filer_edge for the family row (that join is covered by its own dedicated tests
 			// below and in family-rollup.test.ts) — criterion 1 itself is only about structural disjointness.
@@ -1090,7 +1090,7 @@ describe("§7-3b criteria", () => {
 				},
 			])
 
-			// Symmetric check from B's side: B is in the SAME cluster as A, but carries no family membership of its
+			// Symmetric check from B's side: B is in the same cluster as A, but carries no family membership of its
 			// own — families must be empty, never inheriting A's family fact via the shared cluster.
 			const resultB = await filerLookup(db, { frn: toFRN("2020202020")!, asOf: "2026-06-01" })
 			expect(resultB.cluster).toEqual({ cluster_id: "authoritative:AB", members: [FRN_CLUSTER_A, FRN_CLUSTER_B] })
@@ -1113,15 +1113,15 @@ describe("§7-3b criteria", () => {
 		})
 
 		/**
-		 * THE REAL ASSERTION. The test above hand-writes `filer_cluster`/`filer_family` directly and never calls the real
-		 * builder or clusterer — it proves `filerLookup`'s OWN queries stay disjoint, but it CANNOT catch a builder or
+		 * The real assertion. The test above hand-writes `filer_cluster`/`filer_family` directly and never calls the real
+		 * builder or clusterer — it proves `filerLookup`'s own queries stay disjoint, but it cannot catch a builder or
 		 * clusterer that emits the underlying rows differently. The live failure that shape hides: `cluster-filers.ts`'s
 		 * `readAuthoritativeGroups` union-finding every `assertion: "authoritative"` edge with no `relationship` filter, so
 		 * real `HoldingCompany` edges (correctly authoritative) silently merge every filer sharing a holding company into
-		 * ONE entity cluster — three unrelated filers reported as one. This test goes through the REAL pipeline end to end:
+		 * one entity cluster — three unrelated filers reported as one. This test goes through the real pipeline end to end:
 		 * `buildFilerDatabase` (writes typed edges + family membership) then `clusterAuthoritativeComponents` (writes
-		 * `filer_cluster`) then `filerLookup`/`familyRollup` (reads both). Three FRNs sharing one holding company MUST
-		 * yield THREE distinct entity clusters (never merged) and ONE shared family — the mutation this closes (deleting
+		 * `filer_cluster`) then `filerLookup`/`familyRollup` (reads both). Three FRNs sharing one holding company must
+		 * yield three distinct entity clusters (never merged) and one shared family — the mutation this closes (deleting
 		 * the `relationship` filter from `readAuthoritativeGroups`) collapses the three clusters back into one and fails
 		 * this test immediately.
 		 */
@@ -1187,7 +1187,7 @@ describe("§7-3b criteria", () => {
 				distinctClusterIDs.add(row.cluster_id)
 			}
 
-			// THE ASSERTION: 3 distinct cluster_ids — never one shared cluster_id across the 3 FRNs.
+			// the assertion: 3 distinct cluster_ids — never one shared cluster_id across the 3 FRNs.
 			expect(distinctClusterIDs.size).toBe(3)
 
 			const asOf = "2026-12-31"
@@ -1208,7 +1208,7 @@ describe("§7-3b criteria", () => {
 			expect(result1.cluster?.cluster_id).not.toBe(result3.cluster?.cluster_id)
 			expect(result2.cluster?.cluster_id).not.toBe(result3.cluster?.cluster_id)
 
-			// All 3 share exactly ONE family, via BOTH the filerLookup.families surface and familyRollup itself.
+			// All 3 share exactly one family, via both the filerLookup.families surface and familyRollup itself.
 			expect(result1.families).toHaveLength(1)
 			expect(result2.families).toHaveLength(1)
 			expect(result3.families).toHaveLength(1)
@@ -1218,7 +1218,7 @@ describe("§7-3b criteria", () => {
 			expect(result2.families[0]?.family_id).toBe(sharedFamilyID)
 			expect(result3.families[0]?.family_id).toBe(sharedFamilyID)
 
-			// Single-spelling case: all 3 filers reported the IDENTICAL raw spelling
+			// Single-spelling case: all 3 filers reported the identical raw spelling
 			// (SHARED_HOLDING), so display_names carries exactly that one value, everywhere it's surfaced.
 			expect(result1.families[0]?.display_names).toEqual([SHARED_HOLDING])
 			expect(result2.families[0]?.display_names).toEqual([SHARED_HOLDING])
@@ -1242,8 +1242,8 @@ describe("§7-3b criteria", () => {
 		 * Multi-spelling case (real builder, real canonicalizeOrganizationName — the reader-only unit tests for this live
 		 * in family-rollup.test.ts's own `describe("display_names")` block). "Acme Corp" and "Acme Corporation, LLC" both
 		 * reduce to the canonical `"acme"` (`@mailwoman/record`'s `canonicalizeOrganizationName` —
-		 * `record/organization.test.ts` pins this exact collapse), so two REAL 499 rows filed under those two different
-		 * spellings land in the SAME family_id. THE RULE this proves end to end: both raw spellings survive in
+		 * `record/organization.test.ts` pins this exact collapse), so two real 499 rows filed under those two different
+		 * spellings land in the same family_id. the rule this proves end to end: both raw spellings survive in
 		 * `display_names`, sorted, never silently collapsed to one.
 		 */
 		it("REAL builder, multi-spelling family: two raw holding-company spellings that canonicalize identically both survive in display_names, sorted — never collapsed to one", async () => {
@@ -1281,14 +1281,14 @@ describe("§7-3b criteria", () => {
 			expect(result1.families).toHaveLength(1)
 			expect(result2.families).toHaveLength(1)
 
-			// Same family_id — proves the two spellings really did canonicalize together, not a coincidence of
+			// Same family_id — proves the two spellings really did canonicalize together rather than a coincidence of
 			// the fixture.
 			const sharedFamilyID = result1.families[0]?.family_id
 			expect(result2.families[0]?.family_id).toBe(sharedFamilyID)
 
 			const expectedSpellings = ["Acme Corp", "Acme Corporation, LLC"].toSorted()
 
-			// THE RULE: both spellings, sorted, on every surface that reports them.
+			// the rule: both spellings, sorted, on every surface that reports them.
 			expect(result1.families[0]?.display_names).toEqual(expectedSpellings)
 			expect(result2.families[0]?.display_names).toEqual(expectedSpellings)
 
@@ -1297,20 +1297,20 @@ describe("§7-3b criteria", () => {
 		})
 
 		/**
-		 * The trap `naming_node_id` had to be designed around, driven through the REAL builder. The multi-spelling test
+		 * The trap `naming_node_id` had to be designed around, driven through the real builder. The multi-spelling test
 		 * above splits its two spellings across two FRNs, so its two `filer_family` rows differ in `node_id` and no key
-		 * question arises. THIS shape puts both spellings on ONE filer: one FRN, two 499 rows filed the same day, `"Acme
+		 * question arises. This shape puts both spellings on one filer: one FRN, two 499 rows filed the same day, `"Acme
 		 * Corp"` and `"Acme Corporation, LLC"` — the documented decision-6 cardinality shape, and the exact case where the
-		 * two membership rows agree on `(node_id, family_id, source, valid_from)` and differ in NOTHING except which
+		 * two membership rows agree on `(node_id, family_id, source, valid_from)` and differ in nothing except which
 		 * company node named the family.
 		 *
-		 * That is why `naming_node_id` is IN `filer_family`'s primary key. Leave it out and the builder's `INSERT OR
-		 * IGNORE` silently drops the second row at BUILD time, taking `"Acme Corporation, LLC"` with it — a regression of
+		 * That is why `naming_node_id` is IN `filer_family`'s primary key. Leave it out and the builder's `insert or
+		 * ignore` silently drops the second row at build time, taking `"Acme Corporation, LLC"` with it — a regression of
 		 * the "expose the plurality within one family, never guess which spelling is right" rule, and one no reader-side
 		 * fix could undo because the fact would already be gone from the artifact. The counter-risk of widening a key is
-		 * inflating counts derived from it, so this pins both: two rows in `filer_family`, but ONE `families` entry
+		 * inflating counts derived from it, so this pins both: two rows in `filer_family`, but one `families` entry
 		 * (`FilerLookupFamily` has no field that could express the difference) and `distinct_member_count` still 1 (it
-		 * counts distinct member NODES, never rows).
+		 * counts distinct member nodes, never rows).
 		 */
 		it("REAL builder, one filer reporting TWO spellings of one family: both survive in display_names, families stays one entry, distinct_member_count stays 1", async () => {
 			await using scratch = await temporaryDirectory("filer-lookup-check1-")
@@ -1343,8 +1343,8 @@ describe("§7-3b criteria", () => {
 			const familyID = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Acme Corp")!
 			const frnNodeID = `${FilerIdentifierType.FRN}:${FRN_TWO_SPELLINGS}`
 
-			// THE KEY DECISION, asserted against the artifact itself: two rows, identical on every column the OLD
-			// primary key covered, distinguished ONLY by naming_node_id. Narrow the key and this is 1.
+			// the KEY decision, asserted against the artifact itself: two rows, identical on every column the old
+			// primary key covered, distinguished only by naming_node_id. Narrow the key and this is 1.
 			const familyRows = await db
 				.selectFrom("filer_family")
 				.selectAll()
@@ -1398,14 +1398,14 @@ describe("§7-3b criteria", () => {
 
 		/**
 		 * The false-relationship-claim failure class, driven end to end. Scope `readFamilyDisplayNames`'s join to
-		 * `(from_node_id, relationship, source, valid_from)` without pinning WHICH edge target names the family, and a node
-		 * carrying TWO holding-company edges that share that 4-tuple (the documented decision-6 shape —
+		 * `(from_node_id, relationship, source, valid_from)` without pinning which edge target names the family, and a node
+		 * carrying two holding-company edges that share that 4-tuple (the documented decision-6 shape —
 		 * `ProviderListRow.holdingCompany`'s own docstring: "one providerID can legitimately carry different holdingCompany
-		 * strings across rows") leaks every name matching the tuple into EVERY family_id the node happens to touch, not
-		 * just the one each edge actually names. That is a FALSE RELATIONSHIP CLAIM — a family reporting a holding company
-		 * it never reported — reproduced here end to end on BOTH shapes that collide on the tuple: the provider-list path
-		 * (one providerID, two holdingCompany values, one shared file-level validFrom) and the 499 path (one FRN, two rows,
-		 * the identical lastFiledAt).
+		 * strings across rows") leaks every name matching the tuple into every family_id the node happens to touch rather
+		 * than just the one each edge actually names. That is a false relationship claim — a family reporting a holding
+		 * company it never reported — reproduced here end to end on both shapes that collide on the tuple: the
+		 * provider-list path (one providerID, two holdingCompany values, one shared file-level validFrom) and the 499 path
+		 * (one FRN, two rows, the identical lastFiledAt).
 		 *
 		 * The scoping is achieved by joining on the persisted `filer_family.naming_node_id` rather than re-canonicalizing
 		 * edge targets at read time, but these two tests are mechanism-independent: they fail with the identical
@@ -1443,8 +1443,8 @@ describe("§7-3b criteria", () => {
 				familyByID.set(family.family_id, family)
 			}
 
-			// THE BUG (pre-fix): BOTH entries' display_names would each contain BOTH names. THE FIX: each
-			// family reports ONLY the one name that actually implies it.
+			// the BUG (pre-fix): both entries' display_names would each contain both names. the FIX: each
+			// family reports only the one name that actually implies it.
 			expect(familyByID.get(familyIDAlpha)?.display_names).toEqual(["Alpha Holdco"])
 			expect(familyByID.get(familyIDZenith)?.display_names).toEqual(["Zenith Unrelated Group"])
 
@@ -1503,10 +1503,10 @@ describe("§7-3b criteria", () => {
 
 	describe("2. Relationship kind + provenance mandatory on every family row", () => {
 		/**
-		 * STRUCTURAL half (the established idiom — see this file's own §7-3a criterion 1 above): an exhaustive `satisfies
+		 * Structural half (the established idiom — see this file's own §7-3a criterion 1 above): an exhaustive `satisfies
 		 * Record<keyof FilerFamilyInsert, true>` pin over `filer_family`'s insert shape. `FilerFamilyTable` carries no
 		 * `Generated<>`-wrapped columns (`schema.ts`), so `Insertable<FilerFamilyTable>` already requires every field on
-		 * insert — this pin's job is making sure that guarantee can't silently erode: a field ADDED to `FilerFamilyTable`
+		 * insert — this pin's job is making sure that guarantee can't silently erode: a field added to `FilerFamilyTable`
 		 * that this literal doesn't also list fails `satisfies`, forcing a reviewer to consciously answer "is the new field
 		 * also required provenance?" Only `tsc` (`yarn typecheck:tests`) checks this.
 		 */
@@ -1530,11 +1530,11 @@ describe("§7-3b criteria", () => {
 
 			expect(FILER_FAMILY_INSERT_FIELDS).toMatchObject({
 				// naming_node_id is provenance in exactly the sense this pin exists to guard: it
-				// records WHICH company node's raw name produced the row's family_id, so a reader never has to
+				// records which company node's raw name produced the row's family_id, so a reader never has to
 				// re-canonicalize a sealed artifact to find its way back to the human-readable name.
 				naming_node_id: true,
-				// assertion is the OTHER half of provenance this table was missing: not who
-				// reported the membership, but how strongly it is evidenced. Without it an EDGAR name-match guess
+				// assertion is the other half of provenance this table was missing: not who
+				// reported the membership, but how strongly it is evidenced. Without it an edgar name-match guess
 				// reached filerLookup.families byte-identical to a filed Form 499 disclosure.
 				assertion: true,
 				relationship: true,
@@ -1652,8 +1652,8 @@ describe("§7-3b criteria", () => {
 	})
 
 	/**
-	 * `filerLookup`'s `families` field and `family-rollup.ts` each carry their OWN copy of the asOf predicate, so a suite
-	 * that probes only the rollup's copy stays green with BOTH halves of this one deleted. These two tests probe
+	 * `filerLookup`'s `families` field and `family-rollup.ts` each carry their own copy of the asOf predicate, so a suite
+	 * that probes only the rollup's copy stays green with both halves of this one deleted. These two tests probe
 	 * `filerLookup`'s copy directly.
 	 */
 	describe("families is asOf-scoped", () => {
@@ -1753,12 +1753,12 @@ describe("§7-3b criteria", () => {
 	})
 
 	/**
-	 * Both §7-3b criteria extend to EDGAR-sourced families. REAL `buildFilerDatabase` (with an `edgarRows` source
-	 * alongside `form499Rows`) + REAL `clusterAuthoritativeComponents`, exactly like criterion 1's own real-builder test
-	 * above — proving the EXISTING relationship-based filters (`readAuthoritativeGroups`'s `relationship: same_entity`,
-	 * `identifiers`' identical filter) generalize correctly to EDGAR's new `Subsidiary`/`ParentCompany` relationship
-	 * kinds without any code change, while the POSITIVE half (the family surfaces DO pick up the EDGAR row) is asserted
-	 * too — an assertion that that only checked absence could pass just as well with the whole EDGAR path deleted.
+	 * Both §7-3b criteria extend to edgar-sourced families. Real `buildFilerDatabase` (with an `edgarRows` source
+	 * alongside `form499Rows`) + real `clusterAuthoritativeComponents`, exactly like criterion 1's own real-builder test
+	 * above — proving the existing relationship-based filters (`readAuthoritativeGroups`'s `relationship: same_entity`,
+	 * `identifiers`' identical filter) generalize correctly to edgar's new `Subsidiary`/`ParentCompany` relationship
+	 * kinds without any code change, while the positive half (the family surfaces do pick up the edgar row) is asserted
+	 * too — an assertion that that only checked absence could pass just as well with the whole edgar path deleted.
 	 */
 	describe("2. EDGAR-sourced families extend checks 1-2", () => {
 		it("an inferred EDGAR subsidiary relationship never leaks into entity clustering or identifiers, but DOES surface as a family via familyRollup/filerLookup.families", async () => {
@@ -1797,7 +1797,7 @@ describe("§7-3b criteria", () => {
 
 			const result = await filerLookup(db, { frn: FRN_SUBSIDIARY, asOf })
 
-			// CRITERION 1/2 extended, negative half: the EDGAR family fact never leaks into cluster/identifiers. The
+			// criterion 1/2 extended, negative half: the edgar family fact never leaks into cluster/identifiers. The
 			// FRN's own entity cluster (itself + its own form499ID, from the ordinary FRN<->form499ID identity
 			// edge every builder emits) never gains the CIK or the subsidiary-name node as a member, and
 			// `identifiers` (relationship: same_entity only) never lists the CIK either.
@@ -1813,10 +1813,10 @@ describe("§7-3b criteria", () => {
 
 			expect(hasCIKIdentifier).toBe(false)
 
-			// CRITERION 1/2 extended, positive half: the family membership DOES surface, on the family-shaped field —
-			// and it surfaces AS AN INFERENCE. `assertion: inferred` plus a `match_score` is the
+			// criterion 1/2 extended, positive half: the family membership does surface, on the family-shaped field —
+			// and it surfaces AS an inference. `assertion: inferred` plus a `match_score` is the
 			// whole difference between this row and a Form 499 holding-company membership the filer itself
-			// filed; before those two fields existed this entry was byte-identical to one, which is how a
+			// filed. before those two fields existed this entry was byte-identical to one, which is how a
 			// name-match guess reached the product surface wearing a filed disclosure's clothes.
 			expect(result.families).toEqual([
 				{
@@ -1829,8 +1829,8 @@ describe("§7-3b criteria", () => {
 			])
 
 			// The CIK gets its own singleton entity-cluster assignment (every filer_node row lands in exactly
-			// one, per clusterAuthoritativeComponents's own contract) — but NEVER the FRN's cluster: the
-			// disclosure edge (cik -> subsidiary name) is relationship: Subsidiary, not same_entity, so
+			// one, per clusterAuthoritativeComponents's own interface) — but never the FRN's cluster: the
+			// disclosure edge (cik -> subsidiary name) is relationship: Subsidiary rather than same_entity, so
 			// readAuthoritativeGroups correctly never unions it with anything.
 			const cikCluster = await db
 				.selectFrom("filer_cluster")
@@ -1846,7 +1846,7 @@ describe("§7-3b criteria", () => {
 			expect(rollup).toHaveLength(1)
 
 			// familyRollup carries the same grading on its own member shape — `source: "edgar-exhibit-21"` alone
-			// could not supply it, since that one source writes an authoritative disclosure edge AND this
+			// could not supply it, since that one source writes an authoritative disclosure edge and this
 			// inferred corroboration in the same build.
 			expect(rollup[0]?.members).toEqual([
 				{
@@ -1861,7 +1861,7 @@ describe("§7-3b criteria", () => {
 	})
 })
 
-describe("filerLookup — general reader contract", () => {
+describe("filerLookup — general reader interface", () => {
 	it("throws when no identifier is supplied", async () => {
 		using db = openMemory()
 		await createAllTables(db)

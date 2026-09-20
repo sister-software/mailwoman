@@ -6,13 +6,13 @@
  *
  *   The model reads a bare famous name as a `street` ("Zürich", "Berlin", "Moscow", "Fulda"), so it
  *   never reaches the admin walk and span-rescore is the only tier that resolves it. That tier takes
- *   the caller's `country` as a HARD gazetteer filter — and for this query shape the caller's country
- *   is a LOCALE DEFAULT, not knowledge (span-rescore.ts already says so, at the #961 block). Measured
+ *   the caller's `country` as a hard gazetteer filter — and for this query shape the caller's country
+ *   is a locale default rather than knowledge (span-rescore.ts already says so, at the #961 block). Measured
  *   through the compiled CLI on 2026-08-10: `geocode --locale en-US 'Zürich'` returns Zurich, Kansas
  *   (population 81), 8,043 km from the gold; `--locale en-GB 'Zürich'` returns nothing at all.
  *
  *   The fix is the #912 change, applied where the bare-toponym class is actually decided: when the span
- *   covers the WHOLE unqualified input, probe the gazetteer unscoped and let the locale country be an
+ *   covers the whole unqualified input, probe the gazetteer unscoped and let the locale country be an
  *   additive bonus instead of a filter. Everything else — a postcode, a region qualifier, a partial
  *   span — keeps the hard filter byte-for-byte.
  */
@@ -86,7 +86,7 @@ const PLACES: ResolvedPlace[] = [
 		prominence: 3.7451,
 		exactMatch: true,
 	},
-	// Manchester: the in-country answer the soft prior must KEEP (NH 5.06 + 2 > GB 5.74).
+	// Manchester: the in-country answer the soft prior must keep (NH 5.06 + 2 > GB 5.74).
 	{
 		id: 6,
 		name: "Manchester",
@@ -109,7 +109,7 @@ const PLACES: ResolvedPlace[] = [
 		prominence: 5.06,
 		exactMatch: true,
 	},
-	// Weimar / Thüringen: the longest-wins trap. "Thüringen" is a REAL exact match (an AT locality),
+	// Weimar / Thüringen: the longest-wins trap. "Thüringen" is a real exact match (an AT locality),
 	// so a 2-token span that happens to contain it must not outrank the 1-token gold.
 	{
 		id: 8,
@@ -133,7 +133,7 @@ const PLACES: ResolvedPlace[] = [
 		prominence: 3.3606,
 		exactMatch: true,
 	},
-	// A postcode → point for the not-bare guard; sits on Berlin, Wisconsin (id 5) so the check ADMITS it.
+	// A postcode → point for the not-bare guard. sits on Berlin, Wisconsin (id 5) so the check admits it.
 	{ id: 900, name: "54923", placetype: "postalcode", country: "US", lat: 43.97, lon: -88.95, score: 1 },
 ]
 
@@ -172,7 +172,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 	})
 
 	it("resolves a bare 'Zürich' under an en-GB locale instead of returning nothing", async () => {
-		// GB holds no Zurich at all, so the hard filter made this an EMPTY result — the worst answer.
+		// GB holds no Zurich at all, so the hard filter made this an empty result — the worst answer.
 		const raw = "Zürich"
 		const roots = [node({ tag: "street", value: raw, start: 0, end: raw.length })]
 		const hit = await findRescoreCandidate(raw, roots, await makeBackend(), { country: "GB" })
@@ -198,7 +198,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 	})
 
 	it("does NOT fire when a postcode qualifies the query (the hard filter stands)", async () => {
-		// A postcode is knowledge, not a locale guess — it has already picked the country.
+		// A postcode is knowledge rather than a locale guess — it has already picked the country.
 		const raw = "Berlin 54923"
 
 		const roots = [
@@ -232,7 +232,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 		const calls: Array<{ text: string; country?: string }> = []
 		const hit = await findRescoreCandidate(raw, roots, await makeBackend(calls), { country: "DE" })
 
-		expect(hit?.place.id).toBe(8) // Weimar DE, not Thüringen AT
+		expect(hit?.place.id).toBe(8) // Weimar DE rather than Thüringen AT
 		expect(calls.filter((c) => c.text === "Thüringen").every((c) => c.country === "DE")).toBe(true)
 	})
 
@@ -274,7 +274,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 })
 
 /**
- * The other half of the bare-toponym class: the queries the model DOES tag `locality`, which reach the admin walk
+ * The other half of the bare-toponym class: the queries the model does tag `locality`, which reach the admin walk
  * instead of span-rescore. `Whitby` / `Warwick` / `Epping` / `Windsor` all land here, and no country reaches the
  * resolver for them at all (the #912 guard upstream drops the locale default for a bare-locality tree), so the pick is
  * population and nothing else. Importance is the only key that separates them — see `toponym-prior.ts` for the measured
@@ -333,7 +333,7 @@ describe("importance key in the admin walk (#17)", () => {
 	})
 
 	it("stands down when a postcode anchor already pinned the country", async () => {
-		// Fame is the prior of LAST resort — it answers "which one did you probably mean" only when
+		// Fame is the prior of last resort — it answers "which one did you probably mean" only when
 		// nothing in the query answered it. A #369 anchor posterior is derived from the address's own
 		// postcode, which is evidence, and evidence outranks a prior every time.
 		const withScores = WHITBY.map((c, i) => ({ ...c, importance: i === 0 ? 0.5089 : 0.5496 }))
@@ -342,7 +342,7 @@ describe("importance key in the admin walk (#17)", () => {
 	})
 
 	/**
-	 * #27 — the OTHER half of the #912 change. A bare toponym the model tags `locality` never reaches span-rescore (the
+	 * #27 — the other half of the #912 change. A bare toponym the model tags `locality` never reaches span-rescore (the
 	 * tree resolves, so the #685 brake holds), so the soft country prior that fixed `Zürich` cannot see it. The CLI's
 	 * answer today is to drop the locale country entirely, which is why `--locale en-GB Whitby` and `--default-country GB
 	 * Whitby` disagree.
@@ -361,7 +361,7 @@ describe("importance key in the admin walk (#17)", () => {
 	})
 
 	it("is additive, never a filter — a dominant foreign bearer still wins", async () => {
-		// Paris FR (6.34) over Paris TX (4.40 + 2 = 6.40)? No: the bonus DOES flip this one, which is
+		// Paris FR (6.34) over Paris TX (4.40 + 2 = 6.40)? No: the bonus does flip this one, which is
 		// exactly why the change ships off. What must hold is that the prior cannot make a place the
 		// gazetteer never returned appear — `weight: 0` is the identity, and the foreign bearer survives.
 		const out = await walk(WHITBY, { localeCountryPrior: "GB", localeCountryPriorWeight: 0 })
@@ -380,17 +380,17 @@ describe("importance key in the admin walk (#17)", () => {
 })
 
 /**
- * The bare-COUNTRY class: "Japan" / "China" / "Germany" as the whole query. Two independent defects, measured through
+ * The bare-country class: "Japan" / "China" / "Germany" as the whole query. Two independent defects, measured through
  * the compiled CLI on 2026-08-13 against the shipped candidate.db (which carries every country at `placetype: country`
  * with real centroids and `is_primary = 1`):
  *
  * - The parser tags bare country names `locality` about half the time (Japan, China, Nigeria, Australia — vs France,
  *   Germany, United States tagged `country`), and the locality placetype filter made the country row unreachable at any
- *   rank: bare `Japan` answered Japan, Pennsylvania. Fix: the lone bare locality-tagged span ALSO races the `country`
+ *   rank: bare `Japan` answered Japan, Pennsylvania. Fix: the lone bare locality-tagged span also races the `country`
  *   placetype, prominence arbitrates.
- * - Even a CORRECT `country` tag failed under the locale-inferred default scope: the hard filter can only admit the scope
+ * - Even a correct `country` tag failed under the locale-inferred default scope: the hard filter can only admit the scope
  *   country itself, so bare `Germany` under en-US filtered out the DE row and fell to Camp Dennison, Ohio (an FTS alias
- *   — its historical name is "Germany"). Fix: an INFERRED scope is withheld from `country`-placetype lookups; an
+ *   — its historical name is "Germany"). Fix: an inferred scope is withheld from `country`-placetype lookups. an
  *   explicit scope stays supreme.
  */
 describe("bare-country class", () => {
@@ -496,7 +496,7 @@ describe("bare-country class", () => {
 		expect(out.roots[0]?.metadata?.["bare_country_repick"]).toBe(true)
 	})
 
-	// #1678 thread 2 — the parse half. The race finds the right PLACE; before this the node kept the wrong
+	// #1678 thread 2 — the parse half. The race finds the right place. before this the node kept the wrong
 	// TAG, so a bare country answered with a correct coordinate under `{"locality": …}`. That label misleads
 	// the moment the same toponym sits inside a longer address rather than alone.
 	it("retags a country repick to `country`", async () => {
@@ -525,7 +525,7 @@ describe("bare-country class", () => {
 		expect(root.metadata?.["bare_country_repick"]).toBeUndefined()
 	})
 
-	it("never fires on an address-shaped tree — a second value-bearing node keeps the race off", async () => {
+	it("never fires on an address-shaped tree — a second value-containing node keeps the race off", async () => {
 		const tree = {
 			raw: "Japan, Pennsylvania",
 			roots: [
@@ -568,7 +568,7 @@ describe("bare-country class", () => {
 
 	it("scopes the country race by the inferred filter's own query country only when explicit", async () => {
 		// Under the inferred posture the caller (the #912 guard) has already withheld the scope for the
-		// bare-locality shape, so the race runs worldwide; nothing here asserts an inferred locality
+		// bare-locality shape, so the race runs worldwide. nothing here asserts an inferred locality
 		// filter, because that combination does not reach the resolver in production.
 		const calls: Array<{ text: string; placetype?: unknown; country?: string }> = []
 

@@ -46,7 +46,7 @@ test("COMPONENT_TO_LIBPOSTAL: the core US/EU mappings hold", () => {
 })
 
 /**
- * An engine that parses "1600 pennsylvania ave" into two fixed matches; no expand.
+ * An engine that parses "1600 pennsylvania ave" into two fixed matches. no expand.
  */
 const fixtureEngine: LibpostalEngine = {
 	parse: async () => [
@@ -273,7 +273,7 @@ test("GET /openapi.json serves the emitted 3.1 document", async () => {
 	expect(Object.keys(doc.paths)).toEqual(expect.arrayContaining(["/", "/parse", "/expand"]))
 })
 
-test("POST with a non-string body field is treated as absent (never-contract: old code crashed to 500)", async () => {
+test("POST with a non-string body field is treated as absent (never-interface: old code crashed to 500)", async () => {
 	const app = createLibpostalApp(fixtureEngine)
 
 	const alone = await app.request("/parse", {
@@ -322,7 +322,7 @@ test("bodyless POST with a JSON content-type answers the legacy 400, not a valid
 	expect(await res.json()).toEqual({ error: "query is required" })
 })
 
-test("duplicate query params use the first value (never-contract: old code crashed to 500)", async () => {
+test("duplicate query params use the first value (never-interface: old code crashed to 500)", async () => {
 	const app = createLibpostalApp(fixtureEngine)
 	const res = await app.request("/parse?query=a&query=b")
 	expect(res.status).toBe(200)

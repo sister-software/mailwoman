@@ -30,7 +30,7 @@ The first two facts together are the blocker. Tokenizer training (A0, A1) needed
 
 ## Step 1 — GPU passthrough
 
-From the host (this is operator-side, not in-container):
+From the host (this is operator-side rather than in-container):
 
 ```bash
 incus config device add <container> gpu gpu
@@ -138,5 +138,5 @@ The right time to bake it in is when classifier-training becomes a routine conta
 ## See also
 
 - [`VERDICT_SMOKES.md`](./VERDICT_SMOKES.mdx) — what to run once the environment is up
-- [PHASE_2_training.md](../phases/PHASE_2_training.mdx) — the training loop's expected configuration
+- [PHASE_2_training.md](../../records/plan/phases/PHASE_2_training.mdx) — the training loop's expected configuration
 - [`tokenizer-a0-baseline.md`](./tokenizer-a0-baseline.mdx) — the lighter-weight alternative path (CPU-only, no torch needed)

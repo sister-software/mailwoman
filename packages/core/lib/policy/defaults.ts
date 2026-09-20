@@ -3,7 +3,7 @@
 
 /**
  *   Default policy table: every component is `rule_only` until per-tag golden-set metrics justify a
- *   migration. This file is the canonical place to record such migrations; each Phase 2+ rollout
+ *   migration. This file is the canonical place to record such migrations. each Phase 2+ rollout
  *   edits one entry here with a commit-message rationale.
  */
 
@@ -12,7 +12,7 @@ import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
 import type { ClassifierPolicy, PolicyMode } from "#policy/policy"
 
 /**
- * Build a fresh array of policies — one per `ComponentTag`, all in `mode`. Returns a new array on each call; callers
+ * Build a fresh array of policies — one per `ComponentTag`, all in `mode`. Returns a new array on each call. callers
  * may mutate it freely.
  *
  * `mode` defaults to `rule_only` (the historical default — every component rule-sourced until a per-tag migration). The

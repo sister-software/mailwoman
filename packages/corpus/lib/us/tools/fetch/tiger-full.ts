@@ -3,23 +3,23 @@
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 /**
- *   Fetch the full TIGER 2024 ADDRFEAT dataset — all US counties.
+ *   Fetch the full tiger 2024 addrfeat dataset — all US counties.
  *
- *   TIGER ADDRFEAT 2024 source:
+ *   tiger addrfeat 2024 source:
  *
- *   - https://www2.census.gov/geo/tiger/TIGER2024/ADDRFEAT/
+ *   - https://www2.census.gov/geo/tiger/TIGER2024/addrfeat/
  *   - Files: `tl_2024_<statefips><countyfips>_addrfeat.zip`
  *
  *   Each state's ZIPs land in `<outRoot>/tiger/addrfeat/state-<statefips>/` with a per-state
- *   `MANIFEST.json` recording filename, sha256, and bytes for every county ZIP so re-runs can skip
- *   already-verified files. (Extraction + ogr2ogr ingestion happen later, in the `tiger` adapter;
+ *   `manifest.json` recording filename, sha256, and bytes for every county ZIP so re-runs can skip
+ *   already-verified files. (Extraction + ogr2ogr ingestion happen later, in the `tiger` adapter.
  *   this module is download + provenance only.)
  *
  *   Invoke via `mailwoman corpus fetch tiger-full --out-root <path>`. Native `fetch` streams each
  *   county ZIP to disk (no curl subprocess).
  */
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
-   procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
+   procedure rather than sections of declarations. A region there folds nothing a reader wants folded. */
 import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
@@ -36,12 +36,12 @@ import { readManifest, streamDownload, writeManifest } from "#tools/fetch/downlo
  * than data.
  */
 /**
- * Lowest 2xx status; anything below is informational.
+ * Lowest 2xx status. anything below is informational.
  */
 const HTTP_OK = 200
 
 /**
- * Lowest 3xx status; at or above it the response is a redirect or an error, not a body.
+ * Lowest 3xx status. at or above it the response is a redirect or an error rather than a body.
  */
 const HTTP_REDIRECT = 300
 
@@ -74,7 +74,7 @@ interface CountyEntry {
 }
 
 /**
- * Read a per-state MANIFEST.json into a filename → entry map.
+ * Read a per-state manifest.json into a filename → entry map.
  */
 async function readCountyManifest(manifestPath: string): Promise<Map<string, CountyEntry>> {
 	const map = new Map<string, CountyEntry>()
@@ -132,7 +132,7 @@ export async function fetchTigerFull(
 	options: FetchTigerFullOptions,
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
-	const skipStateFips = (options.skipStateFips ?? "50").split(/\s+/).filter((value) => value.length > 0)
+	const skipStateFips = (options.skipStateFips ?? "50").split(/\s+/).filter((value) => value.length)
 	const rateSleepMs = Math.round((options.rateSleep ?? 0.2) * 1000)
 	const maxParallel = options.maxParallel ?? 4
 	const dryRun = options.dryRun ?? false
@@ -144,8 +144,8 @@ export async function fetchTigerFull(
 
 	report?.(`=== Fetching TIGER 2024 ADDRFEAT directory listing...`)
 
-	// `responseType: "text"` — an Apache directory index, scraped below. The per-county ARCHIVE downloads
-	// stay on raw `fetch` (they stream to disk; see `downloadOne`).
+	// `responseType: "text"` — an Apache directory index, scraped below. The per-county archive downloads
+	// stay on raw `fetch` (they stream to disk. see `downloadOne`).
 	const listingRes = await new APIClient({
 		displayName: "tiger-listing",
 		retry: true,
@@ -212,7 +212,7 @@ export async function fetchTigerFull(
 			const url = `${TIGER_BASE_URL}/${fname}`
 			const known = manifest.get(fname)
 
-			// Skip if already verified via MANIFEST.
+			// Skip if already verified via manifest.
 			if (known && (await fileMatchesSha(dest, known.sha256, known.bytes))) {
 				report?.(`  skip (verified) ${fname}`)
 
@@ -273,7 +273,7 @@ export async function fetchTigerFull(
 			}
 		}
 
-		// Rewrite per-state MANIFEST.json with all known-good counties (sorted for determinism).
+		// Rewrite per-state manifest.json with all known-good counties (sorted for determinism).
 		const counties = [...manifest.values()].toSorted((a, b) => a.filename.localeCompare(b.filename))
 
 		const manifestDoc = {

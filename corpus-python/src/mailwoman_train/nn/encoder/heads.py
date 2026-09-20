@@ -1,7 +1,7 @@
 """Building the output heads, and the weight initialization that follows them.
 
-Construction order is a contract: `_init_weights` walks `self.parameters()`, which yields in
-registration order and draws from the global RNG for each, so moving a head's construction changes
+Construction order is a interface: `_init_weights` walks `self.parameters()`, which yields in
+registration order and draws from the global RNG for each. Therefore, moving a head's construction changes
 the initial weights of everything registered after it.
 """
 
@@ -39,7 +39,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
     ) -> None:
         """The output heads, in two groups that differ in what they touch.
 
-        The merge heads OWN columns of the classifier's output: their logits replace specific label
+        The merge heads own columns of the classifier's output: their logits replace specific label
         columns in `forward`, so they reach the exported graph and change what inference predicts.
         The structured heads sit beside the classifier — the CRF decodes its output, the span scorer
         and span-boundary head score it — and touch no column.
@@ -85,7 +85,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
         """Heads whose logits replace columns of the classifier's output."""
         # Dedicated affix head (#492): MLP over [final hidden ; raw gazetteer 5-dim skip] ->
         # {O, B-street_prefix, I-street_prefix, B-street_suffix, I-street_suffix}. The gaz vector
-        # skip-connects PAST the encoder so the head owns the clue->affix mapping (consult
+        # skip-connects past the encoder so the head owns the clue->affix mapping (consult
         # 2026-06-10); independent dropout on the skip layers robustness locally. Its 4 affix
         # logits replace the main classifier's affix columns in forward (merge-in-forward).
         # Train-time conventions pairing (#478): per-locale forbidden-label mask applied to the
@@ -124,12 +124,12 @@ class CoarseEncoderHeads(CoarseEncoderState):
             self.register_buffer("affix_target_lut", lut, persistent=False)
 
         # Separate dependent_locality head (P-B probe, ROAD_TO_MAILWOMAN_V8_1_0 §4). The dead dep-loc tag
-        # is resurrected in its OWN head subspace instead of by reinit-ing the shared classifier's rows:
-        # a fresh MLP whose 2 logits OWN the B/I-dependent_locality columns (merge-in-forward, exactly like
+        # is resurrected in its own head subspace instead of by reinit-ing the shared classifier's rows:
+        # a fresh MLP whose 2 logits own the B/I-dependent_locality columns (merge-in-forward, exactly like
         # the affix head, so the inference graph carries it). The encoder stays shared+trainable — the probe
         # tests whether growing the capability in a separate head avoids the comma-drop invariance break that
         # every flat-head reinit recipe paid (v3.10–v3.13). init_from v385 (strict=False) leaves this head
-        # fresh; the main CE loss trains it via the merged logits.
+        # fresh. the main CE loss trains it via the merged logits.
         self.use_deploc_head = use_deploc_head
         if use_deploc_head:
             self.deploc_head = nn.Sequential(
@@ -157,9 +157,9 @@ class CoarseEncoderHeads(CoarseEncoderState):
         use_crf: bool,
     ) -> None:
         """Heads that score or decode the classifier's output without replacing any of it."""
-        # Span-boundary auxiliary head (#727, GLiNER-lite probe). A TRAINING-ONLY 2-logit head over the
-        # final hidden state predicting, per token, whether an entity span STARTS (a B-* tag) and whether
-        # one ENDS here (an entity token whose successor doesn't continue it). The BIO head places tags;
+        # Span-boundary auxiliary head (#727, GLiNER-lite probe). A training-only 2-logit head over the
+        # final hidden state predicting, per token, whether an entity span starts (a B-* tag) and whether
+        # one ends here (an entity token whose successor doesn't continue it). The BIO head places tags.
         # this head places boundaries, and the shared encoder must satisfy both — the pressure targets the
         # boundary-absorption residual (a region token pulled into an adjacent street span, "05149 VT
         # Tucker Road" → "VT" absorbed into street). It never touches the exported inference graph (like the
@@ -178,7 +178,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
 
         # #727 stage-2 phase 1: the semi-Markov span scorer. Unlike stage-1's aux head (which only
         # shapes the encoder via BCE pressure and is never exported), this is a real scoring path —
-        # Phase 2 exports it, Phase 3 decodes it in JS. Default-OFF ⇒ byte-identical: the BIO logits
+        # Phase 2 exports it, Phase 3 decodes it in JS. Default-off ⇒ byte-identical: the BIO logits
         # path never reads it, which `test_span_scorer_off_is_byte_identical_to_baseline` enforces.
         self.use_span_scorer = use_span_scorer
         self.span_loss_weight = float(span_loss_weight)
@@ -195,13 +195,13 @@ class CoarseEncoderHeads(CoarseEncoderState):
         self.crf: LinearChainCRF | None = LinearChainCRF(num_labels, self.id_to_label) if use_crf else None
 
         # PR3 self-conditioning modules. ``locale_head`` maps the pooled (mean over real tokens)
-        # representation to the locale posterior — the aux supervised signal AND the exported
+        # representation to the locale posterior — the aux supervised signal and the exported
         # LocalePosterior. ``locale_film`` produces a (scale, shift) pair from the same pooled
         # vector that FiLM-modulates the per-token reps feeding the BIO head. ``locale_film`` is
-        # zero-initialized in _init_weights so the model starts as the EXACT identity of an
+        # zero-initialized in _init_weights so the model starts as the exact identity of an
         # unconditioned encoder (gamma=0, beta=0 → h unchanged) and only learns to modulate as the
         # aux gradient flows — this is the de-risking move against the CRF-style from-scratch
-        # divergence (one new behaviour, introduced gently, not a cold-start architecture shock).
+        # divergence (one new behaviour, introduced gently rather than a cold-start architecture shock).
         self.locale_head: nn.Linear | None
         self.locale_film: nn.Linear | None
         if self.use_locale_conditioning:
@@ -214,7 +214,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
     def _init_weights(self) -> None:
         """Xavier-style init for linears + small-normal embeddings + LN gamma=1.
 
-        Critical: ``nn.LayerNorm.weight`` (``gamma``) MUST be initialized to 1.0, not 0.
+        Critical: ``nn.LayerNorm.weight`` (``gamma``) must be initialized to 1.0 rather than 0.
         A previous version zeroed every 1D parameter, which collapsed every LN to a constant
         output (``gamma·normalized + beta`` = 0·anything + 0 = 0) and made the model
         predict the same class for every token regardless of input. Loss plateaued near
@@ -226,7 +226,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
             elif p.dim() == 1 and p.requires_grad:
                 nn.init.zeros_(p)
         # Reset every LayerNorm to default (gamma=1, beta=0). The blanket loop above
-        # accidentally zeroed gamma; LN with gamma=0 emits 0 + beta for all inputs.
+        # accidentally zeroed gamma. LN with gamma=0 emits 0 + beta for all inputs.
         for module in self.modules():
             if isinstance(module, nn.LayerNorm):
                 nn.init.ones_(module.weight)
@@ -238,7 +238,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
             with torch.no_grad():
                 self.token_embeddings.weight[self.token_embeddings.padding_idx].zero_()
         # PR3: zero-init the FiLM projection so conditioning starts as a no-op (gamma=0, beta=0).
-        # The blanket xavier loop above gave it real weights; reset them so the from-scratch model
+        # The blanket xavier loop above gave it real weights. reset them so the from-scratch model
         # begins identical to an unconditioned encoder and learns to modulate gradually.
         if self.locale_film is not None:
             nn.init.zeros_(self.locale_film.weight)

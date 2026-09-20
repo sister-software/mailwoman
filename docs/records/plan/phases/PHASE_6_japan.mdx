@@ -10,7 +10,7 @@
 
 - **Structurally different addressing.** JP has no streets. Addresses are nested blocks (chōme/banchi/go). If any core code assumes "street is mandatory," it breaks here.
 - **Different script.** CJK characters expose tokenizer vocabulary limits. SentencePiece with `byte_fallback=true` (set in Phase 1) should handle this, but real test only happens with real JP data.
-- **Excellent open data.** MLIT (国土交通省) publishes comprehensive address data freely. Quality comparable to BAN.
+- **Excellent open data.** MLIT (国土交通省) publishes complete address data freely. Quality comparable to BAN.
 - **Existing reference implementation.** `japanese-address-parser` Rust crate is a baseline to compare against.
 
 ## What must already work before Phase 6
@@ -26,7 +26,7 @@ If any of these aren't true, the design failed and the project needs a Phase 0 r
 
 ### Data
 
-- Adapter for MLIT address data (CSV format, comprehensive coverage of JP)
+- Adapter for MLIT address data (CSV format, complete coverage of JP)
 - Adapter for WOF JP admin records (already accessible)
 - Synthesis rules for JP variants: kanji vs hiragana vs romaji, traditional vs modern numbering
 
@@ -69,4 +69,4 @@ npx mailwoman parse --locale ja-JP "東京都千代田区丸の内1-1-1"
 
 and get a parse with `prefecture: 東京都, municipality: 千代田区, district: 丸の内, block: 1, sub_block: 1, building_number: 1` — and no core code changed since Phase 3, only adapters, weights, and locale profiles — the architecture is validated.
 
-If core code did need to change, the change is the deliverable, not the JP support. Document what changed and why so future locales (Korean, Thai, etc.) benefit.
+If core code did need to change, the change is the deliverable rather than the JP support. Document what changed and why so future locales (Korean, Thai, etc.) benefit.

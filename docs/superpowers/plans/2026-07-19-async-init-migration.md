@@ -1,6 +1,6 @@
 # async-init Migration Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Point mailwoman at the published `async-init@1.0.0` package and delete the superseded (and defective) `core/lifecycle/` module.
 
@@ -28,8 +28,8 @@ Claude-Session: https://claude.ai/code/session_01QTpYm118V3tGk4FRhKi8Sr
 - Only two real consumers of `core/lifecycle/`: `core/scripting/utils/index.ts` (`ServiceRepository`) and `core/api/APIClient.ts` (`ServiceSymbol.isAsyncDisposable`). Every other repo mention of "lifecycle" is prose in comments.
 - **Nothing in the repo ever registers a service** into `ServiceRepository` — its registry is empty at runtime; `postScriptCleanup`'s dispose call is a forward-compatibility hook. Migrating to `defaultRegistry` preserves observable behavior exactly (abort + no-op disposal).
 - `AsyncDisposableLRUCache` has zero consumers — deleted with the module.
-- `lru-cache` in `core/package.json` (^11.5.2, ~line 318) is used ONLY by the deleted module. `corpus/` imports lru-cache but declares its own `^11.5.2` (verified corpus/package.json:98) — removing core's copy is safe.
-- The old `ServiceSymbol.isAsyncDisposable` used `Object.hasOwn` on the instance, so it NEVER matched prototype-implemented disposables — `APIClient`'s cache disposal has been dead code. The migration makes it live; that behavior change is intended and gets a regression test.
+- `lru-cache` in `core/package.json` (^11.5.2, ~line 318) is used only by the deleted module. `corpus/` imports lru-cache but declares its own `^11.5.2` (verified corpus/package.json:98) — removing core's copy is safe.
+- The old `ServiceSymbol.isAsyncDisposable` used `Object.hasOwn` on the instance, so it never matched prototype-implemented disposables — `APIClient`'s cache disposal has been dead code. The migration makes it live; that behavior change is intended and gets a regression test.
 
 ---
 
@@ -44,7 +44,7 @@ Claude-Session: https://claude.ai/code/session_01QTpYm118V3tGk4FRhKi8Sr
 **Interfaces:**
 
 - Consumes: `isAsyncDisposable(input: unknown): input is AsyncDisposable` from `async-init` (chain-walking guard).
-- Produces: `APIClient` whose `[Symbol.asyncDispose]` actually disposes prototype-implemented cache storages.
+- Produces: `APIClient` whose `[Symbol.asyncDispose]` disposes prototype-implemented cache storages.
 
 - [ ] **Step 1: Create the worktree** (superpowers:using-git-worktrees), branch `feat/async-init-migration` off `main`. All subsequent steps run inside it. Run `yarn install` once to hydrate.
 
@@ -78,7 +78,7 @@ import { APIClient } from "./APIClient.ts"
 test("APIClient disposal reaches a caching storage whose asyncDispose lives on the prototype", async () => {
 	let disposeCount = 0
 
-	// The regression case: [Symbol.asyncDispose] on the PROTOTYPE chain, not an own property.
+	// The regression case: [Symbol.asyncDispose] on the PROTOTYPE chain rather than an own property.
 	// The pre-migration predicate (Object.hasOwn on the instance) never matched this shape,
 	// leaving cache disposal as dead code.
 	const storagePrototype = {
@@ -107,12 +107,12 @@ test("APIClient disposal reaches a caching storage whose asyncDispose lives on t
 })
 ```
 
-Implementer latitude: if `buildStorage`'s option or return types disagree with the sketch (axios-cache-interceptor's `AxiosStorage` shape), adapt the storage construction — the ESSENTIAL property is that `[Symbol.asyncDispose]` sits on the prototype chain, not as an own property, and that `caching.storage` type-checks (a `as never`/`as AxiosStorage` cast at the `caching:` boundary is acceptable in a test). Do not weaken the assertion.
+Implementer latitude: if `buildStorage`'s option or return types disagree with the sketch (axios-cache-interceptor's `AxiosStorage` shape), adapt the storage construction — the ESSENTIAL property is that `[Symbol.asyncDispose]` sits on the prototype chain rather than as an own property, and that `caching.storage` type-checks (a `as never`/`as AxiosStorage` cast at the `caching:` boundary is acceptable in a test). Do not weaken the assertion.
 
 - [ ] **Step 4: Run test to verify it fails**
 
 Run: `yarn vitest run core/api/APIClient.test.ts` — and if the root invocation doesn't pick up core's vitest config (core has its own `vitest.config.ts` with sibling-alias rules), run it from the workspace instead: `cd core && yarn vitest run api/APIClient.test.ts`. Use whichever form works for the remaining test steps too.
-Expected: FAIL — `disposeCount` is 0 (old predicate misses the prototype method).
+Expected: fail — `disposeCount` is 0 (old predicate misses the prototype method).
 
 - [ ] **Step 5: Migrate APIClient**
 
@@ -128,7 +128,7 @@ with:
 import { isAsyncDisposable } from "async-init"
 ```
 
-(Import-group placement: `async-init` is a bare external import — it sorts with the other external packages at the top of the file, not with the relative imports; let `yarn oxlint --fix`/`yarn format` settle ordering.)
+(Import-group placement: `async-init` is a bare external import — it sorts with the other external packages at the top of the file rather than with the relative imports; let `yarn oxlint --fix`/`yarn format` settle ordering.)
 
 And replace line 165:
 
@@ -212,13 +212,13 @@ export function postScriptCleanup(signal: NodeJS.Signals = "SIGTERM", exitCode?:
 }
 ```
 
-Semantics notes (document in the commit body, not code comments): `defaultRegistry.dispose()` aborts the registry's own signal BEFORE disposing, so the old timeout-path `abortController.abort(signal)` is redundant — by the time the timeout fires, the abort already happened at dispose entry. The old `inspect()` undisposed-count listing has no equivalent (the new registry doesn't expose its contents) and is dropped; the error line suffices. The registry is empty in practice today (nothing registers), so observable behavior is identical.
+Semantics notes (document in the commit body rather than code comments): `defaultRegistry.dispose()` aborts the registry's own signal before disposing, so the old timeout-path `abortController.abort(signal)` is redundant — by the time the timeout fires, the abort already happened at dispose entry. The old `inspect()` undisposed-count listing has no equivalent (the new registry doesn't expose its contents) and is dropped; the error line suffices. The registry is empty in practice today (nothing registers), so observable behavior is identical.
 
 - [ ] **Step 3: Verify the scripting suite + types**
 
 Run: `yarn vitest run core/scripting 2>/dev/null || yarn vitest run --dir core` (fall back to the core suite if scripting has no dedicated tests)
 Run: `yarn workspace @mailwoman/core run check-types 2>/dev/null || yarn tsc --noEmit -p core`
-Expected: green / exit 0. (Adapt the exact check-types invocation to what core's package.json actually offers — read its scripts.)
+Expected: green / exit 0. (Adapt the exact check-types invocation to what core's package.json offers — read its scripts.)
 
 - [ ] **Step 4: Commit**
 
@@ -240,7 +240,7 @@ dropped. Nothing registers services today, so behavior is unchanged."
 **Files:**
 
 - Delete: `core/lifecycle/index.ts`, `core/lifecycle/services.ts`, `core/lifecycle/ServiceSymbol.ts`, `core/lifecycle/lru-cache.ts`
-- Modify: `core/package.json` — remove `./lifecycle` from BOTH exports maps; remove `"lru-cache": "^11.5.2"` from dependencies
+- Modify: `core/package.json` — remove `./lifecycle` from both exports maps; remove `"lru-cache": "^11.5.2"` from dependencies
 
 - [ ] **Step 1: Delete the module**
 
@@ -260,7 +260,7 @@ In `core/package.json` delete the dev-map entry (~lines 97-100):
 		},
 ```
 
-AND the `publishConfig.exports` entry (~lines 241-243):
+and the `publishConfig.exports` entry (~lines 241-243):
 
 ```json
 			"./lifecycle": {
@@ -279,7 +279,7 @@ Delete `"lru-cache": "^11.5.2",` from `core/package.json` dependencies (corpus d
 grep -rn "ServiceRepository\|ServiceSymbol\|AsyncDisposableLRUCache\|ServiceMethodResolver\|lifecycle/index\|lifecycle/ServiceSymbol" --include="*.ts" . | grep -v node_modules | grep -v "/out/" | grep -v worktrees | grep -v ".claude"
 ```
 
-Expected: NO hits in source files (docs/ mentions in historical records are fine and out of scope — do not edit dated docs).
+Expected: no hits in source files (docs/ mentions in historical records are fine and out of scope — do not edit dated docs).
 
 - [ ] **Step 5: Commit**
 
@@ -327,7 +327,7 @@ yarn workspace @mailwoman/core pack -o /tmp/claude-1000/-home-lab-Projects-mailw
 tar -tzf /tmp/claude-1000/-home-lab-Projects-mailwoman/52b1cbdf-08a6-4826-93ee-2cbe4006d58b/scratchpad/core-probe.tgz | grep -i lifecycle
 ```
 
-Expected: pack succeeds; the grep finds NOTHING (no lifecycle files in the tarball).
+Expected: pack succeeds; the grep finds nothing (no lifecycle files in the tarball).
 
 - [ ] **Step 4: Push branch + open PR**
 
@@ -350,7 +350,7 @@ https://claude.ai/code/session_01QTpYm118V3tGk4FRhKi8Sr
 
 ## Notes for the operator (not tasks)
 
-- **Semver:** removing the public `./lifecycle` subpath is breaking for `@mailwoman/core` — the release that ships this is a core major (or rides the next planned major, e.g. v8). The subpath's flagship exports were defective (guards inert), so external breakage is unlikely, but the version check is the release-time call, not this PR's.
+- **Semver:** removing the public `./lifecycle` subpath is breaking for `@mailwoman/core` — the release that ships this is a core major (or rides the next planned major, e.g. v8). The subpath's flagship exports were defective (guards inert), so external breakage is unlikely, but the version check is the release-time call rather than this PR's.
 - The historical spec/plan docs keep the `lifecycle-ts` name; the package on npm is `async-init@1.0.0`. Dated docs are point-in-time records — not renamed.
 
 ## Out of scope

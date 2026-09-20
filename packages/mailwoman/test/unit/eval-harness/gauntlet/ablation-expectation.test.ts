@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the ablation layer's GRACEFUL-DEGRADATION EXPECTATION MODEL, at fixture scale against a fake gazetteer.
+ *   Tests for the ablation layer's graceful-degradation expectation model, at fixture scale against a fake gazetteer.
  *
  *   The fake is the point. The model's whole claim is that an expectation is computed from the components a deletion
- *   LEFT BEHIND — never from the variant's own output — and the only way to prove a non-dependency is to hold
+ *   left behind — never from the variant's own output — and the only way to prove a non-dependency is to hold
  *   everything else fixed and vary the output. `deriveExpectedRung` takes no result argument at all, so the compiler
- *   already forbids the obvious version of the mistake; the test forbids the version where someone adds one later.
+ *   already forbids the obvious version of the mistake. the test forbids the version where someone adds one later.
  *
  *   Four other properties are pinned here because each has a silent failure mode:
  *
@@ -44,7 +44,7 @@ import {
 import { describe, expect, it } from "vitest"
 
 /**
- * A gazetteer place. `negRank` is `-log10(population + 1)`, so a bigger place is a SMALLER number.
+ * A gazetteer place. `negRank` is `-log10(population + 1)`, so a bigger place is a smaller number.
  */
 function place(over: Partial<AblationPlace> & { id: number; name: string; placetype: string }): AblationPlace {
 	return {
@@ -118,7 +118,7 @@ describe("bboxRadiusKm — a zero-extent bbox is ABSENCE, not a radius of zero",
 		expect(km).toBeLessThan(16)
 	})
 
-	// `spr` stores an unset bbox as `min == max` (NOT NULL DEFAULT 0) — 49.2% of localities, 59.1% of countries.
+	// `spr` stores an unset bbox as `min == max` (not NULL default 0) — 49.2% of localities, 59.1% of countries.
 	it("returns null for a degenerate bbox rather than 0", () => {
 		expect(bboxRadiusKm({ lat: 40, lon: -74, bbox: { minLat: 40, maxLat: 40, minLon: -74, maxLon: -74 } })).toBeNull()
 	})
@@ -173,7 +173,7 @@ describe("ablationLadderFromChain", () => {
 		expect(LADDER.rungs.map((r) => r.kind)).toEqual(["base", "locality", "county", "region", "country"])
 	})
 
-	// A gazetteer bbox that makes an ancestor TIGHTER than its child would pass the child and fail the parent for the
+	// A gazetteer bbox that makes an ancestor tighter than its child would pass the child and fail the parent for the
 	// same point, which is not a ladder.
 	it("keeps radii non-decreasing going up", () => {
 		const radii = LADDER.rungs.map((r) => r.radiusKM)
@@ -221,7 +221,7 @@ describe("deriveExpectedRung — computed from what REMAINS", () => {
 		expect(expected).toMatchObject({ kind: "rung", depth: 0 })
 	})
 
-	// The operator's own example: dropping the country from an address the region still pins must NOT be graded as a
+	// The operator's own example: dropping the country from an address the region still pins must not be graded as a
 	// break — the surviving evidence keeps the deep rung.
 	it("keeps the deep rung when only the country goes", () => {
 		const expected = deriveExpectedRung(
@@ -241,7 +241,7 @@ describe("deriveExpectedRung — computed from what REMAINS", () => {
 		expect(deriveExpectedRung({ country: "United States" }, LADDER, gz)).toMatchObject({ kind: "rung", depth: 4 })
 	})
 
-	// The headline case: a bare ambiguous name with nothing else to lean on. ABSTAINING is the correct answer.
+	// The headline case: a bare ambiguous name with nothing else to lean on. abstaining is the correct answer.
 	it("expects ABSTENTION for a bare name no population winner settles", () => {
 		const expected = deriveExpectedRung({ locality: "Springfield" }, LADDER, gz)
 
@@ -253,7 +253,7 @@ describe("deriveExpectedRung — computed from what REMAINS", () => {
 		expect(deriveExpectedRung({ unit: "Suite 400" }, LADDER, gz).kind).toBe(ABSTAIN_RUNG)
 	})
 
-	// Ambiguity plus a handle this model cannot evaluate is NOT a licence to demand abstention.
+	// Ambiguity plus a handle this model cannot evaluate is not a licence to demand abstention.
 	it("declines to constrain when a venue survives alongside the ambiguous name", () => {
 		const expected = deriveExpectedRung({ locality: "Springfield", venue: "Kwik-E-Mart" }, LADDER, gz)
 
@@ -271,10 +271,10 @@ describe("deriveExpectedRung — computed from what REMAINS", () => {
 })
 
 /**
- * THE CIRCULARITY GUARD.
+ * The circularity guard.
  *
  * An expectation derived from the variant's own output would grade the pipeline against itself and pass everything.
- * `deriveExpectedRung` takes no result argument, so the direct version cannot compile; these pin the property so a
+ * `deriveExpectedRung` takes no result argument, so the direct version cannot compile. these pin the property so a
  * later "just peek at the answer" refactor fails loudly instead of quietly making the layer useless.
  */
 describe("the expectation is INVARIANT to the variant's output", () => {
@@ -292,7 +292,7 @@ describe("the expectation is INVARIANT to the variant's output", () => {
 		]
 
 		for (const outcome of outcomes) {
-			// Grading consumes the outcome; deriving must not. Re-derive after each grade and compare.
+			// Grading consumes the outcome. deriving must not. Re-derive after each grade and compare.
 			gradeAgainstLadder({ expected, ladder: LADDER, ...outcome, slot: "absent", anchorRungDepth: 0 })
 
 			expect(deriveExpectedRung(remaining, LADDER, gz)).toEqual(expected)
@@ -330,7 +330,7 @@ describe("residualWords — the corpus types less than the input carries", () =>
 		expect(residualWords("742 A B, IL", { region: "IL" })).toEqual([])
 	})
 
-	// `fr-chevaleret-rooftop` asserts ONLY its postcode. Deleting it leaves the model an empty component set, and an
+	// `fr-chevaleret-rooftop` asserts only its postcode. Deleting it leaves the model an empty component set, and an
 	// empty set used to read as "nothing names a place" → abstain → the correct rooftop graded overconfident.
 	it("turns an otherwise-ABSTAIN expectation into an unconstrained one", () => {
 		const gz = fakeGazetteer()
@@ -339,7 +339,7 @@ describe("residualWords — the corpus types less than the input carries", () =>
 		expect(deriveExpectedRung({}, LADDER, gz, ["chevaleret", "paris"]).kind).toBe(UNCONSTRAINED_RUNG)
 	})
 
-	// …but untyped words can only STOP an abstention, never deepen a rung expectation: they are evidence of unknown
+	// …but untyped words can only stop an abstention, never deepen a rung expectation: they are evidence of unknown
 	// strength, and treating them as strong would be the same guess in the other direction.
 	it("does not deepen a rung expectation", () => {
 		const withResidual = deriveExpectedRung({ region: "Illinois" }, LADDER, fakeGazetteer(), ["evergreen", "terrace"])
@@ -358,7 +358,8 @@ describe("gradeAgainstLadder", () => {
 		expect(graded).toMatchObject({ grade: "held", achievedRungDepth: 0, degradedRungs: 0 })
 	})
 
-	// The whole point of the layer: coarser-and-honest is a PASS, and the rung-depth delta is recorded as data.
+	// The whole point of the layer: a coarser answer the surviving evidence justifies passes, and the rung-depth delta
+	// is recorded as data.
 	it("passes a coarsening the surviving evidence justifies, and records how far it fell", () => {
 		const graded = gradeAgainstLadder({ ...base, expected: rung(3), lat: 39.76, lon: -89.66 })
 
@@ -437,7 +438,7 @@ describe("gradeAgainstLadder", () => {
 		expect(graded.grade).toBe("wrong")
 	})
 
-	// S-2 finding 3: the slot came back FILLED with a different token. A good coordinate does not redeem that.
+	// S-2 finding 3: the slot came back filled with a different token. A good coordinate does not redeem that.
 	it("fails a SUBSTITUTION even when the coordinate is perfect", () => {
 		const graded = gradeAgainstLadder({
 			...base,
@@ -448,7 +449,7 @@ describe("gradeAgainstLadder", () => {
 		})
 
 		expect(graded.grade).toBe("substituted")
-		// The geometry stays readable — the row is a hazard, not a mystery.
+		// The geometry stays readable — the row is a hazard rather than a mystery.
 		expect(graded.achievedRungDepth).toBe(0)
 	})
 
@@ -466,7 +467,7 @@ describe("gradeAgainstLadder", () => {
 
 	describe("the anchor floor — a deletion is charged only for what IT cost", () => {
 		it("reads a variant that matches its already-coarse anchor as held, not as a loss", () => {
-			// The anchor was already at the locality rung; the variant lands there too. Nothing was lost.
+			// The anchor was already at the locality rung. the variant lands there too. Nothing was lost.
 			const graded = gradeAgainstLadder({
 				...base,
 				anchorRungDepth: 1,

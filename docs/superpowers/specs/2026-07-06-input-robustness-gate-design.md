@@ -25,7 +25,7 @@ Three absorption layers sit upstream of the check:
 
 1. **Deterministic `normalize/`** — Unicode NFC, punctuation, whitespace collapse + trailing-
    punctuation trim (`normalize/whitespace.ts`). Note: `normalize/abbreviations.ts` (Rd→Road etc.)
-   EXISTS but is opt-in (`normalize/compute.ts`) and NOT wired into the runtime pipeline —
+   exists but is opt-in (`normalize/compute.ts`) and not wired into the runtime pipeline —
    abbreviation handling is deliberately the model's job.
 2. **Model-side case normalization** (`neural/case-normalize.ts`) — #690 all-caps title-casing +
    #829 all-lowercase restore, on by default, offset-stable.
@@ -41,7 +41,7 @@ Checks:
   `lower`, `upper`, `ws`, `trail-dot`, `comma-tight`. DIR = drop the postcode, must stay within
   5km. Known deterministic failures live in `KNOWN_INV_XFAIL` (currently empty; INV is 35/35 green)
   with anti-rot bookkeeping — an xfail that starts passing is flagged.
-- **Golden `graceful/*` slices** (`data/eval/golden/v0.1.2`) — small labeled adversarial slices
+- **Golden `graceful/*` sets** (`data/eval/golden/v0.1.2`) — small labeled adversarial sets
   (`graceful/typo|mis-casing|mis-punctuation|whitespace`, ~10 typo cases).
 - **`perturb-golden.ts`** — a one-off perturbation generator (delimiter-strip, lowercase, glue),
   never a standing check.
@@ -52,10 +52,10 @@ Checks:
 | ------------------------ | --------------------------------------- | -------------------- | ---------------------------------------- |
 | Casing                   | yes (case-normalize #690/#829)          | yes                  | INV[lower/upper] green                   |
 | Spacing                  | yes (whitespace.ts)                     | incidental           | INV[ws], INV[comma-tight]                |
-| Abbreviation swap        | capable but OFF at runtime (deliberate) | yes                  | golden entries only — no stability check |
+| Abbreviation swap        | capable but off at runtime (deliberate) | yes                  | golden entries only — no stability check |
 | Number spelling          | no                                      | no                   | nowhere                                  |
 | Typos (single-char edit) | no                                      | no                   | ~10 labeled golden cases only            |
-| Transpositions           | no                                      | no                   | folded into golden typo slice            |
+| Transpositions           | no                                      | no                   | folded into golden typo set              |
 
 ## Deliverable 1 — docs
 
@@ -75,7 +75,7 @@ Extend `scripts/eval/gauntlet/metamorphic.ts`:
    model trains on both forms, the coordinate must not move. Single-letter abbreviations (N/S/E/W/R)
    are excluded — ambiguous with initials. Applies only to bases containing an expandable suffix;
    add realistic bases where a locale lacks one.
-2. **`transpose` + `typo-sub`** — deterministic single-character edits at a FIXED position (middle
+2. **`transpose` + `typo-sub`** — deterministic single-character edits at a fixed position (middle
    of the longest alphabetic token ≥5 chars, never the house number or postcode). NO RNG. New
    tolerance-band relation (≤5km, modeled on DIR), NOT the 1m INV epsilon — a corrupted input may
    legitimately shift the parse.
@@ -84,7 +84,7 @@ Extend `scripts/eval/gauntlet/metamorphic.ts`:
    never normalized); record in a known-xfail map (the band analog of `KNOWN_INV_XFAIL`) so the check
    documents the gap non-blocking.
 
-Report per class. Update the coverage-matrix rows this changes; note xfail'd gaps honestly.
+Report per class. Update the coverage-matrix rows this changes; note xfail'd gaps directly.
 
 ### Out of scope
 

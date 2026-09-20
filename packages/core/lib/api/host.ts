@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Hostname handling shared by designated HTTP clients' allowlists.
+ * @file Hostname handling shared by designated http clients' allowlists.
  */
 
 import { ResourceError } from "#errors/schema"
 
 /**
  * A trailing dot makes a hostname fully qualified — `www.sec.gov.` and `www.sec.gov` reach the same server, but only
- * the latter is in an allowlist, and the WHATWG parser preserves the dot. Stripped before the lookup so the FQDN form
+ * the latter is in an allowlist, and the whatwg parser preserves the dot. Stripped before the lookup so the fqdn form
  * is admitted rather than rejected as an unknown host.
  */
 export function canonicalHostname(url: URL): string {
@@ -17,7 +17,7 @@ export function canonicalHostname(url: URL): string {
 }
 
 /**
- * The status a refused request reports — the request itself is malformed for this client, not the upstream.
+ * The status a refused request reports — the request itself is malformed for this client rather than the upstream.
  */
 const HTTP_BAD_REQUEST = 400
 
@@ -36,7 +36,7 @@ export interface AssertAllowedHostOptions {
 	 */
 	clientName: string
 	/**
-	 * Replaces the plain host list in the not-allowed refusal, e.g. `SEC EDGAR hosts (…)`.
+	 * Replaces the plain host list in the not-allowed refusal, e.g. `SEC edgar hosts (…)`.
 	 */
 	hostsDescription?: string
 	/**

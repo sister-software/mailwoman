@@ -1,5 +1,5 @@
 ---
-title: Decoder grammar contract — the objective we decode, the one we mean, and the measurement between them
+title: Decoder grammar interface — the objective we decode, the one we mean, and the measurement between them
 role: reference
 audience: maintainer
 owner: model
@@ -9,15 +9,15 @@ tags:
   - decoder
 ---
 
-# Decoder grammar contract
+# Decoder grammar interface
 
-**Status.** Design record and standing contract, from the 2026-08-24 design session. It fixes four
+**Status.** Design record and standing interface, from the 2026-08-24 design session. It fixes four
 things in one place: the objective the shipped decoder maximizes, the objective the failing
 board rows imply we mean, a constraint taxonomy stated as **measurable predicates** rather than
 intuitions, and the toponymy vocabulary the rest of the docs should use. Companions:
 [`SCHEMA.mdx`](./SCHEMA.mdx) (the `ComponentTag` union and `PARENT_OF`),
 [`2026-08-16-autodecoder-coherence.md`](../../records/research/2026-08-16-autodecoder-coherence.md)
-(the resolver-side coherence ladder this contract mirrors on the parser side), and #727 (the span
+(the resolver-side coherence ladder this interface mirrors on the parser side), and #727 (the span
 head).
 
 ## Position: where the rules live
@@ -28,7 +28,7 @@ base grows monotonically with observed formats, and each addition risks the prev
 sequence labeler takes the opposite position: the rules are implicit in the weights, which removes
 the case analysis and with it the ability to read, test, or falsify any single rule.
 
-This contract takes a third position. **Structure is declared in the objective — the factorization
+This interface takes a third position. **Structure is declared in the objective — the factorization
 of the score and two small typed grammars carried as data. Content is learned.** A rule here is a
 term in a score with a measurable firing census, never a case in code and never only a tendency in
 the weights.
@@ -74,13 +74,13 @@ score(S, T, H | x)  =  Σ_{(i,j,t) ∈ S} φ(i, j, t)   +   Σ_{(h,d,r) ∈ H} �
 ```
 
 maximized **jointly**. The stages of the intuitive pipeline — lexical cues, candidate spans,
-protected entities, inter-span grammar, address semantics — are the _terms of one objective_, not
+guarded entities, inter-span grammar, address semantics — are the _terms of one objective_ rather than
 sequential decisions: the overlapping name candidates in
 `Cafe at St Mary's, Church of St Mary the Virgin, St Mary's St, Shrewsbury SY1 1BX` cannot be
 committed before the inter-span grammar runs, because which candidates are real is decided by which
 segmentation makes the whole address cohere.
 
-**Atomicity is a signature restriction, not a prohibition on internal grammar.** `φ(i, j, t)` may
+**Atomicity is a signature restriction rather than a prohibition on internal grammar.** `φ(i, j, t)` may
 read anything inside `x[i..j]`, internal syntax included. `ψ` reads spans only as atoms. No term
 crosses a span boundary. A parser is free to know that `of` in `Port of Spain` is an adposition;
 that knowledge raises `φ` for the whole span as a well-formed toponym and contributes nothing to any
@@ -90,10 +90,10 @@ attachment across its boundary.
 venue or street as root, `address`-typed edges to locality, postcode, region — is the `AddressTree`
 under `PARENT_OF`, with `REL=address` equal to the resolver's containment set and
 `number → street` an existing `PARENT_OF` edge. One production is currently missing from the
-containment contract: a POI under a POI (`Cafe at St Mary's` located at
+containment interface: a POI under a POI (`Cafe at St Mary's` located at
 `Church of St Mary the Virgin`). `containment.ts:61` gives `venue` the parents
 `["street", "locality"]` only; the Heathrow sub-venue case was handled by widening `unit`'s
-parents, not by a venue→venue edge. Adding that production is schema work and is tracked here
+parents rather than by a venue→venue edge. Adding that production is schema work and is tracked here
 rather than assumed.
 
 ## 3. Toponym-internal grammar, and the vocabulary for it
@@ -113,7 +113,7 @@ a junction.
 This internal grammar is a small typed grammar, `G_name`, and its place in the objective is fixed by
 the atomicity restriction: **`G_name` scores the inside of `φ` and nothing else.** A span coheres as
 a name partly _because_ its internal parse under `G_name` is well-formed — that is how an
-out-of-registry pub name like `Ye Three Lords` earns protection from shape alone — and that
+out-of-registry pub name like `Ye Three Lords` warrants protection from shape alone — and that
 well-formedness never licenses an external attachment into the span's interior.
 
 What exists today, mapped to this vocabulary: the street domain has real generic-element inventories
@@ -183,7 +183,7 @@ violates, and the taxonomy is thereafter read from evaluation rather than argued
 | `St Andrew Undershaft Church, St Mary Axe, London EC3A 8BN`                         | two labels inside segment 1; `locality="London"` deleted while its postcode survives                     | C4 + C5                                |
 | `Cafe at St Mary's, Church of St Mary the Virgin, St Mary's St, Shrewsbury SY1 1BX` | mid-phrase `region`/`locality` fragments; no POI-under-POI production                                    | C4 + C5 + the missing venue→venue edge |
 | `12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India`                       | `Indiranagar → venue`; note the candidate's `Karnataka → region` is the template-conformant reading      | C5                                     |
-| `Rua Augusta`                                                                       | whole-span retag `street → locality` — not a split; the Lisbon-street / São-Paulo-street ambiguity       | C6, not C4                             |
+| `Rua Augusta`                                                                       | whole-span retag `street → locality` — not a split; the Lisbon-street / São-Paulo-street ambiguity       | C6 rather than C4                      |
 
 ## 7. Empirical support
 
@@ -198,11 +198,11 @@ violates, and the taxonomy is thereafter read from evaluation rather than argued
    attributed against a placebo run sharing base, seed, and steps — while `Unter den Linden`, the
    city splits, and the GB venue cluster (the same abstract constraint, other surface families)
    did not move. Emissions memorize constraint instances; the transfer radius is representational
-   similarity, not the rule's scope.
+   similarity rather than the rule's scope.
 3. **The data route also over-generalizes along the wrong axis.** The trailing-region corpus rows
    taught _text in the trailing position is administrative_; v4.8.0 applied that along the
    positional axis and destroyed venues (`Ye Three Lords, 27 Minories, London EC3N 1DE` →
-   `locality="Ye Three Lords"`). Four dose adjustments could not separate the teaching from the
+   `locality="Ye Three Lords"`). Four weight adjustments could not separate the teaching from the
    damage, because both travel on the same representational axis.
 
 ## 8. implementation map
@@ -229,7 +229,7 @@ parses it should forbid.
    gazetteer locality entry flips `Port of Spain`-class rows without retraining. Expressible in the
    engine config; falsifies §4 if it fails.
 3. **FST maximal-match check** — ANSWERED (2026-08-24, read from `buildFSTEmissionPriors` in
-   `packages/neural/lib/fst-prior.ts`): there is NO maximal-match preference. The walk starts at every
+   `packages/neural/lib/fst-prior.ts`): there is no maximal-match preference. The walk starts at every
    word position, applies bias at the first accepting state, and applies bias AGAIN at every longer
    accepting extension from the same start — nested and covering entries stack additively into the
    emission matrix, and nothing ranks, deduplicates, or suppresses among overlapping spans
@@ -238,6 +238,6 @@ parses it should forbid.
    nested `Spain` country hit at the FST layer: both land as per-token bias and the token-factorized
    decoder resolves them token-locally — the §4 subsidy, confirmed at the code rather than presumed.
    The §9.2 ablation therefore cannot be expressed as an FST-side switch; suppression of covered
-   sub-span clues would be NEW behavior, not the removal of an existing preference.
+   sub-span clues would be new behavior rather than the removal of an existing preference.
 4. **Schema decision**: admit or reject the venue→venue containment edge for the POI-under-POI
    production, with a board row as its acceptance test.

@@ -11,7 +11,7 @@
  *   1. **The id disagreement.** `candidate.db` and the score source key Whitby, Ontario differently
  *        (`8143502164401` vs `8000001156384`), so an id join drops it — and dropping the foreign
  *        homonym is exactly the outcome the fame prior exists to prevent. Every fixture place here
- *        carries a DIFFERENT id on the two sides, so an id join would score nothing at all.
+ *        carries a different id on the two sides, so an id join would score nothing at all.
  *   2. **Same-name fan-out.** One country holds many places of one name. The join must give each its
  *        own score rather than the group's best, and must refuse a same-name place that is simply
  *        somewhere else.
@@ -29,7 +29,7 @@ let sourcePath: string
 /**
  * A score source in the shape `admin-global-priority-importance.db` has: `spr` + `place_importance`.
  *
- * Ids here are deliberately NOTHING like the ids a candidate build would carry — the join must not depend on them.
+ * Ids here are deliberately nothing like the ids a candidate build would carry — the join must not depend on them.
  */
 function buildFixtureSource(path: string): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -88,7 +88,7 @@ describe("loadImportanceIndex", () => {
 	test("indexes current places only, and counts the unkeyable rather than dropping them silently", () => {
 		const index = loadImportanceIndex(sourcePath)
 
-		// 9 source rows: 1 deprecated (excluded by the query), 1 unkeyable (counted, not indexed).
+		// 9 source rows: 1 deprecated (excluded by the query), 1 unkeyable (counted rather than indexed).
 		expect(index.stats.places).toBe(7)
 		expect(index.stats.unkeyable).toBe(1)
 		expect(index.stats.keys).toBe(6) // the two US Warwicks share one key
@@ -104,7 +104,7 @@ describe("ImportanceIndex.find", () => {
 	test("scores a place whose id the two artifacts DISAGREE about (the whole reason the join is by name)", () => {
 		const index = loadImportanceIndex(sourcePath)
 
-		// The candidate side's Whitby rows carry unrelated ids; only name + country + placetype + position
+		// The candidate side's Whitby rows carry unrelated ids. only name + country + placetype + position
 		// are used, so both bearers score — including the foreign homonym the ranking exists to demote.
 		expect(index.find("Whitby", "GB", "locality", 54.4796, -0.6251)).toBeCloseTo(0.5496, 4)
 		expect(index.find("Whitby", "CA", "locality", 43.8975, -78.9428)).toBeCloseTo(0.5089, 4)
@@ -114,7 +114,7 @@ describe("ImportanceIndex.find", () => {
 		const index = loadImportanceIndex(sourcePath)
 
 		expect(index.find("Warwick", "US", "locality", 41.7001, -71.4162)).toBeCloseTo(0.5055, 4)
-		// The Georgia one must NOT inherit Rhode Island's 0.5055 — that is the fan-out defect.
+		// The Georgia one must not inherit Rhode Island's 0.5055 — that is the fan-out defect.
 		expect(index.find("Warwick", "US", "locality", 33.2137, -83.9224)).toBeCloseTo(0.3729, 4)
 	})
 
@@ -142,7 +142,7 @@ describe("ImportanceIndex.find", () => {
 	test("the key is the SHARED fold — diacritics and non-Latin scripts reach their scores", () => {
 		const index = loadImportanceIndex(sourcePath)
 
-		// "Zurich" and "Zürich" fold to the same key; Cyrillic survives the fold intact.
+		// "Zurich" and "Zürich" fold to the same key. Cyrillic survives the fold intact.
 		expect(index.find("Zurich", "CH", "locality", 47.3769, 8.5417)).toBeCloseTo(0.6216, 4)
 		expect(index.find("Москва", "RU", "locality", 55.7558, 37.6173)).toBeCloseTo(0.953, 4)
 	})

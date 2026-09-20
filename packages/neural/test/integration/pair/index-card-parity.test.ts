@@ -5,16 +5,16 @@
  *   Every shipped `pair-index-<country>.bin` must agree with the model card that describes it.
  *
  *   A model card is what a consumer, the release preflight and a future maintainer all read to learn
- *   what an artifact IS. Nothing else compares the two, and a card can drift across several
+ *   what an artifact is. Nothing else compares the two, and a card can drift across several
  *   increments without any check noticing — leaving it not merely absent but confidently wrong. The
- *   artifact is the arbiter here; the card is graded against it.
+ *   artifact is the arbiter here. the card is graded against it.
  *
- *   WHAT IT CHECKS, AND WHAT IT DELIBERATELY DOES NOT. Pair COUNT and the calibrated `delta` /
- *   `transitionBeta` are compared, because those are properties of the CONTENT and a rebuild from
- *   the same sources reproduces them exactly. The card's `md5` is NOT compared: a PIX1 header
+ *   what IT checks, and what IT deliberately does not. Pair count and the calibrated `delta` /
+ *   `transitionBeta` are compared, because those are properties of the content and a rebuild from
+ *   the same sources reproduces them exactly. The card's `md5` is not compared: a PIX1 header
  *   embeds `buildDate`, so identical sources produce different bytes on every rebuild, and asserting
  *   on it would fail constantly for a reason that is not a defect. The md5 documents the artifact
- *   STAGED for a release; the release-side check in `packages/release-kit/lib/release/verify-metadata.ts` is where
+ *   staged for a release. the release-side check in `packages/release-kit/lib/release/verify-metadata.ts` is where
  *   staged bytes get checked.
  *
  *   Skips per-package when the binary is absent — these are derived artifacts, gitignored and built
@@ -31,8 +31,8 @@ import { describe, expect, test } from "vitest"
  *
  * The card key is spelled out per package rather than discovered, because the naming is genuinely inconsistent across
  * the four (`us_artifacts` / `fr_artifacts` / `gb_artifacts` / `nz_artifacts`, each with its own `pair_index_<cc>_bin`
- * child). A guard that GUESSED the key would silently pass on a card whose block had been renamed or dropped — the
- * exact failure it exists to catch — so the mapping is explicit and a missing block is a failure, not a skip.
+ * child). A guard that guessed the key would silently pass on a card whose block had been renamed or dropped — the
+ * exact failure it exists to catch — so the mapping is explicit and a missing block is a failure rather than a skip.
  */
 const PACKAGES = [
 	{ pkg: "neural-weights-en-us", country: "us", cardKeys: ["us_artifacts", "pair_index_us_bin"] },
@@ -60,7 +60,7 @@ interface PairIndexFacts {
 }
 
 /**
- * Read a PIX1 binary's header and entry count without constructing a resolver — this test cares about what the FILE
+ * Read a PIX1 binary's header and entry count without constructing a resolver — this test cares about what the file
  * says, so it deliberately does not route through the reader that a bug could also affect.
  */
 async function readPairIndexFacts(path: string): Promise<PairIndexFacts> {
@@ -111,8 +111,8 @@ describe("pair-index ↔ model-card parity", () => {
 				facts.pairs
 			)
 
-			// The calibrated magnitudes ride the header; a card claiming a delta the binary does not carry would
-			// misdescribe the shipped behaviour, not just the shipped size.
+			// The calibrated magnitudes ride the header. a card claiming a delta the binary does not carry would
+			// misdescribe the shipped behaviour rather than just the shipped size.
 			const cardDelta = String(block!.delta_calibration ?? "")
 
 			expect(cardDelta, `${pkg}: card delta_calibration does not mention the artifact's δ=${facts.delta}`).toContain(
@@ -126,9 +126,9 @@ describe("pair-index ↔ model-card parity", () => {
 				).toContain(String(facts.transitionBeta))
 			}
 
-			// The whole-edge parent bias (#46) is default-on for the locales that have a board, and OFF (no
+			// The whole-edge parent bias (#46) is default-on for the locales that have a board, and off (no
 			// header key) for the ones that don't. Both directions are graded: a card that omits a shipped
-			// parentDelta misdescribes the behaviour, and a card that CLAIMS one the artifact lacks is worse —
+			// parentDelta misdescribes the behaviour, and a card that claims one the artifact lacks is worse —
 			// it reads as though the D-rule's per-locale check had been cleared when it hasn't. The assertion
 			// spells out `parentDelta=<n>` rather than the bare number because δ and β are both 5 today, so a
 			// substring match on "5" would pass on a card that never mentioned the parent at all.

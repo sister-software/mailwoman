@@ -1,15 +1,15 @@
 """The loader split must not move a single row, in value or in order.
 
-Every stage of this pipeline draws from one `random.Random`: the slice order, the row-group order,
+Every stage of this pipeline draws from one `random.Random`: the parquet-file order, the row-group order,
 the row order inside a group, the country-acceptance test, the source multinomial, the shuffle
 buffer, and each augmentation. They share a stream, so a split that reorders two calls — or adds a
 draw, or skips one — reshuffles the corpus a run trains on while every existing test still passes:
-the suite asserts that rows are well-formed and that mixtures are stationary, not that a seeded run
+the suite asserts that rows are well-formed and that mixtures are stationary rather than that a seeded run
 yields these rows in this order.
 
-So this pins the sequence. `iter_rows` carries the sampling; the char path carries `iter_encoded`
+So this pins the sequence. `iter_rows` carries the sampling. the char path carries `iter_encoded`
 end to end without a SentencePiece artifact; `source_row_counts` carries the metadata reader that
-the dose audit reads.
+the epoch-mixture audit reads.
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ from mailwoman_train.config import DataConfig
 from mailwoman_train.data.loader import collate, iter_encoded, iter_rows, source_row_counts
 from mailwoman_train.tokenizer.char import build_char_vocab, save_char_vocab
 
-#: Committed beside this file, captured from the code as it stood BEFORE a split. Regenerating it
+#: Committed beside this file, captured from the code as it stood before a split. Regenerating it
 #: after a change makes the test compare the new code against itself, so regenerate only when the
 #: current code is already verified against the existing reference.
 #:
@@ -39,7 +39,7 @@ REFERENCE_README = [
     "Pins the streaming loader's sampled output across a refactor.",
     "Regenerate: uv run python tests/mailwoman_train/data/test_loader_split_parity.py",
     "Fixture: build_reference_corpus() in the test beside this file — two sources, three",
-    "  countries, unequal country and source weights, multiple row groups per slice, and every",
+    "  countries, unequal country and source weights, multiple row groups per parquet file, and every",
     "  augmentation on, so every consumer of the shared RNG stream is live.",
     "",
     "rows: one seeded pass of iter_rows over the train split, each row as source|country|raw.",
@@ -47,7 +47,7 @@ REFERENCE_README = [
     "val_rows: the same over the val split, which takes the other branch of _raw_row_stream —",
     "  no source bucketing, and train-only policy neutralized.",
     "encoded: one seeded pass of iter_encoded on the char path, as labels + attention per row.",
-    "source_row_counts: rows per source read from parquet footers, what the dose audit reads.",
+    "source_row_counts: rows per source read from parquet footers, what the epoch-mixture audit reads.",
     "collate_keys: the batch keys collate emits for those examples.",
 ]
 
@@ -145,9 +145,9 @@ def _row(index: int, country: str, source: str) -> dict[str, Any]:
 def build_reference_corpus(root: Path) -> Path:
     """A corpus with enough variety that every filter and every RNG consumer is live.
 
-    Two sources so the multinomial runs; three countries with unequal weights so the acceptance
-    test both passes and fails; several row groups per slice so the row-group shuffle has
-    something to permute; a mixed-source val slice because the held-out branch bypasses the
+    Two sources so the multinomial runs. three countries with unequal weights so the acceptance
+    test both passes and fails. several row groups per parquet file so the row-group shuffle has
+    something to permute. a mixed-source val file because the held-out branch bypasses the
     source bucketing entirely and a single-source one would not tell the branches apart.
     """
     corpus = root / "corpus"
@@ -292,7 +292,7 @@ def test_source_row_counts_match_the_committed_reference(corpus: Path) -> None:
 
 
 def test_collate_keys_match_the_committed_reference(corpus: Path, tmp_path: Path) -> None:
-    """A channel dropped from `collate` reaches the model as an absent tensor, not an error."""
+    """A channel dropped from `collate` reaches the model as an absent tensor rather than an error."""
     if not REFERENCE.is_file():
         pytest.skip(f"no reference at {REFERENCE}; generate it before splitting")
     expected = json.loads(REFERENCE.read_text())["collate_keys"]

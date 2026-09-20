@@ -1,8 +1,8 @@
 """Building the input layer, the soft-feed channels and the transformer body.
 
-Construction order is a contract, and it binds this module twice. `_init_weights` walks
+Construction order is a interface, and it binds this module twice. `_init_weights` walks
 `self.parameters()`, which yields them in registration order and draws from the global RNG for
-each, so the three builders must be called from `__init__` in the order they appear below and
+each. Therefore, the three builders must be called from `__init__` in the order they appear below and
 nothing inside one may be reordered. A loaded checkpoint is unaffected — `load_state_dict`
 overwrites — but a from-scratch run started after a reorder no longer reproduces one started
 before it.
@@ -60,7 +60,7 @@ class CoarseEncoderConstruct(CoarseEncoderState):
 
         CRF NLL is per-sequence and unbounded — at random init it runs ~seq_len*log(num_tags),
         so ~380 against CE's ~3 per token, and equal-weight summing lets CRF gradients drown out
-        CE. `crf_loss_weight` 0.1 keeps the CRF a structural regularizer on the emissions;
+        CE. `crf_loss_weight` 0.1 keeps the CRF a structural regularizer on the emissions.
         weight 1.0 regressed val_macro_f1 from 0.26 to 0.17 by step 750. `crf_normalization`
         "per_token" divides by the real-token count for a magnitude comparable to per-token CE,
         which removes the hand-tuning that weight search needed; "per_sequence" is the older
@@ -106,7 +106,7 @@ class CoarseEncoderConstruct(CoarseEncoderState):
         (see `CharCNNEmbedding`) instead of read from a SentencePiece piece-ID table, so a whole
         word ("Čistá") is one token and diacritics never fragment the span. The SentencePiece
         table stays built and unused in that mode, which keeps the pretrain, MLM and save paths
-        working unchanged; the ship-slim path drops it once an architecture is chosen.
+        working unchanged. the ship-slim path drops it once an architecture is chosen.
 
         `phrase_input_projection` maps `(hidden + phrase_feature_dim) → hidden` so the body's
         stack keeps its declared `hidden_size`. It is None when phrase priors are off and the
@@ -169,7 +169,7 @@ class CoarseEncoderConstruct(CoarseEncoderState):
         rather than a zero-width one. `inject_first_token` additionally places the pooled anchor at
         position 0 and is meaningful only with the postcode anchor on.
 
-        `country_feature_scale` is a per-dim scale applied to `country_features` BEFORE the
+        `country_feature_scale` is a per-dim scale applied to `country_features` before the
         projection: dim 0 (country_surface) stays 1.0 and dim 1 (country_ambiguous) takes
         `country_ambiguous_scale`, where 1.0 is the hard homograph guard. It registers as a buffer
         so it EXPORTS as a constant into the ONNX graph — inference feeds the raw feature and the

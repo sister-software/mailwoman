@@ -51,7 +51,7 @@ describe("collectMissingFileEntries", () => {
 	})
 
 	it("accepts a directory entry satisfied by a member beneath it", () => {
-		// `out/` is how cartographer/spatial/tiger declare their build output; tar may not list the
+		// `out/` is how cartographer/spatial/tiger declare their build output. tar may not list the
 		// directory node itself, only its contents.
 		expect(collectMissingFileEntries(["out/"], new Set(["./out/index.js"]))).toEqual([])
 		expect(collectMissingFileEntries(["out"], new Set(["./out/index.js"]))).toEqual([])
@@ -108,8 +108,8 @@ describe("collectMissingImportTargets", () => {
 
 describe("collectMissingBinTargets", () => {
 	it("flags a bin whose file the tarball lacks — the map-tui class", () => {
-		// `@mailwoman/map-tui` declares `bin: { "map-tui": "./out/cli.js" }` and packs `out/` as a GLOB, so an
-		// unbuilt tree packs clean and npm PATH-links a file that isn't there. Nothing else in the manifest
+		// `@mailwoman/map-tui` declares `bin: { "map-tui": "./out/cli.js" }` and packs `out/` as a glob, so an
+		// unbuilt tree packs clean and npm path-links a file that isn't there. Nothing else in the manifest
 		// mentions `out/cli.js`, which is why neither the files nor the exports guard sees it.
 		const bin = { "map-tui": "./out/cli.js" }
 
@@ -118,7 +118,7 @@ describe("collectMissingBinTargets", () => {
 	})
 
 	it("reads both spellings npm accepts", () => {
-		// The string form names the package itself; the map form names each command.
+		// The string form names the package itself. the map form names each command.
 		expect(collectMissingBinTargets("./out/cli.js", new Set())).toEqual(["./out/cli.js"])
 
 		expect(collectMissingBinTargets({ mailwoman: "./out/cli.js", mw: "./out/cli.js" }, new Set())).toEqual([

@@ -77,7 +77,7 @@ export interface PerTagCounts {
 /**
  * Accumulate exact-match counts per tag. The caller owns inference so checks can choose their precise parse options
  * without duplicating the scoring implementation; `onRow` hands each row's predicted components back so a scorer can
- * run per-row diagnostics over the SAME parse the counts were taken from.
+ * run per-row diagnostics over the same parse the counts were taken from.
  */
 export async function scorePerTagCounts(
 	rows: readonly PerTagEvalRow[],
@@ -158,17 +158,17 @@ export interface UnfoldedEvalClassifierOptions {
 	 */
 	model: string
 	/**
-	 * PACKAGE-SHAPED (#718-safe): `<root>` loads model + tokenizer + card + ALL soft channels from the package via
+	 * Package-shaped (#718-safe): `<root>` loads model + tokenizer + card + all soft channels from the package via
 	 * `loadFromWeights` — the only in-distribution grade for a country-channel model (v6.2.0+). Takes precedence over the
 	 * explicit {@linkcode UnfoldedEvalClassifierOptions.model} path.
 	 */
 	weightsCache: string
 	/**
-	 * Gazetteer-anchor lexicon path; empty feeds nothing.
+	 * Gazetteer-anchor lexicon path. empty feeds nothing.
 	 */
 	gazetteerLexicon: string
 	/**
-	 * Feed the lexicon only when the path EXISTS on disk (the country probe's posture, harmless for older models) rather
+	 * Feed the lexicon only when the path exists on disk (the country probe's posture, harmless for older models) rather
 	 * than whenever it is set (the affix scorer's, where a missing file should fail loudly).
 	 */
 	gazetteerLexiconWhenPresent?: boolean
@@ -233,7 +233,7 @@ export interface LocaleEvalSpec {
 	 */
 	system: SystemCode
 	/**
-	 * Eval JSONL files (raw + components). Multiple files are concatenated.
+	 * Eval jsonl files (raw + components). Multiple files are concatenated.
 	 */
 	files: string[]
 }
@@ -242,10 +242,10 @@ export interface LocaleEvalSpec {
  * One eval spec per locale that has an eval set, shared by the capability-manifest generator and the mask-regression
  * release check. The eval rows carry split street parts so the affix capability (`street_prefix`/`street_suffix`) is
  * measurable — the folded `per-locale-f1.ts` joins the three street parts and cannot see it. FR uses the dedicated
- * street-prefix slice (`fr-street-prefix-real.jsonl`, the #719 reproduction), NOT the broad golden dev set, for the
+ * street-prefix eval set (`fr-street-prefix-real.jsonl`, the #719 reproduction), not the broad golden dev set, for the
  * essential tags: golden FR carries only ~7 `street_prefix` rows against ~1535 without it, so the unfolded
- * `street_prefix` F1 there is dominated by absent-gold rows (measured 5.3) — it would UNDER-certify the very capability
- * the delta check exists to protect. On the purpose-built slice the model emits FR `street_prefix` at F1 80.0 (the
+ * `street_prefix` F1 there is dominated by absent-gold rows (measured 5.3) — it would under-certify the very capability
+ * the delta check exists to guard. On the purpose-built eval set the model emits FR `street_prefix` at F1 80.0 (the
  * figure the #719 fix cites), which is the honest capability number the loader must guard.
  */
 export const MASK_EVAL_LOCALES: LocaleEvalSpec[] = [
@@ -272,19 +272,19 @@ export interface MaskOffOnOptions {
 	/**
 	 * The parse mode the rows are graded in. Both callers — the capability-manifest generator and the mask-regression
 	 * release check — pass `"formatted"`: the rows are formatted postal addresses, on which the production pipeline
-	 * derives `formatted` and runs the evidence-bundle channels OFF as a declared ablation. Omitting it grades the
-	 * bare-library default (`fragmented`), a path production does not take on these inputs; the option stays so a caller
+	 * derives `formatted` and runs the evidence-bundle channels off as a declared ablation. Omitting it grades the
+	 * bare-library default (`fragmented`), a path production does not take on these inputs. the option stays so a caller
 	 * can measure that path on purpose, never by accident (#2048).
 	 */
 	inputMode?: "formatted"
 }
 
 /**
- * Score one locale's rows mask-OFF (conventions disabled — the model's raw capability; `createScorer` warns about the
- * declared-required override, which is expected) and mask-ON (conventions `auto`: locale-head detection applies the
- * detected system's `forbiddenTags` as a hard emission mask — the SHIP behavior whose damage the callers measure).
+ * Score one locale's rows mask-off (conventions disabled — the model's raw capability; `createScorer` warns about the
+ * declared-required override, which is expected) and mask-on (conventions `auto`: locale-head detection applies the
+ * detected system's `forbiddenTags` as a hard emission mask — the ship behavior whose damage the callers measure).
  *
- * Full SHIP-CONFIG otherwise (anchor-on + gazetteer-on — `createScorer`'s defaults, less any declared tier override).
+ * Full ship-config otherwise (anchor-on + gazetteer-on — `createScorer`'s defaults, less any declared tier override).
  * Only the conventions channel toggles. `strict: true` fails closed if a declared channel can't be fed, so a
  * stale/incomplete feed surfaces loudly rather than silently grading a handicapped model.
  */

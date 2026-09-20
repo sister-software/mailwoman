@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The two halves of the OSGB36 → WGS84 pipeline are tested SEPARATELY and against different
+ *   The two halves of the OSGB36 → WGS84 pipeline are tested separately and against different
  *   tolerances, because they fail differently. The projection is exact algebra and is held to
- *   sub-millimetre; the Helmert is an approximation to OSTN15 and is held to the ±5 m the module
+ *   sub-millimetre. the Helmert is an approximation to OSTN15 and is held to the ±5 m the module
  *   docstring promises. Collapsing them into one end-to-end assertion at 5 m would let a real
  *   projection bug hide inside the datum budget.
  */
@@ -22,7 +22,7 @@ function dms(degrees: number, minutes: number, seconds: number): number {
 
 /**
  * Rough metres-per-degree at GB latitudes, for turning an angular residual into the metres the accuracy claim is stated
- * in. Approximate on purpose — it is measuring a 3 m error against a 5 m bar, not surveying.
+ * in. Approximate on purpose — it is measuring a 3 m error against a 5 m bar rather than surveying.
  */
 function offsetMeters(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }): number {
 	const dNorth = (a.latitude - b.latitude) * 111_132
@@ -34,7 +34,7 @@ function offsetMeters(a: { latitude: number; longitude: number }, b: { latitude:
 /**
  * OS's Annexe C worked example for the National Grid projection, from "A Guide to Coordinate Systems in Great Britain"
  * (V3.6, © OS 2020) — the OSGB36 geodetic coordinates and the eastings/northings they project to. C.1 runs it forwards,
- * C.2 backwards; we test the backwards direction, which is the one this module implements.
+ * C.2 backwards. we test the backwards direction, which is the one this module implements.
  */
 const ANNEXE_C_GRID = { easting: 651_409.903, northing: 313_177.27 }
 const ANNEXE_C_OSGB36 = { latitude: dms(52, 39, 27.2531), longitude: dms(1, 43, 4.5177) }
@@ -44,9 +44,9 @@ const ANNEXE_C_OSGB36 = { latitude: dms(52, 39, 27.2531), longitude: dms(1, 43, 
  * geodetic to National Grid E/N.
  *
  * This is the test that pins the datum shift, and it is worth being precise about what it can and cannot show. Annexe D
- * uses the SAME Helmert this module does, so agreement here proves the implementation — the parameter signs, the
+ * uses the same Helmert this module does, so agreement here proves the implementation — the parameter signs, the
  * Position-Vector rotation convention, the cartesian round trip. It says nothing about how close the Helmert is to
- * OSTN15 truth; that is the separate 40-point test below.
+ * OSTN15 truth. that is the separate 40-point test below.
  */
 const ANNEXE_D_GRID = { easting: 422_297.792, northing: 412_878.741 }
 const ANNEXE_D_OSGB36 = { latitude: dms(53, 36, 42.2972), longitude: -dms(1, 39, 46.5416) }
@@ -56,10 +56,10 @@ const ANNEXE_D_ETRS89 = { latitude: dms(53, 36, 43.1653), longitude: -dms(1, 39,
  * A six-point span of OS's official OSTN15/OSGM15 developer-pack test vectors (`OSTN15_OSGM15_TestInput_*`), each
  * pairing a published OSGB36 easting/northing with the published ETRS89 latitude/longitude of the same physical point.
  *
- * OSTN15 is the exact transformation; these residuals therefore measure the Helmert APPROXIMATION, which is the number
+ * OSTN15 is the exact transformation. these residuals therefore measure the Helmert approximation, which is the number
  * the module's ±5 m promise is about. Six of the forty are inlined — chosen to span the extremes rather than to sample
  * evenly, because the error is a smooth field and only its corners are informative. TP01 (Scilly) and TP31 (St Kilda)
- * are the two worst points in the whole set; TP08 (Bristol) and TP38 (Shetland waters) are among the best. The full
+ * are the two worst points in the whole set. TP08 (Bristol) and TP38 (Shetland waters) are among the best. The full
  * 40-point distribution is recorded in the module docstring.
  *
  * OS OpenData, Open Government Licence v3.
@@ -77,7 +77,7 @@ test("osgb36GridToAiryLatLon reproduces OS's Annexe C.2 worked example to sub-mi
 	const got = osgb36GridToAiryLatLon(ANNEXE_C_GRID)
 
 	// 1e-4 arc-seconds is ~3 mm of ground distance. The measured residual is ~1.3e-5 arcsec (~0.4 mm),
-	// which is the worked example's own rounding, not our error — OS publishes to 0.0001".
+	// which is the worked example's own rounding rather than our error — OS publishes to 0.0001".
 	expect(Math.abs(got.latitude - ANNEXE_C_OSGB36.latitude) * 3600).toBeLessThan(1e-4)
 	expect(Math.abs(got.longitude - ANNEXE_C_OSGB36.longitude) * 3600).toBeLessThan(1e-4)
 })
@@ -97,7 +97,7 @@ test("the Helmert reproduces OS's Annexe D worked example to the centimetre", ()
 	expect(Math.abs(airy.latitude - ANNEXE_D_OSGB36.latitude) * 3600).toBeLessThan(1e-3)
 	expect(Math.abs(airy.longitude - ANNEXE_D_OSGB36.longitude) * 3600).toBeLessThan(1e-3)
 
-	// And the shift must be a REAL correction, not a no-op: OSGB36 and WGS84 differ by ~70-120 m across
+	// And the shift must be a real correction rather than a no-op: OSGB36 and WGS84 differ by ~70-120 m across
 	// GB, so a Helmert that silently did nothing would still look close to the OSGB36 intermediate.
 	expect(offsetMeters(got, ANNEXE_D_OSGB36)).toBeGreaterThan(50)
 })
@@ -109,7 +109,7 @@ test("the Helmert stays inside 5 m of OSTN15 truth across the GB extremes", () =
 		expect(offsetMeters(got, { latitude, longitude }), id).toBeLessThan(5)
 	}
 
-	// The bar is a promise, not a description — the mainland points are far better than it, and pinning
+	// The bar is a promise rather than a description — the mainland points are far better than it, and pinning
 	// that keeps a regression that doubles the mainland error from hiding under an offshore-sized budget.
 	const bristol = OSTN15_POINTS.find((p) => p.id === "TP08")!
 
@@ -143,7 +143,7 @@ test("osgb36ToWGS84 places known GB landmarks where they actually are", () => {
 })
 
 test("osgb36ToWGS84 spans the GB extent without the series diverging", () => {
-	// Redfearn's series is a truncated expansion in distance from the central meridian; it is well-behaved
+	// Redfearn's series is a truncated expansion in distance from the central meridian. it is well-behaved
 	// across GB but not everywhere. Pin the corners so a change to the series terms cannot quietly break
 	// the far south-west or the Northern Isles while London still looks right.
 	const scilly = osgb36ToWGS84({ easting: 90_000, northing: 10_000 })
@@ -159,8 +159,8 @@ test("osgb36ToWGS84 spans the GB extent without the series diverging", () => {
 })
 
 test("the grid origin is a real Atlantic coordinate, not a sentinel", () => {
-	// Code-Point Open writes 0,0 for its 865 no-coordinate rows, but 0,0 IS a valid grid point (south-west
-	// of the Scillies). The module cannot detect the sentinel and must not try — this pins that contract so
+	// Code-Point Open writes 0,0 for its 865 no-coordinate rows, but 0,0 is a valid grid point (south-west
+	// of the Scillies). The module cannot detect the sentinel and must not try — this pins that interface so
 	// nobody "helpfully" adds a zero check here instead of filtering at the call site.
 	const origin = osgb36ToWGS84({ easting: 0, northing: 0 })
 

@@ -1,6 +1,6 @@
 # Earth Shell Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** A private workspace, `packages/earth`, that builds a React + Vite installable PWA for Cloudflare Workers Static Assets, mounts the geocoder UI from `@mailwoman/react/map` on a fake runtime, serves `/`, `/debug`, `/trace` and `/build.json`, and is ready for a Workers Builds project at `earth.mailwoman.ai`. No real runtime moves in this plan; that is the second Earth plan.
 
@@ -18,7 +18,7 @@
 - `process.env` is never read directly; there is no environment to read in this plan.
 - A test imports the package under test through its public exports; the app declares an `exports` entry for every module a test names.
 - Source under `lib/`, tests under `test/`, `rootDir: ./lib`, explicit `.ts`/`.tsx` extensions on relative imports, no `enum`.
-- Comments state invariants, not history.
+- Comments state invariants rather than history.
 - Every commit passes the pre-commit hook. Branch: `git fetch origin main && git checkout -b feat/earth-shell origin/main`.
 - Nothing in `docs/` changes in this plan except the three-origin CORS edit in the tile worker, which is not in `docs/`.
 
@@ -136,7 +136,7 @@ Expected: the react browser suite passes with the same count as on `main`; knip 
 
 ```bash
 git add packages/react
-git commit -m "feat(react): the fake geocoder runtime is a public subpath, map/fake-runtime, not a test helper"
+git commit -m "feat(react): the fake geocoder runtime is a public subpath, map/fake-runtime rather than a test helper"
 ```
 
 ---
@@ -357,7 +357,7 @@ the query on all three. Cloudflare's SPA fallback serves `index.html` for each; 
 
 ## Deployment: Workers Builds
 
-Cloudflare builds and deploys this app from the repository; the settings live in the Cloudflare dashboard, not here.
+Cloudflare builds and deploys this app from the repository; the settings live in the Cloudflare dashboard rather than here.
 
 | Setting           | Value                                                        |
 | ----------------- | ------------------------------------------------------------ |
@@ -430,7 +430,7 @@ describe("routeForPath", () => {
 		expect(routeForPath(pathname)).toBe(route)
 	})
 
-	test("an unknown path is null, not the geocoder", () => {
+	test("an unknown path is null rather than the geocoder", () => {
 		expect(routeForPath("/demo")).toBeNull()
 		expect(routeForPath("/debug/extra")).toBeNull()
 	})

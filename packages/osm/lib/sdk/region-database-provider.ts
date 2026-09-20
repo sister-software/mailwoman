@@ -7,7 +7,7 @@
  *   with the country's street-normalization locale (so probe-side keying matches the extract the builder
  *   wrote) and caches the open handle per country. Wire its bound `for` into `GeocodeDeps.osmExtracts`.
  *
- *   ⚠ The extracts it opens are ODbL OpenStreetMap Derived Databases — see `osm/README.md` for the
+ *   ⚠ The extracts it opens are ODbL OpenStreetMap Derived Databases — see `osm/readme.md` for the
  *   distribution boundary and the counsel sign-off required before shipping any of them.
  */
 
@@ -28,9 +28,9 @@ export interface OSMExtracts {
  * Opens + caches per-country OSM rooftop lookups. A non-US geocode consults `for(country)`; the first hit for a country
  * opens its extract (with the matching street locale) once, subsequent calls reuse it.
  *
- * `for` is synchronous, so on-disk existence is probed asynchronously ONCE instead of per call: {@linkcode warm} awaits
+ * `for` is synchronous, so on-disk existence is probed asynchronously once instead of per call: {@linkcode warm} awaits
  * `pathExists` for every supported country's extract and records what exists; `for` consults that map. Prefer
- * {@linkcode OSMRegionDatabaseProvider.create}, which constructs AND warms before answering — a provider constructed
+ * {@linkcode OSMRegionDatabaseProvider.create}, which constructs and warms before answering — a provider constructed
  * directly must be warmed before its first `for`, or it answers `{}` for every country.
  */
 export class OSMRegionDatabaseProvider implements Disposable {
@@ -48,7 +48,7 @@ export class OSMRegionDatabaseProvider implements Disposable {
 
 	/**
 	 * Construct a provider and warm its existence map before answering. The constructor cannot await the probe, so this
-	 * static factory does; a caller that constructs directly must {@linkcode warm} before the first `for`.
+	 * static factory does. a caller that constructs directly must {@linkcode warm} before the first `for`.
 	 */
 	static async create(dataRoot: string): Promise<OSMRegionDatabaseProvider> {
 		const provider = new OSMRegionDatabaseProvider(dataRoot)
@@ -58,7 +58,7 @@ export class OSMRegionDatabaseProvider implements Disposable {
 		return provider
 	}
 
-	#slicePath(countryCode: string): string {
+	#addressPointsPath(countryCode: string): string {
 		return join(this.#dataRoot, "osm", `address-points-${countryCode}-${countryCode}.db`)
 	}
 
@@ -73,7 +73,7 @@ export class OSMRegionDatabaseProvider implements Disposable {
 
 	async #probeExtracts(): Promise<void> {
 		for (const cc of supportedOSMCountries()) {
-			const path = this.#slicePath(cc)
+			const path = this.#addressPointsPath(cc)
 
 			if (await pathExists(path)) {
 				this.#onDisk.add(path)
@@ -94,9 +94,9 @@ export class OSMRegionDatabaseProvider implements Disposable {
 
 		let entry: OSMExtracts = {}
 
-		// Only countries with a registered street locale AND an on-disk extract — never key with the wrong rules.
+		// Only countries with a registered street locale and an on-disk extract — never key with the wrong rules.
 		if (supportedOSMCountries().includes(cc)) {
-			const path = this.#slicePath(cc)
+			const path = this.#addressPointsPath(cc)
 
 			if (this.#onDisk.has(path)) {
 				entry = { addressPoints: new AddressPointSqliteLookup(path, { streetLocale: streetLocaleForCountry(cc) }) }

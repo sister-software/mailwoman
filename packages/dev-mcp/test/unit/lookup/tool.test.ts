@@ -3,7 +3,7 @@
 
 /**
  *   The dispatch half of `mwdev_lookup`: which artifact each source resolves, and what it says when that artifact is
- *   not there. Every case here pins the same rule — an absent artifact returns `unavailable_reason` and NO rows, never
+ *   not there. Every case here pins the same rule — an absent artifact returns `unavailable_reason` and no rows, never
  *   a row per query saying "no", which is the shape a genuine absence has.
  */
 
@@ -13,7 +13,7 @@ import { runLookup } from "@mailwoman/dev-mcp/lookup/tool"
 import { afterAll, describe, expect, it } from "vitest"
 
 /**
- * The five artifact-backed sources never touch the registry; passing one that would throw proves it.
+ * The five artifact-backed sources never touch the registry. passing one that would throw proves it.
  */
 const noRegistry = new Proxy({} as EngineRegistryLike, {
 	get() {

@@ -27,12 +27,12 @@ test("splitCSVLine strips the wrapping quotes Code-Point puts on every text fiel
 	expect(row[1]).toBe("10")
 	expect(row[2]).toBe("526506")
 	expect(row[4]).toBe("E92000001")
-	// The empty admin-county field is an empty string, not a `""` literal and not undefined.
+	// The empty admin-county field is an empty string rather than a `""` literal and not undefined.
 	expect(row[7]).toBe("")
 })
 
 test("splitCSVLine treats a comma inside quotes as data", () => {
-	// The case that defeats the shared splitter. No row in the 2026-05 extract needs this; the format allows it.
+	// The case that defeats the shared splitter. No row in the 2026-05 extract needs this. the format allows it.
 	expect(splitCSVLine('"AB1 1AA",10,1,2,"X, Y","b"')).toEqual(["AB1 1AA", "10", "1", "2", "X, Y", "b"])
 })
 
@@ -79,7 +79,7 @@ test("readCodePointCSV keeps a quoted multiline field in one logical record and 
 })
 
 test("normalizeCodePointSpacing collapses the fixed-width padded form", () => {
-	// Code-Point is SPECIFIED as a 7-character field with the outward code left-justified, so a short
+	// Code-Point is specified as a 7-character field with the outward code left-justified, so a short
 	// postcode is padded to `B1  1AA`. Left alone that is a different string from `B1 1AA` and would land
 	// as a second, duplicate place.
 	expect(normalizeCodePointSpacing('"B1  1AA"'.replaceAll('"', ""))).toBe("B1 1AA")
@@ -119,7 +119,7 @@ test("parseCodePointMetadata reads the header fields and the per-area row manife
 })
 
 test("parseCodePointMetadata survives an unknown header field", () => {
-	// OS has added header rows before (RM UPDATE DATE postdates the product). A new one must not be fatal
+	// OS has added header rows before (RM update date postdates the product). A new one must not be fatal
 	// and must not be mistaken for an area count.
 	const metadata = parseCodePointMetadata(
 		["PRODUCT: OS CODE-POINT_03.02", "SOME NEW FIELD: whatever", "      AB\t17403"].join("\n")

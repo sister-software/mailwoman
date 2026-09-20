@@ -4,36 +4,37 @@
 /**
  *   `mailwoman corpus upload` — push a corpus version, the tokenizer, or the training code to R2.
  *
- *   R2 IS THE ONLY WAY IN. `modal volume put` writes to the training volume are visible to
- *   `modal volume ls/get` and NOT to containers — `train_remote.py` documents that in its own source,
+ *   R2 is the only WAY IN. `modal volume put` writes to the training volume are visible to
+ *   `modal volume ls/get` and not to containers — `train_remote.py` documents that in its own source,
  *   and it is why every remote artifact travels local → R2 → container-side rclone. A corpus that never
  *   reaches R2 cannot reach a GPU.
  *
- *   VERSION-GENERAL BY ARGUMENT. This command used to carry a hardcoded five-step script — "sync corpus
+ *   version-general BY argument. This command used to carry a hardcoded five-step script — "sync corpus
  *   v0.3.0", "sync corpus v0.4.0", tokenizer, code — so a new corpus version could not be uploaded
  *   without editing it. Worse, the hardcoded versions had stopped existing locally, so the very first
  *   step failed on a checkout where they were absent and buried the reason under rclone's harmless
- *   missing-config NOTICE. That failure reads as "R2 is not configured" and is not.
+ *   missing-config notice. That failure reads as "R2 is not configured" and is not.
  *
  *   Credentials come from `RCLONE_S3_*` in the typed private env, consumed through rclone's `:s3:`
- *   connection-string form. **No `rclone.conf` is involved**, so the NOTICE about one being absent is
- *   expected output, not a fault — it is suppressed here so it stops being read as an error.
+ *   connection-string form. **No `rclone.conf` is involved**, so the notice about one being absent is
+ *   expected output rather than a fault — it is suppressed here so it stops being read as an error.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { Box, Text } from "ink"
 import { useState } from "react"
 import { Globerator } from "spliterator/node/fs"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import { $private } from "#env"
 
 const DEFAULT_BUCKET = "mailwoman-assets"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "upload",
@@ -51,15 +52,6 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	bucket: string
-	corpusVersion?: string
-	corpusDir?: string
-	tokenizer: boolean
-	code: boolean
-	dryRun: boolean
-}
-
 interface Step {
 	label: string
 	status: "pending" | "running" | "done" | "error" | "skipped"
@@ -74,7 +66,7 @@ const MARK: Record<Step["status"], string> = {
 	skipped: "–",
 }
 
-const CorpusUpload: ParsedCommandComponent<Options> = ({ options }) => {
+const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 	const [steps, setSteps] = useState<Step[]>([])
 
 	const state = useCommandTask(async () => {
@@ -84,7 +76,7 @@ const CorpusUpload: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const corpusRoot = options.corpusDir ?? String(dataRootPath("corpus", "versioned"))
 
-		const versions = splitList(options.corpusVersion)
+		const versions = extractDelimited(options.corpusVersion)
 
 		if (!versions.length && !options.tokenizer && !options.code) {
 			const available = (await pathExists(corpusRoot))
@@ -98,7 +90,7 @@ const CorpusUpload: ParsedCommandComponent<Options> = ({ options }) => {
 		}
 
 		// rclone reads `:s3:` credentials from the environment. Point RCLONE_CONFIG at nothing so the
-		// "config file not found" NOTICE stops appearing in output that people read as a failure.
+		// "config file not found" notice stops appearing in output that people read as a failure.
 		const env = childEnv({
 			RCLONE_CONFIG: "",
 			RCLONE_S3_PROVIDER: "Cloudflare",
@@ -163,8 +155,8 @@ const CorpusUpload: ParsedCommandComponent<Options> = ({ options }) => {
 			setSteps((prev) => prev.map((s, i) => (i === index ? { ...s, ...patch } : s)))
 
 		for (const [index, job] of jobs.entries()) {
-			// CHECK THE SOURCE FIRST. rclone's own error for an absent directory arrives buried under the
-			// config NOTICE, which is exactly how "this version does not exist here" got read as "R2 is
+			// check the source first. rclone's own error for an absent directory arrives buried under the
+			// config notice, which is exactly how "this version does not exist here" got read as "R2 is
 			// broken". Say which path was missing instead.
 			if (!(await pathExists(job.source))) {
 				update(index, { status: "error", detail: `not found locally: ${job.source}` })

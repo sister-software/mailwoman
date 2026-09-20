@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Engine contract + the `ComponentTag` → libpostal-label mapping. libpostal-specific knowledge
- *   lives here; the engine yields raw Mailwoman matches (a `ComponentTag` classification + covered
+ *   Engine interface + the `ComponentTag` → libpostal-label mapping. libpostal-specific knowledge
+ *   lives here. the engine yields raw Mailwoman matches (a `ComponentTag` classification + covered
  *   text) and {@link toLibpostalComponents} serializes them to libpostal's ordered `[{label,
  *   value}]` shape.
  */
@@ -27,7 +27,7 @@ export interface ParseMatch {
 }
 
 /**
- * Mailwoman `ComponentTag` → libpostal label. libpostal's label set is OSM-derived; ours is close but not identical, so
+ * Mailwoman `ComponentTag` → libpostal label. libpostal's label set is OSM-derived. ours is close but not identical, so
  * map the overlap and pass unmapped classifications through unchanged.
  */
 export const COMPONENT_TO_LIBPOSTAL: Record<string, string> = {
@@ -67,7 +67,7 @@ const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_part
 
 /**
  * Flatten a neural `AddressTree` to reading-order raw matches for {@link LibpostalEngine.parse}. The street node and
- * its street-name children collapse into ONE `street` match (libpostal's `road` is the full name); other children
+ * its street-name children collapse into one `street` match (libpostal's `road` is the full name); other children
  * (house_number, unit) emit as their own matches. Values join with a single space — original inter-part punctuation is
  * not reconstructed.
  */

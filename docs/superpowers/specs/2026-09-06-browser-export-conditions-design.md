@@ -27,7 +27,7 @@ workaround that will never be removed.
 
 `rspack` stays disabled in `docs/docusaurus.config.ts` for the same reason: it refuses the `node:`
 imports webpack is told to stub. The docs build is slower than it needs to be because the packages are
-wrong, not because Docusaurus is.
+wrong rather than because Docusaurus is.
 
 ## Decisions taken
 
@@ -52,7 +52,7 @@ Before any edit, produce the list of `@mailwoman/*` subpaths the docs client bun
 each, the Node builtin it pulls in and through which import. `esbuild` with
 `conditions: ["browser"]`, `platform: "browser"` and `bundle: true` over each subpath, run with the
 stubs removed, reports the exact chain in its error output. The inventory is a table in the PR
-description, not a comment in code.
+description rather than a comment in code.
 
 The likely shape, from the stub list: `@mailwoman/core/fs/*` reached through a resources reader;
 `path-ts` composed paths that assume `node:path`; `@mailwoman/core/module/resolvers` reached through a

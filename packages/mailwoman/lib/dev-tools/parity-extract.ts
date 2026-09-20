@@ -24,7 +24,7 @@ export interface ParityCase {
 	 */
 	expected: unknown[]
 	/**
-	 * Set when an expected arg wasn't a pure literal; that slot in `expected` holds source text.
+	 * Set when an expected arg wasn't a pure literal. that slot in `expected` holds source text.
 	 */
 	nonLiteral?: boolean
 }

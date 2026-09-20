@@ -3,7 +3,7 @@
 
 /**
  *   The app's routes, read from `location.pathname` with no router. Cloudflare's SPA fallback serves `index.html`
- *   for every path, so the app decides what a path means; a path it does not know is a not-found view, so a stale
+ *   for every path, so the app decides what a path means. a path it does not know is a not-found view, so a stale
  *   link fails visibly rather than showing the globe as if nothing were wrong.
  */
 

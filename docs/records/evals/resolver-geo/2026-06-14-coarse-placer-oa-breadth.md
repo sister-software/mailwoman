@@ -13,7 +13,7 @@ DeepSeek's refinements (leave-one-language-family-out + an abstention-threshold 
 - **Split — leave-one-language-FAMILY-out** (not random, per DeepSeek): **16 TRAIN** countries across 7
   families (slavic, romance, germanic, nordic, hellenic, central-asian, maritime) feed the `OTHER` class;
   **11 HELDOUT** countries across 3 families **never trained** (baltic EE/LV/LT, oceania AU/NZ/NC,
-  middle-east AE/IL/KW/QA/SA) are the honest generalization probe.
+  middle-east AE/IL/KW/QA/SA) are the direct generalization probe.
 - **Models:** M3 baseline (Overture, 4 off-map countries) vs the OA-broadened retrain, both evaluated on
   the same OA test set. Coarse-placer is a char-ngram hashed **linear** classifier.
 

@@ -39,7 +39,7 @@ export interface ModuleMoveResult {
 	manifestRewrites: ManifestRewrite[]
 	pathLiterals: PathLiteralRewrite[]
 	/**
-	 * Rewritten specifiers re-resolved to their target against the moved tree. Equal to `rewrites.length` on success; a
+	 * Rewritten specifiers re-resolved to their target against the moved tree. Equal to `rewrites.length` on success. a
 	 * shortfall throws rather than returning.
 	 */
 	verified: number
@@ -100,7 +100,7 @@ async function removeEmptiedDirectories(repoRoot: string, directories: readonly 
  * Delete what each moved source used to emit.
  *
  * `tsc -b --clean` does not: nothing claims the output of a source that is no longer there, so it survives every
- * rebuild. A stale `out/cli.js` then ANSWERS — it is a complete, loadable module compiled from the old tree — and the
+ * rebuild. A stale `out/cli.js` then answers — it is a complete, loadable module compiled from the old tree — and the
  * first thing it does is import a path that moved. Removing it here is what makes the next build's absence mean
  * absence.
  */
@@ -123,7 +123,7 @@ async function rewriteFile(repoRoot: string, file: string, edits: readonly TextE
  * Move the files and rewrite the specifiers `plan` names.
  *
  * A plan carrying an unresolved specifier is refused outright: it describes a tree that would not resolve, and applying
- * the part of it that does resolve leaves the remainder harder to find, not easier.
+ * the part of it that does resolve leaves the remainder harder to find rather than easier.
  */
 export async function applyModuleMoves(
 	context: RepoContext,

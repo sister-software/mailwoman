@@ -5,7 +5,7 @@
  *   The conformance runner's three refusals and its failure line.
  *
  *   `undecidable` must not hold, an empty suite must not pass, and both sides of a law must be observed
- *   independently — a fixture whose base and variant are the same string IS the identity law, and answering
+ *   independently — a fixture whose base and variant are the same string is the identity law, and answering
  *   its second side from a cache would turn the strongest nondeterminism check available into a tautology.
  *
  *   `gauntletObserver` is checked against a hand-built `GeocodeResult` so the claim "this runs through the
@@ -293,10 +293,10 @@ describe("gauntletObserver", () => {
 		expect(outcome.result.country).toBe("United Kingdom")
 		expect(outcome.result.hierarchy[0]?.placeID).toBe("wof:101750367")
 		// No mechanism account: the shape vocabulary lives in the private dev-mcp workspace, so a shape-carrying
-		// observer is the caller's to supply. Absent, not empty.
+		// observer is the caller's to supply. Absent rather than empty.
 		expect(outcome.mechanismShapes).toBeUndefined()
 		// And no resolver trace either: the walk records nothing unless a sink asks it to, and this observer does
-		// not ask. Absent, not an empty walk — the distinction `candidate_admissibility` reads.
+		// not ask. Absent rather than an empty walk — the distinction `candidate_admissibility` reads.
 		expect(outcome.candidates).toBeUndefined()
 	})
 })

@@ -10,7 +10,7 @@
  *   frozen candidate set. They share a word and measure different layers.
  *
  *   Every rate prints its denominator, and a rate nobody could compute prints as `unmeasured` rather than as
- *   zero — a wrong-area rate over no coordinate-bearing selection is not 0%.
+ *   zero — a wrong-area rate over no coordinate-containing selection is not 0%.
  *
  *   `renderLosses` lists the rows the baseline won and Mailwoman did not, with the query in view. A report
  *   of aggregates alone cannot be audited, and those rows name the mechanism.
@@ -191,7 +191,7 @@ export function renderDecisionTable(verdict: BenchmarkVerdict): string[] {
 }
 
 /**
- * One arm's abstention-threshold curve, with both sides of the trade in the same row: what withholding buys on the
+ * One arm's abstention-threshold curve, with both sides of the trade in the same row: what withholding provides on the
  * withheld-gold rows and what it costs on the rows that hold a gold.
  */
 export function renderThresholdCurve(arm: string, curve: readonly ThresholdPoint[]): string[] {
@@ -236,7 +236,7 @@ export function renderThresholdDecisions(decisions: readonly ThresholdDecision[]
  * The rows the baseline got right and Mailwoman did not, with the query in view.
  *
  * A record that prints only aggregates cannot be audited, and these are the rows worth reading: a deterministic
- * resolver with no fame term beating the production one names a mechanism, not a rounding difference.
+ * resolver with no fame term beating the production one names a mechanism rather than a rounding difference.
  */
 export function renderLosses(
 	panel: readonly SameDataPanelRow[],

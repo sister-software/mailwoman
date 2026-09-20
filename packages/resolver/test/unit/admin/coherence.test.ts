@@ -5,7 +5,7 @@
  *   Tests for #263 admin descendant-consistency (`opts.adminCoherence`). When a region resolves to a
  *   foreign namesake (greedy by population — "ME" → Messina, IT) and its child locality then finds
  *   nothing beneath it, re-pick the (region, locality) pair so the locality descends from a same-named
- *   region candidate ("Portland" → Maine, not Messina). Joint over the containment graph; no country
+ *   region candidate ("Portland" → Maine rather than Messina). Joint over the containment graph. no country
  *   prior, no list. Byte-stable when the flag is unset and when no consistent pair exists.
  */
 
@@ -142,7 +142,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 		const out = await resolver.resolveTree(portlandMeTree(), { adminCoherence: false })
 		const loc = localityOf(out)
 
-		// Greedy walk scoped Portland to Messina (parent 10) → nothing → unresolved; no re-pick.
+		// Greedy walk scoped Portland to Messina (parent 10) → nothing → unresolved. no re-pick.
 		expect(loc?.lat == null || (loc.lat === 0 && loc.lon === 0)).toBe(true)
 		expect(loc?.metadata?.["admin_coherence_repicked"]).toBeUndefined()
 	})
@@ -157,7 +157,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 	})
 
 	it("ignores fuzzy (non-exact) region candidates — a Portland under Missouri must NOT match the token 'ME'", async () => {
-		// Place a Portland under Missouri (the fuzzy runner-up). Since MISSOURI.exactMatch is false, the
+		// Place a Portland under Missouri (the fuzzy runner-up). Since missouri.exactMatch is false, the
 		// pass must not consider it, so no re-pick to Missouri.
 		const PORTLAND_MO: ResolvedPlace = { ...PORTLAND_ME, id: 31, parent_id: 30, lat: 37, lon: -93 }
 		const resolver = createWOFResolver(await makeBackend([MESSINA, MISSOURI, PORTLAND_MO]))
@@ -168,7 +168,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 	})
 
 	it("falls through to a same-named COUNTRY when no region holds the locality (#267 — Tbilisi, Georgia)", async () => {
-		// "Georgia" the US state vs Georgia the country. Tbilisi descends from the COUNTRY, Atlanta from the state.
+		// "Georgia" the US state vs Georgia the country. Tbilisi descends from the country, Atlanta from the state.
 		const usGeorgia = {
 			id: 40,
 			name: "Georgia",
@@ -235,16 +235,16 @@ describe("resolveTree + adminCoherence (#263)", () => {
 		expect(tb?.lat).toBeCloseTo(41.69, 2)
 		expect(tb?.metadata?.["admin_coherence_repicked"]).toBe(true)
 
-		// Atlanta IS under the US state → it resolves in the walk; no country fall-through.
+		// Atlanta is under the US state → it resolves in the walk. no country fall-through.
 		const at = localityOf(await resolver.resolveTree(tree("Atlanta"), { adminCoherence: true }))
 		expect(at?.lat).toBeCloseTo(33.76, 2)
 	})
 
 	it("re-picks via matchCountry when the gazetteer has NO country node + the locality is orphaned (#1023 — flattened GE hierarchy)", async () => {
 		// The 2026-07-07 admin rebuild (#1015) flattened Georgia to localities-only: no `country`-placetype
-		// node, and Tbilisi orphaned (parent_id -1). So both the country-node lookup AND the `parentID`
+		// node, and Tbilisi orphaned (parent_id -1). So both the country-node lookup and the `parentID`
 		// descendant test miss it — the exact shape that regressed "Tbilisi, Georgia" → US Georgia (10,200 km).
-		// matchCountry("Georgia") → GE lets the fall-through scope by the `country` COLUMN, which is still set.
+		// matchCountry("Georgia") → GE lets the fall-through scope by the `country` column, which is still set.
 		const usGeorgia = {
 			id: 40,
 			name: "Georgia",
@@ -289,7 +289,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 		expect(loc?.lon).toBeCloseTo(44.83, 2)
 		expect(loc?.metadata?.["admin_coherence_repicked"]).toBe(true)
 
-		// The greedy walk had bound the region node to the US-state namesake; the fall-through reverts that
+		// The greedy walk had bound the region node to the US-state namesake. the fall-through reverts that
 		// stale decoration so no wrong-country coordinate / `resolver_country` leaks into the result.
 		const region = regionOf(out)
 		expect(region?.lat).toBeUndefined()
@@ -344,7 +344,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 
 		const loc = localityOf(out)
 		expect(loc?.lat).toBeCloseTo(33.76, 2)
-		// Resolved in the walk, not by the coherence pass — no re-pick marker.
+		// Resolved in the walk rather than by the coherence pass — no re-pick marker.
 		expect(loc?.metadata?.["admin_coherence_repicked"]).toBeUndefined()
 		// The US-Georgia region decoration stands (not reverted).
 		const region = regionOf(out)
@@ -353,7 +353,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 })
 
 describe("resolveTree + applyParentFallbackContradiction", () => {
-	// 臺南市 (Tainan City) and 新竹市 (Hsinchu City) are regions; only Hsinchu's 北區 carries a key. The walk scopes 北區 to
+	// 臺南市 (Tainan City) and 新竹市 (Hsinchu City) are regions. only Hsinchu's 北區 carries a key. The walk scopes 北區 to
 	// Tainan, misses, and the parent-fallback retry answers Hsinchu's — a namesake 214 km away on the real gazetteer.
 	const TAINAN: ResolvedPlace = {
 		id: 100,

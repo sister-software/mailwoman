@@ -67,7 +67,7 @@
 		"@mailwoman/variant-aliases": "workspace:*"
 	},
 	"devDependencies": {
-		"path-ts": "^2.3.0"
+		"path-ts": "^2.4.1"
 	},
 	"engines": {
 		"node": ">=24.18.0"

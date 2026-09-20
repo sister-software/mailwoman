@@ -1,10 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { sample } from "@mailwoman/core/random"
+
 import { makeCedex, makePoBoxPhrase } from "#recipes/po/box/cedex/phrases"
 import type { FRTuple, Rendered } from "#recipes/po/box/cedex/types"
 import { FR_LEADERS, VENUES_FR } from "#recipes/po/box/cedex/vocabulary"
-import { pick } from "#synthesizers/utils"
 
 const BP_TAIL_CUTOFF = 0.45,
 	BP_BARE_CUTOFF = 0.6,
@@ -41,7 +42,7 @@ export function renderBpFr(random: () => number, tuple: FRTuple): Rendered {
 		}
 	}
 
-	const venue = pick(VENUES_FR, random)
+	const venue = sample(VENUES_FR, random)
 
 	return {
 		fmt: "bp-venue",
@@ -69,7 +70,7 @@ export function renderCedexFr(random: () => number, tuple: FRTuple): Rendered {
 	if (draw < CEDEX_GOLDEN_ORDER_CUTOFF)
 		return { fmt: "cedex-golden-order", raw: `${postcode} ${cedex} ${location}`, components: line }
 
-	const venue = pick(VENUES_FR, random)
+	const venue = sample(VENUES_FR, random)
 
 	return { fmt: "cedex-venue", raw: `${venue}, ${postcode} ${location} ${cedex}`, components: { venue, ...line } }
 }

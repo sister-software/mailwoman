@@ -1,6 +1,6 @@
 # Interface Reference
 
-Every boundary in the system has an explicit TypeScript contract. Stick to these. If you need to extend, extend; do not silently widen.
+Every boundary in the system has an explicit TypeScript interface. Stick to these. If you need to extend, extend; do not silently widen.
 
 ## Core types
 
@@ -158,7 +158,7 @@ export interface PolicyRegistry {
 }
 ```
 
-Default policy table is in `packages/core/src/policy-defaults.ts`. Initial state: every component is `rule_only`. Migrations to other modes happen via explicit commits with accompanying metric evidence.
+Default policy table is in `packages/core/lib/policy/defaults.ts`. Initial state: every component is `rule_only`. Migrations to other modes happen via explicit commits with accompanying metric evidence.
 
 ## Locale interface
 
@@ -323,7 +323,7 @@ export interface LabeledRow {
 - `ClassificationProposal` mirrors Mailwoman's existing output shape with the addition of `source` and `source_id`. Backward compat for downstream consumers.
 - `Classifier.locales` and `Classifier.emits` are arrays known at construction time. Allows the solver to skip locale-incompatible classifiers entirely without running them.
 - `CanonicalRow.components` is `Partial<Record<…>>` because most rows lack most components. Coarse rows have only country/region/locality. Don't force `null` fills.
-- `LabeledRow.tokens` is the SentencePiece output, not raw words. This is the model's native input. Tokenization happens once, in the corpus stage, not at training time. Determinism.
+- `LabeledRow.tokens` is the SentencePiece output rather than raw words. This is the model's native input. Tokenization happens once, in the corpus stage rather than at training time. Determinism.
 - Every row carries `license` so downstream consumers can filter for redistribution-safe data.
 
 ## Forbidden patterns

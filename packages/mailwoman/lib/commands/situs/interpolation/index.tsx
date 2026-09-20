@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman situs interpolation` — national TIGER EDGES download + interpolation-database build
+ *   `mailwoman situs interpolation` — national tiger edges download + interpolation-database build
  *   driver (#483 follow-on).
  *
  *   Orchestrates the per-state `mailwoman situs interpolation-database` command across every county in
  *   the contiguous US (3,143 counties) without running them all at once. Downloads county-level
- *   EDGES ZIPs from https://www2.census.gov/geo/tiger/TIGER2023/EDGES/ in parallel (capped at
+ *   edges ZIPs from https://www2.census.gov/geo/tiger/TIGER2023/edges/ in parallel (capped at
  *   `--concurrency`, default 12), retrying on 5xx / network errors, then builds one database DB per
  *   state via that sibling command.
  *
@@ -17,10 +17,10 @@
  *   time if you kill the run early.
  *
  *   Idempotency: ZIPs already present in `--edges-dir` are skipped (size-verified). State database DBs
- *   already present in `--out-dir` are skipped unless `--force` is passed. The per-state CHILD owns
- *   its own DB's write; this driver only orchestrates downloads + child builds and writes the small
+ *   already present in `--out-dir` are skipped unless `--force` is passed. The per-state child owns
+ *   its own DB's write. this driver only orchestrates downloads + child builds and writes the small
  *   ranked-county cache, so there is no national-DB temp-then-rename here — large-artifact
- *   atomicity lives one level down in the database builder. Progress streams to stderr; the summary
+ *   atomicity lives one level down in the database builder. Progress streams to stderr. the summary
  *   lands on stdout.
  */
 
@@ -41,14 +41,14 @@ import { Globerator } from "spliterator/node/fs"
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	positiveInteger,
-	splitUpperList,
+	splitUSStateCodes,
 	stripAnsi,
 	useCommandTask,
 } from "#cli-kit"
 /**
- * A successful response; anything else is an error page or an unfollowed redirect.
+ * A successful response. anything else is an error page or an unfollowed redirect.
  */
 
 /**
@@ -60,7 +60,7 @@ import {
  */
 
 /**
- * Lowest 5xx status. Server-side failures are worth retrying; client errors are not.
+ * Lowest 5xx status. Server-side failures are worth retrying. client errors are not.
  */
 const HTTP_SERVER_ERROR_MIN = 500
 
@@ -70,7 +70,7 @@ const HTTP_SERVER_ERROR_MIN = 500
 const MAX_LISTED_FAILURES = 20
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "interpolation",
@@ -91,18 +91,6 @@ export const spec = {
 		"build-only": { type: "boolean", default: false, description: "Only build existing downloads" },
 	},
 } as const satisfies CommandSpec
-
-interface Options {
-	edgesDir: string
-	outDir?: string
-	release: string
-	states?: string
-	topCounties?: number
-	concurrency: number
-	force: boolean
-	downloadOnly: boolean
-	buildOnly: boolean
-}
 
 //#region State FIPS map
 
@@ -167,8 +155,8 @@ const STATE_FIPS: Record<string, string> = {
 const RANKED_FILE = String(repoRootPathBuilder("mailwoman", "data", "county-population-ranked.json"))
 
 /**
- * The per-state STREET-SEGMENT builder is now the sibling `situs interpolation-database` command (the old
- * `scripts/build-interpolation-database.ts` was migrated into the CLI). Re-invoke the SAME CLI entry this process was
+ * The per-state street-segment builder is now the sibling `situs interpolation-database` command (the old
+ * `scripts/build-interpolation-database.ts` was migrated into the CLI). Re-invoke the same CLI entry this process was
  * started from, so dev + published installs both resolve correctly.
  */
 const CLI_ENTRY = scriptEntryPath()
@@ -186,8 +174,8 @@ interface CountyRecord {
 }
 
 /**
- * Fetch and parse the Census Population Estimates CSV, then materialise the sorted county list. SUMLEV=050 rows are
- * county-level; STATE + COUNTY form the 5-digit GEOID (zero-padded).
+ * Fetch and parse the Census Population Estimates CSV, then materialise the sorted county list. sumlev=050 rows are
+ * county-level. state + county form the 5-digit geoid (zero-padded).
  */
 async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
 	console.error("Fetching Census Population Estimates CSV (co-est2023-alldata.csv)…")
@@ -229,7 +217,7 @@ async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
 }
 
 /**
- * Load (or generate) the ranked county list. On first run this downloads the Census CSV; on subsequent runs it reads
+ * Load (or generate) the ranked county list. On first run this downloads the Census CSV. on subsequent runs it reads
  * the cached JSON file.
  */
 async function loadRankedCounties(): Promise<CountyRecord[]> {
@@ -292,13 +280,13 @@ async function downloadFile(url: string, dest: string, retries = 3): Promise<voi
 //#region ZIP extraction
 
 /**
- * The shapefile components DuckDB needs out of a TIGER EDGES archive. The siblings are useless without each other, so a
+ * The shapefile components DuckDB needs out of a tiger edges archive. The siblings are useless without each other, so a
  * partial extract is a broken layer rather than a smaller one.
  */
 const SHAPEFILE_MEMBERS = /\.(?:shp|dbf|prj|shx)$/i
 
 /**
- * Unpack a TIGER EDGES ZIP into --edges-dir, flattened. Silently overwrites existing files (idempotent at the shapefile
+ * Unpack a tiger edges ZIP into --edges-dir, flattened. Silently overwrites existing files (idempotent at the shapefile
  * level).
  */
 async function extractEdgesZip(zipPath: string, destDir: string): Promise<void> {
@@ -439,7 +427,7 @@ async function buildStateDatabase(
 	}
 
 	// The child's parse-relevant facts span its Ink summary (stdout: "N segment-sides → …") + plain
-	// progress (stderr: "N county shapefiles for …") — combine + strip ANSI, then match WITHOUT line
+	// progress (stderr: "N county shapefiles for …") — combine + strip ansi, then match without line
 	// anchors so the summary's "✓ " render prefix doesn't defeat the regex.
 	const stdout = stripAnsi(result.stdout ?? "")
 	const stderr = stripAnsi(result.stderr ?? "")
@@ -474,7 +462,7 @@ interface StateResult {
 	skipped?: boolean
 }
 
-const SitusInterpolation: ParsedCommandComponent<Options> = ({ options }) => {
+const SitusInterpolation: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const EDGES_DIR = options.edgesDir
 		const OUT_DIR = options.outDir ?? dataRootPath("interpolation")
@@ -485,9 +473,7 @@ const SitusInterpolation: ParsedCommandComponent<Options> = ({ options }) => {
 		const BUILD_ONLY = options.buildOnly
 
 		// States to process — filtered by --states flag if provided.
-		const TARGET_STATES = options.states
-			? splitUpperList(options.states).filter((s) => s in STATE_FIPS)
-			: Object.keys(STATE_FIPS)
+		const TARGET_STATES = options.states ? splitUSStateCodes(options.states) : Object.keys(STATE_FIPS)
 
 		if (!TARGET_STATES.length) {
 			throw new CommandError("No valid states specified. Check --states values against the STATE_FIPS map.")
@@ -573,7 +559,7 @@ const SitusInterpolation: ParsedCommandComponent<Options> = ({ options }) => {
 
 		// States from our target list that have at least one downloaded county SHP. The listing is materialized once
 		// so the filter callback stays synchronous.
-		const edgesEntries = await Globerator.files("shp", { cwd: EDGES_DIR, absolute: false }).toArray()
+		const edgesEntries = await Globerator.files("shp", { cwd: EDGES_DIR, absolute: false, recursive: false }).toArray()
 
 		const availableStates = TARGET_STATES.filter((abbr) => {
 			const fips = STATE_FIPS[abbr]
@@ -590,7 +576,7 @@ const SitusInterpolation: ParsedCommandComponent<Options> = ({ options }) => {
 		console.error("")
 
 		// ── Step 4: build databases sequentially ─────────────────────────────────
-		// Sequential (not parallel): each database script uses DuckDB + SQLite; they're already
+		// Sequential (not parallel): each database script uses DuckDB + SQLite. they're already
 		// I/O + DuckDB-parallel internally. Running states concurrently risks memory OOM on the
 		// 32K-row state builds and complicates progress reporting.
 		const wallStart = Date.now()

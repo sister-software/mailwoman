@@ -26,7 +26,7 @@ const HIERARCHY_ORDER: readonly ComponentTag[] = [
 
 /**
  * Render an admin-hierarchy variant: the components it carries, in hierarchy order, joined the way the country joins a
- * line. This is a gazetteer QUERY rather than a postal address, which is why it does not go through a layout — a
+ * line. This is a gazetteer query rather than a postal address, which is why it does not go through a layout — a
  * country whose postal layout drops the region would collapse `Paris, Île-de-France` back into `Paris`.
  */
 function renderHierarchy(
@@ -58,7 +58,7 @@ function renderHierarchy(
  * to its output (e.g. `"United States"` → `"United States of America"`). If `components.country` and the formatted
  * `raw` disagree, alignment will fail downstream. Keying off the canonical form keeps the two in lockstep.
  *
- * Phase 1 US + FR only; extend as new locales come online. Missing countries fall back to the country row's `wof:name`,
+ * Phase 1 US + FR only. extend as new locales come online. Missing countries fall back to the country row's `wof:name`,
  * accepting the alignment risk for non-canonicalized names.
  */
 export const COUNTRY_DISPLAY_NAME: Record<string, string> = {
@@ -78,7 +78,7 @@ export interface WOFVariantSpec {
 	suffix: string
 	components: Partial<Record<ComponentTag, string>>
 	/**
-	 * Render this variant as an ADMIN HIERARCHY rather than as a postal address.
+	 * Render this variant as an admin hierarchy rather than as a postal address.
 	 *
 	 * A hierarchy variant is a query — `Paris`, then `Paris, Île-de-France`, then `Paris, Île-de-France, France` — and
 	 * several of its steps are not addresses at all. France's postal layout carries no region, so rendering `{ locality,
@@ -92,7 +92,7 @@ export interface WOFVariantSpec {
 
 export interface NameSlotOptions {
 	/**
-	 * Canonical surface for the record's own `"default"` slot. Default `rec.name` verbatim; the admin adapter substitutes
+	 * Canonical surface for the record's own `"default"` slot. Default `rec.name` verbatim. the admin adapter substitutes
 	 * the OpenCage-canonical {@link COUNTRY_DISPLAY_NAME} for country records.
 	 */
 	canonicalName?: (rec: WOFRecord) => string

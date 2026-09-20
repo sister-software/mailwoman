@@ -1,5 +1,5 @@
 /*
- * Space is painted HERE, not by the map. Under globe projection a MapLibre background layer paints the sphere, and
+ * Space is painted here, not by the map. Under globe projection a MapLibre background layer paints the sphere, and
  * the canvas is transparent everywhere outside it — so the field around the body, and the stars in it, belong to the
  * page behind the canvas. The body's own surface tone is the style's `planetary/space` layer.
  *

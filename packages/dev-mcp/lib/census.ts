@@ -5,9 +5,9 @@
  *   The activation-coverage census (#1719): is every mechanism in the parse path alive on at least one board row?
  *
  *   The rule this enforces is the operator's, stated 2026-08-16: a pipeline part with no test case that activates it
- *   is ITSELF a kind of failure. House history is the evidence — the FST prior dead because a session never fed it
+ *   is itself a kind of failure. House history is the evidence — the FST prior dead because a session never fed it
  *   (#1699), overlays fed the base classifier's FST (#1703), a channel shipped never-trained (#1349), dep_loc dead
- *   uniformly (R5) — and every one of them kept the board green, because soft mechanisms are DESIGNED to degrade
+ *   uniformly (R5) — and every one of them kept the board green, because soft mechanisms are designed to degrade
  *   silently and outcome tests cannot see a counterfactual. The census asks the question outcome tests cannot: not
  *   "did the rows pass" but "did each mechanism signal on any row at all".
  *
@@ -16,12 +16,12 @@
  *   - **L0 present** — the mechanism's record appears in the trace (the stage ran / the channel was configured). Near
  *     meaningless alone: Weimar carried `fst applied: true` beside three all-zero channels.
  *   - **L1 signaled** — it produced nonzero input to the next stage: a channel fed a nonzero feature, a prior's own
- *     `applied` contract ("moved anything") held, a repair changed labels. This file computes L0 and L1 from one
+ *     `applied` interface ("moved anything") held, a repair changed labels. This file computes L0 and L1 from one
  *     traced run.
- *   - **L2 moved an outcome** — needs ablation pairs and is NOT computed here; the gauntlet's ablation layer is the
+ *   - **L2 moved an outcome** — needs ablation pairs and is not computed here. the gauntlet's ablation layer is the
  *     home for it. Reported as explicitly unmeasured so a reader cannot mistake L1 coverage for outcome relevance.
  *
- *   A mechanism at zero L1 across the whole set is reported as INERT with the standing rule attached: every zero needs
+ *   A mechanism at zero L1 across the whole set is reported as inert with the standing rule attached: every zero needs
  *   either a row that activates it or an allowlisted reason someone can state ({@link CENSUS_ALLOWLIST}). Trust the
  *   subtraction over the story.
  */
@@ -35,8 +35,8 @@ import { describeObservedRate } from "#power"
 import { inputSetProvenance, provenanceFor } from "#tool-kit"
 
 /**
- * Mechanisms whose L1 zero is EXPECTED, each with the reason a reader can check. The census reports them as
- * `allowlisted`, never as inert — and an allowlisted mechanism that unexpectedly FIRES is reported loudly, because the
+ * Mechanisms whose L1 zero is expected, each with the reason a reader can check. The census reports them as
+ * `allowlisted`, never as inert — and an allowlisted mechanism that unexpectedly fires is reported loudly, because the
  * reason on file is then stale.
  */
 export const CENSUS_ALLOWLIST: Partial<Record<string, string>> = {
@@ -51,7 +51,7 @@ export const CENSUS_ALLOWLIST: Partial<Record<string, string>> = {
 }
 
 /**
- * One row's slice of the census — kept so a reader can go from an inert mechanism to the rows that SHOULD have fired
+ * One row's entry in the census — kept so a reader can go from an inert mechanism to the rows that should have fired
  * it, and from a starvation count to the exact inputs.
  */
 export interface CensusRow {
@@ -76,7 +76,7 @@ export interface CensusAggregate {
 	n: number
 	channels: Record<"anchor" | "gazetteer" | "country", ChannelTally>
 	/**
-	 * Per prior kind: rows where the prior record was present (L0) and rows where its own `applied` contract held (L1).
+	 * Per prior kind: rows where the prior record was present (L0) and rows where its own `applied` check passed (L1).
 	 */
 	priors: Record<TracePriorKind, { l0_present: number; l1_applied: number }>
 	emissions_moved_rows: number
@@ -89,7 +89,7 @@ export interface CensusAggregate {
 	 */
 	evidence_silent_rows: string[]
 	/**
-	 * Mechanisms at zero L1 across every row, minus the allowlist. THE finding.
+	 * Mechanisms at zero L1 across every row, minus the allowlist. The finding.
 	 */
 	inert: Array<{ mechanism: string; l0_present: number; note: string }>
 	/**
@@ -236,7 +236,7 @@ export async function runCensus(registry: EngineRegistryLike, args: Record<strin
 		if (run.trace?.parse) {
 			traced.push({ id: item.id, input: item.input, parse: run.trace.parse })
 		} else {
-			// A row with no trace contributes NOTHING to any tally — counting it as "nothing fired" would manufacture
+			// A row with no trace contributes nothing to any tally — counting it as "nothing fired" would manufacture
 			// inertness out of a bundle that cannot trace.
 			untraced.push(item.id)
 		}
@@ -273,7 +273,7 @@ export async function runCensus(registry: EngineRegistryLike, args: Record<strin
 			"L2 (moved an outcome) is NOT measured here — that needs ablation pairs (gauntlet ablation layer). " +
 				"L1 coverage is necessary for relevance, never sufficient.",
 		]
-			.filter((sentence) => sentence.length > 0)
+			.filter((sentence) => sentence.length)
 			.join(" "),
 		n_requested: set.n,
 		n_traced: aggregate.n,

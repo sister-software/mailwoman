@@ -3,18 +3,18 @@
 
 /**
  *   Failure report (#1104-adjacent): run N models over the schema-correct parity corpus, collect the
- *   per-floor-label DISAGREEMENTS with structural metadata, and emit a cross-model HTML report — which
+ *   per-floor-label disagreements with structural metadata, and emit a cross-model html report — which
  *   addresses remain beyond reach, which are model-specific regressions/fixes, and what those failures
- *   CORRELATE with (country, delimiter class, script, source). The tool that would have caught the v261
+ *   correlate with (country, delimiter class, script, source). The tool that would have caught the v261
  *   country regression as "a shared class across the fragment lineage" at a glance.
  *
  *   Emits a Docusaurus MDX report into the evals tree so it folds into the docs build and accumulates a
  *   model-comparison history alongside the other eval reports. MDX-safe (every dynamic cell is
  *   backtick-wrapped + pipe/backtick-escaped, so an address can't break the table or trip the angle-lint).
  *
- *   Usage (label=cacheRoot pairs; label=shipped uses the installed default):
+ *   Usage (label=cacheRoot pairs. label=shipped uses the installed default):
  *     node packages/mailwoman/lib/dev-tools/failure/report.run.ts \
- *       [--corpus golden:<dir>[:N]] [--out docs/articles/evals/competitive-parity/<file>.mdx] [--date YYYY-MM-DD] \
+ *       [--corpus golden:<dir>[:N]] [--out docs/articles/evals/competitive-parity/<file>.mdx] [--date yyyy-MM-DD] \
  *       shipped=shipped v257=$MAILWOMAN_TEMP_ROOT/v257-cache v261=$MAILWOMAN_TEMP_ROOT/v261-cache
  *   Writes the MDX (default docs/articles/evals/competitive-parity/failure-report.mdx) plus
  *   `$MAILWOMAN_TEMP_ROOT/failure-report.json`.
@@ -57,8 +57,8 @@ interface Fixture {
 
 /**
  * Load the corpus. Default = the schema-correct parity corpus (street-family aware, campaign check).
- * `golden:<dir>[:<sampleN>]` = the golden dev set (broad label coverage INCLUDING country/region, which parity is
- * sparse on) — note its `street` gold is FLAT-schema (pre-split), so street reads confounded there;
+ * `golden:<dir>[:<sampleN>]` = the golden dev set (broad label coverage including country/region, which parity is
+ * sparse on) — note its `street` gold is flat-schema (pre-split). Therefore, street reads confounded there.
  * country/region/locality/postcode/house_number are single-tag and valid.
  */
 async function loadCorpus(
@@ -67,7 +67,7 @@ async function loadCorpus(
 	if (spec?.startsWith("golden:")) {
 		const [, dir, sampleArg] = spec.split(":")
 		const sampleN = sampleArg ? Number(sampleArg) : Infinity
-		const files = Globerator.files("jsonl", { cwd: resolvePath(dir!), absolute: false })
+		const files = Globerator.files("jsonl", { cwd: resolvePath(dir!), absolute: false, recursive: false })
 		const fixtures: Fixture[] = []
 
 		for await (const file of files) {
@@ -96,9 +96,10 @@ async function loadCorpus(
 		return { fixtures, kind: "golden", name: `golden:${basename(dir!)}` }
 	}
 
-	const fixtures = (await Array.fromAsync(JSONSpliterator.fromAsync<ParityFixture>(PARITY_FIXTURES_PATH)))
+	const fixtures = await JSONSpliterator.fromAsync<ParityFixture>(PARITY_FIXTURES_PATH)
 		.filter((f) => !f.dropped && f.expect)
 		.map((f) => ({ id: f.id, input: f.input, country: f.country, source: f.source, expect: f.expect! }))
+		.toArray()
 
 	return { fixtures, kind: "parity", name: PARITY_FIXTURES_PATH.split("/").pop()! }
 }
@@ -129,7 +130,7 @@ interface FixtureFailures {
 	country: string
 	source: string
 	flags: StructuralFlags
-	// modelLabel -> the floor labels that DISAGREED, with expected/got.
+	// modelLabel -> the floor labels that disagreed, with expected/got.
 	failsByModel: Record<string, { label: string; expected: string; got: string }[]>
 }
 
@@ -191,8 +192,8 @@ async function runFailureReport(): Promise<void> {
 			const byTag = await parseTags(cls, f.input)
 			const fails: { label: string; expected: string; got: string }[] = []
 
-			// Grade EVERY gold label (not just the floors) so country/region/locality/venue failures — the
-			// classes a candidate silently trades — are captured. Floor labels compare their tag FAMILY
+			// Grade every gold label (not just the floors) so country/region/locality/venue failures — the
+			// classes a candidate silently trades — are captured. Floor labels compare their tag family
 			// (street = prefix/street/suffix/particle); all others compare by direct tag name.
 			for (const [goldLabel, gold] of Object.entries(f.expect)) {
 				if (!gold?.length) continue
@@ -212,12 +213,12 @@ async function runFailureReport(): Promise<void> {
 
 	const all = [...records.values()]
 	const labels = specs.map((s) => s.label)
-	const anyFail = all.filter((r) => Object.keys(r.failsByModel).length > 0)
-	// "Beyond reach": failed on EVERY graded model.
+	const anyFail = all.filter((r) => Object.keys(r.failsByModel).length)
+	// "Beyond reach": failed on every graded model.
 	const beyondReach = anyFail.filter((r) => labels.every((l) => r.failsByModel[l]))
 
-	// Per-LABEL failure count per model — the view where a silently-traded class (e.g. country on the
-	// fragment lineage) jumps out: a label whose failure count RISES across candidates.
+	// Per-label failure count per model — the view where a silently-traded class (e.g. country on the
+	// fragment lineage) jumps out: a label whose failure count rises across candidates.
 	const allLabels = [
 		...new Set(
 			all.flatMap((r) =>
@@ -269,7 +270,7 @@ async function runFailureReport(): Promise<void> {
 	const stamp = flags.date || isoDate()
 
 	const cell = (s: string): string => "`" + (s || "∅").replaceAll("`", "ˋ").replaceAll("|", "\\|") + "`"
-	// NOT `formatPercent`: this rounds `(n / d) * 100` where core computes `(100 * n) / d`, and the two can differ in the
+	// Not `formatPercent`: this rounds `(n / d) * 100` where core computes `(100 * n) / d`, and the two can differ in the
 	// last bit at a .5 rounding boundary — the report's zero-decimal cells stay byte-stable under their own arithmetic.
 	const pct2 = (n: number, d: number): string => (d ? `${((n / d) * 100).toFixed(0)}%` : "—")
 	const mdRow = (cells: (string | number)[]): string => `| ${cells.join(" | ")} |`
@@ -352,7 +353,7 @@ async function runFailureReport(): Promise<void> {
 			.map((r) => mdRow([`\`${r.country}\``, cell(r.input), `\`${r.source}\``])),
 	].join("\n")
 
-	// Model-specific: failed on SOME but not all graded models — a fix or regression between candidates.
+	// Model-specific: failed on some but not all graded models — a fix or regression between candidates.
 	const diffs = anyFail.filter((r) => !beyondReach.includes(r))
 
 	const diffTable = [

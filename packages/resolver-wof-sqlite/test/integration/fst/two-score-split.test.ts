@@ -78,7 +78,7 @@ function downgradeToV4(v5: Buffer): Buffer {
 	}
 
 	out.writeUInt16LE(4, 4)
-	// This fixture carries no trailer; zero the offset so a reader reports no provenance.
+	// This fixture carries no trailer. zero the offset so a reader reports no provenance.
 	out.writeUInt32LE(0, 28)
 
 	return out
@@ -116,7 +116,7 @@ describe("two-score split — format v5", () => {
 
 	it("a v4 artifact still reads, with its single float as referential and NO encyclopedic channel", () => {
 		// Back-compat is real: the shipped fst-per-locale set is v4 and must keep loading. What it must
-		// NOT do is invent an encyclopedic score — a v4 file has no such data and nowhere to put it.
+		// not do is invent an encyclopedic score — a v4 file has no such data and nowhere to put it.
 		const entry = deserializeFST(downgradeToV4(serializeFST(splitMatcher(0.1173)))).query("Saint-Denis").accepting[0]!
 
 		expect(entry.referential).toBeCloseTo(0.4863, 5)

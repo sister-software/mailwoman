@@ -11,7 +11,7 @@ import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { aliasBagExactMatch, foldQueryText } from "#fts/index"
 
 /**
- * Among `ids`, return the subset whose name OR any alias equals `text` case-insensitively — the exact-match tier for
+ * Among `ids`, return the subset whose name or any alias equals `text` case-insensitively — the exact-match tier for
  * ranking. One indexed query over `<schema>.names`. When the extract has no `names` table (a slim DB built with
  * `dropNames`, or a postcode-only extract), fall back to the self-contained `place_search` FTS content: its `alt_names`
  * column is the same alias set joined on the boundary-preserving `ALIAS_SEPARATOR` (#523), so `aliasBagExactMatch`
@@ -77,8 +77,8 @@ export function exactMatchIDs<DB>(
 }
 
 /**
- * Among `ids` (already known exact matches), the subset holding `text` as an OFFICIAL name (`names.official = 1`, the
- * #940 ingest bit). Same COLLATE NOCASE semantics as {@link WOFSQLitePlaceLookup.#exactMatchIDs} so the two probes
+ * Among `ids` (already known exact matches), the subset holding `text` as an official name (`names.official = 1`, the
+ * #940 ingest bit). Same collate nocase semantics as {@link WOFSQLitePlaceLookup.#exactMatchIDs} so the two probes
  * agree on what "equals the query" means. Fails soft on gazetteers built before #940 (no `official` column) — the
  * sub-tier then behaves exactly as if `officialNameExact` were off.
  */

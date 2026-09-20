@@ -2,35 +2,35 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `nl-postcode` — the Dutch full-form postcode slice (#924). The model reads the DIGITS-FIRST NL
+ *   `nl-postcode` — the Dutch full-form postcode recipe (#924). The model reads the digits-first NL
  *   postcode "1012 LG" as a house number + a 2-letter street ("1012 LG Amsterdam" → house_number
  *   1012 / street "LG" / locality Amsterdam), and that spurious street context then pulls the
  *   locality into the US situs tier (Amsterdam → Amsterdam, NY). Letters-first postcodes (UK
- *   "SW1A 1AA") parse natively; the `\d{4} [A-Z]{2}` shape does not, and the soft query-shape prior
+ *   "SW1A 1AA") parse natively. the `\d{4} [A-Z]{2}` shape does not, and the soft query-shape prior
  *   (0.9 log-odds) can't overcome the strong house-number reading of a leading 4-digit token.
  *
- *   This is the model-first fix as DATA (the #723/#901 discipline — teach the boundary, don't
+ *   This is the model-first fix as data (the #723/#901 discipline — teach the boundary, don't
  *   override the decoder): real NL (street, number, postcode, city) tuples in the orders Dutch
- *   addresses actually use, with the full postcode tagged as ONE postcode span. Both the SPACED
- *   ("1012 LG", the failing form — a 2-token span) and UNSPACED ("1012LG", 1 token) forms are
- *   emitted so the model learns the digits-first postcode regardless of spacing; the three orders
+ *   addresses actually use, with the full postcode tagged as one postcode span. Both the spaced
+ *   ("1012 LG", the failing form — a 2-token span) and unspaced ("1012LG", 1 token) forms are
+ *   emitted so the model learns the digits-first postcode regardless of spacing. the three orders
  *   keep polarity balanced (the v1.9.9 lesson).
  */
 
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
-import { alignAndWrite, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
+import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 
 /**
- * "1012LG" → "1012 LG". The tuples carry the unspaced OA form; the spaced form is the failing case.
+ * "1012LG" → "1012 LG". The tuples carry the unspaced OA form. the spaced form is the failing case.
  */
 function spacePostcode(pc: string): string {
 	return pc.replace(/^(\d{4})([A-Z]{2})$/, "$1 $2")
 }
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const nlPostcodeRecipe: CorpusRecipe = {
 	name: "nl-postcode",
@@ -60,12 +60,12 @@ export const nlPostcodeRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// Spacing rotates so the model sees BOTH the failing spaced form and the unspaced form; the
-			// components.postcode value MUST match the raw form so alignment tags the right span.
+			// Spacing rotates so the model sees both the failing spaced form and the unspaced form. the
+			// components.postcode value must match the raw form so alignment tags the right span.
 			const spaced = read % 2 === 0
 			const postcode = spaced ? spacePostcode(rawPostcode) : rawPostcode
 
-			// The three orders Dutch addresses use. `street number, postcode city` is canonical; the
+			// The three orders Dutch addresses use. `street number, postcode city` is canonical. the
 			// pc-first form is where the leading digits most strongly mis-read as a house number.
 			const order = read % 3
 			let raw: string
@@ -85,7 +85,7 @@ export const nlPostcodeRecipe: CorpusRecipe = {
 				locality: city,
 			}
 
-			const source_id = sliceSourceID("synth-nl-postcode", {
+			const source_id = recipeSourceID("synth-nl-postcode", {
 				...components,
 				o: String(order),
 				s: spaced ? "1" : "0",

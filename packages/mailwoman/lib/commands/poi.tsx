@@ -8,10 +8,10 @@
  *   at a sealed `poi.db` layer (`mailwoman gazetteer build poi`). `--overpass` additionally renders
  *   the OverpassQL export block (`@mailwoman/poi-overpass`) — export-only, mailwoman never queries
  *   Overpass itself. A non-POI query (kind classifier never emits `poi_query`, or the intent stage
- *   fell through) reports that and exits 0 — this command is a debug probe, not a strict
+ *   fell through) reports that and exits 0 — this command is a debug probe rather than a strict
  *   POI-only parser.
  *
- *   Exit-code contract:
+ *   Exit-code interface:
  *
  *   - 0 on any completed probe, including "no POI intent" and abstain outcomes.
  *   - 1 on a missing positional query or a fatal pipeline error.
@@ -35,6 +35,7 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	loadClassifierTolerant,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	reportToStderr,
 	useCommandTask,
@@ -42,7 +43,7 @@ import {
 } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "poi",
@@ -63,14 +64,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	locale: string
-	db?: string
-	overpass: boolean
-	json: boolean
-	resolveDB?: string
-	candidateDB?: string
-}
+type Options = OptionsOf<typeof spec>
 
 /**
  * Try to build the WOF resolver (same backend selector `geocode.tsx`/`parse.tsx --resolve` use), so an anchor remainder
@@ -135,7 +129,7 @@ async function formatOverpassBlock(intent: POIIntent): Promise<string> {
 	if (intent.subject.kind === "category") {
 		const { getPOICategory } = await import("@mailwoman/poi-taxonomy")
 		const { categoryIDs } = intent.subject
-		// EVERY member needs a tag, not just one: a union emitted from the subset that happens to carry `osmTag` is a
+		// Every member needs a tag rather than just one: a union emitted from the subset that happens to carry `osmTag` is a
 		// narrower query than the one the POI branch ran, and the difference would be invisible in the printed result.
 		const untagged = categoryIDs.filter((id) => !getPOICategory(id)?.osmTag)
 
@@ -223,7 +217,7 @@ async function runPOI(input: string, options: Options): Promise<string> {
 	const { createRuntimePipeline } = await import("#index")
 
 	// #1108: an attempted-but-failed encoder load is never silent — absent weights get an install hint,
-	// a corrupt bundle surfaces its underlying error. Stderr only; stdout stays the probe output.
+	// a corrupt bundle surfaces its underlying error. Stderr only. stdout stays the probe output.
 	const classifier = await loadClassifierTolerant(options.locale, { onDegrade: reportToStderr })
 	const resolverHandle = await tryLoadResolver(options)
 

@@ -2,7 +2,7 @@
 
 `__init__` is 405 lines and `forward` 415. Breaking either into named stages is where an
 initialization order or a branch condition changes without any test noticing: the suite exercises
-shapes and finiteness, not values. So this pins values.
+shapes and finiteness rather than values. So this pins values.
 
 The state-dict keys matter as much as the logits. `save_pretrained` writes a checkpoint keyed on
 attribute names, and every checkpoint on the Modal volume was written by the pre-split code. An
@@ -21,7 +21,7 @@ torch = pytest.importorskip("torch")
 from mailwoman_train.labels import ACTIVE_BIO_LABELS  # noqa: E402
 from mailwoman_train.nn.encoder import MailwomanCoarseEncoder  # noqa: E402
 
-#: Committed beside this file, captured from the code as it stood BEFORE a split. Regenerating it
+#: Committed beside this file, captured from the code as it stood before a split. Regenerating it
 #: after a change makes the test compare the new code against itself, so regenerate only when the
 #: current code is already verified against the existing reference.
 #:
@@ -43,7 +43,7 @@ REFERENCE_README = [
     "parameter_checksums: each parameter's initial sum. Most are constants, not RNG state:",
     "  _init_weights zeroes biases and cue vectors, resets every LayerNorm gamma to 1.0 (a zeroed",
     "  gamma collapses the layer to a constant output, which it has done), and zeroes locale_film",
-    "  last so locale conditioning starts as the identity. The remaining xavier_uniform_ weights",
+    "  last. Therefore, locale conditioning starts as the identity. The remaining xavier_uniform_ weights",
     "  are the RNG-dependent ones: they move if module construction is REORDERED, which the logits",
     "  do not detect because the reference forward supplies no channel features.",
 ]
@@ -54,7 +54,7 @@ SEQ_LEN = 8
 
 
 def build_reference_encoder() -> MailwomanCoarseEncoder:
-    """A small encoder with EVERY optional channel and head on, built from a fixed seed.
+    """A small encoder with every optional channel and head on, built from a fixed seed.
 
     Every flag is on deliberately. Each channel's `nn.Linear` draws from the RNG as it is
     constructed, so the initial weights encode the construction ORDER — reordering two channels,
@@ -106,18 +106,18 @@ def parameter_checksums(model: MailwomanCoarseEncoder) -> dict[str, float]:
     Most of these are constants rather than RNG state, and the artifact's README says which and
     why: `_init_weights` zeroes biases and cue vectors, resets every LayerNorm gamma to 1.0, and
     zeroes `locale_film` last so conditioning starts as a no-op. A constant moving means that
-    policy changed; a drawn weight moving means construction order did.
+    policy changed. a drawn weight moving means construction order did.
     """
     return {name: round(float(p.detach().sum()), 6) for name, p in model.named_parameters()}
 
 
 def reference_inputs(model: MailwomanCoarseEncoder) -> dict[str, torch.Tensor]:
-    """A forward call that reaches EVERY channel, with seeded features.
+    """A forward call that reaches every channel, with seeded features.
 
     Passing no channel features is what let a reordered channel pass a logit comparison: a
     projection the forward never invokes cannot change a logit. Each channel gets a real tensor at
     its own declared width, so splitting `forward` into stages has to preserve what each one does
-    with its input, not merely that it is skipped.
+    with its input rather than merely that it is skipped.
     """
     generator = torch.Generator().manual_seed(1)
 
@@ -174,7 +174,7 @@ def test_forward_is_deterministic_under_a_fixed_seed() -> None:
 
 #: How far a rebuilt value may sit from the committed one and still count as unmoved.
 #:
-#: NOT exact equality, which is what this compared first and why these two tests failed on CI while
+#: Not exact equality, which is what this compared first and why these two tests failed on CI while
 #: passing on the machine that wrote the reference: the same fp32 graph over four transformer blocks
 #: lands on a different last digit under a different CPU's kernels and vectorization (0.637875 here,
 #: 0.637876 on the runner). Exact equality therefore pins the HOST as well as the code, and the
@@ -184,7 +184,7 @@ def test_forward_is_deterministic_under_a_fixed_seed() -> None:
 #: a reordered channel, a dropped term, a head wired to the wrong input — moves a logit by a
 #: fraction of its own magnitude, four orders of magnitude above this floor. Registration ORDER is
 #: pinned exactly by `parameter_checksums`, which sums initial weights straight off the RNG and
-#: never reaches a matmul, so the strict half of this file is unaffected.
+#: never reaches a matmul. Therefore, the strict half of this file is unaffected.
 TOLERANCE = 1e-4
 
 
@@ -234,7 +234,7 @@ def test_a_checkpoint_round_trips_through_save_and_load(tmp_path: Path) -> None:
     reloaded.save_pretrained(tmp_path / "again")
     assert json.loads((tmp_path / "again" / "config.json").read_text()) == written
 
-    # `from_pretrained` returns a model in TRAIN mode, which is what a resume wants. Compare in
+    # `from_pretrained` returns a model in train mode, which is what a resume wants. Compare in
     # eval: `nn.MultiheadAttention` takes a different kernel path while training, so the reduction
     # order differs by ~1e-6 even at dropout 0.0. In eval the two are bitwise equal.
     reloaded.eval()

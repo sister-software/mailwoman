@@ -1,7 +1,7 @@
 # The Lite artifact line — free channel vs subscriber channel (design)
 
 2026-07-30. Operator + Claude. GTM item D1. Companion to D2, the public
-[database products catalog](../../articles/licensing/data-products.md), which is the artifact
+[database products catalog](../../records/site-2026-08/licensing/data-products.md), which is the artifact
 inventory this policy is applied to. The pricing page shipped first (PRs #1353 / #1355) and
 already publishes the OEM band this doc's registration mechanic hangs off.
 
@@ -11,17 +11,17 @@ service, or a data-use agreement. Every place where an instrument would eventual
 written carries a **PENDING COUNSEL** marker, and each such marker gets a numbered entry in the
 counsel dossier before anything ships.
 
-## 1. What is actually being sold
+## 1. What is being sold
 
 Mailwoman's engine is AGPL and stays AGPL. The commercial license sells release from the
-copyleft condition, not access to the code. Neither of those is a recurring cost to us, which is
+copyleft condition rather than access to the code. Neither of those is a recurring cost to us, which is
 the flaw in pricing them alone: a perpetual grant against a one-time build.
 
 The recurring cost is the **data**. Rebuilding the admin gazetteer is a ten-minute build on top
 of a multi-hour ingest, a verify check, a swap, and a publish; poi.db is a four-country DuckDB
 pass over a 13.68M-row Overture release; the situs extracts are a 50-state ingest. Somebody has to
 run those, grade them, and eat the R2 bill. That work is periodic, so a subscription is the
-honest shape for it.
+direct shape for it.
 
 This is the MaxMind GeoLite motion, and it is worth naming the parts precisely rather than
 gesturing at the brand:
@@ -32,9 +32,9 @@ gesturing at the brand:
 3. The free channel requires **registration with a key**, which is how we learn who is embedding
    the thing and how we get a name to email.
 4. The free channel requires **attribution**. The paid channel does not (beyond whatever the
-   upstream data's own license demands, which no contract of ours can waive).
+   upstream data's own license demands, which no interface of ours can waive).
 
-## 2. Delay, not degradation
+## 2. Delay rather than degradation
 
 The first design fork: does Lite differ from the subscriber artifact by being **older** or by
 being **worse**?
@@ -42,15 +42,15 @@ being **worse**?
 **Decision: older.** Lite and subscriber are the same bytes at different times. There is one
 build, one verify check, one artifact, and two publish dates.
 
-The argument against degradation is operational, not philosophical. A degraded artifact is a
+The argument against degradation is operational rather than philosophical. A degraded artifact is a
 second product line: a second build recipe, a second verify baseline, a second set of eval
 numbers, a second thing to regress. Worse, "degraded" has no natural stopping point — every
 support conversation becomes an argument about whether a given miss is the degradation or a bug.
 A delayed artifact has neither problem. Its quality is exactly the quality we already graded and
 published, and "how far behind is it" is a subtraction anyone can do.
 
-It also matches what the data actually is. An address register is a moving record of the world.
-The value in paying is having this quarter's buildings, not a secret better version of last
+It also matches what the data is. An address register is a moving record of the world.
+The value in paying is having this quarter's buildings rather than a secret better version of last
 quarter's.
 
 ### 2.1 The cadence proposal
@@ -68,7 +68,7 @@ quarter's.
 Two honesty constraints on the "weekly" claim, both of which have to be true before it is
 published anywhere customer-facing:
 
-- **Weekly is a ceiling set by upstream, not a promise per artifact.** Overture releases
+- **Weekly is a ceiling set by upstream rather than a promise per artifact.** Overture releases
   monthly-ish; WOF changes continuously; TIGER is annual; BAN is frequent; the FCC BDC vintage
   is biannual. An artifact cannot be fresher than its source. The subscriber commitment is
   therefore "we publish within one week of a source release we ingest," not "a new artifact
@@ -77,7 +77,7 @@ published anywhere customer-facing:
   the operator rebuilds it (`RELEASING.md`: "Rebuilt periodically as WOF upstream changes"), and
   the HF dataset card has not been touched since 2026-05-28. A published weekly commitment
   without a scheduled build is a promise we would immediately break. §7 makes the scheduled
-  build a prerequisite, not a follow-up.
+  build a prerequisite rather than a follow-up.
 
 ### 2.2 What the delay is measured against
 
@@ -97,13 +97,13 @@ license-enforcement instrument, and the docs must say so in those words, because
 on everything already published is irrevocable and the pricing page publishes that commitment
 ("Published releases stay published").
 
-### 3.1 What a key buys us
+### 3.1 What a key provides us
 
 - **A name.** An email address and a company, attached to a download. Today an embedder is
   invisible until they file an issue. This is the entire GeoLite mechanic: MaxMind's free tier
   is a lead list that also happens to be a useful product.
-- **Volume and shape.** Which artifacts, which versions, how often, roughly how many
-  distinct downloaders. Enough to answer "is anyone actually using the FR extract" without
+- **Volume and shape.** Which artifacts, which versions, how frequently, roughly how several
+  distinct downloaders. Enough to answer "is anyone using the FR extract" without
   instrumenting anyone's runtime.
 - **A notification channel.** When an artifact is rebuilt because the previous one had a bug
   (the #1015 class), we currently have no way to tell anyone.
@@ -139,7 +139,7 @@ infrastructure:
   revoking one never touches artifacts already downloaded.
 - **Telemetry scope.** Key id, artifact, version, timestamp, coarse request origin. No IP
   retention beyond the edge log's own window, and no attempt to fingerprint an end user. The
-  privacy page needs a section for this before the endpoint exists, not after.
+  privacy page needs a section for this before the endpoint exists rather than after.
 
 > **PENDING COUNSEL — L1.** The registration form collects a name, an email, and a company, so
 > it is a personal-data collection under GDPR/CCPA, however small. What notice text must appear
@@ -148,7 +148,7 @@ infrastructure:
 > rather than an edit? File in the counsel dossier before the form goes up.
 
 > **PENDING COUNSEL — L2.** The instrument the Lite key is issued under. It is not the AGPL
-> (that governs code we wrote, not data we compiled), and it is not the commercial license. It
+> (that governs code we wrote rather than data we compiled), and it is not the commercial license. It
 > needs to be some short data-use notice that carries the attribution condition of §4 and the
 > no-redistribution-of-the-subscriber-artifact expectation, and it needs to sit correctly on top
 > of the upstream licenses in §5. Drafting that text is the counsel task; this document only
@@ -161,18 +161,18 @@ This is the GeoLite trade in its clearest form, and it is the part most likely t
 misunderstood internally, so state the two layers separately:
 
 **Layer 1 — the upstream data's own attribution.** Non-negotiable, channel-independent, and not
-ours to sell. WOF, Overture (CDLA-Permissive-2.0), GeoNames (CC-BY 4.0), and BAN (Licence
+ours to sell. WOF, Overture (CDLA-Permissive-2.0), GeoNames (CC-BY 4.0), and BAN (license
 Ouverte 2.0) each require attribution from anyone who redistributes their data, and paying us
 does not release anyone from that. The catalog page lists these per artifact. Any marketing that
 implies the subscriber tier removes attribution entirely is false and must be corrected.
 
 **Layer 2 — our own attribution condition on the Lite channel.** A visible credit wherever the
 artifact's output is user-facing, in the "geocoding by Mailwoman" shape. The subscriber tier
-waives this one, because this one is genuinely ours to waive.
+waives this one, because this one is in fact ours to waive.
 
 > **PENDING COUNSEL — L3.** Whether we can attach an attribution condition to a compiled
 > artifact whose upstream inputs are public domain or CC0, and if so on what basis (database
-> compilation right in the EU vs. contract in the US — likely a different answer per
+> compilation right in the EU vs. interface in the US — likely a different answer per
 > jurisdiction). The working assumption is that the condition rides the **download agreement**,
 > not a claim of copyright over the facts. That assumption is exactly what needs checking, and
 > it is the required one for the entire Lite line.
@@ -213,7 +213,7 @@ Two caveats that are not optional:
   applies no license filter. A measurement is the right basis for a decision and the wrong basis
   for a standing product. Before the US situs extracts enter the line, that audit becomes a
   build-time filter over the per-row `source` column, with a test, so a future Overture release
-  that quietly adds an ODbL contributor fails the build rather than the check.
+  that without output adds an ODbL contributor fails the build rather than the check.
 - **The corpus filter is the precedent to copy.** `SHARE_ALIKE_PATTERN` /
   `--exclude-share-alike` already does exactly this job on the training side, and it is why the
   weights are clean. The artifact side needs the same discipline, wired to the per-row `source`
@@ -224,7 +224,7 @@ Two caveats that are not optional:
 | Artifact                              | Why                                                                                                                                   |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | OSM rooftop extracts (`osm/`)         | ODbL. Already publish-blocked pending counsel; a paid channel would be the wrong direction of travel.                                 |
-| OSM-derived POI/infrastructure layers | ODbL. The layer contract already puts these at `build-local`: we ship the builder, the user builds on their own disk.                 |
+| OSM-derived POI/infrastructure layers | ODbL. The layer interface already puts these at `build-local`: we ship the builder, the user builds on their own disk.                |
 | Overture `base`-theme derivatives     | ODbL. Overture does not launder OSM's license.                                                                                        |
 | `timezone.db`                         | timezone-boundary-builder is ODbL; attribution and share-alike apply to the built database. The builder ships; the database does not. |
 
@@ -265,7 +265,7 @@ later, and the pricing page already publishes durable commitments we intend to k
    as the code and stay there. If a weights bundle ever enters the Lite line it does so as an
    _additional_ distribution channel, never as a replacement for the npm package.
 5. **No third channel.** Two channels, one rule. An "academic tier" or a "startup tier" is a
-   discount on the subscriber channel, not a new artifact line.
+   discount on the subscriber channel rather than a new artifact line.
 
 ## 7. Prerequisites, in order
 
@@ -290,7 +290,7 @@ for doing 1–4 first regardless of when counsel appears.
 
 ## 8. Open questions for the operator
 
-1. **Is 90 days the right delay?** It is a proposal, not a finding. Shorter makes Lite a real
+1. **Is 90 days the right delay?** It is a proposal rather than a finding. Shorter makes Lite a real
    product and weakens the subscription; longer makes Lite a demo. MaxMind's GeoLite equivalent
    differentiates on accuracy rather than delay, so there is no directly comparable number to
    copy.
@@ -302,18 +302,18 @@ for doing 1–4 first regardless of when counsel appears.
    a manifest that already records tier and license, a version already on a dated path, and no
    OpenAddresses caveat. The gazetteer is the most valuable but carries L4.
 4. **Does the free channel need a coverage floor?** If Lite is 90 days behind, an artifact
-   rebuilt less often than every 90 days makes Lite and subscriber identical, and the tier
-   collapses for that artifact. That is fine and honest, but it should be stated rather than
+   rebuilt less frequently than every 90 days makes Lite and subscriber identical, and the tier
+   collapses for that artifact. That is fine and direct, but it should be stated rather than
    discovered.
 
 ## See also
 
-- [Database products catalog](../../articles/licensing/data-products.md) — the artifact
+- [Database products catalog](../../records/site-2026-08/licensing/data-products.md) — the artifact
   inventory this policy applies to (D2).
-- [Pricing](../../articles/licensing/pricing.mdx) — the published tiers and the OEM band.
-- [Data licensing & provenance](../../articles/licensing/data-provenance.md) — the per-source
+- [Pricing](../../records/site-2026-08/licensing/pricing.mdx) — the published tiers and the OEM band.
+- [Data licensing & provenance](../../records/site-2026-08/licensing/data-provenance.md) — the per-source
   license table and the ODbL boundary this document's §5 rule is derived from.
-- [Spatial-layer contract](../../articles/plan/reference/layer-contract.mdx) — the
+- [Spatial-layer interface](../../engineering/reference/layer-interface.mdx) — the
   shipped/build-local/private tiers.
 - `docs/superpowers/plans/counsel-dossier.md` — where every PENDING COUNSEL marker above is
   filed.

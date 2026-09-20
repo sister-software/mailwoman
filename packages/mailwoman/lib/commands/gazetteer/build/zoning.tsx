@@ -7,18 +7,18 @@
  *   `@mailwoman/zoning/sdk`, so each stays unit-testable without Ink or the network in the loop. Mirrors
  *   `coastal.tsx`'s progress (stderr) / summary (stdout) split.
  *
- *   THE ARTIFACT IS BUILT LOCALLY AND NEVER SHIPPED. Three published statements disagree about the source's
- *   licence, so the manifest carries `tier: build-local` and `license: NOASSERTION`, and the SDK refuses a
+ *   the artifact is built locally and never shipped. Three published statements disagree about the source's
+ *   licence, so the manifest carries `tier: build-local` and `license: noassertion`, and the SDK refuses a
  *   `shipped` tier while that holds. This command is how a user gets the layer at all.
  *
- *   `--measure-resolutions` DOES NOT BUILD. The index resolution is a measurement this layer takes rather
+ *   `--measure-resolutions` does not build. The index resolution is a measurement this layer takes rather
  *   than a number argued to, and running the measurement is a mode of its own because it costs a full pass
- *   per candidate and produces a table, not an artifact. What it reports is NOT the `partial` share: 95.7% of
+ *   per candidate and produces a table rather than an artifact. What it reports is not the `partial` share: 95.7% of
  *   these polygons are smaller than a res-9 cell, so that statistic sits near 100% everywhere. The two
  *   columns that decide are candidates-per-cell and the count of features a centre-in-polygon polyfill would
  *   have returned nothing for.
  *
- *   `--authority` IS THE SMOKE RUNG, and `--limit` narrows it further. Building one local authority over the
+ *   `--authority` is the smoke rung, and `--limit` narrows it further. Building one local authority over the
  *   real export exercises the field names, the ring-role resolution, the vocabulary census, the projection
  *   and the seal — which is what fixtures structurally cannot.
  */
@@ -32,7 +32,7 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	formatLayerVerification,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	splitNumberList,
 	useCommandTask,
 } from "#cli-kit"
@@ -45,13 +45,13 @@ import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 const DEFAULT_COVERAGE_RESOLUTION = "6"
 
 /**
- * Index resolution, chosen from the candidates-per-cell and zero-cell measurement — see the workspace README for the
+ * Index resolution, chosen from the candidates-per-cell and zero-cell measurement — see the workspace readme for the
  * table and the reasoning. `--measure-resolutions` re-derives it.
  */
 const DEFAULT_INDEX_RESOLUTION = "10"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "zoning",
@@ -78,21 +78,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	export?: string
-	out?: string
-	indexResolution: string
-	coverageResolution: string
-	measureResolutions?: string
-	authority?: string
-	limit?: string
-	offline: boolean
-	sourceVintage?: string
-	chunkSize?: string
-	verify: boolean
-}
-
-const GazetteerBuildZoning: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const [
 			{ dataRootPath },
@@ -123,7 +109,7 @@ const GazetteerBuildZoning: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const client = createGZTClient()
 
-		// The item read supplies the product vintage AND the licence text the build reconciles against. Both are read
+		// The item read supplies the product vintage and the licence text the build reconciles against. Both are read
 		// rather than trusted from a constant: the vintage stamps the manifest, and the Tailte Éireann clause is the reason
 		// this layer is built locally rather than shipped.
 		const item = options.offline ? undefined : await client.readItemRecord()
@@ -140,7 +126,7 @@ const GazetteerBuildZoning: ParsedCommandComponent<Options> = ({ options }) => {
 		let exportPath = options.export
 
 		if (!exportPath) {
-			// THE VINTAGE IS REQUIRED HERE AND NOT EARLIER. It keys the download cache and it stamps the manifest, so a run
+			// the vintage is required here and not earlier. It keys the download cache and it stamps the manifest, so a run
 			// that neither downloads nor builds — `--measure-resolutions` over an export already on disk — needs none, and
 			// demanding one would make the measurement impossible offline.
 			if (!vintage) {
@@ -150,13 +136,13 @@ const GazetteerBuildZoning: ParsedCommandComponent<Options> = ({ options }) => {
 				)
 			}
 
-			// The result URL is READ from the Hub job rather than assembled: it carries a generated file id with no
+			// The result URL is read from the Hub job rather than assembled: it carries a generated file id with no
 			// relationship to the item id, so a hard-coded URL survives a republish by pointing at a file that is no longer
 			// the product. It 302s, and the transfer follows.
 			exportPath = await downloadZoningExport({
 				url: await client.readExportURL(),
 				vintage,
-				cacheRoot: String(dataRootPath("zoning", "cache")),
+				cacheRoot: dataRootPath("zoning", "cache").toString(),
 				onProgress: (message) => console.error(`  [download] ${message}`),
 			})
 		}
@@ -176,7 +162,7 @@ const GazetteerBuildZoning: ParsedCommandComponent<Options> = ({ options }) => {
 			]
 		}
 
-		// A BUILD needs the vintage, because it stamps the manifest. A manifest carrying a guessed version carries a number
+		// A build needs the vintage, because it stamps the manifest. A manifest carrying a guessed version carries a number
 		// that means nothing.
 		if (!vintage) {
 			throw new Error(
@@ -188,10 +174,10 @@ const GazetteerBuildZoning: ParsedCommandComponent<Options> = ({ options }) => {
 		const sourceVintage = vintage
 		const coverageResolution = Number(options.coverageResolution)
 		const indexResolution = Number(options.indexResolution)
-		const out = options.out ?? String(dataRootPath("zoning", "zoning-ireland.db"))
-		const buildSHA = resolveBuildSHA(String(repoRootPath()))
+		const out = options.out ?? dataRootPath("zoning", "zoning-ireland.db").toString()
+		const buildSHA = resolveBuildSHA(repoRootPath().toString())
 
-		// A narrowed run reads a SUBSET on purpose, so its declared count is the subset's own and the build asserts the sum
+		// A narrowed run reads a subset on purpose, so its declared count is the subset's own and the build asserts the sum
 		// against that rather than against the whole product.
 		const narrowed = Boolean(options.authority || options.limit)
 
@@ -201,7 +187,7 @@ const GazetteerBuildZoning: ParsedCommandComponent<Options> = ({ options }) => {
 			...(options.limit ? { limit: Number(options.limit) } : {}),
 		}
 
-		// A NARROWED RUN COUNTS ITSELF FIRST. `ogrinfo` reports the layer's total and nothing narrower, so a build whose
+		// A narrowed RUN counts itself first. `ogrinfo` reports the layer's total and nothing narrower, so a build whose
 		// declared count was the whole product's would refuse every smoke run — and the declared-count check is the thing
 		// that turns a truncated read into a failure rather than into a smaller country. Counting is one extra pass over a
 		// file the build reads anyway.
@@ -235,7 +221,7 @@ const GazetteerBuildZoning: ParsedCommandComponent<Options> = ({ options }) => {
 					}
 
 		const result = await buildZoningDatabase({
-			// A narrowed run is the smoke rung and reads a subset in one process; a full build is BATCHED, one child process
+			// A narrowed run is the smoke rung and reads a subset in one process. a full build is batched, one child process
 			// per range of the authority's own feature ids. The reason is reproducibility rather than speed — see
 			// `@mailwoman/zoning/sdk/ingest-chunk`.
 			...(narrowed

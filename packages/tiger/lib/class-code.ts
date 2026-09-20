@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Defines the current class of a geographic entity. These codes can be found in the TIGER/Line products, gazetteer
+ * Defines the current class of a geographic entity. These codes can be found in the tiger/Line products, gazetteer
  * files, and other products.
  *
- * @title MAF/TIGER Feature Class Code
+ * @title MAF/tiger Feature Class Code
  */
 export const TIGERClassCode = {
 	/**
@@ -25,14 +25,14 @@ export const TIGERClassCode = {
 	Levee: "C3024",
 
 	/**
-	 * A durable, permanent structure, extending into a body of water, built to protect a shoreline from erosion, to form
-	 * a protected coastal marina/harbor, or to create stable channels for navigation. Unlike piers and docks, water does
-	 * not flow under it. Alternatively referred to as a groyne, groin, seawall, or bulwark.
+	 * A durable, permanent structure, extending into a body of water, built to guard a shoreline from erosion, to form a
+	 * guarded coastal marina/harbor, or to create stable channels for navigation. Unlike piers and docks, water does not
+	 * flow under it. Alternatively referred to as a groyne, groin, seawall, or bulwark.
 	 */
 	JettyBreakwater: "C3025",
 
 	/**
-	 * An area from which commercial minerals are or were removed from the Earth; not including an oilfield or gas field.
+	 * An area from which commercial minerals are or were removed from the Earth. not including an oilfield or gas field.
 	 */
 	QuarryOpenPitMine: "C3026",
 
@@ -183,7 +183,7 @@ export const TIGERClassCode = {
 	 * Corporate entities with legal boundaries established to conduct both business and nonprofit affairs of Alaska
 	 * Natives pursuant to the Alaska Native Claims Settlement Act of 1972 (Public Law 92-203). There are twelve
 	 * geographically defined ANRCs and they are all within and cover most of the State of Alaska (the Annette Island
-	 * Reserve—an American Indian reservation—is excluded from any ANRC).
+	 * Reserve—an American Indian reservation—is excluded from any anrc).
 	 */
 	AlaskaNativeRegionalCorporation: "G2200",
 
@@ -277,8 +277,8 @@ export const TIGERClassCode = {
 	CountySubdivision: "G4040",
 
 	/**
-	 * A subdivision of the three major islands in the U.S. Virgin Islands (USVI). The estates have legally defined
-	 * boundaries and are much smaller in area than the Census Subdistricts (USVI county subdivisions), but do not
+	 * A subdivision of the three major islands in the U.S. Virgin Islands (usvi). The estates have legally defined
+	 * boundaries and are much smaller in area than the Census Subdistricts (usvi county subdivisions), but do not
 	 * necessarily nest within these districts.
 	 */
 	Estate: "G4050",
@@ -383,7 +383,7 @@ export const TIGERClassCode = {
 
 	/**
 	 * Statistical geographic areas defined for the tabulation and dissemination of American Community Survey (ACS) and
-	 * Puerto Rico Community Survey, Public Use Microdata Sample (PUMS) data, as well as ACS period estimates, and
+	 * Puerto Rico Community Survey, Public Use Microdata Sample (pums) data, as well as ACS period estimates, and
 	 * decennial census data. Nesting within states or equivalent entities, PUMAs cover the entirety of the United States,
 	 * Puerto Rico, Guam, and the U.S. Virgin Islands.
 	 */
@@ -437,7 +437,7 @@ export const TIGERClassCode = {
 	OceanSea: "H2053",
 
 	/**
-	 * A body of ice moving outward and down slope from an area of accumulation; an area of relatively permanent snow or
+	 * A body of ice moving outward and down slope from an area of accumulation. an area of relatively permanent snow or
 	 * ice on the top or side of a mountain or mountainous area. [includes ice field and ice patch]
 	 */
 	Glacier: "H2081",
@@ -508,7 +508,7 @@ export const TIGERClassCode = {
 	NursingHomeRetirementHomeHomeForTheAged: "K1233",
 
 	/**
-	 * A facility (correctional or non-correctional) where groups of juveniles reside; this includes training schools,
+	 * A facility (correctional or non-correctional) where groups of juveniles reside. this includes training schools,
 	 * detention centers, residential treatment centers and orphanages.
 	 */
 	JuvenileInstitution: "K1235",
@@ -526,7 +526,7 @@ export const TIGERClassCode = {
 	FederalPenitentiaryStatePrisonPrisonFarm: "K1237",
 
 	/**
-	 * A facility that serves as a place for the confinement of adult persons in lawful detention, not elsewhere
+	 * A facility that serves as a place for the confinement of adult persons in lawful detention rather than elsewhere
 	 * classified or administered by a government of unknown jurisdiction.
 	 */
 	OtherCorrectionalInstitution: "K1238",
@@ -686,7 +686,7 @@ export const TIGERClassCode = {
 	OtherEmploymentCenter: "K2366",
 
 	/**
-	 * A facility where one or more modes of transportation can be accessed by people or for the shipment of goods;
+	 * A facility where one or more modes of transportation can be accessed by people or for the shipment of goods.
 	 * examples of such a facility include marine terminal, bus station, train station, airport and truck warehouse.
 	 */
 	TransportationTerminal: "K2400",
@@ -785,7 +785,7 @@ export const TIGERClassCode = {
 	Zoo: "K2586",
 
 	/**
-	 * A sanctified place or structure where people gather for religious worship; examples include church, synagogue,
+	 * A sanctified place or structure where people gather for religious worship. examples include church, synagogue,
 	 * temple, and mosque.
 	 */
 	PlaceOfWorship: "K3544",

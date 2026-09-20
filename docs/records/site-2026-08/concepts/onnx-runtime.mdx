@@ -25,7 +25,7 @@ The same `model.onnx` file works in all three.
 
 ## How the model file is structured
 
-An ONNX model is a graph of operations: matrix multiplies, attention computations, activations, layer normalisation, etc. Each operation has typed inputs and outputs. The graph is serialized as a Protocol Buffer.
+An ONNX model is a graph of operations: matrix multiplies, attention computations, activations, layer normalization, etc. Each operation has typed inputs and outputs. The graph is serialized as a Protocol Buffer.
 
 For Mailwoman's encoder, the export traces this kind of structure:
 
@@ -71,7 +71,7 @@ const logits = results.logits // float32[1, seq_len, 21]
 const labels = argmax(logits) // pick best label per token
 ```
 
-The whole inference path — tokenize, run model, decode labels — takes ~5 ms on a modest CPU for a typical address. The session-creation step (loading the file, JIT-compiling the graph) takes ~30 ms and is amortized across many calls.
+The whole inference path — tokenize, run model, decode labels — takes ~5 ms on a modest CPU for a typical address. The session-creation step (loading the file, JIT-compiling the graph) takes ~30 ms and is amortized across several calls.
 
 ## Inference in the browser
 
@@ -113,12 +113,12 @@ A few subtle issues come up during ONNX export:
 - **Dynamic axes.** The model needs to handle variable batch sizes and variable sequence lengths. Both are declared as "dynamic axes" during export. The exported model graph contains shape inference logic so the runtime can adapt at call time.
 - **Operations that have no ONNX equivalent.** Most PyTorch ops do. A few (some custom ROCm kernels, some experimental quantization ops) do not. Mailwoman avoids them.
 - **The `dynamo` exporter path.** PyTorch 2.x ships two ONNX exporters: the legacy TorchScript-based one and the newer `dynamo`-based one. The legacy path crashes on `transformers ≥ 5`'s attention masking implementation; we use the `dynamo` path with `onnxscript` post-processing.
-- **CPU-only export on this GPU.** ROCm + bf16 + ONNX tracing hangs on the lab's hardware. The model is moved to CPU before the export call. This is slow (a few minutes) but only runs at ship time, not per-iteration.
+- **CPU-only export on this GPU.** ROCm + bf16 + ONNX tracing hangs on the lab's hardware. The model is moved to CPU before the export call. This is slow (a few minutes) but only runs at ship time rather than per-iteration.
 
 ## Where this lives in the code
 
-- **Export script:** `corpus-python/src/mailwoman_train/export_onnx.py`
-- **Quantization:** `corpus-python/src/mailwoman_train/quantize.py`
+- **Export script:** `corpus-python/src/mailwoman_train/export/onnx.py`
+- **Quantization:** `corpus-python/src/mailwoman_train/export/quantize.py`
 - **Node runtime wrapper:** `neural/onnx-runner.ts`
 - **Web runtime wrapper:** `neural-web/web-onnx-runner.ts`
 - **Demo integration:** `docs/src/pages/demo/index.tsx`

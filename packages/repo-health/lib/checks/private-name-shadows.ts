@@ -4,7 +4,7 @@
 /**
  * @file A module-private function that shares its name with a function another module exports is either a re-typed
  *   copy or a collision, and both are worth one look before merge. `mailwoman/prefer-home` reports the shapes someone
- *   has already tabled; this is the detector for the shape nobody has tabled yet. A 2026-09-04 census found 39 such
+ *   has already tabled. this is the detector for the shape nobody has tabled yet. A 2026-09-04 census found 39 such
  *   pairs across `packages/*\/lib`: two were true copies (`percentile` with the percentile as a fraction, a second
  *   `pyRound`), the rest thin wrappers, deliberate dependency-free copies, or same-name-different-thing.
  *
@@ -12,7 +12,7 @@
  *
  *       // repo-health-ignore private-name-shadows-export -- <reason>
  *
- *   The `debt` check pins the count so the number ratchets down; this check names each site.
+ *   The `debt` check pins the count so the number ratchets down. this check names each site.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -30,7 +30,7 @@ export const SHADOW_IGNORE_MARKER = "repo-health-ignore private-name-shadows-exp
 
 /**
  * Names too generic to mean the same thing twice: a private `normalize` beside an exported `normalize` is two different
- * normalizations, not a copy.
+ * normalizations rather than a copy.
  */
 const GENERIC_NAMES: ReadonlySet<string> = new Set([
 	"normalize",

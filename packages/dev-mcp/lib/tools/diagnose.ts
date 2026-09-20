@@ -3,7 +3,7 @@
 
 /**
  *   The `mwdev_diagnose` tool definition — the description an agent reads, the input schema, and the handler wiring.
- *   The measurement itself lives in the package root; this file is the CONTRACT, and the description is the
+ *   The measurement itself lives in the package root. this file is the interface, and the description is the
  *   required half of it.
  */
 
@@ -49,7 +49,7 @@ export const diagnoseTool = async ({ registry }: DevToolDeps): Promise<DevTool> 
 			.optional()
 			.describe(
 				"Cap on the PER-ROW accounts in the reply — the aggregates (by_shape, counterfactual_settings, summary) " +
-					"still cover every evaluated row. The emitted slice leads with non-clean rows and `rows_omitted` " +
+					"still cover every evaluated row. The emitted rows lead with the non-clean ones and `rows_omitted` " +
 					"says what it left out. Use for large sets where the census is the point and the row dump is not."
 			),
 	}),

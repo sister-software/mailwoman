@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   POI subject detection for the `poi_query` kind. The lexicon is INJECTED (`POIPhraseLookup`) —
+ *   POI subject detection for the `poi_query` kind. The lexicon is injected (`POIPhraseLookup`) —
  *   this package keeps its bitter-lesson invariant (no dictionaries in-tree); the phrase table
  *   lives in `@mailwoman/poi-taxonomy` and is wired in by `createRuntimePipeline` behind the
- *   `poiQueryKind` flag (default-ON since 2026-07-20). Spec §3.1.
+ *   `poiQueryKind` flag (default-on since 2026-07-20). Spec §3.1.
  */
 
 import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
@@ -20,8 +20,8 @@ const MAX_POI_SEGMENTS = 3
  */
 export interface POIPhraseMatch {
 	/**
-	 * The matched subject's identifier string. For `kind: "category"`, a `@mailwoman/poi-taxonomy` category id; for
-	 * `kind: "brand"` or `kind: "name"`, the canonical display name. `matchPOISubject` treats it opaquely; the caller
+	 * The matched subject's identifier string. For `kind: "category"`, a `@mailwoman/poi-taxonomy` category id. for
+	 * `kind: "brand"` or `kind: "name"`, the canonical display name. `matchPOISubject` treats it opaquely. the caller
 	 * (`mailwoman`'s `poi-intent.ts`) interprets it per `kind`.
 	 */
 	categoryID: string
@@ -39,14 +39,14 @@ export interface POIPhraseMatch {
 	 */
 	wikidata?: string
 	/**
-	 * Whether this hit is one member of a set the caller must search TOGETHER, rather than one candidate in a preference
+	 * Whether this hit is one member of a set the caller must search together, rather than one candidate in a preference
 	 * list.
 	 *
 	 * A lookup returning several hits means two different things, and the difference decides whether narrowing to the
 	 * first is an answer or an invented ordering. A phrase index returns the categories one typed phrase could name, the
 	 * curated reading first (`credit union` → the `bank` rollup its synonym redirects to, then the standalone
-	 * `credit_union` category), and the first entry IS the subject. An affordance rung returns every entity kind that
-	 * affords ONE activity, in a stable enumeration that is not a preference, and taking the first picks a winner nobody
+	 * `credit_union` category), and the first entry is the subject. An affordance rung returns every entity kind that
+	 * affords one activity, in a stable enumeration that is not a preference, and taking the first picks a winner nobody
 	 * authored.
 	 *
 	 * Set on every member of such a set. {@link matchPOISubject} then carries them all, the POI branch searches their
@@ -55,18 +55,19 @@ export interface POIPhraseMatch {
 	 */
 	searchAsSet?: boolean
 	/**
-	 * ISO 3166-1 alpha-2 countries the authority behind this hit scopes its claim to. Absent = the claim holds
+	 * ISO 3166-1 alpha-2 countries the authority behind this hit scopes its claim to. Absent = the condition is true
 	 * everywhere.
 	 *
-	 * A scope is a statement about ESTABLISHMENTS, so it is judged against the country of the place being searched, not
-	 * the caller's locale: the locale is the lens the phrase is read through, and it says nothing about where the claim
-	 * holds. `matchPOISubject` carries the value untouched; the POI intent stage binds it once the anchor has resolved.
+	 * A scope is a statement about establishments, so it is judged against the country of the place being searched rather
+	 * than the caller's locale: the locale is the lens the phrase is read through, and it says nothing about where the
+	 * condition is true. `matchPOISubject` carries the value untouched. the POI intent stage binds it once the anchor has
+	 * resolved.
 	 */
 	countryScope?: readonly string[]
 }
 
 /**
- * Injected phrase→category lookup. Exact-phrase, locale-aware; returns [] on miss.
+ * Injected phrase→category lookup. Exact-phrase, locale-aware. returns [] on miss.
  */
 export type POIPhraseLookup = (phrase: string, locale?: string) => ReadonlyArray<POIPhraseMatch>
 
@@ -86,7 +87,7 @@ export interface POIQuerySpan {
  */
 export interface POISubjectMatch {
 	/**
-	 * The hit the subject SCORES under — its kind and its confidence. Always `matches[0]`; the two are built together in
+	 * The hit the subject scores under — its kind and its confidence. Always `matches[0]`; the two are built together in
 	 * one place so they cannot disagree.
 	 */
 	match: POIPhraseMatch
@@ -153,7 +154,7 @@ function reachedMatches(hits: ReadonlyArray<POIPhraseMatch>): POIPhraseMatch[] {
 }
 
 /**
- * Match a POI subject: the whole input, or the text before the FIRST anchor separator WHOSE PREFIX HITS THE LEXICON (≤
+ * Match a POI subject: the whole input, or the text before the first anchor separator whose prefix hits the lexicon (≤
  * 8 tokens). Scans separator occurrences left-to-right — a lexicon phrase may itself contain a bare separator word
  * (e.g. "walk in clinic"), so the first separator isn't necessarily the right split point. Returns null when the
  * lexicon never fires — including comma-ridden full addresses whose leading segment isn't a lexicon phrase.
@@ -191,7 +192,7 @@ export function matchPOISubject(
 		const subject = trimmed.slice(0, separator.index).trim()
 
 		// Subjects only grow as the scan moves right — once over budget, later splits are too. Whitespace-only
-		// split, not `wordsOf`: a comma inside a subject is real content here, not a separator to erase.
+		// split rather than `wordsOf`: a comma inside a subject is real content here rather than a separator to erase.
 		if (subject.split(/\s+/).length > MAX_SUBJECT_TOKENS) break
 
 		const hits = lookup(subject, locale)
@@ -238,7 +239,7 @@ export function matchPOISubject(
 /**
  * `poi_query` scorer over an injected lexicon. Confidence bands: whole-input lexicon hit 0.92 (above venue-landmark's
  * 0.88 ceiling — an exact lexicon phrase beats a shape heuristic); subject + anchor 0.9. Guards below keep venue-led
- * FULL addresses (class 2) on the structured-address path: a remainder that leads with a house number, or a 4+-segment
+ * full addresses (class 2) on the structured-address path: a remainder that leads with a house number, or a 4+-segment
  * input, scores 0 here.
  */
 export function createScorePOIQuery(
@@ -266,7 +267,7 @@ export function createScorePOIQuery(
 /**
  * Confidence band for a bare category. One notch above `poi_query`'s whole-input band (0.92) so the anchorless subset
  * takes the top slot from it, and only from it — every anchored POI query keeps scoring `poi_query` exactly as before.
- * The coordinator's POI branch accepts both kinds, so the routing is identical either way; the split exists so the
+ * The coordinator's POI branch accepts both kinds, so the routing is identical either way. the split exists so the
  * marker can say "you named a category and no place", which is a different thing to tell a caller.
  */
 const POI_CATEGORY_CONFIDENCE = 0.93
@@ -275,10 +276,10 @@ const POI_CATEGORY_CONFIDENCE = 0.93
  * `poi_category` scorer (ROAD_TO_V9 §4.4) — a bare taxonomy category with nowhere to search: "tacos", "grocery store",
  * "drinking fountain".
  *
- * Fires ONLY on a whole-input lexicon hit (`remainder === ""`) whose subject is a CATEGORY. A brand (`kind: "brand"`)
- * is excluded: a bare "Starbucks" is a name lookup, not a category, and the taxonomy id a category marker promises to
- * carry does not exist for it — `POIPhraseMatch.categoryID` holds the brand's display name in that case, which would
- * make the marker's `categoryID` evidence a lie.
+ * Fires only on a whole-input lexicon hit (`remainder === ""`) whose subject is a category. A brand (`kind: "brand"`)
+ * is excluded: a bare "Starbucks" is a name lookup rather than a category, and the taxonomy id a category marker
+ * promises to carry does not exist for it — `POIPhraseMatch.categoryID` holds the brand's display name in that case,
+ * which would make the marker's `categoryID` evidence a lie.
  */
 export function createScorePOICategory(
 	lookup: POIPhraseLookup,

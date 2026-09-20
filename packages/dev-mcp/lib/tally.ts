@@ -13,7 +13,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
  *
  *   Absence discipline: a path that is missing on a row tallies under {@link ABSENT_KEY}, never silently skipped and
  *   never conflated with a value — "the field was not there" is a countable fact (the winner-less rows in a coherence
- *   census are a claim, not noise). `null` tallies as the string "null", distinct from absence, because a field
+ *   census are a claim rather than noise). `null` tallies as the string "null", distinct from absence, because a field
  *   explicitly set to null (`postcode_country_scope: null`) said something a missing field did not.
  */
 
@@ -47,7 +47,7 @@ export function readPath(value: unknown, path: string): { present: boolean; valu
 
 /**
  * Count distinct values at one dotted path across rows. Non-scalar values (objects) tally under their JSON form so a
- * structured field can still be tallied without a silent drop; scalars tally under `String(value)`.
+ * structured field can still be tallied without a silent drop. scalars tally under `String(value)`.
  */
 export function tallyPath(rows: ReadonlyArray<unknown>, path: string): Record<string, number> {
 	const counts: Record<string, number> = {}

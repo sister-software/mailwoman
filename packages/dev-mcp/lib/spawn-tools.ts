@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The tools that SPAWN the compiled CLI, and the one that polls them.
+ *   The tools that spawn the compiled CLI, and the one that polls them.
  *
- *   They are together because they share three properties nothing else here has. Each writes its report to stdout,
- *   which in this process is the JSON-RPC channel — so each must run as a child rather than an import. Each therefore
- *   puts the COMPILED tree back on a path this server otherwise keeps off it, and pays `assertCompiledFresh` for the
+ *   They are together because they share three properties nothing else here has. Each writes its report to stdout.
+ *   In this process, stdout is the JSON-RPC channel. Each must run as a child rather than an import. Each therefore
+ *   puts the compiled tree back on a path this server otherwise keeps off it, and pays `assertCompiledFresh` for the
  *   privilege. And each pays the full ~1.4 s cold start the warm tools exist to avoid, which is a fact their results
  *   state rather than hide.
  */
@@ -27,7 +27,7 @@ import { summarizeJob, type DevTool } from "#tool-kit"
 /**
  * Where each check job wrote its battery, keyed by job id.
  *
- * Kept beside the tools rather than re-derived from the log afterwards: the out-dir is chosen when the job STARTS, so
+ * Kept beside the tools rather than re-derived from the log afterwards: the out-dir is chosen when the job starts, so
  * recovering it from printed output would fail exactly when the run died before printing any — the case where knowing
  * the directory matters most.
  */
@@ -57,7 +57,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 			}),
 			handler: async (args) => {
 				// The gauntlet writes its whole report to stdout, and stdout here is the JSON-RPC channel — so it is
-				// spawned rather than imported. That puts the COMPILED tree back on the path, which is what this guard is
+				// spawned rather than imported. That puts the compiled tree back on the path, which is what this guard is
 				// for: a stale out/ would grade replaced code and report a verdict rather than an error.
 				const freshness = await assertCompiledFresh(registry.repoRoot)
 
@@ -179,7 +179,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				}
 
 				// Spawned for the same reason the gauntlet is: it writes its battery report to stdout, which here is the
-				// JSON-RPC channel. The eval ALSO runs its own recompile-before-eval guard, stricter than this one and meant
+				// JSON-RPC channel. The eval also runs its own recompile-before-eval guard, stricter than this one and meant
 				// to fire — it is surfaced verbatim rather than pre-empted.
 				const freshness = await assertCompiledFresh(registry.repoRoot)
 				const outDir = (args["out_dir"] as string | undefined) ?? tempRootPath(`mwdev-check-${jobs.list().length}`)
@@ -323,7 +323,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 
 				const promotionEvalOutDir = promotionEvalOutDirs.get(jobID)
 
-				// A check job's numbers come from its own artifacts; only a gauntlet job needs its log parsed.
+				// A check job's numbers come from its own artifacts. only a gauntlet job needs its log parsed.
 				const report = promotionEvalOutDir
 					? await readEvalReport(promotionEvalOutDir, job.stdout, job.stderr)
 					: parseGauntletReport(job.stdout, job.stderr)
@@ -337,7 +337,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 					// A running job still reports what it has produced so far, clearly marked — a partial log is useful and
 					// a silent "not ready" is not.
 					partial: job.state === "running",
-					// A graded FAIL exits 1, so `state: "failed"` is what a completed-and-failing gauntlet looks like. That
+					// A graded `fail` exits 1, so `state: "failed"` is what a completed-and-failing gauntlet looks like. That
 					// reads as a crash, and the two need different responses — say which happened.
 					...(job.state === "failed" && report.verdict
 						? {

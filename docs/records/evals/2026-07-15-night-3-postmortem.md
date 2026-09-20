@@ -9,7 +9,7 @@ GPU, zero Modal spend, zero training runs.** Six PRs, all measurements on the sh
 
 ## What shipped (PRs, in merge order)
 
-The stack matters — #1136 and #1137 are based on #1132, not `main`.
+The stack matters — #1136 and #1137 are based on #1132 rather than `main`.
 
 1. **[#1132] `fix(neural)`: word-consistency heal → ship default-ON.** The 2026-06-19 check shelved
    this heal (street −12.6 adversarial) and blamed "the vote amplifies noise on byte-soup rows,"
@@ -40,7 +40,7 @@ The stack matters — #1136 and #1137 are based on #1132, not `main`.
 | parity street                | 0.543 | **0.573** |
 | golden exact-match           | 24.5% | 25.5%     |
 
-2pp promote check PASS (worst: country −0.4pp, n=245). Presets 6/6, zero grouper-audit. Check
+2pp promote check pass (worst: country −0.4pp, n=245). Presets 6/6, zero grouper-audit. Check
 revision declared explicitly: `eval parity` now grades the ship-config parse; floors untouched.
 
 ## What we learned (the measurements that change the plan)
@@ -49,10 +49,10 @@ revision declared explicitly: `eval parity` now grades the ship-config parse; fl
   **bare fragments with no house number** — a recall/polarity failure (26/34 empty-street rows have
   _zero_ street-family label in the raw argmax; the model refuses, the decode doesn't drop it).
   Leading-number inputs fail only 21.6%.
-- **The digit-atomicity splice is counter-evidenced, not just unvalidated.** Multi-digit house
+- **The digit-atomicity splice is counter-evidenced, notunvalidated.** Multi-digit house
   numbers are the _best_-performing form (17.3% fail) vs short-digit 29.2% and alphanumeric 73.3%.
   Per-digit shattering does not correlate with failure. Deprioritized in the runbook.
-- **Diacritics: "visibility, not regression" — confirmed.** Resolve-locality is 100% on every
+- **Diacritics: "visibility rather than regression" — confirmed.** Resolve-locality is 100% on every
   scored diacritic locale (CZ/PL/PT/RO/SK) while street-tag surface exactness lags. The city never
   goes wrong.
 - **The stage-2 falsifier resolved both branches** (DeepSeek-designed, session 019f6471, zero
@@ -80,7 +80,7 @@ revision declared explicitly: `eval parity` now grades the ship-config parse; fl
 - **Verification caught two would-be false claims.** An "ASCII row broke" reading that would have
   contradicted the byte-identity guarantee was a `--failing 50` **truncation artifact**; and the
   all-zero resolve column in the first diacritic probe was my own harness bug (`resolve` vs
-  `resolveTree`), not a model finding.
+  `resolveTree`) rather than a model finding.
 
 ## What could have gone better
 
@@ -95,7 +95,7 @@ revision declared explicitly: `eval parity` now grades the ship-config parse; fl
   supposed to land _before_ grading and didn't; the check-spec doc states that sequencing rather
   than claiming an ordering git can't show. **Lessons: verify the commit landed (`git log -1`) —
   never trust the tail of a pipe; and when a workaround succeeds twice, that's the signal to
-  diagnose, not to keep working around.**
+  diagnose rather than to keep working around.**
 - **I wrote the PT/RO check spec before checking the source data.** The 15 minutes that would have
   gone into `head -3 countrywide.csv` would have retargeted the whole task. Pre-registration is not
   a substitute for looking at the inputs.
@@ -111,8 +111,8 @@ revision declared explicitly: `eval parity` now grades the ship-config parse; fl
   handoff.
 - **Declared the parity check revision explicitly** (grade the ship-config parse) instead of leaving
   the check measuring a parse production no longer performs. Floors untouched; `--no-word-consistency`
-  preserves the old baseline. Per the no-silent-check-drift rule, this is stated, not slipped in.
-- **Did NOT ship v267.** It fixes both target rows and breaks a Brazilian one, and its overlap
+  preserves the old baseline. Per the no-silent-check-drift rule, this is stated rather than slipped in.
+- **Did not ship v267.** It fixes both target rows and breaks a Brazilian one, and its overlap
   surface now includes FR — the exact locale of the v5.1.0 "net-positive by luck" incident. A
   six-leg battery finished near the shift boundary with the operator asleep is the artifact I'd be
   least comfortable defending. Staged and characterized instead.
@@ -123,7 +123,7 @@ revision declared explicitly: `eval parity` now grades the ship-config parse; fl
 
 1. **Merge order** — #1132 first (the stack base), then #1136/#1137 rebase to `main` and get real
    CI. #1133/#1134/#1135 are independent.
-2. **Ratify the protected lane** for the span-head arc (plan item 4). It spans multiple nights; the
+2. **Ratify the guarded lane** for the span-head arc (plan item 4). It spans multiple nights; the
    nightly cadence is precisely what has kept it unbuilt for ~200 model versions.
 3. **v267 disposition** — worth a proper multi-leg pre-registration (incl. a pt-BR leg), or park it?
    The RO byte-fallback fix is real (4/5 → 5/5) but the corpus exposure is 13/321 fixtures.
@@ -150,5 +150,5 @@ revision declared explicitly: `eval parity` now grades the ship-config parse; fl
 | NaN incidents              | 0                                              |
 | CI failures                | 0 (2 PRs untestable by CI — annotated)         |
 | Demo regressions           | 0                                              |
-| Production behavior change | word-consistency heal ON (pending #1132 merge) |
+| Production behavior change | word-consistency heal on (pending #1132 merge) |
 | Local test suite           | 3450 pass / 23 skip, 0 fail                    |

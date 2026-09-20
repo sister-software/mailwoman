@@ -1,7 +1,7 @@
 # Golden eval set v0.1.0
 
 Hand-labeled ground truth for the Mailwoman neural classifier. **This is the
-contract for "what good looks like."** The corpus pipeline's `corpus-v0.1.0`
+interface for "what good looks like."** The corpus pipeline's `corpus-v0.1.0`
 ships paired with this golden set; eval scripts compare classifier output to
 the components in each entry.
 
@@ -95,12 +95,12 @@ the place-shaped prefix is venue.
 **`kryptonite/particle-honorific`** — apostrophe + St./Saint /
 Mt./Mount / Ft./Fort / directional-initial ambiguity. Same surface form
 plays different syntactic roles in venue vs street vs locality. E.g.
-"P'tit St. Denis Street Café" — venue's "St." is an honorific, not a
+"P'tit St. Denis Street Café" — venue's "St." is an honorific rather than a
 street_prefix.
 
 **`kryptonite/disambiguation`** — locality alone (or locality+region)
-that could resolve to many real places. Ground truth matches what was
-written, not what is most famous.
+that could resolve to a set of real places. Ground truth matches what was
+written rather than what is most famous.
 
 **`graceful/typo`** — single-char edits or transpositions on a clean
 address. "Pensylvania" → still recoverable; the model should produce
@@ -133,7 +133,7 @@ ideally do_ on each adversarial case — including when partial-parse +
 low-confidence-flag is the right answer rather than a full but wrong
 parse.
 
-## Why hand-labeled, not synthesized?
+## Why hand-labeled rather than synthesized?
 
 Phase 1 corpus rows are derived from public data sources (WOF, BAN, OSM, …)
 and carry adapter-level ground truth — but those sources have their own

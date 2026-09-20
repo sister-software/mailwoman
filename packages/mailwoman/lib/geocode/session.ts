@@ -3,11 +3,11 @@
 
 /**
  *   The warm half of `mailwoman geocode`: everything the command used to assemble inline, hoisted behind a
- *   session so a caller that geocodes more than once — the interactive debug view, a REPL, a batch loop —
- *   pays for the classifier, the gazetteer backend and the database handles ONCE.
+ *   session so a caller that geocodes more than once — the interactive debug view, a repl, a batch loop —
+ *   pays for the classifier, the gazetteer backend and the database handles once.
  *
- *   {@linkcode createGeocodeSession} runs the one-time loads in the order the CLI's error contract depends
- *   on, and each step's failure message IS that contract:
+ *   {@linkcode createGeocodeSession} runs the one-time loads in the order the CLI's error interface depends
+ *   on, and each step's failure message is that interface:
  *
  *   1. The gazetteer path (a candidate.db, else the WOF admin databases) — the most common missing prerequisite
  *        and the cheapest to check, so it reports before the multi-second weights load.
@@ -65,42 +65,42 @@ import {
 	resolveWOFDatabasePaths,
 } from "#resolver-backend"
 
-//#region Contract
+//#region Interface
 
 /**
- * The slice of the geocode command's parsed options a session reads.
+ * The subset of the geocode command's parsed options a session reads.
  *
- * Declared structurally because the session is the lower layer; importing the CLI specification here would point the
+ * Declared structurally because the session is the lower layer. importing the CLI specification here would point the
  * dependency the wrong way. The command hands over its whole parsed options object and structural typing accepts the
  * superset. Fields with CLI defaults are required here.
  */
 export interface GeocodeSessionOptions {
 	/**
-	 * Feed the gazetteer FST prior to the parse (#1497). **ON by default** since 2026-08-16; pass `false` to disable.
+	 * Feed the gazetteer FST prior to the parse (#1497). **on by default** since 2026-08-16. pass `false` to disable.
 	 *
 	 * Promoted on measured evidence in both arms of both batteries. Regression board 352/354 → 353/354 conditional, with
-	 * a row-level diff over all 209 failing rows showing exactly one fixed and ZERO broken. Parity corpus (321 fixtures)
+	 * a row-level diff over all 209 failing rows showing exactly one fixed and zero broken. Parity corpus (321 fixtures)
 	 * under en-US weights: every floor byte-identical, spurious `street` 13/54 → 10/54 (it stops `Perth`, `Dallas` and
 	 * `California` being tagged as streets), full agreement US 54/99 → 57/99 and AU 9/20 → 10/20.
 	 *
-	 * The effect lands entirely in the PRECISION half that `parity-corpus.ts` documents the floors cannot see, so a
+	 * The effect appears entirely in the precision half that `parity-corpus.ts` documents the floors cannot see, so a
 	 * floors-only reading reports "no change" — which is why the promotion rests on the full-agreement and spurious
 	 * columns rather than the floor table.
 	 *
 	 * Known residual, carried deliberately: under fr-FR weights the US bucket moves 54/99 → 53/99. Every floor is
-	 * identical there too, so that row moved on a NON-FLOOR tag. It is a US row parsed with FR weights — a pairing
+	 * identical there too, so that row moved on a NON-floor tag. It is a US row parsed with FR weights — a pairing
 	 * production does not route — and the FR bucket itself is unchanged, so the D-rule's tier-1 test is met.
 	 */
 	gazetteerPrior?: boolean
 	locale: string
 	/**
-	 * Grade a CANDIDATE weights bundle instead of the installed one — a package-shaped directory
+	 * Grade a candidate weights bundle instead of the installed one — a package-shaped directory
 	 * (`<root>/node_modules/@mailwoman/neural-weights-<locale>/`), as staged by an eval harness or `npm install
 	 * --prefix`. Unset loads whatever the resolution ladder finds, which is what production does.
 	 *
-	 * `resolveWeights` treats this rung as authoritative ONLY when the directory holds `model.onnx` and
+	 * `resolveWeights` treats this rung as authoritative only when the directory holds `model.onnx` and
 	 * `tokenizer.model`; a cache missing them falls through to the installed workspace package, which in this repo always
-	 * resolves. So a path typo does not fail here — it loads the SHIPPED model under the candidate's label. A caller that
+	 * resolves. So a path typo does not fail here — it loads the shipped model under the candidate's label. A caller that
 	 * cannot tolerate that must check the layout before constructing the session and read
 	 * {@link GeocodeSession.artifacts} back after; `missingWeightsCacheArtifacts` is the shared check.
 	 */
@@ -119,51 +119,53 @@ export interface GeocodeSessionOptions {
 	postcodeCountryCoherence: boolean
 	forkEntity: boolean
 	/**
-	 * The opt-in venue tier (#1684's POI half) — see `GeocodeDeps.poiVenueTier`. Default OFF.
+	 * The opt-in venue tier (#1684's POI half) — see `GeocodeDeps.poiVenueTier`. Off by default.
 	 */
 	poiVenueTier?: boolean
 	/**
-	 * The capital-status ranking axis (#1880) — bounded promotion of a NATIONAL capital among same-name candidates on the
+	 * The capital-status ranking axis (#1880) — bounded promotion of a national capital among same-name candidates on the
 	 * bare-toponym class (`promoteCapitals`, resolver/toponym-prior.ts — applied after the fame key, tier-safe). Reads
-	 * the artifact's `capital` table, falling back to the repo's `data/gazetteer/capitals-v1.json`. Default ON (board-651
-	 * receipt on PR #1888: +6/−0 with the exemption's +1 beside it); `false` disables. Unset, a missing reference
-	 * degrades to no promotion; an EXPLICIT `true` throws instead, so an asked-for key can never no-op silently.
+	 * the artifact's `capital` table, falling back to the repo's `data/gazetteer/capitals-v1.json`. On by default
+	 * (board-651 receipt on PR #1888: +6/−0 with the exemption's +1 beside it); `false` disables. Unset, a missing
+	 * reference degrades to no promotion. an explicit `true` throws instead, so an asked-for key can never no-op
+	 * silently.
 	 */
 	capitalTier?: boolean
 	/**
 	 * #1882 — exempt own-name `variant` aliases (the holder's primary name in another orthography, stamped by the
-	 * candidate build's own-name detector) from the cross-country primary-preference penalty. Candidate backend only;
-	 * no-ops on an artifact without the `name_role` column. Default ON (same PR #1888 receipt); `false` disables.
+	 * candidate build's own-name detector) from the cross-country primary-preference penalty. Candidate backend only.
+	 * no-ops on an artifact without the `name_role` column. On by default (same PR #1888 receipt); `false` disables.
 	 */
 	variantAliasExemption?: boolean
 	postcodeShapeCoherence: boolean
 	postcodeContainmentCoherence: boolean
 	/**
 	 * Admin-containment re-rank (#1717 stage 2) — a parsed region qualifier participates in locality-candidate selection
-	 * via the candidate gazetteer's ancestors sidecar. Default OFF (D-rule); `undefined` keeps the production default.
+	 * via the candidate gazetteer's ancestors sidecar. Off by default (D-rule); `undefined` keeps the production
+	 * default.
 	 */
 	adminContainmentRerank?: boolean
 	/**
-	 * DEPRECATED NO-OP, removed at the next major. The Decision-A retry rider it controlled was retired 2026-08-19 under
-	 * the #486 repair-retirement policy with a measured record of exactly zero effect (the board, its failure slice, and
-	 * 600 fresh register records — #1694 holds the receipts). Accepted so existing callers keep compiling; ignored,
+	 * Deprecated no-OP, removed at the next major. The Decision-A retry rider it controlled was retired 2026-08-19 under
+	 * the #486 repair-retirement policy with a measured record of exactly zero effect (the board, its failure subset, and
+	 * 600 fresh register records — #1694 holds the receipts). Accepted so existing callers keep compiling. ignored,
 	 * because single-pass is now the only behavior.
 	 */
 	retryAlternateRegister?: boolean
 	placeCountryThreshold: number
 	/**
-	 * Record a {@link GeocodeTrace} per input. OFF by default and NOT a command flag: the `--debug` surfaces opt in
+	 * Record a {@link GeocodeTrace} per input. Off by default and not a command flag: the `--debug` surfaces opt in
 	 * (`createGeocodeSession({ ...options, trace: true })`), and every other caller keeps the one-shot cost. Tracing
-	 * spends one EXTRA decode per input (`traceParse` alongside the resolve's own parse, ~3 ms warm) — the two run the
+	 * spends one extra decode per input (`traceParse` alongside the resolve's own parse, ~3 ms warm) — the two run the
 	 * same opts through the same `#decode`, so the trace describes the decode that produced the tree, and the tree the
 	 * resolver walks is still `parseForGeocode`'s.
 	 */
 	trace?: boolean
 	/**
-	 * When a lookup resolves NOTHING, re-probe the value across the other admin bands and record which hold it.
+	 * When a lookup resolves nothing, re-probe the value across the other admin bands and record which hold it.
 	 *
-	 * DIAGNOSTIC ONLY and off by default: the answer is byte-identical either way, and what changes is that a miss can
-	 * say WHY. A key we hold under another placetype is a reachability failure the model's tag caused; a key held nowhere
+	 * Diagnostic only and off by default: the answer is byte-identical either way, and what changes is that a miss can
+	 * say why. A key we hold under another placetype is a reachability failure the model's tag caused. a key held nowhere
 	 * is coverage. Both reach a caller as `null` without this, and they call for opposite work.
 	 *
 	 * Costs one extra backend call per band per miss and needs {@link trace}, since the record is the whole product.
@@ -178,8 +180,8 @@ export interface GeocodeSessionOptions {
 /**
  * What the model and the cheap structural stages had to say about one input — the `--debug` view's evidence rows.
  *
- * Assembled ONLY when the session was opened with {@link GeocodeSessionOptions.trace}. Every field is a value some stage
- * actually produced; there is no field here a surface has to invent a number for. What it deliberately does NOT carry
+ * Assembled only when the session was opened with {@link GeocodeSessionOptions.trace}. Every field is a value some stage
+ * actually produced. there is no field here a surface has to invent a number for. What it deliberately does not carry
  * is a `PipelineResult`: `geocodeAddress`'s cascade is not `runPipeline` (see `geocode-core.ts`'s header — the
  * pipeline's reconcile stage drops the street node the coordinate tiers need), so the stages that never run on this
  * path — the `@mailwoman/locale-check` stage, the phrase grouper, the POI branch — have nothing to report and are
@@ -207,7 +209,7 @@ export interface GeocodeTrace {
 	locale: string
 	/**
 	 * #1721 — the resolver's interior: one record per backend lookup the walk performed, carrying the query as sent, the
-	 * candidate table with per-stage ranks, the checks that fired, and the pick's provenance. An EMPTY array means the
+	 * candidate table with per-stage ranks, the checks that fired, and the pick's provenance. An empty array means the
 	 * walk performed no lookups (nothing resolvable in the tree); the field is absent only when tracing was off.
 	 */
 	resolver: ResolveNodeTrace[]
@@ -221,14 +223,14 @@ export interface GeocodeRun {
 	result: GeocodeResult
 	tree: AddressTree
 	/**
-	 * Wall-clock milliseconds per phase — `parse`, `resolve`, `total`, plus `trace` on a session that ATTEMPTED one
-	 * (present even when the attempt threw, so the phases always sum to `total`). MEASURED here rather than read off a
+	 * Wall-clock milliseconds per phase — `parse`, `resolve`, `total`, plus `trace` on a session that attempted one
+	 * (present even when the attempt threw, so the phases always sum to `total`). measured here rather than read off a
 	 * `PipelineResult`, because this path never builds one: these are the phases the session actually runs, so a caller
-	 * rendering them is reading its own clock, not a neighbouring path's.
+	 * rendering them is reading its own clock rather than a neighbouring path's.
 	 */
 	timing: PipelineTiming
 	/**
-	 * The debug evidence, present only when the session was opened with {@link GeocodeSessionOptions.trace} AND the loaded
+	 * The debug evidence, present only when the session was opened with {@link GeocodeSessionOptions.trace} and the loaded
 	 * classifier could produce one. A bundle whose classifier throws on `traceParse` degrades to no trace — the geocode
 	 * is the answer the caller came for, and the evidence rows report their own absence.
 	 */
@@ -245,7 +247,7 @@ export interface GeocodeSession extends Disposable {
 	 */
 	initTiming: PipelineTiming
 	/**
-	 * The artifact paths this session RESOLVED, as opposed to the ones a caller asked for.
+	 * The artifact paths this session resolved, as opposed to the ones a caller asked for.
 	 *
 	 * Resolution walks several rungs and a missing artifact degrades silently by design, so "which file did you actually
 	 * open" is not answerable from the options object. A probe reporting what the gazetteer knows has to read the same
@@ -271,10 +273,10 @@ export interface GeocodeSession extends Disposable {
 //#region Path + flag helpers
 
 async function resolveWOFPath(options: Pick<GeocodeSessionOptions, "dataRoot" | "resolveDB">): Promise<string[]> {
-	// The shared database SELECTION (explicit list, then $MAILWOMAN_WOF_DB, then the default set) with this
-	// caller's own contract on top: filtered to what exists on disk — the same auto-attach the server and
+	// The shared database selection (explicit list, then $MAILWOMAN_WOF_DB, then the default set) with this
+	// caller's own interface on top: filtered to what exists on disk — the same auto-attach the server and
 	// drop-ins use, so `mailwoman geocode` works out of the box on a standard data root — and a hard error
-	// when nothing survives, which is part of the CLI's construction-order contract.
+	// when nothing survives, which is part of the CLI's construction-order interface.
 	const paths = await existingWOFDatabasePaths(resolveWOFDatabasePaths(options.resolveDB, options.dataRoot))
 
 	if (!paths.length) {
@@ -294,7 +296,7 @@ function parseBiasPoints(raw: string | undefined): NonNullable<GeocodeDeps["bias
 	return (raw ?? "")
 		.split(";")
 		.map((part: string) => part.trim())
-		.filter((part) => part.length > 0)
+		.filter((part) => part.length)
 		.map((part: string) => {
 			const [coords, w] = part.split(":")
 			const [lat, lon] = coords!.split(",").map(Number)
@@ -309,7 +311,7 @@ export interface ForkEntityProbe {
 	deps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric">
 	/**
 	 * The poi.db handle behind {@link deps}' `poiLookup`, so the session can release it. Carried separately because
-	 * `POIExecutorLookup` is a read interface and declares no disposal contract.
+	 * `POIExecutorLookup` is a read interface and declares no disposal interface.
 	 */
 	handle?: Disposable
 }
@@ -317,7 +319,7 @@ export interface ForkEntityProbe {
 /**
  * The authority-designation route, opened when the sealed flood layer is on disk (#1989).
  *
- * PRESENCE OF THE LAYER FILE IS THE SWITCH — there is no boolean, because a boolean would have to construct the reader
+ * Presence OF the layer file is the switch — there is no boolean, because a boolean would have to construct the reader
  * itself and would put a sealed database open on the default construction path. No `flood.db` in the data root, no
  * route, and the geocode result is byte-identical to a build without the field.
  *
@@ -341,9 +343,9 @@ export async function loadAuthorityDesignationRoute(
 }
 
 /**
- * The soil-capability route, opened when the sealed SSURGO layer is on disk (#1991).
+ * The soil-capability route, opened when the sealed ssurgo layer is on disk (#1991).
  *
- * PRESENCE OF THE LAYER FILE IS THE SWITCH — the same posture as the flood route above, and for the same reason: a
+ * Presence OF the layer file is the switch — the same posture as the flood route above, and for the same reason: a
  * boolean would have to construct the reader itself and would put a sealed database open on the default construction
  * path. No `soil.db` in the data root, no route, and the geocode result is byte-identical to a build without the
  * field.
@@ -368,15 +370,15 @@ export async function loadSoilCapabilityRoute(
 }
 
 /**
- * The coastal-erosion route, opened when the sealed EA NCERM layer is on disk (#1993).
+ * The coastal-erosion route, opened when the sealed EA ncerm layer is on disk (#1993).
  *
- * PRESENCE OF THE LAYER FILE IS THE SWITCH — the same posture as the two routes above, and for the same reason: a
+ * Presence OF the layer file is the switch — the same posture as the two routes above, and for the same reason: a
  * boolean would have to construct the reader itself and would put a sealed database open on the default construction
  * path. No `coastal-england.db` in the data root, no route, and the geocode result is byte-identical to a build without
  * the field.
  *
- * THE ARTIFACT IS NAMED FOR ITS EXTENT rather than for its subject, because the surveyed alternatives are not
- * interchangeable with it: Wales publishes NCERM on the previous generation's vocabulary, Scotland's Dynamic Coast
+ * The artifact is named FOR its extent rather than for its subject, because the surveyed alternatives are not
+ * interchangeable with it: Wales publishes ncerm on the previous generation's vocabulary, Scotland's Dynamic Coast
  * carries a property-level prohibition of its own, and Northern Ireland publishes 122 line segments carrying one
  * attribute. A file called `coastal.db` would invite one of them to overwrite the other.
  *
@@ -403,12 +405,12 @@ export async function loadCoastalErosionRoute(
 /**
  * The zoning route, opened when the sealed Irish Generalised Zoning Types layer is on disk (#1995).
  *
- * PRESENCE OF THE LAYER FILE IS THE SWITCH — the same posture as the three routes above, and for the same reason: a
+ * Presence OF the layer file is the switch — the same posture as the three routes above, and for the same reason: a
  * boolean would have to construct the reader itself and would put a sealed database open on the default construction
  * path. No `zoning-ireland.db` in the data root, no route, and the geocode result is byte-identical to a build without
  * the field.
  *
- * THE ARTIFACT IS NAMED FOR ITS JURISDICTION rather than for its subject, and here that matters more than anywhere
+ * The artifact is named FOR its jurisdiction rather than for its subject, and here that matters more than anywhere
  * else. Zoning is decentralised by construction: 30 Irish local authorities publish 581 distinct zone codes between
  * them, and a California or a Washington layer would carry its own vocabulary under the same word. A file called
  * `zoning.db` would invite one jurisdiction's codes to answer for another's.
@@ -434,7 +436,7 @@ export async function loadZoningDesignationRoute(
 }
 
 /**
- * The fork→entity probe's two signals — both or neither (an unrestricted probe is the Savile Row hijack; fork-entity.ts
+ * The fork→entity probe's two signals — both or neither (an unrestricted probe is the Savile Row hijack. fork-entity.ts
  * check 2). Tolerate-and-degrade: no poi.db in the data root, no probe.
  */
 export async function loadForkEntityDeps(
@@ -470,27 +472,27 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	const progress = options.onProgress ?? (() => {})
 
 	progress("Checking gazetteer…")
-	// Resolve the gazetteer path FIRST — it's the most common missing prerequisite and the cheapest to
-	// check, so surface that error before the (slower) weights load. (Order matters for the CLI contract:
+	// Resolve the gazetteer path first — it's the most common missing prerequisite and the cheapest to
+	// check, so surface that error before the (slower) weights load. (Order matters for the CLI interface:
 	// a missing gazetteer must report the gazetteer error even when the weights are also absent.) A
-	// candidate.db (--candidate-db / $MAILWOMAN_CANDIDATE_DB) is the demo-parity backend; when present it
+	// candidate.db (--candidate-db / $MAILWOMAN_CANDIDATE_DB) is the demo-parity backend. when present it
 	// stands alone and a WOF admin path isn't required.
 	const candidateDB = await resolveCandidateDBPath(options.candidateDB, options.dataRoot)
 	const wofPath = candidateDB ? [] : await resolveWOFPath(options)
 	const pathsResolvedAt = performance.now()
 
-	// Load the neural classifier (required for street-level; weights must be present).
+	// Load the neural classifier (required for street-level. weights must be present).
 	progress("Loading neural model…")
 
 	let routed: ScriptRoutedClassifier<NeuralAddressClassifier>
 
 	try {
-		// #1732 reach half: the session's dataRoot is authoritative for EVERYTHING it loads, weights and
+		// #1732 reach half: the session's dataRoot is authoritative for everything it loads, weights and
 		// their FSTs included. Before this line threaded it, a data_root override moved the gazetteer but
 		// weights silently resolved from the process env — so a dev-mcp engine with data_root set measured
 		// a mixed configuration, and no A/B comparison for a staged FST existed on the warm path at all.
 		// Routed by script: a bare kanji or Hangul line runs on the character-path family, loaded on first use from the
-		// same options; the primary stays the locale the caller asked for.
+		// same options. the primary stays the locale the caller asked for.
 		routed = await NeuralAddressClassifier.loadRoutedFromWeights({
 			locale: options.locale,
 			overlayRoot: resolvePath(options.dataRoot, "weights"),
@@ -504,12 +506,12 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		)
 	}
 
-	// The primary's own artifacts (its FST siblings, its resolved weights) are read from the primary; parses go
+	// The primary's own artifacts (its FST siblings, its resolved weights) are read from the primary. parses go
 	// through `routed`, which answers the family classifier for a script the primary cannot read.
 	const classifier = routed.primary
 
 	// #1497: the prior the geocode path has never had. Loaded from the classifier's own weights-package sibling, the
-	// same artifact `runPipeline` auto-loads — one source, not a second resolution ladder. A failure degrades to
+	// same artifact `runPipeline` auto-loads — one source rather than a second resolution ladder. A failure degrades to
 	// `undefined`, which is exactly the pre-#1497 behaviour.
 	let fst: FSTMatcherLike | undefined
 	let streetMorphology: FSTMatcherLike | undefined
@@ -532,8 +534,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		}
 
 		if (!fst) {
-			// #1516's shape, one channel over: a requested prior that resolves no artifact leaves the channel OFF, scores
-			// several cases lower, and has NO signal of its own — so the operator reads a model regression. Five shipped
+			// #1516's shape, one channel over: a requested prior that resolves no artifact leaves the channel off, scores
+			// several cases lower, and has no signal of its own — so the operator reads a model regression. Five shipped
 			// overlays have no FST at all (#1705), which makes this the common case rather than the exotic one.
 			console.warn(
 				`[mailwoman] --gazetteer-prior was requested for locale ${options.locale} but no FST artifact resolved` +
@@ -634,9 +636,9 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		nationalDatabases = undefined
 	}
 
-	// The national Overture rooftop tier (Taiwan today), composed BELOW BAN — a country BAN covers keeps BAN's
-	// register — and ABOVE OSM, since a civil-affairs register outranks the community map. In-package, so it needs no
-	// import guard; it is a no-op for a country with no database on disk.
+	// The national Overture rooftop tier (Taiwan today), composed below BAN — a country BAN covers keeps BAN's
+	// register — and above OSM, since a civil-affairs register outranks the community map. In-package, so it needs no
+	// import guard. it is a no-op for a country with no database on disk.
 	const overtureProvider = await OvertureNationalDatabaseProvider.create(resolvePath(options.dataRoot))
 	const banDatabases = nationalDatabases
 
@@ -647,7 +649,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	}
 
 	// Build-local OSM rooftop tier (#247), behind the package + on-disk-database boundary. The provider
-	// applies the country's street normalizer and enables the resolver's locality-bbox fall-through;
+	// applies the country's street normalizer and enables the resolver's locality-bbox fall-through.
 	// an absent unpublished @mailwoman/osm package or absent database remains an admin-only no-op.
 	let osmProvider: ({ for: (country: string) => RegionDatabases } & Disposable) | undefined
 
@@ -687,8 +689,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		disposeQuietly(zoningRoute)
 	}
 
-	// Everything past this point can THROW while the handles above are already open, so it runs behind the
-	// release the per-input path gets. ORDER inside the guard is the contract, not an implementation detail:
+	// Everything past this point can throw while the handles above are already open, so it runs behind the
+	// release the per-input path gets. order inside the guard is the interface rather than an implementation detail:
 	// a coarse-placer or --bias failure still reports after the gazetteer, weights and resolver-package
 	// checks, never in front of them.
 	let placer: CoarsePlacer | undefined
@@ -696,7 +698,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	let bias: NonNullable<GeocodeDeps["bias"]>
 	let forkEntityDeps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric">
 
-	// #1649: the lexicon-aware kind classifier — same construction as the runtime pipeline's default-ON
+	// #1649: the lexicon-aware kind classifier — same construction as the runtime pipeline's default-on
 	// POI arc, so a thing-query ("Statue of Liberty", "Pharmacy near me") abstains with intent markers
 	// instead of the address lanes manufacturing a confident wrong answer.
 	const kindClassifierWithLexicon = createKindClassifier({ poiLexicon: poiTaxonomyLookup })
@@ -715,9 +717,9 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		progress("Loading geographic priors…")
 
 		// Coarse-placer soft country prior (#244) — opt-in. Loads the int8 model bundled in @mailwoman/core
-		// at the requested abstention threshold; a confident in-map guess feeds the resolver's anchorPosterior.
-		// The M2 open-set reject rule (reject on in-map MASS 1-P(OTHER), route on the in-map argmax) lifts in-map
-		// right-country 85.3→91.2% with 0 regressions / 0 misroutes (the pipeline + misroute checks), so it's ON
+		// at the requested abstention threshold. a confident in-map guess feeds the resolver's anchorPosterior.
+		// The M2 open-set reject rule (reject on in-map mass 1-P(other), route on the in-map argmax) lifts in-map
+		// right-country 85.3→91.2% with 0 regressions / 0 misroutes (the pipeline + misroute checks), so it's on
 		// by default. --no-place-country disables it (passes `false`); a custom --place-country-threshold builds
 		// an explicit placer instead of the default-on bundled one.
 		placer = options.placeCountry
@@ -755,14 +757,14 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	}
 
 	/**
-	 * The parse dependencies, built ONCE. `parseForGeocode` and `geocodeParseInputs` must be handed the same object:
+	 * The parse dependencies, built once. `parseForGeocode` and `geocodeParseInputs` must be handed the same object:
 	 * every field on it (`normalizeInput`, `normalizeCase`, `inputMode`) changes what the classifier is given, so two
 	 * separately-built dep objects are two decodes that can silently diverge — which is the exact failure the shared
 	 * derivation exists to prevent.
 	 *
-	 * `fst` and `streetMorphology` belong here for a reason the type alone does not show. This path parses ONCE up front
+	 * `fst` and `streetMorphology` belong here for a reason the type alone does not show. This path parses once up front
 	 * and hands the tree to `geocodeAddress` as `parsedTree`, so `geocodeAddress` never re-parses — which means the
-	 * copies it receives are dead and THIS is the only parse the prior can reach. Omitting them here made
+	 * copies it receives are dead and this is the only parse the prior can reach. Omitting them here made
 	 * `--gazetteer-prior` construct the FST, pass it on, and change nothing: bare `Moscow` stayed `street` in both arms.
 	 */
 	const parseDeps: Pick<
@@ -775,7 +777,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	}
 
 	/**
-	 * The debug evidence for one input, or undefined when tracing is off. Runs `traceParse` under the SAME opts
+	 * The debug evidence for one input, or undefined when tracing is off. Runs `traceParse` under the same opts
 	 * `parseForGeocode` just used ({@link geocodeParseInputs} is the shared derivation), so the record describes this
 	 * input's decode rather than a re-derived one.
 	 */
@@ -802,25 +804,25 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	const geocode = async (input: string): Promise<GeocodeRun> => {
 		const startedAt = performance.now()
 
-		// #912 change 3: parse ONCE up front (shared into geocodeAddress via parsedTree — no re-parse)
-		// so a single bare locality can skip the locale-INFERRED default country. "Paris" under the
-		// en-US locale must not be hard-scoped to Paris, Texas; an explicit --default-country still
+		// #912 change 3: parse once up front (shared into geocodeAddress via parsedTree — no re-parse)
+		// so a single bare locality can skip the locale-inferred default country. "Paris" under the
+		// en-US locale must not be hard-scoped to Paris, Texas. an explicit --default-country still
 		// wins (resolverDefaultCountry returns it before the locale inference is consulted).
 		const parsedTree = await parseForGeocode(input, parseDeps)
 		const parsedAt = performance.now()
 		const trace = await traceOf(input)
 		const tracedAt = performance.now()
-		// #1721: the resolver-interior records for THIS call. A fresh array per call (the deps spread below
+		// #1721: the resolver-interior records for this call. A fresh array per call (the deps spread below
 		// carries it), so concurrent geocodes on one session never interleave their records.
 		const resolverTrace: ResolveNodeTrace[] = []
 
-		// #1589, the #912 guard's sibling: a bare POSTCODE whose format implies countries that exclude
+		// #1589, the #912 guard's sibling: a bare postcode whose format implies countries that exclude
 		// the locale-inferred one must not be hard-scoped by the locale. `SW1A 1AA` under the default
-		// en-US locale was scoped to US and resolved nothing while the gazetteer held the GB row; the
+		// en-US locale was scoped to US and resolved nothing while the gazetteer held the GB row. the
 		// code's own format is harder evidence than the locale hint. An explicit --default-country
 		// still wins (checked first, same as #912), and the bare 5-digit family implies no countries
-		// (countriesFromPostcodeFormat returns []) so the 75008 locale-prior contract is untouched.
-		// A script-routed input ran on the family classifier, not the locale's: the locale then says nothing about the
+		// (countriesFromPostcodeFormat returns []) so the 75008 locale-prior interface is untouched.
+		// A script-routed input ran on the family classifier rather than the locale's: the locale then says nothing about the
 		// address's country, and its inferred scope (`--locale en-US` → US) would starve every lookup for a kanji or
 		// Hangul line. An explicit --default-country is the operator's and stays.
 		const routedAway = (await routed.forInput(input)) !== routed.primary
@@ -842,10 +844,10 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 		const inferredScopeOK = options.defaultCountry || (!isBareLocalityTree(parsedTree) && !barePostcodeFormatConflict())
 
-		// #27: the country #912 just withheld. `inferredScopeOK` false is precisely "we HAVE a locale
+		// #27: the country #912 just withheld. `inferredScopeOK` false is precisely "we have a locale
 		// country and chose not to scope by it", so this is the one place that knows the value was
 		// dropped rather than never derived. Handed on as a soft prior (never a filter) when the operator
-		// opts in with --locale-country-prior; the resolver additionally ignores it under any hard scope.
+		// opts in with --locale-country-prior. the resolver additionally ignores it under any hard scope.
 		const withheldCountry = inferredScopeOK ? undefined : localeCountry
 
 		const result = await geocodeAddress(input, {
@@ -860,34 +862,34 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			...(bias.length ? { bias } : {}),
 			defaultCountry: (inferredScopeOK && localeCountry) || undefined,
 			// The street-miss fallback's #912 posture switch: explicit --default-country stays supreme
-			// through the retry; a locale-inferred scope is withheld there like any bare-locality walk.
+			// through the retry. a locale-inferred scope is withheld there like any bare-locality walk.
 			defaultCountryIsInferred: !options.defaultCountry,
 			...(options.localeCountryPrior && withheldCountry ? { localeCountryPrior: withheldCountry } : {}),
-			// #1880 opt-in: default-OFF downstream, so only the loaded closure needs threading.
+			// #1880 opt-in: default-off downstream, so only the loaded closure needs threading.
 			...(capitalLevel ? { capitalLevel } : {}),
-			// #1585: the locale hint's country scopes the typo-fuzzy tier — threaded UNCONDITIONALLY, including where
+			// #1585: the locale hint's country scopes the typo-fuzzy tier — threaded unconditionally, including where
 			// the #912 guard withholds the hard scope (the withheld case is the one the restriction exists for).
 			...(localeCountry ? { fuzzyCountryScope: localeCountry } : {}),
-			// #42: default-ON since 2026-08-05, so only the explicit --no-postcode-country-coherence opt-out needs
-			// threading (an unset dep already reads as ON downstream).
+			// #42: default-on since 2026-08-05, so only the explicit --no-postcode-country-coherence opt-out needs
+			// threading (an unset dep already reads as on downstream).
 			...(options.postcodeCountryCoherence === false ? { postcodeCountryCoherence: false } : {}),
-			// #31 opt-in mechanisms: default-OFF downstream, so only the explicit opt-in needs threading.
+			// #31 opt-in mechanisms: default-off downstream, so only the explicit opt-in needs threading.
 			...(options.postcodeShapeCoherence === true ? { postcodeShapeCoherence: true } : {}),
 			...(options.postcodeContainmentCoherence === true ? { postcodeContainmentCoherence: true } : {}),
-			// #1717 stage 2, PROMOTED default-ON 2026-08-18 (evidence doc in docs/records/evals/). BOTH
+			// #1717 stage 2, promoted default-on 2026-08-18 (evidence doc in docs/records/evals/). Both
 			// directions forwarded explicitly: the first draft's `!== false ? {true} : {}` dropped the
 			// opt-out on the floor, and geocode-core's own default-on resurrected it — the #1706
 			// one-sided-forwarding class, caught by the promotion's confirmation battery reading
 			// "0 of 558 differed" between the opt-out arm and the default.
 			adminContainmentRerank: options.adminContainmentRerank !== false,
-			// Explicit --interp-calibration forces a single multiplier; unset → the per-region table (#584).
+			// Explicit --interp-calibration forces a single multiplier. unset → the per-region table (#584).
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
 			// Enabled → our threshold-honoring placer; --no-place-country → `false` (disable the default-on prior).
 			placeCountry: placer ? (t: string) => placer.predict(t) : false,
 			// #1649: the lexicon-aware kind classifier — a thing-query abstains instead of resolving nonsense.
 			classifyKind: poiKindClassifier,
 			...forkEntityDeps,
-			// The opt-in venue tier reuses the fork-entity wiring's poiLookup; the flag alone opts in.
+			// The opt-in venue tier reuses the fork-entity wiring's poiLookup. the flag alone opts in.
 			...(options.poiVenueTier === true ? { poiVenueTier: true } : {}),
 			// #1989: present only when the sealed flood layer is on disk, so a data root without one produces the identical
 			// marker list.
@@ -912,7 +914,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			tree: parsedTree,
 			timing: {
 				parse: parsedAt - startedAt,
-				// Present whenever tracing was ATTEMPTED, including the attempt that threw.
+				// Present whenever tracing was attempted, including the attempt that threw.
 				// Hiding them inside `total` would leave the phases not summing to it (`meaning of zero`: a trace entry of 12 ms next to an absent trace says the attempt failed and what it cost, which is a different fact from "tracing was off").
 				...(options.trace ? { trace: tracedAt - parsedAt } : {}),
 				resolve: finishedAt - tracedAt,
@@ -924,7 +926,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	return {
 		initTiming,
-		// The paths the FST block above actually opened, not the ones it was asked for — see `GeocodeSession.artifacts`.
+		// The paths the FST block above actually opened rather than the ones it was asked for — see `GeocodeSession.artifacts`.
 		artifacts: {
 			...(fst && classifier.fstPath ? { fstPath: classifier.fstPath } : {}),
 			...(streetMorphology && classifier.streetMorphologyPath

@@ -4,7 +4,7 @@
 /**
  * @file A hand-picked input set may carry its own truth point — the authoring loop for a new board row.
  *
- *   The point of the feature is that a row can be MEASURED before its case file is written. So the tests that matter
+ *   The point of the feature is that a row can be measured before its case file is written. So the tests that matter
  *   are: the truth reaches the resolved row, the graded fraction is reported against its own denominator, and a mixed
  *   set does not let an ungraded row read as a graded one.
  */
@@ -87,7 +87,7 @@ describe("mwdev_inputs `matching` — class size", () => {
 		const expression = new RegExp("#\\s?\\d", "iu")
 		const matched = set.inputs.filter((row) => expression.test(row.input))
 
-		// Two match the pattern; only ONE is a unit. That is the point of returning the rows and not just the count —
+		// Two match the pattern. only one is a unit. That is the point of returning the rows and not just the count —
 		// `Coffee#1` is a brand name, and a bare count would have reported a class size of 2.
 		expect(matched.map((row) => row.input)).toEqual(["462 Queen St #101, Southington CT", "Coffee#1 Yeovil"])
 	})

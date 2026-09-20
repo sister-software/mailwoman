@@ -101,10 +101,10 @@ describe("the browser loader on a char card", () => {
 		expect(result.labels).toEqual(CARD.labels)
 
 		const config = classifierConfigs[0]!
-		const charEncoder = config.charEncoder as { vocabulary: Map<string, number>; contract: Record<string, number> }
+		const charEncoder = config.charEncoder as { vocabulary: Map<string, number>; interface: Record<string, number> }
 
 		expect(config.tokenizer).toBeUndefined()
-		expect(charEncoder.contract).toEqual({ maxUnits: 96, maxUnitWidth: 7, ctxChars: 3 })
+		expect(charEncoder.interface).toEqual({ maxUnits: 96, maxUnitWidth: 7, ctxChars: 3 })
 		expect(charEncoder.vocabulary.get("東")).toBe(3)
 	})
 

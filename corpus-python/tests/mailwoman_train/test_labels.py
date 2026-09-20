@@ -31,7 +31,7 @@ def test_stage1_bio_labels_well_formed():
 
 
 def test_stage1_constants_are_immutable_across_ships():
-    # Reproducibility contract: anyone diffing a v0.1.0 / v0.2.0 checkpoint against
+    # Reproducibility interface: anyone diffing a v0.1.0 / v0.2.0 checkpoint against
     # today's label space must see the same 15-label tuple in the same order.
     assert STAGE1_COARSE_TAGS == (
         "country",
@@ -60,7 +60,7 @@ def test_stage2_extends_stage1_with_fine_tags():
 
 
 def test_stage2_preserves_stage1_label_ids():
-    # STAGE2 appends fine labels AFTER all STAGE1 entries so old label IDs remain valid
+    # STAGE2 appends fine labels after all STAGE1 entries so old label IDs remain valid
     # if anyone reloads an old checkpoint and only consults the first 15 indices.
     for i, label in enumerate(STAGE1_BIO_LABELS):
         assert STAGE2_BIO_LABELS[i] == label
@@ -86,24 +86,24 @@ def test_stage3_extends_stage2_with_decomposition_tags():
 
 
 def test_stage3_preserves_stage2_label_ids():
-    # Same append-only contract as Stage 1 → 2: a v0.3.0–v0.5.x checkpoint's first 21
+    # Same append-only interface as Stage 1 → 2: a v0.3.0–v0.5.x checkpoint's first 21
     # label IDs stay valid under the Stage 3 vocabulary.
     for i, label in enumerate(STAGE2_BIO_LABELS):
         assert STAGE3_BIO_LABELS[i] == label
 
 
 def test_active_set_points_at_current_stage():
-    # ACTIVE_* tracks the CURRENT training round's vocabulary — STAGE3 as of the v0.6.0
-    # ship (STAGE4 is defined in labels.py but deliberately NOT active; its activation
+    # ACTIVE_* tracks the current training round's vocabulary — STAGE3 as of the v0.6.0
+    # ship (STAGE4 is defined in labels.py but deliberately not active. its activation
     # couples to a retrain + the JS ComponentTag union bump). When the ship-line moves,
-    # this sentinel moves with it in the same commit — never pin ACTIVE to a historical
+    # this sentinel moves with it in the same commit — never pin active to a historical
     # stage.
     assert ACTIVE_TAGS == STAGE3_TAGS
     assert ACTIVE_BIO_LABELS == STAGE3_BIO_LABELS
 
 
 def test_active_set_keeps_historical_stage_prefixes_intact():
-    # The staged-tuple discipline: every historical stage is an intact PREFIX of the
+    # The staged-tuple discipline: every historical stage is an intact prefix of the
     # active lineage, so old checkpoints keep valid label IDs under the new vocabulary.
     assert ACTIVE_TAGS[: len(STAGE2_TAGS)] == STAGE2_TAGS
     assert ACTIVE_BIO_LABELS[: len(STAGE2_BIO_LABELS)] == STAGE2_BIO_LABELS
@@ -138,8 +138,8 @@ def test_collapse_label_keeps_stage3_tags():
 
 def test_collapse_label_drops_tags_not_in_active_set():
     # Tags that exist in the JS-side ComponentTag union but aren't in ACTIVE_TAGS yet
-    # (e.g. attention) still collapse to O. STAGE4 tags are DEFINED in labels.py but
-    # NOT active (activation is coupled to a retrain + the JS union bump) — they
+    # (e.g. attention) still collapse to O. STAGE4 tags are defined in labels.py but
+    # not active (activation is coupled to a retrain + the JS union bump) — they
     # collapse too.
     assert collapse_label("B-attention") == "O"
     assert collapse_label("B-entrance") == "O"
@@ -164,7 +164,7 @@ def test_active_components_present_accepts_coarse_only_rows():
 
 
 def test_active_components_present_accepts_fine_only_rows():
-    # v0.3.0 expansion: BAN/TIGER shape (house_number + street, no coarse tags) now passes.
+    # v0.3.0 expansion: BAN/tiger shape (house_number + street, no coarse tags) now passes.
     # Previously dropped — was the upstream cause of the v0.1.0 positional-heuristic overfit.
     assert active_components_present(["house_number", "street"]) is True
     assert active_components_present(["street"]) is True

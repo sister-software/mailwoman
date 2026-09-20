@@ -7,9 +7,9 @@
  *   Format: `mwl1.<payload>.<signature>`, both parts base64url. The payload is JSON ({@link LicenseKeyPayload}); the
  *   signature is Ed25519 over the UTF-8 bytes of `mwl1.<payload>` — the prefix is inside the signed bytes so a token
  *   cannot be replayed under another format version. Verification needs only the public keys the register ships, so it
- *   works with no network; the well-known file on mailwoman.ai is a freshness check on top, not the anchor.
+ *   works with no network. the well-known file on mailwoman.ai is a freshness check on top rather than the anchor.
  *
- *   Why a signature and not an HMAC: an HMAC is verified with the same secret that mints it, so shipping a verifier would
+ *   Why a signature and not an hmac: an hmac is verified with the same secret that mints it, so shipping a verifier would
  *   ship the minting key, and the alternative is a license server. Ed25519 keeps the private key with the issuer.
  *
  *   Signing and verification run on WebCrypto and the codec on the web platform's primitives, so this module has no
@@ -35,7 +35,7 @@ export const LICENSE_KEY_PREFIX = "mwl1"
 const LICENSE_KEY_PARTS = 3
 
 /**
- * A calendar date as `YYYY-MM-DD`. Dates, not instants: a license runs to the end of its last day in UTC.
+ * A calendar date as `yyyy-MM-DD`. Dates rather than instants: a license runs to the end of its last day in UTC.
  */
 const CalendarDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/u, "expected YYYY-MM-DD")
 
@@ -65,7 +65,7 @@ export const LicenseKeyPayloadSchema = z.object({
 	 */
 	scope: z.union([z.literal("all"), z.array(z.string().min(1)).min(1)]),
 	/**
-	 * The SPDX branch the key selects. One value today; the field exists so a different agreement can be named later.
+	 * The spdx branch the key selects. One value today. the field exists so a different agreement can be named later.
 	 */
 	terms: z.literal("LicenseRef-Commercial"),
 	/**
@@ -91,7 +91,7 @@ export function isSelfServicePayload(payload: LicenseKeyPayload): payload is Sel
 }
 
 /**
- * The outcome of verifying a token. Every failure names its reason; a caller that only wants a yes reads `status`.
+ * The outcome of verifying a token. Every failure names its reason. a caller that only wants a yes reads `status`.
  */
 export type LicenseKeyVerification =
 	| { status: "valid"; kid: string; payload: LicenseKeyPayload }
@@ -114,7 +114,7 @@ export function generateLicenseSigningKeyPair(): Promise<LicenseSigningKeyPair> 
 /**
  * The id a public key is registered under: the mailwoman major version it was minted for, then the first eight hex
  * digits of the SHA-256 of the key's DER encoding — `v9-3f2a9c1d`. The version prefix is what lets a well-known file on
- * mailwoman.ai be read per major version; the digest is what makes two keys distinguishable without a registry.
+ * mailwoman.ai be read per major version. the digest is what makes two keys distinguishable without a registry.
  */
 export async function licenseKeyID(publicKeyPEM: string, majorVersion: number): Promise<string> {
 	const digest = hexOf(await sha256Bytes(publicKeyDER(publicKeyPEM))).slice(0, 8)
@@ -141,7 +141,7 @@ function expiryInstant(expires: string): Date {
 }
 
 /**
- * The payload a token carries, AS WRITTEN and unverified: for reporting what a token this build cannot verify claims
+ * The payload a token carries, AS written and unverified: for reporting what a token this build cannot verify claims
  * (its key id, its license id), never for a decision. `undefined` for anything that is not a well-formed token.
  */
 export function decodeLicenseKeyPayload(token: string): LicenseKeyPayload | undefined {

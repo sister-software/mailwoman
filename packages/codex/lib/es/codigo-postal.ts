@@ -5,17 +5,17 @@
  *   Spanish postcodes (código postal): the branded type, the shape, and the province prior.
  *
  *   The contrast with a German PLZ is the informative part. A PLZ's leading digit maps to a Leitzone
- *   that deliberately CROSSES state borders, so it cannot tell you the Bundesland. A Spanish código
- *   postal is the opposite: its first TWO digits are the province code, assigned alphabetically
+ *   that deliberately crosses state borders, so it cannot tell you the Bundesland. A Spanish código
+ *   postal is the opposite: its first two digits are the province code, assigned alphabetically
  *   (01 Álava … 28 Madrid … 50 Zaragoza), so the province is derivable from the postcode exactly.
- *   Code that wants a Spanish region from an address can read it off the postcode; code that wants a
+ *   Code that wants a Spanish region from an address can read it off the postcode. code that wants a
  *   German one cannot.
  */
 
 import type { Tagged } from "type-fest"
 
 /**
- * A Spanish postcode: five digits, `PPNNN`, where `PP` is the province (`28001` is Madrid).
+ * A Spanish postcode: five digits, `ppnnn`, where `PP` is the province (`28001` is Madrid).
  *
  * @category Postal
  * @type string
@@ -26,7 +26,7 @@ export type CodigoPostal = Tagged<string, "CodigoPostal">
 
 /**
  * Shape of a Spanish código postal — five digits. Identical in shape to a French code postal, a German PLZ and a US
- * ZIP; disambiguation is the parser's job, not the pattern's.
+ * ZIP. disambiguation is the parser's job rather than the pattern's.
  */
 export const CODIGO_POSTAL_PATTERN = /^\d{5}$/
 
@@ -59,7 +59,7 @@ export function parseCodigoPostal(input: string): CodigoPostal | null {
 
 /**
  * The two-digit province prefix (`"28001"` → `"28"`), or `null` for a non-postcode. Callers map it through their own
- * province table; this module deliberately does not ship one, since the campaign that needed it only needs the shape.
+ * province table. this module deliberately does not ship one, since the campaign that needed it only needs the shape.
  */
 export function codigoPostalProvincePrefix(input: string): string | null {
 	const code = normalizeCodigoPostal(input)

@@ -38,10 +38,10 @@ const BBOX_2D_LENGTH = 4
  *
  * They are ingested without being reachable by name. No `PLACETYPE_FILTER_GROUPS` entry lists either, and placetypes
  * absent from that table pass through unfiltered, so a `locality` query expands to exactly `[locality, borough,
- * localadmin]`. Those rows answer only an UNFILTERED query, which ranks population-first and sorts a hood carrying no
+ * localadmin]`. Those rows answer only an unfiltered query, which ranks population-first and sorts a hood carrying no
  * population last.
  *
- * `campus` is deliberately NOT here despite being commoner than macrohood in the same sample (1,368). It is a venue
+ * `campus` is deliberately not here despite being commoner than macrohood in the same sample (1,368). It is a venue
  * tier — universities, hospitals, airports — not an admin one, and it belongs to the sub-venue work, where its
  * terminals and wings are the point.
  */
@@ -109,12 +109,12 @@ async function parseFeature(
 
 	// Label centroid first, math centroid as the fallback — same preference the postcode-locality builder applies.
 	// The math centroid is wrong exactly where it matters most: a multipolygon spanning overseas territories pulls it
-	// off the mainland entirely (France's geom: point is in Spain; lbl: is metropolitan France). Both coordinates are
-	// taken from the SAME source or neither: a lbl:latitude paired with a geom:longitude would be a point on neither
+	// off the mainland entirely (France's geom: point is in Spain. lbl: is metropolitan France). Both coordinates are
+	// taken from the same source or neither: a lbl:latitude paired with a geom:longitude would be a point on neither
 	// centroid.
 	//
 	// The label point carries its own upstream defects (#1905: WOF's lbl: for Washington DC is 7.8 km out), so when
-	// BOTH pairs exist and disagree widely, the record's GeoNames concordance adjudicates — see choosePoint's rule
+	// both pairs exist and disagree widely, the record's GeoNames concordance adjudicates — see choosePoint's rule
 	// and the census in label-point-adjudicator.ts. No anchor, no disagreement, or no decisive separation → the
 	// label preference, byte-identical to before.
 	const hasLbl = typeof props["lbl:latitude"] === "number" && typeof props["lbl:longitude"] === "number"
@@ -124,10 +124,10 @@ async function parseFeature(
 	let lon = hasLbl ? props["lbl:longitude"]! : hasGeom ? props["geom:longitude"]! : 0
 	let pointChoice: PointChoice | undefined
 
-	// Settlement records only: a GeoNames LOCALITY anchor marks the urban seat, but its records for
+	// Settlement records only: a GeoNames locality anchor marks the urban seat, but its records for
 	// regions/counties are centroids, so consulting them there re-imports the very defect class this
 	// exists to fix (measured: the anchor moved the Texas region 172 km off its label placement).
-	// The census the rule is sized against is locality-scoped; so is the check.
+	// The census the rule is sized against is locality-scoped. so is the check.
 	if (placetype === "locality" && hasLbl && hasGeom && anchorLookup) {
 		const gnID = props["wof:concordances"]?.["gn:id"]
 
@@ -167,7 +167,7 @@ async function parseFeature(
 		if (!match || !value) continue
 		const lang = match[1]!
 		const privateuse = match[2]!
-		// #936: only PREFERRED forms in an official language are official names — x_variant rows
+		// #936: only preferred forms in an official language are official names — x_variant rows
 		// tagged with an official language are abbreviations/codes ("MSP", "Frisco"), and marking
 		// them official scored 13× the collision count in the risk probe.
 		const official = privateuse === "preferred" && isOfficialLanguage(country, lang) ? 1 : 0
@@ -238,8 +238,8 @@ export interface IngestWOFResult {
 	placesIngested: number
 	skipped: number
 	/**
-	 * Records whose stored point is the GEOMETRIC centroid because the GeoNames anchor overrode the label preference
-	 * (`choice === "geom-by-anchor"`). Zero with no anchor lookup configured; a build that expected the adjudicator to
+	 * Records whose stored point is the geometric centroid because the GeoNames anchor overrode the label preference
+	 * (`choice === "geom-by-anchor"`). Zero with no anchor lookup configured. a build that expected the adjudicator to
 	 * run reads this instead of assuming.
 	 */
 	labelPointOverrides: number
@@ -264,8 +264,9 @@ export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOF
 
 	const filePaths = await Globerator.from("**/data/**/*.geojson", {
 		cwd: opts.dataDir,
+		absolute: true,
 		exclude,
-		// The repos root can expose one checkout through both layouts. Treat a symlink as an alias, not a
+		// The repos root can expose one checkout through both layouts. Treat a symlink as an alias rather than a
 		// second source tree: the direct checkout supplies its records once.
 		followSymlinks: false,
 	}).toArray()

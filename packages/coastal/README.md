@@ -5,7 +5,7 @@ England as a sealed spatial layer: acquisition, the `coastal-england.db` build, 
 answers what the authority's mapping assigns at a coordinate **under a named scenario**.
 
 Design record: [`docs/superpowers/specs/2026-08-27-erosion-layer-survey.md`](../../docs/superpowers/specs/2026-08-27-erosion-layer-survey.md).
-Contract: [`docs/engineering/reference/layer-contract.mdx`](../../docs/engineering/reference/layer-contract.mdx).
+Interface: [`docs/engineering/reference/layer-interface.mdx`](../../docs/engineering/reference/layer-interface.mdx).
 
 ## What it reports, and what it refuses to
 
@@ -19,7 +19,7 @@ Two readings — and the one that is **missing** is the point of this layer exis
 
 **There is no `designated_absence` here, and that is the inversion of the flood layer.** For flood
 zones the Environment Agency states England-wide coverage and the Planning Practice Guidance defines
-Zone 1 as "all land outside Zones 2, 3a and 3b" — so an empty answer inside England IS a
+Zone 1 as "all land outside Zones 2, 3a and 3b" — so an empty answer inside England is a
 designation. NCERM publishes no coverage statement at all. A location in England with no erosion
 polygon is either **inland** — most of the country, about which the product says nothing — or **on
 the coast and outside the mapped risk area**, which is the designation a caller wants; and
@@ -102,9 +102,9 @@ single layer throws on the day another layer carries its ninth value:
 | `published`                 |        2 | `2024` on 89,124 rows, `0` on 87                                                                                                                                                        |
 
 Membership for `def_type` is tested **case-folded** and the value is stored **verbatim**: the fold
-exists for the source's own inconsistent capitalization, not to absorb a new defence type.
+exists for the source's own inconsistent capitalization rather than to absorb a new defence type.
 
-**Blank is a single space, not an empty string** — `" "` on the same 87 rows that carry
+**Blank is a single space rather than an empty string** — `" "` on the same 87 rows that carry
 `published = 0`, all of them on SMP layers (13 to 16 per layer; the NFI layers have none). A reader
 testing `=== ""` finds nothing and reports the anomalous rows as ordinary ones. The Environment
 Agency documents no meaning for them, so they are carried as published rather than dropped or
@@ -135,7 +135,7 @@ Each is encoded in the code rather than written down somewhere else:
 
 `coastal_zone_area` holds the authority's unsimplified rings with a precomputed bounding box — the
 truth table. `coastal_zone_cell` is the H3 containment index above it, classifying each cell `whole`
-or `partial` **per polygon** rather than per class: an erosion answer IS the polygon, because the
+or `partial` **per polygon** rather than per class: an erosion answer is the polygon, because the
 distance, the policy and the defence are per feature. A `whole` cell answers in primary-key probes
 alone; only a `partial` cell falls through to the ray cast, against only the polygons the cell names
 for that scenario.
@@ -206,7 +206,7 @@ Resolution 9 is refused because its index answers 0.5 % to 0.7 % of in-layer pro
 candidates and nothing more. Resolution 11 costs **3.9× the rows** (2.28 M against 0.59 M) to raise
 the index-answered share from about 5.5 % to about 24 %, and the ray cast stays the common path
 either way. Since the candidate set per cell is tiny — a coastal frontage is not a river network —
-the probe saving does not buy four times the cell tier. Resolution 10 keeps that tier under 600 k
+the probe saving does not add four times the cell tier. Resolution 10 keeps that tier under 600 k
 rows and still narrows every probe to a handful of polygons.
 
 ## The build, as it ran
@@ -278,7 +278,7 @@ the same rule the flood layer states for the same reason.
 Two further limits the coverage row cannot express, both from the authority's own text: the product
 "considers the predominant risk at the coast" and generally excludes foreshore features, so an NCERM
 answer is silent about flooding; and the 87 anomalous rows carry blank policy and defence fields with
-`published = 0`, which the Environment Agency documents no meaning for.
+`published = 0`; the Environment Agency documents no policy or defence fields for those rows.
 
 ## Building it
 
@@ -323,7 +323,7 @@ Dynamic Coast carries an explicit prohibition on property-level assessment, and 
 publishes 122 line segments carrying one attribute — none of them interchangeable with England's. A
 positive-only check would pass on an artifact that reported the entire country as designated.
 
-Distances are measured to the **edge**, not to the nearest vertex: a point a centimeter from a long
+Distances are measured to the **edge** rather than to the nearest vertex: a point a centimeter from a long
 edge can be meters from every vertex of it, and measuring vertices makes the boundary tolerance far
 stricter than it reads.
 
@@ -344,7 +344,7 @@ overwrite an English one.
 
 OGL v3.0, with the published attribution string
 `© Environment Agency copyright and/or database right 2025. All rights reserved.` — which OGL makes a
-**condition**, not decoration. Both services report `<Fees>NONE</Fees>`; no registration and no key.
+**condition** rather than decoration. Both services report `<Fees>NONE</Fees>`; no registration and no key.
 `tier: shipped`.
 
 The workspace publishes with every release from `.release-it.json`'s workspace list.

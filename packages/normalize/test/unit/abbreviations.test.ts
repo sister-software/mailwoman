@@ -48,7 +48,7 @@ describe("expandAbbreviations — en-US", () => {
 		expect(r.map[0]).toBe(0) // A
 		expect(r.map[1]).toBe(1) // v
 		expect(r.map[2]).toBe(2) // e
-		expect(r.map[3]).toBe(2) // n (inserted; clamped to last source char)
+		expect(r.map[3]).toBe(2) // n (inserted. clamped to last source char)
 		expect(r.map[4]).toBe(2) // u (inserted)
 		expect(r.map[5]).toBe(2) // e (inserted)
 	})
@@ -70,7 +70,7 @@ describe("expandAbbreviations — fr-FR", () => {
 describe("expandAbbreviations — es-ES / es-MX", () => {
 	// `Av.` is Avenida in Spanish and Avenue in French. Until 2026-08-05 there was no Spanish table at
 	// all, so every `es-*` locale fell through to the en-US default and `Av.` went unexpanded, while
-	// the locale-UNKNOWN set the geocode path uses expanded it to the ENGLISH "Avenue". Both MX rows in
+	// the locale-unknown set the geocode path uses expanded it to the english "Avenue". Both MX rows in
 	// the 2026-08-05 gauntlet batch record the second half of that (mx-op3-san-miguel-canada-zapopan,
 	// pr-op3-place-at-the-sea-ponce) and had to leave `street` unasserted because of it.
 	it("expands Av. → Avenida, not Avenue", () => {
@@ -88,7 +88,7 @@ describe("expandAbbreviations — es-ES / es-MX", () => {
 	})
 
 	it("leaves the English suffixes alone under a Spanish locale", () => {
-		// `Ave`/`St`/`Blvd` are en-US table entries; a Spanish address that happens to contain one is
+		// `Ave`/`St`/`Blvd` are en-US table entries. a Spanish address that happens to contain one is
 		// not an invitation to expand it into English.
 		expect(expandAbbreviations("Calle 5 Ave", "es-MX").text).toBe("Calle 5 Ave")
 	})
@@ -102,13 +102,13 @@ describe("expandAbbreviations — the Av collision across locales", () => {
 		expect(expandAbbreviations("1 Av. de la Convention", "fr-FR").text).toBe("1 Avenue de la Convention")
 	})
 
-	// TRACKED DEFECT, pinned so a fix is a deliberate change and not a surprise. The locale-UNKNOWN set
+	// tracked defect, pinned so a fix is a deliberate change and not a surprise. The locale-unknown set
 	// is what the geocode path uses (`normalize(input, { locale: "und" })` in mailwoman/geocode-core.ts),
 	// because Stage 1 runs before the parse that would establish the locale. `Av` is in that set on the
 	// claim that it "reads Avenue in both" — true of en/fr, false of es/pt, which is how Spanish input
 	// acquires an English street type. It cannot simply be dropped here: the gauntlet row
-	// fr-op3-halles-market-bonneuil is a `pass` that asserts street "Avenue de la Convention" AND an
-	// address_point tier, so removing the entry needs a resolver-gauntlet run, not a table edit.
+	// fr-op3-halles-market-bonneuil is a `pass` that asserts street "Avenue de la Convention" and an
+	// address_point tier, so removing the entry needs a resolver-gauntlet run rather than a table edit.
 	it("still expands Av → the English Avenue under locale 'und'", () => {
 		expect(expandAbbreviations("3499 Av. Los Meros", "und").text).toBe("3499 Avenue Los Meros")
 	})

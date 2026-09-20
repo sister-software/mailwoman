@@ -6,9 +6,9 @@
  *
  *   The required pair is `whitespaceBlindKey` and `whitespaceApplicability`, and the reason both exist is
  *   here in executable form: the key refuses a pair that changed anything besides whitespace, and the
- *   applicability rules refuse a pair the key ACCEPTS but whose spacing the transformation could never have
+ *   applicability rules refuse a pair the key accepts but whose spacing the transformation could never have
  *   moved. A space swapped for a newline clears the first and is refused by neither — it is refused because
- *   no NAMED transformation produces it, which is how this law keeps the segmentation grammar out.
+ *   no named transformation produces it, which is how this law keeps the segmentation grammar out.
  *
  *   Every exclusion is exercised against a real committed board row rather than an invented string: the bare
  *   GB unit code, whose only space belongs to the code, and the single-token Polish row, which has no
@@ -93,7 +93,7 @@ describe("whitespace transformations", () => {
 	})
 
 	it("leaves the postcode's own space alone on both run transformations", () => {
-		// The two renderings above already show it; asserted here as the claim rather than as a side effect of a longer
+		// The two renderings above already show it. asserted here as the claim rather than as a side effect of a longer
 		// string, because it is the whole reason the run transformations are not a plain `replaceAll`.
 		expect(WHITESPACE_TRANSFORMATION_BY_NAME.repeated(GB_DOWNING)).toContain("SW1A 2AA")
 		expect(WHITESPACE_TRANSFORMATION_BY_NAME.tabbed(GB_DOWNING)).toContain("SW1A 2AA")
@@ -275,7 +275,7 @@ describe("auditWhitespaceSuite", () => {
 
 describe("a seeded whitespace regression", () => {
 	/**
-	 * The pipeline stand-in that fails ONLY on the tabbed arm — the shape the live finding takes. Seeding the regression
+	 * The pipeline stand-in that fails only on the tabbed arm — the shape the live finding takes. Seeding the regression
 	 * rather than waiting for one is what proves the failure line carries enough to diagnose from.
 	 */
 	const observe: ConformanceObserver = async (query) => {

@@ -7,7 +7,7 @@
  *   rather than content, `<script>`/`<style>` blocks that are neither — and every strategy downstream
  *   should reason about the same narrowed window rather than each re-deriving one.
  *
- *   Returns HTML, not text: the caller still has a document to parse. `#html/text` answers the text
+ *   Returns html rather than text: the caller still has a document to parse. `#html/text` answers the text
  *   question and `#html/tables` the grid question.
  */
 
@@ -16,26 +16,26 @@ import type { AnyNode } from "domhandler"
 import { findAll, removeElement, textContent } from "domutils"
 import { parseDocument } from "htmlparser2"
 
-export interface DocumentSliceOptions {
+export interface DocumentNarrowingOptions {
 	/**
-	 * Narrow to the inner HTML of the FIRST element with this (lower-case) name — an SGML/XML envelope's payload element.
+	 * Narrow to the inner html of the first element with this (lower-case) name — an sgml/XML envelope's payload element.
 	 * A document that states no such element is not narrowed, which is the right reading for a bare fragment that never
 	 * had an envelope.
 	 */
 	within?: string
 	/**
-	 * Element names to remove entirely, applied AFTER {@linkcode DocumentSliceOptions.within} so an envelope's own
+	 * Element names to remove entirely, applied after {@linkcode DocumentNarrowingOptions.within} so an envelope's own
 	 * metadata is never mistaken for the payload's.
 	 */
 	without?: readonly string[]
 }
 
 /**
- * Narrows `html` to the window described by `options` and renders it back to HTML. One parse, and the tree answers both
+ * Narrows `html` to the window described by `options` and renders it back to html. One parse, and the tree answers both
  * questions — a regex `<head[^>]*>[\s\S]*?<\/head>` cannot tell a `<` inside an attribute value from a tag, and a
  * document whose envelope is malformed is exactly the document a caller most needs read correctly.
  */
-export function sliceDocument(html: string, options: DocumentSliceOptions = {}): string {
+export function narrowDocument(html: string, options: DocumentNarrowingOptions = {}): string {
 	const document = parseDocument(html, { decodeEntities: true })
 
 	const envelope = options.within ? findAll((element) => element.name === options.within, document).at(0) : undefined
@@ -59,7 +59,7 @@ export function sliceDocument(html: string, options: DocumentSliceOptions = {}):
 
 /**
  * Whether to read `markup` as XML. XML mode keeps tag case and treats every element as needing an explicit close, which
- * is what an OGC exception report, an FGDC metadata document, or an S3 listing want. HTML mode recovers unclosed tags
+ * is what an OGC exception report, an fgdc metadata document, or an S3 listing want. html mode recovers unclosed tags
  * the way a browser does, which is what a filing wants.
  */
 export interface MarkupQueryOptions {
@@ -67,8 +67,8 @@ export interface MarkupQueryOptions {
 }
 
 /**
- * The LOCAL name of an element — `gco:CharacterString` is `characterstring`. A namespace prefix is the publisher's
- * choice of alias and two documents from the same service can spell it differently; the local name is the contract.
+ * The local name of an element — `gco:CharacterString` is `characterstring`. A namespace prefix is the publisher's
+ * choice of alias and two documents from the same service can spell it differently. the local name is the interface.
  */
 function localName(name: string): string {
 	const colon = name.lastIndexOf(":")
@@ -89,14 +89,14 @@ export function elementTexts(markup: string, name: string, options: MarkupQueryO
 }
 
 /**
- * The text of the FIRST element named `name`, or `undefined` when the document states none.
+ * The text of the first element named `name`, or `undefined` when the document states none.
  */
 export function elementText(markup: string, name: string, options: MarkupQueryOptions = {}): string | undefined {
 	return elementTexts(markup, name, options).at(0)
 }
 
 /**
- * One attribute of the document's ROOT element, or `undefined` when the root carries no such attribute. Asked of the
+ * One attribute of the document's root element, or `undefined` when the root carries no such attribute. Asked of the
  * root specifically, so a value repeated on a descendant cannot answer for the document — the count a service reports
  * for a collection is a property of the collection, and a regex over the whole body cannot tell the two apart.
  */

@@ -4,17 +4,17 @@
 /**
  *   The smallest single-setting flip that changes a row's answer (#1722).
  *
- *   An account says what the pipeline DID. A counterfactual says what it would have done under one different setting,
+ *   An account says what the pipeline did. A counterfactual says what it would have done under one different setting,
  *   which is the only way to turn "this mechanism ran" into "this mechanism decided" — the L2 rung the activation
  *   census deliberately does not measure. One setting moves per flip, always, because a flip that moves two settings
  *   cannot attribute the change to either.
  *
- *   The setting space is FIXED and enumerated here rather than derived from `EngineConfig`. Every setting in that
- *   interface is flippable in principle; these five are the ones whose flip is cheap (no second gazetteer, no second
- *   model) and whose meaning is stateable in one sentence. A setting that cannot apply to a row is reported as SKIPPED
+ *   The setting space is fixed and enumerated here rather than derived from `EngineConfig`. Every setting in that
+ *   interface is flippable in principle. these five are the ones whose flip is cheap (no second gazetteer, no second
+ *   model) and whose meaning is stateable in one sentence. A setting that cannot apply to a row is reported as skipped
  *   with its reason, never omitted — an absent setting and a setting that changed nothing are different facts.
  *
- *   Runs are ENGINE-MAJOR: every row needing one flip is measured before the next flip's engine is built. The
+ *   Runs are engine-major: every row needing one flip is measured before the next flip's engine is built. The
  *   registry holds two engines at a time (`EngineRegistry`'s cap, set by the measured throughput ceiling on a shared
  *   WOF SQLite), so a row-major loop would evict and rebuild a multi-second engine on nearly every iteration.
  */
@@ -41,7 +41,7 @@ export type CounterfactualSetting = (typeof COUNTERFACTUAL_SETTINGS)[number]
  *
  * The finest of the pre-registered distance thresholds, borrowed rather than chosen: a flip that moves the answer less
  * than the tightest threshold anything here grades at cannot change a verdict, so reporting it would fill the result
- * with coordinate jitter. A flip that changes ABSTENTION is reported at any distance — there is no distance to measure,
+ * with coordinate jitter. A flip that changes abstention is reported at any distance — there is no distance to measure,
  * which is the point.
  */
 export const COUNTERFACTUAL_MOVED_KM = DISTANCE_THRESHOLDS_KM[0]
@@ -69,8 +69,8 @@ let overlayLocaleCache: Map<string, string> | null = null
 /**
  * Country (ISO alpha-2, upper) → the canonical locale tag of the weights overlay that scopes it.
  *
- * Derived from each overlay's own REGION SUBTAG, which is what makes this a derivation rather than a second table:
- * `en-gb` scopes GB because that is what the tag says. A country with two overlays would keep the first listed; none
+ * Derived from each overlay's own region subtag, which is what makes this a derivation rather than a second table:
+ * `en-gb` scopes GB because that is what the tag says. A country with two overlays would keep the first listed. none
  * exists today, and the manifest is the place that would have to decide.
  */
 async function overlayLocaleByCountry(): Promise<Map<string, string>> {
@@ -119,10 +119,10 @@ export interface SettingSkip {
 /**
  * The single-setting flips available for one row.
  *
- * `effective` is the RESOLVED session options — the production defaults already filled in — because the flip has to be
- * stated against what the engine will actually do, not against what the caller happened to type. An unset setting in a
- * caller's `EngineConfig` means the production default, so reading the caller's object would report every unset setting
- * as absent and flip it in the wrong direction.
+ * `effective` is the resolved session options — the production defaults already filled in — because the flip has to be
+ * stated against what the engine will actually do rather than against what the caller happened to type. An unset
+ * setting in a caller's `EngineConfig` means the production default, so reading the caller's object would report every
+ * unset setting as absent and flip it in the wrong direction.
  */
 export async function enumerateFlips(
 	effective: GeocodeSessionOptions,
@@ -169,7 +169,7 @@ export async function enumerateFlips(
  * The locale flip, or the reason there is none.
  *
  * Two directions, never one: a row running under the base weights flips TO its country's overlay, and a row already
- * running under its country's overlay flips BACK to the base. The second direction is what prices the overlay — "the
+ * running under its country's overlay flips back to the base. The second direction is what prices the overlay — "the
  * overlay is required here" is a claim only its removal can support.
  */
 async function localeCounterfactual(
@@ -218,7 +218,7 @@ export interface CounterfactualAnswer {
 }
 
 /**
- * A flip that MOVED the answer. Flips that changed nothing are counted, never listed — the list is the finding.
+ * A flip that moved the answer. Flips that changed nothing are counted, never listed — the list is the finding.
  *
  * `moved_km` is `null` when one side has no coordinate: an abstention has no distance from anything, and turning that
  * into a number (zero, or infinity) is the projection this whole surface exists to avoid. `changed_abstention` is the
@@ -307,7 +307,7 @@ export async function runCounterfactuals(
 	}
 
 	for (const { flip, targets: batched } of batches.values()) {
-		// Tracing stays OFF on a flip arm: the flip is graded on its ANSWER, and a traced session pays an extra
+		// Tracing is off on a flip arm: the flip is graded on its answer, and a traced session pays an extra
 		// decode per input for evidence nothing here reads.
 		const engine = await registry.acquire({ ...baseConfig, ...flip.patch, trace: false })
 

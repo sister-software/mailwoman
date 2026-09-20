@@ -10,12 +10,12 @@
  *   eval: 11 of 600 stratified postcodes under the production default (3 bare-form misses, 8 country-suffixed rows
  *   answering the country label centroid, 27–221 km off); 0 of 600 under `--locale en-GB`.
  *
- *   The rung fires ONLY on that contradiction, and only for postcode formats whose SHAPE is structurally
+ *   The rung fires only on that contradiction, and only for postcode formats whose shape is structurally
  *   letter-digit ({@link REPAIRABLE_POSTCODE_FORMATS}): a `SW1A 1AA` cannot be a house number. The five-digit
  *   families (us_zip / fr / de) are deliberately excluded — `12345` in `12345 Main St` is a house number, and a
- *   repair that could eat it would trade a GB fix for a US regression. Positive evidence only: the rung ADDS a
+ *   repair that could eat it would trade a GB fix for a US regression. Positive evidence only: the rung adds a
  *   postcode node derived from the shape span and removes only the street/house-number-family nodes that sat wholly
- *   inside that span; any node extending beyond the span vetoes the repair.
+ *   inside that span. any node extending beyond the span vetoes the repair.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
@@ -24,7 +24,7 @@ import type { QueryShape } from "@mailwoman/query-shape"
 
 /**
  * Postcode formats whose surface is structurally distinguishable from anything else an address writes — letters mixed
- * INTO the digit groups (GB `KT2 6AB`, CA `M5H 2N2`). Membership is earned by that structural argument, never by
+ * into the digit groups (GB `KT2 6AB`, CA `M5H 2N2`). Membership is earned by that structural argument, never by
  * coverage ambition. Two exclusions, both measured rather than reasoned:
  *
  * - Five-digit families (us_zip / fr / de): `12345` in `12345 Main St` is a house number.
@@ -39,7 +39,7 @@ const REPAIRABLE_POSTCODE_FORMATS: ReadonlySet<string> = new Set(["uk_postcode",
 const MIN_FORMAT_CONFIDENCE = 0.9
 
 /**
- * The tags the misread produces. A node with any OTHER tag overlapping the format span vetoes the repair — the rung
+ * The tags the misread produces. A node with any other tag overlapping the format span vetoes the repair — the rung
  * replaces a wrong reading, never a plausible one.
  */
 const MISREAD_TAGS: ReadonlySet<string> = new Set([
@@ -48,7 +48,7 @@ const MISREAD_TAGS: ReadonlySet<string> = new Set([
 	"street_suffix",
 	"street_prefix",
 	"unit",
-	// "PO33 4DE" — the Portsmouth/Isle of Wight area reads as a PO Box. A REAL PO Box surface ("PO Box
+	// "PO33 4DE" — the Portsmouth/Isle of Wight area reads as a PO Box. A real PO Box surface ("PO Box
 	// 123") can never match a letter-digit postcode format span, so the format check keeps this safe.
 	"po_box",
 ])
@@ -62,7 +62,7 @@ function within(node: AddressNode, start: number, end: number): boolean {
 }
 
 /**
- * Repair the tree IN PLACE when a high-confidence letter-digit postcode span carries no postcode node and every node
+ * Repair the tree IN place when a high-confidence letter-digit postcode span carries no postcode node and every node
  * inside it is a street/house-number-family misread. Returns `true` when a repair was applied. Idempotent: a tree that
  * already carries a postcode node over the span never repairs, so the alternate-register retry path cannot
  * double-fire.
@@ -78,7 +78,7 @@ export function repairPostcodeContradiction(tree: AddressTree, shape: QueryShape
 		// Condition 1: the span already resolved to a postcode node somewhere — nothing to repair.
 		if (anyNode(tree, (n) => n.tag === "postcode" && overlaps(n, start, end))) continue
 
-		// Condition 2: every value-bearing node touching the span is a misread-family node sitting WHOLLY
+		// Condition 2: every value-containing node touching the span is a misread-family node sitting wholly
 		// inside it. A node of any other tag, or one extending beyond the span, vetoes the repair.
 		const touching = collectNodes(tree.roots, (n) => overlaps(n, start, end))
 

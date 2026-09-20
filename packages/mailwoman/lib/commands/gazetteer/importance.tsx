@@ -4,9 +4,9 @@
 /**
  *   `mailwoman gazetteer importance` — build the `place_importance` table in a WOF SQLite database.
  *   Downloads Nominatim's `wikimedia-importance.csv.gz`, joins it through the `concordances` table,
- *   and writes TWO scores per place.
+ *   and writes two scores per place.
  *
- *   THE TWO-SCORE SPLIT (ROAD_TO_V9 §2 R1, ratified 2026-08-06). This command used to write one
+ *   the two-score split (ROAD_TO_V9 §2 R1, ratified 2026-08-06). This command used to write one
  *   column, filled by Wikipedia where the join landed and by a population-derived pseudo-score
  *   everywhere else — a conflation nothing downstream could take apart, which is how encyclopedic
  *   importance became the de-facto ranking signal for a geocoder whose users are asking "which place
@@ -16,17 +16,17 @@
  *   ranks on. Schema, DDL, the referential derivation and the blend live in
  *   `@mailwoman/resolver-wof-sqlite/place-importance-schema` — read it before changing either score.
  *
- *   The table is added to the `--db` IN PLACE (the original `scripts/build-importance.ts` behavior):
+ *   The table is added to the `--db` IN place (the original `scripts/build-importance.ts` behavior):
  *   the WOF DB must already carry `concordances` (and, for the fallback, `place_population`) — run
- *   `mailwoman gazetteer build admin` first. Step progress streams to stderr; the final tally lands on
+ *   `mailwoman gazetteer build admin` first. Step progress streams to stderr. the final tally lands on
  *   stdout.
  *
- *   THE JOIN IS NOT A FUNCTION (#1497). 7,061 Wikidata ids name more than one current WOF place, and
+ *   the join is not A function (#1497). 7,061 Wikidata ids name more than one current WOF place, and
  *   before 2026-08-05 all of them received the same score — `Q18125` (Manchester, England) put 0.7397
  *   on a 53-person Minnesota village. `gazetteer-pipeline/importance-fanout.ts` decides which
  *   candidate a fanned-out id actually means (coincident → keep all, since 71.4% of the fan-out is
- *   one place modelled at several placetypes; else decisive population → keep the winner; else drop
- *   the id). Its module header carries the survey and the worked cases; read it before changing the
+ *   one place modelled at several placetypes. else decisive population → keep the winner. else drop
+ *   the id). Its module header carries the survey and the worked cases. read it before changing the
  *   rule. Dropped places are not left blank — they fall through to the population fallback below,
  *   which is what they had before Wikipedia importance existed.
  */
@@ -42,7 +42,7 @@ import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 import { createReadStream } from "spliterator/node/fs"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import type { FanoutCandidate } from "#gazetteer-pipeline/importance-fanout"
 /**
  * Permanent redirect.
@@ -65,7 +65,7 @@ const IMPORTANCE_READ_HIGH_WATER_MARK = 64 * 1024
 const IMPORTANCE_URL = "https://nominatim.org/data/wikimedia-importance.csv.gz"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "importance",
@@ -76,12 +76,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	db: string
-	tsv?: string
-}
-
-const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 
@@ -103,7 +98,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const kdb = new DatabaseClient<PlaceImportanceDatabase>(dbPath, { open: true })
 
-		// DDL via the Kysely schema-builder; the hot INSERT loop below stays on the raw `db` handle.
+		// DDL via the Kysely schema-builder. the hot insert loop below stays on the raw `db` handle.
 
 		// Step 1: Load Wikidata concordances from WOF
 		console.error("Loading Wikidata concordances from WOF...")
@@ -114,7 +109,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 		try {
 			// Joins `spr` for the geometry + population the fan-out guard needs, and restricts to
 			// `is_current = 1` — a deprecated place is not in any consumer's read path, and leaving it
-			// in would let a dead row win a fan-out group. DISTINCT because `concordances` carries
+			// in would let a dead row win a fan-out group. distinct because `concordances` carries
 			// duplicate (id, other_id) rows (Q18125 appears twice for the same place).
 			const stmt = kdb.prepare(
 				`SELECT DISTINCT c.other_id AS other_id, s.id AS id, s.placetype AS placetype,
@@ -192,7 +187,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const fileChunks = await createReadStream(gzPath, IMPORTANCE_READ_HIGH_WATER_MARK)
 
-		// crlf: the wikidata id is the last column — a CRLF source would leave a stray \r on it.
+		// crlf: the wikidata id is the last column — a crlf source would leave a stray \r on it.
 		for await (const line of TextSpliterator.fromAsync(gunzipChunks(fileChunks), { crlf: true })) {
 			totalRows++
 
@@ -218,12 +213,12 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 
 		console.error(`  Parsed ${totalRows.toLocaleString()} rows, ${importanceMap.size} matched Wikidata IDs`)
 
-		// Step 4: Build place_importance at the TWO-SCORE SPLIT schema (ROAD_TO_V9 §2 R1).
+		// Step 4: Build place_importance at the two-score split schema (ROAD_TO_V9 §2 R1).
 		//
 		// Before the split this ran as two passes over one column: Wikipedia scores, then an
-		// `INSERT OR IGNORE` population fallback for whatever Wikipedia missed. That made the column
+		// `insert or ignore` population fallback for whatever Wikipedia missed. That made the column
 		// a conflation nothing downstream could take apart — which is how encyclopedic importance
-		// became the de-facto ranking signal. Now each place gets ONE row carrying both scores in
+		// became the de-facto ranking signal. Now each place gets one row carrying both scores in
 		// their own columns, and the legacy `importance` column is written by `blendImportance` — the
 		// bounded blend whose cap keeps an article-floor score from outranking a population-attested
 		// town (see the constant's docstring for the bracketing contests).
@@ -231,8 +226,8 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 
 		await createPlaceImportanceTable(kdb)
 
-		// A single WOF id can concord to MULTIPLE wikidata ids (the current global DB's concordances carry
-		// such multiplicities; a naive per-wikidata insert double-inserts the wof id and violates the `id`
+		// A single WOF id can concord to multiple wikidata ids (the current global DB's concordances carry
+		// such multiplicities. a naive per-wikidata insert double-inserts the wof id and violates the `id`
 		// primary key). Collapse to the MAX importance per wof id first, then insert once each.
 		const wofEncyclopedic = new Map<number, number>()
 
@@ -277,7 +272,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 
 		let encyclopedicCount = 0
 		let referentialOnlyCount = 0
-		// One row per place in the UNION of the two signals. A place absent from both is absent from
+		// One row per place in the union of the two signals. A place absent from both is absent from
 		// the table entirely — the pre-split behavior, and the correct one: a row of zeros would assert
 		// that we measured no salience rather than that we measured nothing.
 		const allIDs = new Set<number>([...wofReferential.keys(), ...wofEncyclopedic.keys()])
@@ -300,9 +295,9 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 
 		kdb.exec("COMMIT")
 
-		// The total is READ BACK, never derived by adding the two counters. The counters describe what
-		// this run tried to do; the table is what it did, and when those disagreed nobody noticed
-		// because the derived number looked plausible. `SELECT count(*)` cannot drift.
+		// The total is read back, never derived by adding the two counters. The counters describe what
+		// this run tried to do. the table is what it did, and when those disagreed nobody noticed
+		// because the derived number looked plausible. `select count(*)` cannot drift.
 		const total = countRows(kdb, "place_importance")
 
 		await kdb.destroy() // closes the underlying `db` handle

@@ -1,0 +1,10 @@
+## Reject a fragment joined to a complete proposition.
+##
+## "Exactly one per row, and the two never merge." compresses two facts into
+## one sentence. State each fact with its own finite predicate.
+extends: existence
+message: "'%s' coordinates a fragment with a complete proposition — state both propositions explicitly."
+level: error
+ignorecase: true
+tokens:
+  - '\bexactly one per row,\s+and the two never merge\b'

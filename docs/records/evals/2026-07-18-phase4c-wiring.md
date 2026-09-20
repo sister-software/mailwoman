@@ -25,7 +25,7 @@ disaster. The board's number was real but partial.
 
 Two design moves, each measured:
 
-1. **Street-splice, not tree-replace.** Override only the tokens the winning segmentation labels
+1. **Street-splice rather than tree-replace.** Override only the tokens the winning segmentation labels
    street-family; argmax owns locality/region/postcode/house_number. This alone recovered most of
    the loss (fr exact −1.4pp) but still cost fr street −2.7pp — the span head over/under-extends the
    street on clean multi-component inputs where the BIO head is better.
@@ -34,7 +34,7 @@ Two design moves, each measured:
    street is wrong/absent and the confirmed segmentation street replaces it. An unconfirmed street
    never overrides the model.
 
-## Result — the honest production delta (vs argmax, the baseline production runs)
+## Result — the direct production delta (vs argmax, the baseline production runs)
 
 | board (evidence-conditional street-splice) | argmax baseline | reranked  | delta         |
 | ------------------------------------------ | --------------- | --------- | ------------- |
@@ -48,7 +48,7 @@ Two design moves, each measured:
 
 273 fixes / 3 breaks on the fragment board. **Zero golden regression, +16.9pp on FR fragments.**
 Note the framing: the night's "+6.0pp" was measured against the span-head's own seg@1; against the
-model production actually runs (argmax), the fragment-street win is +16.9pp — the argmax baseline was
+model production runs (argmax), the result is +16.9pp — the argmax baseline was
 much lower on fragments than the segmentation seg@1 the board used.
 
 ## Status + what's next
@@ -60,7 +60,7 @@ opts)`, PURE composition (injected evidence), byte-stable fallback for span-less
   `createRuntimePipeline` behind a flag (so the CLI + drop-in servers exercise it) is the next step,
   along with the full CLI promote battery (gauntlet, metamorphic) — the golden guard here is the
   headline check and it passes at 0.000.
-- **FR index rebuild (BAN sdk):** `street-centroids-fr.db` predates the contract fold; rebuilding it
+- **FR index rebuild (BAN sdk):** `street-centroids-fr.db` predates the interface fold; rebuilding it
   with `foldStreetSurface` + a `street_norm` index closes the last few fragment misses (3 breaks) and
   makes the production lookup fast.
 - The rerank changes only the STREET tag, only on atlas-confirmed evidence — the anti-Pelias

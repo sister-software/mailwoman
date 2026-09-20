@@ -32,7 +32,7 @@ def test_it_answers_the_root_that_holds_this_file() -> None:
 
 
 def test_it_raises_rather_than_answering_a_relative_path(monkeypatch: pytest.MonkeyPatch) -> None:
-    """With no qualifying parent the function must raise, not hand back somewhere writable."""
+    """With no qualifying parent the function must raise rather than hand back somewhere writable."""
     from mailwoman_train.cli import packages_root
 
     monkeypatch.setattr(packages_root, "__file__", "/nonexistent/src/mailwoman_train/cli/packages_root.py")

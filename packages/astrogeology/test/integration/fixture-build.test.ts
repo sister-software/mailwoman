@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The whole build chain over tiny fixtures with no network: five Moon rows through normalization, NDJSON, tippecanoe
- *   and the metadata block; a synthetic DEM through the terrarium encode, the MBTiles writer, overviews and PMTiles.
- *   The tools (`tippecanoe`, `pmtiles`, GDAL) are the lab's; a missing one fails with its name in the error.
+ *   The whole build chain over tiny fixtures with no network: five Moon rows through normalization, ndjson, tippecanoe
+ *   and the metadata block. a synthetic DEM through the terrarium encode, the MBTiles writer, overviews and PMTiles.
+ *   The tools (`tippecanoe`, `pmtiles`, gdal) are the lab's. a missing one fails with its name in the error.
  *
- *   `fixtures/dem-fixture.tif` was written once with GDAL's Python bindings: 1024×512 Int16 over the whole globe in
- *   EPSG:4326, DEFLATE-compressed, elevation `sin(row·π/8) · (row / 511) · 30000` metres. Its range sits inside
- *   terrarium's ±32,768 m envelope, so the encode has something to carry at both ends; 1024 pixels across lands the
+ *   `fixtures/dem-fixture.tif` was written once with gdal's Python bindings: 1024×512 Int16 over the whole globe in
+ *   epsg:4326, deflate-compressed, elevation `sin(row·π/8) · (row / 511) · 30000` metres. Its range sits inside
+ *   terrarium's ±32,768 m envelope, so the encode has something to carry at both ends. 1024 pixels across lands the
  *   MBTiles step at zoom 2, where the pyramid has levels to build.
  */
 
@@ -83,7 +83,7 @@ test("the Moon fixture builds a nomenclature archive whose tiles carry the five 
 
 	expect(tile.stdout.length).toBeGreaterThan(0)
 
-	// The search artifact: five names plus the one alias whose clean name differs (Buys-Ballot H → Buys Ballot H).
+	// The search artifact: five names plus the one alias whose clean name differs (Provides-Ballot H → Provides Ballot H).
 	const index = resolvePath(scratch.path, "moon-search.ancestrie")
 
 	expect(await buildSearchIndex(features, String(index))).toBe(6)
@@ -127,7 +127,7 @@ test("the Moon fixture builds a nomenclature archive whose tiles carry the five 
 
 /**
  * `runFile` decodes a tool's output as UTF-8, so the PNG signature's first byte (0x89) reads as the replacement
- * character and the seven bytes after it survive verbatim; that is enough to tell a PNG from anything else.
+ * character and the seven bytes after it survive verbatim. that is enough to tell a PNG from anything else.
  */
 const PNG_SIGNATURE_AS_UTF8 = "�PNG\r\n\n"
 
@@ -157,7 +157,7 @@ test("the fixture DEM builds a hillshade archive of PNG tiles with relief", asyn
 		"pmtiles",
 	])
 
-	// Overviews must DECIMATE. Averaging a base-256 numeral answers a height that is no sample of the terrain.
+	// Overviews must decimate. Averaging a base-256 numeral answers a height that is no sample of the terrain.
 	const overviews = commands.find((command) => command[0] === "gdaladdo")
 	expect(overviews).toContain("nearest")
 	expect(overviews).not.toContain("average")

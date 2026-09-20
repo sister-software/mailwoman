@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the no-street synthesizer. Verifies that every emitted row has NO street-side tags —
- *   this is the contract that makes the rows useful as counter-distribution training data.
+ *   Tests for the no-street synthesizer. Verifies that every emitted row has no street-side tags —
+ *   this is the interface that makes the rows useful as counter-distribution training data.
  */
 
 import { makeLcg } from "@mailwoman/core/random"
@@ -51,7 +51,7 @@ describe("synthesizeNoStreetRow", () => {
 		expect(hasAnyStreetSideTag(row!.components)).toBe(false)
 
 		// The whole point: adversarial venues contain street-typing tokens that the model
-		// must learn to NOT classify as street-side tags.
+		// must learn to not classify as street-side tags.
 		const v = row!.components.venue!.toLowerCase()
 
 		const hasStreetWord = [
@@ -106,7 +106,7 @@ describe("synthesizeNoStreetRow", () => {
 
 		expect(row).not.toBeNull()
 		expect(row!.components.country).toBeDefined()
-		// Country surface form is the canonical / colloquial name, not the ISO code.
+		// Country surface form is the canonical / colloquial name rather than the ISO code.
 		expect(row!.components.country!.length).toBeGreaterThan(2)
 		expect(hasAnyStreetSideTag(row!.components)).toBe(false)
 	})
@@ -142,7 +142,7 @@ describe("synthesizeNoStreetRow", () => {
 			counts[row!.template]++
 		}
 
-		// venue-adversarial is the critical slice — should be the largest single bucket.
+		// venue-adversarial is the critical pattern — should be the largest single bucket.
 		expect(counts["venue-adversarial"]).toBeGreaterThan(counts["venue-plain"])
 
 		// All templates should fire at least once at this sample size.

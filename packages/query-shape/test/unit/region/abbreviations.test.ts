@@ -1,18 +1,13 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { classifyToken, tokenizeForClass } from "@mailwoman/query-shape/character-class"
+import { classifyTokens } from "@mailwoman/query-shape/character-class"
 import { computeQueryShape } from "@mailwoman/query-shape/compute"
 import { detectRegionAbbreviations } from "@mailwoman/query-shape/region-abbreviations"
 import { segment } from "@mailwoman/query-shape/segmentation"
-import type { TokenClass } from "@mailwoman/query-shape/types"
 import { describe, expect, it } from "vitest"
 
-function makeTokenClasses(text: string): TokenClass[] {
-	const spans = tokenizeForClass(text)
-
-	return spans.map((span) => ({ span, class: classifyToken(span.body), length: span.end - span.start }))
-}
+const makeTokenClasses = classifyTokens
 
 describe("detectRegionAbbreviations", () => {
 	it("detects 'DC' after comma in 'Washington, DC 20500'", () => {
@@ -53,7 +48,7 @@ describe("detectRegionAbbreviations", () => {
 		const text = "Seattle, WA and Portland, OR"
 		const tokens = makeTokenClasses(text)
 		const segs = segment(text)
-		// "WA" appears after the first comma; whether BOTH are detected depends on segmentation treating
+		// "WA" appears after the first comma. whether both are detected depends on segmentation treating
 		// "and" as whitespace-separated, so this pins the weaker property: at least one is found.
 		const hits = detectRegionAbbreviations(tokens, segs)
 
@@ -73,7 +68,7 @@ describe("detectRegionAbbreviations", () => {
 		const tokens = makeTokenClasses(text)
 		const segs = segment(text)
 		const hits = detectRegionAbbreviations(tokens, segs)
-		// "WORLD" is 5 letters, not 2
+		// "world" is 5 letters rather than 2
 		expect(hits).toEqual([])
 	})
 

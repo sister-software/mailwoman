@@ -8,12 +8,12 @@
  *   card (refusing if a `capabilities` block already exists).
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "Generate the model-card capability manifest (#718/#719)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "capability-manifest",
@@ -34,26 +34,11 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	model?: string
-	tokenizer?: string
-	modelCard?: string
-	anchorLookup?: string
-	gazetteerLexicon?: string
-	write: boolean
-}
+// The generator prints the block on stdout and its diagnostics on stderr, so no `json`.
+const EvalCapabilityManifest = harnessCommand(spec, async (options) => {
+	const { generateCapabilityManifest } = await import("#eval-harness/capability-manifest")
 
-const EvalCapabilityManifest: ParsedCommandComponent<Options> = ({ options }) => {
-	const state = useCommandTask(async () => {
-		const { generateCapabilityManifest } = await import("#eval-harness/capability-manifest")
-
-		return generateCapabilityManifest(options)
-	})
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	// The generator prints the block on stdout and its diagnostics on stderr.
-	return null
-}
+	return generateCapabilityManifest(options)
+})
 
 export default EvalCapabilityManifest

@@ -1,8 +1,8 @@
-"""Contract tests for the affix-split relabel pass (#511).
+"""Interface tests for the affix-split relabel pass (#511).
 
-The critical property is BUILDER PARITY: split_street_span must agree with
-build-street-affix-slice.mjs::parseStreet on every case, or the pass introduces a third
-labeling and re-creates the contradiction it exists to cure.
+The critical property is BUILDER PARITY: split_street_span must agree with the affix recipe's
+``parseStreet`` (`packages/corpus/lib/recipes/street/affix.ts`) on every case, or the pass introduces a third
+labeling and re-creates the contradiction it exists to fix.
 """
 
 import json
@@ -45,7 +45,7 @@ LEX = AffixRelabelLexicon(
         "lane": "LANE",
     },
     version="test",
-    # v2 licensing vocabulary (see TestPositionalLicensing). AVENUE et al. deliberately absent —
+    # v2 licensing vocabulary (see TestPositionalLicensing). avenue et al. deliberately absent —
     # suffix-shaped but not name-prone.
     name_prone=frozenset({"PARK", "HILL"}),
 )
@@ -69,7 +69,7 @@ class TestSplitBuilderParity:
         assert split("Broadway") is None
 
     def test_no_suffix_no_split(self):
-        # Trailing directional is NOT a suffix — the builder requires a trailing suffix.
+        # Trailing directional is not a suffix — the builder requires a trailing suffix.
         assert split("South County Road 175 West") is None
 
     def test_directional_is_the_name(self):
@@ -78,14 +78,14 @@ class TestSplitBuilderParity:
         assert split("North St") is None
 
     def test_affix_shaped_name_rejected(self):
-        # Builder parity: "W Park Ave" gets NO split because the name "Park" is a suffix variant.
+        # Builder parity: "W Park Ave" gets no split because the name "Park" is a suffix variant.
         assert split("W Park Ave") is None
 
     def test_multiword_name_prone_tail_is_licensed_by_the_true_suffix(self):
-        # CONTRACT CHANGE 2026-08-10 (#1569 five-whys): this case was the blanket rejection that
+        # interface change 2026-08-10 (#1569 five-whys): this case was the blanket rejection that
         # taught the training feed to absorb true suffixes ('Cherry Hill' ends name-prone-shaped,
-        # but the trailing TRUE suffix licenses the split — TS allowNameProneTail semantics).
-        # Previously pinned as None; see TestPositionalLicensing for the full new contract.
+        # but the trailing true suffix licenses the split — TS allowNameProneTail semantics).
+        # Previously pinned as None. see TestPositionalLicensing for the full new interface.
         assert split("W Cherry Hill Rd") == (1, 1)
 
     def test_period_not_stripped(self):
@@ -193,7 +193,7 @@ class TestRelabelSpans:
     """Char-arithmetic re-target of the #519 span triple — the v0.5.0 form of the pass."""
 
     @staticmethod
-    def _slices(row):
+    def _span_texts(row):
         return [
             (t, row["raw"][s:e]) for s, e, t in zip(row["span_starts"], row["span_ends"], row["span_tags"], strict=True)
         ]
@@ -208,7 +208,7 @@ class TestRelabelSpans:
             "span_tags": ["house_number", "street", "locality", "region", "postcode"],
         }
         assert relabel_row(row, LEX) is True
-        assert self._slices(row) == [
+        assert self._span_texts(row) == [
             ("house_number", "1234"),
             ("street_prefix", "SE"),
             ("street", "Division"),
@@ -230,7 +230,7 @@ class TestRelabelSpans:
             "span_tags": ["street"],
         }
         assert relabel_row(row, LEX) is True
-        assert self._slices(row) == [
+        assert self._span_texts(row) == [
             ("street_prefix", "N"),
             ("street", "Dixie Box"),
             ("street_suffix", "Road"),
@@ -249,8 +249,8 @@ class TestRelabelSpans:
         assert row["span_starts"] == [0] and row["span_ends"] == [27] and row["span_tags"] == ["street"]
 
     def test_dotted_suffix_is_conservative_on_the_span_path(self):
-        # "Main St.": the corpus tokenizer dropped the period, so the TOKEN path sees "St" and
-        # splits; the span path sees the whitespace word "St." (builder parity: parseStreet
+        # "Main St.": the corpus tokenizer dropped the period, so the token path sees "St" and
+        # splits. the span path sees the whitespace word "St." (builder parity: parseStreet
         # splits raw words, "St." is not in the lexicon) and leaves the span whole. The span path
         # is the v0.5.0 source of truth — conservative beats a third labeling.
         row = {
@@ -275,7 +275,7 @@ class TestRelabelSpans:
             "span_tags": ["street", "street"],
         }
         assert relabel_row(row, LEX) is True
-        assert self._slices(row) == [
+        assert self._span_texts(row) == [
             ("street_prefix", "N"),
             ("street", "Main"),
             ("street_suffix", "St"),
@@ -323,7 +323,7 @@ class TestRelabelSpans:
             "span_tags": ["street", "street_suffix"],
         }
         assert relabel_row(row, LEX) is False
-        assert self._slices(row) == [("street", "Menlo Park"), ("street_suffix", "Road")]
+        assert self._span_texts(row) == [("street", "Menlo Park"), ("street_suffix", "Road")]
 
     def test_second_pass_is_a_no_op(self):
         row = {
@@ -349,7 +349,7 @@ class TestRelabelSpans:
             "span_tags": ["street_prefix", "street"],
         }
         assert relabel_row(row, LEX) is True
-        assert self._slices(row) == [
+        assert self._span_texts(row) == [
             ("street_prefix", "N"),
             ("street", "Main"),
             ("street_suffix", "St"),
@@ -390,7 +390,7 @@ class TestPositionalLicensing:
         assert split("Industrial Park Rd") == (0, 1)
 
     def test_directional_prefix_plus_name_prone_tail_splits(self):
-        # Flips the old blanket rejection: the trailing TRUE suffix licenses 'Cherry Hill'.
+        # Flips the old blanket rejection: the trailing true suffix licenses 'Cherry Hill'.
         assert split("W Cherry Hill Rd") == (1, 1)
 
     def test_single_word_name_prone_name_still_refused(self):
@@ -398,7 +398,7 @@ class TestPositionalLicensing:
         assert split("W Park Ave") is None
 
     def test_non_name_prone_suffix_shaped_tail_still_refused(self):
-        # 'Avenue' is suffix-shaped but NOT a name-prone head noun — no license.
+        # 'Avenue' is suffix-shaped but not a name-prone head noun — no license.
         assert split("Old Avenue Road") is None
 
     def test_bio_end_to_end(self):
@@ -418,7 +418,7 @@ class TestPositionalLicensing:
 
     def test_v1_artifact_without_name_prone_keeps_the_old_blanket_rejection(self):
         """Back-compat: a v1 lexicon (no ``name_prone`` key) must reproduce the pre-licensing
-        behavior byte-for-byte — old runs stay reproducible; the fix rides the v2 artifact."""
+        behavior byte-for-byte — old runs stay reproducible. the fix rides the v2 artifact."""
         import dataclasses
 
         lex_v1 = dataclasses.replace(LEX, name_prone=frozenset())

@@ -53,6 +53,14 @@
 			},
 			"by_country": {
 				"US": 400
+			},
+			"countries_by_source": {
+				"big": {
+					"US": 202
+				},
+				"small": {
+					"US": 198
+				}
 			}
 		},
 		"emitted_level": {

@@ -4,9 +4,9 @@
 
 Mailwoman is on the right strategic track. The strongest idea in the project is still the Pelias-style split between parsing and resolving, updated for a modern TypeScript/runtime world: a small contextual parser proposes possibilities, deterministic structure supplies cheap priors, and a resolver/gazetteer checks world coherence. That direction is better than either "rules forever" or "one model does everything."
 
-The current work is a significant step forward, but mostly as architecture and instrumentation, not yet as model-quality proof. The v0.5.0 scaffolding - QueryShape, kind classification, phrase grouping, JS Viterbi, resolver alternatives, top-k training support, and opt-in joint decoding - is the right shape. The expensive next step should not be "run the full fresh-slate train again and hope." It should be a tighter validation program that proves the destabilizer, closes the top-k-to-Stage-5 integration gap, and establishes slice-level checks before spending H100/LLM/human-labeling budget at scale.
+The current work is a measured step forward, but mostly as architecture and instrumentation rather than yet as model-quality proof. The v0.5.0 scaffolding - QueryShape, kind classification, phrase grouping, JS Viterbi, resolver alternatives, top-k training support, and opt-in joint decoding - is the right shape. The expensive next step should not be "run the full fresh-slate train again and hope." It should be a tighter validation program that proves the destabilizer, closes the top-k-to-Stage-5 integration gap, and establishes per-subset checks before spending H100/LLM/human-labeling budget at scale.
 
-Recommended posture: continue, but narrow the next cycle. Treat the next spend as validation of the pipeline hypothesis, not as a release train.
+Recommended posture: continue, but narrow the next cycle. Treat the next spend as validation of the pipeline hypothesis rather than as a release train.
 
 ## Historical context
 
@@ -25,7 +25,7 @@ That is the correct historical synthesis. Geocoding has never only been NLP and 
 
 Keeping parser and resolver separate is the most important architectural decision. It avoids asking the model to memorize WOF/BAN/TIGER, and it gives the resolver room to return candidates instead of pretending one answer is certain. The new `alternatives` field and `--candidates` CLI direction are especially aligned with graceful failure.
 
-This is also where Mailwoman can be meaningfully better than old geocoders: not just "more correct top-1," but more honest about ambiguity. `Springfield`, `Paris`, and postalcode placeholder failures should surface as candidate sets and diagnostics.
+This is also where Mailwoman can be meaningfully better than old geocoders: only "more correct top-1," but more direct about ambiguity. `Springfield`, `Paris`, and postalcode placeholder failures should surface as candidate sets and diagnostics.
 
 ### 2. Small, TypeScript-first neural runtime is justified
 
@@ -35,7 +35,7 @@ The browser demo constraint is also valuable as a forcing function: it prevents 
 
 ### 3. Ship-of-Theseus migration is the right risk model
 
-The policy registry and component-by-component migration are conservative in the best sense. Postcodes, state abbreviations, and bounded format rules should remain deterministic. Neural should earn authority by component and by locale. This is how to avoid replacing a debuggable rule parser with an opaque model that is worse in production.
+The policy registry and component-by-component migration are conservative in the best sense. Postcodes, state abbreviations, and bounded format rules should remain deterministic. Neural should gain authority by component and by locale. This is how to avoid replacing a debuggable rule parser with an opaque model that is worse in production.
 
 ### 4. The staged pipeline is the right decomposition
 
@@ -70,7 +70,7 @@ Before expensive validation, wire the real path behind a flag:
 2. Stage 2.7 phrase proposals are converted into classifier-compatible priors or candidate spans.
 3. Resolver supplies top-k candidates per admin span.
 4. `reconcileSpans` runs in `runPipeline`.
-5. Eval compares fallback argmax vs joint decode on the kryptonite set and normal golden slices.
+5. Eval compares fallback argmax vs joint decode on the kryptonite set and normal golden sets.
 
 Until that path exists, further training only validates part of the system.
 
@@ -96,7 +96,7 @@ The project has made real progress, but the model metrics are not yet a green li
 - Confidence is reported mostly per token; product users need parse-level and candidate-level calibration.
 - Golden v0.1.2 includes adversarial transliteration rows the model was not trained for; that is useful as a stress test but misleading as a headline denominator unless separately weighted.
 
-The next expensive run needs predefined acceptance slices, not a single headline F1. Minimum:
+The next expensive run needs predefined acceptance subsets rather than a single headline F1. Minimum:
 
 - rule-only baseline
 - neural-only argmax
@@ -127,7 +127,7 @@ That means the bottleneck is no longer architecture ideation. It is training-sys
 
 Do not add a learned phrase proposer, span re-reader, larger hidden size, or label expansion until this is stable.
 
-### 5. Synthetic corpus validation catches alignment, not semantics
+### 5. Synthetic corpus validation catches alignment rather than semantics
 
 The substring validator is correctly treated as critical. But it only proves annotated values appear in raw strings. It does not prove the labels are complete, semantically correct, or distributionally sane.
 
@@ -140,11 +140,11 @@ Given v0.5.0 divergence, the synthetic additions need more scrutiny before they 
 - run semantic spot checks on a sampled batch
 - require source-specific gradient/loss dashboards
 
-LLM data is useful here, especially for kryptonite cases, but it should enter as a weighted adversarial curriculum, not as an unexamined corpus expansion.
+LLM data is useful here, especially for kryptonite cases, but it should enter as a weighted adversarial curriculum rather than as an unexamined corpus expansion.
 
 ### 6. Rule-based structural layers must stay bounded
 
-QueryShape and phrase-grouper are justified because they encode structural facts, not gazetteer knowledge. But there is a slippery slope: venue marker lists, street suffix dictionaries, and phrase heuristics can become the same long-tail implementation the project is trying to escape.
+QueryShape and phrase-grouper are justified because they encode structural facts rather than gazetteer knowledge. But there is a slippery slope: venue marker lists, street suffix dictionaries, and phrase heuristics can become the same long-tail implementation the project is trying to escape.
 
 The rule should be explicit:
 
@@ -163,7 +163,7 @@ If a new phrase-grouper rule needs a large dictionary or a bug-specific exceptio
 - Locale-specific weight packages.
 - Parse/resolve separation.
 - WOF resolver with top-k alternatives.
-- Component schema as a guarded contract.
+- Component schema as a guarded interface.
 - Rule/neural policy registry.
 - JS Viterbi structural mask.
 - QueryShape as a cheap prior system.
@@ -172,11 +172,11 @@ If a new phrase-grouper rule needs a large dictionary or a bug-specific exceptio
 
 ### Change or tighten
 
-- Make `docs/articles/plan/v0-5-0-shipped.md` the temporary source of truth, then reconcile `TODO.md`, `STAGES.md`, `ARCHITECTURE.md`, and concept pages against it.
+- Make `docs/articles/plan/v0-5-0-shipped.md` the temporary authoritative record, then reconcile `TODO.md`, `STAGES.md`, `ARCHITECTURE.md`, and concept pages against it.
 - Move from "model F1" checks to "pipeline outcome" checks: parse exact match, top-k resolver recall, graceful failure, and calibration.
-- Treat `reconcileSpans` as an integration priority, not a future idea.
+- Treat `reconcileSpans` as an integration priority rather than a future idea.
 - Promote `predict_top_k` from Python training support into TypeScript/browser runtime support.
-- Use synthetic data as a controlled slice with explicit weights, not just extra rows.
+- Use synthetic data as a controlled source with explicit weights, notextra rows.
 - Create an explicit "expensive run preflight" checklist that must pass before rented GPU time.
 
 ### Defer
@@ -219,7 +219,7 @@ Run the next cheap-but-informative experiments before any full retrain:
 
 Decision:
 
-- If A1 + v0.3 trains cleanly, ship tokenizer win without B2 mass and defer transliteration training.
+- If A1 + v0.3 trains directly, ship tokenizer win without B2 mass and defer transliteration training.
 - If v0.1 + v0.4 diverges, corpus composition is the blocker.
 - If only A1 diverges, investigate vocab/embedding frequency and maybe reduce vocab or initialize from A0 differently.
 
@@ -244,7 +244,7 @@ Check it behind `forceJointReconcile` or similar. Run it against:
 - postcode-only/locality-only fast paths
 - browser demo fixture set
 
-Compare to current fallback. If joint decode does not beat fallback on kryptonite without hurting normal slices, fix scoring before retraining.
+Compare to current fallback. If joint decode does not beat fallback on kryptonite without hurting the normal subsets, fix scoring before retraining.
 
 ### Step 4 - Build an eval matrix that mirrors product claims
 
@@ -268,7 +268,7 @@ This report should become the release check for any new weights.
 Keep DeepSeek generation, but route it through explicit curriculum weights:
 
 - start synthetic transliteration at a low batch share
-- keep kryptonite rows as high-value adversarial validation and small training slice
+- keep kryptonite rows as high-value adversarial validation and small training source
 - preserve a clean non-synthetic control run
 - use source-specific gradient/loss dashboards
 - require semantic spot-check sampling before corpus promotion
@@ -291,7 +291,7 @@ Then spend on a full C-train. Not before.
 The project should aim to become the TypeScript-native open geocoding front end: parser, structured candidate generator, and resolver interface that can run locally, in a browser, or next to Pelias-like services. It does not need rooftop precision or a universal world model to be valuable. It needs to be:
 
 - easy to deploy
-- honest about ambiguity
+- direct about ambiguity
 - cheap enough for browsers and serverless
 - retrainable on open data
 - calibrated enough that downstream systems can decide when to ask for more context

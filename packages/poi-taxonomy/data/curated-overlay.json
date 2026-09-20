@@ -1,6 +1,14 @@
 {
 	"categories": [
 		{
+			"id": "mechanical_parts_supplier",
+			"label": "Mechanical parts supplier",
+			"hierarchy": ["business_to_business", "business_manufacturing_and_supply", "mechanical_parts_supplier"],
+			"basicLabel": null,
+			"source": "mailwoman",
+			"overtureCategories": ["bearing_supplier"]
+		},
+		{
 			"id": "place_of_worship",
 			"label": "Place of worship",
 			"hierarchy": ["religious_organization", "place_of_worship"],

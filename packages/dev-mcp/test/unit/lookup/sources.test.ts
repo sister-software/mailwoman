@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fixtures are built by the PRODUCTION schema builders and populated with rows copied off the shipped artifacts, so
+ *   Fixtures are built by the production schema builders and populated with rows copied off the shipped artifacts, so
  *   what these tests pin is the real behaviour rather than a restatement of the probe. Two cases exist only because
  *   driving the real artifacts falsified the first implementation: `1012 LG` (route order) and the deprecated-only WOF
  *   name (the FTS index cannot show one, so a second route has to).
@@ -61,8 +61,8 @@ function memoryDatabase<DB>(): DatabaseClient<DB> {
  * pair whose stem hides the unit code.
  */
 const CANDIDATE_ROWS: Array<Partial<CandidateTable> & Pick<CandidateTable, "name_key" | "spr_id">> = [
-	// Each key is minted from the SURFACE the build folds, never written folded by hand — for an alias row that
-	// surface is the ALIAS, not the display `name`, which is why "Balearic Islands" keys under `illes balears`.
+	// Each key is minted from the surface the build folds, never written folded by hand — for an alias row that
+	// surface is the alias rather than the display `name`, which is why "Balearic Islands" keys under `illes balears`.
 	{ name_key: nameKey("Porto Petro"), name: "Porto Petro", placetype_id: 1, country_id: 1, spr_id: 1, population: 0 },
 	{
 		name_key: nameKey("Illes Balears"),
@@ -153,7 +153,7 @@ async function candidateFixture(): Promise<DatabaseClient<CandidateDatabase>> {
 			row.name ?? null,
 			row.population ?? 0,
 			row.is_primary ?? 1,
-			// `importance` stays NULL unless the fixture row gives one — the UNMEASURED case is the point.
+			// `importance` stays NULL unless the fixture row gives one — the unmeasured case is the point.
 			row.importance ?? null
 		)
 	}
@@ -171,7 +171,7 @@ function rowFor(rows: LookupRow[], query: string): LookupRow {
 
 describe("lookupCandidate", () => {
 	it("finds the three places an exact `name` probe reports as absent", async () => {
-		// The trap this source exists to prevent: `name_key` is the fold, so `WHERE name = 'Porto Petro'` on a
+		// The trap this source exists to prevent: `name_key` is the fold, so `where name = 'Porto Petro'` on a
 		// build that stores `porto petro` answers zero rows and reads as a gazetteer gap.
 		const db = await candidateFixture()
 		const rows = lookupCandidate(db, ["Porto Petro", "Illes Balears"])
@@ -211,7 +211,7 @@ describe("lookupCandidate", () => {
 	it("tries the whitespace fold BEFORE the qualifier strip", async () => {
 		// Measured against the shipped candidate.db: strip-first sends `1012 LG` to `1012`, resolving the NL PC6
 		// unit to its 4-digit stem (and to a DK row) while the unit's own record sits under `1012lg`. The runtime
-		// folds whitespace at the top of findPlace, so this order is the runtime's, not a preference.
+		// folds whitespace at the top of findPlace, so this order is the runtime's rather than a preference.
 		const db = await candidateFixture()
 		const [row] = lookupCandidate(db, ["1012 LG"])
 
@@ -220,7 +220,7 @@ describe("lookupCandidate", () => {
 
 	it("restricts the qualifier-strip retry to primary rows, as the runtime does", async () => {
 		// #1626: an alias-keyed stripped hit is a scrape. `hart` carries a primary Hart and an alias row for
-		// Hyattsville; only the first may answer a stripped probe.
+		// Hyattsville. only the first may answer a stripped probe.
 		const db = await candidateFixture()
 		const [row] = lookupCandidate(db, ["Hart b.Graz"])
 
@@ -282,7 +282,7 @@ describe("lookupWOF", () => {
 	})
 
 	it("reports a deprecated-only name as the THIRD state, not as absence", async () => {
-		// The FTS content is built with `is_current != 0 AND is_deprecated = 0` applied, so the resolver's index
+		// The FTS content is built with `is_current != 0 and is_deprecated = 0` applied, so the resolver's index
 		// cannot hold this record at all — the `names` route is the only cheap way to see that it exists.
 		const db = await wofFixture()
 		const [row] = lookupWOF([{ name: "admin.db", db }], ["Birmingham/Wolverhampton/Walsall/Dudley"])
@@ -425,7 +425,7 @@ describe("lookupPostcodeAnchor", () => {
 	})
 
 	it("says a present record is unreachable at serve under an alnum-run card", () => {
-		// The artifact HAS the key and the running model is never fed it — a hit and a warning, not a miss.
+		// The artifact has the key and the running model is never fed it — a hit and a warning rather than a miss.
 		const [row] = lookupPostcodeAnchor(resolver, ["SW1A 2AA"], { spanMode: "alnum-run" })
 
 		expect(row!.hit).toBe(true)
@@ -498,7 +498,7 @@ describe("lookupCandidate fame-diagnosis extras", () => {
 			}
 		}
 
-		// Without the option the property is ABSENT — unread, not measured-empty.
+		// Without the option the property is absent — unread rather than measured-empty.
 		const [bare] = lookupCandidate(db, ["Porto Petro"])
 		const bareEntries = (bare!.entries ?? []) as Array<{ importance_split?: unknown }>
 

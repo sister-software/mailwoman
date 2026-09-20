@@ -1,4 +1,4 @@
-"""Build the fragment slice.
+"""Build the fragment recipe output.
 
 Usage:
     python -m mailwoman_train.corpora.fragment \

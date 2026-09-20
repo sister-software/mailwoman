@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Typed schema for the spatial-layer contract — the two tables EVERY layer database embeds,
+ *   Typed schema for the spatial-layer interface — the two tables every layer database embeds,
  *   regardless of tier: `layer_manifest` (single-row identity/provenance/licensing record) and
- *   `layer_coverage` (per-H3-cell survey completeness). The contract is what lets shipped,
+ *   `layer_coverage` (per-H3-cell survey completeness). The interface is what lets shipped,
  *   build-local, and private layers share one query surface. Spec:
  *   docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md §2.1.
  *
- *   Coverage carries the meaning-of-zero rule: a MISSING coverage row means "unmapped/unknown",
+ *   Coverage defines the meaning-of-zero rule: a missing coverage row means "unmapped/unknown",
  *   never "surveyed and empty". Consumers must treat absence as absence of evidence.
  */
 
@@ -25,7 +25,7 @@ export const LayerTier = {
 	 */
 	BuildLocal: "build-local",
 	/**
-	 * The user's own data, conforming to the contract, never distributed.
+	 * The user's own data, conforming to the interface, never distributed.
 	 */
 	Private: "private",
 } as const
@@ -37,7 +37,7 @@ export type LayerTier = (typeof LayerTier)[keyof typeof LayerTier]
  */
 export const LayerFreshnessPolicy = {
 	/**
-	 * Immutable artifact; updates are full rebuilds (the gazetteer discipline).
+	 * Immutable artifact. updates are full rebuilds (the gazetteer discipline).
 	 */
 	Sealed: "sealed",
 	/**
@@ -60,7 +60,7 @@ export interface LayerManifestTable {
 	 */
 	tier: string
 	/**
-	 * SPDX-ish license expression, e.g. `CDLA-Permissive-2.0`, `ODbL-1.0`.
+	 * Spdx-ish license expression, e.g. `cdla-Permissive-2.0`, `ODbL-1.0`.
 	 */
 	license: string
 	attribution: string | null
@@ -82,7 +82,7 @@ export interface LayerManifestTable {
 	created_at: string
 }
 
-// Owned by @mailwoman/evidence so bdc, resolver and filer can check on the SAME FUNCTION rather than on matching copies
+// Owned by @mailwoman/evidence so bdc, resolver and filer can check on the same function rather than on matching copies
 // of the same three strings. The layer_coverage schema and its IO stay here.
 
 export interface LayerCoverageTable {
@@ -110,28 +110,28 @@ export interface LayerCoverageTable {
 }
 
 /**
- * Pass to `new DatabaseClient<LayerContractDatabase>(...)` (or intersect into a layer's own schema).
+ * Pass to `new DatabaseClient<layerschemadatabase>(...)` (or intersect into a layer's own schema).
  */
-export interface LayerContractDatabase {
+export interface layerschemadatabase {
 	layer_manifest: LayerManifestTable
 	layer_coverage: LayerCoverageTable
 }
 
 /**
- * The slice of a Kysely handle the contract helpers touch — the parameter type every one of them takes.
+ * The subset of a Kysely handle the interface helpers touch — the parameter type every one of them takes.
  *
- * Kysely is invariant in its schema parameter, so a `Kysely<POIDatabase>` is NOT assignable to
- * `Kysely<LayerContractDatabase>` even when `POIDatabase extends LayerContractDatabase`. The incompatibility is in
- * `transaction()` and `with()`, which the contract never calls. Naming only the members it does call lets a layer pass
+ * Kysely is invariant in its schema parameter, so a `Kysely<POIDatabase>` is not assignable to
+ * `Kysely<layerschemadatabase>` even when `POIDatabase extends layerschemadatabase`. The incompatibility is in
+ * `transaction()` and `with()`, which the interface never calls. Naming only the members it does call lets a layer pass
  * its own handle directly. The alternative — a cast at every call site — does not merely skip one check: it disarms
  * every column-level guarantee these two tables carry, including any added later.
  */
-export type LayerContractHandle = Pick<Kysely<LayerContractDatabase>, "insertInto" | "schema" | "selectFrom">
+export type layerschemahandle = Pick<Kysely<layerschemadatabase>, "insertInto" | "schema" | "selectFrom">
 
 /**
  * Create `layer_manifest`. Single row enforced by `name` PK + the writer's insert-once discipline.
  */
-export async function createLayerManifestTable(db: LayerContractHandle): Promise<void> {
+export async function createLayerManifestTable(db: layerschemahandle): Promise<void> {
 	await db.schema
 		.createTable("layer_manifest")
 		.addColumn("name", "text", (c) => c.primaryKey())
@@ -151,9 +151,9 @@ export async function createLayerManifestTable(db: LayerContractHandle): Promise
 }
 
 /**
- * Create `layer_coverage` — small fixed-width rows probed by PK, the WITHOUT ROWID sweet spot.
+ * Create `layer_coverage` — small fixed-width rows probed by PK, the without rowid sweet spot.
  */
-export async function createLayerCoverageTable(db: LayerContractHandle): Promise<void> {
+export async function createLayerCoverageTable(db: layerschemahandle): Promise<void> {
 	await db.schema
 		.createTable("layer_coverage")
 		.addColumn("h3_cell", "integer", (c) => c.primaryKey())
@@ -162,7 +162,7 @@ export async function createLayerCoverageTable(db: LayerContractHandle): Promise
 		// `readLayerCoverage` resolves to `source_present` — what they were in fact recording.
 		.addColumn("basis", "text")
 		.addColumn("observed_rows", "integer", (c) => c.notNull())
-		// `WITHOUT ROWID` has no first-class builder; the raw modifier is the idiomatic fallback.
+		// `without rowid` has no first-class builder. the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }

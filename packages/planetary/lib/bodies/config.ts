@@ -13,7 +13,7 @@ export interface PlanetaryView {
 
 /**
  * Everything one body's build needs that the other's differs in. The artifact URLs pin one pipeline publish, the way
- * Earth's resource versions pin one gazetteer build; a republish moves the pin by a commit here.
+ * Earth's resource versions pin one gazetteer build. a republish moves the pin by a commit here.
  */
 export interface PlanetaryMapConfig {
 	body: PlanetaryBody
@@ -22,7 +22,7 @@ export interface PlanetaryMapConfig {
 	 * The body's own name, for prose that already sits under the title — "Search Mars", "About Mars".
 	 *
 	 * Carried rather than derived: six call sites stripped the `"Mailwoman "` prefix off {@link title} themselves, and
-	 * every one of them answers the WHOLE title the day that prefix changes, which reads as a bug in the sentence rather
+	 * every one of them answers the whole title the day that prefix changes, which reads as a bug in the sentence rather
 	 * than in the config.
 	 */
 	displayName: string
@@ -54,7 +54,7 @@ export interface PlanetaryMapConfig {
 	}
 	artifacts: {
 		/**
-		 * The pipeline's build version, `YYYYMMDD-<digest>`, as `astrogeology publish` printed it.
+		 * The pipeline's build version, `yyyymmdd-<digest>`, as `astrogeology publish` printed it.
 		 */
 		version: string
 		searchIndexURL: string

@@ -4,7 +4,7 @@
 /**
  * @file `fetchGeonamesDumps` — catalog-driven coverage, the zip→txt extraction, and the two presence traps: a country
  *   the source does not publish (404 ≠ transfer failure, the geonames-postal lesson) and a present `<CC>.txt` that is
- *   not a gazetteer dump at all (GeoNames' postal exports share the basename; seven tier-1 postal files sat at these
+ *   not a gazetteer dump at all (GeoNames' postal exports share the basename. seven tier-1 postal files sat at these
  *   paths reading as coverage until the capitals build found them capital-less).
  */
 
@@ -112,7 +112,7 @@ describe("fetchGeonamesDumps", () => {
 		expect(summary.fetched).toBe(2)
 		expect(summary.failedCodes).toEqual(["XX"])
 
-		// The zip is extracted and removed — the directory holds the txt, not the archive.
+		// The zip is extracted and removed — the directory holds the txt rather than the archive.
 		const aa = await readLocalTextFile(join(outRoot, "AA.txt"))
 
 		expect(aa).toContain("Aa City")
@@ -130,7 +130,7 @@ describe("fetchGeonamesDumps", () => {
 
 		const outRoot = scratch.path
 
-		// AA is already a real dump; BB is a 12-column postal export squatting on the dump filename.
+		// AA is already a real dump. BB is a 12-column postal export squatting on the dump filename.
 		await writeLocalFile(dumpRow(1, "Aa City", "PPLC", "AA"), join(outRoot, "AA.txt"))
 
 		await writeLocalTextFile(

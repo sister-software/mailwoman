@@ -17,7 +17,7 @@ const HTML_ESCAPES: Record<string, string> = {
 }
 
 /**
- * Escape a string so an HTML sink renders it as literal text, markup included.
+ * Escape a string so an html sink renders it as literal text, markup included.
  */
 export function escapeHTML(text: string): string {
 	return text.replaceAll(/[&<>"']/gu, (character) => HTML_ESCAPES[character] ?? character)

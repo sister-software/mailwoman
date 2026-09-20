@@ -17,7 +17,7 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
  *        precedence over a country → region → locality ancestor chain (most-specific wins, weights
  *        merge key-by-key). This is the mechanism the EU locales never exercise (they ride
  *        WORLD_DEFAULT).
- *   2. Live dispatch — a `WOFSQLitePlaceLookup` with an INJECTED convention, keyed by the country's WOF
+ *   2. Live dispatch — a `WOFSQLitePlaceLookup` with an injected convention, keyed by the country's WOF
  *        id, proving the merged convention actually reroutes `findPlace`'s strategy dispatch.
  */
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -54,7 +54,7 @@ describe("convention engine — merge + resolve", () => {
 	})
 
 	it("deep-merges country → region → locality with most-specific winning", () => {
-		// country sets a base strategy list + pc weight; region overrides the strategy list; locality
+		// country sets a base strategy list + pc weight. region overrides the strategy list. locality
 		// nudges name weight. The resolved convention reflects the most-specific value per field.
 		const source = new SeedConventionSource({
 			100: { candidateStrategies: ["postcode_area_resolution"], scoringWeights: { pc: 0.7 } }, // country (JP)
@@ -62,7 +62,7 @@ describe("convention engine — merge + resolve", () => {
 			300: { scoringWeights: { name: 0.4 } }, // locality (Sapporo)
 		} satisfies Record<number, Convention>)
 
-		// chain ordered MOST-GENERAL → MOST-SPECIFIC
+		// chain ordered most-general → most-specific
 		const out = resolveConvention(source, [100, 200, 300])
 		expect(out.candidateStrategies).toEqual(["grid_interpolation", "postcode_area_resolution"]) // region won
 		expect(out.scoringWeights).toEqual({ pc: 0.7, name: 0.4, pop: 0.1 }) // country pc + locality name + base pop
@@ -111,12 +111,12 @@ describe("convention engine — live dispatch", () => {
 	})
 
 	afterEach(() => {
-		// lookup[Symbol.dispose]() in each test closes db; nothing else to do.
+		// lookup[Symbol.dispose]() in each test closes db. nothing else to do.
 	})
 
 	it("default (empty source) → coordinate-first recovers the postcode's town from a typo", async () => {
 		using lookup = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
-		// "Plaun" won't FTS-match; postcode_area_resolution injects Plauen from the postcode.
+		// "Plaun" won't FTS-match. postcode_area_resolution injects Plauen from the postcode.
 		const r = await lookup.findPlace({ text: "Plaun", placetype: "locality", postcode: "08523", country: "DE" })
 		expect(r[0]?.name).toBe("Plauen")
 	})

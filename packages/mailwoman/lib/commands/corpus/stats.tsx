@@ -5,35 +5,38 @@
  *   Report corpus statistics.
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "stats",
 	description: "Build corpus statistics.",
 	options: {
-		slices: { type: "string", required: true, description: "Comma-separated parquet slice paths or a directory" },
-		output: { type: "string", required: true, description: "Output corpus-stats.json path" },
-		"limit-per-slice": { type: "number", description: "Row cap per slice (debug)" },
+		parquet: {
+			type: "string",
+			required: true,
+			description: "Comma-separated parquet file paths or a directory",
+			deprecatedName: "slices",
+		},
+		out: { type: "string", required: true, description: "Output corpus-stats.json path", deprecatedName: "output" },
+		"limit-per-file": {
+			type: "number",
+			description: "Row cap per parquet file (debug)",
+			deprecatedName: "limit-per-slice",
+		},
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	slices: string
-	output: string
-	limitPerSlice?: number
-}
-
-const Cmd: ParsedCommandComponent<Options> = ({ options }) => {
+const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildCorpusStats } = await import("@mailwoman/corpus/tools")
 
 		await buildCorpusStats({
-			slicesArg: options.slices,
-			outputPath: options.output,
-			limitPerSlice: options.limitPerSlice,
+			parquetPath: options.parquet,
+			outputPath: options.out,
+			limitPerFile: options.limitPerFile,
 		})
 
 		return "done"

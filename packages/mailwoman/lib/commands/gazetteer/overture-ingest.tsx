@@ -12,17 +12,17 @@
  *
  *   Standing rules encoded here (see epic #470 "pre-registered decision rules"):
  *
- *   - The release is pinned in every artifact path. The addresses theme is ALPHA; rows churn between
+ *   - The release is pinned in every artifact path. The addresses theme is alpha. rows churn between
  *       monthly releases. Two releases never mix in one artifact.
  *   - The per-row `sources` array is preserved verbatim — it is what makes leakage-free eval filtering
  *       possible (#472) and satisfies the provenance-per-row rule.
- *   - Overture's `id` (GERS) rides along as a nullable passthrough column. Nothing joins on it.
+ *   - Overture's `id` (gers) rides along as a nullable passthrough column. Nothing joins on it.
  *
- *   The probe (fill-rates.json + fill-rates.md) runs against the LOCAL Parquet after ingest, so it is
+ *   The probe (fill-rates.json + fill-rates.md) runs against the local Parquet after ingest, so it is
  *   exact for what we materialized and costs no second remote scan.
  *
- *   Progress streams to stderr; the final summary is on stdout. The per-country Parquet + the
- *   fill-rates report are written DIRECTLY under `<out>/<release>/` (Parquet/JSON artifacts, not a
+ *   Progress streams to stderr. the final summary is on stdout. The per-country Parquet + the
+ *   fill-rates report are written directly under `<out>/<release>/` (Parquet/JSON artifacts rather than a
  *   SQLite DB — no atomic temp-swap applies); this preserves the original
  *   `scripts/ingest-overture-addresses.ts` behavior verbatim.
  */
@@ -32,13 +32,7 @@ import { CommandError } from "@mailwoman/core/scripting/command"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	splitUpperList,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, splitCountryCodes, useCommandTask } from "#cli-kit"
 // Overture prunes old releases from the bucket (the 2026-08-19 listing held exactly one), so a stale
 // pin fails the default ingest outright. Moves together with `gazetteer-pipeline/poi/defaults.ts`'s
 // pin — see its docstring for why the two constants stay independent.
@@ -62,7 +56,7 @@ interface CountryProbe {
 }
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "overture-ingest",
@@ -76,15 +70,6 @@ export const spec = {
 		"corpus-jsonl": { type: "boolean", default: false, description: "Emit corpus JSONL" },
 	},
 } as const satisfies CommandSpec
-
-interface Options {
-	release?: string
-	countries: string
-	limit?: string
-	out?: string
-	probeOnly: boolean
-	corpusJSONL: boolean
-}
 
 function renderMarkdown(release: string, probes: CountryProbe[]): string {
 	const lines = [
@@ -120,7 +105,7 @@ function renderMarkdown(release: string, probes: CountryProbe[]): string {
 	return lines.join("\n")
 }
 
-const GazetteerOvertureIngest: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 
@@ -129,7 +114,7 @@ const GazetteerOvertureIngest: ParsedCommandComponent<Options> = ({ options }) =
 		}
 
 		const release = options.release ?? DEFAULT_RELEASE
-		const countries = splitUpperList(options.countries)
+		const countries = splitCountryCodes(options.countries)
 		const limit = options.limit ? Number.parseInt(options.limit, 10) : undefined
 		const outRoot = options.out ?? dataRootPath("overture")
 		const outDir = join(outRoot, release)
@@ -148,7 +133,7 @@ const GazetteerOvertureIngest: ParsedCommandComponent<Options> = ({ options }) =
 		await db.run("SET s3_region='us-west-2';")
 		// Modest thread count + a hard memory ceiling: DuckDB's default (all cores) over the
 		// Overture addresses theme OOM-killed this box once (2026-06-19, naive read_parquet).
-		// COPY streams to disk, so the caps cost little; they bound scan parallelism + buffers.
+		// copy streams to disk, so the caps cost little. they bound scan parallelism + buffers.
 		await db.run("SET threads=4;")
 		await db.run("SET memory_limit='8GB';")
 
@@ -190,8 +175,8 @@ const GazetteerOvertureIngest: ParsedCommandComponent<Options> = ({ options }) =
 		}
 
 		/**
-		 * Emit the flattened corpus-input JSONL the `overture` corpus adapter consumes (`{ street, number, unit, postcode,
-		 * locality }`), so `@mailwoman/corpus` stays free of the heavy native DuckDB binding. `street` is kept WHOLE
+		 * Emit the flattened corpus-input jsonl the `overture` corpus adapter consumes (`{ street, number, unit, postcode,
+		 * locality }`), so `@mailwoman/corpus` stays free of the heavy native DuckDB binding. `street` is kept whole
 		 * (keyword included); the downstream affix-relabel splits `street_prefix`. `locality` flattens the `address_levels`
 		 * municipality (the deepest level) with a `postal_city` fallback.
 		 */
@@ -221,7 +206,7 @@ const GazetteerOvertureIngest: ParsedCommandComponent<Options> = ({ options }) =
 		}
 
 		/**
-		 * Probe one country's LOCAL Parquet for the fill-rate report.
+		 * Probe one country's local Parquet for the fill-rate report.
 		 */
 		const probeCountry = async (cc: string): Promise<CountryProbe | null> => {
 			const src = countryParquet(cc)

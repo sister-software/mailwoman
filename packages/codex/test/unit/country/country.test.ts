@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { countrySurfaceForms, isCountryToken, matchCountry } from "@mailwoman/codex/country"
+import { countrySurfaceForms, formatAsCountryISO2, isCountryToken, matchCountry } from "@mailwoman/codex/country"
 import { expect, test } from "vitest"
 
 test("matchCountry: resolves alpha-2, alpha-3, and name (case-insensitive) to the iso2", () => {
@@ -45,4 +45,10 @@ test("isCountryToken: true for any recognized form, false otherwise", () => {
 	for (const tok of ["Narnia", "", 7, null, undefined]) {
 		expect(isCountryToken(tok)).toBe(false)
 	}
+})
+
+test("formatAsCountryISO2 normalizes an explicit code and rejects other input", () => {
+	expect(formatAsCountryISO2(" us ")).toBe("US")
+	expect(() => formatAsCountryISO2("USA")).toThrow(/ISO 3166-1 alpha-2/)
+	expect(() => formatAsCountryISO2("XX")).toThrow(/ISO 3166-1 alpha-2/)
 })

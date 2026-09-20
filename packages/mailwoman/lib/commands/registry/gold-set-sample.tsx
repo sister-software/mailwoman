@@ -2,17 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman registry gold-set-sample` — sample the HARD co-located name-collision slice (#625
- *   gold-set P3) as JSONL rows for adjudication. Without `--out-jsonl` the first 10 rows print to
+ *   `mailwoman registry gold-set-sample` — sample the hard co-located name-collision stratum (#625
+ *   gold-set P3) as jsonl rows for adjudication. Without `--out-jsonl` the first 10 rows print to
  *   stdout.
  */
 
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "gold-set-sample",
@@ -30,16 +30,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	sources?: string
-	cap: number
-	state: string
-	tau: number
-	n: number
-	outJSONL?: string
-}
-
-const RegistryGoldSetSample: ParsedCommandComponent<Options> = ({ options }) => {
+const RegistryGoldSetSample: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { goldSetSample } = await import("@mailwoman/registry/tools")
 

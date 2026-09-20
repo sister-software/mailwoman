@@ -2,8 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Korean road-name address register (주소DB) as the LABEL source: a streaming reader over the monthly zip
- *   `fetchJusoKR` downloads (#2204 §1).
+ *   The Korean road-name address register (주소DB) as the alignment ground truth — the label a permit string is scored
+ *   against, in the sense the aligner uses the word. A streaming reader over the monthly zip `fetchJusoKR` downloads
+ *   (#2204 §1).
+ *
+ *   The ministry assigns the road names and building numbers it publishes, so the register asserts `address` on
+ *   `premise` rows. That is what makes it usable as ground truth, and what separates it from the permit registry, whose
+ *   address field is an `observation`.
  *
  *   The archive holds four pipe-delimited CP949 text files per 시도 plus one nationwide road-code file, laid out as the
  *   guide inside the zip states (붙임1, the 전체분 layout):
@@ -13,12 +18,12 @@
  *       지번_<시도>.txt              관리번호|일련번호|법정동코드|시도명|시군구명|법정읍면동명|법정리명|산여부|…
  *       부가정보_<시도>.txt          관리번호|행정동코드|행정동명|우편번호|…|건축물대장건물명|시군구건물명|공동주택여부
  *
- *   A LABEL row is one 주소 record joined to its road code (the admin ladder and the road name), its representative lot
+ *   A label row is one 주소 record joined to its road code (the admin ladder and the road name), its representative lot
  *   (대표여부 = 1: the 법정동, the 리, and the lot number the 지번 form writes) and its supplement (the postcode — the
- *   기초구역번호 on the 주소 row IS the five-digit postcode — and the building name). The row-count note in the zip
+ *   기초구역번호 on the 주소 row is the five-digit postcode — and the building name). The row-count note in the zip
  *   gives 6,424,089 addresses and 8,194,643 lots for the 2026-08-31 edition.
  *
- *   MEMBER NAMES ARE CP949 WITHOUT THE UTF-8 FLAG, so a zip reader that trusts the format's CP437 default finds
+ *   member names are CP949 without the UTF-8 flag, so a zip reader that trusts the format's CP437 default finds
  *   `┴╓╝╥_╝¡┐ïÆ╣▌╗π.txt` and matches nothing; `filenameEncoding` decodes the central directory's real bytes. The
  *   contents need the same treatment one layer down, which is what `decodeByteStream` does before the line split.
  */
@@ -31,7 +36,7 @@ import { TextSpliterator } from "spliterator"
 /**
  * The publisher's encoding, for both the member names and their contents.
  *
- * `cp949`, not `euc-kr`: the register uses the UHC extension, and Node's WHATWG `euc-kr` reads none of it. One row in
+ * `cp949`, not `euc-kr`: the register uses the UHC extension, and Node's whatwg `euc-kr` reads none of it. One row in
  * 48,000 carries such a sequence and decodes to a different string with no error raised — see `decodeByteStream`.
  */
 const ENCODING = "cp949"
@@ -113,7 +118,7 @@ export function parenthetical(row: JusoLabelRow): string {
 /**
  * Every full-edition member of one kind, as `[region suffix, archive name]`, sorted by region.
  *
- * The monthly edition also ships 변동 (change-only) files under the same prefixes; those carry a different row set and
+ * The monthly edition also ships 변동 (change-only) files under the same prefixes. those carry a different row set and
  * are excluded by name.
  */
 export function regionMembers(names: readonly string[], prefix: string): Array<[string, string]> {
@@ -170,16 +175,16 @@ function joinNumber(main: string, sub: string): string {
 
 export interface ReadJusoOptions {
 	/**
-	 * Stop after this many rows per 시도. For a fixture or a smoke run; omit for the whole register.
+	 * Stop after this many rows per 시도. For a fixture or a smoke run. omit for the whole register.
 	 */
 	maxRowsPerRegion?: number
 }
 
 /**
- * Stream every LABEL row, region by region.
+ * Stream every label row, region by region.
  *
  * The lot and supplement files of one 시도 are held while its address file streams, so the join never holds the country
- * at once — the largest region's two side files, not 6.4 million addresses.
+ * at once — the largest region's two side files rather than 6.4 million addresses.
  */
 export async function* readJusoLabelRows(
 	archivePath: PathBuilderLike,

@@ -11,11 +11,11 @@ import type { ZodType } from "zod"
 
 /**
  * What an operation does to the world, declared rather than inferred. `external-write` names the operations that
- * publish (npm, Hugging Face, R2) and are therefore reachable only through the plan → execute contract.
+ * publish (npm, Hugging Face, R2) and are therefore reachable only through the plan → execute interface.
  */
 export const OperationEffect = {
 	/**
-	 * Reads the checkout, the data root, or a registry; changes nothing.
+	 * Reads the checkout, the data root, or a registry. changes nothing.
 	 */
 	Read: "read",
 	/**
@@ -24,7 +24,7 @@ export const OperationEffect = {
 	LocalWrite: "local-write",
 	/**
 	 * Writes to a system outside this machine. Irreversible, credentialed, and reachable only through the plan → execute
-	 * contract.
+	 * interface.
 	 */
 	ExternalWrite: "external-write",
 } as const

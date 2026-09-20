@@ -36,7 +36,7 @@ line rather than the fourth step.
 
 ## Exemplar paragraph
 
-> `@mailwoman/nominatim` speaks the Nominatim HTTP contract over the Mailwoman engine, so an existing client
+> `@mailwoman/nominatim` speaks the Nominatim HTTP interface over the Mailwoman engine, so an existing client
 > keeps working after you change its host. Forward geocoding (`/search`) and reverse geocoding (`/reverse`)
 > are implemented, along with `/status` and an emitted `/openapi.json`; `/lookup` is planned and returns
 > nothing useful yet, so a client that resolves known place identifiers is not ready to move. There is no
@@ -60,8 +60,8 @@ geo.geocode("1600 Pennsylvania Ave NW, Washington DC", addressdetails=True)
 
 ## Checks before commit
 
-- The outcome sentence names a state, not an activity.
+- The outcome sentence names a state rather than an activity.
 - Every command was executed, and the verify step's output is pasted from a real run.
-- Unsupported cases appear in Limits with a next action, not as a discovery mid-procedure.
+- Unsupported cases appear in Limits with a next action rather than as a discovery mid-procedure.
 - No marketing language survives anywhere on the page.
 - The audit checklist in [`../writing-system.md`](../writing-system.md) has been run over the draft.

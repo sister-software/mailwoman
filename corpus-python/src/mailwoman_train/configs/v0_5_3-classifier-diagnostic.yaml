@@ -1,6 +1,6 @@
 # v0.5.3 classifier — "diagnostic" iteration.
 #
-# Purpose: identify WHY v0.5.2 only emits region/O despite training on 673M structured
+# Purpose: identify why v0.5.2 only emits region/O despite training on 673M structured
 # addresses. This run keeps v0.5.2's architecture but fixes observability:
 #
 # Changes from v0.5.2:
@@ -14,7 +14,7 @@
 #   - log_every_steps: 100 → 50 (denser loss curve)
 #
 # Unchanged from v0.5.2:
-#   - h384, batch=128 direct, CE-only, phrase priors ON
+#   - h384, batch=128 direct, CE-only, phrase priors on
 #   - cosine LR, wof-admin: 0.3, ban: 3.0, tiger: 4.0
 #   - v0.5.0-a1 tokenizer (48K vocab)
 #

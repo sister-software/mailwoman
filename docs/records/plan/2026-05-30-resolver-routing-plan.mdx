@@ -27,7 +27,7 @@ A per-input **routing layer** in front of the resolver:
   `p(v0-wins)`. Interpretable + debuggable; no extra parse cost.
 - **Confidence bands:** `p > 0.8` → v0; `p < 0.2` → neural; the narrow ambiguous
   band → **resolver-as-arbiter** (run both, resolve both, pick the higher
-  resolver-confidence result). Caps the 2× parse cost to a small traffic slice.
+  resolver-confidence result). Caps the 2× parse cost to a small share of traffic.
 - **resolver-as-arbiter** is the powerful core mechanism — it makes
   _resolvability_ (gazetteer support) the routing signal, directly optimizing the
   end goal. Used three ways: online fallback (ambiguous band), offline
@@ -36,7 +36,7 @@ A per-input **routing layer** in front of the resolver:
   bad `PARENT_OF` nesting poisons the resolver's parent-constraint inheritance,
   its main strength). Revisit only if data demands it.
 
-### The output-contract constraint
+### The output-interface constraint
 
 v0 → flat `ClassificationRecord[]`; neural → `AddressTree`; resolver consumes a
 **tree**. So routing v0 into the resolver requires a **flat→tree adapter**
@@ -98,8 +98,8 @@ production-pipeline changes — all of Phase 1 is offline scripts + one adapter.
   Mitigated by 142k-candidate ambiguity (real Springfield problem) + perturbation
   stress + the golden regression set; the OA follow-on track is the independent
   check. Don't oversell WOF-bootstrap as "real-world" until OA lands.
-- **Admin-level ceiling:** the resolver resolves locality/region/postcode, not
-  street/house. "Correct place" = right city/ZIP, not right building. Street-level
+- **Admin-level ceiling:** the resolver resolves locality/region/postcode rather than
+  street/house. "Correct place" = right city/ZIP rather than right building. Street-level
   (OSM/OpenAddresses) is a later phase.
 - **Resolver score isn't a probability:** calibrate before using it as arbiter
   threshold or auto-label signal; reject below a min-score (both-garbage).

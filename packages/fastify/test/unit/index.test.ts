@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `@mailwoman/fastify` route + decorator tests. Every case injects a FAKE runtime pipeline via the `pipeline` option
+ *   `@mailwoman/fastify` route + decorator tests. Every case injects a fake runtime pipeline via the `pipeline` option
  *   so no model weights or gazetteer data are needed — the plugin's routing, envelopes, decorator, POI filtering, and
  *   prefix encapsulation are all exercised over `fastify.inject`.
  */

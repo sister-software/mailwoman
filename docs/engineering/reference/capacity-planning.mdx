@@ -18,11 +18,11 @@ table — an uncited number in this file is a defect.
 
 ## Why the numbers come out small
 
-Rooftop fidelity is a data problem, not a model problem. The parser is a 38 MB int8 ONNX
+Rooftop fidelity is a data problem rather than a model problem. The parser is a 38 MB int8 ONNX
 model shared world-wide (every locale overlay ships the same bytes); adding a country never
 grows it. Fidelity grows by adding **layers** — sealed, read-only, memory-mapped SQLite
 artifacts probed by parse-derived keys (see
-[the layer contract](./layer-contract.mdx)). Because retrieval is a keyed probe — house
+[the layer interface](./layer-interface.mdx)). Because retrieval is a keyed probe — house
 number + street within an already-resolved locality — rather than fuzzy full-text recall,
 there is no query-time index that must be resident in RAM. Disk holds the data; the page
 cache holds whatever the query traffic touches.
@@ -42,7 +42,7 @@ cache holds whatever the query traffic touches.
 | International postcode DB                                       | 144 MB        | —                            |
 | poi.db (13.68M Overture rows)                                   | 3.7 GB        | ~270 B/row                   |
 
-The GB postcode pair is required evidence, not trivia: **the same dataset costs 40× less
+The GB postcode pair is required evidence rather than trivia: **the same dataset costs 40× less
 when packed for its one probe shape** than in general-purpose SQLite form. See the
 cost-reduction roadmap below.
 
@@ -61,7 +61,7 @@ registers: BAN, GNAF, LINZ, …) is roughly 500–800M points. At the measured 2
 
 **Memory: ~1–2 GB floor.** The fixed cost is the ORT session + tokenizer + FST + lexicons
 (~300–500 MB resident). Every layer is memory-mapped and probed by key, so the rest is page
-cache: more RAM buys latency, never correctness. There is no heap that must hold an index.
+cache: more RAM provides latency, never correctness. There is no heap that must hold an index.
 
 For context — the incumbents this trades against (public deployment guidance for their own
 full-planet installs, approximate): a planet Pelias is on the order of 600 GB of
@@ -83,7 +83,7 @@ A locale is a fixed kit. Adding one never touches the model:
 
 Worked examples: en-us (all pieces), fr-fr (overlay + BAN points), en-gb (overlay +
 Code-Point postcodes; rooftop layer is the open acquisition). Coverage status per country
-belongs to the coverage register, not this file.
+belongs to the coverage register rather than this file.
 
 ## Cost-reduction roadmap
 
@@ -105,7 +105,7 @@ Three changes, held behind the five-arm benchmark's per-query-class latency and 
    build-time artifacts that make hot, stable queries single lookups (H3-ring KNN lists,
    interpolation-ready per-street tables). The candidate table and postcode bins already ARE
    this pattern, and the 40× receipt shows probe-shaped precompute costs less than the
-   general form it replaces. Only stable + hot queries earn an artifact; precompute freezes a
+   general form it replaces. Only stable + hot queries warrant an artifact; precompute freezes a
    query distribution.
 
 Changes 1 and 3 are not opposed: specializing to the probe shape is simultaneously the

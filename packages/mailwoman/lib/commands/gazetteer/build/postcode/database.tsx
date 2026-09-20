@@ -3,8 +3,8 @@
 
 /**
  *   `mailwoman gazetteer build postcode-database --country <cc>` — one country's WOF postcode database
- *   (`postalcode-<cc>.db`): repo ingest → centroid-fill ladder (US: Census ZCTA + GeoNames; all:
- *   GeoNames postal → admin parent-borrow → hierarchy-ancestor fallback) → FTS → SEAL. Replaces the
+ *   (`postalcode-<cc>.db`): repo ingest → centroid-fill ladder (US: Census zcta + GeoNames. all:
+ *   GeoNames postal → admin parent-borrow → hierarchy-ancestor fallback) → FTS → seal. Replaces the
  *   reopen-and-mutate `fill-zcta-centroids` / `backfill-postcode-centroids` scripts — fills are build
  *   steps now. GeoNames-sourced rows are CC-BY 4.0 (attribute "GeoNames (CC-BY 4.0)").
  */
@@ -12,16 +12,10 @@
 import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { Box, Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	phaseReporter,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReporter, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "postcode-database",
@@ -40,16 +34,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	country: string
-	out?: string
-	repos?: string
-	zcta?: string
-	geonamesPostal?: string
-	admin?: string
-}
-
-const GazetteerBuildPostcodeDatabase: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildPostcodeDatabase: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildPostcodeDatabase } = await import("#gazetteer-pipeline")
 

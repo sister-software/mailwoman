@@ -3,21 +3,21 @@
 
 /**
  *   Hierarchy campaign R2 — borough (child, parent) pairs from the shipped WOF admin DB, emitted
- *   in the pair-index entry shape. Boroughs PROJECT onto `dependent_locality` (the schema umbrella
- *   term — see plan/reference/placetype-evidence.mdx), so the entries ride the existing PIX1 tag;
+ *   in the pair-index entry shape. Boroughs project onto `dependent_locality` (the schema umbrella
+ *   term — see plan/reference/placetype-evidence.mdx), so the entries ride the existing PIX1 tag.
  *   no format change.
  *
- *   Scope discipline: the extractor is country-filtered — only locales with a CARRIER package and
- *   a contextually-alive tag receive entries (GB/London first; a perfect index against a dead tag
+ *   Scope discipline: the extractor is country-filtered — only locales with a carrier package and
+ *   a contextually-alive tag receive entries (GB/London first. a perfect index against a dead tag
  *   is zero, the v385 control's lesson). The 211-borough census (2026-08-01): London 33, Tokyo 23,
- *   Paris 20, Rotterdam 23, Amsterdam 8 (compass-named — the directional-homograph class; they
- *   enter ONLY when their locale carrier exists, and law-1-style directional care applies).
+ *   Paris 20, Rotterdam 23, Amsterdam 8 (compass-named — the directional-homograph class. they
+ *   enter only when their locale carrier exists, and law-1-style directional care applies).
  *   Berlin-style duplicates (locality + localadmin parents) dedupe on (child, parent) surface.
  *
- *   CURRENCY (added 2026-08-02, after the fact): both ends of the pair must be LIVE — `is_current != 0 AND
+ *   currency (added 2026-08-02, after the fact): both ends of the pair must be live — `is_current != 0 and
  *   is_deprecated = 0`, the same predicate `granularity.ts` uses. Without it the extraction asserted pairs WOF itself
  *   marks superseded or deprecated: measured 1,175 such pairs in the shipped US index (2.4%), 18 in GB, 2 in DE. The
- *   ingest already hard-rejects `wof:superseded_by` records, but `edtf:deprecated` and `mz:is_current` are RECORDED as
+ *   ingest already hard-rejects `wof:superseded_by` records, but `edtf:deprecated` and `mz:is_current` are recorded as
  *   columns rather than rejected, so filtering them is the reader's job and this reader was not doing it.
  */
 
@@ -29,7 +29,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { PLACETYPE_PROJECTION } from "#gazetteer-pipeline/placetype-census"
 
 /**
- * One borough pair in the pair-index entry shape (`normalizeFSTToken`-folded keys are the BUILDER's job — this module
+ * One borough pair in the pair-index entry shape (`normalizeFSTToken`-folded keys are the builder's job — this module
  * emits raw surfaces so the caller applies the same fold as the PPD path, keeping one normalization owner).
  */
 export interface BoroughPair {
@@ -38,11 +38,12 @@ export interface BoroughPair {
 	tag: "dependent_locality"
 	/**
 	 * The parent row's own `ComponentTag` (PIX2 / schema 3) — the WOF `placetype` of the ancestor this pair was drawn
-	 * from, projected through {@link PLACETYPE_PROJECTION}. Per-ROW, not per-source: `PAIR_PLACETYPES_BY_COUNTRY` admits
-	 * `locality`, `localadmin` AND `borough` as parents on several countries, and those do not project to the same tag
-	 * (`locality`/`localadmin` → `locality`; `borough` → `dependent_locality`). Deriving it from the CHILD's tag instead
-	 * — the pre-PIX2 containment approach — cannot express the borough-parent case at all: `WESTERN_PARENT_OF` gives
-	 * `dependent_locality` exactly one allowed parent, `locality`, and "Park Slope under Brooklyn" is not that.
+	 * from, projected through {@link PLACETYPE_PROJECTION}. Per-row rather than per-source: `PAIR_PLACETYPES_BY_COUNTRY`
+	 * admits `locality`, `localadmin` and `borough` as parents on several countries, and those do not project to the same
+	 * tag (`locality`/`localadmin` → `locality`; `borough` → `dependent_locality`). Deriving it from the child's tag
+	 * instead — the pre-PIX2 containment approach — cannot represent the borough-parent relationship at all:
+	 * `WESTERN_PARENT_OF` gives `dependent_locality` exactly one allowed parent, `locality`, and "Park Slope under
+	 * Brooklyn" is not that.
 	 */
 	parentTag: ComponentTag
 }
@@ -70,14 +71,14 @@ function parentTagFor(placetype: string): ComponentTag {
  * Which WOF placetypes count as the child and the parent of an extracted pair, per country.
  *
  * This is deliberately per-country rather than one global rule, because the two shipped instances are shaped by their
- * SOURCES, not by a universal truth about hierarchy:
+ * sources rather than by a universal truth about hierarchy:
  *
  * - **GB** takes boroughs only. Its neighbourhood pairs come from a curated, venue-confound-boarded file
  *   (`data/gazetteer/london-pairs-v2.jsonl`, campaign R4b) — sweeping in all ~20k GB WOF neighbourhoods here would ship
  *   an unboarded batch and skip the law-1 discipline every GB increment has cleared.
- * - **US** takes boroughs AND neighbourhoods, and admits `borough` as a PARENT. WOF parents US neighbourhoods to the
- *   LOCALITY, not to the borough ("Astoria" hangs off New York, not off Queens), so a locality-only parent rule
- *   silently drops the borough-level pairs the US instance exists for (campaign R5).
+ * - **US** takes boroughs and neighbourhoods, and admits `borough` as a parent. WOF parents US neighbourhoods to the
+ *   locality rather than to the borough ("Astoria" hangs off New York rather than off Queens), so a locality-only
+ *   parent rule silently drops the borough-level pairs the US instance exists for (campaign R5).
  *
  * A country absent from this table gets the GB-shaped default, so adding a country is an explicit act.
  */
@@ -86,22 +87,22 @@ const PAIR_PLACETYPES_BY_COUNTRY: Readonly<
 > = {
 	US: { children: ["borough", "neighbourhood"], parents: ["locality", "localadmin", "borough"] },
 	DE: { children: ["borough", "neighbourhood"], parents: ["locality", "localadmin", "borough"] },
-	// India is the ONE country where parent aliases are enabled, and it is enabled because it was measured there.
+	// India is the one country where parent aliases are enabled, and it is enabled because it was measured there.
 	// Indian cities carry official renames that WOF has not promoted: it stores Bangalore while an address today says
-	// Bengaluru (renamed 2014, present as an `eng` VARIANT). Without expansion the pair exists and never fires —
+	// Bengaluru (renamed 2014, present as an `eng` variant). Without expansion the pair exists and never fires —
 	// "12 MG Road, Indiranagar, Bengaluru" emitted no dependent locality at all.
 	//
-	// NOT enabled globally, deliberately. Applying it everywhere took the US index from 47,878 to 101,560 — more than
+	// Not enabled globally, deliberately. Applying it everywhere took the US index from 47,878 to 101,560 — more than
 	// double, on surfaces no board has ever graded. Every other increment in this campaign cleared a venue-confound
-	// board before shipping, and a 2× expansion of the flagship locale is exactly the kind of change that earns one
+	// board before shipping, and a 2× expansion of the flagship locale is exactly the kind of change that warrants one
 	// rather than riding in on another country's evidence.
 	IN: {
 		children: ["borough", "neighbourhood"],
 		parents: ["locality", "localadmin", "borough"],
 		expandParentAliases: true,
 	},
-	// ES and IT need aliases for the reason India did, in their OWN languages rather than English: WOF stores `Rome`
-	// for a city written `Roma`, and `Cordoba` for one written `Córdoba`. The fold does NOT strip accents, so
+	// ES and IT need aliases for the reason India did, in their own languages rather than English: WOF stores `Rome`
+	// for a city written `Roma`, and `Cordoba` for one written `Córdoba`. The fold does not strip accents, so
 	// `cordoba` and `córdoba` are different keys and the unaccented WOF form would never match a real address.
 	ES: {
 		children: ["borough", "neighbourhood"],
@@ -125,7 +126,7 @@ const DEFAULT_PAIR_PLACETYPES: {
 }
 
 /**
- * Shortest parent alias worth indexing. WOF's `eng` variants include airport and agency codes ("BLR", "BBMP" for
+ * Shortest parent alias worth indexing. WOF's `eng` variants include airport and agency codes ("BLR", "bbmp" for
  * Bangalore) — three letters or fewer is overwhelmingly that class rather than a name anyone writes in an address, and
  * a short key is the shape most likely to collide with an unrelated word.
  */
@@ -139,7 +140,7 @@ const MIN_ALIAS_LENGTH = 3
 const LATIN_SURFACE_PATTERN = /^[\p{Script=Latin}\p{Mark}0-9 '\-.,()/]+$/u
 
 /**
- * Extract dependent-locality-class (child, parent) pairs for one country from a WOF admin DB. Read-only; dedupes
+ * Extract dependent-locality-class (child, parent) pairs for one country from a WOF admin DB. Read-only. dedupes
  * (child, parent) across the locality/localadmin parent duplication. See {@link PAIR_PLACETYPES_BY_COUNTRY} for why the
  * placetype sets are per-country.
  */
@@ -170,9 +171,9 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 			)
 			.all(country) as Array<{ child: string; parent: string; parent_placetype: string }>
 
-		// Parent ALIAS expansion. A writer uses the name they know, which is not always WOF's preferred one: WOF stores
+		// Parent alias expansion. A writer uses the name they know, which is not always WOF's preferred one: WOF stores
 		// Bangalore, while an Indian address today almost always says Bengaluru (renamed 2014, and WOF carries it as an
-		// `eng` VARIANT rather than the preferred name). Without this the pair exists and never fires.
+		// `eng` variant rather than the preferred name). Without this the pair exists and never fires.
 		//
 		// Scoped to `eng` deliberately. The names table is exhaustively multilingual — Bangalore alone carries ~100
 		// language rows — and folding all of them in would bloat the artifact with scripts this Latin model never sees
@@ -199,7 +200,7 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 		for (const { canonical, alias, language } of aliasRows) {
 			if (!canonical || !alias || canonical === alias) continue
 
-			// The WRITER's language decides which alias is worth carrying: the country's own official languages, plus
+			// The writer's language decides which alias is worth carrying: the country's own official languages, plus
 			// English as the lingua franca. WOF's preferred name is often neither — it stores `Rome` (eng) for a city
 			// Italians write `Roma` (ita), and `Bangalore` for one Indians write `Bengaluru`. Restricting on `eng` alone, as
 			// this did when India motivated it, misses every Italian and Spanish form.
@@ -208,9 +209,9 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 			// "which languages does this country write in" keeps one owner instead of gaining a second hardcoded list.
 			if (language !== "eng" && !isOfficialLanguage(country, language)) continue
 
-			// LATIN SCRIPT ONLY. India has 22 official languages and WOF carries Devanagari, Tamil and Bengali names
-			// for its cities; this model never sees those scripts, so indexing them is pure artifact weight. The check
-			// is on the alias, not the language tag, because a language can be written in more than one script.
+			// latin script only. India has 22 official languages and WOF carries Devanagari, Tamil and Bengali names
+			// for its cities. this model never sees those scripts, so indexing them is pure artifact weight. The check
+			// is on the alias rather than the language tag, because a language can be written in more than one script.
 			if (!LATIN_SURFACE_PATTERN.test(alias)) continue
 
 			const set = aliasesByParent.get(canonical) ?? new Set<string>()
@@ -237,7 +238,7 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 
 				if (seen.has(aliasKey) || child === alias) continue
 
-				// An alias is a second SURFACE for the same parent row, so it carries that row's placetype and
+				// An alias is a second surface for the same parent row, so it carries that row's placetype and
 				// therefore the same tag — the alias query is scoped to the same parent placetype list.
 				seen.add(aliasKey)
 				pairs.push({ child, parent: alias, tag: "dependent_locality", parentTag })

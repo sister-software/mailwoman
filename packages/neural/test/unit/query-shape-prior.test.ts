@@ -29,7 +29,7 @@ describe("buildEmissionPriors", () => {
 			knownFormats: [{ format: "us_zip", span: { start: 27, end: 32 }, confidence: 0.6 }],
 		}
 
-		// Three tokens; only the last overlaps the postcode span.
+		// Three tokens. only the last overlaps the postcode span.
 		const toks = tokens([0, 3], [4, 7], [27, 32])
 		const m = buildEmissionPriors(shape, toks, LABELS)
 		const postcodeCol = LABELS.indexOf("B-postcode")
@@ -75,7 +75,7 @@ describe("buildEmissionPriors", () => {
 
 		const m = buildEmissionPriors(shape, tokens([0, 5]), LABELS)
 		const postcodeCol = LABELS.indexOf("B-postcode")
-		// All three hits map to B-postcode; bias is the max (not sum) → 0.6, not 1.8
+		// All three hits map to B-postcode. bias is the max (not sum) → 0.6 rather than 1.8
 		expect(m[0]?.[postcodeCol]).toBeCloseTo(0.6, 6)
 	})
 
@@ -125,10 +125,10 @@ describe("buildEmissionPriors", () => {
 
 describe("buildEmissionPriors — SCOPED locality bias (2026-07-17 rebuild)", () => {
 	// The original backward-walk locality bias was retired after the M1 stack ablation attributed the
-	// prior's entire −7.8pp golden-us locality cost to it (venue/org absorption: "DANVILLE HEALTH
-	// CENTER, 26 Cedar Lane, Danville VT" → locality "danville health center"). The gauntlet regression
-	// layer then caught the over-correction: bare "New York, NY" (us-new-york-nyc) NEEDS the bias — the
-	// model alone drops the locality. This scoped rebuild fires ONLY on that bare admin doubleton:
+	// prior's entire −7.8pp golden-us locality cost to it (venue/org absorption: "danville health
+	// center, 26 Cedar Lane, Danville VT" → locality "danville health center"). The gauntlet regression
+	// layer then caught the over-correction: bare "New York, NY" (us-new-york-nyc) needs the bias — the
+	// model alone drops the locality. This scoped rebuild fires only on that bare admin doubleton:
 	// no digits, abbreviation last, ≤4 preceding tokens, name ≠ the region's own name.
 	const bLoc = LABELS.indexOf("B-locality")
 	const iLoc = LABELS.indexOf("I-locality")
@@ -177,7 +177,7 @@ describe("buildEmissionPriors — SCOPED locality bias (2026-07-17 rebuild)", ()
 
 	it("fires for Washington, DC and — deliberately — for Washington, WA (the old name-IS-region guard was dead in production)", () => {
 		// The retired version compared the preceding text against the region's full name, but production
-		// passes PIECE spans that include the trailing comma, so the comparison never matched. The bias is
+		// passes piece spans that include the trailing comma, so the comparison never matched. The bias is
 		// soft (+2.0 log-odds): a confident region emission on a true state-restatement still wins.
 		for (const [text, span] of [
 			["Washington, DC", "DC"],
@@ -246,7 +246,7 @@ describe("addEmissionMatrix", () => {
 
 /**
  * A format the detector produces and this prior has no label for contributes zero bias and raises nothing, so the two
- * lists can disagree for as long as nobody reads a board row that needed the bias. Driving the REAL detector is what
+ * lists can disagree for as long as nobody reads a board row that needed the bias. Driving the real detector is what
  * makes the assertion hold for formats added later: a hardcoded list here would be the second list all over again.
  */
 describe("format coverage", () => {
@@ -262,7 +262,7 @@ describe("format coverage", () => {
 			expect(shape.knownFormats.length).toBeGreaterThan(0)
 
 			for (const hit of shape.knownFormats) {
-				// ONE hit per call. `100 00` produces four, and passing the whole shape lets a mapped sibling
+				// One hit per call. `100 00` produces four, and passing the whole shape lets a mapped sibling
 				// supply the bias an unmapped format did not.
 				const matrix = buildEmissionPriors(
 					{ knownFormats: [hit] },

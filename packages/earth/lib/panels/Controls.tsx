@@ -5,7 +5,7 @@
  *   Host control widgets injected into the geocoder via the `GeocoderPanels` injection point: the device-location
  *   proximity-bias row (`panels.bias`) and the two opt-in display toggles (`panels.aboveResult`) — calibrated
  *   confidence + dev mode. Host-owned because the state they carry (geolocation permission, the calibrated view, the
- *   dev-mode drawer) is a host concern, not a package one.
+ *   dev-mode drawer) is a host concern rather than a package one.
  */
 
 import type React from "react"
@@ -42,12 +42,12 @@ export interface GeoBiasRowProps {
 /**
  * The device-location bias, as one chip in the map chrome.
  *
- * The chip's own row is NOT `.mw-map-chiprow`: that class carries an overflow-scroll and an edge-fade mask built for a
+ * The chip's own row is not `.mw-map-chiprow`: that class carries an overflow-scroll and an edge-fade mask built for a
  * dozen example chips, and inheriting it here faded the right edge of a single button for no reason.
  *
  * A failure gets a line of its own. The pressed state cannot carry it — a denial turns the chip back off, which looks
- * identical to the visitor turning it off, and the browser will not prompt a second time, so pressing again appeared to
- * do nothing at all.
+ * identical to the visitor turning it off, and the browser will not prompt a second time. Therefore, pressing again
+ * appeared to do nothing at all.
  */
 export const GeoBiasRow: React.FC<GeoBiasRowProps> = ({ active, error, onToggle }) => (
 	<div className={styles.biasRow}>

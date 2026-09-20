@@ -31,7 +31,7 @@ interface FixtureRow {
 	population?: number
 }
 
-// Region/locality pairs. A locality is made a DESCENDANT of a region via the `ancestors` table below.
+// Region/locality pairs. A locality is made a descendant of a region via the `ancestors` table below.
 const FIXTURE: FixtureRow[] = [
 	// Berlin — city-state: region + locality centroids coincide (dist 0), small bbox.
 	{ id: 10, name: "Berlin", placetype: "region", country: "DE", lat: 52.52, lon: 13.4, d: 0.3 },
@@ -57,7 +57,7 @@ const FIXTURE: FixtureRow[] = [
 		d: 0.2,
 		population: 1_350_000,
 	},
-	// Brandenburg — NOT dual-role: same-name town ~75 km W of the region centroid → beyond the relative
+	// Brandenburg — not dual-role: same-name town ~75 km W of the region centroid → beyond the relative
 	// tolerance (region bbox ⌀ ~313 km → 15 % ≈ 47 km). Mirrors the real gazetteer, where Brandenburg
 	// is correctly absent from the 128.
 	{ id: 30, name: "Brandenburg", placetype: "region", country: "DE", lat: 52.4, lon: 13, d: 1.2 },
@@ -95,7 +95,7 @@ const FIXTURE: FixtureRow[] = [
 		d: 0.05,
 		population: 5000,
 	},
-	// Ambiguous region: two same-name coincident localities → relation records BOTH (resolver disambiguates).
+	// Ambiguous region: two same-name coincident localities → relation records both (resolver disambiguates).
 	{ id: 60, name: "Padova", placetype: "region", country: "IT", lat: 45.4, lon: 11.87, d: 0.5 },
 	{ id: 61, name: "Padova", placetype: "locality", country: "IT", lat: 45.41, lon: 11.88, d: 0.1, population: 200_000 },
 	{ id: 62, name: "Padova", placetype: "locality", country: "IT", lat: 45.45, lon: 11.95, d: 0.1, population: 20 },

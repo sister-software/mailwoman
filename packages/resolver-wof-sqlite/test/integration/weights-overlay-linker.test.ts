@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Pins for the shared dev-weights freshness implementation (#1734). The sidecar contract is the part worth pinning: a
- *   fresh sidecar is TRUSTED (that is the whole point — never re-hash a multi-gigabyte source per linker run), a stale
+ *   Pins for the shared dev-weights freshness implementation (#1734). The sidecar interface is the part worth pinning: a
+ *   fresh sidecar is trusted (that is the whole point — never re-hash a multi-gigabyte source per linker run), a stale
  *   or malformed one recomputes and rewrites, and the rewrite self-heals the cache.
  */
 

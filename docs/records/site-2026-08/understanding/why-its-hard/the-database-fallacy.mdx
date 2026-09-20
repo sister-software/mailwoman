@@ -11,15 +11,15 @@ tags:
 
 # The database fallacy
 
-There is a persistent belief in geocoding: **"If we just had a database of all addresses, this problem would be trivial."** The belief is wrong in three independent ways. Together, they make the database approach structurally inadequate.
+There is a persistent belief in geocoding: **"If wehad a database of all addresses, this problem would be trivial."** The belief is wrong in three independent ways. Together, they make the database approach structurally inadequate.
 
 ## Fallacy 1 — There is no master list
 
-Every attempt to build a comprehensive address database has produced a partial, outdated, purpose-specific snapshot.
+Every attempt to build a complete address database has produced a partial, outdated, purpose-specific snapshot.
 
 ### The USPS AMS
 
-The US Postal Service maintains the **Address Management System** (AMS), the closest thing to a master list for US addresses. It contains every delivery point the USPS recognizes — about 165 million addresses. It is not public. It is licensed to commercial mailers under strict terms. It does not include addresses that USPS does not deliver to (many rural areas, some apartment buildings that use cluster boxes with non-standard numbering). It does not include the names people use for places — only the USPS-preferred form.
+The US Postal Service maintains the **Address Management System** (AMS), the closest thing to a master list for US addresses. It contains every delivery point the USPS recognizes — about 165 million addresses. It is not public. It is licensed to commercial mailers under strict terms. It does not include addresses that USPS does not deliver to (several rural areas, some apartment buildings that use cluster boxes with non-standard numbering). It does not include the names people use for places — only the USPS-preferred form.
 
 ### National address gazetteers
 
@@ -28,7 +28,7 @@ The US Postal Service maintains the **Address Management System** (AMS), the clo
 | France  | BAN (Base Adresse Nationale)       | ~25M addresses | Updated monthly, ~95% commune coverage                         |
 | UK      | AddressBase Plus (Ordnance Survey) | ~40M addresses | Updated every 6 weeks, licensed                                |
 | Canada  | National Address Database (NAD)    | ~14M addresses | Incomplete — assembled from volunteer provincial contributions |
-| Japan   | MLIT address data                  | ~30M addresses | Comprehensive but in Japanese only                             |
+| Japan   | MLIT address data                  | ~30M addresses | complete but in Japanese only                                  |
 | India   | None                               | 0              | No national address database exists                            |
 
 Each is built for a different purpose: postal delivery (USPS), land registration (AddressBase), census enumeration (MLIT), or navigation (OpenStreetMap). They disagree on what counts as an address. A French commune may have a BAN entry for every building but the postal service delivers to a subset. A UK address in AddressBase may have a UPRN (Unique Property Reference Number) that no other system uses. There is no universal key.
@@ -37,15 +37,15 @@ Each is built for a different purpose: postal delivery (USPS), land registration
 
 OSM's `addr:*` tags are volunteer-contributed, uneven in coverage, and structurally different from government gazetteers. OSM tags individual buildings (`addr:housenumber=12`, `addr:street=République`) rather than mailing addresses. An apartment building with 50 units is one OSM node with one housenumber. The mailing addresses for those 50 units (Apt 1A through Apt 5J) are not in OSM.
 
-OSM is a collaborative map of the physical world, not an address database — it was never designed to be one.
+OSM is a collaborative map of the physical world rather than an address database — it was never designed to be one.
 
 ### The union of all sources
 
-If you combine USPS AMS + OSM + BAN + NAD + WOF + OpenAddresses + TIGER + every state-level parcel dataset, you get a superset that still has gaps. Rural routes, informal settlements, new construction, addresses in administrative transition — these are systematically underrepresented in every source because they are hard to collect. The union is larger than any single source but the missingness is correlated across sources, not independent. Combining them doesn't fill the gaps — it makes the known-unknowns more visible.
+If you combine USPS AMS + OSM + BAN + NAD + WOF + OpenAddresses + TIGER + every state-level parcel dataset, you get a superset that still has gaps. Rural routes, informal settlements, new construction, addresses in administrative transition — these are systematically underrepresented in every source because they are hard to collect. The union is larger than any single source but the missingness is correlated across sources rather than independent. Combining them doesn't fill the gaps — it makes the known-unknowns more visible.
 
 ## Fallacy 2 — Addresses are not coordinates
 
-An address is a **social protocol for directing a human courier**, not a geographic coordinate. Multiple protocols coexist on the same building:
+An address is a **social protocol for directing a human courier** rather than a geographic coordinate. Multiple protocols coexist on the same building:
 
 | System                  | Address for 350 Fifth Avenue, New York  |
 | ----------------------- | --------------------------------------- |
@@ -55,11 +55,11 @@ An address is a **social protocol for directing a human courier**, not a geograp
 | Building management     | Empire State Building, 350 Fifth Avenue |
 | What a tourist types    | Empire State Building, NYC              |
 
-All five refer to the same physical building. A database that stores only the USPS form will not match a tourist query. A database that stores only the mailing address will misroute a 911 call. A database that tries to store all five forms needs a data model that treats them as equivalent — and that equivalence is a human judgment, not a database join.
+All five refer to the same physical building. A database that stores only the USPS form will not match a tourist query. A database that stores only the mailing address will misroute a 911 call. A database that tries to store all five forms needs a data model that treats them as equivalent — and that equivalence is a human judgment rather than a database join.
 
 ### The ZIP code problem
 
-ZIP codes are **carrier routes**, not areas. USPS draws them for delivery efficiency, not for geographic coherence:
+ZIP codes are **carrier routes** rather than areas. USPS draws them for delivery efficiency rather than for geographic coherence:
 
 - ZIP codes change when carriers retire and routes get redrawn.
 - ZIP codes can overlap (different carriers serve different sides of the same street).
@@ -74,7 +74,7 @@ Non-US postcodes are even less polygon-like:
 
 - UK postcodes (e.g., `SW1A 1AA`) cover about 15 addresses on average — small enough to be effectively points, but not routing areas.
 - Canadian postcodes (e.g., `K1A 0B1`) cover one side of one block face in urban areas, or an entire rural route.
-- Irish postcodes (Eircode) are unique per delivery point — each address gets its own postcode. The postcode IS the address.
+- Irish postcodes (Eircode) are unique per delivery point — each address gets its own postcode. The postcode is the address.
 - French postcodes (e.g., `75008`) correspond to commune boundaries — they are effectively municipal codes that happen to use 5 digits.
 
 A geocoder that treats all postcodes as polygons will produce different error characteristics in every country.
@@ -83,7 +83,7 @@ A geocoder that treats all postcodes as polygons will produce different error ch
 
 Municipalities annex, de-annex, incorporate, dissolve, and rename themselves. Postcodes get split. Streets get renamed. The half-life of an address is about **5 years** in any urban area — after 5 years, roughly half of the addresses in a fast-growing city have changed in some administratively meaningful way.
 
-| What changes            | How often          | Example                                                        |
+| What changes            | How frequently     | Example                                                        |
 | ----------------------- | ------------------ | -------------------------------------------------------------- |
 | Municipality annexation | Annual             | Austin, TX annexed ~50 sq mi between 2010-2020                 |
 | Street renaming         | Ongoing            | "Malcolm X Boulevard" replaces "Reid Avenue" in Brooklyn       |
@@ -109,7 +109,7 @@ A parser that tries to memorize addresses will be wrong on every address that ch
 
 ## See also
 
-- [How mail delivery actually works](../the-problem/how-mail-delivery-works.mdx) — the system that doesn't need a perfect database either
+- [How mail delivery works](../the-problem/how-mail-delivery-works.mdx) — the system that doesn't need a perfect database either
 - [The 90% trap](./the-90-percent-trap.mdx) — why 90% database coverage is deceptively expensive
 - [The tokenization tautology](./the-tokenization-tautology.mdx) — why traditional parsers fall into a related completeness trap
 - [What is an address?](../the-problem/what-is-an-address.mdx) — the data model these databases attempt to capture

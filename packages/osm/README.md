@@ -70,7 +70,7 @@ For the address scope key, an observed `addr:suburb` outranks `addr:city`. This 
 where queries commonly name the suburb while `addr:city` names the wider metropolitan authority. City-only
 queries still reach the same row through the resolved locality bbox fallback.
 
-## Contract migration requirements
+## Interface migration requirements
 
 The builder extends the shared legacy `address_point` table so the existing lookup can consume a locally
 built database immediately. Every OSM row also carries a res-9 H3 spine, and the database embeds `layer_manifest`
@@ -101,4 +101,4 @@ points; only 548 housenumber features lacked a usable street. On the repaired pa
 `OSMRegionDatabaseProvider` path, it moved Mailwoman from 3/20/30 to 56/58/59 at 1/5/25 km, produced 56
 `address_point` results, eliminated all 17 no-results, and caused no regression. Photon remains stronger at
 1 km (60/60); Mailwoman with the locally built database exceeds the frozen Pelias NZ arm (45/45/46). This is a
-build-local result, not a shipped-data claim.
+build-local result rather than a shipped-data claim.

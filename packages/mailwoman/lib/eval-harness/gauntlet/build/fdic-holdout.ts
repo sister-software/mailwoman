@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build the US verified-coord held-out pool for the Gauntlet (C6). FDIC BankFind publishes every insured
- *   bank branch (~78k) with a real street address AND a geocoded LAT/LON — a clean US truth source that is
- *   NOT in mailwoman's training corpus (Overture/NAD/BAN), so it measures genuine US generalization, the
+ *   Build the US verified-coord held-out pool for the Gauntlet (C6). fdic BankFind publishes every insured
+ *   bank branch (~78k) with a real street address and a geocoded LAT/LON — a clean US truth source that is
+ *   not in mailwoman's training corpus (Overture/NAD/BAN), so it measures genuine US generalization, the
  *   complement to the FR/BAN draw. Public domain (US Government work).
  *
- *   Writes a semicolon CSV pool (address;city;state;zip;lat;lon) to $MAILWOMAN_DATA_ROOT/corpus/staging/
- *   fdic-us.csv, build-on-copy. The pool is the FAST draw — holdout.ts reservoir-samples it in milliseconds
- *   instead of streaming the 5 GB BAN file. Re-run to refresh (FDIC re-indexes ~monthly).
+ *   Writes a semicolon CSV pool (address.city.state.zip.lat.lon) to $MAILWOMAN_DATA_ROOT/corpus/staging/
+ *   fdic-us.csv, build-on-copy. The pool is the fast draw — holdout.ts reservoir-samples it in milliseconds
+ *   instead of streaming the 5 GB BAN file. Re-run to refresh (fdic re-indexes ~monthly).
  *
  *   Run: mailwoman eval gauntlet-build fdic-holdout
  */
@@ -54,7 +54,7 @@ interface Loc {
 }
 
 /**
- * Sane CONUS+AK/HI/PR bbox — drops null-island and mis-geocoded rows so the pool is clean truth.
+ * Sane conus+AK/HI/PR bbox — drops null-island and mis-geocoded rows so the pool is clean truth.
  */
 function plausibleUs(lat: number, lon: number): boolean {
 	return (
@@ -68,11 +68,11 @@ function plausibleUs(lat: number, lon: number): boolean {
 }
 
 /**
- * Retry is ON because the page loop below is all-or-nothing: it walks offsets until a page comes back empty, and one
+ * Retry is on because the page loop below is all-or-nothing: it walks offsets until a page comes back empty, and one
  * throttled page in the middle aborted the whole build. The tmp-then-rename tail means a partial run is discarded
- * rather than published, so the cost of a transient failure was the entire download, not a corrupt artifact.
+ * rather than published, so the cost of a transient failure was the entire download rather than a corrupt artifact.
  *
- * No `minRequestIntervalMs`: requests are strictly sequential and each returns {@link PAGE} rows, so the loop already
+ * No `minRequestIntervalMs`: requests are strictly sequential and each returns {@link page} rows, so the loop already
  * paces itself at whatever the API takes to assemble 10,000 records.
  */
 const fdicClient = new APIClient({ displayName: "fdic", retry: true })
@@ -86,7 +86,7 @@ async function fetchPage(offset: number): Promise<Loc[]> {
 }
 
 /**
- * Fetch the FDIC BankFind branch pool and swap it into the staging path (build-on-copy).
+ * Fetch the fdic BankFind branch pool and swap it into the staging path (build-on-copy).
  */
 export async function buildFDICHoldout(): Promise<void> {
 	const OUT = String(dataRootPath("corpus", "staging", "fdic-us.csv"))
@@ -123,7 +123,7 @@ export async function buildFDICHoldout(): Promise<void> {
 				continue
 			}
 
-			// Semicolons can't appear in a US street address/city; no escaping needed.
+			// Semicolons can't appear in a US street address/city. no escaping needed.
 			sink.write(`${address};${city};${state};${zip};${lat};${lon}\n`)
 
 			written++

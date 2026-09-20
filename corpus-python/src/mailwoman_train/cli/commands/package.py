@@ -19,7 +19,7 @@ NAME = "package"
 NO_EVAL_REPORT: dict[str, Any] = {
     "n_entries": 0,
     "full_parse_exact_match": 0.0,
-    "mean_token_confidence": 0.0,  # nosec B105 — numeric eval default, not a credential
+    "mean_token_confidence": 0.0,  # nosec B105 — numeric eval default rather than a credential
     "per_component": {},
     "calibration": [],
     "note": "no golden_dir provided; eval skipped",

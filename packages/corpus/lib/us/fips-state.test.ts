@@ -67,7 +67,7 @@ test("lookupFipsState: null/undefined/empty input returns null", () => {
 })
 
 test("lookupFipsState: the lookup is exact — a non-padded code does not match", () => {
-	// TIGER ships zero-padded `statefp` ("06"), so a bare "6" must NOT resolve to California.
+	// tiger ships zero-padded `statefp` ("06"), so a bare "6" must not resolve to California.
 	expect(lookupFipsState("6")).toBeNull()
 })
 

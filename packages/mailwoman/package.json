@@ -167,6 +167,11 @@
 			"node": "./lib/dev-tools/*.ts",
 			"default": "./out/dev-tools/*.js"
 		},
+		"./release-tools/*": {
+			"types": "./out/release-tools/*.d.ts",
+			"node": "./lib/release-tools/*.ts",
+			"default": "./out/release-tools/*.js"
+		},
 		"./eval-harness/*": {
 			"types": "./out/eval-harness/*.d.ts",
 			"node": "./lib/eval-harness/*.ts",
@@ -292,6 +297,11 @@
 			"node": "./lib/cli/native/spec.ts",
 			"default": "./out/cli/native/spec.js"
 		},
+		"./cli-native/license-attribution": {
+			"types": "./out/cli/native/commands/license/attribution.d.ts",
+			"node": "./lib/cli/native/commands/license/attribution.ts",
+			"default": "./out/cli/native/commands/license/attribution.js"
+		},
 		"./commands/parse": {
 			"types": "./out/commands/parse.d.ts",
 			"node": "./lib/commands/parse.tsx",
@@ -321,6 +331,11 @@
 			"types": "./out/runtime-pipeline.d.ts",
 			"node": "./lib/runtime-pipeline.ts",
 			"default": "./out/runtime-pipeline.js"
+		},
+		"./span-script": {
+			"types": "./out/span-script.d.ts",
+			"node": "./lib/span-script.ts",
+			"default": "./out/span-script.js"
 		},
 		"./admin-coherence": {
 			"types": "./out/admin-coherence.d.ts",
@@ -482,9 +497,9 @@
 		"ink": "^7.1.1",
 		"kysely": "^0.29.5",
 		"onnxruntime-node": "^1.29.0",
-		"path-ts": "^2.3.0",
+		"path-ts": "^2.4.1",
 		"react": "^19.2.8",
-		"spliterator": "^7.7.1",
+		"spliterator": "^7.11.0",
 		"zod": "^4.5.4",
 		"zx": "^8.8.5"
 	},

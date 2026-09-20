@@ -17,7 +17,7 @@ variable.
 Corpus **v0.30.0-bare-postcode** is a pure overlay ADD on v0.29.0: one new parquet and a manifest
 naming the other 719. 720 entries, 685,598,514 rows, and 685,598,514 − 685,578,054 = 20,460 exactly.
 
-`synth-bare-postcode`: 20,460 rows of REAL codes read from the OpenAddresses extracts, no synthesis,
+`synth-bare-postcode`: 20,460 rows of real codes read from the OpenAddresses extracts, no synthesis,
 each emitting a postcode and nothing else.
 
 | Country |   Rows | Spaced | Compact |
@@ -95,7 +95,7 @@ The house_number misreading is gone from all 56. This restores v5.3.0's reading.
 
 The single residual is `SK 010 01`, which reads `O` — the one input that failed as `O` rather than
 `house_number` under the control too. A leading zero is a different defect from the other 31 and was
-identified as separate BEFORE the candidate was graded, which is what makes 31/32 readable as a
+identified as separate before the candidate was graded, which is what makes 31/32 readable as a
 complete result against the targeted failure.
 
 NL was not intact under the control either: 5 of its 24 already read as `house_number`, so "without
@@ -105,9 +105,9 @@ losing NL" meant holding 19/24. It reached 24/24.
 
 `v9.0.0-base`, both artifacts, `verdict: PASS`.
 
-`fr.bare_street_intact: 100 (floor 75)` — unchanged from v5.5.0, so the D-rule holds on the tier-1
+`fr.bare_street_intact: 100 (floor 75)` — unchanged from v5.5.0, so the D-condition is true on the tier-1
 locale this arm most risked. `mask-regression` is SKIPPED because the spec declares no
-`requires_conventions`; that is a spec property, not a result.
+`requires_conventions`; that is a spec property rather than a result.
 
 The int8 delta cap, which failed an earlier arm where fp32 passed, is clear here: the largest
 divergence across 17 compared checks is **0.3pp** (`us.street`), with 11 of 17 at exactly 0.
@@ -167,7 +167,7 @@ rows until that data exists, and the tolerance is a ceiling rather than slack.
 - The capability is present on both artifacts and attributable: the 56 strings are excluded from
   training and moved 0 → 31 of 32 and 19 → 24 of 24.
 - The promotion battery passes 18 of 18 with no FR regression.
-- The two VE rows fail on a diagnosed upstream cascade, not on anything this corpus changed.
+- The two VE rows fail on a diagnosed upstream cascade rather than on anything this corpus changed.
 - `SK 010 01` and `Praha 100 00, Czechia` remain open. The in-context CZ form still splits into
   `postcode "00"` with `cz_postcode "100 00" matched: false`, so the bare form is fixed and the
   in-context form is not.

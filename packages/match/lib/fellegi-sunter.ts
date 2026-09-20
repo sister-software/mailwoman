@@ -18,7 +18,7 @@
  *   link, below the lower bound a non-link, and the band between is _clerical review_ — the
  *   calibrated abstain zone the whole design leans on.
  *
- *   The `m`/`u` numbers here are NOT universal constants. They are estimated from the data — by EM,
+ *   The `m`/`u` numbers here are not universal constants. They are estimated from the data — by EM,
  *   unsupervised (the next increment) — and the term-frequency adjustment that makes a rare-name
  *   agreement count more than a common one layers on top. This module is the deterministic core
  *   those build on: given the levels, it produces the weights, the probability, and the decision.
@@ -39,7 +39,7 @@ export interface ComparisonLevel {
 	 */
 	m: number
 	/**
-	 * P(a pair lands in this level | it is NOT a match). A measure of coincidence / cardinality.
+	 * P(a pair lands in this level | it is not a match). A measure of coincidence / cardinality.
 	 */
 	u: number
 	/**
@@ -77,7 +77,7 @@ export interface Comparison<R> {
 }
 
 /**
- * Per-value term-frequency adjustment for a comparison (the Splink/Winkler mechanism). `m` is unchanged; on an
+ * Per-value term-frequency adjustment for a comparison (the Splink/Winkler mechanism). `m` is unchanged. on an
  * agreement level the effective `u` becomes the value's own frequency, adding `log2(u_level / frequency)` to the weight
  * — large and positive for rare values, negative for common ones. Floored at
  * {@link TermFrequencyAdjustment.minimumFrequency} so an ultra-rare value can't produce an unbounded boost.

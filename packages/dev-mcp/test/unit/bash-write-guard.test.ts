@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The refused set and the admitted set are both the contract, and the admitted set is the one that decides
+ * @file The refused set and the admitted set are both the interface, and the admitted set is the one that decides
  *   whether the guard is usable: a guard that refuses ordinary work gets switched off. The cases below came from
  *   driving the first version over the commands a working session runs, where it refused 55 of 56 of them.
  */
@@ -124,9 +124,9 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["a probe that prints", `node -e "console.log(require('./package.json').version)"`],
 		["a module probe that prints", `node --input-type=module -e "import x from './a.ts'; console.log(x)"`],
 		["a probe writing to stdout", `node -e "process.stdout.write('hi')"`],
-		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string, not this file reading git state.
+		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string rather than this file reading git state.
 		["git staging", `git add -A && git status --porcelain`],
-		// A patch is an artifact the author produced and can dry-run; it fails rather than clobbering when the context
+		// A patch is an artifact the author produced and can dry-run. it fails rather than clobbering when the context
 		// does not match, and it is the only exact way to land a bulk deletion without retyping every removed line.
 		["applying a patch", `git apply /tmp/prune.patch`],
 		["dry-running a patch", `git apply --check /tmp/prune.patch`],
@@ -148,9 +148,9 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["dropping a named stash entry further down the stack", `git stash drop stash@{12}`],
 		// A brace glued to a word is part of that word. Splitting on it read each of these as two segments, the second
 		// headed by a digit, and refused a read-only command with "`1` is not on the admitted command list".
-		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string, not this file reading git state.
+		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string rather than this file reading git state.
 		["a reflog selector", `git rev-parse HEAD@{1}`],
-		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string, not this file reading git state.
+		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string rather than this file reading git state.
 		["an upstream selector", `git log @{upstream}..HEAD --oneline`],
 		["a brace expansion", `wc -l packages/core/lib/{env,paths}.ts`],
 		["switching branch", `git checkout -b feature/x`],
@@ -185,11 +185,11 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["a database probe", `sqlite3 /tmp/wof.db 'select count(*) from place'`],
 		["an environment assignment", `MAILWOMAN_DATA_ROOT=\${HOME}/data yarn test`],
 		// A quoted value used to split the assignment into two words, so the head became the quote placeholder and the
-		// refusal named `QUOTED` — a word nobody typed, for a command admitted the moment the quotes came off. Quoting a
+		// refusal named `quoted` — a word nobody typed, for a command admitted the moment the quotes came off. Quoting a
 		// value that carries `$PWD` or a space is how anyone writes one.
 		["an environment assignment with a quoted value", `MAILWOMAN_DATA_ROOT="/mnt/playpen/x" yarn test`],
-		["a quoted PATH before a node script", `PATH="$PWD/node_modules/.bin:$PATH" node docs/scripts/check/vale-rules.ts`],
-		// A quote nested inside another kind of quote. The pair must be read as one span; mis-pairing it leaves a stray
+		["a quoted PATH before a node script", `PATH="$PWD/node_modules/.bin:$PATH" node config/vale/check-rules.ts`],
+		// A quote nested inside another kind of quote. The pair must be read as one span. mis-pairing it leaves a stray
 		// delimiter that swallows the rest of the command, and the head then comes from inside someone's `-e` script.
 		["a grep pattern quoting a JSON key", `grep -rc '"spliterator": "^6.5.0"' package.json packages/*/package.json`],
 		[
@@ -198,7 +198,7 @@ describe("bash-write-guard: the work a session actually does", () => {
 		],
 		["a redirect after changing directory", `cd /tmp && echo hi > probe.txt`],
 		["a home-relative redirect", `echo x > ~/notes.txt`],
-		// `\b` ends a word at a hyphen, so the arbitrary-program rule read this check's own NAME as `yarn node …` and
+		// `\b` ends a word at a hyphen, so the arbitrary-program rule read this check's own name as `yarn node …` and
 		// refused a read-only guard. The subcommand has to be a whole argument.
 		["a health check whose name starts with a refused subcommand", `yarn mwops health node-modules-reacharound`],
 		["a script whose name starts with a refused subcommand", `yarn exec-plan --dry-run`],

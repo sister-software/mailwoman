@@ -1,6 +1,6 @@
 # Template: explanation
 
-An `explanation` page answers a why question. It has no steps and no contract tables, and a reader should be
+An `explanation` page answers a why question. It has no steps and no interface tables, and a reader should be
 able to close it having changed their mental model rather than their filesystem. Register rules are in
 [`../writing-system.md`](../writing-system.md) under Register by role.
 
@@ -23,7 +23,7 @@ role: explanation
 3. **The analog.** The rule-world concept, before any statistical term.
 4. **The mechanism.** What the system does, in the order it does it.
 5. **What it costs.** Where the design gives something up, and to whom.
-6. **Related.** Links to the reference pages that hold the contract.
+6. **Related.** Links to the reference pages that keep the interface valid.
 
 ## Opening move
 
@@ -32,12 +32,12 @@ than the last.
 
 ## Exemplar paragraph
 
-> Reading an address by hand is two questions, not one. First you decide where the pieces start and stop —
+> Reading an address by hand is two questions rather than one. First you decide where the pieces start and stop —
 > `1600 Amphitheatre Parkway` is one piece, `Mountain View` is another — and only then do you decide what
 > each piece is. The phrase grouper (stage 2.7) is the first of those questions on its own. It proposes
 > spans with a kind hypothesis and a confidence, so the model at stage 3 answers "what type is this proposed
 > span?" instead of discovering boundaries and types at once. Splitting the two costs a page of plumbing and
-> buys a smaller question at the point where errors are expensive, because a boundary the grouper proposes
+> provides a smaller question at the point where errors are expensive, because a boundary the grouper proposes
 > can be reconsidered, while a boundary a joint decoder has already committed to cannot.
 
 <!-- illustrative -->
@@ -54,8 +54,8 @@ groupPhrases("1600 Amphitheatre Parkway, Mountain View, CA 94043", shape, locale
 
 ## Checks before commit
 
-- The rule-world analog appears before the statistical term, not after it.
+- The rule-world analog appears before the statistical term rather than after it.
 - Each term is defined in one sentence at first use, and the registry link carries the rest.
-- The page states what the design gives up, not only what it gains.
-- No steps, no contract tables. Those belong on a `guide` or a `reference` page, linked from Related.
+- The page states what the design gives up rather than only what it gains.
+- No steps, no interface tables. Those belong on a `guide` or a `reference` page, linked from Related.
 - The audit checklist in [`../writing-system.md`](../writing-system.md) has been run over the draft.

@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The FROZEN ruler for the absence-observation probe (#1965), and the arithmetic that reads it. Pure —
+ *   The frozen ruler for the absence-observation probe (#1965), and the arithmetic that reads it. Pure —
  *   no model, no database, no pipeline — so every refusal is testable without loading an engine.
  *
- *   WHAT THIS PROBE MEASURES IS AN ASYMMETRY, NOT A DELTA. #1928's ruler compares two arms against a
+ *   what this probe measures is an asymmetry rather than A delta. #1928's ruler compares two arms against a
  *   frozen baseline count. This one asserts a conjunction and its complement: inside exclusion-grade
  *   coverage a pharmacy-affordance answer holding nothing carries an absence observation, and everywhere
  *   else the route is silent. So every row registers a `expectedOutcome` — either `absence_observation` or
@@ -13,23 +13,23 @@
  *   outcome registered for it. A row that stayed silent for a reason nobody registered fails, even though
  *   it stayed silent.
  *
- *   THE ANCHORS ARE DERIVED FROM THE PILOT LAYER, NOT INVENTED. Each target row names the coverage cell
+ *   the anchors are derived from the pilot layer rather than invented. Each target row names the coverage cell
  *   its anchor resolves into and the `observed_rows` that cell carries. The rows were selected by walking
  *   the pilot layer's own zero-observed cells, taking gazetteer places whose coordinates fall inside one,
  *   and keeping the ones whose resolved search centre lands back in the same cell. No address is written
  *   by hand anywhere in the definition, and a cell centroid is a coordinate — the row's anchor is a place
- *   the gazetteer already carries, not a street line composed to fit.
+ *   the gazetteer already carries rather than a street line composed to fit.
  *
- *   THE CONTROLS SPLIT THE CONJUNCTION. `outside_coverage` rows put the same query and the same empty
- *   answer outside the surveyed cell set, which is the whole contract: the `[]` there is silence.
- *   `wrong_class` puts a DIFFERENT category at the exact cell a target fires on, so the artifact half of
+ *   the controls split the conjunction. `outside_coverage` rows put the same query and the same empty
+ *   answer outside the surveyed cell set, which is the whole interface: the `[]` there is silence.
+ *   `wrong_class` puts a different category at the exact cell a target fires on, so the artifact half of
  *   the conjunction is shown to be required at a cell where the coverage half holds. `cell_populated`
  *   rows sit inside exclusion-grade coverage on cells the layer holds rows in. A control set that could
  *   only fail one way is not a control set.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-// The canonical-JSON encoder is IMPORTED rather than re-typed: two freeze records hashing the same content
+// The canonical-JSON encoder is imported rather than re-typed: two freeze records hashing the same content
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 
 import {
@@ -48,7 +48,7 @@ export const ABSENCE_EXPECTED_OUTCOMES = ["absence_observation", ...ABSENCE_REFU
 export type AbsenceExpectedOutcome = (typeof ABSENCE_EXPECTED_OUTCOMES)[number]
 
 /**
- * The row groups. `target` rows expect the observation; the three control groups expect a named silence.
+ * The row groups. `target` rows expect the observation. the three control groups expect a named silence.
  */
 export const ABSENCE_ROW_GROUPS = ["target", "outside_coverage", "wrong_class", "cell_populated"] as const
 
@@ -70,9 +70,9 @@ export interface AbsenceProbeRow {
 	 */
 	requiresSemanticRoute: boolean
 	/**
-	 * The category set the row is graded on, in code-point order — the union the POI branch searched AFTER the anchor's
+	 * The category set the row is graded on, in code-point order — the union the POI branch searched after the anchor's
 	 * country bound the reached set (#1999). A row's registered outcome binds to the categories the coverage layer
-	 * surveyed, and an activity phrase whose afforded set exceeds them can only be decidable if the binding narrowed it;
+	 * surveyed, and an activity phrase whose afforded set exceeds them can only be decidable if the binding narrowed it.
 	 * stating the set per row is what lets the runner refuse a row that fired for a set nobody registered. Optional for a
 	 * venue-noun row, whose set is the noun.
 	 */
@@ -240,7 +240,7 @@ export interface AbsenceRowOutcome {
 	expectedOutcome: AbsenceExpectedOutcome
 	observedOutcome: AbsenceExpectedOutcome
 	/**
-	 * The registered outcome was observed AND, when the row registers a `searchedCategories`, the POI branch searched
+	 * The registered outcome was observed and, when the row registers a `searchedCategories`, the POI branch searched
 	 * exactly that set.
 	 */
 	holds: boolean
@@ -279,7 +279,7 @@ export interface AbsenceCounts {
 /**
  * Count one run.
  *
- * The denominators are the REGISTERED row counts, never the rows that happened to answer, so a probe that stops being
+ * The denominators are the registered row counts, never the rows that happened to answer, so a probe that stops being
  * able to read a row reports a lower hold count rather than a smaller board.
  */
 export function computeAbsenceCounts(

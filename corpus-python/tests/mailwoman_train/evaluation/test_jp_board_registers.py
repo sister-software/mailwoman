@@ -1,7 +1,7 @@
 """Per-register acceptability on the JP board — and proof the pre-registered eval is untouched.
 
-The full JP slice (#1458) writes a ``register`` column on every board row (``native`` /
-``arabic_chome`` / ``compact_folded`` / ``designator``). Two of those four surfaces appear in ZERO
+The full JP corpus (#1458) writes a ``register`` column on every board row (``native`` /
+``arabic_chome`` / ``compact_folded`` / ``designator``). Two of those four surfaces appear in zero
 source rows and exist only because the JP corpus builder synthesizes them, and they are a small
 minority of the board — so a blended average is exactly the statistic that would hide them failing.
 ``score_jp_probe_board.score_board`` splits the same per-row outcomes by that column.
@@ -12,7 +12,7 @@ What these tests pin, in order of how badly a regression would hurt:
    as unacceptable, and the bar is 0.70 — the 2026-07-18 pre-registration, unchanged. The
    per-register split is diagnostic and must not be able to move it: the board in
    ``test_check_is_the_blended_number_even_when_a_register_is_wiped_out`` has one register at 0.0000
-   and still reads PASS, because the blend clears 0.70.
+   and still reads pass, because the blend clears 0.70.
 2. The split is a partition of those same outcomes — per-register rows/acceptable/unresolved sum
    back to the blended totals. A bucketing bug that double-counted or dropped rows would otherwise
    be invisible in a report that prints both.
@@ -32,7 +32,7 @@ from mailwoman_train.labels import resolve_label_set
 
 JP = resolve_label_set("stage3-jp")
 # A tiny stand-in centroid table. The real one is keyed on raw kanji `pref|muni`; the key is opaque
-# to the scorer (norm_key just strips whitespace), so ASCII keeps the fixtures readable.
+# to the scorer (norm_key just strips whitespace), so ascii keeps the fixtures readable.
 CENTROIDS = {"TOKYO|CHIYODA": [139.75, 35.68, 1], "OSAKA|KITA": [135.50, 34.70, 1]}
 
 
@@ -175,7 +175,7 @@ def test_unresolved_rows_are_unacceptable_and_land_in_their_own_register_bucket(
 
 
 def test_resolve_tags_select_which_spans_form_the_centroid_key():
-    """stage3-jp resolves prefecture|municipality; the STAGE3 (region|locality) pair finds nothing."""
+    """stage3-jp resolves prefecture|municipality. the STAGE3 (region|locality) pair finds nothing."""
     correct = {r["raw"] for r in ALL_ROWS}
     assert _score(correct)["acceptable"] == 6
 
@@ -196,8 +196,8 @@ def test_resolve_tag_defaults_track_the_label_set():
 
 
 def test_every_same_tag_gold_span_is_scored_against_every_predicted_run():
-    # `TOKYO CHIYODA KANDA`: the KR ladder's shape, where 읍/면 and the 리 below it share `dependent_locality`.
-    # The row carries two `municipality` spans; a model that labels both must read 2/2, and the first span
+    # `tokyo chiyoda kanda`: the KR ladder's shape, where 읍/면 and the 리 below it share `dependent_locality`.
+    # The row carries two `municipality` spans. a model that labels both must read 2/2, and the first span
     # is still what forms the centroid key.
     raw = "TOKYO CHIYODA KANDA"
     row = {
@@ -240,7 +240,7 @@ def test_every_same_tag_gold_span_is_scored_against_every_predicted_run():
 
 
 def test_a_multi_token_gold_span_hits_when_only_whitespace_splits_the_predicted_runs():
-    # The permit register's unit `1층 141호` is one gold span; the model labels the space `O`, which the served
+    # The permit register's unit `1층 141호` is one gold span. the model labels the space `O`, which the served
     # projection joins back. Both single runs and the joined surface must be readable, and a run that a NON-space
     # character separates stays apart.
     raw = "X 1층 141호 Y"
@@ -264,7 +264,7 @@ def test_a_multi_token_gold_span_hits_when_only_whitespace_splits_the_predicted_
 
 
 def test_municipality_macro_weights_each_held_out_municipality_once():
-    # CHIYODA carries 4 of 6 rows, KITA 2. Wiping KITA out moves the blended number by a third and the macro by a half:
+    # chiyoda carries 4 of 6 rows, kita 2. Wiping kita out moves the blended number by a third and the macro by a half:
     # the macro is what says "one of two municipalities failed", whatever the row split.
     chiyoda = {r["raw"] for r in ALL_ROWS if "CHIYODA" in r["raw"]}
     result = _score(chiyoda)
@@ -322,7 +322,7 @@ def test_a_gold_exact_row_is_counted_beside_the_check_and_never_inside_it():
 
 
 def test_a_gold_exact_row_needs_its_own_coordinate_within_the_radius():
-    """The gold pair names a centroid; the row still has to sit near it."""
+    """The gold pair names a centroid. the row still has to sit near it."""
     far = {**KANA_ROW, "lon": 0.0, "lat": 0.0}
     result = scorer.score_board(
         [far],

@@ -4,7 +4,7 @@
 /**
  *   `buildToolTable` against stub deps — no MCP transport/server involved. `server.ts`/`cli.ts`'s actual wiring isn't
  *   covered by a CI job (no stdio smoke run exists as of this writing) — `cli.ts` top-level-`await`s a real stdio
- *   connection, so it can't be imported here at all; its own type-checking (`tsc -b`) plus manual verification is
+ *   connection, so it can't be imported here at all. its own type-checking (`tsc -b`) plus manual verification is
  *   what currently backs it, and its extractable pure logic (the decision-6 layer guards) has its own direct unit
  *   tests in `layer-guards.test.ts`. This file covers: every registered tool is present, each schema accepts a
  *   canonical example + rejects a bad one, and each handler routes to the correct dep with the correct arguments.
@@ -31,8 +31,8 @@ function stubDeps(): MCPToolDeps {
 		}),
 		// Mirrors the real `plausibilityCheck`'s (`bdc/sdk/plausibility.ts`) own graceful-abstain shape — decision 6
 		//: an absent `bdcDatabasePath`/`poiDatabasePath` degrades to a typed abstain evidence entry in the
-		// returned bundle, NEVER a throw, so the dispatch tests below can exercise "missing layer path → abstain-shaped
-		// result, not a throw" against a stub without reaching for a real bdc.db/poi.db.
+		// returned bundle, never a throw, so the dispatch tests below can exercise "missing layer path → abstain-shaped
+		// result rather than a throw" against a stub without reaching for a real bdc.db/poi.db.
 		plausibilityCheck: vi.fn(
 			async (query: {
 				bdcDatabasePath?: string
@@ -102,7 +102,7 @@ function stubDeps(): MCPToolDeps {
 				}
 			}
 		),
-		// Mirrors the real `familyRollup`'s (`@mailwoman/filer/family-rollup.ts`) own XOR throw AND its
+		// Mirrors the real `familyRollup`'s (`@mailwoman/filer/family-rollup.ts`) own XOR throw and its
 		// always-array return shape (never `null`, never a bare object) so the dispatch tests below can exercise
 		// both without reaching for a real filer.db.
 		filerFamily: vi.fn(async (query: { databasePath: string; familyID?: string; nodeID?: string; asOf?: string }) => {

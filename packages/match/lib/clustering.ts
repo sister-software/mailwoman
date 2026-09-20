@@ -4,7 +4,7 @@
 /**
  *   Clustering — the third and final matcher stage: resolve scored pairs into canonical entities.
  *
- *   The pairwise scorer treats each pair independently, and its scores are NOT transitive: A~B at a
+ *   The pairwise scorer treats each pair independently, and its scores are not transitive: A~B at a
  *   high weight and B~C at a high weight does not guarantee A~C is a match. So a distinct stage is
  *   required to turn the graph of above-threshold links into coherent groups — skip it and your
  *   "entities" silently fracture or fuse.
@@ -14,7 +14,7 @@
  *   for more recall. Its known weakness is over-merging via transitive chains (a string of weak
  *   links can pull unrelated records into one component); the principled fix is
  *   centroid-/average-linkage hierarchical clustering (Dedupe), which uses the full within-cluster
- *   score matrix — a documented refinement, not this first version. For a geocode-first matcher the
+ *   score matrix — a documented refinement rather than this first version. For a geocode-first matcher the
  *   over-merge risk is already damped: blocking keeps candidate sets local, so chains can't run
  *   across the whole dataset.
  */
@@ -39,10 +39,10 @@ export interface ClusterOptions {
 	/**
 	 * How the above-threshold link graph resolves into clusters:
 	 *
-	 * - `"single"` (default) — connected components (union-find). Fast; ANY above-threshold link fuses two groups, so a
+	 * - `"single"` (default) — connected components (union-find). Fast. any above-threshold link fuses two groups, so a
 	 *   single weak link can over-merge unrelated records through a transitive chain.
-	 * - `"average"` — agglomerative average-linkage refinement WITHIN each connected component: two sub-clusters merge only
-	 *   when the AVERAGE weight of the links between them clears the threshold, so a lone weak bridge no longer fuses two
+	 * - `"average"` — agglomerative average-linkage refinement within each connected component: two sub-clusters merge only
+	 *   when the average weight of the links between them clears the threshold, so a lone weak bridge no longer fuses two
 	 *   otherwise-dense groups. The documented over-merge fix (Dedupe). Falls back to single-linkage for any component
 	 *   larger than {@link maxAverageLinkageComponent}.
 	 */
@@ -150,7 +150,7 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 		}
 	}
 
-	// Collect ALL valid links (not just above-threshold): connected components form from the
+	// Collect all valid links (not just above-threshold): connected components form from the
 	// above-threshold ones, but the average-linkage refinement needs the full sub-graph — a weak or
 	// disagreeing below-threshold edge between two sub-clusters is exactly what should pull them apart.
 	const allLinks: ScoredLink<R>[] = []
@@ -183,7 +183,7 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 	if (opts.linkage !== "average") return [...groups.values()]
 
 	// Average-linkage refinement: split each component where its sub-clusters are joined only by a weak
-	// bridge (the average inter-cluster link weight, over ALL edges between them, falls below the threshold).
+	// bridge (the average inter-cluster link weight, over all edges between them, falls below the threshold).
 	const maxComponent = opts.maxAverageLinkageComponent ?? 64
 	const localOf = new Map<R, number>()
 
@@ -222,7 +222,7 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 
 /**
  * Pick a cluster's most complete record as its canonical representative — the one with the fewest empty fields (`null`
- * / `undefined` / `""`). Ties keep the earliest. A basic, generic canonicalizer; field-level merging across the cluster
+ * / `undefined` / `""`). Ties keep the earliest. A basic, generic canonicalizer. field-level merging across the cluster
  * is the application's job (it knows which source to trust).
  */
 export function representative<R extends object>(group: readonly R[]): R | undefined {

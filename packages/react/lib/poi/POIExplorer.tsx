@@ -41,7 +41,7 @@ export interface POIExplorerProps {
 	 */
 	runLiveSearch?: POILiveSearch
 	/**
-	 * Whether {@link runLiveSearch} can serve BRAND subjects (fetch by QID). Default false: a brand subject shows the
+	 * Whether {@link runLiveSearch} can serve brand subjects (fetch by QID). Default false: a brand subject shows the
 	 * intent + QID chip but no live block. The docs' httpvfs probe leaves this off (brand-wide byte-range hydration is
 	 * pathological — measured); a server-side backend can enable it.
 	 */
@@ -71,8 +71,8 @@ function POIExplorerInner({
 
 	const subject = result?.subject
 
-	// The live block appears whenever the subject COULD be live-searched with an anchor — i.e. capable minus the
-	// anchor-present requirement (`canSearchLive` also requires an anchor; the block itself renders the "add an anchor"
+	// The live block appears whenever the subject could be live-searched with an anchor — i.e. capable minus the
+	// anchor-present requirement (`canSearchLive` also requires an anchor. the block itself renders the "add an anchor"
 	// hint, so it must show one step earlier). Category: not build-local. Brand: brand-capable probe + a QID.
 	const showLiveBlock = Boolean(
 		runLiveSearch &&

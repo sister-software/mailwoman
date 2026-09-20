@@ -33,7 +33,7 @@ difference to the record is two names, and one of them carries 4.1% of the board
 per-municipality report (landed) and the kana-surface register (running).
 
 **Han unification did not cost what it was expected to.** Municipality names that contain a code point the CN rows
-also label (102 of the CN slice's 166 Han characters are in the JP vocabulary) read **0.9947** on the shared head
+also label (102 of the CN corpus's 166 Han characters are in the JP vocabulary) read **0.9947** on the shared head
 against 0.9909 on the JP-only record; names with none read 0.9217 against 0.9997, and 598 of those 598 are
 Kasumigaura. The cost shows on the Chinese side instead: two of the 14 CN board rows start the `locality_unit` one
 character late, on a Han-unified numeral (四, 一) at the boundary with the dependent locality.
@@ -54,7 +54,7 @@ The runtime could neither export, resolve nor run a char-path model before this 
 
 12.5 ms per row after warm-up. One repair had to be switched off for the char path: the SentencePiece
 word-consistency repair, which folds the pieces of one whitespace word onto one tag, folded a Japanese address —
-no whitespace, so one "word" — into a single municipality span on the first served parse.
+no whitespace. Therefore, one "word" — into a single municipality span on the first served parse.
 
 ## 3b. The served path through the RESOLVER: 0 of 300 before, 1,823 of 2,000 after
 
@@ -77,8 +77,8 @@ with no coordinate, and `〒885-0061 宮崎県都城市下長飯町1867-2` answe
    `大阪市` a `locality`, `北区` a `borough` (in the locality filter group), `知名町` a `locality`. The three entries are now
    in the default map; only the character-path model emits the tags, so no Latin parse reaches them.
 2. **The admin ladder.** `extractGeocodeResult` reads the coordinate off `adminLadderFor`'s rungs, which named no JP
-   tag, so a resolved municipality was never read. The JP rungs sit beside their Latin counterparts, `municipality`
-   ABOVE `district`: a district resolves without its municipality as a parent more often than not, and the unscoped
+   tag. Therefore, a resolved municipality was never read. The JP rungs sit beside their Latin counterparts, `municipality`
+   ABOVE `district`: a district resolves without its municipality as a parent more frequently than not, and the unscoped
    namesake it then picks can be another prefecture's (`千葉県市原市大作` → 921 km). District-first 202, municipality-first 271.
 3. **The postal mark.** The normalizer strips `〒` for the SentencePiece tokenizer, where it is byte-fallback OOV. The
    character model was trained with the mark in front of every postcode and misreads the prefecture boundary without it.
@@ -102,7 +102,7 @@ board-routed, reads 0 rows differed (the run id is in the #2164 comment).
 
 **The scoped split (#2175).** The resolver walk now probes a compound municipality as a pair after the whole span
 misses: the head (`神戸市`, `猿島郡`) under the node's own parent, then the tail (`西区`, `五霞町`) as the head's child with
-the parent fallback OFF, so a namesake outside the head is never admissible; a county head with no key sends the town
+the parent fallback off, so a namesake outside the head is never admissible; a county head with no key sends the town
 under the prefecture the walk already holds. Same 300 rows: 282 accepted (94.0%). Same 2,000 rows: **1,889 (94.5%)**,
 1,048 within 5 km, 4 beyond 50 km — all four `和歌山県日高郡美浜町`, where the scoped town probe missed (Wakayama's 美浜町
 has no key) and the candidate backend's own region-scope fallback re-admitted Aichi's, 184 km away. The tail probe now

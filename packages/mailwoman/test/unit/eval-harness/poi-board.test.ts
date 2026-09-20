@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the POI query board's grading core (`gradeCase`), the committed fixture contract, and the
+ *   Tests for the POI query board's grading core (`gradeCase`), the committed fixture interface, and the
  *   tracked-row convention that lets a known failure class sit on the board without reaching the floors.
  *   No db, no classifier, no resolver — `gradeCase` is graded against synthetic `POIBoardOutcome`
  *   fakes, matching the "no db needed" discipline `fragment-board.test.ts` set for the interval math.
@@ -25,7 +25,7 @@ import { canonicalJSON, loadProbeDefinition } from "mailwoman/eval-harness/seman
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
-const fixtures = await Array.fromAsync(JSONSpliterator.fromAsync<POIBoardFixture>(POI_BOARD_FIXTURES))
+const fixtures = await JSONSpliterator.fromAsync<POIBoardFixture>(POI_BOARD_FIXTURES).toArray()
 const probeDefinition = await loadProbeDefinition()
 
 function intentOutcome(poiIntent: POIIntentOutcome): POIBoardOutcome {
@@ -293,7 +293,7 @@ describe("gradeCase — address expectation", () => {
 })
 
 describe("the committed poi-board fixture set", () => {
-	// The composition register. Exact rather than a range, because the floors were re-registered against the COUNTED
+	// The composition register. Exact rather than a range, because the floors were re-registered against the counted
 	// number (#1960) and that is the one that must not move without an argument: 51 counted rows. The committed total
 	// and the tracked count move whenever a failure class is committed to the surface every candidate is graded on,
 	// which is what the tracked convention is for. A row added or a status flipped without this test moving is a floor
@@ -419,13 +419,13 @@ describe("the committed poi-board fixture set", () => {
 })
 
 describe("evaluateFloors — breach detection", () => {
-	// Synthetic slice counts → a FloorInput, mirroring `runPOIBoard`'s `byExpectKind` + `overallPassRate`.
-	function report(slices: Record<string, { total: number; pass: number }>): FloorInput {
+	// Synthetic per-kind counts → a FloorInput, mirroring `runPOIBoard`'s `byExpectKind` + `overallPassRate`.
+	function report(kinds: Record<string, { total: number; pass: number }>): FloorInput {
 		const byExpectKind: FloorInput["byExpectKind"] = {}
 		let total = 0
 		let pass = 0
 
-		for (const [kind, s] of Object.entries(slices)) {
+		for (const [kind, s] of Object.entries(kinds)) {
 			byExpectKind[kind] = { total: s.total, pass: s.pass, rate: s.total > 0 ? s.pass / s.total : 0 }
 			total += s.total
 			pass += s.pass
@@ -472,7 +472,7 @@ describe("evaluateFloors — breach detection", () => {
 	})
 
 	it("breaches on a single abstain miss (100% floor is hard) even when overall clears 90%", () => {
-		// 7/8 abstain is a single false-positive; overall 50/51 still ≥ 90%, but the abstain floor is 100%.
+		// 7/8 abstain is a single false-positive. overall 50/51 still ≥ 90%, but the abstain floor is 100%.
 		const evaluation = evaluateFloors(
 			report({
 				results: { total: 37, pass: 37 },
@@ -499,7 +499,7 @@ describe("evaluateFloors — breach detection", () => {
 		expect(evaluation.lines.find((l) => l.key === "address")!.met).toBe(false)
 	})
 
-	it("treats an absent category slice as UNMET (a 100% floor can't be vacuously cleared)", () => {
+	it("treats an absent category kind as UNMET (a 100% floor can't be vacuously cleared)", () => {
 		const evaluation = evaluateFloors(report({ results: { total: 37, pass: 37 } }))
 
 		expect(evaluation.breached).toBe(true)
@@ -656,7 +656,7 @@ describe("the promoted semantic-utility family (#1960)", () => {
 			expect(fixture.bugRef, fixture.id).toMatch(/^#\d+$/u)
 		}
 
-		// The route-dependent three await the phase-2 decision that would reach them on the default path; the French row is
+		// The route-dependent three await the phase-2 decision that would reach them on the default path. the French row is
 		// tracked as a defect, because its baseline is a confident wrong answer rather than a miss.
 		const byRef = new Map(promoted.map((f) => [f.id, f]))
 

@@ -4,8 +4,8 @@
     modal run -m launch.train_remote::quantize_onnx --fp32-path=… --int8-path=…
     modal run -m launch.train_remote::push_artifact_r2 --volume-path=… --r2-subpath=…
 
-Quantization runs HERE rather than locally because the dynamo-exported graph trips onnx shape
-inference in some local onnxruntime builds; the training image's pinned one quantizes it cleanly.
+Quantization runs here rather than locally because the dynamo-exported graph trips onnx shape
+inference in some local onnxruntime builds. the training image's pinned one quantizes it cleanly.
 The push exists because this volume's container and CLI views are fully divergent — `modal volume
 get` cannot pull a container-written file — so an artifact leaves the way the corpus arrived.
 """
@@ -31,10 +31,10 @@ def export_onnx(
     """Export a checkpoint to ONNX.
 
     Env-var fallbacks (MAILWOMAN_EXPORT_OUTPUT_DIR / MAILWOMAN_EXPORT_STEP /
-    MAILWOMAN_EXPORT_TOKENIZER) are kept for back-compat with prior workflows; CLI params take
+    MAILWOMAN_EXPORT_TOKENIZER) are kept for back-compat with prior workflows. CLI params take
     precedence when set.
 
-    ``--model-dir`` bypasses the ``{output_dir}/checkpoints/step-{step}`` layout and loads a FLAT
+    ``--model-dir`` bypasses the ``{output_dir}/checkpoints/step-{step}`` layout and loads a flat
     ``from_pretrained`` dir directly (``pytorch_model.bin`` + ``config.json``), writing ``model.onnx``
     into that same dir. Used to export an ad-hoc checkpoint — e.g. the #825 B-splice expanded-but-not-
     fine-tuned model for the mean-init ablation — without restructuring it into the training layout.
@@ -49,6 +49,7 @@ def export_onnx(
     from mailwoman_train.export.onnx import export_to_onnx
     from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
     from mailwoman_train.tokenizer import Tokenizer
+    from mailwoman_train.train.checkpoint import checkpoint_dir_name
 
     output_dir = output_dir or os.environ.get("MAILWOMAN_EXPORT_OUTPUT_DIR", f"{VOL_MOUNT}/output-v054")
     step = step or os.environ.get("MAILWOMAN_EXPORT_STEP", "100000")
@@ -60,7 +61,7 @@ def export_onnx(
         ck_dir = Path(model_dir)
         out_path = Path(f"{model_dir}/model.onnx")
     else:
-        ck_dir = Path(f"{output_dir}/checkpoints/step-{step}")
+        ck_dir = Path(output_dir) / "checkpoints" / checkpoint_dir_name(step)
         out_path = Path(f"{output_dir}/model.onnx")
     tokenizer = Tokenizer(Path(tokenizer_path))
 
@@ -74,7 +75,7 @@ def export_onnx(
 
     # #727 stage-2: a span-scorer model's ONNX carries a `span_scores` output, but the JS k-best
     # decoder (neural/semi-markov-decode.ts, PR #1154) also needs the segment-transition table, which
-    # is DECODE-TIME data, not part of the graph. Write it as a sidecar next to model.onnx so the
+    # is decode-time data rather than part of the graph. Write it as a sidecar next to model.onnx so the
     # grade's oracle@k / seg@1 arc reads can consume it. Returns None (no file) for a span-less model,
     # keeping the export byte-identical for every pre-#727 recipe.
     import json as _json
@@ -105,8 +106,8 @@ def quantize_onnx(
     import sys
     from pathlib import Path
 
-    # RELOAD BEFORE READING. This function is almost always called right after `export_onnx` wrote its
-    # fp32 to the volume, and a container that started with an older view reads the PREVIOUS model —
+    # reload before reading. This function is almost always called right after `export_onnx` wrote its
+    # fp32 to the volume, and a container that started with an older view reads the previous model —
     # silently, since the path is the same. Two checkpoints exported to `model.onnx` in sequence and
     # quantized in between produced byte-identical int8 artifacts because of this, which reads as "the
     # two checkpoints are the same model" rather than as a stale mount.
@@ -121,7 +122,7 @@ def quantize_onnx(
     if not fp32.is_file():
         raise RuntimeError(f"no fp32 at {fp32} after vol.reload() — export it first")
 
-    # The INPUT's digest travels with the output. An int8 artifact is otherwise unattributable: nothing
+    # The input's digest travels with the output. An int8 artifact is otherwise unattributable: nothing
     # in the file says which checkpoint it came from, and the fp32 it was made from is usually
     # overwritten by the next export.
     fp32_md5 = hashlib.md5(fp32.read_bytes()).hexdigest()

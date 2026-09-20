@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The schema and its validator, exercised against the frozen first slice from the boundary record
+ *   The schema and its validator, exercised against the frozen first record set from the boundary record
  *   (`docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md` §4): `pharmacy affords
  *   obtain_medication`, mapped onto the `@mailwoman/poi-taxonomy` `pharmacy` category.
  *
  *   The fixtures below are typed with the package's own record types on purpose. A document assembled
  *   through `ConceptRecord`, `RelationRecord`, and the brand helpers, and then accepted by the
- *   validator, is the evidence that the schema can STATE the slice — a plain JSON literal cast at the
+ *   validator, is the evidence that the schema can state the record set — a plain JSON literal cast at the
  *   end would prove only that the validator accepts some object.
  *
- *   This file holds the whole suite rather than splitting by concern: the package contract forbids a
+ *   This file holds the whole suite rather than splitting by concern: the package interface forbids a
  *   relative import between test files, and a fixture copied into a second file is a fixture that
  *   drifts.
  */
@@ -53,7 +53,7 @@ const curated: SourceProvenance = {
 	source: "mailwoman-curated",
 	sourceVersion: "0.1.0",
 	authoredAt: "2026-08-26",
-	notes: "The frozen first slice recorded in #1917.",
+	notes: "The frozen first record set recorded in #1917.",
 }
 
 const affords: RelationRecord = {
@@ -90,7 +90,7 @@ const pharmacy: ConceptRecord = {
 const obtainMedication: ConceptRecord = {
 	id: toConceptID("obtain_medication"),
 	label: "Obtain medication",
-	description: "A person collects or buys medication.",
+	description: "A person collects or provides medication.",
 	kind: ConceptKind.Activity,
 	isA: [],
 	assertions: [],
@@ -144,7 +144,7 @@ const derived: DerivedFactRecord = {
  * Concepts and the one relation, with every other table empty. The base for the refusal cases, so an expected issue
  * list stays short enough to state in full.
  */
-const minimalSlice: GeographicModelDocument = {
+const minimalDocument: GeographicModelDocument = {
 	version: "0.1.0",
 	relations: [affords],
 	concepts: [pharmacy, obtainMedication],
@@ -154,11 +154,11 @@ const minimalSlice: GeographicModelDocument = {
 }
 
 /**
- * The whole first slice: the concepts, the mapping into the external vocabulary, one source observation, and one
+ * The whole first record set: the concepts, the mapping into the external vocabulary, one source observation, and one
  * derived fact naming every record its derivation read.
  */
-const pharmacySlice: GeographicModelDocument = {
-	...minimalSlice,
+const pharmacyDocument: GeographicModelDocument = {
+	...minimalDocument,
 	mappings: [pharmacyCategory],
 	observations: [observed],
 	derivedFacts: [derived],
@@ -197,7 +197,7 @@ function refusalOf(input: unknown): ValidationIssue[] {
 }
 
 /**
- * Every issue as a `path → code` pair, so a case can state the WHOLE expected list rather than the one entry it
+ * Every issue as a `path → code` pair, so a case can state the whole expected list rather than the one entry it
  * remembered to look for.
  */
 function refusalPairs(input: unknown): Array<[string, ValidationIssueCode]> {
@@ -240,27 +240,27 @@ describe("branded identifiers", () => {
 
 	it("refuses a relation identifier where a concept identifier belongs", () => {
 		const relationID = toRelationID("affords")
-		// @ts-expect-error a RelationID is not a ConceptID; the brands exist to make this assignment fail.
+		// @ts-expect-error a RelationID is not a ConceptID. the brands exist to make this assignment fail.
 		const conceptID: ConceptID = relationID
 
 		expect(conceptID).toBe("affords")
 	})
 
 	it("refuses a plain string where a branded identifier belongs", () => {
-		// @ts-expect-error an unbranded string is not a ConceptID; conversion goes through toConceptID.
+		// @ts-expect-error an unbranded string is not a ConceptID. conversion goes through toConceptID.
 		const conceptID: ConceptID = "pharmacy"
 
 		expect(conceptID).toBe("pharmacy")
 	})
 })
 
-describe("the frozen pharmacy slice", () => {
+describe("the frozen pharmacy record set", () => {
 	it("is stateable through the record types and validates", () => {
-		const result = validateGeographicModelDocument(pharmacySlice)
+		const result = validateGeographicModelDocument(pharmacyDocument)
 
 		expect(result.ok).toBe(true)
 
-		const document = parseGeographicModelDocument(pharmacySlice)
+		const document = parseGeographicModelDocument(pharmacyDocument)
 		const [establishment] = document.concepts
 
 		expect(establishment?.id).toBe("pharmacy")
@@ -276,7 +276,7 @@ describe("the frozen pharmacy slice", () => {
 	})
 
 	it("keeps source observations and derived facts in separate tables", () => {
-		const document = parseGeographicModelDocument(pharmacySlice)
+		const document = parseGeographicModelDocument(pharmacyDocument)
 
 		expect(document.observations.map((observation) => observation.id)).toEqual(["curated-overlay-pharmacy-dispenses"])
 
@@ -292,17 +292,17 @@ describe("the frozen pharmacy slice", () => {
 	})
 
 	it("round-trips through JSON without losing a record", () => {
-		const encoded = stringifyJSON(pharmacySlice)
+		const encoded = stringifyJSON(pharmacyDocument)
 		const document = parseGeographicModelDocument(parseJSONStrict<unknown>(encoded))
 
-		expect(document).toEqual(pharmacySlice)
+		expect(document).toEqual(pharmacyDocument)
 		expect(stringifyJSON(document)).toBe(encoded)
 	})
 })
 
 describe("shape refusals", () => {
 	it("refuses an unknown concept kind", () => {
-		const input = draft(minimalSlice, (document) => {
+		const input = draft(minimalDocument, (document) => {
 			document.concepts[0]!.kind = "shop"
 		})
 
@@ -310,7 +310,7 @@ describe("shape refusals", () => {
 	})
 
 	it("refuses an unknown modality", () => {
-		const input = draft(minimalSlice, (document) => {
+		const input = draft(minimalDocument, (document) => {
 			assertionsOf(document.concepts[0]!)[0]!.modality = "very_likely"
 		})
 
@@ -318,7 +318,7 @@ describe("shape refusals", () => {
 	})
 
 	it("refuses an unknown concept status and an unknown relation semantics", () => {
-		const input = draft(minimalSlice, (document) => {
+		const input = draft(minimalDocument, (document) => {
 			document.concepts[0]!.status = "provisional"
 			document.relations[0]!.semantics = "probabilistic"
 		})
@@ -330,7 +330,7 @@ describe("shape refusals", () => {
 	})
 
 	it("refuses a blank provenance source", () => {
-		const input = draft(minimalSlice, (document) => {
+		const input = draft(minimalDocument, (document) => {
 			document.concepts[0]!.provenance = { source: "   " }
 		})
 
@@ -338,7 +338,7 @@ describe("shape refusals", () => {
 	})
 
 	it("refuses a missing table rather than reading it as an empty one", () => {
-		const input = draft(minimalSlice, (document) => {
+		const input = draft(minimalDocument, (document) => {
 			Reflect.deleteProperty(document, "derivedFacts")
 		})
 
@@ -346,7 +346,7 @@ describe("shape refusals", () => {
 	})
 
 	it("refuses a country scope that is not an upper-case ISO 3166-1 alpha-2 code", () => {
-		const input = draft(minimalSlice, (document) => {
+		const input = draft(minimalDocument, (document) => {
 			assertionsOf(document.concepts[0]!)[0]!.countries = ["us", "USA"]
 		})
 
@@ -357,7 +357,7 @@ describe("shape refusals", () => {
 	})
 
 	it("refuses a field the schema does not declare", () => {
-		const input = draft(minimalSlice, (document) => {
+		const input = draft(minimalDocument, (document) => {
 			document.concepts[0]!.synonyms = ["chemist"]
 		})
 
@@ -367,7 +367,7 @@ describe("shape refusals", () => {
 
 describe("ranking-policy refusals", () => {
 	it("refuses every generic ranking field the program names, wherever it appears", () => {
-		const input = draft(minimalSlice, (document) => {
+		const input = draft(minimalDocument, (document) => {
 			const assertion = assertionsOf(document.concepts[0]!)[0]!
 
 			assertion.score = 0.9
@@ -391,7 +391,7 @@ describe("ranking-policy refusals", () => {
 	})
 
 	it("names the ranking fragment it matched, so the message says why", () => {
-		const input = draft(minimalSlice, (document) => {
+		const input = draft(minimalDocument, (document) => {
 			document.concepts[0]!.affinityWeight = 1
 		})
 
@@ -401,7 +401,7 @@ describe("ranking-policy refusals", () => {
 
 describe("whole-table refusals", () => {
 	it("refuses a duplicate identifier and keeps the first claimant", () => {
-		const input = draft(minimalSlice, (document) => {
+		const input = draft(minimalDocument, (document) => {
 			document.concepts[1]!.id = "pharmacy"
 		})
 
@@ -412,7 +412,7 @@ describe("whole-table refusals", () => {
 	})
 
 	it("refuses a concept that is a kind of itself", () => {
-		const input = draft(minimalSlice, (document) => {
+		const input = draft(minimalDocument, (document) => {
 			document.concepts[0]!.isA = ["pharmacy"]
 		})
 
@@ -420,7 +420,7 @@ describe("whole-table refusals", () => {
 	})
 
 	it("refuses an isA cycle that runs through more than one concept", () => {
-		const input = draft(minimalSlice, (document) => {
+		const input = draft(minimalDocument, (document) => {
 			document.concepts[0]!.isA = ["obtain_medication"]
 			document.concepts[1]!.isA = ["pharmacy"]
 		})
@@ -432,7 +432,7 @@ describe("whole-table refusals", () => {
 	})
 
 	it("refuses an isA parent no concept declares", () => {
-		const input = draft(minimalSlice, (document) => {
+		const input = draft(minimalDocument, (document) => {
 			document.concepts[0]!.isA = ["retail_premises"]
 		})
 
@@ -440,7 +440,7 @@ describe("whole-table refusals", () => {
 	})
 
 	it("refuses an assertion naming a relation no document declares", () => {
-		const input = draft(minimalSlice, (document) => {
+		const input = draft(minimalDocument, (document) => {
 			assertionsOf(document.concepts[0]!)[0]!.relation = "sells"
 		})
 
@@ -448,7 +448,7 @@ describe("whole-table refusals", () => {
 	})
 
 	it("refuses an assertion naming a target concept no document declares", () => {
-		const input = draft(minimalSlice, (document) => {
+		const input = draft(minimalDocument, (document) => {
 			assertionsOf(document.concepts[0]!)[0]!.target = "collect_parcel"
 		})
 
@@ -456,7 +456,7 @@ describe("whole-table refusals", () => {
 	})
 
 	it("refuses an assertion whose asserting concept is outside the relation's domain kinds", () => {
-		const input = draft(minimalSlice, (document) => {
+		const input = draft(minimalDocument, (document) => {
 			document.concepts[0]!.kind = ConceptKind.Activity
 		})
 
@@ -466,7 +466,7 @@ describe("whole-table refusals", () => {
 	})
 
 	it("refuses an assertion whose target is outside the relation's range kinds", () => {
-		const input = draft(minimalSlice, (document) => {
+		const input = draft(minimalDocument, (document) => {
 			document.concepts[1]!.kind = ConceptKind.Establishment
 		})
 
@@ -474,7 +474,7 @@ describe("whole-table refusals", () => {
 	})
 
 	it("refuses a mapping onto a concept no document declares", () => {
-		const input = draft(pharmacySlice, (document) => {
+		const input = draft(pharmacyDocument, (document) => {
 			document.mappings[0]!.concept = "chemist"
 		})
 
@@ -484,7 +484,7 @@ describe("whole-table refusals", () => {
 
 describe("relation refusals", () => {
 	it("refuses an inverse no document declares", () => {
-		const input = draft(minimalSlice, (document) => {
+		const input = draft(minimalDocument, (document) => {
 			document.relations[0]!.inverse = "afforded_by"
 		})
 
@@ -492,7 +492,7 @@ describe("relation refusals", () => {
 	})
 
 	it("refuses an inverse that does not name this relation back", () => {
-		const input = draft(minimalSlice, (document) => {
+		const input = draft(minimalDocument, (document) => {
 			document.relations[0]!.inverse = "afforded_by"
 
 			document.relations.push({
@@ -511,7 +511,7 @@ describe("relation refusals", () => {
 	})
 
 	it("refuses both halves of an inverse pair whose domain and range kinds are not swapped", () => {
-		const input = draft(minimalSlice, (document) => {
+		const input = draft(minimalDocument, (document) => {
 			document.relations[0]!.inverse = "afforded_by"
 
 			document.relations.push({
@@ -536,7 +536,7 @@ describe("relation refusals", () => {
 	})
 
 	it("refuses a transitive relation whose domain and range kinds cannot chain", () => {
-		const input = draft(minimalSlice, (document) => {
+		const input = draft(minimalDocument, (document) => {
 			document.relations[0]!.transitive = true
 		})
 
@@ -546,7 +546,7 @@ describe("relation refusals", () => {
 
 describe("derived-fact refusals", () => {
 	it("refuses a derived fact with no inputs", () => {
-		const input = draft(pharmacySlice, (document) => {
+		const input = draft(pharmacyDocument, (document) => {
 			document.derivedFacts[0]!.inputs = []
 		})
 
@@ -554,7 +554,7 @@ describe("derived-fact refusals", () => {
 	})
 
 	it("refuses an input that resolves against no record of its kind", () => {
-		const input = draft(pharmacySlice, (document) => {
+		const input = draft(pharmacyDocument, (document) => {
 			document.derivedFacts[0]!.inputs = [{ kind: DerivationInputKind.Observation, id: "affords" }]
 		})
 
@@ -564,7 +564,7 @@ describe("derived-fact refusals", () => {
 	})
 
 	it("refuses a derived fact that names itself as an input", () => {
-		const input = draft(pharmacySlice, (document) => {
+		const input = draft(pharmacyDocument, (document) => {
 			document.derivedFacts[0]!.inputs = [
 				{ kind: DerivationInputKind.DerivedFact, id: "pharmacy-obtain-medication-us" },
 			]
@@ -574,7 +574,7 @@ describe("derived-fact refusals", () => {
 	})
 
 	it("refuses an unknown derivation input kind", () => {
-		const input = draft(pharmacySlice, (document) => {
+		const input = draft(pharmacyDocument, (document) => {
 			document.derivedFacts[0]!.inputs = [{ kind: "layer", id: "poi" }]
 		})
 
@@ -590,7 +590,7 @@ describe("reporting every violation at once", () => {
 	 * reports the first violation and stops is the behavior this suite exists to refuse.
 	 */
 	function ninefoldDefect(): unknown {
-		return draft(pharmacySlice, (document) => {
+		return draft(pharmacyDocument, (document) => {
 			document.version = ""
 			document.concepts[0]!.kind = "shop"
 			document.concepts[0]!.isA = ["pharmacy"]
@@ -661,14 +661,14 @@ describe("reporting every violation at once", () => {
 
 	it("refuses a document that is not an object at all", () => {
 		expect(refusalPairs("pharmacy affords obtain_medication")).toEqual([["$", ValidationIssueCode.WrongType]])
-		expect(refusalPairs([pharmacySlice])).toEqual([["$", ValidationIssueCode.WrongType]])
+		expect(refusalPairs([pharmacyDocument])).toEqual([["$", ValidationIssueCode.WrongType]])
 	})
 
 	it("renders one line per issue", () => {
 		const issues = refusalOf(ninefoldDefect())
 		const rendered = formatValidationIssues(issues)
 
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- an in-memory string of one line per issue, and the line count IS the assertion.
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- an in-memory string of one line per issue, and the line count is the assertion.
 		expect(rendered.split("\n")).toHaveLength(issues.length)
 	})
 })

@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Every weights package must decode with its MODEL's label vocabulary.
+ *   Every weights package must decode with its model's label vocabulary.
  *
  *   A carrier overlay (`mailwoman.baseWeights` set) ships no model of its own — it shares the base's — so its card
  *   describes the overlay while the vocabulary belongs to the base. An overlay card that omits `labels` is therefore
- *   CORRECT, and the resolver has to fall back rather than the author having to copy 33 strings into every carrier,
+ *   correct, and the resolver has to fall back rather than the author having to copy 33 strings into every carrier,
  *   which is a duplicate that goes stale on the first retrain.
  *
  *   The failure this pins is silent and total. `NeuralAddressClassifier` falls back to `STAGE2_BIO_LABELS` (21) when no
@@ -14,7 +14,7 @@
  *   `assertEmissionWidth` — so the package is not degraded, it is inoperable, and only at runtime.
  *
  *   Presence-checking the card is not enough, which is how this shipped: `resolveWeights` already fell back to the
- *   base card when the overlay's was ABSENT, but four scaffolded carriers had a card that existed and simply had no
+ *   base card when the overlay's was absent, but four scaffolded carriers had a card that existed and simply had no
  *   `labels` key. Existence and completeness are different questions.
  */
 

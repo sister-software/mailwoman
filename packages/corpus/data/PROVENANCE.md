@@ -1,5 +1,208 @@
 # `corpus/data/` provenance
 
+## `address-source-register.json` — the address-source register (#2323)
+
+Which jurisdictions exist, what research has resolved for each, and what is known about every
+source's terms. Generated, **not hand-edited**.
+
+### Regenerate
+
+```sh
+mailwoman corpus source-register \
+  --inventory      ../mailwoman-internal/research/global-address-jurisdiction-inventory-v3.csv \
+  --sources        ../mailwoman-internal/research/global-functional-authority-corpora-v2.csv \
+  --register-version 0.1.0 \
+  --authored-at    2026-09-18 \
+  --source-version global-address-corpus-spec-v3
+yarn format
+```
+
+That is the command that produced the committed copy. The two CSVs are research working documents and
+live in the `mailwoman-internal` repository under `research/`, so regenerating needs a checkout of it
+beside this one. They were under this repository's gitignored `.notes/` until 2026-09-20, where
+nothing versioned them and a reviewer could not tell which copy produced the register. The register
+is the committed record here, and it carries every field a reader needs to check a row: the
+publisher, the retrieved URL, and the research pass.
+
+There is a third input, and it is committed: `--decisions` defaults to `license-decisions.json`
+beside this file, and holds every licence decision somebody made by reading a publisher's terms. The
+build derives each decision as `unchecked` from the research pass's access labels and applies the
+recorded ones over that, so a decision survives a rebuild. Recording one in the register instead
+would be erased by the next run with no error, because the write below replaces the file whole
+(#2351). The file is empty today, which is why every decision in the register reads `unchecked`.
+
+The `oxfmt` pass is required — committed JSON is oxfmt-clean, which `JSON.stringify` cannot
+reproduce. The generator is deterministic, so the artifact is reproducible from the same inputs.
+
+### What no check can establish about this file (#2352)
+
+Regeneration is the only thing that catches a hand edit to a generated artifact, and regeneration
+needs the two CSVs in `mailwoman-internal/research/`. A CI runner for this repository has no checkout
+of that one, so the register's correctness rests on whoever last ran the command above, and
+`auditAddressSourceRegister` does not change that: it checks the file's structure, and a publisher's
+name rewritten to something that names no institution is structurally sound.
+
+The inputs are now versioned, which is what changed on 2026-09-20. A reviewer can diff the CSV that
+produced the register against the one a later build reads, and a research pass that moves a
+publisher's name leaves a commit saying so. Establishing that the committed register matches its
+inputs still takes running the command with both repositories checked out.
+
+A committed digest would not close it either. A sweep that edits the artifact and the digest together
+passes, and one that edits only the artifact fails without saying which side is right.
+
+This is the arrangement that let a prose sweep rewrite `Contracts Finder / Find a Tender` to
+`Interfaces Finder / Find a Tender` and `National Database of Public Contracts` to
+`National Database of Public Interfaces`, and let it stand until somebody regenerated. Both are
+restored, and a reader who finds a name here that resolves to no institution should regenerate before
+concluding the publisher renamed itself.
+
+### Inputs, as of the committed build
+
+| file                                           |  rows | what is read                                                           |
+| ---------------------------------------------- | ----: | ---------------------------------------------------------------------- |
+| `global-address-jurisdiction-inventory-v3.csv` |   250 | all 250 rows — every ISO 3166-1 alpha-2 code plus the operational `XK` |
+| `global-functional-authority-corpora-v2.csv`   | 2,389 | the 389 rows naming a national source; 2,000 are dropped               |
+
+The 2,000 dropped rows carry `origin = global_research_rail`: eight global discovery lookups the
+pass repeated once per jurisdiction, which collapse to eight distinct row bodies ignoring the `iso2`
+and `jurisdiction` columns. They name a lookup to perform rather than a source, so they are the
+README's procedure and not rows here.
+
+### Why three columns the CSV carries reach no register field
+
+`global-functional-authority-corpora-v2.csv` has an `address_role`, a `coverage` and an `upstream`
+column, and the register declares all three unresolved. That is not the build dropping usable data.
+Over the 389 rows it keeps, `address_role` reads `varies` on all 389, `coverage` reads
+`country-specific` on all 389, and `upstream` is empty on all 389. The first two are the research
+pass saying it did not determine the field per source.
+
+The build reads the columns and refuses to carry a placeholder, because
+`ingestEligibilityProblems` reports "no address role is resolved" and "no coverage has been
+measured" as two of the three blockers that apply to every source in the register. Writing `varies`
+into `addressRole` would stop both from firing while resolving nothing. A value outside the declared
+placeholder set is carried through, and an `address_role` that is neither a placeholder nor an
+`AddressRole` fails the build rather than being dropped.
+
+### How an edit to the committed file is detected
+
+The register carries `contentDigest`, a sha256 the build writes over every other field in it.
+`readAddressSourceRegister` recomputes it on every read and refuses a file that no longer matches,
+naming the regenerate command above.
+
+It exists because no check can regenerate this artifact and compare. The two research CSVs are
+working documents under `.notes/`, which is not committed, so a CI job has nothing to rebuild from.
+Without a recorded digest, a hand edit to a generated file is invisible: a prose sweep rewrote
+`Contracts Finder / Find a Tender` to `Interfaces Finder / Find a Tender` and two other publisher
+names, and the structural audit passed, because it checks shape rather than whether a name is the
+publisher's (#2352).
+
+The digest covers the register as parsed, not as bytes, because `oxfmt` reformats the file after the
+build writes it. It detects an edit rather than attributing one: rerunning the build after a change
+produces a new digest, which is the intended path, while editing the committed copy does not.
+
+Of the four artifacts in this directory, the register is the one carrying a digest. The sub-venue
+lexicon, the reviewed VE postcode tuples and the license decisions do not. The license decisions are
+hand-written by design — that file is an input to this build, not an output of one.
+
+### What the register carries
+
+Two tables rather than one nested list. The jurisdiction table is a complete 250-row enumeration;
+the source table is zero or more rows per jurisdiction, 389 over 240 of them. Nesting the second
+inside the first would make a jurisdiction nobody researched structurally identical to one whose
+list happens to be empty, and no reader could tell which they were looking at.
+
+| research state | jurisdictions | meaning                                                       |
+| -------------- | ------------: | ------------------------------------------------------------- |
+| `seeded`       |           240 | at least one national source resolved                         |
+| `exception`    |             7 | somebody looked and recorded that no ordinary registry exists |
+| `unexamined`   |             3 | nothing resolved and nothing ruled out                        |
+
+`exception` and `unexamined` are separate values on purpose: a researched absence is a finding and
+an unexamined jurisdiction is not, and collapsing them would let a consumer read "we could not look"
+as "there is nothing there". Every non-`seeded` row carries a `stateReason`, and the audit refuses
+one that does not.
+
+| source status           | rows | meaning                                                                 |
+| ----------------------- | ---: | ----------------------------------------------------------------------- |
+| `verified-authority`    |  221 | register confirmed; address fields, bulk access and terms not inspected |
+| `retained-original`     |  142 | carried from the earlier memo without recheck; no publisher, no URL     |
+| `verified-corpus`       |   25 | a bulk corpus confirmed reachable                                       |
+| `verified-corpus-stale` |    1 | reachable, and the copy examined has stopped being updated              |
+
+The `A`/`A~`/`B`/`C`/`D` column is `backboneState`, and it is deliberately not called a tier: this
+repository already has locale tiers 1 through 5 in `scope.config.json` and the
+`shipped` / `build-local` / `private` tiers in the layer interface.
+
+### Three things the research pass did not resolve, on any row
+
+Say this plainly rather than making a reader discover it by querying:
+
+- **`addressRole` — 0 of 389.** Every row reads `varies`. The specification's section 2 asks for a
+  role per source and the pass recorded none, so the register cannot say whether any of these
+  sources holds premises, registered offices or mailing addresses.
+- **`upstreamLineage` — 0 of 389.** No row records what it was copied from, so two databases carrying
+  one upstream submission cannot yet be collapsed into the single observation they are.
+- **`coverage` — 0 of 389.** Every row reads `country-specific`, which is a scope rather than a
+  measurement. A national portal is not evidence of national coverage.
+
+The register declares all three in its `unresolved` array and the audit checks the claim in both
+directions: a field listed there must be absent from every row, and a field not listed must be
+present on at least one.
+
+**No row is ingest-eligible.** Ask `ingestEligibilityProblems()` rather than reading a status as
+permission; today it answers with reasons for all 389.
+
+### Licences: every one unchecked
+
+All 389 rows point at one of twelve decision records, and every one is `state: "unchecked"`. That is
+a finding, not a placeholder. The 247 web-researched rows read `CHECK NATIONAL / DATASET TERMS`
+verbatim. The other 142 carry an access label from the original memo — `Free`, `Free-reg`, `Gated`,
+`Licensed` — which says what the download costs and grants nothing, so treating one as permissive
+would admit a source on a sentence about price.
+
+`unchecked` is a first-class value distinct from a licence reviewed and found permissive, which is
+what `elected` records: the terms, the retrieved copy, the version, and why that grant rather than
+another. `electedLicenseLabel()` is what the mechanical prefix filter in `utils/license.ts` reads,
+and it answers `undefined` for anything not elected.
+
+## `license-decisions.json` — licence decisions somebody made by reading terms (#2351)
+
+Hand-written, and the only file in this directory that is. `address-source-register.json` is
+generated and rewritten whole on every build, so a decision recorded there is erased by the next run
+with no error and a normal-looking count. This file is an input to that build instead.
+
+Each key is a `licenseID` the register already declares. Each value is an `ElectedLicense` or a
+`RefusedLicense` minus its `licenseID`, which the build fills from the key so one licence cannot carry
+two decisions. `buildSourceRegister` applies these over the `unchecked` defaults it derives from the
+research pass's access labels, and refuses a decision naming a licence no source points at.
+
+An election records four things, which the corpus acceptance rules ask for: the elected terms, the
+copy they were read from, that copy's version where the publisher gives one, and why this grant and
+not another. `auditAddressSourceRegister` refuses an incomplete record and the build refuses a
+register that fails its audit, so an incomplete entry never reaches the committed artifact.
+
+**The file is empty.** Every one of the register's 389 decisions therefore reads `unchecked`. Electing
+them is necessary and not sufficient: `ingestEligibilityProblems` also refuses all 389 sources for an
+unresolved `addressRole` and unmeasured `coverage`, which no licence decision touches, so clearing
+this alone moves the ingest-eligible count from 0 to 0.
+
+### Why there are 389 of them rather than 12
+
+A decision is scoped to one publisher in one jurisdiction, so the register carries one per source.
+Keying a decision by the research pass's access label alone made it as wide as the label:
+`CHECK NATIONAL / DATASET TERMS` covered 247 of the 389 sources across 222 publishers, and `Free`
+covered 99. Recording one election against either would have granted every source under it on a
+single reading of one publisher's terms.
+
+The jurisdiction is part of the scope because a publisher name is not unique across states. The pass
+wrote `Ministry of Justice` for Belarus, Lebanon and Timor-Leste, `Ministry of Commerce and Industry`
+for five countries, and `Commercial-registration authority` as a description rather than a name.
+
+The cost falls on a publisher that genuinely serves several jurisdictions. INSEE covers mainland
+France and nine overseas territories, so it holds ten decisions, and a reviewer who reads its terms
+once records that conclusion ten times. That is the direction to err in: an over-wide election is the
+failure review cannot undo.
+
 ## `reviewed-ve-postcode-tuples.json` — reviewed Venezuelan postcode placement (#1821)
 
 Four geographic facts support the Venezuelan `locality postcode, region` convention. The Barcelona
@@ -15,7 +218,7 @@ postcode-to-place join unchanged.
 
 ## `sub-venue-lexicon.json` — the sub-venue designator lexicon (#35, waves 1–2)
 
-The vocabulary a corpus slice (and eventually the span proposer) reads to recognize `Terminal 5`,
+The vocabulary a corpus recipe (and eventually the span proposer) reads to recognize `Terminal 5`,
 `North Terminal`, `Concourse B`, `第1ターミナル` as venue-interior structure. Generated, **not
 hand-edited**. See `docs/engineering/sub-venue-corpus-task.mdx` for why this exists — the short
 version is that the `unit` tag was never taught the modifier+designator shape, so closing the class by
@@ -54,7 +257,7 @@ reproduce. The generator is byte-deterministic and oxfmt is too, so the artifact
 the same fetch outputs. `sub-venue-lexicon.test.ts` pins determinism directly.
 
 The extract JSONLs and the `.osm.pbf` files are build inputs under
-`$MAILWOMAN_DATA_ROOT/sub-venue/`, not committed.
+`$MAILWOMAN_DATA_ROOT/sub-venue/` rather than committed.
 
 ### Sources, as of the committed build (2026-08-05)
 
@@ -68,31 +271,31 @@ The extract JSONLs and the `.osm.pbf` files are build inputs under
 | OpenStreetMap   | Geofabrik `japan-latest.osm.pbf`                   | ODbL                | 183,999 |
 | Overture Places | `poi.db` spatial layer, vintage `2026-05-20.0`     | CDLA-Permissive-2.0 | 9,219   |
 
-**The ODbL question, unchanged from wave 1 and still open for the slice.** The committed artifact
+**The ODbL question, unchanged from wave 1 and still open for the recipe output.** The committed artifact
 contains no OSM geometry and no OSM row. What survives the OSM leg is surface COUNTS — that the token
 `ターミナル` appears in 1,215 Japanese feature names — plus the `identifierShapes` distribution, whose
 `examples` are gate reference strings (`B32`, `1A`, `16-18`). Facts and short factual strings are not
 a substantial extraction from a database, so this table is not treated as a Derived Database. That
-reading matches `osm/README.md`'s posture that the ODbL obligation rides on the built slice rather
-than on code. **A corpus slice built from OSM rows IS a derived work, and that question is still not
-settled** — it gates step 4, not this table.
+reading matches `osm/README.md`'s posture that the ODbL obligation rides on the built recipe output
+rather than on code. **A corpus recipe output built from OSM rows IS a derived work, and that question is still not
+settled** — it gates step 4 rather than this table.
 
 ### What the sources are FOR, and what each cannot do
 
 Overture and OSM fail differently, which is why both are read.
 
 - **Overture (`poi.db`)** is curated venue-interior naming. `concourse` appears 35 times in its
-  `airport_terminal` slice against 4 in the whole Great Britain OSM extract, and 3 of those 4 are a
+  `airport_terminal` category against 4 in the whole Great Britain OSM extract, and 3 of those 4 are a
   street called CONCOURSE WAY. **But poi.db is four countries** — US 11,521,612 / CA 794,418 /
   FR 721,352 / MX 644,316, and nothing else (measured 2026-08-05). It can attest en-US, en-CA, fr-FR
-  and es-MX and nothing else, so a zero count in it is evidence of absence in four countries, not in
+  and es-MX and nothing else, so a zero count in it is evidence of absence in four countries rather than in
   the world.
 - **OSM** reaches any region with a Geofabrik extract, and carries the `name:<lang>` family, which is
   where every non-Latin surface in this table comes from. What it does not carry is a curated notion
   of "interior": 3,204 of Great Britain's 3,273 `hall` hits sit on a `public_transport=platform`,
   because a British bus stop is named after the village hall it stands outside.
 
-The Overture category set is measured, not guessed. A full scan of all 13,681,698 rows counted, per
+The Overture category set is measured rather than guessed. A full scan of all 13,681,698 rows counted, per
 category, how many named rows carry a designator token; the ranking is not what a category name
 predicts. `gas_station` leads the entire table with 12,996 hits, every one of them `station` inside
 "Holiday Station" or "Chevron Station Seward", and `shoe_store` contributes 708 hits of `wing` because
@@ -112,7 +315,7 @@ and a `hall` on a terminal is a hall.
 
 ### Head nouns: what the curation pass needed before it could start
 
-Wikidata gives the ENCYCLOPAEDIC name of a concept, not the designator as addressed. Q849706's
+Wikidata gives the ENCYCLOPAEDIC name of a concept rather than the designator as addressed. Q849706's
 Spanish label is `terminal aeroportuaria`; the form on an envelope is `Terminal`. That is why wave 1
 shipped 1,014 uncurated surfaces and could promote none of them — there was nothing promotable in the
 table. Two derivations run before the harvest:
@@ -189,9 +392,9 @@ list.
 
 **A rejection of a SHIPPED designator is advisory.** `neural/venue-structure.ts` carries a flat
 English vocabulary with no locale gate, and `wing`, `terminal` and `concourse` are in it. This table
-cannot un-ship them: the `wing` / en-US rejection tells a slice author which locale to leave out of a
+cannot un-ship them: the `wing` / en-US rejection tells a recipe author which locale to leave out of a
 generated line, and it does nothing to stop the span proposer firing on "Red Wing". Giving the shipped
-vocabulary a per-locale gate is step 4's problem, and it is the single largest thing the slice will
+vocabulary a per-locale gate is step 4's problem, and it is the single largest thing the recipe will
 want that does not exist yet.
 
 The mechanism does hold for anything the lexicon adds. `pier` is promoted for en-GB and rejected for
@@ -200,10 +403,10 @@ en-US, and because it is not in the shipped list, the rejection has teeth: the r
 
 ### Identifier shapes are per-region now
 
-`Gate A12` is a rendering, not a string anyone wrote down: all 658 Great Britain `aeroway=gate`
+`Gate A12` is a rendering rather than a string anyone wrote down: all 658 Great Britain `aeroway=gate`
 features but 13 are unnamed and carry only a `ref`. The table therefore carries a distribution rather
 than a phrase list — and the distribution turns out to differ by country far more than the shared
-vocabulary suggests, so a slice generating `Gate <ref>` for a French address has to sample France's:
+vocabulary suggests, so a recipe generating `Gate <ref>` for a French address has to sample France's:
 
 | region | gate refs | most common shape      |           second | third           |
 | ------ | --------: | ---------------------- | ---------------: | --------------- |
@@ -224,4 +427,4 @@ produces a plausible string that is wrong about Spain.
 lists are re-declared in `sub-venue-lexicon.ts`. That is a drift surface, and
 `sub-venue-lexicon.test.ts` pins both lists literally so a change in either place fails a test rather
 than passing silently. The right move is still the reverse direction: have `neural/venue-structure.ts`
-read a committed lexicon slice and delete both copies.
+read a committed lexicon extract and delete both copies.

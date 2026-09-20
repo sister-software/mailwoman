@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `computeQueryShape` must stay LINEAR in input size.
+ *   `computeQueryShape` must stay linear in input size.
  *
  *   Every parse pays this stage before the model is touched, and its inputs (tokens, segments) both grow with
  *   input length — so any routine that pairs them is quadratic, and a 1 MB query costs minutes instead of
  *   milliseconds. `region-abbreviations.ts` is the one that has to walk both.
  *
  *   No correctness test can catch that: a quadratic and a linear implementation return identical results, so
- *   only the growth CURVE distinguishes them. Hence a ratio assertion, and hence a ratio rather than a
+ *   only the growth curve distinguishes them. Hence a ratio assertion, and hence a ratio rather than a
  *   millisecond budget — pinning absolute time makes a timing test a CI flake, while the ratio is the thing a
- *   complexity regression actually changes. Quadratic doubles to ~4x, linear to ~2x; the 3x threshold sits
+ *   complexity regression actually changes. Quadratic doubles to ~4x, linear to ~2x. the 3x threshold sits
  *   clear of a loaded runner without letting the real failure through.
  */
 
@@ -44,7 +44,7 @@ function timeAt(input: string): number {
 }
 
 /**
- * Sample both sizes INTERLEAVED (small, large, small, large, …) rather than all-small-then-all-large: runner load and
+ * Sample both sizes interleaved (small, large, small, large, …) rather than all-small-then-all-large: runner load and
  * thermal state drift over the test's lifetime, and a block design hands the drift entirely to one side of the ratio.
  * Interleaving gives both sizes an equal draw from every load regime, so the two minimums are comparable.
  */
@@ -72,7 +72,7 @@ test("computeQueryShape stays linear as segment count doubles", () => {
 	const { small, large } = bestOfBoth(4000, 8000)
 	const ratio = large / Math.max(small, 0.001)
 
-	// 3.5, not 3: the 3x bar produced two false failures on loaded CI runners on 2026-08-05 (measured
+	// 3.5 rather than 3: the 3x bar produced two false failures on loaded CI runners on 2026-08-05 (measured
 	// 3.13x, 15.3ms -> 48.0ms, best-of-three block design). Quadratic doubles to ~4x at these sizes —
 	// fixed overhead is <1ms against 15ms+ samples — so 3.5 still separates the real failure from a
 	// noisy neighbour.

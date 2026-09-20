@@ -2,24 +2,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `release.config.json`'s `weights` + `softFeed` blocks, resolved to absolute paths — the ONE reader of
+ *   `release.config.json`'s `weights` + `softFeed` blocks, resolved to absolute paths — the one reader of
  *   the dev/release weights recipe.
  *
  *   This file exists because the recipe had three homes. `release.config.json` names the artifacts and
- *   carries the reasoning in `lineage`; `copy-weights.ts` reads it for the release; and ten
+ *   carries the reasoning in `lineage`. `copy-weights.ts` reads it for the release. and ten
  *   each `neural-weights-<locale>` overlay's `scripts/link-dev-weights.ts` hardcoded a byte-identical copy of the
  *   same two paths for dev. The en-us copy's own docstring records what that cost:
  *
- *   > Bump this path, model-card.json `files_md5`, and release.config.json `weights.model` in LOCKSTEP on
+ *   > Bump this path, model-card.json `files_md5`, and release.config.json `weights.model` in lockstep on
  *   > each ship — the 9.0.0 release moved only release.config, which left this default and the card's md5
  *   > record on the prior base for a full release cycle.
  *
  *   Three legs, one of them pure duplication. This is the leg that goes.
  *
- *   THE BASE DIRECTORY IS PER KEY, and that is the trap this module exists to hold in one place. The model
- *   and tokenizer resolve against the DATA ROOT; three of the four lexicons resolve against the REPO
- *   (they are generated, committed files); `localitySurfaceLexicon` resolves against the DATA ROOT because
- *   it is built, not committed; and the postcode databases resolve against the data root's `wof/`. Nothing
+ *   the base directory is PER KEY, and that is the trap this module exists to hold in one place. The model
+ *   and tokenizer resolve against the data root. three of the four lexicons resolve against the repo
+ *   (they are generated, committed files); `localitySurfaceLexicon` resolves against the data root because
+ *   it is built rather than committed. and the postcode databases resolve against the data root's `wof/`. Nothing
  *   in the JSON marks which is which, so a reader that guessed one rule would silently resolve four of
  *   seven artifact classes to paths that do not exist — and every one of them degrades to `undefined`
  *   rather than failing.
@@ -31,9 +31,9 @@ import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 /**
  * A file the recipe names that can be materialized by copying or linking it.
  *
- * `shippedName` is the filename the artifact must carry in a weights directory — NOT its source basename. They differ,
- * and the difference is the contract: `resolveFromPackageDir` finds siblings by fixed name, so an artifact placed under
- * its source name resolves to nothing and reports absence rather than failing.
+ * `shippedName` is the filename the artifact must carry in a weights directory — not its source basename. They differ,
+ * and the difference is the interface: `resolveFromPackageDir` finds siblings by fixed name, so an artifact placed
+ * under its source name resolves to nothing and reports absence rather than failing.
  */
 export interface LinkableArtifact {
 	shippedName: string
@@ -41,13 +41,13 @@ export interface LinkableArtifact {
 }
 
 /**
- * An artifact the recipe names that must be BUILT, not copied — the source entry is a build INPUT.
+ * An artifact the recipe names that must be built rather than copied — the source entry is a build input.
  *
- * Kept in a separate type on purpose. `softFeed.postcodeDBByCountry[cc]` names a WOF postcode EXTRACT
+ * Kept in a separate type on purpose. `softFeed.postcodeDBByCountry[cc]` names a WOF postcode extract
  * (`postalcode-gb.db`) from which `mailwoman gazetteer postcode-binary` produces `postcode-gb.bin`;
  * `pairIndexByCountry[cc]` names a tuples CSV behind `pair-index-<cc>.bin`. A consumer that treated either as linkable
  * would place a database where the resolver expects a binary — and since every sibling degrades `existsSync →
- * undefined`, the resolver would then report the artifact ABSENT rather than wrong, which is the harder failure to
+ * undefined`, the resolver would then report the artifact as missing rather than wrong, which is the harder failure to
  * see.
  */
 export interface BuildableArtifact {
@@ -71,7 +71,7 @@ export interface WeightsRecipe {
 	softFeed: SoftFeedRecipe
 	/**
 	 * Files this recipe names for a locale. Absent entries are simply omitted — a release that ships without a channel is
-	 * a supported lean install, not an error.
+	 * a supported lean install rather than an error.
 	 */
 	linkableFor: (locale: string) => LinkableArtifact[]
 	/**
@@ -99,7 +99,7 @@ export async function readWeightsRecipe(
 	const model = overrides.model ?? resolvePath(dataRoot, config.weights.model)
 	const tokenizer = overrides.tokenizer ?? resolvePath(dataRoot, config.weights.tokenizer)
 
-	// `copy-weights.ts` lets an absolute config entry pass through; matching that here keeps the two readers
+	// `copy-weights.ts` lets an absolute config entry pass through. matching that here keeps the two readers
 	// from disagreeing about what a leading slash means.
 	const underDataRoot = (rel: string, ...segments: string[]): string =>
 		rel.startsWith("/") ? rel : resolvePath(dataRoot, ...segments, rel)
@@ -110,12 +110,12 @@ export async function readWeightsRecipe(
 			{ shippedName: "tokenizer.model", sourcePath: tokenizer },
 		]
 
-		// Repo-relative: generated and COMMITTED, so they travel with the checkout.
+		// Repo-relative: generated and committed, so they travel with the checkout.
 		for (const [shippedName, sourcePath] of repoCommittedSoftFeedSources(repoRoot, softFeed)) {
 			out.push({ shippedName, sourcePath })
 		}
 
-		// Data-root-relative: BUILT, ~7 MB, never in git. The asymmetry with the three above is the reason this
+		// Data-root-relative: built, ~7 MB, never in git. The asymmetry with the three above is the reason this
 		// module exists rather than a `resolve(base, rel)` at each call site.
 		if (softFeed.localitySurfaceLexicon) {
 			out.push({
@@ -124,9 +124,9 @@ export async function readWeightsRecipe(
 			})
 		}
 
-		// The FSTs are DEV-ONLY: `release.config.json` does not name them and `copy-weights.ts` does not ship
+		// The FSTs are DEV-only: `release.config.json` does not name them and `copy-weights.ts` does not ship
 		// them, so they exist in a weights directory only because a dev linker put them there. Their absence is
-		// therefore not a lean install — it silently resolves the gazetteer and street-context priors OFF, which
+		// therefore not a lean install — it silently resolves the gazetteer and street-context priors off, which
 		// is a scoring change with no error. Named here so one reader knows the whole dev set.
 		out.push(
 			{
@@ -158,12 +158,12 @@ export async function readWeightsRecipe(
 			})
 		}
 
-		// PRESENCE, not a path. The pair-index entries are heterogeneous — `gb` names a `source`, `us` names only a
+		// presence rather than a path. The pair-index entries are heterogeneous — `gb` names a `source`, `us` names only a
 		// `boroughDB`, and every country carries its own `delta` / `transitionBeta` / `parentDelta` tuning — and the
 		// build that reads them is `buildPairIndexOverlay` in `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`,
 		// which each overlay's link script already calls with its own measured parameters. Modelling one input path
 		// here was a guess: an earlier draft read a `db` key that no entry has, so this returned nothing for all eight
-		// countries and the artifact silently never appeared as buildable. Report that a build is OWED and leave the
+		// countries and the artifact silently never appeared as buildable. Report that a build is owed and leave the
 		// build where it lives.
 		if (softFeed.pairIndexByCountry?.[country]) {
 			out.push({

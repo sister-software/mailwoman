@@ -19,16 +19,16 @@
  *        `I-<tag>`; no overlap → `O`.
  *   5. Emit the located char spans verbatim as `span_starts[]` / `span_ends[]` / `span_tags[]` (the
  *        v0.5.0 char-offset format, #519). The token quantization in step 4 is the part the v0.5.0
- *        rebuild deletes; during the transition both representations ride on every labeled row.
+ *        rebuild deletes. during the transition both representations ride on every labeled row.
  *
  *   Structural invariants the function preserves (the span ones loudly — a violation throws rather
- *   than quarantines, because it indicates a bug here, not bad source data):
+ *   than quarantines, because it indicates a bug here rather than bad source data):
  *
  *   - `tokens.length === labels.length` always.
  *   - Each component contributes at most one contiguous BIO run (no `B-tag … O … I-tag` gaps). This is
  *       enforced by greedy first-match span assignment + ordered token iteration.
  *   - The span triple is sorted ascending by start and non-overlapping.
- *   - `raw` is NFC-normalized (asserted per row; a non-NFC raw makes char offsets ambiguous downstream
+ *   - `raw` is NFC-normalized (asserted per row. a non-NFC raw makes char offsets ambiguous downstream
  *       — NFD `é` occupies two code units where NFC `é` occupies one — and silently so).
  */
 
@@ -57,7 +57,7 @@ export interface AlignOptions {
 	maxEditDistance?: number
 
 	/**
-	 * Case-insensitive comparison for substring search. Default `true`. The retained span in `raw` is the original case;
+	 * Case-insensitive comparison for substring search. Default `true`. The retained span in `raw` is the original case.
 	 * only matching is case-insensitive.
 	 */
 	caseInsensitive?: boolean
@@ -92,7 +92,7 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 
 	// #519 NFC handling — relaxed from a hard throw to normalization (2026-06-12, DeepSeek-validated):
 	// one non-NFC row (e.g. a non-Latin name variant like "দক্ষিণ কোরিয়া") must not crash a multi-hour
-	// build. Normalize `raw` AND every component value to NFC, compute spans over the NFC raw, and
+	// build. Normalize `raw` and every component value to NFC, compute spans over the NFC raw, and
 	// store the NFC raw — preserving the #519 single-normalization-form principle while keeping the row.
 	const raw = row.raw.normalize("NFC")
 	const components = { ...row.components }
@@ -112,7 +112,7 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 
 	// Longest value first: a short component must not claim a word that a longer, more specific
 	// component owns ("Alaska Regional Dr, Alaska" — region "Alaska" stealing the street's first
-	// word quarantined the street; pilot2's residual class). Emit order is unaffected — spans are
+	// word quarantined the street. pilot2's residual class). Emit order is unaffected — spans are
 	// re-sorted by start below.
 	const entries = (Object.entries(components) as Array<[ComponentTag, string | undefined]>).toSorted(
 		(a, b) => (b[1]?.length ?? 0) - (a[1]?.length ?? 0)
@@ -136,7 +136,7 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 		// yielding a span past the end. An out-of-bounds offset can never be a valid char span —
 		// quarantine the row rather than crash assertSpanInvariants and take down a multi-hour build.
 		// (If this class proves large in the quarantine report, locateSpan's boundary logic needs a
-		// combining-mark fix to KEEP these non-Latin rows.)
+		// combining-mark fix to keep these non-Latin rows.)
 		if (span.start < 0 || span.end > raw.length || span.start >= span.end) {
 			return {
 				kind: "quarantined",
@@ -160,7 +160,7 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 		tokens: tokens.map((t) => t.text),
 		labels,
 		// The v0.5.0 char-offset triple (#519): the located spans, emitted verbatim. The token
-		// quantization above is what the rebuild deletes; both ride during the transition.
+		// quantization above is what the rebuild deletes. both ride during the transition.
 		span_starts: componentSpans.map((s) => s.start),
 		span_ends: componentSpans.map((s) => s.end),
 		span_tags: componentSpans.map((s) => s.tag),
@@ -173,8 +173,8 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
  * Enforce the #519 span-triple invariants — in-bounds, sorted ascending by start, non-overlapping — loudly.
  *
  * For `alignRow`: `claimed`-span bookkeeping in `locateSpan` already makes overlap impossible and the caller sorts, so
- * a violation here is a bug in this file, not bad source data: throw (naming the row) rather than quarantine, so the
- * corruption can't ride into a corpus. Exported for every OTHER span producer (`composeAdversarialRow`'s offset
+ * a violation here is a bug in this file rather than bad source data: throw (naming the row) rather than quarantine, so
+ * the corruption can't ride into a corpus. Exported for every other span producer (`composeAdversarialRow`'s offset
  * arithmetic, future synthesis paths) — any code that emits the triple without going through `alignRow` must pass its
  * output through this.
  */
@@ -229,9 +229,9 @@ function locateSpan(args: {
 
 	if (!needle.length) return undefined
 
-	// Pass 1: verbatim substring. Word-boundary-aligned matches are PREFERRED over intra-word ones
+	// Pass 1: verbatim substring. Word-boundary-aligned matches are preferred over intra-word ones
 	// — leftmost-substring alone let a short value claim the inside of an earlier word (region "AK"
-	// matched inside "Umak"/"Lake", scrambling every later span; caught by the v0.5.0 pilot build).
+	// matched inside "Umak"/"Lake", scrambling every later span. caught by the v0.5.0 pilot build).
 	// Intra-word matches stay allowed as the fallback because they are essential for affix
 	// supervision (street_suffix "straße" inside "Hauptstraße" has no boundary-aligned occurrence —
 	// sub-word spans are the point of the char-offset format).
@@ -294,8 +294,8 @@ function overlapsClaimed(start: number, end: number, claimed: Array<[number, num
 }
 
 /**
- * Assign BIO labels to tokens given the component spans. Components MUST be sorted by start offset. For each token,
- * find the first component span that contains the token's start offset; if the token is the first one inside that span
+ * Assign BIO labels to tokens given the component spans. Components must be sorted by start offset. For each token,
+ * find the first component span that contains the token's start offset. if the token is the first one inside that span
  * emit `B-<tag>`, else `I-<tag>`.
  */
 function labelTokens(tokens: readonly TokenSpan[], spans: readonly ComponentSpan[]): readonly BIOLabel[] {

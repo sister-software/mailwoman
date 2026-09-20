@@ -11,7 +11,7 @@ description: Autonomous overnight engineering shift workflow for mailwoman. Enco
 - The session likely involves: launching one or more Modal training runs, shipping models to HF, updating the demo, writing docs.
 - The operator is offline or asleep — decisions must be made without their input.
 
-## When NOT to use
+## When not to use
 
 - Operator is actively at the keyboard. Use normal collaboration mode.
 - Single-task sessions (one fix, one PR) — too much overhead.
@@ -66,7 +66,7 @@ find the earlier draft repository /home/lab/Projects/mailwoman \
 If a match exists, **import it** (and adjust as needed) rather than re-derive.
 The operator has called this out twice; the cost of forgetting is a polite but
 firm "I warned you about recreating existing work." Salvage-first is part of
-pre-flight, not an optional optimization.
+pre-flight rather than an optional optimization.
 
 ### Sub-agent briefs carry the same check
 
@@ -101,9 +101,9 @@ the next copy is reported at commit time instead of at review.
 | Demo presets (6-11 addresses)         | Local        | Trivially small                                               |
 | File edits, git operations            | Local        | Network-bound regardless                                      |
 | Build script development + tests      | Local        | Iteration speed                                               |
-| Single-file parquet builds (<1M rows) | Local        | Bound by Python parquet, not GPU                              |
+| Single-file parquet builds (<1M rows) | Local        | Bound by Python parquet rather than GPU                       |
 
-**Heat rule:** in summer (May–September) or when the lab `sensors` reports any core ≥85°C, treat ALL "either-place" work as Modal-first.
+**Heat rule:** in summer (May–September) or when the lab `sensors` reports any core ≥85°C, treat all "either-place" work as Modal-first.
 
 **Modal pyc cache failure mode:** `export_onnx` can fail with stale label dict imports after a `labels.py` change, even after `modal volume put --force`. Workaround: clear cache before invoking:
 
@@ -119,8 +119,8 @@ When training diverges:
 
 1. **Stop** the app: `modal app stop -y <app-id>`. Don't let it burn GPU on garbage gradients.
 2. **Capture** the divergence point: which step, what loss trajectory, what config differed from a known-good run.
-3. **Diagnose ONE knob.** Never adjust two variables simultaneously — you lose attribution.
-4. **Document** the hypothesis in the config YAML as a comment, not the commit message alone. The next iteration needs to see what's already been tried.
+3. **Diagnose one knob.** Never adjust two variables simultaneously — you lose attribution.
+4. **Document** the hypothesis in the config YAML as a comment rather than the commit message alone. The next iteration needs to see what's already been tried.
 5. **Retry.** If it diverges again with the same root, escalate: drop the feature entirely (CE-only fallback) or schedule a deeper investigation as a separate issue.
 
 **Known constraints (bf16 CRF):**
@@ -131,7 +131,7 @@ When training diverges:
 ## Diagnostic before fix
 
 When a run regresses or a tag underperforms, the next action is **the cheapest
-experiment that could falsify your hypothesis** — not a code change, not a
+experiment that could falsify your hypothesis** — not a code change rather than a
 structural retrain. The pattern that adjudicated the consolidation affix fork
 (the PR #468 diagnostic, below) is the template:
 
@@ -140,7 +140,7 @@ structural retrain. The pattern that adjudicated the consolidation affix fork
    its examples." These imply different fixes; conflating them wastes a full
    training cycle.
 2. **Design a 2k-step probe that distinguishes them.** Resume from the latest
-   checkpoint, change ONE knob in the direction the hypothesis predicts,
+   checkpoint, change one knob in the direction the hypothesis predicts,
    re-evaluate. If the metric moves with the hypothesis → confirmed; if flat →
    the planned fix is wasted compute.
 3. **Run the probe before the fix.** Even 2k steps × A100 is minutes; a
@@ -151,7 +151,7 @@ First instinct was "CRF / feature-channel interference, build choreography to
 zero the gazetteer clue near postcodes" (which became PR #468). The cheap
 diagnostic (resume + raise affix-sampling weight, 2k steps) later showed US
 postcode improved +1.6 with _zero_ postcode-position changes — the regression
-was under-convergence, not interference. **Choreography wasn't essential for
+was under-convergence rather than interference. **Choreography wasn't essential for
 the nail it was built for.** Default-off/byte-stable saved face; the diagnostic
 would have saved the build cycle.
 
@@ -196,7 +196,7 @@ which null run backs it, then pick a row.
 
 **Rule: never `init_from` to continue a run whose capability you are still
 trying to grow.** If you need the checkpoint slot, snapshot the optimizer state
-with the weights and delete the _next_ checkpoint, not the resume target.
+with the weights and delete the _next_ checkpoint rather than the resume target.
 
 ## Pre-publish eval
 
@@ -205,7 +205,7 @@ analysis below, run `mwdev_arc` — self-control, then null, then candidate. It 
 to attribute a result when the shipped model disagrees with itself, and it subtracts
 the fine-tune's own row loss rather than attributing it to the change under test. The protocol and its rationale
 are the `training-arc` skill; the eval floors are the `eval-model` skill. Neither is
-optional, and the per-tag check below is in addition to them, not instead.
+optional, and the per-tag check below is in addition to them rather than instead.
 
 ### Per-tag error analysis
 
@@ -226,8 +226,7 @@ The 2pp threshold catches the regressions that matter without blocking on noise.
 
 ### No silent eval drift
 
-The 2pp pre-publish eval measures against **canonical floors from the config**,
-not against whatever table happens to be in the current postmortem. Any
+The 2pp pre-publish eval measures against **canonical floors from the config** rather than against whatever table happens to be in the current postmortem. Any
 relaxation lives in a separate, explicit "eval-revision" note with a stated
 reason; the table in the doc cites the config bars verbatim above any
 scorecard.
@@ -257,7 +256,7 @@ lowering the bar in the table.
 
 ## Idle-time policy
 
-**Between training launches, work the backlog. Do NOT only schedule wakeups and wait.**
+**Between training launches, work the backlog. Do not only schedule wakeups and wait.**
 
 Scheduled wakeups (`ScheduleWakeup`) are correct for _monitoring signals_: training step counter, CI status flip, external job completion. They are wrong for "check back later in case something happened."
 
@@ -268,9 +267,9 @@ When training is running:
 | First training of session | Build the next iteration's config + corpus recipe files                |
 | Second training           | Address backlog issues (#-labeled GitHub items with empirical context) |
 | Final training            | Draft the shift report, update docs, prep ship pipeline                |
-| All training done         | Continue with backlog OR launch the next iteration                     |
+| All training done         | Continue with backlog or launch the next iteration                     |
 
-**The shift was a success when:** all primary goals shipped AND the buffer time produced 1-2 backlog items closed OR 1-2 additional iterations launched. Idle time is waste.
+**The shift was a success when:** all primary goals shipped and the buffer time produced 1-2 backlog items closed or 1-2 additional iterations launched. Idle time is waste.
 
 ## Commit hygiene
 
@@ -316,20 +315,20 @@ Numbers table at the end: shift duration, models trained, total Modal time, loca
 ### Ship discipline
 
 - Default to **don't ship** for any artifact you'd be uncomfortable demoing to a hostile interviewer.
-- "Experimental" labels are a privilege, not a fallback. Use them when results warrant inspection (mixed signal, A/B-able), not as cover for "I uploaded too fast."
+- "Experimental" labels are a privilege rather than a fallback. Use them when results warrant inspection (mixed signal, A/B-able) rather than as cover for "I uploaded too fast."
 
 ### Iteration discipline
 
-- A model change that costs 4h of GPU and 30min of human attention should produce ONE before/after table covering 5+ tags. If you can't articulate what you expect to change before the run, don't launch.
-- If a run produces an unexpected result (good OR bad), pause for 10 minutes to write up the surprise before launching the follow-up. Surprises lose information if you don't capture them while fresh.
+- A model change that costs 4h of GPU and 30min of human attention should produce one before/after table covering 5+ tags. If you can't articulate what you expect to change before the run, don't launch.
+- If a run produces an unexpected result (good or bad), pause for 10 minutes to write up the surprise before launching the follow-up. Surprises lose information if you don't capture them while fresh.
 
 ### Treadmill guard (codified)
 
-Two opposite-direction failures on consecutive iterations = **fork, not a
+Two opposite-direction failures on consecutive iterations = **fork rather than a
 branch**. Stop, name the fork, consult; do not run a third recipe variant
 solo. The pattern: iteration N pushes knob K up to fix tag A and hurts tag B;
 iteration N+1 pushes K down to fix B and re-hurts A. That's a capacity or
-stability constraint, not a tuning problem, and no further K-only iteration
+stability constraint rather than a tuning problem, and no further K-only iteration
 will resolve it.
 
 The consolidation arc hit this exactly at Run C (high density → transient
@@ -341,12 +340,12 @@ affix peak + FR-region collapse; moderate density → stable ~65 affix ceiling
 
 ### Time budget discipline
 
-- A 9h shift is 9h of capacity, not 9h × (work duration). If you finish primary goals at 60% time, the remaining 40% is bonus iterations or backlog, not waiting.
-- Watch for "I'm being conservative" framing applied to "I'm being idle." Conservatism means _picking a smaller scope_, not _doing less of the chosen scope_.
+- A 9h shift is 9h of capacity rather than 9h × (work duration). If you finish primary goals at 60% time, the remaining 40% is bonus iterations or backlog rather than waiting.
+- Watch for "I'm being conservative" framing applied to "I'm being idle." Conservatism means _picking a smaller scope_ rather than _doing less of the chosen scope_.
 
 ## Operator handoff format
 
-At the very end of an autonomous shift, send the operator a chat-friendly summary (not a commit link alone). **Order matters — lead with what the operator needs to act on, not with what shipped.**
+At the very end of an autonomous shift, send the operator a chat-friendly summary (not a commit link alone). **Order matters — lead with what the operator needs to act on rather than with what shipped.**
 
 1. **Anything that needs eyes-on, in priority order** — merge wall, decision deferred, regression to review, open NaN mystery. This is what gets read first; everything below is context.
 2. **What changed in production** — HF defaults, demo version, npm tags. Empty is fine; say so.

@@ -29,7 +29,7 @@ export type { FileHandle } from "node:fs/promises"
  * @param byteSize How many bytes to read. Defaults to 65,536, which is enough to sniff a file's format.
  *
  * @returns The bytes read, as a UTF-8 string.
- * @throws ENOENT when the file does not exist.
+ * @throws Enoent when the file does not exist.
  */
 export async function readFileHead(path: PathBuilderLike, byteSize: number): Promise<string> {
 	// `try`/`finally` rather than `await using`: this module is on the Docusaurus config loader's import path, and its
@@ -55,7 +55,7 @@ export async function readFileHead(path: PathBuilderLike, byteSize: number): Pro
  *
  * Answers what it actually read, which is shorter than `length` at end of file.
  *
- * @throws ENOENT when the file does not exist.
+ * @throws Enoent when the file does not exist.
  */
 export async function readFileRange(path: PathBuilderLike, offset: number, length: number): Promise<Buffer> {
 	const handle = await open(path.toString(), "r")

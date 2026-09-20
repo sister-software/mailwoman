@@ -7,7 +7,7 @@
  *   The US analog is `us/state.ts`. The informative difference: a US state's two-letter code (`CA`)
  *   is the USPS abbreviation people actually write in an address, whereas a German address almost
  *   never carries the Bundesland at all — it is `PLZ City`, and the state is inferred. So these
- *   codes matter for resolver region-matching and display, not for parsing the surface string.
+ *   codes matter for resolver region-matching and display rather than for parsing the surface string.
  */
 
 /**
@@ -52,7 +52,7 @@ export const DE_BUNDESLAENDER = {
 } as const satisfies Record<string, GermanStateInfo>
 
 /**
- * An ISO 3166-2:DE state code (`BW`, `BY`, `BE`, …).
+ * An ISO 3166-2:DE state code (`BW`, `BY`, `be`, …).
  */
 export type GermanStateCode = keyof typeof DE_BUNDESLAENDER
 

@@ -5,7 +5,7 @@ title: Tokenizer A0 — baseline
 
 # Tokenizer A0 — baseline
 
-The v0.5.0 plan ([`PHASE_8 §A`](../phases/PHASE_8_v0_5_0_fresh_slate.mdx)) splits the tokenizer retrain into two steps:
+The v0.5.0 plan ([`PHASE_8 §A`](../../records/plan/phases/PHASE_8_v0_5_0_fresh_slate.mdx)) splits the tokenizer retrain into two steps:
 
 - **A0** trains on `corpus-v0.3.0` (the existing en-US + fr-FR corpus, no transliterations) using the new SentencePiece harness. Its purpose is to validate the harness and measure a byte-fallback **baseline** before the new synthetic data lands.
 - **A1** retrains on `corpus-v0.4.0` (= v0.3.0 + Thread B kryptonite + Thread B2 transliteration). Its purpose is to hit the plan's `< 5%` byte-fallback target on non-Latin scripts.
@@ -47,7 +47,7 @@ Eval fixture: 43 hand-curated lines covering CJK / Cyrillic / Armenian / Greek /
 
 The v0.1.0 tokenizer was trained on a corpus that included **Who's On First admin-name variants**. WOF ships place names in dozens of scripts — Tokyo appears as `Tokyo` _and_ `東京` _and_ `Tōkyō` _and_ in Cyrillic transliteration, all in the same admin record. Mailwoman v0.1.0's training pipeline pulled these admin records to populate Stage 6 lookups, and the tokenizer training scanned the same data.
 
-The result: v0.1.0's byte-fallback rate on Cyrillic / Armenian / Greek / Arabic / Hebrew / Devanagari was effectively zero, not because the corpus had real coverage of those scripts but because **the place-name admin variants accidentally taught the tokenizer enough sub-pieces to avoid byte-fallback on a small evaluation slice**.
+The result: v0.1.0's byte-fallback rate on Cyrillic / Armenian / Greek / Arabic / Hebrew / Devanagari was effectively zero rather than because the corpus had real coverage of those scripts but because **the place-name admin variants accidentally taught the tokenizer enough sub-pieces to avoid byte-fallback on a small evaluation set**.
 
 When we moved to `corpus-v0.3.0` (US DOT NAD + WOF postalcode + cleaner US/FR address rows), those incidental admin-name variants stopped being in the tokenizer training set. A0 — trained on the same en-US + fr-FR mass without the WOF admin leakage — has effectively no non-Latin coverage. Hence the regressions you see in the table.
 
@@ -69,13 +69,13 @@ A1 retrain is a single re-invocation of the A0 harness against `corpus-v0.4.0` �
 
 Three things:
 
-1. **The harness is validated.** A0 trained end-to-end on real data. Reservoir sampling, the user-defined-symbols normalization step (see [`SP UDS whitespace failure mode`](./sentencepiece-uds-whitespace.mdx) — or, if you are reading on the published docs site, the version in the mailwoman repo at `corpus-python/src/mailwoman_train/tokenizer_train.py`), the model card writer, the byte-fallback eval — every piece worked. A1 has zero new code to write.
+1. **The harness is validated.** A0 trained end-to-end on real data. Reservoir sampling, the user-defined-symbols normalization step (see [`SP UDS whitespace failure mode`](./sentencepiece-uds-whitespace.mdx) — or, if you are reading on the published docs site, the version in the mailwoman repo at `corpus-python/src/mailwoman_train/tokenizer/uds.py`), the model card writer, the byte-fallback eval — every piece worked. A1 has zero new code to write.
 2. **The eval fixture is validated.** 43 hand-curated multi-script lines is small but the per-script breakdown is informative enough to tell us _where_ a retrain helped vs hurt. Future tokenizer iterations will use the same fixture and the same harness, so A0 / A1 / A2 numbers will be directly comparable.
 3. **The user-defined-symbols list is validated.** A0 has 2,110 UDS — US state codes, country abbreviations, postcode literal patterns (`5-digit ZIP`, `5-4 ZIP+4`, UK alphanumeric blocks, JP `100-0005`). The A0 harness substitutes ASCII space → U+2581 internally so SP's normalization does not silently disable the UDS (the [SP UDS whitespace failure mode](./sentencepiece-uds-whitespace.mdx)). That substitution has held across every A-series harness run.
 
 ## Model card schema
 
-A0's `model_card.json` is the contract for every future tokenizer. It carries:
+A0's `model_card.json` is the interface for every future tokenizer. It carries:
 
 ```json
 {
@@ -104,7 +104,7 @@ A0's `model_card.json` is the contract for every future tokenizer. It carries:
 
 ## See also
 
-- [PHASE_8 §A](../phases/PHASE_8_v0_5_0_fresh_slate.mdx#a-tokenizer-retrain--multi-script--adversarial-coverage) — the plan's tokenizer scope
-- [Tokenization](../../concepts/tokenization.mdx) — what SentencePiece does and why byte-fallback matters
-- [v0.5.0 — as shipped](../v0-5-0-shipped.mdx) — where A0 fits in the six-thread bundle
+- [PHASE_8 §A](../../records/plan/phases/PHASE_8_v0_5_0_fresh_slate.mdx#a-tokenizer-retrain--multi-script--adversarial-coverage) — the plan's tokenizer scope
+- [Tokenization](../../records/site-2026-08/concepts/tokenization.mdx) — what SentencePiece does and why byte-fallback matters
+- [v0.5.0 — as shipped](../../records/plan/v0-5-0-shipped.mdx) — where A0 fits in the six-thread bundle
 - [`CORPUS_V0_4_0_GENERATION.md`](./CORPUS_V0_4_0_GENERATION.mdx) — how the corpus A1 will train on is being assembled

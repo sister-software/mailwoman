@@ -43,9 +43,9 @@ const TX_INTERPOLATION_DB = dataRootPath("interpolation", "interpolation-us-tx.d
 /**
  * Wall-clock budget for a CLI spawn.
  *
- * The old 10 s was set against an imagined fast path. Measured 2026-08-03 on an idle 16-core box, ONE `mailwoman
+ * The old 10 s was set against an imagined fast path. Measured 2026-08-03 on an idle 16-core box, one `mailwoman
  * geocode` takes 5.62 s end to end — 2.73 s of it node boot plus this CLI's import graph, before any model is touched —
- * so the margin was 1.8x. Eight concurrent spawns reach 8.75 s, 87% of the old budget, and vitest runs test FILES in
+ * so the margin was 1.8x. Eight concurrent spawns reach 8.75 s, 87% of the old budget, and vitest runs test files in
  * parallel. That is why these "flaked": not randomness, a deterministic threshold sitting just under a floor nobody had
  * measured. A generous budget costs nothing on a passing test.
  */
@@ -89,7 +89,7 @@ describe("geocode argument validation", () => {
 			await withCLISpawnLockAsync(() =>
 				runFile(process.execPath, [CLI_PATH, "geocode"], {
 					encoding: "utf8",
-					// Set a bogus WOF path so the command fails on arg validation, not on missing DB.
+					// Set a bogus WOF path so the command fails on arg validation rather than on missing DB.
 					env: childEnv({ MAILWOMAN_WOF_DB: "/nonexistent/wof.db" }),
 					timeout: CLI_SPAWN_TIMEOUT_MS,
 				})
@@ -132,7 +132,7 @@ describe("geocode argument validation", () => {
 			output = (execErr.stdout ?? "") + (execErr.stderr ?? "")
 		}
 
-		// Rejected BEFORE any database or weights work, so this test needs neither.
+		// Rejected before any database or weights work, so this test needs neither.
 		expect(output).toMatch(/Pick one output format/)
 	})
 
@@ -170,9 +170,9 @@ describe("geocode argument validation", () => {
 			await withCLISpawnLockAsync(() =>
 				runFile(process.execPath, [CLI_PATH, "geocode", "123 Main St, Anytown, TX 78000"], {
 					encoding: "utf8",
-					// Unset the env var AND point the data root at an empty dir: since the proximity-bias
+					// Unset the env var and point the data root at an empty dir: since the proximity-bias
 					// pass, geocode auto-attaches the wofExtractPaths default set when the env is absent —
-					// on a standard data root that now SUCCEEDS (the new contract). The error contract
+					// on a standard data root that now succeeds (the new interface). The error interface
 					// only survives when no default database exists either.
 					env: childEnv({ MAILWOMAN_WOF_DB: undefined, MAILWOMAN_DATA_ROOT: emptyDataRoot }),
 					timeout: CLI_SPAWN_TIMEOUT_MS,
@@ -273,7 +273,7 @@ describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxDatabases)(
 		test("--format=json stdout is machine-parseable even with >80-col lines (Ink wrap regression)", async () => {
 			// "Toledo Ohio" is a route_pair query: its intent_markers[].message is a ~140-char JSON
 			// string. Before writeRawStdout (2026-08-07), Ink's <Text> renderer word-wrapped piped
-			// output at 80 cols, inserting REAL newlines inside the JSON string and breaking
+			// output at 80 cols, inserting real newlines inside the JSON string and breaking
 			// JSON.parse. This test fails against the unfixed CLI.
 			const { stdout } = await withCLISpawnLockAsync(() =>
 				runFile(process.execPath, [CLI_PATH, "geocode", "Toledo Ohio", `--resolve-db=${wofPath}`], {

@@ -5,7 +5,7 @@
 /**
  *   Codex Stop hook: the Codex twin of `vale-response-check.ts`. The lint policy — rule set,
  *   severity split, finding format — lives in `vale-check-core.ts`; this file owns only the Codex
- *   payload shape, the loop guard, and the output JSON. Codex's hook contract
+ *   payload shape, the loop guard, and the output JSON. Codex's hook interface
  *   (https://learn.chatgpt.com/docs/hooks) matches Claude Code's on the parts this hook uses:
  *   `Stop` fires when a turn completes, the payload carries `last_assistant_message`, and the
  *   output is `decision: "block"` + `reason` or the non-blocking `systemMessage`. Codex's
@@ -13,14 +13,14 @@
  *
  *   Two deliberate differences from the Claude adapter:
  *
- *   - Codex has NO `stop_hook_active` field and no built-in loop prevention, so the one-pass guard
+ *   - Codex has no `stop_hook_active` field and no built-in loop prevention, so the one-pass guard
  *     is a session-keyed marker file in the OS temp dir: a block writes the marker, and the next
  *     Stop in that session consumes it and passes unchecked. That approximates Claude's semantics
  *     — the reply after a block goes unlinted whatever produced it — and caps a false positive at
  *     one corrective turn.
  *   - There is no transcript fallback: Codex's `transcript_path` is nullable and its transcript
- *     schema is Codex's own, not the JSONL shape the Claude adapter parses. A missing
- *     `last_assistant_message` here is silence, not a parse attempt.
+ *     schema is Codex's own rather than the jsonl shape the Claude adapter parses. A missing
+ *     `last_assistant_message` here is silence rather than a parse attempt.
  *
  *   Register it in `.codex/hooks.json` under `hooks.Stop`; the command path is repo-relative,
  *   matching how `.codex/config.toml` addresses `packages/dev-mcp/lib/cli/index.ts`.

@@ -4,7 +4,7 @@
 /**
  * @file The `workspace:*` closure of a set of seed packages, computed from the manifests rather than copied into a list,
  *   and the pack step that turns a closure into `file:` tarball dependencies. Both clean-install smokes use these, so a
- *   fix to how a closure is walked or packed lands in one place; the un-awaited pack that broke the get-started harness
+ *   fix to how a closure is walked or packed lands in one place. the un-awaited pack that broke the get-started harness
  *   had been fixed in the release smoke a day earlier because each carried its own copy.
  */
 
@@ -19,7 +19,7 @@ const DEPENDENCY_FIELDS = ["dependencies", "optionalDependencies", "peerDependen
 /**
  * Every workspace the root `workspaces` field names, expanded, keyed by package name, with its repo-relative directory.
  */
-// repo-health-ignore export-name-affix -- keys the shared reader's answer by package name; it adds the manifest read.
+// repo-health-ignore export-name-affix -- keys the shared reader's answer by package name. it adds the manifest read.
 export async function workspaceDirectories(repoRoot: string): Promise<Map<string, string>> {
 	const byName = new Map<string, string>()
 
@@ -36,7 +36,7 @@ export async function workspaceDirectories(repoRoot: string): Promise<Map<string
  * The seeds plus every workspace they reach through a `workspace:` dependency, optional or peer dependency,
  * transitively — the set a consumer's `npm install` of the seeds pulls from the registry, computed so a package added
  * to a seed's graph is picked up without anyone editing a list. Throws when a seed or a reached dependency names no
- * workspace: a `workspace:` specifier that resolves nowhere is a broken manifest, not an absence.
+ * workspace: a `workspace:` specifier that resolves nowhere is a broken manifest rather than an absence.
  */
 export async function walkWorkspaceClosure(repoRoot: string, seeds: readonly string[]): Promise<Map<string, string>> {
 	const byName = await workspaceDirectories(repoRoot)

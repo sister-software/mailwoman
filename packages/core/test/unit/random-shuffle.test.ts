@@ -8,7 +8,7 @@
  *   those loops drew, because a changed order silently rewrites an artifact nobody re-reads.
  *
  *   The fourth, in `conformal-calibrate.run.ts`, takes a raw LCG state modulo `i + 1` rather than
- *   `floor(random() * (i + 1))`. That is the same walk with a different SAMPLER, so it goes through `shuffleBy`;
+ *   `floor(random() * (i + 1))`. That is the same walk with a different sampler, so it goes through `shuffleBy`;
  *   the last case asserts both halves — that `shuffleBy` reproduces it, and that `shuffleWith` does not.
  */
 
@@ -26,7 +26,7 @@ import { describe, expect, it } from "vitest"
  * The walk as `panel-fill`, `fr-lieudit` and the coarse-placer trainer each spelled it out.
  */
 function retypedWalk<T>(array: T[], random: () => number): void {
-	// oxlint-disable-next-line mailwoman/prefer-home -- this IS the copy under test: the walk the call sites used to spell out, kept here so the equivalence is asserted rather than assumed.
+	// oxlint-disable-next-line mailwoman/prefer-home -- this is the copy under test: the walk the call sites used to spell out, kept here so the equivalence is asserted rather than assumed.
 	for (let index = array.length - 1; index > 0; index--) {
 		const swap = Math.floor(random() * (index + 1))
 
@@ -78,8 +78,8 @@ describe("shuffleWith", () => {
 
 		shuffleWith(array, random)
 
-		// fr-lieudit shuffles its pool and then draws from the SAME generator for the country fraction. The next value
-		// must be the 50th-1 draw, not a fresh stream's first.
+		// fr-lieudit shuffles its pool and then draws from the same generator for the country fraction. The next value
+		// must be the 50th-1 draw rather than a fresh stream's first.
 		const expected = mulberry32(20_260_913)
 
 		for (let step = 0; step < array.length - 1; step++) {
@@ -120,7 +120,7 @@ describe("shuffleWith", () => {
 			fromFloat64.push(float64())
 		}
 
-		// Same multiplier and increment, and the FIRST step agrees: 1234567 × 1103515245 is about 1.4e15, still under
+		// Same multiplier and increment, and the first step agrees: 1234567 × 1103515245 is about 1.4e15, still under
 		// 2^53 where a double is exact. The state then grows past it, `*` starts rounding where `Math.imul` wraps at 32
 		// bits, and the sequences part company on the second step. So neither file's stream can be served by the other's
 		// generator, and a reader comparing only the first value would conclude the opposite.
@@ -131,7 +131,7 @@ describe("shuffleWith", () => {
 
 	it("reproduces the modulo-indexed walk through shuffleBy, and not through shuffleWith", () => {
 		// `conformal-calibrate.run.ts` derives its index as `state % (i + 1)` over a raw glibc LCG state. That is the same
-		// WALK with a different SAMPLER, so `shuffleBy` reproduces it — which is why that call site no longer keeps a loop.
+		// walk with a different sampler, so `shuffleBy` reproduces it — which is why that call site no longer keeps a loop.
 		for (const size of [2, 17, 64, 500]) {
 			for (const seed of SEEDS) {
 				const mixed = (seed * 2_654_435_761 + 1) & 0xff_ff_ff_ff

@@ -3,7 +3,7 @@
 
 /**
  *   The `/trace` route: an input, a trace button, and the four-band model visualizer over the loaded classifier's
- *   decode-path trace. The runtime handle supplies the trace hook; a classifier bundle that predates it says so
+ *   decode-path trace. The runtime handle supplies the trace hook. a classifier bundle that predates it says so
  *   instead of rendering an empty visualizer.
  */
 
@@ -58,7 +58,7 @@ export function LiveModelVisualizer({
 		try {
 			setTrace(await traceParse(text))
 		} catch (caught) {
-			// ORT's WASM backend can throw non-Errors (abort codes as numbers or strings); String() keeps the failure
+			// ORT's wasm backend can throw non-Errors (abort codes as numbers or strings); String() keeps the failure
 			// visible instead of storing undefined and rendering nothing.
 			setError(caught instanceof Error ? caught.message : String(caught))
 		} finally {

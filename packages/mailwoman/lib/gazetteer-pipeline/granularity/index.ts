@@ -2,22 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The gazetteer DEPTH LADDER — per-country measurement of where the admin gazetteer bottoms out,
+ *   The gazetteer depth ladder — per-country measurement of where the admin gazetteer bottoms out,
  *   worldwide. Built 2026-08-02 after a probe found the shipped `admin-global-priority.db` stocks 9
- *   of WOF's 34 placetypes and carries a `dependent_locality` tier in 11 of 244 countries; the venue
+ *   of WOF's 34 placetypes and carries a `dependent_locality` tier in 11 of 244 countries. the venue
  *   tier is empty. "Is WOF granular enough" had never been measured, and this module is the
  *   instrument.
  *
- *   Rung MEMBERSHIP derives from `PLACETYPE_PROJECTION` so the scorecard and the placetype census
- *   can never disagree about what projects where; rung ORDER is explicit here, because "bottoms out
+ *   Rung membership derives from `PLACETYPE_PROJECTION` so the scorecard and the placetype census
+ *   can never disagree about what projects where. rung order is explicit here, because "bottoms out
  *   at" needs an ordering the projection map does not carry.
  *
  *   Two different presence rules, deliberately. Rungs at or above `locality` are measured by node
- *   PRESENCE — a country either has region rows or it does not. Rungs below it are measured by
- *   PARENT-COVERAGE SHARE: the fraction of the country's locality-class nodes carrying at least one
+ *   presence — a country either has region rows or it does not. Rungs below it are measured by
+ *   parent-coverage share: the fraction of the country's locality-class nodes carrying at least one
  *   child projecting onto that rung. That statistic is not invented here — the placetype-census
  *   probe measured GB's dependent-locality share at 33.2% of 16,987 locality-class surfaces and
- *   found it to be real conditional evidence, while WITHIN-node share carried none (WOF rarely
+ *   found it to be real conditional evidence, while within-node share carried none (WOF rarely
  *   parents a locality under a locality, so covered nodes read ~100% across the board).
  *
  *   Read-only against the admin DB: no network, no model, no writes.
@@ -49,7 +49,7 @@ export const LADDER: readonly ComponentTag[] = [
 ]
 
 /**
- * Rungs measured by parent-coverage share rather than node presence — everything BELOW the locality backbone, which is
+ * Rungs measured by parent-coverage share rather than node presence — everything below the locality backbone, which is
  * the denominator those shares are taken against.
  */
 export const SUB_LOCALITY_RUNGS: ReadonlySet<ComponentTag> = new Set<ComponentTag>([
@@ -59,7 +59,7 @@ export const SUB_LOCALITY_RUNGS: ReadonlySet<ComponentTag> = new Set<ComponentTa
 ])
 
 /**
- * The locality-class placetypes that host address-bearing children — the parent set and the parent-coverage
+ * The locality-class placetypes that host address-containing children — the parent set and the parent-coverage
  * denominator. Matches `PARENT_PLACETYPES` in `placetype-census.ts` by construction.
  */
 export const PARENT_PLACETYPES: readonly string[] = ["locality", "localadmin"]
@@ -76,9 +76,9 @@ export function placetypesForRung(rung: ComponentTag): string[] {
 }
 
 /**
- * One rung's measurement for one country. A rung the builder LOOKED AT and found empty is a present row of zeroes; a
+ * One rung's measurement for one country. A rung the builder looked AT and found empty is a present row of zeroes. a
  * rung with no measurable source is absent from {@link CountryGranularity.rungs} entirely. Collapsing those two would
- * break the meaning-of-zero rule inside the artifact.
+ * violate the meaning-of-zero requirement inside the artifact.
  */
 export interface RungMeasurement {
 	/**
@@ -87,7 +87,7 @@ export interface RungMeasurement {
 	nodes: number
 	/**
 	 * How many of {@link nodes} are Overture-backfilled (`OVERTURE_ID_BASE <= id < GEONAMES_ID_BASE`) rather than real
-	 * WOF. For the Overture backfill set the locality rung and above ARE Overture, so a report that hid this would
+	 * WOF. For the Overture backfill set the locality rung and above are Overture, so a report that hid this would
 	 * present self-comparison as corroboration.
 	 */
 	overtureBackfilled: number
@@ -120,9 +120,9 @@ export interface CountryGranularity {
 }
 
 /**
- * Build a `CASE` expression projecting a placetype column onto a rung name, generated from the projection table so it
- * cannot drift from it. Placetypes projecting onto nothing in {@link LADDER} fall through to NULL and are filtered by
- * the caller's `WHERE`.
+ * Build a `case` expression projecting a placetype column onto a rung name, generated from the projection table so it
+ * cannot drift from it. Placetypes projecting onto nothing in {@link ladder} fall through to NULL and are filtered by
+ * the caller's `where`.
  */
 function rungCaseExpression(column: string): string {
 	const whens = LADDER.flatMap((rung) =>
@@ -144,7 +144,7 @@ function ladderPlacetypes(): string[] {
  *
  * Read-only. Three grouped queries: node counts per (country, rung) with the source split, distinct covered parents per
  * (country, rung) through `ancestors`, and the locality-class denominator. The projection runs in SQL because a parent
- * with both a borough child and a neighbourhood child must count ONCE toward `dependent_locality` — counting distinct
+ * with both a borough child and a neighbourhood child must count once toward `dependent_locality` — counting distinct
  * parents per placetype and summing in JS would double it.
  */
 export function buildGranularityLadder(adminDBPath: string): CountryGranularity[] {
@@ -211,8 +211,8 @@ export function buildGranularityLadder(adminDBPath: string): CountryGranularity[
 
 		if (existing) return existing
 
-		// Seed EVERY rung at zero: the country was measured, so an empty rung is a present zero. A rung with no
-		// measurable source at all is dropped by the caller, not left implicit here.
+		// Seed every rung at zero: the country was measured, so an empty rung is a present zero. A rung with no
+		// measurable source at all is dropped by the caller rather than left implicit here.
 		const rungs: Partial<Record<ComponentTag, RungMeasurement>> = {}
 
 		for (const rung of LADDER) {
@@ -262,7 +262,7 @@ export function buildGranularityLadder(adminDBPath: string): CountryGranularity[
 /**
  * The deepest rung a country actually reaches, or `null` when it has nothing live at any rung.
  *
- * Two presence rules, because parent-coverage is only meaningful BELOW the locality backbone — the backbone is its
+ * Two presence rules, because parent-coverage is only meaningful below the locality backbone — the backbone is its
  * denominator. At or above `locality`, a rung counts as reached when it has any nodes. Below it, when parent-coverage
  * clears `floor`.
  */

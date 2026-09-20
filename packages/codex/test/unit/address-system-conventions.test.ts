@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Pure-codex guard for the FR conventions row (#719). The shipped neural model emits the FR LEADING
+ *   Pure-codex guard for the FR conventions row (#719). The shipped neural model emits the FR leading
  *   `street_prefix` (Rue/Avenue/Cours/…) correctly, but the #511 forbid masked it to −1e9 before
- *   Viterbi and destroyed it on real French addresses (F1 0.0 vs 80.0 mask-off; the larger real-FR
+ *   Viterbi and destroyed it on real French addresses (F1 0.0 vs 80.0 mask-off. the larger real-FR
  *   eval saw ~96 → ~0.6). These assertions fail in CI — no model, no weights — if a future change
  *   re-forbids `street_prefix`, so the live bug cannot silently reappear. The model-level
  *   regression check is a separate, later build step.
@@ -49,7 +49,7 @@ describe("GB address-system conventions (#1275)", () => {
 
 		// Clip fragments from the #1275 board ("1 9PD" for SK11 9PD, "2LH" for CV31 2LH, "3 2GL" for
 		// WF3 2GL) are shape-invalid. (A letter-led fragment like "K11 9PD" can still be shape-valid in
-		// isolation — the repair pass operates on raw-text sub-match, not fragment shape, so the pattern
+		// isolation — the repair pass operates on raw-text sub-match rather than fragment shape, so the pattern
 		// only needs to describe the canonical form.)
 		for (const clipped of ["1 9PD", "2LH", "3 2GL"]) {
 			expect(clipped).not.toMatch(pattern)

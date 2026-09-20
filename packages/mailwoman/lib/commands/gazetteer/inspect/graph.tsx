@@ -8,7 +8,7 @@
  *   Use this instead of `wof tree` when the root has many shared descendants (e.g. `planet`) — the
  *   graph shape stays compact regardless of DAG topology because each node and edge appears exactly
  *   once. Output format follows the d3-force / react-flow convention (`nodes`, `links` with
- *   `source`/`target`) so it drops into common HTML graph viewers without translation.
+ *   `source`/`target`) so it drops into common html graph viewers without translation.
  */
 
 import { Spinner } from "@inkjs/ui"
@@ -21,12 +21,12 @@ import { availableParallelism } from "@mailwoman/core/utils/system"
 import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, parseRoles, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, parseRoles, useCommandTask } from "#cli-kit"
 
 const BATCH_SIZE = availableParallelism()
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "graph",
@@ -37,18 +37,12 @@ export const spec = {
 	],
 	options: {
 		roles: { type: "string", description: `Role filter: ${PlacetypeRoles.join(", ")}` },
-		output: { type: "string", description: "Output JSON" },
+		out: { type: "string", description: "Output JSON", deprecatedName: "output" },
 		compact: { type: "boolean", default: false, description: "Emit compact JSON" },
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	roles?: string
-	output?: string
-	compact: boolean
-}
-
-const WOFGraph: ParsedCommandComponent<Options, [string, string]> = ({ args, options }) => {
+const WOFGraph: CommandComponent<typeof spec, [string, string]> = ({ args, options }) => {
 	const placetypeName = args[1]
 
 	const state = useCommandTask(async () => {
@@ -71,28 +65,28 @@ const WOFGraph: ParsedCommandComponent<Options, [string, string]> = ({ args, opt
 		const graph = generatePlacetypeGraph(placetype, roles)
 		const serialized = options.compact ? stringifyJSON(graph) : prettyJSON(graph)
 
-		if (options.output) {
-			await writeLocalFile(serialized + "\n", options.output)
+		if (options.out) {
+			await writeLocalFile(serialized + "\n", options.out)
 		} else {
 			// Write JSON directly to stdout so Ink's <Text> renderer doesn't word-wrap long
-			// lines (compact mode is one very long line; pretty mode is fine either way).
+			// lines (compact mode is one very long line. pretty mode is fine either way).
 			process.stdout.write(serialized + "\n")
 		}
 	})
 
 	if (state.status !== "done") return <CommandTaskResult state={state} running={<Spinner />} />
 
-	if (options.output) {
+	if (options.out) {
 		return (
 			<Box flexDirection="column">
 				<Text>
-					Wrote node-link graph for placetype <Text bold>{placetypeName!}</Text> to <Text bold>{options.output}</Text>.
+					Wrote node-link graph for placetype <Text bold>{placetypeName!}</Text> to <Text bold>{options.out}</Text>.
 				</Text>
 			</Box>
 		)
 	}
 
-	// Stdout path: JSON is written above via process.stdout.write; render nothing through Ink.
+	// Stdout path: JSON is written above via process.stdout.write. render nothing through Ink.
 	return null
 }
 

@@ -6,25 +6,25 @@
 assembled-coordinate ceiling — the number behind "the US bottleneck is rural gazetteer coverage."
 It is the **admin-centroid** tier. Production doesn't stop there: `mailwoman/geocode-core.ts`'s
 `geocodeAddress` runs a per-state situs + interpolation cascade over the #567 address-point layer
-(124.9M US points) that the eval never wired. Graded against what actually ships, the same 10,000
+(124.9M US points) that the eval never wired. Graded against what ships, the same 10,000
 US rows resolve to **p50 0.0 km, p90 1.0 km, 85.9% within 100 m, 90% within 1 km** — and only 12%
-fall back to the admin centroid at all. The "coordinate bottleneck" was a measurement gap, not a
+fall back to the admin centroid at all. The "coordinate bottleneck" was a measurement gap rather than a
 data gap and not a model gap. Fixed: `oa-resolver-eval --cascade` (`dd3628da`) now grades the
 production coordinate.
 
 ## What happened
 
 The eval builds a neural parse, resolves it through the WOF admin gazetteer, and takes the resolved
-place's centroid as the coordinate. That centroid is honest as far as it goes — a city centroid is
+place's centroid as the coordinate. That centroid is direct as far as it goes — a city centroid is
 legitimately tens of km from an edge address, which is exactly why we lead with admin-_match_ rate
-there, not the coordinate. The trouble is we then carried the 3.3 km admin number into the
+there rather than the coordinate. The trouble is we then carried the 3.3 km admin number into the
 head-to-head, the model card, and the docs as if it were the coordinate the product delivers.
 
 It isn't. The `geocode` CLI and the `/api/geocode` service both run `geocodeAddress`, which reads
 the parsed region, picks that state's situs + interpolation extracts, and resolves through a coordinate
 cascade: an exact address-point (rooftop/parcel) when the house number is on file, a house-number
 interpolation along the street segment otherwise, and the admin centroid only when neither exists.
-The eval simply called `resolveTree` with no extract options, so every row landed at the admin tier.
+The eval only called `resolveTree` with no extract options, so every row landed at the admin tier.
 `copy-weights` is skipped on CI and the per-state extracts are multi-GB, so nobody noticed the eval was
 running a different, blunter path than production.
 
@@ -41,13 +41,13 @@ rewriting history.
 | **neural** (admin centroid)        |          98.0% |       100.0% |   100.0% |          3.3 |         10.0 |  159.4 |
 | v0 (Pelias)                        |          95.5% |        99.5% |    99.7% |          3.4 |         11.0 |  259.1 |
 | **neural+addrpt**                  |          98.0% |       100.0% |   100.0% |          0.0 |          2.9 |   19.9 |
-| **neural+cascade (SHIPPED coord)** |          98.0% |       100.0% |   100.0% |          0.0 |          1.0 |   18.3 |
+| **neural+cascade (shipped coord)** |          98.0% |       100.0% |   100.0% |          0.0 |          1.0 |   18.3 |
 
 `neural+cascade` is the production coordinate (`geocode-core.ts`: address_point > interpolated >
 admin, per-state extracts). **Tier share: address_point 79.8%, interpolated 8.2%, admin 12.0%. Within
 100 m: 85.9% · within 1 km: 90.0% (n=10,000).** The entire residual coordinate error lives in the
 12% admin tail — rows in places with no situs/interpolation point coverage, where the centroid is
-the honest best estimate.
+the direct best estimate.
 
 **Update (post-fix, 2026-06-19):** characterizing that 12% admin tail (#723) found 54% of it
 recoverable with no new data, and two fixes from this diagnostic's follow-up landed it on the same
@@ -57,13 +57,13 @@ recoverable with no new data, and two fixes from this diagnostic's follow-up lan
 verified `fr.house_number` flat). Re-measured: **address_point 79.8 → 83.5%, interpolated 8.2 →
 9.7%, admin 12.0 → 6.8%; within 100 m 85.9 → 90.0%, within 1 km 90.0 → 94.8%, cascade p99 18.3 →
 10.9 km.** The admin tail is now under 7%, and the remaining bulk is a situs extract theme-reselect
-(the SD/IL holes are in Overture's OpenAddresses theme, not the sparser NAD theme we ingested), not
+(the SD/IL holes are in Overture's OpenAddresses theme rather than the sparser NAD theme we ingested) rather than
 a coverage gap — #723.
 
 ## Why this matters
 
 This is the same trap as the #375 localadmin scoring artifact and the #566 reconcile regression:
-**grade the assembled output the product actually ships, not an intermediate.** The new twist is the
+**grade the assembled output the product ships rather than an intermediate.** The new twist is the
 direction — every prior instance had us _over_-reporting (a metric looking better than the shipped
 behavior); this one had us _under_-reporting by three orders of magnitude. A model can win on labels
 while the assembled address resolves wrong (the #566 case); it can also resolve street-accurate while
@@ -73,8 +73,8 @@ run what ships over them, grade that.
 It also retires "the US coordinate bottleneck is rural gazetteer coverage." The rural states aren't
 the laggards once you grade the cascade — SD and VT land their addresses at the address-point tier
 like everywhere else; their lower _locality-match_ (VT 93.8%, IA 95.8%) is a separate, mostly
-naming-convention residual (civic suffixes like "Barre" vs "Barre Town", ~71% of the 2% miss), not a
-coordinate problem. The next US coordinate gain is point-data coverage for the 12% admin tail, not a
+naming-convention residual (civic suffixes like "Barre" vs "Barre Town", ~71% of the 2% miss) rather than a
+coordinate problem. The next US coordinate gain is point-data coverage for the 12% admin tail rather than a
 retrain and not more gazetteer breadth.
 
 ## Caveats
@@ -89,7 +89,7 @@ retrain and not more gazetteer breadth.
   not yet feed the gazetteer/conventions channels. Routing it through the canonical `createScorer`
   for full ship-config parity is a tracked follow-up; it does not affect the coordinate result here.
 - **Locality-match residual is separate.** The ~2% locality miss is mostly civic-suffix /
-  coincident-municipality naming, not absent places — a metric-fairness item, not a coverage hole.
+  coincident-municipality naming rather than absent places — a metric-fairness item rather than a coverage hole.
 
 Raw report: `oa-resolver-eval --cascade` self-emitted via `--out-md`. Reproduces the situs-cascade
 diagnostic run independently through `geocodeAddress` over the same rows (p50 0.0 / p90 1.0 / 85.9%

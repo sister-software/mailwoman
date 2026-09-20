@@ -7,7 +7,7 @@
  */
 
 /**
- * The register axis the #690 case-normalization work made required: as-written, lowercase, UPPERCASE.
+ * The register axis the #690 case-normalization work made required: as-written, lowercase, uppercase.
  */
 export const REGISTERS = ["asis", "lower", "upper"] as const
 

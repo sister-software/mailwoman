@@ -1,6 +1,6 @@
 ---
 name: training-arc
-description: Protocol for grading a model change. Control FIRST, run-shape as an explicit decision, attribution against the placebo fine-tune rather than the shipped model. Use before launching any training run, and before reporting any candidate's board result.
+description: Protocol for grading a model change. Control first, run-shape as an explicit decision, attribution against the placebo fine-tune rather than the shipped model. Use before launching any training run, and before reporting any candidate's board result.
 ---
 
 ## Why this exists
@@ -8,7 +8,8 @@ description: Protocol for grading a model change. Control FIRST, run-shape as an
 Eight training runs in one session were graded candidate-vs-shipped, and every one reported a regression
 that was, in substantial part, the cost of fine-tuning at all. The controls that would have said so ran
 eighth and ninth instead of first. The full ledger is
-`docs/records/evals/retrospectives/2026-08-23-trailing-region-dose-arc.md`.
+`docs/records/evals/retrospectives/2026-08-23-trailing-region-dose-arc.md` — a dated record, so its
+filename keeps the spelling the arc was named under.
 
 Nothing below is style advice. Each step is a mistake that shipped.
 
@@ -31,7 +32,7 @@ Read the rest of this file when a leg needs building, or when the tool's verdict
 
 ## Step 1 — the SELF-control, once per session
 
-Stage the SHIPPED model through the identical candidate path and grade it against itself.
+Stage the shipped model through the identical candidate path and grade it against itself.
 
 ```
 mwdev_compare inputs={"kind":"board"} \
@@ -63,8 +64,8 @@ base costs those rows before the new data is read.
 
 Consequences, both required:
 
-- **A candidate's regressions are `candidate − placebo`, not `candidate − shipped`.** Eighteen regressions
-  where the placebo has ten is eight attributable, not eighteen.
+- **A candidate's regressions are `candidate − placebo` rather than `candidate − shipped`.** Eighteen regressions
+  where the placebo has ten is eight attributable rather than eighteen.
 - **A fine-tune must first recover the placebo's net loss.** If the placebo nets −5, a candidate at −5 has
   achieved nothing and a candidate at −3 is an improvement.
 
@@ -105,7 +106,7 @@ and a candidate that flips them changed a low-confidence answer rather than brok
 `retrieval-repointed` (ranking or gazetteer), `tier-changed` (**data coverage — no model change touches it**).
 Grading a tier fall-through against a model wastes a run.
 
-## Step 5 — the comparison is against SHIPPED, and it is not the attribution
+## Step 5 — the comparison is against the shipped model, and it is not the attribution
 
 The placebo is the right baseline for _attributing_ a regression. It never authorizes shipping one:
 publishing costs a user the difference from what they have today.
@@ -129,14 +130,14 @@ measurement in this protocol.
 - **Artifact resolution sorts by mtime and prints the artifact chosen** — enforced in
   `packages/dev-mcp/lib/compiled-tree.ts`. Never resolve by name sort: `v0.9.9` beats `v0.26.0`
   lexically.
-- **A smoke run proves the config loads, not that the new rows are reached.** Read the file through
+- **A smoke run proves the config loads rather than that the new rows are reached.** Read the file through
   the loader's own check (`country_weights.get(cc)`) first.
 - **`country_weights` is a hard admission filter.** A country absent from it trains on nothing
   regardless of the row count. Check with `mwdev_coverage` before assuming a locale is taught.
-- **A hypothesis-bearing corpus change declares `data.required_corpus_receipts`.** Each receipt states
+- **A corpus change carrying a hypothesis declares `data.required_corpus_receipts`.** Each receipt states
   the minimum sampled rows and may constrain source, country, and a contiguous component sequence.
-  Run Modal's CPU-only `audit_epoch_mixture` before allocating a GPU; a missing source or a zero-dose
-  label order must stop the run. A source file or rendering branch is not evidence that the sampler
+  Run Modal's CPU-only `audit_epoch_mixture` before allocating a GPU; a missing source, or a label
+  order whose source is drawn zero times, must stop the run. A source file or rendering branch is not evidence that the sampler
   reaches the target rows (#1869).
 
 ## Reporting — the structure is part of the protocol
@@ -150,10 +151,10 @@ not run, say so — an unattributed regression count is not a finding.
 - Every table names its comparison arm in its header ("vs shipped v4.4.0"), and every count carries its
   denominator.
 - A derived figure states its arithmetic where it appears: "net +2 = treatment net +6 − placebo net +4".
-  This rule shipped once already (commit aa6f149b2, the share figures) and recurred — in place, not in a
+  This rule shipped once already (commit aa6f149b2, the share figures) and recurred — in place rather than in a
   footnote.
 - Define each project term at first use or link the doc that does. Name the corpus recipe file, config
   key, or weight — the words the `AmbiguousShorthand` and `ProjectShorthand` Vale rules refuse are banned in reports.
 - Denominate spend: "$29 of the $40 Modal budget for this experiment", never a bare dollar figure.
 - State the next action and stop. No scheduling (`tomorrow`), no wind-down narration — the operator sets
-  cadence, and completion is acceptance criteria, not elapsed turns.
+  cadence, and completion is acceptance criteria rather than elapsed turns.

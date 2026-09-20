@@ -16,7 +16,7 @@ from ...labels import resolve_label_set
 from ...paths import data_root_path
 from .score import ACCEPT_KM, CHECK, RESOLVE_TAGS, score_board
 
-#: Resolved when a default is needed, not at import: this module is loaded by path in
+#: Resolved when a default is needed rather than at import: this module is loaded by path in
 #: `test_jp_board_registers`, where no data root is configured and none is required.
 PROBE_DIR_PARTS = ("corpus", "versioned", "v8-jp-probe")
 
@@ -132,7 +132,7 @@ def resolve_tags_for(args: argparse.Namespace, label_set: Any) -> tuple[str, str
 def main() -> None:
     args = parse_args()
 
-    # Imported here, not at module scope, so the pure scoring arithmetic stays importable
+    # Imported here rather than at module scope, so the pure scoring arithmetic stays importable
     # (and testable) without the torch install.
     import torch
 

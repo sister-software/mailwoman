@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build nsul` — the GB UPRN → unit-postcode register (`nsul.db`): the ONS
- *   National Statistics UPRN Lookup joined to OS Open UPRN's coordinates, under the layer contract.
- *   Reads a hand-acquired archive from a vintage-dated `<data-root>/nsul/<YYYY-MM>/` directory
+ *   `mailwoman gazetteer build nsul` — the GB uprn → unit-postcode register (`nsul.db`): the ONS
+ *   National Statistics uprn Lookup joined to OS Open uprn's coordinates, under the layer interface.
+ *   Reads a hand-acquired archive from a vintage-dated `<data-root>/nsul/<yyyy-MM>/` directory
  *   (there is no download step — the portal item is fetched by hand beside its `.md5` sidecar and
  *   `item.json`), verifies it against the sidecar, and writes a sealed, atomically-swapped artifact.
- *   Nothing on the parse/resolve path reads it yet; the runtime surface is a separate proposal
+ *   Nothing on the parse/resolve path reads it yet. the runtime surface is a separate proposal
  *   (#1975, F4).
  *
- *   Coverage is England, Scotland and Wales; Northern Ireland postcode data is outside ONS's open
+ *   Coverage is England, Scotland and Wales. Northern Ireland postcode data is outside ONS's open
  *   terms, and the layer's own coverage rows say so. See `gazetteer-pipeline/nsul-layer.ts` for the
  *   checks (md5, exact header per region, the eleven-region set, accounting identity, row floor).
  *
@@ -21,16 +21,10 @@
 import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { Box, Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	phaseReporter,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReporter, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "nsul",
@@ -48,13 +42,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	sourceDir?: string
-	out?: string
-	uprnDB?: string
-}
-
-const GazetteerBuildNSUL: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildNSUL: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { repoRootPath } = await import("@mailwoman/core/utils")
 		const { buildSHA } = await import("#gazetteer/stamp-manifest")

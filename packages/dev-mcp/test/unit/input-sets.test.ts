@@ -8,7 +8,7 @@ import { resolveInputSet } from "@mailwoman/dev-mcp/input-sets"
 import { describe, expect, it } from "vitest"
 
 /**
- * The board and parity corpora are COMMITTED, so they grade everywhere. The panel and golden sets live under
+ * The board and parity corpora are committed, so they grade everywhere. The panel and golden sets live under
  * `$MAILWOMAN_DATA_ROOT` and are absent in CI, so their suites are presence-conditional the way `weights.test.ts`
  * checks on the dev model.
  *
@@ -35,10 +35,10 @@ describe("resolveInputSet — board", () => {
 		expect(set.corpusHash).toMatch(/^[0-9a-f]{64}$/)
 	})
 
-	it("reports what a slice EXCLUDED, not only what it kept", async () => {
+	it("reports what a subset EXCLUDED, not only what it kept", async () => {
 		const set = await resolveInputSet({ kind: "board", country: "GB" })
 
-		expect(set.selection).toBe("slice")
+		expect(set.selection).toBe("subset")
 		expect(set.n).toBeGreaterThan(0)
 		expect(set.populationN).toBeGreaterThan(set.n)
 		expect(set.notCovered.some((line) => line.startsWith("countries excluded:"))).toBe(true)
@@ -104,10 +104,10 @@ describe.skipIf(!havePanel)("resolveInputSet — panel", () => {
 		expect(set.notes.join(" ")).toContain("truth_type")
 	})
 
-	it("reports what a truth_type slice excluded", async () => {
+	it("reports what a truth_type subset excluded", async () => {
 		const set = await resolveInputSet({ kind: "panel", version: "v2", truth_type: "rooftop" })
 
-		expect(set.selection).toBe("slice")
+		expect(set.selection).toBe("subset")
 		expect(set.populationN).toBe(420)
 		expect(set.notCovered.join(" ")).toContain("truth types excluded")
 	})
@@ -115,8 +115,10 @@ describe.skipIf(!havePanel)("resolveInputSet — panel", () => {
 
 describe.skipIf(!havePanel21)("resolveInputSet — panel v2.1", () => {
 	it("resolves the re-sourced v2.1 panel with a coordinate on every row", async () => {
-		// v2.1 = v2 with the 25 city-only rows whose truth was copied from hard-slice-board.jsonl (circular truth,
-		// #1725) re-sourced to independent Wikidata centroids. Same 420 rows, same order; v2 stays immutable.
+		// v2.1 = v2 with the 25 city-only rows whose truth was copied from the hard-case board
+		// (`packages/mailwoman/lib/eval-harness/fixtures/hard-case-board.jsonl`, scored by
+		// `packages/mailwoman/lib/dev-tools/score/hard-case-board.run.ts`) (circular truth,
+		// #1725) re-sourced to independent Wikidata centroids. Same 420 rows, same order. v2 stays immutable.
 		const set = await resolveInputSet({ kind: "panel", version: "v2.1" })
 
 		expect(set.n).toBe(420)
@@ -178,12 +180,12 @@ describe.skipIf(!haveHoldoutUS)("resolveInputSet — holdout", () => {
 		expect(set.selection).toBe("random-draw")
 	})
 
-	it("is a random draw, not a declared slice — the two support opposite claims", async () => {
-		// A slice is chosen by a predicate and generalizes to nothing beyond it. This is the one subset in this file
-		// whose rate estimates the population's, and the sentence a caller relays has to say so.
+	it("is a random draw, not a declared subset — the two support opposite claims", async () => {
+		// A declared subset is chosen by a predicate and generalizes to nothing beyond it. This is the one set in this
+		// file whose rate estimates the population's, and the sentence a caller relays has to say so.
 		const set = await resolveInputSet({ kind: "holdout", source: "us", n: 25, seed: 7 })
 
-		expect(set.selection).not.toBe("slice")
+		expect(set.selection).not.toBe("subset")
 		expect(set.hasTruth.coordinates).toBe(25)
 	})
 
@@ -214,7 +216,7 @@ describe.skipIf(!haveHoldoutUS)("resolveInputSet — holdout", () => {
 	})
 
 	it("refuses an unknown source rather than resolving to an empty set", async () => {
-		// `source` arrives from an MCP tool call as untrusted JSON, so the refusal is a RUNTIME check on a value the
+		// `source` arrives from an MCP tool call as untrusted JSON, so the refusal is a runtime check on a value the
 		// signature forbids. `Reflect.set` puts the value in the field the way the transport does, without asserting to
 		// the compiler that "de" is a HoldoutSource — which is the claim under test, and a false one.
 		const unknownSource: Extract<InputSetRef, { kind: "holdout" }> = { kind: "holdout" }
@@ -226,7 +228,7 @@ describe.skipIf(!haveHoldoutUS)("resolveInputSet — holdout", () => {
 })
 
 describe("resolveInputSet — ladder", () => {
-	it("expands every truth-bearing board row into prefix rungs that carry the row's truth and locale hint", async () => {
+	it("expands every truth-containing board row into prefix rungs that carry the row's truth and locale hint", async () => {
 		const board = await resolveInputSet({ kind: "board", country: "GB" })
 		const ladder = await resolveInputSet({ kind: "ladder", country: "GB" })
 		const truthRows = board.inputs.filter((row) => typeof row.truthLat === "number")

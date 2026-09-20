@@ -15,31 +15,17 @@ export interface PlaceEntry {
 	name: string
 	parentChain: number[]
 	/**
-	 * REFERENTIAL likelihood in [0, 1] — population-anchored (`referentialFromPopulation`), and the ONLY score the
-	 * decoder bias is allowed to read (ROAD_TO_V9 §2, ratified 2026-08-06).
-	 *
-	 * This field was called `importance` through format v4, where it carried whichever score the source database happened
-	 * to hold: the population proxy on a database with no `place_importance` table (which is every shipped
-	 * `fst-per-locale` binary), the Wikipedia score where the concordance join landed otherwise. The rename is the point
-	 * — a v4 artifact's value is a CONFLATION that cannot be told apart after the fact, which is why `fst-freshness.ts`
-	 * reports anything below {@link FST_FORMAT_VERSION} as format-stale rather than reading it as referential.
+	 * Population-based referential likelihood in [0, 1], used by decoder bias.
 	 */
 	referential: number
 	/**
-	 * Encyclopedic (Wikipedia) importance in [0, 1], fan-out-guarded per #1497. Carried for consumers that want to
-	 * DISPLAY salience; never read by the decoder or by any ranking.
-	 *
-	 * `undefined` = this place has no encyclopedic signal, or the artifact predates format 5. NEVER conflate either with
-	 * 0 — the meaning-of-zero rule; roughly 89% of the 2026-08-05 gazetteer's rows have no Wikipedia article at all.
+	 * Encyclopedic importance in [0, 1] for display only; `undefined` means unavailable.
 	 */
 	encyclopedic?: number
 	lat: number
 	lon: number
 	/**
-	 * Surface-ambiguity class (survey #4): how many DISTINCT countries carry a place with THIS entry's accepting surface,
-	 * counted over the whole admin DB at build time (clamped to 255). A property of the surface, not the place — the same
-	 * place reached via different alias surfaces reports each surface's own count. `undefined` = built without ambiguity
-	 * data (pre-2026-07-27 artifacts) — NEVER conflate with 1 (the unambiguous case); the meaning-of-zero rule.
+	 * Number of countries sharing this accepting surface, clamped to 255; `undefined` means unavailable.
 	 */
 	crossCountryBranches?: number
 }
@@ -84,13 +70,13 @@ export interface FSTProvenance {
 	edgeCount: number
 	nameInsertions: number
 	/**
-	 * How many places carried a non-zero REFERENTIAL score at build time. Named `importanceMatches` for stamp
+	 * How many places carried a non-zero referential score at build time. Named `importanceMatches` for stamp
 	 * compatibility with every artifact written before the two-score split — renaming the JSON key would make every
 	 * existing stamp unreadable, and the number means the same thing it always did on a population-built artifact.
 	 */
 	importanceMatches: number
 	/**
-	 * How many places carried an ENCYCLOPEDIC score at build time. `undefined` on a pre-split build — which is not the
+	 * How many places carried an encyclopedic score at build time. `undefined` on a pre-split build — which is not the
 	 * same as 0 (a v5 build against a population-only database), so the freshness report says the two in different
 	 * words.
 	 */
@@ -104,11 +90,11 @@ export interface FSTProvenance {
 	/**
 	 * MD5 of the source database's bytes at build time — the artifact's link to the gazetteer it is a projection of.
 	 *
-	 * `sourceDB` records the PATH, which is exactly the field that cannot change when the bytes behind it do: the admin
-	 * DB is a sealed readonly artifact that a rebuild REPLACES in place, so every FST built before the 2026-08-04 swap
-	 * still names the current file and none of them was built from it. Compared by `fst-freshness.ts`.
+	 * `sourceDB` records the path, which is exactly the field that cannot change when the bytes behind it do: the admin
+	 * DB is a sealed readonly artifact that a rebuild replaces in place. Therefore, every FST built before the 2026-08-04
+	 * swap still names the current file and none of them was built from it. Compared by `fst-freshness.ts`.
 	 *
-	 * `undefined` = built before the stamp existed (every artifact predating 2026-08-05). NEVER conflate that with "built
+	 * `undefined` = built before the stamp existed (every artifact predating 2026-08-05). Never conflate that with "built
 	 * from a database whose md5 is unknown" — the freshness check reports the two in different words.
 	 */
 	sourceDBMD5?: string
@@ -141,15 +127,16 @@ export interface BuildFSTOpts {
 	placetypes?: PlacetypeID[]
 	languages?: string[]
 	/**
-	 * Degenerate-surface curation (build-time; the ASR-contextual-biasing "prune the bias list" discipline). A name whose
-	 * FULL normalized token sequence joins to a member of this set is never inserted — the surface carries no
+	 * Degenerate-surface curation (build-time. the ASR-contextual-biasing "prune the bias list" discipline). A name whose
+	 * full normalized token sequence joins to a member of this set is never inserted — the surface carries no
 	 * discriminative value as a bias key (bare function words: "la"; bare street-type words: "boulevard"). The FST is a
-	 * bias list, not the gazetteer of record — the resolver's candidate tables are untouched, so excluded places stay
-	 * findable; they just stop nudging the decoder on degenerate keys. Keys must be `normalizeTokens(...).join(" ")`.
+	 * bias list rather than the gazetteer of record — the resolver's candidate tables are untouched, so excluded places
+	 * stay findable. they just stop nudging the decoder on degenerate keys. Keys must be `normalizeTokens(...).join("
+	 * ")`.
 	 */
 	excludeSurfaces?: ReadonlySet<string>
 	/**
-	 * Compositional clause of the same policy: refuse a name whose EVERY normalized token is a member (e.g. "de la") — a
+	 * Compositional clause of the same policy: refuse a name whose every normalized token is a member (e.g. "de la") — a
 	 * surface made entirely of function words cannot be discriminative. Source this from stopwords only, never
 	 * street-type words ("Avenue Road" is a real name; "de la" is not).
 	 */
@@ -159,13 +146,13 @@ export interface BuildFSTOpts {
 	 */
 	exclusionPolicy?: string
 	/**
-	 * Surface-ambiguity classes (survey #4, 2026-07-27): normalized-join surface → the number of DISTINCT countries
-	 * (across the WHOLE admin DB, not just this build's country scope) with a place carrying that surface. When supplied,
-	 * every inserted place row records the count for ITS accepting surface (`PlaceEntry.crossCountryBranches`) — an entry
-	 * accessible under several surfaces records each surface's own count. Serialized into the place row's former `_pad`
-	 * byte with presence signaled by header flags bit0, so VERSION stays put and pre-ambiguity artifacts read as "no
-	 * data" (never "0 branches" — the meaning-of-zero rule). No decoder consumes it yet; consumers (FST-prior tempering,
-	 * the Option-A evidence channel) arrive behind their own measured checks.
+	 * Surface-ambiguity classes (survey #4, 2026-07-27): normalized-join surface → the number of distinct countries
+	 * (across the whole admin DB rather than just this build's country scope) with a place carrying that surface. When
+	 * supplied, every inserted place row records the count for its accepting surface (`PlaceEntry.crossCountryBranches`)
+	 * — an entry accessible under several surfaces records each surface's own count. Serialized into the place row's
+	 * former `_pad` byte with presence signaled by header flags bit0, so version stays put and pre-ambiguity artifacts
+	 * read as "no data" (never "0 branches" — the meaning-of-zero rule). No decoder consumes it yet. consumers (FST-prior
+	 * tempering, the Option-A evidence channel) arrive behind their own measured checks.
 	 */
 	surfaceCountryCounts?: ReadonlyMap<string, number>
 	onProgress?: (phase: string, detail?: string) => void

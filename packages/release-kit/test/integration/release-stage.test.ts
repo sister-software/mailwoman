@@ -16,7 +16,11 @@ import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { isPresent } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { literalFilesEntries, verifyTarball } from "@mailwoman/release-kit/pack/verify-tarball"
-import { checkReleaseListIdentity, SANCTIONED_RELEASE_ABSENCES } from "@mailwoman/release-kit/release/stage"
+import {
+	assertWorkspacePublishable,
+	checkReleaseListIdentity,
+	SANCTIONED_RELEASE_ABSENCES,
+} from "@mailwoman/release-kit/release/stage"
 import { planWeightsMaterialization } from "@mailwoman/release-kit/weights/fetch-hf-weights"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
@@ -28,7 +32,7 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 describe("checkReleaseListIdentity", () => {
-	it("holds on the current tree: 61 published, every absence sanctioned by name", async () => {
+	it("holds on the current tree: 60 published, every absence sanctioned by name", async () => {
 		const identity = await checkReleaseListIdentity(String(repoRootPath()))
 
 		expect(identity.publishCount).toBe(60)
@@ -47,7 +51,7 @@ describe("checkReleaseListIdentity", () => {
 			join(root, "package.json")
 		)
 
-		// A workspace the field names must carry a manifest; the reader refuses a literal that does not.
+		// A workspace the field names must carry a manifest. the reader refuses a literal that does not.
 		for (const workspace of ["packages/a", "packages/b", "packages/frozen-one"]) {
 			await makeDirectories(join(root, workspace))
 			await writeLocalJSONFile({ name: workspace }, join(root, workspace, "package.json"))
@@ -62,10 +66,33 @@ describe("checkReleaseListIdentity", () => {
 
 		const identity = await checkReleaseListIdentity(root)
 
-		// The en-au class: a workspace outside the release list with no stated reason is FROZEN, and the
-		// failure must carry its name, not "expected 3, found 2".
+		// The en-au class: a workspace outside the release list with no stated reason is frozen, and the
+		// failure must carry its name rather than "expected 3, found 2".
 		expect(identity.unexpectedAbsences).toEqual(["packages/frozen-one"])
 		expect(identity.publishCount).toBe(2)
+	})
+})
+
+describe("assertWorkspacePublishable", () => {
+	it("refuses packages/osm and quotes the rights reason it is held for", () => {
+		expect(() => assertWorkspacePublishable("packages/osm")).toThrow(/ODbL counsel sign-off pending/)
+	})
+
+	it("refuses the release-it workspace path shape, which carries a leading ./", () => {
+		// `@release-it-plugins/workspaces` passes `./<workspace>` through
+		// RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE. Matching the record's keys literally would admit that spelling while
+		// refusing the bare one.
+		expect(() => assertWorkspacePublishable("./packages/osm")).toThrow(/ODbL counsel sign-off pending/)
+		expect(() => assertWorkspacePublishable("./packages/osm/")).toThrow(/ODbL counsel sign-off pending/)
+	})
+
+	it("refuses a private workspace as well, so one rule covers every entry", () => {
+		expect(() => assertWorkspacePublishable("packages/release-kit")).toThrow(/held out of the release/)
+	})
+
+	it("admits a workspace the release list names", () => {
+		expect(() => assertWorkspacePublishable("./packages/neural-weights-en-us")).not.toThrow()
+		expect(() => assertWorkspacePublishable("packages/core")).not.toThrow()
 	})
 })
 
@@ -161,7 +188,7 @@ describe("the Hugging Face materialization plan", () => {
 	}
 
 	it("puts every destination under packages/ — the lost-prefix class", async () => {
-		// The v9.2.0 release's FIRST dispatch died on `cp … "$ws/street-type-lexicon-v3.json"` after every workspace
+		// The v9.2.0 release's first dispatch died on `cp … "$ws/street-type-lexicon-v3.json"` after every workspace
 		// moved under `packages/`. Destinations are now derived from one prefix in one function, and this pins it.
 		const plans = await planWeightsMaterialization(repoRoot)
 
@@ -170,7 +197,7 @@ describe("the Hugging Face materialization plan", () => {
 	})
 
 	it("accounts for every declared artifact a checkout cannot supply — the en-au class", async () => {
-		// What this proves: no literal `files` entry of a release weights package is BOTH untracked and unplanned.
+		// What this proves: no literal `files` entry of a release weights package is both untracked and unplanned.
 		// That is precisely the state `verify-tarball.ts` refuses at publish time, and precisely what
 		// @mailwoman/neural-weights-en-au was in when the audit stopped v9.2.0 after 49 of 51 packages had
 		// published. The manifests and the git listing are read here independently of the recipe, so a planner
@@ -200,7 +227,7 @@ describe("the Hugging Face materialization plan", () => {
 
 	it("never plans over a file git already tracks", async () => {
 		// The other direction: a recipe that materialized `model-card.json` or `calibration.json` would overwrite
-		// committed content in the checkout on the publish path, where the destination root IS the checkout.
+		// committed content in the checkout on the publish path, where the destination root is the checkout.
 		const tracked = trackedPaths()
 
 		const clobbered = (await planWeightsMaterialization(repoRoot))
@@ -213,8 +240,8 @@ describe("the Hugging Face materialization plan", () => {
 
 describe("the pair-index parity selector", () => {
 	it("still matches a test file — the empty-selection class", async () => {
-		// The v9.2.0 release's SECOND dispatch died because publish.yml named the parity test's pre-regroup path and
-		// Vitest matched zero files. The workflow now calls a package script whose filter is the test's NAME, and
+		// The v9.2.0 release's second dispatch died because publish.yml named the parity test's pre-regroup path and
+		// Vitest matched zero files. The workflow now calls a package script whose filter is the test's name, and
 		// this asserts the filter is not empty-handed — the same answer a dispatch would return several minutes in.
 		const repoRoot = String(repoRootPath())
 

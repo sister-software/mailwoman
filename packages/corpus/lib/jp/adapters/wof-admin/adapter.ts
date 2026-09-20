@@ -4,7 +4,7 @@
 /**
  *   `wof-admin-jp`: Japanese admin-hierarchy adapter.
  *
- *   PROTOTYPE — not yet wired into the Stage 3 training corpus. Demonstrates the JP address shape and
+ *   prototype — not yet wired into the Stage 3 training corpus. Demonstrates the JP address shape and
  *   synthesizes BIO-labeled training rows from the global WOF SQLite.
  *
  *   JP addresses differ from US/EU in three ways:
@@ -13,7 +13,7 @@
  *        "1-2-3 Minamicho, Setagaya, Tokyo"
  *   2. **No street names** — most JP addresses use a block/sub-block grid system. The "neighbourhood"
  *        placetype (丁目) is the closest analog to a street but is actually a grid cell.
- *   3. **Postcode-first convention** — addresses are often prefixed with `〒NNN-NNNN`.
+ *   3. **Postcode-first convention** — addresses are often prefixed with `〒NNN-nnnn`.
  *
  *   Schema mapping to ComponentTags (subset of Stage 3 + JP-specific Phase 6 tags):
  *
@@ -25,7 +25,7 @@
  *
  *   This adapter currently emits only the admin chain (region → locality → block). House numbers and
  *   sub-blocks require a different data source (JP postcode database or real-world address dumps
- *   from MLIT/JapanPost).
+ *   from mlit/JapanPost).
  */
 
 import { isPresent } from "@mailwoman/core/objects"
@@ -33,7 +33,7 @@ import { allRows, getRow } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 
 /**
  * Ancestry hops walked upward from a WOF record before giving up — deeper than any real JP admin chain.
@@ -93,7 +93,7 @@ function pickName(row: PlaceRow, jpnNames: Map<number, string>): string {
  *
  * Format: `〒<postcode>? <region><locality><neighbourhood>?`
  *
- * No house numbers yet — needs MLIT data.
+ * No house numbers yet — needs mlit data.
  */
 export function synthesizeJpAddress(
 	chain: PlaceRow[],
@@ -136,6 +136,7 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 	return {
 		id: WOF_ADMIN_JP_ADAPTER_ID,
 		defaultLicense: "CC-BY-4.0",
+		addressRole: AddressRole.Premise,
 		description: "Japanese admin hierarchy from WOF (synthesized addresses without house numbers).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
@@ -155,7 +156,7 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 			}
 
 			// One read of the JP place table instead of a fresh `prepare` + up to six point queries per
-			// seed; there are tens of thousands of neighbourhood seeds.
+			// seed. there are tens of thousands of neighbourhood seeds.
 			const byID = new Map<number, PlaceRow>()
 
 			for (const row of allRows<PlaceRow>(

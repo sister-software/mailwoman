@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman data coverage` — what mailwoman can do PER COUNTRY, parse and geocode kept apart.
+ *   `mailwoman data coverage` — what mailwoman can do PER country, parse and geocode kept apart.
  *
  *   Sibling of `data inventory`, which asks what artifacts are on disk and whether they can say how they were built.
  *   This asks the question a reader actually has: for a given country, can we parse an address there, and can we place
  *   it — and those two have wildly different answers.
  *
  *   It exists because the answer is held in five registers that do not agree, and reading any one of them alone
- *   produces a confident wrong answer. A published locale package is not training (only `en-us` ships a model; the
+ *   produces a confident wrong answer. A published locale package is not training (only `en-us` ships a model. the
  *   rest are data-only overlays). Corpus rows are not training (`country_weights` is a hard admission filter — a
  *   country absent from it trains on nothing, which is how Norway trained on zero rows across 44 configs). Training is
  *   not verification (a board row that is not `status: pass` tracks rather than checks). And the geocoder's coverage is
@@ -19,28 +19,29 @@
  *   is looking at.
  */
 
-import { statPath, pathExists } from "@mailwoman/core/fs/readers"
-import { Globerator } from "spliterator/node/fs"
-
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
-	splitUpperList,
+	type CommandComponent,
+	splitCountryCodes,
 	useCommandTask,
 	writeRawStdout,
 } from "#cli-kit"
 import { trains, type CoverageReport } from "#coverage/census"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "coverage",
 	description: "What mailwoman parses and geocodes, per country.",
 	options: {
 		countries: { type: "string", description: "Comma-separated ISO alpha-2 codes. Omit for the countries that train." },
-		config: { type: "string", description: "Training config whose country_weights decides admission" },
+		config: {
+			type: "string",
+			description:
+				"Training config whose country_weights decides admission. Defaults to the config scope.config.json records for the Latin family's shipped graph.",
+		},
 		refresh: {
 			type: "boolean",
 			default: false,
@@ -50,54 +51,22 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	countries?: string
-	config?: string
-	refresh: boolean
-	json: boolean
-}
-
-const CoverageCommand: ParsedCommandComponent<Options> = ({ options }) => {
+const CoverageCommand: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { censusCoverage } = await import("#coverage/census")
-		const { dataRootPath, repoRootPath } = await import("@mailwoman/core/utils")
+		const { censusCoverage, newestManifest, resolveTrainingConfig } = await import("#coverage/census")
+		const { repoRootPath } = await import("@mailwoman/core/utils")
+		const { readScopeConfig } = await import("@mailwoman/core/scope-config")
 
 		const repoRoot = String(repoRootPath())
-		const configDir = `${repoRoot}/corpus-python/src/mailwoman_train/configs`
 
-		// By MTIME, not filename: the version scheme sorts neither lexically nor numerically — `v8-leg2-sp.yaml` beats
-		// `v4.8.0-...` both ways, and picking it reports every country as DROPPED, which reads as a catastrophic
-		// finding rather than as the wrong file. The report always names the config it used.
-		let newest: string | undefined
-
-		if (await pathExists(configDir)) {
-			const pairs: Array<{ n: string; at: number }> = []
-
-			for await (const n of Globerator.files("yaml", { cwd: configDir, absolute: false })) {
-				if (!n.includes("smoke")) {
-					pairs.push({ n, at: (await statPath(`${configDir}/${n}`)).mtimeMs })
-				}
-			}
-
-			newest = pairs.toSorted((a, b) => b.at - a.at).at(0)?.n
-		}
-
-		const versioned = String(dataRootPath("corpus", "versioned"))
-		const manifests: Array<{ path: string; at: number }> = []
-
-		// By MTIME, not directory name. Corpus versions sort neither lexically (`v0.9.9` beats `v0.26.0`, because
-		// `9` > `2`) nor numerically (`v8-jp-full` beats both) — measured: the name sort picked `v0.9.9` and silently
-		// reported the coverage of a corpus nine versions old. The report always names the manifest it used.
-		if (await pathExists(versioned)) {
-			for await (const candidate of Globerator.from("*/*/MANIFEST.json", { cwd: versioned })) {
-				manifests.push({ path: candidate, at: (await statPath(candidate)).mtimeMs })
-			}
-		}
-
-		const manifestPath = manifests.toSorted((a, b) => b.at - a.at)[0]?.path ?? ""
+		// The config is named by `scope.config.json` rather than discovered. Both discovery orders are wrong here: the
+		// mtime sort sorts a total tie after a checkout, and the version scheme sorts neither lexically nor numerically.
+		// The report names the config it read either way.
+		const config = resolveTrainingConfig(await readScopeConfig(), { requested: options.config })
+		const manifestPath = await newestManifest()
 
 		const report = await censusCoverage({
-			configPath: options.config ?? (newest ? `${configDir}/${newest}` : ""),
+			configPath: config.path,
 			manifestPath,
 			casesRoot: `${repoRoot}/packages/mailwoman/lib/eval-harness/gauntlet/cases`,
 			refresh: options.refresh,
@@ -109,7 +78,7 @@ const CoverageCommand: ParsedCommandComponent<Options> = ({ options }) => {
 			return { ok: true }
 		}
 
-		const wanted = options.countries === undefined ? undefined : splitUpperList(options.countries)
+		const wanted = options.countries === undefined ? undefined : splitCountryCodes(options.countries)
 
 		writeRawStdout(render(report, wanted))
 

@@ -5,7 +5,7 @@ import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 /**
  *   Coordinate-first locality resolution (#275). When a `locality` query carries a sibling `postcode`
- *   AND a `postcode_locality` table is present, the resolver injects the postcode's containing
+ *   and a `postcode_locality` table is present, the resolver injects the postcode's containing
  *   locality (which the FTS name-match can't generate for an under-indexed small town) and
  *   soft-scores the union `0.6·S_pc + 0.3·S_name + 0.1·S_pop` with exact-name tiering. These tests
  *   pin the three behaviours: injection recovers the name-miss, exact-name tiering keeps an
@@ -96,9 +96,9 @@ describe("coordinate-first locality resolution", () => {
 	})
 
 	it("preserves the actual placetype from spr when injecting a postcode-locality candidate (#523)", async () => {
-		// Brooklyn is a BOROUGH. When the postcode injection fetches it by id, the placetype must
+		// Brooklyn is a borough. When the postcode injection fetches it by id, the placetype must
 		// come from the spr row ("borough"), not a hard-coded "locality". The placetype filter
-		// expands locality→borough so the candidate passes; the assertion guards the label.
+		// expands locality→borough so the candidate passes. the assertion guards the label.
 		const r = await lookup.findPlace({ text: "Brooklyn", placetype: "locality", postcode: "11201", country: "US" })
 		expect(r.length).toBeGreaterThan(0)
 		expect(r[0]?.placetype).toBe("borough")

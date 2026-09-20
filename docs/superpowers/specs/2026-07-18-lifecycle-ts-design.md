@@ -20,7 +20,7 @@ and reaches into `@mailwoman/core` internals (`ResourceError`,
 `ConsoleLogger`). Rather than patch in place, the API is redesigned from
 scratch as a standalone package, and mailwoman migrates onto it.
 
-**Type ergonomics are a first-order requirement**, not a nice-to-have: full
+**Type ergonomics are a first-order requirement** rather than a nice-to-have: full
 inference at every call site, no `any` in the public surface, no runtime
 behavior the types fail to describe.
 
@@ -106,8 +106,7 @@ A lazy, awaitable, disposable wrapper. `Service<T>` implements
 
 **Semantics — each fixes a flaw in the old module:**
 
-- **Promise-memoized resolution.** `resolve()` stores the in-flight promise,
-  not the instance — concurrent awaits share one resolution (the old code
+- **Promise-memoized resolution.** `resolve()` stores the in-flight promise rather than the instance — concurrent awaits share one resolution (the old code
   raced and could construct duplicate instances, leaking one). A _failed_
   resolution clears the memo so a later await may retry.
 - **Every resolver form runs `[asyncInit]`** and receives the
@@ -117,7 +116,7 @@ A lazy, awaitable, disposable wrapper. `Service<T>` implements
   `Function.prototype.toString().startsWith("class")` tiebreak — an
   inherited-disposable subclass is never invoked without `new` (the old
   `Object.hasOwn(prototype, …)` check crashed on exactly that case).
-- **Honest proxy types.** The method-resolver proxy survives, but non-function
+- **direct proxy types.** The method-resolver proxy survives, but non-function
   properties are typed as what the runtime returns — thunks:
 
 ```ts
@@ -164,7 +163,7 @@ ServiceRegistry()`. The old static-singleton-that-`extends Service` with
   `defaultRegistry`.
 - **Backed by `AsyncDisposableStack`** — native LIFO ordering and
   `SuppressedError` aggregation replace the hand-rolled reverse loop.
-- **Registration recorded at `register` time**, not first-await — a
+- **Registration recorded at `register` time** rather than first-await — a
   resolved-but-never-awaited service can no longer escape disposal (old code
   populated its map inside `then()`).
 - **Double-register on one token throws** `E_DUPLICATE_TOKEN` (the old map
@@ -244,11 +243,11 @@ registry.register(IIndexer, Indexer)
 | `E_DEPENDENCY_CYCLE`   | Constructor-resolved dependency cycle (path in message) |
 | `E_DISPOSED`           | Operation on a disposed registry or service             |
 
-## Bug ledger — review findings → design remedy
+## Bug ledger — review findings → design action
 
 Traceability from the 2026-07-18 `core/lifecycle` review:
 
-| #   | Finding (old module)                                                                                          | Remedy in this design                            |
+| #   | Finding (old module)                                                                                          | Action in this design                            |
 | --- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
 | 1   | `markAsDisposed` set string key `"AsyncDisposedSymbol"`, guards inert                                         | `markDisposed` sets the real `disposed` symbol   |
 | 2   | `Object.hasOwn` predicates missed prototype chain (crash on inherited ctor; `APIClient` cache never disposed) | All guards use `in` + class sniff                |
@@ -262,7 +261,7 @@ Traceability from the 2026-07-18 `core/lifecycle` review:
 
 Vitest; every ledger row and every error code gets a test. Enumerated targets:
 
-- Double-dispose guard actually blocks (mark + isDisposed round-trip)
+- Double-dispose guard blocks (mark + isDisposed round-trip)
 - Inherited-disposable class resolves via `new` (no bare-call crash)
 - Concurrent `await service` constructs exactly one instance; failed resolve retries
 - All resolver forms run `[asyncInit]` with context

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Stories for the declarative resolved-place overlays, over the SAME offline stub style as `MapCanvas`
+ *   Stories for the declarative resolved-place overlays, over the same offline stub style as `MapCanvas`
  *   (one `background` layer, zero network — never hits `tiles.mailwoman.ai`). Each story feeds a fake
  *   resolved place through `computeMapPlaceRenderSpec` and drops `<ResolvedPlaceLayers>` into `<MapCanvas>`,
  *   covering every branch of the render cascade: bbox circle, crisp polygon, street-radius circle,
@@ -27,7 +27,7 @@ const STUB_STYLE: MapCanvasStyle = {
 }
 
 /**
- * Base place; each story overrides only the fields its branch needs.
+ * Base place. each story overrides only the fields its branch needs.
  */
 function place(overrides: Partial<ResolvedMapPlace>): ResolvedMapPlace {
 	return { id: 1, name: "Demo Place", placetype: "locality", lat: 40.7128, lon: -74.006, score: 1, ...overrides }

@@ -6,20 +6,20 @@
  *   former express `server/`'s handler bodies — `GeocodeRouter.getDeps` + its retired `/api/geocode`,
  *   `/api/batch`, `/api/resolve-tree`, `/api/reload` handlers, `AddressRouter`'s retired `/parse`
  *   handler, and `HealthRouter`'s `/health` data block — onto the engine-agnostic `@mailwoman/api`
- *   contract's live routes (`/v1/parse`, `/v1/geocode`, `/v1/batch`, `/v1/resolve`, `/v1/reload`).
+ *   interface's live routes (`/v1/parse`, `/v1/geocode`, `/v1/batch`, `/v1/resolve`, `/v1/reload`).
  *   `mailwoman/server/` is deleted — this file is its sole successor, a fresh port rather
  *   than a thin wrapper.
  *
- *   `createServeEngine` builds the shared stack ONCE, at boot, instead of express's lazy
+ *   `createServeEngine` builds the shared stack once, at boot, instead of express's lazy
  *   first-request memoized promise — the CLI's `serve` command awaits it before listening, so a
- *   misconfigured deployment fails FRIENDLY at boot (the #1009 pattern the drop-ins already use)
+ *   misconfigured deployment fails friendly at boot (the #1009 pattern the drop-ins already use)
  *   instead of a runtime 503 on the first request. `parse` speaks native neural output (`ParseOutcome`
  *   = ordered components + the decoded `AddressTree`, the same language `/v1/resolve` speaks) — it
- *   needs only the model weights, loaded ONCE here and reused by the geocode stack below, so it is
+ *   needs only the model weights, loaded once here and reused by the geocode stack below, so it is
  *   built independently of the WOF-data check: a WOF-less boot still answers `/v1/parse`, while
  *   `geocode`/`batch`/`resolveTree`/`reload` are simply absent (`@mailwoman/api`'s routes answer 503
  *   for those on their own). When the weights themselves are unresolvable (`@mailwoman/neural`
- *   missing, or no weights package installed), `parse` is ALSO absent and the routes answer 501 — no
+ *   missing, or no weights package installed), `parse` is also absent and the routes answer 501 — no
  *   rules fallback (the legacy-excision's point). `health` always answers, even when everything else
  *   is broken.
  */
@@ -40,6 +40,7 @@ import { tryParsingJSON } from "@mailwoman/core/json"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { deriveInputMode } from "@mailwoman/core/pipeline"
 import type { Resolver, ResolveOpts } from "@mailwoman/core/resolver"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { computeQueryShape } from "@mailwoman/query-shape"
@@ -81,12 +82,7 @@ async function wofPaths(): Promise<string[]> {
 
 	// The env override is comma-split and probed like the convention set: a listed database that is not on
 	// disk is dropped here rather than handed to the resolver to fail on open.
-	const explicit = env
-		? env
-				.split(",")
-				.map((p) => p.trim())
-				.filter((p) => p.length > 0)
-		: undefined
+	const explicit = env ? extractDelimited(env) : undefined
 
 	return await existingWOFDatabasePaths(explicit)
 }
@@ -117,8 +113,8 @@ async function readModelCard(): Promise<Record<string, unknown> | null> {
 		// Native ESM resolution of the weights package's card. `@mailwoman/neural-weights-*` packages carry no `exports`
 		// map, so the subpath resolves as a plain file inside the package, and (unlike `node:module`'s
 		// `findPackageJSON`) `import.meta.resolve` realpaths through the workspace symlink — the same string the CJS
-		// `require.resolve` this replaced returned. It does NOT throw for a missing FILE inside a resolvable package,
-		// only for an unresolvable package; the `pathExists` below already checks every candidate, so that is a no-op
+		// `require.resolve` this replaced returned. It does not throw for a missing file inside a resolvable package,
+		// only for an unresolvable package. the `pathExists` below already checks every candidate, so that is a no-op
 		// here.
 		candidates.push(resolveModulePath("@mailwoman/neural-weights-en-us/model-card.json"))
 	} catch {
@@ -143,7 +139,7 @@ async function readModelCard(): Promise<Record<string, unknown> | null> {
 }
 
 /**
- * Count canonical per-state databases (`<prefix>-us-<2-letter>.db`) in a data subdir; 0 if absent. Ported from
+ * Count canonical per-state databases (`<prefix>-us-<2-letter>.db`) in a data subdir. 0 if absent. Ported from
  * `HealthRouter`.
  */
 async function countDatabases(subdir: string, prefix: string): Promise<number> {
@@ -243,18 +239,18 @@ export interface ServeEngine {
 }
 
 /**
- * Build the wired `mailwoman serve` engine. Awaited ONCE at boot (unlike express's lazy per-request `getDeps()`), so a
+ * Build the wired `mailwoman serve` engine. Awaited once at boot (unlike express's lazy per-request `getDeps()`), so a
  * misconfigured deployment reports its preflight failure before the process starts listening — the caller (the `serve`
  * command) decides whether to boot degraded (parse+health only) or exit friendly.
  */
 export async function createServeEngine(): Promise<ServeEngine> {
 	// `health` reads files best-effort and never throws — wired unconditionally, matching `HealthRouter`'s "answers even
-	// when broken" contract.
+	// when broken" interface.
 	const health: MailwomanAPIEngine["health"] = () => buildHealthData()
 
 	// Parse needs only the model weights — not the gazetteer. Load them independently of the WOF-data check below so
 	// `/v1/parse` answers whenever weights resolve, even on a geocode-degraded boot. The classifier instance loaded
-	// here is reused by the geocode stack below — weights load ONCE per boot.
+	// here is reused by the geocode stack below — weights load once per boot.
 	let parse: MailwomanAPIEngine["parse"]
 	let neuralMod: typeof import("@mailwoman/neural") | undefined
 	let classifier: GeocodeClassifier | undefined
@@ -266,7 +262,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 		const parseClassifier = classifier
 
 		parse = async (address, opts) => {
-			// Decision A: explicit wire register wins; unset → the kind classifier decides (same derivation
+			// Decision A: explicit wire register wins. unset → the kind classifier decides (same derivation
 			// as the runtime pipeline / geocode-core — /v1/parse is the "plain parse" endpoint class).
 			const shape = computeQueryShape(address)
 
@@ -283,7 +279,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 			}
 		}
 	} catch {
-		// Weights unresolvable — leave parse undefined; the route answers 501 with its existing guard.
+		// Weights unresolvable — leave parse undefined. the route answers 501 with its existing guard.
 		console.error("createServeEngine: neural weights not found — /v1/parse disabled (501)")
 	}
 
@@ -306,9 +302,9 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	const paths = await wofPaths()
 	// Candidate backend → country-agnostic default (demo's global, population-first behavior); a per-request `country`
 	// still scopes. FTS backend keeps the US default. (#170) A candidate DB alone (no WOF admin database) is a valid boot
-	// configuration — `createResolverBackend` prefers it over `wofPaths` — so the preflight check below checks BOTH,
+	// configuration — `createResolverBackend` prefers it over `wofPaths` — so the preflight check below checks both,
 	// mirroring the drop-ins' `!candidateDB && wofPaths.length === 0` condition rather than `GeocodeRouter`'s WOF-only check.
-	// This check governs geocode/batch/resolveTree/reload ONLY — `parse` is already wired above and unaffected.
+	// This check governs geocode/batch/resolveTree/reload only — `parse` is already wired above and unaffected.
 	const candidateDB = await resolveCandidateDBPath()
 
 	if (!paths.length && !candidateDB) {
@@ -327,7 +323,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	// "documented wire shape looser than the domain type" idiom — `GeocodeOutcome` is a deliberately loose passthrough.
 	const geocode: GeocodeCallback = async (address, opts) => oneGeocode(deps, address, opts?.inputMode)
 
-	// Sequential loop — results land in input order; a thrown row is isolated to its own
+	// Sequential loop — results land in input order. a thrown row is isolated to its own
 	// `{ input, error }` slot. Rows are trimmed here (the route passes the raw validated array through).
 	//
 	// This was a bounded-concurrency worker pool (`MAILWOMAN_BATCH_CONCURRENCY`, default 8) until
@@ -360,7 +356,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	}
 
 	// Metrics are the engine's own responsibility here — unlike `/v1/geocode`, the route wraps no try/catch around
-	// `resolveTree` (it lets a fault fall through to the app's 500 safety net), so the tier metric AND the rethrow both
+	// `resolveTree` (it lets a fault fall through to the app's 500 safety net), so the tier metric and the rethrow both
 	// happen here. Ported from `GeocodeRouter`'s `resolveTreeHandler`.
 	const resolveTree: MailwomanAPIEngine["resolveTree"] = async (tree, rawOpts) => {
 		const incomingOpts = (rawOpts ?? {}) as ResolveOpts

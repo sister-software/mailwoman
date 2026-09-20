@@ -44,7 +44,7 @@ generator"); the 9.0.0 lockstep miss is the prediction landing.
 
 Considered and rejected. `scratchpad/add-a-country-runbook.md` Addendum A argues that a JSON recipe is "the
 same shape as the thing that lagged" in #1015, that it adds a register, and that JSON cannot carry the
-reasoning a code comment does. The first two objections are decisive against a NEW file. The third turns out
+reasoning a code comment does. The first two objections are decisive against a new file. The third turns out
 not to apply: `release.config.json` already carries richer prose in `lineage` than the code comment it would
 replace.
 
@@ -79,7 +79,7 @@ but has no binaries, probe the overlay before throwing.
 layout; it does not know `release.config.json` exists. The dev link command, which is monorepo-only, reads
 the recipe and writes the overlay.
 
-The overlay is a DERIVED artifact, not a register: rebuilt from the recipe, verified against the card's
+The overlay is a DERIVED artifact rather than a register: rebuilt from the recipe, verified against the card's
 `files_md5`. By the runbook's own criterion — `wof-build-manifest.json` is a LOG because it can be
 re-derived — it cannot lag in the #1015 sense. A stale entry fails its digest check rather than being
 believed.
@@ -87,7 +87,7 @@ believed.
 Consequence worth stating: nothing symlinks into a tracked package directory any more. That is the shared
 cause of three known hazards — `yarn test` mutating tracked directories as a side effect of
 `weights.test.ts`, the `fs.copyFile`-through-a-symlink trap in `copy-weights.ts`, and the publish tarball
-symlink refusal (`YN0035`). **The `publish-workspace.ts` dereference net stays.** Its cause is gone, not its
+symlink refusal (`YN0035`). **The `publish-workspace.ts` dereference net stays.** Its cause is gone rather than its
 value; AGENTS.md says do not remove it, and a net whose hazard is merely unlikely is still the net.
 
 ### 3. Sibling reporting, because the rung trades a loud failure for a quiet one
@@ -110,13 +110,13 @@ empty and `base-latn` has no card at all.
 
 That is defensible for `model.onnx` and `tokenizer.model` — overlays share the base byte-for-byte via
 `mailwoman.baseWeights` and have no digest of their own — but it means the digest assertion covers one of
-ten packages, and it covers nothing an overlay actually ships: `postcode-gb.bin`, `pair-index-de.bin`, the
+ten packages, and it covers nothing an overlay ships: `postcode-gb.bin`, `pair-index-de.bin`, the
 lexicons, the per-locale FSTs.
 
 The link command refuses to link an overlay-owned artifact that has no recorded digest, rather than linking
 it unchecked. This is the runbook's closing move — "promote the warning to a check" — applied here.
 
-## What is NOT in scope
+## What is not in scope
 
 - The layered config file from `scratchpad/config-file-plan.md`. Superseded; see "Why not a config file".
 - Any change to `resolveFromPackageDir`'s sibling list or resolution order.
@@ -130,7 +130,7 @@ Unit, against a temporary data root and a fake package directory:
 
 - package with binaries → resolves from the package; overlay never probed
 - package empty, overlay populated → resolves from the overlay, `source` says so
-- package empty, overlay empty, user cache populated → falls through to the cache (existing behaviour holds)
+- package empty, overlay empty, user cache populated → falls through to the cache (the lookup still uses the cache)
 - package empty, nothing anywhere → throws, naming the package dir, the overlay and the cache
 - overlay model present, tokenizer absent → throws rather than half-resolving
 - sibling report distinguishes a sibling resolved from `package` versus `overlay` versus absent

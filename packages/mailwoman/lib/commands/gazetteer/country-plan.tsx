@@ -4,11 +4,11 @@
 /**
  *   `mailwoman gazetteer country-plan <cc>` — what moving a country between admin sources would involve.
  *
- *   READ-ONLY, by construction and not by flag. It clones nothing, edits nothing and builds nothing; the
+ *   read-only, by construction and not by flag. It clones nothing, edits nothing and builds nothing. the
  *   `--apply` half is a separate command precisely because the steps it would take are a clone measured in
  *   hundreds of megabytes and an edit to a file that is reviewed like code.
  *
- *   Everything it reports is computed from the ARTIFACT rather than the lists. `defaults.ts` is a
+ *   Everything it reports is computed from the artifact rather than the lists. `defaults.ts` is a
  *   declaration and the WOF leg is presence-driven, so only the built database has the two reconciled —
  *   and reading a declaration to decide what to change is how #1015 happened.
  *
@@ -22,13 +22,7 @@ import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { resolvePath } from "path-ts"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	useCommandTask,
-	writeRawStdout,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
 import {
 	adminDBAvailable,
 	censusForCountry,
@@ -50,7 +44,7 @@ export const description =
 	"Read-only: clones nothing, edits nothing, builds nothing."
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "country-plan",
@@ -67,15 +61,9 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	target?: string
-	adminDB?: string
-	write: boolean
-}
-
 /**
  * The repositories a WOF move would clone. Names only — `--plan` never reaches the network, so their existence and size
- * are reported as UNKNOWN rather than guessed.
+ * are reported as unknown rather than guessed.
  */
 function wofRepoNames(country: string): string[] {
 	const cc = country.toLowerCase()
@@ -83,7 +71,7 @@ function wofRepoNames(country: string): string[] {
 	return [`whosonfirst-data-admin-${cc}`, `whosonfirst-data-postalcode-${cc}`]
 }
 
-const CountryPlanCommand: ParsedCommandComponent<Options, [string?]> = ({ options, args }) => {
+const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options, args }) => {
 	const state = useCommandTask(
 		async () => {
 			const adminDB = options.adminDB ?? String(resolvePath(mailwomanDataRoot(), "wof", "admin-global-priority.db"))
@@ -94,7 +82,7 @@ const CountryPlanCommand: ParsedCommandComponent<Options, [string?]> = ({ option
 				geonamesCountries: DEFAULT_GEONAMES_COUNTRIES as readonly string[],
 			}
 
-			// The repos root is checked against the DECLARED wof list rather than substituted for it. The WOF leg
+			// The repos root is checked against the declared wof list rather than substituted for it. The WOF leg
 			// is presence-driven, so a clone nobody declared becomes coverage on the next build and a declaration
 			// nobody cloned silently does not — and only comparing the two can tell those apart.
 			const reposRoot = String(resolvePath(mailwomanDataRoot(), "wof", "repos"))
@@ -171,7 +159,7 @@ const CountryPlanCommand: ParsedCommandComponent<Options, [string?]> = ({ option
 			}
 
 			if (!(await adminDBAvailable(adminDB))) {
-				// Absence reported as absence: without the artifact there is no current state to move FROM, and
+				// Absence reported as absence: without the artifact there is no current state to move from, and
 				// guessing it from the lists is the thing this command exists not to do.
 				lines.push(
 					"",
@@ -235,7 +223,7 @@ const CountryPlanCommand: ParsedCommandComponent<Options, [string?]> = ({ option
 			let writeFailures = 0
 
 			// `--write` edits the working tree and stops there. It does not stage, commit or build: the value
-			// this command adds is that BOTH halves of a move are written or neither, and a diff a person reads
+			// this command adds is that both halves of a move are written or neither, and a diff a person reads
 			// is what keeps that reviewable. A commit would move the review to after the fact.
 			if (options.write && plan.edits.length && !plan.blockers.length) {
 				const defaultsPath = String(repoRootPath("packages", "mailwoman", "lib", "gazetteer-pipeline", "defaults.ts"))

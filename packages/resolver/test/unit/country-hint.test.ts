@@ -4,8 +4,8 @@
 /**
  *   Tests for the #833 forward `country_hint` linkage. A region node carrying `metadata.country_hint`
  *   (an address-system recognizer's derived country — `recognizeUSRegions` stamps "US" on a 2-letter US
- *   state abbrev) constrains THAT node's lookup to the hinted country, below a resolved parent's country
- *   but above the global defaults. It breaks the two-consistent-pairs tie ("Augusta, ME" → Maine, not
+ *   state abbrev) constrains that node's lookup to the hinted country, below a resolved parent's country
+ *   but above the global defaults. It breaks the two-consistent-pairs tie ("Augusta, ME" → Maine rather than
  *   the more-populous Augusta under Messina) that geographic consistency alone cannot.
  */
 
@@ -137,7 +137,7 @@ describe("resolveTree + country_hint (#833 forward linkage)", () => {
 		const out = await resolver.resolveTree(augustaMeTree(true), {})
 		const loc = localityOf(out)
 
-		// region "ME" constrained to US → Maine; Augusta scopes to Maine → Augusta, Maine (not Sicily).
+		// region "ME" constrained to US → Maine. Augusta scopes to Maine → Augusta, Maine (not Sicily).
 		expect(loc?.lat).toBeCloseTo(44.31, 2)
 		expect(loc?.lon).toBeCloseTo(-69.78, 2)
 	})

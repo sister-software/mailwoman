@@ -5,14 +5,14 @@
  *   `mailwoman gazetteer repos-sync` — what state the WOF repos root is IN, and the one repair `inspect sync` cannot
  *   perform.
  *
- *   THE DIVISION OF LABOUR MATTERS, because two commands touching the same directories otherwise looks like an
- *   accident. `gazetteer inspect sync` clones and pulls; it now resolves each repo's origin through
- *   `resolveWOFRepoOrigin`, so a NEW clone comes from our fork when one exists. What it cannot do is fix an EXISTING
+ *   the division OF labour matters, because two commands touching the same directories otherwise looks like an
+ *   accident. `gazetteer inspect sync` clones and pulls. it now resolves each repo's origin through
+ *   `resolveWOFRepoOrigin`, so a new clone comes from our fork when one exists. What it cannot do is fix an existing
  *   checkout: `synchronizeRepo` pulls in place and never rewrites a remote, so a directory cloned from upstream before
  *   the fork existed keeps pulling upstream forever, silently, over corrections the build depends on. That repair is
  *   here, and it is opt-in twice (`--apply --repoint`) because it changes what the next build ingests.
  *
- *   REPORT FIRST. Without `--apply` nothing is written: the sweep resolves every origin, reads every checkout and
+ *   report first. Without `--apply` nothing is written: the sweep resolves every origin, reads every checkout and
  *   prints the plan — remote, vintage, shallowness, and whether the tree is safe to touch. A plan nobody saw cannot be
  *   checked, and the vintage half is not available anywhere else: the admin build reads whatever is on disk, so a repo
  *   six months behind produces a plausible artifact and no complaint.
@@ -21,14 +21,15 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { runFile } from "@mailwoman/core/process"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import type { RepoSyncPlan } from "#gazetteer-pipeline/repos/sync"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "repos-sync",
@@ -42,14 +43,6 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	root?: string
-	countries?: string
-	apply: boolean
-	repoint: boolean
-	offline: boolean
-}
-
 const ACTION_MARK: Record<string, string> = {
 	"up-to-date": "=",
 	"fast-forward": "↑",
@@ -60,7 +53,7 @@ const ACTION_MARK: Record<string, string> = {
 	"refuse-not-a-clone": "✗",
 }
 
-const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { join } = await import("path-ts")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
@@ -70,12 +63,12 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const root = options.root ?? String(dataRootPath("wof", "repos"))
 
-		const requested = splitList(options.countries).map((cc) => `whosonfirst-data-admin-${cc.toLowerCase()}`)
+		const requested = extractDelimited(options.countries).map((cc) => `whosonfirst-data-admin-${cc.toLowerCase()}`)
 
 		const audit = await auditReposRoot(root, { readCommits: false })
 		const repos = [...new Set([...audit.repos.map((r) => r.name), ...requested])].toSorted()
 
-		// Existing clones live under `<root>/<owner>/<name>` when nested; prefer wherever the repo already is. The
+		// Existing clones live under `<root>/<owner>/<name>` when nested. prefer wherever the repo already is. The
 		// existence probes are materialized up front because `planReposSync`'s `directoryFor` is a synchronous callback.
 		const directories = new Map<string, string>()
 
@@ -113,7 +106,7 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 						await runFile("git", ["-C", plan.directory, "merge", "--ff-only", "origin/HEAD"])
 						performed.push(`fast-forwarded ${plan.repo}`)
 					} else if (plan.action === SyncAction.RepointRequired && options.repoint) {
-						// The previous remote is KEPT as `upstream`. Losing the address of the repo we fork from would make
+						// The previous remote is kept as `upstream`. Losing the address of the repo we fork from would make
 						// the next upstream sync a guess.
 						await runFile("git", ["-C", plan.directory, "remote", "rename", "origin", "upstream"])
 						await runFile("git", ["-C", plan.directory, "remote", "add", "origin", plan.origin.url])
@@ -139,7 +132,7 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 			}
 		}
 
-		// The vintage stamp lives OUTSIDE the repos root: `ingestWOF` globs the root and a stray file inside it is one
+		// The vintage stamp lives outside the repos root: `ingestWOF` globs the root and a stray file inside it is one
 		// more thing for that glob to consider.
 		const vintagePath = String(dataRootPath("wof", "repos-vintage.json"))
 

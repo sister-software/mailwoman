@@ -1,12 +1,12 @@
 """Loader wiring for the v0.5.0 char-offset span triple (#519, rebuild-plan step 4).
 
-Pins the loader-side contract:
+Pins the loader-side interface:
 
-1. Rows from a span-schema slice stream the triple end-to-end — ``iter_rows`` carries it,
-   ``iter_encoded`` hands it to ``encode_row`` (which trains FROM the spans).
-2. Frozen pre-v0.5.0 slices (no span columns) ride the legacy token path: no span keys appear.
-3. Corruption is LOUD, never a silent fallback: a slice with a partial span-column set raises,
-   and a null span value inside a span-schema slice raises naming the row.
+1. Rows from a span-schema parquet file stream the triple end-to-end — ``iter_rows`` carries it,
+   ``iter_encoded`` hands it to ``encode_row`` (which trains from the spans).
+2. Frozen pre-v0.5.0 files (no span columns) ride the legacy token path: no span keys appear.
+3. Corruption is loud, never a silent fallback: a file with a partial span-column set raises,
+   and a null span value inside a span-schema file raises naming the row.
 """
 
 from __future__ import annotations
@@ -81,7 +81,7 @@ def _iter(corpus: Path) -> list[dict]:
     )
 
 
-def test_span_slice_rows_carry_the_triple(tmp_path: Path) -> None:
+def test_span_schema_rows_carry_the_triple(tmp_path: Path) -> None:
     corpus = _write_corpus(tmp_path, [_row()])
     rows = _iter(corpus)
     assert len(rows) == 1
@@ -90,7 +90,7 @@ def test_span_slice_rows_carry_the_triple(tmp_path: Path) -> None:
     assert rows[0]["span_tags"] == ["po_box", "locality", "region", "postcode"]
 
 
-def test_legacy_slice_rows_have_no_span_keys(tmp_path: Path) -> None:
+def test_legacy_schema_rows_have_no_span_keys(tmp_path: Path) -> None:
     corpus = _write_corpus(tmp_path, [_row()], drop_columns=("span_starts", "span_ends", "span_tags"))
     rows = _iter(corpus)
     assert len(rows) == 1
@@ -103,7 +103,7 @@ def test_partial_span_columns_raise(tmp_path: Path) -> None:
         _iter(corpus)
 
 
-def test_null_span_value_in_span_slice_raises(tmp_path: Path) -> None:
+def test_null_span_value_in_span_schema_file_raises(tmp_path: Path) -> None:
     corpus = _write_corpus(tmp_path, [_row(), _row(raw="123 Main St", span_starts=None)])
     with pytest.raises(ValueError, match="null span column"):
         _iter(corpus)
@@ -129,7 +129,7 @@ def test_empty_triple_is_a_valid_all_o_row(tmp_path: Path) -> None:
 
 def test_positive_weight_for_absent_source_raises(tmp_path: Path) -> None:
     corpus = _write_corpus(tmp_path, [_row()])
-    with pytest.raises(ValueError, match="positive source_weights entries have no slices"):
+    with pytest.raises(ValueError, match="positive source_weights entries have no parquet files"):
         list(
             iter_rows(
                 corpus,
@@ -175,7 +175,7 @@ def test_training_source_inventory_is_not_required_in_validation_split(tmp_path:
 
 def test_augmentation_plus_relabel_keep_spans_consistent_end_to_end(tmp_path: Path) -> None:
     """The mutation-upstream hazard, pinned at the loader level: with the directional expansion
-    AND the #511 relabel both on, every emitted row's spans must address ITS OWN raw."""
+    and the #511 relabel both on, every emitted row's spans must address its own raw."""
     from mailwoman_train.data.relabel import AffixRelabelLexicon
 
     corpus = _write_corpus(
@@ -210,7 +210,7 @@ def test_augmentation_plus_relabel_keep_spans_consistent_end_to_end(tmp_path: Pa
     )
     assert len(rows) == 2  # original + expanded copy
 
-    def slices(r: dict) -> list[tuple[str, str]]:
+    def span_texts(r: dict) -> list[tuple[str, str]]:
         return [(t, r["raw"][s:e]) for s, e, t in zip(r["span_starts"], r["span_ends"], r["span_tags"], strict=True)]
 
     for r in rows:
@@ -218,7 +218,7 @@ def test_augmentation_plus_relabel_keep_spans_consistent_end_to_end(tmp_path: Pa
             assert 0 <= s < e <= len(r["raw"])
 
     original = next(r for r in rows if r["raw"] == "1234 SE Division St")
-    assert slices(original) == [
+    assert span_texts(original) == [
         ("house_number", "1234"),
         ("street_prefix", "SE"),
         ("street", "Division"),
@@ -226,7 +226,7 @@ def test_augmentation_plus_relabel_keep_spans_consistent_end_to_end(tmp_path: Pa
     ]
     expanded = next(r for r in rows if "Southeast" in r["raw"])
     assert expanded["raw"] == "1234 Southeast Division St"
-    assert slices(expanded) == [
+    assert span_texts(expanded) == [
         ("house_number", "1234"),
         ("street_prefix", "Southeast"),
         ("street", "Division"),
@@ -269,7 +269,7 @@ def test_iter_encoded_legacy_path_passes_none(tmp_path: Path, monkeypatch) -> No
 def test_iter_encoded_skips_astral_utf16_offset_rows(tmp_path: Path, monkeypatch) -> None:
     # The corpus stores UTF-16 span offsets (#519); this consumer is code-point-native. An astral-
     # script row (Gothic — 2 UTF-16 units per code point) has span ends that exceed the code-point
-    # len(raw), so encode_row would raise span-out-of-bounds. iter_encoded must skip it, not crash.
+    # len(raw), so encode_row would raise span-out-of-bounds. iter_encoded must skip it rather than crash.
     astral = _row(
         raw="𐍃𐌿𐌽𐌸",  # 4 code points, 8 UTF-16 units
         tokens=["𐍃𐌿𐌽𐌸"],
@@ -288,6 +288,6 @@ def test_iter_encoded_skips_astral_utf16_offset_rows(tmp_path: Path, monkeypatch
     monkeypatch.setattr(encode_module, "encode_row", fake_encode_row)
     cfg = DataConfig(corpus_dir=str(corpus), country_weights={"US": 1.0}, coarse_filter=False)
     list(iter_encoded(cfg, tokenizer=UNUSED_TOKENIZER, split="train"))
-    # Only the BMP row reached encode_row; the astral row was skipped before it (no crash).
+    # Only the BMP row reached encode_row. the astral row was skipped before it (no crash).
     assert len(captured) == 1
     assert captured[0]["raw"] == "P.O. Box 19, Buffalo, NY 14201"

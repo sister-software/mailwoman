@@ -1,10 +1,10 @@
 /**
  * Threshold-free, report-only observations for decoder-grammar constraint C4.
  *
- * A phrase proposal is evidence, not a constraint. Overlapping proposals are retained verbatim and this module never
- * turns their presence into a binary violation. It records every adjacent decoded span boundary and the structural
- * evidence available at that boundary so a census can measure which combinations distinguish wrong splits from legal
- * component edges.
+ * A phrase proposal is evidence rather than a constraint. Overlapping proposals are retained verbatim and this module
+ * never turns their presence into a binary violation. It records every adjacent decoded span boundary and the
+ * structural evidence available at that boundary so a census can measure which combinations distinguish wrong splits
+ * from legal component edges.
  */
 
 /* oxlint-disable sister-software/multiline-statement-padding -- feature-vector records stay adjacent as one receipt */
@@ -206,7 +206,7 @@ export interface C4FeatureVectorCount {
 }
 
 /**
- * Representative full-input receipts printed per feature vector; the JSON row ledger remains complete.
+ * Representative full-input receipts printed per feature vector. the JSON row ledger remains complete.
  */
 const FEATURE_VECTOR_EXAMPLE_LIMIT = 3
 

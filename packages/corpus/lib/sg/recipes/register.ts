@@ -2,21 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `sg-register` slice recipe — the forms a person in Singapore types, rendered over the Overture-SG register rows
- *   (#2204 §4). The base `overture` source carries the register's own shape, `990 OLD CHOA CHU KANG ROAD, 699814,
+ *   `sg-register` recipe — the forms a person in Singapore types, rendered over the Overture-SG register rows
+ *   (#2204 §4). The base `overture` source carries the register's own shape, `990 old choa CHU kang road, 699814,
  *   Singapore`, and the Latin model has no register for the three forms that dominate typed Singapore addresses:
  *
  *   - the HDB block line, `Blk 123 Ang Mo Kio Ave 3 #05-67 Singapore 560123` — `Blk` in front of the block number (the
  *     register's `number`), a floor-unit `#NN-NN` after the street, the country name as the locality;
  *   - the bracketed postcode, `123 Ang Mo Kio Ave 3 S(560123)` — the form the postal service prints;
  *   - the building-led line, `National Shooting Centre, 990 Old Choa Chu Kang Road, Singapore 699814` — the register's
- *     `unit` field holds the BUILDING or ESTATE name on 91,818 of 142,210 rows, which the adapter refuses as a unit and
+ *     `unit` field holds the building or estate name on 91,818 of 142,210 rows, which the adapter refuses as a unit and
  *     this recipe renders as a `venue` when it reads as a building rather than an estate.
  *
  *   Every value in `components` is a verbatim substring of `raw`, aligned by {@link alignAndWrite}. The floor-unit is
- *   SYNTHESIZED (the register carries one on a single row): floor 01–30, unit 01–399, zero-padded — the shape, not a
+ *   synthesized (the register carries one on a single row): floor 01–30, unit 01–399, zero-padded — the shape rather than a
  *   real occupancy. `Blk` and the `S(` `)` around a postcode are untagged, as the board's `sg-cs-blk-12-kallang-ave`
- *   row expects (`house_number: "12"`). Streets arrive upper-case and are rendered title-cased; a third abbreviate the
+ *   row expects (`house_number: "12"`). Streets arrive upper-case and are rendered title-cased. a third abbreviate the
  *   generic (`Avenue` → `Ave`, `Road` → `Rd`, …) the way a typed line does.
  *
  *   Run: mailwoman corpus slice sg-register --input <overture-sg.corpus.jsonl> --count N --seed S
@@ -26,7 +26,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { titlecase } from "#au/adapters/gnaf/assemble"
-import { alignAndWrite, type CorpusRecipe, readTuples, sliceSourceID } from "#recipes/scaffold"
+import { alignAndWrite, type CorpusRecipe, readTuples, recipeSourceID } from "#recipes/scaffold"
 
 const SOURCE = "synth-sg-register"
 
@@ -49,13 +49,13 @@ const GENERIC_ABBREVIATIONS: ReadonlyArray<readonly [full: string, short: string
 
 /**
  * Estate and area names the register's `unit` field carries beside building names. A name ending in one of these is an
- * estate, which no one writes in front of an address line; a name without one reads as a building and is rendered as a
+ * estate, which no one writes in front of an address line. a name without one reads as a building and is rendered as a
  * `venue`.
  */
 const ESTATE_TAILS = ["ESTATE", "CONSERVATION AREA", "HILLS", "PARK", "GARDENS", "GARDEN", "HEIGHTS", "GROVE", "VILLE"]
 
 /**
- * Share of rows per register. The block line and the bracketed postcode are the two the Latin model has never seen; the
+ * Share of rows per register. The block line and the bracketed postcode are the two the Latin model has never seen. the
  * official line keeps the register's own shape in the mix so the block forms train beside it.
  */
 const P_BLOCK = 0.4
@@ -78,7 +78,7 @@ const REGISTER_DRAW: Record<SGRegister, number> = {
 }
 
 /**
- * `OLD CHOA CHU KANG ROAD` → `Old Choa Chu Kang Road`; an already-mixed value is returned as it is. The register writes
+ * `old choa CHU kang road` → `Old Choa Chu Kang Road`; an already-mixed value is returned as it is. The register writes
  * every street and building name upper-case, the same convention as G-NAF, so the G-NAF title-caser serves both.
  */
 export function titleCaseSGName(name: string): string {
@@ -100,7 +100,7 @@ export function abbreviateSGStreet(street: string): string {
 
 /**
  * Whether the register's `unit` value names a building rather than an estate — the building-led register's lead. A name
- * carrying a digit, a parenthesized abbreviation (`DIABETES & METABOLISM CENTRE (DMC)`) or one word only is not one.
+ * carrying a digit, a parenthesized abbreviation (`diabetes & metabolism centre (DMC)`) or one word only is not one.
  */
 export function isBuildingName(unit: string): boolean {
 	const value = unit.trim().toUpperCase()
@@ -182,7 +182,7 @@ export function renderSGRegister(row: SGRow, random: () => number, register?: SG
 }
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the registers and why each is here.
+ * Recipe registered with the corpus builder — see the file header for the registers and why each is here.
  */
 export const sgRegisterRecipe: CorpusRecipe = {
 	name: "sg-register",
@@ -243,7 +243,7 @@ export const sgRegisterRecipe: CorpusRecipe = {
 					country: "SG",
 					locale: "en-SG",
 					source,
-					source_id: sliceSourceID(source, { raw: rendering.raw }),
+					source_id: recipeSourceID(source, { raw: rendering.raw }),
 					corpus_version: "0.1.0",
 					license:
 						"CDLA-Permissive-2.0 — Overture Maps addresses over the Singapore Open Data Licence 1.0 (OneMap / Singapore Land Authority)",

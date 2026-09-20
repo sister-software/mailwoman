@@ -4,7 +4,7 @@
 /**
  * @file The CA urban/rural split, which the code carries in its second character.
  *
- *   Canada Post puts a `0` in the second position of a RURAL forward sortation area. The two populations measure a
+ *   Canada Post puts a `0` in the second position of a rural forward sortation area. The two populations measure a
  *   granularity apart — urban 78 m p50, rural 2.08 km — so admitting CA wholesale would have claimed a tier for half
  *   the country that only the other half earns. These cases pin the boundary at the one character that decides it.
  */
@@ -43,7 +43,7 @@ describe("CA urban LDU", () => {
 	})
 
 	it("does not collide with the systems already in the tier", () => {
-		// A GB unit and an NL PC6 keep matching; a US ZIP, a DE PLZ and a JP code stay out.
+		// A GB unit and an NL PC6 keep matching. a US ZIP, a DE PLZ and a JP code stay out.
 		expect(shapeAccepts("N7 0BT")).toBe(true)
 		expect(shapeAccepts("1012 LG")).toBe(true)
 

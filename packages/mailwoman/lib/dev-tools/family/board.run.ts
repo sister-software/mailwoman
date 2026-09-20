@@ -6,7 +6,7 @@
  *   file per family and country, with the point of every row that names a place read off the admin gazetteer and the
  *   status of every row graded through the gauntlet's grader before it is written.
  *
- *   A name the gazetteer does not hold, or holds twice at the same rank, REFUSES: a curated row's truth is a record,
+ *   A name the gazetteer does not hold, or holds twice at the same rank, is refused: a curated row's truth is a record,
  *   and a guessed record is the defect this builder exists to keep out. The chosen record is printed beside each row so
  *   the read can be audited.
  *
@@ -51,7 +51,7 @@ const FAMILY_ISSUE: Record<TargetFamily, string> = {
 }
 
 /**
- * The placetypes a district lookup admits, most specific first; the first placetype with a record wins.
+ * The placetypes a district lookup admits, most specific first. the first placetype with a record wins.
  */
 const DISTRICT_PLACETYPES = ["borough", "localadmin", "macrohood", "neighbourhood", "microhood", "locality"] as const
 

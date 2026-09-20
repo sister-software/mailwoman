@@ -1,26 +1,26 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { elementText, elementTexts, rootAttribute, sliceDocument } from "@mailwoman/core/html/document"
+import { elementText, elementTexts, narrowDocument, rootAttribute } from "@mailwoman/core/html/document"
 import { describe, expect, it } from "vitest"
 
-describe("sliceDocument", () => {
+describe("narrowDocument", () => {
 	it("narrows to an envelope element's payload", () => {
-		expect(sliceDocument("<a>before<TEXT><p>body</p></TEXT>after</a>", { within: "text" })).toBe("<p>body</p>")
+		expect(narrowDocument("<a>before<TEXT><p>body</p></TEXT>after</a>", { within: "text" })).toBe("<p>body</p>")
 	})
 
 	it("leaves a document that states no such envelope whole", () => {
-		expect(sliceDocument("<p>body</p>", { within: "text" })).toBe("<p>body</p>")
+		expect(narrowDocument("<p>body</p>", { within: "text" })).toBe("<p>body</p>")
 	})
 
 	it("removes the named elements after narrowing, so envelope metadata never answers for the payload", () => {
 		const html = "<text><head><title>filename.htm</title></head><p>body</p><script>x=1</script></text>"
 
-		expect(sliceDocument(html, { within: "text", without: ["head", "script"] })).toBe("<p>body</p>")
+		expect(narrowDocument(html, { within: "text", without: ["head", "script"] })).toBe("<p>body</p>")
 	})
 
 	it("removes a nested match, not only a direct child", () => {
-		expect(sliceDocument("<div><p>a<style>b{}</style></p></div>", { without: ["style"] })).toBe("<div><p>a</p></div>")
+		expect(narrowDocument("<div><p>a<style>b{}</style></p></div>", { without: ["style"] })).toBe("<div><p>a</p></div>")
 	})
 })
 
@@ -31,7 +31,7 @@ describe("elementTexts", () => {
 		expect(elementTexts(xml, "Prefix", { xml: true })).toEqual(["release/a/", "release/b/"])
 	})
 
-	it("ignores a namespace prefix, which is the publisher's alias rather than the contract", () => {
+	it("ignores a namespace prefix, which is the publisher's alias rather than the interface", () => {
 		expect(
 			elementTexts("<r><gco:CharacterString>x</gco:CharacterString></r>", "CharacterString", { xml: true })
 		).toEqual(["x"])

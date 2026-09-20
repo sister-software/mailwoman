@@ -1,10 +1,10 @@
-# House-number interpolation — design (#483, slice 1)
+# House-number interpolation — design (#483, increment 1)
 
-First slice of the interpolation tier scoped in
+First increment of the interpolation tier scoped in
 [2026-06-11-geocoder-table-stakes-scoping.md](./2026-06-11-geocoder-table-stakes-scoping.md):
 "123 Main St" where no address point exists → estimate the coordinate between known ranges
 along the street segment. This document covers the pilot — a Vermont-scoped TIGER EDGES
-segment table, a standalone interpolation module in `resolver-wof-sqlite`, and the honest
+segment table, a standalone interpolation module in `resolver-wof-sqlite`, and the direct
 eval that grades it against real address points.
 
 ## Where it sits in the resolution ladder
@@ -19,7 +19,7 @@ admin centroid       (locality/region/country — the existing WOF resolver answ
 
 The interpolator only ever answers when the exact-point tier missed, and its answer is
 always flagged: `interpolated: true` plus an `uncertaintyM` radius (half the matched
-segment's length — the honest default from the #483 issue). Same honesty convention as
+segment's length — the direct default from the #483 issue). Same honesty convention as
 `reverse.ts`'s `containment: "approximate"` and the demo's approximate circles: data
 reality surfaced per result, never hidden.
 
@@ -42,17 +42,17 @@ The same per-county shapefiles the real-intersection eval already reads
 TIGER conventions that shape the schema:
 
 - **Sides are independent.** Left and right carry separate ranges and separate ZIPs (a
-  street can be a ZIP boundary). We emit one ROW PER SIDE, not per edge.
-- **Parity is per side, by convention but not by contract.** Typically one side of a US
-  street is odd and the other even, and TIGER's from/to numbers usually agree on parity
+  street can be a ZIP boundary). We emit one ROW PER SIDE rather than per edge.
+- **Parity is per side, by convention but not by interface.** Typically one side of a US
+  street is odd and the other even, and TIGER's from/to numbers typically agree on parity
   (Vermont: 137,248 of 137,256 sides). When from/to parity DISAGREES the side is recorded
   `parity = "mixed"` and matches either parity. Per-side fidelity is an open question
   below — we measure it, we don't assume it.
 - **Ranges may descend.** `from > to` means house numbers decrease walking from-node →
   to-node. The row keeps the raw from/to (the interpolation position needs the
   direction); the index columns store `min`/`max` for range matching.
-- **Ranges are potential, not actual.** TIGER ranges are theoretical capacity
-  (`100–198`), not occupancy. Interpolating assumes uniform spacing across the range —
+- **Ranges are potential rather than actual.** TIGER ranges are theoretical capacity
+  (`100–198`) rather than occupancy. Interpolating assumes uniform spacing across the range —
   the classic source of interpolation error, which is exactly what the eval measures.
 - **Non-numeric house numbers exist** (hyphenated Queens-style `12-34`, alphanumeric
   suffixes). The pilot keeps numeric-only sides and counts what it skips.
@@ -60,7 +60,7 @@ TIGER conventions that shape the schema:
 ## Segment table schema
 
 One SQLite DB per state, built by `scripts/build-interpolation-extract.ts` (the
-`build-address-point-extract.ts` pattern: idempotent rebuild, provenance per row, THE shared
+`build-address-point-extract.ts` pattern: idempotent rebuild, provenance per row, the shared
 street normalizer):
 
 ```sql
@@ -83,9 +83,9 @@ CREATE INDEX idx_seg_postcode ON street_segment (postcode, street_norm, min_hn);
 CREATE INDEX idx_seg_street   ON street_segment (street_norm, min_hn);
 ```
 
-Keying reuses `resolver-wof-sqlite/street-normalize.ts` — the SAME function the
+Keying reuses `resolver-wof-sqlite/street-normalize.ts` — the same function the
 address-point extract and lookup use (one normalizer, never two; the PLACETYPE_ORDER
-lesson) — plus `canonicalizeRouteKey`, a route-designator fold applied by BOTH the
+lesson) — plus `canonicalizeRouteKey`, a route-designator fold applied by both the
 builder and the lookup. Measured need: TIGER spells routes `State Rte 100` / `US Hwy 5`
 where E911/Overture say `VT ROUTE 100` / `US ROUTE 5` — the single largest street-name
 miss class in the VT eval (+3.1pp coverage from the fold alone, no tail cost). The
@@ -96,9 +96,9 @@ only if a national build makes size hurt.
 
 **Scoping is postcode-first, like the address-point tier.** TIGER edges carry no
 locality name, so locality scope can't be matched directly against this table — a known
-limitation of this slice (see open questions). Queries without a postcode fall back to a
-statewide street-name match, which is honest but ambiguous for common names ("Main
-Street" exists in many towns); the lookup ABSTAINS when the statewide candidates span
+limitation of this increment (see open questions). Queries without a postcode fall back to a
+statewide street-name match, which is direct but ambiguous for common names ("Main
+Street" exists in several towns); the lookup ABSTAINS when the statewide candidates span
 multiple postcodes with no way to pick.
 
 ## Query algorithm (`resolver-wof-sqlite/interpolation.ts`)
@@ -109,14 +109,14 @@ Given `{ street, number, postcode? }`:
    integer (non-numeric → no answer, this tier doesn't guess).
 2. **Candidate fetch** — rows with `street_norm` equal and `min_hn ≤ n ≤ max_hn`,
    postcode-scoped when a postcode is given. A given ZIP that scopes to nothing is a
-   MISS, not a statewide guess — the statewide retry was built and MEASURED (2026-06-11
+   MISS rather than a statewide guess — the statewide retry was built and MEASURED (2026-06-11
    VT eval): +2.3pp coverage but a poisoned tail (p99 1.0 → 20.8 km, max 204 km — a
    statewide-unique name can live in a far-away town), so it was reverted. Queries
    WITHOUT a postcode match statewide and abstain unless every candidate agrees on a
    single ZIP.
 3. **Parity match** — prefer sides whose `parity` equals the number's parity, then
-   `mixed`, then opposite-parity as a last resort (an opposite-parity hit is usually the
-   right block, wrong side of the street — tens of meters, not kilometers; the result
+   `mixed`, then opposite-parity as a last resort (an opposite-parity hit is typically the
+   right block, wrong side of the street — tens of meters rather than kilometers; the result
    reports `parityMatched: false` so callers and the eval can see it).
 4. **Pick** the tightest range (smallest `max_hn − min_hn`) among the preferred group —
    the most specific claim wins.
@@ -127,8 +127,8 @@ Given `{ street, number, postcode? }`:
 6. **Answer** — `{ lat, lon, interpolated: true, parityMatched, uncertaintyM, source,
 release }` where `uncertaintyM` is half the segment's polyline length in meters.
 
-No side-of-street offset in this slice: TIGER centerline + half-segment uncertainty is
-the honest claim. Offsetting perpendicular by ~10 m to the matched side is a cheap
+No side-of-street offset in this increment: TIGER centerline + half-segment uncertainty is
+the direct claim. Offsetting perpendicular by ~10 m to the matched side is a cheap
 follow-up once the eval says the centerline is the dominant error term (it isn't — range
 uniformity is).
 
@@ -137,17 +137,17 @@ uniformity is).
 `core/resolver/resolve.ts` already runs the exact-point tier via `opts.addressPoints`
 (`applyAddressPoint`, stamping `resolution_tier: "address_point"`). The interpolation
 tier slots in immediately after it as the fall-through: same `(street, number, postcode,
-locality)` extraction, consulted ONLY when the exact tier missed, stamping
+locality)` extraction, consulted only when the exact tier missed, stamping
 `resolution_tier: "interpolated"` + the uncertainty metadata.
 
-**This slice ships the module standalone and does NOT wire core.** The wiring needs a
+**This increment ships the module standalone and does not wire core.** The wiring needs a
 second `ResolveOpts` member (or a widening of `addressPoints` into an ordered tier list)
 and that interface decision deserves its own review — noted as a follow-up on #483
 rather than smuggled into the pilot. The module's `find()` signature is deliberately
 identical in shape to `AddressPointLookup.find()` so the wiring is mechanical when it
 lands.
 
-## Eval — honest-eval pattern at street grain
+## Eval — direct-eval pattern at street grain
 
 `scripts/eval/interpolation-eval.ts`, self-reporting. The gold is the #476 address-point
 extract (`address-points-us-vt.db`, Overture 2026-05-20.0 — NAD/E911-lineage situs
@@ -163,23 +163,23 @@ deterministic held-out sample of Vermont points:
 
 These are points the exact tier would mostly HIT — the eval uses them precisely because
 truth is known. The production value is the complement (numbers with no point), where
-truth is unknowable; measuring on known points is the only honest proxy.
+truth is unknowable; measuring on known points is the only direct proxy.
 
 ## Pilot results (2026-06-11, VT, 5000-key sample, seed 42)
 
 - **Coverage 82.0%** (4100/5000 found a segment). Miss composition: 469 name-absent in
   TIGER (private roads, new subdivisions, E911-only names like `CHARBO UNKNOWN 6`), 232
   range-gaps within the right ZIP+name, 166 ZIP-mismatches (name+range exists in a
-  neighbouring ZIP — the class the rejected statewide retry would have answered, badly),
+  neighboring ZIP — the class the rejected statewide retry would have answered, badly),
   33 range-gaps statewide.
 - **Coord error vs truth: p50 66 m, p90 249 m** (p99 1.0 km; parity-matched n=3927 p50
   65 m / fallback n=173 p50 116 m). Median claimed uncertainty (half segment length)
   137 m — the p50 error sits inside the claimed radius.
-- **Check: MISS.** The pre-registered #483 check (p50 ≤ 50 m, p90 ≤ 150 m) is NOT met —
-  stated directly, not re-baselined. The shortfall tracks rural Vermont's long sparse
+- **Check: MISS.** The pre-registered #483 check (p50 ≤ 50 m, p90 ≤ 150 m) is not met —
+  stated directly rather than re-baselined. The shortfall tracks rural Vermont's long sparse
   segments (median claimed uncertainty 137 m: the geometry itself caps precision) and
   TIGER's uniform-spacing assumption. Next changes, in measured-first order: re-run on a
-  denser county (the check may simply be a rural-geometry artifact — measure before
+  denser county (the check may only be a rural-geometry artifact — measure before
   building), segment subdivision at OA point anchors, ZIP+4 snapping (#525). No rollout
   until a check pass or a STATED re-baseline with operator sign-off.
 
@@ -197,16 +197,16 @@ builder's new `--county-fips` flag; 1,460,216 points, 231 ZIPs).
 
 Cook's median claimed uncertainty (half segment length) is 80 m vs Vermont's 137 m — the
 segment geometry itself is the divide. **Verdict: the VT check miss is substantially a
-rural-geometry artifact, not a method error.** TIGER uniform-spacing interpolation clears
+rural-geometry artifact rather than a method error.** TIGER uniform-spacing interpolation clears
 the check where segments are short; long sparse rural segments cap precision below the
 check. Per the resolution-ladder plan this keeps Method 2 (address-point interpolation) as
 the corrective for the sparse stratum, and any county-stratified check re-baseline remains
-an operator sign-off, not made here.
+an operator sign-off rather than made here.
 
 ## Method 2 — address-point interpolation (2026-06-12, resolution-ladder Phase 1 step 2)
 
 `resolver-wof-sqlite/address-point-interpolation.ts` (`AddressPointInterpolator`): bracket the
-query number with REAL neighbor points from the #476 extract on the same route-folded street key
+query number with real neighbor points from the #476 extract on the same route-folded street key
 (`street_key`, a new extract column — the fold adoption the pilot deferred), interpolate linearly
 in house-number space between the bracket's centroids; single-sided bracket = extrapolation
 along the two nearest same-side numbers, capped at one pair-span (`t ≤ 2`), with an explicitly
@@ -216,7 +216,7 @@ larger `uncertaintyM`; no bracket = fall through to TIGER range interpolation. H
 **Non-circularity:** the lookup excludes every row at the queried house number by construction —
 a held-out key is only ever interpolated from non-held-out neighbor numbers. (This is also
 production-faithful: an on-file number is the exact tier's answer, never this tier's.) The
-prior eval had no extract-side holdout to lean on, so the guarantee lives in the lookup, not the
+prior eval had no extract-side holdout to lean on, so the guarantee lives in the lookup rather than the
 sampler.
 
 Same eval (`--mode ladder`), same check, same seed-42 samples. Pre-registered question: does
@@ -231,35 +231,35 @@ Method 2 clear the check on its bracketed stratum?
 | tiger-alone, same sample (baseline)   | 4100 |     66 m / 249 m |   4389 |     41 m / 79 m |
 
 - **Coverage: VT 82.0% → 97.7%, Cook 87.8% → 99.6%** — bracketing answers most of TIGER's
-  name-absent/range-gap miss classes because the neighbor points ARE the E911/Overture names.
-- **Check on the bracketed stratum: Cook PASS (42/61). VT MISS — p50 50.5 m (over by 0.5 m),
+  name-absent/range-gap miss classes because the neighbor points are the E911/Overture names.
+- **Check on the bracketed stratum: Cook pass (42/61). VT MISS — p50 50.5 m (over by 0.5 m),
   p90 182 m.** stated directly: Method 2 moved VT's bracketed p90 249 → 182 m and its p50
   66 → 50.5 m, and that is still a miss. Not re-baselined.
 - The VT residual is wide-bracket concentrated, and the claimed `uncertaintyM` (half bracket
   span) predicts it: bracketed rows claiming ≤ 100 m (71.4% of the stratum) measure p50 42 m /
   p90 116 m — inside the check — while the > 250 m claims (7.2%) measure p50 143 m / p90 917 m.
   The Phase 5 calibrated-confidence work is the principled home for acting on that (per-tier
-  P(error < X) by claimed uncertainty), not a quiet stratum rebuilt here.
+  P(error < X) by claimed uncertainty) rather than a quiet stratum rebuilt here.
 
 ## Open questions
 
-1. **Workspace split.** This slice implements inside `resolver-wof-sqlite` (the module is
+1. **Workspace split.** This increment implements inside `resolver-wof-sqlite` (the module is
    small, shares the normalizer + geo helpers, and ships nothing by default). The scoping
    note leaned toward a new `@mailwoman/resolver-interpolation` workspace — different
    data lifecycle (TIGER yearly vintages vs WOF), the slim/fat split the demo taught.
    **Operator call** before this grows beyond a pilot: stay (one fewer package, shared
    normalizer stays intra-package) vs split (independent versioning of the TIGER data
-   contract). Nothing in this slice blocks either answer.
+   interface). Nothing in this increment blocks either answer.
 2. **Odd/even fidelity.** Vermont measures 99.99% of address-carrying sides
    parity-consistent (8 `mixed` of 137,256), but a clean from/to pair doesn't prove the
    real houses obey it, and TIGER does not guarantee it nationally; the `mixed` bucket and
    the opposite-parity fallback are the pressure valves. The eval's parity-split
    reporting is the instrument — if fallback hits dominate the error tail in a denser
    state, revisit before national rollout.
-3. **Locality scope.** TIGER carries ZIPs, not locality names. A locality-only query
+3. **Locality scope.** TIGER carries ZIPs rather than locality names. A locality-only query
    (no postcode) currently rides the statewide fallback + abstention. Joining ZIP →
    locality via the postcode extract (or place ancestry) would restore locality scoping —
-   follow-up, not pilot.
+   follow-up rather than pilot.
 4. **ZIP+4 snapping** — deferred to #525 (needs the ZCTA work as a prior), per scoping.
 5. **EU rollout** — OSM Karlsruhe-schema `addr:interpolation` ways, with the ODbL
    share-alike treatment documented in #26. Out of scope for the US pilot.

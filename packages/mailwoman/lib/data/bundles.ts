@@ -2,72 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `mailwoman data` command group's bundle registry (#task-6) — the consumer download path
- *   `mailwoman doctor`'s fix hints have pointed at (a bare `curl`) since the candidate/POI checks
- *   were written, without a command behind it. This module is the PURE half: what a bundle is, where
- *   its artifacts live on the public bucket, where they land on disk, and the present/missing/stale
- *   decision. `commands/data/pull.tsx` and `commands/data/status.tsx` own the IO (network + fs).
- *
- *   SURVEY (2026-08-03, this task): a one-time enumeration of what the public bucket serves, recorded
- *   here as the paper trail behind the `BUNDLES` table below. Every artifact resolves against
- *   `PUBLIC_BUCKET_BASE_URL` — a public, unauthenticated HTTPS base. No bucket name, no credentials,
- *   nothing a consumer of this package configures. 413 files total. What's there, by top-level prefix:
- *
- *   - `gazetteer/<date>/candidate.db` — 12 dated builds, `2026-06-20b` .. `2026-07-07a`. Only the
- *     LATEST is live (matches `doctor/checks.ts`'s `CANDIDATE_URL` before this change): 1,652,916,224
- *     bytes. The older dates are retained history, not alternates to offer.
- *   - `poi/<date>/poi.db` — 2 dated builds, `2026-07-19a` and `2026-07-20a` (latest, matches the
- *     demo's `POI_LAYER_VERSION`): 3,889,184,768 bytes.
- *   - `street/us/<slug>/{situs,interp}.db` — the 50-state + DC + VI national street tier, 52 slugs,
- *     103 files, 41,261,826,048 bytes total. `vi` ships `situs.db` only (no TIGER interpolation
- *     database for the territory — a real gap, not an omission here). Sizes recorded per-slug below.
- *   - `street/fr/2026-07-10/situs.db` — the FR national BAN rooftop database (situs-only, no
- *     interpolation tier; matches the demo's `NATIONAL_STREET_DATABASE_VERSION`), 6,952,509,440 bytes.
- *     `street/fr/national/situs.db` also exists (an older, pre-dated-convention upload) but nothing
- *     current points at it — not registered here.
- *   - `en-us/<version>/*` — the MODEL release assets (weights, tokenizer, FST, postcode binaries).
- *     Out of scope: those install via `npm install @mailwoman/neural-weights-en-us`
- *     (`doctor/checks.ts`'s `WEIGHTS_FIX`), not `mailwoman data pull`.
- *   - `pair-index/*.bin`, `sqljs/*` — small binaries the DEMO stages same-origin; not a
- *     server-side download consumers of this CLI would ever want as a "bundle".
- *
- *   NOT SHIPPED (checked, absent): no `timezone`/`nuts`/`un-locode` artifact anywhere under
- *   `mailwoman/` in the bucket — `@mailwoman/timezone-lookup` and `@mailwoman/nuts-lookup` build
- *   their own data locally today. No bundle is defined for them; inventing a path here would be
- *   exactly the mistake this task's brief warns against. Also checked and absent: an `.md5` sidecar
- *   for ANY object in the bucket (`{Path}.md5` — zero matches across all 413 files, and `rclone
- *   lsjson --hash` reports no native hash either, since these are multipart uploads). So every
- *   `BUNDLES` entry below carries `md5Sidecar: false` today; `needsDownload`'s md5-comparison branch
- *   exists and is unit-tested against synthetic remote state for the day a bundle publishes one (see
- *   `docs/scripts/publish-demo-assets-to-r2.py` / `gazetteer publish` — neither writes a sidecar yet).
- *
- *   LOCAL PATH CONVENTIONS — confirmed by reading the actual consumers, not assumed:
- *
- *   - `candidate`: `<dataRoot>/wof/candidate.db` — `doctor/runner.ts`'s `conventionCandidatePath`.
- *   - `poi`: `<dataRoot>/poi/poi.db` — `doctor/runner.ts`'s `poiPath()`.
- *   - `us`: `<dataRoot>/address-points/address-points-us-<slug>.db` and
- *     `<dataRoot>/interpolation/interpolation-us-<slug>.db` — `geocode-core.ts`'s
- *     `selectAddressPointsDB`/`selectInterpolationDB`, the SAME convention `resolveDatabasePath`
- *     (`data-release.ts`) understands for the `"address-points"`/`"interpolation"` families. A
- *     `releases.json` pinning either family to a version routes the download to the VERSIONED
- *     filename (`resolveBundleArtifacts`, below) so a later `mailwoman geocode` run resolves it.
- *   - `fr`: `<dataRoot>/ban/address-points-fr.db` — `ban/scripts/build-address-point-database.ts`'s own
- *     default `--out` (`dataRootPath("ban", "address-points-fr.db")`), which is also where
- *     `BANRegionDatabaseProvider` looks. `mailwoman geocode` wires that provider (`commands/geocode.tsx`
- *     imports `@mailwoman/ban/sdk` and passes `nationalDatabases`), so pulling this bundle is sufficient
- *     — a French address resolves to the `address_point` tier with no further configuration
- *     (re-verified 2026-08-04 on four Paris addresses, uncertainty 1 m). What FR still lacks is the
- *     INTERPOLATION tier: a BAN miss falls straight through to admin rather than estimating along the
- *     street, because no French interpolation database is built.
+ *   Registry for downloadable public-data bundles. It defines remote artifacts, their local paths,
+ *   and whether local state is current. the data commands own network and filesystem I/O.
  */
 
 import type { DataReleaseManifest } from "#data/release"
 
 /**
- * The public, unauthenticated bucket every bundle artifact resolves against — the same host `doctor/checks.ts`'s
- * (now-removed) `CANDIDATE_URL`/`POI_URL` and the browser runtime's `ASSET_BASE_URL`
- * (`packages/mailwoman/lib/browser-runtime/resources.ts`) point at. No credentials: this is the read side of the R2
- * bucket `commands/tiles/publish.tsx`/`commands/gazetteer/publish.tsx` write to.
+ * Public base URL for bundle artifacts.
  */
 export const PUBLIC_BUCKET_BASE_URL = "https://public.mailwoman.ai/mailwoman/"
 
@@ -81,7 +23,7 @@ export interface BundleArtifact {
 	remotePath: string
 	/**
 	 * Where the artifact lands, relative to the data root (e.g. `"wof/candidate.db"`). For a `family`-tagged (`"us"`
-	 * bundle) artifact this is the LEGACY unversioned path; {@link resolveBundleArtifacts} substitutes the manifest-pinned
+	 * bundle) artifact this is the legacy unversioned path; {@link resolveBundleArtifacts} substitutes the manifest-pinned
 	 * versioned name when one is configured.
 	 */
 	localPath: string
@@ -92,9 +34,9 @@ export interface BundleArtifact {
 	 */
 	md5Sidecar: boolean
 	/**
-	 * Byte size at survey time — for the dry-run plan and `data status`'s human-readable sizes only. NOT a integrity
+	 * Byte size at survey time — for the dry-run plan and `data status`'s human-readable sizes only. Not a integrity
 	 * check target (a rebuild at the same dated path would be a bug, since these paths are meant to be immutable, but
-	 * this field is not how a mismatch would be caught — the HEAD `Content-Length` at pull time is).
+	 * this field is not how a mismatch would be caught — the head `Content-Length` at pull time is).
 	 */
 	approxBytes: number
 	/**
@@ -110,18 +52,52 @@ export interface BundleArtifact {
 }
 
 /**
- * A named, downloadable slice of Mailwoman's public data — what `mailwoman data pull <name>` fetches.
+ * What a bundle's rows came from and what using them obliges an operator to.
+ *
+ * A bundle is downloaded rather than installed with the package, so its terms reach an operator through nothing the npm
+ * tarball carries. `data --list` and `data pull` print these before the transfer, since the moment to read terms is
+ * before taking a copy rather than after.
+ *
+ * `unresolved` is a field rather than an omission. A bundle assembled from several upstream sources carries whatever is
+ * unestablished about them, and leaving that blank would present a partially-read bundle as a fully-read one.
+ */
+export interface BundleRights {
+	/**
+	 * Who published the rows, as they name themselves.
+	 */
+	publishers: readonly string[]
+	/**
+	 * The terms as the publisher names them. Several entries where a bundle draws on several publications.
+	 */
+	terms: readonly string[]
+	/**
+	 * What an operator must do, stated as the obligation rather than as a license name.
+	 */
+	conditions: readonly string[]
+	/**
+	 * What nobody has established about this bundle's terms.
+	 */
+	unresolved: readonly string[]
+}
+
+/**
+ * A named, downloadable subset of Mailwoman's public data — what `mailwoman data pull <name>` fetches.
  */
 export interface DataBundle {
 	name: string
 	description: string
 	artifacts: BundleArtifact[]
+	/**
+	 * The terms this bundle's rows carry. Required, so a bundle added without one fails to compile rather than
+	 * downloading with its obligations unstated.
+	 */
+	rights: BundleRights
 }
 
 /**
  * Per-state hosted street-tier sizes (bytes), from the 2026-08-03 bucket survey — the source table
- * {@link usStreetArtifacts} expands into `BundleArtifact` entries. `interp` is absent for `vi` (no TIGER interpolation
- * database hosted for the territory — a real, confirmed gap, not a table-entry someone forgot).
+ * {@link usStreetArtifacts} expands into `BundleArtifact` entries. `interp` is absent for `vi` (no tiger interpolation
+ * database hosted for the territory — a real, confirmed gap rather than a table-entry someone forgot).
  */
 const US_STREET_DATABASE_SIZES: Record<string, { situs: number; interp?: number }> = {
 	ak: { situs: 78_602_240, interp: 26_771_456 },
@@ -212,9 +188,9 @@ function usStreetArtifacts(): BundleArtifact[] {
 }
 
 /**
- * The bundle registry. Every artifact here was CONFIRMED against the live bucket on 2026-08-03 (see the module
- * docstring) — no invented paths. `timezone` (named in this task's brief as a candidate bundle) is absent on purpose:
- * nothing under `mailwoman/` in the bucket serves it.
+ * The bundle registry. Every artifact here was checked against the live bucket on 2026-08-03 (see the module docstring)
+ * — no invented paths. `timezone` (named in this task's brief as a candidate bundle) is absent on purpose: nothing
+ * under `mailwoman/` in the bucket serves it.
  */
 export const BUNDLES: Record<string, DataBundle> = {
 	candidate: {
@@ -229,6 +205,21 @@ export const BUNDLES: Record<string, DataBundle> = {
 				approxBytes: 2_880_921_600,
 			},
 		],
+		rights: {
+			publishers: ["Who's On First", "GeoNames"],
+			terms: [
+				"Who's On First: Creative Commons Zero covers Mapzen's own work, and the dataset is also a modification of existing open data whose sources carry their own terms.",
+				"GeoNames: Creative Commons Attribution.",
+			],
+			conditions: [
+				"Link back to the Who's On First license, which its own LICENSE.md makes a requirement rather than a courtesy.",
+				"Attribute GeoNames.",
+			],
+			unresolved: [
+				"Which upstream project each row's name came from. Who's On First records a geometry source per record and the corpus adapters read none of it — see docs/engineering/reference/artifact-rights-inventory.mdx.",
+				"Whether the Ordnance Survey and Royal Mail notice in Who's On First's LICENSE.md reaches any row in this bundle.",
+			],
+		},
 	},
 	poi: {
 		name: "poi",
@@ -241,6 +232,14 @@ export const BUNDLES: Record<string, DataBundle> = {
 				approxBytes: 3_889_184_768,
 			},
 		],
+		rights: {
+			publishers: ["Overture Maps Foundation"],
+			terms: ["Overture Places theme: CDLA-Permissive-2.0."],
+			conditions: ["Attribute Overture Maps Foundation contributors."],
+			unresolved: [
+				"Which upstream projects the Overture Places theme drew each row from, and whether any of them carries a condition beyond the CDLA attribution.",
+			],
+		},
 	},
 	fr: {
 		name: "fr",
@@ -253,6 +252,19 @@ export const BUNDLES: Record<string, DataBundle> = {
 				approxBytes: 6_952_509_440,
 			},
 		],
+		rights: {
+			publishers: ["DINUM and IGN, for Base Adresse Nationale"],
+			terms: [
+				"Licence Ouverte 2.0, the attribution-only half of BAN's dual grant. The text as retrieved on 2026-09-21 is archived at packages/corpus/data/licenses/licence-ouverte-2.0.md.",
+			],
+			conditions: [
+				"Name the source, at minimum the licensor, and the date of the last update — the condition the license states in those words.",
+				"Do not suggest the licensor endorses the use.",
+			],
+			unresolved: [
+				"Whether the election of the attribution-only half binds a redistributor of this database, since BAN is dual-licensed and the other half carries share-alike.",
+			],
+		},
 	},
 	us: {
 		name: "us",
@@ -260,14 +272,44 @@ export const BUNDLES: Record<string, DataBundle> = {
 			"US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, " +
 			"50 states + DC + VI (103 files, ~41.3 GB total). Use --only <slug> to pull a single state.",
 		artifacts: usStreetArtifacts(),
+		rights: {
+			publishers: ["United States Census Bureau, for TIGER/Line", "OpenAddresses, per contributing source"],
+			terms: [
+				"TIGER/Line: a work of the United States Government, which carries no copyright under 17 U.S.C. § 105.",
+				"OpenAddresses: per-source terms that differ, and which THIRD_PARTY_NOTICES.md records as commonly requiring attribution and share-alike.",
+			],
+			conditions: [
+				"Read the terms of the contributing OpenAddresses source for the state you pulled. They are not one grant.",
+			],
+			unresolved: [
+				"Which OpenAddresses source supplied each state's situs rows, and what each of those sources requires. A per-state answer needs the contributing source list rather than the bundle.",
+			],
+		},
 	},
 }
 
 /**
+ * One bundle's terms as lines for a terminal, publishers first, then terms, conditions and what stays unresolved.
+ *
+ * The unresolved lines are printed rather than held back. A bundle whose conditions are listed and whose gaps are not
+ * reads as fully established, and an operator deciding whether to take a copy is the reader those gaps are for.
+ */
+export function describeBundleRights(bundle: DataBundle): string[] {
+	const { rights } = bundle
+
+	return [
+		`published by ${rights.publishers.join("; ")}`,
+		...rights.terms.map((line) => `terms: ${line}`),
+		...rights.conditions.map((line) => `you must: ${line}`),
+		...rights.unresolved.map((line) => `unresolved: ${line}`),
+	]
+}
+
+/**
  * Resolve `${base}${artifact.remotePath}` — the one place that string gets built. `baseURL` defaults to the public
- * bucket; `data pull --host` passes a mirror or private registry serving the SAME object keys (the catalog schema is
- * host-independent — an air-gapped install mirrors the key space, not a rewritten layout). A missing trailing slash is
- * repaired rather than concatenated into a mangled key.
+ * bucket; `data pull --host` passes a mirror or private registry serving the same object keys (the catalog schema is
+ * host-independent — an air-gapped install mirrors the key space rather than a rewritten layout). A missing trailing
+ * slash is repaired rather than concatenated into a mangled key.
  */
 export function artifactURL(artifact: BundleArtifact, baseURL: string = PUBLIC_BUCKET_BASE_URL): string {
 	const base = baseURL.endsWith("/") ? baseURL : `${baseURL}/`
@@ -277,16 +319,16 @@ export function artifactURL(artifact: BundleArtifact, baseURL: string = PUBLIC_B
 
 /**
  * Map a bundle's artifacts against a (possibly `null`) local `releases.json` manifest, resolving each `family`-tagged
- * artifact's {@link BundleArtifact.localPath} to the VERSIONED filename (`resolveDatabasePath`'s naming convention:
+ * artifact's {@link BundleArtifact.localPath} to the versioned filename (`resolveDatabasePath`'s naming convention:
  * `<family>/<family>-us-<slug>-<version>.db`) when the manifest pins that family to a version — so a download lands
  * exactly where `resolveDatabasePath` (`data-release.ts`) will find it on the next `mailwoman geocode` run. Artifacts
- * with no `family` (candidate/poi/fr — single fixed-path downloads) pass through unchanged; a family artifact with no
+ * with no `family` (candidate/poi/fr — single fixed-path downloads) pass through unchanged. a family artifact with no
  * matching manifest entry also passes through unchanged (the legacy unversioned path, `resolveDatabasePath`'s
  * fallback).
  *
- * Pure: no filesystem access. This computes the intended DESTINATION path; whether something already exists there (or
+ * Pure: no filesystem access. This computes the intended destination path. whether something already exists there (or
  * at a differently-versioned path `resolveDatabasePath` would also accept) is the caller's `existsSync`/
- * `resolveDatabasePath` check, not this function's.
+ * `resolveDatabasePath` check rather than this function's.
  */
 export function resolveBundleArtifacts(bundle: DataBundle, manifest: DataReleaseManifest | null): BundleArtifact[] {
 	return bundle.artifacts.map((artifact) => {
@@ -332,7 +374,7 @@ export interface LocalArtifactState {
 }
 
 /**
- * What the remote object currently reports, gathered by the caller (an HTTP HEAD via `APIClient`, and — when
+ * What the remote object currently reports, gathered by the caller (an http head via `APIClient`, and — when
  * {@link BundleArtifact.md5Sidecar} is true — a fetch of the `.md5` sidecar text).
  */
 export interface RemoteArtifactState {
@@ -342,10 +384,10 @@ export interface RemoteArtifactState {
 
 /**
  * Decide whether an artifact needs downloading: absent locally → yes. An available md5 (sidecar present) is the
- * authoritative signal once local exists — mismatch → yes, match → no, checked BEFORE content-length so a bundle that
+ * authoritative signal once local exists — mismatch → yes, match → no, checked before content-length so a bundle that
  * publishes a sidecar can't be short-circuited by a coincidentally-matching size. With no md5 to compare, fall back to
- * a `Content-Length` size comparison. With NEITHER signal available, the artifact is treated as up to date (the caller
- * is expected to surface a "couldn't verify" warning in that case, not force a redundant multi-GB re-fetch).
+ * a `Content-Length` size comparison. With neither signal available, the artifact is treated as up to date (the caller
+ * is expected to surface a "couldn't verify" warning in that case rather than force a redundant multi-GB re-fetch).
  */
 export function needsDownload(local: LocalArtifactState, remote: RemoteArtifactState): boolean {
 	if (!local.exists) return true

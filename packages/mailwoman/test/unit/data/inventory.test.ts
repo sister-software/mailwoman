@@ -4,7 +4,7 @@
 /**
  *   The inventory's classifications, against a fixture data root.
  *
- *   The property under test throughout is that the FOUR states stay distinct. A report that collapsed
+ *   The property under test throughout is that the four states stay distinct. A report that collapsed
  *   "has no manifest" into "could not be opened", or counted a third party's artifact as our debt, would
  *   still print a number — it would just print one nobody can act on, which is the failure mode this
  *   whole phase exists to fix.
@@ -12,7 +12,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
+import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import {
 	buildCommandGaps,
@@ -42,7 +42,7 @@ async function dataRoot(): Promise<string> {
 async function manifested(path: string, name: string, buildCmd: string): Promise<void> {
 	await makeDirectories(join(path, ".."))
 
-	using db = new DatabaseClient<LayerContractDatabase>(path)
+	using db = new DatabaseClient<layerschemadatabase>(path)
 
 	db.exec(`CREATE TABLE layer_manifest (
 		name TEXT PRIMARY KEY, version TEXT NOT NULL, schema_version INTEGER NOT NULL, tier TEXT NOT NULL,
@@ -59,7 +59,7 @@ async function manifested(path: string, name: string, buildCmd: string): Promise
  * A built database with no manifest — the ordinary state of most of the data root.
  */
 function bare(path: string): void {
-	using db = new DatabaseClient<LayerContractDatabase>(path)
+	using db = new DatabaseClient<layerschemadatabase>(path)
 
 	db.exec("CREATE TABLE rows (id INTEGER PRIMARY KEY)")
 }
@@ -112,7 +112,7 @@ describe("takeInventory — the four states stay distinct", () => {
 		const link = report.entries.find((e) => e.path === "wof/candidate.db")
 
 		expect(link?.linkTarget).toBe("wof/candidate-2026-08-15.db")
-		// And it still reports the size of what it points at, not the size of the link.
+		// And it still reports the size of what it points at rather than the size of the link.
 		expect(link?.bytes).toBeGreaterThan(0)
 	})
 
@@ -160,7 +160,7 @@ describe("the reported rate", () => {
 
 		const sentence = inventorySentence(await takeInventory({ dataRoot: root }))
 
-		// 1 of 2, not 1 of 3: an artifact nobody can open is not a provenance gap someone can close.
+		// 1 of 2 rather than 1 of 3: an artifact nobody can open is not a provenance gap someone can close.
 		expect(sentence).toContain("1 of 2")
 		expect(sentence).toContain("could not be opened")
 	})
@@ -193,7 +193,7 @@ describe("rebuildHint", () => {
 describe("buildCommandGaps — a manifest is only worth its build command", () => {
 	it("flags a path the workspace regroup moved", async () => {
 		// Measured on the shipped osm databases: they record `node osm/out/scripts/build-rooftop-database.js`, which
-		// now lives under `packages/osm/`. The literal survived the move INSIDE a built database, where no lint
+		// now lives under `packages/osm/`. The literal survived the move inside a built database, where no lint
 		// reaches it, and the artifact still passes every "has a manifest" check.
 		const root = await dataRoot()
 

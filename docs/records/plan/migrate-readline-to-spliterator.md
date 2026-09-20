@@ -1,8 +1,8 @@
 # Migrate `node:readline` → `spliterator`
 
 **Status:** EXECUTED 2026-07-08 — all sites migrated; see "Execution notes" at the end for the
-deltas between this plan and what the v3.1.0 API audit + migration actually found.  
-**Scope:** 25 files / 27 call sites  
+deltas between this plan and what the v3.1.0 API audit + migration found.
+**Scope:** 25 files / 27 call sites
 **Goal:** Replace `node:readline` `createInterface` line-by-line streaming with
 `spliterator`'s `TextSpliterator`, `JSONSpliterator`, or `CSVSpliterator` — the same
 library already used in `core/resources/`, `registry/ingest.ts`, and
@@ -130,7 +130,7 @@ for await (const row of CSVSpliterator.fromAsync(path, { mode: "object" })) {
 > **RESOLVED in v3.1.0:** the column tokenizer now unconditionally preserves empty fields
 > (`skipEmpty: false` internally; probed: `"a,,c,"` keeps all 4 columns including trailing
 > empties). The `registry/ingest.ts:54` workaround comment is stale on this point.
-> **⚠️ NEW known issue found during execution:** `enableQuoteHandling: true` does NOT protect
+> **⚠️ NEW known issue found during execution:** `enableQuoteHandling: true` does not guard
 > embedded delimiters inside quoted fields — the option is applied to row splitting only and
 > never reaches the column tokenizer (probed: `"a,x",b` mis-parses into two rows). Any CSV with
 > quoted fields must keep manual quote handling over `TextSpliterator`. Upstream fix needed.
@@ -237,7 +237,7 @@ for await (const line of TextSpliterator.fromAsync(jsonl)) {
 | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | **1** | `scripts/jsonl-to-parquet.ts`, `corpus/src/build.ts` (JSONL → `JSONSpliterator`)                                                                                                         | Lowest risk — JSON has no delimiter ambiguity. These are the most exercised paths (every corpus build hits them). |
 | **2** | All adapter JSONL call sites: `openaddresses/adapter.ts`, `overture/adapter.ts`, `synth-po-box/adapter.ts`, `usgov-nad/adapter.ts`, `gnaf/adapter.ts`, `scaffold.ts`, `align-extract.ts` | All JSONL. Same shape as Phase 1.                                                                                 |
-| **3** | `scripts/eval/` call sites: `audit-po-box-cedex-extract.ts`, `reverse-geocode-eval.ts`, `holdout.ts`, `train-cross-gbt.ts`, `train-org-cross-gbt.ts`                                     | JSONL + CSV. Eval scripts — low blast radius for regressions.                                                     |
+| **3** | `scripts/eval/` call sites: `audit-po-box-cedex-extract.ts`, `reverse-geocode-eval.ts`, `holdout.ts`, `train-cross-gbt.ts`, `train-org-cross-gbt.ts`                                     | JSONL + CSV. Eval scripts — low scope for regressions.                                                            |
 | **4** | CSV sites: `fr-admin-split.ts`, `locale.ts`, `ingest-csv.ts`                                                                                                                             | ⚠️ `skipEmpty` caveat — verify column counts match before landing.                                                |
 | **5** | Pipe/TSV sites: `importance.tsx`, `postcode-intl.tsx`, `redistricting.ts`, `build-kryptonite-extract.ts`, `build-transliteration-extract.ts`                                             | Straightforward delimiter substitution.                                                                           |
 | **6** | Child-process stdout sites: `tiger/sdk/fetch.ts`, `osm/sdk/extract.ts`, `osm/sdk/street-recovery.ts`, `locale.ts:218`                                                                    | ⚠️ Highest risk — external process pipelines. Test with real data.                                                |
@@ -262,7 +262,7 @@ for await (const line of TextSpliterator.fromAsync(jsonl)) {
    that prompt is gone. The script now inherits stdio so the npm CLI runs its own auth
    handshake (printing an approval URL for a hardware security key, or prompting for a
    code itself). Should another interactive prompt appear, the reasoning still holds:
-   spliterator is a byte-range splitter, not a line-editor, and such a site would be
+   spliterator is a byte-range splitter rather than a line-editor, and such a site would be
    excluded from the migration.
 
 4. **`split.ts` write path.** `corpus/src/split.ts:219` uses `createInterface` for
@@ -282,7 +282,7 @@ For each phase, verify:
 ## Execution notes (2026-07-08)
 
 Executed by five parallel agents over disjoint file sets, against a pre-flight API audit of the
-installed spliterator v3.1.0 (live probes, not docs). Everything above marked "corrected" or
+installed spliterator v3.1.0 (live probes rather than docs). Everything above marked "corrected" or
 "superseded" came out of that audit. The deltas that mattered:
 
 ### API facts the plan missed (probed)
@@ -310,9 +310,9 @@ installed spliterator v3.1.0 (live probes, not docs). Everything above marked "c
 
 ### Inventory corrections
 
-- `corpus/src/adapters/gnaf/adapter.ts` is a JSONL reader, not pipe-delimited — the PSV reader is
+- `corpus/src/adapters/gnaf/adapter.ts` is a JSONL reader rather than pipe-delimited — the PSV reader is
   `assemble.ts`, which already used `PSVSpliterator` before this migration.
-- `scripts/eval/gauntlet/holdout.ts` is semicolon-delimited CSV, not JSONL.
+- `scripts/eval/gauntlet/holdout.ts` is semicolon-delimited CSV rather than JSONL.
 
 ### The doc's stated risks, resolved
 
@@ -329,7 +329,7 @@ warm cache, Node 26.2.0): spliterator v2 measured **0.45×** readline; v3.1.0 me
 **0.91–0.92×** (readline 0.52–0.53M rows/s, spliterator 0.48M rows/s, checksums identical). The
 rewrite roughly doubled v2's throughput; the residual ~8% deficit is the price of the fd-lifecycle
 
-- dependency-surface wins, not a blocker.
+- dependency-surface wins rather than a blocker.
 
 ### Upstream spliterator issues to file
 

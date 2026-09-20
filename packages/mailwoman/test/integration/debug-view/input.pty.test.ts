@@ -3,7 +3,7 @@
 
 /**
  *   The regression for the debug view's input field, driven through a real pty because the defect it covers is about
- *   BYTES: what a terminal sends for alt+backspace, and what Ink's keypress parser makes of it. A component test can
+ *   bytes: what a terminal sends for alt+backspace, and what Ink's keypress parser makes of it. A component test can
  *   only assert what the harness decides to pass `useInput`, which is the same assumption that let the bug ship.
  *
  *   What the probe measured against `ink-text-input` 6.0.0 (the field this replaced), Ink 7.1.1, 2026-08-13:
@@ -13,12 +13,12 @@
  *       ctrl+C, so its insert branch typed the `w`: `hello world` → `hello worldw`. That is the reported
  *       "alt+backspace inserts a w".
  *   - `\x1b\x7f` (meta+backspace) arrives as `input: "", key.backspace + key.meta`, and was treated as a plain
- *       backspace — one character deleted, not one word.
+ *       backspace — one character deleted rather than one word.
  *
  *   Both sequences must now delete the word before the cursor, and neither may leave a letter behind.
  *
- *   `script` is util-linux's, and the `-e` / `-c` spelling is too; the suite skips where that isn't the `script` on
- *   PATH, exactly like `map-tui/cli.pty.test.ts`, which this harness is modelled on.
+ *   `script` is util-linux's, and the `-e` / `-c` spelling is too. the suite skips where that isn't the `script` on
+ *   path, exactly like `map-tui/cli.pty.test.ts`, which this harness is modelled on.
  */
 
 import { isExecutable } from "@mailwoman/core/fs/readers"
@@ -93,7 +93,7 @@ async function driveInput(keys: string[]): Promise<string> {
 		await delay(KEYSTROKE_GAP_MS)
 	}
 
-	// Escape is the probe's quit; the kill is the belt-and-braces for a frame that never arrived.
+	// Escape is the probe's quit. the kill is the belt-and-braces for a frame that never arrived.
 	child.stdin.write(ESC)
 	await delay(KEYSTROKE_GAP_MS)
 	child.kill("SIGKILL")
@@ -103,12 +103,12 @@ async function driveInput(keys: string[]): Promise<string> {
 }
 
 /**
- * Every `VALUE=[…]` the probe rendered, in stream order — the field's edit history. NOT de-duplicated: the same value
+ * Every `value=[…]` the probe rendered, in stream order — the field's edit history. Not de-duplicated: the same value
  * can be reached twice (both word deletes here land on `hello `), and a `Set` would hide the second behind the first,
- * which is exactly the assertion this test needs to make about the LAST frame.
+ * which is exactly the assertion this test needs to make about the last frame.
  */
 function valueSamples(output: string): string[] {
-	// oxlint-disable-next-line no-control-regex -- stripping SGR from a pty capture IS matching a control character
+	// oxlint-disable-next-line no-control-regex -- stripping SGR from a pty capture is matching a control character
 	return output.replaceAll(/\u001B\[[\d;?]*[a-zA-Z]/gu, "").match(/VALUE=\[[^\]]*\]/gu) ?? []
 }
 
@@ -120,7 +120,7 @@ describe.skipIf(!HAS_LINUX_SCRIPT)("debug-view input field (pty)", () => {
 			const samples = valueSamples(output)
 
 			expect(samples).toContain("VALUE=[hello world]")
-			// Meta+backspace: the word, not the character (`hello worl` was ink-text-input's answer).
+			// Meta+backspace: the word rather than the character (`hello worl` was ink-text-input's answer).
 			expect(samples).toContain("VALUE=[hello ]")
 			expect(samples).toContain("VALUE=[hello there]")
 			// Ctrl+W landed as a word delete, and the letter Ink resolved it to never reached the value.

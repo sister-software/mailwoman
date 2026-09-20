@@ -17,14 +17,14 @@ that touches the site); the editorial parts are reviewer discipline. Run the che
 
 ## Declare the page's role
 
-Every maintained page declares what kind of page it is in frontmatter, and each role has a contract:
+Every maintained page declares what kind of page it is in frontmatter, and each role has a interface:
 
 | Role        | Reader need                           | Time horizon            | Canonicality              | Required frontmatter                           |
 | ----------- | ------------------------------------- | ----------------------- | ------------------------- | ---------------------------------------------- |
 | `guide`     | accomplish a task                     | evergreen               | one preferred path        | `audience`, `prerequisites`, `verified-with`   |
 | `tutorial`  | learn by doing                        | evergreen but versioned | one learning journey      | `audience`, `prerequisites`, `verified-with`   |
 | `concept`   | understand a stable idea              | evergreen               | one explanatory home      | `audience`, `source-of-truth`, `review-by`     |
-| `reference` | look up a precise contract            | release-bound           | authoritative             | `source-of-truth`, `generated-from` or `owner` |
+| `reference` | look up a precise interface           | release-bound           | authoritative             | `source-of-truth`, `generated-from` or `owner` |
 | `decision`  | understand an active choice           | active until superseded | links to accepted outcome | `status`, `owner`, `superseded-by` when closed |
 | `evidence`  | inspect a result or historical record | immutable/datestamped   | cited by maintained pages | `date`, `status`, `promoted-conclusions`       |
 
@@ -56,7 +56,7 @@ the owner — don't open a parallel page:
 - **How good is it, and how do we know?** → [Quality and evaluation](./concepts/quality-and-evaluation.mdx)
 
 A new page needs a reader question none of these owns — name that question in the PR description.
-Contracts belong in Reference; a duplicated explanation is a future contradiction.
+Interfaces belong in Reference; a duplicated explanation is a future contradiction.
 
 ## Retiring a page
 
@@ -68,7 +68,7 @@ Contracts belong in Reference; a duplicated explanation is a future contradictio
       the build becomes public — and nothing public gets unpublished — as a side effect of a move.
       Promoting an internal record to the public site is its own explicit decision, per page, with
       operator sign-off, and only for records with no internal references, no security-sensitive
-      detail, and evidentiary value (a maintained page wants to cite them). Demotion is for mistakes, not age: a page leaves the
+      detail, and evidentiary value (a maintained page wants to cite them). Demotion is for mistakes rather than age: a page leaves the
       public site only if it should never have been public. Dated records keep their URLs and their
       point-in-time content.
 
@@ -83,8 +83,8 @@ Contracts belong in Reference; a duplicated explanation is a future contradictio
 - **Release-bound numbers cite the shipped npm model.** Parameter counts, sizes, and scores come
   from the published artifacts, and they're refreshed at release time —
   ["Step 5 — refresh the docs' release-bound numbers" in RELEASING.md](https://github.com/sister-software/mailwoman/blob/main/RELEASING.md#step-5--refresh-the-docs-release-bound-numbers).
-- **Name the property.** The word "honest" (and its cluster) stays out of prose — say what the
-  page actually claims: the eval holds out the training data, the coverage number excludes
+- **Name the property.** The word "direct" (and its cluster) stays out of prose — say what the
+  page claims: the eval holds out the training data, the coverage number excludes
   interpolation. Harness identifiers (`honest-eval`, `coverage-honest`) are exempt.
 
 ## What CI checks

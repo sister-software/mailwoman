@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The four-law selectivity end to end against a SEEDED admin DB — the every-PR layer.
+ *   The four-law selectivity end to end against a seeded admin DB — the every-PR layer.
  *
  *   Same idiom as `resolver-wof-sqlite/candidate-lookup.test.ts`: production DDL, hand-picked rows,
- *   and the REAL `buildLocalitySurfaceLexicon` driven through `opts.dbPath`. Every surface here is
+ *   and the real `buildLocalitySurfaceLexicon` driven through `opts.dbPath`. Every surface here is
  *   one the full-scale test named, so the laws are asserted at full fidelity — and, unlike the full
  *   build, this file is invariant to gazetteer size. The 2026-08-02 measurement that motivated the
  *   split: the two full-DB tests were 236.9s of a 253s CI leg, and growing.
  *
- *   What does NOT live here: `entries > 10_000` and the other coverage-scale assertions. Those are
+ *   What does not live here: `entries > 10_000` and the other coverage-scale assertions. Those are
  *   claims about the gazetteer rather than about the laws — see `evidence-lexicons.full.test.ts`.
  *
  *   ## Reading the populations
@@ -22,7 +22,7 @@
  *
  *   Which floor applies depends on whether libpostal's given_names/surnames/personal_titles carry
  *   the surface. Verified against the shipped dictionaries: paris, lyon, joseph, fargo and
- *   washington ARE person names; rennes, belleville, smallville, minot, rutland, plainfield,
+ *   washington are person names. rennes, belleville, smallville, minot, rutland, plainfield,
  *   cheyenne and roazhon are not. Fargo is the one that surprises — it needs the 0.45 tier, which is
  *   why it is seeded at 130 k rather than something merely above 10 k.
  */
@@ -141,7 +141,7 @@ afterEach(() => scratch[Symbol.asyncDispose]())
 /**
  * Build against the fixture and return the emitted surface map plus the build's counters.
  *
- * NAMING TRAP, called out because both halves are spelled "entries": `built.entries` is a COUNT (`BuiltLexicon.entries:
+ * Naming trap, called out because both halves are spelled "entries": `built.entries` is a count (`BuiltLexicon.entries:
  * number`) while the lexicon file's `entries` is the surface→bitmask MAP. The map comes back as `surfaces` so the two
  * cannot be confused at a call site.
  */
@@ -152,7 +152,7 @@ async function buildAgainstFixture(
 	placetypes: string[]
 ): Promise<{ built: BuiltLexicon; surfaces: Record<string, number> }> {
 	// A fresh DB per call. Two tests build twice — the sub-phrase one covers both country sets, and
-	// the invariance one runs the same build twice on purpose — and `CREATE TABLE` is not idempotent.
+	// the invariance one runs the same build twice on purpose — and `create table` is not idempotent.
 	const seq = buildSeq++
 	const dbPath = scratch.resolve(`admin-${seq}.db`)
 	const output = scratch.resolve(`lexicon-${seq}.json`)
@@ -173,16 +173,16 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 		expect(surfaces.lyon).toBeDefined()
 		// A given name at ordinary-town prominence is refused — the Rue-Joseph hazard.
 		expect(surfaces.joseph).toBeUndefined()
-		// A non-name surface at comparable prominence passes; only law 2 applies to it.
+		// A non-name surface at comparable prominence passes. only law 2 applies to it.
 		expect(surfaces.rennes).toBeDefined()
 	})
 
 	it("law-3 guard: parent prominence never launders a person-name neighbourhood", async () => {
 		const { surfaces } = await buildAgainstFixture(["FR"], ["locality", "localadmin", "neighbourhood"])
 
-		// Joseph-the-neighbourhood sits inside Paris and STILL does not clear.
+		// Joseph-the-neighbourhood sits inside Paris and still does not clear.
 		expect(surfaces.joseph).toBeUndefined()
-		// Belleville is not a person name, so it DOES inherit Paris's prominence.
+		// Belleville is not a person name, so it does inherit Paris's prominence.
 		expect(surfaces.belleville).toBeDefined()
 	})
 
@@ -198,7 +198,7 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 		const { built, surfaces } = await buildAgainstFixture(["FR"], ["locality", "localadmin"])
 
 		expect(surfaces.smallville).toBeUndefined()
-		// EXACT, which the full build cannot assert. Two surfaces fail the post-scan prominence pass
+		// exact, which the full build cannot assert. Two surfaces fail the post-scan prominence pass
 		// and only two: `smallville` (0.166, under the 0.25 one-token floor) and `joseph` (0.383 —
 		// over that floor, under the 0.45 person-name tier). If a third ever appears here, a law
 		// changed scope.
@@ -226,7 +226,7 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 			expect(surfaces[surface], surface).toBeDefined()
 		}
 
-		// A directional INSIDE a multi-token surface survives.
+		// A directional inside a multi-token surface survives.
 		expect(surfaces["east nashville"]).toBeDefined()
 		// …and nothing in the US set is refused on prominence, unlike the FR set. The asymmetry is
 		// the point: these rows are seeded at their real magnitudes.
@@ -241,7 +241,7 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 
 		const fr = await buildAgainstFixture(["FR"], ["locality", "localadmin"])
 
-		// "Roazhon" is a real Breton nickname for Rennes, not a sub-phrase of it.
+		// "Roazhon" is a real Breton nickname for Rennes rather than a sub-phrase of it.
 		expect(fr.surfaces.roazhon).toBeDefined()
 	})
 

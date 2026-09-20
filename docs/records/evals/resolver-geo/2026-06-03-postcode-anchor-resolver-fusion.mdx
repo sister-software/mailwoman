@@ -3,11 +3,11 @@
 The postcode anchor (#240) is wired into the OpenAddresses real-point resolver eval as a `neural+anchor`
 row (`--postcode-anchor`). The neural parse and the resolver supply the admin/place identity as before;
 the **coordinate** is taken from the postcode anchor's own centroid. So the row isolates exactly what the
-anchor sharpens: where, not which place. The tables below are emitted verbatim by
+anchor sharpens: where rather than which place. The tables below are emitted verbatim by
 `scripts/eval/oa-resolver-eval.ts` (eval figures are never hand-typed).
 
 The anchor now carries a **position-aware confidence**: a digit-only code that shares its comma-segment
-with a street word reads as a house number, not a postcode (house numbers sit beside the street,
+with a street word reads as a house number rather than a postcode (house numbers sit beside the street,
 postcodes beside the city), so its confidence is scaled down. The street vocabulary is the full USPS
 Pub-28 suffix table from `@mailwoman/codex/us` — minus the abbreviations that collide with a state code
 (`KY` is both Key and Kentucky, `PR` both Prairie and Puerto Rico), since those appear in the postcode's
@@ -62,7 +62,7 @@ The fusion is a clean win in both directions: it supplies postcode-level coordin
 whose postcodes the resolver's extracts do not carry (DE/ES/IT/NL/FR), and it tightens the tail even where
 they do (US), because a real postcode out-resolves a mis-parsed admin centroid. It is the postcode tier
 the eval's own note promised, between the admin-centroid tier and the future street-level (TIGER) tier —
-and the position-aware confidence means it runs on the anchor's own judgment, not an eval-side crutch.
+and the position-aware confidence means it runs on the anchor's own judgment rather than an eval-side crutch.
 
 Reproduce:
 

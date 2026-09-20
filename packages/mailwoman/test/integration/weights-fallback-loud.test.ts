@@ -2,18 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   #1108 — the CLI's weights fallback must be LOUD, never silent, while KEEPING the encoder-less
+ *   #1108 — the CLI's weights fallback must be loud, never silent, while keeping the encoder-less
  *   structural fallback so `npx mailwoman parse …` quick demos still produce output.
  *
- *   These integration tests drive the compiled CLI (`mailwoman/out/cli.js`) with weights forced ABSENT
- *   (a locale with no weights workspace package + an empty $HOME so the user weights cache is empty too)
+ *   These integration tests drive the compiled CLI (`mailwoman/out/cli.js`) with weights forced absent
+ *   (a locale with no weights workspace package + an empty $home so the user weights cache is empty too)
  *   or a bad explicit `--model`/`--tokenizer` (the corrupt/partial-bundle surrogate — a load error that
  *   `resolveWeights` raises deterministically, without needing a real onnx graph). Each asserts that:
  *
- *   1. a warning lands on STDERR (never STDOUT — piped stdout parsing must stay clean), and
- *   2. degraded structural output is STILL produced on STDOUT with exit 0 (the fallback is kept, not
+ *   1. a warning lands on stderr (never stdout — piped stdout parsing must stay clean), and
+ *   2. degraded structural output is still produced on stdout with exit 0 (the fallback is kept rather than
  *      turned into a hard-fail), and
- *   3. weights-ABSENT ("not found — install …") is distinguished from a weights LOAD error ("failed to
+ *   3. weights-absent ("not found — install …") is distinguished from a weights load error ("failed to
  *      load — Encoder error: …", the underlying cause surfaced rather than swallowed).
  *
  *   The two silence points the audit named: (a) `tryLoadNeural`'s bare `try/catch` returned undefined
@@ -39,14 +39,14 @@ const cliBin = await mailwomanCLIPath()
  *
  * Was `de-DE` until 2026-08-02, when campaign R9 shipped `@mailwoman/neural-weights-de-de` and made the "absent" locale
  * resolvable. Every assertion here inverted at once: the CLI stopped warning because it found real weights, and
- * `expected '' to contain 'neural weights not found'` is what that looks like. `pt-BR` has no carrier package today; if
+ * `expected '' to contain 'neural weights not found'` is what that looks like. `pt-BR` has no carrier package today. if
  * one ever ships, this breaks the same way and wants the same one-line move.
  */
 const ABSENT_LOCALE = "pt-BR"
 const ABSENT_PACKAGE = "@mailwoman/neural-weights-pt-br"
 
 /**
- * An empty $HOME so the user weights cache (`~/.cache/mailwoman/weights`) is empty for the child too.
+ * An empty $home so the user weights cache (`~/.cache/mailwoman/weights`) is empty for the child too.
  */
 let homeStub: TemporaryDirectory
 /**
@@ -68,7 +68,7 @@ afterAll(() => {
 })
 
 /**
- * Child env with weights forced absent: empty $HOME + quiet node.
+ * Child env with weights forced absent: empty $home + quiet node.
  */
 function absentEnv(extra: Record<string, string | undefined> = {}): NodeJS.ProcessEnv {
 	return childEnv({ HOME: homeStub.path.toString(), NODE_NO_WARNINGS: "1", ...extra })
@@ -93,7 +93,7 @@ async function runCLI(
 }
 
 /**
- * Strip ANSI/ink-spinner noise and parse the JSON payload (object or array) out of CLI stdout.
+ * Strip ansi/ink-spinner noise and parse the JSON payload (object or array) out of CLI stdout.
  */
 function parseStdoutJSON(stdout: string): unknown {
 	const cleaned = stdout.replaceAll(/\[[0-9;]*[a-zA-Z]/gu, "").trim()
@@ -115,7 +115,7 @@ describe("#1108 loud weights fallback — weights ABSENT (non-interactive / pipe
 		expect(code).toBe(0)
 		expect(stderr).toContain("neural weights not found")
 		expect(stderr).toContain(ABSENT_PACKAGE)
-		// The encoder-less structural fallback still produced output — not silent, not empty.
+		// The encoder-less structural fallback still produced output — not silent rather than empty.
 		const parsed = parseStdoutJSON(stdout) as Record<string, unknown>
 		expect(parsed).toBeTypeOf("object")
 		expect(parsed["postcode"]).toBe("10118")
@@ -170,7 +170,7 @@ describe("#1108 loud weights fallback — weights LOAD error surfaced, not swall
 		)
 
 		expect(code).toBe(0)
-		// Corrupt/partial → surface the cause, do NOT mislabel it "not installed".
+		// Corrupt/partial → surface the cause, do not mislabel it "not installed".
 		expect(stderr).toContain("neural weights failed to load")
 		expect(stderr).toContain(tokenizerPath)
 		expect(stderr).not.toContain("neural weights not found")
@@ -194,7 +194,7 @@ describe("#1108 — the interactive/declined degraded banner is unchanged (regre
 })
 
 // End-to-end --resolve degraded path (exit 0 with a real resolver) — conditioned on a WOF SQLite distribution,
-// mirroring resolve-flag.test.ts. Runs only where a WOF DB is on disk; proves the warning + degraded
+// mirroring resolve-flag.test.ts. Runs only where a WOF DB is on disk. proves the warning + degraded
 // output + exit 0 combination the audit's test (1) calls for on the full --resolve path.
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB || DEFAULT_WOF_PATH

@@ -7,14 +7,14 @@
  *   The EO BMF is the IRS's authoritative registry of US tax-exempt organizations (charities,
  *   churches, foundations, ...), published as per-region CSVs at
  *   `https://www.irs.gov/charities-non-profits/exempt-organizations-business-master-file-extract-eo-bmf`
- *   (`eo1.csv`..`eo4.csv`, `eo_pr.csv`, `eo_xx.csv`). Each row carries an organization NAME plus
- *   its mailing address. It complements `usgov-nppes` with a DIFFERENT venue population
+ *   (`eo1.csv`..`eo4.csv`, `eo_pr.csv`, `eo_xx.csv`). Each row carries an organization name plus
+ *   its mailing address. It complements `usgov-nppes` with a different venue population
  *   (non-profits vs healthcare providers) and, notably, a high share of PO-box addresses — useful
  *   `po_box`-tag signal (a tag with historically low recall).
  *
- *   Output: one row per record with a usable city + postcode. NAME → `venue`; the street line becomes
- *   `po_box` when it's a PO-box, else `house_number` + `street`; CITY/STATE/ZIP fill the locality
- *   line. STATE is already a USPS abbreviation in the source. License: `"Public Domain"` (US
+ *   Output: one row per record with a usable city + postcode. name → `venue`; the street line becomes
+ *   `po_box` when it's a PO-box, else `house_number` + `street`; city/state/ZIP fill the locality
+ *   line. state is already a USPS abbreviation in the source. License: `"Public Domain"` (US
  *   federal).
  */
 
@@ -22,7 +22,7 @@ import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 
 /**
  * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
@@ -52,7 +52,7 @@ interface IRSBMFRow {
 /**
  * Classify the street line into a `po_box` or a `{house_number?, street}` split.
  *
- * BMF mixes street addresses and PO boxes in one `STREET` column, so the PO-box shapes have to be claimed BEFORE the
+ * BMF mixes street addresses and PO boxes in one `street` column, so the PO-box shapes have to be claimed before the
  * shared house-number split runs — otherwise `splitStreetLine` would hand back `"PO Box 1234"` as a plain street, which
  * is correct for every other US adapter and wrong here.
  */
@@ -68,6 +68,7 @@ export function createUSGovIRSBMFAdapter(): CorpusAdapter {
 	return {
 		id: USGOV_IRS_BMF_ADAPTER_ID,
 		defaultLicense: USGOV_IRS_BMF_DEFAULT_LICENSE,
+		addressRole: AddressRole.Mailing,
 		description:
 			"IRS Exempt Organizations Business Master File — US non-profit venue+address (public-domain), with strong PO-box coverage.",
 
@@ -95,7 +96,7 @@ export function createUSGovIRSBMFAdapter(): CorpusAdapter {
 				const zipRaw = (record.ZIP ?? "").trim()
 
 				if (!city || !zipRaw) continue
-				const postcode = zipRaw.split("-")[0]!.trim() // 5-digit; drop the optional +4
+				const postcode = zipRaw.split("-")[0]!.trim() // 5-digit. drop the optional +4
 
 				const split = splitStreetLineOrPOBox(street)
 

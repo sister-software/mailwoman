@@ -19,7 +19,7 @@ describe("distanceKm", () => {
 	})
 
 	it("measures a real displacement", () => {
-		// Lyon is ~391.5 km from Paris; the exact figure matters less than that it is not 0 and not Infinity.
+		// Lyon is ~391.5 km from Paris. the exact figure matters less than that it is not 0 and not Infinity.
 		expect(distanceKm({ lat: 45.764, lon: 4.8357 }, PARIS.lat, PARIS.lon)).toBeCloseTo(391.5, 1)
 	})
 })
@@ -116,7 +116,7 @@ describe("tostEquivalence — the degenerate sample", () => {
 	})
 
 	it("never calls a total wipeout equivalent, which is the other way to reach a zero standard error", () => {
-		// pA = 1 and pB = 0 both sit at the edge, so the pooled variance is zero while the arms are as far apart as
+		// pA = 1 and pB = 0 both sit at the edge. Therefore, the pooled variance is zero while the arms are as far apart as
 		// they can be. An equivalence test that keys on the standard error alone declares parity here.
 		const reading = tostEquivalence(50, 0, 50)
 

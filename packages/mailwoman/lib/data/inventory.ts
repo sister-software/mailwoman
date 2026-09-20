@@ -2,28 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   What is in the data root, and for each artifact whether it can say how it was built.
- *
- *   Phase 1 of the lab-reproducibility sequence (`docs/superpowers/specs/2026-08-17-lab-reproducibility-
- *   strategy.md`). The contract it reports against already exists — `layer_manifest` / `layer_coverage`,
- *   specified in `docs/engineering/reference/layer-contract.mdx` — and the finding that prompted this is
- *   that it is implemented on a minority of the built databases. The gap is an unfinished rollout, not a
- *   missing design, which is why the answer is a scoreboard rather than a new mechanism.
- *
- *   DATABASES ARE THE UNIT, because `layer_manifest` is a table: provenance lives inside SQLite artifacts
- *   and nowhere else, so a walk that reported every file would count parquet databases and tiles it could
- *   never classify. The report says what it did not look at rather than implying coverage it lacks.
- *
- *   IT DOES NOT SIZE THE ROOT. `du` over ~744 GB takes minutes and answers a different question — disk
- *   pressure, not reproducibility. Sizes here come from `stat` on each database, which is free.
- *
- *   A SYMLINK IS A DECISION. `candidate.db` is a symlink to one of about ten candidate builds, and which
- *   one is live is expressed in that link and nowhere else. Reporting the target makes a real choice
- *   visible instead of leaving it as a filesystem detail.
+ *   Inventories databases in the data root and reports their provenance and symlink targets.
  */
 
 import { pathExists, readLink, isSymbolicLink, statPath, type Dirent } from "@mailwoman/core/fs/readers"
-import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
+import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
 import { getRow } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
@@ -109,7 +92,7 @@ export interface InventoryReport {
 	entries: InventoryEntry[]
 	counts: Record<Provenance, number>
 	/**
-	 * Databases that were found but NOT opened, because they sit under a foreign root. Named so the report's denominator
+	 * Databases that were found but not opened, because they sit under a foreign root. Named so the report's denominator
 	 * is auditable rather than implied.
 	 */
 	skippedForeign: number
@@ -127,10 +110,10 @@ export interface InventoryReport {
  * one read-write would fail on exactly the artifacts it most needs to describe.
  */
 export function probeManifest(path: string): { manifest?: LayerManifest; error?: string } {
-	let db: DatabaseClient<LayerContractDatabase> | undefined
+	let db: DatabaseClient<layerschemadatabase> | undefined
 
 	try {
-		db = new DatabaseClient<LayerContractDatabase>(path, { readOnly: true })
+		db = new DatabaseClient<layerschemadatabase>(path, { readOnly: true })
 
 		if (!tableExists(db, "layer_manifest")) return {}
 
@@ -163,7 +146,7 @@ async function findDatabases(dataRoot: string, maxDepth: number): Promise<{ path
 		try {
 			entries = await Globerator.from("*", { cwd: dir, withFileTypes: true, onlyFiles: false }).toArray()
 		} catch {
-			// An unreadable directory is not a finding about provenance; skip it rather than fail the report.
+			// An unreadable directory is not a finding about provenance. skip it rather than fail the report.
 			return
 		}
 
@@ -196,7 +179,7 @@ async function findDatabases(dataRoot: string, maxDepth: number): Promise<{ path
 /**
  * Classify one database.
  *
- * `lstat` before `stat`: a symlinked artifact must report BOTH the link and the size of what it points at, and `stat`
+ * `lstat` before `stat`: a symlinked artifact must report both the link and the size of what it points at, and `stat`
  * alone silently answers for the target while `lstat` alone silently answers for the link.
  */
 async function inventoryEntry(dataRoot: string, path: string): Promise<InventoryEntry> {
@@ -265,7 +248,7 @@ export function inventorySentence(report: InventoryReport): string {
 }
 
 /**
- * Whether a recorded `build_cmd` names something that still exists in THIS repo.
+ * Whether a recorded `build_cmd` names something that still exists in this repo.
  *
  * A manifest is only worth as much as its build command, and two ways of being worthless were measured on the shipped
  * artifacts. `osm/address-points-{de,gb,nz}-*.db` record `node osm/out/scripts/build-rooftop-database.js`, a path the

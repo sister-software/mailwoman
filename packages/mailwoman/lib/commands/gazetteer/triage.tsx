@@ -4,7 +4,7 @@
 /**
  *   `mailwoman gazetteer triage` — the WOF currency-hole ledger (`gazetteer-pipeline/wof-triage.ts`).
  *
- *   REPORT ONLY. Nothing this command emits changes a resolve; the ledger exists so an upstream coverage hole is
+ *   report only. Nothing this command emits changes a resolve. the ledger exists so an upstream coverage hole is
  *   reviewable instead of invisible, and so a decision to supplement one is recorded rather than inferred. The
  *   motivating case is in the module docstring (`Rochester, Kent`, deprecated in a January 2019 batch with no
  *   successor, resolving 474 km away until the currency backfill).
@@ -14,14 +14,15 @@
  */
 
 import { makeDirectories, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import type { TriageRow, TriageSummary } from "#gazetteer-pipeline/wof/triage"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "triage",
@@ -35,15 +36,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	admin?: string
-	geonames?: string
-	countries?: string
-	out?: string
-	uncoveredOnly: boolean
-}
-
-const GazetteerTriage: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerTriage: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath, isoDate } = await import("@mailwoman/core/utils")
 		const { CoverageVerdict, triageWOFCurrency } = await import("#gazetteer-pipeline/wof/triage")
@@ -51,7 +44,7 @@ const GazetteerTriage: ParsedCommandComponent<Options> = ({ options }) => {
 		const adminDB = options.admin ?? String(dataRootPath("wof", "admin-global-priority.db"))
 		const geonamesDir = options.geonames ?? String(dataRootPath("geonames"))
 
-		const countries = splitList(options.countries)
+		const countries = extractDelimited(options.countries)
 
 		const stamp = isoDate()
 		const outPath = options.out ?? String(dataRootPath("wof", "triage", `currency-${stamp}.jsonl`))
@@ -68,7 +61,7 @@ const GazetteerTriage: ParsedCommandComponent<Options> = ({ options }) => {
 		await makeDirectories(dirname(outPath))
 		await writeLocalJSONLFile(emitted, outPath)
 
-		// The review queue's head: uncovered AND independently attested, most populous first — the rows most likely to
+		// The review queue's head: uncovered and independently attested, most populous first — the rows most likely to
 		// be an upstream mistake rather than a real cessation.
 		const queue = rows
 			.filter((r) => r.coverage === CoverageVerdict.Uncovered && r.attestation.state === "attested")

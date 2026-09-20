@@ -3,24 +3,24 @@
 
 /**
  *   House-number interpolation (#483): when the exact address-point tier (#476, `address-point.ts`)
- *   misses, estimate the coordinate from TIGER street-segment ranges — parity-aware range match,
+ *   misses, estimate the coordinate from tiger street-segment ranges — parity-aware range match,
  *   then linear interpolation along the segment polyline. Design:
  *   `docs/articles/plan/2026-06-11-interpolation-design.md`.
  *
  *   Reads the per-state extract built by `scripts/build-interpolation-extract.ts` (`street_segment`: one
- *   row per TIGER edge SIDE — independent left/right ranges, ZIPs, parity). Query-side
- *   normalization is THE shared normalizer (`street-normalize.ts`) — identical to build-side, by
+ *   row per tiger edge side — independent left/right ranges, ZIPs, parity). Query-side
+ *   normalization is the shared normalizer (`street-normalize.ts`) — identical to build-side, by
  *   construction.
  *
  *   Every answer is honest about being an estimate: `interpolated: true`, `parityMatched` (false when
  *   only the opposite side's range contained the number — usually the right block, wrong side of
  *   the street), and `uncertaintyM` (half the matched segment's length — the #483 issue's honest
- *   default). Scoping is postcode-first (a given ZIP that scopes to nothing is a MISS — the
+ *   default). Scoping is postcode-first (a given ZIP that scopes to nothing is a miss — the
  *   statewide retry was measured and rejected, see `find()`); without a postcode the statewide name
- *   match must agree on a single postcode or the lookup ABSTAINS (a common street name spanning
- *   towns is ambiguity, not an answer).
+ *   match must agree on a single postcode or the lookup abstains (a common street name spanning
+ *   towns is ambiguity rather than an answer).
  *
- *   Standalone in this slice — core tier wiring (`resolution_tier: "interpolated"` after the
+ *   Standalone for now — core tier wiring (`resolution_tier: "interpolated"` after the
  *   exact-point fall-through) is a noted follow-up on #483, so the `find()` shape mirrors
  *   `AddressPointLookup.find()` to keep that wiring mechanical.
  */
@@ -37,9 +37,9 @@ import type { StreetSegmentDatabase } from "#street/segment-schema"
 /**
  * How an interpolated answer was computed (#483 Method 2):
  *
- * - `address_point` — bracketed/extrapolated between REAL neighbor points from the #476 extract
- *   (`AddressPointInterpolator`), replacing TIGER's uniform-spacing assumption with occupancy.
- * - `tiger_range` — linear position within a TIGER segment's theoretical house-number range (`StreetInterpolator`), the
+ * - `address_point` — bracketed/extrapolated between real neighbor points from the #476 extract
+ *   (`AddressPointInterpolator`), replacing tiger's uniform-spacing assumption with occupancy.
+ * - `tiger_range` — linear position within a tiger segment's theoretical house-number range (`StreetInterpolator`), the
  *   fallback for streets too sparse to bracket.
  */
 export type InterpolationMethod = "address_point" | "tiger_range"
@@ -87,7 +87,7 @@ export interface InterpolationQuery {
 	street: string
 	number: string
 	/**
-	 * ZIP scope — strongly preferred; without it common street names abstain (see module doc).
+	 * ZIP scope — strongly preferred. without it common street names abstain (see module doc).
 	 */
 	postcode?: string
 	/**
@@ -99,7 +99,7 @@ export interface InterpolationQuery {
 
 /**
  * Acceptance geometry for the `near` tie-break: the winning postcode group's closest segment must sit within this many
- * kilometres of `near`, AND the runner-up group must be at least {@link NEAR_DOMINANCE} times farther. Both measured on
+ * kilometres of `near`, and the runner-up group must be at least {@link NEAR_DOMINANCE} times farther. Both measured on
  * the two live failures: Brooklyn's `st pauls place` 11226 segment is ~2 km from the Brooklyn centroid with Great
  * Neck's 11021 at ~24 km (12×); Fraser's `east 13 mile road` 48026 is ~2 km with Mecosta's namesake ~190 km away. A
  * near-tie between groups is genuine ambiguity and stays an abstention.
@@ -126,7 +126,7 @@ interface SegmentRow {
 /**
  * The postcode group nearest `near`, under the {@link NEAR_MAX_KM} dominance geometry — or null when no group qualifies
  * (out of range, or the runner-up is too close to call). A group's distance is its closest segment's first polyline
- * vertex; a segment whose geometry fails to parse prices as unreachable rather than aborting the tie-break.
+ * vertex. a segment whose geometry fails to parse prices as unreachable rather than aborting the tie-break.
  */
 function nearestPostcodeGroup(pool: readonly SegmentRow[], near: { lat: number; lon: number }): SegmentRow[] | null {
 	const groups = new Map<string, { rows: SegmentRow[]; km: number }>()
@@ -170,7 +170,7 @@ export class StreetInterpolator<
 > implements InterpolationLookup {
 	readonly #db: DatabaseClient<DB>
 	/**
-	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal cannot reach it —
 	 * ownership is membership rather than a flag a later branch has to check.
 	 */
 	readonly #resources = new DisposableStack()
@@ -190,7 +190,7 @@ export class StreetInterpolator<
 		}
 
 		// Degrade gracefully on an empty/tableless extract (interrupted build, stray 0-byte file): with no
-		// `street_segment` table this interpolator is a no-op miss, not a crash that loses the state (#568).
+		// `street_segment` table this interpolator is a no-op miss rather than a crash that loses the state (#568).
 		if (hasTable(this.#db, "street_segment")) {
 			const columns = `from_hn, to_hn, min_hn, max_hn, parity, postcode, geometry, source, release`
 
@@ -207,10 +207,10 @@ export class StreetInterpolator<
 			)
 		}
 
-		// #374 doctrine: the conformal radius multiplier is a property of the calibration set the ARTIFACT was
+		// #374 doctrine: the conformal radius multiplier is a property of the calibration set the artifact was
 		// built against, so it ships in the extract's `interp_calibration` metadata table (street-segment-schema.ts)
 		// and is read here, once, at open time — sync raw `.prepare()` per the sync-by-interface doctrine
-		// (AGENTS.md). Extracts predating the table (the pre-2026-07 fleet) yield `undefined`; callers then fall
+		// (agents.md). Extracts predating the table (the pre-2026-07 fleet) yield `undefined`; callers then fall
 		// back to their in-code table, byte-identically.
 		if (hasTable(this.#db, "interp_calibration")) {
 			const row = this.#db.prepare("SELECT radius_multiplier FROM interp_calibration LIMIT 1").get() as
@@ -245,13 +245,13 @@ export class StreetInterpolator<
 
 		// Key-variant ladder (see `streetKeyVariants`): the literal key first, then the doubled-type
 		// collapse and the saint↔st register swap. A variant advances the ladder when it produces no
-		// ANSWER, not merely no rows — a wrong-register key can cover the number in far-away towns and
-		// then fail the ambiguity check ("saint pauls place" reaches Nassau's rows; the Brooklyn answer
+		// answer rather than merely no rows — a wrong-register key can cover the number in far-away towns and
+		// then fail the ambiguity check ("saint pauls place" reaches Nassau's rows. the Brooklyn answer
 		// lives under "st pauls place"), and stopping at rows would eclipse the right variant.
 		for (const variant of streetKeyVariants(query.street)) {
 			const streetNorm = canonicalizeRouteKey(variant)
 
-			// A given ZIP that scopes to nothing is a MISS, not a statewide guess: the retry was
+			// A given ZIP that scopes to nothing is a miss rather than a statewide guess: the retry was
 			// measured (2026-06-11 VT eval) at +2.3pp coverage for a poisoned tail (p99 1.0 → 20.8
 			// km, max 204 km — a unique name statewide can live in a far-away town).
 			const rows = query.postcode
@@ -282,8 +282,8 @@ export class StreetInterpolator<
 		let pool = preferred.length ? preferred : rows
 		const parityMatched = preferred.length > 0
 
-		// No scope given: the covering ranges must agree on ONE postcode or the lookup abstains — a
-		// name spanning towns is ambiguity, not an answer. Counted over the PARITY pool, not all
+		// No scope given: the covering ranges must agree on one postcode or the lookup abstains — a
+		// name spanning towns is ambiguity rather than an answer. Counted over the parity pool rather than all
 		// rows: a section-line boundary road carries a different ZIP per side ("east 13 mile road"
 		// is Fraser 48026 odd / Roseville 48066 even), and the opposite side can never hold the
 		// number it would otherwise veto. When several postcodes survive parity, the caller's

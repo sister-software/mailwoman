@@ -6,10 +6,10 @@
  *   streaming parser (3a decisions 3 & 8).
  *
  *   Implemented from the earlier draft's `sync/fcc/universal-service.ts` (the author's own earlier draft, no provenance
- *   headers) — ONLY the 17-column vocabulary (:27-44) and the `principalCommType` → classification
- *   mapping (:164-176) survive the port; everything else about the earlier-draft loader is rewritten:
+ *   headers) — only the 17-column vocabulary (:27-44) and the `principalCommType` → classification
+ *   mapping (:164-176) survive the port. everything else about the earlier-draft loader is rewritten:
  *
- *   - The earlier-draft loader reads the ENTIRE TSV into memory via `fs.readFile`, then parses it with the
+ *   - The earlier-draft loader reads the entire TSV into memory via `fs.readFile`, then parses it with the
  *     `csv` package configured `relax_column_count_less: true` — a short row is silently truncated,
  *     never surfaced. {@linkcode parseForm499} instead streams row by row through `TSVSpliterator` (the
  *     file is never held in memory whole) and throws a descriptive error naming the file and the
@@ -17,21 +17,21 @@
  *     {@linkcode FORM_499_COLUMNS}'s 17 — decision 8's "malformed input must be loud" discipline,
  *     the same one 2a's `peekProviderID` (`bdc/sdk/build-bdc.ts`) applies to a bad `provider_id`.
  *   - the earlier draft's `RawFCCForm499Filing` interface declares an `otherTradeName1` field that its own
- *     column tuple never lists — meaning it was NEVER actually populated by that loader, a live bug
+ *     column tuple never lists — meaning it was never actually populated by that loader, a live bug
  *     in the salvage source. This port omits the field entirely rather than perpetuate one that can
  *     never carry data.
  *   - `frn` is parsed through {@linkcode toFRN} (decision 3's zero-padded 10-digit branded string).
- *   - the earlier draft's row type carries `holdingCompany` AND `managementCompany` as two separate string
- *     fields; this port keeps both (spec §3.1 finding 1 — ownership and operational control are
- *     different assertions, not synonyms to collapse into one).
+ *   - the earlier draft's row type carries `holdingCompany` and `managementCompany` as two separate string
+ *     fields. this port keeps both (spec §3.1 finding 1 — ownership and operational control are
+ *     different assertions rather than synonyms to collapse into one).
  *
  *   On the DC agent: the 499 "DC agent" is the registered agent for service of process, a role
  *   dominated by a handful of firms (CT Corporation, CSC, Cogency Global) serving tens of thousands
  *   of otherwise-unrelated filers. The `dcAgent*` fields below are carried as plain string
- *   attributes ONLY — nothing in this file, or anywhere downstream, may treat a shared DC agent as
+ *   attributes only — nothing in this file, or anywhere downstream, may treat a shared DC agent as
  *   evidence that two filers are related. That inference is the single most likely false-positive
  *   generator in the whole crosswalk design (spec §3.1 finding 3) and is out of scope here by
- *   design, not by oversight.
+ *   design rather than by oversight.
  */
 
 import { TSVSpliterator } from "spliterator"
@@ -81,7 +81,7 @@ export interface Form499Row {
 	form499ID: string
 	/**
 	 * `null` when the raw field doesn't parse to a valid 10-digit FRN ({@linkcode toFRN}) — never thrown, since a
-	 * missing/invalid FRN on an otherwise well-formed row is common in the wild (a filer not yet registered in CORES) and
+	 * missing/invalid FRN on an otherwise well-formed row is common in the wild (a filer not yet registered in cores) and
 	 * is not the "malformed row" decision 8 guards against.
 	 */
 	frn: FRN | null
@@ -90,7 +90,7 @@ export interface Form499Row {
 	 */
 	lastFiledAt: string
 	/**
-	 * `true` iff the raw field is the literal string `"TRUE"` — matches the earlier draft's own comparison.
+	 * `true` iff the raw field is the literal string `"true"` — matches the earlier draft's own comparison.
 	 */
 	usfContributor: boolean
 	legalNameOfCarrier: string
@@ -100,12 +100,12 @@ export interface Form499Row {
 	 */
 	principalCommType: string
 	/**
-	 * The filer's holding company — an OWNERSHIP assertion. Kept distinct from {@link Form499Row.managementCompany} (spec
+	 * The filer's holding company — an ownership assertion. Kept distinct from {@link Form499Row.managementCompany} (spec
 	 * §3.1 finding 1); do not collapse the two.
 	 */
 	holdingCompany: string
 	/**
-	 * The filer's management company — an OPERATIONAL CONTROL assertion, not a synonym for
+	 * The filer's management company — an operational control assertion rather than a synonym for
 	 * {@link Form499Row.holdingCompany}.
 	 */
 	managementCompany: string
@@ -113,8 +113,8 @@ export interface Form499Row {
 	customerInquiriesTelephone: string
 	customerInquiriesAddress: string
 	/**
-	 * The DC agent's display name — the registered agent for service of process. Plain attribute only; see the module
-	 * docstring. NEVER treat this (or the other `dcAgent*` fields) as evidence that two filers sharing an agent are
+	 * The DC agent's display name — the registered agent for service of process. Plain attribute only. see the module
+	 * docstring. Never treat this (or the other `dcAgent*` fields) as evidence that two filers sharing an agent are
 	 * related.
 	 */
 	dcAgentDisplayName: string
@@ -126,20 +126,20 @@ export interface Form499Row {
 	 * The filer's lifecycle, parsed from the workbook's `note1`/`note2`/`note3` columns — a cessation date, a successor
 	 * filer, and the FCC's own reasons. See `form499-notes.ts`.
 	 *
-	 * **Optional because the SOURCE decides whether it exists, not the filer.** The 17-column TSV
+	 * **Optional because the source decides whether it exists rather than the filer.** The 17-column TSV
 	 * ({@linkcode FORM_499_COLUMNS}) has no note columns at all, so {@linkcode parseForm499} can never populate this;
-	 * `parseForm499Workbook` always does. `undefined` therefore means "this source cannot say", which is NOT the same as
-	 * the `{notes: [], …}` an XLSX row with blank notes produces — that one means "the FCC said nothing about this
+	 * `parseForm499Workbook` always does. `undefined` therefore means "this source cannot say", which is not the same as
+	 * the `{notes: [], …}` an xlsx row with blank notes produces — that one means "the FCC said nothing about this
 	 * filer". A consumer treating the two alike would read every TSV-sourced filer as confirmed-active.
 	 */
 	lifecycle?: Form499Lifecycle
 	/**
 	 * Two-letter USPS codes for the states this filer registered operations in, from the workbook's 59 per-jurisdiction
-	 * TRUE/FALSE columns (Alabama…Wyoming, including territories and the Pacific atolls). Sorted, so two rows with the
+	 * true/false columns (Alabama…Wyoming, including territories and the Pacific atolls). Sorted, so two rows with the
 	 * same footprint compare equal.
 	 *
 	 * Optional for the same reason as {@link Form499Row.lifecycle}: absent from the TSV vocabulary entirely. An empty
-	 * ARRAY means the workbook marked no jurisdiction (656 filers in the 2025-12-07 vintage); `undefined` means the
+	 * array means the workbook marked no jurisdiction (656 filers in the 2025-12-07 vintage); `undefined` means the
 	 * source could not say.
 	 */
 	operatingStates?: string[]
@@ -163,8 +163,8 @@ export type FilerClassification = (typeof FilerClassification)[keyof typeof File
 /**
  * Classify a Form 499 row by its free-text `principalCommType` plus its `usfContributor` flag — a direct port of
  * the earlier draft's `supplementOrganization` mapping (`sync/fcc/universal-service.ts`:160-176), including its if/else-if between
- * Incumbent LEC and CLEC (a filer whose `principalCommType` contains "Incumbent" is classified as Incumbent LEC only,
- * never also CLEC, even though nothing in the FCC data guarantees those substrings are mutually exclusive).
+ * Incumbent LEC and clec (a filer whose `principalCommType` contains "Incumbent" is classified as Incumbent LEC only,
+ * never also clec, even though nothing in the FCC data guarantees those substrings are mutually exclusive).
  * Interexchange and Toll Reseller are independent checks, same as the original.
  */
 export function classifyFiler(row: Form499Row): FilerClassification[] {
@@ -216,7 +216,7 @@ function toForm499Raw(fields: readonly string[], tsvPath: string, lineNumber: nu
 
 /**
  * Converts one {@linkcode toForm499Raw} result into a typed {@linkcode Form499Row} — applies {@linkcode toFRN} to `frn`
- * and the `"TRUE"` literal check to `usfContributor`; every other field passes through as the raw TSV string.
+ * and the `"true"` literal check to `usfContributor`; every other field passes through as the raw TSV string.
  */
 function toForm499Row(raw: Record<Form499Column, string>): Form499Row {
 	return {

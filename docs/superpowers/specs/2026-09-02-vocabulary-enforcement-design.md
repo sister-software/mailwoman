@@ -1,12 +1,12 @@
 # Vocabulary enforcement across every committed surface
 
 **Status:** design approved 2026-09-02 (scope and landing strategy chosen by the operator).
-**Supersedes the deferral recorded in** `docs/.vale-vocab.ini`'s header.
+**Supersedes the deferral recorded in** `config/vale/.vale-vocab.ini`'s header.
 
 ## The problem
 
 `AGENTS.md` states that four words — the three the `AmbiguousShorthand` rule listed then, and the retired one `repo-health` already
-counts — are banned "in replies AND in
+counts — are banned "in replies and in
 every committed prose surface", because each stands for four or five different things and a reader
 cannot tell which one a sentence means. Three Vale configs enforce parts of that claim, and the
 claim is wider than the enforcement:
@@ -14,7 +14,7 @@ claim is wider than the enforcement:
 | Surface                                                                  | Config            | Rules applied                            |
 | ------------------------------------------------------------------------ | ----------------- | ---------------------------------------- |
 | `docs/articles`, `docs/src/pages`, `writing-system.md`, `page-templates` | `.vale.ini`       | the full `Mailwoman` style               |
-| Root contracts, `docs/engineering`, package `README.md`                  | `.vale-vocab.ini` | `AmbiguousShorthand` only; six rules off |
+| Root interfaces, `docs/engineering`, package `README.md`                 | `.vale-vocab.ini` | `AmbiguousShorthand` only; six rules off |
 | Agent replies                                                            | `.vale-chat.ini`  | `Mailwoman` + `MailwomanChat`            |
 | **`.ts`, `.tsx`, `.py` comments and docstrings**                         | **none**          | **none**                                 |
 | `CHANGELOG.md`, `.github/`, `scripts/` markdown                          | none              | none                                     |
@@ -29,7 +29,7 @@ Two consequences, both measured at `9996e8f60`:
    `repo-health`'s `bannedVocabulary` counter, which covers the retired word alone.
 
 Vale reads comment prose in all three languages correctly — it extracts comments and ignores code —
-so the gap is a missing config section, not a missing tool.
+so the gap is a missing config section rather than a missing tool.
 
 ## Decisions taken
 
@@ -47,21 +47,21 @@ the acronym-casing convention already exempts them and this ban follows the same
 ## Why a sense census comes before any rewrite
 
 The retired word reached zero occurrences from 3,481 only after its four concepts were named — a corpus
-recipe, a corpus slice, a WOF extract, a region database — so each site had one agreed replacement
+recipe, a corpus recipe output, a WOF extract, a region database — so each site had one agreed replacement
 rather than a per-site guess. `AGENTS.md` records that as the working precedent.
 
 A per-site rewrite with no census is how a docstring loses its meaning, and this repository's
 comments carry invariants and measured numbers that a careless reword destroys. The census is
-therefore the first deliverable, not documentation of one.
+therefore the first deliverable rather than documentation of one.
 
 Censusing by the word that modifies `check` finds 519 distinct constructions, most appearing once.
-`scripts/vocab-census.ts` classifies every hit by the REMEDY it needs, and the three remedies differ
+`scripts/vocab-census.ts` classifies every hit by the ACTION it needs, and the three actions differ
 in cost by an order of magnitude. Measured at `9996e8f60` over 2,638 tracked `.ts`/`.tsx`/`.py`
 files:
 
-| Remedy         | Count | What it means                                                                                                                                                                                                                                                   | Judgement                            |
+| Action         | Count | What it means                                                                                                                                                                                                                                                   | Judgement                            |
 | -------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| `backtick`     | 163   | The site names a contract-bearing identifier — `@mailwoman/locale-hint`, `promotion-eval.ts`, `mailwoman eval promote`, `mwdev_promotion_eval`. Vale skips inline code, so backticks are both the fix and correct markdown.                                     | none                                 |
+| `backtick`     | 163   | The site names a interface-tied identifier — `@mailwoman/locale-hint`, `promotion-eval.ts`, `mailwoman eval promote`, `mwdev_promotion_eval`. Vale skips inline code, so backticks are both the fix and correct markdown.                                       | none                                 |
 | `rename-check` | 956   | The modifier carries the check's real name: `street-context check` → `the street-context check`. Top modifiers: `street-context` 32, `delta` 20, `test` 19, `country` 27, `acceptance` 11, `postcode` 9, `§7-3b` 9, `existence` 8, `interval` 7, `detection` 6. | verify the modifier is the real name |
 | `read-context` | 895   | The site says only "the check" / "a check". Which check it means is learnable solely from the surrounding paragraph.                                                                                                                                            | full                                 |
 
@@ -81,7 +81,7 @@ order below keeps every intermediate state shippable and every diff reviewable.
 1. **Census, committed.** `scripts/vocab-census.ts` classifies every hit by sense and prints the
    table above. It is the measuring instrument; it must exist before any edit, so progress is read
    from a number rather than asserted.
-2. **Config, not yet enforcing.** Add `[*.{ts,tsx}]` and `[*.py]` sections to a code config and
+2. **Config rather than yet enforcing.** Add `[*.{ts,tsx}]` and `[*.py]` sections to a code config and
    widen the vocab config's path list. Run in report mode. This proves the config sees what the
    census sees — two independent readings of the same surface, which is how a false negative in the
    measuring tool gets caught.
@@ -100,14 +100,14 @@ order below keeps every intermediate state shippable and every diff reviewable.
 
 ## Two tensions the sweep will hit, decided here
 
-**`source of truth` (9 hits) is flagged by `StockPhrases`,** and `AGENTS.md` uses it as contract
-language: "`SCHEMA.mdx` is the single source of truth for the `ComponentTag` union." The phrase names
+**`source of truth` (9 hits) is flagged by `StockPhrases`,** and `AGENTS.md` uses it as interface
+language: "`SCHEMA.mdx` is the single authoritative record for the `ComponentTag` union." The phrase names
 a real property — which document wins when two disagree. Keep the phrase; add it to the accept list
-rather than reword nine contracts.
+rather than reword nine interfaces.
 
 **`names the` (10 hits) is flagged by `StockPhrases`,** while "name the concrete thing" is the
 house instruction that the `AmbiguousShorthand` rule's own message gives. A rule that forbids the
-remedy another rule prescribes is a rule defect. Narrow `StockPhrases` to the stock construction it
+action another rule prescribes is a rule defect. Narrow `StockPhrases` to the stock construction it
 means and leave the plain verb alone.
 
 ## Verification

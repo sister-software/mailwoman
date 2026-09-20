@@ -2,72 +2,73 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `sub-venue` slice recipe (#35 step 4) — teach the `unit` tag the venue-INTERIOR shapes it was
+ *   `sub-venue` recipe (#35 step 4) — teach the `unit` tag the venue-interior shapes it was
  *   never taught, so the modifier+designator class wins at the shipped `venueStructureBiasScale` of
- *   6.0 instead of needing ~11 nats. `docs/engineering/sub-venue-corpus-task.mdx` is the spec; the
+ *   6.0 instead of needing ~11 nats. `docs/engineering/sub-venue-corpus-task.mdx` is the spec. the
  *   vocabulary is `corpus/data/sub-venue-lexicon.json` (v0.2.0) and the curation ledger is
- *   `corpus/src/tools/sub-venue-promotions.ts`. The READ half — promotions, identifier
+ *   `corpus/src/tools/sub-venue-promotions.ts`. The read half — promotions, identifier
  *   distributions, name pools — is `sub-venue-sources.ts`; this file renders lines and emits rows.
  *
- *   ── WHY THIS SYNTHESIZES RATHER THAN HARVESTS ────────────────────────────────────────────────────
+ *   ── why this synthesizes rather than harvests ────────────────────────────────────────────────────
  *   Wave 1's lesson, and the reason the spec's "get real data first" instruction is honoured in a
- *   shape it did not anticipate: the attested SURFACE STRINGS are thin. 87 GB features attest
- *   `terminal`, 29 attest `wing`, 4 attest `concourse` (3 of which are a street called CONCOURSE WAY).
- *   You cannot train a tag on 29 strings. What the five extracts DO carry at volume is the three
+ *   shape it did not anticipate: the attested surface strings are thin. 87 GB features attest
+ *   `terminal`, 29 attest `wing`, 4 attest `concourse` (3 of which are a street called concourse WAY).
+ *   You cannot train a tag on 29 strings. What the five extracts do carry at volume is the three
  *   things a generator needs — 45,000+ real venue names across four countries, a per-region
- *   identifier DISTRIBUTION measured over 2,868 gate/terminal/campus refs, and the confound
+ *   identifier distribution measured over 2,868 gate/terminal/campus refs, and the confound
  *   population that becomes the negatives. So the bulk is `designator × per-region-identifier ×
  *   modifier` sampled per locale, and the attested strings ride along as seasoning
  *   ({@link ATTESTED_FRACTION}) rather than as the corpus.
  *
- *   ── THE PER-REGION IDENTIFIER RULE, AND WHY IT IS NOT COSMETIC ───────────────────────────────────
- *   `Gate A12` is a rendering, not a string anyone wrote down: all but 13 of Great Britain's 658
+ *   ── the PER-region identifier rule, and why IT is not cosmetic ───────────────────────────────────
+ *   `Gate A12` is a rendering rather than a string anyone wrote down: all but 13 of Great Britain's 658
  *   `aeroway=gate` features are unnamed and carry only a `ref`. The lexicon therefore ships a
  *   distribution, and it differs by country far more than the shared English vocabulary suggests —
  *   GB gates are 71% bare digits and JP 89%, FR and DE are ~60% letter-digit (`A37`, `B05`), and ES
- *   gives a THIRD of its gates a range (`B18-B20`), which no other country does at that rate. A
+ *   gives a third of its gates a range (`B18-B20`), which no other country does at that rate. A
  *   generator that samples Great Britain's shape into a Spanish line produces a plausible string that
  *   is wrong about Spain, so every leg samples its own region.
  *
- *   ── ONLY PROMOTED (designator, locale) PAIRS PRODUCE POSITIVES ───────────────────────────────────
- *   A promotion names a designator, a phrase AND a locale, because the same token is a designator in
+ *   ── only promoted (designator, locale) pairs produce positives ───────────────────────────────────
+ *   A promotion names a designator, a phrase and a locale, because the same token is a designator in
  *   one language and a disaster in another: `hall` is 0-of-3,273 in Great Britain and 35-of-40 in
- *   France; `wing` is 23-of-29 in Great Britain and 4-of-3,358 in the United States. A REJECTED pair
- *   generates NEGATIVES in that locale instead — en-US `wing` rows are Red Wing, not units.
+ *   France; `wing` is 23-of-29 in Great Britain and 4-of-3,358 in the United States. A rejected pair
+ *   generates negatives in that locale instead — en-US `wing` rows are Red Wing rather than units.
  *
  *   `shape: "identifier-required"` is honoured as the ledger's docstring demands: de-DE `halle` is
  *   emitted only as `Halle <identifier>`, never bare and never after a modifier, because its 168-hit
- *   confound includes the CITY Halle (Saale) and only the identifier-bearing shape separates them.
+ *   confound includes the city Halle (Saale) and only the identifier-containing shape separates them.
  *   {@link buildSubVenueForm} enforces it and `sub-venue.test.ts` pins it.
  *
- *   ── LABELS ───────────────────────────────────────────────────────────────────────────────────────
+ *   ── labels ───────────────────────────────────────────────────────────────────────────────────────
  *   Sub-venue is `unit`; the container is `venue`. That is the spec's wording and it invents nothing:
  *   `block` / `sub_block` exist in the `ComponentTag` union but are JP-char-model-only and outside
- *   `ACTIVE_TAGS` (STAGE3), so they are not reachable from a Latin slice.
+ *   `ACTIVE_TAGS` (STAGE3), so they are not reachable from a Latin-script recipe output.
  *
- *   ── WHAT IS DELIBERATELY NOT HERE ────────────────────────────────────────────────────────────────
+ *   ── what is deliberately not here ────────────────────────────────────────────────────────────────
  *   1. **A modifier+designator form outside English.** `VENUE_STRUCTURE_MODIFIERS` is an English
  *        list, and the extracts say the localized modifier surfaces do not exist to copy: `aile` in
  *        France is 0 hits, `ala` in Spain 0, `flügel` in Germany 0. Generating `Terminal Sud` would
  *        be inventing a vocabulary with no confound board behind it, which is the exact failure the
  *        promotion ledger exists to prevent. Non-English legs get designator+identifier only.
  *   2. **A ja-JP leg.** `ターミナル` is promoted (1,213 real of 1,215). The one non-Latin
- *        surface the task named, but Japanese addresses train through `build_jp_slice.py` against the
- *        `stage3-jp` 47-label head, where the interior tags are `block`/`sub_block`/`building_number`
- *        — a different model, a different label set, and a different builder. A katakana `unit` row
- *        in this (Latin) feed would in any case be dropped by `country_weights`, which carries no
- *        `JP` key. The JP extract is harvested and ready; the leg belongs to the JP slice.
+ *        surface the task named, but Japanese addresses train through the JP corpus builder
+ *        (`corpus-python/src/mailwoman_train/countries/jp/corpora/`) against the `stage3-jp` 47-label
+ *        head, where the interior tags are `block`/`sub_block`/`building_number` — a different model, a
+ *        different label set, and a different builder. A katakana `unit` row in this (Latin) feed
+ *        would in any case be dropped by `country_weights`, which carries no `JP` key. The JP extract
+ *        is harvested and ready. the leg belongs to the JP corpus.
  */
 
-import type { ComponentTag } from "@mailwoman/codex/component"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
+import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
-import { sliceSourceID, type CorpusRecipe } from "#recipes/scaffold"
+import { recipeSourceID, type CorpusRecipe } from "#recipes/scaffold"
 import { buildStreetNegatives, loadContextTuples, type StreetNegatives } from "#recipes/sub/venue/context"
+import { addressGroups, type Group, type Register, renderGroups, sampleRegister } from "#recipes/sub/venue/render"
 import {
 	buildIdentifierModel,
 	defaultLexiconPath,
@@ -86,17 +87,17 @@ import {
 	titleCase,
 } from "#recipes/sub/venue/sources"
 import type { LocaleBaseTuple } from "#synthesizers/locale"
-import { pick } from "#synthesizers/utils"
 import type { SubVenueLexiconTable } from "#tools"
 import { alignRow } from "#utils"
 
 export * from "#recipes/sub/venue/sources"
 export * from "#recipes/sub/venue/context"
+export * from "#recipes/sub/venue/render"
 
 //#region Plan
 
 /**
- * One locale's leg of the slice.
+ * One locale's leg of the recipe.
  *
  * `positiveShare` / `negativeShare` are relative weights, normalized at run time — they do not have to sum to 1.
  */
@@ -104,7 +105,7 @@ export interface SubVenueLeg {
 	locale: string
 	country: string
 	/**
-	 * ISO 3166-1 alpha-2 key into the lexicon's `identifierShapes` AND the extract filename. The two axes are the same
+	 * ISO 3166-1 alpha-2 key into the lexicon's `identifierShapes` and the extract filename. The two axes are the same
 	 * axis: a distribution is measured in a region's own extract.
 	 */
 	region: string
@@ -121,7 +122,7 @@ export interface SubVenueLeg {
 	negativeShare: number
 	/**
 	 * Ca-ES only — keep context tuples whose postcode starts with one of these. Catalan-language territories by postal
-	 * prefix (07 Illes Balears, 08 Barcelona, 17 Girona, 25 Lleida, 43 Tarragona) rather than by a REGION string, whose
+	 * prefix (07 Illes Balears, 08 Barcelona, 17 Girona, 25 Lleida, 43 Tarragona) rather than by a region string, whose
 	 * spelling in the OA export is not something to guess at.
 	 */
 	postcodePrefixes?: readonly string[]
@@ -133,13 +134,13 @@ export interface SubVenueLeg {
  * En-GB and en-US carry the most because they are where the eval board lives (28 of the 30 confound rows are GB or US
  * addresses) and because the English shipped vocabulary is the only one with a modifier grammar — the target class.
  * fr-FR, de-DE and es-ES exist because the ledger promoted surfaces there (169, 19+32 and 190 real hits respectively)
- * and a slice that skipped them would leave every non-English promotion untrained. ca-ES is small on purpose: its
+ * and a recipe that skipped them would leave every non-English promotion untrained. ca-ES is small on purpose: its
  * promotion is 15 hits and its line differs from es-ES only in the Catalan street vocabulary the postal-prefix filter
  * selects for.
  *
  * The negative shares invert that ordering where the confound mass does. en-US carries the largest negative share
  * because its confound population is the largest measured anywhere in the ledger — 3,354 `wing` (Red Wing boots 676,
- * chicken wings 759), 2,330 `pier` (Pier 1 Imports, which IS the designator+identifier shape), 27,081 `hall`.
+ * chicken wings 759), 2,330 `pier` (Pier 1 Imports, which is the designator+identifier shape), 27,081 `hall`.
  */
 export const SUBVENUE_LEGS: readonly SubVenueLeg[] = [
 	{
@@ -194,7 +195,7 @@ export const SUBVENUE_LEGS: readonly SubVenueLeg[] = [
 /**
  * En-US has no OSM extract, so its identifier distribution has to be borrowed. GB is the borrow, and the leg's `region`
  * says so literally rather than in a comment: the two English-speaking aviation systems number their gates the same way
- * (GB 71% bare digit) and poi.db — the only US source in reach — carries names, not refs, so it cannot supply a
+ * (GB 71% bare digit) and poi.db — the only US source in reach — carries names rather than refs, so it cannot supply a
  * distribution of its own. Recorded here because it is the one place a leg's `region` is not its own country.
  */
 export const US_IDENTIFIER_REGION_BORROWED_FROM = "GB"
@@ -204,38 +205,38 @@ export const US_IDENTIFIER_REGION_BORROWED_FROM = "GB"
 //#region Tunables
 
 /**
- * The row count this slice is built at, and the arithmetic behind it. `--count` overrides; this is the number to use
- * absent a reason.
+ * The row count this recipe output is built at, and the arithmetic behind it. `--count` overrides. this is the number
+ * to use absent a reason.
  *
- * The training sampler (`corpus-python/src/mailwoman_train/data_loader.py`, `_raw_row_stream`) draws SOURCES from a
+ * The training sampler (`corpus-python/src/mailwoman_train/data_loader.py`, `_raw_row_stream`) draws sources from a
  * multinomial over `source_weights` and yields the next row from that source's iterator. Two consequences set the
  * size:
  *
  * 1. A source's share of an epoch is `weight / Σweights`, independent of how many rows it has.
- * 2. **A source that exhausts is DELETED from the multinomial** — there is no cycling. Under-size the slice and its
- *    nominal dose is fiction for the rest of the epoch.
+ * 2. **A source that exhausts is deleted from the multinomial** — there is no cycling. Under-size the recipe output and
+ *    its nominal reps per row are fiction for the rest of the epoch.
  *
- * Measured against the shipped `v4.1.0-gb-venue-l1e4-2k` weight table: 33 sources summing to 144.5. At the dose the B11
- * GB-venue exercise settled on for a hard rare class — 12.0, the value `synth-fr-bare-street`, `synth-si-bare-village`,
- * `synth-cz-pcfirst-preposition`, `synth-fr-fragment` and `synth-no-fragment` all carry — the share is `12 / 156.5 =
- * 7.67%`, and `train_rows_per_epoch` is 1,000,000. So the epoch draws **76,677 rows** from this slice, and anything
- * smaller runs dry mid-epoch. 120,000 clears that with room for a config that drops a source or raises the dose. (For
- * contrast: `synth-fr-bare-street` is 10,803 rows at dose 12.0, so it exhausts 14% into its own nominal share every
- * epoch — a precedent for the dose, not for the size.)
+ * Measured against the shipped `v4.1.0-gb-venue-l1e4-2k` weight table: 33 sources summing to 144.5. At the reps per row
+ * the B11 GB-venue exercise settled on for a hard rare class — 12.0, the value `synth-fr-bare-street`,
+ * `synth-si-bare-village`, `synth-cz-pcfirst-preposition`, `synth-fr-fragment` and `synth-no-fragment` all carry — the
+ * share is `12 / 156.5 = 7.67%`, and `train_rows_per_epoch` is 1,000,000. So the epoch draws **76,677 rows** from this
+ * recipe output, and anything smaller runs dry mid-epoch. 120,000 clears that with room for a config that drops a
+ * source or raises the reps. (For contrast: `synth-fr-bare-street` is 10,803 rows at 12.0 reps per row, so it exhausts
+ * 14% into its own nominal share every epoch — a precedent for the reps rather than for the size.)
  */
 export const RECOMMENDED_ROW_COUNT = 120_000
 
 /**
- * Share of emitted rows that are NEGATIVES (the confound classes, carrying no `unit`).
+ * Share of emitted rows that are negatives (the confound classes, carrying no `unit`).
  *
- * The spec's instruction is structural: "include the confound shapes as NEGATIVES in the same slice, or the model
- * learns the surface rather than the structure". 0.3 is the dose the `no-fragment` recipe settled on for its own
+ * The spec's instruction is structural: "include the confound shapes as negatives in the same recipe output, or the
+ * model learns the surface rather than the structure". 0.3 is the share the `no-fragment` recipe settled on for its own
  * counter-distribution and there is no measurement here that beats it; `--negative-fraction` moves it.
  */
 const DEFAULT_NEGATIVE_FRACTION = 0.3
 
 /**
- * Share of POSITIVES whose sub-venue string is a REAL name lifted verbatim out of an extract rather than synthesized —
+ * Share of positives whose sub-venue string is a real name lifted verbatim out of an extract rather than synthesized —
  * `Terminal 2 D`, `Pier 1`, `Terminal 1 Flugsteig B`. The seasoning, per the module docstring. Kept small because the
  * attested pool is small: after promotion + shape filtering it is 13–47 strings per leg, and a larger share would just
  * repeat them.
@@ -243,10 +244,10 @@ const DEFAULT_NEGATIVE_FRACTION = 0.3
 const ATTESTED_FRACTION = 0.1
 
 /**
- * Within the SYNTHESIZED positives of an English leg: the split between the two proposal shapes.
+ * Within the synthesized positives of an English leg: the split between the two proposal shapes.
  *
  * Modifier-heavy on purpose. Designator+identifier proposes at 0.85 confidence and already wins the decode at the
- * shipped 6.0; modifier+designator proposes at 0.6 and needs 5.87–10.65. The failing class is the one to teach, and the
+ * shipped 6.0. modifier+designator proposes at 0.6 and needs 5.87–10.65. The failing class is the one to teach, and the
  * passing one is here to not regress (`Concourse B` / `Terminal 5` / `Gate 12` / `Wing B` must stay correct).
  */
 const ENGLISH_MODIFIER_FORM_FRACTION = 0.6
@@ -256,17 +257,17 @@ const ENGLISH_MODIFIER_FORM_FRACTION = 0.6
 //#region Board reservation
 
 /**
- * Surfaces reserved by `mailwoman/eval-harness/fixtures/venue-structure-confounds.jsonl` — the 30-row board this slice
- * has to hold. A row containing any of these is DROPPED and counted in `contaminated`.
+ * Surfaces reserved by `mailwoman/eval-harness/fixtures/venue-structure-confounds.jsonl` — the 30-row board this recipe
+ * has to hold. A row containing any of these is dropped and counted in `contaminated`.
  *
  * The `--exclude-surfaces` precedent from `fr-fragment` / `no-fragment`, applied by hand rather than by file because
  * the board lives in `mailwoman/` and `@mailwoman/corpus` cannot reach across that workspace boundary at run time. Keep
- * it in sync when the board grows; a slice that trains on its own eval set measures memorization.
+ * it in sync when the board grows. a recipe output that trains on its own eval set measures memorization.
  *
  * Note what this costs and why it is still right: reserving `east gate` / `west gate` removes the two GB surfaces the
- * board uses for its `modifier-designator-street` class, so the slice teaches that class from the OTHER real ones its
+ * board uses for its `modifier-designator-street` class, so the recipe teaches that class from the other real ones its
  * sources carry (`North Gate`, `South Gate`, `East Hall`, `West Hall`, `Lower Hall`, `East Campus`, …). The class is
- * taught; the board's own strings are not.
+ * taught. the board's own strings are not.
  */
 export const BOARD_RESERVED_SURFACES: readonly string[] = [
 	// gb-street-gate
@@ -315,149 +316,6 @@ export function isBoardReserved(raw: string): boolean {
 
 //#endregion
 
-//#region Rendering
-
-/**
- * One labelled piece of the line. Pieces inside a group are space-joined; groups are joined by the register's
- * separator.
- */
-interface Piece {
-	text: string
-	tag?: ComponentTag
-}
-
-type Group = Piece[]
-
-/**
- * Surface register. Every eval in this repo gets a lowercase leg because lowercase is the register users type — Google
- * Maps taught them — so every slice has to carry one.
- */
-const Register = {
-	Canonical: "canonical",
-	CommaFree: "comma-free",
-	Lower: "lower",
-	Upper: "upper",
-} as const
-
-type Register = (typeof Register)[keyof typeof Register]
-
-// Registers: 45% canonical, 20% comma-free, 25% lower, 10% upper.
-const CANONICAL_REGISTER_CUTOFF = 0.45
-const COMMA_FREE_REGISTER_CUTOFF = 0.65
-const LOWER_REGISTER_CUTOFF = 0.9
-
-function sampleRegister(random: () => number): Register {
-	const r = random()
-
-	if (r < CANONICAL_REGISTER_CUTOFF) return Register.Canonical
-
-	if (r < COMMA_FREE_REGISTER_CUTOFF) return Register.CommaFree
-
-	if (r < LOWER_REGISTER_CUTOFF) return Register.Lower
-
-	return Register.Upper
-}
-
-/**
- * Join groups into `raw` + `components`, applying the register to BOTH so alignment still finds every value.
- */
-export function renderGroups(
-	groups: Group[],
-	register: Register
-): { raw: string; components: Partial<Record<ComponentTag, string>> } {
-	const fold = (text: string): string => {
-		if (register === Register.Lower) return text.toLowerCase()
-
-		if (register === Register.Upper) return text.toUpperCase()
-
-		return text
-	}
-
-	const separator = register === Register.CommaFree ? " " : ", "
-
-	const raw = groups
-		.map((group) => group.map((piece) => fold(piece.text)).join(" "))
-		.filter(isPresent)
-		.join(separator)
-
-	const components: Partial<Record<ComponentTag, string>> = {}
-
-	for (const group of groups) {
-		for (const piece of group) {
-			if (piece.tag && !components[piece.tag]) {
-				components[piece.tag] = fold(piece.text)
-			}
-		}
-	}
-
-	return { raw, components }
-}
-
-/**
- * The street + tail groups for a country, in that country's own order.
- *
- * DE/ES/FR put the postcode before the locality and DE/ES put the house number after the street; GB and US keep the
- * anglophone order and US carries a region. These are the same orders `synthesizers/locale.ts` renders, restated here
- * because this recipe assembles its groups piece-by-piece (it has to, to place a sub-venue group in front of them).
- */
-export function addressGroups(country: string, tuple: LocaleBaseTuple, withStreet: boolean): Group[] {
-	const groups: Group[] = []
-	const houseNumber = tuple.house_number?.trim()
-	const street = tuple.street.trim()
-
-	if (withStreet && street) {
-		const streetPiece: Piece = { text: street, tag: "street" }
-		const numberPiece: Piece | null = houseNumber ? { text: houseNumber, tag: "house_number" } : null
-
-		if (!numberPiece) {
-			groups.push([streetPiece])
-		} else if (country === "DE" || country === "ES") {
-			groups.push([streetPiece, numberPiece])
-		} else {
-			groups.push([numberPiece, streetPiece])
-		}
-	}
-
-	const locality: Piece = { text: tuple.locality.trim(), tag: "locality" }
-	const postcode = tuple.postcode?.trim()
-	const region = tuple.region?.trim()
-
-	if (country === "US") {
-		groups.push([locality])
-		const tail: Group = []
-
-		if (region) {
-			tail.push({ text: region, tag: "region" })
-		}
-
-		if (postcode) {
-			tail.push({ text: postcode, tag: "postcode" })
-		}
-
-		if (tail.length) {
-			groups.push(tail)
-		}
-	} else if (country === "GB") {
-		groups.push([locality])
-
-		if (postcode) {
-			groups.push([{ text: postcode, tag: "postcode" }])
-		}
-	} else {
-		// FR / DE / ES — postcode then locality, one group.
-		const tail: Group = []
-
-		if (postcode) {
-			tail.push({ text: postcode, tag: "postcode" })
-		}
-
-		tail.push(locality)
-		groups.push(tail)
-	}
-
-	return groups
-}
-
 //#endregion
 
 //#region Positive forms
@@ -489,7 +347,7 @@ export function buildSubVenueForm(
 	if (!promoted.length) return null
 
 	if (attested.length && random() < ATTESTED_FRACTION) {
-		const text = pick(attested, random)
+		const text = sample(attested, random)
 
 		return { text, form: "attested", designatorID: "attested" }
 	}
@@ -498,8 +356,8 @@ export function buildSubVenueForm(
 	const useModifier = modifierCandidates.length > 0 && random() < ENGLISH_MODIFIER_FORM_FRACTION
 
 	if (useModifier) {
-		const promotedSurface = pick(modifierCandidates, random)
-		const modifier = pick(modifiers, random)
+		const promotedSurface = sample(modifierCandidates, random)
+		const modifier = sample(modifiers, random)
 
 		return {
 			text: `${titleCase(modifier)} ${promotedSurface.surface}`,
@@ -508,7 +366,7 @@ export function buildSubVenueForm(
 		}
 	}
 
-	const promotedSurface = pick(promoted, random)
+	const promotedSurface = sample(promoted, random)
 	const identifier = sampleIdentifier(model, promotedSurface.designatorID, random)
 
 	if (!identifier) return null
@@ -536,7 +394,7 @@ export const buildPositiveForms = buildSubVenueForm
  */
 export const NegativeClass = {
 	/**
-	 * A locale-REJECTED surface in the venue slot: Red Wing Shoes, Village Hall, Porte de Champerret.
+	 * A locale-rejected surface in the venue slot: Red Wing Shoes, Village Hall, Porte de Champerret.
 	 */
 	RejectedVenue: "rejected-venue",
 	/**
@@ -556,8 +414,8 @@ export const NegativeClass = {
 	 */
 	GateSuffixStreet: "gate-suffix-street",
 	/**
-	 * A PROMOTED phrase outside the shape its promotion covers — `Halle Rosengarten`, `PHOENIX Halle`. The other half of
-	 * an `identifier-required` ruling; see `LegPools.unpromotedShapes`.
+	 * A promoted phrase outside the shape its promotion covers — `Halle Rosengarten`, `phoenix Halle`. The other half of
+	 * an `identifier-required` ruling. see `LegPools.unpromotedShapes`.
 	 */
 	UnpromotedShape: "unpromoted-shape",
 } as const
@@ -565,7 +423,7 @@ export const NegativeClass = {
 export type NegativeClass = (typeof NegativeClass)[keyof typeof NegativeClass]
 
 /**
- * Which negative classes this leg's pools can actually produce. A class with no source is ABSENT rather than
+ * Which negative classes this leg's pools can actually produce. A class with no source is absent rather than
  * substituted — the report then says so, and a reader can tell a missing class from an unsampled one.
  */
 function availableNegativeClasses(pools: LegPools, streets: StreetNegatives): NegativeClass[] {
@@ -658,7 +516,7 @@ function emitRow(
 		country: leg.country,
 		locale: leg.locale,
 		source: context.source,
-		source_id: sliceSourceID(context.source, { ...components, ...disambiguator }),
+		source_id: recipeSourceID(context.source, { ...components, ...disambiguator }),
 		corpus_version: CORPUS_VERSION,
 		license: LICENSE,
 	})
@@ -677,12 +535,12 @@ function emitRow(
 	return true
 }
 
-// One draw per row: 25% carry no street; 55% put the sub-venue before the venue, the rest the venue first.
+// One draw per row: 25% carry no street. 55% put the sub-venue before the venue, the rest the venue first.
 const NO_STREET_SHARE = 0.25
 const SUBVENUE_FIRST_CUTOFF = 0.55
 
 /**
- * Emit one leg's POSITIVE rows: `<sub-venue> unit`, a real `venue`, and the leg's own address skeleton.
+ * Emit one leg's positive rows: `<sub-venue> unit`, a real `venue`, and the leg's own address skeleton.
  */
 function emitPositives(
 	context: EmitContext,
@@ -707,10 +565,10 @@ function emitPositives(
 			continue
 		}
 
-		const tuple = pick(pools.context, random)
-		const venue = pick(pools.venues, random)
+		const tuple = sample(pools.context, random)
+		const venue = sample(pools.venues, random)
 
-		// A venue name that CONTAINS the sub-venue string (or vice versa) makes the two spans
+		// A venue name that contains the sub-venue string (or vice versa) makes the two spans
 		// unresolvable — alignment claims the longer one and quarantines the other — and the row would
 		// teach an overlap that never occurs on a real envelope. Redraw instead.
 		const lowVenue = venue.toLowerCase()
@@ -724,6 +582,9 @@ function emitPositives(
 		const r = random()
 		// A quarter of rows carry no street: an airport terminal's address usually does not have one.
 		const body = addressGroups(leg.country, tuple, r >= NO_STREET_SHARE)
+
+		// No layout names this country, so the row would be a venue with no address behind it.
+		if (!body.length) continue
 		// Both orders occur on real signage and mail — "Terminal 5, Heathrow" and "Heathrow, Terminal 5".
 		const groups = r < SUBVENUE_FIRST_CUTOFF ? [subGroup, venueGroup, ...body] : [venueGroup, subGroup, ...body]
 
@@ -747,7 +608,7 @@ function emitPositives(
 const NEGATIVE_WITH_STREET_SHARE = 0.75
 
 /**
- * Emit one leg's NEGATIVE rows — the confound classes, none of which carries a `unit`.
+ * Emit one leg's negative rows — the confound classes, none of which carries a `unit`.
  */
 function emitNegatives(
 	context: EmitContext,
@@ -764,7 +625,7 @@ function emitNegatives(
 
 	while (produced < target && guard++ < target * 8) {
 		if (!available.length || !pools.context.length) break
-		const negativeClass = pick(available, random)
+		const negativeClass = sample(available, random)
 		const register = sampleRegister(random)
 		let groups: Group[]
 
@@ -782,14 +643,17 @@ function emitNegatives(
 						? pools.longerNames
 						: pools.unpromotedShapes
 
-			const name = pick(pool, random)
-			const tuple = pick(pools.context, random)
+			const name = sample(pool, random)
+			const tuple = sample(pools.context, random)
 
 			groups = [
 				[{ text: name, tag: "venue" }],
 				...addressGroups(leg.country, tuple, random() < NEGATIVE_WITH_STREET_SHARE),
 			]
 		}
+
+		// No layout names this country, so the row would carry a name with no address behind it.
+		if (!groups.length || groups.every((group) => group.every((piece) => piece.tag === "venue"))) continue
 
 		const ok = emitRow(context, leg, stats, groups, register, `sub-venue-negative:${negativeClass}`, {
 			leg: leg.locale,
@@ -807,7 +671,7 @@ function emitNegatives(
 }
 
 function pickTuple(pool: readonly LocaleBaseTuple[], random: () => number): LocaleBaseTuple {
-	return pick(pool, random)
+	return sample(pool, random)
 }
 
 /**
@@ -845,7 +709,7 @@ async function buildLegPools(
 		? await readExtractPools(`${paths.extractsDir}/${leg.extract}`, query)
 		: EMPTY_NAME_POOLS
 
-	// poi.db holds four countries; only these two legs are inside it.
+	// poi.db holds four countries. only these two legs are inside it.
 	const poiPools =
 		leg.country === "US" || leg.country === "FR" ? readPOIPools(paths.poiDB, leg.country, query) : EMPTY_NAME_POOLS
 
@@ -856,7 +720,7 @@ async function buildLegPools(
 		const prefixes = leg.postcodePrefixes
 		const filtered = context.filter((t) => prefixes.some((p) => (t.postcode ?? "").startsWith(p)))
 
-		// A leg that filters itself empty is a build-time fact worth failing on, not a silent fallback
+		// A leg that filters itself empty is a build-time fact worth failing on rather than a silent fallback
 		// to the parent locale's rows under a different `locale` stamp.
 		if (!filtered.length) {
 			throw new Error(
@@ -892,8 +756,8 @@ function emptyStats(leg: SubVenueLeg, pools: LegPools, promotedCount: number): S
 }
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const subVenueRecipe: CorpusRecipe = {
 	name: "sub-venue",

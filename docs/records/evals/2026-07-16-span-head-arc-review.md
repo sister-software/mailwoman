@@ -22,7 +22,7 @@ fixtures, 20 countries, deliberately fragment-heavy):
 | house_number | 0.808        | 0.97     |
 | **street**   | **0.573**    | **0.90** |
 
-Coarse geography is ~99%. The model knows _what things are_. What it cannot reliably do is say **where
+Coarse geography is ~99%. The the system _what things are_. What it cannot reliably do is say **where
 one thing ends and the next begins**.
 
 The archetype, on the shipped model:
@@ -37,7 +37,7 @@ It knows there's a street and a number. It puts the boundary inside the number.
 
 Under flat BIO, the output **factorizes** into T per-token decisions. The encoder is shared, so the
 tokens are not independent in any representational sense — but the loss and the decode treat them as
-separable. "These five subwords are ONE street" is therefore not a decision the model is ever scored
+separable. "These five subwords are one street" is therefore not a decision the model is ever scored
 on; it's an emergent property of five separate votes that happen to agree. There is no object anywhere
 in the objective or the decode that represents _the solution_.
 
@@ -59,8 +59,8 @@ Rue de Rome          →  locality ✗        (Rome IS a city)
 ```
 
 The prefix isn't the variable — **toponym identity is**, and a house number is what breaks the tie.
-"Montmartre" votes locality, which is what the training distribution taught it to do: bare street
-fragments are rare in the corpus and bare localities are not, so the prior is doing exactly its job
+"Montmartre" votes locality. The training distribution taught it to do that: bare street fragments
+are rare in the corpus and bare localities are common, so the prior is doing exactly its job
 and the job is wrong. Nothing in the objective makes propagating the prefix's implication cheaper
 than ignoring it.
 
@@ -74,12 +74,12 @@ scheme list; anything off-template falls through); flat BIO fails on clean input
 **The proposal:** score whole _segmentations_ — a semi-Markov CRF over spans, with a **segment-level**
 transition grammar. Same idea as scheme matching, except the scores are learned and the hypothesis
 space is every segmentation rather than a hand-written list. And : **k-best output**, because
-the useful artifact is a ranked list of readings, not one answer.
+the useful artifact is a ranked list of readings rather than one answer.
 
 Worth noting for anyone who's been here before: this project abandoned a **token-level** CRF at v0.5.0
 (bf16 NaN, `crf_loss_weight=0.0` ever since). That scar was treated as "CRF diverged" for ~200 model
 versions. It doesn't transfer: at subword granularity, transitions are noise — _"must `1` follow `▁8`"_
-is not grammar. At segment granularity (5–8 segments, not 40 subwords), "house_number is adjacent to
+is not grammar. At segment granularity (5–8 segments rather than 40 subwords), "house_number is adjacent to
 street", "one postcode per reading" is well-posed. Same table, right altitude.
 
 ---
@@ -118,7 +118,7 @@ The partition counter-evidenced it before it cost a training run.
 
 ### The two failure mechanisms
 
-Of 30 unfixed Paris cases, 26 have no digit at all, and they split cleanly:
+Of 30 unfixed Paris cases, 26 have no digit at all, and they split directly:
 
 **17 — the model calls the whole string a `locality`.** Not silence; _confidence_.
 `Avenue des Champs-Élysées → locality`. This is a **recall/polarity** failure.
@@ -145,7 +145,7 @@ schema anticipated the structure; flat BIO can't execute it.
 Additive-biaffine span scorer over start/end projections → per-type scores for every span ≤8 tokens;
 segment transition table; fp32 semi-Markov CRF loss co-trained alongside the untouched BIO head.
 Both DP routines (log-partition, Viterbi) verified against **brute-force enumeration of every valid
-segmentation** — a DP that's subtly wrong still trains, it just trains toward the wrong thing.
+segmentation** — a DP that's subtly wrong still trains, ittrains toward the wrong thing.
 
 **The pre-registered check:** `seg@1 > token@1`, plus a secondary read (oracle@10 must rise).
 
@@ -170,7 +170,7 @@ soft channels (postcode anchor / gazetteer / country lexicon). With channels fed
 | oracle@10              | 0.749                  | **0.7753**              |
 
 **The margin over the token decode is +0.75pp — two fixtures, inside noise.** Much of the original
-+7.9pp was the BIO head's _starvation_, not the span head's strength. Feed the channels and BIO
++7.9pp was the BIO head's _starvation_ rather than the span head's strength. Feed the channels and BIO
 recovers most of it.
 
 What survives, and matters:
@@ -195,7 +195,7 @@ Korunní 810, Praha  →  Korunni:street  810:house_number  Praha:locality
 branch); the transition table as a JSON sidecar with the segment-type axis **in the file** (never
 hardcoded); k-best decode in JS, brute-force verified, shared by node and browser.
 
-Costs, measured on the runtime that ships (`onnxruntime-web` WASM EP, not the node bench):
+Costs, measured on the runtime that ships (`onnxruntime-web` WASM EP rather than the node bench):
 
 |                                             |                       |
 | ------------------------------------------- | --------------------- |
@@ -254,7 +254,7 @@ list with no arbiter to collect it.
 The resolver answers _"where is this?"_ The question a bare fragment needs is **"is this a street name
 at all?"** — an existence check against the BAN/gazetteer **name index**. No locality, no house number
 required, so it sidesteps the circularity entirely. `ban/street-centroids-fr.db` contains every French
-street name; asking whether `Rue de Rome` is in it is a lexicon lookup, not a geocode.
+street name; asking whether `Rue de Rome` is in it is a lexicon lookup rather than a geocode.
 
 Two signals have already failed (plausibility veto: inert; resolution specificity: −16, because
 preferring "finer" among `country` / `region` / `locality` _rewards the locality-reading failure mode_). A
@@ -322,7 +322,7 @@ Both near-misses had the same signature: **a number that couldn't reproduce some
 
 - Phase 1's check reported `token@1` 0.348 against a known 0.573. Cause: a Python harness feeding no
   soft channels, plus a bug welding words together (`▁5|th|▁|Ave` → `"5thAve"` — it dropped the
-  `O`-labelled separator). Nearly published as an architecture verdict.
+  `O`-labeled separator). Nearly published as an architecture verdict.
 - Phase 4a's first rerank showed one signal inert and another −16. Cause: the harness resolver had no
   street extracts and reached street tier **0 times in 267 fixtures**. Nearly published as _"resolution
   evidence can't work."_
@@ -337,7 +337,7 @@ local grading run.
 
 > **Answered.** All four went to review and came back adjudicated — see
 > [`2026-07-16-span-head-arc-review-follow-up.md`](./2026-07-16-span-head-arc-review-follow-up.md)
-> for the verdicts and the converged plan. Kept here as asked, not as open.
+> for the verdicts and the converged plan. Kept here as asked rather than as open.
 
 1. **Is +0.75pp at rank-1 enough to justify the decode?** We say no, and that the case is the list.
    Is that motivated reasoning about a phase we already built?

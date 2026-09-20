@@ -12,7 +12,7 @@ Two defects made every prior-on number taken before this date wrong, both found 
 fixed in separate PRs.
 
 1. **The session never fed the prior to the parse that happened** (#1699). `createGeocodeSession`
-   built the FST and passed it to `geocodeAddress`, but that path parses ONCE up front and hands the
+   built the FST and passed it to `geocodeAddress`, but that path parses once up front and hands the
    tree over as `parsedTree`, so `geocodeAddress` never re-parsed and its copy was dead. Bare `Moscow`
    read as `street` with the flag on and off alike.
 2. **The gauntlet fed every overlay the BASE classifier's FST** (#1703). A GB row ran en-GB weights
@@ -26,7 +26,7 @@ fixed in separate PRs.
 | layer       | prior OFF               | prior ON                |
 | ----------- | ----------------------- | ----------------------- |
 | regression  | 352/354 conditional     | **353/354** conditional |
-| metamorphic | PASS (3 tracked xfails) | PASS (3 tracked xfails) |
+| metamorphic | pass (3 tracked xfails) | pass (3 tracked xfails) |
 
 Row-level diff over all failing rows (conditional + tracked), 209 OFF and 208 ON:
 
@@ -49,10 +49,10 @@ title verbatim ("FST decoder bias is invisible to every live eval").
 
 The three spurious streets it stops emitting are `Perth`, `Dallas` and `California`.
 
-**Every floor tally is byte-identical in all four runs.** The prior's entire effect lands in the
+**Every floor tally is byte-identical in all four runs.** The prior's entire effect appears in the
 PRECISION half that `parity-corpus.ts` documents the floors structurally cannot see — _"a tag emitted
 where the gold has NONE costs nothing, forever."_ A floors-only reading reports "no change" and misses
-both the gain and the loss, which is why this promotion rests on the full-agreement and spurious
+both the result and the loss, which is why this promotion rests on the full-agreement and spurious
 columns.
 
 ## The D-rule (iron rule 6)
@@ -73,7 +73,7 @@ what is reported is parity's own metric.
 
 The register's `fst` row records that the pipeline ships the street-context check with the emission
 prior **zeroed**, because unconditional it measured **US-golden −48**. That number is about the
-**street-morphology** prior (`ZEROED_MORPHOLOGY_OPTS`), not the gazetteer FST, and it is unaffected
+**street-morphology** prior (`ZEROED_MORPHOLOGY_OPTS`) rather than the gazetteer FST, and it is unaffected
 here: `geocode-core.ts` already calls `streetContextRequirementFor` — the same helper `runPipeline` calls, on
 purpose, so the two paths cannot drift (#1669) — so both ship `fstStreetContextPositiveScale = 0`
 identically. Turning the gazetteer prior on does not re-open the morphology question.
@@ -85,5 +85,5 @@ The change is now visible to the gauntlet and to the parity corpus. It remains i
 bounded by those two batteries. Closing that is the remainder of #1497.
 
 Five shipped overlays still carry no FST at all (`es-es` and `it-it` were built 2026-08-16 but are
-staged, not promoted; `en-au`, `en-in`, `en-nz` have none), so the prior is inert for them and the
+staged rather than promoted; `en-au`, `en-in`, `en-nz` have none), so the prior is inert for them and the
 gauntlet now says so out loud per locale. See #1705.

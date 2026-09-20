@@ -2,26 +2,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Coverage reconciliation (#621) — THE PRODUCT OUTPUT: what replaces inspecting the map by eye.
+ *   Coverage reconciliation (#621) — the product output: what replaces inspecting the map by eye.
  *
- *   Over the entities resolved across sources (#618), classify each by which KIND of source its
+ *   Over the entities resolved across sources (#618), classify each by which kind of source its
  *   records come from:
  *
- *   - **eligibility** sources — entities that exist as providers / facilities: NPPES org NPIs, TX HHSC
+ *   - **eligibility** sources — entities that exist as providers / facilities: NPPES org NPIs, TX hhsc
  *       nursing facilities.
  *   - **funding** source — entities enrolled in a funding program: FCC Rural Health Care filings.
  *
  *   Three buckets fall out:
  *
- *   - **enrolled** — resolves to BOTH an eligibility and a funding record.
- *   - **eligible, not enrolled** — an eligibility record with NO funding record resolving to it (the
- *       ANTI-JOIN: the set you currently find by eye).
- *   - **funded, not in the eligibility set** — a funding record with no eligibility record resolving to
+ *   - **enrolled** — resolves to both an eligibility and a funding record.
+ *   - **eligible rather than enrolled** — an eligibility record with no funding record resolving to it (the
+ *       anti-join: the set you currently find by eye).
+ *   - **funded rather than in the eligibility set** — a funding record with no eligibility record resolving to
  *       it.
  *
  *   Output: GeoJSON (drops on the same map) + a table, each entity tagged with its bucket + source
- *   memberships. We produce the reconciled join; what a gap MEANS — and whether it's real or a
- *   sampling artifact — is the consumer's call, not ours. This is strictly a set-membership
+ *   memberships. We produce the reconciled join. what a gap means — and whether it's real or a
+ *   sampling artifact — is the consumer's call rather than ours. This is strictly a set-membership
  *   reconciliation, never an allegation.
  *
  *   Run: `mailwoman registry scorer-eval coverage-reconciliation [--cap 2000] [--wof <admin.db>]
@@ -149,7 +149,7 @@ export async function coverageReconciliation(
 	report?.(`    ${records.length} records; geocoded ${geo}/${total} (${((100 * geo) / total).toFixed(1)}%)`)
 
 	report?.("[D] resolving + reconciling…")
-	// learnedScorer:false — reconciliation joins eligibility ↔ funding ACROSS datasets (recall-oriented):
+	// learnedScorer:false — reconciliation joins eligibility ↔ funding across datasets (recall-oriented):
 	// the same facility under different operational names is the signal we want, which the dedup-calibrated
 	// GBT default rejects (measured: "enrolled" overlap 22→6). Use the FS baseline for this cross-dataset join.
 	const { entities } = resolveEntities(records, { trainEM: true, collapseSpatial: true, learnedScorer: false })

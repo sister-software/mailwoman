@@ -16,20 +16,18 @@
  *   whatever `--arm` is called — and the receipt records which of the two actually happened, because a
  *   route dropped on the way in and a route that changed nothing produce the same numbers.
  *
- *   Report-only by design: the exit code is non-zero only when the HARNESS broke — a moved ruler, an
- *   unresolved control row, a missing database. A recorded STOP-REDESIGN is a result, not a failure.
+ *   Report-only by design: the exit code is non-zero only when the harness broke — a moved ruler, an
+ *   unresolved control row, a missing database. A recorded stop-redesign is a result rather than a failure.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
-import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "Pre-registered geographic-model semantic-utility probe (#1928)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "semantic-utility-probe",
@@ -51,53 +49,32 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	locale: string
-	weightsCache?: string
-	db?: string
-	resolveDB?: string
-	candidateDB?: string
-	arm: string
-	semanticObservation: boolean
-	out?: string
-	json: boolean
-}
+const EvalSemanticUtilityProbe = harnessCommand(
+	spec,
+	async (options) => {
+		const { printProbeReceipt, runSemanticUtilityProbe } = await import("#eval-harness/semantic-utility/run")
 
-const EvalSemanticUtilityProbe: ParsedCommandComponent<Options> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { printProbeReceipt, runSemanticUtilityProbe } = await import("#eval-harness/semantic-utility/run")
+		const receipt = await runSemanticUtilityProbe({
+			locale: options.locale,
+			weightsCacheRoot: options.weightsCache,
+			db: options.db,
+			resolveDB: options.resolveDB,
+			candidateDB: options.candidateDB,
+			arm: options.arm,
+			semanticObservation: options.semanticObservation,
+		})
 
-			const receipt = await runSemanticUtilityProbe({
-				locale: options.locale,
-				weightsCacheRoot: options.weightsCache,
-				db: options.db,
-				resolveDB: options.resolveDB,
-				candidateDB: options.candidateDB,
-				arm: options.arm,
-				semanticObservation: options.semanticObservation,
-			})
+		if (options.out) {
+			await writeLocalJSONFile(receipt, options.out)
+		}
 
-			if (options.out) {
-				await writeLocalJSONFile(receipt, options.out)
-			}
+		if (!options.json) {
+			printProbeReceipt(receipt)
+		}
 
-			if (!options.json) {
-				printProbeReceipt(receipt)
-			}
-
-			return { receipt }
-		},
-		() => 0
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	if (options.json && state.status === "done") {
-		return <Text>{prettyJSON(state.result.receipt)}</Text>
-	}
-
-	return null
-}
+		return { receipt }
+	},
+	{ exitCode: () => 0, json: ({ receipt }, options) => (options.json ? receipt : undefined) }
+)
 
 export default EvalSemanticUtilityProbe

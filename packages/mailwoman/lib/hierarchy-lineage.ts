@@ -4,36 +4,36 @@
 /**
  *   #1731 — per-node lineage provenance for the result `hierarchy`.
  *
- *   The `hierarchy` array is assembled from INDEPENDENTLY resolved parse nodes: the parsed region resolves on its own
+ *   The `hierarchy` array is assembled from independently resolved parse nodes: the parsed region resolves on its own
  *   and contributes its entry beside the locality winner, whether or not any place on earth has that containment chain.
- *   The recorded instance: `24 37 42nd St, Astoria, NY 11103` shipped a hierarchy of Astoria-the-OREGON-locality under
+ *   The recorded instance: `24 37 42nd St, Astoria, NY 11103` shipped a hierarchy of Astoria-the-oregon-locality under
  *   New-York-the-region — two correct-looking fragments composing a chain that exists nowhere. Silently mixing the
- *   winner's lineage with independently resolved fragments is the defect; this module makes the mixing explicit.
+ *   winner's lineage with independently resolved fragments is the defect. this module makes the mixing explicit.
  *
  *   Each entry gains a tri-state `in_winner_lineage`:
  *
- *   - `true` — the winner's own ancestors sidecar vouches for this entry (or the entry IS the winner).
- *   - `false` — the entry resolved independently to a place OUTSIDE the winner's containment chain: the chimera
- *     fragment, and the statement the #1722 account layer reads as "parsed region resolved independently to X; winner
+ *   - `true` — the winner's own ancestors sidecar vouches for this entry (or the entry is the winner).
+ *   - `false` — the entry resolved independently to a place outside the winner's containment chain: the chimera
+ *     fragment, and the statement the #1722 account layer reads as "parsed region resolved independently to X. winner
  *     sits in Y".
- *   - ABSENT — no sidecar to ask (the backend/artifact carries no `ancestors()`), or the entry has no place identity.
+ *   - absent — no sidecar to ask (the backend/artifact carries no `ancestors()`), or the entry has no place identity.
  *     Absence is "unverifiable", never "false" (the meaning-of-zero rule).
  *
  *   The winner-chain-AS-hierarchy representation (the issue's other sanctioned close) belongs to the #1717 stage-2
- *   containment re-rank, where the winner's chain becomes the natural assembly; until then the shipped shape keeps its
+ *   containment re-rank, where the winner's chain becomes the natural assembly. until then the shipped shape keeps its
  *   parse-anchored entries and states each one's standing.
  */
 
 /**
- * One link of the winner's stamped lineage — the id-bearing slice of `@mailwoman/core`'s `Ancestor` (declared locally
- * so this module stays decoder/resolver-import-free, the `admin-coherence.ts` posture).
+ * One link of the winner's stamped lineage — the id-containing subset of `@mailwoman/core`'s `Ancestor` (declared
+ * locally so this module stays decoder/resolver-import-free, the `admin-coherence.ts` posture).
  */
 interface LineageAncestor {
 	id: number | string
 }
 
 /**
- * A resolved-tree node slice the assembly reads — structurally satisfied by the decorated `AddressNode`.
+ * The subset of a resolved-tree node the assembly reads — structurally satisfied by the decorated `AddressNode`.
  */
 export interface HierarchySourceNode {
 	tag: string
@@ -72,10 +72,10 @@ const HIERARCHY_TAGS = [
 ]
 
 /**
- * The MOST-SPECIFIC resolved admin node — the lineage anchor for tiers without an admin-ladder pick (#1731 follow-up).
+ * The most-specific resolved admin node — the lineage anchor for tiers without an admin-ladder pick (#1731 follow-up).
  *
  * The first live `mwdev_diagnose` run caught the defect this fixes: on an address-point result the fallback anchor was
- * the FIRST resolved admin node in tree order — often the REGION — and an ancestor chain never contains its own
+ * the first resolved admin node in tree order — often the region — and an ancestor chain never contains its own
  * descendants, so `1600 Pennsylvania Ave…` graded its correctly-resolved `Washington` locality `in_winner_lineage:
  * false`. Anchoring at the deepest resolved entry grades ancestors (which its chain does contain) and can never
  * false-flag a descendant.
@@ -110,7 +110,7 @@ export function assembleHierarchy(
 			tag: n.tag,
 			value: n.value.trim(),
 			// The resolver stamps the gazetteer's canonical name (proper casing) on `resolver_name`; fall back to the raw
-			// parsed span when a node resolved without one. #1014: consumers should DISPLAY this, not `value`.
+			// parsed span when a node resolved without one. #1014: consumers should display this rather than `value`.
 			name: (n.metadata?.["resolver_name"] as string | undefined)?.trim() || n.value.trim(),
 			...(n.lat != null ? { lat: n.lat, lon: n.lon! } : {}),
 			...(n.placeID ? { placeID: n.placeID } : {}),
@@ -146,7 +146,7 @@ export interface LineageAnchor {
  * Annotate `entries` in place with `in_winner_lineage` against `anchor`'s stamped ancestor chain.
  *
  * Grading is by place identity (`wof:<id>`), never by name — a name match across instances is exactly the confusion the
- * field exists to expose. Without a sidecar only the anchor's own entry can be vouched for; every other entry stays
+ * field exists to expose. Without a sidecar only the anchor's own entry can be vouched for. every other entry stays
  * ungraded rather than guessed.
  */
 export function annotateHierarchyLineage(
@@ -169,7 +169,7 @@ export function annotateHierarchyLineage(
 		if (lineage.has(entry.placeID)) {
 			entry.in_winner_lineage = true
 		} else if (ancestors !== undefined) {
-			// Only a PRESENT sidecar can testify to absence — without one, "not in the set" is ignorance.
+			// Only a present sidecar can testify to absence — without one, "not in the set" is ignorance.
 			entry.in_winner_lineage = false
 		}
 	}

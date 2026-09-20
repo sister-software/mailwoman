@@ -27,7 +27,7 @@ from mailwoman_train.features.gazetteer_anchor import GazetteerLexicon
 from mailwoman_train.tokenizer.encode import encode_row
 from mailwoman_train.types import PieceSpan
 
-#: Committed beside this file, captured from the code as it stood BEFORE a split.
+#: Committed beside this file, captured from the code as it stood before a split.
 #:
 #: Regenerate with: uv run python -m tests.mailwoman_train.tokenizer.test_encode_row_channels
 REFERENCE = Path(__file__).parent / "encode-row-channels-reference.json"

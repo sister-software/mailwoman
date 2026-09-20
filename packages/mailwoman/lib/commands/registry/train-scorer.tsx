@@ -5,7 +5,7 @@
  *   `mailwoman registry train-scorer <variant>` — train + emit a committed learned-scorer model:
  *   `gbt` (the production dedup GBT, #603), `cross-gbt` (the NPI-anchored cross-source link scorer,
  *   #655 option 2), or `org-cross-gbt` (the CCN-anchored org-level cross-source scorer). Needs the
- *   record-matcher source files, weights, and WOF/database data locally — operator-run, not CI.
+ *   record-matcher source files, weights, and WOF/database data locally — operator-run rather than CI.
  */
 
 import { Text } from "ink"
@@ -13,7 +13,8 @@ import { Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
+	type OptionsOf,
 	reportToStderr,
 	useCommandTask,
 } from "#cli-kit"
@@ -21,7 +22,7 @@ import {
 const variants = ["gbt", "cross-gbt", "org-cross-gbt"] as const
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "train-scorer",
@@ -42,19 +43,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	sources?: string
-	state?: string
-	npis?: number
-	cap?: number
-	cost?: number
-	precisionBar?: number
-	out?: string
-	locale: string
-	date?: string
-	wof?: string
-	dataRoot?: string
-}
+type Options = OptionsOf<typeof spec>
 
 type Variant = (typeof variants)[number]
 
@@ -95,7 +84,7 @@ async function runVariant(variant: Variant, options: Options): Promise<{ out: st
 	}
 }
 
-const RegistryTrainScorer: ParsedCommandComponent<Options, [Variant]> = ({ options, args }) => {
+const RegistryTrainScorer: CommandComponent<typeof spec, [Variant]> = ({ options, args }) => {
 	const state = useCommandTask(() => runVariant(args[0], options))
 
 	if (state.status !== "done") return <CommandTaskResult state={state} />

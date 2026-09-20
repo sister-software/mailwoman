@@ -27,7 +27,7 @@ the homograph probe until that was caught.)
 | Check                                       | v263 (6.2.0)  | v264          | verdict                              |
 | ------------------------------------------- | ------------- | ------------- | ------------------------------------ |
 | **country-homograph F1** (real, n=54)       | 82.6          | **85.1**      | ✓ +2.5pp — recovers a homograph miss |
-| **golden WOF-admin country recall**         | 200/224=89.3% | 204/224=91.1% | ✓ +1.8pp — the win holds AND grows   |
+| **golden WOF-admin country recall**         | 200/224=89.3% | 204/224=91.1% | ✓ +1.8pp — recall improves           |
 | **real-postal country recall** (falsifier)  | 3/4           | 3/4           | ✓ held                               |
 | **hallucination** (300 real no-country)     | 1%            | 1%            | ✓ held                               |
 | **held-out US coordinate** (300 FDIC, ≤5km) | 279           | 269 (z −0.14) | ✓ PASS                               |
@@ -36,7 +36,7 @@ the homograph probe until that was caught.)
 
 Softening the guard recovered country recall on **both** distributions at once: the homograph test (its
 target) and the WOF-admin hierarchy (a bonus). The v263 hard guard was
-over-suppressing country broadly, not only on true homographs; the `country_ambiguous` bit fires on any
+over-suppressing country broadly rather than only on true homographs; the `country_ambiguous` bit fires on any
 flagged surface and v263 trusted it too little everywhere. At scale 0.5 the model trusts it more, recovers
 recall, and precision holds (falsifier hallucination unchanged) because the softer bit is still an
 informative false-positive signal, just not a near-veto.
@@ -56,7 +56,7 @@ Both scales beat v263 on every axis. The split: **0.25 maximizes the narrow homo
 synthetic), **0.5 maximizes the broad WOF-admin country** (n=224, the #1104 target) **and aggregate**
 (n=4255), by ~1 row each. Precision (0 false-positives) and hallucination (1%) held at every scale — 0.25
 did not over-soften. **Decision (operator, 2026-07-15): promote v264 (0.5)** — the balanced default,
-strongest on the larger-sample metrics; the homograph edge of 0.25 is on a small synthetic slice. 0.25
+strongest on the larger-sample metrics; the homograph edge of 0.25 is on a small synthetic subset. 0.25
 stays a graded candidate should the homograph lens ever be weighted higher.
 
 ## Reproduce

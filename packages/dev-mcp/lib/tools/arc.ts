@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `mwdev_arc` tool definition. The protocol lives in `../arc.ts`; this file is the CONTRACT, and the description
+ *   The `mwdev_arc` tool definition. The protocol lives in `../arc.ts`; this file is the interface, and the description
  *   is the required half — it is what stops the next agent reaching for a bare two-arm compare.
  */
 

@@ -1,7 +1,7 @@
 """The two measuring passes: what the register holds, and what the permits align to.
 
 Neither draws from the RNG and neither writes a row. Pass 1 reads the register to count eligible
-rows per 시도 and to BUILD THE KEY INDEX; pass 2 reads the permits, which can only be aligned once
+rows per 시도 and to BUILD THE KEY INDEX. pass 2 reads the permits, which can only be aligned once
 that index exists, and averages their coordinates per 시군구. Everything the selecting half needs
 from the sources comes back in the two records below.
 
@@ -97,7 +97,7 @@ def survey_register(juso_zip: Path, args: argparse.Namespace) -> RegisterSurvey:
 def survey_permits(permit_dir: Path, args: argparse.Namespace, index: KeyIndex) -> PermitSurvey:
     """Pass 2: measure alignment per form and per category, and average each 시군구's permit points.
 
-    The census is written to the build report BEFORE any row is selected, so the alignment rate is a
+    The census is written to the build report before any row is selected, so the alignment rate is a
     measurement of the source rather than of what survived selection.
     """
     survey = PermitSurvey()

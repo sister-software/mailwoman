@@ -29,14 +29,14 @@ a runtime problem wearing a docs costume.
 
 ## Decisions taken
 
-**Earth is a product, not a demo.** It ships at `earth.mailwoman.ai` beside `moon.mailwoman.ai` and
+**Earth is a product rather than a demo.** It ships at `earth.mailwoman.ai` beside `moon.mailwoman.ai` and
 `mars.mailwoman.ai`. Every identifier that says "demo" is renamed at the moment it moves, to a name
 that says what it is. "Fake runtime" stays as the test-fixture term in stories and tests.
 
 **The app is a private workspace under `packages/`.** `packages/earth`, `@mailwoman/earth`,
 `private: true`, in `SANCTIONED_RELEASE_ABSENCES` with the reason "private Earth map app — Cloudflare
 infrastructure, never publishes". Every workspace lives under `packages/` except `docs/`, and an app is
-a workspace with a `wrangler.toml`, not a new directory root.
+a workspace with a `wrangler.toml` rather than a new directory root.
 
 **The runtime moves to its owners.** No new runtime package. The table below is the move map.
 
@@ -168,12 +168,12 @@ Renames in `@mailwoman/react/map`, applied when `_runtime.ts` lands and the pack
 touched: `GeocoderDemo` to `Geocoder`, `DemoMap` to `MapCanvas`, `DemoControls` to `GeocoderControls`,
 `useDemoGeocode` to `useGeocode`, `DemoMapProps` and siblings accordingly, `DemoRuntime` to
 `GeocoderRuntime`, `DemoPanels` to `GeocoderPanels`. Subpath exports (`./map/DemoMap`,
-`./map/GeocoderDemo`, `./runtime/useDemoRuntime`) are renamed, not aliased.
+`./map/GeocoderDemo`, `./runtime/useDemoRuntime`) are renamed rather than aliased.
 
 ### Docs after the move
 
 - `docs/package.json` loses every dependency `knip` reports unused once the page and its runtime leave;
-  the list is measured at that point, not predicted here. If an explainer needs one of the removed
+  the list is measured at that point rather than predicted here. If an explainer needs one of the removed
   packages, that explainer moves to the Earth app under `/debug`; a docs page links to it.
 - `/demo`, `/debug` and `/trace` become redirects to `earth.mailwoman.ai` with the same path and query,
   through `@docusaurus/plugin-client-redirects` (not yet a docs dependency) or a static page with a

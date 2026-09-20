@@ -8,19 +8,19 @@
  *   as running it the first time, and on a 420-row panel with an external arm it also costs the external service 420
  *   requests it has already answered. A stored run makes the second comparison free.
  *
- *   **It is a CACHE, not a record.** `evals/scores-by-version.json` and `docs/records/evals/` are the record, written by
+ *   **It is a cache rather than a record.** `evals/scores-by-version.json` and `docs/records/evals/` are the record, written by
  *   humans and by `eval ledger-append`. Nothing here is authoritative, nothing here is committed, and a pruned run is
  *   not a lost result — it is a result that has to be re-measured, which is the correct cost for something nobody wrote
  *   down. Storing it under the data root rather than the repo is what keeps that distinction physical.
  *
- *   RETENTION, which spec §9.8 left open. Two rules, both cheap to reason about:
+ *   retention, which spec §9.8 left open. Two rules, both cheap to reason about:
  *
  *   1. **Age.** Runs older than {@link RETENTION_DAYS} are pruned. A stored run is only meaningful against the tree that
  *      produced it, and after a fortnight of commits it is describing a system that no longer exists.
  *   2. **Count.** At most {@link RETENTION_MAX_RUNS} are kept, newest first, regardless of age. This is the backstop for
  *      a busy day — the age rule alone permits an unbounded number of runs inside the window.
  *
- *   A run whose `tree_fingerprint` no longer matches the working tree is NOT pruned automatically. It is still evidence
+ *   A run whose `tree_fingerprint` no longer matches the working tree is not pruned automatically. It is still evidence
  *   about that tree, and deleting it silently would be worse than keeping it: `{kind:"recorded"}` refuses to compare
  *   across fingerprints anyway, and says which two it saw.
  */
@@ -53,7 +53,7 @@ export const RETENTION_MAX_RUNS = 200
 /**
  * What one arm answered for one row, kept in a shape a later run can replay without re-deriving it.
  *
- * Deliberately the SAME shape a live arm produces (`ExternalAnswer`), so a recorded arm and a live one are
+ * Deliberately the same shape a live arm produces (`ExternalAnswer`), so a recorded arm and a live one are
  * indistinguishable downstream. A replay that had its own row type would need its own grading path, and a second
  * grading path is how the two stop agreeing.
  */
@@ -70,9 +70,9 @@ export interface RecordedAnswer {
 /**
  * One stored run.
  *
- * `payload` is whatever the producing tool returned, opaque here — this module owns storage and retention, not the
- * shape of a result. `answers` is the one exception, and it is explicit rather than dug out of the payload: it is the
- * replay index `{kind:"recorded"}` reads, and a store that had to know a result's internals to find it would break
+ * `payload` is whatever the producing tool returned, opaque here — this module owns storage and retention rather than
+ * the shape of a result. `answers` is the one exception, and it is explicit rather than dug out of the payload: it is
+ * the replay index `{kind:"recorded"}` reads, and a store that had to know a result's internals to find it would break
  * every time a result grew a field.
  */
 export interface StoredRun {
@@ -130,7 +130,7 @@ export async function putRun(run: StoredRun, dir: PathBuilderLike = RUN_STORE_DI
 /**
  * Persist a run and apply retention, or say why it could not be done.
  *
- * A failure here must not fail the measurement that produced it. The store is a cache; the queries have already been
+ * A failure here must not fail the measurement that produced it. The store is a cache. the queries have already been
  * issued, and for a billed arm already paid for, so throwing away a completed comparison because a disk was full would
  * cost more than the cache is worth. The caller carries the returned sentence into its warnings, so the loss is
  * reported rather than discovered later as a run_id that "was pruned".
@@ -164,7 +164,7 @@ export async function getRun(runID: string, dir: PathBuilderLike = RUN_STORE_DIR
 /**
  * The replay index for one arm of a stored run, keyed by row id.
  *
- * @throws When that arm was not recorded. Naming what WAS recorded is the useful half of the error: the common mistake
+ * @throws When that arm was not recorded. Naming what was recorded is the useful half of the error: the common mistake
  *   is asking for `mailwoman` on a run whose two arms were `mailwoman` and `photon` under different labels, and a bare
  *   "not found" sends the caller looking for the wrong thing.
  */
@@ -206,7 +206,7 @@ export async function listRuns(
 	dir: PathBuilderLike = RUN_STORE_DIR,
 	currentFingerprint?: string
 ): Promise<RunSummary[]> {
-	return Globerator.files("json", { cwd: dir, absolute: false, throwIfDirectoryMissing: false })
+	return Globerator.files("json", { cwd: dir, absolute: false, recursive: false, throwIfDirectoryMissing: false })
 		.map((file) => readStoredRunFile(dir, file))
 		.filter(isPresent)
 		.map(({ run, bytes, file }): RunSummary => ({
@@ -250,7 +250,7 @@ export async function pruneRuns(
 	for (const entry of all) {
 		const created = Date.parse(entry.created_at)
 
-		// An unparseable timestamp is treated as OLD. A run that cannot say when it happened cannot be trusted to
+		// An unparseable timestamp is treated as old. A run that cannot say when it happened cannot be trusted to
 		// describe a current tree, and keeping it forever is the worse failure.
 		if (!Number.isFinite(created) || created < cutoff) {
 			byAge.push(entry.run_id)

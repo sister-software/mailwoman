@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Composed test for the WHOLE geocoder over a FAKE runtime: render `<Geocoder>`, submit a query, and
- *   assert the geocoder responds — the result panel fills in (HARD: it's plain DOM in the control panel,
- *   independent of WebGL) and the map drops a resolved-place marker (BEST-EFFORT: react-map-gl mounts the
+ *   Composed test for the whole geocoder over a fake runtime: render `<Geocoder>`, submit a query, and
+ *   assert the geocoder responds — the result panel fills in (hard: it's plain DOM in the control panel,
+ *   independent of WebGL) and the map drops a resolved-place marker (best-effort: react-map-gl mounts the
  *   `<Marker>` only once the map instance exists, which needs SwiftShader WebGL — its absence means no
- *   software GL in this Chromium, not a component fault, exactly like `MapCanvas.test.tsx`). No network, no
+ *   software GL in this Chromium rather than a component fault, exactly like `MapCanvas.test.tsx`). No network, no
  *   ONNX, no gazetteer, no tiles.
  */
 
@@ -19,7 +19,7 @@ import { userEvent } from "vitest/browser"
 import { renderComponent } from "../../render.tsx"
 
 /**
- * Poll `get` inside act() until truthy or timeout; never throws (returns null on timeout).
+ * Poll `get` inside act() until truthy or timeout. never throws (returns null on timeout).
  */
 async function settle<T>(get: () => T | null, timeout = 8000): Promise<T | null> {
 	const start = Date.now()
@@ -52,7 +52,7 @@ test("submit drives the result panel + a map marker over the fake runtime", asyn
 		/>
 	)
 
-	// ClientOnly mounts asynchronously; wait for the reused QueryForm input.
+	// ClientOnly mounts asynchronously. wait for the reused QueryForm input.
 	await vi.waitFor(() => expect(container.querySelector("#mw-pipeline-input")).toBeTruthy())
 
 	// The pill carries no submit button, the way the reference map apps carry none: a search field submits on Enter,
@@ -60,13 +60,13 @@ test("submit drives the result panel + a map marker over the fake runtime", asyn
 	await userEvent.click(container.querySelector("#mw-pipeline-input") as HTMLInputElement)
 	await userEvent.keyboard("{Enter}")
 
-	// HARD: the result panel is plain DOM in the floating control panel — no WebGL needed.
+	// hard: the result panel is plain DOM in the floating control panel — no WebGL needed.
 	await vi.waitFor(() => expect(container.textContent).toContain("Parsed components"))
 	expect(container.textContent).toContain("house_number")
 	expect(container.textContent).toContain("Resolved place")
 	expect(container.textContent).toContain("New York")
 
-	// BEST-EFFORT: the resolved-place marker mounts as a react-map-gl child once the map exists (SwiftShader GL).
+	// best-effort: the resolved-place marker mounts as a react-map-gl child once the map exists (SwiftShader GL).
 	const marker = await settle(() => container.querySelector(".maplibregl-marker"))
 
 	if (marker) {
@@ -79,9 +79,10 @@ test("mounts the map container + floating control panel", async () => {
 
 	await vi.waitFor(() => expect(container.querySelector(".mw-geocoder-demo")).toBeTruthy())
 	// The chrome + the map wrapper both render synchronously (map canvas is best-effort, tested in MapCanvas). The
-	// chrome is the floating column that replaced the full-height control panel: a search pill, chips beneath it, and
-	// a control capsule down the right edge.
-	expect(container.querySelector(".mw-map-chrome--top")).not.toBeNull()
+	// chrome is one panel — a left column on a desktop, a bottom drawer on a phone — holding the search, the examples
+	// and the result, plus a control capsule down the right edge.
+	expect(container.querySelector(".mw-map-panel")).not.toBeNull()
+	expect(container.querySelector(".mw-map-panel__header")).not.toBeNull()
 	expect(container.querySelector(".mw-map-searchbar")).not.toBeNull()
 	expect(container.querySelector(".mw-map-control-stack")).not.toBeNull()
 	expect(container.querySelector(".mw-geocoder-demo__map .mw-demo-map")).not.toBeNull()

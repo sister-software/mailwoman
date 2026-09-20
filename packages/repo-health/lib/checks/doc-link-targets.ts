@@ -7,12 +7,12 @@
  *   never a declaration anywhere in this repository, only a `@see {@linkcode …}` target, and it was written twice
  *   before anyone noticed there was nothing to find.
  *
- *   WHAT IT CHECKS. Only a bare identifier target — `{@link foo}`, `{@linkcode Foo.bar}` — against the set of names
+ *   what IT checks. Only a bare identifier target — `{@link foo}`, `{@linkcode Foo.bar}` — against the set of names
  *   the tree declares or imports anywhere. A URL target, a path, and a `{@link foo | text}` label are all left alone.
  *   The name set is repository-wide rather than per-file on purpose: a link to a name declared in another package is
  *   correct and common, so a per-file rule would report thousands of them.
  *
- *   THAT WIDTH IS THE LIMIT, and it is stated rather than hidden: a tag naming a symbol that exists SOMEWHERE but not
+ *   that width is the limit, and it is stated rather than hidden: a tag naming a symbol that exists somewhere but not
  *   where the reader can reach it still passes. What this refuses is the name that exists nowhere at all, which is the
  *   case that sends someone off to write it.
  */
@@ -103,7 +103,7 @@ export interface DanglingLink {
 }
 
 /**
- * This module's own repo-relative path, excluded from the sweep it performs: the header has to SPELL the tag shapes it
+ * This module's own repo-relative path, excluded from the sweep it performs: the header has to spell the tag shapes it
  * looks for, and `{@link foo}` in an explanation is an example rather than a promise. `debt.ts` excludes itself from
  * its own vocabulary count for the same reason.
  */

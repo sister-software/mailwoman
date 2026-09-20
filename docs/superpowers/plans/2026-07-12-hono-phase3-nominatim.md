@@ -1,22 +1,22 @@
 # Hono API surface, Phase 3: nominatim migration — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Migrate `@mailwoman/nominatim` from express to Hono + `@hono/zod-openapi` with the OpenAPI document emitted from the route table, retiring `nominatim/openapi.yaml` (the last handwritten drop-in spec) through the parity check.
 
-**Architecture:** The photon pattern (phase 2, merged as #1082), applied to nominatim's four GET endpoints. Same `legacyQuery` adapter (express-simple `string|string[]` query shape, null-prototype), same tolerant-union query schemas with doc-exact `.openapi()` overrides, same handlers-own-every-wire-decision mandate. The merged `photon/{engine,projection,schema,routes,app}.ts` files are the living exemplar — follow them structurally; this plan supplies the nominatim-specific code. No new api-kit atoms: nominatim's geojson envelope (`toFeatureCollection`) is its own vendor shape (polygon-capable `geometry: unknown`, result-field `properties`), not the api-kit Point envelope; the spec's `LonLat` atom stays deferred with no consumer (record in the PR).
+**Architecture:** The photon pattern (phase 2, merged as #1082), applied to nominatim's four GET endpoints. Same `legacyQuery` adapter (express-simple `string|string[]` query shape, null-prototype), same tolerant-union query schemas with doc-exact `.openapi()` overrides, same handlers-own-every-wire-decision mandate. The merged `photon/{engine,projection,schema,routes,app}.ts` files are the living exemplar — follow them structurally; this plan supplies the nominatim-specific code. No new api-kit atoms: nominatim's geojson envelope (`toFeatureCollection`) is its own vendor shape (polygon-capable `geometry: unknown`, result-field `properties`) rather than the api-kit Point envelope; the spec's `LonLat` atom stays deferred with no consumer (record in the PR).
 
 **Tech Stack:** hono `^4.12.29`, `@hono/zod-openapi` `^1.4.0`, `@mailwoman/api-kit` (`serveNode`, `attachOpenAPIDocs`, `emitOpenAPIDocuments`), zod `^4.4.3`, vitest.
 
 ## Global Constraints
 
-- **Vendor wire shapes are immutable.** Error envelope is `{error: string}` (libpostal-style, NOT photon's FeatureCollection+message). Exact bodies: 501s carry issue refs verbatim — `{"error":"search not implemented (see #802)"}`, `{"error":"reverse not implemented (see #803)"}`, `{"error":"lookup not implemented (see #805)"}`; 400s (reverse only): `{"error":"lat and lon are required"}`, `{"error":"lat must be in [-90, 90] and lon in [-180, 180]"}`; 500: `{"error":"internal error"}`. CORS methods `GET, OPTIONS`.
+- **Vendor wire shapes are immutable.** Error envelope is `{error: string}` (libpostal-style rather than photon's FeatureCollection+message). Exact bodies: 501s carry issue refs verbatim — `{"error":"search not implemented (see #802)"}`, `{"error":"reverse not implemented (see #803)"}`, `{"error":"lookup not implemented (see #805)"}`; 400s (reverse only): `{"error":"lat and lon are required"}`, `{"error":"lat must be in [-90, 90] and lon in [-180, 180]"}`; 500: `{"error":"internal error"}`. CORS methods `GET, OPTIONS`.
 - **`/status` special default:** engine method absent → 200 `{"status":0,"message":"OK"}` — NOT 501. The only endpoint with a non-501 absent-method answer.
-- **Format matrix:** `parseFormat` falls back to `"jsonv2"` for anything not in `{json, geojson, jsonld}`. `geojson` → `toFeatureCollection`; `jsonld` → schema.org projection on `/search` (array) and `/reverse` (single object or `null`); `/lookup` has NO jsonld branch (jsonld falls through to raw results — a legacy quirk to preserve); `/reverse` with a null engine result serializes `null` (json body `null`, 200).
+- **Format matrix:** `parseFormat` falls back to `"jsonv2"` for anything not in `{json, geojson, jsonld}`. `geojson` → `toFeatureCollection`; `jsonld` → schema.org projection on `/search` (array) and `/reverse` (single object or `null`); `/lookup` has no jsonld branch (jsonld falls through to raw results — a legacy quirk to preserve); `/reverse` with a null engine result serializes `null` (json body `null`, 200).
 - **`addressdetails` forcing:** `parseBool(q) || format === "jsonld"` on `/search` and `/reverse`; plain `parseBool` on `/lookup`.
-- **Param parsing verbatim:** `asString` (repeated param → array → undefined, silently treated as absent — pin it), `parseBool` (`"1"`/`"true"`), `countrycodes`/`osm_ids` comma-split, `limit` = `Number(x ?? 10) || 10` (DEFAULT 10, not photon's 15), `accept-language` kebab param. `/search` has NO required params — bare `/search` reaches the engine with `q: undefined` (engine returns what it returns; pin with a fixture). `NominatimSearchParams.viewbox` exists on the interface but was never parsed and is NOT in the yaml — leave unparsed/undeclared (photon's bbox precedent).
+- **Param parsing verbatim:** `asString` (repeated param → array → undefined, silently treated as absent — pin it), `parseBool` (`"1"`/`"true"`), `countrycodes`/`osm_ids` comma-split, `limit` = `Number(x ?? 10) || 10` (DEFAULT 10 rather than photon's 15), `accept-language` kebab param. `/search` has no required params — bare `/search` reaches the engine with `q: undefined` (engine returns what it returns; pin with a fixture). `NominatimSearchParams.viewbox` exists on the interface but was never parsed and is not in the yaml — leave unparsed/undeclared (photon's bbox precedent).
 - **Engine + formatter exports move verbatim** (public API): `NominatimFormat`, `NominatimAddressDetails`, `NominatimResult`, `NominatimSearchParams`, `NominatimReverseParams`, `NominatimLookupParams`, `NominatimStatus`, `NominatimEngine`, `NominatimFeatureCollection`, `toFeatureCollection`, `ResolvedAddress`, `MAILWOMAN_LICENCE`, `toNominatimResult`, `nominatimResultToSchemaOrg` (module-private `stableID`, `DEFAULT_LIMIT`, `parseFormat`, `parseBool`, `asString` move with their consumers). `createNominatimRouter`/`NominatimRouterOptions` deleted, no shim.
-- **Adjudication consistency** with phases 1–2 (ledger `.superpowers/sdd/progress.md`): repeated single-valued params are never-contract-tolerated (legacy: `asString(array)` → undefined → param absent — that IS the observable contract, pin it, no 400); the yaml uses `$ref`-shared `components.parameters` (limit/addressdetails/format/accept-language) — the parity test MUST dereference them (phase-2 lesson, resolver code included below).
+- **Adjudication consistency** with phases 1–2 (ledger `.superpowers/sdd/progress.md`): repeated single-valued params are never-interface-tolerated (legacy: `asString(array)` → undefined → param absent — that is the observable interface, pin it, no 400); the yaml uses `$ref`-shared `components.parameters` (limit/addressdetails/format/accept-language) — the parity test must dereference them (phase-2 lesson, resolver code included below).
 - `erasableSyntaxOnly`; `.ts` imports; acronym casing; both exports maps; lockfile deltas commit with their change; compile before `out/`; `yarn oxfmt` before commit; vitest takes one `--dir` per invocation; no raw `process.env`/argv.
 - No new workspace; registration checklist N/A; Task 6 runs `smoke-clean-install` as the receipt.
 - `nominatim/tsconfig.json` needs the phase-2 additions upfront: `"resolveJsonModule": true`, `"files": ["./package.json"]`, `../api-kit` reference.
@@ -32,14 +32,14 @@
 - Create: `nominatim/format.ts`
 - Create: `nominatim/schema.ts`
 - Modify: `nominatim/index.ts`, `nominatim/package.json`, `nominatim/tsconfig.json`
-- Test: `nominatim/index.test.ts` (existing 13 tests — stay green UNCHANGED)
+- Test: `nominatim/index.test.ts` (existing 13 tests — stay green unchanged)
 
 **Interfaces:**
 
 - Consumes: `z` from `@hono/zod-openapi`.
 - Produces:
-  - `nominatim/engine.ts` — moved VERBATIM from `index.ts`: `NominatimFormat`, `NominatimAddressDetails`, `NominatimResult`, `NominatimSearchParams`, `NominatimReverseParams`, `NominatimLookupParams`, `NominatimStatus`, `NominatimEngine`.
-  - `nominatim/format.ts` — moved VERBATIM: `NominatimFeatureCollection`, `toFeatureCollection`, `ResolvedAddress`, `MAILWOMAN_LICENCE`, `stableID` (private), `toNominatimResult`, `nominatimResultToSchemaOrg` (the `@mailwoman/annotations` import moves here).
+  - `nominatim/engine.ts` — moved verbatim from `index.ts`: `NominatimFormat`, `NominatimAddressDetails`, `NominatimResult`, `NominatimSearchParams`, `NominatimReverseParams`, `NominatimLookupParams`, `NominatimStatus`, `NominatimEngine`.
+  - `nominatim/format.ts` — moved verbatim: `NominatimFeatureCollection`, `toFeatureCollection`, `ResolvedAddress`, `MAILWOMAN_LICENCE`, `stableID` (private), `toNominatimResult`, `nominatimResultToSchemaOrg` (the `@mailwoman/annotations` import moves here).
   - `nominatim/schema.ts` — NEW (exact code in Step 4).
   - `index.ts` re-exports all three; express router keeps compiling (Task 2 deletes it).
 
@@ -58,7 +58,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Zod wire schemas for the Nominatim-compatible surface. Key names and envelopes are the vendor
- *   contract — immutable. Query schemas are validator-proof (string|string[] unions, all optional)
+ *   interface — immutable. Query schemas are validator-proof (string|string[] unions, all optional)
  *   with doc-exact `.openapi()` overrides; every wire decision lives in the handlers (see
  *   routes.ts's legacyQuery adapter, the photon-established pattern).
  */
@@ -242,7 +242,7 @@ git commit -m "refactor(nominatim): split engine, formatter, and zod wire schema
 - [ ] **Step 3: Port `nominatim/index.test.ts`** to `app.request()` (all 13 carry over) and ADD pinning tests (exact code):
 
 ```ts
-test("/status without an engine method answers 200 OK, not 501 (the one non-501 absent-method default)", async () => {
+test("/status without an engine method answers 200 OK rather than 501 (the one non-501 absent-method default)", async () => {
 	const app = createNominatimApp({})
 	const res = await app.request("/status")
 	expect(res.status).toBe(200)
@@ -504,7 +504,7 @@ Parity check adjudications: <real list>"
 
 - [ ] **Step 1:** Reconcile cli.ts against Task 2 Step 5 (report delta or "no delta" with evidence).
 - [ ] **Step 2:** README: swap express/`createNominatimRouter` snippets → `createNominatimApp` + `serveNode` (with `hostname` — phase-2 README lesson); document `GET /openapi.json`; curl examples byte-identical.
-- [ ] **Step 3:** Smoke (compile FIRST; kill ONLY the exact `$!` PID — production-incident rule; the hosted nominatim isn't a unit on this host but the rule is absolute):
+- [ ] **Step 3:** Smoke (compile first; kill only the exact `$!` PID — production-incident rule; the hosted nominatim isn't a unit on this host but the rule is absolute):
 
 ```bash
 yarn compile
@@ -535,7 +535,7 @@ Expected: results with `licence`/`display_name`/`annotations`; addressdetails ca
 - [ ] **Step 3:** `node scripts/smoke-clean-install.ts` — the publish-safety receipt.
 - [ ] **Step 4:** `yarn lint:oxlint`; `yarn oxfmt --check nominatim`.
 - [ ] **Step 5:** `grep -rn "express" nominatim --include="*.ts" --include="*.json" | grep -v out/` — no live hits.
-- [ ] **Step 6:** Docs: `docs/articles/api.mdx` — the "source of truth" passage and redocly example now have NO surviving checked-in yaml; rewrite that passage: all three drop-ins emit their documents at `GET /openapi.json`; drop the redocly-lint example or repoint it at an emitted document workflow (`curl …/openapi.json | npx @redocly/cli lint -`). Own commit: `docs: all drop-in specs are emitted at /openapi.json`.
+- [ ] **Step 6:** Docs: `docs/articles/api.mdx` — the "authoritative record" passage and redocly example now have no surviving checked-in yaml; rewrite that passage: all three drop-ins emit their documents at `GET /openapi.json`; drop the redocly-lint example or repoint it at an emitted document workflow (`curl …/openapi.json | npx @redocly/cli lint -`). Own commit: `docs: all drop-in specs are emitted at /openapi.json`.
 - [ ] **Step 7:** Push + PR:
 
 ```bash

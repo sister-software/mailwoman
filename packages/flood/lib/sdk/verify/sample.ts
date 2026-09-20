@@ -15,7 +15,7 @@ import type { FloodDatabase } from "#schema"
  * Draw a reproducible sample of points from the artifact: some inside polygons, some inside the footprint and outside
  * every polygon.
  *
- * BOTH KINDS ARE REQUIRED. A sample drawn only from inside polygons never exercises the designated-absence reading,
+ * Both kinds are required. A sample drawn only from inside polygons never exercises the designated-absence reading,
  * which is the reading this product's Zone-1-as-absence design turns on — and an artifact that answered `unknown`
  * everywhere except inside a polygon would pass a polygon-only sample. The stride discipline — keys chosen before any
  * geometry is read, deterministic rather than random — is `strideSampleInteriorPoints`'s.

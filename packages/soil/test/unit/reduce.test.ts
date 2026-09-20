@@ -54,7 +54,7 @@ describe("mapUnitProfile", () => {
 	it("puts a rated class 8 in the class shares, never in an absence share", () => {
 		const profile = mapUnitProfile({ no_mapping: 0 }, [component(100, "Series", "8")])
 
-		// Class 8 is a DETERMINATION — the survey looked and rated the land as precluding commercial plant production —
+		// Class 8 is a determination — the survey looked and rated the land as precluding commercial plant production —
 		// and 67,547 national components carry it. Folding it in with the absences is the reassuring wrong number.
 		expect(profile.classShares.get("8")).toBe(1)
 		expect(profile.unrated).toBe(0)
@@ -73,7 +73,7 @@ describe("mapUnitProfile", () => {
 		const profile = mapUnitProfile({ no_mapping: 0 }, [component(0, "Series", "2"), component(0, "Series", "3")])
 
 		// Nothing can be apportioned from an unweighted mixture. Answering with an empty distribution would drop the
-		// delineation's area out of every share and break the sum-to-one invariant silently.
+		// delineation's area out of every share and violate the sum-to-one relationship silently.
 		expect(profile.noData).toBe(1)
 		expect(profile.classShares.size).toBe(0)
 	})

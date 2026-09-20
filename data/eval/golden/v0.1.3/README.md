@@ -1,7 +1,7 @@
 # Golden eval set v0.1.3
 
 Hand-labeled ground truth for the Mailwoman neural classifier. **This is the
-contract for "what good looks like."** Eval scripts compare classifier output
+interface for "what good looks like."** Eval scripts compare classifier output
 to the components in each entry.
 
 ## What changed in v0.1.3 (2026-08-06)
@@ -9,14 +9,14 @@ to the components in each entry.
 **US street spans are labeled SPLIT.** The rest of this file is v0.1.2's, carried
 forward; read `MANIFEST.json`'s `convention` block for the authoritative statement,
 `REVIEW-DECK.md` for the rows that moved, and
-[SCHEMA.mdx](../../../../docs/engineering/reference/SCHEMA.mdx) for the contract.
+[SCHEMA.mdx](../../../../docs/engineering/reference/SCHEMA.mdx) for the interface.
 
-`6220 SE Salmon St` is four components, not two: `house_number` `6220`,
+`6220 SE Salmon St` is four components rather than two: `house_number` `6220`,
 `street_prefix` `SE`, `street` `Salmon`, `street_suffix` `St`. v0.1.2 folded the
 prefix and the type into `street`, which disagreed with the corpus that trains the
 model — and the eval scorer papered over the gap by gluing the model's spans back
 together before comparing. That cost a real verdict: the v9.0.0 candidate failed
-its promotion gate on `us.street` over the convention, not over its parse.
+its promotion check on `us.street` over the convention rather than over its parse.
 
 Produced from v0.1.2 by `mailwoman corpus golden-relabel`
 (`corpus/src/tools/golden-relabel-street.ts`), splitting on the USPS Pub-28 table
@@ -28,7 +28,7 @@ A scorer that folds `street_prefix`/`street`/`street_suffix` back together is no
 grading this answer key. `packages/mailwoman/lib/dev-tools/per-locale-f1.run.ts` reads the declaration in
 `MANIFEST.json` and scores split-convention rows unfolded.
 
-Numbers here are NOT comparable with v0.1.2 numbers. The gate spec that grades
+Numbers here are not comparable with v0.1.2 numbers. The evaluation spec that grades
 against this key is `mailwoman/eval-harness/specs/v9.0.0-base.json`.
 
 ## Files
@@ -121,12 +121,12 @@ the place-shaped prefix is venue.
 **`kryptonite/particle-honorific`** — apostrophe + St./Saint /
 Mt./Mount / Ft./Fort / directional-initial ambiguity. Same surface form
 plays different syntactic roles in venue vs street vs locality. E.g.
-"P'tit St. Denis Street Café" — venue's "St." is an honorific, not a
+"P'tit St. Denis Street Café" — venue's "St." is an honorific rather than a
 street_prefix.
 
 **`kryptonite/disambiguation`** — locality alone (or locality+region)
-that could resolve to many real places. Ground truth matches what was
-written, not what is most famous.
+that could resolve to a set of real places. Ground truth matches what was
+written rather than what is most famous.
 
 **`graceful/typo`** — single-char edits or transpositions on a clean
 address. "Pensylvania" → still recoverable; the model should produce
@@ -159,7 +159,7 @@ ideally do_ on each adversarial case — including when partial-parse +
 low-confidence-flag is the right answer rather than a full but wrong
 parse.
 
-## Why hand-labeled, not synthesized?
+## Why hand-labeled rather than synthesized?
 
 Phase 1 corpus rows are derived from public data sources (WOF, BAN, OSM, …)
 and carry adapter-level ground truth — but those sources have their own

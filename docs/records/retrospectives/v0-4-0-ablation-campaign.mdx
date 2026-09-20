@@ -23,7 +23,7 @@ The only intended differences from v0.3.0 were:
 - **§3** `model.class_weights: {O: 1.0, B-country: 2.0, ..., B-venue: 0.5, ...}` (was uniform).
 - **§4** Source weights rebalanced: `usgov-nad: 2.0 → 1.0`; `wof-admin: 1.0 → 2.0`; `wof-postalcode: 1.0 → 2.0`.
 
-§2 (longer training to step 5000+ floor) and §5 (JS-side Viterbi + model-card label loading) were process improvements, not loss-surface changes. §5 had shipped before training. §6 was "reuse existing corpus" — non-action.
+§2 (longer training to step 5000+ floor) and §5 (JS-side Viterbi + model-card label loading) were process improvements rather than loss-surface changes. §5 had shipped before training. §6 was "reuse existing corpus" — non-action.
 
 ## Run-by-run
 
@@ -43,7 +43,7 @@ Diverged step 1000. Same fingerprint. Step-750 checkpoint at macro_f1 0.37 prese
 
 `configs/v0_4_0-lr1.5e4.yaml`. By this point the bisect pattern was visible: 5e-4 → step 750, 3e-4 → step 1000. A pure-LR explanation predicted lr=1.5e-4 → step 1875 (linear) or ~step 2200 (proportional). It diverged at step 2000.
 
-A factor-3.3× LR drop bought a factor-2.7× step delay. Sub-linear — confirming that LR controls _when_ the divergence appears but isn't the root cause. The destabilizer is in the recipe, not the LR knob. Step-1250 checkpoint at macro_f1 0.39 preserved.
+A factor-3.3× LR drop bought a factor-2.7× step delay. Sub-linear — confirming that LR controls _when_ the divergence appears but isn't the root cause. The destabilizer is in the recipe rather than the LR knob. Step-1250 checkpoint at macro_f1 0.39 preserved.
 
 ### Runs 4 & 5 — ablations at lr=5e-4
 
@@ -94,7 +94,7 @@ Before deferring §1 and §3 we audited `model.py` and `crf.py` for implementati
 
 - `crf.py:155-164` — the `per_token` reduction is `nll.sum() / total_tokens.clamp(min=1)`. Mathematically what the docstring claims. No NaN-prone path; the `.clamp(min=1)` guards the empty-batch edge case.
 - `model.py:270-300` — class_weights enter via `nn.functional.cross_entropy(..., weight=class_weights)`. The PyTorch-standard path. No silent broadcast mismatch (`class_weights.shape == (num_labels,)` is asserted in the model constructor).
-- Dual-loss fusion: `loss = ce_loss + self.crf_loss_weight * crf_loss`. Equal-weight summing at `crf_loss_weight=1.0` with `per_token` reduction was the §1 hypothesis. The hypothesis was that per-token normalization brings CRF NLL to CE magnitude. Empirically, when §1 is active, training destabilizes — so either per-token CRF NLL is NOT actually comparable to per-token CE on this corpus, or the magnitude comparison is right but some other dynamic dominates.
+- Dual-loss fusion: `loss = ce_loss + self.crf_loss_weight * crf_loss`. Equal-weight summing at `crf_loss_weight=1.0` with `per_token` reduction was the §1 hypothesis. The hypothesis was that per-token normalization brings CRF NLL to CE magnitude. Empirically, when §1 is active, training destabilizes — so either per-token CRF NLL is not comparable to per-token CE on this corpus, or the magnitude comparison is right but some other dynamic dominates.
 
 No implementation bug found. The destabilization is a real recipe interaction.
 
@@ -112,7 +112,7 @@ After shipping, we ran a categorized per-tag FP/FN analysis on the shipped check
 | bio_slip     |    73 |    6% | `LE TRÉPORT, 76470` → `", 7647"`           |
 | other        |     6 |  0.5% | —                                          |
 
-**Empty-pred dominates**. §4's NAD downweight (2.0 → 1.0) removed the dominant source of "postcode comes first" patterns (NAD's 57M structured 911-grade rows + many FR mid-position patterns from auxiliary sources). The model now treats mid-position numeric tokens as house_number by default.
+**Empty-pred dominates**. §4's NAD downweight (2.0 → 1.0) removed the dominant source of "postcode comes first" patterns (NAD's 57M structured 911-grade rows + several FR mid-position patterns from auxiliary sources). The model now treats mid-position numeric tokens as house_number by default.
 
 ### Country FN (194 total)
 
@@ -124,13 +124,13 @@ After shipping, we ran a categorized per-tag FP/FN analysis on the shipped check
 France, Lozère, ՍԵՆՏ-ԱԼԲԱՆ-ՍՅՈՒՐ-ԼԻՄԱՆՅՈԼ              →  pred: "" (empty)
 ```
 
-This is v0.3.0's documented non-Latin-byte-fallback failure mode. The v0.4.0 weights did not regress this slice; the eval suite is counting v0.3.0's known failure modes against v0.4.0. After excluding adversarials, country FN drops 194 → ~16.
+This is v0.3.0's documented non-Latin-byte-fallback failure mode. The v0.4.0 weights did not regress this subset; the eval suite is counting v0.3.0's known failure modes against v0.4.0. After excluding adversarials, country FN drops 194 → ~16.
 
-**The country −0.07 F1 regression is mostly a golden-set adversarial-weighting artifact, not a real recipe regression.**
+**The country −0.07 F1 regression is mostly a golden-set adversarial-weighting artifact rather than a real recipe regression.**
 
 ## The decoder sidecar
 
-The bio_slip slice (6% of postcode FN) is a decoder bug, not a model bug. The model's BIO tag attribution is correct; the emitted span includes leading/trailing punctuation tokens. Fixed in `core/decoder/build-tree.ts` (commit `c72ab4c` on main):
+The bio_slip class (6% of postcode FN) is a decoder bug rather than a model bug. The model's BIO tag attribution is correct; the emitted span includes leading/trailing punctuation tokens. Fixed in `core/decoder/build-tree.ts` (commit `c72ab4c` on main):
 
 ```ts
 function trimBoundary(raw: string, start: number, end: number): { start: number; end: number } {
@@ -143,15 +143,15 @@ function trimBoundary(raw: string, start: number, end: number): { start: number;
 }
 ```
 
-Both `node.value` and `node.start`/`node.end` trim in sync so consumers slicing `raw[start:end]` get the same string as `node.value`. Spans that trim to empty (all-punctuation, pathological model output) are dropped. Word-internal punctuation (hyphens in `Sainte-Livrade-sur-Lot`, accents in `Montréal`) is preserved. 6 new boundary-trim tests pass; full repo suite (1592 tests under singleFork + 30s timeout) green.
+Both `node.value` and `node.start`/`node.end` trim in sync so consumers reading `raw[start:end]` get the same string as `node.value`. Spans that trim to empty (all-punctuation, pathological model output) are dropped. Word-internal punctuation (hyphens in `Sainte-Livrade-sur-Lot`, accents in `Montréal`) is preserved. 6 new boundary-trim tests pass; full repo suite (1592 tests under singleFork + 30s timeout) green.
 
 ## What deferred to v0.4.1
 
-§1 (per-token CRF norm) and §3 (class weights) both deferred. Both individually broke training in at least one tested configuration. The leading hypothesis at this iteration's boundary is that a high-variance adapter slice in `corpus-v0.3.0` produces gradient spikes the per-token-normalized CRF can't dampen — a `corpus-audit` + gradient-norm probe pass per source-id would surface a candidate.
+§1 (per-token CRF norm) and §3 (class weights) both deferred. Both individually broke training in at least one tested configuration. The leading hypothesis at this iteration's boundary is that a high-variance adapter source in `corpus-v0.3.0` produces gradient spikes the per-token-normalized CRF can't dampen — a `corpus-audit` + gradient-norm probe pass per source-id would surface a candidate.
 
 v0.4.1 thread proposals (drafted in [`PR i116 body`](https://github.com/sister-software/mailwoman/tree/issue-116-phase-2-x-v0-4-0)):
 
-- **Thread A** — source-weight tweak (NAD 1.0 → 1.5 partial restore) + synthesis pass over component-order permutations + case-norm eval. Targets the 65% empty_pred slice. 1-2 days.
+- **Thread A** — source-weight tweak (NAD 1.0 → 1.5 partial restore) + synthesis pass over component-order permutations + case-norm eval. Targets the 65% empty_pred class. 1-2 days.
 - **Thread B** — corpus-side gradient-norm probe per source-id. Find the high-variance adapter. 3-5 days.
 - **Thread C** — verdict-smoke framework redesign (constant-LR) + milder class_weights ratio. 1-2 days.
 
@@ -159,14 +159,14 @@ v0.4.1 thread proposals (drafted in [`PR i116 body`](https://github.com/sister-s
 
 Six items from the [TODO.md parallel-work list](https://github.com/sister-software/mailwoman/blob/main/TODO.mdx) shipped to `main` during the GPU-bound training windows (host-claude worked them in parallel):
 
-| Commit    | What                                                                                   |
-| --------- | -------------------------------------------------------------------------------------- |
-| `ceb2c1f` | `@mailwoman/locale-hint` workspace — Stage 2 of the runtime pipeline                   |
-| `58eee3b` | `mailwoman parse --candidates <N>` — Springfield-class disambiguation surface          |
-| `5566cd2` | `corpus-audit` tool — extract distribution × source_weights diagnostic                 |
-| `150c7db` | runtime-pipeline test hardening (AbortSignal, timing-budget, non-graceful failure)     |
-| `d94261b` | `mailwoman parse --benchmark <N>` — per-stage p50/p95/p99                              |
-| `c1f82ac` | `docs/articles/concepts/staged-pipeline-contract.md` — "how to plug in a custom stage" |
+| Commit    | What                                                                                    |
+| --------- | --------------------------------------------------------------------------------------- |
+| `ceb2c1f` | `@mailwoman/locale-hint` workspace — Stage 2 of the runtime pipeline                    |
+| `58eee3b` | `mailwoman parse --candidates <N>` — Springfield-class disambiguation surface           |
+| `5566cd2` | `corpus-audit` tool — extract distribution × source_weights diagnostic                  |
+| `150c7db` | runtime-pipeline test hardening (AbortSignal, timing-budget, non-graceful failure)      |
+| `d94261b` | `mailwoman parse --benchmark <N>` — per-stage p50/p95/p99                               |
+| `c1f82ac` | `docs/articles/concepts/staged-pipeline-interface.md` — "how to plug in a custom stage" |
 
 Plus the decoder sidecar (`c72ab4c`) and the PHASE_2 iteration-log updates (`6ddc170` / `d499288` / `09d0d9f` / `404cceb`).
 
@@ -186,7 +186,7 @@ Final eval, shipped checkpoint vs v0.3.0, golden v0.1.2:
 
 Macro F1 raw: 0.357 vs 0.293. Token confidence: 0.806 vs 0.857. Full-parse exact match: 0.082 vs 0.107.
 
-Issue #116's "≥2 of 4 axes improved" metric: only fine F1 cleanly improved (street +0.03, house_number +0.01). Coarse F1 is mixed once adversarial denominators are excluded. Calibration flat. Training stability negative (the central finding of the campaign).
+Issue #116's "≥2 of 4 axes improved" metric: only fine F1 directly improved (street +0.03, house_number +0.01). Coarse F1 is mixed once adversarial denominators are excluded. Calibration flat. Training stability negative (the central finding of the campaign).
 
 ## See also
 

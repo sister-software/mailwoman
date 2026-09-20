@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The frozen candidate fixture every arm of the same-data benchmark reads (#2261): the row contract, the
+ *   The frozen candidate fixture every arm of the same-data benchmark reads (#2261): the row interface, the
  *   replay key, the digests, and the validator that refuses a fixture two arms could read differently.
  *
- *   Evidence is keyed per LOOKUP rather than per row: one input costs the walk up to `maxLookups` backend
+ *   Evidence is keyed per lookup rather than per row: one input costs the walk up to `maxLookups` backend
  *   calls (default 10), each with its own text, placetype and scope. So a row holds a map from canonical
  *   query to answer, plus the pool — the deduplicated union of every answer, which is the ordered candidate
  *   set the row offered. Which of the pool an arm consults is its own query policy and part of what is being
- *   measured; the pool is what must be equal, and `assertEqualEvidence` checks that.
+ *   measured. the pool is what must be equal, and `assertEqualEvidence` checks that.
  *
  *   `replayBackend` raises on a key it does not hold rather than answering `[]`. An empty answer is a state
  *   the resolver absorbs silently, so the arm would report an abstention the fixture produced.
@@ -22,13 +22,13 @@ import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { canonicalJSON, definitionContentHash } from "#eval-harness/preregistration"
 
 /**
- * The row contract's version. A change to the shape of a fixture row bumps it, and a scorer refuses a fixture whose
+ * The row interface's version. A change to the shape of a fixture row bumps it, and a scorer refuses a fixture whose
  * version it does not know — a silently reinterpreted field is the failure this number exists to prevent.
  */
 export const SAME_DATA_SCHEMA_VERSION = 1
 
 /**
- * Candidate fields the fixture never carries, because each is a verdict the backend already computed ABOUT THE QUERY
+ * Candidate fields the fixture never carries, because each is a verdict the backend already computed about the query
  * rather than a fact about the place. Carrying one hands every arm a partly solved row.
  *
  * This tuple is the one home: {@link SameDataCandidate} is derived from it, and the frozen definition's own list is
@@ -72,7 +72,7 @@ export interface SameDataGold {
 	geonameid: string
 	/**
 	 * The distinct WOF ids that denote this place, ascending — a SET because the gazetteer carries 21 of its 10,738
-	 * coherently-joined `cities15000.txt` places twice. A selection naming any member is correct; grading against one
+	 * coherently-joined `cities15000.txt` places twice. A selection naming any member is correct. grading against one
 	 * arbitrary member would measure which duplicate an arm returned.
 	 */
 	placeIDs: number[]
@@ -280,7 +280,7 @@ export interface ArmEvidenceObservation {
 /**
  * Whether every arm read the same evidence for every row.
  *
- * Compares the row digest, the pool size, the candidate id set and the candidate field-name set, and reports the FIRST
+ * Compares the row digest, the pool size, the candidate id set and the candidate field-name set, and reports the first
  * arm as the reference so a difference names both sides. This is the check the brief's acceptance criterion asks for,
  * and it runs over what the arms actually read rather than over the file they were handed.
  */
@@ -353,10 +353,10 @@ export function observeEvidence(arm: string, row: SameDataFixtureRow): ArmEviden
 /**
  * A backend that answers only from the fixture.
  *
- * A key the fixture does not hold RAISES **and** is appended to `misses`. Both are needed, and the second is the one
+ * A key the fixture does not hold raises **and** is appended to `misses`. Both are needed, and the second is the one
  * that matters: `resolveTree` catches a backend throw on purpose — "a backend failure should not abort the whole tree
  * walk" — records `backend_error` on the trace and emits `picked: null`. So a raise alone reaches the arm as an
- * ABSTENTION, and the arm would report the resolver refusing when it was the fixture that refused. The caller reads
+ * abstention, and the arm would report the resolver refusing when it was the fixture that refused. The caller reads
  * `misses` after the walk and turns a non-empty list into a harness error, which the scorer excludes from every
  * metric.
  */
@@ -376,8 +376,8 @@ export function replayBackend(row: SameDataFixtureRow, misses: string[] = []): R
 				)
 			}
 
-			// A fresh array AND a fresh object per candidate. The array copy stops an in-place sort inside the walk from
-			// reordering the frozen evidence; the per-candidate copy stops the walk writing to it, because the resolver
+			// A fresh array and a fresh object per candidate. The array copy stops an in-place sort inside the walk from
+			// reordering the frozen evidence. the per-candidate copy stops the walk writing to it, because the resolver
 			// stamps verdict fields onto the candidates it is handed (`containedByQualifier`, `mismatch`). A shared
 			// object would leave one arm reading evidence another arm edited.
 			return hit.map((candidate) => ({ ...candidate }))

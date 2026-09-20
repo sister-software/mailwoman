@@ -2,18 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build `data/gazetteer/capitals-v1.json` — the CAPITAL-STATUS reference (#1880): every national
- *   capital (`PPLC`) and first-order administrative seat (`PPLA`) in the GeoNames gazetteer dumps,
- *   each carrying its coordinate AND its folded name set (name + romanization + alternate names).
+ *   Build `data/gazetteer/capitals-v1.json` — the capital-status reference (#1880): every national
+ *   capital (`pplc`) and first-order administrative seat (`ppla`) in the GeoNames gazetteer dumps,
+ *   each carrying its coordinate and its folded name set (name + romanization + alternate names).
  *   The consumer (`@mailwoman/resolver-wof-sqlite/capitals`) matches a candidate by country +
  *   proximity + name membership — all three conjuncts, because the first board run matched on
- *   coordinates alone and promoted capital-ADJACENT namesakes (North Salt Lake beside the Utah
- *   seat) instead of capitals; the alternate names are what keep exonym rows ("Vienna" for Wien)
+ *   coordinates alone and promoted capital-adjacent namesakes (North Salt Lake beside the Utah
+ *   seat) instead of capitals. the alternate names are what keep exonym rows ("Vienna" for Wien)
  *   matching without a hand-kept exonym list.
  *
- *   Feature codes are matched EXACTLY: `PPLA2`–`PPLA4` (lower-order seats) and `PPLCH` (historical
+ *   Feature codes are matched exactly: `PPLA2`–`PPLA4` (lower-order seats) and `pplch` (historical
  *   capital) stay out. `countryInfo.txt` — the same source's own catalog — grades the extraction:
- *   a catalog country whose dump yields no `PPLC` row, and a catalog capital NAME that matches none
+ *   a catalog country whose dump yields no `pplc` row, and a catalog capital name that matches none
  *   of the extracted rows' names, are both recorded in the coverage block rather than silently
  *   absorbed (the partial-reader rule: a reference that could not measure a country must say so).
  */
@@ -44,7 +44,7 @@ export interface CapitalReferenceEntry {
 	level: "national" | "admin1"
 	/**
 	 * Folded name keys (name + romanization + alternate names) — the consumer's name-membership conjunct, which is what
-	 * keeps the coordinate radius from promoting a capital's same-name neighbours. Folded with the SAME
+	 * keeps the coordinate radius from promoting a capital's same-name neighbours. Folded with the same
 	 * `normalizeLocalityForKey` the candidate gazetteer keys with.
 	 */
 	k: string[]
@@ -66,17 +66,17 @@ export interface CapitalsReference {
 		missing_dumps: string[]
 		/**
 		 * Catalog countries whose `<CC>.txt` is not a 19-column gazetteer dump (GeoNames' postal exports share the
-		 * basename). NOT counted as scanned: a wrong-format file cannot answer the capital question, and "scanned, found
+		 * basename). Not counted as scanned: a wrong-format file cannot answer the capital question, and "scanned, found
 		 * none" would be the partial-reader lie.
 		 */
 		wrong_format: string[]
 		/**
-		 * Scanned catalog countries whose dump carries no `PPLC` row — a fact about the source.
+		 * Scanned catalog countries whose dump carries no `pplc` row — a fact about the source.
 		 */
 		missing_national: string[]
 		/**
-		 * Catalog rows whose stated capital name (folded) matches no extracted row name for that country — worth a read,
-		 * not a failure: multi-capital countries and spelling drift land here.
+		 * Catalog rows whose stated capital name (folded) matches no extracted row name for that country — worth a read
+		 * rather than a failure: multi-capital countries and spelling drift land here.
 		 */
 		capital_name_mismatches: string[]
 	}
@@ -84,7 +84,7 @@ export interface CapitalsReference {
 }
 
 /**
- * Feature codes admitted, mapped to the reference level. Exact codes only — `startsWith("PPLA")` would admit the
+ * Feature codes admitted, mapped to the reference level. Exact codes only — `startsWith("ppla")` would admit the
  * county-seat tiers this reference exists to exclude.
  */
 const LEVEL_BY_FEATURE_CODE: Record<string, CapitalReferenceEntry["level"]> = {
@@ -93,14 +93,14 @@ const LEVEL_BY_FEATURE_CODE: Record<string, CapitalReferenceEntry["level"]> = {
 }
 
 /**
- * Coordinate decimals kept in the committed file (4 ≈ 11 m; the consumer matches at km radius).
+ * Coordinate decimals kept in the committed file (4 ≈ 11 m. the consumer matches at km radius).
  */
 const COORD_DECIMALS = 4
 
 const roundCoord = (value: number): number => Number(value.toFixed(COORD_DECIMALS))
 
 /**
- * Extract the capital/seat rows from ONE GeoNames dump (tab-separated, 19 columns; 0-indexed: 0 `geonameid`, 1 `name`,
+ * Extract the capital/seat rows from one GeoNames dump (tab-separated, 19 columns. 0-indexed: 0 `geonameid`, 1 `name`,
  * 2 `asciiname`, 3 `alternatenames`, 4/5 lat/lon, 6 feature class, 7 feature code, 8 country code). The folded name set
  * (`k`) covers name + asciiname + every alternate name, so exonym rows match at the consumer.
  */
@@ -228,7 +228,7 @@ export async function buildCapitalsReference(options: BuildCapitalsOptions): Pro
 		const nationals = rows.filter((r) => r.level === "national")
 
 		if (!nationals.length) {
-			// A stated capital with no PPLC row is a gap; a catalog row with no capital (AQ, BV) is not.
+			// A stated capital with no pplc row is a gap. a catalog row with no capital (AQ, BV) is not.
 			if (capital) {
 				missingNational.push(country)
 			}
@@ -262,7 +262,7 @@ export async function buildCapitalsReference(options: BuildCapitalsOptions): Pro
 	}
 
 	// One entry per line: the header reads like JSON, the entry block diffs like a table.
-	// `false`: the head is SPLICED, not written — the regex below reopens its closing brace so the entries can be
+	// `false`: the head is spliced rather than written — the regex below reopens its closing brace so the entries can be
 	// printed one per line. A trailing newline puts a character after that brace and the match silently fails.
 	const head = prettyJSON({ ...reference, entries: undefined }, false).replace(/\n\}$/, ",\n")
 	const body = reference.entries.map((e) => "\t\t" + stringifyJSON(e)).join(",\n")

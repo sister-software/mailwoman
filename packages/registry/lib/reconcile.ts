@@ -6,19 +6,19 @@
  *   coverage-reconciliation.ts` does inline, so the CLI (`registry --reconcile`) and any consumer
  *   can reuse it.
  *
- *   Given entities already resolved ACROSS sources (#618), classify each by which KIND of source its
+ *   Given entities already resolved across sources (#618), classify each by which kind of source its
  *   records come from. You tag each source label as either an **eligibility** source (it denotes
  *   membership in some base set — e.g. registered providers/facilities) or a **funding/enrollment**
  *   source (it denotes participation in a program). Three buckets fall out per entity:
  *
- *   - **enrolled** — resolves to BOTH an eligibility and a funding record.
- *   - **eligible, not enrolled** — an eligibility record with NO funding record resolving to it (the
- *       ANTI-JOIN).
- *   - **funded, not in the eligibility set** — a funding record with no eligibility record resolving to
+ *   - **enrolled** — resolves to both an eligibility and a funding record.
+ *   - **eligible rather than enrolled** — an eligibility record with no funding record resolving to it (the
+ *       anti-join).
+ *   - **funded rather than in the eligibility set** — a funding record with no eligibility record resolving to
  *       it.
  *
  *   This is strictly a **set-membership reconciliation, never a determination.** We produce the
- *   reconciled join and surface the candidate set; what a gap MEANS — and whether it is real, a
+ *   reconciled join and surface the candidate set. what a gap means — and whether it is real, a
  *   sampling artifact, or actionable — is entirely the data consumer's call. Nothing here is an
  *   allegation. {@link reconciliationReport} bakes that caveat in by construction.
  *
@@ -67,7 +67,7 @@ export interface ReconciliationResult {
 }
 
 /**
- * Bucket an entity from the source labels its records span. Returns `null` when the entity carries NO eligibility- or
+ * Bucket an entity from the source labels its records span. Returns `null` when the entity carries no eligibility- or
  * funding-tagged source (it is outside this reconciliation — e.g. a source the caller didn't assign a role) so callers
  * can exclude it rather than silently miscount it.
  */
@@ -157,7 +157,7 @@ export interface ReconciliationReportOptions {
 	 */
 	scopeNote?: string
 	/**
-	 * A paragraph about the scorer choice (e.g. why the FS baseline, not the dedup GBT).
+	 * A paragraph about the scorer choice (e.g. why the FS baseline rather than the dedup GBT).
 	 */
 	scorerNote?: string
 	/**
@@ -165,14 +165,15 @@ export interface ReconciliationReportOptions {
 	 */
 	sampleNote?: string
 	/**
-	 * How many "eligible, not enrolled" rows to spot-check. Default 15.
+	 * How many "eligible rather than enrolled" rows to spot-check. Default 15.
 	 */
 	spotCheckLimit?: number
 }
 
 /**
  * A markdown reconciliation report: the bucket counts, the enrolled-rate floor, an anti-join spot-check, and — always,
- * by construction — the neutral caveat. The deliverable is the anti-join SET, not a rate, and never an allegation.
+ * by construction — the neutral caveat. The deliverable is the anti-join SET rather than a rate, and never an
+ * allegation.
  */
 export function reconciliationReport(result: ReconciliationResult, options: ReconciliationReportOptions = {}): string {
 	const { counts, reconciled } = result

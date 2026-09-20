@@ -10,7 +10,7 @@ tags:
 
 # Geocode-first record matching — the thing that imploded, and why it won't again
 
-Mailwoman started as the answer to a record-matching problem, not a parsing one.
+Mailwoman started as the answer to a record-matching problem rather than a parsing one.
 The original job was unglamorous: a pile of clinics receiving federal and state
 funding, arriving as SQLite dumps, CSV exports, and hand-keyed spreadsheets, and
 a question — _which of these registered entities already got money, which are
@@ -31,7 +31,7 @@ resolves every record to a coordinate and a hierarchy first, then links records
 by _where they are_ and _who they are_ — not by how their address strings happen
 to be spelled.
 
-Every clause earns its place:
+Every clause warrants its place:
 
 - **Entity resolution.** The classical problem — blocking, pairwise matching,
   clustering into canonical entities. Not a new field; a very old, very
@@ -48,7 +48,7 @@ The v0 matcher was **string-first**: classify the address into components, slot
 them into templates, compare the strings. Strings are the wrong key for
 addresses, and there's a single fact that proves it. `Jyllandsgade 15` and
 `Jyllandsgade 75` differ by one character — Levenshtein similarity **0.963** —
-and they are **650 metres apart** (Isaj et al., SSTD 2019). String similarity has
+and they are **650 meters apart** (Isaj et al., SSTD 2019). String similarity has
 the wrong _topology_: it pulls different buildings together and pushes spellings
 of the same building apart. A matcher built on it spends its life drowning in
 false pairs and missing real ones, and ours did.
@@ -69,25 +69,25 @@ geography levels carry the heaviest evidence by design (±9.45 bits at the
 same-building grain vs ±6.32 for an exact name), which is why the boundary bends
 with distance rather than with spelling. (Prior λ is illustrative here to keep the
 boundary visible; production runs λ=1e-4 with phone and spatial-key corroboration
-this two-axis slice omits. Generator:
+this two-axis view omits. Generator:
 `scripts/record-matcher/viz/geocode-first-surface.ts`.)_
 
 What changed is that mailwoman is now a **geocoder with calibrated confidence.**
-Every record can become a rooftop coordinate (± calibrated metres) plus a
+Every record can become a rooftop coordinate (± calibrated meters) plus a
 Who's-on-First hierarchy plus structured components, each with a confidence. That
 hands you matching keys with the _right_ topology:
 
 - **the coordinate / situs point / H3 cell** — the same building gets the same
   key, regardless of how the street was abbreviated;
 - **the WOF ancestry** — spelling-invariant blocking by locality and region,
-  because you're keying on resolved IDs, not text;
+  because you're keying on resolved IDs rather than text;
 - **structured components with confidence** — you compare field-by-field, and you
   _know which fields to trust_.
 
 You never match on the formatted string. You match on the resolved place, and
 the lossy-template problem disappears with the string it lived in.
 
-## Entity resolution is three problems, not one
+## Entity resolution is three problems rather than one
 
 The reason ER "implodes" is that people treat it as one giant problem. It's
 three, and naming them _is_ the architecture (Binette & Steorts, 2022; Papadakis
@@ -100,8 +100,8 @@ et al., 2021):
    calibrated decision layer.
 3. **Cluster** — pairwise scores are _not transitive_ (A~B at 0.6 and B~C at 0.6
    does not make A~C a match), so a separate stage closes pairs into canonical
-   entities. Skip it and your "entities" quietly fracture or fuse (Dedupe; the
-   non-transitivity is essential, not a footnote).
+   entities. Skip it and your "entities" without output fracture or fuse (Dedupe; the
+   non-transitivity is essential rather than a footnote).
 
 Upstream of all three is **canonicalize**: parse the name, sanitize the org name,
 geocode the address, normalize the phone and email. That's mostly salvage — the
@@ -162,32 +162,31 @@ and non-Gaussian, with a hard urban→rural gradient (street-interpolation media
    sharing a _PO-box or multi-unit_ coordinate is barely location agreement at all.
    This is not a new idea we have to invent — NAACCR's cancer-registry geocoder
    already propagates exactly this (interpolation type, feature-match geography,
-   PO-box/rural-route flags, a Match/Review/Non-Match triage). It maps cleanly onto
+   PO-box/rural-route flags, a Match/Review/Non-Match triage). It maps directly onto
    our situs → interp → admin tier cascade and conformal radii. We have the quality
-   class already; the matcher just has to spend it.
+   class already; the matcherhas to spend it.
 
-Calibrate the thresholds against mailwoman's _own_ measured error distribution,
-not the literature's older-geocoder constants. Our rooftop tier is tighter; the
-shape of the lesson holds, the numbers are ours to measure.
+Calibrate the thresholds against mailwoman's _own_ measured error distribution rather than the literature's older-geocoder constants. Our rooftop tier is tighter; the
+shape of the measured pattern remains supported, the numbers are ours to measure.
 
-## Where a model earns its place
+## Where a model warrants its place
 
 The classical core is the v1. Models are selective changes bolted on where the
 evidence says they pay — never the foundation:
 
 - **Org-name embeddings** for fuzzy blocking and similarity. Regex can't see
   `Comcast Cable Communications LLC` ≈ `Xfinity` (a DBA) or survive OCR noise; an
-  embedding + ANN index can. Embedding/ANN blocking earns its keep _specifically_
+  embedding + ANN index can. Embedding/ANN blocking warrants its keep _specifically_
   on noisy, textual fields — not as a blanket replacement (DeepBlocker).
 - **A gradient-boosted matcher** over the comparison vector once labels exist. A
   tree over `{distance, name-sim, street-sim}` already clears ~90% matched-class F1
-  in production (Grab) — a strong, interpretable upgrade from hand-weights, not a
+  in production (Grab) — a strong, interpretable upgrade from hand-weights rather than a
   neural moonshot. **This one is shipped, and on by default**: a pure-Node
   gradient-boosted tree over the agreement pattern plus the over-merge interaction
   (co-located × name-disagree), trained on the NPPES NPI-truth set. It beat the
   Fellegi-Sunter core by ~5pp dedup F1 held-out within a state and by ~+22pp on
   states it never trained on (TX→CA, TX→NY), reducing the co-located over-merge — so
-  it earns the default slot, shipped with a calibrated link threshold (its logit
+  it warrants the default slot, shipped with a calibrated link threshold (its logit
   isn't in FS-weight units). The model is NPPES/US-trained; for a very different
   domain, A/B it or drop back to the hand-weighted core with
   `resolveEntities({ learnedScorer: false })`. One sharp caveat we measured: the GBT
@@ -196,7 +195,7 @@ evidence says they pay — never the foundation:
   discovery is the opposite objective** — that same pattern is the prototypical
   signal of one facility under different operational names across sources — so the
   cross-dataset and reconciliation flows pin the FS core (`learnedScorer: false`),
-  where recall, not over-merge precision, is what matters. Same model, opposite
+  where recall rather than over-merge precision, is what matters. Same model, opposite
   objective: pick the scorer by the question you're asking.
 - **An LLM in the gray zone, never on the easy 95%.** Framed as in-context
   _clustering_ rather than all-pairs classification, an LLM reduces API calls ~5× and
@@ -204,8 +203,7 @@ evidence says they pay — never the foundation:
   calibrated scorer abstained on.
 - **An LLM for ingest.** The messy-data reality — "it came as a SQLite dump" — is
   where an LLM is cheaply excellent: read a header row plus a few
-  samples, infer the column→field mapping, cache it. One call per _source schema_,
-  not per row. The most painful onboarding step, deleted.
+  samples, infer the column→field mapping, cache it. One call per _source schema_ rather than per row. The most painful onboarding step, deleted.
 
 ## Four rules, carried over
 
@@ -216,10 +214,10 @@ The four rules the geocoder already lives by govern the matcher too:
   of an exhaustive search in under 100 trials (AutoER, 2025). So we build a
   _tunable_ matcher and a small tuner — we do not chase one perfect model.
 - **Calibrate, then abstain.** A link is a probability; the ambiguous middle goes
-  to review, not to a coin flip.
+  to review rather than to a coin flip.
 - **Grade the pipeline against truth, never a stage in isolation.** The reconcile
   regression taught this the hard way. Match quality is measured on linked
-  entities versus reality, not on a scorer's pairwise F1.
+  entities versus reality rather than on a scorer's pairwise F1.
 - **No silent caps.** When blocking drops a region or a tier, say so. A matcher
   that silently never compares two records reads as "no match found" — the most
   dangerous lie an ER system can tell.
@@ -228,16 +226,16 @@ The four rules the geocoder already lives by govern the matcher too:
 
 Two records at the same address might be the same clinic — or two of the forty
 providers who share a hospital campus. The matcher's strongest precision change is
-[inverse-address-frequency](./spatial-expectation-and-density.mdx): down-weight a shared address by how many distinct
+[inverse-address-frequency](./spatial-expectation-and-density.mdx): down-weight a shared address by how several distinct
 entities sit on it, so a lonely address is strong evidence of identity and a
 crowded one is nearly none. It's on by default.
 
-But rarity is only meaningful against a population. The change counts how often each
+But rarity is only meaningful against a population. The change counts how frequently each
 address appears across the records you hand it — so when you dedupe a _whole_
-dataset, the input is the corpus and it just works. Hand it a thin sample and
+dataset, the input is the corpus and it works. Hand it a thin sample and
 there's nothing to be rare against: every address looks unique, the signal
 flattens, and the change degrades to baseline with no warning. The fix is cheap — the frequency
-table is a parse-free string scan, no geocoding — so when you're matching a slice,
+table is a parse-free string scan, no geocoding — so when you're matching a subset,
 build the table over the full source and pass it in. The one thing you can't do is
 conjure rarity from a single record with nothing to compare it to.
 
@@ -273,5 +271,5 @@ build it and grade it against real clinic data. That's the work.
 
 - [Record-matcher data catalog](./record-matcher-data-catalog.md) — what each source dataset is, where it lives, and how its columns map into the matcher
 - [Record-matcher sources (reference)](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/record-matcher-sources.md) — the machine-readable source registry the catalog narrates
-- [Choosing the dedup yardstick](./dedup-entity-truth.mdx) — why org-name, not NPI, grades the matcher's decision surface
+- [Choosing the dedup yardstick](./dedup-entity-truth.mdx) — why org-name rather than NPI, grades the matcher's decision surface
 - [Case study: cross-registry linking](./cross-registry-linking.mdx) — the same doctor in two federal registries, matched through the geocode

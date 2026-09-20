@@ -64,7 +64,7 @@ PO6 66.1% of 24,077; PO4 66.3% of 24,445. Largest single confusion: `PO20 9BH` â
 Unit postcodes interleave at the scale of a street. A point's own centroid is beaten by a neighbour's
 for three points in ten, and buildings do not help because a building almost never spans the decision
 between two units: the whole building takes the same wrong neighbour. The 91 truth postcodes absent
-from Code-Point Open are a coverage gap of the centroid source, not of the method.
+from Code-Point Open are a coverage gap of the centroid source rather than of the method.
 
 ## Consequences
 

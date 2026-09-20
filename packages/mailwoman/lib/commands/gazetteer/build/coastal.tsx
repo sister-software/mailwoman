@@ -7,27 +7,27 @@
  *   → download → build → verify all live in `@mailwoman/coastal/sdk`, so each stays unit-testable without Ink
  *   or the network in the loop. Mirrors `flood.tsx`'s progress (stderr) / summary (stdout) split.
  *
- *   `--measure-resolutions` DOES NOT BUILD. The index resolution is a measurement this layer takes rather
+ *   `--measure-resolutions` does not build. The index resolution is a measurement this layer takes rather
  *   than a number argued to, and running the measurement is a mode of its own because it costs a full pass
- *   over the chosen scenarios per candidate and produces a table, not an artifact. The table is PER SCENARIO:
+ *   over the chosen scenarios per candidate and produces a table rather than an artifact. The table is PER scenario:
  *   twelve layers cover the same frontages with different extents, and a pooled share would average a
  *   present-day designation together with a 2105 projection and describe neither.
  *
- *   `--scenarios` IS THE SMOKE RUNG, and `--limit` narrows it further. Building one scenario over a real
+ *   `--scenarios` is the smoke rung, and `--limit` narrows it further. Building one scenario over a real
  *   prefix of the source exercises the field names, the per-layer distance column, the value domains, the
  *   projection and the seal — which is what fixtures structurally cannot.
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { Box, Text } from "ink"
 
 import {
 	type CommandSpec,
 	CommandTaskResult,
 	formatLayerVerification,
-	type ParsedCommandComponent,
-	splitList,
+	type CommandComponent,
 	splitNumberList,
 	useCommandTask,
 } from "#cli-kit"
@@ -40,13 +40,13 @@ import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 const DEFAULT_COVERAGE_RESOLUTION = "6"
 
 /**
- * Index resolution, chosen from the per-scenario `partial`-share measurement — see the workspace README for the table
+ * Index resolution, chosen from the per-scenario `partial`-share measurement — see the workspace readme for the table
  * and the reasoning. `--measure-resolutions` re-derives it.
  */
 const DEFAULT_INDEX_RESOLUTION = "10"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "coastal",
@@ -70,21 +70,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	gdb?: string
-	out?: string
-	indexResolution: string
-	coverageResolution: string
-	measureResolutions?: string
-	scenarios?: string
-	limit?: string
-	offline: boolean
-	sourceVintage?: string
-	chunkSize?: string
-	verify: boolean
-}
-
-const GazetteerBuildCoastal: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 
@@ -110,12 +96,12 @@ const GazetteerBuildCoastal: ParsedCommandComponent<Options> = ({ options }) => 
 		}
 
 		const scenarioKeys = options.scenarios
-			? splitList(options.scenarios)
+			? extractDelimited(options.scenarios)
 			: NCERM_SCENARIOS.map((scenario) => scenario.key)
 
 		const client = createEANCERMClient()
 
-		// The catalogue read supplies the product's ISO revision date AND the direct file URL. Both are read rather than
+		// The catalogue read supplies the product's ISO revision date and the direct file URL. Both are read rather than
 		// assembled: the EA's file service keys on an opaque id with no relationship to the dataset id, so a hard-coded
 		// URL survives a republish by pointing at a file that is no longer the product.
 		const catalogue = options.offline ? undefined : await client.readCatalogueRecord()
@@ -130,8 +116,8 @@ const GazetteerBuildCoastal: ParsedCommandComponent<Options> = ({ options }) => 
 
 		console.error(`▸ product vintage: ${sourceVintage}`)
 
-		// OGL v3.0 makes the attribution statement a licence CONDITION, so a change in it changes what a re-user has to
-		// publish. Read from the structured record and compared against the constant the artifact is stamped with; the
+		// OGL v3.0 makes the attribution statement a licence condition, so a change in it changes what a re-user has to
+		// publish. Read from the structured record and compared against the constant the artifact is stamped with. the
 		// abstract's copy is doubled and its first copy carries no year, which is why the parse refuses a yearless one.
 		if (!options.offline) {
 			assertAttributionUnchanged(await client.readAttributionStatement())
@@ -151,7 +137,7 @@ const GazetteerBuildCoastal: ParsedCommandComponent<Options> = ({ options }) => 
 			geodatabasePath = await downloadCoastalGeodatabase({
 				url,
 				revisionDate: sourceVintage,
-				cacheRoot: String(dataRootPath("coastal", "cache")),
+				cacheRoot: dataRootPath("coastal", "cache").toString(),
 				onProgress: (message) => console.error(`  [download] ${message}`),
 			})
 		}
@@ -175,8 +161,8 @@ const GazetteerBuildCoastal: ParsedCommandComponent<Options> = ({ options }) => 
 
 		const coverageResolution = Number(options.coverageResolution)
 		const indexResolution = Number(options.indexResolution)
-		const out = options.out ?? String(dataRootPath("coastal", "coastal-england.db"))
-		const buildSHA = resolveBuildSHA(String(repoRootPath()))
+		const out = options.out ?? dataRootPath("coastal", "coastal-england.db").toString()
+		const buildSHA = resolveBuildSHA(repoRootPath().toString())
 
 		// The declared count comes from the source's own per-layer totals, so a short read throws rather than building a
 		// shorter coastline. A `--limit` run declares the limited total for the same reason.
@@ -189,7 +175,7 @@ const GazetteerBuildCoastal: ParsedCommandComponent<Options> = ({ options }) => 
 		console.error(`▸ source declares ${identity.declaredFeatureCount.toLocaleString()} features`)
 
 		// The live service's per-layer feature counts are the cheapest two-path check there is, and they catch a stale or
-		// truncated archive before anything is written. PER LAYER rather than pooled: twelve layers of nearly identical
+		// truncated archive before anything is written. PER layer rather than pooled: twelve layers of nearly identical
 		// size is exactly the population where a pooled total agrees while two of them are transposed. A `--limit` run has
 		// deliberately fewer features than the service reports, so the check is skipped there rather than made to pass.
 		const expectedFeatureCounts: Record<string, number> = {}
@@ -203,7 +189,7 @@ const GazetteerBuildCoastal: ParsedCommandComponent<Options> = ({ options }) => 
 		}
 
 		const result = await buildCoastalDatabase({
-			// A `--limit` run is the smoke rung and reads a PREFIX in one process; a full build is BATCHED, one child
+			// A `--limit` run is the smoke rung and reads a prefix in one process. a full build is batched, one child
 			// process per scenario layer plus one for the two ground-instability layers. The reason is reproducibility
 			// rather than speed — see `@mailwoman/coastal/sdk/ingest-chunk`.
 			...(options.limit

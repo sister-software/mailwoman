@@ -30,10 +30,10 @@
 			"node": "./lib/vite/build-info.ts",
 			"default": "./out/vite/build-info.js"
 		},
-		"./playwright/chrome-contract": {
-			"types": "./out/playwright/chrome-contract.d.ts",
-			"node": "./lib/playwright/chrome-contract.ts",
-			"default": "./out/playwright/chrome-contract.js"
+		"./playwright/chrome-interface": {
+			"types": "./out/playwright/chrome-interface.d.ts",
+			"node": "./lib/playwright/chrome-interface.ts",
+			"default": "./out/playwright/chrome-interface.js"
 		},
 		"./vite/pwa": {
 			"types": "./out/vite/pwa.d.ts",
@@ -55,7 +55,7 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/resolver-wof-wasm": "workspace:*",
 		"@playwright/test": "^1.63.0",
-		"path-ts": "^2.3.0",
+		"path-ts": "^2.4.1",
 		"vite": "^8.2.2",
 		"vite-plugin-pwa": "^1.3.0"
 	},

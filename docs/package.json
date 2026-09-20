@@ -3,6 +3,7 @@
 	"version": "0.0.0",
 	"private": true,
 	"description": "Docusaurus knowledge base for Mailwoman Geocoder",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"imports": {
 		"#docs-sub-header": "./src/components/DocsSubHeader/index.tsx",
 		"#unit/*": "./test/unit/*.ts",
@@ -33,10 +34,15 @@
 			"node": "./plugins/runtime-assets/workspace/aliases.ts",
 			"default": "./plugins/runtime-assets/workspace/aliases.ts"
 		},
-		"./scripts/docs-frontmatter-contract": {
-			"types": "./scripts/docs/frontmatter/contract.ts",
-			"node": "./scripts/docs/frontmatter/contract.ts",
-			"default": "./scripts/docs/frontmatter/contract.ts"
+		"./scripts/docs-frontmatter-metadata": {
+			"types": "./scripts/docs/frontmatter/metadata.ts",
+			"node": "./scripts/docs/frontmatter/metadata.ts",
+			"default": "./scripts/docs/frontmatter/metadata.ts"
+		},
+		"./scripts/docs-path-citations": {
+			"types": "./scripts/docs/path-citations.ts",
+			"node": "./scripts/docs/path-citations.ts",
+			"default": "./scripts/docs/path-citations.ts"
 		},
 		"./scripts/generate-cli-reference": {
 			"types": "./scripts/generate-cli-reference.ts",
@@ -50,10 +56,10 @@
 		"clear": "docusaurus clear",
 		"docusaurus": "docusaurus",
 		"freshness-report": "node scripts/list-stale-docs.ts",
-		"lint:prose": "vale --config .vale.ini articles src/pages engineering/writing-system.md engineering/page-templates",
-		"lint:prose:fixtures": "node scripts/check-vale-rules.ts",
-		"lint:prose:vocab": "vale --config .vale-vocab.ini ../AGENTS.md ../README.md ../RELEASING.md ../CONTRIBUTING.md ../REPRODUCIBILITY.md ../.claude/output-styles/mailwoman-development.md ../.agents/skills engineering/*.md engineering/*.mdx engineering/reference superpowers research records && vale --config .vale-vocab.ini --glob='*README.md' ../packages",
-		"lint:structure": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-docs-structure.ts --strict",
+		"lint:prose": "node ../config/vale/lint-prose.ts docs",
+		"lint:prose:fixtures": "node ../config/vale/check-rules.ts",
+		"lint:prose:vocab": "node ../config/vale/lint-prose.ts docs-vocab",
+		"lint:structure": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check/docs-structure.ts --strict",
 		"prebuild": "node ../packages/mailwoman/out/cli/index.js openapi --out ./static/openapi/mailwoman.json && node ../packages/libpostal/out/cli.js openapi --out ./static/openapi/libpostal.json && node ../packages/photon/out/cli.js openapi --out ./static/openapi/photon.json && node ../packages/nominatim/out/cli.js openapi --out ./static/openapi/nominatim.json && node ./scripts/generate-cli-reference.ts",
 		"serve": "docusaurus serve --host 0.0.0.0 --port 7770",
 		"start": "docusaurus start --host 0.0.0.0 --port 7770 --no-open",
@@ -84,14 +90,13 @@
 		"@mailwoman/resolver-wof-wasm": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mdx-js/react": "^3.1.1",
-		"classnames": "^2.5.1",
 		"clsx": "^2.1.1",
 		"docusaurus-plugin-glossary": "^3.3.4",
-		"js-yaml": "^5.4.1",
+		"js-yaml": "^5.4.2",
 		"mailwoman": "workspace:*",
 		"maplibre-gl": "^6.7.0",
 		"onnxruntime-web": "1.29.0",
-		"path-ts": "^2.3.0",
+		"path-ts": "^2.4.1",
 		"prism-react-renderer": "^2.4.1",
 		"react": "^19.2.8",
 		"react-dom": "^19.2.8",
@@ -110,14 +115,12 @@
 		"@types/react-map-gl": "^6.1.10",
 		"@typescript/native": "npm:typescript@^7.0.2",
 		"@vitejs/plugin-react": "^6.1.1",
-		"@vvago/vale": "^3.20.0",
-		"spliterator": "^7.7.1",
+		"spliterator": "^7.11.0",
 		"storybook": "^10.6.0",
 		"typescript": "npm:@typescript/typescript6@^6.0.2",
 		"unist": "^0.0.1",
 		"unist-util-visit": "^5.1.0",
-		"vite": "^8.2.2",
-		"zx": "^8.8.5"
+		"vite": "^8.2.2"
 	},
 	"browserslist": {
 		"production": [

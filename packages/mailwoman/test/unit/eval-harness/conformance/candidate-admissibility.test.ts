@@ -6,13 +6,13 @@
  *   whole point of taking {@link ResolveNodeTrace} as the input is that every reading can be stated as a
  *   table and checked without resolving anything.
  *
- *   THE TWO ASYMMETRIES ARE THE TESTS THAT MATTER. A removal at the window leaves the row UNMEASURED, because
- *   the observation could not decide it. An addition at the window does NOT, because the law constrains what
+ *   The two asymmetries are the tests that matter. A removal at the window leaves the row unmeasured, because
+ *   the observation could not decide it. An addition at the window does not, because the law constrains what
  *   refinement removes — and a naïve `top5(refined) ⊆ top5(base)` assertion gets exactly that case wrong, in
  *   the direction that fails valid refinements. Both are asserted here rather than left to the live suite,
  *   where a run that happens to produce neither would report the same green as a run that handles both.
  *
- *   AND `unexplained` IS ASSERTED IN BOTH DIRECTIONS, because the live suite does not produce it: the shipped
+ *   And `unexplained` is asserted IN both directions, because the live suite does not produce it: the shipped
  *   pipeline holds this law on every committed row, so the failing branch has no live witness and would
  *   otherwise ship unexercised.
  */
@@ -223,7 +223,7 @@ describe("reading a refinement pair", () => {
 		expect(reading.counts.beyond_window).toBe(2)
 	})
 
-	// The refined table being short does not explain a candidate ARRIVING: its window bounds what the refined
+	// The refined table being short does not explain a candidate arriving: its window bounds what the refined
 	// lookup could show, never what the base's roomy table failed to hold.
 	it("does not let the refined table's own window explain an addition the base had room for", () => {
 		const reading = accountRefinement(

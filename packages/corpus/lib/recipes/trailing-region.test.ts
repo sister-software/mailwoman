@@ -2,20 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file `trailing-region` — POSTCODE PLACEMENT, the surface that decides which countries this slice can teach.
+ * @file `trailing-region` — postcode placement, the surface that decides which countries this recipe can teach.
  *
  *   The same digits change TAG with position. Measured on the shipped model, `Barcelona 6001, Anzoátegui, Venezuela`
  *   tags `6001` as `house_number` and loses the locality into the street, while `6001 Barcelona, Anzoátegui, Venezuela`
- *   tags it `postcode` and recovers `locality: Barcelona`. So a slice emitting one placement teaches one family of
- *   countries, and the tests below pin which surface each placement writes — including that an ABSENT placement still
+ *   tags it `postcode` and recovers `locality: Barcelona`. So a recipe emitting one placement teaches one family of
+ *   countries, and the tests below pin which surface each placement writes — including that an absent placement still
  *   means `leading`, because a tuples file written before the field existed must produce the rows it always did.
  */
 
+import { CA_PROVINCES } from "@mailwoman/codex/ca"
 import { trailingRegionRecipe } from "@mailwoman/corpus/recipes/trailing-region"
-import { sliceRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
+import { recipeRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
 
-const run = sliceRunner("trailing-region", trailingRegionRecipe, 901)
+const run = recipeRunner("trailing-region", trailingRegionRecipe, 901)
 
 /**
  * One tuple repeated with each placement. Same locality, region, country and code throughout, so any difference in the
@@ -24,7 +25,7 @@ const run = sliceRunner("trailing-region", trailingRegionRecipe, 901)
 const base = { locality: "Portopetro", region: "Illes Balears", country: "Spain", cc: "ES", locale: "es-ES" }
 
 /**
- * The recipe varies its surfaces by row INDEX (`read % 2`, `read % 4`), so a single tuple cannot exercise a given
+ * The recipe varies its surfaces by row index (`read % 2`, `read % 4`), so a single tuple cannot exercise a given
  * placement's plain form reliably. Repeating it lets the assertions look for a surface among the emitted rows rather
  * than pinning one index.
  */
@@ -42,7 +43,7 @@ describe("trailing-region postcode placement", () => {
 		const withField = await run(repeat({ ...base, postcode: "07691", postcodePlacement: "leading" }), [])
 		const without = await run(repeat({ ...base, postcode: "07691" }), [])
 
-		// Byte-identical, not merely equivalent: the 17,908-row tuples file on disk carries no placement.
+		// Byte-identical rather than merely equivalent: the 17,908-row tuples file on disk carries no placement.
 		expect(without.rows.map((row) => row.raw)).toEqual(withField.rows.map((row) => row.raw))
 	})
 
@@ -51,7 +52,7 @@ describe("trailing-region postcode placement", () => {
 		const { rows } = await run(repeat({ ...tuple, postcode: "6001", postcodePlacement: "after_locality" }), [])
 
 		expect(rows.some((row) => row.raw === "Barcelona 6001, Anzoátegui, Venezuela")).toBe(true)
-		// The failing board rows are exactly this string; a leading code here would teach the wrong country.
+		// The failing board rows are exactly this string. a leading code here would teach the wrong country.
 		expect(rows.some((row) => row.raw.startsWith("6001 "))).toBe(false)
 	})
 
@@ -66,7 +67,7 @@ describe("trailing-region postcode placement", () => {
 
 	it("still labels every postcode-carrying row as the STRUCTURED source, whatever the placement", async () => {
 		// The sampler weights by `source`. A placement that leaked rows back into `synth-trailing-region` would make the
-		// new surface share the bare slice's dose and become unweightable.
+		// new surface share the bare source's reps per row and become unweightable.
 		const { rows } = await run(
 			[
 				{ ...base, postcode: "07691", postcodePlacement: "leading" },
@@ -80,7 +81,7 @@ describe("trailing-region postcode placement", () => {
 	})
 
 	it("leaves a tuple with no postcode alone under every placement", async () => {
-		// The bare admin tail is the slice's original surface and the placements must not touch it.
+		// The bare admin tail is the recipe's original surface and the placements must not touch it.
 		for (const placement of ["leading", "after_locality", "after_region"] as const) {
 			const { rows } = await run(repeat({ ...base, postcodePlacement: placement }), [])
 
@@ -89,11 +90,82 @@ describe("trailing-region postcode placement", () => {
 	})
 })
 
+describe("trailing-region Canadian province codes", () => {
+	const ca = (region: string) => ({
+		locality: "Gander",
+		region,
+		country: "Canada",
+		cc: "CA",
+		locale: "en-CA",
+		postcode: "A1V 0A9",
+		postcodePlacement: "after_region",
+	})
+
+	it("writes the province code beside the name form, never instead of it", async () => {
+		const { rows } = await run(repeat(ca("Newfoundland and Labrador"), 12), [])
+
+		expect(rows.some((row) => row.raw.includes("Gander, NL A1V 0A9, Canada"))).toBe(true)
+		expect(rows.some((row) => row.raw.includes("Newfoundland and Labrador"))).toBe(true)
+	})
+
+	it("labels the region component as the surface the row wrote", async () => {
+		const { rows } = await run(repeat(ca("Newfoundland and Labrador"), 12), [])
+		const coded = rows.filter((row) => row.raw.includes(", NL A1V 0A9"))
+
+		expect(coded.length).toBeGreaterThan(0)
+		expect(coded.every((row) => row.components?.["region"] === "NL")).toBe(true)
+	})
+
+	it("covers every province and territory", async () => {
+		for (const { code, name } of Object.values(CA_PROVINCES)) {
+			const { rows } = await run(repeat(ca(name), 12), [])
+
+			expect(rows.some((row) => row.raw.includes(`, ${code} A1V 0A9`))).toBe(true)
+		}
+	})
+
+	it("reaches the same code from the co-official French name", async () => {
+		for (const { code, french } of Object.values(CA_PROVINCES)) {
+			const { rows } = await run(repeat(ca(french), 12), [])
+
+			expect(rows.some((row) => row.raw.includes(`, ${code} A1V 0A9`))).toBe(true)
+		}
+	})
+
+	it("leaves a country that writes its region out alone", async () => {
+		const { rows } = await run(repeat({ ...base, postcode: "07691", postcodePlacement: "after_region" }, 12), [])
+
+		expect(rows.every((row) => row.raw.includes("Illes Balears"))).toBe(true)
+	})
+
+	it("writes the US state code too, which is the surface #2303 measured missing", async () => {
+		// The code reaches the model in volume through the US sources, but only ever with a street in front of the city.
+		// This recipe's `after_region` surface is the bare one: `Washington, DC 20003`.
+		const us = (region: string) => ({
+			locality: "Washington",
+			region,
+			country: "United States",
+			cc: "US",
+			locale: "en-US",
+			postcode: "20003",
+			postcodePlacement: "after_region",
+		})
+
+		const { rows } = await run(repeat(us("District of Columbia"), 12), [])
+		const coded = rows.filter((row) => row.raw.includes(", DC 20003"))
+
+		expect(coded.length).toBeGreaterThan(0)
+		expect(coded.every((row) => row.components?.["region"] === "DC")).toBe(true)
+		// Both forms are posted for the US, so the name keeps its share rather than being replaced.
+		expect(rows.some((row) => row.raw.includes("District of Columbia"))).toBe(true)
+	})
+})
+
 describe("trailing-region source labelling", () => {
-	it("takes `--source-name`, so a rebuilt slice can be dosed apart from the rows it must outweigh", async () => {
+	it("takes `--source-name`, so a rebuilt output can be weighted apart from the rows it must outweigh", async () => {
 		// The sampler buckets by `source` and weights each bucket. #1673's corrected Spanish surfaces are the same
 		// recipe over the same shape as the rows they exist to outweigh, so emitting them under the shipped label
-		// would have dosed them at exactly whatever those rows already draw — no treatment at all.
+		// would have given them exactly the reps per row those rows already draw — no treatment at all.
 		const tuples = repeat({ ...base, postcode: "07691", postcodePlacement: "leading" })
 		const { rows } = await run(tuples, [], { sourceName: "synth-trailing-region-es-v28" })
 
@@ -102,7 +174,7 @@ describe("trailing-region source labelling", () => {
 
 	it("keeps the structured and bare rows apart under an overridden name too", async () => {
 		// The split exists because pooling the structured rows with the 88,904 bare ones makes the new surface
-		// unweightable; an override that collapsed the two would reintroduce that on the renamed slice.
+		// unweightable. an override that collapsed the two would reintroduce that under the renamed source.
 		const { rows } = await run(repeat({ ...base }), [], { sourceName: "synth-trailing-region-es-v28" })
 
 		expect(rows.every((row) => row.source === "synth-trailing-region-es-v28-bare")).toBe(true)

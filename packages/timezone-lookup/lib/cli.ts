@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman-timezone` — build the polygon DB, or look up a coordinate's IANA timezone.
+ *   `mailwoman-timezone` — build the polygon DB, or look up a coordinate's iana timezone.
  *
  *   ```sh
  *   mailwoman-timezone build --geojson combined-with-oceans.json --out timezone.db
@@ -49,7 +49,7 @@ if (positionals[0] === "build") {
 	}
 
 	using lookup = new TimezoneLookup({ databasePath: values.db })
-	// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe, not Array#find
+	// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe rather than Array#find
 	const tzid = lookup.explore(lat, lon)
 
 	console.log(stringifyJSON({ timezone: tzid, offsetSec: tzid ? offsetSecForTimezone(tzid) : null }))

@@ -1,9 +1,9 @@
 # Progressive atlas distribution
 
-**Date:** 2026-08-09  
-**Status:** direction approved; implementation plan pending  
+**Date:** 2026-08-09
+**Status:** direction approved; implementation plan pending
 **Related:** [issue #1577](https://github.com/sister-software/mailwoman/issues/1577),
-[spatial-layer contract](../../engineering/reference/layer-contract.mdx),
+[spatial-layer interface](../../engineering/reference/layer-interface.mdx),
 [WOF granularity scorecard](./2026-08-02-wof-granularity-scorecard-design.md),
 [inferential resolution](../plans/2026-08-08-inferential-resolution.md)
 
@@ -18,7 +18,7 @@ The knowledge graph makes that naming problem structural. We need answers to fou
 adding more databases:
 
 1. What is installed with the engine, the model, and the atlas?
-2. How can every installation retain worldwide coverage while a consumer chooses where to buy disk
+2. How can every installation retain worldwide coverage while a consumer chooses where to provide disk
    and precision?
 3. Where do country-specific address systems live when the atlas is globally partitioned?
 4. How does the CLI explain, plan, fetch, verify, and diagnose the resulting installation?
@@ -70,7 +70,7 @@ copying the shared ONNX model. npm remains the distribution mechanism because th
 coupled to runtime versions and belong in the application's dependency lockfile.
 
 Country is a strong address-system prior. Language is a separate observation. Multilingual
-countries, exonyms, native-script venue names, and transliterated queries all require a many-to-many
+countries, exonyms, native-script venue names, and transliterated queries all require a several-to-several
 relationship between country, script, locale, and address system. A future `AddressSystemID` may
 make that relationship explicit; an ISO country code alone should never become a claim that the
 country has one language.
@@ -99,7 +99,7 @@ core can still bound a query to a country or region. Each additional layer narro
 space when its coverage permits that claim.
 
 Every result continues to report `resolution_tier`, uncertainty, and provenance. Layer absence and
-source absence remain different states. The `layer_coverage` contract decides whether zero means
+source absence remain different states. The `layer_coverage` interface decides whether zero means
 "observed absent" or "unknown."
 
 ## Replace the monolithic candidate projection
@@ -168,7 +168,7 @@ npx mw data pull --area gb --detail address
 ```
 
 Profiles provide progressive disclosure. `starter`, `standard`, `local`, and `complete` are named
-catalog queries, not frozen bundles with bespoke loaders.
+catalog queries rather than frozen bundles with bespoke loaders.
 
 ## Area selection and physical extracts
 
@@ -198,7 +198,7 @@ countries without inventing a special cross-border database.
 
 The build assigns an entity to one canonical home extract and records cross-extract references by stable
 ID. Geometry that crosses extract boundaries needs an explicit fragmentation or indirection rule; the
-prototype must prove that rule before publication.
+prototype must test that rule before publication.
 
 SQLite's attachment limit rules out attaching a planet of tiny files. The runtime needs a extract
 broker that:
@@ -212,7 +212,7 @@ broker that:
 ## Catalog and embedded manifests
 
 The remote catalog answers what can be installed. Each SQLite database's embedded layer manifest
-answers what is actually installed. Both are required.
+answers what is installed. Both are required.
 
 ```ts
 interface AtlasArtifact {
@@ -243,7 +243,7 @@ leaves the prior installation usable.
 Dependencies are explicit. An address extract may depend on a global identity version and a street
 schema version without requiring every other address extract from the same country.
 
-## CLI contract from issue #1577
+## CLI interface from issue #1577
 
 Issue #1577 supplies the consumer acceptance surface for this design:
 
@@ -280,7 +280,7 @@ coverage.
 The `mw` alias and `man mailwoman` are packaging/documentation work around the same commands; they do
 not introduce alternate behavior.
 
-## Filesystem contract
+## Filesystem interface
 
 `env-paths` supplies platform-native defaults. Existing deployments retain
 `MAILWOMAN_DATA_ROOT` as the complete durable-data override.
@@ -316,7 +316,7 @@ Mailwoman directories.
 
 ## Licensing tiers keep the same runtime shape
 
-The layer contract's three tiers remain:
+The layer interface's three tiers remain:
 
 - `shipped`: permissive/public-domain artifacts distributed by Mailwoman;
 - `build-local`: ODbL or other restricted inputs built on the consumer's machine;
@@ -374,5 +374,5 @@ No distribution migration begins until a prototype answers these with receipts:
    clean consumer project.
 
 The architecture can grow one layer at a time. The first implementation increment is the census and
-catalog plan, because both are read-only and tell us whether the proposed starter is actually small
+catalog plan, because both are read-only and tell us whether the proposed starter is small
 before we ask consumers to depend on it.

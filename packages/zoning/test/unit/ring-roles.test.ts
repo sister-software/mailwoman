@@ -4,13 +4,13 @@
 /**
  *   The hole-role resolution, pinned against the convention it depends on.
  *
- *   THE SIGN CONVENTION IS A CONTRACT AND IT IS PINNED FIRST. `ringSignedAreaM2` signs CLOCKWISE positive,
+ *   the sign convention is A interface and IT is pinned first. `ringSignedAreaM2` signs clockwise positive,
  *   which is the opposite of the standard planar shoelace, and this resolver reads a ring's role off that
  *   sign. A change to the helper that flipped it would turn every exterior into a hole and every hole into an
  *   exterior — and the resulting polygons would still be well-formed, still answer containment questions, and
  *   still be wrong everywhere.
  *
- *   THE REST IS THE PUBLISHER'S ENCODING. This service puts each ring in its own `MultiPolygon` part on the
+ *   the rest is the publisher'S encoding. This service puts each ring in its own `MultiPolygon` part on the
  *   features that carry holes that way, so a reader taking the arriving nesting at face value reads a hole as
  *   a second zoned area. Every case below arrives in that shape.
  */
@@ -25,7 +25,7 @@ const SIDE = 0.01
 
 describe("the sign convention this resolver reads roles from", () => {
 	it("signs a clockwise ring POSITIVE and a counter-clockwise one negative", () => {
-		// Clockwise is the EXTERIOR under this service, so this is the statement the whole resolution rests on. The two ring
+		// Clockwise is the exterior under this service, so this is the statement the whole resolution rests on. The two ring
 		// builders are `@mailwoman/spatial`'s own, aliased by the test-kit to this product's meaning.
 		expect(
 			ringSignedAreaM2(exteriorRing(ORIGIN.lon, ORIGIN.lat, ORIGIN.lon + SIDE, ORIGIN.lat + SIDE))
@@ -72,7 +72,7 @@ describe("resolveRingRoles", () => {
 		expect(resolved.holeCount).toBe(1)
 		expect(resolved.nestedHoles).toBe(1)
 		expect(resolved.adjacentHoles).toBe(0)
-		// ONE polygon carrying TWO rings — the shape the ring blob's point test needs to answer a hole correctly.
+		// One polygon carrying two rings — the shape the ring blob's point test needs to answer a hole correctly.
 		expect(resolved.polygons).toHaveLength(1)
 		expect(resolved.polygons[0]).toHaveLength(2)
 	})
@@ -104,7 +104,7 @@ describe("resolveRingRoles", () => {
 		const { nested, allExterior } = ringAreaReadings(resolved.polygons)
 
 		expect(allExterior).toBeGreaterThan(nested)
-		// The raw signed sum IS the hole-aware area under this convention, which is what makes the comparison against the
+		// The raw signed sum is the hole-aware area under this convention, which is what makes the comparison against the
 		// publisher's own figure exact rather than approximate.
 		expect(resolved.signedAreaM2).toBeCloseTo(nested, 3)
 	})
@@ -186,7 +186,7 @@ describe("resolveRingRoles", () => {
 
 	it("carries a hole that shares its parent's boundary rather than dropping it, and counts it", () => {
 		// The residual case, measured at 9 of 3,516 holes nationally and every one a sliver under 1.7 m²: a ring whose
-		// vertices sit ON the exterior. Dropping it would add ground the plan carved out; the count is on the receipt so a
+		// vertices sit on the exterior. Dropping it would add ground the plan carved out. the count is on the receipt so a
 		// reader sees the number rather than assuming it is zero.
 		const resolved = resolveRingRoles(
 			[
@@ -205,7 +205,7 @@ describe("resolveRingRoles", () => {
 	it("takes the LARGEST ring as the exterior where no ring reads as one, and counts it", () => {
 		// Measured at exactly one feature of 85,330: a three-vertex sliver enclosing 3.0 × 10⁻⁷ m², whose winding is
 		// floating-point noise rather than something the publisher stated — it reads clockwise in the source's own metres
-		// and counter-clockwise after reprojection. Refusing would fail the build on the publisher's own data; skipping the
+		// and counter-clockwise after reprojection. Refusing would fail the build on the publisher's own data. skipping the
 		// feature would invent an absence.
 		const resolved = resolveRingRoles([[holeRing(ORIGIN.lon, ORIGIN.lat, ORIGIN.lon + SIDE, ORIGIN.lat + SIDE)]], "9")
 

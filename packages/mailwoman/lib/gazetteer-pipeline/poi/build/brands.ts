@@ -3,32 +3,32 @@
 
 /**
  *   The POI brand lexicon builder — part 1 of 2 (part 2 wires `lookupPOIBrand` into the runtime
- *   pipeline; no pipeline wiring here). Reads a BUILT `poi.db` (Overture Places, the `poi` table
- *   `build-poi.ts` materializes) READ-ONLY via `node:sqlite` and aggregates its `(brand_wikidata,
+ *   pipeline. no pipeline wiring here). Reads a built `poi.db` (Overture Places, the `poi` table
+ *   `build-poi.ts` materializes) read-only via `node:sqlite` and aggregates its `(brand_wikidata,
  *   name)` pairs into a `@mailwoman/poi-taxonomy` brand table: one row per Wikidata QID, its
  *   most-frequently observed name plus alias spellings that clear a noise floor.
  *
- *   The output (`poi-taxonomy/data/brands.json`) is COMMITTED — a rebuild against the same `poi.db`
+ *   The output (`poi-taxonomy/data/brands.json`) is committed — a rebuild against the same `poi.db`
  *   must be byte-identical. Every ordering decision in {@linkcode aggregateBrands} is an explicit,
- *   deterministic tie-break (rows desc → QID asc for brands; count desc → name asc for the modal
- *   pick; alphabetical for aliases), never left to SQL row order or `Map` iteration order.
+ *   deterministic tie-break (rows desc → QID asc for brands. count desc → name asc for the modal
+ *   pick. alphabetical for aliases), never left to SQL row order or `Map` iteration order.
  *
  *   Two phases, split the way `build-poi.ts` splits ingest from materialize, so the aggregation
- *   logic is unit-testable WITHOUT touching sqlite:
+ *   logic is unit-testable without touching sqlite:
  *
  *   1. {@linkcode readBrandNameCounts} / {@linkcode readSourceLayer} — `node:sqlite`, read-only,
- *        the exact `GROUP BY brand_wikidata, name` aggregate plus the source layer's manifest
+ *        the exact `group BY brand_wikidata, name` aggregate plus the source layer's manifest
  *        identity.
- *   2. {@linkcode aggregateBrands} — a PURE function over an `Iterable<BrandNameCount>` (real rows
- *        OR an injected test fixture) — mirrors `build-poi.ts`'s injected-`rows` injection point
+ *   2. {@linkcode aggregateBrands} — a pure function over an `Iterable<BrandNameCount>` (real rows
+ *        or an injected test fixture) — mirrors `build-poi.ts`'s injected-`rows` injection point
  *        (`POISourceRow`) and `chooseCategoryColumn`'s pure-function-over-decoded-rows pattern.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
-import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
-import { workspacePath } from "@mailwoman/core/paths"
+import { readLayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
+import { workspacePathBuilder } from "@mailwoman/core/paths"
 import { allRows } from "@mailwoman/core/utils"
 import type { BrandRecord, POIBrandSourceLayer, POIBrandTable } from "@mailwoman/poi-taxonomy"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
@@ -40,7 +40,7 @@ import { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "#gazetteer-pipeline/poi/def
 export { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "#gazetteer-pipeline/poi/defaults"
 
 /**
- * The brand TABLE's own schema/data version — bump when the shape or matching semantics change. Independent of
+ * The brand table's own schema/data version — bump when the shape or matching semantics change. Independent of
  * {@link POIBrandSourceLayer.version}, which tracks the source `poi.db`'s own layer-manifest version.
  */
 export const BRAND_TABLE_VERSION = "0.2.0"
@@ -55,12 +55,12 @@ export function defaultPOIDatabasePath(): PathBuilder {
 /**
  * Default commit location: `poi-taxonomy/data/brands.json`. Resolved via `repoRootPath` (source-vs-compiled-tree-aware
  * — see `core/utils/repo.ts`) rather than a hand-rolled relative path off `import.meta.dirname`: this module's
- * directory depth relative to the repo root DIFFERS between source (`mailwoman/gazetteer-pipeline/poi/`) and compiled
+ * directory depth relative to the repo root differs between source (`mailwoman/gazetteer-pipeline/poi/`) and compiled
  * (`mailwoman/out/gazetteer-pipeline/poi/`) trees, so a fixed `../../../` would resolve to the wrong package under
  * `yarn compile`'s output.
  */
-export function defaultBrandTableOutPath(): string {
-	return workspacePath("poi-taxonomy", "data", "brands.json")
+export function defaultBrandTableOutPath(): PathBuilder {
+	return workspacePathBuilder("poi-taxonomy", "data", "brands.json")
 }
 
 /**
@@ -73,8 +73,8 @@ export interface BrandNameCount {
 }
 
 /**
- * Reads the exact aggregate the design calls for: `SELECT brand_wikidata, name, COUNT(*) n FROM poi WHERE
- * brand_wikidata IS NOT NULL AND name IS NOT NULL GROUP BY brand_wikidata, name`. Opens `dbPath` READ-ONLY — this
+ * Reads the exact aggregate the design calls for: `select brand_wikidata, name, count(*) n from poi where
+ * brand_wikidata is not NULL and name is not NULL group BY brand_wikidata, name`. Opens `dbPath` read-only — this
  * builder only ever reads a sealed `poi.db`, never writes one.
  */
 export function readBrandNameCounts(dbPath: PathBuilderLike): BrandNameCount[] {
@@ -94,7 +94,7 @@ export function readBrandNameCounts(dbPath: PathBuilderLike): BrandNameCount[] {
  * Reads `dbPath`'s layer manifest and narrows it to what {@link POIBrandSourceLayer} needs.
  */
 export async function readSourceLayer(dbPath: PathBuilderLike): Promise<POIBrandSourceLayer> {
-	using kdb = new DatabaseClient<LayerContractDatabase>(dbPath, { readOnly: true })
+	using kdb = new DatabaseClient<layerschemadatabase>(dbPath, { readOnly: true })
 
 	const manifest = await readLayerManifest(kdb)
 
@@ -113,14 +113,14 @@ interface RawBrandAggregate {
 }
 
 /**
- * PURE aggregation core — no sqlite in this function, so it's unit-testable directly against a fixture. Per QID: `rows`
- * is the sum of every observed `(wikidata, name)` count; `name` is the MODAL (highest-count) variant, ties broken
- * alphabetically; `aliases` are every OTHER variant clearing the noise floor `max(3, 1% of rows)` (guards against
+ * Pure aggregation core — no sqlite in this function, so it's unit-testable directly against a fixture. Per QID: `rows`
+ * is the sum of every observed `(wikidata, name)` count; `name` is the modal (highest-count) variant, ties broken
+ * alphabetically; `aliases` are every other variant clearing the noise floor `max(3, 1% of rows)` (guards against
  * typo/OCR-noise variants swelling the alias list), sorted alphabetically. QIDs whose total falls under `minRows` are
- * dropped entirely. QIDs whose modal name covers LESS than `dominance` of the total (default {@link DEFAULT_DOMINANCE}
- * = 0.5) are ALSO dropped entirely — a modal share under the floor means the QID is systematically mistagged across
- * many unrelated names, not one real chain with noisy spelling variants, so no single name/alias split is trustworthy.
- * The final list is sorted by `rows` descending, ties broken by QID.
+ * dropped entirely. QIDs whose modal name covers less than `dominance` of the total (default {@link DEFAULT_DOMINANCE}
+ * = 0.5) are also dropped entirely — a modal share under the floor means the QID is systematically mistagged across
+ * many unrelated names rather than one real chain with noisy spelling variants, so no single name/alias split is
+ * trustworthy. The final list is sorted by `rows` descending, ties broken by QID.
  *
  * The two explicit tie-breaks (alphabetical for name/alias ties, QID for brand-total ties) are what make a rebuild
  * against the same db byte-identical — determinism never depends on SQL row order or `Map` iteration order here.
@@ -241,7 +241,7 @@ export function serializeBrandTable(table: POIBrandTable): string {
 /**
  * Writes `table` to `out` (creating parent directories as needed) via {@link serializeBrandTable}.
  */
-export async function writeBrandTable(table: POIBrandTable, out: string): Promise<void> {
+export async function writeBrandTable(table: POIBrandTable, out: PathBuilderLike): Promise<void> {
 	await makeDirectories(dirname(out))
 	await writeLocalFile(serializeBrandTable(table), out)
 }

@@ -4,7 +4,7 @@
 /**
  *   Shared helpers for the `registry/tools` probe battery.
  *
- *   The rule: anything reused by two or more probes belongs here; anything a single probe needs
+ *   The rule: anything reused by two or more probes belongs here. anything a single probe needs
  *   stays with that probe.
  */
 
@@ -53,7 +53,7 @@ export const norm = (s: string | undefined): string => (s ?? "").trim()
 
 /**
  * Corporate-form suffixes and function words that carry no identity — dropped from an organization name before its
- * tokens are compared, so the domain words carry the distinguishing signal.
+ * tokens are compared, so the domain words include the distinguishing signal.
  */
 const ORGANIZATION_STOP_WORDS = new Set([
 	"llc",
@@ -76,7 +76,7 @@ const ORGANIZATION_STOP_WORDS = new Set([
 /**
  * The token set of an organization name: lower-cased, non-alphanumerics folded to spaces, stop words removed.
  *
- * NOT a canonical form — `@mailwoman/record`'s `canonicalizeOrganizationName` is the stronger canonical key
+ * Not a canonical form — `@mailwoman/record`'s `canonicalizeOrganizationName` is the stronger canonical key
  * (jurisdiction-aware designation stripping, a DBA split). This set serves the probes' cheap Jaccard overlap over raw
  * registry names, never blocking or display.
  */
@@ -105,8 +105,8 @@ export const std = (xs: readonly number[]): number => {
 	return Math.sqrt(xs.map((x) => (x - m) ** 2).reduce((a, b) => a + b, 0) / Math.max(1, xs.length))
 }
 
-// NOTE(phase4): pct keeps the fraction-in/no-%-suffix shape — not core formatPercent's
-// numerator/denominator contract (call sites append their own "%").
+// note(phase4): pct keeps the fraction-in/no-%-suffix shape — not core formatPercent's
+// numerator/denominator interface (call sites append their own "%").
 export const pct = (x: number): string => (100 * x).toFixed(1)
 
 /**
@@ -140,11 +140,11 @@ export const inTXBBOX = (lat: number, lon: number): boolean =>
  * NPPES registry column headers, by the short name the probes read them under.
  *
  * The NPI registry export is a ~330-column TSV with headers this long, so every probe that touches it needs this map,
- * and five of them had grown their own copy. The copies were a NESTED SUPERSET chain, not a disagreement -- each new
- * probe took the previous one's map and appended what it additionally read -- so this is the widest of the five, and no
- * consumer loses a column. Reading extra keys costs nothing: they are inert strings, and nothing enumerates this object
- * (checked: no `Object.keys`/`values`/`entries`/spread over it anywhere in `tools/`), so adding a column can never
- * change a probe's behavior.
+ * and five of them had grown their own copy. The copies were a nested superset chain rather than a disagreement -- each
+ * new probe took the previous one's map and appended what it additionally read -- so this is the widest of the five,
+ * and no consumer loses a column. Reading extra keys costs nothing: they are inert strings, and nothing enumerates this
+ * object (checked: no `Object.keys`/`values`/`entries`/spread over it anywhere in `tools/`), so adding a column can
+ * never change a probe's behavior.
  */
 export const NPPES_COLUMNS = {
 	npi: "NPI",
@@ -167,7 +167,7 @@ export const NPPES_COLUMNS = {
 	isSubpart: "Is Organization Subpart",
 	parentLBN: "Parent Organization LBN",
 	parentTIN: "Parent Organization TIN",
-	// #625 taxonomy discriminator: the 15 taxonomy slots; collected as a set (any shared code = agreement).
+	// #625 taxonomy discriminator: the 15 taxonomy slots. collected as a set (any shared code = agreement).
 	taxonomy: Array.from({ length: 15 }, (_, i) => `Healthcare Provider Taxonomy Code_${i + 1}`),
 }
 
@@ -200,7 +200,7 @@ export const LR_L2 = 1e-3
 /**
  * L2-regularized logistic regression by batch gradient descent ({@link TRAINING_EPOCHS} epochs) — the probes' linear
  * arm. `w` carries the per-sample class weights (the caller up-weights the rare class). Returns the linear scorer: the
- * logit, not the probability, threshold-comparable across a fixed feature layout.
+ * logit rather than the probability, threshold-comparable across a fixed feature layout.
  */
 export function trainLogisticRegression(
 	X: readonly (readonly number[])[],
@@ -435,7 +435,7 @@ export interface ColocatedPair {
 }
 
 /**
- * Every unordered pair of DISTINCT NPIs sharing a practice-address key — the over-merge population. Providers are
+ * Every unordered pair of distinct NPIs sharing a practice-address key — the over-merge population. Providers are
  * de-duplicated per address by NPI (first record wins); single-NPI addresses yield nothing.
  */
 export function* colocatedDistinctPairs(
@@ -524,7 +524,7 @@ export interface GBTHyperparameters {
 const CROSS_SOURCE_HYPERPARAMS: GBTHyperparameters = { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 }
 
 /**
- * Share of join keys assigned to fit during calibration; the rest are held out.
+ * Share of join keys assigned to fit during calibration. the rest are held out.
  */
 const FIT_SPLIT_FRACTION = 0.8
 
@@ -567,7 +567,7 @@ export interface TrainCrossSourceModelOptions {
 	 */
 	rows: readonly CrossSourceRow[]
 	/**
-	 * The join keys present in BOTH sources.
+	 * The join keys present in both sources.
 	 */
 	joined: ReadonlySet<string>
 	addressFrequency: TermFrequencyTable
@@ -601,8 +601,8 @@ export interface TrainCrossSourceModelOptions {
 
 /**
  * Phases C–F shared by the cross-source trainers: geocode + ingest each source under its own provenance label, block
- * the union and keep only CROSS-source candidate pairs, featurize with the SHARED `createMatchFeaturizer` (train ≡
- * inference), calibrate the #655 threshold on a held-out split of the join keys, train the shipped model on ALL pairs,
+ * the union and keep only cross-source candidate pairs, featurize with the shared `createMatchFeaturizer` (train ≡
+ * inference), calibrate the #655 threshold on a held-out split of the join keys, train the shipped model on all pairs,
  * and emit it as a committed TS module.
  */
 export async function trainCrossSourceModel(
@@ -615,7 +615,7 @@ export async function trainCrossSourceModel(
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
 
-	// `ColumnMapping.source` is a LITERAL provenance label — ingest each source separately so every
+	// `ColumnMapping.source` is a literal provenance label — ingest each source separately so every
 	// record carries its registry of origin (the cross-source filter + the sweep harness key on it).
 	const mappingFor = (source: string): ColumnMapping => ({
 		id: "npi",
@@ -705,7 +705,7 @@ export async function trainCrossSourceModel(
 		const recall = totalPos > 0 ? tp / totalPos : 0
 		const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0
 
-		// The #655 rule: the LOWEST threshold whose precision clears the bar (maximizes recall under it).
+		// The #655 rule: the lowest threshold whose precision clears the bar (maximizes recall under it).
 		if (precision >= precisionBar && recall > barRecall) {
 			barRecall = recall
 			recommendedThreshold = t

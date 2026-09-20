@@ -63,13 +63,13 @@ describe("evidenceCensus", () => {
 	})
 
 	it("does not call an unconfigured session starved", () => {
-		// No channels at all is a fact about the configuration, not about this input. Reporting it as starvation would
+		// No channels at all is a fact about the configuration rather than about this input. Reporting it as starvation would
 		// send the reader to the retrieval side when the wiring is what is missing.
 		expect(evidenceCensus(trace()).silent).toBe(false)
 	})
 
 	it("counts firing over features, not confidence", () => {
-		// Features are what the model reads; confidence is derived beside them. If they disagree, the features win.
+		// Features are what the model reads. confidence is derived beside them. If they disagree, the features decide.
 		const disagreeing = { features: [[0.5], [0]], confidence: [0, 0] }
 
 		expect(evidenceCensus(trace({ gazetteer: disagreeing })).gazetteer).toEqual({

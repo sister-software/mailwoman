@@ -3,7 +3,7 @@
 
 /**
  *   The `mwdev_sources` tool definition — the description an agent reads, the input schema, and the handler wiring.
- *   The census itself lives in `../source-census.ts`; this file is the CONTRACT.
+ *   The census itself lives in `../source-census.ts`; this file is the interface.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -80,7 +80,7 @@ export const sourcesTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 		const rows = await Promise.all(paths.map(async (path) => await censusArtifact(path, countries)))
 		const usable = rows.filter((row) => row.readable)
 
-		// Per COUNTRY across artifacts, so "where is VE data" is one read rather than a scan of every row.
+		// Per country across artifacts, so "where is VE data" is one read rather than a scan of every row.
 		const byCountry: Record<string, Array<{ artifact: string; n: number; join: string[] }>> = {}
 
 		for (const row of usable) {
@@ -95,8 +95,8 @@ export const sourcesTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 		const asked = countries ?? []
 		const missing = asked.filter((code) => !byCountry[code]?.length)
 
-		// When the caller named countries, an artifact holding NONE of them is noise — 29 lines of zeros buries the
-		// two that matter. The absence is still reported, in `summary` and by a country's empty `by_country` entry;
+		// When the caller named countries, an artifact holding none of them is noise — 29 lines of zeros buries the
+		// two that matter. The absence is still reported, in `summary` and by a country's empty `by_country` entry.
 		// what is dropped is the per-artifact restatement of it.
 		const relevant = countries
 			? rows.filter((row) => !row.readable || Object.values(row.countries ?? {}).some((n) => n > 0))

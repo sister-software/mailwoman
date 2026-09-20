@@ -4,12 +4,12 @@
 /**
  *   `mailwoman eval parity` — the rescued v1 parity corpus (#1093) scored against a checkpoint,
  *   parse-only. Carries the plan-2 pre-registered floors (house_number/postcode ≥ 0.97, street
- *   family ≥ 0.90); a non-zero exit means the checkpoint does not yet clear the bar the HELD
+ *   family ≥ 0.90); a non-zero exit means the checkpoint does not yet clear the bar the held
  *   plan-2 production swaps re-run against. Per-country full-agreement table gauges the accent-
  *   mangle + fragment campaign's progress.
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 /**
  * Largest disagreement sample that keeps parity output reviewable.
@@ -19,7 +19,7 @@ const MAX_REPORTED_DISAGREEMENTS = 50
 export const description = "Parity-corpus eval — rescued v1 gold vs a checkpoint (plan-2 swap floors)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "parity",
@@ -32,10 +32,13 @@ export const spec = {
 		fixtures: { type: "string", description: "Fixture JSONL override" },
 		"weights-cache": { type: "string", description: "Package-shaped candidate weights directory" },
 		"street-morphology": { type: "boolean", default: false, description: "Enable street-morphology emission bias" },
-		"gazetteer-prior": {
+		// The runner reads `gazetteerPrior !== false`, so the prior is on unless a caller forces it off and `false`
+		// is the only value this flag can usefully carry. Naming it for the thing it does keeps the flag and the
+		// property it binds to in agreement.
+		"gazetteer-prior-off": {
 			type: "boolean",
 			default: false,
-			description: "Feed the gazetteer FST emission prior (#1497)",
+			description: "Disable the gazetteer FST emission prior (#1497)",
 		},
 		"word-consistency": { type: "boolean", default: true, description: "Enable word-consistency healing" },
 		failing: {
@@ -48,46 +51,28 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	locale: string
-	model?: string
-	tokenizer?: string
-	card?: string
-	fixtures?: string
-	weightsCache?: string
-	streetMorphology: boolean
-	gazetteerPriorOff: boolean
-	wordConsistency: boolean
-	failing: number
-}
+// The runner narrates its tables + verdict on stdout, so no `json`.
+const EvalParity = harnessCommand(
+	spec,
+	async (options) => {
+		const { runParityEval } = await import("#eval-harness/parity-corpus")
 
-const EvalParity: ParsedCommandComponent<Options> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { runParityEval } = await import("#eval-harness/parity-corpus")
-
-			return (
-				await runParityEval({
-					locale: options.locale,
-					modelPath: options.model,
-					tokenizerPath: options.tokenizer,
-					modelCardPath: options.card,
-					fixturesPath: options.fixtures,
-					weightsCacheRoot: options.weightsCache,
-					streetMorphology: options.streetMorphology,
-					gazetteerPrior: options.gazetteerPriorOff ? false : undefined,
-					wordConsistency: options.wordConsistency,
-					failing: options.failing,
-				})
-			).exitCode
-		},
-		(exitCode) => exitCode
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	// The runner narrates its tables + verdict on stdout.
-	return null
-}
+		return (
+			await runParityEval({
+				locale: options.locale,
+				modelPath: options.model,
+				tokenizerPath: options.tokenizer,
+				modelCardPath: options.card,
+				fixturesPath: options.fixtures,
+				weightsCacheRoot: options.weightsCache,
+				streetMorphology: options.streetMorphology,
+				gazetteerPrior: options.gazetteerPriorOff ? false : undefined,
+				wordConsistency: options.wordConsistency,
+				failing: options.failing,
+			})
+		).exitCode
+	},
+	{ exitCode: (exitCode) => exitCode }
+)
 
 export default EvalParity

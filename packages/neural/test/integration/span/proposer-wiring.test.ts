@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Contract tests for the Stage 2.7 consumption wiring: the codex-backed lexicon builder and the
+ *   Interface tests for the Stage 2.7 consumption wiring: the codex-backed lexicon builder and the
  *   span-proposal emission priors. Essential properties: the lexicon derives strictly from codex
  *   tables (no invented designators, no bare "MS" in the scan); the priors are soft additive biases
- *   with B-/I- structure; annotation O-bias respects its confidence floor; QUOTED_SPAN contributes
+ *   with B-/I- structure. annotation O-bias respects its confidence floor. QUOTED_SPAN contributes
  *   no bias at all.
  */
 
@@ -104,7 +104,7 @@ describe("buildSpanProposalPriors", () => {
 	})
 
 	it("dual-path alternatives bias their own spans — both readings stay alive", () => {
-		// "Unit 4/22": SPLIT_UNIT [0,6) + SPLIT_HOUSE_NUMBER [7,9) + FUSED [5,9) at lower conf.
+		// "Unit 4/22": SPLIT_UNIT [0,6) + SPLIT_HOUSE_NUMBER [7,9) + fused [5,9) at lower conf.
 		const proposals: ProposedSpan[] = [
 			{ start: 0, end: 6, kind: "SPLIT_UNIT", confidence: 0.85, alternativeGroup: 0, source: "slash" },
 			{ start: 7, end: 9, kind: "SPLIT_HOUSE_NUMBER", confidence: 0.85, alternativeGroup: 0, source: "slash" },
@@ -114,7 +114,7 @@ describe("buildSpanProposalPriors", () => {
 		const m = buildSpanProposalPriors(proposals, pieces, LABELS)
 		expect(m[0]![1]).toBeCloseTo(0.85 * 5) // B-unit on "Unit"
 		expect(m[1]![2]).toBeCloseTo(0.85 * 5) // I-unit on "4"
-		expect(m[1]![5]).toBeCloseTo(0.3 * 5) // fused B-house_number ALSO alive on "4", weaker
+		expect(m[1]![5]).toBeCloseTo(0.3 * 5) // fused B-house_number also alive on "4", weaker
 		expect(m[2]![5]).toBeCloseTo(0.85 * 5) // split B-house_number on "22" (max over fused I-)
 	})
 

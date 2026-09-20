@@ -6,21 +6,21 @@
  *
  *   The Form 499 filer database ships three free-text note columns that nothing in this crosswalk has ever
  *   read. They are not free text. Across the 2025-12-07 vintage's 19,852 filers, 11,533 carry at least one
- *   note and every note in the file matches ONE OF EIGHT SHAPES — 3,085 distinct strings, eight templates,
+ *   note and every note in the file matches one OF eight shapes — 3,085 distinct strings, eight templates,
  *   no stragglers. That makes them a structured lifecycle log wearing a prose costume.
  *
- *   Two of the eight are not annotations at all, they are DATA the schema already has columns for:
+ *   Two of the eight are not annotations at all, they are data the schema already has columns for:
  *
  *   - `No longer active as of 9/8/2013` (9,706 rows) is a `valid_to`. Without it every ceased filer reads
  *     as open-ended, and a carrier dissolved in 2013 is presented in the present tense.
- *   - `Replaced by filer 821002` (2,826 rows) is a SUPERSESSION EDGE between two filers. 99.8% of those
+ *   - `Replaced by filer 821002` (2,826 rows) is a supersession edge between two filers. 99.8% of those
  *     targets resolve to a filer ID present in the same file, the chains run 1-5 deep, and none of them
  *     cycle. That is the identity chain the spine spec wanted, already written down.
  *
- *   The other six are cessation REASONS, and they are the FCC's own words about a filer's status. They are
+ *   The other six are cessation reasons, and they are the FCC's own words about a filer's status. They are
  *   carried as a small closed vocabulary plus the verbatim source string, never as a derived judgment of
  *   our own — `Form499Lifecycle.notes` always holds exactly what the file said. This matters most for
- *   {@linkcode Form499CessationReason.Bankruptcy}: it is a quoted federal record with provenance, not a
+ *   {@linkcode Form499CessationReason.Bankruptcy}: it is a quoted federal record with provenance rather than a
  *   claim this project makes about a company.
  *
  *   **Nothing here infers.** A note that matches no shape is counted in
@@ -42,7 +42,7 @@ export const Form499CessationReason = {
 	 */
 	ReplacedByFiler: "replaced-by-filer",
 	/**
-	 * `This company still exists, however it is no longer providing telecommunications services.` The entity survives;
+	 * `This company still exists, however it is no longer providing telecommunications services.` The entity survives.
 	 * only the telecom operation ended. Distinct from {@linkcode Form499CessationReason.OutOfBusiness} and the difference
 	 * is required — one of these companies can still be somebody's parent.
 	 */
@@ -84,15 +84,15 @@ export interface Form499Lifecycle {
 	 */
 	notes: string[]
 	/**
-	 * ISO `YYYY-MM-DD` date this filer stopped being active, from `No longer active as of <date>`. Absent when no note
+	 * ISO `yyyy-MM-DD` date this filer stopped being active, from `No longer active as of <date>`. Absent when no note
 	 * stated one.
 	 *
 	 * ISO because this is destined for `valid_to`, which `assertISODate` enforces and which every `asOf`-scoped read
-	 * compares as a plain string. The source states `M/D/YYYY`, which sorts wrong and fails that assertion.
+	 * compares as a plain string. The source states `M/D/yyyy`, which sorts wrong and fails that assertion.
 	 */
 	ceasedAt?: string
 	/**
-	 * The Form 499 filer ID that superseded this one, from `Replaced by filer <id>`. A supersession edge, not an
+	 * The Form 499 filer ID that superseded this one, from `Replaced by filer <id>`. A supersession edge rather than an
 	 * ownership one: it says this registration became that registration, and nothing about who owns either.
 	 */
 	replacedByForm499ID?: string
@@ -102,7 +102,7 @@ export interface Form499Lifecycle {
 	 */
 	reasons: Form499CessationReasonValue[]
 	/**
-	 * Notes matching none of the eight templates. Always `0` for the 2025-12-07 vintage; a non-zero count in a later
+	 * Notes matching none of the eight templates. Always `0` for the 2025-12-07 vintage. a non-zero count in a later
 	 * vintage means the FCC added a template and this file needs revisiting. Counted rather than silently dropped so that
 	 * fact can be measured instead of assumed.
 	 */
@@ -150,7 +150,8 @@ function pad2(value: string): string {
  * `null`/`undefined`/blank entries are skipped, and any number of cells is tolerated so a future vintage adding `note4`
  * needs no signature change.
  *
- * Never throws. A note this does not recognize is counted, not guessed at — see {@link Form499Lifecycle.unrecognized}.
+ * Never throws. A note this does not recognize is counted rather than guessed at — see
+ * {@link Form499Lifecycle.unrecognized}.
  */
 export function parseForm499Notes(rawNotes: ReadonlyArray<string | null | undefined>): Form499Lifecycle {
 	const notes: string[] = []
@@ -223,7 +224,7 @@ export function parseForm499Notes(rawNotes: ReadonlyArray<string | null | undefi
 /**
  * True when this filer's notes state it is no longer an active Form 499 filer.
  *
- * Deliberately NOT `reasons.length > 0`: {@linkcode Form499CessationReason.AccountConsolidated} means the filing moved
+ * Deliberately not `reasons.length > 0`: {@linkcode Form499CessationReason.AccountConsolidated} means the filing moved
  * under a parent's and {@linkcode Form499CessationReason.ExitedTelecom} means the company still exists — reading either
  * as "this entity is gone" would erase a live company that is somebody's parent. A `ceasedAt` date, or an explicit
  * out-of-business/absorbed/replaced statement, is what this reports on.

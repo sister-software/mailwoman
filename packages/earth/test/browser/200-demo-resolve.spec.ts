@@ -19,19 +19,18 @@ test.describe("Demo — resolution cascade", () => {
 		await demo.submit()
 
 		const { resolved, markerCount } = await demo.readResult()
-		// 90210 is the example; should land somewhere in CA. The cascade may resolve via postcode
+		// 90210 is the example. should land somewhere in CA. The cascade may resolve via postcode
 		// or fall back to locality if the postcode has placeholder coords. Either way: a marker.
 		expect(markerCount).toBeGreaterThan(0)
 		expect(resolved["coords"]).toBeTruthy()
 		demo.console.assertNoFailEvents()
 	})
 
-	test("German address — postcode 10115 country-restricts into Berlin, not New York", async ({ demo }) => {
+	test("German address — postcode 10115 country-restricts into Berlin rather than New York", async ({ demo }) => {
 		// Regression for the candidate-table cascade: 10115 is both a Berlin DE postcode and a New York US
 		// ZIP, and the gazetteer now carries US + DE/FR/EU postcodes. The locality must resolve first
 		// (Berlin → DE by population) and country-restrict the postcode, so it resolves to the DE 10115 point —
-		// IN Berlin — never the NYC ZIP. Grade the COORDINATE (postcode-precise now): Berlin ≈ 52.5, 13.4,
-		// not Manhattan ≈ 40.8, -74.0.
+		// IN Berlin — never the NYC ZIP. Grade the coordinate (postcode-precise now): Berlin ≈ 52.5, 13.4 rather than Manhattan ≈ 40.8, -74.0.
 		await demo.goto("5 Hauptstraße, Berlin, Berlin 10115")
 		await demo.submit()
 
@@ -43,8 +42,8 @@ test.describe("Demo — resolution cascade", () => {
 
 	test("Canadian address — postcode M5H 2N2 resolves into Toronto (the -20f CA coverage)", async ({ demo }) => {
 		// -20f folds Canada's Overture divisions into the admin gazetteer (Toronto, Montréal, … — absent
-		// before) PLUS 843k CA postcode centroids. So "Toronto" resolves to Ontario (top by population),
-		// the cascade country-restricts to CA, and the CA postcode is reachable. Grade the COORDINATE:
+		// before) plus 843k CA postcode centroids. So "Toronto" resolves to Ontario (top by population),
+		// the cascade country-restricts to CA, and the CA postcode is reachable. Grade the coordinate:
 		// downtown Toronto ≈ 43.6, -79.4 — not Toronto, Ohio (40.46), where it landed pre-CA-admin.
 		await demo.goto("100 Queen Street West, Toronto, ON M5H 2N2")
 		await demo.submit()
@@ -55,10 +54,12 @@ test.describe("Demo — resolution cascade", () => {
 		demo.console.assertNoFailEvents()
 	})
 
-	test("Russian address — Moscow resolves to Russia, not Moscow, Idaho (-20g world coverage)", async ({ demo }) => {
+	test("Russian address — Moscow resolves to Russia rather than Moscow, Idaho (-20g world coverage)", async ({
+		demo,
+	}) => {
 		// -20g folds ~70 countries' Overture divisions + GeoNames population + multilingual aliases. So
 		// the English "Moscow" (an alias of Москва) resolves, and the 10.4M-pop RU city outranks the
-		// 26k-pop US homonym. Grade the COORDINATE: Moscow ≈ 55.7, 37.6 — not Idaho (46.7, -117).
+		// 26k-pop US homonym. Grade the coordinate: Moscow ≈ 55.7, 37.6 — not Idaho (46.7, -117).
 		await demo.goto("Moscow, Russia")
 		await demo.submit()
 		const { markerCount } = await demo.readResult()
@@ -97,7 +98,7 @@ test.describe("Demo — resolution cascade", () => {
 		lon: number
 		tolDeg: number
 		/**
-		 * A measured defect the case documents until it is fixed; the test is expected to fail while it stands.
+		 * A measured defect the case documents until it is fixed. the test is expected to fail while it stands.
 		 */
 		knownFailure?: string
 	}[] = [
@@ -116,7 +117,7 @@ test.describe("Demo — resolution cascade", () => {
 			lon: 14.45,
 			tolDeg: 0.15,
 			knownFailure:
-				"The v9.1.0 classifier tags `Praha` as a street and splits `100 00` into two house numbers, so the cascade has no locality or postcode to resolve and drops no marker. A model defect, not a runtime one.",
+				"The v9.1.0 classifier tags `Praha` as a street and splits `100 00` into two house numbers, so the cascade has no locality or postcode to resolve and drops no marker. A model defect rather than a runtime one.",
 		},
 		{
 			name: "Australian postcode 2000 → Sydney",
@@ -143,7 +144,7 @@ test.describe("Demo — resolution cascade", () => {
 	}
 
 	test("White House default — surfaces no fail-pattern errors even when resolver returns nothing", async ({ demo }) => {
-		// Postcode 20500 has lat=0/lon=0 in WOF; cascade filters it; raw text + locality may also
+		// Postcode 20500 has lat=0/lon=0 in WOF. cascade filters it. raw text + locality may also
 		// miss. The test isn't asserting the resolution succeeds — it's asserting that the
 		// "Style is not done loading" race + bbox-on-empty-result paths stay clean.
 		await demo.goto()

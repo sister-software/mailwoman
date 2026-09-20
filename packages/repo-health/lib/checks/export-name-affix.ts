@@ -6,10 +6,10 @@
  *   over `workspaceDirectories`, `listTrackedFiles` over `trackedFiles`. The longer name is how a duplicate arrives,
  *   because an author who knew the shorter name would have imported it.
  *
- *   The sibling {@linkcode findPrivateNameShadows} compares names for EQUALITY, which finds a copy only when both
+ *   The sibling {@linkcode findPrivateNameShadows} compares names for equality, which finds a copy only when both
  *   authors chose the same word. This compares camelCase component runs instead, which is what an affix leaves behind.
  *
- *   SCOPED ACROSS PACKAGES on purpose. Two names inside one package are usually a deliberate family
+ *   scoped across packages on purpose. Two names inside one package are usually a deliberate family
  *   (`buildPostcodeLocalityJP` beside `buildPostcodeLocality`); across packages, the shorter name has a public home the
  *   longer one could have imported.
  *
@@ -32,7 +32,7 @@ export const AFFIX_IGNORE_MARKER = "repo-health-ignore export-name-affix --"
 
 /**
  * How many camelCase components a shared run must carry. One-component runs are the vocabulary of the tree — `read`,
- * `build`, `file` — so a floor of one reports nearly every name against nearly every other; measured over this
+ * `build`, `file` — so a floor of one reports nearly every name against nearly every other. measured over this
  * repository's exported function names, the floor is the difference between 417 pairs and 130.
  */
 const COMPONENT_FLOOR = 2
@@ -151,7 +151,7 @@ export async function findAffixPairs(context: RepoContext): Promise<AffixPair[]>
 		byLowerName.set(key, [...(byLowerName.get(key) ?? []), site])
 	}
 
-	// One diagnostic per declaration, not per matching run and not per overload: an overload set is one name, and a name
+	// One diagnostic per declaration rather than per matching run and not per overload: an overload set is one name, and a name
 	// containing several shorter names is still one thing to look at.
 	const pairs = new Map<string, AffixPair>()
 

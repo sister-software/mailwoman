@@ -33,7 +33,7 @@ node scripts/ingest-overture-addresses.ts \
 
 ## Run
 
-`--country` is REQUIRED (the JSONL is per-country; rows omit a country field):
+`--country` is required (the JSONL is per-country; rows omit a country field):
 
 ```bash
 mailwoman corpus run overture \

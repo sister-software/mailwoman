@@ -22,7 +22,7 @@ It checks seven things: model weights, the Node runtime, the ONNX runtime, the d
 gazetteer, the POI layer, and any locale overlays (e.g. fr-fr), and prints the one command that
 closes each gap. Exit code 0 means the two CORE checks
 (weights + runtime) passed — parsing works even with every data layer missing. A red `✗` on a data
-layer is a reported gap with a `fix:` line, not a failure; read that line before guessing at a fix.
+layer is a reported gap with a `fix:` line rather than a failure; read that line before guessing at a fix.
 `--json` emits the same report as `{ checks: [...], exitCode }` for scripting.
 
 ## Parse
@@ -43,13 +43,13 @@ const result = await parse(input)
 ```
 
 `result.tree.roots` is an array of tagged nodes (`tag`, `value`, `confidence`, `children`) nested by
-geographic containment, not a flat record. Build the pipeline once and reuse it across calls —
-loading the model is the expensive part, not the parse.
+geographic containment rather than a flat record. Build the pipeline once and reuse it across calls —
+loading the model is the expensive part rather than the parse.
 
 The full `ComponentTag` vocabulary is the type of that name exported from `@mailwoman/core/types`.
 Read it before assuming a tag exists or guessing at its name.
 
-**Confidence is the model's own score, not a calibrated probability, by default.** Don't read `0.91`
+**Confidence is the model's own score rather than a calibrated probability, by default.** Don't read `0.91`
 as "91% likely correct" — on the held-out set this model is measurably under-confident (mean score
 0.913 vs 0.980 accuracy). If you route decisions on the number — sending low-confidence spans to
 review, say — wire the calibrator shipped in the weights package first (`createCalibrator` from
@@ -87,7 +87,7 @@ the live remote size instead of trusting the local file.
 
 ## Filing a bug
 
-A wrong parse or a wrong geocode is worth a precise report — a concrete address that broke, not a
+A wrong parse or a wrong geocode is worth a precise report — a concrete address that broke rather than a
 description of the class of address that broke:
 
 - The exact input string, copied — not retyped. Whitespace and punctuation are the bug about half
@@ -97,7 +97,7 @@ description of the class of address that broke:
 - The output of `npx mailwoman parse --debug "<input>"` — the full pipeline trace (normalized form,
   query shape, locale, kind, per-stage timing, and the resulting tree) in one JSON object.
 - Whether you resolved (`--resolve` on `parse`, or `geocode`) or only parsed — a missing coordinate
-  on a parse-only call is documented behavior, not a bug.
+  on a parse-only call is documented behavior rather than a bug.
 - The locale, if it isn't `en-US`.
 
 File at https://github.com/sister-software/mailwoman/issues.

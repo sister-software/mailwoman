@@ -1,6 +1,6 @@
 # v8-jp-full 24k: the JP char model clears its pre-registered check
 
-**Date:** 2026-08-05 · **Run:** `v8-jp-full` seed 42, 24,000 steps on Modal (app `ap-sQNIbzfiHx5OgmG8iG8Xa8`) · **Arc:** CJK Phase 3/4 (#1176) · **Status:** CHECK PASS
+**Date:** 2026-08-05 · **Run:** `v8-jp-full` seed 42, 24,000 steps on Modal (app `ap-sQNIbzfiHx5OgmG8iG8Xa8`) · **Arc:** CJK Phase 3/4 (#1176) · **Status:** check pass
 
 The scorer and bar were pre-registered on #1176 (2026-07-29, scorer pinned at `34c7b6c2`): blended
 coordinate-acceptability ≥ 0.70 at 15 km on the held-out 20,000-row board, scored with
@@ -22,7 +22,7 @@ The bar was set from Leg-1's 200k-row probe (0.9925 on 33 labels); the full mode
 10× corpus with the 47-label `stage3-jp` head — 2,000,000 train rows, char vocab 2,237, from
 scratch, 3.07 epochs, ~80 min at ~5 steps/s.
 
-## 2. Per-register acceptability (diagnostic, not the check)
+## 2. Per-register acceptability (diagnostic rather than the check)
 
 | register       | @15 km                 | unresolved |
 | -------------- | ---------------------- | ---------- |
@@ -53,7 +53,7 @@ held: the same head at 24k reads municipality 0.9943. The probe's four mechanica
 answered yes (head loads/saves on the char path, `[classifier_learning_rate] 18,095 params @ 0.001`
 printed, supported labels separated, scorer ran end to end) — which is all a probe is for.
 
-**Correction, 2026-09-05.** The 0.2237 / 0.1847 probe read above was a scorer artifact, not a model
+**Correction, 2026-09-05.** The 0.2237 / 0.1847 probe read above was a scorer artifact rather than a model
 state. Re-scored on 2026-09-05 with the current `score_jp_probe_board.py --label-set stage3-jp` against
 the same jp-board.jsonl, the `v8-jp-full-2k` step-2000 checkpoint reads coordinate-acceptability
 **0.9931** (19,862 / 20,000; 107 unresolved) with municipality span exact-match **0.9947**, prefecture
@@ -61,12 +61,12 @@ the same jp-board.jsonl, the `v8-jp-full-2k` step-2000 checkpoint reads coordina
 parameterization existed, so the 47-label checkpoint was LIKELY read through the 33-label `ID_TO_LABEL`,
 the silent mislabeling the scorer's docstring names. The probe's own log had token macro-F1 0.9996 at
 step 2,000, which was never compatible with a 0.18 span match on the same board. Consequence for the
-reading above: the head learns municipality by step 2,000, not "at 24k"; the cosine-anneal explanation
+reading above: the head learns municipality by step 2,000 rather than "at 24k"; the cosine-anneal explanation
 was not needed. The v8-cjk 2k probe (#2034) uses the corrected figure as its comparison arm.
 
-## 5. What this does NOT decide
+## 5. What this does not decide
 
-- Shipping. This is a training-check record, not a release: the JP model has no serving path yet
+- Shipping. This is a training-check record rather than a release: the JP model has no serving path yet
   (char-path inference, weights packaging, and the `ja-jp` overlay are the next arc). The ledger
   keys by shipped npm model versions and does not take this row.
 - The head-LR change (`classifier_learning_rate: 1e-3`, a 2× head/body ratio). The run converged

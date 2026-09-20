@@ -58,7 +58,7 @@ raises at first call rather than at import, so a broken module reaches a trainin
 
 Their comment claims they keep `tokenizer.py` import-light. Measured, that claim does not hold: `gazetteer_anchor`
 adds 2,263 µs and `country_lexicon` 117 µs on top of `tokenizer`'s 36,869 µs, which is 6.5%. Neither module reaches
-torch. Deferred imports elsewhere in the tree do buy real weight and stay — see §11.
+torch. Deferred imports elsewhere in the tree do provide real weight and stay — see §11.
 
 Both `huggingface/nanotron` and `allenai/OLMo-core` hold value types in a `data/types.py` that everything imports.
 A package-root `types.py` holding `PieceSpan` removes all five deferred imports.
@@ -102,7 +102,7 @@ A new country adds one directory holding only the roles it needs.
 root. Corpus carries 14 country and region directories among 7 role directories today, and at every country the role
 directories stop being findable. One path segment holds the package root at roughly twelve entries permanently.
 
-The key is `countries/`, not `locales/`, because the Python per-country code is keyed by country — register readers,
+The key is `countries/` rather than `locales/`, because the Python per-country code is keyed by country — register readers,
 script-specific text normalization — whereas `locale` in this repository means the `en-US` form that keys the
 weights packages and the `--locale` flag.
 
@@ -245,7 +245,7 @@ against the literal strings extracted from the current file. The collapse lands 
 `training-arc` skills, and the fixture strings in `packages/dev-mcp/test/unit/bash-write-guard.test.ts`. The compiler
 reads none of them, so they are swept as quoted literals per the "Moving a workspace" rule in `AGENTS.md`.
 
-The Bash write guard is unaffected: `packages/dev-mcp/lib/hooks/bash/write/rules.ts:196` matches `head: "modal"`, not
+The Bash write guard is unaffected: `packages/dev-mcp/lib/hooks/bash/write/rules.ts:196` matches `head: "modal"` rather than
 a filename.
 
 ### 8.6 `scripts/`
@@ -263,7 +263,7 @@ with no `uv run` and no environment. Folding it into the CLI would make the pre-
   not exported.
 - Widen `[tool.mypy] files` from `["src"]` to include `launch/`, which this arc rewrites anyway.
   `tests/` stays out: `uv run mypy --strict tests` reports 663 errors in 54 of 56 files on this branch, so admitting
-  it is its own arc, not a line in this one.
+  it is its own arc rather than a line in this one.
 - Delete `src/mailwoman_corpus/`: zero importers, a docstring and a `__version__`.
 - Add a Python counterpart of `prefix-directories` to `repo-health`, so section 5 stays satisfied. The Python tree is
   outside every structural check the repository runs, which is why section 3's two defects went unreported.
@@ -302,7 +302,7 @@ Steps 1 through 7 touch nothing a Modal run reads before merge. Step 8 changes e
   A deferred import is not a defect on its own. Measured on this branch: `mailwoman_train.cli` imports in 22,340 µs
   while `mailwoman_train.train` takes 1,458,740 µs, so the 32 deferred imports in `cli.py` keep torch's 1.46 s off
   every `--help`. Of the 63 deferred intra-package imports in the tree, five are cycle-dodgers — `tokenizer.py` at
-  541, 550, 566, 583 and 598 — and the other 58 buy startup weight.
+  541, 550, 566, 583 and 598 — and the other 58 provide startup weight.
 
 - A corpus version is added to `launch/corpora.py` as one table row, verified by adding the most recent existing
   version through the new path and diffing the generated command set against the current literal strings.

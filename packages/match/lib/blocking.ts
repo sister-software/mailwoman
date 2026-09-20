@@ -7,11 +7,11 @@
  *   bet pays off: two records resolving to the same place land in the same spatial cell regardless
  *   of how their address strings are spelled, so geography is the primary block.
  *
- *   A {@link BlockingKey} maps a record to zero or more string keys; records sharing any key become
+ *   A {@link BlockingKey} maps a record to zero or more string keys. records sharing any key become
  *   candidates. Keys compose as a _union_ (the standard multi-pass approach — high recall from
- *   cheap rules): block on the spatial cell OR the canonical key OR the postcode, and a pair that
- *   any rule catches is scored. {@link conjunction} builds the AND-style key Geo-ER uses (`name-cell
- *   AND geo-cell`) when a single rule is too loose.
+ *   cheap rules): block on the spatial cell or the canonical key or the postcode, and a pair that
+ *   any rule catches is scored. {@link conjunction} builds the and-style key Geo-ER uses
+ *   (`name-cell and geo-cell`) when a single rule is too loose.
  *
  *   Recall is the priority — a pair the blocker never proposes can never match, the most dangerous
  *   silent failure in record linkage. So the spatial grid is generous and neighbour-expanded by
@@ -93,7 +93,7 @@ export function exactKey<R>(
 }
 
 /**
- * A conjunctive block key — the cross-product of its sub-keys, joined (Geo-ER's "name AND distance"). A record is keyed
+ * A conjunctive block key — the cross-product of its sub-keys, joined (Geo-ER's "name and distance"). A record is keyed
  * by every combination of one sub-key from each input, so two records co-block only when they agree on _all_ inputs.
  * Tighter blocks, lower recall — use when a single rule is too loose.
  */
@@ -117,7 +117,7 @@ export function conjunction<R>(...keys: BlockingKey<R>[]): BlockingKey<R> {
  */
 export interface BlockResult<R> {
 	/**
-	 * Deduplicated candidate pairs (no self-pairs; a pair caught by multiple keys appears once).
+	 * Deduplicated candidate pairs (no self-pairs. a pair caught by multiple keys appears once).
 	 */
 	pairs: Array<[R, R]>
 	/**
@@ -129,8 +129,8 @@ export interface BlockResult<R> {
 /**
  * Generate candidate pairs from `records` via one or more blocking keys (their union). Builds an inverted index (key →
  * records) and emits the unique within-block pairs. A block larger than `maxBlockSize` is skipped and reported in
- * `droppedBlocks` rather than blowing up into a quadratic scan — an explicit, visible coverage limit, not a silent
- * drop.
+ * `droppedBlocks` rather than blowing up into a quadratic scan — an explicit, visible coverage limit rather than a
+ * silent drop.
  */
 export function block<R>(
 	records: readonly R[],

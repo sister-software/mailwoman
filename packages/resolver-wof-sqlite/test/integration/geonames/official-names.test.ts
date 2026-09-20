@@ -4,8 +4,8 @@
 /**
  *   #936 ingest bit — `ingestGeonamesAliases({ alternateDir })` decorates alias rows with the
  *   alternateNamesV2 language tag, `privateuse` ("preferred"), and the `official` bit (language is
- *   CLDR-official for the country; colloquial/historic never qualify). The Turku fixture mirrors
- *   the motivating row: "Åbo" is Turku's official Swedish name, not a mere alias. Without the V2
+ *   CLDR-official for the country. colloquial/historic never qualify). The Turku fixture mirrors
+ *   the motivating row: "Åbo" is Turku's official Swedish name rather than a mere alias. Without the V2
  *   file the fold is byte-identical to the pre-#936 untagged behavior.
  */
 
@@ -88,14 +88,14 @@ beforeAll(async () => {
 		dir.resolve("FI.txt")
 	)
 
-	// "Santa Isabel" reproduces the Malabo shape: one language-tagged UNFLAGGED row + a separate
+	// "Santa Isabel" reproduces the Malabo shape: one language-tagged unflagged row + a separate
 	// language-less row carrying the historic evidence (isHistoric + a `to` date). Historic-ness is a
-	// fact about the NAME — the unflagged row must not classify official.
+	// fact about the name — the unflagged row must not classify official.
 	const santaIsabelHistoric = ["1", "633679", "", "Santa Isabel", "", "", "", "1", "", "1973"].join("\t")
 
 	await writeLocalTextFile(
 		[
-			altRow("633679", "sv", "Åbo"), // official Swedish — deliberately NOT preferred-flagged (the real FI row isn't)
+			altRow("633679", "sv", "Åbo"), // official Swedish — deliberately not preferred-flagged (the real FI row isn't)
 			altRow("633679", "el", "Tourkou"), // Greek transliteration — not official in FI
 			altRow("633679", "la", "Aboa", { 7: "1" }), // historic — never official
 			altRow("633679", "sv", "Santa Isabel"), // official language, unflagged row…
@@ -118,14 +118,14 @@ test("V2 tags mark the official-language preferred name; transliterations and hi
 	const byName = (name: string): Row =>
 		db.prepare(`SELECT language, privateuse, official FROM names WHERE name = ?`).get(name) as Row
 
-	// Åbo qualifies WITHOUT isPreferredName — the flag is sparse annotation in real dumps (Turku's
+	// Åbo qualifies without isPreferredName — the flag is sparse annotation in real dumps (Turku's
 	// actual sv row is unflagged), so officialness must not require it.
 	expect(byName("Åbo")).toEqual({ language: "sv", privateuse: "", official: 1 })
 	expect(byName("Tourkou")).toEqual({ language: "el", privateuse: "", official: 0 })
 	expect(byName("Aboa")).toEqual({ language: "la", privateuse: "", official: 0 })
-	// The Malabo shape: the historic evidence lives on a DIFFERENT row than the language tag.
+	// The Malabo shape: the historic evidence lives on a different row than the language tag.
 	expect(byName("Santa Isabel")).toEqual({ language: "sv", privateuse: "", official: 0 })
-	// The primary-name mirror row stays untagged — spr.name already IS the name-exact tier.
+	// The primary-name mirror row stays untagged — spr.name already is the name-exact tier.
 	expect(byName("Turku")).toEqual({ language: "", privateuse: "", official: 0 })
 })
 

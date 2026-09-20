@@ -8,11 +8,11 @@
  *   The worker also carries the range-chunk cache for the byte-range databases the resolver reads from the data
  *   origin. Two jobs:
  *
- *   1. PERSISTENCE. The database URLs are versioned and immutable, so every validated 64 KB range chunk is stored in
+ *   1. persistence. The database URLs are versioned and immutable, so every validated 64 KB range chunk is stored in
  *      Cache Storage keyed by URL and offset. A repeat visit replays the warm-up and the cascade reads from disk.
- *   2. INTEGRITY. Mobile Safari's HTTP cache can hand back a TORN range chunk (a truncated body for a 206), which
+ *   2. integrity. Mobile Safari's http cache can hand back a torn range chunk (a truncated body for a 206), which
  *      reaches SQLite as "database disk image is malformed". Every chunk's body length is checked against its
- *      Content-Range BEFORE it is cached or served; a torn chunk is refetched once with `cache: "no-store"`. The
+ *      Content-Range before it is cached or served. a torn chunk is refetched once with `cache: "no-store"`. The
  *      readers' own cache-busting retry stays as the backstop for browsers without service workers.
  *
  *   Non-database requests are never intercepted (no `respondWith`, so the browser default applies). sql.js-httpvfs
@@ -122,7 +122,7 @@ async function respondWithCachedRange(request: Request, href: string, start: num
 		let chunk = response.status === HTTP_PARTIAL_CONTENT ? await validatedChunk(response) : null
 
 		if (!chunk && response.status === HTTP_PARTIAL_CONTENT) {
-			// A torn chunk out of the HTTP cache: force fresh bytes once.
+			// A torn chunk out of the http cache: force fresh bytes once.
 			response = await fetch(href, {
 				method: "GET",
 				mode: "cors",
@@ -156,7 +156,7 @@ async function respondWithCachedRange(request: Request, href: string, start: num
 
 /**
  * Read a 206 response's body and verify its length against the Content-Range header. The final chunk of a file is
- * legitimately shorter than requested, so the header, not the request, is the truth. Null for a torn body or an
+ * legitimately shorter than requested, so the header rather than the request, is the truth. Null for a torn body or an
  * unparsable header.
  */
 async function validatedChunk(response: Response): Promise<ValidatedChunk | null> {

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Nominatim engine contract + wire types the router delegates to. The RESOLVED-address →
+ *   The Nominatim engine interface + wire types the router delegates to. The resolved-address →
  *   {@link NominatimResult} formatter (`toNominatimResult`, `toFeatureCollection`,
  *   `nominatimResultToSchemaOrg`) lives in `format.ts`.
  */
@@ -11,13 +11,13 @@ import type { OpenCageAnnotations } from "@mailwoman/annotations"
 
 /**
  * Output serialization formats Nominatim supports. `jsonv2` is the modern default. `jsonld` is the Mailwoman extension
- * (#1052) — schema.org `Place` JSON-LD, not part of upstream Nominatim.
+ * (#1052) — schema.org `Place` JSON-LD rather than part of upstream Nominatim.
  */
 export type NominatimFormat = "jsonv2" | "json" | "geojson" | "jsonld"
 
 /**
  * The structured address breakdown returned under `address` when `addressdetails=1`. Keys mirror Nominatim's
- * OSM-derived tag names; populated from Mailwoman's `ComponentTag` / resolved ancestor lineage (mapping owned by
+ * OSM-derived tag names. populated from Mailwoman's `ComponentTag` / resolved ancestor lineage (mapping owned by
  * #804).
  */
 export type NominatimAddressDetails = Record<string, string>
@@ -53,7 +53,7 @@ export interface NominatimResult {
 }
 
 /**
- * Parsed `/search` parameters (free-text OR structured; never both).
+ * Parsed `/search` parameters (free-text or structured. never both).
  */
 export interface NominatimSearchParams {
 	q?: string
@@ -95,7 +95,7 @@ export interface NominatimLookupParams {
 
 /**
  * Whether an artifact could state its own provenance. `unreadable` is kept apart from `absent` because "we could not
- * open it" is a fault to chase, not a rebuild to schedule.
+ * open it" is a fault to chase rather than a rebuild to schedule.
  */
 export type NominatimManifestState = "present" | "absent" | "unreadable"
 
@@ -118,7 +118,7 @@ export interface NominatimStatusArtifact {
 	 */
 	reason?: string
 	/**
-	 * When the artifact was BUILT, as its own manifest records it.
+	 * When the artifact was built, as its own manifest records it.
 	 */
 	built?: string
 	/**
@@ -126,7 +126,7 @@ export interface NominatimStatusArtifact {
 	 */
 	version?: string
 	/**
-	 * What it was built FROM: the manifest's source, then its source vintage.
+	 * What it was built from: the manifest's source, then its source vintage.
 	 */
 	sources?: string[]
 }
@@ -137,7 +137,7 @@ export interface NominatimStatusArtifact {
  */
 export interface NominatimStatusExtension {
 	/**
-	 * Every artifact this process opened, INCLUDING the ones that carry no manifest — an unstamped artifact reports its
+	 * Every artifact this process opened, including the ones that carry no manifest — an unstamped artifact reports its
 	 * own absence rather than being omitted, because an omission cannot be told apart from an artifact nobody opened.
 	 */
 	artifacts: NominatimStatusArtifact[]
@@ -159,7 +159,7 @@ export interface NominatimStatus {
 
 /**
  * A freshness report as this surface consumes it — structurally `mailwoman/freshness`'s `FreshnessReport`, declared
- * here so the wire contract keeps no import from the engine implementation.
+ * here so the wire interface keeps no import from the engine implementation.
  */
 export interface NominatimFreshnessReport {
 	dataUpdated?: string
@@ -169,12 +169,12 @@ export interface NominatimFreshnessReport {
 /**
  * Compose the `/status` payload from a freshness report.
  *
- * A FUNCTION rather than four lines at the one call site, because the CLI and the test that checks this response would
+ * A function rather than four lines at the one call site, because the CLI and the test that checks this response would
  * otherwise each hold their own copy of the same mapping — and the field this mapping exists to get right is one that
- * is OMITTED under a condition, which is exactly what two copies stop agreeing about first.
+ * is omitted under a condition, which is exactly what two copies stop agreeing about first.
  *
  * `data_updated` is dropped when no artifact carried a build date. Nominatim declares the field optional, so leaving it
- * out is the contract's own way of saying the deployment cannot date its data; filling it with a boot time or a file
+ * out is the interface's own way of saying the deployment cannot date its data. filling it with a boot time or a file
  * mtime would answer with something that looks measured and is not.
  */
 export function nominatimStatus(freshness: NominatimFreshnessReport): NominatimStatus {
@@ -187,7 +187,7 @@ export function nominatimStatus(freshness: NominatimFreshnessReport): NominatimS
 }
 
 /**
- * The geocoding engine the router delegates to. Each method is optional; a route whose method is not provided answers
+ * The geocoding engine the router delegates to. Each method is optional. a route whose method is not provided answers
  * `501 Not Implemented`. The real implementation (Mailwoman parse → resolve, plus `WOFReverseGeocoder`) is wired by the
  * CLI and fleshed out across #802–#805.
  */

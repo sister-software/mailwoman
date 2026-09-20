@@ -2,35 +2,35 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The FROZEN ruler for the phase-2 decision (#1967), and the arithmetic that reads it. Pure — no model,
+ *   The frozen ruler for the phase-2 decision (#1967), and the arithmetic that reads it. Pure — no model,
  *   no database, no pipeline — so every refusal and every threshold is testable without loading an engine.
  *
- *   WHY A FOURTH PRE-REGISTRATION AND NOT A FOURTH COPY. #1928's ruler decides one lane against one frozen
+ *   why A fourth PRE-registration and not A fourth copy. #1928's ruler decides one lane against one frozen
  *   baseline; #1965's asserts one asymmetry. Phase 2 spans four lanes whose combined effect neither covers,
- *   so this file registers the LANES and the checks that read them, and takes the implementation from
+ *   so this file registers the lanes and the checks that read them, and takes the implementation from
  *   {@linkcode canonicalJSON} rather than re-typing it. Two encoders hashing the same content drift at the
  *   first key ordering either one changes.
  *
- *   A BLOCKED LANE IS REGISTERED AND NEVER MEASURED. Mapping breadth (#1963) authored W1-1 and W1-2 and
- *   HELD W1-3 behind #1980, so its operational half cannot be measured at all today. There are two ways to
+ *   A blocked lane is registered and never measured. Mapping breadth (#1963) authored W1-1 and W1-2 and
+ *   held W1-3 behind #1980, so its operational half cannot be measured at all today. There are two ways to
  *   get that wrong and the audit refuses both: a ruler that scores a blocked lane reports a number about
  *   nothing, and a ruler that omits it reports full coverage over three quarters of the phase. So a lane
- *   carries `status`, a `blocked` lane may register NO check ({@linkcode auditPhase2Definition} refuses
+ *   carries `status`, a `blocked` lane may register no check ({@linkcode auditPhase2Definition} refuses
  *   one), it must name what blocks it and what its rows will read once unblocked, and every verdict carries
  *   {@linkcode Phase2Verdict.coverage} plus the blocked lane ids in its reasons.
  *
- *   EVERY LANE'S BASELINE IS A MERGED-PR RECEIPT, AND THE RULER SAYS SO. All six phase-2 implementation
+ *   every lane'S baseline is A merged-PR receipt, and the ruler says SO. All six phase-2 implementation
  *   issues closed before this pre-registration was written, so there is no arm that ran first here. Each
  *   check therefore names the receipt standing in for a baseline — the PR that recorded it, and the number —
  *   and the run reproduces it. A baseline nobody can point at is indistinguishable from one chosen after the
  *   result was visible.
  *
- *   THE MEASUREMENTS ARE WHOLE ROW COUNTS. Every reading is an integer over a stated denominator, including
+ *   the measurements are whole row counts. Every reading is an integer over a stated denominator, including
  *   the identity checks: a definition hash that has not moved reads `1`, a moved one reads `0`. That keeps
  *   every threshold a row count, the property #1928's audit already enforces, and keeps one comparison rule
  *   for the whole ruler instead of one per field type.
  *
- *   THIS FILE DECIDES WHAT THE RULER MAPS TO. It does not RECORD it. The recording is the operator's, and
+ *   this file decides what the ruler maps TO. It does not record it. The recording is the operator's, and
  *   the definition's `recordingNote` says so on the receipt.
  */
 
@@ -252,7 +252,7 @@ export interface Phase2Lane {
 /**
  * One row of the integration record's default-change bar, recorded with what it reads today.
  *
- * This register is NEVER an input to {@linkcode decidePhase2}. It exists because "proceed to what the record authorized"
+ * This register is never an input to {@linkcode decidePhase2}. It exists because "proceed to what the record authorized"
  * is a claim about a specific authorization — the opt-in surface — and a reader has to be able to see that the separate
  * bar for a default change is not met, rather than infer it from the absence of a claim.
  */
@@ -275,12 +275,12 @@ export interface Phase2Thresholds {
 	 */
 	controlRegressionTolerance: number
 	/**
-	 * How many `resolution`-tier target checks must hold for PROCEED-AS-AUTHORIZED.
+	 * How many `resolution`-tier target checks must hold for proceed-AS-authorized.
 	 */
 	minimumResolutionChecks: number
 	/**
-	 * How many `evidence`-tier target checks must hold. Required by BOTH decisions: the authorized surface serves a
-	 * category WITH the authority that chose it, so the evidence half is not an alternative to the resolution half.
+	 * How many `evidence`-tier target checks must hold. Required by both decisions: the authorized surface serves a
+	 * category with the authority that chose it, so the evidence half is not an alternative to the resolution half.
 	 */
 	minimumEvidenceChecks: number
 	/**
@@ -293,7 +293,7 @@ export interface Phase2Thresholds {
 /**
  * The artifacts every measurement was registered against. Recorded, compared, and reported — never a decision input.
  *
- * A run on a rebuilt `poi.db` or a bumped weights package is still a run; it is just not comparable to the receipts
+ * A run on a rebuilt `poi.db` or a bumped weights package is still a run. it is just not comparable to the receipts
  * this ruler names as baselines, and {@linkcode Phase2Verdict.comparability} is where a reader sees that.
  */
 export interface Phase2ArtifactPins {
@@ -332,7 +332,7 @@ export interface Phase2DecisionDefinition {
 	issue: string
 	program: string
 	/**
-	 * What PROCEED-AS-AUTHORIZED authorizes, named so the decision cannot be read as authorizing more.
+	 * What proceed-AS-authorized authorizes, named so the decision cannot be read as authorizing more.
 	 */
 	authorizedOutcome: string
 	scopeNote: string
@@ -741,7 +741,7 @@ export function describeBar(bar: Phase2Bar): string {
 /**
  * Measure every registered check against the readings one run produced.
  *
- * REFUSES a check whose measurement no reading answers, rather than treating the absence as a miss. An unread
+ * Refuses a check whose measurement no reading answers, rather than treating the absence as a miss. An unread
  * measurement is a broken instrument, and a broken instrument reporting `0` is indistinguishable from a real zero — the
  * one reading a decision must never be built on.
  */
@@ -775,7 +775,7 @@ export function evaluatePhase2Checks(
 }
 
 /**
- * Count one run. The denominators are the REGISTERED check counts.
+ * Count one run. The denominators are the registered check counts.
  */
 export function computePhase2Counts(
 	definition: Phase2DecisionDefinition,
@@ -799,11 +799,11 @@ export function computePhase2Counts(
 /**
  * Map measured checks onto exactly one decision, against the frozen thresholds.
  *
- * ORDER IS required, and it is #1928's order. A control miss is checked FIRST and stops under both decisions: a
- * capability bought by moving something that already worked is not a result to act on. PROCEED-AS-AUTHORIZED is checked
- * before EVIDENCE-ONLY, and requires BOTH tiers — the surface the integration record authorizes serves a category
+ * Order is required, and it is #1928's order. A control miss is checked first and stops under both decisions: a
+ * capability bought by moving something that already worked is not a result to act on. proceed-AS-authorized is checked
+ * before evidence-only, and requires both tiers — the surface the integration record authorizes serves a category
  * together with the authority that chose it, so the evidence half is a component of proceeding rather than an
- * alternative to it. EVIDENCE-ONLY is then exactly the record's §7 outcome: the observation surface holds and the
+ * alternative to it. evidence-only is then exactly the record's §7 outcome: the observation surface holds and the
  * recognition capability did not reach its bar.
  *
  * A blocked lane changes no arithmetic. It changes `coverage`, and it is named in the reasons on every run.

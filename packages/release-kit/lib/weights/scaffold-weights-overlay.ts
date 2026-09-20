@@ -5,14 +5,14 @@
  *   Scaffold a data-only `@mailwoman/neural-weights-<locale>` overlay and register it everywhere it
  *   has to be registered.
  *
- *   WHY THIS EXISTS. A weights overlay is six small files, which makes copying a sibling look like
- *   the obvious move. It is not: copying carried `repository.directory` verbatim THREE times in one
+ *   Why this exists. A weights overlay is six small files, which makes copying a sibling look like
+ *   the obvious move. It is not: copying carried `repository.directory` verbatim three times in one
  *   day (de-de took en-nz's, then en-in took de-de's before that was fixed, propagating the wrong
  *   value two hops), each time turning `main` red on the #757 provenance test. The fields that must
- *   NOT survive a copy are precisely the ones naming the source, and a human diffing two
+ *   not survive a copy are precisely the ones naming the source, and a human diffing two
  *   near-identical manifests is bad at spotting them.
  *
- *   A new overlay also has FIVE registration points, and missing any one fails at a different stage
+ *   A new overlay also has five registration points, and missing any one fails at a different stage
  *   and a different time:
  *
  *   1. root `package.json` `workspaces` — miss it and `yarn pack` says "not part of the project"
@@ -24,7 +24,7 @@
  *   This writes all six files and edits all five registers, so the failure mode is "the command was
  *   not run" rather than "the command was run and one edit was forgotten".
  *
- *   Deliberately does NOT touch `.github/workflows/publish.yml`: its fetch/preflight/guard lines
+ *   Deliberately does not touch `.github/workflows/publish.yml`: its fetch/preflight/guard lines
  *   name artifacts explicitly and a locale may or may not ship a pair index, a postcode binary or an
  *   FST. That edit stays a human decision, and the command prints the exact lines to add.
  *
@@ -51,7 +51,7 @@ export interface ScaffoldWeightsOverlayOptions {
 	 */
 	locale: string
 	/**
-	 * The one artifact the overlay adds; defaults to `pair-index-<cc>.bin`, or `fst-<locale>.bin` under `base`.
+	 * The one artifact the overlay adds. defaults to `pair-index-<cc>.bin`, or `fst-<locale>.bin` under `base`.
 	 */
 	artifact?: string
 	/**
@@ -85,7 +85,7 @@ export async function scaffoldWeightsOverlay(
 
 	/**
 	 * BCP-47 in, lowercase package suffix out: `es-ES` → `es-es`. The workspace directory, the package name and every
-	 * register use this form; the ORIGINAL casing is kept only for the model card's `locale` field, which is the one
+	 * register use this form. the original casing is kept only for the model card's `locale` field, which is the one
 	 * place the tag is a tag rather than an identifier.
 	 */
 	const localeTag = options.locale
@@ -102,7 +102,7 @@ export async function scaffoldWeightsOverlay(
 	}
 
 	/**
-	 * Read the ROOT version rather than a sibling package's. `prepare-version` refuses to bump a tree that is not
+	 * Read the root version rather than a sibling package's. `prepare-version` refuses to bump a tree that is not
 	 * version-synced, so a new workspace must be born at the root version — the v8.4.0 bdc/filer drift is what that guard
 	 * exists to catch.
 	 */
@@ -117,7 +117,7 @@ export async function scaffoldWeightsOverlay(
 			description: `${localeTag} weights overlay for mailwoman — data-only; shares the base model with ${basePackage}.`,
 			license: "AGPL-3.0",
 			type: "module",
-			// `directory` names THIS package. It is the field that has been wrong every time an overlay was
+			// `directory` names this package. It is the field that has been wrong every time an overlay was
 			// created by copying a sibling.
 			repository: {
 				type: "git",
@@ -125,7 +125,7 @@ export async function scaffoldWeightsOverlay(
 				directory: `packages/neural-weights-${slug}`,
 			},
 			// `!scripts/**` keeps the dev linker out of the tarball. It imports the shared builder by
-			// relative path, which does not resolve once unpacked — and a data-only overlay has no use
+			// relative path, which fails after unpacking — and a data-only overlay has no use
 			// for a dev script anyway.
 			files: [
 				"model-card.json",
@@ -138,7 +138,7 @@ export async function scaffoldWeightsOverlay(
 				"!scripts/**",
 			],
 			dependencies: { [basePackage]: "workspace:*" },
-			// The dev linker imports the shared builder; knip refuses an import no manifest declares.
+			// The dev linker imports the shared builder. knip refuses an import no manifest declares.
 			devDependencies: { "@mailwoman/resolver-wof-sqlite": "workspace:*" },
 			mailwoman: { baseWeights: basePackage },
 		},
@@ -161,7 +161,7 @@ export async function scaffoldWeightsOverlay(
 	// The dev linker, emitted rather than copied. This step used to be a printed instruction reading
 	// "copy the closest sibling's build block", and that is precisely how es-es and it-it came to ship
 	// de-de's docstring — describing German addresses, in packages whose code was correct. Generating it
-	// leaves nothing to copy; the magnitudes below are placeholders the author is told to calibrate.
+	// leaves nothing to copy. the magnitudes below are placeholders the author is told to calibrate.
 	await writeLocalTextFile(
 		base
 			? `/**
@@ -195,11 +195,11 @@ await materializeDevOverlay({
  *   overlay declares \`mailwoman.baseWeights\`, so it symlinks nothing and its only job is building the index that makes
  *   \`resolveWeights({locale: "${slug}"})\` surface \`pairIndexPath\` in local dev.
  *
- *   TODO(${slug}): say what makes this locale's index required, and what it is INERT without. If
- *   the locale writes its postcode BEFORE the locality, it needs entries in
+ *   TODO(${slug}): say what makes this locale's index required, and what it is inert without. If
+ *   the locale writes its postcode before the locality, it needs entries in
  *   \`SEGMENT_PARENT_POSTCODE_SHAPES\` and \`LEADING_POSTCODE_COUNTRIES\`
  *   (\`neural/placetype-pair-prior.ts\`) or the artifact changes nothing; if it writes the postcode
- *   last, say so, because the ABSENCE from that set is then deliberate. Write this for ${slug}, not
+ *   last, say so, because the absence from that set is then deliberate. Write this for ${slug} rather than
  *   for whichever locale you read first.
  */
 
@@ -209,7 +209,7 @@ await materializeDevOverlay({
 	locale: "${slug}",
 	pairIndex: {
 		country: "${country}",
-		// TODO(${slug}): calibrate. These are the magnitudes every existing overlay was measured at, not
+		// TODO(${slug}): calibrate. These are the magnitudes every existing overlay was measured at rather than
 		// a measurement of this one.
 		delta: 10,
 		transitionBeta: 5,
@@ -260,7 +260,7 @@ await materializeDevOverlay({
 	const registered: string[] = []
 
 	// 1. Root workspaces. The field is `packages/*` plus literals, so a new overlay directory is covered by the glob
-	//    the moment it exists; a literal entry is only written when no pattern already names the directory.
+	//    the moment it exists. a literal entry is only written when no pattern already names the directory.
 	const rootPath = repoPath("package.json")
 	const rootPkg = await readLocalJSONFile<{ workspaces: string[] }>(rootPath)
 

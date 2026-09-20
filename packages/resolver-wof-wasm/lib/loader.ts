@@ -5,10 +5,10 @@
  *   Loads a slim WOF SQLite distribution into an in-memory `@sqlite.org/sqlite-wasm` database.
  *
  *   V1 strategy: fetch the whole file (~35 MB for the default top-1k US slim) and open it via the OO1
- *   API's "OPFS"-flavored constructor in transient mode. The full-fetch approach is fine for a
+ *   API's "opfs"-flavored constructor in transient mode. The full-fetch approach is fine for a
  *   bundle this size — the slim DB is what the browser holds in RAM for the duration of the session
- *   anyway, and HTTP/2 + gzip make the 35 MB transfer pay one RTT + transfer time, not the
- *   "hundreds of byte-range requests" cost a HTTP-VFS approach would incur.
+ *   anyway, and http/2 + gzip make the 35 MB transfer pay one RTT + transfer time rather than the
+ *   "hundreds of byte-range requests" cost a http-VFS approach would incur.
  *
  *   When we eventually want incremental loading (Phase B.x), this is the point to swap — keep
  *   `WOFWasmPlaceLookup` unchanged and replace the loader with a `sql.js-httpvfs`-style VFS.
@@ -20,7 +20,7 @@ export interface LoadSlimOpts {
 	/**
 	 * Either a URL to fetch the slim .db from, or a raw Uint8Array containing the file bytes.
 	 *
-	 * URL form is the public-demo path (load over HTTP). Uint8Array form is what tests use to skip the network entirely
+	 * URL form is the public-demo path (load over http). Uint8Array form is what tests use to skip the network entirely
 	 * and is also useful if a caller wants to embed the DB in their own bundler output (Vite's `?url` / `?arraybuffer`
 	 * imports both produce things that fit here).
 	 */
@@ -51,7 +51,7 @@ export interface LoadSlimOpts {
 export async function loadSlimWOFDatabase(opts: LoadSlimOpts): Promise<{ db: Database; sqlite3: Sqlite3Static }> {
 	const bytes = typeof opts.source === "string" ? await fetchBytes(opts.source, opts.fetchImpl) : opts.source
 
-	// sqlite3InitModule's TS signature lies about its options bag — the runtime DOES accept the
+	// sqlite3InitModule's TS signature lies about its options bag — the runtime does accept the
 	// Emscripten-style {print, printErr, locateFile} options shown in the upstream docs. Cast to
 	// `any` for the call site rather than shadowing the typed wrapper for the entire file.
 	const sqlite3 = await (sqlite3InitModule as (opts: Record<string, unknown>) => Promise<Sqlite3Static>)({
@@ -62,11 +62,11 @@ export async function loadSlimWOFDatabase(opts: LoadSlimOpts): Promise<{ db: Dat
 
 	// OO1 transient-DB constructor: opens an in-memory DB then we restore the file bytes into it
 	// via `sqlite3.capi.sqlite3_deserialize`. This is the official way to "open a Uint8Array as a
-	// database" — `new DB(":memory:")` followed by deserialize is faster than CREATE TABLE +
-	// INSERT-from-dump and preserves the on-disk b-tree pages directly.
+	// database" — `new DB(":memory:")` followed by deserialize is faster than create table +
+	// insert-from-dump and preserves the on-disk b-tree pages directly.
 	const db = new sqlite3.oo1.DB(":memory:", "ct")
 
-	// `allocFromTypedArray` has shape constraints across sqlite-wasm versions; the
+	// `allocFromTypedArray` has shape constraints across sqlite-wasm versions. the
 	// explicit alloc + HEAPU8.set pattern is the lowest-common-denominator path and
 	// avoids the "expecting 8/16/32/64" heap-shape mismatch seen on Node builds.
 	const p = sqlite3.wasm.alloc(bytes.byteLength)

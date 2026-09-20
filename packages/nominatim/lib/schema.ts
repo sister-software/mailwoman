@@ -3,8 +3,8 @@
 
 /**
  *   Zod wire schemas for the Nominatim-compatible surface. Key names and envelopes are the vendor
- *   contract — immutable. Query schemas are validator-proof (string|string[] unions, all optional)
- *   with doc-exact `.openapi()` overrides; every wire decision lives in the handlers (see
+ *   interface — immutable. Query schemas are validator-proof (string|string[] unions, all optional)
+ *   with doc-exact `.openapi()` overrides. every wire decision lives in the handlers (see
  *   routes.ts's legacyQuery adapter, the photon-established pattern).
  */
 
@@ -12,7 +12,7 @@ import { z } from "@hono/zod-openapi"
 import { stampedResponseSchema } from "@mailwoman/api-kit"
 
 /**
- * The `addressdetails=1` breakdown — OSM-derived keys; tolerant of extras.
+ * The `addressdetails=1` breakdown — OSM-derived keys. tolerant of extras.
  */
 export const NominatimAddressDetailsSchema = z
 	.object({
@@ -88,7 +88,7 @@ export const NominatimFeatureCollectionSchema = z
 
 /**
  * One database the deployment is serving from, and what its embedded `layer_manifest` says about it. `manifest:
- * "absent"` is an artifact built before the layer contract — it is listed rather than dropped, so a reader can tell an
+ * "absent"` is an artifact built before the layer interface — it is listed rather than dropped, so a reader can tell an
  * unstamped artifact from one nobody opened.
  */
 const NominatimStatusArtifactSchema = z
@@ -186,7 +186,7 @@ export const StampedNominatimFeatureCollectionSchema = stampedResponseSchema(
 /**
  * The real `/search` 200 response union (#1052 doc accuracy): a jsonv2/json result array by default, a `format=geojson`
  * FeatureCollection, or a `format=jsonld` array of schema.org `Place` objects — see `routes.ts`'s search handler.
- * Doc-only; the wire behavior is unchanged.
+ * Doc-only. the wire behavior is unchanged.
  */
 export const NominatimSearchResponseSchema = z
 	.union([
@@ -199,7 +199,7 @@ export const NominatimSearchResponseSchema = z
 /**
  * The real `/reverse` 200 response union (#1052 doc accuracy): a single jsonv2/json result, `null` when unresolved, a
  * `format=geojson` FeatureCollection, or a `format=jsonld` schema.org `Place` — see `routes.ts`'s reverse handler.
- * Doc-only; the wire behavior is unchanged.
+ * Doc-only. the wire behavior is unchanged.
  */
 export const NominatimReverseResponseSchema = z
 	.union([StampedNominatimResultSchema, z.null(), StampedNominatimFeatureCollectionSchema, SchemaOrgPlaceSchema])
@@ -207,8 +207,8 @@ export const NominatimReverseResponseSchema = z
 
 /**
  * The real `/lookup` 200 response union (#1052 doc accuracy): a jsonv2/json result array by default, or a
- * `format=geojson` FeatureCollection. NO `jsonld` branch — a legacy quirk preserved verbatim by `routes.ts`'s lookup
- * handler (`format=jsonld` falls through to the raw jsonv2 array there), so this union stays two-wide, unlike
+ * `format=geojson` FeatureCollection. There is no `jsonld` branch — a legacy quirk preserved verbatim by `routes.ts`'s
+ * lookup handler (`format=jsonld` falls through to the raw jsonv2 array there), so this union stays two-wide, unlike
  * `/search`'s three-wide union.
  */
 export const NominatimLookupResponseSchema = z
@@ -216,7 +216,7 @@ export const NominatimLookupResponseSchema = z
 	.openapi("NominatimLookupResponse")
 
 /**
- * A validator-proof query param: accepts one value or repeats; the doc override keeps the emitted schema exact.
+ * A validator-proof query param: accepts one value or repeats. the doc override keeps the emitted schema exact.
  */
 const tolerantParam = z.union([z.string(), z.array(z.string())]).optional()
 

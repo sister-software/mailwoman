@@ -6,7 +6,7 @@
  *
  *   {@link extractZip} and {@link extractSingleFileZip} take the whole archive as a `Buffer`, which is the right shape
  *   when a client has just downloaded one (`bdc/sdk/download.ts`) and the wrong shape for anything sizable: adm-zip
- *   holds the archive AND the decompressed member resident at once. The national address dumps under
+ *   holds the archive and the decompressed member resident at once. The national address dumps under
  *   `$MAILWOMAN_DATA_ROOT` are 0.5–2.9 GB compressed and up to 9 GB unpacked, so the path-in readers below stream —
  *   yauzl seeks the central directory over a file handle and inflates one member on demand, at constant memory
  *   regardless of archive size.
@@ -61,7 +61,7 @@ async function openStreamingArchive(
  */
 export interface ZipNameOptions {
 	/**
-	 * An `iconv-lite` label — `cp949`, `shift_jis`, `gbk`. Omit when the archive's names are ASCII or properly flagged
+	 * An `iconv-lite` label — `cp949`, `shift_jis`, `gbk`. Omit when the archive's names are ascii or properly flagged
 	 * UTF-8, which is every other archive this repository reads.
 	 */
 	filenameEncoding?: string
@@ -70,7 +70,7 @@ export interface ZipNameOptions {
 /**
  * A member's name, decoded as {@link ZipNameOptions} asks.
  *
- * `iconv-lite` rather than `TextDecoder` for the reason `decodeByteStream` gives: Node's WHATWG `euc-kr` is EUC-KR
+ * `iconv-lite` rather than `TextDecoder` for the reason `decodeByteStream` gives: Node's whatwg `euc-kr` is EUC-KR
  * proper and reads 8,824 of CP949's 17,048 two-byte sequences differently, so a member whose name uses the UHC
  * extension would be looked for under a name that does not exist.
  */
@@ -96,7 +96,7 @@ async function openEntryStream(entry: Entry, options?: ZipFileOptions): Promise<
 		[Symbol.asyncDispose]: async () => {
 			// A member read to its end has already released yauzl's read, and its `close` has already been delivered — so
 			// waiting for that event here would wait forever. `readableEnded` is the test that separates the two paths:
-			// true after a full read, false after a `take` or a `break`. `closed` is NOT the test, because Node sets it when
+			// true after a full read, false after a `take` or a `break`. `closed` is not the test, because Node sets it when
 			// the close event is queued rather than delivered, so a guard on it skips the wait on the path that needs it.
 			if (contents.readableEnded) return
 
@@ -104,7 +104,7 @@ async function openEntryStream(entry: Entry, options?: ZipFileOptions): Promise<
 
 			contents.destroy()
 
-			// Wait for the teardown to finish, not merely to start. `destroy()` returns before yauzl has released its read,
+			// Wait for the teardown to finish rather than merely to start. `destroy()` returns before yauzl has released its read,
 			// and the archive's own disposer runs next: it then raises `Cannot close while reading in progress` on the
 			// early-exit path this reader documents as supported.
 			await closed
@@ -161,7 +161,7 @@ export function extractSingleFileZip(data: ArrayBuffer | Buffer): Promise<Buffer
 /**
  * Names a member of an archive, either exactly or by pattern.
  *
- * A pattern matches the FIRST entry whose full archive-internal path tests true, in central-directory order.
+ * A pattern matches the first entry whose full archive-internal path tests true, in central-directory order.
  */
 export type ZipEntrySelector = string | RegExp
 
@@ -280,7 +280,7 @@ export interface ExtractZipEntriesOptions {
 /**
  * Extract members of an archive into `destinationDirectory`.
  *
- * Directory entries are skipped; a nested path is created as needed unless `flatten` is set. Members stream one at a
+ * Directory entries are skipped. a nested path is created as needed unless `flatten` is set. Members stream one at a
  * time, so this is bounded by the largest member rather than by the archive.
  *
  * @category Files
@@ -322,11 +322,11 @@ export async function extractZipEntries(
 /**
  * Verify every member's CRC-32 against the value its central-directory header claims — what `unzip -t` is for.
  *
- * This is a corruption check on a download, so it decompresses everything and keeps nothing; the archive is read one
+ * This is a corruption check on a download, so it decompresses everything and keeps nothing. the archive is read one
  * member at a time and the checksum is folded chunk by chunk, so memory is bounded by the inflate window.
  *
  * The CRC is computed here rather than delegated to yauzl's `validateCrc32`, which asserts `Cannot validate CRC32 for
- * uncompressed data` on a STORED member — and a corrupt stored member is precisely what this is meant to catch. Folding
+ * uncompressed data` on a stored member — and a corrupt stored member is precisely what this is meant to catch. Folding
  * it locally covers both storage methods with one path.
  *
  * @category Files

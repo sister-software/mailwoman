@@ -3,22 +3,16 @@
 
 /**
  *   `mailwoman registry matcher-scale` — the pure-Node matcher scale eval (block → Fellegi-Sunter →
- *   cluster over synthetic geo-clustered records at increasing N; wall-clock + peak RSS). Emits the
+ *   cluster over synthetic geo-clustered records at increasing N. wall-clock + peak RSS). Emits the
  *   markdown report to stdout. Tip: run with `node --expose-gc` for cleaner per-size RSS.
  */
 
 import { Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	splitNumberList,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, splitNumberList, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "matcher-scale",
@@ -35,14 +29,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	sizes: string
-	dup: number
-	em: boolean
-	outMd?: string
-}
-
-const RegistryMatcherScale: ParsedCommandComponent<Options> = ({ options }) => {
+const RegistryMatcherScale: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { matcherScale } = await import("@mailwoman/registry/tools")
 

@@ -4,8 +4,8 @@
 /**
  *   Unit tests for the coarse-placer soft-prior wiring in `geocodeAddress` (#244, M1 step C). Fakes
  *   the classifier + resolver so the test captures the `ResolveOpts` the cascade hands the resolver
- *   — no WOF / weights / databases needed. Pins the contract: a confident in-map guess injects an
- *   `anchorPosterior`; abstain / off-map / no-stage are byte-stable no-ops; an explicit
+ *   — no WOF / weights / databases needed. Pins the interface: a confident in-map guess injects an
+ *   `anchorPosterior`. abstain / off-map / no-stage are byte-stable no-ops. an explicit
  *   `defaultCountry` still flows alongside.
  */
 
@@ -61,11 +61,11 @@ describe("geocodeAddress — coarse-placer soft prior (#244)", () => {
 		const post = seen[0]?.anchorPosterior
 		expect(post, "default-on should inject a country posterior for a clear in-map address").toBeDefined()
 		const entries = Object.entries(post ?? {})
-		// Residual upgrade: a full per-in-map-country DISTRIBUTION, not the one-hot argmax.
+		// Residual upgrade: a full per-in-map-country distribution rather than the one-hot argmax.
 		expect(entries.length).toBeGreaterThan(1)
 
 		for (const [c, p] of entries) {
-			expect(c).toMatch(/^[A-Z]{2}$/) // 2-letter in-map country (never OTHER)
+			expect(c).toMatch(/^[A-Z]{2}$/) // 2-letter in-map country (never `other`)
 			expect(p).toBeGreaterThanOrEqual(0)
 		}
 
@@ -129,7 +129,7 @@ describe("geocodeAddress — the dominant-bearer guard on hardCountry (#1738)", 
 	})
 
 	/**
-	 * A street + locality tree — NOT bare-locality, so the placer block runs (the #912 change skips bare trees).
+	 * A street + locality tree — not bare-locality, so the placer block runs (the #912 change skips bare trees).
 	 */
 	const treeWithLocality = (locality: string): AddressTree => ({
 		raw: `1001 Rue X, ${locality}`,
@@ -164,18 +164,18 @@ describe("geocodeAddress — the dominant-bearer guard on hardCountry (#1738)", 
 		return { resolver, seen }
 	}
 
-	// CONTRACT CHANGE, #1751 narrowing #1738. This test asserted `anchorPosterior` SURVIVED a disagreeing
-	// bearer — "the placer's posterior stays the SOFT anchor the worldwide race weighs". At
+	// interface change, #1751 narrowing #1738. This test asserted `anchorPosterior` survived a disagreeing
+	// bearer — "the placer's posterior stays the soft anchor the worldwide race weighs". At
 	// `COARSE_PLACER_ANCHOR_WEIGHT = 1` that anchor is not soft: the within-tier key is
 	// `(prominence ?? score) + w · posterior[country]`, so on `Queen Street, Bristol` a 0.9261 posterior
 	// gap overturned GB Bristol's 0.884776 prominence lead and the answer moved 5,274 km to Connecticut.
 	// A prior that decides is not a prior.
 	//
-	// So a disagreeing bearer now withholds BOTH. The outcome #1738 protects is unchanged — measured
+	// So a disagreeing bearer now withholds both. The outcome #1738 guards is unchanged — measured
 	// end to end, `1001 Boulevard Saint-Laurent, Montréal` still answers 45.5079245, -73.5593271, CA —
 	// and the board is identical on both arms (gauntlet 382/383, 449/591 resolved, same tier tally).
 	//
-	// The alternative that would preserve #1738's wording is to keep the posterior at a REDUCED weight
+	// The alternative that would preserve #1738's wording is to keep the posterior at a reduced weight
 	// it cannot decide with. That needs a measured weight rather than a chosen one (#1740's complaint
 	// about `placeCountryThreshold`), and no population exists to measure it on yet.
 	test("a DISAGREEING dominant bearer withholds the placer entirely — Montréal under French text", async () => {
@@ -191,8 +191,8 @@ describe("geocodeAddress — the dominant-bearer guard on hardCountry (#1738)", 
 		expect(seen[0]?.anchorPosterior).toBeUndefined()
 	})
 
-	// The other half of the contract, unchanged and worth pinning: an AGREEING bearer still gets the
-	// soft posterior. Withholding on agreement would retire the placer, not narrow it.
+	// The other half of the interface, unchanged and worth pinning: an agreeing bearer still gets the
+	// soft posterior. Withholding on agreement would retire the placer rather than narrow it.
 	test("an AGREEING dominant bearer still gets the soft posterior", async () => {
 		const { resolver, seen } = guardResolver({ country: "FR", exactMatch: true })
 

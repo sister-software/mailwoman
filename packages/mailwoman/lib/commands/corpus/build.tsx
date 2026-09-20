@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman corpus build --version 0.1.0 --output /data/corpus/versioned/ --inputs '{ "wof-admin":
+ *   `mailwoman corpus build --version 0.1.0 --out /data/corpus/versioned/ --inputs '{ "wof-admin":
  *   "/data/wof/admin.db", "wof-postalcode": "/data/wof/post.db" }'`
  *
  *   End-to-end corpus build. Drives every registered adapter (or the filtered subset) per `--inputs`,
- *   runs synthesis + alignment, computes the locality-holdout split, and writes the final JSONL
- *   slices + per-stage manifests under `<output>/corpus-v<version>/`.
+ *   runs synthesis + alignment, computes the locality-holdout split, and writes the final jsonl
+ *   parquet files + per-stage manifests under `<out>/corpus-v<version>/`.
  *
  *   Adapters whose id is missing from `--inputs` are skipped (and noted in the manifest); this is how
  *   the CLI handles partial builds during development.
@@ -19,7 +19,7 @@ import type { AdapterOptions } from "@mailwoman/corpus/types"
 import { Box, Text } from "ink"
 import { useState } from "react"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * `--inputs` accepts either:
@@ -35,26 +35,19 @@ export const spec = {
 	description: "Build a versioned corpus.",
 	options: {
 		"corpus-version": { type: "string", default: "0.1.0-dev", description: "Corpus version" },
-		output: { type: "string", required: true, description: "Output root" },
+		out: { type: "string", required: true, description: "Output root", deprecatedName: "output" },
 		inputs: { type: "string", required: true, description: "Adapter input JSON map" },
 		synthesize: { type: "boolean", default: true, description: "Enable augmentation" },
-		"rows-per-slice": {
+		"rows-per-file": {
 			type: "number",
 			default: 1_000_000,
 			validate: (value) => Number.isInteger(value) && value > 0,
-			validationMessage: "--rows-per-slice must be a positive integer.",
-			description: "Max rows per slice",
+			validationMessage: "--rows-per-file must be a positive integer.",
+			description: "Max rows per parquet file",
+			deprecatedName: "rows-per-slice",
 		},
 	},
 } as const satisfies CommandSpec
-
-interface Options {
-	corpusVersion: string
-	output: string
-	inputs: string
-	synthesize: boolean
-	rowsPerSlice: number
-}
 
 type AdapterInput = string | AdapterOptions
 
@@ -80,7 +73,7 @@ function isAdapterInputMap(input: unknown): input is Record<string, AdapterInput
 	})
 }
 
-const CorpusBuild: ParsedCommandComponent<Options> = ({ options }) => {
+const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const [stage, setStage] = useState<{ name: BuildStage; message: string }>()
 
 	const state = useCommandTask(async () => {
@@ -104,12 +97,12 @@ const CorpusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 		const adapters = defaultAdapterRegistry.list()
 
 		const m = await buildCorpus({
-			outputDir: options.output,
+			outputDir: options.out,
 			corpusVersion: options.corpusVersion,
 			adapters,
 			adapterInputs,
 			synthesize: options.synthesize,
-			rowsPerSlice: options.rowsPerSlice,
+			rowsPerFile: options.rowsPerFile,
 			onProgress: (name, message) => setStage({ name, message }),
 		})
 
@@ -132,7 +125,7 @@ const CorpusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 					corpus-v{options.corpusVersion}: <Text color="green">{done.total}</Text> rows ({done.adapters} adapters,{" "}
 					<Text dimColor>{done.quarantined} quarantined</Text>)
 				</Text>
-				<Text dimColor>{options.output}</Text>
+				<Text dimColor>{options.out}</Text>
 			</Box>
 		)
 	}

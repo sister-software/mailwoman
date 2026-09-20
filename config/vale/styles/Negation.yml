@@ -1,0 +1,15 @@
+## Mailwoman house style: state the positive behavior instead of building a sentence
+## around what something is not.
+##
+## The comma fallback is deliberately broad. A narrow allow-list made negation
+## easy to move into a new sentence shape, so exceptions belong on literal data
+## or quoted external text rather than in this rule.
+extends: existence
+message: "This contrast is framed as negation — state the positive behavior or result directly."
+level: error
+ignorecase: true
+tokens:
+  - '\b(?:[\w-]+\s+)?is\s+(?:a|an|the)\s+[\w-]+,\s+not\b'
+  - '\b[\w-]+(?:ed|en),\s+not\b'
+  - ',\s+which\s+does\s+not\b'
+  - ',\s+\*{0,2}not\*{0,2}\b'

@@ -3,14 +3,16 @@
 
 /**
  *   The street-level coordinate tiers, in cascade order: exact address point (#476), house-number
- *   interpolation (#483), then the street-centroid fallback. Each answers WHERE, never WHICH PLACE —
- *   they stamp a coordinate onto the STREET node's metadata and never touch admin resolution.
+ *   interpolation (#483), then the street-centroid fallback. Each answers where, never which place —
+ *   they stamp a coordinate onto the street node's metadata and never touch admin resolution.
  *
  *   Split out of `resolve.ts` so the resolver file holds the walk and the admin-coherence passes, and
  *   this one holds the tiers. The FR voie-type folding lives here because only the street-centroid
- *   tier consults it.
+ *   tier consults it. the voie types themselves are `@mailwoman/codex/fr`'s, and what stays local is
+ *   the tokens this recognizer admits beyond them.
  */
 
+import { isFrenchStreetWord } from "@mailwoman/codex/fr"
 import { isStreetDirectionalToken } from "@mailwoman/codex/us"
 import { collectNodes, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import type { AddressPointLookup, InterpolationLookup, StreetCentroidLookup } from "@mailwoman/core/resolver"
@@ -24,13 +26,13 @@ const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_part
 
 /**
  * Reassemble the full street string from the street node's subtree (#483 coverage fix). The parser nests the
- * directional/suffix as `street_prefix`/`street_suffix` CHILDREN of `street` (containment.ts), so `street.value` alone
- * is the bare base name ("Sheldon" for "East Sheldon Rd") — which misses the coordinate extracts keyed on the FULL
- * normalized name. Collect street + its prefix/particle/suffix descendants (NOT house_number/unit, which also nest
+ * directional/suffix as `street_prefix`/`street_suffix` children of `street` (containment.ts), so `street.value` alone
+ * is the bare base name ("Sheldon" for "East Sheldon Rd") — which misses the coordinate extracts keyed on the full
+ * normalized name. Collect street + its prefix/particle/suffix descendants (not house_number/unit, which also nest
  * under street), order by span offset, and join.
  */
 function assembleStreetValue(streetNode: AddressNode, directionalUnit?: AddressNode): string {
-	const parts = collectNodes([streetNode], (n) => STREET_NAME_TAGS.has(n.tag) && n.value.trim().length > 0)
+	const parts = collectNodes([streetNode], (n) => STREET_NAME_TAGS.has(n.tag) && n.value.trim().length)
 
 	// #718 admin-tail: a directional quadrant the model mis-tagged `unit` ("1532 Taylor Street NE" →
 	// [unit] "NE") folds back into the street key by span order, so the situs/interp lookup matches the
@@ -56,23 +58,20 @@ const isDirectionalUnit = (value: string): boolean => isStreetDirectionalToken(v
 
 /**
  * Address-point tier (#476): find `street` + `house_number` in the tree (first occurrence, depth-first), scope by the
- * tree's postcode/locality values, and on an exact hit stamp the point onto the STREET node's metadata. Additive only —
+ * tree's postcode/locality values, and on an exact hit stamp the point onto the street node's metadata. Additive only —
  * admin resolution is never altered.
  */
 /**
- * Half-width (degrees) of the bbox derived from a resolved locality centroid for the #247 OSM bbox fall-through. ~0.25°
- * ≈ 28 km N–S — generous enough for a large metro whose centroid sits off the queried point, while the EXACT `(street,
- * number)` match keeps a cross-commune collision rare. The proper fix is per-point scope backfill (the OSM association
- * / point-in-polygon pass, #250); this is the coverage stopgap until then.
+ * Half-width in degrees of the locality-centroid bbox used for an exact street-and-number fallback.
  */
 const LOCALITY_BBOX_RADIUS_DEG = 0.25
 
 /**
  * Every `(street, house_number)` pair the tree offers, nearest pair first: the house number whose span sits closest to
- * the street's, a number BEFORE the street winning a tie. A venue-led string parses more than one of each — `Bar 1802,
+ * the street's, a number before the street winning a tie. A venue-led string parses more than one of each — `Bar 1802,
  * 22 Rue Pascal, 75005 Paris, France` carries two house numbers and one street, and `22` is the one written beside `Rue
  * Pascal`. The tiers probe the pairs in this order and stop at the first register hit, and the pair that hit is what
- * the result names; a walk that took "the first node of each tag" paired whatever the traversal met first.
+ * the result names. a walk that took "the first node of each tag" paired whatever the traversal met first.
  */
 export function streetNumberPairs(
 	roots: readonly AddressNode[]
@@ -96,7 +95,7 @@ export function streetNumberPairs(
 }
 
 /**
- * Characters between a house number and its street; a number after the street costs one extra so the tie goes to the
+ * Characters between a house number and its street. a number after the street costs one extra so the tie goes to the
  * number written before it, the order every Latin-script address system this resolver serves writes.
  */
 function pairGap(pair: { street: AddressNode; houseNumber: AddressNode }): number {
@@ -182,7 +181,7 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 			lon: hit.lon,
 			source: hit.source,
 			release: hit.release,
-			// The register row's OWN scope tags, when carried — a rooftop consumer can decorate the
+			// The register row's own scope tags, when carried — a rooftop consumer can decorate the
 			// commune/postcode the register attests even when the query never named them.
 			...(hit.localityNorm ? { locality_norm: hit.localityNorm } : {}),
 			...(hit.postcode ? { postcode: hit.postcode } : {}),
@@ -192,10 +191,10 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 }
 
 /**
- * House-number interpolation tier (#483): the third rung, consulted ONLY when the exact address-point tier
- * ({@link applyAddressPoint}) did NOT already stamp the street node (`resolution_tier === "address_point"`). That check
- * IS the "after the exact-point fall-through" — an estimate never overwrites a real situs point. Postcode-scoped (no
- * locality — the interpolators abstain statewide without a postcode). Stamps a DISTINCT metadata key
+ * House-number interpolation tier (#483): the third rung, consulted only when the exact address-point tier
+ * ({@link applyAddressPoint}) did not already stamp the street node (`resolution_tier === "address_point"`). That check
+ * is the "after the exact-point fall-through" — an estimate never overwrites a real situs point. Postcode-scoped (no
+ * locality — the interpolators abstain statewide without a postcode). Stamps a distinct metadata key
  * (`interpolated_point`, never `address_point`). Additive only — admin resolution is untouched.
  */
 export function applyInterpolation(
@@ -207,8 +206,8 @@ export function applyInterpolation(
 	const directionalUnit = [...walkNodes(roots)].find((n) => n.tag === "unit" && isDirectionalUnit(n.value))
 	const postcode = firstOfTag(roots, "postcode")?.value.trim()
 	// The resolved locality's coordinate — the `near` tie-breaker the interpolator may consult when the query carries
-	// no postcode and the covering ranges span several ZIPs (the borough-namesake class). Only a RESOLVED locality
-	// qualifies; an unresolved one contributes nothing.
+	// no postcode and the covering ranges span several ZIPs (the borough-namesake class). Only a resolved locality
+	// qualifies. an unresolved one contributes nothing.
 	const resolvedLocality = [...walkNodes(roots)].find((n) => n.tag === "locality" && n.lat != null && n.lon != null)
 
 	const localityCoord = resolvedLocality ? { lat: resolvedLocality.lat!, lon: resolvedLocality.lon! } : undefined
@@ -244,8 +243,8 @@ export function applyInterpolation(
 
 	houseNumber.metadata = { ...houseNumber.metadata, resolution_tier: "interpolated" }
 	// Conformal-calibrated radius (#374): the raw half-segment heuristic underestimates the true spread
-	// (~72% coverage on Travis); ×1.70 → a 90% bound. The ARTIFACT's own multiplier (read from the extract's
-	// `interp_calibration` metadata table at open time — `lookup.radiusCalibration`) is the default; an
+	// (~72% coverage on Travis); ×1.70 → a 90% bound. The artifact's own multiplier (read from the extract's
+	// `interp_calibration` metadata table at open time — `lookup.radiusCalibration`) is the default. an
 	// explicit caller factor is the @internal instrument override. Neither present (extracts predating the
 	// metadata table, no caller factor) keeps the raw value, byte-stable. Preserve the raw radius for
 	// transparency.
@@ -265,60 +264,20 @@ export function applyInterpolation(
 }
 
 /**
- * French thoroughfare (voie) type tokens — the leading word that marks a street-only span as a THOROUGHFARE rather than
- * a place name ("Place Bellecour", "Cours de l'Intendance", "Quai des Bateliers"). Used by the #1042 street-centroid
- * tier to recognize a thoroughfare that the model mis-parsed as a `locality` (the FR no-street class, #901).
- * Deliberately generous — a false positive simply misses the exact street-centroid lookup and no-ops; the lookup is the
- * real check.
+ * Tokens this recognizer admits beyond `@mailwoman/codex`'s French voie types.
+ *
+ * The canonical types and their abbreviations live in the codex, and {@linkcode isVoieShaped} asks it first. What stays
+ * here is the deliberate generosity: this tier recognizes a thoroughfare the model mis-parsed as a `locality` (the FR
+ * no-street class, #901), and a false positive simply misses the exact street-centroid lookup and no-ops — the lookup
+ * is the real check. A token admitted for that reason is not a claim that it is a voie type, so it does not belong in
+ * the postal reference.
  */
-const FR_VOIE_TYPES: ReadonlySet<string> = new Set([
-	"rue",
-	"ruelle",
-	"venelle",
-	"avenue",
-	"av",
-	"ave",
-	"boulevard",
-	"bd",
-	"bld",
-	"bvd",
-	"boul",
-	"place",
-	"pl",
-	"cours",
-	"quai",
-	"impasse",
-	"imp",
-	"allee",
-	"all",
-	"chemin",
-	"ch",
-	"che",
-	"passage",
-	"pas",
-	"square",
-	"sq",
-	"faubourg",
-	"fg",
-	"fbg",
-	"route",
-	"rte",
-	"esplanade",
-	"promenade",
-	"sentier",
-	"sente",
-	"villa",
-	"cite",
-	"hameau",
-	"montee",
-	"chaussee",
-	"traverse",
-	"mail",
-	"clos",
-	"voie",
+const FR_GENEROUS_VOIE_TOKENS: ReadonlySet<string> = new Set([
+	// Not a voie type: an address quarter, admitted because a span reading `Quartier …` is a thoroughfare often
+	// enough to be worth the lookup.
 	"quartier",
-	"lotissement",
-	"residence",
+	// `foldVoieTokens` splits on the hyphen, so `Rond-Point de …` arrives here as `rond`, which the codex set
+	// holds only as the whole token `rond-point`.
 	"rond",
 ])
 
@@ -335,16 +294,18 @@ function foldVoieTokens(s: string): string[] {
 		.replaceAll(/[.,'’]/g, "")
 		.replaceAll("-", " ")
 		.split(/\s+/)
-		.filter((token) => token.length > 0)
+		.filter((token) => token.length)
 }
 
 /**
- * Does a string START with a French thoroughfare type token ("Rue …", "Place …")?
+ * Does a string start with a French thoroughfare type token ("Rue …", "Place …")?
  */
 function isVoieShaped(s: string): boolean {
 	const first = foldVoieTokens(s)[0]
 
-	return first !== undefined && FR_VOIE_TYPES.has(first)
+	if (first === undefined) return false
+
+	return isFrenchStreetWord(first) || FR_GENEROUS_VOIE_TOKENS.has(first)
 }
 
 /**
@@ -359,17 +320,8 @@ function pushCandidate(list: string[], v: string | undefined, cap: number): void
 }
 
 /**
- * Street-centroid tier (#1042): the street-level rung BELOW the exact/interpolation tiers and ABOVE admin-centroid
- * resolution. For a STREET-ONLY query (a thoroughfare with NO house number), stamp the street's centroid onto a
- * `street` node so a consumer gets a street-level coordinate instead of the commune centroid (or a wrong namesake).
- *
- * The FR no-street class mis-parses the thoroughfare — "Place Bellecour, Lyon" parses `region=Lyon`, `locality="Place
- * Bellecour"`; "Avenue des Champs-Élysées" truncates — so this recovers the thoroughfare + commune RAW-TEXT-first (the
- * same substrate as span-rescore), preferring parsed nodes and falling back to the comma-split raw query. A
- * thoroughfare is recognized by its leading voie type ({@link isVoieShaped}); the commune is any non-voie span. Every
- * (thoroughfare, commune) pair is probed against the exact street-centroid lookup, first hit wins — a false candidate
- * simply misses. Additive only: fires ONLY when no house number is present (rooftop tiers untouched) and no
- * street-level coordinate already resolved, and never alters admin resolution.
+ * Add a street centroid for street-only queries when no rooftop or street coordinate exists. Candidate pairs prefer
+ * parsed values and fall back to comma-separated raw input. a lookup miss is ignored.
  */
 export function applyStreetCentroid(
 	roots: AddressNode[],
@@ -417,7 +369,7 @@ export function applyStreetCentroid(
 	if (houseNumber) return // street-only tier — a numbered address is the rooftop tiers' job
 
 	// Candidate countries: pre-resolution hints (defaultCountry + unrestricted placer) then the resolved countries. BAN is
-	// FR-only, so a non-FR candidate simply yields no lookup; the exact (street, base-commune) match is the real filter.
+	// FR-only, so a non-FR candidate simply yields no lookup. the exact (street, base-commune) match is the real filter.
 	const countries: string[] = []
 
 	for (const c of [...hints, ...resolvedCountries]) {
@@ -435,7 +387,7 @@ export function applyStreetCentroid(
 	const rawSegments = raw
 		.split(",")
 		.map((s) => s.trim())
-		.filter((segment) => segment.length > 0)
+		.filter((segment) => segment.length)
 
 	const CAP = 5
 
@@ -517,9 +469,9 @@ export function applyStreetCentroid(
 				uncertainty_m: hit.uncertaintyM,
 			}
 
-			// #1058: a commune-scoped hit is REGISTER evidence of the street's locality — record it for
+			// #1058: a commune-scoped hit is register evidence of the street's locality — record it for
 			// the geocode layer's locality/city decoration, and drop any span-rescored locality that
-			// contradicts it. Span-rescore injects SPECULATIVELY (a low-confidence street prefix like
+			// contradicts it. Span-rescore injects speculatively (a low-confidence street prefix like
 			// "Rue" exact-matches the commune Rue in Somme); the register's exact (street, commune)
 			// match is strictly stronger, so the injected token-of-the-street must not survive as the
 			// result's city.

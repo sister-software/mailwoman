@@ -5,26 +5,27 @@
  *   `mailwoman gazetteer build` — the durable GeoNames-alias upstream fold + the byte-range candidate
  *   build (FTS5-trigram fuzzy index baked in), in one command. Every decision the 2026-06-27 manual
  *   rebuild needed (which countries fold, which postcode databases, FTS) is a default here. Progress
- *   streams to stderr; the final summary is on stdout. See RELEASING.md Step 5.
+ *   streams to stderr. the final summary is on stdout. See releasing.md Step 5.
  */
 
 import { tryStat } from "@mailwoman/core/fs/readers"
+import { formatGeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite/geonames"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	phaseReporter,
-	splitUpperList,
+	splitCountryCodes,
 	useCommandTask,
 } from "#cli-kit"
 import { foldSourceAdminPath, foldStaleness, foldStalenessMessage } from "#gazetteer-pipeline/admin/fold/staleness"
 import { DEFAULT_CANDIDATE_OUT, DEFAULT_FOLD_COUNTRIES, DEFAULT_IMPORTANCE_DB } from "#gazetteer-pipeline/defaults"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "candidate",
@@ -48,18 +49,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	admin?: string
-	out?: string
-	fold: boolean
-	countries?: string
-	foldOut?: string
-	allowStaleFold: boolean
-	importance?: string
-	skipImportance: boolean
-}
-
-const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { mailwomanDataRoot } = await import("@mailwoman/core/utils")
 
@@ -76,12 +66,12 @@ const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) =
 		const adminIn = options.admin ?? join(wofDir(root), DEFAULT_ADMIN_DB)
 		const out = options.out ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
 
-		const countries = options.countries ? splitUpperList(options.countries) : DEFAULT_FOLD_COUNTRIES
+		const countries = options.countries ? splitCountryCodes(options.countries) : DEFAULT_FOLD_COUNTRIES
 
 		let adminDB = adminIn
 
-		// A fold output that predates its admin database carries the admin database's OLD coordinates (the Frankfurt
-		// read of 2026-09-06): refused unless asked for, since the remedy is `--fold` on this same command.
+		// A fold output that predates its admin database carries the admin database's old coordinates (the Frankfurt
+		// read of 2026-09-06): refused unless asked for, since the action is `--fold` on this same command.
 		if (!options.fold && !options.allowStaleFold) {
 			const source = foldSourceAdminPath(adminIn)
 			const [foldStat, adminStat] = await Promise.all([tryStat(adminIn), source ? tryStat(source) : null])
@@ -104,10 +94,7 @@ const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) =
 				adminIn,
 				adminOut: foldOut,
 				countries,
-				onCountry: (e) =>
-					console.error(
-						`  ${e.country}: ${e.skipped ? "(dump missing — skipped)" : `${e.places.toLocaleString()} places`}`
-					),
+				onCountry: (e) => console.error(`  ${formatGeonamesIngestProgress(e)}`),
 				onPhase: phaseReporter(),
 			})
 

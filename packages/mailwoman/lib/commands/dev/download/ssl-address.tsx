@@ -8,10 +8,10 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "ssl-address",
@@ -22,12 +22,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	outDir?: string
-	concurrency: number
-}
-
-const DevDownloadSSLAddress: ParsedCommandComponent<Options> = ({ options }) => {
+const DevDownloadSSLAddress: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { downloadSSLAddress } = await import("@mailwoman/core/tools")

@@ -5,18 +5,18 @@
  * @file The release registry as an MCP tool table — the pure half of this server, so the mapping from an operation to a
  *   tool can be tested against a synthetic registry with no transport.
  *
- *   ONE OPERATION, ONE TOOL.
+ *   one operation, one tool.
  *
  * 	 `release.verify-metadata` becomes `release_verify_metadata`
  *   and its description opens with `[read]`, `[local-write]` or `[external-write]`, the effect the registry declares
  *   rather than anything inferred here. A local-write tool gains a `dry_run` argument the operation's own schema does
  *   not carry, because the context flag is the adapter's to thread.
  *
- *   THE TWO PUBLISHING OPERATIONS ARE OFF BY DEFAULT. An MCP session that receives this server must not thereby receive
+ *   the two publishing operations are off BY default. An MCP session that receives this server must not thereby receive
  *   npm authority — the same posture `@mailwoman/dev-mcp` states for itself. `publish-workspace` and `bless-package` are
  *   registered only when the server is started with `--allow-external-write`, and even then they run the plan → execute
- *   contract the operations enforce themselves: a plan file whose digest must match a recomputed one on an unmoved,
- *   clean HEAD. This table never bypasses that, and carries no release logic of its own.
+ *   interface the operations enforce themselves: a plan file whose digest must match a recomputed one on an unmoved,
+ *   clean head. This table never bypasses that, and carries no release logic of its own.
  */
 
 import { OperationEffect, type ReleaseContext, type ReleaseOperation } from "@mailwoman/release-kit"
@@ -92,7 +92,7 @@ export function buildReleaseToolTable(
 				`[${operation.effect}] ${operation.description}` +
 				(writes ? " Pass dry_run: true to have the operation describe what it would write and write nothing." : "") +
 				(operation.effect === OperationEffect.ExternalWrite
-					? " Reachable only through the plan → execute contract the operation enforces: a --plan file from release_plan whose digest must still match on an unmoved, clean HEAD."
+					? " Reachable only through the plan → execute interface the operation enforces: a --plan file from release_plan whose digest must still match on an unmoved, clean HEAD."
 					: ""),
 			inputSchema: schema,
 			handler: async (args) => {

@@ -10,7 +10,7 @@
  *   proportion test would discard that pairing and widen the interval for nothing.
  *
  *   The decision is pooled and the per-stratum tables are descriptive. Exact power at alpha 0.05 two-sided:
- *   100 rows gives 0.74 against a true 12-point margin and 0.90 against 18 points; 50 rows gives 0.36 and
+ *   100 rows gives 0.74 against a true 12-point margin and 0.90 against 18 points. 50 rows gives 0.36 and
  *   0.58. Five per-stratum significance decisions at that power are five chances to find a win, so the power
  *   is spent once, pooled, at the registered 8-point margin.
  *
@@ -31,7 +31,7 @@ export const CONFIDENCE_BINS = [0, 0.2, 0.4, 0.6, 0.8, 1] as const
 
 /**
  * The largest discordant-pair count the exact test computes. The first term is `2 ** -n`, which is representable down
- * to about n = 1074; the bound is well inside that and refusing past it beats returning a silent zero.
+ * to about n = 1074. the bound is well inside that and refusing past it beats returning a silent zero.
  */
 const MAX_EXACT_N = 1000
 
@@ -96,8 +96,8 @@ export interface ArmMetrics {
 	arm: string
 	stratum: string
 	/**
-	 * Rows scored — after errored rows are removed. This is the row count, NOT the denominator of any rate below; each
-	 * rate carries its own.
+	 * Rows scored — after errored rows are removed. This is the row count rather than the denominator of any rate below.
+	 * each rate carries its own.
 	 */
 	n: number
 	errors: number
@@ -220,8 +220,8 @@ export interface PairedComparison {
 /**
  * Compare two arms over the rows both scored, paired row by row.
  *
- * The bootstrap resamples ROWS, not arms: a resample draws row indices with replacement and recomputes both arms'
- * accuracy on the same draw, which is what makes the interval a paired one.
+ * The bootstrap resamples rows rather than arms: a resample draws row indices with replacement and recomputes both
+ * arms' accuracy on the same draw, which is what makes the interval a paired one.
  */
 export function comparePaired(
 	first: readonly ArmRowResult[],
@@ -288,7 +288,7 @@ export function comparePaired(
 }
 
 /**
- * The registered decision, evaluated. Both conditions must hold; each is reported with what it read, so a refusal names
+ * The registered decision, evaluated. Both conditions must hold. each is reported with what it read, so a refusal names
  * the quantity that refused it.
  */
 export interface BenchmarkVerdict {
@@ -306,7 +306,7 @@ export interface BenchmarkVerdict {
 }
 
 /**
- * Evaluate the frozen decision rule: an 8-point pooled margin AND an exact McNemar rejection at alpha 0.05, with no
+ * Evaluate the frozen decision rule: an 8-point pooled margin and an exact McNemar rejection at alpha 0.05, with no
  * stratum where Mailwoman's wrong-area or false-selection rate is higher than the baseline's.
  */
 export function evaluateVerdict(

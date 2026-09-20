@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The acquisition + build surface for the NRCS SSURGO soil-capability layer. The READER is the
+ * @file The acquisition + build surface for the nrcs ssurgo soil-capability layer. The reader is the
  *   package root.
  */
 

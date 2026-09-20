@@ -2,15 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The LABEL register's key sets, the only thing a permit string is allowed to align against (#2204 §5).
+ *   The address register's key sets, the only thing a permit string is allowed to align against (#2204 §5).
  *
- *   The permit registry is a NOISY source: a clerk typed each address, in both address systems, with no validation. So
- *   nothing in a permit string is taken on its own word. The region must be a 시도 the register lists, the 시군구 one
+ *   The permit registry asserts `observation` for its address field: a clerk typed each address, in both address
+ *   systems, with no validation, and the registry attests only that it received the string. The permit identity the
+ *   local authority grants is a separate `identity` assertion on the same row, and is not what a string aligns against.
+ *   So nothing in a permit string is taken on its own word. The region must be a 시도 the register lists, the 시군구 one
  *   that region lists, the road one that 시군구 lists, the 동 one that 시군구 lists, the 리 one that 동 lists. A string
- *   that satisfies the whole key becomes a training row; one that does not is a BOARD row — an address the model will
+ *   that satisfies the whole key becomes a training row. one that does not is a board row — an address the model will
  *   be read on and never trained on.
  *
- *   Built by one pass over the LABEL rows, which is why it lives beside them rather than inside the aligner.
+ *   Built by one pass over the register rows, which is why it lives beside them rather than inside the aligner.
  */
 
 import { type JusoLabelRow, REGION_ALIASES } from "#kr/adapters/juso/label-rows"
@@ -77,7 +79,7 @@ function add(map: Map<string, Set<string>>, key: string, value: string): void {
 }
 
 /**
- * Add one LABEL row's names to the key sets.
+ * Add one label row's names to the key sets.
  *
  * The 읍/면 joins the road set's unit as a road-form token too, since the road address writes it between the 시군구 and the
  * road.
@@ -104,7 +106,7 @@ export function indexLabelRow(index: KeyIndex, row: JusoLabelRow): void {
 }
 
 /**
- * Admit the pre-merger region names as aliases of the register's current one, SHARING its key sets.
+ * Admit the pre-merger region names as aliases of the register's current one, sharing its key sets.
  *
  * The sets are shared by reference rather than copied: an alias is the same place under an older name, and a later
  * `indexLabelRow` under either name must reach the same set.
@@ -169,7 +171,7 @@ export function sigunguSpan(index: KeyIndex, region: string, tokens: readonly st
 }
 
 /**
- * The key sets the permit aligner reads, from one pass over the LABEL rows.
+ * The key sets the permit aligner reads, from one pass over the register rows.
  */
 export async function buildKeyIndex(rows: AsyncIterable<JusoLabelRow>): Promise<KeyIndex> {
 	const index = emptyKeyIndex()

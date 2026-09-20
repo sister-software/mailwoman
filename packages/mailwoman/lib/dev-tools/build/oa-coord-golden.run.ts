@@ -2,21 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build a coordinate-bearing held-out eval set for a non-US locale from a standard-schema
+ *   Build a coordinate-containing held-out eval set for a non-US locale from a standard-schema
  *   OpenAddresses country dump (#229 Phase A).
  *
  *   Label-F1 on non-US is confounded by labeling convention — where a Spanish "Calle Mayor" street
- *   boundary falls is a judgement, not a fact — so these rows carry the truth lat/lon and are graded
- *   on the ASSEMBLED COORDINATE by `packages/mailwoman/lib/dev-tools/fr/admin/split/eval.run.ts --default-country <CC>`.
+ *   boundary falls is a judgement rather than a fact — so these rows carry the truth lat/lon and are graded
+ *   on the assembled coordinate by `packages/mailwoman/lib/dev-tools/fr/admin/split/eval.run.ts --default-country <CC>`.
  *
- *   Expects a countrywide CSV with `LON,LAT,NUMBER,STREET,CITY,POSTCODE[,REGION]` (IT/FR/most OA
+ *   Expects a countrywide CSV with `LON,LAT,number,street,city,postcode[,region]` (IT/FR/most OA
  *   collections). The Spanish dump uses a cadastral schema and is not handled here.
  *
- *   Rows are bucketed by REGION — or the postcode's first two characters when REGION is absent — so
+ *   Rows are bucketed by region — or the postcode's first two characters when region is absent — so
  *   the set spans the country rather than whichever province leads the file, and rendered in three
  *   natural orders so the model is not graded against one rigid template.
  *
- *   The seeded shuffle is distribution-faithful to the Python original but NOT CPython-bit-identical
+ *   The seeded shuffle is distribution-faithful to the Python original but not CPython-bit-identical
  *   (see `python-random.ts`), so a set rebuilt here will not match one built by the retired script
  *   row for row.
  *
@@ -45,7 +45,7 @@ import { Globerator } from "spliterator/node/fs"
  * Approximates Python's default `csv.DictReader` dialect.
  *
  * `normalizeKeys: false` keeps the source's own header spelling, which is what the row reader indexes by —
- * OpenAddresses ships ALL-CAPS headers.
+ * OpenAddresses ships all-caps headers.
  */
 const CSV_OPTIONS = {
 	normalizeKeys: false,
@@ -90,8 +90,8 @@ interface Address {
 /**
  * A usable address, or `null` for a row missing a field the eval needs.
  *
- * The street must OPEN with a letter: OA rows whose STREET is a bare number or a lone punctuation mark are parse noise,
- * not addresses. House number `"0"` is the dump's placeholder for "no number known".
+ * The street must open with a letter: OA rows whose street is a bare number or a lone punctuation mark are parse noise
+ * rather than addresses. House number `"0"` is the dump's placeholder for "no number known".
  */
 function parseRow(row: CSVRecord): Address | null {
 	const num = (row.NUMBER ?? "").trim()
@@ -122,11 +122,11 @@ interface SampleOptions {
 	 */
 	target: number
 	/**
-	 * Sample each bucket uniformly across the WHOLE stream rather than taking its first `perBucket` rows.
+	 * Sample each bucket uniformly across the whole stream rather than taking its first `perBucket` rows.
 	 *
 	 * The default fill takes a bucket's rows from wherever its key first appears in file order. Municipality-ordered
 	 * dumps (OA CZ/PL) therefore concentrate every bucket on one city, which under-disperses the localities the
-	 * wrong-city metric needs (#291). Reservoir mode costs a full pass; selection stays deterministic per seed and input
+	 * wrong-city metric needs (#291). Reservoir mode costs a full pass. selection stays deterministic per seed and input
 	 * order.
 	 */
 	reservoir: boolean
@@ -259,7 +259,7 @@ async function* sourceRows(): AsyncIterable<CSVRecord> {
 	}
 
 	const pattern = values["csv-glob"]!
-	const filePaths = await Globerator.from(pattern).toSorted()
+	const filePaths = await Globerator.from(pattern, { absolute: true }).toSorted()
 
 	for (const filePath of filePaths) {
 		yield* csvRecordsFromFile(filePath)

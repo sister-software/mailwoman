@@ -3,12 +3,12 @@
 
 /**
  *   Type surface of the committed `sentencepiece.mjs` artifact — google/sentencepiece **v0.2.2**
- *   compiled to WASM with the native-offsets embind wrapper (`binding.cpp`, task #26). Rebuilt only
+ *   compiled to wasm with the native-offsets embind wrapper (`binding.cpp`, task #26). Rebuilt only
  *   by `build.sh`; bump the tag there and note it here.
  */
 
 /**
- * One encode result. `begins`/`ends` are UTF-8 BYTE offsets into the encoded input with the upstream invariant
+ * One encode result. `begins`/`ends` are UTF-8 byte offsets into the encoded input with the upstream invariant
  * `utf8(text).slice(begins[i], ends[i])` = the piece's surface, and contiguity between consecutive pieces. The TS
  * tokenizer layer owns byte→UTF-16 conversion.
  */
@@ -18,7 +18,7 @@ export interface EncodeWithOffsetsResult {
 	begins: number[]
 	ends: number[]
 	/**
-	 * Present INSTEAD of the arrays when encoding failed (errors cross the boundary as values).
+	 * Present instead of the arrays when encoding failed (errors cross the boundary as values).
 	 */
 	error?: string
 }
@@ -29,7 +29,7 @@ export interface EncodeWithOffsetsResult {
 export declare class SentencePieceProcessor {
 	constructor()
 	/**
-	 * Load a `tokenizer.model` from its serialized-proto bytes. Takes a `Uint8Array` — the binding deliberately does NOT
+	 * Load a `tokenizer.model` from its serialized-proto bytes. Takes a `Uint8Array` — the binding deliberately does not
 	 * accept a string (embind marshals JS strings to `std::string` as UTF-8, which corrupts arbitrary binary). Returns
 	 * `""` on success, the sentencepiece status message on failure.
 	 */
@@ -37,7 +37,7 @@ export declare class SentencePieceProcessor {
 	encodeWithOffsets(text: string): EncodeWithOffsetsResult
 	decodeIDs(ids: IntVector): string
 	/**
-	 * Embind object lifetime: the processor owns WASM-heap memory — call when done (long-lived singletons in practice
+	 * Embind object lifetime: the processor owns wasm-heap memory — call when done (long-lived singletons in practice
 	 * never do).
 	 */
 	delete(): void
@@ -60,7 +60,7 @@ export interface SentencePieceModule {
 }
 
 /**
- * The emscripten MODULARIZE factory — resolves once the embedded WASM is instantiated.
+ * The emscripten modularize factory — resolves once the embedded wasm is instantiated.
  */
 declare function createSentencePiece(): Promise<SentencePieceModule>
 

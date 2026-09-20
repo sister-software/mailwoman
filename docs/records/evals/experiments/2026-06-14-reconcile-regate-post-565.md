@@ -3,7 +3,7 @@
 _2026-06-14. We retired joint-reconcile to argmax (#566) after an audit found it broke the
 street + house-number geocode precondition on 77–84% of clean US addresses. The root cause — the
 phrase grouper bundling the house number into the street phrase — was then fixed (#565). This report
-answers the obvious follow-up: now that the destructive mechanism is gone, does reconcile earn its way
+answers the obvious follow-up: now that the destructive mechanism is gone, does reconcile warrant its way
 back as the default (or at least FR-scoped, the locale #427 claimed it helped)? Graded on the assembled
 pipeline in both modes, the answer is no. #565 repaired the structural break, but reconcile is still
 strictly worse than argmax on tag values — worst on the exact locale it was supposed to help. Argmax
@@ -65,7 +65,7 @@ weights, same grouper, only the `jointReconcile` flag differs):
 
 US has no offsetting win — street regresses 2.4pp, locality 1.8pp, everything else flat. FR is the
 damning column: reconcile takes **street from 79.4% to 65.7% (−13.7pp)**, with locality and region also
-down. Its only gain anywhere is FR house_number (+1.8pp). The locale #427 said reconcile helps is the
+down. the result observed anywhere is FR house_number (+1.8pp). The locale #427 said reconcile helps is the
 locale it hurts most.
 
 ### Precondition — #565 worked, but reconcile still isn't at parity
@@ -97,20 +97,20 @@ structure that argmax keeps intact. On FR that is the `Rue de la <X>` / `Chemin 
 particle + core pattern — the merge collapses it and the street value falls apart (−13.7pp). On US
 multi-word residential streets it drops the span entirely (the 5.6% precondition break). Argmax avoids
 both failure modes for the same reason: it commits to the model's per-token decision instead of
-re-deriving a span from phrase proposals. This is design-level behavior of the reconcile path, not a
+re-deriving a span from phrase proposals. This is design-level behavior of the reconcile path rather than a
 second bundling bug to patch.
 
 ## Verdict — keep reconcile retired
 
 Both checks fail. Reconcile loses tag-value accuracy on US and FR with no locale where it wins overall,
-and it still breaks the geocoder precondition on 5.6% of rows where argmax never does. There is no slice
+and it still breaks the geocoder precondition on 5.6% of rows where argmax never does. There is no subset
 — not even FR — where re-promotion is net-positive. **Argmax stays the default. Joint-reconcile remains
 opt-in (`jointReconcile: true`) and undefaulted; this report is the record of why.** The #427 "reconcile
 helps FR" claim was an artifact of grading raw neural — the same blind spot that hid the original
 regression.
 
 Independent of the reconcile decision, the **argmax-FR street ceiling of 79.4%** is its own open
-question (and the FR street/region recall generally) — that is a model + FR-grouper matter, not a
+question (and the FR street/region recall generally) — that is a model + FR-grouper matter rather than a
 reconcile one, and is left to the FR parity track. Worth capturing as a learning item; not a
 prerequisite for this verdict.
 

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The index resolution is a MEASUREMENT this layer takes, not a number argued to.
+ *   The index resolution is a measurement this layer takes rather than a number argued to.
  *
  *   The share of cells that come out `partial` decides whether the index answers most probes on its own
  *   or whether the ray cast is the common path, and it is a property of England's floodplain geometry
@@ -10,8 +10,8 @@
  *   resolution and reports the table the choice is made from; `build-flood.ts` then builds at the chosen
  *   one.
  *
- *   ONE STREAM, EVERY RESOLUTION. Re-reading a 367 MB geodatabase per candidate costs minutes each and
- *   buys nothing — the classification is per feature, so every candidate index folds the same feature in
+ *   one stream, every resolution. Re-reading a 367 MB geodatabase per candidate costs minutes each and
+ *   adds nothing — the classification is per feature, so every candidate index folds the same feature in
  *   turn. The cost is memory: each resolution holds its own cell sets, and the finest candidate dominates.
  *   A caller that runs out of headroom runs the candidates in separate invocations.
  */
@@ -82,7 +82,7 @@ export async function measureFloodCellResolutions(
 }
 
 /**
- * The measurement as markdown table ROWS — what a build receipt carries, one line per element so a caller printing them
+ * The measurement as markdown table rows — what a build receipt carries, one line per element so a caller printing them
  * never has to split a joined string back apart.
  */
 export function formatResolutionMeasurementRows(measurements: readonly CellIndexMeasurement[]): string[] {

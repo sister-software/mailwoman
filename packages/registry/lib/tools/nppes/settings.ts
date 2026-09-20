@@ -32,7 +32,7 @@ export interface Setting {
 /**
  * Build the progression against a corpus-wide address-frequency table.
  *
- * Every row sets BOTH `collapseSpatial` and `addressFrequency` EXPLICITLY, because the proven settings are default-on
+ * Every row sets both `collapseSpatial` and `addressFrequency` explicitly, because the proven settings are default-on
  * in `resolveEntities`: leave either implicit and the flipped default silently rides the `+ inverse-address-frequency`
  * row, making the A1 delta read as 0. Every row is fed the corpus-wide table — the realistic deployment, where the CLI
  * builds it from the full source files — so the zero-config default, whose input-scoped table is intentionally sparse
@@ -52,8 +52,8 @@ export function buildSettings(addressFrequency: TermFrequencyTable): Setting[] {
 		},
 		// A2–A4 (#625): the built-but-unmeasured over-merge settings. Each builds on the A1 + discriminator
 		// stack so the marginal effect is isolated. A2 (require name/org corroboration) is the direct
-		// over-merge precision setting; A3 (phone) is the recall-tail corroborator that should keep A2 from
-		// killing name-drift links; A4 (average-linkage) splits a component joined only by a weak bridge.
+		// over-merge precision setting. A3 (phone) is the recall-tail corroborator that should keep A2 from
+		// killing name-drift links. A4 (average-linkage) splits a component joined only by a weak bridge.
 		{
 			label: "+ require name/org corroboration (A2, #625)",
 			config: {
@@ -86,9 +86,9 @@ export function buildSettings(addressFrequency: TermFrequencyTable): Setting[] {
 		},
 		// A5 (#625): the taxonomy code-set discriminator — set-overlap agreement over the NPI's 15 taxonomy
 		// slots. The named "still-more-distinctive identifier" from the 2026-06-16 report: co-located
-		// DISTINCT providers usually have disjoint sets (the over-merge separator) while an entity's own
-		// records always share theirs (never splits). Stacked on the BEST prior classical config (A1 +
-		// authorized-official; A3 phone + A4 avg-linkage were measured neutral-to-negative and are left off).
+		// distinct providers usually have disjoint sets (the over-merge separator) while an entity's own
+		// records always share theirs (never splits). Stacked on the best prior classical config (A1 +
+		// authorized-official. A3 phone + A4 avg-linkage were measured neutral-to-negative and are left off).
 		{
 			label: "+ taxonomy code-set discriminator (A5, #625)",
 			config: {

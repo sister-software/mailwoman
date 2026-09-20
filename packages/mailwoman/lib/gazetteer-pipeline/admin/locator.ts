@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Which admin place CONTAINS this point — a build-time point-in-polygon locator over a WOF polygon database.
+ * @file Which admin place contains this point — a build-time point-in-polygon locator over a WOF polygon database.
  *
  *   Built for the question a gazetteer join answers badly. Asking WOF which region a US postcode's `parent_id` leads to
- *   contradicts the ZIP numbering plan on 8.46% of placed codes; asking which region POLYGON contains the code's own
+ *   contradicts the ZIP numbering plan on 8.46% of placed codes. asking which region polygon contains the code's own
  *   coordinate contradicts it on 0.69%, a 12× improvement, using only data already shipped under permissive licences.
  *   The residual is inherited rather than produced: 264 of those 286 sit on a coordinate that is not a location.
  *
@@ -73,7 +73,7 @@ export class AdminLocator {
 	readonly located: number
 	/**
 	 * Places present in the admin DB whose geometry the polygon DB does not carry. A caller reporting coverage needs
-	 * this: a probe that finds nothing may mean the point is outside every polygon OR that the containing place has no
+	 * this: a probe that finds nothing may mean the point is outside every polygon or that the containing place has no
 	 * polygon at all, and only this number separates them.
 	 */
 	readonly withoutGeometry: number
@@ -117,7 +117,7 @@ export class AdminLocator {
 				let maxLat = Number.NEGATIVE_INFINITY
 
 				for (const polygon of polygons) {
-					// The OUTER ring bounds the polygon; holes are inside it by definition.
+					// The outer ring bounds the polygon. holes are inside it by definition.
 					for (const [lon, lat] of polygon[0] ?? []) {
 						minLon = Math.min(minLon, lon!)
 						maxLon = Math.max(maxLon, lon!)
@@ -161,7 +161,7 @@ export class AdminLocator {
 
 	/**
 	 * The place containing this point, or `null` when no loaded polygon does. Ties go to the first shape loaded —
-	 * overlapping admin polygons of one placetype are a source defect, not something to arbitrate here.
+	 * overlapping admin polygons of one placetype are a source defect rather than something to arbitrate here.
 	 */
 	locate(lon: number, lat: number): LocatedAdmin | null {
 		const candidates = this.#grid.get(`${Math.floor(lon / CELL_DEGREES)}:${Math.floor(lat / CELL_DEGREES)}`)

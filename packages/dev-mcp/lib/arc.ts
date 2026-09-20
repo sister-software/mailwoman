@@ -2,40 +2,49 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The graded-arc protocol as ONE call: self-control, then null, then candidate — in that order, and with the first
+ *   The graded-arc protocol as one call: self-control, then null, then candidate — in that order, and with the first
  *   two able to stop the third from being reported.
  *
  *   The order is the whole point. On 2026-08-23 eight training runs were graded candidate-against-shipped and every one
  *   reported a regression that was, in substantial part, the cost of fine-tuning at all. The two controls that say so
- *   were run eighth and ninth. They were not skipped because anyone decided to skip them; they were skipped because
+ *   were run eighth and ninth. They were not skipped because anyone decided to skip them. they were skipped because
  *   running them is three more commands at the moment you already have a number in hand, and a number in hand feels
- *   like an answer. Making the controls the DEFAULT PATH rather than a discipline is the only fix that survives a
+ *   like an answer. Making the controls the default path rather than a discipline is the only fix that survives a
  *   fresh context.
  *
  *   Two facts this encodes that an agent otherwise re-derives every time:
  *
  *   - **A candidate's regressions are `candidate − null`, not `candidate − shipped`.** Touching the base costs rows
  *     before the new extract is read at all — measured at 10 of 649 on `v440-step-060000`, paid inside the first 1,000
- *     steps and flat to 4,000. Eighteen regressions where the null has ten is eight attributable, not eighteen.
- *   - **A self-control that is not 0 invalidates the session, not the row.** If the shipped model graded through the
+ *     steps and flat to 4,000. Eighteen regressions where the null has ten is eight attributable rather than eighteen.
+ *   - **A self-control that is not 0 invalidates the session rather than the row.** If the shipped model graded through the
  *     candidate path disagrees with itself, no candidate number from that rig means anything, and reporting one
  *     anyway is how a harness bug becomes a model finding.
  *
- *   So `runArc` REFUSES to attribute when the self-control is dirty. It reports the candidate's raw numbers, marks
+ *   So `runArc` refuses to attribute when the self-control is dirty. It reports the candidate's raw numbers, marks
  *   them unattributable, and says which control failed. That refusal is the feature.
  */
+
+import { dRuleCountries, type ProtectedCountry, readScopeConfig } from "@mailwoman/core/scope-config"
 
 import { runCompare } from "#compare/index"
 import type { EngineRegistryLike } from "#engine/registry"
 import type { ComparedRow } from "#tool-kit"
 
 /**
- * Locales that iron rule 6 — the D-rule — protects unconditionally.
+ * The countries a default-on change may not regress, read from `scope.config.json`.
  *
  * No default-on mechanism ships with a known regression on any of these, whatever the net says. A candidate that wins
  * 40 rows and loses one in France is not a candidate.
+ *
+ * It is derived rather than written here because the written version drifted. `["FR", "GB", "DE"]` stood under a
+ * docstring claiming iron rule 6's protection while `scope.mdx` put US and FR in tier 1 — so a candidate regressing US
+ * rows raised no D-rule reason at all, which is the one reading the rule exists to force. Tier-1 membership now comes
+ * from the register the table is checked against, and every country guarded beyond it carries its reason.
  */
-export const D_RULE_COUNTRIES = ["FR", "GB", "DE"] as const
+export async function protectedCountries(): Promise<ProtectedCountry[]> {
+	return dRuleCountries(await readScopeConfig())
+}
 
 /**
  * One arm's board result, reduced to what a verdict needs.
@@ -60,7 +69,7 @@ export interface ArcLeg {
 	/**
 	 * The addresses that improved. Carried for the same reason as the regressions, and originally omitted — which made
 	 * every report from this tool one-sided: "35 regressed" with the 37 wins reduced to a count nobody could inspect. A
-	 * candidate is a TRADE, and a reader cannot price a trade with one side hidden.
+	 * candidate is a trade, and a reader cannot price a trade with one side hidden.
 	 */
 	improvedInputs: string[]
 	runID?: string
@@ -82,11 +91,11 @@ export interface ArcResult {
 	attributableRegressions?: number
 	attributableNet?: number
 	/**
-	 * False when a control disqualified the measurement. The candidate numbers are still reported; they are just not
+	 * False when a control disqualified the measurement. The candidate numbers are still reported. they are just not
 	 * evidence about the candidate.
 	 */
 	attributable: boolean
-	dRuleViolations: Array<{ country: string; n: number }>
+	dRuleViolations: Array<{ country: string; n: number; reason: string }>
 	verdict: "ship" | "hold" | "unattributable"
 	reasons: string[]
 }
@@ -126,7 +135,7 @@ function legFrom(label: string, weights: string, result: Record<string, unknown>
 /**
  * How the candidate was trained.
  *
- * This is not bookkeeping: it decides whether a null leg is MISSING or INAPPLICABLE. A fine-tune inherits a base and
+ * This is not bookkeeping: it decides whether a null leg is missing or inapplicable. A fine-tune inherits a base and
  * pays to touch it, so a null is the only thing that separates the change's cost from the tax. A from-scratch run
  * inherits nothing, so there is no tax to subtract and demanding a null would be asking for a control of nothing.
  * Reporting the second case with the first case's caveat is how a correct number gets discounted.
@@ -137,13 +146,13 @@ export interface ArcOptions {
 	candidate: string
 	shape?: RunShape
 	/**
-	 * A staged copy of the SHIPPED weights, run through the identical candidate path. Dereference the symlinks when
+	 * A staged copy of the shipped weights, run through the identical candidate path. Dereference the symlinks when
 	 * staging it — a directory that points back at the shipped artifacts grades the shipped model under the candidate's
 	 * name and the control passes for the wrong reason.
 	 */
 	control?: string
 	/**
-	 * The null arm: same base, same steps, same seed, same brake, NO added extract.
+	 * The null arm: same base, same steps, same seed, same brake, no added extract.
 	 */
 	null?: string
 	inputs?: unknown
@@ -153,11 +162,16 @@ export interface ArcOptions {
 /**
  * The verdict, given three legs. Pure on purpose: this is the half that was getting decided by eye, and deciding it by
  * eye is what produced eight confidently-wrong regression counts.
+ *
+ * `protections` is an argument rather than a file read for the same reason. The function stays pure, the caller states
+ * which countries it is blocking on, and a test declares its own list instead of inheriting whatever the register
+ * happens to hold — {@linkcode runArc} passes {@linkcode protectedCountries}.
  */
 export function decideArc(
 	control: ArcLeg | undefined,
 	nullLeg: ArcLeg | undefined,
 	candidate: ArcLeg,
+	protections: readonly ProtectedCountry[],
 	shape: RunShape = "fine-tune"
 ): ArcResult {
 	const reasons: string[] = []
@@ -189,17 +203,22 @@ export function decideArc(
 		)
 	}
 
-	const dRuleViolations = D_RULE_COUNTRIES.map((country) => ({
-		country,
-		n: candidate.regressedByCountry[country] ?? 0,
-	})).filter((entry) => entry.n > 0)
+	const dRuleViolations = protections
+		.map(({ country, reason }) => ({
+			country,
+			n: candidate.regressedByCountry[country] ?? 0,
+			reason,
+		}))
+		.filter((entry) => entry.n > 0)
 
 	const attributableRegressions = nullLeg ? candidate.regressed - nullLeg.regressed : undefined
 	const attributableNet = nullLeg ? candidate.net - nullLeg.net : undefined
 
 	if (dRuleViolations.length) {
 		reasons.push(
-			`D-RULE: regressions on ${dRuleViolations.map((entry) => `${entry.country} (${entry.n})`).join(", ")}. ` +
+			`D-RULE: regressions on ${dRuleViolations
+				.map((entry) => `${entry.country} (${entry.n}) — ${entry.reason}`)
+				.join("; ")}. ` +
 				"Iron rule 6 blocks a default-on ship regardless of net. Fix, check per-locale, or make it opt-in."
 		)
 	}
@@ -232,7 +251,7 @@ export function decideArc(
 }
 
 /**
- * Run the arc. Legs run SEQUENTIALLY — three concurrent board runs saturate the lab host, and the arc is not on
+ * Run the arc. Legs run sequentially — three concurrent board runs saturate the lab host, and the arc is not on
  * anyone's critical path.
  */
 export async function runArc(registry: EngineRegistryLike, options: ArcOptions): Promise<ArcResult> {
@@ -258,7 +277,7 @@ export async function runArc(registry: EngineRegistryLike, options: ArcOptions):
 	const nullLeg = options.null ? await compare("null (same base, no new data)", options.null) : undefined
 	const candidate = await compare("candidate", options.candidate)
 
-	return decideArc(control, nullLeg, candidate, options.shape ?? "fine-tune")
+	return decideArc(control, nullLeg, candidate, await protectedCountries(), options.shape ?? "fine-tune")
 }
 
 /**
@@ -266,7 +285,7 @@ export async function runArc(registry: EngineRegistryLike, options: ArcOptions):
  *
  * It lives beside {@linkcode decideArc} rather than in the tool wrapper because the first version computed the same
  * sentence in both places and they disagreed on their first live run: `reasons` correctly called a from-scratch run's
- * null INAPPLICABLE while the wrapper's summary still called the number an upper bound carrying a fine-tune tax. Two
+ * null inapplicable while the wrapper's summary still called the number an upper bound carrying a fine-tune tax. Two
  * copies of a rule agree until one of them is fixed.
  */
 export function summarizeArc(arc: ArcResult): string {

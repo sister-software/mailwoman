@@ -5,7 +5,7 @@
  *   Tests for the #1042 street-centroid tier: the shared `stripArrondissement` folder and the
  *   `StreetCentroidSqliteLookup` reader. Seeds a temp-file `street_centroid` fixture (the schema the
  *   `ban/scripts/build-street-centroid-extract.ts` roll-up writes) and asserts postcode-scope probing,
- *   base-commune probing, arrondissement folding, the cross-row WEIGHTED centroid aggregate, the
+ *   base-commune probing, arrondissement folding, the cross-row weighted centroid aggregate, the
  *   extent-derived uncertainty, and the exact-match miss.
  */
 
@@ -34,7 +34,7 @@ interface Seed {
 }
 
 /**
- * A seeded `street_centroid` extract, owned by the CALLER: the reader opens it by path, so the directory has to outlive
+ * A seeded `street_centroid` extract, owned by the caller: the reader opens it by path, so the directory has to outlive
  * this function.
  */
 type StreetCentroidFixture = TemporaryDirectory & { extractPath: string }
@@ -67,7 +67,7 @@ async function seedExtract(rows: Seed[]): Promise<StreetCentroidFixture> {
 			r.max_lon,
 			r.point_count,
 			r.street_norm,
-			r.street_norm // name_key — the geocoding lookup doesn't probe it; any non-null fixture value serves
+			r.street_norm // name_key — the geocoding lookup doesn't probe it. any non-null fixture value serves
 		)
 	}
 
@@ -83,8 +83,8 @@ describe("stripArrondissement", () => {
 
 	it("is a no-op for every other commune", () => {
 		expect(stripArrondissement(normalizeLocalityForKey("Bordeaux"))).toBe("bordeaux")
-		// The fold keeps hyphens (only the STREET normalizer splits them), so the stored commune key is hyphenated —
-		// and a commune merely CONTAINING "paris" is never stripped.
+		// The fold keeps hyphens (only the street normalizer splits them), so the stored commune key is hyphenated —
+		// and a commune merely containing "paris" is never stripped.
 		expect(stripArrondissement(normalizeLocalityForKey("Le Touquet-Paris-Plage"))).toBe("le touquet-paris-plage")
 		expect(stripArrondissement(normalizeLocalityForKey(""))).toBe("")
 	})
@@ -157,7 +157,7 @@ describe("StreetCentroidSqliteLookup", () => {
 	})
 
 	it("probes by base commune, folding a query arrondissement, and WEIGHTED-aggregates across rows", () => {
-		// (10 @ 4.83 + 30 @ 4.85) / 40 = 4.845 — the point-count-weighted centroid, not the plain mean 4.84.
+		// (10 @ 4.83 + 30 @ 4.85) / 40 = 4.845 — the point-count-weighted centroid rather than the plain mean 4.84.
 		const hit = lookup.find({ street: "Place Bellecour", locality: "Lyon 2e Arrondissement" })
 		expect(hit).not.toBeNull()
 		expect(hit!.lon).toBeCloseTo(4.845, 4)

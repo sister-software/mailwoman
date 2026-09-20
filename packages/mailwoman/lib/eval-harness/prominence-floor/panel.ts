@@ -6,8 +6,8 @@
  *   contains no judgement of its own: the bands, the eligibility rule, the fill order and the seed all come
  *   from `benchmark-definition.json`, committed before any row was inspected.
  *
- *   Two strata per BAND, and the band is what this benchmark adds. The same-data panel drew every gold above
- *   one population floor, so a floor arm admitted all of it by construction; here a stratum is filled once per
+ *   Two strata per band, and the band is what this benchmark adds. The same-data panel drew every gold above
+ *   one population floor, so a floor arm admitted all of it by construction. here a stratum is filled once per
  *   band, from that band's own rows, and the record reports each band separately.
  *
  *   Rows are drawn from the per-country main-table dumps rather than `cities15000.txt`, because the point is
@@ -29,7 +29,7 @@ import type { GeoNamesCity } from "#eval-harness/same-data/panel"
 
 /**
  * One panel row. The same shape the same-data fixture, arms and scorer already read, plus the band it was drawn from —
- * so the recorder, the replay and the metrics need no second row contract.
+ * so the recorder, the replay and the metrics need no second row interface.
  */
 export interface ProminencePanelRow extends SameDataPanelRow {
 	band: string

@@ -1,5 +1,5 @@
 ---
-license: agpl-3.0
+license: AGPL-3.0
 language:
   - fr
 library_name: onnx
@@ -69,7 +69,7 @@ Parsing free-text French postal addresses into structured components
 (country, region, locality, dependent_locality, postcode, subregion, cedex,
 venue, street, house_number) for **geocoding** — resolving a parsed address to
 coordinates via a gazetteer/resolver. The model is the parsing front-end of that
-pipeline, not a standalone geocoder.
+pipeline rather than a standalone geocoder.
 
 ## Ship-config requirement (read before using)
 
@@ -78,14 +78,14 @@ inference. Running it with those channels off is out-of-distribution and silentl
 collapses the admin tags (country/region/locality/postcode) — an anchor-off
 metric on an anchor-trained model is systematically misleading. Construct the
 scorer through `@mailwoman/neural`'s `createScorer` (the canonical
-`ProductionScorer`), which reads the bundle's `requires`/channel contract and
+`ProductionScorer`), which reads the bundle's `requires`/channel interface and
 **fails closed** if a declared channel isn't fed. Do not hand-wire the raw ONNX
 session with the anchor input zero-filled. Every eval here is
 **anchor-on**.
 
 ## Evaluation
 
-We grade the **assembled coordinate** (the resolved place), not raw label-F1 in
+We grade the **assembled coordinate** (the resolved place) rather than raw label-F1 in
 isolation. For FR, the model resolves addresses well when given the correct
 default country (the gazetteer holds ~114k FR places); on a real FR sample the
 neural front-end out-parses the rules baseline it replaces on locality-match.
@@ -136,8 +136,8 @@ card carries the full corpus + recipe provenance.
 
 ## License & links
 
-- **License:** [AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html).
+- **License:** [AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html).
 - **Docs & concepts:** https://mailwoman.ai
 - **Loader / scorer API:** `@mailwoman/neural` (`createScorer`).
-- The functional contract for this bundle is `model-card.json`; this `README.md`
+- The functional interface for this bundle is `model-card.json`; this `README.md`
   is the HuggingFace-facing card.

@@ -3,18 +3,18 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 /**
- *   #370 RESCORE-CEILING probe — sizes how much of the unresolved tail a parse<->resolve rescoring
+ *   #370 rescore-ceiling probe — sizes how much of the unresolved tail a parse<->resolve rescoring
  *   loop could recover, vs a true gazetteer coverage gap. For each coord-golden row: parse (the shipped
- *   v4.13.0 model) -> resolveTree -> resolved? For each UNRESOLVED row, ask whether the GOLD locality is
+ *   v4.13.0 model) -> resolveTree -> resolved? For each unresolved row, ask whether the gold locality is
  *   in the gazetteer (findPlace) and what the model emitted, and bucket the failure:
- *     - swap     : gold IS in the gazetteer AND the model emitted a DIFFERENT (wrong) locality token
+ *     - swap     : gold is in the gazetteer and the model emitted a different (wrong) locality token
  *                  -> a constrained rescore that swaps in the gold token recovers it. The clearest #370 win.
- *     - needsK   : gold IS in the gazetteer AND the model emitted NO locality -> only a K-best decode
+ *     - needsK   : gold is in the gazetteer and the model emitted no locality -> only a K-best decode
  *                  that surfaces the gold token could recover it (harder).
  *     - emitUnres: model emitted the gold locality but resolveTree still didn't resolve -> a resolver
- *                  ranking/country-filter issue, NOT a rescore opportunity.
- *     - covGap   : gold NOT in the gazetteer -> rescoring can't help; it's a coverage gap.
- *   recoverable = swap + needsK = #370's CEILING. Same resolver for baseline + gold-check (consistent).
+ *                  ranking/country-filter issue rather than a rescore opportunity.
+ *     - covGap   : gold not in the gazetteer -> rescoring can't help. it's a coverage gap.
+ *   recoverable = swap + needsK = #370's ceiling. Same resolver for baseline + gold-check (consistent).
  *
  *   Run: node packages/mailwoman/lib/dev-tools/rescore-ceiling-probe.run.ts [--model out/v191/model.onnx] [--n 150]
  */
@@ -71,8 +71,8 @@ async function main() {
 	console.log(`loc | n   res  unres | swap needsK emitUnres covGap | swapKm p50/p90 (top1·best5)`)
 
 	const T = { n: 0, res: 0, unres: 0, swap: 0, needsK: 0, emitUn: 0, cov: 0 }
-	// FALSIFIER accumulators: great-circle error (km) from the postcode-disambiguated gold-locality
-	// resolution to truth, over the swap cases. top1 = resolver's ranked choice; best5 = the ceiling
+	// falsifier accumulators: great-circle error (km) from the postcode-disambiguated gold-locality
+	// resolution to truth, over the swap cases. top1 = resolver's ranked choice. best5 = the ceiling
 	// if same-name disambiguation picks the right candidate from the top 5.
 	const swapTop1: number[] = []
 	const swapBest5: number[] = []
@@ -114,9 +114,9 @@ async function main() {
 			} else if (emitted && emitted.toLowerCase() !== gold.toLowerCase()) {
 				s.swap++
 
-				// FALSIFIER: resolve the gold locality with the row's postcode (what the rescore keeps as
-				// an anchor) and measure great-circle to truth. p50 < 10km → the swap recovers a REAL
-				// coordinate; scatter → the gold name resolves to a same-name collision (a label-F1 mirage,
+				// falsifier: resolve the gold locality with the row's postcode (what the rescore keeps as
+				// an anchor) and measure great-circle to truth. p50 < 10km → the swap recovers a real
+				// coordinate. scatter → the gold name resolves to a same-name collision (a label-F1 mirage,
 				// the #685 trap). (0,0) placeholders are dropped — WOF ships them on some rows.
 				const tLat = Number(row.lat),
 					tLon = Number(row.lon)
@@ -125,7 +125,7 @@ async function main() {
 					const pc = ((row.components?.postcode ?? row.components?.postal_code ?? "") as string).toString().trim()
 					const dis = pc ? await lookup.findPlace({ text: gold, country: cc, postcode: pc, limit: 5 }) : goldCands
 
-					// findPlace candidates carry lat/lon (NOT the ResolvedPlace latitude/longitude).
+					// findPlace candidates carry lat/lon (not the ResolvedPlace latitude/longitude).
 					const dists = dis
 						.filter((c) => Number.isFinite(c.lat) && Number.isFinite(c.lon) && (c.lat !== 0 || c.lon !== 0))
 						.map((c) => haversineKm(tLat, tLon, c.lat, c.lon))
@@ -168,7 +168,7 @@ async function main() {
 			`              coverage-gap (rescore can't help)      = ${T.cov} (${((100 * T.cov) / Math.max(T.unres, 1)).toFixed(0)}%)`
 	)
 
-	// FALSIFIER VERDICT (DeepSeek-specified): does the gold-locality swap recover a REAL coordinate?
+	// falsifier verdict (DeepSeek-specified): does the gold-locality swap recover a real coordinate?
 	const t1p50 = percentile(swapTop1, 50) ?? Number.NaN,
 		t1p90 = percentile(swapTop1, 90) ?? Number.NaN,
 		b5p50 = percentile(swapBest5, 50) ?? Number.NaN,

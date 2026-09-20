@@ -5,7 +5,7 @@
  *   The authoring loader: that a directory's layout is convenience and nothing else, and that a
  *   failure names the file an author can open.
  *
- *   The enumeration property is tested against a permuted FILE LIST rather than against a real
+ *   The enumeration property is tested against a permuted file list rather than against a real
  *   directory, on purpose. `readdir` order is a property of the filesystem — hash order on ext4, and
  *   not something a test can arrange — so a test that wrote files in an awkward order would be
  *   asserting about the machine it ran on. Handing the merge its files in reverse states the property
@@ -104,7 +104,7 @@ function file(path: string, value: unknown): GeographicModelSourceFile {
 
 const relationFile = file("relations/affords.json", relations)
 
-function slice(): GeographicModelSourceFile[] {
+function sourceFiles(): GeographicModelSourceFile[] {
 	return [
 		file(MODEL_MANIFEST_FILENAME, manifest),
 		file("concepts/activities.json", activities),
@@ -140,8 +140,8 @@ async function writeModelDirectory(files: readonly GeographicModelSourceFile[]):
 
 describe("the authoring layout carries no meaning", () => {
 	it("produces one table and one artifact whatever order the files arrive in", () => {
-		const forward = mergeGeographicModelFiles(slice())
-		const backward = mergeGeographicModelFiles(slice().toReversed())
+		const forward = mergeGeographicModelFiles(sourceFiles())
+		const backward = mergeGeographicModelFiles(sourceFiles().toReversed())
 
 		expect(backward).toEqual(forward)
 
@@ -151,7 +151,7 @@ describe("the authoring layout carries no meaning", () => {
 	})
 
 	it("reads a directory the same way twice", async () => {
-		const root = writeModelDirectory(slice())
+		const root = writeModelDirectory(sourceFiles())
 		const once = serializeCompiledModel(compileGeographicModel(await loadGeographicModelDirectory(await root)))
 
 		expect(serializeCompiledModel(compileGeographicModel(await loadGeographicModelDirectory(await root)))).toBe(once)
@@ -159,7 +159,7 @@ describe("the authoring layout carries no meaning", () => {
 	})
 
 	it("merges a table split across files, and one file holding several tables", async () => {
-		const document = await loadGeographicModelDirectory(await writeModelDirectory(slice()))
+		const document = await loadGeographicModelDirectory(await writeModelDirectory(sourceFiles()))
 
 		expect(document.concepts.map((concept) => concept.id)).toEqual(["obtain_medication", "pharmacy"])
 		expect(document.mappings).toHaveLength(1)
@@ -169,7 +169,7 @@ describe("the authoring layout carries no meaning", () => {
 
 describe("a failure names the file", () => {
 	it("names the source path of a file that is not JSON", () => {
-		const files = [...slice(), { path: "concepts/broken.json", text: "{ not json" }]
+		const files = [...sourceFiles(), { path: "concepts/broken.json", text: "{ not json" }]
 		const [issue] = issuesOf(() => mergeGeographicModelFiles(files)).issues
 
 		expect(issue?.file).toBe("concepts/broken.json")
@@ -178,7 +178,7 @@ describe("a failure names the file", () => {
 
 	it("names both files when two of them claim one identifier", () => {
 		// `concepts/duplicate.json` sorts first, so it is the claimant every second claim is reported against.
-		const files = [...slice(), file("concepts/duplicate.json", establishments)]
+		const files = [...sourceFiles(), file("concepts/duplicate.json", establishments)]
 
 		const duplicates = issuesOf(() => mergeGeographicModelFiles(files)).issues.filter(
 			(issue) => issue.code === ValidationIssueCode.DuplicateID
@@ -214,7 +214,7 @@ describe("a failure names the file", () => {
 	})
 
 	it("refuses a directory with no manifest", () => {
-		const { issues } = issuesOf(() => mergeGeographicModelFiles(slice().slice(1)))
+		const { issues } = issuesOf(() => mergeGeographicModelFiles(sourceFiles().slice(1)))
 
 		expect(issues.map((issue) => [issue.file, issue.code])).toEqual([
 			[MODEL_MANIFEST_FILENAME, LoadIssueCode.MissingField],
@@ -222,7 +222,9 @@ describe("a failure names the file", () => {
 	})
 
 	it("refuses a version authored outside the manifest, and says where it belongs", () => {
-		const { issues } = issuesOf(() => mergeGeographicModelFiles([...slice(), file("c/v.json", { version: "9.9.9" })]))
+		const { issues } = issuesOf(() =>
+			mergeGeographicModelFiles([...sourceFiles(), file("c/v.json", { version: "9.9.9" })])
+		)
 
 		expect(issues.map((issue) => issue.file)).toEqual(["c/v.json"])
 		expect(issues[0]?.message).toContain(MODEL_MANIFEST_FILENAME)
@@ -230,7 +232,7 @@ describe("a failure names the file", () => {
 
 	it("refuses a key that is not a table rather than dropping the records under it", () => {
 		const { issues } = issuesOf(() =>
-			mergeGeographicModelFiles([...slice(), file("c/typo.json", { conceptz: activities.concepts })])
+			mergeGeographicModelFiles([...sourceFiles(), file("c/typo.json", { conceptz: activities.concepts })])
 		)
 
 		expect(issues.map((issue) => [issue.file, issue.code, issue.path])).toEqual([

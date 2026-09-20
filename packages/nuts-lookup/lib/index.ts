@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `@mailwoman/nuts-lookup` — EU coordinate → NUTS statistical-region codes (levels 1–3). Point-in-
- *   polygon over the Eurostat GISCO NUTS boundaries in a `node:sqlite` table. NUTS ids nest by
+ *   `@mailwoman/nuts-lookup` — EU coordinate → nuts statistical-region codes (levels 1–3). Point-in-
+ *   polygon over the Eurostat gisco nuts boundaries in a `node:sqlite` table. nuts ids nest by
  *   prefix (`DE` → `DE1` → `DE11` → `DE111`), so we find the deepest containing region and derive
  *   its parents. An `@mailwoman/annotations` `Annotator`.
  */
@@ -11,6 +11,7 @@
 import type { AnnotationSet, Annotator, NUTS } from "@mailwoman/annotations"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import type { NUTSDatabase } from "#schema"
 
@@ -18,8 +19,8 @@ import type { NUTSDatabase } from "#schema"
  * Normalized geometry: an array of polygons, each `[outerRing, ...holes]`, each ring `[[lon,lat],…]`.
  */
 /**
- * NUTS code lengths by level. The code is hierarchical and fixed-width per level — a two-letter country prefix plus one
- * digit per level — so the length IS the level.
+ * Nuts code lengths by level. The code is hierarchical and fixed-width per level — a two-letter country prefix plus one
+ * digit per level — so the length is the level.
  */
 const NUTS_1_LENGTH = 3
 
@@ -38,14 +39,14 @@ export type MultiPolygonCoords = number[][][][]
 /**
  * Ray-cast point-in-ring (even-odd rule). `ring` is `[[lon, lat], …]`.
  *
- * DELIBERATE DUPLICATE of `@mailwoman/spatial`'s `pointInRing`, kept local on purpose. This package has exactly one
+ * Deliberate duplicate of `@mailwoman/spatial`'s `pointInRing`, kept local on purpose. This package has exactly one
  * dependency — zero-dep `@mailwoman/annotations` — and importing spatial to reach a fifteen-line ray cast would pull
  * `@mailwoman/core` with it, whose published tarball carries ~11 MB of libpostal/WOF/chromium-i18n data. Eleven
  * megabytes for fifteen lines is the wrong trade for a leaf lookup package. If this package ever gains a real spatial
  * dependency, delete these and import them.
  *
  * Repo-health-ignore private-name-shadows-export -- kept local so a leaf lookup package stays off @mailwoman/core's ~11
- * MB of shipped data; see the docstring
+ * MB of shipped data. see the docstring
  */
 function pointInRing(lon: number, lat: number, ring: number[][]): boolean {
 	let inside = false
@@ -64,7 +65,7 @@ function pointInRing(lon: number, lat: number, ring: number[][]): boolean {
 	return inside
 }
 
-// repo-health-ignore private-name-shadows-export -- kept local so a leaf lookup package stays off @mailwoman/core's ~11 MB of shipped data; see the docstring
+// repo-health-ignore private-name-shadows-export -- kept local so a leaf lookup package stays off @mailwoman/core's ~11 MB of shipped data. see the docstring
 function pointInPolygon(lon: number, lat: number, polygon: number[][][]): boolean {
 	if (!polygon[0] || !pointInRing(lon, lat, polygon[0])) return false
 
@@ -81,7 +82,7 @@ export function pointInMultiPolygon(lon: number, lat: number, polygons: MultiPol
 }
 
 /**
- * Derive the nested NUTS levels from a NUTS id (`"DE111"` → `{ level1:"DE1", level2:"DE11", level3:"DE111" }`).
+ * Derive the nested nuts levels from a nuts id (`"DE111"` → `{ level1:"DE1", level2:"DE11", level3:"DE111" }`).
  */
 export function nutsFromID(id: string): NUTS {
 	const nuts: NUTS = {}
@@ -108,7 +109,7 @@ export function nutsFromID(id: string): NUTS {
 const GEOMETRY_CACHE_LIMIT = 256
 
 /**
- * A NUTS lookup over a built `node:sqlite` polygon table.
+ * A nuts lookup over a built `node:sqlite` polygon table.
  */
 export class NUTSLookup implements Disposable {
 	#db: DatabaseClient<NUTSDatabase>
@@ -119,13 +120,13 @@ export class NUTSLookup implements Disposable {
 	readonly #ownedDatabase?: DatabaseClient<NUTSDatabase>
 	#byLevelBox: ReturnType<DatabaseClient["prepare"]>
 	/**
-	 * Parsed geometry by NUTS id, most recently used last. The table is read-only, so an entry never goes stale; the
+	 * Parsed geometry by nuts id, most recently used last. The table is read-only, so an entry never goes stale. the
 	 * cache is bounded because the shipped `nuts.db` carries 14.3 MB of geometry JSON over 2,010 regions, and a lookup
 	 * service that answers points across the whole EU would otherwise hold every region parsed.
 	 */
 	readonly #geometryCache = new Map<string, MultiPolygonCoords>()
 
-	constructor(opts: { databasePath: string } | { database: DatabaseClient<NUTSDatabase> }) {
+	constructor(opts: { databasePath: PathBuilderLike } | { database: DatabaseClient<NUTSDatabase> }) {
 		this.#ownedDatabase =
 			"database" in opts ? undefined : new DatabaseClient<NUTSDatabase>(opts.databasePath, { readOnly: true })
 
@@ -133,7 +134,7 @@ export class NUTSLookup implements Disposable {
 
 		this.#byLevelBox = this.#db.prepare(
 			// The explicit alias pins the JS key: for a bare column ref, sqlite3_column_name returns the
-			// SCHEMA's declared casing (`nutsId` in every shipped nuts.db — plus `nutsID` from builds made
+			// schema's declared casing (`nutsId` in every shipped nuts.db — plus `nutsID` from builds made
 			// in the window the casing sweep had renamed the DDL), not the query's spelling.
 			`SELECT nutsId AS nutsID, geom FROM nuts_regions
 			 WHERE level = ? AND minLat <= ? AND maxLat >= ? AND minLon <= ? AND maxLon >= ?`
@@ -141,7 +142,7 @@ export class NUTSLookup implements Disposable {
 	}
 
 	/**
-	 * The nested NUTS codes containing `(lat, lon)`, or null when the point is outside the EU NUTS area.
+	 * The nested nuts codes containing `(lat, lon)`, or null when the point is outside the EU nuts area.
 	 */
 	explore(lat: number, lon: number): NUTS | null {
 		for (const level of [3, 2, 1]) {

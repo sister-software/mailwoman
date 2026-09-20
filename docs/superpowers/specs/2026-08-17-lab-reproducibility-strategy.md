@@ -26,7 +26,7 @@ The eight are `poi.db` and its variants plus four OSM address-point extracts. Th
 `candidate.db`, `admin-global-priority.db`, every postcode extract, timezone, nuts, un-locode, bdc, filer —
 carries no provenance at all.
 
-The contract already exists. `docs/engineering/reference/layer-contract.mdx` specifies `layer_manifest` /
+The interface already exists. `docs/engineering/reference/layer-interface.mdx` specifies `layer_manifest` /
 `layer_coverage`, with source, `asOf`, and the meaning-of-zero coverage rule. **It is implemented on 13% of
 the built databases.** That is the whole finding: this is not a missing design, it is an unfinished rollout.
 
@@ -40,13 +40,13 @@ Two smaller facts worth carrying, because they shape what "reproducible" can mea
 
 ## The organising idea
 
-**Provenance, not configuration.**
+**Provenance rather than configuration.**
 
 A manifest describes what _was_ built. Configuration describes what _should_ be built. Reproduction needs
 the first. This distinction is not stylistic — it is the lesson of #1015, where
 `scripts/wof-build-manifest.json` lagged the live database by 71 Overture and 161 GeoNames countries and the
 real recipe had to be reconstructed from the artifact's synthetic-id ranges. `RELEASING.md` records the fix:
-the recipe moved INTO code, reviewed like code, and the manifest was demoted to a LOG.
+the recipe moved into code, reviewed like code, and the manifest was demoted to a LOG.
 
 So the test for every artifact this strategy adds is: **can it be re-derived from the thing it describes?**
 A file that can is a log and cannot lag — a stale entry fails its own check. A file that cannot is a
@@ -127,10 +127,10 @@ The design left three questions open. Resolving them here.
 | `link` is idempotent                                                      | **met**                                                                                                                                  |
 | `yarn test` leaves tracked directories untouched                          | **met** — all ten linkers and `buildPairIndexOverlay` write to the overlay; every tracked package stays empty across a full linker sweep |
 
-**Risk carried, not deferred:** only `model` and `tokenizer` throw. The other ~11 siblings degrade to
+**Risk carried rather than deferred:** only `model` and `tokenizer` throw. The other ~11 siblings degrade to
 `undefined` by design, so the new rung could turn a loud failure into a quiet one — a checkout that parses
 with no lexicons, no FST, no pair index, scoring worse and saying nothing. Sibling reporting ships with the
-rung, not after it.
+rung rather than after it.
 
 ## Phase 1 — `mw data inventory` — DONE
 
@@ -139,7 +139,7 @@ Read-only walk of the data root. Per artifact: size, kind, its manifest if it ha
 
 This is deliberately the cheapest phase and deliberately second. It turns an anxiety into `8 / 60`, gives
 every later phase a scoreboard, and tells us where the real gaps are instead of us guessing. It also has to
-report the two facts above honestly: that `pelias-rig` is a third of the disk and not ours, and that
+report the two facts above directly: that `pelias-rig` is a third of the disk and not ours, and that
 `candidate.db` is a symlink whose target is a real choice.
 
 **Acceptance:** the command names every artifact, classifies each as provenanced / unprovenanced /
@@ -162,9 +162,9 @@ Everything phase 2 produces emits a manifest, so the phase 1 number improves by 
 ### The check this phase owes
 
 "One country, one source" is currently held by comments in `defaults.ts`; `verifyAdmin` tests floors, so
-duplication moves every check number in the passing direction and the build ships. The command that MOVES a
-country between sources is exactly the thing that can violate the invariant, so the check lands with the
-command, not after it.
+duplication moves every check number in the passing direction and the build ships. The command that moves a
+country between sources is exactly the thing that can violate the required relationship, so the check lands with the
+command rather than after it.
 
 A second, newly measured instance of the same class: three repositories are currently checked out **twice**,
 under both the flat `<root>/<name>` and nested `<root>/<owner>/<name>` layouts, at identical commits. `ingestWOF`
@@ -177,17 +177,17 @@ order. Deduplicating the repos root and naming one layout canonical belongs here
 Four builders stamp a `layer_manifest`, through one shared `stampLayerManifest` that also owns the ordering
 (before the seal, or before the swap — a sealed artifact is `0444` and a swapped one is already live):
 
-| Builder                       | Artifact                   | Notes                                                                  |
-| ----------------------------- | -------------------------- | ---------------------------------------------------------------------- |
-| `gazetteer build admin`       | `admin-global-priority.db` | licence is a CONJUNCTION of the folds that actually contributed        |
-| `gazetteer build candidate`   | `candidate-*.db`           | provenance is a CHAIN — names its ancestor, not the ancestor's sources |
-| `situs interpolation-extract` | `interpolation/*` (52)     | TIGER, public domain                                                   |
-| `situs address-points`        | `address-points/*` (53)    | records the dataset allow-list the build applied                       |
+| Builder                       | Artifact                   | Notes                                                                         |
+| ----------------------------- | -------------------------- | ----------------------------------------------------------------------------- |
+| `gazetteer build admin`       | `admin-global-priority.db` | license is a CONJUNCTION of the folds that contributed                        |
+| `gazetteer build candidate`   | `candidate-*.db`           | provenance is a CHAIN — names its ancestor rather than the ancestor's sources |
+| `situs interpolation-extract` | `interpolation/*` (52)     | TIGER, public domain                                                          |
+| `situs address-points`        | `address-points/*` (53)    | records the dataset allow-list the build applied                              |
 
 Plus a fix to the OSM rooftop builder, whose `build_cmd` recorded a path the workspace regroup moved — the
 defect phase 1 surfaced.
 
-**The contract gained a third spine shape.** `SpineKeys` offered `h3`, `wofID` and `addressID` — the two
+**The interface gained a third spine shape.** `SpineKeys` offered `h3`, `wofID` and `addressID` — the two
 layer shapes that existed when it was written, a cellular one and an id-joined one. `address_point` and
 `street_segment` carry none of the three; they are probed on `(postcode | locality, street_norm, number)`.
 A first draft declared `addressID: "address_id"`, a column that does not exist, caught by reading the table
@@ -195,9 +195,9 @@ rather than the schema module. `street` is additive; existing layers are unaffec
 
 **The number does not move until each artifact is rebuilt.** Artifacts are rebuilt, never patched, so the
 shipped databases stay unprovenanced and `data inventory` will keep reporting them as such. That is the
-discipline working, not a gap.
+discipline working rather than a gap.
 
-### What phase 3 did NOT cover, and why
+### What phase 3 did not cover, and why
 
 The `wof/` family is 79 databases and four of its sub-families are still unstamped: the 24 `postcode-*`
 extracts, the 13 `postalcode-*` WOF ingests, the 2 `wof-polygons`, and assorted one-offs. None is on the
@@ -220,7 +220,7 @@ Carried from the repo's own documents, restated because every phase can violate 
 5. **Measure the claim.** Every number in this document came from a command. Where a phase rests on a claim
    about data or scale, it spends the one command that determines the result.
 
-## Open, and honestly open
+## Open, and directly open
 
 - **The seat-preference term's reach is unverified end-to-end.** It moves 3,896 top slots at the ranker.
   Three inverted probes — the term itself, `compareReferential`, and the candidate `ORDER BY` — changed
@@ -228,4 +228,4 @@ Carried from the repo's own documents, restated because every phase can violate 
   harness reads the edits. So the pipeline decides those answers downstream of candidate ordering, and where
   is not yet known. The worktree arm is the instrument; this is the first thing to point it at.
 - **`ten-minute-trial.mdx` promises zero configuration.** Every phase here must leave that true. Phase 1 and
-  2 add commands, not settings, for that reason.
+  2 add commands rather than settings, for that reason.

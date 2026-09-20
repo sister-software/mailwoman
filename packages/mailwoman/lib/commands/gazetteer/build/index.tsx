@@ -4,25 +4,19 @@
 /**
  *   `mailwoman gazetteer build` — the whole data pipeline, turnkey: `build admin` (WOF + Overture +
  *   GeoNames → verified, sealed admin gazetteer) then `build candidate` (the byte-range candidate
- *   table) FROM that fresh admin artifact. The legacy standalone GeoNames fold is skipped here — the
+ *   table) from that fresh admin artifact. The legacy standalone GeoNames fold is skipped here — the
  *   admin build already folds the full 161-country set upstream (a superset of the old fold list).
- *   Both artifacts land at STAGING/dated paths; swapping/promoting stays deliberate (RELEASING.md).
+ *   Both artifacts land at staging/dated paths. swapping/promoting stays deliberate (releasing.md).
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	phaseReporter,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReporter, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "build",
@@ -33,12 +27,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	data?: string
-	skipVerify: boolean
-}
-
-const GazetteerBuild: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildAdmin, buildCandidate, DEFAULT_CANDIDATE_OUT, resolvePostcodeDatabases, wofDir } =
 			await import("#gazetteer-pipeline")

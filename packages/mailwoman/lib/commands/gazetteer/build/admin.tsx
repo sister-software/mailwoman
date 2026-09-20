@@ -4,9 +4,9 @@
 /**
  *   `mailwoman gazetteer build admin` — the turnkey admin-gazetteer build: WOF ingest → Overture
  *   divisions (real `division_area` extents + country nodes, #1015) → GeoNames folds → freeze →
- *   enrich (region abbrevs + place_abbr) → FTS → the structural VERIFY check (#1026 node census,
- *   reverse EU panel) → SEAL 0444. Builds to a STAGING path; swapping over the live DB is a separate,
- *   deliberate step (RELEASING.md). The coverage recipe lives in `gazetteer-pipeline/defaults.ts`.
+ *   enrich (region abbrevs + place_abbr) → FTS → the structural verify check (#1026 node census,
+ *   reverse EU panel) → seal 0444. Builds to a staging path. swapping over the live DB is a separate,
+ *   deliberate step (releasing.md). The coverage recipe lives in `gazetteer-pipeline/defaults.ts`.
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
@@ -15,14 +15,14 @@ import { Box, Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	phaseReporter,
-	splitUpperList,
+	splitCountryCodes,
 	useCommandTask,
 } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "admin",
@@ -37,18 +37,9 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	data?: string
-	out?: string
-	overtureCountries?: string
-	geonamesCountries?: string
-	overtureRelease?: string
-	skipVerify: boolean
-}
+const csv = (raw: string | undefined): string[] | undefined => (raw ? splitCountryCodes(raw) : undefined)
 
-const csv = (raw: string | undefined): string[] | undefined => (raw ? splitUpperList(raw) : undefined)
-
-const GazetteerBuildAdmin: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildAdmin: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildAdmin } = await import("#gazetteer-pipeline")
 

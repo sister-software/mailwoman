@@ -4,13 +4,13 @@
 /**
  *   The dev-MCP worker — the process that actually imports mailwoman.
  *
- *   The shim (`cli.ts`) speaks MCP stdio to the client and imports NOTHING from this repo's runtime, so it never goes
- *   stale; this child holds the whole module graph — engines, gazetteers, ONNX sessions — and is the unit of restart.
- *   Killing and re-forking it is the ONLY way a running server picks up edited source: Node cannot evict an imported
+ *   The shim (`cli.ts`) speaks MCP stdio to the client and imports nothing from this repo's runtime, so it never goes
+ *   stale. this child holds the whole module graph — engines, gazetteers, ONNX sessions — and is the unit of restart.
+ *   Killing and re-forking it is the only way a running server picks up edited source: Node cannot evict an imported
  *   ES module, and a fresh process is also the only guarantee that the multi-gigabyte SQLite mmaps and ORT sessions
  *   are actually released.
  *
- *   Protocol (over the fork IPC channel; every message is one JSON-structured object):
+ *   Protocol (over the fork IPC channel. every message is one JSON-structured object):
  *
  *   in:  { type: "handshake" }
  *        { type: "call", id, name, args }
@@ -19,10 +19,10 @@
  *        { type: "result", id, ok: true, value } | { type: "result", id, ok: false, error }
  *
  *   `inputSchema` crosses the boundary as plain JSON Schema (draft-7, what MCP clients expect) because the shim must
- *   register tools WITHOUT importing zod schemas from this side — that import is exactly the staleness it exists to
- *   avoid. Tool handlers run here verbatim; the shim adds no behavior beyond transport and restart.
+ *   register tools without importing zod schemas from this side — that import is exactly the staleness it exists to
+ *   avoid. Tool handlers run here verbatim. the shim adds no behavior beyond transport and restart.
  *
- *   STDOUT DISCIPLINE: this process's stdout is piped to the shim's STDERR, so library noise can never corrupt the
+ *   stdout discipline: this process's stdout is piped to the shim's stderr, so library noise can never corrupt the
  *   MCP channel. All protocol traffic rides the IPC channel via `process.send`.
  */
 
@@ -116,7 +116,7 @@ process.on("message", (message: WorkerInbound) => {
 			return
 		}
 
-		// Validate HERE, not in the shim: the split moved the SDK's schema enforcement out of the call path, and an
+		// Validate here rather than in the shim: the split moved the SDK's schema enforcement out of the call path, and an
 		// unvalidated handler turns a stale-schema client's mis-shaped argument into a deep, misattributed TypeError
 		// (a tally array arriving as its JSON text reached `paths.map`). Parsing also applies the schema's defaults.
 		const parsed = tool.inputSchema.safeParse(message.args)
@@ -149,7 +149,7 @@ process.on("message", (message: WorkerInbound) => {
 	}
 })
 
-// The shim restarts by SIGTERM; the same cleanup the old single-process server ran on its signals.
+// The shim restarts by sigterm. the same cleanup the old single-process server ran on its signals.
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
 	process.on(signal, () => {
 		registry.evictAll()

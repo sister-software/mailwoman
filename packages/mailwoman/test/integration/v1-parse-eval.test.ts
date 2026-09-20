@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The v7 rules-excision swap check (Track V1) — RE-CONDITIONAL 2026-07-17.
+ *   The v7 rules-excision swap check (Track V1) — RE-conditional 2026-07-17.
  *
  *   ## What changed and why
  *
@@ -12,7 +12,7 @@
  *   T1/T2/T4 neural swaps (`hold/v1-parse-neural-check-blocked`) were parked indefinitely.
  *
  *   **Operator decision, 2026-07-17** (`scratchpad/MAILWOMAN_ROAD_TO_V7.md` §4.1): the v7 acceptance
- *   criterion is now **coordinate acceptability + the plausibility guard**, NOT the 0.90 parse-tag
+ *   criterion is now **coordinate acceptability + the plausibility guard**, not the 0.90 parse-tag
  *   street floor. The floor measured the wrong thing for a geocoder — the deepparse head-to-head
  *   proved both parsers sit at ~65% street on hostile input yet resolution is where mailwoman wins —
  *   and 0.90 parse-tag street is plausibly unreachable at 29M params on this fragment-heavy
@@ -31,16 +31,16 @@
  *     - **Coordinate acceptability** — when the neural street parse is correct, the geocode is
  *       coordinate-safe: 98.6% within 1 km of the rules geocode, median 0 km.
  *     - **A bounded garbage tail** — 18 fixtures diverge > 25 km. The stage-2.5 kind-classifier routes
- *       11 (non-structured kinds) away from the neural parser; of the 7 that classify as
+ *       11 (non-structured kinds) away from the neural parser. of the 7 that classify as
  *       `structured_address`, the plausibility guard catches 4, leaving a residual of **3 of 321
  *       (0.9%)** — the #727 in-country boundary class that stage-2 (k-best span decode) then erases.
  *       The doc frames this as an order-of-magnitude result: "the tail is bounded to low single
- *       digits, not that it is exactly three."
+ *       digits rather than that it is exactly three."
  *     - **Zero false fallbacks** — none of the 81 coordinate-safe structured fixtures trip the guard.
  *
  *   ## What this test asserts (each threshold traces to a measured receipt)
  *
- *   Re-measured here on the CURRENT shipped model (v381 / v6.5.0) with the shipped instrument
+ *   Re-measured here on the current shipped model (v381 / v6.5.0) with the shipped instrument
  *   (`isImplausibleResolution`, i.e. the country-centroid guard). The three conditional properties, and the
  *   fresh measurement each cleared at the time of re-verification:
  *
@@ -48,26 +48,26 @@
  *        passes, ≥ 0.90 resolve within 1 km of the rules geocode. Receipt: 98.6%; fresh: 76/80 = 0.950.
  *        Floor set conservatively below both, with noise margin.
  *     2. **Guard soundness (zero false fallbacks)** — no coordinate-safe (Δ ≤ 5 km) `structured_address`
- *        fixture trips the guard. Receipt: 0/81; fresh: 0/78. Hard zero.
+ *        fixture trips the guard. Receipt: 0/81. fresh: 0/78. Hard zero.
  *     3. **Tail bound** — the garbage-tail residual (structured, street-fail, Δ > 25 km, kind-router
  *        miss, guard miss) ≤ 2% of live fixtures. Receipt (guard A+B): 3/321 = 0.9%; fresh (shipped
  *        guard A only): 5/321 = 1.56%. Bound traces to the "low single digits" framing with margin.
  *
- *   The old parse-tag street/hn/postcode agreement is still COMPUTED and logged as an INFORMATIONAL
+ *   The old parse-tag street/hn/postcode agreement is still computed and logged as an informational
  *   line (it drives Track B), it just no longer checks the release.
  *
  *   This check compares the neural resolution against the rules baseline it replaces — the final
  *   pre-excision safety check.
  *
- *   ## Plan-4 conversion (2026-07-17) — the rules arm now reads FROZEN goldens
+ *   ## Plan-4 conversion (2026-07-17) — the rules arm now reads frozen goldens
  *
- *   The v1 rules parser has been DELETED (`createAddressParser` and its module graph are gone). The
- *   rules baseline this check compares against is no longer produced live; it is read from the
+ *   The v1 rules parser has been deleted (`createAddressParser` and its module graph are gone). The
+ *   rules baseline this check compares against is no longer produced live. it is read from the
  *   phase-0 frozen capture `mailwoman/test-fixtures/legacy-golden/parity-raw.jsonl` (the top
  *   solution's `classifications` per input, captured byte-stable in PR #1092). That flat record is
- *   rebuilt into an `AddressTree` via `v0RecordToTree` — the SAME synthetic-token builder the live
+ *   rebuilt into an `AddressTree` via `v0RecordToTree` — the same synthetic-token builder the live
  *   arm used on `solutions[0].classifications` — and resolved through the WOF resolver exactly as
- *   before. The coordinate comparison is therefore identical to the live arm; only the source of the
+ *   before. The coordinate comparison is therefore identical to the live arm. only the source of the
  *   rules parse changed (live parser → committed snapshot of that same parser).
  *
  *   Skips when the neural weights or the WOF gazetteer are absent (CI).
@@ -142,9 +142,9 @@ const fold = (s: string) => s.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
 async function weightsPresent(): Promise<boolean> {
 	try {
-		// ASK THE RESOLVER. This probed `packages/neural-weights-en-us/model.onnx` directly, which is true only
+		// ASK the resolver. This probed `packages/neural-weights-en-us/model.onnx` directly, which is true only
 		// while the dev linker materializes binaries into that package — and a skip-guard that stops matching
-		// does not fail, it SKIPS, so the suite disappears from the run reporting success. The repo has already
+		// does not fail, it skips. Therefore, the suite disappears from the run reporting success. The repo has already
 		// paid for this once: the workspace regroup left this literal behind and both this suite and
 		// `api-engine.test.ts` went quiet until someone counted the skips.
 		return await pathExists((await resolveWeights({ locale: "en-us" })).modelPath)
@@ -213,13 +213,11 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 			using backend = new WOFSQLitePlaceLookup({ databasePath: [resolvePath(ADMIN_DB), resolvePath(POSTCODE_DB)] })
 			const resolver = createWOFResolver(backend)
 
-			const fixtures = (
-				await Array.fromAsync(
-					JSONSpliterator.fromAsync<ParityFixture>(
-						"packages/mailwoman/lib/eval-harness/fixtures/parity-corpus.triaged.jsonl"
-					)
-				)
-			).filter((f) => !f.dropped && f.expect)
+			const fixtures = await JSONSpliterator.fromAsync<ParityFixture>(
+				"packages/mailwoman/lib/eval-harness/fixtures/parity-corpus.triaged.jsonl"
+			)
+				.filter((f) => !f.dropped && f.expect)
+				.toArray()
 
 			const rows: Measured[] = []
 
@@ -278,7 +276,7 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 				})
 			}
 
-			// INFORMATIONAL: the old parse-tag agreement (non-enforcing; drives Track B)
+			// informational: the old parse-tag agreement (non-enforcing. drives Track B)
 			const agreement = (label: string) => {
 				const scored = rows.filter((r) => r.agree[label] !== undefined)
 				const hit = scored.filter((r) => r.agree[label]).length
@@ -319,14 +317,14 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 				`[check] P3 garbage-tail residual (structured, street-fail, Δ>25km, guard-miss): ${residual}/${rows.length} = ${(100 * residualRate).toFixed(2)}% (bound 2.0%; receipt 0.9% = 3/321)`
 			)
 
-			// P1 — Receipt: 98.6% within 1km when the neural street parse is correct; fresh: 76/80 = 0.950.
+			// P1 — Receipt: 98.6% within 1km when the neural street parse is correct. fresh: 76/80 = 0.950.
 			//      Floor 0.90 sits below both with margin. When the model parses the street right, the geocode is safe.
 			expect(
 				acceptRate,
 				"coordinate acceptability: street-PASS neural geocode within 1km of rules"
 			).toBeGreaterThanOrEqual(0.9)
 
-			// P2 — Receipt: 0/81 coord-safe structured fixtures trip the guard; fresh: 0/78. Zero false fallbacks is
+			// P2 — Receipt: 0/81 coord-safe structured fixtures trip the guard. fresh: 0/78. Zero false fallbacks is
 			//      the guard's whole justification — a non-zero here means it would bounce good geocodes to fallback.
 			expect(guardFalsePositives, "plausibility-guard false fallbacks on coord-safe structured fixtures").toBe(0)
 

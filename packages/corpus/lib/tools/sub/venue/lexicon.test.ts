@@ -5,10 +5,10 @@
  *   Pins the sub-venue lexicon builder. Everything here runs over synthetic inputs — the builder is a
  *   pure function of parsed data by design, so no fixture on disk and no network is involved.
  *
- *   The tests that matter most are the DRIFT pin (the seed against `neural/venue-structure.ts`, which
- *   `@mailwoman/corpus` cannot import — see the module docstring), the NAME-HARVEST GATE, which is the
+ *   The tests that matter most are the drift pin (the seed against `neural/venue-structure.ts`, which
+ *   `@mailwoman/corpus` cannot import — see the module docstring), the name-harvest gate, which is the
  *   filter standing between this table and 250,000 German and British street names, and the
- *   ATTRIBUTION pin, which is the wave-1 defect that put `west → platform` in the shipped artifact.
+ *   attribution pin, which is the wave-1 defect that put `west → platform` in the shipped artifact.
  */
 
 import {
@@ -31,7 +31,7 @@ import { SUBVENUE_PROMOTIONS } from "@mailwoman/corpus/tools/sub-venue-promotion
 import { expect, test } from "vitest"
 
 /**
- * A minimal SPARQL envelope in the exact shape WDQS serves.
+ * A minimal sparql envelope in the exact shape wdqs serves.
  */
 const wikidataFixture = {
 	results: {
@@ -54,7 +54,7 @@ const wikidataFixture = {
 				label: { value: "空港ターミナル" },
 				kind: { value: "label" },
 			},
-			// A SECOND Japanese label, which is what makes the shared-substring head derivation possible
+			// A second Japanese label, which is what makes the shared-substring head derivation possible
 			// at all — a group of one has nothing to share. The real pull carries five.
 			{
 				item: { value: "http://www.wikidata.org/entity/Q849706" },
@@ -97,7 +97,7 @@ function surface(partial: Partial<SubVenueSurface> & Pick<SubVenueSurface, "phra
 }
 
 test("SHIPPED_DESIGNATOR_SEED mirrors neural/venue-structure.ts's VENUE_STRUCTURE_DESIGNATORS", () => {
-	// THE DRIFT PIN. `@mailwoman/corpus` does not depend on `@mailwoman/neural`, so this list is a copy
+	// the drift PIN. `@mailwoman/corpus` does not depend on `@mailwoman/neural`, so this list is a copy
 	// and the copy is what this test exists to catch. If `VENUE_STRUCTURE_DESIGNATORS` gains or loses a
 	// term, update both and update this literal.
 	expect(SHIPPED_DESIGNATOR_SEED.map((d) => d.id).toSorted()).toEqual([
@@ -114,7 +114,7 @@ test("SHIPPED_DESIGNATOR_SEED mirrors neural/venue-structure.ts's VENUE_STRUCTUR
 })
 
 test("SHIPPED_DESIGNATOR_SEED's modifierEligible set matches MODIFIER_ELIGIBLE_STRUCTURE_DESIGNATORS", () => {
-	// `gate` and `building` are excluded UPSTREAM because "East Gate" and "Building Society Place" are
+	// `gate` and `building` are excluded upstream because "East Gate" and "Building Society Place" are
 	// real GB streets. Measured on the GB extract 2026-08-04: the token `gate` appears in 890 named
 	// transport features — Park Gate, Notting Hill Gate, Queens Gate, Lancaster Gate, North Gate — and
 	// essentially none of them is a sub-venue. The exclusion is right and this pins it.
@@ -143,7 +143,7 @@ test("SHIPPED_MODIFIER_SEED mirrors VENUE_STRUCTURE_MODIFIERS", () => {
 })
 
 test("CONCEPT_QIDS covers every concept the wikidata fetch pulls", () => {
-	// Mirrors `fetch/wikidata-subvenue.ts`'s SUBVENUE_CONCEPTS. `wing` is absent from BOTH on purpose:
+	// Mirrors `fetch/wikidata-subvenue.ts`'s SUBVENUE_CONCEPTS. `wing` is absent from both on purpose:
 	// Wikidata has no clean "wing of a building" concept.
 	expect(Object.keys(CONCEPT_QIDS).toSorted()).toEqual([
 		"arcade",
@@ -182,7 +182,7 @@ test("surfacesFromWikidata maps QIDs to designators and drops untagged and unkno
 })
 
 test("surfacesFromWikidata: nothing it produces is curated", () => {
-	// The required invariant. A Wikidata class label is a CONCEPT NAME, not an addressed
+	// The required invariant. A Wikidata class label is a concept name rather than an addressed
 	// designator (`puerta de embarque` vs `Puerta`), so promotion is a human act.
 	expect(surfacesFromWikidata(wikidataFixture).every((s) => !s.curated)).toBe(true)
 })
@@ -231,7 +231,7 @@ test("nameContainsSurfaces falls back to substring matching for Han and Kana", (
 })
 
 test("extractAttestedPhrases attributes a hit to the record the PHRASE names, not the row's designator", () => {
-	// THE WAVE-1 DEFECT. A British bus stop is tagged `public_transport=platform` and named "Village
+	// the wave-1 defect. A British bus stop is tagged `public_transport=platform` and named "Village
 	// Hall" or "West Kensington"; wave 1 filed those as surfaces of `platform`, which is how the
 	// shipped artifact came to claim `west → platform` and `hall → platform`. 108 of its 133
 	// OSM-derived surfaces were mis-attributed this way.
@@ -254,7 +254,7 @@ test("extractAttestedPhrases attributes a hit to the record the PHRASE names, no
 		["west", "west", "modifier"],
 	])
 
-	// And the row's own designator survives as CONTEXT, which is what makes the confound board
+	// And the row's own designator survives as context, which is what makes the confound board
 	// possible: a `hall` seen on a platform is a bus stop, a `hall` seen on a terminal is a hall.
 	expect(surfaces.every((s) => s.context["platform"] === 1)).toBe(true)
 })
@@ -370,10 +370,10 @@ test("deriveHeadNounSurfaces does not mistake the modifier half for the head", (
 test("deriveHeadNounSurfaces holds the cognate floor at five folded characters", () => {
 	// Both sides of the floor, and neither is reachable from the committed table — no surface there
 	// sits on the boundary, so without this a change to the constant moves the artifact in silence.
-	// `campo` shares four folded characters with `campus` and means FIELD.
+	// `campo` shares four folded characters with `campus` and means field.
 	expect(deriveHeadNounSurfaces([surface({ phrase: "campo sportivo", recordID: "campus", lang: "it" })])).toEqual([])
 
-	// `satélite` shares five with `satellite` and is the addressed form; a floor of six loses it.
+	// `satélite` shares five with `satellite` and is the addressed form. a floor of six loses it.
 	expect(
 		deriveHeadNounSurfaces([surface({ phrase: "satélite de embarque", recordID: "satellite", lang: "es" })]).map(
 			(s) => s.phrase
@@ -400,7 +400,7 @@ test("deriveHeadNounSurfaces keeps a spaced non-Latin candidate to whole tokens"
 		surface({ phrase: "공항터미널", recordID: "terminal", lang: "ko" }),
 	])
 
-	// `터미널` and `공항` are both whole tokens of the spaced member; a fragment straddling the space is
+	// `터미널` and `공항` are both whole tokens of the spaced member. a fragment straddling the space is
 	// never offered.
 	expect(derived.map((s) => s.phrase).toSorted()).toEqual(["공항", "터미널"])
 })
@@ -439,7 +439,7 @@ test("applyPromotions curates only the matching designator, phrase and locale", 
 })
 
 test("applyPromotions refuses a region-free surface when the same language has a rejection", () => {
-	// The `pier` case. Promoted for en-GB, rejected for en-US; without this guard the en-GB decision
+	// The `pier` case. Promoted for en-GB, rejected for en-US. without this guard the en-GB decision
 	// curates the region-free English surface and hands `Pier 1 Imports` what en-US was refused.
 	const surfaces = [
 		surface({ phrase: "pier", recordID: "pier", lang: "en", region: "", source: "seed" }),
@@ -505,7 +505,7 @@ test("buildSubVenueLexicon: the seed's English surfaces are curated, everything 
 	const table = buildSubVenueLexicon({ wikidata: wikidataFixture, harvests: [], sources: [], promotions: [] })
 	const curated = table.surfaces.filter((s) => s.curated)
 
-	// Nine shipped designators plus twelve modifiers. The six PROPOSED designators contribute an
+	// Nine shipped designators plus twelve modifiers. The six proposed designators contribute an
 	// English surface too, but uncurated — nothing new auto-promotes.
 	expect(curated).toHaveLength(SHIPPED_DESIGNATOR_SEED.length + SHIPPED_MODIFIER_SEED.length)
 	expect(curated.every((s) => s.source === "seed")).toBe(true)

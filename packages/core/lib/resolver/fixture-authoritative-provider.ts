@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   In-memory fixture implementation of the authoritative-provider contract (#1901) — synthetic
- *   addresses, synthetic identifiers, zero network. Ships beside the contract the way
+ *   In-memory fixture implementation of the authoritative-provider interface (#1901) — synthetic
+ *   addresses, synthetic identifiers, zero network. Ships beside the interface the way
  *   `@mailwoman/core/api/test-clocks` ships beside `APIClient`, and for the same reason: every
- *   consumer package exercises the boundary against the SAME reference implementation instead of five
+ *   consumer package exercises the boundary against the same reference implementation instead of five
  *   hand-rolled mocks that drift.
  *
  *   The fixture matches on the query's normalized form or a declared component value — deliberately
- *   simple string keys, because the fixture tests the THREADING of provider answers through result
- *   surfaces, never provider matching quality. No fixture row may carry licensed data; synthetic
- *   UPRN-shaped identifiers use the reserved 0-prefix range no real UPRN occupies.
+ *   simple string keys, because the fixture tests the threading of provider answers through result
+ *   surfaces, never provider matching quality. No fixture row may carry licensed data. synthetic
+ *   uprn-shaped identifiers use the reserved 0-prefix range no real uprn occupies.
  */
 
 import {
@@ -33,7 +33,7 @@ export interface FixtureAuthoritativeRule {
 
 export interface FixtureAuthoritativeProviderOptions {
 	/**
-	 * Rules checked in order; the first hit answers. No hit → a `refused` response, because a fixture that silently
+	 * Rules checked in order. the first hit answers. No hit → a `refused` response, because a fixture that silently
 	 * "matches nothing" is indistinguishable from a fixture that was never consulted.
 	 */
 	rules: ReadonlyArray<FixtureAuthoritativeRule>
@@ -47,8 +47,8 @@ export interface FixtureAuthoritativeProviderOptions {
 const FIXTURE_ATTRIBUTION = "Synthetic fixture data — not derived from any licensed source"
 
 /**
- * Build a fixture provider from rules. The returned provider is pure and synchronous under the hood; the async
- * signature is the contract's.
+ * Build a fixture provider from rules. The returned provider is pure and synchronous under the hood. the async
+ * signature is the interface's.
  */
 export function createFixtureAuthoritativeProvider(
 	options: FixtureAuthoritativeProviderOptions
@@ -73,8 +73,8 @@ export function createFixtureAuthoritativeProvider(
 }
 
 /**
- * A ready-made exact match for one synthetic premise, for the common one-rule test. The UPRN-shaped identifier sits in
- * a 0-prefixed range no real UPRN occupies.
+ * A ready-made exact match for one synthetic premise, for the common one-rule test. The uprn-shaped identifier sits in
+ * a 0-prefixed range no real uprn occupies.
  */
 export function fixtureExactMatch(overrides: Partial<AuthoritativeMatch> = {}): AuthoritativeResponse {
 	return {

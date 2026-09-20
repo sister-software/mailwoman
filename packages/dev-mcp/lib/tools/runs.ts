@@ -3,7 +3,7 @@
 
 /**
  *   The `mwdev_runs` tool definition — the description an agent reads, the input schema, and the handler wiring.
- *   The measurement itself lives in the package root; this file is the CONTRACT, and the description is the
+ *   The measurement itself lives in the package root. this file is the interface, and the description is the
  *   required half of it.
  */
 
@@ -55,9 +55,9 @@ export const runsTool = async ({ registry }: DevToolDeps): Promise<DevTool> => (
 		const sameTree = all.filter((run) => run.fingerprint_matches_now).length
 
 		// One measurement often writes several runs in the same second against the same tool, input set and
-		// tree — a burst of arms, not several comparisons. Listed row by row those fill the reply with rows
+		// tree — a burst of arms rather than several comparisons. Listed row by row those fill the reply with rows
 		// that differ only in `run_id` and byte count, and push the older, genuinely different runs past the
-		// limit. Group them; the newest of each group is the one a {kind:"recorded"} arm would replay, and the
+		// limit. Group them. the newest of each group is the one a {kind:"recorded"} arm would replay, and the
 		// rest are named by count and stay reachable through `get`.
 		const groups = new Map<string, typeof all>()
 

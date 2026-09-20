@@ -7,7 +7,7 @@ verified-with: mailwoman 8.7.0
 
 # Improve geocode precision
 
-Every geocode you have run so far answered `resolution_tier: "admin"` — a coordinate for the city, not
+Every geocode you have run so far answered `resolution_tier: "admin"` — a coordinate for the city rather than
 for the building. By the end of this page you'll have moved one address 1,521 m, from a city centroid to
 its rooftop, with a 127 MB download; you'll know what the four tiers are and which download reaches
 which; and you'll know what `uncertainty_m` is measuring in each one. About twenty minutes.
@@ -170,7 +170,7 @@ tells you what kind of coordinate it is.
 
 | Tier            | Source                                    | `uncertainty_m`                          |
 | --------------- | ----------------------------------------- | ---------------------------------------- |
-| `address_point` | the state's rooftop register (`situs.db`) | `1` — a floor, not a measurement         |
+| `address_point` | the state's rooftop register (`situs.db`) | `1` — a floor rather than a measurement  |
 | `interpolated`  | the TIGER street network (`interp.db`)    | the calibrated bracket, `141` above      |
 | `street`        | a national register's street centroids    | half the street's bounding-box diagonal  |
 | `admin`         | the gazetteer, `candidate.db`             | `null` — no sub-locality estimate exists |
@@ -179,7 +179,7 @@ Three notes on that table.
 
 **The `1` at the rooftop tier is a constant.** The situs point is a parcel or building coordinate and
 the code writes a 1 m floor rather than a measured error. It means "this is as good as this pipeline
-gets", not "this is accurate to a meter".
+gets" rather than "this is accurate to a meter".
 
 **The `141` at the interpolated tier is calibrated, and per region.** The raw radius — half the matched
 segment's length — covers about 72% of true errors, so it is multiplied by a per-region conformal factor

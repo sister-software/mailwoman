@@ -100,7 +100,7 @@ export async function setLicenseState(
 
 /**
  * Read and clear the plaintext refresh secret so it is answered to exactly one claim. A read then a clear conditioned
- * on the value read: two claims racing both read it, but only the one whose clear lands a row answers it. (`RETURNING`
+ * on the value read: two claims racing both read it, but only the one whose clear lands a row answers it. (`returning`
  * on the update alone would answer the cleared column, which is null.)
  */
 export async function takePendingRefreshSecret(ledger: Ledger, lid: string): Promise<string | undefined> {
@@ -191,7 +191,7 @@ export async function setEmailState(
 /**
  * Tokens whose email has not been confirmed sent: `pending` covers a crash between the insert and the send, or between
  * the provider accepting the message and the ledger recording it; `failed` is a provider refusal. Both are re-sent
- * under the invoice id; whether the provider deduplicates on it is the provider's (`email/provider.ts`).
+ * under the invoice id. whether the provider deduplicates on it is the provider's (`email/provider.ts`).
  */
 export async function tokensAwaitingEmail(ledger: Ledger): Promise<LicenseTokenRow[]> {
 	return ledger.selectFrom("license_tokens").selectAll().where("email_state", "in", ["pending", "failed"]).execute()

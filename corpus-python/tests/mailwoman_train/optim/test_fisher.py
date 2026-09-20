@@ -1,6 +1,6 @@
 """Fisher capture + EWC consumption (v8.3.0 Phase 1 — fisher.py).
 
-Pins the three contract properties the design memo names:
+Pins the three interface properties the design memo names:
 
 1. **Byte-identical trajectory** — capture only reads ``p.grad``; a run with the accumulator
    attached ends with exactly the weights of a run without it (the rng/byte-stability rule).
@@ -129,7 +129,7 @@ def test_ewc_penalty_grows_with_distance_and_scales_with_lambda(tmp_path: Path) 
 def _fisher_weighted_drift(fisher_path: Path, base: torch.nn.Module, tuned: torch.nn.Module) -> float:
     """Σ F_i·(θ_i − θ*_i)² — drift measured where the Fisher says the base had curvature.
 
-    EWC only promises protection ALONG high-Fisher directions; low-curvature directions drift
+    EWC only promises protection ALONG high-Fisher directions. low-curvature directions drift
     freely by design (that freedom is what lets the fine-tune learn). An unweighted drift metric
     counts exactly the directions the brake deliberately releases.
     """
@@ -147,7 +147,7 @@ def test_large_lambda_brakes_the_drift(tmp_path: Path) -> None:
     unbraked twin on the same stream.
 
     (λ is bounded by SGD stability — λ·F·lr must stay < 2 — so the memo's "λ→∞ freezes" is asserted
-    as a strong RELATIVE brake at a large-but-stable λ, not a literal fixed point.)
+    as a strong RELATIVE brake at a large-but-stable λ rather than a literal fixed point.)
     """
 
     def tune(lam: float) -> torch.nn.Module:
@@ -186,13 +186,13 @@ def test_fresh_head_params_are_unpenalized(tmp_path: Path) -> None:
             self.body = base  # prefixes every name with "body." — zero overlap with the artifact
             self.fresh_head = torch.nn.Linear(3, 5)
 
-    # A model sharing NO names with the artifact is a wiring error — penalty() refuses loudly
-    # (silence would ship an unbraked "protected" fine-tune).
+    # A model sharing no names with the artifact is a wiring error — penalty() refuses loudly
+    # (silence would ship an unbraked "guarded" fine-tune).
     ewc = EWCPenalty(fisher_path, ref, lam=1.0, device=torch.device("cpu"))
     with pytest.raises(ValueError, match="no parameter names"):
         ewc.penalty(WithHead())
 
-    # The realistic shape: same names, one EXTRA fresh param. Penalty must ignore the extra.
+    # The realistic shape: same names, one extra fresh param. Penalty must ignore the extra.
     tuned = _tiny(seed=1)
     tuned.load_state_dict(base.state_dict())
     baseline = float(ewc.penalty(tuned))

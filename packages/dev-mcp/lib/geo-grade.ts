@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Grading two arms against a truth COORDINATE, which is the only axis a cross-engine comparison has.
+ *   Grading two arms against a truth coordinate, which is the only axis a cross-engine comparison has.
  *
  *   `grade.ts` grades against expectations — components, place ids, tiers — using the board's own `checkCase`. None of
  *   that survives a comparison with Pelias or Photon: those arms answer with a point and a label from a vocabulary that
@@ -11,7 +11,7 @@
  *   truth point, thresholded at 1 / 5 / 25 km, with a no-result a miss at every threshold.
  *
  *   The equivalence test is here for the reason §5.6 gives: a parity claim is not two percentages that look close. It
- *   is a TOST against a bound chosen BEFORE the measurement — ±5 pp at 25 km — and it can come back "not equivalent and
+ *   is a tost against a bound chosen before the measurement — ±5 pp at 25 km — and it can come back "not equivalent and
  *   not different", which is the answer an underpowered run should give.
  */
 
@@ -35,13 +35,13 @@ export const DISTANCE_THRESHOLDS_KM = [1, 5, 25] as const
 export const EQUIVALENCE_THRESHOLD_KM = 25
 
 /**
- * The pre-registered TOST equivalence bound, in percentage points. Two arms are declared equivalent only when the whole
+ * The pre-registered tost equivalence bound, in percentage points. Two arms are declared equivalent only when the whole
  * confidence interval for their difference at {@link EQUIVALENCE_THRESHOLD_KM} sits inside ±5 pp.
  */
 const EQUIVALENCE_BOUND_PP = 5
 
 /**
- * One-sided critical z at α = 0.05, the standard TOST pairing — each of the two one-sided tests is run at 5%, which
+ * One-sided critical z at α = 0.05, the standard tost pairing — each of the two one-sided tests is run at 5%, which
  * makes the procedure a 90% confidence interval read against the bound.
  */
 const Z_CRITICAL_95_ONE_SIDED = 1.645
@@ -62,7 +62,7 @@ export interface GeoPoint {
 /**
  * Distance from an arm's answer to a truth point, or `null` when the arm returned no coordinate.
  *
- * `null` is NOT infinity and must not be turned into one. It flows into {@link hitAt} as a miss at every threshold —
+ * `null` is not infinity and must not be turned into one. It flows into {@link hitAt} as a miss at every threshold —
  * which is what the protocol says — while staying distinguishable in the row, so a reader can tell an arm that missed
  * by 400 km from an arm that had nothing to say.
  */
@@ -89,7 +89,7 @@ export function thresholdKey(thresholdKm: number): string {
 /**
  * Grade one row at one threshold.
  *
- * Deliberately a HIT/MISS comparison rather than "whichever arm is closer". An arm that moves a result from 40 km to 30
+ * Deliberately a HIT/miss comparison rather than "whichever arm is closer". An arm that moves a result from 40 km to 30
  * km has not found the address, and a metric that rewards it would report progress on rows where nothing usable
  * changed. The full distances are carried on the row for anyone who wants to read the margin.
  */
@@ -147,7 +147,7 @@ export interface EquivalenceReading {
 	p_lower: number | null
 	p_upper: number | null
 	/**
-	 * `true` only when BOTH one-sided tests reject, i.e. the difference is demonstrably inside the bound. `false` covers
+	 * `true` only when both one-sided tests reject, i.e. the difference is demonstrably inside the bound. `false` covers
 	 * two very different situations — a real difference, and too few rows to tell — which is why the sentence says which
 	 * one this is rather than leaving `false` to be read as "different".
 	 */
@@ -156,7 +156,7 @@ export interface EquivalenceReading {
 }
 
 /**
- * Half the width of one proportion's Wilson interval, at the one-sided level TOST is run at. The instrument for the
+ * Half the width of one proportion's Wilson interval, at the one-sided level tost is run at. The instrument for the
  * boundary cases the normal approximation cannot describe: it stays wide at `p = 0` and `p = 1`, where the
  * normal-approximation standard error collapses to zero.
  */
@@ -167,10 +167,10 @@ function wilsonHalfWidth(successes: number, n: number): number {
 }
 
 /**
- * The equivalence verdict as a sentence, which has THREE readings and not two.
+ * The equivalence verdict as a sentence, which has three readings and not two.
  *
  * Failing an equivalence test does not mean the arms differ, and it does not mean nothing was learned — which of those
- * it means depends on where the point estimate fell. A difference already outside the bound is a difference; a small
+ * it means depends on where the point estimate fell. A difference already outside the bound is a difference. a small
  * difference with an interval too wide to place is an underpowered run. Wording both as "this is not a claim that the
  * arms differ" would flatly contradict the two-proportion z-test printed beside it, which on a lopsided pair of arms
  * reports a significant gap in the same paragraph.
@@ -199,12 +199,12 @@ function equivalence(
 }
 
 /**
- * TOST for two proportions against the pre-registered bound.
+ * Tost for two proportions against the pre-registered bound.
  *
- * The standard error is the INDEPENDENT-samples one even though the rows are paired. That is the conservative direction
+ * The standard error is the independent-samples one even though the rows are paired. That is the conservative direction
  * and it is chosen on purpose: paired arms over one input set are positively correlated, so the true paired variance is
  * smaller, so this interval is wider and equivalence is harder to declare. An equivalence claim that survives this test
- * survives the paired one; a claim that fails it may only be underpowered, which the sentence says.
+ * survives the paired one. a claim that fails it may only be underpowered, which the sentence says.
  */
 export function tostEquivalence(
 	successesA: number,

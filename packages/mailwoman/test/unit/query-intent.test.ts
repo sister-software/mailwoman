@@ -13,7 +13,7 @@
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import type { QueryKind } from "@mailwoman/core/pipeline"
-import { declaredAmbiguityMarker } from "mailwoman/query-intent"
+import { coarserAnswerMarker, declaredAmbiguityMarker } from "mailwoman/query-intent"
 import { describe, expect, test } from "vitest"
 
 interface PlaceFixture {
@@ -95,7 +95,7 @@ describe("declaredAmbiguityMarker", () => {
 
 	test("collapses the coincident WOF twin before measuring — the trap that would fire on every capital", () => {
 		// Paris the `locality` and Paris the `localadmin`: same city, same population, ~0.3 km apart. A RAW top-2 margin
-		// here is 0.01, which is under the threshold; the 10 km collapse is what makes the number mean anything. Without it
+		// here is 0.01, which is under the threshold. the 10 km collapse is what makes the number mean anything. Without it
 		// this assertion returns a marker and every major city in the world reads as ambiguous.
 		const tree = treeOf({ name: "Paris", lat: 48.8566, lon: 2.3522, prominence: 6.32 }, [
 			{ name: "Paris", placetype: "localadmin", lat: 48.8589, lon: 2.347, prominence: 6.31 },
@@ -112,7 +112,7 @@ describe("declaredAmbiguityMarker", () => {
 	})
 
 	test("declines — rather than declaring decisive — when there is nothing to rank", () => {
-		// One candidate is not a contest; a marker either way would be a claim about a measurement that was never made.
+		// One candidate is not a contest. a marker either way would be a claim about a measurement that was never made.
 		const tree = treeOf({ name: "Ouagadougou", lat: 12.3714, lon: -1.5197, prominence: 6.3 }, [])
 
 		expect(declaredAmbiguityMarker({ kinds: BARE, tree, lat: 12.3714, lon: -1.5197 })).toBeNull()
@@ -134,5 +134,86 @@ describe("declaredAmbiguityMarker", () => {
 		})
 
 		expect(declaredAmbiguityMarker({ kinds: BARE, tree, lat: 37.2153, lon: -93.2982 })).toBeNull()
+	})
+})
+
+/**
+ * `coarserAnswerMarker` — the other direction of the same reading.
+ *
+ * `declaredAmbiguityMarker` above reports too many answers. This reports too FEW, and it exists because the two were
+ * asymmetric: `301 College Ave #101, Athens, GA 30601` returned the Athens label centroid at `admin`, 1,627 m from the
+ * rooftop that `301 College Ave, Athens, GA 30601` reaches at `address_point`, and nothing in the response separated it
+ * from a correct answer to `Athens, GA`.
+ *
+ * The false-positive cases are the ones that shape the table. A house number on an interpolated answer is located —
+ * interpolation is how a house number is placed along a segment — and a unit is located by nothing in this repository,
+ * so a floor for either would fire on correct answers.
+ */
+describe("coarserAnswerMarker", () => {
+	const STRUCTURED: QueryKind[] = ["structured_address"]
+
+	test("reports the components an admin answer did not use", () => {
+		const marker = coarserAnswerMarker({
+			kinds: STRUCTURED,
+			components: { house_number: "301", street: "College Ave #101", postcode: "30601", unit: null },
+			reachedTier: "admin",
+		})
+
+		expect(marker?.code).toBe("declared_coarser_answer")
+		expect(marker?.evidence?.["unusedComponents"]).toEqual(["house_number", "street", "postcode"])
+		expect(marker?.evidence?.["requiredTier"]).toBe("interpolated")
+		expect(marker?.mechanism).toBe("resolver:tier_shortfall")
+	})
+
+	test("stays silent when the answer is as fine as the question", () => {
+		expect(
+			coarserAnswerMarker({
+				kinds: STRUCTURED,
+				components: { house_number: "301", street: "College Ave", postcode: "30601" },
+				reachedTier: "address_point",
+			})
+		).toBeNull()
+	})
+
+	test("an INTERPOLATED answer locates a house number, so it raises nothing", () => {
+		// `129 E Burr Oak St, Athens, MI` — 124 m uncertainty, and the house is placed as precisely as the tier allows.
+		// The first version of the floor table read `address_point` here and reported a shortfall on a correct answer.
+		expect(
+			coarserAnswerMarker({
+				kinds: STRUCTURED,
+				components: { house_number: "129", street: "E Burr Oak St" },
+				reachedTier: "interpolated",
+			})
+		).toBeNull()
+	})
+
+	test("a unit raises nothing on its own, because no layer here locates one", () => {
+		// A floor for `unit` would fire on every correct apartment address in the corpus.
+		expect(coarserAnswerMarker({ kinds: STRUCTURED, components: { unit: "Apt 101" }, reachedTier: "admin" })).toBeNull()
+	})
+
+	test("a venue answer satisfies every floor, so an entity query raises nothing", () => {
+		// `tierRank` ranks `venue` house-grade: a resolved venue is the place the query asked about.
+		expect(
+			coarserAnswerMarker({
+				kinds: ["landmark"],
+				components: { house_number: "301", street: "College Ave" },
+				reachedTier: "venue",
+			})
+		).toBeNull()
+	})
+
+	test("a postcode alone is met by a street-grade answer", () => {
+		// A postcode centroid is street-grade in most address systems. A finer floor would report a shortfall on every
+		// correct Dutch result.
+		expect(
+			coarserAnswerMarker({ kinds: STRUCTURED, components: { postcode: "30601" }, reachedTier: "street" })
+		).toBeNull()
+
+		expect(
+			coarserAnswerMarker({ kinds: STRUCTURED, components: { postcode: "30601" }, reachedTier: "admin" })?.evidence?.[
+				"unusedComponents"
+			]
+		).toEqual(["postcode"])
 	})
 })

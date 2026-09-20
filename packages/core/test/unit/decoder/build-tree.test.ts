@@ -28,7 +28,7 @@ describe("buildAddressTree", () => {
 		expect(allTags.toSorted()).toEqual(["house_number", "locality", "postcode", "region", "street"])
 	})
 
-	test("groups B-street + I-street + I-street into one street span sliced from raw", () => {
+	test("groups B-street + I-street + I-street into one street span taken from raw", () => {
 		const tree = buildAddressTree(WHITE_HOUSE_RAW, whiteHouseTokens())
 		const street = findByTag(tree.roots, "street")!
 		expect(street.value).toBe("Pennsylvania Avenue NW")
@@ -90,7 +90,7 @@ describe("buildAddressTree", () => {
 
 // Boundary-trim regression coverage. Samples sourced from v0.4.0's post-hoc regression
 // diagnostic (.playpen/control/drafts/v0_4_0-regression-diagnostic.md). The shipped v0.4.0 model
-// occasionally emits BIO spans with leading/trailing punctuation; the decoder now trims the span
+// occasionally emits BIO spans with leading/trailing punctuation. the decoder now trims the span
 // boundary past non-word characters. start/end tighten in sync so consumers slicing raw[start:end]
 // get the same string as node.value.
 describe("buildAddressTree — boundary trim", () => {
@@ -152,7 +152,7 @@ describe("buildAddressTree — boundary trim", () => {
 
 	test("preserves trailing abbreviation period (#1519 trailing-dot fix)", () => {
 		// "Neusser Str." — model correctly labels the dot as I-street.
-		// The period is an abbreviation marker, not a punctuation slip.
+		// The period is an abbreviation marker rather than a punctuation slip.
 		const raw = "Neusser Str. 12"
 
 		const tokens: DecoderToken[] = [
@@ -203,7 +203,7 @@ describe("buildAddressTree — boundary trim", () => {
 
 // Paired-punctuation span-edge trimming (paired-punctuation audit, .superpowers/sdd/task-9-audit-report.md).
 // `trimBoundary` is generic — it strips any leading/trailing non-word character, one at a time, with no notion of
-// "pairing" at all. That's what makes it inherently safe for UNBALANCED paired punctuation too: it never looks for a
+// "pairing" at all. That's what makes it inherently safe for unbalanced paired punctuation too: it never looks for a
 // matching partner, so a lone leading quote with no closer, or a lone trailing paren with no opener, trims exactly
 // the same way a single stray comma does. These cases characterize that the existing mechanism (built for the
 // v0.4.0 comma-slip class) generalizes to quotes/brackets/braces/guillemets without any dedicated code.
@@ -302,8 +302,8 @@ describe("buildAddressTree — paired-punctuation span-edge trimming", () => {
 
 // Spurious-boundary repair. The neural model fragments some multi-word locality values into two
 // B-locality spans ("Saint Paul" → B-locality "Saint" + B-locality "Paul") — a real, decode-
-// agnostic emission bug (argmax == viterbi; see scripts/diag-saintalbans.ts). A `B-X` token that is
-// whitespace-adjacent to an open `X` span is folded in; a comma/separator keeps spans distinct.
+// agnostic emission bug (argmax == viterbi. see scripts/diag-saintalbans.ts). A `B-X` token that is
+// whitespace-adjacent to an open `X` span is folded in. a comma/separator keeps spans distinct.
 describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", () => {
 	function localitySpans(nodes: AddressNode[]): AddressNode[] {
 		const out: AddressNode[] = []
@@ -326,7 +326,7 @@ describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", 
 	}
 
 	test("folds whitespace-adjacent B-locality B-locality into one span", () => {
-		// "Saint Paul, MN" — model emits B-locality on BOTH "Saint" and "Paul".
+		// "Saint Paul, MN" — model emits B-locality on both "Saint" and "Paul".
 		const raw = "Saint Paul, MN"
 
 		const tokens: DecoderToken[] = [

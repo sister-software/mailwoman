@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Ground-truth verifier for the (locality, region) pair-index PROBE artifacts written by
+ *   Ground-truth verifier for the (locality, region) pair-index probe artifacts written by
  *   `pair-index-hierarchy-probe.ts` (design:
- *   `docs/superpowers/plans/2026-07-26-pair-index-hierarchy-design.md`). Deliberately a SEPARATE
+ *   `docs/superpowers/plans/2026-07-26-pair-index-hierarchy-design.md`). Deliberately a separate
  *   implementation from the builder — the expected pair set is re-derived here with one flat SQL
  *   query (CTE surface unions, SQL-side joins) instead of the builder's JS-side map joins, then
- *   folded and compared. Two independent code paths converging on the same set is the receipt; a
+ *   folded and compared. Two independent code paths converging on the same set is the receipt. a
  *   shared extraction module would verify only the serialization round-trip.
  *
  *   Checks, per country:
@@ -16,10 +16,10 @@
  *      fold/schema versions.
  *   2. Entry-count match — the binary's `pairCount` (read straight from the documented PIX1 layout)
  *      vs the re-derived expected set size.
- *   3. FULL membership sweep — every expected folded pair must probe OK with tag `locality`; any
+ *   3. Full membership sweep — every expected folded pair must probe OK with tag `locality`; any
  *      resolver entry beyond the expected count would surface as a count mismatch in (2).
  *   4. Named receipts — ("Springfield", "Illinois") present in US; ("Springfield", "Bretagne")
- *      ABSENT (cross-country negative control); FR communes under both their région (macroregion:
+ *      absent (cross-country negative control); FR communes under both their région (macroregion:
  *      "Bretagne") and département (WOF region: "Ille-et-Vilaine").
  *
  *   Throws (exits non-zero under `runIfScript`) on any failure.
@@ -79,7 +79,7 @@ const NAMED_PROBES_BY_COUNTRY: Readonly<Record<string, readonly NamedProbe[]>> =
 		{ child: "Marseille", parent: "Bouches-du-Rhône", expect: "present" },
 		// Cross-country negative control.
 		{ child: "Rennes", parent: "Illinois", expect: "absent" },
-		// Wrong-région control: Brest is in Bretagne, not Normandie.
+		// Wrong-région control: Brest is in Bretagne rather than Normandie.
 		{ child: "Brest", parent: "Normandie", expect: "absent" },
 	],
 }
@@ -104,7 +104,7 @@ function expectedPairSet(
 	country: string,
 	parentPlacetypes: string[]
 ): Map<string, [string, string]> {
-	// Explicitly NUMBERED placeholders throughout: `?1` (country) and `?2..?N` (parent placetypes) are
+	// Explicitly numbered placeholders throughout: `?1` (country) and `?2..?N` (parent placetypes) are
 	// each reused across several clauses. Mixing `?1` with anonymous `?` silently mis-numbers the
 	// anonymous ones past the bound arguments (they bind NULL and the INs match nothing) — the first
 	// run of this verifier did exactly that and "verified" against an empty expected set.
@@ -204,7 +204,7 @@ async function main(): Promise<void> {
 			fail(`header delta ${header.delta} != 0 — a probe artifact must be uncalibrated`)
 		}
 
-		// Against the reader's OWN constant, not a re-typed literal — this script and the format cannot disagree.
+		// Against the reader's own constant rather than a re-typed literal — this script and the format cannot disagree.
 		if (header.schemaVersion !== KNOWN_SCHEMA_VERSION) {
 			fail(
 				`header schemaVersion ${header.schemaVersion} != ${KNOWN_SCHEMA_VERSION} ` +
@@ -265,7 +265,7 @@ async function main(): Promise<void> {
 			} else if (edge.tag !== "locality") {
 				wrongTag++
 			} else if (edge.parentTag !== "region") {
-				// PIX2: the sweep grades BOTH ends. The probe builder declares a locality→region edge in its
+				// PIX2: the sweep grades both ends. The probe builder declares a locality→region edge in its
 				// header, so an entry whose recorded parent tag is anything else is a builder bug the pre-PIX2
 				// sweep could not have seen.
 				wrongParentTag++

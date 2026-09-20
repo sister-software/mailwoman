@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The LOCAL comparison rigs — start them, stop them, ask them a question.
+ *   The local comparison rigs — start them, stop them, ask them a question.
  *
  *   `mwdev_compare`'s external arm grades an already-running engine but deliberately never starts one, so bringing a rig
  *   up was a shell exercise in `$MAILWOMAN_TEMP_ROOT/*-rig/*.sh` that a fresh context has no way to know about, and
@@ -11,12 +11,12 @@
  *   downloads, checksum verification, index extraction and atomic promotion are one-time operations with real disk and
  *   licence consequences, and nothing here will perform them.
  *
- *   Endpoints are PINNED TO LOOPBACK by the registry below and cannot be overridden. That is the same commitment
+ *   Endpoints are pinned TO loopback by the registry below and cannot be overridden. That is the same commitment
  *   `REFUSED_ENDPOINT_HOSTS` makes on the grading path, arrived at from the other side: a tool that can be pointed
  *   anywhere eventually gets pointed at `photon.komoot.io`, and a volunteer endpoint is not ours to spend. A comparison
  *   against some other host is `mwdev_compare`'s external arm, which refuses the shared instances by name.
  *
- *   Queries here are OBSERVATIONS, not measurements: no grading, no rate, no verdict. `mwdev_compare` is what turns two
+ *   Queries here are observations rather than measurements: no grading, no rate, no verdict. `mwdev_compare` is what turns two
  *   engines into a number.
  */
 
@@ -38,7 +38,7 @@ const RIG_TIMEOUT_MS = 15_000
 
 /**
  * One paced client per rig, built on first use and reused — the house `APIClient` rather than raw `fetch`, so rig
- * traffic gets the same pacing, bounded retry and `ResourceError` mapping as every other HTTP caller in the repo (and
+ * traffic gets the same pacing, bounded retry and `ResourceError` mapping as every other http caller in the repo (and
  * so this tool exercises the client we ship).
  */
 const clients = new Map<EngineRigName, APIClient>()
@@ -57,7 +57,7 @@ function clientFor(name: EngineRigName): APIClient {
 			baseURL: assertScorableEndpoint(rig.endpoint),
 			timeout: RIG_TIMEOUT_MS,
 			headers: { "User-Agent": "mailwoman-dev-mcp" },
-			// A rig that is still warming answers 4xx/5xx; those are STATES here, read from the status field, not
+			// A rig that is still warming answers 4xx/5xx. those are states here, read from the status field rather than
 			// exceptions to throw. `rigQuery` reports the code per row.
 			validateStatus: () => true,
 		},
@@ -101,7 +101,7 @@ function rigScriptPath(...segments: string[]): string {
 }
 
 /**
- * The rigs this tool can drive. `containers` is in START order; stop reverses it, because Elasticsearch must outlive
+ * The rigs this tool can drive. `containers` is in start order. stop reverses it, because Elasticsearch must outlive
  * the API that queries it.
  */
 export const ENGINE_RIGS = {
@@ -129,7 +129,7 @@ interface ContainerState {
 	name: string
 	/**
 	 * The runtime's own status string (`Up 2 minutes`, `Exited (0) 3 days ago`, `Created`), or `absent` when no container
-	 * by that name exists — which is a DIFFERENT fact from a stopped one: absent means the rig was never built here, and
+	 * by that name exists — which is a different fact from a stopped one: absent means the rig was never built here, and
 	 * building it is the manual half this module refuses to do.
 	 */
 	status: string
@@ -141,7 +141,7 @@ export interface RigStatus {
 	containers: ContainerState[]
 	/**
 	 * Whether the endpoint answered its health query just now. `false` with running containers is the normal state during
-	 * an Elasticsearch warm-up, not a fault.
+	 * an Elasticsearch warm-up rather than a fault.
 	 */
 	answering: boolean
 	/**
@@ -152,7 +152,7 @@ export interface RigStatus {
 
 /**
  * One result as this tool reports it — engine-neutral, so a reader compares two engines without learning two payload
- * shapes. `sourceID` is the thing worth reading: Pelias's `gid` says WHICH dataset supplied the answer
+ * shapes. `sourceID` is the thing worth reading: Pelias's `gid` says which dataset supplied the answer
  * (`whosonfirst:locality:101750331` vs `geonames:locality:2639268`), which is how a coverage question gets settled.
  */
 export interface RigResult {
@@ -190,7 +190,7 @@ async function containerStates(rig: (typeof ENGINE_RIGS)[EngineRigName]): Promis
 
 	const known = new Map(
 		[...TextSpliterator.from(listing)]
-			.filter((line) => line.length > 0)
+			.filter((line) => line.length)
 			.map((line) => {
 				const [name, ...rest] = TextSpliterator.from(line, { delimiter: "\t" })
 
@@ -228,8 +228,8 @@ export async function rigStatus(name: EngineRigName): Promise<RigStatus> {
 }
 
 /**
- * Start a rig and wait for it to ANSWER, not merely to be running — a container that is up while Elasticsearch is still
- * loading serves 500s, and a caller told "started" would read those as the engine's opinion.
+ * Start a rig and wait for it to answer rather than merely to be running — a container that is up while Elasticsearch
+ * is still loading serves 500s, and a caller told "started" would read those as the engine's opinion.
  */
 export async function rigStart(name: EngineRigName): Promise<RigStatus & { waitedMs: number }> {
 	const rig = ENGINE_RIGS[name]

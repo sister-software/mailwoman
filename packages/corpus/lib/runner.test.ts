@@ -5,7 +5,7 @@ import { readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { runAdapter, type RunnerProgress } from "@mailwoman/corpus/runner"
-import type { CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
+import { AddressRole, type CanonicalRow, type CorpusAdapter } from "@mailwoman/corpus/types"
 import { JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -13,6 +13,7 @@ function makeAdapter(opts: {
 	id?: string
 	rows: CanonicalRow[]
 	defaultLicense?: string
+	addressRole?: AddressRole
 	throwAfter?: number
 }): CorpusAdapter {
 	const id = opts.id ?? "test"
@@ -21,6 +22,7 @@ function makeAdapter(opts: {
 	return {
 		id,
 		defaultLicense: license,
+		addressRole: opts.addressRole ?? AddressRole.Premise,
 		description: `synthetic adapter ${id}`,
 		async *rows() {
 			let i = 0
@@ -83,9 +85,7 @@ describe("runAdapter", () => {
 		expect(manifest.corpus_version).toBe("0.1.0")
 		expect(manifest.sha256).toMatch(/^[0-9a-f]{64}$/)
 
-		const lines = await Array.fromAsync(
-			JSONSpliterator.fromAsync<CanonicalRow>(scratch.resolve("syn", "canonical.jsonl"))
-		)
+		const lines = await JSONSpliterator.fromAsync<CanonicalRow>(scratch.resolve("syn", "canonical.jsonl")).toArray()
 
 		expect(lines).toHaveLength(2)
 		expect(lines[0]!.corpus_version).toBe("0.1.0")
@@ -94,6 +94,28 @@ describe("runAdapter", () => {
 		const manifestOnDisk = await readLocalJSONFile<{ sha256: string }>(scratch.resolve("syn", "MANIFEST.json"))
 
 		expect(manifestOnDisk.sha256).toBe(manifest.sha256)
+	})
+
+	it("stamps the adapter's addressRole on rows that omit one and leaves an explicit role alone", async () => {
+		const adapter = makeAdapter({
+			id: "syn",
+			addressRole: AddressRole.RegisteredOffice,
+			rows: [
+				baseRow({ source_id: "syn-1", raw: "Paris" }),
+				baseRow({ source_id: "syn-2", raw: "Lyon", components: { locality: "Lyon" }, addressRole: "facility" }),
+			],
+		})
+
+		await runAdapter({
+			adapter,
+			adapterOptions: { inputPath: "ignored" },
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+		})
+
+		const lines = await JSONSpliterator.fromAsync<CanonicalRow>(scratch.resolve("syn", "canonical.jsonl")).toArray()
+
+		expect(lines.map((line) => line.addressRole)).toEqual(["registered-office", "facility"])
 	})
 
 	it("dedupes by canonical key (count visible in manifest)", async () => {
@@ -138,7 +160,7 @@ describe("runAdapter", () => {
 		})
 
 		// Periodic at yielded=2,4 plus the final tick. Some implementations may also emit the
-		// final tick coincidentally at a multiple of progressEvery; check the floor instead.
+		// final tick coincidentally at a multiple of progressEvery. check the floor instead.
 		expect(ticks.length).toBeGreaterThanOrEqual(3)
 		const final = ticks.at(-1)!
 		expect(final.yielded).toBe(5)
@@ -151,6 +173,7 @@ describe("runAdapter", () => {
 		const bad: CorpusAdapter = {
 			id: "syn",
 			defaultLicense: "CC0-1.0",
+			addressRole: AddressRole.Premise,
 			description: "",
 			async *rows() {
 				yield { ...baseRow({}), source: "different" }
@@ -171,6 +194,7 @@ describe("runAdapter", () => {
 		const bad: CorpusAdapter = {
 			id: "syn",
 			defaultLicense: "CC0-1.0",
+			addressRole: AddressRole.Premise,
 			description: "",
 			async *rows() {
 				yield baseRow({ source: "syn", raw: "" })

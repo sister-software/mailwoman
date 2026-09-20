@@ -2,21 +2,28 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Smoke test for the `--debug` non-TTY path ({@link runStaticDebug} in `command.tsx`). Runs IN PROCESS — no CLI
+ *   Smoke test for the `--debug` non-TTY path ({@link runStaticDebug} in `command.tsx`). Runs IN process — no CLI
  *   spawn — so it needs both prerequisites the compiled CLI would otherwise hide behind a subprocess: the neural
- *   weights ({@link resolveWeights}, same probe `mailwoman doctor` and `geocode-session.ts` use) AND a WOF admin
+ *   weights ({@link resolveWeights}, same probe `mailwoman doctor` and `geocode-session.ts` use) and a WOF admin
  *   SQLite distribution. Guard mirrors `commands/geocode.test.ts`'s `hasWOFDB` predicate exactly (same env var,
  *   same convention path) so the two suites skip and run together rather than disagreeing about the environment.
  *
- *   The `--debug-size` floor, empty-input, and `--debug` format-guard tests below all run UNCONDITIONALLY (no guard):
+ *   The `--debug-size` floor, empty-input, and `--debug` format-guard tests below all run unconditionally (no guard):
  *   each rejection fires before `runStaticDebug` ever calls `createGeocodeSession`, so none of the three needs
  *   weights or a database.
+ *
+ *   every frame is stripped OF ansi before IT is matched. The frame has two outputs and the assertions below are about
+ *   only one of them: chalk emits a dim/reset pair around each evidence label, so `/system\s+us/` cannot match a
+ *   coloured frame — `\s+` does not span the reset sequence sitting between the label and its value. chalk's level
+ *   follows `FORCE_COLOR`. It several terminals and `tmux`/`direnv` setups set and nothing here clears. Therefore, a test
+ *   that matches the raw capture passes or fails by the environment it happens to run in.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { workspacePath } from "@mailwoman/core/paths"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { stripAnsi } from "mailwoman/cli-kit"
 import { runStaticDebug } from "mailwoman/debug-view/command"
 import { mapPaneCellSize } from "mailwoman/debug-view/DebugFrame"
 import { $public } from "mailwoman/env"
@@ -64,13 +71,13 @@ describe.skipIf(!canRun)("runStaticDebug", () => {
 	test("renders a captured DebugFrame for a real address, tier line + map ink + echoed input", async () => {
 		const options = createGeocodeCommandOptions({ tiles: TILES_PATH, debugSize: "100x30" })
 
-		const text = await runStaticDebug("3215 SE Clinton St, Portland OR", options)
+		const text = stripAnsi(await runStaticDebug("3215 SE Clinton St, Portland OR", options))
 
-		// The resolved tier line — street-level when the database is present, admin centroid otherwise; either is a
+		// The resolved tier line — street-level when the database is present, admin centroid otherwise. either is a
 		// legitimate resolve for this environment, so the assertion accepts both.
 		expect(text).toMatch(/address_point|admin/)
 
-		// The map pane inked SOMETHING: a rendered braille cell (U+2800..U+28FF) from the tile geometry, or at
+		// The map pane inked something: a rendered braille cell (U+2800..U+28FF) from the tile geometry, or at
 		// minimum the marker glyph at the resolved coordinate.
 		expect(/[⠀-⣿]/u.test(text) || text.includes("●")).toBe(true)
 
@@ -81,7 +88,7 @@ describe.skipIf(!canRun)("runStaticDebug", () => {
 	test("the captured frame carries the dev-mode evidence rows and result sections from REAL pipeline data", async () => {
 		const options = createGeocodeCommandOptions({ tiles: TILES_PATH, debugSize: "140x40" })
 
-		const text = await runStaticDebug("3215 SE Clinton St, Portland OR", options)
+		const text = stripAnsi(await runStaticDebug("3215 SE Clinton St, Portland OR", options))
 
 		// The evidence rows, each with a value only the live classifier can produce: the conventions system and how
 		// it was chosen, the locale head's own axis, the SentencePiece stream, the channels as fed, the decode.
@@ -97,7 +104,7 @@ describe.skipIf(!canRun)("runStaticDebug", () => {
 			expect(text).toContain(heading)
 		}
 
-		// Timing is measured, not defaulted — a zero here would mean the session handed over a placeholder.
+		// Timing is measured rather than defaulted — a zero here would mean the session handed over a placeholder.
 		expect(text).toMatch(/parse\s+\d+\.\d ms/u)
 
 		// And the footer says what this frame is.
@@ -120,7 +127,7 @@ describe("runStaticDebug --debug-size floor", () => {
 	})
 
 	test("the floor is exactly the frame's fixed chrome plus a 6-row map pane", async () => {
-		// The floor is arithmetic, not taste: 19 rows leaves the map pane 5 content rows, 20 leaves it 6. Asserting
+		// The floor is arithmetic rather than taste: 19 rows leaves the map pane 5 content rows, 20 leaves it 6. Asserting
 		// the pair is what keeps the constant and `mapPaneCellSize` from drifting apart the next time a row is added
 		// to the input area.
 		expect(mapPaneCellSize(60, 20).rows).toBe(6)

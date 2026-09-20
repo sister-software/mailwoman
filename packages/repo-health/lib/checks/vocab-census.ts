@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Classifies every `Mailwoman.AmbiguousShorthand` hit by the REMEDY it needs, and reports each as a diagnostic.
+ * @file Classifies every `Mailwoman.AmbiguousShorthand` hit by the action it needs, and reports each as a diagnostic.
  *
  *   The sweep that removes these words is only safe if each site's replacement is decided by a rule rather than guessed
  *   at, one comment at a time — a careless reword drops the invariant or the measured number the comment existed to
  *   state. `shard` reached zero from 3,481 the same way: its four concepts were named first, so every site had one
  *   agreed replacement.
  *
- *   Three remedies, in ascending cost. A CONTRACT-BEARING name keeps its spelling and only needs backticks, because Vale
- *   skips inline code. A MODIFIED reference carries the check's real name in the word before it, so `street-context
- *   gate` becomes `the street-context check`. A BARE reference says only "the gate", and which check that is can be
+ *   Three actions, in ascending cost. A interface-tied name keeps its spelling and only needs backticks, because Vale
+ *   skips inline code. A modified reference carries the check's real name in the word before it, so `street-context
+ *   gate` becomes `the street-context check`. A bare reference says only "the gate", and which check that is can be
  *   learned solely by reading the surrounding paragraph.
  */
 
@@ -31,14 +31,14 @@ import { trackedSourcePaths } from "#tracked-sources"
 const HIT_PATTERN = /^(.*?):(\d+):(\d+):Mailwoman\.AmbiguousShorthand(?:Code)?:'([^']+)'/
 
 /**
- * Names that keep their spelling — `AGENTS.md` lists them as contract-bearing. A hit naming one of these is a
- * formatting fix, not a rewrite. Empty: every contract-bearing identifier that carried a banned word has been renamed;
- * add a name here only when a new one must carry one, and record why in `AmbiguousShorthandCode.yml`.
+ * Names that keep their spelling — `agents.md` lists them as interface-tied. A hit naming one of these is a formatting
+ * fix rather than a rewrite. Empty: every interface-tied identifier that carried a banned word has been renamed. add a
+ * name here only when a new one must carry one, and record why in `AmbiguousShorthandCode.yml`.
  */
-const CONTRACT_BEARING = /(?!)/
+const INTERFACE_TOKEN = /(?!)/
 
 /**
- * The remedy a hit needs.
+ * The action a hit needs.
  */
 export const Remedy = {
 	backtick: "backtick",
@@ -104,12 +104,12 @@ const EMPTY_MODIFIERS = new Set([
 /**
  * How far from Vale's reported line to look for the matched word.
  *
- * A BARE `//` line shifts Vale's line numbers: measured on @vvago/vale 3.17.0, a hit on line 5 with two empty comment
- * lines above it is reported as line 6. The COUNT is unaffected — the hit is real either way — but the census indexes
+ * A bare `//` line shifts Vale's line numbers: measured on @vvago/vale 3.17.0, a hit on line 5 with two empty comment
+ * lines above it is reported as line 6. The count is unaffected — the hit is real either way — but the census indexes
  * source by that number to derive a modifier, and a reader following the output would be sent to the wrong line.
  *
- * Searching a window rather than trusting the number makes the instrument self-correcting. Three lines is measured, not
- * guessed: the two files in this repository that drift are each off by two.
+ * Searching a window rather than trusting the number makes the instrument self-correcting. Three lines is measured
+ * rather than guessed: the two files in this repository that drift are each off by two.
  */
 const LINE_DRIFT_WINDOW = 3
 
@@ -147,7 +147,7 @@ function locate(
  * Classifies each Vale `--output line` record against `sources`, a map from path to that file's lines. Pure, so the
  * fixture test states its cases inline rather than writing files.
  *
- * Only the MODIFIER a hit is bucketed by comes from the indexed line, so a stray offset mislabels a bucket rather than
+ * Only the modifier a hit is bucketed by comes from the indexed line, so a stray offset mislabels a bucket rather than
  * losing a site — read the line before editing it.
  */
 export function classify(hitLines: readonly string[], sources: ReadonlyMap<string, readonly string[]>): Hit[] {
@@ -165,9 +165,9 @@ export function classify(hitLines: readonly string[], sources: ReadonlyMap<strin
 		const before = index === -1 ? "" : source.slice(0, index)
 		const modifier = (/([A-Za-z0-9_.`§/-]+)[\s-]*$/.exec(before.trimEnd())?.[1] ?? "").toLowerCase()
 
-		// A contract-bearing name is decided by the WHOLE line, not the modifier: `mailwoman eval
+		// A interface-tied name is decided by the whole line rather than the modifier: `mailwoman eval
 		// gate` and `` `promotion-eval.ts` `` put different words immediately before the hit.
-		const remedy = CONTRACT_BEARING.test(source)
+		const remedy = INTERFACE_TOKEN.test(source)
 			? Remedy.backtick
 			: EMPTY_MODIFIERS.has(modifier)
 				? Remedy.readContext
@@ -180,8 +180,8 @@ export function classify(hitLines: readonly string[], sources: ReadonlyMap<strin
 }
 
 /**
- * Which of the four words a match belongs to. Searched ANYWHERE in the token, not at its start: the code rule matches
- * the whole compound, so `promotion-eval` is a `gate` and a prefix test files it under whichever family the
+ * Which of the four words a match belongs to. Searched anywhere in the token rather than at its start: the code rule
+ * matches the whole compound, so `promotion-eval` is a `gate` and a prefix test files it under whichever family the
  * fall-through names.
  */
 export function wordFamily(word: string): "gate" | "seam" | "shard" | "cut" {
@@ -205,7 +205,7 @@ const TRACKED_GLOBS = ["*.ts", "*.tsx", "corpus-python/*.py"] as const
 
 /**
  * Runs Vale over every tracked source file and returns its `--output line` records. Vale is resolved through the
- * workspace rather than the PATH, so the census reads the same binary `yarn lint:prose` does.
+ * workspace rather than the path, so the census reads the same binary `yarn lint:prose` does.
  */
 async function collectHits(context: RepoContext): Promise<string[]> {
 	const root = context.repoRoot
@@ -214,18 +214,18 @@ async function collectHits(context: RepoContext): Promise<string[]> {
 		relative(root, path)
 	)
 
-	// The CENSUS config, not the enforcing one: enforcement exempts the Vale fixtures, and the census
+	// The census config rather than the enforcing one: enforcement exempts the Vale fixtures, and the census
 	// needs one of them to trip so its positive control still means something. `@vvago/vale` is this
-	// package's devDependency for exactly this line; knip cannot see a specifier passed to a resolver,
+	// package's devDependency for exactly this line. knip cannot see a specifier passed to a resolver,
 	// so `knip.json` names the dependency as used.
 	const vale = await valeCommand(import.meta.url)
-	const config = resolvePath(root, "docs/.vale-code-census.ini")
+	const config = resolvePath(root, "config/vale/.vale-code-census.ini")
 
-	// Run from the REPO ROOT, because the paths are repo-relative. Run it from anywhere else and Vale
+	// Run from the repo root, because the paths are repo-relative. Run it from anywhere else and Vale
 	// resolves none of them, reports zero alerts, and exits 0 — the reading is identical to a clean tree.
 	// That is why the positive control below is not optional.
 	// Vale exits non-zero when it reports alerts, which is this command's expected outcome. Only a
-	// process error carries the output; a spawn failure has none and must not read as zero hits.
+	// process error carries the output. a spawn failure has none and must not read as zero hits.
 	const result = await runFile(vale.file, [...vale.argv, "--config", config, "--output", "line", ...files], {
 		cwd: root,
 		maxBuffer: 1 << 28,
@@ -242,32 +242,29 @@ async function collectHits(context: RepoContext): Promise<string[]> {
 
 /**
  * A file that must always trip, so a reported zero is distinguishable from a run that resolved no files. The Vale
- * fixture is the right control precisely because it is PERMANENT: every other file carrying these words is scheduled to
+ * fixture is the right control precisely because it is permanent: every other file carrying these words is scheduled to
  * lose them, and a control the sweep eventually cleans stops proving anything on the day it matters most.
  */
-const POSITIVE_CONTROL = "docs/scripts/vale-fixtures/dirty.ts"
+const POSITIVE_CONTROL = "config/vale/fixtures/dirty.ts"
 
 /**
- * Paths whose hits DO NOT count, and why each is excluded. The set measured is every tracked source minus these — the
+ * Paths whose hits do not count, and why each is excluded. The set measured is every tracked source minus these — the
  * denominator the count is reported against.
  *
- * Each states the vocabulary as DATA rather than using it as prose, so counting them measures the instrument instead of
+ * Each states the vocabulary as data rather than using it as prose, so counting them measures the instrument instead of
  * the repository and the target of zero could never be reached.
  */
 const UNMEASURED: ReadonlyArray<readonly [path: string, reason: string]> = [
-	["docs/scripts/vale-fixtures/", "the rule's own fixtures; the dirty one must keep failing forever"],
+	["config/vale/fixtures/", "the rule's own fixtures; the dirty one must keep failing forever"],
 	["packages/repo-health/lib/checks/vocab-census.ts", "this file — its patterns have to spell the words it classifies"],
 	["packages/repo-health/test/unit/vocab-census.test.ts", "its cases are lines of source quoted verbatim"],
 	["packages/repo-health/lib/checks/debt.ts", "its banned-vocabulary constant has to spell the word it counts"],
-	[
-		"docs/scripts/check/vale-rules.ts",
-		"the rule fixtures' own harness; its docstring quotes the words the rules match",
-	],
+	["config/vale/check-rules.ts", "the rule fixtures' own harness; its docstring quotes the words the rules match"],
 ]
 
 /**
  * The `vocab-census` check: one error per ambiguous-shorthand hit Vale reports in tracked source outside the unmeasured
- * instrument files, each naming the remedy it needs.
+ * instrument files, each naming the action it needs.
  */
 export const vocabCensusCheck: RepoCheck = {
 	id: "vocab-census",
@@ -290,9 +287,9 @@ export const vocabCensusCheck: RepoCheck = {
 		await Promise.all(
 			[...paths].map(async (path) => {
 				// Indexed by line number, so the whole file is resident by necessity rather than by choice.
-				// `skipEmpty: false` is REQUIRED: the default drops blank lines, which shifts every line
+				// `skipEmpty: false` is required: the default drops blank lines, which shifts every line
 				// number after the first one and silently classifies each hit against a different line of
-				// source. Measured: the default moved 731 of 2,014 hits between remedy buckets.
+				// source. Measured: the default moved 731 of 2,014 hits between action buckets.
 				sources.set(
 					path,
 					TextSpliterator.from(await readLocalTextFile(resolvePath(context.repoRoot, path)), {
@@ -304,7 +301,7 @@ export const vocabCensusCheck: RepoCheck = {
 
 		const hits = classify(hitLines, sources)
 
-		// Asserted on the CLASSIFIED hits, not on the raw Vale lines. A control that greps the raw
+		// Asserted on the classified hits rather than on the raw Vale lines. A control that greps the raw
 		// output tests a different string than the classifier parses: renaming the rule to
 		// `AmbiguousShorthandCode` kept every raw line matching a substring check while the classifier's
 		// pattern matched none, and the census reported a clean tree.
@@ -318,7 +315,7 @@ export const vocabCensusCheck: RepoCheck = {
 			]
 		}
 
-		// Excluded AFTER the control is checked, never before: the control must be measured to prove the run resolved
+		// Excluded after the control is checked, never before: the control must be measured to prove the run resolved
 		// files, and excluded to keep the target of zero reachable.
 		const counted = hits.filter((hit) => !UNMEASURED.some(([path]) => hit.path.startsWith(path)))
 

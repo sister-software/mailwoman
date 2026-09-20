@@ -107,10 +107,10 @@ describe("matchPOISubject", () => {
 })
 
 /**
- * What a lookup's SECOND hit means, which decides whether narrowing to the first is an answer or an invented ordering.
+ * What a lookup's second hit means, which decides whether narrowing to the first is an answer or an invented ordering.
  *
  * The committed phrase index returns the categories one typed phrase could name, most specific first, and the first
- * entry IS the subject — which category a typed phrase reaches is #1933's question and is unchanged here. An affordance
+ * entry is the subject — which category a typed phrase reaches is #1933's question and is unchanged here. An affordance
  * rung returns every kind that affords one activity, in an enumeration that is not a preference, and flags each member
  * `searchAsSet`; the whole set is then carried and the POI branch searches their union.
  */
@@ -164,7 +164,7 @@ describe("a lookup returning several hits", () => {
 		expect(m?.remainder).toBe("")
 	})
 
-	// `match` is the hit the subject SCORES under, and it is always the head of `matches` — two names for one value, so
+	// `match` is the hit the subject scores under, and it is always the head of `matches` — two names for one value, so
 	// a scorer reading the kind and a branch reading the set can never disagree about which subject was matched.
 	it("scores under the head of the set", () => {
 		const m = matchPOISubject("prescription near Denver CO", "en-US", affordedSet)
@@ -184,7 +184,7 @@ describe("a lookup returning several hits", () => {
  * surrounding whitespace).
  */
 describe("ANCHOR_SEPARATOR split behaviour (byte-identical across the linearization)", () => {
-	// Fixed subject lexicon: hits only these short leading phrases. The WHOLE inputs below are longer (they carry the
+	// Fixed subject lexicon: hits only these short leading phrases. The whole inputs below are longer (they carry the
 	// place), so the whole-input path misses and the separator scan runs — surfacing the split point itself.
 	const SUBJECTS = new Set(["cafe", "gas station", "hotel", "atm", "trails", "x"])
 
@@ -215,7 +215,7 @@ describe("ANCHOR_SEPARATOR split behaviour (byte-identical across the linearizat
 		{ text: "cafe, Boston, MA", subject: "cafe", remainder: "Boston, MA" },
 		{ text: "cafe near town in Denver", subject: "cafe", remainder: "town in Denver" },
 		// shared whitespace between comma and a following anchor: comma's trailing \s* consumes it,
-		// so the anchor does NOT re-split — remainder carries "near y" intact
+		// so the anchor does not re-split — remainder carries "near y" intact
 		{ text: "x,  near y", subject: "x", remainder: "near y" },
 	]
 
@@ -246,7 +246,7 @@ describe("ANCHOR_SEPARATOR split behaviour (byte-identical across the linearizat
 	})
 
 	it("skips a leading separator (index === 0 guard) — no split before the first token", () => {
-		// Leading comma: the sole separator is at index 0 and is skipped; the whole-input path already missed → null.
+		// Leading comma: the sole separator is at index 0 and is skipped. the whole-input path already missed → null.
 		expect(matchPOISubject(", Boston", "en-US", subjectLookup)).toBeNull()
 	})
 
@@ -328,7 +328,7 @@ describe("ANCHOR_SEPARATOR is linear (ReDoS safety)", () => {
 		const m = matchPOISubject(pathological, "en-US", neverHits)
 		const elapsed = performance.now() - start
 		expect(m).toBeNull()
-		// The old O(n²) form took seconds on 1e5 chars; the linear form completes in single-digit ms. 100ms is a
+		// The old O(n²) form took seconds on 1e5 chars. the linear form completes in single-digit ms. 100ms is a
 		// generous ceiling that still fails loudly if quadratic backtracking returns.
 		expect(elapsed).toBeLessThan(100)
 	})

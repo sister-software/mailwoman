@@ -3,10 +3,11 @@
 
 /**
  *   Input coercions shared by every operation schema. An adapter hands an operation `--key value` pairs with the value
- *   still a string, or `true` for a bare flag; the schema is the one place a type is decided, so these helpers are how a
+ *   still a string, or `true` for a bare flag. the schema is the one place a type is decided, so these helpers are how a
  *   flag becomes a boolean and a comma list becomes an array.
  */
 
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { z } from "zod"
 
 /**
@@ -18,7 +19,7 @@ export const flag = z
 	.transform((value) => value === true || value === "true" || value === "1")
 
 /**
- * A boolean flag that defaults to TRUE and is turned off with `--flag false`.
+ * A boolean flag that defaults to true and is turned off with `--flag false`.
  */
 export const flagDefaultOn = z
 	.union([z.boolean(), z.string()])
@@ -26,7 +27,7 @@ export const flagDefaultOn = z
 	.transform((value) => value === undefined || value === true || value === "true" || value === "1")
 
 /**
- * An optional string; a bare `--key` with no value is refused rather than read as the string "true".
+ * An optional string. a bare `--key` with no value is refused rather than read as the string "true".
  */
 export const text = z.string().optional()
 
@@ -36,11 +37,4 @@ export const text = z.string().optional()
 export const list = z
 	.string()
 	.optional()
-	.transform((value) =>
-		value
-			? value
-					.split(",")
-					.map((entry) => entry.trim())
-					.filter((entry) => entry.length > 0)
-			: []
-	)
+	.transform((value) => (value ? extractDelimited(value) : []))

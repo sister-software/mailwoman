@@ -55,7 +55,7 @@ Ancestor names (locality, region, country) always come from the canonical
 `wof:name` field on the ancestor record. Cross-product over ancestor
 `name:*` variants (e.g. emitting `"75008 Париж"` because Paris has a
 `name:rus_x_preferred`) is **not** done here — that's a synthesis-step
-augmentation, not an adapter responsibility. Multiplying postcode rows by
+augmentation rather than an adapter responsibility. Multiplying postcode rows by
 ancestor locale would inflate the corpus by an order of magnitude without
 a clear training-value story; if it turns out we need it, the synthesis
 pipeline (`packages/corpus/lib/synthesize.ts`) is the right place.

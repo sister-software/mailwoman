@@ -6,7 +6,7 @@
 		"  KEN_ALL CSV carrying the shapes the renderers branch on, not a sample of the real source.",
 		"",
 		"train / val: every rendered row as raw + register + the span triple, in emission order.",
-		"  The ORDER is the assertion: one moved draw off the shared RNG re-renders the whole slice.",
+		"  The ORDER is the assertion: one moved draw off the shared RNG re-renders the whole corpus.",
 		"board: the held-out municipalities' rows, same form.",
 		"report: the build report with the paths removed, since those are the fixture's tmp dir."
 	],

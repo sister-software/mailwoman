@@ -40,7 +40,7 @@ export const WRONG_AREA_KM = 25
 
 /**
  * The ablation arm's pinned options — the six library defaults it turns off. Read from the frozen definition at run
- * time; this constant exists so a unit test can assert the two agree.
+ * time. this constant exists so a unit test can assert the two agree.
  */
 export const ABLATION_RESOLVE_OPTS: ResolveOpts = {
 	adminCoherence: false,
@@ -61,7 +61,8 @@ export interface ArmRowResult {
 	selection: string | null
 	/**
 	 * True when the selection equals the row's gold place id. Always false for an abstention, including in the
-	 * withheld-gold stratum — abstention is scored there through the abstention metrics, not by calling it a selection.
+	 * withheld-gold stratum — abstention is scored there through the abstention metrics rather than by calling it a
+	 * selection.
 	 */
 	correct: boolean
 	/**
@@ -115,7 +116,7 @@ function placeIDValue(placeID: string): string {
 
 /**
  * The winner's normalized margin over the runner-up in one trace, in [0, 1]. One when the lookup considered a single
- * candidate; zero when the top two tied.
+ * candidate. zero when the top two tied.
  */
 function traceMargin(trace: ResolveNodeTrace): number {
 	const scores = trace.candidates.map((candidate) => candidate.score).toSorted((left, right) => right - left)
@@ -197,7 +198,7 @@ export async function runResolverArm(
 			traceSink: (record) => traces.push(record),
 		})
 
-		// Read BEFORE the result is built. `resolveTree` catches a backend throw by design, so a replay miss reaches this
+		// Read before the result is built. `resolveTree` catches a backend throw by design, so a replay miss reaches this
 		// point looking exactly like a resolver that refused — the one confusion the abstention strata exist to measure.
 		if (misses.length) {
 			return {

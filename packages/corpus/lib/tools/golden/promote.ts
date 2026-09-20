@@ -7,18 +7,18 @@
  *
  *   ## What it does
  *
- *   1. Reads a candidates JSONL from `data/eval/golden/candidates/`
+ *   1. Reads a candidates jsonl from `data/eval/golden/candidates/`
  *   2. Reads the previous-version golden dir for forward-copy + dedup base
  *   3. Applies filters that drop candidates unlikely to be human-typed:
  *
  *        - Components-glued-without-commas (5+ components but <2 separators → freeform jumble)
- *        - Postcode-at-start with many other components (US/UK conventions put postcode last; FR puts it
+ *        - Postcode-at-start with many other components (US/UK conventions put postcode last. FR puts it
  *                 before locality only)
  *        - Suspicious-token signals (unmatched brackets, control chars, etc.)
  *   4. Dedupes by normalized raw (case-insensitive, whitespace-collapsed)
  *   5. Splits by country (US/FR/other) and writes `data/eval/golden/v<X.Y.Z>/{us,fr,other}.jsonl`
- *   6. Forward-copies the prior version's adversarial.jsonl + README as-is
- *   7. Writes MANIFEST.json with sha256 of each output file
+ *   6. Forward-copies the prior version's adversarial.jsonl + readme as-is
+ *   7. Writes manifest.json with sha256 of each output file
  *
  *   ## Usage
  *
@@ -67,7 +67,7 @@ export interface PromoteStats {
 
 export interface PromoteGoldenOptions {
 	/**
-	 * Candidates JSONL (required).
+	 * Candidates jsonl (required).
 	 */
 	input: string
 	/**
@@ -109,7 +109,7 @@ function isComponentsGlued(entry: GoldenEntry): boolean {
 
 /**
  * Heuristic: in US/UK conventions, postcode goes at the END of the address. If postcode appears in the first third of a
- * multi-component raw AND there are 4+ components, the LLM probably over-aggressively reordered. FR is exempt (postcode
+ * multi-component raw and there are 4+ components, the LLM probably over-aggressively reordered. FR is exempt (postcode
  * often precedes locality there).
  */
 function isPostcodeBadlyLeading(entry: GoldenEntry): boolean {
@@ -159,7 +159,7 @@ export async function promoteGolden(
 
 	report?.(`reading candidates: ${options.input}`)
 
-	// The candidates file is the REQUIRED input, so its absence must not read as "zero candidates" —
+	// The candidates file is the required input, so its absence must not read as "zero candidates" —
 	// that promotes the prior version unchanged and reports success. `JSONSpliterator.fromAsync`
 	// reports a missing path as a bare `TypeError` naming its own internals, so name the path here.
 	if (!(await pathExists(options.input))) {
@@ -173,7 +173,7 @@ export async function promoteGolden(
 	const seenNormalized = new Set<string>()
 
 	if (await pathExists(priorDir)) {
-		for await (const f of Globerator.files("jsonl", { cwd: priorDir, absolute: false })) {
+		for await (const f of Globerator.files("jsonl", { cwd: priorDir, absolute: false, recursive: false })) {
 			const country = f.replace(".jsonl", "").toUpperCase()
 			const entries = await JSONSpliterator.fromAsync<GoldenEntry>(join(priorDir, f)).toArray()
 
@@ -252,7 +252,7 @@ export async function promoteGolden(
 	const buckets = new Map<string, GoldenEntry[]>()
 
 	for (const { country, entries } of priorEntries) {
-		// Existing files keyed by filename uppercase (us.jsonl → US, adversarial.jsonl → ADVERSARIAL)
+		// Existing files keyed by filename uppercase (us.jsonl → US, adversarial.jsonl → adversarial)
 		buckets.set(country, [...entries])
 	}
 
@@ -324,7 +324,7 @@ export async function promoteGolden(
 		manifest.files[filename] = { entries: entries.length, sha256: await sha256File(path) }
 	}
 
-	// Forward-copy non-.jsonl files (README.md, etc.) from prior
+	// Forward-copy non-.jsonl files (readme.md, etc.) from prior
 	if (await pathExists(priorDir)) {
 		for await (const f of Globerator.from("*", { cwd: priorDir, absolute: false })) {
 			if (f.endsWith(".jsonl")) continue

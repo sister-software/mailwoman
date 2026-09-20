@@ -16,7 +16,7 @@ import { createRoot, type Root } from "react-dom/client"
  * test leaves in flight: an autocomplete debounce (10 ms) scheduled by the final pick, a secondary parse/runtime
  * promise that lands just after the last assertion resolved. Draining these in an act scope is what keeps them from
  * logging "not wrapped in act(...)" in the window between a test returning and this `afterEach` running. 25 ms clears
- * the 10 ms debounce with margin; the clipboard reset (1500 ms) is instead cleared by `useClipboard`'s unmount effect,
+ * the 10 ms debounce with margin. the clipboard reset (1500 ms) is instead cleared by `useClipboard`'s unmount effect,
  * so it needs no drain here.
  */
 const CLEANUP_DRAIN_MS = 25
@@ -46,7 +46,7 @@ export async function cleanup(): Promise<void> {
 
 	if (!trees.length) return
 
-	// Drain any trailing async update INSIDE act() so a still-pending debounce/promise settles in-scope
+	// Drain any trailing async update inside act() so a still-pending debounce/promise settles in-scope
 	// rather than firing unwrapped in the gap before unmount.
 	await act(async () => {
 		await new Promise((resolve) => {

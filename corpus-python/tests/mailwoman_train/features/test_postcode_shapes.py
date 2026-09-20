@@ -58,7 +58,7 @@ def test_every_row_the_record_does_not_exempt_compiles_under_python() -> None:
 
     That failure would otherwise arrive at import time inside a Modal container, after the corpus is
     staged and the GPU is running. A row that genuinely cannot be written in both dialects declares
-    `javascriptOnly` with its reason; anything else must compile here.
+    `javascriptOnly` with its reason. anything else must compile here.
     """
     for label, _kind, pattern in ALL_POSTCODE_SHAPES:
         if label in UNREADABLE_HERE:
@@ -86,7 +86,7 @@ def test_each_exempt_row_really_is_unreadable_here() -> None:
 
 
 def test_priority_order_survives_the_filter() -> None:
-    """Priority IS the index, so dropping a row must not reorder the rest."""
+    """Priority is the index, so dropping a row must not reorder the rest."""
     readable = [label for label, _, _ in ALL_POSTCODE_SHAPES if label not in UNREADABLE_HERE]
     assert [label for label, _, _ in POSTCODE_PATTERNS] == readable
     # NUM5 is the catch-all and must stay last, or it claims spans the specific rows exist for.
@@ -102,7 +102,7 @@ def test_the_table_is_the_size_the_record_declares() -> None:
 
 
 def test_ie_eircode_is_detected_as_one_span():
-    # The row the first drift was found on. Space is REQUIRED, so the glued form is not a match.
+    # The row the first drift was found on. Space is required, so the glued form is not a match.
     (match,) = collect_matches("Ballinlough, T12 X70A, Cork")
     assert "Ballinlough, T12 X70A, Cork"[match.start : match.end] == "T12 X70A"
 

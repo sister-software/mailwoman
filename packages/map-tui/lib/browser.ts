@@ -4,17 +4,17 @@
 /**
  * The interactive map browser — a full-screen, alternate-screen terminal app over `MapRenderer`.
  *
- * `MapBrowser` owns exactly three things the frame-first library deliberately does not: terminal MODE (alternate
- * screen, hidden cursor, raw stdin, mouse reporting), viewport STATE (center, zoom, drag anchor), and the write path.
+ * `MapBrowser` owns exactly three things the frame-first library deliberately does not: terminal mode (alternate
+ * screen, hidden cursor, raw stdin, mouse reporting), viewport state (center, zoom, drag anchor), and the write path.
  * Frames still come from `MapRenderer.renderFrame` as values; `blitFrame` copies one into an `AsciifyTerminal`, whose
  * damage diff decides what actually goes down the wire.
  *
  * The pane is the terminal minus its bottom row, which is the status bar. `AsciifyTerminal` is told that size and never
  * addresses a cell outside it, so the two writers never fight over a cell.
  *
- * Every mode change made in {@link MapBrowser.start} is undone by {@link MapBrowser.restore}, which is idempotent so a
- * signal handler, an `exit` hook and the normal path can all call it. A terminal left in raw mode with mouse reporting
- * on is not a recoverable shell, so restore is the one operation that must survive any exit path.
+ * Every mode change made in {@link MapBrowser.start} is undone by {@link MapBrowser.restore}. It is idempotent.
+ * Therefore, a signal handler, an `exit` hook and the normal path can all call it. A terminal left in raw mode with
+ * mouse reporting on is not a recoverable shell, so restore is the one operation that must survive any exit path.
  */
 
 import { errorMessage } from "@mailwoman/core/errors/schema"
@@ -327,7 +327,7 @@ export class MapBrowser {
 
 	/**
 	 * Zooms one or more whole levels. With an anchor cell (the wheel's pointer), the center shifts so whatever was under
-	 * the pointer stays under it; without one, the pane center holds.
+	 * the pointer stays under it. without one, the pane center holds.
 	 */
 	private zoomBy(delta: number, anchor: { column: number; row: number } | null): void {
 		const next = clamp(this.zoom + delta, this.source.minZoom, this.source.maxZoom)
@@ -378,8 +378,8 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Pans relative to where the drag STARTED, not the previous motion report. Accumulating per-report deltas would
-	 * drift, since each one is rounded to a whole cell.
+	 * Pans relative to where the drag started rather than the previous motion report. Accumulating per-report deltas
+	 * would drift, since each one is rounded to a whole cell.
 	 */
 	private continueDrag(column: number, row: number): void {
 		const anchor = this.drag
@@ -475,7 +475,7 @@ export class MapBrowser {
 		try {
 			const frame = await this.renderer.renderFrame(viewport)
 
-			// The terminal may have been restored while the tiles were in flight; writing then would paint over the
+			// The terminal may have been restored while the tiles were in flight. writing then would paint over the
 			// user's shell.
 			if (this.restored) return
 

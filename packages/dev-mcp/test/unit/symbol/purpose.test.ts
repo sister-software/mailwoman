@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The behaviour half of the duplicate-avoidance pair: asking what a thing DOES rather than what it is called.
+ * @file The behaviour half of the duplicate-avoidance pair: asking what a thing does rather than what it is called.
  *   The cases below are the questions a name search cannot answer, plus the two coverage defects the first index
  *   shipped with — a pathspec that dropped every file directly in `lib/`, and a cache key that could not see a staged
  *   or new file.

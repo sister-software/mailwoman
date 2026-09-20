@@ -2,18 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Retrieval-rescue census (#1878) — report-only. For every coordinate-truth board row, classify whether a CORRECT
- *   answer was available even when the delivered answer was wrong: in the fork→entity layer (probed UNCONDITIONALLY,
+ *   Retrieval-rescue census (#1878) — report-only. For every coordinate-truth board row, classify whether a correct
+ *   answer was available even when the delivered answer was wrong: in the fork→entity layer (probed unconditionally,
  *   ignoring `fork-entity.ts` check 1), or sitting unpicked in the resolver's own ranked `candidates` list.
  *
  *   The question this measures is the next release's framing: when a parse goes wrong, how often is the right answer
- *   already on hand? `COMER parís.méxico` is the worked case both ways — the shipped model wins it because a wrong but
- *   UNRESOLVABLE parse lets the incumbent abstain and the entity layer answer; the v5-line candidates lose it because a
- *   wrong but RESOLVABLE parse (locality "COMER" → Comer, Georgia, US) silences the same on-hand answer.
+ *   already on hand? `comer parís.méxico` is the worked case both ways — the shipped model wins it because a wrong but
+ *   unresolvable parse lets the incumbent abstain and the entity layer answer. the v5-line candidates lose it because a
+ *   wrong but resolvable parse (locality "comer" → Comer, Georgia, US) silences the same on-hand answer.
  *
  *   Classification is pure and the runner is dumb: everything here is testable without a board, and the runner only
- *   feeds it results. This census emits NO verdict about any check change — it names rows; the rows then get per-row
- *   trace reads before any decode or resolver behavior moves (the decoder-grammar contract's graduation rule).
+ *   feeds it results. This census emits no verdict about any check change — it names rows. the rows then get per-row
+ *   trace reads before any decode or resolver behavior moves (the decoder-grammar interface's graduation rule).
  */
 
 import { haversineKm } from "@mailwoman/spatial"
@@ -23,19 +23,19 @@ import { DEFAULT_TOL_M } from "#eval-harness/gauntlet/check-case"
 /**
  * The six ways a truth-graded row can relate to the answers on hand, plus the ungraded bucket.
  *
- * - `correct_as_is` — the delivered answer is inside tolerance; no rescue question arises.
- * - `entity_rescued_already` — the #1585 wire fired (the result carries `entity`) and the answer is correct: the CURRENT
+ * - `correct_as_is` — the delivered answer is inside tolerance. no rescue question arises.
+ * - `entity_rescued_already` — the #1585 wire fired (the result includes `entity`) and the answer is correct: the current
  *   mechanism already performed the rescue.
- * - `rescue_available_entity` — delivered answer wrong; the unconditional fork-entity probe holds a hit inside tolerance.
+ * - `rescue_available_entity` — delivered answer wrong. the unconditional fork-entity probe holds a hit inside tolerance.
  *   The check (incumbent resolved) is what stands between the row and the right answer.
- * - `rescue_available_rank` — delivered answer wrong; a NON-WINNING entry of the resolver's own `candidates` list is
- *   inside tolerance. The ranking, not the retrieval, lost the row.
+ * - `rescue_available_rank` — delivered answer wrong. a NON-winning entry of the resolver's own `candidates` list is
+ *   inside tolerance. The ranking rather than the retrieval, lost the row.
  * - `rescue_available_both` — both of the above hold.
  * - `no_rescue_on_hand` — delivered answer wrong and neither source holds the truth: these rows need retrieval or parse
- *   work, not rescue plumbing.
- * - `check_protects` is NOT a value here — it is a separate boolean, because it can hold alongside `correct_as_is`: the
- *   row is correct AND an unconditional entity hit exists (necessarily elsewhere, or redundant), so loosening the check
- *   puts the row at risk. The loosening decision needs both lists, not one label.
+ *   work rather than rescue plumbing.
+ * - `check_protects` is not a value here — it is a separate boolean, because it can hold alongside `correct_as_is`: the
+ *   row is correct and an unconditional entity hit exists (necessarily elsewhere, or redundant), so loosening the check
+ *   puts the row at risk. The loosening decision needs both lists rather than one label.
  */
 export type RescueClass =
 	| "correct_as_is"
@@ -64,16 +64,16 @@ export interface RescueRowInput {
 	lat: number | null
 	lon: number | null
 	/**
-	 * True when the delivered result carries `entity` — the #1585 wire fired under the current check.
+	 * True when the delivered result includes `entity` — the #1585 wire fired under the current check.
 	 */
 	entityFired: boolean
 	/**
 	 * The unconditional fork-entity probe's hit for this input, when a `declared_fork` marker rode and the probe was
-	 * asked IGNORING check 1. Undefined = probe not applicable or no hit.
+	 * asked ignoring check 1. Undefined = probe not applicable or no hit.
 	 */
 	unconditionalEntityHit?: RescueCandidate
 	/**
-	 * The resolver's ranked alternatives EXCLUDING the winner (`candidates[1..]` of the delivered result).
+	 * The resolver's ranked alternatives excluding the winner (`candidates[1..]` of the delivered result).
 	 */
 	alternateCandidates: readonly RescueCandidate[]
 }
@@ -93,7 +93,7 @@ export interface RescueRowReport {
 	 */
 	rescueRank?: number
 	/**
-	 * The row is CORRECT as delivered while an unconditional entity hit exists — the set a check loosening puts at risk.
+	 * The row is correct as delivered while an unconditional entity hit exists — the set a check loosening puts at risk.
 	 * Reported beside the classification, never instead of it.
 	 */
 	checkProtects: boolean
@@ -137,7 +137,7 @@ export function classifyRescueRow(row: RescueRowInput): {
 		}
 	}
 
-	// A correct row with an unconditional entity hit is the loosening-risk set — even a CORRECT entity hit belongs in
+	// A correct row with an unconditional entity hit is the loosening-risk set — even a correct entity hit belongs in
 	// it, because a changed check reorders which mechanism answers, and reordering is a behavior change to re-grade.
 	const checkProtects = deliveredCorrect && row.unconditionalEntityHit !== undefined
 

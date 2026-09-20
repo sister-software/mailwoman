@@ -7,8 +7,7 @@
  *
  *   Bitter-lesson-safe: only universal structural cues (proximity, punctuation, capitalization,
  *   hyphenation, format-shape repetition). No place-name dictionaries — a `LOCALITY_PHRASE`
- *   proposal means "this looks shaped like a multi-word capitalized run that COULD be a city name",
- *   not "this IS a city name". Typing the span is the classifier's job; this layer only answers "do
+ *   proposal means "this looks shaped like a multi-word capitalized run that could be a city name" rather than "this is a city name". Typing the span is the classifier's job. this layer only answers "do
  *   these tokens belong together?".
  *
  *   Per "possibilities not constraints", rules emit overlapping proposals freely. The reconciler
@@ -39,7 +38,7 @@ import {
 export { tokenizeSegment, type SegmentToken } from "#rules/tokens"
 
 /**
- * Region-abbreviation SHAPE via the shared `@mailwoman/query-shape` predicate, widened to 3 letters (US states,
+ * Region-abbreviation shape via the shared `@mailwoman/query-shape` predicate, widened to 3 letters (US states,
  * Canadian provinces, and 3-letter codes like "TWN").
  */
 function isRegionAbbreviation(s: string): boolean {
@@ -48,7 +47,7 @@ function isRegionAbbreviation(s: string): boolean {
 
 /**
  * True when token starts with an uppercase letter — the common Western proper-noun shape. Unicode-aware (`\p{Lu}`) so
- * accented Latin capitals (`Évellys`, `Étagnac`, `Ñuñoa`, `Ávila`) count as proper nouns too; an ASCII-only `[A-Z]`
+ * accented Latin capitals (`Évellys`, `Étagnac`, `Ñuñoa`, `Ávila`) count as proper nouns too. an ascii-only `[A-Z]`
  * silently dropped those localities from the grouper (#425 residual).
  */
 function startsCapitalized(s: string): boolean {
@@ -64,14 +63,14 @@ function isStreetSuffix(token: string): boolean {
 }
 
 /**
- * Romance/Latin street-TYPE words that LEAD the street ("Via Trento", "Calle Mayor", "Corso Italia"). English puts the
+ * Romance/Latin street-type words that lead the street ("Via Trento", "Calle Mayor", "Corso Italia"). English puts the
  * type last (a suffix — see STREET_SUFFIXES); Romance languages put it first. Without this, a leading "Via"/"Calle" is
  * capitalized first-segment text the locality rule proposes, and on OOD intl input the model can't type it either — so
  * the grouper-audit promotes it to a spurious `locality`, burying the real city (#425 re-verification).
  *
- * Street-TYPES only — deliberately NOT the ambiguous area/development words ("Polígono", "Urbanización", "Lugar",
- * "Partida", "Borgo") that legitimately serve AS localities. This stays a bounded linguistic category; per-locale
- * breadth belongs in a future rule pack, not an exception pile.
+ * Street-types only — deliberately not the ambiguous area/development words ("Polígono", "Urbanización", "Lugar",
+ * "Partida", "Borgo") that legitimately serve AS localities. This stays a bounded linguistic category. per-locale
+ * breadth belongs in a future rule pack rather than an exception pile.
  */
 const STREET_PREFIXES: ReadonlySet<string> = new Set([
 	// Italian
@@ -118,13 +117,13 @@ function isStreetPrefix(token: string): boolean {
 }
 
 /**
- * Lowercase connective particles that live INSIDE multi-word place names — the Romance/Germanic glue that bridges two
+ * Lowercase connective particles that live inside multi-word place names — the Romance/Germanic glue that bridges two
  * capitalized content words: "Las Palmas **de** Gran Canaria", "San Pietro **in** Casale", "Alphen **aan den** Rijn",
- * "Frankfurt **am** Main", "Rothenburg **ob der** Tauber". This is a BOUNDED linguistic category (place-name
- * connectives), not a gazetteer or a stopword dump — and it only ever fires when bracketed by capitalized content on
- * BOTH sides (see `scoreLocalityPhrase`), so a stray "and"/"the" in a street phrase can't smuggle a particle through.
- * Keep coverage to the connectives that actually bridge place-name tokens; growing it into a per-locale stopword list
- * is the wrong move — that pressure belongs on the gazetteer/reconciler, not here.
+ * "Frankfurt **am** Main", "Rothenburg **ob der** Tauber". This is a bounded linguistic category (place-name
+ * connectives) rather than a gazetteer or a stopword dump — and it only ever fires when bracketed by capitalized
+ * content on both sides (see `scoreLocalityPhrase`), so a stray "and"/"the" in a street phrase can't smuggle a particle
+ * through. Keep coverage to the connectives that actually bridge place-name tokens. growing it into a per-locale
+ * stopword list is the wrong move — that pressure belongs on the gazetteer/reconciler rather than here.
  */
 const PLACE_NAME_PARTICLES: ReadonlySet<string> = new Set([
 	// Spanish / Catalan / Portuguese
@@ -173,7 +172,7 @@ const PLACE_NAME_PARTICLES: ReadonlySet<string> = new Set([
 
 /**
  * A short lowercase particle fused via apostrophe to a capitalized name — the Italian/French elision that the tokenizer
- * keeps as ONE token: `nell'Emilia`, `dell'Adda`, `l'Aquila`. Treated as place-name CONTENT (it carries the proper
+ * keeps as one token: `nell'Emilia`, `dell'Adda`, `l'Aquila`. Treated as place-name content (it carries the proper
  * noun), so it can both start and continue a locality run.
  */
 function isFusedParticleName(s: string): boolean {
@@ -181,7 +180,7 @@ function isFusedParticleName(s: string): boolean {
 }
 
 /**
- * Place-name content token: a capitalized word OR an apostrophe-fused particle name (`nell'Emilia`).
+ * Place-name content token: a capitalized word or an apostrophe-fused particle name (`nell'Emilia`).
  */
 function isPlaceNameContent(s: string): boolean {
 	return startsCapitalized(s) || isFusedParticleName(s)
@@ -195,8 +194,8 @@ function isPlaceNameParticle(s: string): boolean {
 }
 
 /**
- * Venue-marker nouns with per-term confidence weights. Same caveat as STREET_SUFFIXES — universal structural markers,
- * not a places dictionary. Higher weight = stronger venue signal.
+ * Venue-marker nouns with per-term confidence weights. Same caveat as STREET_SUFFIXES — universal structural markers
+ * rather than a places dictionary. Higher weight = stronger venue signal.
  */
 const VENUE_MARKERS: ReadonlyMap<string, number> = new Map([
 	// Dining (0.90 — unambiguous venue markers)
@@ -264,7 +263,7 @@ const VENUE_MARKERS: ReadonlyMap<string, number> = new Map([
 
 /**
  * Unit-marker tokens outside the USPS tables. Pub-28 Appendix C2 (via `@mailwoman/codex`) covers the designator words
- * themselves — APT/STE/RM/FL/BLDG/DEPT and their full forms — so the local extension carries only the bare "#" that
+ * themselves — APT/STE/RM/FL/bldg/dept and their full forms — so the local extension carries only the bare "#" that
  * introduces "#4B", which is not USPS vocabulary.
  */
 const UNIT_MARKER_EXTENSIONS: ReadonlySet<string> = new Set(["#"])
@@ -298,10 +297,10 @@ export function hasUnitMarker(tokens: ReadonlyArray<SegmentToken>): boolean {
 }
 
 /**
- * `NUMERIC` rule: emit one proposal per all-digit token. House numbers, postcodes (when no format hit), unit numbers
+ * `numeric` rule: emit one proposal per all-digit token. House numbers, postcodes (when no format hit), unit numbers
  * all surface here as a base hypothesis.
  *
- * Confidence drops for very long runs (5+ digits) where POSTCODE will typically win; the reconciler does the final
+ * Confidence drops for very long runs (5+ digits) where postcode will typically win. the reconciler does the final
  * pick.
  */
 export function scoreNumeric(tokens: ReadonlyArray<SegmentToken>, text: string): PhraseProposal[] {
@@ -311,7 +310,7 @@ export function scoreNumeric(tokens: ReadonlyArray<SegmentToken>, text: string):
 		if (!isAllDigit(t.body)) continue
 		const len = t.body.length
 
-		// 1-4 digit pure-numerics are clearly NUMERIC (house number). 5+ are ambiguous with POSTCODE
+		// 1-4 digit pure-numerics are clearly numeric (house number). 5+ are ambiguous with postcode
 		// — emit anyway at lower confidence so the reconciler sees both options.
 		const confidence =
 			len <= MAX_UNAMBIGUOUS_HOUSE_NUMBER_DIGITS ? UNAMBIGUOUS_NUMERIC_CONFIDENCE : NEUTRAL_PROPOSAL_CONFIDENCE
@@ -327,7 +326,7 @@ export function scoreNumeric(tokens: ReadonlyArray<SegmentToken>, text: string):
 }
 
 /**
- * `POSTCODE` rule: lift each `QueryShape.knownFormats` postcode hit directly. The QueryShape stage already did the
+ * `postcode` rule: lift each `QueryShape.knownFormats` postcode hit directly. The QueryShape stage already did the
  * format-shape recognition — Stage 2.7's job is just to publish the spans as phrase proposals so the reconciler can use
  * them.
  */
@@ -335,8 +334,8 @@ export function scorePostcode(shape: QueryShapeLike, text: string): PhrasePropos
 	const out: PhraseProposal[] = []
 
 	for (const hit of shape.knownFormats) {
-		// `po_box` is not a postcode; the kind classifier owns that signal. Skip non-postcode
-		// formats here so we don't pollute POSTCODE proposals.
+		// `po_box` is not a postcode. the kind classifier owns that signal. Skip non-postcode
+		// formats here so we don't pollute postcode proposals.
 		if (hit.format === "po_box") continue
 
 		out.push({
@@ -366,10 +365,10 @@ export function scoreRegionAbbreviation(
 
 		if (!isRegionAbbreviation(t.body)) continue
 		// A region code is canonically standalone — the tail of "City, ST ZIP", never immediately
-		// followed by another place-name word. When the next token IS place-name content (and not
-		// itself a region abbreviation or a street suffix), this token is the HEAD of a multi-word
-		// place name ("SAN" NAZARIO, "DI" CASTELLO — common in all-caps intl data where every short
-		// word matches the 2-3-uppercase shape), not a region. Suppressing the region proposal here
+		// followed by another place-name word. When the next token is place-name content (and not
+		// itself a region abbreviation or a street suffix), this token is the head of a multi-word
+		// place name ("SAN" nazario, "DI" castello — common in all-caps intl data where every short
+		// word matches the 2-3-uppercase shape) rather than a region. Suppressing the region proposal here
 		// keeps it from out-deduping the same span's LOCALITY_PHRASE in the reconciler (#425).
 		const after = tokens[i + 1]
 
@@ -378,7 +377,7 @@ export function scoreRegionAbbreviation(
 		}
 
 		// Position cue: last token in a segment (canonical region slot) → high confidence. Anywhere
-		// else, moderate. Anywhere in the LAST segment → slightly elevated (region is canonically the
+		// else, moderate. Anywhere in the last segment → slightly elevated (region is canonically the
 		// final non-postcode component).
 		const atTail = i === tokens.length - 1
 		const confidence = atTail ? 0.85 : segmentIsLast ? 0.7 : NEUTRAL_PROPOSAL_CONFIDENCE
@@ -397,8 +396,8 @@ export function scoreRegionAbbreviation(
  * `HYPHENATED_COMPOUND` rule: tokens containing an internal hyphen. Captures `NY-NY` (venue disambiguation case),
  * `Saint-Denis` (French locality compound), `10118-1234` (ZIP+4 written as a single token).
  *
- * Internal hyphen is the cue; the rule doesn't pre-judge what the compound MEANS — that's typing (classifier) or
- * reconcile work. A high confidence here just says "this is one unit, not two".
+ * Internal hyphen is the cue. the rule doesn't pre-judge what the compound means — that's typing (classifier) or
+ * reconcile work. A high confidence here just says "this is one unit rather than two".
  */
 export function scoreHyphenatedCompound(tokens: ReadonlyArray<SegmentToken>, text: string): PhraseProposal[] {
 	const out: PhraseProposal[] = []
@@ -424,7 +423,7 @@ export function scoreHyphenatedCompound(tokens: ReadonlyArray<SegmentToken>, tex
  * `STREET_PHRASE` rule: a token run that contains a street-type suffix. The span covers a leading numeric (house
  * number) when present, through the suffix token.
  *
- * Confidence reflects how canonical the run looks: NUMERIC + 1-3 capitalized words + SUFFIX scores highest; suffix-only
+ * Confidence reflects how canonical the run looks: numeric + 1-3 capitalized words + suffix scores highest. suffix-only
  * or non-leading-numeric variants score lower but still emit.
  */
 export function scoreStreetPhrase(tokens: ReadonlyArray<SegmentToken>, text: string): PhraseProposal[] {
@@ -449,9 +448,9 @@ export function scoreStreetPhrase(tokens: ReadonlyArray<SegmentToken>, text: str
 		// Need at least one preceding token (or a numeric house number) for STREET_PHRASE — a
 		// suffix-only token "Street" alone isn't a street phrase.
 		if (start === suffixIdx) continue
-		// #565: a leading ALL-DIGIT token is a house NUMBER, not part of the street name. Exclude it from
-		// the STREET_PHRASE span — the NUMERIC rule already proposes the house number separately — so the
-		// joint reconciler types the house number and the street as DISTINCT nodes instead of fusing the
+		// #565: a leading all-digit token is a house number rather than part of the street name. Exclude it from
+		// the STREET_PHRASE span — the numeric rule already proposes the house number separately — so the
+		// joint reconciler types the house number and the street as distinct nodes instead of fusing the
 		// whole run ("3075 Hill Street") into one (the regression behind #566). Ordinals ("5th Ave") are
 		// part of the name and stay.
 		let hadHouseNumber = false
@@ -476,8 +475,8 @@ export function scoreStreetPhrase(tokens: ReadonlyArray<SegmentToken>, text: str
 		})
 	}
 
-	// Romance street pattern: the street TYPE LEADS ("Via Trento", "Calle Mayor", "Largo Millefiori").
-	// Walk RIGHT from a street-prefix token gathering capitalized place-name words (bridging particles),
+	// Romance street pattern: the street type leads ("Via Trento", "Calle Mayor", "Largo Millefiori").
+	// Walk right from a street-prefix token gathering capitalized place-name words (bridging particles),
 	// stopping at a digit house-number or any non-place token.
 	for (let prefixIdx = 0; prefixIdx < tokens.length; prefixIdx++) {
 		if (!isStreetPrefix(tokens[prefixIdx]!.body)) continue
@@ -503,7 +502,7 @@ export function scoreStreetPhrase(tokens: ReadonlyArray<SegmentToken>, text: str
 		const startTok = tokens[prefixIdx]!
 		const endTok = tokens[end]!
 
-		// Prefix + name scores moderately; a bare prefix still emits a low-confidence marker so the
+		// Prefix + name scores moderately. a bare prefix still emits a low-confidence marker so the
 		// audit types the leftover span `street`, never `locality`.
 		out.push({
 			span: makeSection(text, startTok.start, endTok.end),
@@ -519,7 +518,7 @@ export function scoreStreetPhrase(tokens: ReadonlyArray<SegmentToken>, text: str
  * `LOCALITY_PHRASE` rule: runs of contiguous place-name tokens (1-6 long). Emits multiple overlapping proposals so the
  * reconciler can choose between e.g. `Saint Petersburg` as one phrase vs `Saint` + `Petersburg` as two.
  *
- * The run bridges lowercase place-name PARTICLES (`de`, `in`, `aan den`, `am`, …) and apostrophe-fused names
+ * The run bridges lowercase place-name particles (`de`, `in`, `aan den`, `am`, …) and apostrophe-fused names
  * (`nell'Emilia`) when they sit between capitalized content — without that, the walk used to stop dead at the first
  * lowercase token, so it never proposed "Reggio nell'Emilia", "Las Palmas de Gran Canaria", or "San Pietro in Casale"
  * as single spans. Those gaps are exactly the native-order multi-word localities the joint-decode A/B fragmented (Route
@@ -531,11 +530,11 @@ export function scoreStreetPhrase(tokens: ReadonlyArray<SegmentToken>, text: str
 /**
  * Longest locality phrase proposed, in tokens — "Las Palmas de Gran Canaria" is 5.
  *
- * Bounds BOTH the emitted proposals and the forward walk that finds them. Those must stay tied: the walk exists only to
+ * Bounds both the emitted proposals and the forward walk that finds them. Those must stay tied: the walk exists only to
  * measure the run this cap will clamp anyway, so letting it range further is work whose result is discarded, and it is
  * quadratic on a long capitalized run where every start index walks to the end.
  */
-const MAX_LOCALITY_PHRASE_TOKENS = 6
+export const MAX_LOCALITY_PHRASE_TOKENS = 6
 
 export function scoreLocalityPhrase(
 	tokens: ReadonlyArray<SegmentToken>,
@@ -547,13 +546,13 @@ export function scoreLocalityPhrase(
 	for (let i = 0; i < tokens.length; i++) {
 		if (!isPlaceNameContent(tokens[i]!.body)) continue
 
-		// A leading street-type word ("Via", "Calle", "Corso") heads a STREET, not a locality — let
+		// A leading street-type word ("Via", "Calle", "Corso") heads a street rather than a locality — let
 		// scoreStreetPhrase own it so the audit never promotes it to a spurious locality.
 		if (isStreetPrefix(tokens[i]!.body)) continue
 
-		// A region-abbreviation-SHAPED head (2-3 uppercase letters) starts a LOCALITY_PHRASE only when
+		// A region-abbreviation-shaped head (2-3 uppercase letters) starts a LOCALITY_PHRASE only when
 		// place-name content follows it. This keeps a standalone trailing "NY"/"TX" owned by
-		// REGION_ABBREVIATION, while still forming "SAN NAZARIO" / "CITTÀ DI CASTELLO" — in all-caps
+		// REGION_ABBREVIATION, while still forming "SAN nazario" / "cittÀ DI castello" — in all-caps
 		// intl data (OpenAddresses), the head/connector of a place name ("SAN", "DI", "DEL") matches
 		// the abbreviation shape, so a hard skip here dropped the multi-word locality entirely (#425).
 		if (isRegionAbbreviation(tokens[i]!.body)) {
@@ -563,7 +562,7 @@ export function scoreLocalityPhrase(
 		}
 
 		// Walk forward grabbing place-name content. Bridge connective particles (lowercase "de"/"in" or
-		// all-caps "DI"/"DEL") ONLY when a content token follows within a short run (≤2 consecutive
+		// all-caps "DI"/"DEL") only when a content token follows within a short run (≤2 consecutive
 		// particles: "aan den Rijn"), so a dangling "Palmas de" at end-of-segment doesn't extend the
 		// run. Stop on digits, street suffixes, and NON-particle region abbreviations ("Springfield IL"
 		// must not absorb "IL").
@@ -602,7 +601,7 @@ export function scoreLocalityPhrase(
 				if (tokens[k] && k - (j + 1) <= 2 && isPlaceNameContent(tokens[k]!.body)) {
 					j = k
 
-					// jump onto the content token; the bridged particles stay inside the span
+					// jump onto the content token. the bridged particles stay inside the span
 					continue
 				}
 			}
@@ -616,7 +615,7 @@ export function scoreLocalityPhrase(
 			const startTok = tokens[i]!
 			const endTok = tokens[i + len - 1]!
 
-			// Never end a proposal ON a connective particle ("Las Palmas de" / "CITTÀ DI" is not a place).
+			// Never end a proposal on a connective particle ("Las Palmas de" / "cittÀ DI" is not a place).
 			if (isPlaceNameParticle(endTok.body)) continue
 			const spanText = text.slice(startTok.start, endTok.end)
 			const isRegionName = len === 1 && US_REGION_NAMES.has(spanText.toLowerCase())
@@ -642,24 +641,24 @@ export function scoreLocalityPhrase(
 				confidence: Math.min(0.95, confidence),
 			})
 		}
-		// Do NOT skip past the run — let i++ advance normally so every capitalized token gets a
+		// Do not skip past the run — let i++ advance normally so every capitalized token gets a
 		// chance to emit single-token proposals from its own starting position. (Saint Petersburg
-		// needs `Saint`, `Petersburg`, AND `Saint Petersburg`; a run-skip would lose `Petersburg`.)
+		// needs `Saint`, `Petersburg`, and `Saint Petersburg`; a run-skip would lose `Petersburg`.)
 	}
 
 	return out
 }
 
 /**
- * `VENUE_PHRASE` rule: capitalized run containing a venue-marker noun (Steakhouse, Hotel, etc.) OR containing a
+ * `VENUE_PHRASE` rule: capitalized run containing a venue-marker noun (Steakhouse, Hotel, etc.) or containing a
  * hyphenated compound + ≥1 capitalized word.
  *
- * The shape "NY-NY Steakhouse" — the kryptonite case the reconciler eventually needs to lift the NY tokens off REGION —
+ * The shape "NY-NY Steakhouse" — the kryptonite case the reconciler eventually needs to lift the NY tokens off region —
  * surfaces here as a `VENUE_PHRASE` proposal at moderate-high confidence.
  *
  * Also includes a venue-by-exclusion positional prior: multi-word capitalized run in the first segment with no street
  * suffix, no house number, and no unit marker → weak VENUE_PHRASE at 0.50-0.55. The idea: if we can't identify what
- * something IS, but it's in the venue slot (first segment) and doesn't look like any other component, it might be a
+ * something is, but it's in the venue slot (first segment) and doesn't look like any other component, it might be a
  * venue name.
  */
 export function scoreVenuePhrase(

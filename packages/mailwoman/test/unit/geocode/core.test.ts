@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   #928: `countryFromPostcodeFormat` — a parsed postcode's FORMAT as a country signal, used by the
+ *   #928: `countryFromPostcodeFormat` — a parsed postcode's format as a country signal, used by the
  *   `postcodeCountryPrior` change to override the language-based placer (which conflates GB/US). The
- *   essential guarantee: the GB pattern is UNFORGEABLE across the formats we resolve — it never matches
+ *   essential guarantee: the GB pattern is unforgeable across the formats we resolve — it never matches
  *   a US ZIP, an NL `\d{4} [A-Z]{2}`, an FR 5-digit, or a Canadian `A#A #A#` code — so turning the change
  *   on can never mis-route a non-GB address.
  */
@@ -57,7 +57,7 @@ describe("countryFromPostcodeFormat (#928)", () => {
 	})
 
 	it("GB / CA / IE formats never collide", () => {
-		// GB inward is 3 chars (\d[A-Z]{2}); CA ends \d[A-Z]\d; IE unique part is 4 alnum. Mutually exclusive.
+		// GB inward is 3 chars (\d[A-Z]{2}). CA ends \d[A-Z]\d. IE unique part is 4 alnum. Mutually exclusive.
 		expect(countryFromPostcodeFormat("E4 9AZ")).toBe("GB")
 		expect(countryFromPostcodeFormat("K2P 1L4")).toBe("CA")
 		expect(countryFromPostcodeFormat("D02 AF30")).toBe("IE")
@@ -118,6 +118,50 @@ describe("extractGeocodeResult — resolved-place surfacing (#1014)", () => {
 		}
 
 		expect(extractGeocodeResult("berlin", tree).hierarchy[0]?.name).toBe("Berlin")
+	})
+})
+
+describe("extractGeocodeResult — a component the answer did not follow (#2301)", () => {
+	// `Nawāda, 744301`: 744301 is an Andaman and Nicobar Islands code, the walk selects Nawada in Bihar, and the
+	// resolver refuses to relocate the coordinate 1,914 km onto Port Blair. Both components are still in the result.
+	// without this field nothing in it says they name different places.
+	const refused = (): AddressTree => ({
+		raw: "Nawāda, 744301",
+		roots: [
+			node({
+				tag: "locality",
+				value: "Nawāda",
+				lat: 24.88,
+				lon: 85.53,
+				placeID: "wof:1",
+				metadata: { resolver_name: "Nawada", postcode_city_mismatch: true, postcode_move_refused_km: 1914.2 },
+			}),
+			node({ tag: "postcode", value: "744301", start: 8, end: 14 }),
+		],
+	})
+
+	it("reports the refused postcode with the distance following it would have moved the answer", () => {
+		const r = extractGeocodeResult("Nawāda, 744301", refused())
+
+		expect(r.unfollowed_components).toEqual([
+			{ tag: "postcode", value: "744301", reason: "postcode_move_refused", distance_km: 1914.2 },
+		])
+
+		// The component itself is kept, which is what separates this from `dropped_components`.
+		expect(r.components.postcode).toBe("744301")
+		expect(r.dropped_components).toBeUndefined()
+	})
+
+	it("omits the field entirely when the answer followed everything it parsed", () => {
+		const agreeing: AddressTree = {
+			raw: "Paris, 75008",
+			roots: [
+				node({ tag: "locality", value: "Paris", lat: 48.8566, lon: 2.3522, placeID: "wof:1" }),
+				node({ tag: "postcode", value: "75008", start: 7, end: 12 }),
+			],
+		}
+
+		expect(extractGeocodeResult("Paris, 75008", agreeing).unfollowed_components).toBeUndefined()
 	})
 })
 
@@ -187,7 +231,7 @@ describe("extractGeocodeResult — ranked candidates for limit>1 (#1016)", () =>
 		}
 
 		const r = extractGeocodeResult("springfield", tree)
-		expect(r.candidates).toHaveLength(2) // primary + the distinct MA one; the coincident township is dropped
+		expect(r.candidates).toHaveLength(2) // primary + the distinct MA one. the coincident township is dropped
 		expect(r.candidates.map((c) => c.placeID)).toEqual(["wof:100", "wof:201"])
 	})
 
@@ -212,7 +256,7 @@ describe("extractGeocodeResult — ranked candidates for limit>1 (#1016)", () =>
 
 describe("extractGeocodeResult — parsed house-grade fields (#1041)", () => {
 	// A rooftop parse of "123 East Sheldon Rd 75001 Paris": the street node is stamped `address_point`, and its
-	// name-bearing subtree (prefix + base + suffix) plus the house_number nest under it (per the containment schema).
+	// name-containing subtree (prefix + base + suffix) plus the house_number nest under it (per the containment schema).
 	const rooftopTree = (tier: "address_point" | "interpolated" | "admin"): AddressTree => ({
 		raw: "123 east sheldon rd 75001 paris",
 		roots: [
@@ -346,7 +390,7 @@ describe("recognizeBarePostcode (#22)", () => {
 
 describe("extractGeocodeResult — unit-grade postcodes lead the admin ladder (#977 NL, #22 GB)", () => {
 	/**
-	 * The GB shape of the defect: `29 Brecknock Road, London, N7 0BT` resolves BOTH the locality (the London centroid,
+	 * The GB shape of the defect: `29 Brecknock Road, London, N7 0BT` resolves both the locality (the London centroid,
 	 * 51.5005/-0.1094) and the unit postcode (`N70BT`, 51.5500/-0.1307 — 38 m from the rooftop truth), and the admin
 	 * ladder returned London, 5.6 km out. Coordinates are the live `candidate.db` rows, read 2026-08-10.
 	 */
@@ -379,7 +423,7 @@ describe("extractGeocodeResult — unit-grade postcodes lead the admin ladder (#
 	})
 
 	it("keeps the locality centroid when the resolver only reached the OUTWARD stem", () => {
-		// A stem hit (`N7`) is district-class — coarser than the locality, so it must NOT lead.
+		// A stem hit (`N7`) is district-class — coarser than the locality, so it must not lead.
 		const r = extractGeocodeResult("29 Brecknock Road, London, N7 0BT", gbTree("N7"))
 		expect(r.lat).toBeCloseTo(51.500526, 4)
 	})
@@ -429,7 +473,7 @@ describe("extractGeocodeResult — unit-grade postcodes lead the admin ladder (#
 
 describe("extractGeocodeResult — street-tier locality from the register commune (#1058)", () => {
 	// "Rue Sainte-Catherine, Bordeaux": the street-centroid tier matched the register's (street,
-	// commune) pair and stamped `street_locality: "Bordeaux"` on the street node; span-rescore's
+	// commune) pair and stamped `street_locality: "Bordeaux"` on the street node. span-rescore's
 	// speculative locality ("Rue", the street's first token — a real commune in the Somme) was
 	// dropped by the resolver for contradicting the register.
 	const streetTierTree = (): AddressTree => ({
@@ -538,7 +582,7 @@ describe("parseForGeocode — query-shape emission prior (#981)", () => {
 		expect(calls).toHaveLength(1)
 		const { text, opts } = calls[0]!
 		expect(opts?.queryShape).toBeDefined()
-		// The shape must be the one computeQueryShape derives from the SAME text handed to the model.
+		// The shape must be the one computeQueryShape derives from the same text handed to the model.
 		expect(opts!.queryShape).toEqual(computeQueryShape(text))
 	})
 
@@ -556,8 +600,8 @@ describe("parseForGeocode — query-shape emission prior (#981)", () => {
 
 		const qs = calls[0]!.opts!.queryShape!
 		// The Wetstraat/Rue-de-la-Loi cross-border class: no known postcode format, no region abbreviation, so
-		// buildEmissionPriors returns an all-zeros matrix — the emission prior CANNOT move it. That class needs a
-		// lexical country prior, not this belt.
+		// buildEmissionPriors returns an all-zeros matrix — the emission prior cannot move it. That class needs a
+		// lexical country prior rather than this belt.
 		expect(qs.knownFormats).toHaveLength(0)
 		expect(qs.regionAbbreviations ?? []).toHaveLength(0)
 	})
@@ -607,14 +651,14 @@ describe("the #404 lineage-attachment wiring (#1717)", () => {
 })
 
 // The Decision-A retry rider's suite lived here until 2026-08-19 — retired with the rider (#1694, the
-// #486 policy): measured zero effect on the board, its failure slice, and 600 fresh register records.
+// #486 policy): measured zero effect on the board, its failure subset, and 600 fresh register records.
 // Single-pass behavior is pinned structurally by test/geocode-core-single-parse.test.ts.
 
 describe("#1537: a famous namesake the model reads as a `street` keeps its candidate list", () => {
 	/**
 	 * The live shape the issue reports, reduced to a fixture. The model tags a bare `Springfield` / `Berlin` / `Moscow`
 	 * as a `street` (they read as street names), so the admin walk resolves nothing and the #370 span-rescore tier is the
-	 * ONLY thing that recovers the place. It used to decorate the injected node with an EMPTY alternatives list, so
+	 * only thing that recovers the place. It used to decorate the injected node with an empty alternatives list, so
 	 * `candidates` came back holding one entry and `declared_ambiguity` — whose whole trigger is a top-1-vs-top-2 margin
 	 * — could not fire for the very class it exists for.
 	 */
@@ -666,7 +710,7 @@ describe("#1537: a famous namesake the model reads as a `street` keeps its candi
 			findPlace: async (query) =>
 				query.text.trim().toLowerCase() === "springfield" ? SPRINGFIELDS.map((p) => ({ ...p })) : [],
 		}),
-		// No placer: this test is about the resolver's candidate list, not the country prior — and loading the
+		// No placer: this test is about the resolver's candidate list rather than the country prior — and loading the
 		// bundled placer model in a unit test would be a several-hundred-millisecond side quest.
 		placeCountry: false,
 	})

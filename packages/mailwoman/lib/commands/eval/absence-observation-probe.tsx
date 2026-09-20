@@ -10,28 +10,26 @@
  *   `probe-definition.json`, which the loader refuses to hand over if its content hash has moved.
  *
  *   Nothing is injected into the runtime pipeline for the absence work: the pipeline answers, and the
- *   route reads the finished answer. The semantic phrase route (#1929) IS injected, because the
+ *   route reads the finished answer. The semantic phrase route (#1929) is injected, because the
  *   activity-phrased rows cannot reach a category without it.
  *
- *   The coverage layer is BUILD-LOCAL (ODbL), so it is not committed and not published. Without it the run
+ *   The coverage layer is build-local (ODbL), so it is not committed and not published. Without it the run
  *   refuses at construction rather than reporting an empty board — see
  *   `docs/superpowers/specs/2026-08-27-exclusion-grade-coverage-pilot.md` for the build command.
  *
- *   Report-only by design: the exit code is non-zero only when the HARNESS broke — a moved ruler, a
- *   missing coverage layer, a missing database. A recorded BREACHED is a result, not a crash, and it is
+ *   Report-only by design: the exit code is non-zero only when the harness broke — a moved ruler, a
+ *   missing coverage layer, a missing database. A recorded breached is a result rather than a crash, and it is
  *   the result the asymmetry claim is graded on.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
-import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "Pre-registered coverage-qualified absence-observation probe (#1965)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "absence-observation-probe",
@@ -48,52 +46,32 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	locale: string
-	weightsCache?: string
-	coverage?: string
-	db?: string
-	resolveDB?: string
-	candidateDB?: string
-	out?: string
-	json: boolean
-}
+const EvalAbsenceObservationProbe = harnessCommand(
+	spec,
+	async (options) => {
+		const { printAbsenceProbeReceipt, runAbsenceObservationProbe } =
+			await import("#eval-harness/absence-observation/run")
 
-const EvalAbsenceObservationProbe: ParsedCommandComponent<Options> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { printAbsenceProbeReceipt, runAbsenceObservationProbe } =
-				await import("#eval-harness/absence-observation/run")
+		const receipt = await runAbsenceObservationProbe({
+			locale: options.locale,
+			weightsCacheRoot: options.weightsCache,
+			coverageDatabasePath: options.coverage,
+			db: options.db,
+			resolveDB: options.resolveDB,
+			candidateDB: options.candidateDB,
+		})
 
-			const receipt = await runAbsenceObservationProbe({
-				locale: options.locale,
-				weightsCacheRoot: options.weightsCache,
-				coverageDatabasePath: options.coverage,
-				db: options.db,
-				resolveDB: options.resolveDB,
-				candidateDB: options.candidateDB,
-			})
+		if (options.out) {
+			await writeLocalJSONFile(receipt, options.out)
+		}
 
-			if (options.out) {
-				await writeLocalJSONFile(receipt, options.out)
-			}
+		if (!options.json) {
+			printAbsenceProbeReceipt(receipt)
+		}
 
-			if (!options.json) {
-				printAbsenceProbeReceipt(receipt)
-			}
-
-			return { receipt }
-		},
-		() => 0
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	if (options.json && state.status === "done") {
-		return <Text>{prettyJSON(state.result.receipt)}</Text>
-	}
-
-	return null
-}
+		return { receipt }
+	},
+	{ exitCode: () => 0, json: ({ receipt }, options) => (options.json ? receipt : undefined) }
+)
 
 export default EvalAbsenceObservationProbe

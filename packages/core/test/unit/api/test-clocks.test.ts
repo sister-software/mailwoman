@@ -4,11 +4,11 @@
 /**
  *   {@linkcode VirtualClock.runUntilSettled}'s stuck-work guard.
  *
- *   The guard used to budget IDLE EVENT-LOOP TURNS (1000 of them), on the stated assumption that "a
+ *   The guard used to budget idle event-loop turns (1000 of them), on the stated assumption that "a
  *   real `readFile` resolves in a handful of turns". Turns are not time. Each idle turn is a
  *   `setImmediate` round-trip costing microseconds, so the whole 1000-turn budget expires in a few
  *   milliseconds — while the real I/O being waited on takes tens. On an unloaded machine the race
- *   happened to go the right way; under load it did not, and the guard fired on WORKING code:
+ *   happened to go the right way. under load it did not, and the guard fired on working code:
  *
  *     Error: VirtualClock.runUntilSettled: no pending sleep and no progress for 1000 turns at
  *            t=4368. The work is blocked on something this clock does not drive.
@@ -17,9 +17,9 @@
  *   `filer/sdk/sec-client.test.ts` and `bdc/sdk/client.test.ts`. The spin made it worse: 1000 tight
  *   `setImmediate` turns compete with the very I/O they are waiting for.
  *
- *   The budget is real elapsed time now, measured with `performance.now()`. NOT `Date.now()` —
+ *   The budget is real elapsed time now, measured with `performance.now()`, not `Date.now()` —
  *   consumers run under `vi.useFakeTimers({ toFake: ["Date"] })`, which freezes `Date` but leaves
- *   `performance` and `setTimeout` real, so a Date-based budget would never expire and the guard
+ *   `performance` and `setTimeout` real. Therefore, a Date-based budget would never expire and the guard
  *   would hang exactly where it is supposed to report.
  */
 
@@ -31,7 +31,7 @@ describe("VirtualClock.runUntilSettled — the stuck-work guard", () => {
 		const clock = new VirtualClock()
 
 		// 50ms of real time is thousands of idle setImmediate turns. Under the turn-budgeted guard
-		// this threw; the work was never stuck, the budget was just denominated in the wrong unit.
+		// this threw. the work was never stuck, the budget was just denominated in the wrong unit.
 		await expect(clock.runUntilSettled(realDelay(50))).resolves.toBeUndefined()
 	})
 
@@ -45,7 +45,7 @@ describe("VirtualClock.runUntilSettled — the stuck-work guard", () => {
 			return clock.now()
 		})()
 
-		// Virtual time jumps; no real 120s elapses.
+		// Virtual time jumps. no real 120s elapses.
 		await expect(clock.runUntilSettled(work)).resolves.toBe(120_000)
 	})
 

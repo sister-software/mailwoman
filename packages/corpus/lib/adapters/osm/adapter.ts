@@ -6,27 +6,27 @@
  *   theme has no rows for Pakistan, Bangladesh or Vietnam (the three parquets are 532-byte headers), and the Latin
  *   model has never seen their formats: the Islamabad sector line, the Dhaka trailing postcode, the `Đường`-led street.
  *
- *   This adapter consumes the per-country JSONL `@mailwoman/osm`'s `emit-corpus-jsonl` script writes from a Geofabrik
+ *   This adapter consumes the per-country jsonl `@mailwoman/osm`'s `emit-corpus-jsonl` script writes from a Geofabrik
  *   extract (`{ street, number, postcode?, suburb?, city?, unit?, place?, subdistrict?, district?, province?, lat, lon
- *   }`), the same split the `overture` adapter rides so the corpus package never meets GDAL or a PBF.
+ *   }`), the same split the `overture` adapter rides so the corpus package never meets gdal or a PBF.
  *
  *   ⚠ ODbL. Every row carries `license: "ODbL-1.0"`, which `SHARE_ALIKE_PATTERN` matches: a proprietary-weights build
- *   passes `--exclude-share-alike` and drops these rows at ingest, so they reach the open weights only. That is the
- *   whole licensing contract of this adapter, and the reason `defaultLicense` is not an option.
+ *   passes `--exclude-share-alike` and drops these rows at ingest. Therefore, they reach the open weights only. That is the
+ *   whole licensing interface of this adapter, and the reason `defaultLicense` is not an option.
  *
  *   The mapping keeps to what a person types on the envelope. Mappers put free text in `addr:housenumber` (`House 34,
  *   Road 4, Sector 9`, `Near Askari Towers 2`) and in `addr:street`; a house number is kept only in a designator shape,
  *   and a street with a comma or more than eight words is skipped as a line rather than a name. A comma in `addr:city`
  *   is the neighborhood ahead of the city (`Mirpur 10, Dhaka` in Bangladesh): the last comma-separated part is the
  *   locality, and the head enters the dependent-locality chain last, behind `suburb`, `subdistrict`, `district` and
- *   `place`. `addr:district` is NOT mapped on its
+ *   `place`. `addr:district` is not mapped on its
  *   own: for Vietnam it is the quận below the city, which the country template renders only when no city is present,
- *   so a mapped district with a city would be a component with no span to align to and the row would quarantine.
+ *. Therefore, a mapped district with a city would be a component with no span to align to and the row would quarantine.
  *
- *   | JSONL field                                | ComponentTag                                              |
+ *   | jsonl field                                | ComponentTag                                              |
  *   | ------------------------------------------ | --------------------------------------------------------- |
  *   | `number`                                   | `house_number` when designator-shaped (`12`, `14/E`, `B-77`) |
- *   | `street`                                   | `street` (keyword included; affix-relabel splits it)      |
+ *   | `street`                                   | `street` (keyword included. affix-relabel splits it)      |
  *   | `unit`                                     | `unit`                                                     |
  *   | `postcode`                                 | `postcode` when 4–6 digits                                 |
  *   | `city` (tail after the last comma)         | `locality`                                                 |
@@ -36,11 +36,12 @@
 
 import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { tryParsingJSON } from "@mailwoman/core/json"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { stripCombiningMarks } from "@mailwoman/normalize/fold"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 
 /**
  * Registry id for this adapter, stamped into every row it emits.
@@ -105,12 +106,11 @@ export function isStreetName(value: string): boolean {
  * `Mirpur 10`). A value without a comma is the locality alone.
  */
 export function splitCityValue(value: string): { locality: string; head: string | null } {
-	const parts = value
-		.split(",")
-		.map((part) => part.trim())
-		.filter((part) => part.length > 0)
+	const parts = extractDelimited(value)
 
-	if (parts.length < 2) return { locality: value.trim(), head: null }
+	if (parts.length < 2) {
+		return { locality: value.trim(), head: null }
+	}
 
 	return { locality: parts.at(-1)!, head: parts.slice(0, -1).join(", ") }
 }
@@ -137,7 +137,7 @@ function parseLine(line: string): OSMCorpusRow | null {
 }
 
 /**
- * Map one JSONL row onto the components the corpus asserts, or null when the row has no usable street.
+ * Map one jsonl row onto the components the corpus asserts, or null when the row has no usable street.
  */
 export function componentsForOSMRow(row: OSMCorpusRow): CanonicalRow["components"] | null {
 	const street = clean(row.street)
@@ -170,7 +170,7 @@ export function componentsForOSMRow(row: OSMCorpusRow): CanonicalRow["components
 		components.locality = split.locality
 	}
 
-	// The first candidate that is a name of its own: not a comma-joined pair, not the street or the locality again.
+	// The first candidate that is a name of its own: not a comma-joined pair rather than the street or the locality again.
 	const dependent = [row.suburb, row.subdistrict, row.district, row.place, split?.head]
 		.map((value) => clean(value ?? undefined))
 		.find(
@@ -191,7 +191,7 @@ export function componentsForOSMRow(row: OSMCorpusRow): CanonicalRow["components
 		components.region = province
 	}
 
-	// A street alone is not an address row; the coarse adapters already teach bare names. A number and a street is one:
+	// A street alone is not an address row. the coarse adapters already teach bare names. A number and a street is one:
 	// 41,000 of Vietnam's 70,069 rows carry nothing above the street, and `568 Đường Điện Biên Phủ` is the line a
 	// person types.
 	if (Object.keys(components).length === 1) return null
@@ -226,6 +226,7 @@ export function createOSMAdapter(): CorpusAdapter {
 	return {
 		id: OSM_ADAPTER_ID,
 		defaultLicense: OSM_LICENSE,
+		addressRole: AddressRole.Premise,
 		description:
 			"OpenStreetMap addresses (ODbL, share-alike): per-country JSONL from a Geofabrik extract, for the countries no permissive source covers.",
 

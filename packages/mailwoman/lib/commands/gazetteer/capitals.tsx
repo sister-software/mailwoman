@@ -11,33 +11,32 @@
 
 import { Box, Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "capitals",
 	description: "Build the capital-status reference",
 	options: {
 		geonames: { type: "string", description: "GeoNames dump directory. Default <data-root>/geonames" },
-		output: { type: "string", description: "Output path. Default <repo>/data/gazetteer/capitals-v1.json" },
+		out: {
+			type: "string",
+			description: "Output path. Default <repo>/data/gazetteer/capitals-v1.json",
+			deprecatedName: "output",
+		},
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	geonames?: string
-	output?: string
-}
-
-const GazetteerCapitals: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerCapitals: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildCapitalsReference } = await import("#gazetteer/capitals")
 		const { dataRootPath, repoRootPathBuilder } = await import("@mailwoman/core/utils")
 
 		const result = await buildCapitalsReference({
 			geonamesDir: options.geonames ?? String(dataRootPath("geonames")),
-			outPath: options.output ?? String(repoRootPathBuilder("data", "gazetteer", "capitals-v1.json")),
+			outPath: options.out ?? String(repoRootPathBuilder("data", "gazetteer", "capitals-v1.json")),
 		})
 
 		const c = result.coverage

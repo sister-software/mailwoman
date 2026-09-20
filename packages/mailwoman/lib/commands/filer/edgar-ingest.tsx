@@ -2,18 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman filer edgar-ingest` — run the EDGAR chain against live SEC filings and write
- *   `EdgarSubsidiaryRow`s to JSONL. Reads company names from a file (one per line) and a CIK lookup index
+ *   `mailwoman filer edgar-ingest` — run the edgar chain against live SEC filings and write
+ *   `EdgarSubsidiaryRow`s to jsonl. Reads company names from a file (one per line) and a CIK lookup index
  *   (`cik-lookup-data.txt`); requires `SEC_EDGAR_USER_AGENT` set in the environment. Paced at 9 req/s.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "edgar-ingest",
@@ -30,14 +30,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	names: string
-	lookup?: string
-	outDir: string
-	pin?: string[]
-}
-
-const FilerEdgarIngest: ParsedCommandComponent<Options> = ({ options }) => {
+const FilerEdgarIngest: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { filerEdgarIngest } = await import("@mailwoman/filer/tools")
 
@@ -45,7 +38,7 @@ const FilerEdgarIngest: ParsedCommandComponent<Options> = ({ options }) => {
 		const names = (await readLocalTextFile(options.names))
 			.split("\n")
 			.map((line) => line.trim())
-			.filter((line) => line.length > 0)
+			.filter((line) => line.length)
 
 		// oxlint-enable mailwoman/prefer-spliterator
 

@@ -2,35 +2,35 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   #244 M2 Phase 1 — POST-HOC open-set scoring on the EXISTING (shipped) coarse-placer, NO retrain.
+ *   #244 M2 Phase 1 — post-hoc open-set scoring on the existing (shipped) coarse-placer, no retrain.
  *   The OA-breadth verdict found the 12-way softmax's own max-prob detector tops out at ~88/88 on
- *   the leave-one-family-out probe (in-map accuracy vs off-map HELDOUT-family caught). This asks:
- *   does a DIFFERENT open-set score, read off the same frozen weights, clear the 90/90 the softmax
+ *   the leave-one-family-out probe (in-map accuracy vs off-map heldout-family caught). This asks:
+ *   does a different open-set score, read off the same frozen weights, clear the 90/90 the softmax
  *   can't?
  *
- *   The 11-way routing (argmax over the in-map classes) is FIXED — the model is unchanged. The only
- *   thing each score changes is the REJECT decision (keep the in-map route vs. abstain → OTHER). We
+ *   The 11-way routing (argmax over the in-map classes) is fixed — the model is unchanged. The only
+ *   thing each score changes is the reject decision (keep the in-map route vs. abstain → other). We
  *   sweep each score's threshold and trace its (in-map accuracy, heldout-caught) Pareto.
  *
  *   Scores compared (all functions of the frozen 12 logits / 11 in-map logits `z`):
  *
  *   - Maxprob : softmax max over the 11 in-map classes (the verdict's baseline detector)
- *   - P_inmap : 1 - P(OTHER) (trust the model's own OTHER head)
- *   - Energy : logsumexp(z) (free-energy; higher = more in-map)
+ *   - P_inmap : 1 - P(other) (trust the model's own `other` head)
+ *   - Energy : logsumexp(z) (free-energy. higher = more in-map)
  *   - Maxlogit : max(z)
- *   - Maha : -min_c (z-μ_c)ᵀ Σ⁻¹ (z-μ_c), class-conditional Gaussians (tied Σ) fit on in-map TRAIN
+ *   - Maha : -min_c (z-μ_c)ᵀ Σ⁻¹ (z-μ_c), class-conditional Gaussians (tied Σ) fit on in-map train
  *       logits (Lee et al. 2018, in the 11-dim in-map-logit space — the linear model's only dense
  *       representation). Higher = closer to the in-map manifold.
  *
- *   In-map accuracy = of the 11-country test rows, fraction NOT rejected AND argmax-in-map == truth.
+ *   In-map accuracy = of the 11-country test rows, fraction not rejected and argmax-in-map == truth.
  *   heldout caught = of the never-trained off-map families (baltic/oceania/middle-east), fraction
- *   rejected. Both move with the threshold; the Pareto is the whole story.
+ *   rejected. Both move with the threshold. the Pareto is the whole story.
  *
  *   Run: `mailwoman placer eval openset [--model <dir>] [--out-md <path>]`
  */
 
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
-   procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
+   procedure rather than sections of declarations. A region there folds nothing a reader wants folded. */
 
 import { basename, type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
@@ -43,7 +43,7 @@ import { readLocalJSONFile } from "#fs/readers"
 import { writeLocalFile } from "#fs/writers"
 
 /**
- * Steps in the threshold sweep; finer than the reporting precision so the knee is not missed.
+ * Steps in the threshold sweep. finer than the reporting precision so the knee is not missed.
  */
 const QUANTILE_SWEEP_STEPS = 200
 
@@ -178,7 +178,7 @@ export async function evalOpenSet(
 	if (W.length !== C * D) throw new Error(`weights ${W.length} ≠ ${C}×${D}`)
 
 	/**
-	 * Raw logits (PRE-temperature) for the 12 classes. OOD scores use the geometry, not calibration.
+	 * Raw logits (PRE-temperature) for the 12 classes. OOD scores use the geometry rather than calibration.
 	 */
 	function logits(raw: string): Float64Array {
 		const feats = featurize(raw)
@@ -207,7 +207,7 @@ export async function evalOpenSet(
 		return JSONSpliterator.fromAsync<DataRow>(resolvePath(dataDir, file))
 	}
 
-	// Fit the Mahalanobis params on IN-MAP TRAIN logits (no test leak): per-class
+	// Fit the Mahalanobis params on IN-MAP train logits (no test leak): per-class
 	// mean in the nIn-dim in-map-logit space + a tied (shared) covariance.
 	report?.("fitting Mahalanobis on in-map train logits…")
 	const trainRows = load("train.jsonl")
@@ -335,7 +335,7 @@ export async function evalOpenSet(
 		softmaxInto(z, probs)
 		const zin = inVec(z)
 
-		// argmax over in-map classes (the FIXED routing).
+		// argmax over in-map classes (the fixed routing).
 		let amIdx = 0,
 			am = -Infinity
 
@@ -370,9 +370,9 @@ export async function evalOpenSet(
 
 	const heldoutScored = heldout.map((r) => scoreRow(r.raw, undefined))
 
-	// Honest threshold protocol: split each probe 50/50 (deterministic by index parity) into DEV + TEST.
+	// Honest threshold protocol: split each probe 50/50 (deterministic by index parity) into DEV + test.
 	// The operating threshold is picked on DEV (maximizing balanced min); the reported point is frozen on
-	// TEST — so the number is a generalization estimate, not a threshold fit to the set it's scored on.
+	// test — so the number is a generalization estimate rather than a threshold fit to the set it's scored on.
 	const inDev = inmapScored.filter((_, i) => i % 2 === 0)
 	const inTest = inmapScored.filter((_, i) => i % 2 === 1)
 	const heldDev = heldoutScored.filter((_, i) => i % 2 === 0)
@@ -399,7 +399,7 @@ export async function evalOpenSet(
 		return { t, inMapAcc: (100 * keepCorrect) / inSplit.length, heldCaught: (100 * caught) / heldSplit.length }
 	}
 
-	// For each score: KEEP (route in-map) iff score >= threshold; else REJECT (→ OTHER).
+	// For each score: keep (route in-map) iff score >= threshold. else reject (→ other).
 	// in-map accuracy = keep & correctRoute. heldout caught = rejected.
 	function paretoFor(scoreKey: ScoreKey) {
 		// Candidate thresholds: quantiles of the union of scores.
@@ -414,7 +414,7 @@ export async function evalOpenSet(
 		const pts: ParetoPoint[] = uniq.map((t) => pointAt(scoreKey, t, inmapScored, heldoutScored))
 
 		// Summaries.
-		let balanced: { val: number; pt: ParetoPoint | null } = { val: -1, pt: null } // max of min(inMapAcc, heldCaught) on the FULL probe
+		let balanced: { val: number; pt: ParetoPoint | null } = { val: -1, pt: null } // max of min(inMapAcc, heldCaught) on the full probe
 		let atHeld90: ParetoPoint | null = null // highest inMapAcc with heldCaught >= 90
 		let atIn90: ParetoPoint | null = null
 
@@ -435,7 +435,7 @@ export async function evalOpenSet(
 			}
 		}
 
-		// HONEST point: pick t* on DEV (max balanced min), freeze + report on TEST.
+		// honest point: pick t* on DEV (max balanced min), freeze + report on test.
 		let devBest: { val: number; t: number | null } = { val: -1, t: null }
 
 		for (const p of pts) {
@@ -507,7 +507,7 @@ export async function evalOpenSet(
 
 	lines.push("")
 
-	// Winner by the HONEST dev→test balanced min (not the full-probe number).
+	// Winner by the honest dev→test balanced min (not the full-probe number).
 	const ranked = SCORES.map((k) => ({
 		k,
 		honestMin: Math.min(results[k].honest.inMapAcc, results[k].honest.heldCaught),

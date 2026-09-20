@@ -4,18 +4,18 @@
 /**
  *   Load-time capability delta check (#718/#719). The structural fix that makes the D2/#719 bug-class
  *   — a conventions `forbiddenTags` row destroying a tag the model demonstrably emits — impossible
- *   to ship: `createScorer` reads the model-card's `capabilities` block and FAILS CLOSED when a
+ *   to ship: `createScorer` reads the model-card's `capabilities` block and fails closed when a
  *   conventions row forbids a certified tag (`maskOffF1 − maskOnF1 > 5pp`).
  *
  *   Two essential assertions:
  *
- *   1. PASSES on the REAL post-D2 config — FR forbids only `street_suffix`, which the model does NOT
+ *   1. Passes on the real post-D2 config — FR forbids only `street_suffix`, which the model does not
  *        emit (no capability entry → legal); the certified FR `street_prefix` (maskOff 80) is no
  *        longer forbidden, so nothing trips.
- *   2. THROWS when a synthetic FR forbid re-adds `street_prefix` (a CERTIFIED tag at maskOff 80) — the
- *        exact #719 shape. This proves the guard would have caught the original bug at LOAD time.
+ *   2. Throws when a synthetic FR forbid re-adds `street_prefix` (a certified tag at maskOff 80) — the
+ *        exact #719 shape. This checks that loading rejects the original bug shape.
  *
- *   Requires the production v1.5.0 int8 + its real feed channels on disk; skips otherwise (mirrors
+ *   Requires the production v1.5.0 int8 + its real feed channels on disk. skips otherwise (mirrors
  *   weights.test.ts) so stripped-down CI still passes.
  */
 
@@ -66,7 +66,7 @@ describe.skipIf(!haveAll)("createScorer capability delta check (#718/#719)", () 
 	})
 
 	test("PASSES on the real post-D2 conventions (FR forbids only street_suffix, which the model does not emit)", async () => {
-		// Sanity: the shipped table is the post-#719 fix — street_suffix only, NO street_prefix.
+		// Sanity: the shipped table is the post-#719 fix — street_suffix only, no street_prefix.
 		expect(ADDRESS_SYSTEM_CONVENTIONS.fr!.forbiddenTags).toEqual(["street_suffix"])
 		const scorer = await createScorer(baseOpts)
 		expect(scorer).toBeDefined()
@@ -74,7 +74,7 @@ describe.skipIf(!haveAll)("createScorer capability delta check (#718/#719)", () 
 
 	test("THROWS when a synthetic FR forbid re-adds street_prefix — a CERTIFIED tag (catches the #719 bug at load)", async () => {
 		// Re-introduce the original bug: forbid street_prefix for FR. The model is certified at maskOff
-		// F1 80 (server tier) with NO benign maskOn measurement → the eval must reject this mask.
+		// F1 80 (server tier) with no benign maskOn measurement → the eval must reject this mask.
 		;(ADDRESS_SYSTEM_CONVENTIONS as Record<string, AddressSystemConventions | undefined>).fr = {
 			...savedFr,
 			forbiddenTags: ["street_prefix", "street_suffix"],
@@ -86,10 +86,10 @@ describe.skipIf(!haveAll)("createScorer capability delta check (#718/#719)", () 
 	})
 
 	test("pocket tier is conditional against its own certified capabilities", async () => {
-		// The pocket tier (anchor-only) ALSO certifies FR street_prefix with a non-zero maskOff F1; a
+		// The pocket tier (anchor-only) also certifies FR street_prefix with a non-zero maskOff F1. a
 		// forbid there is equally illegal. Confirms the tier selector actually reads the pocket cell.
-		// Don't pin the F1 literal — it's model-card-dependent (v1.8.0 certifies ~78, not the older 80),
-		// so match the message shape, not the number.
+		// Don't pin the F1 literal — it's model-card-dependent (v1.8.0 certifies ~78 rather than the older 80),
+		// so match the message shape rather than the number.
 		;(ADDRESS_SYSTEM_CONVENTIONS as Record<string, AddressSystemConventions | undefined>).fr = {
 			...savedFr,
 			forbiddenTags: ["street_prefix"],

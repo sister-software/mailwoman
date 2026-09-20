@@ -6,22 +6,16 @@
  *   database. Compares it against the incumbent GeoNames `GB_full` rows on row membership, coordinate
  *   agreement, Northern Ireland coverage, and ten hand-checked landmark probes.
  *
- *   Reports; does not decide. Both databases are opened read-only.
+ *   Reports. does not decide. Both databases are opened read-only.
  */
 
 import { prettyJSON } from "@mailwoman/core/json"
 import { Box, Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	phaseReporter,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReporter, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "verify-codepoint",
@@ -39,13 +33,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	codepoint?: string
-	incumbent?: string
-	json?: boolean
-}
-
-const GazetteerVerifyPostcodeCodePoint: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerVerifyPostcodeCodePoint: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath, isoDate } = await import("@mailwoman/core/utils")
 

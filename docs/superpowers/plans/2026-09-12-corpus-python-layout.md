@@ -6,11 +6,11 @@
 > and root `yarn test` (9,460 tests) green, and **no module over 500 lines, no function over 120**.
 >
 > The step checkboxes below were never ticked during execution and are left as written — they are the
-> plan as authored, not a record of what happened. The record is the commit range and the criteria
+> plan as authored rather than a record of what happened. The record is the commit range and the criteria
 > above. One deviation from the spec is deliberate and documented there: the package is `evaluation/`,
 > not `eval/`.
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Restructure `corpus-python/` from 48 flat modules plus a 5,278-line launcher into role directories at the package root with `countries/<cc>/` for country-specific code, adding declared protocols and training callbacks.
 
@@ -26,7 +26,7 @@
 - Run tests with `uv run --extra dev --extra train pytest tests -q`. The baseline is **983 passed, 11 skipped** in ~30 s. A task is not done below 983.
 - Never launch a training run. No step in this plan calls `modal run` against a GPU function.
 - Source lives under `src/mailwoman_train/`; tests mirror it under `tests/mailwoman_train/`.
-- Acronyms capitalize as whole components in identifiers: `parseJSON`, not `parseJson`. Python `snake_case` keeps its own convention (`onnx_path`), but a class is `ONNXExporter`, not `OnnxExporter`.
+- Acronyms capitalize as whole components in identifiers: `parseJSON` rather than `parseJson`. Python `snake_case` keeps its own convention (`onnx_path`), but a class is `ONNXExporter` rather than `OnnxExporter`.
 - `uvx ruff@0.16.5 check --fix .` and `uvx ruff@0.16.5 format .` after every move; ruff's `I` rule re-sorts imports and will otherwise fail CI.
 - A comment states an invariant, a constraint, or why an obvious implementation is unsafe. Move history to the commit message. When moving a docstring that carries a measured number, the number travels with it.
 - No module in `src/mailwoman_train/` exceeds 500 lines; no function exceeds 120.
@@ -81,7 +81,7 @@ corpus-python/
 - Consumes: nothing.
 - Produces: `mailwoman_train.types.PieceSpan`, a frozen-field dataclass with `piece: str`, `piece_id: int`, `char_begin: int`, `char_end: int`. Every later task imports `PieceSpan` from `mailwoman_train.types`, never from `mailwoman_train.tokenizer`.
 
-The five deferred imports carry a comment claiming they keep `tokenizer.py` import-light. Verify that claim before removing them: `gazetteer_anchor.py` imports `json`, `re`, `collections.abc.Sequence`, `dataclasses.dataclass` and `.tokenizer`; `country_lexicon.py` imports `collections.abc.Sequence`, `.gazetteer_anchor` and `.tokenizer`. Neither reaches torch or any heavy dependency, so lifting them to module level costs nothing. Step 1 measures this rather than trusting the comment.
+The five deferred imports carry a comment claiming they keep `tokenizer.py` import-light. Check that behavior before removing them: `gazetteer_anchor.py` imports `json`, `re`, `collections.abc.Sequence`, `dataclasses.dataclass` and `.tokenizer`; `country_lexicon.py` imports `collections.abc.Sequence`, `.gazetteer_anchor` and `.tokenizer`. Neither reaches torch or any heavy dependency, so lifting them to module level costs nothing. Step 1 measures this rather than trusting the comment.
 
 - [ ] **Step 1: Measure the import weight claim**
 
@@ -99,7 +99,7 @@ Create `tests/mailwoman_train/test_import_hygiene.py`:
 ```python
 """A deferred intra-package import may not dodge an import cycle.
 
-A deferred import is legitimate when it buys startup weight: `cli.py` defers 32 of them and keeps
+A deferred import is legitimate when it provides startup weight: `cli.py` defers 32 of them and keeps
 torch's 1.46 s off every `--help` (measured — `mailwoman_train.cli` imports in 22,340 us against
 `mailwoman_train.train`'s 1,458,740 us). It is a defect when the target module imports this one back,
 because then the deferral is hiding a circular graph and an ImportError surfaces at first call
@@ -196,7 +196,7 @@ def test_piece_span_is_declared_in_types() -> None:
 uv run --extra dev --extra train pytest tests/mailwoman_train/test_import_hygiene.py -q
 ```
 
-Expected: both tests FAIL. The first lists exactly the five `tokenizer.py` sites at lines 541, 550, 566, 583 and 598 — and nothing else. The second fails with `ModuleNotFoundError: No module named 'mailwoman_train.types'`.
+Expected: both tests fail. The first lists exactly the five `tokenizer.py` sites at lines 541, 550, 566, 583 and 598 — and nothing else. The second fails with `ModuleNotFoundError: No module named 'mailwoman_train.types'`.
 
 If the first test names more than those five, the cycle reachability walk is over-reaching; read the extra entries before weakening the assertion. If it names fewer, the walk is under-reaching and the detector is worthless — a false negative here is indistinguishable from a clean tree.
 
@@ -245,7 +245,7 @@ from .country_lexicon import COUNTRY_FEATURE_DIM, realign_country_to_pieces
 from .gazetteer_anchor import realign_gazetteer_to_pieces, suppress_gazetteer_near_postcode
 ```
 
-Then delete the six `from .` lines inside `encode_with_features` at 541, 550, 566, 583 and 598, along with the two comment lines that explain the deferral ("Local import keeps tokenizer.py import-light…"). Leave every other comment in that function in place — they describe channel behavior, not imports.
+Then delete the six `from .` lines inside `encode_with_features` at 541, 550, 566, 583 and 598, along with the two comment lines that explain the deferral ("Local import keeps tokenizer.py import-light…"). Leave every other comment in that function in place — they describe channel behavior rather than imports.
 
 - [ ] **Step 7: Run the new test and the full suite**
 
@@ -254,7 +254,7 @@ uv run --extra dev --extra train pytest tests/mailwoman_train/test_import_hygien
 uv run --extra dev --extra train pytest tests -q
 ```
 
-Expected: the hygiene test PASSES, and the suite reports at least **984 passed** (983 plus the two new tests, minus none).
+Expected: the hygiene test passes, and the suite reports at least **984 passed** (983 plus the two new tests, minus none).
 
 - [ ] **Step 8: Lint, type-check, commit**
 
@@ -297,14 +297,14 @@ This is the measured boundary — every name that crosses a builder today:
 | `tw_registry.py:29`                                   | `build_tw_slice`    | `ascii_digits`, `normalize_text`                                                                                                       |
 | `build_kr_slice.py:52`, `build_registry_corpus.py:34` | `build_cjk_overlay` | `verify_cn_record`                                                                                                                     |
 
-`BOARD_BUCKET_MIN` does NOT move. It is 90 in `build_tw_slice.py` and a different value in `build_jp_slice.py`; the two importers alias it apart (`JP_BOARD_BUCKET_MIN`, `TW_BOARD_BUCKET_MIN`). It is a per-country constant and stays with its country in Task 13.
+`BOARD_BUCKET_MIN` does not move. It is 90 in `build_tw_slice.py` and a different value in `build_jp_slice.py`; the two importers alias it apart (`JP_BOARD_BUCKET_MIN`, `TW_BOARD_BUCKET_MIN`). It is a per-country constant and stays with its country in Task 13.
 
 - [ ] **Step 1: Write the failing test**
 
 Create `tests/mailwoman_train/test_text_normalize.py`:
 
 ```python
-"""The shared CJK text helpers answer from `text/`, not from a corpus builder."""
+"""The shared CJK text helpers answer from `text/` rather than from a corpus builder."""
 
 from __future__ import annotations
 
@@ -341,7 +341,7 @@ def test_builder_machinery_answers_from_corpora() -> None:
 uv run --extra dev --extra train pytest tests/mailwoman_train/test_text_normalize.py -q
 ```
 
-Expected: FAIL with `ModuleNotFoundError: No module named 'mailwoman_train.text'`.
+Expected: fail with `ModuleNotFoundError: No module named 'mailwoman_train.text'`.
 
 - [ ] **Step 3: Create the two packages**
 
@@ -627,7 +627,7 @@ If `load_config(None, strict=False)` does not yield a usable default, read `conf
 uv run --extra dev --extra train pytest tests/mailwoman_train/test_encoder_split_parity.py -q
 ```
 
-Expected: PASS before any split. Save the logits to a file the split can diff against:
+Expected: pass before any split. Save the logits to a file the split can diff against:
 
 ```bash
 uv run python - <<'PY' > /tmp/encoder-reference.txt
@@ -830,7 +830,7 @@ def test_train_callback_protocol_declares_the_expected_members() -> None:
 uv run --extra dev --extra train pytest tests/mailwoman_train/test_protocols.py -q
 ```
 
-Expected: FAIL with `ModuleNotFoundError: No module named 'mailwoman_train.protocols'`.
+Expected: fail with `ModuleNotFoundError: No module named 'mailwoman_train.protocols'`.
 
 - [ ] **Step 3: Write `protocols.py`**
 
@@ -897,7 +897,7 @@ uv run --extra dev --extra train pytest tests/mailwoman_train/test_protocols.py 
 uv run --extra dev --extra train pytest tests -q
 ```
 
-Expected: PASS; at least 992 passed overall.
+Expected: pass; at least 992 passed overall.
 
 - [ ] **Step 5: Commit**
 
@@ -975,7 +975,7 @@ def test_every_shipped_callback_satisfies_the_protocol() -> None:
 uv run --extra dev --extra train pytest tests/mailwoman_train/test_train_callbacks.py -q
 ```
 
-Expected: FAIL with `ImportError: cannot import name 'callbacks'`.
+Expected: fail with `ImportError: cannot import name 'callbacks'`.
 
 - [ ] **Step 3: Write the five callbacks**
 
@@ -1059,7 +1059,7 @@ git commit -m "feat(train): drive logging, eval, checkpointing and trackio throu
 - [ ] **Step 1: Write the failing test**
 
 ```python
-"""A country is found through the registry, not by importing its module by name."""
+"""A country is found through the registry rather than by importing its module by name."""
 
 from __future__ import annotations
 
@@ -1091,7 +1091,7 @@ def test_an_unknown_code_names_the_known_ones() -> None:
 uv run --extra dev --extra train pytest tests/mailwoman_train/test_country_registry.py -q
 ```
 
-Expected: FAIL with `ModuleNotFoundError: No module named 'mailwoman_train.countries'`.
+Expected: fail with `ModuleNotFoundError: No module named 'mailwoman_train.countries'`.
 
 - [ ] **Step 3: Move Japan**
 
@@ -1224,7 +1224,7 @@ git commit -m "refactor(train): key per-country code by country under countries/
 - Consumes: every role module.
 - Produces: `cli.main(argv=None)`, and one `cli/commands/<name>.py` per subcommand, each exporting `add_parser(subparsers) -> None` and `run(args) -> int`.
 
-`scripts/verify_toolchain.py` does NOT move. Measured reason: its imports are `importlib.metadata`, `re`, `sys`, `tomllib` and `pathlib` — standard library only — and `.husky/pre-commit:63` plus `package.json:54` invoke it as bare `python3` with no `uv run`. Folding it into the CLI would make the pre-commit hook depend on a synced venv.
+`scripts/verify_toolchain.py` does not move. Measured reason: its imports are `importlib.metadata`, `re`, `sys`, `tomllib` and `pathlib` — standard library only — and `.husky/pre-commit:63` plus `package.json:54` invoke it as bare `python3` with no `uv run`. Folding it into the CLI would make the pre-commit hook depend on a synced venv.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1270,7 +1270,7 @@ def test_each_subcommand_accepts_help(name: str) -> None:
 uv run --extra dev --extra train pytest tests/mailwoman_train/test_cli_commands.py -q
 ```
 
-Expected: FAIL with `ImportError: cannot import name 'build_parser' from 'mailwoman_train.cli'`.
+Expected: fail with `ImportError: cannot import name 'build_parser' from 'mailwoman_train.cli'`.
 
 - [ ] **Step 3: Split `cli.py`**
 
@@ -1430,7 +1430,7 @@ git commit -m "test(launch): pin the 57 sync functions before collapsing them"
 - Consumes: nothing.
 - Produces: `launch` as an importable package. `modal run -m launch.train` replaces `modal run corpus-python/modal/train_remote.py`.
 
-The rename is forced, not stylistic. Step 1 re-measures the reason.
+The rename is forced rather than stylistic. Step 1 re-measures the reason.
 
 - [ ] **Step 1: Re-measure the shadowing**
 
@@ -1466,9 +1466,9 @@ Rewrite each hit. The known set: `REPRODUCIBILITY.md:28,31`, `packages/mailwoman
 
 Leave `docs/records/` alone — those are dated point-in-time records and keep the path that was true when written.
 
-- [ ] **Step 5: Confirm the Bash write guard still fires**
+- [ ] **Step 5: the result still fires**
 
-The guard matches `head: "modal"` at `packages/dev-mcp/lib/hooks/bash/write/rules.ts:196`, not a filename, so a renamed target changes nothing. Confirm by reading that rule, and update the fixture strings in `bash-write-guard.test.ts` to the new path so the test describes a command someone could actually type.
+The guard matches `head: "modal"` at `packages/dev-mcp/lib/hooks/bash/write/rules.ts:196` rather than a filename, so a renamed target changes nothing. Confirm by reading that rule, and update the fixture strings in `bash-write-guard.test.ts` to the new path so the test describes a command someone could type.
 
 - [ ] **Step 6: Commit**
 
@@ -1527,7 +1527,7 @@ for name, spec in sorted(extract_sync_functions(Path('launch/train_remote.py').r
 "
 ```
 
-Transcribe each into a `CorpusVersion`. Read every one; the generator gives you the rows, not the review.
+Transcribe each into a `CorpusVersion`. Read every one; the generator gives you the rows rather than the review.
 
 - [ ] **Step 3: Write the single sync function**
 
@@ -1539,7 +1539,7 @@ Transcribe each into a `CorpusVersion`. Read every one; the generator gives you 
 uv run --extra dev --extra train pytest tests/launch/test_sync_table_parity.py -q
 ```
 
-Expected: PASS. A failure names the version whose generated commands differ from the frozen census. Fix the table entry, never the fixture.
+Expected: pass. A failure names the version whose generated commands differ from the frozen census. Fix the table entry, never the fixture.
 
 - [ ] **Step 5: Collapse the seven `mean_init_*`**
 
@@ -1623,7 +1623,7 @@ Expected: the grep prints nothing before the delete. If it prints a hit, stop �
 
 `packages/repo-health/lib/checks/python-prefix-directories.ts` mirrors `prefix-directories.ts` with `_` as the delimiter and `.py` as the source extension, scoped to `corpus-python/`. Register it in `packages/repo-health/lib/registry.ts`.
 
-The TypeScript check excludes workspace directories because a directory name is an npm package name. There is no Python equivalent, so that exclusion does not carry over. `__init__.py` and `__main__.py` are excluded: both are Python's own names, not this repository's to arrange.
+The TypeScript check excludes workspace directories because a directory name is an npm package name. There is no Python equivalent, so that exclusion does not carry over. `__init__.py` and `__main__.py` are excluded: both are Python's own names rather than this repository's to arrange.
 
 - [ ] **Step 6: Run the check and the repo's own suites**
 
@@ -1676,4 +1676,4 @@ git commit -m "chore(train): mirror the test tree, ship py.typed, add the Python
 
 **Type consistency.** `PieceSpan` is defined in Task 1 and consumed by name in Tasks 2, 4 and 7. `protocols.TrainCallback` is defined in Task 7 with four hooks and implemented in Task 8 with the same four. `protocols.CountryModule` declares `country_code`, `label_set_name`, `build_corpus` and `registers`, and Task 9's `countries/jp/__init__.py` now supplies all four under those names. The first draft called the last one `registers_available`, which would have failed Task 9's own `isinstance` check against the protocol; it is corrected in the task body. Task 5 step 4's `serialization.save_pretrained` names the module that same step creates.
 
-**Known soft spot.** Task 9 step 3's `build_corpus` body assumes `build_jp_slice.py` exposes a `build(output_dir, limit=...)` entry point. The step says to read the real signature first and record it, rather than inventing one. Treat a mismatch there as expected work, not as a plan failure.
+**Known soft spot.** Task 9 step 3's `build_corpus` body assumes `build_jp_slice.py` exposes a `build(output_dir, limit=...)` entry point. The step says to read the real signature first and record it, rather than inventing one. Treat a mismatch there as expected work rather than as a plan failure.

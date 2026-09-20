@@ -2,31 +2,31 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer postal-city` — build the POSTAL-CITY CANDIDATE side-index (#741 / #475) INTO
+ *   `mailwoman gazetteer postal-city` — build the postal-city candidate side-index (#741 / #475) into
  *   a candidate gazetteer so the candidate-backend resolver (the demo/CLI default) can resolve a
  *   user-typed postal city to its geographic locality. Adds one table,
  *   `postal_city_candidate(name_key, postcode → spr_id, …)`, keyed exactly by `(name_key,
  *   postcode)`.
  *
- *   Bridge (no admin-DB join): for each DIVERGENT `(postcode, postal_city)` in the alias DB, the
- *   `postcode_locality` database gives the postcode's CONTAINING `locality_id`; that locality's
+ *   Bridge (no admin-DB join): for each divergent `(postcode, postal_city)` in the alias DB, the
+ *   `postcode_locality` database gives the postcode's containing `locality_id`; that locality's
  *   coordinate and name come straight from the candidate table's own row for that `spr_id`. So a
  *   postal-city query with the postcode resolves to exactly the geographic locality the FTS
  *   coordinate-first path would pick — but via one exact probe, no population/region ranking.
  *
- *   Idempotent: drops + recreates the table each run. Modifies the candidate DB IN PLACE — run it on
- *   a COPY to validate, then fold it into the canonical candidate build before republish. Progress
- *   streams to stderr; the final summary is on stdout.
+ *   Idempotent: drops + recreates the table each run. Modifies the candidate DB IN place — run it on
+ *   a copy to validate, then fold it into the canonical candidate build before republish. Progress
+ *   streams to stderr. the final summary is on stdout.
  */
 
 import { allRows } from "@mailwoman/core/utils"
 import type { PostalCityCandidateDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "postal-city",
@@ -38,13 +38,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	candidateDB: string
-	aliasDB?: string
-	postcodeLocalityDB?: string
-}
-
-const GazetteerPostalCity: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerPostalCity: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
@@ -98,7 +92,7 @@ const GazetteerPostalCity: ParsedCommandComponent<Options> = ({ options }) => {
 			alias.prepare("SELECT postcode, postal_city FROM postal_city_alias WHERE divergent = 1")
 		)
 
-		// DDL via the Kysely schema-builder (the house idiom); the hot INSERT loop below stays on the
+		// DDL via the Kysely schema-builder (the house idiom); the hot insert loop below stays on the
 		// raw `node:sqlite` handle for speed. `db` wraps `db` — the two share the one connection.
 		await db.schema.dropTable(POSTAL_CITY_CANDIDATE_TABLE).ifExists().execute()
 		await createPostalCityCandidateTable(db)

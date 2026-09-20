@@ -2,25 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman placer probe-frontier` — the #822 frontier probe: can the DEPLOYED coarse placer
+ *   `mailwoman placer probe-frontier` — the #822 frontier probe: can the deployed coarse placer
  *   (#244) emit the placer-recoverable countries? Emits the branch verdict (data gap /
  *   under-confident / low-quality signal / no change) that drives the Phase-2 fix choice.
  */
 
 import { Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	reportToStderr,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, reportToStderr, useCommandTask } from "#cli-kit"
 
 export const description = "Probe whether the deployed coarse placer (#244) covers the recoverable tranche (#822)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "probe-frontier",
@@ -35,13 +29,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	model?: string
-	n: number
-	out?: string
-}
-
-const PlacerProbeFrontier: ParsedCommandComponent<Options> = ({ options }) => {
+const PlacerProbeFrontier: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { probeFrontier } = await import("@mailwoman/core/coarse-placer/tools")
 

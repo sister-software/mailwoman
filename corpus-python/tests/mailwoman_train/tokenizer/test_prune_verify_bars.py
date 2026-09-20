@@ -1,7 +1,7 @@
 """The vocab-pruning probe's two bars, against tokenizers and graphs that disagree on purpose.
 
 Nothing exercised either. Both bars need a SentencePiece pair and an int8 ONNX pair to run, so the
-counting itself — the part that decides PASS or FAIL — was reachable only from a full probe run,
+counting itself — the part that decides `PASS` or `FAIL` — was reachable only from a full probe run,
 where a bar that counts nothing and a bar that finds nothing print the same line.
 
 Both bars are one-sided in the direction that matters: a bar that under-counts reports a sound
@@ -93,7 +93,7 @@ METAS = [
 
 
 def test_feeds_resolve_every_symbolic_dimension() -> None:
-    """A symbolic dimension left unresolved is a feed the session refuses, not a wrong number."""
+    """A symbolic dimension left unresolved is a feed the session refuses rather than a wrong number."""
     feeds = feeds_for(METAS, [1, 2, 4])
 
     assert feeds["input_ids"].tolist() == [[1, 2, 4]]

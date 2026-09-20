@@ -21,7 +21,7 @@ test("toGeoJSON: a coordinate becomes a Point with GeoJSON [longitude, latitude]
 	const f = fc.features[0]!
 	expect(f.type).toBe("Feature")
 	expect(f.geometry.type).toBe("Point")
-	// GeoJSON is [lon, lat] — NOT [lat, lon]. This ordering is a classic foot-gun.
+	// GeoJSON is [lon, lat] — not [lat, lon]. This ordering is a classic foot-gun.
 	expect(f.geometry.coordinates).toEqual([-73.9857, 40.7484])
 })
 
@@ -54,7 +54,7 @@ test("toGeoJSON: properties carry record count, cohesion, and DISTINCT, SORTED s
 	expect(p.recordCount).toBe(4)
 	expect(p.cohesion).toBe(3.5)
 	expect(p.sourceIDs).toEqual(["r1", "r2", "r3", "r4"])
-	expect(p.sources).toEqual(["ca-state", "nppes"]) // de-duped + sorted; null omitted
+	expect(p.sources).toEqual(["ca-state", "nppes"]) // de-duped + sorted. null omitted
 })
 
 test("toGeoJSON: displayName joins the representative's name parts; null when absent", () => {

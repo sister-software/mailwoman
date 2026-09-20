@@ -6,19 +6,19 @@
  *
  *   Every standing eval scores the TOP-1 parse, which made hypothesis-space improvements invisible —
  *   the instrument-blindness the 2026-07-15 stage-2 plan names. This eval measures the k-best
- *   headroom directly: a semi-Markov Viterbi over the CURRENT model's post-prior emissions (span
+ *   headroom directly: a semi-Markov Viterbi over the current model's post-prior emissions (span
  *   score = summed B-/I- log-probs over word-aligned segments, smoothed empirical segment-type
  *   transition bigrams from the golden dev gold orderings), returning the top-k whole segmentations.
- *   `oracle@k` = the gold value appears in ANY of the top-k hypotheses' extractions.
+ *   `oracle@k` = the gold value appears in any of the top-k hypotheses' extractions.
  *
- *   Baselines are REGISTERED, not restated here — see `baselines.json` (profiles `v264`, `v301`)
+ *   Baselines are registered rather than restated here — see `baselines.json` (profiles `v264`, `v301`)
  *   and pass `--assert-baseline <profile>` to make this harness refuse to print when its
- *   instruments read wrong. The night-3 read: the naive re-decode is WORSE at rank 1 than the token
+ *   instruments read wrong. The night-3 read: the naive re-decode is worse at rank 1 than the token
  *   decode (a trained span scorer is necessary) while the correct reading exists in the top-10 ~75%
  *   of the time. Both halves of the DeepSeek-designed falsifier (session 019f6471) — details in
  *   `docs/superpowers/plans/2026-07-15-727-stage2-kbest-plan.md`.
  *
- *   This decoder is deliberately the same shape the stage-2 JS/WASM post-processing decode will
+ *   This decoder is deliberately the same shape the stage-2 JS/wasm post-processing decode will
  *   take (span enumeration + pruning + k-way Viterbi outside the ONNX graph); when the trained span
  *   head lands, its scores replace the summed BIO log-probs here and this eval's oracle@k becomes
  *   the rerank ceiling tracker.
@@ -60,7 +60,7 @@ export interface OracleKOptions {
 	k?: number
 	/**
 	 * Registered baseline profile to check this run's street readings against (`v264`, `v301`). When set, the harness
-	 * REFUSES to print a report if any reading deviates from its row — the Tier-0 instrument check. Omit for an
+	 * refuses to print a report if any reading deviates from its row — the Tier-0 instrument check. Omit for an
 	 * unregistered candidate.
 	 */
 	assertBaseline?: string
@@ -88,9 +88,9 @@ export async function buildTransitionTable(goldenDir: string): Promise<(from: st
 		let goldenRows: Array<{ raw?: string; components?: Record<string, string> }>
 
 		try {
-			goldenRows = await Array.fromAsync(
-				JSONSpliterator.fromAsync<{ raw?: string; components?: Record<string, string> }>(`${goldenDir}/${file}`)
-			)
+			goldenRows = await JSONSpliterator.fromAsync<{ raw?: string; components?: Record<string, string> }>(
+				`${goldenDir}/${file}`
+			).toArray()
 		} catch {
 			continue
 		}
@@ -175,7 +175,7 @@ export function segmentDecodeKBest(
 		return row.map((value) => value - z)
 	})
 
-	// Group pieces into words; pure-punctuation pieces are their own word.
+	// Group pieces into words. pure-punctuation pieces are their own word.
 	const words: number[][] = []
 	let current: number[] = []
 
@@ -325,7 +325,7 @@ function extractSurface(
 }
 
 /**
- * Run the oracle-recall@k eval; narrates the per-floor table on stdout. Informational — always exits 0.
+ * Run the oracle-recall@k eval. narrates the per-floor table on stdout. Informational — always exits 0.
  */
 export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKOutcome> {
 	const k = options.k ?? 10
@@ -359,7 +359,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 			baseByTag.set(node.tag, [...(baseByTag.get(node.tag) ?? []), node.value])
 		}
 
-		// The trace MUST carry the same priors as the parse above: the segment decode scores spans out
+		// The trace must carry the same priors as the parse above: the segment decode scores spans out
 		// of `trace.emissions`, so a bare trace would grade seg@1 on unprimed emissions while token@1
 		// saw primed ones — comparing two different models and calling it a decode delta.
 		const trace = await classifier.traceParse(fixture.input, productionParseOptions(fixture.input))
@@ -399,7 +399,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 		}
 	}
 
-	// Tier-0 instrument check, BEFORE anything prints. A report from a harness reading this far
+	// Tier-0 instrument check, before anything prints. A report from a harness reading this far
 	// off its registered baseline is worse than no report — Phase 1 and Phase 4a both shipped one.
 	if (options.assertBaseline) {
 		const readings: Record<string, number> = {}

@@ -4,27 +4,27 @@
 /**
  *   Does an `fst-*.bin` still match the gazetteer it was built from?
  *
- *   WHY THIS EXISTS. Every FST artifact is a projection of one WOF admin database, and the admin
- *   database is a sealed readonly artifact that a rebuild REPLACES. Nothing mechanically tied the two
+ *   why this exists. Every FST artifact is a projection of one WOF admin database, and the admin
+ *   database is a sealed readonly artifact that a rebuild replaces. Nothing mechanically tied the two
  *   together: the 2026-08-04 admin swap (4.87M rows, ancestry repaired, macrohood/microhood ingested)
  *   left `fst-global-priority.bin` at its 2026-05-28 build and the per-locale set at 2026-07-26, and
  *   the only way to notice was to compare mtimes by hand. The artifacts kept loading, kept answering
  *   queries, and answered them from a gazetteer that no longer exists.
  *
- *   `FSTProvenance` already recorded `sourceDB` — the source's PATH, which is exactly the field that
- *   cannot change when the bytes behind it do. So the stamp gains the source's IDENTITY (md5 + byte
+ *   `FSTProvenance` already recorded `sourceDB` — the source's path, which is exactly the field that
+ *   cannot change when the bytes behind it do. So the stamp gains the source's identity (md5 + byte
  *   size) and this module compares it. The shape deliberately mirrors
  *   `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`'s `pairIndexStaleReason`: one function returning a reason
  *   string or `undefined`, so a fact added to the stamp cannot be checked by some callers and not
  *   others — which is how three of the four base linkers ended up unable to notice a PIX1 schema bump.
  *
- *   FORMAT IS PART OF FRESHNESS. The check compares the serializer version too, not just the source
+ *   format is part OF freshness. The check compares the serializer version too rather than just the source
  *   md5. A guard that checks only the source reads a format-obsolete binary as "current" (the R5
  *   freshness-guard lesson, format edition), and a file below {@link MIN_STAMPED_FORMAT_VERSION}
  *   cannot carry a stamp at all — reported as its own reason rather than silently passing.
  *
- *   STALE IS A WARNING, NOT A FAULT. A dev tree with an old FST must still run; the artifact is a
- *   decode-time bias list, not a correctness dependency. Callers print {@link formatFSTStaleWarning}
+ *   stale is A warning rather than A fault. A dev tree with an old FST must still run. the artifact is a
+ *   decode-time bias list rather than a correctness dependency. Callers print {@link formatFSTStaleWarning}
  *   and continue.
  */
 
@@ -39,7 +39,7 @@ import type { FSTProvenance } from "#fst/types"
 
 /**
  * Fixed header size in bytes — mirrors `fst-serialize.ts`'s `HEADER_SIZE`. Duplicated rather than exported across
- * because this module reads the header by SEEK (never buffering the file), and the serializer's constant is private to
+ * because this module reads the header by seek (never buffering the file), and the serializer's constant is private to
  * its own read/write pair.
  */
 const HEADER_SIZE = 32
@@ -56,7 +56,7 @@ const PROVENANCE_OFFSET_FIELD = 28
 
 /**
  * First serializer version carrying the trailing provenance block. Below this a file has no place to put a stamp, so
- * "unstamped" is a statement about the FORMAT, not about the builder.
+ * "unstamped" is a statement about the format rather than about the builder.
  */
 export const MIN_STAMPED_FORMAT_VERSION = 3
 
@@ -69,7 +69,7 @@ const MD5_HEX_LENGTH = 32
  * What an FST was built from, recorded so a later reader can tell whether that thing still exists.
  *
  * `bytes` is not redundant with `md5` — it is the field that survives a truncated or half-written source and makes the
- * mismatch legible in the warning ("5,273,722,880 → 5,372,076,032" names the rebuild; a hex delta does not).
+ * mismatch legible in the warning ("5,273,722,880 → 5,372,076,032" names the rebuild. a hex delta does not).
  */
 export interface FSTSourceIdentity {
 	md5: string
@@ -92,9 +92,9 @@ export interface FSTStampFields {
  * What a caller expects the artifact to have been built from.
  *
  * `exclusionPolicy` is optional and caller-supplied on purpose. The policy id lives in
- * `mailwoman/gazetteer-pipeline/fst.ts` (which depends on this package, not the other way round), so only the caller
- * knows which policy it means — the same split as the pair-index guard, where the format+magnitude half is shared and
- * the source-md5 half stays with the script that knows its sources.
+ * `mailwoman/gazetteer-pipeline/fst.ts` (which depends on this package rather than the other way round), so only the
+ * caller knows which policy it means — the same split as the pair-index guard, where the format+magnitude half is
+ * shared and the source-md5 half stays with the script that knows its sources.
  */
 export interface FSTExpectation {
 	source: FSTSourceIdentity
@@ -107,7 +107,7 @@ export interface FSTExpectation {
 }
 
 /**
- * Read an artifact's stamp WITHOUT deserializing it — a header seek plus the trailer, three reads totalling a few
+ * Read an artifact's stamp without deserializing it — a header seek plus the trailer, three reads totalling a few
  * kilobytes. The distinction matters: `fst-global-priority.bin` is 317 MB and this runs on every `yarn test` via the
  * weights linkers, so `readFileSync` + `readFSTProvenance` would trade a freshness guard for a slower test suite and
  * nobody would keep it.
@@ -202,8 +202,8 @@ export async function readWOFSourceIdentity(
 }
 
 /**
- * Memo for {@link readWOFSourceIdentity}, keyed on (path, mtimeMs, size) — NOT on path alone, for the same reason
- * `computeSurfaceCountryCounts` isn't: the admin DB is a sealed artifact that a rebuild REPLACES, so a path-only memo
+ * Memo for {@link readWOFSourceIdentity}, keyed on (path, mtimeMs, size) — not on path alone, for the same reason
+ * `computeSurfaceCountryCounts` isn't: the admin DB is a sealed artifact that a rebuild replaces, so a path-only memo
  * would serve a stale digest against a new file for the life of the process.
  */
 const sourceIdentityMemo = new Map<string, FSTSourceIdentity>()
@@ -211,7 +211,7 @@ const sourceIdentityMemo = new Map<string, FSTSourceIdentity>()
 /**
  * Why an FST artifact is stale against `expected`, or `undefined` when it still matches.
  *
- * The order is deliberate: FORMAT first (a version-obsolete file is stale whatever its source says), then the presence
+ * The order is deliberate: format first (a version-obsolete file is stale whatever its source says), then the presence
  * of a stamp, then the source identity, then the build policy. Each returns prose a reader can act on — the reasons are
  * printed verbatim into {@link formatFSTStaleWarning}.
  */
@@ -255,7 +255,7 @@ export function fstStaleReason(fields: FSTStampFields | undefined, expected: FST
 /**
  * The whole check, for a caller that has a path and a source DB and wants a warning string or nothing.
  *
- * Returns `undefined` when the artifact is current OR when it is absent — an absent artifact is a different problem
+ * Returns `undefined` when the artifact is current or when it is absent — an absent artifact is a different problem
  * with a different message, and every existing caller already reports it in place.
  */
 export async function fstFreshnessWarning({
@@ -283,7 +283,7 @@ export async function fstFreshnessWarning({
 }
 
 /**
- * The one warning format, so `grep -r "FST STALE"` finds every site that can emit one.
+ * The one warning format, so `grep -r "FST stale"` finds every site that can emit one.
  */
 export function formatFSTStaleWarning({
 	fstPath,

@@ -5,9 +5,9 @@
  *   Fixture rung of the `sub-venue` recipe's verification ladder (fixtures → smoke → full build).
  *
  *   What is pinned here is the part no downstream count can catch. A composition report tells you the
- *   slice has 84,000 positives; it cannot tell you that one of them is a bare `Halle`, which the
+ *   recipe output has 84,000 positives. it cannot tell you that one of them is a bare `Halle`, which the
  *   de-DE board says is a city of 240,000 people. So the promotion gate, the `identifier-required`
- *   shape constraint, the per-REGION identifier draw and the word-boundary rule that separates
+ *   shape constraint, the per-region identifier draw and the word-boundary rule that separates
  *   `Gate` from `Briggate` are asserted directly, against the committed lexicon.
  */
 
@@ -81,11 +81,11 @@ describe("promotedSurfacesFor", () => {
 	})
 
 	it("gives a non-English locale no English shipped surfaces", () => {
-		// The shipped list is English; es-ES gets exactly what its board earned.
+		// The shipped list is English. es-ES gets exactly what its board earned.
 		expect(promotedSurfacesFor("es-ES", lexicon).map((s) => s.phrase)).toEqual(["terminal"])
 	})
 
-	it("covers every promote decision in the ledger except the ja-JP one this slice excludes", () => {
+	it("covers every promote decision in the ledger except the ja-JP one this recipe excludes", () => {
 		const promoted = SUBVENUE_PROMOTIONS.filter((p) => p.decision === "promote")
 
 		const covered = new Set(
@@ -101,7 +101,7 @@ describe("promotedSurfacesFor", () => {
 describe("matchesPromotedShape", () => {
 	const halle = promotedSurfacesFor("de-DE", lexicon).find((s) => s.phrase === "halle")!
 
-	it("accepts an identifier-bearing German hall and refuses the city", () => {
+	it("accepts an identifier-containing German hall and refuses the city", () => {
 		expect(matchesPromotedShape("messe west halle 8", halle)).toBe(true)
 		expect(matchesPromotedShape("vw halle 42", halle)).toBe(true)
 		expect(matchesPromotedShape("halle", halle)).toBe(false)
@@ -109,7 +109,7 @@ describe("matchesPromotedShape", () => {
 
 	it("refuses a German hall whose follower is a WORD, not an identifier", () => {
 		// The 2026-08-05 smoke put `Halle Wohnstadt Nord` in the attested pool under a looser rule.
-		// `Wohnstadt` is a name; the de-DE board turns on an IDENTIFIER following the phrase.
+		// `Wohnstadt` is a name. the de-DE board turns on an identifier following the phrase.
 		expect(matchesPromotedShape("halle wohnstadt nord", halle)).toBe(false)
 		expect(matchesPromotedShape("halle rosengarten", halle)).toBe(false)
 		expect(matchesPromotedShape("halle-südstadt", halle)).toBe(false)
@@ -158,7 +158,7 @@ describe("isSignIdentifier", () => {
 			expect([value, isSignIdentifier(value)]).toEqual([value, true])
 		}
 
-		// Multi-letter prefixes are campus / platform / stop codes, not identifiers — `AG1` is a
+		// Multi-letter prefixes are campus / platform / stop codes rather than identifiers — `AG1` is a
 		// Sheffield bus stop on a street called Arundel Gate.
 		for (const value of ["AG1", "AG124", "BS04", "PWP2", "WSW3687", "RQ8", "CHU", "Inn", "de"]) {
 			expect([value, isSignIdentifier(value)]).toEqual([value, false])
@@ -231,7 +231,7 @@ describe("sampleIdentifier", () => {
 	it("falls back to the region's pooled distribution for a designator with no refs of its own", () => {
 		const model = buildIdentifierModel(lexicon, "FR")
 
-		// `concourse` has zero identifierShapes rows in any region; the FR pool still answers.
+		// `concourse` has zero identifierShapes rows in any region. the FR pool still answers.
 		expect(sampleIdentifier(model, "concourse", makeMulberry32(3))).toBeTruthy()
 	})
 })
@@ -309,7 +309,7 @@ describe("buildPositiveForms", () => {
 		}
 	})
 
-	it("uses an attested string when one is offered, at roughly the seasoning dose", () => {
+	it("uses an attested string when one is offered, at roughly the seasoning rate", () => {
 		const leg = legFor("en-GB")
 		const promoted = promotedSurfacesFor("en-GB", lexicon)
 		const model = buildIdentifierModel(lexicon, "GB")
@@ -335,7 +335,7 @@ describe("isBoardReserved", () => {
 		expect(isBoardReserved("12 Briggate, Leeds, LS1 6ER")).toBe(true)
 		expect(isBoardReserved("Gate House, 1 Farringdon Street")).toBe(true)
 		expect(isBoardReserved("12 East Gate, Warwick")).toBe(true)
-		// A different -gate street of the same class is exactly what the slice is allowed to teach.
+		// A different -gate street of the same class is exactly what the recipe is allowed to teach.
 		expect(isBoardReserved("14 Stonegate, York")).toBe(false)
 	})
 })

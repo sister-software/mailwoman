@@ -4,23 +4,23 @@
 /**
  *   The cell index, and the measurement the index resolution is chosen from.
  *
- *   THE CLASSIFIER ITSELF LIVES IN `@mailwoman/spatial`, re-exported below so this package's call sites and
- *   its `@mailwoman/zoning/sdk/cells` subpath keep reading the same. `classifyFeatureCells`, the per-PART
+ *   the classifier itself lives IN `@mailwoman/spatial`, re-exported below so this package's call sites and
+ *   its `@mailwoman/zoning/sdk/cells` subpath keep reading the same. `classifyFeatureCells`, the per-part
  *   zero-cell guard and the allocator-avoiding shortcuts around it are properties of h3-js rather than of
- *   this product — the layer contract's polygon-builder section states them as requirements on EVERY polygon
+ *   this product — the layer interface's polygon-builder section states them as requirements on every polygon
  *   builder — and a second copy of the zero-cell guard is a second place for it to stop guarding.
  *
- *   WHAT THIS LAYER ADDS IS THE NUMBER THE RESOLUTION IS ACTUALLY CHOSEN FROM, AND IT IS NOT THE `partial`
- *   SHARE. The inherited size contract picks a resolution from the measured `partial` share, and for this
+ *   what this layer adds is the number the resolution is actually chosen from, and IT is not the `partial`
+ *   share. The inherited size interface picks a resolution from the measured `partial` share, and for this
  *   subject that statistic carries no signal: computed over all 85,330 Irish features, the median zoning
  *   polygon is 4,497 m² against an average res-9 cell of 105,333 m², so 95.7% of them are smaller than a cell
  *   and the `partial` share is near 100% at every candidate. Two numbers do carry signal —
- *   CANDIDATES PER CELL, which is how much geometry a probe reads, and the POLYFILL-ONLY ZERO-CELL COUNT,
- *   which is how many features a centre-in-polygon index would have dropped — so both are measured here and
+ *   candidates PER cell, which is how much geometry a probe reads, and the polyfill-only zero-cell count,
+ *   which is how many features a centre-in-polygon index would have dropped . Therefore, both are measured here and
  *   the `partial` share is reported beside them rather than in place of them.
  *
- *   THE ZERO-CELL COUNT IS A MEASUREMENT OF THE ALTERNATIVE, NOT OF THIS INDEX. `classifyFeatureCells` takes
- *   overlapping containment and REFUSES a feature that reaches no cell, so this index's own zero-cell count is
+ *   the zero-cell count is A measurement OF the alternative rather than OF this index. `classifyFeatureCells` takes
+ *   overlapping containment and refuses a feature that reaches no cell, so this index's own zero-cell count is
  *   zero by construction. What the column reports is what `polygonToCells` — the centre-in-polygon polyfill a
  *   builder reaches for first — would have returned nothing for, and every one of those would have read
  *   downstream as an absence of zoning.
@@ -36,7 +36,7 @@ import {
 import { polygonToCells } from "h3-js"
 
 /**
- * Would a CENTRE-IN-POLYGON polyfill return nothing for this feature?
+ * Would a centre-IN-polygon polyfill return nothing for this feature?
  *
  * The measurement that forced this layer's index to take cell-touches-polygon: at resolution 9 `polygonToCells` returns
  * an empty set for the great majority of Irish zoning polygons, because no cell centre falls inside them. A builder
@@ -70,7 +70,7 @@ export interface CellIndexMeasurement {
 	 */
 	partialCells: number
 	/**
-	 * `partialCells / touchedCells`. Reported, and NOT what the resolution is chosen on — see this file's header.
+	 * `partialCells / touchedCells`. Reported, and not what the resolution is chosen on — see this file's header.
 	 */
 	partialShare: number
 	/**
@@ -92,7 +92,7 @@ export interface CellIndexMeasurement {
 	multiCandidateCells: number
 	multiCandidateShare: number
 	/**
-	 * Features a centre-in-polygon polyfill would have returned NOTHING for — see {@link polyfillFindsNothing}.
+	 * Features a centre-in-polygon polyfill would have returned nothing for — see {@link polyfillFindsNothing}.
 	 * `undefined` where the measurement did not run it.
 	 */
 	polyfillZeroCellFeatures?: number
@@ -101,7 +101,7 @@ export interface CellIndexMeasurement {
 	 */
 	coarsenedFeatures: number
 	/**
-	 * Features this index returned no cell for. ZERO BY CONSTRUCTION: `classifyFeatureCells` throws rather than returning
+	 * Features this index returned no cell for. zero BY construction: `classifyFeatureCells` throws rather than returning
 	 * an empty set, so a non-zero value here means the guard was bypassed.
 	 */
 	zeroCellFeatures: number
@@ -110,9 +110,9 @@ export interface CellIndexMeasurement {
 /**
  * Accumulate one resolution's cell index over a stream of features.
  *
- * The whole set is held as short-cell STRINGS rather than the integers the tables store, because `compactCells` is an
+ * The whole set is held as short-cell strings rather than the integers the tables store, because `compactCells` is an
  * h3-js function over full indexes and round-tripping at every step would cost more than the strings do. The candidate
- * counter is keyed by the 48-bit INTEGER instead: it is the larger of the two at every candidate resolution, and it is
+ * counter is keyed by the 48-bit integer instead: it is the larger of the two at every candidate resolution, and it is
  * never handed back to h3.
  */
 export class ZoningCellIndex {
@@ -172,7 +172,7 @@ export class ZoningCellIndex {
 	 * The measurement.
 	 *
 	 * The compacted count is an approximation of what the build stores and is reported as one: the build compacts each
-	 * FEATURE's whole set, while this compacts the union of them. The union can only compact at least as far, so this is
+	 * feature's whole set, while this compacts the union of them. The union can only compact at least as far, so this is
 	 * a lower bound on the stored row count — the direction a size estimate should err in — and the build's own receipt
 	 * reports the real number.
 	 */
@@ -237,10 +237,10 @@ export class ZoningCellIndex {
 }
 
 /**
- * The measurement as markdown table ROWS — what a build receipt carries, one line per element so a caller printing them
+ * The measurement as markdown table rows — what a build receipt carries, one line per element so a caller printing them
  * never has to split a joined string back apart.
  *
- * THE ZERO-CELL COLUMN IS FIRST AFTER THE COUNTS, because it is the column the resolution is chosen on and the one a
+ * The zero-cell column is first after the counts, because it is the column the resolution is chosen on and the one a
  * reader most needs to see is not zero for the alternative index.
  */
 export function formatResolutionRows(measurements: readonly CellIndexMeasurement[]): string[] {

@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Diff two parses of the SAME input, over spans rather than over the component map.
+ *   Diff two parses of the same input, over spans rather than over the component map.
  *
  *   The component map is what a comparison reaches for and it loses the thing you need. Two arms that both emit
- *   `locality` tell you nothing about whether the locality MOVED, and a map keyed by tag cannot represent a span that
+ *   `locality` tell you nothing about whether the locality moved, and a map keyed by tag cannot represent a span that
  *   slid one token left — it looks identical to a span that was replaced. This is not hypothetical: it is how a
  *   regression that turned
  *
@@ -15,14 +15,14 @@
  *   locality changed" in a map diff, when what actually happened is that two spans were destroyed and a third was
  *   retagged onto the text of one of them.
  *
- *   So spans are matched by OVERLAP first and tag second, which lets the four events be told apart:
+ *   So spans are matched by overlap first and tag second, which lets the four events be told apart:
  *
  *   - `retagged`  — same text, different tag. The venue that became a locality.
  *   - `moved`     — same tag, different span. The locality that slid onto the neighbouring segment.
  *   - `removed` / `added` — a span with no counterpart at all.
  *   - `confidence` — same tag, same span, the model simply became more or less sure.
  *
- *   That last one is why the confidence delta is carried per span rather than as a headline: a row that did not change
+ *   That last one is why the confidence delta is stored per span rather than as a headline: a row that did not change
  *   its answer but lost 0.3 of confidence on the deciding span is a row about to flip, and an aggregate cannot say so.
  */
 
@@ -32,7 +32,7 @@ import type { AddressTree } from "#decoder/types"
 /**
  * What happened to one span between the two arms.
  *
- * `unchanged` is emitted rather than dropped so a renderer can show context lines; a caller wanting only the changes
+ * `unchanged` is emitted rather than dropped so a renderer can show context lines. a caller wanting only the changes
  * filters on {@linkcode isChange}.
  */
 export type SpanDeltaKind = "added" | "removed" | "retagged" | "moved" | "confidence" | "unchanged"
@@ -54,7 +54,7 @@ export interface SpanDelta {
 	confidenceBefore?: number
 	confidenceAfter?: number
 	/**
-	 * `after - before`, present only when both sides are. Negative means the arm under test is LESS sure.
+	 * `after - before`, present only when both sides are. Negative means the arm under test is less sure.
 	 */
 	confidenceDelta?: number
 	/**
@@ -260,7 +260,7 @@ export function diffParse(
 export const CONFIDENCE_NOISE_FLOOR = 0.02
 
 /**
- * Render a diff the way a reader reads one — the ADDRESS first, then the spans that moved under it.
+ * Render a diff the way a reader reads one — the address first, then the spans that moved under it.
  *
  * Address-first is the point. An aggregate that reports "18 regressed" without the strings is the shape that let a
  * venue-destroying regression read as a routine count for five runs.

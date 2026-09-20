@@ -24,9 +24,9 @@ import { runWorktreeArm } from "#worktree/arm"
  * input, and served from the map afterwards. That is also why this arm cannot stream: the answers exist before the
  * first `answer()` call.
  *
- * The config is resolved by {@linkcode resolveConfig}, the SAME function the in-process arm uses, and handed to the
+ * The config is resolved by {@linkcode resolveConfig}, the same function the in-process arm uses, and handed to the
  * child whole. A change added there reaches this arm without being copied into it — the alternative, a hand-written
- * option list inside the runner script, is exactly the shared-constants drift this comparison exists to DETECT rather
+ * option list inside the runner script, is exactly the shared-constants drift this comparison exists to detect rather
  * than to commit.
  */
 export async function worktreeArmRunner(
@@ -73,7 +73,7 @@ export async function worktreeArmRunner(
 		answer: async (input) => {
 			const answer = byInput.get(input)
 
-			// A missing input is a batching fault, not a no-result, and says so: the child was handed this set, so
+			// A missing input is a batching fault rather than a no-result, and says so: the child was handed this set, so
 			// silence here would otherwise be scored as the pipeline declining to answer.
 			if (!answer) {
 				return {

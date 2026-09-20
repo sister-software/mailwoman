@@ -4,11 +4,11 @@
 /**
  *   `mailwoman eval oracle-k` — oracle-recall@k over segment-level k-best decodes (#727 stage-2
  *   instrumentation). Measures the k-best rerank headroom the top-1 checks can't see: how often the
- *   gold value appears ANYWHERE in the top-k whole-segmentation hypotheses decoded from the current
+ *   gold value appears anywhere in the top-k whole-segmentation hypotheses decoded from the current
  *   model's emissions. Informational (always exits 0) — the standing floors stay on `eval parity`.
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 /**
  * Largest useful hypothesis set for the bounded oracle probe.
@@ -18,7 +18,7 @@ const MAX_ORACLE_HYPOTHESES = 50
 export const description = "Oracle-recall@k — k-best segment-decode headroom over the parity corpus (#727 stage-2)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "oracle-k",
@@ -48,38 +48,24 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	locale: string
-	weightsCache?: string
-	fixtures?: string
-	goldenDir?: string
-	k: number
-	assertBaseline?: string
-}
+// The runner narrates its table on stdout, so no `json`.
+const EvalOracleK = harnessCommand(
+	spec,
+	async (options) => {
+		const { runOracleK } = await import("#eval-harness/oracle-k")
 
-const EvalOracleK: ParsedCommandComponent<Options> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { runOracleK } = await import("#eval-harness/oracle-k")
-
-			return (
-				await runOracleK({
-					locale: options.locale,
-					weightsCacheRoot: options.weightsCache,
-					fixturesPath: options.fixtures,
-					goldenDir: options.goldenDir,
-					k: options.k,
-					assertBaseline: options.assertBaseline,
-				})
-			).exitCode
-		},
-		(exitCode) => exitCode
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	// The runner narrates its table on stdout.
-	return null
-}
+		return (
+			await runOracleK({
+				locale: options.locale,
+				weightsCacheRoot: options.weightsCache,
+				fixturesPath: options.fixtures,
+				goldenDir: options.goldenDir,
+				k: options.k,
+				assertBaseline: options.assertBaseline,
+			})
+		).exitCode
+	},
+	{ exitCode: (exitCode) => exitCode }
+)
 
 export default EvalOracleK

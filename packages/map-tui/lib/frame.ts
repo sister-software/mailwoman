@@ -6,7 +6,7 @@
  *
  * `rasterizeToFrame` turns an `RGBAGrid` (drawn by ./raster.ts) into a `MapFrame`: one codepoint and one packed color
  * per cell. The braille dither/luminance work is asciify's — `FrameRasterizer` subclasses `AsciifyTerminal` with a
- * no-op sink purely to reach its protected `_computeBrailleCells`, `_cellChars`, `_cellColors`, so this module never
+ * no-op sink purely to reach its guarded `_computeBrailleCells`, `_cellChars`, `_cellColors`, so this module never
  * re-implements the dot math. `frameToANSILines` and `overlayText` then work on the plain `MapFrame` value, with no
  * further asciify dependency; `blitFrame` is the path back the other way, for callers driving a live terminal.
  */
@@ -27,16 +27,16 @@ export interface MapFrame {
 	 */
 	chars: Uint32Array
 	/**
-	 * 0xRRGGBB per cell; 0 = inkless.
+	 * 0xRRGGBB per cell. 0 = inkless.
 	 */
 	colors: Uint32Array
 	attribution: string
 }
 
 /**
- * Reaches asciify's protected braille conversion from the outside. Constructed fresh per {@link rasterizeToFrame} call
- * — cheap, since the state is just two typed arrays sized to the cell grid. The `write` sink is never invoked: this
- * class only ever calls `_computeBrailleCells` directly, never `rasterize`/`flush`.
+ * Reaches asciify's guarded braille conversion from the outside. Constructed fresh per {@link rasterizeToFrame} call —
+ * cheap, since the state is just two typed arrays sized to the cell grid. The `write` sink is never invoked: this class
+ * only ever calls `_computeBrailleCells` directly, never `rasterize`/`flush`.
  */
 class FrameRasterizer extends AsciifyTerminal {
 	constructor(columns: number, rows: number) {
@@ -52,10 +52,10 @@ class FrameRasterizer extends AsciifyTerminal {
 }
 
 /**
- * Converts a 2×4-subpixel RGBA grid into braille cells. Grid must be `columns * 2` x `rows * 4`.
+ * Converts a 2×4-subpixel rgba grid into braille cells. Grid must be `columns * 2` x `rows * 4`.
  *
- * @throws If the grid's dimensions don't match `columns * 2` x `rows * 4` — a caller sizing bug, not something to
- *   silently clip.
+ * @throws If the grid's dimensions don't match `columns * 2` x `rows * 4` — a caller sizing bug rather than something
+ *   to silently clip.
  */
 export function rasterizeToFrame(grid: RGBAGrid, columns: number, rows: number, attribution: string): MapFrame {
 	if (grid.width !== columns * 2 || grid.height !== rows * 4) {

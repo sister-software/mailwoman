@@ -34,7 +34,7 @@ const DEFAULT_PLACETYPES: PlacetypeID[] = [
 const DEFAULT_COUNTRIES = ["US"]
 const DEFAULT_LANGUAGES = ["eng", ""]
 /**
- * Ids per `IN (…)` batch. SQLITE_MAX_VARIABLE_NUMBER defaults to 32,766; 500 matches the name-load batch a few phases
+ * Ids per `IN (…)` batch. SQLITE_MAX_VARIABLE_NUMBER defaults to 32,766. 500 matches the name-load batch a few phases
  * down, so both read paths bind the same shape.
  */
 const ANCESTOR_CHUNK = 500
@@ -95,8 +95,8 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	const parentStmt = db.prepare("SELECT id, name, placetype, parent_id, latitude, longitude FROM spr WHERE id = ?")
 
 	// Fallback for a sentinel parent_id (-1, -4, …): the ancestors table. Read in chunked `IN (…)`
-	// batches ONCE — the point-query version fired per orphan row, and on a global build the orphans
-	// run to six figures. Ordering is county → region → country, preserved by the same CASE the
+	// batches once — the point-query version fired per orphan row, and on a global build the orphans
+	// run to six figures. Ordering is county → region → country, preserved by the same case the
 	// per-row query used, with `id` leading so one pass groups the rows.
 	const ancestorsByID = new Map<number, number[]>()
 
@@ -171,12 +171,12 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 		return chain
 	}
 
-	// Phase 3: Load BOTH scores (ROAD_TO_V9 §2 R1, the two-score split).
+	// Phase 3: Load both scores (ROAD_TO_V9 §2 R1, the two-score split).
 	//
-	// Referential is ALWAYS population-anchored and never read out of a legacy `place_importance`
+	// Referential is always population-anchored and never read out of a legacy `place_importance`
 	// column, because a legacy row that got a Wikipedia score overwrote whatever population would have
 	// said and the two are indistinguishable afterwards. Encyclopedic rides along for consumers and is
-	// never handed to the decoder. `loadImportanceSplit` handles all four schema generations; the
+	// never handed to the decoder. `loadImportanceSplit` handles all four schema generations. the
 	// source it reports is stamped into provenance so an artifact says which one it read.
 	progress("importance", "Loading referential + encyclopedic scores")
 	const split = loadImportanceSplit(db)
@@ -226,7 +226,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	progress("trie", "Building trie")
 	const nodes: FSTNode[] = [{ edges: new Map(), places: [] }]
 
-	// Degenerate-surface curation (see BuildFSTOpts.excludeSurfaces). Applied to the WHOLE normalized
+	// Degenerate-surface curation (see BuildFSTOpts.excludeSurfaces). Applied to the whole normalized
 	// surface only — a multi-token name containing a function word ("los angeles") is never affected.
 	const excludeSurfaces = opts.excludeSurfaces
 	const excludeAllTokensOf = opts.excludeAllTokensOf
@@ -242,7 +242,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 		return false
 	}
 
-	// Surface-ambiguity classes (survey #4): a per-SURFACE fact, so the entry is cloned per insertion
+	// Surface-ambiguity classes (survey #4): a per-surface fact, so the entry is cloned per insertion
 	// with its accepting surface's count attached (the same place under "nyc" and "new york city"
 	// records each surface's own ambiguity). Absent map → entries carry no count (back-compat bytes).
 	const surfaceCountryCounts = opts.surfaceCountryCounts
@@ -299,7 +299,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 			name: row.name,
 			parentChain,
 			referential: split.referential.get(row.id) ?? 0,
-			// Spread rather than assigned: a place with no Wikipedia article must carry NO field, not a
+			// Spread rather than assigned: a place with no Wikipedia article must carry no field rather than a
 			// zero. The serializer's per-place presence bit reads `!== undefined`.
 			...(encyclopedic === undefined ? {} : { encyclopedic }),
 			lat: row.latitude,
@@ -336,7 +336,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	const matcher = FSTMatcher.fromNodes(nodes)
 
 	// The build stamp (2026-08-05). `sourceDB` alone was never enough to tell a reader whether this
-	// artifact matches the database at that path — the admin DB is sealed and REPLACED by a rebuild, so
+	// artifact matches the database at that path — the admin DB is sealed and replaced by a rebuild, so
 	// the path is constant across every generation of it. Hashing costs 7.3 s for the 5.27 GB admin DB
 	// and is free whenever the `.md5` sidecar is current, which the admin build already writes.
 	// `sourceIdentity` lets a caller that already knows the digest (or is building from something that

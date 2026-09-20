@@ -7,7 +7,7 @@
  *   Public Domain (federal statistical survey).
  *
  *   The FY 2023 release is the most current as of 2026-05. IMLS ships a single ZIP containing CSV,
- *   SAS, and SPSS variants. We extract the outlet-level CSV (pls_fy*_outlet*.csv or similar) and
+ *   SAS, and spss variants. We extract the outlet-level CSV (pls_fy*_outlet*.csv or similar) and
  *   discard the rest. The administrative-entity (system-level) CSV is intentionally skipped — it has
  *   no per-branch address detail.
  *
@@ -16,11 +16,11 @@
  *   member listing + selective extraction).
  *
  *   Invoke via `mailwoman corpus fetch imls-pls --out-root <path>`. Idempotent: if dest CSV exists
- *   and sha matches MANIFEST, skips download.
+ *   and sha matches manifest, skips download.
  */
 
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
-   procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
+   procedure rather than sections of declarations. A region there folds nothing a reader wants folded. */
 
 import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
@@ -99,7 +99,7 @@ export async function fetchIMLSPLS(
 
 	let csvName = entries.find((name) => /pls_fy.*outlet.*\.csv/i.test(name))
 
-	// Fallback: if IMLS renames the file, grab any CSV that is NOT the ae file.
+	// Fallback: if IMLS renames the file, grab any CSV that is not the ae file.
 	if (!csvName) {
 		csvName = entries.find((name) => /\.csv$/i.test(name) && !/system|state|_ae\b|_se\b/i.test(name))
 	}
@@ -129,7 +129,7 @@ export async function fetchIMLSPLS(
 	await removePathIfPresent(zipDest)
 	report?.("  Removed ZIP (CSV kept)")
 
-	// MARK: Write MANIFEST
+	// MARK: Write manifest
 
 	const manifest: SourceManifest = {
 		source_url: ZIP_URL,

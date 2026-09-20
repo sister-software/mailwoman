@@ -11,9 +11,9 @@
 export type MutuallyAssignable<A, B> = [A] extends [B] ? ([B] extends [A] ? true : never) : never
 
 /**
- * `true` only when A and B have the SAME KEYS and the same value types.
+ * `true` only when A and B have the same keys and the same value types.
  *
- * Assignability alone is not enough, and the difference is exactly the drift a corpus schema suffers: an OPTIONAL field
+ * Assignability alone is not enough, and the difference is exactly the drift a corpus schema suffers: an optional field
  * added to one side and not the other keeps both sides mutually assignable (a value missing an optional key is still
  * assignable), so a pure {@link MutuallyAssignable} bridge compiles clean through the very change it exists to catch.
  * Measured 2026-08-05 by adding `driftProbe?: string` to `SeedCase` — `tsc -b` passed. The key-set legs below are what

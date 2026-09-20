@@ -5,8 +5,8 @@
  *   The acquisition side: the failure body Soil Data Access actually returns, the metadata that decides an
  *   artifact's vintage and its licence, and the farmland scope that decides whether two rows are comparable.
  *
- *   THE EXCEPTION FIXTURE IS THE LIVE SERVICE'S OWN BODY, captured from a query with a bad column name. Its
- *   twin — a query that exceeds the server's own timeout — returns the SAME document shape on an HTTP 200,
+ *   the exception fixture is the live service'S own body, captured from a query with a bad column name. Its
+ *   twin — a query that exceeds the server's own timeout — returns the same document shape on an http 200,
  *   which is why the detection is on the body rather than on the status.
  */
 
@@ -16,7 +16,7 @@ import { FarmlandScope, farmlandScope, soilLayerName } from "@mailwoman/soil/voc
 import { describe, expect, it } from "vitest"
 
 /**
- * The live service's answer to `SELECT nosuchcolumn FROM sacatalog`, verbatim, HTTP 400.
+ * The live service's answer to `select nosuchcolumn from sacatalog`, verbatim, http 400.
  */
 const INVALID_COLUMN = `<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
 <ServiceExceptionReport xmlns="http://www.opengis.net/ogc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/ogc http://schemas.opengis.net/wms/1.1.1/OGC-exception.xsd">
@@ -26,7 +26,7 @@ Invalid query: Invalid column name &#39;nosuchcolumn&#39;.</ServiceException>
 `
 
 /**
- * The same document a server-side timeout returns — on an HTTP 200, which is the whole trap.
+ * The same document a server-side timeout returns — on an http 200, which is the whole trap.
  */
 const TIMED_OUT = `<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
 <ServiceExceptionReport xmlns="http://www.opengis.net/ogc">
@@ -69,7 +69,7 @@ describe("readServiceException", () => {
 })
 
 /**
- * The shape of the FGDC document NRCS ships inside every survey-area archive, trimmed to the elements this layer reads.
+ * The shape of the fgdc document nrcs ships inside every survey-area archive, trimmed to the elements this layer reads.
  * The dates and the scale are `IA153`'s real ones.
  */
 const FGDC = `<metadata><idinfo><citation><citeinfo><origin>
@@ -88,7 +88,7 @@ describe("readFGDCMetadata", () => {
 	it("takes the OLDEST source citation, which is the field survey the polygons rest on", () => {
 		const metadata = readFGDCMetadata(FGDC, "IA153")
 
-		// The refresh is 2025; the ground was walked in 1960. A consumer reading the refresh as survey currency reads it
+		// The refresh is 2025. the ground was walked in 1960. A consumer reading the refresh as survey currency reads it
 		// wrong by sixty-five years, so both travel and the older one names its source.
 		expect(metadata.publicationDate).toBe("2025-09-09")
 		expect(metadata.oldestSourceDate).toBe("1960")
@@ -99,7 +99,7 @@ describe("readFGDCMetadata", () => {
 	it("refuses a survey area whose use constraints no longer carry the public-information sentence", () => {
 		const withoutGrant = FGDC.replace("This is public information and may be interpreted", "This is restricted and")
 
-		// That sentence IS the grant this layer ships on. A build that absorbed its removal would ship an artifact under
+		// That sentence is the grant this layer ships on. A build that absorbed its removal would ship an artifact under
 		// terms nobody checked.
 		expect(() => readFGDCMetadata(withoutGrant, "IA153")).toThrow(/public information/u)
 	})
@@ -112,7 +112,7 @@ describe("readFGDCMetadata", () => {
 
 	it("reads an unclosed element as unreadable, in one pass rather than by scanning for it", () => {
 		// What a truncated archive produces, and what a lazy-quantifier reader backtracks polynomially over. Every element
-		// after the truncation is unreadable, so the licence assertion — the FIRST thing read — is what refuses, and the refusal
+		// after the truncation is unreadable, so the licence assertion — the first thing read — is what refuses, and the refusal
 		// doubles as the timing check.
 		const truncated = `${FGDC.slice(0, FGDC.indexOf("<pubdate>") + "<pubdate>".length)}${"9".repeat(200_000)}`
 		const started = performance.now()

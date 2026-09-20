@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The shop's operations for `mwops shop <operation>`: the same contract as the release registry (an id, a declared
+ *   The shop's operations for `mwops shop <operation>`: the same interface as the release registry (an id, a declared
  *   effect, zod input and output, `run`), so the operator CLI is a view over this list the way it is over the other
  *   two. `status` reads; `provision` writes to Stripe and, with `--apply`, to `shop/ids.json`, the one file that
  *   carries what Stripe answered. The mode picks the key: `test` reads `MAILWOMAN_STRIPE_SECRET_KEY` and refuses
@@ -51,7 +51,7 @@ const ProvisionInputSchema = z.object({
 })
 
 /**
- * Carry the ids Stripe answered into `ids.json`, the one file that names them. The webhook secret is never written; it
+ * Carry the ids Stripe answered into `ids.json`, the one file that names them. The webhook secret is never written. it
  * goes to `wrangler secret put`.
  */
 async function recordShopIDs(mode: ShopMode, report: ProvisionReport): Promise<string | undefined> {

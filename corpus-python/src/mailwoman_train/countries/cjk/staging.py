@@ -7,7 +7,7 @@ the region: the overlay's manifest, its re-sealed character vocabulary, and the 
 volume's copy of the training package is the one this recipe needs rather than a stale sync.
 
 A launcher calls these by name from the volume's own copy of the package, so an import failure here
-IS the report that the package did not land.
+is the report that the package did not land.
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ def _overlay_files(versioned: str, corpus: str) -> dict[str, bool]:
 
 
 def _contains(path: str, marker: str) -> bool:
-    """Whether a synced file holds a marker. A path check answers that the file arrived; this
+    """Whether a synced file holds a marker. A path check answers that the file arrived. this
     answers that the file that arrived is the one the recipe needs."""
     if not os.path.isfile(path):
         return False

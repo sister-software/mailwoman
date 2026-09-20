@@ -3,10 +3,10 @@
 
 /**
  *   The admin build's Freeze phase, extracted from `scripts/build-unified-wof.ts`: WAL checkpoint →
- *   journal freeze → ancestors closure → `ancestors(id)` index (BEFORE the −4 backfill — without it
+ *   journal freeze → ancestors closure → `ancestors(id)` index (before the −4 backfill — without it
  *   the backfill's per-candidate lookups full-scan the 13M-row table each time and the build stalls
  *   for hours, #1015) → `wof:hierarchy` −4 backfill (WOF ids only) → coincident_roles → indexes →
- *   ANALYZE → integrity check. Runs IN PLACE on the staging DB; the caller `VACUUM INTO`s the final
+ *   analyze → integrity check. Runs IN place on the staging DB. the caller `vacuum into`s the final
  *   artifact afterwards.
  */
 
@@ -18,8 +18,8 @@ import { assertDatabaseIntegrity } from "@mailwoman/sqlite/sealed-db"
 
 export interface FreezeAdminOptions {
 	/**
-	 * Repos root for the `wof:hierarchy` −4 backfill (#440/#832 — NYC/London-class multi-parent orphans). Omit ONLY in
-	 * fixture tests; a real build without it leaves those metros unreachable by the region-descendant filter.
+	 * Repos root for the `wof:hierarchy` −4 backfill (#440/#832 — NYC/London-class multi-parent orphans). Omit only in
+	 * fixture tests. a real build without it leaves those metros unreachable by the region-descendant filter.
 	 */
 	dataDir?: string
 	onPhase?: (phase: string, detail?: string) => void
@@ -38,7 +38,7 @@ export async function freezeAdmin(
 	db: DatabaseClient<WOFDatabase>,
 	opts: FreezeAdminOptions = {}
 ): Promise<FreezeAdminResult> {
-	// resolver-wof-sqlite is an OPTIONAL peer of mailwoman — import it lazily (the gazetteer-pipeline
+	// resolver-wof-sqlite is an optional peer of mailwoman — import it lazily (the gazetteer-pipeline
 	// convention) so importing this module never faults without it.
 	const { backfillAncestorsFromHierarchy, discoverAdminDataRoots } =
 		await import("@mailwoman/resolver-wof-sqlite/ancestry")
@@ -69,9 +69,9 @@ export async function freezeAdmin(
 	phase("ancestors", "parent_id closure")
 	const ancestorRows = populateAncestors(db)
 
-	// Index `ancestors(id)` NOW — before the −4 backfill probes it. `createUnifiedIndexes` (below) builds this same
-	// index, but it runs AFTER the backfill; without it here the backfill's per-candidate lookups full-scan the
-	// closure table EACH time (#1015). `IF NOT EXISTS` keeps the later createUnifiedIndexes a no-op.
+	// Index `ancestors(id)` now — before the −4 backfill probes it. `createUnifiedIndexes` (below) builds this same
+	// index, but it runs after the backfill. without it here the backfill's per-candidate lookups full-scan the
+	// closure table each time (#1015). `if not exists` keeps the later createUnifiedIndexes a no-op.
 	phase("ancestors-index")
 	db.exec("CREATE INDEX IF NOT EXISTS ancestors_by_id ON ancestors(id)")
 
@@ -87,7 +87,7 @@ export async function freezeAdmin(
 				`WARNING: no */data geojson roots under ${opts.dataDir} — orphans like NYC stay unreachable`
 			)
 		} else {
-			// Only real WOF places have `wof:hierarchy` geojson; synthetic Overture/GeoNames rows (ids >=
+			// Only real WOF places have `wof:hierarchy` geojson. synthetic Overture/GeoNames rows (ids >=
 			// OVERTURE_ID_BASE) never do, and probing millions of them across every repo root turned this step into a
 			// ~40-min stall on the wide-coverage build (#1015). Their ancestry comes from the parent_id closure.
 			const bf = await backfillAncestorsFromHierarchy(db, geojsonRoots, { maxID: OVERTURE_ID_BASE })

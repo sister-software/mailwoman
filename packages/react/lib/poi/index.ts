@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file POI explorer components, hooks, runtime, and contracts.
+ * @file POI explorer components, hooks, runtime, and interfaces.
  */
 
 export { AbstainPanel } from "./AbstainPanel.tsx"

@@ -52,7 +52,7 @@ CHECK FAILED: 3 violation(s).
 ## Checks before commit
 
 - Losses are reported in their own section, with the same precision as the wins.
-- Each caveat states its mechanism, not only its existence.
+- Each caveat states its mechanism rather than only its existence.
 - If the eval set and the training set share a source, the page says so beside the number it affects.
 - Every number carries the command that produced it, or a link to the run that did.
 - Deltas carry units (`pp`, `%`, `ms`), and a magnitude that could be zero says which zero it is.

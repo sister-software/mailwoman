@@ -49,7 +49,7 @@ silently deflate every class share.
 
 ## The resolution, measured
 
-The index resolution is a measurement, not an argument. Measured on `IA153` — 17,966 delineations over
+The index resolution is a measurement rather than an argument. Measured on `IA153` — 17,966 delineations over
 1,532.5 km², median delineation 24,863 m²:
 
 | res | touched cells |  whole | partial | partial share | whole after compaction | (cell, delineation) pairs | mean delineations/cell | top class under half |
@@ -100,8 +100,7 @@ Three measured behaviours the code is written against:
    Every response is read as text and checked for the report before anything parses it as JSON.
 2. **The download host answers `HEAD` with 405 and ignores `Range`.** A request with `Range: bytes=0-0`
    returned HTTP 200 and transferred the whole 27,598,377 bytes. Freshness comes from
-   `sacatalog.saverest`, which is also what the archive's filename embeds. A wrong date is an HTTP **400**,
-   not a 404.
+   `sacatalog.saverest`, which is also what the archive's filename embeds. A wrong date is an HTTP **400** rather than a 404.
 3. **The tabular export carries embedded newlines.** `sacatlog.txt` holds 594 newline bytes and exactly
    ONE record, because `fgdcmetadata` is a 43,251-character XML document; `mstabcol.txt` — the column
    dictionary itself — holds 913 newlines and 865 records. The reader is quote-aware end to end.
@@ -129,7 +128,7 @@ _U.S. Department of Agriculture, Natural Resources Conservation Service._
 
 ## Two dates, and they are not the same fact
 
-`sacatalog.saverest` is the refresh. NRCS runs ONE coordinated Annual Soils Refresh each October 1, and
+`sacatalog.saverest` is the refresh. NRCS runs one coordinated Annual Soils Refresh each October 1, and
 grouping the catalogue by year returns 2016: 1, 2025: 3,323, 2026: 56 — so a region's areas share a
 vintage. **The field survey underneath is far older.** `IA153` carries a 2025-09-09 refresh over a
 _Soil Survey of Polk County, Iowa_ published in **1960** at 1:15,840, and the dataset's own
@@ -171,7 +170,7 @@ mailwoman gazetteer build soil --area IA153 --verify
 # The pilot: every published Iowa survey area.
 mailwoman gazetteer build soil --region IA --verify
 
-# The resolution measurement. Reports a table, not an artifact.
+# The resolution measurement. Reports a table rather than an artifact.
 mailwoman gazetteer build soil --area IA153 --measure-resolutions 7,8,9,10
 ```
 
@@ -186,7 +185,7 @@ because the traps are properties of h3-js rather than of either product.
 `--verify` runs both halves. The positive half re-asks Soil Data Access which map unit covers a sample of
 points drawn deterministically from the artifact, comparing **map unit against map unit** — comparing the
 derived class instead would let a wrong delineation agree by accident whenever two neighbours share a
-class. Disagreements carry the distance to the nearest **edge**, not to the nearest vertex: a point a
+class. Disagreements carry the distance to the nearest **edge** rather than to the nearest vertex: a point a
 centimeter from a long edge can be meters from every vertex, and the flood layer's one near-miss read
 1.58 m to vertices and 0.009 m to edges.
 
@@ -196,7 +195,7 @@ pass on an artifact that answered class 8 for the whole planet.
 
 ## The observation
 
-Default OFF, and the switch is the presence of `$MAILWOMAN_DATA_ROOT/soil/soil.db` rather than a boolean.
+Default off, and the switch is the presence of `$MAILWOMAN_DATA_ROOT/soil/soil.db` rather than a boolean.
 The reading reaches a caller as one additive `QueryIntentMarker` with `code: "authority_designation"` and
 `mechanism: "layer:soil_capability"` — the same code the flood layer's marker uses, under the same `layer`
 family, with a rule of its own. The class never travels without the share it rests on. Ranking, abstention
@@ -210,12 +209,12 @@ byte-identical to one with it, minus the marker.
   download. Should a builder reach for one, the raster rule applies: bin at build time to the same
   per-cell class summary shape and store that, never the grid.
 - **No Cropland Data Layer.** It is CC0 and measured, but it answers a different question — observed cover
-  in one season, not capability — its accuracy caveats are unread, and it is a raster ingest into a
+  in one season rather than capability — its accuracy caveats are unread, and it is a raster ingest into a
   repository with no raster tooling. Whoever does build it inherits a meaning-of-zero inversion that
   arrives pre-built in the source's own encoding: the derived Crop Frequency Layer's value domain runs
-  `"1"` planted once in 18 years through `"18"` planted every year, then **`"255"` planted ZERO times**,
+  `"1"` planted once in 18 years through `"18"` planted every year, then **`"255"` planted zero times**,
   while **`"0"` is No Data**. A reader that takes 0 as "never planted" reads _we have no data here_ as
   _nothing was ever grown here_ — exactly backwards. Nothing in this vocabulary uses a numeric sentinel
   for either state, and nothing in it should start.
 - **No suitability score.** The layer repeats what an authority states, in the authority's vocabulary, with
-  the authority's dates. The projection to a number belongs to the consumer, not to the layer.
+  the authority's dates. The projection to a number belongs to the consumer rather than to the layer.

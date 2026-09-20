@@ -3,7 +3,7 @@
 
 /**
  *   End-to-end proof of the shim/worker split: a real MCP client spawns the real bin, calls a real tool through the
- *   forked worker, restarts the worker MID-SESSION, and keeps working — the property the split exists for. No stubs
+ *   forked worker, restarts the worker MID-session, and keeps working — the property the split exists for. No stubs
  *   anywhere: a stubbed worker would prove the test's own idea of the IPC protocol, and protocol drift between shim
  *   and worker is precisely the failure this file must catch.
  */
@@ -17,7 +17,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 const CLI_PATH = String(resolvePackagePath("@mailwoman/dev-mcp", "lib", "cli", "index.ts"))
 
 /**
- * Worker boot imports the whole mailwoman graph; under vitest concurrency that is seconds, not milliseconds.
+ * Worker boot imports the whole mailwoman graph. under vitest concurrency that is seconds rather than milliseconds.
  */
 const BOOT_TIMEOUT_MS = 120_000
 
@@ -50,7 +50,7 @@ describe("the never-stale shim", () => {
 			expect(names).toContain("mwdev_inputs")
 			expect(names).toContain("mwdev_restart")
 
-			// The schemas crossed the IPC boundary as plain JSON Schema — spot-check one is an object schema, not a
+			// The schemas crossed the IPC boundary as plain JSON Schema — spot-check one is an object schema rather than a
 			// serialization accident.
 			const inputsTool = tools.find((tool) => tool.name === "mwdev_inputs")
 
@@ -74,8 +74,13 @@ describe("the never-stale shim", () => {
 	it(
 		"restarts the worker mid-session and keeps serving — the property the split exists for",
 		async () => {
+			interface Status {
+				pid: number
+				boot_tree_fingerprint: string
+			}
+
 			const before = await client.callTool({ name: "mwdev_daemon", arguments: { action: "status" } })
-			const beforePID = (before.structuredContent as { pid: number }).pid
+			const beforeStatus = before.structuredContent as Status
 
 			const restart = await client.callTool({ name: "mwdev_restart", arguments: {} })
 
@@ -87,17 +92,27 @@ describe("the never-stale shim", () => {
 				tools_changed: boolean
 			}
 
-			expect(report.previous_pid).toBe(beforePID)
-			expect(report.new_pid).not.toBe(beforePID)
-			// The tree did not move between forks, so the fingerprints must agree — a restart is not a source change.
-			expect(report.new_boot_fingerprint).toBe(report.previous_boot_fingerprint)
+			expect(report.previous_pid).toBe(beforeStatus.pid)
+			expect(report.new_pid).not.toBe(beforeStatus.pid)
+			// A restart is not a source change: the same tree yields the same tool SET.
+			//
+			// Deliberately not `new_boot_fingerprint === previous_boot_fingerprint`. That digest covers the newest
+			// source mtime and `git status --porcelain` (`tree-fingerprint.ts`), so it moves whenever anything writes
+			// into the checkout — and under `yarn test` 866 other files run alongside this one, at least one of which
+			// re-populates the weights overlay by design. The assertion held only while nothing else touched the tree,
+			// which is true in isolation and false in the suite it runs in.
 			expect(report.tools_changed).toBe(false)
+
+			// The plumbing each fork owns, which is load-independent: a worker reports the fingerprint it booted
+			// against, and the restart report carries each fork's own value rather than re-reading one for both.
+			expect(report.previous_boot_fingerprint).toBe(beforeStatus.boot_tree_fingerprint)
 
 			// The fresh worker serves: same client, same session, new module graph.
 			const after = await client.callTool({ name: "mwdev_daemon", arguments: { action: "status" } })
-			const afterPID = (after.structuredContent as { pid: number }).pid
+			const afterStatus = after.structuredContent as Status
 
-			expect(afterPID).toBe(report.new_pid)
+			expect(afterStatus.pid).toBe(report.new_pid)
+			expect(afterStatus.boot_tree_fingerprint).toBe(report.new_boot_fingerprint)
 		},
 		BOOT_TIMEOUT_MS
 	)
@@ -116,9 +131,9 @@ describe("the never-stale shim", () => {
 	it(
 		"rejects mis-shaped arguments at the schema, not deep inside the handler",
 		async () => {
-			// The split moved the SDK's validation out of the call path; the worker must re-impose it. A client holding
+			// The split moved the SDK's validation out of the call path. the worker must re-impose it. A client holding
 			// a pre-restart schema sends exactly this shape — an array parameter as its JSON text — and the failure it
-			// gets back must name the arguments, not a TypeError from whatever the handler tried to do with the string.
+			// gets back must name the arguments rather than a TypeError from whatever the handler tried to do with the string.
 			const result = await client.callTool({
 				name: "mwdev_run",
 				arguments: { tally: '["tier"]' },

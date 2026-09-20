@@ -2,24 +2,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Diff two GEOCODES of the same input — the parse diff plus what the resolver did with it.
+ *   Diff two geocodes of the same input — the parse diff plus what the resolver did with it.
  *
  *   A distance delta on its own is the geocoding equivalent of a component map: it says the answer moved and not why.
  *   The three ways a geocode changes are different problems with different fixes, and only a per-span view separates
  *   them:
  *
  *   1. **The parse changed**, so the resolver was asked a different question. Nothing is wrong with retrieval.
- *   2. **The parse held and a span resolved to a different PLACE** — same text, same tag, new `placeID`. That is a
+ *   2. **The parse held and a span resolved to a different place** — same text, same tag, new `placeID`. That is a
  *      ranking or a gazetteer-coverage problem.
- *   3. **The parse held, the places held, and the TIER changed** — the same components fell through to a coarser rung
+ *   3. **The parse held, the places held, and the tier changed** — the same components fell through to a coarser rung
  *      because a rooftop or interpolation lookup missed. That is a data-coverage problem and no amount of model work
  *      touches it.
  *
  *   It lives in `mailwoman` rather than beside the parse diff in `core` because it needs `haversineKm`, and
  *   `@mailwoman/spatial` depends on `@mailwoman/core` — putting it in core would close a cycle. Re-implementing the
- *   haversine to avoid the move is the other wrong answer; `AGENTS.md` names spatial as its one home.
+ *   haversine to avoid the move is the other wrong answer; `agents.md` names spatial as its one home.
  *
- *   The retrieval BREADTH per span is carried for the same reason a per-span confidence is: a span that resolved to the
+ *   The retrieval breadth per span is carried for the same reason a per-span confidence is: a span that resolved to the
  *   same place from 40 candidates instead of 2 is one gazetteer edit away from moving, and an answer that did not
  *   change yet is not the same as an answer that is stable.
  */
@@ -39,14 +39,14 @@ export interface SpanResolution {
 	lat?: number
 	lon?: number
 	/**
-	 * How many candidates the retrieval considered. Breadth, not correctness — a span that won from 40 is less settled
-	 * than one that won from 2, even when both picked the same place.
+	 * How many candidates the retrieval considered. Breadth rather than correctness — a span that won from 40 is less
+	 * settled than one that won from 2, even when both picked the same place.
 	 */
 	candidates?: number
 }
 
 /**
- * What changed for one span's RESOLUTION, independent of whether its parse changed.
+ * What changed for one span's resolution, independent of whether its parse changed.
  */
 export interface SpanGeoDelta {
 	tag: string
@@ -81,7 +81,7 @@ export interface GeocodeDiff {
 	latAfter?: number | null
 	lonAfter?: number | null
 	/**
-	 * Kilometres the FINAL answer moved. Undefined when either arm returned no coordinate — which is a different event
+	 * Kilometres the final answer moved. Undefined when either arm returned no coordinate — which is a different event
 	 * from moving zero kilometres and must not read as one.
 	 */
 	movedKm?: number
@@ -209,7 +209,7 @@ export function diffGeocode(input: string, before: GeocodeArm, after: GeocodeArm
 /**
  * Metres below which a coordinate move is rendered as "same point".
  *
- * Int8 quantization and float round-tripping move a centroid by centimetres; rendering that as a delta buries the moves
+ * Int8 quantization and float round-tripping move a centroid by centimetres. rendering that as a delta buries the moves
  * that matter.
  */
 export const SAME_POINT_M = 1
@@ -254,7 +254,7 @@ export function renderGeocodeDiff(diff: GeocodeDiff): string {
 		}
 	}
 
-	// The parse story last, because when attribution is `parse-changed` it IS the explanation and the reader needs it.
+	// The parse story last, because when attribution is `parse-changed` it is the explanation and the reader needs it.
 	if (!diff.parse.identical) {
 		for (const span of diff.parse.spans.filter(isChange)) {
 			lines.push(`  · parse: ${describeSpan(span)}`)

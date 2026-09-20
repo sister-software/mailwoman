@@ -55,7 +55,7 @@ kind-classifier → phrase-grouper → classifier (neural/rule-based) → ...
 
 ## Design
 
-- **Boundary discovery, not classification.** The phrase grouper answers "where
+- **Boundary discovery rather than classification.** The phrase grouper answers "where
   are the coherent units?" — the classifier answers "what _type_ is each unit?"
   This separation makes both problems easier.
 - **Bitter-lesson-safe:** uses only universal structural cues (proximity,
@@ -70,8 +70,8 @@ kind-classifier → phrase-grouper → classifier (neural/rule-based) → ...
 - [`@mailwoman/core`](../core) — pipeline coordinator that consumes phrase groups
 - [`@mailwoman/kind-classifier`](../kind-classifier) — preceding stage
 - [The Knowledge Ladder](https://mailwoman.ai/articles/concepts/the-knowledge-ladder/) — design rationale
-- [Staged Pipeline Contract](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx)
+- [Staged Pipeline Interface](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx)
 
 ## License
 
-[AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html)
+[AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html)

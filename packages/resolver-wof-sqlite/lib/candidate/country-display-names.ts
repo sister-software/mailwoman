@@ -13,17 +13,18 @@ import { normalizeLocalityForKey } from "#street/normalize"
 /**
  * Fold every country surface ICU knows onto that country's candidate row (#1678 thread 1).
  *
- * A bare `格鲁吉亚` (Georgia the country) resolved to NOTHING while `佐治亚州` (Georgia the US state) resolved correctly, and
- * the model gave both the same wrong `locality` tag — so the tag was never the variable. Measured 2026-08-15: 140 of
- * 237 country rows are synthetic and carry a canonical English name and nothing else; WOF holds no Chinese country
- * names at all; and the GeoNames alias fold filters through a Latin-script regex, so neither existing source could ever
- * supply them.
+ * A bare `格鲁吉亚` (Georgia the country) resolved to nothing while `佐治亚州` (Georgia the US state) resolved correctly, and
+ * the model gave both the same wrong `locality` tag — so the tag was never the variable. 140 of 237 country rows are
+ * synthetic and carry a canonical English name and nothing else, and WOF holds no Chinese country names at all. The
+ * GeoNames alias fold now admits every script, but it reaches only the fold's own country set and names a place from
+ * its dump row, so it supplies a country surface for no country outside that set.
  *
  * `Intl.DisplayNames` already knows every one — ~280 regions, ~5,244 surfaces, from the same ICU the runtime uses for
  * every other locale-sensitive operation. No download, no vendored corpus, no snapshot to drift.
  *
- * `is_primary = 0`: these are NAMES THE WORLD USES, not the country's canonical name. The display `name` stays whatever
- * the gazetteer already had, so resolving `格鲁吉亚` answers with the Georgia country row rather than renaming it.
+ * `is_primary = 0`: these are names the world uses rather than the country's canonical name. The display `name` stays
+ * whatever the gazetteer already had, so resolving `格鲁吉亚` answers with the Georgia country row rather than renaming
+ * it.
  *
  * Returns the row count so the caller can report it — a zero means ICU supplied nothing, which is a different fact from
  * the pass not having run.
@@ -48,7 +49,9 @@ export function stageCountryDisplayNames(ctx: {
 
 		const held = countryByISO2.get(iso2)
 
-		if (!held || a.pop > held.a.pop) {
+		// An unmeasured population loses to any measured one and ties with another unmeasured, which is what a zero
+		// stand-in did here before the column carried null.
+		if (!held || (a.pop ?? 0) > (held.a.pop ?? 0)) {
 			countryByISO2.set(iso2, { sid, a })
 		}
 	}
@@ -64,7 +67,7 @@ export function stageCountryDisplayNames(ctx: {
 
 		const k = normalizeLocalityForKey(name)
 
-		// The country's own key is already staged as its primary; INSERT OR IGNORE at materialization dedupes the
+		// The country's own key is already staged as its primary. insert or ignore at materialization dedupes the
 		// rest, so this only skips the obvious self-alias.
 		if (!k || k === target.a.pkey) continue
 

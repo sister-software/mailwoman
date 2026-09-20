@@ -2,7 +2,7 @@
 
 Authored geographic semantics for the [mailwoman](https://www.npmjs.com/package/mailwoman) geocoder: stable concepts (`pharmacy`, `obtain_medication`), the relations a curator can state between them (`pharmacy affords obtain_medication`), mappings into external vocabularies, source observations, and derived facts — every record carrying provenance, and all of it compiled deterministically into a lookup artifact the runtime reads.
 
-The design problem it exists to solve: a geocoder benefits from knowing that a pharmacy is a place where you obtain medication, but the moment that knowledge becomes a ranking rule, authored opinion starts overriding what the models learned from data. This package holds the knowledge in a shape that CANNOT become ranking policy — no numeric field exists anywhere in the schema, and the compiled artifact answers lookups, never orderings.
+The design problem it exists to solve: a geocoder benefits from knowing that a pharmacy is a place where you obtain medication, but the moment that knowledge becomes a ranking rule, authored opinion starts overriding what the models learned from data. This package holds the knowledge in a shape that cannot become ranking policy — no numeric field exists anywhere in the schema, and the compiled artifact answers lookups, never orderings.
 
 ## Should you install this?
 
@@ -26,8 +26,8 @@ One document holds six tables, and all six are required — a hand-authored file
 
 Three properties hold by construction:
 
-- **No numeric field exists anywhere.** Not a strength, not a confidence, not a count. `Modality` is an ordinal vocabulary of words (`necessary`, `prohibited`, `strongly_expected`, … `strongly_unusual`) and the package exports no order over it, because a number on an authored relationship is a ranking weight whatever it is called.
-- **Authored, observed, and derived are three types, not three uses of one type.** Their identifiers carry separate brands, so one is not assignable where another is expected, and they live in separate tables so a curation decision has to be made deliberately rather than by a record sitting in a convenient place.
+- **No numeric field exists anywhere.** Not a strength rather than a confidence rather than a count. `Modality` is an ordinal vocabulary of words (`necessary`, `prohibited`, `strongly_expected`, … `strongly_unusual`) and the package exports no order over it, because a number on an authored relationship is a ranking weight whatever it is called.
+- **Authored, observed, and derived are three types rather than three uses of one type.** Their identifiers carry separate brands, so one is not assignable where another is expected, and they live in separate tables so a curation decision has to be made deliberately rather than by a record sitting in a convenient place.
 - **A derived fact carries its provenance structurally.** It has no `source` field: its `derivation` plus its `inputs` are the provenance, and every input carries source provenance in turn. A source string can be copied onto a record that did not come from it; an input list either resolves or the document does not validate.
 
 Identifiers are branded through `type-fest`'s `Tagged` and converted explicitly — `toConceptID`, `toRelationID`, `toRuleID`, `toMappingID`, `toObservationID`, `toDerivedFactID`. The brands are compile-time only; the strings survive JSON untouched.
@@ -54,7 +54,7 @@ It is plain deterministic TypeScript with no I/O: no reasoner, no query engine, 
 
 ## What is authored today
 
-The first slice, in [`data/model/`](./data/model/):
+The first record set, in [`data/model/`](./data/model/):
 
 ```text
 place
@@ -64,7 +64,7 @@ pharmacy               isA healthcare_facility          affords obtain_medicatio
 activity
 obtain_medication      isA activity
 
-affords                establishment → activity, not transitive, not symmetric
+affords                establishment → activity rather than transitive rather than symmetric
 poi-taxonomy pharmacy  → the pharmacy concept
 ```
 
@@ -76,7 +76,7 @@ node packages/geographic-model/lib/scripts/build-artifact.ts && npx oxfmt packag
 
 [`data/PROVENANCE.md`](./data/PROVENANCE.md) records what each file states and where each external category id was read from. A reviewed amendment admitted a first breadth wave — a `drugstore` concept, a US-scoped `affords` assertion on it, and a second `poi-taxonomy` mapping — and all three are authored, under the same provenance discipline. One activity therefore reaches two establishment classes, which is what the schema was shaped to express and what the POI branch searches as a union.
 
-Measured, not promised: with this one proposition injected behind an off-by-default flag, activity-phrased queries against the live geocoder moved from 0 of 4 answered to 3 of 4 (a pharmacy 0.41 km from the Denver anchor), with all 6 control queries unchanged. That measurement — pre-registered before the code existed, frozen by hash, decided against committed thresholds — is why the package continues to grow.
+Measured rather than promised: with this one proposition injected behind an off-by-default flag, activity-phrased queries against the live geocoder moved from 0 of 4 answered to 3 of 4 (a pharmacy 0.41 km from the Denver anchor), with all 6 control queries unchanged. That measurement — pre-registered before the code existed, frozen by hash, decided against committed thresholds — is why the package continues to grow.
 
 ## Design commitments
 
@@ -89,17 +89,17 @@ Each of these is owned elsewhere, and naming the owner is what keeps a second co
 | Dataset identity and coverage epistemics                                                                     | `@mailwoman/core/layers`                                                                                 |
 | Empirical, spatial activity-affordance statistics                                                            | Fitted from data elsewhere in the program — against the identifiers owned here                           |
 
-Two rules are enforced by tests rather than assumed: `@mailwoman/core` must not depend on this package (core ships the pipeline contract plus ~9 MB of reference data to every consumer, and a world-semantics dependency there is one every drop-in API inherits without asking), and the public surface carries no ranking policy — a binding whose name announces a boost, penalty, weight, rank, score, or ordering fails the suite.
+Two rules are enforced by tests rather than assumed: `@mailwoman/core` must not depend on this package (core ships the pipeline interface plus ~9 MB of reference data to every consumer, and a world-semantics dependency there is one every drop-in API inherits without asking), and the public surface carries no ranking policy — a binding whose name announces a boost, penalty, weight, rank, score, or ordering fails the suite.
 
 The operating rule for the whole boundary is one sentence: **knowledge creates observations; it never overrides learned interpretation.** A record here may create a fact, an anomaly, a contradiction, or a coverage-qualified absence. It may not create an imperative.
 
-Architecturally excluded for the life of the package: an OWL/DL reasoner, a SPARQL endpoint, a triplestore, a general-purpose knowledge-graph service, and any query-time traversal of the authoring JSON. Authored records are source material compiled into artifacts — artifacts, not a service.
+Architecturally excluded for the life of the package: an OWL/DL reasoner, a SPARQL endpoint, a triplestore, a general-purpose knowledge-graph service, and any query-time traversal of the authoring JSON. Authored records are source material compiled into artifacts — artifacts rather than a service.
 
 ## Where the full design lives
 
 This README is the package-local summary. The authoritative documents are in the mailwoman repository:
 
-- The ownership boundary and the frozen first slice: [`docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md`](https://github.com/sister-software/mailwoman/blob/main/docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md)
+- The ownership boundary and the frozen first record set: [`docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md`](https://github.com/sister-software/mailwoman/blob/main/docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md)
 - The program that governs growth, with its decision points: [sister-software/mailwoman#1916](https://github.com/sister-software/mailwoman/issues/1916)
 
 ## Layout

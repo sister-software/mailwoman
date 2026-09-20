@@ -100,7 +100,7 @@ beforeAll(() => {
 				[1.001, 1],
 			],
 		},
-		// Descending range: numbers DECREASE walking from-node → to-node.
+		// Descending range: numbers decrease walking from-node → to-node.
 		{
 			street_norm: "river road",
 			side: "R",
@@ -126,7 +126,7 @@ beforeAll(() => {
 				[0.001, 2],
 			],
 		},
-		// Odd number on a street with ONLY an even side on record — the parity fallback.
+		// Odd number on a street with only an even side on record — the parity fallback.
 		{
 			street_norm: "mill street",
 			side: "R",
@@ -152,8 +152,8 @@ beforeAll(() => {
 				[0.001, 4],
 			],
 		},
-		// Stored under the CANONICAL route key (as the builder writes it from TIGER's
-		// "State Rte 100") — the query side must fold "VT ROUTE 100" to the same key.
+		// Stored under the canonical route key (as the builder writes it from tiger's
+		// "State Rte 100") — the query side must fold "VT route 100" to the same key.
 		{
 			street_norm: "state route 100",
 			side: "L",
@@ -207,7 +207,7 @@ describe("StreetInterpolator", () => {
 		const hit = interpolator.find({ street: "River Rd", number: "450", postcode: "05601" })
 		expect(hit!.lon).toBeCloseTo(0.0005, 9)
 		expect(hit!.lat).toBeCloseTo(1, 9)
-		// And the from-boundary sits at the polyline START even though it's the range MAX.
+		// And the from-boundary sits at the polyline start even though it's the range MAX.
 		const atFrom = interpolator.find({ street: "River Rd", number: "500", postcode: "05601" })
 		expect(atFrom!.lon).toBeCloseTo(0, 9)
 	})
@@ -255,7 +255,7 @@ describe("StreetInterpolator", () => {
 	})
 
 	it("matches a TIGER-spelled route key from the E911/Overture route spelling", () => {
-		// TIGER says "State Rte 100"; E911/Overture say "VT ROUTE 100" — both fold to the same
+		// tiger says "State Rte 100"; E911/Overture say "VT route 100" — both fold to the same
 		// canonical key (build side stores it folded, query side folds before matching).
 		const hit = interpolator.find({ street: "VT ROUTE 100", number: "1043", postcode: "05601" })
 		expect(hit).not.toBeNull()
@@ -271,14 +271,14 @@ describe("StreetInterpolator", () => {
 	})
 })
 
-// #374 doctrine: the conformal radius multiplier is a property of the calibration set the ARTIFACT was
-// built against, so it ships in the extract's `interp_calibration` metadata table and is read ONCE at open
+// #374 doctrine: the conformal radius multiplier is a property of the calibration set the artifact was
+// built against, so it ships in the extract's `interp_calibration` metadata table and is read once at open
 // time. A extract predating the table (the shipped fleet) reads `undefined` — never a throw, never a guess.
 describe("StreetInterpolator — artifact-carried radius calibration (#374)", () => {
 	it("reads the extract's baked multiplier at open time", async () => {
 		await using kdb = DatabaseClient.temp<StreetSegmentDatabase>()
 		seed(kdb, [MAIN_EVEN])
-		// The SAME producer the extract builder runs (`writeInterpCalibration`), so the fixture can't
+		// The same producer the extract builder runs (`writeInterpCalibration`), so the fixture can't
 		// drift from the production shape.
 
 		await writeInterpCalibration(kdb, { radius_multiplier: 1.7, method: "split-conformal:2026-06-14", region: "TX" })
@@ -286,7 +286,7 @@ describe("StreetInterpolator — artifact-carried radius calibration (#374)", ()
 
 		expect(calibrated.radiusCalibration).toBe(1.7)
 		// find() itself never applies the multiplier — the raw radius stays the honest half-segment
-		// value (conformal-calibrate measures THIS); the resolver owns the multiplication.
+		// value (conformal-calibrate measures this); the resolver owns the multiplication.
 		const hit = calibrated.find({ street: "Main St", number: "150", postcode: "05601" })
 		expect(hit).not.toBeNull()
 		expect(hit!.uncertaintyM).toBeGreaterThan(40)
@@ -320,7 +320,7 @@ describe("StreetInterpolator — artifact-carried radius calibration (#374)", ()
  */
 describe("StreetInterpolator — parity-first ambiguity, near tie-break, key variants", () => {
 	it("answers without a postcode when PARITY selects a single ZIP (the boundary-road class)", () => {
-		// 151 is odd; only the 05601 odd side can hold it. The even 05602 namesake used to veto this
+		// 151 is odd. only the 05601 odd side can hold it. The even 05602 namesake used to veto this
 		// via the pre-parity postcode count.
 		const hit = interpolator.find({ street: "Main St", number: "151" })
 

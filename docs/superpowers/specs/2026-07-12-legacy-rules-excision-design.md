@@ -14,7 +14,7 @@ The v1 rules parser (pelias-parser lineage) was kept through the neural transiti
    - libpostal drop-in `/parse` (`libpostal/cli.ts:40`) — rules-only, sole engine. Its docstring falsely claims "neural BIO tagger".
    - Nominatim drop-in `/search` (`nominatim/cli.ts:248`) — neural is primary, but every hit runs a second, rules parse (`streetParts`) to recover `house_number`/`road` the resolver drops.
 2. **Two module-graph entanglements** block a clean reduce:
-   - `core/classification/Classification.ts` (the `Classification` string-set) is a shared contract: `core/types/mapping.ts`, `tokenization/Span.ts`, `formatter/format.ts` (type-only).
+   - `core/classification/Classification.ts` (the `Classification` string-set) is a shared interface: `core/types/mapping.ts`, `tokenization/Span.ts`, `formatter/format.ts` (type-only).
    - `core/tokenization/context.ts` imports runtime values from `core/solver`, and the neural pipeline imports `Span` from the tokenization barrel — the v0 solver sits in the neural module graph today (loaded, never invoked).
 3. **~6.8k LOC of legacy tests** run in CI on every PR, including 27 integration files (2.7k LOC) of hand-curated country-parity assertions driven by test-kit's global `createAddressParser()`.
 
@@ -29,36 +29,36 @@ Non-production paths (all die with the parser): CLI no-weights fallback, `parse`
 | `/v1/parse` format  | **Native neural output** (`AnnotationSet`/`ComponentTag` tree — the same language the rest of `/v1` speaks). Breaking, documented in the migration guide. No permanent projection into the dead `SerializedSolution` shape.                                                                                                                                       |
 | CLI no-weights UX   | **Interactive weights guard** (see §Weights guard). Prompt to download a weights package; decline ⇒ degraded pipeline parse with a banner. Non-TTY ⇒ hard error with install hint.                                                                                                                                                                                |
 | Utilities to retain | Already current-gen: `codex/us/*` (USPS directionals/suffixes), `normalize/abbreviations`. The legacy classifiers are the duplicate copies and die. `core/data/libpostal/` dictionary **data stays** — live dep of corpus tiger/ban decompose + the street-morphology FST builder (raw `.txt` reads, verified).                                                   |
-| Parity corpus       | **Rescued, not sealed.** Convert to neural eval fixtures before deletion (§Parity-corpus rescue).                                                                                                                                                                                                                                                                 |
+| Parity corpus       | **Rescued rather than sealed.** Convert to neural eval fixtures before deletion (§Parity-corpus rescue).                                                                                                                                                                                                                                                          |
 
 ## Evidence capture (phase 0 — while everything still runs)
 
 The rules parser is the reference for every non-regression check below and is about to be deleted. Captured **before any swap lands**, committed as fixtures:
 
-| Artifact                                  | Feed                                                                                           | Debugs                                                                                                                                                                                                 |
-| ----------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `/v1/parse` golden responses              | the 2.7k parity addresses + rare-label synthetics (`po_box`, `level`, `staircase`, `entrance`) | did the neural swap regress a component the old endpoint extracted — compared at component level via the taxonomy bridge (the wire shape changes by design, so this check is semantic, not byte-exact) |
-| libpostal `/parse` golden responses       | same set                                                                                       | exact-label fidelity of the `toLibpostal()` projection                                                                                                                                                 |
-| nominatim `/search` full golden responses | ~200 queries incl. known resolver-drop cases                                                   | semantic drift in `streetParts` after deriving from the neural parse                                                                                                                                   |
-| raw rules output per parity assertion     | each `mailwoman/test/` assertion input                                                         | fixture failure triage: "neural changed" vs "assertion was idiosyncratic"                                                                                                                              |
+| Artifact                                  | Feed                                                                                           | Debugs                                                                                                                                                                                                        |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/v1/parse` golden responses              | the 2.7k parity addresses + rare-label synthetics (`po_box`, `level`, `staircase`, `entrance`) | did the neural swap regress a component the old endpoint extracted — compared at component level via the taxonomy bridge (the wire shape changes by design, so this check is semantic rather than byte-exact) |
+| libpostal `/parse` golden responses       | same set                                                                                       | exact-label fidelity of the `toLibpostal()` projection                                                                                                                                                        |
+| nominatim `/search` full golden responses | ~200 queries incl. known resolver-drop cases                                                   | semantic drift in `streetParts` after deriving from the neural parse                                                                                                                                          |
+| raw rules output per parity assertion     | each `mailwoman/test/` assertion input                                                         | fixture failure triage: "neural changed" vs "assertion was idiosyncratic"                                                                                                                                     |
 
 Plus one probe before trusting the archive: `npm i @mailwoman/classifiers@6.0.0 mailwoman@6.0.0` in a clean tmp dir (cold, outside the workspace), construct the parser, parse one address. If the published tarballs don't stand alone, the sealing story is hollow and we fix that **in a 6.x patch** before v7.
 
 ## Projection layer
 
-`toLibpostal()` joins `toOpenCage()`/`toNative()` in `@mailwoman/annotations` — the annotation contract is already where output-format projections live, so libpostal's label taxonomy becomes one more projection, not a private map inside the drop-in server.
+`toLibpostal()` joins `toOpenCage()`/`toNative()` in `@mailwoman/annotations` — the annotation interface is already where output-format projections live, so libpostal's label taxonomy becomes one more projection rather than a private map inside the drop-in server.
 
 **Plan-1 discovery (2026-07-12):** `libpostal/engine.ts` already carries `COMPONENT_TO_LIBPOSTAL` + `toLibpostalComponents()` serving the current wire (v1 classification names overlap `ComponentTag` names for the mapped set, so the same map covers both eras). Plan 2 hoists or extends that map rather than writing one from scratch; the open choice there is hoist-into-`annotations` vs extend-in-place.
 
 **Plan-2 amendments (2026-07-12, scout-verified against source):**
 
-1. **The projection stays in `libpostal/engine.ts` (extend-in-place).** `@mailwoman/annotations` is the coordinate-keyed _enrichment_ contract (`AnnotationSet` = dms/mgrs/timezone/currency/…, projected by `toOpenCage()`/`toNative()`); it has no component/tag vocabulary and is the wrong home for a parse-component projection. The paragraph above stands corrected.
-2. **"Native neural output" for `/v1/parse` means the decoder serializers, not `AnnotationSet`:** ordered `[ComponentTag, value]` components (`decodeAsTuples`) plus the loose `AddressTree` shape `/v1/resolve` already speaks (`{ roots }`). Same correction as (1): `AnnotationSet` was the wrong term in §Decisions.
-3. **The drop-in checks are structured comparisons, not byte-equality.** The neural tag vocabulary differs from the rules parser's by design (street splits into `street_prefix`/`street`/`street_suffix`; no `unit_designator`; values are case-normalized). Byte-identity with the rules-era goldens is unattainable for any engine swap. Checks become: (a) wire-shape validity (labels within the libpostal vocabulary post-projection, reading order preserved), (b) pre-registered per-label agreement floors vs the goldens after case-folding + street assembly (house_number ≥ 0.97, postcode ≥ 0.97, road ≥ 0.90 — pre-registered before any check run), (c) a committed diff report classing every divergence (known-vocab / improvement / regression) for review. The nominatim `road` field additionally gets _richer_ by design (full assembled prefix+base+suffix vs the bare rules `street` value) — an adjudicated-improvement class, not a regression.
+1. **The projection stays in `libpostal/engine.ts` (extend-in-place).** `@mailwoman/annotations` is the coordinate-keyed _enrichment_ interface (`AnnotationSet` = dms/mgrs/timezone/currency/…, projected by `toOpenCage()`/`toNative()`); it has no component/tag vocabulary and is the wrong home for a parse-component projection. The paragraph above stands corrected.
+2. **"Native neural output" for `/v1/parse` means the decoder serializers rather than `AnnotationSet`:** ordered `[ComponentTag, value]` components (`decodeAsTuples`) plus the loose `AddressTree` shape `/v1/resolve` already speaks (`{ roots }`). Same correction as (1): `AnnotationSet` was the wrong term in §Decisions.
+3. **The drop-in checks are structured comparisons rather than byte-equality.** The neural tag vocabulary differs from the rules parser's by design (street splits into `street_prefix`/`street`/`street_suffix`; no `unit_designator`; values are case-normalized). Byte-identity with the rules-era goldens is unattainable for any engine swap. Checks become: (a) wire-shape validity (labels within the libpostal vocabulary post-projection, reading order preserved), (b) pre-registered per-label agreement floors vs the goldens after case-folding + street assembly (house_number ≥ 0.97, postcode ≥ 0.97, road ≥ 0.90 — pre-registered before any check run), (c) a committed diff report classing every divergence (known-vocab / improvement / regression) for review. The nominatim `road` field additionally gets _richer_ by design (full assembled prefix+base+suffix vs the bare rules `street` value) — an adjudicated-improvement class rather than a regression.
 4. **`streetParts` needs no replacement parse at all:** `GeocodeResult.house_number`/`.street` already carry the spans (#1041), populated from the same neural parse the geocode runs. The nominatim swap is a deletion.
 
 - Direction: `ComponentTag` → libpostal labels (`street → road`, `locality → city`, `region → state`, …). `core/types/mapping.ts` is retained as the taxonomy bridge (it survives the excision precisely because the projections and the parity conversion need it).
-- Labels the neural taxonomy can't distinguish (`house`, `near`, `category`): omit, log-once. They are near-absent in the golden corpus; if the check shows otherwise, that's a board issue, not a blocker.
+- Labels the neural taxonomy can't distinguish (`house`, `near`, `category`): omit, log-once. They are near-absent in the golden corpus; if the check shows otherwise, that's a board issue rather than a blocker.
 - Nominatim's `streetParts` recovery uses the same projection helper against the neural parse **already computed for the query** — the second parse per `/search` hit disappears (perf win, blocked by the golden set).
 
 ## Weights guard (CLI)
@@ -70,9 +70,9 @@ Plus one probe before trusting the archive: `npm i @mailwoman/classifiers@6.0.0 
 3. Declined ⇒ **degraded pipeline parse** (normalize → query-shape → locale-hint → kind-classifier → phrase-grouper structural output) with an explicit banner naming what's degraded and how to upgrade.
 4. Missing + non-TTY (CI, pipes) ⇒ hard error with install hint. `--degraded` opts into 3 without a prompt; `--download-weights` opts into 2 without a prompt. Scripts stay deterministic.
 
-The degraded path is the current-gen preprocessing stack, **not** a retained rules parser.
+The degraded path is the current-gen preprocessing stack rather than a retained rules parser.
 
-## Contract rehoming (before deletion)
+## Interface rehoming (before deletion)
 
 1. `Classification.ts` string-set → `core/types/` (it's a taxonomy the mapper and formatter consume; the classifier implementation around it dies).
 2. Break `tokenization/context.ts → core/solver` edge. Keep `Span`, `normalizer`, `split` (current-gen consumers: neural, phrase-grouper, decoder, policy). Delete `context`, `Graph`, `permutate` with the solver.
@@ -80,7 +80,7 @@ The degraded path is the current-gen preprocessing stack, **not** a retained rul
 
 ## Parity-corpus rescue
 
-The 27 country files are hand-written multilingual gold (ported addressit/pelias parity cases) — human expectations, not captured rules output. Triage per assertion:
+The 27 country files are hand-written multilingual gold (ported addressit/pelias parity cases) — human expectations rather than captured rules output. Triage per assertion:
 
 - **Convert straight:** labels identical across taxonomies (`house_number`, `postcode`, `unit`, …).
 - **Translate then convert:** via `legacyClassificationToComponentTag`; mapping recorded in the fixture.
@@ -92,7 +92,7 @@ Every converted fixture carries provenance: `v1-parity:<country>: "<address>" ma
 
 | Delete                                                                                      | Notes                                                             |
 | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `classifiers/` workspace (2.8k LOC + 29 test files)                                         | npm package deprecated, not unpublished                           |
+| `classifiers/` workspace (2.8k LOC + 29 test files)                                         | npm package deprecated rather than unpublished                    |
 | `core/solvers/`, `core/solver/`                                                             | after the tokenization edge is broken                             |
 | `core/parser/AddressParser.ts`, `solution-to-proposals.ts`                                  | `proposal-pipeline.ts` rehomed first                              |
 | `core/classification/` implementation (Base/Word/Phrase/Section/Composite, scheme)          | `Classification.ts` rehomed first                                 |
@@ -110,7 +110,7 @@ Stays, explicitly: `core/data/libpostal/` + `core/data/internal/` dictionaries (
 1. **Phase 0:** archive probe + golden capture (all four artifacts).
 2. **Projection:** build `toLibpostal()` in `annotations/` with unit tests against the libpostal golden.
 3. **Swaps, one PR each, eval-conditional:** `/v1/parse` → native neural (check: semantic component-level comparison vs golden + emitted OpenAPI update) → libpostal `/parse` (check: byte-level non-regression vs golden; fix the docstring) → nominatim `streetParts` from the neural parse (check: `/search` golden, byte-level).
-4. **Weights guard** lands with the `/v1/parse`-era CLI work (it must exist before the fallback dies).
+4. **Weights guard** arrives with the `/v1/parse`-era CLI work (it must exist before the fallback dies).
 5. **Rehoming:** `Classification.ts` → `core/types/`; break `context → solver` edge; move `proposal-pipeline.ts`.
 6. **Umbrella surface:** remove the classifiers re-export + `utils/parser.ts` consumers (keeps CI green through deletion).
 7. **Parity conversion** (after 5 — fixtures import the cleaned graph), then delete the old parity files.
@@ -123,7 +123,7 @@ Stays, explicitly: `core/data/libpostal/` + `core/data/internal/` dictionaries (
 - Every swap PR carries its golden-set check; the goldens are committed fixtures, so checks outlive the parser.
 - Converted parity fixtures join the neural eval suite in the same PR that deletes their source files — coverage never dips between PRs.
 - CI sheds ~6.8k LOC of legacy tests at step 8; `ci:test` keeps running the full remaining suite.
-- Standing eval checks (`mailwoman eval promote`, demo presets) run per swap; ledger append on PASS as usual.
+- Standing eval checks (`mailwoman eval promote`, demo presets) run per swap; ledger append on pass as usual.
 
 ## Migration guide (outline, ships in docs)
 
@@ -142,4 +142,4 @@ Stays, explicitly: `core/data/libpostal/` + `core/data/internal/` dictionaries (
 
 ## Consult notes (DeepSeek pro, 3 rounds, 2026-07-12)
 
-Folded in: pre-deletion golden capture; projection lives in `annotations/`; registry cold-install probe; migration guide + docs scrub + re-export removal sequenced before deletion. Rejected: in-repo source tarball archive (tag + registry already archive it); blocking against upstream libpostal's own outputs (different parser, unattainable exact-match — checks are non-regression vs our own endpoints); "rules baseline is an irreplaceable oracle" (it stays installable; parity assertions are human gold, not rules output). Session made no quantitative predictions; structural contributions 4/6 adopted.
+Folded in: pre-deletion golden capture; projection lives in `annotations/`; registry cold-install probe; migration guide + docs scrub + re-export removal sequenced before deletion. Rejected: in-repo source tarball archive (tag + registry already archive it); blocking against upstream libpostal's own outputs (different parser, unattainable exact-match — checks are non-regression vs our own endpoints); "rules baseline is an irreplaceable oracle" (it stays installable; parity assertions are human gold rather than rules output). Session made no quantitative predictions; structural contributions 4/6 adopted.

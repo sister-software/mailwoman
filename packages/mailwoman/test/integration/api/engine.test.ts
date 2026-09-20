@@ -8,16 +8,16 @@
  *   `app.request()`.
  *
  *   `test/resolve-router.test.ts` (the `/api/resolve` XML-tree-viewer endpoint, `ResolveRouter.ts`)
- *   does NOT port — that endpoint retires with the debug pages, and its coverage is unrelated
- *   to `resolveTreeHandler`/`/v1/resolve` (a DIFFERENT express router, `GeocodeRouter.ts`), which this
- *   file DOES cover (ported from `geocode-router.test.ts`'s RemoteResolver round-trip test).
+ *   does not port — that endpoint retires with the debug pages, and its coverage is unrelated
+ *   to `resolveTreeHandler`/`/v1/resolve` (a different express router, `GeocodeRouter.ts`), which this
+ *   file does cover (ported from `geocode-router.test.ts`'s RemoteResolver round-trip test).
  *
  *   The generic timing-metrics algorithm (percentiles, tier partition, reservoir) also does not
  *   re-port here — `api-kit/metrics.test.ts` already exhaustively covers the identical
  *   `recordTimed`/`metricsSnapshot` logic this engine delegates to. This file only exercises the
- *   `/metrics` HTTP surface reflecting a real wired call (the integration behavior, not the algorithm).
+ *   `/metrics` http surface reflecting a real wired call (the integration behavior rather than the algorithm).
  *
- *   The engine is built ONCE (`beforeAll`) and reused across every test in this file — unlike
+ *   The engine is built once (`beforeAll`) and reused across every test in this file — unlike
  *   express's per-request lazy `getDeps()`, `createServeEngine()` does the (slow: model + SQLite)
  *   setup work eagerly, so paying that cost once per file (not once per test) matters. Error-path
  *   assertions run unconditionally: the validation-layer 400s never reach the engine, so they pass
@@ -40,7 +40,7 @@ import { beforeAll, beforeEach, describe, expect, test } from "vitest"
 const wofPath = $public.MAILWOMAN_WOF_DB ?? String(dataRootPath("wof", "admin-global-priority.db"))
 const txSitus = String(dataRootPath("address-points", "address-points-us-tx.db"))
 const hasStack = (await pathExists(wofPath)) && (await pathExists(txSitus))
-// oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe; the title and callback arrive where it is invoked
+// oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe. the title and callback arrive where it is invoked
 const describeIfStack = describe.skipIf(!hasStack)
 
 /**
@@ -48,9 +48,9 @@ const describeIfStack = describe.skipIf(!hasStack)
  */
 async function weightsPresent(): Promise<boolean> {
 	try {
-		// ASK THE RESOLVER. This probed `packages/neural-weights-en-us/model.onnx` directly, which is true only
+		// ASK the resolver. This probed `packages/neural-weights-en-us/model.onnx` directly, which is true only
 		// while the dev linker materializes binaries into that package — and a skip-guard that stops matching
-		// does not fail, it SKIPS, so the suite disappears from the run reporting success. The repo has already
+		// does not fail, it skips. Therefore, the suite disappears from the run reporting success. The repo has already
 		// paid for this once: the workspace regroup left this literal behind and both this suite and
 		// `api-engine.test.ts` went quiet until someone counted the skips.
 		return await pathExists((await resolveWeights({ locale: "en-us" })).modelPath)
@@ -59,7 +59,7 @@ async function weightsPresent(): Promise<boolean> {
 	}
 }
 
-// oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe; the title and callback arrive where it is invoked
+// oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe. the title and callback arrive where it is invoked
 const describeIfWeights = describe.skipIf(!(await weightsPresent()))
 
 let app: ReturnType<typeof createMailwomanAPI>
@@ -121,8 +121,8 @@ describe("api-engine — /health (run unconditionally, never throws)", () => {
 		expect(typeof body.data.interpolation_states).toBe("number")
 	})
 
-	// `readModelCard`'s FIRST non-env candidate is `import.meta.resolve` of the weights package's card. Pin the
-	// resolver itself, not just the observable: the third candidate is a CWD-relative dev-tree path
+	// `readModelCard`'s first non-env candidate is `import.meta.resolve` of the weights package's card. Pin the
+	// resolver itself rather than just the observable: the third candidate is a CWD-relative dev-tree path
 	// (`neural-weights-en-us/model-card.json`) which happens to exist when the suite runs from the repo root, so the
 	// /health assertion below would survive a broken resolution. This one would not.
 	test("the weights card resolves through the package graph, not the CWD-relative dev fallback", () => {
@@ -131,7 +131,7 @@ describe("api-engine — /health (run unconditionally, never throws)", () => {
 		)
 	})
 
-	// The `model` block is `readModelCard`'s only observable. Deterministic in a checkout WITHOUT dev weights linked:
+	// The `model` block is `readModelCard`'s only observable. Deterministic in a checkout without dev weights linked:
 	// the card is one of the metadata files the weights workspace commits (the binaries are not).
 	test("GET /health: the model block comes from the resolved weights package's card", async () => {
 		const res = await app.request("/health")
@@ -144,7 +144,7 @@ describe("api-engine — /health (run unconditionally, never throws)", () => {
 	})
 })
 
-// /v1/parse — native neural output; needs only the model weights, not the gazetteer, so
+// /v1/parse — native neural output. needs only the model weights rather than the gazetteer, so
 // it's conditioned on `weightsPresent()` rather than `hasStack` — a WOF-less boot still answers this.
 
 describeIfWeights(
@@ -216,7 +216,7 @@ describeIfStack("api-engine — success path against real WOF + TX databases", (
 		expect(results[0]!.input).toBe(addresses[0])
 		expect(results[1]!.input).toBe(addresses[1])
 
-		// #485 4a handoff: per-ROW metrics land in the engine, not just the route's whole-call "batch" tier.
+		// #485 4a handoff: per-row metrics land in the engine rather than just the route's whole-call "batch" tier.
 		const snapshot = metricsSnapshot()
 
 		const perRowTotal = Object.entries(snapshot.timings.tiers)

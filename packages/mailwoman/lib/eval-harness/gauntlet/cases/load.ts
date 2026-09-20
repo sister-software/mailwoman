@@ -4,19 +4,19 @@
 /**
  *   Load the curated regression corpus from `cases/<cc>/*.jsonl`.
  *
- *   The corpus was one 3,530-line TS array until 2026-08-05. It is now one JSONL file per ISO-3166 alpha-2
+ *   The corpus was one 3,530-line TS array until 2026-08-05. It is now one jsonl file per ISO-3166 alpha-2
  *   country dir — the per-`cc` layout the gazetteer database set already uses (`postalcode-<cc>-overture.db`) —
  *   because the array had reached the size where "does GB assert dependent_locality anywhere?" was a scroll
  *   rather than a listing.
  *
- *   ORDER IS DEFINED, not incidental: country dir ascending, then case `id` ascending within the file. The
+ *   order is defined rather than incidental: country dir ascending, then case `id` ascending within the file. The
  *   loader re-sorts rather than trusting file order, so a hand-appended row at the bottom of a file cannot
- *   change what the corpus IS — only what a text diff looks like. Nothing downstream depends on the old
- *   chronological array order; the ablation board id hashes a SORTED fingerprint (`ablation.ts`), and the
+ *   change what the corpus is — only what a text diff looks like. Nothing downstream depends on the old
+ *   chronological array order. the ablation board id hashes a sorted fingerprint (`ablation.ts`), and the
  *   regression runner grades per row.
  *
- *   What the prose migration cost, stated directly: JSONL carries no comments, so the 16 batch headers and 18
- *   per-case margin notes that lived between the array literals moved VERBATIM to `batch-notes.md`, keyed by
+ *   What the prose migration cost, stated directly: jsonl carries no comments, so the 16 batch headers and 18
+ *   per-case margin notes that lived between the array literals moved verbatim to `batch-notes.md`, keyed by
  *   the `source` value their rows carry. They are not lost, but they are no longer adjacent to their rows.
  *   That is the real price of this layout and the reason `source` must stay a curated, batch-shaped value.
  */
@@ -65,14 +65,14 @@ export class CorpusRowError extends Error {
 }
 
 /**
- * Read one `<cc>/*.jsonl` file. Blank lines are skipped; the line counter still counts them, so the number in an error
+ * Read one `<cc>/*.jsonl` file. Blank lines are skipped. the line counter still counts them, so the number in an error
  * is the number your editor shows.
  */
 async function loadCorpusFile(path: string, expectedCC: string): Promise<SeedCase[]> {
 	const rows: SeedCase[] = []
 	let line = 0
 
-	// `skipEmpty: false` is what makes the line NUMBER true. On the default (skip), the counter counts ROWS and
+	// `skipEmpty: false` is what makes the line number true. On the default (skip), the counter counts rows and
 	// silently under-reports by one per blank line above the failure — the report is then confidently wrong,
 	// which is worse than absent. Blank lines are dropped below, after they have been counted.
 	for await (const raw of TextSpliterator.fromAsync(path, { skipEmpty: false })) {
@@ -100,8 +100,8 @@ async function loadCorpusFile(path: string, expectedCC: string): Promise<SeedCas
 			throw new CorpusRowError(path, line, `does not match SeedCase — ${detail}`)
 		}
 
-		// The dir IS the country claim. A row filed under the wrong `cc` still loads and still runs, so nothing
-		// downstream would ever notice; the listing it was filed under would just be quietly wrong.
+		// The dir is the country claim. A row filed under the wrong `cc` still loads and still runs, so nothing
+		// downstream would ever notice. the listing it was filed under would just be quietly wrong.
 		if (result.data.country.toLowerCase() !== expectedCC) {
 			throw new CorpusRowError(
 				path,
@@ -134,7 +134,7 @@ export async function loadRegressionCases(dir: PathBuilderLike = CASES_DIR): Pro
 
 	for (const cc of ccDirs) {
 		const ccPath = join(dir, cc)
-		const files = await Globerator.files("jsonl", { cwd: ccPath, absolute: false }).toSorted()
+		const files = await Globerator.files("jsonl", { cwd: ccPath, absolute: false, recursive: false }).toSorted()
 		const ccCases: SeedCase[] = []
 
 		for (const file of files) {
@@ -145,7 +145,7 @@ export async function loadRegressionCases(dir: PathBuilderLike = CASES_DIR): Pro
 			const previous = seen.get(c.id)
 
 			if (previous) {
-				// `id` is the regression DB's PRIMARY KEY, so a duplicate would fail the build with a constraint
+				// `id` is the regression DB's primary KEY, so a duplicate would fail the build with a constraint
 				// error naming neither file. Fail here instead, naming both.
 				throw new Error(`duplicate case id "${c.id}" — in ${basename(previous)} and cases/${cc}/`)
 			}
@@ -161,10 +161,10 @@ export async function loadRegressionCases(dir: PathBuilderLike = CASES_DIR): Pro
 /**
  * A content hash of a loaded corpus — canonical row keys, sorted, `sha256`.
  *
- * ORDER-INDEPENDENT on purpose: it answers "are these the same cases?", never "were they read in the same order?".
- * `load.test.ts` pins it, and that pin is what carried the 2026-08-05 TS-array → JSONL migration across the commit that
+ * Order-independent on purpose: it answers "are these the same cases?", never "were they read in the same order?".
+ * `load.test.ts` pins it, and that pin is what carried the 2026-08-05 TS-array → jsonl migration across the commit that
  * deleted the array — the hash was measured against the array while both existed, so a later edit that changes corpus
- * CONTENT has to change the pin deliberately.
+ * content has to change the pin deliberately.
  */
 export function regressionCorpusHash(rows: readonly SeedCase[]): string {
 	return sha256Hex(

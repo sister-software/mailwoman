@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file `walkNodes` yields document order, so a `find` over it and the flat component map name the SAME span when a tag
+ * @file `walkNodes` yields document order, so a `find` over it and the flat component map name the same span when a tag
  *   occurs twice. The pair that showed the two disagreeing: `Village of Fae, Camino Real, Carmel-By-The-Sea, CA 93921`,
  *   two `venue` spans, where the named slot answered the second and the map the first.
  */
@@ -75,7 +75,7 @@ describe("slotNodes", () => {
 		expect(slotNodes(tree.roots).find((n) => n.tag === "locality")?.value).toBe("Bengaluru")
 		expect(decodeAsJSON(tree).locality).toBe("Bengaluru")
 
-		// The resolver grounds the LATER span only: it now holds the slot in both projections.
+		// The resolver grounds the later span only: it now holds the slot in both projections.
 		localities[1]!.lat = 15.3
 		localities[1]!.lon = 75.7
 		localities[1]!.placeID = "wof:85688457"

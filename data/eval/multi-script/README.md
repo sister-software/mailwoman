@@ -5,7 +5,7 @@ by `python -m mailwoman_train tokenizer --eval-fixture …`, which records the r
 and per-script) in the trained tokenizer's `model_card.json`.
 
 These are **not** parser-output gold (no `components` field) — they exercise the tokenizer
-only. Lines are hand-curated rather than corpus-sampled so the per-script slices stay
+only. Lines are hand-curated rather than corpus-sampled so the per-script sets stay
 balanced and so the file is small enough to keep in git.
 
 ## File

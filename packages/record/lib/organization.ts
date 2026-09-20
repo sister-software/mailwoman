@@ -4,37 +4,9 @@
 /**
  *   Organization-name canonicalization — reduce a company name to a stable, comparable key.
  *
- *   Winkler's record-linkage recipe: words of little distinguishing power (the legal designation —
- *   `Corporation`, `Limited`, `LLC`) are normalized away before matching, so `Acme Corp` and `Acme
- *   Corporation, LLC` collapse to the same key. We also split off a `doing business as` clause and
- *   normalize connectives (`&` → `and`), punctuation, accents, and a leading `The`.
- *
- *   **The collision problem (#668).** A legal-form token in one jurisdiction is a meaningful word in
- *   another domain. `PT` is Indonesia's `Perseroan Terbatas` (its LLC) — and US-healthcare
- *   shorthand for _Physical Therapy_. `SCA` / `SCS` are French/Belgian/Luxembourg commandite forms
- *   — and, in a clinic's name, _Sudden Cardiac Arrest_ / _Spinal Cord Stimulator_. A single
- *   universal strip-list can't be right for both: strip `PT` and you corrupt `Lakeside PT`; keep it
- *   and you leave the legal form on an Indonesian company. So the strip-set is computed on **two
- *   axes**:
- *
- *   - **jurisdiction** (ISO 3166-1 alpha-2, e.g. from the resolved address country) — _adds_ the legal
- *       forms valid in that country. Collision-prone forms (`pt`, `sca`, `scs`) live here, admitted only
- *       behind a known jurisdiction, NOT in the universal base.
- *   - **domain** (an ingest-config tag, e.g. `healthcare`) — _protects_ domain-meaningful tokens from
- *       ever being stripped, even when a jurisdiction pack would add them. Domain protection wins.
- *
- *   `effective = (base ∪ jurisdiction-pack) − domain-protect-pack`. With no options the set is the
- *   universal base and behavior is byte-for-byte unchanged — the new axes are strictly opt-in.
- *
- *   Evidence honesty (per the name-canonicalization research pass): the PERSON-name side is well
- *   sourced; the ORGANIZATION side is a known evidence gap. This is a solid _canonicalization_
- *   baseline (the strip-designations principle is Winkler-grounded; the designation list draws on
- *   the ISO 20275 Entity Legal Forms register and `cleanco`). The jurisdiction/domain packs below
- *   are grounded seeds, not exhaustive — extend them per ISO 20275 as locales are added. The harder
- *   org-_matching_ problems — acronym ↔ expansion (`IBM` ↔ `International Business Machines`),
- *   DBA/alias resolution beyond the simple clause, subsidiary/parent, and TF-IDF n-gram token
- *   matching — are deferred to a follow-up (a dedicated org-matching research pass + the matcher
- *   epic).
+ *   Removes legal designations and normalizes DBA clauses, punctuation, accents, connectives, and a
+ *   leading article. Jurisdiction adds legal forms. domain protection prevents ambiguous terms from
+ *   being stripped.
  */
 
 import { foldForKey } from "@mailwoman/codex/address-key"
@@ -62,8 +34,8 @@ export interface OrganizationName {
 }
 
 /**
- * A domain pack name. Each protects the abbreviations that are meaningful in that domain from being stripped as legal
- * forms (see {@link DOMAIN_PROTECTED}). `general` protects nothing — the explicit "no domain" choice. Add a pack here
+ * A domain pack name. Each guards the abbreviations that are meaningful in that domain from being stripped as legal
+ * forms (see {@link DOMAIN_PROTECTED}). `general` guards nothing — the explicit "no domain" choice. Add a pack here
  * (and to {@link DOMAIN_PROTECTED}) per ingest domain.
  */
 export type DesignationDomain = "general" | "healthcare"
@@ -74,13 +46,13 @@ export type DesignationDomain = "general" | "healthcare"
 export interface CanonicalizeOptions {
 	/**
 	 * ISO 3166-1 alpha-2 country code of the org's jurisdiction (typically the resolved address country). Adds that
-	 * country's legal forms — including collision-prone ones held out of the base — to the strip-set. Case-insensitive;
+	 * country's legal forms — including collision-prone ones held out of the base — to the strip-set. Case-insensitive.
 	 * unknown codes add nothing.
 	 */
 	jurisdiction?: string
 	/**
-	 * Ingest domain. Protects domain-meaningful abbreviations (e.g. `healthcare` protects `pt` / `sca` / `scs`) from
-	 * being stripped, overriding any jurisdiction pack that would add them.
+	 * Ingest domain. Guards domain-meaningful abbreviations (e.g. `healthcare` guards `pt` / `sca` / `scs`) from being
+	 * stripped, overriding any jurisdiction pack that would add them.
 	 */
 	domain?: DesignationDomain
 }
@@ -89,7 +61,7 @@ export interface CanonicalizeOptions {
  * Universal legal-entity designations — the forms that are safe to strip regardless of jurisdiction or domain because
  * they don't collide with common domain abbreviations. Normalized to lowercase with punctuation removed (so `L.L.C.` →
  * `llc`). Drawn from the ISO 20275 register + `cleanco`'s common set. Stripped as whole tokens wherever they occur.
- * Deliberately excludes name-meaningful words (`group`, `holdings`, `partners`, `associates`) AND the collision-prone
+ * Deliberately excludes name-meaningful words (`group`, `holdings`, `partners`, `associates`) and the collision-prone
  * forms (`pt`, `sca`, `scs`) — those last live in {@link JURISDICTION_DESIGNATIONS}, admitted only behind a known
  * jurisdiction.
  */
@@ -151,8 +123,8 @@ const BASE_DESIGNATIONS = new Set([
 /**
  * Jurisdiction-conditional legal forms (ISO 3166-1 alpha-2 → forms), added only when the jurisdiction is known. This is
  * where the collision-prone tokens live: `pt` (Indonesia), `sca` / `scs` (French/Belgian/Luxembourg commandite forms).
- * Stripping these is correct ONLY when we know the org's country — never in the universal base. Grounded seeds, not
- * exhaustive; extend per ISO 20275.
+ * Stripping these is correct only when we know the org's country — never in the universal base. Grounded seeds rather
+ * than exhaustive. extend per ISO 20275.
  */
 const JURISDICTION_DESIGNATIONS: Record<string, readonly string[]> = {
 	ID: ["pt", "tbk", "ud"], // Perseroan Terbatas / Terbuka (listed) / Usaha Dagang
@@ -164,7 +136,7 @@ const JURISDICTION_DESIGNATIONS: Record<string, readonly string[]> = {
 }
 
 /**
- * Domain protect-sets (domain → tokens never stripped). Overrides any jurisdiction pack: a token here stays in the name
+ * Domain guard-sets (domain → tokens never stripped). Overrides any jurisdiction pack: a token here stays in the name
  * even if the org's jurisdiction would treat it as a legal form. `healthcare` guards the clinical abbreviations that
  * collide with jurisdiction-conditional legal forms — `pt` (Physical Therapy), `sca` (Sudden Cardiac Arrest), `scs`
  * (Spinal Cord Stimulator) — plus a couple of always-clinical ones for future-proofing.
@@ -175,9 +147,9 @@ const DOMAIN_PROTECTED: Record<DesignationDomain, readonly string[]> = {
 }
 
 /**
- * Compute the effective designation strip-set for the given context: `(base ∪ jurisdiction-pack) −
- * domain-protect-pack`. Returns the shared base set unchanged when no context is given (the byte-stable default), so
- * the common path allocates nothing.
+ * Compute the effective designation strip-set for the given context: `(base ∪ jurisdiction-pack) − domain-guard-pack`.
+ * Returns the shared base set unchanged when no context is given (the byte-stable default), so the common path
+ * allocates nothing.
  */
 function resolveDesignations(options?: CanonicalizeOptions): ReadonlySet<string> {
 	const jurisdiction = options?.jurisdiction?.trim().toUpperCase()
@@ -239,8 +211,8 @@ function canonicalizeFragment(
  * designation-stripped key. Returns `null` for empty input.
  *
  * Pass {@link CanonicalizeOptions} to resolve the jurisdiction × domain collision (#668): a `jurisdiction` adds that
- * country's legal forms, a `domain` protects its meaningful abbreviations. With no options the universal base set is
- * used and the result is byte-for-byte the legacy behavior.
+ * country's legal forms, a `domain` guards its meaningful abbreviations. With no options the universal base set is used
+ * and the result is byte-for-byte the legacy behavior.
  */
 export function canonicalizeOrganizationName(
 	input: string | null | undefined,

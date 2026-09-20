@@ -8,7 +8,7 @@ OpenCage-informed annotations layer (epic #811). Local/no-GPU shift; $20 Modal b
 Seven new npm packages, all live, tested, and publish-safe (in `.release-it.json`, covered by
 `ci:smoke`):
 
-- `@mailwoman/annotations` — the contract: native typed `AnnotationSet` + `toOpenCage()` / `toNative()`.
+- `@mailwoman/annotations` — the interface: native typed `AnnotationSet` + `toOpenCage()` / `toNative()`.
 - `@mailwoman/nominatim` — `/search` + `/reverse` over the live engine, full annotations block.
 - `@mailwoman/photon` — `/api` + `/reverse`, GeoJSON FeatureCollections.
 - `@mailwoman/libpostal` — `/parse` (faithful libpostal labels) + `/expand` (deterministic, documented).
@@ -19,7 +19,7 @@ Seven new npm packages, all live, tested, and publish-safe (in `.release-it.json
 Mercator, geohash, qibla, sun, callingcode, currency, flag, timezone, NUTS, UN_LOCODE. Only what3words
 (proprietary) is excluded.
 
-**Two real bugs found and fixed by the new harness, not by guessing:**
+**Two real bugs found and fixed by the new harness rather than by guessing:**
 
 - `defaultCountry="US"` is a hard override (geocode-core.ts:102), inherited from GeocodeRouter's
   no-candidate-DB fallback. It beat the default-on placer, so every non-US query resolved to its US
@@ -35,7 +35,7 @@ was dropping house_number + road. Recover them from a parse and backfill country
 White House query now returns the full address at the rooftop coordinate.
 
 **Tooling:** `scripts/eval/nominatim-dropin-parity.mjs` — spins the packaged server, scores the geopy
-contract + resolve-rate over a fixed set, `/reverse`, and the countrycodes override. Checks the
+interface + resolve-rate over a fixed set, `/reverse`, and the countrycodes override. Checks the
 supported set (US + the #743 safelist), tracks the placer frontier non-conditional.
 
 **Docs:** comparison matrix `how-mailwoman-compares.mdx` (#819) + five `switching-from-*.mdx` guides
@@ -56,7 +56,7 @@ coverage. Filed #823 for the exonym/coverage change. **Caveat (caught after post
 default drop-in config (admin gazetteer, no `MAILWOMAN_CANDIDATE_DB`), so the precise percentages and
 the exonym-vs-coverage split are config-dependent — with a candidate DB, "coverage" cities like London
 and Beijing resolve. The placer-namesake gap survives the candidate DB (population-first can't break the
-US-namesake tie without a country prior), so #822 is robust; the percentages are withdrawn pending a
+US-namesake tie without a country prior), so #822 is resilient; the percentages are withdrawn pending a
 re-run on the operator's canonical candidate config. Report carries the full caveat.
 
 **Robustness hardening (all 3 drop-ins).** An edge-case probe of the shipped servers found 500 crashes
@@ -67,12 +67,12 @@ query trim + 512-char cap. Verified all cases return 200/4xx; the parity harness
 
 ## What went well
 
-- **The harness earned its keep immediately.** It existed to prove the geopy contract; it surfaced the
+- **The harness earned its keep immediately.** It existed to the result; it surfaced the
   defaultCountry bug on the first run (4/10) and then validated the fix (9/10). Building the measurement
   before declaring victory is what caught it.
 - **Probe before fix.** Every behavior change (drop defaultCountry, wire countrycodes) was preceded by a
   direct `geocodeAddress` probe that proved the hypothesis and bounded the blast on US queries. The
-  defaultCountry removal shipped with measured evidence, not a guess.
+  defaultCountry removal shipped with measured evidence rather than a guess.
 - **Verify-before-verdict fired repeatedly and correctly:** caught the countrycodes no-op against the
   guide's own claim; caught a stale-buildinfo compile that would have validated the wrong binary; caught
   the placer-vs-safelist distinction (the wide-safelist probe changed nothing).
@@ -88,11 +88,11 @@ query trim + 512-char cap. Verified all cases return 200/4xx; the parity harness
   countrycodes against the old binary. Grepping the compiled output for the new symbol saved it. Lesson
   re-learned: grade the compiled tree, confirm the symbol is in `out/` before testing.
 - **Over-checkpointed early.** Spent too much attention pacing to the hourly cron until DeepSeek
-  relayed the operator's intent — continuous momentum, not cron-paced. Corrected and drove the list.
+  relayed the operator's intent — continuous momentum rather than cron-paced. Corrected and drove the list.
 - **Published the frontier numbers before checking the resolver config.** The diagnostic ran on the
   default drop-in (no candidate DB) but I framed the percentages as the general non-US recall truth, and
   committed the report + commented #822/#823 before realizing resolution is config-dependent. A probe
-  ("does a candidate DB change this?") would have caught it _before_ publishing, not after. Caught it on
+  ("does a candidate DB change this?") would have caught it _before_ publishing rather than after. Caught it on
   the exonym follow-up (a false "Poland = absence" against the proven Warszawa result was the thread to
   pull), corrected the report + both issues + this doc. Lesson: for a measured claim about the engine,
   pin and state the data/config it ran on _before_ treating the numbers as settled — the same
@@ -103,14 +103,14 @@ query trim + 512-char cap. Verified all cases return 200/4xx; the parity harness
 - **Dropped `defaultCountry` from both drop-in geocodes** rather than make it conditional — the placer
   handles bare US queries (probe: even ambiguous "Springfield, IL"). Drop-in-local, doesn't touch the
   demo's GeocodeRouter. Alternative (per-request country detection) was more code for no measured gain.
-- **Did NOT widen `HARD_PLACE_COUNTRY_SAFELIST`** — measured it changes nothing (the placer abstains,
+- **Did not widen `HARD_PLACE_COUNTRY_SAFELIST`** — measured it changes nothing (the placer abstains,
   so the safelist never checks). The real change is GPU model work (#822). Avoided a useless shared-path
   change.
 - **Left photon lean** — no street parse / country backfill on the per-keystroke autocomplete path. The
   rich enrichment belongs on nominatim (the structured-lookup surface), per the architectural split.
-- **Docs in `concepts/`, not `recipes/`** — the operator's untracked `recipes/` WIP has broken
+- **Docs in `concepts/` rather than `recipes/`** — the operator's untracked `recipes/` WIP has broken
   `commercial.md` links that will fail docs CI when committed. Kept my docs out of that path.
-- **Parked the 3 cartographer DEM/terrain tests** (commented, not deleted) — DeepSeek relayed that the
+- **Parked the 3 cartographer DEM/terrain tests** (commented rather than deleted) — DeepSeek relayed that the
   operator disabled DEM sources for mobile performance.
 
 ## Open questions for the operator

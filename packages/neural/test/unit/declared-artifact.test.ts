@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `readDeclaredArtifactFile` — what a weights package's OWN card says it ships, and whether it does.
+ *   `readDeclaredArtifactFile` — what a weights package's own card says it ships, and whether it does.
  *
  *   This reader decides whether an unfed anchor channel is a broken package or a supported posture (#1516), so
  *   its tail matters more than its happy path: the shipped cards keep `$comment_*` siblings inside `files` to
- *   record a DELIBERATE absence, and reading one of those as a filename would turn en-gb's documented
+ *   record a deliberate absence, and reading one of those as a filename would turn en-gb's documented
  *   mitigation into a hard failure at every load.
  */
 
@@ -132,7 +132,7 @@ describe("unfedAnchorDetail — whether an unfed anchor channel is worth a warni
 	it("stays SILENT for a package that declares no binary — the #1516 false alarm", async () => {
 		// en-gb's shape. Its card says `requires.anchor.required: true` (about the shared encoder) and ships no
 		// binary on purpose, and the old condition read only the first half — so every process that loaded this
-		// overlay printed an anchor-OFF warning naming no package, which an operator whose primary bin was
+		// overlay printed an anchor-off warning naming no package, which an operator whose primary bin was
 		// present and feeding could only read as being about the primary.
 		const dir = packageDir({
 			requires: { anchor: { required: true } },

@@ -127,7 +127,7 @@ def test_emitted_level_counts_augmented_copies_against_the_row_budget(tmp_path: 
     assert report["emitted_level"]["augmented_share"] > 0.3
 
 
-#: Committed beside this file, captured from the code as it stood BEFORE a split. The assertions
+#: Committed beside this file, captured from the code as it stood before a split. The assertions
 #: above read shares and ranges, which a reordered draw can satisfy while sampling different rows;
 #: this pins the whole report, every window and every per-source figure included.
 #:
@@ -143,7 +143,7 @@ def _pinned_report(corpus: Path) -> dict:
 
 
 def test_the_whole_report_matches_the_committed_reference(tmp_path: Path) -> None:
-    """A share stays in range while the rows behind it change; the windows and counts do not."""
+    """A share stays in range while the rows behind it change. the windows and counts do not."""
     expected = json.loads(AUGMENTED_REFERENCE.read_text())["report"]
     assert _pinned_report(_write_corpus(tmp_path)) == expected
 

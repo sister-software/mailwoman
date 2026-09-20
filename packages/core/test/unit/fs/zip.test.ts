@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The streaming zip readers' two contracts that nothing else checks: a consumer may stop early, and a member name
+ * @file The streaming zip readers' two interfaces that nothing else checks: a consumer may stop early, and a member name
  *   the archive never declared an encoding for can still be read.
  *
  *   Both were broken. Stopping early raised `Cannot close while reading in progress` from yauzl, because the archive was
@@ -18,7 +18,7 @@ import ADMZip from "adm-zip"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 /**
- * Big and INCOMPRESSIBLE. A member that inflates in one pass is already finished when the consumer breaks, and yauzl
+ * Big and incompressible. A member that inflates in one pass is already finished when the consumer breaks, and yauzl
  * has released its read — such a fixture passes whether or not the disposal waits, which is what a 400 KB run of one
  * repeated character did. Random bytes keep the stream genuinely open across the break.
  */
@@ -57,7 +57,7 @@ describe("readZipEntry", () => {
 	it("lets a consumer stop before the member ends", async () => {
 		let first = 0
 
-		// oxlint-disable-next-line no-unreachable-loop -- stopping after one chunk IS the case under test.
+		// oxlint-disable-next-line no-unreachable-loop -- stopping after one chunk is the case under test.
 		for await (const chunk of readZipEntry(archivePath, "big.bin")) {
 			first = chunk.length
 
@@ -78,7 +78,7 @@ describe("readZipEntry", () => {
 	})
 
 	it("reads a second member after one was abandoned, so the archive was really closed", async () => {
-		// oxlint-disable-next-line no-unreachable-loop -- abandoning the first member IS the setup under test.
+		// oxlint-disable-next-line no-unreachable-loop -- abandoning the first member is the setup under test.
 		for await (const _chunk of readZipEntry(archivePath, "big.bin")) break
 
 		let text = ""
@@ -92,7 +92,7 @@ describe("readZipEntry", () => {
 
 	it("raises when no member matches", async () => {
 		const read = async () => {
-			// oxlint-disable-next-line no-unreachable-loop -- the generator raises before it can yield; the body never runs.
+			// oxlint-disable-next-line no-unreachable-loop -- the generator raises before it can yield. the body never runs.
 			for await (const _chunk of readZipEntry(archivePath, "absent.txt")) break
 		}
 

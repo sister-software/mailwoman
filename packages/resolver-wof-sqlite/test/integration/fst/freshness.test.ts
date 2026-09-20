@@ -5,7 +5,7 @@
  *   Fixture-scale cover for the FST build stamp and the freshness check.
  *
  *   Everything here runs on a three-state FST and a 12-byte "source database", because the thing under
- *   test is a comparison, not a gazetteer. The one property that DOES need a real artifact — that the
+ *   test is a comparison rather than a gazetteer. The one property that does need a real artifact — that the
  *   trailer can be read by seek without buffering 317 MB — is exercised structurally: the fixture
  *   writes a trailer at a non-zero offset and the reader is never handed the buffer.
  */
@@ -33,7 +33,7 @@ afterAll(() => TMP[Symbol.asyncDispose]())
 
 /**
  * A two-token FST ("aa" → "bb") with one place, so the serialized artifact has a real string table, edge table and
- * place table between the header and the trailer — the trailer offset must be computed, not guessed.
+ * place table between the header and the trailer — the trailer offset must be computed rather than guessed.
  */
 function fixtureMatcher(): FSTMatcher {
 	return FSTMatcher.fromNodes([
@@ -125,7 +125,7 @@ describe("readWOFSourceIdentity", () => {
 		const lie = "11111111111111111111111111111111"
 		await writeLocalTextFile(`${lie}  trusted-sidecar.db\n`, `${path}.md5`)
 
-		// The lie proves the sidecar was READ rather than the file re-hashed — the property that keeps
+		// The lie proves the sidecar was read rather than the file re-hashed — the property that keeps
 		// the guard cheap enough to leave switched on for a 5 GB source.
 		expect((await readWOFSourceIdentity(path)).md5).toBe(lie)
 	})

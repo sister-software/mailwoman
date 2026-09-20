@@ -1,8 +1,9 @@
 /**
- * Tests for the anchor-absorption counter-augmentation (#220/#723 Probe A1). The required checks: (1) every slice
- * aligns cleanly (no quarantine) so the slice is trainable, and (2) the LEADING 5-digit gets the CONTEXT-correct label
- * — house_number when a trailing postcode is present (CASE-H), postcode when not (CASE-P). That contrast is exactly
- * what the model must learn instead of flipping the default (the Probe A0 erosion this slice fixes).
+ * Tests for the anchor-absorption counter-augmentation (#220/#723 Probe A1). The required checks: (1) every template
+ * aligns cleanly (no quarantine) so the recipe output is trainable, and (2) the leading 5-digit gets the
+ * context-correct label — house_number when a trailing postcode is present (case-H), postcode when not (case-P). That
+ * contrast is exactly what the model must learn instead of flipping the default (the Probe A0 erosion this recipe
+ * fixes).
  */
 
 import { makeLcg } from "@mailwoman/core/random"
@@ -31,7 +32,7 @@ function rowFor(template: AnchorAbsorptionTemplate, seed = 1) {
 }
 
 /**
- * The BIO tag on the FIRST token of raw (the leading 5-digit's label).
+ * The BIO tag on the first token of raw (the leading 5-digit's label).
  */
 function leadingTag(aligned: ReturnType<typeof alignRow>): string | null {
 	if (aligned.kind !== "labeled") return null
@@ -51,7 +52,7 @@ describe("synthesize anchor-absorption", () => {
 		"standard",
 	]
 
-	it("every slice aligns cleanly (no quarantine) across seeds", () => {
+	it("every template aligns cleanly (no quarantine) across seeds", () => {
 		for (const t of templates) {
 			for (let seed = 1; seed <= 20; seed++) {
 				const { synth, aligned } = rowFor(t, seed)
@@ -68,15 +69,15 @@ describe("synthesize anchor-absorption", () => {
 
 	it("CASE-P (US rural): leading postcode, NO trailing → postcode", () => {
 		const { synth, aligned } = rowFor("p-us-rural", 3)
-		expect(synth.components.house_number).toBeUndefined() // no house number — the leading IS the postcode
+		expect(synth.components.house_number).toBeUndefined() // no house number — the leading is the postcode
 		expect(leadingTag(aligned)).toBe("postcode")
 	})
 
 	it("h-no-trailing-locality: leading number + LOCALITY + state, no trailing → house_number (the A3 fix)", () => {
-		// The contrast to p-us-rural: same no-trailing state-bearing shape, but a LOCALITY is present, so the
-		// leading number is the house number — the discriminator the A2 slice lacked (98 house#->postcode).
+		// The contrast to p-us-rural: same no-trailing state-containing shape, but a locality is present, so the
+		// leading number is the house number — the discriminator the A2 recipe output lacked (98 house#->postcode).
 		const { synth, aligned } = rowFor("h-no-trailing-locality", 3)
-		expect(synth.components.locality).toBeTruthy() // a locality IS present (vs p-us-rural's none)
+		expect(synth.components.locality).toBeTruthy() // a locality is present (vs p-us-rural's none)
 		expect(synth.components.postcode).toBeUndefined() // no trailing postcode
 		expect(leadingTag(aligned)).toBe("house_number")
 	})

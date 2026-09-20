@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build uprn` — the OS Open UPRN spatial layer (`uprn.db`): every GB Unique
- *   Property Reference Number with OS's own WGS84 point, under the layer contract. Acquires the
+ *   `mailwoman gazetteer build uprn` — the OS Open uprn spatial layer (`uprn.db`): every GB Unique
+ *   Property Reference Number with OS's own WGS84 point, under the layer interface. Acquires the
  *   archive from the open OS Downloads API (same product family as Code-Point Open), verifies it
  *   against OS's published md5, and writes a sealed, atomically-swapped artifact. The layer is an
  *   interoperability key source — nothing on the parse/resolve path reads it.
  *
- *   Coverage is England, Scotland and Wales; Northern Ireland's identifiers live in LPS Pointer, not
+ *   Coverage is England, Scotland and Wales. Northern Ireland's identifiers live in LPS Pointer rather than
  *   any OS OpenData product, and the layer's own coverage rows say so. See
  *   `gazetteer-pipeline/uprn-layer.ts` for the checks (md5, exact header, accounting identity, row
  *   floor).
@@ -20,16 +20,10 @@
 import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { Box, Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	phaseReporter,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReporter, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "uprn",
@@ -41,13 +35,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	sourceDir?: string
-	out?: string
-	offline?: boolean
-}
-
-const GazetteerBuildUPRN: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildUPRN: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { repoRootPath } = await import("@mailwoman/core/utils")
 		const { buildSHA } = await import("#gazetteer/stamp-manifest")

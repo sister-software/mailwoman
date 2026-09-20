@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The languages a REGION's addresses are written in: the country's official languages plus the region's own
+ *   The languages a region's addresses are written in: the country's official languages plus the region's own
  *   co-official ones, in ISO 639-3 (the code the Who's On First names table carries). This is the question a corpus
  *   extraction asks when it turns a region record into the surfaces a person types, and it differs from
  *   {@link isOfficialLanguage} in two ways: it answers per region rather than per country, and it refuses the
  *   country-wide `regional` list, whose languages are official somewhere in the country and not in the region at hand.
  *
- *   Spain is the one country with a per-region table so far; every other country answers with its official languages
+ *   Spain is the one country with a per-region table so far. every other country answers with its official languages
  *   alone, which for GB, FR, DE, IT, NL and PT is the language the source addresses are already written in.
  */
 
@@ -16,7 +16,7 @@ import { OFFICIAL_LANGUAGES } from "#country/official-languages"
 import { coOfficialLanguagesForProvince } from "#es/co-official-languages"
 
 /**
- * The length of an ISO 639-3 code, the spelling the Who's On First names table uses; the generated table lists each
+ * The length of an ISO 639-3 code, the spelling the Who's On First names table uses. the generated table lists each
  * language under its ISO 639-1 spelling too, which is two letters.
  */
 const ALPHA3_LENGTH = 3

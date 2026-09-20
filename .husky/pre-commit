@@ -95,7 +95,7 @@ if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^packages/mailw
 			echo "  git add docs/articles/developers/reference/cli.mdx" >&2
 			exit 1
 		fi
-		# The SECOND generated artifact, same freshness contract: the man page's CI drift test fired on
+		# The SECOND generated artifact, same freshness interface: the man page's CI drift test fired on
 		# 2026-08-17 (cli.mdx prose) and again on 2026-08-18 (a new flag) because only cli.mdx was
 		# hook-covered. Same guard, same remediation shape.
 		node packages/mailwoman/out/cli/index.js dev generate man-page

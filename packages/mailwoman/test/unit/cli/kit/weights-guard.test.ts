@@ -3,7 +3,7 @@
 
 /**
  *   Pure-implementation tests for the CLI weights guard (plan 3). The interactive component is exercised
- *   live under a pty in the plan's Task-4 verification; here we pin the npm invocation, the probe
+ *   live under a pty in the plan's Task-4 verification. here we pin the npm invocation, the probe
  *   semantics against a cache layout, and the probe's rejection of metadata-only installs.
  */
 
@@ -14,8 +14,8 @@ import { buildWeightsInstallArgs, probeWeights } from "mailwoman/cli-kit/weights
 import { join } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-// A locale with NO weights package, which is the whole point: these cases assert the not-resolvable
-// path, so the locale must be one nothing can resolve. It was `de-DE` until 2026-08-02, when campaign
+// A locale with no weights package, which is the whole point: these cases assert the not-resolvable
+// path. Therefore, the locale must be one nothing can resolve. It was `de-DE` until 2026-08-02, when campaign
 // R9 shipped `@mailwoman/neural-weights-de-de` and silently invalidated the premise — `resolveWeights`
 // started finding the real workspace package and every "nothing resolves" assertion inverted.
 //

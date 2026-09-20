@@ -1,11 +1,11 @@
 # v0.5.0 classifier verdict-smoke — thread C-s recipe.
 #
-# Hand off: NOT for immediate use. This config is parked here as part of Thread C-s
+# Hand off: not for immediate use. This config is parked here as part of Thread C-s
 # (the scaffold-now-train-later ship). It becomes invocable when:
 #
-#   - Thread A (tokenizer retrain) has landed under /data/models/tokenizer/v0.5.0/, AND
+#   - Thread A (tokenizer retrain) has landed under /data/models/tokenizer/v0.5.0/, and
 #   - Thread B (corpus-v0.4.0 with phrase proposals + adversarial expansion) has landed
-#     under /data/corpus/versioned/v0.4.0/corpus-v0.4.0/, AND
+#     under /data/corpus/versioned/v0.4.0/corpus-v0.4.0/, and
 #   - Thread F (verdict-smoke framework) is merged to main so the `--smoke-mode constant`
 #     flag + `train.lr_schedule: constant` config field are wired through.
 #
@@ -20,7 +20,7 @@
 # 50K run on rented GPU. Catches:
 #
 #   - Phrase-prior feature plumbing: corpus loader emits the (B, S, 10) feature tensor
-#     in the layout the model expects (see phrase_priors.py for the slot contract).
+#     in the layout the model expects (see phrase_priors.py for the slot interface).
 #   - Top-k inference returns calibrated paths when sanity-checked against the eval set.
 #   - CRF + class_weights + per_token + phrase-prior projection all coexist without
 #     NaN or dtype mismatch under bf16 on gfx1103.
@@ -64,7 +64,7 @@ data:
 
 model:
   # Hidden-size stays at v0.3.0/v0.4.0 baseline per Thread C-s scope. The plan doc mentions
-  # a 256 → 384 or 512 bump as "likely paid for by rented GPU" for the FULL v0.5.0 run,
+  # a 256 → 384 or 512 bump as "likely paid for by rented GPU" for the full v0.5.0 run,
   # but the scaffold validates that the new architecture trains cleanly at the current
   # size first. Treat the bump as an orthogonal training-side concern, bumped in a
   # follow-up `v0_5_0-classifier-large.yaml` if the v0.5.0 baseline lands clean.
@@ -82,7 +82,7 @@ model:
   crf_normalization: per_token
   crf_loss_weight: 1.0
   # v0.4.0 class-weight recipe — coarse-biased CE. Re-validate after the v0.5.0 corpus
-  # mix lands; the relative class frequencies will shift with the adversarial additions.
+  # mix lands. the relative class frequencies will shift with the adversarial additions.
   class_weights:
     O: 1.0
     B-country: 2.0
@@ -105,9 +105,9 @@ model:
     I-street: 0.5
     B-house_number: 0.5
     I-house_number: 0.5
-  # v0.5.0 thread C: phrase-prior conditioning ON. The headline architectural change for
+  # v0.5.0 thread C: phrase-prior conditioning on. The headline architectural change for
   # this iteration — Stage 2.7's PhraseProposals flow into the classifier as per-token
-  # features (see phrase_priors.py for the layout). Default is OFF for backward-compat;
+  # features (see phrase_priors.py for the layout). Default is off for backward-compat;
   # turning it on here is the explicit v0.5.0 opt-in.
   use_phrase_priors: true
   # Per-token feature width = PHRASE_BIE_DIM (3) + PHRASE_KIND_DIM (7) = 10.
@@ -136,7 +136,7 @@ train:
   precision: bf16
   num_workers: 0
   csv_log_path: "{output_dir}/train_log.csv"
-  # Constant linear warmup → flat at learning_rate; no cosine decay. Per Thread F's
+  # Constant linear warmup → flat at learning_rate. no cosine decay. Per Thread F's
   # VERDICT_SMOKES.md mode A: sustained peak LR for the smoke window means dual-loss
   # divergence surfaces immediately rather than being masked by a decaying tail
   # (the v0.4.0 cw-only false-positive trap). Equivalent to passing
@@ -144,8 +144,8 @@ train:
   lr_schedule: constant
 
 eval:
-  # Golden v0.1.2 stays the eval anchor for v0.5.0. The non-Latin adversarial slice +
-  # kryptonite catalogue are NEW eval splits per the plan doc § Success metrics; their
+  # Golden v0.1.2 stays the eval anchor for v0.5.0. The non-Latin adversarial subset +
+  # kryptonite catalogue are new eval splits per the plan doc § Success metrics. their
   # fixtures land alongside Thread D (reconcile).
   golden_dir: ""
   val_jsonl: ""

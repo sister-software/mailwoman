@@ -1,6 +1,6 @@
 ---
 sidebar_position: 36
-title: "2026-05-28 v0-vs-Neural harness — honest assessment"
+title: "2026-05-28 v0-vs-Neural harness — direct assessment"
 ---
 
 # v0-vs-Neural harness — 2026-05-28
@@ -89,7 +89,7 @@ Neural tokenizer + BIO decoder garbles multi-byte characters. Examples:
 - `Korunní 810, Praha` → neural: `{locality: ["Korunn"], region: ["ha"]}` — `ní` is split mid-character
 - `Rua Raul Leite Magalhães, 65, Tapiraí - SP, 18180-000, Brazil` → neural: `{street: ["es"], region: ["zil"], venue: ["Rua Raul Leite Magalh"]}` — Portuguese diacritics destroy span boundaries
 
-This is a tokenizer/encoder issue, not a schema issue. The model can't recover when SentencePiece pieces don't reassemble to the original characters.
+This is a tokenizer/encoder issue rather than a schema issue. The model can't recover when SentencePiece pieces don't reassemble to the original characters.
 
 ### 2. Schema gap: `unit_designator`
 
@@ -125,9 +125,9 @@ intersections relative to v0's hand-tuned coverage.
 
 ## What this means for v0.6.2
 
-This is the "honest assessment" the postmortem called for. The implications:
+This is the "direct assessment" the postmortem called for. The implications:
 
-1. **Locale coverage is the dominant gap.** US, FR, and a slice of AUS are in distribution;
+1. **Locale coverage is the dominant gap.** US, FR, and a portion of AUS are in distribution;
    everything else is structurally untaught. v0.6.2's corpus augmentation has to expand
    beyond US-only synth-street.
 2. **Schema additions are needed before retraining helps Aus/UK unit notation.** The
@@ -146,7 +146,7 @@ This is the "honest assessment" the postmortem called for. The implications:
 
 The harness also accepts a `--falsehoods <dir>` argument for JSONL files of structured rows.
 `data/eval/falsehoods/streets.jsonl` lands the catalog from
-[`falsehoods-streets.md`](../../understanding/why-its-hard/falsehoods/falsehoods-streets.mdx) as 22 explicit
+[`falsehoods-streets.md`](../../site-2026-08/understanding/why-its-hard/falsehoods/falsehoods-streets.mdx) as 22 explicit
 test rows — Piccadilly, rue de Rivoli, Plein 1944, Avenue Road, Gondel 2695, the
 A1-as-composite-street, dependent streets, Japanese block addressing, rural routes, Mannheim
 grid. Each row carries `falsehood` (the category) and `expected_failure` (whether this is a
@@ -173,7 +173,7 @@ parser succeeds and the rule-based pipeline fails:
    HouseNumberClassifier grabs the leading `8` then mis-tags the rest; neural reads it as a
    single street span correctly.
 2. `R 5, 6-13, D-68161 Mannheim` — grid address with no street. v0's classifiers force a
-   street-shaped reading that doesn't fit; neural correctly produces just locality + postcode.
+   street-shaped reading that doesn't fit; neural correctly produceslocality + postcode.
 
 The pattern: **neural is sometimes BETTER on formats it has never seen**, because v0's
 hand-tuned rules actively misclassify them. The "ambiguous-but-common" cases (rue de Rivoli,
@@ -201,10 +201,10 @@ Total runtime: ~5 seconds for 376 assertions.
 
 ## See also
 
-- [Street-supplement architecture](../../concepts/street-supplement-architecture.mdx) — the design context
+- [Street-supplement architecture](../../site-2026-08/concepts/street-supplement-architecture.mdx) — the design context
 - [Layer 1 morphology FST eval](../experiments/2026-05-28-layer-1-morphology-fst.mdx) — preceding eval that
   established the decoder-only fix is insufficient
-- [Falsehoods about street names](../../understanding/why-its-hard/falsehoods/falsehoods-streets.mdx) — the
+- [Falsehoods about street names](../../site-2026-08/understanding/why-its-hard/falsehoods/falsehoods-streets.mdx) — the
   edge cases the harness's falsehoods row source captures
 - 2026-05-28 night-2 postmortem — postmortem that triggered
   this assessment

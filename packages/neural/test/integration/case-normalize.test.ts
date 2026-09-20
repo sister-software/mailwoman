@@ -3,7 +3,7 @@
 
 /**
  *   #690 input case-normalization — detection + transform. The essential guarantees: mixed-case and
- *   non-ASCII input are NEVER touched (byte-stable, the no-regression-by-construction), and the
+ *   non-ascii input are never touched (byte-stable, the no-regression-by-construction), and the
  *   transform is length-preserving (token offsets survive).
  */
 
@@ -44,7 +44,7 @@ describe("titleCaseInput", () => {
 	it("title-cases ASCII runs ≥3 letters, preserves ≤2-letter all-caps runs (#252), preserves length", () => {
 		expect(titleCaseInput("PALESTINE")).toBe("Palestine")
 		// #252: ≤2-letter all-caps runs are state codes / suffix abbrevs (TX, RD, ST) — title-casing them
-		// (Tx, Rd) corrupted the region signal. Preserve them; the model reads both forms.
+		// (Tx, Rd) corrupted the region signal. Preserve them. the model reads both forms.
 		expect(titleCaseInput("214 JONES RD")).toBe("214 Jones RD")
 		expect(titleCaseInput("ELKHART TX")).toBe("Elkhart TX")
 		const caps = "214 JONES RD, ELKHART, TX 75839"

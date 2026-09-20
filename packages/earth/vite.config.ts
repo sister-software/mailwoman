@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Earth build: React, the PWA manifest and service worker, and `build.json`. There is no server side; every
+ *   The Earth build: React, the PWA manifest and service worker, and `build.json`. There is no server side. every
  *   output is a static asset Cloudflare serves without invoking a Worker.
  */
 

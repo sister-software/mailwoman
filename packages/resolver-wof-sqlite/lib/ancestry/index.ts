@@ -3,14 +3,14 @@
 
 /**
  *   The shared ancestor-lineage walk over the WOF `ancestors` table — one place's containment chain
- *   joined with `spr` for canonical names + centroids, ordered NEAREST-FIRST (deepest placetype
+ *   joined with `spr` for canonical names + centroids, ordered nearest-first (deepest placetype
  *   first, country last).
  *
  *   Factored out of `WOFSQLitePlaceLookup.ancestors()` (#404) so the reverse geocoder (`reverse.ts`,
- *   #484) reuses the SAME walk instead of growing a second one. The placetype-specificity ordering
- *   lives here as `PLACETYPE_DEPTH` — a single TS map instead of the previous SQL CASE, and
+ *   #484) reuses the same walk instead of growing a second one. The placetype-specificity ordering
+ *   lives here as `PLACETYPE_DEPTH` — a single TS map instead of the previous SQL case, and
  *   extended below `localadmin` (locality/borough/neighbourhood/microhood now rank correctly
- *   instead of sorting last; forward resolution rarely saw those as ANCESTOR placetypes, reverse
+ *   instead of sorting last. forward resolution rarely saw those as ancestor placetypes, reverse
  *   geocoding always does).
  */
 
@@ -19,7 +19,7 @@ import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
  * WOF placetype → containment depth, coarsest = 1. Higher = finer. Placetypes we never resolve (continent, empire, …)
- * map to 0 and sort last. NOT the same table as the FST's `PLACETYPE_ORDER` (fst-serialize.ts) — that one is a
+ * map to 0 and sort last. Not the same table as the FST's `PLACETYPE_ORDER` (fst-serialize.ts) — that one is a
  * serialization order, this one is containment depth.
  */
 export const PLACETYPE_DEPTH: Readonly<Record<string, number>> = {
@@ -57,7 +57,7 @@ export interface AncestorPlaceRow {
 
 /**
  * The ancestor lineage of `id` — self excluded, nearest-first. Returns `[]` when the place has no recorded ancestry.
- * NOT memoized here; `WOFSQLitePlaceLookup` keeps its own per-id cache.
+ * Not memoized here; `WOFSQLitePlaceLookup` keeps its own per-id cache.
  */
 export function ancestorLineage<DB>(db: DatabaseClient<DB>, id: number, schemaName = "main"): AncestorPlaceRow[] {
 	const rows = allRows<AncestorPlaceRow>(

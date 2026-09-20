@@ -6,11 +6,11 @@
  *   (`_app.tsx:820-900`). It walks the host-supplied `autocomplete` over the locality segment the visitor
  *   is typing (the text after the last comma), owns the suggestion list + keyboard-highlighted active
  *   descendant, and rewrites the input on pick (replacing just that segment). No FST, no fetch of its own
- *   — the `autocomplete` fetcher is INJECTED (the package never imports `@mailwoman/resolver-wof-sqlite`),
+ *   — the `autocomplete` fetcher is injected (the package never imports `@mailwoman/resolver-wof-sqlite`),
  *   so this stays node-safe and testable with a synchronous fake.
  *
  *   Returns the `<input>` aria/combobox props to spread onto the reused {@link QueryForm} input plus an
- *   `onInputKeyDown` (↑/↓ move the highlight, Enter accepts it AND suppresses submit, Esc dismisses), and
+ *   `onInputKeyDown` (↑/↓ move the highlight, Enter accepts it and suppresses submit, Esc dismisses), and
  *   the presentational {@link PlaceAutocomplete} listbox renders `suggestions` / `activeIndex`.
  */
 
@@ -124,13 +124,14 @@ export function usePlaceAutocomplete({
 	debounceMs = 150,
 }: UsePlaceAutocompleteOptions): UsePlaceAutocomplete {
 	/**
-	 * The last COMPLETED fetch, keyed by the query that produced it. Visibility is DERIVED from this during render rather
+	 * The last completed fetch, keyed by the query that produced it. Visibility is derived from this during render rather
 	 * than pushed through sync setStates in the effect — the effect's only job is the async fetch, so every state write
-	 * in it happens after an await and the react(set-state-in-effect) rule is satisfied by structure, not by exception.
+	 * in it happens after an await and the react(set-state-in-effect) rule is satisfied by structure rather than by
+	 * exception.
 	 */
 	const [fetched, setFetched] = useState<{ query: string; suggestions: Suggestion[] } | null>(null)
 	/**
-	 * The query whose list was dismissed or picked. Suppression as DATA, replacing the one-shot ref flag: a pick stores
+	 * The query whose list was dismissed or picked. Suppression as data, replacing the one-shot ref flag: a pick stores
 	 * the query the rewritten text will produce, so the post-pick fetch is skipped and the place just chosen is never
 	 * re-suggested. One divergence from the ref version, accepted and small: after Esc, retyping the exact same string
 	 * keeps the list hidden until the query changes.
@@ -177,7 +178,7 @@ export function usePlaceAutocomplete({
 			const next = replaceSegment(text, value)
 
 			setText(next)
-			// Suppress the fetch the rewritten text would trigger — the segment being typed IS the picked name.
+			// Suppress the fetch the rewritten text would trigger — the segment being typed is the picked name.
 			setDismissed(localitySegment(next))
 			setFetched(null)
 			setActiveIndex(-1)

@@ -4,20 +4,20 @@
 /**
  *   `mailwoman gazetteer census` — build the PCN1 placetype census (hierarchy campaign R4c) from the
  *   shipped WOF admin DB. Counts each locality-class parent's children through the projection table
- *   (`gazetteer-pipeline/placetype-census.ts`), folds parent surfaces with the SAME `normalizeFSTToken`
+ *   (`gazetteer-pipeline/placetype-census.ts`), folds parent surfaces with the same `normalizeFSTToken`
  *   the PIX1 pair index uses — so a consumer folds once and probes both artifacts — and writes
  *   `placetype-census-<country>.bin`.
  *
  *   Fold collisions SUM. Two distinct raw parents that fold together ("St Helens" / "St. Helens") are
- *   one census node whose counts are the union of both; the serializer refuses duplicate parents, so a
+ *   one census node whose counts are the union of both. the serializer refuses duplicate parents, so a
  *   merge bug surfaces as a throw rather than a silently halved count.
  *
- *   `--delta` is deliberately OPTIONAL and unset by default, unlike the pair index's required one: R4c
- *   ships the census as data + loader + offline probe with NO decode wiring. A calibrated delta is a
- *   later rung's output; writing one now would put an unmeasured bias into a shipped artifact.
+ *   `--delta` is deliberately optional and unset by default, unlike the pair index's required one: R4c
+ *   ships the census as data + loader + offline probe with no decode wiring. A calibrated delta is a
+ *   later rung's output. writing one now would put an unmeasured bias into a shipped artifact.
  *
  *   Self-verifying (the sealed-artifact spirit): after writing, the command re-reads its own bytes
- *   through a fresh `PlacetypeCensusResolver` and probes known parents, printing PROBE OK/MISS with the
+ *   through a fresh `PlacetypeCensusResolver` and probes known parents, printing probe OK/miss with the
  *   node's dependent-locality share and lift rather than trusting the write.
  */
 
@@ -28,10 +28,10 @@ import type { PlacetypeCensusHeader, PlacetypeCensusNode } from "@mailwoman/neur
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Known parents probed after write, PER COUNTRY. Probing another country's names against a freshly built census prints
+ * Known parents probed after write, PER country. Probing another country's names against a freshly built census prints
  * reassuring-looking misses that verify nothing (the lesson the pair-index command's en-nz first build taught).
  */
 const PROBE_PARENTS_BY_COUNTRY: Readonly<Record<string, readonly string[]>> = {
@@ -40,7 +40,7 @@ const PROBE_PARENTS_BY_COUNTRY: Readonly<Record<string, readonly string[]>> = {
 }
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "census",
@@ -53,14 +53,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	out: string
-	country: string
-	source?: string
-	delta?: number
-}
-
-const GazetteerCensus: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerCensus: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath, md5File } = await import("@mailwoman/core/utils")
 		const { normalizeFSTToken } = await import("@mailwoman/neural/fst-prior")
@@ -83,7 +76,7 @@ const GazetteerCensus: ParsedCommandComponent<Options> = ({ options }) => {
 			)
 		}
 
-		// Fold, merging collisions by SUMMING counts — the serializer throws on duplicates, so a merge bug is loud.
+		// Fold, merging collisions by summing counts — the serializer throws on duplicates, so a merge bug is loud.
 		const folded = new Map<string, PlacetypeCensusNode>()
 		let collisions = 0
 
@@ -128,7 +121,7 @@ const GazetteerCensus: ParsedCommandComponent<Options> = ({ options }) => {
 
 		await writeLocalFile(bytes, outPath)
 
-		// Self-verifying readback over the bytes just written, not the in-memory nodes.
+		// Self-verifying readback over the bytes just written rather than the in-memory nodes.
 		const resolver = new PlacetypeCensusResolver(bytes)
 		const probeParents = PROBE_PARENTS_BY_COUNTRY[country]
 

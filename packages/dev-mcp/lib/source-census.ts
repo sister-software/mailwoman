@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   WHAT DATA DO WE ACTUALLY HOLD, per country, per artifact.
+ *   what data do WE actually hold, per country, per artifact.
  *
- *   `lookup-sources.ts` answers "does this source know this string". This answers the question that comes BEFORE it —
+ *   `lookup-sources.ts` answers "does this source know this string". This answers the question that comes before it —
  *   is there anything here for this country at all, in which file, and can it be joined to anything. Every locale
  *   expansion starts with it, and it was hand-rolled four separate times in one session before landing here.
  *
@@ -14,13 +14,13 @@
  *     triple, so a row count alone is a misleading yes. `postalcode-geonames-intl.db` holds 395,544 PT postcodes and
  *     is `spr`-only; `postalcode-intl.db` holds 27,119 FR and has the ancestry tables. Same verb, different answer.
  *   - **`parentLinked`** — and even an `ancestors` table is not enough on its own. Measured on `postalcode-intl.db`:
- *     `parent_id` is `-1` on EVERY postcode row, and the ancestry chain for `75002` is a single SELF-reference at
+ *     `parent_id` is `-1` on every postcode row, and the ancestry chain for `75002` is a single self-reference at
  *     placetype `postalcode`. So neither column reaches a locality, and a builder that assumes either produces zero
  *     rows and reads as a coverage gap.
  *   - **`bytes` / `tables`** — a zero-byte or table-less extract is a real on-disk state (see #1791), and it looks
  *     identical to "this country has no data" from a row count.
  *
- *   ABSENCE IS REPORTED, NOT OMITTED. A country asked for and not found gets a row saying so, because "the query
+ *   absence is reported rather than omitted. A country asked for and not found gets a row saying so, because "the query
  *   returned nothing" and "we never looked there" are the two facts this file exists to keep apart.
  */
 
@@ -32,7 +32,7 @@ import { join, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
- * What a extract can be joined THROUGH, which decides what a corpus builder can extract from it.
+ * What a extract can be joined through, which decides what a corpus builder can extract from it.
  *
  * `ancestry` does not promise the chain reaches a locality — only that the table exists. The header records why that
  * distinction cost a measurement.
@@ -60,7 +60,7 @@ export interface SourceCensusRow {
 	countries?: Record<string, number>
 	join: JoinCapability[]
 	/**
-	 * Whether ANY row carries a usable `parent_id`. A extract whose every row reads `-1` cannot be walked upward, and
+	 * Whether any row carries a usable `parent_id`. A extract whose every row reads `-1` cannot be walked upward, and
 	 * that is invisible from a row count.
 	 */
 	parentLinked?: boolean
@@ -75,7 +75,7 @@ function tableNames(db: DatabaseClient<WOFDatabase>): string[] {
 }
 
 /**
- * Census one SQLite artifact. Never throws — an unreadable file is a finding, not an error.
+ * Census one SQLite artifact. Never throws — an unreadable file is a finding rather than an error.
  */
 export async function censusArtifact(path: string, countries?: readonly string[]): Promise<SourceCensusRow> {
 	const artifact = path.split("/").pop() ?? path
@@ -127,7 +127,7 @@ export async function censusArtifact(path: string, countries?: readonly string[]
 			counts[code] = row.n
 		}
 
-		// Asked for and absent is a REPORTED zero, never a missing key — the caller is deciding whether to acquire data.
+		// Asked for and absent is a reported zero, never a missing key — the caller is deciding whether to acquire data.
 		if (countries) {
 			for (const code of countries) {
 				counts[code] ??= 0
@@ -165,7 +165,7 @@ export async function gazetteerArtifacts(dataRoot?: PathBuilderLike): Promise<st
 
 	if (!(await pathExists(wof))) return []
 
-	return (await Globerator.files("db", { cwd: wof, absolute: false }).toArray())
+	return (await Globerator.files("db", { cwd: wof, absolute: false, recursive: false }).toArray())
 		.filter((name) => !/\.(?:prev\d*|bak)\b/.test(name))
 		.toSorted()
 		.map((name) => join(wof, name))

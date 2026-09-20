@@ -5,7 +5,7 @@
  *   Fixture-scale guard for the NI OSM postcode database. The real check is the full build's reconciliation
  *   against the 2026-08-05 census (12,327 elements → 4,757 units → exactly 1 malformed value); this
  *   holds the four things that eval cannot express cheaply — the #920 name law survives, the medoid
- *   lands on a real member point, a malformed tag value is DROPPED and named rather than repaired, and
+ *   lands on a real member point, a malformed tag value is dropped and named rather than repaired, and
  *   the provenance `meta` reaches the sealed artifact carrying the ODbL obligation and the
  *   meaning-of-zero coverage record.
  *
@@ -57,13 +57,13 @@ beforeAll(async () => {
 			copyright: "The data included in this document is from www.openstreetmap.org.",
 		},
 		elements: [
-			// BT3 9QQ across three elements, two of them ways — the medoid must land ON one of the three,
+			// BT3 9QQ across three elements, two of them ways — the medoid must land on one of the three,
 			// and the mean (54.6100, -5.8900) is deliberately not a member.
 			node(1, "BT3 9QQ", 54.6, -5.88),
 			way(2, "BT3 9QQ", 54.61, -5.89),
 			way(3, "BT3 9QQ", 54.62, -5.9),
 			// Lowercase + a doubled inner space: both normalize to the same single-space uppercase code, so
-			// this is ONE postcode with two attestations, not two codes and a typo.
+			// this is one postcode with two attestations rather than two codes and a typo.
 			node(4, "bt1 5gs", 54.597, -5.93),
 			node(5, "BT1  5GS", 54.598, -5.931),
 			// The malformed value the real acquisition contains exactly one of.
@@ -98,23 +98,23 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	expect(result.stats.points).toBe(5)
 	expect(result.stats.skippedMalformed).toBe(1)
 	expect(result.stats.skippedNoCoordinate).toBe(1)
-	// A drop counter says something broke; the named value says WHAT. `"BT36 4RU,"` is a typo, not a bug.
+	// A drop counter says something broke. the named value says which value it was. `"BT36 4RU,"` is a typo rather than a bug.
 	expect(result.stats.malformedValues).toEqual({ "BT36 4RU,": 1 })
 	// Ways and relations are not a footnote — 2 of the 5 surviving points come from `center`.
 	expect(result.stats.pointsByType).toEqual({ node: 3, way: 2 })
 	expect(result.districts).toBe(2)
 	expect(result.sectors).toBe(2)
-	// Every internal identity holds; nothing is silently unaccounted for.
+	// Every internal identity holds. nothing is silently unaccounted for.
 	expect(result.reconciliationFailures).toEqual([])
-	// The data extract, not the wall clock — the date that actually describes the rows.
+	// The data extract rather than the wall clock — the date that actually describes the rows.
 	expect(result.osmTimestamp).toBe("2026-08-05T13:14:01Z")
-	// Sealed 0444 — the artifact is read-only from the moment it exists (mode bits, not accessSync: root.path
+	// Sealed 0444 — the artifact is read-only from the moment it exists (mode bits rather than accessSync: root.path
 	// ignores the permission and would pass a W_OK probe on a sealed file).
 	expect((await statPath(out)).mode & 0o222).toBe(0)
 
 	await using db = new DatabaseClient<WOFDatabase>(out, { readOnly: true })
 
-	// Name law: `spr.name` is the sanitized-query token shape; the display form is an alt `names` row.
+	// Name law: `spr.name` is the sanitized-query token shape. the display form is an alt `names` row.
 	const names = db.prepare("SELECT id, name FROM spr ORDER BY name").all() as Array<{ id: number; name: string }>
 	expect(names.map((n) => n.name)).toEqual(["BT15GS", "BT39QQ"])
 	// Ids come from this database's own range, and sorting by name makes them a function of the postcode set
@@ -124,12 +124,12 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	const alt = db.prepare("SELECT COUNT(*) AS n FROM names WHERE name = 'BT3 9QQ'").get() as { n: number }
 	expect(alt.n).toBe(1)
 
-	// The spaced form must never be the primary name — the CZ build that stored it measured WORSE than no
+	// The spaced form must never be the primary name — the CZ build that stored it measured worse than no
 	// coverage at all (#920), because its bigrams partial-matched the wrong codes.
 	const spaced = db.prepare("SELECT COUNT(*) AS n FROM spr WHERE name LIKE '% %'").get() as { n: number }
 	expect(spaced.n).toBe(0)
 
-	// Case folding: the lowercase and double-spaced tags collapsed into ONE place, not two plus a typo.
+	// Case folding: the lowercase and double-spaced tags collapsed into one place rather than two plus a typo.
 	const bt1 = db.prepare("SELECT COUNT(*) AS n FROM names WHERE name = 'BT1 5GS'").get() as { n: number }
 	expect(bt1.n).toBe(1)
 
@@ -178,7 +178,7 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	expect(meta.get("coverage_meaning_of_zero")).toContain("NOT ATTESTED IN OPENSTREETMAP")
 	expect(meta.get("coverage")).toContain(`of ${NI_LIVE_POSTCODES}`)
 	expect(meta.get("source_osm_timestamp")).toBe("2026-08-05T13:14:01Z")
-	// The query that produced THESE bytes is recorded, so a rebuild can be compared against it.
+	// The query that produced these bytes is recorded, so a rebuild can be compared against it.
 	expect(meta.get("source_query")).toContain("addr:postcode")
 	expect(meta.get("source_response_md5")).toMatch(/^[0-9a-f]{32}$/)
 
@@ -195,7 +195,7 @@ test("buildPostcodeNIOSM: a response modified since acquisition is refused, not 
 		join(dir, "response.json")
 	)
 
-	// A sidecar recording a DIFFERENT md5 — the shape a half-edited acquisition dir takes.
+	// A sidecar recording a different md5 — the shape a half-edited acquisition dir takes.
 	await writeLocalJSONFile(
 		{ endpoint: "x", query: "y", queryMD5: "z", retrievedAt: "t", bytes: 1, md5: "0".repeat(32) },
 		join(dir, "acquisition.json")

@@ -33,7 +33,7 @@ from mailwoman_train.countries.jp.probe_corpora import (
     muni_bucket,
 )
 
-#: Committed beside this file, captured from the code as it stood BEFORE a split. Regenerating it
+#: Committed beside this file, captured from the code as it stood before a split. Regenerating it
 #: after a change makes the test compare the new code against itself, so regenerate only when the
 #: current code is already verified against the existing reference.
 #:
@@ -54,7 +54,7 @@ REFERENCE_README = [
 ]
 
 #: The parquet column layout the builder reads. `address_levels` is Overture's list of
-#: `{value: ...}` structs; the builder takes level 0 as the prefecture and level 1 as the
+#: `{value: ...}` structs. the builder takes level 0 as the prefecture and level 1 as the
 #: municipality.
 FIXTURE_SCHEMA = pa.schema(
     [

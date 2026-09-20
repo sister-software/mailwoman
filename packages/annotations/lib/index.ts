@@ -21,7 +21,7 @@ export interface DMS {
 }
 
 /**
- * Web Mercator (EPSG:3857) coordinate.
+ * Web Mercator (epsg:3857) coordinate.
  */
 export interface Mercator {
 	x: number
@@ -38,7 +38,7 @@ export interface CurrencyInfo {
 }
 
 /**
- * IANA timezone + current offset.
+ * Iana timezone + current offset.
  */
 export interface TimezoneInfo {
 	name: string
@@ -65,7 +65,7 @@ export interface Iso3166 {
 }
 
 /**
- * EU NUTS statistical-region codes.
+ * EU nuts statistical-region codes.
  */
 export interface NUTS {
 	level1?: string
@@ -74,7 +74,7 @@ export interface NUTS {
 }
 
 /**
- * The native enrichment set. Every field is optional; an annotator fills the slice it owns. camelCase throughout,
+ * The native enrichment set. Every field is optional. an annotator fills the fields it owns. camelCase throughout,
  * structured sub-objects — the internal representation the serializers map from.
  */
 export interface AnnotationSet {
@@ -84,7 +84,7 @@ export interface AnnotationSet {
 	geohash?: string
 	mercator?: Mercator
 	/**
-	 * Initial bearing (degrees) to Mecca.
+	 * Initial direction (degrees) to Mecca.
 	 */
 	qiblaBearing?: number
 	sun?: SunTimes
@@ -101,7 +101,7 @@ export interface AnnotationSet {
 	iso3166?: Iso3166
 	nuts?: NUTS
 	/**
-	 * UN/LOCODE, e.g. "US NYC".
+	 * UN/locode, e.g. "US NYC".
 	 */
 	unLocode?: string
 	/**
@@ -129,7 +129,7 @@ export interface AnnotatorInput {
 	 */
 	countryCode?: string
 	/**
-	 * The resolved place's name (locality), when known — feeds name-keyed annotators (UN/LOCODE).
+	 * The resolved place's name (locality), when known — feeds name-keyed annotators (UN/locode).
 	 */
 	placeName?: string
 	/**
@@ -139,7 +139,7 @@ export interface AnnotatorInput {
 }
 
 /**
- * A unit of enrichment: takes a coordinate/place, returns the slice of the set it can fill.
+ * A unit of enrichment: takes a coordinate/place, returns the fields of the set it can fill.
  */
 export type Annotator = (input: AnnotatorInput) => Partial<AnnotationSet> | Promise<Partial<AnnotationSet>>
 
@@ -341,7 +341,7 @@ export interface SchemaOrgPlace {
 }
 
 /**
- * The neutral resolved-address input {@link toSchemaOrg} serializes. Every field is optional; an absent field is omitted
+ * The neutral resolved-address input {@link toSchemaOrg} serializes. Every field is optional. an absent field is omitted
  * from the output entirely (no `null`s). Mirrors the {@link OpenCageAnnotations} precedent: one native shape, a
  * dedicated serializer per wire format.
  */
@@ -353,8 +353,8 @@ export interface SchemaOrgInput {
 	 */
 	name?: string
 	/**
-	 * The rendered street line (house number + street + unit) as ONE string. Compose it with the locale-aware
-	 * `@mailwoman/formatter` (`formatAddress`) where available, or {@link composeStreetAddress} for a plain join.
+	 * The rendered street line (house number + street + unit) as one string. Use `@mailwoman/codex/address-format` for
+	 * locale-aware rendering or {@link composeStreetAddress} for a plain join.
 	 */
 	streetAddress?: string
 	/**
@@ -372,23 +372,23 @@ export interface SchemaOrgInput {
 
 /**
  * Collapse parsed street parts into one opaque `streetAddress` line — the schema.org lossy-by-design collapse (house
- * number + street + unit → a single space-joined string). Parts are number-FIRST, correct for the shipped en-US / fr-FR
- * tiers; callers with `@mailwoman/formatter` render locale-aware (e.g. de-DE number-last) instead. Blank parts are
- * dropped; an all-empty input yields `""`.
+ * number + street + unit → a single space-joined string). Parts are number-first, correct for the shipped en-US / fr-FR
+ * tiers. callers with `@mailwoman/formatter` render locale-aware (e.g. de-DE number-last) instead. Blank parts are
+ * dropped. an all-empty input yields `""`.
  */
 export function composeStreetAddress(parts: { houseNumber?: string; street?: string; unit?: string }): string {
 	return [parts.houseNumber, parts.street, parts.unit]
 		.map((part) => part?.trim())
-		.filter((part) => part !== undefined && part.length > 0)
+		.filter((part) => part !== undefined && part.length)
 		.join(" ")
 }
 
 /**
  * Serialize a resolved address into a schema.org `Place` JSON-LD object — `Place { geo: GeoCoordinates, address:
- * PostalAddress }` (#1052). An OUTPUT PROJECTION, lossy by design: `streetAddress` is one opaque string, and
+ * PostalAddress }` (#1052). An output projection, lossy by design: `streetAddress` is one opaque string, and
  * tiers/confidence/provenance don't fit the core vocabulary, so they're dropped rather than shoehorned into an
  * extension property. Only populated fields are emitted — absent fields are omitted entirely (never `null`).
- * `addressCountry` is ISO-3166 alpha-2 (uppercased). `geo` is emitted only when both coordinates are finite; the
+ * `addressCountry` is ISO-3166 alpha-2 (uppercased). `geo` is emitted only when both coordinates are finite. the
  * `address` block only when at least one address field is present.
  */
 export function toSchemaOrg(input: SchemaOrgInput): SchemaOrgPlace {

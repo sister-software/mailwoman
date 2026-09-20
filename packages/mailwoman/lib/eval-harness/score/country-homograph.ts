@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Country homograph scorer — the TRUE baseline for the model-first country change. Measures
- *   country/region/locality P/R/F1 (unfolded `decodeAsJSON`) on the hard homograph eval, PLUS the
+ *   Country homograph scorer — the true baseline for the model-first country change. Measures
+ *   country/region/locality P/R/F1 (unfolded `decodeAsJSON`) on the hard homograph eval, plus the
  *   over-fire confusion: how often a gold region/locality span is mistagged as `country` (the
  *   "trailing token = country" failure), and how often gold country is missed.
  *
@@ -38,17 +38,17 @@ export interface ScoreCountryHomographOptions {
 	 */
 	model?: string
 	/**
-	 * Eval JSONL. Default `data/eval/external/country-homograph-real.jsonl`.
+	 * Eval jsonl. Default `data/eval/external/country-homograph-real.jsonl`.
 	 */
 	file?: string
 	/**
-	 * Gazetteer-anchor lexicon (#464): fed when the path EXISTS so a gazetteer-trained model (v0.9.12+) gets its
-	 * candidate-tag clues; harmless for older models (the runner skips inputs the ONNX doesn't declare). Unlike
+	 * Gazetteer-anchor lexicon (#464): fed when the path exists so a gazetteer-trained model (v0.9.12+) gets its
+	 * candidate-tag clues. harmless for older models (the runner skips inputs the ONNX doesn't declare). Unlike
 	 * `score-affix`, this probe defaults the path to `data/gazetteer/anchor-lexicon-v1.json` rather than off.
 	 */
 	gazetteerLexicon?: string
 	/**
-	 * Write the machine-readable sidecar here — the contract the check verdict reads.
+	 * Write the machine-readable sidecar here — the interface the check verdict reads.
 	 */
 	json?: string
 	/**
@@ -65,7 +65,7 @@ export interface ScoreCountryHomographOptions {
 	 */
 	suppressGazNearPostcode?: boolean
 	/**
-	 * PACKAGE-SHAPED (#718-safe): `<root>` loads model + tokenizer + card + ALL soft channels (anchor + gazetteer +
+	 * Package-shaped (#718-safe): `<root>` loads model + tokenizer + card + all soft channels (anchor + gazetteer +
 	 * country) from the package via `loadFromWeights` — the only in-distribution grade for a country-channel model
 	 * (v6.2.0+), which is exactly what this country probe must feed. Precedence over
 	 * {@linkcode ScoreCountryHomographOptions.model}.
@@ -125,7 +125,7 @@ export async function scoreCountryHomograph(
 		...(options.bridgeGaps ? { bridgeGaps: true } : {}),
 	})
 
-	const rows = await Array.fromAsync(JSONSpliterator.fromAsync<PerTagEvalRow>(file))
+	const rows = await JSONSpliterator.fromAsync<PerTagEvalRow>(file).toArray()
 
 	// over-fire diagnostics
 	let overfire = 0 // gold region/locality token tagged as country
@@ -136,7 +136,7 @@ export async function scoreCountryHomograph(
 	const stat = await scorePerTagCounts(
 		rows,
 		TAGS,
-		async (raw) => decodeAsJSON(await neural.parse(raw)) as Record<string, string>,
+		async (raw) => decodeAsJSON(await neural.parse(raw)),
 		(row, got) => {
 			const exp = row.components
 

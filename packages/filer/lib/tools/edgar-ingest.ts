@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman filer edgar-ingest`'s library half — the EDGAR chain against a live SEC client, with the
+ *   `mailwoman filer edgar-ingest`'s library half — the edgar chain against a live SEC client, with the
  *   full registrant index. No argv, no `process.exit`: the command owns argument parsing, rendering, and
  *   exit codes. Every field on the result is a number the command can render without importing another
  *   module.
@@ -20,16 +20,16 @@ export type { EdgarIngestReport, EdgarSkipReason } from "#sdk/edgar/ingest"
 
 export interface FilerEdgarIngestOptions {
 	/**
-	 * Company names to resolve — one per line in a file, or passed as an array. Every name is tried; a blank line is
+	 * Company names to resolve — one per line in a file, or passed as an array. Every name is tried. a blank line is
 	 * skipped rather than producing an outcome.
 	 */
 	queries: string[]
 	/**
-	 * Output directory for the subsidiary rows as JSONL.
+	 * Output directory for the subsidiary rows as jsonl.
 	 */
 	outDir: string
 	/**
-	 * Optional CIK lookup-data file path (`cik-lookup-data.txt`, one `NAME:CIK:` per line).
+	 * Optional CIK lookup-data file path (`cik-lookup-data.txt`, one `name:CIK:` per line).
 	 */
 	cikLookupPath?: string
 	/**
@@ -49,9 +49,9 @@ export interface FilerEdgarIngestResult {
 }
 
 /**
- * Run the EDGAR ingest chain against a live SEC client and write the subsidiary rows to `outDir` as JSONL.
+ * Run the edgar ingest chain against a live SEC client and write the subsidiary rows to `outDir` as jsonl.
  *
- * The ticker index is read from `cikLookupPath` when given; it is parsed to `CompanyTickerEntry[]` once and reused
+ * The ticker index is read from `cikLookupPath` when given. it is parsed to `CompanyTickerEntry[]` once and reused
  * across every query.
  */
 export async function filerEdgarIngest(options: FilerEdgarIngestOptions): Promise<FilerEdgarIngestResult> {

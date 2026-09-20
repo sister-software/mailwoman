@@ -15,13 +15,13 @@
  *   propagated license travels with each `CanonicalRow` so downstream code can stratify, exclude,
  *   or re-attribute by license at training time.
  *
- *   Country must be explicit (`opts.country` REQUIRED): OpenAddresses files are organized by country
+ *   Country must be explicit (`opts.country` required): OpenAddresses files are organized by country
  *   but the row-level data doesn't include a country code, so the adapter refuses to run without
  *   one. This matches how a `mailwoman corpus build` invocation pins each file to a country via the
  *   inputs JSON.
  *
- *   Properties consumed (per the canonical OpenAddresses schema; both UPPERCASE and lowercase
- *   variants are accepted because legacy dumps used UPPERCASE):
+ *   Properties consumed (per the canonical OpenAddresses schema. both uppercase and lowercase
+ *   variants are accepted because legacy dumps used uppercase):
  *
  *   | Property | ComponentTag | | ------------- |
  *   -------------------------------------------------------------- | | `number` | `house_number` |
@@ -30,9 +30,9 @@
  *   per-row `license` override | | `hash` / `id` | `source_id` (prefer `hash`; fall back to `id`;
  *   then synthesize)|
  *
- *   `district` is intentionally NOT mapped — for US data it carries borough or county and would
+ *   `district` is intentionally not mapped — for US data it carries borough or county and would
  *   inflate alignment quarantine because postal addresses don't include it. Phase 6+ may revisit
- *   for non-US locales where district names DO appear on the envelope.
+ *   for non-US locales where district names do appear on the envelope.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address-format"
@@ -40,7 +40,7 @@ import { tryParsingJSON } from "@mailwoman/core/json"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 import { SHARE_ALIKE_PATTERN } from "#utils"
 
 /**
@@ -55,7 +55,7 @@ export const OPENADDRESSES_ADAPTER_ID = "openaddresses"
 export const OPENADDRESSES_DEFAULT_LICENSE = "CC-BY-4.0"
 
 /**
- * Subset of OpenAddresses Feature properties the adapter inspects. The runtime accepts UPPERCASE or lowercase keys;
+ * Subset of OpenAddresses Feature properties the adapter inspects. The runtime accepts uppercase or lowercase keys.
  * this interface documents the canonical lowercase form after normalization.
  */
 interface OaProperties {
@@ -90,7 +90,7 @@ function normalizeProperties(raw: unknown): OaProperties {
 }
 
 /**
- * Parse a single ND-GeoJSON line; return null for blanks, comments, or non-Feature shapes.
+ * Parse a single ND-GeoJSON line. return null for blanks, comments, or non-Feature shapes.
  */
 function parseFeatureLine(line: string): OaProperties | null {
 	const trimmed = line.trim()
@@ -114,9 +114,9 @@ export interface OpenaddressesAdapterOptions {
 	defaultLicense?: string
 
 	/**
-	 * Per-adapter share-alike drop. Default **true** (include) as of 2026-06-19: exclusion is a deliberate BUILD-level
-	 * act (`buildCorpus({ excludeLicenses })` / `--exclude-share-alike`), NOT a silent adapter default (#26 — "purposely
-	 * exclude, don't opt in to include"). Set false only for an explicit adapter-scoped drop; the build-level
+	 * Per-adapter share-alike drop. Default **true** (include) as of 2026-06-19: exclusion is a deliberate build-level
+	 * act (`buildCorpus({ excludeLicenses })` / `--exclude-share-alike`), not a silent adapter default (#26 — "purposely
+	 * exclude, don't opt in to include"). Set false only for an explicit adapter-scoped drop. the build-level
 	 * `--exclude-share-alike` is the normal path.
 	 */
 	allowShareAlike?: boolean
@@ -124,7 +124,7 @@ export interface OpenaddressesAdapterOptions {
 
 /**
  * Build an OpenAddresses adapter. The optional `defaultLicense` lets callers stamp a non-default fallback for dumps
- * known to carry a single license throughout (e.g. a PDDL-only state slice).
+ * known to carry a single license throughout (e.g. a pddl-only state extract).
  */
 export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {}): CorpusAdapter {
 	const defaultLicense = opts.defaultLicense ?? OPENADDRESSES_DEFAULT_LICENSE
@@ -133,6 +133,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 	return {
 		id: OPENADDRESSES_ADAPTER_ID,
 		defaultLicense,
+		addressRole: AddressRole.Premise,
 		description: "OpenAddresses (global): line-delimited GeoJSON dumps with per-row licenses.",
 
 		async *rows(adapterOpts: AdapterOptions): AsyncIterable<CanonicalRow> {
@@ -169,7 +170,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 					const region = props.region?.trim() ?? ""
 					const postcode = props.postcode?.trim() ?? ""
 
-					// A row is only useful if it has, at minimum, a street + (postcode OR locality).
+					// A row is only useful if it has, at minimum, a street + (postcode or locality).
 					// Pure point-only rows would land in quarantine anyway.
 					if (!street) continue
 

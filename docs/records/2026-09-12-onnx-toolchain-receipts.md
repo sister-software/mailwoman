@@ -45,7 +45,7 @@ to the length it was traced at and fails only at some other length. It did not:
 | 128 (traced) | bit-equal               | bit-equal               |
 | 192          | both refuse identically | both refuse identically |
 
-The 192 refusal is the 128-row position-embedding table, not a regression — the two graphs refuse
+The 192 refusal is the 128-row position-embedding table rather than a regression — the two graphs refuse
 with the same error.
 
 **Consequence for whoever rebuilds an artifact:** a rebuild of anything exported before this pin
@@ -79,7 +79,7 @@ read by both processes so the feed is provably the same:
 | random ids + gaussian channels        | 7.8e-02       | 3 / 200 tokens          |
 | ten real addresses, shipped tokenizer | 9.8e-02       | **0 / 172 real tokens** |
 
-The random-input flips are ill-conditioning, not signal: an int8 model's logits on uniform-random
+The random-input flips are ill-conditioning rather than signal: an int8 model's logits on uniform-random
 token ids are near-degenerate, so the argmax there is decided by noise. On real addresses the
 decision the decoder reads is unchanged on every token of every address.
 

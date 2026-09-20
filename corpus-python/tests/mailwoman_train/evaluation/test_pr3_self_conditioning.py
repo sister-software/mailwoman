@@ -1,12 +1,12 @@
 """PR3 self-conditioning wiring smoke (CPU, seconds).
 
-The "is the new architecture wired correctly?" check that PR3 ships BEFORE any GPU run. Builds a
+The "is the new architecture wired correctly?" check that PR3 ships before any GPU run. Builds a
 tiny encoder with ``use_locale_conditioning=True``, runs forward, and asserts the locale head +
 FiLM modulation + auxiliary loss are wired and finite. Also covers the cross-pollution regression check
-metric, save/load round-trip, back-compat with the conditioning OFF, and that the pilot config
+metric, save/load round-trip, back-compat with the conditioning off, and that the pilot config
 loads with the expected scope.
 
-NO loss.backward, NO optimizer step, NO GPU. Geometry + numerical-sanity only — the falsify-before-
+No loss.backward, no optimizer step, no GPU. Geometry + numerical-sanity only — the falsify-before-
 you-spend check for the self-conditioned retrain.
 """
 
@@ -80,7 +80,7 @@ def test_locale_id_map():
     assert locale_id("ZZ") == IGNORE_INDEX  # unmapped country
     assert locale_id(None) == IGNORE_INDEX
     assert NUM_LOCALES == len(LOCALE_TO_ID)
-    # Append-only contract: US/FR/DE are the pilot's first three ids.
+    # Append-only interface: US/FR/DE are the pilot's first three ids.
     assert LOCALE_TO_ID["US"] == 0 and LOCALE_TO_ID["FR"] == 1 and LOCALE_TO_ID["DE"] == 2
 
 
@@ -129,7 +129,7 @@ def test_aux_locale_loss_is_finite():
 
 def test_all_ignored_locale_batch_does_not_nan():
     """A batch whose every row has an unmapped country (all IGNORE_INDEX) must not poison the loss
-    with a 0/0 → NaN from the aux CE — the aux term is skipped, the BIO loss stands alone."""
+    with a 0/0 → NaN from the aux CE — the aux term is skipped, so only BIO loss is computed."""
     enc = _build_encoder(use_locale_conditioning=True, locale_loss_weight=0.3)
     b = _stub_batch(2, 8)
     labels = torch.zeros(2, 8, dtype=torch.long)
@@ -146,14 +146,14 @@ def test_all_ignored_locale_batch_does_not_nan():
 
 # endregion
 
-# region back-compat: conditioning OFF
+# region back-compat: conditioning off
 
 
 def test_conditioning_off_emits_no_locale_logits_and_ignores_locale_ids():
     enc = _build_encoder(use_locale_conditioning=False)
     assert enc.locale_head is None and enc.locale_film is None
     b = _stub_batch(2, 8)
-    # Passing locale_ids to an unconditioned encoder is harmless (ignored, not an error) — the
+    # Passing locale_ids to an unconditioned encoder is harmless (ignored rather than an error) — the
     # data loader always emits them now, so the off path must tolerate them.
     out = enc(
         input_ids=b["input_ids"],
@@ -184,7 +184,7 @@ def test_save_load_roundtrip_preserves_locale_config(tmp_path):
 
 
 def test_load_pre_pr3_card_back_compat(tmp_path):
-    """A model card written before PR3 (no locale keys) loads with conditioning OFF."""
+    """A model card written before PR3 (no locale keys) loads with conditioning off."""
     m = _build_encoder(use_locale_conditioning=False)
     m.save_pretrained(tmp_path)
     card = tmp_path / "config.json"
@@ -208,7 +208,7 @@ def test_cross_pollution_counts_city_start_as_postcode():
     b_reg = LABEL_TO_ID["B-region"]
     b_pc = LABEL_TO_ID["B-postcode"]
     o = LABEL_TO_ID["O"]
-    # 4 gold city/region-start tokens; 1 predicted as postcode → 25%.
+    # 4 gold city/region-start tokens. 1 predicted as postcode → 25%.
     labels = torch.tensor([[b_loc, o, b_reg, o], [b_loc, o, b_reg, o]])
     preds = torch.tensor([[b_pc, o, b_reg, o], [b_loc, o, b_reg, o]])
     row_locale = torch.tensor([LOCALE_TO_ID["US"], LOCALE_TO_ID["DE"]])

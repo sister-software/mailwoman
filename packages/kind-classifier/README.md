@@ -61,8 +61,8 @@ locale-hint → kind-classifier → phrase-grouper → classifier → ...
 - [`@mailwoman/query-shape`](../query-shape) — feeds structural data into this stage
 - [`@mailwoman/locale-hint`](../locale-hint) — feeds locale context
 - [`@mailwoman/phrase-grouper`](../phrase-grouper) — Stage 2.7, next in the pipeline
-- [Staged Pipeline Contract](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx)
+- [Staged Pipeline Interface](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx)
 
 ## License
 
-[AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html)
+[AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html)

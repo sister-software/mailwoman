@@ -3,26 +3,27 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Materialize a release's weights artifacts from the PUBLIC Hugging Face bucket — the `--source hf`
+ *   Materialize a release's weights artifacts from the public Hugging Face bucket — the `--source hf`
  *   half of the #1894 preflight, and the recipe `.github/workflows/publish.yml` now calls in place of
- *   the curl-and-cp block it used to carry inline. ONE recipe, two callers: the preflight points it at
+ *   the curl-and-cp block it used to carry inline. One recipe, two callers: the preflight points it at
  *   a staging tree, the publish job points it at the checkout. `copy-weights.ts` is the same shape for
- *   the operator's data root; both take a destination root and touch nothing else.
+ *   the operator's data root. both take a destination root and touch nothing else.
  *
- *   WHAT IS FETCHED IS DERIVED, NOT LISTED. A `neural-weights-<locale>` package's `files` array is its
+ *   what is fetched is derived rather than listed. A `neural-weights-<locale>` package's `files` array is its
  *   author stating which artifacts the tarball carries, and `git ls-files` says which of those a
- *   checkout already has; the difference is exactly the set something must materialize — the same
+ *   checkout already has. the difference is exactly the set something must materialize — the same
  *   predicate `verify-tarball.ts` refuses a publish over (`literalFilesEntries`, shared with it). The
  *   v9.2.0 release published 49 of 51 workspaces before that audit refused
  *   `@mailwoman/neural-weights-en-au`, whose four declared lexicons the YAML's hand-maintained copy
  *   list did not name. A derived list cannot fall behind a manifest that way.
  *
- *   NO CREDENTIALS, NO WRITES ANYWHERE BUT THE DESTINATION ROOT. The bucket is public — the same files
+ *   no credentials, no writes anywhere but the destination root. The bucket is public — the same files
  *   the browser demo loads. Nothing here writes to Hugging Face, npm, git, or R2.
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { trackedFiles } from "@mailwoman/core/git"
+import { isPresent } from "@mailwoman/core/objects"
 import { readReleaseConfig, repoCommittedSoftFeedSources } from "@mailwoman/core/release-config"
 import { resolvePath } from "path-ts"
 
@@ -36,7 +37,7 @@ import { releaseWorkspaces } from "#release/stage"
 const DEFAULT_HF_RESOLVE_ROOT = "https://huggingface.co/buckets"
 
 /**
- * The artifact that identifies the BASE weights package. Every overlay shares this file byte for byte and declares none
+ * The artifact that identifies the base weights package. Every overlay shares this file byte for byte and declares none
  * of its own, which is what makes the base self-contained — and what makes it derivable rather than spelled `en-us`.
  */
 const MODEL_FILENAME = "model.onnx"
@@ -45,8 +46,8 @@ const MODEL_FILENAME = "model.onnx"
  * Where one declared artifact comes from.
  *
  * `hf` names a bucket object by basename under `base`, the versioned bucket directory it is read from: `mailwoman
- * release hf` uploads with a single `--locale`, flat, so an overlay's `pair-index-de.bin` lives under the BASE locale's
- * version directory rather than its own, and a character-path family (`cjk`) lives under its OWN directory, because its
+ * release hf` uploads with a single `--locale`, flat, so an overlay's `pair-index-de.bin` lives under the base locale's
+ * version directory rather than its own, and a character-path family (`cjk`) lives under its own directory, because its
  * `model.onnx` shares a basename with the Latin base's and is not the same bytes. `repo` names a committed file the
  * checkout already carries (see `repoCommittedSoftFeedSources`).
  */
@@ -68,7 +69,7 @@ export interface WeightsArtifactPlan {
 	filename: string
 	origin: ArtifactOrigin
 	/**
-	 * The md5 a release model card declares for this filename, when one does. Absent means NO CARD DECLARES ONE — never
+	 * The md5 a release model card declares for this filename, when one does. Absent means no card declares one — never
 	 * "the bytes are unverified because the check was skipped"; the report separates the two.
 	 */
 	expectedMD5?: string
@@ -122,7 +123,7 @@ function weightsWorkspace(locale: string): string {
 
 /**
  * Which of these workspaces' files git already tracks — i.e. what `stageReleaseTree`'s `git archive` puts in the
- * staging tree for free (`model-card.json`, `calibration.json`, `README.md`, the sources).
+ * staging tree for free (`model-card.json`, `calibration.json`, `readme.md`, the sources).
  */
 async function trackedWorkspaceFiles(repoRoot: string, workspaces: readonly string[]): Promise<Set<string>> {
 	return new Set(await trackedFiles(repoRoot, [...workspaces]))
@@ -133,7 +134,7 @@ async function trackedWorkspaceFiles(repoRoot: string, workspaces: readonly stri
  *
  * Merged across every release weights card rather than read from the base alone: the base's card covers the artifacts
  * every overlay copies (`model.onnx`, the two bundle lexicons), and an overlay is free to declare its own. Two cards
- * declaring DIFFERENT md5s for one filename is refused outright — one bucket object cannot satisfy both, and a fetch
+ * declaring different md5s for one filename is refused outright — one bucket object cannot satisfy both, and a fetch
  * has no basis to choose.
  */
 async function declaredChecksums(repoRoot: string, workspaces: readonly string[]): Promise<Map<string, string>> {
@@ -147,7 +148,7 @@ async function declaredChecksums(repoRoot: string, workspaces: readonly string[]
 		const card = await readLocalJSONFile<{ files_md5?: Record<string, unknown> }>(cardPath)
 
 		for (const [filename, md5] of Object.entries(card.files_md5 ?? {})) {
-			// `$comment` keys carry the block's prose, not a checksum.
+			// `$comment` keys carry the block's prose rather than a checksum.
 			if (filename.startsWith("$") || typeof md5 !== "string") continue
 
 			const existing = declared.get(filename)
@@ -167,7 +168,7 @@ async function declaredChecksums(repoRoot: string, workspaces: readonly string[]
 }
 
 /**
- * The locale whose package ships the model itself — the BASE, and the directory every artifact is staged under.
+ * The locale whose package ships the model itself — the base, and the directory every artifact is staged under.
  */
 export async function resolveBaseLocale(repoRoot: string, locales: readonly string[]): Promise<string> {
 	const carriers: string[] = []
@@ -209,29 +210,29 @@ export async function readBaseModelVersion(repoRoot: string): Promise<string> {
 }
 
 /**
- * Artifacts the base model card declares that ride the bucket but are NEVER fetched into a tarball — today the #1354
+ * Artifacts the base model card declares that ride the bucket but are never fetched into a tarball — today the #1354
  * Fisher consolidation pair (`fisher_artifact.file` + its `.sidecar`).
  *
- * The bundle contract says a weights release ships its Fisher, so every fine-tune off that base can apply the EWC
- * brake; the runtime never reads it and npm never carries it, which is exactly why nothing else would notice its
- * absence. HEAD-probed with the rest so a half-staged release is refused before it publishes. BOTH halves are probed:
+ * The bundle interface says a weights release ships its Fisher, so every fine-tune off that base can apply the EWC
+ * brake. the runtime never reads it and npm never carries it, which is exactly why nothing else would notice its
+ * absence. head-probed with the rest so a half-staged release is refused before it publishes. Both halves are probed:
  * the YAML this replaces checked only `file`, and a declared sidecar that never uploaded would have passed.
  */
 export async function distributionOnlyRemoteNames(repoRoot: string, baseLocale: string): Promise<string[]> {
 	const cardPath = resolvePath(repoRoot, weightsWorkspace(baseLocale), "model-card.json")
 
-	const card = await readLocalJSONFile<{ fisher_artifact?: { file?: unknown; sidecar?: unknown } }>(cardPath)
+	const card = await readLocalJSONFile<{ fisher_artifact?: { file?: string; sidecar?: string } }>(cardPath)
 
 	const declared = [card.fisher_artifact?.file, card.fisher_artifact?.sidecar]
 
-	return declared.filter((name): name is string => typeof name === "string" && name.length > 0)
+	return declared.filter(isPresent)
 }
 
 /**
  * The versioned bucket directory for `version`.
  *
  * `$private.HF_BUCKET_RESOLVE_URL` replaces the `<host>/<bucket>/resolve` prefix wholesale, for a mirror or a local
- * fixture server; unset, the prefix is built from `release.config.json`'s `assets.hfBucket`. Nothing about either path
+ * fixture server. unset, the prefix is built from `release.config.json`'s `assets.hfBucket`. Nothing about either path
  * needs a token — the bucket is public, and a credential here would only hide the day it stops being public.
  */
 export async function hfVersionBase(repoRoot: string, version: string): Promise<string> {
@@ -369,7 +370,7 @@ export async function planCharFamilyArtifacts(
 	family: string,
 	workspace: string
 ): Promise<WeightsArtifactPlan[]> {
-	// The directory is named by the FAMILY card's version, for the base and for every overlay that inherits it.
+	// The directory is named by the family card's version, for the base and for every overlay that inherits it.
 	const cardPath = resolvePath(repoRoot, weightsWorkspace(family), "model-card.json")
 	const card = await readLocalJSONFile<{ version?: unknown }>(cardPath)
 

@@ -27,21 +27,21 @@ answer is clean.
 > **CORRECTION (night-10, hours after first publication):** the first version of this
 > section attributed the locality gap to the postal-city/vanity-city divergence (#475).
 > The alias-table join MEASURED that attribution and refuted it: only 1 of 461 named
-> misses is alias-explained — NAD's locality field carries _census/municipal_ names, not
+> misses is alias-explained — NAD's locality field carries _census/municipal_ names rather than
 > postal names, so this eval cannot exhibit the vanity-city failure mode at all.
 
-What the misses actually are (classified, n=461 with a resolved-but-wrong name):
+What the misses are (classified, n=461 with a resolved-but-wrong name):
 
 - **54.0% are the SAME PLACE under a different name surface** — census designations:
   `College CDP` ↔ WOF `Fox Farm-College`, `City and Borough of Juneau`, `X Township` ↔
   `X` (NJ alone is 148 of 461 — townships). This is the Plauen-Vogtl name-match-artifact
   class, US edition; the fix lane is the #386-style hierarchy-aware designation credit
   generalized to US census surfaces — filed as its own issue with these numbers.
-- The remainder are genuine ranking/disambiguation misses (e.g. Juneau → Wrangell).
+- The remainder are actual ranking/disambiguation misses (e.g. Juneau → Wrangell).
 
 Consumers: the designation-credit issue (primary); **#478** still gets its
 complementarity row (v0 locality 86.7 vs neural region 100.0). **#475's alias table is
-NOT validated by this eval** — it needs an eval whose _inputs_ carry postal surfaces
+not validated by this eval** — it needs an eval whose _inputs_ carry postal surfaces
 (real-traffic shaped); noted on the issue.
 
 Caveats: admin-centroid coord errors are expected to be tens of km (the harness's own
@@ -65,7 +65,7 @@ entirely, and the strict designation class (`<name> <designation>` ↔ `<name>`)
 **14 rows (~0.2pp)** — far below implementation threshold. #498 closed as
 premise-refuted-by-corrected-measurement. The real residual gap (9.2pp vs v0) is ranking/
 coverage misses concentrated in ID/WY/UT/LA plus WOF neighborhood-vs-locality granularity
-(`College CDP` ↔ `Fox Farm-College`) — the latter is the PIP lens's territory, not a
+(`College CDP` ↔ `Fox Farm-College`) — the latter is the PIP lens's territory rather than a
 name-credit's.
 
 Running tally for this document: three findings published, two corrected by their own

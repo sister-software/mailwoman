@@ -3,7 +3,7 @@
     cd corpus-python
     modal run -m launch.train_remote::<name> [--flag value ...]
 
-MODULE MODE, not a file path. Modal imports a file path as a TOP-LEVEL module with the file's own
+MODULE MODE rather than a file path. Modal imports a file path as a TOP-LEVEL module with the file's own
 directory on `sys.path`, which makes `launch` unimportable and every `from .x import y` in this
 package an ImportError; `-m` imports it as `launch.train_remote` with the package intact. The
 launcher is a package because a single file grew to fifty-seven near-identical sync functions and
@@ -35,7 +35,7 @@ What lives where:
 | `volume.py`    | what the container sees and what the image actually holds                 |
 
 This file defines nothing. It imports each module so that the one `app` carries every function,
-because `modal run -m launch.train_remote::<name>` resolves `<name>` against THIS module's
+because `modal run -m launch.train_remote::<name>` resolves `<name>` against this module's
 namespace — a function whose module is never imported is a function nobody can launch.
 """
 
@@ -43,9 +43,16 @@ from __future__ import annotations
 
 from .app import app
 from .artifacts import export_onnx, push_artifact_r2, quantize_onnx
-from .audits import audit_epoch_mixture, audit_suffix_feed, census_opening_token
+from .audits import (
+    audit_epoch_mixture,
+    audit_suffix_feed,
+    audit_validation_coverage,
+    census_comma_segment_number,
+    census_opening_token,
+    census_region_code_token,
+)
 from .bucket import bucket_census
-from .census import country_census_raw, diagnose_corpus, digit_prior, piece_prior
+from .census import country_census_raw, diagnose_corpus, digit_prior, locale_supply_census, piece_prior
 from .grade import diagnose_suffix_plasticity, eval_de, grade_evidence_bundle, grade_street_type_contrast
 from .mean_init import mean_init
 from .stage import stage_v8cjk_regs
@@ -62,8 +69,11 @@ __all__ = [
     "app",
     "audit_epoch_mixture",
     "audit_suffix_feed",
+    "audit_validation_coverage",
     "bucket_census",
+    "census_comma_segment_number",
     "census_opening_token",
+    "census_region_code_token",
     "country_census_raw",
     "debug_volume",
     "diagnose_corpus",
@@ -73,6 +83,7 @@ __all__ = [
     "export_onnx",
     "grade_evidence_bundle",
     "grade_street_type_contrast",
+    "locale_supply_census",
     "main",
     "mean_init",
     "piece_prior",

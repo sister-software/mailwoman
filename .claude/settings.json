@@ -1,5 +1,11 @@
 {
 	"outputStyle": "Mailwoman Development",
+	"worktree": {
+		"symlinkDirectories": ["node_modules"]
+	},
+	"permissions": {
+		"deny": ["Read(./data/coarse-placer/**/*.jsonl)", "Read(./data/eval/**/*.jsonl)"]
+	},
 	"hooks": {
 		"PreToolUse": [
 			{
@@ -34,6 +40,17 @@
 						"timeout": 15
 					}
 				]
+			},
+			{
+				"matcher": "Write|Edit",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "node \"$CLAUDE_PROJECT_DIR/packages/dev-mcp/lib/hooks/vale/edit/check.ts\"",
+						"timeout": 30,
+						"statusMessage": "Prose check"
+					}
+				]
 			}
 		],
 		"SessionStart": [
@@ -44,6 +61,12 @@
 						"command": "node \"$CLAUDE_PROJECT_DIR/packages/dev-mcp/lib/hooks/session-orientation.ts\"",
 						"timeout": 15,
 						"statusMessage": "Workspace orientation"
+					},
+					{
+						"type": "command",
+						"command": "node \"$CLAUDE_PROJECT_DIR/packages/dev-mcp/lib/hooks/vale/session/digest.ts\"",
+						"timeout": 15,
+						"statusMessage": "Prose rules"
 					}
 				]
 			}

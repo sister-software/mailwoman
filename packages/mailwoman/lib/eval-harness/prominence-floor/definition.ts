@@ -10,7 +10,7 @@
  *   a population floor of 10,000 — admits every correct answer it contains by construction. A panel whose
  *   gold all clears a floor cannot measure that floor, whatever the rate says.
  *
- *   So the population BAND is the unit here, and the decision is stated per band rather than pooled: pooling
+ *   So the population band is the unit here, and the decision is stated per band rather than pooled: pooling
  *   is the operation that hid the confound the first time. A floor that wins pooled while losing a band fails
  *   this claim.
  */
@@ -197,7 +197,7 @@ export function auditProminenceDefinition(definition: ProminenceFloorDefinition)
 	const ordered = [...definition.populationBands].toSorted((left, right) => left.min - right.min)
 
 	for (const [index, band] of ordered.entries()) {
-		// `bandRule` registers that a row with no recorded population is in NO band. `bandFor` enforces that by refusing
+		// `bandRule` registers that a row with no recorded population is in no band. `bandFor` enforces that by refusing
 		// `undefined`, but a band starting at 0 would admit a row the register counted as zero, which is the same
 		// absence wearing a number — and the reader `readCities` supplies turns an empty column into exactly that.
 		if (band.min < 1) {

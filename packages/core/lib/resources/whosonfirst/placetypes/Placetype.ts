@@ -73,6 +73,7 @@ export class Placetype implements Disposable {
 
 		const definitionPaths = Globerator.from("*.json", {
 			cwd: repoDirectory("placetypes"),
+			absolute: true,
 		})
 
 		const batchIterator = parallelMap(
@@ -89,7 +90,7 @@ export class Placetype implements Disposable {
 		)
 
 		for await (const _definition of batchIterator) {
-			// `parallelMap` performs registration above; its yielded definitions have no further consumer.
+			// `parallelMap` performs registration above. its yielded definitions have no further consumer.
 		}
 	}
 

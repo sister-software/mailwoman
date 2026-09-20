@@ -5,12 +5,12 @@
  *   Typed schema for the `postcode_locality` databases (`postcode-locality-<cc>.db`) — the postcode →
  *   candidate-locality table the resolver's `postcode_area_resolution` strategy attaches.
  *
- *   ONE table, several builds: the European point-in-polygon build and the CJK name/point-match
+ *   One table, several builds: the European point-in-polygon build and the CJK name/point-match
  *   builds (JP, KR, TW) all emit this shape, which is what lets a single resolver strategy consume
  *   every database. The DDL therefore lives here rather than in any one builder, so a column added to
  *   the row interface is a compile error against the builder that fills it.
  *
- *   The builders' bulk INSERT stays a POSITIONAL prepared statement for throughput — but its column
+ *   The builders' bulk insert stays a positional prepared statement for throughput — but its column
  *   list comes from {@link POSTCODE_LOCALITY_COLUMNS} and its table from
  *   {@link createPostcodeLocalityTable}, so the positional order cannot drift from the DDL.
  */
@@ -53,25 +53,25 @@ export interface PostcodeLocalityDatabase {
 }
 
 /**
- * The slice of a Kysely handle the DDL below touches — the parameter type the builders take.
+ * The subset of a Kysely handle the DDL below touches — the parameter type the builders take.
  */
 export type PostcodeLocalitySchemaHandle = Pick<Kysely<PostcodeLocalityDatabase>, "schema">
 
 /**
- * Whether the statement carries `IF NOT EXISTS`.
+ * Whether the statement carries `if not exists`.
  *
- * Required, not defaulted: the databases divide into ACCUMULATIVE builds, where one shared database is filled country
- * by country in successive runs and the second run must find the table already there, and single-country REBUILDS,
- * which drop and recreate. Silently defaulting either way turns a mismatched call site into a wrong artifact instead of
- * a compile error.
+ * Required rather than defaulted: the databases divide into accumulative builds, where one shared database is filled
+ * country by country in successive runs and the second run must find the table already there, and single-country
+ * rebuilds, which drop and recreate. Silently defaulting either way turns a mismatched call site into a wrong artifact
+ * instead of a compile error.
  */
 export interface PostcodeLocalityDDLOptions {
 	ifNotExists: boolean
 }
 
 /**
- * The `postcode_locality` columns in INSERT order. {@link POSTCODE_LOCALITY_INSERT_SQL} derives its column list and
- * placeholders from this, so a column reordered in the DDL cannot leave the positional INSERT behind.
+ * The `postcode_locality` columns in insert order. {@link POSTCODE_LOCALITY_INSERT_SQL} derives its column list and
+ * placeholders from this, so a column reordered in the DDL cannot leave the positional insert behind.
  */
 export const POSTCODE_LOCALITY_COLUMNS = [
 	"postcode",

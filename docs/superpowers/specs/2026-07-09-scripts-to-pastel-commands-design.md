@@ -6,7 +6,7 @@
 
 ## Decisions (operator-confirmed 2026-07-09)
 
-1. **Scope:** corpus/scripts, codegen/lint (`mailwoman dev`), registry/tiger/coarse-placer tools, AND the eval harness. Release-it hook scripts stay plain (release-it invokes them headless; a compile step in the release path buys nothing).
+1. **Scope:** corpus/scripts, codegen/lint (`mailwoman dev`), registry/tiger/coarse-placer tools, and the eval harness. Release-it hook scripts stay plain (release-it invokes them headless; a compile step in the release path adds nothing).
 2. **Logic home:** the owning workspace (`corpus/tools/`, `registry/tools/`, …). Command `.tsx` files are thin wrappers in `mailwoman/commands/` (Pastel file-routing requires they live there).
 3. **WOF bins:** absorb into `mailwoman gazetteer` and delete all four `resolver-wof-sqlite` bins. **Slim is deprecated — verified:** the demo runtime's `hasWOFDB` branch loads the version-independent candidate table via httpvfs (`docs/src/pages/demo/_app.tsx:431` → `WOFCandidateTableLookup`); `wof-hot.db` is never fetched. `buildSlimWOFDatabase` (the module) survives solely as the resolver-wof-wasm test-fixture builder. **Bellwether: the demo production smoke stays green.**
 4. **Lookup bins (timezone/nuts/un-locode):** stay lean `parseArgs` — the sanctioned exception (consumer-facing micro-packages; ink+react+zod+commander dep weight is hostile there). Documented below as policy.
@@ -30,7 +30,7 @@ Every table row = one thin `.tsx` in `mailwoman/commands/…` wrapping a `run()`
 | `corpus golden promote`     | `corpus/scripts/promote-golden.ts`                                                                                                         | `corpus/tools/golden-promote.ts`                                        |
 | — (fold)                    | `corpus/scripts/run-corpus-build.ts`                                                                                                       | duplicate of existing `corpus run` (`runAdapter`) — verify, then delete |
 
-The source enum makes `fetch` one command, not nine. Existing `mailwoman/corpus-tools/` (3 files backing align-extract/stats/overlay-manifest commands) migrates into `corpus/tools/` in the same phase so the corpus workspace owns all corpus logic — commands repoint, `mailwoman` already depends on `@mailwoman/corpus`.
+The source enum makes `fetch` one command rather than nine. Existing `mailwoman/corpus-tools/` (3 files backing align-extract/stats/overlay-manifest commands) migrates into `corpus/tools/` in the same phase so the corpus workspace owns all corpus logic — commands repoint, `mailwoman` already depends on `@mailwoman/corpus`.
 
 ### `mailwoman dev` (new group)
 
@@ -47,7 +47,7 @@ The source enum makes `fetch` one command, not nine. Existing `mailwoman/corpus-
 
 ### `mailwoman eval` (new group)
 
-Logic lands in **`mailwoman/eval-harness/`** — deliberate deviation from owning-workspace: no workspace owns evals, and a private evals workspace can't be a dependency of the published CLI. Follows the `gazetteer-pipeline` precedent. Check-threshold JSONs (`scripts/eval/checks/*.json`) and fixtures move with it; the ledger (`evals/scores-by-version.json`) stays at repo root (data, not code).
+Logic lands in **`mailwoman/eval-harness/`** — deliberate deviation from owning-workspace: no workspace owns evals, and a private evals workspace can't be a dependency of the published CLI. Follows the `gazetteer-pipeline` precedent. Check-threshold JSONs (`scripts/eval/checks/*.json`) and fixtures move with it; the ledger (`evals/scores-by-version.json`) stays at repo root (data rather than code).
 
 | Command                      | Source script                                                                               |
 | ---------------------------- | ------------------------------------------------------------------------------------------- |
@@ -118,7 +118,7 @@ All four `bin` entries leave `resolver-wof-sqlite/package.json`. `build-fts-cli.
 
 ## 3. The dedupe program (2026-07-09 survey; counts = in-scope call sites)
 
-New core helpers follow the acronym-casing convention (`readJSONL`, not `readJsonl`) so they don't join the #875 debt. Phase 0 lands the core helpers; later phases consume them as each script migrates — **no big-bang rewrite of untouched scripts**; a script's dedupe happens when it migrates (probes headed for `diagnostic/` are not rewritten).
+New core helpers follow the acronym-casing convention (`readJSONL` rather than `readJsonl`) so they don't join the #875 debt. Phase 0 lands the core helpers; later phases consume them as each script migrates — **no big-bang rewrite of untouched scripts**; a script's dedupe happens when it migrates (probes headed for `diagnostic/` are not rewritten).
 
 | #   | Concern                                                       | Sites                     | Destination                                                                                        |
 | --- | ------------------------------------------------------------- | ------------------------- | -------------------------------------------------------------------------------------------------- |
@@ -142,7 +142,7 @@ New core helpers follow the acronym-casing convention (`readJSONL`, not `readJso
 - Both `./sdk/cli` and `./sdk/test` are published subpath exports (5.x) — they become **deprecated re-export shims** pointing at the new modules, removed at the next major (bundle with the #875 batch). New subpaths `./cli-kit`, `./test-kit` added to **both** exports maps (dev `node→.ts` and `publishConfig.exports`).
 - `sdk` submodule meaning is restored: data acquisition only. Add one line to AGENTS.md saying so.
 
-Commands remain TSX (compiled); tool modules in owning workspaces remain plain `.ts` (run directly under node during dev). A tool module's contract: `export async function run(options: X, report?: (line: string) => void): Promise<Result>` — no argv access, no `process.exit`, throw on failure. The command owns argv (zod), rendering, and exit codes. This is the isolation boundary that makes tools testable without Ink.
+Commands remain TSX (compiled); tool modules in owning workspaces remain plain `.ts` (run directly under node during dev). A tool module's interface: `export async function run(options: X, report?: (line: string) => void): Promise<Result>` — no argv access, no `process.exit`, throw on failure. The command owns argv (zod), rendering, and exit codes. This is the isolation boundary that makes tools testable without Ink.
 
 ## 5. Phasing (one PR each, sequenced)
 
@@ -157,9 +157,9 @@ Commands remain TSX (compiled); tool modules in owning workspaces remain plain `
 
 Phase 5 last because the checks guard releases — nothing else may wobble while they move. Phases 1/2/4 are independent after 0.
 
-## 6. Risks + contracts
+## 6. Risks + interfaces
 
-- **Check parity is the hard contract:** `eval promote`/`eval gauntlet` must reproduce the old scripts' exit codes, stdout verdict lines consumed by the operator, and artifact paths (ledger append command printed on PASS). Run both on the same model before deleting.
+- **Check parity is the hard interface:** `eval promote`/`eval gauntlet` must reproduce the old scripts' exit codes, stdout verdict lines consumed by the operator, and artifact paths (ledger append command printed on pass). Run both on the same model before deleting.
 - **Reference repoints** (enumerated during each phase's plan): RELEASING.md, `.agents/skills/{mailwoman-release,wof-build,night-shift,eval-model}`, `.pi/prompts/release-check.md`, root `package.json` scripts (`ci:smoke` untouched), workflows.
 - **Published-surface changes:** resolver-wof-sqlite loses 4 bins (breaking, accepted); `mailwoman` `./sdk/*` shimmed not removed; `mailwoman` gains `@mailwoman/tiger` (+ possibly resolver-wof-sqlite) deps — check publish weight impact is nil (deps already in the workspace tree).
 - **Pastel flag-prop caveat** (AGENTS.md): kebab flags bind lowercase-acronym props (`--resolve-db` → `resolveDB`) — schema keys must match Pastel's derivation; keep the existing exception note.
@@ -168,8 +168,8 @@ Phase 5 last because the checks guard releases — nothing else may wobble while
 ## 7. Success metrics
 
 - [ ] `corpus/scripts/` deleted; corpus logic lives in `corpus/tools/` behind `mailwoman corpus …`
-- [ ] `scripts/` top level = release tooling + configs ONLY (codegen/lint gone to `mailwoman dev`)
-- [ ] `scripts/eval/` reduced to Python calibration scripts + `checks` data consumed by eval-harness — or empty if those move cleanly; probes in `diagnostic/`
+- [ ] `scripts/` top level = release tooling + configs only (codegen/lint gone to `mailwoman dev`)
+- [ ] `scripts/eval/` reduced to Python calibration scripts + `checks` data consumed by eval-harness — or empty if those move directly; probes in `diagnostic/`
 - [ ] `registry/tools/`, `tiger/tools/`, `core/coarse-placer/tools/` all reachable via commands
 - [ ] resolver-wof-sqlite has zero `bin` entries; demo smoke green
 - [ ] `mailwoman/sdk/` gone (shims at old subpaths); `sdk` = data acquisition everywhere

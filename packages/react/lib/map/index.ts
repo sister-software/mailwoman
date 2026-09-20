@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `@mailwoman/react/map` — the geocoder map surface, kept behind its OWN subpath so `maplibre-gl`
+ *   `@mailwoman/react/map` — the geocoder map surface, kept behind its own subpath so `maplibre-gl`
  *   / `react-map-gl` (WebGL + DOM at import) never enter the package-root graph. Importing this subpath
- *   pulls the map deps; importing `@mailwoman/react` (root) does not. Consumers who only want the
+ *   pulls the map deps. importing `@mailwoman/react` (root) does not. Consumers who only want the
  *   parse/POI explorers never pay for maplibre.
  *
  *   The host must supply `maplibre-gl` + `react-map-gl` (peer deps) and import
@@ -14,7 +14,7 @@
 export { MapCanvas } from "./MapCanvas.tsx"
 export type { MapCanvasExtraProps, MapCanvasProps, MapCanvasStyle } from "./MapCanvas.tsx"
 
-// ── Map chrome (node-safe presentation; the host supplies the input and reads its own map) ──
+// ── Map chrome (node-safe presentation. the host supplies the input and reads its own map) ──
 export { MapChipRow } from "./MapChipRow.tsx"
 export type { MapChip, MapChipRowProps } from "./MapChipRow.tsx"
 export { MapCompass } from "./MapCompass.tsx"
@@ -28,9 +28,9 @@ export { MapFooter } from "./MapFooter.tsx"
 export type { MapFooterProps } from "./MapFooter.tsx"
 export { MapProgressBar } from "./MapProgressBar.tsx"
 export type { MapProgressBarProps } from "./MapProgressBar.tsx"
-export { MapSheet } from "./MapSheet.tsx"
+export { MapSheet, SheetClose } from "./MapSheet.tsx"
 export type { MapSheetProps } from "./MapSheet.tsx"
-export { MapSearchBar } from "./MapSearchBar.tsx"
+export { MapSearchBar, SearchGlyph } from "./MapSearchBar.tsx"
 export type { MapSearchBarProps } from "./MapSearchBar.tsx"
 
 export type {
@@ -46,7 +46,7 @@ export type {
 	VersionOption,
 } from "#map/types"
 
-// ── Pure geometry + render spec (node-safe; no react-map-gl at runtime) ──────
+// ── Pure geometry + render spec (node-safe. no react-map-gl at runtime) ──────
 export { approxCircleGeometry, bboxToBounds, geomBounds, radiusCircleGeometry } from "#map/geometry"
 export type { BoundsTuple, PlaceBBox, PlaceGeometry } from "#map/geometry"
 export { cameraToViewState, computeMapPlaceRenderSpec } from "#map/place-render"

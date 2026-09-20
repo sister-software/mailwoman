@@ -32,7 +32,7 @@ never "equals".
 `concourse`, `wing`, `enclosure` are not places to OSM — they are building interior, modelled by the
 separate **Simple Indoor Tagging** scheme (`indoor=room|corridor|area|level`, `building:part=*`,
 `level=*`). This is the mismatch that matters most for us: it means the vocabulary we want for
-sub-venue parsing lives in OSM's _indoor_ scheme, not its _place_ scheme.
+sub-venue parsing lives in OSM's _indoor_ scheme rather than its _place_ scheme.
 
 ## The table
 
@@ -50,7 +50,7 @@ sub-venue parsing lives in OSM's _indoor_ scheme, not its _place_ scheme.
 | `custom`        | none — WOF's override for non-standard geometries                                                                   | n/a                        |
 | `dependency`    | `boundary=administrative` with ISO3166 tags; messy in OSM                                                           | weak                       |
 | `disputed`      | `disputed=yes` / `boundary=disputed`                                                                                | moderate                   |
-| `empire`        | **none** — historical polities live in OpenHistoricalMap, not OSM                                                   | firm (absent)              |
+| `empire`        | **none** — historical polities live in OpenHistoricalMap rather than OSM                                            | firm (absent)              |
 | `enclosure`     | none in the place scheme; a fenced area is `barrier=*`, an interior one is indoor tagging                           | weak                       |
 | `installation`  | military: `landuse=military` + `military=base`; industrial: `man_made=works`                                        | moderate                   |
 | `intersection`  | a node where highways meet; `junction=yes`, `highway=motorway_junction`                                             | firm                       |

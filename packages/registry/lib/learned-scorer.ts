@@ -5,7 +5,7 @@
  *   The learned scorer (#603) — the production wiring for the gradient-boosted-tree model behind
  *   {@link ResolveConfig.scorer}. Two pieces:
  *
- *   1. {@link createMatchFeaturizer} — the ONE feature extractor for a candidate pair, used identically
+ *   1. {@link createMatchFeaturizer} — the one feature extractor for a candidate pair, used identically
  *        at train time (`registry/tools/train-gbt.ts`), eval time (the learned-scorer
  *        evals), and inference time (here). A pair → one-hot of each comparison's agreement level +
  *        the over-merge interaction terms (co-located × name/org disagreement) + address
@@ -14,11 +14,11 @@
  *        the resolve pipeline's `scorer` hook expects (a logit, threshold-comparable with the
  *        Fellegi-Sunter weight it replaces).
  *
- *   Both take the comparison set as INPUT (rather than importing {@link buildDefaultModel}) so this
- *   module has no dependency cycle with `resolve.ts`. The contract that keeps train ≡ inference:
+ *   Both take the comparison set as input (rather than importing {@link buildDefaultModel}) so this
+ *   module has no dependency cycle with `resolve.ts`. The interface that keeps train ≡ inference:
  *   feed the comparisons from `buildDefaultModel({ collapseSpatial: true, addressFrequency })` —
- *   the model's structure (and thus the feature layout) is fixed by that config; only the frequency
- *   VALUES differ between the training corpus and the matched set, which is the point (the model
+ *   the model's structure (and thus the feature layout) is fixed by that config. only the frequency
+ *   values differ between the training corpus and the matched set, which is the point (the model
  *   generalizes, as the cross-state eval showed).
  */
 
@@ -35,8 +35,8 @@ import type { SourceRecord } from "#types"
 
 /**
  * Similarity at which two official names count as the same organisation. Set high because the feature is a near-exact
- * agreement signal, not a fuzzy one — the fuzzy comparison is a separate feature and this one exists to distinguish
- * it.
+ * agreement signal rather than a fuzzy one — the fuzzy comparison is a separate feature and this one exists to
+ * distinguish it.
  */
 const OFFICIAL_NAME_AGREEMENT = 0.93
 
@@ -45,9 +45,9 @@ const OFFICIAL_NAME_AGREEMENT = 0.93
  */
 export interface LearnedFeatureConfig {
 	/**
-	 * The comparison set the features are built over — MUST be `buildDefaultModel({ collapseSpatial: true,
+	 * The comparison set the features are built over — must be `buildDefaultModel({ collapseSpatial: true,
 	 * addressFrequency }).comparisons` so the feature layout matches the trained model. (`usePhone` / `discriminators`
-	 * are NOT part of the learned feature model — the GBT replaces the FS weight wholesale and owns its own feature
+	 * are not part of the learned feature model — the GBT replaces the FS weight wholesale and owns its own feature
 	 * vector.)
 	 */
 	comparisons: Comparison<SourceRecord>[]
@@ -85,7 +85,7 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 			}
 		}
 
-		// Interaction: co-located (spatial exact = level 0) AND names/org disagree (catch-all level).
+		// Interaction: co-located (spatial exact = level 0) and names/org disagree (catch-all level).
 		const spatialExact = spatialI !== undefined && pat[spatialI] === 0 ? 1 : 0
 
 		const nameDisagree =
@@ -103,11 +103,11 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 		const freq = a.address?.raw ? addressFrequency.frequency(a.address.raw) : 0
 		f.push(Math.min(1, freq * 1000))
 		// #625 roll-up signature (2026-07-06 adjudication): every genuine over-merge in the adjudicated
-		// packet was a MANAGEMENT-COMPANY roll-up — differently-branded operating entities at a shared
-		// corporate/billing address where the AUTHORIZED OFFICIAL also agrees (the operator signs
-		// everything). The official is NOT in the comparison set (discriminators are excluded from the
+		// packet was a management-company roll-up — differently-branded operating entities at a shared
+		// corporate/billing address where the authorized official also agrees (the operator signs
+		// everything). The official is not in the comparison set (discriminators are excluded from the
 		// learned feature model), so the GBT could never see — let alone learn — that officialAgree in
-		// the presence of orgDisagree is ANTI-identity evidence. These three appended features express
+		// the presence of orgDisagree is anti-identity evidence. These three appended features express
 		// it directly from `attributes.authorizedOfficial`; appended at the END so models trained
 		// without them (the cross-source GBT) keep scoring unchanged (trailing features are ignored).
 		const offA = a.attributes?.["authorizedOfficial"]?.trim()

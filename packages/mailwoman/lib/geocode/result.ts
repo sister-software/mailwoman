@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The geocode result contract — `ResolutionTier`, `GeocodeResult` — and `extractGeocodeResult`, the projection
+ * @file The geocode result interface — `ResolutionTier`, `GeocodeResult` — and `extractGeocodeResult`, the projection
  *   from a resolved tree into it. Split from `geocode-core.ts`, which owns the pipeline that produces the tree.
  */
 
@@ -23,12 +23,30 @@ import { assembleStreetName } from "#street/name-assembly"
 /**
  * The resolution tier that produced the coordinate. `address_point` > `interpolated` > `street` > `admin`.
  *
- * - `address_point` — rooftop / parcel centroid; uncertainty_m is a small floor (~1 m)
- * - `interpolated` — house-number estimate; uncertainty_m is honest (calibrated bracket span)
+ * - `address_point` — rooftop / parcel centroid. uncertainty_m is a small floor (~1 m)
+ * - `interpolated` — house-number estimate. uncertainty_m is honest (calibrated bracket span)
  * - `street` — street centroid for a street-only query (#1042); uncertainty_m is half the street's bbox diagonal
- * - `admin` — admin centroid; uncertainty_m is null (no sub-locality estimate available)
+ * - `admin` — admin centroid. uncertainty_m is null (no sub-locality estimate available)
  */
 export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin" | "venue" | "plus_code"
+
+/**
+ * One component the parse kept and the answer did not follow.
+ *
+ * `reason` names the resolver decision rather than describing it, so a consumer can branch. The only value today is
+ * `postcode_move_refused`: the postcode resolved to a point more than `postcodeConsistencyMaxMoveKm` from the locality
+ * the walk selected, and the answer stayed on the locality — a postcode carries no checksum, so a transposed one is a
+ * valid code naming a real place, and disagreement with the other components is the available signal.
+ */
+export interface UnfollowedComponent {
+	tag: ComponentTag
+	value: string
+	reason: "postcode_move_refused"
+	/**
+	 * How far following this component would have moved the answer.
+	 */
+	distance_km: number
+}
 
 /**
  * The geocode-core result shape — the engine returns this verbatim (passthrough) to `/v1/geocode` and `/v1/batch`.
@@ -49,11 +67,20 @@ export interface GeocodeResult {
 	 * rule applied to a component. A consumer rendering an answer can now say which happened.
 	 */
 	dropped_components?: DroppedSpan[]
+	/**
+	 * Components the parse kept and the answer did not follow, present only when there were any (#2301).
+	 *
+	 * Distinct from {@link dropped_components}, which names a span the flat projection deleted. Here the value is in
+	 * `components` and reads as if it were honoured: `Nawāda, 744301` returns both the locality and the postcode, and
+	 * nothing in the result says the two name places 1,914 km apart or which one the coordinate followed. A consumer that
+	 * cannot see the disagreement cannot lower its confidence for it.
+	 */
+	unfollowed_components?: UnfollowedComponent[]
 	lat: number | null
 	lon: number | null
 	resolution_tier: ResolutionTier
 	/**
-	 * WHAT MAY BE CLAIMED about this coordinate, orthogonal to {@link resolution_tier}, which says how it was PRODUCED. A
+	 * What may be claimed about this coordinate, orthogonal to {@link resolution_tier}, which says how it was produced. A
 	 * rooftop matched against a register its authority declares complete is `designated`; the same rooftop matched
 	 * against a crowdsourced extract is `observed`. Same tier, different authority — and reporting only the tier silently
 	 * upgrades one into the other. Derived by `epistemicStatusFor`, the one place the mapping lives.
@@ -67,14 +94,14 @@ export interface GeocodeResult {
 	 */
 	derivation?: DerivationProjection
 	/**
-	 * The entity the fork→entity probe resolved (#1585's entity half) — present ONLY when the `venue` tier answered: the
+	 * The entity the fork→entity probe resolved (#1585's entity half) — present only when the `venue` tier answered: the
 	 * decoder declared a fork, the incumbent path produced no coordinate, and exactly one poi.db entity bears the query's
-	 * exact name (see `fork-entity.ts` for the three checks). Positive evidence only; absent everywhere else.
+	 * exact name (see `fork-entity.ts` for the three checks). Positive evidence only. absent everywhere else.
 	 */
 	entity?: { name: string; categoryID: string | null; confidence: number; country: string }
 	/**
-	 * The register row's OWN scope tags when the `address_point` tier answered and its database carries them: the
-	 * attested locality (normalized key form) and postcode of the ROOFTOP, independent of what the query named. Consumers
+	 * The register row's own scope tags when the `address_point` tier answered and its database carries them: the
+	 * attested locality (normalized key form) and postcode of the rooftop, independent of what the query named. Consumers
 	 * may decorate an answer with the register's commune/postcode (the Photon drop-in's `city` slot); never a filter,
 	 * absent on every other tier.
 	 */
@@ -87,36 +114,36 @@ export interface GeocodeResult {
 	region: string | null
 	postcode: string | null
 	/**
-	 * The PARSED house number + full street name (reassembled from the street subtree — prefix + base + suffix, since
+	 * The parsed house number + full street name (reassembled from the street subtree — prefix + base + suffix, since
 	 * `street.value` alone is the bare base span), or null when the parse found neither. #1041 — lets a forward consumer
 	 * that resolved to a house-number-grade coordinate (the `address_point` / `interpolated` {@link resolution_tier})
-	 * render the result HOUSE-GRADE (`type: house` + `housenumber`/`street`, matching upstream Photon) instead of
+	 * render the result house-grade (`type: house` + `housenumber`/`street`, matching upstream Photon) instead of
 	 * mislabeling a rooftop as its admin locality. Populated regardless of tier (they are the parsed spans); the consumer
 	 * conditions the house-grade rendering on the tier so an admin-only fallback is never dressed up as a rooftop.
 	 */
 	house_number: string | null
 	street: string | null
 	/**
-	 * The PARSED venue span (same #1041 posture as house_number/street: populated regardless of tier, straight from the
+	 * The parsed venue span (same #1041 posture as house_number/street: populated regardless of tier, straight from the
 	 * parse). Surfaced 2026-08-01 — the gauntlet's venue expectations had graded against nothing for their whole life
 	 * because no result field carried the span (hierarchy filters to admin tags).
 	 */
 	venue: string | null
 	/**
-	 * The PARSED dependent-locality span (#1041 posture: the parse view, populated regardless of resolution). Distinct
-	 * from `hierarchy`, which is the RESOLVED view — it only admits nodes the resolver decorated (lat/placeID), so a
+	 * The parsed dependent-locality span (#1041 posture: the parse view, populated regardless of resolution). Distinct
+	 * from `hierarchy`. It is the resolved view — it only admits nodes the resolver decorated (lat/placeID). Therefore, a
 	 * parsed-but-unresolved dependent locality (Abbey Hey with no gazetteer hit) never appears there. Surfaced 2026-08-01
 	 * (hierarchy campaign R1) after the gauntlet's dep-loc expectations were found reading the resolved view.
 	 */
 	dependent_locality: string | null
 	/**
-	 * The PARSED unit / sub-venue span (#1041 posture, same as `venue` above: the parse view, populated regardless of
+	 * The parsed unit / sub-venue span (#1041 posture, same as `venue` above: the parse view, populated regardless of
 	 * tier) — `Terminal 5`, `Suite 300`, `Gate 12`.
 	 *
 	 * Surfaced 2026-08-05 for the same reason `venue` was in 2026-08-01, and found the same way: the gauntlet's sub-venue
 	 * cases (added 2026-08-01) assert `unit`, no result field carried it, and `componentOf`'s deliberately-loud
 	 * unknown-key throw meant the whole regression layer died the moment the corpus was rebuilt from its own seed. The
-	 * committed corpus had been ungradeable since the day those cases landed; only the staleness of the built artifact
+	 * committed corpus had been ungradeable since the day those cases landed. only the staleness of the built artifact
 	 * hid it.
 	 */
 	unit: string | null
@@ -130,9 +157,9 @@ export interface GeocodeResult {
 	 * Admin hierarchy from the resolver, locality → country (most specific first). `name` is the resolved gazetteer name
 	 * (proper-cased canonical, #1014) — distinct from `value`, the raw parsed input span.
 	 *
-	 * Entries are INDEPENDENTLY resolved parse nodes, not one containment walk — so the chain can compose places no
-	 * containment holds (#1731). `in_winner_lineage` states each entry's standing against the winner's stamped ancestor
-	 * chain: `true` = vouched, `false` = resolved outside the winner's lineage (the chimera fragment), absent =
+	 * Entries are independently resolved parse nodes rather than one containment walk — so the chain can compose places
+	 * no containment holds (#1731). `in_winner_lineage` states each entry's standing against the winner's stamped
+	 * ancestor chain: `true` = vouched, `false` = resolved outside the winner's lineage (the chimera fragment), absent =
 	 * unverifiable (no sidecar, or no place identity). See `hierarchy-lineage.ts`.
 	 */
 	hierarchy: HierarchyEntry[]
@@ -151,11 +178,11 @@ export interface GeocodeResult {
 		placeID?: string
 	}>
 	/**
-	 * The country #42's postcode-country coherence pass scoped the walk to, or null. Non-null ONLY when the pass actually
+	 * The country #42's postcode-country coherence pass scoped the walk to, or null. Non-null only when the pass actually
 	 * overrode {@link GeocodeDeps.defaultCountry} — off, abstained and agreed-with-the-default all read null.
 	 *
-	 * This is the FIRING RECEIPT, and it exists because the alternative is unreadable evidence. A check run with the pin
-	 * OFF and one with it ON can come back identical for two opposite reasons: the mechanism ran on every row and changed
+	 * This is the firing receipt, and it exists because the alternative is unreadable evidence. A check run with the pin
+	 * off and one with it on can come back identical for two opposite reasons: the mechanism ran on every row and changed
 	 * nothing (the result worth having), or it never ran at all (the 2026-08-04 oa-resolver trap, where an identical 1.94
 	 * MB dump turned out to mean the eval's database set carried no US postcodes). A magnitude never carries its own
 	 * absence, so the pass reports its own count instead of leaving the reader to infer it.
@@ -163,43 +190,43 @@ export interface GeocodeResult {
 	postcode_country_scope: string | null
 	/**
 	 * The #1880 capital promotion's firing receipt, in the same posture as {@link postcode_country_scope}: the promoted
-	 * candidate's country, PRESENT only when the promotion changed some node's leading candidate. Absent means it never
+	 * candidate's country, present only when the promotion changed some node's leading candidate. Absent means it never
 	 * spoke — off, no capital in any race, or the capital already led. A pinned comparison counts this instead of
 	 * inferring activity from moved rows.
 	 */
 	capital_promotion?: string
 	/**
-	 * The #1882 variant-alias exemption's firing receipt (#1893), same posture as {@link capital_promotion}: PRESENT
+	 * The #1882 variant-alias exemption's firing receipt (#1893), same posture as {@link capital_promotion}: present
 	 * (`true`) only when some node's winning candidate reached the top because the exemption spared it the cross-country
 	 * alias penalty. Absent means it never spoke — off, no variant row in any race, the variant lost, or a backend that
 	 * never runs the primary-preference ranker.
 	 */
 	variant_alias_exemption?: true
 	/**
-	 * Query-intent advisories (ROAD_TO_V9 §4) — what the intent vocabulary had to say about the QUESTION, alongside the
+	 * Query-intent advisories (ROAD_TO_V9 §4) — what the intent vocabulary had to say about the question, alongside the
 	 * answer. **Always present**; an empty array is this path stating that the vocabulary looked and found nothing, which
 	 * is a different claim from a missing field (the {@link `PipelineResult.faults`} discipline).
 	 *
-	 * Nothing here changed the answer. Three of the four markers are raised by the kind classifier from the string alone;
+	 * Nothing here changed the answer. Three of the four markers are raised by the kind classifier from the string alone.
 	 * the fourth (`declared_ambiguity`) is raised after the resolve by reading the ranked candidate list's dominance
 	 * margin and comparing it to the measured 0.5-log10 decisive threshold — a read, never a re-rank. This is the same
-	 * narrow-channel posture {@link postcode_country_scope} set: an advisory RECEIPT inside a resolution contract, not a
-	 * second opinion about the result.
+	 * narrow-channel posture {@link postcode_country_scope} set: an advisory receipt inside a resolution interface rather
+	 * than a second opinion about the result.
 	 */
 	intent_markers: QueryIntentMarker[]
 	/**
 	 * Admin-coherence verdicts (#1717 stage 1) — did the winning candidate's resolved ancestry confirm, contradict, or
-	 * fail to speak to the PARSED `region` / `country` qualifiers? Flag-only measurement in the same posture as
+	 * fail to speak to the parsed `region` / `country` qualifiers? Flag-only measurement in the same posture as
 	 * {@link intent_markers}: nothing reads these to rank or check, and the field is additive. Present whenever a winner
 	 * resolved (both members always populated — `unstated` is the explicit no-qualifier claim); absent when the geocode
-	 * produced no resolved winner to check against. See `admin-coherence.ts` for the verdict contract and the stated v1
+	 * produced no resolved winner to check against. See `admin-coherence.ts` for the verdict interface and the stated v1
 	 * fold-equality bounds.
 	 */
 	admin_coherence?: AdminCoherenceReport
 	/**
-	 * A configured authoritative provider's answer (#1901), carried BESIDE Mailwoman's own — nothing above this field
+	 * A configured authoritative provider's answer (#1901), carried beside Mailwoman's own — nothing above this field
 	 * changes when it is present, and the field is absent (never null, never empty) when no provider is configured. Every
-	 * value inside is the PROVIDER'S assertion, including a `refused` status (the provider spoke and said no — distinct
+	 * value inside is the provider'S assertion, including a `refused` status (the provider spoke and said no — distinct
 	 * from a parse failure and from an open-gazetteer miss) and a `transport_error` (the provider could not be reached,
 	 * which absence would silently impersonate).
 	 */
@@ -210,8 +237,29 @@ export interface GeocodeResult {
  * Walk the resolved tree and extract the geocode result: the street node's address-point / interpolation coordinate
  * (whichever tier won), else the best admin centroid (locality → region → country).
  */
+/**
+ * Read the resolver's refusals off the walked tree.
+ *
+ * The resolver records a refused postcode move on the locality it declined to leave — that node holds the distance,
+ * because it is the one that knows the gap — so the component reported here is the postcode, read from the tree. A row
+ * with no refusal produces an empty array and the field is omitted from the result entirely.
+ */
+function unfollowedComponents(allNodes: readonly AddressNode[]): UnfollowedComponent[] {
+	const refusedKm = allNodes
+		.map((node) => node.metadata?.["postcode_move_refused_km"])
+		.find((km): km is number => typeof km === "number")
+
+	if (refusedKm === undefined) return []
+
+	const postcode = allNodes.find((node) => node.tag === "postcode")
+
+	if (!postcode) return []
+
+	return [{ tag: "postcode", value: postcode.value, reason: "postcode_move_refused", distance_km: refusedKm }]
+}
+
 export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeOutcomeLike {
-	// `includeDropped` is not optional here even though the flag is: a span the projection deleted is the ONE thing a
+	// `includeDropped` is not optional here even though the flag is: a span the projection deleted is the one thing a
 	// caller cannot reconstruct from the result, and #1755 is what its absence cost — the #1748 trailing region is
 	// parsed, mistagged `locality`, and deleted at this line, which is why no decode pin ever moved that class.
 	const projected = decodeAsJSON(tree, { includeDropped: true })
@@ -219,6 +267,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 	// Grounded spans first, then text order — the order `decodeAsJSON` used for `components` above, so a named slot
 	// and the flat map name the same span when a tag occurs twice (tree-shape.ts explains the rule).
 	const allNodes = slotNodes(tree.roots)
+	const unfollowed = unfollowedComponents(allNodes)
 
 	const streetNode = allNodes.find((n) => n.tag === "street")
 
@@ -288,11 +337,11 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 		// harnesses sort by, so the two cannot disagree about where a postcode sits without failing a test.
 		//
 		// Two constraints this list carries and a reader cannot recover from the ordering alone. `postcode` has to
-		// be ON the ladder at all: a lone-postcode query resolves the postcode node and nothing else, and without
+		// be on the ladder at all: a lone-postcode query resolves the postcode node and nothing else, and without
 		// the rung the result reported 0,0 despite a resolved coordinate (the proximity-bias feature's 48026 case).
-		// And a unit-grade hit has to LEAD it: `29 Brecknock Road, London, N7 0BT` resolves its unit postcode to
+		// And a unit-grade hit has to lead it: `29 Brecknock Road, London, N7 0BT` resolves its unit postcode to
 		// 51.5500/-0.1307, 38 m from the rooftop truth, against a London centroid 5.6 km away — on all 15 GB
-		// rooftop rows of the 2026-08-09 panel run. Nothing was missing from the gazetteer and no lookup failed;
+		// rooftop rows of the 2026-08-09 panel run. Nothing was missing from the gazetteer and no lookup failed.
 		// the answer was on the tree and this list did not ask for it.
 		const adminPriority = adminLadderForNodes(allNodes)
 
@@ -309,7 +358,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 		}
 	}
 
-	// #1058: a commune-scoped street-centroid hit is REGISTER evidence of the street's locality — the
+	// #1058: a commune-scoped street-centroid hit is register evidence of the street's locality — the
 	// resolver stamps it as `street_locality` on the street node (and drops span-rescored locality
 	// nodes that contradict it). Surface it as the result locality so `city` decorates from the
 	// register's commune, never from a token of the street name ("Rue Sainte-Catherine, Bordeaux" →
@@ -352,7 +401,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 		allNodes.find((n) => n.metadata?.["resolver_name"] && n.lat === lat && n.lon === lon) ??
 		allNodes.find((n) => n.metadata?.["resolver_name"] && n.lat != null)
 
-	// #1731: lineage-graded against the admin-ladder pick when the admin tier answered, else the DEEPEST
+	// #1731: lineage-graded against the admin-ladder pick when the admin tier answered, else the deepest
 	// resolved admin node — never the first-in-tree-order one, whose chain cannot contain its own
 	// descendants (the 1600-Pennsylvania false flag the first mwdev_diagnose run caught).
 	const hierarchy = assembleHierarchy(allNodes, streetLocality, adminWinnerNode ?? lineageAnchorNode(allNodes))
@@ -410,6 +459,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 		input,
 		components,
 		...(dropped?.length ? { dropped_components: dropped } : {}),
+		...(unfollowed.length ? { unfollowed_components: unfollowed } : {}),
 		lat,
 		lon,
 		resolution_tier: tier,

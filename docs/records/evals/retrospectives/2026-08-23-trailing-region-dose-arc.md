@@ -92,7 +92,7 @@ Adding a dependent locality moved the "first named segment" binding from `locali
 `dependent_locality`. Bare street names started reading as dependent localities, and venues did not
 recover.
 
-### v4.10.0 — dose is a change, not a fix
+### v4.10.0 — the share is a change rather than a fix
 
 Same extract as v4.9.0, byte-identical, at a third the exposure. One variable.
 
@@ -102,7 +102,7 @@ Same extract as v4.9.0, byte-identical, at a third the exposure. One variable.
 | v4.9.0      |     9.4% |       11 |        31 |     −20 |                    15 |
 | **v4.10.0** | **3.1%** |        9 |        22 | **−13** |                     9 |
 
-The damage scales with dose and does not vanish with it. A 3× reduce bought back 7 net rows and 6 venue
+The damage scales with the share and does not vanish with it. A 3× reduce bought back 7 net rows and 6 venue
 rows, and the arm is still net −13, still FR −3 / GB −5 / IE −3. Regressions fall sub-linearly (25 → 22
 for a 3× reduce) because what remains is not over-exposure — it is that the extract's signal is wrong for
 the classes it does not contain, at any exposure that teaches anything.
@@ -112,13 +112,13 @@ the classes it does not contain, at any exposure that teaches anything.
 ### v4.11.0 — the composition hypothesis, tested and eliminated
 
 The conclusion below was that an admin-only extract damages the classes it does not contain. v4.11.0
-tested it directly by putting the same surface into rows that DO contain them.
+tested it directly by putting the same surface into rows that do contain them.
 
 `house-venue` was already emitting the target tail — `Springfield, IL 02101` and `Bengaluru,
 Karnataka 560038` are the same locality-region-postcode shape — and every row it emits carries a
-venue, a street AND a house number. 18,000 IN/PT/MX rows with real
+venue, a street and a house number. 18,000 IN/PT/MX rows with real
 postcodes were emitted under the EXISTING `synth-house-venue` source, so they took a share of a bucket
-that has shipped at weight 2.0 rather than claiming a new dose. Measured on the extract: venue 100%,
+that has shipped at weight 2.0 rather than claiming a new share. Measured on the extract: venue 100%,
 street 100%, house_number 100%.
 
     Bob's Pizza, 9 Lake Dr, Srikakulam, Andhra Pradesh 532001
@@ -126,19 +126,19 @@ street 100%, house_number 100%.
 
 **5 improved / 18 regressed, net −13. FR −3, GB −5, IE −3. Nine venue-led regressions.**
 
-No new source, no new dose, the alternatives present in every row — and the same countries lost the
-same classes. So the cause is NOT the extract's internal composition, and it is not exposure:
+No new source, no new share, the alternatives present in every row — and the same countries lost the
+same classes. So the cause is not the extract's internal composition, and it is not exposure:
 
-| run         | new source? | own dose? | venue/street present? |     net | venue-led |
-| ----------- | ----------- | --------- | --------------------- | ------: | --------: |
-| v4.8.0      | yes         | 9.4%      | no                    |     −18 |        12 |
-| v4.9.0      | yes         | 9.4%      | no                    |     −20 |        15 |
-| v4.10.0     | yes         | 3.1%      | no                    |     −13 |         9 |
-| **v4.11.0** | **no**      | **no**    | **yes**               | **−13** |     **9** |
+| run         | new source? | own share? | venue/street present? |     net | venue-led |
+| ----------- | ----------- | ---------- | --------------------- | ------: | --------: |
+| v4.8.0      | yes         | 9.4%       | no                    |     −18 |        12 |
+| v4.9.0      | yes         | 9.4%       | no                    |     −20 |        15 |
+| v4.10.0     | yes         | 3.1%       | no                    |     −13 |         9 |
+| **v4.11.0** | **no**      | **no**     | **yes**               | **−13** |     **9** |
 
 What every run shares is the DATA: non-US/FR admin tails entering a model whose tail expectations were
 set by US and FR. Adding them shifts those expectations for the countries it already knows, and FR/GB/
-IE venue rows are where that shows. Composition and dose modulate the size of the shift; neither
+IE venue rows are where that shows. Composition and share modulate the size of the shift; neither
 removes it.
 
 ### v4.12.0 — the brake is not the change either, and a FLOOR appears
@@ -148,13 +148,13 @@ One variable against v4.11.0: `ewc_lambda` 1e4 -> 1e5. Same corpus, source, weig
 **7 improved / 19 regressed, net -12. Venue-led still 9. FR -3, GB -5, IE -3.** A ten-fold stronger
 brake moved the net by one row and the venue class by none.
 
-| run     | change changed                                 | net | venue-led |
-| ------- | ---------------------------------------------- | --: | --------: |
-| v4.8.0  | admin extract @ 9.4%                           | -18 |        12 |
-| v4.9.0  | + dependent locality                           | -20 |        15 |
-| v4.10.0 | dose -> 3.1%                                   | -13 |     **9** |
-| v4.11.0 | venue-bearing rows, no new source, no new dose | -13 |     **9** |
-| v4.12.0 | EWC brake x10                                  | -12 |     **9** |
+| run     | change changed                               | net | venue-led |
+| ------- | -------------------------------------------- | --: | --------: |
+| v4.8.0  | admin extract @ 9.4%                         | -18 |        12 |
+| v4.9.0  | + dependent locality                         | -20 |        15 |
+| v4.10.0 | share -> 3.1%                                | -13 |     **9** |
+| v4.11.0 | venue-containing rows, same source and share | -13 |     **9** |
+| v4.12.0 | EWC brake x10                                | -12 |     **9** |
 
 Three unrelated changes — exposure, composition, regularization — reach the same floor with the SAME
 NINE venue-led rows. A floor that three independent changes cannot move is not a property of any of
@@ -179,7 +179,7 @@ Both readings matter and neither was available before:
 
 1. **The arc over-attributed.** A third of every "regression" charged to these extracts was the price of
    fine-tuning at all. Five runs of extract-blame were measuring a mixture.
-2. **The arc was not wrong.** Eight to nine rows ARE the data's doing, and they are the right ones —
+2. **The arc was not wrong.** Eight to nine rows are the data's doing, and they are the right ones —
    `gb-venue-ye-three-lords`, `gb-lex-cafe-st-marys`, `gb-op2-four-seasons-cjk` appear only in the
    treated arms. The venue diagnosis holds for that subset.
 
@@ -189,11 +189,11 @@ the four.
 
 ### What this changes for anything shipped from here
 
-The baseline for grading a candidate is the NULL RUN, not the shipped model. A candidate that costs
+The baseline for grading a candidate is the NULL RUN rather than the shipped model. A candidate that costs
 ten rows has cost nothing; one that costs eighteen has cost eight. Every check in this arc used the
 wrong denominator.
 
-It also sets a floor on what a fine-tune can deliver: **it must buy back five net rows before it breaks
+It also sets a floor on what a fine-tune can deliver: **it must recover five net rows before it breaks
 even**, because that is what 4,000 steps against this base costs on its own. None of the six came
 close, and no extract-side change can, since the tax is charged before the extract is read.
 
@@ -203,10 +203,10 @@ rather than a preference.
 ### The control as originally specified (kept — the reasoning stands)
 
 If the same nine rows regress under every intervention, the next question is whether they regress
-under NO intervention: **fine-tune the base corpus with no added extract at all, same steps, same seed.**
+under no intervention: **fine-tune the base corpus with no added extract at all, same steps, same seed.**
 
 - If those nine still move, the arc's entire premise is wrong. The regressions are an artifact of
-  fine-tuning this base for 4,000 steps, not of the data, and every conclusion above about extracts is
+  fine-tuning this base for 4,000 steps rather than of the data, and every conclusion above about extracts is
   measuring the wrong thing.
 - If they hold, the data is implicated after all and the floor is a real interaction.
 
@@ -220,11 +220,11 @@ should cost fewer. One variable against v4.11.0, `max_steps` 4000 -> 1000.
 
 **4 improved / 10 regressed, net -6.**
 
-Regressions fell 18 -> 10. But ten IS the null's tax, so the extract now costs nothing beyond it — and
-buys nothing either, the improvements falling 5 -> 4. `gb-venue-ye-three-lords` holds at this
+Regressions fell 18 -> 10. But ten is the null's tax, so the extract now costs nothing beyond it — and
+adds nothing either, the improvements falling 5 -> 4. `gb-venue-ye-three-lords` holds at this
 distance; `gb-lex-cafe-st-marys` and `gb-op2-four-seasons-cjk` do not.
 
-The finding is in the shape of the tax, not the net. **It is paid in the first 1,000 steps and barely
+The finding is in the shape of the tax rather than the net. **It is paid in the first 1,000 steps and barely
 grows to 4,000** — 10 rows at both. It is not proportional to how far the weights travel; it is a
 fixed cost of touching this base at all. No shorter run avoids it.
 
@@ -232,21 +232,21 @@ fixed cost of touching this base at all. No shorter run avoids it.
 
 Eight runs. Every change that exists for an additive fine-tune, each isolated:
 
-| run         | change                               | net vs shipped | regressed |
-| ----------- | ------------------------------------ | -------------: | --------: |
-| v4.8.0      | admin extract @ 9.4%                 |            -18 |        25 |
-| v4.9.0      | + dependent locality                 |            -20 |        31 |
-| v4.10.0     | dose -> 3.1%                         |            -13 |        22 |
-| v4.11.0     | venue-bearing, no new source or dose |            -13 |        18 |
-| v4.12.0     | EWC brake x10                        |            -12 |        19 |
-| v4.14.0     | steps -> 1,000                       |             -6 |        10 |
-| **v4.13.0** | **NULL — no added data at all**      |         **-5** |    **10** |
+| run         | change                                  | net vs shipped | regressed |
+| ----------- | --------------------------------------- | -------------: | --------: |
+| v4.8.0      | admin extract @ 9.4%                    |            -18 |        25 |
+| v4.9.0      | + dependent locality                    |            -20 |        31 |
+| v4.10.0     | share -> 3.1%                           |            -13 |        22 |
+| v4.11.0     | venue-containing, same source and share |            -13 |        18 |
+| v4.12.0     | EWC brake x10                           |            -12 |        19 |
+| v4.14.0     | steps -> 1,000                          |             -6 |        10 |
+| **v4.13.0** | **NULL — no added data at all**         |         **-5** |    **10** |
 
 The null is the best of them. Every arm that adds data is worse than adding none, and the arm that adds
 data most cautiously converges on the null rather than beating it.
 
 **No fine-tune of this base can ship an additive surface.** The tax is fixed, immediate, and larger
-than anything an additive extract has been able to buy back. That is not a judgement about these extracts;
+than anything an additive extract has been able to recover. That is not a judgement about these extracts;
 it is a property of the starting point, and it holds across exposure, composition, regularization and
 distance.
 
@@ -256,24 +256,24 @@ learned rather than grafted. That is a different order of commitment and should 
 ## The cause, stated once
 
 **PROVISIONAL, pending the null-run control described above.** Adding non-US/FR admin tails to this
-model regresses FR/GB/IE venue parsing, and neither composition, dose, nor the EWC brake removes it. Five runs: three admin-only extracts at three doses, one dose reduce on
+model regresses FR/GB/IE venue parsing, and neither composition, share, nor the EWC brake removes it. Five runs: three admin-only extracts at three shares, one share reduce on
 a byte-identical extract, and one that carried venue+street+house_number in every row inside an
 already-shipping bucket. All five net-negative, all five losing the same classes in the same
-countries. Composition and dose modulate the size of the shift; the shift itself tracks the data.
+countries. Composition and share modulate the size of the shift; the shift itself tracks the data.
 
 That points past the corpus at the model: a 39.3M-param encoder fine-tuned with an EWC brake against a
 US/FR base may not have capacity to hold a new tail convention without moving an old one. The next
-experiment is therefore NOT another extract — it is the same data against a different training shape
+experiment is therefore not another extract — it is the same data against a different training shape
 (no EWC brake, or a longer run, or a from-scratch base that sees all the tails at once). That is a
 larger commitment than a fine-tune and should be scoped as one.
 
 ## What this does and does not license
 
-- **Dose is not the remedy, and that is now measured rather than argued.** v4.10.0 held the extract
+- **The share is not the action, and that is now measured rather than argued.** v4.10.0 held the extract
   byte-identical and reduce exposure 3×; net went −20 → −13 and stopped there. Extrapolating the observed
-  sub-linear fall, the dose that stops hurting is below the dose that teaches.
+  sub-linear fall, the share that stops hurting is below the share that teaches.
 - **It does license the corpus-authoring task**: this extract needs rows where a venue or a street
-  precedes the locality before it can carry a meaningful dose. That is authoring, not tuning.
+  precedes the locality before it can carry a meaningful share. That is authoring rather than tuning.
 - **VE remains unmoved and unmovable from here.** GeoNames does not publish Venezuela and nothing on
   disk carries a VE postcode. IN's `after_region` rows were the proxy and they did not generalize to
   VE's `after_locality` in any of the three runs.
@@ -291,11 +291,11 @@ source this project consumes was checked on 2026-08-23:
 | Overture, local snapshot                                                             | `places` theme only; no addresses theme downloaded |
 
 So VE postcodes are not an acquisition someone forgot to run. They are absent from the open corpus this
-project is built on. The one avenue NOT checked is Overture's upstream `addresses` theme, which is not
-mirrored locally — worth one query before concluding it is unobtainable, not worth assuming it helps.
+project is built on. The one avenue not checked is Overture's upstream `addresses` theme, which is not
+mirrored locally — worth one query before concluding it is unobtainable rather than worth assuming it helps.
 
 That makes the VE question a product decision rather than a data-fetching task: either a synthetic
-4-digit code paired with a REAL (locality, region) pair from the WOF admin DB, or VE stays unfixed. The
+4-digit code paired with a real (locality, region) pair from the WOF admin DB, or VE stays unfixed. The
 `house-venue` synthesizer now carries VE's tail ordering, so the shape has a home either way — see
 `packages/corpus/lib/synthesizers/house-venue.ts`.
 
@@ -316,14 +316,14 @@ adds nothing. **Every regression reported in this document is real.**
 
 Worth keeping as a habit rather than a one-off: a self-comparison costs one board run and is the only
 thing that separates "the candidate is worse" from "my rig is noisy". It should precede the first
-candidate of any arc, not follow the eighth.
+candidate of any arc rather than follow the eighth.
 
 ## Method notes worth keeping
 
-- **Grade the board, not the val loss.** All three runs reported `macro_f1` between 0.9203 and 0.9212
+- **Grade the board rather than the val loss.** All three runs reported `macro_f1` between 0.9203 and 0.9212
   and `cross_pollution=0.00%`. Every one of them was a do-not-ship. The val split cannot see the venue
   class the board is built to see.
-- **A smoke run proves the config loads, not that the extract is reached.** The mixed extract's leading
+- **A smoke run proves the config loads rather than that the extract is reached.** The mixed extract's leading
   arm keeps the zero-rows guard from firing even when the whole trailing arm is dropped. The check
   that mattered was reading the extract through the loader's own check before launching.
 - **A false negative in the measuring tool looks exactly like a real absence.** Corpus `labels` is a

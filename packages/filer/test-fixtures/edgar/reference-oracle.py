@@ -1,4 +1,4 @@
-"""How expected.json was produced — a one-off audit tool, not part of any build.
+"""How expected.json was produced — a one-off audit tool rather than part of any build.
 
 An independent implementation of the Exhibit 21 extraction rules, written to check
 filer/sdk/exhibit21.ts rather than to ship. Deliberately unlike it: a real HTML parser
@@ -6,7 +6,7 @@ filer/sdk/exhibit21.ts rather than to ship. Deliberately unlike it: a real HTML 
 line by line against the source documents and vendored as expected.json.
 
 The point is non-circularity. An expected.json generated from parseExhibit21 output would
-have recorded, as the contract, the eight zero-yield documents and eighteen fabricated names
+have recorded, as the interface, the eight zero-yield documents and eighteen fabricated names
 the TypeScript parser produced on 2026-08-03 — all of which its own hand-written fixture
 suite passed. Ground truth has to come from somewhere the implementation cannot reach.
 
@@ -14,8 +14,8 @@ Re-run it (needs beautifulsoup4 + lxml in a virtualenv) to audit expected.json:
 
     python reference-oracle.py filer/test-fixtures/edgar/*.htm
 
-It is NOT a second parser to keep in sync, and nothing imports it. When a rule changes,
-the plan and exhibit21.ts are what change; this file is the record of how the numbers in
+It is not a second parser to keep in sync, and nothing imports it. When a rule changes,
+the plan and exhibit21.ts are what change. this file is the record of how the numbers in
 expected.json were arrived at, and re-running it is how a reviewer checks them.
 """
 
@@ -134,7 +134,7 @@ def classify_table(rows, stats, carried=None):
         seconds = [p[1] for p in two]
         designated = sum(1 for v in seconds if DESIGNATION.search(v))
         distinct = len(set(seconds))
-        # A jurisdiction column repeats; a second NAME column does not. Charter writes its
+        # A jurisdiction column repeats. a second name column does not. Charter writes its
         # jurisdictions as "Delaware limited liability company" (135/135 carry a designation)
         # and is separated from IDT's two-across name list only by this ratio.
         if designated * 2 > len(two) and distinct * 10 > len(two) * 7:
@@ -165,9 +165,9 @@ def classify_table(rows, stats, carried=None):
             name = row[i] if i < len(row) else ""
             juris = row[j] if j < len(row) else ""
             if not name and i < j:
-                # Indented corporate-tree row: the child's name sits in a column to the RIGHT of the
-                # labelled name column but still LEFT of the labelled jurisdiction column. The nesting
-                # depth is discarded; the name itself is not in doubt.
+                # Indented corporate-tree row: the child's name sits in a column to the right of the
+                # labelled name column but still left of the labelled jurisdiction column. The nesting
+                # depth is discarded. the name itself is not in doubt.
                 for k in range(i + 1, min(j, len(row))):
                     if row[k]:
                         name = row[k]

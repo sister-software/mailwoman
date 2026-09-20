@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Assemble a package-shaped weights directory under a `cacheRoot`, so a CANDIDATE model can be graded
+ *   Assemble a package-shaped weights directory under a `cacheRoot`, so a candidate model can be graded
  *   with its sibling channels fed — `<cacheRoot>/node_modules/@mailwoman/neural-weights-<locale>`, the
  *   layout `resolveWeights`' cache rung finds and the posture `score-anchor-v2-boards.run.ts` and
  *   `overlay-channel-smoke.ts` both take.
  *
- *   WHY THIS EXISTS RATHER THAN "just point --model at the checkpoint". A model is not its `.onnx`. The
- *   card declares which channels it needs, and the SIBLINGS (anchor binary, four lexicons, FST, pair
- *   index) are what feed them; grading a candidate by swapping the model file alone silently scores it
- *   with the SHIPPED bundle's channels — the #566/#685 trap one level up. Staging the whole set into a
+ *   Why this exists rather than "just point --model at the checkpoint". A model is not its `.onnx`. The
+ *   card declares which channels it needs, and the siblings (anchor binary, four lexicons, FST, pair
+ *   index) are what feed them. grading a candidate by swapping the model file alone silently scores it
+ *   with the shipped bundle's channels — the #566/#685 trap one level up. Staging the whole set into a
  *   throwaway directory is what makes "this is the bundle, graded as a bundle" checkable.
  *
  *   Symlinks by default (nothing is copied, nothing in the data root is touched). `--from` seeds the
@@ -71,7 +71,7 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 
 	const cacheRoot = resolvePath(repoRoot, options.out)
 	// The layout comes from the resolver's own `weightsCachePackageDir` rather than a re-typed literal —
-	// this operation's whole contract is "lay out the directory `resolveWeights`' cache rung finds", so the
+	// this operation's whole interface is "lay out the directory `resolveWeights`' cache rung finds", so the
 	// two must not be able to drift.
 	const packageDir = weightsCachePackageDir(cacheRoot, options.locale)
 
@@ -83,7 +83,7 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 
 	const omit = new Set(options.omit)
 	/**
-	 * Staged name → source path. Seeded from `from`, then overridden; last writer wins, which is what makes `file` a
+	 * Staged name → source path. Seeded from `from`, then overridden. last writer wins, which is what makes `file` a
 	 * divergence rather than a conflict.
 	 */
 	const staged = new Map<string, string>()

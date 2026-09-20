@@ -26,7 +26,7 @@ describe("wholeCommunes", () => {
 })
 
 describe("certifiedCoverageCells", () => {
-	// Two points ~30 m apart share a res-9 cell; the third is a different town.
+	// Two points ~30 m apart share a res-9 cell. the third is a different town.
 	const bourg = { lat: 46.2052, lon: 5.2255 }
 	const nearBourg = { lat: 46.2054, lon: 5.2257 }
 	const oyonnax = { lat: 46.2567, lon: 5.6553 }

@@ -4,20 +4,20 @@
 /**
  *   Hierarchy campaign R4c — build the PCN1 placetype census from the shipped WOF admin DB. Two
  *   pieces live here: {@link PLACETYPE_PROJECTION}, the executable form of the projection table in
- *   plan/reference/placetype-evidence.mdx ("no placetype gets its own tag; every placetype gets a
- *   projection"), and {@link buildPlacetypeCensus}, which counts each parent's children THROUGH that
+ *   plan/reference/placetype-evidence.mdx ("no placetype gets its own tag. every placetype gets a
+ *   projection"), and {@link buildPlacetypeCensus}, which counts each parent's children through that
  *   projection.
  *
  *   The census counts what the source can actually answer. `admin-global-priority.db` carries nine
  *   placetypes (locality, localadmin, neighbourhood, borough, county, macrocounty, region,
  *   macroregion, country) because `ADMIN_PLACETYPES` in `admin/ingest-wof.ts` allowlists exactly
- *   those; the projection table maps all 34 in the WOF vocabulary. The other 25 are absent from the
- *   artifact by BUILD RECIPE, not by WOF's contents — which is COVERAGE, not fact (the
+ *   those. the projection table maps all 34 in the WOF vocabulary. The other 25 are absent from the
+ *   artifact by build recipe rather than by WOF's contents — which is coverage rather than fact (the
  *   meaning-of-zero rule), and why the artifact ships positive counts only and the reader treats a
  *   missing node as neutral. `mailwoman gazetteer granularity` measures the difference.
  *
  *   Inclusion rule: a parent enters the census only if it has at least one child projecting onto a
- *   tag OTHER than `locality`. A node recording "this locality has 300 locality children" is true
+ *   tag other than `locality`. A node recording "this locality has 300 locality children" is true
  *   and useless — every locality has those — and including them would inflate the artifact by two
  *   orders of magnitude for zero discriminative mass. The tag whose conditional prior this arc is
  *   about (`dependent_locality`) is exactly the one the rule keeps.
@@ -35,8 +35,8 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
  * build into a throw at the worst moment. Sorted to keep the diff readable when WOF grows the vocabulary.
  *
  * Pinned to `WhosOnFirstPlacetype` (`@mailwoman/core/resources/whosonfirst`) with `satisfies`, the same discipline
- * `WOF_VENUE_STRUCTURE_PLACETYPES` uses: this list stops COMPILING if it names something outside the vocabulary. The
- * type is the authority on membership; this array exists because a type union cannot be enumerated at runtime, which is
+ * `WOF_VENUE_STRUCTURE_PLACETYPES` uses: this list stops compiling if it names something outside the vocabulary. The
+ * type is the authority on membership. this array exists because a type union cannot be enumerated at runtime, which is
  * what the completeness test needs. A hand-maintained copy drifted once already — it was missing `custom`.
  */
 export const WOF_PLACETYPES = [
@@ -79,13 +79,13 @@ export const WOF_PLACETYPES = [
 
 /**
  * WOF placetype → `ComponentTag` projection, the executable copy of plan/reference/placetype-evidence.mdx's table. A
- * `null` value means "in the vocabulary, deliberately NOT projected" (context-only placetypes: metroarea, timezone, and
+ * `null` value means "in the vocabulary, deliberately not projected" (context-only placetypes: metroarea, timezone, and
  * the out-of-grammar continent/ocean rows) — distinct from a placetype missing from this map entirely, which is an
  * unmapped placetype the builder will refuse to count silently.
  *
  * `county`/`macrocounty` project onto `subregion` here, the US reading. Ireland writes county as an address line ("Co.
  * Kerry"), where the same rows project onto `region`; that per-locale re-projection belongs to the IE census instance
- * when it is built, not to this table, because a single global map cannot be right for both.
+ * when it is built rather than to this table, because a single global map cannot be right for both.
  */
 export const PLACETYPE_PROJECTION: Readonly<Record<string, ComponentTag | null>> = {
 	// Locality backbone — the census denominator for everything below it.
@@ -107,7 +107,7 @@ export const PLACETYPE_PROJECTION: Readonly<Record<string, ComponentTag | null>>
 	disputed: "country",
 	postalcode: "postcode",
 	venue: "venue",
-	// Venue sub-structure. A WOF `building`/`campus` place carries a venue NAME ("Empire State Building", "MIT
+	// Venue sub-structure. A WOF `building`/`campus` place carries a venue name ("Empire State Building", "MIT
 	// Campus"); the interior subdivisions carry a unit designator ("Concourse B", "Terminal 4", "West Wing"). The
 	// admin build stocks none of these today — that is the ingest allowlist (`ADMIN_PLACETYPES`), not the source, and
 	// measuring the difference is what `mailwoman gazetteer granularity` exists for.
@@ -132,16 +132,16 @@ export const PLACETYPE_PROJECTION: Readonly<Record<string, ComponentTag | null>>
 	// `custom` is WOF's override for a locally-defined placetype. It names no fixed feature class, so no projection
 	// can be right for it — deliberately uncounted rather than guessed at.
 	custom: null,
-	// Multi-span and record placetypes: in the vocabulary, structurally unprojectable onto ONE tag. An intersection is
+	// Multi-span and record placetypes: in the vocabulary, structurally unprojectable onto one tag. An intersection is
 	// a two-span construct (`intersection_a` + `intersection_b`); a WOF `address` is a whole address record consumed by
-	// the kind-classifier and the resolver's address-point tiers, not a span role.
+	// the kind-classifier and the resolver's address-point tiers rather than a span role.
 	intersection: null,
 	address: null,
 }
 
 /**
- * The projection every census parent is keyed by — a census node describes the children of a PLACE, and the placetypes
- * that host address-bearing children are the locality-class ones.
+ * The projection every census parent is keyed by — a census node describes the children of a place, and the placetypes
+ * that host address-containing children are the locality-class ones.
  */
 const PARENT_PLACETYPES = ["locality", "localadmin"] as const
 
@@ -152,12 +152,12 @@ export interface PlacetypeCensusBuildResult {
 	 */
 	nodes: PlacetypeCensusNode[]
 	/**
-	 * Global child counts per projected tag across the whole country, BEFORE the inclusion rule drops locality-only
+	 * Global child counts per projected tag across the whole country, before the inclusion rule drops locality-only
 	 * parents — the denominator behind `PlacetypeCensusHeader.baseRates`.
 	 */
 	countryTotals: Partial<Record<ComponentTag, number>>
 	/**
-	 * Parent→child links counted (the census's row mass, not its node count).
+	 * Parent→child links counted (the census's row mass rather than its node count).
 	 */
 	links: number
 	/**

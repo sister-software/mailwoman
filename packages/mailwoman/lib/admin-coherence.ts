@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Admin-coherence verdicts (#1717 stage 1) — after a geocode resolves, compare the PARSED admin
+ *   Admin-coherence verdicts (#1717 stage 1) — after a geocode resolves, compare the parsed admin
  *   qualifiers (`region`, `country`) against what the winning candidate's resolved ancestry actually
- *   says, and report a per-component verdict. FLAG-ONLY: nothing reads these verdicts to rank,
+ *   says, and report a per-component verdict. flag-only: nothing reads these verdicts to rank,
  *   re-pick, or check — they exist so a board run can count how often the resolver's answer ignores a
  *   qualifier the parse got right (`Weimar, Thüringen` → Weimar TX), and how often the winner
  *   carries no ancestry to check at all (the `unverifiable` count).
@@ -13,20 +13,20 @@
  *
  *   - `confirmed` — the qualifier matches a winner-ancestry node of its class under the shared
  *     name fold ({@link normalizeLocalityForKey}, the same fold candidate.db's `name_key` is built
- *     with — build side and check side agree by construction), or the winner IS that qualifier's
+ *     with — build side and check side agree by construction), or the winner is that qualifier's
  *     own resolution (a region-tagged winner confirms the region qualifier by identity —
  *     containment degenerates to self).
- *   - `contradicted` — the winner's ancestry HAS a node of that class and none of them fold-match
+ *   - `contradicted` — the winner's ancestry has a node of that class and none of them fold-match
  *     the parsed value.
  *   - `unstated` — the parse produced no such qualifier. The common case, and not a problem: most
  *     queries simply don't name a region or country.
- *   - `unverifiable` — the parse produced the qualifier but the winner carries NO ancestry of that
- *     class to check against. Report it faithfully; folding it into either decided verdict would
+ *   - `unverifiable` — the parse produced the qualifier but the winner carries no ancestry of that
+ *     class to check against. Report it faithfully. folding it into either decided verdict would
  *     hide exactly the gap #1717 wants measured.
  *
- *   STATED BOUNDS (v1 is fold-equality only — do not read more into a verdict than this):
+ *   stated bounds (v1 is fold-equality only — do not read more into a verdict than this):
  *
- *   - Cross-language variant forms are NOT bridged: `Thüringen` folds to `thuringen`, the stored
+ *   - Cross-language variant forms are not bridged: `Thüringen` folds to `thuringen`, the stored
  *     exonym `Thuringia` to `thuringia`, so a variant-form match the gazetteer could vouch for
  *     still reads `contradicted`. Bridging it needs a candidate.db alias probe, which would pull
  *     the SQLite lookup implementation into this pure module — deliberately skipped.
@@ -36,7 +36,7 @@
  *     `Illinois` and `Deutschland` against a DE winner, but an uncurated endonym (`Alemania`)
  *     against a DE winner reads `contradicted` — the module never silently over-claims a match it
  *     cannot derive.
- *   - The region verdict additionally carries the MISLABEL BRIDGE: a region slot holding a COUNTRY
+ *   - The region verdict additionally carries the mislabel bridge: a region slot holding a country
  *     name ("Batumi, Georgia" parses region="Georgia") confirms against the winner's country-class
  *     evidence, because containment holds and `contradicted` would misdescribe the geography. It
  *     runs after the region band, is monotone (`contradicted`/`unverifiable` → `confirmed` is the
@@ -60,13 +60,13 @@ import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 
 /**
  * One admin-coherence verdict. See the module docstring for the exact meaning of each — in particular, `unverifiable`
- * is an absence-of-evidence claim about the WINNER, never about the parse.
+ * is an absence-of-evidence claim about the winner, never about the parse.
  */
 type AdminCoherenceVerdict = "confirmed" | "contradicted" | "unstated" | "unverifiable"
 
 /**
  * The per-component verdicts. Both members are always present when the report exists (the `intent_markers` discipline:
- * state the empty case — `unstated` IS the explicit "no qualifier" claim, so an optional member would be a second way
+ * state the empty case — `unstated` is the explicit "no qualifier" claim, so an optional member would be a second way
  * to say the same thing). The report as a whole is what's optional: absent means the geocode resolved no winner to
  * check against.
  */
@@ -76,8 +76,8 @@ export interface AdminCoherenceReport {
 }
 
 /**
- * The parsed admin qualifiers — the raw spans off the address tree's `region` / `country` nodes (the parse view, not
- * the resolved view). Empty / whitespace-only reads as absent.
+ * The parsed admin qualifiers — the raw spans off the address tree's `region` / `country` nodes (the parse view rather
+ * than the resolved view). Empty / whitespace-only reads as absent.
  */
 export interface ParsedAdminQualifiers {
 	region?: string | undefined
@@ -86,7 +86,7 @@ export interface ParsedAdminQualifiers {
 
 /**
  * One link of the winner's containment lineage, as the resolver stamped it (`metadata.ancestors`, the #404 opt-in) — a
- * structural slice of `@mailwoman/core`'s `Ancestor`.
+ * structural subset of `@mailwoman/core`'s `Ancestor`.
  */
 interface AdminAncestor {
 	placetype: string
@@ -108,9 +108,9 @@ export interface AdminCoherenceWinner {
  * Fold both sides of every name comparison through the shared candidate.db `name_key` normalizer — one function, both
  * sides, so the check can never disagree with the index it's checking against.
  *
- * The region-side expansion ({@link regionKeys}) and the region band ({@link REGION_CLASS_PLACETYPES}) moved DOWN to
+ * The region-side expansion ({@link regionKeys}) and the region band ({@link REGION_CLASS_PLACETYPES}) moved down to
  * `@mailwoman/resolver-wof-sqlite/region-keys` when the #1717 stage-2 containment re-rank became their second consumer
- * — the dependency points that way, and the #861 rule wants one function, not a mirrored copy.
+ * — the dependency points that way, and the #861 rule wants one function rather than a mirrored copy.
  */
 function foldKey(name: string): string {
 	return normalizeLocalityForKey(name)
@@ -149,7 +149,7 @@ function intersects(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
 }
 
 /**
- * The winner's COUNTRY-class evidence keys: the resolver-stamped alpha-2 expanded through the codex tables into every
+ * The winner's country-class evidence keys: the resolver-stamped alpha-2 expanded through the codex tables into every
  * spelling the check can vouch for, plus any country-placetype ancestors. One assembly, two consumers — the country
  * verdict compares against it, and the region verdict's mislabel bridge (below) does too, so the two verdicts can never
  * disagree about what counts as country-class evidence.
@@ -188,9 +188,9 @@ function regionVerdict(parsedRegion: string | undefined, winner: AdminCoherenceW
 
 	if (!parsed) return "unstated"
 
-	// The winner IS a region resolution — the qualifier is the thing that resolved, so containment
+	// The winner is a region resolution — the qualifier is the thing that resolved, so containment
 	// degenerates to identity. The resolver's own binding (alias-aware, unlike the fold) is the
-	// match evidence here; re-checking it under fold-equality would misread every alias hit as a
+	// match evidence here. re-checking it under fold-equality would misread every alias hit as a
 	// contradiction.
 	if (winner.tag === "region") return "confirmed"
 
@@ -202,11 +202,11 @@ function regionVerdict(parsedRegion: string | undefined, winner: AdminCoherenceW
 		if (intersects(parsedKeys, regionKeys(ancestor.name, iso))) return "confirmed"
 	}
 
-	// The mislabel bridge: the region SLOT sometimes holds a COUNTRY name — "Moscow, Russia" parses
+	// The mislabel bridge: the region slot sometimes holds a country name — "Moscow, Russia" parses
 	// region="Russia", "Batumi, Georgia" parses region="Georgia" (the shape the flag's own first
 	// triage counted at ~4 of 16 contradictions). Containment still holds when the winner's
 	// country-class evidence matches the qualifier, so `contradicted` would be the wrong claim about
-	// the geography. Checked AFTER the region band (a genuine region match never depends on it) and
+	// the geography. Checked after the region band (a genuine region match never depends on it) and
 	// monotone by construction: it can only move `contradicted`/`unverifiable` → `confirmed`.
 	if (intersects(countryKeys(parsed), winnerCountryKeys(winner))) return "confirmed"
 
@@ -228,7 +228,7 @@ function countryVerdict(parsedCountry: string | undefined, winner: AdminCoherenc
 }
 
 /**
- * Assess the parsed admin qualifiers against the winning candidate. Pure — no I/O, no lookup, no side effects; call it
+ * Assess the parsed admin qualifiers against the winning candidate. Pure — no I/O, no lookup, no side effects. call it
  * once at result assembly, only when a winner exists (no winner → no report, absence meaning "nothing resolved to check
  * against").
  */
@@ -243,8 +243,8 @@ export function assessAdminCoherence(
 }
 
 /**
- * A resolved-tree node slice the assembly adapter reads — structurally satisfied by `@mailwoman/core`'s `AddressNode`,
- * declared locally so the pure module carries no decoder import.
+ * The subset of a resolved-tree node the assembly adapter reads — structurally satisfied by `@mailwoman/core`'s
+ * `AddressNode`, declared locally so the pure module carries no decoder import.
  */
 export interface AdminCoherenceSourceNode {
 	tag: string
@@ -257,8 +257,8 @@ export interface AdminCoherenceSourceNode {
  * the winner's checkable ancestry (the `resolver_country` stamp + any `metadata.ancestors` chain) off the resolved
  * tree's nodes, and return a spreadable result fragment. `winner` is the admin-ladder pick; `fallbackWinner` is the
  * primary resolved node the street-backed tiers report instead (the resolution context the coordinate was scoped by).
- * No winner at all → an empty fragment: the `admin_coherence` field stays ABSENT, which is a different claim from
- * `unverifiable` (nothing resolved, so there was no candidate to check).
+ * No winner at all → an empty fragment: the `admin_coherence` field stays absent, which is a different claim from
+ * `unverifiable` (nothing resolved. Therefore, there was no candidate to check).
  */
 export function adminCoherenceField(
 	nodes: readonly AdminCoherenceSourceNode[],
@@ -277,8 +277,8 @@ export function adminCoherenceField(
 		{
 			tag: picked.tag,
 			countryCode: (picked.metadata?.["resolver_country"] as string | undefined)?.trim() || undefined,
-			// The resolver's #404 stamp — present when the geocode path opted in AND the backend's
-			// artifact carries an ancestors table; its absence is what the verdicts report as
+			// The resolver's #404 stamp — present when the geocode path opted in and the backend's
+			// artifact carries an ancestors table. its absence is what the verdicts report as
 			// `unverifiable`.
 			ancestry: picked.metadata?.["ancestors"] as readonly AdminAncestor[] | undefined,
 		}

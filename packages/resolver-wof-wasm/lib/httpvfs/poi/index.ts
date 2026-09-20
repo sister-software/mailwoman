@@ -2,18 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A SECOND sql.js-httpvfs worker, byte-ranged over the published `poi.db` (`poiLayerURL()`) —
+ *   A second sql.js-httpvfs worker, byte-ranged over the published `poi.db` (`poiLayerURL()`) —
  *   category-only k-ring search for a live POI explorer. Independent of
- *   `resolver.ts`'s admin-gazetteer worker: a POI search opens its OWN worker over a
+ *   `resolver.ts`'s admin-gazetteer worker: a POI search opens its own worker over a
  *   different DB, over the same staged sql.js-httpvfs UMD/worker/wasm assets.
  *
- *   The k-ring walk + h3 packing REPLICATE `resolver-wof-sqlite/poi-lookup.ts`'s Node reader exactly
- *   — `latLngToCell` → `shortCellToInt` (the SHARED `@mailwoman/spatial` 48-bit packer, never
+ *   The k-ring walk + h3 packing replicate `resolver-wof-sqlite/poi-lookup.ts`'s Node reader exactly
+ *   — `latLngToCell` → `shortCellToInt` (the shared `@mailwoman/spatial` 48-bit packer, never
  *   reimplemented), then the same per-cell probe SQL, ring-by-ring dedup, and a final haversine sort.
- *   Keep the two readers in lockstep; a probe-semantics cross-check against the Node reader lives in
- *   the PR description, not in this tree (throwaway verification script, not shipped).
+ *   Keep the two readers in lockstep. a probe-semantics cross-check against the Node reader lives in
+ *   the PR description rather than in this tree (throwaway verification script rather than shipped).
  *
- *   CATEGORY-ONLY, matching the runbook: no FTS name search, no brand search — the multi-hop demo
+ *   category-only, matching the runbook: no FTS name search, no brand search — the multi-hop demo
  *   path is deliberately excluded from this tester.
  */
 
@@ -26,7 +26,7 @@ import { rowsFromExec } from "#httpvfs/rows"
 export { resolveAnchorCenter, type AnchorCenter } from "#httpvfs/poi/anchor"
 
 /**
- * Resolution the published `poi.db`'s `h3_cell` column is keyed at — MUST match the builder (poi-lookup.ts's
+ * Resolution the published `poi.db`'s `h3_cell` column is keyed at — must match the builder (poi-lookup.ts's
  * `POI_H3_RESOLUTION`).
  */
 const POI_H3_RESOLUTION = 9
@@ -76,16 +76,16 @@ export interface POISearchOpts {
 	/**
 	 * Fan-out leaves — the Overture `taxonomy.primary` ids this canonical category rolls up into (`supermarket` →
 	 * `grocery_store`, …), from `@mailwoman/poi-taxonomy`'s `resolveOvertureCategories`. When set, every resolvable leaf
-	 * is probed per cell and the rows are unioned; unknown leaves are skipped. Absent ⇒ probe `categoryID` alone
+	 * is probed per cell and the rows are unioned. unknown leaves are skipped. Absent ⇒ probe `categoryID` alone
 	 * (identity) — matching the Node reader's back-compat.
 	 */
 	categoryIDs?: string[]
 	center: { lat: number; lon: number }
 	/**
 	 * Ring budget (default 6, k reaches 5 — empirically ~1 km against the sealed layer: a live cross-check against a real
-	 * Springfield-IL cafe cluster found its NEAREST hit only at k=3, so a smaller default returned zero results for a
+	 * Springfield-IL cafe cluster found its nearest hit only at k=3, so a smaller default returned zero results for a
 	 * perfectly ordinary query). Still well under the Node reader's 12-ring/~4 km default — the tester issues one
-	 * explicit-click search, not a per-keystroke probe, so the request count stays bounded either way.
+	 * explicit-click search rather than a per-keystroke probe, so the request count stays bounded either way.
 	 */
 	maxRings?: number
 	limit?: number
@@ -106,7 +106,7 @@ const DEFAULT_LIMIT = 10
 /**
  * Category-only k-ring search. Probes `opts.center`'s res-9 cell, expanding ring-by-ring (deduping cells already
  * probed) until `limit` rows are on hand after a completed ring or `maxRings` is exhausted, then haversine-sorts the
- * pool. Returns `[]` for a category the DB's dictionary doesn't carry — a clean miss, not a throw.
+ * pool. Returns `[]` for a category the DB's dictionary doesn't carry — a clean miss rather than a throw.
  */
 export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearchOpts): Promise<POISearchHit[]> {
 	const limit = Math.max(1, opts.limit ?? DEFAULT_LIMIT)
@@ -131,14 +131,14 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 
 		for (const cell of newCells) {
 			seenCells.add(cell)
-			// The SAME packing as poi-lookup.ts: the shared @mailwoman/spatial `shortCellToInt` 48-bit
-			// packer — `poi.h3_cell` is the SHORTENED cell.
+			// The same packing as poi-lookup.ts: the shared @mailwoman/spatial `shortCellToInt` 48-bit
+			// packer — `poi.h3_cell` is the shortened cell.
 			const shortCell = shortCellToInt(cell as H3Cell)
 
 			// Country is appended to the per-cell probe (beyond the spec's literal 4-column SQL) so the
-			// tester's results list can show it — same WHERE/ORDER/LIMIT + packing, one extra column.
+			// tester's results list can show it — same where/order/limit + packing, one extra column.
 			// `category_id IN (…)` unions the fan-out leaves in one probe per cell (the ids are dictionary ints, never
-			// user input — no injection surface). LIMIT still caps the per-cell pull; the outer ring loop + final sort
+			// user input — no injection surface). limit still caps the per-cell pull. the outer ring loop + final sort
 			// trim to the nearest `limit`.
 			const sql =
 				`SELECT name, latitude, longitude, confidence, country FROM poi ` +

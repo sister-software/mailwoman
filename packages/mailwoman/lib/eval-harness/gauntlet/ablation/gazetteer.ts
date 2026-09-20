@@ -5,19 +5,19 @@
  *   The {@linkcode AblationGazetteerProbe} implementation: the two databases the ablation layer's expectation model
  *   reads, and nothing else.
  *
- *   - `wof/admin-global-priority.db` — `spr` + `ancestors`. The LADDER comes from here: a resolved place id → its
+ *   - `wof/admin-global-priority.db` — `spr` + `ancestors`. The ladder comes from here: a resolved place id → its
  *       containment chain, with each ancestor's centroid and bbox. The walk is `ancestorLineage`'s (shared with the
- *       reverse geocoder, `resolver-wof-sqlite/ancestry.ts`), extended with the bbox columns this model needs; both
+ *       reverse geocoder, `resolver-wof-sqlite/ancestry.ts`), extended with the bbox columns this model needs. both
  *       probes are PK / `ancestors_by_id` lookups.
- *   - `wof/candidate.db` — the byte-range candidate gazetteer. The AMBIGUITY count comes from here, keyed by the SAME
+ *   - `wof/candidate.db` — the byte-range candidate gazetteer. The ambiguity count comes from here, keyed by the same
  *       `normalizeLocalityForKey` the resolver probes with, so "how many places share this name" is asked of the exact
  *       table the pipeline resolves against rather than of a second, differently-normalized index.
  *
- *   Both are opened read-only and both are OPTIONAL: a machine without them gets `available: false` and the layer falls
+ *   Both are opened read-only and both are optional: a machine without them gets `available: false` and the layer falls
  *   back to anchor-only grading, loudly. A silently ladder-less run would report every variant as ungraded and look
  *   identical to a run where nothing degraded.
  *
- *   The queries stay raw `.prepare()` (the resolver-reader convention, AGENTS.md): they are synchronous point probes on
+ *   The queries stay raw `.prepare()` (the resolver-reader convention, agents.md): they are synchronous point probes on
  *   a read-only artifact, called once per rung and once per component per variant.
  */
 
@@ -67,8 +67,8 @@ interface CandidateRow {
 }
 
 /**
- * `spr`'s bbox columns are `NOT NULL DEFAULT 0`, so an unset extent reads as `min == max` — the meaning-of-zero trap
- * this model must not fall into. Fold that to `null` at the READER, once, so nothing downstream can mistake it for an
+ * `spr`'s bbox columns are `not NULL default 0`, so an unset extent reads as `min == max` — the meaning-of-zero trap
+ * this model must not fall into. Fold that to `null` at the reader, once, so nothing downstream can mistake it for an
  * extent of zero.
  */
 function bboxOf(
@@ -97,7 +97,7 @@ export function wofIDFromPlaceID(placeID: string | undefined): number | null {
 }
 
 /**
- * Collapse a population-ordered candidate list to DISTINCT PLACES: anything within {@linkcode COINCIDENT_PLACE_KM} of
+ * Collapse a population-ordered candidate list to distinct places: anything within {@linkcode COINCIDENT_PLACE_KM} of
  * an already-kept, higher-ranked entry is the same physical place (WOF stores a big city as both a `locality` and a
  * `localadmin`, same population). Exported because it is the step that makes a namesake count mean "namesakes".
  */
@@ -115,15 +115,15 @@ export function collapseCoincident(places: readonly AblationPlace[]): AblationPl
 
 /**
  * How many candidate rows one name probe reads before collapsing. The probe is a contiguous scan of one `name_key` on
- * the clustered B-tree, so the cost is bounded by the namesake cluster itself; the cap only guards the pathological
+ * the clustered B-tree, so the cost is bounded by the namesake cluster itself. the cap only guards the pathological
  * keys (`San José` carries 886 rows worldwide). Sized well above the corpus's worst (886) so no corpus name is
- * truncated — a truncated list would UNDERSTATE ambiguity, which is the direction that turns an abstain into a false
+ * truncated — a truncated list would understate ambiguity, which is the direction that turns an abstain into a false
  * expectation.
  */
 const NAME_PROBE_LIMIT = 2000
 
 /**
- * The two-database probe. Construct once per run; disposal releases both handles.
+ * The two-database probe. Construct once per run. disposal releases both handles.
  */
 export class AblationGazetteer implements AblationGazetteerProbe {
 	readonly available: boolean
@@ -149,11 +149,12 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	 *
 	 * The dynamic import keeps this optional dependency off ordinary evaluation paths, and
 	 * `@mailwoman/resolver-wof-sqlite`'s index is not something a `mailwoman --help` should pay for. The reverse geocoder
-	 * SHARES this object's already-open admin handle (`adminDatabase`), so it opens nothing and disposal stays the single
+	 * shares this object's already-open admin handle (`adminDatabase`), so it opens nothing and disposal stays the single
 	 * owner. No polygon sidecar is passed: there is no global `wof-polygons.db`, so containment is the approximate
 	 * (nearest-centroid descent) mode — good enough to name a chain, and the chain is all this model wants from it.
 	 *
-	 * The availability check lives here, not in the constructor: it reads the filesystem, and a constructor cannot await.
+	 * The availability check lives here rather than in the constructor: it reads the filesystem, and a constructor cannot
+	 * await.
 	 */
 	static async create(
 		opts: { ancestryPath?: PathBuilderLike; candidatePath?: PathBuilderLike } = {}
@@ -210,7 +211,7 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 		)
 
 		// The `ancestorLineage` walk (resolver-wof-sqlite/ancestry.ts) plus the bbox columns — same join, same
-		// `ancestors_by_id` index; ordering is done in JS below, deepest first.
+		// `ancestors_by_id` index. ordering is done in JS below, deepest first.
 		this.#lineageStatement = this.#ancestry.prepare(
 			`SELECT s.id AS id, a.ancestor_placetype AS placetype, s.name AS name, s.country AS country,
 				s.latitude AS latitude, s.longitude AS longitude,
@@ -262,7 +263,7 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 					lat: row.latitude,
 					lon: row.longitude,
 					bbox: bboxOf(row.min_latitude, row.max_latitude, row.min_longitude, row.max_longitude),
-					// `spr` carries no population column; the ranking margin is only ever taken over
+					// `spr` carries no population column. the ranking margin is only ever taken over
 					// candidate-table rows, so a lineage place's rank is never read.
 					negRank: 0,
 					population: null,
@@ -295,7 +296,7 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 				negRank: 0,
 				population: null,
 			}))
-			// Nearest-first: the ladder walks OUTWARD from the resolved place, so the chain must be deepest first.
+			// Nearest-first: the ladder walks outward from the resolved place, so the chain must be deepest first.
 			.toSorted((a, b) => containmentDepth(b.placetype) - containmentDepth(a.placetype))
 
 		this.#lineageCache.set(id, places)
@@ -306,7 +307,7 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	containingChain(lat: number, lon: number): AblationPlace[] {
 		if (!this.#reverse) return []
 
-		// The reverse hierarchy is already deepest-first; re-read each id off `spr` so every rung carries the bbox
+		// The reverse hierarchy is already deepest-first. re-read each id off `spr` so every rung carries the bbox
 		// (the reverse candidate shape does not).
 		return this.#reverse
 			.reverseGeocodeSync(lat, lon)

@@ -11,17 +11,17 @@
 
 ## Status
 
-**Shipped (2026-05-20).** Implementation matches the design below, with three deviations called out in the changelog. The `Resolver` interface (type contract) lives in `@mailwoman/core/resolver`; `resolveTree` + `createWOFResolver` moved to the root `@mailwoman/resolver` package in #215 (so the resolver can depend on `@mailwoman/spatial` + `@mailwoman/codex` while `@mailwoman/core` stays a leaf). The WOF backing is provided through `@mailwoman/resolver-wof-sqlite` as an **optional peer dep** that the CLI dynamic-imports only when `--resolve` is set.
+**Shipped (2026-05-20).** Implementation matches the design below, with three deviations called out in the changelog. The `Resolver` interface (type interface) lives in `@mailwoman/core/resolver`; `resolveTree` + `createWOFResolver` moved to the root `@mailwoman/resolver` package in #215 (so the resolver can depend on `@mailwoman/spatial` + `@mailwoman/codex` while `@mailwoman/core` stays a leaf). The WOF backing is provided through `@mailwoman/resolver-wof-sqlite` as an **optional peer dep** that the CLI dynamic-imports only when `--resolve` is set.
 
 ## What "integration" means here
 
-Phase 4.2 ships a self-contained `PlaceLookup` that takes a text query and returns ranked candidates. Phase 4.3 turns that into something the parser pipeline knows how to use:
+Phase 4.2 ships a self-contained `PlaceLookup` that takes a text query and returns ranked candidates. Phase 4.3 turns that into something the parser the system how to use:
 
 1. **A `Resolver` interface** that takes a parsed `AddressTree` and decorates it in-place with resolved place IDs + coordinates.
 2. **A wiring point** in the parser where the resolver runs after the decoder produces the tree.
 3. **A CLI flag** (`--resolve`) that toggles the pipeline on.
 
-The decorated `AddressTree` flows through the existing XML/JSON/tuple projections — Phase 4.1's `src` attribute already carries the right shape; the resolver simply overlays its own `source` + `sourceId` on the nodes it resolved, displacing the classifier-derived attribution into `metadata` for debugging.
+The decorated `AddressTree` flows through the existing XML/JSON/tuple projections — Phase 4.1's `src` attribute already carries the right shape; the resolver only overlays its own `source` + `sourceId` on the nodes it resolved, displacing the classifier-derived attribution into `metadata` for debugging.
 
 ## Public API sketch
 
@@ -63,7 +63,7 @@ When the resolver successfully matches a node:
 | `AddressNode.metadata.classifier_source` (new)    | undefined                                                  | the displaced classifier `source`   |
 | `AddressNode.metadata.classifier_source_id` (new) | undefined                                                  | the displaced classifier `sourceId` |
 
-When the resolver does NOT match a node (no candidate above `minWinningScore`, or no resolver for the placetype), the node's existing classifier attribution is preserved unchanged.
+When the resolver does not match a node (no candidate above `minWinningScore`, or no resolver for the placetype), the node's existing classifier attribution is preserved unchanged.
 
 ## XML output (post-resolve)
 
@@ -86,7 +86,7 @@ The resolver walks top-down with parent-constraint inheritance:
 2. For each child, query with `parentId = parent.placeId.wof_id` if the parent resolved. This narrows the search space dramatically — `Springfield` under Illinois resolves correctly without country/region disambiguation.
 3. If the parent didn't resolve, fall back to unconstrained query.
 
-Bounded by `maxLookups` — a tree with 20 candidate nodes won't trigger 20 queries; the resolver gives up at the limit and leaves the remaining nodes with classifier attribution.
+Bounded by `maxLookups` — a tree with 20 candidate nodes won't trigger 20 queries; the the system at the limit and leaves the remaining nodes with classifier attribution.
 
 ## CLI
 
@@ -99,7 +99,7 @@ mailwoman parse --resolve --resolve-db /path/to/wof.db --format xml "..."
 - `--resolve-db <path>` overrides the default WOF DB path. The default reads from `$MAILWOMAN_WOF_DB` env, else errors with a clear message about where to get the WOF distribution + how to set the env.
 - Adds ~50–100ms per parse for the resolver step (a handful of FTS5 queries). Acceptable for the CLI use case; library users can disable per-call.
 
-## What's NOT in Phase 4.3
+## What's not in Phase 4.3
 
 - Postcode resolution — separate `wof-postalcode` extract, opt-in via `--resolve-postcodes` (Phase 4.3.x).
 - Street-level / address-level resolution — WOF doesn't go that deep; would need OSM / OpenAddresses gazetteers, license-checked. Phase 4.4 candidate.
@@ -130,6 +130,6 @@ mailwoman parse --resolve --resolve-db /path/to/wof.db --format xml "..."
 - **2026-05-20** — written as design intent during the autonomous night shift. Not yet started; awaits operator review.
 - **2026-05-20** (Phase 4.3.x — proximity ranking) — `FindPlaceQuery` gains `near` (soft boost or hard filter via `maxDistanceKm`) and `bbox` (hard filter). Backed by an R*Tree virtual table built alongside FTS5 by `mailwoman-wof-build-fts`. No new deps — both FTS5 and R*Tree ship with core SQLite. Closes the "no popularity signal" gap from Phase 4.2 by letting callers express "I'm here, find what's near me" or "find places within this region" without SpatiaLite. Backwards-compatible: DBs built before this PR keep working; bbox filter is silently dropped when the R\*Tree is missing, proximity boost still works via centroid columns directly. 13 new unit tests + smoke against real WOF (142,383 bbox rows indexed in 3.14s alongside the FTS5 build).
 - **2026-05-20** (same day, post-sync) — shipped. Three deviations from the original plan:
-  1. **`@mailwoman/resolver-wof-sqlite` is an optional peer dep, not a hard dep.** The CLI dynamic-imports it inside `withResolver()` so callers who never set `--resolve` don't pay the kysely + resolver bundle cost. Honors the Phase 4.2 plan's "optional dep" intent.
+  1. **`@mailwoman/resolver-wof-sqlite` is an optional peer dep rather than a hard dep.** The CLI dynamic-imports it inside `withResolver()` so callers who never set `--resolve` don't pay the kysely + resolver bundle cost. Honors the Phase 4.2 plan's "optional dep" intent.
   2. **`PlaceCandidate.wof_id` → `id` rename.** Phase 4.2 shipped the WOF candidate with a `wof_id` field; that was structurally incompatible with `core/resolver`'s generic `ResolvedPlace.id`. Renamed in this PR so `WofSqlitePlaceLookup` satisfies `ResolverBackend` without an adapter shim. No external consumers yet so the breakage was free.
   3. **Pre-existing locale-casing bug fix bundled.** `resolveWeights` was forming `@mailwoman/neural-weights-en-US` (uppercase region) but the package is lowercase. The CLI accepts canonical `en-US` casing; `weights.ts` now lowercases before forming the package name. Surfaced on the first end-to-end smoke test; fix shipped alongside Phase 4.3.

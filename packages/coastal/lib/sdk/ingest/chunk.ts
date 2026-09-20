@@ -3,23 +3,23 @@
 
 /**
  *   The streaming pass — every feature into `coastal_zone_area` (or `coastal_ground_instability`) and into
- *   `coastal_zone_cell` — as a unit of work that can run over PART of the source.
+ *   `coastal_zone_cell` — as a unit of work that can run over part of the source.
  *
- *   WHY THIS IS A CHUNK RATHER THAN THE WHOLE FILE. h3's WASM heap cannot be reset from JavaScript, and it
+ *   why this is A chunk rather than the whole file. h3's wasm heap cannot be reset from JavaScript, and it
  *   does not survive an unbounded number of polyfill calls: over the sibling flood product, runs died after
  *   roughly 510,000 and 798,000 features on geometry that classifies in milliseconds in a fresh process. A
  *   build that completes only when fragmentation happens to stay low is not a reproducible build, so the
- *   classification is bounded BY CONSTRUCTION — one process per range of the authority's own feature ids.
- *   This product is small enough that one chunk per layer fits inside the default bound; the bound ships
+ *   classification is bounded BY construction — one process per range of the authority's own feature ids.
+ *   This product is small enough that one chunk per layer fits inside the default bound. the bound ships
  *   anyway, because determinism by construction is not the same fact as determinism by luck.
  *
- *   THE DOMAIN CHECKS RUN HERE, AND THEY THROW. An unknown policy, policy interpretation or defence type is a
- *   source-schema change, which is the event a reader most needs to hear about; coercing it to a nearest
+ *   the domain checks RUN here, and they throw. An unknown policy, policy interpretation or defence type is a
+ *   source-schema change, which is the event a reader most needs to hear about. coercing it to a nearest
  *   neighbour or to null converts "the source changed" into "there is nothing here". The defence check
  *   compares case-folded and stores the source's own string, because the census found `Sheet piles` beside
  *   `Sheet Piles` and `Vertical Wall - Concrete` beside `Vertical Wall - concrete`.
  *
- *   THE CHUNK OWNS NO ARTIFACT. It appends rows to a database the parent created and will seal, and returns
+ *   the chunk owns no artifact. It appends rows to a database the parent created and will seal, and returns
  *   counts the parent adds up. Chunks run one at a time against that file, so there is no concurrent writer
  *   and no locking to reason about.
  */
@@ -81,7 +81,7 @@ export interface CoastalChunkResult {
 	 */
 	observedByCoverageCell: Array<[number, number]>
 	/**
-	 * Square metres: the source's own figure, the encoded rings read WITH their holes, and read without.
+	 * Square metres: the source's own figure, the encoded rings read with their holes, and read without.
 	 */
 	area: { sourceM2: number; nestedM2: number; allExteriorM2: number }
 	/**
@@ -198,7 +198,7 @@ export async function ingestCoastalChunk(
 				}
 			}
 
-			// COVERAGE IS DERIVED FROM THE UNCOMPACTED CLASSIFICATION, not from the stored rows. A compacted parent spans
+			// coverage is derived from the uncompacted classification rather than from the stored rows. A compacted parent spans
 			// several coverage cells and `addCoverageCells` handles that, but the fringe is where this product's cells almost
 			// all are — so counting off the stored rows and counting off the classification agree here, and the
 			// classification is the one that cannot be changed by a compaction decision.
@@ -253,7 +253,7 @@ export async function ingestCoastalChunk(
 				encodeRings(feature.polygons)
 			)
 
-			// NO CELL ROWS, AND THE ABSENCE IS THE STRUCTURE. Ground instability is a different hazard from coastal erosion,
+			// no cell rows, and the absence is the structure. Ground instability is a different hazard from coastal erosion,
 			// and 160 rows answer a bounding-box scan faster than an index would. Not indexing them is what makes it
 			// impossible for one to reach an erosion probe.
 			instabilityFeatures++

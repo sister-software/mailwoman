@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-Mailwoman is distributed under [AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html)
+Mailwoman is distributed under [AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html)
 (with a commercial license available — contact `teffen@sister.software`). It builds upon the
 third-party code and data listed below.
 

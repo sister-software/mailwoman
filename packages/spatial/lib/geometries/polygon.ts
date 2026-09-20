@@ -113,7 +113,7 @@ export function isPolygonLiteral<P extends PolygonPath = PolygonPath>(input: unk
 /**
  * Predicate for checking if a polygon geometry is a solid, i.e. it has no holes.
  */
-// The parameter admits BOTH paths because distinguishing them is the function's job: defaulted to
+// The parameter admits both paths because distinguishing them is the function's job: defaulted to
 // `SolidPolygonPath`, it cannot be asked about a polygon with holes without the caller asserting past the signature.
 export function isSolidPolygonPath(input: PolygonLiteral<PolygonPath>): boolean {
 	return input.coordinates.length === 1
@@ -125,7 +125,7 @@ export function isSolidPolygonPath(input: PolygonLiteral<PolygonPath>): boolean 
  * Deliberately looser than {@link LineStringPath} — the ray cast only ever indexes `[0]` and `[1]`, and the callers
  * arrive with different position types (`[number, number, ...number[]]` from the resolver's GeoJSON reader, plain
  * `number[][]` from a `JSON.parse` of a stored geometry column). A tight tuple type here would force a cast at every
- * call site and buy nothing the predicate uses.
+ * call site and add nothing the predicate uses.
  */
 export type ContainmentRing = readonly (readonly number[])[]
 
@@ -142,10 +142,10 @@ export type PolygonRings = readonly ContainmentRing[]
 export type MultiPolygonRings = readonly PolygonRings[]
 
 /**
- * Ray-cast a point against ONE linear ring — the even-odd crossing count. Shoot a ray along +lon and toggle on every
+ * Ray-cast a point against one linear ring — the even-odd crossing count. Shoot a ray along +lon and toggle on every
  * edge crossing.
  *
- * Points exactly on an edge are implementation-defined; either side is acceptable for geocoding, where admin boundaries
+ * Points exactly on an edge are implementation-defined. either side is acceptable for geocoding, where admin boundaries
  * are Douglas-Peucker–simplified before they ever reach us.
  */
 export function pointInRing(lon: number, lat: number, ring: ContainmentRing): boolean {
@@ -186,7 +186,7 @@ export function pointInPolygon(lon: number, lat: number, rings: PolygonRings): b
 }
 
 /**
- * Inside ANY polygon of a multi-polygon.
+ * Inside any polygon of a multi-polygon.
  */
 export function pointInMultiPolygon(
 	lon: number,
@@ -238,7 +238,7 @@ export function arealPolygons(geometry: ParsedGeometry | null | undefined): Mult
 }
 
 /**
- * The polygons of a geometry that MUST be areal — {@linkcode arealPolygons} with the refusal every polygon ingest was
+ * The polygons of a geometry that must be areal — {@linkcode arealPolygons} with the refusal every polygon ingest was
  * writing for itself.
  *
  * @param subject Names the feature in the refusal, e.g. `feature 41209`.
@@ -256,13 +256,13 @@ export function requireArealPolygons(geometry: ParsedGeometry, subject: string, 
 /**
  * Does an areal GeoJSON geometry contain the point?
  *
- * The three-valued return is the point of the function. `null` means the geometry is NOT AREAL — a Point or a
+ * The three-valued return is the point of the function. `null` means the geometry is not areal — a Point or a
  * LineString cannot contain anything — and a caller must read that as "no polygon on record", the same as a missing
  * geometry, never as a rejection. Collapsing it to `false` is how a place with a point-only record gets excluded from a
  * containment pass instead of falling through to the approximate path.
  *
  * `scripts/eval/pip-containment.py` grades the same containment truth against its own ray cast and has to be matched BY
- * HAND if this one changes — it is the one copy no import can reach.
+ * hand if this one changes — it is the one copy no import can reach.
  */
 export function geometryContains(
 	geometry: ParsedGeometry | null | undefined,
@@ -280,7 +280,7 @@ export function geometryContains(
  * An axis-aligned rectangle as a closed ring, in GeoJSON `[lon, lat]` order and counter-clockwise — the exterior
  * winding.
  *
- * SHARED BECAUSE THE WINDING IS A CONVENTION AND A SECOND COPY IS A SECOND PLACE FOR IT TO DRIFT. Three layer builders
+ * Shared because the winding is A convention and A second copy is A second place FOR IT TO drift. Three layer builders
  * hand-build rectangles for their fixture rungs, and each pairs this with {@link reversedRing} to make a hole. A copy
  * whose hole is wound the same way as its exterior produces a fixture that passes every structural check and tests
  * nothing about hole handling — which is the exact failure the area cross-check exists to catch in production data.

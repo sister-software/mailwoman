@@ -20,7 +20,7 @@ class CharCNNEmbedding(nn.Module):
     downstream (anchor/gazetteer/phrase channels, the blocks, CRF, classifier) changes.
 
     Why this fixes the diacritic problem the SentencePiece path can't: the tokenizer is now
-    word-level, so "Čistá" is ONE token whose embedding is composed from its own characters — the
+    word-level, so "Čistá" is one token whose embedding is composed from its own characters — the
     subword vocab never gets to isolate the diacritic into its own O-tagged piece (the 3.3x Slavic
     fertility tax that broke span boundaries → wrong-city geocoding). The char vocab is small (the
     Unicode chars seen in training, a few thousand), so the embedding table is a fraction of a 48k SP
@@ -43,7 +43,7 @@ class CharCNNEmbedding(nn.Module):
         super().__init__()
         self.pad_char_id = pad_char_id
         self.char_embeddings = nn.Embedding(char_vocab_size, char_embed_dim, padding_idx=pad_char_id)
-        # Split the hidden width across the kernels; the projection absorbs any remainder so the
+        # Split the hidden width across the kernels. the projection absorbs any remainder so the
         # output is exactly ``hidden_size`` regardless of divisibility.
         per_kernel = max(1, hidden_size // len(kernel_sizes))
         self.convs = nn.ModuleList(
@@ -63,7 +63,7 @@ class CharCNNEmbedding(nn.Module):
         pad_mask = (flat == self.pad_char_id).unsqueeze(1)  # (B*S, 1, W)
         feats: list[torch.Tensor] = []
         for conv in self.convs:
-            # Even kernels with symmetric padding emit W+1; trim to the input width so every kernel's
+            # Even kernels with symmetric padding emit W+1. trim to the input width so every kernel's
             # output aligns to the char positions (and the pad mask), for any kernel-size mix.
             c = torch.relu(conv(x))[..., :width]  # (B*S, per_kernel, W)
             c = c.masked_fill(pad_mask, -1e4)

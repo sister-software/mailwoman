@@ -8,7 +8,7 @@ date: 2026-06-20
 
 The whole geocoder runs in your browser. You type an address, you get a rooftop coordinate, and no server ever sees your query — the gazetteer it resolves against is a SQLite database sitting on a CDN, and the page reads it with HTTP range requests, a few kilobytes at a time. It's a lovely trick. We were proud of it. Then we counted the requests it took to find a single city, and the number was 243.
 
-So the questions for the day: why does looking up one name cost 243 round trips? What goes wrong when you search a database you can only read a slice at a time? And how do you get a global gazetteer — every country, region, county, and city we resolve against — down to about a dozen reads without putting a server back in the loop?
+So the questions for the day: why does looking up one name cost 243 round trips? What goes wrong when you search a database you can only read a byte range at a time? And how do you get a global gazetteer — every country, region, county, and city we resolve against — down to about a dozen reads without putting a server back in the loop?
 
 {/* truncate */}
 
@@ -32,7 +32,7 @@ We talked it over with DeepSeek, and the reframe that came back was the one wort
 
 Concretely: a single table, one row per name a place can be found by. Each row carries everything the resolver needs already on it — the canonical name, the centroid, the bounding box, the country, and the population rank baked in as a sortable column — so once you've found the row, you're done, with no second trip to go fetch the details. The table is `WITHOUT ROWID`, which in SQLite means the rows _are_ the B-tree, sorted by the key, and the key is the normalized name. We load it pre-sorted and `VACUUM` it so a name and its neighbours sit on adjacent pages. Now a lookup is the thing the straw was always good at: walk the tree to the name, read the leaf, and the matches for "springfield" are sitting there in a row, ranked, ready.
 
-One discipline holds the whole thing up: the key has to be normalized the _same_ way when we build the table and when we query it, or the walk lands one page off and finds nothing. So both sides call the same function — `normalizeLocalityForKey` — by construction, not by convention. It folds case, strips diacritics so `Saint-Étienne` keys as `saint-etienne`, and leaves scripts that aren't Latin alone so `北京` stays `北京`. Build-side and query-side can't drift, because there's only one of it.
+One discipline holds the whole thing up: the key has to be normalized the _same_ way when we build the table and when we query it, or the walk lands one page off and finds nothing. So both sides call the same function — `normalizeLocalityForKey` — by construction rather than by convention. It folds case, strips diacritics so `Saint-Étienne` keys as `saint-etienne`, and leaves scripts that aren't Latin alone so `北京` stays `北京`. Build-side and query-side can't drift, because there's only one of it.
 
 ## The cost we almost shipped
 
@@ -42,6 +42,6 @@ The fix wasn't more postcodes. It was order. Resolve the locality first — "Ber
 
 ## What it bought
 
-A name now resolves in about 12 range requests and under a megabyte, down from 243 and 16.5 MB. The whole table is 490 MB with _global_ coverage — every place we know, not three countries — in a single file the browser reads a dozen pages of. US locality resolution holds at 96.8%; the European cities we'd just added through Overture come back at parity. And the slim build — the per-model-version, three-country database we'd been maintaining — is gone, along with the chore of deciding which countries were worth shipping.
+A name now resolves in about 12 range requests and under a megabyte, down from 243 and 16.5 MB. The whole table is 490 MB with _global_ coverage — every place we know rather than three countries — in a single file the browser reads a dozen pages of. US locality resolution holds at 96.8%; the European cities we'dadded through Overture come back at parity. And the slim build — the per-model-version, three-country database we'd been maintaining — is gone, along with the chore of deciding which countries were worth shipping.
 
-The lesson sticks because the constraint was never going away. When the only way to touch your data is one short read at a time, searching is the expensive verb. So we stopped searching. We built the answer ahead of time and gave it an address, and now the browser just goes and reads it.
+The result is still supported because the constraint was never going away. When the only way to touch your data is one short read at a time, searching is the expensive verb. So we stopped searching. We built the answer ahead of time and gave it an address, and now the browser goes and reads it.

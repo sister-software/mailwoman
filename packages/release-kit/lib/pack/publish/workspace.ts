@@ -8,20 +8,20 @@
  *   Three-step flow:
  *
  *   1. `yarn pack -o <tmpfile>` — yarn 4 translates `workspace:*` deps to the concrete sibling version
- *        while building the tarball. npm's own publish step does NOT do this translation, and
- *        shipping `workspace:*` to consumers breaks `npm install` (EUNSUPPORTEDPROTOCOL).
- *   2. Derive the PUBLISH exports map from the dev map inside the tarball — every `node → .ts`
- *        condition is rewritten to emitted JavaScript (the repo runs source under node; consumers get `out/`). The dev
- *        `exports` in each workspace's package.json is the single source of truth; there is no
+ *        while building the tarball. npm's own publish step does not do this translation, and
+ *        shipping `workspace:*` to consumers breaks `npm install` (eunsupportedprotocol).
+ *   2. Derive the publish exports map from the dev map inside the tarball — every `node → .ts`
+ *        condition is rewritten to emitted JavaScript (the repo runs source under node. consumers get `out/`). The dev
+ *        `exports` in each workspace's package.json is the single source of truth. there is no
  *        hand-maintained `publishConfig.exports` (that duplication shipped a fully-broken v7.2.0
- *        when it was removed without a replacement — this transform IS the replacement). A guard
+ *        when it was removed without a replacement — this transform is the replacement). A guard
  *        then fails the publish if any exported target still ends in `.ts`/`.tsx` or points at a
  *        file the tarball doesn't contain.
  *   3. `npm publish <tmpfile>` — npm CLI is the right tool for the actual publish because it
  *        auto-detects GitHub Actions' OIDC environment and uses it for Trusted Publishing. Yarn's
  *        `yarn npm publish` doesn't integrate with npm's OIDC flow.
  *
- *   Env contract from the plugin (see node_modules/@release-it-plugins/workspaces/index.js):
+ *   Env interface from the plugin (see node_modules/@release-it-plugins/workspaces/index.js):
  *
  *   - RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE: ./<workspace>
  *   - RELEASE_IT_WORKSPACES_TAG: dist-tag (latest / next / etc.)
@@ -41,6 +41,7 @@ import { resolvePath } from "path-ts"
 import { $private, $public } from "#env/index"
 import { dereferenceWorkspaceSymlinks, packWorkspaceForPublish } from "#pack/pack-workspace"
 import { formatTarballAudit, verifyTarball } from "#pack/verify-tarball"
+import { assertWorkspacePublishable } from "#release/stage"
 
 export interface PublishWorkspaceOptions {
 	repoRoot: string
@@ -62,7 +63,7 @@ export interface PublishWorkspaceReport {
 }
 
 /**
- * The plugin's environment contract, read once so the operation's schema can default from it.
+ * The plugin's environment interface, read once so the operation's schema can default from it.
  */
 export function releaseItWorkspaceEnvironment(): {
 	workspacePath: string | undefined
@@ -83,6 +84,10 @@ export function releaseItWorkspaceEnvironment(): {
 export async function publishWorkspace(options: PublishWorkspaceOptions): Promise<PublishWorkspaceReport> {
 	const { repoRoot, workspacePath, log } = options
 
+	// Before anything is packed, and before the weights skip, so a held-out workspace is refused on every path into this
+	// function rather than on the ones that reach the npm call.
+	assertWorkspacePublishable(workspacePath)
+
 	const skipWeights = !!$public.MAILWOMAN_SKIP_WEIGHTS
 	const isWeightsWorkspace = workspacePath.startsWith("./packages/neural-weights-")
 
@@ -96,7 +101,7 @@ export async function publishWorkspace(options: PublishWorkspaceOptions): Promis
 
 	// Dereference any symlinks among the workspace's `files` entries before
 	// publishing — npm/yarn refuse to upload tarballs containing symlinks
-	// (registry returns HTTP 415). The neural-weights workspaces in particular
+	// (registry returns http 415). The neural-weights workspaces in particular
 	// can end up with symlinks from a dev linker.
 	await dereferenceWorkspaceSymlinks(cwd)
 
@@ -164,10 +169,10 @@ export async function publishWorkspace(options: PublishWorkspaceOptions): Promis
 	return { workspace: workspacePath, outcome: "published", tarballAudit }
 }
 
-// The tarball audit lives in verify-tarball.ts so BOTH publish paths inherit it — `bless-package` packs
+// The tarball audit lives in verify-tarball.ts so both publish paths inherit it — `bless-package` packs
 // the first publish of a package and had no guard at all, which is how neural-weights-en-in@8.6.0
 // shipped without the one binary it exists to carry.
 
-// dereferenceWorkspaceSymlinks lives in pack-workspace.ts so packWorkspaceForPublish derefs for EVERY
-// caller (smoke included); the explicit call above stays as the documented safety net (AGENTS.md
+// dereferenceWorkspaceSymlinks lives in pack-workspace.ts so packWorkspaceForPublish derefs for every
+// caller (smoke included); the explicit call above stays as the documented safety net (agents.md
 // "symlinks in the publish tarball").

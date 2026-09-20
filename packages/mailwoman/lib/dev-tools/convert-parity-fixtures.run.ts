@@ -6,7 +6,7 @@
  *   assertions (`parity-inputs.jsonl`, legacy-Classification-keyed) into ComponentTag-keyed eval
  *   fixtures for `mailwoman eval parity`. Top-solution gold only (`expected[0]` — the positional
  *   alternatives were rules-ranking artifacts); cases whose gold carries an unmapped legacy tag
- *   (given_name, surname, personal_title, …) or no expectation at all become TOMBSTONES — kept in
+ *   (given_name, surname, personal_title, …) or no expectation at all become tombstones — kept in
  *   the fixture file with a `dropped` reason so provenance survives, skipped by the runner.
  *   Run from the repo root: `node packages/mailwoman/lib/dev-tools/convert-parity-fixtures.run.ts`
  */
@@ -103,7 +103,7 @@ for await (const parityCase of JSONSpliterator.fromAsync<ParityCase>(IN_PATH)) {
 		expect[componentTag] = Array.isArray(values) ? values.map(String) : [String(values)]
 	}
 
-	// A case whose gold is ENTIRELY unmappable tombstones; a partially-mappable one keeps its
+	// A case whose gold is entirely unmappable tombstones. a partially-mappable one keeps its
 	// mapped gold (dropping e.g. `unit_designator` must not discard the case's house_number/street
 	// expectations — the AU unit patterns are campaign targets).
 	if (!Object.keys(expect).length) {

@@ -35,8 +35,8 @@ export function wofRepoName(theme: "admin" | "postalcode" | "venue", country: st
  *
  * Two are in use and both are legitimate. `gazetteer inspect sync` writes `<root>/<owner>/<name>`, which is what the
  * admin ingest's depth-agnostic GeoJSON glob reads. The shipped postcode extracts were built from repositories cloned
- * by hand as `<root>/<name>`. A reader that knows one layout reports a repository that is present as MISSING, and every
- * reader here treats missing as "no evidence" and continues — so the wrong layout is silent, not loud.
+ * by hand as `<root>/<name>`. A reader that knows one layout reports a repository that is present as missing, and every
+ * reader here treats missing as "no evidence" and continues — so the wrong layout is silent rather than loud.
  */
 export async function resolveWOFRepo(
 	reposRoot: PathBuilderLike,
@@ -55,7 +55,7 @@ export async function resolveWOFRepo(
 /**
  * The `data` directory of a country's repository, or `null` when the repository is not cloned.
  *
- * The pairing every reader needs: {@link readWOFFeature} takes roots that already point INTO `data`.
+ * The pairing every reader needs: {@link readWOFFeature} takes roots that already point into `data`.
  */
 export async function resolveWOFDataDir(
 	reposRoot: PathBuilderLike,

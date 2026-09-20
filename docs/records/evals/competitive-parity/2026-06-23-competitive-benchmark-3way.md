@@ -2,8 +2,8 @@
 
 Same-harness, three-system comparison on real held-out OpenAddresses coordinates, run after the
 #193 GeoNames postcode extract landed PL/CZ coverage in the candidate gazetteer (`candidate-global-20i.db`).
-This supersedes the night's two-system (mailwoman vs Nominatim) e2e numbers, which used a different
-grader (`span-rescore-e2e.ts`, tag-rank `bestCoord`) on `-20h` and so weren't directly comparable to the
+This supersedes the night's two-system (mailwoman vs Nominatim) e2e numbers. That run used a different
+grader (`span-rescore-e2e.ts`, tag-rank `bestCoord`) on `-20h`, so its numbers were not directly comparable to the
 incumbents.
 
 ## How we scored
@@ -18,7 +18,7 @@ incumbents.
   Right-_place_ is the fair test.
 - **SECONDARY — conditional median error + the @1/@5 km tiers**, to keep the centroid-vs-rooftop trade
   visible rather than hidden.
-- `n = 60` rows/locale, clean OA input (NOT the messy-degradation case). Change-off (`mailwoman`) and
+- `n = 60` rows/locale, clean OA input (not the messy-degradation case). Change-off (`mailwoman`) and
   `#370` span-rescore setting-on (`mailwoman+rescore`) are both graded from the same parse.
 
 ## Resolve-rate @ 25 km
@@ -33,7 +33,7 @@ incumbents.
 | FR                |       93% |               93% |       65% |     98% |
 | AU                |       32% |               35% |       97% |     78% |
 | **EU (no AU)**    |   **84%** |           **88%** |   **78%** | **89%** |
-| **ALL (incl AU)** |   **77%** |           **80%** |   **81%** | **88%** |
+| **all (incl AU)** |   **77%** |           **80%** |   **81%** | **88%** |
 
 ## Two-axis aggregate (incl AU)
 
@@ -44,7 +44,7 @@ incumbents.
 | nominatim         | 420 |  77% |  80% |   81% |            0.0 |       17% |
 | pelias            | 420 |  71% |  83% |   88% |            0.0 |        2% |
 
-## Reading it honestly
+## Reading it directly
 
 1. **Pelias is the strongest system here** — 88% @25km all-panel, 2% no-result. A hosted Elasticsearch
    stack over mixed sources resolves nearly everything and places most of it at rooftop. It is the real
@@ -56,7 +56,7 @@ incumbents.
    gap (88 → 80) is AU. The failure mode is same-named towns scattered across states, which the
    country-level postcode-consistency check can't disambiguate. EU-only is the legitimate headline for a
    Europe comparison _because_ AU is its own, named, unsolved problem — not because hiding it flatters us.
-4. **Centroids, not rooftops.** mailwoman is 26% @1km vs Nominatim 77 / Pelias 71. The @25km parity is
+4. **Centroids rather than rooftops.** mailwoman is 26% @1km vs Nominatim 77 / Pelias 71. The @25km parity is
    right-_area_ parity; the incumbents are far more precise when they hit. State it, don't bury it.
 5. **Two changes, partly substitutes.** On `-20h` (no PL/CZ postcodes) the #370 rescore change lifted EU
    ~+16pp by _recovering the fragmented town_. On `-20i` the postcode resolves the address directly, so
@@ -73,7 +73,7 @@ candidate gazetteer noted.
 - **Change A — postcode-disambiguated locality selection** (`ResolveOpts.postcodeConsistency`, resolver-
   only, no data/GPU): when a same-named locality resolves far from a resolved sibling postcode, re-pick
   the instance nearest the postcode (or fall back to the postcode point). Fixed the 16 "postcode-
-  available-but-ignored" misses with ZERO regressions.
+  available-but-ignored" misses with zero regressions.
 - **Change B — extend the #193 GeoNames postcode fill to PT/AU/AT** (`candidate-global-20j`): converts
   uncovered postcodes into anchors, which Change A then disambiguates. AU 35→65 (+30pp), PT 78→88.
 
@@ -87,11 +87,11 @@ candidate gazetteer noted.
 | FR          |              93 |       100 |         100 |        65 |     98 |
 | AU          |              32 |        35 |          65 |        97 |     78 |
 | **EU (6)**  |          **66** |  **92.5** |    **94.2** |    **78** | **89** |
-| **ALL (7)** |          **61** |    **84** |    **90.0** |    **81** | **88** |
+| **all (7)** |          **61** |    **84** |    **90.0** |    **81** | **88** |
 
-With both changes, mailwoman leads BOTH incumbents on the @25km right-area metric — EU 94.2 and all-panel
+With both changes, mailwoman leads both incumbents on the @25km right-area metric — EU 94.2 and all-panel
 90.0 — from a 30 MB browser model, no Elasticsearch. The @1km precision gap (centroids vs rooftops)
-stands; this is right-AREA, not rooftop.
+stands; this is right-AREA rather than rooftop.
 
 Residuals after A+B (the next changes): AU's remaining misses are mostly a PARSE issue — the model emits a
 house number as a second postcode ("Grantson Street 51" → postcode=51), and the anchor picks the first

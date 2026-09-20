@@ -6,11 +6,11 @@
  *   SessionStart hook: which workspace owns which concern, and what each one exports, as one listing at the top of a
  *   session.
  *
- *   WHY THIS AND NOT MORE. An agent that does not know a package exists cannot ask `mwdev_symbol` about it, and the map
- *   from a concern to a workspace is the part AGENTS.md spends a table on and a session forgets first. The listing is
- *   the workspace NAMES and their export subpaths — an index of where to look, not what is there. The signatures were
+ *   why this and not more. An agent that does not know a package exists cannot ask `mwdev_symbol` about it, and the map
+ *   from a concern to a workspace is the part agents.md spends a table on and a session forgets first. The listing is
+ *   the workspace names and their export subpaths — an index of where to look rather than what is there. The signatures were
  *   measured at roughly 88,000 tokens for this repository, which would displace the work it is meant to serve and
- *   would not survive a compaction; the names cost a fraction of that and point at a tool that answers the rest.
+ *   would not survive a compaction. the names cost a fraction of that and point at a tool that answers the rest.
  *
  *   It fails silent and exits 0 on every error path. A session that cannot start because its orientation hook threw is
  *   a worse trade than a session that starts without orientation.
@@ -23,7 +23,7 @@ import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { resolvePath } from "path-ts"
 
 /**
- * How many subpaths a workspace contributes before the rest are counted instead. A handful names the concerns; the full
+ * How many subpaths a workspace contributes before the rest are counted instead. A handful names the concerns. the full
  * list of a large package is what `mwdev_symbol` is for, and the listing has to stay small enough to survive at the top
  * of a session.
  */

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file `diffGeocode` — saying WHY the answer moved, not just that it did.
+ * @file `diffGeocode` — saying why the answer moved rather than just that it did.
  *
  *   A distance delta is the geocoding equivalent of a component map: it reports that the answer moved and not which of
  *   three unrelated problems caused it. These tests pin the three apart, because the fix differs completely — a parse
@@ -93,7 +93,7 @@ describe("diffGeocode", () => {
 		expect(diff.spanGeo[0]?.kind).toBe("repointed")
 		expect(diff.spanGeo[0]?.placeIDBefore).toBe("wof:101750367")
 		expect(diff.spanGeo[0]?.placeIDAfter).toBe("wof:85950361")
-		// London GB to London ON is most of the way across the Atlantic.
+		// London, England to London, Ontario is most of the way across the Atlantic.
 		expect(diff.movedKm).toBeGreaterThan(5000)
 	})
 
@@ -111,7 +111,7 @@ describe("diffGeocode", () => {
 	})
 
 	it("keeps a LOST coordinate distinct from a zero-kilometre move", () => {
-		// Undefined distance and zero distance are different events; collapsing them is the meaning-of-zero mistake.
+		// Undefined distance and zero distance are different events. collapsing them is the meaning-of-zero mistake.
 		const node = tree(["locality", "London", 13, 19, 0.9, "wof:101750367", 51.5, -0.12, 2])
 
 		const diff = diffGeocode(

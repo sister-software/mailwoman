@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the Gauntlet's RESOLVER-pin pin (#42, 2026-08-05) — the plumbing that lets the check grade a resolver
- *   configuration, not just a model.
+ *   Tests for the Gauntlet's resolver-pin pin (#42, 2026-08-05) — the plumbing that lets the check grade a resolver
+ *   configuration rather than just a model.
  *
  *   These assert a mapping, deliberately: `run options → layer options → geocode deps`. The check itself needs the ~9 GB
- *   database set and a loaded ONNX, so a test that ran it would be an integration run, not a check — and the failure mode
- *   this surface exists to prevent is silent. A dropped pin does not throw; it produces a check log identical to the
+ *   database set and a loaded ONNX, so a test that ran it would be an integration run rather than a check — and the failure mode
+ *   this surface exists to prevent is silent. A dropped pin does not throw. it produces a check log identical to the
  *   unpinned one, which reads exactly like "the pin changed nothing". Every hop is therefore pinned here.
  */
 
@@ -55,8 +55,9 @@ describe("runResolverPins — CLI options → pin set", () => {
 		expect(runResolverPins({ postcodeCountryCoherence: true })).toEqual({ postcodeCountryCoherence: true })
 	})
 
-	// The pin that carries evidence since the 2026-08-05 default-on flip: the ON pin now restates production,
-	// so a run that means to grade the pre-promotion configuration has to be able to say OFF and be believed.
+	// The pin that carries evidence since the 2026-08-05 default-on flip: the pin that turns it on now restates
+	// production, so a run that means to grade the pre-promotion configuration has to be able to turn it off and
+	// be believed.
 	it("carries an OFF pin", () => {
 		expect(runResolverPins({ postcodeCountryCoherence: false })).toEqual({ postcodeCountryCoherence: false })
 	})
@@ -175,9 +176,9 @@ describe("gazetteerPrior pin (#1497)", () => {
 describe("runResolverPins forwards BOTH halves of the prior tri-state", () => {
 	// The bug this pins: while the prior was opt-in, the builder forwarded only the truthy half
 	// (`...(options.gazetteerPrior ? { gazetteerPrior: true } : {})`). After the default-on flip that silently
-	// discarded `--gazetteer-prior-off`, so the OFF arm graded the DEFAULT configuration while its log said
-	// `gazetteerPrior=OFF` — the exact "two pin logs that differ only in a flag someone typed" failure the pins
-	// line exists to prevent. Caught by running the off arm and reading the board, not by a test.
+	// discarded `--gazetteer-prior-off`, so the off arm graded the default configuration while its log said
+	// `gazetteerPrior=off` — the exact "two pin logs that differ only in a flag someone typed" failure the pins
+	// line exists to prevent. Caught by running the off arm and reading the board rather than by a test.
 	it("keeps an explicit false", () => {
 		expect(runResolverPins({ gazetteerPrior: false })).toEqual({ gazetteerPrior: false })
 	})
@@ -193,7 +194,7 @@ describe("runResolverPins forwards BOTH halves of the prior tri-state", () => {
 
 describe("adminContainmentRerank pin (#1717 stage 2)", () => {
 	// Two-sided from day one — the #1706 class: a one-sided forwarding compiles, passes every other test, and
-	// produces an OFF-labelled log that graded the default arm.
+	// produces an off-labelled log that graded the default arm.
 	it("maps the ON pin onto the geocode dep of the same name", () => {
 		expect(resolverPinDeps({ adminContainmentRerank: true })).toEqual({ adminContainmentRerank: true })
 	})
@@ -225,6 +226,72 @@ describe("adminContainmentRerank pin (#1717 stage 2)", () => {
 		expect(resolverPinDeps({ adminContainmentRerank: true, postcodeCountryCoherence: false })).toEqual({
 			adminContainmentRerank: true,
 			postcodeCountryCoherence: false,
+		})
+	})
+})
+
+describe("spanRescoreRequireContextRemainder — #2266's pin", () => {
+	it("survives every hop from run options to the resolve, both directions", () => {
+		expect(
+			resolverPinDeps(layerDepsOptions(runLayerOptions({ spanRescoreRequireContextRemainder: true })).pins)
+		).toEqual({ spanRescoreRequireContextRemainder: true })
+
+		expect(
+			resolverPinDeps(layerDepsOptions(runLayerOptions({ spanRescoreRequireContextRemainder: false })).pins)
+		).toEqual({ spanRescoreRequireContextRemainder: false })
+	})
+
+	it("is named in the run banner, both directions, and absent when unset", () => {
+		// An off/on pair whose logs are indistinguishable is not evidence about the pin.
+		expect(describeResolverPins({ spanRescoreRequireContextRemainder: true })).toContain(
+			"spanRescoreRequireContextRemainder=ON"
+		)
+
+		expect(describeResolverPins({ spanRescoreRequireContextRemainder: false })).toContain(
+			"spanRescoreRequireContextRemainder=OFF"
+		)
+
+		expect(describeResolverPins({ adminContainmentRerank: true })).not.toContain("spanRescoreRequireContextRemainder")
+	})
+
+	it("composes with a sibling pin rather than replacing it", () => {
+		expect(resolverPinDeps({ spanRescoreRequireContextRemainder: true, adminContainmentRerank: false })).toEqual({
+			spanRescoreRequireContextRemainder: true,
+			adminContainmentRerank: false,
+		})
+	})
+})
+
+describe("spanRescoreWeakResolution — #2264's pin", () => {
+	it("survives every hop from run options to the resolve, each reading", () => {
+		for (const reading of ["score", "containment", "either"] as const) {
+			expect(resolverPinDeps(layerDepsOptions(runLayerOptions({ spanRescoreWeakResolution: reading })).pins)).toEqual({
+				spanRescoreWeakResolution: reading,
+			})
+		}
+	})
+
+	it("names the READING in the run banner, not an ON", () => {
+		// Three readings that grade different configurations. Collapsing them to a single on reading is how two arms
+		// produce identical pin logs, which is the one thing the banner exists to prevent.
+		expect(describeResolverPins({ spanRescoreWeakResolution: "score" })).toContain("spanRescoreWeakResolution=score")
+
+		expect(describeResolverPins({ spanRescoreWeakResolution: "containment" })).toContain(
+			"spanRescoreWeakResolution=containment"
+		)
+
+		expect(describeResolverPins({ adminContainmentRerank: true })).not.toContain("spanRescoreWeakResolution")
+	})
+
+	it("has no OFF spelling — an unset pin is the shipped brake", () => {
+		expect(resolverPinDeps(layerDepsOptions(runLayerOptions({})).pins)).toEqual({})
+		expect(describeResolverPins(undefined)).toContain("production defaults")
+	})
+
+	it("composes with a sibling pin rather than replacing it", () => {
+		expect(resolverPinDeps({ spanRescoreWeakResolution: "either", spanRescoreRequireContextRemainder: true })).toEqual({
+			spanRescoreWeakResolution: "either",
+			spanRescoreRequireContextRemainder: true,
 		})
 	})
 })

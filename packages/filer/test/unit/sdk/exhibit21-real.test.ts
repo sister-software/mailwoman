@@ -2,21 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file {@linkcode parseExhibit21} against REAL SEC EDGAR Exhibit 21 documents.
+ * @file {@linkcode parseExhibit21} against real SEC edgar Exhibit 21 documents.
  *
  *   `exhibit21.test.ts` covers hand-written fixtures — shapes chosen to exercise a rule. This file covers
- *   thirteen documents pulled off EDGAR on 2026-08-03 and vendored verbatim, including the SGML
- *   `<DOCUMENT>` envelope EDGAR's archive serves them inside. `test-fixtures/edgar/manifest.json` records
+ *   thirteen documents pulled off edgar on 2026-08-03 and vendored verbatim, including the sgml
+ *   `<document>` envelope edgar's archive serves them inside. `test-fixtures/edgar/manifest.json` records
  *   where each came from.
  *
  *   The two suites answer different questions, and only this one answers "does it work". At the time this
  *   file was written, the hand-written suite was fully green while these thirteen documents — which state
- *   142 subsidiaries between them — yielded 45, of which 18 were fabricated: EDGAR's own SGML tokens
- *   (`EX-21.1`, the sequence number `3`, the filename `q42025exh211listofsubsidia.htm`), the HTML
+ *   142 subsidiaries between them — yielded 45, of which 18 were fabricated: edgar's own sgml tokens
+ *   (`EX-21.1`, the sequence number `3`, the filename `q42025exh211listofsubsidia.htm`), the html
  *   `<title>` text `Document`, table header labels (`Entity Name`, `Full Legal Name`), and twelve rows
  *   whose `name` was the bullet character `•` and whose `jurisdiction` was the actual company name.
  *
- *   **`test-fixtures/edgar/expected.json` is ground truth, and it was NOT produced by this parser.** It
+ *   **`test-fixtures/edgar/expected.json` is ground truth, and it was not produced by this parser.** It
  *   comes from an independent DOM-based reference implementation, read line by line against the source
  *   documents. An expectation copied from the implementation under test certifies whatever that
  *   implementation does — including the eight zero-yield documents and the eighteen fabrications above,
@@ -43,8 +43,8 @@ interface ExpectedFixtures {
 
 const FIXTURE_DIRECTORY = resolvePackagePath("@mailwoman/filer", "test-fixtures", "edgar")
 
-// parseJSONStrict, not tryParsingJSON: a corrupt expected.json must fail the suite loudly rather than
-// degrade to a fallback, since it IS the contract every assertion below is measured against.
+// parseJSONStrict rather than tryParsingJSON: a corrupt expected.json must fail the suite loudly rather than
+// degrade to a fallback, since it is the interface every assertion below is measured against.
 const expected = await readLocalJSONFile<ExpectedFixtures>(join(FIXTURE_DIRECTORY, "expected.json"))
 
 const FIXTURE_NAMES = Object.keys(expected.fixtures).toSorted()
@@ -62,8 +62,8 @@ function normalized(html: string): string {
 
 /**
  * `alti-global-2025.htm` separates its entries with nothing but a double space, so no name/jurisdiction boundary exists
- * to be found. Abstaining entirely is the required answer for it — see `expected.json`'s comment. Every OTHER vendored
- * document states a subsidiary list a reader can follow, so zero is a parser failure there, not an abstention.
+ * to be found. Abstaining entirely is the required answer for it — see `expected.json`'s comment. Every other vendored
+ * document states a subsidiary list a reader can follow, so zero is a parser failure there rather than an abstention.
  */
 const EXPECTED_TO_ABSTAIN_ENTIRELY = new Set(["alti-global-2025.htm"])
 

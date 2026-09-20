@@ -23,6 +23,7 @@ import type { AddressTree } from "@mailwoman/core/decoder"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import type { ResolvedPlace, ResolveOpts, ResolverBackend } from "@mailwoman/core/resolver"
 import { createWOFResolver } from "@mailwoman/resolver"
+import { haversineKm } from "@mailwoman/spatial"
 
 import {
 	candidatePool,
@@ -52,36 +53,36 @@ function stripWithheld(place: ResolvedPlace): SameDataCandidate {
 /**
  * A backend that answers from the real one and records every question and answer.
  *
- * The recorded answer is the STRIPPED form, so what the fixture holds is what the arms will later read — recording the
+ * The recorded answer is the stripped form, so what the fixture holds is what the arms will later read — recording the
  * full answer and stripping at write time would leave the recording and the replay disagreeing about what the walk
  * saw.
  */
 function recordingBackend(
 	backend: ResolverBackend,
 	into: Map<string, SameDataLookup>,
-	withheld: ReadonlySet<string>,
+	withheld: ((place: ResolvedPlace) => boolean) | null,
 	onWithhold: (count: number) => void
 ): ResolverBackend {
 	return {
 		...backend,
 		async findPlace(query: SameDataQuery) {
 			const raw = await backend.findPlace(query)
-			const answer = withheld.size ? raw.filter((place) => !withheld.has(String(place.id))) : raw
+			const answer = withheld ? raw.filter((place) => !withheld(place)) : raw
 
-			if (withheld.size) {
+			if (withheld) {
 				onWithhold(raw.length - answer.length)
 			}
 
 			const key = canonicalQueryKey(query)
 
 			if (!into.has(key)) {
-				// The stored query is parsed BACK from the key rather than kept by reference. The walk reuses and MUTATES
+				// The stored query is parsed back from the key rather than kept by reference. The walk reuses and mutates
 				// its query object after the call returns — it adds `parentID` once a parent resolves — so a stored
 				// reference ends up describing a question that was never asked, and the fixture's key and query disagree.
 				// Round-tripping through the key also makes the two agree by construction.
 				into.set(key, {
 					key,
-					// A throw is the contract: the key is this process's own canonical JSON, so a parse failure means the
+					// A throw is the interface: the key is this process's own canonical JSON, so a parse failure means the
 					// encoder is broken and every recorded row after it would be wrong.
 					query: parseJSONStrict<SameDataQuery>(key),
 					candidates: answer.map((place) => stripWithheld(place)),
@@ -102,7 +103,7 @@ export interface RecordCensus {
 	candidates: number
 	/**
 	 * Candidate answers the gold filter withheld during recording, counted across every question asked. Zero everywhere
-	 * except the withheld-gold stratum; a non-zero value on a `goldPresent` row would be a defect.
+	 * except the withheld-gold stratum. a non-zero value on a `goldPresent` row would be a defect.
 	 */
 	removedGold: number
 	/**
@@ -124,11 +125,77 @@ export interface RecordInputs {
 	 * be included explicitly — an omitted default is a missing key at replay.
 	 */
 	armOptions: ReadonlyArray<ResolveOpts>
+	/**
+	 * Withhold every row denoting the gold place rather than only the ids the concordance linked. Off by default, and the
+	 * default is what keeps `same-data-resolver-v1` and `prominence-floor-v1` byte-stable on a re-record.
+	 *
+	 * Why it exists: the gold identity set is built from the `gn:id` concordance, and the gazetteer carries **285,478 of
+	 * its 2,689,326 populated localities twice** — 10.6% share a folded name with a `localadmin` within 5 km, and 264,523
+	 * of those name that twin as their depth-1 ancestor. Removing the concorded id leaves the twin answerable, so an arm
+	 * returning it is graded as selecting where no correct candidate exists. It named the right place. Measured on
+	 * `same-data-resolver-v1`: 10 of 100 withheld-gold rows, and three of the five rows published as exemplars of
+	 * confident failure — `Langfang` 2.8 km, `Matsusaka` 1.3 km, `Troyes` 0.6 km.
+	 *
+	 * Turning it on changes what the stratum means, so it belongs to a successor definition rather than a version bump of
+	 * a benchmark whose arms have run. `benchmark-freeze.json` states the reason: a rule editable after a result is
+	 * visible asserts nothing.
+	 */
+	withholdEveryDenotingRow?: boolean
 }
 
 export interface RecordResult {
 	fixture: SameDataFixtureRow[]
 	census: RecordCensus[]
+}
+
+/**
+ * How far apart two rows with the same folded name may sit and still denote one settlement. 5 km is the radius the
+ * `same-data-resolver-v1` correction re-graded at, where it credited 10 of 100 withheld-gold rows. at 25 km it credits
+ * 15, so the figure moves with the radius and the radius is stated wherever the figure is.
+ */
+const SAME_SETTLEMENT_KM = 5
+
+/**
+ * The diacritic-folded comparison surface. Deliberately not the resolver's `foldName`: that one empties a non-Latin
+ * name, so `東京` and `Москва` would fold equal to each other and to every other non-Latin row.
+ */
+function settlementKey(name: string): string {
+	return name
+		.normalize("NFD")
+		.replaceAll(/\p{Diacritic}/gu, "")
+		.toLowerCase()
+		.replaceAll(/[^a-z0-9]+/gu, "")
+}
+
+/**
+ * What the recorder withholds for one row, or null when the row carries its gold.
+ *
+ * The default is id equality — the rule `same-data-resolver-v1` was frozen under. Under
+ * {@link RecordInputs.withholdEveryDenotingRow} it also withholds a row whose folded name equals the gold's within
+ * {@link SAME_SETTLEMENT_KM}, which is the settlement-identity rule: the gazetteer carries one place at two admin tiers
+ * and the concordance links only one of them.
+ */
+function withholdPredicate(
+	row: SameDataPanelRow,
+	everyDenotingRow: boolean
+): ((place: ResolvedPlace) => boolean) | null {
+	if (row.goldPresent) return null
+
+	const ids = new Set(row.gold.placeIDs.map((placeID) => String(placeID)))
+
+	if (!everyDenotingRow) return (place) => ids.has(String(place.id))
+
+	const goldKey = settlementKey(row.gold.name)
+
+	return (place) => {
+		if (ids.has(String(place.id))) return true
+
+		if (!place.name || settlementKey(place.name) !== goldKey) return false
+
+		// Both halves are required. `Batāla` (IN) and `Batala` (IN) fold equal and sit 1,421 km apart — a real namesake,
+		// and withholding it would remove a candidate the stratum is entitled to offer.
+		return haversineKm(place.lat, place.lon, row.gold.lat, row.gold.lon) <= SAME_SETTLEMENT_KM
+	}
 }
 
 /**
@@ -147,10 +214,10 @@ export async function recordFixture(inputs: RecordInputs): Promise<RecordResult>
 		let recordingError: string | undefined
 
 		let removedGold = 0
-		const withheld = new Set(row.goldPresent ? [] : row.gold.placeIDs.map((placeID) => String(placeID)))
+		const withheld = withholdPredicate(row, inputs.withholdEveryDenotingRow === true)
 
 		// One recording backend for the row, shared across the arm option sets: the lookup map and the withheld count are
-		// per ROW, and building the closure inside the loop would capture the counter afresh each pass.
+		// per row, and building the closure inside the loop would capture the counter afresh each pass.
 		const recorder = createWOFResolver(
 			recordingBackend(backend, lookups, withheld, (count) => {
 				removedGold += count

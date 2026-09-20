@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reverse lookup over the `postcode-locality-*.db` artifacts: the CONTAINING postcode of a
+ *   Reverse lookup over the `postcode-locality-*.db` artifacts: the containing postcode of a
  *   resolved locality, keyed by its WOF id — no name matching. Serves the drop-ins' answer
  *   enrichment: a village answer carries the postcode the gazetteer attests for it.
  *
  *   The exactly-one rule is the abstention: a locality contained by several postcodes (any real
- *   city) gets NOTHING — emitting one of many would state a precision the evidence doesn't hold.
+ *   city) gets nothing — emitting one of many would state a precision the evidence doesn't hold.
  *   Tolerate-and-degrade like every optional artifact: a machine without the DBs answers undefined
  *   everywhere and the consumer simply doesn't decorate.
  */
@@ -28,7 +28,7 @@ export async function createLocalityPostcodeLookup(): Promise<LocalityPostcodeLo
 	const statements = new Map<string, ReturnType<DatabaseClient["prepare"]>>()
 
 	for (const suffix of POSTCODE_LOCALITY_SUFFIXES) {
-		const path = String(dataRootPath("wof", `postcode-locality-${suffix}.db`))
+		const path = dataRootPath("wof", `postcode-locality-${suffix}.db`)
 
 		if (!(await pathExists(path))) continue
 
@@ -37,7 +37,7 @@ export async function createLocalityPostcodeLookup(): Promise<LocalityPostcodeLo
 
 			// No `is_containing` filter: villages routinely carry 0 (the builder's containment test is
 			// distance-classified, and a village near its postcode centroid still has exactly one code).
-			// The exactly-one DISTINCT rule below is the entire ambiguity guard.
+			// The exactly-one distinct rule below is the entire ambiguity guard.
 			statements.set(
 				suffix,
 				db.prepare(`SELECT DISTINCT postcode FROM postcode_locality WHERE locality_id = ? LIMIT 2`)

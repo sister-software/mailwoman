@@ -25,7 +25,7 @@ const deps = await buildGauntletDeps()
 const probe = await loadForkEntityDeps({ dataRoot: String(mailwomanDataRoot()), forkEntity: true })
 
 if (!probe.deps.poiLookup) {
-	// The census's entity half is the point; a run without poi.db would silently degrade every
+	// The census's entity half is the point. a run without poi.db would silently degrade every
 	// rescue_available_entity row into no_rescue_on_hand — the partial-reader rule says fail instead.
 	throw new Error("retrieval-rescue census requires poi.db (loadForkEntityDeps returned no lookup)")
 }
@@ -44,7 +44,7 @@ for (const c of cases) {
 
 	const markers = result.intent_markers.map((m) => m.code)
 
-	// Unconditional: ask the entity layer whenever the fork marker rode, INCLUDING when the incumbent
+	// Unconditional: ask the entity layer whenever the fork marker rode, including when the incumbent
 	// resolved — measuring what check 1 currently silences is the census's purpose.
 	const hit =
 		markers.includes("declared_fork") && probe.deps.poiLookup && probe.deps.isStreetGeneric

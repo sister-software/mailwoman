@@ -221,7 +221,7 @@ gazetteer matched on `Falls`, found Falls Township, and returned it. Nothing in 
 false: the coordinate is Falls Township's, and `matched_locality` says Falls Township. Only the
 assumption that a coordinate means a match is false.
 
-A returned coordinate is a match against a gazetteer, not a check that the address exists — so compare
+A returned coordinate is a match against a gazetteer rather than a check that the address exists — so compare
 `hierarchy[].name` against the value you sent and route the disagreements to review, which is the
 comparison already in the loop above. It costs one string compare per row and it is the difference
 between twenty-one usable coordinates and twenty.
@@ -234,7 +234,7 @@ record matcher, so what it writes is an entity set rather than a row dump.
 Two things about it before you run it. Unlike `geocode`, it will not start without a `--resolve-db` or
 `$MAILWOMAN_WOF_DB`, even though the candidate gazetteer is what answers — so pass the
 gazetteer's own path to satisfy the check. And its output properties are the record matcher's normalized
-view of your row, not your row: your `customer_id` rides in `sourceIDs`.
+view of your row rather than your row: your `customer_id` rides in `sourceIDs`.
 
 ```bash
 npx mailwoman registry run customers.csv --infer-mapping \
@@ -308,7 +308,7 @@ head -4 customers.geocoded.jsonl | jq -c '{customer_id, resolution_tier, uncerta
 
 The four DC rows no longer share a coordinate, and the summary line is identical because nothing about
 the file or the loop changed. The sixteen rows in other states still read `admin` — precision is bought
-per jurisdiction, not per install.
+per jurisdiction rather than per install.
 
 One number to know if you compare this against `mailwoman geocode` on the same address: C-1004 reports
 `uncertainty_m: 98` here and `141` from the CLI. Both are right. 98 m is the raw half-segment radius,

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The acquisition + build surface for the Irish zoning layer. The READER is the package root.
+ * @file The acquisition + build surface for the Irish zoning layer. The reader is the package root.
  */
 
 export * from "#sdk/build-zoning"

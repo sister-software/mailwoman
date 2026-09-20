@@ -22,7 +22,7 @@ function at(confidence: number, n: number, correct: number): Observation[] {
 
 describe("reliabilityCurve", () => {
 	it("reports a perfectly calibrated sample as ECE 0", () => {
-		// 0.95-confident and right 95% of the time; 0.25-confident and right 25% of the time.
+		// 0.95-confident and right 95% of the time. 0.25-confident and right 25% of the time.
 		const curve = reliabilityCurve([...at(0.95, 100, 95), ...at(0.25, 100, 25)], 10)
 
 		expect(curve.ece).toBeCloseTo(0, 10)
@@ -32,7 +32,7 @@ describe("reliabilityCurve", () => {
 	})
 
 	it("signs the gap so overconfidence is negative", () => {
-		// The direction is the finding, not the magnitude: a confidence ABOVE the accuracy it earns is the failure that
+		// The direction is the finding rather than the magnitude: a confidence above the accuracy it warrants is the failure that
 		// lets a caller trust a wrong answer, and an unsigned gap cannot tell it from the harmless direction.
 		const overconfident = reliabilityCurve(at(0.9, 100, 50), 10)
 		const underconfident = reliabilityCurve(at(0.5, 100, 90), 10)

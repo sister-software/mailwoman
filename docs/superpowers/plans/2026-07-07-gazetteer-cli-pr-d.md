@@ -1,10 +1,10 @@
 # Gazetteer CLI PR D: zero mutators — the sealed postcode-extract command + drawer classification
 
-> **For agentic workers:** REQUIRED SUB-SKILL: superpowers:executing-plans (inline). Checkbox steps.
+> **For agentic workers:** required sub-skill: superpowers:executing-plans (inline). Checkbox steps.
 
 **Goal:** Eliminate the last two DB mutators (`fill-zcta-centroids`, `backfill-postcode-centroids`) by folding their fills into a sealed `gazetteer build postcode-extract` command; classify every remaining drawer resident (audit → eval, codegen renamed, remaining builders seal-retrofitted); file PR E for the pure ports.
 
-**Spec:** `docs/superpowers/specs/2026-07-07-scripts-cleanup-gazetteer-cli-design.md` §5 (PR C/D slice). **Deferred to PR E:** verbatim ports of `build-postcode-locality{,-cjk,-kr,-tw}`, `build-postalcode-nl-pc6`, `build-supplemental-gazetteer` (~2.2k lines, each needing source-data E2E), and the corpus tooling (`build-corpus-stats`, `align-canonical-extract`, `assemble-overlay-manifest`) — mechanical ports with per-artifact validation, their own session. `build-pilot-anchor-lookup` is LIVE (neural/scorer + eval consume its output) — stays until PR E decides its home.
+**Spec:** `docs/superpowers/specs/2026-07-07-scripts-cleanup-gazetteer-cli-design.md` §5 (PR C/D increment). **Deferred to PR E:** verbatim ports of `build-postcode-locality{,-cjk,-kr,-tw}`, `build-postalcode-nl-pc6`, `build-supplemental-gazetteer` (~2.2k lines, each needing source-data E2E), and the corpus tooling (`build-corpus-stats`, `align-canonical-extract`, `assemble-overlay-manifest`) — mechanical ports with per-artifact validation, their own session. `build-pilot-anchor-lookup` is LIVE (neural/scorer + eval consume its output) — stays until PR E decides its home.
 
 ## Global Constraints
 
@@ -39,6 +39,6 @@ As PR A–C. Branch `feat/gazetteer-cli-pr-d`.
 
 ### Task 3: E2E + PR
 
-- [ ] E2E: `gazetteer build postcode-extract --country us` → compare row/fill counts vs the live `postalcode-us.db` (filled-coordinate count must be ≥ live; provenance tags present); artifact sealed. Do NOT swap (operator-conditional; the current live extract is fine).
+- [ ] E2E: `gazetteer build postcode-extract --country us` → compare row/fill counts vs the live `postalcode-us.db` (filled-coordinate count must be ≥ live; provenance tags present); artifact sealed. Do not swap (operator-conditional; the current live extract is fine).
 - [ ] File the PR E tracking issue (the six ports + corpus tooling + pilot-anchor home + `scripts/` endgame).
 - [ ] Push, open PR D.

@@ -42,7 +42,7 @@ test("toFeatureCollection: wraps results as a GeoJSON FeatureCollection (geometr
 	expect(f.geometry).toEqual({ type: "Point", coordinates: [-77.0365, 38.8977] })
 	// boundingbox [south, north, west, east] → GeoJSON bbox [west, south, east, north]
 	expect(f.bbox).toEqual([-77.04, 38.89, -77.03, 38.9])
-	// the coordinate + boundingbox move OUT of properties; the rest stays.
+	// the coordinate + boundingbox move OUT of properties. the rest stays.
 	expect(f.properties["display_name"]).toBeDefined()
 	expect(f.properties["lat"]).toBeUndefined()
 	expect(f.properties["boundingbox"]).toBeUndefined()
@@ -102,7 +102,7 @@ test("nominatimResultToSchemaOrg: projects a result's address into a schema.org 
 	expect(place.address?.addressCountry).toBe("US") // country_code "us" → uppercased alpha-2
 })
 
-// Echoes params.addressdetails into the result so the route test also proves the router FORCES it for jsonld.
+// Echoes params.addressdetails into the result so the route test also proves the router forces it for jsonld.
 const jsonldEngine: NominatimEngine = {
 	search: async (params) => [toNominatimResult(dc, { addressdetails: params.addressdetails })],
 	reverse: async (params) => toNominatimResult(dc, { addressdetails: params.addressdetails }),
@@ -171,7 +171,7 @@ test("root: GET / serves a friendly HTML banner, not a bare 404 (#1022)", async 
 	expect(body).toContain("what-mailwoman-is") // docs pointer
 })
 
-// Pinning tests — the four nominatim wrinkles (wire contract) + the parsing/error-envelope guarantees.
+// Pinning tests — the four nominatim wrinkles (wire interface) + the parsing/error-envelope guarantees.
 
 test("/status without an engine method answers 200 OK, not 501 (the one non-501 absent-method default)", async () => {
 	const app = createNominatimApp({})

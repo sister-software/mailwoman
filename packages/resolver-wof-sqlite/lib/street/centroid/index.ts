@@ -2,17 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   SQLite implementation of core's `StreetCentroidLookup` (#1042): the street-level tier BELOW the
- *   exact address-point tier and ABOVE admin-centroid resolution. Given a street name (no house
- *   number) plus a postcode/commune scope, it returns the street's CENTROID + an honest extent-derived
+ *   SQLite implementation of core's `StreetCentroidLookup` (#1042): the street-level tier below the
+ *   exact address-point tier and above admin-centroid resolution. Given a street name (no house
+ *   number) plus a postcode/commune scope, it returns the street's centroid + an honest extent-derived
  *   uncertainty from the derived `street-centroids-<cc>.db` roll-up.
  *
- *   Query-side normalization is THE shared normalizer (`street-normalize.ts`), selected per the extract's
+ *   Query-side normalization is the shared normalizer (`street-normalize.ts`), selected per the extract's
  *   `streetLocale`, so build-side and probe-side keys agree by construction. The commune scope folds
  *   through `normalizeLocalityForKey` + `stripArrondissement` (BAN names Paris/Lyon/Marseille per
- *   arrondissement; a query names the base commune).
+ *   arrondissement. a query names the base commune).
  *
- *   Scope order is most-selective first: `postcode`, then the base commune. Each scope WEIGHTED-
+ *   Scope order is most-selective first: `postcode`, then the base commune. Each scope weighted-
  *   aggregates (by `point_count`) across the matched rows in SQL, so a commune-scope probe returns the
  *   street's grand centroid over every postcode/arrondissement it spans — one row, one hit. Matching is
  *   exact-after-normalization only (no fuzzy street matching in this tier).
@@ -49,7 +49,7 @@ interface AggRow {
 }
 
 /**
- * Weighted-centroid aggregate over a WHERE-filtered set. `SUM(coord*n)/SUM(n)` reconstructs the grand centroid.
+ * Weighted-centroid aggregate over a where-filtered set. `SUM(coord*n)/SUM(n)` reconstructs the grand centroid.
  */
 const AGG_SELECT =
 	"SUM(lat * point_count) / SUM(point_count) AS lat, " +
@@ -58,7 +58,7 @@ const AGG_SELECT =
 	"MAX(source) AS source, MAX(release) AS release"
 
 /**
- * Half the bbox diagonal, in METERS — an honest coarse radius for a street centroid.
+ * Half the bbox diagonal, in meters — an honest coarse radius for a street centroid.
  */
 function extentRadiusM(minLat: number, maxLat: number, minLon: number, maxLon: number): number {
 	return Math.round(haversineKm(minLat, minLon, maxLat, maxLon) * 500)
@@ -72,15 +72,15 @@ export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 
 	/**
 	 * @param dbPath Extract path.
-	 * @param opts.streetLocale The street-normalization locale this extract was BUILT with — must match, or every key
-	 *   misses. Defaults to `"fr"` (BAN is the French national register; the tier is FR-only today).
+	 * @param opts.streetLocale The street-normalization locale this extract was built with — must match, or every key
+	 *   misses. Defaults to `"fr"` (BAN is the French national register. the tier is FR-only today).
 	 */
 	constructor(dbPath: string, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#db = new DatabaseClient<StreetCentroidDatabase>(dbPath, { readOnly: true })
 		this.#locale = opts.streetLocale ?? "fr"
 
 		// Degrade gracefully on an empty/tableless extract (interrupted build, stray 0-byte file): with no
-		// `street_centroid` table this lookup is a no-op miss, not a crash (mirrors the address-point reader).
+		// `street_centroid` table this lookup is a no-op miss rather than a crash (mirrors the address-point reader).
 		if (hasTable(this.#db, "street_centroid")) {
 			this.#byPostcode = prepareGet(
 				this.#db,

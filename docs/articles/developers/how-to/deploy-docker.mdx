@@ -21,7 +21,7 @@ the published image — the repo-root `Dockerfile`, `docker/package.json`, `dock
 [example server](/examples/mailwoman-server.mjs) in step 4 _was_ executed, outside a container, in both
 states the image can start in: with a gazetteer on disk, and with an empty data root, which is what a
 first run with no volume looks like. Those transcripts are real.
-Treat the `docker run` lines as sourced, not as executed output.
+Treat the `docker run` lines as sourced rather than as executed output.
 
 ## Prerequisites
 
@@ -155,7 +155,7 @@ holding one file, `wof/candidate.db`, which is the shape of the mounted volume a
 server is why that is enough — and why the same server also boots when the volume is missing:
 
 ```js
-// Check on the gazetteer being THERE, not on anything being configured.
+// Check on the gazetteer being THERE rather than on anything being configured.
 const candidateDB = resolveCandidateDBPath()
 ```
 

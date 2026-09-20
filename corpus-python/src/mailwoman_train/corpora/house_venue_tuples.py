@@ -6,7 +6,7 @@ each renders its own surface conventions. Those live in `countries/<code>/tuples
 knows only the budget per country and the output file, so adding a country adds a module and a row
 in `SOURCES` and touches nobody else's sampler.
 
-The output feeds the house-venue recipe's synthesizer, which owns the rendering into addresses;
+The output feeds the house-venue recipe's synthesizer, which owns the rendering into addresses.
 these are the raw component tuples.
 
 Usage:

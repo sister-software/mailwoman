@@ -34,7 +34,7 @@ const LABELS = [
 ]
 
 const VOCAB = { "<pad>": 0, "<unk>": 1, "1": 2, "9": 3, 京: 4, 代: 5, 区: 6, 千: 7, 田: 8, 東: 9, 都: 10 }
-const CONTRACT = { maxUnits: 16, maxUnitWidth: 5, ctxChars: 2 }
+const INTERFACE = { maxUnits: 16, maxUnitWidth: 5, ctxChars: 2 }
 
 async function charPackage(cardExtra: Record<string, unknown> = {}): Promise<string> {
 	const dir = resolvePath(fixtures.use(await temporaryDirectory("char-pkg-")).path)
@@ -46,9 +46,9 @@ async function charPackage(cardExtra: Record<string, unknown> = {}): Promise<str
 		stringifyJSON({
 			encoder: "char",
 			char_vocab: "char-vocab.json",
-			max_units: CONTRACT.maxUnits,
-			max_unit_width: CONTRACT.maxUnitWidth,
-			char_ctx: CONTRACT.ctxChars,
+			max_units: INTERFACE.maxUnits,
+			max_unit_width: INTERFACE.maxUnitWidth,
+			char_ctx: INTERFACE.ctxChars,
 			labels: LABELS,
 			...cardExtra,
 		}),
@@ -59,7 +59,7 @@ async function charPackage(cardExtra: Record<string, unknown> = {}): Promise<str
 }
 
 describe("readEncoderFromModelCard", () => {
-	it("reads a char card's vocabulary sibling and contract, and defaults an absent block to SentencePiece", async () => {
+	it("reads a char card's vocabulary sibling and interface, and defaults an absent block to SentencePiece", async () => {
 		const dir = await charPackage()
 
 		expect(await readEncoderFromModelCard(join(dir, "model-card.json"))).toEqual({
@@ -73,7 +73,7 @@ describe("readEncoderFromModelCard", () => {
 		expect(await readEncoderFromModelCard(undefined)).toEqual({ kind: "sentencepiece" })
 	})
 
-	it("refuses a char card missing part of the contract rather than guessing a window", async () => {
+	it("refuses a char card missing part of the interface rather than guessing a window", async () => {
 		const dir = await charPackage({ char_ctx: undefined })
 
 		await expect(readEncoderFromModelCard(join(dir, "model-card.json"))).rejects.toThrow(/char_ctx/)
@@ -165,7 +165,7 @@ describe("NeuralAddressClassifier on the char path", () => {
 		const seen = { charIDs: [] as number[][][] }
 
 		const classifier = new NeuralAddressClassifier({
-			charEncoder: { vocabulary: new Map(Object.entries(VOCAB)), contract: CONTRACT },
+			charEncoder: { vocabulary: new Map(Object.entries(VOCAB)), interface: INTERFACE },
 			runner: charRunner(seen),
 			labels: LABELS,
 		})
@@ -180,7 +180,7 @@ describe("NeuralAddressClassifier on the char path", () => {
 		]
 
 		expect(seen.charIDs).toHaveLength(1)
-		expect(seen.charIDs[0]).toHaveLength(CONTRACT.maxUnits)
+		expect(seen.charIDs[0]).toHaveLength(INTERFACE.maxUnits)
 
 		expect(tree.roots.flatMap(walk)).toEqual([
 			["prefecture", "東京都"],
@@ -193,7 +193,7 @@ describe("NeuralAddressClassifier on the char path", () => {
 		expect(
 			() =>
 				new NeuralAddressClassifier({
-					charEncoder: { vocabulary: new Map(Object.entries(VOCAB)), contract: CONTRACT },
+					charEncoder: { vocabulary: new Map(Object.entries(VOCAB)), interface: INTERFACE },
 					runner: {
 						async infer() {
 							return { logits: [], numLabels: 0 }

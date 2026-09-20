@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Coverage for the OpenAddresses resolver eval's pure halves — the tree walkers that decide WHICH place a row
+ * @file Coverage for the OpenAddresses resolver eval's pure halves — the tree walkers that decide which place a row
  *   resolved to, and the region predicate that decides whether it counts.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { regionMatches } from "mailwoman/eval-harness/oa/resolver/admin-match"
+import { resolveOptsFrom } from "mailwoman/eval-harness/oa/resolver/parse-rig"
 import {
 	collectResolved,
 	findAddressPointHit,
@@ -247,5 +248,44 @@ describe("street-level preconditions", () => {
 			houseNumber: "12",
 			postcode: undefined,
 		})
+	})
+})
+
+describe("resolveOptsFrom", () => {
+	it("passes no pin through when no flag is set, so the arm grades the library default", () => {
+		expect(resolveOptsFrom({}, "none")).toEqual({})
+		expect(resolveOptsFrom({}, "US")).toEqual({ defaultCountry: "US" })
+	})
+
+	it("carries a ZERO cap, which is the arm that separates the re-pick from the coordinate fallback", () => {
+		// `0` is falsy and the surrounding pins are presence-tested. a truthiness check here would drop the one arm that
+		// refuses every fall, and the run would report the shipped numbers under the arm's name.
+		expect(resolveOptsFrom({ postcodeConsistencyMaxMoveKm: 0 }, "none")).toEqual({ postcodeConsistencyMaxMoveKm: 0 })
+
+		expect(resolveOptsFrom({ postcodeConsistencyMaxMoveKm: 300 }, "none")).toEqual({
+			postcodeConsistencyMaxMoveKm: 300,
+		})
+	})
+
+	it("turns the whole pass off on its own pin, which is a different arm from any cap", () => {
+		expect(resolveOptsFrom({ noPostcodeConsistency: true }, "none")).toEqual({ postcodeConsistency: false })
+	})
+
+	it("carries the #2266 span-rescore pin only when it is set", () => {
+		expect(resolveOptsFrom({ spanRescoreRequireContextRemainder: true }, "none")).toEqual({
+			spanRescoreRequireContextRemainder: true,
+		})
+
+		// Default-off in the library: forwarding `false` would PIN the shipped behaviour rather than leaving it, which is
+		// the one-sided-forwarding class the gauntlet's tri-states exist for.
+		expect(resolveOptsFrom({ spanRescoreRequireContextRemainder: false }, "none")).toEqual({})
+	})
+
+	it("carries the #2264 weak-resolution reading verbatim, and nothing when unset", () => {
+		expect(resolveOptsFrom({ spanRescoreWeakResolution: "containment" }, "none")).toEqual({
+			spanRescoreWeakResolution: "containment",
+		})
+
+		expect(resolveOptsFrom({}, "none")).toEqual({})
 	})
 })

@@ -68,7 +68,7 @@ A label sequence is valid under BIO grammar iff:
 So `[O, B-street, I-street, O, B-locality, B-region]` is valid.
 `[B-street, I-locality]` is invalid (mid-tag switch).
 
-If you just take per-token argmax, you get whatever each token's
+If youtake per-token argmax, you get whatever each token's
 highest-probability label is — regardless of validity. That can produce
 nonsense like `[B-street, I-locality, O]` if the encoder's emissions
 push the second token toward `I-locality` and the first toward
@@ -76,7 +76,7 @@ push the second token toward `I-locality` and the first toward
 
 ## What Viterbi does
 
-Viterbi searches for the **highest-scoring label SEQUENCE**, not
+Viterbi searches for the **highest-scoring label SEQUENCE** rather than
 per-token argmaxes:
 
 ```
@@ -136,7 +136,7 @@ say "this transition is statistically likely."
 
 Consider: `B-region → B-locality` is structurally valid. So is
 `B-region → B-postcode`. But in real addresses, `region` is almost
-always followed by `postcode` (`MA 02101`), not another locality. The
+always followed by `postcode` (`MA 02101`) rather than another locality. The
 structural mask treats both as equally allowed.
 
 A learned transition matrix could in principle encode that statistical
@@ -146,7 +146,7 @@ common sequence. Mailwoman doesn't ship one. Viterbi runs on emission
 scores alone, which is what ships today. It works well enough because
 the encoder's emissions already carry most of the sequencing signal
 via attention — a learned transition layer would be an additive
-refinement on top of that, not a replacement for it.
+refinement on top of that rather than a replacement for it.
 
 ## Why there's no learned CRF
 
@@ -162,26 +162,26 @@ probe), every config from v0.6.3 on has stayed at `0.0` — the current
 one included. [Dual-loss curvature
 conflict](./dual-loss-curvature-conflict.mdx) has the full diagnostic
 story of why the two losses fought instead of cooperating. There's no
-active plan to revisit it — the structural mask alone already buys the
+active plan to revisit it — the structural mask alone already provides the
 concrete win (no orphan-I), and the encoder's attention covers most of
 the rest.
 
-## What a learned CRF would buy (if one ever ships)
+## What a learned CRF would provide (if one ever ships)
 
 A learned transition layer would add soft transition preferences on
 top of the hard structural mask. For example:
 
 - `B-house_number` is almost always followed by `B-street` or `O,
 B-street` — a learned matrix could encode that preference.
-- `B-postcode` rarely precedes anything (it's usually the last
+- `B-postcode` rarely precedes anything (it's typically the last
   component) — `B-postcode → O` could get a boost.
 - `B-street_prefix → B-street` is common; `B-street_prefix →
 B-locality` is rare — a learned matrix could rank these apart.
 
-It would not buy:
+It would not provide:
 
 - Better encoder representations. The encoder is the upstream learner;
-  a CRF layer is downstream of it, not a substitute for it.
+  a CRF layer is downstream of it rather than a substitute for it.
 - Handling of novel patterns. If a sequence isn't represented well in
   training, a transition matrix has no opinion either.
 - Inference speed. Viterbi over a learned matrix is marginally slower

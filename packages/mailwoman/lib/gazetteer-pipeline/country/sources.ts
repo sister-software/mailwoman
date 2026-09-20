@@ -5,12 +5,12 @@
  *   Which source serves a country's admin coverage, and what it costs when more than one does.
  *
  *   Three sources feed the admin gazetteer and each is selected differently: the WOF leg is
- *   PRESENCE-driven (`ingestWOF` globs `**\/data\/**\/*.geojson` over the repos root and reads no list),
- *   while Overture and GeoNames are LIST-driven from `defaults.ts`. So adding a country by cloning is half
- *   the job; the other half is removing it from whichever list serves it today, and nothing enforced the
+ *   presence-driven (`ingestWOF` globs `**\/data\/**\/*.geojson` over the repos root and reads no list),
+ *   while Overture and GeoNames are list-driven from `defaults.ts`. So adding a country by cloning is half
+ *   the job. the other half is removing it from whichever list serves it today, and nothing enforced the
  *   pairing.
  *
- *   THE INVARIANT IS NOT "ONE COUNTRY, ONE SOURCE", and that matters because the runbook this came from
+ *   the invariant is not "one country, one source", and that matters because the runbook this came from
  *   states it as though it were. Measured against the shipped `admin-global-priority.db` on 2026-08-17:
  *   245 countries, 231 single-source, **14 two-source** (all Overture + GeoNames), 0 three-source. The
  *   fourteen are not drift — the config lists agree with the artifact exactly.
@@ -28,7 +28,7 @@
  *   Overture does not carry, so dropping the fold wholesale would lose coverage. Both facts are true, and
  *   a check that refused two sources would be refusing a deliberate trade.
  *
- *   Hence the rule this module encodes: the FOURTEEN are accepted and recorded; a FIFTEENTH is refused.
+ *   Hence the rule this module encodes: the fourteen are accepted and recorded. a fifteenth is refused.
  *   An existing trade someone measured is not the same thing as a country silently acquiring a second
  *   source because a clone landed and a list was never edited.
  */
@@ -46,8 +46,8 @@ export const AdminSource = {
 	 */
 	Overture: "overture",
 	/**
-	 * The GeoNames fold, `DEFAULT_GEONAMES_COUNTRIES`. Despite the ingest function's name it writes `spr` PLACES, not
-	 * only alternate names: the rows are `locality` with `parent_id = -1`.
+	 * The GeoNames fold, `DEFAULT_GEONAMES_COUNTRIES`. Despite the ingest function's name it writes `spr` places rather
+	 * than only alternate names: the rows are `locality` with `parent_id = -1`.
 	 */
 	GeoNames: "geonames",
 } as const
@@ -58,9 +58,9 @@ export type AdminSource = (typeof AdminSource)[keyof typeof AdminSource]
  * The countries measured as two-source on 2026-08-17, with Overture + GeoNames, against both the config lists and the
  * shipped artifact.
  *
- * A baseline, not a permission slip. It exists so a NEW double-listing is distinguishable from the fourteen that were
- * already there — the difference between a trade someone made and an accident nobody noticed. Removing an entry is a
- * coverage decision (see the overlap table above); adding one is what this module refuses.
+ * A baseline rather than a permission slip. It exists so a new double-listing is distinguishable from the fourteen that
+ * were already there — the difference between a trade someone made and an accident nobody noticed. Removing an entry is
+ * a coverage decision (see the overlap table above); adding one is what this module refuses.
  */
 export const ACCEPTED_TWO_SOURCE_COUNTRIES: ReadonlySet<string> = new Set([
 	"AT",
@@ -96,9 +96,9 @@ export interface SourceConflict {
 /**
  * Map every country to the sources that serve it, from the three lists.
  *
- * `wofCountries` is passed in rather than read from `DEFAULT_WOF_PRIORITY_COUNTRIES` because that list is a DECLARATION
+ * `wofCountries` is passed in rather than read from `DEFAULT_WOF_PRIORITY_COUNTRIES` because that list is a declaration
  * and the WOF leg is presence-driven: what actually gets ingested is whatever is cloned. A caller checking a build
- * should pass what is on disk; a caller checking the recipe should pass the list. Conflating them is how a clone that
+ * should pass what is on disk. a caller checking the recipe should pass the list. Conflating them is how a clone that
  * nobody declared, or a declaration nobody cloned, reads as fine.
  */
 export function countrySourceMap(lists: {

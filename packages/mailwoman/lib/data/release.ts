@@ -4,7 +4,7 @@
 /**
  *   Versioned data-artifact addressing + atomic switchover (#485 piece 4). Database DBs are addressed as
  *   `<family>/<family>-us-<slug>-<version>.db`, with a `releases.json` manifest at the data root
- *   pinning each family to its current version. So a new build publishes ALONGSIDE the old,
+ *   pinning each family to its current version. So a new build publishes alongside the old,
  *   flipping the manifest (one atomic file write) switches traffic over, and the build provenance (the
  *   version) travels in the filename — "what data is deployed" is a read of one JSON.
  *
@@ -71,7 +71,7 @@ export async function resolveDatabasePath(
 }
 
 /**
- * The path a `us`-family artifact ALREADY occupies on disk (versioned or legacy, via {@link resolveDatabasePath}), or
+ * The path a `us`-family artifact already occupies on disk (versioned or legacy, via {@link resolveDatabasePath}), or
  * the artifact's own resolved path for a non-family artifact — `null` when nothing is there yet. Shared by `data pull`
  * and `data status`, so "already present" means the same thing to both.
  */

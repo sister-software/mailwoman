@@ -44,9 +44,9 @@ const SCORERS: ReadonlyArray<KindScorer> = [
 	{ kind: "postcode_only", score: scorePostcodeOnly },
 	{ kind: "locality_only", score: scoreLocalityOnly },
 	{ kind: "structured_address", score: scoreStructuredAddress },
-	// ROAD_TO_V9 §4. Ordinary members of the same list — intent is vocabulary, not a stage. `bare_toponym` and
+	// ROAD_TO_V9 §4. Ordinary members of the same list — intent is vocabulary rather than a stage. `bare_toponym` and
 	// `route_pair` are scored under `locality_only` on purpose (see `intent-rules.ts`), so their position here is
-	// cosmetic; the sort below is what decides.
+	// cosmetic. the sort below is what decides.
 	{ kind: "bare_toponym", score: scoreBareToponym },
 	{ kind: "route_pair", score: scoreRoutePair },
 	{ kind: "near_me", score: scoreNearMe },
@@ -73,7 +73,7 @@ function rank(scored: Array<{ kind: QueryKind; confidence: number }>): QueryKind
  * Every kind whose verdict carries `intentMarkers`. Checked before the marker builder runs so the hot path — a
  * structured address, where none of these fire — pays one set membership test per kind and nothing else.
  */
-const MARKER_BEARING_KINDS: ReadonlySet<QueryKind> = new Set<QueryKind>(["route_pair", "near_me", "poi_category"])
+const MARKER_KINDS: ReadonlySet<QueryKind> = new Set<QueryKind>(["route_pair", "near_me", "poi_category"])
 
 /**
  * Attach markers to a verdict, or return it untouched. Separate from {@link rank} because the lexicon-wired path needs
@@ -87,7 +87,7 @@ function withIntentMarkers(
 ): QueryKindResult {
 	const kinds = [{ kind: verdict.kind, confidence: verdict.confidence }, ...verdict.alternatives]
 
-	if (!kinds.some((k) => MARKER_BEARING_KINDS.has(k.kind))) return verdict
+	if (!kinds.some((k) => MARKER_KINDS.has(k.kind))) return verdict
 
 	const intentMarkers: QueryIntentMarker[] = deriveIntentMarkers(kinds, { input, poiLexicon, locale })
 
@@ -109,7 +109,7 @@ export function classifyKindSync(input: NormalizedInputLite, shape: QueryShapeLi
 }
 
 /**
- * Async variant matching the runtime-pipeline's `classifyKind` contract.
+ * Async variant matching the runtime-pipeline's `classifyKind` interface.
  *
  * The locale parameter is accepted for future locale-aware rules (Japanese honorifics, etc.) but not currently used.
  */

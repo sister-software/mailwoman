@@ -5,7 +5,7 @@
  *   Synthesis / augmentation per Phase 1 task #6.
  *
  *   An `Augmentation` is a pure function that takes a `CanonicalRow` and either returns a new
- *   `CanonicalRow` (with `raw` AND `components` transformed in lockstep so alignment still
+ *   `CanonicalRow` (with `raw` and `components` transformed in lockstep so alignment still
  *   succeeds) or `null` when the augmentation doesn't apply to the row's shape.
  *
  *   Synthesis runs **before** alignment: augmentations transform raw + components together, and the
@@ -20,9 +20,9 @@
  *
  *   Phase 1 implements the locale-agnostic + most useful US/FR augmentations. Typo injection (#530)
  *   is now implemented ({@link typoInject}) — the "seed-aware API" the deferral asked for is
- *   resolved by seeding the PRNG from each row's `source_id`. It ships in {@link AUGMENTATIONS} but
+ *   resolved by seeding the prng from each row's `source_id`. It ships in {@link augmentations} but
  *   is kept OUT of the default set ({@link defaultAugmentationsForCountry}) until its on-model
- *   effect is measured; see the note there.
+ *   effect is measured. see the note there.
  */
 
 import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
@@ -34,7 +34,7 @@ import {
 	matchTrailingSuffix,
 } from "@mailwoman/codex/us"
 import { isPresent } from "@mailwoman/core/objects"
-import { mulberry32 } from "@mailwoman/core/random"
+import { mulberry32, sample } from "@mailwoman/core/random"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 import { stripCombiningMarks } from "@mailwoman/normalize/fold"
 
@@ -44,7 +44,7 @@ import { whitespaceTokenizer, type Tokenizer } from "#utils/tokenize"
 
 /**
  * An augmentation transforms a single row. Return `null` if the augmentation doesn't apply (e.g. accent-strip on a row
- * that has no accents; particle-strip on a US row).
+ * that has no accents. particle-strip on a US row).
  */
 export type Augmentation = (row: CanonicalRow) => CanonicalRow | null
 
@@ -70,9 +70,8 @@ function withAugmentation(
 	}
 }
 
-// ===========================================================================
-// Locale-agnostic augmentations
-// ===========================================================================
+// The augmentations below apply to any locale: they read the raw string and its components without consulting a
+// country table, so adding a locale never touches them.
 
 /**
  * Upper-case raw + every component value. Returns null if already all-upper.
@@ -119,10 +118,10 @@ export const dropCommas: Augmentation = (row) => {
 }
 
 /**
- * Replace single spaces with double spaces in `raw` AND in every component value. The component update is essential for
+ * Replace single spaces with double spaces in `raw` and in every component value. The component update is essential for
  * alignment: `alignRow` substring-searches each component's surface form inside `raw`, so doubling the spaces in `raw`
  * only would leave single-spaced components unfindable (this was the bug behind v0.1.1's first build attempt — 99.9% of
- * quarantined rows traced back to this augmentation). Doubling both keeps the substring contract intact.
+ * quarantined rows traced back to this augmentation). Doubling both keeps the substring interface intact.
  */
 export const doubleSpace: Augmentation = (row) => {
 	if (!/ /.test(row.raw)) return null
@@ -159,11 +158,11 @@ export const accentStrip: Augmentation = (row) => {
 
 // The typo-injection helpers below keep generated rows reproducible.
 // The Phase-1 deferral asked for a "seed-aware API" so the corpus stays reproducible. Resolution:
-// seed the PRNG from the row's own `source_id` — deterministic per row, no global state, fits the
+// seed the prng from the row's own `source_id` — deterministic per row, no global state, fits the
 // existing `(row) => CanonicalRow | null` signature unchanged.
 
 /**
- * QWERTY adjacency for realistic single-key substitutions (lowercase; case is restored on apply).
+ * Qwerty adjacency for realistic single-key substitutions (lowercase. the original capitalization returns on apply).
  */
 const QWERTY_ADJACENCY: Record<string, string> = {
 	a: "qwsz",
@@ -200,7 +199,7 @@ const QWERTY_ADJACENCY: Record<string, string> = {
 const ALPHA_NAME = /^[\p{L}][\p{L} '.-]{3,}$/u
 
 /**
- * Djb2 → uint32 seed. Deterministic; no `Math.random` (banned here and breaks corpus reproducibility).
+ * Djb2 → uint32 seed. Deterministic. no `Math.random` (banned here and breaks corpus reproducibility).
  */
 function hashString(s: string): number {
 	let h = 5381
@@ -213,19 +212,20 @@ function hashString(s: string): number {
 }
 
 /**
- * Inject ONE realistic typo — an adjacent-QWERTY-key substitution OR an adjacent-character transposition — into a
+ * Inject one realistic typo — an adjacent-qwerty-key substitution or an adjacent-character transposition — into a
  * single alpha name component (street/locality/region…), teaching the model to recover from real-world misspellings
- * ("Cupertino" → "Cupertimo"). The edit is applied to BOTH `raw` and the component so the substring contract `alignRow`
- * depends on holds. Number / postcode / unit components are never touched (they fail {@link ALPHA_NAME}). Deterministic
- * per row (seeded from `source_id`). Returns `null` when no eligible component exists or the edit is a no-op.
+ * ("Cupertino" → "Cupertimo"). The edit is applied to both `raw` and the component so the substring interface
+ * `alignRow` depends on holds. Number / postcode / unit components are never touched (they fail {@link ALPHA_NAME}).
+ * Deterministic per row (seeded from `source_id`). Returns `null` when no eligible component exists or the edit is a
+ * no-op.
  */
 export const typoInject: Augmentation = (row) => {
 	const rng = mulberry32(hashString(`${row.source_id}:typo`))
 
-	// Count occurrences so we only edit an UNAMBIGUOUS target — a value that appears exactly once in
+	// Count occurrences so we only edit an unambiguous target — a value that appears exactly once in
 	// raw and isn't a substring of another component. (e.g. "Cupertino" the locality is a substring of
-	// "Cupertino Avenue" the street; editing it would `replace` the street's occurrence and break the
-	// span. The substring contract `alignRow` enforces is why we filter rather than guess the position.)
+	// "Cupertino Avenue" the street. editing it would `replace` the street's occurrence and break the
+	// span. The substring interface `alignRow` enforces is why we filter rather than guess the position.)
 	const occurs = (needle: string): number => {
 		let n = 0
 
@@ -243,7 +243,7 @@ export const typoInject: Augmentation = (row) => {
 	)
 
 	if (!eligible.length) return null
-	const [tag, value] = pick(eligible, rng)
+	const [tag, value] = sample(eligible, rng)
 	// Interior alpha positions only — keep the first char (most real typos are interior) + a right neighbour.
 	const positions: number[] = []
 
@@ -253,7 +253,7 @@ export const typoInject: Augmentation = (row) => {
 		}
 
 	if (!positions.length) return null
-	const i = pick(positions, rng)
+	const i = sample(positions, rng)
 	const ch = value[i]!
 	let typed: string
 
@@ -274,16 +274,15 @@ export const typoInject: Augmentation = (row) => {
 	if (typed === value) return null
 	const newRaw = row.raw.replace(value, typed)
 
-	// first occurrence; `replace(string, …)` is literal, not regex
+	// first occurrence; `replace(string, …)` is literal rather than regex
 	return withAugmentation(row, "typo-inject", newRaw, { ...row.components, [tag]: typed })
 }
 
-// ===========================================================================
-// US-specific augmentations
-// ===========================================================================
+// The augmentations below read US tables — state names, USPS suffixes, ZIP shapes — so each one is correct for a US
+// row and wrong for any other. `augmentations` is what scopes them. none checks the country itself.
 
 /**
- * US state full ↔ alpha-2 mapping. Two-way: `STATE_TO_ABBR["Oregon"] = "OR"`.
+ * US state full ↔ alpha-2 mapping. Two-way: `STATE_TO_ABBR["Oregon"] = "or"`.
  */
 const STATE_NAME_TO_ABBR: Record<string, string> = {
 	Alabama: "AL",
@@ -354,7 +353,7 @@ export const stateExpand: Augmentation = (row) => {
 	const full = STATE_ABBR_TO_NAME[region]
 
 	if (!full) return null
-	// Replace the bounded "OR" surface form with "Oregon" in raw. Use word boundaries so we
+	// Replace the bounded "or" surface form with "Oregon" in raw. Use word boundaries so we
 	// don't match inside "Stop" or similar.
 	const re = new RegExp(`\\b${region}\\b`, "g")
 
@@ -462,7 +461,7 @@ export const directionalAbbreviate: Augmentation = (row) => {
 
 /**
  * US: swap the trailing street-suffix word in `components.street` to its preferred USPS abbreviation, preserving case.
- * `"5th Avenue"` → `"5th Ave"`; `"5TH AVENUE"` → `"5TH AVE"`; `"main street"` → `"main st"`. Returns null when no
+ * `"5th Avenue"` → `"5th Ave"`; `"5TH avenue"` → `"5TH AVE"`; `"main street"` → `"main st"`. Returns null when no
  * trailing suffix is recognized, when the trailing word is already the preferred abbreviation, or when the swap would
  * leave `raw` un- touched (alignment requires both raw and components to move in lockstep).
  *
@@ -497,7 +496,7 @@ export const streetSuffixAbbreviate: Augmentation = (row) => {
 
 /**
  * US: swap the trailing street-suffix word in `components.street` to its full canonical form, preserving case. `"5th
- * Ave"` → `"5th Avenue"`; `"5TH AVE"` → `"5TH AVENUE"`; `"main st"` → `"main street"`. Returns null when no trailing
+ * Ave"` → `"5th Avenue"`; `"5TH AVE"` → `"5TH avenue"`; `"main st"` → `"main street"`. Returns null when no trailing
  * suffix is recognized, when the trailing word is already the canonical full form, or when the swap would leave `raw`
  * untouched.
  *
@@ -529,12 +528,12 @@ export const streetSuffixExpand: Augmentation = (row) => {
 }
 
 /**
- * US: swap the LEADING secondary-unit designator in `components.unit` to its approved USPS abbreviation, preserving
- * case + the identifier. `"Apartment 4B"` → `"Apt 4B"`; `"SUITE 200"` → `"STE 200"`; `"floor 3"` → `"fl 3"`. Returns
+ * US: swap the leading secondary-unit designator in `components.unit` to its approved USPS abbreviation, preserving
+ * case + the identifier. `"Apartment 4B"` → `"Apt 4B"`; `"suite 200"` → `"STE 200"`; `"floor 3"` → `"fl 3"`. Returns
  * null when the unit has no recognized leading designator (a bare `"4B"` / `"#210"`), the designator is already the
  * approved abbreviation, or the swap would leave `raw` untouched.
  *
- * Mirrors `streetSuffixAbbreviate`, but designators LEAD the unit (vs suffixes that trail the street). Sourced from the
+ * Mirrors `streetSuffixAbbreviate`, but designators lead the unit (vs suffixes that trail the street). Sourced from the
  * USPS Pub-28 C2 codex — the data-generation counterpart to the runtime `UnitDesignatorClassifier`.
  */
 export const unitDesignatorAbbreviate: Augmentation = (row) => {
@@ -564,8 +563,8 @@ export const unitDesignatorAbbreviate: Augmentation = (row) => {
 }
 
 /**
- * US: swap the LEADING secondary-unit designator in `components.unit` to its full canonical form, preserving case + the
- * identifier. `"Apt 4B"` → `"Apartment 4B"`; `"STE 200"` → `"SUITE 200"`. Returns null when there's no recognized
+ * US: swap the leading secondary-unit designator in `components.unit` to its full canonical form, preserving case + the
+ * identifier. `"Apt 4B"` → `"Apartment 4B"`; `"STE 200"` → `"suite 200"`. Returns null when there's no recognized
  * leading designator, it's already the canonical word, or the swap would leave `raw` untouched. Same leading-word-only
  * rule as `unitDesignatorAbbreviate`.
  */
@@ -610,9 +609,8 @@ export const zipPlus4DashDrop: Augmentation = (row) => {
 	return withAugmentation(row, "zip-plus4-dash-drop", newRaw, { ...row.components, postcode: noDash })
 }
 
-// ===========================================================================
-// FR-specific augmentations
-// ===========================================================================
+// The French augmentations, on the same footing as the US ones above: they read French orthography and are scoped by
+// the registry rather than by a country check of their own.
 
 /**
  * FR: drop the article particle from a street ("Rue de la République" → "Rue République").
@@ -633,9 +631,8 @@ export const particleStrip: Augmentation = (row) => {
 	return withAugmentation(row, "particle-strip", newRaw, newComponents)
 }
 
-// ===========================================================================
-// Registry + default policies
-// ===========================================================================
+// The registry below is the only thing that scopes the augmentations above to a locale, and the id it keys them by is
+// what a corpus row records, so renaming one rewrites history rather than a table.
 
 /**
  * Stable id → augmentation table.
@@ -660,13 +657,13 @@ export const AUGMENTATIONS: Record<string, Augmentation> = {
 }
 
 /**
- * Default augmentation set, by country. Phase 1: US + FR; others get the locale-agnostic set.
+ * Default augmentation set, by country. Phase 1: US + FR. others get the locale-agnostic set.
  */
 export function defaultAugmentationsForCountry(country: string): readonly Augmentation[] {
-	// `typoInject` (#530) is deliberately NOT in the default set. It is implemented, tested, and
-	// registered in {@link AUGMENTATIONS} so callers can opt in (add it here or compose it directly),
+	// `typoInject` (#530) is deliberately not in the default set. It is implemented, tested, and
+	// registered in {@link augmentations} so callers can opt in (add it here or compose it directly),
 	// but it changes the synthesized corpus distribution and its effect on the trained model is not
-	// yet measured. Per the project's default-OFF discipline, promotion into the default build is an
+	// yet measured. Per the project's default-off discipline, promotion into the default build is an
 	// operator call once an A/B vs the current corpus exists — keeping the default byte-stable.
 	const universal = [caseUpper, caseLower, dropCommas, doubleSpace]
 
@@ -692,7 +689,7 @@ export function defaultAugmentationsForCountry(country: string): readonly Augmen
 }
 
 /**
- * Run every augmentation against a row; collect the non-null outputs. The augmentations are pure, so callers can
+ * Run every augmentation against a row. collect the non-null outputs. The augmentations are pure, so callers can
  * compose them off this generator (e.g. nesting accent-strip ∘ state-abbreviate).
  */
 export function* synthesizeRow(
@@ -706,13 +703,6 @@ export function* synthesizeRow(
 			yield out
 		}
 	}
-}
-
-/**
- * One element of `arr`, drawn with the supplied unit-interval source. TODO: Rename to "sample" for clarity.
- */
-export function pick<T>(arr: ReadonlyArray<T>, random: () => number): T {
-	return arr[Math.floor(random() * arr.length)]!
 }
 
 /**
@@ -776,8 +766,10 @@ export function tieredNumber(random: () => number, bands: readonly TieredNumberB
  * The primary locale a synthesizer renders for a country — ISO-3166-1 alpha-2, alpha-3, or the English display name,
  * case- and whitespace-tolerant. Unknown countries render as `en-US`.
  *
- * The PO-box synthesizer keeps its own template-scoped `countryToLocale` on top of this one: it maps any locale WITHOUT
- * a PO-box template back to `en-US` (so `DE` still renders the en-US box vocabulary there).
+ * `poBoxTemplateLocale` in `#synthesizers/po-box` narrows this one: it maps any locale without a PO-box template back
+ * to `en-US`, so `DE` still renders the en-US box vocabulary there. It carries its own name rather than shadowing this
+ * one, because two exports called `countryToLocale` in one directory leave an importer's answer to which module they
+ * happened to reach.
  */
 export function countryToLocale(country: string): string {
 	const c = country.trim().toUpperCase()
@@ -805,9 +797,7 @@ export function countryToLocale(country: string): string {
 	return "en-US"
 }
 
-// ===========================================================================
-// Compositional synthesis (Phase 1.6 §2.1)
-// ===========================================================================
+// Compositional synthesis, which is a different operation from everything above.
 //
 // The single-row augmentations above transform one `CanonicalRow` into another with `raw` and
 // `components` moved in lockstep, leaving alignment to derive labels downstream. Composition is
@@ -828,13 +818,13 @@ export function countryToLocale(country: string): string {
 // - Augmentations are unary `(CanonicalRow) -> CanonicalRow | null` and run through
 //   `synthesizeRow`. Composition is binary `(string, CanonicalRow) -> LabeledRow` and emits
 //   `LabeledRow` directly (it cannot defer labels to alignment without the embedded-token bug).
-// - Augmentations preserve provenance to a single source; compositions cite the address source
+// - Augmentations preserve provenance to a single source. compositions cite the address source
 //   in `synth.base_source_id` and carry the venue surface form on the `venue` component.
-// - Throttling (the issue calls for ~5-15% of training set) is a build-time policy, not an
-//   adapter-level concern — the build pipeline applies it; the primitive stays pure.
+// - Throttling (the issue calls for ~5-15% of training set) is a build-time policy rather than an
+//   adapter-level concern — the build pipeline applies it. the primitive stays pure.
 //
-// See `DECISIONS.md` for the rationale on why composition lives alongside augmentation but is
-// not part of the `AUGMENTATIONS` registry.
+// See `decisions.md` for the rationale on why composition lives alongside augmentation but is
+// not part of the `augmentations` registry.
 
 /**
  * Options accepted by `composeAdversarialRow`.
@@ -855,7 +845,7 @@ export interface ComposeAdversarialOptions {
 
 	/**
 	 * Separator inserted between the venue and the address `raw`. Default `", "`. Single space (`" "`) produces the
-	 * harder unpunctuated variant; newline (`"\n"`) the multi-line variant.
+	 * harder unpunctuated variant. newline (`"\n"`) the multi-line variant.
 	 */
 	separator?: string
 
@@ -875,7 +865,7 @@ export type ComposeResult = { kind: "labeled"; row: LabeledRow } | { kind: "quar
  * Compose a venue string + an address row into a single adversarial `LabeledRow`.
  *
  * The emitted row's `raw` is `${venue}${separator}${address.raw}`. Tokens are produced by tokenizing the two halves
- * independently and concatenating; labels are venue tokens → `B-venue` / `I-venue` followed by the address's labels
+ * independently and concatenating. labels are venue tokens → `B-venue` / `I-venue` followed by the address's labels
  * (obtained by aligning the input address in isolation). This deterministic boundary is the entire point of the
  * primitive: the embedded place-shaped tokens in the venue stay labeled as `venue`, never as the address's locality /
  * region / etc., even when they share surface forms.
@@ -911,7 +901,7 @@ export function composeAdversarialRow(
 	}
 
 	// Char-offset spans over the composed raw are only meaningful under NFC (#519) — the address
-	// half is enforced by alignRow; the venue is caller-supplied and checked here.
+	// half is enforced by alignRow. the venue is caller-supplied and checked here.
 	if (venueTrimmed.normalize("NFC") !== venueTrimmed) {
 		return { kind: "quarantined", row: { row: address, reason: "venue-not-nfc" } }
 	}
@@ -949,13 +939,13 @@ export function composeAdversarialRow(
 	// Re-target the char-offset spans (#519) onto the composed surface: the venue span covers the
 	// whole trimmed venue (internal punctuation included — the token path cannot say that), and the
 	// address's spans shift right by the venue + separator length. alignRow emits the triple on
-	// every labeled row, so absence here is an alignment-contract bug, not data — fail loudly.
+	// every labeled row, so absence here is an alignment-interface bug rather than data — fail loudly.
 	const { span_starts: addrStarts, span_ends: addrEnds, span_tags: addrTags } = addressAligned.row
 
 	if (addrStarts === undefined || addrEnds === undefined || addrTags === undefined) {
 		throw new Error(
 			`composeAdversarialRow: alignRow returned a labeled row without the span triple ` +
-				`(source=${address.source}, source_id=${address.source_id}) — alignment contract violation`
+				`(source=${address.source}, source_id=${address.source_id}) — alignment interface violation`
 		)
 	}
 

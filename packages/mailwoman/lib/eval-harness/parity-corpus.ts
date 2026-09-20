@@ -3,12 +3,12 @@
 
 /**
  *   The parity-corpus eval (#1093) — the rescued v1 hand-written gold scored against a checkpoint,
- *   parse-only. The ratified default check is the triaged corpus (321 live across 20 countries; see
+ *   parse-only. The ratified default check is the triaged corpus (321 live across 20 countries. see
  *   PARITY_FIXTURES_PATH below); pass `--fixtures` for the 354-live pre-triage v1 denominator. This
  *   is the model campaign's check for the
- *   HELD plan-2 swaps: the per-label floors below are the SAME pre-registered floors the swap checks
- *   carry (house_number ≥ 0.97, postcode ≥ 0.97, street-family ≥ 0.90 — never edited to green; a
- *   miss is an adjudication). Comparison is case-folded, whitespace-collapsed; the street label
+ *   held plan-2 swaps: the per-label floors below are the same pre-registered floors the swap checks
+ *   carry (house_number ≥ 0.97, postcode ≥ 0.97, street-family ≥ 0.90 — never edited to green. a
+ *   miss is an adjudication). Comparison is case-folded, whitespace-collapsed. the street label
  *   compares the assembled neural street-name family against the gold `street` values.
  */
 
@@ -23,9 +23,9 @@ import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"
 import { JSONSpliterator } from "spliterator"
 
 /**
- * Default check corpus. RATIFIED 2026-07-13 to the triaged set (321 live / 55 tombstones): the 22 rules-era no-solution
+ * Default check corpus. ratified 2026-07-13 to the triaged set (321 live / 55 tombstones): the 22 rules-era no-solution
  * assertions plus 33 gold-triage tombstones (rules-idiosyncratic fixtures a neural parser should not be graded against
- * — solver-permutation probes, autocomplete-era jitter, self-admitted TODOs; each carries a `dropped` reason).
+ * — solver-permutation probes, autocomplete-era jitter, self-admitted TODOs. each carries a `dropped` reason).
  * Proposal
  *
  * - Per-fixture rationale: `docs/articles/evals/competitive-parity/2026-07-13-parity-gold-triage.md`. The pre-#875 v1
@@ -63,7 +63,7 @@ export interface ParityFixture {
 	 */
 	expect?: Record<string, string[]>
 	/**
-	 * Tombstone reason; the runner skips these rows but the provenance survives.
+	 * Tombstone reason. the runner skips these rows but the provenance survives.
 	 */
 	dropped?: string
 	/**
@@ -93,8 +93,8 @@ export interface ParityEvalOptions {
 	fixturesPath?: string
 	/**
 	 * Grade a candidate laid out as a package-shaped weights dir
-	 * (`<cacheRoot>/node_modules/@mailwoman/neural-weights-<locale>`). PREFER THIS over modelPath/tokenizerPath for
-	 * candidates: the explicit-path branch feeds NO sibling channels (anchor/gazetteer/calibration) and grades a crippled
+	 * (`<cacheRoot>/node_modules/@mailwoman/neural-weights-<locale>`). Prefer this over modelPath/tokenizerPath for
+	 * candidates: the explicit-path branch feeds no sibling channels (anchor/gazetteer/calibration) and grades a crippled
 	 * model — the #718 zero-fill trap.
 	 */
 	weightsCacheRoot?: string
@@ -131,7 +131,7 @@ function loadFixtures(path: string): Promise<ParityFixture[]> {
 }
 
 /**
- * Run the parity-corpus eval; narrates per-label + per-country tables and a floor verdict on stdout.
+ * Run the parity-corpus eval. narrates per-label + per-country tables and a floor verdict on stdout.
  */
 export async function runParityEval(options: ParityEvalOptions = {}): Promise<ParityEvalOutcome> {
 	const fixtures = await loadFixtures(options.fixturesPath ?? PARITY_FIXTURES_PATH)
@@ -148,7 +148,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 	let fstGazetteer: FSTMatcher | undefined
 
 	if (options.gazetteerPrior !== false) {
-		// The classifier's OWN weights-package sibling — the same artifact the runtime loads, so this grades the prior
+		// The classifier's own weights-package sibling — the same artifact the runtime loads, so this grades the prior
 		// production would use rather than one resolved by a second ladder.
 		const fstPath = (classifier as { fstPath?: string }).fstPath
 
@@ -159,7 +159,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 
 			console.log(`gazetteer prior ON (${fstPath})`)
 		} else {
-			// Loud, not silent. A requested prior that resolves nothing scores lower with no signal of its own, which
+			// Loud rather than silent. A requested prior that resolves nothing scores lower with no signal of its own, which
 			// reads as a model difference — #1516's shape, and the reason five overlays needed #1705.
 			console.warn(
 				"gazetteer prior REQUESTED but this weights package ships no FST — the channel is OFF and these numbers " +
@@ -184,13 +184,13 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 	}
 
 	const tallies = new Map(PARITY_FLOORS.map((f) => [f.label, { hit: 0, total: 0, failing: [] as string[] }]))
-	// PRECISION — the half the floors above CANNOT see. Every floor does `if (!goldValues?.length)
-	// continue`, so a tag emitted where the gold has NONE costs nothing, forever. That is the same
+	// Precision — the half the floors above cannot see. Every floor does `if (!goldValues?.length)
+	// continue`, so a tag emitted where the gold has none costs nothing, forever. That is the same
 	// blind spot T1a found on street (the board flattered the span decode because its failure lived
 	// in the rows the filter dropped) and the deepparse comparison found on postcode: we report
-	// postcode 98.6% and that is RECALL — on 249 rows with no gold postcode, v264 emits one on 25.
+	// postcode 98.6% and that is recall — on 249 rows with no gold postcode, v264 emits one on 25.
 	// 16 of those are a house_number read as a postcode ("Epleskogen 39A" -> postcode "39A"), and
-	// `39A` is not a postcode in any system. Informational, not a floor: a floor is the operator's.
+	// `39A` is not a postcode in any system. Informational rather than a floor: a floor is the operator's.
 	const precision = new Map(PARITY_FLOORS.map((f) => [f.label, { spurious: 0, absent: 0, examples: [] as string[] }]))
 	const byCountry = new Map<string, { cases: number; fullAgree: number }>()
 
@@ -200,11 +200,11 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		// Ship-config parse (check-revision 2026-07-15): production's safeClassify/parseForGeocode heal
 		// with WORD_CONSISTENCY_SHIP_DEFAULT, so the check must grade the same parse the swapped
 		// surfaces serve. Floors unchanged. Pre-heal continuity: `--no-word-consistency`.
-		// Production config parity (#1146): the query-shape emission prior is fed on EVERY path
+		// Production config parity (#1146): the query-shape emission prior is fed on every path
 		// production parses on — `safeClassify` in the runtime pipeline, and `geocode-core` since #981
 		// (which fixed this same divergence for the drop-in servers). Without it this check graded a
 		// starved parse. A no-op on inputs carrying no known format and no region abbrev, so the bare
-		// `street, city` class is byte-stable; it earns its keep on the digit-span / region-abbrev rows.
+		// `street, city` class is byte-stable. it warrants its keep on the digit-span / region-abbrev rows.
 		const byTag = groupTuplesByTag(
 			await classifier.parse(fixture.input, {
 				postcodeRepair: true,
@@ -217,7 +217,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 
 		let caseAgrees = true
 
-		// The precision half: on a row whose gold does NOT carry this tag, did we emit it anyway?
+		// The precision half: on a row whose gold does not carry this tag, did we emit it anyway?
 		for (const { label, tags } of PARITY_FLOORS) {
 			if (expect[label]?.length) continue
 			const bucket = precision.get(label)!
@@ -300,7 +300,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		)
 	}
 
-	// The precision half. INFORMATIONAL, never a verdict — a floor here is an operator act. Reported
+	// The precision half. informational, never a verdict — a floor here is an operator act. Reported
 	// because "postcode 98.6%" is a recall number and reads like a capability, and the missing half is
 	// where the house_number deficit went.
 	console.log("")

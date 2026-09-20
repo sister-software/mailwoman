@@ -23,7 +23,7 @@ test.describe("Mailwoman Earth shell", () => {
 	})
 
 	test("the footer carries the docs link and the commit the build was made from", async ({ page }) => {
-		// The REAL runtime's footer, not the canned one's. The app mounts two, and when each built its own the commit
+		// The real runtime's footer rather than the canned one's. The app mounts two, and when each built its own the commit
 		// link went into the fake path and rendered nowhere a visitor could see it — a smoke that checked the canned
 		// footer would have passed the whole time. `?runtime=fake` is absent here for that reason.
 		//
@@ -42,7 +42,7 @@ test.describe("Mailwoman Earth shell", () => {
 			"https://mailwoman.ai/docs"
 		)
 
-		// The commit link resolves against build.json, which only a built deployment serves — so this asserts the shape
+		// The commit link resolves against build.json. It only a built deployment serves. Therefore, this asserts the shape
 		// rather than a particular sha.
 		const commit = footer.locator("a[href*='/commit/']")
 

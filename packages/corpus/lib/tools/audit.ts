@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman corpus audit` — per-source slice-count vs source_weight diagnostic.
+ *   `mailwoman corpus audit` — per-source parquet-file count vs source_weight diagnostic.
  *
- *   Reads a corpus dir's MANIFEST.json (or scans slices directly), counts slices per source,
- *   optionally loads a training config to pair the counts with the configured source_weights, and
- *   reports the estimated sampled-row distribution at training time.
+ *   Reads a corpus dir's manifest.json (or scans the parquet files directly), counts files per
+ *   source, optionally loads a training config to pair the counts with the configured
+ *   source_weights, and reports the estimated sampled-row distribution at training time.
  *
- *   Would have caught v0.3.0's "NAD = 411/674 train slices × 2.0 weight = ~75% of sampled mix"
+ *   Would have caught v0.3.0's "NAD = 411/674 train files × 2.0 weight = ~75% of sampled mix"
  *   finding before the v0.3.0 retrospective surfaced it.
  *
- *   Emits warnings to stderr and the audit table to stdout; never throws on an empty corpus.
+ *   Emits warnings to stderr and the audit table to stdout. never throws on an empty corpus.
  */
 
 import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -20,7 +20,7 @@ import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 /**
- * Share of a slice one source may hold before the mix is flagged as dominated by it.
+ * Share of the sampled mix one source may hold before the mix is flagged as dominated by it.
  */
 const DOMINANT_SOURCE_SHARE = 0.4
 
@@ -30,28 +30,31 @@ const DOMINANT_SOURCE_SHARE = 0.4
  */
 const MAX_TOP_TO_RUNNER_UP_RATIO = 1.5
 
+/**
+ * Options for {@linkcode audit}.
+ */
 export interface AuditOpts {
 	corpusDir: PathBuilderLike
 	configPath?: string
 	/**
-	 * Sample at most N slices per split when counting sources. Default 100 for speed; bump to read the full set on a slow
-	 * run. The first row of each slice determines its source — corpus-v0.2.0+ slices are 100% source-segregated, so a
-	 * one-row read is authoritative.
+	 * Sample at most N parquet files per split when counting sources. Default 100 for speed. bump to read the full set on
+	 * a slow run. The first row of each file determines its source — corpus-v0.2.0+ files are 100% source-segregated, so
+	 * a one-row read is authoritative.
 	 */
-	sampleSliceCount?: number
+	sampleFileCount?: number
 }
 
-interface SliceStats {
+interface FileCountStats {
 	/**
-	 * Slices per source per split
+	 * Parquet files per source per split
 	 */
 	bySplit: Record<string, Record<string, number>>
 	/**
-	 * Total slices counted (may be less than file count if sampleSliceCount caps reads)
+	 * Total parquet files counted (may be less than file count if `sampleFileCount` caps reads)
 	 */
-	totalSlices: number
+	totalCounted: number
 	/**
-	 * Total slices on disk (file count) — equals totalSlices unless capped
+	 * Total parquet files on disk — equals totalCounted unless capped
 	 */
 	totalFiles: number
 }
@@ -85,7 +88,7 @@ async function parseConfig(configPath: string): Promise<ParsedConfig | null> {
 
 		// Skip blank lines and comments.
 		if (/^[\t ]*(#|$)/.test(raw)) continue
-		// Lines indented MORE than `source_weights:` are entries; lines with ≤ indent end the block.
+		// Lines indented more than `source_weights:` are entries. lines with ≤ indent end the block.
 		const indent = raw.match(/^[\t ]*/)![0].length
 
 		if (indent <= blockIndent) {
@@ -105,18 +108,18 @@ async function parseConfig(configPath: string): Promise<ParsedConfig | null> {
 }
 
 /**
- * Scan a corpus directory's slices (typically under <corpus_dir>/train, /val, /test) and count slices per source per
- * split.
+ * Scan a corpus directory's parquet files (typically under <corpus_dir>/train, /val, /test) and count files per source
+ * per split.
  */
-async function scanSlices(corpusDir: PathBuilderLike, sampleCount: number): Promise<SliceStats> {
-	const stats: SliceStats = { bySplit: {}, totalSlices: 0, totalFiles: 0 }
+async function scanParquetFiles(corpusDir: PathBuilderLike, sampleCount: number): Promise<FileCountStats> {
+	const stats: FileCountStats = { bySplit: {}, totalCounted: 0, totalFiles: 0 }
 
 	for (const split of ["train", "val", "test"]) {
 		const splitDir = join(corpusDir, split)
 
 		if (!(await pathExists(splitDir))) continue
 
-		const files = await Globerator.files("parquet", { cwd: splitDir, absolute: false }).toSorted()
+		const files = await Globerator.files("parquet", { cwd: splitDir, absolute: false, recursive: false }).toSorted()
 
 		stats.totalFiles += files.length
 		const sampleEvery = Math.max(1, Math.floor(files.length / sampleCount))
@@ -126,13 +129,13 @@ async function scanSlices(corpusDir: PathBuilderLike, sampleCount: number): Prom
 		// We can't read parquet without a dep, so we infer source from filenames where possible.
 		// The corpus build typically writes deterministically by source — fall back to "<unknown>"
 		// when filename gives no hint. For accurate per-source counts on real corpora, the
-		// MANIFEST.json route below is preferred.
+		// manifest.json route below is preferred.
 		for (const f of sampled) {
 			const inferred = inferSourceFromFilename(f)
 			splitMap[inferred] = (splitMap[inferred] ?? 0) + 1
 		}
 
-		// Scale to estimated full-slice counts.
+		// Scale to estimated full-file counts.
 		const scale = files.length / Math.max(sampled.length, 1)
 
 		for (const k of Object.keys(splitMap)) {
@@ -140,7 +143,7 @@ async function scanSlices(corpusDir: PathBuilderLike, sampleCount: number): Prom
 		}
 
 		stats.bySplit[split] = splitMap
-		stats.totalSlices += files.length
+		stats.totalCounted += files.length
 	}
 
 	return stats
@@ -158,7 +161,7 @@ function inferSourceFromFilename(filename: string): string {
 }
 
 /**
- * Known source name prefixes. Corpus-v0.3.0 uses these as `source_id` prefixes; matching against the longest prefix
+ * Known source name prefixes. Corpus-v0.3.0 uses these as `source_id` prefixes. matching against the longest prefix
  * that fits a given `first_source_id` recovers the canonical source name.
  *
  * Order matters: longer prefixes must be tried first so `usgov-nad-...` matches `usgov-nad` rather than `usgov`. Sorted
@@ -201,15 +204,18 @@ function sourceFromID(sourceID: string, knownPrefixes: readonly string[]): strin
 }
 
 /**
- * Prefer reading MANIFEST.json when present — uses each slice's `first_source_id` + prefix matching to recover the
- * source name. Falls back to scanSlices when MANIFEST is absent.
+ * Prefer reading manifest.json when present — uses each file's `first_source_id` + prefix matching to recover the
+ * source name. Falls back to scanParquetFiles when manifest is absent.
  *
- * NOTE: corpus-v0.3.0 slices can mix sources (see `last_source_id` differing from `first_source_id`). The first-row
- * source is an approximation; reading the parquet's full source column would be authoritative but requires a parquet
- * dep. For audit purposes the first-row approximation is accurate within ~5% for the corpus-v0.3.0 shape (most slices
+ * Note: corpus-v0.3.0 files can mix sources (see `last_source_id` differing from `first_source_id`). The first-row
+ * source is an approximation. reading the parquet's full source column would be authoritative but requires a parquet
+ * dep. For audit purposes the first-row approximation is accurate within ~5% for the corpus-v0.3.0 shape (most files
  * are >95% one source).
  */
-async function manifestScan(corpusDir: PathBuilderLike, knownPrefixes: readonly string[]): Promise<SliceStats | null> {
+async function manifestScan(
+	corpusDir: PathBuilderLike,
+	knownPrefixes: readonly string[]
+): Promise<FileCountStats | null> {
 	const manifestPath = join(corpusDir, "MANIFEST.json")
 
 	if (!(await pathExists(manifestPath))) return null
@@ -221,53 +227,53 @@ async function manifestScan(corpusDir: PathBuilderLike, knownPrefixes: readonly 
 	if (!Array.isArray(manifest.slices)) return null
 	const bySplit: Record<string, Record<string, number>> = {}
 
-	for (const slice of manifest.slices) {
-		const split = slice.split
-		const src = slice.source ?? sourceFromID(slice.first_source_id ?? "", knownPrefixes)
+	for (const file of manifest.slices) {
+		const split = file.split
+		const src = file.source ?? sourceFromID(file.first_source_id ?? "", knownPrefixes)
 		bySplit[split] ??= {}
 		bySplit[split][src] = (bySplit[split][src] ?? 0) + 1
 	}
 
 	const total = Object.values(bySplit).reduce((sum, m) => sum + Object.values(m).reduce((a, b) => a + b, 0), 0)
 
-	return { bySplit, totalSlices: total, totalFiles: total }
+	return { bySplit, totalCounted: total, totalFiles: total }
 }
 
 interface AuditRow {
 	source: string
-	slices: number
-	slicePct: number
+	files: number
+	filePct: number
 	weight: number | "—"
 	effectiveSamplePct: number | "—"
 	overweightFactor?: number
 }
 
 function buildAuditRows(stats: Record<string, number>, weights: Record<string, number>): AuditRow[] {
-	const totalSlices = Object.values(stats).reduce((a, b) => a + b, 0)
+	const totalCounted = Object.values(stats).reduce((a, b) => a + b, 0)
 	const allSources = new Set([...Object.keys(stats), ...Object.keys(weights)])
 	const rows: AuditRow[] = []
-	// Compute effective sample weight: slice_count × source_weight. Sources with no weight get the
+	// Compute effective sample weight: file_count × source_weight. Sources with no weight get the
 	// "—" marker (loader skips them).
 	const sampleWeights: Array<[string, number]> = []
 
 	for (const src of allSources) {
-		const slices = stats[src] ?? 0
+		const files = stats[src] ?? 0
 		const weight = weights[src]
-		const effective = weight !== undefined ? slices * weight : 0
+		const effective = weight !== undefined ? files * weight : 0
 		sampleWeights.push([src, effective])
 	}
 
 	const totalSampleWeight = sampleWeights.reduce((a, [, w]) => a + w, 0)
 
 	for (const src of allSources) {
-		const slices = stats[src] ?? 0
+		const files = stats[src] ?? 0
 		const weight = weights[src] ?? "—"
-		const effective = typeof weight === "number" ? (slices * weight) / Math.max(totalSampleWeight, 1) : "—"
+		const effective = typeof weight === "number" ? (files * weight) / Math.max(totalSampleWeight, 1) : "—"
 
 		rows.push({
 			source: src,
-			slices,
-			slicePct: totalSlices > 0 ? slices / totalSlices : 0,
+			files,
+			filePct: totalCounted > 0 ? files / totalCounted : 0,
 			weight,
 			effectiveSamplePct: typeof effective === "number" ? effective : "—",
 		})
@@ -276,7 +282,7 @@ function buildAuditRows(stats: Record<string, number>, weights: Record<string, n
 	// Flag the dominator: empirically calibrated against the v0.3.0 → v0.4.0 retrospective.
 	// v0.3.0 had usgov-nad at 52% effective sample (1.9× ban); the resulting label-space dilution
 	// was responsible for the coarse-F1 regression. So flag a source as "concentration warning"
-	// when it's above 40% effective sample OR more than 1.5× the next-highest.
+	// when it's above 40% effective sample or more than 1.5× the next-highest.
 	const numeric = rows.filter((r) => typeof r.effectiveSamplePct === "number") as Array<
 		AuditRow & { effectiveSamplePct: number }
 	>
@@ -295,7 +301,7 @@ function buildAuditRows(stats: Record<string, number>, weights: Record<string, n
 		}
 	}
 
-	rows.sort((a, b) => b.slices - a.slices)
+	rows.sort((a, b) => b.files - a.files)
 
 	return rows
 }
@@ -309,7 +315,7 @@ function formatPct(v: number | "—"): string {
 function printReport(
 	corpusDir: PathBuilderLike,
 	configPath: string | undefined,
-	stats: SliceStats,
+	stats: FileCountStats,
 	rows: AuditRow[]
 ): void {
 	console.log(`\nCorpus audit — ${corpusDir}`)
@@ -319,7 +325,7 @@ function printReport(
 	}
 
 	console.log(
-		`Total slices:  ${stats.totalSlices}${stats.totalFiles !== stats.totalSlices ? ` (${stats.totalFiles} files on disk)` : ""}`
+		`Total files:   ${stats.totalCounted}${stats.totalFiles !== stats.totalCounted ? ` (${stats.totalFiles} files on disk)` : ""}`
 	)
 	console.log("")
 
@@ -328,10 +334,10 @@ function printReport(
 	if (trainStats) {
 		const total = Object.values(trainStats).reduce((a, b) => a + b, 0)
 
-		console.log(`Train split: ${total} slices`)
+		console.log(`Train split: ${total} files`)
 		console.log("")
 
-		const headers = ["source", "slices", "slice %", "weight", "eff. sample %"]
+		const headers = ["source", "files", "file %", "weight", "eff. sample %"]
 		const widths = [22, 8, 10, 8, 14]
 		const fmtRow = (cells: string[]) => cells.map((c, i) => c.padEnd(widths[i]!)).join("  ")
 
@@ -342,8 +348,8 @@ function printReport(
 			console.log(
 				fmtRow([
 					row.source,
-					String(row.slices),
-					formatPct(row.slicePct),
+					String(row.files),
+					formatPct(row.filePct),
 					typeof row.weight === "number" ? row.weight.toFixed(2) : "—",
 					formatPct(row.effectiveSamplePct),
 				])
@@ -368,7 +374,7 @@ function printReport(
 			console.log("✓ No single-source concentration (top source < 40% effective sample AND < 1.5× next).")
 		}
 
-		const missingWeights = rows.filter((r) => r.weight === "—" && r.slices > 0)
+		const missingWeights = rows.filter((r) => r.weight === "—" && r.files > 0)
 
 		if (missingWeights.length && configPath) {
 			console.error(
@@ -377,11 +383,11 @@ function printReport(
 			)
 		}
 
-		const orphanWeights = rows.filter((r) => typeof r.weight === "number" && r.slices === 0)
+		const orphanWeights = rows.filter((r) => typeof r.weight === "number" && r.files === 0)
 
 		if (orphanWeights.length) {
 			console.error(
-				`⚠ Sources weighted in config but no slices found in corpus ` +
+				`⚠ Sources weighted in config but no parquet files found in corpus ` +
 					`(no-op weights): ${orphanWeights.map((r) => r.source).join(", ")}`
 			)
 		}
@@ -395,7 +401,8 @@ export async function audit(opts: AuditOpts): Promise<void> {
 	const prefixes = [...new Set([...KNOWN_SOURCE_PREFIXES, ...Object.keys(config?.sourceWeights ?? {})])]
 
 	const stats =
-		(await manifestScan(opts.corpusDir, prefixes)) ?? (await scanSlices(opts.corpusDir, opts.sampleSliceCount ?? 100))
+		(await manifestScan(opts.corpusDir, prefixes)) ??
+		(await scanParquetFiles(opts.corpusDir, opts.sampleFileCount ?? 100))
 
 	const trainStats = stats.bySplit["train"] ?? {}
 	const rows = buildAuditRows(trainStats, config?.sourceWeights ?? {})

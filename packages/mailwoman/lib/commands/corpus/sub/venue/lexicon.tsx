@@ -15,18 +15,19 @@
  *     --out          corpus/data/sub-venue-lexicon.json
  *   ```
  *
- *   `--extracts` takes `REGION=path` pairs because the REGION is the axis every curation decision is
+ *   `--extracts` takes `region=path` pairs because the region is the axis every curation decision is
  *   taken on and no extract filename carries it reliably (`ile-de-france` is FR, `great-britain` is
  *   GB). A bare path is accepted and lands region `""`, which means the surfaces it produces can never
- *   be promoted — that is the correct failure, not a convenience.
+ *   be promoted — that is the correct failure rather than a convenience.
  */
 
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "sub-venue-lexicon",
@@ -39,20 +40,13 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	wikidataDir?: string
-	extracts?: string
-	overtureDB?: string
-	out: string
-}
-
 /**
  * Split `GB=/a.jsonl,DE=/b.jsonl` into extract inputs. A bare path keeps region `""`.
  */
 function parseExtracts(extractSpec: string | undefined): Array<{ path: string; region: string }> {
 	if (!extractSpec) return []
 
-	return splitList(extractSpec).map((entry) => {
+	return extractDelimited(extractSpec).map((entry) => {
 		const split = entry.indexOf("=")
 
 		return split === -1
@@ -61,7 +55,7 @@ function parseExtracts(extractSpec: string | undefined): Array<{ path: string; r
 	})
 }
 
-const CorpusSubVenueLexicon: ParsedCommandComponent<Options> = ({ options }) => {
+const CorpusSubVenueLexicon: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { generateSubVenueLexicon, readOvertureLayerVintage, readOvertureSubVenues } =
 			await import("@mailwoman/corpus/tools")

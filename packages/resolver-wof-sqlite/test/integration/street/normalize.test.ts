@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The collision contract for the address-point normalizer (#476): variants that refer to the same
- *   street MUST normalize identically; distinct streets must not. Build-side and lookup-side both
+ *   The collision interface for the address-point normalizer (#476): variants that refer to the same
+ *   street must normalize identically. distinct streets must not. Build-side and lookup-side both
  *   import the same function, so these tests are the whole correctness story for the keying.
  */
 
@@ -58,7 +58,7 @@ describe("normalizeStreetForKey", () => {
 	})
 
 	it("does NOT fold an ordinal WORD that is not followed by a street suffix", () => {
-		// "First National Bank Rd" — "First" is a name prefix here, not an ordinal cross-street.
+		// "First National Bank Rd" — "First" is a name prefix here rather than an ordinal cross-street.
 		expect(normalizeStreetForKey("First National Bank Rd")).toContain("first")
 	})
 
@@ -77,7 +77,7 @@ describe("normalizeLocalityForKey", () => {
 
 describe("canonicalizeRouteKey", () => {
 	it("folds TIGER and E911/Overture route spellings to the same key", () => {
-		// TIGER "State Rte 100" → normalizeStreetForKey → "state route 100" already; the E911
+		// tiger "State Rte 100" → normalizeStreetForKey → "state route 100" already. the E911
 		// spelling needs the designator fold to meet it.
 		expect(canonicalizeRouteKey(normalizeStreetForKey("State Rte 100"))).toBe("state route 100")
 		expect(canonicalizeRouteKey(normalizeStreetForKey("VT ROUTE 100"))).toBe("state route 100")
@@ -117,7 +117,7 @@ describe("stripLocalityQualifier (query-side fallback)", () => {
 	it("returns '' when nothing is stripped (no wasted re-probe)", () => {
 		expect(stripLocalityQualifier("Paris")).toBe("")
 		expect(stripLocalityQualifier("San Francisco")).toBe("")
-		// "am Main" is part of the canonical name — must NOT be over-stripped.
+		// "am Main" is part of the canonical name — must not be over-stripped.
 		expect(stripLocalityQualifier("Frankfurt am Main")).toBe("")
 		expect(stripLocalityQualifier("New York")).toBe("")
 		expect(stripLocalityQualifier("Foo an der")).toBe("")
@@ -206,7 +206,7 @@ describe("normalizeStreetForKeyLocale — the pl/vn/id branches (the 2026-08-19 
 		expect(normalizeStreetForKeyLocale("Marszałkowska", "pl")).toBe("marszalkowska")
 		expect(normalizeStreetForKeyLocale("al. Jerozolimskie", "pl")).toBe("jerozolimskie")
 		expect(normalizeStreetForKeyLocale("Plac Zamkowy", "pl")).toBe("zamkowy")
-		// The type alone is a name, not a prefix — never stripped to nothing.
+		// The type alone is a name rather than a prefix — never stripped to nothing.
 		expect(normalizeStreetForKeyLocale("Ulica", "pl")).toBe("ulica")
 	})
 
@@ -234,7 +234,7 @@ describe("the zh branch — the Taiwanese register's Han keys", () => {
 	it("keys a street as its Han fold: no whitespace, kanji section numerals as written", () => {
 		expect(normalizeStreetForKeyLocale("重慶南路一段", "zh")).toBe("重慶南路一段")
 		expect(normalizeStreetForKeyLocale("重慶南路 一段", "zh")).toBe("重慶南路一段")
-		// Full-width Latin or digits inside a name fold to ASCII, as they do in the number.
+		// Full-width Latin or digits inside a name fold to ascii, as they do in the number.
 		expect(normalizeStreetForKeyLocale("中山路２段", "zh")).toBe("中山路2段")
 	})
 

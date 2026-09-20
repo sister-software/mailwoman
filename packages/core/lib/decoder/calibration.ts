@@ -5,14 +5,14 @@
  *   Opt-in confidence calibration for decoded spans.
  *
  *   The decoder emits a per-span `confidence` that is the mean of the span's per-token softmax
- *   probabilities (`build-tree.ts`). Softmax probabilities are NOT calibrated — a CE-trained model
+ *   probabilities (`build-tree.ts`). Softmax probabilities are not calibrated — a CE-trained model
  *   is systematically over/under-confident in bands. Task #59 fits an isotonic-regression
  *   calibrator on a held-out OpenAddresses + corpus set
  *   (`corpus-python/scripts/fit-isotonic-calibration.py`) and ships the result as a 20-bin lookup table
  *   (`data/eval/calibration/isotonic-<locale>-<version>.json`).
  *
  *   This module turns that table into a pure `(rawConfidence) => calibratedConfidence` function. It
- *   is deliberately decoupled from the table source: pass the PARSED JSON object so this stays
+ *   is deliberately decoupled from the table source: pass the parsed JSON object so this stays
  *   browser-safe (no `node:fs`) — the demo imports the JSON directly, Node scripts `JSON.parse`
  *   it.
  *
@@ -62,7 +62,7 @@ export function createCalibrator(table: CalibrationTable | CalibrationBin[]): Ca
 	}
 
 	// Sort by center and extract parallel arrays for interpolation.
-	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 	const sorted = [...bins].sort((a, b) => a.center - b.center)
 	const centers = sorted.map((b) => b.center)
 	const cals = sorted.map((b) => clampConfidence(b.calibrated))

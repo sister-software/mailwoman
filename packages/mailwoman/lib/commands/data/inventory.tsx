@@ -17,13 +17,7 @@ import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { repoRootPath } from "@mailwoman/core/paths"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	useCommandTask,
-	writeRawStdout,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
 import {
 	buildCommandGaps,
 	inventorySentence,
@@ -35,10 +29,10 @@ import {
 
 export const description =
 	"Report every database in the data root and whether it records how it was built. `layer_manifest` is " +
-	"the contract (docs/engineering/reference/layer-contract.mdx); this says how much of the root implements it."
+	"the interface (docs/engineering/reference/layer-interface.mdx); this says how much of the root implements it."
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "inventory",
@@ -51,18 +45,11 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	dataRoot?: string
-	depth?: string
-	all: boolean
-	json: boolean
-}
-
 /**
  * One line per directory: how many of its databases carry a manifest, and how much disk they hold.
  *
  * The rollup is the actionable view and the flat list is not. The 2026-08-17 first run found 210 databases of which 53
- * were per-state address-point databases from ONE builder — so a per-artifact list reads as 53 problems where the
+ * were per-state address-point databases from one builder — so a per-artifact list reads as 53 problems where the
  * rollup reads as one, which is also how many code changes it takes to fix.
  */
 function rollup(entries: readonly InventoryEntry[]): string[] {
@@ -93,7 +80,7 @@ function rollup(entries: readonly InventoryEntry[]): string[] {
 		})
 }
 
-const InventoryCommand: ParsedCommandComponent<Options> = ({ options }) => {
+const InventoryCommand: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const dataRoot = options.dataRoot ?? String(mailwomanDataRoot())
 
@@ -120,7 +107,7 @@ const InventoryCommand: ParsedCommandComponent<Options> = ({ options }) => {
 		// A manifest whose build command cannot be run documents nothing, and both ways of failing that were
 		// found on the shipped artifacts: a path the workspace regroup moved, and a path under gitignored
 		// `scratchpad/` that exists only on the machine that built it. Reported separately from the count,
-		// because these artifacts PASS every "has a manifest" check.
+		// because these artifacts pass every "has a manifest" check.
 		const repoRoot = String(repoRootPath())
 
 		const manifested = report.entries.filter((e) => e.provenance === Provenance.Manifested)
@@ -129,7 +116,7 @@ const InventoryCommand: ParsedCommandComponent<Options> = ({ options }) => {
 			await Promise.all(
 				manifested.map(async (e) => ({ entry: e, gaps: await buildCommandGaps(e.manifest!.build_cmd, repoRoot) }))
 			)
-		).filter(({ gaps }) => gaps.length > 0)
+		).filter(({ gaps }) => gaps.length)
 
 		if (broken.length) {
 			lines.push(

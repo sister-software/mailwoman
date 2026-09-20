@@ -2,10 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Pass 1c of the candidate build (#1737): resurrect deprecated-with-no-successor WOF localities that a second
- *   source independently attests. Extracted from `build-candidate.ts` as a cohesive unit — the checks, their measured
- *   constants, and the GeoNames dump reader live together here; the build calls {@link resurrectCurrencyHoles} once,
- *   between the primaries pass and the alias pass.
+ *   Restores deprecated WOF localities only when an independent source attests them.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -22,39 +19,18 @@ import type { WOFDatabase } from "#schema"
 import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
- * Corroboration radius for the currency backfill (#1737), km — both for the live-near blocker and the GeoNames
- * attestation. Measured basis (2026-08-19 prototype, GB locality slice): at 10 km, 20 of 108 dead names resurrect —
- * Rochester (Kent), Aldershot, Staines, Telford, Ebbw Vale among them — while the `Birmingham/Wolverhampton/…`
- * conurbation blobs stay dead (no attestation) and Swansea/Wrexham stay out because a live same-name row already serves
- * them within the radius.
+ * Corroboration radius in kilometres for live-place and GeoNames checks.
  */
 const CURRENCY_BACKFILL_RADIUS_KM = 10
 
 /**
- * Minimum attestor population for a resurrection. The same prototype measured 44 of 108 dead GB names attested but
- * under this floor — hamlet-scale ghosts whose absence from the index nobody has reported. A floor keeps the pass
- * answering the measured defect (real settlements) rather than re-importing the tail WOF chose to prune.
+ * Minimum attestor population for a resurrection.
  */
 const CURRENCY_BACKFILL_POP_FLOOR = 1000
 
 /**
- * Pass 1c (#1737): resurrect deprecated-with-no-successor localities that a second source independently attests.
- *
- * WOF deprecations WITH a successor need nothing — the successor indexes. A deprecation with `is_superseded = 0` on a
- * populated place is the shape of an upstream mistake (Rochester Kent, Aldershot, Telford; 120 GB localities alone),
- * and it is indistinguishable from a correct pruning at this layer without outside evidence. So every resurrection
- * requires all three conditions, positive evidence only:
- *
- * 1. NO live same-name spr row of any placetype within {@link CURRENCY_BACKFILL_RADIUS_KM} of the dead record — a live row
- *    means the place is alive (possibly under another placetype) and there is no hole. A DISTANT same-name row is a
- *    namesake and does not block.
- * 2. A GeoNames feature-class-P attestation of the same folded name within the radius.
- * 3. The attestor at or above {@link CURRENCY_BACKFILL_POP_FLOOR}.
- *
- * The staged row keeps the WOF identity — id, name, centroid, bbox, region ancestry — because the dead record's own
- * data is not what is wrong with it. GeoNames contributes exactly two things: the attestation, and the population that
- * lets the row stand in prominence races (the dead record's own population is absent). Each name is judged once per
- * country; the resurrected place joins `attrs`, so the alias pass explodes its alt names like any primary's.
+ * Restore a deprecated locality only when no nearby live namesake exists and GeoNames attests the same folded name
+ * above {@link CURRENCY_BACKFILL_POP_FLOOR}. The staged row retains WOF identity.
  */
 export interface CurrencyBackfillOutcomes {
 	judged: number
@@ -162,7 +138,7 @@ export async function resurrectCurrencyHoles(ctx: {
 			continue
 		}
 
-		// Dead rows FIRST: a country with no deprecated-no-successor localities needs no attestors at all, and
+		// Dead rows first: a country with no deprecated-no-successor localities needs no attestors at all, and
 		// loading a national dump to judge zero rows is pure heap pressure on a build already near its ceiling
 		// (the first live run OOM'd in a later pass with JP/KR dumps loaded for 0 dead names each).
 		const dead = deadStmt.all(cc, ...deadPlacetypes)
@@ -232,28 +208,28 @@ export async function resurrectCurrencyHoles(ctx: {
 			if (!pkey || seen.has(pkey)) continue
 			seen.add(pkey)
 			// Read from the row: the query admits whatever `deadPlacetypes` names, and the rank comparison below must
-			// judge each candidate against ITS dead rung, never a hardcoded one.
+			// judge each candidate against its dead rung, never a hardcoded one.
 			const deadPlacetype = String(d.placetype ?? "locality")
 
 			count(deadPlacetype, "judged")
 			const dLat = Number(d.latitude)
 			const dLon = Number(d.longitude)
 
-			// A live row blocks only when it is AT LEAST AS COARSE as the dead one. The original check compared name and
+			// A live row blocks only when it is AT least AS coarse as the dead one. The original check compared name and
 			// distance alone, on the premise that a nearby same-name row means "the place is alive under another
-			// placetype" — true for a place recorded twice, false for a placetype DEMOTION, which is the shape that
+			// placetype" — true for a place recorded twice, false for a placetype demotion, which is the shape that
 			// actually occurs: WOF retired `Gillingham` the locality (pop 101,187) and kept `Gillingham` the
-			// neighbourhood 3.2 km away, and the check read the surviving CHILD as covering its own dead parent.
+			// neighbourhood 3.2 km away, and the check read the surviving child as covering its own dead parent.
 			// Sixteen of seventeen GB refusals had exactly that shape (#1746).
 			//
-			// An UNRANKED placetype blocks, which is the conservative direction: this check's failure mode is inventing
-			// a place, so a row we cannot rank is treated as covering rather than waved through.
+			// An unranked placetype blocks, which is the conservative direction: this check's failure mode is inventing
+			// a place. Therefore, a row we cannot rank is treated as covering rather than waved through.
 			const liveNear = liveStmt.all(cc, name).some((row) => {
 				if (haversineKm(dLat, dLon, Number(row.latitude), Number(row.longitude)) > CURRENCY_BACKFILL_RADIUS_KM) {
 					return false
 				}
 
-				// Blocks UNLESS the live row is strictly finer. The equal rung must still block — a live `locality`
+				// Blocks unless the live row is strictly finer. The equal rung must still block — a live `locality`
 				// covers a dead `locality` — and an unranked placetype blocks too, since this check's failure mode
 				// is inventing a place.
 				return isStrictlyFiner(String(row.placetype ?? ""), deadPlacetype) !== true

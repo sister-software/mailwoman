@@ -4,7 +4,7 @@
 /**
  *   Linear-chain CRF Viterbi decoder in TypeScript.
  *
- *   ITS OWN SUBPATH ON PURPOSE — do not fold this into the package barrel. `@mailwoman/neural`'s root export
+ *   its own subpath on purpose — do not fold this into the package barrel. `@mailwoman/neural`'s root export
  *   pulls onnxruntime, and the docs bundle needs the decoder without the runtime. The decode is pure
  *   arithmetic over scores someone else produced, which is exactly why it can be reached without them.
  *
@@ -86,21 +86,21 @@ function isValidTransition(from: string, to: string): boolean {
 }
 
 /**
- * A position-scoped transition bonus (TRANSITION-BETA build, 2026-07-24): `+bonus` on every transition INTO `toLabel`
- * at exactly `timestep` — from ANY predecessor label (at `timestep === 0` the "predecessor" is the sequence start, so
+ * A position-scoped transition bonus (transition-beta build, 2026-07-24): `+bonus` on every transition into `toLabel`
+ * at exactly `timestep` — from any predecessor label (at `timestep === 0` the "predecessor" is the sequence start, so
  * the bonus lands on the start transition instead). The placetype-pair prior emits one per pair hit at the child span's
  * first piece when its index header carries `transitionBeta`; the hook itself is generic — a sparse list of
  * adjustments, no knowledge of who produced them.
  *
- * Because the bonus is predecessor-independent, it cannot change WHICH predecessor wins for `toLabel` at `timestep` —
- * it changes whether paths ENTERING `toLabel` there outscore paths that stay fused through a competing run (the task-8
+ * Because the bonus is predecessor-independent, it cannot change which predecessor wins for `toLabel` at `timestep` —
+ * it changes whether paths entering `toLabel` there outscore paths that stay fused through a competing run (the task-8
  * probe's path-fusion mechanism: a locally-winning emission bias can still lose globally when the forced
- * `I-`/fresh-`B-` continuation costs more than the local win recovers; a transition-entry bonus pays that structural
- * toll directly).
+ * `I-`/fresh-`B-` continuation costs more than the local emission bias recovers. a transition-entry bonus pays that
+ * structural toll directly).
  */
 interface ViterbiTransitionAdjustment {
 	/**
-	 * Timestep whose INCOMING transition is adjusted.
+	 * Timestep whose incoming transition is adjusted.
 	 */
 	timestep: number
 	/**
@@ -123,16 +123,16 @@ export interface ViterbiInput {
 	 */
 	transitions: number[][]
 	/**
-	 * Per-label log-score for being the FIRST label.
+	 * Per-label log-score for being the first label.
 	 */
 	startTransitions?: number[]
 	/**
-	 * Per-label log-score for being the LAST label.
+	 * Per-label log-score for being the last label.
 	 */
 	endTransitions?: number[]
 	/**
 	 * Position-scoped transition bonuses (see {@link ViterbiTransitionAdjustment}). Omitted/empty = the exact
-	 * pre-TRANSITION-BETA decode — no behavioral term is added anywhere.
+	 * pre-transition-beta decode — no behavioral term is added anywhere.
 	 */
 	transitionAdjustments?: ReadonlyArray<ViterbiTransitionAdjustment>
 }
@@ -164,7 +164,7 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 	const endTrans = input.endTransitions ?? new Array<number>(numLabels).fill(0)
 
 	// Sparse per-timestep lookup for the position-scoped transition bonuses. Null when none were
-	// passed — the hot loop below then never consults it (the pre-TRANSITION-BETA code path, exactly).
+	// passed — the hot loop below then never consults it (the pre-transition-beta code path, exactly).
 	let adjustAt: Map<number, Map<number, number>> | null = null
 
 	if (input.transitionAdjustments?.length) {
@@ -178,7 +178,7 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 				adjustAt.set(adj.timestep, byLabel)
 			}
 
-			// Two adjustments landing on the same (timestep, toLabel) cell compose by MAX, not sum — the
+			// Two adjustments landing on the same (timestep, toLabel) cell compose by MAX rather than sum — the
 			// emission side's `applyWindowBias` uses the same Math.max discipline, and overlapping window-mode
 			// candidates must not stack the bonus.
 			byLabel.set(adj.toLabel, Math.max(byLabel.get(adj.toLabel) ?? NEG_INF, adj.bonus))
@@ -219,8 +219,8 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 				}
 			}
 
-			// The bonus is predecessor-independent, so it distributes over the max — adding it AFTER the
-			// argmax over j is exact, not an approximation.
+			// The bonus is predecessor-independent, so it distributes over the max — adding it after the
+			// argmax over j is exact rather than an approximation.
 			cur[k] = bestScore + (tAdjust?.get(k) ?? 0) + emissions[t]![k]!
 			ptr[k] = bestPrev
 		}

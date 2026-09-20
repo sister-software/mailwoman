@@ -11,7 +11,7 @@ The corpus-side fix for v0.6.1's `dependent_locality` regression. Per the
 morphology FST as a decoder-only fix is insufficient because the model is too
 overconfident on its synth-street-induced dep_loc predictions. The recipe per
 DeepSeek's turn 2 consult is to add explicit counter-distribution training data:
-addresses where the model should NOT emit street labels at all.
+addresses where the model should not emit street labels at all.
 
 This eval doc captures the new synthesizer + pipeline glue that produces that
 counter-distribution extract.
@@ -21,7 +21,7 @@ counter-distribution extract.
 - `corpus/src/synthesize-no-street.ts` — six-template synthesizer:
   - `venue-adversarial` (35% weight) — venues whose names contain street-typing
     tokens (`Wall Street Industries`, `5th Avenue Theatre`, `Park Avenue Dental`,
-    `Highway 61 Diner`, etc.). The critical slice: these are exactly the rows
+    `Highway 61 Diner`, etc.). The critical source: these are exactly the rows
     that v0.6.1's "decompose mode" mis-tags. Explicit B-venue / I-venue labels
     on tokens like `Street`/`Avenue`/`Highway` teach the model to suppress
     street-side predictions when the surrounding context is venue-shaped.
@@ -32,7 +32,7 @@ counter-distribution extract.
   - `country-only` (2%) — `"United States"`.
 - `corpus/src/synthesize-no-street.test.ts` — 8 unit tests covering each
   template, including a 500-iteration "never emits any street-side tag"
-  contract check and a 1000-iteration template-distribution sanity check.
+  interface check and a 1000-iteration template-distribution sanity check.
 - `scripts/build-no-street-extract.mjs` — mirrors `build-po-box-extract.mjs`:
   reads `{locality, region, postcode, country}` tuples from JSONL stdin and
   emits aligned `LabeledRow` JSONL ready for the parquet extract routing step.
@@ -53,7 +53,7 @@ template distribution:
 ```
 
 Critical check — **0 street-side BIO labels across all 20 synthesized rows**. The
-contract holds.
+the result.
 
 Sample of the critical adversarial output:
 
@@ -72,7 +72,7 @@ raw: South Park Children's Center, München, Bayern 80331
 ```
 
 The tokens `Street`, `Drive`, `Park` carry explicit `B-venue` / `I-venue` labels
-— the model sees direct evidence that these tokens are NOT street components in
+— the model sees direct evidence that these tokens are not street components in
 this surrounding context.
 
 ## v0.6.2 recipe (proposed)
@@ -112,5 +112,5 @@ runnable:
   the decoder-only fix is insufficient and the corpus side is required
 - 2026-05-28 night-2 postmortem — original
   postmortem driving the v0.6.2 recipe
-- [Street-supplement architecture](../../concepts/street-supplement-architecture.mdx)
+- [Street-supplement architecture](../../site-2026-08/concepts/street-supplement-architecture.mdx)
   — the layered design context

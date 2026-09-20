@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Phase-0: golden `/search` wire responses from the CURRENT nominatim drop-in (neural geocode +
- *   rules streetParts recovery). Spawns its own server child on a scratch port and kills ONLY that
+ *   Phase-0: golden `/search` wire responses from the current nominatim drop-in (neural geocode +
+ *   rules streetParts recovery). Spawns its own server child on a scratch port and kills only that
  *   PID (house rule: never kill by pattern). Needs the lab data-root (weights + gazetteer).
- *   Run from the repo root AFTER `yarn compile`:
+ *   Run from the repo root after `yarn compile`:
  *   `node nominatim/dev-tools/capture-search-golden.run.ts`
  */
 
@@ -36,7 +36,7 @@ const withHouseNumber = await JSONSpliterator.fromAsync<ParityRow>(PARITY_PATH)
 
 const syntheticInputs = await TextSpliterator.fromAsync(SYNTHETIC_PATH)
 	.map((line) => line.trim())
-	.filter((line) => line.length > 0)
+	.filter((line) => line.length)
 	.toArray()
 
 const queries = [...new Set([...withHouseNumber, ...syntheticInputs])]
@@ -48,7 +48,7 @@ const child = spawnProcess("node", ["packages/nominatim/out/cli.js", "serve", "-
 try {
 	const deadline = Date.now() + 180_000
 
-	// Model + gazetteer boot takes a while; poll /status until the server answers.
+	// Model + gazetteer boot takes a while. poll /status until the server answers.
 	for (;;) {
 		try {
 			const res = await fetch(`${BASE}/status`)

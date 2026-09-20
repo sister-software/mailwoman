@@ -13,7 +13,7 @@ inputs.
 
 Full geocode cascade — WOF admin + per-state situs/interpolation + **BAN national register** +
 **BAN street-centroids (#1042)** + OSM rooftop. Wiring copied verbatim from
-`mailwoman/eval-harness/gauntlet/harness.ts` (the cascade production actually runs).
+`mailwoman/eval-harness/gauntlet/harness.ts` (the cascade production runs).
 
 | triaged parity (n=267) |                               | Paris fixture (n=63) |                                   |
 | ---------------------- | ----------------------------- | -------------------- | --------------------------------- |
@@ -24,7 +24,7 @@ Full geocode cascade — WOF admin + per-state situs/interpolation + **BAN natio
 
 ## Why — the instrument check that Phase 4a's first attempt skipped
 
-**Evidence rate: the share of fixtures where ANY hypothesis reached street-level resolution.**
+**Evidence rate: the share of fixtures where any hypothesis reached street-level resolution.**
 
 | locale                      | n    | evidence rate |
 | --------------------------- | ---- | ------------- |
@@ -56,7 +56,7 @@ reranker fired, and it was wrong.
 ## What this does and does not overturn
 
 **Does NOT overturn:** the k-best headroom is real and measured — oracle@5 **0.723** (parity) and
-**0.905** (Paris) against a shipped 0.573. The span decode genuinely puts the right answer in the
+**0.905** (Paris) against a shipped 0.573. The span decode in fact puts the right answer in the
 list. That stands.
 
 **Does overturn:** the assumption — mine and the arc's, stated on 2026-07-15 — that _"the arbiter for
@@ -64,16 +64,16 @@ the k-best list is the resolver."_ For contextful addresses the resolver could a
 barely need it. For the bare fragments that need it, the resolver is blind. The arbiter has to be
 something else.
 
-## The direction this points (NOT chased here — that would be signal #3 on a losing streak)
+## The direction this points (not chased here — that would be signal #3 on a losing streak)
 
 The resolver answers _"where is this?"_ The useful question for reranking a bare fragment is
-_"is this a street name at all?"_ — an **existence check against the gazetteer/BAN name index**, not
+_"is this a street name at all?"_ — an **existence check against the gazetteer/BAN name index** rather than
 a geocode. `ban/street-centroids-fr.db` contains every FR street name; asking whether
 `Rue de Rome` appears in it needs no locality and no house number.
 
-That is a lexicon lookup, not resolution — a different signal with a different failure surface, and
+That is a lexicon lookup rather than resolution — a different signal with a different failure surface, and
 it interacts directly with #1142 (the `matched` vs `importance` split: "is this a known name" is
-_exactly_ the `matched` bit that today's multiply destroys). It earns a probe only with the same bar
+_exactly_ the `matched` bit that today's multiply destroys). It warrants a probe only with the same bar
 the others got: a pre-registered check and a measured win.
 
 **Two signals have now failed** (plausibility veto: inert; resolution specificity: −16, rewards the
@@ -88,7 +88,7 @@ to a branch.
 - **4b (isotonic ambiguity check)** — still valuable, and now _more_ so: if evidence cannot pick the
   winner, calibrated confidence is what lets a caller know the answer is uncertain. Unblocked.
 - **4c (option C: kind-posterior + recall-weighted loss)** — now the **primary** change for the
-  bare-fragment class, not a follow-up. It attacks the parse where evidence cannot.
+  bare-fragment class rather than a follow-up. It attacks the parse where evidence cannot.
 
 **And the standing fact this does not change:** the v7 street floor is **0.90**. seg@1 is 0.577,
 oracle@5 is 0.723. Even a perfect reranker would have landed short. The floors need 4c and/or more

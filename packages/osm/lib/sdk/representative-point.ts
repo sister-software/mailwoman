@@ -16,7 +16,8 @@ function isFinitePair(lon: unknown, lat: unknown): lon is number {
 
 /**
  * Reduce a GeoJSON geometry to one representative coordinate: the point itself, or the average of an exterior ring's
- * distinct vertices. The average is an intentionally cheap venue/rooftop-tier coordinate, not a polygon centroid.
+ * distinct vertices. The average is an intentionally cheap venue/rooftop-tier coordinate rather than a polygon
+ * centroid.
  */
 export function representativePoint(geom: OSMGeometryLike | null | undefined): [number, number] | null {
 	if (!geom) return null

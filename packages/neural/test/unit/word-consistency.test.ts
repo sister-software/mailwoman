@@ -12,8 +12,8 @@ const peak = (idx: number, hi: number): number[] => LABELS.map((_l, i) => (i ===
 
 describe("enforceWordConsistency (#727 / admin-token fragmentation)", () => {
 	it("heals a fragmented word to ONE type by confidence-weighted vote (not first-piece-wins)", () => {
-		// `▁VER` leans locality (idx1, modest), `MONT` is near-certain region (idx3, strong). The vote
-		// sums region mass > locality mass → the WHOLE word becomes region (the `VER`-bleed is fixed).
+		// `▁VER` leans locality (idx1, modest), `mont` is near-certain region (idx3, strong). The vote
+		// sums region mass > locality mass → the whole word becomes region (the `VER`-bleed is fixed).
 		const pieces = [{ piece: "▁VER" }, { piece: "MONT" }]
 		const emissions = [peak(1, 2), peak(3, 8)]
 		const r = enforceWordConsistency(pieces, emissions, LABELS, [1, 3]) // B-locality, B-region (fragmented)
@@ -59,10 +59,10 @@ describe("enforceWordConsistency (#727 / admin-token fragmentation)", () => {
 	})
 })
 
-describe("enforceWordConsistency only arbitrates DISAGREEING words (the documented contract)", () => {
+describe("enforceWordConsistency only arbitrates DISAGREEING words (the documented interface)", () => {
 	it("never rewrites an already-consistent multi-piece word, even when the vote mass prefers another type", () => {
 		// `▁G am le` all street (B,I,I — consistent), but the summed emissions lean locality. The heal's
-		// job is consistency, not re-decoding: viterbi's global choice stands. (The `Gamle Drammensvei`
+		// job is consistency rather than re-decoding: viterbi's global choice stands. (The `Gamle Drammensvei`
 		// golden regression, 2026-07-15.)
 		const pieces = [{ piece: "▁G" }, { piece: "am" }, { piece: "le" }]
 		const emissions = [peak(1, 8), peak(1, 8), peak(3, 2)] // locality-heavy mass
@@ -72,7 +72,7 @@ describe("enforceWordConsistency only arbitrates DISAGREEING words (the document
 	})
 
 	it("never flips a single-piece word (no intra-word inconsistency exists)", () => {
-		// `▁Broadway` B-street via viterbi; local mass prefers O. A one-piece word is trivially
+		// `▁Broadway` B-street via viterbi. local mass prefers O. A one-piece word is trivially
 		// consistent — the heal must not override the decoder. (The `East Broadway` golden regression.)
 		const r = enforceWordConsistency([{ piece: "▁Broadway" }], [peak(0, 8)], LABELS, [1])
 		expect(r.healedWords).toBe(0)
@@ -82,7 +82,7 @@ describe("enforceWordConsistency only arbitrates DISAGREEING words (the document
 
 describe("enforceWordConsistency confidence checks (#727 conditional variant)", () => {
 	it("minMeanConfidence skips a low-confidence heal (noise-amplification guard)", () => {
-		// Near-flat emissions: the vote has no conviction. unrestricted it still heals; conditional it must not.
+		// Near-flat emissions: the vote has no conviction. unrestricted it still heals. conditional it must not.
 		const flat = (idx: number): number[] => LABELS.map((_l, i) => (i === idx ? 0.1 : 0))
 		const pieces = [{ piece: "▁VER" }, { piece: "MONT" }]
 		const unrestricted = enforceWordConsistency(pieces, [flat(1), flat(3)], LABELS, [1, 3])
@@ -102,7 +102,7 @@ describe("enforceWordConsistency confidence checks (#727 conditional variant)", 
 	})
 
 	it("skipByteFallbackWords leaves a word with a raw byte piece untouched", () => {
-		// RO `ț` byte-falls-back: `<0xC8> <0x9B>` pieces inside the word. The vote premise breaks → skip.
+		// RO `ț` byte-falls-back: `<0xC8> <0x9B>` pieces inside the word. The vote assumption fails → skip.
 		const pieces = [{ piece: "▁Gala" }, { piece: "<0xC8>" }, { piece: "<0x9B>" }, { piece: "i" }]
 		const emissions = [peak(1, 8), peak(3, 8), peak(3, 8), peak(1, 8)]
 		const r = enforceWordConsistency(pieces, emissions, LABELS, [1, 3, 3, 1], { skipByteFallbackWords: true })

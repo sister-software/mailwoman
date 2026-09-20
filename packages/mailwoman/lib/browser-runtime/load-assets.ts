@@ -48,9 +48,9 @@ export interface ReleaseAssets {
 	fstMatcher: FSTMatcherLike | null
 	fstProvenance: FSTProvenanceLike | null
 	/**
-	 * The street-morphology matcher — the #1315 street-context check's signal source, the node/browser parity fix (SCOPE
-	 * invariant 2: node runtimes wire this by default; the browser previously never could). Loaded with the FST gazetteer
-	 * because the check needs BOTH (core's `streetContextRequirementFor` only fires when the two stages are present).
+	 * The street-morphology matcher — the #1315 street-context check's signal source, the node/browser parity fix (scope
+	 * invariant 2: node runtimes wire this by default. the browser previously never could). Loaded with the FST gazetteer
+	 * because the check needs both (core's `streetContextRequirementFor` only fires when the two stages are present).
 	 * `null` when the release ships no `fst-street-morphology.bin` (pre-artifact bundles) — the demo then parses without
 	 * the check, byte-identical to before.
 	 */
@@ -60,6 +60,12 @@ export interface ReleaseAssets {
 	 * the load failed.
 	 */
 	lookup: MailwomanLookupLike | null
+	/**
+	 * Give this bundle's native memory back — the ONNX session's weights and arenas, which live in the wasm heap outside
+	 * the JavaScript heap and are not reclaimed by dropping this object. A host that loads a second bundle over a page's
+	 * life (a version switch, a backend-force toggle, compare mode) must call this on the one it is replacing.
+	 */
+	release: () => Promise<void>
 	calibrator: Calibrator | null
 	/**
 	 * Per-parse placetype-pair prior selection (placetype-pair-prior arc, #1278). Runs locale-check over the input text
@@ -113,7 +119,7 @@ export async function loadReleaseAssets(
 	const pairIndexBase = pairIndexBaseURL(PAIR_INDEX_VERSION)
 
 	// Dynamic so the onnxruntime-web chunk loads only when a release does. The result is narrowed to the structural
-	// classifier contract this module exposes, so the neural package's own classifier type never enters a host bundle.
+	// classifier interface this module exposes, so the neural package's own classifier type never enters a host bundle.
 	const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web-loader")
 
 	// The model is the only artifact here whose transfer a visitor waits on — tens of megabytes against kilobytes for
@@ -128,29 +134,35 @@ export async function loadReleaseAssets(
 			)
 		: fetchWithRetry
 
-	const { classifier, diagnostics, postcodeAnchorLookup, selectPairIndexForText } = (await loadNeuralClassifierFromURLs(
-		{
-			...neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
-				hasAnchor: release.hasAnchor,
-				forceWASM: progress.forceWASM,
-			}),
-			fetchImpl: modelFetch,
-			// Every published pair index is loaded; the loader keeps each live and `selectPairIndexForText` picks per
-			// parse. Fetched tolerantly: a 404 is skipped, so a missing binary means no prior, never a failed load.
-			pairIndexURLs: pairIndexURLs(pairIndexBase),
-		}
-	)) as {
+	const {
+		classifier,
+		diagnostics,
+		postcodeAnchorLookup,
+		selectPairIndexForText,
+		// `release` is the ReleaseInfo parameter in this scope. the classifier's disposer needs its own name.
+		release: releaseClassifier,
+	} = (await loadNeuralClassifierFromURLs({
+		...neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
+			hasAnchor: release.hasAnchor,
+			forceWASM: progress.forceWASM,
+		}),
+		fetchImpl: modelFetch,
+		// Every published pair index is loaded. the loader keeps each live and `selectPairIndexForText` picks per
+		// parse. Fetched tolerantly: a 404 is skipped, so a missing binary means no prior, never a failed load.
+		pairIndexURLs: pairIndexURLs(pairIndexBase),
+	})) as {
 		classifier: MailwomanClassifierLike
 		diagnostics?: { backend: string; modelBytes: number } | null
 		postcodeAnchorLookup?: Map<string, { lat: number; lon: number }> | null
 		selectPairIndexForText?: SelectPairIndex | null
+		release?: () => Promise<void>
 	}
 
 	progress.setBackend(
 		diagnostics ? `${diagnostics.backend} (${(diagnostics.modelBytes / 1024 / 1024).toFixed(0)} MB int8)` : "unknown"
 	)
 
-	// The model is in. What follows is the lexicons and the optional gazetteer, which the step index reports, so the
+	// The model is in. What follows is the lexicons and the optional gazetteer. It the step index reports. Therefore, the
 	// byte channel goes quiet rather than holding its last value at 100%.
 	progress.setByteFraction?.(null)
 	progress.setStepIndex(0)
@@ -183,7 +195,7 @@ export async function loadReleaseAssets(
 		}
 
 		// The street-context check needs both matchers, so the morphology matcher is loaded only once the gazetteer FST
-		// is; a release that predates the artifact answers null and the parse runs with the check off.
+		// is. a release that predates the artifact answers null and the parse runs with the check off.
 		if (fstMatcher) {
 			try {
 				streetMorphologyMatcher = await loadStreetMorphologyFST(DEFAULT_LOCALE, release.version)
@@ -228,5 +240,8 @@ export async function loadReleaseAssets(
 		lookup,
 		calibrator,
 		selectPairIndex: selectPairIndexForText ?? null,
+		release: async () => {
+			await releaseClassifier?.()
+		},
 	}
 }

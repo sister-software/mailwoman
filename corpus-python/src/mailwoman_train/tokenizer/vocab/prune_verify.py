@@ -1,6 +1,6 @@
 """Task #25 (SP vocab-pruning probe) — bars B1 + B2 from the pre-registration.
 
-B1 — segmentation byte-identity: original vs pruned tokenizer must produce IDENTICAL piece
+B1 — segmentation byte-identity: original vs pruned tokenizer must produce identical piece
 sequences (modulo id renumbering, checked via the id map) on (a) every eval-surface text and
 (b) a fresh 1M-row random sample of the training feed. Zero diffs or the bar fails.
 
@@ -34,23 +34,23 @@ from ...paths import data_root_path
 
 
 def sample_training_rows(manifest_path: str, remap: tuple[str, str], n: int, seed: int) -> list[str]:
-    """Fresh random sample across slices: pick slices round-robin, one random batch each."""
+    """Fresh random sample across parquet files: pick files round-robin, one random batch each."""
     import pyarrow.parquet as pq
 
     manifest = json.loads(Path(manifest_path).read_text())
-    slices = [s["path"].replace(remap[0], remap[1], 1) for s in manifest["slices"] if s["split"] == "train"]
+    files = [s["path"].replace(remap[0], remap[1], 1) for s in manifest["slices"] if s["split"] == "train"]
     rng = random.Random(seed)
-    rng.shuffle(slices)
+    rng.shuffle(files)
     rows: list[str] = []
-    per_slice = max(1, n // len(slices) + 1)
+    per_file = max(1, n // len(files) + 1)
 
-    for slice in slices:
-        pf = pq.ParquetFile(slice)
+    for path in files:
+        pf = pq.ParquetFile(path)
         group = rng.randrange(pf.num_row_groups)
         table = pf.read_row_group(group, columns=["raw"])
         raws = table.column(0).to_pylist()
         rng.shuffle(raws)
-        rows.extend(raws[:per_slice])
+        rows.extend(raws[:per_file])
 
         if len(rows) >= n:
             break
@@ -112,7 +112,7 @@ def check_segmentation_identity(orig: Any, pruned: Any, old_to_new: np.ndarray, 
 def feeds_for(input_metas: Sequence[Any], session_ids: list[int]) -> dict[str, np.ndarray]:
     """Assemble feeds per the model's actual meta: every input is (batch, sequence[, F]).
 
-    Every channel is fed zeros. Parity must hold for ANY channel values if the surgery is sound —
+    Every channel is fed zeros. Parity must hold for any channel values if the surgery is sound —
     the graphs differ only in the embedding gather table — and the full-battery bar (B3) is what
     covers realistic feeds end to end.
     """
@@ -142,7 +142,7 @@ def check_logit_parity(
 ) -> int:
     """B2 — how many of `texts` the two graphs answer differently, bit for bit.
 
-    BITWISE, not close: the kept embedding rows are byte-identical and the rest of the graph is
+    BITWISE rather than close: the kept embedding rows are byte-identical and the rest of the graph is
     untouched, so any difference at all is the surgery having changed something it should not have.
     """
     input_metas = orig_session.get_inputs()

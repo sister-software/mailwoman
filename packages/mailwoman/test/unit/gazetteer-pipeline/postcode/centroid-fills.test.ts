@@ -75,8 +75,8 @@ test("GeoNames postal names each postcode's delivery city, including territories
 	ins.run(2, -1, "11375", "postalcode", "US", 40.72, -73.85) // Queens: a neighbourhood delivery city
 	ins.run(3, -1, "00601", "postalcode", "US", 0, 0) // Puerto Rico, filed as US in WOF
 
-	// GeoNames files a US territory under PR, not US. The database files it under US. Reading only `US`
-	// rows leaves every territory postcode unnamed — 149 of them against the 2024 Census ZCTA list.
+	// GeoNames files a US territory under PR rather than US. The database files it under US. Reading only `US`
+	// rows leaves every territory postcode unnamed — 149 of them against the 2024 Census zcta list.
 	const geonamesDir = join(dir, "geonames-postal")
 
 	await makeDirectories(geonamesDir)
@@ -131,7 +131,7 @@ test("falls back to the combined dump for a country the per-country directory ha
 		)
 		.run()
 
-	// An EMPTY per-country directory — the shape on disk that made this branch required.
+	// An empty per-country directory — the shape on disk that made this branch required.
 	const geonamesDir = join(dir, "geonames-postal")
 
 	await makeDirectories(geonamesDir)
@@ -151,7 +151,7 @@ test("falls back to the combined dump for a country the per-country directory ha
 
 	expect(r.geonamesNames).toBe(1)
 
-	// FI carries the SAME postcode string — country scoping is what keeps Helsinki out of Brooklyn.
+	// FI carries the same postcode string — country scoping is what keeps Helsinki out of Brooklyn.
 	const row = db.prepare("SELECT n.name AS name FROM names n WHERE n.id = 1").get() as { name: string }
 
 	expect(row.name).toBe("Brooklyn")

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Types for the pipeline (parse + resolve) explorer. The model/gazetteer runtime is INJECTED as a
+ *   Types for the pipeline (parse + resolve) explorer. The model/gazetteer runtime is injected as a
  *   {@link PipelineRuntime}: this package owns the UI state machine + presentation, while the host
  *   (the docs site's RuntimeEmbed, or any app) owns loading ONNX/WOF and executing a parse. That keeps
  *   onnxruntime-web, sql.js-httpvfs, and node builtins entirely out of this package's browser graph.
@@ -22,16 +22,16 @@ export interface PipelineLoadingState {
 	 * Bytes received over bytes expected for the asset being fetched right now, in [0, 1] — `null` while nothing is
 	 * downloading or when the response declares no length.
 	 *
-	 * The step index alone cannot report this download. The model is fetched BEFORE the first step is entered, so a
-	 * step-derived bar sits at one-third for the whole of a 38 MB transfer and then jumps — which reads as a hung page,
-	 * not a loading one. This is the only channel that moves during the wait that actually takes the time.
+	 * The step index alone cannot report this download. The model is fetched before the first step is entered, so a
+	 * step-derived bar sits at one-third for the whole of a 38 MB transfer and then jumps — which reads as a hung page
+	 * rather than a loading one. This is the only channel that moves during the wait that actually takes the time.
 	 */
 	byteFraction?: number | null
 }
 
 /**
  * The injected parse runtime. The host implements `runParse` (compute shape → classify → resolve) and reports load
- * progress + errors. This package never imports the model or gazetteer — it only calls this contract.
+ * progress + errors. This package never imports the model or gazetteer — it only calls this interface.
  */
 export interface PipelineRuntime {
 	/**
@@ -75,7 +75,7 @@ export interface PipelinePanels {
 	 */
 	versionControl?: ReactNode
 	/**
-	 * Backend indicator + WASM toggle.
+	 * Backend indicator + wasm toggle.
 	 */
 	backendControl?: ReactNode
 	/**

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The capability-gap report exists so a backend that omits an optional method cannot disable a default-ON option
- *   silently. These cases pin the property that matters: a gap is DATA, not a log line that a caller may or may not
+ *   The capability-gap report exists so a backend that omits an optional method cannot disable a default-on option
+ *   silently. These cases pin the property that matters: a gap is data rather than a log line that a caller may or may not
  *   have been watching for.
  */
 
@@ -12,8 +12,8 @@ import { describeCapabilityGaps, formatCapabilityGaps } from "@mailwoman/resolve
 import { describe, expect, it } from "vitest"
 
 /**
- * The minimum a backend must implement. A backend shaped like this is VALID — every method the gap report names is
- * optional on the contract — which is exactly why the absence needs reporting rather than rejecting.
+ * The minimum a backend must implement. A backend shaped like this is valid — every method the gap report names is
+ * optional on the interface — which is exactly why the absence needs reporting rather than rejecting.
  */
 class MinimalBackend implements ResolverBackend {
 	async findPlace() {
@@ -54,7 +54,7 @@ describe("describeCapabilityGaps", () => {
 		expect(gaps[0]?.backend).toBe("MinimalBackend")
 		expect(line).toContain("MinimalBackend")
 		expect(line).toContain("default-ON")
-		// Both gaps share one line — an operator reads it or skips it once, not once per capability.
+		// Both gaps share one line — an operator reads it or skips it once rather than once per capability.
 		expect(line).toContain("ancestors()")
 		expect(line).toContain("coincidentLocalitiesFor()")
 		expect(line).not.toContain("\n")

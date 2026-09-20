@@ -1,6 +1,6 @@
 """Reading the two inputs: the Overture-JP parquet, and KEN_ALL for the 〒 join.
 
-The eligibility filter lives in the iterator so BOTH build passes see the identical row set — a
+The eligibility filter lives in the iterator so both build passes see the identical row set — a
 filter applied only in pass 2 would desynchronize the exact-selection masks.
 """
 
@@ -17,7 +17,7 @@ from ....corpora.builder import MAX_FIELD_CHARS
 from ....text.normalize import normalize_text
 from ..text import JP_PREFECTURES, normalize_name, normalize_number
 
-#: Where each input sits under `$MAILWOMAN_DATA_ROOT`. Resolved after parsing, not here: reading the
+#: Where each input sits under `$MAILWOMAN_DATA_ROOT`. Resolved after parsing rather than here: reading the
 #: root at import would raise for a caller who passes the flag and never needs it.
 PARQUET_PARTS = ("overture", "2026-06-17.0", "addresses-jp.parquet")
 KENALL_PARTS = ("KEN_ALL_ROME", "KEN_ALL_ROME.CSV")
@@ -32,13 +32,13 @@ class KenAllIndex:
     """The 〒 join: TOWN-level first, municipality catch-all only as the fallback.
 
     The probe joined at municipality granularity, which always returns the ``NNN-0000`` catch-all
-    Japan Post lists first — so every probe row carried a postcode whose last four digits were
+    Japan Post lists first . Therefore, every probe row carried a postcode whose last four digits were
     ``0000``. Real Japanese postcodes are town-level, and KEN_ALL carries the town (``大字`` /
     ``町``) in column 4. Joining there instead makes the trailing digits real.
 
     The join needs one correction that is worth the measurement it took: Overture writes the ōaza
     prefix (``字崎枝``, ``大字上田``) and KEN_ALL does not. Exact town match alone hits **17.8%**
-    of rows; retrying with a leading ``字``/``大字`` stripped takes it to **89.6%** (200k-row slice,
+    of rows. retrying with a leading ``字``/``大字`` stripped takes it to **89.6%** (200k-row probe corpus,
     2026-08-04). The remaining 10.4% falls back to the municipality catch-all, and nothing misses.
     """
 
@@ -67,7 +67,7 @@ def load_kenall_postcodes(path: Path) -> KenAllIndex:
 
     Column layout: ``postcode, prefecture-kanji, city-kanji, town-kanji, …romaji``. Town names carry
     parenthetical annotations (``大通東（１～１３丁目）``) that are stripped, and the literal
-    ``以下に掲載がない場合`` ("if not listed below") is the municipality catch-all, not a town.
+    ``以下に掲載がない場合`` ("if not listed below") is the municipality catch-all rather than a town.
     """
     town: dict[str, str] = {}
     municipality: dict[str, str] = {}
@@ -105,7 +105,7 @@ def iter_source_rows(
       ``encode_row_units`` truncates silently, so a row that cannot fit is dropped here, counted,
       rather than half-labelled there.
 
-    The filter lives in the iterator so BOTH passes see the identical row set — a filter applied
+    The filter lives in the iterator so both passes see the identical row set — a filter applied
     only in pass 2 would desynchronize the exact-selection masks.
 
     Normalization happens here for the same reason.

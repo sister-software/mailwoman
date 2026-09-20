@@ -17,8 +17,8 @@ export function norm(s: string): string {
 }
 
 /**
- * Lower-case + trim ONLY — no punctuation stripping, no whitespace collapse. The loose fold the harness-side
- * comparisons share; unlike {@link norm} it keeps interior whitespace and punctuation byte-for-byte, so substring
+ * Lower-case + trim only — no punctuation stripping, no whitespace collapse. The loose fold the harness-side
+ * comparisons share. unlike {@link norm} it keeps interior whitespace and punctuation byte-for-byte, so substring
  * containment still sees them.
  */
 export function normLoose(s: string | undefined): string {
@@ -26,8 +26,9 @@ export function normLoose(s: string | undefined): string {
 }
 
 /**
- * Normalized exact, or either-direction TOKEN-subset (fragmentation + decomposition tolerant). Token subset, not raw
- * substring, so "Saint" ⊆ "Saint Paul" and "Ave" ⊆ "Elm Ave" match while "Park" does NOT spuriously match "Parkway".
+ * Normalized exact, or either-direction token-subset (fragmentation + decomposition tolerant). Token subset rather than
+ * raw substring, so "Saint" ⊆ "Saint Paul" and "Ave" ⊆ "Elm Ave" match while "Park" does not spuriously match
+ * "Parkway".
  */
 export function valueMatch(pred: string, gold: string): boolean {
 	const a = norm(pred)

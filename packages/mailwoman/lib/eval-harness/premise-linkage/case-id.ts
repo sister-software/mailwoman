@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The salted case identifier (#1902) — the only thing a published premise-linkage result carries
+ *   The salted case identifier (#1902) — the only field a published premise-linkage result includes
  *   that is derived from the address.
  *
  *   A bare hash of the input would be reversible in practice: the address space a provider grants
  *   access to is enumerable, so anyone holding the register can hash every row and read the published
- *   identifiers straight back. The salt is what breaks that, and it has to be RUN-SPECIFIC rather than
+ *   identifiers straight back. The salt is what breaks that, and it has to be RUN-specific rather than
  *   repository-wide — two reports under one salt can be joined row-for-row into a longer record of the
  *   same premises, which is the linkage the identifier exists to prevent.
  */
@@ -27,7 +27,7 @@ const CASE_ID_LENGTH = 16
 const MINIMUM_SALT_LENGTH = 16
 
 /**
- * Refuse a salt that cannot do its job, BEFORE any row is read.
+ * Refuse a salt that cannot do its job, before any row is read.
  *
  * Checked once at the start of a run rather than per row, so an operator who forgot to export the secret is told so
  * immediately instead of after the licensed file has been opened.

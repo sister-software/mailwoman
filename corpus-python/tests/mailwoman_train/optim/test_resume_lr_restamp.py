@@ -23,7 +23,7 @@ class TinyModel(torch.nn.Module):
 
 
 class TinySpanClassifierModel(torch.nn.Module):
-    """Adds a `span_scorer.` prefix so both carveouts (`span_head_learning_rate` AND
+    """Adds a `span_scorer.` prefix so both carveouts (`span_head_learning_rate` and
     `classifier_learning_rate`) can be exercised together — the 3-group shape."""
 
     def __init__(self):
@@ -38,7 +38,7 @@ def _scheduler_cfg(*, warmup_steps=10, max_steps=100, lr_schedule="constant"):
 
 
 def test_raw_load_state_dict_clobbers_a_changed_classifier_lr(tmp_path):
-    """Trap characterization — NOT testing our fix. Proves the underlying torch behavior the
+    """Trap characterization — not testing our fix. Shows how torch behaves the
     fix exists to correct: a bare `build_optimizer` + `optim.load_state_dict()` round trip
     silently discards a changed `classifier_learning_rate`, with no exception and no signal."""
     # Phase-1 "checkpoint": classifier group at the old hot LR.
@@ -47,15 +47,15 @@ def test_raw_load_state_dict_clobbers_a_changed_classifier_lr(tmp_path):
     opt_state_path = tmp_path / "optimizer.pt"
     torch.save(optim1.state_dict(), opt_state_path)
 
-    # Phase-2 "resume": build fresh from a DIFFERENT (decayed) classifier LR, per config.
+    # Phase-2 "resume": build fresh from a different (decayed) classifier LR, per config.
     m2 = TinyModel()
     optim2, _labels2 = build_optimizer(m2, learning_rate=1e-5, weight_decay=0.01, classifier_learning_rate=1e-4)
     live_classifier_lr = next(g["lr"] for g in optim2.param_groups if g["lr"] == 1e-4)
-    assert live_classifier_lr == 1e-4  # sanity: the fresh build DID honor the new config
+    assert live_classifier_lr == 1e-4  # sanity: the fresh build did honor the new config
 
     optim2.load_state_dict(torch.load(opt_state_path, weights_only=False))
 
-    # The trap: post-load, the group is back at the CHECKPOINT's old LR, not the live config's.
+    # The trap: post-load, the group is back at the checkpoint's old LR rather than the live config's.
     # Both groups have 2 params (weight+bias) — disambiguate by numel (classifier: 33*4+33).
     classifier_group = next(g for g in optim2.param_groups if sum(p.numel() for p in g["params"]) == 33 * 4 + 33)
     assert classifier_group["lr"] == 1e-3  # old value won — silently
@@ -63,8 +63,8 @@ def test_raw_load_state_dict_clobbers_a_changed_classifier_lr(tmp_path):
 
 
 def test_restamp_resume_lrs_recovers_the_live_config_value(tmp_path, capsys):
-    """With the fix applied: after `_restamp_resume_lrs`, param groups AND scheduler.base_lrs
-    reflect the live config's (changed) classifier LR, not the checkpoint's."""
+    """With the fix applied: after `_restamp_resume_lrs`, param groups and scheduler.base_lrs
+    reflect the live config's (changed) classifier LR rather than the checkpoint's."""
     m1 = TinyModel()
     optim1, _labels1 = build_optimizer(m1, learning_rate=1e-5, weight_decay=0.01, classifier_learning_rate=1e-3)
     sched1 = build_scheduler(optim1, _scheduler_cfg(warmup_steps=2))
@@ -79,7 +79,7 @@ def test_restamp_resume_lrs_recovers_the_live_config_value(tmp_path, capsys):
     torch.save(sched1.state_dict(), sched_state_path)
 
     m2 = TinyModel()
-    # `labels` is build_optimizer's OWN return, not a hand-typed parallel list — the point of
+    # `labels` is build_optimizer's own return rather than a hand-typed parallel list — the point of
     # this fix. See `test_restamp_resume_lrs_labels_are_not_a_hand_built_list` below for the
     # reorder-proofing assertion this buys.
     optim2, labels = build_optimizer(m2, learning_rate=1e-5, weight_decay=0.01, classifier_learning_rate=1e-4)
@@ -129,7 +129,7 @@ def test_restamp_resume_lrs_is_silent_when_nothing_changed(tmp_path, capsys):
     torch.save(sched1.state_dict(), sched_state_path)
 
     m2 = TinyModel()
-    # SAME classifier_learning_rate as phase 1 — nothing should change on restamp.
+    # Same classifier_learning_rate as phase 1 — nothing should change on restamp.
     optim2, labels = build_optimizer(m2, learning_rate=1e-5, weight_decay=0.01, classifier_learning_rate=1e-3)
     live_lrs = [g["lr"] for g in optim2.param_groups]
     sched2 = build_scheduler(optim2, _scheduler_cfg(warmup_steps=2))
@@ -154,8 +154,8 @@ def test_restamp_resume_lrs_is_silent_when_nothing_changed(tmp_path, capsys):
 
 
 def test_build_optimizer_three_group_labels_attribute_to_the_right_group(tmp_path, capsys):
-    """span_head_learning_rate AND classifier_learning_rate both set — 3 groups. Labels must
-    attribute to the group that actually carries that override's LR, not just be the right
+    """span_head_learning_rate and classifier_learning_rate both set — 3 groups. Labels must
+    attribute to the group that actually carries that override's LR rather than just be the right
     length/set of strings (the original bug: the caller's hand-built if-chain could get the
     STRINGS right while attributing them to the wrong `optim.param_groups` index after a
     build_optimizer reorder). Then runs the full resume round trip through `_restamp_resume_lrs`
@@ -172,7 +172,7 @@ def test_build_optimizer_three_group_labels_attribute_to_the_right_group(tmp_pat
     assert len(optim1.param_groups) == 3
     assert labels1 == ["base", "span_head_learning_rate", "classifier_learning_rate"]
 
-    # Attribution check: each label's group must hold that override's PARAMS, not just its LR
+    # Attribution check: each label's group must hold that override's params rather than just its LR
     # (a positional-only check could pass by coincidence if two overrides shared an LR value).
     expected_params_by_label = {
         "base": {id(p) for n, p in m1.named_parameters() if n.startswith("encoder.")},
@@ -199,10 +199,10 @@ def test_build_optimizer_three_group_labels_attribute_to_the_right_group(tmp_pat
         span_head_learning_rate=1e-4,
         classifier_learning_rate=1e-3,
     )
-    # Reorder-proofing: `labels2` is READ from build_optimizer's return, never re-derived by
+    # Reorder-proofing: `labels2` is read from build_optimizer's return, never re-derived by
     # this test — the same discipline the fixed call site in train.py now follows. If
     # build_optimizer's internal carve-out order ever changes, this assignment (and the
-    # zip below) tracks it automatically; nothing here hard-codes group index -> label.
+    # zip below) tracks it automatically. nothing here hard-codes group index -> label.
     assert labels2 == labels1  # same overrides set => same label order, sourced fresh each time
     live_lrs = [g["lr"] for g in optim2.param_groups]
     sched2 = build_scheduler(optim2, _scheduler_cfg(warmup_steps=2))

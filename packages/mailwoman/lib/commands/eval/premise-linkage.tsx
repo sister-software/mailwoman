@@ -7,7 +7,7 @@
  *   plus the #1901 authoritative provider) and emits an aggregate report that has passed the writer's
  *   preflight.
  *
- *   Two modes, and the report says which it was. With `--config <module>` the command loads a PRIVATE
+ *   Two modes, and the report says which it was. With `--config <module>` the command loads a private
  *   run configuration from outside this repository — the controlled adapter, the real provider, and
  *   production deps — and requires both an agreed `--min-cell-size` and a run salt in the environment.
  *   Without it the command runs the shipped synthetic fixture end to end, which is a self-check of the
@@ -22,7 +22,7 @@ import { Box, Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	readMailwomanVersion,
 	useCommandTask,
 } from "#cli-kit"
@@ -30,7 +30,7 @@ import {
 export const description = "Grade a controlled premise-linkage evaluation across the open and authoritative arms."
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "premise-linkage",
@@ -57,13 +57,6 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	config?: string
-	out?: string
-	minCellSize?: number
-	policy?: string
-}
-
 /**
  * The synthetic self-check publishes nothing, so its cell floor exists only to keep the writer's suppression path on
  * the same code the controlled run takes.
@@ -76,7 +69,7 @@ const SYNTHETIC_MIN_CELL_SIZE = 1
  */
 const GENERATED_SALT_BYTES = 24
 
-const EvalPremiseLinkage: ParsedCommandComponent<Options> = ({ options }) => {
+const EvalPremiseLinkage: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const [{ runPremiseLinkage, resolvePremiseLinkageConfig }, { publishableReport, writePremiseLinkageReport }] =
 			await Promise.all([
@@ -174,7 +167,7 @@ const EvalPremiseLinkage: ParsedCommandComponent<Options> = ({ options }) => {
 }
 
 /**
- * Import a private run configuration from outside this repository. The specifier is the operator's; nothing here
+ * Import a private run configuration from outside this repository. The specifier is the operator's. nothing here
  * inspects it beyond handing it to the loader, and `resolve` decides whether what came back is usable.
  */
 async function loadControlledConfig<T>(
@@ -188,7 +181,7 @@ async function loadControlledConfig<T>(
 
 /**
  * The shipped synthetic fixture, its matching provider, and a pipeline stub — the self-check's three pieces, which ship
- * together so they cannot disagree.
+ * together. Therefore, they cannot disagree.
  */
 async function loadSyntheticConfig() {
 	const { syntheticFixtureAdapter, syntheticFixtureDeps, syntheticFixtureProvider } =

@@ -2,17 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman corpus slice <recipe>` — build a synthetic training-corpus slice from a registered
- *   recipe (the durable replacement for the 16 `scripts/build-*-slice.mjs` scripts). `--list`
- *   prints the registry. Recipes are `tuples` (read `--input` JSONL of
+ *   `mailwoman corpus slice <recipe>` — run a registered corpus recipe and write its output, the
+ *   durable replacement for the sixteen one-off build scripts that preceded the recipe registry.
+ *   `--list` prints the registry. Recipes are `tuples` (read `--input` jsonl of
  *   (locality,region,postcode,country) tuples) or `generate` (self-generate `--count` rows). Output
- *   is aligned LabeledRow JSONL ready for the parquet slicing step (`mailwoman corpus ...`). See
- *   corpus/src/recipes.
+ *   is aligned LabeledRow jsonl ready for the parquet step (`mailwoman corpus build`). The registry
+ *   lives in `packages/corpus/lib/recipes/`.
  */
 
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { CommandError } from "@mailwoman/core/scripting/command"
-import type { SliceRecipeOpts } from "@mailwoman/corpus"
+import type { RecipeOptions } from "@mailwoman/corpus"
 import { createRecipeLineWriter } from "@mailwoman/corpus/recipes/scaffold"
 import { Box, Text } from "ink"
 
@@ -20,25 +20,25 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	countOption,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	stringOption,
 	useCommandTask,
 } from "#cli-kit"
 /**
- * Bare `mailwoman corpus slice` stays the recipe runner now that `slice/` hosts subcommands.
+ * Bare `mailwoman corpus slice` stays the recipe runner now that this directory hosts subcommands.
  */
 export const isDefault = true
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "slice",
-	description: "Build a synthetic corpus slice",
+	description: "Run a corpus recipe and write its output",
 	positionals: [{ name: "recipe", description: "Recipe name" }],
 	options: {
 		list: { type: "boolean", default: false, description: "List recipes" },
-		output: stringOption("Output JSONL path"),
+		out: { ...stringOption("Output JSONL path"), deprecatedName: "output" },
 		input: stringOption("Input tuples JSONL"),
 		count: stringOption("Rows to generate"),
 		variants: { type: "string", default: "1", description: "Variants per tuple" },
@@ -71,63 +71,29 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	list: boolean
-	output?: string
-	input?: string
-	count?: string
-	variants: string
-	seed?: string
-	golden: boolean
-	sourceName?: string
-	houseNumberProb?: string
-	pmbRatio?: string
-	militaryRatio?: string
-	reversedFraction?: string
-	edgesDir?: string
-	country?: string
-	intlFraction?: string
-	commaFreeFraction?: string
-	ortsteilFraction?: string
-	adminDB?: string
-	countryFraction?: string
-	districtAsLocality?: boolean
-	bareProb?: string
-	hnProb?: string
-	communes?: string
-	banDir?: string
-	excludeSurfaces?: string
-	multilocaleCount?: string
-	lexicon?: string
-	extractsDir?: string
-	poiDB?: string
-	subVenueTuples?: string
-	negativeFraction?: string
-}
-
 const num = (s: string | undefined): number | undefined => (s == null ? undefined : Number(s))
 
-const CorpusSlice: ParsedCommandComponent<Options> = ({ options, args }) => {
+const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
-		const { getSliceRecipe, listSliceRecipes } = await import("@mailwoman/corpus")
+		const { getRecipe, listRecipes } = await import("@mailwoman/corpus")
 
 		if (options.list || !args.length) {
 			return [
 				"recipes:",
-				...listSliceRecipes().map((r) => `  ${r.name.padEnd(20)} [${r.mode}] ${r.description}`),
+				...listRecipes().map((r) => `  ${r.name.padEnd(20)} [${r.mode}] ${r.description}`),
 				"",
-				"usage: mailwoman corpus slice <recipe> --output <out.jsonl> [--input <tuples.jsonl> | --count N] [--seed N]",
+				"usage: mailwoman corpus slice <recipe> --out <out.jsonl> [--input <tuples.jsonl> | --count N] [--seed N]",
 			]
 		}
 
 		const name = args[0]!
-		const recipe = getSliceRecipe(name)
+		const recipe = getRecipe(name)
 
 		if (!recipe) {
 			throw new CommandError(`unknown recipe "${name}". Run \`mailwoman corpus slice --list\`.`)
 		}
 
-		if (!options.output) throw new CommandError("--output <out.jsonl> required")
+		if (!options.out) throw new CommandError("--out <out.jsonl> required")
 
 		if (recipe.mode === "tuples" && !options.input)
 			throw new CommandError(`recipe "${name}" needs --input <tuples.jsonl>`)
@@ -136,8 +102,8 @@ const CorpusSlice: ParsedCommandComponent<Options> = ({ options, args }) => {
 
 		const seed = options.seed != null ? Number(options.seed) : Date.now()
 
-		const opts: SliceRecipeOpts = {
-			output: options.output,
+		const opts: RecipeOptions = {
+			output: options.out,
 			seed,
 			variants: countOption(options.variants, 1),
 			input: options.input,
@@ -169,9 +135,9 @@ const CorpusSlice: ParsedCommandComponent<Options> = ({ options, args }) => {
 			negativeFraction: num(options.negativeFraction),
 		}
 
-		console.error(`▸ slice recipe "${name}" [${recipe.mode}] seed=${seed} → ${options.output}`)
+		console.error(`▸ recipe "${name}" [${recipe.mode}] seed=${seed} → ${options.out}`)
 
-		const stream = openWriteStream(options.output, { encoding: "utf8" })
+		const stream = openWriteStream(options.out, { encoding: "utf8" })
 
 		const write = createRecipeLineWriter(stream)
 
@@ -184,7 +150,7 @@ const CorpusSlice: ParsedCommandComponent<Options> = ({ options, args }) => {
 
 		return [
 			`recipe: ${name}`,
-			`${stats.emitted.toLocaleString()} rows emitted, ${stats.skipped.toLocaleString()} skipped${stats.read != null ? `, ${stats.read.toLocaleString()} read` : ""}${stats.contaminated ? `, ${stats.contaminated.toLocaleString()} board-reserved` : ""} → ${options.output}`,
+			`${stats.emitted.toLocaleString()} rows emitted, ${stats.skipped.toLocaleString()} skipped${stats.read != null ? `, ${stats.read.toLocaleString()} read` : ""}${stats.contaminated ? `, ${stats.contaminated.toLocaleString()} board-reserved` : ""} → ${options.out}`,
 		]
 	})
 
@@ -203,4 +169,4 @@ const CorpusSlice: ParsedCommandComponent<Options> = ({ options, args }) => {
 	return null
 }
 
-export default CorpusSlice
+export default CorpusRecipeRun

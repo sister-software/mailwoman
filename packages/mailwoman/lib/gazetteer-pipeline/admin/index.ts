@@ -6,11 +6,11 @@
  *   plus four separately-remembered post-build steps (the #1015 rebuild missed two of them), in one
  *   verified, sealed pipeline:
  *
- *   ingest-wof → fold-overture → fold-geonames → freeze → enrich → VACUUM INTO → FTS → VERIFY → SEAL.
+ *   ingest-wof → fold-overture → fold-geonames → freeze → enrich → vacuum into → FTS → verify → seal.
  *
- *   A failed verify THROWS and leaves the artifact UNSEALED for inspection — do not swap it. On
- *   success the build appends itself to the build log (`data/gazetteer/wof-build-manifest.json` — a LOG, not
- *   a recipe; the recipe is `../defaults.ts`).
+ *   A failed verify throws and leaves the artifact unsealed for inspection — do not swap it. On
+ *   success the build appends itself to the build log (`data/gazetteer/wof-build-manifest.json` — a LOG rather than
+ *   a recipe. the recipe is `../defaults.ts`).
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -53,14 +53,14 @@ export interface BuildAdminOptions {
 	 */
 	dataDir?: string
 	/**
-	 * Output artifact path. Default `<data-root>/wof/admin-global-priority.REBUILD.db` (staging — swap deliberately).
+	 * Output artifact path. Default `<data-root>/wof/admin-global-priority.rebuild.db` (staging — swap deliberately).
 	 */
 	out?: string
 	overtureCountries?: readonly string[]
 	geonamesCountries?: readonly string[]
 	overtureRelease?: string
 	/**
-	 * Skip the verify step (fixture/dev runs ONLY — an unverified artifact must never be promoted).
+	 * Skip the verify step (fixture/dev runs only — an unverified artifact must never be promoted).
 	 */
 	skipVerify?: boolean
 	/**
@@ -98,7 +98,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	const geonamesCountries = opts.geonamesCountries ?? DEFAULT_GEONAMES_COUNTRIES
 	const overtureRelease = opts.overtureRelease ?? DEFAULT_OVERTURE_RELEASE
 
-	// resolver-wof-sqlite is an OPTIONAL peer — lazy import (the gazetteer-pipeline convention).
+	// resolver-wof-sqlite is an optional peer — lazy import (the gazetteer-pipeline convention).
 	const { createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 
 	const ingestPath = out + ".ingest"
@@ -107,7 +107,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		await removePath(ingestPath)
 	}
 
-	// BEFORE the WOF ingest, not at `fold-overture` where the release is first read: a pruned pin is a one-request
+	// Before the WOF ingest rather than at `fold-overture` where the release is first read: a pruned pin is a one-request
 	// question, and discovering it after 2.9M records reads as a network fault rather than an expired pin.
 	const releaseCheck = await checkOvertureRelease(overtureRelease)
 
@@ -144,7 +144,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 			concurrency: opts.concurrency,
 			batchCommitSize: opts.batchCommitSize,
 			// #1905: GeoNames-anchored label-point adjudication. Reads the same per-country extracts fold-geonames
-			// consumes; a data root without them degrades to the plain label preference.
+			// consumes. a data root without them degrades to the plain label preference.
 			anchorLookup: await createGeoNamesAnchorLookup(String(dataRootPath("geonames"))),
 			onProgress: (processed, skipped, total) =>
 				phase(
@@ -162,7 +162,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		overtureIngested = await ingestOvertureDivisions(db, overtureCountries, overtureRelease)
 		phase("fold-overture", `${overtureIngested.toLocaleString()} divisions`)
 
-		// #1026: the A-class admin fold for the zero-coverage locales — country + region NODES + locality
+		// #1026: the A-class admin fold for the zero-coverage locales — country + region nodes + locality
 		// ancestry. Scoped to the countries actually in this run's geonames set.
 		const gapSet = new Set(geonamesAdminGapCountries().filter((cc) => geonamesCountries.includes(cc)))
 		phase("fold-geonames", `${geonamesCountries.length} countries (${gapSet.size} with admin fold)`)
@@ -228,14 +228,14 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		}
 	}
 
-	// BEFORE the seal — see `stampLayerManifest`, which owns that ordering and its reason.
+	// Before the seal — see `stampLayerManifest`, which owns that ordering and its reason.
 	phase("manifest")
 	const sha = buildSHA(String(repoRootPath()))
 
 	await stampLayerManifest(
 		out,
 		adminLayerManifest({
-			// The counts the build actually produced, not the lists it was given. A fold that ingested
+			// The counts the build actually produced rather than the lists it was given. A fold that ingested
 			// nothing must not appear as a source — see manifest.ts.
 			counts: { wof: ingest.placesIngested, overture: overtureIngested, geonames: folded.placesIngested },
 			buildSHA: sha,

@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The registry of release operations — the ONLY executable entry point of this package, and the file knip treats as
+ *   The registry of release operations — the only executable entry point of this package, and the file knip treats as
  *   such. An operation that is not listed here is dead code and knip reports it, which is the property the retired
- *   `scripts/**` entry glob could never provide. Adapters (`@mailwoman/ops-cli`, the release MCP) iterate this array;
+ *   `scripts/**` entry glob could never provide. Adapters (`@mailwoman/ops-cli`, the release MCP) iterate this array.
  *   they never import an operation module directly.
  */
 
@@ -27,6 +27,7 @@ import { smokeCleanInstallOperation } from "#operations/smoke/clean-install"
 import { smokeGetStartedOperation } from "#operations/smoke/get-started"
 import { stageWeightsCacheOperation } from "#operations/stage-weights-cache"
 import { verifyMetadata } from "#operations/verify-metadata"
+import { writeRightsFiles } from "#operations/write-rights-files"
 
 /**
  * Every release operation, in the order an adapter lists them: the plan first, then the read-only checks, the local
@@ -39,6 +40,7 @@ export const operations: ReadonlyArray<ReleaseOperation<unknown, unknown>> = [
 	cleanOperation,
 	prepareVersion,
 	generatedSurfaces,
+	writeRightsFiles,
 	copyWeightsOperation,
 	fetchHFWeightsOperation,
 	preflight,

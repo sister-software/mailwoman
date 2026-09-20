@@ -3,7 +3,7 @@
 
 /**
  *   `<CompareToggle>` states — off (just the checkbox), and on (the compare-version select with the
- *   primary filtered out + a status line). No maplibre; plain DOM.
+ *   primary filtered out + a status line). No maplibre. plain DOM.
  */
 
 import type { Meta, StoryObj } from "@storybook/react-vite"

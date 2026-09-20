@@ -1,6 +1,6 @@
 """The two passes over one epoch: what the sampler drew, and what the trainer would read.
 
-They open the SAME stream at the SAME seed, which is what makes their counts comparable — with
+They open the same stream at the same seed, which is what makes their counts comparable — with
 every augmentation probability at zero the two consume the rng identically and their counts are
 byte-equal, which the test pins. The emitted pass still skips `iter_rows`' shuffle buffer, which
 reorders rows and cannot change counts.
@@ -33,6 +33,18 @@ class DrawPass:
     windows: list[Counter[str]]
     totals: Counter[str]
     countries: Counter[str]
+    #: Countries drawn from each source, keyed `source`, then country code.
+    #:
+    #: `per_source` says how many rows a source contributed and `countries` says how many a country
+    #: received, and neither says which countries a source's rows belonged to. That join is what
+    #: separates a country the sampler declined from a country whose rows sit in files the sampler
+    #: never opened: `_source_iter` visits a source's parquet files in shuffled order and drains each
+    #: before opening the next, so a fixed draw per source reads only the earliest files.
+    #:
+    #: Measured on Belgium, which holds 150,000 rows, all from `overture`, all carrying a street, at
+    #: `country_weights` 1.0. Uniform sampling within `overture`'s 2,400,000 rows would give it 1,079
+    #: of that source's 17,269 draws. It appears in no count at either level (#2347).
+    countries_by_source: dict[str, Counter[str]]
     per_source: dict[str, dict[str, Any]]
     full_windows: int
     receipts: list[dict[str, Any]]
@@ -85,10 +97,12 @@ def run_draw_pass(
     n_windows = (draws + window - 1) // window
     window_counts: list[Counter[str]] = [Counter() for _ in range(n_windows)]
     draw_countries: Counter[str] = Counter()
+    countries_by_source: dict[str, Counter[str]] = {}
     receipt_counts: Counter[str] = Counter()
     for i, row in enumerate(islice(stream, draws)):
         window_counts[i // window][row["source"]] += 1
         draw_countries[row["country"]] += 1
+        countries_by_source.setdefault(row["source"], Counter())[row["country"]] += 1
         for receipt in required_receipts:
             if matches_receipt(row, receipt):
                 receipt_counts[receipt.name] += 1
@@ -96,10 +110,10 @@ def run_draw_pass(
     total_draws = sum(draw_totals.values())
 
     full_windows = [w for w in window_counts if sum(w.values()) == window]
-    # DOSE, not just share (#1677). `reps_per_row` is the number every weight is implicitly choosing and
-    # that nobody sees: a 0.60% share of 7.68M draws over 277 rows is 165 passes per row, while a 3.57%
+    # reps PER row rather than just share (#1677). `reps_per_row` is the number every weight is implicitly choosing
+    # and that nobody sees: a 0.60% share of 7.68M draws over 277 rows is 165 passes per row, while a 3.57%
     # share over 53,078 rows is 5. The v4.6.0 bare-country collapse was picked at weight 1.0 — the
-    # smallest number in the config — by someone reading 1.0 as a small dose.
+    # smallest number in the config — by someone reading 1.0 as a small exposure.
     rows_by_source = source_row_counts(corpus_dir, "train")
 
     per_source: dict[str, dict[str, Any]] = {}
@@ -114,8 +128,8 @@ def run_draw_pass(
             "draws": draws_for_src,
             "draw_share": share,
             "max_window_relative_deviation": max(deviations) if deviations else 0.0,
-            # `None` when the slice's row count could not be read — reported as unknown rather than as a
-            # dose of zero, which would read as "this slice is safe".
+            # `None` when the source's row count could not be read — reported as unknown rather than as
+            # zero reps per row, which would read as "this source is safe".
             "rows": rows,
             "reps_per_row": (draws_for_src / rows) if rows else None,
         }
@@ -124,6 +138,7 @@ def run_draw_pass(
         windows=window_counts,
         totals=draw_totals,
         countries=draw_countries,
+        countries_by_source=countries_by_source,
         per_source=per_source,
         full_windows=len(full_windows),
         receipts=[
@@ -150,7 +165,7 @@ def run_emitted_pass(
 ) -> EmittedPass:
     """Pass 2 — emitted level: the same stream expanded through the augmentation policy.
 
-    The SAME emit step the trainer runs, exclusion included (#2243) — the audit reimplemented it
+    The same emit step the trainer runs, exclusion included (#2243) — the audit reimplemented it
     once without the per-source exclusion and reported an excluded source with the count it would
     have had if augmented. The relabel lexicon stays absent: this pass counts rows per source and
     per country, and relabel rewrites labels within a row without adding or removing one.
@@ -220,8 +235,8 @@ def audit_mixture(
 ) -> dict[str, Any]:
     """Run both passes over one epoch of ``draws`` rows and return the report dict.
 
-    ``augment_exclude_sources`` reaches the emitted pass because the TRAINER applies it. Both
-    passes open the stream at the SAME seed, so the emitted counts are byte-equal to the draw
+    ``augment_exclude_sources`` reaches the emitted pass because the trainer applies it. Both
+    passes open the stream at the same seed, so the emitted counts are byte-equal to the draw
     counts when every augmentation is off.
     """
     filled_augment = normalized_augment(augment)
@@ -264,6 +279,9 @@ def audit_mixture(
             "windows": [dict(w) for w in drawn.windows],
             "per_source": drawn.per_source,
             "by_country": dict(drawn.countries.most_common()),
+            "countries_by_source": {
+                src: dict(counts.most_common()) for src, counts in sorted(drawn.countries_by_source.items())
+            },
         },
         "emitted_level": {
             "totals": dict(emitted.totals),

@@ -12,7 +12,7 @@ WebCrypto and the worker imports it by subpath under export conditions.
 
 A commercial license exists (`COMMERCIAL-LICENSE.md`, `LicenseRef-Commercial`), a signed key format exists
 (`mwl1.<payload>.<signature>`, Ed25519, verified offline against the public keys each release ships), and the
-operator can mint one by hand with `mailwoman license issue`. There is no way for a customer to buy one without
+operator can mint one by hand with `mailwoman license issue`. There is no way for a customer to provide one without
 writing an email and waiting for a person. The pricing page (`docs/articles/pricing.mdx`, routed at `/docs/pricing`)
 already publishes two prices, $250 a month or $2,400 a year per legal entity, so the shop must sell both.
 
@@ -22,7 +22,7 @@ fetch the current one. This design builds the part Stripe cannot and leans on St
 
 ## Decisions taken
 
-**A yearly or monthly subscription, not a one-time payment.** Stripe's Customer Portal does renewal payment methods
+**A yearly or monthly subscription rather than a one-time payment.** Stripe's Customer Portal does renewal payment methods
 and cancellation only for a subscription, and both published prices are recurring.
 
 **The token follows the billing period.** Every `invoice.paid` mints a new token whose `expires` is the period end
@@ -30,7 +30,7 @@ plus a 14-day grace window. An offline credential is what a customer keeps after
 what was paid for by more than the grace. A monthly customer therefore holds a new token each month, delivered by email
 and fetchable with `mailwoman license refresh`.
 
-**Stripe Payment Links, not a session-creation endpoint.** A Payment Link supports the licensee-name custom field,
+**Stripe Payment Links rather than a session-creation endpoint.** A Payment Link supports the licensee-name custom field,
 required terms acceptance, tax ID collection, a success URL with `{CHECKOUT_SESSION_ID}`, and `client_reference_id`.
 That removes the endpoint, its rate limit, its CORS rule, and the pre-allocated order; Stripe's own IDs carry
 idempotency instead.
@@ -44,7 +44,7 @@ returns 5xx on any failure and writes D1 under unique constraints gets at-least-
 that alone. A queue arrives when a measurement calls for one.
 
 **The key format stays in `@mailwoman/core`, and the worker imports it by subpath.** Ed25519 moves from `node:crypto`
-onto WebCrypto, which Node, `workerd`, and browsers all implement, so one implementation signs and verifies everywhere.
+onto WebCrypto, which Node, `workerd`, and browsers all implement. Therefore, one implementation signs and verifies everywhere.
 The worker imports `@mailwoman/core/license/key` and `@mailwoman/core/license/register`, never the `license` barrel and
 never a module that reaches `node:fs`; a bundle test holds that line. Where a core module's implementation must differ
 per platform, its `package.json` export carries `workerd` and `browser` conditions beside `node`, the way the browser
@@ -113,7 +113,7 @@ every current browser, so there is one implementation and no condition is needed
 Signing and verifying become `async`, because WebCrypto is. Every caller changes in the same PR: `verifyConfiguredLicenseKey`
 and `buildEngineStamp`'s input, `resolveEngineStamp`, `runtimeLicenseCheck`'s observation, the `license
 keygen|issue|verify` command, and the tests. `resolveEngineStamp` already answers a promise and the doctor's runner is
-already async, so the change is in signatures, not in control flow.
+already async, so the change is in signatures rather than in control flow.
 
 **Export conditions.** The worker bundles with Wrangler's esbuild, which resolves `exports` under the `workerd`,
 `worker`, and `browser` conditions before `default`. Every core subpath the worker imports must resolve to a module
@@ -192,7 +192,7 @@ register's `active` entries. The worker's own bundle is what the bundle test abo
 
 ### Plan catalog
 
-Code, not Stripe metadata and not client input:
+Code rather than Stripe metadata and not client input:
 
 ```ts
 interface CommercialPlan {
@@ -271,7 +271,7 @@ with ids only.
 
 ## The docs site
 
-**`/license`** (`docs/src/pages/license.mdx`, already live) gains a "Buy" section with the two Payment Links, the
+**`/license`** (`docs/src/pages/license.mdx`, already live) gains a "Purchase" section with the two Payment Links, the
 "Manage billing" portal link, and a paragraph on the refresh command. The contact address stays for enterprise and
 negotiated terms.
 
@@ -320,7 +320,7 @@ Public status answers carry no reason.
 
 Carried from #2121 and kept: a distinct deploy credential and service from the tile worker; production and sandbox
 separated in every binding; secrets only through Wrangler secret bindings and never in git, build output, or logs; the
-Stripe API version and SDK pinned; exact-origin CORS and `no-store` on every token-bearing route; rate limits on claim,
+Stripe API version and SDK pinned; exact-origin CORS and `no-store` on every token-containing route; rate limits on claim,
 refresh, and status; a CI step that scans the worker bundle and its source maps for private-key markers and test-key
 prefixes; and a kill switch that stops issuance without stopping verification or refresh.
 

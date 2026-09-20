@@ -3,7 +3,7 @@
 		"Pins the streaming loader's sampled output across a refactor.",
 		"Regenerate: uv run python tests/mailwoman_train/data/test_loader_split_parity.py",
 		"Fixture: build_reference_corpus() in the test beside this file \u2014 two sources, three",
-		"  countries, unequal country and source weights, multiple row groups per slice, and every",
+		"  countries, unequal country and source weights, multiple row groups per parquet file, and every",
 		"  augmentation on, so every consumer of the shared RNG stream is live.",
 		"",
 		"rows: one seeded pass of iter_rows over the train split, each row as source|country|raw.",
@@ -11,7 +11,7 @@
 		"val_rows: the same over the val split, which takes the other branch of _raw_row_stream \u2014",
 		"  no source bucketing, and train-only policy neutralized.",
 		"encoded: one seeded pass of iter_encoded on the char path, as labels + attention per row.",
-		"source_row_counts: rows per source read from parquet footers, what the dose audit reads.",
+		"source_row_counts: rows per source read from parquet footers, what the epoch-mixture audit reads.",
 		"collate_keys: the batch keys collate emits for those examples."
 	],
 	"rows": [

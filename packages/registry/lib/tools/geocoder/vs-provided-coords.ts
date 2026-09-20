@@ -5,15 +5,15 @@
  *   Geocoder validation against provided coordinates (#619) — a free, honest, real-world accuracy
  *   eval.
  *
- *   TX HHSC's nursing-facilities registry ships a `Geo Location` (`lat,lon`) per facility alongside
+ *   TX hhsc's nursing-facilities registry ships a `Geo Location` (`lat,lon`) per facility alongside
  *   its physical address. We geocode the address with mailwoman's real parser + resolver and
  *   measure the great-circle delta to the provided point — p50 / p90, broken down by the resolution
  *   tier we assign (address_point / interpolated / admin). This is an independent check of the
- *   geocoder on real facility addresses; it does not touch the matcher.
+ *   geocoder on real facility addresses. it does not touch the matcher.
  *
  *   The provided coordinate is treated as ground truth for _this_ eval, with the honest caveat that
  *   it is itself a third-party geocode of unknown provenance — a large delta is a discrepancy to
- *   inspect, not automatically our error.
+ *   inspect rather than automatically our error.
  *
  *   Run: `mailwoman registry scorer-eval vs-provided-coords [--max 1176] [--wof <admin.db>]
  *   [--data-root <dir>] [--out-md docs/articles/evals/resolver-geo/<date>-...md]`
@@ -73,7 +73,7 @@ export interface GeocoderVsProvidedCoordsOptions {
  * GeoJSON `[longitude, latitude]`, so `31.5,-89.5` is a Mississippi row here and a South-Atlantic point there — and
  * `GeoPoint.from` maps 0,0 to null, which moves Null Island out of the measured outliers and into the skipped bucket.
  * The report below attributes part of its p99/max tail to malformed provided coordinates, so those rows have to stay
- * rejected or measured as-is, never rewritten. Strictness is the measurement, not an unfinished migration.
+ * rejected or measured as-is, never rewritten. Strictness is the measurement rather than an unfinished migration.
  */
 function parseLatLon(raw: string | undefined): { latitude: number; longitude: number } | null {
 	if (!raw) return null
@@ -87,7 +87,7 @@ function parseLatLon(raw: string | undefined): { latitude: number; longitude: nu
 }
 
 // The core nearest-rank `percentile` (q in [0,100]) replaces the retired local `quantile(sorted, q)`
-// — byte-identical semantics (floor index, clamped); `?? NaN` preserves the empty-sample behavior.
+// — byte-identical semantics (floor index, clamped); `?? NaN` keeps empty-sample behavior.
 const quantile = (xs: number[], q: number): number => percentile(xs, q * 100) ?? Number.NaN
 
 /**

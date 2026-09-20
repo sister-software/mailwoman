@@ -5,7 +5,7 @@
  *   PFX1 round-trip + doctrine tests. The doctrine cases are the point, and each pins one property
  *   the arc document earned with a measurement: a coordinate may never travel without its
  *   `radiusP95Km` (M-3's 200× spread between a US band and a GB outward code), the ancestry-only
- *   tier must survive the round trip as ABSENCE rather than `0,0` (M-2b's coordinate-less BT
+ *   tier must survive the round trip as absence rather than `0,0` (M-2b's coordinate-less BT
  *   districts), and a duplicate prefix must throw rather than silently keep one of two counts.
  */
 
@@ -38,7 +38,7 @@ const northernIreland = { placetype: "macroregion", wofID: 404_227_473, name: "N
 const nodes: PostcodePrefixNode[] = [
 	{ prefix: "SW1A", ancestors: [uk, england], lat: 51.501, lon: -0.1416, radiusP95Km: 1.23, unitCount: 232 },
 	{ prefix: "M1", ancestors: [uk, england], lat: 53.4808, lon: -2.2426, radiusP95Km: 2.5, unitCount: 1040 },
-	// The ancestry-only tier: ancestors, a count, and NO coordinate.
+	// The ancestry-only tier: ancestors, a count, and no coordinate.
 	{ prefix: "BT9", ancestors: [uk, northernIreland], unitCount: 121 },
 	// A prefix whose area straddles a border asserts the country and nothing finer.
 	{ prefix: "TD1", ancestors: [uk], lat: 55.6, lon: -2.8, radiusP95Km: 4.75, unitCount: 300 },
@@ -76,7 +76,7 @@ describe("PFX1 postcode-prefix index", () => {
 		expect(bt9.ancestors.map((a) => a.name)).toEqual(["United Kingdom", "Northern Ireland"])
 	})
 
-	it("sums unitCount across every node, coordinate-bearing or not", () => {
+	it("sums unitCount across every node, coordinate-containing or not", () => {
 		const resolver = new PostcodePrefixIndexResolver(serializePostcodePrefixIndex(header, nodes))
 		const total = [...resolver.nodes()].reduce((sum, node) => sum + node.unitCount, 0)
 
@@ -133,7 +133,7 @@ describe("PFX1 layout conformance (docs/engineering/reference/pfx1.ksy)", () => 
 		const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 		const decoder = new TextDecoder()
 
-		// magic: the ASCII bytes "PFX1"
+		// magic: the ascii bytes "PFX1"
 		expect(decoder.decode(bytes.subarray(0, 4))).toBe("PFX1")
 
 		// header_len: u4le, then header_json: UTF-8 JSON of exactly that many bytes
@@ -141,8 +141,7 @@ describe("PFX1 layout conformance (docs/engineering/reference/pfx1.ksy)", () => 
 		const parsedHeader = parseJSONStrict<PostcodePrefixHeader>(decoder.decode(bytes.subarray(8, 8 + headerLen)))
 
 		expect(parsedHeader.schemaVersion).toBe(1)
-		// The meaning-of-zero statement is mandatory: a miss against a partial register is unattested,
-		// not absent, and a reader cannot tell the two apart without it.
+		// The meaning-of-zero statement is mandatory: a miss against a partial register is unattested rather than absent, and a reader cannot tell the two apart without it.
 		expect(parsedHeader.coverageNote.length).toBeGreaterThan(0)
 
 		// ancestor_count: u4le, then the interned dictionary
@@ -151,7 +150,7 @@ describe("PFX1 layout conformance (docs/engineering/reference/pfx1.ksy)", () => 
 		o += 4
 
 		// Three distinct surfaces (UK, England, Northern Ireland) across four nodes that make seven
-		// references — the dictionary is the anti-repetition device, so it must be SHORTER than the
+		// references — the dictionary is the anti-repetition device, so it must be shorter than the
 		// reference count, which the assertion at the end of the walk states directly.
 		expect(ancestorCount).toBe(3)
 
@@ -159,7 +158,7 @@ describe("PFX1 layout conformance (docs/engineering/reference/pfx1.ksy)", () => 
 			const placetypeLen = bytes[o++]!
 			expect(decoder.decode(bytes.subarray(o, o + placetypeLen)).length).toBeGreaterThan(0)
 			o += placetypeLen
-			// f64, not u32: WOF ids exceed 2^32 and must stay exactly representable.
+			// f64 rather than u32: WOF ids exceed 2^32 and must stay exactly representable.
 			const wofID = view.getFloat64(o, true)
 			o += 8
 
@@ -227,7 +226,7 @@ describe("PFX1 layout conformance (docs/engineering/reference/pfx1.ksy)", () => 
 			o += 4
 		}
 
-		// The dictionary earns its place: more references than entries.
+		// The dictionary warrants its place: more references than entries.
 		expect(totalRefs).toBeGreaterThan(ancestorCount)
 
 		// The walk consumed the buffer exactly — no trailing bytes, no short read.
@@ -236,7 +235,7 @@ describe("PFX1 layout conformance (docs/engineering/reference/pfx1.ksy)", () => 
 
 	it("the ancestry-only tier survives as ABSENCE, never as a 0,0 sentinel", () => {
 		// A magnitude never carries its own absence: BT9's coordinate-less record must be shorter than
-		// a coordinate-bearing one by exactly the 4 + 4 bytes the two optional fields occupy.
+		// a coordinate-containing one by exactly the 4 + 4 bytes the two optional fields occupy.
 		const withCoordinate = serializePostcodePrefixIndex(header, [
 			{ prefix: "AA1", ancestors: [uk], lat: 51, lon: 0, radiusP95Km: 1, unitCount: 1 },
 		])

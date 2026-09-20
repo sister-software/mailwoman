@@ -4,7 +4,7 @@
 /**
  *   `mailwoman dev generate country-population` — regenerate `codex/country/population.ts` (the
  *   per-country population table, #1650's prominence-race fallback) from GeoNames countryInfo.txt.
- *   Network codegen; the output is committed for provenance.
+ *   Network codegen. the output is committed for provenance.
  */
 
 import { Text } from "ink"
@@ -12,7 +12,7 @@ import { Text } from "ink"
 import { type CommandSpec, CommandTaskResult, reportToStderr, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "country-population",

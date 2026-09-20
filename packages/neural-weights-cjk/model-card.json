@@ -144,7 +144,7 @@
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"notes": [
 		"One CJK package a consumer installs as a unit (#1177 Phase B): Japanese and Chinese ride one 49-label head; ja-jp and zh-cn data-only overlays follow.",
-		"Channel-free by contract (D5): no postcode-anchor, gazetteer, country or evidence channels; the graph declares only char_ids and attention_mask.",
+		"Channel-free by interface (D5): no postcode-anchor, gazetteer, country or evidence channels; the graph declares only char_ids and attention_mask.",
 		"Korean rides the same head with no new tag: 시/도 → region, 시군구 → subregion (WOF counties), 읍/면 and 법정동/리 → dependent_locality (two spans when a row carries both), 도로명 → street, 건물번호 or the lot number → house_number, 우편번호 → postcode, the building name → venue (docs/superpowers/specs/2026-09-06-kr-under-the-cjk-package.md).",
 		"Taiwan rides the same head with no new tag: 縣市 → region, 鄉鎮市區 → subregion, 村里 → dependent_locality, the street with its 段/巷/弄 → street, 號 → house_number, 之/樓 → unit. No postcode field is built (Chunghwa Post's codes carry no distribution grant).",
 		"The three registries are typed business addresses aligned exactly against the LABEL keys before training; an unaligned string became a board row, never a training row (docs/records/evals/2026-09-08-v8-cjk-regs.md)."

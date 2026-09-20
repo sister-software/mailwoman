@@ -6,21 +6,19 @@ with the class rules translated to German surface reality:
 
 - `street-particle` — the preposition-led class (Am/An der/Zur/Im/Unter den …), the DE analog of
   the FR particle class.
-- `date-name` — German date-streets (Straße des 17. Juni; digit + month names).
+- `date-name` — German date-streets (Straße des 17. Juni. digit + month names).
 - `admin-street-homonym` — data-driven per the operative definition: a street whose painter-folded
-  word n-grams hit a locality-surface-lexicon-v7 entry WOULD get locality evidence painted; that
+  word n-grams hit a locality-surface-lexicon-v7 entry would get locality evidence painted. that
   is the class the DE fold can help or hurt. (German inflection — "Berliner Straße" ≠ "berlin" —
-  keeps this class smaller than FR's; the exact-match residue is the honest population.)
-- `street-housenumber` / `alnum-housenumber` — German order, number AFTER street ("Hauptstraße
+  keeps this class smaller than FR's. the exact-match residue is the honest population.)
+- `street-housenumber` / `alnum-housenumber` — German order, number after street ("Hauptstraße
   12" / "12a").
 - `bare-street`, `bare-locality` (expect_no_street — the negative class is the point).
 
 SPLIT DISCIPLINE (recorded, weaker than FR's): the training feed's only DE street data is the
-synth-german slice (OA Berlin + Sachsen), so the board excludes state codes BE and SN entirely —
+`synth-german` source (OA Berlin + Sachsen), so the board excludes Berlin (BE) and Saxony (SN) entirely —
 GEOGRAPHIC disjointness. Ubiquitous street vocabulary (Hauptstraße) still repeats across Länder;
-the board therefore measures class behavior over shared vocabulary with held-out compositions,
-not FR-grade surface disjointness. The reserved-surface list is still emitted for future slice
-builders.
+the board therefore measures class behavior over shared vocabulary with held-out compositions rather than FR-grade surface disjointness. The reserved-surface list is still emitted for future recipes.
 
 Usage:
   python -m mailwoman_train.countries.de.fragment_board [--per-class 400] [--seed 42] \
@@ -41,7 +39,7 @@ import pyarrow.parquet as pq
 
 from ...paths import data_root_path
 
-#: Resolved when a default is needed, not at import.
+#: Resolved when a default is needed rather than at import.
 PARQUET_PARTS = ("overture", "2026-06-17.0", "addresses-de.parquet")
 LEXICON_PARTS = ("gazetteer", "locality-surface-lexicon-v7.json")
 
@@ -100,7 +98,7 @@ def main() -> None:
                     return True
         return False
 
-    # Seeded per-class reservoirs; one street surface appears at most once per class.
+    # Seeded per-class reservoirs. one street surface appears at most once per class.
     res: dict[str, list[dict[str, Any]]] = {k: [] for k in KLASSES}
     seen_counts: dict[str, int] = {k: 0 for k in KLASSES}
     seen_surfaces: dict[str, set[str]] = {k: set() for k in KLASSES}

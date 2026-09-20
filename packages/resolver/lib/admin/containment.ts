@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The admin-containment partition (#1717 stage 2) — the ONE ordering function both deciding sites
- *   call, per the #861 rule (shared constants prove nothing; the #861 parity contract diverged at
+ *   The admin-containment partition (#1717 stage 2) — the one ordering function both deciding sites
+ *   call, per the #861 rule (shared constants prove nothing. the #861 parity interface diverged at
  *   exactly the points a constant cannot express). The candidate backend partitions its row set
  *   before the limit window (so a contained candidate can reach the walk at all), and the resolver
- *   walk partitions AGAIN after its fame/anchor re-ranks (so `rankByImportance` cannot hand the top
+ *   walk partitions again after its fame/anchor re-ranks (so `rankByImportance` cannot hand the top
  *   slot back to a more-famous uncontained namesake — Richmond VA outscores Richmond, North
  *   Yorkshire on importance, and without the second partition the change loses exactly where fame
  *   disagrees with the qualifier). Two call sites, one function, one ordering.
@@ -16,23 +16,23 @@ import { firstNodeWhere, type AddressNode } from "@mailwoman/core/decoder"
 
 /**
  * Find the first non-empty region-tagged span anywhere in a tree — the qualifier the walk threads onto locality
- * lookups. Deliberately the same node the admin-coherence VERDICTS read (the first `region` node), so the change's
+ * lookups. Deliberately the same node the admin-coherence verdicts read (the first `region` node), so the change's
  * firing population and the flag's `contradicted` population are the same rows. A `region` slot can hold a country name
  * the parser mislabeled ("Moscow, Russia" parses region="Russia") — the backend's qualifier probe answers that too,
  * because containment is containment whatever tier the container sits at.
  */
 export function firstRegionQualifier(roots: readonly AddressNode[]): string | undefined {
-	return firstNodeWhere(roots, (n) => n.tag === "region" && n.value.trim().length > 0)?.value.trim()
+	return firstNodeWhere(roots, (n) => n.tag === "region" && n.value.trim())?.value.trim()
 }
 
 /**
- * Stable, TIER-SAFE partition: within each match tier, candidates the containment source vouched for (`isContained`)
- * move ahead of the rest, and BOTH groups keep their incoming relative order — the same house rules every soft ranking
+ * Stable, tier-safe partition: within each match tier, candidates the containment source vouched for (`isContained`)
+ * move ahead of the rest, and both groups keep their incoming relative order — the same house rules every soft ranking
  * key here obeys (`toponym-prior.ts`): tier-safe (a contained partial match never outranks an exact one — `isExact`
- * splits the population exactly as `rankWithinTier`'s tri-state rule does, only a stated exact tier earns the front),
- * positive-evidence-only (only a stated `true` moves a row; `false` and "never evaluated" both hold their incoming
- * rank, so an incapable backend is a no-op by construction), and stable (the backend's own ordering survives within
- * each (tier, containment) cell).
+ * splits the population exactly as `rankWithinTier`'s tri-state rule does, only a stated exact tier warrants the
+ * front), positive-evidence-only (only a stated `true` moves a row; `false` and "never evaluated" both hold their
+ * incoming rank, so an incapable backend is a no-op by construction), and stable (the backend's own ordering survives
+ * within each (tier, containment) cell).
  *
  * Implemented with the slot idiom (`reorderMeasured`'s mechanics): each tier's members permute only among the positions
  * that tier already occupies, so a tier-interleaved list — the walk's no-importance path never regrouped tiers — cannot

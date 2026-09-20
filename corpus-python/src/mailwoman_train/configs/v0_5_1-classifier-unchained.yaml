@@ -60,8 +60,8 @@ model:
   crf_loss_weight: 0.0
   # Class weights: penalize hallucination of rare tags (dependent_locality, subregion)
   # and pull attention toward underperforming coarse tags (country, locality).
-  # Weights below 1.0 = model pays LESS for mislabeling that tag (common tags it's already good at).
-  # Weights above 1.0 = model pays MORE (rare/hallucinated tags it needs to stop emitting).
+  # Weights below 1.0 = model pays less for mislabeling that tag (common tags it's already good at).
+  # Weights above 1.0 = model pays more (rare/hallucinated tags it needs to stop emitting).
   class_weights:
     O: 0.5
     B-country: 2.0

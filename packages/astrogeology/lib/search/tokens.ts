@@ -10,7 +10,7 @@
 import type { BuildableBodyID } from "#bodies"
 
 /**
- * What a suggestion carries back: enough to place AND FRAME the feature without a second lookup.
+ * What a suggestion carries back: enough to place and frame the feature without a second lookup.
  *
  * `diameterKm` is what a camera needs to choose a zoom, and its absence is not a neutral gap: a framing function given
  * no diameter falls to its smallest-feature branch, so every search result and every deep link framed a 4,000 km canyon
@@ -24,7 +24,7 @@ import type { BuildableBodyID } from "#bodies"
  * index signature that makes an optional property assignable to one. An interface fails to assign once `diameterKm` is
  * present.
  */
-// oxlint-disable-next-line typescript/consistent-type-definitions -- see the note above; an interface does not assign to `JSONValue`
+// oxlint-disable-next-line typescript/consistent-type-definitions -- see the note above. an interface does not assign to `JSONValue`
 export type NomenclatureSearchPayload = {
 	id: string
 	body: BuildableBodyID
@@ -44,5 +44,5 @@ export function nomenclatureTokens(name: string): string[] {
 		.toLowerCase()
 		.split(/[\s-]+/u)
 		.map((token) => token.replaceAll(/[^\p{L}\p{N}]/gu, ""))
-		.filter((token) => token.length > 0)
+		.filter((token) => token.length)
 }

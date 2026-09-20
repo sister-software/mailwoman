@@ -2,7 +2,7 @@
 
 This is where the soft-feed channels are assembled. Each channel is optional and absent by
 default, so a row encoded without one is byte-identical to what the pre-channel recipe produced.
-Every channel projects onto the SAME pieces the labels do, and pads to the same width.
+Every channel projects onto the same pieces the labels do, and pads to the same width.
 """
 
 from __future__ import annotations
@@ -56,7 +56,7 @@ def fit_channel(
 ) -> tuple[list[list[float]], list[float]]:
     """Truncate a painted channel to `max_length` and zero-pad it to the width the labels use.
 
-    Every channel lands on the SAME pieces the labels do, so it must end the same width. A channel
+    Every channel lands on the same pieces the labels do, so it must end the same width. A channel
     padded to a different one produces a tensor the collate cannot stack, which surfaces as a shape
     error somewhere else entirely.
     """
@@ -121,18 +121,18 @@ def encode_row(
     THE SPANS and the token-quantized path is skipped — intra-span punctuation pieces get the
     span's label, which the token path structurally cannot express. Rows without spans use the
     legacy ``tokens``/``labels`` path unchanged, so the loader reads both corpus generations
-    during the transition; the token path is deleted once v0.5.0 lands. This is one storage
-    format change in flight, not a permanent dual-format fork.
+    during the transition. the token path is deleted once v0.5.0 lands. This is one storage
+    format change in flight rather than a permanent dual-format fork.
 
     When ``anchor_lookup`` is supplied (the postcode-anchor pilot, #239/#240), also returns
     ``anchor_features`` ``(max_length, ANCHOR_FEATURE_DIM)`` and ``anchor_confidence``
-    ``(max_length,)``, projected onto the SAME pieces as the labels (so a postcode anchor lands on
+    ``(max_length,)``, projected onto the same pieces as the labels (so a postcode anchor lands on
     exactly its sub-tokens) and zero-padded. Absent → those keys are omitted (back-compat). The
     anchor follows the label source: spans present → the postcode range comes off the spans.
 
     When ``gazetteer_lexicon`` is supplied (the gazetteer anchor, #464), also returns
     ``gazetteer_features`` ``(max_length, lexicon.feature_dim)`` and ``gazetteer_confidence``
-    ``(max_length,)`` — candidate-tag-set clues painted from the RAW SURFACE only (never labels;
+    ``(max_length,)`` — candidate-tag-set clues painted from the RAW SURFACE only (never labels.
     identical computation at train and inference, and identical under both label sources).
     Absent → omitted (back-compat).
     """
@@ -175,8 +175,8 @@ def encode_row(
     if gazetteer_lexicon is not None:
         gfeats, gconfs = realign_gazetteer_to_pieces(raw, list(spans), gazetteer_lexicon)
         # Train-time channel choreography (#464): zero the clue adjacent to postcode-anchor hits so
-        # the model never learns the biased region->postcode CRF transition. Keyed off the SAME anchor
-        # confidence inference uses (consistent train/inference), which is why this block runs AFTER the
+        # the model never learns the biased region->postcode CRF transition. Keyed off the same anchor
+        # confidence inference uses (consistent train/inference), which is why this block runs after the
         # anchor's and reads the confidence out of `out`. No-op without the anchor channel.
         if gazetteer_choreography and "anchor_confidence" in out:
             gfeats, gconfs = suppress_gazetteer_near_postcode(
@@ -186,12 +186,12 @@ def encode_row(
 
     if country_lexicon is not None:
         # Country-lexicon channel (#1104): per-piece [country_surface, country_ambiguous] painted from
-        # the RAW SURFACE only (never labels; identical at train + inference). Independent of the
+        # the RAW surface only (never labels. identical at train + inference). Independent of the
         # near-postcode gazetteer choreography — a trailing "…12345 USA" keeps its country clue.
         put("country", realign_country_to_pieces(raw, list(spans), country_lexicon), COUNTRY_FEATURE_DIM)
 
     if street_type_lexicon is not None:
-        # Street-type channel (P-A / Option A): per-piece street_type clue painted from the RAW SURFACE
+        # Street-type channel (P-A / Option A): per-piece street_type clue painted from the RAW surface
         # by the codex street-type lexicon. Same schema as the gazetteer lexicon, so it reuses the same
         # generic realign. Independent of the near-postcode choreography (a street-type word is a street
         # fact wherever it sits). Positive-evidence-only — absence paints zero.
@@ -200,7 +200,7 @@ def encode_row(
 
     if locality_surface_lexicon is not None:
         # Locality-surface channel (v3.16.0 evidence bundle): per-piece [locality, locality_homograph]
-        # painted from the RAW SURFACE. Same lexicon schema as the gazetteer → same generic realign.
+        # painted from the RAW surface. Same lexicon schema as the gazetteer → same generic realign.
         painted = realign_gazetteer_to_pieces(raw, list(spans), locality_surface_lexicon)
         put("locality_surface", painted, locality_surface_lexicon.feature_dim)
     return out

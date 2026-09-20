@@ -1,6 +1,6 @@
 """What a staged Japanese corpus must contain before a run can read it.
 
-The launcher stages files; this says whether what landed is usable. Japan's base corpus is shared:
+The launcher stages files. this says whether what landed is usable. Japan's base corpus is shared:
 the kana build is the base the CJK overlay's MANIFEST points back at, so a run that stages only the
 overlay still needs these parts already on the volume.
 """

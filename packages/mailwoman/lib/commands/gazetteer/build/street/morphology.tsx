@@ -9,10 +9,12 @@
  *   per-locale FST dir. See `mailwoman/gazetteer-pipeline/street-morphology.ts` for the rationale.
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
+
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "street-morphology",
@@ -26,27 +28,22 @@ export const spec = {
 			type: "string",
 			description: "Comma-separated locale subfolders (default: every locale with a street_types.txt)",
 		},
-		output: {
+		out: {
 			type: "string",
+			deprecatedName: "output",
 			description: "Output path (default: $MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin)",
 		},
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	dictionaries?: string
-	locales?: string
-	output?: string
-}
-
-const GazetteerBuildStreetMorphology: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildStreetMorphology: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildStreetMorphologyArtifact } = await import("#gazetteer/street-morphology")
 
 		const built = await buildStreetMorphologyArtifact({
 			dictionariesDir: options.dictionaries,
-			locales: options.locales === undefined ? undefined : splitList(options.locales),
-			output: options.output,
+			locales: options.locales === undefined ? undefined : extractDelimited(options.locales),
+			output: options.out,
 			onProgress: (line) => console.error(line),
 		})
 

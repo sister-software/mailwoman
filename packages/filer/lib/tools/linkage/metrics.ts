@@ -2,37 +2,37 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Pairwise grouping precision/recall/F1 (§7-3b decision 4) — scores a PREDICTED "same group"
- *   judgment against a TRUTH partition over the same id universe. Built for {@linkcode filerLinkageEval}
+ *   Pairwise grouping precision/recall/F1 (§7-3b decision 4) — scores a predicted "same group"
+ *   judgment against a truth partition over the same id universe. Built for {@linkcode filerLinkageEval}
  *   (`linkage-eval.ts`), which scores the corporate-family membership a `filer.db` build asserts
  *   (`filer_family`) against held-out `holdingCompany` truth. The types here are generic — nothing below is
  *   filer-specific — because the same shape ("does this grouping recover a held-out one?") recurs anywhere
  *   this SDK adds a linkage eval.
  *
- *   **Why pairwise, not a group-alignment metric (B-cubed, the Hungarian algorithm):** a "positive" here is
- *   an unordered PAIR of ids judged to belong to the same group — true/false positive/negative are counted
+ *   **Why pairwise rather than a group-alignment metric (B-cubed, the Hungarian algorithm):** a "positive" here is
+ *   an unordered pair of ids judged to belong to the same group — true/false positive/negative are counted
  *   over pairs, never over groups, so no group-to-group correspondence ever has to be chosen. That matters
  *   for {@linkcode filerLinkageEval}'s use: a predicted family's id is derived from the canonicalized
  *   parent name, so there is no correspondence problem to solve and no alignment step to get wrong — the
  *   only question that matters is "are these two records correctly judged together or apart," which is
- *   well-defined over pairs without an alignment step. (The scorecard states the same rationale; keep the
+ *   well-defined over pairs without an alignment step. (The scorecard states the same rationale. keep the
  *   two in step — a module and its published page disagreeing about why a metric was chosen is its own
  *   defect.) `registry/tools/train-gbt.ts`'s (unexported) `clusterF1` makes the identical pairwise choice
  *   for an analogous problem (does `resolveEntities`' clustering recover the true NPI grouping?) —
- *   evidence pairwise is the right shape for THIS kind of experiment too, not just a borrowed convenience.
+ *   evidence pairwise is the right shape for this kind of experiment too rather than just a borrowed convenience.
  *   It isn't reused here: it hard-codes a `{records}`/NPI-shaped input, and its zero-denominator
  *   convention is one this module deliberately replaces — see below.
  *
- *   **Zero-denominator convention (deliberately NOT `clusterF1`'s):** `clusterF1` defaults an empty
+ *   **Zero-denominator convention (deliberately not `clusterF1`'s):** `clusterF1` defaults an empty
  *   denominator to `0` for both precision and recall, silently. This module reports `null` instead — "the
  *   prediction made no positive calls at all" and "every positive call the prediction made was wrong" are
  *   different, honest facts, and collapsing them into the same `0` would misreport a linkage that
- *   predicted NOTHING (this module's own primary use case — see {@linkcode filerLinkageEval}'s scorecard)
+ *   predicted nothing (this module's own primary use case — see {@linkcode filerLinkageEval}'s scorecard)
  *   as indistinguishable from one that confidently predicted the wrong thing everywhere.
  *
  *   **`f1` propagates that `null` rather than collapsing it.** `f1` is the one field a reader quotes as
  *   the headline, so an `f1: 0` fallback whenever `truePositivePairs === 0` throws the distinction above
- *   away again at exactly the point it matters most. Worked example: a PERFECT prediction over an
+ *   away again at exactly the point it matters most. Worked example: a perfect prediction over an
  *   all-singleton truth partition (nothing to merge, nothing merged) has no defined precision and no
  *   defined recall, so an `f1` of `0` would be arithmetically indistinguishable from a linkage that got
  *   every call wrong. So `f1` is `null` whenever
@@ -43,20 +43,20 @@
  */
 
 /**
- * {@linkcode scorePairwiseGrouping}'s result. Every count is over UNORDERED pairs drawn from the `ids` passed in — see
- * the module docstring for why pairs, not aligned clusters.
+ * {@linkcode scorePairwiseGrouping}'s result. Every count is over unordered pairs drawn from the `ids` passed in — see
+ * the module docstring for why pairs rather than aligned clusters.
  */
 export interface PairwiseGroupingScore {
 	/**
-	 * Pairs the truth partition puts together AND the prediction puts together.
+	 * Pairs the truth partition puts together and the prediction puts together.
 	 */
 	truePositivePairs: number
 	/**
-	 * Pairs the prediction puts together that the truth partition does NOT — a false merge.
+	 * Pairs the prediction puts together that the truth partition does not — a false merge.
 	 */
 	falsePositivePairs: number
 	/**
-	 * Pairs the truth partition puts together that the prediction does NOT — a missed link.
+	 * Pairs the truth partition puts together that the prediction does not — a missed link.
 	 */
 	falseNegativePairs: number
 	/**
@@ -82,9 +82,9 @@ export interface PairwiseGroupingScore {
 	 */
 	recall: number | null
 	/**
-	 * `null` whenever `precision` or `recall` is `null` — an F1 over an undefined component is undefined, not zero (see
-	 * the module docstring's worked example). `0` when both are defined and `truePositivePairs === 0` (the harmonic mean
-	 * of two zeros, reported as the `0` it is rather than `NaN`). Otherwise the ordinary harmonic mean of
+	 * `null` whenever `precision` or `recall` is `null` — an F1 over an undefined component is undefined rather than zero
+	 * (see the module docstring's worked example). `0` when both are defined and `truePositivePairs === 0` (the harmonic
+	 * mean of two zeros, reported as the `0` it is rather than `NaN`). Otherwise the ordinary harmonic mean of
 	 * `precision`/`recall`.
 	 */
 	f1: number | null
@@ -93,13 +93,13 @@ export interface PairwiseGroupingScore {
 /**
  * Score a `predictedSame` pairwise predicate against a `truthSame` one, over every unordered pair drawn from `ids`.
  * Both predicates are called once per pair (`ids.length` choose 2 — O(n²)) — fine for an eval-scale id universe (this
- * SDK's callers run this over tens of FRNs, not millions); not intended for production-scale record linkage.
+ * SDK's callers run this over tens of FRNs rather than millions); not intended for production-scale record linkage.
  *
- * Accepting predicates rather than two group-id maps is deliberate: a TRUTH grouping is usually a clean partition (one
- * group id per id — see {@linkcode groupPredicateFromMap}), but a PREDICTED grouping need not be a partition at all.
- * {@linkcode filerLinkageEval} is the worked case: a registrant can belong to SEVERAL corporate families at once
+ * Accepting predicates rather than two group-id maps is deliberate: a truth grouping is usually a clean partition (one
+ * group id per id — see {@linkcode groupPredicateFromMap}), but a predicted grouping need not be a partition at all.
+ * {@linkcode filerLinkageEval} is the worked case: a registrant can belong to several corporate families at once
  * (`filer_family` admits more than one membership per node), and two registrants are predicted-same when their family
- * SETS intersect — an overlap relation, not an equivalence class. A single group-id map cannot express that; a
+ * sets intersect — an overlap relation rather than an equivalence class. A single group-id map cannot express that. a
  * predicate can.
  */
 export function scorePairwiseGrouping<ID>(
@@ -137,8 +137,8 @@ export function scorePairwiseGrouping<ID>(
 	const precision = predictedPositivePairs > 0 ? truePositivePairs / predictedPositivePairs : null
 	const recall = truthPositivePairs > 0 ? truePositivePairs / truthPositivePairs : null
 
-	// `null` in, `null` out — never `0`. `0` is reserved for the case both components are DEFINED and the
-	// prediction still recovered nothing, which is a measurement; an undefined component is the absence of one.
+	// `null` in, `null` out — never `0`. `0` is reserved for the case both components are defined and the
+	// prediction still recovered nothing, which is a measurement. an undefined component is the absence of one.
 	let f1: number | null = null
 
 	if (precision !== null && recall !== null) {

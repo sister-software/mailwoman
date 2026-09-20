@@ -3,7 +3,7 @@
 
 /**
  *   Unit half of the input-field regression: the edits, given the keys. The other half — that a terminal's
- *   alt+backspace ARRIVES as these keys at all — is `input.pty.test.ts`, and neither test can do the other's job.
+ *   alt+backspace arrives as these keys at all — is `input.pty.test.ts`, and neither test can do the other's job.
  */
 
 import type { Key } from "ink"
@@ -51,9 +51,9 @@ describe("wordStart", () => {
 	})
 
 	it("is whitespace-delimited, so punctuation inside a token is not a boundary", () => {
-		// The addresses this field edits are full of commas; stopping at one would make ⌥⌫ take half a word.
+		// The addresses this field edits are full of commas. stopping at one would make ⌥⌫ take half a word.
 		expect(wordStart("3215 SE Clinton St, Portland", 28)).toBe(20)
-		// A trailing space is skipped first, so this takes `St,` whole — comma included, not stopping before it.
+		// A trailing space is skipped first, so this takes `St,` whole — comma included rather than stopping before it.
 		expect(wordStart("3215 SE Clinton St, ", 20)).toBe(16)
 	})
 })
@@ -75,7 +75,7 @@ describe("applyKey", () => {
 
 	it("forward-deletes on Delete, leaving the cursor where it was", () => {
 		// Ink names the two apart and so does the keyboard: `backspace` is the key above Enter, `delete` is the
-		// navigation cluster's forward Delete (ESC[3~). Folding them together made Delete eat the character BEHIND
+		// navigation cluster's forward Delete (ESC[3~). Folding them together made Delete eat the character behind
 		// the cursor.
 		expect(applyKey({ value: "hello world", cursor: 5 }, "", key({ delete: true }))).toEqual({
 			value: "helloworld",
@@ -87,7 +87,7 @@ describe("applyKey", () => {
 	})
 
 	it("deletes the word before the cursor on ctrl+W, which Ink delivers as the letter w", () => {
-		// THE BUG: Ink resolves ctrl+letter to `input: "w"` with `key.ctrl`. A handler that only guards ctrl+C
+		// the BUG: Ink resolves ctrl+letter to `input: "w"` with `key.ctrl`. A handler that only guards ctrl+C
 		// falls through to its insert branch and types the letter.
 		expect(applyKey(AT_END("hello world"), "w", key({ ctrl: true }))).toEqual({ value: "hello ", cursor: 6 })
 	})
@@ -130,21 +130,21 @@ describe("applyKey", () => {
 	})
 
 	it("steps and deletes by whole codepoints, not UTF-16 units", () => {
-		// "St 🏠" is 6 UTF-16 units: the house is a surrogate PAIR. Stepping by one unit leaves a lone surrogate —
+		// "St 🏠" is 6 UTF-16 units: the house is a surrogate pair. Stepping by one unit leaves a lone surrogate —
 		// a string that renders as `�` and that the tokenizer never saw in training.
 		const HOUSE = "St 🏠"
 
 		expect(HOUSE).toHaveLength(5)
 		expect(applyKey(AT_END(HOUSE), "", key({ backspace: true }))).toEqual({ value: "St ", cursor: 3 })
 
-		// The arrow lands BEFORE the pair, never between its halves.
+		// The arrow lands before the pair, never between its halves.
 		expect(applyKey(AT_END(HOUSE), "", key({ leftArrow: true })).cursor).toBe(3)
 		expect(applyKey({ value: HOUSE, cursor: 3 }, "", key({ rightArrow: true })).cursor).toBe(5)
 
 		// Forward Delete takes the whole codepoint too.
 		expect(applyKey({ value: HOUSE, cursor: 3 }, "", key({ delete: true }))).toEqual({ value: "St ", cursor: 3 })
 
-		// A cursor handed in mid-pair snaps to the pair's START (offset 4 → 3, the way a browser refuses to put a
+		// A cursor handed in mid-pair snaps to the pair's start (offset 4 → 3, the way a browser refuses to put a
 		// caret inside a grapheme) and the edit applies from there — the space goes, the house survives intact.
 		expect(applyKey({ value: HOUSE, cursor: 4 }, "", key({ backspace: true }))).toEqual({
 			value: "St🏠",
@@ -153,14 +153,14 @@ describe("applyKey", () => {
 	})
 
 	it("keeps a pasted multi-line address instead of dropping the whole paste", () => {
-		// A paste arrives as ONE `input`. Rejecting it because it contains a newline dropped the address on the
+		// A paste arrives as one `input`. Rejecting it because it contains a newline dropped the address on the
 		// floor with no feedback — the field simply didn't respond.
 		expect(applyKey({ value: "", cursor: 0 }, "12 Rue de Rivoli\n75001 Paris", key())).toEqual({
 			value: "12 Rue de Rivoli 75001 Paris",
 			cursor: 28,
 		})
 
-		// CRLF collapses to ONE space, and a stray control character inside the run is dropped, not the run.
+		// crlf collapses to one space, and a stray control character inside the run is dropped rather than the run.
 		expect(applyKey({ value: "", cursor: 0 }, "a\r\nb\u0000c", key())).toEqual({ value: "a bc", cursor: 4 })
 	})
 

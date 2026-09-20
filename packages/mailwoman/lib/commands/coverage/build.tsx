@@ -6,8 +6,10 @@
  *   (PMTiles) from the per-state address-point (+ interpolation) databases. See `coverage-core.ts` for the
  *   pipeline + fog model. Publish the result with `mailwoman tiles publish`.
  *
- *   Maintainer-only: needs the local databases + `tippecanoe` on PATH + the @duckdb/node-api dev dep.
+ *   Maintainer-only: needs the local databases + `tippecanoe` on path + the @duckdb/node-api dev dep.
  */
+
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -18,20 +20,32 @@ import { useState } from "react"
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
-	splitList,
+	type CommandComponent,
 	splitNumberList,
 	useCommandTask,
 } from "#cli-kit"
+
+/**
+ * The coarsest and finest H3 resolutions the library defines. A cell index outside 0–15 is not a
+ * resolution the H3 bindings can address, so this bound is the format's rather than a tuning choice.
+ */
+const MAX_H3_RESOLUTION = 15
+
+/**
+ * The deepest zoom a tile pyramid addresses. Tippecanoe and the Web Mercator tile scheme both stop at
+ * 22, so a higher value names a tile no renderer will request.
+ */
+const MAX_TILE_ZOOM = 22
 
 const h3 = (description: string, defaultValue: number) =>
 	({
 		type: "number",
 		default: defaultValue,
-		validate: (value: number) => Number.isInteger(value) && value >= 0 && value <= 15,
-		validationMessage: `${description} must be an integer from 0 to 15.`,
+		validate: (value: number) => Number.isInteger(value) && value >= 0 && value <= MAX_H3_RESOLUTION,
+		validationMessage: `${description} must be an integer from 0 to ${MAX_H3_RESOLUTION}.`,
 		description,
 	}) as const
+
 const unit = (description: string, defaultValue: number) =>
 	({
 		type: "number",
@@ -40,6 +54,13 @@ const unit = (description: string, defaultValue: number) =>
 		validationMessage: `${description} must be between 0 and 1.`,
 		description,
 	}) as const
+
+/**
+ * The command-line interface the filesystem command router reads for `mailwoman coverage build`.
+ *
+ * Its option names and descriptions are the source the CLI reference page is generated from, so a
+ * rename here moves `docs/articles/developers/reference/cli.mdx` and the docs check refuses the drift.
+ */
 export const spec = {
 	name: "build",
 	description: "Build address-coverage PMTiles.",
@@ -81,7 +102,7 @@ export const spec = {
 		"max-zoom": {
 			type: "number",
 			default: 12,
-			validate: (value) => Number.isInteger(value) && value >= 0 && value <= 22,
+			validate: (value) => Number.isInteger(value) && value >= 0 && value <= MAX_TILE_ZOOM,
 			description: "Max zoom",
 		},
 		out: {
@@ -98,33 +119,10 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	states: string
-	excludeStates: string
-	dataRoot: string
-	interp: boolean
-	interpRoot: string
-	fineRes: number
-	rollup: string
-	domainRes: number
-	saturation: number
-	satSeg: number
-	interpWeight: number
-	optimisticGamma: number
-	postcode: boolean
-	geonamesPostal: string
-	wofDB: string
-	postcodeCeiling: number
-	salienceFloor: number
-	postcodeExclude: string
-	maxZoom: number
-	out: string
-	keepNdjson: boolean
-	threads?: number
-}
 
-const CoverageBuild: ParsedCommandComponent<Options> = ({ options }) => {
+const CoverageBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const [stage, setStage] = useState<{ name: string; message: string }>()
+
 	const state = useCommandTask(async () => {
 		const { buildCoverageTiles } = await import("#coverage/core")
 
@@ -133,7 +131,7 @@ const CoverageBuild: ParsedCommandComponent<Options> = ({ options }) => {
 		return buildCoverageTiles(
 			{
 				states: options.states,
-				excludeStates: splitList(options.excludeStates),
+				excludeStates: extractDelimited(options.excludeStates),
 				dataRoot: options.dataRoot,
 				interpRoot: options.interp ? options.interpRoot : null,
 				fineRes: options.fineRes,
@@ -147,7 +145,7 @@ const CoverageBuild: ParsedCommandComponent<Options> = ({ options }) => {
 				wofDB: options.postcode ? options.wofDB : null,
 				postcodeCeiling: options.postcodeCeiling,
 				salienceFloor: options.salienceFloor,
-				postcodeExcludeCountries: splitList(options.postcodeExclude),
+				postcodeExcludeCountries: extractDelimited(options.postcodeExclude),
 				tileMaxZoom: options.maxZoom,
 				out: options.out,
 				keepNdjson: options.keepNdjson,

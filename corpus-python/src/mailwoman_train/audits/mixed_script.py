@@ -1,7 +1,7 @@
 """Audit script transitions inside gold address components.
 
 Row-level script diversity is not the same capability as a bilingual or mixed-script
-component. ``Rinrin, 高山市`` contains multiple scripts across components; a venue such as
+component. ``Rinrin, 高山市`` contains multiple scripts across components. a venue such as
 ``Four Seasons Inn四季酒家`` changes script inside one semantic span. This audit keeps those
 populations separate and reports the latter by component tag, country, and source.
 
@@ -66,7 +66,7 @@ _SCRIPT_MARKERS = (
 
 
 def character_script(char: str) -> str | None:
-    """Return a strong writing-system label; ignore digits, punctuation, marks, and symbols."""
+    """Return a strong writing-system label. ignore digits, punctuation, marks, and symbols."""
     if not unicodedata.category(char).startswith("L"):
         return None
     name = unicodedata.name(char, "")
@@ -247,8 +247,8 @@ def main() -> None:
         manifest_path = corpus_dir / "MANIFEST.json"
         if mappings and manifest_path.exists():
             manifest = json.loads(manifest_path.read_text())
-            for slice in manifest.get("slices", []):
-                slice["path"] = _remap(slice["path"], mappings)
+            for entry in manifest.get("slices", []):
+                entry["path"] = _remap(entry["path"], mappings)
             stream_dir = Path(temp)
             (stream_dir / "MANIFEST.json").write_text(json.dumps(manifest))
 

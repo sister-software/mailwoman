@@ -6,7 +6,7 @@
  *   can diff two oracles against each other and against the parser without re-learning a response
  *   schema per provider.
  *
- *   It is deliberately built out of the repo's OWN types rather than a bespoke one:
+ *   It is deliberately built out of the repo's own types rather than a bespoke one:
  *   {@linkcode PostalAddress} from `@mailwoman/record` (which carries a `ComponentTag`-keyed
  *   {@linkcode ComponentDict}, the formatter's `canonicalKey`, and an `AddressGeocode`), plus a
  *   {@linkcode PostalAddressID} from `@mailwoman/address-id`. That is what makes the oracle's output
@@ -14,10 +14,10 @@
  *   whose assertion fields are `expectComponents` (a tag→value map), `expectLat`/`expectLon`,
  *   `expectToleranceM` and `expectTier` — the same four things, under the same vocabulary.
  *
- *   ORACLE, NOT TRUTH. Nothing here is authoritative. Google and the Census Bureau disagree with each
+ *   oracle rather than truth. Nothing here is authoritative. Google and the Census Bureau disagree with each
  *   other, with the postal authority, and with the address as written, and both will confidently
- *   return a coordinate for an address that does not exist. The value of running one is that a HUMAN
- *   authoring a gauntlet case gets a second opinion with provenance attached, not that a case can be
+ *   return a coordinate for an address that does not exist. The value of running one is that a human
+ *   authoring a gauntlet case gets a second opinion with provenance attached rather than that a case can be
  *   auto-generated. {@linkcode OracleGeocodeResult.raw} exists for exactly this reason: whenever the
  *   component mapping had to make a judgement call (see `google-parser.ts`'s region-form note), the
  *   provider's untouched answer is still in hand.
@@ -43,7 +43,7 @@ export const OracleProvider = {
 	 */
 	Google: "google",
 	/**
-	 * US Census Bureau geocoder (`geocoding.geo.census.gov`). US only, free, TIGER-derived.
+	 * US Census Bureau geocoder (`geocoding.geo.census.gov`). US only, free, tiger-derived.
 	 */
 	Census: "census",
 } as const
@@ -86,7 +86,7 @@ export interface OracleGeocodeResult<Raw = unknown> {
 	partialMatch: boolean
 	/**
 	 * The provider's own stable identifier for the matched place, when it has one: a Google Place ID, or `null` for the
-	 * Census geocoder (whose `tigerLine.tigerLineId` identifies a street SEGMENT, not a place, and is carried on
+	 * Census geocoder (whose `tigerLine.tigerLineId` identifies a street segment rather than a place, and is carried on
 	 * {@linkcode OracleGeocodeResult.raw} instead).
 	 */
 	placeID: string | null
@@ -105,7 +105,7 @@ export interface OracleGeocodeResult<Raw = unknown> {
  * A region value narrowed to something usable as {@linkcode createPostalAddressID}'s `state` prefix, or `undefined` so
  * that function falls back to its own derivation.
  *
- * `createPostalAddressID` interpolates `state` into the key WITHOUT validating it, while `parsePostalAddressID` and
+ * `createPostalAddressID` interpolates `state` into the key without validating it, while `parsePostalAddressID` and
  * `isPostalAddressID` both require `^[a-z]{2}\.`. Handing it `Île-de-France` therefore mints an ID that the package's
  * own parser rejects — and an ID that cannot be read back is strictly worse than one that says `xx`. Only a bare
  * two-letter code passes (`NY` yes, `NSW` correctly no).

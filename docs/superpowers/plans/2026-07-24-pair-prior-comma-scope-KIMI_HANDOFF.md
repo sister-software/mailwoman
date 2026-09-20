@@ -84,7 +84,7 @@ names are BUILT from real place names, so naive windows hit real index pairs):**
 - `Queens Park Academy, Queens Park Academy Chestnut Avenue, Chester, MK40 4HA` — same shape
   inside a street span
 - `Cosheston Voluntary School, Cosheston Vc Primary School, Pembroke Dock, SA72 4UN` —
-  "Cosheston" is a genuine hamlet name occurring inside two venue spans
+  "Cosheston" is an actual hamlet name occurring inside two venue spans
 
 **Correctly untouched (both modes) — no-dep-loc golden rows:**
 
@@ -112,10 +112,10 @@ names are BUILT from real place names, so naive windows hit real index pairs):**
 
 1. **Boundary hypotheses without commas.** We have non-comma boundary sources at decode time: the
    model's own first-pass BIO span predictions, capitalization runs, the `phrase-grouper` stage's
-   proposed units, postcode/house-number anchors (both ends of a GB address are usually
+   proposed units, postcode/house-number anchors (both ends of a GB address are typically
    unambiguous). Is a **two-pass decode** — parse once unbiased, derive pseudo-segments from the
    predicted span boundaries, then probe the prior segment-wise against those and re-decode —
-   principled, or does it just launder window mode's FP problem through the model's own (weak on
+   principled, or does itlaunder window mode's FP problem through the model's own (weak on
    GB) boundaries? Any known-good pattern from constrained decoding literature for this
    "self-derived structure" loop?
 2. **Positional asymmetry.** In register-style GB addresses the dependent locality sits
@@ -123,7 +123,7 @@ names are BUILT from real place names, so naive windows hit real index pairs):**
    string. Window mode currently probes all positions uniformly. How would you exploit
    position-in-sequence (e.g., only probe windows in the suffix region after the last
    street-suffix token / before the postcode anchor) without breaking the "model owns ambiguity"
-   rule for genuinely odd orderings?
+   rule for in fact odd orderings?
 3. **Index-side specificity weighting.** 19,209 pairs, flat δ. Children like "Queens Park" are
    massively venue-ambiguous; children like "Holland Fen" are nearly unambiguous. Would a
    per-pair δ scaled by child-name specificity (document frequency of the child string in venue
@@ -133,7 +133,7 @@ names are BUILT from real place names, so naive windows hit real index pairs):**
 4. **Structural vetoes stronger than a marker list.** The confound windows are almost always
    INSIDE a span the model itself labels venue/street/house_number as-written. Veto any window
    that overlaps a first-pass span whose argmax is in `{venue, street, unit, house_number}` at
-   confidence above a threshold? (Distinct from Q1: this uses the first pass only as a veto, not
+   confidence above a threshold? (Distinct from Q1: this uses the first pass only as a veto rather than
    as a segmenter — failure mode analysis welcome.)
 5. **The determiner/shape cue.** FSA confounds skew toward `The X Arms`, `X Academy`, `X Cafe` —
    head-noun-final English compounds. Is a lightweight shape check (definite article prefix,

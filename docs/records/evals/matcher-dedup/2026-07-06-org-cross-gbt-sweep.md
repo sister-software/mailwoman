@@ -1,6 +1,6 @@
 # #655 — cross-source threshold sweep: can a re-thresholded GBT beat FS?
 
-_TX-scoped, ≤2000 rows/source (NPPES org + TX HHSC nursing = eligibility-ish; FCC-RHC = funding), geocoded once then resolved per arm. **Phone-corrob** = of the cross-source entities whose records carry a phone in ≥2 different sources, the fraction where those phones MATCH — a label-free precision proxy (phone is not the join key). Higher cross-source + higher phone-corrob = better._
+_TX-scoped, ≤2000 rows/source (NPPES org + TX HHSC nursing = eligibility-ish; FCC-RHC = funding), geocoded once then resolved per arm. **Phone-corrob** = of the cross-source entities whose records carry a phone in ≥2 different sources, the fraction where those phones match — a label-free precision proxy (phone is not the join key). Higher cross-source + higher phone-corrob = better._
 
 | arm              |          threshold | total entities | cross-source links | triple-source | phone-corrob (of checkable) |
 | ---------------- | -----------------: | -------------: | -----------------: | ------------: | --------------------------- |
@@ -24,7 +24,7 @@ _TX-scoped, ≤2000 rows/source (NPPES org + TX HHSC nursing = eligibility-ish; 
 
 FS baseline: **27** cross-source links (0 triple), phone-corrob 56% (15/27).
 
-**No GBT threshold dominates FS** — none matches FS's 27 cross-source links at ≥ its 56% phone-corrob without over-merging (entity count collapsing below 3019). At its dedup threshold the GBT finds FEWER cross-source links than FS; lowering the threshold to admit more only over-merges (the over-merge features REPLACE the FS weight, so true cross-source pairs share a logit band with genuine over-merges). Threshold alone (option 1) is **INSUFFICIENT** — FS stays pinned (correct + best-precision for this objective); a cross-objective retrain (option 2), blocked on cross-source labels, is the only change. See #655.
+**No GBT threshold dominates FS** — none matches FS's 27 cross-source links at ≥ its 56% phone-corrob without over-merging (entity count collapsing below 3019). At its dedup threshold the GBT finds FEWER cross-source links than FS; lowering the threshold to admit more only over-merges (the over-merge features REPLACE the FS weight, so true cross-source pairs share a logit band with actual over-merges). Threshold alone (option 1) is **INSUFFICIENT** — FS stays pinned (correct + best-precision for this objective); a cross-objective retrain (option 2), blocked on cross-source labels, is the only change. See #655.
 
 ## Candidate verdict (org-cross-GBT, added at review — the run predates the harness's candidate-verdict wiring)
 
@@ -36,6 +36,5 @@ No dedup-GBT collapse signature (its arms sit at 106 entities or 0 links).
 
 **Reading:** the org-cross-GBT is the first scorer to EXCEED FS's link discovery on the org flows
 without over-merging. It misses STRICT dominance only on the noisy proxy's rate. Recommendation:
-un-pin FS for the org-level cross-dataset flows as an operator decision (the flip is a config default,
-not this eval's to make); alternatively hold FS pinned and re-judge after widening the label set with
+un-pin FS for the org-level cross-dataset flows as an operator decision (the flip is a config default rather than this eval's to make); alternatively hold FS pinned and re-judge after widening the label set with
 the other Care Compare families (dialysis/hospice/SNF/HHA), which should tighten the proxy's n.

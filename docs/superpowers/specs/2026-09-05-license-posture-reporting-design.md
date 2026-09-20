@@ -140,11 +140,11 @@ the `listening on` line, when the app options carry a stamp with a `notice`.
 | ------------------------------------------------------------ | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `mailwoman geocode --json`                                   | top-level `engine` on each record                                           | `--stdin` emits one record per line, so per record is the only place                                                                                                  |
 | `mailwoman reverse --json`                                   | top-level `engine` on the record                                            | same shape                                                                                                                                                            |
-| `mailwoman autocomplete --json`                              | `engine` on a wrapping object `{ engine, entries }`                         | today's output is a bare array; wrapping it is a change to that command's `--json` contract, recorded in the CHANGELOG                                                |
+| `mailwoman autocomplete --json`                              | `engine` on a wrapping object `{ engine, entries }`                         | today's output is a bare array; wrapping it is a change to that command's `--json` interface, recorded in the CHANGELOG                                               |
 | `mailwoman parse --format json`                              | top-level `engine` on the decoded object                                    | `tuple` and `xml` are unchanged                                                                                                                                       |
 | `mailwoman geocode --jsonld`                                 | none                                                                        | schema.org vocabulary; a foreign key breaks consumers. The stderr notice still prints                                                                                 |
 | `POST /v1/geocode`, `/v1/parse`, `/v1/resolve`, `/v1/format` | top-level `engine` on the response                                          | `GeocodeOutcomeLikeSchema` is `.loose()` and the route passes the outcome through verbatim, so the field is additive; adding it to the schema documents it in OpenAPI |
-| `POST /v1/batch`                                             | once, on the envelope beside `results`                                      | one stamp per response, not per row                                                                                                                                   |
+| `POST /v1/batch`                                             | once, on the envelope beside `results`                                      | one stamp per response rather than per row                                                                                                                            |
 | Nominatim `/search`, `/reverse`, `/lookup`                   | `engine` on each result object; `licence` stays the data attribution string | top level is a bare array by protocol; `NominatimResultSchema` is `.loose()`, and geopy and its peers ignore unknown keys                                             |
 | Photon `/api`, `/reverse`                                    | `engine` as a foreign member on the FeatureCollection                       | RFC 7946 section 6.1 permits foreign members; `PhotonFeatureCollection` gains the optional field                                                                      |
 | libpostal `/parse`, `/expand`                                | none in the body                                                            | `/parse` is a bare array of `{label, value}` by protocol; headers carry the posture                                                                                   |
@@ -168,7 +168,7 @@ reads `mailwoman/9.2.0 (LicenseRef-Commercial)` and the `Link` header is unchang
 ## The `/license` page
 
 `https://mailwoman.ai/license` returns 404 today, as do `/licensing`, `/licensing/commercial` and
-`/pricing`. The pages under `docs/records/site-2026-08/licensing/` are records, not routed. This
+`/pricing`. The pages under `docs/records/site-2026-08/licensing/` are records rather than routed. This
 design adds one routed page, `docs/src/pages/license.mdx`, that states:
 
 - the dual license in one paragraph, with the AGPL obligations in the doctor's vocabulary;
@@ -177,7 +177,7 @@ design adds one routed page, `docs/src/pages/license.mdx`, that states:
 - how a key is configured (`MAILWOMAN_LICENSE_KEY`) and checked (`mailwoman doctor`,
   `mailwoman license verify`).
 
-The URL is the contract; the self-service design places its Payment Link on this page. The path is
+The URL is the interface; the self-service design places its Payment Link on this page. The path is
 `/license`, singular, to match `license_url`, `rel="license"`, and the `license` command.
 
 ## Interfaces changed
@@ -203,7 +203,7 @@ Unit, in `packages/core/test/unit/license/stamp.test.ts`:
 
 - `buildEngineStamp` over no key, `valid`, `expired`, `unknown_key`, `invalid`: `license` and the
   presence of `notice` match the doctor's branch for each; `licensee` and `kid` never appear in the
-  output, asserted by key enumeration, not by spot check.
+  output, asserted by key enumeration rather than by spot check.
 - `licenseNotice` returns two lines for the AGPL branch, the expiry-dated variant for `expired`, and
   `undefined` for `valid`.
 - `license_url` honours `docsURL` and strips a trailing slash, the way `licenseKeysWellKnownURL` does.

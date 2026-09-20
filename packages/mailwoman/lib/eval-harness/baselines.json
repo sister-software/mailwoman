@@ -333,7 +333,7 @@
 			"registered_at": "2026-07-16",
 			"commit": "e45e0255",
 			"command": "mailwoman eval fragment-board --weights-cache <dir> --klass street-housenumber",
-			"note": "GUARD (contextful). With a clean house number the model is excellent — 370/400. This is the number a database must not buy its fragment gains with."
+			"note": "GUARD (contextful). With a clean house number the model is excellent — 370/400. This is the number a database must not provide its fragment gains with."
 		},
 		{
 			"id": "fragment-fr.alnum_housenumber@v264",

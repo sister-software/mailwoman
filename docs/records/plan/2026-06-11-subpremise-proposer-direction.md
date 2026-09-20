@@ -1,4 +1,4 @@
-# The sub-premise nexus — pre-tagging as information, not decision (direction note)
+# The sub-premise nexus — pre-tagging as information rather than decision (direction note)
 
 Operator instinct, 2026-06-11: "if there's any utility in pre-tagging PO Box as a pre-model
 stage, so be it… there's some nexus of secondary address pieces — apartments, suites, units,
@@ -10,7 +10,7 @@ PO Box 123 · Apt 4B · Suite 500 · Unit 9 · Level 12 · 3rd Floor · Private 
 61547 · CMB B99 — every one is **DESIGNATOR + IDENTIFIER**: a closed-vocabulary leader (now
 provenance-tracked across `codex/us|fr|ca|au|nz`) followed by a short id with per-designator
 shape rules. Addressing standards treat them as one family too (USPS "secondary unit
-designators"; AU's subpremise forms in the same AMAS table the #517 slices mined; NZ Post's
+designators"; AU's subpremise forms in the same AMAS table the #517 recipes mined; NZ Post's
 delivery-service types). The model currently learns each tag's instances separately
 (`unit` extract, `po_box/cedex` extract) and shares nothing across the family.
 
@@ -27,16 +27,16 @@ The architecture has rightful homes for this instinct, in escalating order of am
 
 1. **Input-layer clue (knowledge ladder rung 3.2 — cheapest, partially built).** The gazetteer
    channel's 5 dims already include a `po_box` bit. The nexus version: a **subpremise clue
-   dimension** that fires on ANY codex designator (unit, level, po_box-class, all locales) —
+   dimension** that fires on any codex designator (unit, level, po_box-class, all locales) —
    one bit + the designator's tag-class, the same multi-hot pattern. The model conditions; it
    never obeys. Cost: a lexicon rebuild + a channel-dim bump (retrain-coupled — rides a
-   scheduled run, not its own).
+   scheduled run rather than its own).
 2. **Stage 2.7 phrase proposal (the operator's instinct, structurally).** The phrase grouper
    already carries a "unit check"; the generalization is a **sub-premise proposer**: one rule
    layer over all codex designator tables emitting typed span proposals
    (`{span: "PO Box 123", kind: PO_BOX_PHRASE, confidence}`), consumed as phrase priors today —
    the classifier conditions on the boundary hypothesis and can still disagree. This also
-   subsumes the #518 bracket/paren proposer's implementation (same stage, same output contract) —
+   subsumes the #518 bracket/paren proposer's implementation (same stage, same output interface) —
    one proposer, two cue families (designators + paired delimiters).
 3. **Stage 5 second emitter (#478's capstone — where this is ultimately heading).** Codex
    matchers emit full CANDIDATES (`po_box="P.O. Box 19"` at chars 0–11, conf from matcher

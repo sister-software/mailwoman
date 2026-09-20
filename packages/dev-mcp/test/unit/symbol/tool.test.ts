@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The contract half of `mwdev_symbol`: a search that answers with denominators and states what it did not read.
+ *   The interface half of `mwdev_symbol`: a search that answers with denominators and states what it did not read.
  */
 
 import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine/registry"
@@ -11,7 +11,7 @@ import { buildToolTable } from "@mailwoman/dev-mcp/tools"
 import { describe, expect, it } from "vitest"
 
 /**
- * The search reads the working tree and nothing else; a registry that throws on touch proves it.
+ * The search reads the working tree and nothing else. a registry that throws on touch proves it.
  */
 const noRegistry = new Proxy({} as EngineRegistryLike, {
 	get() {

@@ -24,7 +24,7 @@ from mailwoman_train.labels import ACTIVE_BIO_LABELS, ACTIVE_TAGS, STAGE2_FINE_T
 def test_phase_label_reports_current_stage():
     # With ACTIVE_TAGS pointing at STAGE3_TAGS (the v0.6.0 ship-line), the phase
     # label must mention Stage 3 — otherwise the published model card silently
-    # mislabels itself. The named-stage branch must fire, not the "Custom" fallback.
+    # mislabels itself. The named-stage branch must fire rather than the "Custom" fallback.
     label = _phase_label()
     assert "Stage 3" in label, f"unexpected phase label {label!r}"
     assert not label.startswith("Custom"), f"phase label fell through to the fallback: {label!r}"
@@ -80,7 +80,7 @@ def test_components_blurb_mentions_fine_tags():
 
 def test_target_status_uses_stage2_floors_for_fine_labels():
     # venue/street/house_number get the v0.3.0 issue-spec floors (0.60/0.70/0.80),
-    # not the 0.95 coarse contract. Provide eval numbers right between the two
+    # not the 0.95 coarse interface. Provide eval numbers right between the two
     # bands so the assertion only passes if the correct floor is in effect.
     report = {
         "per_component": {
@@ -94,7 +94,7 @@ def test_target_status_uses_stage2_floors_for_fine_labels():
     assert "street" in line and "0.5500" in line
     assert "target ≥0.70" in line
     # venue lands "at target" — its 0.65 is above the 0.60 floor, so it should
-    # NOT show in the "below" list. The string `0.6500` should not appear.
+    # not show in the "below" list. The string `0.6500` should not appear.
     assert "0.6500" not in line
 
 
@@ -111,7 +111,7 @@ def test_readme_includes_phase_and_components():
     assert "venue" in md
     assert "street" in md
     assert "house_number" in md
-    # SMOKE BUILD warning must NOT appear when smoke=False.
+    # smoke build warning must not appear when smoke=False.
     assert "SMOKE BUILD" not in md
 
 

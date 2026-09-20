@@ -5,15 +5,15 @@
  *   Per-locale held-out F1 regression check.
  *
  *   The golden v0.1.2 dev set is already split by country (`dev/us.jsonl`, `dev/fr.jsonl`,
- *   `dev/adversarial.jsonl`). This script loads the neural classifier ONCE and scores each country
- *   file SEPARATELY, then reports per-locale component-F1, exact-match, and — the point of the
- *   exercise — the SPREAD of macro-F1 across locales.
+ *   `dev/adversarial.jsonl`). This script loads the neural classifier once and scores each country
+ *   file separately, then reports per-locale component-F1, exact-match, and — the point of the
+ *   exercise — the spread of macro-F1 across locales.
  *
  *   Why it exists (DeepSeek consult 2026-06-02, measurement #1): the multi-locale-interference risk
  *   is theorized, never observed. Before building any locale-conditioning architecture we must
- *   first measure whether US and FR already diverge on the SAME model. Equal per-locale F1 ⇒ no
+ *   first measure whether US and FR already diverge on the same model. Equal per-locale F1 ⇒ no
  *   current interference ⇒ conditioning is premature. A gap ⇒ interference conditioning
- *   earns its keep. Run again after adding any new locale: if an existing locale's F1 drops, that's
+ *   warrants its keep. Run again after adding any new locale: if an existing locale's F1 drops, that's
  *   the interference regression check firing.
  *
  *   Scoring mirrors `harness-neural.ts`: flatten the AddressTree via `decodeAsJSON`, fold the
@@ -21,16 +21,16 @@
  *   `intersection_a`/`_b` → `street`) into the golden component vocab, then compare case-folded
  *   strings per tag.
  *
- *   THE FOLD IS NOT UNCONDITIONAL. It exists because the golden answer key through v0.1.2 wrote a US
+ *   the fold is not unconditional. It exists because the golden answer key through v0.1.2 wrote a US
  *   street as one span while the corpus (and the model) split it, and gluing was the cheap way to
- *   compare them. Golden v0.1.3 moved the answer key onto the corpus convention and DECLARES that in
- *   its `MANIFEST.json` (`convention.street_convention`), so the fold is now read per row from the
- *   answer key itself: split-convention countries are scored UNFOLDED, everyone else keeps the glue.
+ *   compare them. Golden v0.1.3 moved the answer key onto the corpus convention and declares that in
+ *   its `manifest.json` (`convention.street_convention`), so the fold is now read per row from the
+ *   answer key itself: split-convention countries are scored unfolded, everyone else keeps the glue.
  *   An answer key that carries its own convention cannot be graded under the wrong one by accident —
  *   which is what happened on the v9.0.0 check, where the convention gap read as an 0.4pp `us.street`
  *   regression.
  *
- *   The anchor + gazetteer feed channels are fed by DEFAULT (the standard paths, same as
+ *   The anchor + gazetteer feed channels are fed by default (the standard paths, same as
  *   `score-country-homograph.ts` / `oa-resolver-eval`). The current 33-label STAGE3 models were
  *   trained with these channels live, so omitting them scores the model out-of-distribution and
  *   silently collapses the admin tags (country→0, region↔locality flips) while street/venue survive
@@ -38,7 +38,7 @@
  *   zero-feed (anchor-off) path on purpose, or `--model-anchor-lookup`/`--gazetteer-lexicon` to
  *   override paths.
  *
- *   `promotion-eval.ts` calls {@linkcode perLocaleF1} IN-PROCESS and captures the markdown report
+ *   `promotion-eval.ts` calls {@linkcode perLocaleF1} IN-process and captures the markdown report
  *   (the `report` sink) into `<out-dir>/<tag>-per-locale.md` — the file the verdict assembler
  *   regex-reads for `us.postcode`, `us.locality`, `us.region`, `us.street`, `fr.house_number` and
  *   `us.micro`. The progress narration goes to `reportError`, which is where the child process's
@@ -76,17 +76,18 @@ import { JSONSpliterator } from "spliterator"
 
 import { $public } from "#env"
 import { normalizeComponent } from "#eval-harness/per/tag-f1"
+import { deriveGeocodeRegister } from "#geocode/core"
 
 /**
- * Default anchor + gazetteer feed paths — the SAME ones `score-country-homograph.ts` and the verdict `oa-resolver-eval`
- * runs use. The current 33-label STAGE3 models (v1.5.x, v1.7.x; ONNX inputs `anchor_features`/`gazetteer_features`)
- * were trained WITH these channels live, so honest inference must feed them. The lookup is keyed by the input's own
- * postcode — always available at eval time. Why this is a DEFAULT, not opt-in (the bug this file used to have): when
- * these are omitted, the ONNXRunner falls back to the `confidence = 0` zero-feed (its "anchor-off identity"). That's
- * out-of-distribution for an anchor-trained model and it SELECTIVELY collapses the admin tags
+ * Default anchor + gazetteer feed paths — the same ones `score-country-homograph.ts` and the verdict `oa-resolver-eval`
+ * runs use. The current 33-label STAGE3 models (v1.5.x, v1.7.x. ONNX inputs `anchor_features`/`gazetteer_features`)
+ * were trained with these channels live, so honest inference must feed them. The lookup is keyed by the input's own
+ * postcode — always available at eval time. Why this is a default rather than opt-in (the bug this file used to have):
+ * when these are omitted, the ONNXRunner falls back to the `confidence = 0` zero-feed (its "anchor-off identity").
+ * That's out-of-distribution for an anchor-trained model and it selectively collapses the admin tags
  * (country/region/locality/postcode) + the CRF transitions around them — `country` F1 drops to 0, region↔locality flip
  * — while the morphology tags (street/house_number/venue) that don't lean on the anchor channel survive. The result
- * LOOKS like a per-version model regression but is purely a harness OOD artifact: BOTH v1.5.0 and v1.7.0 crater
+ * looks like a per-version model regression but is purely a harness OOD artifact: both v1.5.0 and v1.7.0 crater
  * identically without the feed and recover identically with it. Pass `--no-anchor` to deliberately measure the
  * anchor-off (zero-feed) path.
  */
@@ -123,9 +124,18 @@ export interface PerLocaleF1Options {
 	bridgeGaps?: boolean
 	outJSON?: string
 	/**
-	 * P3 (#829/#690): disable the all-caps title-case shim (`normalizeCase: false`) — the ALL-CAPS read. Default false.
+	 * P3 (#829/#690): disable the all-caps title-case shim (`normalizeCase: false`) — the all-caps read. Default false.
 	 */
 	rawCase?: boolean
+	/**
+	 * Parse each row in the register `deriveGeocodeRegister` gives it, which is what the geocode path does (#2345).
+	 *
+	 * Default false, which parses every row with no `inputMode` at all. The classifier reads an absent register as
+	 * `fragmented`, so that default feeds `streetTypeLexicon` and `localitySurfaceLexicon` to every row — including the
+	 * 1,896 of 2,660 `us.jsonl` rows production withholds them from. Both readings are wanted: the existing one to
+	 * compare against every floor reduce from it, and this one to describe the shipped configuration.
+	 */
+	productionRegister?: boolean
 }
 
 /**
@@ -134,7 +144,7 @@ export interface PerLocaleF1Options {
 export interface PerLocaleF1Result {
 	reports: FileReport[]
 	/**
-	 * Max − min macro-F1 across the LOCALE files (adversarial excluded) — the interference signal.
+	 * Max − min macro-F1 across the locale files (adversarial excluded) — the interference signal.
 	 */
 	spread: number
 }
@@ -153,10 +163,10 @@ interface GoldenRow {
 /**
  * Fold neural Stage-3 tags into the golden component vocab (street parts + intersections → street).
  *
- * `foldStreetParts: false` is the v0.1.3 convention (the 2026-08-06 relabel): that answer key labels US streets SPLIT —
+ * `foldStreetParts: false` is the v0.1.3 convention (the 2026-08-06 relabel): that answer key labels US streets split —
  * `street_prefix` / `street` / `street_suffix` are three spans — so gluing the prediction back together before
- * comparing measures the harness, not the model. The v9.0.0 promotion eval read exactly that as an 0.4pp `us.street`
- * regression. Which mode applies is decided PER ROW from the golden dir's own MANIFEST (see
+ * comparing measures the harness rather than the model. The v9.0.0 promotion eval read exactly that as an 0.4pp
+ * `us.street` regression. Which mode applies is decided PER row from the golden dir's own manifest (see
  * {@linkcode readStreetConvention}), never from a flag someone has to remember: an answer key that declares its
  * convention cannot be graded under the wrong one by accident.
  */
@@ -226,8 +236,8 @@ function foldToComponents(flat: Partial<Record<ComponentTag, string>>, foldStree
 }
 
 /**
- * Country → `"split"` | `"folded"`, read from the golden version's own `MANIFEST.json` (`convention.street_convention`;
- * the `*` key is the default). Looked up in the golden dir and then its parent, because the battery points at a SPLIT
+ * Country → `"split"` | `"folded"`, read from the golden version's own `manifest.json` (`convention.street_convention`;
+ * the `*` key is the default). Looked up in the golden dir and then its parent, because the battery points at a split
  * subdir (`…/v0.1.3/dev`) while the manifest sits at the version root.
  *
  * A version with no such block — every golden through v0.1.2 — reads as all-folded, so this is a no-op on the old
@@ -364,7 +374,7 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 
 /**
  * Score each locale file separately and report per-locale component-F1, exact-match, and the cross-locale macro-F1
- * SPREAD. The markdown report goes to `report` (one call per line, matching the child stdout the runner captured); the
+ * spread. The markdown report goes to `report` (one call per line, matching the child stdout the runner captured); the
  * progress narration goes to `reportError`.
  */
 export async function perLocaleF1(
@@ -377,6 +387,7 @@ export async function perLocaleF1(
 		goldenDir: options.goldenDir ?? "data/eval/golden/v0.1.2/dev",
 		files: options.files ?? ["us.jsonl", "fr.jsonl", "adversarial.jsonl"],
 		rawCase: options.rawCase ?? false,
+		productionRegister: options.productionRegister ?? false,
 	}
 
 	reportError("--- per-locale-f1.ts ---")
@@ -402,7 +413,7 @@ export async function perLocaleF1(
 
 	let neural: NeuralAddressClassifier
 
-	// PACKAGE-SHAPED (#718-safe): `--weights-cache <root>` loads model + tokenizer + card + ALL soft
+	// package-shaped (#718-safe): `--weights-cache <root>` loads model + tokenizer + card + all soft
 	// channels (anchor + gazetteer + country) from `<root>/node_modules/@mailwoman/neural-weights-en-us`
 	// via loadFromWeights, exactly as production does — the only way to grade a country-channel model
 	// (v6.2.0+) in-distribution. Mirrors the gauntlet + `eval parity --weights-cache`. Takes precedence
@@ -412,9 +423,9 @@ export async function perLocaleF1(
 
 		neural = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: args.weightsCache })
 	} else if (args.modelPath || args.tokenizerPath || args.modelCardPath) {
-		// misuse check: if ANY custom-model flag is set, ALL THREE are required. Previously a missing
-		// --tokenizer silently fell back to the DEFAULT shipped weights, so --model was ignored and two
-		// different checkpoints scored byte-identical. Refuse to guess; fail loud.
+		// misuse check: if any custom-model flag is set, all three are required. Previously a missing
+		// --tokenizer silently fell back to the default shipped weights, so --model was ignored and two
+		// different checkpoints scored byte-identical. Refuse to guess. fail loud.
 		if (!args.modelPath || !args.tokenizerPath || !args.modelCardPath) {
 			throw new Error(
 				"--model requires --tokenizer AND --model-card together (refusing to silently fall back to " +
@@ -429,9 +440,9 @@ export async function perLocaleF1(
 			ONNXRunner.create(args.modelPath),
 		])
 
-		// Anchor + gazetteer feed. DEFAULT-ON (the standard paths) so an anchor-trained model is scored
+		// Anchor + gazetteer feed. default-on (the standard paths) so an anchor-trained model is scored
 		// in-distribution — see the DEFAULT_* note above for why omitting these silently collapses the
-		// admin tags. `--no-anchor` opts out; an explicit `--model-anchor-lookup`/`--gazetteer-lexicon`
+		// admin tags. `--no-anchor` opts out. an explicit `--model-anchor-lookup`/`--gazetteer-lexicon`
 		// overrides the default path. The runner harmlessly skips inputs a plainer ONNX doesn't declare.
 		const anchorLookupPath = args.noAnchor ? undefined : (args.modelAnchorLookupPath ?? DEFAULT_ANCHOR_LOOKUP)
 		const gazetteerLexiconPath = args.noAnchor ? undefined : (args.gazetteerLexiconPath ?? DEFAULT_GAZETTEER_LEXICON)
@@ -487,7 +498,7 @@ export async function perLocaleF1(
 		let rows: GoldenRow[]
 
 		try {
-			rows = await Array.fromAsync(JSONSpliterator.fromAsync<GoldenRow>(path))
+			rows = await JSONSpliterator.fromAsync<GoldenRow>(path).toArray()
 		} catch (error) {
 			reportError(`  skip ${file}: ${(error as Error).message}`)
 
@@ -498,23 +509,28 @@ export async function perLocaleF1(
 		const t0 = performance.now()
 		// MAILWOMAN_DUMP_MISS_TAG=<tag>: print every row where gold has <tag> but the prediction
 		// differs (false-neg or mislabel). A diagnostic lens for "which surfaces does the model drop"
-		// — added for the #560 fr.house_number investigation; harmless when the env is unset.
+		// — added for the #560 fr.house_number investigation. harmless when the env is unset.
 		const dumpTag = $public.MAILWOMAN_DUMP_MISS_TAG
 
 		for (const row of rows) {
 			const wordConsistency = parseWordConsistencyEnv($public.MAILWOMAN_WORD_CONSISTENCY)
 
-			// PRODUCTION-CONFIG parity (2026-07-17, the M1 check-fidelity fix): production parses feed the
+			// production-config parity (2026-07-17, the M1 check-fidelity fix): production parses feed the
 			// query-shape prior + postcodeRepair on every path (safeClassify, geocode-core since #981), but
-			// this battery historically fed NEITHER — so the check scored a config production doesn't run.
-			// M1 measured that gap at +2.3 micro on golden-us (the battery flattered production; the entire
+			// this battery historically fed neither — so the check scored a config production doesn't run.
+			// M1 measured that gap at +2.3 micro on golden-us (the battery flattered production. the entire
 			// delta was the since-scoped locality bias, PR #1148). Score what ships.
+			const rowShape = computeQueryShape(row.raw)
+
 			const tree = await neural.parse(row.raw, {
 				postcodeRepair: true,
-				queryShape: computeQueryShape(row.raw),
+				queryShape: rowShape,
+				// Absent, the classifier reads the register as `fragmented` and feeds both evidence lexicons to every
+				// row. Production feeds them only where the kind verdict says so (#2345).
+				...(args.productionRegister ? { inputMode: deriveGeocodeRegister(row.raw, rowShape) } : {}),
 				...(wordConsistency ? { enforceWordConsistency: wordConsistency } : {}),
 				// P3 (#829/#690): --raw-case disables the all-caps title-case shim so the read measures the
-				// MODEL's own case handling (the shim would mask any augment_upper_case_prob effect).
+				// model's own case handling (the shim would mask any augment_upper_case_prob effect).
 				...(args.rawCase ? { normalizeCase: false } : {}),
 			})
 

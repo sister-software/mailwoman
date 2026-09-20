@@ -2,18 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Train the CROSS-SOURCE link scorer (#655 option 2 — unblocked 2026-07-06). The dedup GBT (#603)
+ *   Train the cross-source link scorer (#655 option 2 — unblocked 2026-07-06). The dedup GBT (#603)
  *   is trained on within-NPPES labels, so its strongest feature (`spatial-exact × name-disagree`)
- *   REJECTS the prototypical cross-source pair ("same provider, different operational text across
+ *   rejects the prototypical cross-source pair ("same provider, different operational text across
  *   registries") — the reason the cross-dataset flows pin the FS baseline. The 2026-06-16
  *   feasibility doc blocked a cross-source retrain on "no non-circular anchor"; the anchor exists:
- *   **CMS Open Payments joins NPPES by NPI** — the same practitioner in two INDEPENDENT registries,
+ *   **CMS Open Payments joins NPPES by NPI** — the same practitioner in two independent registries,
  *   each with independently human-entered name + address. Same-NPI cross-source pairs are
  *   ground-truth positives labeled by a key the matcher's features never see.
  *
  *   Pipeline: assemble NPPES + Open Payments TX records for the same NPI population (Phases A/B
- *   here), then the SHARED `trainCrossSourceModel` runs Phases C–F — geocode through the standard
- *   ingest → block the UNION, keep only CROSS-source candidate pairs → the SHARED
+ *   here), then the shared `trainCrossSourceModel` runs Phases C–F — geocode through the standard
+ *   ingest → block the union, keep only cross-source candidate pairs → the shared
  *   `createMatchFeaturizer` (train ≡ inference) → label by NPI → held-out-NPI calibration (the #655
  *   threshold rule: max recall subject to a pairwise-precision bar, reported alongside F1-max) →
  *   train the shipped model on all pairs → emit `registry/models/crosssource-gbt-en-us.ts`.
@@ -31,6 +31,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { isoDate } from "@mailwoman/core/utils"
+import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { addressFrequencyKey, streamRows } from "#index"
 import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
@@ -47,7 +48,7 @@ export interface TrainCrossSourceGBTOptions {
 	/**
 	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
 	 */
-	sources?: string
+	sources?: PathBuilderLike
 	/**
 	 * State filter. Default TX.
 	 */
@@ -81,7 +82,7 @@ export async function trainCrossSourceGBT(
 	options: TrainCrossSourceGBTOptions,
 	report?: (line: string) => void
 ): Promise<{ out: string; pairs: number; recommendedThreshold: number }> {
-	const SOURCES = options.sources || String(dataRootPath("record-matcher", "sources"))
+	const SOURCES = resolvePath(options.sources ?? dataRootPath("record-matcher", "sources"))
 	const STATE = stateOption(options)
 	const NPIS = options.npis ?? 2000
 	const OUT = options.out || "packages/registry/lib/models/crosssource-gbt-en-us.ts"
@@ -156,7 +157,7 @@ export async function trainCrossSourceGBT(
 		rows.push({ npi, name, org: "", address: practice, source: "nppes" })
 	}
 
-	// Keep only NPIs present in BOTH sources — every record has a cross-source counterpart.
+	// Keep only NPIs present in both sources — every record has a cross-source counterpart.
 	for (const npi of joined) {
 		rows.push(opByNPI.get(npi)!)
 	}

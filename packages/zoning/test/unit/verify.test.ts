@@ -4,18 +4,18 @@
 /**
  *   The two-path comparison's own logic, against a scripted service reader.
  *
- *   THE VALUE OF THE CHECK IS WHICH OF THREE OUTCOMES A POINT GETS, and that decision is what a live run can
- *   only be watched making. Expressed against a function rather than an HTTP client it can be pinned: a point
- *   the service also places inside AGREES, a point far from any service edge DISAGREES, and a point a few
+ *   the value OF the check is which OF three outcomes A point gets, and that decision is what a live run can
+ *   only be watched making. Expressed against a function rather than an http client it can be pinned: a point
+ *   the service also places inside agrees, a point far from any service edge disagrees, and a point a few
  *   centimetres from an edge is `boundary_tolerance` — because the two channels render the same edge through
  *   different rounding.
  *
- *   AND THE SERVICE SIDE RESOLVES HOLE ROLES THE SAME WAY THE INGEST DOES. The publisher uses one convention
+ *   and the service side resolves hole roles the same WAY the ingest does. The publisher uses one convention
  *   on both channels, so a checker that read the service's rings as nested GeoJSON would answer "inside" for a
  *   point in a hole and report the artifact as wrong at exactly the locations the hole handling exists for.
  *
- *   THE NEGATIVE HALF IS PINNED HERE TOO. Donegal is the one local authority of 31 the Department does not
- *   publish, and Northern Ireland is a different jurisdiction entirely; both must read `unknown` with no
+ *   the negative half is pinned here too. Donegal is the one local authority of 31 the Department does not
+ *   publish, and Northern Ireland is a different jurisdiction entirely. both must read `unknown` with no
  *   designation, and this is the check that would catch a builder generalizing the flood layer's
  *   Zone-1-by-absence rule.
  */
@@ -210,7 +210,7 @@ describe("the negative half", () => {
 			expect(point.label.length).toBeGreaterThan(0)
 		}
 
-		// Both populations are load-bearing: the unpublished authority, and the other jurisdiction.
+		// Both populations are required: the unpublished authority, and the other jurisdiction.
 		expect(OUTSIDE_PUBLICATION_POINTS.some((point) => point.label.includes("Donegal"))).toBe(true)
 		expect(OUTSIDE_PUBLICATION_POINTS.some((point) => point.label.includes("Northern Ireland"))).toBe(true)
 	})

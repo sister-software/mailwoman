@@ -4,7 +4,7 @@
 /**
  *   Autocomplete behaviors ported from mailwoman's `fst-autocomplete` (#587): partial-last-token
  *   completion, the complete-token-must-not-shadow rule, the per-branch cap, dedupe, and the
- *   robustness contract (never throw, [] over garbage). Plus the parts the FST could not answer:
+ *   robustness interface (never throw, [] over garbage). Plus the parts the FST could not answer:
  *   every suggestion's containment chain.
  */
 
@@ -25,7 +25,7 @@ function seal(entries: readonly AncestrieEntry[]): Ancestrie {
 }
 
 // The synthetic trie the FST suite used:
-//   root --new--> [york → New York; london → New London ×2 (city 2 + county 3)]
+//   root --new--> [york → New York. london → New London ×2 (city 2 + county 3)]
 //        --san--> [francisco → San Francisco]
 //        --chicago--> Chicago
 const CITIES = seal([
@@ -52,7 +52,7 @@ describe("char-level partial completion + BFS (#587 ports)", () => {
 	})
 
 	it("a complete-token walk must not SHADOW the partial interpretation", () => {
-		// The live FST artifact held a place literally named "Chic" — the typed prefix is BOTH a
+		// The live FST artifact held a place literally named "Chic" — the typed prefix is both a
 		// complete edge and a partial of "chicago", and letting the successful walk short-circuit
 		// silently dropped every longer completion.
 		const shadowed = seal([
@@ -137,7 +137,7 @@ describe("dedupe", () => {
 	})
 })
 
-describe("robustness contract", () => {
+describe("robustness interface", () => {
 	it("empty and whitespace-collapsed queries → no suggestions, depth 0", () => {
 		for (const query of [[], [""], ["", ""]] as string[][]) {
 			const r = autocomplete(CITIES, query)
@@ -177,7 +177,7 @@ describe("the normalizeToken boundary", () => {
 		const trie = Ancestrie.from(builder.seal())
 
 		expect(autocomplete(trie, ["NEW", "YOR"], { normalizeToken: fold }).suggestions.map((s) => s.id)).toEqual([1])
-		// Without the query-side normalizer the cased query misses — the normalization boundary is the caller's contract.
+		// Without the query-side normalizer the cased query misses — the normalization boundary is the caller's interface.
 		expect(autocomplete(trie, ["NEW", "YOR"]).suggestions).toEqual([])
 	})
 })

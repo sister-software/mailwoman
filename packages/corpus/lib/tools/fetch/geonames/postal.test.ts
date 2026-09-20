@@ -4,8 +4,8 @@
 /**
  * @file `fetchGeonamesPostal` — and specifically what it does with a country GeoNames does not publish.
  *
- *   That is the behaviour worth a test. GeoNames covers ~80 countries, not all of them, so a caller planning a postcode
- *   slice needs "this country does not exist upstream" kept apart from "the transfer failed" — the first is an
+ *   That is the behaviour worth a test. GeoNames covers ~80 countries rather than all of them, so a caller planning a postcode
+ *   recipe output needs "this country does not exist upstream" kept apart from "the transfer failed" — the first is an
  *   acquisition question and the second is a retry. Venezuela is the live instance: it 404s and the country the
  *   gauntlet evidence for the `«locality» «postcode»` defect comes from.
  */
@@ -28,8 +28,8 @@ let baseURL: string
 let outRoot: PathBuilderLike
 
 /**
- * The manifest as written. `parseJSONStrict` rather than a tolerant parse: a corrupt manifest here is a test failure,
- * not a fallback.
+ * The manifest as written. `parseJSONStrict` rather than a tolerant parse: a corrupt manifest here is a test failure
+ * rather than a fallback.
  */
 async function readManifest(): Promise<{
 	unavailable: string[]
@@ -41,7 +41,7 @@ async function readManifest(): Promise<{
 
 beforeAll(async () => {
 	server = createServer((req, res) => {
-		// PT is published; VE is not. Anything else is a 500, so a transfer failure stays distinguishable from both.
+		// PT is published. VE is not. Anything else is a 500, so a transfer failure stays distinguishable from both.
 		if (req.url === "/PT.zip") {
 			res.writeHead(200)
 			res.end("pt-payload")
@@ -71,7 +71,7 @@ beforeAll(async () => {
 afterAll(() => server[Symbol.asyncDispose]())
 
 /**
- * The retry COUNT is what these cases pin; the pause between attempts is not, and paying the shipped 5 s twice per
+ * The retry count is what these cases pin. the pause between attempts is not, and paying the shipped 5 s twice per
  * failing transfer cost this file 20.1 s of the fast leg.
  */
 const RETRY_DELAY_MS = 1
@@ -110,7 +110,7 @@ describe("fetchGeonamesPostal", () => {
 		expect(summary.fetched).toBe(1)
 	})
 
-	it("classifies by STATUS, not by message prose — a 500 from a URL containing '404' stays a transfer failure", async () => {
+	it("classifies by STATUS rather than by message prose — a 500 from a URL containing '404' stays a transfer failure", async () => {
 		// ~1-2% of ephemeral ports contain the substring "404"; this pins the failure mode with the substring in
 		// the path instead, where it is deterministic.
 		const summary = await fetchGeonamesPostal({
@@ -124,7 +124,7 @@ describe("fetchGeonamesPostal", () => {
 		expect((await readManifest()).unavailable).toEqual([])
 	})
 
-	it("keeps a transfer failure OUT of `unavailable` — it is a retry, not a coverage gap", async () => {
+	it("keeps a transfer failure OUT of `unavailable` — it is a retry rather than a coverage gap", async () => {
 		const summary = await fetchGeonamesPostal({ retryDelayMs: RETRY_DELAY_MS, outRoot, baseURL, countries: ["ZZ"] })
 
 		expect(summary.failedCodes).toEqual(["ZZ"])

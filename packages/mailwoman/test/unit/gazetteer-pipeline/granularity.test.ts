@@ -54,9 +54,9 @@ describe("SUB_LOCALITY_RUNGS", () => {
  * connections and the builder opens its own read-only handle, so this writes a temp file — the same approach
  * `placetype-census.test.ts` uses.
  *
- * Shape: GB has two locality parents (London, Quiet Town). London carries a borough AND a neighbourhood child, which
- * must count as ONE covered parent for dependent_locality, not two. IE has one locality parent and no children at all —
- * a country that bottoms out at locality. One Overture-backfilled locality proves the source split.
+ * Shape: GB has two locality parents (London, Quiet Town). London carries a borough and a neighbourhood child, which
+ * must count as one covered parent for dependent_locality rather than two. IE has one locality parent and no children
+ * at all — a country that bottoms out at locality. One Overture-backfilled locality proves the source split.
  */
 function ladderFixtureDB(): string {
 	const path = `/tmp/granularity-fixture-${process.pid}-${Math.random().toString(36).slice(2)}.db`
@@ -86,7 +86,7 @@ function ladderFixtureDB(): string {
 		db.prepare(`INSERT INTO spr VALUES (?, ?, ?, ?, ?, ?)`).run(id, name, placetype, country, isCurrent, isDeprecated)
 	}
 
-	// Camden AND Shoreditch both under London — one covered parent, not two.
+	// Camden and Shoreditch both under London — one covered parent rather than two.
 	const links: Array<[child: number, ancestor: number]> = [
 		[4, 2],
 		[5, 2],
@@ -105,7 +105,7 @@ describe("buildGranularityLadder", () => {
 		const rows = buildGranularityLadder(ladderFixtureDB())
 		const gb = rows.find((row) => row.country === "GB")
 
-		// London has a borough child and a neighbourhood child; both project onto dependent_locality.
+		// London has a borough child and a neighbourhood child. both project onto dependent_locality.
 		expect(gb?.rungs.dependent_locality?.nodes).toBe(2)
 		expect(gb?.rungs.dependent_locality?.parentsCovered).toBe(1)
 	})

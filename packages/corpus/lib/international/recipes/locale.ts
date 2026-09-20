@@ -2,25 +2,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `locale` slice recipe — the multi-locale generalization of the `german` recipe. Reads REAL
+ *   `locale` recipe — the multi-locale generalization of the `german` recipe. Reads real
  *   OpenAddresses tuples for a `--country` (DE/FR/NL/IT/ES), renders each via
- *   {@link synthesizeLocaleRow} in BOTH orders (`--intl-fraction`, default 0.4 international / the
- *   rest country-native), aligns to BIO, and emits a labeled JSONL. Generate-mode: it STREAMS each
+ *   {@link synthesizeLocaleRow} in both orders (`--intl-fraction`, default 0.4 international / the
+ *   rest country-native), aligns to BIO, and emits a labeled jsonl. Generate-mode: it streams each
  *   source CSV (a streamed zip member for cached zips, plain `createReadStream` for extracted CSVs) and
  *   reservoir-samples to {@link RESERVOIR_CAP} (so FR/ES countrywide work in bounded memory), then
- *   draws `--count` rows from the pool with the passed `random`. Ported from
- *   scripts/build-locale-slice.mjs.
+ *   draws `--count` rows from the pool with the passed `random`. Ported from the root build script
+ *   it replaced.
  *
- *   The reservoir uses its OWN seeded PRNG ({@link makeMulberry32}, per part), independent of the
- *   emit `random`, so the input sample is reproducible WITHOUT perturbing the synth/order draws.
+ *   The reservoir uses its own seeded prng ({@link makeMulberry32}, per part), independent of the
+ *   emit `random`, so the input sample is reproducible without perturbing the synth/order draws.
  *
- *   SURFACE DIVERSITY (#241): two per-country shape draws ride the emit loop, sized by the
+ *   surface diversity (#241): two per-country shape draws ride the emit loop, sized by the
  *   2026-07-02 format-diversity audit against the `openaddresses-{es,nl,it}-sample.jsonl` observed
- *   forms. ES: the OpenCage template comma-joins the house number (`CALLE MAYOR, 12`) but all 3,000
- *   eval rows space-join (`CALLE MAYOR 12`) — {@link ES_SPACE_JOIN_FRACTION} of native rows collapse
+ *   forms. ES: the OpenCage template comma-joins the house number (`calle mayor, 12`) but all 3,000
+ *   eval rows space-join (`calle mayor 12`) — {@link ES_SPACE_JOIN_FRACTION} of native rows collapse
  *   the comma. NL: OA (and the eval, 3,000/3,000) glue the postcode (`1187LM`) while the national
  *   convention spaces it (`1187 LM`) — {@link NL_GLUED_POSTCODE_FRACTION} of rows keep the glued
- *   source shape, the rest the spaced conventional one. These draws are consumed ONLY for their
+ *   source shape, the rest the spaced conventional one. These draws are consumed only for their
  *   country, so DE/FR emit streams are unchanged for a given seed.
  */
 
@@ -30,6 +30,7 @@ import { openReadStream } from "@mailwoman/core/fs/streams"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
+import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
@@ -37,14 +38,13 @@ import { CSVSpliterator } from "spliterator"
 import { stableSourceID } from "#adapters/utils"
 import type { CorpusRecipe } from "#recipes/scaffold"
 import { type LocaleBaseTuple, type SynthesizedLocaleRow, synthesizeLocaleRow } from "#synthesizers/locale"
-import { pick } from "#synthesizers/utils"
 import { alignRow } from "#utils"
 
 /**
  * One per-country OA source part: either a cached `zip` + `csv` member (streamed out of the archive) or an extracted
  * plain `path` (streamed via `createReadStream`). Both carry the standard OA header
- * (LON,LAT,NUMBER,STREET,UNIT,CITY,DISTRICT,REGION,POSTCODE,ID,HASH). An optional `region` fallback covers countries
- * whose REGION column is empty (DE — the Bundesland is implied by the per-state file).
+ * (LON,LAT,number,street,unit,city,district,region,postcode,ID,hash). An optional `region` fallback covers countries
+ * whose region column is empty (DE — the Bundesland is implied by the per-state file).
  */
 export interface LocalePart {
 	zip?: PathBuilderLike
@@ -52,19 +52,19 @@ export interface LocalePart {
 	path?: PathBuilderLike
 	region?: string
 	/**
-	 * NZ — the OA DISTRICT column holds the city (`Auckland`) and CITY holds the suburb (`Birkenhead`). When set, map
-	 * DISTRICT→locality and CITY→dependent_locality (falling back to CITY→locality when DISTRICT is empty, ~18% of NZ
-	 * rows). Without this, the default CITY→locality mapping wrongly trains the suburb as the locality.
+	 * NZ — the OA district column holds the city (`Auckland`) and city holds the suburb (`Birkenhead`). When set, map
+	 * district→locality and city→dependent_locality (falling back to city→locality when district is empty, ~18% of NZ
+	 * rows). Without this, the default city→locality mapping wrongly trains the suburb as the locality.
 	 */
 	districtAsLocality?: boolean
 	/**
-	 * ES pedanía part only — the header is the RAW (un-conformed) CNIG export schema (`numero`, `tipo_vial`,
-	 * `nombre_via`, `poblacion`, `municipio`, `comunidad_autonoma`, `cod_postal`), NOT the standard OA
-	 * NUMBER/STREET/CITY/DISTRICT/REGION/POSTCODE header every other part uses. Verified 2026-07-22 by exact- coordinate
-	 * cross-check: the OA-conformed `extracted/es/countrywide.csv` collapses CITY to `municipio` and drops `poblacion`
-	 * (Spain's below-municipio núcleo/pedanía name) entirely, so the pedanía signal survives ONLY in this raw export.
-	 * `street` is reconstructed as `tipo_vial + " " + nombre_via` (verified byte-identical to the conformed STREET column
-	 * for the same row). CITY-analog = `poblacion`, DISTRICT-analog = `municipio`.
+	 * ES pedanía part only — the header is the RAW (un-conformed) cnig export schema (`numero`, `tipo_vial`,
+	 * `nombre_via`, `poblacion`, `municipio`, `comunidad_autonoma`, `cod_postal`), not the standard OA
+	 * number/street/city/district/region/postcode header every other part uses. Verified 2026-07-22 by exact- coordinate
+	 * cross-check: the OA-conformed `extracted/es/countrywide.csv` collapses city to `municipio` and drops `poblacion`
+	 * (Spain's below-municipio núcleo/pedanía name) entirely, so this raw export is the only source for the pedanía
+	 * signal. `street` is reconstructed as `tipo_vial + " " + nombre_via` (verified byte-identical to the conformed
+	 * street column for the same row). city-analog = `poblacion`, district-analog = `municipio`.
 	 */
 	cnigRaw?: boolean
 }
@@ -73,15 +73,15 @@ export interface LocaleCountrySource {
 	source: string
 	parts: LocalePart[]
 	/**
-	 * The `corpus_version` stamped on emitted rows. DE/FR keep the historical `0.4.0` (regenerating those slices must
-	 * stay lineage-identical); ES/IT/NL are the #241 staging lineage (`v0.9.9-es-it-nl`).
+	 * The `corpus_version` stamped on emitted rows. DE/FR keep the historical `0.4.0` (regenerating those recipe outputs
+	 * must stay lineage-identical); ES/IT/NL are the #241 staging lineage (`v0.9.9-es-it-nl`).
 	 */
 	corpusVersion: string
 	/**
-	 * An ALTERNATE part list, read instead of {@link parts} when the `--district-as-locality` override is explicitly
+	 * An alternate part list, read instead of {@link parts} when the `--district-as-locality` override is explicitly
 	 * `true` for this invocation (see `run()`). ES-only for now — the standard `parts` entry can't supply real
 	 * dependent-locality signal (its OA-conformed CSV drops `poblacion`; see {@link LocalePart.cnigRaw}), so the pedanía
-	 * build reads a wholly different raw source instead of flipping the standard CITY/DISTRICT columns. `undefined` for
+	 * build reads a wholly different raw source instead of flipping the standard city/district columns. `undefined` for
 	 * every other country — the override then just forces `districtAsLocality` on the normal `parts`, as GB/NZ already do
 	 * per-part.
 	 */
@@ -91,9 +91,9 @@ export interface LocaleCountrySource {
 /**
  * Per-country OA sources + the source name used in the corpus. DE/FR read their historical build inputs, the cached
  * zips under `$MAILWOMAN_DATA_ROOT/oa-cache` — materialize them there to regenerate. ES/NL read the extracted
- * countrywide CSVs and IT the cached national zip under `$MAILWOMAN_DATA_ROOT` (#241; the fresh ES extract is
- * OA-conformed, so the old raw-CNIG conform map is gone). DE carries a per-part `region` fallback (its REGION column is
- * empty; the international-order tail needs it, #327). FR/NL/IT/ES REGION is populated per-row (ES = comunidad
+ * countrywide CSVs and IT the cached national zip under `$MAILWOMAN_DATA_ROOT` (#241. the fresh ES extract is
+ * OA-conformed, so the old raw-cnig conform map is gone). DE carries a per-part `region` fallback (its region column is
+ * empty. the international-order tail needs it, #327). FR/NL/IT/ES region is populated per-row (ES = comunidad
  * autónoma, IT = regione, NL = province).
  */
 const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
@@ -124,7 +124,7 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		source: "synth-es",
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "es", "countrywide.csv") }],
-		// Pedanía slice (`synth-es-pedania`, `--district-as-locality`). Reads the RAW (un-conformed) CNIG export
+		// Pedanía source (`synth-es-pedania`, `--district-as-locality`). Reads the RAW (un-conformed) cnig export
 		// cached at oa-cache/es__countrywide.zip — the `parts` CSV above lost `poblacion` in OA's own conform step
 		// (see {@link LocalePart.cnigRaw}). districtAsLocality is pinned true here (this part only exists to be
 		// read pedanía-style); the CLI override still applies harmlessly on top.
@@ -138,20 +138,20 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		],
 	},
 	NZ: {
-		// LINZ-derived OA countrywide extract (2.12M rows). `districtAsLocality` inverts the CITY/DISTRICT
-		// mapping: DISTRICT holds the city (Auckland), CITY the suburb (Birkenhead). NZ OA carries no postcode.
+		// linz-derived OA countrywide extract (2.12M rows). `districtAsLocality` inverts the city/district
+		// mapping: district holds the city (Auckland), city the suburb (Birkenhead). NZ OA carries no postcode.
 		source: "synth-nz",
 		corpusVersion: "0.9.9",
 		// Eval holdout: a probe build excludes ~12% of NZ localities (a locality-bucket split) for a source-disjoint
-		// coord board; that split is a BUILD-TIME concern (scratchpad), so the committed recipe reads the full CSV.
+		// coord board. that split is a build-time concern (scratchpad), so the committed recipe reads the full CSV.
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv"), districtAsLocality: true }],
 	},
 	GB: {
-		// HM Land Registry Price Paid Data tuples (25.67M rows out of the PPD ingest). PPD's DISTRICT is the
-		// postal town (locality) and CITY is the dependent locality — legitimately EMPTY on the majority of rows
-		// (most GB addresses have no dependent locality). `districtAsLocality` maps DISTRICT→locality and, when
-		// present, CITY→dependent_locality; the `readTuples` check above only drops a row when BOTH are empty, so
-		// the majority empty-CITY rows survive.
+		// HM Land Registry Price Paid Data tuples (25.67M rows out of the PPD ingest). PPD's district is the
+		// postal town (locality) and city is the dependent locality — legitimately empty on the majority of rows
+		// (most GB addresses have no dependent locality). `districtAsLocality` maps district→locality and, when
+		// present, city→dependent_locality. the `readTuples` check above only drops a row when both are empty, so
+		// the majority empty-city rows survive.
 		source: "synth-gb",
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("ppd", "2026-07-22", "gb-tuples.csv"), districtAsLocality: true }],
@@ -166,41 +166,41 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 const RESERVOIR_CAP = 1_200_000
 
 /**
- * Fraction of NATIVE-order ES rows whose street→house join is space-collapsed (`CALLE MAYOR 12`) instead of the
- * template's comma (`CALLE MAYOR, 12`). Both are real Spanish surfaces — the comma is the official convention, the
+ * Fraction of native-order ES rows whose street→house join is space-collapsed (`calle mayor 12`) instead of the
+ * template's comma (`calle mayor, 12`). Both are real Spanish surfaces — the comma is the official convention, the
  * space is what OA-derived feeds (and all 3,000 `openaddresses-es-sample.jsonl` rows) carry. 0.5 teaches both.
  */
 const ES_SPACE_JOIN_FRACTION = 0.5
 
 /**
  * Fraction of NL rows whose postcode keeps OA's glued shape (`1187LM`) instead of the spaced national convention (`1187
- * LM`). The eval sample is 100% glued; the conventional spaced form is the `1012 LM` two-letter-suffix shape the model
+ * LM`). The eval sample is 100% glued. the conventional spaced form is the `1012 LM` two-letter-suffix shape the model
  * currently glues onto the city (#241). 0.5 teaches both.
  */
 const NL_GLUED_POSTCODE_FRACTION = 0.5
 
 /**
- * OA CITY-noise normalization (#241) — the documented cleaning step, derived from the 2026-07-02 FULL-STREAM audit of
+ * OA city-noise normalization (#241) — the documented cleaning step, derived from the 2026-07-02 full-stream audit of
  * the ES (15.6M rows), IT (13.9M), and NL (9.1M) sources (not a hand-list). Returns the cleaned city, or `null` to drop
  * the tuple.
  *
  * Cleaned classes:
  *
- * 1. DROP pseudo-localities — the ES cadastral aggregates (`Comunidad de 09076, 09150 y 09578`, `Ledanía de …`; 0.06% of
- *    ES rows): any CITY containing a comma or a ≥4-digit run is a land-register aggregate, not a renderable city.
- *    Structural, locale-safe — NL's genuine `2e Valthermond` (one digit) survives; IT/NL have zero hits.
- * 2. STRIP a trailing parenthesized 1–3-letter admin code — the NL BAG province disambiguator (`Bergen (NH)`, `Rijswijk
+ * 1. Drop pseudo-localities — the ES cadastral aggregates (`Comunidad de 09076, 09150 y 09578`, `Ledanía de …`; 0.06% of
+ *    ES rows): any city containing a comma or a ≥4-digit run is a land-register aggregate rather than a renderable
+ *    city. Structural, locale-safe — NL's genuine `2e Valthermond` (one digit) survives. IT/NL have zero hits.
+ * 2. Strip a trailing parenthesized 1–3-letter admin code — the NL BAG province disambiguator (`Bergen (NH)`, `Rijswijk
  *    (GLD)` → `Bergen`, `Rijswijk`; 0.13% of NL rows). The analogue of the German Kreis/region-suffix class (#241 names
  *    `Rabenau Sachs` / `Weißwasser /O.L.`): an admin-region gloss glued onto the locality value that dirties locality
  *    labels.
  *
- * Audit-verified NON-noise, deliberately NOT cleaned (a naive suffix rule would mangle real names):
+ * Audit-verified NON-noise, deliberately not cleaned (a naive suffix rule would mangle real names):
  *
- * - ES/IT city-ends-with-province (`Alhama de Almería`, `GENZANO DI ROMA`; ~0.8% each): genuine toponyms whose linking
+ * - ES/IT city-ends-with-province (`Alhama de Almería`, `genzano DI roma`; ~0.8% each): genuine toponyms whose linking
  *   `de`/`di` makes them full names, unlike the German glued-abbreviation class.
  * - ES bilingual slash names (`Laudio/Llodio`; 2.16%): official co-names — the eval expects them verbatim.
- * - IT ALL-CAPS city casing (98.79% of the source, and the eval's observed form): casing is the #829 case-augmentation
- *   change, not this slice's.
+ * - IT all-caps city casing (98.79% of the source, and the eval's observed form): casing is the #829 case-augmentation
+ *   change rather than this recipe's.
  */
 export function cleanCityNoise(city: string): string | null {
 	if (/,|\d{4}/.test(city)) return null
@@ -227,14 +227,14 @@ interface ColumnIndex {
 /**
  * Stream real tuples out of an OA source part and reservoir-sample to {@link RESERVOIR_CAP}. Reads the CSV row-by-row —
  * `readZipEntry | CSVSpliterator` for zip parts, `createReadStream | CSVSpliterator` for extracted parts (both bounded
- * memory) — and keeps a uniform random sample (Algorithm R) seeded by `rng`, separate from the emit loop's PRNG. NO
- * global dedup (a 25M-key Set would OOM; OA rows are near-unique). The city passes through {@link cleanCityNoise}; the
- * region falls back to `part.region` when the row's REGION cell is empty (DE).
+ * memory) — and keeps a uniform random sample (Algorithm R) seeded by `rng`, separate from the emit loop's prng. No
+ * global dedup (a 25M-key Set would OOM. OA rows are near-unique). The city passes through {@link cleanCityNoise}. the
+ * region falls back to `part.region` when the row's region cell is empty (DE).
  *
- * Exported for {@link locale.test.ts} — the CSV read path (quote handling, CRLF, region fallback) has no other test.
+ * Exported for {@link locale.test.ts} — the CSV read path (quote handling, crlf, region fallback) has no other test.
  */
 export async function readTuples(part: LocalePart, rng: () => number): Promise<LocaleBaseTuple[]> {
-	// No `encoding` on the file path — CSVSpliterator delimits raw bytes and decodes utf-8 itself; a string stream
+	// No `encoding` on the file path — CSVSpliterator delimits raw bytes and decodes utf-8 itself. a string stream
 	// (from `{ encoding: "utf8" }`) would defeat its byte-range scanner.
 	const input: NodeJS.ReadableStream | AsyncIterable<Uint8Array> = part.path
 		? openReadStream(part.path)
@@ -248,7 +248,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 	let dropped = 0
 
 	try {
-		// CSVSpliterator handles OA's quoted fields (embedded commas/newlines) and CRLF row terminators
+		// CSVSpliterator handles OA's quoted fields (embedded commas/newlines) and crlf row terminators
 		// (spliterator ≥ 3.2.0); `header: false` yields the header row too, so the column index is built
 		// from that first row rather than from a header option.
 		for await (const cells of CSVSpliterator.fromAsync<string[]>(input, {
@@ -259,7 +259,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 				// oxlint-disable-next-line no-loop-func -- the binding is per-iteration (for-of/for-await) and the batch is awaited before the next
 				const ix = (name: string): number => header!.indexOf(name)
 
-				// `cnigRaw` (ES pedanía only): the RAW CNIG header has no NUMBER/STREET/CITY/DISTRICT/REGION/POSTCODE
+				// `cnigRaw` (ES pedanía only): the RAW cnig header has no number/street/city/district/region/postcode
 				// at all — `numero`/`nombre_via`/`poblacion`/`municipio`/`comunidad_autonoma`/`cod_postal` instead.
 				// See {@link LocalePart.cnigRaw}.
 				cols = part.cnigRaw
@@ -287,10 +287,10 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 
 			if (cols === null) continue
 
-			// cnigRaw: STREET is split into a road-type column (`tipo_vial`, e.g. "CARRETERA") and the name
+			// cnigRaw: street is split into a road-type column (`tipo_vial`, e.g. "carretera") and the name
 			// (`nombre_via`) — rejoin them exactly as OA's own conform step does (verified byte-identical to the
-			// conformed STREET column for the same source row). Every other part's header already carries the
-			// pre-joined STREET column, so `cols.tipoVial === -1` and this is a no-op there.
+			// conformed street column for the same source row). Every other part's header already carries the
+			// pre-joined street column, so `cols.tipoVial === -1` and this is a no-op there.
 			const street =
 				cols.tipoVial >= 0
 					? [get(cells, cols.tipoVial), get(cells, cols.street)].filter(isPresent).join(" ")
@@ -300,12 +300,12 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 
 			if (!street) continue
 
-			// Default: CITY → locality. NZ/GB (`districtAsLocality`) inverts it — the OA DISTRICT holds the city
-			// (`Auckland`) and CITY holds the suburb (`Birkenhead`), so DISTRICT → locality and CITY →
-			// dependent_locality. When DISTRICT is empty (~18% of NZ rows), fall back to CITY → locality with no
-			// sub-locality. GB PPD tuples flip which side is legitimately empty — on the MAJORITY of GB rows CITY
-			// (the dependent_locality) is empty and DISTRICT (the locality) is populated, so the check below only
-			// drops a `districtAsLocality` row when BOTH are empty, never when CITY alone is — filtering on CITY
+			// Default: city → locality. NZ/GB (`districtAsLocality`) inverts it — the OA district holds the city
+			// (`Auckland`) and city holds the suburb (`Birkenhead`), so district → locality and city →
+			// dependent_locality. When district is empty (~18% of NZ rows), fall back to city → locality with no
+			// sub-locality. GB PPD tuples flip which side is legitimately empty — on the majority of GB rows city
+			// (the dependent_locality) is empty and district (the locality) is populated, so the check below only
+			// drops a `districtAsLocality` row when both are empty, never when city alone is — filtering on city
 			// alone silently discards most of the GB source. See {@link LocalePart.districtAsLocality}.
 			let locality: string | null
 			let dependent_locality: string | undefined
@@ -321,10 +321,10 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 					locality = cleanedDistrict
 					const cleanedCity = cleanCityNoise(rawCity)
 
-					// ES pedanía lesson (2026-07-22): the CNIG `poblacion` column is filled on ~93% of rows but
-					// EQUALS `municipio` on the majority of those (the address point sits in the municipio's own
-					// main town, not a below-municipio pedanía) — only ~32.6% of ES rows carry a genuinely
-					// DISTINCT poblacion. GB/NZ never hit this (CITY/DISTRICT name the same place only by rare
+					// ES pedanía lesson (2026-07-22): the cnig `poblacion` column is filled on ~93% of rows but
+					// equals `municipio` on the majority of those (the address point sits in the municipio's own
+					// main town rather than a below-municipio pedanía) — only ~32.6% of ES rows carry a genuinely
+					// distinct poblacion. GB/NZ never hit this (city/district name the same place only by rare
 					// coincidence), but the guard is general: a dependent_locality equal to its own locality is
 					// never a real sub-locality, so drop it rather than emit a same-value pair (would fail the
 					// dep_loc≠locality invariant every recipe otherwise upholds).
@@ -382,7 +382,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 /**
  * Country-append fraction (the fr-admin-split #728 pattern, generalized to the locale recipe): mutates `synth` in
  * place, `countryFraction` of the time appending an explicit country surface form ("United Kingdom") to `raw` + a
- * `country` component — the model relearns to emit country WHEN the token is present without over-firing it on the
+ * `country` component — the model relearns to emit country when the token is present without over-firing it on the
  * (still-majority) country-less rows. `countryFraction <= 0` (the default) short-circuits the `random()` draw away
  * entirely — no `synth` mutation and no RNG consumption — so every existing locale's emit stream stays byte-identical
  * to before this option existed. Exported for {@link locale.test.ts}.
@@ -398,13 +398,13 @@ export function applyCountryAppend(
 
 		if (!forms?.length) {
 			// The BR/NZ lesson: a missing table entry must never silently no-op a requested fraction —
-			// it must raise so the gap is caught at build time, not discovered later as a 0% check failure.
+			// it must raise so the gap is caught at build time rather than discovered later as a 0% check failure.
 			throw new Error(
 				`No COUNTRY_SURFACE_FORMS entry for ${country} — add it to codex/country/country.ts before using --country-fraction`
 			)
 		}
 
-		const form = pick(forms, random)
+		const form = sample(forms, random)
 		synth.raw = `${synth.raw}, ${form}`
 		synth.components = { ...synth.components, country: form }
 	}
@@ -421,7 +421,7 @@ export function applyDistrictAsLocalityOverride(part: LocalePart, override: bool
 
 /**
  * Pick which part list a `--country` run reads: {@link LocaleCountrySource.pedaniaParts} when the override is explicitly
- * `true` AND the country registers one (ES only, so far), else the default `parts` — unchanged for every other
+ * `true` and the country registers one (ES only, so far), else the default `parts` — unchanged for every other
  * country/override combination. Exported for {@link locale.test.ts}.
  */
 export function resolveLocaleParts(countrySource: LocaleCountrySource, override: boolean | undefined): LocalePart[] {
@@ -429,8 +429,8 @@ export function resolveLocaleParts(countrySource: LocaleCountrySource, override:
 }
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const localeRecipe: CorpusRecipe = {
 	name: "locale",
@@ -451,8 +451,8 @@ export const localeRecipe: CorpusRecipe = {
 		},
 	],
 	async run(opts, write) {
-		// Emit PRNG: the legacy build-locale-slice.mjs seeded mulberry32(opts.seed). The reservoir uses a
-		// SEPARATE per-part mulberry32 (below) so input sampling never perturbs this emit stream.
+		// Emit prng: the legacy build script seeded mulberry32(opts.seed). The reservoir uses a
+		// separate per-part mulberry32 (below) so input sampling never perturbs this emit stream.
 		const random = makeMulberry32(opts.seed)
 		const country = (opts.country ?? "DE").toUpperCase()
 		const countrySource = COUNTRY_SOURCES[country]
@@ -489,7 +489,7 @@ export const localeRecipe: CorpusRecipe = {
 		const pool: LocaleBaseTuple[] = []
 
 		for (let pi = 0; pi < parts.length; pi++) {
-			// A reservoir PRNG per part, seeded but independent of the emit loop's `random`, so the sample is
+			// A reservoir prng per part, seeded but independent of the emit loop's `random`, so the sample is
 			// reproducible without perturbing the synth/order draws.
 			const reservoirRng = makeMulberry32((opts.seed ^ (0x9e_37_79_b9 * (pi + 1))) >>> 0)
 			const effectivePart = applyDistrictAsLocalityOverride(parts[pi]!, districtAsLocalityOverride)
@@ -497,7 +497,7 @@ export const localeRecipe: CorpusRecipe = {
 
 			for (const x of t) {
 				pool.push(x)
-			} // NOT pool.push(...t) — spreading huge arrays overflows the stack
+			} // Not pool.push(...t) — spreading huge arrays overflows the stack
 		}
 
 		if (!pool.length) {
@@ -513,7 +513,7 @@ export const localeRecipe: CorpusRecipe = {
 			const base = pool[Math.floor(random() * N)]!
 			const order = random() < intlFraction ? "international" : "native"
 
-			// Per-country surface-shape draws (#241) — consumed ONLY for that country, so the DE/FR emit
+			// Per-country surface-shape draws (#241) — consumed only for that country, so the DE/FR emit
 			// streams for a given seed are unchanged by their existence.
 			const nativeHouseJoin =
 				country === "ES" ? (random() < ES_SPACE_JOIN_FRACTION ? ("space" as const) : ("template" as const)) : undefined

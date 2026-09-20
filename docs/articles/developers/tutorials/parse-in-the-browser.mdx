@@ -166,7 +166,7 @@ Three inputs, run in order against one loaded classifier:
       postcode = 60606
 ```
 
-The indentation is containment, not reading order: the region contains the locality, the locality
+The indentation is containment rather than reading order: the region contains the locality, the locality
 contains the street and the postcode, and the street carries its own number, prefix and suffix. That
 is why the second input has no `region` level at all — a British address has no state to nest under —
 and the structure is what makes a resolver's job tractable later.
@@ -178,7 +178,7 @@ All three inputs are lowercase, because that is the register a person types in.
 
 Per-parse cost above is 20–30 ms on the WASM backend, on a warm session. The first parse after load
 is not in that range, which is why the loader runs a warm-up inference before handing the classifier
-back — that cost is inside step 2's number, not step 3's.
+back — that cost is inside step 2's number rather than step 3's.
 
 ## What the load costs
 
@@ -230,7 +230,7 @@ Two constraints ride on that:
 - **The parse runs on the thread that called it.** Nothing here moves inference to a worker. Session
   creation reads a 39.4 MB model and each parse is tens of milliseconds; put both in a worker of your
   own if your page has an animation to keep smooth.
-- **WebGPU availability is a browser and hardware property, not a configuration one.** The fallback
+- **WebGPU availability is a browser and hardware property rather than a configuration one.** The fallback
   is automatic, so a device without it still parses — on the slower backend. Log
   `diagnostics.backend` in production if you want to know which half of your traffic gets which.
 
@@ -248,7 +248,7 @@ reason.
 
 The data is the other. `@mailwoman/resolver-wof-wasm` is the published browser lookup, and its
 loader fetches a whole database and opens it in memory — workable for a slim, purpose-built
-distribution, not for the 1.65 GB worldwide one. `buildSlimWOFDatabase` from
+distribution rather than for the 1.65 GB worldwide one. `buildSlimWOFDatabase` from
 `@mailwoman/resolver-wof-sqlite/build-slim` is what produces such a distribution: give it a source
 gazetteer, a country set and a locality cap, and it writes a resolver-schema database sized for a
 static deploy.
@@ -262,7 +262,7 @@ you built for your own coverage, or send the parsed components to a server that 
 
 Steps 2 and 3 ran under Node.js 26.2.0 rather than in a browser, against the same `onnxruntime-web`
 build a browser loads and through the same `loadNeuralClassifierFromURLs` entry point. It is one code
-path, not two: the browser runtime's own test suite exercises the WASM execution provider in Node for
+path rather than two: the browser runtime's own test suite exercises the WASM execution provider in Node for
 the same reason. The parse output, the label count, the byte counts and the timings are therefore
 measured. Step 1's file set was copied out of this repository's own weights workspace, which is what
 the npm package publishes, and served over HTTP from a local directory for the step-2 run.

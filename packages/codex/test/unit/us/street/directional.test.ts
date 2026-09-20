@@ -46,7 +46,7 @@ test("matchLeadingDirectional: matches the first word only, preserving its surfa
 
 	// a street whose first word is not a directional
 	expect(matchLeadingDirectional("Main St")).toBeNull()
-	// directional NOT at the start is not a leading match
+	// a directional that is not at the start is not a leading match
 	expect(matchLeadingDirectional("Old North Rd")).toBeNull()
 	expect(matchLeadingDirectional("   ")).toBeNull()
 })
@@ -54,7 +54,7 @@ test("matchLeadingDirectional: matches the first word only, preserving its surfa
 test("renderDirectional: emits abbr/full in the reference's case", () => {
 	const ne = { canonical: "NORTH EAST", abbreviation: "NE" } as const
 	expect(renderDirectional(ne, "abbr", "N").toUpperCase()).toBe("NE")
-	// the "full" form is the one-word US street spelling, not the spaced publication form
+	// the "full" form is the one-word US street spelling rather than the spaced publication form
 	expect(renderDirectional(ne, "full", "Main")).toBe("Northeast")
 	const n = { canonical: "NORTH", abbreviation: "N" } as const
 	expect(renderDirectional(n, "abbr", "s")).toBe("n") // lower-case reference → lower-case output

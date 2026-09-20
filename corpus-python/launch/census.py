@@ -10,7 +10,7 @@ requires, and a census answers a question nobody has a receipt for yet. Two disc
 all four. Each counts by pulling rows through the LOADER the trainer uses rather than reading
 parquet and reimplementing the sampler — reimplementing it is how the first digit count went wrong
 — except `country_census_raw`, which reads raw parquet precisely because the loader is the thing
-under suspicion. And each prints the census BEFORE the conditional table, so a country with no rows
+under suspicion. And each prints the census before the conditional table, so a country with no rows
 reads as "no data" rather than "a probability of zero".
 """
 
@@ -18,8 +18,8 @@ from __future__ import annotations
 
 from .app import VOL_MOUNT, app, training_image, vol
 
-#: The recipes live beside the training package on the volume; a census reads the one that trained
-#: the model it is asking about, not a local copy.
+#: The recipes live beside the training package on the volume. a census reads the one that trained
+#: the model it is asking about rather than a local copy.
 CONFIGS = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs"
 
 
@@ -33,12 +33,12 @@ def diagnose_corpus(
     verify_country: str = "",
     verify_source: str = "",
 ) -> None:
-    """Check which corpus slices the data loader actually sees on the Modal volume.
+    """Check which corpus parquet files the data loader actually sees on the Modal volume.
 
     Pass ``--corpus-dir`` to point at an overlay. Pass ``--verify-country DE --verify-source
     synth-german`` to additionally PULL a few rows through the real filter and confirm they survive
-    — a slice whose rows are all filtered out is a run that trains on nothing and reports success.
-    This is the pre-launch "verify the loader sees the slice, THEN launch" check.
+    — a source whose rows are all filtered out is a run that trains on nothing and reports success.
+    This is the pre-launch "verify the loader sees the source, then launch" check.
     """
     import json
     import random
@@ -46,7 +46,7 @@ def diagnose_corpus(
     from collections import Counter
     from pathlib import Path
 
-    vol.reload()  # see slices committed after this container started
+    vol.reload()  # see files committed after this container started
     sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
 
     corpus_root = Path(corpus_dir)
@@ -57,40 +57,50 @@ def diagnose_corpus(
 
     if manifest.exists():
         data = json.loads(manifest.read_text())
-        train_slices = [s for s in data.get("slices", []) if s.get("split") == "train"]
-        print(f"MANIFEST: {len(train_slices)} train slices, {sum(s['rows'] for s in train_slices):,} rows")
+        train_files = [s for s in data.get("slices", []) if s.get("split") == "train"]
+        print(f"MANIFEST: {len(train_files)} train parquet files, {sum(s['rows'] for s in train_files):,} rows")
 
-        existing = sum(1 for s in train_slices if Path(s["path"]).exists())
-        missing = len(train_slices) - existing
-        print(f"Train slice files: {existing} exist, {missing} missing")
+        existing = sum(1 for s in train_files if Path(s["path"]).exists())
+        missing = len(train_files) - existing
+        print(f"Train parquet files: {existing} exist, {missing} missing")
         if missing > 0:
-            for s in train_slices:
+            for s in train_files:
                 if not Path(s["path"]).exists():
                     print(f"  MISSING: {s['path']}")
                     break
 
-    from mailwoman_train.data.loader import _slice_first_source, _slice_paths
+    from mailwoman_train.data.loader import _parquet_paths, file_source_counts
 
-    paths = _slice_paths(corpus_root, "train")
-    print(f"\n_slice_paths returned {len(paths)} train slices")
+    paths = _parquet_paths(corpus_root, "train")
+    print(f"\n_parquet_paths returned {len(paths)} train parquet files")
 
+    # A file counts under every source it carries, which is what the loader's index does. Counting each file once
+    # under its first row's source hid the sources that never open a file.
     by_source: Counter[str] = Counter()
+    rows_by_source: Counter[str] = Counter()
+    multi = 0
     errors = 0
     for p in paths:
         if not p.exists():
             errors += 1
             continue
         try:
-            src = _slice_first_source(p)
-            by_source[src] += 1
+            per_source = file_source_counts(p)
         except Exception as exc:  # noqa: BLE001
             errors += 1
             if errors <= 3:
                 print(f"  ERROR reading {p}: {exc}")
+            continue
+        if len(per_source) > 1:
+            multi += 1
+        for src, row_count in per_source.items():
+            by_source[src] += 1
+            rows_by_source[src] += row_count
 
-    print(f"\nSource index ({errors} errors, {sum(by_source.values())} readable):")
+    readable = len(paths) - errors
+    print(f"\nSource index ({errors} errors, {readable} readable, {multi} carrying more than one source):")
     for src, count in by_source.most_common():
-        print(f"  {src:35s} {count:4d} slices")
+        print(f"  {src:35s} {count:4d} files  {rows_by_source[src]:>12,} rows")
 
     # Pre-launch verification: do rows of the target country/source actually survive the filter?
     if verify_country or verify_source:
@@ -146,16 +156,16 @@ def country_census_raw(
     vol.reload()
     sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
 
-    from mailwoman_train.data.loader import _slice_paths
+    from mailwoman_train.data.loader import _parquet_paths
 
-    slices = _slice_paths(Path(corpus_dir), "train")
-    print(f"train slices: {len(slices)}")
+    files = _parquet_paths(Path(corpus_dir), "train")
+    print(f"train parquet files: {len(files)}")
 
     counts: Counter[str] = Counter()
     by_source: dict[str, Counter[str]] = {}
     seen = 0
-    for sh in slices:
-        pf = pq.ParquetFile(sh)
+    for path in files:
+        pf = pq.ParquetFile(path)
         for batch in pf.iter_batches(batch_size=8192, columns=["country", "source"]):
             cc = batch.column("country").to_pylist()
             ss = batch.column("source").to_pylist()
@@ -181,8 +191,8 @@ def country_census_raw(
         for src, k in (by_source.get(c) or Counter()).most_common(5):
             print(f"        via {src}: {k:,}")
 
-    # COMPLETENESS AUDIT — corpus countries vs the config's admitted set. The Norway bug was ONE
-    # silent drop; this asks what else. Two failure modes:
+    # completeness audit — corpus countries vs the config's admitted set. The Norway bug was one
+    # silent drop. this asks what else. Two failure modes:
     #   (a) present-but-dropped: rows in the corpus, absent from country_weights -> silently trained on nothing.
     #   (b) admitted-but-absent: in country_weights, ~zero corpus rows -> the config promises a locale it can't deliver.
     import yaml as _yaml
@@ -219,12 +229,12 @@ def digit_prior(
     rows: int = 400000,
     seed: int = 42,
 ) -> None:
-    """Which tag owns a bare digit-bearing token, as the SAMPLER draws it?
+    """Which tag owns a bare digit-containing token, as the SAMPLER draws it?
 
     The question is whether the model's `39A -> postcode` habit contradicts its training prior or
     reflects it. A previous count said P(house_number | bare digit)=0.810 vs P(postcode|·)=0.101 —
-    but that was ONE synthetic slice, read off disk, unweighted. The prior the model actually sees
-    is the WEIGHTED multinomial over ~700 slice refs, after the country filter, the coarse filter,
+    but that was one synthetic recipe output, read off disk, unweighted. The prior the model actually sees
+    is the weighted multinomial over ~700 parquet files, after the country filter, the coarse filter,
     and the augmentations. Those are not decorations: `augment_glue_prob` alone rewrites token
     boundaries, which is the thing under investigation.
 
@@ -232,7 +242,7 @@ def digit_prior(
     own weights — rather than reimplementing the sampler.
 
     Reports P(tag | token) for two families:
-      - BARE digit-ish tokens matching `\\d+[A-Za-z]?` (39A, 121, 44B).
+      - Bare digit-ish tokens matching `\\d+[A-Za-z]?` (39A, 121, 44B).
       - By token SHAPE, so `5` / `39A` / `1234` / `75008` are not averaged into one number. A
         4-digit token in NL and a 5-digit token in FR are different questions.
 
@@ -323,7 +333,7 @@ def digit_prior(
             if not BARE.match(tok):
                 continue
             n_bare_tokens += 1
-            # B-/I- stripped: the question is which COMPONENT owns the token, not its BIO position.
+            # B-/I- stripped: the question is which component owns the token rather than its BIO position.
             tag = lab.split("-", 1)[1] if "-" in lab else lab
             by_tag[tag] += 1
             by_shape[shape(tok)][tag] += 1
@@ -360,7 +370,7 @@ def digit_prior(
 
     # The control: the countries whose rows actually fail in production, at the shapes that fail.
     # Absence is not a low probability — a country with no rows has no prior at all, and its
-    # failures are OOD, not mis-taught. The census prints BEFORE the conditional table so a missing
+    # failures are OOD rather than mis-taught. The census prints before the conditional table so a missing
     # row reads as "no data" rather than "zero probability".
     print("\n--- COUNTRY CENSUS: rows drawn per country (absence != a prior of zero) ---")
     cc_rows: Counter[str] = Counter()
@@ -402,9 +412,9 @@ def piece_prior(
 
     `digit_prior` counted P(tag | token) and found P(postcode | a 2- or 3-digit token) = 0.0000 in
     every country with data. That looked like the model contradicting its corpus. It is not. The
-    model never sees a token; it sees pieces, and emits one label per piece. Digits tokenize roughly
-    one piece per character, so a 5-digit postcode `[9|0|2|1|0]` mints FOUR `I-postcode` labels while
-    a 2-digit house number `[1|4]` mints ONE `I-house_number`. Longer runs are postcodes AND longer
+    model never sees a token. it sees pieces, and emits one label per piece. Digits tokenize roughly
+    one piece per character, so a 5-digit postcode `[9|0|2|1|0]` mints four `I-postcode` labels while
+    a 2-digit house number `[1|4]` mints one `I-house_number`. Longer runs are postcodes and longer
     runs mint proportionally more continuation labels, so the continuation label distribution can
     invert the token distribution — mechanically, by length. Counting at the wrong unit is how the
     first reading came out backwards.
@@ -412,9 +422,9 @@ def piece_prior(
     That is the hypothesis. This measures it, at the unit, through `iter_encoded` — the same call
     the trainer makes, so the tokenizer and the BIO expansion are the real ones rather than
     arithmetic about them. (A hand-derivation predicted P(postcode | continuation) = 0.688 assuming
-    fertility == digit count; multi-digit pieces like `16` exist, so the real number can differ.)
+    fertility == digit count. multi-digit pieces like `16` exist, so the real number can differ.)
 
-    Reports, for digit-bearing pieces only:
+    Reports, for digit-containing pieces only:
       - P(tag | START piece of a digit run)        vs the model's measured B-house_number 0.604
       - P(tag | CONTINUATION piece of a digit run) vs the model's measured I-postcode 0.587-0.765
       - the same split by run length, since length is the variable doing the work
@@ -439,7 +449,7 @@ def piece_prior(
     cfg_path = Path(CONFIGS) / config_name
     cfg = yaml.safe_load(cfg_path.read_text())
     data_cfg = DataConfig(**cfg["data"])
-    # `tokenizer_dir` names the directory; the SentencePiece model is the file inside it.
+    # `tokenizer_dir` names the directory. the SentencePiece model is the file inside it.
     tok = Tokenizer(Path(data_cfg.tokenizer_dir) / "tokenizer.model")
 
     print(f"config     : {cfg_path.name}")
@@ -463,8 +473,8 @@ def piece_prior(
         pieces = [tok.sp.id_to_piece(i) for i in ex.input_ids]
         labels = ex.labels
 
-        # Walk maximal runs of digit-bearing pieces. The run is the unit under investigation:
-        # its FIRST piece is where the model emits B-*, the rest are where it emits I-*.
+        # Walk maximal runs of digit-containing pieces. The run is the unit under investigation:
+        # its first piece is where the model emits B-*, the rest are where it emits I-*.
         i = 0
         while i < len(pieces):
             if not DIGIT.search(pieces[i]) or labels[i] == IGNORE:
@@ -530,3 +540,186 @@ def piece_prior(
             continue
         top = "  ".join(f"{k}pc:{v / t:.2f}" for k, v in f.most_common(3))
         print(f"    {dl:>6d}  {t:>9,}   {top}")
+
+
+SEQUENCE_RECEIPT_CAP = 5000
+"""How many distinct component sequences a receipt records per split.
+
+Every country measured so far holds far fewer — 42 for GB, 31 for US — so the cap bounds a receipt
+for a country whose label vocabulary turns out to be large, and truncates nothing today.
+`component_sequences_recorded` states how many the receipt actually holds beside
+`distinct_component_sequences`, so a truncated receipt says so.
+"""
+
+
+@app.function(
+    volumes={VOL_MOUNT: vol},
+    image=training_image,
+    timeout=7200,
+    memory=32768,
+)
+def locale_supply_census(
+    country: str = "GB",
+    corpus_dir: str = "/data/corpus/versioned/v0.32.0-locality-shape/corpus-v0.32.0-locality-shape",
+    splits: str = "train,val,test",
+) -> None:
+    """How much INDEPENDENT address data one country has, as opposed to how many rows.
+
+    A row count answers neither question a locale-isolated graph turns on. The sampler restarts an
+    exhausted source with a fresh shuffled pass, so a small source is presented many times and its
+    row count reads as supply it does not have. And a corpus can carry one street rendered a hundred
+    ways, which is one street.
+
+    So this counts four things a row count cannot give, over a full scan rather than a sample —
+    a distinct count is the one statistic a sample cannot extrapolate:
+
+    - **rows**, per split, which is the number already in hand from the epoch-mixture audit.
+    - **distinct raw surfaces**, the strings the tokenizer actually sees. Rows over surfaces is how
+      much of the corpus is the same text written again.
+    - **distinct `source_id`s**, the underlying records. `SourceProvenance.source_id` is documented
+      stable across reruns precisely so dedup and holdout manifests are reproducible, which makes it
+      the independent-record count. Surfaces over source ids is how many ways one record is rendered.
+    - **distinct component sequences**, the tuple of `span_tags` a row carries. This is the shape
+      vocabulary the country teaches: a corpus of 800,000 rows carrying four sequences teaches four
+      forms.
+
+    Digests rather than strings in the two large sets. A full GB scan holds roughly 15.6 million raw
+    surfaces, and 8-byte digests keep the sets inside this function's memory where the strings would
+    not. A blake2b collision at this cardinality is far below the precision any decision here needs.
+
+    Natural and synthetic are counted apart. A synthesized row carries `synth_method`, and counting
+    the two together would answer "how much data is there" with a number partly produced by the
+    recipe under test.
+
+    Reads raw parquet rather than the loader, because the question is what the corpus contains. What
+    a run draws from it is `audit_epoch_mixture`, and the two answer different questions: that one
+    measures the sampler, this one measures the supply.
+    """
+    import json
+    import sys
+    import time
+    from collections import Counter
+    from hashlib import blake2b
+    from pathlib import Path
+
+    import pyarrow.compute as pc
+    import pyarrow.dataset as ds
+
+    vol.reload()
+    sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
+
+    from mailwoman_train.data.loader import _parquet_paths
+
+    want = country.strip().upper()
+    columns = ["country", "source", "source_id", "raw", "span_tags", "synth_method"]
+
+    # Predicate pushdown rather than reading every row and discarding most. A full scan of this corpus is
+    # 681,901,687 rows across 718 files, and one country is a small part of it. `pyarrow.dataset` skips a row
+    # group whose `country` statistics exclude the wanted value, which is most of them where a file holds one
+    # source. A row group with no usable statistics is read and filtered, so the count is the same either way.
+
+    def digest(value: str) -> int:
+        return int.from_bytes(blake2b(value.encode("utf-8"), digest_size=8).digest(), "big")
+
+    by_split: dict[str, dict[str, object]] = {}
+    report: dict[str, object] = {"country": want, "corpus_dir": corpus_dir, "splits": by_split}
+
+    for split in (s.strip() for s in splits.split(",") if s.strip()):
+        files = _parquet_paths(Path(corpus_dir), split)
+        surfaces: set[int] = set()
+        record_ids: set[int] = set()
+        sequences: Counter[str] = Counter()
+        by_source: Counter[str] = Counter()
+        rows = street_rows = synth_rows = street_and_region_rows = 0
+
+        started = time.monotonic()
+        dataset = ds.dataset([str(path) for path in files], format="parquet")
+
+        for batch in dataset.to_batches(columns=columns, filter=pc.field("country") == want, batch_size=8192):
+            if not batch.num_rows:
+                continue
+
+            sources = batch.column("source").to_pylist()
+            ids = batch.column("source_id").to_pylist()
+            raws = batch.column("raw").to_pylist()
+            tags = batch.column("span_tags").to_pylist()
+            synths = batch.column("synth_method").to_pylist()
+
+            for source, source_id, raw, span_tags, synth in zip(sources, ids, raws, tags, synths, strict=True):
+                rows += 1
+                by_source[str(source)] += 1
+
+                if synth:
+                    synth_rows += 1
+
+                if raw:
+                    surfaces.add(digest(raw))
+
+                if source_id:
+                    record_ids.add(digest(f"{source}\u001f{source_id}"))
+
+                present = tuple(span_tags or ())
+                sequences["|".join(present)] += 1
+
+                has_street = "street" in present or "house_number" in present
+
+                if has_street:
+                    street_rows += 1
+
+                # The split assignment holds a row out by its `region` component, so a street row carrying no region
+                # can never reach the validation or test split however the holdouts are declared. This counter is the
+                # ceiling on street-level validation a region holdout could ever draw for this country (#2353).
+                if has_street and "region" in present:
+                    street_and_region_rows += 1
+
+        elapsed = time.monotonic() - started
+
+        by_split[split] = {
+            "files": len(files),
+            "seconds": round(elapsed, 1),
+            "rows": rows,
+            "street_rows": street_rows,
+            "street_and_region_rows": street_and_region_rows,
+            "synth_rows": synth_rows,
+            "distinct_surfaces": len(surfaces),
+            "distinct_source_ids": len(record_ids),
+            "distinct_component_sequences": len(sequences),
+            # Every sequence the split carries. A country's sequence vocabulary is small — 42 for GB, 31 for US — and
+            # the question the receipt gets asked is which shapes a country never teaches, which a truncated list
+            # cannot answer. The cap bounds the receipt for a country whose vocabulary turns out to be large.
+            "component_sequences": dict(sequences.most_common(SEQUENCE_RECEIPT_CAP)),
+            "component_sequences_recorded": min(len(sequences), SEQUENCE_RECEIPT_CAP),
+            "by_source": dict(by_source.most_common()),
+        }
+
+        print(f"\n=== {want} / {split} — {len(files)} parquet files, {elapsed:,.0f}s ===")
+        print(f"  rows                          {rows:>12,}")
+        print(f"  of those, street or house no. {street_rows:>12,}")
+        print(f"  of those, also with a region  {street_and_region_rows:>12,}")
+        print(f"  of those, synthesized         {synth_rows:>12,}")
+        print(f"  distinct raw surfaces         {len(surfaces):>12,}")
+        print(f"  distinct source ids           {len(record_ids):>12,}")
+        print(f"  distinct component sequences  {len(sequences):>12,}")
+
+        if rows and surfaces:
+            print(f"\n  rows per distinct surface     {rows / len(surfaces):>12.2f}")
+
+        if surfaces and record_ids:
+            print(f"  surfaces per distinct record  {len(surfaces) / len(record_ids):>12.2f}")
+
+        if by_source:
+            print("\n  rows by source:")
+            for source, count in by_source.most_common(12):
+                print(f"    {source:<28s} {count:>12,}")
+
+        if sequences:
+            print("\n  most common component sequences:")
+            for sequence, count in sequences.most_common(8):
+                print(f"    {count:>10,}  {sequence or '(no spans)'}")
+
+    out = Path(f"{VOL_MOUNT}/audits/locale-supply-{want.lower()}.json")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    vol.commit()
+
+    print(f"\nwrote {out}")

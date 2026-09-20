@@ -4,8 +4,8 @@
 /**
  *   The attribution parse, pinned against the record's own malformed text.
  *
- *   THIS IS A MEASURED TRAP, NOT A HYPOTHETICAL ONE. The 2024 record's abstract carries the attribution
- *   statement TWICE, and the first copy — inherited from the superseded 2018–2021 record — has no year. OGL
+ *   this is A measured trap rather than A hypothetical one. The 2024 record's abstract carries the attribution
+ *   statement twice, and the first copy — inherited from the superseded 2018–2021 record — has no year. OGL
  *   v3.0 makes the statement a licence condition, so a parse taking the first match ships a licence condition
  *   stated incorrectly. The fixture below is the real text, read from the Environment Agency's CSW.
  */
@@ -66,7 +66,7 @@ describe("parseAttributionStatement", () => {
 		const record =
 			`<a>${ATTRIBUTION_MARKER} © Somebody 1999.</a>` + `<b>${ATTRIBUTION_MARKER} © Somebody Else 2025.</b>`
 
-		// The LAST dated copy wins, which is what makes the published record's yearless first copy unreachable.
+		// The last dated copy wins, which is what makes the published record's yearless first copy unreachable.
 		expect(parseAttributionStatement(record)).toBe("© Somebody Else 2025.")
 	})
 
@@ -96,7 +96,7 @@ describe("assertAttributionUnchanged", () => {
 
 describe("the service slug", () => {
 	it("is the authority's misspelling of its own product", () => {
-		// The correct spelling answers HTTP 404 and the misspelling answers HTTP 200. A build that "corrected" this would
+		// The correct spelling answers http 404 and the misspelling answers http 200. A build that "corrected" this would
 		// lose the service half of the two-path verification while reporting a clean run.
 		expect(NCERM_SERVICE_SLUG).toBe("ncern-national-2024")
 		expect(NCERM_SERVICE_SLUG).not.toContain("ncerm")

@@ -3,6 +3,7 @@
 
 import { isAuDeliveryService } from "@mailwoman/codex/au"
 import { isNZDeliveryService } from "@mailwoman/codex/nz"
+import { sample } from "@mailwoman/core/random"
 
 import { makeAuNZPoBoxPhrase } from "#recipes/po/box/cedex/phrases"
 import type { AUTuple, NZTuple, Rendered } from "#recipes/po/box/cedex/types"
@@ -13,7 +14,6 @@ import {
 	NZ_LEADERS_RARE,
 	VENUES_EN,
 } from "#recipes/po/box/cedex/vocabulary"
-import { pick } from "#synthesizers/utils"
 
 const AU_UPPER_LOCALITY_CUTOFF = 0.6,
 	AU_STANDARD_CUTOFF = 0.45,
@@ -53,7 +53,7 @@ export function renderAUPoBox(random: () => number, tuple: AUTuple): Rendered {
 		}
 
 	if (draw < AU_BARE_CUTOFF) return { fmt: "au-bare", raw: phrase, components: { po_box: phrase } }
-	const venue = pick(VENUES_EN, random)
+	const venue = sample(VENUES_EN, random)
 
 	return {
 		fmt: "au-venue",
@@ -75,7 +75,7 @@ export function renderNZPoBox(random: () => number, tuple: NZTuple): Rendered {
 		return { fmt: "nz-no-postcode", raw: `${phrase}, ${locality}`, components: { po_box: phrase, locality } }
 
 	if (draw < NZ_BARE_CUTOFF) return { fmt: "nz-bare", raw: phrase, components: { po_box: phrase } }
-	const venue = pick(VENUES_EN, random)
+	const venue = sample(VENUES_EN, random)
 
 	return { fmt: "nz-venue", raw: `${venue}, ${phrase}, ${locality} ${postcode}`, components: { venue, ...base } }
 }

@@ -3,7 +3,7 @@
 
 /**
  *   One chunk of the flood ingest, as its own process — spawned by `buildFloodDatabase`, never run by
- *   hand. The process boundary and the stdout contract live with `runIngestChunkScript`; what stays here
+ *   hand. The process boundary and the stdout interface live with `runIngestChunkScript`; what stays here
  *   is only this product's flags and its feature-source constructor.
  */
 

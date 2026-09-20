@@ -3,18 +3,18 @@
 2026-07-20. Operator + Claude. **Reworked 2026-07-30** (operator: "way old") — the design held;
 §0 records what ten days changed around it. Phase sizing and §8's counsel checks unchanged. Extends
 `docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md` (the Phase-1 spatial-layer
-spec); its §7 decisions bind here — the layer contract, the shipped/build-local/private tiers,
-the meaning-of-zero rule, "ship the builder, not ODbL data," the agent-as-decoder framing, and
+spec); its §7 decisions bind here — the layer interface, the shipped/build-local/private tiers,
+the meaning-of-zero rule, "ship the builder rather than ODbL data," the agent-as-decoder framing, and
 the thin MCP toolset. Companion integration notes:
 `scratchpad/poi-record-match-integration.md` (record/match boundaries for the provider registry and
 CRM layers). The earlier draft salvage source surveyed read-only this session:
 the author's earlier draft (AGPL, operator is sole author, the author's own earlier draft
 approved per the Phase-1 salvage rule).
 
-Phase 1 is substantially landed already: `core/layers/` (the contract), `@mailwoman/spatial/h3`
+Phase 1 is substantially landed already: `core/layers/` (the interface), `@mailwoman/spatial/h3`
 (the 48-bit packing), `resolver-wof-sqlite/poi-schema.ts` + `mailwoman/gazetteer-pipeline/poi/`
 (poi.db), `@mailwoman/poi-taxonomy`, and `mcp/` (the thin tool surface) all exist in-tree. This
-spec builds the BDC vertical on that substrate. It is a design, not a plan — each phase gets its
+spec builds the BDC vertical on that substrate. It is a design rather than a plan — each phase gets its
 own plan file after review.
 
 ## 0. The 2026-07-30 rework — what changed around this design
@@ -31,12 +31,12 @@ Nothing below invalidates a §7 phase or a §2 layer decision; the deltas are su
   has a validation vendor** — Sonar (385+ ISPs, partner directory) is the commercial flagship
   target and UISP the free-plugin distribution lane, with C5 (serviceability SaaS) as the live OEM
   reference. That converts §1's "users" from personas into named routes.
-- **Counsel batching**: §8's eight questions ride the ONE consolidated G1 session (with the
+- **Counsel batching**: §8's eight questions ride the one consolidated G1 session (with the
   license-fence, OEM-template, and ODbL items). Question 1 (the Fabric `location_id` join key)
   still checks 2a — unchanged, just scheduled.
 - **The enterprise line** (ROAD_TO_MAILWOMAN_V8_3_0 / B11): 2c's CRM record-match work doubles as
   an enterprise on-ramp — the acceptance-battery discipline from the retrain arc (per-customer
-  canaries, noise-honest margins) applies verbatim to record-match delivery. No design change;
+  canaries, noise-direct margins) applies verbatim to record-match delivery. No design change;
   named so 2c is scoped with that reuse in mind.
 - **C1 unblocked**: it was deferred on 2026-07-28 while the 8.2.0 arc owned the repo; the repo is
   free.
@@ -59,7 +59,7 @@ Users:
   filing and demographic picture ("which of our buildings sit in a block a competitor claims to
   serve").
 
-The interface is an **agent**, not a form. The agent supplies intent extraction, planning, and
+The interface is an **agent** rather than a form. The agent supplies intent extraction, planning, and
 narrative. Mailwoman supplies what the agent lacks: deterministic, local, provenance-tracked
 spatial ground truth — the address spine, the layers, the distances, the census. This is the
 Phase-1 framing applied to one vertical: mailwoman is the decoder's tool belt, never the
@@ -97,17 +97,17 @@ Row grain (verified against the earlier draft `sync/fcc/bdc/block-aggregator.ts:
 | `low_latency`                   | boolean                                                                      |
 | `business_residential_code`     | B/R/both                                                                     |
 | `geoid`                         | 15-char census block GEOID — the **public** spatial key                      |
-| `location_id`                   | Fabric BSL id — opaque join key only (§2.2); NOT resolvable to a point by us |
+| `location_id`                   | Fabric BSL id — opaque join key only (§2.2); not resolvable to a point by us |
 
 **Spine keys.** `wof_id` (block-centroid PIP against the gazetteer at build time), `h3` (res-9
-integer short cell of the block centroid). `address_id` is NOT a spine key here — BDC claims are
-block-grained, not address-grained; the `location_id` (BSL) that would make them address-grained
-is licensed and unresolvable (§2.2). This is a deliberate contract choice: bdc.db rows key at
+integer short cell of the block centroid). `address_id` is not a spine key here — BDC claims are
+block-grained rather than address-grained; the `location_id` (BSL) that would make them address-grained
+is licensed and unresolvable (§2.2). This is a deliberate interface choice: bdc.db rows key at
 block resolution, and any per-address answer is an inference across the block, flagged as such.
 
 **Tier.** Shipped candidate — the source is public domain. Open cost, flagged (§7): a full
 nationwide fixed-broadband availability vintage is ~10^8 rows. Shipping a continental bdc.db to
-R2 is a size and build-time cost, not a licensing one. The likely resolution is a **shipped
+R2 is a size and build-time cost rather than a licensing one. The likely resolution is a **shipped
 pilot-state pocket + build-local for the rest**, mirroring the poi.db "pilot then scale"
 posture; decide at 2a exit.
 
@@ -116,9 +116,9 @@ posture; decide at 2a exit.
 **snapshot** of one vintage: `freshness_policy = versioned-refresh` (re-issued under the same
 name per vintage), each issue itself sealed. `source_vintage` carries the `as_of_date`;
 `build_sha` + `build_cmd` pin the exact filing files. A filing landscape is only ever "as of
-vintage X" — the vintage is required on every answer, not metadata.
+vintage X" — the vintage is required on every answer rather than metadata.
 
-**Meaning-of-zero.** `layer_coverage` at res 6 records which blocks the ingested vintage actually
+**Meaning-of-zero.** `layer_coverage` at res 6 records which blocks the ingested vintage
 covered. A block with no filing row is **UNKNOWN** — no provider filed availability there in this
 vintage — never "no service exists." This is the whole epistemic spine of the vertical (§4):
 absence of a filing is not evidence of absence of service, and never evidence of implausibility.
@@ -136,7 +136,7 @@ Mailwoman never ingests it, never ships it, never derives a table from it. Concr
   the Fabric point, we return a block-level inference and say so.
 - "Fabric-without-Fabric" (the earlier draft `sync/commands/bdc/infer-locations.ts`) is the salvage that
   matters here: infer location→block relationships from the free per-provider availability CSVs
-  themselves, not from the licensed Fabric. It ports as a build-time **sqlite staging** step
+  themselves rather than from the licensed Fabric. It ports as a build-time **sqlite staging** step
   (the earlier-draft Redis dedup is replaced — §3).
 
 This boundary is stated in the manifest `attribution` and in the vertical's docs. It is the
@@ -146,7 +146,7 @@ difference between a shippable public-record product and a license violation.
 
 Physical-plant evidence (fiber huts, telephone exchanges, telecom cabinets, datacenters) has no
 permissive source. It lives in OSM and in Overture's _base_ theme, both ODbL. Per the Phase-1
-tier rule and §3.5 of the Phase-1 spec, mailwoman **ships the builder, not the data**: the
+tier rule and §3.5 of the Phase-1 spec, mailwoman **ships the builder rather than the data**: the
 existing `poi build --source osm` path (build-local layer over `osm/sdk` ingestion) is extended
 to recognize telecom-infrastructure tags, and `@mailwoman/poi-taxonomy`'s
 infrastructure-extension namespace gains the categories:
@@ -164,7 +164,7 @@ names the missing layer, never fabricates a distance.
 **Tier / freshness / meaning-of-zero.** `build-local`, `freshness_policy = sealed` (rebuild-only),
 `layer_coverage` from the OSM survey extent. OSM telecom coverage is sparse and uneven — the
 coverage table is not decoration here, it is what stops a sparse cell from reading as "no fiber
-plant nearby, therefore implausible" (§4).
+plant near, therefore implausible" (§4).
 
 ### 2.4 Demographics — reuse the existing tiger workspace (shipped)
 
@@ -172,8 +172,8 @@ Market sizing needs population, housing-unit, and area counts per census unit. *
 exists in-tree** — `tiger/sdk/schema.ts` defines `TIGERBlockTable` (`population`,
 `housing_unit_count`, `block_group_code`, `block_code`, land area) and `PLBlockTable` (2020 P.L.
 94-171). The earlier-draft "TIGER block model with population/housing/area" salvage row is therefore
-**mostly redundant** — do not re-port it; reuse `@mailwoman/tiger`. The only genuinely new piece
-is exposing the block table as a demographics layer conforming to the layer contract (a thin
+**mostly redundant** — do not re-port it; reuse `@mailwoman/tiger`. The only in fact new piece
+is exposing the block table as a demographics layer conforming to the layer interface (a thin
 manifest/coverage wrapper + a res-9 h3 column), so `market_size` reads it through the same
 `@mailwoman/core/layers` boundary as everything else. Census is public domain — shipped tier, sealed.
 
@@ -193,14 +193,14 @@ question (§7); not in the 2a–2c scope.
 
 ## 3. Primitives / tools
 
-Favor existing packages. The Phase-1 scope guard holds: verticals are agent workflows over the
-spine, not new ML product lines. But BDC needs a **data-acquisition provider** (fetch, parse,
+Favor existing packages. the result: verticals are agent workflows over the
+spine rather than new ML product lines. But BDC needs a **data-acquisition provider** (fetch, parse,
 extract, ingest) exactly like `ban/` and `osm/`, so one new workspace is justified:
 
 **`@mailwoman/bdc`** (new workspace, mirrors `ban`/`osm`): `bdc/sdk` (the public-API client,
 file listing, vintage resolution, CSV parsing, ingest to the staging DB), the bdc.db Kysely
 schema module (`createBDCTable` co-located with the typed interface, intersecting
-`LayerContractDatabase`), the layer reader, and the thin plausibility scorer. Everything else
+`layerschemadatabase`), the layer reader, and the thin plausibility scorer. Everything else
 reuses existing packages.
 
 The three primitives, and where each lives:
@@ -208,11 +208,11 @@ The three primitives, and where each lives:
 ### 3.1 `filing_landscape(area)` → provider/tech/speed census
 
 A census of the BDC filings in an area: which providers, which technologies, which advertised
-speeds, over how many blocks. Pure composition — `aggregate(bdc.db, area, h3res)` (the Phase-1
+speeds, over how several blocks. Pure composition — `aggregate(bdc.db, area, h3res)` (the Phase-1
 `@mailwoman/spatial` verb) grouped by `provider_id` / `technology_code` / speed bucket. Lives as
 a reader function in `@mailwoman/bdc`; the `area` is resolved by the existing geocode/gazetteer
 path (a WOF id, a bbox, or an h3 cell set). Returns per the coverage rule: the census is scoped
-to surveyed blocks, and unsurveyed blocks in the area are reported as unknown count, not zero.
+to surveyed blocks, and unsurveyed blocks in the area are reported as unknown count rather than zero.
 
 ### 3.2 `plausibility_check(address, claimed_tech, claimed_speed) → evidence bundle`
 
@@ -221,7 +221,7 @@ The headline primitive. Composition, no ML:
 1. Geocode `address` (existing pipeline; **formatted register** — customer records, `input_mode: "formatted"`/the batch default, retry rider on zero-hit) → block `geoid` + res-9 `h3` cell.
 2. **Filing evidence** — does bdc.db hold a filing in that block matching `claimed_tech` at or
    above `claimed_speed`? (positive corroboration) Or a filing that contradicts it (a provider
-   filing a lesser tech)? (weak signal, not disproof).
+   filing a lesser tech)? (weak signal rather than disproof).
 3. **Physical evidence** — `nearest(osm-infra-layer, point, k)` for the plant class the claim
    implies (fiber claim → nearest telecom exchange / datacenter / cabinet). Distance + the
    coverage confidence of that cell.
@@ -267,13 +267,13 @@ temptation to read absence as disproof is constant. The rules, pre-registered:
    self-reported and over-claim is the entire reason BDC challenges exist). The bundle reports
    "a filing corroborates the claim," never "the claim is true."
 2. **Positive evidence only.** The only strong output is **co-presence**: a matching filing
-   plus nearby physical plant in a well-surveyed cell. Everything else degrades toward
-   uncertainty, not toward a negative verdict.
-3. **Absence is UNKNOWN, not implausible.** No filing in a block → unknown (unsurveyed by that
-   provider, or genuinely unserved — indistinguishable from the public record). No fiber plant
+   plus near physical plant in a well-surveyed cell. Everything else degrades toward
+   uncertainty rather than toward a negative verdict.
+3. **Absence is UNKNOWN rather than implausible.** No filing in a block → unknown (unsurveyed by that
+   provider, or in fact unserved — indistinguishable from the public record). No fiber plant
    within range → unknown _unless_ the infra cell is well-surveyed, and even then it is
    "no corroborating plant found," not "impossible." The meaning-of-zero rule applies to
-   **conclusions**, not just to storage: `plausibility_check` never emits "implausible" from an
+   **conclusions**, notto storage: `plausibility_check` never emits "implausible" from an
    absence. The strongest negative it can emit is "no supporting evidence found, and coverage is
    good enough that this is informative" — still framed as absence-of-evidence.
 4. **coverage_confidence is mandatory on every answer.** A sparse-coverage cell collapses the
@@ -308,18 +308,18 @@ where one exists.
 | Organization / PointOfContact / OrganizationClassification models                          | the earlier draft `mailwoman/organization/*`, `mailwoman/contacts/PointOfContact.ts`                | provider registry entity shell (2c) — see §5.1                 |
 | Block×availability×demographics rollup SQL                                                 | `sync/commands/bdc/generate-provider-geojson.ts`                                        | design reference for `aggregate()` / `market_size`             |
 
-### Already ported — do NOT re-port
+### Already ported — do not re-port
 
 - **H3 48-bit short-cell packing** — `@mailwoman/spatial/h3` already exports `shortenH3Cell`,
   `expandH3Cell`, `shortCellToPoint`, `cellToPointLiteral` (Phase-1 landed it). The earlier draft stores the
   short cell as a hex string; mailwoman packs it to an **integer** for the clustered B-tree — use
   the mailwoman form, never the hex string.
 - **TIGER block model with population/housing/area** — `@mailwoman/tiger` already has
-  `TIGERBlockTable` + `PLBlockTable` (§2.4). Reuse it; the only new work is the layer-contract
+  `TIGERBlockTable` + `PLBlockTable` (§2.4). Reuse it; the only new work is the layer-interface
   wrapper. (Block-intersection _queries_ may be new; add them to `@mailwoman/tiger` or compose
   from `@mailwoman/spatial` — do not fork a second block model.)
 
-### Does NOT port, and why
+### Does not port, and why
 
 - **Fabric data-source / migrations** (`sync/fcc/fabric/*`) — CostQuest-licensed (§2.2). Never.
 - **Redis** (dedup in `infer-locations.ts`, the `RedisManager`) — replaced by sqlite staging per
@@ -330,7 +330,7 @@ where one exists.
   `core/env` (zero-raw-`process.env` rule), the mailwoman async-init/lifecycle, and Pastel
   `cli-kit`. The `ServiceRepository.register` pattern in `client.ts` maps to the async-init
   package.
-- **ECFS / ULS clients, CAF / RDOF / tribal ingest** — do not exist in the earlier draft; genuinely new work,
+- **ECFS / ULS clients, CAF / RDOF / tribal ingest** — do not exist in the earlier draft; in fact new work,
   deferred (subsidy registry is already Phase-1-deferred).
 
 ### 5.1 The contacts gap (from the integration notes)
@@ -341,7 +341,7 @@ places), and it explicitly defers acronym/DBA/TF-IDF org _matching_ to "the matc
 the earlier draft `Organization` / `PointOfContact` / `OrganizationClassification` models supply the entity
 shell; `@mailwoman/record` supplies the name normalization. Salvage rule: **do not duplicate
 `OrganizationName`** — the provider registry becomes a versioned-refresh layer of
-organizations-keyed-by-FRN, joined to places by the existing matcher, not a new subsystem. This
+organizations-keyed-by-FRN, joined to places by the existing matcher rather than a new subsystem. This
 is 2c.
 
 ## 6. Named costs
@@ -350,15 +350,14 @@ is 2c.
   (`BroadbandTechnologyCode`, `AddressConfidenceCode`, `LandUseCode`, `BSLFlag`). `erasableSyntaxOnly`
   forbids `enum` repo-wide — each ports as `const X = {…} as const` + `type X = (typeof
 X)[keyof typeof X]`. Mechanical but touches every dictionary file.
-- **Redis → sqlite staging** for the fabric-without-fabric dedup — a rewrite of the dedup pass,
-  not a copy. The staging DB is a temp artifact, built-then-discarded.
+- **Redis → sqlite staging** for the fabric-without-fabric dedup — a rewrite of the dedup pass rather than a copy. The staging DB is a temp artifact, built-then-discarded.
 - **bdc.db scale** — a nationwide fixed-broadband vintage is ~10^8 rows; continental shipped-tier
   is a real R2/build-time cost. Pilot-pocket-then-scale is the likely answer (decide at 2a exit).
 - **BSL block-granularity ceiling** — because the Fabric point is licensed, every per-address
-  plausibility answer is a block-level inference. This is a correctness ceiling, not a bug; the
+  plausibility answer is a block-level inference. This is a correctness ceiling rather than a bug; the
   bundle must always flag block-grain inference as such.
 - **OSM telecom sparsity** — telecom-infra coverage in OSM is thin and uneven; the physical
-  falsifier fires positively far less often than the filing evidence, and the coverage table
+  falsifier fires positively far less frequently than the filing evidence, and the coverage table
   carries the weight of not over-reading its absence.
 
 ## 7. Phasing
@@ -370,12 +369,12 @@ this spec is reviewed.
 
 Scope: the `@mailwoman/bdc` workspace skeleton; salvage the BDC client + vintage/file listing +
 CSV parser (`enum`→const, env re-home); the bdc.db Kysely schema intersecting
-`LayerContractDatabase`; the fabric-without-fabric ingest (Redis→sqlite staging) for one pilot
+`layerschemadatabase`; the fabric-without-fabric ingest (Redis→sqlite staging) for one pilot
 state; the layer reader + `filing_landscape`; the `mailwoman_bdc_filing_landscape` MCP tool.
 
 Checks (pre-registered):
 
-- Layer-contract conformance — `readLayerManifest`/`readLayerCoverage` pass; h3 packed as res-9
+- Layer-interface conformance — `readLayerManifest`/`readLayerCoverage` pass; h3 packed as res-9
   integer short cell (byte-compatible with poi.db / address-id join).
 - Coverage/meaning-of-zero test — an unsurveyed block returns `undefined` from
   `readLayerCoverage`, and `filing_landscape` reports it as unknown, never zero.
@@ -394,9 +393,9 @@ evidence into the `{ claim, evidence_found, coverage_confidence }` bundle; the
 Checks:
 
 - **Positive-evidence-only invariant test** — a fixture with a claim in a block that has NO
-  filing and NO nearby plant returns "unknown / insufficient evidence," and asserts the scorer
+  filing and no near plant returns "unknown / insufficient evidence," and asserts the scorer
   can NEVER emit "implausible" from an absence (§4). This is the required check.
-- Co-presence path — a claim with a matching filing + nearby well-surveyed plant returns high
+- Co-presence path — a claim with a matching filing + near well-surveyed plant returns high
   `evidence_found` + high `coverage_confidence`.
 - Layer-absent path — with the OSM infra layer absent, the bundle says "requires the
   locally-built OSM infra layer," never a fabricated distance.
@@ -412,8 +411,8 @@ and `reconcile.ts` buckets ("our building in a competitor-claimed-served block")
 
 Checks:
 
-- Provider registry conforms to the layer contract (versioned-refresh, FRN-keyed).
-- No duplication of `OrganizationName` — the matcher, not a new contacts subsystem, does the
+- Provider registry conforms to the layer interface (versioned-refresh, FRN-keyed).
+- No duplication of `OrganizationName` — the matcher rather than a new contacts subsystem, does the
   join (reviewer check against §5.1).
 - A reconcile fixture produces the enrolled / present-not-in-base buckets over a synthetic
   CRM + bdc.db pair.

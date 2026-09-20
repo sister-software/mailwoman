@@ -1,4 +1,4 @@
-# The honest eval — when the metric graded by name and missed the wrong state
+# The direct eval — when the metric graded by name and missed the wrong state
 
 _2026-06-08. Self-emitted figures from `scripts/eval/honest-eval.sh` (#371 leakage-free
 geographic split + #373 PIP-containment). Numbers are written by the harness, never hand-typed._
@@ -7,19 +7,19 @@ geographic split + #373 PIP-containment). Numbers are written by the harness, ne
 
 Every resolver number we have ever quoted shares a flaw: the eval set and the training corpus
 cover the same places. A model that has seen Springfield, Illinois a thousand times in training
-will "resolve" it on the eval — but that is recall of a memorized place, not generalization. And
+will "resolve" it on the eval — but that is recall of a memorized place rather than generalization. And
 the headline metric made it worse. We graded resolution by **locality name-match**: did the
 resolved place carry the same name string as the gold? That question is blind to the failure that
-actually matters — resolving the right _name_ in the wrong _place_. "New York" matches "New York"
+matters — resolving the right _name_ in the wrong _place_. "New York" matches "New York"
 whether the point lands in Manhattan or in a village 280km upstate.
 
 So this harness measures two things the old one could not:
 
-1. **A leakage-free slice.** Evaluate only on OpenAddresses rows whose geography the training
+1. **A leakage-free set.** Evaluate only on OpenAddresses rows whose geography the training
    corpus held out (`corpus/src/split.ts` `defaultHoldouts()`: US = VT/WY/ND, FR = Corse/Lozère/
    Creuse). Those are places the model has never seen. In the current samples only **US/Vermont**
    clears a 1000-row trust floor (1428 rows); FR's held-out départements total 16 rows, and DE has
-   no manifest holdout. We report VT and flag the rest honestly rather than scoring noise.
+   no manifest holdout. We report VT and flag the rest directly rather than scoring noise.
 2. **A non-gameable metric.** Beyond name-match, report **region-match**, **coordinate error**
    (great-circle, gold point to resolved centroid, p50/p90), and **PIP-containment** — is the gold
    point inside the resolved WOF polygon. PIP is name-surface-independent: it rewards a
@@ -27,7 +27,7 @@ So this harness measures two things the old one could not:
 
 ## What it found, immediately
 
-The first run on the honest Vermont slice:
+The first run on the held-out Vermont set:
 
 | metric                                         |      value |
 | ---------------------------------------------- | ---------: |
@@ -43,7 +43,7 @@ ten, and the metric we had been quoting could not see it.
 ### Root cause
 
 The model is fine. It tags `region="VT"`, `locality="North Hero"`, the street, the number, and the
-postcode cleanly. The resolver is where it breaks: WOF stores the state only as "Vermont", and the
+postcode directly. The resolver is where it breaks: WOF stores the state only as "Vermont", and the
 `place_search` FTS index carried no USPS abbreviations, so `findPlace("VT")` returned nothing. With
 no resolved region, the resolver's parent-constraint never engaged, the locality search ran
 unconstrained across the entire US, and a higher-population namesake in another state won. "Sheldon"
@@ -51,13 +51,13 @@ has ten US localities; the population-5,455 one beats Vermont's population-932 o
 
 The abbreviation enrichment that would fix this **already exists** — `scripts/add-region-abbrevs.ts`
 sources state/province abbreviations from the in-repo chromium-i18n libaddressinput data and writes
-them into the `names` table, which `build-fts` folds into `place_search`. It was simply missing from
+them into the `names` table, which `build-fts` folds into `place_search`. It was only missing from
 the build manifest's post-build step, so the deployed gazetteer was built without it (0 `abbr` rows).
 
-### The fix, measured on the same slice
+### The fix, measured on the same set
 
 Running `add-region-abbrevs.ts` and rebuilding the FTS index, then re-measuring on the identical VT
-slice:
+set:
 
 | metric                                   | baseline | abbrev-enriched |
 | ---------------------------------------- | -------: | --------------: |
@@ -75,7 +75,7 @@ the fix makes the resolver pick the right _instance_.
 Note the PIP-containment numbers. Even after the fix, locality-PIP is 29.7%, because 37% of the
 correctly-resolved Vermont localities are WOF **point geometry** (no polygon can contain a point),
 and WOF's small-town polygons are tight while OpenAddresses ascribes rural addresses to the town
-they are nearest, not the town whose boundary encloses them. That is why the scorecard leads with
+they are nearest rather than the town whose boundary encloses them. That is why the scorecard leads with
 region-match and coordinate error — both checkable for 100% of rows — and reports locality-PIP only
 alongside its polygon-coverage denominator. Raw locality-PIP would silently count un-PIP-able points
 as failures.
@@ -102,7 +102,7 @@ functional check wins — and chasing the disagreement found the deeper bug.
 
 ## The resolution — repair ancestry from `wof:hierarchy`
 
-The ancestry gap is a build artifact, not a source gap. NYC's source geojson carries a full
+The ancestry gap is a build artifact rather than a source gap. NYC's source geojson carries a full
 `wof:hierarchy` (region_id 85688543 = New York in every one of its five borough branches); it is
 only `wof:parent_id` that is `-4`, and `build-unified-wof`'s parent_id-closure follows nothing but
 parent_id. So `scripts/backfill-ancestors-from-hierarchy.ts` reads `wof:hierarchy` for every
@@ -111,7 +111,7 @@ the gazetteer.
 
 Re-measured on the abbreviation-enriched **and** ancestry-backfilled gazetteer:
 
-| slice              | metric               |       baseline |      abbrev only | abbrev + backfill |
+| set                | metric               |       baseline |      abbrev only | abbrev + backfill |
 | ------------------ | -------------------- | -------------: | ---------------: | ----------------: |
 | VT held-out (1428) | region-match         |           0.0% |            99.9% |             99.9% |
 | VT held-out        | coord p50 / p90 (km) |     326 / 1827 |        3.4 / 7.4 |         3.4 / 7.4 |
@@ -125,8 +125,8 @@ regression is gone, with NYC resolving to New York City again. Net-positive on r
 
 Two things are worth saying about what this fix is. It is parser-agnostic: the harness runs both
 the neural parser and the v0 (Pelias-style rules) parser through the same resolver, and the fix
-lifts both from 0% region / ~330km coord to ~99.5% / ~3.3km. The bug lived in the gazetteer, not
-the parser. And once the resolver is honest, the neural parser keeps its edge over v0 on geography
+lifts both from 0% region / ~330km coord to ~99.5% / ~3.3km. The bug lived in the gazetteer rather than
+the parser. And once the resolver is direct, the neural parser keeps its edge over v0 on geography
 it never trained on:
 
 | parser (VT, fixed DB) | locality | region | coord p50 | coord p90 | coord p99 |
@@ -135,7 +135,7 @@ it never trained on:
 | v0 (Pelias)           |    91.9% |  99.5% |       3.3 |       7.2 |      2120 |
 
 The medians tie; the neural parser's p99 tail (277km vs 2120km) is far tighter, which is the
-beat-Pelias-on-the-hard-cases result we want on a held-out slice.
+beat-Pelias-on-the-hard-cases result we want on a held-out set.
 
 ## Status
 
@@ -155,5 +155,5 @@ beat-Pelias-on-the-hard-cases result we want on a held-out slice.
    re-publish to R2 (smoke-test region-match ≥99.9%, coord p50 ≤5km after).
 2. Fold the ancestry repair into `build-unified-wof`'s `populateAncestors` so a fresh build is
    correct without the post-build step.
-3. Broaden the honest slice: a targeted OA re-ingest for FR's held-out départements, and a DE
+3. Broaden the held-out set: a targeted OA re-ingest for FR's held-out départements, and a DE
    holdout in the corpus manifest, so region-match and coordinate error can be reported per locale.

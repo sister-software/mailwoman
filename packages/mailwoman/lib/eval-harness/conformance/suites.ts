@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The register of committed conformance-law suites. Pure — the law modules and the fixture contract, no
+ *   The register of committed conformance-law suites. Pure — the law modules and the fixture interface, no
  *   engine, so a test can assert the register without a model or a gazetteer.
  *
- *   A SUITE OUTSIDE THIS REGISTER NEVER RUNS. `mailwoman eval conformance` reads it to decide what a default
+ *   A suite outside this register never runs. `mailwoman eval conformance` reads it to decide what a default
  *   run covers and which audit each law gets, so a committed `.jsonl` nobody registered is not a suite that
  *   runs unaudited — it is a suite that runs never, and reports as an absence. `conformance-suites.test.ts`
  *   walks the directory and refuses a file no entry names, which is the only check that can see that gap.
@@ -58,11 +58,11 @@ export interface ConformanceSuite {
 	law: string
 	path: string
 	/**
-	 * Suite-wide checks, run BEFORE the engine loads. One message per problem, empty when the suite is runnable.
+	 * Suite-wide checks, run before the engine loads. One message per problem, empty when the suite is runnable.
 	 */
 	audit: (fixtures: readonly ConformanceFixture[]) => string[]
 	/**
-	 * The extra line a finding prints under its head. Every shipped law names the TRANSFORMATION, without which a
+	 * The extra line a finding prints under its head. Every shipped law names the transformation, without which a
 	 * violation reads as "these two strings disagreed" rather than "uppercasing broke it".
 	 */
 	detail: (fixture: ConformanceFixture) => string
@@ -70,7 +70,7 @@ export interface ConformanceSuite {
 	 * How much of the population the suite reached, printed beside the law's own hold count.
 	 *
 	 * Optional because most laws can be stated over any row: the arms a query refuses are reported per row by the
-	 * applicability rules, and the verdict already names the denominator that decides it. A law whose ELIGIBILITY is a
+	 * applicability rules, and the verdict already names the denominator that decides it. A law whose eligibility is a
 	 * property of the text — canonical form is the one shipped example, where 83 of 651 committed rows carry a character
 	 * either form can act on — needs the second denominator as well, or its hold count implies a breadth it never
 	 * exercised. `corpusInputs` is every committed board row's query text, supplied by the runner.
@@ -111,7 +111,7 @@ export const CONFORMANCE_SUITES: readonly ConformanceSuite[] = [
 		law: REFINEMENT_MONOTONICITY_LAW,
 		path: REFINEMENT_MONOTONICITY_SUITE_PATH,
 		audit: auditRefinementSuite,
-		// The step is named from the FULLER query to the coarser one, because that is the direction the derivation runs;
+		// The step is named from the fuller query to the coarser one, because that is the direction the derivation runs.
 		// the law itself is stated the other way, which the head line already prints as base → variant.
 		detail: (fixture) => `    xform   : variant −${describeRefinementStep(fixture)} → base`,
 		coverage: describeRefinementCoverage,

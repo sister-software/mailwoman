@@ -14,7 +14,7 @@ admits both production origins. The preview serves on port 7770, the one local o
 
 The map primitives the repository already has (`MapCanvas`, the `StyleSpecificationComposer` in
 `@mailwoman/cartographer`, the PMTiles tile worker, `mailwoman tiles publish`) are Earth-only by
-accident of use, not by design. Two small map products over a different body are the cheapest way to
+accident of use rather than by design. Two small map products over a different body are the cheapest way to
 find out which of them assume Earth, and they are products in their own right.
 
 ## Decisions taken
@@ -61,7 +61,7 @@ packages/planetary/
 
 `vite.config.ts` reads `PLANETARY_BODY` through a typed `lib/env.ts` whose `liveEnv` view extends
 `@mailwoman/core/env`, never `process.env` directly. Production host and built body are checked at
-startup: a mismatch renders an error page, not the wrong body.
+startup: a mismatch renders an error page rather than the wrong body.
 
 ### Build and deployment
 
@@ -115,7 +115,7 @@ No new route, no Moon- or Mars-specific worker code.
 initial view (Moon at 0°, 0°; Mars centred on Tharsis, both checked visually). Pan, zoom and rotate come
 from the shell. A click on a nomenclature feature selects it, opens the panel, and pushes
 `/feature/<id>` to history without a reload. Fly-to respects `prefers-reduced-motion`. MapLibre's globe
-is a rendering model, not a geodesy engine; the app makes no distance or area claim in v1, and when it
+is a rendering model rather than a geodesy engine; the app makes no distance or area claim in v1, and when it
 does, it calls `@mailwoman/spatial` with the body radius the pipeline's `bodies.ts` supplies.
 
 ### Search
@@ -123,7 +123,7 @@ does, it calls `@mailwoman/spatial` with the body radius the pipeline's `bodies.
 The pipeline builds an `@mailwoman/ancestrie` artifact per body over feature names and their aliases
 (`Sea of Tranquility` for `Mare Tranquillitatis`). The app fetches it once, walks it with the
 browser-safe reader, and lists results with feature type; results are keyboard navigable, and selecting
-one moves the camera and selects the feature. The artifact is a static asset served by the app, not a
+one moves the camera and selects the feature. The artifact is a static asset served by the app rather than a
 tile.
 
 ### PWA

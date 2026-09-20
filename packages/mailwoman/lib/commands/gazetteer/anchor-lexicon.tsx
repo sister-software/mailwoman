@@ -2,22 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer anchor-lexicon` — build the gazetteer-anchor LEXICON (knowledge-ladder rung
- *   3.2; #464). One generated artifact, codex as the single source of truth, consumed by BOTH the
+ *   `mailwoman gazetteer anchor-lexicon` — build the gazetteer-anchor lexicon (knowledge-ladder rung
+ *   3.2; #464). One generated artifact, codex as the single source of truth, consumed by both the
  *   Python trainer (gazetteer_anchor.py) and the TS inference side — so the two matchers cannot
  *   drift (the PLACETYPE_ORDER lesson: dual implementations silently corrupt).
  *
- *   The lexicon maps normalized surface forms → a candidate-tag BITMASK: country=1, region=2,
+ *   The lexicon maps normalized surface forms → a candidate-tag bitmask: country=1, region=2,
  *   po_box=4, cedex=8, homograph=16 (set iff country∩region by construction). Two entry maps with
- *   different match rules (encoded as DATA so both consumers share them):
+ *   different match rules (encoded as data so both consumers share them):
  *
- *   - `entries` — case-INSENSITIVE, keyed lowercase ("georgia", "costa rica", "timor-leste").
- *   - `code_entries` — exact-UPPERCASE only ("CA", "GA", "IN", "USA"), because "in"/"ca" as common
+ *   - `entries` — case-insensitive, keyed lowercase ("georgia", "costa rica", "timor-leste").
+ *   - `code_entries` — exact-uppercase only ("CA", "GA", "IN", "USA"), because "in"/"ca" as common
  *       lowercase words would fire everywhere. Country/region surfaces ≤3 alphabetic chars land
  *       here. po_box/cedex designators stay case-insensitive regardless of length ("Box 17" is
  *       titlecase).
  *
- *   The anchor is membership CLUES, not verdicts — the model decides every tag (model-first, see
+ *   The anchor is membership clues rather than verdicts — the model decides every tag (model-first, see
  *   docs/engineering/reference/closed-vocab-fields-model-first.mdx). A "Box" hit inside "Box
  *   Canyon Rd" is fine: the homograph/contrast training teaches the model to read context.
  *
@@ -28,7 +28,7 @@ import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Homographs printed before the list is truncated.
@@ -44,23 +44,23 @@ const BIT = { country: 1, region: 2, po_box: 4, cedex: 8, homograph: 16 }
 const SLOTS = ["country", "region", "po_box", "cedex", "homograph"]
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "anchor-lexicon",
 	description: "Build the shared anchor lexicon",
 	options: {
-		output: { type: "string", description: "Output path. Default <repo>/data/gazetteer/anchor-lexicon-v1.json" },
+		out: {
+			type: "string",
+			description: "Output path. Default <repo>/data/gazetteer/anchor-lexicon-v1.json",
+			deprecatedName: "output",
+		},
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	output?: string
-}
-
 /**
- * THE shared word-normalization rule (mirrored verbatim in gazetteer_anchor.py and the TS matcher — documented in
- * `rules.word_norm` below): per whitespace-word, strip LEADING/TRAILING characters that are not Unicode letters or
+ * The shared word-normalization rule (mirrored verbatim in gazetteer_anchor.py and the TS matcher — documented in
+ * `rules.word_norm` below): per whitespace-word, strip leading/trailing characters that are not Unicode letters or
  * digits (keep internal ones: "timor-leste", "u.s.a"), then rejoin single-spaced. Entry keys and scanned tokens both
  * pass through it, so "U.S.A." ≡ "u.s.a".
  */
@@ -76,7 +76,7 @@ const isShortCode = (s: string): boolean => {
 	return letters.length > 0 && letters.length <= MAX_ABBREVIATION_LETTERS && /^[\p{L}.\s]+$/u.test(s)
 }
 
-const GazetteerAnchorLexicon: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerAnchorLexicon: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { wordNorm, wordNormLower } = await import("@mailwoman/codex")
 		const { COUNTRY_LOOKUP } = await import("@mailwoman/codex/country")
@@ -86,7 +86,7 @@ const GazetteerAnchorLexicon: ParsedCommandComponent<Options> = ({ options }) =>
 
 		const { repoRootPathBuilder } = await import("@mailwoman/core/utils")
 
-		const output = options.output ?? String(repoRootPathBuilder("data", "gazetteer", "anchor-lexicon-v1.json"))
+		const output = options.out ?? String(repoRootPathBuilder("data", "gazetteer", "anchor-lexicon-v1.json"))
 
 		// surface → bits, split across the two match-rule maps.
 		const entries = new Map<string, number>() // lowercase key
@@ -140,11 +140,11 @@ const GazetteerAnchorLexicon: ParsedCommandComponent<Options> = ({ options }) =>
 		// ── cedex (FR) ──────────────────────────────────────────────────────────────────────────────
 		entries.set("cedex", (entries.get("cedex") ?? 0) | BIT.cedex)
 
-		// ── homograph bit: surface is BOTH a country and a region candidate ──────────────────────────
+		// ── homograph bit: surface is both a country and a region candidate ──────────────────────────
 		for (const map of [entries, codeEntries]) {
 			for (const [key, bits] of map) {
 				if (bits & BIT.country && bits & BIT.region) {
-					// oxlint-disable-next-line oxc/bad-bitwise-operator -- genuine bit-set union, not a mistyped logical or
+					// oxlint-disable-next-line oxc/bad-bitwise-operator -- genuine bit-set union rather than a mistyped logical or
 					map.set(key, bits | BIT.homograph)
 				}
 			}

@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Country surface forms across scripts, enumerated from the RUNTIME's own ICU via `Intl.DisplayNames`.
+ *   Country surface forms across scripts, enumerated from the runtime's own ICU via `Intl.DisplayNames`.
  *
  *   The gazetteer holds country names in English and little else, which is why a bare `格鲁吉亚` (Georgia the country,
  *   Chinese), `沙特阿拉伯` or `巴布亚新几内亚` resolves to nothing while `佐治亚州` (Georgia the US state) resolves
  *   correctly — the state is a real WOF record carrying multilingual names, and 140 of the 237 country rows are
- *   synthetic and carry only a canonical English name. Measured 2026-08-15; WOF has no Chinese country names at all,
+ *   synthetic and carry only a canonical English name. Measured 2026-08-15. WOF has no Chinese country names at all,
  *   and `geonames-aliases.ts` filters every alias through a Latin-script regex.
  *
  *   ICU already knows all of it. No download, no vendored corpus, no licence question, and no drift against a snapshot
@@ -15,8 +15,8 @@
  *   locale-sensitive operation. Measured coverage at time of writing: **280 regions, 5,244 distinct surfaces** across
  *   the locale × style grid below.
  *
- *   This module ENUMERATES. It does not decide what the gazetteer stores — see the candidate build for that, and note
- *   that a surface here is a NAME THE WORLD USES, never an authority's designation.
+ *   This module enumerates. It does not decide what the gazetteer stores — see the candidate build for that, and note
+ *   that a surface here is a name the world uses, never an authority's designation.
  */
 
 /**
@@ -25,9 +25,9 @@
  * Greek, Thai) or a major Latin-script exonym set that diverges from English.
  *
  * Adding a locale is additive and safe — surfaces are deduplicated — but every addition grows the candidate table, so
- * it earns its place by contributing surfaces a user would plausibly type.
+ * it warrants its place by contributing surfaces a user would plausibly type.
  */
-export const DISPLAY_NAME_LOCALES = [
+export const DISPLAY_NAME_LOCALES: readonly Intl.UnicodeBCP47LocaleIdentifier[] = [
 	"en",
 	"zh-Hans",
 	"zh-Hant",
@@ -52,7 +52,7 @@ export const DISPLAY_NAME_LOCALES = [
 	"uk",
 	"sv",
 	"el",
-] as const
+]
 
 /**
  * `long` is the ordinary name, `short` supplies the abbreviations people actually type (`UK`, `US`, `アメリカ`), and
@@ -82,10 +82,10 @@ export interface CountryDisplayName {
 
 /**
  * Two-letter sequences that are not ISO 3166-1 regions. `Intl.DisplayNames.of` echoes its input for an unknown code, so
- * the echo IS the miss signal — no separate region list to keep in sync.
+ * the echo is the miss signal — no separate region list to keep in sync.
  */
 /**
- * The AA–ZZ sweep bounds. ISO 3166-1 alpha-2 is exactly two uppercase ASCII letters, so enumerating the whole square
+ * The AA–ZZ sweep bounds. ISO 3166-1 alpha-2 is exactly two uppercase ascii letters, so enumerating the whole square
  * and keeping what ICU recognises avoids carrying a region list that would need its own upkeep.
  */
 const ASCII_A = 65
@@ -98,7 +98,7 @@ function isEcho(code: string, rendered: string | undefined): boolean {
 /**
  * Enumerate every AA–ZZ code against the locale × style grid, keeping what ICU recognises.
  *
- * Deduplicated per (iso2, name): the same surface reached from several locales is one row, and the FIRST locale that
+ * Deduplicated per (iso2, name): the same surface reached from several locales is one row, and the first locale that
  * produced it wins the attribution — deterministic because {@link DISPLAY_NAME_LOCALES} is ordered.
  */
 export function* enumerateCountryDisplayNames(
@@ -139,7 +139,7 @@ export function* enumerateCountryDisplayNames(
 }
 
 /**
- * Every surface ICU knows for one country. Convenience over {@link enumerateCountryDisplayNames} for a single lookup;
+ * Every surface ICU knows for one country. Convenience over {@link enumerateCountryDisplayNames} for a single lookup.
  * the generator is the bulk path.
  */
 export function countryDisplayNames(iso2: string, locales?: readonly string[]): string[] {

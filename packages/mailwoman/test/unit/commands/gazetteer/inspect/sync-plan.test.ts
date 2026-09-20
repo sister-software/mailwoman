@@ -20,7 +20,7 @@ const DISCOVERED: readonly DiscoveredRepo[] = [
 
 describe("assertDestinationNotARepoName", () => {
 	it("refuses a repository name in the destination slot", () => {
-		// The trap that cost 65 GB: the name lands on the positional, which is the destination directory, so no
+		// The trap that cost 65 GB: the name lands on the positional. It is the destination directory. Therefore, no
 		// `--repos` filter is applied and the whole org syncs into a directory named after one repo.
 		expect(() => assertDestinationNotARepoName("whosonfirst-data-admin-tr")).toThrow(/--repos/)
 	})
@@ -74,7 +74,7 @@ describe("selectRepos", () => {
 	})
 
 	it("points a country name at the country flag, which a near miss cannot", () => {
-		// `-turkey` is nearer to a real `-tu` repository than to `-tr` by string distance, so the hint has to be stated
+		// `-turkey` is nearer to a real `-tu` repository than to `-tr` by string distance. Therefore, the hint has to be stated
 		// rather than inferred.
 		expect(() => selectRepos(DISCOVERED, { repos: "whosonfirst-data-admin-turkey" })).toThrow(/--countries/)
 	})
@@ -93,7 +93,7 @@ describe("selectRepos", () => {
 	it("expands --countries to that country's admin and postalcode repositories", () => {
 		const selection = selectRepos(DISCOVERED, { countries: "tr" })
 
-		// Venue is NOT included: no country in the data root has a venue clone, and it doubles the transfer.
+		// Venue is not included: no country in the data root has a venue clone, and it doubles the transfer.
 		expect(selection.selected.map((entry) => entry.name)).toEqual([
 			"whosonfirst-data-admin-tr",
 			"whosonfirst-data-postalcode-tr",

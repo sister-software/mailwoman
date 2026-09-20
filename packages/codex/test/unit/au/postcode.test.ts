@@ -27,7 +27,7 @@ test("normalizeAuPostcode: rejects wrong-shape / non-string → null", () => {
 	expect(normalizeAuPostcode("20 00")).toBeNull() // interior space
 	expect(normalizeAuPostcode("")).toBeNull()
 	expect(normalizeAuPostcode("   ")).toBeNull()
-	expect(normalizeAuPostcode(2000)).toBeNull() // number, not string
+	expect(normalizeAuPostcode(2000)).toBeNull() // number rather than string
 	expect(normalizeAuPostcode(null)).toBeNull()
 	expect(normalizeAuPostcode(undefined)).toBeNull()
 })
@@ -35,7 +35,7 @@ test("normalizeAuPostcode: rejects wrong-shape / non-string → null", () => {
 test("isAuPostcode: predicate is true only for an already-normalized four-digit string", () => {
 	expect(isAuPostcode("2000")).toBe(true)
 	expect(isAuPostcode("0800")).toBe(true)
-	// the predicate does NOT trim — it tests the shape verbatim
+	// the predicate does not trim — it tests the shape verbatim
 	expect(isAuPostcode(" 2000 ")).toBe(false)
 	expect(isAuPostcode("200")).toBe(false)
 	expect(isAuPostcode("ABCD")).toBe(false)

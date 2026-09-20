@@ -26,7 +26,7 @@ export interface PairIndexInputs {
 	transitionBeta?: number
 	parentDelta?: number
 	boroughDB?: string
-	// oxlint-disable-next-line sister-software/no-title-case-acronym -- mirrors release.config.json's literal `pairsJsonl` wire key; renaming the member would stop it typing the parsed JSON
+	// oxlint-disable-next-line sister-software/no-title-case-acronym -- mirrors release.config.json's literal `pairsJsonl` wire key. renaming the member would stop it typing the parsed JSON
 	pairsJsonl?: string
 	banDir?: string
 	[key: string]: unknown
@@ -48,7 +48,7 @@ export interface SoftFeedRecipe {
 
 /**
  * A char-path base package's binaries (#2164), keyed by script family (`cjk`). Paths are data-root relative, like
- * `weights.model`. The vocabulary is committed in the package too; the recipe's copy keeps it in step with the graph.
+ * `weights.model`. The vocabulary is committed in the package too. the recipe's copy keeps it in step with the graph.
  */
 export interface CharWeightsRecipe {
 	model: string
@@ -56,7 +56,7 @@ export interface CharWeightsRecipe {
 	lineage?: string
 	/**
 	 * The data-only overlays that inherit this family's graph through `mailwoman.baseWeights` (`ja-jp`, `zh-cn`): each
-	 * ships its locale FST and nothing of the model, and is staged and fetched under the FAMILY's bucket directory.
+	 * ships its locale FST and nothing of the model, and is staged and fetched under the family's bucket directory.
 	 */
 	overlays?: string[]
 }
@@ -77,7 +77,53 @@ export async function readReleaseConfig(repoRoot: PathBuilderLike = repoRootPath
 }
 
 /**
- * The lexicons that are COMMITTED to the repository, by the name they take in a weights package and the `softFeed` key
+ * Every locale package the config ships, Latin and character-path alike.
+ *
+ * `locales` and `charWeights[].overlays` are two halves of one list: an overlay under `charWeights` ships beside the
+ * Latin ones and is invisible to a reader that consults only the first. A census that reads one half reports a country
+ * with a shipping overlay as having none.
+ *
+ * Lives here rather than beside a consumer because a reader that lives outside this package is unreachable from one,
+ * which is how a package comes to hardcode what the config names.
+ */
+export function shippingLocales(config: Pick<ReleaseConfig, "locales" | "charWeights">): Set<string> {
+	const locales = new Set(config.locales)
+
+	for (const family of Object.values(config.charWeights ?? {})) {
+		for (const overlay of family.overlays ?? []) {
+			locales.add(overlay)
+		}
+	}
+
+	return locales
+}
+
+/**
+ * Country → the locale package that scopes it, derived from {@link shippingLocales} rather than restated.
+ *
+ * The region subtag of a locale package is the country it scopes — `en-au` scopes AU, `zh-cn` scopes CN — so a
+ * hand-written table is a second copy of `release.config.json`'s two lists, and the copy is what goes stale when a
+ * locale ships. `repo-health`'s `locale-tables` check exists because that copy existed.
+ *
+ * Existence is not training: a country here has a package that scopes it, which says nothing about whether the corpus
+ * carries rows for it. A tag with no region subtag contributes nothing rather than a blank key.
+ */
+export function weightsPackageByCountry(config: Pick<ReleaseConfig, "locales" | "charWeights">): Map<string, string> {
+	const out = new Map<string, string>()
+
+	for (const locale of shippingLocales(config)) {
+		const region = locale.split("-")[1]
+
+		if (region) {
+			out.set(region.toUpperCase(), locale)
+		}
+	}
+
+	return out
+}
+
+/**
+ * The lexicons that are committed to the repository, by the name they take in a weights package and the `softFeed` key
  * that names their repo-relative source. The locality-surface lexicon is not here: it is built, lives in the data root,
  * and is resolved by `softFeed.localitySurfaceLexicon` against that root instead.
  */

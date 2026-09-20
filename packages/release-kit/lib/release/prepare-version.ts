@@ -3,17 +3,17 @@
 
 /**
  *   Phase-1 of the PR-based release flow: write the target version into the root `package.json` +
- *   every workspace listed in `.release-it.json` — and do NOTHING else. No git, no tags, no npm. The
+ *   every workspace listed in `.release-it.json` — and do nothing else. No git, no tags, no npm. The
  *   caller (`publish.yml`'s `prepare` job) commits the result onto a `release/v<version>` branch and
- *   opens the release PR; the tag + npm publish happen in the separate `publish` phase only after
+ *   opens the release PR. the tag + npm publish happen in the separate `publish` phase only after
  *   that PR has merged through the "Production Integrity" ruleset (PR + green `test` required on
  *   `main` — the ruleset that rejects release-it's direct push).
  *
- *   The workspace list is read from `.release-it.json` — the SAME list the per-workspace publish
+ *   The workspace list is read from `.release-it.json` — the same list the per-workspace publish
  *   loop derives (#756: one source of truth, so this operation can't drift from what actually
  *   publishes). Semver parsing/increment is the `semver` package.
  *
- *   Output contract: the operation answers `resolvedVersion`, and the CLI adapter prints
+ *   Output interface: the operation answers `resolvedVersion`, and the CLI adapter prints
  *   `RESOLVED_VERSION=<x.y.z>` — the workflow greps this line (no $GITHUB_OUTPUT / env access here).
  *
  *   Inputs:
@@ -44,7 +44,7 @@ export interface PrepareReleaseVersionReport {
 	currentVersion: string
 	resolvedVersion: string
 	/**
-	 * Version-bearing files written: root + every release workspace + `release.config.json`. Zero under `checkOnly`.
+	 * Versioned files written: root + every release workspace + `release.config.json`. Zero under `checkOnly`.
 	 */
 	filesWritten: number
 }
@@ -88,13 +88,13 @@ export async function prepareReleaseVersion(
 		targetVersion = explicit
 	}
 
-	// The SAME workspace list the publish loop uses (#756) — root + these is the full bump surface.
+	// The same workspace list the publish loop uses (#756) — root + these is the full bump surface.
 	// The canonical reader (stage.ts) refuses an empty or malformed list.
 	const workspaces = await releaseWorkspaces(repoRoot)
 
 	const manifestPaths = [rootManifestPath, ...workspaces.map((ws) => resolvePath(repoRoot, ws, "package.json"))]
 
-	// Validate the whole set BEFORE writing anything — a half-bumped tree is worse than a failed run.
+	// Validate the whole set before writing anything — a half-bumped tree is worse than a failed run.
 	const parsed: Array<{ path: string; manifest: Record<string, unknown> }> = []
 
 	for (const path of manifestPaths) {
@@ -116,11 +116,11 @@ export async function prepareReleaseVersion(
 		}
 	}
 
-	// `release.config.json#version` carries the SAME unified release number (RELEASING.md, its own $comment) and
+	// `release.config.json#version` carries the same unified release number (releasing.md, its own $comment) and
 	// lagged two releases running (#1024, then v9.2.0 shipping while it read 9.1.0) because nothing bumped it. It is
 	// validated with the sync set but written by a one-line textual replacement — the file is oxfmt-formatted, and
 	// the stringify write path used for the manifests would reformat it wholesale, moving the `weights` block a
-	// code-only release must never touch (release-config-bump.test.ts pins the exact-one-line contract).
+	// code-only release must never touch (release-config-bump.test.ts pins the exact-one-line interface).
 	const releaseConfigPath = resolvePath(repoRoot, "release.config.json")
 	const releaseConfigText = await readLocalTextFile(releaseConfigPath)
 	const releaseConfig = parseJSONStrict<{ version?: string }>(releaseConfigText)
@@ -148,7 +148,7 @@ export async function prepareReleaseVersion(
 		filesWritten = parsed.length + 1
 
 		log(
-			`bumped ${filesWritten} version-bearing files (root + ${workspaces.length} workspaces + release.config.json) to ${targetVersion}`
+			`bumped ${filesWritten} versioned files (root + ${workspaces.length} workspaces + release.config.json) to ${targetVersion}`
 		)
 	}
 

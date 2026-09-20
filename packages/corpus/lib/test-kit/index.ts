@@ -9,7 +9,7 @@
  *   `JSONSpliterator` import header, a `let scratch`, a `beforeEach` that mkdtemps
  *   `mailwoman-<something>-`, an `afterEach` that force-removes it swallowing errors, and a
  *   `loadRows()` that reads the run's `canonical.jsonl` back through `JSONSpliterator`. Nothing about
- *   any of that is adapter-specific; only the tmpdir prefix and the adapter id ever differed.
+ *   any of that is adapter-specific. only the tmpdir prefix and the adapter id ever differed.
  *
  *   This directory is excluded from the published tarball by `corpus/package.json`'s `files` (the
  *   `!test-kit/**\/*` entry, which predates this file), which is why importing `vitest` here is safe
@@ -33,7 +33,7 @@ export interface ScratchDir {
 /**
  * Register a fresh scratch directory for each test in the current suite, removed afterwards.
  *
- * `slug` names the directory (`mailwoman-<slug>-XXXXXX` under the OS temp dir) and exists only to make a stray leftover
+ * `slug` names the directory (`mailwoman-<slug>-xxxxxx` under the OS temp dir) and exists only to make a stray leftover
  * traceable to the suite that made it. Teardown swallows its own errors: a test that already removed the directory, or
  * a platform that holds a handle open, must not turn a passing assertion into a failing suite.
  */
@@ -46,7 +46,7 @@ export function useScratchDir(slug: string): ScratchDir {
 		dir.path = resolvePath(owned.path)
 	})
 
-	// The directory is owned by the TEST, never by a module-scoped stack. Under `isolate: false` this module is shared
+	// The directory is owned by the test, never by a module-scoped stack. Under `isolate: false` this module is shared
 	// across every corpus adapter suite in a fork, so a stack disposed by the first file's `afterAll` left every later
 	// file calling `use()` on a disposed stack — which is what "Cannot call AsyncDisposableStack.prototype.use on an
 	// already-disposed DisposableStack" was, across a different set of adapter suites on each run.

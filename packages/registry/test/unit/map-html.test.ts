@@ -6,7 +6,7 @@ import type { EntityGeoData } from "@mailwoman/registry/types"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { describe, expect, it } from "vitest"
 
-// The collection shape `toMapHTML` consumes. Its properties are EntityGeoData, not an open record —
+// The collection shape `toMapHTML` consumes. Its properties are EntityGeoData rather than an open record —
 // typing them loosely meant every call site in this file was passing something toMapHTML rejects.
 // Was a dead `GeoJsonFeatureCollection` import from ./types.ts (never exported there); repointed to the
 // real @mailwoman/spatial type as part of the #875 casing sweep.
@@ -28,13 +28,13 @@ describe("toMapHTML", () => {
 
 		expect(html.startsWith("<!doctype html>")).toBe(true)
 		expect(html.trimEnd().endsWith("</html>")).toBe(true)
-		// MapLibre GL, not Leaflet, pinned with SRI.
+		// MapLibre GL rather than Leaflet, pinned with SRI.
 		expect(html).toContain("maplibre-gl@5.24.0/dist/maplibre-gl.js")
 		expect(html).toContain('integrity="sha384-')
 		expect(html).not.toMatch(/leaflet/i)
-		// The house Protomaps basemap-v4 vector source (CORS-aware tile-worker), not a raster tile URL.
+		// The house Protomaps basemap-v4 vector source (cors-aware tile-worker), not a raster tile URL.
 		expect(html).toContain("https://tiles.mailwoman.ai/basemap-v4.json")
-		// Glyphs + sprite from the CORS-enabled upstream Protomaps assets (house mirror isn't CORS-routed).
+		// Glyphs + sprite from the cors-enabled upstream Protomaps assets (house mirror isn't cors-routed).
 		expect(html).toContain("protomaps.github.io/basemaps-assets/fonts")
 		expect(html).toContain("protomaps.github.io/basemaps-assets/sprites/v4/light")
 		expect(html).not.toMatch(/tile\.openstreetmap\.org|raster/)
@@ -43,7 +43,7 @@ describe("toMapHTML", () => {
 
 	it("inlines a real Protomaps basemap (many generated layers) plus the entity circle layer", () => {
 		const html = toMapHTML(fc([point(0, 0, { entityID: "e1", recordCount: 1, sources: ["x"], name: null })]))
-		// @protomaps/basemaps generates ~70 layer specs; they + our layer are inlined in the style.
+		// @protomaps/basemaps generates ~70 layer specs. they + our layer are inlined in the style.
 		expect(html).toContain('"id":"mw-entities"')
 		expect(html).toContain('"id":"earth"')
 		expect(html).toContain('"basemap-v4"')

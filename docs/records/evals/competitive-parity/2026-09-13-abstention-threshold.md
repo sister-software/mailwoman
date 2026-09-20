@@ -1,13 +1,17 @@
 # Abstention threshold for admin selection (2026-09-13)
 
 The [same-data controlled benchmark](./2026-09-13-same-data.md) refused its registered claim on one
-condition: in the withheld-gold stratum, where no correct candidate is in the pool by construction,
-Mailwoman answered on 75 of 100 rows against the baseline's 57. This record measures what an
-abstention rule could do about that, on the same 453 frozen rows.
+condition: in the withheld-gold stratum, Mailwoman answered on 75 of 100 rows against the baseline's 57. This record measures what an abstention rule could do about that, on the same 453 frozen rows.
+
+That stratum withholds the gold **id** rather than every row denoting the gold place, so "no correct
+candidate is in the pool" holds for most of it rather than by construction — see
+[the correction](#correction-nine-of-the-twenty-eight-name-the-right-place) and the whole-stratum
+re-grading in the
+[same-data record](./2026-09-13-same-data.md#correction-what-the-withheld-gold-rate-counts).
 
 **Exploratory, and outside that pre-registration.** Every threshold here was read off results that
 were already visible, which is the one thing the registered rule forbids. Nothing below re-decides the
-frozen verdict, and no threshold earns a claim until it is registered ahead of a panel it has not
+frozen verdict, and no threshold warrants a claim until it is registered ahead of a panel it has not
 seen.
 
 Four findings, in the order they constrain each other:
@@ -15,7 +19,10 @@ Four findings, in the order they constrain each other:
 1. A threshold on the confidence the resolver already records beats the baseline on **both** axes at
    once — at four of the fifteen tested values it would also have satisfied the full registered rule.
 2. That same signal is blind to the case it most needs to catch. 28 of the 75 false selections carry
-   the maximum confidence, so no threshold can reach a false-selection rate below 28%.
+   the maximum confidence, so no threshold can reach a false-selection rate below 28%. Nine of those
+   28 name the withheld settlement under a different WOF id and are not false at all, so the floor a
+   threshold has to clear is 19 rows — see
+   [the correction](#correction-nine-of-the-twenty-eight-name-the-right-place).
 3. `ResolveOpts.minWinningScore`, the shipped knob nearest to this, could not express abstention at
    all: across the populated range of its scale it moved the false-selection rate from 75% to 74% —
    one row.
@@ -33,10 +40,10 @@ Every arm reports confidence as the winner's margin over the runner-up within th
 considered, normalized into [0, 1], and **1 when there was no runner-up**. The sweep re-grades the
 committed results: a selection whose confidence falls below the threshold is re-read as an abstention.
 
-No resolver is re-run, so the walk is held fixed. A resolver that actually refused a node could ask
+No resolver is re-run, so the walk is held fixed. A resolver that refused a node could ask
 different questions afterwards, through `parentFallback` and `hierarchyCompletion`, and reach a
 different final selection. Everything in the next two sections is therefore an upper bound on what a
-threshold over this signal can buy at the final selection, not a prediction of shipped behaviour. The
+threshold over this signal can provide at the final selection rather than a prediction of shipped behaviour. The
 knob section below is the opposite: a real replay, and it shows what that caveat costs.
 
 ## The trade curve
@@ -79,7 +86,7 @@ is the threshold and nothing else.
 | 0.20      | 5.9 points    | 7.553e-2        | none                    | no              |
 | 0.30      | 0.8 points    | 8.570e-1        | none                    | no              |
 
-### What the first step actually moves
+### What the first step moves
 
 Threshold 0.01 withholds only the selections whose margin is effectively zero. It withholds 107 of
 Mailwoman's 383 selections:
@@ -127,7 +134,7 @@ all. The same value means opposite things on either side of the panel:
 | gold present  |                    134 | 129 (96.3%)       |
 | withheld gold |                     28 | 0 by construction |
 
-A lone candidate is usually the right one when the gold is in the pool, and necessarily the wrong one
+A lone candidate is typically the right one when the gold is in the pool, and necessarily the wrong one
 when it is not. Abstaining on absent gold needs a signal about the winner's **fit to the query** —
 how much of the input it explains, whether its hierarchy is consistent with the rest — not its lead
 over rivals it never had.
@@ -140,8 +147,34 @@ The mechanisms behind those 28 rows:
 | `picked:span_rescore span_rescore rescore_postcode_unverified` |          4 |
 | `picked:bare_region bare_race bare_region_repick`              |          1 |
 
-`Langfang`, `Tirur`, `Matsusaka`, `Batāla` and `Troyes` are five of the 23: a bare toponym whose real
-referent was withheld, answered at full confidence from a lookup that considered one candidate.
+`Langfang`, `Tirur`, `Matsusaka`, `Batāla` and `Troyes` are five of the 23: a bare toponym whose
+concorded gold id was withheld, answered at full confidence from a lookup that considered one
+candidate.
+
+### Correction: nine of the twenty-eight name the right place
+
+Three of those five exemplars are correct answers. The withheld-gold stratum removes the ids the
+`gn:id` concordance links, and the gazetteer carries several settlements twice — once as a `locality`,
+once as the `localadmin` with the same name at the same centroid — so removing the concorded id
+leaves the twin answerable:
+
+| row             | query       | withheld gold | selected                |     km |
+| --------------- | ----------- | ------------- | ----------------------- | -----: |
+| gold_absent-003 | `Langfang`  | 102027403     | Langfang, localadmin CN |    2.8 |
+| gold_absent-014 | `Matsusaka` | 1259441025    | Matsuzaka, locality JP  |    1.3 |
+| gold_absent-021 | `Troyes`    | 101750981     | Troyes, localadmin FR   |    0.6 |
+| gold_absent-009 | `Tirur`     | 102028423     | Torur, locality IN      |  452.8 |
+| gold_absent-018 | `Batāla`    | 102030761     | Batala, locality IN     | 1420.9 |
+
+`Tirur` and `Batāla` stand as written. `Batāla` is why the identity test needs both halves: the folded
+names agree and the places are 1,421 km apart.
+
+Across the 28 max-margin rows, nine name the gold settlement under another id within 5 km (eleven
+within 25 km), and twelve sit within 5 km of the gold whatever they are called. So the floor the
+margin cannot cross is **19 rows rather than 28** — still structural, and still for the reason the next
+paragraph gives, but a fifth smaller than published. The
+[same-data record](./2026-09-13-same-data.md#correction-what-the-withheld-gold-rate-counts) carries
+the whole-stratum re-grading.
 
 **`bare_race` needs its denominator before it reads as a cause.** The check fires for a lone
 locality-tagged node, and this stratum is built from bare toponyms, so it fires on most of the
@@ -153,8 +186,8 @@ stratum whatever the outcome:
 | `bare_race`        |                   69 | 57 (82.6%) |
 | no `bare_race`     |                   31 | 18 (58.1%) |
 
-On the gold-present rows it fires on 73 of 353. So it marks a query SHAPE, not a failure: bare-toponym
-rows do select more often than the rest of the stratum, 82.6% against 58.1%, but two thirds of the
+On the gold-present rows it fires on 73 of 353. So it marks a query SHAPE rather than a failure: bare-toponym
+rows do select more frequently than the rest of the stratum, 82.6% against 58.1%, but two thirds of the
 stratum carries the check and a quarter of those rows still abstained. The enrichment is worth a
 separate measurement; it is not on its own evidence that the race manufactures these selections.
 
@@ -170,8 +203,8 @@ it was fixed ([#2265](https://github.com/sister-software/mailwoman/issues/2265))
 **What the defect was.** `applySpanRescore` begins `if (hasResolvedPlace(roots)) return`
 (`packages/resolver/lib/resolve/passes.ts`) — it declines only when the tree already holds a resolved
 place. A `minWinningScore` refusal leaves a tree with no resolved place, which is precisely the
-recovery pass's trigger condition, so the recovery re-issued the byte-identical locality lookup the
-floor had just declined. Measured before the fix, raising the floor across the whole populated range
+recovery pass's trigger condition. Therefore, the recovery re-issued the byte-identical locality lookup the
+floor haddeclined. Measured before the fix, raising the floor across the whole populated range
 of the scale moved the false-selection rate from 75 of 100 rows to 74 — one row — and moved selection
 accuracy not at all. The handover was visible in the mechanism strings: at floor 4 the withheld-gold
 rows decided by `picked:ranked` fell from 56 to 8 while `picked:span_rescore` rose from 18 to 66.
@@ -184,7 +217,7 @@ state and has the call site decline; it is inert at the default, because `minWin
 to 0 and no shipped backend emits a negative score.
 
 Generated into [`same-data-knob.md`](/benchmarks/same-data-knob.md). Unlike the curve above this is a
-real replay of the resolver at each option set, not a re-grade. Every rate is measured over the 372 of
+real replay of the resolver at each option set rather than a re-grade. Every rate is measured over the 372 of
 453 rows that every arm scored without a replay miss, so the columns are comparable to each other;
 all 100 withheld-gold rows survive every arm, so the false-selection column is complete.
 
@@ -225,7 +258,7 @@ panel was built, and a user asking for a village of 800 people meets the same fl
 The magnitude therefore says nothing about what a floor should be, and this panel cannot be used to
 choose one. What survives the confound is the mechanism: a refusal in one pass is answered by
 another, and no choice of floor can show through while that holds. That part is read from the code
-and confirmed by the mechanism counts, neither of which depends on the panel.
+and confirmed by the implementation counts, neither of which depends on the panel.
 
 ## What this supports, and what comes next
 
@@ -233,7 +266,7 @@ Supported: the ranking already carries a signal that separates supportable selec
 unsupportable ones well enough to beat the deterministic baseline on selection accuracy and false
 selection simultaneously, and the resolver does not consult it. Supported: `spanRescore` answers a
 refusal `minWinningScore` made, because the state the refusal leaves is the state the recovery pass
-triggers on — read from the code and confirmed by the mechanism counts, so it does not depend on this
+triggers on — read from the code and confirmed by the implementation counts, so it does not depend on this
 panel. Refused: any claim that a particular threshold or floor is the right one; the floor that
 produces 8% here is calibrated by accident to a panel whose gold all has population above 15,000.
 

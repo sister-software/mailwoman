@@ -2,7 +2,7 @@
 
 Operator design note, 2026-08-08. Captured from a conversation immediately after the first-pass
 Pelias benchmark; the failure-mode analysis in `FIRST_PASS.md` is the evidence that motivates it.
-This is a design record, not a plan of record — nothing here is scheduled.
+This is a design record rather than a plan of record — nothing here is scheduled.
 
 ## The idea in one paragraph
 
@@ -16,12 +16,12 @@ one another.
 ## Why now
 
 The benchmark measured our failure shape precisely. Our misses are bimodal: either 0.01 km or
-10,000 km, with very little between. Every catastrophic row was a country-scope failure, not a
+10,000 km, with very little between. Every catastrophic row was a country-scope failure rather than a
 parse failure — the model read `Favona`, `Maylands WA` and `Mulda` correctly and the resolver then
 chose a same-named place on another continent. Pelias fails differently: its misses cluster in the
 hundreds-to-few-thousand km range, because full-text ranking degrades into plausible-but-wrong.
 
-Obviously-wrong is the better failure mode for a user to catch. It is also a symptom of throwing
+an incorrect inference is the better failure mode for a user to catch. It is also a symptom of throwing
 information away: a system that knew "this street is not any street we hold in this locality" would
 not have crossed an ocean. The constraint that was already in hand went unused.
 
@@ -38,10 +38,10 @@ not have crossed an ocean. The constraint that was already in hand went unused.
    this depends on.
 
 3. **Structural affinity.** Naming schemes are real and mineable. A neighborhood whose streets are
-   all US presidents admits an unknown `Garfield Ave` on family membership, not string similarity.
+   all US presidents admits an unknown `Garfield Ave` on family membership rather than string similarity.
    The same shape generalizes: an unknown hydronym against known hydrology, an unknown toponym
    against a region's morphology (the `-ton`/`-by`/`-thorpe` families in GB, `-ville` in FR).
-   The identification is by structure-preserving relationship, not by label — the operator's
+   The identification is by structure-preserving relationship rather than by label — the operator's
    category-theory framing.
 
 4. **Physical plausibility.** Terrain, development and habitability act as exclusion. An address
@@ -52,9 +52,9 @@ not have crossed an ocean. The constraint that was already in hand went unused.
 
 The hazard is stated directly: this inverts our failure mode. Today we fail at 10,000 km and the
 user notices. An inference engine fails at 2 km and the user does not — which is the Pelias failure
-mode we just called worse.
+mode wecalled worse.
 
-The resolution is to make the derivation part of the answer. A result carries not only a coordinate
+The resolution is to make the derivation part of the answer. the result not only a coordinate
 and an uncertainty, but **how the granularity was reached**:
 
 - `retrieved` — a gazetteer row matched; this is what every tier does today.
@@ -80,7 +80,7 @@ Not every constraint is allowed to do the same thing. The operational vocabulary
 - **Relation / affinity** — establishes structural compatibility between entities or regions.
 - **Prior** — changes probability and can never, by itself, prove or exclude.
 
-The derivation graph is therefore the central data structure, not metadata attached after the
+The derivation graph is therefore the central data structure rather than metadata attached after the
 resolver has chosen an answer. A result is a projection of that graph:
 
 ```text
@@ -100,8 +100,8 @@ Evidence sources that observe the same latent factor are not independent. Popula
 density, broadband availability, POI density and built-up area are all partial observations of
 urbanisation; multiplying them as five independent likelihoods would manufacture confidence. A
 model must represent those correlations (directly or through latent factors), and calibration must
-use geographically held-out regions rather than random nearby rows. An 80% candidate region should
-contain the withheld truth approximately 80% of the time in genuinely novel geographies.
+use geographically held-out regions rather than random near rows. An 80% candidate region should
+contain the withheld truth approximately 80% of the time in in fact novel geographies.
 
 ## Central place theory, grounded
 
@@ -113,7 +113,7 @@ Christaller's central place theory gives _threshold_ (minimum population sustain
 _range_ (maximum distance travelled for it). The prediction: a settlement of a given size supports
 approximately N of a facility class, spatially distributed across its service area. So a query for
 a grocery store in a suburb where we hold no POI row is not unanswerable — density and settlement
-size say roughly how many exist and roughly where they concentrate (arterial roads, commercial
+size say roughly how several exist and roughly where they concentrate (arterial roads, commercial
 zoning), which is a bounded region with a stated basis.
 
 The theory is 1933 and its assumptions (isotropic plain, rational consumers) do not survive contact
@@ -126,7 +126,7 @@ than assumed**:
 - **TIGER** — roads, blocks, block groups: the skeleton facilities distribute along.
 - **BDC** (`bdc/`) — broadband availability as a development proxy, already ingested.
 - **Overture/POI** (`poi.db`, 13.68M rows) — the observed density that _calibrates_ the predicted
-  density. This is the honest move: fit the threshold/range parameters against places where we DO
+  density. This is the direct move: fit the threshold/range parameters against places where we DO
   hold POI coverage, then apply them where we do not, and report the residual.
 
 That last point is what separates this from numerology. CPT supplies the functional form; poi.db
@@ -134,13 +134,13 @@ supplies the fit; the fit's error on held-out regions is the confidence attached
 
 ## Precompute
 
-The relationships should be mined ahead of time, not derived per query — the resolver ladder is
+The relationships should be mined ahead of time rather than derived per query — the resolver ladder is
 synchronous and per-keystroke. Naming families, per-locality street-set completeness, terrain
 exclusion masks and fitted CPT parameters are all build-time artifacts keyed to the existing H3/WOF
 spine. This is the same pattern as the candidate table and the postcode bins, and it belongs to
 the targeted-precompute change already filed as
 [#1549](https://github.com/sister-software/mailwoman/issues/1549) — with the caution recorded there
-intact: precompute freezes a query distribution, so only stable and hot query classes earn an
+intact: precompute freezes a query distribution, so only stable and hot query classes warrant an
 artifact.
 
 ## Benchmarks are discovery instruments
@@ -152,7 +152,7 @@ of the box. A benchmark discrepancy must terminate in one of four receipts:
 1. a parser/model change;
 2. a resolver or ranking change;
 3. a coverage/artifact change; or
-4. a documented product boundary where abstention is the honest answer.
+4. a documented product boundary where abstention is the direct answer.
 
 Issue #1569 is the exemplar: the comparison exposed a terminal-suffix span failure, which became a
 specific training augmentation with a falsifiable recovery bar instead of an anecdotal bad result.
@@ -165,7 +165,7 @@ identical corpus. Version, scope, source lineage and snapshot date belong in eve
 Operator addition, same session. The FCC broadband work (`bdc/`, `filer/`) is not adjacent to this
 idea; it is the same idea already in production on a different claim type.
 
-Its central thesis: carriers submit availability claims they often cannot substantiate, and
+Its central thesis: carriers submit availability claims they frequently cannot substantiate, and
 **physical plant determines what is possible**. A fiber claim at a location implies a fiber hut
 within reach, poles or conduit along the route, and a serving terminal. Absent that plant, the
 claim is not merely unverified — it is physically implausible, and the implausibility is
@@ -204,16 +204,16 @@ physical constraint and reports its derivation answers _where is this, how do we
 claim even possible_ — which is address intelligence rather than address lookup. The BDC
 verification case is the proof that the second question has customers.
 
-The caution from the provenance section applies with more force here, not less: an infrastructure
-prior that quietly promotes a plausible-but-wrong coordinate is worse than no prior. Every
+The caution from the provenance section applies with more force here rather than less: an infrastructure
+prior that without output promotes a plausible-but-wrong coordinate is worse than no prior. Every
 constraint must be named in the derivation, and every fitted relationship must carry the residual
 it was fitted at.
 
 ## Source and distribution boundaries
 
-The evidence graph cannot erase the licence or legal posture of its inputs. Code, build recipes,
+The evidence graph cannot erase the license or legal posture of its inputs. Code, build recipes,
 source observations, fitted artifacts and runtime outputs are separate objects and may have
-different distribution rights. Every assertion retains its source and licence metadata through
+different distribution rights. Every assertion retains its source and license metadata through
 projection; a permissive output cannot be claimed merely because the combining code is open source.
 
 A source that is unavailable for a proposed use is not an observation the engine may consume. The
@@ -228,8 +228,8 @@ rather than an assumption embedded in application code.
 
 ## Consequence for OSM ingestion
 
-OSM should enter the engine as versioned observations, not as a timeless truth table. The ingest
-contract is:
+OSM should enter the engine as versioned observations rather than as a timeless truth table. The ingest
+interface is:
 
 ```text
 acquire snapshot/replication sequence
@@ -243,7 +243,7 @@ acquire snapshot/replication sequence
 
 Natural source identity is `(osm_type, osm_id, version)`; the artifact also records snapshot or
 replication sequence, source URL/hash, builder version, region, timestamps and ODbL attribution.
-Current state and history are separate products. Deletes and redactions are events, not missing
+Current state and history are separate products. Deletes and redactions are events rather than missing
 rows silently forgotten by a rebuild.
 
 Coverage is a first-class output distinct from row count. A extract may assert `observed_no_match` in
@@ -255,7 +255,7 @@ Source assertions remain plural. OSM, TIGER, BAN, Overture and future public add
 their own provenance and may disagree; ingestion does not overwrite them into one allegedly
 authoritative row. Reconciliation happens in the derivation graph. Users consume sealed artifacts
 and verified deltas rather than running the acquisition pipeline, while the build recipe remains
-reproducible subject to the source licence and the existing ODbL counsel check on `@mailwoman/osm`.
+reproducible subject to the source license and the existing ODbL counsel check on `@mailwoman/osm`.
 
 The current rooftop builder already has four sound foundations: it quarantines ODbL extracts from the
 permissive gazetteer, keeps countries independent, measures rather than guesses the street-association
@@ -263,7 +263,7 @@ gap, and builds on a temporary database before atomic replacement. Before full-s
 still needs:
 
 - required source URL/hash/size, extract polygon, OSM timestamp or replication sequence and builder
-  Git SHA (`--release unknown` must fail, not ship);
+  Git SHA (`--release unknown` must fail rather than ship);
 - an embedded layer manifest plus surveyed-extent coverage whose completeness does not default to
   1 merely because the PBF was traversed;
 - a companion assertion table retaining OSM type/id/version, geometry method (node versus polygon
@@ -288,31 +288,31 @@ tables and the sealed artifact manifest rather than widening every lookup row.
 
 - Naming-family mining. Does the presidents-block pattern generalize past anecdote? Measure the
   proportion of localities with a detectable naming scheme before assuming it is a change.
-- CPT parameter fitting. The residual on held-out POI regions IS the experiment; if it is wide, the
+- CPT parameter fitting. The residual on held-out POI regions is the experiment; if it is wide, the
   prior is too weak to act on.
-- Terrain exclusion. How much candidate area does slope/land-cover actually remove in the places
+- Terrain exclusion. How much candidate area does slope/land-cover remove in the places
   where we miss? Possibly a great deal in mountainous terrain and almost none on a coastal plain.
 
 ## Falsifiers to run before building anything
 
 1. **Does negative evidence change any answer?** Take the benchmark's missed rows, apply "not any
-   street we hold in this locality", and count how many candidate sets shrink usefully. If few, the
+   street we hold in this locality", and count how several candidate sets shrink usefully. If few, the
    coverage register is not complete enough for this to bite yet.
 2. **Do naming families exist at measurable rates?** Sample localities from the situs data and test
    for schemes (presidents, trees, states, numbered grids). A low hit rate kills source 3.
 3. **Does CPT fit our own POI data?** Fit threshold/range against poi.db in covered metros, predict
    held-out metros, report error. A wide residual kills the density prior.
 4. **Does inference beat the current fallback on the benchmark panel?** Re-score the panel with
-   inference on and off. The bar is the strata table, not a pooled headline.
+   inference on and off. The bar is the strata table rather than a pooled headline.
 
 ## Prohibitions
 
-- **Never emit an inferred point as though retrieved.** Provenance is mandatory, not optional
+- **Never emit an inferred point as though retrieved.** Provenance is mandatory rather than optional
   decoration.
 - **Soft priors never exclude.** Registries and theory may nudge ranking; only a typed exclusion
   backed by a hard rule and an explicitly complete coverage scope may remove a candidate
   (`registry-backed-structured-prediction` doctrine).
-- **A bounded region with stated confidence, never a fabricated coordinate.** If the honest output
+- **A bounded region with stated confidence, never a fabricated coordinate.** If the direct output
   is a 40 km² polygon, that is the output.
 - **Fit before assert.** No CPT parameter ships without its residual measured against held-out POI
   coverage.

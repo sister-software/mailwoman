@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Photon engine contract + wire types the router delegates to. Feature/collection
+ *   The Photon engine interface + wire types the router delegates to. Feature/collection
  *   construction lives here too (`photonFeature`, `photonCollection`) since every projection
- *   builds on them; the RESOLVED-place → {@link PhotonProperties} projection itself lives in
+ *   builds on them. the resolved-place → {@link PhotonProperties} projection itself lives in
  *   `projection.ts`.
  */
 
@@ -81,7 +81,7 @@ export interface PhotonReverseParams {
 }
 
 /**
- * The engine the router delegates to. Each method is optional; a missing one answers `501`. The real implementation
+ * The engine the router delegates to. Each method is optional. a missing one answers `501`. The real implementation
  * backs `/api` with the FST autocomplete tier + parse→resolve, and `/reverse` with the `WOFReverseGeocoder`.
  */
 export interface PhotonEngine {

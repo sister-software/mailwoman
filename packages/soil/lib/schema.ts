@@ -2,36 +2,36 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Typed schema for `soil.db` — the polygon truth table, the containment index above it, and the ONE
- *   reduction both consumers read, plus the layer-contract tables from `@mailwoman/core/layers`.
+ *   Typed schema for `soil.db` — the polygon truth table, the containment index above it, and the one
+ *   reduction both consumers read, plus the layer-interface tables from `@mailwoman/core/layers`.
  *
- *   THREE CELL-FACING TABLES ARE ONE PIPELINE, NOT THREE SOURCES. {@link SoilMapUnitAreaTable} holds what
+ *   three cell-facing tables are one pipeline rather than three sources. {@link SoilMapUnitAreaTable} holds what
  *   the authority drew, unsimplified. {@link SoilMapUnitCellTable} says which cells each delineation
- *   reaches and whether it fills them. {@link SoilCapabilityCellTable} is that index reduced ONCE, at build
+ *   reaches and whether it fills them. {@link SoilCapabilityCellTable} is that index reduced once, at build
  *   time, into a per-cell distribution. A `partial` cell's contribution to the reduction is weighted by the
  *   area it actually covers, which is why the truth table keeps unsimplified rings: simplify them and the
  *   weights change silently.
  *
- *   THE REDUCTION STORES A DISTRIBUTION, NEVER A WINNER, AND THAT IS FORCED BY MEASUREMENT RATHER THAN
- *   PREFERENCE. 84.0% of the 339,191 national map units hold two or more components; in 16.8% the largest
- *   component covers under half the map unit; and 85.4% of `IA153`'s 17,966 delineations are smaller than
- *   one resolution-9 cell, so no affordable cell size removes the mixture. NRCS itself ships
+ *   the reduction stores A distribution, never A winner, and that is forced BY measurement rather than
+ *   preference. 84.0% of the 339,191 national map units hold two or more components. in 16.8% the largest
+ *   component covers under half the map unit. and 85.4% of `IA153`'s 17,966 delineations are smaller than
+ *   one resolution-9 cell, so no affordable cell size removes the mixture. nrcs itself ships
  *   `muaggatt.niccdcd` — its own dominant-condition capability class — beside `niccdcdpct`, the share that
  *   class actually covers, with an observed minimum of 2%. This table reproduces that pattern at cell grain
  *   rather than inventing one.
  *
- *   AN ABSENCE IS NEVER A SMALL NUMBER. Four separate shares name why the rest of a cell carries no class,
- *   and class 8 is NOT among them: class 8 is a determination — the survey looked and rated the land as
- *   precluding commercial plant production — so it is a class share like any other. Folding a `NOTCOM`
+ *   an absence is never A small number. Four separate shares name why the rest of a cell carries no class,
+ *   and class 8 is not among them: class 8 is a determination — the survey looked and rated the land as
+ *   precluding commercial plant production — so it is a class share like any other. Folding a `notcom`
  *   polygon, a water body and an unrated series into "not arable" would produce a well-formed wrong answer,
  *   which is what the four shares exist to make impossible.
  *
- *   `WITHOUT ROWID` ON THE CELL TABLES AND NEVER ON THE GEOMETRY TABLE. Small fixed-width rows probed by
- *   their exact primary key belong in the B-tree; a row carrying a geometry blob does not — clustering it
+ *   `without rowid` on the cell tables and never on the geometry table. Small fixed-width rows probed by
+ *   their exact primary key belong in the B-tree. a row carrying a geometry blob does not — clustering it
  *   into the B-tree makes every index page a geometry page.
  */
 
-import type { LayerContractDatabase } from "@mailwoman/core/layers"
+import type { layerschemadatabase } from "@mailwoman/core/layers"
 import { addBoundingBoxColumns, addCellIndexColumns, addRingGeometryColumns } from "@mailwoman/sqlite/schema-columns"
 import { sql, type Kysely } from "kysely"
 
@@ -44,7 +44,7 @@ export const SoilCellContainment = {
 	 */
 	Whole: "whole",
 	/**
-	 * The delineation's boundary crosses the cell. The index has narrowed the candidates; the point test decides.
+	 * The delineation's boundary crosses the cell. The index has narrowed the candidates. the point test decides.
 	 */
 	Partial: "partial",
 } as const
@@ -52,19 +52,19 @@ export const SoilCellContainment = {
 export type SoilCellContainment = (typeof SoilCellContainment)[keyof typeof SoilCellContainment]
 
 /**
- * One map-unit delineation, verbatim. A plain rowid table: it holds a geometry blob, which is the one shape `WITHOUT
- * ROWID` hurts.
+ * One map-unit delineation, verbatim. A plain rowid table: it holds a geometry blob, which is the one shape `without
+ * rowid` hurts.
  */
 export interface SoilMapUnitAreaTable {
 	/**
 	 * `<areasymbol>:<ordinal>` — the survey area plus this delineation's position in the authority's own shapefile order.
-	 * SSURGO publishes no per-delineation key of its own (`mukey` names the MAP UNIT, and one map unit has many
+	 * ssurgo publishes no per-delineation key of its own (`mukey` names the MAP unit, and one map unit has many
 	 * delineations), so the ordinal is what makes a row nameable at all. Text, so a source that starts publishing a
 	 * non-numeric id needs no schema change.
 	 */
 	area_id: string
 	/**
-	 * The map unit this delineation belongs to — NRCS's own key, and the join to every attribute.
+	 * The map unit this delineation belongs to — nrcs's own key, and the join to every attribute.
 	 */
 	mukey: string
 	areasymbol: string
@@ -81,7 +81,7 @@ export interface SoilMapUnitAreaTable {
 /**
  * Per (cell, delineation): does the delineation cover the whole cell, or only part of it?
  *
- * Keyed on the delineation rather than on the map unit, because the reduction weights by the area a DELINEATION covers
+ * Keyed on the delineation rather than on the map unit, because the reduction weights by the area a delineation covers
  * and two delineations of one map unit reaching the same cell cover different ground.
  */
 export interface SoilMapUnitCellTable {
@@ -103,20 +103,20 @@ export interface SoilMapUnitCellTable {
 }
 
 /**
- * One SSURGO map unit — the attribute row every delineation joins to.
+ * One ssurgo map unit — the attribute row every delineation joins to.
  */
 export interface SoilMapUnitTable {
 	mukey: string
 	areasymbol: string
 	/**
-	 * The map unit symbol. `NOTCOM` and `NOTPUB` are MEANINGFUL values here, not codes to skip: they name a polygon the
-	 * authority drew with no soil mapping behind it.
+	 * The map unit symbol. `notcom` and `notpub` are meaningful values here rather than codes to skip: they name a
+	 * polygon the authority drew with no soil mapping behind it.
 	 */
 	musym: string
 	muname: string
 	/**
 	 * `Consociation` | `Complex` | `Association` | `Undifferentiated group`, from the authority's declared domain. A
-	 * complex is NRCS's statement that two or more soils are intermingled and cannot be separated at the mapping scale —
+	 * complex is nrcs's statement that two or more soils are intermingled and cannot be separated at the mapping scale —
 	 * the mixture is the survey's finding rather than this layer's loss.
 	 */
 	mukind: string | null
@@ -133,7 +133,7 @@ export interface SoilMapUnitTable {
 	 */
 	farmland_scope: string
 	/**
-	 * NRCS's OWN dominant-condition capability class for the map unit, carried rather than recomputed.
+	 * Nrcs's own dominant-condition capability class for the map unit, carried rather than recomputed.
 	 */
 	niccdcd: string | null
 	/**
@@ -142,8 +142,8 @@ export interface SoilMapUnitTable {
 	 */
 	niccdcdpct: number | null
 	/**
-	 * Whether this map unit is a polygon with NO soil mapping behind it — `NOTCOM`, `NOTPUB`, access denied, or a map
-	 * unit carrying no components at all. Such a map unit contributes to `nodata_share` and NEVER to a class share.
+	 * Whether this map unit is a polygon with no soil mapping behind it — `notcom`, `notpub`, access denied, or a map
+	 * unit carrying no components at all. Such a map unit contributes to `nodata_share` and never to a class share.
 	 */
 	no_mapping: number
 }
@@ -160,12 +160,12 @@ export interface SoilComponentTable {
 	comppct_r: number
 	compname: string | null
 	/**
-	 * `Miscellaneous area` is what separates NOT-RATEABLE from UNRATED: a rock outcrop or a water body is a component the
+	 * `Miscellaneous area` is what separates not-rateable from unrated: a rock outcrop or a water body is a component the
 	 * capability rating does not apply to, while an unrated series is one the survey did not rate.
 	 */
 	compkind: string | null
 	/**
-	 * Nonirrigated Land Capability Class, `"1"`–`"8"`. NULL means NOT RATED, never class 8.
+	 * Nonirrigated Land Capability Class, `"1"`–`"8"`. NULL means not rated, never class 8.
 	 */
 	nirrcapcl: string | null
 	/**
@@ -180,13 +180,13 @@ export interface SoilComponentTable {
 	irrcapcl: string | null
 	irrcapscl: string | null
 	/**
-	 * The NCCPI v3.0 overall index in [0, 1], under its own rule name. Never blended with the capability class.
+	 * The nccpi v3.0 overall index in [0, 1], under its own rule name. Never blended with the capability class.
 	 */
 	nccpi_v3: number | null
 }
 
 /**
- * THE SHARED ARTIFACT BOTH CONSUMERS READ: one row per cell, the index reduced once.
+ * The shared artifact both consumers read: one row per cell, the index reduced once.
  *
  * The result-level observation takes {@link SoilCapabilityCellTable.top_class} with the share it rests on; #1683's
  * affordance vector takes `class_shares` plus the four absence shares as its axis. One artifact, one aggregation, one
@@ -194,13 +194,13 @@ export interface SoilComponentTable {
  */
 export interface SoilCapabilityCellTable {
 	/**
-	 * 48-bit short H3 cell at the declared index resolution. SINGLE-resolution, unlike {@link SoilMapUnitCellTable}: this
+	 * 48-bit short H3 cell at the declared index resolution. single-resolution, unlike {@link SoilMapUnitCellTable}: this
 	 * is the table a consumer joins on, and a mixed-resolution join key is not one.
 	 */
 	h3_cell: number
 	/**
 	 * JSON: the authority's class codes mapped to their area-weighted share, sorted by descending share. Shares above the
-	 * declared truncation floor only; the remainder is in `other_share`.
+	 * declared truncation floor only. the remainder is in `other_share`.
 	 */
 	class_shares: string
 	/**
@@ -212,7 +212,7 @@ export interface SoilCapabilityCellTable {
 	 */
 	notrateable_share: number
 	/**
-	 * `NOTCOM`, `NOTPUB` and access-denied map units: a polygon the authority drew, with no soil mapping behind it.
+	 * `notcom`, `notpub` and access-denied map units: a polygon the authority drew, with no soil mapping behind it.
 	 */
 	nodata_share: number
 	/**
@@ -221,7 +221,7 @@ export interface SoilCapabilityCellTable {
 	 */
 	other_share: number
 	/**
-	 * The fraction of the CELL covered by any map-unit delineation at all.
+	 * The fraction of the cell covered by any map-unit delineation at all.
 	 *
 	 * The five shares above are normalized over this, so they sum to 1 exactly. A cell at the edge of a survey area is
 	 * partly outside every delineation, and without this column that unmapped remainder would silently deflate every
@@ -230,7 +230,7 @@ export interface SoilCapabilityCellTable {
 	 */
 	mapped_share: number
 	/**
-	 * The largest class share, and the share it rests on — the result-level consumer's reading, and NRCS's own
+	 * The largest class share, and the share it rests on — the result-level consumer's reading, and nrcs's own
 	 * `niccdcd`/`niccdcdpct` pattern at cell grain. NULL when the cell carries no class at all, which is a real answer: a
 	 * cell that is 100% `unrated_share` is complete and holds no capability reading whatsoever.
 	 */
@@ -249,11 +249,11 @@ export interface SoilCapabilityCellTable {
 }
 
 /**
- * The authority's mapped footprint, one row per published survey area — derived from the survey-area OUTLINE and each
- * area's own metadata, NEVER from the rated polygons.
+ * The authority's mapped footprint, one row per published survey area — derived from the survey-area outline and each
+ * area's own metadata, never from the rated polygons.
  *
- * Deriving it from the rated polygons is the error §3.2 of the survey describes: `NOTCOM` and access-denied map units
- * are INSIDE the footprint and carry no rating, so a footprint taken from the rated set would report them as unmapped
+ * Deriving it from the rated polygons is the error §3.2 of the survey describes: `notcom` and access-denied map units
+ * are inside the footprint and carry no rating, so a footprint taken from the rated set would report them as unmapped
  * when the authority has in fact declared exactly what they are.
  */
 export interface SoilSurveyAreaTable {
@@ -265,7 +265,7 @@ export interface SoilSurveyAreaTable {
 	saverest: string
 	saversion: number | null
 	/**
-	 * The OLDEST source citation date in the area's own FGDC lineage — the field survey the republished polygons rest on.
+	 * The oldest source citation date in the area's own fgdc lineage — the field survey the republished polygons rest on.
 	 *
 	 * This is a different fact from `saverest` and keeping them apart is the point: `IA153` carries a 2025-09-09 refresh
 	 * over a field survey published in 1960, and the dataset's own time-period-of-content ends at the refresh, so a
@@ -281,7 +281,7 @@ export interface SoilSurveyAreaTable {
 	 */
 	source_scale: number | null
 	/**
-	 * The scale the map units were DIGITIZED at, from `legend.projectscale` — 12000 for `IA153`. A different number from
+	 * The scale the map units were digitized at, from `legend.projectscale` — 12000 for `IA153`. A different number from
 	 * `source_scale` and a different fact: one is how finely the ground was walked, the other how finely it was drawn.
 	 */
 	mapping_scale: number | null
@@ -309,7 +309,7 @@ export interface SoilSurveyAreaTable {
  */
 export interface SoilVocabularyTable {
 	/**
-	 * The domain name as NRCS spells it — `capability_class`, `capability_subclass`, `farmland_classification`,
+	 * The domain name as nrcs spells it — `capability_class`, `capability_subclass`, `farmland_classification`,
 	 * `component_kind`, `mapunit_kind`.
 	 */
 	domain: string
@@ -330,7 +330,7 @@ export interface SoilVocabularyTable {
 /**
  * Pass to `new DatabaseClient<SoilDatabase>(...)`.
  */
-export interface SoilDatabase extends LayerContractDatabase {
+export interface SoilDatabase extends layerschemadatabase {
 	soil_map_unit_area: SoilMapUnitAreaTable
 	soil_map_unit_cell: SoilMapUnitCellTable
 	soil_map_unit: SoilMapUnitTable
@@ -341,13 +341,13 @@ export interface SoilDatabase extends LayerContractDatabase {
 }
 
 /**
- * The slice of a Kysely handle the DDL touches. Kysely is invariant in its schema parameter, so naming only the members
- * these functions call lets a caller pass its own wider handle.
+ * The subset of a Kysely handle the DDL touches. Kysely is invariant in its schema parameter, so naming only the
+ * members these functions call lets a caller pass its own wider handle.
  */
 export type SoilSchemaHandle = Pick<Kysely<SoilDatabase>, "schema">
 
 /**
- * Create `soil_map_unit_area`. A PLAIN rowid table on purpose — the `rings` blob is exactly the payload `WITHOUT ROWID`
+ * Create `soil_map_unit_area`. A plain rowid table on purpose — the `rings` blob is exactly the payload `without rowid`
  * penalizes.
  */
 export async function createSoilMapUnitAreaTable(db: SoilSchemaHandle): Promise<void> {
@@ -368,7 +368,7 @@ export async function createSoilMapUnitCellTable(db: SoilSchemaHandle): Promise<
 
 	await addCellIndexColumns(table, "area_id")
 		.addPrimaryKeyConstraint("soil_map_unit_cell_pk", ["h3_cell", "area_id"])
-		// `WITHOUT ROWID` has no first-class builder; the raw modifier is the idiomatic fallback.
+		// `without rowid` has no first-class builder. the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }

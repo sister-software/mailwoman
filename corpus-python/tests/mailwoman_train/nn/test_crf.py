@@ -60,7 +60,7 @@ def test_start_mask_rejects_i_prefix():
 def test_log_likelihood_finite_and_negative_of_neg_log():
     n = len(ACTIVE_BIO_LABELS)
     crf = LinearChainCRF(n, ID_TO_LABEL)
-    # Toy batch: B=2, S=5. Emissions are random; tags are valid B-locality runs.
+    # Toy batch: B=2, S=5. Emissions are random. tags are valid B-locality runs.
     torch.manual_seed(0)
     emissions = torch.randn(2, 5, n)
     b_locality = LABEL_TO_ID["B-locality"]
@@ -144,7 +144,7 @@ def test_log_likelihood_finite_with_padding():
     b_locality = LABEL_TO_ID["B-locality"]
     i_locality = LABEL_TO_ID["I-locality"]
     o = LABEL_TO_ID["O"]
-    # Row 0 padded after 3 real tokens; row 1 full.
+    # Row 0 padded after 3 real tokens. row 1 full.
     tags = torch.tensor(
         [
             [b_locality, i_locality, o, 0, 0],
@@ -291,7 +291,7 @@ def test_top_k_decode_calibrated_scores_are_log_probs():
     paths = crf.top_k_decode(emissions, mask, k=10)[0]
     probs = [float(torch.tensor(p.score).exp()) for p in paths]
     s = sum(probs)
-    # Allow a tiny slack for fp32 rounding; the strict invariant is sum <= 1.
+    # Allow a tiny slack for fp32 rounding. the strict invariant is sum <= 1.
     assert s <= 1.0 + 1e-5, f"top-k probabilities sum to {s} > 1"
     # All scores are finite (no -inf made it past the filter).
     assert all(math_isfinite(p.score) for p in paths)

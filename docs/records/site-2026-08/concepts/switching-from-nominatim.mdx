@@ -8,7 +8,7 @@ description: Point your existing Nominatim client at Mailwoman — the endpoint 
 
 You run Nominatim because it's free and self-hosted. You also run PostgreSQL, an `osm2pgsql` import that
 takes hours and tens of gigabytes, and a server you can't ship inside an app or run in a browser.
-Mailwoman gives you the same HTTP contract from a SQLite file — so you can move your client without
+Mailwoman gives you the same HTTP interface from a SQLite file — so you can move your client without
 rewriting it, then drop the database stack.
 
 ## One command
@@ -44,7 +44,7 @@ Mailwoman ignores: `extratags`, `namedetails`, `dedupe`, `polygon_text`/`_svg`/`
 
 ## What's different
 
-- **Richer results: annotations.** Every result carries an `annotations` block — coordinate
+- **Richer results: annotations.** The API returns an `annotations` block — coordinate
   formats (DMS, MGRS, geohash, Maidenhead, Mercator), qibla bearing, sun times, the country flag, calling
   code, and currency, plus the IANA timezone with its current (DST-correct) offset and, where the data
   bundles are present, the UN/LOCODE and EU NUTS codes. Nominatim returns none of these. It's the same
@@ -59,7 +59,7 @@ Mailwoman ignores: `extratags`, `namedetails`, `dedupe`, `polygon_text`/`_svg`/`
 - **Coordinate precision varies by coverage.** Where the address-point and street extracts reach,
   `/search` returns the rooftop or an interpolated point — `1600 Pennsylvania Avenue NW` resolves to the
   building, with `addressdetails` down to `house_number` and `road`. Where they don't, you get the admin
-  centroid: the right place, not the right doorstep. The `addressdetails` always reflect what was parsed.
+  centroid: the right place rather than the right doorstep. The `addressdetails` always reflect what was parsed.
 - **Bare ambiguous names can still collide.** The worldwide gazetteer resolves international cities by
   population-weighted ranking, so `Vienna, Austria`, `Sydney`, and `Tirana, Albania` all land in the
   right place — coverage now spans the long tail of countries that used to return nothing. Where a US
@@ -67,7 +67,7 @@ Mailwoman ignores: `extratags`, `namedetails`, `dedupe`, `polygon_text`/`_svg`/`
   `countrycodes` forces the right one (`?q=Sydney&countrycodes=au`). Teaching the coarse country router
   to emit a country prior for those bare cases is active work
   ([#822](https://github.com/sister-software/mailwoman/issues/822)); an exonym like `Wien`/`Vienna`
-  needs the model, not the gazetteer.
+  needs the model rather than the gazetteer.
 
 See [how Mailwoman compares](./how-mailwoman-compares.mdx) for the capability matrix across Nominatim,
 Photon, OpenCage, Pelias, and libpostal — including the two rows the hosted services can't check.

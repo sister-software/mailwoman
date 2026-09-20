@@ -4,20 +4,20 @@
 /**
  *   Address-point interpolation — "Method 2" of the resolution ladder (#483, Phase 1 of
  *   `docs/articles/plan/2026-06-11-resolution-ladder.md`): when the exact address-point tier (#476)
- *   misses a house number, bracket the number with REAL neighbor points on the same street from the
+ *   misses a house number, bracket the number with real neighbor points on the same street from the
  *   same #476 extract and interpolate linearly in house-number space between them. Real occupancy
- *   replaces TIGER's uniform-spacing assumption — the dominant error term of the TIGER pilot's check
- *   miss; TIGER range interpolation (`StreetInterpolator`) demotes to the fallback for streets too
+ *   replaces tiger's uniform-spacing assumption — the dominant error term of the tiger pilot's check
+ *   miss. tiger range interpolation (`StreetInterpolator`) demotes to the fallback for streets too
  *   sparse to bracket.
  *
- *   Matching key is `street_key` — THE shared normalizer plus the route fold
- *   (`canonicalizeRouteKey`), identical at build time (`scripts/build-address-point-extract.ts`) and
- *   query time, by construction. Scope is postcode-first like the segment tier; a query without a
+ *   Matching key is `street_key` — the shared normalizer plus the route fold
+ *   (`canonicalizeRouteKey`), identical at build time (`mailwoman situs address-points`) and
+ *   query time, by construction. Scope is postcode-first like the segment tier. a query without a
  *   postcode goes straight to the fallback (which carries its own statewide-ambiguity abstention).
  *
- *   Bracketing contract:
+ *   Bracketing interface:
  *
- *   - Neighbor candidates NEVER include the queried number itself (any unit/duplicate row of it) — in
+ *   - Neighbor candidates never include the queried number itself (any unit/duplicate row of it) — in
  *       production the exact tier would already have answered an on-file number, and in the eval
  *       this is what makes grading against the same extract non-circular by construction.
  *   - Both-sided bracket (`bracket: "both"`): linear interpolation between the nearest known number
@@ -27,7 +27,7 @@
  *       carries no evidence and the query falls through); `uncertaintyM` = the pair distance plus
  *       the extrapolated overshoot, explicitly larger than the both-sided radius.
  *   - No bracket (no neighbors, a single known number, or past the extrapolation cap): fall through to
- *       the TIGER fallback when configured, else null.
+ *       the tiger fallback when configured, else null.
  *
  *   Standalone like the segment tier — core wiring rides the Phase 2 ordered `spatialTiers` list.
  */
@@ -70,7 +70,7 @@ export class AddressPointInterpolator<
 > implements InterpolationLookup {
 	readonly #db: DatabaseClient<DB>
 	/**
-	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal cannot reach it —
 	 * ownership is membership rather than a flag a later branch has to check.
 	 */
 	readonly #resources = new DisposableStack()
@@ -92,7 +92,7 @@ export class AddressPointInterpolator<
 		// is skipped, deferring to the segment fallback rather than crashing at construction.
 		if (hasTable(this.#db, "address_point")) {
 			// Strictly-numeric neighbor numbers on the route-folded street key within the ZIP. The
-			// queried number itself is excluded HERE (see module doc: non-circular by construction).
+			// queried number itself is excluded here (see module doc: non-circular by construction).
 			this.#byPostcode = prepareAll(
 				this.#db,
 				`SELECT CAST(number AS INTEGER) AS n, lat, lon, source, release
@@ -195,7 +195,7 @@ function interpolateFromNeighbors(rows: readonly PointRow[], n: number): Interpo
 	}
 
 	// Single-sided: extrapolate along the two nearest known numbers on the populated side.
-	// `near` is the anchor closest to n, `far` the next one out; t > 1 by construction.
+	// `near` is the anchor closest to n, `far` the next one out. t > 1 by construction.
 	const side = below ? anchors.slice(-2) : anchors.slice(0, 2)
 
 	if (side.length < 2) return null

@@ -5,7 +5,7 @@ title: "2026-05-28 Layer 1 morphology FST eval"
 
 # Layer 1 (street-morphology FST) eval — 2026-05-28
 
-Applied the newly-landed [street-morphology FST](../../concepts/street-supplement-architecture.mdx)
+Applied the newly-landed [street-morphology FST](../../site-2026-08/concepts/street-supplement-architecture.mdx)
 as a decoder-only fix on the v0.6.1 weights and re-ran the 4561-entry golden set. Goal: measure
 whether the morphology prior alone suppresses v0.6.1's 1066 `dependent_locality` hallucinations
 without retraining.
@@ -46,7 +46,7 @@ Tuned: `maxAffixBias=1.0`, `maxNeighbourStreetBias=1.0`, `dependentLocalityPenal
 
 `v0.6.1 neural-only` vs `v0.6.1 + admin FST only` is essentially a no-op (1066 vs 1063 dep_loc
 hallucinations). Confirms the structural diagnosis from the
-[WOF hierarchy gap](../../concepts/wof-hierarchy-gap.mdx) doc: the admin FST has no street
+[WOF hierarchy gap](../../site-2026-08/concepts/wof-hierarchy-gap.mdx) doc: the admin FST has no street
 placetypes to match, so it can provide no negative-evidence anchor for street tokens. Synth-street
 exploited exactly this vacuum.
 
@@ -60,13 +60,13 @@ legitimate decisions on other tokens.
 
 The model's confidence on its synth-street-induced dep_loc predictions is high. Per
 the v0.6.1 calibration probe design: when the hallucinations
-are high-confidence, **retraining is required, not just a decoder-time threshold or bias**.
+are high-confidence, **retraining is required, nota decoder-time threshold or bias**.
 
 ### Default morphology bias is over-aggressive and causes collateral street_suffix damage
 
 At default magnitudes (`maxAffixBias=3.0`), the morphology FST inflates `street_suffix`
 hallucinations from 204 → 332 — a +63% increase. Investigation: the libpostal
-`street_types.txt` dictionaries contain many 1-2 character abbreviations (`a`, `b`, `av`, `bd`,
+`street_types.txt` dictionaries contain several 1-2 character abbreviations (`a`, `b`, `av`, `bd`,
 `br`, ...) that collide with US state abbreviations (`OR`, `CA`, `ND`, `NY`) and short tokens.
 A minimum-length-3 surface-form filter mitigates this (`av` no longer matches, but `avenue`,
 `rue`, `blvd` still do — see
@@ -74,7 +74,7 @@ A minimum-length-3 surface-form filter mitigates this (`av` no longer matches, b
 
 Even with the filter, default bias magnitudes still produce 238 hallucinations vs the 204
 baseline — a smaller but real regression. Lowering `maxAffixBias` to 1.0 brings collateral
-damage back to 213, basically baseline-equivalent.
+damage back to 213, in practice baseline-equivalent.
 
 ### Layer 1 is a real deliverable on top of a v0.6.2 retrain
 
@@ -88,7 +88,7 @@ just needs a backbone model that wasn't trained to be wrong about dep_loc.
 ## What this means for v0.6.2
 
 Per DeepSeek's turn 2 recipe
-and the [street-supplement architecture doc](../../concepts/street-supplement-architecture.mdx):
+and the [street-supplement architecture doc](../../site-2026-08/concepts/street-supplement-architecture.mdx):
 
 1. **Retrain with synth-street weight 0.5** (down from 2.0) — reduces the gradient pressure
    that pushed the model into overconfident dep_loc predictions.
@@ -132,9 +132,9 @@ node scripts/eval-morphology-fst.ts \
 
 ## See also
 
-- [Street-supplement architecture](../../concepts/street-supplement-architecture.mdx) — the design
+- [Street-supplement architecture](../../site-2026-08/concepts/street-supplement-architecture.mdx) — the design
   this eval validates against
-- [WOF hierarchy gap](../../concepts/wof-hierarchy-gap.mdx) — the structural cause
+- [WOF hierarchy gap](../../site-2026-08/concepts/wof-hierarchy-gap.mdx) — the structural cause
 - [v0.6.1 error analysis](../model-versions/v0.6.1-error-analysis.mdx) — the original regression
 - 2026-05-28 night-2 postmortem — the postmortem that drove
   the design consult

@@ -1,6 +1,6 @@
 # Planetary App Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** One private workspace, `packages/planetary`, built twice by `PLANETARY_BODY`, serving `moon.mailwoman.ai` and `mars.mailwoman.ai`: a MapLibre globe over the published nomenclature and hillshade archives, labels decluttered by scale, a click-to-inspect feature panel, search over the pipeline's ancestrie artifact, stable `/feature/<id>` links, and visible attribution from the pipeline manifest.
 

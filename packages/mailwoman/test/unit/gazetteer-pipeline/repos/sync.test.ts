@@ -3,7 +3,7 @@
 
 /**
  *   Tests for the sync planner. The planner is where every decision about someone's working tree is made, so these pin
- *   the REFUSALS above all — a plan that fast-forwards over unpushed corrections destroys the only copy, and the whole
+ *   the refusals above all — a plan that fast-forwards over unpushed corrections destroys the only copy, and the whole
  *   reason the fork exists is that corrections are authored in these directories.
  */
 

@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Pins the Overture sub-venue reader against a poi.db FIXTURE — a real SQLite file with the three
+ *   Pins the Overture sub-venue reader against a poi.db fixture — a real SQLite file with the three
  *   tables the reader touches, built here rather than mocked.
  *
  *   The fixture is the point. `@mailwoman/corpus` declares poi.db's columns locally (it does not
- *   depend on `@mailwoman/resolver-wof-sqlite`, which owns the full `POIDatabase` interface), so
+ *   depend on `@mailwoman/resolver-wof-sqlite`, which owns the full `POIDatabase` interface). Therefore,
  *   nothing type-checks the projection against the real schema. What stands in for that is a fixture
  *   whose DDL matches the shipped layer's — `h3_cell`, `category_id`, `neg_rank`, `rowid_key` clustered
  *   PK, `name`, `country` — so a rename upstream fails here instead of throwing at runtime against a
@@ -30,7 +30,7 @@ interface FixtureRow {
 }
 
 /**
- * The deliberately small schema this fixture owns locally; see the file-level boundary note.
+ * The deliberately small schema this fixture owns locally. see the file-level boundary note.
  */
 interface FixtureDatabase {
 	poi_category_codes: {
@@ -48,7 +48,7 @@ interface FixtureDatabase {
 		rowid_key: number
 		name: string | null
 		/**
-		 * Mirrors the shipped column so a rename fails here; it does NOT mirror the fold. The real `poi.name_key` is
+		 * Mirrors the shipped column so a rename fails here. it does not mirror the fold. The real `poi.name_key` is
 		 * `NameKey`, minted by `normalizeLocalityForKey` — which this package cannot reach, and which no assertion here
 		 * needs. Do not copy the value expression below as if it were the fold.
 		 */
@@ -67,7 +67,7 @@ const CATEGORY_IDS: Record<string, number> = {
 	campus_building: 733,
 	pier: 952,
 	airport_lounge: 956,
-	// Deliberately present and NOT in the sub-venue set: the reader must not read it. `gas_station`
+	// Deliberately present and not in the sub-venue set: the reader must not read it. `gas_station`
 	// is the single largest designator-token producer in the whole layer (12,996 hits of `station`,
 	// all inside brand names), so it is the right negative to pin.
 	gas_station: 250,
@@ -213,12 +213,12 @@ test("a row from the reader satisfies SubVenueHarvestRow with no adaptation", as
 	expect(row).not.toHaveProperty("localizedNames")
 })
 
-test("readOvertureLayerVintage reads the layer-contract manifest", async () => {
+test("readOvertureLayerVintage reads the layer-interface manifest", async () => {
 	await expect(readOvertureLayerVintage(databasePath)).resolves.toBe("2026-05-20.0")
 })
 
 test("OVERTURE_SUBVENUE_CATEGORIES maps every category to a designator the lexicon knows", () => {
-	// `pier` is a wave-2 addition to PROPOSED_DESIGNATORS; the rest predate it. A category mapped to a
+	// `pier` is a wave-2 addition to PROPOSED_DESIGNATORS. the rest predate it. A category mapped to a
 	// designator with no record would produce surfaces pointing at nothing.
 	expect(Object.entries(OVERTURE_SUBVENUE_CATEGORIES).toSorted()).toEqual([
 		["airport_lounge", "terminal"],

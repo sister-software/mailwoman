@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   #727 stage-2 Phase 4a — reranking a k-best parse list on RESOLUTION EVIDENCE.
+ *   #727 stage-2 Phase 4a — reranking a k-best parse list on resolution evidence.
  *
  *   The arc's thesis, stated by the operator (2026-07-15): the arbiter for a k-best list is the
- *   resolver, not hand-weights. A rank-2 parse that resolves to a real place beats a rank-1 that
+ *   resolver rather than hand-weights. A rank-2 parse that resolves to a real place beats a rank-1 that
  *   resolves to a country centroid.
  *
  *   The measured case for this existing at all: on the triaged parity corpus the shipped decode gets
- *   street 0.573 while the span decode's top-10 CONTAINS the right answer 0.775 of the time
- *   (oracle@5 0.723). Rank-1 cannot reach that headroom; only a reranker can.
+ *   street 0.573 while the span decode's top-10 contains the right answer 0.775 of the time
+ *   (oracle@5 0.723). Rank-1 cannot reach that headroom. only a reranker can.
  *
  *   ## Why this is deliberately, almost embarrassingly small
  *
@@ -20,16 +20,17 @@
  *   whoever complained loudest). The moment this file grows a per-hypothesis score blend, we have
  *   rebuilt that with extra steps.
  *
- *   So the rule is ONE bit of evidence, not a score: **drop hypotheses whose resolution is
- *   implausible; otherwise keep the model's own ranking.** The parse scores already share a partition
+ *   So the rule is one bit of evidence rather than a score: **drop hypotheses whose resolution is
+ *   implausible. otherwise keep the model's own ranking.** The parse scores already share a partition
  *   function and are comparable within an input — the reranker's job is not to re-score them, it is to
  *   veto the ones the world says are wrong.
  *
- *   Adding a second signal here requires the same bar the first one cleared: a MEASURED win on the
+ *   Adding a second signal here requires the same bar the first one cleared: a measured win on the
  *   parity + Paris fixtures, stated in a verdict doc. Not a plausible story.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
+import type { CountryBBoxFact } from "@mailwoman/core/resolver"
 
 import { isImplausibleResolution } from "#plausibility"
 
@@ -38,11 +39,11 @@ import { isImplausibleResolution } from "#plausibility"
  */
 export interface RerankCandidate<T = unknown> {
 	/**
-	 * The parse's own score. Comparable to its siblings from the SAME input; not across inputs.
+	 * The parse's own score. Comparable to its siblings from the same input. not across inputs.
 	 */
 	score: number
 	/**
-	 * The parse tree, UNRESOLVED — `rerankByResolution` resolves it via the injected resolver.
+	 * The parse tree, unresolved — `rerankByResolution` resolves it via the injected resolver.
 	 */
 	tree: AddressTree
 	/**
@@ -68,15 +69,15 @@ export interface RerankedCandidate<T = unknown> extends RerankCandidate<T> {
 
 export interface RerankResult<T = unknown> {
 	/**
-	 * Candidates in FINAL order: plausible ones first (model order preserved), vetoed ones after.
+	 * Candidates in final order: plausible ones first (model order preserved), vetoed ones after.
 	 */
 	ranked: Array<RerankedCandidate<T>>
 	/**
-	 * The winner — the first plausible candidate, or the model's rank-1 when ALL were vetoed.
+	 * The winner — the first plausible candidate, or the model's rank-1 when all were vetoed.
 	 */
 	best: RerankedCandidate<T>
 	/**
-	 * True when the winner is NOT the model's rank-1 — i.e. resolution evidence actually changed the answer. This is the
+	 * True when the winner is not the model's rank-1 — i.e. resolution evidence actually changed the answer. This is the
 	 * metric the arc is judged on (`rank-2-beats-rank-1 rate`); log it, because a rerank that never fires is a rerank
 	 * that is not earning its resolver calls.
 	 */
@@ -95,12 +96,27 @@ export interface RerankOpts {
 	 * — the last 5 candidates cost 2x the resolves for ~5pp of ceiling.
 	 */
 	maxResolve?: number
+	/**
+	 * ISO-2 country the resolutions are expected to land in — the parse's own country node, the `--locale` scope, or a
+	 * caller hint. Threaded to {@link isImplausibleResolution} as guard B: a coordinate outside that country's coarse box
+	 * is vetoed, which is the cross-country-jump class guard A structurally cannot see.
+	 *
+	 * Omitted → guard B does not run, and only the bare-country-centroid guard applies. That is the shipped default and
+	 * it changes nothing on the served path, because nothing on the served path calls this function: the runtime pipeline
+	 * reranks with `rerankByStreetEvidence`, and this one has no in-repo caller outside its own test.
+	 */
+	expectedCountry?: string
+	/**
+	 * The loaded artifact's own guard-B boxes (`resolver.artifactCoverage?.countryBBoxes`). Replaces the built-in table
+	 * wholesale when supplied, so a consumer's artifact and its guard cannot disagree.
+	 */
+	countryBBoxes?: ReadonlyMap<string, CountryBBoxFact>
 }
 
 /**
  * Rerank a k-best parse list on resolution evidence.
  *
- * Resolves up to `maxResolve` candidates IN MODEL ORDER and returns the first whose resolution is plausible. Candidates
+ * Resolves up to `maxResolve` candidates IN model order and returns the first whose resolution is plausible. Candidates
  * beyond `maxResolve` are never resolved (and never vetoed — they simply keep their model rank behind the resolved
  * ones).
  *
@@ -132,14 +148,17 @@ export async function rerankByResolution<T>(
 		try {
 			resolved = await resolveTree(candidate.tree)
 		} catch {
-			// A resolver failure is NOT evidence against the parse — treat it as "no evidence" and let
+			// A resolver failure is not evidence against the parse — treat it as "no evidence" and let
 			// the model's rank stand, rather than vetoing a possibly-correct hypothesis on an outage.
 			ranked.push({ ...candidate, resolved: null, implausible: false })
 
 			continue
 		}
 
-		const verdict = isImplausibleResolution(resolved)
+		const verdict = isImplausibleResolution(resolved, {
+			...(opts.expectedCountry ? { expectedCountry: opts.expectedCountry } : {}),
+			...(opts.countryBBoxes ? { countryBBoxes: opts.countryBBoxes } : {}),
+		})
 
 		ranked.push({
 			...candidate,

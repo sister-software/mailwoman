@@ -64,8 +64,8 @@ describe("extractDeclaredSymbols", () => {
 	})
 
 	it("ignores a constant that is not a function", () => {
-		// A duplicated table or literal is a different problem with a different answer; reporting them would bury the
-		// duplicated LOGIC this exists to surface.
+		// A duplicated table or literal is a different problem with a different answer. reporting them would bury the
+		// duplicated logic this exists to surface.
 		expect(extractDeclaredSymbols('const MAX_SAMPLES = 1024\nconst NAME = "x"')).toEqual([])
 	})
 })
@@ -147,7 +147,7 @@ describe("readWriteIntent", () => {
 	})
 
 	it("ignores a malformed payload rather than throwing", () => {
-		// A hook that throws on an unexpected payload becomes a broken editor, not a broken hint.
+		// A hook that throws on an unexpected payload becomes a broken editor rather than a broken hint.
 		expect(readWriteIntent({ tool_name: "Write", tool_input: {} })).toBeNull()
 		expect(readWriteIntent(null)).toBeNull()
 	})
@@ -183,7 +183,7 @@ describe("formatFindings", () => {
 	})
 
 	it("says the existing implementation may be the wrong one to reuse", () => {
-		// api-kit's `percentile` takes a FRACTION where core's takes [0, 100]. A hint phrased as an instruction would
+		// api-kit's `percentile` takes a fraction where core's takes [0, 100]. A hint phrased as an instruction would
 		// have an author collapse those two and silently change a unit.
 		const text = formatFindings([
 			{ name: "percentile", sites: [declarationSite("packages/core/utils/stats.ts", true, 12)] },
@@ -217,7 +217,7 @@ describe("selectReportable", () => {
 
 	it("suppresses a name that is declared everywhere and exported nowhere", () => {
 		// `main` had 34 declaration sites at the time this rule was chosen and not one of them is importable. A stoplist
-		// would have to name it; this rule derives it, which is the difference that keeps the rule from going stale.
+		// would have to name it. this rule derives it, which is the difference that keeps the rule from going stale.
 		const found = new Map([["main", [declarationSite("scripts/a.ts", false), declarationSite("scripts/b.ts", false)]]])
 
 		expect(selectReportable(found, { writingFile: "scripts/c.ts" })).toEqual([])

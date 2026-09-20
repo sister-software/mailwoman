@@ -1,6 +1,6 @@
 # License Posture Reporting Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Every mailwoman output that leaves the process says which license branch produced it: a two-line stderr notice from the CLI and the servers, an `engine` object in JSON bodies, and `Server` + `Link: rel="license"` headers on every HTTP response.
 
@@ -19,11 +19,11 @@
 - `node:*` imports are refused outside `@mailwoman/core` by `oxlint.config.ts`. File reads go through `@mailwoman/core/fs/readers`; process spawns through `@mailwoman/core/process`.
 - Relative imports carry `.ts`; sibling modules inside a package go through the `#` imports map (`#license/key`), never `../`.
 - No `enum`; `const X = {…} as const`.
-- Comments state invariants, not history. No dates, PR numbers, or "added for" in a comment.
-- The launcher `packages/mailwoman/lib/cli.ts` keeps ONE static import. Everything new there arrives by dynamic import after dispatch.
-- The `mailwoman` package may depend on `@mailwoman/api`, `@mailwoman/api-kit`, and the drop-ins. NONE of those may depend on `mailwoman`. The stamp crosses that boundary as an option value, never as an import.
+- Comments state invariants rather than history. No dates, PR numbers, or "added for" in a comment.
+- The launcher `packages/mailwoman/lib/cli.ts` keeps one static import. Everything new there arrives by dynamic import after dispatch.
+- The `mailwoman` package may depend on `@mailwoman/api`, `@mailwoman/api-kit`, and the drop-ins. none of those may depend on `mailwoman`. The stamp crosses that boundary as an option value, never as an import.
 - Run `yarn compile` before any test that spawns the compiled CLI (`out/cli.js`). The pre-commit hook runs the compiled CLI too.
-- Every prose file (spec, CHANGELOG, docs page) passes `node_modules/@vvago/vale/bin/vale --config docs/.vale-vocab.ini <file>`.
+- Every prose file (spec, CHANGELOG, docs page) passes `node_modules/@vvago/vale/bin/vale --config config/vale/.vale-vocab.ini <file>`.
 - Commit messages end with `Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg`.
 - Work happens on branch `feat/license-posture-reporting` in the worktree `.claude/worktrees/license-posture`. Never `cd` to the main checkout.
 
@@ -55,8 +55,8 @@
 
 Three decisions recorded here that refine the spec:
 
-1. `mailwoman parse --format json` gets NO body stamp. Its default projection (`decodeAsJSON`) is a flat `tag → value` map that consumers iterate as tags, so a foreign key would read as a tag. The stderr notice covers the command. The spec's placement table listed parse; this plan overrides that row.
-2. The server-start notice is printed by each server's own `onListen` callback (the four `cli.ts` entry points and `mailwoman serve`), not by `serveNode`. `serveNode` stays a listener wrapper with no knowledge of the stamp, and the code that prints is the same `printLicenseNotice` the launcher uses.
+1. `mailwoman parse --format json` gets no body stamp. Its default projection (`decodeAsJSON`) is a flat `tag → value` map that consumers iterate as tags, so a foreign key would read as a tag. The stderr notice covers the command. The spec's placement table listed parse; this plan overrides that row.
+2. The server-start notice is printed by each server's own `onListen` callback (the four `cli.ts` entry points and `mailwoman serve`) rather than by `serveNode`. `serveNode` stays a listener wrapper with no knowledge of the stamp, and the code that prints is the same `printLicenseNotice` the launcher uses.
 3. The stamp is offline. The spec says a `retired` key reads as the open-source branch; a retired reading needs the well-known register, which the stamp never consults. A retired key whose signature still verifies stamps `LicenseRef-Commercial` until the release that removes its public key; the doctor's `--online` check is where retirement is reported. This is the asymmetry `packages/core/lib/license/trusted-keys.ts` already documents.
 
 ---
@@ -242,7 +242,7 @@ Expected: FAIL — `buildEngineStamp` is not exported from `@mailwoman/core/lice
  *
  *   The stamp carries no licensee and no key id. A deployment serving the public must not carry its operator's
  *   commercial relationship in every response; the doctor prints those two locally. It is offline: the well-known
- *   register is the doctor's freshness check, not a per-process network call.
+ *   register is the doctor's freshness check rather than a per-process network call.
  */
 
 import type { LicenseKeyVerification } from "#license/key"
@@ -584,7 +584,7 @@ it("prints the notice for a key this build does not trust", async () => {
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest run packages/mailwoman/test/unit/cli-launcher.test.ts`
-Expected: the two new tests FAIL (stderr is empty); the three existing tests PASS.
+Expected: the two new tests fail (stderr is empty); the three existing tests pass.
 
 - [ ] **Step 3: Print the notice after dispatch**
 
@@ -722,7 +722,7 @@ const output = booleanValue(parsed.values, "json")
 
 and change the `json` option description to `"Emit { engine, entries } as JSON instead of formatted text."`.
 
-- [ ] **Step 5: Record the contract change**
+- [ ] **Step 5: Record the interface change**
 
 In `CHANGELOG.md` under `## Unreleased`, add a `### Changed` section (or extend the existing one):
 
@@ -1006,7 +1006,7 @@ test("engine option: every /v1 body carries `engine` and every response carries 
 	expect((await health.json()) as object).not.toHaveProperty("engine")
 })
 
-test("engine option: /v1/batch stamps the envelope once, not the rows", async () => {
+test("engine option: /v1/batch stamps the envelope once rather than the rows", async () => {
 	const app = createMailwomanAPI(fullEngine, { engine: stamp })
 	const res = await app.request("/v1/batch", {
 		method: "POST",
@@ -1037,7 +1037,7 @@ test("no engine option: no `engine` field and no headers", async () => {
 - [ ] **Step 2: Run the tests to verify they fail**
 
 Run: `yarn vitest run packages/api/test/unit/index.test.ts`
-Expected: the three new tests FAIL; the rest PASS.
+Expected: the three new tests fail; the rest pass.
 
 - [ ] **Step 3: Thread the option through app and routes**
 
@@ -1095,7 +1095,7 @@ export const GeocodeOutcomeSchema = GeocodeOutcomeLikeSchema.extend({ engine: En
 - [ ] **Step 5: Run the tests to verify they pass**
 
 Run: `yarn vitest run packages/api/test/unit/index.test.ts packages/mailwoman/test/unit/api-schema-drift.test.ts` (adjust the drift test's path with `git ls-files | grep api-schema-drift`).
-Expected: PASS.
+Expected: pass.
 
 If a route's `responses` schema in `routes.ts` is declared with the wire schema and the typed `c.json` now rejects the widened body, widen the route's `200` content schema to the same schema you extended in Step 4.
 
@@ -1175,7 +1175,7 @@ Replace `fixtureEngine` with the name the file already uses for its engine fixtu
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest run packages/nominatim/test/unit/index.test.ts`
-Expected: the two new tests FAIL.
+Expected: the two new tests fail.
 
 - [ ] **Step 3: Thread the option**
 
@@ -1268,7 +1268,7 @@ test("no engine option: the collection has no `engine` member", async () => {
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest run packages/photon/test/unit/index.test.ts`
-Expected: the two new tests FAIL.
+Expected: the two new tests fail.
 
 - [ ] **Step 3: Thread the option**
 
@@ -1342,7 +1342,7 @@ test("engine option: headers only — the /parse body is byte-identical with and
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest run packages/libpostal/test/unit/index.test.ts`
-Expected: the new test FAILS on the `server` header.
+Expected: the new test fails on the `server` header.
 
 - [ ] **Step 3: Add the option**
 
@@ -1391,7 +1391,7 @@ const engineStamp = await resolveEngineStamp()
 const app = createXApp(engine, { cors: values.cors, engine: engineStamp.stamp })
 ```
 
-and as the LAST statement of the `onListen` callback:
+and as the last statement of the `onListen` callback:
 
 ```ts
 printLicenseNotice(engineStamp)
@@ -1515,7 +1515,7 @@ Replace the contact address with whatever the operator names as the sales contac
 
 - [ ] **Step 2: Vale, then build**
 
-Run: `node_modules/@vvago/vale/bin/vale --config docs/.vale.ini docs/src/pages/license.mdx`
+Run: `node_modules/@vvago/vale/bin/vale --config config/vale/.vale.ini docs/src/pages/license.mdx`
 Expected: 0 errors. Fix any finding by naming the concrete thing.
 
 Run: `yarn workspace @mailwoman/docs build 2>&1 | tail -5` (this takes minutes; see the `run-docs` skill for the faster dev-server check) and confirm `docs/build/license/index.html` exists.
@@ -1582,4 +1582,4 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 git push -u origin feat/license-posture-reporting
 ```
 
-Then open the PR against `main` with the spec linked, the `parse --format json` decision stated, the `autocomplete --json` contract change stated, and the session link `https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg` as the last line.
+Then open the PR against `main` with the spec linked, the `parse --format json` decision stated, the `autocomplete --json` interface change stated, and the session link `https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg` as the last line.

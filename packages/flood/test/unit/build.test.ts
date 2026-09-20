@@ -4,8 +4,8 @@
 /**
  *   The fixture rung: build a real sealed artifact from hand-built geometry, then read it.
  *
- *   THE TWO DIRECTIONS OF THE MEANING-OF-ZERO RULE ARE THE POINT OF THIS FILE. A point inside the
- *   authority's footprint and outside every polygon must read as the authority's Zone 1 DESIGNATION, and a
+ *   the two directions OF the meaning-OF-zero rule are the point OF this file. A point inside the
+ *   authority's footprint and outside every polygon must read as the authority's Zone 1 designation, and a
  *   point outside the footprint must read `unknown`. Both are the same empty answer from the geometry, and
  *   a layer that could not tell them apart would report every unmapped location as low-hazard.
  */
@@ -105,7 +105,7 @@ describe("buildFloodDatabase", () => {
 	it("derives the footprint from the coverage statement, not from the polygon union", () => {
 		expect(lookup.identity.extent.statement).toBe(EA_COVERAGE_STATEMENT)
 
-		// The polygons occupy a few square kilometres; the statement's footprint is the whole outline, so the coverage
+		// The polygons occupy a few square kilometres. the statement's footprint is the whole outline, so the coverage
 		// cells vastly outnumber the cells any polygon reaches. A footprint taken from the polygons would be the other way
 		// round — and every Zone 1 location would read as unmapped.
 		expect(result.coverageCells).toBeGreaterThan(result.coverageCellsWithRows * 10)

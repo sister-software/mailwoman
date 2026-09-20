@@ -8,11 +8,11 @@
  *   published spec (https://github.com/google/open-location-code/blob/main/docs/specification.md);
  *   no dependency, no I/O.
  *
- *   A FULL code (8 digits, a `+`, then 2–3 more) decodes directly. A SHORT code (2–6 leading digits
+ *   A full code (8 digits, a `+`, then 2–3 more) decodes directly. A short code (2–6 leading digits
  *   removed, e.g. `VFQ6+92P`) is only meaningful near a reference point — the removed prefix is
  *   recovered from the reference, then the candidate cell is shifted by whole prefix-resolutions if
  *   a neighboring cell sits closer (the spec's `recoverNearest`). The reference in an address is the
- *   RESOLVED LOCALITY, which is why the geocode wiring recovers after the admin walk.
+ *   resolved locality, which is why the geocode wiring recovers after the admin walk.
  */
 
 /**
@@ -25,7 +25,7 @@ const OLC_DIGIT_VALUE = new Map<string, number>([...OLC_ALPHABET].map((c, i) => 
 
 /**
  * Degree width of each pair-position, most significant first: the pair at index i spans `20^(2-i)` degrees. Ten pair
- * digits (five lat/lon pairs) take a cell to 1/400° ≈ 275 m; grid digits refine further.
+ * digits (five lat/lon pairs) take a cell to 1/400° ≈ 275 m. grid digits refine further.
  */
 const PAIR_RESOLUTIONS = [20, 1, 1 / 20, 1 / 400, 1 / 8000] as const
 
@@ -47,15 +47,15 @@ export interface DecodedPlusCode {
 }
 
 /**
- * A syntactically-valid FULL plus code: exactly 8 digits, `+`, then 2 or 3 digits. (The spec allows padded and longer
- * forms; addresses carry the 10–11 digit register, which is all this reader accepts.)
+ * A syntactically-valid full plus code: exactly 8 digits, `+`, then 2 or 3 digits. (The spec allows padded and longer
+ * forms. addresses carry the 10–11 digit register, which is all this reader accepts.)
  */
 export function isFullPlusCode(token: string): boolean {
 	return /^[23456789CFGHJMPQRVWX]{8}\+[23456789CFGHJMPQRVWX]{2,3}$/i.test(token)
 }
 
 /**
- * A syntactically-valid SHORT plus code: 2, 4, or 6 leading digits removed — so 6, 4, or 2 digits before the `+`. The
+ * A syntactically-valid short plus code: 2, 4, or 6 leading digits removed — so 6, 4, or 2 digits before the `+`. The
  * 4-before-`+` form (`VFQ6+92P`) is the one Google prints on place cards.
  */
 export function isShortPlusCode(token: string): boolean {
@@ -63,7 +63,7 @@ export function isShortPlusCode(token: string): boolean {
 }
 
 /**
- * Decode a FULL plus code to its cell. Returns null on anything `isFullPlusCode` rejects.
+ * Decode a full plus code to its cell. Returns null on anything `isFullPlusCode` rejects.
  */
 export function decodePlusCode(code: string): DecodedPlusCode | null {
 	if (!isFullPlusCode(code)) return null
@@ -106,7 +106,7 @@ export function decodePlusCode(code: string): DecodedPlusCode | null {
 
 /**
  * Encode the pair digits of a coordinate to `length` digits (length ≤ 10, even) — the prefix implementation
- * {@link recoverNearestPlusCode} needs; not a general encoder.
+ * {@link recoverNearestPlusCode} needs. not a general encoder.
  */
 function encodePairDigits(lat: number, lon: number, length: number): string {
 	let latVal = Math.min(Math.max(lat + 90, 0), 180 - 1e-12)
@@ -130,7 +130,7 @@ function encodePairDigits(lat: number, lon: number, length: number): string {
 }
 
 /**
- * Recover a SHORT plus code against a reference coordinate, per the spec's `recoverNearest`: prepend the reference's
+ * Recover a short plus code against a reference coordinate, per the spec's `recoverNearest`: prepend the reference's
  * prefix at the missing precision, then shift the candidate cell by whole prefix-resolutions when a neighboring cell
  * center sits closer to the reference. Returns the decoded nearest cell, or null for an invalid short code.
  */
@@ -143,7 +143,7 @@ export function recoverNearestPlusCode(shortCode: string, refLat: number, refLon
 
 	if (!candidate) return null
 
-	// The prefix pins the cell modulo its own resolution; the nearest bearer of the short code may sit
+	// The prefix pins the cell modulo its own resolution. the nearest bearer of the short code may sit
 	// one prefix-cell away (the reference near a cell edge). Shift by whole prefix-resolutions, never
 	// past the poles.
 	const LAT_MIN = -90

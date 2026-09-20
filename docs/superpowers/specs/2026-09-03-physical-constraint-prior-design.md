@@ -8,7 +8,7 @@ every exclusion carries, and how the GB prototype is built and graded.
 
 | Input                                         | Result                                                                                                                                                                                                                                                                                                                                        |
 | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| #1684 experiment 3 (GHSL habitability mask)   | NO-GO on the pre-registered rule: the only mask with a clean control excludes 7 of 46 FIRST_PASS tail rows and 0 of 5 on the current tail; the mask with power also excludes 50 of 420 truth points, which are rural rooftops. A habitability mask does not earn a place as a candidate filter. Recorded on #1975.                            |
+| #1684 experiment 3 (GHSL habitability mask)   | NO-GO on the pre-registered rule: the only mask with a clean control excludes 7 of 46 FIRST_PASS tail rows and 0 of 5 on the current tail; the mask with power also excludes 50 of 420 truth points, which are rural rooftops. A habitability mask does not warrant a place as a candidate filter. Recorded on #1975.                         |
 | License position (operator, 2026-09-03)       | Exploration and validation of these inputs are free. Packages ship separately, so a customer chooses which data-license posture to engage with; `mailwoman doctor` reports the posture of every attached layer (PR #2117). Counsel review stays the condition for shipping beyond `build-local`.                                              |
 | #1571 (inferential resolution)                | Physical plausibility is its fourth constraint source. Its prohibitions bind here: positive evidence only, soft priors, never an inferred point served as retrieved, a bounded region with stated confidence rather than a fabricated coordinate.                                                                                             |
 | Exclusion-grade coverage (PR #1973)           | `supportsExclusion` is true only for `basis = designated` or `surveyed`. `source_present` supports presence and nothing else. A cell with no footprint data is not a cell excluded by physics.                                                                                                                                                |
@@ -26,7 +26,7 @@ each assignment how it was reached.
 
 Two consequences follow, and both narrow the design.
 
-**The prior is a build-time product, not a runtime scorer.** The assignment is computed once from
+**The prior is a build-time product rather than a runtime scorer.** The assignment is computed once from
 sealed inputs into a sealed artifact, `postcode-unit-assignment-gb.db`, with a `layer_manifest` and
 per-row provenance. At runtime the resolver reads it as a lookup: a unit postcode resolves to the set
 of points assigned to it, or to their bound. No runtime component reasons about buildings. This is
@@ -41,7 +41,7 @@ four attribution lines (section 8). Falsifier F1 is therefore answered, and it r
 prototype:
 
 - For GB, the open UPRN → unit postcode register exists. The shippable artifact is a sealed build of
-  NSUL joined to Open UPRN's coordinates, not a generative reconstruction of it.
+  NSUL joined to Open UPRN's coordinates rather than a generative reconstruction of it.
 - The generative method is graded against NSUL as a measurement of how much of the register
   physical inputs alone recover. That number is what Northern Ireland needs, where neither Open UPRN
   nor NSUL exists, and it is the only place the method's error can be measured.
@@ -53,7 +53,7 @@ prototype:
 Candidate shaping happens between candidate lookup and ordering. The `PlaceLookup` backend
 (`@mailwoman/resolver-wof-sqlite`) returns candidates; `@mailwoman/resolver` decorates the tree and
 then orders through `span-rescore.ts` and `rankByImportance` in `toponym-prior.ts`. The prior's
-runtime surface is a decoration step that runs on the decorated tree BEFORE any ordering, and it
+runtime surface is a decoration step that runs on the decorated tree before any ordering, and it
 touches exactly two things:
 
 1. The candidate SET, by hard exclusion, only where section 5 permits it.
@@ -131,7 +131,7 @@ footprint input's measured contribution.
 
 **Pre-registered rule.** If rule 2 does not lift exact assignment by at least 5 percentage points
 over rule 1 on `PO`, the footprint input is dropped from the design and the artifact is the null model
-with its measured error. If the null model itself is under 80% exact, the assignment does not earn a
+with its measured error. If the null model itself is under 80% exact, the assignment does not warrant a
 runtime surface at any tier and the artifact stays a measurement.
 
 ## 7. Northern Ireland — the hard test
@@ -162,7 +162,7 @@ needs the licensed register.
 | OSM buildings (NI only)       | ODbL-1.0               | attribution, share-alike | `build-local`; the same posture `packages/osm` holds         |
 
 The doctor summarizes each of these from the artifact's own `layer_manifest` once built, so the
-posture is data in the artifact, not prose here.
+posture is data in the artifact rather than prose here.
 
 ## 9. Falsifiers, in order
 

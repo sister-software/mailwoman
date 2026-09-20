@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `capital` table (#1880's distribution home): the capital-status reference carried INSIDE
+ *   The `capital` table (#1880's distribution home): the capital-status reference carried inside
  *   `candidate.db`, so an npm consumer who pulled the artifact can run `capital_tier` without the
  *   repo's `data/gazetteer/capitals-v1.json` — which published packages do not ship. One row per
  *   reference entry (241 national capitals + 3,463 admin-1 seats at the 2026-08-24 build); the
- *   loader reads the WHOLE table once into a `CapitalIndex` at session construction, so there is no
+ *   loader reads the whole table once into a `CapitalIndex` at session construction, so there is no
  *   per-probe query and no index beyond the rowid.
  *
  *   `keys` holds the entry's folded name set as a JSON array — the name-membership conjunct that
@@ -42,7 +42,7 @@ export interface CapitalTable {
 }
 
 /**
- * Create the table on a build in progress. Async because Kysely's schema-builder is; called from the candidate build's
+ * Create the table on a build in progress. Async because Kysely's schema-builder is. called from the candidate build's
  * DDL phase alongside the other typed builders.
  */
 export async function createCapitalTable<DB extends { capital: CapitalTable }>(db: Kysely<DB>): Promise<void> {
@@ -59,7 +59,7 @@ export async function createCapitalTable<DB extends { capital: CapitalTable }>(d
 /**
  * Read the whole reference out of an artifact, or `null` when the artifact predates the table — the caller then falls
  * back to its next source rather than treating an old artifact as "no capitals" (the meaning-of-zero rule: a missing
- * table is UNMEASURED, an empty one is a finding).
+ * table is unmeasured, an empty one is a finding).
  */
 export function readCapitalPoints<DB>(db: DatabaseClient<DB>): CapitalPoint[] | null {
 	if (!hasTable(db, CAPITAL_TABLE)) return null

@@ -8,7 +8,7 @@
  *   carries for 15 of its 22 縣市 answer a rooftop for a `縣市 鄉鎮市區 street number` line that the admin ladder could only
  *   place at the 鄉鎮市區 centroid, or the 縣市's when the district is absent from the gazetteer.
  *
- *   The US is NOT a member: its Overture rows are keyed per state and served by `RegionDatabaseProvider`. The provider
+ *   The US is not a member: its Overture rows are keyed per state and served by `RegionDatabaseProvider`. The provider
  *   has the same `for(country)` shape as the BAN and OSM providers so the geocode session composes it beside them, and it
  *   is a no-op for a country with no registered locale or no database on disk.
  */
@@ -21,7 +21,7 @@ import { join } from "path-ts"
 import type { RegionDatabases } from "#geocode/regions"
 
 /**
- * Country → the street locale its national Overture extract is BUILT and PROBED with. Membership is a per-register
+ * Country → the street locale its national Overture extract is built and probed with. Membership is a per-register
  * decision: a country joins when its parquet has been read (which fields scope a point, how the number is written) and
  * a locale branch keys those surfaces on both sides.
  */
@@ -41,7 +41,7 @@ export function streetLocaleForOvertureCountry(countryCode: string): StreetLocal
 }
 
 /**
- * The SPDX expression a country's national database records in its layer manifest: Overture's theme license AND the
+ * The spdx expression a country's national database records in its layer manifest: Overture's theme license and the
  * source registers' own. The per-agency attribution is computed by the build from the rows it kept and stamped beside
  * it.
  */
@@ -76,7 +76,7 @@ export function nationalAddressPointsPath(dataRoot: string, countryCode: string)
 
 /**
  * Opens and caches the national Overture rooftop lookups by country. `warm` probes the disk once for every registered
- * country so `for` never touches the filesystem; prefer {@link OvertureNationalDatabaseProvider.create}, which warms
+ * country so `for` never touches the filesystem. prefer {@link OvertureNationalDatabaseProvider.create}, which warms
  * before answering.
  */
 export class OvertureNationalDatabaseProvider implements Disposable {

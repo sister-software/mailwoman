@@ -6,7 +6,7 @@
  *   contradiction, one withheld gold. It exists to prove the harness catches the two failures that would
  *   otherwise be invisible in a real run.
  *
- *   A replay miss records `error` rather than an abstention: the fixture refused, not the resolver, and the
+ *   A replay miss records `error` rather than an abstention: the fixture refused rather than the resolver, and the
  *   scorer excludes the row from every metric so the abstention counts stay about the resolver.
  *
  *   An unequal fixture is caught over what the arms read rather than over the file — `assertEqualEvidence`
@@ -130,7 +130,7 @@ describe("same-data synthetic smoke (#2261)", () => {
 
 	it("records a replay miss as an ERROR, never as an abstention", async () => {
 		const panel = panelFor("smoke-miss", [101], true)
-		// Everything the walk asks EXCEPT the locality lookup, so exactly one question goes unanswered.
+		// Everything the walk asks except the locality lookup, so exactly one question goes unanswered.
 		const starved = fixtureFor("smoke-miss", [SPRINGFIELD_IL])
 
 		starved.lookups = starved.lookups.filter((lookup) => lookup.query.placetype !== "locality")

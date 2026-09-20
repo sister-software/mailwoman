@@ -2,7 +2,7 @@
 
 A corpus builder is run by hand, months apart, and nothing in the suite imports it. So a module of
 this shape can break at IMPORT time and the whole suite stays green — which is what happened when
-`build_fragment_slice.py` became `corpora/fragment.py`: it read its country-surface table through
+the fragment builder moved from the package root to `corpora/fragment/`: it read its country-surface table through
 `Path(__file__).parent / "data"`, the move put one more directory between the two, and the failure
 surfaced only when someone ran the builder.
 
@@ -28,7 +28,7 @@ def _module_name(path: Path) -> str:
 
 
 def _invocation_name(path: Path) -> str:
-    """What follows `python -m`. A `__main__.py` is invoked by its PACKAGE name, not its own."""
+    """What follows `python -m`. A `__main__.py` is invoked by its PACKAGE name rather than its own."""
     name = _module_name(path)
     return name.rsplit(".", 1)[0] if name.endswith(".__main__") else name
 
@@ -80,13 +80,13 @@ def test_a_usage_string_names_the_module_it_is_written_in(path: Path) -> None:
     name = _invocation_name(path)
     docstring = ast.get_docstring(ast.parse(path.read_text(encoding="utf-8"))) or ""
     for line in docstring.splitlines():
-        # A line that BEGINS with the command is a usage line. Prose that mentions the command in
+        # A line that begins with the command is a usage line. Prose that mentions the command in
         # passing — `cli.py` describing what `python -m mailwoman_train` dispatches to — is a
         # reference to another module's entry point and correct as written.
         stripped = line.strip().removeprefix("uv run ")
         if not stripped.startswith("python -m mailwoman_train"):
             continue
-        # The WHOLE token after `-m`, not a substring of it: a lost space turns
+        # The whole token after `-m`, not a substring of it: a lost space turns
         # `…corpora.registry tw` into `…corpora.registrytw`, which contains the module name and is
         # not the module name.
         documented = stripped.split()[2]

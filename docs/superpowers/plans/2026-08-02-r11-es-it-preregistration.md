@@ -1,4 +1,4 @@
-# R11 — Spain and Italy, and the alias rule generalized
+# R11 — Spain and Italy, and the alias rule applied across locales
 
 Campaign R11, 2026-08-02. Both were "mechanical" after R9/R10 — and both turned out to need the
 alias mechanism India motivated, in their own languages rather than English.
@@ -9,7 +9,7 @@ alias mechanism India motivated, in their own languages rather than English.
 WOF stores the unaccented form for several Spanish cities, so a bare WOF surface would never match
 a real Spanish address.
 
-**WOF's preferred name is often English.** It stores `Rome` — an Italian address says `Roma`, which
+**WOF's preferred name is frequently English.** It stores `Rome` — an Italian address says `Roma`, which
 WOF carries as the `ita` preferred name. R10's alias rule was scoped to `language = 'eng'`, which
 would have missed every Italian and Spanish form.
 
@@ -30,7 +30,7 @@ moved 175,744 → 176,086 (+342 Latin-script official-language forms).
 ## Codex modules
 
 `codex/es/codigo-postal.ts` and `codex/it/cap.ts`, both five digits. The docstrings carry the part
-worth knowing: a Spanish código postal's first two digits ARE the province (assigned alphabetically,
+worth knowing: a Spanish código postal's first two digits are the province (assigned alphabetically,
 01 Álava … 28 Madrid), so a Spanish region is derivable from the postcode. An Italian CAP is the
 opposite — large cities span ranges (Rome 00118–00199) and provinces share leading digits, so it
 narrows geography without identifying a province, the same trap German Leitzonen set.
@@ -46,7 +46,7 @@ narrows geography without identifying a province, the same trap German Leitzonen
 
 Final: ES 3,559 pairs, IT 4,026.
 
-## Both packages were scaffolded, not copied
+## Both packages were scaffolded rather than copied
 
 `scripts/scaffold-weights-overlay.ts` (shipped hours earlier, after the template-copy bug cost three
 fixes) created both and registered all four automatable points. Neither reproduced the

@@ -8,28 +8,28 @@
  *   matters (France's `geom:` point is in Spain). But the label point carries its own upstream
  *   defects: WOF's `lbl:` for `Washington` (wof:85931779) sits at 38.82652, −77.01712 — the
  *   district's southern tip, 7.8 km from the city — and the shipped preference imported it
- *   faithfully, which is what put four metamorphic BAND rows 8.1 km out.
+ *   faithfully, which is what put four metamorphic band rows 8.1 km out.
  *
- *   Neither point can arbitrate itself, so where the two DISAGREE the record's own GeoNames
+ *   Neither point can arbitrate itself, so where the two disagree the record's own GeoNames
  *   concordance is the independent anchor. Census over the 2026-08-25 artifact's repo-backed
  *   localities above 100,000 population (1,612 records carrying both points): 144 disagree by more
  *   than {@link LABEL_GEOM_DISAGREEMENT_KM}; adjudicated against their `gn:id` anchor, 48 have the
  *   label point closer (the Chinese prefecture-city shape — the label marks the urban seat, the
- *   centroid the vast polygon), 40 have the GEOMETRIC point at least
+ *   centroid the vast polygon), 40 have the geometric point at least
  *   {@link ANCHOR_DECISIVE_RATIO}× closer (Washington, Frankfurt am Main at 10.8 km, Stuttgart at
  *   9.5 km, Oklahoma City at 11.3 km, Chennai at 12.5 km, Yokohama at 14.5 km), 52 separate by less
  *   than the ratio and 4 carry no anchor.
  *
  *   The rule is therefore conservative by construction: the anchor overrides the label preference
- *   ONLY when the two points disagree beyond the threshold AND the anchor separates them at the
+ *   only when the two points disagree beyond the threshold and the anchor separates them at the
  *   decisive ratio. Agreeing points, anchorless records, and unclear separations all keep the
  *   existing label-first behavior byte-identically.
  */
 
+import { readUnquotedTSVText } from "@mailwoman/core/fs/delimited"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { haversineKm } from "@mailwoman/spatial"
 import { join, type PathBuilderLike } from "path-ts"
-import { TSVSpliterator } from "spliterator"
 
 /**
  * A candidate or anchor coordinate pair, WGS-84 decimal degrees.
@@ -58,7 +58,7 @@ export interface AdjudicatedPoint extends PointPair {
 }
 
 /**
- * Resolve a `gn:id` concordance to its GeoNames coordinate, scoped by country. `undefined` is ABSENCE — no anchor for
+ * Resolve a `gn:id` concordance to its GeoNames coordinate, scoped by country. `undefined` is absence — no anchor for
  * this record — and the caller must fall back to the label preference rather than treating it as a zero-distance
  * anchor.
  */
@@ -92,7 +92,7 @@ export function choosePoint(geom: PointPair, lbl: PointPair, anchor: PointPair |
 }
 
 /**
- * GeoNames tab-separated column offsets (the standard country-file dump layout): id first, then name fields; latitude
+ * GeoNames tab-separated column offsets (the standard country-file dump layout): id first, then name fields. latitude
  * and longitude sit at columns 4 and 5.
  */
 const GN_COLUMN_ID = 0
@@ -102,10 +102,10 @@ const GN_COLUMN_LON = 5
 /**
  * Build a lazy per-country anchor lookup over a GeoNames country-file directory (`<dir>/<CC>.txt`).
  *
- * A country file loads on the FIRST anchor request for that country and is cached as an id → point map; a country whose
+ * A country file loads on the first anchor request for that country and is cached as an id → point map. a country whose
  * file is absent caches an empty map, so a data root without GeoNames extracts degrades to "no anchor anywhere" — the
  * label preference, byte-identical to a build without this module. Loading is lazy by design: the consult fires only
- * for the rare wide-disagreement records, so the cost is one asynchronous file read per country that HAS such a
+ * for the rare wide-disagreement records, so the cost is one asynchronous file read per country that has such a
  * record.
  */
 export async function createGeoNamesAnchorLookup(geonamesDir: PathBuilderLike): Promise<GeoNamesAnchorLookup> {
@@ -120,11 +120,11 @@ export async function createGeoNamesAnchorLookup(geonamesDir: PathBuilderLike): 
 			const points = new Map<string, PointPair>()
 			const path = join(geonamesDir, `${country.toUpperCase()}.txt`)
 
-			// Missing country extract → empty map, cached: absence of anchors, never an error. `from` parses CONTENT
+			// Missing country extract → empty map, cached: absence of anchors, never an error. `from` parses content
 			// (a path argument would be parsed as one row of itself), so the file is read once and streamed through the
 			// TSV parser.
 			if (await pathExists(path)) {
-				for (const cols of TSVSpliterator.from(await readLocalTextFile(path), { header: false })) {
+				for (const cols of readUnquotedTSVText(await readLocalTextFile(path))) {
 					const latitude = Number(cols[GN_COLUMN_LAT])
 					const longitude = Number(cols[GN_COLUMN_LON])
 

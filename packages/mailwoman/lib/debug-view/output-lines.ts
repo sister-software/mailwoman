@@ -6,23 +6,23 @@
  *   result panel, section for section: parsed components, the kind verdict, stage timing, the resolved place, the admin
  *   hierarchy, then the runner-up candidates.
  *
- *   FLAT is the design, not a shortcut. The pane scrolls, and a scroll offset over a nested structure has to be
- *   translated into "which section, which row" by whoever draws it AND by whoever clamps the offset; over a flat list
- *   both are `slice`. That is also why this module is pure data rather than elements: `DebugFrame` renders the list and
- *   `DebugSessionApp` clamps its ↑/↓ against the SAME list, so the two can't disagree about how far down it goes.
+ *   A flat list is the design rather than a shortcut. The pane scrolls, and a scroll offset over a nested structure has to be
+ *   translated into "which section, which row" by whoever draws it and by whoever clamps the offset. over a flat list
+ *   both are one `.slice()` call. That is also why this module is pure data rather than elements: `DebugFrame` renders the list and
+ *   `DebugSessionApp` clamps its ↑/↓ against the same list, so the two can't disagree about how far down it goes.
  *
  *   Nothing here computes an address fact. Every value is read off the {@link GeocodeResult}, the {@link AddressTree},
- *   or the session's own clock; a section with no data is OMITTED rather than rendered empty, and a field with no value
- *   renders {@link ABSENT}.
+ *   or the session's own clock. a section with no data is omitted rather than rendered empty, and a field with no value
+ *   renders {@link absent}.
  */
 
-import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 
 import { ABSENT } from "#debug-view/trace-rows"
 import type { GeocodeResult } from "#geocode/result"
 import type { GeocodeTrace } from "#geocode/session"
 
-//#region Contract
+//#region Interface
 
 /**
  * One rendered row of the output pane.
@@ -51,7 +51,7 @@ export interface OutputLine {
 	 */
 	confidence?: number
 	/**
-	 * Rendered as a badge INSTEAD of `value` — reserved for the two verdicts a reader scans for first, the resolution
+	 * Rendered as a badge instead of `value` — reserved for the two verdicts a reader scans for first, the resolution
 	 * tier and the kind. A badge on every row would be a badge on none.
 	 */
 	badge?: string
@@ -85,11 +85,34 @@ function formatMsFixed(ms: number): string {
 }
 
 /**
+ * Whether the per-span script is worth printing: the tree holds more than one writing system.
+ *
+ * On a single-script address the script repeats on every line and says nothing, so the pane stays as it was. On a mixed
+ * one it is the only place the distinction survives — the input folds to whichever script writes most of it, which for
+ * `金龍酒家, 12 Gerrard Street, London WC2H 7JS` is Latin, and the Han venue is the span a reader is looking for.
+ *
+ * `Zyyy` is not a writing system for this purpose. It is what a house number or a postcode answers, so counting it
+ * would make almost every address look mixed.
+ */
+function scriptsWorthShowing(tree: AddressTree): boolean {
+	const scripts = new Set<string>()
+
+	for (const node of walkNodes(tree.roots)) {
+		if (node.script && node.script !== "Zyyy") {
+			scripts.add(node.script)
+		}
+	}
+
+	return scripts.size > 1
+}
+
+/**
  * Depth-first, parents before children, in span order — the order the address reads. Children are indented so a
  * street's prefix/suffix stay visibly subordinate to it rather than looking like siblings of the locality.
  */
 function componentLines(tree: AddressTree): OutputLine[] {
 	const lines: OutputLine[] = []
+	const showScript = scriptsWorthShowing(tree)
 
 	const visit = (node: AddressNode, depth: number): void => {
 		lines.push({
@@ -98,6 +121,7 @@ function componentLines(tree: AddressTree): OutputLine[] {
 			tag: node.tag,
 			value: node.value,
 			confidence: node.confidence,
+			...(showScript && node.script ? { detail: node.script } : {}),
 		})
 
 		for (const child of node.children) {
@@ -167,7 +191,7 @@ export function outputLines(input: OutputLinesInput): OutputLine[] {
 		}
 	}
 
-	// Advisories, never a second opinion about the answer (ROAD_TO_V9 §4) — carried on the RESULT, so they
+	// Advisories, never a second opinion about the answer (ROAD_TO_V9 §4) — carried on the result, so they
 	// survive even when the register was pinned and there is no kind verdict above them.
 	for (const marker of result.intent_markers ?? []) {
 		lines.push({ kind: "field", label: `  ${marker.code}`, value: marker.mechanism, detail: marker.message })
@@ -187,7 +211,7 @@ export function outputLines(input: OutputLinesInput): OutputLine[] {
 		kind: "field",
 		label: "  tier",
 		badge: result.resolution_tier,
-		// An admin centroid is the fallback answer, not the house-grade one the other tiers promise.
+		// An admin centroid is the fallback answer rather than the house-grade one the other tiers promise.
 		badgeColor: result.resolution_tier === "admin" ? "yellow" : "green",
 	})
 
@@ -199,9 +223,9 @@ export function outputLines(input: OutputLinesInput): OutputLine[] {
 		value: result.uncertainty_m == null ? "unknown" : `${result.uncertainty_m} m`,
 	})
 
-	// The resolved place is the DEEPEST decorated node — `hierarchy` is ordered most-specific-first, so its head is
+	// The resolved place is the deepest decorated node — `hierarchy` is ordered most-specific-first, so its head is
 	// the finest place the gazetteer actually confirmed. Deliberately not `candidates[0]`: that is the resolver's
-	// PRIMARY node for the candidate ranking, and on a rooftop tier (where the coordinate came from a database, not a
+	// primary node for the candidate ranking, and on a rooftop tier (where the coordinate came from a database rather than a
 	// place row) it falls back to the first resolved admin node — the region, which is not what a reader means by
 	// "resolved place". The candidate head still shows up below when it differs.
 	const place = result.hierarchy.at(0)
@@ -213,7 +237,7 @@ export function outputLines(input: OutputLinesInput): OutputLine[] {
 		tag: place?.tag ?? winner?.tag,
 		value: place?.name || place?.value || winner?.name || ABSENT,
 		detail: [place?.placeID ?? winner?.placeID, result.countryCode]
-			.filter((part) => part != null && part.length > 0)
+			.filter((part) => part != null && part.length)
 			.join(" "),
 	})
 
@@ -240,7 +264,7 @@ export function outputLines(input: OutputLinesInput): OutputLine[] {
 					entry.placeID,
 					entry.lat != null && entry.lon != null ? `(${formatCoordinate(entry.lat, entry.lon)})` : null,
 				]
-					.filter((part) => part != null && part.length > 0)
+					.filter((part) => part != null && part.length)
 					.join(" "),
 			})
 		}
@@ -258,7 +282,7 @@ export function outputLines(input: OutputLinesInput): OutputLine[] {
 				tag: candidate.tag,
 				value: candidate.name,
 				detail: [candidate.countryCode, formatCoordinate(candidate.lat, candidate.lon)]
-					.filter((part) => part != null && part.length > 0)
+					.filter((part) => part != null && part.length)
 					.join(" "),
 			})
 		}

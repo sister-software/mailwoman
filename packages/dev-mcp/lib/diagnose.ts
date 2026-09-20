@@ -2,19 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Mechanism accounts (#1722) — per row, what the pipeline DID, assembled from the facts it already exposes.
+ *   Mechanism accounts (#1722) — per row, what the pipeline did, assembled from the facts it already exposes.
  *
  *   Two commitments from the epic bind every line here.
  *
- *   1. **Expectations pin OUTCOMES, never mechanisms.** Nothing in an account is asserted by a board row, and nothing
+ *   1. **Expectations pin outcomes, never mechanisms.** Nothing in an account is asserted by a board row, and nothing
  *      here is cached. Every account is recomputed from the current system on every call, so an explanation is free to
  *      dissolve the moment the system stops working that way. (The anti-Pelias rule: no mechanistic belief accumulates
  *      that a truer understanding of addresses could break against.)
- *   2. **Failure shapes are MECHANISM-STATES, never address shapes.** Every predicate below reads pipeline facts —
- *      channels, constraints, ranks, lineage — and none reads what KIND of address the row is. A shape makes a claim about
- *      what the system did on this input; it cannot fossilize a wrong belief about how addresses work.
+ *   2. **Failure shapes are mechanism-states, never address shapes.** Every predicate below reads pipeline facts —
+ *      channels, constraints, ranks, lineage — and none reads what kind of address the row is. A shape makes a claim about
+ *      what the system did on this input. it cannot fossilize a wrong belief about how addresses work.
  *
- *   Classification is v1: transparent predicates over recorded pipeline facts, with NO calibration. Every result says so in its
+ *   Classification is v1: transparent predicates over recorded pipeline facts, with no calibration. Every result says so in its
  *   own `calibration` field. A row that matches no shape and still fails its expectation is reported `unclassified`
  *   rather than squeezed into the nearest match, because a label applied to it now is the thing a calibrated v2 would
  *   have to un-learn.
@@ -22,33 +22,33 @@
  *   What v2 is, stated precisely (the loose earlier wording — "shapes get a calibrated posterior, novelty mints a
  *   class" — was wrong twice over, and the correction is worth carrying here rather than rediscovering):
  *
- *   1. **Class-conditional (Mondrian) SPLIT CONFORMAL** over held-out diagnosed rows, calibrated per shape, so a
- *      minority shape is not judged by a threshold a majority shape set. It yields PREDICTION SETS and p-values with
- *      an empirical coverage guarantee — NOT a posterior. A p of 0.82 is not "82% likely to be this shape", and any
+ *   1. **Class-conditional (Mondrian) split conformal** over held-out diagnosed rows, calibrated per shape, so a
+ *      minority shape is not judged by a threshold a majority shape set. It yields prediction sets and p-values with
+ *      an empirical coverage guarantee — not a posterior. A p of 0.82 is not "82% likely to be this shape", and any
  *      surface that reads it that way is lying about what conformal gives.
- *   2. **A separate conformal novelty detector** whose job is to ABSTAIN when no known shape fits.
+ *   2. **A separate conformal novelty detector** whose job is to abstain when no known shape fits.
  *   3. **Minting a new shape is a downstream clustering-and-review step**, not an operation conformal performs.
- *      Standard Mondrian CP assumes the taxonomy already exists; open-set conformal can flag that an observation
- *      belongs to no known class, and what to do about that is our architecture, not the method's.
+ *      Standard Mondrian CP assumes the taxonomy already exists. open-set conformal can flag that an observation
+ *      belongs to no known class, and what to do about that is our architecture rather than the method's.
  *
  *   Two measured obstacles stand between v1 and that v2, both visible in this tool's own census and neither solved by
  *   more code:
  *
  *   - **Resolution is bounded by class size.** A conformal p-value moves in steps of 1/(n+1), so a class needs
  *     n >= 1/alpha - 1 calibration rows before a threshold at error rate alpha exists at all (19 rows for alpha=0.05).
- *     On the 2026-08-19 board slice the shapes ran evidence_starved 113, retrieval_empty 95, scope_miss_readmission
+ *     On the 2026-08-19 board subset the shapes ran evidence_starved 113, retrieval_empty 95, scope_miss_readmission
  *     75, wrong_instance_detected 38, rank_flip 10, parse_shape_contradiction 3, mis_tag_in_vocabulary 1. The first
- *     four could carry calibration; the last three cannot, and splitting them into train/calibration halves makes it
+ *     four could carry calibration. the last three cannot, and splitting them into train/calibration halves makes it
  *     worse.
- *   - **These shapes are MULTI-LABEL and Mondrian partitions.** `by_shape` counts overlap by construction and the
+ *   - **These shapes are multi-label and Mondrian partitions.** `by_shape` counts overlap by construction and the
  *     result says never to sum them, so "the class" a row calibrates under has to be defined first — earliest pipeline stage,
- *     full label set, or something else — and that choice is a modelling decision, not a detail.
+ *     full label set, or something else — and that choice is a modelling decision rather than a detail.
  *
  *   Exchangeability is the third question and the least comfortable one: calibration rows drawn from the tracked board
  *   are actively drained by the fixes this tool motivates (five promoted in one night), so yesterday's diagnosed
  *   population is not exchangeable with tomorrow's failures.
  *
- *   Aggregation is BY SHAPE with each class's n, never by raw row count: the n=64 city-only aggregate at p=0.084 that
+ *   Aggregation is BY shape with each class's n, never by raw row count: the n=64 city-only aggregate at p=0.084 that
  *   motivated this issue concealed a six-row single-mechanism finding, and a rate over a mixture is a number about the
  *   mixture.
  */
@@ -83,8 +83,8 @@ export { expectationCase, type ExpectationReading } from "#diagnose/expectation"
 const KNOWN_FORMAT_CONFIDENCE_FLOOR = 0.9
 
 /**
- * Row ids listed per shape before the list is capped. The `n` beside it is always the real count; this bounds the
- * PAYLOAD, never the measurement.
+ * Row ids listed per shape before the list is capped. The `n` beside it is always the real count. this bounds the
+ * payload, never the measurement.
  */
 const SHAPE_ID_CAP = 20
 
@@ -93,12 +93,12 @@ const SHAPE_ID_CAP = 20
  *
  * A flip is one geocode per row per setting and the setting space is five wide, so a full board would be thousands of
  * extra resolves plus an engine build per distinct patch. Every result that applies the narrowing says so, and says
- * that a clean row's settings are then UNMEASURED rather than measured and found inert.
+ * that a clean row's settings are then unmeasured rather than measured and found inert.
  */
 export const COUNTERFACTUAL_FULL_RUN_MAX_ROWS = 20
 
 /**
- * The v1 shape vocabulary, in PIPELINE EXECUTION ORDER — parse, evidence, retrieval, ranking, outcome.
+ * The v1 shape vocabulary, in pipeline execution order — parse, evidence, retrieval, ranking, outcome.
  *
  * A row can match several, and the order is what makes a multi-match readable: the earliest pipeline stage comes first,
  * so `[retrieval_empty, wrong_instance_detected]` reads as one story rather than two verdicts. The two terminal states
@@ -178,7 +178,7 @@ const COMPONENT_FOR_KNOWN_FORMAT = {
 } as const satisfies Record<KnownFormat, string>
 
 /**
- * The slice of a {@link GeocodeRun} an account reads, declared structurally.
+ * The subset of a {@link GeocodeRun}'s fields an account reads, declared structurally.
  *
  * A `GeocodeRun` satisfies this by shape, so `runDiagnose` passes one straight through — and the assembly stays
  * testable without constructing a whole `GeocodeResult`, which is twenty-five fields of which six matter here.
@@ -251,7 +251,7 @@ export interface ParseFacts {
 }
 
 /**
- * One backend lookup, reduced to the facts a shape reads. The candidate table itself is deliberately NOT carried —
+ * One backend lookup, reduced to the facts a shape reads. The candidate table itself is deliberately not carried —
  * `mwdev_trace` renders it, and an account that dumped it would be a trace with extra steps.
  */
 interface LookupFact {
@@ -264,7 +264,7 @@ interface LookupFact {
 	checks: string[]
 	picked: { name: string; source: string } | null
 	/**
-	 * The picked candidate's rank in the FIRST recorded stage (the backend's own order), or `null` when nothing was
+	 * The picked candidate's rank in the first recorded stage (the backend's own order), or `null` when nothing was
 	 * picked or the pick came from a path that never ranked.
 	 */
 	picked_initial_rank: number | null
@@ -276,14 +276,14 @@ interface LookupFact {
 
 export interface RetrievalFacts {
 	/**
-	 * `null` when the trace carries no resolver records at all (a trace predating them). An EMPTY array is the walk
+	 * `null` when the trace carries no resolver records at all (a trace predating them). An empty array is the walk
 	 * stating it performed no lookups — a different claim, and one the shapes must not read as retrieval failure.
 	 *
-	 * COVERAGE BOUND, and it is required for every retrieval shape below: the trace records the WALK's own
+	 * Coverage bound, and it is required for every retrieval shape below: the trace records the walk's own
 	 * `#lookupAndPick` and nothing else. The resolver's post-walk recovery passes — span-rescore (a famous name the model
 	 * tagged `street`, which the walk never queries because `street` is not in the placetype map) and the
 	 * postcode-compound recovery — query the backend directly and emit no record. So a row can carry a resolved
-	 * coordinate beside an EMPTY lookup list; {@link RowAccount.resolved_without_recorded_lookup} states exactly that
+	 * coordinate beside an empty lookup list; {@link RowAccount.resolved_without_recorded_lookup} states exactly that
 	 * case rather than leaving the reader to read the empty list as "no retrieval happened".
 	 */
 	lookups: LookupFact[] | null
@@ -321,7 +321,7 @@ export interface RowAccount {
 	outcome: OutcomeFacts
 	expectation: ExpectationReading
 	/**
-	 * A coordinate arrived and the resolver trace recorded NO lookup — the account's retrieval facts are blind for this
+	 * A coordinate arrived and the resolver trace recorded no lookup — the account's retrieval facts are blind for this
 	 * row. See {@link RetrievalFacts.lookups} for which passes are outside the trace's coverage. Reported so the empty
 	 * lookup list is not read as "retrieval had nothing to do": the retrieval shapes cannot fire here, and their silence
 	 * is a coverage bound rather than a finding.
@@ -351,7 +351,7 @@ function decodeReading(parse: NeuralParseTrace): DecodeReading {
 /**
  * Fold a detector span and a component value to the same comparable form.
  *
- * Known-format spans are offsets into the NORMALIZED input while component values are sliced from the RAW one, so the
+ * Known-format spans are offsets into the normalized input while component values are taken from the RAW one, so the
  * two frames cannot be compared by offset. Folding away case and every non-alphanumeric character compares what both
  * frames do agree on — the characters — which is what the contradiction is about.
  */
@@ -403,7 +403,7 @@ export function collectRetrievalFacts(records: ReadonlyArray<ResolveNodeTrace> |
 	const lookups = records.map((record): LookupFact => {
 		const picked = record.picked
 		const pickedRow = picked ? record.candidates.find((candidate) => candidate.id === picked.id) : undefined
-		// The rank vector's key order IS the resolver's stage execution order — the recorder writes one entry per stage
+		// The rank vector's key order is the resolver's stage execution order — the recorder writes one entry per stage
 		// as it runs — so the first key is the backend's own order and the last is the order the pick came from.
 		const stages = pickedRow ? Object.keys(pickedRow.ranks) : []
 		const firstStage = stages[0]
@@ -473,8 +473,8 @@ export function collectOutcomeFacts(result: AccountInput["result"]): OutcomeFact
 /**
  * Match the mechanism-state predicates.
  *
- * The terminal states are NOT decided here: `clean` vs `unclassified` needs the row's expectation, and keeping that out
- * of this function is what stops an expectation from ever influencing a MECHANISM claim (commitment 1).
+ * The terminal states are not decided here: `clean` vs `unclassified` needs the row's expectation, and keeping that out
+ * of this function is what stops an expectation from ever influencing a mechanism claim (commitment 1).
  */
 export function matchShapes(facts: {
 	parse: ParseFacts | null
@@ -497,7 +497,7 @@ export function matchShapes(facts: {
 		shapes.push("evidence_starved")
 	}
 
-	// A span is only empty AT THE DECIDING SITE when nothing resolved it: a `postcode_format_probe` and an
+	// A span is only empty AT the deciding site when nothing resolved it: a `postcode_format_probe` and an
 	// `empty_admin_pick` both answer off an empty candidate table, and reading those as retrieval failure would report
 	// a working fallback as a defect.
 	const emptyDeciding = lookups.some(
@@ -511,10 +511,10 @@ export function matchShapes(facts: {
 		shapes.push("retrieval_empty")
 	}
 
-	// The rule fires only when the scoped probe missed across the whole cascade AND the unscoped fallback produced
+	// The rule fires only when the scoped probe missed across the whole cascade and the unscoped fallback produced
 	// rows — so every candidate in that lookup is a re-admitted one, and a pick under the eval is a re-admitted pick.
 	// The per-candidate `regionScopeMiss` stamp does not reach `ResolveCandidateTrace`, so lookup granularity is all
-	// the trace can support; it suffices here because the rule's own condition covers the whole row set.
+	// the trace can support. it suffices here because the rule's own condition covers the whole row set.
 	if (lookups.some((lookup) => lookup.checks.includes("region_scope_miss") && lookup.picked)) {
 		shapes.push("scope_miss_readmission")
 	}
@@ -543,7 +543,7 @@ function channelMark(reading: ChannelReading): string {
 }
 
 /**
- * One line per row — the tool-kit renderer pattern. The structured account is what a diff reads; this is what a human
+ * One line per row — the tool-kit renderer pattern. The structured account is what a diff reads. this is what a human
  * reads in a transcript without an agent paraphrasing it, which is where detail goes missing.
  */
 export function renderAccount(account: Omit<RowAccount, "rendered">): string {
@@ -629,7 +629,7 @@ export interface ShapeAggregate {
 /**
  * Per-shape counts and the rows in each class.
  *
- * Ordered by {@link DIAGNOSE_SHAPES} so two runs are diffable, and a shape no row matched is OMITTED rather than
+ * Ordered by {@link DIAGNOSE_SHAPES} so two runs are diffable, and a shape no row matched is omitted rather than
  * reported as zero — a class with no members is not a class anyone can describe, and a table of zeros reads as a
  * measurement of them.
  */
@@ -702,8 +702,8 @@ export function aggregateCounterfactuals(
 /**
  * The in-vocabulary mis-tag refinement of `unclassified` (#1722 v2 — the `bd-op2-london-college` class, where `Dhaka
  * 1205` decoded as street + house_number and the expected locality/postcode never existed): an expected component tag
- * the parse never produced, whose expected VALUE occurs verbatim in the input. A tag that exists with a WRONG value is
- * a different fact and stays out — that failure has a component to interrogate; this one does not.
+ * the parse never produced, whose expected value occurs verbatim in the input. A tag that exists with a wrong value is
+ * a different fact and stays out — that failure has a component to interrogate. this one does not.
  */
 function misTaggedInVocabulary(
 	item: ResolvedInput,
@@ -824,7 +824,7 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 
 	const rows: RowAccount[] = accounts.map((account) => ({ ...account, rendered: renderAccount(account) }))
 
-	// Stable partition, non-clean first — only the EMITTED order; every aggregate reads `rows` whole.
+	// Stable partition, non-clean first — only the emitted order. every aggregate reads `rows` whole.
 	const emittedRows = [
 		...rows.filter((row) => !row.shapes.includes("clean")),
 		...rows.filter((row) => row.shapes.includes("clean")),
@@ -881,7 +881,7 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 				: "",
 			counterfactualSentence,
 		]
-			.filter((sentence) => sentence.length > 0)
+			.filter((sentence) => sentence.length)
 			.join(" "),
 		n_requested: selected.length,
 		n_evaluated: rows.length,
@@ -897,8 +897,8 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 		counterfactuals_narrowed: narrowed,
 		counterfactual_errors: counterfactualErrors,
 		elapsed_ms: Date.now() - startedAt,
-		// Under a cap the emitted slice leads with non-clean rows — the ones every aggregate above points
-		// at — and says what it left out. The aggregates are computed over EVERY row regardless.
+		// Under a cap the emitted rows lead with the non-clean ones — the ones every aggregate above points
+		// at — and says what it left out. The aggregates are computed over every row regardless.
 		rows: rowsCap === undefined ? emittedRows : emittedRows.slice(0, rowsCap),
 		rows_omitted: rowsCap === undefined ? 0 : Math.max(0, emittedRows.length - rowsCap),
 	}

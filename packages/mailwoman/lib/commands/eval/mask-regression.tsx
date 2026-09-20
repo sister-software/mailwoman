@@ -4,17 +4,17 @@
 /**
  *   `mailwoman eval mask-regression` — the per-release mask-regression check (#718), the "second
  *   lock" beside `createScorer`'s load-time capability delta check: re-runs the ship artifact
- *   mask-off vs mask-on and FAILS (exit 1) if ANY tag's unfolded F1 drops more than the threshold
+ *   mask-off vs mask-on and fails (exit 1) if any tag's unfolded F1 drops more than the threshold
  *   (default 2pp) under the conventions mask. Weight-dependent — a release eval, never a CI step
  *   (#582). `eval promote` runs it automatically when the spec declares `requires_conventions`.
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "Mask-regression check (#718) — mask-off vs mask-on per-tag F1, 2pp lock"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "mask-regression",
@@ -36,30 +36,15 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	model?: string
-	tokenizer?: string
-	modelCard?: string
-	anchorLookup?: string
-	gazetteerLexicon?: string
-	threshold?: number
-	json?: string
-}
+// The check narrates its own ✓ pass / ✗ fail lines on stderr, so no `json`.
+const EvalMaskRegression = harnessCommand(
+	spec,
+	async (options) => {
+		const { maskRegressionCheck } = await import("#eval-harness/mask-regression")
 
-const EvalMaskRegression: ParsedCommandComponent<Options> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { maskRegressionCheck } = await import("#eval-harness/mask-regression")
-
-			return (await maskRegressionCheck(options)).pass
-		},
-		(pass) => (pass ? 0 : 1)
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	// The check narrates its own ✓ PASS / ✗ FAIL lines on stderr.
-	return null
-}
+		return (await maskRegressionCheck(options)).pass
+	},
+	{ exitCode: (pass) => (pass ? 0 : 1) }
+)
 
 export default EvalMaskRegression

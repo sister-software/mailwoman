@@ -53,7 +53,7 @@ export interface BuildStreetMorphologyFSTOpts {
 	 * Minimum length (in characters, post-normalization) of variant surface forms to insert into the trie. Defaults to 3.
 	 *
 	 * Rationale: libpostal's street_types dictionaries contain 1-2 character abbreviations (`a`, `b`, `av`, `bd`, `br`,
-	 * ...) that collide with non-affix tokens at parse time — notably US state abbreviations (`OR`, `CA`, `ND`, `NY`),
+	 * ...) that collide with non-affix tokens at parse time — notably US state abbreviations (`or`, `CA`, `ND`, `NY`),
 	 * single-letter unit designators, and arbitrary short tokens. Empirically these collisions push the morphology prior
 	 * to mis-tag state abbreviations as `street_suffix`. A minimum length of 3 retains useful forms (`ave`, `blvd`,
 	 * `rue`, `str`) while filtering out the noise.
@@ -88,7 +88,7 @@ function parseLine(line: string): { canonical: string; variants: string[] } | nu
 	const parts = trimmed
 		.split("|")
 		.map((s) => s.trim())
-		.filter((s) => s.length > 0)
+		.filter((s) => s.length)
 
 	if (!parts.length) return null
 
@@ -212,9 +212,9 @@ export async function buildStreetMorphologyFST(
 			name: canonical,
 			parentChain: [],
 			// Fixed referential score: street affixes are structurally unambiguous (Avenue is almost
-			// never anything but street-typing). The morphology prior caps bias separately; this value
+			// never anything but street-typing). The morphology prior caps bias separately. this value
 			// just feeds the cap formula `referential * cap`. No encyclopedic field — a street affix is
-			// not a place and has no article; absence here is the correct statement.
+			// not a place and has no article. absence here is the correct statement.
 			referential: 1,
 			lat: 0,
 			lon: 0,

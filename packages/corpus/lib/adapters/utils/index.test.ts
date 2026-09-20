@@ -8,7 +8,7 @@ import {
 	stableSourceID,
 	streamingSha256,
 } from "@mailwoman/corpus/adapters/utils"
-import type { CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
+import { AddressRole, type CanonicalRow, type CorpusAdapter } from "@mailwoman/corpus/types"
 import { describe, expect, it } from "vitest"
 
 function fixtureRow(overrides: Partial<CanonicalRow> = {}): CanonicalRow {
@@ -28,6 +28,7 @@ function fixtureAdapter(id: string): CorpusAdapter {
 	return {
 		id,
 		defaultLicense: "CC0-1.0",
+		addressRole: AddressRole.Premise,
 		description: `fixture adapter ${id}`,
 		async *rows() {
 			yield fixtureRow({ source: id, source_id: `${id}-1` })

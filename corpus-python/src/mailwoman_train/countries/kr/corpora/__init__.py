@@ -19,14 +19,14 @@ with their representative lot, postcode and building name (`juso.py`) — in sev
 **The registry corpus** (``--registry-out-dir``, source ``localdata-kr``) is the NOISY half: every open business in
 the permit registry (`registers.py`), each row carrying both address forms as a clerk typed them, aligned against
 the LABEL register's own key sets and kept only when the whole key matches. The alignment rate is measured per form
-and per category and written to the build report BEFORE the rows are selected. A permit string that does not align
+and per category and written to the build report before the rows are selected. A permit string that does not align
 is a board row (``kr-registry-board.jsonl``), never a training row.
 
 The board is the held-out set of 시군구 (the same stable hash rule as the JP and TW boards, one in ten). The register
 carries no coordinate, so the board's coordinate half is the permit registry's: every permit row's EPSG:5174 point is
 projected through GDAL and averaged per 시군구, and the LABEL board row carries its 시군구's centroid, which is what
 the JP scorer compares a resolved (region, subregion) pair against. Permit rows in a held-out 시군구 go to the
-registry board, so a typed address in a held-out district is read, not trained.
+registry board, so a typed address in a held-out district is read rather than trained.
 
 The modules:
 

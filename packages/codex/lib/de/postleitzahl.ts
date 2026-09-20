@@ -9,7 +9,7 @@
  *   digit maps cleanly to a band of states (`StateAbbreviationZipCodePrefixRecord`). A German PLZ's
  *   first digit maps to a **Leitzone** — a postal routing region that deliberately **crosses
  *   Bundesland borders** (Leitzone 6 covers Frankfurt in Hessen, Saarbrücken in Saarland, and Mainz
- *   in Rheinland-Pfalz). So the PLZ prior narrows geography, but it does NOT narrow the state the
+ *   in Rheinland-Pfalz). So the PLZ prior narrows geography, but it does not narrow the state the
  *   way a US ZIP does — a lesson for any code that tries to derive a German region from a postcode
  *   alone.
  */
@@ -18,7 +18,7 @@ import type { Tagged } from "type-fest"
 
 /**
  * A German postcode: five digits since the 1993 reform (`12623`). A bare 5-digit string, same shape as a US ZIP or a
- * French code postal — disambiguation is the parser's job, not the shape's.
+ * French code postal — disambiguation is the parser's job rather than the shape's.
  *
  * @category Postal
  * @type string
@@ -65,7 +65,7 @@ export interface LeitzoneInfo {
 	 */
 	region: string
 	/**
-	 * Well-known anchor cities in the zone (illustrative, not exhaustive).
+	 * Well-known anchor cities in the zone (illustrative rather than exhaustive).
 	 */
 	cities: readonly string[]
 }

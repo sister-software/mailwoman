@@ -4,7 +4,7 @@
 /**
  *   Grading a comparison, and refusing to grade one that cannot be graded.
  *
- *   This module owns NO metric. `checkCase` is the grader — the same one the regression board runs — and the
+ *   This module owns no metric. `checkCase` is the grader — the same one the regression board runs — and the
  *   projection from a geocode into the shape it asserts on is `toGauntletResult`, imported rather than re-written.
  *   What lives here is the part `checkCase` has no opinion about: whether truth exists for a set at all, what a
  *   two-arm delta means, and how large an effect this many rows could have missed.
@@ -30,7 +30,7 @@ const Z_CRITICAL_95 = 1.96
 /**
  * Project a committed seed row into the table shape {@link checkCase} reads.
  *
- * Written with NAMED fields on purpose. `build-regression-db.ts` inserts the same mapping positionally for bulk-load
+ * Written with named fields on purpose. `build-regression-db.ts` inserts the same mapping positionally for bulk-load
  * speed, so it cannot be shared as-is — but naming every field here means a column added to {@link GauntletCaseTable} is
  * a compile error against this function rather than a silently-null column at grade time.
  */
@@ -81,7 +81,7 @@ export type RowGrade = "improved" | "regressed" | "neutral" | "ungradeable"
 /**
  * Grade one row's two arms against its expectations.
  *
- * `checkCase` returns the list of issues, so fewer issues is better. Comparing COUNTS rather than the issue text is
+ * `checkCase` returns the list of issues, so fewer issues is better. Comparing counts rather than the issue text is
  * deliberate: an arm that trades one wrong component for a different wrong component has not improved, and a text diff
  * would report a change where the grade is unmoved.
  */
@@ -116,7 +116,7 @@ export interface SignificanceReading {
 	p: number | null
 	verdict: "a_better" | "b_better" | "indistinguishable" | "untestable"
 	/**
-	 * The smallest true difference this many rows could have detected, in PERCENTAGE POINTS.
+	 * The smallest true difference this many rows could have detected, in percentage points.
 	 *
 	 * Always reported, including — especially — when the verdict is `indistinguishable`, because that verdict without an
 	 * MDE is indistinguishable from "no effect", and those are different claims.
@@ -130,7 +130,7 @@ export interface SignificanceReading {
  * magnitude tighter than any decision taken on it here.
  *
  * Exported for `geo-grade.ts`'s equivalence test rather than copied into it: two tests that must agree about what a
- * p-value means should be reading the same function, not two transcriptions of the same polynomial.
+ * p-value means should be reading the same function rather than two transcriptions of the same polynomial.
  */
 export function normalCDF(z: number): number {
 	const sign = z < 0 ? -1 : 1

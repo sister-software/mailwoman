@@ -9,7 +9,7 @@
  *   future rule wrapper) satisfy the same `ProposalClassifier` shape, so this pair is engine-neutral.
  *
  *   Rehomed here from the (deleted) `core/parser/proposal-pipeline.ts` during the v7 rules-parser
- *   excision — the parser-era `TokenContext` writeback half went with the solver; these two generic
+ *   excision — the parser-era `TokenContext` writeback half went with the solver. these two generic
  *   helpers survive because the neural `--policy` CLI path still uses them.
  *
  *   Pure module: no resource imports, no top-level await. Safe to import from anywhere.
@@ -23,7 +23,7 @@ import type { ClassificationProposal, ClassifierContext, ProposalClassifier } fr
  * Run every classifier against every section, concatenate the results.
  *
  * Classifiers that throw are isolated — their failure logs but does not block other classifiers' proposals from being
- * collected. (Per the `ProposalClassifier` contract, implementations are supposed to swallow errors, but
+ * collected. (Per the `ProposalClassifier` interface, implementations are supposed to swallow errors, but
  * defense-in-depth lives here.)
  */
 export async function collectProposals(
@@ -51,7 +51,7 @@ export async function collectProposals(
 }
 
 /**
- * Optional policy filter. An explicit `policy` registry is authoritative; without one the input is returned unchanged.
+ * Optional policy filter. An explicit `policy` registry is authoritative. without one the input is returned unchanged.
  */
 export function filterByPolicy(
 	proposals: readonly ClassificationProposal[],

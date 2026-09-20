@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman registry convert tx-hhsc` — convert the TX HHSC nursing-facilities TSV (which ships
- *   an authoritative `Geo Location` per facility) into the OaRow JSONL the resolver eval consumes
+ *   `mailwoman registry convert tx-hhsc` — convert the TX hhsc nursing-facilities TSV (which ships
+ *   an authoritative `Geo Location` per facility) into the OaRow jsonl the resolver eval consumes
  *   (#619), so the geocoder can be graded against provided coordinates via
  *   `oa-resolver-eval --address-points`.
  */
@@ -11,10 +11,10 @@
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "tx-hhsc",
@@ -28,12 +28,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	src?: string
-	out: string
-}
-
-const RegistryConvertTXHHSC: ParsedCommandComponent<Options> = ({ options }) => {
+const RegistryConvertTXHHSC: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { convertTXHHSC } = await import("@mailwoman/registry/tools")
 

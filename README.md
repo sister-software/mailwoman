@@ -103,13 +103,13 @@ use today — no PostgreSQL, no Elasticsearch, no `osm2pgsql` import:
 | [`@mailwoman/libpostal`](./packages/libpostal) | libpostal — `/parse`, `/expand` (no gazetteer needed) | `npx @mailwoman/libpostal serve` |
 
 Point geopy's `Nominatim(domain="localhost:8080")` at the first one and forward + reverse
-geocoding keep working. Every result carries an OpenCage-style `annotations` block —
+geocoding keep working. The API returns an OpenCage-style `annotations` block —
 IANA timezone, UN/LOCODE, EU NUTS codes, coordinate formats, sun times, currency —
 composed by [`@mailwoman/annotations`](./annotations).
 
 ## How it compares
 
-This table compares what each system needs to run, not how well it performs. Mailwoman
+This table compares what each system needs to run rather than how well it performs. Mailwoman
 began as a fork of Pelias Parser and ships wire-compatible drop-ins for the other three.
 
 |                               | Mailwoman                       | libpostal          | Nominatim                  | Photon                         |
@@ -124,7 +124,7 @@ began as a fork of Pelias Parser and ships wire-compatible drop-ins for the othe
 ## Drop-in servers
 
 Migrating off Nominatim, Photon, or libpostal? Each has a compatible server — same wire
-contract, from a SQLite file instead of a cluster. A hosted Photon-compatible endpoint is
+interface, from a SQLite file instead of a cluster. A hosted Photon-compatible endpoint is
 live for evaluation:
 
 ```bash
@@ -149,7 +149,7 @@ The problem splits in two:
 
 Knowledge reaches the model at inference as _soft input features_ (anchors) — it informs,
 never overrides. If you know RAG from the LLM world, this is RAG for token classification.
-The confidence numbers the parser returns are calibrated probabilities, not heuristic
+The confidence numbers the parser returns are calibrated probabilities rather than heuristic
 scores: when it says `0.88`, it is right about 88% of the time.
 
 For the longer version, read [What Mailwoman
@@ -207,7 +207,7 @@ mailwoman poi "gas station near Springfield, IL" --db poi.db
 
 Mailwoman is dual-licensed:
 
-- **[AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html)** for open-source use. You
+- **[AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html)** for open-source use. You
   may use, modify, and redistribute the software, but you must share your modifications and,
   for network services, your source.
 - **A commercial license** for closed-source/commercial use without the AGPL's source-sharing

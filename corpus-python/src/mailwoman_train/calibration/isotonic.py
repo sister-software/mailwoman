@@ -239,7 +239,7 @@ def fit_and_measure(records: list[dict[str, Any]], *, bins: int, ece_bins: int, 
     ece_raw, mce_raw, rel_raw = ece(ev_conf, ev_correct, ece_bins)
     ece_cal, mce_cal, rel_cal = ece(ev_cal, ev_correct, ece_bins)
 
-    # The OA half is genuinely held-out real addresses; the corpus half is in-domain, so its
+    # The OA half is genuinely held-out real addresses. the corpus half is in-domain, so its
     # confidence runs optimistically high. Reported apart because averaging them hides that.
     oa = ev_src == "oa"
     ece_raw_oa, _, _ = ece(ev_conf[oa], ev_correct[oa], ece_bins)

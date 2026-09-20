@@ -1,7 +1,7 @@
 # Wrap handoff — close out the FST / comma-free / #1143 arc (2026-07-26)
 
 **For:** DeepSeek (fresh context, executing lead) · **From:** the coordinating lead (Claude) · **Repo:** mailwoman @ `main`
-(`426379e4` or later). **The arc is ~90% done and merged** — this doc is the remaining wrap-up, not a
+(`426379e4` or later). **The arc is ~90% done and merged** — this doc is the remaining wrap-up rather than a
 build brief. Read the prior session's own report first:
 `docs/superpowers/plans/2026-07-25-SESSION-REPORT-fst-arcs.md` (your predecessor's verdicts, verified
 accurate against main + the ledger). The full dated record is `.superpowers/sdd/progress.md`
@@ -11,7 +11,7 @@ accurate against main + the ledger). The full dated record is `.superpowers/sdd/
 > **Spec-clarity review (DeepSeek pro, 2026-07-26).** This work order was adversarially reviewed by a
 > repo-blind model as a spec-clarity test. Verdict after resolving repo facts: **Tasks 1–3 GREEN**
 > (autonomously executable — no human judgment call, no information missing from the repo). **Task 4
-> was the one genuine gap** — "reconcile" was too vague and risked the executor guessing at roadmap
+> was the one actual gap** — "reconcile" was too vague and risked the executor guessing at roadmap
 > status; it has since been rewritten as an explicit per-item edit list (below). The Task-1 FST source
 > path and the Task-3 fixture location were also pinned as a result of the review. Net: the spec is
 > clear enough for a myopic-but-repo-equipped executor to finish autonomously, with Task 4 now closed.
@@ -20,7 +20,7 @@ accurate against main + the ledger). The full dated record is `.superpowers/sdd/
 
 ## Where the arc landed (settled — do not re-open)
 
-- **Comma-free "street + trailing city" is a DECODE DEAD END** — confirmed with receipts, not
+- **Comma-free "street + trailing city" is a DECODE DEAD END** — confirmed with receipts rather than
   abandoned. Fork B (trailing-locality prior) passed a curated 33-row board then went net-negative on
   400-row held-out BAN population: no decode geometry separates a trailing city from a person-name
   street surname (`Avenue Marceau Julien` ≡ `Rue des Lyonnais Paris`). Same open-vocab wall as
@@ -41,7 +41,7 @@ accurate against main + the ledger). The full dated record is `.superpowers/sdd/
 
 1. **Verify before verdict.** A report (even this one) is not truth for a required number — re-run
    it on the live CLI (`node mailwoman/out/cli.js parse --neural "<input>"`) before acting.
-2. **Measure in the SHIPPED configuration.** v3101-cache ≠ shipped v385 (bare-street 0.777 vs 0.605).
+2. **Measure in the shipped configuration.** v3101-cache ≠ shipped v385 (bare-street 0.777 vs 0.605).
    Board percentages from a candidate cache are candidate numbers. Pin to production defaults; when an
    identical-artifact rerun disagrees, suspect the cache.
 3. **Pre-register bars in writing before measuring** (`.superpowers/sdd/progress.md`, dated). No knob
@@ -53,7 +53,7 @@ accurate against main + the ledger). The full dated record is `.superpowers/sdd/
    `grep -c "def sync_latam_br" corpus-python/modal/train_remote.py` == 1. Never commit them; never
    pathless `git checkout -- .`.
 5. **Release + PR mechanics.** PR everything; branch from `origin/main`. Releases go through the
-   two-phase PR flow ONLY (`mailwoman-release` skill / `RELEASING.md`), never local `yarn release`.
+   two-phase PR flow only (`mailwoman-release` skill / `RELEASING.md`), never local `yarn release`.
 
 ---
 
@@ -62,7 +62,7 @@ accurate against main + the ledger). The full dated record is `.superpowers/sdd/
 ### 1. ⚠ RELEASE-STAGING GAP for `fst-<locale>.bin` — the next release breaks without this (do first)
 
 #1318 added `fst-en-us.bin` / `fst-fr-fr.bin` / `fst-en-gb.bin` to the `files[]` arrays of the three
-weights packages, but the release **staging path was left for follow-up** and currently does NOT
+weights packages, but the release **staging path was left for follow-up** and currently does not
 materialize them:
 
 - **`scripts/copy-weights.ts`** materializes `model.onnx`, `postcode-*.bin`, `anchor-lexicon`,
@@ -84,7 +84,7 @@ that the tarball contains a REAL `fst-<locale>.bin` (no symlink) and the files-g
 **Source path (pinned):** `$MAILWOMAN_DATA_ROOT/wof/fst-per-locale/fst-<locale>.bin` — this is exactly
 what `neural-weights-en-us/scripts/link-dev-weights.ts:211` already resolves
 (`dataRootPath("wof", "fst-per-locale", "fst-en-us.bin")`) to create the dev symlink. **link-dev-weights.ts
-is your reference implementation** — copy-weights.ts must materialize from the SAME source, just with
+is your reference implementation** — copy-weights.ts must materialize from the same source, just with
 unlink-then-copy instead of symlink. (Confirmed: `copy-weights.ts` has zero `fst` references today;
 `link-dev-weights.ts` handles all three locales.) Blobs are the 2026-05-28 220k-importance per-locale
 build (en-us 22MB / fr-fr 10.7MB / en-gb 3.9MB); en-nz has none → byte-stable. This is the one item
@@ -101,11 +101,11 @@ promotion expected to flip the sign). Right now that obligation lives only in `p
 retire or renew the homonym bar revision", linking the ledger entry and the exact battery
 (pre-registration #6). If the homonym flips positive as predicted, the revision retires; if it doesn't,
 we've shipped a durable regression and must decide whether to check the prior harder or revert
-default-on. This is a standing obligation, not optional.
+default-on. This is a standing obligation rather than optional.
 
 ### 3. ~~Formalize the #1143 waive~~ — ✅ DONE (Claude, 2026-07-26)
 
-Operator delegated the call ("most long-term accurate parsing, not a pile of hacks") → **waived to
+Operator delegated the call ("most long-term accurate parsing rather than a pile of hacks") → **waived to
 training, no decode patch.** GitHub **#1143 CLOSED as not-planned**
 (https://github.com/sister-software/mailwoman/issues/1143): disposition comment posted (re-anchored
 0.605/0.777, the decode-dead-end rationale, what #1315 covered), title de-ghosted (0.215 removed),

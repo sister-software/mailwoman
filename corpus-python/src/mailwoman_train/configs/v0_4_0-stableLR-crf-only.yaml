@@ -1,4 +1,4 @@
-# v0.4.0 stable-LR ablation: §1 per_token CRF ON, §3 class_weights OFF.
+# v0.4.0 stable-LR ablation: §1 per_token CRF on, §3 class_weights off.
 #
 # Tests whether §1 destabilizes even at the v0.3.0-stable LR (1.5e-4). If this run
 # diverges past step 2000, per_token CRF norm × crf_loss_weight=1.0 is the offender
@@ -48,7 +48,7 @@ model:
   # §1 per_token CRF norm + weight=1.0.
   crf_normalization: per_token
   crf_loss_weight: 1.0
-  # NO class_weights (omitted → uniform CE).
+  # No class_weights (omitted → uniform CE).
 
 train:
   output_dir: /data/models/checkpoints/v0_4_0-stableLR-crf-only

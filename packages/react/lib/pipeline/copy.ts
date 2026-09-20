@@ -3,7 +3,7 @@
 
 /**
  *   Builds the "Copy JSON" payload for a parse result — the components + the selected resolved place,
- *   pretty-printed. Pure; shared by the explorer's copy button.
+ *   pretty-printed. Pure. shared by the explorer's copy button.
  */
 
 import { prettyJSON } from "@mailwoman/core/json"

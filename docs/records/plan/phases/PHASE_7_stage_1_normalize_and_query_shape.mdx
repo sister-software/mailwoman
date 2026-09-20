@@ -4,7 +4,7 @@
 
 **Branch:** ad-hoc on `main`; ship via incremental commits.
 
-**Depends on:** [`STAGES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx) (the interface contract) and [`QUERY_SHAPE.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/QUERY_SHAPE.mdx) (the QueryShape sub-system design).
+**Depends on:** [`STAGES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx) (the interface interface) and [`QUERY_SHAPE.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/QUERY_SHAPE.mdx) (the QueryShape sub-system design).
 
 **Why these two together:** QueryShape consumes `NormalizedInput.normalized` and produces structural priors that downstream stages thread through. Building them in the same ship means the boundary between them gets its first real test before it ossifies.
 
@@ -18,7 +18,7 @@ Per STAGES.md "What's next" suggestion: **QueryShape first**, then Normalize. Re
 
 ## Tasks
 
-### Slice A — `@mailwoman/query-shape`
+### Increment A — `@mailwoman/query-shape`
 
 #### 1. Workspace scaffolding
 
@@ -46,7 +46,7 @@ Per STAGES.md "What's next" suggestion: **QueryShape first**, then Normalize. Re
 - [ ] `classifyInput(text: string): CharacterClass` — folds token classes to dominant class
 - [ ] Unicode-range detection for CJK, Cyrillic, Arabic (regex `\p{Script=...}` where supported)
 
-#### 4. Tokenization — internal, not exported
+#### 4. Tokenization — internal rather than exported
 
 - [ ] `tokenize(text: string): SpanRange[]` — whitespace + punctuation split, preserves character offsets
 - [ ] Treats consecutive non-whitespace-non-punct as one token
@@ -76,7 +76,7 @@ Per STAGES.md "What's next" suggestion: **QueryShape first**, then Normalize. Re
 #### 8. Re-exports — `index.ts`
 
 - [ ] Export public types + `computeQueryShape`
-- [ ] Do NOT export internal helpers (tokenize, internal regex tables)
+- [ ] Do not export internal helpers (tokenize, internal regex tables)
 
 #### 9. Tests
 
@@ -94,9 +94,9 @@ Per STAGES.md "What's next" suggestion: **QueryShape first**, then Normalize. Re
 
 #### Ship
 
-- [ ] One commit, one push. No npm publish — internal use only until Slice B lands.
+- [ ] One commit, one push. No npm publish — internal use only until Increment B lands.
 
-### Slice B — `@mailwoman/normalize`
+### Increment B — `@mailwoman/normalize`
 
 #### 1. Workspace scaffolding
 
@@ -143,7 +143,7 @@ Per STAGES.md "What's next" suggestion: **QueryShape first**, then Normalize. Re
 - [ ] `npm run compile` / `npm test` / `npm run lint` all green
 - [ ] One commit, one push
 
-### Slice C — integration
+### Increment C — integration
 
 Optional, defer if running long:
 
@@ -156,7 +156,7 @@ Optional, defer if running long:
 - [ ] Both workspaces build clean.
 - [ ] Tests green.
 - [ ] No new runtime deps.
-- [ ] `LOG.md` has entries for each slice.
+- [ ] `LOG.md` has entries for each increment.
 - [ ] Branch pushed to main.
 - [ ] STAGES.md "Today" lines for Stage 1 + QueryShape updated to reflect shipped state.
 

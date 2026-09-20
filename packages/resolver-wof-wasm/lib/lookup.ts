@@ -40,7 +40,7 @@ export interface WOFWasmPlaceLookupOpts {
 /**
  * One `sqlite_master` probe behind the lazy aux-table checks below.
  */
-// repo-health-ignore private-name-shadows-export -- the same probe over a synchronous sqlite-wasm handle; the httpvfs export answers a worker round trip and the sqlite one a node:sqlite client, and no adapter unifies the three handles
+// repo-health-ignore private-name-shadows-export -- the same probe over a synchronous sqlite-wasm handle. the httpvfs export answers a worker round trip and the sqlite one a node:sqlite client, and no adapter unifies the three handles
 function tableExists(db: Database, name: string): boolean {
 	return db.selectObjects(`SELECT 1 FROM sqlite_master WHERE type='table' AND name=? LIMIT 1`, [name]).length > 0
 }
@@ -101,7 +101,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 
 		if (!text) return []
 
-		// Postcode-typed queries keep the #920 fused name-law shape; everything else splits on
+		// Postcode-typed queries keep the #920 fused name-law shape. everything else splits on
 		// intra-token punctuation so hyphenated names reach the FTS as their real terms (#945) —
 		// parity with the resolver-wof-sqlite implementation.
 		const ftsQuery = sanitizeFTSQuery(text, {
@@ -112,13 +112,13 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 
 		const limit = Math.max(1, query.limit ?? 10)
 
-		// FTS5 MATCH on place_search joined to spr. Placetype + country filters are pushed into the
-		// WHERE clause because they reduce candidate count cheaply.
+		// FTS5 match on place_search joined to spr. Placetype + country filters are pushed into the
+		// where clause because they reduce candidate count cheaply.
 		const conditions: string[] = ["place_search MATCH ?", "spr.is_current != 0", "spr.is_deprecated = 0"]
 		const params: Array<string | number> = [ftsQuery]
 
 		// Shared placetype-equivalence expansion (core/resolver): a `locality` query must also reach
-		// `borough` / `localadmin` rows. Without it, Brooklyn-the-borough (pop 2.5M, an EXACT name
+		// `borough` / `localadmin` rows. Without it, Brooklyn-the-borough (pop 2.5M, an exact name
 		// match) was unreachable and the fuzzy "Brooklyn Park, MN" won. Same table the Node resolver
 		// uses — the two backends can't drift.
 		const placetypes = expandPlacetypeFilter(normalizePlacetypes(query.placetype)) as WOFPlacetype[] | null
@@ -144,7 +144,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		// Over-fetch a pool ordered by raw BM25, then re-rank in JS (exact-name tier, then
 		// population-weighted bm25). The over-fetch is essential: a famous place can sit a few rows
 		// below a tiny same-name town on raw BM25 ("New York" loses to "West New York" by a hair), so a
-		// tight LIMIT on bm25 alone would truncate it before the re-rank could pull it up. This mirrors
+		// tight limit on bm25 alone would truncate it before the re-rank could pull it up. This mirrors
 		// the post-scoring tier + population boost in resolver-wof-sqlite/lookup.ts. (v1 issued pure
 		// bm25, which is why the demo targeted West New York for "New York, NY".)
 		const hasPop = this.#hasPopulation()
@@ -183,14 +183,14 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		const normQuery = foldQueryText(text)
 		// Exact-abbreviation ids: region/state abbreviations live in the slim DB's `place_abbr` table
 		// (carried by build-slim before `names` is dropped). A candidate whose abbreviation equals the
-		// query is an EXACT match — same tier as an exact name match — so "VT" → Vermont outranks a
+		// query is an exact match — same tier as an exact name match — so "VT" → Vermont outranks a
 		// foreign region that merely token-matches "VT" via a multilingual name fragment. No-op on slim
 		// DBs built before place_abbr (the table is absent → empty set). This is the data-driven
 		// replacement for the demo's hardcoded region-abbreviation map (since deleted); it also generalizes beyond US.
 		const abbrIDs = this.#abbrExactIDs(text)
 
 		// Strict exact = canonical name or region abbreviation equals the query. Computed for the whole
-		// pool FIRST because the ALIAS tier below only engages when no strict exact exists.
+		// pool first because the alias tier below only engages when no strict exact exists.
 		const strictExact = (row: { name: string; id: number }): boolean =>
 			foldQueryText(row.name) === normQuery || abbrIDs.has(row.id)
 
@@ -200,7 +200,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 			.map((row) => {
 				// Alias tier: `alt_names` is the FTS row's alias bag (the slim DB's only surviving alias
 				// source), aliases joined on the boundary-preserving ALIAS_SEPARATOR (#523). The shared
-				// parser does a true per-alias equality check, unrestricted; on a LEGACY bag (pre-#523 slim
+				// parser does a true per-alias equality check, unrestricted. on a legacy bag (pre-#523 slim
 				// artifact, boundaries lost) it falls back to padded containment conditioned on "no strictly
 				// exact candidate" so interior fragments ("York" inside "New York City") can't be
 				// false-promoted. Mirrors the Node resolver's alias tier
@@ -237,7 +237,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 								maxLon: row.max_longitude,
 							}
 						: undefined,
-				// Flip sign so higher = better (PlaceLookup contract). The adjusted, population-aware
+				// Flip sign so higher = better (PlaceLookup interface). The adjusted, population-aware
 				// score is what we sorted by, so callers see the same ordering they're shown.
 				score: -adjScore,
 			}))

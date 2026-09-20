@@ -1,7 +1,7 @@
 """Parquet round-trip check for the v0.5.0 span columns (#519, rebuild-plan step 1).
 
-The slice pipeline is JSONL (builders, via ``alignRow``) → converter →
-parquet → this package's PyArrow readers. JSONL has carried the span triple since #527; this
+The recipe-output pipeline is JSONL (builders, via ``alignRow``) → converter →
+parquet → this package's PyArrow readers. JSONL has carried the span triple since #527. this
 test pins the two properties the parquet leg must now hold:
 
 1. **Round-trip identity** — ``span_starts``/``span_ends``/``span_tags`` written by the real
@@ -11,7 +11,7 @@ test pins the two properties the parquet leg must now hold:
    with a named row. Silent loss (the pre-#519 behavior: columns simply dropped) is the hazard
    this step exists to close.
 
-Runs the converter via subprocess so the check covers the actual converter, not a
+Runs the converter via subprocess so the check covers the actual converter rather than a
 re-implementation. The converter was ported from ``scripts/jsonl-to-parquet.py`` to
 TypeScript (e61a4a0d, the TypeScript-monoculture ship) and now lives at
 ``corpus/src/tools/jsonl-to-parquet.ts`` — a DuckDB rewrite verified field-for-field
@@ -44,7 +44,7 @@ pytestmark = pytest.mark.skipif(
 
 # Inline node driver: imports the real TS converter (Node strips types natively), runs it on
 # the argv-supplied paths, and forwards any thrown error's message to stderr with a non-zero
-# exit — so the loud-failure assertions below exercise the converter's own contract text.
+# exit — so the loud-failure assertions below exercise the converter's own interface text.
 _NODE_DRIVER = """
 import { pathToFileURL } from "node:url";
 const { jsonlToParquet } = await import(pathToFileURL(%s).href);
@@ -104,7 +104,7 @@ def test_span_columns_round_trip(tmp_path: Path) -> None:
             span_ends=[11],
             span_tags=["po_box"],
         ),
-        # All-O row: a legitimately EMPTY triple must survive as [], not null.
+        # All-O row: a legitimately empty triple must survive as [], not null.
         _row(
             source_id="t-all-o",
             raw="hello world",

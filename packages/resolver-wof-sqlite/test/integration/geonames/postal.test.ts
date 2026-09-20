@@ -58,7 +58,7 @@ describe("ingestGeonamesPostal", () => {
 		const dir = dirDirectory.path
 
 		// Three members of "110 00": two clustered at ~50.08, one outlier pulling the mean north.
-		// The medoid must be one of the REAL points (the cluster member nearest the mean), never
+		// The medoid must be one of the real points (the cluster member nearest the mean), never
 		// the mean itself.
 		await writeLocalTextFile(
 			[
@@ -86,7 +86,7 @@ describe("ingestGeonamesPostal", () => {
 
 		expect(row.placetype).toBe("postalcode")
 		expect(row.id).toBeGreaterThanOrEqual(GEONAMES_POSTAL_ID_BASE)
-		// Medoid = a real member (50.09 is nearest the outlier-pulled mean), NOT the mean (~50.157).
+		// Medoid = a real member (50.09 is nearest the outlier-pulled mean), not the mean (~50.157).
 		expect([50.08, 50.09, 50.3]).toContain(row.latitude)
 		expect(row.latitude).toBe(50.09)
 
@@ -96,6 +96,36 @@ describe("ingestGeonamesPostal", () => {
 			.map((r) => (r as { name: string }).name)
 
 		expect(names).toEqual(["110 00", "11000"])
+	})
+
+	it("reports a code whose rows all name one point", async () => {
+		await using dirDirectory = await temporaryDirectory("gn-postal-degenerate-")
+		const dir = dirDirectory.path
+
+		// TH 10230 verbatim: two Bangkok districts published at one coordinate ~90 km from either. The medoid has
+		// nothing to choose between, and the result must say so rather than presenting two rows as agreement.
+		await writeLocalTextFile(
+			[
+				"TH\t10230\tLat Phrao\tBangkok\t10\t\t\t\t\t14.3333\t99.9167\t1",
+				"TH\t10230\tKhanna Yao\tBangkok\t10\t\t\t\t\t14.3333\t99.9167\t1",
+				"TH\t10120\tYan Nawa\tBangkok\t10\t\t\t\t\t13.6969\t100.5407\t4",
+			].join("\n"),
+			join(dir, "TH.txt")
+		)
+
+		const db = await fixtureDB()
+		const result = await ingestGeonamesPostal(db, ["TH"], dir)
+
+		expect(result.byCountry.TH).toBe(2)
+		// 10120 is a single row — one point by construction, and not what this counter is about.
+		expect(result.singlePointByCountry.TH).toBe(1)
+
+		const row = db.prepare("SELECT latitude, longitude FROM spr WHERE name = '10230'").get() as {
+			latitude: number
+			longitude: number
+		}
+
+		expect([row.latitude, row.longitude]).toEqual([14.3333, 99.9167])
 	})
 
 	it("reports missing country files instead of throwing", async () => {

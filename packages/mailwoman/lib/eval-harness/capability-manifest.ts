@@ -5,20 +5,20 @@
  *   Capability-manifest generator (#718 / #719) — the measurement half of the load-time delta check.
  *
  *   The structural fix for the D2/#719 bug-class (a conventions mask destroying a capability the
- *   model demonstrably HAS): the model card declares, PER TIER × PER address-system × PER tag, the
- *   model's measured per-tag F1 with the conventions mask OFF, plus the mask-ON F1 for any tag a
+ *   model demonstrably has): the model card declares, PER tier × PER address-system × PER tag, the
+ *   model's measured per-tag F1 with the conventions mask off, plus the mask-on F1 for any tag a
  *   codex `forbiddenTags` row would suppress. The `createScorer` loader (neural/scorer.ts) reads
- *   this `capabilities` block and FAILS CLOSED when a conventions mask would forbid a tag the model
- *   is CERTIFIED to emit — conditional by a DELTA (`maskOffF1 − maskOnF1 > 5pp`), not an absolute floor,
- *   so a tag the model emits at 0.80 is still protected if the mask drops it to 0.0 (the exact #719
+ *   this `capabilities` block and fails closed when a conventions mask would forbid a tag the model
+ *   is certified to emit — conditional by a delta (`maskOffF1 − maskOnF1 > 5pp`), not an absolute floor,
+ *   so a tag the model emits at 0.80 is still guarded if the mask drops it to 0.0 (the exact #719
  *   shape: FR `street_prefix` collapsed 80.0 → 0.0 under the old blanket prefix+suffix forbid).
  *
- *   Tiers (the two SHIP-CONFIGs the model is fed under):
+ *   Tiers (the two ship-CONFIGs the model is fed under):
  *
- *   - `server`: anchor + gazetteer channels ON (the production default — what `createScorer` builds).
- *   - `pocket`: anchor ON, gazetteer OFF (the lighter on-device feed; not yet a serving target).
+ *   - `server`: anchor + gazetteer channels on (the production default — what `createScorer` builds).
+ *   - `pocket`: anchor on, gazetteer off (the lighter on-device feed. not yet a serving target).
  *
- *   For each tier × locale × {mask-off, mask-on} we run the model and compute UNFOLDED exact-match
+ *   For each tier × locale × {mask-off, mask-on} we run the model and compute unfolded exact-match
  *   per-tag F1 (same implementation as `score-affix.ts` — split `street_prefix`/`street`/`street_suffix`
  *   so the affix capability is measurable, which the folded `per-locale-f1.ts` cannot see). The
  *   classifier is built via the canonical `createScorer` so the channel feed matches the ship
@@ -85,24 +85,24 @@ export interface CapabilityManifestOptions {
 //#region Tier + locale matrix
 
 /**
- * Serving tiers and their channel feed (vs the model-card SHIP-CONFIG, expressed as overrides).
+ * Serving tiers and their channel feed (vs the model-card ship-config, expressed as overrides).
  */
 const TIERS: Record<string, ScorerOverrides> = {
-	// Production default — anchor + gazetteer both fed (no override needed; createScorer's defaults).
+	// Production default — anchor + gazetteer both fed (no override needed. createScorer's defaults).
 	server: {},
 	// On-device lighter feed — anchor on, gazetteer ablated. `overrides.gazetteer:false` warns loudly
-	// (a DECLARED ablation), which is correct: pocket is a deliberate below-ship-config tier.
+	// (a declared ablation), which is correct: pocket is a deliberate below-ship-config tier.
 	pocket: { gazetteer: false },
 }
 
 /**
- * The per-tag vocabulary scored, UNFOLDED (street parts split — mirrors score-affix.ts).
+ * The per-tag vocabulary scored, unfolded (street parts split — mirrors score-affix.ts).
  */
 const TAGS = UNFOLDED_ADDRESS_TAGS
 
 /**
- * The union of every tag any codex conventions row forbids — the ONLY tags the loader's delta check reads, so the ONLY
- * tags that NEED a paired `maskOnF1`. Derived from the codex so a new forbid row automatically widens the manifest the
+ * The union of every tag any codex conventions row forbids — the only tags the loader's delta check reads, so the only
+ * tags that need a paired `maskOnF1`. Derived from the codex so a new forbid row automatically widens the manifest the
  * next time it's regenerated.
  */
 const FORBIDDEN_TAGS: Set<string> = new Set(
@@ -142,10 +142,10 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 
 			console.error(`\n[${tier}/${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
 
-			// The generator constructs its scorers WHILE the card's `capabilities` block may not yet
-			// exist; the loader's delta check is a no-op until the block is written. After a `--write`,
-			// regenerating uses the already-written block, but mask-OFF construction never trips the
-			// check (it only fires for a forbidden CERTIFIED tag, and mask-off forbids none).
+			// The generator constructs its scorers while the card's `capabilities` block may not yet
+			// exist. the loader's delta check is a no-op until the block is written. After a `--write`,
+			// regenerating uses the already-written block, but mask-off construction never trips the
+			// check (it only fires for a forbidden certified tag, and mask-off forbids none).
 			// `inputMode: "formatted"`: certification probes are formatted postal addresses, whose
 			// production path disables evidence-bundle channels. The mask-regression check grades the
 			// same mode (#2048), so the two report one number for one row.
@@ -165,9 +165,9 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 			const perTag: Record<string, TagCapability> = {}
 
 			for (const t of TAGS) {
-				// Skip tags the model never emits AND never sees in gold under either mask — a 0/0 F1 is
+				// Skip tags the model never emits and never sees in gold under either mask — a 0/0 F1 is
 				// not a capability claim, just noise. (maskOffF1 0 with the tag genuinely present in gold
-				// IS a real claim and is kept.)
+				// is a real claim and is kept.)
 				if (off[t] === 0 && on[t] === 0 && !rowsHaveTag(rows, t)) continue
 				const cap: TagCapability = { maskOffF1: off[t]! }
 
@@ -200,7 +200,7 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 //#region Entry
 
 /**
- * Measure the per-tier × system × tag capability manifest; optionally patch it into the model card.
+ * Measure the per-tier × system × tag capability manifest. optionally patch it into the model card.
  */
 export async function generateCapabilityManifest(options: CapabilityManifestOptions = {}): Promise<void> {
 	const paths: ResolvedPaths = {
@@ -219,7 +219,7 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 	console.log(prettyJSON({ capabilities }))
 
 	if (WRITE) {
-		// Provenance key alongside the tier keys; ignored by readers (`lookupTagCapability` skips it).
+		// Provenance key alongside the tier keys. ignored by readers (`lookupTagCapability` skips it).
 		;(capabilities as Record<string, unknown>).$comment =
 			"Per-tier (server=anchor+gazetteer; pocket=anchor-only) × address-system × tag capability " +
 			"manifest (#718/#719). maskOffF1 = measured per-tag exact-match F1 with the conventions mask " +
@@ -228,9 +228,9 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 			"conventions row forbids a tag with maskOffF1 − maskOnF1 > 0.05 (the mask provably destroys a " +
 			"real capability). Generated by `mailwoman eval capability-manifest` against the v1.5.0 int8."
 
-		// SURGICAL insert (not a JSON round-trip): the shipped card hand-formats compact inline objects
+		// surgical insert (not a JSON round-trip): the shipped card hand-formats compact inline objects
 		// (`"anchor": { "required": true }`) that a `JSON.stringify` would expand, spuriously reordering a
-		// shipped artifact. Instead, append ONE new top-level key, byte-preserving everything else. The
+		// shipped artifact. Instead, append one new top-level key, byte-preserving everything else. The
 		// card is validated JSON, so its tail is `…\n}\n` (root close); we splice `,\n\t"capabilities":…`
 		// before that final brace, one indent level deep (each block line tab-prefixed).
 		const original = await readLocalTextFile(paths.modelCard)
@@ -238,7 +238,7 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 
 		if (lastBrace === -1) throw new Error(`model-card has no closing brace: ${paths.modelCard}`)
 
-		// Strict, not tolerant: a corrupt model card must abort the splice rather than read as
+		// Strict rather than tolerant: a corrupt model card must abort the splice rather than read as
 		// "no capabilities block" and append a second one.
 		if (parseJSONStrict<{ capabilities?: unknown }>(original).capabilities !== undefined) {
 			// Idempotency guard: a prior write left a block. A text-splice would duplicate the key, so refuse.
@@ -248,7 +248,7 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 			)
 		}
 
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Re-indenting a string serialized on the line above, not reading anything.
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Re-indenting a string serialized on the line above rather than reading anything.
 		const block = prettyJSON(capabilities)
 			.split("\n")
 			.map((line) => "\t" + line)

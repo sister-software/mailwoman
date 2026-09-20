@@ -4,7 +4,7 @@
 import { type CommandSpec, runNativeCommand, stringValue } from "#cli/native/spec"
 
 /**
- * Native OpenAPI command contract.
+ * Native OpenAPI command interface.
  */
 export const spec = {
 	name: "openapi",

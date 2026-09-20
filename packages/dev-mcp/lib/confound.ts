@@ -7,18 +7,18 @@
  *   This mechanizes a hazard the repo already documents rather than inventing a rule.
  *   `docs/engineering/reference/resolver-backends.mdx` states it outright: *"Any comparison between backends must pin
  *   `--country-scope` to `locale` or `none` across both arms, or run the full 2×2."* Under the default
- *   `--country-scope auto`, switching backend ALSO switches country scoping, and that document's own table shows
+ *   `--country-scope auto`, switching backend also switches country scoping, and that document's own table shows
  *   `12 Rue de Rivoli, 75001 Paris` landing in Texas or in France depending on which of the two variables actually
  *   moved. A caller declaring `variable: ["backend"]` in that situation is measuring two things and attributing the
  *   result to one.
  *
- *   Comparing STATED configs cannot see this; comparing EFFECTIVE configs can, which is why
+ *   Comparing stated configs cannot see this. comparing effective configs can, which is why
  *   {@link EngineRegistry.acquire} resolves defaults before anything here reads them.
  *
  *   **It warns, it does not refuse** (decided 2026-08-16, spec §6.3). An earlier draft made an undeclared difference a
  *   hard error. The reasoning that overturned it: a refusal an agent cannot override is a reason to bypass the tool
  *   and run the comparison in a shell, where there is no guard at all. A warning that travels inside `summary`
- *   survives the relay; a refusal only helps if the agent stays inside the tool.
+ *   survives the relay. a refusal only helps if the agent stays inside the tool.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -27,9 +27,9 @@ import { runFileSync } from "@mailwoman/core/process"
 import { effectiveKeyFor } from "#engine/registry"
 
 /**
- * Whether the comparison's SETUP was clean — did exactly the declared keys differ between the two resolved configs.
+ * Whether the comparison's setup was clean — did exactly the declared keys differ between the two resolved configs.
  *
- * Read this as a hygiene check on the experiment, never as a causal finding. It compares two config objects; it has no
+ * Read this as a hygiene check on the experiment, never as a causal finding. It compares two config objects. it has no
  * access to why any individual row moved, and a delta is a property of an aggregate while causation happens per row
  * through a mechanism. A `clean` here licenses the sentence "nothing else in the configuration moved" and nothing
  * stronger. Diagnosis needs the per-row interior, which this file does not have and `mwdev_trace` does.
@@ -50,7 +50,7 @@ export const VariableIsolation = {
 	NoVariable: "no_variable",
 	/**
 	 * The arms are different geocoders. No configuration record can express what differs, because the dominant variable
-	 * is the INDEX each one holds — and no configuration record can isolate a change here, however carefully declared.
+	 * is the index each one holds — and no configuration record can isolate a change here, however carefully declared.
 	 */
 	CrossEngine: "cross_engine",
 } as const
@@ -61,7 +61,7 @@ export interface ConfoundReading {
 	variable_isolation: VariableIsolation
 	/**
 	 * Every key that actually differs, whether or not it was declared. This is the field to read; `variable` as passed is
-	 * the caller's claim, not a finding.
+	 * the caller's claim rather than a finding.
 	 */
 	variable_effective: string[]
 	declared: string[]
@@ -93,7 +93,7 @@ export function checkConfounds(
 ): ConfoundReading {
 	const moved = differingKeys(effectiveA, effectiveB)
 	// Declared keys arrive in the CLI's snake_case (the vocabulary the tool schema documents); `effective*` keys are
-	// camelCase. Compared raw, one correctly-declared change reads as TWO findings — declared-but-unmoved under one
+	// camelCase. Compared raw, one correctly-declared change reads as two findings — declared-but-unmoved under one
 	// spelling, moved-but-undeclared under the other — and every honest single-change comparison grades itself ambiguous.
 	const declaredSet = new Set(declared.map(effectiveKeyFor))
 	const movedSet = new Set(moved)
@@ -108,7 +108,7 @@ export function checkConfounds(
 		warnings.push(
 			`Undeclared differences: ${movedButUndeclared.join(", ")}. The delta cannot be attributed to ` +
 				`${declared.length ? declared.join(", ") : "any single pin"} alone — these moved too. ` +
-				`Either pin them across both arms, or declare them and read the result as a 1×2 slice of a 2×2.`
+				`Either pin them across both arms, or declare them and read the result as one row of a 2×2.`
 		)
 	}
 
@@ -152,9 +152,9 @@ export function checkConfounds(
  *
  * What is actually true is shorter and worse: the arms hold different indexes built from different sources at different
  * vintages, and no record either arm can produce says by how much. The panel comparator in the benchmark rig states the
- * same thing in its own header — "a behavioral comparison over deliberately different data footprints, not a claim that
- * the arms have equivalent indexes". So the reading is fixed at {@link VariableIsolation.CrossEngine} and the caller's
- * `variable` is echoed rather than checked: there is nothing to check it against.
+ * same thing in its own header — "a behavioral comparison over deliberately different data footprints rather than a
+ * claim that the arms have equivalent indexes". So the reading is fixed at {@link VariableIsolation.CrossEngine} and the
+ * caller's `variable` is echoed rather than checked: there is nothing to check it against.
  */
 export function crossEngineReading(armA: string, armB: string, declared: string[]): ConfoundReading {
 	return {
@@ -182,11 +182,11 @@ export interface WorktreeTreeDelta {
 }
 
 /**
- * The reading for a comparison whose two arms are BOTH worktree arms with clean commits.
+ * The reading for a comparison whose two arms are both worktree arms with clean commits.
  *
  * {@link crossEngineReading}'s "different geocoders over different indexes" is written for Pelias-vs-mailwoman, where
  * nothing in either arm's provenance can bound the difference. A worktree pair is the opposite case: both arms name a
- * commit, so the tool can MEASURE what separates them and say it, instead of disclaiming an attribution the caller set
+ * commit, so the tool can measure what separates them and say it, instead of disclaiming an attribution the caller set
  * the comparison up to make. The isolation verdict stays {@link VariableIsolation.CrossEngine} — the config-key checker
  * still has nothing to check across two processes — but the warning carries the bounded surface: every difference lives
  * inside the named commits, and a reader can `git diff` the printed range.
@@ -222,7 +222,7 @@ export function worktreePairReading(
  *
  * `resolver_score` is bm25-derived on FTS (≈19–41) and population-derived on the candidate table (≈5–7), so a
  * cross-backend comparison of it is a unit error wearing a number. Worse, `resolver-backends.mdx:162-170` measured that
- * WITHIN either backend the wrong answers' score range sits inside the correct answers' range with a HIGHER mean — so
+ * within either backend the wrong answers' score range sits inside the correct answers' range with a higher mean — so
  * it cannot be thresholded on either, which is why this is a refusal rather than a warning.
  */
 const INCOMPARABLE_FIELDS = new Set(["resolver_score", "score", "prominence"])

@@ -1,6 +1,6 @@
 """The surface pairs each expansion augmentation draws from.
 
-Every table maps a surface to the other surface of the SAME component — an abbreviation to its
+Every table maps a surface to the other surface of the same component — an abbreviation to its
 expansion, an ordinal to its word — so an augmented copy keeps the row's labels and only changes
 how the field is written.
 """
@@ -21,9 +21,9 @@ DIRECTIONALS: dict[str, str] = {
 
 # Ordinal street names, both directions ("5th" ↔ "Fifth") — the 8.2.0 pre-ship metamorphic catch:
 # "350 Fifth Ave, New York, NY" (the Empire State Building) lost its locality while the digit form
-# parsed clean. The num-ordinal BAND relation is a stated product invariant (gauntlet metamorphic);
+# parsed clean. The num-ordinal band relation is a stated product invariant (gauntlet metamorphic);
 # teach the equivalence instead of hoping for it. First..Tenth covers the overwhelming mass of US
-# ordinal streets; applied ONLY to street-family-labeled tokens (a "5th" unit/floor is not a street).
+# ordinal streets. applied only to street-family-labeled tokens (a "5th" unit/floor is not a street).
 ORDINAL_STREETS: dict[str, str] = {
     "1st": "First",
     "2nd": "Second",

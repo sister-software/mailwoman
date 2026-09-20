@@ -7,8 +7,8 @@
  *   git (gitignored model.onnx + tokenizer.model); this operation materializes the binaries at release
  *   time.
  *
- *   The source model + tokenizer FILENAMES come from `release.config.json` (`weights.model` /
- *   `weights.tokenizer`) so the version-bearing names live in one place rather than hardcoded here.
+ *   The source model + tokenizer filenames come from `release.config.json` (`weights.model` /
+ *   `weights.tokenizer`) so the versioned names live in one place rather than hardcoded here.
  *   They resolve against `mailwomanDataRoot()`, which is the one home for the root itself. Override
  *   at release time via env vars:
  *
@@ -16,9 +16,9 @@
  *   - MAILWOMAN_PUBLISH_MODEL: absolute path to the int8 quantized model.onnx (wins outright)
  *   - MAILWOMAN_PUBLISH_TOKENIZER: absolute path to the matching tokenizer.model (wins outright)
  *
- *   Also materializes the #718 D1 SOFT-FEED artifacts so the library default `loadFromWeights` feeds
+ *   Also materializes the #718 D1 soft-feed artifacts so the library default `loadFromWeights` feeds
  *   the anchor + gazetteer channels the trained model expects (without these, the package's default
- *   load path serves the model anchor-OFF — the #566/#685 OOD crater):
+ *   load path serves the model anchor-off — the #566/#685 OOD crater):
  *
  *   - `postcode-<cc>.bin` — the compact PCB1 postcode-anchor binary, built from the WOF postcode extract
  *       (`softFeed.postcodeDBByCountry[<cc>]`) via `mailwoman gazetteer postcode-binary`.
@@ -26,7 +26,7 @@
  *       (`softFeed.gazetteerLexicon`).
  *   - `pair-index-<cc>.bin` — the placetype-pair-prior arc's PIX1 retrieval index, built from a
  *       PPD-style (child, parent) tuples CSV (`softFeed.pairIndexByCountry[<cc>].source` + `.delta`) via
- *       `mailwoman gazetteer pair-index`. COUNTRY-SPECIFIC BY DESIGN — a workspace whose country has no
+ *       `mailwoman gazetteer pair-index`. country-specific BY design — a workspace whose country has no
  *       `pairIndexByCountry` entry ships no sibling and is silently skipped (see materializePairIndex).
  *
  *   Idempotent. Used by .release-it.json's before:init hook through `mwops release copy-weights`.
@@ -54,7 +54,7 @@ export interface CopyWeightsOptions {
 	repoRoot: string
 	/**
 	 * Where the weights workspaces are written — the source checkout (the release path), or a #1894 preflight's staging
-	 * tree. Sources always resolve against THIS checkout's data root and release.config.json; only destinations move.
+	 * tree. Sources always resolve against this checkout's data root and release.config.json. only destinations move.
 	 */
 	destRoot?: string
 	log: (line: string) => void
@@ -72,14 +72,14 @@ interface MaterializationContext {
 	repoRoot: string
 	dataRoot: string
 	/**
-	 * The derived-artifact store for THIS checkout's inputs. Computed once — the key is a hash over files that do not
+	 * The derived-artifact store for this checkout's inputs. Computed once — the key is a hash over files that do not
 	 * change mid-run.
 	 */
 	derivedStore: string
 	softFeed: SoftFeedRecipe
 	/**
 	 * The repo-committed soft-feed lexicons (gazetteer #464, country #1104, street-type Option-A), shipped-name →
-	 * absolute source. The per-key base-directory rule lives in `weights-recipe.ts`; only the BUILT locality-surface
+	 * absolute source. The per-key base-directory rule lives in `weights-recipe.ts`; only the built locality-surface
 	 * lexicon resolves against the data root instead.
 	 */
 	repoCommittedSources: Map<string, string>
@@ -95,7 +95,7 @@ interface MaterializationContext {
 /**
  * Serve `filename` into `dir` from the derived store, if this checkout's key already has it.
  *
- * Returns true when the file was placed, which tells the caller to skip its CLI spawn. A miss returns false; the caller
+ * Returns true when the file was placed, which tells the caller to skip its CLI spawn. A miss returns false. the caller
  * builds and then calls {@link stashDerived}.
  *
  * Replaces the actions/cache round-trip that carried 76.3 MB at ~1.6 MB/s (48–54s per leg) to a runner that already
@@ -119,9 +119,9 @@ async function serveFromDerivedStore(context: MaterializationContext, dir: strin
 
 	const dest = resolvePath(dir, filename)
 
-	// Unlink first. `fs.copyFile` FOLLOWS a symlink at the destination and writes THROUGH it, leaving
-	// the symlink in place — and the registry refuses a tarball containing one (HTTP 415, YN0035).
-	// Same discipline as the rest of this module; see AGENTS.md "symlinks in the publish tarball".
+	// Unlink first. `fs.copyFile` follows a symlink at the destination and writes through it, leaving
+	// the symlink in place — and the registry refuses a tarball containing one (http 415, YN0035).
+	// Same discipline as the rest of this module. see agents.md "symlinks in the publish tarball".
 	await removePathIfPresent(dest)
 
 	await copyFileTo(cached, dest)
@@ -134,12 +134,12 @@ async function serveFromDerivedStore(context: MaterializationContext, dir: strin
  * Deposit a freshly-built `filename` into the derived store under this checkout's key.
  *
  * Best-effort by design: a store write that fails must never fail a release. The build already succeeded and the
- * workspace already has the artifact — the store is an optimization, not a source of truth, so a failure here costs the
- * next run five minutes and nothing else.
+ * workspace already has the artifact — the store is an optimization rather than a source of truth, so a failure here
+ * costs the next run five minutes and nothing else.
  */
 async function stashDerived(context: MaterializationContext, dir: string, filename: string): Promise<void> {
 	// Never poison the store: a below-floor build must not become the artifact every future run
-	// receives as a HIT. The build-time floors are the primary check; this holds when they are
+	// receives as a HIT. The build-time floors are the primary check. this holds when they are
 	// bypassed (a stale-compiled builder predating them was #1528's exact shape).
 	const violation = await derivedStoreServeViolation(filename, resolvePath(dir, filename))
 
@@ -168,7 +168,7 @@ export async function copyWeights({
 }: CopyWeightsOptions): Promise<CopyWeightsReport> {
 	// CI release workflow sets MAILWOMAN_SKIP_WEIGHTS_COPY=1 when release_weights
 	// input is false (the default). Weights binaries live on the operator's host and
-	// aren't fetchable from CI; the workflow excludes the weights workspaces from the
+	// aren't fetchable from CI. the workflow excludes the weights workspaces from the
 	// publish set in that mode, so skipping the copy is correct.
 	if ($public.MAILWOMAN_SKIP_WEIGHTS_COPY) {
 		log("copy-weights: MAILWOMAN_SKIP_WEIGHTS_COPY set — skipping.")
@@ -223,7 +223,7 @@ export async function copyWeights({
 		// Unlink first so a pre-existing symlink (from link-dev-weights.ts) is
 		// replaced with a real file. Otherwise copyFile follows the symlink and
 		// writes through it, leaving the symlink in place — which yarn refuses
-		// to publish (npm registry rejects symlinks with HTTP 415).
+		// to publish (npm registry rejects symlinks with http 415).
 		await removePathIfPresent(modelDest)
 		await removePathIfPresent(tokenizerDest)
 		await copyFileTo(sourceModel, modelDest)
@@ -298,12 +298,12 @@ async function materializeFST(context: MaterializationContext, workspace: string
 }
 
 /**
- * Materialize the locale-GENERAL street-morphology FST (`fst-street-morphology.bin`, the #1315 street-context check's
+ * Materialize the locale-general street-morphology FST (`fst-street-morphology.bin`, the #1315 street-context check's
  * signal source) into a weights workspace — a verbatim copy of the sealed artifact staged by `mailwoman gazetteer build
  * street-morphology` at $MAILWOMAN_DATA_ROOT/wof/. Shipping it as a weights sibling is what carries it to the
  * per-version R2 asset layout the browser demo fetches — the node runtimes can rebuild from the bundled libpostal
  * dictionaries, the browser cannot. A missing source is skipped with a warning (byte-stable: node consumers fall back
- * to the per-process dictionary build; the demo parses without the street-context check, exactly as before).
+ * to the per-process dictionary build. the demo parses without the street-context check, exactly as before).
  */
 async function materializeStreetMorphology(context: MaterializationContext, workspace: string, dir: string) {
 	const src = resolvePath(context.dataRoot, "wof", "fst-street-morphology.bin")
@@ -344,7 +344,7 @@ async function materializeSoftFeed(context: MaterializationContext, workspace: s
 		context.log(`copied soft-feed → ${workspace}/${basename}`)
 	}
 
-	// The BUILT locality-surface lexicon (~7 MB, data-root, never in git) — the one that breaks its
+	// The built locality-surface lexicon (~7 MB, data-root, never in git) — the one that breaks its
 	// three neighbours' base-directory pattern.
 	if (context.sourceLocalitySurface) {
 		if (!(await tryStat(context.sourceLocalitySurface))) {
@@ -406,7 +406,7 @@ async function materializeSoftFeed(context: MaterializationContext, workspace: s
 /**
  * Materialize the placetype-pair-prior arc's PIX1 index (`pair-index-<cc>.bin`) into a weights workspace — mirrors
  * {@link materializeSoftFeed}'s postcode-binary block exactly, but keyed off `softFeed.pairIndexByCountry` (a CSV
- * source + a required calibrated `--delta`, not a WOF DB) instead of `postcodeDBByCountry`. COUNTRY-SPECIFIC BY DESIGN,
+ * source + a required calibrated `--delta`, not a WOF DB) instead of `postcodeDBByCountry`. country-specific BY design,
  * same as the runtime resolver (`neural/weights.ts`'s `resolvePairIndexSibling`): a workspace whose country has no
  * `pairIndexByCountry` entry ships no pair-index sibling and is skipped silently (not every locale gets one).
  */
@@ -418,14 +418,14 @@ async function materializePairIndex(context: MaterializationContext, workspace: 
 		return
 	}
 
-	// Inputs resolve against DIFFERENT roots, and conflating them is a real failure mode (it broke CI once):
+	// Inputs resolve against different roots, and conflating them is a real failure mode (it broke CI once):
 	// `source` and `boroughDB` are large acquired datasets under the data root, while `pairsJsonl` is a curated file
-	// CHECKED INTO THE REPO (`data/gazetteer/london-pairs-v2.jsonl`). `resolvePath` lets an absolute entry pass
+	// checked into the repository (`data/gazetteer/london-pairs-v2.jsonl`). `resolvePath` lets an absolute entry pass
 	// through untouched either way.
 	const source = entry.source ? resolvePath(context.dataRoot, entry.source) : undefined
 	const boroughDB = entry.boroughDB ? resolvePath(context.dataRoot, entry.boroughDB) : undefined
 
-	// A COMMA-SEPARATED list since R7 (London + NI): resolve each entry, then rejoin.
+	// A comma-separated list since R7 (London + NI): resolve each entry, then rejoin.
 	const pairsJsonl = entry.pairsJsonl
 		? entry.pairsJsonl
 				.split(",")

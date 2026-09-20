@@ -58,8 +58,8 @@ const HOMOGRAPH_CONTEST_SHARE = 1 / 3
 const COUNTRY_INFO_COLUMNS = { iso: 0, country: 4 } as const
 
 /**
- * The postal dump's admin1 CODE column. `@mailwoman/corpus`'s {@link GEONAMES_POSTAL_COLUMNS} names the admin1 NAME at
- * index 3 because that is what a corpus row renders; this panel keys on the code beside it, which is stable across the
+ * The postal dump's admin1 code column. `@mailwoman/corpus`'s {@link GEONAMES_POSTAL_COLUMNS} names the admin1 name at
+ * index 3 because that is what a corpus row renders. this panel keys on the code beside it, which is stable across the
  * register's language variants.
  */
 const POSTAL_ADMIN1_CODE_COLUMN = 4
@@ -80,7 +80,7 @@ export interface GeoNamesCity {
 
 /**
  * Parse a GeoNames main-table dump. This benchmark reads `cities15000.txt`, the table filtered to places above 15,000
- * population; a per-country dump (`FR.txt`) carries the same columns and parses here unchanged, which is what a panel
+ * population. a per-country dump (`FR.txt`) carries the same columns and parses here unchanged, which is what a panel
  * reaching below that floor would read. `header: false`: the dump is headerless, and a spliterator that assumed one
  * would eat the first row.
  */
@@ -127,7 +127,7 @@ export async function readCountryNames(path: string): Promise<Map<string, string
 /**
  * The first postcode seen for each `(country, admin1)` pair, from `allCountries-postal.txt`.
  *
- * FIRST rather than random: the register's order is the register's, and taking the first makes the choice a property of
+ * First rather than random: the register's order is the register's, and taking the first makes the choice a property of
  * the source instead of a second seeded draw nobody registered. The file carries 1.8 million rows, so it is streamed
  * and only the index is held.
  */
@@ -263,7 +263,7 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 				.slice(0, 2)
 				.every((bearer) => goldSets.has(bearer.geonameid))
 		})
-		// One row per NAME, keyed on the first bearer in geonameid order, so a name cannot enter the panel twice.
+		// One row per name, keyed on the first bearer in geonameid order, so a name cannot enter the panel twice.
 		.filter((city) => {
 			const bearers = byName
 				.get(city.asciiname.toLowerCase())!

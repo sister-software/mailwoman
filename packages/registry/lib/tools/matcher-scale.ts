@@ -5,10 +5,10 @@
  *   Pure-Node matcher scale eval — the number behind "no Elasticsearch, no server."
  *
  *   The differentiator vs Pelias/Nominatim + a bolt-on ER stack is that the whole resolve (block →
- *   Fellegi-Sunter → cluster) runs in ONE Node process with no external service. This measures how
+ *   Fellegi-Sunter → cluster) runs in one Node process with no external service. This measures how
  *   far that goes: synthetic geo-clustered records (so geo-blocking produces realistic candidate
- *   pairs, not one giant block or all singletons), resolved at increasing N, timing wall-clock +
- *   peak RSS. Geocoding is NOT in scope here (it's the per-record cost measured elsewhere) — this
+ *   pairs rather than one giant block or all singletons), resolved at increasing N, timing wall-clock +
+ *   peak RSS. Geocoding is not in scope here (it's the per-record cost measured elsewhere) — this
  *   isolates the matcher's block/score/cluster cost as a function of N.
  *
  *   Run: `mailwoman registry matcher-scale [--sizes 10000,50000,100000,250000,500000] [--dup 3]
@@ -44,7 +44,7 @@ export interface MatcherScaleOptions {
 
 /**
  * Generate N synthetic records clustered into ~N/DUP distinct "places". Each place gets a coordinate in the
- * continental-US box, a canonical key, and an org name; its DUP duplicates carry a lightly-varied name and a jittered
+ * continental-US box, a canonical key, and an org name. its DUP duplicates carry a lightly-varied name and a jittered
  * coordinate, so geo-cell + canonical-key blocking groups them and scoring links them — the realistic shape of a dedup
  * workload.
  */
@@ -110,7 +110,7 @@ export async function matcherScale(
 		const t0 = performance.now()
 
 		// learnedScorer:false — this measures the FS-baseline pipeline throughput baseline (the learned scorer
-		// is now default-on; its per-pair tree eval is a separate cost, not what this scale number tracks).
+		// is now default-on. its per-pair tree eval is a separate cost rather than what this scale number tracks).
 		const { entities, candidatePairs } = resolveEntities(records, {
 			collapseSpatial: true,
 			trainEM: EM,

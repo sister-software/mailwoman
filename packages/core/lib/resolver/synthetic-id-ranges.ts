@@ -9,11 +9,11 @@
  *   `candidate_interval` sidecars are keyed by `spr_id` alone, a result's `placeID` is `wof:<spr_id>`, and the
  *   backend's `ancestors(id)` answers whichever row wrote last. Two builders that pick the same base give two places
  *   one id — which happened twice while each builder kept its own list of the ranges it believed were taken
- *   (NZ localities and Code-Point Open both at 9.7e12, 3,033 shared ids in the served table; CZ districts and the NI
- *   OSM postcodes both at 9.8e12). A docstring cannot enforce distinctness; this module and its test do.
+ *   (NZ localities and Code-Point Open both at 9.7e12, 3,033 shared ids in the served table. CZ districts and the NI
+ *   OSM postcodes both at 9.8e12). A docstring cannot enforce distinctness. this module and its test do.
  *
  *   Add a range here, never at the builder. Each holds at least 5e10 ids against a largest occupancy of 1.75 M
- *   (Code-Point Open), so spacing is not the constraint; the registry is.
+ *   (Code-Point Open), so spacing is not the constraint. the registry is.
  */
 
 /**
@@ -37,7 +37,7 @@ export const GEONAMES_POSTAL_ID_BASE = 9_500_000_000_000
 export const NL_PC6_ID_BASE = 9_600_000_000_000
 
 /**
- * The LINZ-derived New Zealand locality database (`gazetteer build nz-localities`).
+ * The linz-derived New Zealand locality database (`gazetteer build nz-localities`).
  */
 export const NZ_LOCALITY_ID_BASE = 9_650_000_000_000
 
@@ -62,7 +62,7 @@ export const CZ_DISTRICT_ID_BASE = 9_850_000_000_000
 export const TW_DISTRICT_ID_BASE = 9_900_000_000_000
 
 /**
- * Every synthetic range, ascending. The test over this table is what keeps the bases distinct and spaced; a builder
+ * Every synthetic range, ascending. The test over this table is what keeps the bases distinct and spaced. a builder
  * reads its own constant above and never this list.
  */
 export const SYNTHETIC_ID_RANGES: ReadonlyArray<{ readonly name: string; readonly base: number }> = [

@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The worktree arm's CONTRACT, exercised against a throwaway git repo rather than this one.
+ *   The worktree arm's interface, exercised against a throwaway git repo rather than this one.
  *
  *   Deliberately not a geocode: building an engine costs minutes and needs the data root, so a test that ran one
  *   would be a slow integration test wearing a unit test's clothes. What is asserted here is the implementation that
- *   was actually hard — that a ref arm runs the REF's source and a `WORKTREE` arm runs the UNCOMMITTED one,
+ *   was actually hard — that a ref arm runs the REF's source and a `worktree` arm runs the uncommitted one,
  *   that a dirty tree says so in the commit it reports, and that neither leaves litter behind.
  */
 
@@ -57,7 +57,7 @@ async function fakeRepo(marker: string): Promise<string> {
 		join(root, "packages", "mailwoman", "geocode", "index.ts")
 	)
 
-	// The workspace link yarn would have installed. Both arms need it and for different reasons: the WORKTREE arm
+	// The workspace link yarn would have installed. Both arms need it and for different reasons: the worktree arm
 	// resolves through it directly, and the ref arm's farm mirrors this directory to build its own — so an empty
 	// node_modules here would test neither path.
 	await makeDirectories(join(root, "node_modules"))
@@ -81,7 +81,7 @@ describe("runWorktreeArm — a ref arm runs THAT ref's source", () => {
 	it("answers from the committed source, not the working tree", async () => {
 		const root = await fakeRepo("committed")
 
-		// Edit without committing. A ref arm must not see this; that is the whole distinction it sells.
+		// Edit without committing. A ref arm must not see this. that is the whole distinction it sells.
 		await writeLocalTextFile(
 			`export async function createGeocodeSession() {
 				return { geocode: async () => ({ result: { lat: 9, lon: 9, resolution_tier: "uncommitted", components: {} } }), [Symbol.dispose]: () => {} }
@@ -115,7 +115,7 @@ describe("runWorktreeArm — the WORKTREE arm runs the UNCOMMITTED source", () =
 		})
 
 		expect(result.answers[0]!.tier).toBe("uncommitted")
-		// A dirty tree is not its HEAD. Reporting the bare sha would let a result claim a commit it did not run.
+		// A dirty tree is not its head. Reporting the bare sha would let a result claim a commit it did not run.
 		expect(result.commit).toContain("+dirty")
 	})
 
@@ -151,7 +151,7 @@ describe("runWorktreeArm — cleanup", () => {
 
 		const listed = runFileSync("git", ["worktree", "list"], { cwd: root, encoding: "utf8" })
 
-		// The main checkout is always listed; a leaked worktree would be a second line.
+		// The main checkout is always listed. a leaked worktree would be a second line.
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- the test creates at most one extra worktree
 		expect(listed.trim().split("\n")).toHaveLength(1)
 	})
@@ -165,7 +165,7 @@ describe("runWorktreeArm — cleanup", () => {
 
 		expect(runFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" })).toBe(before)
 		expect(runFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" })).toBe(head)
-		// A stash-based arm would have moved these; a worktree cannot, which is why it is a worktree.
+		// A stash-based arm would have moved these. a worktree cannot, which is why it is a worktree.
 		expect(await Globerator.from("*", { cwd: root, absolute: false, onlyFiles: false }).toArray()).toContain("packages")
 	})
 })

@@ -7,7 +7,7 @@
 #   - lr_schedule: constant → cosine (decay after step 50K prevents overfitting)
 #
 # Everything else carries from v0.5.1 unchained:
-#   - h384, batch=128 direct, CE-only, phrase priors ON, class weights tuned
+#   - h384, batch=128 direct, CE-only, phrase priors on, class weights tuned
 #
 # Expected improvement: model learns positional "locality precedes region abbreviation"
 # pattern from OSM data instead of WOF bare-name frequency.

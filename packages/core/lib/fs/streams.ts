@@ -38,7 +38,7 @@ export function openReadStream(path: PathBuilderLike, options?: Parameters<typeo
 /**
  * Open a path for streaming writes.
  *
- * Unlike the file writers in `./writers.ts`, this does NOT create the parent directory: a stream that fails on the
+ * Unlike the file writers in `./writers.ts`, this does not create the parent directory: a stream that fails on the
  * first chunk rather than at open time reports the missing directory somewhere the caller is no longer looking. Call
  * `makeDirectories` first where the parent may be absent.
  */
@@ -49,15 +49,15 @@ export function openReadStream(path: PathBuilderLike, options?: Parameters<typeo
  * file Shift_JIS. `spliterator` splits UTF-8 bytes, so the decode happens upstream of the split rather than after it —
  * a line boundary found in CP949 bytes is not a line boundary.
  *
- * NOT `TextDecoder`, AND THE DIFFERENCE IS NOT SMALL. Node's WHATWG `euc-kr` implements EUC-KR proper (KS X 1001) and
+ * Not `TextDecoder`, and the difference is not small. Node's whatwg `euc-kr` implements EUC-KR proper (KS X 1001) and
  * not the UHC extension CP949 adds in lead bytes 0x81–0xA0. Of the 17,048 two-byte sequences Python's `cp949` accepts,
- * `TextDecoder('euc-kr')` reads 8,824 differently: 6,475 become U+FFFD and 2,349 become a DIFFERENT character with no
+ * `TextDecoder('euc-kr')` reads 8,824 differently: 6,475 become U+fffd and 2,349 become a different character with no
  * error raised. `iconv-lite` disagrees with `cp949` on none of the 17,048.
  *
  * It is not a rare corner. One row in 48,000 of the Korean address register carries such a sequence — `더샾오피스텔`, bytes
  * `b4 f5 98 de bf c0 c7 c7 bd ba c5 da`, which `TextDecoder` reads as `더乍의퓰뵀�`.
  *
- * The decoder is STREAMING for the same reason a `TextDecoder` would need `{ stream: true }`: a multi-byte character
+ * The decoder is streaming for the same reason a `TextDecoder` would need `{ stream: true }`: a multi-byte character
  * split across two chunks must be held until its tail arrives, where a per-chunk decode emits a replacement character
  * and corrupts the row. `iconv-lite`'s stream decoder holds that state, and `end()` flushes what is left.
  *
@@ -90,7 +90,7 @@ export async function* decodeByteStream(
  * Decode bytes already in memory from a legacy encoding, the one-shot sibling of {@link decodeByteStream}.
  *
  * Same reasoning, same reason not to reach for `TextDecoder`, and it lives here so a reader that finds one finds the
- * other. Use this when the whole file is a bounded size the publisher fixes; use the stream when it is not.
+ * other. Use this when the whole file is a bounded size the publisher fixes. use the stream when it is not.
  *
  * @category Files
  * @param encoding An `iconv-lite` label — `cp949`, `cp932`, `gbk`.

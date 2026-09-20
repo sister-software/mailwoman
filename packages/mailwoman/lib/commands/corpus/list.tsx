@@ -5,7 +5,7 @@
  *   `mailwoman corpus list` — print every adapter known to the default registry, one per line.
  *
  *   Used by humans and by scripts that want to fan out a build over adapters. Prints nothing (zero
- *   lines + exit 0) when no adapter has been registered yet; that's the expected state during early
+ *   lines + exit 0) when no adapter has been registered yet. that's the expected state during early
  *   Phase 1 while adapters are still being authored.
  */
 
@@ -14,13 +14,13 @@ import { Box, Text } from "ink"
 import { type CommandSpec, CommandTaskResult, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = { name: "list", description: "List registered corpus adapters" } as const satisfies CommandSpec
 
 /**
  * Per-line output is rendered as a single `Text` node so Ink does not column-wrap the adapter id when the host stdout
- * is non-TTY (CI, spawned tests). The list is meant to be grep-friendly, not pretty.
+ * is non-TTY (CI, spawned tests). The list is meant to be grep-friendly rather than pretty.
  */
 const CorpusList = () => {
 	const state = useCommandTask(async () => {

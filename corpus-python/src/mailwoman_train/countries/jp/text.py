@@ -24,7 +24,7 @@ JP_PREFECTURES = frozenset(
     "熊本県 大分県 宮崎県 鹿児島県 沖縄県".split()
 )
 
-# Hyphen-equivalence class. Applied to the NUMBER field only: U+30FC and U+FF70 are prolonged-sound
+# Hyphen-equivalence class. Applied to the number field only: U+30FC and U+FF70 are prolonged-sound
 # marks that belong inside katakana names, and folding them there would corrupt the name. In a
 # banchi-go they are a typed hyphen.
 _HYPHEN_CLASS = "‐‑‒–—―−ー﹘﹣－ｰ"
@@ -40,8 +40,8 @@ _CHOME_TAIL = re.compile(r"^(.*?)([0-9０-９〇一二三四五六七八九十�
 def normalize_name(text: str) -> str:
     """Normalize a NAME field (prefecture / municipality / street): NFC + kana fold + de-space.
 
-    ALL whitespace is removed, interior included. 135 street values carry an ideographic space
-    (``西与賀町　字今津乙``) which is a rendering artifact of the source, not part of the name — the
+    All whitespace is removed, interior included. 135 street values carry an ideographic space
+    (``西与賀町　字今津乙``) which is a rendering artifact of the source rather than part of the name — the
     written form closes it up, and leaving it in put a U+3000 inside a ``district`` span (found by
     counting labelled chars against significant chars on the first full build: coverage read
     1.000001, which is how a six-row defect announces itself).

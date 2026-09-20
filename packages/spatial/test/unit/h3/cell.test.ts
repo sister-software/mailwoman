@@ -12,7 +12,7 @@ import {
 import { getBaseCellNumber, latLngToCell } from "h3-js"
 import { expect, test } from "vitest"
 
-// A real resolution-9 cell (White House, 38.8977, -77.0365) from h3-js itself, not a synthetic
+// A real resolution-9 cell (White House, 38.8977, -77.0365) from h3-js itself rather than a synthetic
 // hex string — this exercises the actual encoding shortCellToInt is packing.
 const CELL = latLngToCell(38.8977, -77.0365, 9) as H3Cell
 
@@ -21,7 +21,7 @@ const CELL = latLngToCell(38.8977, -77.0365, 9) as H3Cell
 const RESOLUTIONS = Array.from({ length: 16 }, (_, resolution) => resolution)
 
 test("shortCellToInt: packs a real res-9 cell to the 48-bit short-cell integer", () => {
-	// Computed here via the existing shortenH3Cell, not a hand-copied literal, so this can't drift
+	// Computed here via the existing shortenH3Cell rather than a hand-copied literal, so this can't drift
 	// from shortenH3Cell's own encoding.
 	const expected = Number(BigInt(`0x${shortenH3Cell(CELL)}`))
 
@@ -46,7 +46,7 @@ test("expandH3Cell: round-trips a cell whose base cell zeroes the leading nibble
 	expect(expandH3Cell(shortenH3Cell(cell), 15)).toBe(cell)
 })
 
-// A short cell derived from an integer key has lost its leading zeros; expansion has to restore them
+// A short cell derived from an integer key has lost its leading zeros. expansion has to restore them
 // rather than shift the digit path.
 test("expandH3Cell: accepts an unpadded short cell recovered from its integer form", () => {
 	const cell = latLngToCell(64.3025, 135.29175, 15) as H3Cell

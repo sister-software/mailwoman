@@ -1,10 +1,10 @@
-"""The fragment/autocomplete slice, synthesized from real address parts.
+"""The fragment/autocomplete recipe, synthesized from real address parts.
 
 Three modules, in the order the builder uses them:
 
 - `sources.py` — harvesting real surfaces from OpenAddresses CSVs and from a corpus's spans.
 - `rows.py` — turning one surface into a labeled row, with char offsets over the rendered text.
-- `build.py` — the CLI that assembles the slice and separates the 10% holdout.
+- `build.py` — the CLI that assembles the recipe output and separates the 10% holdout.
 
 `python -m mailwoman_train.corpora.fragment` runs `__main__.py`, which carries the usage line.
 """

@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Generator for `data/taxonomy.json` — merges the FULL Overture Places category taxonomy snapshot
- *   with mailwoman's hand-maintained curated overlay. Two committed inputs, one committed output;
- *   the merge is a PURE, deterministic function so a regenerate against the same inputs is
+ *   Generator for `data/taxonomy.json` — merges the full Overture Places category taxonomy snapshot
+ *   with mailwoman's hand-maintained curated overlay. Two committed inputs, one committed output.
+ *   the merge is a pure, deterministic function so a regenerate against the same inputs is
  *   byte-identical (the {@link buildTaxonomyTable} → {@link prettyJSON} pair is what the
  *   determinism test in `lookup.test.ts` exercises).
  *
@@ -14,20 +14,20 @@
  *            ac891b7f22486a6c96c1f6232461e7193263b184
  *   Fetched: 2026-07-20 (row count 2117 category rows, excluding the header)
  *   Format : semicolon-delimited, BOM-prefixed — `<category code>; [<hierarchy,path,leaf>]`, where the
- *            path's LAST element is always the code itself (asserted at parse time).
- *   The old Overture `categories` PROPERTY on the Places feature is retired in Overture's Sept 2026
- *   release; this snapshot is the NEW `taxonomy` property's category vocabulary, pinned as committed
- *   data so the runtime never reaches the network. See `data/PROVENANCE.md`.
+ *            path's last element is always the code itself (asserted at parse time).
+ *   The old Overture `categories` property on the Places feature is retired in Overture's Sept 2026
+ *   release. this snapshot is the new `taxonomy` property's category vocabulary, pinned as committed
+ *   data so the runtime never reaches the network. See `data/provenance.md`.
  *
  *   ── Merge rules ─────────────────────────────────────────────────────────────────────────────────
- *   • Curated records (the 26 in `curated-overlay.json`) are preserved verbatim and WIN id collisions
+ *   • Curated records (the 26 in `curated-overlay.json`) are preserved verbatim and win id collisions
  *     with the snapshot (a curated `bank`/`school`/`cafe` keeps its curated hierarchy, `osmTag`, and
  *     `overtureCategories` — the snapshot's same-id row is dropped).
- *   • Overture leaves a curated record already ABSORBS via its `overtureCategories` (e.g. `coffee_shop`
- *     → `cafe`, `grocery_store` → `supermarket`, `hiking_trail` → `trail`) are NOT emitted as
+ *   • Overture leaves a curated record already absorbs via its `overtureCategories` (e.g. `coffee_shop`
+ *     → `cafe`, `grocery_store` → `supermarket`, `hiking_trail` → `trail`) are not emitted as
  *     standalone snapshot records. Those leaves belong to their curated canonical id — emitting them
  *     twice would let a snapshot id-phrase (`coffee shop`) shadow the curated synonym (`coffee shop` →
- *     `cafe`) in the phrase index, which the POI board depends on NOT happening. The db still stores
+ *     `cafe`) in the phrase index, which the POI board depends on not happening. The db still stores
  *     the raw leaves; `resolveOvertureCategories` fans the curated id back out to them. Umbrella records may set
  *     `retainOvertureLeaves` when each mapped leaf remains independently meaningful.
  *   • Every other snapshot row becomes an identity Overture record (id = code, humanized label,
@@ -36,10 +36,10 @@
  *     machines with different ICU builds commit the same bytes.
  *
  *   Run: `node poi-taxonomy/scripts/generate-taxonomy.ts && npx oxfmt poi-taxonomy/data/taxonomy.json`
- *   (reads the committed CSV; the oxfmt pass is the repo law — committed JSON is oxfmt-clean, which raw
+ *   (reads the committed CSV. the oxfmt pass is the repo law — committed JSON is oxfmt-clean, which raw
  *   `JSON.stringify` can't reproduce). Pass `--fetch` to refresh the CSV snapshot from the source URL
  *   above first (records nothing new about provenance automatically — update this header +
- *   `PROVENANCE.md` by hand when you do). The generator itself is byte-deterministic; oxfmt is too, so
+ *   `provenance.md` by hand when you do). The generator itself is byte-deterministic. oxfmt is too, so
  *   the committed artifact is reproducible, and the merge's data is content-identical to a fresh run
  *   (asserted by `lookup.test.ts`).
  */
@@ -93,15 +93,15 @@ export interface CuratedOverlay {
 /**
  * Parse the Overture categories CSV. Accepts its leading BOM, skips the header row, and splits each `code; [a,b,c]`
  * line. A handful of Overture rows (4 as of the v1.17.0 snapshot — `aircraft_repair`, `ev_charging_station`,
- * `custom_t_shirt_store`, `community_services_non_profits`) carry a display path whose LEAF label differs from the
- * category code the db actually stores; for those the code is APPENDED as the true leaf so the invariant `lookup.ts`'s
+ * `custom_t_shirt_store`, `community_services_non_profits`) carry a display path whose leaf label differs from the
+ * category code the db actually stores. for those the code is appended as the true leaf so the invariant `lookup.ts`'s
  * integrity test relies on (`hierarchy.at(-1) === id`) holds while the display ancestry is preserved. Throws only on a
  * structurally broken row (no code / empty path) or a repeated code.
  */
 export function parseOvertureCSV(csvText: string): OvertureSnapshotRow[] {
 	const rows: OvertureSnapshotRow[] = []
 	const seen = new Set<string>()
-	// The header is row 1; the first emitted record is row 2.
+	// The header is row 1. the first emitted record is row 2.
 	let rowNumber = 1
 
 	for (const fields of CSVSpliterator.from<string[]>(csvText, {

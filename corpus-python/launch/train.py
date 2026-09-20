@@ -2,7 +2,7 @@
 
     modal run -d -m launch.train_remote --config <recipe>.yaml --resume auto
 
-Stage what the recipe reads FIRST, with `launch/syncs.py`; this module trains against whatever is
+Stage what the recipe reads first, with `launch/syncs.py`; this module trains against whatever is
 already on the volume. Two preflights run before the GPU is billed — the corpus receipts on CPU, and
 the wall-clock estimate against this function's timeout — because both failures are otherwise found
 hours in, after the spend.
@@ -19,8 +19,7 @@ from .app import OUTPUT_DIR, VOL_MOUNT, app, hf_secret, training_image, vol
 # at the measured throughput 60k optimizer steps alone need ~3h55m, before image boot, volume
 # reload, loader init, validation, checkpointing, and the final save/commit. 21,600 s (6h)
 # covers the 60k A100 recipe with real headroom, and `_required_train_seconds` preflights any
-# recipe against the ceiling INSIDE train() — a config that cannot fit fails in minute one,
-# not at the wire.
+# recipe against the ceiling inside train() — a config that cannot fit fails in minute one rather than at the wire.
 TRAIN_TIMEOUT_SECONDS = 21600
 # Measured on the v4.3.3 A100 run (2026-08-09): ~4.25 optimizer steps/s at batch 128.
 MEASURED_STEPS_PER_SECOND = 4.25
@@ -88,7 +87,7 @@ def _train_gpu(
     """Run the CE-only classifier training on an A100.
 
     Pass ``--trackio`` (and optionally ``--trackio-space org/space``) to mirror metrics
-    to a Hugging Face Space dashboard. These override the YAML config's trackio fields;
+    to a Hugging Face Space dashboard. These override the YAML config's trackio fields.
     omit them to honor whatever the config sets (default: tracking off).
     """
     import sys
@@ -96,8 +95,8 @@ def _train_gpu(
     import torch
 
     # Fetch the latest committed volume state. Without this, a container mounts a stale
-    # snapshot and never sees slices added via `modal volume put` after deploy — which silently
-    # trains on the old corpus (the v0.7.1 intersection-slice trap, night-3 2026-05-29).
+    # snapshot and never sees parquet files added via `modal volume put` after deploy — which silently
+    # trains on the old corpus (the v0.7.1 intersection-recipe trap, night-3 2026-05-29).
     vol.reload()
 
     # Add training code to path
@@ -109,8 +108,8 @@ def _train_gpu(
         print(f"GPU: {torch.cuda.get_device_name(0)}")
         print(f"VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
 
-    # Corpus existence is verified AFTER the config loads (below), against cfg.data.corpus_dir — the
-    # corpus version travels in the config, not hardcoded here. (Was pinned to v0.3.0, which silently
+    # Corpus existence is verified after the config loads (below), against cfg.data.corpus_dir — the
+    # corpus version travels in the config rather than hardcoded here. (Was pinned to v0.3.0, which silently
     # blocked every later corpus once v0.3.0 was cleaned off the volume. 2026-06-12.)
 
     # The config file references paths relative to /data/ which matches our volume mount
@@ -122,7 +121,7 @@ def _train_gpu(
     print(f"Resume: {resume}")
     print("Starting training...\n")
 
-    # Import and run training. load_config is the STRICT path (#1248): an unknown YAML
+    # Import and run training. load_config is the strict path (#1248): an unknown YAML
     # key — e.g. a setting the volume-side config schema predates — raises here at launch,
     # naming the dotted key + file, instead of silently running a fine-tune with every setting inert.
     from mailwoman_train.config import load_config
@@ -131,15 +130,15 @@ def _train_gpu(
     cfg = load_config(config_path)
 
     # Verify the corpus the config actually points at exists on the volume (post-config so the version
-    # isn't hardcoded). The data loader reads cfg.data.corpus_dir; fail loud here if it's missing.
+    # isn't hardcoded). The data loader reads cfg.data.corpus_dir. fail loud here if it's missing.
     train_dir = os.path.join(cfg.data.corpus_dir, "train")
     if not os.path.isdir(train_dir):
         raise RuntimeError(
             f"Corpus not found at {train_dir} (cfg.data.corpus_dir={cfg.data.corpus_dir}). "
             "Stage it first: `modal run -m launch.train_remote::sync --version <name>`."
         )
-    slice_count = len([f for f in os.listdir(train_dir) if f.endswith(".parquet")])
-    print(f"Corpus: {cfg.data.corpus_dir} ({slice_count} train slices)")
+    file_count = len([f for f in os.listdir(train_dir) if f.endswith(".parquet")])
+    print(f"Corpus: {cfg.data.corpus_dir} ({file_count} train parquet files)")
 
     if cfg.data.required_corpus_receipts:
         from pathlib import Path
@@ -157,7 +156,7 @@ def _train_gpu(
         print(f"Corpus receipts: verified ({len(cfg.data.required_corpus_receipts)} requirements)")
 
     # Preflight the wall-clock budget (2026-08-09 P1): a recipe whose step count cannot fit
-    # this function's timeout must fail HERE, not die at the wire like the 60k predecessor
+    # this function's timeout must fail here rather than die at the wire like the 60k predecessor
     # that Modal killed at step 59,900.
     required = _required_train_seconds(cfg.train.max_steps)
     if required > TRAIN_TIMEOUT_SECONDS:
@@ -194,7 +193,7 @@ def _train_gpu(
         run_train(cfg, resume_from="auto")
     elif resume and resume != "none":
         # Explicit checkpoint path — the branch-run mechanism (e.g. the linear_cooldown read of
-        # a mid-cosine checkpoint under a NEW output dir). Previously silently dropped, which
+        # a mid-cosine checkpoint under a new output dir). Previously silently dropped, which
         # made every non-auto resume a fresh run.
         run_train(cfg, resume_from=resume)
     else:
@@ -221,7 +220,7 @@ def main(
     """
     Run the mailwoman training pipeline on Modal.
 
-    Stage what the recipe reads FIRST, with its own sync; this entry point trains against whatever
+    Stage what the recipe reads first, with its own sync. this entry point trains against whatever
     is already on the volume and stages nothing.
 
     --config         Training config YAML filename

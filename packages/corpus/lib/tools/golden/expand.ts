@@ -7,19 +7,20 @@
  *
  *   ## Why this approach
  *
- *   The Phase 2 golden set has 74 entries; session-notes.md called for ≥500/locale. Manual curation
+ *   The Phase 2 golden set has 74 entries. session-notes.md called for ≥500/locale. Manual curation
  *   doesn't scale. Pure-LLM generation (invent raw + labels from scratch) is too noisy — labels
  *   would be unverified.
  *
  *   This module takes the middle path:
  *
- *   1. **Seeds come from corpus-v0.2.0 test slice** — already through the alignment pipeline, so labels
+ *   1. **Seeds come from the corpus-v0.2.0 test split's parquet files** — already through the alignment pipeline, so
+ *        labels
  *        are pipeline-verified.
  *   2. **LLM only varies the surface form** — case, abbreviations, reordering, dropped components. The
- *        component VALUES (locality string, postcode digits, etc.) are preserved verbatim.
+ *        component values (locality string, postcode digits, etc.) are preserved verbatim.
  *   3. **Programmatic validator drops hallucinations** — every component value must appear as a
  *        substring (case-insensitive, whitespace-normalized) of the variant's raw. Failures dropped
- *        silently; cost is wasted tokens, never bad-labeled golden entries.
+ *        silently. cost is wasted tokens, never bad-labeled golden entries.
  *
  *   ## Usage
  *
@@ -36,7 +37,7 @@
  *   - `DEEPSEEK_API_KEY` — required for provider `deepseek`
  *   - `ANTHROPIC_API_KEY` — required for provider `anthropic`
  *
- *   ## What this module does NOT do
+ *   ## What this module does not do
  *
  *   - Does not commit anything or modify the versioned golden dir. Candidates land in
  *       `data/eval/golden/candidates/` for operator review (skim, prune, then run
@@ -49,14 +50,14 @@ import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON, stringifyJSON, prettyJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
 import { SeededRandom } from "@mailwoman/core/random"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { dirname } from "path-ts"
 import { createNewlineWriter } from "spliterator"
 
 import { $private } from "#env"
-import { streamParquetRows } from "#utils/parquet"
+import { openParquetRowStream } from "#parquet/streams"
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -67,7 +68,7 @@ const MAX_CANDIDATE_LENGTH = 500
 
 /**
  * The stream position the per-source subsample draws from. Fixed rather than supplied, because the point is that two
- * runs over one corpus choose the same seeds; a caller-supplied seed would make that the caller's problem to remember.
+ * runs over one corpus choose the same seeds. a caller-supplied seed would make that the caller's problem to remember.
  */
 const SUBSAMPLE_SEED = 20_260_913
 
@@ -107,7 +108,7 @@ interface GoldenCandidate {
 
 export interface ExpandGoldenOptions {
 	/**
-	 * Corpus test slice path(s), comma-separated. Default: the v0.2.0 test slice under the data root.
+	 * Corpus test-split parquet path(s), comma-separated. Default: the v0.2.0 test parquet file under the data root.
 	 */
 	corpus?: string
 	/**
@@ -119,7 +120,7 @@ export interface ExpandGoldenOptions {
 	 */
 	variants?: number
 	/**
-	 * JSONL output path. Default `data/eval/golden/candidates/expand-<ts>.jsonl`.
+	 * Jsonl output path. Default `data/eval/golden/candidates/expand-<ts>.jsonl`.
 	 */
 	output?: string
 	/**
@@ -201,27 +202,24 @@ async function loadSeeds(
 	includeSources: Set<string> | null,
 	report?: (line: string) => void
 ): Promise<Seed[]> {
-	const paths = corpusPath
-		.split(",")
-		.map((p) => p.trim())
-		.filter(isPresent)
+	const paths = extractDelimited(corpusPath)
 
-	report?.(`reading seeds from ${paths.length} slice(s) (target: ${count}, stratified)`)
+	report?.(`reading seeds from ${paths.length} parquet file(s) (target: ${count}, stratified)`)
 
 	if (includeSources) {
 		report?.(`  include-sources filter: ${Array.from(includeSources).join(", ")}`)
 	}
 
-	// Stratified sampling: read all rows from all slices, group by source. Bounded by per-source
+	// Stratified sampling: read all rows from all parquet files, group by source. Bounded by per-source
 	// reservoir: keep at most max(2*count, 5000) rows per source so we don't blow memory on train
-	// slices (1M rows × many slices). Sampling later is uniform within each pool.
+	// parquet files (1M rows × many files). Sampling later is uniform within each pool.
 	const bySource = new Map<string, Seed[]>()
 	const PER_SOURCE_CAP = Math.max(2 * count, 5000)
 	let scanned = 0
 	let skippedThinComponents = 0
 
 	for (const path of paths) {
-		for await (const row of streamParquetRows<CorpusRow>(path)) {
+		for await (const row of openParquetRowStream<CorpusRow>(path)) {
 			scanned++
 
 			// Source allow-list (--include-sources) — applied early to skip parsing rows we won't use
@@ -257,7 +255,7 @@ async function loadSeeds(
 	}
 
 	report?.(
-		`  scanned ${scanned} rows across ${paths.length} slice(s); thin-components dropped: ${skippedThinComponents}`
+		`  scanned ${scanned} rows across ${paths.length} parquet file(s); thin-components dropped: ${skippedThinComponents}`
 	)
 
 	report?.(`  per-source pool sizes:`)
@@ -266,7 +264,7 @@ async function loadSeeds(
 		report?.(`    ${src}: ${pool.length}`)
 	}
 
-	// Round-robin sample. Each source gives floor(count / nSources) seeds; rounding goes
+	// Round-robin sample. Each source gives floor(count / nSources) seeds. rounding goes
 	// to sources in alphabetical order. If a pool is smaller than its target, take all of it.
 	const sources = Array.from(bySource.keys()).toSorted()
 	const perSource = Math.floor(count / sources.length)
@@ -281,7 +279,7 @@ async function loadSeeds(
 		const pool = bySource.get(src)!
 		const target = perSource + (i < remainder ? 1 : 0)
 
-		// Subsample without replacement — shuffle, then slice.
+		// Subsample without replacement — shuffle, then take the head.
 		random.shuffle(pool)
 
 		const take = Math.min(target, pool.length)
@@ -437,7 +435,7 @@ function parseCandidates(text: string): Candidate[] {
 // ── Validator ─────────────────────────────────────────────────────────────
 
 /**
- * Components that are NEVER allowed to be dropped — keeps degenerate single-token candidates out.
+ * Components that are never allowed to be dropped — keeps degenerate single-token candidates out.
  */
 const REQUIRED_COMPONENT_TAGS = new Set(["locality", "region", "street", "house_number", "venue"])
 
@@ -536,7 +534,7 @@ export async function expandGolden(
 
 						// Remove dropped components from the components map
 						for (const tag of goldenCandidate.dropped_components) {
-							// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record; the object is not on a hot path
+							// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record. the object is not on a hot path
 							delete goldenCandidate.components[tag]
 						}
 

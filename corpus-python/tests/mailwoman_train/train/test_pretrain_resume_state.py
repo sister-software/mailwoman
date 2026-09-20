@@ -80,7 +80,7 @@ def test_a_checkpoint_with_scheduler_state_loads_it(tmp_path: Path) -> None:
 
 
 def test_an_empty_checkpoint_directory_resumes_at_step_zero(tmp_path: Path) -> None:
-    """A directory with nothing in it is a resume that has nothing to restore, not a failure."""
+    """A directory with nothing in it is a resume that has nothing to restore rather than a failure."""
     empty = tmp_path / "empty"
     empty.mkdir()
     optim, scheduler = _optimizer_and_scheduler()

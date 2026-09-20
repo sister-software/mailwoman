@@ -2,27 +2,27 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman eval invariance` — the INVARIANCE MINI-SUITE: a standing, seconds-cheap
+ *   `mailwoman eval invariance` — the invariance mini-suite: a standing, seconds-cheap
  *   metamorphic-invariance check (comma-drop / abbreviation-swap / case-fold / lowercase /
  *   whitespace-jitter / trailing-punct / idempotence) over `eval-harness/invariance/suite.jsonl`, meant
- *   to run in EVERY probe grade so distribution-shift collateral surfaces at 2k-probe cost instead of
- *   ship-prep cost. Compares decoded PARSE COMPONENTS only (no resolver) — cheap by construction. Parses
- *   run through the PRODUCTION runtime pipeline (`createRuntimePipeline`), per-row locale from each
- *   fixture row's country, weights-package FST auto-loaded (#1516). Exit nonzero on any LOST pair, or
- *   when the DEGRADED count exceeds `--max-degraded`. `--baseline` switches to regression mode: a
- *   violation the baseline ALSO exhibits on the same pair is reported but doesn't fail the check — the
+ *   to run in every probe grade so distribution-shift collateral surfaces at 2k-probe cost instead of
+ *   ship-prep cost. Compares decoded parse components only (no resolver) — cheap by construction. Parses
+ *   run through the production runtime pipeline (`createRuntimePipeline`), per-row locale from each
+ *   fixture row's country, weights-package FST auto-loaded (#1516). Exit nonzero on any `lost` pair, or
+ *   when the degraded count exceeds `--max-degraded`. `--baseline` switches to regression mode: a
+ *   violation the baseline also exhibits on the same pair is reported but doesn't fail the check — the
  *   shape probe grading uses to diff a candidate against v385. Two more regression-mode classes never
- *   fail the check: GAINED pairs (the candidate holds what the baseline violated) and gained-capability
+ *   fail the check: gained pairs (the candidate holds what the baseline violated) and gained-capability
  *   residuals (a row whose critical components the baseline never parsed at all).
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description =
 	"Metamorphic invariance mini-suite (comma-drop/abbrev/case/idempotence) — standing probe guard"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "invariance",
@@ -45,34 +45,15 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	suite?: string
-	model?: string
-	tokenizer?: string
-	modelCard?: string
-	weightsCache?: string
-	locale?: string
-	maxDegraded?: number
-	baseline?: string
-	baselineTokenizer?: string
-	baselineModelCard?: string
-	baselineWeightsCache?: string
-}
+// The runner narrates its own report + verdict lines, so no `json` — rendering anything here would duplicate it.
+const EvalInvariance = harnessCommand(
+	spec,
+	async (options) => {
+		const { runInvarianceCommand } = await import("#eval-harness/invariance/command")
 
-const EvalInvariance: ParsedCommandComponent<Options> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { runInvarianceCommand } = await import("#eval-harness/invariance/command")
-
-			return await runInvarianceCommand(options)
-		},
-		(exitCode) => exitCode
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	// The runner narrates its own report + verdict lines — rendering anything here would duplicate it.
-	return null
-}
+		return await runInvarianceCommand(options)
+	},
+	{ exitCode: (exitCode) => exitCode }
+)
 
 export default EvalInvariance

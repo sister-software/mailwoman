@@ -403,7 +403,7 @@
 {"raw":"Weldam 15, 8103 HN Raalte","components":{"street":"Weldam","locality":"Raalte","house_number":"15","postcode":"8103 HN"},"country":"NL","order":"native"}
 {"raw":"Mexicohof 25, 2622AE Delft","components":{"street":"Mexicohof","locality":"Delft","house_number":"25","postcode":"2622AE"},"country":"NL","order":"native"}
 {"raw":"Piet Heynstraat 4, 5102VP Dongen","components":{"street":"Piet Heynstraat","locality":"Dongen","house_number":"4","postcode":"5102VP"},"country":"NL","order":"native"}
-{"raw":"Buys Ballotstraat, 1704 SK Heerhugowaard","components":{"street":"Buys Ballotstraat","locality":"Heerhugowaard","postcode":"1704 SK"},"country":"NL","order":"native"}
+{"raw":"Buys\\u0020Ballotstraat, 1704 SK Heerhugowaard","components":{"street":"Buys\\u0020Ballotstraat","locality":"Heerhugowaard","postcode":"1704 SK"},"country":"NL","order":"native"}
 {"raw":"Raadhuisplein 41C, 3771ER Barneveld","components":{"street":"Raadhuisplein","locality":"Barneveld","house_number":"41C","postcode":"3771ER"},"country":"NL","order":"native"}
 {"raw":"Hunsingosingel 14, 2548LN 's-Gravenhage","components":{"street":"Hunsingosingel","locality":"'s-Gravenhage","house_number":"14","postcode":"2548LN"},"country":"NL","order":"native"}
 {"raw":"Pieter Latensteinstraat 20, 1501 VG Zaandam","components":{"street":"Pieter Latensteinstraat","locality":"Zaandam","house_number":"20","postcode":"1501 VG"},"country":"NL","order":"native"}
@@ -1004,7 +1004,7 @@
 {"raw":"37 Wingerd, Waddinxveen, Zuid-Holland 2742SB","components":{"street":"Wingerd","locality":"Waddinxveen","house_number":"37","postcode":"2742SB","region":"Zuid-Holland"},"country":"NL","order":"international"}
 {"raw":"36 De Keijzerstraat, Zwolle, Overijssel 8023VX","components":{"street":"De Keijzerstraat","locality":"Zwolle","house_number":"36","postcode":"8023VX","region":"Overijssel"},"country":"NL","order":"international"}
 {"raw":"Groene Weidje, Goes","components":{"street":"Groene Weidje","locality":"Goes"},"country":"NL","order":"native"}
-{"raw":"55 Buys Ballotstraat, Hilversum, Noord-Holland 1221 NG","components":{"street":"Buys Ballotstraat","locality":"Hilversum","house_number":"55","postcode":"1221 NG","region":"Noord-Holland"},"country":"NL","order":"international"}
+{"raw":"55 Buys\\u0020Ballotstraat, Hilversum, Noord-Holland 1221 NG","components":{"street":"Buys\\u0020Ballotstraat","locality":"Hilversum","house_number":"55","postcode":"1221 NG","region":"Noord-Holland"},"country":"NL","order":"international"}
 {"raw":"13 Bloemstein, Nieuw-Vennep, Noord-Holland","components":{"street":"Bloemstein","locality":"Nieuw-Vennep","house_number":"13","region":"Noord-Holland"},"country":"NL","order":"international"}
 {"raw":"Hereweg, Meeden, Groningen 9651 AT","components":{"street":"Hereweg","locality":"Meeden","postcode":"9651 AT","region":"Groningen"},"country":"NL","order":"international"}
 {"raw":"Puntenburgerlaan, 3812 CC Amersfoort","components":{"street":"Puntenburgerlaan","locality":"Amersfoort","postcode":"3812 CC"},"country":"NL","order":"native"}

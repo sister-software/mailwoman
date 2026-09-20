@@ -1,4 +1,4 @@
-# v0.4.0 stable-LR ablation: §3 class_weights ON, §1 CRF reverted to v0.3.0.
+# v0.4.0 stable-LR ablation: §3 class_weights on, §1 CRF reverted to v0.3.0.
 #
 # Tests whether §3 destabilizes even at the v0.3.0-stable LR (1.5e-4). If this run
 # diverges past step 2000, class_weights are the offender at any LR — kill the
@@ -45,7 +45,7 @@ model:
   label_smoothing: 0.0
   # v0.3.0 dual-loss recipe (per_sequence default + crf_loss_weight=0.05).
   crf_loss_weight: 0.05
-  # §3 class_weights ON.
+  # §3 class_weights on.
   class_weights:
     O: 1.0
     B-country: 2.0

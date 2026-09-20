@@ -159,7 +159,7 @@ export async function fulfilInvoice(
 		}
 	}
 
-	// The line's own period, not the subscription's current one: a replayed or backfilled invoice after a later renewal
+	// The line's own period rather than the subscription's current one: a replayed or backfilled invoice after a later renewal
 	// must mint the period it paid for, never the newer one.
 	const periodEnd = line.period?.end
 
@@ -212,7 +212,7 @@ export async function fulfilInvoice(
 	})
 
 	if (inserted === "present") {
-		// Another mint for this invoice landed between the read above and this insert; its row is the token.
+		// Another mint for this invoice landed between the read above and this insert. its row is the token.
 		const winner = await findToken(deps.ledger, invoiceID)
 
 		if (!winner) throw new Error(`token for ${invoiceID} vanished after a concurrent insert`)
@@ -250,7 +250,7 @@ export type SendOutcome = { state: "sent" } | { state: "failed"; reason: string 
 
 /**
  * Send a token to its licensee under the invoice id and record the outcome. The refresh secret rides along while the
- * plaintext is still pending, so a re-send before the first claim carries what the first would have.
+ * plaintext is still pending, so a re-send before the first claim includes what the first would have.
  */
 export async function sendTokenEmail(
 	deps: Pick<FulfilDependencies, "ledger" | "email">,

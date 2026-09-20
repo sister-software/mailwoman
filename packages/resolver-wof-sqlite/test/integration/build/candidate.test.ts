@@ -9,11 +9,11 @@
  *
  *   1. **Denormalized single-probe shape** — every candidate row carries name + centroid + bbox +
  *        country/placetype codes, so a resolve is one statement (no join to spr).
- *   2. **Shared-normalizer parity** — the `name_key` is {@link normalizeLocalityForKey}, the SAME
- *        function the query side uses; a diacritic name keys to its folded form by construction.
- *   3. **page_size = 8192** — set right before VACUUM (node:sqlite creates the file at 4096).
+ *   2. **Shared-normalizer parity** — the `name_key` is {@link normalizeLocalityForKey}, the same
+ *        function the query side uses. a diacritic name keys to its folded form by construction.
+ *   3. **page_size = 8192** — set right before vacuum (node:sqlite creates the file at 4096).
  *   4. **The passes** — primaries, alias bags, region abbreviations, postcode extracts (with the
- *        `latitude!=0 AND longitude!=0` placeholder-coord filter), and each extract's `names`-table
+ *        `latitude!=0 and longitude!=0` placeholder-coord filter), and each extract's `names`-table
  *        delivery-city aliases (#1495).
  */
 
@@ -93,7 +93,7 @@ function buildFixtureAdmin(path: string): void {
  * extract — that's where `postcode/centroid-fills.ts` writes the GeoNames delivery-city names (#1495). One real-coord
  * ZIP + one placeholder 0,0.
  *
- * @param withNames Build the extract WITHOUT a `names` table, to cover the tolerate-and-say-so path.
+ * @param withNames Build the extract without a `names` table, to cover the tolerate-and-say-so path.
  */
 function buildFixturePostcodes(path: string, withNames = true): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -255,7 +255,7 @@ describe("buildCandidateTable", () => {
 		const output = scratch.resolve("candidate.db")
 		buildFixtureAdmin(input)
 
-		// Georgia the country, with NO place_population row — the measured state of 147 of 237 primary
+		// Georgia the country, with no place_population row — the measured state of 147 of 237 primary
 		// country records. Without the fallback it enters every prominence race at an asserted zero.
 		using src = new DatabaseClient<WOFDatabase>(input)
 		src.exec(`INSERT INTO spr VALUES (300, 'Georgia', 'country', 'GE', 42.0, 43.5, 41.0, 40.0, 43.6, 46.7, -1, 0)`)
@@ -269,7 +269,7 @@ describe("buildCandidateTable", () => {
 
 		expect(country?.population).toBe(3_704_500)
 
-		// The fallback is COUNTRY-scoped: a locality with no population keeps its honest zero.
+		// The fallback is country-scoped: a locality with no population keeps its honest zero.
 		const [springfield] = probe(db, normalizeLocalityForKey("Springfield"))
 		expect(springfield?.population).toBe(114_000)
 	})
@@ -320,7 +320,7 @@ describe("buildCandidateTable", () => {
 			)
 
 		try {
-			// Gloss core: every alias of the double-absent place stamps; its primary never does.
+			// Gloss core: every alias of the double-absent place stamps. its primary never does.
 			expect(role("fish")[0]).toMatchObject({ role: "gloss" })
 			expect(role("vis")[0]).toMatchObject({ role: "gloss" })
 			expect(role("poisson")[0]).toMatchObject({ role: null, primary: 1 })
@@ -328,13 +328,13 @@ describe("buildCandidateTable", () => {
 			// Prominence rescue: same key volume, measured population — no gloss stamp.
 			expect(role("bigtown")[0]).toMatchObject({ role: null })
 
-			// Abbr provenance: official-language variant stamps; non-official variant does not; the
+			// Abbr provenance: official-language variant stamps. non-official variant does not. the
 			// preferred-name alias does not.
 			expect(role(normalizeLocalityForKey("Chi-Town"))[0]).toMatchObject({ role: "abbr", primary: 0 })
 			expect(role(normalizeLocalityForKey("Windy City"))[0]).toMatchObject({ role: null })
 			expect(role(normalizeLocalityForKey("St Etienne"))[0]).toMatchObject({ role: null })
 
-			// The abbreviation KIND stamps by kind alone — no official-language test.
+			// The abbreviation kind stamps by kind alone — no official-language test.
 			expect(role("spr")[0]).toMatchObject({ role: "abbr", primary: 0 })
 		} finally {
 			await db.destroy()
@@ -362,7 +362,7 @@ describe("buildCandidateTable", () => {
 		const output = scratch.resolve("candidate.db")
 		buildFixtureAdmin(input)
 		const result = await buildCandidateTable({ input, output })
-		// Chicago: Chi-Town + Windy City; Saint-Étienne: St Etienne = 3 aliases.
+		// Chicago: Chi-Town + Windy City. Saint-Étienne: St Etienne = 3 aliases.
 		expect(result.aliases).toBe(3)
 
 		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
@@ -395,7 +395,7 @@ describe("buildCandidateTable", () => {
 		buildFixturePostcodes(pc)
 
 		const result = await buildCandidateTable({ input, output, postcodes: [pc] })
-		// The real-coord 60601 + 11201 survive; the 0,0 placeholder 20500 is filtered.
+		// The real-coord 60601 + 11201 survive. the 0,0 placeholder 20500 is filtered.
 		expect(result.postcodes).toBe(2)
 
 		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
@@ -487,17 +487,17 @@ describe("buildCandidateTable", () => {
 		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 		// Before the fix this probe returned nothing: the delivery-city names reached
-		// `place_search.alt_names` (FTS) but never the candidate table, where every row IS an
+		// `place_search.alt_names` (FTS) but never the candidate table, where every row is an
 		// exact-tier row.
 		const [brooklyn] = probe(db, normalizeLocalityForKey("Brooklyn"))
 		expect(brooklyn).toBeDefined()
 		expect(brooklyn!.placetype).toBe("postalcode")
-		// The alias row is denormalized onto the POSTCODE — display name, coords and bbox are 11201's.
+		// The alias row is denormalized onto the postcode — display name, coords and bbox are 11201's.
 		expect(brooklyn!.name).toBe("11201")
 		expect(brooklyn!.country).toBe("US")
 		expect(brooklyn!.latitude).toBeCloseTo(40.694, 3)
 		expect(brooklyn!.min_lat).toBeCloseTo(40.68, 2)
-		// `is_primary = 0` — the rank/demotion contest must treat it as an alias, not a canonical
+		// `is_primary = 0` — the rank/demotion contest must treat it as an alias rather than a canonical
 		// postcode name.
 		expect(brooklyn!.is_primary).toBe(0)
 
@@ -541,7 +541,7 @@ describe("buildCandidateTable", () => {
 
 		const { page_size } = db.prepare("PRAGMA page_size").get() as { page_size: number }
 		expect(page_size).toBe(8192)
-		// And the clustered table is WITHOUT ROWID (the rows ARE the B-tree).
+		// And the clustered table is without rowid (the rows are the B-tree).
 		const sql = (db.prepare("SELECT sql FROM sqlite_master WHERE name='candidate'").get() as { sql: string }).sql
 		expect(sql).toMatch(/WITHOUT ROWID/i)
 	})
@@ -549,7 +549,7 @@ describe("buildCandidateTable", () => {
 	describe("the importance column (#28)", () => {
 		/**
 		 * A score source whose ids share nothing with the admin fixture's — the join must work anyway. Chicago and
-		 * Saint-Étienne are scored; Springfield deliberately is NOT (the unmeasured case).
+		 * Saint-Étienne are scored. Springfield deliberately is not (the unmeasured case).
 		 */
 		function buildFixtureImportance(path: string): void {
 			using db = new DatabaseClient<WOFDatabase>(path)
@@ -597,7 +597,7 @@ describe("buildCandidateTable", () => {
 			using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 			expect(importanceOf(db, normalizeLocalityForKey("Chicago"))).toEqual([0.8125])
-			// The score is a property of the PLACE, so the alias rows carry it. This is what lets a bare
+			// The score is a property of the place, so the alias rows carry it. This is what lets a bare
 			// "Moscow" reach Москва's score through the alias row that holds the Latin key.
 			expect(importanceOf(db, normalizeLocalityForKey("Chi-Town"))).toEqual([0.8125])
 			expect(importanceOf(db, normalizeLocalityForKey("Windy City"))).toEqual([0.8125])
@@ -618,7 +618,7 @@ describe("buildCandidateTable", () => {
 			using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 			// Springfield's only same-key scored place is 1,500 km away — a different town. The check
-			// refuses it, and the refusal is recorded as ABSENCE, not as a zero a consumer could rank on.
+			// refuses it, and the refusal is recorded as absence rather than as a zero a consumer could rank on.
 			expect(importanceOf(db, normalizeLocalityForKey("Springfield"))).toEqual([null])
 			// Illinois (region) and the US (country) were never scored at all.
 			expect(importanceOf(db, normalizeLocalityForKey("Illinois"))).toEqual([null])
@@ -637,7 +637,7 @@ describe("buildCandidateTable", () => {
 
 			using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
-			// A postcode has no toponym fame; the score source's 60601 row must not leak onto it.
+			// A postcode has no toponym fame. the score source's 60601 row must not leak onto it.
 			expect(importanceOf(db, "60601")).toEqual([null])
 			// …including the delivery-city alias hanging off the same postcode row.
 			expect(importanceOf(db, normalizeLocalityForKey("Brooklyn"))).toEqual([null])
@@ -790,7 +790,7 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 	}
 
 	/**
-	 * GeoNames dump lines: 19 tab-separated columns; the pass reads 1 name, 2 ascii, 4 lat, 5 lon, 6 feature_class, 14
+	 * GeoNames dump lines: 19 tab-separated columns. the pass reads 1 name, 2 ascii, 4 lat, 5 lon, 6 feature_class, 14
 	 * population.
 	 */
 	function geonamesLine(id: number, name: string, lat: number, lon: number, fclass: string, pop: number): string {
@@ -863,7 +863,7 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 		for (const key of ["oldblob", "nearlive", "tinyham", "ghosttown"]) {
 			const rows = db.prepare(`SELECT spr_id FROM candidate WHERE name_key = ?`).all(key) as { spr_id: number }[]
 
-			// `nearlive` keeps its LIVE localadmin row (304); the dead 303 must not join it. The others
+			// `nearlive` keeps its live localadmin row (304); the dead 303 must not join it. The others
 			// stage nothing at all.
 			expect(rows.map((r) => r.spr_id)).toEqual(key === "nearlive" ? [304] : [])
 		}

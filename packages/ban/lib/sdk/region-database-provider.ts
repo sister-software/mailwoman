@@ -3,12 +3,12 @@
 
 /**
  *   The BAN rooftop extract provider — the injection point the geocode cascade consults for the national
- *   open-register precision tier (#1012), AHEAD of the community OSM tier. Given a data root, it opens
+ *   open-register precision tier (#1012), ahead of the community OSM tier. Given a data root, it opens
  *   `ban/address-points-<cc>.db` with the country's street-normalization locale (so probe-side keying
  *   matches the extract the builder wrote) and caches the open handle per country. Wire its bound `for`
  *   into `GeocodeDeps.nationalExtracts`.
  *
- *   BAN is a French national register, so the registry is deliberately FR-only today; the shape
+ *   BAN is a French national register, so the registry is deliberately FR-only today. the shape
  *   generalises to any other national open register (the coverage story, one country at a time).
  */
 
@@ -24,7 +24,7 @@ import { streetLocaleForBANCountry, supportedBANCountries } from "#sdk/street-lo
 export interface BANExtracts {
 	addressPoints?: AddressPointSqliteLookup
 	/**
-	 * The #1042 derived street-centroid tier — a `GROUP BY street` roll-up, for a street-only query (no house number).
+	 * The #1042 derived street-centroid tier — a `group BY street` roll-up, for a street-only query (no house number).
 	 */
 	streetCentroids?: StreetCentroidSqliteLookup
 }
@@ -33,9 +33,9 @@ export interface BANExtracts {
  * Opens + caches per-country BAN rooftop lookups. A non-US geocode consults `for(country)`; the first hit for a country
  * opens its extract (with the matching street locale) once, subsequent calls reuse it.
  *
- * `for` is synchronous, so on-disk existence is probed asynchronously ONCE instead of per call: {@linkcode warm} awaits
+ * `for` is synchronous, so on-disk existence is probed asynchronously once instead of per call: {@linkcode warm} awaits
  * `pathExists` for every supported country × extract-tier combination and records what exists; `for` consults that map.
- * Prefer {@linkcode BANRegionDatabaseProvider.create}, which constructs AND warms before answering — a provider
+ * Prefer {@linkcode BANRegionDatabaseProvider.create}, which constructs and warms before answering — a provider
  * constructed directly must be warmed before its first `for`, or it answers `{}` for every country.
  */
 export class BANRegionDatabaseProvider implements Disposable {
@@ -53,7 +53,7 @@ export class BANRegionDatabaseProvider implements Disposable {
 
 	/**
 	 * Construct a provider and warm its existence map before answering. The constructor cannot await the probe, so this
-	 * static factory does; a caller that constructs directly must {@linkcode warm} before the first `for`.
+	 * static factory does. a caller that constructs directly must {@linkcode warm} before the first `for`.
 	 */
 	static async create(dataRoot: string): Promise<BANRegionDatabaseProvider> {
 		const provider = new BANRegionDatabaseProvider(dataRoot)
@@ -63,7 +63,7 @@ export class BANRegionDatabaseProvider implements Disposable {
 		return provider
 	}
 
-	#slicePath(countryCode: string): string {
+	#addressPointsPath(countryCode: string): string {
 		return join(this.#dataRoot, "ban", `address-points-${countryCode}.db`)
 	}
 
@@ -82,7 +82,7 @@ export class BANRegionDatabaseProvider implements Disposable {
 
 	async #probeExtracts(): Promise<void> {
 		for (const cc of supportedBANCountries()) {
-			for (const path of [this.#slicePath(cc), this.#streetCentroidPath(cc)]) {
+			for (const path of [this.#addressPointsPath(cc), this.#streetCentroidPath(cc)]) {
 				if (await pathExists(path)) {
 					this.#onDisk.add(path)
 				}
@@ -103,10 +103,10 @@ export class BANRegionDatabaseProvider implements Disposable {
 
 		const entry: BANExtracts = {}
 
-		// Only countries with a registered street locale AND an on-disk extract — never key with the wrong rules.
+		// Only countries with a registered street locale and an on-disk extract — never key with the wrong rules.
 		if (supportedBANCountries().includes(cc)) {
 			const locale = streetLocaleForBANCountry(cc)
-			const path = this.#slicePath(cc)
+			const path = this.#addressPointsPath(cc)
 
 			if (this.#onDisk.has(path)) {
 				entry.addressPoints = new AddressPointSqliteLookup(path, { streetLocale: locale })

@@ -2,26 +2,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The two-arm premise-linkage runner (#1902). Every controlled row goes through the SAME production
+ *   The two-arm premise-linkage runner (#1902). Every controlled row goes through the same production
  *   `geocodeAddress` twice: once with the deps the shipped product uses, and once with those deps plus
  *   a configured authoritative provider (#1901). Nothing else differs between the arms, which is what
  *   makes the arm-to-arm delta attributable to the provider rather than to the harness.
  *
- *   THE OPEN ARM REFUSES ON IDENTITY, BY CONSTRUCTION. It has no authoritative namespace to answer in,
+ *   the open ARM refuses on identity, BY construction. It has no authoritative namespace to answer in,
  *   so its identifier outcome is `refused` on every row — recorded in the same vocabulary as the other
  *   arm, and never as `wrong`. That is the size of the gap the authoritative arm exists to close,
  *   stated rather than hidden: the open arm's comparable metric is the coordinate table, and grading
  *   its identity by distance instead would answer a different question than the one asked.
  *
- *   FOUR DISTINCTIONS THE MAPPING KEEPS, all of them the #1901 contract's:
+ *   four distinctions the mapping keeps, all of them the #1901 interface's:
  *
- *   - A REFUSAL is not a miss. It enters the eligible denominator only when the registered policy says
+ *   - A refusal is not a miss. It enters the eligible denominator only when the registered policy says
  *       a unique answer was required, and even then it stays `refused`.
- *   - An AMBIGUOUS answer is never `exact`. The provider declined to choose; collapsing to its first
+ *   - An ambiguous answer is never `exact`. The provider declined to choose. collapsing to its first
  *       candidate would manufacture the certainty it withheld.
- *   - A TRANSPORT FAILURE is not a refusal. It is `errored`: out of every rate, reported as its own
+ *   - A transport failure is not a refusal. It is `errored`: out of every rate, reported as its own
  *       count.
- *   - A MATCH THAT NAMES NO IDENTIFIER in the graded scheme is not `wrong` either. It is ungradable —
+ *   - A match that names no identifier in the graded scheme is not `wrong` either. It is ungradable —
  *       also `errored` — because reading "I could not check this" as "this was incorrect" is the
  *       measurement-boundary lie this repository keeps finding.
  */
@@ -80,7 +80,7 @@ const DEFAULT_COORDINATE_THRESHOLDS_M: readonly number[] = [5, 25, 100]
 /**
  * The ladder improvement and regression are measured on.
  *
- * A confidently WRONG identifier is the worst thing an arm can do — worse than declining, because a consumer acts on
+ * A confidently wrong identifier is the worst thing an arm can do — worse than declining, because a consumer acts on
  * it. An abstention is worse than candidates, which at least narrow the answer. A committed correct identifier is best.
  * Ungradable rows have no rank: they are excluded from the comparison rather than assigned one.
  */
@@ -100,7 +100,7 @@ export interface PremiseLinkageGrade {
 }
 
 /**
- * Map one arm's authoritative block onto the outcome vocabulary. Pure, and the ONLY place an outcome is decided — both
+ * Map one arm's authoritative block onto the outcome vocabulary. Pure, and the only place an outcome is decided — both
  * arms are graded through it, so neither can acquire a private definition of `exact`.
  */
 export function outcomeFor(
@@ -156,9 +156,9 @@ export function outcomeFor(
 /**
  * The coordinate this arm is graded on.
  *
- * The #1901 contract carries the provider's coordinate BESIDE Mailwoman's own and leaves the choice to the consumer.
+ * The #1901 interface includes the provider's coordinate beside Mailwoman's own and leaves the choice to the consumer.
  * This harness is that consumer, and the choice is stated here rather than implied: when the provider committed to a
- * premise, its coordinate is the one the authoritative arm asserted; everywhere else the arm's answer is Mailwoman's.
+ * premise, its coordinate is the one the authoritative arm asserted. everywhere else the arm's answer is Mailwoman's.
  */
 function gradedCoordinate(
 	result: GeocodeResult,
@@ -244,7 +244,7 @@ function isErrored(row: PremiseLinkageResultRow): boolean {
  * The rows an arm could have answered exactly.
  *
  * Ungradable rows always leave. Refusals leave only under `abstain_ok`, because an arm that was permitted to abstain
- * was not asked to be right on those rows; under `unique_required` they stay in the denominator and count against the
+ * was not asked to be right on those rows. under `unique_required` they stay in the denominator and count against the
  * exact rate — while remaining `refused` in the row itself.
  */
 function eligibleRows(
@@ -309,7 +309,7 @@ function aggregateArm(
 	for (const shapeClass of PREMISE_LINKAGE_SHAPE_CLASSES) {
 		const classRows = rows.filter((row) => row.inputShapeClass === shapeClass)
 
-		// An absent class is absent, not zero: a class nobody supplied rows for has no rate to report.
+		// An absent class is absent rather than zero: a class nobody supplied rows for has no rate to report.
 		if (!classRows.length) continue
 
 		perClass[shapeClass] = ratesFor(classRows, policy)
@@ -368,13 +368,13 @@ function compareArms(
 }
 
 /**
- * The pieces a controlled run supplies. A private config module exports these; the synthetic self-check builds them
+ * The pieces a controlled run supplies. A private config module exports these. the synthetic self-check builds them
  * from the shipped fixture.
  */
 export interface PremiseLinkageRunConfig {
 	adapter: PremiseLinkageAdapter
 	/**
-	 * The deps the OPEN arm runs on — the production pipeline and artifacts. The authoritative arm receives these plus
+	 * The deps the open arm runs on — the production pipeline and artifacts. The authoritative arm receives these plus
 	 * the provider and nothing else.
 	 */
 	deps: GeocodeDeps
@@ -394,7 +394,7 @@ export interface PremiseLinkageRunOptions extends PremiseLinkageRunConfig {
 }
 
 /**
- * A run's output. The report is publishable after the writer's preflight; `rows` and `inputs` are NOT, and exist so the
+ * A run's output. The report is publishable after the writer's preflight; `rows` and `inputs` are not, and exist so the
  * writer can check what the report was computed from.
  */
 export interface PremiseLinkageRunResult {

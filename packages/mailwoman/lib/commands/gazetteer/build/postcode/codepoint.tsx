@@ -4,10 +4,10 @@
 /**
  *   `mailwoman gazetteer build postcode-codepoint` — the GB unit-postcode database from Ordnance Survey
  *   Code-Point Open (OGL v3). Acquires the archive from the open OS Downloads API, verifies it against
- *   OS's published md5, converts OSGB36 eastings/northings to WGS84, and writes a sealed database to a NEW
- *   DATED path. Promotion into `DEFAULT_POSTCODE_DATABASES` is a separate, deliberate step.
+ *   OS's published md5, converts OSGB36 eastings/northings to WGS84, and writes a sealed database to a new
+ *   dated path. Promotion into `DEFAULT_POSTCODE_DATABASES` is a separate, deliberate step.
  *
- *   Coverage is England, Scotland and Wales. Northern Ireland is NOT in this product and the database says
+ *   Coverage is England, Scotland and Wales. Northern Ireland is not in this product and the database says
  *   so in its own `meta`; see the pipeline module for the licensing reason.
  *
  *   The pipeline module is lazy-imported so `--help` never faults without the optional
@@ -17,16 +17,10 @@
 import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { Box, Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	phaseReporter,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReporter, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "postcode-codepoint",
@@ -41,13 +35,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	sourceDir?: string
-	out?: string
-	offline?: boolean
-}
-
-const GazetteerBuildPostcodeCodePoint: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildPostcodeCodePoint: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildPostcodeCodePoint } = await import("#gazetteer/postcode/codepoint/database")
 

@@ -4,21 +4,21 @@
 /**
  *   The coverage footprint, and the one thing about it that is easy to get wrong in a way nothing reports.
  *
- *   THE INTERIOR TEST IS CONSERVATIVE, SO WHERE IT IS APPLIED DECIDES HOW MUCH OF A STATE ANSWERS.
- *   `interiorCoverageCells` keeps only cells lying WHOLLY inside a geometry — correct, because a cell
+ *   the interior test is conservative, SO where IT is applied decides how much OF A state answers.
+ *   `interiorCoverageCells` keeps only cells lying wholly inside a geometry — correct, because a cell
  *   wrongly called interior would state that an authority determined a location it never looked at. Applied
- *   PER SURVEY AREA it also drops every cell a county border crosses, and at resolution 6 those cells are
+ *   PER survey area it also drops every cell a county border crosses, and at resolution 6 those cells are
  *   about 6.5 km across against a county roughly 50 km across: measured on Polk County, 20 interior cells
  *   against the ~42 it spans by area. More than half the county would have read `unknown` while sitting
  *   inside a survey the build had ingested — an artifact that is complete, well-formed, and silently
  *   answers "no survey here" over ground it holds.
  *
- *   The fix is to run the test ONCE over the union. This file pins it with two adjacent fixture areas that
+ *   The fix is to run the test once over the union. This file pins it with two adjacent fixture areas that
  *   share an edge, because the per-area version passes every other test in this package.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
+import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
 import { SoilCapabilityLookup, SoilReadingKind } from "@mailwoman/soil"
 import { buildSoilDatabase, type SurveyAreaInput } from "@mailwoman/soil/sdk/build-soil"
 import type { SoilDelineation } from "@mailwoman/soil/sdk/ingest"
@@ -56,7 +56,7 @@ const SHARED_EDGE_LON = lon + 5 * FIXTURE_SIDE
  * How far the second delineation band sits from the shared edge — comfortably more than a resolution-6 cell's ~0.06°,
  * so a county's own interior test produces coverage over it whether or not the border cells survive.
  *
- * Both bands are needed. Without the interior band a single county yields NO coverage rows at all (its mapped soil sits
+ * Both bands are needed. Without the interior band a single county yields no coverage rows at all (its mapped soil sits
  * entirely inside the strip its own interior test drops), and the comparison below would be against zero.
  */
 const INTERIOR_BAND_OFFSET = 0.3
@@ -129,14 +129,14 @@ async function build(areas: SurveyAreaInput[]): Promise<string> {
 }
 
 function coverageCellCount(databasePath: string): number {
-	using database = new DatabaseClient<LayerContractDatabase>(databasePath, { readOnly: true })
+	using database = new DatabaseClient<layerschemadatabase>(databasePath, { readOnly: true })
 
 	return (database.prepare("SELECT count(*) AS n FROM layer_coverage").get() as { n: number }).n
 }
 
 describe("the coverage footprint over adjacent survey areas", () => {
 	it("covers the shared border, which a per-area interior test drops", async () => {
-		// Two counties tiling along `SHARED_EDGE_LON`, each carrying a band of delineations up against that edge, so the
+		// Two counties tiling along `SHARED_EDGE_LON`, each carrying a band of delineations up against that edge. Therefore, the
 		// cells straddling it are genuinely reached by mapped soil from both sides.
 		const [westOnly, eastOnly, both] = await Promise.all([
 			build([westCounty()]).then(coverageCellCount),
@@ -147,7 +147,7 @@ describe("the coverage footprint over adjacent survey areas", () => {
 		expect(westOnly).toBeGreaterThan(0)
 		expect(eastOnly).toBeGreaterThan(0)
 
-		// STRICTLY greater than the sum, and the excess IS the border strip: those cells lie wholly inside the union and
+		// Strictly greater than the sum, and the excess is the border strip: those cells lie wholly inside the union and
 		// wholly inside neither county, so a per-area test cannot produce them however many areas it is given.
 		expect(both).toBeGreaterThan(westOnly + eastOnly)
 	})

@@ -4,7 +4,7 @@
 /**
  *   The shared frame of the PCN1/PIX1/PFX1 binary family (little-endian): a u32 magic, a u32
  *   headerLen, then headerLen bytes of UTF-8-encoded JSON. Each format's records follow the frame
- *   and stay with their owning module — the single-file writer+reader discipline is per format; this
+ *   and stay with their owning module — the single-file writer+reader discipline is per format. this
  *   module only keeps the three from restating the frame itself. Pure JS, no Node imports: the
  *   browser runtime loads the same artifacts.
  */
@@ -95,7 +95,7 @@ export function writeFramedHeader(magic: number, header: unknown): Uint8Array {
 
 /**
  * Validate the magic and decode the header JSON, returning the header plus a {@link ByteCursor} positioned at the first
- * record byte. `badMagicMessage` is the format's own wording — each reader's message is an error contract its tests
+ * record byte. `badMagicMessage` is the format's own wording — each reader's message is an error interface its tests
  * pin.
  */
 export function readFramedHeader<Header>(

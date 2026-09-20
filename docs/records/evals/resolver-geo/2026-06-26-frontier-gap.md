@@ -1,15 +1,15 @@
 # #822 placer-frontier diagnostic — bare vs country-hint, by country
 
 > ⚠ **Config caveat + correction (added after the fact).** These numbers were measured on the
-> **default drop-in config — the admin gazetteer (`admin-global-priority.db`) with NO candidate-ranking
+> **default drop-in config — the admin gazetteer (`admin-global-priority.db`) with no candidate-ranking
 > DB** (`MAILWOMAN_CANDIDATE_DB` unset, which is exactly what `npx @mailwoman/nominatim serve` gives).
 > They are valid for that config, but resolution is **highly config-dependent** and I over-framed them
 > as the general non-US recall truth. With a candidate DB loaded, large distinctive cities that read as
-> "coverage" misses here actually resolve (London 553→2 km, Beijing 1661→9 km), so the "residual
+> "coverage" misses here resolve (London 553→2 km, Beijing 1661→9 km), so the "residual
 > coverage" framing below conflated true coverage with a missing candidate table. The candidate backend
 > is population-first and **ignores the country hint**, and the builds vary (the `-intl` build even
 > regressed the aggregate to ~12.8%), so the precise bare/+hint percentages and the exonym-vs-coverage
-> split are NOT settled — they need the operator's canonical candidate config pinned, then a re-run.
+> split are not settled — they need the operator's canonical candidate config pinned, then a re-run.
 >
 > **What survives, config-independent:** the **placer-namesake gap is real** — `Vienna, Austria`,
 > `Sydney`, `Warsaw`, `Toronto` resolve to their US namesakes _even with a candidate DB loaded_, because
@@ -20,7 +20,7 @@
 _geonames cities15000, top 3/country by population (≥ 50000). "Resolved" = within
 50 km of the city's true coordinate. **Bare** = no country constraint (what the drop-in sends
 for a bare query); **+hint** = with the country as a `countrycodes` constraint. The bare→hint lift is
-what growing the placer would buy (#822); what stays unresolved with a hint is the exonym/coverage change._
+what growing the placer would provide (#822); what stays unresolved with a hint is the exonym/coverage change._
 
 - Cities: **506** across **187** countries
 - Resolve-rate **bare: 29.2%** → **+hint: 46.6%** (lift +17.4 pp)
@@ -28,8 +28,8 @@ what growing the placer would buy (#822); what stays unresolved with a hint is t
 - Countries: **54** bare-supported · **36** placer-recoverable (#822) · **97** residual
 - Residual splits: **92** name-not-found (English name matches no in-country record — exonym fix where the record exists under a local name, else coverage-absence) · **5** wrong-place (coverage/disambiguation)
 
-> **How to read this.** Bare resolve-rate is the placer ceiling, not the geocoder's capability — a
-> bare query carries no country hint. The **+hint** column is the honest #822 prize: countries that
+> **How to read this.** Bare resolve-rate is the placer ceiling rather than the geocoder's capability — a
+> bare query carries no country hint. The **+hint** column is the direct #822 prize: countries that
 > resolve once the country is known but not before. The **residual** set fails even with the hint, so
 > the placer can't fix it — that's alt-name (Warsaw/Warszawa) + gazetteer coverage, a parallel change.
 
@@ -76,11 +76,11 @@ what growing the placer would buy (#822); what stays unresolved with a hint is t
 
 ## Residual A — name-not-found (exonym fix, or coverage-absence)
 
-The hint returns NOTHING: the English query name matches no place in the country. Where the record
+The hint returns nothing: the English query name matches no place in the country. Where the record
 exists under a LOCAL name (`Warsaw` vs `Warszawa` — proven end-to-end), indexing alt-name surface forms
 onto the candidate table fixes it cheaply (#823, no model change). Where the country has no candidate
 records at all, it's coverage. European exonyms dominate; the per-country split needs a local-name probe.
-`hint→∅` = of the hint-unresolved cities, how many returned no result (vs a wrong place).
+`hint→∅` = of the hint-unresolved cities, how several returned no result (vs a wrong place).
 
 | Country                                    | ISO2 | Bare | +hint | hint→∅ |
 | ------------------------------------------ | ---- | ---: | ----: | -----: |
@@ -180,7 +180,7 @@ records at all, it's coverage. European exonyms dominate; the per-country split 
 ## Residual B — gazetteer coverage / disambiguation
 
 The hint returns a WRONG place: the country has a same-name match but the target city isn't in the
-candidate gazetteer, or loses disambiguation. Needs more data, not alt-names (Beijing, Rio).
+candidate gazetteer, or loses disambiguation. Needs more data rather than alt-names (Beijing, Rio).
 
 | Country       | ISO2 | Bare | +hint | hint→∅ |
 | ------------- | ---- | ---: | ----: | -----: |

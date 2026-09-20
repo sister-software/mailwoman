@@ -5,22 +5,22 @@
  *   The live half of the phase-2 decision (#1967): load the frozen pre-registration, run the instruments its
  *   checks read, and emit one receipt carrying the arithmetic against every bar.
  *
- *   THIS MODULE DECIDES NOTHING IT DID NOT READ. Lanes, checks, denominators, bars, artifact pins and the one
+ *   this module decides nothing IT did not read. Lanes, checks, denominators, bars, artifact pins and the one
  *   marker query all come from `decision-definition.json`, which {@linkcode loadPhase2Definition} refuses to
  *   hand over if its content hash has moved. The runner supplies measurements and nothing else.
  *
- *   IT RUNS THE EXISTING INSTRUMENTS RATHER THAN RE-DERIVING THEM. Both probe arms come from
+ *   IT runs the existing instruments rather than RE-deriving them. Both probe arms come from
  *   {@linkcode runSemanticUtilityProbe}, the asymmetry from {@linkcode runAbsenceObservationProbe}, the floors
  *   from {@linkcode runPOIBoard} and the laws from {@linkcode measureConformance} — the same call the
  *   `eval conformance` command narrates. A second orchestration free to load a different suite set or a
  *   different backend would report numbers that look like these and answer a different question.
  *
- *   THE RECEIPT CARRIES ARTIFACT IDENTITY AND SAYS WHERE IT DEVIATES. A run on a rebuilt `poi.db` or a bumped
- *   weights package is still a run; it is simply not comparable to the merged-PR receipts the ruler names as
+ *   The receipt records the artifact identity and the deviation. A run on a rebuilt `poi.db` or a bumped
+ *   weights package is still a run. it is simply not comparable to the merged-PR receipts the ruler names as
  *   baselines. So the observed identity is recorded beside the pins, every difference is named, and the
  *   verdict carries `comparability` — reported, never a decision input.
  *
- *   THE RECORDING IS THE OPERATOR'S. The receipt states what the ruler maps to and carries `recorded: false`.
+ *   the recording is the operator'S. The receipt states what the ruler maps to and carries `recorded: false`.
  *   Nothing here writes a verdict onto the issue.
  */
 
@@ -130,7 +130,7 @@ export interface Phase2Receipt {
 	checks: Phase2CheckOutcome[]
 	verdict: Phase2Verdict
 	/**
-	 * Always `false`. The ruler maps measurements onto one decision; recording it is the operator's, per #1967.
+	 * Always `false`. The ruler maps measurements onto one decision. recording it is the operator's, per #1967.
 	 */
 	recorded: false
 	recordingNote: string
@@ -156,7 +156,7 @@ export interface Phase2RunOptions extends POIBoardOptions {
 	 */
 	collisionCensusPath?: string
 	/**
-	 * Commit sha recorded in the receipt. Defaults to the checkout's own short HEAD.
+	 * Commit sha recorded in the receipt. Defaults to the checkout's own short head.
 	 */
 	gitCommit?: string
 }
@@ -172,7 +172,7 @@ function matches(observed: string | number, pinned: string | number): number {
 /**
  * Run every instrument the registered checks read, and answer with one reading per measurement.
  *
- * Instruments are selected from the CHECKS rather than run unconditionally: a definition that registers no absence
+ * Instruments are selected from the checks rather than run unconditionally: a definition that registers no absence
  * check must not need a build-local coverage layer to produce a receipt.
  */
 async function measure(
@@ -369,7 +369,7 @@ async function measure(
 	let coverageVersion = "not measured"
 
 	if (needed.has("absence_observation_probe")) {
-		// `db` is deliberately NOT forwarded. The absence probe defaults the layer the executor queries to the COVERAGE
+		// `db` is deliberately not forwarded. The absence probe defaults the layer the executor queries to the coverage
 		// layer itself, and that default is the whole claim: an absence qualified by one layer's coverage while the
 		// answer came out of another is a statement about two artifacts nobody compared. A `--db` meant for the board
 		// would silently cross them.
@@ -425,7 +425,7 @@ async function measure(
 
 	if (needed.has("poi_board")) {
 		// `quiet` because this receipt is the report: the board's own table would print 56 rows between two of this
-		// ruler's lines. `enforce` is left off deliberately — the floors are read as a MEASUREMENT here, and a breach
+		// ruler's lines. `enforce` is left off deliberately — the floors are read as a measurement here, and a breach
 		// belongs in the verdict rather than in an exit code the ruler would have to interpret.
 		const { report } = await runPOIBoard({
 			...options,
@@ -552,7 +552,7 @@ async function measure(
 /**
  * Every pinned artifact whose observed identity differs, named with both values.
  *
- * A measurement not taken is NOT a deviation: a definition registering no absence check leaves the absence pins
+ * A measurement not taken is not a deviation: a definition registering no absence check leaves the absence pins
  * unmeasured, and reporting that as a difference would turn "this ruler did not ask" into "the artifact moved".
  */
 function comparePins(pins: Phase2ArtifactPins, artifact: Phase2ObservedArtifacts): string[] {
@@ -622,7 +622,7 @@ async function measureMarker(
 			detail: `marker kind ${first.kind}, code ${first.code}, mechanism ${first.mechanism}, evidence names assertion ${String((first.evidence as { assertion?: { id?: string } }).assertion?.id)}`,
 		}
 	} finally {
-		// The runtime pipeline never opens the artifact reader itself, so the route owns nothing to close; draining
+		// The runtime pipeline never opens the artifact reader itself, so the route owns nothing to close. draining
 		// keeps one query's firings from being attributed to the next.
 		route.takeObservations()
 	}

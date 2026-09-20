@@ -84,7 +84,7 @@ export function compilerAdmits(scope: CompileScope, path: string): boolean {
 
 /**
  * The workspace's compile scope, or an empty one (admits everything) when it carries no `tsconfig.json`. Read through
- * TypeScript's own JSONC parser: the configs carry line comments.
+ * TypeScript's own jsonc parser: the configs carry line comments.
  */
 export async function readCompileScope(repoRoot: string, workspace: string): Promise<CompileScope> {
 	const configPath = resolvePath(repoRoot, workspace, "tsconfig.json")

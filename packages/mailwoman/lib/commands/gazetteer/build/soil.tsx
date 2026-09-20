@@ -2,24 +2,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build soil` — acquire NRCS's SSURGO survey areas for a region and build the sealed
+ *   `mailwoman gazetteer build soil` — acquire nrcs's ssurgo survey areas for a region and build the sealed
  *   `soil.db` layer. Thin wiring only: the catalogue read, the downloads, the metadata, the build and the
  *   verification all live in `@mailwoman/soil/sdk`, so each stays unit-testable without Ink or the network
  *   in the loop.
  *
- *   THE REGION IS A SURVEY-AREA PREFIX, WHICH IS THE AUTHORITY'S OWN UNIT. `--region IA` builds every Iowa
+ *   the region is A survey-area prefix, which is the authority'S own unit. `--region IA` builds every Iowa
  *   survey area; `--area IA153` builds one. That mirrors `gazetteer build bdc --state`, and it is what makes
  *   the manifest's declared extent and the coverage rows describe the same set — a list of published survey
  *   areas rather than "the United States".
  *
- *   `--measure-resolutions` DOES NOT BUILD. The index resolution is a measurement this layer takes rather
- *   than a number argued to, and running it is a mode of its own because it produces a table, not an
- *   artifact. It reports the `partial` share and the mean delineations per cell; the SECOND number §4.7 asks
+ *   `--measure-resolutions` does not build. The index resolution is a measurement this layer takes rather
+ *   than a number argued to, and running it is a mode of its own because it produces a table rather than an
+ *   artifact. It reports the `partial` share and the mean delineations per cell. the second number §4.7 asks
  *   for — the share of cells whose top class holds under half the cell — needs the attribute join and the
  *   area weighting, so it comes off the built artifact instead and rides in the build summary.
  *
- *   `--area` IS THE SMOKE RUNG. One real survey area, from the real archive, which verifies what fixtures
- *   structurally cannot: the shapefile's field names, that the `.prj` really resolves to EPSG:4326, that the
+ *   `--area` is the smoke rung. One real survey area, from the real archive, which verifies what fixtures
+ *   structurally cannot: the shapefile's field names, that the `.prj` really resolves to epsg:4326, that the
  *   pipe-delimited export parses with its embedded newlines intact, that `mukey` joins spatial to tabular,
  *   and the seal.
  */
@@ -32,7 +32,7 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	formatLayerVerification,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	splitNumberList,
 	useCommandTask,
 } from "#cli-kit"
@@ -45,13 +45,13 @@ import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 const DEFAULT_COVERAGE_RESOLUTION = "6"
 
 /**
- * Index resolution, chosen from the measurement — see the workspace README for the table and the reasoning.
+ * Index resolution, chosen from the measurement — see the workspace readme for the table and the reasoning.
  * `--measure-resolutions` re-derives it.
  */
 const DEFAULT_INDEX_RESOLUTION = "9"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "soil",
@@ -73,19 +73,6 @@ export const spec = {
 		"verify-points": { type: "string", description: "How many points to re-ask the service about (default 60)" },
 	},
 } as const satisfies CommandSpec
-
-interface Options {
-	region?: string
-	area?: string
-	out?: string
-	indexResolution: string
-	coverageResolution: string
-	measureResolutions?: string
-	chunkSize?: string
-	verify: boolean
-	verifyOnly: boolean
-	verifyPoints?: string
-}
 
 /**
  * Both halves of the check, as the summary lines they produce.
@@ -119,7 +106,7 @@ async function runVerification(
 	})
 }
 
-const GazetteerBuildSoil: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 
@@ -144,7 +131,7 @@ const GazetteerBuildSoil: ParsedCommandComponent<Options> = ({ options }) => {
 		const region = options.area ? options.area.toLowerCase() : prefix.toLowerCase()
 		const client = createSoilDataAccessClient()
 
-		// `--verify-only` CHECKS AN ARTIFACT THAT ALREADY EXISTS and acquires nothing. A full-region build takes hours and
+		// `--verify-only` checks an artifact that already exists and acquires nothing. A full-region build takes hours and
 		// seals its artifact before the check runs, so a check that could only run as the build's last step would cost a
 		// rebuild every time the check itself was worth re-running.
 		if (options.verifyOnly) {

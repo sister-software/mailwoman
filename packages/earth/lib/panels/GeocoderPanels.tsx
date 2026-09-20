@@ -5,7 +5,7 @@
  *   The host-only chrome around the geocoder, composed for `@mailwoman/react/map`'s `panels` injection point: the
  *   about box, the release line, the geo-bias row, the permalink, the calibration and dev-mode toggles, the result
  *   panel with its visualizers, the decode-path drawer, the map controls and the version compare. Everything here is
- *   presentation over the runtime handle; nothing here loads or resolves.
+ *   presentation over the runtime handle. nothing here loads or resolves.
  */
 
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
@@ -71,10 +71,10 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 	const loading = runtime.loading
 	const loadStatus = runtime.ready || !loading ? null : describeLoad(loading)
 
-	/* oxlint-disable react/no-unstable-nested-components -- render props, not components: the controls call each member (`panels.result({…})`) rather than mounting it */
+	/* oxlint-disable react/no-unstable-nested-components -- render props rather than components: the controls call each member (`panels.result({…})`) rather than mounting it */
 	return useMemo<GeocoderPanels>(
 		() => ({
-			// The sheet's own title and its capsule button are the disclosure; a second one inside would repeat them.
+			// The sheet's own title and its capsule button are the disclosure. a second one inside would repeat them.
 			header: <About collapsible={false} />,
 			releaseInfo: selectedRelease ? (
 				<p style={{ margin: "0 0 0.75rem", fontSize: "0.85rem", opacity: 0.75 }}>
@@ -84,7 +84,7 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			) : undefined,
 			bias: <GeoBiasRow active={geoBias.active} error={geoBias.error} onToggle={geoBias.toggle} />,
 			permalink: (text) => <PermalinkButton text={text} />,
-			// The two display toggles read on the MODEL, not on an address, so they live behind the Developer capsule
+			// The two display toggles read on the model rather than on an address, so they live behind the Developer capsule
 			// rather than above every result — at the top of the result sheet they were the first thing a visitor met,
 			// and on a phone they pushed the answer below the fold.
 			developerExtras: (
@@ -124,7 +124,12 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			debugDrawer: ({ result }) => (
 				<DebugDrawer result={result} devMode={devMode} traceParse={traceParse} onClose={() => setDevMode(false)} />
 			),
-			mapControls: <MapControls />,
+			// The feature inspector and its longitude/latitude/zoom readout are developer tooling, and were mounted for
+			// every visitor. They sit in MapLibre's bottom-right corner, directly above the footer strip, so on a narrow
+			// window the readout ran along the same edge as the Sources button — two unrelated things sharing one line,
+			// one of which nobody outside this repository has a use for. Shown under the same condition as the
+			// decode-path drawer.
+			mapControls: devMode ? <MapControls /> : null,
 			layers: ({ map }) => <LayerToggleControl map={map} />,
 			// The identity, the docs link, the commit and the credits live in `EarthFooter` so this footer and the canned
 			// runtime's cannot differ. `status` is the one thing only this path has: what is being fetched right now.

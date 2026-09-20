@@ -10,7 +10,7 @@
  *
  *   Why three shapes:
  *
- *   - JSON is the libpostal-compat surface; downstream users with existing pipelines.
+ *   - JSON is the libpostal-compat surface. downstream users with existing pipelines.
  *   - Tuples preserve repetition + source order — fixes the lossy cases JSON can't handle.
  *   - XML preserves containment hierarchy and per-node attributes (conf today, src in Phase 4 when the
  *       Resolver lands). XML chosen over S-expression for LLM-tooling alignment and off-the-shelf
@@ -31,7 +31,7 @@ import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
  * A single token emitted by the model, paired with its predicted label and confidence.
  *
  * `start`/`end` are character offsets into the original raw input. The tokenizer is responsible for producing these
- * (SentencePiece's `encode` returns offsets); they are NOT recomputed by the decoder.
+ * (SentencePiece's `encode` returns offsets); they are not recomputed by the decoder.
  */
 export interface DecoderToken {
 	/**
@@ -59,9 +59,9 @@ export interface DecoderToken {
 /**
  * One node of the address tree — a component span plus any nested child components.
  *
- * `value` is the raw text covered by this span, sliced from the original input by `[start, end)`. `confidence` is
- * aggregated across the span's tokens (currently mean; see `build-tree.ts`). `children` are tagged subcomponents whose
- * spans fall within this node's span AND whose tag's containment rule names this node's tag as a permitted parent.
+ * `value` is the raw text covered by this span, taken from the original input by `[start, end)`. `confidence` is
+ * aggregated across the span's tokens (currently mean. see `build-tree.ts`). `children` are tagged subcomponents whose
+ * spans fall within this node's span and whose tag's containment rule names this node's tag as a permitted parent.
  */
 export interface AddressNode {
 	tag: ComponentTag
@@ -111,16 +111,28 @@ export interface AddressNode {
 	 */
 	alternatives?: ReadonlyArray<unknown>
 	/**
-	 * ADDITIONAL roles this single span plays, beyond `tag` (#413). A place can hold multiple admin tiers under one name
-	 * — a city-state (Berlin is region AND locality) or a capital-seat province (Milano province ~ Milano comune). Rather
+	 * Additional roles this single span plays, beyond `tag` (#413). A place can hold multiple admin tiers under one name
+	 * — a city-state (Berlin is region and locality) or a capital-seat province (Milano province ~ Milano comune). Rather
 	 * than synthesize a second node with a borrowed span, the resolver records the extra role(s) here, so one node = one
 	 * span = many roles (the model Google's `address_components[].types` uses). `tag`/`placeID`/`lat`/`lon` remain the
-	 * PRIMARY role; each interpretation is a distinct secondary role with its own resolved place. Serializers surface
+	 * primary role. each interpretation is a distinct secondary role with its own resolved place. Serializers surface
 	 * every role (a city-state emits both `region` and `locality`). Distinct from `alternatives` — those are same-role
-	 * runner-up places (Springfield IL vs MA); interpretations are DIFFERENT tags, same span. Empty / absent for the
+	 * runner-up places (Springfield IL vs MA); interpretations are different tags, same span. Empty / absent for the
 	 * common single-role node. Both completion (#415) and a future concordance decode write into this one slot.
 	 */
 	interpretations?: ReadonlyArray<Interpretation>
+	/**
+	 * The ISO 15924 script this span is written in — the one that writes most of its script-containing codepoints.
+	 *
+	 * The span is where the question is answerable. A whole input folds to one answer and loses which part carried which
+	 * writing system: `金龍酒家, 12 Gerrard Street, London WC2H 7JS` is majority Latin, so a reader of the input's script
+	 * cannot tell that the venue is Han. `Zyyy` is the abstention — a span holding only a house number borrows no
+	 * neighbour's script.
+	 *
+	 * Absent on a tree built without a query shape to read it from, so a consumer treats absence as unknown rather than
+	 * as `Zyyy`.
+	 */
+	script?: string
 }
 
 /**
@@ -155,23 +167,23 @@ export interface AddressTree {
 	raw: string
 	roots: AddressNode[]
 	/**
-	 * The addressing SYSTEM this tree was decoded under, which selects the containment hierarchy
+	 * The addressing system this tree was decoded under, which selects the containment hierarchy
 	 * (`containmentFor(system)` in `./containment.ts`). Absent means the default Western hierarchy (`house_number →
 	 * street → locality → …`).
 	 *
-	 * This is forward-compat insurance, not yet a behavioral switch: every system currently resolves to the same map, so
-	 * an absent or present `system` produces identical trees today. It exists so that when a distinct system lands (e.g.
-	 * Japanese block addressing, where `building_number` nests under `sub_block`/`block` with no `street` parent),
-	 * consumers and the tree builder already carry the discriminator — no `AddressTree` shape change later. A locale
-	 * pre-classifier (Phase 6+) is the intended source of this value.
+	 * This is forward-compat insurance rather than yet a behavioral switch: every system currently resolves to the same
+	 * map, so an absent or present `system` produces identical trees today. It exists so that when a distinct system
+	 * lands (e.g. Japanese block addressing, where `building_number` nests under `sub_block`/`block` with no `street`
+	 * parent), consumers and the tree builder already carry the discriminator — no `AddressTree` shape change later. A
+	 * locale pre-classifier (Phase 6+) is the intended source of this value.
 	 */
 	system?: AddressSystem
 	/**
-	 * The parse-time locale-head verdict when it was CONFIDENT (softmax >= the action threshold): the model's own read of
+	 * The parse-time locale-head verdict when it was confident (softmax >= the action threshold): the model's own read of
 	 * which country's addressing this text is shaped like. Absent = under threshold or the head never ran — unknown,
-	 * never "domestic". Evidence about the TEXT, not a resolved country: the head is a 9-way classifier, so a Chinese
-	 * address may read GB — right about "not the locale's country", wrong about which. The scope check this exists for
-	 * (#1684) therefore only ever DROPS an inferred scope on a mismatch; it never re-points one.
+	 * never "domestic". Evidence about the text rather than a resolved country: the head is a 9-way classifier, so a
+	 * Chinese address may read GB — right about "not the locale's country", wrong about which. The scope check this
+	 * exists for (#1684) therefore only ever drops an inferred scope on a mismatch. it never re-points one.
 	 */
 	localeCountry?: { country: string; confidence: number }
 }

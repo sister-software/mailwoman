@@ -3,24 +3,18 @@
 
 /**
  *   `mailwoman placer quantize` — int8-quantize the coarse placer (#244) weights (per-class
- *   symmetric scales, 4× smaller). Verify the accuracy cost with `placer eval quant-compare`.
+ *   symmetric scales, 4× smaller). Measure the accuracy cost with `placer eval quant-compare`.
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	reportToStderr,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, reportToStderr, useCommandTask } from "#cli-kit"
 
 export const description = "Int8-quantize the coarse placer (#244) weights (4× smaller)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "quantize",
@@ -31,12 +25,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	in?: string
-	out?: string
-}
-
-const PlacerQuantize: ParsedCommandComponent<Options> = ({ options }) => {
+const PlacerQuantize: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { quantizeCoarsePlacer } = await import("@mailwoman/core/coarse-placer/tools")
 

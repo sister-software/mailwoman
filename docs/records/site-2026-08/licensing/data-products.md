@@ -21,19 +21,19 @@ side rather than the artifact side.
 ## How to read an entry
 
 **Tier** is the distribution posture, defined by the
-[spatial-layer contract](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/layer-contract.mdx#tiers) and used here for every
-artifact, not just the ones that formally embed the layer manifest:
+[spatial-layer interface](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/layer-interface.mdx#tiers) and used here for every
+artifact, notthe ones that formally embed the layer manifest:
 
 - **shipped** — permissive sources only. We build it and publish it.
 - **build-local** — share-alike or otherwise unpublishable sources. We ship the **builder**; you
   run it on your own disk; we distribute nothing.
 - **private** — your own data, conforming to the same schema, loaded from
   `$MAILWOMAN_DATA_ROOT`, never leaving your machine.
-- **planned** — designed, not built. Listed so the roadmap is legible, marked so nobody plans
+- **planned** — designed rather than built. Listed so the roadmap is legible, marked so nobody plans
   around vapor.
 
-**Cadence** is honest rather than aspirational. Most of these are rebuilt when coverage changes or
-an ingest bug is fixed, not on a schedule. Where that is the case, the entry says so.
+**Cadence** is direct rather than aspirational. Most of these are rebuilt when coverage changes or
+an ingest bug is fixed rather than on a schedule. Where that is the case, the entry says so.
 
 Every artifact is a **sealed** SQLite file: built to a temp path, verified, swapped into place,
 then `chmod 0444`. Updates are full rebuilds. Nothing here is a live database you write to.
@@ -132,7 +132,7 @@ published derivative is `candidate.db` above.
 describes a **1.09 GB, seven-country** build with 1,288,749 places and seven FST binaries. It was
 last touched on 2026-05-28, at package version 0.5.4, and every number in it is a snapshot of that
 date. The current build is global (244 countries) and only four FST locales are still produced.
-Treat the card as history, not as a description of anything you can download today.
+Treat the card as history rather than as a description of anything you can download today.
 
 :::
 
@@ -140,7 +140,7 @@ Treat the card as history, not as a description of anything you can download tod
 
 ## POI layer — `poi.db`
 
-Layer #1 on the [spatial-layer contract](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/layer-contract.mdx), and the worked
+Layer #1 on the [spatial-layer interface](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/layer-interface.mdx), and the worked
 example every later layer copies. It answers category and brand queries — "coffee near Springfield
 IL" — rather than address queries.
 
@@ -181,7 +181,7 @@ shipped `poi.db` is not it. Queries that need infrastructure abstain with
 
 ## US situs extracts — `address-points-us-<st>.db`
 
-The precision tier for the United States: an exact building coordinate, not a street estimate and
+The precision tier for the United States: an exact building coordinate rather than a street estimate and
 not a city centroid.
 
 **Contents.** One `address_point` table per state, carrying normalized and raw street, house
@@ -259,7 +259,7 @@ bounding box, and member-point count, for street-only queries.
 
 **Upstream source.** Base Adresse Nationale, from `adresse.data.gouv.fr`, release 2026-05-18.
 
-**License.** **Licence Ouverte / Open Licence 2.0 (Etalab)** — attribution only, **no share-alike**.
+**License.** **license Ouverte / Open license 2.0 (Etalab)** — attribution only, **no share-alike**.
 BAN is dual-licensed and we elect the permissive option, which is why the extract ships under the same
 terms as the permissive core and needed no counsel check.
 
@@ -276,8 +276,8 @@ row count, and md5 at build time.
 **Build.** `node ban/out/scripts/build-address-point-extract.js --csv-dir <dir> --release 2026-05-18`.
 A `--depts` flag builds a transient sample for validation first.
 
-**Not included.** No interpolation extract exists for France. The exact-point tier covers the win;
-house numbers BAN does not carry are simply not interpolated.
+**Not included.** No interpolation extract exists for France. The exact-point tier covers the result;
+house numbers BAN does not carry are only not interpolated.
 
 ---
 
@@ -354,7 +354,7 @@ obligation. No formal identifier (CC0 or otherwise) is given.
 **Tier:** build-local. `@mailwoman/un-locode-lookup` is published to npm at 8.3.0; the `.db` is not.
 
 **Row counts.** 116k entries, of which roughly 93k carry coordinates. (An older docstring in the
-package puts the coordinate-bearing share at about a third; the README and recipe figures above are
+package puts the coordinate-containing share at about a third; the README and recipe figures above are
 the ones to use.)
 
 **Build.** `npx @mailwoman/un-locode-lookup build --csv code-list.csv --out un-locode.db`.
@@ -392,13 +392,13 @@ this page they are a **first-party artifact** — we trained them, so their lice
 Hugging Face-facing READMEs list only the AGPL half; the `package.json` and model card carry the
 dual form and are authoritative.
 
-| Package                               | Role                    | npm   | Unpacked |
-| ------------------------------------- | ----------------------- | ----- | -------- |
-| `@mailwoman/neural-weights-en-us`     | the self-contained base | 8.3.0 | ~72 MB   |
-| `@mailwoman/neural-weights-en-gb`     | data-only overlay       | 8.3.0 | ~12 MB   |
-| `@mailwoman/neural-weights-fr-fr`     | data-only overlay       | 8.3.0 | ~17 MB   |
-| `@mailwoman/neural-weights-en-nz`     | data-only overlay       | 8.3.0 | ~8 MB    |
-| `@mailwoman/neural-weights-base-latn` | parked, not published   | 7.8.1 | —        |
+| Package                               | Role                         | npm   | Unpacked |
+| ------------------------------------- | ---------------------------- | ----- | -------- |
+| `@mailwoman/neural-weights-en-us`     | the self-contained base      | 8.3.0 | ~72 MB   |
+| `@mailwoman/neural-weights-en-gb`     | data-only overlay            | 8.3.0 | ~12 MB   |
+| `@mailwoman/neural-weights-fr-fr`     | data-only overlay            | 8.3.0 | ~17 MB   |
+| `@mailwoman/neural-weights-en-nz`     | data-only overlay            | 8.3.0 | ~8 MB    |
+| `@mailwoman/neural-weights-base-latn` | parked rather than published | 7.8.1 | —        |
 
 **Contents.** The en-US package carries the model (`model.onnx`), the SentencePiece tokenizer, the
 model card, calibration tables, the US postcode FST, the en-US and street-morphology FST gazetteer
@@ -410,7 +410,7 @@ has one, a `pair-index-<cc>.bin` placetype-pair index (GB: 19,209 pairs, ~458 KB
 **Model.** Version 7.0.0, the from-scratch base. ONNX int8 dynamic quantized from fp32, opset 17,
 max sequence 128, six layers at hidden size 384, vocabulary 73,143, roughly 29M parameters.
 **37.6 MB int8** (146.6 MB fp32). Note that the en-US package README prints older size and
-vocabulary figures; the `model-card.json` is the functional contract.
+vocabulary figures; the `model-card.json` is the functional interface.
 
 **Training data.** Compiled from permissive sources only, by construction: the corpus build filters
 share-alike rows through `SHARE_ALIKE_PATTERN` (`--exclude-share-alike`), and the model card's
@@ -428,13 +428,13 @@ model's own lineage. Most releases are code-only; promoting a newly trained mode
 is a deliberate, larger operation. The model's own identity lives in `model_lineage` on the card.
 
 **Note on card drift.** The overlay model cards are not auto-bumped at release, so their `version`
-fields lag the base. Read `model_lineage` and `files_md5`, not the overlay card's version number.
+fields lag the base. Read `model_lineage` and `files_md5` rather than the overlay card's version number.
 
 ---
 
 ## Broadband filings — `bdc.db` (planned)
 
-**Status: designed, not built.** Phase 2a of the broadband-plausibility vertical. Listed so the
+**Status: designed rather than built.** Phase 2a of the broadband-plausibility vertical. Listed so the
 shape is public; nothing exists to download.
 
 **Intended contents.** FCC Broadband Data Collection availability filings at census-block grain:
@@ -464,13 +464,13 @@ work happens at public block granularity plus the address spine we already own.
 ## What is not on this shelf
 
 - **Build inputs.** Postcode extracts, `tiger.db`, the durable GeoNames alias fold, and the raw
-  Overture parquet slices are intermediates that feed the artifacts above. They are documented
-  in the build runbooks, not here.
+  Overture parquet extracts are intermediates that feed the artifacts above. They are documented
+  in the build runbooks rather than here.
 - **Demo assets.** The map-highlight polygons and the address-coverage tile overlay exist to make
   the demo work; see the [coverage overlay runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/coverage-overlay.mdx).
-- **Your data.** A `private`-tier layer conforming to the same contract — a CRM export, survey
+- **Your data.** A `private`-tier layer conforming to the same interface — a CRM export, survey
   notes, parcel relationships — joins the same query surface and never leaves your machine. That
-  is a supported posture, not a product we sell.
+  is a supported posture rather than a product we sell.
 
 ## See also
 
@@ -479,7 +479,7 @@ work happens at public block granularity plus the address spine we already own.
 - [Pricing](./pricing.mdx) — the engine's tiers, and the
   [OEM band](./pricing.mdx#embedding-mailwoman-in-a-product-you-sell) for shipping Mailwoman inside
   a product you license to others.
-- [Spatial-layer contract](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/layer-contract.mdx) — the schema every layer database
+- [Spatial-layer interface](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/layer-interface.mdx) — the schema every layer database
   embeds, and where the tier vocabulary on this page comes from.
 - [POI layer runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/poi-layer-runbook.mdx) — the worked build/verify/publish
   example.

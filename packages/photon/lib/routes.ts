@@ -4,7 +4,7 @@
 /**
  *   Route definitions + handlers for the Photon-compatible surface. The OpenAPI document is
  *   emitted from these definitions — no handwritten spec. Handlers parse params from the
- *   `legacyQuery` express-shaped view; the zod query schemas drive only the emitted document.
+ *   `legacyQuery` express-shaped view. the zod query schemas drive only the emitted document.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
@@ -47,8 +47,8 @@ function asStringArray(raw: unknown): string[] | undefined {
 }
 
 /**
- * A friendly HTML landing page for `GET /` (#1022). Upstream komoot/photon serves no root page, so there's no wire
- * contract to match — this is pure courtesy: a browser visitor (or an evaluator kicking the tires) who pastes the bare
+ * A friendly html landing page for `GET /` (#1022). Upstream komoot/photon serves no root page, so there's no wire
+ * interface to match — this is pure courtesy: a browser visitor (or an evaluator kicking the tires) who pastes the bare
  * host in gets a one-glance orientation with clickable example queries instead of Express's `Cannot GET /` 404, which
  * reads as "the service is broken". Relative example URLs so they resolve against whatever host/port serves this.
  */
@@ -72,7 +72,7 @@ footer { margin-top: 2rem; font-size: .9rem; opacity: .8 }
 </head>
 <body>
 <h1>@mailwoman/photon</h1>
-<p>A Photon-compatible autocomplete geocoding API — the same <code>/api</code> and <code>/reverse</code> contract, served from a SQLite gazetteer instead of an Elasticsearch cluster.</p>
+<p>A Photon-compatible autocomplete geocoding API — the same <code>/api</code> and <code>/reverse</code> interface, served from a SQLite gazetteer instead of an Elasticsearch cluster.</p>
 <p>Try a query:</p>
 <ul>
 <li><a class="q" href="/api?q=berlin&amp;limit=3">/api?q=berlin&amp;limit=3</a></li>
@@ -153,7 +153,7 @@ export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine, sta
 
 		const collection = await engine.search(params)
 
-		// #1052: `format=jsonld` re-serializes the SAME FeatureCollection as schema.org `Place[]` JSON-LD.
+		// #1052: `format=jsonld` re-serializes the same FeatureCollection as schema.org `Place[]` JSON-LD.
 		if (asString(q["format"]) === "jsonld") {
 			return c.json(photonToSchemaOrg(collection), 200)
 		}

@@ -2,28 +2,30 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Adapter runner — drives a `CorpusAdapter` to completion and writes intermediate JSONL + a
- *   per-slice manifest.
+ *   Adapter runner — drives a `CorpusAdapter` to completion and writes intermediate jsonl + a
+ *   per-adapter manifest.
  *
  *   Output layout under `outputDir`:
  *
  *   ```
  *   <outputDir>/<adapter.id>/
  *   canonical.jsonl       # one row per line, in emission order
- *   MANIFEST.json         # adapter id, version, row count, sha256, license, started_at, ended_at
+ *   manifest.json         # adapter id, version, row count, sha256, license, started_at, ended_at
  * ```
  *
  *   The runner is responsible for everything an adapter is **not** responsible for:
  *
- *   - Stamping `corpus_version` on every row (adapters must NOT set it).
+ *   - Stamping `corpus_version` on every row (adapters must not set it).
+ *   - Stamping the adapter's `addressRole` on every row that omits one, so a single-role source declares its role once
+ *       and a multi-role source overrides per row.
  *   - Applying `canonicalDedupKey` and skipping duplicates.
- *   - Streaming sha256 over JSONL bytes so the manifest checksum doesn't require a re-read.
+ *   - Streaming sha256 over jsonl bytes so the manifest checksum doesn't require a re-read.
  *   - Honoring backpressure on the output write stream.
  *   - Counting + emitting periodic progress to an optional callback.
  *   - Honoring `signal` (delegates to adapter's iteration boundary).
  *
- *   The runner does NOT perform alignment, tokenization, synthesis, or slicing into Parquet. Those
- *   steps run later, consuming the JSONL slices this writes.
+ *   The runner does not perform alignment, tokenization, synthesis, or the Parquet write. Those
+ *   steps run later, consuming the jsonl files this writes.
  */
 
 import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
@@ -49,12 +51,12 @@ export interface RunnerProgress {
 	yielded: number
 
 	/**
-	 * Rows actually written to JSONL (after dedup).
+	 * Rows actually written to jsonl (after dedup).
 	 */
 	written: number
 
 	/**
-	 * Bytes written to JSONL so far.
+	 * Bytes written to jsonl so far.
 	 */
 	bytes: number
 
@@ -79,7 +81,7 @@ export interface RunAdapterOptions {
 	adapterOptions: AdapterOptions
 
 	/**
-	 * Root output directory; the runner creates `<outputDir>/<adapter.id>/` under it.
+	 * Root output directory. the runner creates `<outputDir>/<adapter.id>/` under it.
 	 */
 	outputDir: PathBuilderLike
 
@@ -102,7 +104,7 @@ export interface RunAdapterOptions {
 }
 
 /**
- * Return value of `runAdapter`: the same shape as `MANIFEST.json` on disk.
+ * Return value of `runAdapter`: the same shape as `manifest.json` on disk.
  */
 export interface AdapterRunManifest {
 	adapter_id: string
@@ -123,7 +125,7 @@ export interface AdapterRunManifest {
 /**
  * Drive a single adapter to completion.
  *
- * Returns the manifest describing the run. Writes `canonical.jsonl` + `MANIFEST.json` under `outputDir/<adapter.id>/`.
+ * Returns the manifest describing the run. Writes `canonical.jsonl` + `manifest.json` under `outputDir/<adapter.id>/`.
  * Throws if the output directory cannot be created, if a row arrives with a missing required field, or if the abort
  * signal fires.
  */
@@ -169,7 +171,12 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 			yielded++
 			assertEmittedRow(adapter, row)
 
-			const stamped: CanonicalRow = { ...row, corpus_version: corpusVersion }
+			const stamped: CanonicalRow = {
+				...row,
+				corpus_version: corpusVersion,
+				addressRole: row.addressRole ?? adapter.addressRole,
+			}
+
 			const key = canonicalDedupKey(stamped)
 
 			if (!dedupExhausted) {
@@ -264,7 +271,7 @@ export async function runAllAdapters(
 }
 
 /**
- * Validate an emitted row. Cheap; runs once per row. Catches adapter bugs early so the JSONL doesn't end up
+ * Validate an emitted row. Cheap. runs once per row. Catches adapter bugs early so the jsonl doesn't end up
  * half-malformed.
  */
 function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
@@ -291,7 +298,7 @@ function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
 
 /**
  * Promise-ify a single event emission. Used to await `drain` / `close` on the write stream. Exported for `build.ts`,
- * whose stage streams await `close` the same way; unlike a bare two-listener race, the loser listener is detached so a
+ * whose stage streams await `close` the same way. unlike a bare two-listener race, the loser listener is detached so a
  * long-lived stream does not accumulate one orphan handler per wait.
  */
 export function once(emitter: WriteStream, event: "drain" | "close"): Promise<void> {

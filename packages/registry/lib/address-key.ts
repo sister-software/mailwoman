@@ -6,9 +6,9 @@
  *   resolved {@link SourceRecord} and exposes it as a blocking key — the deterministic,
  *   exact-canonical-address complement to the fuzzy Fellegi-Sunter / GBT scoring. Two uses:
  *
- *   - **As a pre-dedup / join key:** `GROUP BY postalAddressID(record)` collapses records that resolve
- *       to the same place AND share a canonical address with NO scoring at all — the cheap, certain
- *       slice of dedup before the matcher does the fuzzy rest.
+ *   - **As a pre-dedup / join key:** `group BY postalAddressID(record)` collapses records that resolve
+ *       to the same place and share a canonical address with no scoring at all — the cheap, certain
+ *       part of dedup before the matcher does the fuzzy rest.
  *   - **As a blocking key:** {@link addressIDBlockingKey} adds the address-id to the blocking union, so
  *       records sharing one are guaranteed to be compared.
  */
@@ -20,7 +20,7 @@ import type { SourceRecord } from "#types"
 
 /**
  * The stable address primary key for a record, or null when it isn't geocoded (no coordinate → no locality cell) or
- * carries no raw address to hash. Uses the resolved coordinate + the raw address; the state prefix is plucked from the
+ * carries no raw address to hash. Uses the resolved coordinate + the raw address. the state prefix is plucked from the
  * address when present.
  */
 export function postalAddressID(record: SourceRecord): PostalAddressID | null {

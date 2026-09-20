@@ -15,9 +15,9 @@
  *   carries no country property — see `extract-poi.ts`'s module docstring), and derives res-6 coverage
  *   by polyfilling the extract's declared `--bbox` (`bboxCoverageCells`, decision 5) rather than only
  *   the cells rows happened to land in — an infra-only extract is sparse by category, so "no plant in a
- *   well-surveyed cell" needs its own zero-observed-rows coverage row, not silent absence. The manifest
+ *   well-surveyed cell" needs its own zero-observed-rows coverage row rather than silent absence. The manifest
  *   swaps to `tier: build-local`, `license: ODbL-1.0`, OSM attribution — the default Overture branch
- *   below is UNTOUCHED and stays byte-identical when `--source` is omitted.
+ *   below is untouched and stays byte-identical when `--source` is omitted.
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
@@ -28,9 +28,9 @@ import { Box, Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	phaseReporter,
-	splitUpperList,
+	splitCountryCodes,
 	useCommandTask,
 } from "#cli-kit"
 import type { BBox, POISourceRow } from "#gazetteer-pipeline/poi/build/poi"
@@ -40,7 +40,7 @@ import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 const DEFAULT_COUNTRIES = "US,CA,MX,FR"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "poi",
@@ -57,18 +57,6 @@ export const spec = {
 		bbox: { type: "string", description: "OSM extract bounding box" },
 	},
 } as const satisfies CommandSpec
-
-interface Options {
-	source: "overture" | "osm"
-	release?: string
-	countries?: string
-	out?: string
-	limit?: string
-	skipIngest: boolean
-	pbf?: string
-	country?: string
-	bbox?: string
-}
 
 /**
  * `--bbox` field count: `minLon,minLat,maxLon,maxLat`.
@@ -91,7 +79,7 @@ function parseBBoxFlag(raw: string): BBox {
 	return { minLon, minLat, maxLon, maxLat }
 }
 
-const GazetteerBuildPOI: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { LayerTier } = await import("@mailwoman/core/layers")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
@@ -121,11 +109,11 @@ const GazetteerBuildPOI: ParsedCommandComponent<Options> = ({ options }) => {
 			// twice, once here to derive coverage, once as buildPOIDatabase's `rows` injection point.
 			const rows: POISourceRow[] = []
 
-			// DYNAMIC import, required: @mailwoman/osm is UNPUBLISHED (ODbL counsel sign-off
-			// pending — see osm/README.md), and this dependency belongs only on the selected build path,
+			// dynamic import, required: @mailwoman/osm is unpublished (ODbL counsel sign-off
+			// pending — see osm/readme.md), and this dependency belongs only on the selected build path,
 			// so a top-level import breaks the whole published CLI on a clean install — the smoke
 			// test's clean-install leg is what catches it. The osm source branch is build-local by
-			// design; it may only resolve its SDK when actually invoked.
+			// design. it may only resolve its SDK when actually invoked.
 			const { extractOSMPOIs } = await import("@mailwoman/osm/sdk")
 
 			for await (const row of extractOSMPOIs(pbf)) {
@@ -159,7 +147,7 @@ const GazetteerBuildPOI: ParsedCommandComponent<Options> = ({ options }) => {
 		}
 
 		const release = options.release ?? DEFAULT_RELEASE
-		const countries = splitUpperList(options.countries ?? DEFAULT_COUNTRIES)
+		const countries = splitCountryCodes(options.countries ?? DEFAULT_COUNTRIES)
 		const limit = options.limit ? Number.parseInt(options.limit, 10) : undefined
 		const out = options.out ?? dataRootPath("poi", "poi.db")
 

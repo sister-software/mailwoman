@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `--debug` input area's evidence rows, as plain strings: what the model was told the input WAS (system,
+ *   The `--debug` input area's evidence rows, as plain strings: what the model was told the input was (system,
  *   register, locale), what it was fed (tokens, retrieval channels), and what it decided (decode, locale head).
  *   Content parity with the docs demo's dev-mode drawer (`docs/src/components/ModelVisualizer`) minus its emissions
  *   heatmap — a terminal row is not a matrix, and the priors that moved those emissions are named on the decode row
  *   instead.
  *
- *   Every function here takes the {@link GeocodeTrace} the session recorded and returns ONE line. A stage that
- *   produced nothing renders {@link ABSENT} and says why — "not fed" is the #566/#685 diagnostic fact the demo's
- *   channel band already reports, and an absent locale head is a property of the loaded bundle, not a zero. Nothing in
+ *   Every function here takes the {@link GeocodeTrace} the session recorded and returns one line. A stage that
+ *   produced nothing renders {@link absent} and says why — "not fed" is the #566/#685 diagnostic fact the demo's
+ *   channel band already reports, and an absent locale head is a property of the loaded bundle rather than a zero. Nothing in
  *   this module derives, infers, or fills in a value the trace did not carry.
  *
  *   Pure and Ink-free so the formatting is unit-testable without a render, and so a caller can truncate the result
@@ -36,7 +36,7 @@ export const ABSENT = "—"
 const FIELD_GAP = "  "
 
 function fields(parts: Array<string | null>): string {
-	return parts.filter((part) => part != null && part.length > 0).join(FIELD_GAP)
+	return parts.filter((part) => part != null && part.length).join(FIELD_GAP)
 }
 
 //#endregion
@@ -44,7 +44,7 @@ function fields(parts: Array<string | null>): string {
 //#region Rows
 
 /**
- * How many locale-head classes the row names. The head's axis is nine countries wide; the tail is uniformly flat on a
+ * How many locale-head classes the row names. The head's axis is nine countries wide. the tail is uniformly flat on a
  * confident parse, and three entries is what fits beside the rest of the row on a narrow pane.
  */
 const LOCALE_HEAD_ENTRIES = 3
@@ -72,7 +72,7 @@ export function systemRow(trace: GeocodeTrace | undefined): string {
 }
 
 /**
- * The locale head's top classes as probabilities, on the head's OWN axis (`localeCountries` rides with the logits, so
+ * The locale head's top classes as probabilities, on the head's own axis (`localeCountries` rides with the logits, so
  * nothing here hardcodes an order — the PLACETYPE_ORDER dual-maintenance class).
  */
 export function localeHeadRow(trace: GeocodeTrace | undefined): string {
@@ -95,7 +95,7 @@ export function localeHeadRow(trace: GeocodeTrace | undefined): string {
 /**
  * The SentencePiece stream exactly as fed, pieces space-separated with the `▁` word-start sentinel intact (it is the
  * tokenizer's own mark for "a word starts here", and dropping it hides the fertility question every digit-ownership bug
- * is asked in). The COUNT leads so it survives the caller's truncation, which eats the tail.
+ * is asked in). The count leads so it survives the caller's truncation, which eats the tail.
  */
 export function tokensRow(trace: GeocodeTrace | undefined): string {
 	if (!trace) return ABSENT
@@ -110,7 +110,7 @@ export function tokensRow(trace: GeocodeTrace | undefined): string {
 /**
  * The retrieval channels as fed to the encoder: per channel, how many pieces carried a nonzero clue and which ones.
  *
- * "not fed" and `0/12` are DIFFERENT claims — the first is a channel with no source wired (the demo's band says so
+ * "not fed" and `0/12` are different claims — the first is a channel with no source wired (the demo's band says so
  * too), the second is a wired channel that matched nothing on this input. Collapsing them is how "why didn't my
  * gazetteer prior fire" becomes unanswerable.
  */
@@ -144,8 +144,8 @@ export function channelsRow(trace: GeocodeTrace | undefined): string {
  * What the decode did: the algorithm, the mean per-token confidence, the component sequence it produced, which priors
  * actually moved the emissions, and which repair passes changed a label.
  *
- * `priors` reports EFFECT, not configuration — `TracePrior.applied` is true only where a composed prior carried a
- * nonzero bias — which is why this row is a usable substitute for the emissions matrix the terminal has no room for.
+ * `priors` reports effect rather than configuration — `TracePrior.applied` is true only where a composed prior carried
+ * a nonzero bias — which is why this row is a usable substitute for the emissions matrix the terminal has no room for.
  */
 export function decodeRow(trace: GeocodeTrace | undefined): string {
 	if (!trace) return ABSENT
@@ -156,7 +156,7 @@ export function decodeRow(trace: GeocodeTrace | undefined): string {
 	const meanConfidence = tokens.length ? tokens.reduce((sum, token) => sum + token.confidence, 0) / tokens.length : null
 
 	// B-/I- stripped and runs collapsed: the ribbon above already carries per-character ownership, so what
-	// this row adds is the ORDER the decode produced, not a second copy of the spans.
+	// this row adds is the order the decode produced rather than a second copy of the spans.
 	const sequence: string[] = []
 
 	for (const token of tokens) {

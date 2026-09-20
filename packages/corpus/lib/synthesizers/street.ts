@@ -6,29 +6,34 @@
  *   `street_prefix`, `street`, and `street_suffix` are emitted as separate BIO spans (instead of
  *   monolithic `street`). Mirrors the PO box synthesizer pattern.
  *
- *   Why this exists: TIGER/NAD/BAN adapter changes (committed earlier tonight) emit decomposed
- *   components from raw source data, but the v0.4.0 parquet slices on Modal were built BEFORE those
- *   changes. Rebuilding the full corpus requires downloading raw TIGER/NAD/BAN data and re-running
+ *   Why this exists: tiger/NAD/BAN adapter changes (committed earlier tonight) emit decomposed
+ *   components from raw source data, but the v0.4.0 parquet files on Modal were built before those
+ *   changes. Rebuilding the full corpus requires downloading raw tiger/NAD/BAN data and re-running
  *   adapters end-to-end — out of scope for a single night shift. This synthesizer takes (locality,
  *   region, postcode) tuples and produces freshly-decomposed Stage 3 training rows, same shape as
  *   the PO box pipeline.
  *
- *   Note: uses the SAME decomposition logic as TIGER's `decomposeStreet()` so the synthetic
- *   distribution matches what the model would see if/when TIGER slices are rebuilt with the new
+ *   Note: uses the same decomposition logic as tiger's `decomposeStreet()` so the synthetic
+ *   distribution matches what the model would see if/when the tiger parquet files are rebuilt with the new
  *   adapter.
  */
 
-import { isPresent } from "@mailwoman/core/objects"
+/* oxlint-disable mailwoman/prefer-home -- the admin tails below are written as US templates because this synthesizer
+   refuses a non-US tuple outright (`if (base.country !== "US") return null`). A layout call would answer the same
+   string for the only country that reaches it, and would read as though the file served more. */
 
-import { pick, tieredNumber } from "#synthesizers/utils"
+import { isPresent } from "@mailwoman/core/objects"
+import { sample } from "@mailwoman/core/random"
+
+import { tieredNumber } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { decomposeStreet } from "#us/adapters/tiger/street-decompose"
 
 // Hand-curated US street name pool. Real frequency-weighted street names — sampled
-// from US Census TIGER 2024 top-1000 by occurrence count. Keep ~50 entries so the
+// from US Census tiger 2024 top-1000 by occurrence count. Keep ~50 entries so the
 // synthesis distribution doesn't overfit to a tiny vocabulary.
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
-   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
    output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
    extracted as named constants above. */
@@ -178,11 +183,11 @@ export interface StreetSynthesisOpts {
 	 */
 	includeHouseNumberProb?: number
 	/**
-	 * Probability of emitting the street BARE — no `, City, ST ZIP` tail and no region/locality/ postcode components
+	 * Probability of emitting the street bare — no `, City, ST ZIP` tail and no region/locality/ postcode components
 	 * (just `street_prefix`/`street`/`street_suffix` + optional `house_number`). Default 0 (preserves the original
 	 * full-address behavior exactly, including the RNG sequence). Set >0 to teach the model that a bare `10th Ave` /
-	 * `Main St` is a STREET, not a locality — the functional-test failure cluster (bare streets mislabeled `locality`),
-	 * the bare-format analogue of the v0.7.x intersection-bare fix.
+	 * `Main St` is a street rather than a locality — the functional-test failure cluster (bare streets mislabeled
+	 * `locality`), the bare-format analogue of the v0.7.x intersection-bare fix.
 	 */
 	bareProb?: number
 }
@@ -190,7 +195,7 @@ export interface StreetSynthesisOpts {
 function randomHouseNumber(random: () => number): string {
 	// US house number distribution: skewed low. 1-99 (30%), 100-999 (40%),
 	// 1000-9999 (25%), 10000+ (5%). The last band's 89_999 span is this file's own
-	// (the PO-box generators use 90_000) and is baked into every shipped street slice.
+	// (the PO-box generators use 90_000) and is baked into every shipped street recipe output.
 	return tieredNumber(random, [
 		{ cutoff: 0.3, base: 1, span: 99 },
 		{ cutoff: 0.7, base: 100, span: 900 },
@@ -200,8 +205,8 @@ function randomHouseNumber(random: () => number): string {
 }
 
 /**
- * Synthesize a US street address with decomposed Stage 3 components. The street is built from PREFIX + NAME + SUFFIX,
- * then passed through the same `decomposeStreet()` utility the TIGER adapter uses — guarantees the synthetic
+ * Synthesize a US street address with decomposed Stage 3 components. The street is built from prefix + name + suffix,
+ * then passed through the same `decomposeStreet()` utility the tiger adapter uses — guarantees the synthetic
  * distribution matches the canonical decomposition logic.
  */
 export function synthesizeStreetRow(
@@ -213,19 +218,19 @@ export function synthesizeStreetRow(
 
 	if (base.country !== "US") return null
 
-	const prefix = pick(DIRECTIONAL_PREFIXES, random)
-	const name = pick(STREET_NAMES, random)
-	const suffix = pick(STREET_SUFFIXES, random)
-	const trailing = pick(TRAILING_DIRECTIONALS, random)
+	const prefix = sample(DIRECTIONAL_PREFIXES, random)
+	const name = sample(STREET_NAMES, random)
+	const suffix = sample(STREET_SUFFIXES, random)
+	const trailing = sample(TRAILING_DIRECTIONALS, random)
 
-	// Build the "full" street string the adapter would receive from TIGER FULLNAME.
+	// Build the "full" street string the adapter would receive from tiger fullname.
 	const parts = [prefix, name, suffix, trailing].filter(isPresent)
 	const fullStreet = parts.join(" ")
 
-	// Pass through the same decomposeStreet TIGER uses — match the training distribution.
+	// Pass through the same decomposeStreet tiger uses — match the training distribution.
 	const decomposed = decomposeStreet(fullStreet)
 
-	// NOTE: country is intentionally omitted. We don't emit "USA" or "US" in the raw
+	// note: country is intentionally omitted. We don't emit "USA" or "US" in the raw
 	// string, and the aligner's fuzzy match (edit distance 2) will spuriously match
 	// "US" against any 2-char token (e.g. a house number "45" is exactly 2 substitutions
 	// from "US"). The PO box synthesizer skips country for the same reason.

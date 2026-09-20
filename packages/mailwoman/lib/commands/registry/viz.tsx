@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman registry viz <figure>` — emit one of the record-matcher figures (HTML/SVG). The map
- *   figures (`cross-dataset-map`, `source-provenance-map`) must be SERVED OVER LOCALHOST to render
- *   their basemap (the house tile server CORS-restricts to localhost + the docs domains). PNG
+ *   `mailwoman registry viz <figure>` — emit one of the record-matcher figures (html/SVG). The map
+ *   figures (`cross-dataset-map`, `source-provenance-map`) must be served over localhost to render
+ *   their basemap (the house tile server cors-restricts to localhost + the docs domains). PNG
  *   rendering stays programmatic via `renderPlotlyHTMLToPNG` / `renderServedMapToPNG` in
  *   `@mailwoman/registry/tools` (lazy playwright).
  */
@@ -14,7 +14,8 @@ import { Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
+	type OptionsOf,
 	reportToStderr,
 	useCommandTask,
 } from "#cli-kit"
@@ -22,7 +23,7 @@ import {
 const figures = ["cross-dataset-map", "geocode-first-surface", "source-provenance-map", "yardstick-figure"] as const
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "viz",
@@ -42,18 +43,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	in?: string
-	crossAgencyOnly: boolean
-	lambda?: number
-	state?: string
-	db?: string
-	nadMod?: number
-	oaMod?: number
-	cap?: number
-	outHTML?: string
-	outSVG?: string
-}
+type Options = OptionsOf<typeof spec>
 
 type Figure = (typeof figures)[number]
 
@@ -90,7 +80,7 @@ async function runFigure(figure: Figure, options: Options): Promise<string> {
 	}
 }
 
-const RegistryViz: ParsedCommandComponent<Options, [Figure]> = ({ options, args }) => {
+const RegistryViz: CommandComponent<typeof spec, [Figure]> = ({ options, args }) => {
 	const state = useCommandTask(async () => await runFigure(args[0], options))
 
 	if (state.status !== "done") return <CommandTaskResult state={state} />

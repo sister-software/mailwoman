@@ -3,7 +3,7 @@
 
 /**
  *   Quick comparison of demo presets between two models (`mailwoman eval preset-compare`). Baseline
- *   = the shipped dev weights; pass `modelPath` to also print a candidate's parses. The promotion
+ *   = the shipped dev weights. pass `modelPath` to also print a candidate's parses. The promotion
  *   check captures this report into `<out-dir>/presets.md` via the `report` sink.
  */
 

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Tests for the FCC CORES registration lookup.
+ * @file Tests for the FCC cores registration lookup.
  *
  *   Every fixture is a real `apps.fcc.gov/cores/searchDetail.do` response, retrieved 2026-08-07 and vendored
  *   verbatim. No test performs a live request: the parse tests drive {@linkcode parseCORESRegistration}
@@ -73,7 +73,7 @@ describe("parseCORESRegistration — real CORES detail pages", () => {
 	it("leaves an already-mixed-case entity name alone and title-cases a uniformly-cased one", async () => {
 		const comcast = parseCORESRegistration(COMCAST_FRN, await fixture("frn-0003768165-comcast.html"))
 
-		// The source states "COMCAST CABLE COMMUNICATIONS, LLC" — uniformly cased, so it is tidied.
+		// The source states "comcast cable communications, LLC" — uniformly cased, so it is tidied.
 		expect(comcast?.entityName).toBe("Comcast Cable Communications, LLC")
 		// Its contact organization is already mixed-case in the source and must survive untouched.
 		expect(comcast?.contactOrganization).toBe("Comcast Cable Communications, LLC")
@@ -140,7 +140,7 @@ describe("recaseUniform", () => {
 		expect(recaseUniform("HARGRAY COMMUNICATIONS GROUP LP")).toBe("Hargray Communications Group LP")
 		// A trailing comma or period must not stop the token being recognized.
 		expect(recaseUniform("ACME FIBER, LLC")).toBe("Acme Fiber, LLC")
-		// Words that conventionally ARE title case stay title case.
+		// Words that conventionally are title case stay title case.
 		expect(recaseUniform("OTELCO TELEPHONE INC")).toBe("Otelco Telephone Inc")
 	})
 })

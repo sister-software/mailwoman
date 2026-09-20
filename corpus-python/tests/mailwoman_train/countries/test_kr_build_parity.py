@@ -27,7 +27,7 @@ from mailwoman_train.countries.kr.corpora import build
 
 from .kr_fixture import JusoAddress, JusoRegion, write_juso_zip, write_permit_csv
 
-#: Committed beside this file, captured from the code as it stood BEFORE a split. Regenerating it
+#: Committed beside this file, captured from the code as it stood before a split. Regenerating it
 #: after a change makes the test compare the new code against itself, so regenerate only when the
 #: current code is already verified against the existing reference.
 #:
@@ -136,7 +136,7 @@ REGIONS = [
 ]
 
 #: (name, status, road address, lot address, road postcode, lot postcode, x, y). The road forms are
-#: written to align against the index above; the last row aligns against neither, which is what puts
+#: written to align against the index above. the last row aligns against neither, which is what puts
 #: an unaligned permit on the registry board.
 PERMITS: list[tuple[str, str, str, str, str, str, str, str]] = [
     (
@@ -277,7 +277,7 @@ def run_build(root: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     """One build against the fixture, with the projection stubbed, returned as the pinned payload."""
     monkeypatch.setattr(registers, "transform_coordinates", stub_transform)
     archive, permits = write_fixture(root)
-    out_dir, registry_dir = root / "slice", root / "registry"
+    out_dir, registry_dir = root / "corpus", root / "registry"
     report = build(reference_args(archive, permits, out_dir, registry_dir))
 
     def rendered(directory: Path) -> list[dict[str, Any]]:

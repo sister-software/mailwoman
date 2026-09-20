@@ -6,7 +6,7 @@
  *   gazetteer. Three phases, run separately so the expensive one happens once:
  *
  *     panel   Execute the frozen selection rules over GeoNames and write the panel.
- *     record  Parse every query with the shipped model, drive the REAL backend once per arm option set,
+ *     record  Parse every query with the shipped model, drive the real backend once per arm option set,
  *             and freeze every answer. This is the only phase that touches a gazetteer.
  *     run     Replay the frozen fixture through the three arms, score, and write the results.
  *     sweep   Re-grade the frozen results under an abstention threshold and write the trade curve (#2264).
@@ -23,10 +23,17 @@
  *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts score
  *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts sweep
  *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts knob
+ *
+ *   `record --withhold-every-denoting-row` removes every row denoting the gold settlement instead of every id the
+ *   concordance links. The gazetteer carries 10.6% of its populated localities at two admin tiers, so under the
+ *   concorded-id rule an arm answering the twin is graded as selecting where no correct candidate exists. The two
+ *   rules define different strata and their rates are not comparable. `benchmark-freeze.json` admits a rule change
+ *   only as a successor definition, so the receipt records which rule produced the fixture.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalJSONLFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { gitHead } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -82,7 +89,9 @@ const { values, positionals } = parseArguments({
 		gazetteer: { type: "string" },
 		backend: { type: "string" },
 		out: { type: "string" },
+		panel: { type: "string" },
 		limit: { type: "string" },
+		"withhold-every-denoting-row": { type: "boolean" },
 	},
 	allowPositionals: true,
 })
@@ -99,7 +108,15 @@ const GAZETTEER = values.gazetteer || dataRootPath("wof", "admin-global-priority
 const BACKEND = values.backend || dataRootPath("wof", "candidate.db").toString()
 const OUT = values.out || repoRootPath("docs", "static", "benchmarks").toString()
 
-const PANEL_PATH = `${OUT}/same-data-panel.jsonl`
+/**
+ * The panel, named separately from `--out` so a successor construction can read the frozen panel while writing its own
+ * fixture elsewhere.
+ *
+ * One path for both would force a successor to overwrite the frozen artifacts to change the withheld-gold rule, which
+ * is the one thing `benchmark-freeze.json` exists to refuse. Comparability runs the other way too: a successor that
+ * re-executed the selection rules would be measuring a different panel and a different rule at once.
+ */
+const PANEL_PATH = values.panel || `${OUT}/same-data-panel.jsonl`
 const FIXTURE_PATH = `${OUT}/same-data-candidates.jsonl`
 const RESULTS_PATH = `${OUT}/same-data-results.jsonl`
 const RECEIPT_PATH = `${OUT}/same-data-receipt.json`
@@ -156,11 +173,22 @@ async function recordPhase(): Promise<void> {
 
 	const parse = (query: string): Promise<AddressTree> => scorer.parse(query, { postcodeRepair: true })
 
+	// The withheld-gold stratum under a rule `same-data-resolver-v1` was not frozen under, so a fixture recorded this
+	// way belongs to a successor benchmark id rather than to v1.
+	const withholdEveryDenotingRow = values["withhold-every-denoting-row"] === true
+
+	if (withholdEveryDenotingRow) {
+		console.error(
+			`  withholding every DENOTING row — this is not the ${(await loadSameDataDefinition()).benchmarkID} construction; score it as a successor`
+		)
+	}
+
 	const { fixture, census } = await recordFixture({
 		panel: rows,
 		backend: lookup,
 		parse,
 		armOptions: armOptionSets(),
+		withholdEveryDenotingRow,
 	})
 
 	const problems = validateFixture(rows, fixture)
@@ -179,8 +207,11 @@ async function recordPhase(): Promise<void> {
 
 	await writeLocalJSONFile(
 		{
-			benchmarkID: definition.benchmarkID,
+			benchmarkID: withholdEveryDenotingRow ? `${definition.benchmarkID}-denoting` : definition.benchmarkID,
 			definitionVersion: definition.version,
+			// Which withheld-gold rule produced this fixture. The two rules define different strata, so the benchmark id
+			// alone does not identify a run.
+			withheldGoldRule: withholdEveryDenotingRow ? "every-denoting-row" : "concorded-ids",
 			recordedAt: isoSeconds(),
 			gitHead: await gitHead(repoRootPath()),
 			weights,
@@ -202,7 +233,7 @@ async function recordPhase(): Promise<void> {
 }
 
 /**
- * Every arm's `ResolveOpts`, production first. The production arm's EMPTY bag is listed explicitly: an omitted default
+ * Every arm's `ResolveOpts`, production first. The production arm's empty bag is listed explicitly: an omitted default
  * is a missing replay key, and `replayBackend` would then raise on the arm the benchmark is about.
  */
 function armOptionSets(): ResolveOpts[] {
@@ -252,11 +283,31 @@ const BOOTSTRAP = { resamples: 10_000, seed: 20_260_913 } as const
  */
 const REQUIRED_MARGIN_POINTS = 8
 
+/**
+ * What the receipt says about the fixture these results came from, or a stated absence.
+ *
+ * Read rather than assumed, because the two withheld-gold rules define different strata and their abstention rates are
+ * not comparable. The definition alone names neither, so a report headed by the definition would label a successor's
+ * numbers with the frozen benchmark's id — two constructions, one heading, and a reader with no way to tell them
+ * apart.
+ */
+async function recordedUnder(): Promise<{ benchmarkID: string; withheldGoldRule: string }> {
+	const receipt = await tryReadLocalJSONFile<{ benchmarkID?: string; withheldGoldRule?: string }>(RECEIPT_PATH)
+
+	return {
+		benchmarkID: receipt?.benchmarkID ?? "(no receipt beside these results)",
+		// A fixture recorded before the rule was named carries no field. that is the v1 rule, and saying so is not the
+		// same as saying nothing.
+		withheldGoldRule: receipt?.withheldGoldRule ?? "concorded-ids (receipt predates the field)",
+	}
+}
+
 async function scorePhase(): Promise<void> {
-	const { definition, panel, results } = await allKeyed({
+	const { definition, panel, results, recorded } = await allKeyed({
 		definition: loadSameDataDefinition(),
 		panel: JSONSpliterator.fromAsync<SameDataPanelRow>(PANEL_PATH).toArray(),
 		results: JSONSpliterator.fromAsync<ArmRowResult>(RESULTS_PATH).toArray(),
+		recorded: recordedUnder(),
 	})
 
 	const panelByID = new Map(panel.map((row) => [row.id, row]))
@@ -284,7 +335,9 @@ async function scorePhase(): Promise<void> {
 	const verdict = evaluateVerdict(pooled, byStratum, REQUIRED_MARGIN_POINTS)
 
 	const lines = [
-		`# Same-data resolver benchmark — ${definition.benchmarkID} ${definition.version}`,
+		`# Same-data resolver benchmark — ${recorded.benchmarkID} ${definition.version}`,
+		"",
+		`Withheld-gold rule: \`${recorded.withheldGoldRule}\`. Ruler: \`${definition.benchmarkID}\` ${definition.version}.`,
 		"",
 		"## Per-stratum and pooled",
 		"",
@@ -370,12 +423,12 @@ async function sweepPhase(): Promise<void> {
 		"",
 		"Re-graded from the frozen results: a selection is withheld when its recorded confidence falls below the",
 		"threshold. No resolver is re-run, so the walk is held fixed and the curve is an upper bound on what a",
-		"threshold over this signal can buy at the final selection.",
+		"threshold over this signal can provide at the final selection.",
 		"",
 		"**Exploratory, and outside the frozen pre-registration.** Every threshold here was read off results that",
 		"were already visible, which is the one thing the registered rule forbids. The decision column below says",
 		"what the registered rule WOULD have read at each threshold; it does not re-decide the frozen verdict, and",
-		"no threshold earns a claim until it is registered ahead of a panel it has not seen.",
+		"no threshold warrants a claim until it is registered ahead of a panel it has not seen.",
 		"",
 		`${ceiling.count} of ${ceiling.of} of Mailwoman's withheld-gold selections carry the maximum margin, because the`,
 		"lookup that produced them considered one candidate. No threshold at or below 1 can withhold those.",
@@ -415,6 +468,9 @@ const KNOB_ARMS: Array<[string, ResolveOpts]> = [
 	["minWinningScore 5", { minWinningScore: 5 }],
 	["spanRescore off", { spanRescore: false }],
 	["minWinningScore 4 + spanRescore off", { minWinningScore: 4, spanRescore: false }],
+	// The narrower refusal beside the blanket one: span rescore still runs, and a sub-span that drops a word of the
+	// name is refused while one that drops a qualifier, a number or a street the parse read is kept.
+	["spanRescore context remainder", { spanRescoreRequireContextRemainder: true }],
 ]
 
 async function knobPhase(): Promise<void> {
@@ -439,7 +495,7 @@ async function knobPhase(): Promise<void> {
 	}
 
 	// A raised floor changes what the walk asks next, so each arm loses a different set of rows to replay misses.
-	// Scoring every arm over its own survivors would compare rates whose denominators moved; this intersection is what
+	// Scoring every arm over its own survivors would compare rates whose denominators moved. this intersection is what
 	// makes the columns comparable, and the count of rows it drops is reported beside them.
 	const errored = new Set(
 		[...byArm.values()].flatMap((results) => results.filter((result) => result.error).map((result) => result.rowID))

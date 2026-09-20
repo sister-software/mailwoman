@@ -2,20 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The FULL-SCALE locality-surface build against the live WOF admin DB.
+ *   The full-scale locality-surface build against the live WOF admin DB.
  *
- *   NOT ON THE PR PATH by default. Measured 2026-08-02 this pair of tests was 236.9s of a 253s CI
+ *   not on the PR path by default. Measured 2026-08-02 this pair of tests was 236.9s of a 253s CI
  *   leg (172s after the scan memoization), and it grows with the gazetteer. It runs in three places,
  *   each catching something the others cannot:
  *
  *   - `test.yml` job `lexicon-full`, path-conditional — a PR that changes the builder or its inputs.
- *   - `lexicon-nightly.yml` — DATA drift. The gazetteer is rebuilt outside any PR, so no path filter
+ *   - `lexicon-nightly.yml` — data drift. The gazetteer is rebuilt outside any PR, so no path filter
  *       can see it. This is the only layer that catches that and the control for the fixture
  *       layer: if the fixture stops representing the real data, this is what says so.
  *   - `publish.yml` prepare — the release eval.
  *
  *   The every-PR law coverage lives in `evidence-lexicons.fixture.test.ts`, which asserts the same
- *   four laws against a seeded DB and is invariant to gazetteer size. What stays HERE is the
+ *   four laws against a seeded DB and is invariant to gazetteer size. What stays here is the
  *   coverage-scale claims — `entries > 10_000` and the nonzero skip counters — because those are
  *   claims about the gazetteer rather than about the laws.
  */
@@ -65,12 +65,12 @@ describe.skipIf(!(await pathExists(ADMIN_DB)))("locality-surface build — integ
 
 		const j = await readLocalJSONFile<{ entries: Record<string, number> }>(tmp)
 
-		// Family F2b — directionals (neighbourhoods literally named these; law-1 closure):
+		// Family F2b — directionals (neighbourhoods literally named these. law-1 closure):
 		for (const s of ["east", "west", "north", "south", "northeast", "southwest"]) {
 			expect(j.entries[s], s).toBeUndefined()
 		}
 
-		// Family F2 — region vocabulary (the evidence→REGION rotation rows):
+		// Family F2 — region vocabulary (the evidence→region rotation rows):
 		for (const s of ["washington", "wyoming", "vermont", "missouri", "north dakota"]) {
 			expect(j.entries[s], s).toBeUndefined()
 		}
@@ -79,15 +79,15 @@ describe.skipIf(!(await pathExists(ADMIN_DB)))("locality-surface build — integ
 		expect(j.entries.school).toBeUndefined()
 		expect(j.entries.state).toBeUndefined()
 
-		// The lexicon still carries the ordinary locality surfaces the census rows NEED. (Not casper/
-		// powell: Casper WY is a GIVEN-NAME homograph at 0.42 < the 0.45 law-3 tier, Powell WY is below
-		// the law-2 floor — both were absent from v4 too; their census flips were family-F1 street-code
+		// The lexicon still carries the ordinary locality surfaces the census rows need. (Not casper/
+		// powell: Casper WY is a given-name homograph at 0.42 < the 0.45 law-3 tier, Powell WY is below
+		// the law-2 floor — both were absent from v4 too. their census flips were family-F1 street-code
 		// evidence, fixed in the street lexicon.)
 		for (const s of ["fargo", "minot", "rutland", "plainfield", "cheyenne"]) {
 			expect(j.entries[s], s).toBeDefined()
 		}
 
-		// Multi-token entries with a directional/state INSIDE survive (only whole-surface exclusion):
+		// Multi-token entries with a directional/state inside survive (only whole-surface exclusion):
 		expect(j.entries["east nashville"]).toBeDefined()
 	}, 600_000)
 })

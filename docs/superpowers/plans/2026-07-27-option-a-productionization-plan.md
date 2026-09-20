@@ -14,7 +14,7 @@ zero-out, independent per-channel draws) with **three-law lexicon selectivity**:
 1. **Degenerate exclusion** — function words, street-type words, all-function-word compositions
    (the shipped FST curation policy, applied to training evidence).
 2. **Prominence floor** — 1-token locality surfaces need population-backed importance ≥ 0.25
-   (hamlets are noise, not evidence).
+   (hamlets are noise rather than evidence).
 3. **Person-name tier** — 1-token surfaces in libpostal given_names/surnames/personal_titles need
    importance ≥ 0.45 (Joseph/Pierre/Saint leave; Paris/Lyon/Nancy stay).
 
@@ -29,7 +29,7 @@ doctrine (operator-ratified) is required: evidence value peaks in the register u
 - Promote both lexicon builders from `scripts/diagnostic/` into `mailwoman/gazetteer-pipeline/` +
   `mailwoman gazetteer build` commands (drawer policy), the three-law policy recorded in each
   artifact's `generated_by` + a policy block. Versioned outputs; the locality lexicon (13 MB) ships
-  like the other soft-feed binaries (weights-package sibling + HF staging + publish.yml fetch), NOT
+  like the other soft-feed binaries (weights-package sibling + HF staging + publish.yml fetch) rather than
   in git.
 - The evidence-channel spec lands in the model card's `requires` block (the ship-config discipline:
   a bundle-trained model refuses to run without its lexicons — the #718 strict-channel precedent).
@@ -43,7 +43,7 @@ doctrine (operator-ratified) is required: evidence value peaks in the register u
 - ONNX export gains the two graph inputs (`export_onnx` wiring); node + browser classifiers feed
   them; `neural-web` parity.
 - The zero-feature path must be byte-identical to a no-channel model for back-compat weights (the
-  probe's smoke-test contract, now a standing test).
+  probe's smoke-test interface, now a standing test).
 
 ### Phase 3 — the production training run (M)
 
@@ -53,7 +53,7 @@ doctrine (operator-ratified) is required: evidence value peaks in the register u
 - **Checks (pre-registered before launch, per the iron rules):** the full promotion battery — golden
   us/fr floors, **invariance suite `--baseline v385`** (the probe chain never ran it; the P-B
   comma-drop signature is the named watch), gauntlet ×3 layers, presets byte-check, fragment boards
-  **with lowercase legs** (doctrine), and the NEW **evidence-ablation check**: channels-zeroed parse
+  **with lowercase legs** (doctrine), and the new **evidence-ablation check**: channels-zeroed parse
   ≥ v385 baseline on unaffected spans — this check joins the standing battery permanently.
 
 ### Phase 4 — ship + retire (S)
@@ -63,11 +63,11 @@ doctrine (operator-ratified) is required: evidence value peaks in the register u
 - Decode-surface retirement check (SCOPE invariant 4): which FST-prior/check changes does the trained
   bundle subsume? Measured head-to-head; retire what it beats — the anti-hellscape payoff.
 
-## Open research items (named, not blocking Phases 1–2)
+## Open research items (named rather than blocking Phases 1–2)
 
 - **Street channel × lowercase × house-number** (the −0.19 class): changes = feed case-augmentation
   bump, street-channel presence-noise, `normalizeCase`-for-lowercase (its own product arc). Phase 3
-  carries it as a watched class with its own bar, not a blocker.
+  carries it as a watched class with its own bar rather than a blocker.
 - The ambiguity field (`crossCountryBranches`, 6.6.5 candidates) as a continuous third dim — only
   after the binary bundle ships (one artifact churn at a time).
 - Pair-hierarchy artifacts as the GB/NZ-style pair evidence channel — the design doc's five open

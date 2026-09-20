@@ -31,7 +31,7 @@ const session = await loadModel("path/to/model.onnx")
 | **`onnx-runner.ts`**              | ONNX Runtime Web inference session (WebGPU / WASM backends)                                                               |
 | **`classifier.ts`**               | `NeuralAddressClassifier` — tokenize → run → decode                                                                       |
 | **`scorer.ts`**                   | `createScorer` / `ProductionScorer` — canonical entry point that reads `requires` from `model-card.json` and fails closed |
-| **`anchor-inference.ts`**         | Postcode anchor feature injection (soft channel, not override)                                                            |
+| **`anchor-inference.ts`**         | Postcode anchor feature injection (soft channel rather than override)                                                     |
 | **`gazetteer-inference.ts`**      | Gazetteer lexicon soft-feature injection                                                                                  |
 | **`viterbi.ts`**                  | Viterbi decoder (linear-chain CRF) with BIO transition masks                                                              |
 | **`labels.ts`**                   | Label index ↔ `ComponentTag` mapping                                                                                      |
@@ -48,7 +48,7 @@ const session = await loadModel("path/to/model.onnx")
 ## Key exports
 
 ```ts
-// Canonical entry point — respects model-card.json "requires" contract
+// Canonical entry point — respects model-card.json "requires" interface
 export { createScorer, ProductionScorer, type Scorer } from "./scorer.js"
 
 // Tokenizer (SentencePiece unigram, byte_fallback)
@@ -100,7 +100,7 @@ The US arm asserts a region only when every clean unit under the prefix lands in
 
 The layout is specified normatively in [`pfx1.ksy`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/pfx1.ksy), and a conformance test walks the serializer's bytes against that document rather than against itself.
 
-## Ship-config contract
+## Ship-config interface
 
 The `ProductionScorer` reads `model-card.json`'s `requires` block and
 **fails closed** if a declared channel isn't fed. Do not hand-wire ONNX
@@ -118,4 +118,4 @@ for the shipped model.
 
 ## License
 
-[AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html)
+[AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html)

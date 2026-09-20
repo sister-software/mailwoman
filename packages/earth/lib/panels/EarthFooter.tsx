@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Earth's footer strip, in ONE place.
+ *   Earth's footer strip, in one place.
  *
  *   The app mounts two runtimes — the real one, and the canned one `?runtime=fake` serves the shell smoke and the
- *   stories — and both render THIS component rather than each building its own `<MapFooter>`. The deployed page is the
+ *   stories — and both render this component rather than each building its own `<MapFooter>`. The deployed page is the
  *   real one, so anything the fake path alone carries renders nowhere a visitor can see, and a smoke reading the fake
  *   footer then attests something that does not ship. `status` is the only thing the two paths may differ by.
  */
@@ -35,7 +35,7 @@ const ATTRIBUTION = [
 
 export interface EarthFooterProps {
 	/**
-	 * What is loading right now, beside the identity. The bar across the top of the viewport says how far along it is;
+	 * What is loading right now, beside the identity. The bar across the top of the viewport says how far along it is.
 	 * this says which artifact it is fetching, which is the part a number cannot carry. Absent on the canned runtime,
 	 * which loads nothing.
 	 */

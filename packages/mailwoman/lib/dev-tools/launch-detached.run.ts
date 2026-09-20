@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Start a long-running command in ITS OWN SESSION and exit, so nothing that kills this process can reach the child.
+ *   Start a long-running command in its own session and exit, so nothing that kills this process can reach the child.
  *
- *   WHAT THIS IS FOR. A Modal training launch is a local CLIENT talking to a remote container. Modal's `-d` does not
- *   make that client disposable — its own banner says detached mode "only keeps the LAST triggered Modal function alive
+ *   what this is FOR. A Modal training launch is a local client talking to a remote container. Modal's `-d` does not
+ *   make that client disposable — its own banner says detached mode "only keeps the last triggered Modal function alive
  *   after the parent process has been killed" — and when the client dies Modal cancels the input:
  *
  *       [modal-client] Received a cancellation signal while processing input (…)
@@ -15,10 +15,10 @@
  *   `timeout` around the launch on 2026-07-15, and an agent background task stopped by a host memory guard, which is
  *   the case this file exists to make impossible.
  *
- *   HOW IT WORKS, and why the shell spellings do not. A harness stops a background task by signalling its PROCESS
- *   GROUP. `spawn(…, { detached: true })` calls `setsid(2)` in the child, which places it in a new session and a new
- *   group, so a group signal has no member to reach; `unref()` then lets this process exit while the child continues.
- *   `nohup` is not equivalent — it ignores SIGHUP and leaves the child in the same group, so a group kill still lands.
+ *   how IT works, and why the shell spellings do not. A harness stops a background task by signalling its process
+ *   group. `spawn(…, { detached: true })` calls `setsid(2)` in the child, which places it in a new session and a new
+ *   group. Therefore, a group signal has no member to reach; `unref()` then lets this process exit while the child continues.
+ *   `nohup` is not equivalent — it ignores sighup and leaves the child in the same group, so a group kill still lands.
  *   `setsid` is equivalent and is not on the Bash guard's admitted command list.
  *
  *   The child's output goes to `--log`, because a detached child cannot inherit a terminal that is about to disappear.
@@ -68,7 +68,7 @@ const child = spawnProcess(command, args, {
 
 child.unref()
 
-// This process owns the handle; the child holds its own copy of the descriptor across the fork, so closing here does
+// This process owns the handle. the child holds its own copy of the descriptor across the fork, so closing here does
 // not disturb it. Leaving it open would keep the event loop alive and defeat the point of `unref`.
 await log.close()
 

@@ -34,7 +34,7 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * Westminster holds a point; Edinburgh is covered and empty; New York is outside coverage entirely.
+ * Westminster holds a point. Edinburgh is covered and empty. New York is outside coverage entirely.
  */
 const WESTMINSTER = { latitude: 51.5007, longitude: -0.1246 }
 const EDINBURGH = { latitude: 55.9533, longitude: -3.1883 }
@@ -76,7 +76,7 @@ async function fixture(name: string, basis: CoverageBasis): Promise<string> {
 		createdAt: "2026-08-18T00:00:00.000Z",
 	})
 
-	// Both cells are COVERED. Only one holds a point — that is the whole distinction under test.
+	// Both cells are covered. Only one holds a point — that is the whole distinction under test.
 	const cells = new Set([WESTMINSTER, EDINBURGH].map((p) => uprnCoverageCell(p.latitude, p.longitude)))
 
 	await writeLayerCoverage(
@@ -90,9 +90,9 @@ async function fixture(name: string, basis: CoverageBasis): Promise<string> {
 async function open(name: string, basis: CoverageBasis) {
 	const path = await fixture(name, basis)
 	const lookup = fixtures.use(new UPRNLookup({ databasePath: path }))
-	const contractDB = fixtures.use(new DatabaseClient<UPRNDatabase>(path, { readOnly: true }))
+	const schemadb = fixtures.use(new DatabaseClient<UPRNDatabase>(path, { readOnly: true }))
 
-	return { lookup, contractDB }
+	return { lookup, schemadb }
 }
 
 describe("uprnAbsenceAt", () => {

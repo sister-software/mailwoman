@@ -119,7 +119,7 @@ MAILWOMAN_DATA_HOST=/path/to/mailwoman-data docker compose -f docker/docker-comp
 
 ## Image facts
 
-- Base `node:24-slim` (Debian, glibc — onnxruntime-node's prebuilds are glibc, not musl).
+- Base `node:24-slim` (Debian, glibc — onnxruntime-node's prebuilds are glibc rather than musl).
 - Runs as the unprivileged `node` user.
 - `linux/amd64` only for now; arm64 is a follow-up (needs the arm64 ORT prebuild verified).
 - Weights baked in (`@mailwoman/neural-weights-en-us`); gazetteer volume-mounted.

@@ -3,7 +3,7 @@
 Four passes, two output corpora, one shared RNG. The first paragraph above is what `--help` prints,
 so it stays a sentence about what the command does.
 
-`survey.py` runs the two measuring passes; this module runs the two SELECTING ones and writes what
+`survey.py` runs the two measuring passes. this module runs the two SELECTING ones and writes what
 they choose. Passes 3 and 4 draw from the same `random.Random`, and
 `tests/mailwoman_train/countries/test_kr_build_parity.py` pins what comes out — hoisting one draw
 above another re-renders both corpora.
@@ -45,7 +45,7 @@ from .rows import (
 )
 from .survey import PermitSurvey, RegisterSurvey, survey_permits, survey_register
 
-#: Resolved after parsing, not here: reading the data root at import would raise for a caller who
+#: Resolved after parsing rather than here: reading the data root at import would raise for a caller who
 #: passes the flags and never needs it.
 JUSO_ZIP_PARTS = ("corpus", "sources", "juso-kr", "202608ALLMTCHG00.zip")
 PERMIT_DIR_PARTS = ("corpus", "sources", "localdata-kr")
@@ -123,7 +123,7 @@ def write_label_board(
 ) -> tuple[list[dict[str, Any]], int]:
     """Write the held-out board, whose coordinate half is the permit registry's 시군구 centroid.
 
-    A row whose 시군구 has no centroid is DROPPED rather than written without one: the JP scorer
+    A row whose 시군구 has no centroid is dropped rather than written without one: the JP scorer
     compares a resolved pair against a coordinate, and a board row with none cannot be scored.
     """
     board_records: list[dict[str, Any]] = []
@@ -283,7 +283,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
     for directory in (out_dir, registry_dir):
         if directory.exists() and any(directory.iterdir()) and not args.force:
             raise SystemExit(
-                f"{directory} exists and is non-empty — pass --force to overwrite (a slice is a read-only artifact)"
+                f"{directory} exists and is non-empty — pass --force to overwrite (a built corpus is a read-only artifact)"
             )
 
     survey = survey_register(juso_zip, args)

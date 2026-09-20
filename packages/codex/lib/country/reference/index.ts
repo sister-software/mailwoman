@@ -4,7 +4,7 @@
 /**
  *   Country-reference annotators. The flag emoji is a pure function of the ISO 3166-1 alpha-2 code
  *   (two Regional Indicator Symbols); calling code + currency come from {@link COUNTRY_REFERENCE}, a
- *   table generated from mledoze/countries (provenance-tracked, not hand-typed — the
+ *   table generated from mledoze/countries (provenance-tracked rather than hand-typed — the
  *   no-irrelevant-trivia rule).
  */
 
@@ -17,7 +17,7 @@ const A_UPPER = "A".charCodeAt(0)
 
 /**
  * The flag emoji for an ISO 3166-1 alpha-2 country code, formed from the two Regional Indicator Symbols (`US` → 🇺🇸).
- * Returns `""` for anything that is not two ASCII letters.
+ * Returns `""` for anything that is not two ascii letters.
  */
 export function countryFlag(alpha2: string): string {
 	const code = alpha2.toUpperCase()
@@ -28,8 +28,8 @@ export function countryFlag(alpha2: string): string {
 }
 
 /**
- * Fill the country-reference slice (ISO 3166 alpha-2, flag, calling code, currency) from a resolved country code.
- * Abstains on anything that isn't two ASCII letters.
+ * Fill the country-reference fields (ISO 3166 alpha-2, flag, calling code, currency) from a resolved country code.
+ * Abstains on anything that isn't two ascii letters.
  */
 export const countryReferenceAnnotator: Annotator = ({ countryCode }): Partial<AnnotationSet> => {
 	if (!countryCode || !/^[A-Za-z]{2}$/.test(countryCode)) return {}

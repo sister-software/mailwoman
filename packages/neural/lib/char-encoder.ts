@@ -3,15 +3,17 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 
+import { familyFallbackFor } from "#weights/families"
+
 /**
  * @file The character encoder for char-path models — the runtime twin of `encode_row_units` in
- *   `corpus-python/src/mailwoman_train/char_tokenizer.py`, under the same contract (D1): one UNIT per Unicode code point,
+ *   `corpus-python/src/mailwoman_train/char_tokenizer.py`, under the same interface (D1): one unit per Unicode code point,
  *   `char_ids (S, W)` where slot `j` of unit `[b, e)` is the code point at `b - ctx + j`, PAD outside the string or at
- *   and past `e + ctx`, UNK for a code point the sealed vocabulary lacks; the row truncated to S units and padded with
+ *   and past `e + ctx`, UNK for a code point the sealed vocabulary lacks. the row truncated to S units and padded with
  *   all-PAD unit rows carrying attention 0. A CJK model never meets SentencePiece: this is its whole tokenizer.
  *
- *   Code points, not UTF-16 units. Python indexes `str` by code point, so an astral character (𠮷) is one unit there
- *   and must be one unit here; iterating the string with `Array.from` is what keeps the two encoders producing the same
+ *   Code points rather than UTF-16 units. Python indexes `str` by code point, so an astral character (𠮷) is one unit there
+ *   and must be one unit here. iterating the string with `Array.from` is what keeps the two encoders producing the same
  *   `char_ids` for the same text, which `test/unit/char-encoder.test.ts` pins against a fixture the Python side wrote.
  *
  *   This module is on the browser bundle (the classifier imports it), so it reaches no `node:` module: the vocabulary
@@ -26,7 +28,7 @@ export const PAD_CHAR_ID = 0
 
 /**
  * The unknown id: a code point the sealed vocabulary lacks. Fixed at 1 by `build_char_vocab`, which writes `<unk>`
- * second; every real character follows in code-point order.
+ * second. every real character follows in code-point order.
  */
 export const UNK_CHAR_ID = 1
 
@@ -35,7 +37,7 @@ export const UNK_CHAR_ID = 1
  */
 export type CharVocabulary = ReadonlyMap<string, number>
 
-export interface CharEncoderContract {
+export interface CharEncoderInterface {
 	/**
 	 * S — the unit count every row is truncated or padded to (the training config's `max_units`).
 	 */
@@ -56,7 +58,7 @@ export interface CharUnit {
 	 */
 	text: string
 	/**
-	 * UTF-16 offsets into the original string, so a decoded span can be sliced from the input as typed.
+	 * UTF-16 offsets into the original string, so a decoded span can be read back out of the input as typed.
 	 */
 	start: number
 	end: number
@@ -78,10 +80,14 @@ export interface CharEncoding {
 }
 
 /**
- * Encode one string under the contract. Every real unit is one code point of `raw`; the first S of them are kept.
+ * Encode one string under the interface. Every real unit is one code point of `raw`; the first S of them are kept.
  */
-export function encodeCharUnits(raw: string, vocabulary: CharVocabulary, contract: CharEncoderContract): CharEncoding {
-	const { maxUnits, maxUnitWidth, ctxChars } = contract
+export function encodeCharUnits(
+	raw: string,
+	vocabulary: CharVocabulary,
+	encoderInterface: CharEncoderInterface
+): CharEncoding {
+	const { maxUnits, maxUnitWidth, ctxChars } = encoderInterface
 	const codePoints = Array.from(raw)
 	const kept = codePoints.slice(0, maxUnits)
 	const charIDs: number[][] = []
@@ -162,10 +168,10 @@ export type EncoderDescriptor =
 	  }
 
 /**
- * Read a parsed card's `encoder` block (#2164). A char card names its vocabulary sibling and the `(S, W, ctx)` contract
- * the model was trained under; a runtime that guessed any of the three would encode every row differently from training
- * and score confidently on garbage, so a char card missing one of them is refused rather than defaulted. Pure, so the
- * browser loader reads it from a fetched card and the node loader from a file.
+ * Read a parsed card's `encoder` block (#2164). A char card names its vocabulary sibling and the `(S, W, ctx)`
+ * interface the model was trained under. a runtime that guessed any of the three would encode every row differently
+ * from training and score confidently on garbage, so a char card missing one of them is refused rather than defaulted.
+ * Pure, so the browser loader reads it from a fetched card and the node loader from a file.
  */
 export function encoderDescriptorFromCard(
 	card: Record<string, unknown> | undefined,
@@ -208,11 +214,14 @@ export function encoderDescriptorFromCard(
 
 /**
  * The base package a locale falls back to when it has no package of its own: the CJK char-path base for Japanese,
- * Chinese and Korean (#2164). Latin locales have no family base — `en-us` IS the Latin base, and the overlays name it
+ * Chinese and Korean (#2164). Latin locales have no family base — `en-us` is the Latin base, and the overlays name it
  * through `mailwoman.baseWeights` instead.
+ *
+ * The mapping used to be three language subtags written here, which is the same claim `#weights/families` makes about
+ * which locales the character family serves. Two copies disagreed: this one answered `cjk` for `ko-KR`, `zh-TW` and
+ * `zh-HK` while the registry listed only the packaged `ja-jp` and `zh-cn`. The registry now declares the languages and
+ * this delegates, so the answer has one home.
  */
 export function scriptFamilyBase(locale: string): string | undefined {
-	const language = locale.toLowerCase().split("-")[0]
-
-	return language === "ja" || language === "zh" || language === "ko" ? "cjk" : undefined
+	return familyFallbackFor(locale)
 }

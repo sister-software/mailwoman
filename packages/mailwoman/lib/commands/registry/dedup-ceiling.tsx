@@ -4,15 +4,15 @@
 /**
  *   `mailwoman registry dedup-ceiling` — the #625 "how good is good enough" measurement: the
  *   irreducible over-merge of co-located distinct-NPI providers (the Bayes error that caps dedup
- *   precision). Geocode-free + label-free; emits the markdown report to stdout.
+ *   precision). Geocode-free + label-free. emits the markdown report to stdout.
  */
 
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "dedup-ceiling",
@@ -29,15 +29,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	sources?: string
-	cap: number
-	state: string
-	tau: number
-	outMd?: string
-}
-
-const RegistryDedupCeiling: ParsedCommandComponent<Options> = ({ options }) => {
+const RegistryDedupCeiling: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dedupCeiling } = await import("@mailwoman/registry/tools")
 

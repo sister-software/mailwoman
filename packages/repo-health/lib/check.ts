@@ -26,7 +26,7 @@ export type DiagnosticSeverity = (typeof DiagnosticSeverity)[keyof typeof Diagno
 export interface Diagnostic {
 	severity: DiagnosticSeverity
 	/**
-	 * One sentence a reader can act on; the file and line, when there is one, come separately.
+	 * One sentence a reader can act on. the file and line, when there is one, come separately.
 	 */
 	message: string
 	file?: string
@@ -43,7 +43,7 @@ export interface RepoContext {
 
 export interface RepoCheck {
 	/**
-	 * Stable, and the name an adapter exposes: `exports`, `version-sync`, `test-contract`.
+	 * Stable, and the name an adapter exposes: `exports`, `version-sync`, `test-interface`.
 	 */
 	id: string
 	description: string

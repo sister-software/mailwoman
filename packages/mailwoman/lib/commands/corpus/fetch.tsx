@@ -4,19 +4,20 @@
 /**
  *   `mailwoman corpus fetch <source>` — reproducible bulk-download of the open-data sources the
  *   corpus build consumes (disk-loss recovery, weekly refresh, fresh-environment bootstrap). Each
- *   source writes its raw files plus a sibling `MANIFEST.json` (origin URL, timestamp, byte count,
+ *   source writes its raw files plus a sibling `manifest.json` (origin URL, timestamp, byte count,
  *   sha256). See `@mailwoman/corpus/tools` `fetch/index.ts` for the source registry + license tiers.
  */
 
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import type { FetchSourceID, FetchSummary } from "@mailwoman/corpus/tools"
 import { Text } from "ink"
 
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
+	type OptionsOf,
 	reportToStderr,
-	splitList,
 	useCommandTask,
 } from "#cli-kit"
 
@@ -42,7 +43,7 @@ const sources = [
 ] as const satisfies readonly FetchSourceID[]
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "fetch",
@@ -68,24 +69,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	outRoot: string
-	mode?: "featureserver" | "bulk"
-	nadUrl?: string
-	chunkSize?: number
-	pageSize?: number
-	concurrency?: number
-	startOid?: number
-	endOid?: number
-	country?: string
-	countries?: string
-	skipStateFips?: string
-	rateSleep?: number
-	maxParallel?: number
-	dryRun: boolean
-	month?: string
-	categories?: string
-}
+type Options = OptionsOf<typeof spec>
 
 async function runSource(source: FetchSourceID, options: Options): Promise<FetchSummary> {
 	const {
@@ -122,7 +106,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchJusoKR({ ...base, month: options.month }, reportToStderr)
 		case "localdata-kr":
 			return fetchLocaldataKR(
-				{ ...base, categories: options.categories === undefined ? undefined : splitList(options.categories) },
+				{ ...base, categories: options.categories === undefined ? undefined : extractDelimited(options.categories) },
 				reportToStderr
 			)
 		case "ban":
@@ -145,8 +129,8 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchGeonamesDumps(
 				{
 					...base,
-					// Undefined = every country the source's own countryInfo.txt catalogs; present dumps are skipped.
-					countries: options.countries === undefined ? undefined : splitList(options.countries),
+					// Undefined = every country the source's own countryInfo.txt catalogs. present dumps are skipped.
+					countries: options.countries === undefined ? undefined : extractDelimited(options.countries),
 				},
 				reportToStderr
 			)
@@ -154,9 +138,9 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchGeonamesPostal(
 				{
 					...base,
-					// Undefined, not an empty list, when the flag is absent — the module's own default set is the answer for
+					// Undefined rather than an empty list, when the flag is absent — the module's own default set is the answer for
 					// 'fetch what the corpus wants', and an empty array would fetch nothing while looking deliberate.
-					countries: options.countries === undefined ? undefined : splitList(options.countries),
+					countries: options.countries === undefined ? undefined : extractDelimited(options.countries),
 				},
 				reportToStderr
 			)
@@ -190,7 +174,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 	}
 }
 
-const CorpusFetch: ParsedCommandComponent<Options, [FetchSourceID]> = ({ options, args }) => {
+const CorpusFetch: CommandComponent<typeof spec, [FetchSourceID]> = ({ options, args }) => {
 	const state = useCommandTask(
 		() => runSource(args[0], options),
 		(summary) => (summary.failed > 0 ? 1 : 0)

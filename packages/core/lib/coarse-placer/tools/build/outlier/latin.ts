@@ -2,20 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Latin-script off-map outlier exposure for the #244 coarse-placer (milestone 3). M2's OTHER class
+ *   Latin-script off-map outlier exposure for the #244 coarse-placer (milestone 3). M2's `other` class
  *   was trained on NON-Latin/non-CJK scripts (Cyrillic, Arabic, …) from WOF names, so off-map
- *   COUNTRIES written in Latin script (Poland, Brazil, Mexico, …) still mis-place to a trained
- *   Latin country (the "Latin-off-map residual"). The fix is REAL off-map addresses (not synthetic
+ *   countries written in Latin script (Poland, Brazil, Mexico, …) still mis-place to a trained
+ *   Latin country (the "Latin-off-map residual"). The fix is real off-map addresses (not synthetic
  *   name variants — see #564: synthetic mass fits its own quirks): assemble address strings from
- *   the Overture per-country address parquet and append them as `country: "OTHER"`.
+ *   the Overture per-country address parquet and append them as `country: "other"`.
  *
- *   Discipline: countries split into TRAIN (their rows feed train/val OTHER) and HELDOUT (rows go
- *   ONLY to the dedicated test file), so we can measure generalization to off-map countries the
- *   model never saw — not just memorization. The in-map test.jsonl is left UNTOUCHED so the
- *   before/after in-map regression check stays clean; the Latin metric lives in its own file.
+ *   Discipline: countries split into train (their rows feed train/val `other`) and heldout (rows go
+ *   only to the dedicated test file), so we can measure generalization to off-map countries the
+ *   model never saw — not just memorization. The in-map test.jsonl is left untouched so the
+ *   before/after in-map regression check stays clean. the Latin metric lives in its own file.
  *
- *   Run AFTER build-dataset + the exposure outliers (it appends). Re-runnable: it rewrites the
- *   dedicated test file and appends fresh OTHER rows (so don't run it twice onto the same splits
+ *   Run after build-dataset + the exposure outliers (it appends). Re-runnable: it rewrites the
+ *   dedicated test file and appends fresh `other` rows (so don't run it twice onto the same splits
  *   without rebuilding train/val).
  *
  *   Run: `mailwoman placer build-dataset --outliers latin [--per-country 6000] [--overture
@@ -52,7 +52,7 @@ export interface BuildOutlierLatinOptions {
 	 */
 	overture?: PathBuilderLike
 	/**
-	 * Dataset dir the OTHER rows append to. Default `<repo>/data/coarse-placer`.
+	 * Dataset dir the `other` rows append to. Default `<repo>/data/coarse-placer`.
 	 */
 	data?: PathBuilderLike
 }
@@ -67,19 +67,19 @@ export interface BuildOutlierLatinResult {
 }
 
 /**
- * Off-map (NOT among the trained countries) and Latin-script. TRAIN feeds the OTHER class; HELDOUT is test-only — the
- * generalization probe (unseen off-map countries should still route OTHER). #743: PL/PT/CZ moved from OTHER to
- * FIRST-CLASS in-map countries (they're now in COARSE_CLASSES), so they're removed here — keeping them would feed
- * contradictory gold (the same address labelled both PL and OTHER). That leaves BR/MX as the Latin off-map TRAIN
+ * Off-map (not among the trained countries) and Latin-script. train feeds the `other` class. heldout is test-only — the
+ * generalization probe (unseen off-map countries should still route `other`). #743: PL/PT/CZ moved from `other` to
+ * first-class in-map countries (they're now in COARSE_CLASSES), so they're removed here — keeping them would feed
+ * contradictory gold (the same address labelled both PL and `other`). That leaves BR/MX as the Latin off-map train
  * exposure and CA/LI as the heldout probe (the hard near-twins of in-map US/DE — an honest worst case). The in-map
- * expansion itself shrinks the off-map Latin surface, and the bulk OTHER exposure is non-Latin (build-
- * outlier-exposure.ts), so the thinner Latin train set is acceptable; watch OTHER-Latin recall in the openset eval.
+ * expansion itself shrinks the off-map Latin surface, and the bulk `other` exposure is non-Latin (build-
+ * outlier-exposure.ts), so the thinner Latin train set is acceptable. watch other-Latin recall in the openset eval.
  */
 const TRAIN_COUNTRIES = ["BR", "MX"]
 const HELDOUT_COUNTRIES = ["CA", "LI"]
 
 /**
- * Address_levels arrives as a list (node-api) or its string repr; pull the value strings out.
+ * Address_levels arrives as a list (node-api) or its string repr. pull the value strings out.
  */
 function levelValues(al: unknown): string[] {
 	if (Array.isArray(al)) return al.flatMap((x) => (x && x.value ? [String(x.value)] : []))
@@ -132,7 +132,7 @@ export async function buildOutlierLatin(
 				`SELECT number, street, postcode, postal_city, address_levels FROM read_parquet('${f}') LIMIT ${PER}`
 			)
 		} catch (error) {
-			// oxlint-disable-next-line mailwoman/prefer-spliterator -- An in-memory error message, not a file.
+			// oxlint-disable-next-line mailwoman/prefer-spliterator -- An in-memory error message rather than a file.
 			report?.(`  ${cc}: SKIP (${errorMessage(error).split("\n")[0]})`)
 
 			return []
@@ -145,7 +145,7 @@ export async function buildOutlierLatin(
 	const valAppend: string[] = []
 	const testRows: LatinTestRow[] = []
 
-	// dedicated Latin off-map test: {raw, country:"OTHER", group, srcCountry}
+	// dedicated Latin off-map test: {raw, country:"other", group, srcCountry}
 
 	for (const cc of TRAIN_COUNTRIES) {
 		const rows = (await rowsFor(cc)).toSorted((a, b) => hashFNV1a(a) - hashFNV1a(b))
@@ -182,7 +182,7 @@ export async function buildOutlierLatin(
 
 	;(duck as { disconnect?: () => void }).disconnect?.()
 
-	// Append OTHER rows to train/val; write the dedicated Latin off-map test file.
+	// Append `other` rows to train/val. write the dedicated Latin off-map test file.
 	await appendLocalTextFile(otherRowsJSONL(trainAppend), resolvePath(dataDir, "train.jsonl"))
 	await appendLocalTextFile(otherRowsJSONL(valAppend), resolvePath(dataDir, "val.jsonl"))
 

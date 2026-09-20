@@ -7,7 +7,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { type OptionPropertyName, parseArguments } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type * as React from "react"
 
@@ -19,6 +19,17 @@ interface OptionSpecBase {
 	default?: OptionValue
 	multiple?: boolean
 	required?: boolean
+	/**
+	 * The flag this option used to be spelled as. It keeps working, with a notice on stderr, and never appears in help.
+	 *
+	 * A CLI flag is a interface with whatever scripts already call it, so a rename that removes the old spelling breaks
+	 * them at the moment of the rename with no way to find out first. The notice is what turns that into a warning the
+	 * caller can act on before the alias goes.
+	 *
+	 * Passing both spellings is a usage error rather than a precedence rule: the caller meant one of them and the command
+	 * cannot tell which.
+	 */
+	deprecatedName?: string
 }
 
 interface BooleanOptionSpec extends OptionSpecBase {
@@ -68,6 +79,64 @@ export interface ParsedCommand {
 	values: Record<string, OptionValue | undefined>
 }
 
+/**
+ * Collapse an intersection of mapped types into one object type, preserving each property's optionality.
+ *
+ * {@linkcode OptionsOf} builds its required and optional halves separately, because a single mapped type cannot vary `?`
+ * per key. Without this the editor shows the intersection and an error names one half of it.
+ */
+type OneObject<Shape> = { [Key in keyof Shape]: Shape[Key] }
+
+/**
+ * The value stored in a flag's property, before {@linkcode OptionSpec.multiple} is applied. A `choices` list narrows the
+ * property to that union rather than leaving it `string`, which is what a hand-written `Options` already did.
+ */
+type OptionScalar<Option> = Option extends { type: "boolean" }
+	? boolean
+	: Option extends { type: "number" }
+		? number
+		: Option extends { choices: readonly (infer Choice extends string)[] }
+			? Choice
+			: string
+
+type OptionValueOf<Option> = Option extends { multiple: true } ? Array<OptionScalar<Option>> : OptionScalar<Option>
+
+/**
+ * The flags the router always supplies a value for: one carrying a `default`, and one declared `required`. Every other
+ * flag is absent unless the user passes it.
+ */
+type AlwaysPresentFlag<Options> = {
+	[Flag in keyof Options]: Options[Flag] extends { default: unknown }
+		? Flag
+		: Options[Flag] extends { required: true }
+			? Flag
+			: never
+}[keyof Options]
+
+/**
+ * A command's options object, derived from its own `spec`.
+ *
+ * The router writes each flag's value to the property `optionPropertyName` derives from it, so a property spelled any
+ * other way is never written to and the flag parses, validates, and does nothing. A restated `interface Options` can
+ * disagree that way silently. a derived one cannot, because the disagreement becomes a compile error at the read site.
+ *
+ * A flag carrying a `default`, or marked `required`, is always supplied and its property is required. Every other
+ * property is optional. `choices` narrows the property to that union; `multiple` widens it to an array.
+ */
+export type OptionsOf<Spec extends CommandSpec> = Spec["options"] extends infer Options
+	? Options extends Readonly<Record<string, OptionSpec>>
+		? OneObject<
+				{
+					[Flag in AlwaysPresentFlag<Options> & string as OptionPropertyName<Flag>]-?: OptionValueOf<Options[Flag]>
+				} & {
+					[
+						Flag in Exclude<keyof Options, AlwaysPresentFlag<Options>> & string as OptionPropertyName<Flag>
+					]?: OptionValueOf<Options[Flag]>
+				}
+			>
+		: Record<string, never>
+	: Record<string, never>
+
 export class CLIError extends CommandError {
 	constructor(message: string, options?: ErrorOptions) {
 		super(message, options)
@@ -101,6 +170,13 @@ function validateCommandSpec(spec: CommandSpec): void {
 
 		if (option.short && reservedOptionShortNames.has(option.short)) {
 			throw new TypeError(`Command ${spec.name} cannot declare root-owned option -${option.short}.`)
+		}
+
+		// A retired spelling that is also a live option would delete the live one's value on every run.
+		if (option.deprecatedName && option.deprecatedName in (spec.options ?? {})) {
+			throw new TypeError(
+				`Command ${spec.name} names --${option.deprecatedName} as the old spelling of --${name} while declaring it.`
+			)
 		}
 	}
 }
@@ -161,6 +237,15 @@ export function parseCommand(spec: CommandSpec, args: readonly string[]): Parsed
 			...(option.multiple ? { multiple: true } : {}),
 			...(option.default !== undefined && option.type !== "number" ? { default: option.default } : {}),
 		}
+
+		// The retired spelling parses, and carries no default — a default here would make the alias look supplied on
+		// every run and shadow the current flag's own.
+		if (option.deprecatedName) {
+			definitions[option.deprecatedName] = {
+				type: option.type === "boolean" ? "boolean" : "string",
+				...(option.multiple ? { multiple: true } : {}),
+			}
+		}
 	}
 
 	let parsed: ReturnType<typeof parseArguments>
@@ -191,6 +276,26 @@ export function parseCommand(spec: CommandSpec, args: readonly string[]): Parsed
 	) as Record<string, OptionValue | undefined>
 
 	for (const [name, option] of Object.entries(spec.options ?? {})) {
+		if (option.deprecatedName) {
+			const retired = values[option.deprecatedName]
+
+			// The retired key never survives into the bag a command reads: leaving it there gives one value two homes,
+			// and a command that reaches for the old one keeps working past the removal it was warned about.
+			values[option.deprecatedName] = undefined
+
+			if (retired !== undefined) {
+				// Both spellings is a usage error rather than a precedence rule: the caller meant one of them and the
+				// command cannot tell which.
+				if (values[name] !== undefined && values[name] !== option.default) {
+					throw new CLIUsageError(`--${option.deprecatedName} is the old name for --${name}; pass one of them.`)
+				}
+
+				console.error(`--${option.deprecatedName} is deprecated and will be removed; use --${name}.`)
+
+				values[name] = retired
+			}
+		}
+
 		const raw = values[name]
 
 		if (values.help !== true && raw === undefined && option.required) {
@@ -260,7 +365,7 @@ function optionLabel(name: string, option: OptionSpec): string {
 }
 
 /**
- * Render detailed help. This is the only parser path that imports CLIUI.
+ * Render detailed help. This is the only parser path that imports cliui.
  */
 export async function renderCommandHelp(spec: CommandSpec): Promise<string> {
 	const { cliui } = await import("@isaacs/cliui/min")
@@ -349,7 +454,7 @@ export function booleanValue(values: Record<string, unknown>, name: string): boo
 }
 
 /**
- * A boolean flag with NO schema default: unstated stays `undefined` so the library default applies downstream, and only
+ * A boolean flag with no schema default: unstated stays `undefined` so the library default applies downstream, and only
  * a stated `--flag` / `--no-flag` reaches the consumer as an explicit value.
  */
 export function triStateValue(values: Record<string, unknown>, name: string): boolean | undefined {

@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   #1902's acceptance criteria, one named test each. Every case runs on the shipped SYNTHETIC fixture
+ *   #1902's acceptance criteria, one named test each. Every case runs on the shipped synthetic fixture
  *   — invented addresses, invented identifiers in the reserved 0-prefixed range, no model, no
  *   gazetteer, no network — so the suite runs anywhere and no licensed row can reach it.
  *
- *   What the suite pins is the SHAPE of the report rather than any prose about it: a numerator and its
+ *   What the suite pins is the shape of the report rather than any prose about it: a numerator and its
  *   denominator for every rate, an outcome vocabulary neither arm can privately redefine, and a writer
  *   that refuses before it opens a file.
  */
@@ -263,7 +263,7 @@ describe("#1902: the report prints every numerator and denominator", () => {
 		// Abstention permitted: the open arm's refusals leave the denominator entirely.
 		expect(permittedOpen.overall.exactOverEligible).toEqual({ n: 0, of: 0 })
 
-		// A unique answer required: the same refusals count against it — and are STILL recorded as refusals.
+		// A unique answer required: the same refusals count against it — and are still recorded as refusals.
 		expect(requiredOpen.overall.exactOverEligible.of).toBeGreaterThan(0)
 		expect(requiredOpen.overall.refusedOverAll).toEqual(permittedOpen.overall.refusedOverAll)
 
@@ -340,7 +340,7 @@ describe("#1902: the public-report writer refuses an injected disclosure", () =>
 
 		injected.arms[0]!.providerName = `graded ${run.inputs[0]!} in 4 ms`
 
-		// The one check that PROVES a disclosure — this string was read from the run's own input — is the
+		// The one check that proves a disclosure — this string was read from the run's own input — is the
 		// one reported, ahead of the two heuristics the same value also trips.
 		expect(refusalFrom(() => publishableReport({ ...run, report: injected })).reason).toBe(
 			PremiseLinkageRedactionReason.InputSubstring
@@ -488,7 +488,7 @@ describe("#1902: the Mailwoman-only arm uses the production pipeline, unchanged"
 	})
 })
 
-describe("#1902: the authoritative arm consumes the #1901 provider contract", () => {
+describe("#1902: the authoritative arm consumes the #1901 provider interface", () => {
 	it("hands the fixture provider the assembled #1901 query, once per row", async () => {
 		const log: AuthoritativeQuery[] = []
 		const rows = await collectRows(syntheticFixtureAdapter())
@@ -499,8 +499,8 @@ describe("#1902: the authoritative arm consumes the #1901 provider contract", ()
 		})
 
 		expect(log.length).toBeGreaterThan(0)
-		expect(log.every((query) => typeof query.rawQuery === "string" && query.rawQuery.length > 0)).toBe(true)
-		expect(log.every((query) => query.normalizedQuery.length > 0)).toBe(true)
+		expect(log.every((query) => typeof query.rawQuery === "string" && query.rawQuery.length)).toBe(true)
+		expect(log.every((query) => query.normalizedQuery.length)).toBe(true)
 		expect(log.some((query) => query.components.some((component) => component.tag === "locality"))).toBe(true)
 	})
 

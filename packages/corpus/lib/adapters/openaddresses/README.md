@@ -53,7 +53,7 @@ Downstream training code can stratify or exclude by license via the
 OpenAddresses includes a non-trivial fraction of **ODbL** and
 **CC-BY-SA** rows (notably parts of Canada and several European
 countries) that — per the licensing strategy in [#26][licensing] —
-must NOT enter the training corpus for the proprietary
+must not enter the training corpus for the proprietary
 `@mailwoman/neural-weights-*` packages. Training on share-alike data
 would create a copyleft obligation on the weights themselves.
 

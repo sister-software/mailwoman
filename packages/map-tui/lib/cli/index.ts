@@ -12,7 +12,7 @@
  *
  * Signal handling is not optional here. This is a raw-mode app on the alternate screen with mouse reporting on, and
  * there is no framework underneath to put any of that back — a process killed between `start` and `restore` leaves the
- * user with an unusable shell. So `restore` is wired to SIGINT, SIGTERM and `exit`, and it is idempotent for exactly
+ * user with an unusable shell. So `restore` is wired to sigint, sigterm and `exit`, and it is idempotent for exactly
  * that reason.
  */
 
@@ -91,9 +91,11 @@ async function main(): Promise<number> {
 
 	try {
 		/**
-		 * `parseCLIArgs` keeps argv and the environment read on this one line, and nowhere else in the package —
-		 * `@mailwoman/core/env`'s typed readers would pull core's data-backed environment schema behind a CLI whose whole
-		 * premise is `npx`, so the bin passes the raw records to the pure parser instead.
+		 * Keep reads of argv and env here and nowhere else in the package.
+		 *
+		 * We intentionally avoid `@mailwoman/core/env`: its typed readers depend on core's data-backed env schema, while
+		 * this CLI is designed to run as a lightweight `npx` entrypoint. So the bin passes raw argv/env records into the
+		 * pure `parseCLIArgs` function instead.
 		 */
 		// oxlint-disable-next-line sister-software/no-process-globals -- see above.
 		args = parseCLIArgs(process.argv.slice(2), process.env)
@@ -119,7 +121,7 @@ async function main(): Promise<number> {
 
 	let opened: TileSource
 
-	// A bad `--tiles` path is a usage error, not a crash — the guard stays around the open, and ownership passes to the
+	// A bad `--tiles` path is a usage error rather than a crash — the guard stays around the open, and ownership passes to the
 	// `using` declaration only once the open succeeded.
 	try {
 		opened = await openTiles(args.tiles)

@@ -3,8 +3,8 @@
 
 /**
  *   `mailwoman tiles publish` — upload a PMTiles archive to the Cloudflare R2 bucket the tile worker serves from. The
- *   upload itself is `publishTiles` in `#tiles/publish`, which the planetary pipeline calls as a function; this file
- *   is the command's contract and its Ink rendering.
+ *   upload itself is `publishTiles` in `#tiles/publish`, which the planetary pipeline calls as a function. this file
+ *   is the command's interface and its Ink rendering.
  */
 
 import { Spinner } from "@inkjs/ui"
@@ -13,7 +13,7 @@ import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCo
 import { publishTiles, type PublishTilesOptions } from "#tiles/publish"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "publish",

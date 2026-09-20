@@ -43,7 +43,7 @@ export function classifySlot(deleted: string, emitted: string | null): SlotOutco
 
 /**
  * Coarseness rank: higher is more precise. The tier ladder is `address_point → interpolated → street → admin`, and a
- * deletion that walks DOWN it has cost the user precision even when the coordinate barely moved.
+ * deletion that walks down it has cost the user precision even when the coordinate barely moved.
  */
 export function tierRank(tier: ResolutionTier): number {
 	switch (tier) {
@@ -87,8 +87,8 @@ export function scoreAblation(
 
 	return {
 		displacementKm,
-		// A row whose own anchor never resolved is NOT gradable — reporting it as held would be the meaning-of-zero
-		// trap one level down. A resolved anchor with an unresolved ablated arm IS broken: the answer is gone.
+		// A row whose own anchor never resolved is not gradable — reporting it as held would be the meaning-of-zero
+		// trap one level down. A resolved anchor with an unresolved ablated arm is broken: the answer is gone.
 		broken: !anchorResolved ? null : !ablatedResolved ? true : displacementKm! > toleranceKm,
 		tierDrop: isTierDrop(anchor.tier, ablated.tier),
 		unresolved: !ablatedResolved,
@@ -98,7 +98,7 @@ export function scoreAblation(
 }
 
 /**
- * Fold per-row outcomes into the (component, locale) map. A pair with no rows produces NO cell — see
+ * Fold per-row outcomes into the (component, locale) map. A pair with no rows produces no cell — see
  * {@linkcode AblationCell.support}.
  */
 export function aggregateCells(
@@ -137,7 +137,7 @@ export function aggregateCells(
 			locale: first.locale,
 			support: bucket.length,
 			brokenCount: bucket.filter((r) => r.broken === true).length,
-			// `percentile` returns null on an empty sample; a cell whose anchors all failed has no displacement
+			// `percentile` returns null on an empty sample. a cell whose anchors all failed has no displacement
 			// distribution, and -1 would be a number the reader could average. Encode it as NaN-free absence via
 			// gradedCount === 0 — the consumer's rule is "skip a cell you cannot read", same as support 0.
 			displacementKmP50: percentile(graded, 50) ?? 0,

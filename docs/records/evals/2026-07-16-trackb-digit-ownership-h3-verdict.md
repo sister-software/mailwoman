@@ -7,13 +7,13 @@ prior problem.** H3 ("the corpus prior favours postcode over house_number") is r
 it can be posed at. So is the length-marginal theory that replaced it, and that theory was mine.
 
 The defect is real — parity precision reads `postcode 25/249 = 0.100` emitted where the gold has
-none — but it is a **tail**, not a centre, and nothing in the training distribution explains it.
+none — but it is a **tail** rather than a center, and nothing in the training distribution explains it.
 
 ---
 
 ## 1. What H3 claimed, and why the first count was worthless
 
-The claim: the model calls `39A` a postcode because its corpus says digit-bearing tokens are
+The claim: the model calls `39A` a postcode because its corpus says digit-containing tokens are
 postcodes.
 
 The first count said the opposite (`P(house_number | bare digit) = 0.810` vs `postcode 0.101`) and
@@ -106,10 +106,10 @@ told it had and we lacked. We have it. It is in the emissions.
 **The failing rows sit at the same run length with 19× the postcode rate.** Length cannot be the
 variable, because length is held fixed across the split.
 
-So the marginal story dies: a model that had learned the marginal would read 0.66 everywhere, not
+So the marginal story dies: a model that had learned the marginal would read 0.66 everywhere rather than
 0.027 on 351 rows and 0.52 on 25.
 
-## 5. What is actually eliminated
+## 5. What is eliminated
 
 | hypothesis                                        | status                  | evidence                                                       |
 | ------------------------------------------------- | ----------------------- | -------------------------------------------------------------- |
@@ -138,12 +138,12 @@ The one variable that moves with the failures is the **street token**, and the e
 
 Every failing row is Norwegian, Polish, Dutch, or New Zealand. **Norway does not appear in the
 country census at all** at the ≥30-sample threshold. For those rows the question may not be "what did
-the corpus teach" but "the corpus has nothing to teach from" — which is coverage, not prior, and a
-different fix. That census read is unfinished and is the next measurement, not a conclusion.
+the corpus teach" but "the corpus has nothing to teach from" — which is coverage rather than prior, and a
+different fix. That census read is unfinished and is the next measurement rather than a conclusion.
 
 ### The symmetry worth noticing
 
-The house-number **licence** — the defect v310 just fixed — was: _a digit licenses the street
+The house-number **license** — the defect v310fixed — was: _a digit licenses the street
 reading_, so a street with no number read as a locality. The Track B lead is its mirror: _a known
 street licenses the house_number reading_, so a number after an unknown street reads as a postcode.
 
@@ -152,7 +152,7 @@ they are one defect seen twice, and the fix that worked on the first half — a 
 teaching the component **without** its partner, plus a counter-distribution so the model learns the
 distinction instead of flipping its default — is the same shape as the fix for the second.
 
-That is a hypothesis with a strong prior and no measurement. It gets tested, not assumed. The
+That is a hypothesis with a strong prior and no measurement. It gets tested rather than assumed. The
 registry tiers say the extract would be BAN/BAG-sourced (tier A) with OSM (tier D) only as an
 experiment, and it stays **positive evidence only** — no validator, no veto.
 

@@ -41,7 +41,7 @@ describe("whitespaceTokenizer", () => {
 		expect(t).toEqual([])
 	})
 
-	it("token spans align to the original string slice", () => {
+	it("token spans align to the original string's substrings", () => {
 		const raw = "Paris, France"
 		const t = whitespaceTokenizer().tokenize(raw)
 
@@ -181,7 +181,7 @@ describe("alignRow — fuzzy fallback", () => {
 		const result = alignRow(
 			baseRow({
 				raw: "75008 Paris",
-				components: { locality: "Pâris", postcode: "75008" }, // accent-bearing version
+				components: { locality: "Pâris", postcode: "75008" }, // accent-containing version
 			}),
 			{ maxEditDistance: 0 }
 		)
@@ -279,7 +279,7 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 		if (result.kind !== "labeled") return
 		// Token path untouched.
 		expect(result.row.tokens).toHaveLength(result.row.labels.length)
-		// Span triple: parallel, sorted by start, each slice round-trips to the component surface.
+		// Span triple: parallel, sorted by start, each substring round-trips to the component surface.
 		expect(result.row.span_tags).toEqual(["house_number", "street", "locality", "region", "postcode"])
 		expect(result.row.span_starts).toEqual([0, 5, 26, 38, 41])
 		expect(result.row.span_ends).toEqual([4, 24, 36, 40, 46])
@@ -353,7 +353,7 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 			expect(span_starts!).toHaveLength(span_tags!.length)
 
 			for (let i = 1; i < span_starts!.length; i++) {
-				expect(span_starts![i]!).toBeGreaterThanOrEqual(span_ends![i - 1]!) // sorted AND non-overlapping
+				expect(span_starts![i]!).toBeGreaterThanOrEqual(span_ends![i - 1]!) // sorted and non-overlapping
 			}
 		}
 	})
@@ -407,7 +407,7 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Umak/AK bug)", () => {
 	it("a short region value does not claim the inside of an earlier word", () => {
 		// Pre-fix, leftmost-substring let region "AK" (case-insensitive) match inside "Umak",
-		// scrambling every later span — 0.088% of the pilot slice, 46 natural rows.
+		// scrambling every later span — 0.088% of the pilot corpus, 46 natural rows.
 		const result = alignRow(
 			baseRow({
 				raw: "Umak Cir, AK 99546",
@@ -427,7 +427,7 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 	})
 
 	it("intra-word matches survive as the fallback — affix supervision inside compounds", () => {
-		// street_suffix "straße" has NO boundary-aligned occurrence in "Hauptstraße"; the sub-word
+		// street_suffix "straße" has no boundary-aligned occurrence in "Hauptstraße"; the sub-word
 		// span is the point of the char-offset format and must not be quarantined by the fix.
 		const result = alignRow(
 			baseRow({
@@ -453,7 +453,7 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 	})
 
 	it("longest value locates first — a region homonym cannot steal the street's word (pilot2 residual)", () => {
-		// "Alaska" is both the region and the street's first word; locating region first claimed
+		// "Alaska" is both the region and the street's first word. locating region first claimed
 		// [0,6) and quarantined the street. Longest-first gives the street its full surface, and
 		// the region then finds its own boundary-aligned occurrence.
 		const result = alignRow(
@@ -486,8 +486,8 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 		const { raw, span_starts, span_ends, span_tags } = result.row
 
 		for (let i = 0; i < span_tags!.length; i++) {
-			const slice = raw.slice(span_starts![i]!, span_ends![i]!)
-			expect(slice.trim()).toBe(slice) // no span carries edge whitespace
+			const surface = raw.slice(span_starts![i]!, span_ends![i]!)
+			expect(surface.trim()).toBe(surface) // no span carries edge whitespace
 		}
 
 		const regionIdx = span_tags!.indexOf("region")
@@ -499,10 +499,10 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 describe("alignRow — combining-mark / non-Latin name variants (#555)", () => {
 	it("aligns a Bengali country variant instead of quarantining (NFC over-run guard)", () => {
 		// দক্ষিণ কোরিয়া (South Korea, name:ben variant — the row that crashed the v0.5.0 build). The
-		// precomposed য় (U+09DF) is a Bengali nukta combination EXCLUDED from NFC composition, so NFC
+		// precomposed য় (U+09DF) is a Bengali nukta combination excluded from NFC composition, so NFC
 		// *decomposes* it — the source's 13-code-unit form becomes 14. alignRow NFC-normalizes `raw`
-		// BEFORE locating spans (#519) and stores the NFC raw, so the country span stays in-bounds vs
-		// the stored raw and the row ALIGNS rather than quarantining as `span-out-of-bounds` (the
+		// before locating spans (#519) and stores the NFC raw, so the country span stays in-bounds vs
+		// the stored raw and the row aligns rather than quarantining as `span-out-of-bounds` (the
 		// build's tens-of-thousands non-Latin coverage nick).
 		const precomposed = "দক্ষিণ কোরিয়া"
 

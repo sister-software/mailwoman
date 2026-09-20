@@ -4,11 +4,11 @@
 /**
  *   The #1721 resolver-interior trace pins. Three properties matter, in this order:
  *
- *   1. NO SINK, NO EFFECT — the default walk does zero trace bookkeeping and resolves byte-identically. The trace is
+ *   1. no sink, no effect — the default walk does zero trace bookkeeping and resolves byte-identically. The trace is
  *      a debug opt-in, never a production cost.
  *   2. The per-stage rank vector attributes loss: a candidate first by the backend and displaced by the fame key
  *      carries `ranks.initial = 1` and `ranks.importance > 1` — "lost to the fame term" as a recorded fact.
- *   3. Every exit path emits — a lookup that resolves NOTHING still records `picked: null` with its `checks`, because an
+ *   3. Every exit path emits — a lookup that resolves nothing still records `picked: null` with its `checks`, because an
  *      absent record is indistinguishable from a lookup that never ran.
  */
 
@@ -45,7 +45,7 @@ class StubBackend implements Pick<ResolverBackend, "findPlace"> {
 }
 
 /**
- * Two same-name localities: the backend ranks the POPULOUS one first, the fame key must flip them — the Whitby class,
+ * Two same-name localities: the backend ranks the populous one first, the fame key must flip them — the Whitby class,
  * and the rank vector must say so.
  */
 const WHITBY_PLACES: ResolvedPlace[] = [
@@ -109,7 +109,7 @@ describe("resolver-interior trace (#1721)", () => {
 		const canada = localityRecord!.candidates.find((c) => c.country === "CA")
 		const yorkshire = localityRecord!.candidates.find((c) => c.country === "GB")
 
-		// The backend's own order put the populous namesake first; the fame key flipped them. The rank
+		// The backend's own order put the populous namesake first. the fame key flipped them. The rank
 		// vector records both facts, which is the whole point.
 		expect(canada?.ranks["initial"]).toBe(1)
 		expect(yorkshire?.ranks["initial"]).toBe(2)
@@ -120,13 +120,13 @@ describe("resolver-interior trace (#1721)", () => {
 	})
 
 	it("records the span-rescore rescue — the famous-name class no longer answers off the record", async () => {
-		// A STREET-tagged famous name never enters the walk (street is not in the placetype map), so the
+		// A street-tagged famous name never enters the walk (street is not in the placetype map), so the
 		// span-rescore tier is the only thing that resolves it — and before the #1721 follow-up it answered
-		// with an EMPTY trace beside a real coordinate.
+		// with an empty trace beside a real coordinate.
 		const backend = new StubBackend(WHITBY_PLACES)
 		const records: ResolveNodeTrace[] = []
 
-		// Confidence UNDER the rescore threshold (0.7) — a confident street read is deliberately avoided
+		// Confidence under the rescore threshold (0.7) — a confident street read is deliberately avoided
 		// by the span enumeration, and the famous-name class arrives exactly this unconfident.
 		const streetNode = { ...node("street", "Whitby", 0, 6), confidence: 0.4 }
 
@@ -161,7 +161,7 @@ describe("resolver-interior trace (#1721)", () => {
 		expect(record).toBeDefined()
 		expect(record!.picked).toBeNull()
 		expect(record!.candidates).toEqual([])
-		// The bare-toponym race ran (single value-bearing locality node) and still found nothing — the
+		// The bare-toponym race ran (single value-containing locality node) and still found nothing — the
 		// check says the mechanism participated, which is what separates "raced and lost" from "never ran".
 		expect(record!.checks).toContain("bare_race")
 	})

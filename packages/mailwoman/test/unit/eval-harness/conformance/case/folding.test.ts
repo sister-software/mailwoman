@@ -6,7 +6,7 @@
  *
  *   The required pair is `caseFoldKey` and `caseApplicability`, and the reason both exist is here in
  *   executable form: the key refuses a pair that changed anything besides case, and the applicability rules
- *   refuse a pair the key ACCEPTS but whose locale casts case differently. `İstanbul` clears the first and
+ *   refuse a pair the key accepts but whose locale casts case differently. `İstanbul` clears the first and
  *   fails the second, which is the whole argument for having two.
  *
  *   Every exclusion is exercised against a real committed board row rather than a synthetic string — the
@@ -84,7 +84,7 @@ describe("case transformations", () => {
 describe("caseFoldKey", () => {
 	it("matches the German sharp s against its uppercase expansion", () => {
 		expect(caseFoldKey(DE_SHARP_S)).toBe(caseFoldKey("FRIEDRICHSTRASSE"))
-		// The reason this composition exists: a bare lowercase fold does NOT match them.
+		// The reason this composition exists: a bare lowercase fold does not match them.
 		expect(DE_SHARP_S.toLowerCase()).not.toBe("FRIEDRICHSTRASSE".toLowerCase())
 	})
 
@@ -147,7 +147,7 @@ describe("caseApplicability", () => {
 	)
 
 	it("reports the identity rule first when both bear on the same row", () => {
-		// The same Turkish row is already title case, so `mixed` moves nothing. Both rules would exclude it; the
+		// The same Turkish row is already title case, so `mixed` moves nothing. Both rules would exclude it. the
 		// one that fires is the one that says the pair could never have tested anything.
 		expect(caseApplicability(TR_STREET, "mixed", "TR").rule).toBe("identity-transformation")
 	})
@@ -239,7 +239,7 @@ describe("auditCaseFoldingSuite", () => {
 
 describe("a seeded case regression", () => {
 	/**
-	 * The pipeline stand-in that fails ONLY on the uppercase arm — the shape both live findings take. Seeding the
+	 * The pipeline stand-in that fails only on the uppercase arm — the shape both live findings take. Seeding the
 	 * regression rather than waiting for one is what proves the failure line carries enough to diagnose from.
 	 */
 	const observe: ConformanceObserver = async (query) => {

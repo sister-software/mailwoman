@@ -2,44 +2,44 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The whitespace invariance law: changing only the SPACING of a query must not change what the pipeline
+ *   The whitespace invariance law: changing only the spacing of a query must not change what the pipeline
  *   answered. Pure — no model, no I/O beyond reading the committed suite.
  *
- *   WHY IT IS A PRODUCT COMMITMENT. Spacing is the part of an address a user never controls. A pasted
+ *   why IT is A product commitment. Spacing is the part of an address a user never controls. A pasted
  *   spreadsheet cell arrives with a leading and a trailing space, a form field that concatenated two columns
  *   arrives with a doubled one, a tab-separated export arrives with a tab where the space should be, and a
  *   hand-typed line arrives with the comma tight against the next word. All of them name the same building
  *   as the evenly-spaced form a curator typed into the board, and Stage 1 exists to make them one string.
  *
- *   THE LAW IS STATED OVER THE PIPELINE, NOT OVER {@link "@mailwoman/normalize"}. `collapseWhitespace` folding
- *   a run to one ASCII space is a unit fact about one module; that the ANSWER does not move is a fact about
+ *   the LAW is stated over the pipeline rather than over {@link "@mailwoman/normalize"}. `collapseWhitespace` folding
+ *   a run to one ascii space is a unit fact about one module. that the answer does not move is a fact about
  *   the whole path, and only the second one is what a caller relies on. A row here therefore grades on the
  *   axis its own committed board row is graded on — the entity, the coordinate, or the parse — and never on
  *   the normalized string.
  *
- *   TWO GUARDS, ANSWERING DIFFERENT QUESTIONS. {@linkcode whitespaceBlindKey} decides whether a pair differs
- *   by whitespace AND NOTHING ELSE: equal keys mean every non-whitespace character survived, in order, so
+ *   two guards, answering different questions. {@linkcode whitespaceBlindKey} decides whether a pair differs
+ *   by whitespace and nothing else: equal keys mean every non-whitespace character survived, in order, so
  *   case, punctuation, transliteration and Unicode-normalization drift cannot enter this law wearing its
  *   name. {@linkcode whitespaceApplicability} then decides whether the transformation had anything to act on
  *   in the row's own text, which the key cannot say.
  *
- *   NEWLINE IS OUT OF THIS LAW, AND THE REASON IS MECHANICAL. `collapseWhitespace` folds `[ \t]` runs to one
- *   ASCII space and PRESERVES `\n`/`\r`, because `@mailwoman/query-shape`'s segmentation grammar reads a
+ *   newline is OUT OF this LAW, and the reason is mechanical. `collapseWhitespace` folds `[ \t]` runs to one
+ *   ascii space and preserves `\n`/`\r`, because `@mailwoman/query-shape`'s segmentation grammar reads a
  *   newline as a segment separator on a par with a comma. Swapping a space for a newline therefore
- *   re-segments the query on purpose; it is a claim about the segmentation grammar, not about spacing. A tab
+ *   re-segments the query on purpose. it is a claim about the segmentation grammar rather than about spacing. A tab
  *   is the opposite case and belongs here twice over: the same grammar treats a RAW tab as a separator too,
  *   and the collapse is what stops one from reaching it — so the `tabbed` arm is the executable statement
  *   that the collapse still shields that grammar.
  *
- *   A SPACE INSIDE A STRUCTURED IDENTIFIER IS NOT SPACING. `SW1A 2AA` is one code whose format grammar puts a
- *   space in the middle; doubling it or turning it into a tab writes a string outside that grammar, and
+ *   A space inside A structured identifier is not spacing. `SW1A 2AA` is one code whose format grammar puts a
+ *   space in the middle. doubling it or turning it into a tab writes a string outside that grammar, and
  *   recognizing it is not an invariance this law may demand. The run-level transformations therefore skip
  *   those runs — detected through {@link "@mailwoman/codex"}'s own postcode shapes, never a local pattern —
- *   and a query whose ONLY run is structural reports {@linkcode WHITESPACE_APPLICABILITY_RULES}'s
+ *   and a query whose only run is structural reports {@linkcode WHITESPACE_APPLICABILITY_RULES}'s
  *   `structural-identifier-space` rather than the identity reading, because "this query has no spacing" and
  *   "this query's spacing is required" are different absences.
  *
- *   THE VARIANT IS DERIVED, NEVER AUTHORED. Every committed row's `variant` is exactly the named
+ *   the variant is derived, never authored. Every committed row's `variant` is exactly the named
  *   transformation applied to its `base`, and {@linkcode auditWhitespaceSuite} re-derives it. A hand-typed
  *   variant is how a "whitespace" row quietly acquires a dropped comma, and the law then measures something
  *   else under its own name.
@@ -65,15 +65,15 @@ export const WHITESPACE_LAW = "whitespace-invariance"
 /**
  * The six whitespace transformations this law states, and the only six a committed row may use.
  *
- * - `leading` / `trailing` — the pasted-cell registers: one ASCII space bolted onto an end. Separate names because Stage
+ * - `leading` / `trailing` — the pasted-cell registers: one ascii space bolted onto an end. Separate names because Stage
  *   1 reaches them through separate code — the leading trim takes whitespace only, the trailing trim takes whitespace
- *   AND the sentence punctuation a user appends — so one can regress without the other.
+ *   and the sentence punctuation a user appends — so one can regress without the other.
  * - `repeated` — every safe internal run doubled: the concatenated-column register.
  * - `tabbed` — every safe internal run replaced by one tab: the TSV-export register, and the arm that states the collapse
  *   still shields the segmentation grammar (see the module docstring).
- * - `separator-tightened` — the whitespace after each comma deleted (`Portland, OR` → `Portland,OR`). The comma survives,
+ * - `separator-tightened` — the whitespace after each comma deleted (`Portland, or` → `Portland,or`). The comma survives,
  *   so the fields stay separated and the token order is untouched.
- * - `separator-loosened` — one space inserted before each comma (`Portland, OR` → `Portland , OR`).
+ * - `separator-loosened` — one space inserted before each comma (`Portland, or` → `Portland , or`).
  */
 export const WHITESPACE_TRANSFORMATIONS = [
 	"leading",
@@ -87,7 +87,7 @@ export const WHITESPACE_TRANSFORMATIONS = [
 export type WhitespaceTransformationName = (typeof WHITESPACE_TRANSFORMATIONS)[number]
 
 /**
- * What a transformation acts ON. It decides the reason an absent arm carries: a `separator` transformation that moved
+ * What a transformation acts on. It decides the reason an absent arm carries: a `separator` transformation that moved
  * nothing found no comma, a `run` one found no safe run, and a `boundary` one always moves something.
  */
 export type WhitespaceScope = "boundary" | "run" | "separator"
@@ -117,8 +117,8 @@ function splitOnWhitespaceRuns(text: string): string[] {
  * Is `candidate` a postcode under some address system's own shape?
  *
  * Both instruments are codex's, and using two is not belt-and-braces: `candidateSystemsForPostcode` asks every system
- * that has a codex slice, and `UNIT_GRADE_POSTCODE` carries the NL PC6 and CA urban LDU shapes, neither of which has
- * one. A local regex here would be the third copy of a shape the codex already owns.
+ * with a codex postcode shape, and `UNIT_GRADE_POSTCODE` carries the NL PC6 and CA urban LDU shapes, neither of which
+ * has one. A local regex here would be the third copy of a shape the codex already owns.
  */
 function isPostcodeShape(candidate: string): boolean {
 	if (candidateSystemsForPostcode(candidate).length) return true
@@ -127,7 +127,7 @@ function isPostcodeShape(candidate: string): boolean {
 }
 
 /**
- * The indices — into {@linkcode splitOnWhitespaceRuns}'s parts — of the whitespace runs that sit INSIDE a structured
+ * The indices — into {@linkcode splitOnWhitespaceRuns}'s parts — of the whitespace runs that sit inside a structured
  * identifier, i.e. whose two flanking tokens together read as one postcode.
  */
 function structuralRunIndices(parts: readonly string[]): Set<number> {
@@ -164,7 +164,7 @@ function whitespaceRunCount(text: string): number {
 }
 
 /**
- * Rewrite every SAFE whitespace run and leave the structural ones byte-identical.
+ * Rewrite every safe whitespace run and leave the structural ones byte-identical.
  */
 function rewriteSafeRuns(text: string, rewrite: (run: string) => string): string {
 	const parts = splitOnWhitespaceRuns(text)
@@ -198,9 +198,9 @@ export const WHITESPACE_TRANSFORMATION_BY_NAME: Record<WhitespaceTransformationN
  * The whitespace-blind identity of a string — equal keys mean the two differ by whitespace and by nothing else.
  *
  * Every non-whitespace character survives, in its original order, so this is the strongest available statement of the
- * scope rule: a whitespace transformation preserves token content AND token order. `\s` rather than `[ \t]` on purpose
- * — the key is a comparison surface, not a transformation, and a pair that swapped a space for a newline must still
- * come out equal here so {@linkcode classifyWhitespaceTransformation} can refuse it by name.
+ * scope rule: a whitespace transformation preserves token content and token order. `\s` rather than `[ \t]` on purpose
+ * — the key is a comparison surface rather than a transformation, and a pair that swapped a space for a newline must
+ * still come out equal here so {@linkcode classifyWhitespaceTransformation} can refuse it by name.
  */
 export function whitespaceBlindKey(text: string): string {
 	return text.replaceAll(/\s+/gu, "")
@@ -223,10 +223,10 @@ export function classifyWhitespaceTransformation(base: string, variant: string):
 }
 
 /**
- * The declared reasons a whitespace transformation is NOT stateable over a given row.
+ * The declared reasons a whitespace transformation is not stateable over a given row.
  *
  * - `identity-transformation` — the transformation returns the text unchanged because the query holds nothing of the kind
- *   it acts on: no comma for a separator transformation, no whitespace at all for a run one. Such a row is the IDENTITY
+ *   it acts on: no comma for a separator transformation, no whitespace at all for a run one. Such a row is the identity
  *   law wearing a whitespace label — it would hold whatever the pipeline does with spacing.
  * - `structural-identifier-space` — the query's every whitespace run sits inside a structured identifier whose format
  *   grammar fixes it (`N7 0BT`), so a run transformation has no safe run to act on. Reported apart from the identity
@@ -239,7 +239,7 @@ export type WhitespaceApplicabilityRule = (typeof WHITESPACE_APPLICABILITY_RULES
 /**
  * One applicability reading: whether the transformation may be stated as a law for this text, and why.
  *
- * The reason is populated on BOTH verdicts, for the same reason the case-folding law populates it on both — a row
+ * The reason is populated on both verdicts, for the same reason the case-folding law populates it on both — a row
  * silently dropped from a law suite is the absence this layer exists to refuse.
  */
 export interface WhitespaceApplicability {
@@ -254,7 +254,7 @@ export interface WhitespaceApplicability {
 /**
  * May `transformation` be stated as a whitespace law over `text`?
  *
- * Reads the TEXT and nothing else. Unlike case folding, no locale can make a space mean a different space: what makes a
+ * Reads the text and nothing else. Unlike case folding, no locale can make a space mean a different space: what makes a
  * space required here is the identifier it sits inside, which the text carries with it whatever country the row routes
  * through.
  */
@@ -320,15 +320,15 @@ export const WHITESPACE_SUITE_PATH: string = resolvePackagePath(
  *
  * Returns one message per problem, each naming the fixture. Empty means the suite states this law and only this law.
  *
- * The `caseCountry` requirement is not bookkeeping: a row graded with no country routes through the BASE en-US weights
+ * The `caseCountry` requirement is not bookkeeping: a row graded with no country routes through the base en-US weights
  * package rather than its own overlay, so a whitespace violation would be reported for an instrument that was never
  * pointed at the row's locale.
  *
- * {@linkcode whitespaceApplicability} is deliberately NOT re-checked here, and the case-folding audit's parallel check
- * is not an oversight in this one. A pair classifies only when its transformation MOVED something, which is the whole
- * of what applicability asks of a whitespace transformation, so an inapplicable row cannot reach this function — it
- * fails classification first, naming the transformation set. The rules are required one layer out, where the suite's
- * COMPLETENESS test reads them: an arm absent from a committed row must name the rule that refuses it.
+ * {@linkcode whitespaceApplicability} is deliberately not re-checked here, and the case-folding audit's parallel check
+ * is not an oversight in this one. A pair classifies only when its transformation moved something, which is the whole
+ * of what applicability asks of a whitespace transformation. Therefore, an inapplicable row cannot reach this function
+ * — it fails classification first, naming the transformation set. The rules are required one layer out, where the
+ * suite's completeness test reads them: an arm absent from a committed row must name the rule that refuses it.
  */
 export function auditWhitespaceSuite(fixtures: readonly ConformanceFixture[]): string[] {
 	return auditCommonFixtureFields(fixtures, WHITESPACE_LAW, (fixture, label, problems) => {

@@ -10,7 +10,7 @@
  *   default). Which repositories to sync is decided in `sync-plan.ts` before any network work, so a mistake is a
  *   message rather than a directory full of clones.
  *
- *   The progress display reports REPOSITORIES, and the per-repository `▸` lines are the required part: a first
+ *   The progress display reports repositories, and the per-repository `▸` lines are the required part: a first
  *   clone of a large country runs for minutes, and a counter that moves only on completion is indistinguishable from a
  *   hang while it does. Those lines go to stderr, so they survive the non-interactive Ink render that writes one frame
  *   at unmount.
@@ -31,7 +31,7 @@ import {
 	CheckList,
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	useCommandTask,
 } from "#cli-kit"
 import {
@@ -45,18 +45,18 @@ import {
  * Concurrency for the clone fan-out.
  *
  * Fixed rather than `availableParallelism()`: these are network transfers of hundreds of megabytes, so the ceiling is
- * bandwidth and GitHub's patience, not cores. A 128-core host opening 128 clones serves nobody.
+ * bandwidth and GitHub's patience rather than cores. A 128-core host opening 128 clones serves nobody.
  */
 const CONCURRENCY = 8
 
 /**
  * Above this many repositories the final list is summarized instead of printed in full. The `▸` lines above it are
- * complete either way — this bounds the closing frame, not the record.
+ * complete either way — this bounds the closing frame rather than the record.
  */
 const MAX_LISTED_CHECKS = 25
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "sync",
@@ -74,13 +74,6 @@ export const spec = {
 		"dry-run": { type: "boolean", default: false, description: "Print the plan without cloning" },
 	},
 } as const satisfies CommandSpec
-
-interface Options {
-	repos?: string
-	countries?: string
-	all?: boolean
-	dryRun?: boolean
-}
 
 interface SyncPlan {
 	destination: string
@@ -109,7 +102,7 @@ async function discoverRepos(): Promise<DiscoveredRepo[]> {
 	}
 }
 
-const WOFSync: ParsedCommandComponent<Options, [string?]> = ({ options, args }) => {
+const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) => {
 	const [plan, setPlan] = useState<SyncPlan>()
 	const [active, setActive] = useState<readonly string[]>([])
 	const [doneCount, setDoneCount] = useState(0)
@@ -133,10 +126,10 @@ const WOFSync: ParsedCommandComponent<Options, [string?]> = ({ options, args }) 
 				all: options.all,
 			})
 
-			// WHERE each repo comes from is resolved per repo, not assumed to be upstream. `gh repo list` enumerates the
-			// UPSTREAM org, so the discovered `url` always names upstream — cloning from it would pull upstream data over
+			// where each repo comes from is resolved per repo rather than assumed to be upstream. `gh repo list` enumerates the
+			// upstream org, so the discovered `url` always names upstream — cloning from it would pull upstream data over
 			// the corrections our fork carries (the January 2019 GB deprecation batch is the first, #1742). Existing
-			// clones are NOT re-pointed here: `synchronizeRepo` pulls in place and never rewrites a remote, so this fixes
+			// clones are not re-pointed here: `synchronizeRepo` pulls in place and never rewrites a remote, so this fixes
 			// new clones only. `gazetteer repos-sync` reports and re-points the existing ones.
 			const { githubForkProbe, resolveWOFRepoOrigin } = await import("#gazetteer/wof/repo-origin")
 
@@ -150,7 +143,7 @@ const WOFSync: ParsedCommandComponent<Options, [string?]> = ({ options, args }) 
 						console.error(`▸ ${name}: ${origin.reason}`)
 					}
 
-					// `owner` is the DIRECTORY, and it stays upstream even when the bytes come from our fork. The
+					// `owner` is the directory, and it stays upstream even when the bytes come from our fork. The
 					// destination is `<root>/<owner>/<name>`, so keying it on the resolved org would give one repo two
 					// homes — and `ingestWOF` globs the whole root, so the build would read both and resolve the conflict
 					// by FastGlob enumeration order (`repos-audit.ts` documents that hazard). One repo, one directory,

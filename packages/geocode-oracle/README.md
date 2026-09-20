@@ -1,7 +1,7 @@
 # @mailwoman/geocode-oracle
 
 Third-party reference geocoders — Google and the US Census Bureau — as a **verification oracle** for
-authoring gauntlet cases. Private: not published, not a dependency of anything on the parse path.
+authoring gauntlet cases. Private: not published rather than a dependency of anything on the parse path.
 
 ## What it is for
 
@@ -47,11 +47,11 @@ file header carries its full outcome table.
 **The Census geocoder can never return a rooftop coordinate.** It locates an address by finding the
 TIGER/Line segment whose address range contains the house number and interpolating along it, so its
 coordinate is routinely 20–100 m from the building and further on a long rural segment. Pin
-`expectToleranceM` against that, not against a rooftop assumption.
+`expectToleranceM` against that rather than against a rooftop assumption.
 
 **Google's errors arrive under HTTP 200.** `REQUEST_DENIED`, `OVER_QUERY_LIMIT`, `INVALID_REQUEST` and
 `UNKNOWN_ERROR` are 200s carrying a `status` field, invisible to every check `core/api` provides. The
-client maps them onto the normal `ResourceError` contract and refuses to cache any body that is not a
+client maps them onto the normal `ResourceError` interface and refuses to cache any body that is not a
 real answer — a `REQUEST_DENIED` persisted under a 30-day TTL would make an unbilled key look like a
 permanently broken address.
 

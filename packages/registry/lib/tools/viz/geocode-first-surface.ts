@@ -3,7 +3,7 @@
 
 /**
  *   Plot string-only and string-plus-distance match probabilities using the record matcher's
- *   Fellegi-Sunter weights. The supplied prior is illustrative and the output is self-contained HTML.
+ *   Fellegi-Sunter weights. The supplied prior is illustrative and the output is self-contained html.
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
@@ -17,16 +17,16 @@ export interface GeocodeFirstSurfaceOptions {
 	/**
 	 * Illustrative prior λ. Production's record matcher uses λ=1e-4 (calibrated for the full multi-field model with phone
 	 *
-	 * - Spatial exact-key); here we want the boundary visible in a two-axis slice. Default 0.02.
+	 * - Spatial exact-key); here we want the boundary visible in a two-axis projection. Default 0.02.
 	 */
 	lambda?: number
 	/**
-	 * Output HTML path. Default `/tmp/geocode-first-surface.html`.
+	 * Output html path. Default `/tmp/geocode-first-surface.html`.
 	 */
 	outHTML?: string
 }
 
-// ── Real Bayes-factor weights, transcribed from source (values kept in sync by comment, not import,
+// ── Real Bayes-factor weights, transcribed from source (values kept in sync by comment rather than import,
 //    so this generator is self-contained / independent of the match package's build state). ───────────
 
 interface Level {
@@ -80,7 +80,7 @@ function distanceWeight(km: number): number {
 }
 
 /**
- * Emit the geocode-first decision-surface Plotly HTML — see the module doc.
+ * Emit the geocode-first decision-surface Plotly html — see the module doc.
  */
 export async function geocodeFirstSurface(
 	options: GeocodeFirstSurfaceOptions = {},
@@ -138,10 +138,10 @@ export async function geocodeFirstSurface(
 			label: "Springfield General — IL vs MA",
 			detail: "identical name, ~1500 km apart",
 			sim: 1,
-			km: 15, // plotted on the far plateau (real distance ~1500 km; clamped into view)
+			km: 15, // plotted on the far plateau (real distance ~1500 km. clamped into view)
 		},
 		{
-			// "St" → "Street" canonicalizes to a high (not exact) name agreement; the trailing "Apt 2"
+			// "St" → "Street" canonicalizes to a high (not exact) name agreement. the trailing "Apt 2"
 			// keeps it off 1.0. Lands in the 0.88 "high" tier — same place, drifted-but-recognizable string.
 			label: "123 Main St vs 123 Main Street Apt 2",
 			detail: "same building, drifted string",
@@ -159,7 +159,7 @@ export async function geocodeFirstSurface(
 		geoP: pGeocodeFirst(t.sim, t.km),
 	}))
 
-	// ── HTML. ───────────────────────────────────────────────────────────────────────────────────────
+	// ── html. ───────────────────────────────────────────────────────────────────────────────────────
 
 	const data = {
 		simAxis,
@@ -171,7 +171,7 @@ export async function geocodeFirstSurface(
 		prior: PRIOR,
 	}
 
-	// EVERY `<`, not only `</script>`: `<!--` also leaves script-data state in the HTML tokenizer, after which a
+	// Every `<`, not only `</script>`: `<!--` also leaves script-data state in the html tokenizer, after which a
 	// later `</script>` no longer ends the element. `\u003c` is the same string to a JSON reader.
 	const safe = stringifyJSON(data).replaceAll("<", "\\u003c")
 

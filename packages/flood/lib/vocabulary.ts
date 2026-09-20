@@ -5,22 +5,22 @@
  *   The Environment Agency's own words, as data: the product identity, the zone domain it publishes, the
  *   coverage sentence that licenses a `designated` basis, and the attribution string OGL v3.0 requires.
  *
- *   THE ZONE DOMAIN IS CLOSED AND THE BUILDER THROWS ON A VALUE OUTSIDE IT. An unknown code is a
- *   source-schema change, which is the event a reader most needs to hear about; coercing it to a nearest
+ *   the zone domain is closed and the builder throws on A value outside IT. An unknown code is a
+ *   source-schema change, which is the event a reader most needs to hear about. coercing it to a nearest
  *   neighbour or to null converts "the source changed" into "there is nothing here".
  *
- *   THE STORED CODES ARE `FZ2` AND `FZ3`, NOT "Flood Zone 2"/"Flood Zone 3". The published metadata
+ *   The stored codes are `FZ2` and `FZ3`, not "Flood Zone 2"/"Flood Zone 3". The published metadata
  *   describes the column as "Assigned Flood Zone (Flood Zone 2 or 3)"; the shipped geodatabase declares
  *   `flood_zone` as a 3-character string and fills it with `FZ2` / `FZ3`. Measured over the whole file:
  *   540,282 `FZ2` and 273,345 `FZ3`, 813,627 together. A builder written against the metadata prose finds
  *   nothing.
  *
- *   ZONE 1 IS NOT IN THIS TABLE, BECAUSE IT IS NOT IN THE DATA. The Planning Practice Guidance defines it
- *   as "all land outside Zones 2, 3a and 3b" — an absence, not a polygon. It reaches a reader through
+ *   zone 1 is not IN this table, because IT is not IN the data. The Planning Practice Guidance defines it
+ *   as "all land outside Zones 2, 3a and 3b" — an absence rather than a polygon. It reaches a reader through
  *   `layer_coverage` instead: inside England a cell the authority designated and no polygon covering the
- *   point IS the Zone 1 designation. {@linkcode FLOOD_ZONE_1} carries its definition for that reading.
+ *   point is the Zone 1 designation. {@linkcode FLOOD_ZONE_1} carries its definition for that reading.
  *
- *   3a AND 3b ARE NOT DISTINGUISHED, and the EA says so: it is "not required to map the outer boundary of
+ *   3a and 3b are not distinguished, and the EA says so: it is "not required to map the outer boundary of
  *   the extent of Flood Zone 3b, and it is usually included within our mapped extent of Flood Zone 3". A
  *   consumer that split them would be inventing a boundary the authority declines to draw.
  */
@@ -72,8 +72,8 @@ export const EA_FLOOD_ZONE_DEFINITIONS: ReadonlyArray<FloodZoneDefinition> = [
 export const EA_FLOOD_ZONE_CODES: ReadonlySet<string> = new Set(EA_FLOOD_ZONE_DEFINITIONS.map((zone) => zone.code))
 
 /**
- * Zone 1, which the product represents by ABSENCE. Not a row in `flood_zone_vocabulary`, because the authority ships no
- * Zone 1 polygon; carried here so a reader rendering a designated-absence answer can quote the definition it rests on.
+ * Zone 1, which the product represents by absence. Not a row in `flood_zone_vocabulary`, because the authority ships no
+ * Zone 1 polygon. carried here so a reader rendering a designated-absence answer can quote the definition it rests on.
  */
 export const FLOOD_ZONE_1: FloodZoneDefinition = {
 	code: "FZ1",
@@ -120,7 +120,7 @@ export const EA_FLOOD_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/ope
  * The authority's coverage statement — the sentence that makes `CoverageBasis.Designated` reachable at all, and the
  * only thing `flood_map_extent` is derived from.
  *
- * The union of hazard polygons is NOT the mapped area: Zone 1 is the mapped area minus the polygons, so a footprint
+ * The union of hazard polygons is not the mapped area: Zone 1 is the mapped area minus the polygons, so a footprint
  * derived from the polygons would report every Zone 1 location as unmapped — the exact inversion this layer exists to
  * avoid.
  */
@@ -134,7 +134,7 @@ export const EA_COVERAGE_STATEMENT =
 export const EA_COVERAGE_STATEMENT_URL = `https://environment.data.gov.uk/dataset/${EA_FLOOD_DATASET_ID}`
 
 /**
- * What the product does NOT cover, in the authority's own words. Carried into the observation so a caller can see what
+ * What the product does not cover, in the authority's own words. Carried into the observation so a caller can see what
  * an answer is silent about: a Zone 1 reading says nothing about surface water, groundwater, sewer failure, or the
  * residual risk behind a defence.
  */
@@ -159,7 +159,7 @@ export const EA_DECLARED_BBOX: readonly [number, number, number, number] = [
 ]
 
 /**
- * The projected CRS the published geodatabase declares. The file is NOT in WGS84 — it is OSGB36 / British National
+ * The projected CRS the published geodatabase declares. The file is not in WGS84 — it is OSGB36 / British National
  * Grid, in metres — so the ingest reprojects and the builder refuses a source that declares anything else.
  */
 export const EA_SOURCE_EPSG = 27_700

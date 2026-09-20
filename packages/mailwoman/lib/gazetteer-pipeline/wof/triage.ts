@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   WOF currency triage — a REPORT over the admin gazetteer's non-current records, so a coverage hole
+ *   WOF currency triage — a report over the admin gazetteer's non-current records, so a coverage hole
  *   that upstream created is reviewable instead of invisible.
  *
  *   The motivating case (2026-08-19): `Rochester, Kent` — a ~28k cathedral city — resolved 474 km away
@@ -10,10 +10,10 @@
  *   (`edtf:deprecated: 2019-01-16` on 53 of the 66 readable GB deprecated-no-successor localities)
  *   without writing successors. The Medway cluster shows the shape: `Chatham` stayed current,
  *   `Rochester` and `Gillingham` were deprecated, and the replacement `Medway` localadmin is itself
- *   NOT current. Every record looks individually plausible; only the cluster is wrong.
+ *   not current. Every record looks individually plausible. only the cluster is wrong.
  *
- *   THIS MODULE DECIDES NOTHING. It measures and reports, because the non-current population is a
- *   MIXTURE that no rule separates — measured over the shipped artifact:
+ *   this module decides nothing. It measures and reports, because the non-current population is a
+ *   mixture that no rule separates — measured over the shipped artifact:
  *
  *   - genuine ghost towns (`Treece`, Kansas — evacuated),
  *   - abolished administrative districts (`Shepway District` → Folkestone & Hythe, 2018),
@@ -31,12 +31,12 @@
  *   never `unattested`.
  */
 
+import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePath, type PathBuilderLike } from "path-ts"
-import { TSVSpliterator } from "spliterator"
 
 /**
  * Admin placetypes the triage covers — the bands an address's locality span resolves against. Regions and countries are
@@ -45,7 +45,7 @@ import { TSVSpliterator } from "spliterator"
 const TRIAGE_PLACETYPES = ["locality", "localadmin", "borough"] as const
 
 /**
- * Placetypes searched for a LIVE cover — wider than the subject bands on purpose. WOF's January 2019 GB batch demoted
+ * Placetypes searched for a live cover — wider than the subject bands on purpose. WOF's January 2019 GB batch demoted
  * cities out of the locality band while leaving a same-named county/region standing: `Swansea` (pop 300,352) is
  * reachable only as a principal area 6.1 km from the city, and bare `Newport` now races six live namesake localities
  * with the 161k Welsh city absent from the band. A cover in another band is a different fact from no cover at all, and
@@ -76,15 +76,15 @@ export const CurrencyClass = {
 export type CurrencyClass = (typeof CurrencyClass)[keyof typeof CurrencyClass]
 
 /**
- * Whether a LIVE record already serves this place, and by what evidence.
+ * Whether a live record already serves this place, and by what evidence.
  *
  * - `covered_exact` — a live record of the same folded name within {@link COVERAGE_RADIUS_KM}.
- * - `covered_containment` — a live neighbour whose name this one CONTAINS: `Town of Gilbert` over live `Gilbert`,
+ * - `covered_containment` — a live neighbour whose name this one contains: `Town of Gilbert` over live `Gilbert`,
  *   `Arrondissement de Lyon` over live `Lyon`. This verdict is what keeps the legal-form class out of the hole count —
- *   a same-NAME-STRING test alone called 21,010 US rows holes, and the samples were `Commonwealth of Pennsylvania` and
- *   `Town of Cary`. Directional: `Telford` inside live `Telford and Wrekin` is NOT a cover, because no query for
+ *   a same-name-string test alone called 21,010 US rows holes, and the samples were `Commonwealth of Pennsylvania` and
+ *   `Town of Cary`. Directional: `Telford` inside live `Telford and Wrekin` is not a cover, because no query for
  *   Telford resolves through it.
- * - `covered_cross_band` — a live record of the same name nearby, but at a DIFFERENT placetype: the place answers at
+ * - `covered_cross_band` — a live record of the same name nearby, but at a different placetype: the place answers at
  *   coarser granularity and loses its in-band race. `Swansea` and `Newport` are the measured cases.
  * - `uncovered` — no live record nearby bears or contains the name. The class a reviewer must judge (`Telford`).
  */
@@ -103,8 +103,8 @@ export type CoverageVerdict = (typeof CoverageVerdict)[keyof typeof CoverageVerd
  */
 export interface TriageAttestation {
 	/**
-	 * `unmeasured` when no dump exists for the country: the pass could not look, which is NOT the same as looking and
-	 * finding nothing (the meaning-of-zero rule).
+	 * `unmeasured` when no dump exists for the country: the pass could not look. That differs from looking and finding
+	 * nothing (the meaning-of-zero rule).
 	 */
 	state: "attested" | "unattested" | "unmeasured"
 	population?: number
@@ -129,13 +129,14 @@ export interface TriageRow {
 	latitude: number
 	longitude: number
 	/**
-	 * The record's own population, or 0 when the artifact carries none. Zero here is WOF's absence, not a measured zero.
+	 * The record's own population, or 0 when the artifact carries none. Zero here is WOF's absence rather than a measured
+	 * zero.
 	 */
 	population: number
 	currencyClass: CurrencyClass
 	coverage: CoverageVerdict
 	/**
-	 * The live record that covers this place, when one does — so a reviewer can see WHICH record made the call, and at
+	 * The live record that covers this place, when one does — so a reviewer can see which record made the call, and at
 	 * what band.
 	 */
 	coveredBy?: CoveredBy
@@ -192,11 +193,11 @@ interface LiveRecord {
 }
 
 /**
- * The shared fold for this pass: diacritic-stripped, lower-cased, whitespace-collapsed. Deliberately NOT
- * `normalizeLocalityForKey` — that is the RESOLVER's key discipline, and importing it here would tie a reporting pass
- * to a runtime contract it must be free to outlive. And deliberately NOT `@mailwoman/normalize`'s `stripCombiningMarks`
- * either (NFD, no case/space fold): this fold decomposes under NFKD, so compatibility forms fold too, and the triage
- * artifact was built under it.
+ * The shared fold for this pass: diacritic-stripped, lower-cased, whitespace-collapsed. Deliberately not
+ * `normalizeLocalityForKey` — that is the resolver's key discipline, and importing it here would tie a reporting pass
+ * to a runtime interface it must be free to outlive. And deliberately not `@mailwoman/normalize`'s
+ * `stripCombiningMarks` either (NFD, no case/space fold): this fold decomposes under nfkd, so compatibility forms fold
+ * too, and the triage artifact was built under it.
  */
 function fold(value: string): string {
 	return value
@@ -224,7 +225,7 @@ function judgeCoverage(
 		if (distanceKm > COVERAGE_RADIUS_KM) continue
 
 		if (live.key === dead.key) {
-			// Same band is a true cover; another band answers the query at a coarser grain and is reported as
+			// Same band is a true cover. another band answers the query at a coarser grain and is reported as
 			// such — but only after the whole neighbourhood is searched, since an in-band cover may follow.
 			if (live.placetype === dead.placetype) {
 				return {
@@ -240,7 +241,7 @@ function judgeCoverage(
 			continue
 		}
 
-		// DIRECTIONAL, and the direction is the whole point: the dead name must CONTAIN a live one, because
+		// directional, and the direction is the whole point: the dead name must contain a live one, because
 		// then the place is reachable by the shorter name people type (`Town of Gilbert` over live `Gilbert`).
 		// The reverse is not a cover — `Telford` sits inside live `Telford and Wrekin`, and nothing answers a
 		// query for Telford. An empty live key would `includes()`-match everything, so it never participates.
@@ -282,7 +283,7 @@ function judgeCoverage(
 
 /**
  * Folded name → P-class GeoNames rows for one country, restricted to the names actually being judged (the dump is
- * streamed; only the keys under review are held).
+ * streamed. only the keys under review are held).
  */
 async function loadAttestors(
 	dumpPath: string,
@@ -290,7 +291,7 @@ async function loadAttestors(
 ): Promise<Map<string, { lat: number; lon: number; pop: number }[]>> {
 	const out = new Map<string, { lat: number; lon: number; pop: number }[]>()
 
-	for await (const f of TSVSpliterator.fromAsync(dumpPath, { header: false })) {
+	for await (const f of readUnquotedTSV(dumpPath)) {
 		if (f[6] !== "P") continue
 
 		const candidates = [fold(String(f[1] ?? "")), fold(String(f[2] ?? ""))].filter((key) => key && keys.has(key))
@@ -362,7 +363,7 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 		const live: LiveRecord[] = liveStmt
 			.all(country)
 			// A nameless record cannot cover anything, and its empty key would substring-match every name.
-			.filter((r) => String(r["name"] ?? "").trim().length > 0)
+			.filter((r) => String(r["name"] ?? "").trim().length)
 			.map((r) => {
 				const name = String(r["name"] ?? "")
 				const key = fold(name)
@@ -372,14 +373,14 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 					name,
 					placetype: String(r["placetype"] ?? ""),
 					key,
-					words: new Set(key.split(" ").filter((value) => value.length > 0)),
+					words: new Set(key.split(" ").filter((value) => value.length)),
 					lat: Number(r["latitude"]),
 					lon: Number(r["longitude"]),
 				}
 			})
 
 		// Attestation is looked up only for names under review, and only where a dump exists.
-		const keys = new Set(dead.map((r) => fold(String(r["name"] ?? ""))).filter((key) => key.length > 0))
+		const keys = new Set(dead.map((r) => fold(String(r["name"] ?? ""))).filter((key) => key.length))
 		const dumpPath = opts.geonamesDir ? resolvePath(opts.geonamesDir, `${country}.txt`) : undefined
 		const attestors = dumpPath && (await pathExists(dumpPath)) ? await loadAttestors(dumpPath, keys) : undefined
 
@@ -400,7 +401,7 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 			const placetype = String(record["placetype"] ?? "")
 
 			const { verdict, coveredBy } = judgeCoverage(
-				{ key, words: new Set(key.split(" ").filter((value) => value.length > 0)), lat, lon, placetype },
+				{ key, words: new Set(key.split(" ").filter((value) => value.length)), lat, lon, placetype },
 				live
 			)
 
@@ -437,19 +438,19 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 		rows.push(...countryRows)
 
 		for (const currencyClass of [CurrencyClass.DeprecatedNoSuccessor, CurrencyClass.NotCurrentUnstated]) {
-			const slice = countryRows.filter((r) => r.currencyClass === currencyClass)
+			const classRows = countryRows.filter((r) => r.currencyClass === currencyClass)
 
-			if (!slice.length) continue
+			if (!classRows.length) continue
 
-			const uncovered = slice.filter((r) => r.coverage === CoverageVerdict.Uncovered)
+			const uncovered = classRows.filter((r) => r.coverage === CoverageVerdict.Uncovered)
 
 			summary.push({
 				country,
 				currencyClass,
-				total: slice.length,
-				coveredExact: slice.filter((r) => r.coverage === CoverageVerdict.CoveredExact).length,
-				coveredCrossBand: slice.filter((r) => r.coverage === CoverageVerdict.CoveredCrossBand).length,
-				coveredContainment: slice.filter((r) => r.coverage === CoverageVerdict.CoveredContainment).length,
+				total: classRows.length,
+				coveredExact: classRows.filter((r) => r.coverage === CoverageVerdict.CoveredExact).length,
+				coveredCrossBand: classRows.filter((r) => r.coverage === CoverageVerdict.CoveredCrossBand).length,
+				coveredContainment: classRows.filter((r) => r.coverage === CoverageVerdict.CoveredContainment).length,
 				uncovered: uncovered.length,
 				...(attestors ? { uncoveredAttested: uncovered.filter((r) => r.attestation.state === "attested").length } : {}),
 			})

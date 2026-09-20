@@ -37,7 +37,7 @@ going. The two rows that matter most are the ones a hosted service can never che
 
 ✅ supported · ➖ partial · ❌ not supported · n/a not applicable (hosted-only)
 
-## What that buys you
+## What that provides you
 
 You can run the whole thing on one box, ship it inside your application, or compile it to WebAssembly and
 geocode in the browser. You get forward and reverse geocoding, autocomplete, and structured parsing from
@@ -53,7 +53,7 @@ npx @mailwoman/libpostal serve   # libpostal-compatible /parse, /expand
 ```
 
 Where each tool still does something better, the switching guides say so directly. The goal is to let you
-keep your stack, your client, and your budget, not to claim Mailwoman wins every row.
+keep your stack, your client, and your budget rather than to claim Mailwoman wins every row.
 
 ## What about the map apps?
 
@@ -75,6 +75,6 @@ builds on a geocoder ends up writing a shim like this eventually, and it's the k
 maintaining.
 
 That's the gap Mailwoman aims at. We sit under apps like Cartes rather than beside them:
-`@mailwoman/photon` speaks the same `/api` contract their client already calls, from a SQLite file
+`@mailwoman/photon` speaks the same `/api` interface their client already calls, from a SQLite file
 instead of an Elasticsearch cluster, with a parser at the front door — so the address shim stops being
 the app's problem.

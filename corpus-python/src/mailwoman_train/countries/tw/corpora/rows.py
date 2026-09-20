@@ -1,6 +1,6 @@
 """Reading Overture-TW rows, and rendering one in a register.
 
-The 路 / 段 / 巷 / 弄 designators stay INSIDE the street span: they are the street's own name, not a
+The 路 / 段 / 巷 / 弄 designators stay inside the street span: they are the street's own name rather than a
 type suffix beside it. The 號 designator likewise stays inside the house number, so ``298之1號`` is
 one span — which is how the household-registration form writes it.
 """
@@ -20,7 +20,7 @@ from ....corpora.builder import MAX_FIELD_CHARS, RowRenderer
 from ....corpora.builder import verify_record as _verify_record
 from ....text.normalize import ascii_digits, fullwidth_digits, normalize_text
 
-#: Resolved after parsing, not here: reading the data root at import would raise for a caller who
+#: Resolved after parsing rather than here: reading the data root at import would raise for a caller who
 #: passes `--parquet` and never needs it.
 PARQUET_PARTS = ("overture", "2026-06-17.0", "addresses-tw.parquet")
 LABEL_SET_NAME = "stage3-cjk"
@@ -50,7 +50,7 @@ def verify_record(record: dict[str, Any], tag_set: frozenset[str]) -> None:
 
 
 def split_number_unit(number: str, unit: str) -> tuple[str, str]:
-    """Fold the sub-number the source keeps in ``unit`` into the house number; what remains is the floor.
+    """Fold the sub-number the source keeps in ``unit`` into the house number. what remains is the floor.
 
     ``("２９８", "之１號")`` → ``("２９８之１號", "")``; ``("２０１號", "四樓")`` → ``("２０１號", "四樓")``;
     ``("１４", "之１附１號")`` → ``("１４之１附１號", "")``; ``("１５２號", "四樓之２")`` → ``("１５２號", "四樓之２")``.
@@ -79,7 +79,7 @@ def render_row(
     register: str,
     country: bool = False,
 ) -> dict[str, Any]:
-    """Render one TW row in one register, returning the slice record (spans, legacy tokens, provenance)."""
+    """Render one TW row in one register, returning the corpus record (spans, legacy tokens, provenance)."""
     renderer = RowRenderer()
     sep = " " if register == "spaced" else ""
     digits = fullwidth_digits if register == "official" else ascii_digits

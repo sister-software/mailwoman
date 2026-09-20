@@ -9,11 +9,11 @@
 estimated as the running mean of squared per-parameter gradients over the final N batches of the
 base run (proposed N = 2,000 batches ≈ the last ~2k steps' micro-batches — the converged-model
 regime, which is what EWC's quadratic approximation assumes). Diagonal-only (D4 default):
-blockwise buys accuracy the first consumer can't yet use and multiplies storage; revisit if λ
+blockwise provides accuracy the first consumer can't yet use and multiplies storage; revisit if λ
 calibration shows the diagonal is too blunt.
 
-**Per-locale slices: not in v1.** One Fisher over the full feed. A per-locale family
-(F_us, F_fr, …) enables "protect only what this customer doesn't touch" later — file it as the
+**Per-locale Fisher matrices: not in v1.** One Fisher over the full feed. A per-locale family
+(F_us, F_fr, …) enables "guard only what this customer doesn't touch" later — file it as the
 v2 refinement once a real engagement asks for it.
 
 ## Implementation (training-side, small)
@@ -28,7 +28,7 @@ v2 refinement once a real engagement asks for it.
 - `export`: the artifact converts to **fp16 (~58 MB)** for distribution. Precision receipt: EWC
   penalties use Fisher _relative_ magnitudes; fp16's 3 decimal digits are ample. If 58 MB is
   unwelcome in the npm tarball, ship it **HF/R2-only** (the wof-polygons precedent — fetched by
-  the training/fine-tune tooling, not the runtime; the runtime never reads Fisher).
+  the training/fine-tune tooling rather than the runtime; the runtime never reads Fisher).
 
 ## Consumption (the fine-tune recipe template)
 
@@ -38,23 +38,23 @@ v2 refinement once a real engagement asks for it.
   is): sweep λ ∈ {0, 1e2, 1e4, 1e6} on a 2k-step probe; pick the largest λ that leaves the
   increment's target metric within noise of λ=0. That λ becomes the template default; a customer
   engagement inherits it and only revisits on a battery failure.
-- **The guarantee check** (the sellable sentence): a Fisher-protected fine-tune must hold every
-  base capability within the noise-honest margins on the packaged battery. Base capabilities =
+- **The guarantee check** (the sellable sentence): a Fisher-guarded fine-tune must hold every
+  base capability within the noise-direct margins on the packaged battery. Base capabilities =
   the golden floors + the P0 fragment bars + the gauntlet; the customer's own canaries ride
   alongside. A check failure at the calibrated λ is a _finding about the customer data_, surfaced
-  before delivery — which is the product working, not failing.
+  before delivery — which is the product working rather than failing.
 
-## Contract + provenance
+## Interface + provenance
 
 - `fisher-diag-v1` joins the weights-bundle artifact family: versioned filename, md5 in the
   model card's `files_md5` (HF-staged; npm optional per above), captured-at metadata (run id,
   step window, feed hash) in an `.json` sidecar — the same provenance discipline as the lexicons.
 - The release-hf command + publish.yml preflight gain one file each (the mechanical pattern from
-  the lexicon additions; noted in ROAD_TO §9 so it isn't forgotten at the reduce).
+  the lexicon additions; noted in ROAD_TO §9 so it isn't forgotten at the result).
 
 ## What this deliberately does not claim
 
-EWC protects against drift in _parameter space_, calibrated on _our_ distributions. It does not
+EWC guards against drift in _parameter space_, calibrated on _our_ distributions. It does not
 guarantee arbitrary customer data can't find a pathological direction — that is what the battery
-check is for. The two together (parameter-space brake + behavior-space check) are the honest
+check is for. The two together (parameter-space brake + behavior-space check) are the direct
 guarantee; neither alone is.

@@ -17,7 +17,7 @@ attested BT points exist to grade against.
 
 | Input                                    | Artifact                                                                                                                | Rows in play                                                          | Provenance                                                                                                                                    |
 | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| BT unit postcodes ("the NI census file") | `$MAILWOMAN_DATA_ROOT/osm-ni-postcodes/2026-08-05/response.json` — an Overpass acquisition, not a NISRA product         | 12,327 elements (2,752 nodes, 9,458 ways, 117 relations); 4,757 units | query `nwr["addr:postcode"~"^BT"]`, `out center`; 6,681,108 bytes, md5 `e24adcee6b3dcd23688332f8f9d47a1c`; ODbL 1.0; tier `build-local`       |
+| BT unit postcodes ("the NI census file") | `$MAILWOMAN_DATA_ROOT/osm-ni-postcodes/2026-08-05/response.json` — an Overpass acquisition rather than a NISRA product  | 12,327 elements (2,752 nodes, 9,458 ways, 117 relations); 4,757 units | query `nwr["addr:postcode"~"^BT"]`, `out center`; 6,681,108 bytes, md5 `e24adcee6b3dcd23688332f8f9d47a1c`; ODbL 1.0; tier `build-local`       |
 | Built unit-postcode artifact             | `$MAILWOMAN_DATA_ROOT/wof/postalcode-ni-osm.db` (`mailwoman gazetteer build postcode-ni-osm`)                           | 4,757 rows, one medoid point per unit                                 | built from the acquisition above; the reader is `ni-osm-database.ts`                                                                          |
 | Attested BT points (truth)               | the same 12,327 elements: each carries `addr:postcode` and a coordinate                                                 | 12,326 after 1 malformed value (`BT36 4RU,`); 0 without a coordinate  | as above                                                                                                                                      |
 | Second path for the point count          | `$MAILWOMAN_DATA_ROOT/osm/geofabrik/ireland-and-northern-ireland-latest.osm.pbf` (2026-07-05 snapshot), GDAL OSM driver | 12,292 rows with `addr:postcode LIKE 'BT%'`, 4,743 distinct units     | md5 `2e65f8e36046c914cbaf947528d90f9a`; ODbL 1.0                                                                                              |
@@ -28,7 +28,7 @@ attested BT points exist to grade against.
 OpenStreetMap elements that are themselves the only openly attested BT points. The centroid source and
 the truth source are one file. The postcode-structure plan's M-2b (`docs/superpowers/plans/2026-08-05-postcode-structure-arc.md`)
 called this file "the NI census file" with "no coordinates"; the coordinates were dropped in the CSV
-that plan read, not absent from the acquisition, and "census" there meant a census of OSM tags.
+that plan read rather than absent from the acquisition, and "census" there meant a census of OSM tags.
 
 **Consequence before any number.** The test section 7 describes — an independent centroid source graded
 against attested points — cannot be run from open NI inputs. Unit-grade exact assignment from
@@ -86,7 +86,7 @@ own edge, and any small unit beside it wins those edge points.
 ## Verdict against the pre-registered rules
 
 - **Unit-grade exact assignment from independent open NI inputs: UNMEASURABLE.** Decided by the input
-  inventory, not by a number: the only open BT postcode geometry is derived from the only open BT
+  inventory rather than by a number: the only open BT postcode geometry is derived from the only open BT
   truth points.
 - **Recoverable set 77.44% exact:** inside the pre-registered 59.6–79.6% band, so the GB record's
   reading — about three points in ten wrong — transfers to what NI can measure. It sits above the
@@ -105,7 +105,7 @@ the true competitors are absent from the centroid set, and a point is graded aga
 about one-tenth as crowded. The recoverable set is further conditioned on units OSM mappers tagged twice
 or more, which favors venues, retail parks and estates that were mapped as a batch (BT52's 1,246 points
 are 10.1% of the file). Read 77.4% as "the OSM BT attestation is internally consistent to about three
-points in four when a unit has more than one member", not as the method's error against the register;
+points in four when a unit has more than one member" rather than as the method's error against the register;
 the register's error is what the GB record measures, and that is the number section 7 should carry
 forward for NI as well.
 
@@ -119,12 +119,12 @@ some other unit's by construction.
    centroids derived from the census file" should read: 4,757 unit postcodes, each a medoid of OSM
    `addr:postcode` elements (ODbL, `build-local`), the same elements that are the only openly attested
    BT points — so the section's independent-input test is unmeasurable, and the leave-one-out figure
-   here is its internal-consistency result. The count is 4,757, not 4,758: the plan's figure included
+   here is its internal-consistency result. The count is 4,757 rather than 4,758: the plan's figure included
    the one malformed value.
 2. **No NI assignment artifact is earned.** Both leave-one-out denominators are under the 80% floor, and
    a build-local NI artifact would in any case be the built `postalcode-ni-osm.db` restated, since the
    centroids and the points are one file.
-3. **The way to a measurable NI test is a licensed input, not more computation.** Pointer (LPS) would
+3. **The way to a measurable NI test is a licensed input rather than more computation.** Pointer (LPS) would
    supply both an independent truth and full-coverage unit points; until then the NI number to quote is
    the GB register-graded error, with the caveat that NI's centroids would be OSM medoids at 9.5%
    coverage.

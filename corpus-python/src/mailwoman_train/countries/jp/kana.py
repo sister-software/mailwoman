@@ -1,14 +1,14 @@
 """Kana readings for Japanese municipalities, from the admin DB's `names` table (#2165).
 
 A municipality's official name is kanji (厚木市) and the corpus rows carry it that way, so a model sees a hiragana
-municipality only where the official name IS hiragana — some fifty of Japan's 1,741 municipalities (かすみがうら市,
+municipality only where the official name is hiragana — some fifty of Japan's 1,741 municipalities (かすみがうら市,
 つくば市, さいたま市). Two from-scratch runs closed the municipality span before the trailing 市 on the one such name the
 board holds out (#2165). The register this module feeds renders the municipality as its kana reading plus the kanji
 generic (あつぎ市 for 厚木市), which is both a surface people type and the exact shape of the official kana names.
 
 The readings come from WOF through the admin DB: for a JP locality or localadmin, ``names`` carries the official kanji
 as ``jpn preferred`` and the hiragana readings as ``jpn variant`` — a stem (あつぎ) and a full form (あつぎし). The stem
-is what the register wants; the generic stays kanji.
+is what the register wants. the generic stays kanji.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ _HIRAGANA = range(0x3041, 0x3097)
 
 
 def is_hiragana(text: str) -> bool:
-    """True when every character is hiragana (the prolonged-sound mark ー counts; it appears inside readings)."""
+    """True when every character is hiragana (the prolonged-sound mark ー counts. it appears inside readings)."""
     return bool(text) and all(ord(ch) in _HIRAGANA or ch == "ー" for ch in text)
 
 
@@ -97,7 +97,7 @@ def municipality_kana_from_admin_db(db_path: Path | str) -> dict[str, str]:
         generic_names = [name for name in kanji_names if name.endswith(MUNICIPALITY_GENERICS)]
         if not generic_names:
             continue
-        # The reading belongs to the SHORTEST generic-bearing kanji name (北区); a longer name that ends with it carries
+        # The reading belongs to the shortest generic-containing kanji name (北区); a longer name that ends with it carries
         # a prefix the reading does not cover (大阪市北区), which stays kanji: 大阪市きた区, never きた区.
         base = min(generic_names, key=len)
         stem = pick_kana_stem(base, kana)

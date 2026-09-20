@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The fork→entity probe's conditions (`fork-entity.ts`), each against a stub lookup. The SAVILE ROW
- *   HIJACK GUARD is the required one: poi.db really does hold exactly one poi named
+ *   The fork→entity probe's conditions (`fork-entity.ts`), each against a stub lookup. The savile row
+ *   hijack guard is the required one: poi.db really does hold exactly one poi named
  *   `savile row`, and without check 2 the famous London street would resolve to it — the board row
- *   `gb-fork-entity-savile-row-guard` tracks the live behavior; THIS test is the blocking half.
+ *   `gb-fork-entity-savile-row-guard` tracks the live behavior. this test is the blocking half.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
@@ -91,7 +91,7 @@ describe("probeForkEntity", () => {
 	})
 
 	it("collapses duplicate rows of ONE physical venue and keeps the more confident row", () => {
-		// Two ingest rows ~60 m apart — one venue, not two entities.
+		// Two ingest rows ~60 m apart — one venue rather than two entities.
 		const lookup = stubLookup([
 			{ name: "La Terraza", lat: 48.8773, lon: 2.3516, confidence: 0.7 },
 			{ name: "La Terraza", lat: 48.8778, lon: 2.3519, confidence: 0.95 },
@@ -110,7 +110,7 @@ describe("probeVenueNearAnchor (#1684's venue tier)", () => {
 	it("answers the single exact-name entity near the anchor — local uniqueness, not worldwide", () => {
 		const lookup = stubLookup([
 			// The local bearer plus a same-named entity in another city: the fork probe would abstain
-			// on this pair; the anchored probe must not, because the anchor separates them.
+			// on this pair. the anchored probe must not, because the anchor separates them.
 			{ name: "Nine Elms Tavern", categoryID: "pub", lat: 51.48223, lon: -0.13718, country: "GB" },
 			{ name: "Nine Elms Tavern", categoryID: "pub", lat: 40.7, lon: -74, country: "US" },
 		])
@@ -132,7 +132,7 @@ describe("probeVenueNearAnchor (#1684's venue tier)", () => {
 
 	it("honors a tightened reach — a unit-postcode anchor refuses the namesake 9.9 km away", () => {
 		// The board row: the walk answered "University of Chichester, Bognor Regis" to its unit postcode,
-		// 80 m from the campus, and the only same-named entity in the metro was the OTHER campus, 9.87 km
+		// 80 m from the campus, and the only same-named entity in the metro was the other campus, 9.87 km
 		// away. Under the locality reach that entity is locally unique and replaces a better answer.
 		const bognor = { lat: 50.7876, lon: -0.6717 }
 		const lookup = stubLookup([{ name: "University of Chichester", lat: 50.8455, lon: -0.7756, country: "GB" }])
@@ -195,9 +195,9 @@ describe("probeVenueNearAnchorFolded (the qualifier-folding second leg)", () => 
 	})
 
 	it("abstains when the folded head matches TWO local entities — the chain-branch class", () => {
-		// The query's decoration exists on NO row (the exact leg abstains), and the folded head matches
+		// The query's decoration exists on no row (the exact leg abstains), and the folded head matches
 		// both metro branches — a genuine ambiguity. A query naming an existing branch verbatim is the
-		// exact leg's win, not this leg's problem.
+		// exact leg's win rather than this leg's problem.
 		const lookup = stubLookup([
 			{ name: "The North Face - Covent Garden", lat: 51.512, lon: -0.123, country: "GB" },
 			{ name: "The North Face - Oxford Street", lat: 51.515, lon: -0.141, country: "GB" },

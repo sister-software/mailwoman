@@ -13,15 +13,15 @@
  *   even though all 47 are peers in practice:
  *
  *   - 都 (to, "metropolis") — exactly **1**: Tokyo (東京都). The capital's special form.
- *   - 道 (dō, "circuit") — exactly **1**: Hokkaido (北海道). A historical term; the name already ends in 道,
+ *   - 道 (dō, "circuit") — exactly **1**: Hokkaido (北海道). A historical term. the name already ends in 道,
  *       so Hokkaido is written and indexed whole, never stripped to "北海".
  *   - 府 (fu, "urban prefecture") — exactly **2**: Osaka (大阪府) and Kyoto (京都府). The old imperial capital
  *       region.
  *   - 県 (ken, "prefecture") — the remaining **43**. The ordinary case.
  *
- *   Unlike a French région or a German Bundesland, the prefecture DOES appear on a normal address
+ *   Unlike a French région or a German Bundesland, the prefecture does appear on a normal address
  *   line: a Japanese address is written largest-to-smallest (prefecture → city → ward → block), so
- *   the prefecture is the first thing written, not an inferred-from-postcode afterthought. See
+ *   the prefecture is the first thing written rather than an inferred-from-postcode afterthought. See
  *   `postal-code.ts` for why the postcode is nonetheless the single most reliable anchor.
  */
 
@@ -129,9 +129,9 @@ export function isJapanesePrefectureCode(input: unknown): input is JapanesePrefe
  *   but `a-z`. `Tōkyō-to` and `tokyo` both → `tokyo`.
  *
  * The suffix is only stripped when it is a genuine appendage — separated by a hyphen/space/middle-dot (`Tokyo-to`,
- * `Osaka fu`) or trailing the macron-bearing long-vowel form. That guard is essential: four bare romaji names already
- * END in a suffix syllable (Kyo**to**, Gi**fu**, Hokkai**do**, Kumamo**to**), and a blind trailing-strip would maim
- * them. We never strip from an unseparated bare name, so `kyoto` stays `kyoto`.
+ * `Osaka fu`) or trailing the macron-containing long-vowel form. That guard is essential: four bare romaji names
+ * already END in a suffix syllable (Kyo**to**, Gi**fu**, Hokkai**do**, Kumamo**to**), and a blind trailing-strip would
+ * maim them. We never strip from an unseparated bare name, so `kyoto` stays `kyoto`.
  */
 function foldRomaji(s: string): string {
 	const lowered = foldToken(s)
@@ -174,7 +174,7 @@ export const JP_PREFECTURE_NAME_TO_CODE: ReadonlyMap<string, JapanesePrefectureC
  * Resolve a Japanese prefecture surface form to its ISO 3166-2:JP code, accepting:
  *
  * - A code directly (`"13"` → `"13"`),
- * - A romaji name, case-insensitive, macrons optional, with OR without the romaji type-suffix (`Tōkyō` / `Tokyo` /
+ * - A romaji name, case-insensitive, macrons optional, with or without the romaji type-suffix (`Tōkyō` / `Tokyo` /
  *   `tokyo` / `Tokyo-to` → `"13"`),
  * - A kanji name, with or without its 都/道/府/県 suffix (`東京都` / `東京` → `"13"`).
  *

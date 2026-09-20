@@ -1,8 +1,8 @@
-# Going multi-locale starts with finding out what's actually broken (2026-06-02)
+# Going multi-locale starts with finding out what's  broken (2026-06-02)
 
 You have a parser trained on US and French addresses, and you want it to read German ones. The
 tempting move is to grab a pile of German data and retrain. Don't. Not yet. First find out what's
-actually broken, because "it doesn't work on German" hides at least three different failures, and
+ broken, because "it doesn't work on German" hides at least three different failures, and
 two of them aren't the parser's fault at all.
 
 This is the write-up of that finding-out, done as a night-shift before committing a single GPU-hour.
@@ -16,7 +16,7 @@ error of about 5,940 km.
 
 That looks like the resolver being hopelessly US-centric, and for about ten minutes I believed it.
 Then I found the eval harness hardcoded `defaultCountry: "US"`, which the lookup applies as a _hard
-filter_, so every German address was restricted to US places before ranking ever ran. German Berlin was never even a candidate. Fix the
+filter_. Therefore, every German address was restricted to US places before ranking ever ran. German Berlin was never even a candidate. Fix the
 one string and the same resolver, against the same global gazetteer, puts German Berlin first on
 population alone: coordinate error collapses from 5,940 km to **10 km**. The ranking was fine the
 whole time. (The full autopsy is in the resolver-vs-eval-artifact notes; the short version is: when
@@ -25,7 +25,7 @@ a finding feels like a crisis, check whether you're holding the instrument upsid
 So the resolver and the gazetteer already handle German. The gap is narrower than it looked, and it
 lives in the parser.
 
-## What the parser actually gets wrong, and why
+## What the parser  gets wrong, and why
 
 Here is the neural parser on real German addresses, next to the rule-based `v0`:
 
@@ -52,7 +52,7 @@ represent German orthography, if `ß` and the long compound street names fall ap
 model can't reassemble, then no amount of training data will help, and the right move is a
 tokenizer change, which is a much bigger, more expensive decision.
 
-So that's the check, and it's an afternoon's work, not a GPU run. Feed the v0.6.0-a0 SentencePiece
+So that's the check, and it's an afternoon's work rather than a GPU run. Feed the v0.6.0-a0 SentencePiece
 tokenizer a batch of German streets and check the round-trip:
 
 ```
@@ -87,10 +87,10 @@ street, postcode _before_ the city:
 Straußstraße/B-street  27/B-house_number  12623/B-postcode  Berlin/B-locality
 ```
 
-Five thousand of those, weighted at 0.2 (a supplement, not a flood), continue-trained on top of
+Five thousand of those, weighted at 0.2 (a supplement rather than a flood), continue-trained on top of
 v0.7.2. One variable changed against the previous recipe.
 
-## The baseline, and an honest stopping point
+## The baseline, and an direct stopping point
 
 Here's the "before," measured on a held-out German set the model has never seen:
 

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The #1024 guard must not FAIL OPEN.
+ *   The #1024 guard must not fail open.
  *
  *   `assertShippedModelMatchesCard` blocks the release when the model about to be graded disagrees with
  *   `model-card.json`'s `files_md5`. It only runs inside `if (existsSync(effModel))`, so whatever names
@@ -16,7 +16,7 @@
  *   and nothing is reported: a silent ungating, which is #1024's own failure mode reproduced by the fix's
  *   own path literal.
  *
- *   This is a SOURCE check rather than a behavioural one because the property is about how the path is
+ *   This is a source check rather than a behavioural one because the property is about how the path is
  *   obtained, and the failure is an absence — there is no wrong answer to assert against, only a check that
  *   quietly stopped happening.
  */
@@ -32,7 +32,7 @@ describe("the #1024 shipped-model guard", () => {
 		const source = await readLocalTextFile(HARNESS)
 
 		// Any `neural-weights-<locale>/model.onnx` or `/tokenizer.model` spelled out in a path position. The card
-		// path is deliberately NOT matched: a model-card IS committed to its package, so reading it there is a fact
+		// path is deliberately not matched: a model-card is committed to its package, so reading it there is a fact
 		// about the repo rather than an assumption about where binaries were materialized.
 		const literals = [...source.matchAll(/["'`][^"'`]*neural-weights-[a-z-]+\/(?:model\.onnx|tokenizer\.model)/g)]
 

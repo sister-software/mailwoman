@@ -2,11 +2,11 @@
 
 `build` threads one `random.Random` through the selection masks, the register draw, the postcode
 fraction, the hyphen variant, the spacing and the country prefix. They share a stream, so moving,
-adding or dropping a draw anywhere re-renders the whole slice, and nothing else in the suite would
-notice: the JP builder reads Overture-JP and KEN_ALL, which no test has, so it has never run under
+adding or dropping a draw anywhere re-renders the whole corpus, and nothing else in the suite would
+notice: the JP builder reads Overture-JP and KEN_ALL. It no test has. Therefore, it has never run under
 pytest at all.
 
-The fixture supplies both inputs at a size the build can finish in a second. It is NOT a sample of
+The fixture supplies both inputs at a size the build can finish in a second. It is not a sample of
 the real source — it is the shapes the renderers branch on: a chōme district and a bare one, a
 compact number and one the designator register cannot re-render, a town KEN_ALL entry, an ōaza
 prefix that only matches once stripped, and a municipality catch-all.
@@ -25,7 +25,7 @@ import pytest
 
 from mailwoman_train.countries.jp.corpora import build
 
-#: Committed beside this file, captured from the code as it stood BEFORE a split. Regenerating it
+#: Committed beside this file, captured from the code as it stood before a split. Regenerating it
 #: after a change makes the test compare the new code against itself, so regenerate only when the
 #: current code is already verified against the existing reference.
 #:
@@ -39,7 +39,7 @@ REFERENCE_README = [
     "  KEN_ALL CSV carrying the shapes the renderers branch on, not a sample of the real source.",
     "",
     "train / val: every rendered row as raw + register + the span triple, in emission order.",
-    "  The ORDER is the assertion: one moved draw off the shared RNG re-renders the whole slice.",
+    "  The ORDER is the assertion: one moved draw off the shared RNG re-renders the whole corpus.",
     "board: the held-out municipalities' rows, same form.",
     "report: the build report with the paths removed, since those are the fixture's tmp dir.",
 ]
@@ -54,7 +54,7 @@ SOURCE_SCHEMA = pa.schema(
     ]
 )
 
-#: (prefecture, municipality, street, number) — the branches, not a sample. 神戸市 and 宮崎市 both
+#: (prefecture, municipality, street, number) — the branches rather than a sample. 神戸市 and 宮崎市 both
 #: hash to bucket 98, so they are the held-out board here and everything else is the training pool.
 SOURCE_ROWS: list[tuple[str, str, str, str]] = [
     ("東京都", "八王子市", "八島町二丁目", "3-16"),  # chōme + compact: every register available
@@ -129,7 +129,7 @@ def reference_args(parquet: Path, kenall: Path, out_dir: Path) -> argparse.Names
     return argparse.Namespace(
         parquet=str(parquet),
         kenall=str(kenall),
-        admin_db="",  # the kana register needs a WOF admin DB; an empty string declines it
+        admin_db="",  # the kana register needs a WOF admin DB. an empty string declines it
         out_dir=str(out_dir),
         train_rows=40,
         val_rows=8,
@@ -151,7 +151,7 @@ def reference_args(parquet: Path, kenall: Path, out_dir: Path) -> argparse.Names
 def run_build(root: Path) -> dict[str, Any]:
     """One build, returned as the pinned payload."""
     parquet, kenall = write_fixture(root)
-    out_dir = root / "slice"
+    out_dir = root / "corpus"
     report = build(reference_args(parquet, kenall, out_dir))
 
     def rendered(split: str) -> list[dict[str, Any]]:

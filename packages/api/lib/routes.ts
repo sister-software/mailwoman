@@ -7,11 +7,11 @@
  *   libpostal), nothing here mimics a vendor's legacy query-parsing tolerance: request bodies are
  *   validator-enforced, and a validation failure always answers through the shared api-kit envelope
  *   (`apiError`), never the raw zod shape. `GET /v1/parse` is the one query-string route, and it
- *   reads `c.req.query()` directly — a query string has no repeated-value contract worth preserving
+ *   reads `c.req.query()` directly — a query string has no repeated-value interface worth preserving
  *   here (contrast the drop-ins' `legacyQuery` adapter), so there's nothing to tolerate.
  *
  *   Per-route validation hooks (the 3rd arg to `app.openapi(route, handler, hook)`) override the
- *   app-level `defaultHook` (wired in `app.ts`) so each route can answer its OWN friendly business
+ *   app-level `defaultHook` (wired in `app.ts`) so each route can answer its own friendly business
  *   message — `"address is required"`, `"body must be { addresses: string[] }"`, etc. — matching the
  *   express `mailwoman/server` precedent this surface carries forward. Routes with no friendly
  *   carry-forward message (currently just `/v1/format`) fall through to the app-level hook's generic
@@ -50,9 +50,9 @@ import {
 } from "#schema"
 
 /**
- * Default `POST /v1/batch` row cap when {@link RegisterMailwomanAPIRoutesOptions.batchMax} is omitted. This is the
- * standalone-engine default, not derived from env — `mailwoman serve` always passes the env-derived value explicitly
- * (`$public.MAILWOMAN_BATCH_MAX`, default 1000; see `mailwoman/lib/env/schema.ts`).
+ * Default `post /v1/batch` row cap when {@link RegisterMailwomanAPIRoutesOptions.batchMax} is omitted. This is the
+ * standalone-engine default rather than derived from env — `mailwoman serve` always passes the env-derived value
+ * explicitly (`$public.MAILWOMAN_BATCH_MAX`, default 1000. see `mailwoman/lib/env/schema.ts`).
  */
 export const DEFAULT_BATCH_MAX = 500
 
@@ -63,7 +63,7 @@ const startedAt = Date.now()
  */
 export interface RegisterMailwomanAPIRoutesOptions {
 	/**
-	 * Max `addresses` rows accepted by `POST /v1/batch`. Default {@link DEFAULT_BATCH_MAX}.
+	 * Max `addresses` rows accepted by `post /v1/batch`. Default {@link DEFAULT_BATCH_MAX}.
 	 */
 	batchMax?: number
 
@@ -246,7 +246,7 @@ const metricsRoute = createRoute({
 /**
  * `components` accepts `string | string[]` per key on the wire (a caller may pass every span a multi-span match
  * covered); `formatAddress`/`canonicalKey` want a single string per `ComponentTag`. Multi-span values collapse to their
- * FIRST span here — the formatter template owns joining semantics, not this route.
+ * first span here — the formatter template owns joining semantics rather than this route.
  */
 function toComponentDict(components: Record<string, string | string[]>): ComponentDict {
 	const out: ComponentDict = {}
@@ -362,7 +362,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 				return geocoderUnavailableError(c)
 			}
 
-			// Whole-call latency, recorded under the "batch" tier. Per-row tier metrics are the ENGINE's
+			// Whole-call latency, recorded under the "batch" tier. Per-row tier metrics are the engine's
 			// responsibility (phase 4b) — this app only times the call as a unit.
 			const t0 = performance.now()
 
@@ -389,7 +389,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 
 	app.openapi(
 		resolveRoute,
-		// Metrics are the ENGINE's responsibility here (phase 4b): the express predecessor recorded the
+		// Metrics are the engine's responsibility here (phase 4b): the express predecessor recorded the
 		// street node's stamped resolution tier per call — the wired engine must carry that over, and
 		// must trim batch rows the same way (the route passes raw input through).
 		async (c) => {

@@ -9,9 +9,9 @@
  *   via {@linkcode addEmissionMatrix} — same shape, same additive semantics. Where the admin FST
  *   biases admin BIO labels (`B/I-locality`, `B/I-region`, ...), the morphology FST biases:
  *
- *   - **Affix-token (the matched span):** toward `B/I-street_prefix` AND `B/I-street_suffix` (position
+ *   - **Affix-token (the matched span):** toward `B/I-street_prefix` and `B/I-street_suffix` (position
  *       unknown — let the model + context disambiguate).
- *   - **Adjacent token (one before AND one after each match):** toward `B/I-street`, AWAY from
+ *   - **Adjacent token (one before and one after each match):** toward `B/I-street`, away from
  *       `B/I-dependent_locality`. The negative bias on `dependent_locality` is the essential piece
  *       — it closes the inference-time vacuum that caused v0.6.1's 1066 dep_locality hallucinations
  *       (see [[project-v061-failure-mechanism]]).
@@ -38,7 +38,7 @@ export interface StreetMorphologyPriorOpts {
 	maxAffixBias?: number
 	/**
 	 * Maximum bias magnitude (logits) on the adjacent (neighbour) tokens for the `street` label. Default 2.0 — a touch
-	 * weaker than the affix bias because the neighbour is inferred from adjacency, not direct match.
+	 * weaker than the affix bias because the neighbour is inferred from adjacency rather than direct match.
 	 */
 	maxNeighbourStreetBias?: number
 	/**

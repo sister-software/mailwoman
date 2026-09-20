@@ -3,7 +3,7 @@
 The mixture is STATIONARY for the whole epoch: an exhausted source restarts with a fresh shuffled
 pass rather than leaving the multinomial, and the epoch ends once every source has completed at
 least one full pass. Held-out splits take the other branch entirely — they have no mixture to
-steer, and bucketing a mixed-source val slice by its first row would drop every later source.
+steer, and bucketing a mixed-source val file by its first row would drop every later source.
 """
 
 from __future__ import annotations
@@ -14,14 +14,14 @@ from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
 
-from .corpus_files import _slice_first_source, _slice_paths
-from .parquet import _slice_row_iter, _source_iter
+from .corpus_files import _parquet_paths, file_source_counts
+from .parquet import _file_row_iter, _source_iter
 
 logger = logging.getLogger(__name__)
 
 
 def _stream_held_out(
-    slice_paths: list[Path],
+    paths: list[Path],
     split: str,
     *,
     rng: random.Random,
@@ -29,25 +29,28 @@ def _stream_held_out(
     max_weight: float,
     coarse_filter: bool,
 ) -> Iterator[dict[str, Any]]:
-    """Every filter-accepted row of every slice, slice order shuffled. No source bucketing.
+    """Every filter-accepted row of every parquet file, file order shuffled. No source bucketing.
 
     Non-train splits bypass source bucketing entirely (2026-08-09 P0). The bucketing identifies a
-    slice's source from its FIRST row and filters every row to it — correct for the source-segregated
-    train corpus, but a MIXED-source validation slice silently loses every later-source row (the
-    inherited val slices are mixed, so "3 val slices" was never a coverage receipt). Held-out streams
+    file's source from its first row and filters every row to it — correct for the source-segregated
+    train corpus, but a mixed-source validation file silently loses every later-source row (the
+    inherited val files are mixed, so "3 val files" was never a coverage receipt). Held-out streams
     have no source mixture to steer.
     """
-    order = [s for s in slice_paths if s.exists()]
+    order = [s for s in paths if s.exists()]
     rng.shuffle(order)
     for s in order:
         # Keep the --golden misuse check the bucketing path used to provide: a label-less
-        # golden slice (source=None) scoring as val would produce garbage metrics silently.
-        if _slice_first_source(s) is None:
+        # golden file scoring as val would produce garbage metrics silently. `file_source_counts` raises on the
+        # non-string cell such a file carries, which is the same reading one level down.
+        try:
+            file_source_counts(s)
+        except TypeError as exc:
             raise ValueError(
-                f"slice {s} has no `source` field — likely a --golden (label-less) slice used as a "
-                f"{split!r} slice. Rebuild that slice WITHOUT --golden so rows carry source + labels."
-            )
-        yield from _slice_row_iter(
+                f"parquet file {s} has no `source` field — likely a --golden (label-less) file used as a "
+                f"{split!r} file. Rebuild it WITHOUT --golden so rows carry source + labels."
+            ) from exc
+        yield from _file_row_iter(
             s,
             expected_source=None,
             rng=rng,
@@ -57,42 +60,58 @@ def _stream_held_out(
         )
 
 
-def _index_by_source(slice_paths: list[Path]) -> dict[str, list[Path]]:
-    """Bucket slices by their single `source` value, reading one row group per slice.
+def _index_by_source(paths: list[Path]) -> dict[str, list[Path]]:
+    """Bucket parquet files by every `source` they carry.
 
-    Corpus v0.2.0 slices are 100% source-segregated, so the first row identifies the whole file. A
-    slice that is missing or unreadable is skipped and named; one with a None source raises, because
-    that is a --golden (label-less) slice used as a train slice and it used to fail later with a
-    cryptic "'<' not supported between NoneType and str" from `sorted()`.
+    A file appears under each of its sources, and `_file_row_iter` filters per row against the one it was asked
+    for, so a file carrying two is read twice and yields each source only its own rows. That per-row filter has
+    always been there — the defect this replaced was upstream of it: taking the first row's source as the whole
+    file's meant a source that never opens a file was invisible to the index, to `_apply_source_weights`' unnamed
+    guard, and to the epoch audit alike. Measured on `v0.31.0-region-code-and-unit`: 8 of 718 train files carry
+    more than one source, one carries four, and two sources appear in no other file.
+
+    A file that is missing or unreadable is skipped and named. one with a non-string source raises, because that is
+    a --golden (label-less) file used as a train file and it used to fail later with a cryptic "'<' not supported
+    between NoneType and str" from `sorted()`.
+
+    Why a file carries more than one source at all: `packages/corpus/lib/parquet/writers.ts` closes a part at
+    `rowsPerFile` rows (default 1,000,000) and opens the next one, and it does not break a part at a source boundary.
+    A source therefore ends wherever its row count leaves it, and the next source continues in the same part. Nothing
+    asserts one source per file on the writing side, so this function may not assume one on the reading side — that
+    assumption is the defect it replaced.
     """
     by_source: dict[str, list[Path]] = {}
     skipped: list[tuple[Path, str]] = []
-    for s in slice_paths:
+    multi: list[tuple[Path, list[str]]] = []
+    for s in paths:
         if not s.exists():
             skipped.append((s, "file not found"))
             continue
         try:
-            src = _slice_first_source(s)
+            per_source = file_source_counts(s)
         except Exception as exc:
             skipped.append((s, str(exc)))
             continue
-        by_source.setdefault(src, []).append(s)
+        if len(per_source) > 1:
+            multi.append((s, sorted(per_source)))
+        for src in per_source:
+            by_source.setdefault(src, []).append(s)
 
     if skipped:
         logger.warning(
-            "Skipped %d slices (missing or unreadable):\n  %s",
+            "Skipped %d parquet files (missing or unreadable):\n  %s",
             len(skipped),
             "\n  ".join(f"{p}: {reason}" for p, reason in skipped[:10]),
         )
-    if any(src is None for src in by_source):
-        n_none = sum(len(s) for src, s in by_source.items() if src is None)
-        raise ValueError(
-            f"{n_none} slice rows have no `source` field — likely a --golden (label-less) slice used as a "
-            "train/val slice. Rebuild that slice WITHOUT --golden so rows carry source + labels."
+    if multi:
+        logger.info(
+            "%d parquet file(s) carry more than one source; each is indexed under all of them:\n  %s",
+            len(multi),
+            "\n  ".join(f"{p.name}: {', '.join(srcs)}" for p, srcs in multi[:10]),
         )
     logger.info(
-        "Slice index: %s",
-        ", ".join(f"{src}={len(slices)}" for src, slices in sorted(by_source.items())),
+        "Source index: %s",
+        ", ".join(f"{src}={len(files)}" for src, files in sorted(by_source.items())),
     )
     return by_source
 
@@ -102,24 +121,24 @@ def _apply_source_weights(
 ) -> dict[str, list[Path]]:
     """Drop the sources the weights decline, and refuse the ones they never mention.
 
-    TWO different things get dropped here and only one of them is deliberate.
+    Two different things get dropped here and only one of them is deliberate.
 
     A source NAMED at zero is the config declining it, and the config has no other way to say so —
     ``synth-no-street-led: 0.0`` is that sentence. A source the weights never MENTION is an
     oversight, and it is invisible from every direction: the caller's guard raises only for the
-    mirror case (a positive weight with no slice), the sampler cannot miss what it never indexed,
+    mirror case (a positive weight with no parquet file), the sampler cannot miss what it never indexed,
     and the run log carries no trace. Because intent is expressible, the absence of intent is an
     error, so an unnamed source refuses on the split whose recipe claims coverage.
 
-    The shape it hides: a regenerated slice takes a version suffix in its ``source`` column
+    The shape it hides: a regenerated recipe output takes a version suffix in its ``source`` column
     (``synth-fr-bare-street`` -> ``synth-fr-bare-street-v22``), the config keeps the old key, and
     training silently continues on the superseded vintage while the current generation sits out.
-    The dose audit then reports the old vintage as a DOSE OUTLIER, because the whole weight lands on
-    a fraction of the rows — which reads as an aggressive dose rather than a missing one.
+    The epoch-mixture audit then reports the old vintage as a REPS OUTLIER, because the whole weight
+    lands on a fraction of the rows — which reads as an aggressive exposure rather than a missing one.
     """
     unnamed = sorted(src for src in by_source if src not in source_weights)
     if unnamed and split == "train":
-        detail = ", ".join(f"{src} ({len(by_source[src])} slices)" for src in unnamed)
+        detail = ", ".join(f"{src} ({len(by_source[src])} parquet files)" for src in unnamed)
         raise ValueError(
             f"{len(unnamed)} source(s) in the {split!r} split are absent from source_weights and would "
             f"be dropped without a trace: {detail}. Name each one — give it a weight to train on it, "
@@ -128,12 +147,12 @@ def _apply_source_weights(
         )
 
     declined = {src for src in by_source if source_weights.get(src, 0) <= 0}
-    kept = {src: slices for src, slices in by_source.items() if source_weights.get(src, 0) > 0}
+    kept = {src: files for src, files in by_source.items() if source_weights.get(src, 0) > 0}
     if declined:
         logger.info("Declined %d sources named at zero weight: %s", len(declined), sorted(declined))
     if not kept:
         raise ValueError(
-            "no slices remain after applying source_weights — every slice's source "
+            "no parquet files remain after applying source_weights — every file's source "
             f"is missing from or zero-weighted in source_weights={source_weights!r}"
         )
     return kept
@@ -144,15 +163,15 @@ def _stationary_mixture(
     fresh_iter: Callable[[str], Iterator[dict[str, Any]]],
     rng: random.Random,
 ) -> Iterator[dict[str, Any]]:
-    """Draw a source per row from a multinomial FIXED for the whole epoch.
+    """Draw a source per row from a multinomial fixed for the whole epoch.
 
     STATIONARY mixture (2026-08-09 P0). The previous loop deleted an exhausted source and
-    renormalized the remaining weights, so ``source_weights`` was only the OPENING distribution: a
-    small oversampled source (the #1569 30k-row suffix slice at weight 12.0) was live for ~3,330 of
+    renormalized the remaining weights, so ``source_weights`` was only the opening distribution: a
+    small oversampled source (the #1569 30k-row suffix source at weight 12.0) was live for ~3,330 of
     each ~7,812-step epoch and silent afterwards — the v4.3.3 B1 board oscillated in lockstep with
     those exposure windows. The multinomial is fixed now: an exhausted source restarts with a fresh
     shuffled pass (weighted sampling with replacement at the pass level), and the epoch ends once
-    EVERY source has completed >= 1 full pass — the largest source is seen exactly once, and no
+    every source has completed >= 1 full pass — the largest source is seen exactly once, and no
     source ever silently leaves the mixture.
     """
     iters = {src: fresh_iter(src) for src in weights}
@@ -178,7 +197,7 @@ def _stationary_mixture(
         except StopIteration:
             # A pass that yielded nothing can never yield on a rerun (same rows, same
             # filters) — a positive-weight source with zero selectable rows is a recipe/
-            # corpus contract violation, the runtime sibling of the unreachable-positive-
+            # corpus interface violation, the runtime sibling of the unreachable-positive-
             # weight guard in `_raw_row_stream`. Loud, never a silent drop.
             if pass_rows[chosen] == 0:
                 raise ValueError(
@@ -216,44 +235,44 @@ def _raw_row_stream(
 
     Architecture:
 
-    1. Bucket slices by their (single) ``source`` value. Corpus v0.2.0 slices are 100%
-       source-segregated, so this is a one-time scan of one row-group header per slice.
-    2. For each source, build a per-source row iterator that visits its slices in shuffled
+    1. Bucket parquet files by their (single) ``source`` value. Corpus v0.2.0 files are 100%
+       source-segregated, so this is a one-time scan of one row-group header per file.
+    2. For each source, build a per-source row iterator that visits its files in shuffled
        order. Each iterator yields rows after country + coarse filtering.
     3. On each pull, sample a source via the ``source_weights`` multinomial (or uniform
        when ``source_weights`` is None) and yield the next row from that source's iterator.
-       The multinomial is FIXED for the whole epoch: an exhausted source restarts with a
+       The multinomial is fixed for the whole epoch: an exhausted source restarts with a
        fresh shuffled pass, and the epoch ends once every source has completed at least one
        full pass (stationary mixture — see the 2026-08-09 P0 note at the sampling loop).
-       Non-train splits skip all of this and stream every slice's rows directly.
+       Non-train splits skip all of this and stream every file's rows directly.
 
     Why this and not per-row source acceptance:
 
     The naive approach of accepting each row with probability ``source_weights[source] /
     max(source_weights)`` was the original v0.2.0 implementation (PR #44). It is correct
     on average — the observed mix converges to ``raw_share × accept_share / norm`` — but
-    under v0.2.0's slice layout it fails empirically: slices are 1M-row single-source
-    blocks, so the downstream shuffle buffer fills entirely from the current slice's
+    under v0.2.0's file layout it fails empirically: the parquet files are 1M-row single-source
+    blocks, so the downstream shuffle buffer fills entirely from the current file's
     source before any cross-source mixing happens. Long runs of one source within a batch
     reproduce the positional-heuristic overfit that motivated this issue (#43).
 
     Source-level multinomial sampling makes the observed mix match ``source_weights``
-    *exactly* per-pull, regardless of raw share or slice layout. Memory: one active
+    *exactly* per-pull, regardless of raw share or file layout. Memory: one active
     row-group per source ≈ ``|sources| × 50 MB`` peak — ~300 MB for v0.2.0's 6 train-split
     sources, well within budget.
     """
-    slice_paths = _slice_paths(corpus_dir, split)
+    paths = _parquet_paths(corpus_dir, split)
     max_weight = max(country_weights.values())
 
     # Non-train splits bypass source bucketing entirely (2026-08-09 P0). The bucketing below
-    # identifies a slice's source from its FIRST row and filters every row to it — correct for
-    # the source-segregated train corpus, but a MIXED-source validation slice silently loses
-    # every later-source row (the inherited val slices are mixed, so "3 val slices" was never a
-    # coverage receipt). Held-out streams have no source mixture to steer; yield every
-    # filter-accepted row of every slice, slice order shuffled.
+    # identifies a file's source from its first row and filters every row to it — correct for
+    # the source-segregated train corpus, but a mixed-source validation file silently loses
+    # every later-source row (the inherited val files are mixed, so "3 val files" was never a
+    # coverage receipt). Held-out streams have no source mixture to steer. yield every
+    # filter-accepted row of every file, file order shuffled.
     if split != "train":
         yield from _stream_held_out(
-            slice_paths,
+            paths,
             split,
             rng=rng,
             country_weights=country_weights,
@@ -262,17 +281,17 @@ def _raw_row_stream(
         )
         return
 
-    logger.info("Indexing %d slices by source...", len(slice_paths))
-    by_source = _index_by_source(slice_paths)
-    # ``source_weights`` describes the desired TRAIN mixture. Validation corpora intentionally
+    logger.info("Indexing %d parquet files by source...", len(paths))
+    by_source = _index_by_source(paths)
+    # ``source_weights`` describes the desired train mixture. Validation corpora intentionally
     # contain only a small fixed source subset, so requiring every positive training source there
-    # would make the first scheduled validation fail even though its own slices are healthy. Keep
+    # would make the first scheduled validation fail even though its own files are healthy. Keep
     # the stale-config guard on the split where the recipe makes its coverage claim.
     if source_weights is not None and split == "train":
         missing_positive = sorted(src for src, weight in source_weights.items() if weight > 0 and src not in by_source)
         if missing_positive:
             raise ValueError(
-                f"positive source_weights entries have no slices in the {split!r} split: "
+                f"positive source_weights entries have no parquet files in the {split!r} split: "
                 f"{missing_positive}. Remove the stale weights or rebuild the corpus with those sources."
             )
 

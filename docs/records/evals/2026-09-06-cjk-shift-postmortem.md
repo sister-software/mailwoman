@@ -59,13 +59,13 @@ operator set to end at 13:00 UTC; the last four hours held nothing that did not 
 - A precomposed-Hangul glob over NFD-stored keys read 0 of 52,894; the count contradicted a row already seen, and the
   re-measure in Python read 87.3%. The fourth instance of a measuring-tool false negative this quarter.
 - The Modal log stream stalled after two heartbeat failures, so the monitor that watched it emitted nothing after
-  step 4,000; the volume listing was the signal that worked. Watch the artifact, not the log.
+  step 4,000; the volume listing was the signal that worked. Watch the artifact rather than the log.
 - One push went out with the root health suite red (2aac2de38: the ambiguous-noun counter and a double cast): the
   shell ran `yarn health` and then committed and pushed regardless of its exit. Chain the push on the exit code; the
   correction landed four minutes later (3486a25fa).
 - The Korean builder's `COUNTRY_TOKEN = "대한민국"` read as a hardcoded password to bandit (B105) and failed the `static`
   CI job on 3486a25fa; the local `yarn lint:python` had reported it too, and its exit code went unread. Renamed to
-  `COUNTRY_NAME`. Read the exit code, not the tail of the output.
+  `COUNTRY_NAME`. Read the exit code rather than the tail of the output.
 - `zsh` does not word-split an unquoted variable: a loop that passed `"$1 $2 $3"` as one argument ran four silent
   no-ops before the shape was noticed.
 
@@ -81,4 +81,4 @@ operator set to end at 13:00 UTC; the last four hours held nothing that did not 
 2. The candidate rebuild carrying `postalcode-jp.db` (#2176) — and the WOF county fixes (#2128, #2129) with it.
 3. The named slots (`locality`, `region`) on a JP result stay null while `components` and `hierarchy` carry the tiers.
 4. Korean: the four decisions in the spec (package, KOGL text, the `subregion` route, when to spend the probe).
-5. #2178: whether a 市-inside-name register earns a run.
+5. #2178: whether a 市-inside-name register warrants a run.

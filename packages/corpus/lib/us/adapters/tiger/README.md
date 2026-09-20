@@ -134,12 +134,12 @@ Any other country value is rejected with a clear error.
   house numbers. Generating realistic synthetic house numbers from the
   TIGER range columns (`LFROMADD` / `LTOADD` / `RFROMADD` / `RTOADD`) is
   scoped as a follow-up — for Phase 1.5 the adapter intentionally stays
-  on the canonical-row contract without house-number synthesis.
+  on the canonical-row interface without house-number synthesis.
 
 ## Fixture
 
 `fixtures/tiger/fixture.sql` — 7 hand-crafted street segments + 4
 places across Oregon, Vermont, Wyoming (held out for val/test under
 the default split policy), and California. All public-knowledge place
-names; LINEARID + GEOID values are illustrative, not real TIGER
+names; LINEARID + GEOID values are illustrative rather than real TIGER
 records.

@@ -121,7 +121,7 @@ a library, and `mailwoman serve` is its command. The endpoint tables are on
 
 | Package                       | What it is                                                                                                                                | Install it when                                                                                 |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `@mailwoman/annotations`      | The annotation contract, with a native shape and an OpenCage-compatible one                                                               | You want timezone, currency, or code annotations                                                |
+| `@mailwoman/annotations`      | The annotation interface, with a native shape and an OpenCage-compatible one                                                              | You want timezone, currency, or code annotations                                                |
 | `@mailwoman/codex`            | The address FORMATTER (components → a per-country string, plus a canonical match key) and the per-address-system reference data behind it | You render addresses, need a comparison key, or validate postcodes and street suffixes yourself |
 | `@mailwoman/spatial`          | Distance, bounding box, projection, point-in-polygon                                                                                      | You do spatial math beside a geocode                                                            |
 | `@mailwoman/timezone-lookup`  | Server-side IANA timezone lookup by point                                                                                                 | You need a timezone and are not using annotations                                               |
@@ -129,7 +129,7 @@ a library, and `mailwoman serve` is its command. The endpoint tables are on
 | `@mailwoman/un-locode-lookup` | Nearest UN/LOCODE                                                                                                                         | You work with trade or logistics codes                                                          |
 
 The three lookup packages read databases built like the gazetteer, so each needs its data file as
-well as its package. `@mailwoman/annotations` is the contract the drop-in servers already use, so a
+well as its package. `@mailwoman/annotations` is the interface the drop-in servers already use, so a
 Nominatim-shaped response carries these without your installing anything.
 
 ## Errors
@@ -149,7 +149,7 @@ consecutive releases can carry the same model. Each weights package carries its 
 with the lineage.
 
 The pipeline stages are published but unlisted here because naming them in an install is a signal you
-are building a pipeline rather than using one. They are real packages with real contracts; they are
+are building a pipeline rather than using one. They are real packages with real interfaces; they are
 just not the install surface.
 
 ## See also

@@ -142,7 +142,7 @@ export class FSTMatcher {
 }
 
 /**
- * Normalize text into FST tokens: lowercase, NFKC, strip punctuation, split on whitespace.
+ * Normalize text into FST tokens: lowercase, nfkc, strip punctuation, split on whitespace.
  */
 export function normalizeTokens(text: string): string[] {
 	return text
@@ -150,7 +150,7 @@ export function normalizeTokens(text: string): string[] {
 		.toLowerCase()
 		.replaceAll(/[\p{P}\p{S}]/gu, "")
 		.split(/\s+/)
-		.filter((t) => t.length > 0)
+		.filter((t) => t.length)
 }
 
 export type { FSTNode }

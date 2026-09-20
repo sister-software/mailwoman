@@ -2,16 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Does a confidence mean anything? — the curve, the eval table, and the surfaces that can answer.
- *
- *   Every other tool here asks whether an ANSWER is right. This asks whether the number attached to the answer predicts
- *   that. The two are independent: a model can be accurate and uninformative (every answer at 0.99, right 80% of the
- *   time) or inaccurate and well-calibrated, and only the second is safe to condition on. Nothing else in this server can
- *   see the difference, because every other measurement collapses the confidence away before grading.
- *
- *   This file is the MATH ONLY — no engine, no filesystem, no corpus — so the part that is easy to get subtly and
- *   invisibly wrong is the part that is trivially testable. Where the graded confidences come from is
- *   `reliability-surfaces.ts`, one function per surface.
+ *   Reliability curves compare reported confidence with observed correctness. This module is pure.
+ *   surface-specific confidence collection lives in `reliability-surfaces.ts`.
  */
 
 /**
@@ -37,7 +29,7 @@ export interface ReliabilityBin {
 	mean_confidence: number | null
 	accuracy: number | null
 	/**
-	 * `accuracy - mean_confidence`, SIGNED. Negative is overconfidence — the direction that lets a caller trust a wrong
+	 * `accuracy - mean_confidence`, signed. Negative is overconfidence — the direction that lets a caller trust a wrong
 	 * answer — and an unsigned gap cannot tell it from the harmless direction.
 	 */
 	gap: number | null
@@ -78,7 +70,7 @@ export interface ThresholdRow {
 /**
  * Equal-width bins over [0, 1].
  *
- * Empty bins are RETAINED. A model whose confidences never enter the low bins is itself the finding, and a table that
+ * Empty bins are retained. A model whose confidences never enter the low bins is itself the finding, and a table that
  * silently starts at 0.8 reads as a narrower measurement rather than as a wider result.
  */
 export function reliabilityCurve(sample: readonly Observation[], binCount: number): ReliabilityCurve {
@@ -125,7 +117,7 @@ export function reliabilityCurve(sample: readonly Observation[], binCount: numbe
 /**
  * What a confidence floor at each threshold would actually buy.
  *
- * The curve says whether the number is honest; this says what to DO with it, and they are different questions — a
+ * The curve says whether the number is honest. this says what to do with it, and they are different questions — a
  * well-calibrated surface can still have no threshold worth setting, because the admitted-error count at every useful
  * recall is too high. Both columns of the trade are reported: a precision figure alone hides the correct answers the
  * check throws away.
@@ -157,11 +149,11 @@ export interface ErrorClass {
 /**
  * The confusions an eval at `threshold` lets through, most frequent first.
  *
- * Restricted to the ADMITTED errors on purpose. A hard filter's cost is asymmetric — an admitted error scopes the whole
+ * Restricted to the admitted errors on purpose. A hard filter's cost is asymmetric — an admitted error scopes the whole
  * downstream resolve to the wrong answer, while a rejection only forgoes the narrowing — so the per-class rate above
  * the eval is the number that decides whether the eval is safe, and the overall confusion matrix is not.
  *
- * Requires `expected` and `predicted` strata; a surface without them (the decode path grades a value against a label
+ * Requires `expected` and `predicted` strata. a surface without them (the decode path grades a value against a label
  * and has no second class to name) returns nothing, which is absence and not a clean confusion matrix.
  */
 export function errorClasses(sample: readonly Observation[], threshold: number, limit: number): ErrorClass[] {
@@ -191,7 +183,7 @@ export function errorClasses(sample: readonly Observation[], threshold: number, 
 /**
  * Split a sample by one stratum key and curve each group.
  *
- * A group is keyed by the stratum's VALUE, and observations missing the key are grouped under `(unset)` rather than
+ * A group is keyed by the stratum's value, and observations missing the key are grouped under `(unset)` rather than
  * dropped — a stratum that half the sample does not carry is a fact about the corpus, and dropping those rows moves the
  * denominator of every other group without saying so.
  */

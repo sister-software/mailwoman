@@ -132,8 +132,8 @@ describe("cessation ABSTAINS rather than asserting an incoherent window", () => 
 
 		const holding = edges.find((edge) => edge.relationship === FilerRelationship.HoldingCompany)
 
-		// An inverted window matches NOTHING under `valid_from <= t < valid_to` — the filer would vanish
-		// from every asOf read with no error to notice. Open is visibly incomplete; inverted is invisible.
+		// An inverted window matches nothing under `valid_from <= t < valid_to` — the filer would vanish
+		// from every asOf read with no error to notice. Open is visibly incomplete. inverted is invisible.
 		expect(holding?.valid_to).toBeNull()
 		expect(result.cessationWindowAbstained).toBe(1)
 		expect(result.closedByCessation).toBe(0)
@@ -205,7 +205,7 @@ describe("supersession edges", () => {
 		expect(superseded).toMatchObject({
 			from_node_id: `${FilerIdentifierType.Form499ID}:801004`,
 			to_node_id: `${FilerIdentifierType.Form499ID}:821002`,
-			// Effective when the FCC said the filer ceased, not when it last filed.
+			// Effective when the FCC said the filer ceased rather than when it last filed.
 			valid_from: "2013-09-08",
 			valid_to: null,
 		})

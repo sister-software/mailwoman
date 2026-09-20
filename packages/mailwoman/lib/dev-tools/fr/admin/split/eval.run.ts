@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fr-admin-split-eval.ts — the LIVE eval for the v1.8.0 international admin-split candidate (night
+ *   Fr-admin-split-eval.ts — the live eval for the v1.8.0 international admin-split candidate (night
  *   2026-06-19). Runs the production ship-config parse (createScorer: anchor + gazetteer +
- *   conventions=auto) → resolve (createWOFResolver, defaultCountry FR) → coordinate on the HELD-OUT
+ *   conventions=auto) → resolve (createWOFResolver, defaultCountry FR) → coordinate on the held-OUT
  *   FR golden set (disjoint communes, with truth coords), and reports the metrics that decide the
  *   promote: assembled centroid error, resolve-rate, région-emit-rate, and the #727 diacritic
  *   break.
  *
- *   Grade the ASSEMBLED anchor-ON coordinate, never label-F1. Run for v1.5.0 (baseline) and the
- *   v1.8.0 candidate; promote iff the candidate's mean centroid error ≤ 0.95× v1.5.0 AND the US
+ *   Grade the assembled anchor-on coordinate, never label-F1. Run for v1.5.0 (baseline) and the
+ *   v1.8.0 candidate. promote iff the candidate's mean centroid error ≤ 0.95× v1.5.0 and the US
  *   guardrail (separate oa-resolver-eval run) holds.
  *
  *   Run: node packages/mailwoman/lib/dev-tools/fr/admin/split/eval.run.ts\
@@ -73,22 +73,22 @@ const stringArgs = rawStringArgs as {
 }
 
 /**
- * CONVENTION EPOCH 2026-07-04 (#945, operator-promoted): the DEFAULT scoring coordinate is the one production's
- * result-assembly ladder picks — LOCALITY over postcode (geocode-core `adminPriority`). The harness historically scored
+ * Convention epoch 2026-07-04 (#945, operator-promoted): the default scoring coordinate is the one production's
+ * result-assembly ladder picks — locality over postcode (geocode-core `adminPriority`). The harness historically scored
  * the postcode point (rank 6 > 5), which measured a non-production preference and hid a 1.5 km-class FR gap for weeks.
- * All dumps BEFORE this epoch are postcode-convention: NEVER compare across conventions (the tokenizer-F1 rule,
+ * All dumps before this epoch are postcode-convention: never compare across conventions (the tokenizer-F1 rule,
  * coordinate edition). `--prefer-postcode-coord` reproduces the old convention for continuity runs only.
  *
- * Do NOT "align" this table to `PLACETYPE_SPECIFICITY`. That scale ranks `postalcode` above `locality`, which is the
+ * Do not "align" this table to `PLACETYPE_SPECIFICITY`. That scale ranks `postalcode` above `locality`, which is the
  * preference this convention exists to reject, and swapping it in reinstates the measurement that hid the FR gap.
  *
- * The deeper mismatch is that production has no single ranking to copy: `geocode-core`'s `adminPriority` SWITCHES per
+ * The deeper mismatch is that production has no single ranking to copy: `geocode-core`'s `adminPriority` switches per
  * row, leading with `postcode` only when `isUnitGradePostcodeHit` says the code is street-block-class (a GB unit
  * postcode, an NL PC6) and with `locality` otherwise. This table is the second arm, flattened — right for the FR rows
  * it grades and wrong for a GB unit-postcode row, which it will never see.
  *
  * `@mailwoman/resolver`'s `resolvedSpecificity` is the conditional both arms now consume, and this table is the last
- * flat copy left. It differs on ONE axis: it ranks `postalcode` (5) above `localadmin`/`borough` (4), where the shared
+ * flat copy left. It differs on one axis: it ranks `postalcode` (5) above `localadmin`/`borough` (4), where the shared
  * scale puts an area-grade code below the whole `PLACETYPE_FILTER_GROUPS.locality` tier. Migrating changes this eval's
  * verdict on any row that resolves a `localadmin` or `borough`, so it needs that count on this eval's own panel first —
  * a promoted convention does not move on an argument.
@@ -109,7 +109,7 @@ const PLACETYPE_RANK: Record<string, number> = {
 const POSTCODE_CONVENTION_RANK: Record<string, number> = { ...PLACETYPE_RANK, postalcode: 6, locality: 5 }
 
 /**
- * Deliberately LOCAL rather than tree-hits' `mostSpecific`, which delegates to the production conditional ladder
+ * Deliberately local rather than tree-hits' `mostSpecific`, which delegates to the production conditional ladder
  * (`mostSpecificResolved`): this eval grades on the flat #945 convention tables above — see the `PLACETYPE_RANK`
  * docstring for why migrating needs a panel count first.
  */
@@ -161,11 +161,11 @@ async function main() {
 	// #936 option 3 eval legs: `--official-name-exact` flips the official-name sub-tier promotion on
 	// Boolean pin flags via node:util parseArgs (strict off — the string args ride the stringArgs block above).
 	// #895/#718 discipline: the tri-state pins keep eval legs reproducible against pre-flip baselines —
-	// the positive flag pins ON, the `--no-*`/inverse flag pins OFF (the historical config), no flag =
+	// the positive flag pins the behavior on, the `--no-*`/inverse flag pins it off (the historical config), no flag =
 	// the current library default. Pin explicitly in pre-registered legs.
 	const { values: pins } = parseArguments({
 		options: {
-			// #936: official-language names join the name-exact sub-tier (library default ON since 2026-07-03).
+			// #936: official-language names join the name-exact sub-tier (library default on since 2026-07-03).
 			"official-name-exact": { type: "boolean" },
 			"admin-coherence": { type: "boolean" },
 			"no-admin-coherence": { type: "boolean" },
@@ -173,21 +173,21 @@ async function main() {
 			"raw-case": { type: "boolean" },
 			// #375 night-31: opt-in postcodeConsistency (the #370 change A namesake binder).
 			"postcode-consistency": { type: "boolean" },
-			// #942: postal-compound recovery (library default ON since the 2026-07-03 promote).
+			// #942: postal-compound recovery (library default on since the 2026-07-03 promote).
 			"postal-compound-recovery": { type: "boolean" },
 			"no-postal-compound-recovery": { type: "boolean" },
-			// #965: apply the SAME production scoping geocode-core does — the coarse-placer anchorPosterior
+			// #965: apply the same production scoping geocode-core does — the coarse-placer anchorPosterior
 			// re-rank + the #743 hard-country filter — on top of the soft `--default-country`. Without it the
 			// harness overstates the wrong-country p90 tail for namesake locales (fi 270 km vs production ~3).
 			"hard-country": { type: "boolean" },
 			// #985: comma-separated country codes to ADD to the default hard-country safelist for this run
-			// (e.g. `--hard-country-safelist HU`). Measures a proposed safelist expansion WITHOUT touching
+			// (e.g. `--hard-country-safelist HU`). Measures a proposed safelist expansion without touching
 			// the production const — the p90 of a cross-border-tail country should collapse if it's added.
 			"hard-country-safelist": { type: "string" },
-			// Convention epoch 2026-07-04: locality-first is the DEFAULT (production's ladder). This flag
+			// Convention epoch 2026-07-04: locality-first is the default (production's ladder). This flag
 			// reproduces the pre-epoch postcode-point convention for continuity against old dumps only.
 			"prefer-postcode-coord": { type: "boolean" },
-			// Pre-epoch spelling — accepted so in-flight scripts don't silently change convention; it IS
+			// Pre-epoch spelling — accepted so in-flight scripts don't silently change convention. it is
 			// the default now, so it's a no-op.
 			"prefer-locality-coord": { type: "boolean" },
 		},
@@ -207,8 +207,8 @@ async function main() {
 	const normalizeCasePin = tri("normalize-case", "raw-case")
 	const postcodeConsistencyPin = pins["postcode-consistency"] === true ? true : undefined
 	const postalCompoundPin = tri("postal-compound-recovery", "no-postal-compound-recovery")
-	// `--default-country none` = truly UNSCOPED resolution (no country prior at all) — the #936
-	// namesake legs need it; an empty string would still be a (falsy, ambiguous) country value.
+	// `--default-country none` = truly unscoped resolution (no country prior at all) — the #936
+	// namesake legs need it. an empty string would still be a (falsy, ambiguous) country value.
 	const defaultCountryArg = stringArgs["default-country"] || "FR"
 
 	const resolveOpts: {
@@ -226,7 +226,7 @@ async function main() {
 		...(postalCompoundPin !== undefined ? { postalCompoundRecovery: postalCompoundPin } : {}),
 	}
 
-	// #965: when `--hard-country` is set, load the bundled coarse placer and apply the SAME scoping
+	// #965: when `--hard-country` is set, load the bundled coarse placer and apply the same scoping
 	// geocode-core does per row (anchorPosterior + anchorWeight + the #743 hard-country filter). This
 	// makes the harness's absolute p90s production-equivalent for namesake locales. `hardCountryFor` is
 	// a no-op when defaultCountry is set (the caller's country wins), so the hard filter only bites the
@@ -247,7 +247,7 @@ async function main() {
 
 	const errs: number[] = []
 	const resolvedErrs: number[] = [] // coordinate error over RESOLVED rows only (unconfounded by the unresolved penalty)
-	// Per-row records for a paired A/B bootstrap (--dump-rows): index-aligned across model runs on the SAME
+	// Per-row records for a paired A/B bootstrap (--dump-rows): index-aligned across model runs on the same
 	// golden, so coord-ab-bootstrap.ts can resample rows and compute a paired p50-diff / resolve-rate CI.
 	const rowRecords: Array<{ i: number; resolved: boolean; err_km: number | null }> = []
 	let rowIdx = -1
@@ -341,7 +341,7 @@ async function main() {
 		coord_mean_km: +(mean(errs) ?? Number.NaN).toFixed(2),
 		coord_p50_km: +(percentile(errs, 50) ?? Number.NaN).toFixed(2),
 		coord_p90_km: +(percentile(errs, 90) ?? Number.NaN).toFixed(2),
-		// RESOLVED-ONLY coordinate: the quality WHERE the address resolves, separated from the
+		// resolved-only coordinate: the quality where the address resolves, separated from the
 		// unresolved penalty (which pins to FR_CENTROID and is meaningless for non-FR locales).
 		coord_p50_resolved_km: resolvedErrs.length ? +(percentile(resolvedErrs, 50) ?? Number.NaN).toFixed(2) : null,
 		coord_p90_resolved_km: resolvedErrs.length ? +(percentile(resolvedErrs, 90) ?? Number.NaN).toFixed(2) : null,

@@ -4,16 +4,16 @@
 /**
  * @file The autocomplete ladder (#2154): every board row truncated at every prefix boundary, each rung graded against the
  *   row's own truth, on two arms — the parse → resolve path today's Photon `/api` runs on a partial query, and the FST
- *   autocomplete tier. Four readings per row per arm: the FIRST-HIT rung (how many characters before the truth enters
- *   the top-k), STABILITY (once in, does it stay in on every later rung), LATENCY per rung-length band, and ABSTENTION
+ *   autocomplete tier. Four readings per row per arm: the first-HIT rung (how many characters before the truth enters
+ *   the top-k), stability (once in, does it stay in on every later rung), latency per rung-length band, and abstention
  *   on the one- and two-character rungs where the right answer is no answer.
  *
- *   THE LOCALE HINT IS PART OF THE INPUT. A finished address carries its own country evidence; `Ru` carries none, and a
+ *   the locale hint is part OF the input. A finished address carries its own country evidence; `Ru` carries none, and a
  *   first-hit rung measured without the hint grades the gazetteer's population prior rather than autocomplete. Every
- *   rung therefore runs under the row's country, and a row with none is REFUSED rather than graded.
+ *   rung therefore runs under the row's country, and a row with none is refused rather than graded.
  *
- *   NO NEW TRUTH. The ladder is derived from rows that already carry a coordinate and a tolerance; the full-string rung
- *   is the ordinary board grade for that row, and a difference there is a harness defect, not a finding.
+ *   no new truth. The ladder is derived from rows that already carry a coordinate and a tolerance. the full-string rung
+ *   is the ordinary board grade for that row, and a difference there is a harness defect rather than a finding.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -32,7 +32,7 @@ import { buildGauntletDeps, type GauntletDepsOptions, type GauntletGeocodeOpts }
 import { routeCountry } from "#eval-harness/gauntlet/routing"
 
 /**
- * The two arms. `parse_resolve` is what `@mailwoman/photon`'s `/api` runs on a prefix today and answers ONE coordinate;
+ * The two arms. `parse_resolve` is what `@mailwoman/photon`'s `/api` runs on a prefix today and answers one coordinate;
  * `fst` is the autocomplete tier, answering up to `topK` suggestions.
  */
 export const LADDER_ARMS = ["parse_resolve", "fst"] as const
@@ -55,7 +55,7 @@ export const LADDER_LENGTH_BANDS: ReadonlyArray<readonly [label: string, min: nu
 ]
 
 /**
- * A rung this short expects NO confident answer: one or two characters name nothing.
+ * A rung this short expects no confident answer: one or two characters name nothing.
  */
 export const ABSTAIN_EXPECTED_MAX_CHARS = 2
 
@@ -66,7 +66,7 @@ export const ABSTAIN_EXPECTED_MAX_CHARS = 2
 export const HEADLINE_MAX_TOLERANCE_M = 25_000
 
 /**
- * Which per-locale FST the `fst` arm reads for a row's country. This is NOT the weights-overlay routing
+ * Which per-locale FST the `fst` arm reads for a row's country. This is not the weights-overlay routing
  * (`OVERLAY_LOCALE_BY_COUNTRY`), which falls back to en-US for every country without an overlay: an FST is
  * country-scoped by construction, and grading a French row against the US FST would report "never" for `Paris` as a
  * property of the tier rather than of the artifact chosen. A country with no FST here answers nothing on that arm and
@@ -94,7 +94,7 @@ export const FIRST_KEYSTROKE_RUNGS = 3
 /**
  * The prefixes of one input, shortest first, ending with the full string.
  *
- * The first three single characters stand in for the first keystrokes; after that a rung opens at every token boundary
+ * The first three single characters stand in for the first keystrokes. after that a rung opens at every token boundary
  * — a run of whitespace or a comma — so `Rua Augusta 100, Lisboa` yields `R`, `Ru`, `Rua`, `Rua Augusta`, `Rua Augusta
  * 100`, `Rua Augusta 100, Lisboa`. Trailing separators are trimmed, because a user's screen does not send the space
  * until the next letter arrives.
@@ -158,7 +158,7 @@ export interface RowArmReading {
 	 */
 	firstHitFraction: number | null
 	/**
-	 * After the first hit, how many later rungs LOST the truth again. `0` is a stable row; `null` when it never hit.
+	 * After the first hit, how many later rungs lost the truth again. `0` is a stable row; `null` when it never hit.
 	 */
 	churn: number | null
 	/**
@@ -186,7 +186,7 @@ export function readRow(rungs: readonly RungReading[], inputLength: number): Row
 		firstHitChars: first?.chars ?? null,
 		firstHitFraction: first ? first.chars / inputLength : null,
 		churn,
-		shortRungsAnswered: shortOnes.filter((rung) => rung.answers.length > 0).length,
+		shortRungsAnswered: shortOnes.filter((rung) => rung.answers.length).length,
 		shortRungs: shortOnes.length,
 		fullStringHit: rungs.at(-1)?.hit ?? false,
 	}
@@ -228,7 +228,7 @@ export interface ArmSummary {
 	 */
 	rowsWithoutArtifact: number
 	/**
-	 * Rows whose truth entered the answers at SOME rung.
+	 * Rows whose truth entered the answers at some rung.
 	 */
 	rowsHit: number
 	/**
@@ -348,7 +348,7 @@ export async function runAutocompleteLadder(
 			.execute()
 
 		for (const row of rows) {
-			// `0,0` is the gazetteer's unlocated sentinel, not a place in the Gulf of Guinea.
+			// `0,0` is the gazetteer's unlocated sentinel rather than a place in the Gulf of Guinea.
 			if (row.latitude === 0 && row.longitude === 0) continue
 
 			out.set(row.id, { lat: row.latitude, lon: row.longitude })
@@ -377,7 +377,7 @@ export async function runAutocompleteLadder(
 		const matcher = fstLocale ? await matcherFor(fstLocale) : null
 		const rungs = ladderRungs(row.input)
 
-		// The first request of a process pays engine construction; it is not a rung's latency.
+		// The first request of a process pays engine construction. it is not a rung's latency.
 		if (!warmed) {
 			await deps.geocode(rungs.at(-1)!, geoOpts)
 			warmed = true
@@ -459,7 +459,7 @@ export async function runAutocompleteLadder(
 }
 
 /**
- * The per-arm summary over the HEADLINE rows. Pure.
+ * The per-arm summary over the headline rows. Pure.
  */
 export function summarizeArm(arm: LadderArm, rows: readonly LadderRow[]): ArmSummary {
 	const allHeadline = rows.filter((row) => row.headline)

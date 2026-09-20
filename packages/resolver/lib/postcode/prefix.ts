@@ -5,9 +5,9 @@
  *   Postcode-prefix prior (#31, Mechanism 3) — the partial-code prior for postcodes the full-code
  *   gazetteer does not carry. #1480's abstention is the defect: a BT unit with no permissive source
  *   behind it (the NI half of Code-Point Open) misses the gazetteer, and the tree contributes
- *   NOTHING for it — no country scope, no district, no coordinate. This module derives the code's
- *   PREFIX and probes the PFX1 index (`postcode-prefix-<cc>.bin`), so the resolve "abstains on the
- *   UNIT and still contributes its DISTRICT": the node resolves from the prefix's centroid and/or
+ *   nothing for it — no country scope, no district, no coordinate. This module derives the code's
+ *   prefix and probes the PFX1 index (`postcode-prefix-<cc>.bin`), so the resolve "abstains on the
+ *   unit and still contributes its district": the node resolves from the prefix's centroid and/or
  *   ancestry, whichever the artifact carries.
  *
  *   The index is a structural type (`PostcodePrefixIndexLike`, declared in `core/resolver/types.ts`),
@@ -18,38 +18,38 @@
  *
  *   ## The derivation law (per artifact country)
  *
- *   - **GB** — the OUTWARD code: the compact (whitespace-stripped) form minus its trailing 3 unit
+ *   - **GB** — the outward code: the compact (whitespace-stripped) form minus its trailing 3 unit
  *     characters ("SW1A 2AA" → "SW1A", "BT9 5GS" → "BT9"). Never a greedy regex — the unit is
  *     exactly 3 chars in the compact form, and `outwardOf` in `mailwoman/gazetteer-pipeline/
  *     postcode-prefix.ts` is the build-side twin of this law.
  *   - **US** — the 3-digit section ("94043" → "940"). M-3 measured 3 digits as the first length
  *     where the ZIP prefix stops being free (145 km p95 median); a 5-digit artifact would be the
- *     full code the gazetteer already carries. No US artifact ships yet (B3-4 needs a ZCTA
+ *     full code the gazetteer already carries. No US artifact ships yet (B3-4 needs a zcta
  *     acquisition) — the branch exists so the law is tested before the data.
  *   - **Anything else** — abstain (null).
  *
  *   ## The probe's country restriction
  *
- *   The index is country-specific EVIDENCE: it is only probed when its `country` matches the
+ *   The index is country-specific evidence: it is only probed when its `country` matches the
  *   query's country scope (or the scope is absent). A GB index must not speak under a US scope —
  *   the pipeline passes the locale's index, and the walk's country filter is the caller's declared
  *   universe.
  *
- *   ## Metadata contract (what the node carries afterward)
+ *   ## Metadata interface (what the node carries afterward)
  *
  *   - `postcode_prefix` — the prefix string that resolved it.
- *   - `postcode_prefix_ancestors` — the ancestry the prefix asserts (coarsest-first; GB outward
+ *   - `postcode_prefix_ancestors` — the ancestry the prefix asserts (coarsest-first. GB outward
  *     nodes carry country → constituent-country → district).
  *   - `postcode_prefix_radius_p95_km` — the artifact's measured p95 radius, when the node carries a
  *     coordinate (M-3's receipt: a 1-digit US band and a GB outward code differ by 200×; never read
  *     a coordinate without its radius).
- *   - `coordinate_source: "postcode_prefix"` — ONLY when the node actually carries a coordinate.
+ *   - `coordinate_source: "postcode_prefix"` — only when the node actually carries a coordinate.
  *     The ancestry-only tier (NI's 80 BT districts) stays coordinate-free — the meaning-of-zero
  *     rule, and the half that decides B3-3: inventing a BT centroid would reproduce the `BT3 9QQ` →
  *     Sheffield defect #1480 just fixed.
  *
- *   **D-rule: opt-in behind `ResolveOpts.postcodePrefixPrior`, default-OFF** (the PCN1 posture:
- *   data + loader + offline probe, no decode wiring; the header ships without `delta` until a
+ *   **D-rule: opt-in behind `ResolveOpts.postcodePrefixPrior`, default-off** (the PCN1 posture:
+ *   data + loader + offline probe, no decode wiring. the header ships without `delta` until a
  *   calibration measures one). Bars: B3-2 (≥60% of held-out units within 10 km, zero worse than the
  *   abstention arm), B3-3 (NI ≥95% country scope GB + NIR ancestry + correct district named, 0%
  *   coordinate), B3-5 (structural — no model inputs touched).
@@ -58,22 +58,22 @@
 import type { PostcodePrefixIndexLike, PostcodePrefixNode, ResolvedPlace } from "@mailwoman/core/resolver"
 
 /**
- * A resolved place that may carry NO coordinate. `ResolvedPlace` requires `lat`/`lon` (every gazetteer row has a value,
+ * A resolved place that may carry no coordinate. `ResolvedPlace` requires `lat`/`lon` (every gazetteer row has a value,
  * even the 0,0 unlocated sentinel), and the prefix prior's ancestry-only tier must express absence as `undefined`
  * instead — B3-3: inventing a centroid would reproduce the `BT3 9QQ` → Sheffield defect #1480. `decorateNode` copies
  * `lat`/`lon` onto the node verbatim, so an undefined coordinate stays absent on the node — the meaning-of-zero rule.
- * Widened ONLY at this boundary: gazetteer places (always coordinate-bearing) remain plain `ResolvedPlace`.
+ * Widened only at this boundary: gazetteer places (always coordinate-containing) remain plain `ResolvedPlace`.
  */
 export type CoordinateOptionalPlace = Omit<ResolvedPlace, "lat" | "lon"> & { lat?: number; lon?: number }
 
 /**
- * The MINIMUM compact code length for a GB outward derivation — a shorter code has no 3-character unit to strip ("B3"
- * is a GB area, not a unit-bearing code).
+ * The minimum compact code length for a GB outward derivation — a shorter code has no 3-character unit to strip ("B3"
+ * is a GB area rather than a unit-containing code).
  */
 const MIN_GB_OUTWARD_CODE_LENGTH = 5
 
 /**
- * The MINIMUM code length for a US section derivation.
+ * The minimum code length for a US section derivation.
  */
 const MIN_US_SECTION_CODE_LENGTH = 3
 
@@ -141,9 +141,9 @@ export function probePostcodePrefix(
 }
 
 /**
- * Build the synthetic `ResolvedPlace` a prefix hit resolves a `postalcode` node to. `id: 0` — it is NOT a gazetteer row
+ * Build the synthetic `ResolvedPlace` a prefix hit resolves a `postalcode` node to. `id: 0` — it is not a gazetteer row
  * (the same sentinel `applyPostcodeConsistency` uses for its displaced place, resolve.ts) — and the coordinate is
- * present ONLY when the node carries one, so an ancestry-only hit stays coordinate-free by construction (B3-3's 0%
+ * present only when the node carries one, so an ancestry-only hit stays coordinate-free by construction (B3-3's 0%
  * half).
  */
 export function postcodePrefixResolvedPlace(

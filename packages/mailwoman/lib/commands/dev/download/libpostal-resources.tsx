@@ -8,10 +8,10 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "libpostal-resources",
@@ -25,11 +25,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	force: boolean
-}
-
-const DevDownloadLibpostalResources: ParsedCommandComponent<Options> = ({ options }) => {
+const DevDownloadLibpostalResources: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { downloadLibpostalResources } = await import("@mailwoman/core/tools")
 

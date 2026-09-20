@@ -7,7 +7,7 @@
  *   ends up carrying.
  *
  *   The key count is not bookkeeping: it is the gloss detector's only volume signal, so what counts
- *   as "distinct" (folded, primary included, de-duplicated within the bag) is the contract, and it is
+ *   as "distinct" (folded, primary included, de-duplicated within the bag) is the interface, and it is
  *   asserted here directly rather than through a whole build.
  */
 
@@ -56,7 +56,7 @@ interface Staged {
 
 /**
  * An in-memory source carrying only the one table pass 2 reads, plus a staging sink that records calls instead of
- * writing rows — the pass owns the loop, not the storage.
+ * writing rows — the pass owns the loop rather than the storage.
  */
 function run(rows: Array<{ id: number; alt: string | null }>, attrs: Map<number, PlaceAttrs>) {
 	using src = DatabaseClient.temp<WOFDatabase>()
@@ -92,8 +92,8 @@ describe("explodeAliasBags", () => {
 
 	test("skips an alias that folds onto the place's own primary key", () => {
 		const attrs = new Map([[202, place("Saint-Étienne")]])
-		// The diacritic-free spelling folds to the SAME key as the display name, so it is the place's
-		// primary row, not a second alias.
+		// The diacritic-free spelling folds to the same key as the display name, so it is the place's
+		// primary row rather than a second alias.
 		const { nAlias, keyCounts } = run([{ id: 202, alt: bag("Saint-Etienne", "St Etienne") }], attrs)
 
 		expect(nAlias).toBe(1)
@@ -123,7 +123,7 @@ describe("explodeAliasBags", () => {
 		expect(nAlias).toBe(0)
 		expect(staged).toEqual([])
 		// No key count for either: an unknown place has no place to hang one on, and a place whose bag is
-		// absent is UNMEASURED, which the detector must not read as a low key count.
+		// absent is unmeasured, which the detector must not read as a low key count.
 		expect(keyCounts.size).toBe(0)
 	})
 })

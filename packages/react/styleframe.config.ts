@@ -4,16 +4,16 @@
 /**
  *   The design tokens every consumer of `@mailwoman/react` reads. This file is the source of record; `tokens.css` is
  *   its compiled output and is generated, never hand-edited. `styleframe dtcg export` publishes the same values as
- *   W3C DTCG JSON for Figma and any other tool — DTCG is the interchange format here, not the input, because
+ *   W3C dtcg JSON for Figma and any other tool — dtcg is the interchange format here rather than the input, because
  *   `styleframe dtcg import` is a one-shot code generator rather than a build step.
  *
- *   THREE LAYERS, and a component rule may read only the middle one. Primitives are raw values with no opinion about
- *   use; semantics say what a value is FOR; the few component tokens exist where a component needs a name of its own.
+ *   three layers, and a component rule may read only the middle one. Primitives are raw values with no opinion about
+ *   use. semantics say what a value is FOR. the few component tokens exist where a component needs a name of its own.
  *   `styles.css` reading raw primitives is the defect this file replaces: it read 22 Infima names it did not own, and
- *   eight of them were undefined in production, so those rules silently took Infima's LIGHT fallbacks inside a dark
+ *   eight of them were undefined in production, so those rules silently took Infima's light fallbacks inside a dark
  *   app.
  *
- *   THEMES. Light is the docs site; dark is the three map apps, which set `data-theme="dark"` on `<html>` themselves.
+ *   themes. Light is the docs site. dark is the three map apps, which set `data-theme="dark"` on `<html>` themselves.
  *   Every semantic token is defined in both, so a value can never resolve to nothing.
  */
 
@@ -31,12 +31,12 @@ const { variable, theme, ref } = s
 //#region Primitives
 
 /*
- * Raw values with no opinion about use. Only the semantic layer below may reference them; a component rule that
+ * Raw values with no opinion about use. Only the semantic layer below may reference them. a component rule that
  * reaches one has skipped the layer that says what the value is for.
  */
 
 /**
- * The brand anchors, carried verbatim from the design system. `#ff00b0` is the primary; Earth shipped a drifted
+ * The brand anchors, carried verbatim from the design system. `#ff00b0` is the primary. Earth shipped a drifted
  * `#e0367c` for as long as it read Infima's palette, and that value is retired.
  */
 const brandMagenta = variable("brand-magenta", "#ff00b0")
@@ -46,7 +46,7 @@ const brandAmber = variable("brand-amber", "hsl(39deg 100% 50%)")
 const brandTeal = variable("brand-teal", "hsl(97.78deg 100% 50%)")
 
 /**
- * Neutrals in OKLCH so the lightness steps are perceptually even rather than even in sRGB, where a mid-grey reads
+ * Neutrals in oklch so the lightness steps are perceptually even rather than even in sRGB, where a mid-grey reads
  * darker than its number. One hue for the whole ramp keeps chrome from drifting warm at one end and cool at the other.
  */
 const neutral0 = variable("neutral-0", "oklch(100% 0 264)")
@@ -76,7 +76,7 @@ const infoBase = variable("info-base", "oklch(65% 0.13 230)")
 //#region Type
 
 /*
- * Two axes. A rule names a scale role; a scale role names a face role; only a face role names a family.
+ * Two axes. A rule names a scale role. a scale role names a face role. only a face role names a family.
  */
 
 /**
@@ -122,6 +122,32 @@ const fontWeightSemibold = variable("font-weight-semibold", "600")
 
 //#region Shape and motion
 
+/**
+ * Spacing is A scale rather than a guess.
+ *
+ * The stylesheet had 19 distinct padding/margin/gap values across 171 declarations — 0.05rem, 0.35rem, 0.65rem, 1.1rem
+ * — each picked by eye at the moment it was written and none of them relatable to any other. A tail of near-misses like
+ * that reads as care and behaves as noise: two panels meant to match never quite do, and nothing says which value was
+ * deliberate.
+ *
+ * Seven steps on a 2px grid. A padding, a margin or a gap that is not one of these is a value someone has to justify.
+ */
+const space0 = variable("space-0", "0.125rem")
+const space1 = variable("space-1", "0.25rem")
+const space2 = variable("space-2", "0.375rem")
+const space3 = variable("space-3", "0.5rem")
+const space4 = variable("space-4", "0.75rem")
+const space5 = variable("space-5", "1rem")
+const space6 = variable("space-6", "1.5rem")
+
+/**
+ * The small end of the radius scale. `radius-tick` is for marks a few pixels across — a legend swatch, a tag — where a
+ * larger radius eats the shape; `radius-tight` is the inline block. The stylesheet used to carry six raw pixel radii
+ * (2, 3, 4, 6, 8, 10) with no relation between them, and `999px` written out four times beside a `--radius-pill` that
+ * already said it.
+ */
+const radiusTick = variable("radius-tick", "0.125rem")
+const radiusTight = variable("radius-tight", "0.25rem")
 const radiusControl = variable("radius-control", "0.5rem")
 const radiusPanel = variable("radius-panel", "0.875rem")
 const radiusSheet = variable("radius-sheet", "0.875rem")
@@ -134,7 +160,7 @@ const easingStandard = variable("easing-standard", "cubic-bezier(0.4, 0, 0.2, 1)
 const easingDecelerate = variable("easing-decelerate", "cubic-bezier(0, 0, 0.2, 1)")
 
 /**
- * Safe-area insets belong to the chrome, not to each component that happens to sit near an edge. They stay CSS
+ * Safe-area insets belong to the chrome rather than to each component that happens to sit near an edge. They stay CSS
  * expressions because `env()` resolves per device and has no static value.
  */
 variable("safe-area-top", "env(safe-area-inset-top, 0px)")
@@ -190,6 +216,31 @@ const stateInfoBackground = variable("color-state-info-background", "oklch(65% 0
 
 const accentBackground = variable("color-accent-background", "oklch(65% 0.29 340 / 0.14)")
 
+/**
+ * The three confidence tiers, said once.
+ *
+ * They were two palettes for one idea: the bars and the About legend painted `#22c55e / #f59e0b / #ef4444` while the
+ * span ribbon and the containment tree painted `#1aa84d / #e6a800 / #d8504a` — so the legend in the About sheet
+ * explained colours the results table does not use, under a comment claiming the two matched. Raw hex also meant one
+ * set of colours for both themes, on a surface that flips from white to near-black.
+ *
+ * They are the state palette because that is what they are: high is success, mid is a warning, low is a failure.
+ */
+const confidenceHigh = variable("color-confidence-high", ref(stateSuccess))
+const confidenceHighTint = variable("color-confidence-high-tint", ref(stateSuccessBackground))
+const confidenceMid = variable("color-confidence-mid", ref(stateWarning))
+const confidenceMidTint = variable("color-confidence-mid-tint", ref(stateWarningBackground))
+const confidenceLow = variable("color-confidence-low", ref(stateDanger))
+const confidenceLowTint = variable("color-confidence-low-tint", ref(stateDangerBackground))
+
+/**
+ * The pipeline's stage hues, for the timing bar. Deliberately not the confidence palette — a stage is not a verdict,
+ * and a reader who has learned that green means confident should not meet green again meaning "shape".
+ */
+const stageShape = variable("color-stage-shape", "#3578e5")
+const stageClassify = variable("color-stage-classify", "#8b5cf6")
+const stageResolve = variable("color-stage-resolve", "#14b8a6")
+
 //#endregion
 
 //#region Material
@@ -233,7 +284,7 @@ theme("dark", ({ variable: themeVariable }) => {
 	themeVariable(controlForeground, ref(neutral100))
 	themeVariable(controlBorder, "oklch(100% 0 264 / 0.16)")
 
-	// The state hues lift in a dark ground: the same hue at higher lightness reads at the same strength.
+	// The state hues brighten on a dark ground: the same hue at higher lightness reads at the same strength.
 	themeVariable(stateSuccess, "oklch(76% 0.16 150)")
 	themeVariable(stateSuccessBackground, "oklch(76% 0.16 150 / 0.18)")
 	themeVariable(stateWarning, "oklch(84% 0.15 75)")
@@ -255,7 +306,7 @@ theme("dark", ({ variable: themeVariable }) => {
 
 //#endregion
 
-// Referenced by name from `styles.css` and the app stylesheets; listed here so the compiler keeps them.
+// Referenced by name from `styles.css` and the app stylesheets. listed here so the compiler keeps them.
 void [
 	brandBlue,
 	brandNavy,
@@ -282,6 +333,15 @@ void [
 	fontWeightRegular,
 	fontWeightMedium,
 	fontWeightSemibold,
+	space0,
+	space1,
+	space2,
+	space3,
+	space4,
+	space5,
+	space6,
+	radiusTick,
+	radiusTight,
 	radiusControl,
 	radiusPanel,
 	radiusSheet,
@@ -291,6 +351,15 @@ void [
 	durationSheet,
 	easingStandard,
 	easingDecelerate,
+	confidenceHigh,
+	confidenceHighTint,
+	confidenceMid,
+	confidenceMidTint,
+	confidenceLow,
+	confidenceLowTint,
+	stageShape,
+	stageClassify,
+	stageResolve,
 	backgroundRaised,
 	backgroundSunken,
 	textSecondary,

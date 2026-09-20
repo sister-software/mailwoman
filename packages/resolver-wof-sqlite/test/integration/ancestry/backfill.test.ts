@@ -19,7 +19,7 @@ beforeAll(async () => {
 	await makeDirectories(root.resolve("whosonfirst-data-admin-gb", "data"))
 	// A non-WOF sibling dir that must be ignored
 	await makeDirectories(root.resolve("some-other-repo", "data"))
-	// A `data` dir buried too deep (depth 3+) that must NOT be discovered
+	// A `data` dir buried too deep (depth 3+) that must not be discovered
 	await makeDirectories(root.resolve("whosonfirst-data", "nested", "deeper", "data"))
 })
 
@@ -49,7 +49,7 @@ test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-s
 	const orphanID = 85_977_539
 	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'locality')").run(orphanID)
 	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'locality', 0)").run(orphanID, orphanID) // self only
-	// A country (top-level) with only-self ancestry — must be skipped, not queried for geojson.
+	// A country (top-level) with only-self ancestry — must be skipped rather than queried for geojson.
 	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'country')").run(85_633_793)
 	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'country', 0)").run(85_633_793, 85_633_793)
 
@@ -93,7 +93,7 @@ test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its paren
 	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
 
-	// New York City: the multi-parent locality, ALREADY repaired by an earlier pass — it has a full
+	// New York City: the multi-parent locality, already repaired by an earlier pass — it has a full
 	// ancestor set, so it is not a candidate this time.
 	const nycID = 85_977_539
 	const brooklynID = 421_205_765
@@ -113,7 +113,7 @@ test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its paren
 	}
 
 	// Brooklyn: parent_id points at NYC, so the parent_id closure produced exactly self + NYC and
-	// stopped — NYC's own parent_id is the -4 sentinel. TWO ancestor rows, which the previous
+	// stopped — NYC's own parent_id is the -4 sentinel. Two ancestor rows, which the previous
 	// "<= 1 ancestor row" candidate test excluded, leaving the borough with no region ancestor.
 	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'borough')").run(brooklynID)
 	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'borough', 0)").run(brooklynID, brooklynID)
@@ -172,10 +172,10 @@ test("backfillAncestorsFromHierarchy: survives more candidates than SQLite's bou
 	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
 	// Production always carries ancestors_by_id (unified-schema.ts) and the freeze runs its index phase
-	// before this backfill; without it the correlated NOT EXISTS is quadratic over 33k rows.
+	// before this backfill. without it the correlated not exists is quadratic over 33k rows.
 	db.exec("CREATE INDEX ancestors_by_id ON ancestors(id)")
 
-	// node:sqlite caps a statement at 32,766 bound variables; the 2026-08-04 wide-coverage admin build
+	// node:sqlite caps a statement at 32,766 bound variables. the 2026-08-04 wide-coverage admin build
 	// carried 67,521 country-less candidates. 33,000 self-only places reproduce the overflow.
 	const insertSpr = db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'locality')")
 	const insertAnc = db.prepare("INSERT INTO ancestors VALUES (?, ?, 'locality', 0)")
@@ -204,7 +204,7 @@ test("backfillAncestorsFromHierarchy: leaves a place whose SOURCE hierarchy stop
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
 
 	// Fatumafuti, American Samoa: WOF itself gives it {country_id, locality_id} and no region. The
-	// artifact matching that is correct, not truncated — and because it HAS a country ancestor it is
+	// artifact matching that is correct rather than truncated — and because it has a country ancestor it is
 	// not a candidate at all, so no geojson probe happens for it.
 	const id = 101_734_391
 	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'locality')").run(id)

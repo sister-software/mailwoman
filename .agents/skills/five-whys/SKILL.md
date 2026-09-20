@@ -1,6 +1,6 @@
 ---
 name: five-whys
-description: Root-cause diagnosis by successive why questions, with judgment jargon stripped to its facts. Ask each why of the evidence, not the operator; tag every claim observation, inference, decision, or unknown; stop at an actionable cause or an unverified assumption; give numbers their denominator and IDs their names. Use before proposing a fix, or whenever a diagnosis leans on words like decisive, mis-constructed, or "earns its place".
+description: Root-cause diagnosis by successive why questions, with judgment jargon stripped to its facts. Ask each why of the evidence rather than the operator; tag every claim observation, inference, decision, or unknown; stop at an actionable cause or an unverified assumption; give numbers their denominator and IDs their names. Use before proposing a fix, or whenever a diagnosis leans on words like decisive, mis-constructed, or "warrants its place".
 ---
 
 # Five Whys Skill
@@ -8,8 +8,8 @@ description: Root-cause diagnosis by successive why questions, with judgment jar
 ## Why this exists
 
 The repo already treats Five Whys as diagnostic doctrine: the invariance mini-suite is the #886 five-whys
-follow-up, and the suffix-boundary contract change records its #1569 five-whys root cause. What the method
-never had here is a language contract. Diagnoses kept shipping judgment words where facts belonged:
+follow-up, and the suffix-boundary interface change records its #1569 five-whys root cause. What the method
+never had here is a language interface. Diagnoses kept shipping judgment words where facts belonged:
 
 > The negative twin was mis-constructed — with Lyon in the raw text the register never hits, so nothing is
 > deleted.
@@ -23,8 +23,8 @@ conclusion and the mechanism stays in the author's head. Five Whys forces the me
 chain is only as strong as its weakest word — a link written as a judgment cannot survive the next why.
 
 This skill operationalizes the house style's "Find the cause before proposing the fix" section, whose
-contract lives at `.claude/output-styles/mailwoman-development.md` — the output style the harness loads,
-and the one authority for agent prose. It is a reasoning discipline, not a
+interface lives at `.claude/output-styles/mailwoman-development.md` — the output style the harness loads,
+and the one authority for agent prose. It is a reasoning discipline rather than a
 writing style: published docs pages are governed by `docs/engineering/writing-system.md` and its Vale
 rules, and this skill governs diagnostic prose Vale never sees — chat messages, status reports, handoffs,
 PR descriptions. Where the lists overlap (filler intensifiers, weasel quantities, anthropomorphism), this
@@ -34,22 +34,22 @@ skill inherits the same words rather than redefining them.
 
 - A failure's cause is not established and a fix is being considered.
 - A draft diagnosis or another agent's report contains a judgment word (`decisive`, `mis-constructed`,
-  `clearly`, `obviously`, `earns its place`, `paid for itself`, `the real question is`) or a
+  `clearly`, `obviously`, `warrants its place`, `paid for itself`, `the real question is`) or a
   number with no denominator.
 - The operator says a report is unintelligible, or asks what a term means.
 - The operator asks "why", and the answer stops at an adjective.
 - Before publishing any diagnosis: run the checklist at the bottom.
 
-## When NOT to use
+## When not to use
 
 - Routine status narration with no failure at stake.
 - A cause that is already direct and verified — do not force five levels.
-- Prose for published docs pages — that is the writing system's register, not a diagnosis.
+- Prose for published docs pages — that is the writing system's register rather than a diagnosis.
 - Small talk. Warmth is allowed; agreement must carry information, per the house style.
 
 ## The method
 
-Reproduce first, then ask why of the evidence, not of the operator. The canonical chain and the evidence
+Reproduce first, then ask why of the evidence rather than of the operator. The canonical chain and the evidence
 categories come from `.claude/output-styles/mailwoman-development.md` § Find the cause before proposing
 the fix:
 
@@ -57,10 +57,10 @@ the fix:
 2. Why did that stage choose the wrong value?
 3. Why did its input or rule permit that choice?
 4. Why did the test or pipeline fail to catch the condition?
-5. Why does the system contract allow the condition?
+5. Why does the system interface allow the condition?
 
 Do not force exactly five levels. Use fewer when the cause is direct, more when evidence supports the
-longer chain. Stop the chain at an **actionable cause** — a named stage, rule, input, or contract clause a
+longer chain. Stop the chain at an **actionable cause** — a named stage, rule, input, or interface clause a
 change can touch — or at an **unverified assumption**, where the current evidence cannot answer the next
 why. An unverified assumption is the chain's end and the next action's start: the probe that would answer
 it is the next step.
@@ -72,7 +72,7 @@ Tag every link as one of:
 - **decision** — the team chooses a tradeoff or product behavior; name the tradeoff
 - **unknown** — the current evidence cannot answer it; the chain stops here
 
-A correlation is not a cause. Same antecedent plus same failure is a lead, not a link; the link names the
+A correlation is not a cause. Same antecedent plus same failure is a lead rather than a link; the link names the
 mechanism by which the antecedent produces the failure. When the repository can answer the next why with a
 focused diagnostic, run it before asking anyone anything.
 
@@ -86,12 +86,12 @@ asking the operator.
 - **Rung 3** — which input or constraint permitted it: `mwdev_minimal_pairs` (which token), `mwdev_lookup`
   (does the source know the string), `mwdev_constraints` (what a constraint cost).
 - **Rung 4** — why the test did not catch it: read the test; `mwdev_census` (does the mechanism fire at
-  all), `mwdev_contract` (does the tree obey its contract).
-- **Rung 5** — why the contract allows it: read the contract, then the issue.
+  all), `mwdev_interface` (does the tree obey its interface).
+- **Rung 5** — why the interface allows it: read the interface, then the issue.
 - **Assumption checks** — `mwdev_provenance` (which artifacts the engine is really reading),
   `mwdev_coverage`, `mwdev_sources`.
 
-## The language contract
+## The language interface
 
 Jargon in a diagnosis is a judgment word or an undefined mechanism doing the work of a fact. The rows
 below convert each into its fact. Every row is a sentence that shipped, with its correction.
@@ -99,13 +99,13 @@ below convert each into its fact. Every row is a sentence that shipped, with its
 | Written                                                                                                                                                                                                          | What it hides                                                                                                          | Write instead                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | "The negative twin was mis-constructed — with Lyon in the raw text the register never hits, so nothing is deleted."                                                                                              | The construction error, and what the register matches on.                                                              | "The negative twin contains Lyon in its raw text, so the delete register never matches it and nothing is deleted. Rebuilding the twin from the real control shape (no Lyon) is the fix."                                                                                                                                                                                                                                                                                                                                                                                                              |
-| "Proving the test earns its place — reverting the one-line fix and confirming it fails."                                                                                                                         | A value judgment where the test's purpose belongs.                                                                     | "Reverting the one-line fix makes the test fail; the test detects that regression."                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| "Board slice reads 41/58 resolved; the scoping agent's pre-fix baseline was 40/58. One row differs... Committing first so the comparison is against a clean tree."                                               | Which row differs; whether the 17 unresolved share a cause; what was committed and whether the measurement decides it. | "Board slice reads 41/58 resolved (baseline 40/58). The one differing row is <address>. The 17 unresolved rows are separate until evidence groups them. I committed the fix before measuring so the comparison runs against a clean tree; this measurement decides whether to keep the commit."                                                                                                                                                                                                                                                                                                       |
+| "Proving the test warrants its place — reverting the one-line fix and confirming it fails."                                                                                                                      | A value judgment where the test's purpose belongs.                                                                     | "Reverting the one-line fix makes the test fail; the test detects that regression."                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| "The board subset reads 41/58 resolved; the scoping agent's pre-fix baseline was 40/58. One row differs... Committing first so the comparison is against a clean tree."                                          | Which row differs; whether the 17 unresolved share a cause; what was committed and whether the measurement decides it. | "The board subset reads 41/58 resolved (baseline 40/58). The one differing row is <address>. The 17 unresolved rows are separate until evidence groups them. I committed the fix before measuring so the comparison runs against a clean tree; this measurement decides whether to keep the commit."                                                                                                                                                                                                                                                                                                  |
 | "The refutation is decisive and belongs on the issue."                                                                                                                                                           | The evidence that makes it decisive.                                                                                   | "Posting the refutation to the issue: it shows <observation>, which the issue's premise <quote> rules out."                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | "A refusal is already distinguishable — `intent_markers` carries `kind: poi_query` with a full message. The issue's framing is stale at HEAD. The real remaining gap is that the successful parse is discarded." | What is distinguishable from what; what changed at HEAD; why the gap is "real".                                        | "The trace records `intent_markers.kind = poi_query` with the full message, so a refusal is recoverable from the parse output. The issue's example no longer matches HEAD (<the one thing that changed>). The remaining gap: the successful parse is discarded at <stage> instead of being carried forward."                                                                                                                                                                                                                                                                                          |
 | "...under the harness's fr-FR overlay the street span swallows the commune (`street "Allée Pierre Barthas, Sète"`). The two production parse paths diverge (#1669), and the harness is the one that grades."     | What an overlay does; what the divergence implies for the probe's result.                                              | "Under the harness's per-row country config for fr-FR, the street span's boundary includes the commune text: `street "Allée Pierre Barthas, Sète"`. The CLI probe and the board run different parse paths (#1669); the board's path is the graded one, so the probe's clean run does not transfer."                                                                                                                                                                                                                                                                                                   |
-| "The eval reads 383/384 — the new row passes, and the only failure is the standing es-op3-southeast-portopetro."                                                                                                 | What the eval keeps, what the new row asserts, why the standing row stands.                                            | "The eval reads 383/384. The new row (<address>) passes. The one failure is the standing es-op3 row for `07691 Portopetro, Illes Balears, Spain` — open as <issue link>, not caused by this change. I checked whether other gauntlet rows share its failure shape (<n> do / none do)."                                                                                                                                                                                                                                                                                                                |
-| "wof-hot.db does not exist on this host, so that test has never run here and cannot validate the deletion."                                                                                                      | Where the agent looked; absence is presumed, not shown.                                                                | "I checked <the paths the test resolves> and found no wof-hot.db on this host, so that test has never run here. To verify the deletion I read <file:line> instead: does an unresolvable parent ever set query.parentID?" If the file is later found to exist, triage why this check missed it. The one-call check is `mwdev_provenance` — see §Artifact absence claims.                                                                                                                                                                                                                               |
+| "The eval reads 383/384 — the new row passes, and the only failure is the standing es-op3-southeast-portopetro."                                                                                                 | What the eval keeps, what the new row asserts, why the standing row stands.                                            | "The eval reads 383/384. The new row (<address>) passes. The one failure is the standing es-op3 row for `07691 Portopetro, Illes Balears, Spain` — open as <issue link> rather than caused by this change. I checked whether other gauntlet rows share its failure shape (<n> do / none do)."                                                                                                                                                                                                                                                                                                         |
+| "wof-hot.db does not exist on this host, so that test has never run here and cannot validate the deletion."                                                                                                      | Where the agent looked; absence is presumed rather than shown.                                                         | "I checked <the paths the test resolves> and found no wof-hot.db on this host, so that test has never run here. To verify the deletion I read <file:line> instead: does an unresolvable parent ever set query.parentID?" If the file is later found to exist, triage why this check missed it. The one-call check is `mwdev_provenance` — see §Artifact absence claims.                                                                                                                                                                                                                               |
 | "Census reproduces exactly: 196 firings, 196 resolved nothing, 0 conversions."                                                                                                                                   | Which tool; against what baseline; whose vocabulary "firing" is.                                                       | "`mwdev_census` over the board matches the pre-fix run: `parent_fallback_retry` fired 196 times and every firing resolved nothing — the constraint is inert on this set."                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | "A5 works: the firing lookup now records query.parentID=9000000119609."                                                                                                                                          | The entity behind the ID; what A5 is.                                                                                  | "A5 works: the firing lookup now records the parent for Five Star Island (WOF 9000000119609). A5 = <issue link>; its task list asserts this completion."                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | "The soft posterior is assigned at line 1129, before the dominant probe that already exists at 1156 — so the hardening declines but the re-rank still flips."                                                    | What each term is: a country-guess probability, an existing country check, a new constraint, a ranking change.         | "The country-guess probability (`soft posterior`) is assigned at line 1129, before the existing country check (`dominant probe`, line 1156) runs. The new constraint declines the guess, but the ranking has already used it and still flips. Hoist the check above line 1129 so both constraints read the same value."                                                                                                                                                                                                                                                                               |
@@ -114,7 +114,7 @@ below convert each into its fact. Every row is a sentence that shipped, with its
 
 The rules the rows encode:
 
-1. **A judgment about your own work states the fact instead.** "Earns its place", "paid for itself",
+1. **A judgment about your own work states the fact instead.** "Warrants its place", "paid for itself",
    "decisive" as praise → what was done and what it changed. The repo's own records carry live examples:
    "The #511 lint paid for itself the first time it ran" means the lint caught 9 contradictions on its
    first run.
@@ -124,7 +124,7 @@ The rules the rows encode:
 3. **A number states its denominator, threshold, artifact, and arm.** "41/58" must answer what the other
    17 have in common, or say they are not one class. A delta is never unattributed: name the rows that
    moved.
-4. **An entity is a name, not an ID.** WOF IDs, row names, and test names get the address or place name
+4. **An entity is a name rather than an ID.** WOF IDs, row names, and test names get the address or place name
    beside them.
 5. **A technical term in prose is defined in one sentence at first use, or replaced by its mechanism.**
    Code comments may use the identifier; prose may not lean on it alone.
@@ -139,11 +139,11 @@ The rules the rows encode:
 9. **Distance is not a success metric unless the task grades on distance.** Parsing and geocoding are
    graded on identifying the right place: conformance, span coherence to gazetteer ancestry, currency,
    provenance. State distance only when the eval uses it, and say why it matters for this task.
-10. **A conclusion word appears after its evidence, not instead of it.** "Decisive" survives only in its
+10. **A conclusion word appears after its evidence rather than instead of it.** "Decisive" survives only in its
     defined gauntlet sense (see `packages/mailwoman/lib/eval-harness/gauntlet/ablation-expectation.md`); as
     praise it is deleted and the evidence stands alone.
-11. **A decision is specified.** "One judgment call needs your eyes" → the contract being changed, both
-    options, and what each costs. "Needs your eyes" is a handoff heading, not a description: the item
+11. **A decision is specified.** "One judgment call needs your eyes" → the interface being changed, both
+    options, and what each costs. "Needs your eyes" is a handoff heading rather than a description: the item
     under it states the decision.
 12. **Stock forms are banned.** The full list lives in `.claude/output-styles/mailwoman-development.md`
     § Keep the conversation human. The docs-page subset is enforced by Vale
@@ -156,15 +156,15 @@ Written (shipped on #1814):
 
 > One judgment call needs your eyes
 >
-> #1814 changes a tested contract. geocode-core-place-country.test.ts pinned #1738's "a disagreeing bearer
+> #1814 changes a tested interface. geocode-core-place-country.test.ts pinned #1738's "a disagreeing bearer
 > keeps the posterior soft"; the fix withholds it. My argument is that at w = 1 the soft anchor overturns a
 > 0.88 prominence lead by 0.04 — a prior that decides is not a prior — and Montréal's outcome is unchanged
 > either way. The alternative (keep it at a reduced weight) needs a measured weight and has no population
 > to measure on. That's flagged on the PR.
 
-The same report, written against this skill's contract:
+The same report, written against this skill's interface:
 
-> #1814 changes a tested contract. When someone types `Queen Street, Bristol`, the resolver picks between
+> #1814 changes a tested interface. When someone types `Queen Street, Bristol`, the resolver picks between
 > the two Bristols by adding two numbers: prominence (how big and well-known the place is) and a country
 > guess — a small model that reads the whole input and outputs a probability per country.
 >
