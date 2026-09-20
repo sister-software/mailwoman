@@ -19,6 +19,7 @@ import {
 	buildCorpusCensus,
 	ConfigProvenance,
 	DEFAULT_ADMISSION_FAMILY,
+	newestManifest,
 	normalizeArrowListColumn,
 	readAdmittedCountries,
 	readBoardCoverage,
@@ -26,8 +27,9 @@ import {
 	resolveTrainingConfig,
 	sameCorpusVersion,
 } from "mailwoman/coverage"
+import { utimes } from "node:fs/promises"
 import { join } from "path-ts"
-import { afterAll, beforeAll, describe, expect, it } from "vitest"
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 import { stringifyJSON } from "@mailwoman/core/json";
 
 const fixtures = new AsyncDisposableStack()
@@ -231,6 +233,35 @@ describe("buildCorpusCensus refuses an empty count", () => {
 		)
 
 		await expect(buildCorpusCensus(scratch)).rejects.toThrow(/Refusing to report an empty corpus/)
+	})
+
+	it("refuses to pick between two manifests sharing the newest modification time", async () => {
+		// An mtime tie is what a fresh checkout or a bulk copy produces. The sibling `newestConfig` broke this way over
+		// 225 configs and reported one arm's numbers under another arm's name (#2349), so this returns neither.
+		await using directory = await temporaryDirectory("mw-census-tie-")
+		const versionedRoot = directory.resolve("corpus", "versioned")
+		const paths: string[] = []
+
+		for (const version of ["v0.9.9-one", "v0.26.0-two"]) {
+			const manifest = join(String(versionedRoot), version, `corpus-${version}`, "MANIFEST.json")
+
+			await writeLocalJSONFile({ corpus_version: version, slices: [] }, manifest)
+			paths.push(String(manifest))
+		}
+
+		const shared = new Date("2026-09-20T12:00:00Z")
+
+		for (const path of paths) {
+			await utimes(path, shared, shared)
+		}
+
+		vi.stubEnv("MAILWOMAN_DATA_ROOT", String(directory.path))
+
+		try {
+			await expect(newestManifest()).rejects.toThrow(/share the newest modification time/)
+		} finally {
+			vi.unstubAllEnvs()
+		}
 	})
 
 	it("answers zero for a manifest that lists no train files at all", async () => {

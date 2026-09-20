@@ -581,10 +581,15 @@ export async function admittedByShippedGraphs(scope: ScopeConfig): Promise<Map<s
 /**
  * The newest corpus manifest, by modification time.
  *
- * Not by directory name. Corpus versions are `v0.9.9-si-bare-village`, `v0.26.0-trailing-region-leftcontext`,
- * `v8-jp-full-…` — a set that sorts neither lexically (`v0.9.9` beats `v0.26.0`, because `9` > `2`) nor numerically
- * (`v8` beats both). Measured: the name sort picked `v0.9.9` and reported the coverage of a corpus nine versions old,
- * with nothing in the output to say it had. Every caller names the manifest it used.
+ * The directory name cannot order these. Corpus versions are `v0.9.9-si-bare-village`,
+ * `v0.26.0-trailing-region-leftcontext`, `v8-jp-full-…` — a set that sorts neither lexically (`v0.9.9` beats
+ * `v0.26.0`, because `9` > `2`) nor numerically (`v8` beats both). Measured: the name sort picked `v0.9.9` and
+ * reported the coverage of a corpus nine versions old, with nothing in the output to say it had. Every caller names
+ * the manifest it used.
+ *
+ * Two manifests sharing the newest mtime raise rather than one of them being returned. An mtime tie is what a fresh
+ * checkout or a bulk copy produces, and the sibling `newestConfig` picked one of 225 configs that way and reported
+ * another arm's numbers under this arm's name (#2349). The caller that hits this passes the manifest it means.
  */
 export async function newestManifest(): Promise<string> {
 	const root = String(dataRootPath("corpus", "versioned"))
@@ -597,7 +602,22 @@ export async function newestManifest(): Promise<string> {
 		found.push({ path: candidate, at: (await statPath(candidate)).mtimeMs })
 	}
 
-	return found.toSorted((a, b) => b.at - a.at)[0]?.path ?? ""
+	const ordered = found.toSorted((a, b) => b.at - a.at)
+	const newest = ordered[0]
+
+	if (!newest) return ""
+
+	const tied = ordered.filter((candidate) => candidate.at === newest.at)
+
+	if (tied.length > 1) {
+		throw new Error(
+			`${tied.length} corpus manifests share the newest modification time (${new Date(newest.at).toISOString()}), ` +
+				`so which corpus is newest is undecidable here: ${tied.map((candidate) => candidate.path).join(", ")}. ` +
+				"Pass the manifest to census rather than letting this choose one."
+		)
+	}
+
+	return newest.path
 }
 
 

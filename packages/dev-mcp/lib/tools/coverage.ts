@@ -139,6 +139,9 @@ export function projectCoverage(report: CoverageReport, wantedCountries?: string
 		corpus_rows_total: report.corpusRowsTotal,
 		corpus_census_taken_at: report.corpusCensusTakenAt ?? "just now (recounted)",
 		config: report.configPath,
+		// This tool takes no manifest argument, so the corpus was chosen rather than named. Saying so lets a reader tell
+		// a census of the corpus they meant from a census of whichever one was written to most recently (#2349).
+		manifest_chosen_by: "newest modification time under the data root",
 		n_trained: trained.length,
 		n_trained_with_street_data: withStreet.length,
 		n_geocodable: report.countries.filter((c) => c.gazetteerPlaces > 0).length,

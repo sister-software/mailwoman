@@ -297,6 +297,9 @@ if (values["out-json"]) {
 				configProvenance: config.provenance,
 				shippedAdmittedCountries: [...shippedAdmitted.keys()].toSorted(),
 				manifestPath,
+				// No flag names the manifest, so it was chosen by modification time rather than given. The config beside it
+				// carries its own provenance for the same reason (#2349).
+				manifestProvenance: "newest modification time under the data root",
 				...funnel.provenance,
 			},
 			byStage: funnel.byStage,
