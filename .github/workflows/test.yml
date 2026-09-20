@@ -286,6 +286,36 @@ jobs:
       # the pre-commit hook only lints staged files, so repo-wide drift and --no-verify commits are
       # caught here. The first `uv run` syncs corpus-python's venv incl. the [train] extras (mypy
       # must resolve torch), so this step is slower than it looks on a cold runner.
+      # `@vvago/vale`'s postinstall downloads the binary from `api.github.com` with no Authorization
+      # header, so the hosted runner's shared address hits the anonymous quota and the download answers
+      # 403. `.yarnrc.yml` filters that failure to a warning on purpose, which leaves the install
+      # succeeding with no binary and `lint:prose:vocab` exiting 1 on "Missing Vale binary". That is a
+      # download failure reported in the same place and with the same exit code as a prose finding.
+      #
+      # Caching the extracted binary keeps the prose check measuring prose through a rate-limited
+      # install. Keyed on the package's own version, so a version bump fetches the matching binary
+      # rather than reusing the previous one and reporting its rule set as this version's.
+      - name: Read the Vale package version
+        id: vale-version
+        run: echo "version=$(node -p "require('./node_modules/@vvago/vale/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the Vale binary
+        id: vale-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: node_modules/@vvago/vale/native
+          key: vale-${{ runner.os }}-${{ steps.vale-version.outputs.version }}
+
+      # Saved only when this install produced a binary. On a miss whose download also failed, an
+      # unconditional save would store the empty directory under the key, and every later run would
+      # restore that absence instead of downloading.
+      - name: Save the Vale binary
+        if: steps.vale-cache.outputs.cache-hit != 'true' && hashFiles('node_modules/@vvago/vale/native/vale') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: node_modules/@vvago/vale/native
+          key: vale-${{ runner.os }}-${{ steps.vale-version.outputs.version }}
+
       - name: Lint
         run: yarn lint
 
