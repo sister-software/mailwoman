@@ -157,7 +157,7 @@ export const CODEPOINT_COVERAGE_NOTE =
  *
  * And the LPS End User Licence itself is not merely a commercial-use check. It is personal (§1.2 "personal to you and
  * the licence granted herein is for your benefit only"), internal-only (§2 "solely for your own internal business use …
- * all other uses are prohibited"), and NON-sublicensable (§9 "you may not novate, assign, transfer, sub-interface or
+ * all other uses are prohibited"), and non-sublicensable (§9 "you may not novate, assign, transfer, sub-contract or
  * otherwise part with this Licence"). Shipping BT rows in a published package is therefore out under any reading,
  * commercial or not — and that applies equally to the onspd re-publishers (doogal, FreeMapTools), whose own terms
  * reproduce the same exclusion. nisra's Central Postcode Directory is free but no better: its MOU forbids passing
