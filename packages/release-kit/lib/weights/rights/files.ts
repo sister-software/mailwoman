@@ -44,6 +44,18 @@ export interface ProvenanceDocument {
 	version_series: string
 	version_series_meaning: string
 	base_weights: string | null
+	/**
+	 * What this package inherits by decoding through another package's graph. `null` for a graph package.
+	 */
+	inherited_lineage: {
+		package: string
+		package_version: string
+		model_card_version: string | null
+		chain: string[]
+		note: string
+		attribution: Array<{ text: string; license_named: string | null }>
+		unresolved: string | null
+	} | null
 	artifacts: Array<{ path: string; md5: string | null; digest: string }>
 	training_attribution: {
 		status: "recorded" | "none-recorded-in-this-package"
@@ -84,8 +96,14 @@ function unresolvedQuestions(record: WeightsRightsRecord): string[] {
 
 	if (!record.attribution.length) {
 		questions.push(
-			"This package's model card records no training attribution. That states what the card holds, not that the artifacts have no attributable inputs."
+			record.inherited?.attribution.length
+				? `This package's model card records no training attribution of its own. It ships ${record.artifacts.length} artifacts and no model graph, so its own inputs are unattributed here while the ${record.inherited.attribution.length} entries under inherited_lineage describe ${record.inherited.package}'s graph.`
+				: "This package's model card records no training attribution. That states what the card holds, not that the artifacts have no attributable inputs."
 		)
+	}
+
+	if (record.inherited?.unresolved) {
+		questions.push(`The inherited lineage could not be resolved: ${record.inherited.unresolved}`)
 	}
 
 	for (const entry of record.attribution) {
@@ -120,6 +138,20 @@ export function renderProvenance(record: WeightsRightsRecord): ProvenanceDocumen
 		version_series: record.versionSeries,
 		version_series_meaning: SERIES_MEANING[record.versionSeries]!,
 		base_weights: record.baseWeights,
+		inherited_lineage: record.inherited
+			? {
+					package: record.inherited.package,
+					package_version: record.inherited.packageVersion,
+					model_card_version: record.inherited.modelCardVersion,
+					chain: record.inherited.chain,
+					note: `These entries are ${record.inherited.package}'s record of what its model graph was trained on. This package ships no graph and contributed none of these rows. Read them as the base's lineage rather than as a claim about this package's own artifacts, which are listed under artifacts and attributed under training_attribution.`,
+					attribution: record.inherited.attribution.map((entry) => ({
+						text: entry.text,
+						license_named: entry.licenseNamed,
+					})),
+					unresolved: record.inherited.unresolved,
+				}
+			: null,
 		artifacts: record.artifacts.map((artifact) => ({
 			path: artifact.path,
 			md5: artifact.md5,

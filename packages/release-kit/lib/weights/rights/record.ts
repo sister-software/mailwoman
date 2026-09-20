@@ -80,6 +80,27 @@ export interface AttributionRecord {
 }
 
 /**
+ * What an overlay inherits from the package whose model graph it decodes through.
+ *
+ * The attribution is the base's, restated here so a consumer who installed the overlay alone can read it, and labeled
+ * as the base's so nobody reads it as a claim about this package's own artifacts. `en-au` inherits `en-us`'s ten
+ * entries and contributed none of them: no AusTender row trained that encoder, and an inherited list presented as the
+ * overlay's own would say it did.
+ */
+export interface InheritedLineage {
+	package: string
+	packageVersion: string
+	modelCardVersion: string | null
+	attribution: AttributionRecord[]
+	/**
+	 * The chain from this package to the graph package, longest first, when a base itself declares a base. Cycles and an
+	 * unresolvable base are reported rather than followed.
+	 */
+	chain: string[]
+	unresolved: string | null
+}
+
+/**
  * An artifact this package ships whose attribution another package's card carries.
  */
 export interface ForeignAttribution {
@@ -112,6 +133,14 @@ export interface WeightsRightsRecord {
 	 */
 	attribution: AttributionRecord[]
 	foreignAttribution: ForeignAttribution[]
+	/**
+	 * The lineage this package inherits by decoding through another package's model graph, or `null` for a graph package.
+	 *
+	 * An overlay ships its own artifacts and no model graph, so what its rows were trained on is a fact about the base.
+	 * Naming the base and stopping leaves a consumer who installed the overlay alone unable to see any of it, which is
+	 * the state every overlay's record was in: `base_weights` filled, `training_attribution` empty.
+	 */
+	inherited: InheritedLineage | null
 	/**
 	 * The corpus the card names, when it names one. Not evidence of which records reached the model: the corpus on the
 	 * training volume moves, and no frozen per-release manifest exists to compare it against.
@@ -251,6 +280,8 @@ export async function readWeightsRightsRecord(repoRoot: string, workspace: strin
 		artifacts,
 		attribution: attribution.map((text) => ({ text, licenseNamed: licenseNamedIn(text) })),
 		foreignAttribution: [],
+		// Both filled by `readWeightsRightsRecords`: each is a question about the set rather than about one package.
+		inherited: null,
 		corpusVersion: stringOrNull(card?.training?.corpus_version),
 		tokenizerVersion: stringOrNull(card?.training?.tokenizer_version),
 	}
@@ -291,5 +322,71 @@ export async function readWeightsRightsRecords(
 		}
 	}
 
+	const byName = new Map(records.map((record) => [record.packageName, record]))
+
+	for (const record of records) {
+		record.inherited = resolveInherited(record, byName)
+	}
+
 	return records
+}
+
+/**
+ * Walk from an overlay to the package that owns the model graph, and carry that package's attribution back.
+ *
+ * Follows `mailwoman.baseWeights` rather than assuming one hop, since a base may itself declare one. A cycle and a base
+ * outside the set both stop the walk and are reported in `unresolved`, because a lineage that cannot be resolved is a
+ * different answer from a lineage that is empty — and this record exists to keep those apart.
+ */
+function resolveInherited(
+	record: WeightsRightsRecord,
+	byName: ReadonlyMap<string, WeightsRightsRecord>
+): InheritedLineage | null {
+	if (!record.baseWeights) return null
+
+	const chain: string[] = [record.packageName]
+	const seen = new Set<string>([record.packageName])
+	let current = record.baseWeights
+
+	for (;;) {
+		if (seen.has(current)) {
+			return {
+				package: current,
+				packageVersion: "",
+				modelCardVersion: null,
+				attribution: [],
+				chain: [...chain, current],
+				unresolved: `the base chain returns to ${current}, so no package in it owns a model graph`,
+			}
+		}
+
+		const base = byName.get(current)
+
+		if (!base) {
+			return {
+				package: current,
+				packageVersion: "",
+				modelCardVersion: null,
+				attribution: [],
+				chain: [...chain, current],
+				unresolved: `${current} is not among the packages read, so its lineage could not be resolved here`,
+			}
+		}
+
+		seen.add(current)
+		chain.push(current)
+
+		if (!base.baseWeights) {
+			return {
+				package: base.packageName,
+				packageVersion: base.packageVersion,
+				modelCardVersion: base.modelCardVersion,
+				attribution: base.attribution,
+				chain,
+				unresolved: null,
+			}
+		}
+
+		current = base.baseWeights
+	}
 }

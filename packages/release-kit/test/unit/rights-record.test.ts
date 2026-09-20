@@ -115,6 +115,130 @@ describe("readWeightsRightsRecords", () => {
 		}
 	})
 
+	it("carries the base's attribution to an overlay without making it the overlay's own", async () => {
+		const tree = await treeWith([
+			{
+				workspace: "packages/neural-weights-graph",
+				manifest: {
+					name: "@mailwoman/neural-weights-graph",
+					version: "10.0.0",
+					license: "AGPL-3.0-only OR LicenseRef-Commercial",
+					files: ["model.onnx"],
+				},
+				card: {
+					version: "9.1.0",
+					training: { data_attribution: ["Some Registry (OGL v3.0): the rows this graph trained on."] },
+				},
+			},
+			{
+				workspace: "packages/neural-weights-overlay",
+				manifest: {
+					name: "@mailwoman/neural-weights-overlay",
+					version: "10.0.0",
+					license: "AGPL-3.0-only OR LicenseRef-Commercial",
+					files: ["pair-index.bin"],
+					mailwoman: { baseWeights: "@mailwoman/neural-weights-graph" },
+				},
+				card: { version: "6.5.0" },
+			},
+		])
+
+		try {
+			const records = await readWeightsRightsRecords(tree.root, [
+				"packages/neural-weights-graph",
+				"packages/neural-weights-overlay",
+			])
+
+			const overlay = records[1]!
+
+			// The overlay ships no graph and contributed none of those rows. Its own attribution stays empty, and the
+			// base's travels under a field that says whose it is — the distinction that keeps a record from claiming the
+			// overlay's locale trained the encoder.
+			expect(overlay.attribution).toEqual([])
+			expect(overlay.inherited?.package).toBe("@mailwoman/neural-weights-graph")
+			expect(overlay.inherited?.packageVersion).toBe("10.0.0")
+			expect(overlay.inherited?.modelCardVersion).toBe("9.1.0")
+			expect(overlay.inherited?.attribution.map((entry) => entry.licenseNamed)).toEqual(["OGL v3.0"])
+			expect(overlay.inherited?.unresolved).toBeNull()
+
+			const document = renderProvenance(overlay)
+
+			expect(document.training_attribution.status).toBe("none-recorded-in-this-package")
+			expect(document.inherited_lineage?.attribution).toHaveLength(1)
+			expect(document.inherited_lineage?.note).toContain("contributed none of these rows")
+
+			// A graph package inherits nothing.
+			expect(records[0]!.inherited).toBeNull()
+		} finally {
+			await tree.dispose()
+		}
+	})
+
+	it("reports a base outside the set as unresolved rather than as an empty lineage", async () => {
+		const tree = await treeWith([
+			{
+				workspace: "packages/neural-weights-overlay",
+				manifest: {
+					name: "@mailwoman/neural-weights-overlay",
+					version: "10.0.0",
+					license: "AGPL-3.0-only OR LicenseRef-Commercial",
+					files: ["pair-index.bin"],
+					mailwoman: { baseWeights: "@mailwoman/neural-weights-absent" },
+				},
+				card: { version: "6.5.0" },
+			},
+		])
+
+		try {
+			const [record] = await readWeightsRightsRecords(tree.root, ["packages/neural-weights-overlay"])
+
+			expect(record!.inherited?.attribution).toEqual([])
+			expect(record!.inherited?.unresolved).toMatch(/not among the packages read/)
+			expect(renderProvenance(record!).unresolved.some((line) => line.includes("could not be resolved"))).toBe(true)
+		} finally {
+			await tree.dispose()
+		}
+	})
+
+	it("stops on a base chain that returns to a package it already walked", async () => {
+		const tree = await treeWith([
+			{
+				workspace: "packages/neural-weights-a",
+				manifest: {
+					name: "@mailwoman/neural-weights-a",
+					version: "10.0.0",
+					license: "AGPL-3.0-only OR LicenseRef-Commercial",
+					files: ["a.bin"],
+					mailwoman: { baseWeights: "@mailwoman/neural-weights-b" },
+				},
+				card: { version: "1.0.0" },
+			},
+			{
+				workspace: "packages/neural-weights-b",
+				manifest: {
+					name: "@mailwoman/neural-weights-b",
+					version: "10.0.0",
+					license: "AGPL-3.0-only OR LicenseRef-Commercial",
+					files: ["b.bin"],
+					mailwoman: { baseWeights: "@mailwoman/neural-weights-a" },
+				},
+				card: { version: "1.0.0" },
+			},
+		])
+
+		try {
+			const records = await readWeightsRightsRecords(tree.root, [
+				"packages/neural-weights-a",
+				"packages/neural-weights-b",
+			])
+
+			expect(records[0]!.inherited?.unresolved).toMatch(/returns to/)
+			expect(records[0]!.inherited?.attribution).toEqual([])
+		} finally {
+			await tree.dispose()
+		}
+	})
+
 	it("separates an overlay's version series from a graph package's", async () => {
 		const tree = await treeWith([
 			{

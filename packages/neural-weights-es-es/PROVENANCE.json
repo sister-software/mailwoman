@@ -7,6 +7,56 @@
 	"version_series": "overlay",
 	"version_series_meaning": "This package is a data-only overlay, and model_card_version names this overlay's own artifacts. The model graph its rows decode through is the one base_weights names, at that package's own model_card_version. Neither number is package_version, which moves in lockstep across every mailwoman workspace on every release.",
 	"base_weights": "@mailwoman/neural-weights-en-us",
+	"inherited_lineage": {
+		"package": "@mailwoman/neural-weights-en-us",
+		"package_version": "10.0.0",
+		"model_card_version": "9.1.0",
+		"chain": ["@mailwoman/neural-weights-es-es", "@mailwoman/neural-weights-en-us"],
+		"note": "These entries are @mailwoman/neural-weights-en-us's record of what its model graph was trained on. This package ships no graph and contributed none of these rows. Read them as the base's lineage rather than as a claim about this package's own artifacts, which are listed under artifacts and attributed under training_attribution.",
+		"attribution": [
+			{
+				"text": "HM Land Registry — Price Paid Data (OGL v3.0): the `synth-gb-v1` training extract (800,000 rows) NEW in 6.7.0. Crown copyright, attribution required. The GB placetype-pair index is built from the same source and ships in `neural-weights-en-gb`, whose own card carries its attribution.",
+				"license_named": "OGL v3.0"
+			},
+			{
+				"text": "LINZ-derived OpenAddresses NZ (CC-BY 4.0): the `synth-nz-v2` training extract (800,000 rows) NEW in 6.7.0.",
+				"license_named": "CC-BY 4.0"
+			},
+			{
+				"text": "OpenAddresses ES tuples (CC-BY per OA source): the `synth-es-pedania-v1` training extract (800,000 rows, below-municipio pedanía place names) NEW in 6.7.0.",
+				"license_named": "CC-BY per OA source"
+			},
+			{
+				"text": "BAN — Base Adresse Nationale (DINUM / IGN, Licence Ouverte 2.0): the `synth-fr-lieudit-v1` training extract (`nom_ld` lieu-dit field) NEW in 6.7.0, additional to the existing `synth-fr-fragment` extract (144,865 rows, 6.4.0).",
+				"license_named": "DINUM / IGN, Licence Ouverte 2.0"
+			},
+			{
+				"text": "Overture Maps Foundation — Addresses theme (CDLA-Permissive-2.0): the `overture-latam` CA/MX training extract (456,230 rows, 6.6.0). Attribution-only, not share-alike.",
+				"license_named": "CDLA-Permissive-2.0"
+			},
+			{
+				"text": "OpenAddresses CZ — ČÚZK RÚIAN (CC-BY 4.0): tokenizer-splice training text + the oa-cz coord eval sets",
+				"license_named": "CC-BY 4.0"
+			},
+			{
+				"text": "OpenAddresses PL — GUGiK / PRG (public, BDOT-derived): tokenizer-splice training text + the oa-pl coord eval sets",
+				"license_named": null
+			},
+			{
+				"text": "OpenAddresses SK — MINV/ZBGIS (CC-0/CC-BY per OA source): oa-sk coord eval set (free-rider validation)",
+				"license_named": "CC-0/CC-BY per OA source"
+			},
+			{
+				"text": "OpenAddresses SI — GURS (CC-BY per OA source): oa-si coord eval set (free-rider validation)",
+				"license_named": "CC-BY per OA source"
+			},
+			{
+				"text": "See THIRD_PARTY_NOTICES.md for the standing OpenAddresses / GeoNames / WOF attribution.",
+				"license_named": null
+			}
+		],
+		"unresolved": null
+	},
 	"artifacts": [
 		{
 			"path": "pair-index-es.bin",
@@ -43,7 +93,7 @@
 	"tokenizer_version": null,
 	"unresolved": [
 		"No digest is recorded for 5 of 5 declared artifacts: pair-index-es.bin, anchor-lexicon-v1.json, locality-surface-lexicon-v7.json, street-type-lexicon-v3.json, country-surface-lexicon-v1.json. An unrecorded digest is not a verified one.",
-		"This package's model card records no training attribution. That states what the card holds, not that the artifacts have no attributable inputs.",
+		"This package's model card records no training attribution of its own. It ships 5 artifacts and no model graph, so its own inputs are unattributed here while the 10 entries under inherited_lineage describe @mailwoman/neural-weights-en-us's graph.",
 		"Which records trained the model this package ships or inherits is unresolved. No frozen per-release training manifest exists, and the corpus named above is the recipe's corpus rather than a record of what reached the model."
 	]
 }

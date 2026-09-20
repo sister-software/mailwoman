@@ -7,6 +7,40 @@
 	"version_series": "overlay",
 	"version_series_meaning": "This package is a data-only overlay, and model_card_version names this overlay's own artifacts. The model graph its rows decode through is the one base_weights names, at that package's own model_card_version. Neither number is package_version, which moves in lockstep across every mailwoman workspace on every release.",
 	"base_weights": "@mailwoman/neural-weights-cjk",
+	"inherited_lineage": {
+		"package": "@mailwoman/neural-weights-cjk",
+		"package_version": "10.0.0",
+		"model_card_version": "0.0.3",
+		"chain": ["@mailwoman/neural-weights-zh-cn", "@mailwoman/neural-weights-cjk"],
+		"note": "These entries are @mailwoman/neural-weights-cjk's record of what its model graph was trained on. This package ships no graph and contributed none of these rows. Read them as the base's lineage rather than as a claim about this package's own artifacts, which are listed under artifacts and attributed under training_attribution.",
+		"attribution": [
+			{
+				"text": "Japanese address data © Overture Maps Foundation contributors (CDLA-Permissive-2.0); administrative names from Who's On First.",
+				"license_named": "CDLA-Permissive-2.0"
+			},
+			{
+				"text": "Japanese corporate-number register: 国税庁 法人番号公表サイト (National Tax Agency, Corporate Number Publication Site) — the three published fields are free for anyone to use under the site's 利用規約.",
+				"license_named": null
+			},
+			{
+				"text": "Korean road-name address data (주소DB): 행정안전부 (Ministry of the Interior and Safety), 도로명주소 (juso.go.kr), 공공누리 제1유형 (KOGL Type 1) — attribution required; commercial use, derivatives and redistribution permitted.",
+				"license_named": "KOGL Type 1"
+			},
+			{
+				"text": "Korean permit registry: 행정안전부 (Ministry of the Interior and Safety), 지방행정인허가데이터 (localdata.go.kr), 이용허락범위 제한 없음 — attribution to the ministry.",
+				"license_named": null
+			},
+			{
+				"text": "Taiwanese address data © Overture Maps Foundation contributors (CDLA-Permissive-2.0), from OpenAddresses under the 政府資料開放授權條款－第1版 (Open Government Data License, Taiwan, v1.0), which requires this attribution and voids the grant without it: New Taipei City Government Civil Affairs Bureau; Taichung City Government Civil Affairs Bureau; Kaohsiung City Government Civil Affairs Bureau; Taipei City Government Civil Affairs Bureau; Taoyuan City Government Civil Affairs Bureau; Tainan City Government Civil Affairs Bureau; Changhua County Government Civil Affairs Office; Pingtung County Government; Yunlin County Government; Hsinchu County Civil Affairs Office; Miaoli Civil Affairs Office; Hsinchu City Civil Affairs Office; Keelung City Government Civil Affairs Bureau; Penghu County Government; Kinmen County Civil Affairs Office (Overture release 2026-06-17.0).",
+				"license_named": "CDLA-Permissive-2.0"
+			},
+			{
+				"text": "Taiwanese company register: 提供機關／經濟部商業發展署 (Ministry of Economic Affairs, Administration for Commerce Development), 政府資料開放授權條款－第1版 (Open Government Data License, Taiwan, v1.0) — the 顯名聲明 each dataset prescribes.",
+				"license_named": "Open Government Data License, Taiwan, v1.0"
+			}
+		],
+		"unresolved": null
+	},
 	"artifacts": [
 		{
 			"path": "fst-zh-cn.bin",
@@ -23,7 +57,7 @@
 	"tokenizer_version": null,
 	"unresolved": [
 		"No digest is recorded for 1 of 1 declared artifacts: fst-zh-cn.bin. An unrecorded digest is not a verified one.",
-		"This package's model card records no training attribution. That states what the card holds, not that the artifacts have no attributable inputs.",
+		"This package's model card records no training attribution of its own. It ships 1 artifacts and no model graph, so its own inputs are unattributed here while the 6 entries under inherited_lineage describe @mailwoman/neural-weights-cjk's graph.",
 		"Which records trained the model this package ships or inherits is unresolved. No frozen per-release training manifest exists, and the corpus named above is the recipe's corpus rather than a record of what reached the model."
 	]
 }
