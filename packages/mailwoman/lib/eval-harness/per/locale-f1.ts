@@ -77,6 +77,7 @@ import { JSONSpliterator } from "spliterator"
 
 import { $public } from "#env"
 import { normalizeComponent } from "#eval-harness/per/tag-f1"
+import { deriveGeocodeRegister } from "#geocode/core"
 
 /**
  * Default anchor + gazetteer feed paths — the same ones `score-country-homograph.ts` and the verdict `oa-resolver-eval`
@@ -127,6 +128,15 @@ export interface PerLocaleF1Options {
 	 * P3 (#829/#690): disable the all-caps title-case shim (`normalizeCase: false`) — the all-caps read. Default false.
 	 */
 	rawCase?: boolean
+	/**
+	 * Parse each row in the register `deriveGeocodeRegister` gives it, which is what the geocode path does (#2345).
+	 *
+	 * Default false, which parses every row with no `inputMode` at all. The classifier reads an absent register as
+	 * `fragmented`, so that default feeds `streetTypeLexicon` and `localitySurfaceLexicon` to every row — including the
+	 * 1,896 of 2,660 `us.jsonl` rows production withholds them from. Both readings are wanted: the existing one to
+	 * compare against every floor reduce from it, and this one to describe the shipped configuration.
+	 */
+	productionRegister?: boolean
 }
 
 /**
@@ -378,6 +388,7 @@ export async function perLocaleF1(
 		goldenDir: options.goldenDir ?? "data/eval/golden/v0.1.2/dev",
 		files: options.files ?? ["us.jsonl", "fr.jsonl", "adversarial.jsonl"],
 		rawCase: options.rawCase ?? false,
+		productionRegister: options.productionRegister ?? false,
 	}
 
 	reportError("--- per-locale-f1.ts ---")
@@ -510,9 +521,14 @@ export async function perLocaleF1(
 			// this battery historically fed neither — so the check scored a config production doesn't run.
 			// M1 measured that gap at +2.3 micro on golden-us (the battery flattered production. the entire
 			// delta was the since-scoped locality bias, PR #1148). Score what ships.
+			const rowShape = computeQueryShape(row.raw)
+
 			const tree = await neural.parse(row.raw, {
 				postcodeRepair: true,
-				queryShape: computeQueryShape(row.raw),
+				queryShape: rowShape,
+				// Absent, the classifier reads the register as `fragmented` and feeds both evidence lexicons to every
+				// row. Production feeds them only where the kind verdict says so (#2345).
+				...(args.productionRegister ? { inputMode: deriveGeocodeRegister(row.raw, rowShape) } : {}),
 				...(wordConsistency ? { enforceWordConsistency: wordConsistency } : {}),
 				// P3 (#829/#690): --raw-case disables the all-caps title-case shim so the read measures the
 				// model's own case handling (the shim would mask any augment_upper_case_prob effect).

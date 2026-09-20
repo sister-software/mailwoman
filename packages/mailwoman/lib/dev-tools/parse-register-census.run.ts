@@ -1,6 +1,10 @@
 /**
  * How often each parse register fires, across the populations the model is trained and graded on.
  *
+ * The name carries `parse-` because `register` means two unrelated things in this directory: `register-board.ts`
+ * projects a query into a letter case (`asis`, `lower`, `upper`), while this counts the `fragmented` / `formatted`
+ * register that decides which evidence the decoder is fed.
+ *
  * The register decides whether the decoder is fed `streetTypeLexicon` and `localitySurfaceLexicon`
  * (`packages/neural/lib/classifier/index.ts`): `fragmented` feeds both, `formatted` withholds both. Training feeds them
  * on every row — `corpus-python/src/mailwoman_train/` carries no dropout for either channel — so the share of input
@@ -14,8 +18,8 @@
  *
  * Run:
  *
- *     node packages/mailwoman/lib/dev-tools/register-census.run.ts
- *     node packages/mailwoman/lib/dev-tools/register-census.run.ts --corpus <dir> --corpus-limit 200000
+ *     node packages/mailwoman/lib/dev-tools/parse-register-census.run.ts
+ *     node packages/mailwoman/lib/dev-tools/parse-register-census.run.ts --corpus <dir> --corpus-limit 200000
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
