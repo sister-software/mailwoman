@@ -60,7 +60,7 @@ const SOURCES: readonly Source[] = [
 		url: "https://data.oregon.gov/api/views/j2pk-zk6z/rows.csv?accessType=DOWNLOAD",
 	},
 	{
-		slug: "state-ia-builders",
+		slug: "state-ia-contractors",
 		filename: "IA_Active_Construction_Contractor_Registrations.csv",
 		url: "https://data.iowa.gov/api/views/dpf3-iz94/rows.csv?accessType=DOWNLOAD",
 	},

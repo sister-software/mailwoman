@@ -32,7 +32,7 @@ import { banAdapter } from "#fr/adapters/ban/adapter"
 import type { CorpusAdapter } from "#types"
 import { fccBdcAdapter } from "#us/adapters/fcc-bdc/adapter"
 import { stateHiSchoolsAdapter } from "#us/adapters/state/hi-schools/adapter"
-import { stateIaBuildersAdapter } from "#us/adapters/state/ia-builders/adapter"
+import { stateIaContractorsAdapter } from "#us/adapters/state/ia-contractors/adapter"
 import { stateNyNotariesAdapter } from "#us/adapters/state/ny-notaries/adapter"
 import { stateTxNotariesAdapter } from "#us/adapters/state/tx-notaries/adapter"
 import { tigerAdapter } from "#us/adapters/tiger/adapter"
@@ -69,7 +69,7 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	usgovNADAdapter,
 	usgovImlsPlsAdapter,
 	USGovIRSBMFAdapter,
-	stateIaBuildersAdapter,
+	stateIaContractorsAdapter,
 	stateTxNotariesAdapter,
 	stateNyNotariesAdapter,
 	stateHiSchoolsAdapter,
@@ -105,10 +105,10 @@ export {
 } from "#us/adapters/state/hi-schools/adapter"
 
 export {
-	STATE_IA_BUILDERS_ADAPTER_ID,
-	STATE_IA_BUILDERS_DEFAULT_LICENSE,
-	stateIaBuildersAdapter,
-} from "#us/adapters/state/ia-builders/adapter"
+	STATE_IA_CONTRACTORS_ADAPTER_ID,
+	STATE_IA_CONTRACTORS_DEFAULT_LICENSE,
+	stateIaContractorsAdapter,
+} from "#us/adapters/state/ia-contractors/adapter"
 
 export {
 	STATE_NY_NOTARIES_ADAPTER_ID,

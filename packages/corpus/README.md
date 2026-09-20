@@ -102,7 +102,7 @@ the source that only the adapter's author has read. Ten of the 23 adapters here 
 role: four facility (`state-hi-schools`, `usgov-hrsa-fqhc`, `usgov-imls-pls`,
 `usgov-samhsa-treatment-locator`), three mailing (`synth-po-box`, `state-tx-notaries`,
 `usgov-irs-bmf`), two practice (`usgov-nppes`, `state-ny-notaries`) and one registered-office
-(`state-ia-builders`). A defaulted field would record premise for all ten.
+(`state-ia-contractors`). A defaulted field would record premise for all ten.
 
 **Assertion per field.** `AssertedProposition` in
 [`@mailwoman/evidence`](../evidence/lib/status.ts) records what a publisher asserts, per field, in

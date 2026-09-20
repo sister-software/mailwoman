@@ -341,7 +341,7 @@ home"; PIP is the gap that makes the claim untrue.
 ```
 corpus/src/adapters/fcc-bdc/adapter.ts:78                        corpus/src/adapters/usgov-hrsa-fqhc/adapter.ts:78
 corpus/src/adapters/state-hi-schools/adapter.ts:52               corpus/src/adapters/usgov-imls-pls/adapter.ts:41
-corpus/src/adapters/state-ia-builders/adapter.ts:39           corpus/src/adapters/usgov-irs-bmf/adapter.ts:41
+corpus/src/adapters/state-ia-contractors/adapter.ts:39           corpus/src/adapters/usgov-irs-bmf/adapter.ts:41
 corpus/src/adapters/state-ny-notaries/adapter.ts:37              corpus/src/adapters/usgov-nppes/adapter.ts:44
 corpus/src/adapters/state-tx-notaries/adapter.ts:38              corpus/src/adapters/usgov-samhsa-treatment-locator/adapter.ts:69
 ```

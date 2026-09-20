@@ -20,7 +20,7 @@ describe("findPrefixGroups", () => {
 	test("groups three siblings and leaves a pair alone", () => {
 		const groups = findPrefixGroups([
 			`${ADAPTERS}/state-hi-schools/adapter.ts`,
-			`${ADAPTERS}/state-ia-builders/adapter.ts`,
+			`${ADAPTERS}/state-ia-contractors/adapter.ts`,
 			`${ADAPTERS}/state-ny-notaries/adapter.ts`,
 			`${ADAPTERS}/juso-kr/adapter.ts`,
 			`${ADAPTERS}/localdata-kr/adapter.ts`,
@@ -32,7 +32,7 @@ describe("findPrefixGroups", () => {
 
 		expect(groups[0]?.members.map((member) => member.name)).toEqual([
 			"state-hi-schools",
-			"state-ia-builders",
+			"state-ia-contractors",
 			"state-ny-notaries",
 		])
 	})
@@ -154,7 +154,7 @@ describe("prefixDirectoriesCheck", () => {
 			repoRoot: ".",
 			trackedFiles: [
 				`${ADAPTERS}/state-hi-schools/adapter.ts`,
-				`${ADAPTERS}/state-ia-builders/adapter.ts`,
+				`${ADAPTERS}/state-ia-contractors/adapter.ts`,
 				`${ADAPTERS}/state-ny-notaries/adapter.ts`,
 			],
 		})

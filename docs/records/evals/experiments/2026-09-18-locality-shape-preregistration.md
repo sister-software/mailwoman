@@ -129,7 +129,7 @@ extending it is not the action this reading calls for:
 
 Diffed as parsed YAML rather than as text, `v5.9.0-locality-shape-60k.yaml` differs from
 `v5.7.0-region-code-and-unit-60k.yaml` in five keys: `data.corpus_dir`, `train.output_dir`,
-`train.trackio_run_name`, and `state-ia-builders: 0.0` / `usgov-imls-pls: 0.0`, which v5.8.0
+`train.trackio_run_name`, and `state-ia-contractors: 0.0` / `usgov-imls-pls: 0.0`, which v5.8.0
 added so the loader starts and which reproduce the zero exposure v5.7.0 gave both sources. Seed 42,
 60,000 steps, `gazetteer_choreography: true`, from scratch with no `init_from`.
 

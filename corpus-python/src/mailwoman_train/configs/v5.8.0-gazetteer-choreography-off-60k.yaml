@@ -240,8 +240,8 @@ data:
     # zero rows from either. `_index_by_source` now reads every source in a file, which makes them
     # visible, and `_apply_source_weights` refuses a source the weights never mention. Naming them at
     # zero reproduces the exposure v5.7.0 had. Measured on v0.31.0-region-code-and-unit:
-    # state-ia-builders 74,587 rows in part-0672, usgov-imls-pls 80,402 rows in the same file.
-    state-ia-builders: 0.0
+    # state-ia-contractors 74,587 rows in part-0672, usgov-imls-pls 80,402 rows in the same file.
+    state-ia-contractors: 0.0
     usgov-imls-pls: 0.0
     deepseek-kryptonite: 3.0
     synth-intersection: 1.0
