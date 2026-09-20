@@ -57,6 +57,7 @@ import {
 import {
 	artifactURL,
 	BUNDLES,
+	describeBundleRights,
 	filterArtifacts,
 	resolveBundleArtifacts,
 	type BundleArtifact,
@@ -217,6 +218,13 @@ async function pullBundles(
 			})
 
 			continue
+		}
+
+		// Before the transfer rather than after it. Taking a copy is the act the terms govern, so an operator reads them
+		// while they can still decline. A dry run prints the same lines, which is what makes `--dry-run` answer "what
+		// would this oblige me to" as well as "what would it download".
+		for (const line of describeBundleRights(bundle)) {
+			checks.push({ ok: true, check: `${name}: terms`, detail: line })
 		}
 
 		const artifacts = filterArtifacts(resolveBundleArtifacts(bundle, manifest), opts.only)

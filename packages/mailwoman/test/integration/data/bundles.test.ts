@@ -12,6 +12,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	artifactURL,
 	BUNDLES,
+	describeBundleRights,
 	filterArtifacts,
 	needsDownload,
 	PUBLIC_BUCKET_BASE_URL,
@@ -94,10 +95,38 @@ describe("artifactURL", () => {
 	})
 })
 
+describe("every bundle states its terms before it is pulled", () => {
+	// A bundle is downloaded rather than installed with the package, so its terms reach an operator through nothing the
+	// npm tarball carries. These are printed by `data pull` before the transfer, which is the moment an operator can
+	// still decline.
+	it.each(Object.values(BUNDLES))("$name names publishers, terms and conditions", (bundle) => {
+		expect(bundle.rights.publishers.length).toBeGreaterThan(0)
+		expect(bundle.rights.terms.length).toBeGreaterThan(0)
+		expect(bundle.rights.conditions.length).toBeGreaterThan(0)
+	})
+
+	it("prints what stays unresolved beside what is required", () => {
+		// A bundle whose conditions are listed and whose gaps are not reads as fully established. Every bundle here
+		// draws on sources whose per-row terms nobody has traced, and the lines say so.
+		const lines = describeBundleRights(BUNDLES["candidate"]!)
+
+		expect(lines.some((line) => line.startsWith("published by"))).toBe(true)
+		expect(lines.some((line) => line.startsWith("you must:"))).toBe(true)
+		expect(lines.some((line) => line.startsWith("unresolved:"))).toBe(true)
+	})
+})
+
 describe("resolveBundleArtifacts — maps versioned names", () => {
+	/**
+	 * A bundle must declare its terms to compile, so these fixtures carry an empty declaration. Empty is a fixture that
+	 * states nothing rather than a bundle with no obligations, and `describeBundleRights` has its own tests.
+	 */
+	const noRights = { publishers: [], terms: [], conditions: [], unresolved: [] }
+
 	const bundle: DataBundle = {
 		name: "us",
 		description: "test",
+		rights: noRights,
 		artifacts: [
 			{
 				remotePath: "street/us/ca/situs.db",
@@ -137,6 +166,7 @@ describe("resolveBundleArtifacts — maps versioned names", () => {
 		const candidate: DataBundle = {
 			name: "candidate",
 			description: "test",
+			rights: { publishers: [], terms: [], conditions: [], unresolved: [] },
 			artifacts: [
 				{
 					remotePath: "gazetteer/2026-07-07a/candidate.db",

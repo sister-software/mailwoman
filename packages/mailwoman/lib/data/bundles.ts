@@ -53,12 +53,46 @@ export interface BundleArtifact {
 }
 
 /**
+ * What a bundle's rows came from and what using them obliges an operator to.
+ *
+ * A bundle is downloaded rather than installed with the package, so its terms reach an operator through nothing the npm
+ * tarball carries. `data --list` and `data pull` print these before the transfer, since the moment to read terms is
+ * before taking a copy rather than after.
+ *
+ * `unresolved` is a field rather than an omission. A bundle assembled from several upstream sources carries whatever is
+ * unestablished about them, and leaving that blank would present a partially-read bundle as a fully-read one.
+ */
+export interface BundleRights {
+	/**
+	 * Who published the rows, as they name themselves.
+	 */
+	publishers: readonly string[]
+	/**
+	 * The terms as the publisher names them. Several entries where a bundle draws on several publications.
+	 */
+	terms: readonly string[]
+	/**
+	 * What an operator must do, stated as the obligation rather than as a license name.
+	 */
+	conditions: readonly string[]
+	/**
+	 * What nobody has established about this bundle's terms.
+	 */
+	unresolved: readonly string[]
+}
+
+/**
  * A named, downloadable subset of Mailwoman's public data — what `mailwoman data pull <name>` fetches.
  */
 export interface DataBundle {
 	name: string
 	description: string
 	artifacts: BundleArtifact[]
+	/**
+	 * The terms this bundle's rows carry. Required, so a bundle added without one fails to compile rather than
+	 * downloading with its obligations unstated.
+	 */
+	rights: BundleRights
 }
 
 /**
@@ -172,6 +206,21 @@ export const BUNDLES: Record<string, DataBundle> = {
 				approxBytes: 2_880_921_600,
 			},
 		],
+		rights: {
+			publishers: ["Who's On First", "GeoNames"],
+			terms: [
+				"Who's On First: Creative Commons Zero covers Mapzen's own work, and the dataset is also a modification of existing open data whose sources carry their own terms.",
+				"GeoNames: Creative Commons Attribution.",
+			],
+			conditions: [
+				"Link back to the Who's On First license, which its own LICENSE.md makes a requirement rather than a courtesy.",
+				"Attribute GeoNames.",
+			],
+			unresolved: [
+				"Which upstream project each row's name came from. Who's On First records a geometry source per record and the corpus adapters read none of it — see docs/engineering/reference/artifact-rights-inventory.mdx.",
+				"Whether the Ordnance Survey and Royal Mail notice in Who's On First's LICENSE.md reaches any row in this bundle.",
+			],
+		},
 	},
 	poi: {
 		name: "poi",
@@ -184,6 +233,14 @@ export const BUNDLES: Record<string, DataBundle> = {
 				approxBytes: 3_889_184_768,
 			},
 		],
+		rights: {
+			publishers: ["Overture Maps Foundation"],
+			terms: ["Overture Places theme: CDLA-Permissive-2.0."],
+			conditions: ["Attribute Overture Maps Foundation contributors."],
+			unresolved: [
+				"Which upstream projects the Overture Places theme drew each row from, and whether any of them carries a condition beyond the CDLA attribution.",
+			],
+		},
 	},
 	fr: {
 		name: "fr",
@@ -196,6 +253,19 @@ export const BUNDLES: Record<string, DataBundle> = {
 				approxBytes: 6_952_509_440,
 			},
 		],
+		rights: {
+			publishers: ["DINUM and IGN, for Base Adresse Nationale"],
+			terms: [
+				"Licence Ouverte 2.0, the attribution-only half of BAN's dual grant. The text as retrieved on 2026-09-21 is archived at packages/corpus/data/licenses/licence-ouverte-2.0.md.",
+			],
+			conditions: [
+				"Name the source, at minimum the licensor, and the date of the last update — the condition the license states in those words.",
+				"Do not suggest the licensor endorses the use.",
+			],
+			unresolved: [
+				"Whether the election of the attribution-only half binds a redistributor of this database, since BAN is dual-licensed and the other half carries share-alike.",
+			],
+		},
 	},
 	us: {
 		name: "us",
@@ -203,7 +273,37 @@ export const BUNDLES: Record<string, DataBundle> = {
 			"US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, " +
 			"50 states + DC + VI (103 files, ~41.3 GB total). Use --only <slug> to pull a single state.",
 		artifacts: usStreetArtifacts(),
+		rights: {
+			publishers: ["United States Census Bureau, for TIGER/Line", "OpenAddresses, per contributing source"],
+			terms: [
+				"TIGER/Line: a work of the United States Government, which carries no copyright under 17 U.S.C. § 105.",
+				"OpenAddresses: per-source terms that differ, and which THIRD_PARTY_NOTICES.md records as commonly requiring attribution and share-alike.",
+			],
+			conditions: [
+				"Read the terms of the contributing OpenAddresses source for the state you pulled. They are not one grant.",
+			],
+			unresolved: [
+				"Which OpenAddresses source supplied each state's situs rows, and what each of those sources requires. A per-state answer needs the contributing source list rather than the bundle.",
+			],
+		},
 	},
+}
+
+/**
+ * One bundle's terms as lines for a terminal, publishers first, then terms, conditions and what stays unresolved.
+ *
+ * The unresolved lines are printed rather than held back. A bundle whose conditions are listed and whose gaps are not
+ * reads as fully established, and an operator deciding whether to take a copy is the reader those gaps are for.
+ */
+export function describeBundleRights(bundle: DataBundle): string[] {
+	const { rights } = bundle
+
+	return [
+		`published by ${rights.publishers.join("; ")}`,
+		...rights.terms.map((line) => `terms: ${line}`),
+		...rights.conditions.map((line) => `you must: ${line}`),
+		...rights.unresolved.map((line) => `unresolved: ${line}`),
+	]
 }
 
 /**
