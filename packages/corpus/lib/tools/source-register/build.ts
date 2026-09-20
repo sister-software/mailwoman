@@ -430,7 +430,7 @@ async function readSources(
 			source.upstreamLineage = upstream
 				.split(";")
 				.map((entry) => entry.trim())
-				.filter(Boolean)
+				.filter((entry) => entry.length > 0)
 		}
 
 		records.push(source)
