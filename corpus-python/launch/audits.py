@@ -206,3 +206,44 @@ def audit_suffix_feed(
     )
     vol.commit()
     print(f"\nAudit committed to volume: {json_path}")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    timeout=3600,
+    memory=16384,
+)
+def audit_validation_coverage(
+    config_name: str = "v5.9.0-locality-shape-60k.yaml",
+    countries: str = "US,FR,DE,GB",
+) -> None:
+    """Which countries the validation and test splits hold rows for, and how many carry a street.
+
+    The two splits are five parquet files holding roughly 1.9 million rows each, so this reads the
+    whole population rather than sampling it the way the rest of this module has to. The nearest
+    measured figure is 12 s and 9 s for a scan of those same files filtered to one country, which
+    is a different operation: that one skipped row groups by their `country` statistics and this one
+    reads every row. Treat that as a lower bound until this function reports its own duration.
+
+    The reading it exists to surface: GB held 0 rows in both splits of `v0.32.0-locality-shape`
+    while US held 1,839,635 in each, and no number a run prints today says so (#2353).
+    """
+    import sys
+    from pathlib import Path
+
+    vol.reload()
+    sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
+
+    config_path = _config_path(config_name)
+
+    from mailwoman_train.audits.validation_coverage import run
+
+    json_path = Path(f"{AUDITS}/validation-coverage-{config_path.stem}.json")
+    run(
+        config_path,
+        json_path=json_path,
+        countries=tuple(code.strip().upper() for code in countries.split(",") if code.strip()),
+    )
+    vol.commit()
+    print(f"\nAudit committed to volume: {json_path}")

@@ -8,7 +8,7 @@ validates well from a locale it does not validate at all. Measured on `v0.32.0-l
 holds 1,839,635 validation rows, 1,780,240 of them with a street. Three of the four locales iron rule
 6 blocks a default-on regression on therefore have no street-level validation signal.
 
-THE MECHANISM IS THE SPLIT RULE, NOT A FILTER. `splitForRow` in
+THE SPLIT RULE PRODUCES THIS. `splitForRow` in
 `packages/corpus/lib/utils/split.ts` sends a row to val or test only when its `components.region`
 matches a declared holdout string for its country, and `defaultHoldouts()` names US, FR and DE. So
 the splits are geographic holdouts over three countries rather than a sample of the corpus, every

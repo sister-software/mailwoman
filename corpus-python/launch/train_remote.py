@@ -46,6 +46,7 @@ from .artifacts import export_onnx, push_artifact_r2, quantize_onnx
 from .audits import (
     audit_epoch_mixture,
     audit_suffix_feed,
+    audit_validation_coverage,
     census_comma_segment_number,
     census_opening_token,
     census_region_code_token,
@@ -68,6 +69,7 @@ __all__ = [
     "app",
     "audit_epoch_mixture",
     "audit_suffix_feed",
+    "audit_validation_coverage",
     "bucket_census",
     "census_comma_segment_number",
     "census_opening_token",
