@@ -39,7 +39,13 @@ import { scriptFamilyBase } from "#char-encoder"
 import type { NeuralAddressClassifier } from "#classifier/index"
 import type { ParseOpts } from "#classifier/options"
 import type { NeuralParseTrace } from "#trace"
-import { carriesFamilySegmentFor, FAMILIES, type RoutingDecision, RouteSource } from "#weights/families"
+import {
+	carriesFamilySegmentFor,
+	FAMILIES,
+	leadsWithFamilyScriptFor,
+	type RoutingDecision,
+	RouteSource,
+} from "#weights/families"
 
 /**
  * The family claiming a comma segment of this input, or `undefined`.
@@ -65,6 +71,36 @@ function familyForSegment(shape: Pick<QueryShape, "tokenClasses" | "segments">):
  */
 export function carriesFamilySegment(shape: Pick<QueryShape, "tokenClasses" | "segments">): boolean {
 	return familyForSegment(shape) !== undefined
+}
+
+/**
+ * What {@linkcode routeFamilyForText} would answer with the leading-run reading added, without changing what it answers
+ * today.
+ *
+ * A candidate for measurement. No serving path calls it. `route-census.run.ts` runs it beside the shipped router so the
+ * rows the reading moves can be counted on the whole board before anybody proposes shipping it — the board is
+ * hand-authored and over-represents the defect it was written for, so the 13 rows the proposal was built from are not
+ * the population to decide on.
+ *
+ * The reading is tried last. A row the shipped router already names keeps its answer, so this can only add routes,
+ * which makes the difference between the two columns the exact set of rows a change would move.
+ */
+export function routeFamilyWithLeadingRun(text: string): RoutingDecision {
+	const shipped = routeFamilyForText(text)
+
+	if (shipped.family) return shipped
+
+	const shape = computeQueryShape(text)
+
+	for (const family of FAMILIES) {
+		if (!family.routingScripts) continue
+
+		if (leadsWithFamilyScriptFor(shape, family.routingScripts)) {
+			return { family: family.family, source: RouteSource.Script, confidence: 1 }
+		}
+	}
+
+	return shipped
 }
 
 /**

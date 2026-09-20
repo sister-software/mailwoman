@@ -258,6 +258,40 @@ export function familyForScript(script: string): WeightsFamily | undefined {
  * routed. Reading whitespace runs instead would reach it and would also re-admit the Han venue names, so the comma is
  * the boundary this rule reads.
  */
+/**
+ * Whether the input opens with a run of tokens written in a script the given family serves.
+ *
+ * A candidate predicate, measured and unshipped. {@linkcode routeFamilyForText} does not read it, and enabling it would
+ * change which graph serves an existing request. `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx` requires a route
+ * comparison and a full regression board before that ships.
+ *
+ * It exists because {@linkcode carriesFamilySegmentFor} reads comma segments, and four CN board rows write their Han
+ * unit and their Latin province in one whitespace-separated run — `六分场七队 Hunan` has no comma, so no segment is wholly
+ * Han and the row stays on the Latin graph. Reading whitespace runs instead would reach those four and would also reach
+ * the venue rows the segment rule exists to exclude, because `Far East Chinese 口福羊汤, 13 Gerrard St, London W1D 5PS`
+ * carries a whitespace-bounded Han run too.
+ *
+ * Position separates them where extent does not. In the four CN rows the Han leads the input. In the venue rows the Han
+ * follows Latin words or is glued to one. So this reads the first token that carries a script at all and asks whether
+ * that script is the family's. Tokens carrying no script (`Zyyy` — a house number, a postal code) are skipped rather
+ * than answering, which keeps `〒150-0001 Tokyo` from being decided by its postal mark.
+ *
+ * It reaches no input written wholly in Latin script, so the two romaji JP board rows stay where they are under it. A
+ * locale or postcode predicate is the only kind that reaches those.
+ */
+export function leadsWithFamilyScriptFor(
+	shape: Pick<QueryShape, "tokenClasses">,
+	scripts: ReadonlySet<string>
+): boolean {
+	for (const token of shape.tokenClasses) {
+		if (token.script === "Zyyy") continue
+
+		return scripts.has(token.script)
+	}
+
+	return false
+}
+
 export function carriesFamilySegmentFor(
 	shape: Pick<QueryShape, "tokenClasses" | "segments">,
 	scripts: ReadonlySet<string>

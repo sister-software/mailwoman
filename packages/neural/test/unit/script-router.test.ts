@@ -13,6 +13,7 @@ import {
 	carriesFamilySegment,
 	type ParseOpts,
 	type RoutableClassifier,
+	routeFamilyWithLeadingRun,
 	ScriptRoutedClassifier,
 	scriptFamilyForText,
 } from "@mailwoman/neural"
@@ -73,6 +74,63 @@ describe("scriptFamilyForText", () => {
 		// would also re-admit the venue names above.
 		expect(scriptFamilyForText("六分场七队 Hunan")).toBeUndefined()
 		expect(scriptFamilyForText("一分场一队 Hunan China")).toBeUndefined()
+	})
+})
+
+describe("routeFamilyWithLeadingRun", () => {
+	/**
+	 * The four CN board rows the shipped router leaves on the Latin graph. Each writes its Han unit and its Latin
+	 * province in one whitespace-separated run, so no comma segment is wholly Han and `carriesFamilySegment` abstains.
+	 */
+	const HAN_LED = [
+		"六分场七队 Hunan",
+		"红色边疆一分场十一队 Heilongjiang",
+		"一分场一队 Hunan China",
+		"红花分场十七连 Jiangsu China",
+	]
+
+	/**
+	 * The four board rows that pass today with Han or Hangul inside a Latin line. A reading that moves one of these
+	 * changes the graph serving a checking row, and two of them are GB, which `scope.config.json` names in
+	 * `dRuleProtected`.
+	 */
+	const LATIN_LED = [
+		"JJAN! 짠 Châtelet, 14 Rue du Pont Neuf, 75001 Paris",
+		"SOKCHO 牛者, 6 Rue d'Antin, 75002 Paris",
+		"Four Seasons Inn四季酒家, New Smithfield Market, Unit, M8, Manchester M11 2WW, United Kingdom",
+		"Far East Chinese 口福羊汤, 13 Gerrard St, London W1D 5PS",
+	]
+
+	it.each(HAN_LED)("names the character family for a Han-led line the shipped router abstains on: %s", (input) => {
+		expect(scriptFamilyForText(input)).toBeUndefined()
+		expect(routeFamilyWithLeadingRun(input).family).toBe("cjk")
+	})
+
+	it.each(LATIN_LED)("leaves a Latin-led line where the shipped router put it: %s", (input) => {
+		expect(routeFamilyWithLeadingRun(input).family).toBe(scriptFamilyForText(input))
+	})
+
+	it("keeps the shipped router's answer wherever that router names a family", () => {
+		// Tried last and only on an abstention, which is what makes the difference between the two arms exactly the
+		// rows the reading adds. A reading that could also change an existing answer would need its own comparison.
+		for (const input of ["富山県中新川郡上市町大岩148-7", "逊克二分场四队, HEILONGJIANG, CHINA", "新加坡"]) {
+			expect(routeFamilyWithLeadingRun(input).family).toBe(scriptFamilyForText(input))
+		}
+	})
+
+	it("reaches no input written wholly in Latin script, so the two romaji JP rows stay put", () => {
+		for (const input of [
+			"4-chōme-12-10 Jingūmae, Shibuya, Tokyo 150-0001, Japan",
+			"Rinrin, 3 Chome-57 Tenmanmachi, Takayama, Gifu 506-0025, Japan",
+		]) {
+			expect(routeFamilyWithLeadingRun(input).family).toBeUndefined()
+		}
+	})
+
+	it("skips a leading token carrying no script rather than letting it decide", () => {
+		// `Zyyy` is the class for a house number or a postal mark. Answering on the first token regardless would make
+		// `〒150-0001` decide a route, and the postal mark belongs to no family's script set.
+		expect(routeFamilyWithLeadingRun("〒150-0001 東京都渋谷区").family).toBe("cjk")
 	})
 })
 

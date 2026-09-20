@@ -63,7 +63,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { formatPercent } from "@mailwoman/core/stats"
 import { isoSeconds } from "@mailwoman/core/utils"
 import { detectLocale, scoreByPostcode, scoreByScript } from "@mailwoman/locale-hint"
-import { FAMILIES, familyForLocale, routeFamilyForText } from "@mailwoman/neural"
+import { FAMILIES, familyForLocale, routeFamilyForText, routeFamilyWithLeadingRun } from "@mailwoman/neural"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { join } from "path-ts"
 import { JSONSpliterator } from "spliterator"
@@ -226,6 +226,23 @@ const byCountry = new Map<string, { rows: number; script: Record<string, number>
 const disagreements: Disagreement[] = []
 const misroutes: Misroute[] = []
 
+/**
+ * One row the candidate leading-run reading would send to a different graph than the shipped router sends it to.
+ *
+ * The reading is tried after the shipped router and only when that router abstained, so this list is the whole
+ * difference between the two arms — every row a change would move, and no row it would leave alone.
+ */
+interface MovedRow {
+	id: string
+	country: string
+	status: string
+	from: string
+	to: string
+	input: string
+}
+
+const movedByLeadingRun: MovedRow[] = []
+
 let labeledByTags = 0
 
 let rowsRead = 0
@@ -273,6 +290,18 @@ for (const dir of countryDirs) {
 			const script = routeFamilyForText(row.input).family ?? CALLER
 			const hint = localeHintAnswer(row.input)
 			const localeHint = hint.family
+			const leading = routeFamilyWithLeadingRun(row.input).family ?? CALLER
+
+			if (leading !== script) {
+				movedByLeadingRun.push({
+					id: row.id ?? "(no id)",
+					country: row.country,
+					status: row.status ?? "(none)",
+					from: resolved(script),
+					to: resolved(leading),
+					input: row.input,
+				})
+			}
 
 			answers.script![script] = (answers.script![script] ?? 0) + 1
 			answers["locale-hint"]![localeHint] = (answers["locale-hint"]![localeHint] ?? 0) + 1
@@ -359,6 +388,43 @@ if (misroutes.length) {
 	}
 } else {
 	console.log(`The shipped router sends every one of them to a family that can emit their tags.`)
+}
+
+// The candidate arm, reported on the whole board rather than on the rows the proposal was built from. `#2350` states
+// the reading as a hypothesis with four rows it must move and four it must not, and the board is hand-authored, so the
+// count that decides anything is over every row rather than over those eight.
+console.log(
+	`\n## Candidate reading — the leading family-script run, measured and unshipped\n\n` +
+		`It would move ${movedByLeadingRun.length} of ${graded} rows ` +
+		`(${formatPercent(movedByLeadingRun.length, graded, 1)}) to a different graph. Nothing serving reads it: ` +
+		`\`routeFamilyWithLeadingRun\` tries it only where the shipped router abstained, so this list is the whole ` +
+		`difference between the two arms.\n`
+)
+
+if (movedByLeadingRun.length) {
+	const movedMisroutes = movedByLeadingRun.filter((moved) => misroutes.some((entry) => entry.id === moved.id)).length
+	const movedChecking = movedByLeadingRun.filter((moved) => moved.status === "pass").length
+
+	console.log(
+		`${movedMisroutes} of the ${misroutes.length} rows the label sets grade as mis-routed are among them. ` +
+			(movedChecking
+				? `${movedChecking} of the moved rows check rather than track, so the board would grade the change on ` +
+					`those at once.`
+				: `Every moved row tracks rather than checks, so the board would report no pass or fail either way — ` +
+					`whether the reading helps has to be measured by parsing the moved rows on both graphs.`) +
+			"\n"
+	)
+	console.log(`| id | status | country | from | to | input |`)
+	console.log(`| --- | --- | --- | --- | --- | --- |`)
+
+	for (const entry of movedByLeadingRun) {
+		console.log(
+			`| \`${entry.id}\` | ${entry.status} | ${entry.country} | ${entry.from} | ${entry.to} | ` +
+				`${entry.input.replaceAll("|", "\\|")} |`
+		)
+	}
+} else {
+	console.log(`No row on this board reads differently under it.`)
 }
 
 console.log(`\n## What each router answers\n`)
