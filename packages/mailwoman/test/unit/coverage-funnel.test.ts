@@ -159,6 +159,37 @@ describe("readCoverageFunnel", () => {
 		expect(report.rows.find((row) => row.iso2 === "IO")?.stages.researched.state).toBe(StageState.Absent)
 	})
 
+	it("carries all three ingest conditions, so no one of them reads as the bottleneck", async () => {
+		// `ingestEligibilityProblems` refuses a source for an unchecked licence, an unresolved address role and
+		// unmeasured coverage alike. An earlier version of this funnel carried `licensed` and neither of the others, so
+		// the one universal blocker it could see is the one it reported. The fixture's sources carry no role and no
+		// coverage, which is the state of all 389 in the committed register.
+		const report = await funnel()
+		const kenya = report.rows.find((row) => row.iso2 === "KE")
+
+		expect(kenya?.stages.addressRole.state).toBe(StageState.Blocked)
+		expect(kenya?.stages.coverage.state).toBe(StageState.Blocked)
+		expect(kenya?.stages.licensed.state).toBe(StageState.Blocked)
+
+		// US has an elected licence and still resolves neither field, which is the point: electing terms alone admits
+		// nothing.
+		const us = report.rows.find((row) => row.iso2 === "US")
+
+		expect(us?.stages.licensed.state).toBe(StageState.Reached)
+		expect(us?.stages.addressRole.state).toBe(StageState.Blocked)
+		expect(us?.stages.coverage.state).toBe(StageState.Blocked)
+	})
+
+	it("reads a jurisdiction with no source as absent on both fields rather than blocked", async () => {
+		// Blocked means somebody looked and something stops the next step. A jurisdiction with no source has nothing to
+		// resolve a role for, which is a different reading from a source whose role nobody resolved.
+		const report = await funnel()
+		const antarctica = report.rows.find((row) => row.iso2 === "AQ")
+
+		expect(antarctica?.stages.addressRole.state).toBe(StageState.Absent)
+		expect(antarctica?.stages.coverage.state).toBe(StageState.Absent)
+	})
+
 	it("reads a source with no elected terms as blocked rather than absent", async () => {
 		const report = await funnel()
 		const kenya = report.rows.find((row) => row.iso2 === "KE")

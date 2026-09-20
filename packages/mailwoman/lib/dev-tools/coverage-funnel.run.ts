@@ -130,6 +130,13 @@ console.log(
 		"five registers and would be absent from a report keyed on their union."
 )
 
+console.log(
+	`\nThe stages are not one pipeline. \`licensed\`, \`addressRole\` and \`coverage\` describe the source register's ` +
+		`researched sources; \`corpusRows\`, \`admitted\` and \`sampled\` describe the training corpus, which is fed by ` +
+		`adapters and carries its own per-row licence. The two populations overlap without matching, so a jurisdiction ` +
+		`holds both readings at once rather than passing from one into the other.`
+)
+
 console.log(`\n| stage | reached | absent | blocked | unknown |`)
 console.log(`| --- | --: | --: | --: | --: |`)
 

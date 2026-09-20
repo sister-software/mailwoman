@@ -29,6 +29,19 @@
  *   describes the one training config named in the provenance block. A reader comparing two runs of this report
  *   compares their provenance blocks first.
  *
+ *   The twelve stages are not one pipeline, and reading them as one would be the mistake this report most invites.
+ *   `licensed`, `addressRole` and `coverage` describe the SOURCE REGISTER's 389 researched sources. `corpusRows`,
+ *   `admitted` and `sampled` describe the TRAINING CORPUS, which is fed by adapters and carries its own per-row
+ *   `SourceProvenance.license`. The two populations overlap without matching: NPPES is `us-health-1` in the register
+ *   and `usgov-nppes` at weight 2.0 in the training config, while TIGER and the National Address Database feed the
+ *   corpus and appear in no register row. So a jurisdiction does not pass from `licensed` into `corpusRows` — it holds
+ *   both readings at once, about different sets of sources.
+ *
+ *   That is why the United States reads 9 of 12: 487,234,195 corpus rows and a published package, and 23 registered
+ *   sources of which none is ingest-eligible. The register describes what could be ingested next rather than what
+ *   trains today. #2323's second task, retiring `SourceProvenance.license` for a `licenseID` into the register, is
+ *   what would make the two one population and these twelve stages one sequence.
+ *
  *   Nothing here scores need. {@linkcode OPPORTUNITY_INPUTS} lists the five inputs a work-selection ranking reads and
  *   marks the two this instrument supplies, and {@linkcode opportunityCandidates} filters on those two and orders by
  *   how far a jurisdiction's source research got. Ordering by packages, boards or tiers instead would put the
@@ -67,11 +80,18 @@ export const StageState = {
 export type StageState = (typeof StageState)[keyof typeof StageState]
 
 /**
- * The ten stages, in the order a jurisdiction passes through them.
+ * The twelve stages, in the order a jurisdiction passes through them.
+ *
+ * `licensed`, `addressRole` and `coverage` are the three conditions `ingestEligibilityProblems` applies to every
+ * source, and they are listed together because each one alone blocks ingestion. An earlier version carried `licensed`
+ * and neither of the others, so the one universal blocker it could see is the one it reported, and the license step
+ * read as the bottleneck. Electing all twelve license decisions would move the ingest-eligible count from 0 to 0.
  */
 export const FUNNEL_STAGES = [
 	"researched",
 	"licensed",
+	"addressRole",
+	"coverage",
 	"corpusRows",
 	"admitted",
 	"sampled",
@@ -194,6 +214,35 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 					}
 				: { state: StageState.Absent, detail: "no source to license" }
 
+		// `addressRole` and `coverage` are the other two conditions `ingestEligibilityProblems` applies to every source,
+		// and they are read from the sources themselves rather than from a separate register. A jurisdiction whose
+		// sources carry neither is blocked on both however its licenses read. `upstreamLineage`, the third field the
+		// register declares unresolved, is deliberately absent here: eligibility does not check it, and it costs
+		// correctness in the spec's linkage rules rather than admission.
+		const withRole = sources.filter((source) => source.addressRole !== undefined)
+		const withCoverage = sources.filter((source) => source.coverage !== undefined)
+
+		const addressRole: StageReading = !sources.length
+			? { state: StageState.Absent, detail: "no source to resolve a role for" }
+			: withRole.length
+				? { state: StageState.Reached, detail: `${withRole.length} of ${sources.length} source(s) resolve a role` }
+				: {
+						state: StageState.Blocked,
+						detail: `${sources.length} source(s), none resolving an address role — the grammar their rows carry is unknown`,
+					}
+
+		const coverage: StageReading = !sources.length
+			? { state: StageState.Absent, detail: "no source to measure coverage for" }
+			: withCoverage.length
+				? {
+						state: StageState.Reached,
+						detail: `${withCoverage.length} of ${sources.length} source(s) measure coverage`,
+					}
+				: {
+						state: StageState.Blocked,
+						detail: `${sources.length} source(s), none with measured coverage`,
+					}
+
 		// The census counts a country's rows from the corpus manifest. A jurisdiction absent from the census report is
 		// absent from all five of its registers. The corpus is one of those five, so zero rows here is a measured
 		// reading rather than a gap in this instrument.
@@ -275,6 +324,8 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 		const stages: Record<FunnelStage, StageReading> = {
 			researched,
 			licensed,
+			addressRole,
+			coverage,
 			corpusRows,
 			admitted,
 			sampled,
