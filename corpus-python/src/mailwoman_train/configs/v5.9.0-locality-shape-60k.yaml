@@ -254,6 +254,15 @@ data:
     # zero reproduces the exposure v5.7.0 had. Measured on the shared v0.30.0-bare-postcode base,
     # which this corpus overlays unchanged: state-ia-builders 74,587 rows in part-0672,
     # usgov-imls-pls 80,402 rows in the same file.
+    #
+    # Both spellings of the Iowa source are named, because a `source_weights` key refers to a string
+    # stored in a built corpus rather than to a symbol in the checkout. The adapter emitted
+    # `state-ia-contractors` when v0.32.0-locality-shape was built and emits `state-ia-builders`
+    # since 3839d0a29, so the corpus on disk carries the first and this config would otherwise
+    # decline a source the corpus does not contain while leaving the one it does contain unweighted.
+    # `_apply_source_weights` then refuses the run. Drop the older key when no corpus in use predates
+    # that commit.
+    state-ia-contractors: 0.0
     state-ia-builders: 0.0
     usgov-imls-pls: 0.0
     deepseek-kryptonite: 3.0
