@@ -36,6 +36,7 @@ import { typecheckTestsCheck } from "#checks/typecheck-tests"
 import { versionSyncCheck } from "#checks/version-sync"
 import { vocabCensusCheck } from "#checks/vocab-census"
 import { weightsFamilyCheck } from "#checks/weights/family"
+import { weightsReconciliationCheck } from "#checks/weights/reconciliation"
 import { weightsRightsCheck } from "#checks/weights/rights"
 
 /**
@@ -50,6 +51,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	localeScopeCheck,
 	weightsFamilyCheck,
 	weightsRightsCheck,
+	weightsReconciliationCheck,
 	dataProvenanceCheck,
 	testLayoutCheck,
 	nodeModulesReacharoundCheck,
