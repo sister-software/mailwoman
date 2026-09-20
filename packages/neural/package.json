@@ -68,6 +68,11 @@
 			"node": "./lib/weights/index.ts",
 			"default": "./out/weights/index.js"
 		},
+		"#weights/families": {
+			"types": "./out/weights/families.d.ts",
+			"node": "./lib/weights/families.ts",
+			"default": "./out/weights/families.js"
+		},
 		"#*": {
 			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
@@ -141,6 +146,11 @@
 			"types": "./out/weights/index.d.ts",
 			"node": "./lib/weights/index.ts",
 			"default": "./out/weights/index.js"
+		},
+		"./weights-families": {
+			"types": "./out/weights/families.d.ts",
+			"node": "./lib/weights/families.ts",
+			"default": "./out/weights/families.js"
 		},
 		"./browser": {
 			"types": "./out/browser.d.ts",

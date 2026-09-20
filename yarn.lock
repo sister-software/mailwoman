@@ -6590,6 +6590,7 @@ __metadata:
   resolution: "@mailwoman/repo-health@workspace:packages/repo-health"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/neural": "workspace:*"
     "@mailwoman/release-kit": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
     "@vvago/vale": "npm:^3.20.0"

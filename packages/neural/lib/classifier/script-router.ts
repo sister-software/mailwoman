@@ -7,15 +7,21 @@
  *   family for an input whose script the primary cannot read.
  *
  *   A process loads one classifier for its `--locale` and every input reaches it, so a Hangul or kanji line handed to
- *   the Latin model came back as a locality holding the whole string. The routing rule has two readings, either of
- *   which names the family. The first is the locale hint's own script rule (`scoreByScript`: the `cjk` character
- *   class answers `ja-JP`) folded to its weights family (`scriptFamilyBase`: `ja` / `zh` / `ko` → `cjk`), so the
- *   decision the hint reports and the model that runs agree by construction. The second is per segment: a comma
- *   segment written wholly in a script the family serves names it, whatever the rest of the input is written in
- *   (`carriesFamilySegment`). The whole-input fold cannot see that reading — it answers `mixed` for a Han address
- *   line beside a Latin province and for a Han venue name inside a Latin line alike, and only the first of those
- *   belongs on the character path. A primary that already reads characters (`--locale ja-JP`) is never re-routed:
- *   the caller named it.
+ *   the Latin model came back as a locality holding the whole string. Which families exist, which locales each one
+ *   serves and which scripts route to one are declared in `#weights/families`. This module reads those predicates and
+ *   supplies the classifier that acts on them.
+ *
+ *   The routing rule has two readings, either of which names a family. The first is the locale hint's own script rule
+ *   (`scoreByScript`: the `cjk` character class answers `ja-JP`) folded to its weights family (`scriptFamilyBase`:
+ *   `ja` / `zh` / `ko` → `cjk`), so the decision the hint reports and the model that runs agree by construction. The
+ *   second is per segment: a comma segment written wholly in a script a family serves names it, whatever the rest of
+ *   the input is written in (`carriesFamilySegment`). The whole-input fold cannot see that reading — it answers
+ *   `mixed` for a Han address line beside a Latin province and for a Han venue name inside a Latin line alike, and
+ *   only the first of those belongs on the character path. A primary that already reads characters (`--locale
+ *   ja-JP`) is never re-routed: the caller named it.
+ *
+ *   A family declaring no routing predicate is reachable only through the caller's locale. The Latin family declares
+ *   none, so a Latin request runs on the graph it reached before this registry existed.
  *
  *   The family loads once, on the first input that needs it, and a family whose package is absent degrades to the
  *   primary with one warning — the tolerate-and-degrade posture every optional artifact takes, because a consumer who
@@ -33,71 +39,68 @@ import { scriptFamilyBase } from "#char-encoder"
 import type { NeuralAddressClassifier } from "#classifier/index"
 import type { ParseOpts } from "#classifier/options"
 import type { NeuralParseTrace } from "#trace"
+import { carriesFamilySegmentFor, FAMILIES, type RoutingDecision, RouteSource } from "#weights/families"
 
 /**
- * The scripts the character-path family reads. Japanese, Chinese and Korean are one weights package (`cjk`), so the
- * four scripts name one family rather than three.
- */
-export const FAMILY_SCRIPTS: ReadonlySet<string> = new Set(["Hani", "Kana", "Hira", "Hang"])
-
-/**
- * The family every script in {@link FAMILY_SCRIPTS} belongs to.
- */
-const FAMILY = "cjk"
-
-/**
- * Whether some comma segment of the input is written wholly in a script the character-path family serves.
+ * The family claiming a comma segment of this input, or `undefined`.
  *
- * This is the reading that separates an address line in another script from a name in another script: `逊克二分场四队,
- * heilongjiang, china` carries its Han unit as its own segment, while the Han in `Far East Chinese 口福羊汤, 13 Gerrard St,
- * London W1D 5PS` shares its segment with the Latin words that introduce it, and the character model reading those
- * Latin words by codepoint answers `country: "Chi"`. Tokens carrying no script (`Zyyy` — a house number, a postal code)
- * abstain rather than disqualifying a segment, which is what keeps `六分场七队 100` a Han line. A share threshold is not the
- * instrument: the venue rows and the Chinese unit rows overlap in how much Han they carry, and differ only in where it
- * sits.
- *
- * A Han line separated from its Latin province by whitespace alone (`六分场七队 Hunan`) has no segment of its own and is not
- * routed. Reading whitespace runs instead would reach it and would also re-admit the Han venue names, so the comma is
- * the boundary this rule reads.
+ * Families are read in declaration order. Two families claiming the same script would make that order decide the
+ * answer. The `weights-family` repository check refuses a script claimed twice, so the order changes nothing.
  */
-export function carriesFamilySegment(shape: Pick<QueryShape, "tokenClasses" | "segments">): boolean {
-	for (const segment of shape.segments) {
-		let scripted = 0
+function familyForSegment(shape: Pick<QueryShape, "tokenClasses" | "segments">): string | undefined {
+	for (const entry of FAMILIES) {
+		if (!entry.routingScripts) continue
 
-		for (const token of shape.tokenClasses) {
-			if (token.span.start < segment.span.start || token.span.end > segment.span.end) continue
-
-			if (token.script === "Zyyy") continue
-
-			if (!FAMILY_SCRIPTS.has(token.script)) {
-				scripted = 0
-
-				break
-			}
-
-			scripted++
-		}
-
-		if (scripted > 0) return true
+		if (carriesFamilySegmentFor(shape, entry.routingScripts)) return entry.family
 	}
 
-	return false
+	return undefined
+}
+
+/**
+ * Whether some comma segment of the input is written wholly in a script some declared family serves.
+ *
+ * {@linkcode carriesFamilySegmentFor} decides one script set. This asks it once per declared family, which is the
+ * question the router answers.
+ */
+export function carriesFamilySegment(shape: Pick<QueryShape, "tokenClasses" | "segments">): boolean {
+	return familyForSegment(shape) !== undefined
+}
+
+/**
+ * The family this text routes to, and the reading that named it.
+ *
+ * Two readings, tried in order, and either suffices: the locale hint's whole-input script rule, and a comma segment
+ * written wholly in a script a family serves ({@link carriesFamilySegment}). A decision naming no family carries the
+ * reason it abstained, which is what measuring a router needs — an abstention and a wrong route are different failures,
+ * and the family alone cannot separate them.
+ */
+export function routeFamilyForText(text: string): RoutingDecision {
+	const shape = computeQueryShape(text)
+	const candidate = scoreByScript(shape)
+	const hinted = candidate ? scriptFamilyBase(candidate.locale) : undefined
+
+	if (hinted) return { family: hinted, source: RouteSource.Script, confidence: 1 }
+
+	const segment = familyForSegment(shape)
+
+	if (segment) return { family: segment, source: RouteSource.ScriptSegment, confidence: 1 }
+
+	return {
+		family: undefined,
+		source: RouteSource.Caller,
+		confidence: 1,
+		abstainedBecause: "no declared family names a script this input is written in",
+	}
 }
 
 /**
  * The weights family this text routes to, or undefined when no reading names one (Latin, Cyrillic, Arabic today).
  *
- * Two readings, and either suffices: the locale hint's whole-input script rule, and a comma segment written wholly in a
- * script the family serves ({@link carriesFamilySegment}).
+ * The answer alone. {@linkcode routeFamilyForText} carries the reading that produced it.
  */
 export function scriptFamilyForText(text: string): string | undefined {
-	const shape = computeQueryShape(text)
-	const candidate = scoreByScript(shape)
-	const hinted = candidate ? scriptFamilyBase(candidate.locale) : undefined
-
-	if (hinted) return hinted
-
-	return carriesFamilySegment(shape) ? FAMILY : undefined
+	return routeFamilyForText(text).family
 }
 
 /**

@@ -1,0 +1,168 @@
+/**
+ * The ten-stage coverage funnel over every jurisdiction the source register carries, plus the incumbency grouping and
+ * the inputs a work-selection ranking would read.
+ *
+ * `mailwoman data coverage` reports the countries the five registers mention. This reports the 250 the register knows,
+ * so a jurisdiction that appears in none of them still gets a row saying so at every stage. The difference between the
+ * two denominators is printed, because that difference is the population a failure-driven roadmap cannot see.
+ *
+ * Every stage carries a state and a reason. `unknown` says this instrument cannot answer the stage from a checkout —
+ * `sampled` reads it until an `audit_epoch_mixture` output is supplied — and it is never a claim about the
+ * jurisdiction.
+ *
+ * Run:
+ *
+ *     node packages/mailwoman/lib/dev-tools/coverage-funnel.run.ts
+ *     node packages/mailwoman/lib/dev-tools/coverage-funnel.run.ts --out-json <path>
+ *     node packages/mailwoman/lib/dev-tools/coverage-funnel.run.ts --config <training config> --rows
+ */
+
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { dirtyTrackedFiles, gitHead } from "@mailwoman/core/git"
+import { repoRootPath } from "@mailwoman/core/paths"
+import { dRuleCountries, readScopeConfig, tieredCountries } from "@mailwoman/core/scope-config"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { formatPercent } from "@mailwoman/core/stats"
+import { isoSeconds } from "@mailwoman/core/utils"
+
+import { censusCoverage, newestManifest } from "#coverage/index"
+import {
+	FUNNEL_STAGES,
+	incumbencyGroups,
+	OPPORTUNITY_INPUTS,
+	readCoverageFunnel,
+	StageState,
+} from "#eval-harness/coverage-funnel"
+
+const { values } = parseArguments({
+	options: {
+		"out-json": { type: "string" },
+		config: { type: "string" },
+		rows: { type: "boolean", default: false },
+	},
+})
+
+/**
+ * The training config the `admitted` stage reads when the caller names none.
+ *
+ * Named rather than discovered. `newestConfig` picks by modification time, and on a fresh clone every config carries
+ * the checkout's timestamp, so the pick is arbitrary: this run selected `v0_4_0-stableLR-cw-only.yaml`, whose
+ * `country_weights` admits 2 countries, and the `admitted` row read 2 of 250 as though that were a property of the
+ * repository. Which config is read decides what the whole stage means, so it is stated here and printed with the
+ * report.
+ */
+const DEFAULT_TRAINING_CONFIG = "corpus-python/src/mailwoman_train/configs/v5.9.0-locality-shape-60k.yaml"
+
+const repoRoot = repoRootPath()
+const configPath = values.config ?? String(repoRootPath(...DEFAULT_TRAINING_CONFIG.split("/")))
+const manifestPath = await newestManifest()
+
+if (!configPath || !manifestPath) {
+	throw new Error(
+		`no training config (${String(configPath)}) or corpus manifest (${String(manifestPath)}) — that is an absence of FILES, not of coverage`
+	)
+}
+
+const report = await censusCoverage({
+	configPath,
+	manifestPath,
+	casesRoot: String(repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "cases")),
+})
+
+const scope = await readScopeConfig(repoRoot)
+
+const funnel = await readCoverageFunnel({
+	coverage: report.countries,
+	tieredCountries: [...tieredCountries(scope)],
+	protectedCountries: dRuleCountries(scope).map((entry) => entry.country),
+})
+
+console.log(`\n# Coverage funnel — ${funnel.provenance.jurisdictions} jurisdictions`)
+console.log(`\nRegister ${funnel.provenance.registerVersion}. Training config ${configPath}.`)
+console.log(
+	`The census report carried ${funnel.provenance.censusCountries} countries, so ` +
+		`${funnel.provenance.jurisdictions - funnel.provenance.censusCountries} jurisdictions appear in none of its ` +
+		"five registers and would be absent from a report keyed on their union."
+)
+
+console.log(`\n| stage | reached | absent | blocked | unknown |`)
+console.log(`| --- | --: | --: | --: | --: |`)
+
+for (const stage of FUNNEL_STAGES) {
+	const counts = funnel.byStage[stage]
+	const total = funnel.provenance.jurisdictions
+
+	console.log(
+		`| ${stage} | ${counts[StageState.Reached]} (${formatPercent(counts[StageState.Reached], total, 1)}) | ` +
+			`${counts[StageState.Absent]} | ${counts[StageState.Blocked]} | ${counts[StageState.Unknown]} |`
+	)
+}
+
+/**
+ * How many country codes a group's cell prints before it counts the rest.
+ *
+ * Presentation only. The shallow groups hold over a hundred codes each, and a cell carrying all of them wraps past the
+ * width a terminal table stays readable at. `--out-json` writes every code.
+ */
+const CODES_PER_GROUP_CELL = 18
+
+console.log(`\n## Incumbency — jurisdictions by stages reached\n`)
+console.log(`| stages reached | jurisdictions | which |`)
+console.log(`| --: | --: | --- |`)
+
+for (const group of incumbencyGroups(funnel)) {
+	const shown = group.jurisdictions.slice(0, CODES_PER_GROUP_CELL).join(" ")
+	const hidden = group.jurisdictions.length - CODES_PER_GROUP_CELL
+	const rest = hidden > 0 ? ` … +${hidden}` : ""
+
+	console.log(`| ${group.reached} | ${group.jurisdictions.length} | ${shown}${rest} |`)
+}
+
+console.log(`\nWhich roadmap items were selected from each group is not derivable here. State it beside this table.`)
+
+console.log(`\n## Opportunity inputs\n`)
+console.log(`| input | this instrument supplies it | from |`)
+console.log(`| --- | --- | --- |`)
+
+for (const entry of OPPORTUNITY_INPUTS) {
+	console.log(`| ${entry.input} | ${entry.supplied ? "yes" : "no"} | ${entry.from} |`)
+}
+
+console.log(
+	`\nExisting package and board coverage is deliberately absent from that list. It lowers what work costs and is ` +
+		`not evidence of need.`
+)
+
+if (values.rows) {
+	console.log(`\n## Per jurisdiction\n`)
+	console.log(`| iso2 | name | backbone | reached | ${FUNNEL_STAGES.join(" | ")} |`)
+	console.log(`| --- | --- | --- | --: | ${FUNNEL_STAGES.map(() => "---").join(" | ")} |`)
+
+	for (const row of funnel.rows) {
+		const cells = FUNNEL_STAGES.map((stage) => row.stages[stage].state)
+
+		console.log(`| ${row.iso2} | ${row.name} | ${row.backboneState} | ${row.reached} | ${cells.join(" | ")} |`)
+	}
+}
+
+if (values["out-json"]) {
+	await writeLocalJSONFile(
+		{
+			provenance: {
+				ranAt: isoSeconds(),
+				gitCommit: await gitHead(repoRoot),
+				gitDirtyTrackedFiles: (await dirtyTrackedFiles(repoRoot)).length,
+				configPath,
+				manifestPath,
+				...funnel.provenance,
+			},
+			byStage: funnel.byStage,
+			incumbency: incumbencyGroups(funnel),
+			opportunityInputs: OPPORTUNITY_INPUTS,
+			rows: funnel.rows,
+		},
+		values["out-json"]
+	)
+
+	console.log(`\nwrote ${values["out-json"]}`)
+}

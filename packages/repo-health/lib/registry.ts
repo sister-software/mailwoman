@@ -33,6 +33,7 @@ import { testLayoutCheck } from "#checks/test-layout"
 import { typecheckTestsCheck } from "#checks/typecheck-tests"
 import { versionSyncCheck } from "#checks/version-sync"
 import { vocabCensusCheck } from "#checks/vocab-census"
+import { weightsFamilyCheck } from "#checks/weights-family"
 
 /**
  * Every health check, in the order `mwops health all` runs them: the ones that only read files first, then the ones
@@ -43,6 +44,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	licenseRegisterCheck,
 	localeTablesCheck,
 	localeScopeCheck,
+	weightsFamilyCheck,
 	testLayoutCheck,
 	nodeModulesReacharoundCheck,
 	noRootScriptsCheck,

@@ -74,11 +74,25 @@ export type {
 export {
 	type RoutableClassifier,
 	carriesFamilySegment,
-	FAMILY_SCRIPTS,
+	routeFamilyForText,
 	ScriptRoutedClassifier,
 	scriptFamilyForText,
 	type ScriptRoutedClassifierOpts,
 } from "#classifier/script-router"
+
+export {
+	carriesFamilySegmentFor,
+	FAMILIES,
+	FAMILY_SCRIPTS,
+	FAMILY_VOCABULARY_ARTIFACT,
+	familyByID,
+	FamilyEncoder,
+	familyForLocale,
+	familyForScript,
+	RouteSource,
+	type RoutingDecision,
+	type WeightsFamily,
+} from "#weights/families"
 
 /**
  * Structural type the classifier needs from a runner. Lets callers swap the Node-side `ONNXRunner` for a browser-side

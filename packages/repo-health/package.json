@@ -83,6 +83,7 @@
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/release-kit": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"esbuild": "0.28.2",
