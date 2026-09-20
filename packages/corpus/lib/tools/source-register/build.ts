@@ -28,6 +28,7 @@ import { readCSVRecords } from "#recipes/scaffold"
 import {
 	applyLicenseDecisions,
 	auditAddressSourceRegister,
+	registerContentDigest,
 	BackboneState,
 	JurisdictionResearchState,
 	LicenseReviewState,
@@ -44,6 +45,7 @@ import {
 	type RegisterSector,
 	type UncheckedLicense,
 } from "#source-register/index"
+import { AddressRole } from "#types"
 
 /**
  * The `origin` value the research pass gives its eight repeated discovery lookups. Every row carrying it is dropped.
@@ -74,6 +76,16 @@ const RESEARCH_STATE_BY_NAME: Readonly<Record<string, JurisdictionResearchState>
 	EXCEPTION: JurisdictionResearchState.Exception,
 	RAILS_ONLY: JurisdictionResearchState.Unexamined,
 }
+
+/**
+ * Every `AddressRole` by its wire value, for reading the CSV's `address_role` column.
+ *
+ * Derived from the enum rather than written out, so a role added to `AddressRole` is readable here without a second
+ * edit, and a value the CSV carries that is not a role fails the build.
+ */
+const ADDRESS_ROLE_BY_NAME: Readonly<Record<string, AddressRole>> = Object.fromEntries(
+	Object.values(AddressRole).map((role) => [role, role])
+)
 
 const SOURCE_STATUS_BY_NAME: Readonly<Record<string, SourceStatus>> = {
 	VERIFIED_AUTHORITY: SourceStatus.VerifiedAuthority,
@@ -400,10 +412,67 @@ async function readSources(
 			source.note = rewriteNote(note, fired)
 		}
 
+		const role = readUnresolvedColumn(record["address_role"], "address_role", row)
+
+		if (role) {
+			source.addressRole = mapped(ADDRESS_ROLE_BY_NAME, role, "address_role", row)
+		}
+
+		const coverage = readUnresolvedColumn(record["coverage"], "coverage", row)
+
+		if (coverage) {
+			source.coverage = coverage
+		}
+
+		const upstream = readUnresolvedColumn(record["upstream"], "upstream", row)
+
+		if (upstream) {
+			source.upstreamLineage = upstream
+				.split(";")
+				.map((entry) => entry.trim())
+				.filter(Boolean)
+		}
+
 		records.push(source)
 	}
 
 	return { sources: records, discoveryRailRowsDropped }
+}
+
+/**
+ * Values the research pass wrote into a column it did not resolve per source.
+ *
+ * Every one of the 389 rows carries `address_role: varies` and `coverage: country-specific`, and none carries an
+ * `upstream` value at all. Those two strings are the pass saying it did not determine the field, so carrying them onto
+ * a record would turn "nobody looked" into a value a consumer reads as an answer — and `ingestEligibilityProblems`
+ * would then stop reporting the two blockers that apply to every source in the register.
+ */
+const UNRESOLVED_COLUMN_PLACEHOLDERS: ReadonlySet<string> = new Set(["varies", "country-specific", "unknown", "n/a"])
+
+/**
+ * A column's value, or `undefined` when the research pass left it unresolved.
+ *
+ * Reads the column rather than ignoring it. The build ignored these three entirely, which put a populated column in the
+ * source CSV and an empty field in the register with nothing recording why — a reader comparing the two would
+ * reasonably conclude the build was dropping usable data. Anything outside the placeholder set is returned, so a value
+ * somebody fills in later reaches the register or fails the build rather than being lost.
+ */
+export function readUnresolvedColumn(value: string | undefined, column: string, row: number): string | undefined {
+	const trimmed = (value ?? "").trim()
+
+	if (!trimmed) return undefined
+
+	if (UNRESOLVED_COLUMN_PLACEHOLDERS.has(trimmed.toLowerCase())) return undefined
+
+	if (column === "address_role" && !ADDRESS_ROLE_BY_NAME[trimmed.toLowerCase()]) {
+		throw new Error(
+			`row ${row}: address_role ${stringifyJSON(trimmed)} is neither a declared placeholder nor an \`AddressRole\`. ` +
+				`Add it to \`AddressRole\` if it is a role, or to the placeholder set if it is the research pass declining ` +
+				"to answer."
+		)
+	}
+
+	return trimmed
 }
 
 /**
@@ -478,6 +547,9 @@ export async function buildSourceRegister(options: BuildSourceRegisterOptions): 
 	const register: AddressSourceRegister = {
 		registerID: "address-source-register",
 		version: options.version,
+		// Filled below, once every other field is in place. The digest covers the rest of the register, so it cannot be
+		// computed while the object is still being assembled.
+		contentDigest: "",
 		provenance: {
 			source: "mailwoman-research",
 			sourceVersion: options.sourceVersion,
@@ -492,6 +564,8 @@ export async function buildSourceRegister(options: BuildSourceRegisterOptions): 
 		jurisdictions,
 		sources,
 	}
+
+	register.contentDigest = registerContentDigest(register)
 
 	const problems = auditAddressSourceRegister(register)
 

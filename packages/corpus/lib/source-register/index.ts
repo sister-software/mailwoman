@@ -17,6 +17,7 @@ export {
 	electedLicenseLabel,
 	ingestEligibilityProblems,
 	readAddressSourceRegister,
+	registerContentDigest,
 } from "#source-register/register"
 
 export {

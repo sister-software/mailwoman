@@ -14,6 +14,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { AssertedProposition } from "@mailwoman/evidence/status"
@@ -160,6 +161,50 @@ export function auditAddressSourceRegister(register: AddressSourceRegister): str
 	problems.push(...auditUnresolvedClaim(register))
 
 	return problems
+}
+
+/**
+ * The sha256 the register's `contentDigest` field must carry, over everything else in it.
+ *
+ * Exported because the build writes what the audit checks, and two implementations of one serialization would drift
+ * into a digest that never matches.
+ *
+ * The digest covers the register as parsed rather than as bytes. `prettyJSON` writes it and `oxfmt` reformats the file
+ * afterwards, so a byte digest would name the formatter's output and break whenever the formatter changed. `JSON.parse`
+ * preserves key insertion order, so re-serializing a parsed register reproduces the order the build wrote — which means
+ * a hand edit that reorders keys also fails, and that is a hand edit.
+ */
+export function registerContentDigest(register: AddressSourceRegister): string {
+	const { contentDigest: _omitted, ...rest } = register
+
+	return sha256Hex(stringifyJSON(rest))
+}
+
+/**
+ * Whether a register read off disk still hashes to the digest its build wrote.
+ *
+ * Read-path only, and deliberately not part of {@linkcode auditAddressSourceRegister}. The digest answers whether a file
+ * was edited after it was generated, which is a question about a file. The structural audit answers whether a register
+ * is well formed, which the build asks about an object it is still assembling and which every test fixture asks about a
+ * literal nobody generated.
+ */
+function auditContentDigest(register: AddressSourceRegister): string[] {
+	if (!register.contentDigest) {
+		return [
+			"the register carries no `contentDigest`. It is written by `mailwoman corpus source-register`, and a register " +
+				"without one cannot be told apart from a hand-edited copy.",
+		]
+	}
+
+	const expected = registerContentDigest(register)
+
+	if (expected === register.contentDigest) return []
+
+	return [
+		`the register's \`contentDigest\` reads ${register.contentDigest} and its content hashes to ${expected}. ` +
+			"Something edited the file after the build wrote it. Regenerate it with the command in " +
+			"`packages/corpus/data/PROVENANCE.md` rather than correcting the digest by hand.",
+	]
 }
 
 function auditLicenses(register: AddressSourceRegister): string[] {
@@ -362,10 +407,10 @@ function auditUnresolvedClaim(register: AddressSourceRegister): string[] {
 export async function readAddressSourceRegister(path?: string): Promise<AddressSourceRegister> {
 	const resolved = path ?? addressSourceRegisterPath()
 	const register = await readLocalJSONFile<AddressSourceRegister>(resolved)
-	const problems = auditAddressSourceRegister(register)
+	const problems = [...auditContentDigest(register), ...auditAddressSourceRegister(register)]
 
 	if (problems.length) {
-		throw new Error(`${path} failed the register audit:\n  ${problems.join("\n  ")}`)
+		throw new Error(`${resolved} failed the register audit:\n  ${problems.join("\n  ")}`)
 	}
 
 	return register

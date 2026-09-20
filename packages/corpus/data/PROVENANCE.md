@@ -44,6 +44,42 @@ pass repeated once per jurisdiction, which collapse to eight distinct row bodies
 and `jurisdiction` columns. They name a lookup to perform rather than a source, so they are the
 README's procedure and not rows here.
 
+### Why three columns the CSV carries reach no register field
+
+`global-functional-authority-corpora-v2.csv` has an `address_role`, a `coverage` and an `upstream`
+column, and the register declares all three unresolved. That is not the build dropping usable data.
+Over the 389 rows it keeps, `address_role` reads `varies` on all 389, `coverage` reads
+`country-specific` on all 389, and `upstream` is empty on all 389. The first two are the research
+pass saying it did not determine the field per source.
+
+The build reads the columns and refuses to carry a placeholder, because
+`ingestEligibilityProblems` reports "no address role is resolved" and "no coverage has been
+measured" as two of the three blockers that apply to every source in the register. Writing `varies`
+into `addressRole` would stop both from firing while resolving nothing. A value outside the declared
+placeholder set is carried through, and an `address_role` that is neither a placeholder nor an
+`AddressRole` fails the build rather than being dropped.
+
+### How an edit to the committed file is detected
+
+The register carries `contentDigest`, a sha256 the build writes over every other field in it.
+`readAddressSourceRegister` recomputes it on every read and refuses a file that no longer matches,
+naming the regenerate command above.
+
+It exists because no check can regenerate this artifact and compare. The two research CSVs are
+working documents under `.notes/`, which is not committed, so a CI job has nothing to rebuild from.
+Without a recorded digest, a hand edit to a generated file is invisible: a prose sweep rewrote
+`Contracts Finder / Find a Tender` to `Interfaces Finder / Find a Tender` and two other publisher
+names, and the structural audit passed, because it checks shape rather than whether a name is the
+publisher's (#2352).
+
+The digest covers the register as parsed, not as bytes, because `oxfmt` reformats the file after the
+build writes it. It detects an edit rather than attributing one: rerunning the build after a change
+produces a new digest, which is the intended path, while editing the committed copy does not.
+
+Of the four artifacts in this directory, the register is the one carrying a digest. The sub-venue
+lexicon, the reviewed VE postcode tuples and the license decisions do not. The license decisions are
+hand-written by design — that file is an input to this build, not an output of one.
+
 ### What the register carries
 
 Two tables rather than one nested list. The jurisdiction table is a complete 250-row enumeration;

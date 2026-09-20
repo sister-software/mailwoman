@@ -362,6 +362,18 @@ export interface RegisterProvenance {
 export interface AddressSourceRegister {
 	registerID: string
 	version: string
+	/**
+	 * A sha256 over everything in this register except the digest itself, written by the build.
+	 *
+	 * The register is generated and the two research CSVs it is generated from are working documents under `.notes/`,
+	 * which is not committed, so no check can regenerate the file and compare. Without a recorded digest a hand edit to a
+	 * generated artifact is undetectable: a prose sweep renamed Contracts Finder to "Interfaces Finder" on three rows and
+	 * the structural audit passed, because nothing here knew what the build had written (#2352).
+	 *
+	 * It detects an edit rather than attributing one. Someone who changes a value and reruns the build gets a new digest,
+	 * which is the intended path. Someone who changes a value in the committed file does not, and the audit refuses it.
+	 */
+	contentDigest: string
 	provenance: RegisterProvenance
 	unresolved: readonly UnresolvedField[]
 	licenses: readonly LicenseDecision[]

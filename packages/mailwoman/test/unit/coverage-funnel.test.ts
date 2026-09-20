@@ -72,6 +72,9 @@ function testRegister(): AddressSourceRegister {
 	return {
 		registerID: "test",
 		version: "0.0.0-test",
+		// A hand-built fixture rather than a generated file, so it carries no digest. `readAddressSourceRegister` is
+		// where the digest is checked, and the funnel is given this object directly.
+		contentDigest: "",
 		provenance: { source: "test", sourceVersion: "test", authoredAt: "2026-09-20", notes: "" },
 		unresolved: [],
 		licenses: [

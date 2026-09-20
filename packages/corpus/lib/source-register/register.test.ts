@@ -4,6 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import {
 	applyLicenseDecisions,
 	auditAddressSourceRegister,
@@ -12,6 +14,7 @@ import {
 	JurisdictionResearchState,
 	LicenseReviewState,
 	readAddressSourceRegister,
+	registerContentDigest,
 	SourceStatus,
 	UNRESOLVED_FIELDS,
 	type AddressSourceRegister,
@@ -81,12 +84,34 @@ describe("the committed address-source register", () => {
 	it("passes its own audit", () => {
 		expect(auditAddressSourceRegister(register)).toEqual([])
 	})
+
+	it("still hashes to the digest its build wrote", () => {
+		expect(register.contentDigest).toBe(registerContentDigest(register))
+	})
+
+	it("refuses a copy whose publisher name was edited after the build", async () => {
+		// The worked case: a prose sweep rewrote `Contracts Finder / Find a Tender` to `Interfaces Finder / Find a
+		// Tender` on three rows, and the structural audit passed because it checks shape rather than whether a name is
+		// the publisher's (#2352). One character is enough to move the digest.
+		await using scratch = await temporaryDirectory("mw-register-edited-")
+		const edited = { ...register, sources: register.sources.map((source) => ({ ...source })) }
+		const path = scratch.resolve("address-source-register.json")
+
+		edited.sources[0] = { ...edited.sources[0]!, publisher: `${edited.sources[0]!.publisher} ` }
+
+		await writeLocalJSONFile(edited, path)
+
+		await expect(readAddressSourceRegister(String(path))).rejects.toThrow(/Something edited the file/u)
+	})
 })
 
 describe("auditAddressSourceRegister", () => {
 	const base: AddressSourceRegister = {
 		registerID: "test",
 		version: "0.0.0",
+		// A literal nobody generated, so it carries no meaningful digest. The structural audit does not read the field —
+		// `readAddressSourceRegister` checks it, against a file a build wrote.
+		contentDigest: "",
 		provenance: { source: "test" },
 		unresolved: ["addressRole", "upstreamLineage", "coverage"],
 		licenses: [
@@ -294,6 +319,7 @@ describe("applyLicenseDecisions", () => {
 		return {
 			registerID: "test",
 			version: "0.0.0",
+			contentDigest: "",
 			provenance: { source: "test" },
 			unresolved: ["addressRole", "upstreamLineage", "coverage"],
 			licenses,
