@@ -19,6 +19,8 @@
 
 /// <reference types="node" />
 
+import ts from "typescript"
+
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { cliArguments } from "@mailwoman/core/scripting/arguments"
@@ -207,9 +209,47 @@ function liftTagSentence(body: readonly string[], tags: readonly string[]) {
 	}
 }
 
+/**
+ * The character ranges a rewrite must not touch: every string, template and regular expression in the file.
+ *
+ * A generator that emits `// TODO(…)` inside a template literal has comment-shaped text that is not a comment, and
+ * rewriting it changes what the program prints. Two such sites in `release-kit` and `registry` are why this exists.
+ * Only a parse tells the two apart.
+ */
+function literalSpans(source: string, fileName: string): Array<[number, number]> {
+	const kind = fileName.endsWith("tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+	const file = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, kind)
+	const spans: Array<[number, number]> = []
+
+	const visit = (node: ts.Node): void => {
+		if (
+			ts.isStringLiteralLike(node) ||
+			ts.isTemplateExpression(node) ||
+			ts.isTaggedTemplateExpression(node) ||
+			ts.isRegularExpressionLiteral(node)
+		) {
+			spans.push([node.getStart(file), node.getEnd()])
+			return
+		}
+
+		ts.forEachChild(node, visit)
+	}
+
+	ts.forEachChild(file, visit)
+
+	return spans
+}
+
+const within = (spans: ReadonlyArray<[number, number]>, offset: number) =>
+	spans.some(([start, end]) => offset >= start && offset < end)
+
 /** Rewrite every comment in one source file. */
-export function sweepSource(source: string): string {
-	const blocks = source.replace(/^[\t ]*\/\*\*[\s\S]*?\*\/$/gm, (block) => {
+export function sweepSource(source: string, fileName = "file.ts"): string {
+	const spans = literalSpans(source, fileName)
+
+	const blocks = source.replace(/^[\t ]*\/\*\*[\s\S]*?\*\/$/gm, (block: string, offset: number) => {
+		if (within(spans, offset)) return block
+
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- One comment block, bounded by its own markers.
 		const lines = block.split("\n")
 
@@ -237,7 +277,13 @@ export function sweepSource(source: string): string {
 		return [lines[0]!, ...marked, `${indent} */`].join("\n")
 	})
 
-	return blocks.replace(/(?:^[\t ]*\/\/[^\n]*\n?)+/gm, (group) => {
+	// The second pass reads the first pass's output, whose rewrites shift offsets, so the spans are taken again from
+	// the text this pass actually sees.
+	const shifted = literalSpans(blocks, fileName)
+
+	return blocks.replace(/(?:^[\t ]*\/\/[^\n]*\n?)+/gm, (group: string, offset: number) => {
+		if (within(shifted, offset)) return group
+
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- One run of `//` lines, bounded by the code around it.
 		const lines = group.replace(/\n$/, "").split("\n")
 		const indent = /^([\t ]*)/.exec(lines[0]!)![1]!
@@ -268,7 +314,7 @@ process.exitCode = await runCLICommand(async () => {
 
 	for (const path of paths) {
 		const source = await readLocalTextFile(path)
-		const swept = sweepSource(source)
+		const swept = sweepSource(source, String(path))
 
 		if (swept === source) continue
 
