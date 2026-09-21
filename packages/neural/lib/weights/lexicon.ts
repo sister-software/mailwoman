@@ -27,13 +27,14 @@ import { readRequiredChannels } from "#weights/channels"
  *
  * Serving therefore fed the channel a different lexicon generation than training painted,
  * and nothing said so: the v6 file exists, the channel loads, the parse works.
- * The Run B check had to stage v7's content under the v6 filename to score the candidate faithfully —
- * a workaround that only exists because the filename rather than the card, was the interface.
+ * The Run B check had to stage v7's content under the v6 filename to score the candidate faithfully.
  *
- * The interface is now the card: `requires.<channel>.lexicon` names the artifact
- * the model trained against, and
- * {@linkcode resolveEvidenceLexicon} resolves that. The legacy filenames stay as the back-compat answer for a card that
- * declares no version — every bundle published before 2026-08-06 — and taking that path warns once.
+ * A workaround that only exists because the filename rather than the card, was the interface.
+ *
+ * The interface is now the card: `requires.<channel>.lexicon` names the artifact the
+ * model trained against, and {@linkcode resolveEvidenceLexicon} resolves that.
+ * The legacy filenames stay as the back-compat answer for a card that declares no version —
+ * every bundle published before 2026-08-06 — and taking that path warns once.
  */
 export const EVIDENCE_LEXICON_FAMILIES = {
 	street_type: { prefix: "street-type-lexicon-v", legacy: "street-type-lexicon-v3.json" },
@@ -46,8 +47,8 @@ export type EvidenceLexiconChannel = keyof typeof EVIDENCE_LEXICON_FAMILIES
  * A train/serve lexicon mismatch (#1510): the card names one generation of an evidence
  * lexicon and the weights package ships a different one.
  *
- * Thrown at load time, from {@linkcode resolveWeights}, naming both versions —
- * the whole point is that this can never again be a silent downgrade.
+ * Thrown at load time, from {@linkcode resolveWeights}, naming both versions.
+ * The whole point is that this can never again be a silent downgrade.
  */
 export class LexiconVersionMismatchError extends Error {
 	constructor(message: string) {
@@ -105,7 +106,7 @@ async function shippedLexiconGenerations(dir: PathBuilder, prefix: string): Prom
  * (de-de, es-es, it-it, en-in, en-nz, fr-fr) in one commit, on locales no board has graded.
  *
  * An overlay that wants the bundle links its own copy and says so in its `files` array.
- * that is one locale's measured decision rather than seven unmeasured ones.
+ * That is one locale's measured decision rather than seven unmeasured ones.
  */
 export async function resolveEvidenceLexicon(
 	channel: EvidenceLexiconChannel,

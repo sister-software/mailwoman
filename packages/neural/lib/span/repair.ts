@@ -79,8 +79,9 @@ export interface SpanPattern {
 }
 
 /**
- * Run a priority-ordered pattern list over the raw text and resolve the hits to a non-overlapping set ({@link
- * selectNonOverlappingMatches}). Pattern order is the priority (lower = more specific).
+ * Run a priority-ordered pattern list over the raw text and resolve the hits to a
+ * non-overlapping set ({@link selectNonOverlappingMatches}).
+ * Pattern order is the priority (lower = more specific).
  */
 export function collectMatchesFor<P extends SpanPattern>(
 	patterns: readonly P[],
@@ -132,7 +133,8 @@ export function createLabelSetter(tokens: DecoderToken[]): {
  * The ADD-path safety check: a span may be created only over `O` tokens and the tags
  * in `addOverTags` — never over a confident structural label.
  *
- * Each pass declares its own `addOverTags` set. that set is a change and stays with the pass.
+ * Each pass declares its own `addOverTags` set.
+ * That set is a change and stays with the pass.
  */
 export function isAddSafe(
 	tokens: readonly DecoderToken[],
@@ -149,7 +151,7 @@ export function isAddSafe(
 /**
  * Indices of the tokens whose char span intersects the half-open range `[start, end)`, in token order.
  *
- * Returns an empty array when the range falls between tokens.
+ * @returns an empty array when the range falls between tokens.
  */
 export function tokenIndicesOverlapping(tokens: readonly DecoderToken[], start: number, end: number): number[] {
 	const overlap: number[] = []

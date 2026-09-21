@@ -24,9 +24,9 @@ import { describe, expect, it } from "vitest"
 /**
  * The two staged weights caches this benchmark compares, under `$MAILWOMAN_TEMP_ROOT`.
  *
- * `weightsCachePackageDir` owns the `node_modules/<package>` segment — the layout
- * belongs to the weights package, and a hand-assembled path into it reads a missing
- * artifact as "absent" rather than "looked in the wrong place".
+ * `weightsCachePackageDir` owns the `node_modules/<package>` segment.
+ * The layout belongs to the weights package, and a hand-assembled path into it reads
+ * a missing artifact as "absent" rather than "looked in the wrong place".
  */
 function stagedModel(cacheName: string): string {
 	return join(weightsCachePackageDir(String(tempRootPath(cacheName)), "en-us"), "model.onnx")

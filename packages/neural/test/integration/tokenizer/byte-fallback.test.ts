@@ -100,9 +100,9 @@ describe("MailwomanTokenizer — byte-fallback offset reconstruction (paired-pun
 		const openRun = runPieces.slice(0, 3)
 		const closeRun = runPieces.slice(3, 6)
 
-		// Only the last piece of each run carries the real (non-zero-width) span. earlier pieces
-		// are zero-width placeholders at the run's start — mirrors groupPiecesIntoWords's
-		// "own placeholder, zero contribution" idiom for a bare ▁.
+		// Only the last piece of each run carries the real (non-zero-width) span.
+		// Earlier pieces are zero-width placeholders at the run's start — mirrors
+		// groupPiecesIntoWords's "own placeholder, zero contribution" idiom for a bare ▁.
 		expect(openRun[0]!.start).toBe(openRun[0]!.end)
 		expect(openRun[1]!.start).toBe(openRun[1]!.end)
 		expect(raw.slice(openRun[2]!.start, openRun[2]!.end)).toBe("“")
@@ -155,9 +155,7 @@ async function encodeToTuples(raw: string): Promise<Array<[string, number, numbe
 
 describe("MailwomanTokenizer — per-character byte-fallback run splitting (CJK residual)", () => {
 	test("東京都渋谷区 — a multi-character run splits at UTF-8 character boundaries, no offset collapse", async () => {
-		// On the fixture vocab 東/谷/区 have direct tokens, while 京都渋 fall back to one contiguous 9-piece byte run
-		// (3 bytes per character). Before the split, all 9 pieces collapsed onto [1, 4) at the run's final piece —
-		// a BIO tag boundary inside the run (e.g. B-region at 都) could never surface as its own span.
+		// On the fixture vocab 東/谷/区 have direct tokens, while 京都渋 fall back to one contiguous 9-piece byte run (3 bytes per character). Before the split, all 9 pieces collapsed onto [1, 4) at the run's final piece — a BIO tag boundary inside the run (e.g. B-region at 都) could never surface as its own span.
 		const tuples = await encodeToTuples("東京都渋谷区")
 
 		expect(tuples).toEqual([

@@ -32,8 +32,10 @@ async function scratch(): Promise<string> {
 }
 
 /**
- * A weights directory in the shipped layout — the same fixed filenames `resolveFromPackageDir`
- * reads, which is exactly why the overlay needs no logic of its own.
+ * A weights directory in the shipped layout.
+ *
+ * The same fixed filenames `resolveFromPackageDir` reads, which is exactly why
+ * the overlay needs no logic of its own.
  */
 async function weightsDir(root: string, locale: string, files: Record<string, string>): Promise<string> {
 	const dir = join(root, locale)
@@ -142,8 +144,8 @@ describe("resolveWeights — the artifact report", () => {
 
 		const { artifacts } = await resolveWeights({ locale: ABSENT, overlayRoot: root })
 
-		// A report whose length varied with what happened to resolve could not answer "how
-		// much am I missing" — the question the rung makes newly askable.
+		// A report whose length varied with what happened to resolve could not answer "how much am I missing".
+		// The question the rung makes newly askable.
 		expect(artifacts.length).toBeGreaterThan(10)
 		expect(artifacts.filter((a) => a.origin === null).length).toBeGreaterThan(0)
 		expect(new Set(artifacts.map((a) => a.name)).size).toBe(artifacts.length)

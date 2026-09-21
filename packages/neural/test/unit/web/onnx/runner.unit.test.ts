@@ -56,7 +56,7 @@ vi.mock("onnxruntime-web/webgpu", () => {
 // already sit in the worker's cache — evaluated without this file's ORT mock by an earlier file
 // (a cached module never re-evaluates, and vi.mock factories are only consulted at evaluation).
 // Reset on the way in so the chain re-evaluates against the mock, and on the way out
-// so the next file in this fork (e.g. web-onnx-runner.test.ts, which needs the real runtime)
+// so the next file in this fork (e.g. Web-onnx-runner.test.ts, which needs the real runtime)
 // never inherits our mocked ORT from the cache.
 vi.resetModules()
 afterAll(() => vi.resetModules())
@@ -197,8 +197,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 		expect(Object.keys(feeds).toSorted()).toEqual(["attention_mask", "input_ids"])
 	})
 
-	// #1104 country channel — v6.2.0+ models declare `country_features`/`country_confidence`. The runner
-	// must feed them (real or zero-filled) exactly like the gazetteer channel, else ORT throws.
+	// #1104 country channel — v6.2.0+ models declare `country_features`/`country_confidence`. The runner must feed them (real or zero-filled) exactly like the gazetteer channel, else ORT throws.
 	test("country-channel graph (v6.2.0+) + NO country provided → zero-filled structural fallback, not a throw", async () => {
 		const session = mockSession([
 			"input_ids",

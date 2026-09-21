@@ -160,12 +160,13 @@ export class MailwomanTokenizer {
 	}
 
 	/**
-	 * Load from a path to a `tokenizer.model` file on disk. **Node-only** —
-	 * the dynamic `node:fs` import keeps this method out of the static dependency graph
+	 * Load from a path to a `tokenizer.model` file on disk. **Node-only**.
+	 *
+	 * The dynamic `node:fs` import keeps this method out of the static dependency graph
 	 * so the rest of the tokenizer bundles cleanly for the browser.
 	 *
-	 * Calling it in a browser throws at runtime. use `loadFromBase64`
-	 * (or the URL-fetching loaders in `@mailwoman/neural/web-loader`) instead.
+	 * Calling it in a browser throws at runtime.
+	 * Use `loadFromBase64` (or the URL-fetching loaders in `@mailwoman/neural/web-loader`) instead.
 	 */
 	static async loadFromFile(modelPath: PathBuilderLike): Promise<MailwomanTokenizer> {
 		const { readFile } = await import(/* webpackIgnore: true */ "node:fs/promises")
@@ -198,7 +199,7 @@ export class MailwomanTokenizer {
 			const end = byteToUTF16[raw.ends[i]!] ?? text.length
 
 			// A ▁ piece's native span includes the consumed whitespace — trim to the
-			// word start (the decoder's interface. see header).
+			// word start (the decoder's interface. See header).
 			// Bounded by `end`, so zero-width spans stay put.
 			while (start < end && WHITESPACE_RE.test(text[start]!)) {
 				start++

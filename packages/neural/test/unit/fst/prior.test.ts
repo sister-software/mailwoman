@@ -23,10 +23,10 @@ import { describe, expect, it, test } from "vitest"
 
 const TOKENIZER_MODEL_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
-// Production tokenizer, conditional (mirrors weights.test.ts's `haveModel` skipIf idiom) —
-// the bare-▁-orphan splits below only occur in its vocab rather than the small fixture's.
-// Not present in stripped-down CI, so this whole block skips there. it runs on the
-// lab host where $MAILWOMAN_DATA_ROOT is populated.
+// Production tokenizer, conditional (mirrors weights.test.ts's `haveModel` skipIf idiom).
+// The bare-▁-orphan splits below only occur in its vocab rather than the small fixture's.
+// Not present in stripped-down CI, so this whole block skips there.
+// It runs on the lab host where $MAILWOMAN_DATA_ROOT is populated.
 const PRODUCTION_TOKENIZER_PATH = dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model")
 const haveProductionTokenizer = await pathExists(PRODUCTION_TOKENIZER_PATH)
 
@@ -175,8 +175,9 @@ describe("buildFSTEmissionPriors", () => {
 		// The word boundary is ▁ only: a punctuation-only piece with no leading ▁ is
 		// unconditionally interior to whatever word is still active.
 		// There is deliberately no look-ahead distinguishing "mid-word hyphen" from
-		// "trailing comma before a new ▁ word" — the grouper cannot see the next piece,
-		// and the splits that matter ("Stockton-on-Tees" etc.) don't need it.
+		// "trailing comma before a new ▁ word".
+		// The grouper cannot see the next piece, and the splits that matter
+		// ("Stockton-on-Tees" etc.) don't need it.
 		// So the comma below joins the "Washington" group and carries its bias
 		// rather than getting an all-zero placeholder row of its own.
 		// Nothing is lost by the coarser rule: "▁DC" opens its own group regardless.
@@ -368,8 +369,8 @@ describe("normalizeFSTToken", () => {
 	})
 
 	it("applies NFKC normalization (ligatures and compatibility forms)", () => {
-		// nfkc unifies compatibility forms. for example, the nfkc form resolves superscript
-		// and subscript characters to their base forms.
+		// nfkc unifies compatibility forms.
+		// For example, the nfkc form resolves superscript and subscript characters to their base forms.
 		const result = normalizeFSTToken("ﬁnance") // 'ﬁ' is U+FB01 (fi ligature)
 		expect(result).toBe("finance")
 	})
@@ -379,7 +380,8 @@ describe("groupPiecesIntoWords with normalizeFSTToken", () => {
 	it("normalizes individual word groups correctly", () => {
 		const pieces = [{ piece: "▁Stockton" }, { piece: "-" }, { piece: "▁on" }, { piece: "-" }, { piece: "▁Tees" }]
 		const groups = groupPiecesIntoWords(pieces)
-		// Whitespace-delimited grouping. hyphens are punctuation, so they form separate empty groups
+		// Whitespace-delimited grouping.
+		// Hyphens are punctuation, so they form separate empty groups
 		const nonEmptyGroups = groups.filter((g) => g.fstToken !== "")
 		expect(nonEmptyGroups.map((g) => g.fstToken)).toEqual(["stockton", "on", "tees"])
 	})
@@ -394,8 +396,9 @@ describe("groupPiecesIntoWords with normalizeFSTToken", () => {
 describe("groupPiecesIntoWords — interior punctuation (real fixture tokenizer)", () => {
 	// Interior punctuation (a hyphen/apostrophe with no leading ▁) must continue
 	// the current word, never reset it.
-	// A punctuation-only piece that sets `current = null` silently drops every subsequent
-	// piece up to the next ▁ — these five real-tokenizer splits are where that happens.
+	// A punctuation-only piece that sets `current = null` silently drops every
+	// subsequent piece up to the next ▁.
+	// These five real-tokenizer splits are where that happens.
 	// See the module docstring's "word boundary is ▁ only" section.
 
 	it('groups "Stockton-on-Tees" into a single word ("stocktonontees"), not a truncated fragment', async () => {
@@ -447,10 +450,10 @@ describe("groupPiecesIntoWords — interior punctuation (real fixture tokenizer)
 		// (real split here: ["▁Stock","ton","▁","on","▁the","▁Forest"]).
 		// It closes "Stockton" and leaves `current === null` pending, so the next piece
 		// ("on", with no leading ▁ of its own) opens a fresh word instead of being dropped.
-		// This is not a fixture-vocab curiosity: the pattern is live and widespread
-		// in the production tokenizer (v0.9.0-multisplice) — "Newcastle upon Tyne",
-		// "Weston super Mare", "Kingston upon Hull" and a trailing "IL" all split this
-		// way. see the skipIf-conditional production-tokenizer block below.
+		// This is not a fixture-vocab curiosity: the pattern is live and widespread in the
+		// production tokenizer (v0.9.0-multisplice) — "Newcastle upon Tyne", "Weston super Mare",
+		// "Kingston upon Hull" and a trailing "IL" all split this way.
+		// See the skipIf-conditional production-tokenizer block below.
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
 		const { pieces } = tokenizer.encode("Stockton on the Forest")
 		const groups = groupPiecesIntoWords(pieces)

@@ -70,18 +70,17 @@ export interface InferResult {
 	numLabels: number
 	/**
 	 * Pooled locale-head posterior (`locale_logits` output, LOCALE_COUNTRIES order),
-	 * when the model exports it (v1.1.0+,
-	 * #511 Tier A). Absent on older bundles — consumers must treat undefined as "no address-system detection available".
+	 * when the model exports it (v1.1.0+, #511 Tier A).
+	 *
+	 * Absent on older bundles — consumers must treat undefined as "no address-system detection available".
 	 */
 	localeLogits?: number[]
 	/**
-	 * #727 stage-2: per-span type scores from the semi-Markov span head (`span_scores` output, v3.x+). Indexed
-	 * `spanScores[tokenIdx][lengthIdx][segmentTypeIdx]` — the segment starting at `tokenIdx`,
-	 * of length `lengthIdx + 1` tokens, typed `SEGMENT_TYPES[segmentTypeIdx]` (that axis ships in the
-	 * weights bundle's `semi-crf-transitions.json`, never hardcoded — the PLACETYPE_ORDER class).
+	 * #727 stage-2: per-span type scores from the semi-Markov span head (`span_scores` output, v3.x+). Indexed `spanScores[tokenIdx][lengthIdx][segmentTypeIdx]` — the segment starting at `tokenIdx`, of length `lengthIdx + 1` tokens, typed `SEGMENT_TYPES[segmentTypeIdx]` (that axis ships in the weights bundle's `semi-crf-transitions.json`, never hardcoded — the PLACETYPE_ORDER class).
 	 *
 	 * Absent on every pre-v3 bundle, so consumers must treat undefined as "no span
 	 * decode available" and fall back to the BIO path.
+	 *
 	 * Fetching it costs ~0.75 ms (CPU, S=128); a runtime that never reads it pays nothing
 	 * (ORT prunes the unfetched branch) — measured in `docs/articles/evals/2026-07-15-v301-phase2-export.md`.
 	 */
@@ -215,13 +214,13 @@ function packChannelFeed(
  *
  * Every channel is conditioned on the graph's declared inputs: a supplied channel
  * the graph does not declare is never fed (an undeclared feed crashes ORT),
- * and a declared channel the caller did not supply gets the zero-fill
- * confidence=0 identity so the session never throws on a missing required input.
+ * and a declared channel the caller did not supply gets the zero-fill confidence=0 identity
+ * so the session never throws on a missing required input.
  * The anchor channel historically skipped the declared-input check on the supplied path —
  * an undeclared feed — and now takes the same check as every other channel.
  *
- * `supplied` dims read the channel's own rows. the fallback dim covers the zero-fill path
- * (and, for the evidence channels, a supplied channel with no rows).
+ * `supplied` dims read the channel's own rows.
+ * The fallback dim covers the zero-fill path (and, for the evidence channels, a supplied channel with no rows).
  */
 export function packSoftChannelFeeds(
 	inputNames: readonly string[],
@@ -299,8 +298,8 @@ export function decodeInferOutput(
 	const localeLogits = output.localeLogits ? Array.from(output.localeLogits.data) : undefined
 
 	// Span head (#727 stage-2): present on v3.x+ exports.
-	// Same optional interface as the locale head — a pre-v3 bundle simply has no
-	// `span_scores` output and the BIO path is unaffected.
+	// Same optional interface as the locale head.
+	// A pre-v3 bundle simply has no `span_scores` output and the BIO path is unaffected.
 	const spanTensor = output.spanScores
 	let spanScores: number[][][] | undefined
 	let maxSpan: number | undefined
@@ -313,7 +312,8 @@ export function decodeInferOutput(
 		maxSpan = spanLen
 		spanScores = []
 
-		// Only the first `seqLen` token rows are real. the rest is the fixed-length pad tail.
+		// Only the first `seqLen` token rows are real.
+		// The rest is the fixed-length pad tail.
 		for (let t = 0; t < seqLen; t++) {
 			const perLength: number[][] = new Array(spanLen)
 

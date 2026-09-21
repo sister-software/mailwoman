@@ -19,13 +19,12 @@ import { LOCALE_COUNTRIES } from "#labels"
 import { softmax } from "#viterbi"
 
 // The pinned array lives in labels.ts beside the label vocabulary it mirrors.
-// this module keeps its historical export name.
+// This module keeps its historical export name.
 export { LOCALE_COUNTRIES } from "#labels"
 
 /**
- * The locale head's confident argmax over {@link LOCALE_COUNTRIES},
- * or null below the threshold — the shared core of
- * {@link detectAddressSystem} and {@link confidentLocaleCountry}.
+ * The locale head's confident argmax over {@link LOCALE_COUNTRIES}, or null below the threshold —
+ * the shared core of {@link detectAddressSystem} and {@link confidentLocaleCountry}.
  */
 function localeVerdict(
 	localeLogits: readonly number[] | undefined,
@@ -93,9 +92,10 @@ export function detectAddressSystem(
  * mapping, so the three head countries without a `SystemCode` (ES/IT/NL) still yield a verdict.
  *
  * Same threshold posture: below it the head abstains rather than acting on a coin flip.
- * The head is a 9-way classifier — its verdict is evidence that the text
- * is shaped like that country's addressing, never a resolved country
- * (a Chinese address may read GB: right about "not the locale's country", wrong about which).
+ * The head is a 9-way classifier.
+ *
+ * Its verdict is evidence that the text is shaped like that country's addressing, never a resolved
+ * country (a Chinese address may read GB: right about "not the locale's country", wrong about which).
  */
 export function confidentLocaleCountry(
 	localeLogits: readonly number[] | undefined,

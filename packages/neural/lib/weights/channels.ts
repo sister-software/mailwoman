@@ -20,12 +20,14 @@ import { PostcodeBinaryResolver } from "#postcode/binary-resolver"
 export { inferRequiredChannelsFromInputs } from "#ort-feeds"
 
 /**
- * The structured `requires` block of a `model-card.json` (#718) — the declared
- * ship-config the model was trained against.
+ * The structured `requires` block of a `model-card.json` (#718).
+ * The declared ship-config the model was trained against.
  *
  * The ProductionScorer reads this and fails closed when a declared channel isn't
  * actually fed (silent OOD is the #566/#685 trap).
- * Each channel is optional. a missing channel means "not declared" (treated as not-required).
+ * Each channel is optional.
+ *
+ * A missing channel means "not declared" (treated as not-required).
  */
 export interface RequiredChannels {
 	/**
@@ -34,8 +36,9 @@ export interface RequiredChannels {
 	 * `span_mode` declares which substrings the runtime should look up — omit (or `alnum-run`)
 	 * for every model trained before 2026-08-05, `shaped` for a model trained against a lookup
 	 * with letter-containing keys (see `neural/anchor-inference.ts`'s `AnchorSpanMode`).
-	 * Declaring `shaped` on a model that never saw those keys changes the encoder's input for
-	 * nothing. declaring `alnum-run` on one that did leaves its GB/NL postcodes unanchored.
+	 * Declaring `shaped` on a model that never saw those keys changes the encoder's input for nothing.
+	 *
+	 * Declaring `alnum-run` on one that did leaves its GB/NL postcodes unanchored.
 	 */
 	anchor?: { required: boolean; span_mode?: AnchorSpanMode }
 	/**
@@ -104,13 +107,16 @@ export interface DeclaredArtifact {
 /**
  * What a weights package's own `model-card.json` declares it ships under `files`, for one family of keys.
  *
- * The card's `files` block is the package's manifest of intent and the only per-package statement of what should be on
- * disk — `requires` describes the trained encoder, which is a different claim and is shared across every overlay that
- * inherits the base model. Conflating the two is the #1516 defect: en-gb's card declares `requires.anchor.required:
- * true` (a true statement about the encoder) while deliberately shipping no `postcode-gb.bin` under the #1476
- * mitigation, so a guard keyed on `requires` alone calls a supported configuration broken, and — because the old
- * warning fired once per process and named no package — the operator reads that as the primary locale's bin being
- * missing.
+ * The card's `files` block is the package's manifest of intent and the only
+ * per-package statement of what should be on disk.
+ * `requires` describes the trained encoder, which is a different claim
+ * and is shared across every overlay that inherits the base model.
+ *
+ * Conflating the two is the #1516 defect: en-gb's card declares `requires.anchor.required: true`
+ * (a true statement about the encoder) while deliberately shipping no `postcode-gb.bin` under
+ * the #1476 mitigation, so a guard keyed on `requires` alone calls a supported configuration
+ * broken, and — because the old warning fired once per process and named no package —
+ * the operator reads that as the primary locale's bin being missing.
  *
  * Reads the package's own card only, never the `baseWeights` fallback:
  * an overlay that ships no card of its own is making no claim about its files,
@@ -184,8 +190,9 @@ async function readModelCardObject(
 }
 
 /**
- * Load an `AnchorLookup` from either a PCB1 binary or a JSON pilot lookup (#718 D1) —
- * the two on-disk shapes a weights package's postcode→anchor artifact takes.
+ * Load an `AnchorLookup` from either a PCB1 binary or a JSON pilot lookup (#718 D1).
+ *
+ * The two on-disk shapes a weights package's postcode→anchor artifact takes.
  *
  * Shared by the Node classifier loader and the ProductionScorer.
  */
@@ -214,7 +221,9 @@ const warnedUnfedChannels = new Set<string>()
  * Structural fallback (the parse still works), loud console
  * (a silently anchor-off anchor-trained model is the #566/#685 OOD crater this exists to surface).
  *
- * Bound TO A package, and deduped per (channel, package) — it was once per channel per process until #1516.
+ * Bound TO A package, and deduped per (channel, package).
+ * It was once per channel per process until #1516.
+ *
  * One process routinely loads several packages (the gauntlet grades six locale overlays),
  * so channel-only dedupe meant the first degraded package spoke and every later one
  * was suppressed, while the line named no package at all.
@@ -248,13 +257,16 @@ export function unfedChannelWarner(weightsPackage: string): (channel: UnfedChann
  * The old test was `requires.anchor.required && nothing loaded`, and `requires` describes
  * the trained encoder — shared by every overlay that inherits the base model.
  *
- * So the en-gb overlay, which ships no `postcode-gb.bin` on purpose under the #1476 mitigation,
- * warned on every load. the line named no package and fired once per process, so an operator whose
- * `postcode-us.bin` was present and feeding read it as the primary locale's binary having gone missing.
+ * So the en-gb overlay, which ships no `postcode-gb.bin` on purpose under the
+ * #1476 mitigation, warned on every load.
+ * The line named no package and fired once per process, so an operator whose `postcode-us.bin`
+ * was present and feeding read it as the primary locale's binary having gone missing.
  *
  * Declared-and-missing is a broken package and stays loud.
- * Declared-nothing is a supported posture and is silent — `buildGauntletDeps` asserts the presence a
- * grading run needs, which is the only place that knows whether this particular run needs GB anchors.
+ * Declared-nothing is a supported posture and is silent.
+ *
+ * `buildGauntletDeps` asserts the presence a grading run needs, which is the only
+ * place that knows whether this particular run needs GB anchors.
  */
 export async function unfedAnchorDetail(packageDir: PathBuilderLike | undefined): Promise<string | undefined> {
 	const declared = await readDeclaredArtifactFile(packageDir)
@@ -267,13 +279,14 @@ export async function unfedAnchorDetail(packageDir: PathBuilderLike | undefined)
 }
 
 /**
- * Read the structured `requires` block from a `model-card.json` (#718). defensive:
- * returns `undefined` when the card is absent, unreadable, or has no `requires` field
+ * Read the structured `requires` block from a `model-card.json` (#718).
+ *
+ * Defensive: returns `undefined` when the card is absent, unreadable, or has no `requires` field
  * (callers then infer the required channels from the ONNX graph — see `inferRequiredChannelsFromInputs`).
  *
- * Throws only when the field is present but corrupt
- * (not an object, or a channel entry with a non-boolean `required`) — a malformed
- * declared interface is a loud artifact bug rather than a silent re-default.
+ * @throws only when the field is present but corrupt
+ *   (not an object, or a channel entry with a non-boolean `required`).
+ *   A malformed declared interface is a loud artifact bug rather than a silent re-default.
  */
 /**
  * The card's `encoder` block read from a file — the node-side twin of `encoderDescriptorFromCard` (#2164).
@@ -344,8 +357,8 @@ export async function readRequiredChannels(
 	}
 
 	// `requires.anchor.span_mode` is an enum, and a typo in it is silent OOD
-	// (the wrong spans get anchored, nothing errors) — so an unrecognized value is
-	// a loud artifact bug, like the shapes above.
+	// (the wrong spans get anchored, nothing errors).
+	// So an unrecognized value is a loud artifact bug, like the shapes above.
 	const anchorSpanMode = (obj.anchor as { span_mode?: unknown } | undefined)?.span_mode
 
 	if (anchorSpanMode !== undefined && anchorSpanMode !== "alnum-run" && anchorSpanMode !== "shaped") {
@@ -391,9 +404,9 @@ export interface TagCapability {
  * (`server` = anchor+gazetteer; `pocket` = anchor-only) × per codex address-system
  * × per tag, the model's certified per-tag capability.
  *
- * The `createScorer` loader reads this to fail closed when a conventions mask would
- * forbid a tag the model is certified to emit — the structural fix that makes the D2/#719
- * bug-class (a mask destroying a demonstrated capability) impossible.
+ * The `createScorer` loader reads this to fail closed when a conventions mask
+ * would forbid a tag the model is certified to emit.
+ * The structural fix that makes the D2/#719 bug-class (a mask destroying a demonstrated capability) impossible.
  *
  * Shape: `capabilities[tier][system][tag] = { maskOffF1, maskOnF1? }`.
  * A `$comment` provenance key may sit alongside the tier keys and is ignored by readers.
@@ -401,14 +414,15 @@ export interface TagCapability {
 export type CapabilityManifest = Record<string, Record<string, Record<string, TagCapability>>>
 
 /**
- * Read the `capabilities` block from a `model-card.json` (#718/#719). defensive, mirroring
- * `readRequiredChannels`: returns `undefined` when the card is absent, unreadable, or has no
- * `capabilities` field (a pre-#718 card → the loader's delta check is skipped, back-compat).
+ * Read the `capabilities` block from a `model-card.json` (#718/#719).
  *
- * Throws only when the field is present but not an object — a corrupt declared
- * interface is a loud artifact bug rather than a silent skip.
- * Tier/system/tag sub-shapes are read leniently (a malformed cell simply yields no
- * capability claim — `undefined` from `lookupTagCapability`).
+ * Defensive, mirroring `readRequiredChannels`: returns `undefined` when the card is absent, unreadable,
+ * or has no `capabilities` field (a pre-#718 card → the loader's delta check is skipped, back-compat).
+ *
+ * @throws only when the field is present but not an object.
+ *   A corrupt declared interface is a loud artifact bug rather than a silent skip.
+ *   Tier/system/tag sub-shapes are read leniently (a malformed cell simply yields no
+ *   capability claim — `undefined` from `lookupTagCapability`).
  */
 export async function readCapabilityManifest(
 	modelCardPath: PathBuilderLike | undefined
@@ -465,8 +479,8 @@ export interface CRFTransitions {
 /**
  * Read learned CRF transition parameters from `crf-transitions.json`.
  *
- * Returns `undefined` when the file is missing or malformed — callers fall
- * back to the structural BIO mask only.
+ * @returns `undefined` when the file is missing or malformed — callers fall
+ *   back to the structural BIO mask only.
  */
 export async function readCRFTransitions(crfPath: PathBuilderLike | undefined): Promise<CRFTransitions | undefined> {
 	if (!crfPath || !(await pathExists(crfPath))) return undefined

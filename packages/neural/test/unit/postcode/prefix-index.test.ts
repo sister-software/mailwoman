@@ -151,9 +151,9 @@ describe("PFX1 layout conformance (docs/engineering/reference/pfx1.ksy)", () => 
 		const ancestorCount = view.getUint32(o, true)
 		o += 4
 
-		// Three distinct surfaces (UK, England, Northern Ireland) across four nodes that make
-		// seven references — the dictionary is the anti-repetition device, so it must be shorter
-		// than the reference count, which the assertion at the end of the walk states directly.
+		// Three distinct surfaces (UK, England, Northern Ireland) across four nodes that make seven references.
+		// The dictionary is the anti-repetition device, so it must be shorter than the
+		// reference count, which the assertion at the end of the walk states directly.
 		expect(ancestorCount).toBe(3)
 
 		for (let i = 0; i < ancestorCount; i++) {
@@ -231,7 +231,8 @@ describe("PFX1 layout conformance (docs/engineering/reference/pfx1.ksy)", () => 
 		// The dictionary warrants its place: more references than entries.
 		expect(totalRefs).toBeGreaterThan(ancestorCount)
 
-		// The walk consumed the buffer exactly — no trailing bytes, no short read.
+		// The walk consumed the buffer exactly.
+		// No trailing bytes, no short read.
 		expect(o).toBe(bytes.length)
 	})
 

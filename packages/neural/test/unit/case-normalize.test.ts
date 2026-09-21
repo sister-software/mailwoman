@@ -43,7 +43,8 @@ test("isAllCapsInput: needs ≥3 cased letters; digits/punctuation alone do not 
 
 test("titleCaseInput: title-cases ≥3-letter runs, PRESERVES ≤2-letter runs, length-preserving", () => {
 	expect(titleCaseInput("PALESTINE")).toBe("Palestine")
-	// ≤2-letter runs stay shouting — they're abbreviations the model reads correctly all-caps (suffix RD).
+	// ≤2-letter runs stay shouting.
+	// They're abbreviations the model reads correctly all-caps (suffix RD).
 	expect(titleCaseInput("214 JONES RD")).toBe("214 Jones RD")
 	const input = "ELKHART TX"
 	expect(titleCaseInput(input)).toHaveLength(input.length) // offsets unchanged
@@ -71,8 +72,9 @@ test("normalizeInputCase: the #690 hook — title-case iff all-caps, else unchan
 
 test("titleCaseInput: a run whose lowercase form changes length is kept as typed (offsets never move)", () => {
 	// U+0130 lowercases to two code units.
-	// In `caddesİ` it sits inside the lowered tail, so that run stays shouting rather than shifting
-	// every later offset. in `İstanbul` it is the untouched first letter, so the run title-cases.
+	// In `caddesİ` it sits inside the lowered tail, so that run stays shouting
+	// rather than shifting every later offset.
+	// In `İstanbul` it is the untouched first letter, so the run title-cases.
 	const input = "İSTANBUL CADDESİ"
 	const out = titleCaseInput(input)
 

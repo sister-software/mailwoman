@@ -54,9 +54,10 @@ export interface SoftFeatures {
 	 */
 	gazetteer?: SoftFeatureChannel
 	/**
-	 * Country-lexicon channel (#1104) — present iff `countryLexicon` was
-	 * supplied. deliberately not subject to `suppressGazetteerNearPostcode`:
-	 * unlike the gazetteer's country slot, this channel fires on a trailing "…12345 USA"
+	 * Country-lexicon channel (#1104) — present iff `countryLexicon` was supplied.
+	 *
+	 * Deliberately not subject to `suppressGazetteerNearPostcode`: unlike the
+	 * gazetteer's country slot, this channel fires on a trailing "…12345 USA"
 	 * (where the gazetteer clue is zeroed by the near-postcode choreography).
 	 *
 	 * See `country-inference.ts`.
@@ -65,9 +66,10 @@ export interface SoftFeatures {
 	/**
 	 * Street-type evidence channel (Option-A bundle, Phase 2) — present iff `streetTypeLexicon` was supplied.
 	 *
-	 * Painted by the same generic painter as the gazetteer channel (the lexicons share one schema);
-	 * no choreography — the bundle's anti-over-trust discipline is the train-side
-	 * curriculum rather than a decode-side transform.
+	 * Painted by the same generic painter as the gazetteer channel
+	 * (the lexicons share one schema); no choreography.
+	 * The bundle's anti-over-trust discipline is the train-side curriculum
+	 * rather than a decode-side transform.
 	 */
 	streetType?: SoftFeatureChannel
 	/**
@@ -92,9 +94,11 @@ export interface SoftFeatureSources {
 	/**
 	 * Which substrings the anchor channel looks up (2026-08-05 train-parity fix).
 	 *
-	 * Defaults to `alnum-run`, the shipped behaviour. pairing is essential, the same way
-	 * `suppressGazetteerNearPostcode` is: `shaped` reproduces the train painter's span rule,
-	 * so it belongs only to a model trained against a lookup with letter-containing keys.
+	 * Defaults to `alnum-run`, the shipped behaviour.
+	 * Pairing is essential, the same way `suppressGazetteerNearPostcode` is:
+	 * `shaped` reproduces the train painter's span rule, so it belongs only to a model
+	 * trained against a lookup with letter-containing keys.
+	 *
 	 * Declared by the model card (`requires.anchor.span_mode`), never guessed.
 	 */
 	postcodeAnchorSpanMode?: AnchorSpanMode
@@ -115,8 +119,9 @@ export interface SoftFeatureSources {
 	 * on pieces adjacent to a postcode-anchor hit.
 	 *
 	 * Needs both a `gazetteerLexicon` and a `postcodeAnchorLookup` to take effect
-	 * (the suppression is keyed off the anchor's confidence). pairing is essential —
-	 * enable this IFF the model was trained with the matching train-time choreography.
+	 * (the suppression is keyed off the anchor's confidence).
+	 * Pairing is essential — enable this IFF the model was trained with the matching train-time choreography.
+	 *
 	 * See `suppressGazetteerNearPostcode` in `gazetteer-inference.ts`.
 	 *
 	 * Does not touch the country channel.
@@ -186,14 +191,16 @@ export function buildSoftFeatures(
 		: undefined
 
 	// street-context check for the locality channel (2026-07-29, the 8.2.0 pre-ship
-	// gauntlet catch. precedent: the #1315 FST street-context check).
+	// gauntlet catch. Precedent: the #1315 FST street-context check).
 	// Locality-surface evidence feeds only when the street painter found context on this input.
-	// On a bare place-name lookup ("Melbourne", "Sydney, Australia") homograph-flagged locality
-	// evidence rotates the parse (locality → region/ street — the Washington-DC class,
-	// surviving in the fragment register on world-city homographs) while the resolver already owns
-	// that register outright. withholding = the curriculum-trained absence identity, the same
-	// declared-ablation semantics as formatted mode. street-containing fragments — every measured
-	// win class (homonym/bare-street/particle rows all carry a street-type word) — keep the full bundle.
+	// On a bare place-name lookup ("Melbourne", "Sydney, Australia") homograph-flagged
+	// locality evidence rotates the parse (locality → region/ street — the
+	// Washington-DC class, surviving in the fragment register on world-city homographs)
+	// while the resolver already owns that register outright.
+	// Withholding = the curriculum-trained absence identity, the same declared-ablation
+	// semantics as formatted mode.
+	// Street-containing fragments — every measured win class
+	// (homonym/bare-street/particle rows all carry a street-type word) — keep the full bundle.
 	// The street channel itself needs no check: it paints nothing on a street-word-less input by construction.
 	const streetContext = streetType !== undefined && streetType.confidence.some((c) => c > 0)
 

@@ -103,8 +103,9 @@ describe("placetype-pair prior — decode-order integration", () => {
 		expect(baseline.repairs.find((r) => r.pass === "wordConsistency")).toBeDefined()
 
 		// With the bias: the placetypePair prior's own B-first/I-rest write
-		// (delta 6.0, dominating the weak magnitude-1 baseline) already makes "shoreditch"'s three pieces
-		// unanimous before enforceWordConsistency runs — there is nothing left for the heal to do.
+		// (delta 6.0, dominating the weak magnitude-1 baseline) already makes "shoreditch"'s
+		// three pieces unanimous before enforceWordConsistency runs.
+		// There is nothing left for the heal to do.
 		const index = fixedPairIndex("shoreditch", "london", "dependent_locality")
 
 		const biased = await classifier.traceParse(text, {
@@ -132,9 +133,9 @@ describe("placetype-pair prior — decode-order integration", () => {
 		const { pieces } = tokenizer.encode(text)
 		expect(pieces).toHaveLength(4)
 
-		// strong, already-consistent baseline for "shoreditch": B-street / I-street / I-street at
-		// magnitude 20 — a realistic "the encoder is sure" margin (softmax-saturating relative to the
-		// prior's 6.0 delta. documented here since the brief calls for the exact magnitudes used).
+		// strong, already-consistent baseline for "shoreditch": B-street / I-street / I-street at magnitude 20.
+		// A realistic "the encoder is sure" margin (softmax-saturating relative to the prior's
+		// 6.0 delta. Documented here since the brief calls for the exact magnitudes used).
 		// The placetypePair prior below would bias the same window toward `dependent_locality` at
 		// its real artifact's calibrated delta (6.0) — 20 > 6, so the encoder's reading must win.
 		const logits = [zeroRow(), zeroRow(), zeroRow(), zeroRow()]
@@ -203,9 +204,9 @@ describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusio
 			placetypePair: { index },
 		})
 
-		// The prior fired (anchored leg, emission bias composed) yet the global path
-		// stays fused — the exact emission-only miss the task-8 probe measured,
-		// and the exact decode a pre-transition-beta build produces.
+		// The prior fired (anchored leg, emission bias composed) yet the global path stays fused.
+		// The exact emission-only miss the task-8 probe measured, and the exact
+		// decode a pre-transition-beta build produces.
 		expect(trace.priors.find((p) => p.kind === "placetypePair")).toEqual({
 			kind: "placetypePair",
 			applied: true,

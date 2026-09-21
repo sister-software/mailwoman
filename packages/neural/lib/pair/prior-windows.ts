@@ -19,10 +19,11 @@ import type { WordGroup } from "#fst-prior"
 import type { TokenLike } from "#query-shape-prior"
 
 /**
- * P99 of the GB PPD `city` word-length distribution (measured 2026-07-22. see the module docstring's table).
+ * P99 of the GB PPD `city` word-length distribution (measured 2026-07-22. See the module docstring's table).
  *
- * A dependent_locality-shaped candidate almost never spans more than 3 words in the source
- * register that motivated this prior. the observed max was 5 (287 of 9,031,691 rows).
+ * A dependent_locality-shaped candidate almost never spans more than 3 words in
+ * the source register that motivated this prior.
+ * The observed max was 5 (287 of 9,031,691 rows).
  */
 export const WINDOW_MAX_WORDS = 3
 
@@ -64,9 +65,11 @@ export const DEFAULT_DELTA = 1
 export const STRUCTURAL_MARKER_WORDS: ReadonlySet<string> = new Set(["house", "road", "street", "flat", "court"])
 
 /**
- * A bare house-number shape ("5", "12a", "104b") — the successor class the marker table's rationale
- * calls out alongside the fixed word list: a window followed by what looks like a house number reads
- * as a numbered-street head ("Church 5"-style patterns in some registers) rather than a place name.
+ * A bare house-number shape ("5", "12a", "104b").
+ *
+ * The successor class the marker table's rationale calls out alongside the fixed word list:
+ * a window followed by what looks like a house number reads as a numbered-street head
+ * ("Church 5"-style patterns in some registers) rather than a place name.
  *
  * Same suppression rationale as the fixed words, expressed as a shape test
  * instead of a literal set (a house number is not enumerable).
@@ -81,19 +84,21 @@ export function looksLikeHouseNumber(token: string): boolean {
  * adjustment (transition-beta) is withheld for that hit — the emission bias stays exactly as-is.
  *
  * Rationale: an immediately-preceding "at"/"of" marks a lexicalized venue title
- * ("New Inn at Hoff", "Church of St Mary") — the embedded place name is part of
- * the venue's own name rather than an address field.
+ * ("New Inn at Hoff", "Church of St Mary").
+ * The embedded place name is part of the venue's own name rather than an address field.
+ *
  * Address syntax introduces dependent localities positionally (field order, adjacency to the post town),
  * never prepositionally, so a prepositional predecessor is venue-title evidence
  * and the entry-path bonus must not tip a near-miss into a false positive
  * (the measured trigger: "New Inn at Hoff, Appleby-In-Westmorland" — the β=5 entry bonus
  * alone flipped it, failing the venue-anchored ≤4/6500 bar by one row).
  *
- * Interior place-name prepositions ("Barrow upon Soar", "Knott End on Sea") are unaffected by
- * construction — this is a predecessor check rather than a membership test on the child's own words.
- * No predecessor (child at the string/segment start) → no suppression. list growth requires a
- * per-word rationale line (the same widening discipline as {@link STRUCTURAL_MARKER_WORDS});
- * long-term the list derives from register statistics (#1296).
+ * Interior place-name prepositions ("Barrow upon Soar", "Knott End on Sea") are unaffected by construction.
+ * This is a predecessor check rather than a membership test on the child's own words.
+ *
+ * No predecessor (child at the string/segment start) → no suppression.
+ * List growth requires a per-word rationale line (the same widening discipline as
+ * {@link STRUCTURAL_MARKER_WORDS}); long-term the list derives from register statistics (#1296).
  *
  * - `at` — venue-title locative: "New Inn at Hoff", "The Mill at Glynhir".
  * - `of` — venue-title genitive: "Church of St Mary", "House of Bruar".
@@ -101,8 +106,10 @@ export function looksLikeHouseNumber(token: string): boolean {
 export const TITLE_PREPOSITION_PREDECESSORS: ReadonlySet<string> = new Set(["at", "of"])
 
 /**
- * Is the word-group immediately preceding `window` a venue-title preposition (see
- * {@link TITLE_PREPOSITION_PREDECESSORS})? A window at position 0 has no predecessor and never suppresses.
+ * Is the word-group immediately preceding `window` a venue-title preposition
+ * (see {@link TITLE_PREPOSITION_PREDECESSORS})?
+ *
+ * A window at position 0 has no predecessor and never suppresses.
  */
 export function hasTitlePrepositionPredecessor(nonEmptyGroups: readonly WordGroup[], window: CandidateWindow): boolean {
 	const predecessor = window.startPos > 0 ? nonEmptyGroups[window.startPos - 1] : undefined
@@ -122,8 +129,8 @@ export interface CandidateWindow {
 	/**
 	 * The bare-concatenation fold (no separator) — see the module docstring's "dual-key probe" note.
 	 *
-	 * Identical to
-	 * {@link key} for a single-word candidate. only diverges for a genuine multi-word one.
+	 * Identical to {@link key} for a single-word candidate.
+	 * Only diverges for a genuine multi-word one.
 	 */
 	concatKey: string
 	/**
@@ -134,16 +141,18 @@ export interface CandidateWindow {
 	endPos: number
 	pieceIndices: number[]
 	/**
-	 * The pieces the probe KEY actually covers, when that is narrower than
-	 * {@link pieceIndices} — i.e. a segment whose key had a same-field postcode stripped
-	 * (#1308 / the leading-postcode countries).
+	 * The pieces the probe KEY actually covers, when that is narrower than {@link pieceIndices} — i.e.
+	 * a segment whose key had a same-field postcode stripped (#1308 / the leading-postcode countries).
 	 * Absent when the two coincide.
 	 *
-	 * Read only by the whole-edge parent write ({@link applyParentTagBias}). The child write deliberately keeps spanning
-	 * the whole segment, which is what it has always done. The distinction is not cosmetic: a French parent segment is
-	 * "12210 Montpeyroux", the key is "montpeyroux", and biasing the whole segment toward `locality` emits `locality =
-	 * "12210 Montpeyroux"` — postcode included. Measured on `fr-lieudit-golden.jsonl`: whole-edge 96.3% → 0.0% at
-	 * parentDelta ≥ 6 before this field existed, with the child still correct on 77/80.
+	 * Read only by the whole-edge parent write ({@link applyParentTagBias}).
+	 * The child write deliberately keeps spanning the whole segment, which is what it has always done.
+	 *
+	 * The distinction is not cosmetic: a French parent segment is "12210 Montpeyroux",
+	 * the key is "montpeyroux", and biasing the whole segment toward `locality` emits
+	 * `locality = "12210 Montpeyroux"` — postcode included.
+	 * Measured on `fr-lieudit-golden.jsonl`: whole-edge 96.3% → 0.0% at parentDelta ≥ 6
+	 * before this field existed, with the child still correct on 77/80.
 	 */
 	keyPieceIndices?: number[]
 }
@@ -178,7 +187,7 @@ export function buildWindows(nonEmptyGroups: readonly WordGroup[], maxWords: num
  * (offsets rather than piece-text inspection, so this is robust to however the tokenizer
  * happened to attach a comma piece to its neighboring word group — `groupPiecesIntoWords`
  * absorbs trailing punctuation into the preceding word's `pieceIndices`, so a comma's own
- * piece span can land inside either group depending on tokenization. counting commas strictly
+ * piece span can land inside either group depending on tokenization. Counting commas strictly
  * before a group's own start offset sidesteps that ambiguity entirely).
  *
  * Shared by {@link buildSegmentWindows} (to know where segment boundaries fall) and
@@ -241,8 +250,10 @@ export const MAX_TRAILING_POSTCODE_WORDS = 2
  * Each entry is the same anchored shape codex owns as that system's source of truth
  * (`@mailwoman/codex/<system>`), so the strip and the postcode-repair / postcode-anchor
  * passes never drift on what a GB / NZ postcode is.
- * Country-aware BY design: a header country with no entry here → no strip → byte-stable (see
- * {@link segmentParentPostcodeShape}). Grow this map only with a real codex shape for the added country.
+ * Country-aware BY design: a header country with no entry here → no strip →
+ * byte-stable (see {@link segmentParentPostcodeShape}).
+ *
+ * Grow this map only with a real codex shape for the added country.
  */
 export const SEGMENT_PARENT_POSTCODE_SHAPES: ReadonlyMap<string, RegExp> = new Map([
 	["gb", UK_POSTCODE_PATTERN],
@@ -289,8 +300,10 @@ export function segmentParentPostcodeShape(country: string | undefined): RegExp 
  *
  * The bug this closes: an idiomatic NZ / free-text GB address writes the postcode in
  * the same comma-field as the post town ("Porirua 5026", "Macclesfield SK11 9PD"),
- * so the whole segment folds to "porirua 5026" / "macclesfield sk11 9pd" and misses the
- * index's bare "porirua" / "macclesfield" parent — the (child, parent) pair never fires.
+ * so the whole segment folds to "porirua 5026" / "macclesfield sk11 9pd"
+ * and misses the index's bare "porirua" / "macclesfield" parent.
+ * The (child, parent) pair never fires.
+ *
  * Stripping the trailing postcode lets the town alone key the parent probe.
  *
  * Guards (all three from the issue): (1) only a trailing run — the longest suffix of
@@ -315,13 +328,15 @@ export function trailingSegmentPostcodeTake(tokens: readonly string[], shape: Re
 }
 
 /**
- * Strip a leading postcode-shaped run from a segment's parent-candidate key — the mirror of
- * {@link trailingSegmentPostcodeTake} for countries that write "postcode Commune" (see
- * {@link LEADING_POSTCODE_COUNTRIES}).
+ * Strip a leading postcode-shaped run from a segment's parent-candidate key.
+ *
+ * The mirror of {@link trailingSegmentPostcodeTake} for countries that write "postcode
+ * Commune" (see {@link LEADING_POSTCODE_COUNTRIES}).
  *
  * Anchored full-match against the country shape exactly like the trailing form, so this can
  * only ever remove a run that is a postcode for that country — never an ordinary leading word.
- * Only the probe key changes. the segment itself and every emitted span are untouched.
+ * Only the probe key changes.
+ * The segment itself and every emitted span are untouched.
  */
 export function leadingSegmentPostcodeTake(tokens: readonly string[], shape: RegExp | undefined): number {
 	if (shape === undefined || tokens.length < 2) return 0
@@ -344,10 +359,11 @@ export function leadingSegmentPostcodeTake(tokens: readonly string[], shape: Reg
  * `groupSegments` (see {@link computeGroupSegments}) suffices.
  *
  * `parentPostcodeShape` (the index's country trailing-postcode shape, #1308) strips a trailing
- * postcode from the segment's key forms only (see {@link trailingSegmentPostcodeTake}) —
+ * postcode from the segment's key forms only (see {@link trailingSegmentPostcodeTake}).
  * `startPos`/`endPos`/`pieceIndices` still span the whole segment, so disjointness, marker suppression,
  * the identity-repeat check, and the child bias write are all byte-identical to pre-#1308 behavior.
- * only the probe key of a parent-candidate segment carrying a same-field postcode changes.
+ *
+ * Only the probe key of a parent-candidate segment carrying a same-field postcode changes.
  *
  * The one consumer that needs the narrower span is the whole-edge parent write (#46), which is why the
  * stripped range is also recorded as {@link CandidateWindow.keyPieceIndices} rather than thrown away.
@@ -403,13 +419,17 @@ export function disjoint(a: CandidateWindow, b: CandidateWindow): boolean {
 }
 
 /**
- * Do two candidates fold to an identical key under any of their fold forms? The identity test behind the repeated-name
- * convention (module docstring, "Identity pairs"). Plain repetition ("Mangawhai" / "Mangawhai") matches on `key ===
- * key`; the cross-form comparisons additionally catch a repeat written in two spellings of the same name
- * ("Stockton-on-Tees" folds to the single concat token "stocktonontees", which equals the concat form of "Stockton on
- * Tees") — the same dual-key bridging logic as {@link probeWindowPair}, applied to the identity question. Two genuinely
- * different places can only collide here if their folds collide, i.e. they carry the same name text — which is exactly
- * the population the convention rule is scoped to.
+ * Do two candidates fold to an identical key under any of their fold forms?
+ *
+ * The identity test behind the repeated-name convention (module docstring, "Identity pairs").
+ * Plain repetition ("Mangawhai" / "Mangawhai") matches on `key === key`;
+ * the cross-form comparisons additionally catch a repeat written in two spellings of
+ * the same name ("Stockton-on-Tees" folds to the single concat token "stocktonontees",
+ * which equals the concat form of "Stockton on Tees") — the same dual-key bridging
+ * logic as {@link probeWindowPair}, applied to the identity question.
+ *
+ * Two genuinely different places can only collide here if their folds collide, i.e. they carry
+ * the same name text — which is exactly the population the convention rule is scoped to.
  */
 export function sharesFoldForm(a: CandidateWindow, b: CandidateWindow): boolean {
 	return a.key === b.key || a.key === b.concatKey || a.concatKey === b.key || a.concatKey === b.concatKey

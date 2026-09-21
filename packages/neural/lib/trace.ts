@@ -23,15 +23,16 @@ import type { SoftFeatureChannel } from "#soft-features"
 /**
  * The emission priors the decode path may compose, in application order.
  *
- * The ordered constant is the single source for "every kind" — the decode path's
- * push sites and the empty-input return both produce records in exactly this order,
- * and the trace test asserts against it, so adding a prior without its participation
- * record is a test failure rather than a silent omission.
+ * The ordered constant is the single source for "every kind".
+ * The decode path's push sites and the empty-input return both produce records in
+ * exactly this order, and the trace test asserts against it, so adding a prior without
+ * its participation record is a test failure rather than a silent omission.
  *
  * `"placetypeCensus"` is the one member that is not an emission prior.
  * It is the PCN1 census observability rung: it rides the placetype-pair prior's parent-candidate
- * probes, records what the census knows about each parent, and composes nothing —
- * its `applied` is `false` by construction (see {@link TracePrior.applied}).
+ * probes, records what the census knows about each parent, and composes nothing.
+ *
+ * Its `applied` is `false` by construction (see {@link TracePrior.applied}).
  *
  * It sits directly after `"placetypePair"` because that is where in the decode path it is
  * produced, and the ordering here is production order rather than a claim about composition.
@@ -61,9 +62,9 @@ export interface TracePrior {
 	/**
 	 * Whether this prior moved anything.
 	 *
-	 * Always `false` on `"placetypeCensus"`, which writes no emissions at all — a `true`
-	 * there would mean somebody wired a census bias into the decoder, which the 2026-08-04
-	 * assessment checks behind a calibration δ the artifact deliberately doesn't carry.
+	 * Always `false` on `"placetypeCensus"`, which writes no emissions at all.
+	 * A `true` there would mean somebody wired a census bias into the decoder, which the
+	 * 2026-08-04 assessment checks behind a calibration δ the artifact deliberately doesn't carry.
 	 */
 	applied: boolean
 	/**
@@ -80,8 +81,8 @@ export interface TracePrior {
 	 * `placetypeCensus` only: what the PCN1 census knew about each parent surface
 	 * the pair prior's probe chain looked up on this input.
 	 *
-	 * Absent when no census artifact was loaded — the feature is then entirely inert
-	 * and the record is just `{kind, applied: false}`.
+	 * Absent when no census artifact was loaded.
+	 * The feature is then entirely inert and the record is just `{kind, applied: false}`.
 	 */
 	census?: PlacetypeCensusObservation[]
 	/**
@@ -89,7 +90,7 @@ export interface TracePrior {
 	 * the census, hit or miss — the denominator for {@link census}.
 	 *
 	 * `0` with a census loaded means the probe chain never reached a parent candidate
-	 * (e.g. a single-token input); a positive count with an empty {@link census} means the census genuinely
+	 * (e.g. A single-token input); a positive count with an empty {@link census} means the census genuinely
 	 * knew none of them, which is coverage rather than a claim that those parents have no children.
 	 */
 	censusProbedParents?: number
@@ -131,9 +132,9 @@ export interface TracePiece {
 /**
  * The full trace of one `traceParse` call.
  *
- * Field-by-field provenance lives in the spec's trace interface table. the one deviation
- * from that table is that vocab ids ride on `pieces[].id` rather than a parallel
- * `ids` array (same information, one fewer alignment invariant).
+ * Field-by-field provenance lives in the spec's trace interface table.
+ * The one deviation from that table is that vocab ids ride on `pieces[].id` rather than
+ * a parallel `ids` array (same information, one fewer alignment invariant).
  */
 export interface NeuralParseTrace {
 	/**
@@ -172,9 +173,7 @@ export interface NeuralParseTrace {
 	 */
 	localeLogits?: number[]
 	/**
-	 * #727 stage-2: per-span type scores from the semi-Markov head — `spanScores[token][length-1][type]`. Absent on
-	 * pre-v3 bundles (the model exports no `span_scores`); the type axis lives in the
-	 * weights bundle's `semi-crf-transitions.json`, never hardcoded here.
+	 * #727 stage-2: per-span type scores from the semi-Markov head — `spanScores[token][length-1][type]`. Absent on pre-v3 bundles (the model exports no `span_scores`); the type axis lives in the weights bundle's `semi-crf-transitions.json`, never hardcoded here.
 	 */
 	spanScores?: number[][][]
 	/**

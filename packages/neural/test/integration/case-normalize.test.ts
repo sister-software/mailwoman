@@ -44,9 +44,7 @@ describe("isAllCapsInput", () => {
 describe("titleCaseInput", () => {
 	it("title-cases ASCII runs ≥3 letters, preserves ≤2-letter all-caps runs (#252), preserves length", () => {
 		expect(titleCaseInput("PALESTINE")).toBe("Palestine")
-		// #252: ≤2-letter all-caps runs are state codes / suffix abbrevs (TX, RD, ST) — title-casing them
-		// (Tx, Rd) corrupted the region signal.
-		// Preserve them. the model reads both forms.
+		// #252: ≤2-letter all-caps runs are state codes / suffix abbrevs (TX, RD, ST) — title-casing them (Tx, Rd) corrupted the region signal. Preserve them. The model reads both forms.
 		expect(titleCaseInput("214 JONES RD")).toBe("214 Jones RD")
 		expect(titleCaseInput("ELKHART TX")).toBe("Elkhart TX")
 		const caps = "214 JONES RD, ELKHART, TX 75839"
@@ -110,8 +108,7 @@ describe("normalizeInputCase — the parser hook", () => {
 	it("returns mixed-case and lowercase accented input UNCHANGED; accented shouting title-cases like ASCII", () => {
 		const mixed = "109 Seminary Dr, Mill Valley, CA 94941"
 		expect(normalizeInputCase(mixed)).toBe(mixed)
-		// #1938: the accented shouting form reaches the model as words rather than single-character pieces. `DE` keeps
-		// the ≤2-letter rule.
+		// #1938: the accented shouting form reaches the model as words rather than single-character pieces. `DE` keeps the ≤2-letter rule.
 		expect(normalizeInputCase("CAFÉ DE PARÍS")).toBe("Café DE París")
 		const lowerAccented = "café de parís"
 		expect(normalizeInputCase(lowerAccented)).toBe(lowerAccented)

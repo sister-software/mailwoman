@@ -72,9 +72,11 @@ const OSM_AEROWAY_STRUCTURE_DESIGNATORS = ["terminal", "gate"] as const
  * Every venue-interior designator the span proposer recognizes, lowercased.
  *
  * Note the deliberate omission of abbreviations.
- * Pub 28 ships them (`STE`, `bldg`) because mailers write them. these words are written in full
- * on signage and in venue addresses, and a two-or-three letter abbreviation is exactly the
- * false-positive shape the AU/NZ tables already taught this lexicon to avoid ("Ms Smith" for `MS`).
+ * Pub 28 ships them (`STE`, `bldg`) because mailers write them.
+ *
+ * These words are written in full on signage and in venue addresses, and a two-or-three
+ * letter abbreviation is exactly the false-positive shape the AU/NZ tables already
+ * taught this lexicon to avoid ("Ms Smith" for `MS`).
  *
  * Add one only with a measured need.
  */
@@ -93,8 +95,9 @@ export const VENUE_STRUCTURE_DESIGNATORS: readonly string[] = [
  * that serve the same grammatical role inside a venue.
  *
  * Deliberately excludes abbreviations (`N`, `W`, `NE`).
- * Postal directionals abbreviate because mailers write them that way on a street line. a
- * sub-venue name written on signage does not, and a bare capital letter beside a designator
+ * Postal directionals abbreviate because mailers write them that way on a street line.
+ *
+ * A sub-venue name written on signage does not, and a bare capital letter beside a designator
  * is the identifier shape the designator+identifier rule already owns ("Wing B").
  */
 export const VENUE_STRUCTURE_MODIFIERS: readonly string[] = [

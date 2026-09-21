@@ -65,8 +65,8 @@ export interface PostcodeMatch extends SpanMatch {
 	/**
 	 * "alnum" shapes may ADD over container labels.
 	 *
-	 * "numeric" shapes may only snap an existing span. a "designated" shape
-	 * (the digits behind a postal marker) may overwrite any label.
+	 * "numeric" shapes may only snap an existing span.
+	 * A "designated" shape (the digits behind a postal marker) may overwrite any label.
 	 */
 	kind: "alnum" | "numeric" | "designated"
 }
@@ -117,7 +117,7 @@ export function collectMatches(text: string): PostcodeMatch[] {
 /**
  * Repair postcode label spans in a decoded token sequence using per-country regexes.
  *
- * Returns a new token array (inputs are not mutated) plus a change count.
+ * @returns a new token array (inputs are not mutated) plus a change count.
  */
 export function repairPostcodeLabels(text: string, input: readonly DecoderToken[]): RepairResult {
 	const matches = collectMatches(text)
@@ -135,8 +135,9 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 		const hasPostcode = overlap.some((i) => isTagLabel(tokens[i]!.label, "postcode"))
 
 		if (!hasPostcode) {
-			// ADD path — a designated shape over any label. an alphanumeric shape only
-			// over safe labels. a numeric shape never.
+			// ADD path — a designated shape over any label.
+			// An alphanumeric shape only over safe labels.
+			// A numeric shape never.
 			if (m.kind === "numeric") continue
 
 			if (m.kind === "alnum" && !isAddSafe(tokens, overlap, ADD_OVER_TAGS)) continue
@@ -146,7 +147,7 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 		overlap.forEach((i, k) => setLabel(i, k === 0 ? POSTCODE_B : POSTCODE_I))
 
 		// Leading smear clip: postcode tokens immediately before the snapped run are noise
-		// (e.g. a house-number digit the model over-labeled) — clear to O as before.
+		// (e.g. A house-number digit the model over-labeled) — clear to O as before.
 		for (let j = overlap[0]! - 1; j >= 0 && isTagLabel(tokens[j]!.label, "postcode"); j--) {
 			setLabel(j, OUTSIDE)
 		}
@@ -191,13 +192,13 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 }
 
 // repairLeadingHouseNumber (#723) was removed 2026-06-24.
-// It relabelled a leading 5-digit postcode → house_number under conventions=auto (US) —
-// an override that contradicted the model's own label, which the project's repair
+// It relabelled a leading 5-digit postcode → house_number under conventions=auto (US).
+// An override that contradicted the model's own label, which the project's repair
 // discipline forbids (a repair may add spans on O-tokens or snap boundaries,
 // never re-classify a token from one entity to another).
-// Net on the US golden set it was −302 postcode / +16 house_number. an anchor-ablation
-// probe showed the model is 100% correct on the target rows once the binary postcode anchor
-// (which fires on a leading number that is a valid ZIP elsewhere) is removed.
+// Net on the US golden set it was −302 postcode / +16 house_number.
+// An anchor-ablation probe showed the model is 100% correct on the target rows once the binary
+// postcode anchor (which fires on a leading number that is a valid ZIP elsewhere) is removed.
 // The disambiguation is being absorbed model-side: a region-congruence anchor
 // upgrade + augmented postcode-leading extracts.
 // See the 2026-06-24 postmortem + DeepSeek consult 019ef789.

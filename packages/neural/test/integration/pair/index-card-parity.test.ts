@@ -63,8 +63,9 @@ interface PairIndexFacts {
 }
 
 /**
- * Read a PIX1 binary's header and entry count without constructing a resolver —
- * this test cares about what the file says, so it deliberately does not route
+ * Read a PIX1 binary's header and entry count without constructing a resolver.
+ *
+ * This test cares about what the file says, so it deliberately does not route
  * through the reader that a bug could also affect.
  */
 async function readPairIndexFacts(path: string): Promise<PairIndexFacts> {
@@ -115,8 +116,9 @@ describe("pair-index ↔ model-card parity", () => {
 				facts.pairs
 			)
 
-			// The calibrated magnitudes ride the header. a card claiming a delta the binary does
-			// not carry would misdescribe the shipped behaviour rather than just the shipped size.
+			// The calibrated magnitudes ride the header.
+			// A card claiming a delta the binary does not carry would misdescribe the
+			// shipped behaviour rather than just the shipped size.
 			const cardDelta = String(block!.delta_calibration ?? "")
 
 			expect(cardDelta, `${pkg}: card delta_calibration does not mention the artifact's δ=${facts.delta}`).toContain(
@@ -133,8 +135,8 @@ describe("pair-index ↔ model-card parity", () => {
 			// The whole-edge parent bias (#46) is default-on for the locales that have a board,
 			// and off (no header key) for the ones that don't.
 			// Both directions are graded: a card that omits a shipped parentDelta misdescribes
-			// the behaviour, and a card that claims one the artifact lacks is worse — it reads as
-			// though the D-rule's per-locale check had been cleared when it hasn't.
+			// the behaviour, and a card that claims one the artifact lacks is worse.
+			// It reads as though the D-rule's per-locale check had been cleared when it hasn't.
 			// The assertion spells out `parentDelta=<n>` rather than the bare number
 			// because δ and β are both 5 today, so a substring match on "5" would pass
 			// on a card that never mentioned the parent at all.

@@ -27,8 +27,8 @@ import {
 	type OutputTensor,
 } from "#ort-feeds"
 
-// Back-compat: the dims moved to gazetteer-inference.ts (browser-safe) so the web runner can
-// import them without touching this node-only module.
+// Back-compat: the dims moved to gazetteer-inference.ts (browser-safe) so the web
+// runner can import them without touching this node-only module.
 export { LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATURE_DIM } from "#gazetteer-inference"
 // Back-compat: the result type moved to ort-feeds.ts (pure, shared with the browser runner).
 export { packCharFeed } from "#ort-feeds"
@@ -46,8 +46,8 @@ export interface ONNXRunnerOpts {
 	 * (the training-time max position) even though the fp32 export specified dynamic axes —
 	 * re-quantize with a different shape to override.
 	 *
-	 * Inputs shorter than this are padded with id `0` and masked out via
-	 * attention_mask=0. inputs longer are truncated.
+	 * Inputs shorter than this are padded with id `0` and masked out via attention_mask=0.
+	 * Inputs longer are truncated.
 	 */
 	fixedSeqLen?: number
 	/**
@@ -96,7 +96,8 @@ export const DEFAULT_FIXED_SEQ_LEN = 128
  *
  * - One process, 120 warm parses: 1 thread 18.3 ms/parse, 2 threads 12.5,
  *   4 threads 9.2, ORT's all-cores default 9.3.
- *   More threads win. the parallelism is doing real work.
+ *   More threads win.
+ *   The parallelism is doing real work.
  * - Four concurrent processes, full geocode: 1 thread 32 req/s each, 2 threads 45, 4 threads 33.
  *   Fewer threads win, because N processes each sizing a pool to the machine oversubscribe it N-fold.
  *
@@ -114,8 +115,7 @@ export const DEFAULT_INTRA_OP_THREADS = 2
 /**
  * The `{data, dims}` view `decodeInferOutput` reads.
  *
- * The float32 dtype is the
- * export interface's rather than a runtime check.
+ * The float32 dtype is the export interface's rather than a runtime check.
  */
 function outputTensor(tensor: ort.Tensor): OutputTensor {
 	return { data: tensor.data as Float32Array, dims: tensor.dims }
@@ -188,7 +188,8 @@ export class ONNXRunner {
 	 * Create the session on the configured execution providers, guarded: GPU providers (`cuda`/`webgpu`)
 	 * throw at create-time when their runtime/driver is missing, so on failure we retry on CPU alone.
 	 *
-	 * A box with the GPU runtime uses it. a box without one transparently lands on CPU.
+	 * A box with the GPU runtime uses it.
+	 * A box without one transparently lands on CPU.
 	 */
 	private async createSession(bytes: Uint8Array): Promise<ort.InferenceSession> {
 		try {
@@ -218,11 +219,12 @@ export class ONNXRunner {
 	/**
 	 * Run inference on a single token id sequence — see {@link InferFunction} for the parameter interface.
 	 *
-	 * Pads to `fixedSeqLen` (default 128) with id 0 + mask 0. truncates if longer.
+	 * Pads to `fixedSeqLen` (default 128) with id 0 + mask 0.
+	 * Truncates if longer.
 	 * Output is trimmed back to the actual input length.
 	 *
-	 * Every soft-feed channel is present-conditional on the graph's declared inputs, with the zero-fill
-	 * confidence=0 identity for a declared-but-unsupplied channel (`packSoftChannelFeeds`).
+	 * Every soft-feed channel is present-conditional on the graph's declared inputs, with the
+	 * zero-fill confidence=0 identity for a declared-but-unsupplied channel (`packSoftChannelFeeds`).
 	 */
 	infer: InferFunction = async (tokenIDs, anchor, gazetteer, country, evidence) => {
 		const session = await this.ensureSession()
@@ -262,8 +264,9 @@ export class ONNXRunner {
 	/**
 	 * Run a char-path graph (`char_ids` + `attention_mask`, no `input_ids`; #2164) on one encoding.
 	 *
-	 * The encoder already padded to S, so no fixed sequence length applies. the
-	 * output is trimmed to the real unit count.
+	 * The encoder already padded to S, so no fixed sequence length applies.
+	 * The output is trimmed to the real unit count.
+	 *
 	 * The char path is channel-free by interface, so no soft-feed tensors are packed.
 	 */
 	inferChars: InferCharsFunction = async (charIDs, attentionMask) => {

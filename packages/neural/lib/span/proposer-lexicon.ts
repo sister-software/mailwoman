@@ -64,9 +64,9 @@ const SCAN_EXCLUDED_DELIVERY: ReadonlySet<string> = new Set([
 /**
  * Convert one designator phrase from a codex table into a scan-pattern fragment.
  *
- * Short alphabetic words (≤ 3 chars: "PO", "GPO", "RMB") are treated as initialisms
- * with optional periods/spacing — the punctuation amas tells mailers to strip
- * but deliverable mail still carries ("P.O. Box", "R.M.B 4600").
+ * Short alphabetic words (≤ 3 chars: "PO", "GPO", "RMB") are treated as
+ * initialisms with optional periods/spacing.
+ * The punctuation amas tells mailers to strip but deliverable mail still carries ("P.O. Box", "R.M.B 4600").
  * Longer words match literally with flexible whitespace.
  */
 function phraseToPattern(phrase: string): string {

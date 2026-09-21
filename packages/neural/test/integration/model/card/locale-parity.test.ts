@@ -40,8 +40,9 @@ interface ModelCard {
 /**
  * One evidence-lexicon channel as a card declares it.
  *
- * `lexicon` names the generation the model trained against, and declaring it is what arms the #1510
- * mismatch guard — `resolveEvidenceLexicon` only compares generations on the declared branch,
+ * `lexicon` names the generation the model trained against, and declaring it
+ * is what arms the #1510 mismatch guard.
+ * `resolveEvidenceLexicon` only compares generations on the declared branch,
  * so an undeclared channel silently falls back to a legacy filename with no guard at all.
  */
 interface EvidenceChannel {
@@ -81,8 +82,9 @@ describe("fr-fr ↔ en-us model-card parity (#721 — fr-fr ships en-us's model 
  * must declare the base's evidence channels within it.
  *
  * The subset case is not a smaller claim, it is a wrong one.
- * A declared block suppresses the graph-inference back-compat path, so a missing channel is
- * not inferred — it is dropped, and `required` defaulting to false means nothing fails closed.
+ * A declared block suppresses the graph-inference back-compat path, so a missing channel is not inferred.
+ *
+ * It is dropped, and `required` defaulting to false means nothing fails closed.
  *
  * That is how en-gb ran the whole bundle off on a model trained with it (#1511),
  * and the same gap was later found on fr-fr, en-au and en-nz.
@@ -103,8 +105,8 @@ const EVIDENCE_CHANNELS = ["locality_surface", "street_type"] as const
 /**
  * Drop the `$`-prefixed annotation keys before comparing.
  *
- * They carry per-card history and are expected to differ. the declaration
- * they annotate is what has to match.
+ * They carry per-card history and are expected to differ.
+ * The declaration they annotate is what has to match.
  */
 function semanticFields(channel: EvidenceChannel | undefined): Record<string, unknown> | undefined {
 	if (!channel) return undefined

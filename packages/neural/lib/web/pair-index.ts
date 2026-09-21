@@ -35,13 +35,14 @@ export function resolvePairIndexCountry(country: string | undefined): string {
  * Older HF release versions ship no pair indexes at all, and the prior is a soft
  * decode channel rather than a required model input.
  *
- * **Phase 2 (#1278): no load-time country restriction.** Every successfully-fetched
- * index is constructed into a live
- * {@link PairIndexResolver} and retained, tagged by its header country. The per-parse selection
- * ({@link resolvePairIndexForText}) chooses among them at decode time from the input text's detected
- * country — a load that serves a US and a GB address in one session needs both resolvers live.
- * (#1300 constructed only the single matching index. that peek-before-construct economy is dropped
- * deliberately — the multi-locale demo needs them all, and a handful of small pair maps is cheap.)
+ * **Phase 2 (#1278): no load-time country restriction.** Every successfully-fetched index is
+ * constructed into a live {@link PairIndexResolver} and retained, tagged by its header country.
+ * The per-parse selection ({@link resolvePairIndexForText}) chooses among them at
+ * decode time from the input text's detected country.
+ *
+ * A load that serves a US and a GB address in one session needs both resolvers live.
+ * (#1300 constructed only the single matching index. That peek-before-construct economy is dropped
+ * deliberately. The multi-locale demo needs them all, and a handful of small pair maps is cheap.)
  */
 export async function loadPairIndexes(urls: readonly string[], fetchImpl: typeof fetch): Promise<LoadedPairIndex[]> {
 	const settled = await Promise.all(

@@ -120,7 +120,8 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 		expect(queryShapePrior).toEqual({ kind: "queryShape", applied: false })
 
-		// The span proposer is default-on. whether it fires depends on the text.
+		// The span proposer is default-on.
+		// Whether it fires depends on the text.
 		// The interface is every kind, in application order — asserted against the exported
 		// constant, so a new prior added to #decode without its participation record fails here
 		// instead of silently vanishing from traces.
@@ -298,9 +299,10 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		const clippedTrace = await unpinned.traceParse(text, { spanProposer: false })
 		// The subject here is the postcode check: unpinned, the codex gb row is never consulted,
 		// so the snap path never runs and the clip stands.
-		// Assert that specifically rather than `repairs === []` — the blanket form silently
-		// also pinned "word-consistency never fires", which was true only while that repair was
-		// default-off on the classifier, and broke the moment the default matched the pipeline's.
+		// Assert that specifically rather than `repairs === []`.
+		// The blanket form silently also pinned "word-consistency never fires",
+		// which was true only while that repair was default-off on the classifier,
+		// and broke the moment the default matched the pipeline's.
 		expect(clippedTrace.repairs.filter((r) => r.pass === "postcodeRepair")).toEqual([])
 		const clipped = (await unpinned.parseJSON(text)) as { postcode?: string }
 		expect(clipped.postcode).toBeDefined()
@@ -373,7 +375,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		// Box" fragments: label the alphanumeric pieces street (a STAGE2 tag — the fake classifier
 		// runs the 21-label set, and the bridge is tag-agnostic), leave the dot pieces O. The bridge
 		// merges the fragments across the unlabeled intra-token punctuation, dropping tokens.
-		// the trace interface still promises per-piece before/after (char-offset projection).
+		// The trace interface still promises per-piece before/after (char-offset projection).
 		const text = "P.O. Box 123"
 		const { pieces } = tokenizer.encode(text)
 		const oIdx = STAGE2_BIO_LABELS.indexOf("O")
@@ -399,8 +401,8 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		const trace = await classifier.traceParse(text, { bridgePunctuationGaps: true, spanProposer: false })
 		const bridge = trace.repairs.find((r) => r.pass === "spanBridge")
 
-		// The bridge must have merged (fewer final tokens than pieces) — otherwise this
-		// test's premise is dead and it should fail loudly rather than assert nothing.
+		// The bridge must have merged (fewer final tokens than pieces).
+		// Otherwise this test's premise is dead and it should fail loudly rather than assert nothing.
 		expect(trace.tokens.length).toBeLessThan(pieces.length)
 		expect(bridge).toBeDefined()
 		expect(bridge!.before).toHaveLength(pieces.length)
@@ -430,7 +432,8 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		expect(trace.anchor).toBeDefined()
 		expect(trace.anchor!.confidence).toHaveLength(pieces.length)
 		expect(trace.anchor!.features).toHaveLength(pieces.length)
-		// The ZIP's pieces carry the anchor hit. leading pieces don't.
+		// The ZIP's pieces carry the anchor hit.
+		// Leading pieces don't.
 		expect(Math.max(...trace.anchor!.confidence)).toBeGreaterThan(0)
 		// Serializable by construction: a JSON round-trip preserves the channel byte-for-byte.
 		expect(structuredClone(trace.anchor)).toEqual(trace.anchor)

@@ -54,7 +54,8 @@ export interface WebONNXRunnerOpts {
 	/**
 	 * Optional override for where onnxruntime-web should load its `.wasm` assets from.
 	 *
-	 * Defaults to the package's CDN paths. bundlers usually want to point this at a self-hosted copy.
+	 * Defaults to the package's CDN paths.
+	 * Bundlers usually want to point this at a self-hosted copy.
 	 *
 	 * Example: `setWASMPaths("/static/ort/")` and put the .wasm files at /static/ort/.
 	 */
@@ -99,8 +100,7 @@ function configureWASMPaths(root: string | undefined): void {
 /**
  * The `{data, dims}` view `decodeInferOutput` reads.
  *
- * The float32 dtype is the
- * export interface's rather than a runtime check.
+ * The float32 dtype is the export interface's rather than a runtime check.
  */
 function outputTensor(tensor: ort.Tensor): OutputTensor {
 	return { data: tensor.data as Float32Array, dims: tensor.dims }
@@ -215,8 +215,8 @@ export class WebONNXRunner implements NeuralRunner {
 	 * or entering compare mode each added a model's worth of native memory that never came back.
 	 * Safari is the first browser to complain, because it kills a tab on memory pressure rather than swapping.
 	 *
-	 * Safe to call more than once, and safe to call while a load is still in flight —
-	 * the in-flight session is awaited and then released, so an aborted load does
+	 * Safe to call more than once, and safe to call while a load is still in flight.
+	 * The in-flight session is awaited and then released, so an aborted load does
 	 * not leak the session it was part-way through building.
 	 */
 	async release(): Promise<void> {
@@ -242,7 +242,7 @@ export class WebONNXRunner implements NeuralRunner {
 	 * Names of the inputs the loaded ONNX graph declares.
 	 *
 	 * `null` until the session has been created (first `infer()` call).
-	 * Lets callers (e.g. the web loader) detect anchor/gazetteer-trained models
+	 * Lets callers (e.g. The web loader) detect anchor/gazetteer-trained models
 	 * and warn loudly when the corresponding feature source wasn't provided —
 	 * running such a model on the zero-filled fallback is the measured train/inference
 	 * mismatch ("the zero-fill trap"), not a quality-neutral degrade.

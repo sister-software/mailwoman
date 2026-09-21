@@ -15,7 +15,8 @@ import { spansOverlap } from "#span/repair"
 
 export interface SpanProposalPriorOpts {
 	/**
-	 * Bias magnitude for tag-mapped proposals in log odds. re-evaluate after retraining.
+	 * Bias magnitude for tag-mapped proposals in log odds.
+	 * Re-evaluate after retraining.
 	 */
 	biasScale?: number
 	/**
@@ -44,7 +45,7 @@ const KIND_TO_TAG: ReadonlyMap<string, string> = new Map([
 /**
  * Build the additive prior matrix for one parse.
  *
- * Returns all-zeros rows for pieces no proposal covers — composes harmlessly via `addEmissionMatrix`.
+ * @returns all-zeros rows for pieces no proposal covers — composes harmlessly via `addEmissionMatrix`.
  */
 export function buildSpanProposalPriors(
 	proposals: ReadonlyArray<ProposedSpan>,

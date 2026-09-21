@@ -55,9 +55,9 @@ export const FAMILY_VOCABULARY_ARTIFACT: Readonly<Record<FamilyEncoder, string>>
  *
  * `caller` is the ordinary path: no predicate claimed the input, so it runs on
  * the locale the caller opened the process with.
- * The two script readings are distinguished because they disagree on the case the
- * segment rule exists for — a Han address line beside a Latin province folds to `mixed`
- * and only `script-segment` reaches it.
+ * The two script readings are distinguished because they disagree on the case the segment rule exists for.
+ *
+ * A Han address line beside a Latin province folds to `mixed` and only `script-segment` reaches it.
  */
 export const RouteSource = {
 	/**
@@ -145,9 +145,8 @@ export interface WeightsFamily {
 	 * `ko-KR` ships no weights package and still decodes on the character graph,
 	 * and so do `zh-TW` and `zh-HK`.
 	 *
-	 * Listing only the packaged locales made
-	 * {@linkcode familyForLocale} answer `undefined` for all three while `scriptFamilyBase`
-	 * answered `cjk`, which is the disagreement this field removes.
+	 * Listing only the packaged locales made {@linkcode familyForLocale} answer `undefined` for all three
+	 * while `scriptFamilyBase` answered `cjk`, which is the disagreement this field removes.
 	 */
 	languages?: readonly string[]
 	/**
@@ -285,13 +284,16 @@ export function familyForScript(script: string): WeightsFamily | undefined {
 /**
  * Whether some comma segment of the input is written wholly in a script the given family serves.
  *
- * This is the reading that separates an address line in another script from a name in another script: `逊克二分场四队,
- * heilongjiang, china` carries its Han unit as its own segment, while the Han in `Far East Chinese 口福羊汤, 13 Gerrard St,
- * London W1D 5PS` shares its segment with the Latin words that introduce it, and the character model reading those
- * Latin words by codepoint answers `country: "Chi"`. Tokens carrying no script (`Zyyy` — a house number, a postal code)
- * abstain rather than disqualifying a segment, which is what keeps `六分场七队 100` a Han line. A share threshold is not the
- * instrument: the venue rows and the Chinese unit rows overlap in how much Han they carry, and differ only in where it
- * sits.
+ * This is the reading that separates an address line in another script from a name in
+ * another script: `逊克二分场四队, heilongjiang, china` carries its Han unit as its own segment,
+ * while the Han in `Far East Chinese 口福羊汤, 13 Gerrard St, London W1D 5PS` shares its
+ * segment with the Latin words that introduce it, and the character model reading
+ * those Latin words by codepoint answers `country: "Chi"`.
+ * Tokens carrying no script (`Zyyy` — a house number, a postal code) abstain
+ * rather than disqualifying a segment, which is what keeps `六分场七队 100` a Han line.
+ *
+ * A share threshold is not the instrument: the venue rows and the Chinese unit rows
+ * overlap in how much Han they carry, and differ only in where it sits.
  *
  * A Han line separated from its Latin province by whitespace alone (`六分场七队 Hunan`)
  * has no segment of its own and is not routed.
@@ -307,8 +309,9 @@ export function familyForScript(script: string): WeightsFamily | undefined {
  * and a full regression board before that ships.
  *
  * It exists because {@linkcode carriesFamilySegmentFor} reads comma segments, and four CN
- * board rows write their Han unit and their Latin province in one whitespace-separated run —
+ * board rows write their Han unit and their Latin province in one whitespace-separated run.
  * `六分场七队 Hunan` has no comma, so no segment is wholly Han and the row stays on the Latin graph.
+ *
  * Reading whitespace runs instead would reach those four and would also reach the venue rows the
  * segment rule exists to exclude, because `Far East Chinese 口福羊汤, 13 Gerrard St, London W1D 5PS`
  * carries a whitespace-bounded Han run too.

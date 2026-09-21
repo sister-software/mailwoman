@@ -72,8 +72,10 @@ export const DEFAULT_COUNTRY_LEXICON = "data/gazetteer/country-surface-lexicon-v
  * Memoized weights-package resolution for one scorer construction (#718 D1).
  *
  * The lexicon defaults and the anchor source each fall back to the resolved weights package.
- * memoizing replaces up to five `resolveWeights` walks per `createScorer` call with at most one.
- * A resolution failure memoizes as `null` — the same "no package" answer every ladder treated a throw as.
+ * Memoizing replaces up to five `resolveWeights` walks per `createScorer` call with at most one.
+ *
+ * A resolution failure memoizes as `null`.
+ * The same "no package" answer every ladder treated a throw as.
  */
 function createWeightsMemo(locale: string | undefined): () => Promise<ResolvedWeights | null> {
 	let memo: Promise<ResolvedWeights | null> | undefined
@@ -103,9 +105,11 @@ async function resolveDefaultLexicon(
 /**
  * Resolve the anchor lookup source the scorer feeds (#718 D1).
  *
- * A caller-pinned path wins. otherwise prefer the operator's local pilot JSON
- * (the eval's historical default — unchanged when present), else the soft-feed sibling the weights
- * package ships (`postcode-<cc>.bin` / `anchor-lookup.json`), so eval + serving read the same artifact.
+ * A caller-pinned path wins.
+ * Otherwise prefer the operator's local pilot JSON (the eval's historical default —
+ * unchanged when present), else the soft-feed sibling the weights package ships
+ * (`postcode-<cc>.bin` / `anchor-lookup.json`), so eval + serving read the same artifact.
+ *
  * Returns `undefined` when neither exists (the scorer then fails closed on a declared-required anchor, as before).
  *
  * The one exception is a `shaped` card, which inverts the default order — see the comment on that branch.
@@ -146,8 +150,8 @@ async function resolveAnchorSource(
  * (`data/gazetteer/` carries every generation side by side, so a bare "prefer the repo
  * copy" rule would pin one filename and silently outrank the card).
  *
- * A module-level helper for the same reason as
- * {@link fstPathEntry} — `createScorer` sits at the complexity ceiling.
+ * A module-level helper for the same reason as {@link fstPathEntry}.
+ * `createScorer` sits at the complexity ceiling.
  */
 function streetTypeRepoCandidate(declared: RequiredChannels): string {
 	return `data/gazetteer/${declared.street_type?.lexicon ?? EVIDENCE_LEXICON_FAMILIES.street_type.legacy}`
@@ -176,8 +180,7 @@ function declaredAnchorSpanMode(declared: RequiredChannels): AnchorSpanMode | un
 }
 
 /**
- * {@linkcode shapedKeyerObligationViolation}, wired to {@linkcode fail}. A one-call wrapper so `createScorer` gains no
- * branch — it sits one step under the complexity ceiling (see {@linkcode fstPathEntry}).
+ * {@linkcode shapedKeyerObligationViolation}, wired to {@linkcode fail}. A one-call wrapper so `createScorer` gains no branch. It sits one step under the complexity ceiling (see {@linkcode fstPathEntry}).
  */
 function assertShapedKeyerObligation(
 	lookup: AnchorLookup | undefined,
@@ -195,8 +198,8 @@ function assertShapedKeyerObligation(
 /**
  * Per-channel overrides for a deliberate, declared ablation.
  *
- * Setting any of these to a value diverts the scorer from the model-card's declared
- * ship-config. the scorer honors it but emits a loud `console.error` warning
+ * Setting any of these to a value diverts the scorer from the model-card's declared ship-config.
+ * The scorer honors it but emits a loud `console.error` warning
  * (a stated ablation is legal — silent OOD is not, #566/#685).
  */
 export interface ScorerOverrides {
@@ -249,9 +252,9 @@ export interface CreateScorerOpts {
 	 */
 	modelCardPath: PathBuilderLike
 	/**
-	 * Per-locale FST gazetteer path (`fst-<locale>.bin`), surfaced on the built classifier as
-	 * {@link NeuralAddressClassifier.fstPath} so a caller assembling `createRuntimePipeline` gets the decode-time
-	 * gazetteer bias.
+	 * Per-locale FST gazetteer path (`fst-<locale>.bin`), surfaced on the built
+	 * classifier as {@link NeuralAddressClassifier.fstPath} so a caller assembling
+	 * `createRuntimePipeline` gets the decode-time gazetteer bias.
 	 *
 	 * Path only — `neural` carries no `resolver-wof-sqlite` dependency, so the deserialize
 	 * happens in the caller's layer, exactly as it does for the `loadFromWeights` route.
@@ -266,9 +269,10 @@ export interface CreateScorerOpts {
 	 */
 	fstPath?: PathBuilderLike
 	/**
-	 * Postcode→anchor lookup path — a JSON pilot lookup, or a PCB1 `.bin`
-	 * (recognized by extension, so a candidate's own `postcode-<cc>.bin` can be pinned.
-	 * before that it was JSON-only and pointing at a binary threw a parse error).
+	 * Postcode→anchor lookup path.
+	 *
+	 * A JSON pilot lookup, or a PCB1 `.bin` (recognized by extension, so a candidate's own `postcode-<cc>.bin`
+	 * can be pinned. Before that it was JSON-only and pointing at a binary threw a parse error).
 	 *
 	 * Default: {@link DEFAULT_ANCHOR_LOOKUP} when it exists, else the soft-feed
 	 * sibling shipped in the `@mailwoman/neural-weights-<locale>` package (#718 D1) —
@@ -306,15 +310,17 @@ export interface CreateScorerOpts {
 	 * Locale tag (e.g. `"en-us"`) used to resolve the weights-package soft-feed siblings
 	 * when the default `/mnt` / repo-relative paths are absent (#718 D1).
 	 *
-	 * Only consulted for that fallback. the model/tokenizer/card are always explicit on this path.
+	 * Only consulted for that fallback.
+	 * The model/tokenizer/card are always explicit on this path.
 	 */
 	locale?: string
 	/**
 	 * Fail closed (throw) when the model-card declares a channel required but it isn't actually fed.
 	 *
 	 * Default `true`.
-	 * Set `false` only for throwaway debugging — a below-config scorer is the
-	 * trap this module exists to catch.
+	 * Set `false` only for throwaway debugging.
+	 *
+	 * A below-config scorer is the trap this module exists to catch.
 	 */
 	strict?: boolean
 	/**
@@ -348,8 +354,9 @@ class UnfedChannelError extends Error {
  * A loud, descriptive fail-closed error for a conventions mask that would destroy
  * a certified capability (#718/#719).
  *
- * Thrown by {@link assertConventionsRespectCapabilities} — the structural guard that makes the D2/#719
- * bug-class (a `forbiddenTags` row suppressing a tag the model demonstrably emits) impossible to ship.
+ * Thrown by {@link assertConventionsRespectCapabilities}.
+ * The structural guard that makes the D2/#719 bug-class
+ * (a `forbiddenTags` row suppressing a tag the model demonstrably emits) impossible to ship.
  */
 class CapabilityViolationError extends Error {
 	constructor(message: string) {
@@ -433,8 +440,9 @@ async function assertConventionsRespectCapabilities(
  * (anchor + gazetteer + conventions + bridge + near-postcode suppression),
  * failing closed in `strict` mode when a declared channel can't actually be fed.
  *
- * Resolution of "what's required": the card's `requires` block when present. otherwise
- * inferred from the ONNX graph's input names (back-compat for every pre-#718 bundle).
+ * Resolution of "what's required": the card's `requires` block when present.
+ * Otherwise inferred from the ONNX graph's input names (back-compat for every pre-#718 bundle).
+ *
  * Explicit `overrides` divert from the declaration with a loud warning rather than a throw.
  */
 export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddressClassifier> {
@@ -459,9 +467,9 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	])
 
 	// What the model declares it needs.
-	// Card `requires` block is authoritative. older cards (no block) fall back to the
-	// ONNX graph's declared inputs — a model exporting anchor_features/gazetteer_features
-	// trained with those channels mandatory.
+	// Card `requires` block is authoritative.
+	// Older cards (no block) fall back to the ONNX graph's declared inputs — a model
+	// exporting anchor_features/gazetteer_features trained with those channels mandatory.
 	// Conventions/bridge are card-only (not graph-observable).
 	const declared: RequiredChannels =
 		(await readRequiredChannels(opts.modelCardPath)) ?? inferRequiredChannelsFromInputs(await runner.inputNames())
@@ -469,9 +477,9 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	// Check that capability-manifest changes preserve each required tag.
 	// Before wiring the conventions mask, prove the shipped codex `forbiddenTags` don't destroy a
 	// tag this model is certified to emit (per the card's `capabilities` block for the loaded tier).
-	// This is a property of the model-card + codex pairing, independent of any per-instance
-	// `overrides` — an ablation scorer still loads the same shipped conventions table
-	// production will use, so the check runs unconditionally.
+	// This is a property of the model-card + codex pairing, independent of any per-instance `overrides`.
+	// An ablation scorer still loads the same shipped conventions table production
+	// will use, so the check runs unconditionally.
 	// Makes the D2/#719 bug-class structurally impossible to ship.
 	await assertConventionsRespectCapabilities(opts.modelCardPath, opts.tier ?? "server", strict)
 
@@ -578,8 +586,8 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	}
 
 	// Load evidence-bundle channels and their declared ablation states.
-	// Same load + fail-closed + declared-ablation pattern as the gazetteer. both
-	// lexicons share its JSON schema and parser.
+	// Same load + fail-closed + declared-ablation pattern as the gazetteer.
+	// Both lexicons share its JSON schema and parser.
 	// A bundle-trained card declares `street_type` + `locality_surface`.
 	// The repo preference is card-scoped — see {@link streetTypeRepoCandidate}.
 	// The locality-surface lexicon (13 MB, never in git) resolves from the weights package only.
@@ -673,7 +681,8 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 			}
 		}
 	} else {
-		// Declaration drives it: required → the declared mode. not required → leave undefined (byte-stable).
+		// Declaration drives it: required → the declared mode.
+		// Not required → leave undefined (byte-stable).
 		addressSystemConventions = conventionsRequired ? declaredConventionsMode : undefined
 
 		if (conventionsRequired && !addressSystemConventions) {
@@ -689,8 +698,8 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 
 	// The ship obligation fail-closed (A2): a lookup whose keys only the shaped keyer can reach,
 	// paired with a card that does not declare it, is a silently-dead channel.
-	// Runs after the lookup is loaded because the artifact is the observable half —
-	// the mode alone is not checkable against the graph.
+	// Runs after the lookup is loaded because the artifact is the observable half.
+	// The mode alone is not checkable against the graph.
 	assertShapedKeyerObligation(postcodeAnchorLookup, declaredSpanMode, anchorSource?.path, strict)
 
 	return new NeuralAddressClassifier({
@@ -705,8 +714,8 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		...(streetTypeLexicon ? { streetTypeLexicon } : {}),
 		...(localitySurfaceLexicon ? { localitySurfaceLexicon } : {}),
 		suppressGazetteerNearPostcode,
-		// The card's `mode` is an open string. a non-SystemCode value degrades to a
-		// null conventions row downstream, never a throw.
+		// The card's `mode` is an open string.
+		// A non-SystemCode value degrades to a null conventions row downstream, never a throw.
 		// Overlay cards may pin a concrete system (en-gb pins "gb", #1275).
 		...(addressSystemConventions ? { addressSystemConventions: addressSystemConventions as "auto" | SystemCode } : {}),
 		bridgePunctuationGaps,
@@ -714,7 +723,9 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 }
 
 /**
- * Throw in strict mode. otherwise warn loudly and continue (deliberate below-config debugging).
+ * Throw in strict mode.
+ *
+ * Otherwise warn loudly and continue (deliberate below-config debugging).
  *
  * `ErrorClass` defaults to {@link UnfedChannelError} (the channel-feed traps); the capability
  * check passes {@link CapabilityViolationError} so the two fail-closed families are distinguishable.

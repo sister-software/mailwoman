@@ -61,9 +61,11 @@ export interface PlacetypeCensusNode {
 	 */
 	parent: string
 	/**
-	 * Child counts by projected tag — the placetype→`ComponentTag` projection is the
-	 * builder's job (see `gazetteer-pipeline/placetype-census.ts`), so this artifact
-	 * never carries a placetype vocabulary of its own.
+	 * Child counts by projected tag.
+	 *
+	 * The placetype→`ComponentTag` projection is the builder's job
+	 * (see `gazetteer-pipeline/placetype-census.ts`), so this artifact never
+	 * carries a placetype vocabulary of its own.
 	 */
 	counts: Partial<Record<ComponentTag, number>>
 	/**
@@ -92,8 +94,9 @@ export interface PlacetypeCensusHeader {
 	 */
 	buildDate: string
 	/**
-	 * Global share of each projected tag across every counted child in the country — the
-	 * denominator a consumer needs to turn a node's share into a lift (`nodeShare / baseRate`).
+	 * Global share of each projected tag across every counted child in the country.
+	 *
+	 * The denominator a consumer needs to turn a node's share into a lift (`nodeShare / baseRate`).
 	 *
 	 * Shipped in the header rather than recomputed by the consumer because the base rate
 	 * is a property of the build (which placetypes were counted, over which source),
@@ -105,9 +108,9 @@ export interface PlacetypeCensusHeader {
 	/**
 	 * Optional soft-prior bias magnitude a census hit contributes at decode time.
 	 *
-	 * Absent until a calibration task measures one — the census ships as a probeable artifact
-	 * first (R4c is data + loader + offline probe, no decode wiring), and a defaulted
-	 * number here would let an uncalibrated bias reach the decoder unnoticed.
+	 * Absent until a calibration task measures one.
+	 * The census ships as a probeable artifact first (R4c is data + loader + offline probe, no decode wiring),
+	 * and a defaulted number here would let an uncalibrated bias reach the decoder unnoticed.
 	 */
 	delta?: number
 }
@@ -206,9 +209,10 @@ export function serializePlacetypeCensus(header: PlacetypeCensusHeader, nodes: r
  *
  * `share` is deliberately not on this interface.
  * Within-parent share was measured at ~100% for the dominant class everywhere,
- * so a share-proportional consumer reads a constant — `lift` (share ÷ the country base rate)
- * is the only one of the two that varies with the parent, and naming just it keeps
- * a future consumer from reaching for the flat one.
+ * so a share-proportional consumer reads a constant.
+ *
+ * `lift` (share ÷ the country base rate) is the only one of the two that varies with the
+ * parent, and naming just it keeps a future consumer from reaching for the flat one.
  */
 export interface PlacetypeCensusLike {
 	probe(parent: string): PlacetypeCensusNode | null
@@ -281,9 +285,10 @@ export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 	}
 
 	/**
-	 * Exposes the header's ISO country code so the resolver conforms to
-	 * {@link PlacetypeCensusLike} — the country restriction at the load site reads it to
-	 * refuse a census built for a different country than the locale being parsed.
+	 * Exposes the header's ISO country code so the resolver conforms to {@link PlacetypeCensusLike}.
+	 *
+	 * The country restriction at the load site reads it to refuse a census built for
+	 * a different country than the locale being parsed.
 	 */
 	get country(): string {
 		return this.header.country
@@ -292,18 +297,18 @@ export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 	/**
 	 * Look up one folded parent surface.
 	 *
-	 * Returns `null` when the parent has no census node — absence is not evidence
-	 * (the meaning-of-zero rule): a missing node means the gazetteer has no counted
-	 * children there, which is usually coverage, .
-	 * Therefore, a consumer must treat `null` as neutral and never as a prohibition.
+	 * @returns `null` when the parent has no census node — absence is not evidence
+	 *   (the meaning-of-zero rule): a missing node means the gazetteer has no counted
+	 *   children there, which is usually coverage, .
+	 *   Therefore, a consumer must treat `null` as neutral and never as a prohibition.
 	 */
 	probe(parent: string): PlacetypeCensusNode | null {
 		return this.#nodes.get(parent) ?? null
 	}
 
 	/**
-	 * The share of `parent`'s counted children projecting onto `tag` — `0`
-	 * when the parent is unknown or the tag is unseen there.
+	 * The share of `parent`'s counted children projecting onto `tag`.
+	 * `0` when the parent is unknown or the tag is unseen there.
 	 *
 	 * Positive evidence only: read a `0` as "no support from this artifact", never as "this tag is wrong".
 	 */

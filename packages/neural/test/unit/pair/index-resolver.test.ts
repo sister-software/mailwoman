@@ -133,8 +133,8 @@ describe("serializePairIndex / PairIndexResolver", () => {
 	it("distinguishes pairs sharing a child with different parents", () => {
 		const r = resolver()
 
-		// "london" is a child of "greater london" and a parent of "shoreditch"/"camden" —
-		// the probe key must be the full (child, parent) tuple rather than just the child.
+		// "london" is a child of "greater london" and a parent of "shoreditch"/"camden".
+		// The probe key must be the full (child, parent) tuple rather than just the child.
 		expect(r.probe("london", "greater london")).toEqual(LOCALITY_UNDER_REGION)
 		expect(r.probe("shoreditch", "greater london")).toBeUndefined()
 	})
@@ -238,19 +238,19 @@ describe("transitionBeta header field (TRANSITION-BETA build)", () => {
 	})
 
 	it("old-binary compat: a header WITHOUT the field reads back transitionBeta === undefined", () => {
-		// header carries no transitionBeta, so the emitted header JSON has no such key at all
-		// (not null/0) — the same absence an artifact built before the field existed carries.
+		// header carries no transitionBeta, so the emitted header JSON has no such key at all (not null/0).
+		// The same absence an artifact built before the field existed carries.
 		// (Since the tagTable build the serializer is no longer byte-identical to pre-field artifacts.
-		// the true legacy-binary path is exercised with hand-built bytes in the tagTable describe block.)
+		// The true legacy-binary path is exercised with hand-built bytes in the tagTable describe block.)
 		const bytes = serializePairIndex(HEADER, ENTRIES)
 		const r = new PairIndexResolver(bytes)
 
 		expect(r.transitionBeta).toBeUndefined()
 		expect(peekPairIndexHeader(bytes).transitionBeta).toBeUndefined()
 		expect("transitionBeta" in r.header).toBe(false)
-		// transitionBeta stays absence-tolerant within a schema — optional fields ride
-		// on the JSON header without version bumps. only the record-shaping fields
-		// (the tag table, the parent byte) are version-conditional.
+		// transitionBeta stays absence-tolerant within a schema — optional fields
+		// ride on the JSON header without version bumps.
+		// Only the record-shaping fields (the tag table, the parent byte) are version-conditional.
 		expect(r.header.schemaVersion).toBe(3)
 	})
 })
@@ -267,8 +267,9 @@ describe("parentDelta header field (whole-edge default-on, #46)", () => {
 	})
 
 	it("absence-tolerant: a header WITHOUT the field reads back parentDelta === undefined", () => {
-		// Absent means "no parent bias", not "0" — the same absence interface transitionBeta carries,
-		// and the one de/in/es/it artifacts ship under (unmeasured locales, per-locale check).
+		// Absent means "no parent bias", not "0".
+		// The same absence interface transitionBeta carries, and the one de/in/es/it
+		// artifacts ship under (unmeasured locales, per-locale check).
 		const bytes = serializePairIndex(HEADER, ENTRIES)
 		const r = new PairIndexResolver(bytes)
 
@@ -301,9 +302,9 @@ describe("peekPairIndexHeader", () => {
 	})
 
 	it("succeeds on a header-only-valid buffer whose entry section is truncated — the constructor throws on the same bytes", () => {
-		// Serialize a normal index, then truncate everything after the header +
-		// pairCount fields — the header block itself is untouched and fully valid,
-		// but the entry bytes it declares (pairCount > 0) don't exist.
+		// Serialize a normal index, then truncate everything after the header + pairCount fields.
+		// The header block itself is untouched and fully valid, but the entry bytes
+		// it declares (pairCount > 0) don't exist.
 		// This is the eval's real-world shape: a caller that peeks before constructing must never pay for
 		// (or trip over) a full parse when it's about to discard the result on a country mismatch.
 		const bytes = serializePairIndex(HEADER, ENTRIES)
@@ -389,8 +390,10 @@ describe("parentTag record field (schemaVersion 3 — the typed parent)", () => 
 
 	it("carries a parent tag the containment map would NOT have derived", () => {
 		// `WESTERN_PARENT_OF.dependent_locality` is `["locality"]`.
-		// The US borough source legitimately emits a dependent_locality under a borough
-		// (also dependent_locality) — a derived parent tag could never say that. a recorded one can.
+		// The US borough source legitimately emits a dependent_locality under a
+		// borough (also dependent_locality).
+		// A derived parent tag could never say that.
+		// A recorded one can.
 		const r = resolver([
 			{ child: "park slope", parent: "brooklyn", tag: "dependent_locality", parentTag: "dependent_locality" },
 		])
@@ -408,8 +411,9 @@ describe("parentTag record field (schemaVersion 3 — the typed parent)", () => 
 	})
 
 	it("refuses an entry whose parentTag is not a ComponentTag, naming it", () => {
-		// Typed with `parentTag: string` because that is what a builder hands over — the tag union is
-		// what `serializePairIndex` is being asked to enforce, so the fixture cannot assert it up front.
+		// Typed with `parentTag: string` because that is what a builder hands over.
+		// The tag union is what `serializePairIndex` is being asked to enforce,
+		// so the fixture cannot assert it up front.
 		const entry: Omit<PairIndexEntry, "parentTag"> & { parentTag: string } = {
 			child: "a",
 			parent: "b",

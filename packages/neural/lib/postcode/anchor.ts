@@ -182,8 +182,9 @@ export function normalizePostcode(raw: string): string {
 }
 
 /**
- * The GB outward code of a normalized unit postcode — the part before the space
- * when the inward half is `\d[A-Z]{2}` (`SO4 3RX` → `SO4`).
+ * The GB outward code of a normalized unit postcode.
+ *
+ * The part before the space when the inward half is `\d[A-Z]{2}` (`SO4 3RX` → `SO4`).
  *
  * The GB gazetteer is aggregated to outward codes (2.7M units is too large + too fine for an anchor),
  * so the extractor retries the outward code when a full GB unit misses.
@@ -218,8 +219,9 @@ function confidenceFromCountryCount(k: number): number {
  * The structural tell is cheap and locale-general: house numbers sit beside
  * the street, postcodes beside the city.
  *
- * We scale rather than zero — the gazetteer still vouches for the shape, so a lone code in a
- * street-only line stays usable. the penalty just lets a real trailing postcode out-rank it.
+ * We scale rather than zero.
+ * The gazetteer still vouches for the shape, so a lone code in a street-only line stays usable.
+ * The penalty just lets a real trailing postcode out-rank it.
  */
 const HOUSE_NUMBER_PENALTY = 0.2
 
@@ -297,11 +299,13 @@ function looksLikeStreetWord(token: string, systems: ReadonlySet<string>): boole
 }
 
 /**
- * Position-aware confidence factor for a postcode span: `1` for anything that cannot be confused with a house number,
- * and {@link HOUSE_NUMBER_PENALTY} for a digit-only code sharing its comma-delimited segment with a street word. This
- * is the structural prior that lets the anchor tell a leading `12345 Main St` house number from a trailing `San
- * Francisco 94105` postcode with no model in the loop — and lets a consumer pick the right span by confidence instead
- * of by raw position.
+ * Position-aware confidence factor for a postcode span: `1` for anything that cannot
+ * be confused with a house number, and {@link HOUSE_NUMBER_PENALTY} for a digit-only
+ * code sharing its comma-delimited segment with a street word.
+ *
+ * This is the structural prior that lets the anchor tell a leading `12345 Main St` house
+ * number from a trailing `San Francisco 94105` postcode with no model in the loop —
+ * and lets a consumer pick the right span by confidence instead of by raw position.
  *
  * `systems` narrows the street vocabularies to the ones this code plausibly belongs to
  * (its gazetteer membership, or — for a code in no gazetteer — the format-shape candidates from codex).
@@ -327,9 +331,11 @@ function positionFactor(text: string, start: number, normalized: string, systems
  *
  * For each postcode-shaped span, resolve it against the gazetteer and emit a
  * soft anchor (country posterior + confidence).
- * Spans that match a shape but exist in no gazetteer are still returned, with an empty
- * posterior and confidence 0 — an explicit "looks like a postcode, but isn't one"
- * so the caller can see the extractor fired and chose not to anchor.
+ * Spans that match a shape but exist in no gazetteer are still returned,
+ * with an empty posterior and confidence 0.
+ *
+ * An explicit "looks like a postcode, but isn't one" so the caller can see the
+ * extractor fired and chose not to anchor.
  */
 export function extractPostcodeAnchors(
 	text: string,
@@ -342,7 +348,9 @@ export function extractPostcodeAnchors(
 		const spanText = text.slice(match.start, match.end)
 		const normalized = normalizePostcode(spanText)
 
-		// Exact first. then the GB outward fallback (structural rather than a guess). then edit-distance-1.
+		// Exact first.
+		// Then the GB outward fallback (structural rather than a guess).
+		// Then edit-distance-1.
 		let hits = resolver.lookup(normalized)
 		let matchType: PostcodeAnchor["matchType"] = hits.length ? "exact" : "none"
 
@@ -398,7 +406,7 @@ export function extractPostcodeAnchors(
 
 		// Restrict the street-word check to the systems this code plausibly belongs to: its gazetteer
 		// membership when known (precise — a US-only ZIP never checks the German vocab), else the
-		// format-shape candidates from codex (for a code in no gazetteer. its confidence is 0 anyway).
+		// format-shape candidates from codex (for a code in no gazetteer. Its confidence is 0 anyway).
 		const systems = countries.length
 			? new Set(countries.map((c) => c.toLowerCase()))
 			: new Set<string>(candidateSystemsForPostcode(normalized))

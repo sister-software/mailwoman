@@ -98,7 +98,8 @@ describe("repairPostcodeLabels", () => {
 		const tokens = [tok("Dublin", 0, 6, "B-locality"), tok("D6W", 7, 10, "O"), tok("XV67", 11, 15, "O")]
 		const { tokens: out } = repairPostcodeLabels(text, tokens)
 		expect(postcodeValue(text, out)).toBe("D6W XV67")
-		// A GB letter+2-digit outward has a 3-char inward — the IE pattern (4-alnum unique) must not claim it.
+		// A GB letter+2-digit outward has a 3-char inward.
+		// The IE pattern (4-alnum unique) must not claim it.
 		const gb = "Birmingham B12 8QX"
 		const gbTokens = [tok("Birmingham", 0, 10, "B-locality"), tok("B12", 11, 14, "O"), tok("8QX", 15, 18, "O")]
 		const { tokens: gbOut } = repairPostcodeLabels(gb, gbTokens)
@@ -232,7 +233,8 @@ describe("repairPostcodeLabels", () => {
 
 	it("does NOT add a numeric postcode from scratch (a bare 5-digit could be a house number)", () => {
 		const text = "12345 Main St"
-		// 12345 is a house number the model labeled correctly. no postcode present.
+		// 12345 is a house number the model labeled correctly.
+		// No postcode present.
 		const tokens = [tok("12345", 0, 5, "B-house_number"), tok("Main", 6, 10, "B-street"), tok("St", 11, 13, "I-street")]
 		const { tokens: out, changed } = repairPostcodeLabels(text, tokens)
 		expect(changed).toBe(0)
@@ -241,7 +243,8 @@ describe("repairPostcodeLabels", () => {
 
 	it("does NOT add over a structural tag even for an alphanumeric shape", () => {
 		const text = "1012 AB"
-		// model labeled "1012" as house_number — ADD must be blocked (structural tag present).
+		// model labeled "1012" as house_number.
+		// ADD must be blocked (structural tag present).
 		const tokens = [tok("1012", 0, 4, "B-house_number"), tok("AB", 5, 7, "O")]
 		const { tokens: out } = repairPostcodeLabels(text, tokens)
 		expect(out[0]!.label).toBe("B-house_number") // untouched

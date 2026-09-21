@@ -46,8 +46,8 @@ export type { RepairResult } from "#span/repair"
 /**
  * A detected secondary-unit substring with its char range.
  *
- * Units carry no confidence class — every pattern here requires an explicit designator,
- * so there is no `kind` split like postcode-repair's.
+ * Units carry no confidence class.
+ * Every pattern here requires an explicit designator, so there is no `kind` split like postcode-repair's.
  */
 type UnitMatch = SpanMatch
 
@@ -62,12 +62,7 @@ const UNIT_DESIGNATORS =
 	"APARTMENT|APT|SUITE|STE|UNIT|ROOM|RM|FLOOR|FLR|FL|BUILDING|BLDG|DEPARTMENT|DEPT|LOT|TRAILER|TRLR|SLIP|HANGAR|PIER|FLAT|PH|PENTHOUSE"
 
 const UNIT_PATTERNS: Array<{ label: string; re: RegExp }> = [
-	// Designator + optional "#"/"No." + identifier, e.g. "Apt 4B", "Ste 12", "STE D",
-	// "Unit 9400", "Suite 100", "Rm 5", "Flat 2", "Apartment #3", "Bldg C".
-	// The `\b` after the designator is essential: it stops "Unit" matching inside
-	// "United", "Fl" inside "Florida", etc. The trailing `\b` on the identifier stops
-	// "Apt Main" capturing the "M" of "Main" (single-letter ident only fires on a
-	// standalone token like "STE D").
+	// Designator + optional "#"/"No." + identifier, e.g. "Apt 4B", "Ste 12", "STE D", "Unit 9400", "Suite 100", "Rm 5", "Flat 2", "Apartment #3", "Bldg C". The `\b` after the designator is essential: it stops "Unit" matching inside "United", "Fl" inside "Florida", etc. The trailing `\b` on the identifier stops "Apt Main" capturing the "M" of "Main" (single-letter ident only fires on a standalone token like "STE D").
 	{
 		label: "designator",
 		re: new RegExp(
@@ -109,7 +104,7 @@ function collectMatches(text: string): UnitMatch[] {
 /**
  * Repair secondary-unit label spans in a decoded token sequence using designator regexes.
  *
- * Returns a new token array (inputs are not mutated) plus a change count.
+ * @returns a new token array (inputs are not mutated) plus a change count.
  */
 export function repairUnitLabels(text: string, input: readonly DecoderToken[]): RepairResult {
 	const matches = collectMatches(text)

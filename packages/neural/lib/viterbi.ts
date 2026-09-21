@@ -35,8 +35,8 @@ const NEG_INF = -1e9
  * - `X → B-Y` always permitted (0)
  * - `X → I-Y` permitted only if `X` is `B-Y` or `I-Y` (0); otherwise -inf
  *
- * Returns a `numLabels × numLabels` matrix where `mask[from][to]` is the additive
- * log-score (0 for permitted, NEG_INF for forbidden).
+ * @returns a `numLabels × numLabels` matrix where `mask[from][to]` is the additive
+ *   log-score (0 for permitted, NEG_INF for forbidden).
  */
 export function buildBIOTransitionMask(labels: readonly string[]): number[][] {
 	const n = labels.length
@@ -97,11 +97,12 @@ function isValidTransition(from: string, to: string): boolean {
  * when its index header carries `transitionBeta`; the hook itself is generic —
  * a sparse list of adjustments, no knowledge of who produced them.
  *
- * Because the bonus is predecessor-independent, it cannot change which predecessor wins for `toLabel`
- * at `timestep` — it changes whether paths entering `toLabel` there outscore paths that stay fused
- * through a competing run (the task-8 probe's path-fusion mechanism: a locally-winning emission
- * bias can still lose globally when the forced `I-`/fresh-`B-` continuation costs more than the
- * local emission bias recovers. a transition-entry bonus pays that structural toll directly).
+ * Because the bonus is predecessor-independent, it cannot change which predecessor
+ * wins for `toLabel` at `timestep`.
+ * It changes whether paths entering `toLabel` there outscore paths that stay fused through a
+ * competing run (the task-8 probe's path-fusion mechanism: a locally-winning emission bias
+ * can still lose globally when the forced `I-`/fresh-`B-` continuation costs more than the
+ * local emission bias recovers. A transition-entry bonus pays that structural toll directly).
  */
 interface ViterbiTransitionAdjustment {
 	/**
@@ -142,7 +143,8 @@ export interface ViterbiInput {
 	/**
 	 * Position-scoped transition bonuses (see {@link ViterbiTransitionAdjustment}).
 	 *
-	 * Omitted/empty = the exact pre-transition-beta decode — no behavioral term is added anywhere.
+	 * Omitted/empty = the exact pre-transition-beta decode.
+	 * No behavioral term is added anywhere.
 	 */
 	transitionAdjustments?: ReadonlyArray<ViterbiTransitionAdjustment>
 }
@@ -175,8 +177,8 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 	const endTrans = input.endTransitions ?? new Array<number>(numLabels).fill(0)
 
 	// Sparse per-timestep lookup for the position-scoped transition bonuses.
-	// Null when none were passed — the hot loop below then never consults it
-	// (the pre-transition-beta code path, exactly).
+	// Null when none were passed.
+	// The hot loop below then never consults it (the pre-transition-beta code path, exactly).
 	let adjustAt: Map<number, Map<number, number>> | null = null
 
 	if (input.transitionAdjustments?.length) {
@@ -190,9 +192,9 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 				adjustAt.set(adj.timestep, byLabel)
 			}
 
-			// Two adjustments landing on the same (timestep, toLabel) cell compose by MAX
-			// rather than sum — the emission side's `applyWindowBias` uses the same Math.max
-			// discipline, and overlapping window-mode candidates must not stack the bonus.
+			// Two adjustments landing on the same (timestep, toLabel) cell compose by MAX rather than sum.
+			// The emission side's `applyWindowBias` uses the same Math.max discipline,
+			// and overlapping window-mode candidates must not stack the bonus.
 			byLabel.set(adj.toLabel, Math.max(byLabel.get(adj.toLabel) ?? NEG_INF, adj.bonus))
 		}
 	}
@@ -201,8 +203,7 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 	const dp: number[][] = []
 	const back: number[][] = []
 
-	// t = 0 — an adjustment at timestep 0 lands on the start transition (the sequence start is the
-	// only "predecessor" a first label has).
+	// t = 0 — an adjustment at timestep 0 lands on the start transition (the sequence start is the only "predecessor" a first label has).
 	const firstAdjust = adjustAt?.get(0)
 	const first = new Array<number>(numLabels)
 
@@ -288,9 +289,11 @@ export function perTokenArgmax(emissions: readonly number[][]): number[] {
 }
 
 /**
- * Fused argmax + softmax-at-the-argmax over one logit row: the winning label index and its softmax probability, without
- * materializing the full distribution. The argmax path's per-token decode (`NeuralAddressClassifier`'s `decode:
- * "argmax"` mode) reads `.idx`; `.conf` is the winner's probability.
+ * Fused argmax + softmax-at-the-argmax over one logit row: the winning label index
+ * and its softmax probability, without materializing the full distribution.
+ *
+ * The argmax path's per-token decode (`NeuralAddressClassifier`'s `decode: "argmax"` mode)
+ * reads `.idx`; `.conf` is the winner's probability.
  */
 export function argmaxWithConfidence(row: number[]): { idx: number; conf: number } {
 	let maxIdx = 0
@@ -317,8 +320,8 @@ export function argmaxWithConfidence(row: number[]): { idx: number; conf: number
 /**
  * Softmax of a logit row (returns probabilities summing to 1).
  *
- * Used to compute per-token confidence after Viterbi picks the label sequence —
- * the confidence is the softmax probability of the Viterbi-chosen label at that timestep.
+ * Used to compute per-token confidence after Viterbi picks the label sequence.
+ * The confidence is the softmax probability of the Viterbi-chosen label at that timestep.
  */
 export function softmax(row: readonly number[]): number[] {
 	let max = row[0]!

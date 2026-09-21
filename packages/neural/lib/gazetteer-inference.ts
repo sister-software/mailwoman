@@ -57,13 +57,14 @@ export interface GazetteerLexicon {
 	 * when any span word or the nearest non-empty neighbor word carries a decimal digit —
 	 * evidence painted beside a house number swallowed the digit into the span.
 	 *
-	 * Rides the lexicon so train/inference stay symmetric by construction. false on pre-v3.23 artifacts.
+	 * Rides the lexicon so train/inference stay symmetric by construction.
+	 * False on pre-v3.23 artifacts.
 	 */
 	digitGuard: boolean
 }
 
 /**
- * Parse the lexicon JSON (already `JSON.parse`d — keeps this module browser-safe. caller reads).
+ * Parse the lexicon JSON (already `JSON.parse`d — keeps this module browser-safe. Caller reads).
  */
 export function parseGazetteerLexicon(raw: {
 	feature_dim: number
@@ -265,15 +266,18 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
  * Channel choreography (#464, v0.9.13 postcode fix. DeepSeek 2026-06-10): zero the
  * gazetteer clue on pieces within `window` of a postcode-anchor hit.
  *
- * The clue fires on the region token (`CA`/`GA`) immediately before a US postcode. its additive vector
- * strengthens `B-region`, which makes the `B-region → B-postcode` CRF transition less competitive
- * and drops the postcode (~3pp, US-only — FR postcode precedes the locality, no region neighbor).
+ * The clue fires on the region token (`CA`/`GA`) immediately before a US postcode.
+ * Its additive vector strengthens `B-region`, which makes the
+ * `B-region → B-postcode` CRF transition less competitive and drops the postcode
+ * (~3pp, US-only — FR postcode precedes the locality, no region neighbor).
+ *
  * Suppressing the clue adjacent to the postcode removes the interference
  * while leaving every other clue intact.
  *
- * Returns a new features/confidence pair (does not mutate).
- * `anchorConfidence[i] > 0` marks postcode-span pieces. pairs with the train-time half
- * (`gazetteer_anchor.suppress_gazetteer_near_postcode`) — enable both or neither.
+ * @returns a new features/confidence pair (does not mutate).
+ *   `anchorConfidence[i] > 0` marks postcode-span pieces.
+ *   Pairs with the train-time half (`gazetteer_anchor.suppress_gazetteer_near_postcode`)
+ *   — enable both or neither.
  */
 export function suppressGazetteerNearPostcode(
 	gazetteer: { features: number[][]; confidence: number[] },
@@ -307,8 +311,7 @@ export function suppressGazetteerNearPostcode(
  * Project a per-char bitmask paint onto SP pieces by the same char→piece rule the labels use:
  * a piece takes the bits of the first non-whitespace char it covers, `0` when it covers none.
  *
- * Shared by every channel built on
- * {@link gazetteerCharPaint} so the projection cannot drift between them.
+ * Shared by every channel built on {@link gazetteerCharPaint} so the projection cannot drift between them.
  */
 export function projectCharBitsToPieces(
 	text: string,
@@ -330,7 +333,7 @@ export function projectCharBitsToPieces(
  * Per-piece gazetteer features + confidence for `text`, projected onto its SP `pieces` by the same
  * char→piece rule the labels use (a piece takes the bits of the first non-whitespace char it covers).
  *
- * Returns `(pieces × featureDim)` features + `(pieces,)` confidence (1.0 wherever any bit fires).
+ * @returns `(pieces × featureDim)` features + `(pieces,)` confidence (1.0 wherever any bit fires).
  */
 export function buildGazetteerFeatures(
 	text: string,

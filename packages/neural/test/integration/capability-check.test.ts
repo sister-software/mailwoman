@@ -38,8 +38,8 @@ const GAZETTEER = repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json")
 const MODEL_CARD = workspacePath("neural-weights-en-us", "model-card.json")
 
 // All channels must be feedable: createScorer runs the eval in `strict` mode,
-// and the v1.5.0 card declares anchor+gazetteer required — a missing channel would throw
-// an UnfedChannelError that masks the capability-check behavior we're testing.
+// and the v1.5.0 card declares anchor+gazetteer required.
+// A missing channel would throw an UnfedChannelError that masks the capability-check behavior we're testing.
 // Skip the whole suite unless the full feed is present.
 const haveAll = (await Promise.all([MODEL, TOKENIZER, ANCHOR, GAZETTEER, MODEL_CARD].map((p) => pathExists(p)))).every(
 	(exists) => exists
@@ -55,8 +55,9 @@ const baseOpts = {
 }
 
 describe.skipIf(!haveAll)("createScorer capability delta check (#718/#719)", () => {
-	// Save/restore the live FR conventions row — the eval reads the shared in-memory codex table,
-	// so a synthetic forbid mutates it for the duration of one test and must be reverted.
+	// Save/restore the live FR conventions row.
+	// The eval reads the shared in-memory codex table, so a synthetic forbid mutates
+	// it for the duration of one test and must be reverted.
 	let savedFr: AddressSystemConventions | undefined
 
 	beforeEach(() => {
@@ -89,8 +90,8 @@ describe.skipIf(!haveAll)("createScorer capability delta check (#718/#719)", () 
 	})
 
 	test("pocket tier is conditional against its own certified capabilities", async () => {
-		// The pocket tier (anchor-only) also certifies FR street_prefix with a non-zero
-		// maskOff F1. a forbid there is equally illegal.
+		// The pocket tier (anchor-only) also certifies FR street_prefix with a non-zero maskOff F1.
+		// A forbid there is equally illegal.
 		// Confirms the tier selector actually reads the pocket cell.
 		// Don't pin the F1 literal — it's model-card-dependent (v1.8.0 certifies ~78 rather than the older 80),
 		// so match the message shape rather than the number.

@@ -93,7 +93,8 @@ function fusedLatticeSession(): void {
 }
 
 /**
- * Real PIX1 bytes at the neural fixture's calibration: δ=6, β=5 — the flip needs both (see file header).
+ * Real PIX1 bytes at the neural fixture's calibration: δ=6, β=5.
+ * The flip needs both (see file header).
  */
 function gbIndexBytes(): Uint8Array {
 	const header: PairIndexHeaderInput = {

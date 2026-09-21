@@ -157,10 +157,10 @@ describe("viterbi — basic", () => {
 describe("viterbi — position-scoped transition adjustments (TRANSITION-BETA)", () => {
 	// The path-fusion lattice from the task-8 transition-level probe, miniaturized: a 3-token input
 	// where the fused run (B-locality → I-locality → I-locality) outscores the desired split
-	// (B-locality → B-region → O is irrelevant here — the competing reading is B-region entered at
-	// t=1) by a margin smaller than the bonus. The emission at t=1 already favors B-region locally
-	// (4 > 3), yet the global path stays fused because switching costs the
-	// continuation at t=2 (I-region 0 vs I-locality 5).
+	// (B-locality → B-region → O is irrelevant here — the competing reading is B-region entered at t=1)
+	// by a margin smaller than the bonus.
+	// The emission at t=1 already favors B-region locally (4 > 3), yet the global path stays fused
+	// because switching costs the continuation at t=2 (I-region 0 vs I-locality 5).
 	// This is the exact mechanism the adjustment exists for.
 	const FUSION_EMISSIONS = [
 		[0, 6, NEG_INF, 0, NEG_INF], // t=0: B-locality 6

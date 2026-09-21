@@ -86,7 +86,8 @@ const FLAG_HAS_COORDINATE = 0b0000_0001
 const FLAG_HAS_RADIUS = 0b0000_0010
 
 /**
- * Longest UTF-8 byte length a prefix or an ancestor name may occupy — both are length-prefixed with a `u8`.
+ * Longest UTF-8 byte length a prefix or an ancestor name may occupy.
+ * Both are length-prefixed with a `u8`.
  */
 const MAX_U8_LEN = 255
 
@@ -146,7 +147,8 @@ export interface PostcodePrefixNode {
 	/**
 	 * The measured p95 great-circle distance, in km, from this prefix's centroid to the
 	 * units observed under it — the prior's own confidence, shipped rather than assumed.
-	 * mandatory whenever a coordinate is present, and forbidden without one.
+	 *
+	 * Mandatory whenever a coordinate is present, and forbidden without one.
 	 */
 	radiusP95Km?: number
 	/**
@@ -162,9 +164,9 @@ export interface PostcodePrefixNode {
  * Coverage tier of the source the index was built from, in the sense
  * `docs/engineering/reference/layer-interface.mdx` uses.
  *
- * Not part of the arc document's preregistered header. added because the NI source
- * is ODbL and a share-alike obligation that does not travel with the artifact is
- * a licensing defect waiting for the first consumer.
+ * Not part of the arc document's preregistered header.
+ * Added because the NI source is ODbL and a share-alike obligation that does not travel
+ * with the artifact is a licensing defect waiting for the first consumer.
  */
 export type PostcodePrefixTier = "shipped" | "build-local"
 
@@ -219,16 +221,19 @@ export interface PostcodePrefixHeader {
 	/**
 	 * What a miss means for this file — the meaning-of-zero statement, mandatory.
 	 *
-	 * A prefix absent from a complete register does not exist. a prefix absent from a partial one may
-	 * simply be unattested, and a consumer that cannot tell the two apart will read coverage as fact.
+	 * A prefix absent from a complete register does not exist.
+	 * A prefix absent from a partial one may simply be unattested, and a consumer that
+	 * cannot tell the two apart will read coverage as fact.
 	 */
 	coverageNote: string
 	/**
 	 * Optional soft-prior bias magnitude.
 	 *
-	 * Absent until a calibration task measures one — a defaulted number here would
-	 * let an uncalibrated bias reach the decoder unnoticed (PCN1's rule, verbatim). B3-1 ships data + loader + offline
-	 * probe with no decode wiring, so nothing reads this yet.
+	 * Absent until a calibration task measures one.
+	 * A defaulted number here would let an uncalibrated bias reach the decoder
+	 * unnoticed (PCN1's rule, verbatim).
+	 *
+	 * B3-1 ships data + loader + offline probe with no decode wiring, so nothing reads this yet.
 	 */
 	delta?: number
 }
@@ -527,8 +532,8 @@ export class PostcodePrefixIndexResolver implements PostcodePrefixIndexLike {
 	/**
 	 * Every node, in the file's sorted order.
 	 *
-	 * The round-trip verification reads this. a runtime consumer wants
-	 * {@link PostcodePrefixIndexResolver.probe}.
+	 * The round-trip verification reads this.
+	 * A runtime consumer wants {@link PostcodePrefixIndexResolver.probe}.
 	 */
 	nodes(): IterableIterator<PostcodePrefixNode> {
 		return this.#nodes.values()
@@ -537,10 +542,10 @@ export class PostcodePrefixIndexResolver implements PostcodePrefixIndexLike {
 	/**
 	 * Look up one prefix.
 	 *
-	 * Returns `null` when the index has no node for it — absence is not evidence.
-	 * Read the header's `coverageNote` before treating a miss as anything but neutral:
-	 * for a partial register a miss means unattested, and for a complete one it
-	 * means the prefix is not in the numbering plan.
+	 * @returns `null` when the index has no node for it — absence is not evidence.
+	 *   Read the header's `coverageNote` before treating a miss as anything but neutral:
+	 *   for a partial register a miss means unattested, and for a complete one it
+	 *   means the prefix is not in the numbering plan.
 	 */
 	probe(prefix: string): PostcodePrefixNode | null {
 		return this.#nodes.get(prefix) ?? null

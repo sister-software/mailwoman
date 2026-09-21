@@ -48,8 +48,8 @@ describe("bridgePunctuationGaps", () => {
 	})
 
 	it("does NOT merge across separator punctuation (the FR comma class)", () => {
-		// "…47110, 9016…" — the model double-labels the house number as a second postcode
-		// fragment. the comma is the only thing keeping the spans honest.
+		// "…47110, 9016…" — the model double-labels the house number as a second postcode fragment.
+		// The comma is the only thing keeping the spans honest.
 		// Never bridge it.
 		const text = "47110, 9016"
 		const input = [tok("47110", 0, "B-postcode"), tok(",", 5, "O"), tok("9016", 7, "B-postcode")]
@@ -94,9 +94,9 @@ describe("bridgePunctuationGaps", () => {
 
 	describe("crossing constraint (M2 — Stage 2.7 structural boundaries)", () => {
 		it("blocks a same-tag merge whose gap contains a proposed span boundary", () => {
-			// "Joe's 'Pizza' Shop" with a quoted span over 'Pizza' — the gap " '" between
-			// two venue fragments is bridgeable (apostrophe + space), but the opening quote
-			// at index 6 is a structural boundary the merge must not straddle.
+			// "Joe's 'Pizza' Shop" with a quoted span over 'Pizza'.
+			// The gap " '" between two venue fragments is bridgeable (apostrophe + space),
+			// but the opening quote at index 6 is a structural boundary the merge must not straddle.
 			const text = "Joe's 'Pizza' Shop"
 			const input = [tok("Joe's", 0, "B-venue"), tok("Pizza", 7, "B-venue")]
 			// Without the constraint the bridge merges (regression guard for the test itself):

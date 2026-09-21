@@ -122,9 +122,10 @@ const INIT_WASM_MS_BUDGET = 12_000
 /**
  * Session init on the WebGPU arm.
  *
- * Asserted only when the browser granted a WebGPU adapter and the runner's diagnostics
- * report `webgpu` — the runner falls back to wasm silently, so without that check
- * the arm would measure the other arm under a WebGPU name.
+ * Asserted only when the browser granted a WebGPU adapter and the runner's diagnostics report `webgpu`.
+ * The runner falls back to wasm silently, so without that check the arm would
+ * measure the other arm under a WebGPU name.
+ *
  * Headless Chromium grants a software adapter (SwiftShader) where no GPU is reachable,
  * which is why the receipt prints the adapter's identity beside the number:
  * 2,997 ms on SwiftShader is not a claim about hardware.
@@ -148,7 +149,8 @@ const WARM_P95_WASM_MS_BUDGET = 220
  * sql.js-httpvfs plus the candidate-table probes.
  *
  * The candidate table is clustered so a probe touches a handful of B-tree pages.
- * the demo's own measured session was 38 requests.
+ * The demo's own measured session was 38 requests.
+ *
  * This budget is what fails when a schema or clustering change turns a probe into a scan.
  */
 const GAZETTEER_RANGE_REQUESTS_BUDGET = 120
@@ -156,11 +158,12 @@ const GAZETTEER_RANGE_REQUESTS_BUDGET = 120
 /**
  * Peak `performance.memory.usedJSHeapSize` across the whole browser session.
  *
- * V8 accounts `ArrayBuffer` storage and wasm linear memory outside the JS heap, so this number
- * does not include the ~53 MB of artifact bytes the session holds nor ORT's own arena —
- * it bounds the JS side only, which is where a leak in the runner or the tokenizer would show.
- * Measured at ~10 MiB on the first run. the budget is the "something is retaining
- * objects per parse" regression check rather than a memory target.
+ * V8 accounts `ArrayBuffer` storage and wasm linear memory outside the JS heap, so this
+ * number does not include the ~53 MB of artifact bytes the session holds nor ORT's own arena.
+ * It bounds the JS side only, which is where a leak in the runner or the tokenizer would show.
+ *
+ * Measured at ~10 MiB on the first run.
+ * The budget is the "something is retaining objects per parse" regression check rather than a memory target.
  */
 const PEAK_HEAP_BYTES_BUDGET = 268_435_456
 
@@ -260,8 +263,8 @@ async function tryResolveWeights(): Promise<ResolvedWeights | null> {
 /**
  * Ask a package where one of its files lives.
  *
- * Never assemble a path into another package's install directory by hand —
- * the layout is its owner's to change.
+ * Never assemble a path into another package's install directory by hand.
+ * The layout is its owner's to change.
  */
 async function tryResolveFile(specifier: string): Promise<string | null> {
 	try {
@@ -374,8 +377,9 @@ const CONTENT_TYPES: Record<string, string> = {
 /**
  * Extensions worth compressing.
  *
- * `.onnx`, `.model` and `.bin` are already entropy-dense — the live demo serves them
- * identity-encoded too, which is why the baseline's model figure equals the file size on disk.
+ * `.onnx`, `.model` and `.bin` are already entropy-dense.
+ * The live demo serves them identity-encoded too, which is why the baseline's
+ * model figure equals the file size on disk.
  */
 const COMPRESSIBLE_EXTENSIONS = new Set([".html", ".js", ".mjs", ".json", ".wasm", ".map"])
 
@@ -758,7 +762,8 @@ async function bundleBrowserEntry(resolveDir: string): Promise<Buffer> {
 		minify: true,
 		write: false,
 		logLevel: "silent",
-		// Both are dynamic imports behind a node-environment guard. the browser never evaluates them.
+		// Both are dynamic imports behind a node-environment guard.
+		// The browser never evaluates them.
 		external: ["node:fs/promises", "node:module"],
 	})
 

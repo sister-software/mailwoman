@@ -47,7 +47,7 @@ describe("anchorFeatureVector — pinned to Python anchor_feature_vector", () =>
 })
 
 describe("buildAnchorFeatures — alignment onto SP pieces", () => {
-	// "Strasse 12 10115 Berlin" — the postcode "10115" is chars [11, 16).
+	// "Strasse 12 10115 Berlin". The postcode "10115" is chars [11, 16).
 	const TEXT = "Strasse 12 10115 Berlin"
 
 	const piece = (p: string, start: number, end: number): TokenizedPiece => ({ piece: p, id: 0, start, end })
@@ -133,8 +133,9 @@ describe("buildAnchorFeatures — span modes", () => {
 	}
 
 	/**
-	 * Split `text` into non-whitespace runs, each halved, so every anchor span is covered
-	 * by more than one piece — the geometry that makes a wrong paint extent visible.
+	 * Split `text` into non-whitespace runs, each halved, so every anchor span
+	 * is covered by more than one piece.
+	 * The geometry that makes a wrong paint extent visible.
 	 */
 	function piecesFor(text: string): TokenizedPiece[] {
 		const out: TokenizedPiece[] = []
@@ -219,7 +220,8 @@ describe("buildAnchorFeatures — span modes", () => {
 			expect(features[i]).toEqual(inside ? gb : new Array(ANCHOR_FEATURE_DIM).fill(0))
 		})
 
-		// Both halves of the unit are painted — the outward-only paint the default produces is 2 pieces rather than 4.
+		// Both halves of the unit are painted.
+		// The outward-only paint the default produces is 2 pieces rather than 4.
 		expect(confidence.filter((c) => c === 1)).toHaveLength(4)
 	})
 
@@ -236,7 +238,8 @@ describe("buildAnchorFeatures — span modes", () => {
 	})
 
 	it("(c) an unknown GB unit falls back to its outward district, painting the WHOLE unit span", () => {
-		// SW1A 1AA is not in V2. its outward SW1A is.
+		// SW1A 1AA is not in V2.
+		// Its outward SW1A is.
 		// NI codes behave the same way — Code-Point Open has none.
 		const text = "London SW1A 1AA"
 		const spanStart = text.indexOf("SW1A 1AA")
@@ -317,8 +320,9 @@ describe("buildAnchorFeatures — shaped mode case-folds before shape detection 
 	})
 
 	it("the fold is LENGTH-PRESERVING, so a `ß` upstream cannot shift the painted span", () => {
-		// `"ß".toUpperCase()` is "SS" — a naive uppercase here would slide every later
-		// offset by one and paint the wrong pieces. ascii-only folding cannot.
+		// `"ß".toUpperCase()` is "SS".
+		// A naive uppercase here would slide every later offset by one and paint the wrong pieces.
+		// Ascii-only folding cannot.
 		const text = "straße 1, amsterdam 1012 lg"
 		const pieces = piecesFor(text)
 		const { confidence } = buildAnchorFeatures(text, pieces, V2, { spanMode: "shaped" })

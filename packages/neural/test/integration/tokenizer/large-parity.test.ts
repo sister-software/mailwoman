@@ -115,9 +115,10 @@ describe.skipIf(!haveLargeFixture)("MailwomanTokenizer — large-scale parity (1
 		expect(supported).toBeGreaterThan(fixture.length * 0.95)
 
 		// Allow up to 0.1% slack for Unicode normalization edge cases — SentencePiece nfkc-
-		// normalizes pieces (e.g. fullwidth ＝ → ascii =, precomposed Hangul → decomposed Jamo),
+		// normalizes pieces (e.g. Fullwidth ＝ → ascii =, precomposed Hangul → decomposed Jamo),
 		// so the piece text may differ from `raw.slice` even when the offset itself is correct.
-		// Properly handling this needs an nfkc-aware comparator. current sweep shows ≤ 0.05% rate.
+		// Properly handling this needs an nfkc-aware comparator.
+		// Current sweep shows ≤ 0.05% rate.
 		const mismatchRate = mismatches / supported
 
 		if (mismatchRate >= 0.001) {

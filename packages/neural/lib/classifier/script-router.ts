@@ -69,8 +69,7 @@ function familyForSegment(shape: Pick<QueryShape, "tokenClasses" | "segments">):
 /**
  * Whether some comma segment of the input is written wholly in a script some declared family serves.
  *
- * {@linkcode carriesFamilySegmentFor} decides one script set. This asks it once per declared family, which is the
- * question the router answers.
+ * {@linkcode carriesFamilySegmentFor} decides one script set. This asks it once per declared family, which is the question the router answers.
  */
 export function carriesFamilySegment(shape: Pick<QueryShape, "tokenClasses" | "segments">): boolean {
 	return familyForSegment(shape) !== undefined
@@ -83,9 +82,9 @@ export function carriesFamilySegment(shape: Pick<QueryShape, "tokenClasses" | "s
  * A candidate for measurement.
  * No serving path calls it.
  *
- * `route-census.run.ts` runs it beside the shipped router so the rows the reading
- * moves can be counted on the whole board before anybody proposes shipping it —
- * the board is hand-authored and over-represents the defect it was written for,
+ * `route-census.run.ts` runs it beside the shipped router so the rows the reading moves
+ * can be counted on the whole board before anybody proposes shipping it.
+ * The board is hand-authored and over-represents the defect it was written for,
  * so the 13 rows the proposal was built from are not the population to decide on.
  *
  * The reading is tried last.
@@ -114,10 +113,11 @@ export function routeFamilyWithLeadingRun(text: string): RoutingDecision {
  * What {@linkcode routeFamilyForText} would answer with the postcode reading added,
  * without changing what it answers today.
  *
- * The second candidate for measurement, and the only class of reading that reaches an input written wholly in Latin
- * script. Two board rows are romaji Japanese — `4-chōme-12-10 Jingūmae, Shibuya, Tokyo 150-0001, Japan` and `Rinrin, 3
- * Chome-57 Tenmanmachi, Takayama, Gifu 506-0025, Japan` — and no script predicate can claim either, because there is no
- * non-Latin character in them to read.
+ * The second candidate for measurement, and the only class of reading that reaches
+ * an input written wholly in Latin script.
+ * Two board rows are romaji Japanese — `4-chōme-12-10 Jingūmae, Shibuya, Tokyo 150-0001, Japan`
+ * and `Rinrin, 3 Chome-57 Tenmanmachi, Takayama, Gifu 506-0025, Japan` — and no script
+ * predicate can claim either, because there is no non-Latin character in them to read.
  *
  * `scoreByPostcode` maps four unambiguous formats to locales, and `jp_postcode` is the
  * only one whose locale belongs to a family declaring routing scripts.
@@ -163,8 +163,9 @@ const POSTCODE_ROUTE_CONFIDENCE = 0.9
  *
  * Two readings, tried in order, and either suffices: the locale hint's whole-input script rule,
  * and a comma segment written wholly in a script a family serves ({@link carriesFamilySegment}).
- * A decision naming no family carries the reason it abstained, which is what measuring a router needs —
- * an abstention and a wrong route are different failures, and the family alone cannot separate them.
+ * A decision naming no family carries the reason it abstained, which is what measuring a router needs.
+ *
+ * An abstention and a wrong route are different failures, and the family alone cannot separate them.
  */
 export function routeFamilyForText(text: string): RoutingDecision {
 	const shape = computeQueryShape(text)
@@ -199,7 +200,8 @@ export function scriptFamilyForText(text: string): string | undefined {
  * What the router reads from a classifier: the parse entries and the weights-package
  * metadata the session forwards.
  *
- * A `NeuralAddressClassifier` satisfies it. so does a test stub.
+ * A `NeuralAddressClassifier` satisfies it.
+ * So does a test stub.
  */
 export type RoutableClassifier = Pick<
 	NeuralAddressClassifier,
@@ -216,7 +218,8 @@ export interface ScriptRoutedClassifierOpts<C extends RoutableClassifier = Routa
 	/**
 	 * Load the family's classifier (`cjk`).
 	 *
-	 * Called once per family. a rejection marks the family unavailable.
+	 * Called once per family.
+	 * A rejection marks the family unavailable.
 	 */
 	loadFamily: (family: string) => Promise<C>
 	/**

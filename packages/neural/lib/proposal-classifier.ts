@@ -81,8 +81,8 @@ export function createNeuralProposalClassifier(cfg: NeuralProposalClassifierConf
 				// We intentionally avoid `Span.from(...)` here: the tokenization module performs
 				// filesystem-bound module-init (libpostal data dir scan) which we don't want
 				// to force on every consumer of the proposal-classifier.
-				// The solver and policy registry read `start` / `end` / `body` only. if a downstream
-				// consumer needs the full Span behavior (graph membership, classifications, …),
+				// The solver and policy registry read `start` / `end` / `body` only.
+				// If a downstream consumer needs the full Span behavior (graph membership, classifications, …),
 				// it should re-construct via Span.from(p.span.body, { start: p.span.start }).
 				const span = {
 					start: sectionOffset + node.start,

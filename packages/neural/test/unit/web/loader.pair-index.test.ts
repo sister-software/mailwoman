@@ -51,7 +51,8 @@ let capturedConfig: {
 	}
 } | null = null
 
-// The real tokenizer needs a valid SentencePiece model. stub the load (we feed dummy bytes).
+// The real tokenizer needs a valid SentencePiece model.
+// Stub the load (we feed dummy bytes).
 vi.mock("@mailwoman/neural/tokenizer", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@mailwoman/neural/tokenizer")>()),
 	MailwomanTokenizer: { loadFromBase64: vi.fn(async () => ({ tokenizerStub: true })) },
@@ -221,8 +222,8 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 		// The per-parse selection is the only path (byte-stable when nothing selected —
 		// asserted end-to-end in loader.pair-prior-decode.test.ts).
 		expect(capturedConfig?.placetypePair).toBeUndefined()
-		// But the index is live and retained (phase 2: load all, don't check) —
-		// the same instance the per-parse selection can return.
+		// But the index is live and retained (phase 2: load all, don't check).
+		// The same instance the per-parse selection can return.
 		const [gb] = result.pairIndexes
 		expect(result.pairIndexes).toHaveLength(1)
 		expect(gb!.url).toBe(GB_INDEX)
@@ -264,7 +265,8 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 	test("CONFIG DEFAULT requested but no matching index → warn, no default; the other indexes still load LIVE", async () => {
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
 
-		// Pin 'fr' but only ship gb + nz — the pin can't be honored.
+		// Pin 'fr' but only ship gb + nz.
+		// The pin can't be honored.
 		const fetchImpl = makeFetch((url) =>
 			url.includes("pair-index-gb") ? gbIndexBytes() : url.includes("pair-index-nz") ? nzIndexBytes() : dummyBytes
 		)
@@ -295,7 +297,8 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 
 		const wired = capturedConfig?.placetypePair?.index
 		expect(wired).toBeInstanceOf(PairIndexResolver)
-		// Both load live now — nz is no longer restricted to null. it is available for a per-parse nz pick.
+		// Both load live now — nz is no longer restricted to null.
+		// It is available for a per-parse nz pick.
 		const [gb, nz] = result.pairIndexes
 		expect(gb).toEqual({ url: GB_INDEX, country: "gb", resolver: wired })
 		expect(nz!.country).toBe("nz")

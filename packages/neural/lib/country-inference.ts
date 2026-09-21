@@ -69,15 +69,16 @@ export const COUNTRY_AMBIGUOUS_BIT = 2
 /**
  * The loaded country lexicon.
  *
- * Structurally identical to a {@linkcode GazetteerLexicon} (the same n-gram phrase-scan shape) —
- * the type is reused deliberately so the two channels share one matcher.
+ * Structurally identical to a {@linkcode GazetteerLexicon} (the same n-gram phrase-scan shape).
+ * The type is reused deliberately so the two channels share one matcher.
+ *
  * The `bits`/`slots` describe the lexicon's internal bit layout
  * (`country_surface` / `country_ambiguous`), not a multi-hot emitted vector.
  */
 export type CountryLexicon = GazetteerLexicon
 
 /**
- * Parse the country lexicon JSON (already `JSON.parse`d — keeps this module browser-safe. the caller reads).
+ * Parse the country lexicon JSON (already `JSON.parse`d — keeps this module browser-safe. The caller reads).
  */
 export function parseCountryLexicon(raw: {
 	feature_dim: number
@@ -91,13 +92,16 @@ export function parseCountryLexicon(raw: {
 }
 
 /**
- * Per-piece country features + confidence for `text`, projected onto its SP `pieces` by the same char→piece rule the
- * labels use (a piece takes the bits of the first non-whitespace char it covers) — so the clue lands on exactly the
- * country phrase's sub-tokens. Returns `(pieces × COUNTRY_FEATURE_DIM)` features (`[country_surface,
- * country_ambiguous]`) + `(pieces,)` confidence (1.0 wherever a country surface fires).
+ * Per-piece country features + confidence for `text`, projected onto its SP `pieces` by the same
+ * char→piece rule the labels use (a piece takes the bits of the first non-whitespace char it covers) —
+ * so the clue lands on exactly the country phrase's sub-tokens.
  *
- * Reuses `gazetteerCharPaint` — the country lexicon is the same phrase-scan structure,
- * so the matcher is shared and the two channels cannot drift on how a phrase is matched.
+ * Returns `(pieces × COUNTRY_FEATURE_DIM)` features (`[country_surface, country_ambiguous]`) +
+ * `(pieces,)` confidence (1.0 wherever a country surface fires).
+ *
+ * Reuses `gazetteerCharPaint`.
+ * The country lexicon is the same phrase-scan structure, so the matcher is shared
+ * and the two channels cannot drift on how a phrase is matched.
  */
 export function buildCountryFeatures(
 	text: string,

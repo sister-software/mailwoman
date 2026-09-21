@@ -27,8 +27,8 @@ import { describe, expect, test } from "vitest"
 
 // CI doesn't ship the v0.2.0 model files — they're operator-supplied via
 // `scripts/link-dev-weights.ts` after a training run.
-// Skip the real-model tests when the weights package's `model.onnx` isn't on disk. the
-// runner's structural behavior still gets exercised by `web-onnx-runner.unit.test.ts`,
+// Skip the real-model tests when the weights package's `model.onnx` isn't on disk.
+// The runner's structural behavior still gets exercised by `web-onnx-runner.unit.test.ts`,
 // which mocks the runtime and needs no model.
 async function probeWeights(): Promise<{ modelPath: string; tokenizerPath: string; modelCardPath?: string } | null> {
 	try {
@@ -72,8 +72,8 @@ describe.skipIf(!haveWeights)("WebONNXRunner", () => {
 			WebONNXRunner.fromBytes(modelBytes, { useWebGPU: false }),
 		])
 
-		// Thread the trained label vocabulary from the model card, same as loadFromWeights —
-		// the dev-linked weights are a Stage 3 bundle whose emission width exceeds
+		// Thread the trained label vocabulary from the model card, same as loadFromWeights.
+		// The dev-linked weights are a Stage 3 bundle whose emission width exceeds
 		// the compile-time STAGE2_BIO_LABELS default.
 		const labels = await readLabelsFromModelCard(weights!.modelCardPath)
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner, labels })

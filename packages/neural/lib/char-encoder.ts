@@ -30,8 +30,8 @@ export const PAD_CHAR_ID = 0
 /**
  * The unknown id: a code point the sealed vocabulary lacks.
  *
- * Fixed at 1 by `build_char_vocab`, which writes `<unk>` second. every real
- * character follows in code-point order.
+ * Fixed at 1 by `build_char_vocab`, which writes `<unk>` second.
+ * Every real character follows in code-point order.
  */
 export const UNK_CHAR_ID = 1
 
@@ -130,10 +130,13 @@ export function encodeCharUnits(
 }
 
 /**
- * Validate a parsed `char-vocab-*.json` artifact into a vocabulary. Refuses anything that is not a flat `{ character:
- * integer }` map with the reserved ids in place, because a malformed vocabulary would encode every character as UNK and
- * the model would answer confidently on nothing. Pure: the file read lives on the node-only loader, so this module
- * stays on the browser graph without a `node:` reach (#2168).
+ * Validate a parsed `char-vocab-*.json` artifact into a vocabulary.
+ *
+ * Refuses anything that is not a flat `{ character: integer }` map with the reserved
+ * ids in place, because a malformed vocabulary would encode every character as UNK
+ * and the model would answer confidently on nothing.
+ * Pure: the file read lives on the node-only loader, so this module stays on the
+ * browser graph without a `node:` reach (#2168).
  */
 export function parseCharVocabulary(parsed: unknown, source: string): CharVocabulary {
 	if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
@@ -180,10 +183,10 @@ export type EncoderDescriptor =
 /**
  * Read a parsed card's `encoder` block (#2164).
  *
- * A char card names its vocabulary sibling and the `(S, W, ctx)` interface
- * the model was trained under. a runtime that guessed any of the three would
- * encode every row differently from training and score confidently on garbage,
- * so a char card missing one of them is refused rather than defaulted.
+ * A char card names its vocabulary sibling and the `(S, W, ctx)` interface the model was trained under.
+ * A runtime that guessed any of the three would encode every row differently from training and score
+ * confidently on garbage, so a char card missing one of them is refused rather than defaulted.
+ *
  * Pure, so the browser loader reads it from a fetched card and the node loader from a file.
  */
 export function encoderDescriptorFromCard(
@@ -229,8 +232,8 @@ export function encoderDescriptorFromCard(
  * The base package a locale falls back to when it has no package of its own:
  * the CJK char-path base for Japanese, Chinese and Korean (#2164).
  *
- * Latin locales have no family base — `en-us` is the Latin base, and the overlays
- * name it through `mailwoman.baseWeights` instead.
+ * Latin locales have no family base.
+ * `en-us` is the Latin base, and the overlays name it through `mailwoman.baseWeights` instead.
  *
  * The mapping used to be three language subtags written here, which is the same claim
  * `#weights/families` makes about which locales the character family serves.

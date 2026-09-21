@@ -111,7 +111,7 @@ describe("repairUnitLabels", () => {
 	})
 
 	it("reclaims a bare unit the model mislabeled as locality (Flat 2 → unit)", () => {
-		// The v0.7.2 failure mode: "Flat 2  14 Smith St" → model labels "Flat 2" as locality.
+		// The v0.7.2 failure mode: "Flat 2 14 Smith St" → model labels "Flat 2" as locality.
 		const text = "Flat 2  14 Smith St"
 
 		const tokens = [

@@ -55,9 +55,9 @@ export interface WordConsistencyOpts {
 	/**
 	 * Skip the heal when the vote's mean p(bestType) across the word is below this floor.
 	 *
-	 * The unrestricted variant's failure mode (the 2026-06-19 promotion eval) was
-	 * amplifying noise on rows where the per-piece confidence is itself unreliable —
-	 * a low-confidence vote is exactly that signature.
+	 * The unrestricted variant's failure mode (the 2026-06-19 promotion eval) was amplifying
+	 * noise on rows where the per-piece confidence is itself unreliable.
+	 * A low-confidence vote is exactly that signature.
 	 * `0` (default) never skips.
 	 */
 	minMeanConfidence?: number
@@ -173,7 +173,9 @@ export function enforceWordConsistency(
 	labelIndices: readonly number[],
 	opts?: WordConsistencyOpts
 ): WordConsistencyResult {
-	// Type → {B index, I index}. the standalone O index. per-label-index → type.
+	// Type → {B index, I index}.
+	// The standalone O index.
+	// Per-label-index → type.
 	const typeB = new Map<string, number>()
 	const typeI = new Map<string, number>()
 
@@ -197,8 +199,9 @@ export function enforceWordConsistency(
 
 	// Group pieces into words.
 	// A word = a `▁`-started piece + its non-`▁` continuations.
-	// A bare `▁` (whitespace-only) piece is a separator — it ends the current word and joins no word
-	// (its label is left as-is, matching the decoder's "zero-width O is not a boundary" handling).
+	// A bare `▁` (whitespace-only) piece is a separator.
+	// It ends the current word and joins no word (its label is left as-is,
+	// matching the decoder's "zero-width O is not a boundary" handling).
 	const words: number[][] = []
 	let cur: number[] = []
 
@@ -223,8 +226,8 @@ export function enforceWordConsistency(
 		}
 
 		if (opts?.splitOnPunctuation && PUNCTUATION_ONLY.test(content)) {
-			// Punctuation separator — `12/345`'s halves vote independently. a trailing `,`
-			// never joins `Ave`'s group.
+			// Punctuation separator — `12/345`'s halves vote independently.
+			// A trailing `,` never joins `Ave`'s group.
 			// The piece itself joins no word (its label is left as-is, like whitespace).
 			flush()
 
@@ -245,9 +248,9 @@ export function enforceWordConsistency(
 	flush()
 
 	for (const w of words) {
-		// The heal arbitrates intra-word disagreement only. A word whose pieces
-		// already share one type (a single-piece word trivially does) is the decoder's
-		// global decision — re-deciding it from local type-mass is a re-decode
+		// The heal arbitrates intra-word disagreement only.
+		// A word whose pieces already share one type (a single-piece word trivially does) is
+		// the decoder's global decision — re-deciding it from local type-mass is a re-decode
 		// rather than a consistency repair, and is exactly what regressed golden street
 		// (`▁Broadway` B-street→O, consistent `Gamle` street→locality, 2026-07-15).
 		const currentTypes = new Set(w.map((pi) => idxType[labelIndices[pi]!] ?? "O"))

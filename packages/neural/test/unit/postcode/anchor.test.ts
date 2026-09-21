@@ -230,7 +230,8 @@ describe("gbOutwardCode", () => {
 })
 
 describe("extractPostcodeAnchors — GB outward fallback", () => {
-	// The GB gazetteer is aggregated to outward codes. a unit postcode resolves via its outward.
+	// The GB gazetteer is aggregated to outward codes.
+	// A unit postcode resolves via its outward.
 	const GB = new FakeResolver({ SW1A: [{ country: "GB", lat: 51.501, lon: -0.142 }] })
 
 	it("resolves a GB unit to its outward district, tagged matchType 'outward', full confidence", () => {

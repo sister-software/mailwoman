@@ -56,8 +56,10 @@ const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web-loa
 const BASE = "https://cdn.example/mailwoman/v9.1.0"
 
 /**
- * Fetch stub: 200 with card JSON at the card URL, 200 dummy bytes everywhere else, and every
- * requested URL recorded — the assertion surface is which names were derived rather than what loaded.
+ * Fetch stub: 200 with card JSON at the card URL, 200 dummy bytes everywhere else,
+ * and every requested URL recorded.
+ *
+ * The assertion surface is which names were derived rather than what loaded.
  */
 function makeRecordingFetch(card: object | null, requested: string[]): typeof fetch {
 	return async (input) => {

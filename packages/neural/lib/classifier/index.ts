@@ -102,8 +102,9 @@ export {
  * Structural type the classifier needs from a runner.
  *
  * Lets callers swap the Node-side `ONNXRunner` for a browser-side runner
- * (e.g. `@mailwoman/neural/web-onnx-runner`'s `WebONNXRunner`) without inheritance —
- * the classifier only ever calls `infer(ids)`.
+ * (e.g. `@mailwoman/neural/web-onnx-runner`'s `WebONNXRunner`) without inheritance.
+ * The classifier only ever calls `infer(ids)`.
+ *
  * The signature is {@link InferFunction}, the one interface both runners implement.
  */
 export interface NeuralRunner {
@@ -111,8 +112,9 @@ export interface NeuralRunner {
 	/**
 	 * The char-path graph's entry (#2164).
 	 *
-	 * Absent on a runner built for a SentencePiece graph. a classifier configured with a
-	 * `charEncoder` refuses a runner without it at construction rather than at the first parse.
+	 * Absent on a runner built for a SentencePiece graph.
+	 * A classifier configured with a `charEncoder` refuses a runner without it at
+	 * construction rather than at the first parse.
 	 */
 	inferChars?: InferCharsFunction
 }
@@ -194,9 +196,12 @@ export class NeuralAddressClassifier {
 	}
 
 	/**
-	 * Path to the per-locale FST gazetteer binary (`fst-<locale>.bin`) when the resolved weights package shipped one,
-	 * else `undefined`. The runtime pipeline deserializes + auto-wires it as the default `opts.fst` (opt out with `fst:
-	 * false` at pipeline construction); direct `classifier.parse` callers can do the same or pass their own.
+	 * Path to the per-locale FST gazetteer binary (`fst-<locale>.bin`) when the
+	 * resolved weights package shipped one, else `undefined`.
+	 *
+	 * The runtime pipeline deserializes + auto-wires it as the default `opts.fst`
+	 * (opt out with `fst: false` at pipeline construction); direct `classifier.parse`
+	 * callers can do the same or pass their own.
 	 */
 	get fstPath(): PathBuilderLike | undefined {
 		return this.cfg.fstPath
@@ -216,9 +221,8 @@ export class NeuralAddressClassifier {
 	/**
 	 * The `model.onnx` this instance loaded, and which rung of the resolution ladder produced it.
 	 *
-	 * `undefined` on an instance built through the plain constructor rather than
-	 * {@link loadFromWeights} — there was no resolution, so there is nothing to report,
-	 * which is absence and not an unknown model.
+	 * `undefined` on an instance built through the plain constructor rather than {@link loadFromWeights}.
+	 * There was no resolution, so there is nothing to report, which is absence and not an unknown model.
 	 */
 	get resolvedWeights(): { modelPath: string; source: string } | undefined {
 		return this.cfg.modelPath && this.cfg.weightsSource
@@ -241,11 +245,7 @@ export class NeuralAddressClassifier {
 	/**
 	 * One-call factory — see `classifier-loader.ts`, where the whole resolution lives.
 	 *
-	 * **Node-only.** `#classifier/loader` carries a `browser` condition that resolves
-	 * to a refusing module, so a browser bundle that follows this import stays free of
-	 * `onnxruntime-node` and the fs-reading weights resolver, and calling it there throws.
-	 * The `webpackIgnore` comment keeps webpack's SSR bundle, which resolves the
-	 * `node` condition, from following the Node half.
+	 * **Node-only.** `#classifier/loader` carries a `browser` condition that resolves to a refusing module, so a browser bundle that follows this import stays free of `onnxruntime-node` and the fs-reading weights resolver, and calling it there throws. The `webpackIgnore` comment keeps webpack's SSR bundle, which resolves the `node` condition, from following the Node half.
 	 *
 	 * Browser callers use `loadNeuralClassifierFromURLs`.
 	 */
@@ -258,8 +258,7 @@ export class NeuralAddressClassifier {
 	}
 
 	/**
-	 * {@link loadFromWeights} behind a {@link ScriptRoutedClassifier}: the caller's locale is the primary, and an input
-	 * whose script names another weights family runs on that family's classifier, loaded on first use.
+	 * {@link loadFromWeights} behind a {@link ScriptRoutedClassifier}: the caller's locale is the primary, and an input whose script names another weights family runs on that family's classifier, loaded on first use.
 	 *
 	 * The served entry points (`mailwoman geocode`, the drop-in servers, the batch worker) load through
 	 * this one, so a bare kanji or Hangul line reaches the character-path model without a `--locale`.
@@ -277,13 +276,7 @@ export class NeuralAddressClassifier {
 	 */
 	async parse(text: string, opts?: ParseOpts): Promise<AddressTree> {
 		if (!text.length) return { raw: text, roots: [] }
-		// #690: title-case all-caps ascii input so the mixed-case-trained model doesn't go OOD.
-		// Detection-restricted (mixed-case + non-ascii untouched).
-		// Default-on (#895 settled drift D2 — the geocode path had run it since #713
-		// while the pipeline factory + raw classifier defaulted off); `false` restores
-		// the raw-case parse. ascii title-case is char-for-char length-preserving,
-		// so token offsets are unaffected. the tree is built from the normalized text
-		// (values come out title-cased — the shouting is gone, the resolver name-matches case-insensitively).
+		// #690: title-case all-caps ascii input so the mixed-case-trained model doesn't go OOD. Detection-restricted (mixed-case + non-ascii untouched). Default-on (#895 settled drift D2 — the geocode path had run it since #713 while the pipeline factory + raw classifier defaulted off); `false` restores the raw-case parse. Ascii title-case is char-for-char length-preserving, so token offsets are unaffected. The tree is built from the normalized text (values come out title-cased — the shouting is gone, the resolver name-matches case-insensitively).
 		const modelText = opts?.normalizeCase !== false ? normalizeInputCase(text) : text
 		const { tokens, localeCountry } = await this.#decode(modelText, opts)
 
@@ -301,8 +294,9 @@ export class NeuralAddressClassifier {
 	 *
 	 * Shares the entire decode path with `parse` (one `#decode`, #481) — repair passes included, because
 	 * reconcile must consume the same tokens the argmax path serves users, under the same repair opts.
-	 * `logits` stay RAW (pre-prior, pre-repair) — they are the model's emissions
-	 * rather than the decode's opinions.
+	 * `logits` stay RAW (pre-prior, pre-repair).
+	 *
+	 * They are the model's emissions rather than the decode's opinions.
 	 */
 	async parseWithLogits(text: string, opts?: ParseOpts): Promise<ParseWithLogitsResult> {
 		if (!text.length) {
@@ -332,7 +326,7 @@ export class NeuralAddressClassifier {
 	 * case normalization, so `buildAddressTree(trace.text, trace.tokens)` reproduces
 	 * `parse(text)`'s tree exactly — modulo `opts.calibrate`, which `parse` forwards into
 	 * the tree build to recalibrate node confidences and which the trace does not carry
-	 * (tokens/labels/spans still match. re-pass the calibrator to the rebuild if calibrated confidences matter).
+	 * (tokens/labels/spans still match. Re-pass the calibrator to the rebuild if calibrated confidences matter).
 	 * Serializable by construction — see `./trace.js` for the schema and the spec reference.
 	 */
 	async traceParse(text: string, opts?: ParseOpts): Promise<NeuralParseTrace> {
@@ -394,8 +388,8 @@ export class NeuralAddressClassifier {
 	 * The decode path (#481): tokenize → anchor/gazetteer features → infer →
 	 * priors → CRF/argmax → tokens → repairs.
 	 *
-	 * Both `parse` and `parseWithLogits` consume this — never fork it. the 2026-06 audit
-	 * found three drift surfaces across duplicated copies of this path.
+	 * Both `parse` and `parseWithLogits` consume this — never fork it.
+	 * The 2026-06 audit found three drift surfaces across duplicated copies of this path.
 	 */
 	// Deliberately one function, long on purpose — every caller funnels through here so there is nowhere
 	// for a second copy to drift.
@@ -431,14 +425,14 @@ export class NeuralAddressClassifier {
 		}
 	}> {
 		const encoded = this.encode(text)
-		// Reassigned after inference — the runner clamps to the model's fixed sequence length
-		// and `pieces` has to follow it.
+		// Reassigned after inference.
+		// The runner clamps to the model's fixed sequence length and `pieces` has to follow it.
 		// See the clamp below.
 		let pieces = encoded.pieces
 		// Soft-feature channels (#718): the postcode-anchor (#239/#240) + gazetteer-anchor (#464)
 		// clues the model conditions on alongside the ids, plus the near-postcode gazetteer choreography.
-		// The build + choreography is the single pure `buildSoftFeatures` (soft-features.ts) —
-		// both this decode path and the ProductionScorer feed channels identically,
+		// The build + choreography is the single pure `buildSoftFeatures` (soft-features.ts).
+		// Both this decode path and the ProductionScorer feed channels identically,
 		// so there is exactly one choreography.
 		// Each channel is undefined when its source is unconfigured (no-op).
 		//
@@ -482,8 +476,8 @@ export class NeuralAddressClassifier {
 		//
 		// The limit is reachable by ordinary input: 128 pieces is roughly 330 characters,
 		// which a form-concatenated delivery address clears.
-		// Dropping the tail is the runner's existing choice made visible. the
-		// alternative is throwing on a valid address.
+		// Dropping the tail is the runner's existing choice made visible.
+		// The alternative is throwing on a valid address.
 		// Note the tail is lost rather than deferred — components past the window never reach the model at all.
 		//
 		// `logits.length`, not a literal 128, so this holds for any `fixedSeqLen` — including models
@@ -530,7 +524,8 @@ export class NeuralAddressClassifier {
 
 		// Address-system conventions (#511 Tier A): resolve which system's rules apply —
 		// caller-pinned system, or the model's own locale-head detection under a high confidence bar.
-		// Null = no constraints. the parse below is byte-identical to the pre-conventions path.
+		// Null = no constraints.
+		// The parse below is byte-identical to the pre-conventions path.
 		const conventionsOpt = opts?.addressSystemConventions ?? this.cfg.addressSystemConventions
 		const { detectedSystem, systemSource } = resolveSystemVerdict(conventionsOpt, localeLogits)
 		const conventions = conventionsForSystem(detectedSystem)
@@ -592,9 +587,9 @@ export class NeuralAddressClassifier {
 			applied: morphologyPrior !== undefined && matrixHasBias(morphologyPrior),
 		})
 
-		// Stage 2.7 span proposer (#518, M2+M3): typed span proposals consumed as phrase
-		// priors. default on since 2026-06-12 (operator ruling): an omitted config builds
-		// the codex lexicon lazily with the frozen measured scales; `spanProposer: false`
+		// Stage 2.7 span proposer (#518, M2+M3): typed span proposals consumed as phrase priors.
+		// Default on since 2026-06-12 (operator ruling): an omitted config builds the
+		// codex lexicon lazily with the frozen measured scales; `spanProposer: false`
 		// (config or per-parse) is the proposer-free baseline.
 		// Disabled = byte-stable (no proposals computed).
 		const configured = this.cfg.spanProposer === false ? undefined : (this.cfg.spanProposer ?? this.defaultProposer())
@@ -612,8 +607,8 @@ export class NeuralAddressClassifier {
 		// Placetype-pair prior (placetype-pair-prior arc): retrieval-augmented complement to
 		// the encoder — see placetype-pair-prior.ts for the full windowing/matching interface.
 		// Config-level default set by loadFromWeights (its country-restricted construction);
-		// per-call opts override it, same "opts ?? cfg default" shape as
-		// bridgePunctuationGaps/enforceWordConsistency below.
+		// per-call opts override it, same "opts ??
+		// Cfg default" shape as bridgePunctuationGaps/enforceWordConsistency below.
 		// Default off (neither set → byte-stable).
 		// Composed before the conventions mask so an ungrammatical tag it might
 		// bias toward still gets masked out.
@@ -624,9 +619,11 @@ export class NeuralAddressClassifier {
 		const pairProbeTrace: PlacetypePairProbeTrace | undefined = trace ? {} : undefined
 		// PCN1 census observability rung: passed to the prior so its parent-candidate probes
 		// also probe the census, recording what it knows onto `pairProbeTrace`.
-		// Injected only when tracing — the prior writes census observations nowhere else,
-		// so on a plain `parse()` there is nothing for it to fill and no lookup to pay for.
-		// It never reaches a logit. the `placetypeCensus` record below is its entire output.
+		// Injected only when tracing.
+		// The prior writes census observations nowhere else, so on a plain `parse()`
+		// there is nothing for it to fill and no lookup to pay for.
+		// It never reaches a logit.
+		// The `placetypeCensus` record below is its entire output.
 		const placetypeCensusOpt = opts?.placetypeCensus ?? this.cfg.placetypeCensus
 
 		const censusForProbe: PlacetypeCensusLike | undefined = trace && placetypeCensusOpt ? placetypeCensusOpt : undefined
@@ -667,8 +664,9 @@ export class NeuralAddressClassifier {
 		tracePriors?.push({
 			kind: "placetypePair",
 			applied: placetypePairApplied,
-			// `probePath` rides only when a bias actually landed — an applied:false record stays
-			// shape-identical to every trace produced before the probe chain existed.
+			// `probePath` rides only when a bias actually landed.
+			// An applied:false record stays shape-identical to every trace produced
+			// before the probe chain existed.
 			...(placetypePairApplied && pairProbeTrace?.firedPath ? { probePath: pairProbeTrace.firedPath } : {}),
 		})
 
@@ -739,9 +737,9 @@ export class NeuralAddressClassifier {
 
 		// Per-word BIO consistency repair (#727 + the admin-token fragmentation class).
 		// Opt-in — default off → byte-identical.
-		// Heals words whose pieces disagree (e.g. `vermont`→VER[loc]+mont[region],
-		// `Lozère`→Loz[loc]+ère[region]) via a confidence-weighted vote over the post-prior
-		// emissions. a word whose pieces already agree is untouched.
+		// Heals words whose pieces disagree (e.g. `vermont`→VER[loc]+mont[region], `Lozère`→Loz[loc]+ère[region])
+		// via a confidence-weighted vote over the post-prior emissions.
+		// A word whose pieces already agree is untouched.
 		// See word-consistency.ts.
 		let healedConfidence: Map<number, number> | null = null
 
@@ -818,9 +816,9 @@ export class NeuralAddressClassifier {
 		// Opt-in, declared in the ship config like the conventions mask.
 		// When the span proposer ran, its annotation/quoted boundaries become
 		// merge-crossing constraints (M2's second half).
-		// The char path only: the name registers close an administrative span the model
-		// closed early — the six JP towns whose name carries 市 (`JP_INNER_SHI_TOWNS`)
-		// and every Korean 시군구 (`KR_SIGUNGU`), both in `@mailwoman/codex`.
+		// The char path only: the name registers close an administrative span the model closed early.
+		// The six JP towns whose name carries 市 (`JP_INNER_SHI_TOWNS`) and every Korean
+		// 시군구 (`KR_SIGUNGU`), both in `@mailwoman/codex`.
 		// Exact register names, so no other row can move.
 		if (this.cfg.charEncoder) {
 			for (const [pass, repair] of [
@@ -906,7 +904,7 @@ export class NeuralAddressClassifier {
 	 * Guard against a silent label/emission shape overrun.
 	 *
 	 * When the model emits more logits per token than the configured label vocabulary
-	 * (e.g. a Stage 3 bundle loaded with the default Stage 2 labels), viterbi indexes past the
+	 * (e.g. A Stage 3 bundle loaded with the default Stage 2 labels), viterbi indexes past the
 	 * transition matrix and dies with an opaque `Cannot read properties of undefined (reading '0')`.
 	 * Fail fast here with a message that names the interface the caller violated.
 	 *

@@ -60,7 +60,9 @@ export interface KnownFormatHitLike {
 	format: string
 	span: { start: number; end: number }
 	/**
-	 * 0..1. ambiguous patterns (e.g. 5-digit US/FR/DE overlap) score lower.
+	 * 0..1.
+	 *
+	 * Ambiguous patterns (e.g. 5-digit US/FR/DE overlap) score lower.
 	 */
 	confidence: number
 }
@@ -103,7 +105,7 @@ export interface BuildPriorsOpts {
 	biasScale?: number
 	/**
 	 * Raw input text — enables the scoped locality bias
-	 * (bare admin doubletons only. see `applyScopedLocalityBias`).
+	 * (bare admin doubletons only. See `applyScopedLocalityBias`).
 	 *
 	 * Without it the digit guard cannot run, so the locality bias never fires.
 	 */
@@ -118,7 +120,7 @@ export interface BuildPriorsOpts {
  * the matrix entry for the format's mapped label receives `hit.confidence × biasScale`.
  * Tokens that don't overlap any hit, or for which no label mapping exists, get 0.
  *
- * Returns the all-zeros matrix if `shape.knownFormats` is empty — composes harmlessly.
+ * @returns the all-zeros matrix if `shape.knownFormats` is empty — composes harmlessly.
  */
 export function buildEmissionPriors(
 	shape: QueryShapeLike,
@@ -168,19 +170,22 @@ export function buildEmissionPriors(
  * cannot reach the venue/street inputs the old walk broke on.
  * Guards, in order:
  *
- * 1. No digits anywhere in the input — any house number / postcode means this is not an admin-only
- *    query, and the M1 failure class ("… 26 Cedar Lane, Danville VT") always carries digits.
+ * 1. No digits anywhere in the input.
+ *    Any house number / postcode means this is not an admin-only query, and the M1
+ *    failure class ("… 26 Cedar Lane, Danville VT") always carries digits.
  * 2. The abbreviation is the final token — the doubleton shape rather than a mid-sentence state mention.
  * 3. At most 4 tokens precede it ("Salt Lake City, UT" fits; "Community Health
  *    Service Inc - Grafton ND" does not).
  *
  * The retired version also carried a "name is the region" guard ("Washington, WA" stays region).
- * It was dead in production — the classifier passes tokenizer pieces whose
- * spans include the trailing comma, so the string comparison never matched
- * (and "New York, NY", the gauntlet regression case, needs the bias despite naming its own state).
+ * It was dead in production.
  *
- * Deliberately dropped. the bias is soft, so a confident region emission on a
- * true state restatement still wins.
+ * The classifier passes tokenizer pieces whose spans include the trailing comma,
+ * so the string comparison never matched (and "New York, NY", the gauntlet regression case,
+ * needs the bias despite naming its own state).
+ *
+ * Deliberately dropped.
+ * The bias is soft, so a confident region emission on a true state restatement still wins.
  */
 function applyScopedLocalityBias(
 	matrix: number[][],
@@ -204,7 +209,8 @@ function applyScopedLocalityBias(
 
 		const candidates = tokens.map((tok, t) => ({ tok, t })).filter(({ tok }) => tok.end <= abbrev.start)
 
-		// Guard 3: the doubleton shape — a short leading name rather than a sentence.
+		// Guard 3: the doubleton shape.
+		// A short leading name rather than a sentence.
 		if (!candidates.length || candidates.length > MAX_PRIOR_CANDIDATES) continue
 
 		for (let i = 0; i < candidates.length; i++) {
@@ -217,15 +223,16 @@ function applyScopedLocalityBias(
 }
 
 /**
- * Log-odds bias for the scoped doubleton case — the retired version's strength,
- * now reachable only by the doubleton.
+ * Log-odds bias for the scoped doubleton case.
+ *
+ * The retired version's strength, now reachable only by the doubleton.
  */
 const SCOPED_LOCALITY_BIAS = 2
 
 /**
  * Element-wise add two matrices of equal shape.
  *
- * Returns a new matrix.
+ * @returns a new matrix.
  */
 export function addEmissionMatrix(emissions: number[][], priors: number[][]): number[][] {
 	if (!priors.length) return emissions.map((row) => row.slice())
