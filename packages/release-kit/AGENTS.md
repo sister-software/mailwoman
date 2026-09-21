@@ -68,6 +68,13 @@ Editing a model card changes what a package owes and what it can show, and the c
 `files` array omits either name, so a card edit either regenerates them or fails. Adding an overlay means running the
 writer and committing what it produces; `scaffold-weights-overlay` does not write them.
 
+A record is retained by being committed. `PROVENANCE.json` carries its package's version, and git
+history holds the record every published version shipped with, so what `10.0.0` said survives `10.1.0`
+regenerating. That is the retention, and it holds only while nobody rewrites a record for a version
+already on npm. A source's terms changing tomorrow moves the next version's record rather than the
+description of a release that already went out; a correction to a published release is a new release
+with a new record, or a separately documented notice.
+
 The record makes three distinctions on purpose. A package whose card records no attribution reads
 `none-recorded-in-this-package`, which states what the card holds rather than that the artifacts have no attributable
 inputs. An artifact with no digest reads `unrecorded` rather than verified. And

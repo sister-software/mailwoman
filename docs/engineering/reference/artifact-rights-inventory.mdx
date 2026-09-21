@@ -65,21 +65,29 @@ published it.
 
 Thirteen `neural-weights-*` workspaces. Twelve publish; `base-latn` is private.
 
-| package     | manifest | model card | SPDX field                               | declared artifacts | recorded digests | attribution entries | base    |
-| ----------- | -------- | ---------- | ---------------------------------------- | -----------------: | ---------------: | ------------------: | ------- |
-| `base-latn` | 7.8.1    | —          | `AGPL-3.0-only OR LicenseRef-Commercial` |                  8 |                0 |                   0 | —       |
-| `cjk`       | 10.0.0   | 0.0.3      | `AGPL-3.0-only OR LicenseRef-Commercial` |                  4 |                2 |                   6 | —       |
-| `de-de`     | 10.0.0   | 7.0.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |                  7 |                0 |                   0 | `en-us` |
-| `en-au`     | 10.0.0   | 9.0.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |                  6 |                0 |                   0 | `en-us` |
-| `en-gb`     | 10.0.0   | 9.0.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |                 10 |                0 |                   0 | `en-us` |
-| `en-in`     | 10.0.0   | 7.0.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |                  7 |                0 |                   0 | `en-us` |
-| `en-nz`     | 10.0.0   | 6.6.3      | `AGPL-3.0-only OR LicenseRef-Commercial` |                  8 |                0 |                   0 | `en-us` |
-| `en-us`     | 10.0.0   | 9.1.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |                 14 |                4 |                  10 | —       |
-| `es-es`     | 10.0.0   | 7.0.0      | **`AGPL-3.0`**                           |                  7 |                0 |                   0 | `en-us` |
-| `fr-fr`     | 10.0.0   | 6.5.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |                 10 |                0 |                   0 | `en-us` |
-| `it-it`     | 10.0.0   | 7.0.0      | **`AGPL-3.0`**                           |                  7 |                0 |                   0 | `en-us` |
-| `ja-jp`     | 10.0.0   | 7.0.0      | **`AGPL-3.0`**                           |                  3 |                0 |                   0 | `cjk`   |
-| `zh-cn`     | 10.0.0   | 7.0.0      | **`AGPL-3.0`**                           |                  3 |                0 |                   0 | `cjk`   |
+The SPDX column and the counts are as first observed. The data-artifact column counts files whose
+provenance is in question, so it excludes the README, the model card and the two generated rights
+files, which document the package rather than carrying data.
+
+| package     | manifest | model card | SPDX field as first observed             | data artifacts | recorded digests | attribution entries | base    |
+| ----------- | -------- | ---------- | ---------------------------------------- | -------------: | ---------------: | ------------------: | ------- |
+| `base-latn` | 7.8.1    | —          | `AGPL-3.0-only OR LicenseRef-Commercial` |              — |                — |                   — | —       |
+| `cjk`       | 10.0.0   | 0.0.3      | `AGPL-3.0-only OR LicenseRef-Commercial` |              2 |                2 |                   6 | —       |
+| `de-de`     | 10.0.0   | 7.0.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |              5 |                0 |                   0 | `en-us` |
+| `en-au`     | 10.0.0   | 9.0.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |              4 |                0 |                   0 | `en-us` |
+| `en-gb`     | 10.0.0   | 9.0.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |              8 |                0 |                   1 | `en-us` |
+| `en-in`     | 10.0.0   | 7.0.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |              5 |                0 |                   0 | `en-us` |
+| `en-nz`     | 10.0.0   | 6.6.3      | `AGPL-3.0-only OR LicenseRef-Commercial` |              6 |                0 |                   0 | `en-us` |
+| `en-us`     | 10.0.0   | 9.1.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |             12 |                4 |                  10 | —       |
+| `es-es`     | 10.0.0   | 7.0.0      | **`AGPL-3.0`**                           |              5 |                0 |                   0 | `en-us` |
+| `fr-fr`     | 10.0.0   | 6.5.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |              8 |                0 |                   0 | `en-us` |
+| `it-it`     | 10.0.0   | 7.0.0      | **`AGPL-3.0`**                           |              5 |                0 |                   0 | `en-us` |
+| `ja-jp`     | 10.0.0   | 7.0.0      | **`AGPL-3.0`**                           |              1 |                0 |                   0 | `cjk`   |
+| `zh-cn`     | 10.0.0   | 7.0.0      | **`AGPL-3.0`**                           |              1 |                0 |                   0 | `cjk`   |
+
+`base-latn` is private, so it ships no generated record and its row reads as unmeasured rather than
+as zero. `en-gb` now carries one attribution entry of its own, the OGL v3.0 entry for
+`pair-index-gb.bin` that moved there from `en-us`'s card.
 
 ### Four packages omit the commercial branch
 
@@ -125,15 +133,21 @@ two a reader was holding.
 from `mailwoman.baseWeights` rather than asserted, together with a sentence stating what that series
 means and how it relates to `package_version`. The numbers are left free to differ.
 
-### Artifact digests are recorded for 6 of about 100 shipped artifacts
+### Artifact digests are recorded for 6 of the 62 data artifacts the twelve packages declare
 
 `en-us` records four in `files_md5` — `model.onnx`, `tokenizer.model`,
-`street-type-lexicon-v3.json`, `locality-surface-lexicon-v7.json` — of fourteen declared artifacts.
-`cjk` records two. The remaining eleven packages record none.
+`street-type-lexicon-v3.json`, `locality-surface-lexicon-v7.json` — of its twelve. `cjk` records both
+of its two. The remaining ten packages record none of their 48. Summing the table's data-artifact
+column gives 62, and 6 of 62 is 9.7%.
 
-`en-us` ships artifacts with separate lineages: a trained model, a SentencePiece tokenizer, two
-lexicon files, a US postcode binary, a placetype-pair index built from the Who's On First admin
-hierarchy, and two FST binaries. One `data_attribution` list covers the package.
+`en-us` ships artifacts with separate lineages, and one `data_attribution` list covered all of them.
+
+**Repaired.** Each package's `PROVENANCE.json` now carries a role per artifact, derived from the
+filename. `en-us`'s twelve declared files resolve to a model graph, a SentencePiece tokenizer, two
+calibration tables, a US postcode binary, a placetype-pair index, two gazetteer FST binaries and four
+lexicons. A model graph carries the corpus a training run read; a tokenizer carries the text it was
+fitted on; a pair index and a postcode binary are each built from one named register. Those are four
+different questions and the record no longer answers them with one list.
 
 ### Two packages carry training attribution, under two different keys
 
@@ -170,20 +184,30 @@ ships.
 
 ## Attributed sources for `en-us`, as recorded
 
-Eight of ten entries name a license. Reproduced as stated in the card, without interpretation.
+Eight of ten entries name a license, and five describe rows that trained the model. Reproduced as
+stated in the card, without interpretation. The `use` column is read from each entry's own words and
+travels beside the verbatim text in the package's `PROVENANCE.json`.
 
-|   # | source                                     | license as named                          |
-| --: | ------------------------------------------ | ----------------------------------------- |
-|   1 | HM Land Registry — Price Paid Data         | OGL v3.0                                  |
-|   2 | LINZ-derived OpenAddresses NZ              | CC-BY 4.0                                 |
-|   3 | OpenAddresses ES tuples                    | CC-BY per OA source                       |
-|   4 | BAN — Base Adresse Nationale (DINUM / IGN) | Licence Ouverte 2.0                       |
-|   5 | Overture Maps Foundation — Addresses theme | CDLA-Permissive-2.0                       |
-|   6 | OpenAddresses CZ — ČÚZK RÚIAN              | CC-BY 4.0                                 |
-|   7 | OpenAddresses PL — GUGiK / PRG             | **none named** — "public, BDOT-derived"   |
-|   8 | OpenAddresses SK — MINV/ZBGIS              | CC-0/CC-BY per OA source                  |
-|   9 | OpenAddresses SI — GURS                    | CC-BY per OA source                       |
-|  10 | OpenAddresses / GeoNames / Who's On First  | **a pointer** to `THIRD_PARTY_NOTICES.md` |
+|   # | source                                     | license as named                          | use as stated         |
+| --: | ------------------------------------------ | ----------------------------------------- | --------------------- |
+|   1 | HM Land Registry — Price Paid Data         | OGL v3.0                                  | training              |
+|   2 | LINZ-derived OpenAddresses NZ              | CC-BY 4.0                                 | training              |
+|   3 | OpenAddresses ES tuples                    | CC-BY per OA source                       | training              |
+|   4 | BAN — Base Adresse Nationale (DINUM / IGN) | Licence Ouverte 2.0                       | training              |
+|   5 | Overture Maps Foundation — Addresses theme | CDLA-Permissive-2.0                       | training              |
+|   6 | OpenAddresses CZ — ČÚZK RÚIAN              | CC-BY 4.0                                 | tokenizer, evaluation |
+|   7 | OpenAddresses PL — GUGiK / PRG             | **none named** — "public, BDOT-derived"   | tokenizer, evaluation |
+|   8 | OpenAddresses SK — MINV/ZBGIS              | CC-0/CC-BY per OA source                  | evaluation            |
+|   9 | OpenAddresses SI — GURS                    | CC-BY per OA source                       | evaluation            |
+|  10 | OpenAddresses / GeoNames / Who's On First  | **a pointer** to `THIRD_PARTY_NOTICES.md` | **unstated**          |
+
+Four of the ten describe data this model never learned from. Entries 8 and 9 are coordinate
+evaluation sets recorded as free-rider validation, and 6 and 7 are tokenizer-splice text, which is a
+different and far smaller set than the training corpus. Reading all ten as training attribution says
+the model learned from rows it never saw. Dropping the four loses an attribution those sources still
+require, so both readings are wrong and the record carries the split instead.
+
+Entry 10 states no use at all, which is recorded as `unstated` rather than assumed to be training.
 
 Entry 10 resolves to statements that do not name a single license. Excerpted verbatim from
 `THIRD_PARTY_NOTICES.md`, in a fenced block so the prose checks grade this document's own writing
@@ -297,6 +321,41 @@ which sources contributed, and passing it does not establish that an indirectly 
 misclassified source was caught. A release control needs a reproducible source manifest and an
 explicit eligibility decision per input, including inherited checkpoints and auxiliary artifacts.
 
+**Repaired, in three parts.**
+
+A permission is decided per operation. `SourceOperation` names the seven acts this repository
+performs on a source — fetch, extract, transform, train, redistribute-data, redistribute-model,
+commercial-sublicense — and an elected grant carries a reading per act with the clause it rests on.
+An act the grant does not name reads `unreviewed`, never `permitted`, so electing terms establishes
+which grant applies rather than that everything under it is allowed.
+
+A corpus build declares what it is for. `BuildProfile.Exploratory` includes every row an adapter
+yields, which is what the build always did. `BuildProfile.ReleaseEligible` admits a row only when the
+register reports no problem for its source across the four acts ingest performs, and it refuses a
+source the register never names. The check runs before augmentation, so a refused source cannot
+re-enter as the ancestor of a synthetic row.
+
+A build freezes what contributed. `TRAINING_SOURCES.json` records per source the rows that survived
+both refusals, the license stamped on them, and the register's decision as the build read it,
+under a digest over itself. `sourcesNotPermitting` is what a publish path asks, and it separates the
+three ways a source fails to permit an act. No released model was built from a corpus carrying one.
+
+## Runtime datasets, and what they oblige
+
+The four downloadable bundles are the third record this document keeps apart, and they reach an
+operator through nothing the npm tarball carries.
+
+| bundle      | publishers                                     | terms as named                                                     |
+| ----------- | ---------------------------------------------- | ------------------------------------------------------------------ |
+| `candidate` | Who's On First, GeoNames                       | CC0 over Mapzen's own work; GeoNames CC-BY                         |
+| `poi`       | Overture Maps Foundation                       | CDLA-Permissive-2.0                                                |
+| `fr`        | DINUM and IGN, for Base Adresse Nationale      | Licence Ouverte 2.0, the attribution-only half of a dual grant     |
+| `us`        | US Census Bureau for TIGER/Line, OpenAddresses | a work of the US Government under 17 U.S.C. § 105; OA terms differ |
+
+`mailwoman data pull` prints each bundle's publishers, terms, obligations and open questions before
+the transfer, and `--dry-run` prints the same lines. The declaration is required on the type, so a
+bundle added without one fails to compile rather than downloading with its obligations unstated.
+
 ### The one workspace held for a rights reason had no enforced hold
 
 `packages/osm` is held out of the release pending ODbL counsel sign-off. It is not `private`, and it
@@ -348,6 +407,20 @@ Both graph packages pass. `en-us` records ten entries, eight naming a license; t
 the OpenAddresses PL entry, whose parenthetical reads `public, BDOT-derived`, and the pointer to
 `THIRD_PARTY_NOTICES.md`. `cjk` records six, four naming a license; the two that do not state their
 terms outside a parenthetical rather than stating none.
+
+## How an operator reads any of this
+
+`mailwoman license attribution` prints the engine's own expression, then per installed package the
+sources for the artifacts it ships, the entries it inherits from the package whose graph it decodes
+through, and every question that package's record leaves open. `--json` emits the same for a build to
+read. It says that a commercial agreement covers the code and model artifacts Sister Software authors
+and reaches none of the sources below it, names a package it did not find rather than omitting it, and
+prints what it does not cover — reference data downloaded separately, and the fact that a package
+recording no attribution is not a package with none.
+
+Verified end to end on this checkout: `npm pack --dry-run` on `neural-weights-en-gb` carries
+`LICENSE.md` at 2.1 kB and `PROVENANCE.json` at 5.6 kB, so the generated records reach a consumer
+rather than stopping at the repository.
 
 ## What the record leaves open
 
