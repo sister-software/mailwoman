@@ -36,6 +36,37 @@ hands.
    bar revision — grandfathered as a named violation with a standing remediation obligation rather than a
    precedent.)
 
+   **The precondition: a locale this rule blocks on needs a validation split that can show a
+   regression.** The rule blocks on a regression against the shipped model, and `evaluate()` reports
+   `val_loss`, `val_rows` and `macro_f1` over the whole split. A locale holding no row in that split
+   changes none of those numbers, so a run reports no regression for it whatever happened — and that
+   reads identically to no regression having occurred.
+
+   **The floor is per locale, stated as a number: 1,000 validation rows and 1,000 of them carrying a
+   `street` or `house_number` tag.** Per locale rather than global because the scale is not
+   comparable — US held 1,780,240 validation street rows in the measurement below while the others
+   held thousands or none, so one global number is met by US alone.
+
+   Measured on `v0.32.0-locality-shape` (#2353), against the four locales this rule blocks on — FR
+   and US by tier 1, DE and GB by `scope.config.json`'s `dRuleProtected`:
+
+   | locale |         validation rows | of those, carrying a street |
+   | ------ | ----------------------: | --------------------------: |
+   | US     |               1,839,635 |                   1,780,240 |
+   | FR     |                  12,898 |                           0 |
+   | DE     | 38,115 (33,801 in test) |                   0 in test |
+   | GB     |                       0 |                           0 |
+
+   Three of the four had no street-level validation signal. The repairs land in
+   `packages/corpus/lib/utils/split.ts` and take effect at the next base corpus rebuild: FR gained
+   postcode prefixes so the predicate reaches a BAN row, and GB gained an entry at all, sized at
+   11,147 held-out street rows so its half of the 50/50 val split clears the floor.
+
+   Declare the floor in a recipe as `data.required_validation_coverage`, a list of
+   `{country, split, min_rows, min_street_rows}`. `audit_validation_coverage` fails on the CPU
+   preflight before a GPU is allocated, the way `required_corpus_receipts` fails
+   `audit_epoch_mixture`.
+
    **The opt-in half: a default-OFF path must ship with tests that turn it ON.** "Ship it opt-in" is
    one of the three compliant routes above, which makes default-OFF the most common landing place for
    new mechanisms — and an untested one rots in place. Nothing exercises it, so nothing tells you
