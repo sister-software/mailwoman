@@ -25,7 +25,9 @@ import { PARITY_FIXTURES_V1_PATH, type ParityFixture } from "#eval-harness/parit
 const IN_PATH = "packages/mailwoman/lib/test-fixtures/legacy-golden/parity-inputs.jsonl"
 
 /**
- * Parity test file basename token → ISO-3166 alpha-2. Files without a country token score as ZZ.
+ * Parity test file basename token → ISO-3166 alpha-2.
+ *
+ * Files without a country token score as ZZ.
  */
 const FILE_COUNTRY: Record<string, string> = {
 	aus: "AU",

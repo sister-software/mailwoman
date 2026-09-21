@@ -25,14 +25,16 @@ import { mintCIKNodeID, mintFRNNodeID, mintSubsidiaryNameNodeID } from "#sdk/bui
 import { assertISODate } from "#sdk/guards"
 
 /**
- * One edgar Exhibit 21 subsidiary disclosure — the shape upstream CIK resolution + `parseExhibit21`
- * produce somewhere outside this file. See `build-filer.ts`'s module docstring,
- * "edgar Exhibit 21 ingest" section, for exactly what
+ * One edgar Exhibit 21 subsidiary disclosure — the shape upstream CIK resolution +
+ * `parseExhibit21` produce somewhere outside this file.
+ *
+ * See `build-filer.ts`'s module docstring, "edgar Exhibit 21 ingest" section, for exactly what
  * {@linkcode buildFilerDatabase} does with one of these.
  */
 export interface EdgarSubsidiaryRow {
 	/**
 	 * Zero-padded 10-digit CIK of the filer whose Exhibit 21 disclosed this subsidiary — the parent.
+	 *
 	 * Validated the same zero-padded 10-digit shape `edgar-filings.ts`'s `CIK` branded type
 	 * requires. a malformed value throws (decision 8's "malformed input is loud" discipline).
 	 */
@@ -52,6 +54,7 @@ export interface EdgarSubsidiaryRow {
 	 * ISO `yyyy-MM-DD` filing date of the 10-K this Exhibit 21 came from — becomes both
 	 * `source_vintage` and `valid_from` on every edge/family row this row produces
 	 * (decision 7 — a single per-row date, the same shape `Form499Row.lastFiledAt` uses).
+	 *
 	 * Validated via {@linkcode assertISODate}.
 	 */
 	filingDate: string
@@ -87,7 +90,8 @@ export function processEdgarSubsidiaryRow(
 	const subsidiaryNodeID = mintSubsidiaryNameNodeID(row.subsidiaryName)
 	insNode.run(subsidiaryNodeID, FilerIdentifierType.SubsidiaryName, row.subsidiaryName)
 
-	// The disclosure edge — always written, always authoritative. See this module's file header.
+	// The disclosure edge — always written, always authoritative.
+	// See this module's file header.
 	insEdge.run(
 		cikNodeID,
 		subsidiaryNodeID,
@@ -116,9 +120,10 @@ export function processEdgarSubsidiaryRow(
 	const matchedFRNNodeID = mintFRNNodeID(matched.frn, context)
 	insNode.run(matchedFRNNodeID, FilerIdentifierType.FRN, matched.frn)
 
-	// the score reflects what this match actually knows rather than a flat 0.92 on every link —
-	// see scoreEdgarSubsidiaryMatch. `evidence` carries both raw spellings now, so a reader can
-	// see for itself what the score is grading rather than having to take the number on faith.
+	// the score reflects what this match actually knows rather than a flat 0.92 on
+	// every link — see scoreEdgarSubsidiaryMatch.
+	// `evidence` carries both raw spellings now, so a reader can see for itself what the
+	// score is grading rather than having to take the number on faith.
 	const matchScore = scoreEdgarSubsidiaryMatch(row.subsidiaryName, matched.legalName)
 
 	insEdge.run(

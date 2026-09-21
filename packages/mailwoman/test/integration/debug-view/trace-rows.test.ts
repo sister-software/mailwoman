@@ -17,6 +17,7 @@ const TEXT = "3215 SE Clinton St"
 
 /**
  * A whole query shape, carrying only the formats a case wants to state.
+ *
  * Built rather than cast: the annotated return type is what checks that a `format`
  * name is one the detector can actually emit.
  */

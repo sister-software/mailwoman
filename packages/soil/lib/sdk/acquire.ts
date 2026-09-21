@@ -38,6 +38,7 @@ export interface AcquireRegionOptions {
 	cacheRoot: string
 	/**
 	 * Build only these symbols out of the ones the catalogue returns.
+	 *
 	 * Absent means all of them.
 	 */
 	only?: ReadonlyArray<string>
@@ -114,8 +115,9 @@ export async function acquireRegion(options: AcquireRegionOptions): Promise<Acqu
 	}
 
 	// The latest refresh among the areas built, because that is the date after
-	// which nothing in this artifact changed. Taking the earliest would claim a currency
-	// the newest area does not have. taking today's date would claim one no area has.
+	// which nothing in this artifact changed.
+	// Taking the earliest would claim a currency the newest area does not have.
+	// taking today's date would claim one no area has.
 	const sourceVintage = selected
 		.map((entry) => entry.saverest)
 		.toSorted()

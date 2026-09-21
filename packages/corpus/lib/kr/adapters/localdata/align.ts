@@ -39,6 +39,7 @@ const UNIT_TOKEN = /^(?:지하\s?)?(?:B?\d+(?:~\d+)?(?:층|호)|\d+층|B\d+|지�
 
 /**
  * The shortest either form can be: 시도, 시군구, and the road or the 법정동.
+ *
  * Anything shorter cannot carry the key, whatever else it holds.
  */
 const MINIMUM_TOKENS = 3
@@ -65,8 +66,9 @@ interface Span {
 /**
  * Record a span, unless it is empty or blank.
  *
- * A blank span is what a clerk's double space produces, and a zero-width one what a token found
- * at its own end produces. Neither is a component, and both would train the model on nothing.
+ * A blank span is what a clerk's double space produces, and a zero-width one
+ * what a token found at its own end produces.
+ * Neither is a component, and both would train the model on nothing.
  */
 function put(spans: Span[], text: string, start: number, end: number, tag: string): void {
 	if (end > start && text.slice(start, end).trim()) {

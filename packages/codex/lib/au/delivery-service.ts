@@ -61,6 +61,7 @@ export interface AuDeliveryServiceDesignator {
 	 * True when the designator is recognized by the amas Postal Delivery Type table
 	 * but absent from every current auspost.com.au addressing/product page (accessed 2026-06-11) —
 	 * the rural and community forms superseded by rural street addressing under AS/NZS 4819.
+	 *
 	 * The parser must still recognize these on old addresses. synthesis should weight them low.
 	 */
 	legacy: boolean
@@ -68,6 +69,7 @@ export interface AuDeliveryServiceDesignator {
 
 /**
  * The verbatim Postal Delivery Type table (see the module header for the per-row provenance).
+ *
  * Multiple names can share an abbreviation (roadside mail BAG and roadside mail BOX
  * are both RMB. poste restante is addressed as care PO).
  */
@@ -95,10 +97,11 @@ export type AuDeliveryServiceAbbreviation = (typeof AU_DELIVERY_SERVICE_DESIGNAT
 
 /**
  * Per-designator surface patterns (designator phrase only, no anchor, no id).
- * Ordered longest / most-specific first so the matcher prefers "GPO Box" over "PO Box"
- * and "RMS" over "MS". Each pattern tolerates the punctuation amas tells mailers
- * to strip ("the full stops and commas in R.M.B and P.O.") — recognition must
- * accept what deliverable mail actually carries.
+ *
+ * Ordered longest / most-specific first so the matcher prefers "GPO Box" over "PO Box" and "RMS" over "MS".
+ * Each pattern tolerates the punctuation amas tells mailers to strip
+ * ("the full stops and commas in R.M.B and P.O.") — recognition must accept
+ * what deliverable mail actually carries.
  *
  * MS is special-cased in {@link matchAuDeliveryService}: its identifier must start with a digit
  * so the bare two-letter designator cannot swallow an honorific ("Ms Smith").
@@ -124,6 +127,7 @@ const DESIGNATOR_INFO = new Map<AuDeliveryServiceAbbreviation, { requiresNumber:
 
 /**
  * One anchored regex per designator: phrase + (required|optional) identifier.
+ *
  * The id shape matches the US address system ([\dA-Za-z][\dA-Za-z-]*);
  * MS additionally requires a digit-leading id (see above).
  */
@@ -162,8 +166,10 @@ export interface AuDeliveryServiceMatch {
 /**
  * If `input` is a standalone Australia Post delivery-service phrase
  * ("GPO Box 2890", "Locked Bag 1797", "RMB 4600", bare "CMB"), return the canonical
- * designator, the id, and the legacy flag. Null otherwise — including for "Private Box",
- * which Australia Post explicitly calls out as not a valid type.
+ * designator, the id, and the legacy flag.
+ *
+ * Null otherwise — including for "Private Box", which Australia Post explicitly
+ * calls out as not a valid type.
  */
 export function matchAuDeliveryService(input: unknown): AuDeliveryServiceMatch | null {
 	if (typeof input !== "string") return null
@@ -194,7 +200,9 @@ export function isAuDeliveryService(input: unknown): boolean {
 
 /**
  * Normalize a recognized delivery-service phrase to the canonical amas form
- * (`"g.p.o. box 123"` → `"GPO BOX 123"`). Returns the input unchanged if it isn't one.
+ * (`"g.p.o. box 123"` → `"GPO BOX 123"`).
+ *
+ * Returns the input unchanged if it isn't one.
  */
 export function normalizeAuDeliveryService(input: string): string {
 	const m = matchAuDeliveryService(input)

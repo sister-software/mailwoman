@@ -42,7 +42,9 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * Split `GB=/a.jsonl,DE=/b.jsonl` into extract inputs. A bare path keeps region `""`.
+ * Split `GB=/a.jsonl,DE=/b.jsonl` into extract inputs.
+ *
+ * A bare path keeps region `""`.
  */
 function parseExtracts(extractSpec: string | undefined): Array<{ path: string; region: string }> {
 	if (!extractSpec) return []

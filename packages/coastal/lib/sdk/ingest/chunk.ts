@@ -47,8 +47,10 @@ import {
 } from "#vocabulary"
 
 /**
- * Rows per bulk-insert transaction. Chosen for the geometry table, whose rows carry a blob:
- * a larger transaction grows the write-ahead file without improving throughput.
+ * Rows per bulk-insert transaction.
+ *
+ * Chosen for the geometry table, whose rows carry a blob: a larger transaction
+ * grows the write-ahead file without improving throughput.
  */
 const INSERT_TRANSACTION_ROWS = 5000
 
@@ -58,8 +60,9 @@ const INSERT_TRANSACTION_ROWS = 5000
 const PROGRESS_STRIDE = 5000
 
 /**
- * What one chunk produced. Every field is JSON-serializable, because a chunk
- * normally reports across a process boundary.
+ * What one chunk produced.
+ *
+ * Every field is JSON-serializable, because a chunk normally reports across a process boundary.
  */
 export interface CoastalChunkResult {
 	erosionFeatures: number
@@ -257,8 +260,9 @@ export async function ingestCoastalChunk(
 				encodeRings(feature.polygons)
 			)
 
-			// no cell rows, and the absence is the structure. Ground instability is a different hazard
-			// from coastal erosion, and 160 rows answer a bounding-box scan faster than an index would.
+			// no cell rows, and the absence is the structure.
+			// Ground instability is a different hazard from coastal erosion, and 160 rows
+			// answer a bounding-box scan faster than an index would.
 			// Not indexing them is what makes it impossible for one to reach an erosion probe.
 			instabilityFeatures++
 

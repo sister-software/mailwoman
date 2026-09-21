@@ -24,6 +24,7 @@ import { alignRow } from "#utils"
 
 /**
  * The leading-5-digit source: the real US ZIPs in the postcode anchor's pilot lookup.
+ *
  * Resolved through the data-root helper (the lab default is `$MAILWOMAN_DATA_ROOT`), never re-hardcoded.
  */
 const ANCHOR_LOOKUP = dataRootPath("anchor", "pilot-anchor-lookup.json")

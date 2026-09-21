@@ -145,9 +145,10 @@ test("the fixture DEM builds a hillshade archive of PNG tiles with relief", asyn
 		maxZoom: 2,
 	})
 
-	// Resample the elevations, encode terrarium one band at a time, stack, tile, decimate the pyramid,
-	// convert. There is no `gdaldem` any more: the archive carries height rather than a shaded
-	// picture, so the shading happens at draw time and each body can be tinted from its style.
+	// Resample the elevations, encode terrarium one band at a time, stack, tile,
+	// decimate the pyramid, convert.
+	// There is no `gdaldem` any more: the archive carries height rather than a shaded picture,
+	// so the shading happens at draw time and each body can be tinted from its style.
 	expect(commands.map((command) => command[0])).toEqual([
 		"gdal_translate",
 		"gdal_calc.py",
@@ -160,7 +161,8 @@ test("the fixture DEM builds a hillshade archive of PNG tiles with relief", asyn
 		"pmtiles",
 	])
 
-	// Overviews must decimate. Averaging a base-256 numeral answers a height that is no sample of the terrain.
+	// Overviews must decimate.
+	// Averaging a base-256 numeral answers a height that is no sample of the terrain.
 	const overviews = commands.find((command) => command[0] === "gdaladdo")
 	expect(overviews).toContain("nearest")
 	expect(overviews).not.toContain("average")

@@ -14,6 +14,7 @@ import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolv
 
 /**
  * ISO-3166 alpha-2 (lowercase) → the street-normalization locale.
+ *
  * Deliberately small: only the countries we actually ship an OSM rooftop extract for.
  * Adding a country is a one-line entry plus the matching per-locale branch in
  * `normalizeStreetForKeyLocale` — keep them in lockstep.
@@ -45,10 +46,11 @@ const registry = createStreetLocaleRegistry(
 
 /**
  * Resolve the street-normalization locale for a country.
- * Throws for an unsupported country rather than silently folding with the wrong rules —
- * a extract built with the wrong normalizer keys every street incorrectly and looks fine
- * until a probe misses. Add the country to {@link COUNTRY_TO_STREET_LOCALE}
- * (and a branch in `normalizeStreetForKeyLocale`) before building its extract.
+ *
+ * Throws for an unsupported country rather than silently folding with the wrong rules — a extract
+ * built with the wrong normalizer keys every street incorrectly and looks fine until a probe misses.
+ * Add the country to {@link COUNTRY_TO_STREET_LOCALE} (and a branch in `normalizeStreetForKeyLocale`)
+ * before building its extract.
  */
 export function streetLocaleForCountry(countryCode: string): StreetLocale {
 	return registry.localeFor(countryCode)

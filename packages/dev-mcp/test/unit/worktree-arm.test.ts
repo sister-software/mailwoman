@@ -29,9 +29,9 @@ afterAll(() => fixtures.disposeAsync())
  * A minimal git repo whose "pipeline" is one file, plus a `node_modules` the farm can mirror.
  *
  * `mailwoman/geocode` is stubbed as a real package directory so the runner's import
- * resolves without this test needing the monorepo. That is the same resolution
- * path the real arm uses — a stub here proves the farm and the subprocess,
- * and the engine is exercised for real by the tools that call this.
+ * resolves without this test needing the monorepo.
+ * That is the same resolution path the real arm uses — a stub here proves the farm
+ * and the subprocess, and the engine is exercised for real by the tools that call this.
  */
 async function fakeRepo(marker: string): Promise<string> {
 	const root = String(fixtures.use(await temporaryDirectory("mwdev-wt-test-")).path)
@@ -59,9 +59,10 @@ async function fakeRepo(marker: string): Promise<string> {
 		join(root, "packages", "mailwoman", "geocode", "index.ts")
 	)
 
-	// The workspace link yarn would have installed. Both arms need it and for different reasons:
-	// the worktree arm resolves through it directly, and the ref arm's farm mirrors this
-	// directory to build its own — so an empty node_modules here would test neither path.
+	// The workspace link yarn would have installed.
+	// Both arms need it and for different reasons: the worktree arm resolves through
+	// it directly, and the ref arm's farm mirrors this directory to build its own —
+	// so an empty node_modules here would test neither path.
 	await makeDirectories(join(root, "node_modules"))
 	await createSymbolicLink(join(root, "packages", "mailwoman"), join(root, "node_modules", "mailwoman"))
 	// Untracked and ignored, so the "does not touch the caller's tree" assertion compares
@@ -83,7 +84,8 @@ describe("runWorktreeArm — a ref arm runs THAT ref's source", () => {
 	it("answers from the committed source, not the working tree", async () => {
 		const root = await fakeRepo("committed")
 
-		// Edit without committing. A ref arm must not see this. that is the whole distinction it sells.
+		// Edit without committing.
+		// A ref arm must not see this. that is the whole distinction it sells.
 		await writeLocalTextFile(
 			`export async function createGeocodeSession() {
 				return { geocode: async () => ({ result: { lat: 9, lon: 9, resolution_tier: "uncommitted", components: {} } }), [Symbol.dispose]: () => {} }
@@ -117,7 +119,8 @@ describe("runWorktreeArm — the WORKTREE arm runs the UNCOMMITTED source", () =
 		})
 
 		expect(result.answers[0]!.tier).toBe("uncommitted")
-		// A dirty tree is not its head. Reporting the bare sha would let a result claim a commit it did not run.
+		// A dirty tree is not its head.
+		// Reporting the bare sha would let a result claim a commit it did not run.
 		expect(result.commit).toContain("+dirty")
 	})
 

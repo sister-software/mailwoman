@@ -34,9 +34,11 @@
 import type { WhosOnFirstPlacetype } from "#resources/whosonfirst/placetypes/definition"
 
 /**
- * Higher is finer. Absent placetypes are unranked and must be handled by the caller
- * rather than defaulted — a missing entry silently scoring 0 would rank an unknown placetype
- * as coarse as `country`, which is the wrong direction for every check that reads this.
+ * Higher is finer.
+ *
+ * Absent placetypes are unranked and must be handled by the caller rather than defaulted —
+ * a missing entry silently scoring 0 would rank an unknown placetype as coarse as `country`,
+ * which is the wrong direction for every check that reads this.
  */
 export const PLACETYPE_SPECIFICITY: Readonly<Partial<Record<WhosOnFirstPlacetype | (string & {}), number>>> = {
 	address: 11,
@@ -97,8 +99,9 @@ export function isAtLeastAsSpecific(
  * Is `candidate` strictly finer than `reference` — a child rung rather than the same one?
  *
  * The distinction from {@link isAtLeastAsSpecific} is the whole bug it was written for.
- * "Does this live row cover that dead one" wants the equal case to count as
- * covering: a live `locality` covers a dead `locality` of the same name.
+ * "Does this live row cover that dead one" wants the equal case to count as covering:
+ * a live `locality` covers a dead `locality` of the same name.
+ *
  * Asking `isAtLeastAsSpecific(live, dead)` and negating it answers "is the live row strictly
  * coarser", which quietly drops the equal case — measured on the real artifact, that turned
  * 973 blocked rows into 18 and would have resurrected 955 places that are already alive.

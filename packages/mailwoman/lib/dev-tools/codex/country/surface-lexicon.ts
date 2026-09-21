@@ -62,15 +62,19 @@ const BIT = { country_surface: 1, country_ambiguous: 2 }
 const SLOTS = ["country_surface", "country_ambiguous"]
 
 /**
- * Committed output path. No argv, so the no-process-globals lint policy holds.
+ * Committed output path.
+ *
+ * No argv, so the no-process-globals lint policy holds.
  */
 const OUTPUT = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
 /**
  * The one shared word-normalization rule (identical to build-gazetteer-anchor-lexicon.mjs
- * and mirrored in gazetteer_char_paint on both sides): per whitespace-word, strip leading/trailing
- * characters that are not Unicode letters or digits (keep internal ones: "u.s.a", "timor-leste"),
- * rejoin single-spaced. Entry keys and scanned tokens both pass through it, so "U.S.A." ≡ "u.s.a".
+ * and mirrored in gazetteer_char_paint on both sides): per whitespace-word,
+ * strip leading/trailing characters that are not Unicode letters or digits
+ * (keep internal ones: "u.s.a", "timor-leste"), rejoin single-spaced.
+ *
+ * Entry keys and scanned tokens both pass through it, so "U.S.A." ≡ "u.s.a".
  */
 /**
  * Short alphabetic code (≤3 letters once punctuation is dropped) → exact-uppercase matching.
@@ -88,10 +92,12 @@ const usStateNames = new Set(US_STATE_NAMES.map((n) => n.toLowerCase()))
 const usStateAbbrevs = new Set<string>(US_STATE_ABBREVIATIONS as readonly string[])
 
 /**
- * Curated common-word country surfaces — single tokens that appear far more
- * often as ordinary street/venue/locality words than as a trailing country.
+ * Curated common-word country surfaces — single tokens that appear far more often as
+ * ordinary street/venue/locality words than as a trailing country.
+ *
  * A soft flag (the model still decides), the model-first analogue of Pelias's
- * blacklist (north/south/east/west/street/city/king). Tunable.
+ * blacklist (north/south/east/west/street/city/king).
+ * Tunable.
  */
 const COMMON_WORD_AMBIGUOUS = new Set(["america", "england", "britain", "turkey", "chad", "jordan", "jersey", "guinea"])
 

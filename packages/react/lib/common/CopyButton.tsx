@@ -13,7 +13,9 @@ import { useClipboard } from "#common/useClipboard"
 
 export interface CopyButtonProps {
 	/**
-	 * The text to copy. If a thunk, it's evaluated at click time (so callers can copy the latest value).
+	 * The text to copy.
+	 *
+	 * If a thunk, it's evaluated at click time (so callers can copy the latest value).
 	 */
 	value: string | (() => string)
 	/**

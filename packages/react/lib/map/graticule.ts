@@ -17,28 +17,33 @@ import type { FeatureCollection, MultiLineString } from "geojson"
 const DEFAULT_STEP_DEGREES = 15
 
 /**
- * Degrees between vertices along each line. A meridian drawn as two points is a
- * straight chord through the sphere under a globe projection. it has to be densified
- * to curve. 2° keeps the longest line under 100 vertices.
+ * Degrees between vertices along each line.
+ *
+ * A meridian drawn as two points is a straight chord through the sphere under a globe
+ * projection. it has to be densified to curve. 2° keeps the longest line under 100 vertices.
  */
 /**
- * The antimeridian, in degrees. Longitude runs [-180, 180]; meridians are drawn from the
- * first bound up to but not including the second, because -180 and 180 are the same line
- * and drawing both puts two strokes on one pixel.
+ * The antimeridian, in degrees.
+ *
+ * Longitude runs [-180, 180]; meridians are drawn from the first bound up to but not including
+ * the second, because -180 and 180 are the same line and drawing both puts two strokes on one pixel.
  */
 const MAX_LONGITUDE = 180
 
 const VERTEX_STEP_DEGREES = 2
 
 /**
- * The latitude the parallels stop at. Past ~85° the meridians have converged close enough
- * that more rings read as a smudge at the pole, and Web Mercator's own limit is 85.051129.
+ * The latitude the parallels stop at.
+ *
+ * Past ~85° the meridians have converged close enough that more rings read as a
+ * smudge at the pole, and Web Mercator's own limit is 85.051129.
  */
 const MAX_LATITUDE = 85
 
 /**
- * Build the graticule as one MultiLineString. Pure — same step, same geometry —
- * so it is built once at module scope and never rebuilt for a render.
+ * Build the graticule as one MultiLineString.
+ *
+ * Pure — same step, same geometry — so it is built once at module scope and never rebuilt for a render.
  */
 export function buildGraticule(stepDegrees: number = DEFAULT_STEP_DEGREES): FeatureCollection<MultiLineString> {
 	const lines: number[][][] = []
@@ -55,7 +60,8 @@ export function buildGraticule(stepDegrees: number = DEFAULT_STEP_DEGREES): Feat
 		lines.push(line)
 	}
 
-	// Parallels: constant latitude, walking longitude all the way round. The equator is included. the poles are not.
+	// Parallels: constant latitude, walking longitude all the way round.
+	// The equator is included. the poles are not.
 	for (let lat = -MAX_LATITUDE + stepDegrees; lat < MAX_LATITUDE; lat += stepDegrees) {
 		const line: number[][] = []
 

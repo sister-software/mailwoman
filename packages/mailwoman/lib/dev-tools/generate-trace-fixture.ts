@@ -31,11 +31,15 @@ const DEFAULT_TEXT = "1600 Pennsylvania Ave NW, Washington, DC 20500"
  */
 export interface GenerateTraceFixtureOptions {
 	/**
-	 * Address to trace. Default: the White House.
+	 * Address to trace.
+	 *
+	 * Default: the White House.
 	 */
 	text?: string
 	/**
-	 * Output path override. Default: the committed ModelVisualizer fixture.
+	 * Output path override.
+	 *
+	 * Default: the committed ModelVisualizer fixture.
 	 */
 	out?: string
 }

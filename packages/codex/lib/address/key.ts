@@ -24,6 +24,7 @@ import type { ComponentTag } from "#component"
 
 /**
  * The address-identifying components, in canonical key order.
+ *
  * Venue / attention are intentionally excluded — those carry organization identity,
  * which the record layer keys separately.
  */
@@ -50,7 +51,9 @@ const KEY_FIELD_ORDER = [
  */
 export interface CanonicalKeyOptions {
 	/**
-	 * Field separator in the emitted key. Default `"|"` — preserves field boundaries for blocking.
+	 * Field separator in the emitted key.
+	 *
+	 * Default `"|"` — preserves field boundaries for blocking.
 	 */
 	separator?: string
 }
@@ -61,14 +64,18 @@ export interface CanonicalKeyOptions {
  */
 export interface FoldForKeyOptions {
 	/**
-	 * How connective punctuation folds. `"space"` turns `&`, `+`, and `/` into word
-	 * boundaries (`"A&B"` → `"a b"`); `"and"` spells `&` and `+` out as the word `and`
-	 * (`"AT&T"` → `"at and t"`), leaving `/` to the punctuation catch-all (still a word boundary).
+	 * How connective punctuation folds.
+	 *
+	 * `"space"` turns `&`, `+`, and `/` into word boundaries (`"A&B"` → `"a b"`);
+	 * `"and"` spells `&` and `+` out as the word `and` (`"AT&T"` → `"at and t"`),
+	 * leaving `/` to the punctuation catch-all (still a word boundary).
 	 */
 	ampersand: "space" | "and"
 	/**
-	 * Intra-token deletion set. When true, periods join the apostrophes as intra-token noise
-	 * and are deleted (`"S.A."` → `"sa"`), while a backtick falls to the punctuation catch-all.
+	 * Intra-token deletion set.
+	 *
+	 * When true, periods join the apostrophes as intra-token noise and are deleted
+	 * (`"S.A."` → `"sa"`), while a backtick falls to the punctuation catch-all.
 	 * When false or omitted, backticks are deleted alongside the apostrophes
 	 * and periods become word boundaries (`"S.A."` → `"s a"`).
 	 */
@@ -107,6 +114,7 @@ export function foldForKey(input: string, options: FoldForKeyOptions): string {
 /**
  * Normalize a single token for matching: {@linkcode foldForKey} with connective
  * punctuation flattened to spaces (so `"A&B"` → `"a b"`, not `"ab"`).
+ *
  * Deterministic and reversible-free — the same input always yields the same output.
  */
 export function normalizeAddressToken(input: string): string {
@@ -117,7 +125,8 @@ export function normalizeAddressToken(input: string): string {
  * Derive the canonical match key from an address component dict: each present,
  * address-identifying field normalized via
  * {@linkcode normalizeAddressToken}, in fixed order, joined by the separator. Empty / whitespace-only fields are
- * skipped. Returns an empty string if nothing identifying remains.
+ * skipped.
+ * Returns an empty string if nothing identifying remains.
  */
 export function canonicalKey(components: ComponentDict, opts: CanonicalKeyOptions = {}): string {
 	const separator = opts.separator ?? "|"

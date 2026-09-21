@@ -40,8 +40,8 @@ export function overlayLocale(country: string | undefined): string {
  * given the overlay locales that failed to load.
  *
  * A country with no declared overlay answers `false`: it grades through the base
- * package by design, which is its production path. Therefore, calling that degraded
- * would withhold a suggestion the run is entitled to make.
+ * package by design, which is its production path.
+ * Therefore, calling that degraded would withhold a suggestion the run is entitled to make.
  *
  * `baseOnlyLocales` is keyed by locale because the harness memoizes its fallback per locale —
  * a second country routing to the same overlay takes the cached base classifier

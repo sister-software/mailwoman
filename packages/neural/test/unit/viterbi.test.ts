@@ -115,7 +115,8 @@ describe("viterbi — basic", () => {
 	})
 
 	it("falls back gracefully when emissions strongly contradict structural rules", () => {
-		// All emissions favor I-locality. Viterbi must still produce a structurally valid sequence.
+		// All emissions favor I-locality.
+		// Viterbi must still produce a structurally valid sequence.
 		const emissions = [
 			[0.01, 0.01, 0.97, 0.005, 0.005],
 			[0.01, 0.01, 0.97, 0.005, 0.005],
@@ -158,15 +159,17 @@ describe("viterbi — position-scoped transition adjustments (TRANSITION-BETA)",
 	// where the fused run (B-locality → I-locality → I-locality) outscores the desired split
 	// (B-locality → B-region → O is irrelevant here — the competing reading is B-region entered at
 	// t=1) by a margin smaller than the bonus. The emission at t=1 already favors B-region locally
-	// (4 > 3), yet the global path stays fused because switching costs the continuation at t=2
-	// (I-region 0 vs I-locality 5). This is the exact mechanism the adjustment exists for.
+	// (4 > 3), yet the global path stays fused because switching costs the
+	// continuation at t=2 (I-region 0 vs I-locality 5).
+	// This is the exact mechanism the adjustment exists for.
 	const FUSION_EMISSIONS = [
 		[0, 6, NEG_INF, 0, NEG_INF], // t=0: B-locality 6
 		[0, 0, 3, 4, NEG_INF], // t=1: I-locality 3 vs B-region 4 — local win for B-region
 		[0, 0, 5, 0, 1], // t=2: I-locality 5 vs I-region 1 — the continuation toll
 	]
 
-	// Fused: 6 + 3 + 5 = 14. Split (B-loc, B-reg, I-reg): 6 + 4 + 1 = 11 — margin 3.
+	// Fused: 6 + 3 + 5 = 14.
+	// Split (B-loc, B-reg, I-reg): 6 + 4 + 1 = 11 — margin 3.
 
 	it("a bonus on the entry transition flips a fused path (before/after on the same lattice)", () => {
 		const base = viterbi({

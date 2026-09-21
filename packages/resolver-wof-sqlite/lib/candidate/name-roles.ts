@@ -23,8 +23,10 @@ import { normalizeLocalityForKey } from "#street/normalize"
 export const GLOSS_KEY_THRESHOLD = 50
 
 /**
- * Placetypes the gloss detector never flags. A country or region legitimately carries a name in
- * every language — that is what an exonym set is — so key volume discriminates nothing there.
+ * Placetypes the gloss detector never flags.
+ *
+ * A country or region legitimately carries a name in every language — that is what
+ * an exonym set is — so key volume discriminates nothing there.
  * The detector's population is the non-admin tail, where a place named by a common noun
  * ("Poisson", "Sunday") accumulating 200+ translations is a machine-translated gloss set rather than fame.
  */
@@ -41,8 +43,9 @@ export const GLOSS_EXCLUDED_PLACETYPES: ReadonlySet<string> = new Set([
 
 /**
  * Pass 3c — the #1730 name-role prototype: two independent detectors over the staged rows,
- * write-only in this generation (no ranking consumer. the rank penalty is its
- * own D-rule-conditional step with the `gloss_key` board as regression check).
+ * write-only in this generation (no ranking consumer. the rank penalty is its own
+ * D-rule-conditional step with the `gloss_key` board as regression check).
+ *
  * Both stamp `is_primary = 0` rows only — a place's canonical name and the `place_abbr`
  * region abbreviations are never a gloss or a variant.
  *
@@ -145,11 +148,11 @@ export function stampNameRoles(ctx: {
 			.run().changes
 	)
 
-	// Detect aliases that are the holder's own primary name in another variant.
-	// orthography — romanization, spacing/diacritic variant, or abbreviation expansion.
-	// The verdict is per (alias key, primary key) pair, so it runs in JS over
-	// the still-unstamped alias rows. an uncovered script answers no-verdict
-	// and stamps nothing (own-name.ts owns the predicate and its measured threshold).
+	// Detect aliases that are the holder's own primary name in another variant. orthography —
+	// romanization, spacing/diacritic variant, or abbreviation expansion.
+	// The verdict is per (alias key, primary key) pair, so it runs in JS over the
+	// still-unstamped alias rows. an uncovered script answers no-verdict and stamps
+	// nothing (own-name.ts owns the predicate and its measured threshold).
 	// Runs before gloss on purpose: a surface that is the place's own name is not
 	// a translation, whatever the key volume says.
 	out.exec(

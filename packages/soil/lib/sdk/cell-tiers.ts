@@ -27,9 +27,10 @@ import { mapUnitProfile, reduceCell, type CellCandidate, type MapUnitProfile } f
 /**
  * Resolve the touch table into the stored containment index.
  *
- * Compaction happens here and only on the whole side. It is expected to yield close to nothing
- * on this layer, which is the inversion the survey predicts: compaction needs a uniform
- * interior, and 85.4% of `IA153`'s delineations are smaller than one resolution-9 cell.
+ * Compaction happens here and only on the whole side.
+ * It is expected to yield close to nothing on this layer, which is the inversion
+ * the survey predicts: compaction needs a uniform interior, and 85.4% of `IA153`'s
+ * delineations are smaller than one resolution-9 cell.
  */
 export function resolveCells(
 	database: DatabaseClient<SoilDatabase>,
@@ -50,8 +51,9 @@ export function resolveCells(
 	let wholeRows = 0
 
 	// One group per (delineation, resolution): `compactCells` takes a single resolution,
-	// and an adaptively-indexed layer has several. Pooling them throws. compacting only the
-	// target-resolution group would silently drop every coarsened delineation's interior.
+	// and an adaptively-indexed layer has several.
+	// Pooling them throws. compacting only the target-resolution group would silently
+	// drop every coarsened delineation's interior.
 	database.exec("BEGIN")
 
 	for (const { area_id: areaID, resolution } of groups) {
@@ -98,8 +100,10 @@ export function resolveCells(
 }
 
 /**
- * Cells reduced per progress report. The reduction is the slow phase — a lattice of 49 point
- * tests per sampled cell — so it reports often enough that a long run is visibly alive.
+ * Cells reduced per progress report.
+ *
+ * The reduction is the slow phase — a lattice of 49 point tests per sampled cell —
+ * so it reports often enough that a long run is visibly alive.
  */
 const REDUCE_PROGRESS_STRIDE = 50_000
 
@@ -118,10 +122,11 @@ interface StoredDelineation {
 /**
  * How many delineations the reduction keeps in memory at once.
  *
- * Sized to bound the phase rather than to hold everything: the pilot region's median delineation
- * encodes to roughly 1.4 kB, so 200,000 of them is a few hundred megabytes — comfortable,
- * and far below the 2.5 million a whole state holds. Memory stays flat in row count,
- * which is the property the poi build lost when a reader materialized instead of streaming.
+ * Sized to bound the phase rather than to hold everything: the pilot region's median
+ * delineation encodes to roughly 1.4 kB, so 200,000 of them is a few hundred megabytes —
+ * comfortable, and far below the 2.5 million a whole state holds.
+ * Memory stays flat in row count, which is the property the poi build lost
+ * when a reader materialized instead of streaming.
  */
 const GEOMETRY_CACHE_ENTRIES = 200_000
 

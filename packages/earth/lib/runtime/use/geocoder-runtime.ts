@@ -69,8 +69,9 @@ import { pruneDBRangeCache } from "#runtime/range-cache"
 import { useGeoBias, type GeoBiasControl } from "#runtime/use/geo-bias"
 
 /**
- * Per-region interp-radius conformal factor (#374); default for unmeasured
- * regions. Mirrors `_app.tsx`.
+ * Per-region interp-radius conformal factor (#374); default for unmeasured regions.
+ *
+ * Mirrors `_app.tsx`.
  */
 const INTERP_RADIUS_BY_REGION: Record<string, number> = { dc: 1.44, ny: 1.53, ca: 1.87, mi: 1.93 }
 const INTERP_RADIUS_DEFAULT = 1.95
@@ -82,6 +83,7 @@ const STREET_COMPONENT_TAGS = new Set(["street", "street_prefix", "street_prefix
 
 /**
  * The per-state street lookups, loaded together (lazy by region).
+ *
  * National (country) extracts carry no interp.
  */
 interface StreetLookups {
@@ -122,8 +124,9 @@ export interface GeocoderRuntimeHandle {
 	calibrator: ((raw: number) => number | null) | undefined
 	/**
 	 * Trace the current input through the decode path (for the dev-mode ModelVisualizer drawer).
-	 * Resolves `null` when the classifier bundle predates the `traceParse` hook
-	 * or the trace fails. Feature-detect via {@link supportsTrace}.
+	 *
+	 * Resolves `null` when the classifier bundle predates the `traceParse` hook or the trace fails.
+	 * Feature-detect via {@link supportsTrace}.
 	 */
 	traceParse: (input: string) => Promise<ParseTraceLike | null>
 	/**
@@ -144,14 +147,18 @@ export interface GeocoderRuntimeOptions {
 }
 
 /**
- * Build the real {@link GeocoderRuntime}. Injects the browser runtime's loaders into the
- * shared `useReleaseRuntime` orchestration, then wraps the loaded assets with the map surface
+ * Build the real {@link GeocoderRuntime}.
+ *
+ * Injects the browser runtime's loaders into the shared `useReleaseRuntime`
+ * orchestration, then wraps the loaded assets with the map surface
  * (style / overlays / bias-aware parse / autocomplete / calibrator / map-place enricher).
  */
 
 /**
- * Give a superseded bundle's native memory back. Module scope rather than a `useCallback`:
- * it closes over nothing, so a stable identity costs nothing and it cannot churn the hook's effect.
+ * Give a superseded bundle's native memory back.
+ *
+ * Module scope rather than a `useCallback`: it closes over nothing, so a stable
+ * identity costs nothing and it cannot churn the hook's effect.
  */
 function disposeAssets(assets: ReleaseAssets): Promise<void> {
 	return assets.release()
@@ -190,20 +197,24 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 	)
 
 	/*
-	 * the parse callbacks depend on the bundle they parse
-	 * with. There is no mirror.
+	 * the parse callbacks depend on the bundle they parse with.
 	 *
-	 * They used to read `rt.assets` out of a ref so their identity could stay fixed across
-	 * a load, and the ref was written in an effect — which lost a race it could not win.
-	 * React runs effects child-first, and `runtime.ready` is derived from the same `rt.assets`,
-	 * so a descendant effect reacting to `ready` flipping true ran before this parent's
-	 * effect had written the mirror: `?q=` answered "Classifier not ready" on a page whose
-	 * classifier had loaded fine. Writing the mirror during render instead closed the window
-	 * and broke a different rule — a ref written in render is a value React is entitled to discard.
+	 * There is no mirror.
+	 *
+	 * They used to read `rt.assets` out of a ref so their identity could stay fixed across a load,
+	 * and the ref was written in an effect — which lost a race it could not win.
+	 * React runs effects child-first, and `runtime.ready` is derived from the same
+	 * `rt.assets`, so a descendant effect reacting to `ready` flipping true ran
+	 * before this parent's effect had written the mirror: `?q=` answered "Classifier
+	 * not ready" on a page whose classifier had loaded fine.
+	 *
+	 * Writing the mirror during render instead closed the window and broke a different rule —
+	 * a ref written in render is a value React is entitled to discard.
 	 *
 	 * Naming the values as dependencies has neither problem.
 	 * A callback that parses with a bundle is not the same callback once the bundle changes,
 	 * and saying so is what keeps every consumer in step without a second copy of the truth.
+	 *
 	 * The identity churns once per release load, which is the only moment it means anything.
 	 */
 
@@ -213,10 +224,10 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 	const extrasRef = useRef<WeakMap<ResolvedPlaceView, CandidateExtras>>(new WeakMap())
 	// Lazy street-tier situs/interp lookups, cached by parsed state/country slug (in-flight promise dedup).
 	const streetLookupsRef = useRef<Map<string, Promise<StreetLookups>>>(new Map())
-	// Lazy crisp-polygon DB + per-id cache. The cache is state (not a ref)
-	// so a landed polygon rebuilds `resolveMapPlace` → the runtime → `useGeocode`'s
-	// mapPlace memo, drawing the geometry. Cache value: `undefined` = unfetched,
-	// `null` = fetched-absent (fall through to bbox), geometry = present.
+	// Lazy crisp-polygon DB + per-id cache.
+	// The cache is state (not a ref) so a landed polygon rebuilds `resolveMapPlace` →
+	// the runtime → `useGeocode`'s mapPlace memo, drawing the geometry.
+	// Cache value: `undefined` = unfetched, `null` = fetched-absent (fall through to bbox), geometry = present.
 	const polygonDBRef = useRef<Promise<PolygonDB> | null>(null)
 	const polygonInflightRef = useRef<Set<number>>(new Set())
 	const [polygonCache, setPolygonCache] = useState<Map<number, PlaceGeometry | null>>(() => new Map())
@@ -229,8 +240,8 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		setPolygonCache(new Map())
 	}, [rt.selectedVersion])
 
-	// Lazy-load (and cache) the situs + interp httpvfs lookups for a parsed region's
-	// state extract. Ported from `_app.tsx`.
+	// Lazy-load (and cache) the situs + interp httpvfs lookups for a parsed region's state extract.
+	// Ported from `_app.tsx`.
 	const ensureStreetLookups = useCallback(
 		async (slug: string): Promise<StreetLookups | null> => {
 			let p = streetLookupsRef.current.get(slug)
@@ -289,9 +300,10 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			)
 
 			// `city`, `state`, `postal_code` and `house_number_prefix` are libpostal vocabulary
-			// rather than `ComponentTag`s, so the `|| n.tag === "…"` arms that used to sit
-			// on these four finds could never match. They compiled only while the flattener
-			// returned `{ tag: string }`; against the real tag union they are type errors.
+			// rather than `ComponentTag`s, so the `|| n.tag === "…"` arms that used to
+			// sit on these four finds could never match.
+			// They compiled only while the flattener returned `{ tag: string }`;
+			// against the real tag union they are type errors.
 			const localityNode = nodes.find((n) => n.tag === "locality")
 
 			const stateNode = nodes
@@ -382,8 +394,8 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			}
 
 			// Viewport bias (#938): the map center as a soft proximity hint.
-			// The library's decay is population-ceilinged. The device location
-			// (when granted via the "Use my location" button) joins as a weaker second hint.
+			// The library's decay is population-ceilinged.
+			// The device location (when granted via the "Use my location" button) joins as a weaker second hint.
 			const resolveBias: ResolveBias = []
 
 			if (bias) {
@@ -511,10 +523,10 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 				uncertaintyM: extras.uncertaintyM,
 			}
 
-			// Crisp admin polygon (like `_app.tsx`): only for a real WOF place with no precise
-			// street tier. The pure `computeMapPlaceRenderSpec` cascade prefers `geometry`
-			// when present. the async fetch stays here (a runtime concern), populating a cache +
-			// bumping a nonce so the enricher re-runs with the geometry in hand.
+			// Crisp admin polygon (like `_app.tsx`): only for a real WOF place with no precise street tier.
+			// The pure `computeMapPlaceRenderSpec` cascade prefers `geometry` when present. the
+			// async fetch stays here (a runtime concern), populating a cache + bumping a nonce
+			// so the enricher re-runs with the geometry in hand.
 			const release = rt.selectedRelease
 			const version = rt.selectedVersion
 

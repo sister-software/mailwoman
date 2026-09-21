@@ -38,9 +38,10 @@ import { isZipCode } from "#us/index"
 export type SystemCode = "us" | "de" | "fr" | "es" | "it" | "ca" | "gb" | "jp" | "au" | "nz"
 
 /**
- * Per-system membership test: each entry returns true when the string is accepted by
- * that system's own postcode shape (after that system's normalization — so `D-68161`
- * reaches `de`, `1012 LM` reaches nothing here since NL has no system yet, etc.).
+ * Per-system membership test: each entry returns true when the string is accepted by that
+ * system's own postcode shape (after that system's normalization — so `D-68161` reaches `de`,
+ * `1012 LM` reaches nothing here since NL has no system yet, etc.).
+ *
  * Ordered for a stable, alphabetical-ish result.
  */
 const SYSTEM_ACCEPTS: ReadonlyArray<readonly [SystemCode, (s: string) => boolean]> = [
@@ -58,6 +59,7 @@ const SYSTEM_ACCEPTS: ReadonlyArray<readonly [SystemCode, (s: string) => boolean
 
 /**
  * Every address system with a postcode shape, in {@link SYSTEM_ACCEPTS} order.
+ *
  * The one list a consumer that needs the universe of systems
  * (rather than the systems a given code fits) should read, so it cannot drift from the table.
  */
@@ -65,6 +67,7 @@ export const SYSTEM_CODES: readonly SystemCode[] = SYSTEM_ACCEPTS.map(([system])
 
 /**
  * Every address system whose own postcode shape accepts `postcode`.
+ *
  * Empty when no system recognizes the shape (e.g. a bare `27`, or a 7-digit run).
  * O(number of systems) — a handful of cheap regex tests, run only on the few
  * postcode-shaped spans an address contains.
@@ -93,10 +96,10 @@ export function candidateSystemsForPostcode(postcode: string): SystemCode[] {
  * of the code's granularity, never by "the code has letters in it":
  *
  * - **NL PC6** (`1012 LG`) — ~8 addresses per code. the CBS polygon centroid (#977, the original carve-out).
- * - **GB unit** (`N7 0BT`) — ~15 addresses per code, 1,751,733 shipped from OS
- *   Code-Point Open. Measured 2026-08-10 against the panel-v2 GB rooftop truth:
- *   unit centroid within 1 km on 15/15 rows, median 38 m, max 100 m, while the locality
- *   centroid the ladder returned instead was 5.1–14.6 km out.
+ * - **GB unit** (`N7 0BT`) — ~15 addresses per code, 1,751,733 shipped from OS Code-Point Open.
+ *   Measured 2026-08-10 against the panel-v2 GB rooftop truth: unit centroid within
+ *   1 km on 15/15 rows, median 38 m, max 100 m, while the locality centroid the
+ *   ladder returned instead was 5.1–14.6 km out.
  * - **CA urban LDU** (`M1J 1A8`) — 843,739 six-character codes.
  *   Measured on 879 graded rows of the CA OSM-rooftop panel, through the production
  *   candidate backend, ladder arm against ladder arm:
@@ -104,25 +107,28 @@ export function candidateSystemsForPostcode(postcode: string): SystemCode[] {
  *   | 732 urban rows | p50 | p75 | p90 | ≤1 km | | -------------- | ---: | ---: | ---: | ---: | | locality-first | 2.51
  *   km | 5.42 km | 9.53 km | 26.4% | | postcode-first | **78 m** | **162 m** | **373 m** | **94.7%** |
  *
- *   Closer on 90.4% of them. That is GB's tier on a sample fifty times larger than GB's.
+ *   Closer on 90.4% of them.
+ *   That is GB's tier on a sample fifty times larger than GB's.
  *
- * **CA rural is excluded, and the code says which.** Canada Post puts a `0` in the second
- * position of a rural forward sortation area, so `T0H 1M0` is rural and `M1J 1A8` is not —
- * no lookup required. A rural LDU serves a delivery route rather than a block face,
- * and it measures like one. On the same panel, the 114 rural rows:
+ * **CA rural is excluded, and the code says which.** Canada Post puts a `0` in the second position of
+ * a rural forward sortation area, so `T0H 1M0` is rural and `M1J 1A8` is not — no lookup required.
+ * A rural LDU serves a delivery route rather than a block face, and it measures like one.
+ *
+ * On the same panel, the 114 rural rows:
  *
  * | 114 rural rows | p50       | p75         | p90         | ≤1 km     |
  * | -------------- | --------: | ----------: | ----------: | --------: |
  * | locality-first | **929 m** | **2.02 km** | **5.73 km** | **53.5%** |
  * | postcode-first | 2.08 km   | 4.79 km     | 8.11 km     | 25.4%     |
  *
- * Postcode-first is closer on only 26.3% of them, so the pattern below admits `[1-9]` in
- * that position and nothing else. `509 Main Street South-West Falher AB T0H 1M0` is the
- * worked case: 0.29 km from the locality centroid and 43.18 km from its own postal code.
+ * Postcode-first is closer on only 26.3% of them, so the pattern below admits
+ * `[1-9]` in that position and nothing else.
+ * `509 Main Street South-West Falher AB T0H 1M0` is the worked case: 0.29 km from
+ * the locality centroid and 43.18 km from its own postal code.
  *
  * The pooled CA number hides that entirely — 0.10 km p50 across both populations
- * reads as a uniform win and is not one. A tier claim that averages two granularities
- * is the thing this table exists to prevent.
+ * reads as a uniform win and is not one.
+ * A tier claim that averages two granularities is the thing this table exists to prevent.
  *
  * Lives in codex (per-address-system postal reference) so the Node result assembly
  * (`mailwoman/geocode-core`) and the demo's pin ranking consume one tier definition —
@@ -141,8 +147,10 @@ export const UNIT_GRADE_POSTCODE: ReadonlyArray<RegExp> = [
 ]
 
 /**
- * Strip everything but letters and digits, upper-cased — the comparison surface for "did the resolver
- * hit the full code or a coarser stem?". `N7 0BT` and `N70BT` are the same code; `N7` is not.
+ * Strip everything but letters and digits, upper-cased — the comparison surface for
+ * "did the resolver hit the full code or a coarser stem?".
+ *
+ * `N7 0BT` and `N70BT` are the same code; `N7` is not.
  */
 const alnum = (s: string): string => s.replaceAll(/[^\p{L}\p{N}]/gu, "").toUpperCase()
 
@@ -168,11 +176,12 @@ export function isUnitGradePostcodeHit(parsed: string, resolverName: string | un
  * Address systems whose area-grade postal code is still finer than the locality containing it —
  * the third granularity tier, between {@link UNIT_GRADE_POSTCODE} and the locality-first default.
  *
- * Whether a postal zone is coarser than its locality is a fact about a country's administrative
- * geography rather than about its postal system, and code length does not predict it: FR
- * and DE are both 5-digit and land on opposite sides. France has ~35,000 communes and one code
- * postal often spans several, so the commune is finer. A German Gemeinde can be enormous —
- * Berlin is one WOF locality — so the PLZ is finer by a wide margin.
+ * Whether a postal zone is coarser than its locality is a fact about a country's
+ * administrative geography rather than about its postal system, and code length does
+ * not predict it: FR and DE are both 5-digit and land on opposite sides.
+ * France has ~35,000 communes and one code postal often spans several, so the commune is finer.
+ *
+ * A German Gemeinde can be enormous — Berlin is one WOF locality — so the PLZ is finer by a wide margin.
  *
  * Membership is earned by a full-panel measurement, the same bar {@link UNIT_GRADE_POSTCODE} sets for CA.
  * Coordinate p50 on the OpenAddresses panels, locality-first (the default) against the postcode point:
@@ -188,9 +197,10 @@ export function isUnitGradePostcodeHit(parsed: string, resolverName: string | un
  *
  * **The US row is measured on the population production actually sends to the ladder.** Its rooftop
  * cascade is US-only by construction (`selectAddressPointsDB` composes `address-points-us-<slug>.db`),
- * and it serves 94.2% of US queries, so only 577 of 10,000 panel rows reach an admin
- * decision at all. Those are the rows no rooftop or interpolation extract could place,
- * which skews rural — exactly where a locality centroid sits close and a ZIP zone is wide.
+ * and it serves 94.2% of US queries, so only 577 of 10,000 panel rows reach an admin decision at all.
+ * Those are the rows no rooftop or interpolation extract could place, which skews rural —
+ * exactly where a locality centroid sits close and a ZIP zone is wide.
+ *
  * Measured over all 10,000 rows instead, the US looks like a postcode-first country
  * (2.41 km vs 3.63); that is a selection effect, and it is why this table reports 577
  * rows for the US and full panels for the others, which have no such cascade.
@@ -211,6 +221,7 @@ export const AREA_POSTCODE_FINER_THAN_LOCALITY: ReadonlySet<string> = new Set(["
 
 /**
  * True when this country's area-grade postal code outranks its locality.
+ *
  * Absent or unknown country → false, so the locality-first convention is what an unscoped query gets.
  */
 export function areaPostcodeLeadsLocality(country: string | undefined): boolean {

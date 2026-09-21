@@ -132,9 +132,10 @@ describe("wof-admin-json adapter against fixture", () => {
 
 		const rows = await loadRows()
 
-		// Phase 1.5.1 invariant: both the canonical and the colloquial name produce training rows
-		// for the same WOF id. This was the failure mode the SQLite path could not address even with
-		// the is_current predicate loosened — the `names` table was empty in the WOF SQLite distro.
+		// Phase 1.5.1 invariant: both the canonical and the colloquial name produce
+		// training rows for the same WOF id.
+		// This was the failure mode the SQLite path could not address even with the is_current
+		// predicate loosened — the `names` table was empty in the WOF SQLite distro.
 		const stPete = rows.filter((r) => r.source_id.startsWith("wof-admin-1021-"))
 		const stPeteRaws = stPete.map((r) => r.raw)
 		expect(stPeteRaws.some((r) => r.includes("Saint Petersburg"))).toBe(true)
@@ -156,13 +157,13 @@ describe("wof-admin-json adapter against fixture", () => {
 
 		const rows = await loadRows()
 		const portland = rows.filter((r) => r.source_id.startsWith("wof-admin-1012-default-"))
-		// Self variant is the bare "Portland". Surface form for the with-region /
-		// with-region-country variants depends on the US OpenCage template's pruning
-		// rules (state abbreviation, dropped counties); they may render differently
-		// or fold via reconcileComponents. We assert only that the self variant exists,
-		// the canonical-only path produced exactly one name slot's worth of rows
-		// (no spurious slot from name:eng_x_preferred = "Portland" since it matches the canonical),
-		// and that at least one variant carries an ancestor component.
+		// Self variant is the bare "Portland".
+		// Surface form for the with-region / with-region-country variants depends on the
+		// US OpenCage template's pruning rules (state abbreviation, dropped counties);
+		// they may render differently or fold via reconcileComponents.
+		// We assert only that the self variant exists, the canonical-only path produced exactly
+		// one name slot's worth of rows (no spurious slot from name:eng_x_preferred = "Portland"
+		// since it matches the canonical), and that at least one variant carries an ancestor component.
 		expect(portland.map((r) => r.raw)).toContain("Portland")
 
 		const withAncestor = portland.find(

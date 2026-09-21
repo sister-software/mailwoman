@@ -18,7 +18,9 @@
  * so the two writers never fight over a cell.
  *
  * Every mode change made in {@link MapBrowser.start} is undone by {@link MapBrowser.restore}.
- * It is idempotent. Therefore, a signal handler, an `exit` hook and the normal path can all call it.
+ * It is idempotent.
+ *
+ * Therefore, a signal handler, an `exit` hook and the normal path can all call it.
  * A terminal left in raw mode with mouse reporting on is not a recoverable shell,
  * so restore is the one operation that must survive any exit path.
  */
@@ -53,23 +55,28 @@ const REVERSE_VIDEO = "\u001B[7m"
 const STATUS_BAR_ROWS = 1
 
 /**
- * Size assumed when the output reports none. A pty opened without a window
- * size (util-linux `script`, some CI harnesses) reports 0 columns and 0 rows,
- * which is neither an error nor a usable grid.
+ * Size assumed when the output reports none.
+ *
+ * A pty opened without a window size (util-linux `script`, some CI harnesses) reports
+ * 0 columns and 0 rows, which is neither an error nor a usable grid.
  */
 const FALLBACK_COLUMNS = 80
 const FALLBACK_ROWS = 24
 
 /**
- * Floor on the pane's dimensions. Below this the renderer is being asked for a grid too
- * small to mean anything, and a zero-sized one would divide by zero in the projection.
+ * Floor on the pane's dimensions.
+ *
+ * Below this the renderer is being asked for a grid too small to mean anything,
+ * and a zero-sized one would divide by zero in the projection.
  */
 const MIN_COLUMNS = 4
 const MIN_PANE_ROWS = 1
 
 /**
- * How much of the pane one arrow-key press travels. An eighth is far enough to feel like
- * progress at a keystroke and short enough that the next frame still overlaps the last.
+ * How much of the pane one arrow-key press travels.
+ *
+ * An eighth is far enough to feel like progress at a keystroke and short enough
+ * that the next frame still overlaps the last.
  */
 const PAN_FRACTION = 0.125
 
@@ -82,8 +89,10 @@ const MERCATOR_LATITUDE_LIMIT = 85.05112878
 const COORDINATE_DIGITS = 4
 
 /**
- * The subset of a readable stream the browser drives. Structural so `process.stdin` satisfies it
- * without the app being welded to it — the same reasoning asciify applies to its own output type.
+ * The subset of a readable stream the browser drives.
+ *
+ * Structural so `process.stdin` satisfies it without the app being welded to it —
+ * the same reasoning asciify applies to its own output type.
  */
 export interface BrowserInput {
 	setRawMode?(mode: boolean): unknown
@@ -156,9 +165,11 @@ export class MapBrowser {
 	private resolveExit: ((code: number) => void) | null = null
 
 	/**
-	 * The trailing bytes of the last chunk that could not be decoded yet — a sequence the kernel split
-	 * across two reads. Threading it back through `decodeInputChunk` is what keeps a split mouse
-	 * report from being read as an Esc keypress (which used to quit); the decoder itself stays pure.
+	 * The trailing bytes of the last chunk that could not be decoded yet —
+	 * a sequence the kernel split across two reads.
+	 *
+	 * Threading it back through `decodeInputChunk` is what keeps a split mouse report from
+	 * being read as an Esc keypress (which used to quit); the decoder itself stays pure.
 	 */
 	private pendingInput = ""
 
@@ -197,8 +208,9 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Runs until the user quits, resolving with the process exit code
-	 * (0 for a normal quit, 130 for Ctrl+C). The terminal is restored before this resolves.
+	 * Runs until the user quits, resolving with the process exit code (0 for a normal quit, 130 for Ctrl+C).
+	 *
+	 * The terminal is restored before this resolves.
 	 */
 	async run(): Promise<number> {
 		this.start()
@@ -213,8 +225,9 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Asks the browser to exit with a code. Safe to call from a signal handler,
-	 * and a no-op once an exit is already under way.
+	 * Asks the browser to exit with a code.
+	 *
+	 * Safe to call from a signal handler, and a no-op once an exit is already under way.
 	 */
 	requestExit(code: number): void {
 		const resolve = this.resolveExit
@@ -226,7 +239,9 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Enters the alternate screen and takes over input. Paired with {@link restore}.
+	 * Enters the alternate screen and takes over input.
+	 *
+	 * Paired with {@link restore}.
 	 */
 	start(): void {
 		if (this.started) return
@@ -245,8 +260,9 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Puts the terminal back exactly as it was found. Idempotent: the normal exit path,
-	 * a signal handler and a process-level `exit` hook may each call it.
+	 * Puts the terminal back exactly as it was found.
+	 *
+	 * Idempotent: the normal exit path, a signal handler and a process-level `exit` hook may each call it.
 	 */
 	restore(): void {
 		if (!this.started || this.restored) return
@@ -335,8 +351,10 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Zooms one or more whole levels. With an anchor cell (the wheel's pointer), the center shifts
-	 * so whatever was under the pointer stays under it. without one, the pane center holds.
+	 * Zooms one or more whole levels.
+	 *
+	 * With an anchor cell (the wheel's pointer), the center shifts so whatever was under
+	 * the pointer stays under it. without one, the pane center holds.
 	 */
 	private zoomBy(delta: number, anchor: { column: number; row: number } | null): void {
 		const next = clamp(this.zoom + delta, this.source.minZoom, this.source.maxZoom)
@@ -388,6 +406,7 @@ export class MapBrowser {
 
 	/**
 	 * Pans relative to where the drag started rather than the previous motion report.
+	 *
 	 * Accumulating per-report deltas would drift, since each one is rounded to a whole cell.
 	 */
 	private continueDrag(column: number, row: number): void {
@@ -445,8 +464,10 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Requests a frame. Renders never overlap: a request arriving mid-render is coalesced into
-	 * one more pass, so a held arrow key queues a single redraw rather than a backlog of them.
+	 * Requests a frame.
+	 *
+	 * Renders never overlap: a request arriving mid-render is coalesced into one more pass,
+	 * so a held arrow key queues a single redraw rather than a backlog of them.
 	 */
 	private scheduleRender(): void {
 		if (this.renderInFlight) {

@@ -19,9 +19,11 @@ import { parseDocument } from "htmlparser2"
 
 export interface DocumentNarrowingOptions {
 	/**
-	 * Narrow to the inner html of the first element with this (lower-case) name — an sgml/XML
-	 * envelope's payload element. A document that states no such element is not narrowed,
-	 * which is the right reading for a bare fragment that never had an envelope.
+	 * Narrow to the inner html of the first element with this (lower-case) name —
+	 * an sgml/XML envelope's payload element.
+	 *
+	 * A document that states no such element is not narrowed, which is the right
+	 * reading for a bare fragment that never had an envelope.
 	 */
 	within?: string
 	/**
@@ -33,6 +35,7 @@ export interface DocumentNarrowingOptions {
 
 /**
  * Narrows `html` to the window described by `options` and renders it back to html.
+ *
  * One parse, and the tree answers both questions — a regex `<head[^>]*>[\s\S]*?<\/head>`
  * cannot tell a `<` inside an attribute value from a tag, and a document whose envelope
  * is malformed is exactly the document a caller most needs read correctly.
@@ -60,9 +63,11 @@ export function narrowDocument(html: string, options: DocumentNarrowingOptions =
 }
 
 /**
- * Whether to read `markup` as XML. XML mode keeps tag case and treats every element as needing an
- * explicit close, which is what an OGC exception report, an fgdc metadata document, or an S3 listing
- * want. html mode recovers unclosed tags the way a browser does, which is what a filing wants.
+ * Whether to read `markup` as XML.
+ *
+ * XML mode keeps tag case and treats every element as needing an explicit close,
+ * which is what an OGC exception report, an fgdc metadata document, or an S3 listing want.
+ * html mode recovers unclosed tags the way a browser does, which is what a filing wants.
  */
 export interface MarkupQueryOptions {
 	xml?: boolean
@@ -70,6 +75,7 @@ export interface MarkupQueryOptions {
 
 /**
  * The local name of an element — `gco:CharacterString` is `characterstring`.
+ *
  * A namespace prefix is the publisher's choice of alias and two documents from the
  * same service can spell it differently. the local name is the interface.
  */
@@ -80,9 +86,11 @@ function localName(name: string): string {
 }
 
 /**
- * The text of every element named `name`, in document order — namespace prefix ignored, entities
- * decoded, nested markup flattened to its text. An empty array when the document states no such
- * element, which is a real answer: the element is absent, as distinct from present and empty.
+ * The text of every element named `name`, in document order — namespace prefix ignored,
+ * entities decoded, nested markup flattened to its text.
+ *
+ * An empty array when the document states no such element, which is a real answer:
+ * the element is absent, as distinct from present and empty.
  */
 export function elementTexts(markup: string, name: string, options: MarkupQueryOptions = {}): string[] {
 	const wanted = localName(name)
@@ -99,10 +107,11 @@ export function elementText(markup: string, name: string, options: MarkupQueryOp
 }
 
 /**
- * One attribute of the document's root element, or `undefined` when the root carries no
- * such attribute. Asked of the root specifically, so a value repeated on a descendant
- * cannot answer for the document — the count a service reports for a collection is a
- * property of the collection, and a regex over the whole body cannot tell the two apart.
+ * One attribute of the document's root element, or `undefined` when the root carries no such attribute.
+ *
+ * Asked of the root specifically, so a value repeated on a descendant cannot answer for the
+ * document — the count a service reports for a collection is a property of the collection,
+ * and a regex over the whole body cannot tell the two apart.
  */
 export function rootAttribute(markup: string, attribute: string, options: MarkupQueryOptions = {}): string | undefined {
 	const document = parseDocument(markup, { decodeEntities: true, xmlMode: options.xml ?? false })

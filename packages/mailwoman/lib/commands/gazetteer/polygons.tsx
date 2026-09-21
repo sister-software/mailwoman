@@ -86,7 +86,8 @@ interface SprRow {
 
 interface RawGeometry {
 	type: string
-	// Polygon → LinearRing[]; MultiPolygon → LinearRing[][]. Typed loosely at the JSON boundary.
+	// Polygon → LinearRing[]; MultiPolygon → LinearRing[][].
+	// Typed loosely at the JSON boundary.
 	coordinates: LinearRing[] | LinearRing[][]
 }
 
@@ -116,7 +117,9 @@ function segDist(p: Position, a: Position, b: Position): number {
 }
 
 /**
- * Douglas-Peucker on a ring of [lon,lat]. Keeps endpoints. preserves closure.
+ * Douglas-Peucker on a ring of [lon,lat].
+ *
+ * Keeps endpoints. preserves closure.
  */
 function dp(ring: LinearRing, tol: number): LinearRing | null {
 	if (ring.length <= MIN_RING_VERTICES) return ring
@@ -157,6 +160,7 @@ function dp(ring: LinearRing, tol: number): LinearRing | null {
 
 /**
  * Simplify a Polygon / MultiPolygon geometry. drop rings that collapse.
+ *
  * Returns null if nothing left.
  */
 function simplify(geom: RawGeometry, tol: number): RawGeometry | null {

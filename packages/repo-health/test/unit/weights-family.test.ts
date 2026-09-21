@@ -21,8 +21,8 @@ import { expect, test } from "vitest"
  * A checkout holding only the `neural-weights-*` manifests this case needs, so a diagnostic
  * names the manifest the case wrote rather than one the repository happens to carry.
  *
- * The directory is moved out of this scope: the check reads it after this function
- * returns, and the returned context carries no handle a caller could dispose.
+ * The directory is moved out of this scope: the check reads it after this function returns,
+ * and the returned context carries no handle a caller could dispose.
  * Each case writes a few hundred bytes under the configured temp root.
  */
 async function fixtureContext(manifests: Record<string, unknown>): Promise<RepoContext> {

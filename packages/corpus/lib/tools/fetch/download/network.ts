@@ -17,7 +17,9 @@ import type { PathBuilderLike } from "path-ts"
 const HTTP_TOO_MANY_REQUESTS = 429
 
 /**
- * Lowest 5xx status. Server-side failures are retryable. 4xx are not.
+ * Lowest 5xx status.
+ *
+ * Server-side failures are retryable. 4xx are not.
  */
 const HTTP_SERVER_ERROR_MIN = 500
 
@@ -36,16 +38,21 @@ export const DEFAULT_RETRY_DELAY_MS = 5000
 
 export interface BaseFetchOptions {
 	/**
-	 * Destination root for downloaded source data. Each source writes its own subdirectory.
+	 * Destination root for downloaded source data.
+	 *
+	 * Each source writes its own subdirectory.
 	 */
 	outRoot: PathBuilderLike
 	/**
-	 * Pause between transfer retries, in milliseconds. Defaults to {@linkcode DEFAULT_RETRY_DELAY_MS}.
+	 * Pause between transfer retries, in milliseconds.
+	 *
+	 * Defaults to {@linkcode DEFAULT_RETRY_DELAY_MS}.
 	 *
 	 * A test that exercises the failure path pays this delay once per retry in real time —
 	 * measured at 20.1 s for the two failing-transfer cases in `geonames-postal.test.ts`,
-	 * which is the whole cost of that file. The retry count is the behaviour under test
-	 * there. the pause between attempts is not, so it is a caller's to shorten.
+	 * which is the whole cost of that file.
+	 * The retry count is the behaviour under test there. the pause between attempts
+	 * is not, so it is a caller's to shorten.
 	 */
 	retryDelayMs?: number
 }
@@ -76,10 +83,12 @@ export interface SourceManifest {
  * A status worth retrying: rate limiting or a server-side failure.
  */
 /**
- * An http failure that carries its status, so callers branch on `error.status` rather
- * than on message prose. The prose route shipped a real flake: a caller classified "not
- * published upstream" with `message.includes("404")`, and the message contains the URL —
- * an ephemeral test-server port such as `:40453` satisfies it while the actual status is 500.
+ * An http failure that carries its status, so callers branch on `error.status`
+ * rather than on message prose.
+ *
+ * The prose route shipped a real flake: a caller classified "not published upstream"
+ * with `message.includes("404")`, and the message contains the URL — an ephemeral
+ * test-server port such as `:40453` satisfies it while the actual status is 500.
  * Roughly 1–2% of ephemeral ports contain the substring, which is exactly the kind
  * of sometimes-failure that burns a CI run and vanishes locally.
  */
@@ -101,16 +110,21 @@ export interface DownloadOptions {
 	url: string
 	dest: string
 	/**
-	 * Per-attempt timeout. Default 10 minutes — these are multi-GB government dumps.
+	 * Per-attempt timeout.
+	 *
+	 * Default 10 minutes — these are multi-GB government dumps.
 	 */
 	timeoutMs?: number
 	/**
-	 * Extra attempts after the first, taken only on transient statuses
-	 * or network errors. Default 0.
+	 * Extra attempts after the first, taken only on transient statuses or network errors.
+	 *
+	 * Default 0.
 	 */
 	retries?: number
 	/**
-	 * Delay between attempts. Default 5s.
+	 * Delay between attempts.
+	 *
+	 * Default 5s.
 	 */
 	retryDelayMs?: number
 	headers?: Record<string, string>
@@ -119,6 +133,7 @@ export interface DownloadOptions {
 
 /**
  * Download `url` to `dest` with per-attempt timeout and transient-status retry.
+ *
  * Throws on a non-transient http status or once retries are exhausted.
  * Returns the byte count written.
  */
@@ -144,10 +159,10 @@ export async function downloadToFile(options: DownloadOptions): Promise<{ bytes:
 		let res: Response
 
 		try {
-			// Raw `fetch`, deliberately: this is the shared file downloader and the body
-			// is piped to disk below. `APIClient` is the repo default for API requests —
-			// small bodies, repeated calls — and buffers a non-stream response in memory,
-			// which is the one thing a multi-gigabyte transfer must not do.
+			// Raw `fetch`, deliberately: this is the shared file downloader and the body is piped to disk below.
+			// `APIClient` is the repo default for API requests — small bodies,
+			// repeated calls — and buffers a non-stream response in memory, which is the
+			// one thing a multi-gigabyte transfer must not do.
 			res = await fetch(url, { headers, signal: AbortSignal.timeout(timeoutMs) })
 		} catch (error) {
 			// AbortSignal timeouts and network-level failures are retryable.
@@ -188,6 +203,7 @@ export interface StreamDownloadOptions {
 
 /**
  * Stream an http download to disk, returning the final http status (0 on network error after retries).
+ *
  * Follows redirects (the Census and OpenAddresses endpoints both 302 to their real hosts).
  *
  * Kept separate from {@link downloadToFile} on purpose: this one streams a multi-GB body to

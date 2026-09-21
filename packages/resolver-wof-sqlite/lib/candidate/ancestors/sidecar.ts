@@ -27,9 +27,9 @@ import type { WOFDatabase } from "#schema"
  * depth)` insert is sorted — the contiguous-leaves discipline of the candidate table itself.
  *
  * Excluded by policy: self rows, and placetypes outside the containment ladder
- * (continent, empire, …: `placetypeDepth` 0) — they discriminate nothing a consumer
- * of this sidecar checks. An edge to a parent with no current `spr` row has no name
- * to denormalize. it is dropped and counted rather than stored blind.
+ * (continent, empire, …: `placetypeDepth` 0) — they discriminate nothing a consumer of this sidecar checks.
+ * An edge to a parent with no current `spr` row has no name to denormalize. it is dropped
+ * and counted rather than stored blind.
  */
 export async function buildAncestorsSidecar(ctx: {
 	src: DatabaseClient<WOFDatabase>
@@ -49,9 +49,9 @@ export async function buildAncestorsSidecar(ctx: {
 	)
 
 	// The canonical-parent forest the interval labels are computed over.
-	// One parent per place — the depth-1 edge (finest containment tier, lowest ancestor
-	// id. the `regionOf` MIN-stability convention). All parents stay in the closure
-	// rows. only the interval tree canonicalizes.
+	// One parent per place — the depth-1 edge (finest containment tier, lowest
+	// ancestor id. the `regionOf` MIN-stability convention).
+	// All parents stay in the closure rows. only the interval tree canonicalizes.
 	const canonicalParentOf = new Map<number, number>()
 	const childrenOf = new Map<number, number[]>()
 	const forest = new Set<number>()
@@ -175,9 +175,10 @@ export async function buildAncestorsSidecar(ctx: {
 		}
 	}
 
-	// A canonical-parent cycle (corrupt source ancestry) leaves its members unreachable from
-	// any root: they simply receive no label, and containment against them reads unverifiable —
-	// the absence semantics the schema module states. Counted so a jump is visible across rebuilds.
+	// A canonical-parent cycle (corrupt source ancestry) leaves its members unreachable
+	// from any root: they simply receive no label, and containment against them reads
+	// unverifiable — the absence semantics the schema module states.
+	// Counted so a jump is visible across rebuilds.
 	const cycleSkipped = forest.size - preOf.size
 
 	const insInterval = out.prepare(`INSERT INTO ${CANDIDATE_INTERVAL_TABLE} VALUES (?, ?, ?)`)

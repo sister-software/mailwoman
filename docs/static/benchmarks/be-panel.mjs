@@ -74,6 +74,7 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 
 /**
  * The three configurations, each named for the reader question it answers.
+ *
  * `geocodeOpts` is merged into the per-row `geocodeAddress` call; everything not named here
  * stays at the shipped default, including the coarse-placer country prior and its hard filter.
  */
@@ -109,8 +110,10 @@ if (!dataRoot) {
 const candidatePath = join(dataRoot, "wof", "candidate.db")
 
 /**
- * Fold a place name to the form the committed `acceptedLocality` lists are written in: lowercase,
- * no diacritics, no punctuation, single spaces. `Liège` and `liege` both fold to `liege`.
+ * Fold a place name to the form the committed `acceptedLocality` lists are written in:
+ * lowercase, no diacritics, no punctuation, single spaces.
+ *
+ * `Liège` and `liege` both fold to `liege`.
  */
 function fold(name) {
 	return name
@@ -136,6 +139,7 @@ function fold(name) {
  * That conjunct is the metric, and it is the one this panel needs:
  * `Oude Markt 1, 3000 Leuven` resolves to a hierarchy reading `["Leuven"]` in the netherlands,
  * and `Place Saint-Lambert 1, 4000 Liège` to `["Le Liège", "Liège"]` in france.
+ *
  * Both are name matches in the wrong country, and a panel built to catch cross-border
  * misrouting scored both as locality hits until the conjunct was added.
  */
@@ -143,8 +147,9 @@ function localityChecks(result, accepted, inBelgium) {
 	const acceptedSet = new Set(accepted.map(fold))
 
 	// A decorated node carries a gazetteer `name`; `value` is the parsed text the node was matched from.
-	// Both are collected because the two differ on an exonym (`Antwerp` against `Antwerpen`), and either is
-	// a legitimate way for the gazetteer to have agreed. Absent fields are dropped.
+	// Both are collected because the two differ on an exonym (`Antwerp` against `Antwerpen`),
+	// and either is a legitimate way for the gazetteer to have agreed.
+	// Absent fields are dropped.
 	const hierarchyNames = (result.hierarchy ?? []).flatMap((node) => [node.name, node.value]).filter(Boolean)
 	const nameMatched = hierarchyNames.some((name) => acceptedSet.has(fold(name)))
 
@@ -161,9 +166,11 @@ function inBox(box, lat, lon) {
 }
 
 /**
- * Which weights actually answered, for one locale. `resolveWeights` runs the same resolution order
- * the classifier does, so this reports the artifact that was loaded rather than the one that was
- * asked for — including the base-package fallback an overlay locale takes for its `model.onnx`.
+ * Which weights actually answered, for one locale.
+ *
+ * `resolveWeights` runs the same resolution order the classifier does, so this
+ * reports the artifact that was loaded rather than the one that was asked for —
+ * including the base-package fallback an overlay locale takes for its `model.onnx`.
  * Paths are dereferenced because a development checkout symlinks them into the workspace,
  * and the symlink name says nothing about which checkpoint is behind it.
  */
@@ -188,9 +195,10 @@ async function weightsStamp(locale) {
 
 /**
  * The three versions a differing re-run has to be able to tell apart: the code,
- * the model, and the reference data. Without them a reader whose numbers disagree
- * with the published ones cannot tell data drift from code drift, which is the whole
- * value of publishing the result file next to the script.
+ * the model, and the reference data.
+ *
+ * Without them a reader whose numbers disagree with the published ones cannot tell data drift
+ * from code drift, which is the whole value of publishing the result file next to the script.
  */
 async function versionStamp() {
 	const require = createRequire(import.meta.url)

@@ -34,8 +34,8 @@ const GAZETTEER_FIXTURE = [
 ].join("\n")
 
 // GeoNames fixture (no header. country(0), postcode(1), place(2), ...adm..., lat(9), lon(10), acc(11)).
-// 21638 appears here but not in the zcta file — covers the PO-box/unique ZIP
-// residual case. 90210 appears here too, to verify no-overwrite after zcta fill.
+// 21638 appears here but not in the zcta file — covers the PO-box/unique ZIP residual
+// case. 90210 appears here too, to verify no-overwrite after zcta fill.
 // Two rows for 21638 with different place names → averaged centroid.
 const GEONAMES_FIXTURE = [
 	"US\t21638\tGrasonville\tMaryland\tMD\tQueen Anne's\t\t\t\t38.9573\t-76.1966\t1",
@@ -190,7 +190,8 @@ describe("fillGeonamesPlaceholders", () => {
 		// Fill 90210 via zcta (lat=34.100517).
 		fillPlaceholderCentroids(db, parseZCTACentroids(GAZETTEER_FIXTURE))
 
-		// GeoNames has a different coord for 90210 (lat=34.0736). Must not overwrite.
+		// GeoNames has a different coord for 90210 (lat=34.0736).
+		// Must not overwrite.
 		fillGeonamesPlaceholders(db, parseGeonamesCentroids(GEONAMES_FIXTURE))
 
 		const r = db

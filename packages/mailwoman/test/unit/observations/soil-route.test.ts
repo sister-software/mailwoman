@@ -39,8 +39,10 @@ function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">
 }
 
 /**
- * The kind the mock classifier reports. A designation marker must name it — the verdict's
- * own top kind — because a designation is not raised by intent and has no kind of its own.
+ * The kind the mock classifier reports.
+ *
+ * A designation marker must name it — the verdict's own top kind — because a
+ * designation is not raised by intent and has no kind of its own.
  */
 const TEST_VERDICT_KIND: QueryKind = "locality_only"
 
@@ -176,9 +178,10 @@ describe("#1991: the soil-capability route on the geocode path", () => {
 			const evidence = marker.evidence as Record<string, unknown>
 
 			expect(evidence.topClass).toBe("2")
-			// A 45% plurality. Reporting the class without this number would manufacture
-			// certainty nrcs itself declines to manufacture — its own aggregation ships the
-			// share beside the class, with an observed minimum of 2%.
+			// A 45% plurality.
+			// Reporting the class without this number would manufacture certainty nrcs
+			// itself declines to manufacture — its own aggregation ships the share beside
+			// the class, with an observed minimum of 2%.
 			expect(evidence.topClassShare as number).toBeLessThan(0.5)
 			expect(marker.message).toMatch(/not whether the land can be farmed/u)
 			expect(marker.message).toMatch(/% of the cell/u)

@@ -58,16 +58,20 @@ export interface AuLevelDesignator {
 	 */
 	abbreviation: string
 	/**
-	 * True when the designator takes a numeric or alphanumeric floor identifier after it
-	 * (`level 3`, `basement 2`). False for standalone types (`ground`, `mezzanine`, `rooftop`)
-	 * that name a specific well-known floor by vocabulary alone.
+	 * True when the designator takes a numeric or alphanumeric floor identifier
+	 * after it (`level 3`, `basement 2`).
+	 *
+	 * False for standalone types (`ground`, `mezzanine`, `rooftop`) that name a
+	 * specific well-known floor by vocabulary alone.
 	 */
 	requiresNumber: boolean
 }
 
 /**
- * Amas / AS 4590.1-2017 level-type table (Table 3). Verbatim codes. see the module header
- * for provenance. Ordered with the most-common forms first for match priority.
+ * Amas / AS 4590.1-2017 level-type table (Table 3).
+ *
+ * Verbatim codes. see the module header for provenance.
+ * Ordered with the most-common forms first for match priority.
  */
 export const AU_LEVEL_DESIGNATORS = [
 	{ code: "L", name: "LEVEL", abbreviation: "L", requiresNumber: true },
@@ -108,6 +112,7 @@ export const AU_LEVEL_DESIGNATOR_VARIANTS: Readonly<Record<AuLevelCode, readonly
 
 /**
  * Inverse lookup: every variant (abbreviation or surface form) → the canonical amas code.
+ *
  * Lowercase-keyed for case-insensitive matching (`"level"` → `"L"`, `"bsmt"` → `"B"`).
  */
 export const AU_LEVEL_DESIGNATOR_LOOKUP: ReadonlyMap<string, AuLevelCode> = (() => {
@@ -164,8 +169,10 @@ export interface AuLevelDesignatorMatch {
 }
 
 /**
- * One regex per level code. Multi-word variants ("lower ground", "ground floor") are matched
- * before their shorter constituents by ordering the variant list longest-first within each code.
+ * One regex per level code.
+ *
+ * Multi-word variants ("lower ground", "ground floor") are matched before their shorter
+ * constituents by ordering the variant list longest-first within each code.
  */
 const LEVEL_MATCHERS: ReadonlyArray<{ code: AuLevelCode; requiresNumber: boolean; re: RegExp }> = (() => {
 	const rows: Array<{ code: AuLevelCode; requiresNumber: boolean; re: RegExp }> = []
@@ -189,9 +196,11 @@ const LEVEL_MATCHERS: ReadonlyArray<{ code: AuLevelCode; requiresNumber: boolean
 })()
 
 /**
- * If `input` is a standalone AU level designator phrase ("Level 3", "L 12",
- * "Ground Floor", "Mezzanine", "B 2"), return the canonical code and identifier.
- * Null otherwise. Malformed entries (a requires-number designator with no identifier, e.g. bare "Level")
+ * If `input` is a standalone AU level designator phrase ("Level 3", "L 12", "Ground Floor",
+ * "Mezzanine", "B 2"), return the canonical code and identifier.
+ *
+ * Null otherwise.
+ * Malformed entries (a requires-number designator with no identifier, e.g. bare "Level")
  * return null — the builder throws loudly when a row in a table violates this constraint.
  */
 export function matchAuLevelDesignator(input: unknown): AuLevelDesignatorMatch | null {
@@ -221,10 +230,11 @@ export function isAuLevelDesignator(input: unknown): boolean {
 
 /**
  * Normalize a recognized level phrase to the amas canonical form
- * (`"level 3"` → `"L 3"`, `"ground floor"` → `"G"`). Returns the input unchanged if
- * it isn't a level designator phrase. Throws if a row in {@link AU_LEVEL_DESIGNATORS}
- * is malformed (requires-number entry with no abbreviation or empty name) —
- * the builder must surface structural defects loudly.
+ * (`"level 3"` → `"L 3"`, `"ground floor"` → `"G"`).
+ *
+ * Returns the input unchanged if it isn't a level designator phrase.
+ * Throws if a row in {@link AU_LEVEL_DESIGNATORS} is malformed (requires-number entry with
+ * no abbreviation or empty name) — the builder must surface structural defects loudly.
  */
 export function normalizeAuLevelDesignator(input: string): string {
 	const m = matchAuLevelDesignator(input)

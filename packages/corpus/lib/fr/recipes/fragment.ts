@@ -84,7 +84,9 @@ const HOUSE_NUMBERS = [
 ]
 
 /**
- * FR alphanumeric house-number forms. `bis`/`ter` are separated. a bare letter is suffixed.
+ * FR alphanumeric house-number forms.
+ *
+ * `bis`/`ter` are separated. a bare letter is suffixed.
  */
 const ALNUM_SUFFIXES = ["bis", "ter", "A", "B"]
 
@@ -101,12 +103,15 @@ const norm = (value: string): string =>
 
 /**
  * French commune convention: capitalize each element, leave the joining particles lowercase.
+ *
  * `saint-jean-de-luz` → `Saint-Jean-de-Luz`, not `Saint-Jean-De-Luz`.
  *
- * Needed because BAN's per-region extract databases keep only `locality_base` — normalized,
- * lowercase, accent-stripped. Emitting that verbatim would teach the counter-distribution
- * that a lowercase accent-stripped string is a locality, which is not a fact about French
- * and would not match the fragment board (which reconstructs the same casing).
+ * Needed because BAN's per-region extract databases keep only `locality_base` —
+ * normalized, lowercase, accent-stripped.
+ * Emitting that verbatim would teach the counter-distribution that a lowercase
+ * accent-stripped string is a locality, which is not a fact about French and would
+ * not match the fragment board (which reconstructs the same casing).
+ *
  * The accents are gone from the source and cannot be recovered here. the casing can.
  */
 const FR_LOWER = new Set([
@@ -143,7 +148,9 @@ export function frTitleCase(value: string): string {
 }
 
 /**
- * Does the street name carry a particle? Decides the particle vs bare classification.
+ * Does the street name carry a particle?
+ *
+ * Decides the particle vs bare classification.
  */
 const PARTICLE = /\b(de la|de l'|du|des|de|d'|le|la|les)\b/i
 
@@ -230,7 +237,8 @@ export const frFragmentRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// the split. A surface on the fragment board never enters training.
+			// the split.
+			// A surface on the fragment board never enters training.
 			if (excluded.has(norm(fullStreet))) {
 				contaminated++
 
@@ -239,8 +247,8 @@ export const frFragmentRecipe: CorpusRecipe = {
 
 			const { prefix, street } = decomposeFrStreet(fullStreet)
 
-			// The failing class is the designator-led street. A no-prefix nom_voie
-			// ("La Ville Mois") is a different problem and would muddy the signal.
+			// The failing class is the designator-led street.
+			// A no-prefix nom_voie ("La Ville Mois") is a different problem and would muddy the signal.
 			if (!prefix || !street) {
 				skipped++
 

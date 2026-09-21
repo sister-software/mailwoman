@@ -263,8 +263,8 @@ describe("resolveTree", () => {
 
 		// The FI Pori wins despite the US one's higher score — the hard country filter excludes it.
 		expect(result.roots[0]).toMatchObject({ placeID: "wof:1", lat: 61.48 })
-		// Three lookups since the bare-toponym races: the FI-scoped locality query plus
-		// the FI-scoped `country` and `region` side races (which find nothing here).
+		// Three lookups since the bare-toponym races: the FI-scoped locality query plus the
+		// FI-scoped `country` and `region` side races (which find nothing here).
 		// What the #194 interface forbids is an unscoped retry — every call must still carry the FI filter.
 		expect(backend.calls).toHaveLength(3)
 		expect(backend.calls.every((c) => c.country === "FI")).toBe(true)
@@ -328,9 +328,10 @@ describe("resolveTree", () => {
 
 		const input = tree("Paris", [node("locality", "Paris", 0, 5, [], "rule", "whos_on_first")])
 
-		// Paris scores 8, so a floor of 9 refuses it. Span-rescore recovers any tree holding no
-		// resolved place, and a refusal leaves exactly that — so it used to re-issue the byte-identical
-		// locality lookup the floor had just declined, and the refusal could never reach the caller.
+		// Paris scores 8, so a floor of 9 refuses it.
+		// Span-rescore recovers any tree holding no resolved place, and a refusal leaves
+		// exactly that — so it used to re-issue the byte-identical locality lookup the floor
+		// had just declined, and the refusal could never reach the caller.
 		const result = await resolver.resolveTree(input, { minWinningScore: 9 })
 
 		expect(result.roots[0]?.placeID).toBeUndefined()
@@ -518,7 +519,8 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 	})
 
 	test("anchor posterior re-ranks locality candidates by country (#369), off by default", async () => {
-		// Two same-named localities. US scores higher on name/BM25, DE is the runner-up.
+		// Two same-named localities.
+		// US scores higher on name/BM25, DE is the runner-up.
 		const berlins: ResolvedPlace[] = [
 			{ id: 1, name: "Berlin", placetype: "locality", country: "US", lat: 44.46, lon: -71.18, score: 8 },
 			{ id: 2, name: "Berlin", placetype: "locality", country: "DE", lat: 52.52, lon: 13.4, score: 7 },
@@ -556,13 +558,15 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 	})
 
 	test("anchor posterior re-ranks REGION candidates by country (#369), off by default", async () => {
-		// The region analogue of the locality re-rank — the collision class #447's over-fetch
-		// fix couldn't reach. A bare region abbreviation is shared across countries
+		// The region analogue of the locality re-rank — the collision class #447's
+		// over-fetch fix couldn't reach.
+		// A bare region abbreviation is shared across countries
 		// ("VT" is both Vermont and Viterbo; "ME" both Maine and Messina); modeled here as
 		// two same-named regions so the fake backend's name-substring match returns both.
-		// The non-US region scores higher on name/BM25, so without a signal the wrong country
-		// wins — and because resolveTree resolves region first and inherits its country down,
-		// that poisons the locality too. The postcode posterior breaks the tie at the region.
+		// The non-US region scores higher on name/BM25, so without a signal the wrong
+		// country wins — and because resolveTree resolves region first and inherits
+		// its country down, that poisons the locality too.
+		// The postcode posterior breaks the tie at the region.
 		const regions: ResolvedPlace[] = [
 			{ id: 1, name: "Vermontia", placetype: "region", country: "IT", lat: 42.4, lon: 12.1, score: 8 },
 			{ id: 2, name: "Vermontia", placetype: "region", country: "US", lat: 44, lon: -72.7, score: 7 },
@@ -585,10 +589,10 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 
 	test("anchor posterior keeps the EXACT match within the pinned country (#369) — tier-safe", async () => {
 		// The "ME → Maine rather than the more-populous Missouri" guard.
-		// Three regions all match the query. With a confident US posterior the US
-		// exact match (Maineland) must win over (a) a higher-score US partial match
-		// (Missouriland — a plain additive boost would promote it, dropping the tier) and (b) a
-		// foreign exact match (Messinaland — the posterior breaks that tie within the exact tier).
+		// Three regions all match the query.
+		// With a confident US posterior the US exact match (Maineland) must win over (a) a higher-score US
+		// partial match (Missouriland — a plain additive boost would promote it, dropping the tier)
+		// and (b) a foreign exact match (Messinaland — the posterior breaks that tie within the exact tier).
 		// `exactMatch` is the backend-supplied tier flag (see ResolvedPlace.exactMatch).
 		const regions: ResolvedPlace[] = [
 			{ id: 1, name: "Maineland", placetype: "region", country: "US", lat: 45, lon: -69, score: 5, exactMatch: true },
@@ -616,10 +620,11 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 
 	// Macro-tier equivalence groups + fallback observability (#718).
 	// WOF models some countries' top-level civil division as `macroregion`
-	// (Italian regions. the post-2016 French régions) rather than `region`; likewise
-	// `macrocounty` above `county` (FR/DE/GB). The region/county placetype filter now expands
-	// through PLACETYPE_FILTER_GROUPS to reach them, but the exact type is still preferred,
-	// and a macro-only resolution is annotated `resolution_quality: "fallback"`.
+	// (Italian regions. the post-2016 French régions) rather than `region`;
+	// likewise `macrocounty` above `county` (FR/DE/GB).
+	// The region/county placetype filter now expands through PLACETYPE_FILTER_GROUPS to
+	// reach them, but the exact type is still preferred, and a macro-only resolution
+	// is annotated `resolution_quality: "fallback"`.
 	test("region span resolves to a macroregion fallback when no exact region exists (#718)", async () => {
 		// Only a macroregion matches "Veneto" — the region-only filter would have returned nothing.
 		const places: ResolvedPlace[] = [
@@ -678,8 +683,9 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		expect(r.metadata?.["resolution_quality"]).toBeUndefined()
 	})
 
-	// Dual-role hierarchy completion (#405/#415). In `…, Berlin, Berlin <PC>` the
-	// parser drops the locality (city == region), leaving a region but no locality.
+	// Dual-role hierarchy completion (#405/#415).
+	// In `…, Berlin, Berlin <PC>` the parser drops the locality (city == region),
+	// leaving a region but no locality.
 	// Completion records the dropped locality as a `locality` interpretation on the
 	// resolved region node (one node, one span, two roles — no synthesized sibling),
 	// from the backend's precomputed coincident-roles relation (#403).
@@ -867,8 +873,9 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		expect(localityRole(result.roots)).toBeUndefined()
 	})
 
-	// Ancestor-lineage attachment (#404). Opt-in enrichment: stamp each resolved node's
-	// containment chain onto metadata.ancestors. Off by default → byte-stable.
+	// Ancestor-lineage attachment (#404).
+	// Opt-in enrichment: stamp each resolved node's containment chain onto metadata.ancestors.
+	// Off by default → byte-stable.
 	const LINEAGE = new Map<number, Ancestor[]>([
 		[
 			101_727_113,
@@ -909,8 +916,9 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 })
 
 describe("resolveTree — interpolation tier (#483)", () => {
-	// A fake interpolation lookup: hits "Main St" #42, with an exact-tier-style AddressPointLookup
-	// available for the fall-through test. Mirrors the FakeResolverBackend pattern (no SQLite).
+	// A fake interpolation lookup: hits "Main St" #42, with an exact-tier-style
+	// AddressPointLookup available for the fall-through test.
+	// Mirrors the FakeResolverBackend pattern (no SQLite).
 	const fakeInterp: InterpolationLookup = {
 		find: ({ street, number }) =>
 			street.toLowerCase().includes("main") && number === "42"
@@ -1051,8 +1059,9 @@ describe("resolveTree — interpolation tier (#483)", () => {
 			},
 		}
 
-		// "344 East Sheldon Rd": parser nests street_prefix/street_suffix under street. street.value
-		// is the bare base name. The query must be the full reassembled street, ordered by offset.
+		// "344 East Sheldon Rd": parser nests street_prefix/street_suffix under
+		// street. street.value is the bare base name.
+		// The query must be the full reassembled street, ordered by offset.
 		const nested = tree("344 East Sheldon Rd 05450", [
 			node("street", "Sheldon", 8, 15, [
 				node("house_number", "344", 0, 3),
@@ -1358,14 +1367,14 @@ describe("resolveTree — street-centroid tier (#1042)", () => {
 	})
 
 	// #1764. The register comparison is documented diacritic-insensitive and was not: NFD produced the combining
-	// mark and `[^a-z0-9 ]` then replaced it with a space, so `Sète` folded to "se te"
-	// and matched nothing. The negative branch of that comparison is a `roots.splice`,
-	// so the miss deleted a correct locality node.
+	// mark and `[^a-z0-9 ]` then replaced it with a space, so `Sète` folded to "se te" and matched nothing.
+	// The negative branch of that comparison is a `roots.splice`, so the miss deleted a correct locality node.
 	//
-	// The asymmetry is what makes the fold decide. `communes[]` is built from `adminValues` first,
-	// which already holds the node's own value . Therefore, whenever the typed value hits
-	// the register the fold cannot matter. It matters only when the typed value misses
-	// and the gazetteer's accented display name is the one leg left to match on.
+	// The asymmetry is what makes the fold decide.
+	// `communes[]` is built from `adminValues` first, which already holds the node's own value .
+	// Therefore, whenever the typed value hits the register the fold cannot matter.
+	// It matters only when the typed value misses and the gazetteer's accented
+	// display name is the one leg left to match on.
 	test("#1764: the register-commune fold is diacritic-insensitive ('Sète' ≡ 'Sete')", async () => {
 		const lookup = fakeStreetCentroids([
 			{ street: "allee pierre barthas", commune: "Sete", lat: 43.403651, lon: 3.670243 },

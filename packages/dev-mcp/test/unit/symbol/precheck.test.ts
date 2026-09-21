@@ -59,7 +59,8 @@ describe("symbol-precheck hook", () => {
 	})
 
 	it("exits cleanly on a payload it cannot read", () => {
-		// Exit 0 with no output. A non-zero exit here would surface as a hook error on an ordinary edit.
+		// Exit 0 with no output.
+		// A non-zero exit here would surface as a hook error on an ordinary edit.
 		expect(() => runHook({ tool_name: "Write", tool_input: {} })).not.toThrow()
 	})
 })

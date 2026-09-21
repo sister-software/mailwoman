@@ -19,9 +19,10 @@ import type { Kysely } from "kysely"
 
 /**
  * The address kind a case exercises — a free string, deliberately extensible
- * (the taxonomy grows with the corpus). Seed examples: `fr_street_bare`, `fr_street_postcode`,
- * `us_residential`, `us_business_suite`, `us_po_box`, `us_rural_route`, `us_intersection`,
- * `de_street`, `nl_street`, `intl_multitoken_street`.
+ * (the taxonomy grows with the corpus).
+ *
+ * Seed examples: `fr_street_bare`, `fr_street_postcode`, `us_residential`, `us_business_suite`,
+ * `us_po_box`, `us_rural_route`, `us_intersection`, `de_street`, `nl_street`, `intl_multitoken_street`.
  */
 export type AddressKind = string
 
@@ -66,6 +67,7 @@ export interface GauntletCaseTable {
 	expect_components: string | null
 	/**
 	 * OPT-IN multi-script rendering interface as JSON `{ tag: [rendering, …] }` (null = no interface).
+	 *
 	 * For a listed key the grader asserts that `scriptRenderings(got)` contains every
 	 * listed rendering, case-folded, and the same key in
 	 * {@linkcode expect_components} is superseded — see `check-case.ts`. Every list must be non-empty (the seed schema
@@ -120,25 +122,30 @@ export interface GauntletCaseTable {
 	 */
 	note: string | null
 	/**
-	 * Ablation only, and optional: a JSON `{ component: rung }` hand-pin overriding the ablation layer's
-	 * derived graceful-degradation ladder for this row (`{"country": "region"}`, `{"region": "abstain"}`).
+	 * Ablation only, and optional: a JSON `{ component: rung }` hand-pin overriding
+	 * the ablation layer's derived graceful-degradation ladder for this row
+	 * (`{"country": "region"}`, `{"region": "abstain"}`).
+	 *
 	 * `rung` is `abstain`, `base`, or a WOF placetype naming the rung the deletion should degrade to.
 	 *
 	 * Absent (the normal case) = the derived ladder decides.
 	 * It exists for the two classes no threshold fixes: territories, whose ancestry
 	 * is politically rather than geographically shaped, and dual-role places (#402),
 	 * where one name is both a locality and its own county and the ladder double-counts a rung.
+	 *
 	 * A corpus that needed many of these would be telling you the derivation is wrong
 	 * rather than that the rows are special.
 	 */
 	ablation_expect: string | null
 	/**
 	 * The CLI locale this row runs under (`en-NZ`), or null for the harness default.
-	 * The runner derives the weights overlay from its region subtag, mirroring production's
-	 * locale-hint routing. This is a locale hint, never a country constraint: `--locale` selects
-	 * an address system and supplies a country prior, and an exact foreign match must still
-	 * resolve under it (#1585's interface) — `country` above stays the truth's country, which
-	 * for a locale row can differ (`Paris` under `en-US` is an FR row run with the US overlay).
+	 *
+	 * The runner derives the weights overlay from its region subtag,
+	 * mirroring production's locale-hint routing.
+	 * This is a locale hint, never a country constraint: `--locale` selects an address system
+	 * and supplies a country prior, and an exact foreign match must still resolve under it
+	 * (#1585's interface) — `country` above stays the truth's country, which for a locale
+	 * row can differ (`Paris` under `en-US` is an FR row run with the US overlay).
 	 */
 	locale: string | null
 	/**
@@ -160,8 +167,10 @@ export interface GauntletCaseTable {
  */
 export interface GauntletMetaTable {
 	/**
-	 * Always {@linkcode GAUNTLET_META_ROW_ID}. A one-row table pinned by its primary key, so a
-	 * second write replaces the stamp rather than appending a second, equally-authoritative one.
+	 * Always {@linkcode GAUNTLET_META_ROW_ID}.
+	 *
+	 * A one-row table pinned by its primary key, so a second write replaces the stamp
+	 * rather than appending a second, equally-authoritative one.
 	 */
 	id: string
 	/**
@@ -170,8 +179,10 @@ export interface GauntletMetaTable {
 	 */
 	corpus_hash: string
 	/**
-	 * How many rows were written. Redundant with the hash for detection, required for the diagnosis:
-	 * "0 cases" reads as an empty loader, "306 vs 192" as a corpus that moved under the artifact.
+	 * How many rows were written.
+	 *
+	 * Redundant with the hash for detection, required for the diagnosis: "0 cases" reads
+	 * as an empty loader, "306 vs 192" as a corpus that moved under the artifact.
 	 */
 	case_count: number
 	/**

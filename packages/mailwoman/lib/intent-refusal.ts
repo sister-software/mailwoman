@@ -26,7 +26,9 @@ import type { QueryIntentMarker, QueryKindResult } from "@mailwoman/core/pipelin
 import { computeQueryShape } from "@mailwoman/query-shape"
 
 /**
- * The kinds this refusal applies to. `near_me` additionally needs a focus point no plain geocode carries.
+ * The kinds this refusal applies to.
+ *
+ * `near_me` additionally needs a focus point no plain geocode carries.
  */
 const REFUSAL_KINDS: ReadonlySet<string> = new Set(["poi_query", "poi_category", "near_me"])
 

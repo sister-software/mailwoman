@@ -7,7 +7,9 @@
 import { useCallback, useRef, useState, type RefObject } from "react"
 
 /**
- * Why a device location could not be used. `null` while nothing has gone wrong.
+ * Why a device location could not be used.
+ *
+ * `null` while nothing has gone wrong.
  */
 export type GeoBiasError = "denied" | "unavailable" | "unsupported"
 
@@ -20,9 +22,11 @@ export interface GeoBiasControl {
 	 */
 	active: boolean
 	/**
-	 * Why the last attempt failed, or `null`. The chip alone cannot say this: a denial turns it
-	 * back off, which looks exactly like a visitor toggling it off themselves, and pressing it
-	 * again does nothing visible because the browser remembers the denial and never prompts twice.
+	 * Why the last attempt failed, or `null`.
+	 *
+	 * The chip alone cannot say this: a denial turns it back off, which looks exactly like
+	 * a visitor toggling it off themselves, and pressing it again does nothing visible
+	 * because the browser remembers the denial and never prompts twice.
 	 */
 	error: GeoBiasError | null
 	/**

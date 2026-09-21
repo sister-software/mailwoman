@@ -84,7 +84,8 @@ describe("coordinate-first locality resolution", () => {
 
 	it("flags a postcode/city conflict (wrong-for-the-city postcode) but still returns the named city", async () => {
 		// "10115" is a Berlin postcode, but the parsed city is München (~500 km away) —
-		// a transposed or wrong postcode. The name wins (München), but the mismatch flag fires.
+		// a transposed or wrong postcode.
+		// The name wins (München), but the mismatch flag fires.
 		const r = await lookup.findPlace({ text: "Muenchen", placetype: "locality", postcode: "10115", country: "DE" })
 		expect(r[0]?.name).toBe("Muenchen")
 		expect(r[0]?.mismatch).toBe(true)
@@ -97,8 +98,9 @@ describe("coordinate-first locality resolution", () => {
 	})
 
 	it("preserves the actual placetype from spr when injecting a postcode-locality candidate (#523)", async () => {
-		// Brooklyn is a borough. When the postcode injection fetches it by id,
-		// the placetype must come from the spr row ("borough"), not a hard-coded "locality".
+		// Brooklyn is a borough.
+		// When the postcode injection fetches it by id, the placetype must come from
+		// the spr row ("borough"), not a hard-coded "locality".
 		// The placetype filter expands locality→borough so the candidate passes. the assertion guards the label.
 		const r = await lookup.findPlace({ text: "Brooklyn", placetype: "locality", postcode: "11201", country: "US" })
 		expect(r.length).toBeGreaterThan(0)

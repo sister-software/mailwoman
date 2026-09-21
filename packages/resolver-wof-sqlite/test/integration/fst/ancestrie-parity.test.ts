@@ -221,7 +221,8 @@ describe("fst-autocomplete ↔ ancestrie parity — synthetic", () => {
 		...extra,
 	})
 
-	// Root: new, san, chic, chicago, springfield. Behavior matrix in the states:
+	// Root: new, san, chic, chicago, springfield.
+	// Behavior matrix in the states:
 	//  - "new london": referential TIE between city and county (tie order = insertion order).
 	//  - "springfield": SIX entries at one state — denser than PER_BRANCH, forcing the top-4 limit.
 	//  - "new york": encyclopedic present + crossCountryBranches + a deep parent chain.

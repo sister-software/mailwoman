@@ -59,6 +59,7 @@ interface Pair {
 
 /**
  * The panels, keyed by the country whose addresses they hold.
+ *
  * `misScope` is the wrong default the rescue leg pins — `US` for the non-US panels
  * (the en-US locale default that causes the bug in the first place) and `FR` for the US panel,
  * so both mis-scope directions are covered rather than only the convenient one.
@@ -94,9 +95,10 @@ const PANELS: Record<string, { path: string; country: string; misScope: string; 
 }
 
 /**
- * The impossible default the regime probe pins. Not an ISO-3166 assignment,
- * so no codex address system can claim it and step 1 always fails — which is the point:
- * it isolates what the alternative countries decide.
+ * The impossible default the regime probe pins.
+ *
+ * Not an ISO-3166 assignment, so no codex address system can claim it and step 1 always fails —
+ * which is the point: it isolates what the alternative countries decide.
  */
 const IMPOSSIBLE_DEFAULT = "ZZ"
 
@@ -115,8 +117,10 @@ if (!panel || (backendName !== "fts" && backendName !== "candidate")) {
 const limit = limitArg ? Number(limitArg) : Infinity
 
 /**
- * The two roots the pass reads. The real tree carries a street too. it is never consulted
- * here (the pass keys on the postcode string the caller passes plus the first locality node),
+ * The two roots the pass reads.
+ *
+ * The real tree carries a street too. it is never consulted here
+ * (the pass keys on the postcode string the caller passes plus the first locality node),
  * so the minimal pair is faithful.
  */
 function rootsFor(pair: Pair): AddressNode[] {

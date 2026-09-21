@@ -40,7 +40,9 @@ export interface VersionPickerProps {
 }
 
 /**
- * The model-version selector. Renders `null` when there is nothing meaningful to pick.
+ * The model-version selector.
+ *
+ * Renders `null` when there is nothing meaningful to pick.
  */
 export function VersionPicker({
 	versions,

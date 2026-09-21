@@ -70,8 +70,10 @@ export interface DatabaseMetaDatabase {
 }
 
 /**
- * Create the provenance `meta` table. Co-located with {@link DatabaseMetaDatabase} per the
- * schema-module convention: a column added to one is a compile error against the other.
+ * Create the provenance `meta` table.
+ *
+ * Co-located with {@link DatabaseMetaDatabase} per the schema-module convention:
+ * a column added to one is a compile error against the other.
  */
 export async function createDatabaseMetaTable<DB extends DatabaseMetaDatabase>(db: DatabaseClient<DB>): Promise<void> {
 	const kdb = db
@@ -86,6 +88,7 @@ export async function createDatabaseMetaTable<DB extends DatabaseMetaDatabase>(d
 
 /**
  * Upsert provenance rows into a `meta` table the caller has already created.
+ *
  * One implementation for every database and postcode-locality builder — the column-list form, which
  * is byte-equivalent to the bare `values (?,?)` some builders used against the same two-column table.
  */
@@ -98,9 +101,11 @@ export function writeMetaRows<DB>(db: DatabaseClient<DB>, rows: ReadonlyArray<re
 }
 
 /**
- * What a source dump contributed, fingerprinted. `rows` is the distinct normalized-postcode
- * count (the `spr` rows), which is well below the dump's line count wherever GeoNames
- * carries one row per (postcode, settlement) — PL 72,899 lines → 20,299 codes.
+ * What a source dump contributed, fingerprinted.
+ *
+ * `rows` is the distinct normalized-postcode count (the `spr` rows),
+ * which is well below the dump's line count wherever GeoNames carries one row per
+ * (postcode, settlement) — PL 72,899 lines → 20,299 codes.
  */
 export interface GeonamesPostalSourceFact {
 	country: string
@@ -119,22 +124,27 @@ export interface GeonamesPostalSourceFact {
 
 export interface BuildPostcodeGeonamesTailOptions {
 	/**
-	 * ISO-2 countries to fold, in ingest order. Default {@link DEFAULT_GEONAMES_TAIL_COUNTRIES}.
+	 * ISO-2 countries to fold, in ingest order.
+	 *
+	 * Default {@link DEFAULT_GEONAMES_TAIL_COUNTRIES}.
 	 */
 	countries?: readonly string[]
 	/**
 	 * GeoNames postal dump dir holding `<CC>.txt` (download.geonames.org/export/zip).
+	 *
 	 * Default `<data-root>/geonames-postal`.
 	 */
 	postalDir?: PathBuilderLike
 	/**
-	 * Output artifact. Default `<data-root>/wof/postalcode-geonames-tail-<yyyy-MM-DD>.db` —
-	 * a new dated path every build. promoting it over the shipped `postalcode-geonames-tail.db`
-	 * is a deliberate, separate swap.
+	 * Output artifact.
+	 *
+	 * Default `<data-root>/wof/postalcode-geonames-tail-<yyyy-MM-DD>.db` — a new dated path every build.
+	 * promoting it over the shipped `postalcode-geonames-tail.db` is a deliberate, separate swap.
 	 */
 	out?: PathBuilderLike
 	/**
 	 * Build clock, stamped into `meta.built_at` and the default output name.
+	 *
 	 * Passed in so the module never reads the clock implicitly (the `defaultGazetteerVersion` convention).
 	 */
 	now?: Date
@@ -162,8 +172,9 @@ export interface BuildPostcodeGeonamesTailResult {
 }
 
 /**
- * Build the sealed GeoNames-postal tail database. See the module docstring for
- * what this reproduces and why the country order matters.
+ * Build the sealed GeoNames-postal tail database.
+ *
+ * See the module docstring for what this reproduces and why the country order matters.
  */
 export async function buildPostcodeGeonamesTail(
 	opts: BuildPostcodeGeonamesTailOptions = {}
@@ -208,9 +219,10 @@ export async function buildPostcodeGeonamesTail(
 		ingest = await ingestGeonamesPostal(db, countries, postalDir)
 		phase("ingest", `${ingest.inserted.toLocaleString()} distinct postcodes`)
 
-		// Every row's parent_id is -1 (GeoNames postal carries no hierarchy), so this writes the self
-		// row per place and nothing else. It is not decorative: the resolver's parent-constraint
-		// scopes a lookup with `spr.id IN (select id from ancestors where ancestor_id = ?)`,
+		// Every row's parent_id is -1 (GeoNames postal carries no hierarchy),
+		// so this writes the self row per place and nothing else.
+		// It is not decorative: the resolver's parent-constraint scopes a lookup
+		// with `spr.id IN (select id from ancestors where ancestor_id = ?)`,
 		// and a place absent from `ancestors` can never satisfy it.
 		// The frozen artifact carries exactly one ancestor row per place for this reason.
 		phase("ancestors")
@@ -259,9 +271,10 @@ export async function buildPostcodeGeonamesTail(
 }
 
 /**
- * Fingerprint each present source dump. A country whose file is missing gets no fact row
- * rather than a zeroed one — the meaning-of-zero rule: `rows: 0` would read as "measured,
- * empty", which is a different claim from "never present".
+ * Fingerprint each present source dump.
+ *
+ * A country whose file is missing gets no fact row rather than a zeroed one — the meaning-of-zero rule:
+ * `rows: 0` would read as "measured, empty", which is a different claim from "never present".
  */
 async function collectSourceFacts(
 	countries: readonly string[],
@@ -333,6 +346,7 @@ interface DatabaseMetaInput {
 
 /**
  * Bake the provenance record into the staging DB (pre-vacuum, pre-seal — a shipped DB is never patched).
+ *
  * `sources` is stored as JSON so the per-file md5s stay machine-readable.
  */
 async function writeDatabaseMeta<DB extends DatabaseMetaDatabase>(

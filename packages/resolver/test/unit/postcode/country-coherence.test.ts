@@ -169,7 +169,8 @@ const BERLIN_NH: ResolvedPlace = {
 	exactMatch: true,
 }
 
-// The domestic control: ZIP 62701 + Springfield IL, 3.3 km apart. The default country is coherent here.
+// The domestic control: ZIP 62701 + Springfield IL, 3.3 km apart.
+// The default country is coherent here.
 const PC_62701_US: ResolvedPlace = {
 	id: 900_020,
 	name: "62701",
@@ -323,8 +324,9 @@ const SARNEN_CH: ResolvedPlace = {
 
 /**
  * Models the two backend behaviours that cause the bug: `country` is a hard filter
- * (a US-scoped query never returns a foreign row — `spr.country = ?`), and within
- * the exact tier population is the primary key (#905), so Paris TX beats Paris TN.
+ * (a US-scoped query never returns a foreign row — `spr.country = ?`), and within the
+ * exact tier population is the primary key (#905), so Paris TX beats Paris TN.
+ *
  * Name match is exact + case-insensitive.
  */
 async function makeBackend(places: readonly ResolvedPlace[]): Promise<ResolverBackend & { calls: number }> {
@@ -402,8 +404,8 @@ describe("findPostcodeCountryScope", () => {
 		const backend = await makeBackend(RIVOLI_POOL)
 		const tree = addressTree("75001", "Paris")
 
-		// The row above verdicts FR on this exact evidence. Adding a country token makes
-		// the question answered, so the inference has nothing left to decide.
+		// The row above verdicts FR on this exact evidence.
+		// Adding a country token makes the question answered, so the inference has nothing left to decide.
 		tree.roots.push(node({ tag: "country", value: "France" }))
 
 		const scope = await findPostcodeCountryScope(tree.roots, backend, { postcode: "75001", defaultCountry: "US" })
@@ -547,9 +549,10 @@ describe("findPostcodeCountryScope", () => {
 
 	// Until #24 this asserted the opposite — that PL was unreachable, because the candidate
 	// set came from `candidateSystemsForPostcode` and there is no `pl` codex address system.
-	// That was a corollary of the source, never a safety property: the pair is coherent in
-	// exactly one country and the pass exists to say so. The gazetteer's own postcode membership
-	// is now the candidate source, so the 8 codex address systems stop bounding the mechanism.
+	// That was a corollary of the source, never a safety property: the pair is coherent
+	// in exactly one country and the pass exists to say so.
+	// The gazetteer's own postcode membership is now the candidate source,
+	// so the 8 codex address systems stop bounding the mechanism.
 	// (The abstention rules are unchanged and tested below.)
 	it("proposes a country with no codex address system when the GAZETTEER holds the postcode there", async () => {
 		const plPostcode: ResolvedPlace = {
@@ -626,11 +629,14 @@ describe("findPostcodeCountryScope", () => {
 })
 
 /**
- * The single-sided rungs (#24). The pair test can only speak when both halves are in the gazetteer,
- * and on the 2026-08-09 eu-mixed panel that condition failed 10 times for two opposite reasons —
- * a municipal district the gazetteer does not name (`Praha 3`), and a country whose postcodes
- * the gazetteer does not carry at all (CH, be). Each rung fires only when the default
- * country corroborates neither half, and only when its own half names exactly one country.
+ * The single-sided rungs (#24).
+ *
+ * The pair test can only speak when both halves are in the gazetteer, and on the
+ * 2026-08-09 eu-mixed panel that condition failed 10 times for two opposite reasons —
+ * a municipal district the gazetteer does not name (`Praha 3`), and a country whose
+ * postcodes the gazetteer does not carry at all (CH, be).
+ * Each rung fires only when the default country corroborates neither half, and only
+ * when its own half names exactly one country.
  */
 describe("findPostcodeCountryScope — single-sided rungs (#24)", () => {
 	it("scopes on the LOCALITY alone when it names exactly one country (Sarnen → CH)", async () => {
@@ -794,10 +800,10 @@ describe("findPostcodeCountryScope — single-sided rungs (#24)", () => {
 })
 
 describe("findPostcodeCountryScope — multi-value locality fallthrough", () => {
-	// `Calle Mayor 12, Aravaca, 28023 Madrid`: the model tags both `Aravaca`
-	// and `Madrid` as localities. `Aravaca` is a neighbourhood the locality band cannot see;
-	// `Madrid` carries the ES pair. Coordinates are the live candidate rows:
-	// the ES 28023 row is Aravaca's own CP, 9.6 km from the Madrid locality.
+	// `Calle Mayor 12, Aravaca, 28023 Madrid`: the model tags both `Aravaca` and `Madrid` as localities.
+	// `Aravaca` is a neighbourhood the locality band cannot see; `Madrid` carries the ES pair.
+	// Coordinates are the live candidate rows: the ES 28023 row is Aravaca's own CP,
+	// 9.6 km from the Madrid locality.
 	const PC_28023_ES: ResolvedPlace = {
 		id: 900_200,
 		name: "28023",
@@ -876,7 +882,8 @@ describe("findPostcodeCountryScope — multi-value locality fallthrough", () => 
 		// "Green Point" has pop-0 US namesakes (domestic corroboration for that value only);
 		// "Cape Town" names exactly one country in the whole gazetteer.
 		// Any-value-kills abstained the pass and the hard US filter answered Green Point,
-		// Pennsylvania — 12,748 km off. The live 8001 rows are no/AU/SI: no US row, no ZA row.
+		// Pennsylvania — 12,748 km off.
+		// The live 8001 rows are no/AU/SI: no US row, no ZA row.
 		const greenPointPA: ResolvedPlace = {
 			id: 900_220,
 			name: "Green Point",
@@ -1172,11 +1179,12 @@ describe("resolveTree + postcode-country coherence", () => {
 	})
 
 	it("fires WITHOUT a default country when exactly one country makes the pair coherent (the browser-cascade arm)", async () => {
-		// The 2026-08-11 interface flip (the staged-repoint e2e): with no default in force there
-		// is nothing to override, but the pair rung still constrains — (75001, Paris) is coherent
-		// in FR alone (Paris TX sits ~150 km from the Addison ZIP), so the walk scopes to FR
-		// instead of resolving population-first. Only the pair rung runs on this arm. the
-		// single-sided rungs keep needing the default as their domestic-plausibility guard.
+		// The 2026-08-11 interface flip (the staged-repoint e2e): with no default in
+		// force there is nothing to override, but the pair rung still constrains —
+		// (75001, Paris) is coherent in FR alone (Paris TX sits ~150 km from the Addison ZIP),
+		// so the walk scopes to FR instead of resolving population-first.
+		// Only the pair rung runs on this arm. the single-sided rungs keep needing the
+		// default as their domestic-plausibility guard.
 		const backend = await makeBackend(RIVOLI_POOL)
 
 		const out = await createWOFResolver(backend).resolveTree(addressTree("75001", "Paris"), {

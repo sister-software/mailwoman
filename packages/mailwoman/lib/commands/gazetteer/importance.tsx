@@ -229,8 +229,8 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 		await createPlaceImportanceTable(kdb)
 
 		// A single WOF id can concord to multiple wikidata ids
-		// (the current global DB's concordances carry such multiplicities. a naive
-		// per-wikidata insert double-inserts the wof id and violates the `id` primary key).
+		// (the current global DB's concordances carry such multiplicities. a naive per-wikidata
+		// insert double-inserts the wof id and violates the `id` primary key).
 		// Collapse to the MAX importance per wof id first, then insert once each.
 		const wofEncyclopedic = new Map<number, number>()
 

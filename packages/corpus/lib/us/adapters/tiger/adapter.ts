@@ -43,8 +43,9 @@ import { decomposeStreet } from "#us/adapters/tiger/street-decompose"
 import { lookupFipsState } from "#us/fips-state"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record
- * can be traced back to the dataset it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const TIGER_ADAPTER_ID = "tiger"
 /**
@@ -55,6 +56,7 @@ export const TIGER_DEFAULT_LICENSE = "Public Domain"
 
 /**
  * The country surface form used in `formatAddress` for US.
+ *
  * Matches the canonical OpenCage US template output so reconciliation doesn't strip it
  * when the row carries `country` explicitly.
  */
@@ -76,7 +78,9 @@ interface TigerPlaceRow {
 }
 
 /**
- * Yield one or more `CanonicalRow`s per street segment. Postcode variants:
+ * Yield one or more `CanonicalRow`s per street segment.
+ *
+ * Postcode variants:
  *
  * - No ZIP set → one row, street + region.
  * - `zipl === zipr` → one row, street + region + postcode.
@@ -166,7 +170,9 @@ function* placeVariants(row: TigerPlaceRow): Iterable<{
 }
 
 /**
- * Build a tiger adapter. Pure factory so multiple instances can be created in tests.
+ * Build a tiger adapter.
+ *
+ * Pure factory so multiple instances can be created in tests.
  */
 export function createTigerAdapter(): CorpusAdapter {
 	return {

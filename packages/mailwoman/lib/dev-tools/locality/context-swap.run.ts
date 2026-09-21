@@ -78,9 +78,9 @@ const regionsPresent = new Set(localities.map((place) => place.region))
 /**
  * The panel's rows for one region, raising when the panel holds none.
  *
- * An absent region yields an empty arm, which reports 0% and is indistinguishable from
- * a measured zero. The default coordinate panel's 2,000 rows carry 7 of the 50 states
- * and DC (CA, DC, IL, SD, MT, IA, VT), so most regions hit this path.
+ * An absent region yields an empty arm, which reports 0% and is indistinguishable from a measured zero.
+ * The default coordinate panel's 2,000 rows carry 7 of the 50 states and DC
+ * (CA, DC, IL, SD, MT, IA, VT), so most regions hit this path.
  */
 function byRegion(region: string): typeof localities {
 	if (!regionsPresent.has(region)) {
@@ -144,8 +144,9 @@ console.log(`| arm | rows | locality recovered |`)
 console.log(`| --- | --: | --: |`)
 
 /**
- * How many recovered rows to print under the table. The list shows what the
- * arms render. the table carries the rate.
+ * How many recovered rows to print under the table.
+ *
+ * The list shows what the arms render. the table carries the rate.
  */
 const RESCUED_EXAMPLES = 8
 

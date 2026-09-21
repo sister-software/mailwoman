@@ -108,9 +108,10 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			// Only when both coords are present.
 			const bias = params.lat != null && params.lon != null ? [{ lat: params.lat, lon: params.lon }] : undefined
 
-			// No country constraint: the default-on #244 placer routes the query's country
-			// (Berlin→DE, Boston→US). Forcing "US" here is a hard override (geocode-core.ts:102) that
-			// resolved every non-US query to its US namesake — wrong for a global autocomplete front.
+			// No country constraint: the default-on #244 placer routes the query's
+			// country (Berlin→DE, Boston→US).
+			// Forcing "US" here is a hard override (geocode-core.ts:102) that resolved every
+			// non-US query to its US namesake — wrong for a global autocomplete front.
 			const result = await geocodeAddress(query, {
 				classifier,
 				resolver,
@@ -142,12 +143,11 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			// highway/street osm tags (the parallel of the #1041 house treatment).
 			const streetGrade = result.resolution_tier === "street"
 
-			// The register row's own scope tags (result.rooftop) decorate a house-grade
-			// answer whose hierarchy carries no locality/postcode — the register attests
-			// the rooftop's commune and postcode even when the query never named them,
-			// and #1014's decorate-from-the-resolved-place doctrine covers register attestations
-			// exactly as it covers gazetteer rows. The key form is normalized. title-case
-			// it for display (the extracts store no display-cased locality).
+			// The register row's own scope tags (result.rooftop) decorate a house-grade answer whose
+			// hierarchy carries no locality/postcode — the register attests the rooftop's commune
+			// and postcode even when the query never named them, and #1014's decorate-from-the-resolved-place
+			// doctrine covers register attestations exactly as it covers gazetteer rows.
+			// The key form is normalized. title-case it for display (the extracts store no display-cased locality).
 			const places = result.hierarchy.map((h) => ({ tag: h.tag, name: h.name }))
 
 			if (result.rooftop?.localityNorm && !places.some((p) => p.tag === "locality")) {
@@ -156,10 +156,11 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				places.push({ tag: "locality", name: pyTitle(result.rooftop.localityNorm) })
 			}
 
-			// Locality→postcode enrichment: an admin answer for a place whose containing postcode
-			// is unambiguous (exactly one) carries that postcode — the register/WOF attests it,
-			// the query simply never said it. Multi-postcode cities (Paris) get nothing:
-			// the exactly-one rule is the abstention, per the registry doctrine.
+			// Locality→postcode enrichment: an admin answer for a place whose
+			// containing postcode is unambiguous (exactly one) carries that postcode —
+			// the register/WOF attests it, the query simply never said it.
+			// Multi-postcode cities (Paris) get nothing: the exactly-one rule is the
+			// abstention, per the registry doctrine.
 			// Keyed by the resolved place's WOF id, so no name matching is involved.
 			let enrichedPostcode: string | undefined
 
@@ -184,7 +185,8 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			}
 
 			// #1016: candidates[0] is the primary itself. its ranked alternatives (Springfield MA/IL/…) become the
-			// extra features, up to the requested `limit`. Each alternative is a single resolved place.
+			// extra features, up to the requested `limit`.
+			// Each alternative is a single resolved place.
 			const alternatives = result.candidates.slice(1).map((c) => {
 				const cc = matchCountry(c.countryCode)
 

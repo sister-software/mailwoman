@@ -35,10 +35,11 @@ export interface EvidenceCensus {
 	country: ChannelReading
 	/**
 	 * True when at least one channel was present and every present channel was silent —
-	 * the model decided from token embeddings alone. False when any channel fired,
-	 * and also false when no channel was configured at all: a session with no channels
-	 * cannot be starved of them, and reporting it as starved would point the reader
-	 * at retrieval when the fact is about configuration.
+	 * the model decided from token embeddings alone.
+	 *
+	 * False when any channel fired, and also false when no channel was configured at all:
+	 * a session with no channels cannot be starved of them, and reporting it as starved
+	 * would point the reader at retrieval when the fact is about configuration.
 	 */
 	silent: boolean
 }
@@ -76,6 +77,7 @@ export function evidenceCensus(parse: NeuralParseTrace): EvidenceCensus {
  * so this is an L1 signal per prior rather than merely "the stage ran".
  * `emissions_moved` is the cross-check over the whole matrix: true when the decoded
  * emissions differ anywhere from the raw logits, i.e. when some prior wrote something.
+ *
  * `applied` kinds with `emissions_moved: false` (or vice versa) would mean a prior's own bookkeeping
  * disagrees with the matrix it claims to have written — worth surfacing, never worth papering over.
  */

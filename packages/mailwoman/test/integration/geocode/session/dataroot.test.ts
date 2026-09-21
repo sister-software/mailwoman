@@ -34,10 +34,11 @@ describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weigh
 		// Weights resolution is a ladder, and only its overlay rung is governed by `dataRoot` — a checkout
 		// whose workspace packages or weights cache carry binaries (CI links them into its checkout)
 		// resolves the FST from those rungs, while a checkout without them rejects outright.
-		// Both are in-interface, so this pin asserts the defect's own words instead: the #1732
-		// bug was weights "silently reading the env root", so whatever the ladder answers,
-		// it must never be a path inside the process ENV data root's weights overlay when the
-		// session was given a different root. Pre-fix, `artifacts.fstPath` pointed exactly there.
+		// Both are in-interface, so this pin asserts the defect's own words instead:
+		// the #1732 bug was weights "silently reading the env root", so whatever the ladder
+		// answers, it must never be a path inside the process ENV data root's weights overlay
+		// when the session was given a different root.
+		// Pre-fix, `artifacts.fstPath` pointed exactly there.
 		const outcome = await createGeocodeSession(
 			// The production defaults factory rather than a hand-built literal — the same lockstep factory the dev-mcp
 			// registry derives from, so this pin cannot drift from the shipped configuration.

@@ -23,11 +23,15 @@ import { extname, join, normalize } from "path-ts"
  */
 export interface ServeRangeOptions {
 	/**
-	 * Directory to serve. Default `/tmp`.
+	 * Directory to serve.
+	 *
+	 * Default `/tmp`.
 	 */
 	dir?: string
 	/**
-	 * Port to listen on. Default 8899.
+	 * Port to listen on.
+	 *
+	 * Default 8899.
 	 */
 	port?: number
 }
@@ -50,8 +54,10 @@ const TYPES: Record<string, string> = {
 }
 
 /**
- * Serve `dir` over localhost with http Range support. Resolves once the server is listening. the
- * caller owns the lifetime (dispose it to stop. commands typically hold the process open instead).
+ * Serve `dir` over localhost with http Range support.
+ *
+ * Resolves once the server is listening. the caller owns the lifetime
+ * (dispose it to stop. commands typically hold the process open instead).
  */
 export async function serveWithRangeSupport(
 	options: ServeRangeOptions = {},

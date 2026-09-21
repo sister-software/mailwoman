@@ -1,11 +1,13 @@
 /**
  * Perturb-golden.ts — corpus-perturbation neutral-arena generator (Direction A).
  *
- * Our 376-assertion suite is a Pelias/addressit port (v0's lineage), so it can't reveal
- * where neural beats rules. This builds an unbiased arena from ground truth WE own:
- * take golden v0.1.2 (already labeled in our schema) and apply rule- defeating perturbations
- * while keeping the component labels intact. Rule-based parsers lean on delimiters /
- * capitalization / canonical spacing. a contextual neural model should degrade more gracefully.
+ * Our 376-assertion suite is a Pelias/addressit port (v0's lineage),
+ * so it can't reveal where neural beats rules.
+ * This builds an unbiased arena from ground truth WE own: take golden v0.1.2 (already labeled in our schema)
+ * and apply rule- defeating perturbations while keeping the component labels intact.
+ *
+ * Rule-based parsers lean on delimiters / capitalization / canonical spacing. a
+ * contextual neural model should degrade more gracefully.
  * The three-bucket harness then shows whether that's true (the methodology-vindication test).
  *
  * Perturbation classes (each preserves the expected components — only the surface changes,
@@ -55,10 +57,12 @@ interface GoldenRow {
  * `or 97214` → `OR97214`, `Auvergne-Rhône-Alpes 69001` → `Auvergne-Rhône-Alpes69001`.
  *
  * Driven by the row's own components rather than by a shape.
- * `\b([A-Z]{2})\s+(\d{5})\b` matches a US region code and a five-digit ZIP and nothing else,
- * so it read every non-US row as unperturbable — and this tool runs over the whole golden directory,
- * `fr.jsonl` included. A country whose layout writes the postcode first, or writes no region,
- * still produces no change here, and the caller counts that rather than emitting the row unperturbed.
+ * `\b([A-Z]{2})\s+(\d{5})\b` matches a US region code and a five-digit ZIP
+ * and nothing else, so it read every non-US row as unperturbable — and this tool
+ * runs over the whole golden directory, `fr.jsonl` included.
+ *
+ * A country whose layout writes the postcode first, or writes no region, still produces
+ * no change here, and the caller counts that rather than emitting the row unperturbed.
  */
 function glue(raw: string, components: Record<string, string>): string {
 	const region = components.region?.trim()
@@ -81,6 +85,7 @@ async function main(): Promise<void> {
 
 	/**
 	 * Per class: cases written, and rows the class could not change.
+	 *
 	 * A class that covers one country reports a large unperturbed count here
 	 * rather than looking like a class that simply produced fewer cases.
 	 */

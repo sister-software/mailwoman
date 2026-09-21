@@ -75,9 +75,10 @@ export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 				raw = `${city}, ${postcodeSurface}, ${street} ${number}`
 			} else {
 				// order === STREETLESS_ORDER: the street-less form — `«city» «pc», Česko` — the exact surface of the
-				// cz-full-praha-100-00 board row. The v4.5.0 no-promote receipt measured the gap:
-				// every prior order was street-containing, so the model never saw a spaced PSČ beside
-				// a bare locality and mangled 'Praha 100 00, Czechia' into house_number spans.
+				// cz-full-praha-100-00 board row.
+				// The v4.5.0 no-promote receipt measured the gap: every prior order was
+				// street-containing, so the model never saw a spaced PSČ beside a bare locality
+				// and mangled 'Praha 100 00, Czechia' into house_number spans.
 				// Street/number stay OUT of the components for this form (they are not in the surface).
 				raw = `${city} ${postcodeSurface}, Česko`
 			}

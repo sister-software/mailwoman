@@ -49,15 +49,19 @@ export type CounterfactualSetting = (typeof COUNTERFACTUAL_SETTINGS)[number]
 export const COUNTERFACTUAL_MOVED_KM = DISTANCE_THRESHOLDS_KM[0]
 
 /**
- * The self-contained base weights locale. Every other `@mailwoman/neural-weights-*`
- * package is a data overlay sharing this one's `model.onnx` byte-for-byte, so it is the
- * locale a flip returns TO when the row is already running under its own overlay.
+ * The self-contained base weights locale.
+ *
+ * Every other `@mailwoman/neural-weights-*` package is a data overlay sharing
+ * this one's `model.onnx` byte-for-byte, so it is the locale a flip returns TO
+ * when the row is already running under its own overlay.
  */
 export const BASE_LOCALE = "en-US"
 
 /**
- * Repo-relative home of the release manifest, whose `locales` array is the list
- * of weights overlays that exist. Read rather than re-typed: an overlay added by
+ * Repo-relative home of the release manifest, whose `locales` array is the
+ * list of weights overlays that exist.
+ *
+ * Read rather than re-typed: an overlay added by
  * `packages/release-kit/lib/weights/scaffold-weights-overlay.ts` lands there, and a hand-kept
  * copy here would make the locale setting silently stop offering the newest locale.
  */
@@ -113,6 +117,7 @@ export interface CounterfactualFlip {
 
 /**
  * A setting that could not be flipped for this row, and why.
+ *
  * Reported so an empty flip list is readable: no setting applied, or every
  * setting applied and none moved the answer.
  */
@@ -125,10 +130,10 @@ export interface SettingSkip {
  * The single-setting flips available for one row.
  *
  * `effective` is the resolved session options — the production defaults already filled in —
- * because the flip has to be stated against what the engine will actually do rather
- * than against what the caller happened to type. An unset setting in a caller's
- * `EngineConfig` means the production default, so reading the caller's object would
- * report every unset setting as absent and flip it in the wrong direction.
+ * because the flip has to be stated against what the engine will actually do
+ * rather than against what the caller happened to type.
+ * An unset setting in a caller's `EngineConfig` means the production default, so reading the
+ * caller's object would report every unset setting as absent and flip it in the wrong direction.
  */
 export async function enumerateFlips(
 	effective: GeocodeSessionOptions,
@@ -225,12 +230,14 @@ export interface CounterfactualAnswer {
 }
 
 /**
- * A flip that moved the answer. Flips that changed nothing are counted,
- * never listed — the list is the finding.
+ * A flip that moved the answer.
  *
- * `moved_km` is `null` when one side has no coordinate: an abstention has no distance
- * from anything, and turning that into a number (zero, or infinity) is the projection
- * this whole surface exists to avoid. `changed_abstention` is the fact in that case.
+ * Flips that changed nothing are counted, never listed — the list is the finding.
+ *
+ * `moved_km` is `null` when one side has no coordinate: an abstention has no
+ * distance from anything, and turning that into a number (zero, or infinity) is
+ * the projection this whole surface exists to avoid.
+ * `changed_abstention` is the fact in that case.
  */
 interface CounterfactualMove extends MoveReading {
 	setting: CounterfactualSetting

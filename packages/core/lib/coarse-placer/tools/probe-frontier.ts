@@ -43,12 +43,16 @@ const MIN_IN_CLASS_TOP1 = 0.8
  */
 export interface ProbeFrontierOptions {
 	/**
-	 * Model artifact dir. Default: the deployed placer bundled in `@mailwoman/core`
-	 * (`core/data/coarse-placer`), not the `$MAILWOMAN_DATA_ROOT` training output — match the runtime.
+	 * Model artifact dir.
+	 *
+	 * Default: the deployed placer bundled in `@mailwoman/core` (`core/data/coarse-placer`),
+	 * not the `$MAILWOMAN_DATA_ROOT` training output — match the runtime.
 	 */
 	model?: string
 	/**
-	 * Queries sampled (shortest first). Default 2000.
+	 * Queries sampled (shortest first).
+	 *
+	 * Default 2000.
 	 */
 	n?: number
 	/**
@@ -118,6 +122,7 @@ const RECOVERABLE = [
 
 /**
  * Coarse-placer frontier probe (#822) — see the module doc.
+ *
  * Emits the report head to stdout.
  */
 export async function probeFrontier(

@@ -16,6 +16,7 @@ import { hasColumn as columnExists, tableExists } from "@mailwoman/sqlite/intros
 
 /**
  * A prepared single-row query whose parameter tuple remains visible to TypeScript.
+ *
  * `StatementSync` accepts only the broad `SQLInputValue[]`, which otherwise erases
  * tagged key types before they reach SQLite.
  */
@@ -67,11 +68,12 @@ export function hasTable<DB>(db: DatabaseClient<DB>, name: string): boolean {
 /**
  * True when `table` exists in the open database and carries `column`.
  *
- * The column-level sibling of {@link hasTable}, and it exists for the same reason one layer down:
- * an artifact built before a column was added is still a valid artifact, and a reader that
- * unconditionally names the new column in its `select` turns "this gazetteer is a build behind"
- * into `no such column` at the first keystroke. Probe once at construction and shape the
- * query — `table_info` is a pragma, so it must not sit on a per-query path.
+ * The column-level sibling of {@link hasTable}, and it exists for the same reason one
+ * layer down: an artifact built before a column was added is still a valid artifact,
+ * and a reader that unconditionally names the new column in its `select` turns "this
+ * gazetteer is a build behind" into `no such column` at the first keystroke.
+ * Probe once at construction and shape the query — `table_info` is a pragma,
+ * so it must not sit on a per-query path.
  *
  * Note the interpolation: pragma does not take bound parameters, so `table` is spliced.
  * Every caller passes a module-level constant. never pass user input.

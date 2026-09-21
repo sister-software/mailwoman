@@ -22,6 +22,7 @@ import type { RepoContext } from "#check"
 export interface TrackedSourceOptions {
 	/**
 	 * Pathspecs in `git ls-files` form (default: every `.ts` / `.tsx`).
+	 *
 	 * See {@link pathspecPattern} for the matching rule.
 	 */
 	globs?: readonly string[]
@@ -34,7 +35,9 @@ export interface TrackedSourceOptions {
 	 */
 	excludePrefixes?: readonly string[]
 	/**
-	 * Keep `.d.ts` files. Off by default: declarations are outputs rather than sources.
+	 * Keep `.d.ts` files.
+	 *
+	 * Off by default: declarations are outputs rather than sources.
 	 */
 	includeDeclarations?: boolean
 	/**
@@ -54,6 +57,7 @@ const PATTERN_SPECIALS = /[.+^${}()|[\]\\]/g
  * and `**` is two stars rather than a directory glob: `scripts/**` followed by `/*.ts` requires
  * a literal `/` after `scripts/`, so it matches `scripts/eval/x.ts` and not `scripts/x.ts`.
  * Measured on this repository: the pathspec listed 31 files, 0 of them at the top of `scripts/`.
+ *
  * A pathspec with no wildcard is a leading-path match, as git treats it.
  */
 export function pathspecPattern(pathspec: string): RegExp {

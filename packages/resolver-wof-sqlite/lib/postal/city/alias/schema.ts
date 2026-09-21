@@ -19,8 +19,10 @@
 import type { Kysely } from "kysely"
 
 /**
- * One observed postal-city aggregate. The natural key is `(postcode, postal_city, geo_locality)`;
- * the builder enforces a `MIN_COUNT` floor on `n`, so every row is a non-trivial usage.
+ * One observed postal-city aggregate.
+ *
+ * The natural key is `(postcode, postal_city, geo_locality)`; the builder enforces a
+ * `MIN_COUNT` floor on `n`, so every row is a non-trivial usage.
  */
 export interface PostalCityAliasTable {
 	/**
@@ -75,8 +77,9 @@ export const POSTAL_CITY_ALIAS_COLUMNS = [
 
 /**
  * Create the `postal_city_alias` table + its two probe indexes.
- * Kept here (not only in the builder) so tests can stand up a fixture DB with the exact
- * production shape. Pass a {@link DatabaseClient} (or any `Kysely`) over the alias DB.
+ *
+ * Kept here (not only in the builder) so tests can stand up a fixture DB with the exact production shape.
+ * Pass a {@link DatabaseClient} (or any `Kysely`) over the alias DB.
  */
 export async function createPostalCityAliasTable(db: Kysely<PostalCityAliasDatabase>): Promise<void> {
 	await db.schema

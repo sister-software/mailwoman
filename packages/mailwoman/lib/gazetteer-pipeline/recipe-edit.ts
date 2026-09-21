@@ -81,8 +81,8 @@ const entryPattern = (country: string): RegExp => new RegExp(`^\\s*"${country}",
 /**
  * Add a country to a list, in sorted position.
  *
- * Sorted rather than appended because every list is sorted today, and an appended
- * entry reads as an afterthought in a file whose whole purpose is to be reviewed.
+ * Sorted rather than appended because every list is sorted today, and an appended entry
+ * reads as an afterthought in a file whose whole purpose is to be reviewed.
  * Adding a country that is already present is a no-OP reported as such rather than an error:
  * a caller running the same plan twice should get the same tree.
  */
@@ -99,9 +99,9 @@ export function addCountry(source: string, listName: string, country: string): R
 		return { ok: true, source, changed: false, note: `${cc} is already in ${listName}` }
 	}
 
-	// The first entry that sorts after the new one. Comment lines are skipped
-	// as sort keys but stay attached to whatever follows them, so inserting
-	// before a comment block would separate it from its entry.
+	// The first entry that sorts after the new one.
+	// Comment lines are skipped as sort keys but stay attached to whatever follows them,
+	// so inserting before a comment block would separate it from its entry.
 	let insertAt = lines.length
 
 	for (const [i, line] of lines.entries()) {

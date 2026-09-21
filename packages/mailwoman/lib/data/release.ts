@@ -27,7 +27,9 @@ import type { BundleArtifact } from "#data/bundles"
 export type DataReleaseManifest = Record<string, string>
 
 /**
- * Read `<dataRoot>/releases.json`. Returns null (legacy mode) when absent or malformed.
+ * Read `<dataRoot>/releases.json`.
+ *
+ * Returns null (legacy mode) when absent or malformed.
  */
 export async function readReleaseManifest(dataRoot: string): Promise<DataReleaseManifest | null> {
 	try {
@@ -73,8 +75,9 @@ export async function resolveDatabasePath(
 
 /**
  * The path a `us`-family artifact already occupies on disk
- * (versioned or legacy, via {@link resolveDatabasePath}), or the artifact's own
- * resolved path for a non-family artifact — `null` when nothing is there yet.
+ * (versioned or legacy, via {@link resolveDatabasePath}), or the artifact's own resolved
+ * path for a non-family artifact — `null` when nothing is there yet.
+ *
  * Shared by `data pull` and `data status`, so "already present" means the same thing to both.
  */
 export async function existingLocalPath(

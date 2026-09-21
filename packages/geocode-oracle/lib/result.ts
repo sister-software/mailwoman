@@ -34,17 +34,20 @@ import type { PostalAddress } from "@mailwoman/record"
  */
 
 /**
- * Which reference geocoder produced a result. A plain const object rather than
- * an `enum` — `erasableSyntaxOnly` is on repo-wide.
+ * Which reference geocoder produced a result.
+ *
+ * A plain const object rather than an `enum` — `erasableSyntaxOnly` is on repo-wide.
  */
 export const OracleProvider = {
 	/**
 	 * Google Geocoding API (`maps.googleapis.com/maps/api/geocode/json`).
+	 *
 	 * Global coverage, billed per request.
 	 */
 	Google: "google",
 	/**
 	 * US Census Bureau geocoder (`geocoding.geo.census.gov`).
+	 *
 	 * US only, free, tiger-derived.
 	 */
 	Census: "census",
@@ -82,6 +85,7 @@ export interface OracleGeocodeResult<Raw = unknown> {
 	/**
 	 * The provider's own admission that the match is approximate — Google's `partial_match`,
 	 * which it sets when it had to fall back from the query it was given.
+	 *
 	 * Always `false` for the Census geocoder, which has no equivalent signal.
 	 *
 	 * Treat a `true` here as "do not pin this case without reading the raw result".
@@ -95,13 +99,16 @@ export interface OracleGeocodeResult<Raw = unknown> {
 	 */
 	placeID: string | null
 	/**
-	 * The Open Location Code (plus code) for the match, when the provider
-	 * supplies one. Google only.
+	 * The Open Location Code (plus code) for the match, when the provider supplies one.
+	 *
+	 * Google only.
 	 */
 	plusCode: string | null
 	/**
-	 * The provider's untouched match. Read this whenever the component mapping's judgement
-	 * calls matter — it is the override that keeps those calls from being lossy.
+	 * The provider's untouched match.
+	 *
+	 * Read this whenever the component mapping's judgement calls matter —
+	 * it is the override that keeps those calls from being lossy.
 	 */
 	raw: Raw
 }
@@ -114,6 +121,7 @@ export interface OracleGeocodeResult<Raw = unknown> {
  * while `parsePostalAddressID` and `isPostalAddressID` both require `^[a-z]{2}\.`.
  * Handing it `Île-de-France` therefore mints an ID that the package's own parser rejects —
  * and an ID that cannot be read back is strictly worse than one that says `xx`.
+ *
  * Only a bare two-letter code passes (`NY` yes, `NSW` correctly no).
  *
  * Lives here rather than in either parser because both need it and neither owns it.

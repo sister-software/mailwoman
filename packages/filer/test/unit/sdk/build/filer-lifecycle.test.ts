@@ -228,7 +228,8 @@ describe("supersession edges", () => {
 	})
 
 	it("mints the successor node even when its own row never appears", async () => {
-		// 6 of 2,826 targets in the real vintage dangle. The edge is still what the FCC stated.
+		// 6 of 2,826 targets in the real vintage dangle.
+		// The edge is still what the FCC stated.
 		const { edges } = await build([
 			filerRow({
 				form499ID: "900007",

@@ -90,7 +90,9 @@ export const ZoningReadingKind = {
 	 */
 	Designated: "designated",
 	/**
-	 * No zoning polygon contains the point. Never an absence reading — see this file's header.
+	 * No zoning polygon contains the point.
+	 *
+	 * Never an absence reading — see this file's header.
 	 */
 	Unknown: "unknown",
 } as const
@@ -144,6 +146,7 @@ export interface ZoningPlan {
 	validTo: string | null
 	/**
 	 * The publisher's `CURRENT_PLAN` flag, carried as published.
+	 *
 	 * `1` means not superseded — not "in force today".
 	 */
 	currentPlan: number
@@ -162,6 +165,7 @@ export interface ZoningDesignation {
 	localCodeURL: string | null
 	/**
 	 * The publishing authority's own crosswalk into a shared scheme, where it publishes one.
+	 *
 	 * Beside the local code, never instead of it: 52 of 795 (authority, local code) pairs
 	 * take more than one generic type, so this cannot be reconstructed from `localCode`
 	 * and is a per-polygon fact the Department authored.
@@ -185,15 +189,17 @@ export interface ZoningDesignation {
 		declared: boolean
 	}
 	/**
-	 * One of {@link ProvenanceGrade}. Every row of this artifact is `authoritative`;
-	 * the column exists because a query answered from an `inferred` row may never
-	 * be presented as the authority's designation.
+	 * One of {@link ProvenanceGrade}.
+	 *
+	 * Every row of this artifact is `authoritative`; the column exists because a query
+	 * answered from an `inferred` row may never be presented as the authority's designation.
 	 */
 	provenanceGrade: string
 	jurisdiction: ZoningJurisdiction
 	plan: ZoningPlan
 	/**
 	 * The authority states unzoned land positively on a handful of rows.
+	 *
 	 * `true` here is the authority saying so. an absent designation says nothing at all,
 	 * which is the distinction this layer exists to keep.
 	 */
@@ -208,6 +214,7 @@ export interface ZoningReading {
 	kind: ZoningReadingKind
 	/**
 	 * Every polygon containing the point, ordered by `area_id`.
+	 *
 	 * Usually one. several where a Local Area Plan overlays a Development Plan over
 	 * the same ground, which the source publishes as two rows.
 	 */
@@ -334,10 +341,11 @@ export class ZoningLookup implements Disposable {
 
 		this.#selectCell = this.#database.prepare("SELECT area_id, containment FROM zoning_cell WHERE h3_cell = ?")
 
-		// two statements, and the split is the point. The attributes and the bbox are read without
-		// the blob, because the bbox is the ray cast's prefilter: pulling hundreds of thousands
-		// of vertices off disk only to reject the polygon on a rectangle would make the prefilter
-		// cost more than the test it replaces. A `whole` cell never reads the blob at all.
+		// two statements, and the split is the point.
+		// The attributes and the bbox are read without the blob, because the bbox is the ray
+		// cast's prefilter: pulling hundreds of thousands of vertices off disk only to reject the
+		// polygon on a rectangle would make the prefilter cost more than the test it replaces.
+		// A `whole` cell never reads the blob at all.
 		this.#selectArea = this.#database.prepare(
 			"SELECT area_id, jurisdiction_id, plan_id, local_code, local_description, local_code_url, crosswalk_code, " +
 				"crosswalk_scheme, crosswalk_description, crosswalk_rollup, provenance_grade, min_lat, min_lon, max_lat, max_lon " +

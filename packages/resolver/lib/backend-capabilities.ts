@@ -13,10 +13,10 @@
 import type { BackendCapabilityGap, ResolverBackend } from "@mailwoman/core/resolver"
 
 /**
- * The optional backend methods whose absence degrades a passing default,
- * paired with what stops working. A method whose absence is inert
- * (or whose option is opt-in and therefore a deliberate caller choice) does not belong here —
- * the list exists to name silent degradation rather than to inventory the interface.
+ * The optional backend methods whose absence degrades a passing default, paired with what stops working.
+ *
+ * A method whose absence is inert (or whose option is opt-in and therefore a deliberate caller choice) does
+ * not belong here — the list exists to name silent degradation rather than to inventory the interface.
  */
 const CONSEQUENTIAL_CAPABILITIES: ReadonlyArray<Omit<BackendCapabilityGap, "backend">> = [
 	{
@@ -37,6 +37,7 @@ const CONSEQUENTIAL_CAPABILITIES: ReadonlyArray<Omit<BackendCapabilityGap, "back
 
 /**
  * Enumerate the consequential capabilities this backend does not implement.
+ *
  * Empty means every default-on option the resolver offers has the backend support it needs.
  */
 export function describeCapabilityGaps(backend: ResolverBackend): readonly BackendCapabilityGap[] {
@@ -48,8 +49,9 @@ export function describeCapabilityGaps(backend: ResolverBackend): readonly Backe
 }
 
 /**
- * One log line for a backend's whole set of gaps. Deliberately short: what is missing,
- * which option that costs, and where the consequences are written down.
+ * One log line for a backend's whole set of gaps.
+ *
+ * Deliberately short: what is missing, which option that costs, and where the consequences are written down.
  * The per-gap `degrades` prose stays on the data for a consumer that wants it,
  * because a line long enough to carry it is a line an operator learns to skip.
  */
@@ -70,6 +72,7 @@ const reported = new Set<string>()
 
 /**
  * Report a backend's gaps to stderr the first time this process sees them.
+ *
  * The gaps are data on `Resolver.capabilityGaps` regardless. this also reports them to an operator.
  */
 export function reportCapabilityGaps(gaps: readonly BackendCapabilityGap[]): void {

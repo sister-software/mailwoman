@@ -94,7 +94,9 @@ export function nextClaimState(state: ClaimState, event: ClaimEvent): ClaimState
 }
 
 /**
- * One poll. Never throws: every outcome is an event the reducer knows.
+ * One poll.
+ *
+ * Never throws: every outcome is an event the reducer knows.
  */
 export async function fetchClaim(sessionID: string, signal?: AbortSignal): Promise<ClaimEvent> {
 	const now = Date.now()

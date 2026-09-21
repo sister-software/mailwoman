@@ -35,7 +35,9 @@ import { runAblationOptions } from "mailwoman/eval-harness/gauntlet/run"
 import { describe, expect, it } from "vitest"
 
 /**
- * A minimal assembled result. Only the fields a given assertion reads are overridden.
+ * A minimal assembled result.
+ *
+ * Only the fields a given assertion reads are overridden.
  */
 function result(over: Partial<GauntletResult> = {}): GauntletResult {
 	return {
@@ -213,8 +215,8 @@ describe("classifySlot — substitution is not the same as absence", () => {
 	})
 
 	// The S-2 finding-3 class, which is the reason this field exists: the postcode
-	// slot came back filled, with the house number. A completion nudge reading that
-	// slot would abstain for the wrong reason, or confirm it.
+	// slot came back filled, with the house number.
+	// A completion nudge reading that slot would abstain for the wrong reason, or confirm it.
 	it("reads a different token in the slot as a substitution", () => {
 		expect(classifySlot("94043", "1600")).toBe("substituted")
 		expect(classifySlot("75005", "1802")).toBe("substituted")
@@ -302,7 +304,8 @@ function row(over: Partial<AblationRowOutcome>): AblationRowOutcome {
 		unresolved: false,
 		slot: "absent",
 		emitted: null,
-		// The expectation-model fields (2026-08-05). A fixture that omitted them would
+		// The expectation-model fields (2026-08-05).
+		// A fixture that omitted them would
 		// let `aggregateCells` count an `undefined` grade, which is how a histogram
 		// silently grows a tenth bucket nobody reads.
 		expectedRung: "base",
@@ -412,8 +415,9 @@ describe("the support-0-is-absence rendering rule", () => {
 		expect(md).toContain(`\`${ABLATION_ABSENT}\` means NOT MEASURED`)
 	})
 
-	// The tail threshold folds thin locales into a list. Folding is only acceptable because they are
-	// printed — and a zero-column matrix must say why it is empty rather than emit a headerless table.
+	// The tail threshold folds thin locales into a list.
+	// Folding is only acceptable because they are printed — and a zero-column matrix
+	// must say why it is empty rather than emit a headerless table.
 	it("says so when no locale cleared the matrix threshold, instead of rendering an empty table", () => {
 		const md = renderAblationMarkdown(aggregateCells([row({})], meta), [], {
 			...meta,
@@ -472,10 +476,11 @@ describe("ablationBoardID — a cell without a board is not a measurement", () =
 })
 
 /**
- * The CLI → layer plumbing, pinned for the reason `pin-pin.test.ts` pins the resolver pin:
- * a dropped option does not throw. A dropped `--components` runs the whole corpus
- * and prints a map that looks exactly like the one asked for. a dropped `--limit`
- * turns a smoke run into a forty-minute one.
+ * The CLI → layer plumbing, pinned for the reason `pin-pin.test.ts` pins the
+ * resolver pin: a dropped option does not throw.
+ *
+ * A dropped `--components` runs the whole corpus and prints a map that looks exactly like
+ * the one asked for. a dropped `--limit` turns a smoke run into a forty-minute one.
  */
 describe("runAblationOptions — a CLI flag reaches the layer", () => {
 	it("carries the three ablation options alongside the shared model/pin ladder", () => {

@@ -92,8 +92,10 @@ export interface NSULDatabase extends layerschemadatabase {
 
 /**
  * The compact form of a unit postcode: every space removed, upper-cased.
- * `RG40 4HR` → `RG404HR`. The one derivation both the builder and every consumer share, so a
- * caller holding nsul's spaced form and one holding Code-Point's compact form reach the same key.
+ *
+ * `RG40 4HR` → `RG404HR`.
+ * The one derivation both the builder and every consumer share, so a caller holding
+ * nsul's spaced form and one holding Code-Point's compact form reach the same key.
  */
 export function compactPostcode(pcds: string): string {
 	return pcds.replaceAll(/\s+/g, "").toUpperCase()
@@ -122,6 +124,7 @@ export async function createNSULMetaTable(db: Kysely<NSULDatabase>): Promise<voi
 
 /**
  * The `pcds_compact` index the `uprnsForPostcode` probe reads.
+ *
  * Builders call this after the bulk load (index-after-load).
  * There is no index on the spaced `pcds`: it is derivable from `pcds_compact` through
  * {@link compactPostcode}, and a second index over 40 million rows would add nothing a caller cannot get by compacting

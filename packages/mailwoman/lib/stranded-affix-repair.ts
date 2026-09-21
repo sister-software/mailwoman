@@ -24,9 +24,10 @@
 import { type AddressNode, type AddressTree, collectNodes } from "@mailwoman/core/decoder"
 
 /**
- * Affix tags that cannot stand without a `street`. `house_number` is deliberately not here:
- * a bare `12, London` is a degenerate-but-honest parse, and absorbing a number into
- * a place name would invent a name that was never written.
+ * Affix tags that cannot stand without a `street`.
+ *
+ * `house_number` is deliberately not here: a bare `12, London` is a degenerate-but-honest parse,
+ * and absorbing a number into a place name would invent a name that was never written.
  */
 const STRANDED_AFFIX_TAGS: ReadonlySet<string> = new Set(["street_suffix", "street_prefix"])
 
@@ -38,8 +39,8 @@ const STRANDED_AFFIX_TAGS: ReadonlySet<string> = new Set(["street_suffix", "stre
  * `dependent_locality` belongs here for the same reason the other
  * two do, and its absence stranded a suffix on a real address:
  * `MDL Hythe Marina Village, Shamrock Way, Hythe Marina Village, Hythe, Southampton SO45 6DY`
- * tagged `Shamrock` a dependent_locality and left `Way` with no street anywhere in
- * the tree — a structurally invalid result the board's own validity check flagged.
+ * tagged `Shamrock` a dependent_locality and left `Way` with no street anywhere in the tree —
+ * a structurally invalid result the board's own validity check flagged.
  * A suburb name is no less able to end in `Way`, `Green` or `Row` than a locality is.
  */
 const ABSORBING_TAGS: ReadonlySet<string> = new Set(["locality", "venue", "dependent_locality"])
@@ -67,8 +68,9 @@ export function repairStrandedAffix(tree: AddressTree): boolean {
 		const absorber = all.find((node) => {
 			if (!ABSORBING_TAGS.has(node.tag)) return false
 
-			// Contiguous either way round — `Brixton Hill` (affix trails) and `Mount Pleasant` (affix leads)
-			// are the same defect seen from two sides. Only whitespace may separate them.
+			// Contiguous either way round — `Brixton Hill` (affix trails) and `Mount Pleasant`
+			// (affix leads) are the same defect seen from two sides.
+			// Only whitespace may separate them.
 			const between = affix.start >= node.end ? raw.slice(node.end, affix.start) : raw.slice(affix.end, node.start)
 
 			return between.trim() === "" && between.length <= 1

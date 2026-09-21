@@ -34,18 +34,22 @@ import { CSVSpliterator } from "spliterator"
 export interface BuildNLPC6Options {
 	/**
 	 * CBS PC6 centroid CSV (see the ogr2ogr extraction in the module docstring).
+	 *
 	 * Default `<data-root>/cbs/pc6-centroids.csv`.
 	 */
 	csvPath?: PathBuilderLike
 	/**
-	 * Output database. Default `<data-root>/wof/postalcode-nl-pc6.db`.
+	 * Output database.
+	 *
+	 * Default `<data-root>/wof/postalcode-nl-pc6.db`.
 	 */
 	out?: PathBuilderLike
 }
 
 /**
- * Build the sealed NL PC6 database (#977 tier 2). Not re-exported from the postcode barrel —
- * the command lazy-imports it (optional-peer discipline).
+ * Build the sealed NL PC6 database (#977 tier 2).
+ *
+ * Not re-exported from the postcode barrel — the command lazy-imports it (optional-peer discipline).
  */
 export async function buildNLPC6Database(
 	opts: BuildNLPC6Options = {}

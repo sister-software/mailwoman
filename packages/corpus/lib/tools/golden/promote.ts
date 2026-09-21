@@ -76,11 +76,15 @@ export interface PromoteGoldenOptions {
 	 */
 	bumpTo: string
 	/**
-	 * Previous version to forward-copy + dedup against. Default `v0.1.0`.
+	 * Previous version to forward-copy + dedup against.
+	 *
+	 * Default `v0.1.0`.
 	 */
 	prior?: string
 	/**
-	 * Golden dir root. Default `data/eval/golden`.
+	 * Golden dir root.
+	 *
+	 * Default `data/eval/golden`.
 	 */
 	goldenRoot?: string
 	/**
@@ -110,8 +114,10 @@ function isComponentsGlued(entry: GoldenEntry): boolean {
 
 /**
  * Heuristic: in US/UK conventions, postcode goes at the END of the address.
- * If postcode appears in the first third of a multi-component raw and there are 4+ components,
- * the LLM probably over-aggressively reordered. FR is exempt (postcode often precedes locality there).
+ *
+ * If postcode appears in the first third of a multi-component raw and there are 4+
+ * components, the LLM probably over-aggressively reordered.
+ * FR is exempt (postcode often precedes locality there).
  */
 function isPostcodeBadlyLeading(entry: GoldenEntry): boolean {
 	if (Object.keys(entry.components).length < MIN_PROMOTABLE_COMPONENTS) return false

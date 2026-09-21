@@ -36,7 +36,9 @@ import { resourceDictionaryPath, workspacePath } from "#utils/index"
  */
 export interface GenerateLanguageTypesOptions {
 	/**
-	 * Output path override. Default: `core/resources/languages/types.gen.ts` (the committed types).
+	 * Output path override.
+	 *
+	 * Default: `core/resources/languages/types.gen.ts` (the committed types).
 	 */
 	out?: string
 }
@@ -83,12 +85,14 @@ export async function generateLanguageTypes(
 
 		entryLines.push([alpha2, alpha3b])
 
-		// The /T spelling is a first-class member of the same union and maps to the same label
-		// and the same alpha-2. It is the form WOF actually writes, so a lookup keyed on it must hit.
+		// The /T spelling is a first-class member of the same union and maps to
+		// the same label and the same alpha-2.
+		// It is the form WOF actually writes, so a lookup keyed on it must hit.
 		//
-		// It goes to `alpha3tPairs`, not to `entryLines`. Both lists build both direction maps
-		// from a `new Map([...])`, where the last entry for a key wins — so appending the /T form
-		// to `entryLines` would silently flip `Alpha2ToAlpha3b.get("de")` from `ger` to `deu`.
+		// It goes to `alpha3tPairs`, not to `entryLines`.
+		// Both lists build both direction maps from a `new Map([...])`, where the last
+		// entry for a key wins — so appending the /T form to `entryLines` would silently
+		// flip `Alpha2ToAlpha3b.get("de")` from `ger` to `deu`.
 		// That map is named for the /B standard and documented as returning it. changing what it
 		// answers is a separate decision from widening what the union accepts, and it is not this one.
 		if (alpha3t) {

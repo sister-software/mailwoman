@@ -48,6 +48,7 @@ export const LABEL_GEOM_DISAGREEMENT_KM = 5
 
 /**
  * The anchor must be this many times closer to one point than the other to override the default.
+ *
  * At less separation the anchor cannot say which point is the settlement, and the label keeps winning.
  */
 export const ANCHOR_DECISIVE_RATIO = 2
@@ -60,6 +61,7 @@ export interface AdjudicatedPoint extends PointPair {
 
 /**
  * Resolve a `gn:id` concordance to its GeoNames coordinate, scoped by country.
+ *
  * `undefined` is absence — no anchor for this record — and the caller must fall back
  * to the label preference rather than treating it as a zero-distance anchor.
  */
@@ -68,8 +70,8 @@ export type GeoNamesAnchorLookup = (country: string, gnID: string | number) => P
 /**
  * Choose the stored point for a record carrying both a label and a geometric centroid.
  *
- * With no disagreement, no anchor, or an anchor that does not separate the
- * pair decisively, the label point wins — the existing preference, unchanged.
+ * With no disagreement, no anchor, or an anchor that does not separate the pair decisively,
+ * the label point wins — the existing preference, unchanged.
  * The anchor speaks only in the narrow band the module docstring's census measured.
  */
 export function choosePoint(geom: PointPair, lbl: PointPair, anchor: PointPair | undefined): AdjudicatedPoint {

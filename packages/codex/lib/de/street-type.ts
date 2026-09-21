@@ -21,8 +21,10 @@
  */
 
 /**
- * Canonical German street type → recognized written variants (including the `Str.` abbreviation
- * and the `ß`/`ss` spelling split). The full reference table, used for synthesis/expansion.
+ * Canonical German street type → recognized written variants
+ * (including the `Str.` abbreviation and the `ß`/`ss` spelling split).
+ *
+ * The full reference table, used for synthesis/expansion.
  * For the "is this token part of a street" test, use {@link DE_STREET_SUFFIXES} /
  * {@link isGermanStreetToken}, which exclude the place-name-colliding suffixes.
  */
@@ -57,8 +59,9 @@ export const DE_STREET_TYPE_VARIANTS = {
 export type GermanStreetType = keyof typeof DE_STREET_TYPE_VARIANTS
 
 /**
- * Place-name-safe street suffixes for "is this token part of a street" detection,
- * lowercase, with the `ß`/`ss` split spelled out and `str` for the `Str.` abbreviation.
+ * Place-name-safe street suffixes for "is this token part of a street" detection, lowercase,
+ * with the `ß`/`ss` split spelled out and `str` for the `Str.` abbreviation.
+ *
  * Deliberately excludes the suffixes that also end German city names — `-berg`,
  * `-burg`, `-dorf`, `-feld`, `-hof`, `-stadt`, `-heim`, `-bach`, `-tal` —
  * so a city token in a `PLZ City` segment is not mistaken for a street.

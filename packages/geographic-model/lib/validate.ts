@@ -96,8 +96,10 @@ const DERIVED_FACT_FIELDS = [
 const DERIVATION_INPUT_FIELDS = ["kind", "id"] as const
 
 /**
- * ISO 3166-1 alpha-2, upper case. A lower-case or three-letter value is an authoring mistake
- * that would otherwise scope a claim to a country nothing else in the system names.
+ * ISO 3166-1 alpha-2, upper case.
+ *
+ * A lower-case or three-letter value is an authoring mistake that would otherwise
+ * scope a claim to a country nothing else in the system names.
  */
 const COUNTRY_PATTERN = /^[A-Z]{2}$/
 
@@ -473,9 +475,10 @@ export function formatValidationIssues(issues: readonly ValidationIssue[]): stri
 }
 
 /**
- * Thrown by {@link parseGeographicModelDocument}. Carries the whole issue list,
- * and states the whole issue list in its message, so a caller that only ever
- * prints `error.message` still sees every violation.
+ * Thrown by {@link parseGeographicModelDocument}.
+ *
+ * Carries the whole issue list, and states the whole issue list in its message,
+ * so a caller that only ever prints `error.message` still sees every violation.
  */
 export class GeographicModelValidationError extends Error {
 	readonly issues: readonly ValidationIssue[]
@@ -490,8 +493,10 @@ export class GeographicModelValidationError extends Error {
 
 /**
  * Validate and return an authored document, throwing {@link GeographicModelValidationError}
- * with every violation if it does not validate. The throwing form is for callers with
- * no partial-result behavior to offer — a compiler, a build step, a test.
+ * with every violation if it does not validate.
+ *
+ * The throwing form is for callers with no partial-result behavior to offer —
+ * a compiler, a build step, a test.
  */
 export function parseGeographicModelDocument(input: unknown): GeographicModelDocument {
 	const result = validateGeographicModelDocument(input)

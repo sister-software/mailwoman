@@ -61,7 +61,9 @@ import {
  */
 
 /**
- * Lowest 5xx status. Server-side failures are worth retrying. client errors are not.
+ * Lowest 5xx status.
+ *
+ * Server-side failures are worth retrying. client errors are not.
  */
 const HTTP_SERVER_ERROR_MIN = 500
 
@@ -158,6 +160,7 @@ const RANKED_FILE = String(repoRootPathBuilder("mailwoman", "data", "county-popu
 /**
  * The per-state street-segment builder is now the sibling `situs interpolation-database`
  * command (the old `scripts/build-interpolation-database.ts` was migrated into the CLI).
+ *
  * Re-invoke the same CLI entry this process was started from, so dev + published
  * installs both resolve correctly.
  */
@@ -219,8 +222,9 @@ async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
 }
 
 /**
- * Load (or generate) the ranked county list. On first run this downloads the Census
- * CSV. on subsequent runs it reads the cached JSON file.
+ * Load (or generate) the ranked county list.
+ *
+ * On first run this downloads the Census CSV. on subsequent runs it reads the cached JSON file.
  */
 async function loadRankedCounties(): Promise<CountyRecord[]> {
 	if (await pathExists(RANKED_FILE)) {
@@ -284,6 +288,7 @@ async function downloadFile(url: string, dest: string, retries = 3): Promise<voi
 
 /**
  * The shapefile components DuckDB needs out of a tiger edges archive.
+ *
  * The siblings are useless without each other, so a partial extract is a broken layer
  * rather than a smaller one.
  */
@@ -291,6 +296,7 @@ const SHAPEFILE_MEMBERS = /\.(?:shp|dbf|prj|shx)$/i
 
 /**
  * Unpack a tiger edges ZIP into --edges-dir, flattened.
+ *
  * Silently overwrites existing files (idempotent at the shapefile level).
  */
 async function extractEdgesZip(zipPath: string, destDir: string): Promise<void> {
@@ -379,8 +385,10 @@ interface DatabaseBuildResult {
 }
 
 /**
- * Build one state's interpolation database DB. Returns wall-clock ms + segment count from the
- * script's stdout, or `null` when the database already exists and `--force` was not passed.
+ * Build one state's interpolation database DB.
+ *
+ * Returns wall-clock ms + segment count from the script's stdout, or `null`
+ * when the database already exists and `--force` was not passed.
  */
 async function buildStateDatabase(
 	stateAbbr: string,
@@ -581,8 +589,9 @@ const SitusInterpolation: CommandComponent<typeof spec> = ({ options }) => {
 
 		// ── Step 4: build databases sequentially ─────────────────────────────────
 		// Sequential (not parallel): each database script uses DuckDB + SQLite. they're
-		// already I/O + DuckDB-parallel internally. Running states concurrently risks memory
-		// OOM on the 32K-row state builds and complicates progress reporting.
+		// already I/O + DuckDB-parallel internally.
+		// Running states concurrently risks memory OOM on the 32K-row state builds
+		// and complicates progress reporting.
 		const wallStart = Date.now()
 		let totalSegments = 0
 		let builtStates = 0

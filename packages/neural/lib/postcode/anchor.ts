@@ -37,7 +37,9 @@ import { isStreetSuffixToken, isUSStateAbbreviation } from "@mailwoman/codex/us"
 import { collectMatches } from "#postcode/repair"
 
 /**
- * A gazetteer hit for a postcode string. `lat`/`lon` of 0 means "known postcode, no centroid yet".
+ * A gazetteer hit for a postcode string.
+ *
+ * `lat`/`lon` of 0 means "known postcode, no centroid yet".
  */
 export interface PostcodePlace {
 	country: string
@@ -47,9 +49,10 @@ export interface PostcodePlace {
 
 /**
  * The minimal surface the anchor needs from a gazetteer.
- * Implementations: an in-memory fake (tests) or a SQLite-backed lookup over the `postalcode-*.db`
- * extracts (`@mailwoman/resolver-wof-sqlite`). Keeping this boundary narrow lets a
- * future FST/wasm resolver drop in without touching the anchor logic.
+ *
+ * Implementations: an in-memory fake (tests) or a SQLite-backed lookup over the
+ * `postalcode-*.db` extracts (`@mailwoman/resolver-wof-sqlite`).
+ * Keeping this boundary narrow lets a future FST/wasm resolver drop in without touching the anchor logic.
  */
 export interface PostcodeResolver {
 	/**
@@ -88,8 +91,9 @@ export interface PostcodeAnchor {
 	matchType: "exact" | "outward" | "fuzzy" | "none"
 	/**
 	 * Structural house-number prior in [0, 1]: `1` for a code that cannot be a house number,
-	 * and below `1` for a digit-only code sharing its comma-delimited segment
-	 * with a street word (so it reads as a house number rather than a postcode).
+	 * and below `1` for a digit-only code sharing its comma-delimited segment with a
+	 * street word (so it reads as a house number rather than a postcode).
+	 *
 	 * Already folded into {@link confidence}; exposed so a consumer can rank competing spans,
 	 * or see why one was down-weighted, without re-deriving it.
 	 */
@@ -98,8 +102,10 @@ export interface PostcodeAnchor {
 
 export interface ExtractPostcodeAnchorsOpts {
 	/**
-	 * When an exact lookup finds nothing, retry Damerau–Levenshtein ≤1 variants to absorb typos
-	 * and OCR slips (`75OO8` → `75008`). Off by default so existing callers keep exact-match behaviour.
+	 * When an exact lookup finds nothing, retry Damerau–Levenshtein ≤1 variants to
+	 * absorb typos and OCR slips (`75OO8` → `75008`).
+	 *
+	 * Off by default so existing callers keep exact-match behaviour.
 	 */
 	fuzzy?: boolean
 }
@@ -117,6 +123,7 @@ const FUZZY_PENALTY = 0.6
 /**
  * Class-aware edit-distance-1 variants of a postcode string: deletions, same-class substitutions
  * (digit↔digit, letter↔letter), same-class insertions, and adjacent transpositions.
+ *
  * Restricting substitutions/insertions to the character's class mirrors how humans mistype or OCR
  * a postcode (a digit becomes another digit rather than a letter) and keeps the candidate set small.
  */
@@ -175,9 +182,10 @@ export function normalizePostcode(raw: string): string {
 }
 
 /**
- * The GB outward code of a normalized unit postcode — the part before the space when
- * the inward half is `\d[A-Z]{2}` (`SO4 3RX` → `SO4`). The GB gazetteer is
- * aggregated to outward codes (2.7M units is too large + too fine for an anchor),
+ * The GB outward code of a normalized unit postcode — the part before the space
+ * when the inward half is `\d[A-Z]{2}` (`SO4 3RX` → `SO4`).
+ *
+ * The GB gazetteer is aggregated to outward codes (2.7M units is too large + too fine for an anchor),
  * so the extractor retries the outward code when a full GB unit misses.
  * Returns `null` for any string that isn't a GB unit postcode (so it never fires elsewhere).
  */
@@ -203,10 +211,13 @@ function confidenceFromCountryCount(k: number): number {
 
 /**
  * Confidence scale for a digit-only code that shares its segment with a street word.
+ *
  * A house number and a 5-digit postcode are the same shape, so membership alone can't
  * separate `12345 Main St` (house number that happens to be a real ZIP elsewhere)
- * from `San Francisco 94105` (postcode). The structural tell is cheap
- * and locale-general: house numbers sit beside the street, postcodes beside the city.
+ * from `San Francisco 94105` (postcode).
+ * The structural tell is cheap and locale-general: house numbers sit beside
+ * the street, postcodes beside the city.
+ *
  * We scale rather than zero — the gazetteer still vouches for the shape, so a lone code in a
  * street-only line stays usable. the penalty just lets a real trailing postcode out-rank it.
  */
@@ -214,6 +225,7 @@ const HOUSE_NUMBER_PENALTY = 0.2
 
 /**
  * Standalone street-type words for the locales without a codex address system yet (ES/IT).
+ *
  * US comes from `@mailwoman/codex/us`, German from `@mailwoman/codex/de`,
  * French from `@mailwoman/codex/fr`; the Dutch compound suffixes are still inline
  * below pending a `codex/nl` address system.
@@ -245,21 +257,26 @@ const NON_US_STREET_WORDS = new Set([
 const NL_STREET_SUFFIXES = ["straat", "laan", "plein", "gracht", "kade", "dijk", "steeg", "dreef"]
 
 /**
- * True when a token denotes a street. US suffixes come from the USPS Pub-28
- * table in `@mailwoman/codex/us` (complete, so `Trl`/`Holw`/`Xing` all match),
- * except the abbreviations that collide with a state code — `KY` (Key vs Kentucky),
- * `PR` (Prairie vs Puerto Rico) — which sit in the postcode's own `City, ST ZIP` segment.
+ * True when a token denotes a street.
+ *
+ * US suffixes come from the USPS Pub-28 table in `@mailwoman/codex/us`
+ * (complete, so `Trl`/`Holw`/`Xing` all match), except the abbreviations that collide
+ * with a state code — `KY` (Key vs Kentucky), `PR` (Prairie vs Puerto Rico) —
+ * which sit in the postcode's own `City, ST ZIP` segment.
  * German compounds come from `@mailwoman/codex/de` ({@link isGermanStreetToken}),
- * whose suffix set already excludes the place-name endings (`-berg`, `-burg`, `-dorf`) that
- * would otherwise flag a city token. French voie words come from `@mailwoman/codex/fr`
- * ({@link isFrenchStreetWord}). ES/IT and Dutch fall back to the inline lists.
+ * whose suffix set already excludes the place-name endings (`-berg`, `-burg`, `-dorf`)
+ * that would otherwise flag a city token.
+ *
+ * French voie words come from `@mailwoman/codex/fr` ({@link isFrenchStreetWord}).
+ * ES/IT and Dutch fall back to the inline lists.
  *
  * `systems` restricts which vocabularies are consulted — only the systems the postcode
  * plausibly belongs to (its gazetteer membership, e.g. a US-only ZIP restricts to `{us}`
- * and never checks the German or French vocab). This is what lets the check scale to
- * 15-20 systems without a cross-locale collision (German `-ring` vs English `spring`): an
- * unrelated system's vocabulary is simply never asked. The restriction carries
- * lowercase system/locale tags (`us`, `de`, `fr`, `es`, `it`, `nl`).
+ * and never checks the German or French vocab).
+ * This is what lets the check scale to 15-20 systems without a cross-locale collision
+ * (German `-ring` vs English `spring`): an unrelated system's vocabulary is simply never asked.
+ *
+ * The restriction carries lowercase system/locale tags (`us`, `de`, `fr`, `es`, `it`, `nl`).
  */
 function looksLikeStreetWord(token: string, systems: ReadonlySet<string>): boolean {
 	const t = token.toLowerCase().replaceAll(/[^\p{L}]/gu, "")
@@ -306,8 +323,10 @@ function positionFactor(text: string, start: number, normalized: string, systems
 }
 
 /**
- * Extract postcode anchors from raw text. For each postcode-shaped span, resolve it
- * against the gazetteer and emit a soft anchor (country posterior + confidence).
+ * Extract postcode anchors from raw text.
+ *
+ * For each postcode-shaped span, resolve it against the gazetteer and emit a
+ * soft anchor (country posterior + confidence).
  * Spans that match a shape but exist in no gazetteer are still returned, with an empty
  * posterior and confidence 0 — an explicit "looks like a postcode, but isn't one"
  * so the caller can see the extractor fired and chose not to anchor.

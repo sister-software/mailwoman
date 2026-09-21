@@ -16,7 +16,9 @@ import { EA_FLOOD_LAYER } from "#vocabulary"
 const PROBE_HALF_WIDTH_DEGREES = 0.0001
 
 /**
- * Features per service request. The probe bbox is metres wide, so this is a ceiling rather than a page size.
+ * Features per service request.
+ *
+ * The probe bbox is metres wide, so this is a ceiling rather than a page size.
  */
 const SERVICE_FEATURE_LIMIT = 200
 

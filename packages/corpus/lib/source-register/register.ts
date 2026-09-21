@@ -72,13 +72,15 @@ export function electedLicenseLabel(decision: LicenseDecision): string | undefin
 /**
  * The generated decisions with any recorded decision applied over them.
  *
- * The register's build derives one `unchecked` decision per access label the research pass recorded,
- * which is the honest default: that pass wrote down what a register costs to reach and opened
- * nobody's terms. A decision somebody made by reading those terms replaces the default here.
+ * The register's build derives one `unchecked` decision per access label the
+ * research pass recorded, which is the honest default: that pass wrote down what
+ * a register costs to reach and opened nobody's terms.
+ * A decision somebody made by reading those terms replaces the default here.
  *
- * It is a merge rather than an edit of the built register because the register is generated
- * and rewritten whole. A decision recorded in the output would be erased by the next
- * rebuild, with no error and a normal-looking count (#2351).
+ * It is a merge rather than an edit of the built register because the register
+ * is generated and rewritten whole.
+ * A decision recorded in the output would be erased by the next rebuild,
+ * with no error and a normal-looking count (#2351).
  *
  * @throws When a recorded decision names a licence the generated set does not carry.
  *   That decision licenses nothing — either a typo or a source that has been removed —
@@ -111,8 +113,8 @@ export function applyLicenseDecisions(
 /**
  * The operations bringing a source into the corpus performs.
  *
- * Redistributing the rows or the weights, and selling a commercial license over
- * either, are separate acts that happen at publish time rather than at ingest.
+ * Redistributing the rows or the weights, and selling a commercial license over either,
+ * are separate acts that happen at publish time rather than at ingest.
  * Asking for them here would refuse a source for an act this build does not perform,
  * and a control that refuses the wrong act teaches a reader to route around it.
  */
@@ -134,8 +136,10 @@ export const MODEL_RELEASE_OPERATIONS: readonly SourceOperation[] = [
 /**
  * What an elected grant says about one operation, with `unreviewed` for an operation it does not name.
  *
- * The default is the whole point. An elected grant establishes which terms apply rather than that
- * every act under them is allowed, so an unnamed operation is one nobody read the terms against.
+ * The default is the whole point.
+ * An elected grant establishes which terms apply rather than that every act under them
+ * is allowed, so an unnamed operation is one nobody read the terms against.
+ *
  * Returning `permitted` for it would turn the act of electing terms into a blanket permission,
  * which is the reading the per-operation record exists to refuse.
  */
@@ -207,10 +211,10 @@ export function ingestEligibilityProblems(
 /**
  * What a source's personal-data review leaves in the way of ingest.
  *
- * A license grant and a personal-data reading are separate questions, so an elected
- * grant never answers this one. The absence of a review refuses rather than admits,
- * which is the property the whole register is built on: nobody having looked is a
- * different answer from somebody having looked and found nothing.
+ * A license grant and a personal-data reading are separate questions,
+ * so an elected grant never answers this one.
+ * The absence of a review refuses rather than admits, which is the property the whole register is
+ * built on: nobody having looked is a different answer from somebody having looked and found nothing.
  */
 function personalDataProblems(source: AddressSourceRecord): string[] {
 	const review = source.personalDataReview
@@ -262,6 +266,7 @@ export function auditAddressSourceRegister(register: AddressSourceRegister): str
  * The digest covers the register as parsed rather than as bytes.
  * `prettyJSON` writes it and `oxfmt` reformats the file afterwards, so a byte digest
  * would name the formatter's output and break whenever the formatter changed.
+ *
  * `JSON.parse` preserves key insertion order, so re-serializing a parsed register reproduces the order
  * the build wrote — which means a hand edit that reorders keys also fails, and that is a hand edit.
  */
@@ -276,6 +281,7 @@ export function registerContentDigest(register: AddressSourceRegister): string {
  *
  * Read-path only, and deliberately not part of {@linkcode auditAddressSourceRegister}.
  * The digest answers whether a file was edited after it was generated, which is a question about a file.
+ *
  * The structural audit answers whether a register is well formed, which the build asks about an
  * object it is still assembling and which every test fixture asks about a literal nobody generated.
  */
@@ -368,8 +374,9 @@ function auditElected(decision: ElectedLicense, named: string): string[] {
 			problems.push(`license ${named} reads ${reading.permission} for ${operation} and gives no reason`)
 		}
 
-		// A permission is a claim about somebody else's terms, and one with no stated basis
-		// cannot be checked against them. A refusal needs none: it withholds rather than asserts.
+		// A permission is a claim about somebody else's terms, and one with no stated
+		// basis cannot be checked against them.
+		// A refusal needs none: it withholds rather than asserts.
 		if (reading.permission === OperationPermission.Permitted && !reading.basis) {
 			problems.push(`license ${named} permits ${operation} and names no basis for the permission`)
 		}

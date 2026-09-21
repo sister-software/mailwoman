@@ -59,9 +59,11 @@ const HOMOGRAPH_CONTEST_SHARE = 1 / 3
 const COUNTRY_INFO_COLUMNS = { iso: 0, country: 4 } as const
 
 /**
- * The postal dump's admin1 code column. `@mailwoman/corpus`'s {@link GEONAMES_POSTAL_COLUMNS}
- * names the admin1 name at index 3 because that is what a corpus row renders. this panel
- * keys on the code beside it, which is stable across the register's language variants.
+ * The postal dump's admin1 code column.
+ *
+ * `@mailwoman/corpus`'s {@link GEONAMES_POSTAL_COLUMNS} names the admin1 name at index 3
+ * because that is what a corpus row renders. this panel keys on the code beside it,
+ * which is stable across the register's language variants.
  */
 const POSTAL_ADMIN1_CODE_COLUMN = 4
 
@@ -80,9 +82,11 @@ export interface GeoNamesCity {
 }
 
 /**
- * Parse a GeoNames main-table dump. This benchmark reads `cities15000.txt`, the table filtered
- * to places above 15,000 population. a per-country dump (`FR.txt`) carries the same columns
- * and parses here unchanged, which is what a panel reaching below that floor would read.
+ * Parse a GeoNames main-table dump.
+ *
+ * This benchmark reads `cities15000.txt`, the table filtered to places above 15,000
+ * population. a per-country dump (`FR.txt`) carries the same columns and parses here
+ * unchanged, which is what a panel reaching below that floor would read.
  * `header: false`: the dump is headerless, and a spliterator that assumed one would eat the first row.
  */
 export async function readCities(path: string): Promise<GeoNamesCity[]> {
@@ -163,6 +167,7 @@ export interface PanelBuildInputs {
 	postcodeByAdmin: ReadonlyMap<string, string>
 	/**
 	 * Geonameid → the coherent gold identity set, from `readGoldSets`.
+	 *
 	 * A geonameid absent from this map is ungradeable and can never enter the panel.
 	 */
 	goldSets: ReadonlyMap<string, number[]>
@@ -243,8 +248,9 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 		}
 	})
 
-	// Stratum 2 — a qualified homograph. The gold alternates between the largest bearer and a smaller one,
-	// and the qualifier alternates between the country's English name and the bearer's admin1 code.
+	// Stratum 2 — a qualified homograph.
+	// The gold alternates between the largest bearer and a smaller one, and the qualifier
+	// alternates between the country's English name and the bearer's admin1 code.
 	const homographEligible = cities
 		.filter((city) => {
 			const bearers = byName.get(city.asciiname.toLowerCase())!

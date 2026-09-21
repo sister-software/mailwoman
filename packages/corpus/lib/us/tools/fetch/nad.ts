@@ -53,7 +53,9 @@ const FEATURE_SERVICE_URL =
 
 export interface FetchNADOptions extends BaseFetchOptions {
 	/**
-	 * Fetch strategy. Default `featureserver`.
+	 * Fetch strategy.
+	 *
+	 * Default `featureserver`.
 	 */
 	mode?: "featureserver" | "bulk"
 	/**
@@ -61,23 +63,33 @@ export interface FetchNADOptions extends BaseFetchOptions {
 	 */
 	nadURL?: string
 	/**
-	 * Records per output file. Default `100000`.
+	 * Records per output file.
+	 *
+	 * Default `100000`.
 	 */
 	chunkSize?: number
 	/**
-	 * Records per http request. Default `5000`.
+	 * Records per http request.
+	 *
+	 * Default `5000`.
 	 */
 	pageSize?: number
 	/**
-	 * Parallel page fetches within a chunk. Default `4`.
+	 * Parallel page fetches within a chunk.
+	 *
+	 * Default `4`.
 	 */
 	concurrency?: number
 	/**
-	 * Start objectid. Default `1`.
+	 * Start objectid.
+	 *
+	 * Default `1`.
 	 */
 	startOID?: number
 	/**
-	 * Stop before this OID. Default = total count.
+	 * Stop before this OID.
+	 *
+	 * Default = total count.
 	 */
 	endOID?: number
 }
@@ -95,9 +107,11 @@ interface ChunkManifest {
 }
 
 /**
- * ArcGIS paged reads. Retry is on: the loop walks objectid ranges to completion, so one throttled page
- * previously ended a multi-hour national download. No rate budget — pages are requested
- * one at a time and each assembles thousands of records server-side.
+ * ArcGIS paged reads.
+ *
+ * Retry is on: the loop walks objectid ranges to completion, so one throttled page
+ * previously ended a multi-hour national download.
+ * No rate budget — pages are requested one at a time and each assembles thousands of records server-side.
  */
 const nadClient = new APIClient({
 	displayName: "nad",
@@ -141,6 +155,7 @@ async function discoverTotalCount(): Promise<number> {
 
 /**
  * Fetch a single chunk by paging through its OID range with bounded concurrency.
+ *
  * Returns the count of records written and the count of pages that errored.
  * The caller decides whether to mark the chunk complete based on errors === 0.
  *
@@ -161,7 +176,8 @@ async function fetchChunk(
 		pageRanges.push([cursor, Math.min(cursor + pageSize - 1, chunkEnd)])
 	}
 
-	// Run bounded-concurrency page fetches. Results indexed by page slot for in-order write.
+	// Run bounded-concurrency page fetches.
+	// Results indexed by page slot for in-order write.
 	const pageResults: Array<{ rows: unknown[]; error: Error | null }> = pageRanges.map(() => ({
 		rows: [],
 		error: null,

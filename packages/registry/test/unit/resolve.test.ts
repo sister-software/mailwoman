@@ -88,8 +88,8 @@ describe("resolveEntities", () => {
 	})
 
 	it("learnedScorer: true loads the bundled GBT model and resolves end-to-end (#603)", () => {
-		// The opt-in bundled model loads + scores every blocked pair without throwing.
-		// the result is a sane entity set (between fully-merged and fully-split).
+		// The opt-in bundled model loads + scores every blocked pair without throwing. the
+		// result is a sane entity set (between fully-merged and fully-split).
 		// Behaviour on these synthetic records is the model's call — this guards the
 		// wiring (load → featurize → gbtScore → cluster), not a number.
 		const { entities } = resolveEntities(records, { learnedScorer: true })
@@ -102,8 +102,8 @@ describe("resolveEntities", () => {
 	})
 
 	it("an explicit scorer takes precedence over learnedScorer (#603)", () => {
-		// Both set → the explicit scorer wins. It rejects every pair, so nothing merges even
-		// though the bundled learned model is also requested.
+		// Both set → the explicit scorer wins.
+		// It rejects every pair, so nothing merges even though the bundled learned model is also requested.
 		const { entities } = resolveEntities(records, {
 			learnedScorer: true,
 			scorer: () => Number.NEGATIVE_INFINITY,

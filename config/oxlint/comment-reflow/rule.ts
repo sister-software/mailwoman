@@ -110,6 +110,7 @@ export const reflowRule: CreateRule = {
 					printWidth: { type: "integer", minimum: 1 },
 					targetWidth: { type: "integer", minimum: 1 },
 					tabWidth: { type: "integer", minimum: 1 },
+					paragraphSentences: { type: "integer", minimum: 1 },
 					trailingComments: { enum: ["ignore", "always", "overflow"] },
 				},
 				additionalProperties: false,
@@ -117,7 +118,7 @@ export const reflowRule: CreateRule = {
 		],
 		defaultOptions: [defaultOptions],
 		messages: {
-			reflow: "Reflow comment prose to a measure of {{target}} columns ({{width}} maximum).",
+			reflow: "Set this comment one sentence per line, to a measure of {{target}} columns ({{width}} maximum).",
 			move: "Move this trailing comment above its target and reflow its prose.",
 			missingBlockPrefix: "Comment line is missing its `*` prefix.",
 		},

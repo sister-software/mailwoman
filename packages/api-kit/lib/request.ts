@@ -11,8 +11,9 @@
 import type { Context } from "hono"
 
 /**
- * A non-empty string query value, else `undefined`. An empty `?q=` is treated as absent,
- * since every drop-in reads it that way.
+ * A non-empty string query value, else `undefined`.
+ *
+ * An empty `?q=` is treated as absent, since every drop-in reads it that way.
  */
 export function asString(raw: unknown): string | undefined {
 	return typeof raw === "string" && raw.length ? raw : undefined

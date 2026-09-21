@@ -57,18 +57,20 @@ import { normalizeLocalityForKey } from "#street/normalize"
  * the two snapshots agree to the bit — and 656,755 (64.4%) are inside 500 m.
  *
  * What sets the radius is where that mode ends, and the per-kilometre density states.
- * It falls from 1,076 places/km over 3–5 km to a trough of **441 places/km over 7–10 km**,
- * then climbs back and flattens onto a plateau of 760–780 places/km from 30 km out to 100 km
- * and beyond. That plateau is the background rate of two different towns wearing one name
- * in one country, and it does not decay with distance because there is no reason it should.
- * 10 km is the floor between the two populations. Admitting it scores 679,163 places
- * (66.6% of the matched set); pushing the radius to 25 km provides 8,722 more, and by
- * then better than half of each additional kilometre is the wrong town.
+ * It falls from 1,076 places/km over 3–5 km to a trough of **441 places/km over 7–10 km**, then
+ * climbs back and flattens onto a plateau of 760–780 places/km from 30 km out to 100 km and beyond.
  *
- * The four-row bare-GB board is insensitive across this whole range — 5 km and 25 km were
- * both measured and select identical rows — so the value is chosen by what the join means
- * rather than by what it scores. The radius is the definition of "this is the same place";
- * widening it past the floor starts handing one town's fame to another.
+ * That plateau is the background rate of two different towns wearing one name in
+ * one country, and it does not decay with distance because there is no reason it
+ * should. 10 km is the floor between the two populations.
+ * Admitting it scores 679,163 places (66.6% of the matched set); pushing the radius to 25 km
+ * provides 8,722 more, and by then better than half of each additional kilometre is the wrong town.
+ *
+ * The four-row bare-GB board is insensitive across this whole range — 5 km
+ * and 25 km were both measured and select identical rows — so the value is chosen
+ * by what the join means rather than by what it scores.
+ * The radius is the definition of "this is the same place"; widening it past the
+ * floor starts handing one town's fame to another.
  */
 export const IMPORTANCE_JOIN_RADIUS_KM = 10
 
@@ -83,6 +85,7 @@ interface ScoredPlace {
 
 /**
  * What {@link loadImportanceIndex} measured while reading the source.
+ *
  * Reported by the builder so a run says how much of the gazetteer it actually scored,
  * rather than leaving the caller to infer it from a column full of nulls.
  */
@@ -104,6 +107,7 @@ export interface ImportanceIndexStats {
 
 /**
  * `(name_key, country, placetype)` → the scored places under it.
+ *
  * The separator is U+0000, which no WOF name carries and no fold can produce.
  * Therefore, the three fields can't smear into one another.
  */
@@ -125,9 +129,9 @@ export class ImportanceIndex {
 	 * Places {@link find} refused — the key matched a scored group, but the nearest member
 	 * of it was outside the radius, so it is a different place wearing the same name.
 	 *
-	 * This is the number worth watching across rebuilds. A jump means the score source
-	 * and the admin source have drifted apart and the join is being asked to guess.
-	 * it does not mean the radius is too tight.
+	 * This is the number worth watching across rebuilds.
+	 * A jump means the score source and the admin source have drifted apart and the join
+	 * is being asked to guess. it does not mean the radius is too tight.
 	 */
 	refused = 0
 
@@ -140,9 +144,10 @@ export class ImportanceIndex {
 	 * The importance of the scored place nearest `(lat, lon)` sharing `name`'s folded key, `country`
 	 * and `placetype`, or null when there is no such place within {@link IMPORTANCE_JOIN_RADIUS_KM}.
 	 *
-	 * Null is unmeasured. Never substitute a zero, and never fall back to a population-derived
-	 * value here — the source column already carries that fallback where it has one,
-	 * and inventing a second one would make an absence indistinguishable from a measurement.
+	 * Null is unmeasured.
+	 * Never substitute a zero, and never fall back to a population-derived value here —
+	 * the source column already carries that fallback where it has one, and inventing a
+	 * second one would make an absence indistinguishable from a measurement.
 	 */
 	find(name: string, country: string | null, placetype: string | null, lat: number, lon: number): number | null {
 		const nameKey = normalizeLocalityForKey(name)
@@ -186,9 +191,11 @@ export class ImportanceIndex {
  * to a place the gazetteer no longer carries, and letting it win the nearest-centroid
  * contest would hand a live place a dead one's fame.
  *
- * The whole table is held in memory on purpose. The 2026-08-10 source holds 676,790 scored
- * places in 544,823 groups, and the build probes it once for every one of its ~4.8 M
- * places. the alternative is a prepared statement per place against a 3.7 GB database.
+ * The whole table is held in memory on purpose.
+ * The 2026-08-10 source holds 676,790 scored places in 544,823 groups,
+ * and the build probes it once for every one of its ~4.8 M places. the alternative
+ * is a prepared statement per place against a 3.7 GB database.
+ *
  * Measured end to end, loading the index plus probing all 4.48 M locality-tier places takes 25 s.
  */
 export function loadImportanceIndex(databasePath: string): ImportanceIndex {

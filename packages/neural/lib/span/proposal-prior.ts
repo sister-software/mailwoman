@@ -42,8 +42,9 @@ const KIND_TO_TAG: ReadonlyMap<string, string> = new Map([
 ])
 
 /**
- * Build the additive prior matrix for one parse. Returns all-zeros rows for pieces
- * no proposal covers — composes harmlessly via `addEmissionMatrix`.
+ * Build the additive prior matrix for one parse.
+ *
+ * Returns all-zeros rows for pieces no proposal covers — composes harmlessly via `addEmissionMatrix`.
  */
 export function buildSpanProposalPriors(
 	proposals: ReadonlyArray<ProposedSpan>,

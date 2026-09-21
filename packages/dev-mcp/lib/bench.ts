@@ -21,9 +21,11 @@ import { percentile } from "@mailwoman/core/stats"
 export interface LatencyReading {
 	n: number
 	/**
-	 * Nearest-rank percentiles. `percentile` takes `p` in **[0, 100]**, not a fraction —
-	 * agents.md flags the unit because local copies elsewhere took a fraction,
-	 * and a careless swap silently changes the number by orders of magnitude.
+	 * Nearest-rank percentiles.
+	 *
+	 * `percentile` takes `p` in **[0, 100]**, not a fraction — agents.md flags the unit
+	 * because local copies elsewhere took a fraction, and a careless swap silently
+	 * changes the number by orders of magnitude.
 	 */
 	p50_ms: number | null
 	p90_ms: number | null
@@ -58,6 +60,7 @@ export function summarizeLatency(samplesMs: number[]): LatencyReading {
 export interface BenchReading {
 	/**
 	 * The one-time construction cost, or `null` when the caller did not ask for it.
+	 *
 	 * Never zero — a cold start that was not measured is not a cold start that was free.
 	 */
 	cold: { engine_build_ms: number; first_query_ms: number; total_ms: number } | null

@@ -37,23 +37,26 @@ import { type PremiseLinkageInputRow, PremiseLinkageInputShapeClass } from "#eva
 import type { GeocodeClassifier, GeocodeDeps } from "#geocode/core"
 
 /**
- * Where a run's rows come from. One method, asynchronous, licensed-data-neutral:
- * the controlled implementation reads a provider's file, this file's implementation
- * reads a constant, and the runner cannot tell them apart.
+ * Where a run's rows come from.
+ *
+ * One method, asynchronous, licensed-data-neutral: the controlled implementation reads a provider's
+ * file, this file's implementation reads a constant, and the runner cannot tell them apart.
  */
 export interface PremiseLinkageAdapter {
 	/**
-	 * Stable adapter name for the run's provenance. Never a file path —
-	 * a path to a controlled file is itself a disclosure.
+	 * Stable adapter name for the run's provenance.
+	 *
+	 * Never a file path — a path to a controlled file is itself a disclosure.
 	 */
 	readonly name: string
 	rows(): AsyncIterable<PremiseLinkageInputRow>
 }
 
 /**
- * The scheme every synthetic row grades against. Real UK premise linkage grades
- * against UPRNs. the fixture uses the same scheme name with invented identifiers
- * so the grading path is the one a controlled run takes.
+ * The scheme every synthetic row grades against.
+ *
+ * Real UK premise linkage grades against UPRNs. the fixture uses the same scheme name
+ * with invented identifiers so the grading path is the one a controlled run takes.
  */
 const SYNTHETIC_SCHEME = "uprn"
 
@@ -65,23 +68,28 @@ const SYNTHETIC_ADMIN_LAT = 51.5
 const SYNTHETIC_ADMIN_LON = -0.1
 
 /**
- * One synthetic case: the row the adapter yields, and the answer the synthetic provider
- * gives for it. Both halves live here so an edit to one is an edit to the other.
+ * One synthetic case: the row the adapter yields, and the answer the synthetic provider gives for it.
+ *
+ * Both halves live here so an edit to one is an edit to the other.
  */
 interface SyntheticCase {
 	row: PremiseLinkageInputRow
 	/**
 	 * Substring of the normalized query the provider keys on.
+	 *
 	 * Unique per case — the fixture answers with the first rule that hits,
 	 * so an overlapping key silently reassigns another case's answer.
 	 */
 	matchOn: string
 	/**
-	 * The provider's answer. Absent means no rule, which the #1901 fixture answers as a refusal.
+	 * The provider's answer.
+	 *
+	 * Absent means no rule, which the #1901 fixture answers as a refusal.
 	 */
 	response?: AuthoritativeResponse
 	/**
 	 * Throw instead of answering — the transport-failure case.
+	 *
 	 * A thrown provider is not a refusal, and the harness has to be able to tell them
 	 * apart on real data, so the fixture set carries one.
 	 */
@@ -336,10 +344,11 @@ function syntheticNode(partial: Partial<AddressNode> & Pick<AddressNode, "tag" |
  * A pipeline that always resolves to one admin coordinate — the shape of the open
  * arm's answer when it can name a town and not a premise.
  *
- * Fixture-only, and deliberately so: a controlled run supplies real {@link GeocodeDeps} built
- * from the shipped model and gazetteer, and this exists so the synthetic self-check runs on
- * a machine with neither. It is exported for the same reason the #1901 fixture provider is —
- * one reference stub the command and the tests share, rather than two that drift.
+ * Fixture-only, and deliberately so: a controlled run supplies real
+ * {@link GeocodeDeps} built from the shipped model and gazetteer, and this exists
+ * so the synthetic self-check runs on a machine with neither.
+ * It is exported for the same reason the #1901 fixture provider is — one reference
+ * stub the command and the tests share, rather than two that drift.
  */
 export function syntheticFixtureDeps(): GeocodeDeps {
 	const classifier: GeocodeClassifier = {

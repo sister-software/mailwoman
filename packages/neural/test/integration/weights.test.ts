@@ -78,15 +78,18 @@ const haveModel = await pathExists(MODEL_PATH)
  *
  * The scripts are idempotent — they symlink the dev artifacts into the workspace and,
  * on a cold cache, shell out to the compiled CLI to rebuild a stale `postcode-<cc>.bin`
- * / `pair-index-<cc>.bin` behind a freshness guard. Eighteen call sites in this file
- * were invoking them, most in pairs, for a result that cannot change after the first:
- * measured 2026-08-02 the file was 96.6s of a 253s CI leg.
+ * / `pair-index-<cc>.bin` behind a freshness guard.
+ * Eighteen call sites in this file were invoking them, most in pairs, for a result that
+ * cannot change after the first: measured 2026-08-02 the file was 96.6s of a 253s CI leg.
  *
- * The rebuild semantics survive memoization. The first call does the freshness check
- * and any rebuild. every later call was re-verifying state the first one already made fresh,
- * and no test asserts the ACT of re-linking. Nothing in this file deletes a real `neural-weights-*`
- * artifact mid-run (the two `rmSync`/`symlinkSync` sites work on temp fixtures), so the memo cannot
- * go stale underneath a later test. If that ever changes, this is what has to be reconsidered.
+ * The rebuild semantics survive memoization.
+ * The first call does the freshness check and any rebuild. every later call was re-verifying
+ * state the first one already made fresh, and no test asserts the ACT of re-linking.
+ *
+ * Nothing in this file deletes a real `neural-weights-*` artifact mid-run
+ * (the two `rmSync`/`symlinkSync` sites work on temp fixtures), so the memo
+ * cannot go stale underneath a later test.
+ * If that ever changes, this is what has to be reconsidered.
  *
  * Deliberately lazy rather than a top-level `beforeAll`: every caller is `skipIf`-conditioned on
  * the dev model being present, and a `beforeAll` would spawn the scripts even where all of them skip.
@@ -105,9 +108,10 @@ function ensureDevWeightsLinked(...locales: readonly string[]): void {
 	}
 }
 
-// Every locale's link-dev-weights.ts shells out to the compiled CLI for its derived
-// artifacts, so the CLI must be built. Detected the same way `haveModel` is:
-// existsSync through the repo's data-root helpers, never a hardcoded path.
+// Every locale's link-dev-weights.ts shells out to the compiled CLI for its
+// derived artifacts, so the CLI must be built.
+// Detected the same way `haveModel` is: existsSync through the repo's data-root
+// helpers, never a hardcoded path.
 //
 // There is deliberately no `haveGBWofDB` guard any more (2026-08-05): en-gb stopped building
 // postcode-gb.bin, so the GB WOF postcode extract is no longer a precondition for any test here —
@@ -128,16 +132,18 @@ const NZ_SOURCE_CSV_PATH = dataRootPath("openaddresses", "extracted", "nz", "cou
 const haveNZSource = await pathExists(String(NZ_SOURCE_CSV_PATH))
 
 // Every test that shells out to a link-dev-weights.ts needs this, for two different
-// cold-start costs. en-gb builds pair-index-gb.bin from the ~25.6M-row PPD
-// tuples CSV — several minutes. en-us verifies its pair-index against the 5.2 GB
-// admin-global-priority.db, and with no `.md5` sidecar yet that is a full hash of the file.
-// Both are first-run costs (each script has a skip-if-current fast path), and both are
-// far past vitest's 15s global default. Generous rather than a perf target.
+// cold-start costs. en-gb builds pair-index-gb.bin from the ~25.6M-row PPD tuples CSV —
+// several minutes. en-us verifies its pair-index against the 5.2 GB admin-global-priority.db,
+// and with no `.md5` sidecar yet that is a full hash of the file.
+// Both are first-run costs (each script has a skip-if-current fast path),
+// and both are far past vitest's 15s global default.
+// Generous rather than a perf target.
 const LINK_SCRIPT_TIMEOUT_MS = 600_000
 
 /**
  * A real GB address whose middle place ("Fishburn") is a verified probe OK (child, parent) pair
  * in the shipped `pair-index-gb.bin` ("Fishburn" / "Stockton-on-Tees" → dependent_locality).
+ *
  * Deliberately house-number-less: with a leading house number ("14 Beulah Hill, …") the base
  * model's own B-locality logit for "Fishburn" is confident enough (raw gap ~6.9) that the +6.0
  * pair-index delta narrows but does not flip it — this phrasing's unbiased margin is narrow enough
@@ -153,11 +159,13 @@ const GB_DEPENDENT_LOCALITY_ADDRESS = "Beulah Hill, Fishburn, Stockton-on-Tees, 
 
 /**
  * A real GB (child, parent) pair — "Holland Fen" / "Lincoln", HM Land Registry PPD
- * `city`/`district` — chosen for the widest post-bias margin found by probing the rung-3
- * census (`scratchpad/gb-probe-grade/census-gb-pairs.jsonl`, 19,431 real pairs) against the
- * shipped `pair-index-gb.bin` (δ=6.0). Method: every pair rendered as `"{Child}, {Parent}"`,
- * `traceParse`d, and scored by (biased B-dependent_locality emission at the child's first piece)
- * − (runner-up label's emission at that same piece) — i.e. the post-bias argmax margin.
+ * `city`/`district` — chosen for the widest post-bias margin found by probing the
+ * rung-3 census (`scratchpad/gb-probe-grade/census-gb-pairs.jsonl`, 19,431 real pairs)
+ * against the shipped `pair-index-gb.bin` (δ=6.0).
+ *
+ * Method: every pair rendered as `"{Child}, {Parent}"`, `traceParse`d,
+ * and scored by (biased B-dependent_locality emission at the child's first piece) −
+ * (runner-up label's emission at that same piece) — i.e. the post-bias argmax margin.
  * Top results (comma form unless noted):
  *
  * | rank | pair                              | margin | argmax               |
@@ -264,23 +272,24 @@ describe("resolveWeights — package auto-resolve", () => {
 	// #1177 base-overlay dedup, en-gb form: model/tokenizer resolve from the en-us base
 	// (mailwoman.baseWeights) while the overlay's own card + pair index resolve locally.
 	//
-	// The anchor assertion is inverted as of 2026-08-05 (#1467) and that inversion is the point of
-	// the test. This case used to assert `anchorLookupPath` pointed at a local `postcode-gb.bin`.
+	// The anchor assertion is inverted as of 2026-08-05 (#1467) and that inversion is the point of the test.
+	// This case used to assert `anchorLookupPath` pointed at a local `postcode-gb.bin`.
 	// It now asserts the opposite, because the encoder's GB anchor slot (slot 4 of LOCALE_ORDER)
 	// never received training gradient — every recipe fed the same US/DE/FR-only pilot lookup —
 	// so shipping GB anchors pushed every GB parse along an untrained input direction.
 	// Measured: exact postcode 294/318 with the binary present vs 318/318 with it absent,
 	// on the gb-golden board across three registers.
 	//
-	// So this assertion is a regression check rather than a description: the failure it exists
-	// to catch is someone re-adding postcode-gb.bin — to `files`, to release.config.json's
-	// postcodeDBByCountry, to the publish workflow's fetch list, or by hand into the package
-	// dir — without the retrain that feeds slot 4. That change produces no error
-	// and no warning on its own. it just quietly makes GB worse. 9.0.0 (ROAD_TO_V9 A4):
-	// the GB anchor slot is trained (v4.2.0 base, Fisher receipts in the en-gb card)
-	// and postcode-gb.bin is back — the card declares span_mode "shaped" and the dev linker
-	// builds the bin off that card check. The #1467 "has no anchor lookup" posture this
-	// test pinned from 2026-08-05 lives on in the card's gb_artifacts history.
+	// So this assertion is a regression check rather than a description:
+	// the failure it exists to catch is someone re-adding postcode-gb.bin — to `files`,
+	// to release.config.json's postcodeDBByCountry, to the publish workflow's fetch list,
+	// or by hand into the package dir — without the retrain that feeds slot 4.
+	// That change produces no error and no warning on its own. it just quietly
+	// makes GB worse. 9.0.0 (ROAD_TO_V9 A4): the GB anchor slot is trained
+	// (v4.2.0 base, Fisher receipts in the en-gb card) and postcode-gb.bin is back —
+	// the card declares span_mode "shaped" and the dev linker builds the bin off that card check.
+	// The #1467 "has no anchor lookup" posture this test pinned from 2026-08-05
+	// lives on in the card's gb_artifacts history.
 	test.skipIf(!haveModel || !haveCLI)(
 		"en-gb resolves model/tokenizer from the en-us base with its own model-card, resolves the RETURNED postcode-gb.bin, and parses",
 		async () => {
@@ -308,8 +317,9 @@ describe("resolveWeights — package auto-resolve", () => {
 		LINK_SCRIPT_TIMEOUT_MS
 	)
 
-	// The packaging half of the same regression check. The assertion above reads the resolver's
-	// answer, which is derived from the package directory. this one reads the package manifest.
+	// The packaging half of the same regression check.
+	// The assertion above reads the resolver's answer, which is derived from the
+	// package directory. this one reads the package manifest.
 	// They can disagree — a tarball ships what `files` names, a dev worktree resolves what is on disk —
 	// and each failure mode has its own repair, so neither assertion substitutes for the other.
 	// Restated 2026-08-06 (ROAD_TO_V9 §1 A4) as a coupling rather than a bare absence.
@@ -318,9 +328,9 @@ describe("resolveWeights — package auto-resolve", () => {
 	// and a flat `not.toContain` gives the promotion no way to satisfy it except by deletion.
 	// The durable invariant underneath is the pairing: the binary's unit keys are only reachable
 	// when the card declares `span_mode: "shaped"`, so the two must move together.
-	// Ship the bin under a non-shaped card and every GB parse feeds an untrained input
-	// direction (the measured 24-postcode regression); declare shaped without the bin
-	// and the channel is simply off. Each half is checkable, and neither alone is the interface.
+	// Ship the bin under a non-shaped card and every GB parse feeds an untrained input direction
+	// (the measured 24-postcode regression); declare shaped without the bin and the channel is simply off.
+	// Each half is checkable, and neither alone is the interface.
 	test("neural-weights-en-gb names a postcode binary in `files` IFF its card declares span_mode shaped", async () => {
 		const manifest = await readPackageJSON(workspacePath("neural-weights-en-gb", "package.json"))
 
@@ -342,10 +352,10 @@ describe("resolveWeights — package auto-resolve", () => {
 	// Base-overlay dedup, en-nz form: model/tokenizer/lexicon-less resolution details are all shared with
 	// the en-gb case above — what's new here is the postcode-less posture. en-nz ships no postcode-nz.bin
 	// (no WOF NZ postcode extract exists — the overlay's model-card `no_postcode_bin` follow-up),
-	// so `anchorLookupPath` must come back undefined while `pair-index-nz.bin` and the overlay-local
-	// model-card still resolve from the package dir. Wiring-only, one test —
-	// the prior/country-restrict behavior itself is generic implementation already covered
-	// by the en-gb prior block below and the mispackaging check at the bottom of this file.
+	// so `anchorLookupPath` must come back undefined while `pair-index-nz.bin`
+	// and the overlay-local model-card still resolve from the package dir.
+	// Wiring-only, one test — the prior/country-restrict behavior itself is generic implementation already
+	// covered by the en-gb prior block below and the mispackaging check at the bottom of this file.
 	test.skipIf(!haveModel || !haveCLI || !haveNZSource)(
 		"en-nz resolves model/tokenizer from the en-us base + pair-index-nz.bin locally, with NO anchor lookup (no NZ postcode extract), and parses",
 		async () => {
@@ -380,18 +390,17 @@ describe("resolveWeights — package auto-resolve", () => {
 })
 
 // placetype-pair-prior arc: the arc's end-to-end proof.
-// `pairIndexPath` resolves on en-gb, `loadFromWeights` constructs a country-restricted
-// `PairIndexResolver` default from it, and a real GB dependent_locality address decodes
-// with the tag applied. The en-us companion proves the same input produces no bias
-// when the package ships no sibling index — the prior degrades to byte-stable
-// rather than to a crash or a silent wrong-country apply.
+// `pairIndexPath` resolves on en-gb, `loadFromWeights` constructs a country-restricted `PairIndexResolver`
+// default from it, and a real GB dependent_locality address decodes with the tag applied.
+// The en-us companion proves the same input produces no bias when the package ships no sibling index —
+// the prior degrades to byte-stable rather than to a crash or a silent wrong-country apply.
 //
 // Margin discipline (see the module docstring's margin discipline bullet):
 // the wiring assertions below never depend on the model's own margin — `applied` reports
-// whether the prior fired, and the bias-delta assertion measures the prior's own contribution
-// against a same-input, prior-forced-off trace. Only the last test in this block
-// asserts an argmax flip, and it uses `GB_WIDE_MARGIN_ADDRESS` (margin ~3.5)
-// rather than the knife-edge `GB_DEPENDENT_LOCALITY_ADDRESS` (margin ~0.211).
+// whether the prior fired, and the bias-delta assertion measures the prior's own
+// contribution against a same-input, prior-forced-off trace.
+// Only the last test in this block asserts an argmax flip, and it uses `GB_WIDE_MARGIN_ADDRESS`
+// (margin ~3.5) rather than the knife-edge `GB_DEPENDENT_LOCALITY_ADDRESS` (margin ~0.211).
 describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smoke)", () => {
 	test.skipIf(!haveModel || !haveCLI || !havePPDSource)(
 		"en-gb: pairIndexPath resolves and the country-restricted default fires (WIRING — margin-independent)",
@@ -454,9 +463,9 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 		LINK_SCRIPT_TIMEOUT_MS
 	)
 
-	// The typed disable (`ParseOpts.placetypePair: false`) — the real "turn an
-	// auto-wired config default off for one call" mechanism, and distinct from the
-	// `NO_MATCH_PAIR_INDEX` stub above in that it is a disable signal type-checkable as one.
+	// The typed disable (`ParseOpts.placetypePair: false`) — the real "turn an auto-wired
+	// config default off for one call" mechanism, and distinct from the `NO_MATCH_PAIR_INDEX`
+	// stub above in that it is a disable signal type-checkable as one.
 	// See `placetype-pair-prior.ts`'s module docstring ("Disable semantics") for the three-case
 	// interface this pins the middle case of: a config default is auto-wired here (en-gb),
 	// so `false` is doing real work rather than just matching an already-inert default.
@@ -504,10 +513,11 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 
 			// GB_WIDE_MARGIN_ADDRESS is deliberately comma-less
 			// (see its docstring — the comma form scored lower for this exact pair).
-			// The prior defaults to `probeMode: "segment"`, under which a comma-free three-word
-			// input is one inert segment — no bias, no flip. This is the window-mode sub-window
-			// behavior on purpose, so `probeMode: "window"` (the opt-in mode) is passed explicitly,
-			// reusing the same real resolver already probed above as the per-parse override.
+			// The prior defaults to `probeMode: "segment"`, under which a comma-free
+			// three-word input is one inert segment — no bias, no flip.
+			// This is the window-mode sub-window behavior on purpose, so `probeMode: "window"`
+			// (the opt-in mode) is passed explicitly, reusing the same real resolver
+			// already probed above as the per-parse override.
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
 
 			const json = await cls.parseJSON(GB_WIDE_MARGIN_ADDRESS, {
@@ -519,26 +529,28 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 		LINK_SCRIPT_TIMEOUT_MS
 	)
 
-	// transition-beta characterization (operator-approved build 2026-07-24): a real comma-free GB register
-	// row from the probe's 17-row fused-path population. Measured against the model 7.0.0 from-scratch
-	// base (both legs per row against scratchpad/en-nz-ship-verify/transition-probe-rows.json),
-	// 15 of the 17 rows self-recover beta-less — including Hedon
-	// and Ashby Parva, which never recovered at any β on the fine-tune lineage.
+	// transition-beta characterization (operator-approved build 2026-07-24): a real
+	// comma-free GB register row from the probe's 17-row fused-path population.
+	// Measured against the model 7.0.0 from-scratch base
+	// (both legs per row against scratchpad/en-nz-ship-verify/transition-probe-rows.json),
+	// 15 of the 17 rows self-recover beta-less — including Hedon and Ashby Parva,
+	// which never recovered at any β on the fine-tune lineage.
 	// Glenfield (margin 3.10) was the pinned discriminator on that base.
 	//
 	// staleness trap, and it has bitten this test before: the pin is graded against a
 	// locally built index, so a stale artifact keeps the test green while the row it names
 	// has quietly started self-recovering beta-less ("Upton"/"Bude" did exactly that).
 	// `link-dev-weights.ts`'s freshness guard therefore compares every entry of `sourceMD5s`
-	// rather than just `[0]` — checking the CSV alone leaves it blind to a new source joining
-	// the index (a borough DB, a checked-in London pair set) — and the CI cache key has to
-	// track the same set. A pass here is only as trustworthy as the artifact's freshness.
+	// rather than just `[0]` — checking the CSV alone leaves it blind to a new source joining the index
+	// (a borough DB, a checked-in London pair set) — and the CI cache key has to track the same set.
+	// A pass here is only as trustworthy as the artifact's freshness.
 	//
 	// the contrast retired AT the 9.1.0 release (2026-08-11): under the v4.4.0 suffix-boundary base,
 	// the discriminator population is empty as far as a fresh 191-pair PPD sweep can see —
-	// 190/191 rows recover the dependent locality in both legs (Glenfield included), 0 rows need β,
-	// 0 rows regress with β on, 1 row misses in both. There is no row to move the pin to,
-	// so the beta-less leg now asserts the measured self-recovery instead of a miss.
+	// 190/191 rows recover the dependent locality in both legs (Glenfield included),
+	// 0 rows need β, 0 rows regress with β on, 1 row misses in both.
+	// There is no row to move the pin to, so the beta-less leg now asserts the
+	// measured self-recovery instead of a miss.
 	// The artifact keeps β=5 as insurance (harmless by the same sweep).
 	// If a future base regresses this class, the failure lands on the beta-less assertion below —
 	// re-run the sweep (both legs over PPD five-field rows whose pair probes to dependent_locality)
@@ -585,9 +597,10 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 		async () => {
 			// en-us ships `pair-index-us.bin` (49,033 WOF-sourced pairs), so the property worth
 			// protecting is not the packaging fact that no sibling exists — it does exist —
-			// but that the index is still inert on GB input. Two independent things keep it inert —
-			// the header's hard country restriction, and the plain fact that US pairs don't
-			// contain GB place names (measured: the US index misses all five GB canonical pairs).
+			// but that the index is still inert on GB input.
+			// Two independent things keep it inert — the header's hard country restriction,
+			// and the plain fact that US pairs don't contain GB place names
+			// (measured: the US index misses all five GB canonical pairs).
 			ensureDevWeightsLinked("en-us")
 
 			const r = await resolveWeights({ locale: "en-us" })
@@ -601,12 +614,12 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 	)
 })
 
-// The hard country restriction's warn branch (classifier.ts loadFromWeights):
-// a pair-index sibling whose PIX1 header country disagrees with the resolved locale's
-// country is a packaging error — the eval must warn + skip the prior default, and the
-// load must still succeed (skip-not-throw). Unreachable through a correctly-built package
-// (resolvePairIndexSibling matches on the locale's own country code), so the test manufactures
-// the mispackaging: a cacheRoot package layout whose `pair-index-us.bin` carries a "gb" header.
+// The hard country restriction's warn branch (classifier.ts loadFromWeights): a pair-index sibling
+// whose PIX1 header country disagrees with the resolved locale's country is a packaging error —
+// the eval must warn + skip the prior default, and the load must still succeed (skip-not-throw).
+// Unreachable through a correctly-built package (resolvePairIndexSibling matches
+// on the locale's own country code), so the test manufactures the mispackaging:
+// a cacheRoot package layout whose `pair-index-us.bin` carries a "gb" header.
 describe("loadFromWeights — pair-index country check (warn branch)", () => {
 	test.skipIf(!haveModel)(
 		"mispackaged sibling (header country ≠ locale country) warns and skips the prior",
@@ -615,11 +628,11 @@ describe("loadFromWeights — pair-index country check (warn branch)", () => {
 			// into a temp cacheRoot layout via symlinks (cacheDir = <cacheRoot>/node_modules/<pkg>).
 			ensureDevWeightsLinked("en-us")
 
-			// ASK the resolver where the artifacts are. This used to name the workspace directory,
-			// which held them only while the dev linkers materialized into the tracked
-			// package. they now land in the data-root overlay, and a fixture mirroring an
-			// empty directory produces a cache with no binaries — so the resolve under test
-			// silently answers from somewhere else and the eval never fires.
+			// ASK the resolver where the artifacts are.
+			// This used to name the workspace directory, which held them only while the dev linkers
+			// materialized into the tracked package. they now land in the data-root overlay,
+			// and a fixture mirroring an empty directory produces a cache with no binaries —
+			// so the resolve under test silently answers from somewhere else and the eval never fires.
 			const packageDir = dirname((await resolveWeights({ locale: "en-us" })).modelPath)
 			const cacheRoot = fixtures.use(await temporaryDirectory("mailwoman-pair-check-")).path
 			const fakePackageDir = weightsCachePackageDir(cacheRoot, "en-us")
@@ -630,11 +643,10 @@ describe("loadFromWeights — pair-index country check (warn branch)", () => {
 
 				// Never symlink the artifact this test is about to overwrite.
 				// `writeFileSync` follows a symlink, so once en-us started shipping a real
-				// `pair-index-us.bin` (campaign R5), symlinking it here would have clobbered
-				// the 49,033-pair production binary with the 1-entry stub below — silently,
-				// since the test still passes and every later test in the run would grade
-				// against the corrupted file. Same write-through-the-symlink hazard agents.md
-				// documents for `fs.copyFile` in the publish path.
+				// `pair-index-us.bin` (campaign R5), symlinking it here would have clobbered the
+				// 49,033-pair production binary with the 1-entry stub below — silently, since the test
+				// still passes and every later test in the run would grade against the corrupted file.
+				// Same write-through-the-symlink hazard agents.md documents for `fs.copyFile` in the publish path.
 				if ((await isFile(source)) && entry !== "pair-index-us.bin") {
 					await createSymbolicLink(source, join(fakePackageDir, entry))
 				}

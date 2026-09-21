@@ -69,8 +69,9 @@ function plausibleUs(lat: number, lon: number): boolean {
 }
 
 /**
- * Retry is on because the page loop below is all-or-nothing: it walks offsets until a
- * page comes back empty, and one throttled page in the middle aborted the whole build.
+ * Retry is on because the page loop below is all-or-nothing: it walks offsets until a page
+ * comes back empty, and one throttled page in the middle aborted the whole build.
+ *
  * The tmp-then-rename tail means a partial run is discarded rather than published,
  * so the cost of a transient failure was the entire download rather than a corrupt artifact.
  *

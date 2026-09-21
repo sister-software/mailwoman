@@ -30,8 +30,9 @@ import type { AddressNode, AddressTree } from "#decoder/types"
 
 /**
  * Tags that cannot stand alone: each is a sub-component of a specific structural
- * anchor (street / locality / venue / postcode). If none of a tag's allowed parents
- * appear anywhere in the tree, the node is an orphan fragment.
+ * anchor (street / locality / venue / postcode).
+ *
+ * If none of a tag's allowed parents appear anywhere in the tree, the node is an orphan fragment.
  *
  * This set is also the denominator of the stranded-dependent check —
  * the classes that can fire — so a caller counting which ones do reads it here
@@ -49,16 +50,19 @@ export const STRICT_DEPENDENTS: ReadonlySet<ComponentTag> = new Set<ComponentTag
 ])
 
 /*
- * `intersection_a` / `intersection_b` are deliberately not strict dependents, for the
- * same reason the geographic containers above are exempt: `Main St and 5th Ave` is a bare
- * intersection query — a degenerate-but-valid parse with no street or locality to anchor to,
- * and the correct answer for that input. Treating the pair as stranded flagged it identically
- * to `Elephant and Castle Road`. It is a genuine defect (one street read as a junction).
+ * `intersection_a` / `intersection_b` are deliberately not strict dependents,
+ * for the same reason the geographic containers above are exempt: `Main St and 5th Ave`
+ * is a bare intersection query — a degenerate-but-valid parse with no street
+ * or locality to anchor to, and the correct answer for that input.
+ *
+ * Treating the pair as stranded flagged it identically to `Elephant and Castle Road`.
+ * It is a genuine defect (one street read as a junction).
+ *
  * Therefore, the rule had no power to separate a right answer from a wrong one.
  * A check that fires on both is not evidence about either.
  *
- * The `Elephant and Castle Road` defect stays tracked — by the board's own
- * expectation for that row (#1750), which is where a claim needing truth belongs.
+ * The `Elephant and Castle Road` defect stays tracked — by the board's own expectation
+ * for that row (#1750), which is where a claim needing truth belongs.
  * This file only makes claims a tree can settle about itself.
  */
 
@@ -75,7 +79,9 @@ export interface TreeValidity {
 }
 
 /**
- * Validate an `AddressTree`'s structural coherence. See module docstring.
+ * Validate an `AddressTree`'s structural coherence.
+ *
+ * See module docstring.
  */
 export function validateTree(tree: AddressTree): TreeValidity {
 	const violations: TreeViolation[] = []

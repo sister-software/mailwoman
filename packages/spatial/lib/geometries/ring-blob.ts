@@ -34,8 +34,10 @@
 import type { MultiPolygonRings } from "#geometries/polygon"
 
 /**
- * Format version stamped into every blob. A reader that meets a different number throws
- * rather than reinterpreting bytes it does not know the shape of.
+ * Format version stamped into every blob.
+ *
+ * A reader that meets a different number throws rather than reinterpreting
+ * bytes it does not know the shape of.
  */
 export const RING_BLOB_VERSION = 1
 
@@ -51,8 +53,9 @@ const RING_ENTRY_BYTES = 8
 
 /**
  * Positions a linear ring needs to bound an area: three distinct vertices plus
- * the repeat that closes it (RFC 7946 §3.1.6). Fewer is a degenerate ring,
- * and encoding one would store a polygon no point can be inside.
+ * the repeat that closes it (RFC 7946 §3.1.6).
+ *
+ * Fewer is a degenerate ring, and encoding one would store a polygon no point can be inside.
  */
 const MINIMUM_RING_POSITIONS = 4
 
@@ -163,8 +166,8 @@ function openRings(blob: Uint8Array): {
 		throw new Error(`ring blob: blob declares ${expected} bytes of geometry, holds ${blob.byteLength}`)
 	}
 
-	// The header is a multiple of eight by construction, so the coordinate run is 8-byte
-	// aligned and this view is legal on a shared buffer whose own offset is aligned.
+	// The header is a multiple of eight by construction, so the coordinate run is 8-byte aligned
+	// and this view is legal on a shared buffer whose own offset is aligned.
 	// A misaligned source buffer is copied rather than rejected.
 	const absoluteOffset = blob.byteOffset + headerBytes
 
@@ -215,6 +218,7 @@ export function pointInEncodedRings(blob: Uint8Array, lon: number, lat: number):
 
 /**
  * The even-odd crossing count over one ring held in a flat coordinate run.
+ *
  * Mirrors {@linkcode pointInRing} exactly — same predicate, same tie behavior —
  * so a decoded ring and an encoded one never disagree.
  */
@@ -265,11 +269,11 @@ const EARTH_RADIUS_M = 6_371_008.8
  * Signed spherical area of one linear ring, in square metres. **clockwise is
  * positive**, counter-clockwise negative.
  *
- * The sign is the whole point: an orientation-respecting sum over a polygon's rings subtracts
- * its holes, while a sum of absolute values adds them. Comparing the two against the
- * source's own area figure is what tells a builder whether it has read the holes at all —
- * the failure mode is silent, because a hole read as an exterior ring produces a perfectly
- * well-formed polygon that simply covers more ground than the authority mapped.
+ * The sign is the whole point: an orientation-respecting sum over a polygon's rings
+ * subtracts its holes, while a sum of absolute values adds them.
+ * Comparing the two against the source's own area figure is what tells a builder whether it has
+ * read the holes at all — the failure mode is silent, because a hole read as an exterior ring
+ * produces a perfectly well-formed polygon that simply covers more ground than the authority mapped.
  *
  * Which winding is positive is A interface rather than A detail, because a builder whose source encodes hole roles by
  * orientation reads roles off this sign. It is the opposite of the standard planar shoelace: this sum runs `(lonᵢ −
@@ -295,8 +299,9 @@ export function ringSignedAreaM2(ring: ReadonlyArray<readonly number[]>): number
  * Both readings of one feature's area, in square metres: `nested` respects ring
  * orientation (holes subtract) and `allExterior` does not (holes add).
  *
- * A source whose holes are correctly nested makes `nested` match the authority's own figure and
- * `allExterior` exceed it. The gap between them is the area a hole-blind reader would answer "inside" for.
+ * A source whose holes are correctly nested makes `nested` match the authority's
+ * own figure and `allExterior` exceed it.
+ * The gap between them is the area a hole-blind reader would answer "inside" for.
  */
 export function ringAreaReadings(polygons: MultiPolygonRings): {
 	nested: number
@@ -336,15 +341,17 @@ export interface DegreeExtent {
 /**
  * Refuse a feature whose reprojected vertices fall outside the publisher's own declared extent.
  *
- * The check A projection check cannot make. A swapped coordinate order survives an
- * authority-code comparison — both axes are still numbers in a plausible range —
- * and a source read in its own metres as if they were degrees produces perfectly
- * well-formed coordinates in the wrong ocean. Both show up here on the first feature,
- * before a whole layer is written to the wrong side of the planet.
+ * The check A projection check cannot make.
+ * A swapped coordinate order survives an authority-code comparison — both axes are still
+ * numbers in a plausible range — and a source read in its own metres as if they were
+ * degrees produces perfectly well-formed coordinates in the wrong ocean.
+ *
+ * Both show up here on the first feature, before a whole layer is written to the wrong side of the planet.
  *
  * Shared BY every polygon ingest, because it is rectangle arithmetic over the ring types
- * and knows nothing about any product. `marginDegrees` is the caller's, because a declared extent is
- * itself a rounded published value and how tightly a source hugs its own is a fact about that source.
+ * and knows nothing about any product.
+ * `marginDegrees` is the caller's, because a declared extent is itself a rounded published
+ * value and how tightly a source hugs its own is a fact about that source.
  *
  * @param context Names the calling ingest in the refusal, so a build log says which layer stopped.
  * @throws {RangeError} On the first vertex outside the extent.
@@ -392,20 +399,21 @@ export interface EncodedArea {
 /**
  * A point inside one stored polygon, for a verification sampler.
  *
- * The bounding-box centre is tried first. where it is not inside — a crescent, a band
- * hugging a river, a polygon with a hole through its middle — a small deterministic grid
- * over the box is scanned. A polygon no grid point lands inside is refused (`undefined`)
- * rather than approximated, because a sample point that is not actually inside the
- * polygon turns an agreement check into a check on the sampler.
+ * The bounding-box centre is tried first. where it is not inside — a crescent, a band hugging a river,
+ * a polygon with a hole through its middle — a small deterministic grid over the box is scanned.
+ * A polygon no grid point lands inside is refused (`undefined`) rather than approximated,
+ * because a sample point that is not actually inside the polygon turns an
+ * agreement check into a check on the sampler.
  *
- * Shared BY every polygon layer'S verify, because it is bounding-box arithmetic over the ring blob
- * and knows nothing about any product. `gridSteps` is the one thing that differs between them:
- * a layer whose polygons are narrow strips needs a finer grid than one whose polygons are compact,
- * and the value is part of a layer's sampling receipt — two runs of the same layer must draw
- * the same points, so it is a caller's choice rather than a shared default nobody owns.
+ * Shared BY every polygon layer'S verify, because it is bounding-box arithmetic
+ * over the ring blob and knows nothing about any product.
+ * `gridSteps` is the one thing that differs between them: a layer whose polygons are narrow
+ * strips needs a finer grid than one whose polygons are compact, and the value is part
+ * of a layer's sampling receipt — two runs of the same layer must draw the same points,
+ * so it is a caller's choice rather than a shared default nobody owns.
  *
- * @param gridSteps Grid divisions per axis. Only `steps − 1` interior lines
- *   are tested, so 7 gives a 6 × 6 grid.
+ * @param gridSteps Grid divisions per axis.
+ *   Only `steps − 1` interior lines are tested, so 7 gives a 6 × 6 grid.
  */
 export function interiorPointOfEncodedRings(
 	area: EncodedArea,
@@ -451,8 +459,8 @@ export function bboxContains(
  * A reproducible sample of interior points drawn by a deterministic stride over a key list —
  * the shape every polygon layer's verification sampler shares.
  *
- * The keys are chosen before any geometry is read: selecting them alone is an
- * index-only walk over the primary key, and the rows they name are then fetched by key.
+ * The keys are chosen before any geometry is read: selecting them alone is an index-only
+ * walk over the primary key, and the rows they name are then fetched by key.
  * The draw is deterministic rather than random, so a re-run compares the same points
  * and a disagreement can be looked at rather than re-rolled.
  *

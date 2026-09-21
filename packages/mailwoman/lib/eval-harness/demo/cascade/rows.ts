@@ -24,7 +24,9 @@ import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 
 export interface SmokeRowExpect {
 	/**
-	 * The WOF place id the cascade's TOP hit must carry. Verified against the gazetteer.
+	 * The WOF place id the cascade's TOP hit must carry.
+	 *
+	 * Verified against the gazetteer.
 	 */
 	id?: number
 	/**
@@ -36,8 +38,9 @@ export interface SmokeRowExpect {
 	 */
 	placetype?: string
 	/**
-	 * The cascade dead-ends (no WOF row) and the demo's anchor-centroid fallback must fire
-	 * instead. Mutually exclusive with `id`.
+	 * The cascade dead-ends (no WOF row) and the demo's anchor-centroid fallback must fire instead.
+	 *
+	 * Mutually exclusive with `id`.
 	 */
 	anchor_centroid?: boolean
 }
@@ -59,8 +62,10 @@ const EXPECT_KEYS = new Set(["id", "name", "placetype", "anchor_centroid"])
 const ROW_KEYS = new Set(["input", "expect", "note", "source"])
 
 /**
- * How much of an offending row the error echoes back. Long enough to recognize the row at
- * a glance, short enough that a pathological single-line file cannot flood the terminal.
+ * How much of an offending row the error echoes back.
+ *
+ * Long enough to recognize the row at a glance, short enough that a pathological
+ * single-line file cannot flood the terminal.
  */
 const ERROR_ROW_ECHO_LIMIT = 200
 
@@ -78,8 +83,10 @@ class SmokeRowError extends Error {
 }
 
 /**
- * Parse + validate a jsonl smoke-row file. Throws a {@link SmokeRowError} naming
- * the 1-based row number (and echoing the offending line) on any malformed row.
+ * Parse + validate a jsonl smoke-row file.
+ *
+ * Throws a {@link SmokeRowError} naming the 1-based row number
+ * (and echoing the offending line) on any malformed row.
  * Returns at least one row — an empty file is an error rather than a vacuous pass.
  */
 export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {

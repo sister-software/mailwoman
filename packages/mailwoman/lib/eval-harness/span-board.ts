@@ -18,8 +18,10 @@ import { JSONSpliterator } from "spliterator"
 import { flattenNodes } from "#eval-harness/flatten-nodes"
 
 /**
- * Production parse configuration — the query-shape prior is fed on every path production parses
- * on (safeClassify, and geocode-core since #981). See baselines.json $config.
+ * Production parse configuration — the query-shape prior is fed on every path
+ * production parses on (safeClassify, and geocode-core since #981).
+ *
+ * See baselines.json $config.
  */
 export function productionParseOptions(input: string): {
 	postcodeRepair: true
@@ -34,9 +36,11 @@ export function productionParseOptions(input: string): {
 }
 
 /**
- * Wilson score interval — the reason the boards exist. The normal approximation collapses at the
- * extremes (it reports a negative lower bound on 0/400, and a zero-width interval on 400/400); Wilson
- * stays inside [0,1] and stays sane on the small, skewed cells that fragment classes actually produce.
+ * Wilson score interval — the reason the boards exist.
+ *
+ * The normal approximation collapses at the extremes (it reports a negative lower
+ * bound on 0/400, and a zero-width interval on 400/400); Wilson stays inside [0,1]
+ * and stays sane on the small, skewed cells that fragment classes actually produce.
  */
 export function wilson(successes: number, total: number, z = 1.96): { low: number; high: number } {
 	if (total === 0) return { low: 0, high: 0 }

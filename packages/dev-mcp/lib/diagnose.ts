@@ -85,8 +85,9 @@ export { expectationCase, type ExpectationReading } from "#diagnose/expectation"
 const KNOWN_FORMAT_CONFIDENCE_FLOOR = 0.9
 
 /**
- * Row ids listed per shape before the list is capped. The `n` beside it is always
- * the real count. this bounds the payload, never the measurement.
+ * Row ids listed per shape before the list is capped.
+ *
+ * The `n` beside it is always the real count. this bounds the payload, never the measurement.
  */
 const SHAPE_ID_CAP = 20
 
@@ -105,8 +106,8 @@ export const COUNTERFACTUAL_FULL_RUN_MAX_ROWS = 20
  *
  * A row can match several, and the order is what makes a multi-match readable:
  * the earliest pipeline stage comes first, so `[retrieval_empty, wrong_instance_detected]`
- * reads as one story rather than two verdicts. The two terminal states are mutually
- * exclusive with everything, including each other.
+ * reads as one story rather than two verdicts.
+ * The two terminal states are mutually exclusive with everything, including each other.
  */
 export const DIAGNOSE_SHAPES = [
 	"parse_shape_contradiction",
@@ -124,6 +125,7 @@ export type DiagnoseShape = (typeof DIAGNOSE_SHAPES)[number]
 
 /**
  * What each shape asserts, as the predicate actually reads it.
+ *
  * Emitted with every result so a classification travels with its own definition —
  * a shape name relayed without its predicate is the bare label this design refuses.
  */
@@ -235,8 +237,10 @@ interface KnownFormatReading {
 	confidence: number
 	text: string
 	/**
-	 * The component tag this format asserts. `null` means the format maps to no component —
-	 * the detector saw a shape the schema has no slot for, which is not a contradiction.
+	 * The component tag this format asserts.
+	 *
+	 * `null` means the format maps to no component — the detector saw a shape the
+	 * schema has no slot for, which is not a contradiction.
 	 */
 	expects_component: string | null
 	matched: boolean
@@ -245,8 +249,10 @@ interface KnownFormatReading {
 export interface ParseFacts {
 	kind: { verdict: string; confidence: number } | null
 	/**
-	 * Why {@link ParseFacts.kind} is null, when it is. The classifier is skipped when a caller
-	 * pinned the register, which is a fact about the call — not a zero-confidence verdict.
+	 * Why {@link ParseFacts.kind} is null, when it is.
+	 *
+	 * The classifier is skipped when a caller pinned the register, which is a fact
+	 * about the call — not a zero-confidence verdict.
 	 */
 	kind_absent_reason?: string
 	input_mode: string
@@ -259,6 +265,7 @@ export interface ParseFacts {
 
 /**
  * One backend lookup, reduced to the facts a shape reads.
+ *
  * The candidate table itself is deliberately not carried — `mwdev_trace` renders it,
  * and an account that dumped it would be a trace with extra steps.
  */
@@ -310,6 +317,7 @@ export interface OutcomeFacts {
 	lineage_vouched: number
 	/**
 	 * Hierarchy entries whose lineage standing could not be established (no sidecar, or no place identity).
+	 *
 	 * Counted apart from `outside_winner_lineage`: unverifiable is not contradicted.
 	 */
 	lineage_unverifiable: number
@@ -322,6 +330,7 @@ export interface RowAccount {
 	shapes: DiagnoseShape[]
 	/**
 	 * `null` when the run carried no parse trace — the bundle could not produce one.
+	 *
 	 * Distinct from a parse whose every channel is absent.
 	 */
 	parse: ParseFacts | null
@@ -360,8 +369,8 @@ function decodeReading(parse: NeuralParseTrace): DecodeReading {
 /**
  * Fold a detector span and a component value to the same comparable form.
  *
- * Known-format spans are offsets into the normalized input while component values
- * are taken from the RAW one, so the two frames cannot be compared by offset.
+ * Known-format spans are offsets into the normalized input while component values are
+ * taken from the RAW one, so the two frames cannot be compared by offset.
  * Folding away case and every non-alphanumeric character compares what both frames do
  * agree on — the characters — which is what the contradiction is about.
  */
@@ -523,11 +532,12 @@ export function matchShapes(facts: {
 		shapes.push("retrieval_empty")
 	}
 
-	// The rule fires only when the scoped probe missed across the whole cascade and the
-	// unscoped fallback produced rows — so every candidate in that lookup is a re-admitted one,
-	// and a pick under the eval is a re-admitted pick. The per-candidate `regionScopeMiss`
-	// stamp does not reach `ResolveCandidateTrace`, so lookup granularity is all the trace can
-	// support. it suffices here because the rule's own condition covers the whole row set.
+	// The rule fires only when the scoped probe missed across the whole cascade
+	// and the unscoped fallback produced rows — so every candidate in that lookup is a
+	// re-admitted one, and a pick under the eval is a re-admitted pick.
+	// The per-candidate `regionScopeMiss` stamp does not reach `ResolveCandidateTrace`,
+	// so lookup granularity is all the trace can support. it suffices here
+	// because the rule's own condition covers the whole row set.
 	if (lookups.some((lookup) => lookup.checks.includes("region_scope_miss") && lookup.picked)) {
 		shapes.push("scope_miss_readmission")
 	}
@@ -556,9 +566,10 @@ function channelMark(reading: ChannelReading): string {
 }
 
 /**
- * One line per row — the tool-kit renderer pattern. The structured account is
- * what a diff reads. this is what a human reads in a transcript without an agent
- * paraphrasing it, which is where detail goes missing.
+ * One line per row — the tool-kit renderer pattern.
+ *
+ * The structured account is what a diff reads. this is what a human reads in a transcript
+ * without an agent paraphrasing it, which is where detail goes missing.
  */
 export function renderAccount(account: Omit<RowAccount, "rendered">): string {
 	const parts: string[] = [`${account.id} [${account.shapes.join(",")}]`, `tier=${account.outcome.tier}`]
@@ -634,8 +645,9 @@ export interface ShapeAggregate {
 	n: number
 	row_ids: string[]
 	/**
-	 * Ids not listed because the list hit its cap. A display bound, never a
-	 * measurement one — `n` is the whole class.
+	 * Ids not listed because the list hit its cap.
+	 *
+	 * A display bound, never a measurement one — `n` is the whole class.
 	 */
 	row_ids_omitted: number
 	predicate: string
@@ -679,8 +691,9 @@ export interface SettingTally {
  * Per-setting counterfactual counts: how many rows the setting was tried on,
  * how many it moved, how many it could not apply to.
  *
- * All three, always. A setting that moved nothing on forty rows and a setting that was
- * never applicable are the same zero in a moved-only table, and they are not the same fact.
+ * All three, always.
+ * A setting that moved nothing on forty rows and a setting that was never applicable
+ * are the same zero in a moved-only table, and they are not the same fact.
  */
 export function aggregateCounterfactuals(
 	accounts: ReadonlyArray<{ counterfactuals?: RowCounterfactuals | undefined }>
@@ -913,8 +926,9 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 		counterfactuals_narrowed: narrowed,
 		counterfactual_errors: counterfactualErrors,
 		elapsed_ms: Date.now() - startedAt,
-		// Under a cap the emitted rows lead with the non-clean ones — the ones every aggregate above
-		// points at — and says what it left out. The aggregates are computed over every row regardless.
+		// Under a cap the emitted rows lead with the non-clean ones — the ones every
+		// aggregate above points at — and says what it left out.
+		// The aggregates are computed over every row regardless.
 		rows: rowsCap === undefined ? emittedRows : emittedRows.slice(0, rowsCap),
 		rows_omitted: rowsCap === undefined ? 0 : Math.max(0, emittedRows.length - rowsCap),
 	}

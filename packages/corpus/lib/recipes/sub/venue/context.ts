@@ -16,9 +16,11 @@ import type { LocaleBaseTuple } from "#synthesizers/locale"
 //#region Address context
 
 /**
- * DE + ES address context. Both read through {@link readLocaleTuples}, the `locale`
- * recipe's own streaming + reservoir reader, so the CSV handling (quoted fields, crlf,
- * city-noise cleaning, the DE per-part region fallback) has exactly one implementation.
+ * DE + ES address context.
+ *
+ * Both read through {@link readLocaleTuples}, the `locale` recipe's own streaming + reservoir reader,
+ * so the CSV handling (quoted fields, crlf, city-noise cleaning, the DE per-part region fallback)
+ * has exactly one implementation.
  *
  * DE reads `europe.zip`'s two members rather than `oa-cache/de__*.zip`:
  * the cached per-state zips the `locale` recipe names are not materialized on
@@ -89,10 +91,11 @@ export async function loadContextTuples(
 /**
  * The street-side confound classes, mined from the leg's own address tuples.
  *
- * Real streets rather than invented ones. The 176,519-row context pool carries 195 GB `hall`
- * streets, 114 GB `gate` streets, 134 distinct GB `-gate` single tokens and a two-figure
- * `<modifier> <designator>` population in both GB and US — small absolute numbers, but every
- * one of them a street somebody lives on, which is the property an invented list cannot have.
+ * Real streets rather than invented ones.
+ * The 176,519-row context pool carries 195 GB `hall` streets, 114 GB `gate` streets,
+ * 134 distinct GB `-gate` single tokens and a two-figure `<modifier> <designator>`
+ * population in both GB and US — small absolute numbers, but every one of them a street
+ * somebody lives on, which is the property an invented list cannot have.
  */
 export interface StreetNegatives {
 	designator: LocaleBaseTuple[]

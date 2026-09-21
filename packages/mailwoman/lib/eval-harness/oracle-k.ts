@@ -61,8 +61,10 @@ export interface OracleKOptions {
 	k?: number
 	/**
 	 * Registered baseline profile to check this run's street readings against (`v264`, `v301`).
-	 * When set, the harness refuses to print a report if any reading deviates from its row —
-	 * the Tier-0 instrument check. Omit for an unregistered candidate.
+	 *
+	 * When set, the harness refuses to print a report if any reading deviates from
+	 * its row — the Tier-0 instrument check.
+	 * Omit for an unregistered candidate.
 	 */
 	assertBaseline?: string
 }
@@ -142,6 +144,7 @@ interface SegmentDecodeResult {
 
 /**
  * K-best segment-level semi-Markov Viterbi over a trace's post-prior emissions.
+ *
  * Word-aligned spans (a `▁`-delimited word never splits); pure-punctuation pieces are
  * unit `O` words that no typed segment may cross; `O` words are unit length.
  * State = (word index, last non-O segment type); scores share one normalization per input,
@@ -328,6 +331,7 @@ function extractSurface(
 
 /**
  * Run the oracle-recall@k eval. narrates the per-floor table on stdout.
+ *
  * Informational — always exits 0.
  */
 export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKOutcome> {
@@ -403,8 +407,9 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 		}
 	}
 
-	// Tier-0 instrument check, before anything prints. A report from a harness reading this far
-	// off its registered baseline is worse than no report — Phase 1 and Phase 4a both shipped one.
+	// Tier-0 instrument check, before anything prints.
+	// A report from a harness reading this far off its registered baseline is worse
+	// than no report — Phase 1 and Phase 4a both shipped one.
 	if (options.assertBaseline) {
 		const readings: Record<string, number> = {}
 

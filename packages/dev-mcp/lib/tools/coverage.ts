@@ -21,8 +21,10 @@ import { z } from "zod"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 
 /**
- * One country as a line a reader can act on. Parse and geocode stay in separate columns
- * because they are separate capabilities with wildly different coverage.
+ * One country as a line a reader can act on.
+ *
+ * Parse and geocode stay in separate columns because they are separate capabilities
+ * with wildly different coverage.
  */
 function line(c: CountryCoverage): string {
 	const parse = !c.admitted
@@ -115,11 +117,12 @@ export const coverageTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 /**
  * Project a {@linkcode CoverageReport} into the tool's response shape.
  *
- * Pure and exported so the projection can be tested. It builds its result field by field,
- * which means a field the report grows and this function does not name is dropped in silence — and
- * the consumer reads that as the field not existing. The corpus-mismatch guard shipped
- * inert for exactly that reason: the census computed it, fifteen tests passed,
- * and the first live call showed nothing, because this function did not carry it.
+ * Pure and exported so the projection can be tested.
+ * It builds its result field by field, which means a field the report grows and this function
+ * does not name is dropped in silence — and the consumer reads that as the field not existing.
+ *
+ * The corpus-mismatch guard shipped inert for exactly that reason: the census computed it,
+ * fifteen tests passed, and the first live call showed nothing, because this function did not carry it.
  */
 export function projectCoverage(report: CoverageReport, wantedCountries?: string[]): Record<string, unknown> {
 	const wanted = wantedCountries?.map((c) => c.toUpperCase())

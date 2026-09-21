@@ -143,6 +143,7 @@ const derived: DerivedFactRecord = {
 
 /**
  * Concepts and the one relation, with every other table empty.
+ *
  * The base for the refusal cases, so an expected issue list stays short enough to state in full.
  */
 const minimalDocument: GeographicModelDocument = {
@@ -588,6 +589,7 @@ describe("derived-fact refusals", () => {
 describe("reporting every violation at once", () => {
 	/**
 	 * Nine independent defects across four records and both passes.
+	 *
 	 * The whole list is stated, because a validator that reports the first violation
 	 * and stops is the behavior this suite exists to refuse.
 	 */

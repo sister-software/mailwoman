@@ -37,9 +37,10 @@ interface WeightsManifest {
 }
 
 /**
- * The locale a `neural-weights-*` directory name carries: `neural-weights-en-gb` is `en-gb`,
- * `neural-weights-cjk` is `cjk`. It is the same string `resolveWeights` takes as
- * its locale, which is why the family registry keys on it.
+ * The locale a `neural-weights-*` directory name carries: `neural-weights-en-gb`
+ * is `en-gb`, `neural-weights-cjk` is `cjk`.
+ *
+ * It is the same string `resolveWeights` takes as its locale, which is why the family registry keys on it.
  */
 function localeForDirectory(directory: string): string {
 	return directory.replace(/^neural-weights-/u, "")
@@ -47,6 +48,7 @@ function localeForDirectory(directory: string): string {
 
 /**
  * A package is a family's graph when its `files` array declares `model.onnx`.
+ *
  * An overlay declares neither that nor a vocabulary artifact and names its
  * base through `mailwoman.baseWeights`.
  */
@@ -235,10 +237,10 @@ export const weightsFamilyCheck: RepoCheck = {
 			const family = FAMILIES.find((entry) => entry.locales.includes(locale))
 			const base = manifest.mailwoman?.baseWeights
 
-			// A family's own graph package declares no `baseWeights`, because it is the base
-			// every overlay in the family points at. Reading it as an overlay would report a
-			// second diagnostic for a graph package whose `model.onnx` is already reported
-			// missing above, naming one manifest twice for one defect.
+			// A family's own graph package declares no `baseWeights`, because it is the
+			// base every overlay in the family points at.
+			// Reading it as an overlay would report a second diagnostic for a graph package whose
+			// `model.onnx` is already reported missing above, naming one manifest twice for one defect.
 			if (family?.family === locale) continue
 
 			// An overlay's `baseWeights` and its family must name the same graph.

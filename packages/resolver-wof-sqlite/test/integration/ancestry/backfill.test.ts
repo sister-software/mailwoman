@@ -115,9 +115,10 @@ test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its paren
 		db.prepare("INSERT INTO ancestors VALUES (?, ?, ?, 0)").run(nycID, aid, pt)
 	}
 
-	// Brooklyn: parent_id points at NYC, so the parent_id closure produced exactly self + NYC and
-	// stopped — NYC's own parent_id is the -4 sentinel. Two ancestor rows, which the previous
-	// "<= 1 ancestor row" candidate test excluded, leaving the borough with no region ancestor.
+	// Brooklyn: parent_id points at NYC, so the parent_id closure produced exactly self + NYC
+	// and stopped — NYC's own parent_id is the -4 sentinel.
+	// Two ancestor rows, which the previous "<= 1 ancestor row" candidate test excluded,
+	// leaving the borough with no region ancestor.
 	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'borough')").run(brooklynID)
 	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'borough', 0)").run(brooklynID, brooklynID)
 	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'locality', 0)").run(brooklynID, nycID)

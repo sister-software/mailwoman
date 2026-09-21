@@ -37,8 +37,10 @@ import { streamToDisk } from "@mailwoman/core/utils"
 import { join } from "path-ts"
 
 /**
- * The download service's survey-area cache. Documented at
- * `https://websoilsurvey.sc.egov.usda.gov/DSD/Download/help`, which lists `GET /{CacheName}/{FileName}`.
+ * The download service's survey-area cache.
+ *
+ * Documented at `https://websoilsurvey.sc.egov.usda.gov/DSD/Download/help`,
+ * which lists `GET /{CacheName}/{FileName}`.
  */
 export const WSS_SSA_CACHE_URL = "https://websoilsurvey.sc.egov.usda.gov/DSD/Download/Cache/SSA"
 
@@ -59,23 +61,30 @@ export interface DownloadSurveyAreaOptions {
 	 */
 	versionDate: string
 	/**
-	 * Where vintages are kept. Each version date gets its own directory, so a new refresh never
-	 * overwrites the old one in place and a re-run against the same vintage never re-transfers.
+	 * Where vintages are kept.
+	 *
+	 * Each version date gets its own directory, so a new refresh never overwrites the old
+	 * one in place and a re-run against the same vintage never re-transfers.
 	 */
 	cacheRoot: string
 	onProgress?: (message: string) => void
 }
 
 /**
- * Bytes between progress reports. Smaller than the shared default because these archives
- * are 13–41 MB, and the default stride would leave the smallest of them reporting once.
+ * Bytes between progress reports.
+ *
+ * Smaller than the shared default because these archives are 13–41 MB, and the default
+ * stride would leave the smallest of them reporting once.
  */
 const PROGRESS_STRIDE_BYTES = 8 * 1024 * 1024
 
 /**
  * What this host answers for a version date it does not hold.
+ *
  * Not a 404: it reads as a malformed request rather than a missing file.
- * The message below reports that status. The date comes from the catalogue rather than a guess.
+ * The message below reports that status.
+ *
+ * The date comes from the catalogue rather than a guess.
  */
 const UNKNOWN_VERSION_STATUS = 400
 
@@ -92,7 +101,9 @@ export interface SurveyAreaArchive {
 	spatialDirectory: string
 	tabularDirectory: string
 	/**
-	 * The archive as transferred. Kept so a re-run costs nothing and so the bytes are re-checkable.
+	 * The archive as transferred.
+	 *
+	 * Kept so a re-run costs nothing and so the bytes are re-checkable.
 	 */
 	archivePath: string
 }

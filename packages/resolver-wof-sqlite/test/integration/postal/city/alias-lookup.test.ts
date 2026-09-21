@@ -136,8 +136,9 @@ describe("postal-city alias coordinate-first wiring (#475)", () => {
 	})
 
 	it("an unrelated postcode (no alias) is byte-stable with the reader attached", async () => {
-		// Reader attached, but 37013 isn't queried — a postcode with no divergent alias must behave
-		// exactly as without the reader. Here the distractor still wins (no alias rescues Nashville).
+		// Reader attached, but 37013 isn't queried — a postcode with no divergent
+		// alias must behave exactly as without the reader.
+		// Here the distractor still wins (no alias rescues Nashville).
 		aliasDB = await buildAliasDB()
 
 		using lookup = new WOFSQLitePlaceLookup({

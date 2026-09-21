@@ -73,10 +73,11 @@ describe("MailwomanTokenizer — native offsets (SP 0.2.2)", () => {
 			const text = "CALLE MAYOR 4"
 			const { pieces } = tokenizer.encode(text)
 
-			// EncodeAsImmutableProto attributes "CAL" to the second piece on this input
-			// (verified against Python sentencepiece on the same model bytes) — the spans BIO
-			// gold was built from. Pinning it here keeps runtime and trainer on one convention.
-			// do not "fix" this back to per-char intuition without re-deriving training gold.
+			// EncodeAsImmutableProto attributes "CAL" to the second piece on this
+			// input (verified against Python sentencepiece on the same model bytes) —
+			// the spans BIO gold was built from.
+			// Pinning it here keeps runtime and trainer on one convention. do not "fix" this
+			// back to per-char intuition without re-deriving training gold.
 			expect(pieces[0]!.piece).toBe("▁C")
 			expect(pieces[0]!.start).toBe(pieces[0]!.end)
 			expect(pieces[1]!.piece).toBe("AL")

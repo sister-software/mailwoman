@@ -20,7 +20,9 @@
 import { distance as levenshteinDistance } from "fastest-levenshtein"
 
 /**
- * Jaro similarity in [0, 1]. Two empty strings are identical (1); one empty is 0.
+ * Jaro similarity in [0, 1].
+ *
+ * Two empty strings are identical (1); one empty is 0.
  * Counts matching characters within a sliding window of `floor(max(len)/2) - 1`,
  * discounting half-transpositions.
  */
@@ -142,15 +144,17 @@ export function levenshteinSimilarity(a: string, b: string): number {
 }
 
 /**
- * Name-aware similarity in [0, 1]. Jaro-Winkler by default, with the compound-surname
- * fallback the literature prescribes:
+ * Name-aware similarity in [0, 1].
+ *
+ * Jaro-Winkler by default, with the compound-surname fallback the literature prescribes:
  *
  * - If one name's tokens are a strict subset of the other's (`Lopez` ⊂ `Garcia Lopez`),
  *   that is strong partial agreement J-W misses — floor the score at 0.9.
  * - Otherwise return the better of Jaro-Winkler and normalized edit similarity, so a single token
  *   that is a substring of a longer compound (`Garcia` vs `Garcialopez`) still scores sensibly.
  *
- * Case- and whitespace-insensitive. Empty input scores 0.
+ * Case- and whitespace-insensitive.
+ * Empty input scores 0.
  */
 export function nameSimilarity(a: string, b: string): number {
 	const x = a.trim().toLowerCase().replaceAll(/\s+/g, " ")

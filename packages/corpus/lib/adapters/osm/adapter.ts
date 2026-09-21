@@ -50,8 +50,9 @@ import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter
 export const OSM_ADAPTER_ID = "osm"
 
 /**
- * OpenStreetMap's license. Share-alike: `SHARE_ALIKE_PATTERN` matches it,
- * and `--exclude-share-alike` drops the rows.
+ * OpenStreetMap's license.
+ *
+ * Share-alike: `SHARE_ALIKE_PATTERN` matches it, and `--exclude-share-alike` drops the rows.
  */
 export const OSM_LICENSE = "ODbL-1.0"
 
@@ -80,6 +81,7 @@ const MAX_STREET_WORDS = 8
  * Whether `addr:housenumber` holds a designator a person writes after or before the street:
  * digits with an optional letter, fraction or dash suffix (`12`, `188a`, `14/E`, `1/1146`, `167-c`),
  * or a one- or two-letter block prefix (`B-77`, `L58`, `R 948`, Karachi's plot numbering).
+ *
  * `House 34, Road 4, Sector 9`, `Plot #27`, `-` and a name are not.
  */
 export function housenumberIsDesignator(value: string): boolean {
@@ -104,8 +106,10 @@ export function isStreetName(value: string): boolean {
 }
 
 /**
- * Split an `addr:city` that carries a neighborhood ahead of the city (`Mirpur 10, Dhaka`
- * → locality `Dhaka`, head `Mirpur 10`). A value without a comma is the locality alone.
+ * Split an `addr:city` that carries a neighborhood ahead of the city
+ * (`Mirpur 10, Dhaka` → locality `Dhaka`, head `Mirpur 10`).
+ *
+ * A value without a comma is the locality alone.
  */
 export function splitCityValue(value: string): { locality: string; head: string | null } {
 	const parts = extractDelimited(value)

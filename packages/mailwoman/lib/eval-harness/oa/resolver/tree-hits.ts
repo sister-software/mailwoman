@@ -23,6 +23,7 @@ export interface Resolved {
 	placetype: string
 	/**
 	 * ISO-3166 alpha-2 the resolver placed the node in, when it stamped one.
+	 *
 	 * Read only for a `postalcode`, whose rank against the locality is per-address-system.
 	 */
 	country?: string
@@ -124,9 +125,9 @@ export function collectResolved(tree: AddressTree): Resolved[] {
 /**
  * The deepest resolved place in the set — the one whose coordinate the eval grades.
  *
- * Delegates to `@mailwoman/resolver`'s ranking so the grade tracks what result assembly
- * actually returns. A flat `PLACETYPE_SPECIFICITY` sort promoted every resolved `postalcode`
- * over the locality, which is production's ladder on one arm and its opposite on the other.
+ * Delegates to `@mailwoman/resolver`'s ranking so the grade tracks what result assembly actually returns.
+ * A flat `PLACETYPE_SPECIFICITY` sort promoted every resolved `postalcode` over the locality,
+ * which is production's ladder on one arm and its opposite on the other.
  */
 export function mostSpecific(rs: Resolved[]): Resolved | null {
 	return mostSpecificResolved(rs, (r) => ({

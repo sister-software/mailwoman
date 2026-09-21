@@ -3,9 +3,9 @@
  *
  * `scriptFamilyForText` once routed on the folded character class alone, so only an input that
  * was CJK end to end reached the character model and every mixed input went to the Latin one —
- * which is how `逊克二分场四队, heilongjiang, china` came back as a single locality holding the
- * whole Han unit. The question was never whether reading the per-span script helps the
- * Chinese rows. it is what it does to a Latin address that happens to carry a Han venue name.
+ * which is how `逊克二分场四队, heilongjiang, china` came back as a single locality holding the whole Han unit.
+ * The question was never whether reading the per-span script helps the Chinese rows. it
+ * is what it does to a Latin address that happens to carry a Han venue name.
  *
  * Two candidate rules are measured against the same rows, beside what the
  * shipped router does today (`routedToday`):
@@ -18,9 +18,11 @@
  *   newly routed are the ones a whole-input fold would still send to the Latin model.
  *
  * What this measures is the classifier rather than the pipeline.
- * Each arm calls `parse` directly, so normalization, the phrase grouper and the resolver are all absent
- * and the absolute scores here are not the board's. Both arms run through the identical
- * harness, so the comparison is sound and the direction is what the probe reports.
+ * Each arm calls `parse` directly, so normalization, the phrase grouper and the resolver
+ * are all absent and the absolute scores here are not the board's.
+ *
+ * Both arms run through the identical harness, so the comparison is sound
+ * and the direction is what the probe reports.
  *
  * Run:
  *

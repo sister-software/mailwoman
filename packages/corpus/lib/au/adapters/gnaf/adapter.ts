@@ -39,8 +39,9 @@ import { stableSourceID } from "#adapters/utils"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record
- * can be traced back to the dataset it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const GNAF_ADAPTER_ID = "gnaf"
 /**
@@ -58,8 +59,10 @@ interface GNAFTuple {
 
 /**
  * The address layouts an AU address actually arrives in.
- * The model already handles postcode-trailing (canonical); the two postcode-leading forms are the ones
- * it fails, so they carry the change. We keep the canonical form too so the retrain doesn't forget it.
+ *
+ * The model already handles postcode-trailing (canonical); the two postcode-leading
+ * forms are the ones it fails, so they carry the change.
+ * We keep the canonical form too so the retrain doesn't forget it.
  */
 function renderOrders(c: GNAFTuple): string[] {
 	const region = c.region ? ` ${c.region}` : ""
@@ -75,8 +78,10 @@ function renderOrders(c: GNAFTuple): string[] {
 }
 
 /**
- * Build the G-NAF adapter. `inputPath` is the assembled component jsonl (see {@link ./assemble});
- * it is country-pinned to AU regardless of `opts.country` (G-NAF is Australia-only).
+ * Build the G-NAF adapter.
+ *
+ * `inputPath` is the assembled component jsonl (see {@link ./assemble}); it is
+ * country-pinned to AU regardless of `opts.country` (G-NAF is Australia-only).
  */
 export function createGNAFAdapter(): CorpusAdapter {
 	return {
@@ -127,8 +132,8 @@ export function createGNAFAdapter(): CorpusAdapter {
 					components.region = t.region
 				}
 
-				// `raw` here is one of three deliberate word orders, two of which no
-				// layout prints — the postcode-leading forms this adapter exists to teach.
+				// `raw` here is one of three deliberate word orders, two of which no layout prints —
+				// the postcode-leading forms this adapter exists to teach.
 				// So the question is containment against a string this adapter built
 				// rather than what a layout would have printed.
 				const aligned = componentsPresentIn(components, raw)

@@ -37,8 +37,9 @@ import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record
- * can be traced back to the dataset it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const USGOV_HRSA_FQHC_ADAPTER_ID = "usgov-hrsa-fqhc"
 /**
@@ -48,8 +49,9 @@ export const USGOV_HRSA_FQHC_ADAPTER_ID = "usgov-hrsa-fqhc"
 export const USGOV_HRSA_FQHC_DEFAULT_LICENSE = "Public Domain"
 
 /**
- * Subset of HRSA "Health Center Service Delivery Site Locations" CSV columns consulted
- * by the adapter. Column names match the canonical HRSA Data Warehouse export header.
+ * Subset of HRSA "Health Center Service Delivery Site Locations" CSV columns consulted by the adapter.
+ *
+ * Column names match the canonical HRSA Data Warehouse export header.
  * Operators substituting a closely-related extract should rename columns to
  * match. the readme has the mapping cheatsheet.
  */
@@ -60,19 +62,22 @@ interface HRSASiteRow {
 	"Site State Abbreviation": string
 	"Site Postal Code": string
 	/**
-	 * Optional. Falls back to `stableSourceID` derived from components when missing.
+	 * Optional.
+	 *
+	 * Falls back to `stableSourceID` derived from components when missing.
 	 */
 	"Site ID"?: string
 }
 
 /**
  * Split a "123 Main St Suite 4" surface form into `(house_number, street)`.
+ *
  * The regex tolerates one trailing letter on the number (`"123A Main St"`)
  * and a hyphenated form (`"40-12 Bell Blvd"`); anything else falls back to street-only.
  *
- * Suite / Apt / Unit designators stay on `street` — Mailwoman's `unit`
- * component exists but the address-formatter does not have a clean slot for it,
- * and HRSA addresses do not separate the suite into its own column.
+ * Suite / Apt / Unit designators stay on `street` — Mailwoman's `unit` component exists
+ * but the address-formatter does not have a clean slot for it, and HRSA addresses
+ * do not separate the suite into its own column.
  * Leaving the surface form intact in `street` keeps the adversarial training signal
  * (the model learns that a trailing "Suite 4" is part of the road line in this distribution).
  */
@@ -112,10 +117,10 @@ export function createUSGovHRSAFQHCAdapter(): CorpusAdapter {
 
 				if (!state) continue
 
-				// Insertion order matters here. `venue` first so alignment claims its span
-				// (which may contain a token like "Buffalo") before `locality` runs its search —
-				// the kryptonite case `Buffalo Health Clinic, Buffalo NY` otherwise
-				// mis-labels the venue's "Buffalo" as locality.
+				// Insertion order matters here.
+				// `venue` first so alignment claims its span (which may contain a token like "Buffalo")
+				// before `locality` runs its search — the kryptonite case `Buffalo Health Clinic, Buffalo NY`
+				// otherwise mis-labels the venue's "Buffalo" as locality.
 				const components: CanonicalRow["components"] = {
 					venue,
 					...(split.house_number ? { house_number: split.house_number } : {}),

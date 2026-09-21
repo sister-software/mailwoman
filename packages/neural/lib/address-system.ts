@@ -48,7 +48,9 @@ function localeVerdict(
 }
 
 /**
- * ISO-2 country → codex address system. Unmapped locales have no conventions yet.
+ * ISO-2 country → codex address system.
+ *
+ * Unmapped locales have no conventions yet.
  */
 const COUNTRY_TO_SYSTEM: Partial<Record<(typeof LOCALE_COUNTRIES)[number], SystemCode>> = {
 	US: "us",
@@ -87,11 +89,12 @@ export function detectAddressSystem(
 }
 
 /**
- * The locale head's confident country verdict, or null — {@link detectAddressSystem}
- * minus the system mapping, so the three head countries without a `SystemCode`
- * (ES/IT/NL) still yield a verdict. Same threshold posture: below it the head abstains
- * rather than acting on a coin flip. The head is a 9-way classifier — its verdict is
- * evidence that the text is shaped like that country's addressing, never a resolved country
+ * The locale head's confident country verdict, or null — {@link detectAddressSystem} minus the system
+ * mapping, so the three head countries without a `SystemCode` (ES/IT/NL) still yield a verdict.
+ *
+ * Same threshold posture: below it the head abstains rather than acting on a coin flip.
+ * The head is a 9-way classifier — its verdict is evidence that the text
+ * is shaped like that country's addressing, never a resolved country
  * (a Chinese address may read GB: right about "not the locale's country", wrong about which).
  */
 export function confidentLocaleCountry(

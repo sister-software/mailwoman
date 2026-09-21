@@ -33,9 +33,9 @@ import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resol
 import { isoDate, mailwomanDataRoot } from "@mailwoman/core/utils"
 // resolver-wof-sqlite is an optional peer dep of mailwoman (geocoding is opt-in) —
 // import it dynamically inside the functions (the geocode.tsx convention)
-// rather than at module load, so that merely loading these commands
-// (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault when the
-// peer isn't installed. Types are erased, so type-only imports are safe at module level.
+// rather than at module load, so that merely loading these commands (e.g. `mailwoman --help`,
+// which eagerly imports every command) doesn't fault when the peer isn't installed.
+// Types are erased, so type-only imports are safe at module level.
 import type { GeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite"
 import type { BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 import type { CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
@@ -135,9 +135,11 @@ export const DEFAULT_ADMIN_DB = "admin-global-priority.db"
  * `node:path`'s `join` — the same builder `wofExtractPaths` (`core/utils/data-root.ts`)
  * uses for the identical shape, a caller-supplied root plus a fixed subdirectory.
  * It also makes the return absolute, which the docstrings above have always claimed:
- * the default root is absolute. Therefore, `join` only differed for a caller that passed
- * a relative `--data-root`, and for that caller it silently produced a cwd-relative
- * path the sealed-artifact swap would then resolve somewhere else.
+ * the default root is absolute.
+ *
+ * Therefore, `join` only differed for a caller that passed a relative `--data-root`,
+ * and for that caller it silently produced a cwd-relative path the sealed-artifact
+ * swap would then resolve somewhere else.
  */
 export function wofDir(dataRoot: string = mailwomanDataRoot()): string {
 	return resolvePath(dataRoot, "wof")
@@ -180,6 +182,7 @@ export async function resolvePostcodeDatabases(
 /**
  * Locality databases folded into the candidate build by default, existence-filtered like the
  * postcode set — today the linz-derived NZ suburb database (#1564; `gazetteer build nz-localities`).
+ *
  * A machine without the database builds without it, and the artifact's NZ locality
  * namespace stays exactly as thin as the sources that fed it.
  */
@@ -239,6 +242,7 @@ export interface FoldOptions {
 	adminIn: string
 	/**
 	 * Destination admin DB carrying the folded GeoNames names.
+	 *
 	 * Must differ from `adminIn`.
 	 */
 	adminOut: string
@@ -259,12 +263,15 @@ export interface FoldOptions {
 	adminForCountries?: ReadonlySet<string>
 	/**
 	 * #936: dir holding `<CC>.txt` alternateNamesV2 dumps (default {@link geonamesAlternateDir}) — tags alias rows with
-	 * language / privateuse / `official`. Countries without a file fold untagged, exactly as before.
+	 * language / privateuse / `official`.
+	 *
+	 * Countries without a file fold untagged, exactly as before.
 	 */
 	alternateDir?: string
 	/**
 	 * #1514 override: proceed even when `adminIn` already carries alias rows for countries this run does not list. The
 	 * fold owns its whole id range and rewrites it wholesale, so those countries are dropped.
+	 *
 	 * Only pass this when shrinking the fold is the point.
 	 */
 	allowCoverageLoss?: boolean
@@ -290,15 +297,18 @@ export interface FoldResult {
 }
 
 /**
- * Durable GeoNames upstream fold: copy the admin DB, fold the GeoNames places + Latin alt-names
- * into its canonical `spr`/`names`/`place_population`, then rebuild `place_search`/`place_bbox`
- * so the candidate build carries them. Build-on-copy — `adminIn` is never touched.
+ * Durable GeoNames upstream fold: copy the admin DB, fold the GeoNames places +
+ * Latin alt-names into its canonical `spr`/`names`/`place_population`, then rebuild
+ * `place_search`/`place_bbox` so the candidate build carries them.
+ *
+ * Build-on-copy — `adminIn` is never touched.
  *
  * #1514: the fold owns the id range `[9e12, 9.5e12)` and rewrites it wholesale — the synthetic id is a position in the
  * run, so a partial rewrite binds one run's names to another run's places.
  * Folding a country set narrower than what `adminIn` already carries therefore drops the
  * difference, and since `buildAdmin` bakes the full `DEFAULT_GEONAMES_COUNTRIES` fold into
  * every admin artifact it builds, that is the normal case here rather than an exotic one.
+ *
  * The pre-flight below refuses it unless {@link FoldOptions.allowCoverageLoss} says otherwise.
  */
 export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResult> {
@@ -384,20 +394,25 @@ export interface BuildOptions {
 	/**
 	 * Absolute locality-database paths to fold in (default {@link resolveLocalityDatabases} —
 	 * today the linz-derived NZ suburb database, when the machine holds it).
+	 *
 	 * Same tolerate-and-degrade shape as the postcode databases.
 	 */
 	localityDatabases?: readonly string[]
 	/**
 	 * Score source for the `importance` column (default {@link resolveImportanceDB}).
+	 *
 	 * Pass `false` to build the column empty on purpose.
 	 */
 	importanceDB?: string | false
 	/**
 	 * Countries judged by the cross-source currency backfill (#1737 — deprecated-with-no-successor
 	 * WOF localities resurrected only under a GeoNames attestation. see `resurrectCurrencyHoles`).
-	 * Default: the WOF-priority set — the only countries whose admin comes from WOF repos, so the
-	 * only ones that can carry this hole class. Countries without a `<data-root>/geonames/<CC>.txt`
-	 * dump are skipped loudly by the pass. Pass `false` to disable.
+	 *
+	 * Default: the WOF-priority set — the only countries whose admin comes from WOF repos,
+	 * so the only ones that can carry this hole class.
+	 * Countries without a `<data-root>/geonames/<CC>.txt` dump are skipped loudly by the pass.
+	 *
+	 * Pass `false` to disable.
 	 */
 	currencyBackfillCountries?: readonly string[] | false
 	onProgress?: (phase: string, message: string) => void
@@ -476,9 +491,11 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 }
 
 /**
- * Point the drop-in convention path `<data-root>/wof/candidate.db` at
- * `candidateDB` (a symlink — a pointer swap, never a DB mutation).
- * The nominatim/photon CLIs auto-use this path. Returns the link.
+ * Point the drop-in convention path `<data-root>/wof/candidate.db` at `candidateDB`
+ * (a symlink — a pointer swap, never a DB mutation).
+ *
+ * The nominatim/photon CLIs auto-use this path.
+ * Returns the link.
  */
 export async function promoteCandidate(candidateDB: string, dataRoot: string = mailwomanDataRoot()): Promise<string> {
 	if (!(await pathExists(candidateDB))) throw new Error(`candidate DB not found: ${candidateDB}`)
@@ -538,9 +555,11 @@ export interface PublishResult {
 }
 
 /**
- * Publish the candidate gazetteer to R2 (the demo's byte-range source) and bump the demo's
- * `ADMIN_GAZETTEER_VERSION`. Shells out to the proven `publish-demo-assets-to-r2.py`
- * (boto3 + R2 cache-control); RCLONE_S3_PUBLIC_* creds must be in the process env (source `.env` first).
+ * Publish the candidate gazetteer to R2 (the demo's byte-range source)
+ * and bump the demo's `ADMIN_GAZETTEER_VERSION`.
+ *
+ * Shells out to the proven `publish-demo-assets-to-r2.py` (boto3 + R2 cache-control);
+ * RCLONE_S3_PUBLIC_* creds must be in the process env (source `.env` first).
  */
 export async function publishGazetteer(opts: PublishOptions): Promise<PublishResult> {
 	if (!(await pathExists(opts.candidateDB))) throw new Error(`candidate DB not found: ${opts.candidateDB}`)
@@ -592,6 +611,7 @@ export async function publishGazetteer(opts: PublishOptions): Promise<PublishRes
 
 /**
  * A dated, immutable gazetteer version: `yyyy-MM-DD` + a lowercase suffix letter, e.g. `2026-06-27a`.
+ *
  * Pass a `Date` (the CLI does. the module never reads the clock implicitly).
  */
 export function defaultGazetteerVersion(now: Date, suffix = "a"): string {

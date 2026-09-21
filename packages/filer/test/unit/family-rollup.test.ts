@@ -401,21 +401,24 @@ describe("familyRollup — general reader interface", () => {
 
 	/**
 	 * `readFamilyDisplayNames` (`filer-lookup.ts`) reads back the raw spelling behind each
-	 * `filer_family` row by looking up the authoritative `filer_edge` from that row's `node_id`
-	 * to its own stored `naming_node_id`, under the same `(relationship, source, valid_from)` —
-	 * the exact edge `build/family-membership.ts`'s `insertFamilyMembership` wrote the row
-	 * in lockstep with. That is a pure join on persisted provenance: the reader never calls
+	 * `filer_family` row by looking up the authoritative `filer_edge` from that row's `node_id` to its
+	 * own stored `naming_node_id`, under the same `(relationship, source, valid_from)` — the exact
+	 * edge `build/family-membership.ts`'s `insertFamilyMembership` wrote the row in lockstep with.
+	 *
+	 * That is a pure join on persisted provenance: the reader never calls
 	 * `mintFamilyID`/`canonicalizeOrganizationName` at all, so a canonicalizer change in
 	 * `@mailwoman/record` cannot silently empty a shipped artifact's `display_names`.
 	 *
-	 * These fixtures are hand-written (nodes, edges and family rows inserted directly) and
-	 * each asserts a spelling the reader must surface. They are not independent of the
-	 * real canonicalizer, and deliberately so — `FAMILY_ID_SOLO` and the multi-spelling
-	 * pair below are minted through the real `mintFamilyID`, because made-up `family_id`
-	 * constants round-trip through a wrong join and hide the cross-family leak.
-	 * What each test proves is the reader's join. what the real `mintFamilyID` calls establish is
-	 * that the fixture's premise (these two spellings really do land in one family) holds for real
-	 * rather than by assumption. The end-to-end builder versions live in `filer-lookup.test.ts`.
+	 * These fixtures are hand-written (nodes, edges and family rows inserted directly)
+	 * and each asserts a spelling the reader must surface.
+	 * They are not independent of the real canonicalizer, and deliberately so — `FAMILY_ID_SOLO`
+	 * and the multi-spelling pair below are minted through the real `mintFamilyID`, because made-up
+	 * `family_id` constants round-trip through a wrong join and hide the cross-family leak.
+	 *
+	 * What each test proves is the reader's join. what the real `mintFamilyID` calls establish
+	 * is that the fixture's premise (these two spellings really do land in one family)
+	 * holds for real rather than by assumption.
+	 * The end-to-end builder versions live in `filer-lookup.test.ts`.
 	 */
 	describe("display_names — the naming-provenance join", () => {
 		const HOLDING_NODE_ONE_SPELLING = `${FilerIdentifierType.HoldingCompanyName}:Solo Spelling Inc`
@@ -690,15 +693,18 @@ describe("familyRollup — general reader interface", () => {
 		})
 
 		/**
-		 * The naming provenance is read, never re-derived. `filer.db` ships sealed
-		 * and separately versioned; `canonicalizeOrganizationName` lives in `@mailwoman/record`
-		 * and its designation packs are explicitly documented as extensible.
-		 * This fixture is what an artifact built by an older canonicalizer looks like
-		 * from today's code: the persisted `family_id` is one no current `mintFamilyID`
-		 * call would ever produce, while node, edge and membership are all intact.
-		 * Any read path that re-canonicalizes returns `display_names: []` here — no error,
-		 * no warning, the name simply gone. Joining the stored `naming_node_id` cannot
-		 * fail this way, because nothing in the read path canonicalizes.
+		 * The naming provenance is read, never re-derived.
+		 *
+		 * `filer.db` ships sealed and separately versioned; `canonicalizeOrganizationName` lives in
+		 * `@mailwoman/record` and its designation packs are explicitly documented as extensible.
+		 * This fixture is what an artifact built by an older canonicalizer looks like from
+		 * today's code: the persisted `family_id` is one no current `mintFamilyID` call
+		 * would ever produce, while node, edge and membership are all intact.
+		 *
+		 * Any read path that re-canonicalizes returns `display_names: []` here —
+		 * no error, no warning, the name simply gone.
+		 * Joining the stored `naming_node_id` cannot fail this way, because nothing
+		 * in the read path canonicalizes.
 		 */
 		it("surfaces the display name even when the persisted family_id no longer matches what the CURRENT canonicalizer would mint", async () => {
 			using db = openMemory()

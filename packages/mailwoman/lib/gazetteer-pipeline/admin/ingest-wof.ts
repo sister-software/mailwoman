@@ -43,8 +43,8 @@ const BBOX_2D_LENGTH = 4
  * localadmin]`. Those rows answer only an unfiltered query, which ranks population-first and sorts a hood carrying no
  * population last.
  *
- * `campus` is deliberately not here despite being commoner than macrohood in the same sample
- * (1,368). It is a venue tier — universities, hospitals, airports — not an admin one,
+ * `campus` is deliberately not here despite being commoner than macrohood in the same sample (1,368).
+ * It is a venue tier — universities, hospitals, airports — not an admin one,
  * and it belongs to the sub-venue work, where its terminals and wings are the point.
  */
 export const ADMIN_PLACETYPES: ReadonlySet<string> = new Set([
@@ -90,11 +90,11 @@ async function parseFeature(
 	placetypes: ReadonlySet<string>,
 	anchorLookup?: GeoNamesAnchorLookup
 ): Promise<ParsedFeature | null> {
-	// Typed against the schema `@mailwoman/core/resources/whosonfirst` already
-	// owns (`WOFFeature`/`WOFProperties`, admin.ts) rather than reading `any`.
-	// This file used to name all seventeen `wof:`/`geom:`/`edtf:`/`mz:` keys as
-	// bare strings, which meant a typo — `wof:superceded_by` — would have compiled,
-	// read `undefined`, and silently ingested every superseded record in the corpus.
+	// Typed against the schema `@mailwoman/core/resources/whosonfirst` already owns
+	// (`WOFFeature`/`WOFProperties`, admin.ts) rather than reading `any`.
+	// This file used to name all seventeen `wof:`/`geom:`/`edtf:`/`mz:` keys as bare strings,
+	// which meant a typo — `wof:superceded_by` — would have compiled, read `undefined`,
+	// and silently ingested every superseded record in the corpus.
 	// A type-only import: erased at build, zero runtime cost.
 	const feature = parseJSONStrict<WOFFeature>(text)
 	const props: WOFProperties | undefined = feature.properties
@@ -112,9 +112,10 @@ async function parseFeature(
 	const mzIsCurrent = props["mz:is_current"]
 
 	// Label centroid first, math centroid as the fallback — same preference the
-	// postcode-locality builder applies. The math centroid is wrong exactly
-	// where it matters most: a multipolygon spanning overseas territories pulls it off the
-	// mainland entirely (France's geom: point is in Spain. lbl: is metropolitan France).
+	// postcode-locality builder applies.
+	// The math centroid is wrong exactly where it matters most: a multipolygon
+	// spanning overseas territories pulls it off the mainland entirely
+	// (France's geom: point is in Spain. lbl: is metropolitan France).
 	// Both coordinates are taken from the same source or neither: a lbl:latitude paired
 	// with a geom:longitude would be a point on neither centroid.
 	//
@@ -150,8 +151,9 @@ async function parseFeature(
 		pointChoice = chosen.choice
 	}
 
-	// WOF `geom:bbox` is "minLon,minLat,maxLon,maxLat". Fall back to the centroid (a point bbox)
-	// when absent — still correct for point-in-box proximity, the resolver's main bbox use.
+	// WOF `geom:bbox` is "minLon,minLat,maxLon,maxLat".
+	// Fall back to the centroid (a point bbox) when absent — still correct for
+	// point-in-box proximity, the resolver's main bbox use.
 	let [minLon, minLat, maxLon, maxLat] = [lon, lat, lon, lat]
 	const bboxStr = props["geom:bbox"]
 
@@ -216,15 +218,21 @@ export interface IngestWOFOptions {
 	 */
 	dataDir: PathBuilderLike
 	/**
-	 * Placetype allowlist. Default {@link ADMIN_PLACETYPES}.
+	 * Placetype allowlist.
+	 *
+	 * Default {@link ADMIN_PLACETYPES}.
 	 */
 	placetypes?: ReadonlySet<string>
 	/**
-	 * Parallel file reads. Default 64.
+	 * Parallel file reads.
+	 *
+	 * Default 64.
 	 */
 	concurrency?: number
 	/**
-	 * Files per write transaction. Default 500.
+	 * Files per write transaction.
+	 *
+	 * Default 500.
 	 */
 	batchCommitSize?: number
 	/**
@@ -243,16 +251,19 @@ export interface IngestWOFResult {
 	placesIngested: number
 	skipped: number
 	/**
-	 * Records whose stored point is the geometric centroid because the GeoNames anchor overrode the
-	 * label preference (`choice === "geom-by-anchor"`). Zero with no anchor lookup configured.
-	 * a build that expected the adjudicator to run reads this instead of assuming.
+	 * Records whose stored point is the geometric centroid because the GeoNames anchor
+	 * overrode the label preference (`choice === "geom-by-anchor"`).
+	 *
+	 * Zero with no anchor lookup configured. a build that expected the adjudicator
+	 * to run reads this instead of assuming.
 	 */
 	labelPointOverrides: number
 }
 
 /**
- * Enumerate + ingest WOF GeoJSON into an already-open unified staging
- * DB (parallel reads, single-thread writer, batched transactions).
+ * Enumerate + ingest WOF GeoJSON into an already-open unified staging DB
+ * (parallel reads, single-thread writer, batched transactions).
+ *
  * The `whosonfirst-data-postalcode-*` repos are excluded unless the placetype set asks
  * for `postalcode` — enumerating + reading millions of postcode files the admin build
  * filters out anyway was the bulk of the ingest time (#1015/#1021).

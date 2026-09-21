@@ -40,8 +40,10 @@ export interface OrphanAllowance {
 }
 
 /**
- * Titles allowed to appear on more than one page. Each entry needs a reason — the check
- * exists to catch accidental duplicates, and an unexplained allowance defeats it.
+ * Titles allowed to appear on more than one page.
+ *
+ * Each entry needs a reason — the check exists to catch accidental duplicates,
+ * and an unexplained allowance defeats it.
  */
 export const allowedDuplicateTitles: DuplicateTitleAllowance[] = []
 

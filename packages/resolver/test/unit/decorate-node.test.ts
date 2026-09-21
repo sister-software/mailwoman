@@ -73,8 +73,9 @@ describe("decorateNode and the unlocated sentinel", () => {
 	})
 
 	it("treats a 0 on ONE axis as a real coordinate", () => {
-		// The sentinel is the pair. Null Island is one point. the equator and the prime
-		// meridian are not, and Accra, Greenwich and Libreville all sit near one of them.
+		// The sentinel is the pair.
+		// Null Island is one point. the equator and the prime meridian are not, and Accra,
+		// Greenwich and Libreville all sit near one of them.
 		for (const coord of [
 			{ lat: 0, lon: -0.0005 },
 			{ lat: 5.55, lon: 0 },

@@ -35,8 +35,10 @@ export interface DownloadGeodatabaseOptions {
 	 */
 	url: string
 	/**
-	 * The product's ISO revision date. The cache is keyed on it, so a re-run against the same
-	 * vintage never re-transfers and a new vintage never overwrites the old one in place.
+	 * The product's ISO revision date.
+	 *
+	 * The cache is keyed on it, so a re-run against the same vintage never re-transfers
+	 * and a new vintage never overwrites the old one in place.
 	 */
 	revisionDate: string
 	/**

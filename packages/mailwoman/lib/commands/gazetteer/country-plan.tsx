@@ -63,8 +63,10 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * The repositories a WOF move would clone. Names only — `--plan` never reaches the network,
- * so their existence and size are reported as unknown rather than guessed.
+ * The repositories a WOF move would clone.
+ *
+ * Names only — `--plan` never reaches the network, so their existence
+ * and size are reported as unknown rather than guessed.
  */
 function wofRepoNames(country: string): string[] {
 	const cc = country.toLowerCase()
@@ -253,7 +255,8 @@ const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options,
 					applied.push(`  ${result.changed ? "✓" : "·"} ${result.note}`)
 				}
 
-				// All or nothing. A half-applied move is the exact state the #267 warning describes,
+				// All or nothing.
+				// A half-applied move is the exact state the #267 warning describes,
 				// and writing one edit while refusing the other would manufacture it.
 				if (writeFailures) {
 					lines.push("", "NOT WRITTEN — every edit must apply or none do:", ...applied)

@@ -32,14 +32,17 @@ const { variable, theme, ref } = s
 //#region Primitives
 
 /*
- * Raw values with no opinion about use. Only the semantic layer below may reference them.
- * a component rule that reaches one has skipped the layer that says what the value is for.
+ * Raw values with no opinion about use.
+ *
+ * Only the semantic layer below may reference them. a component rule that reaches
+ * one has skipped the layer that says what the value is for.
  */
 
 /**
  * The brand anchors, carried verbatim from the design system.
- * `#ff00b0` is the primary. Earth shipped a drifted `#e0367c` for as long as it
- * read Infima's palette, and that value is retired.
+ *
+ * `#ff00b0` is the primary.
+ * Earth shipped a drifted `#e0367c` for as long as it read Infima's palette, and that value is retired.
  */
 const brandMagenta = variable("brand-magenta", "#ff00b0")
 const brandBlue = variable("brand-blue", "#1a00ff")
@@ -49,8 +52,9 @@ const brandTeal = variable("brand-teal", "hsl(97.78deg 100% 50%)")
 
 /**
  * Neutrals in oklch so the lightness steps are perceptually even rather than even in sRGB,
- * where a mid-grey reads darker than its number. One hue for the whole ramp keeps
- * chrome from drifting warm at one end and cool at the other.
+ * where a mid-grey reads darker than its number.
+ *
+ * One hue for the whole ramp keeps chrome from drifting warm at one end and cool at the other.
  */
 const neutral0 = variable("neutral-0", "oklch(100% 0 264)")
 const neutral50 = variable("neutral-50", "oklch(97% 0.004 264)")
@@ -67,7 +71,9 @@ const neutral950 = variable("neutral-950", "oklch(12% 0.022 264)")
 const neutral1000 = variable("neutral-1000", "oklch(0% 0 264)")
 
 /**
- * State hues. Each carries a strong value for text and marks, and a tint for the background behind them.
+ * State hues.
+ *
+ * Each carries a strong value for text and marks, and a tint for the background behind them.
  */
 const successBase = variable("success-base", "oklch(62% 0.15 150)")
 const warningBase = variable("warning-base", "oklch(75% 0.15 75)")
@@ -79,11 +85,14 @@ const infoBase = variable("info-base", "oklch(65% 0.13 230)")
 //#region Type
 
 /*
- * Two axes. A rule names a scale role. a scale role names a face role. only a face role names a family.
+ * Two axes.
+ *
+ * A rule names a scale role. a scale role names a face role. only a face role names a family.
  */
 
 /**
  * Swapping the typeface edits these five and nothing else.
+ *
  * Each role states what any face bound to it must do: `number` needs tabular lining figures
  * so a column of coordinates holds its width as it updates; `code` needs `0` and `O`, `1`
  * and `l` to be told apart; `glyph` needs monochrome marks that sit on the text baseline.
@@ -100,8 +109,9 @@ const fontFamilyCode = variable(
 const fontFamilyGlyph = variable("font-family-glyph", `"Iosevka Nexus Mono Web", "Iosevka", ui-monospace, monospace`)
 
 /**
- * A map label is drawn by MapLibre from a signed-distance-field range rather than by
- * the browser from a `@font-face`, so the DOM faces above cannot reach the globe.
+ * A map label is drawn by MapLibre from a signed-distance-field range rather than by the
+ * browser from a `@font-face`, so the DOM faces above cannot reach the globe.
+ *
  * This names the SDF stack, and its value must be one the glyph host serves —
  * today `Noto Sans Regular`, `Noto Sans Medium` or `Noto Sans Italic`.
  */
@@ -130,13 +140,14 @@ const fontWeightSemibold = variable("font-weight-semibold", "600")
 /**
  * Spacing is A scale rather than a guess.
  *
- * The stylesheet had 19 distinct padding/margin/gap values across 171 declarations — 0.05rem,
- * 0.35rem, 0.65rem, 1.1rem — each picked by eye at the moment it was written and none of them
- * relatable to any other. A tail of near-misses like that reads as care and behaves as noise:
- * two panels meant to match never quite do, and nothing says which value was deliberate.
+ * The stylesheet had 19 distinct padding/margin/gap values across 171 declarations —
+ * 0.05rem, 0.35rem, 0.65rem, 1.1rem — each picked by eye at the moment it was written
+ * and none of them relatable to any other.
+ * A tail of near-misses like that reads as care and behaves as noise: two panels meant
+ * to match never quite do, and nothing says which value was deliberate.
  *
- * Seven steps on a 2px grid. A padding, a margin or a gap that is not one of
- * these is a value someone has to justify.
+ * Seven steps on a 2px grid.
+ * A padding, a margin or a gap that is not one of these is a value someone has to justify.
  */
 const space0 = variable("space-0", "0.125rem")
 const space1 = variable("space-1", "0.25rem")
@@ -147,8 +158,10 @@ const space5 = variable("space-5", "1rem")
 const space6 = variable("space-6", "1.5rem")
 
 /**
- * The small end of the radius scale. `radius-tick` is for marks a few pixels across — a legend
- * swatch, a tag — where a larger radius eats the shape; `radius-tight` is the inline block.
+ * The small end of the radius scale.
+ *
+ * `radius-tick` is for marks a few pixels across — a legend swatch, a tag —
+ * where a larger radius eats the shape; `radius-tight` is the inline block.
  * The stylesheet used to carry six raw pixel radii (2, 3, 4, 6, 8, 10) with no relation between
  * them, and `999px` written out four times beside a `--radius-pill` that already said it.
  */
@@ -167,6 +180,7 @@ const easingDecelerate = variable("easing-decelerate", "cubic-bezier(0, 0, 0.2, 
 
 /**
  * Safe-area insets belong to the chrome rather than to each component that happens to sit near an edge.
+ *
  * They stay CSS expressions because `env()` resolves per device and has no static value.
  */
 variable("safe-area-top", "env(safe-area-inset-top, 0px)")
@@ -175,8 +189,10 @@ variable("safe-area-bottom", "env(safe-area-inset-bottom, 0px)")
 variable("safe-area-left", "env(safe-area-inset-left, 0px)")
 
 /**
- * How tall the footer strip stands, so a sheet ending above it and the strip itself read one number
- * instead of two that drift. One line of caption type over 0.35rem of padding on each side.
+ * How tall the footer strip stands, so a sheet ending above it and the strip
+ * itself read one number instead of two that drift.
+ *
+ * One line of caption type over 0.35rem of padding on each side.
  */
 variable("map-footer-height", "1.9rem")
 
@@ -185,8 +201,10 @@ variable("map-footer-height", "1.9rem")
 //#region Semantics
 
 /*
- * The one layer a component rule may read. Every token here is defined in light and overridden
- * in dark, so a value can never resolve to nothing the way eight Infima names did in production.
+ * The one layer a component rule may read.
+ *
+ * Every token here is defined in light and overridden in dark, so a value can never
+ * resolve to nothing the way eight Infima names did in production.
  */
 
 const backgroundCanvas = variable("color-background-canvas", ref(neutral50))
@@ -209,6 +227,7 @@ const controlBorder = variable("control-border", ref(neutral300))
 
 /**
  * Every state colour carries a paired tint for the ground behind it.
+ *
  * The eight names that were undefined in production were all of this shape —
  * a foreground whose background partner was missing.
  */
@@ -226,11 +245,11 @@ const accentBackground = variable("color-accent-background", "oklch(65% 0.29 340
 /**
  * The three confidence tiers, said once.
  *
- * They were two palettes for one idea: the bars and the About legend painted `#22c55e / #f59e0b / #ef4444`
- * while the span ribbon and the containment tree painted `#1aa84d / #e6a800 / #d8504a` —
- * so the legend in the About sheet explained colours the results table does not use,
- * under a comment claiming the two matched. Raw hex also meant one set of colours for
- * both themes, on a surface that flips from white to near-black.
+ * They were two palettes for one idea: the bars and the About legend painted
+ * `#22c55e / #f59e0b / #ef4444` while the span ribbon and the containment tree painted
+ * `#1aa84d / #e6a800 / #d8504a` — so the legend in the About sheet explained colours
+ * the results table does not use, under a comment claiming the two matched.
+ * Raw hex also meant one set of colours for both themes, on a surface that flips from white to near-black.
  *
  * They are the state palette because that is what they are: high is success,
  * mid is a warning, low is a failure.
@@ -243,9 +262,10 @@ const confidenceLow = variable("color-confidence-low", ref(stateDanger))
 const confidenceLowTint = variable("color-confidence-low-tint", ref(stateDangerBackground))
 
 /**
- * The pipeline's stage hues, for the timing bar. Deliberately not the confidence palette —
- * a stage is not a verdict, and a reader who has learned that green means confident
- * should not meet green again meaning "shape".
+ * The pipeline's stage hues, for the timing bar.
+ *
+ * Deliberately not the confidence palette — a stage is not a verdict, and a reader who
+ * has learned that green means confident should not meet green again meaning "shape".
  */
 const stageShape = variable("color-stage-shape", "#3578e5")
 const stageClassify = variable("color-stage-classify", "#8b5cf6")
@@ -268,8 +288,9 @@ const glassShadow = variable("material-glass-shadow", "0 4px 28px oklch(0% 0 264
 const glassHighlight = variable("material-glass-highlight", "oklch(100% 0 264 / 0.5)")
 
 /**
- * What the material becomes where `backdrop-filter` is unavailable or the viewer asks for less
- * transparency. It is opaque on purpose: no control may depend on the blur to stay readable.
+ * What the material becomes where `backdrop-filter` is unavailable or the viewer asks for less transparency.
+ *
+ * It is opaque on purpose: no control may depend on the blur to stay readable.
  */
 const glassFallbackBackground = variable("material-glass-fallback-background", ref(neutral0))
 

@@ -56,23 +56,25 @@ export function componentOf(r: GauntletResult, key: string): string | null {
 				return r.components[key as (typeof COMPONENT_TAGS)[number]] ?? null
 			}
 
-			// loud: a silent null here made venue/dependent_locality expectations grade against nothing
-			// for their whole life (caught 2026-08-01). An unknown key is an authoring bug.
+			// loud: a silent null here made venue/dependent_locality expectations grade
+			// against nothing for their whole life (caught 2026-08-01).
+			// An unknown key is an authoring bug.
 			throw new Error(`expect_components key "${key}" has no GauntletResult mapping — extend componentOf`)
 	}
 }
 
 /**
  * The script families a component value can be written in, for the dual-script comparison below.
+ *
  * Grouped rather than per-Unicode-script: Han, the two kana and Hangul are one family,
- * because a single Japanese rendering routinely mixes Han and kana within one word
- * (`表参道ヒルズ`) and splitting on that boundary would shred one rendering into three.
+ * because a single Japanese rendering routinely mixes Han and kana within one word (`表参道ヒルズ`)
+ * and splitting on that boundary would shred one rendering into three.
  * Latin/Cyrillic — the pair the Mongolian rows are written in — is the case this exists for.
  *
- * Anything not listed collapses to `"other"`: an unlisted script still forms one run,
- * so a value written in it is never shredded, it only cannot be told apart from
- * another unlisted script. Adding a family here is safe. the only effect is that two
- * renderings previously fused into one `"other"` run become two.
+ * Anything not listed collapses to `"other"`: an unlisted script still forms one run, so a value
+ * written in it is never shredded, it only cannot be told apart from another unlisted script.
+ * Adding a family here is safe. the only effect is that two renderings previously
+ * fused into one `"other"` run become two.
  */
 const SCRIPT_FAMILIES: ReadonlyArray<readonly [string, RegExp]> = [
 	["latin", /\p{Script=Latin}/u],
@@ -86,8 +88,9 @@ const SCRIPT_FAMILIES: ReadonlyArray<readonly [string, RegExp]> = [
 ]
 
 /**
- * The script family of one character, or `null` when the character carries
- * no script of its own — digits, punctuation, whitespace, combining marks.
+ * The script family of one character, or `null` when the character carries no script
+ * of its own — digits, punctuation, whitespace, combining marks.
+ *
  * Those are neutral: they belong to whichever rendering surrounds them, which is what
  * lets `BGD - 16 khoroo` stay one Latin rendering instead of four.
  */
@@ -136,7 +139,8 @@ export function scriptRenderings(value: string): string[] {
 		}
 
 		if (charFamily === family) {
-			// Same family across the gap — the neutrals were interior rather than a joiner. Keep them.
+			// Same family across the gap — the neutrals were interior rather than a joiner.
+			// Keep them.
 			chars.push(...pending, char)
 		} else {
 			if (chars.length) {
@@ -158,14 +162,17 @@ export function scriptRenderings(value: string): string[] {
 }
 
 /**
- * Does `got` satisfy the asserted `expected`? Exact case-folded equality, nothing else —
- * the whole of the interface for every ordinary `expect_components` key.
+ * Does `got` satisfy the asserted `expected`?
+ *
+ * Exact case-folded equality, nothing else — the whole of the interface for
+ * every ordinary `expect_components` key.
  *
  * A global set-based fallback over {@linkcode scriptRenderings} lived here briefly
- * (2026-08-10 → 2026-08-11) so a dual-script span could satisfy a truth freezing one of its
- * renderings. Its cost was a cross-tag bleed grading as a pass — the value alone cannot say
- * whether its two renderings are two writings of the same element or two different
- * elements that ran together, so a `locality` of `四季酒家 Manchester` satisfied `Manchester`.
+ * (2026-08-10 → 2026-08-11) so a dual-script span could satisfy a truth freezing one of its renderings.
+ * Its cost was a cross-tag bleed grading as a pass — the value alone cannot say
+ * whether its two renderings are two writings of the same element or two different elements
+ * that ran together, so a `locality` of `四季酒家 Manchester` satisfied `Manchester`.
+ *
  * Review converted the relaxation into the per-row `expect_component_renderings` OPT-IN:
  * a case that genuinely carries a span in two scripts lists the renderings it requires, a key
  * so listed supersedes the same key here, and every other assertion stays this strict equality.
@@ -191,12 +198,14 @@ function missingRenderings(got: string, required: readonly string[]): string[] {
  * grades against: the most specific admin node the resolver decorated
  * (`hierarchy` is sorted locality → dependent_locality → subregion → region → country).
  *
- * Read this before changing IT. The obvious-looking target, {@linkcode GauntletResult.locality},
- * is the wrong one: it echoes the parsed query span (`geocode-core.ts`'s `allNodes.find(...).value`),
- * so `Gaborone` in yields `Gaborone` out no matter which place the resolver actually
- * returned. `hierarchy[].name` is the gazetteer's canonical `resolver_name`,
- * which is the only field in the result that can disagree with the input —
- * and disagreeing with the input is the entire point of this assertion.
+ * Read this before changing IT.
+ * The obvious-looking target, {@linkcode GauntletResult.locality}, is the wrong one:
+ * it echoes the parsed query span (`geocode-core.ts`'s `allNodes.find(...).value`),
+ * so `Gaborone` in yields `Gaborone` out no matter which place the resolver actually returned.
+ *
+ * `hierarchy[].name` is the gazetteer's canonical `resolver_name`, which is the
+ * only field in the result that can disagree with the input — and disagreeing with
+ * the input is the entire point of this assertion.
  */
 function resolvedPlace(r: GauntletResult): GauntletResult["hierarchy"][number] | undefined {
 	return r.hierarchy[0]
@@ -216,9 +225,10 @@ function resolvedPlace(r: GauntletResult): GauntletResult["hierarchy"][number] |
  *    whose expected place sits inside a 25 km bar of its impostor would have had nothing at all.
  *    The corpus stored both columns from the first migration and no branch read them,
  *    so "wrong place, plausible coordinate" was unassertable for the corpus's whole life.
- * 4. Components, exact case-insensitive per key, against the parsed/assembled spans
- *    ({@linkcode componentMatches}). Last because a corrupt `expect_components` JSON
- *    short-circuits the rest of its check, and the place check must still have run.
+ * 4. Components, exact case-insensitive per key, against the parsed/assembled
+ *    spans ({@linkcode componentMatches}).
+ *    Last because a corrupt `expect_components` JSON short-circuits the rest of its check,
+ *    and the place check must still have run.
  *    Rows whose input carries a span in two or more scripts opt in per key via
  *    `expect_component_renderings` — `{ tag: [rendering, …] }` — and for a listed key the
  *    assertion becomes: {@linkcode scriptRenderings} of the got value must contain every
@@ -230,9 +240,10 @@ function resolvedPlace(r: GauntletResult): GauntletResult["hierarchy"][number] |
 export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 	const issues: string[] = []
 
-	// The abstain interface (#1585): the row's expected outcome is no coordinate, so the grade
-	// inverts — any resolved coordinate fails it. Mutually exclusive with a pinned coordinate. a
-	// row carrying both is an authoring bug that must be loud rather than a precedence question.
+	// The abstain interface (#1585): the row's expected outcome is no coordinate,
+	// so the grade inverts — any resolved coordinate fails it.
+	// Mutually exclusive with a pinned coordinate. a row carrying both is an authoring
+	// bug that must be loud rather than a precedence question.
 	if (c.expect_abstain) {
 		if (c.expect_lat != null || c.expect_lon != null) {
 			throw new Error(`case ${c.id}: expect_abstain and expect_lat/expect_lon are mutually exclusive`)
@@ -315,9 +326,9 @@ export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 
 	if (renderinginterface) {
 		for (const [k, required] of Object.entries(renderinginterface)) {
-			// loud, like the unknown-key throw above: an empty or non-string-array list would
-			// assert nothing while looking asserted. The seed schema refuses these on load,
-			// so reaching one here means a row bypassed it.
+			// loud, like the unknown-key throw above: an empty or non-string-array list
+			// would assert nothing while looking asserted.
+			// The seed schema refuses these on load, so reaching one here means a row bypassed it.
 			if (!Array.isArray(required) || !required.length || required.some((v) => typeof v !== "string")) {
 				throw new Error(
 					`expect_component_renderings["${k}"] must be a non-empty string array — authoring bug (the seed schema refuses this; how was this DB built?)`

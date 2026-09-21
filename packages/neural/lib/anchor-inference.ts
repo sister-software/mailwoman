@@ -82,11 +82,13 @@ export function anchorFeatureVector(posterior: Record<string, number>, lat: numb
 }
 
 /**
- * Parse the pilot postcode→anchor lookup JSON (`{postcode: [posterior, lat, lon, source?]}`)
- * into a Map. The optional trailing `source` is the centroid's provenance label
- * (#525 — `"wof"`, `"census-zcta-2024"`, or `null` for a placeholder); build-side bookkeeping,
- * ignored at inference. Pure (takes the parsed object rather than a path) so this module
- * stays browser-safe — the file read lives in the Node-side caller (the eval).
+ * Parse the pilot postcode→anchor lookup JSON (`{postcode: [posterior, lat, lon, source?]}`) into a Map.
+ *
+ * The optional trailing `source` is the centroid's provenance label
+ * (#525 — `"wof"`, `"census-zcta-2024"`, or `null` for a placeholder);
+ * build-side bookkeeping, ignored at inference.
+ * Pure (takes the parsed object rather than a path) so this module stays browser-safe —
+ * the file read lives in the Node-side caller (the eval).
  */
 export function parseAnchorLookup(
 	raw: Record<string, [Record<string, number>, number, number, (string | null)?]>
@@ -108,25 +110,29 @@ export function parseAnchorLookup(
  *   pair: `SW1A 2AA` is scanned as `SW1A` then `2AA`, never as the `SW1A2AA` the train painter writes.
  *   Every model shipped to date was trained against a DE/FR/US-only lookup whose keys are
  *   all five digits, so this never mattered — no space-containing postcode had a key.
- * - `shaped` — the postcode-shaped spans from {@linkcode collectMatches} (`neural/postcode-repair.ts`),
- *   keyed the way `mailwoman_train/tokenizer.py::_paint_anchor_chars` keys them:
- *   `span.replace(" ", "").toUpperCase()`. This is the train-parity mode.
- *   Pair it with a lookup that has letter-containing keys and a model trained on
- *   both. on its own against a shipped model it is a no-op, because no shaped
- *   GB/NL span will resolve. The shape scan runs over an ascii-uppercased copy of
- *   the text ({@linkcode asciiUpper}) — see #1512 there — so the register cannot
- *   silently cost the channel. The KEY is unchanged.
+ * - `shaped` — the postcode-shaped spans from {@linkcode collectMatches}
+ *   (`neural/postcode-repair.ts`), keyed the way `mailwoman_train/tokenizer.py::_paint_anchor_chars`
+ *   keys them: `span.replace(" ", "").toUpperCase()`.
+ *   This is the train-parity mode.
+ *   Pair it with a lookup that has letter-containing keys and a model trained on both. on its
+ *   own against a shipped model it is a no-op, because no shaped GB/NL span will resolve.
+ *   The shape scan runs over an ascii-uppercased copy of the text ({@linkcode asciiUpper}) —
+ *   see #1512 there — so the register cannot silently cost the channel.
+ *   The KEY is unchanged.
  *
  * The train painter's shape source is `mailwoman_train/postcode_shapes.py::collect_matches`,
- * a declared verbatim mirror of `collectMatches`. It is not quite verbatim today: the TS list
- * carries an IE Eircode pattern the Python list lacks. That costs nothing while no IE key
- * exists in any lookup (a shaped span that misses paints nothing, exactly as at train),
- * but the two lists must be reconciled before an IE postcode source is added.
+ * a declared verbatim mirror of `collectMatches`.
+ * It is not quite verbatim today: the TS list carries an IE Eircode pattern the Python list lacks.
+ *
+ * That costs nothing while no IE key exists in any lookup
+ * (a shaped span that misses paints nothing, exactly as at train), but the two lists
+ * must be reconciled before an IE postcode source is added.
  */
 export type AnchorSpanMode = "alnum-run" | "shaped"
 
 /**
  * The GB unit-postcode key shape, space-stripped (`SW1A2AA`).
+ *
  * Used only to derive the outward code for the fallback below — the inward half
  * is always the trailing three characters.
  */
@@ -136,25 +142,30 @@ const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
  * Ascii-only uppercase — the case fold the shaped keyer runs before shape detection (#1512).
  *
  * The defect it closes: `POSTCODE_PATTERNS`' alphanumeric shapes require `[A-Z]` by design
- * (they must not match lowercase prose), so `collectMatches` finds nothing in the raw
- * lowercase register. Measured on the 120-row gb-golden board: 106/120 rows yield a shaped
- * span as-written and uppercase, **0/120** lowercase. The default parse path is saved
- * only by `normalizeInputCase` (#690/#829) restoring the postcode's case first —
- * every GB letter run is ≤2 characters, so `restoreLowerInput` uppercases all of them.
+ * (they must not match lowercase prose), so `collectMatches` finds nothing in the raw lowercase register.
+ * Measured on the 120-row gb-golden board: 106/120 rows yield a shaped span as-written
+ * and uppercase, **0/120** lowercase.
+ *
+ * The default parse path is saved only by `normalizeInputCase` (#690/#829) restoring the postcode's
+ * case first — every GB letter run is ≤2 characters, so `restoreLowerInput` uppercases all of them.
  * A `normalizeCase: false` parse gets no such rescue and loses the entire GB/NL
  * anchor channel silently, and lowercase is the user register.
  *
- * Why ascii-only, and not `toUpperCase()`. The match offsets index into `text`,
- * and `String.prototype.toUpperCase` is not length-preserving (`ß` → `SS`, `ﬁ` → `FI`):
- * one such character upstream of a postcode shifts every subsequent span
- * and the anchor paints the wrong pieces. Folding `[a-z]` in place cannot change length,
- * and every character the alphanumeric patterns care about is ascii anyway.
+ * Why ascii-only, and not `toUpperCase()`.
+ * The match offsets index into `text`, and `String.prototype.toUpperCase` is not
+ * length-preserving (`ß` → `SS`, `ﬁ` → `FI`): one such character upstream of a postcode
+ * shifts every subsequent span and the anchor paints the wrong pieces.
+ *
+ * Folding `[a-z]` in place cannot change length, and every character the
+ * alphanumeric patterns care about is ascii anyway.
  * Same reasoning, and the same guard, as `case-normalize.ts`.
  *
- * Why the fold is on detection only. The KEY was always uppercased
- * (`span.replaceAll(" ", "").toUpperCase()`, the train painter's normalization verbatim);
- * it is the shape scan that was register-sensitive. Folding for the scan and keying off the
- * original text leaves the key byte-identical, so nothing about which lookup entry wins changes.
+ * Why the fold is on detection only.
+ * The KEY was always uppercased (`span.replaceAll(" ", "").toUpperCase()`, the train
+ * painter's normalization verbatim); it is the shape scan that was register-sensitive.
+ *
+ * Folding for the scan and keying off the original text leaves the key byte-identical,
+ * so nothing about which lookup entry wins changes.
  */
 function asciiUpper(text: string): string {
 	return text.replaceAll(/[a-z]/g, (c) => c.toUpperCase())
@@ -185,6 +196,7 @@ const GB_INWARD_LENGTH = 3
  */
 /**
  * Merge per-binary anchor lookups: union the country posteriors per postcode, mean the centroids.
+ *
  * A `(0,0)` centroid is a placeholder and never averaged in.
  */
 export function mergeAnchorLookups(lookups: readonly AnchorLookup[]): AnchorLookup {
@@ -236,9 +248,10 @@ export function countShapedOnlyKeys(lookup: AnchorLookup): number {
 }
 
 /**
- * Scan cap for {@linkcode countShapedOnlyKeys}. The answer is used as "any,
- * and roughly how many" in an error message. walking all 1,749,839 keys of the GB
- * lookup to distinguish 1,000 from 1,746,976 adds nothing.
+ * Scan cap for {@linkcode countShapedOnlyKeys}.
+ *
+ * The answer is used as "any, and roughly how many" in an error message. walking all
+ * 1,749,839 keys of the GB lookup to distinguish 1,000 from 1,746,976 adds nothing.
  */
 export const SHAPED_ONLY_KEY_SCAN_LIMIT = 1000
 
@@ -248,9 +261,10 @@ export const SHAPED_ONLY_KEY_SCAN_LIMIT = 1000
  * or `null` when the pairing is coherent (A2 of ROAD_TO_V9 §1).
  *
  * This is the fail-closed for the one thing about `span_mode` a runtime can actually check.
- * The mode itself is unobservable from the ONNX graph — the inputs are identical
- * either way — so the card is the only source of truth for it, and a card that simply
- * omits the field is indistinguishable from a legitimately-`alnum-run` bundle.
+ * The mode itself is unobservable from the ONNX graph — the inputs are identical either way —
+ * so the card is the only source of truth for it, and a card that simply omits the
+ * field is indistinguishable from a legitimately-`alnum-run` bundle.
+ *
  * What is observable is the artifact pairing: a lookup carrying GB unit keys next to a
  * card that cannot reach them has no legitimate reading and the exact shape a v4.2.0
  * promote would ship if the card were copied forward unchanged.
@@ -282,6 +296,7 @@ export function shapedKeyerObligationViolation(
 
 /**
  * One-shot latch for {@linkcode warnShapedKeyerObligationOnce}.
+ *
  * A mispackaged bundle is a property of the artifact SET, so it is worth saying once per process and
  * pointless to repeat per load — the same posture the unfed-channel warnings take in `classifier.ts`.
  */
@@ -293,10 +308,10 @@ let warnedShapedObligation = false
  * while a runtime parse says it once and carries on — the loader interface this
  * package has always had for a mis-shipped channel.
  *
- * Called from `buildSoftFeatures`, not from a loader, and that placement is the point:
- * it is the only site where the loaded lookup and the card-declared mode are both in hand,
- * so it covers every construction path (the Node loader, the browser loader, a harness
- * assembling a classifier by hand) rather than the single one a loader-side check would catch.
+ * Called from `buildSoftFeatures`, not from a loader, and that placement is the point: it is the only
+ * site where the loaded lookup and the card-declared mode are both in hand, so it covers every
+ * construction path (the Node loader, the browser loader, a harness assembling a classifier by hand)
+ * rather than the single one a loader-side check would catch.
  * The latch keeps the per-parse cost at a boolean read.
  */
 export function warnShapedKeyerObligationOnce(
@@ -315,8 +330,9 @@ export function warnShapedKeyerObligationOnce(
 
 export interface BuildAnchorFeaturesOptions {
 	/**
-	 * Span-collection mode. Defaults to `alnum-run` — the shipped behaviour,
-	 * byte-identical to the pre-2026-08-05 path.
+	 * Span-collection mode.
+	 *
+	 * Defaults to `alnum-run` — the shipped behaviour, byte-identical to the pre-2026-08-05 path.
 	 */
 	spanMode?: AnchorSpanMode
 }
@@ -328,6 +344,7 @@ export interface BuildAnchorFeaturesOptions {
  *
  * Which substrings count as postcode spans is {@linkcode AnchorSpanMode}'s job.
  * A recognized span yields a confidence-1.0 anchor, like training's gold-span.
+ *
  * Returns `(pieces × ANCHOR_FEATURE_DIM)` features + `(pieces,)` confidence.
  */
 export function buildAnchorFeatures(
@@ -341,6 +358,7 @@ export function buildAnchorFeatures(
 
 	/**
 	 * Paint `[spanBegin, spanEnd)` with `entry`'s vector.
+	 *
 	 * Shared by both modes so they can only ever differ in where they paint,
 	 * never in what they paint or how it lands on pieces — the same guarantee the
 	 * train side gets from sharing `_paint_anchor_chars`.

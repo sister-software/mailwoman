@@ -18,9 +18,9 @@ const NON_KEY_CHARACTER = /[^\p{L}\p{N}_]+/gu
 /**
  * Converts a name to snake_case, unless the name is already in all caps.
  *
- * A caseless script takes the all-caps branch, because `toUpperCase()` is the identity
- * on Korean, Japanese, Chinese, Hebrew and Arabic. That is the right branch —
- * those names have no case to convert and survive as written.
+ * A caseless script takes the all-caps branch, because `toUpperCase()` is the
+ * identity on Korean, Japanese, Chinese, Hebrew and Arabic.
+ * That is the right branch — those names have no case to convert and survive as written.
  */
 export function smartSnakeCase<T extends string>(name: T): T extends Uppercase<T> ? T : SnakeCase<T> {
 	const normalizedName = name
@@ -73,8 +73,8 @@ export function smartCapitalCase(input: string): string {
 /**
  * Python `str.isupper()`: at least one cased character, and every cased character uppercase.
  *
- * Distinct from {@link isUniformlyCased}, which reports `true` for a string with
- * no cased characters at all — `"123"` is uniformly cased and is not `isupper()`.
+ * Distinct from {@link isUniformlyCased}, which reports `true` for a string with no
+ * cased characters at all — `"123"` is uniformly cased and is not `isupper()`.
  * Ports that condition on a titlecase on the Python predicate need this one.
  */
 export function pyIsUpper(input: string): boolean {

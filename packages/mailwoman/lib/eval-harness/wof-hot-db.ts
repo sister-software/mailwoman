@@ -18,7 +18,9 @@ import { $public } from "@mailwoman/resolver-wof-wasm/env"
 import { join } from "path-ts"
 
 /**
- * The default demo stage directory. This is a staged release path rather than a data-root artifact.
+ * The default demo stage directory.
+ *
+ * This is a staged release path rather than a data-root artifact.
  */
 export function wofHotStageDir(): string {
 	return String(tempRootPath("v440-stage", "en-us", "v4.4.0"))

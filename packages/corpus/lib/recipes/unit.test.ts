@@ -100,10 +100,10 @@ describe("renderUnit", () => {
 	})
 
 	it("always returns a unit component that survives verbatim in the raw it rendered", () => {
-		// The recipe drops a row whose unit component is not in its raw, because alignment
-		// could not label it. That guard read the designator form handed IN, so a layout
-		// writing anything else was skipped in silence — every `full-comma-bare` row,
-		// 1,160 of 50,000, until the guard was pointed at the rendered component.
+		// The recipe drops a row whose unit component is not in its raw, because alignment could not label it.
+		// That guard read the designator form handed IN, so a layout writing anything
+		// else was skipped in silence — every `full-comma-bare` row, 1,160 of 50,000,
+		// until the guard was pointed at the rendered component.
 		for (const unit of ["Apt 101", "#101", "# 101", "Basement", "Ste 4B"]) {
 			const rows = over(500, (random) => renderUnit(random, TUPLE, unit))
 
@@ -112,9 +112,9 @@ describe("renderUnit", () => {
 	})
 
 	it("writes the postcode on its own comma segment on a minority of tails", () => {
-		// The counter-reading of the bare unit. Nothing else in the corpus writes a bare
-		// number alone in a later comma segment, so without this the unit reading would
-		// be the only evidence for a segment users write a postcode into.
+		// The counter-reading of the bare unit.
+		// Nothing else in the corpus writes a bare number alone in a later comma segment, so without
+		// this the unit reading would be the only evidence for a segment users write a postcode into.
 		const raws = over(2000, (random) => renderUnit(random, TUPLE, "Apt 101").raw)
 		const commaPostcode = raws.filter((raw) => raw.includes("Athens, GA, 30601"))
 

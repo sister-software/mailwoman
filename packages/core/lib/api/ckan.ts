@@ -54,8 +54,10 @@ export interface ReadCKANPackageRecordOptions {
 	 */
 	expectDatasetID: string
 	/**
-	 * The licence value the entry must carry. A different value is a licence change,
-	 * and a build that absorbed one would ship an artifact under terms nobody checked.
+	 * The licence value the entry must carry.
+	 *
+	 * A different value is a licence change, and a build that absorbed one would
+	 * ship an artifact under terms nobody checked.
 	 */
 	expectLicence: string
 	/**
@@ -63,7 +65,9 @@ export interface ReadCKANPackageRecordOptions {
 	 */
 	context: string
 	/**
-	 * The catalogue API root. Defaults to {@link CKAN_CATALOGUE_API_BASE_URL}.
+	 * The catalogue API root.
+	 *
+	 * Defaults to {@link CKAN_CATALOGUE_API_BASE_URL}.
 	 */
 	baseURL?: string
 }

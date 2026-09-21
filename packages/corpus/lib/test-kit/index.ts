@@ -25,8 +25,9 @@ import { afterEach, beforeEach } from "vitest"
 import type { CanonicalRow } from "#types"
 
 /**
- * A per-test scratch directory. `path` is only meaningful inside a test body —
- * it is `""` until the `beforeEach` runs.
+ * A per-test scratch directory.
+ *
+ * `path` is only meaningful inside a test body — it is `""` until the `beforeEach` runs.
  */
 export interface ScratchDir {
 	readonly path: string
@@ -81,11 +82,10 @@ export function readCanonicalRows(outputDir: string, adapterID: string): Promise
 /**
  * Write a delimited fixture — a header line plus the given rows — and answer its path.
  *
- * Three adapter suites carried a hand-rolled copy of this, and the copies disagreed about
- * the one thing a reader cannot see: two joined the rows without a trailing newline
- * and the third appended one. `createNewlineWriter` terminates every line it writes,
- * so the file round-trips through `CSVSpliterator` the same way whichever suite produced it,
- * and a caller passes content without a delimiter.
+ * Three adapter suites carried a hand-rolled copy of this, and the copies disagreed about the one thing
+ * a reader cannot see: two joined the rows without a trailing newline and the third appended one.
+ * `createNewlineWriter` terminates every line it writes, so the file round-trips through `CSVSpliterator`
+ * the same way whichever suite produced it, and a caller passes content without a delimiter.
  */
 export async function writeDelimitedFixture(
 	filePath: string,

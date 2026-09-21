@@ -16,10 +16,12 @@
 import { firstNodeWhere, type AddressNode } from "@mailwoman/core/decoder"
 
 /**
- * Find the first non-empty region-tagged span anywhere in a tree — the qualifier the walk
- * threads onto locality lookups. Deliberately the same node the admin-coherence verdicts read
- * (the first `region` node), so the change's firing population and the flag's `contradicted`
- * population are the same rows. A `region` slot can hold a country name the parser mislabeled
+ * Find the first non-empty region-tagged span anywhere in a tree — the qualifier
+ * the walk threads onto locality lookups.
+ *
+ * Deliberately the same node the admin-coherence verdicts read (the first `region` node),
+ * so the change's firing population and the flag's `contradicted` population are the same rows.
+ * A `region` slot can hold a country name the parser mislabeled
  * ("Moscow, Russia" parses region="Russia") — the backend's qualifier probe answers that too,
  * because containment is containment whatever tier the container sits at.
  */
@@ -74,6 +76,7 @@ export function partitionByContainment<T>(
 /**
  * The trace verdict for one locality pick under the change — stamped as `metadata.admin_containment`
  * so an inert mechanism is visible in the result rather than silently dead (#1719's rule).
+ *
  * Derived from the candidates' `containedByQualifier` stamps: any `true` → `"contained"`;
  * stamps present but none true → `"no_contained_candidate"`; no stamps at all →
  * `"unavailable"` (the backend or artifact cannot answer — a pre-sidecar candidate.db,

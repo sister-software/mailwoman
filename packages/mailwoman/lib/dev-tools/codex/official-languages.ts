@@ -44,7 +44,9 @@ export interface GenerateOfficialLanguagesOptions {
 	 */
 	cldrVersion?: string
 	/**
-	 * Output path override. Default: `codex/country/official-languages.ts` (the committed table).
+	 * Output path override.
+	 *
+	 * Default: `codex/country/official-languages.ts` (the committed table).
 	 */
 	out?: string
 }
@@ -60,6 +62,7 @@ export interface GenerateOfficialLanguagesSummary {
 
 /**
  * One call per CLDR supplemental file, against a CDN that throttles.
+ *
  * Retry only — the caller makes a handful of requests, so a rate budget would
  * be ceremony over a burst that never happens.
  */

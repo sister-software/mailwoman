@@ -41,9 +41,10 @@ import { normalizeGauntletSurface, readGauntletInputs } from "#tools/gauntlet-in
 /**
  * One country's postcodes: the CSV under the extracted OpenAddresses tree, and the country it covers.
  *
- * `openaddresses/extracted/` rather than a cached zip, because the extracted tree is
- * what survives on this lab and its paths mirror the archive's member paths exactly
- * (`cz/countrywide.csv`). Sweden publishes per municipality, so SE is sixteen files.
+ * `openaddresses/extracted/` rather than a cached zip, because the extracted tree is what survives
+ * on this lab and its paths mirror the archive's member paths exactly (`cz/countrywide.csv`).
+ * Sweden publishes per municipality, so SE is sixteen files.
+ *
  * CZ, SK and NL are one countrywide file each.
  */
 interface PostcodeSource {
@@ -78,8 +79,10 @@ const SWEDISH_MUNICIPALITIES = [
 ]
 
 /**
- * Greece is absent on purpose. `gr/b/municipality_of_kalamaria.csv` is the archive's only
- * Greek member and it declares a `postcode` column carrying nothing: 0 values in 10,877 rows.
+ * Greece is absent on purpose.
+ *
+ * `gr/b/municipality_of_kalamaria.csv` is the archive's only Greek member and it
+ * declares a `postcode` column carrying nothing: 0 values in 10,877 rows.
  * `gr_postcode` shares `NNN NN` with the three below, so a Greek reader is served by what
  * they teach until a Greek source with postcodes exists — but no row here claims to be Greek.
  */
@@ -123,9 +126,10 @@ const WRITTEN_FORMS: ReadonlyMap<string, { locale: string; render: (compact: str
 ])
 
 /**
- * `10000` → `["100 00", "10000"]`. Sweden and Greece write five digits with the space
- * after the third, exactly as Czechia and Slovakia do. the compact form rides along
- * because sources store it that way and a reader types it both ways.
+ * `10000` → `["100 00", "10000"]`.
+ *
+ * Sweden and Greece write five digits with the space after the third, exactly as Czechia and Slovakia
+ * do. the compact form rides along because sources store it that way and a reader types it both ways.
  */
 function spacedThree(compact: string): string[] {
 	if (!/^\d{5}$/.test(compact)) return []
@@ -231,9 +235,10 @@ export const barePostcodeRecipe: CorpusRecipe = {
 		const perCountry = new Map(countries.map((country) => [country, 0]))
 		const codesByCountry = new Map(countries.map((country) => [country, new Set<string>()]))
 
-		// The second held-out register. `BARE_POSTCODE_EVAL_CASES` reserves the strings
-		// this recipe's author knew about. the gauntlet boards are older and separate,
-		// and `cz/bare-postcode.jsonl` was authored before this recipe existed.
+		// The second held-out register.
+		// `BARE_POSTCODE_EVAL_CASES` reserves the strings this recipe's author knew
+		// about. the gauntlet boards are older and separate, and `cz/bare-postcode.jsonl`
+		// was authored before this recipe existed.
 		// `100 00` and `110 00` reached the v0.30.0 parquet through that gap, after
 		// which those two board rows measured recall of two strings rather than the capability.
 		const boardInputs = await readGauntletInputs()

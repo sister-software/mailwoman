@@ -51,19 +51,26 @@ const TIGER_BASE_URL = "https://www2.census.gov/geo/tiger/TIGER2024/ADDRFEAT"
 export interface FetchTigerFullOptions extends BaseFetchOptions {
 	/**
 	 * Space-separated list of 2-digit state FIPS codes to skip entirely.
+	 *
 	 * Default `"50"` — Vermont, already fetched in v0.1.1.
 	 */
 	skipStateFips?: string
 	/**
-	 * Seconds to sleep between downloads. Default `0.2`.
+	 * Seconds to sleep between downloads.
+	 *
+	 * Default `0.2`.
 	 */
 	rateSleep?: number
 	/**
-	 * Max concurrent download workers per state. Default `4`.
+	 * Max concurrent download workers per state.
+	 *
+	 * Default `4`.
 	 */
 	maxParallel?: number
 	/**
-	 * Print planned downloads without fetching. Default `false`.
+	 * Print planned downloads without fetching.
+	 *
+	 * Default `false`.
 	 */
 	dryRun?: boolean
 }

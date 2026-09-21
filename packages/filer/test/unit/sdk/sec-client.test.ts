@@ -21,9 +21,9 @@
 
 import { createFakeClock, maxCountInSlidingWindow, VirtualClock } from "@mailwoman/core/api/test-clocks"
 import { type StubOutcome, stubTransport, type StubTransport } from "@mailwoman/core/api/test-transport"
-// `ResourceError` is used both as a value (`toBeInstanceOf`) and as a type
-// (`as ResourceErrorShape`). The value arrives via the post-reset dynamic import below.
-// a `const` carries no type side, so the type position needs its own static import.
+// `ResourceError` is used both as a value (`toBeInstanceOf`) and as a type (`as ResourceErrorShape`).
+// The value arrives via the post-reset dynamic import below. a `const` carries no
+// type side, so the type position needs its own static import.
 // Type-only, so it never evaluates the mocked module chain.
 import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -31,15 +31,16 @@ import { Globerator } from "spliterator/node/fs"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // note: `./sec-client.ts` is imported dynamically below, after `vi.resetModules()` —
-// see the shared-graph guard under the env mock. A static import here would bind the module
-// before the reset and reintroduce the flake this file used to carry.
+// see the shared-graph guard under the env mock.
+// A static import here would bind the module before the reset and reintroduce
+// the flake this file used to carry.
 
 // `$private` (`@mailwoman/core/env`) is a live getter over `{ ...dotEnv, ...process.env }` —
-// the repo's real `.env` already sets `SEC_EDGAR_USER_AGENT`, so `vi.stubEnv` alone
-// can't hide it (see `bdc/sdk/client.test.ts`'s identical finding against `FCC_MAP_*`).
-// Mock the module directly so the no-UA fail-fast test below is isolated from whatever
-// the ambient `.env` actually contains. Every other test in this file passes an
-// explicit `userAgent` option and never reads `$private`.
+// the repo's real `.env` already sets `SEC_EDGAR_USER_AGENT`, so `vi.stubEnv` alone can't
+// hide it (see `bdc/sdk/client.test.ts`'s identical finding against `FCC_MAP_*`).
+// Mock the module directly so the no-UA fail-fast test below is isolated from
+// whatever the ambient `.env` actually contains.
+// Every other test in this file passes an explicit `userAgent` option and never reads `$private`.
 vi.mock("@mailwoman/filer/env", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("@mailwoman/filer/env")>()
 
@@ -319,9 +320,9 @@ describe("createSECClient: on-disk cache", () => {
 
 	it("ignores SEC's own Cache-Control, so the archive-forever rule survives a short max-age", async () => {
 		// M-N: deleting `interpretHeader: false` from the client caused 0 test failures
-		// and is reachable IN production — sec.gov serves `Cache-Control` on these
-		// endpoints, and with header interpretation on, the interceptor derives the
-		// TTL from the header and silently overrides the immutable-archive rule.
+		// and is reachable IN production — sec.gov serves `Cache-Control` on these endpoints,
+		// and with header interpretation on, the interceptor derives the TTL from the header
+		// and silently overrides the immutable-archive rule.
 		// Every other cache test's stub omitted the header, so nothing noticed.
 		vi.useFakeTimers({ toFake: ["Date"] })
 		vi.setSystemTime(new Date("2026-01-01T00:00:00Z"))
@@ -341,8 +342,8 @@ describe("createSECClient: on-disk cache", () => {
 		expect(await client.get(archiveURL)).toEqual({ v: 1 })
 		expect(transport.calls).toHaveLength(1)
 
-		// Well past the header's 1s max-age. The path is an archive document,
-		// so it must still be served from cache.
+		// Well past the header's 1s max-age.
+		// The path is an archive document, so it must still be served from cache.
 		vi.setSystemTime(new Date("2026-01-01T00:00:30Z"))
 
 		expect(await client.get(archiveURL)).toEqual({ v: 1 })
@@ -419,7 +420,8 @@ describe("createSECClient: on-disk cache", () => {
 		expect(isTransientResourceError(caught)).toBe(false)
 		expect(await Globerator.from("*", { cwd: cacheDir.path }).toArray()).toHaveLength(0)
 
-		// Nothing was poisoned, so a later attempt against the same (archive!) URL still fetches.
+		// Nothing was poisoned, so a later attempt against the same (archive!)
+		// URL still fetches.
 		const fixed = stubTransport([{ body: { ok: true } }])
 
 		const fixedClient = createSECClient({
@@ -586,8 +588,8 @@ describe("createSECClient: rate limiting", () => {
 		const FAN_OUT = 40
 		// The default is SEC_DEFAULT_REQUESTS_PER_SECOND (9), not the ceiling.
 		// Pacing exactly at 10/s put 11 requests inside a sliding second on 3 of 3
-		// real-timer runs — the grants were spaced right, but the continuation that
-		// issues each request lands 0-2ms late and tips one across the boundary.
+		// real-timer runs — the grants were spaced right, but the continuation that issues
+		// each request lands 0-2ms late and tips one across the boundary.
 		// Asserting the ceiling here would pin the schedule that measured as a violation.
 		//
 		// The interval is ceiled, matching `createSECClient`: `1000/9` is `111.111…`,
@@ -786,9 +788,10 @@ describe("createSECClient: bounded retry with backoff on 429/5xx and network-cla
 	})
 })
 
-// The interface tasks 6-8 depend on. Each branch is decided from `status` and
-// `isTransientResourceError()` alone — never from message text, which is the trap the standalone
-// client's own suite fell into (it matched `/network error/i` to identify a transport failure).
+// The interface tasks 6-8 depend on.
+// Each branch is decided from `status` and `isTransientResourceError()` alone —
+// never from message text, which is the trap the standalone client's own suite fell
+// into (it matched `/network error/i` to identify a transport failure).
 describe("createSECClient: the caller's failure taxonomy, decided without reading any message", () => {
 	async function failureFor(outcomes: StubOutcome[], maxAttempts = 2): Promise<unknown> {
 		const transport = stubTransport(outcomes)

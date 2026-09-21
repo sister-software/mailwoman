@@ -50,12 +50,13 @@ const { values } = parseArguments({
 	},
 })
 
-// Not a `..` walk from this file. It was one — `resolvePath(shimDir, "..", "..")` — and
-// when source moved under `lib/` the walk landed on `<repo>/packages`, which fingerprinted
-// zero files and refused to boot. The comment beside it had been updated to say `lib/`
-// while the arithmetic still said two, which is precisely the drift a counted walk invites.
-// `repoRootPath()` owns this arithmetic in one place. Not `cwd`, because an MCP
-// client spawns the server from wherever it happens to be.
+// Not a `..` walk from this file.
+// It was one — `resolvePath(shimDir, "..", "..")` — and when source moved under `lib/` the
+// walk landed on `<repo>/packages`, which fingerprinted zero files and refused to boot.
+// The comment beside it had been updated to say `lib/` while the arithmetic still said two,
+// which is precisely the drift a counted walk invites.
+// `repoRootPath()` owns this arithmetic in one place.
+// Not `cwd`, because an MCP client spawns the server from wherever it happens to be.
 const repoRoot = values["repo-root"] ? resolvePath(values["repo-root"]) : String(repoRootPath())
 
 const host = new WorkerHost({

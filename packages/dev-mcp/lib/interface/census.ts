@@ -32,9 +32,11 @@ export function violationKey(violation: TreeViolation): string {
 }
 
 /**
- * Addresses kept per violation class. Enough to see whether a class is one recurring shape
- * or several unrelated ones, which is the distinction that decides whether it is a single
- * defect. the full list is recoverable by re-running against a filtered input set.
+ * Addresses kept per violation class.
+ *
+ * Enough to see whether a class is one recurring shape or several unrelated ones,
+ * which is the distinction that decides whether it is a single defect. the full list
+ * is recoverable by re-running against a filtered input set.
  */
 const EXAMPLES_PER_CLASS = 5
 
@@ -52,8 +54,10 @@ export interface ViolationClass {
 export interface StrandingReading {
 	tag: string
 	/**
-	 * Rows whose parse produced this tag AT all. The denominator that makes the stranding count readable:
-	 * 0 stranded out of 0 produced is not a measurement of the model's stranding behaviour.
+	 * Rows whose parse produced this tag AT all.
+	 *
+	 * The denominator that makes the stranding count readable: 0 stranded out of 0
+	 * produced is not a measurement of the model's stranding behaviour.
 	 */
 	produced_on_rows: number
 	stranded: number
@@ -74,6 +78,7 @@ export interface InterfaceCensus {
 	stranding: StrandingReading[]
 	/**
 	 * Tags that never appeared in any parse, so their stranding count carries no information.
+	 *
 	 * Named because the alternative is a table of zeros a reader will read as a clean bill of health.
 	 */
 	never_produced: string[]
@@ -90,7 +95,9 @@ export interface DuplicateTagClass {
 	tag: ComponentTag
 	topology: DuplicateTagTopology
 	/**
-	 * Rows rather than node pairs. One pathological tree contributes at most once to this class.
+	 * Rows rather than node pairs.
+	 *
+	 * One pathological tree contributes at most once to this class.
 	 */
 	n: number
 	examples: { id: string; input: string; values: string[] }[]
@@ -252,9 +259,11 @@ interface TaggedNode {
 
 /**
  * Classify every repeated tag by the relationships among its nodes.
- * A row may enter more than one topology for one tag: three nodes can contain a nested pair
- * while the third sits on a separate branch. Counts stay row-based within each
- * `(tag, topology)` class, so pair multiplication cannot inflate the result.
+ *
+ * A row may enter more than one topology for one tag: three nodes can contain a
+ * nested pair while the third sits on a separate branch.
+ * Counts stay row-based within each `(tag, topology)` class, so pair multiplication
+ * cannot inflate the result.
  */
 function duplicateTagTopologies(tree: AddressTree): Map<ComponentTag, Map<DuplicateTagTopology, string[]>> {
 	const nodes: TaggedNode[] = []

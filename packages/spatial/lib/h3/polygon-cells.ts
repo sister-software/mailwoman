@@ -89,6 +89,7 @@ export const CELL_ESTIMATE_BUDGET = 2_000_000
 
 /**
  * The coarsest resolution a feature may be pushed down to.
+ *
  * Below this a "cell" is tens of thousands of square kilometres and the index stops summarizing anything.
  */
 export const MIN_INDEX_RESOLUTION = 4
@@ -119,9 +120,9 @@ function boxExtentMetres(box: DegreeBox): { heightM: number; widthM: number } {
 /**
  * The single cell containing this whole bounding box, or `undefined` when it spans more than one.
  *
- * An H3 cell is convex, so a rectangle whose four corners all fall in the same cell lies entirely
- * inside it. That makes this an exact answer rather than an approximation, and it takes the
- * wasm polyfill off the majority of a small-polygon product's parts: 38.8% of the EA flood
+ * An H3 cell is convex, so a rectangle whose four corners all fall in the same cell lies entirely inside it.
+ * That makes this an exact answer rather than an approximation, and it takes the wasm
+ * polyfill off the majority of a small-polygon product's parts: 38.8% of the EA flood
  * features are under 11 m across, and most parts of the multi-part ones are smaller still.
  */
 function enclosingCell(box: DegreeBox, resolution: number): string | undefined {
@@ -143,11 +144,12 @@ function enclosingCell(box: DegreeBox, resolution: number): string | undefined {
 /**
  * Could a shape this size contain a whole cell?
  *
- * A hexagon's minimum width is twice its inradius, and its inradius is `edge × √3/2` — so a bounding
- * box narrower than `edge × √3` in either direction cannot enclose one, and the `containmentFull`
- * polyfill is guaranteed to return nothing. The comparison is deliberately permissive:
- * a wrong `true` costs one polyfill call, while a wrong `false` would demote a whole cell
- * to a partial one, which the ray cast still answers correctly but more slowly.
+ * A hexagon's minimum width is twice its inradius, and its inradius is `edge × √3/2` —
+ * so a bounding box narrower than `edge × √3` in either direction cannot enclose one,
+ * and the `containmentFull` polyfill is guaranteed to return nothing.
+ * The comparison is deliberately permissive: a wrong `true` costs one polyfill call,
+ * while a wrong `false` would demote a whole cell to a partial one, which the ray
+ * cast still answers correctly but more slowly.
  */
 function canContainCell(box: DegreeBox, resolution: number): boolean {
 	if (!Number.isFinite(box.minLat)) return false
@@ -168,11 +170,15 @@ export interface FeatureCells {
 	 */
 	resolution: number
 	/**
-	 * Cells lying entirely inside the feature. A point in one of these is inside without a geometry read.
+	 * Cells lying entirely inside the feature.
+	 *
+	 * A point in one of these is inside without a geometry read.
 	 */
 	whole: H3Cell[]
 	/**
-	 * Cells the feature reaches but does not fill. A point in one of these needs the ray cast.
+	 * Cells the feature reaches but does not fill.
+	 *
+	 * A point in one of these needs the ray cast.
 	 */
 	partial: H3Cell[]
 }
@@ -238,8 +244,8 @@ export function classifyFeatureCells(
 			full = new Set<string>()
 
 			for (const rings of polygons) {
-				// `isGeoJSON = true`: the rings are already `[lon, lat]`, which is the order an
-				// ingest emits. Converting instead would put a transposition between the geometry
+				// `isGeoJSON = true`: the rings are already `[lon, lat]`, which is the order an ingest emits.
+				// Converting instead would put a transposition between the geometry
 				// and the index that nothing downstream could see.
 				const geoJSONRings = rings as number[][][]
 				const box = ringsBoundingBox([rings])
@@ -263,13 +269,14 @@ export function classifyFeatureCells(
 				)
 
 				// An empty answer for a real part is an allocator failure wearing a result's clothes,
-				// and it has to be caught here rather than after the whole feature. h3-js
-				// sizes its output buffer with `_calloc`, and a `_calloc` that fails returns
-				// the null pointer — which in wasm is ordinary writable memory, so the call
-				// reports success and the reader hands back an array of zeros, i.e. nothing.
+				// and it has to be caught here rather than after the whole feature. h3-js sizes its
+				// output buffer with `_calloc`, and a `_calloc` that fails returns the null pointer —
+				// which in wasm is ordinary writable memory, so the call reports success
+				// and the reader hands back an array of zeros, i.e. nothing.
 				// Every part with a non-degenerate bounding box touches at least one cell,
-				// so zero is impossible as an answer. Checking per feature instead would pass any
-				// multi-part feature whose other parts happened to answer, and silently index it short.
+				// so zero is impossible as an answer.
+				// Checking per feature instead would pass any multi-part feature whose other
+				// parts happened to answer, and silently index it short.
 				if (!overlapping.length) {
 					throw new Error(
 						`${layerLabel}: part of feature ${featureID} spanning ${box.minLat},${box.minLon} to ${box.maxLat},${box.maxLon} returned no cell at resolution ${resolution} — a part always touches at least one, so this is an allocator failure reported as an answer`
@@ -280,10 +287,10 @@ export function classifyFeatureCells(
 					touched.add(cell)
 				}
 
-				// A part narrower than a cell's minimum width cannot contain one, so its `full`
-				// set is empty and asking for it is pure cost. Erring towards asking is safe —
-				// a missed whole cell becomes a partial one and the ray cast still answers
-				// correctly — so the comparison is the permissive one.
+				// A part narrower than a cell's minimum width cannot contain one,
+				// so its `full` set is empty and asking for it is pure cost.
+				// Erring towards asking is safe — a missed whole cell becomes a partial one
+				// and the ray cast still answers correctly — so the comparison is the permissive one.
 				if (!canContainCell(box, resolution)) continue
 
 				for (const cell of polygonToCellsExperimental(
@@ -394,10 +401,11 @@ export function ancestorChainCells(
  * One classified feature's cell rows, ready for insertion — the whole set compacted,
  * the partial set left at its own resolution.
  *
- * Shared BY every polygon layer whose cell row names A polygon rather than a class
- * accumulated across features. There is no product knowledge in it: compaction,
- * the short-cell encoding and the belt-and-braces subtraction below are h3 and blob arithmetic,
- * and a second copy is a second place for the subtraction to stop happening.
+ * Shared BY every polygon layer whose cell row names A polygon rather than a
+ * class accumulated across features.
+ * There is no product knowledge in it: compaction, the short-cell encoding
+ * and the belt-and-braces subtraction below are h3 and blob arithmetic, and a second
+ * copy is a second place for the subtraction to stop happening.
  *
  * Compaction is PER feature, which is what keeps a build's memory flat in row count with no
  * temporary table: a row that names one polygon is final the moment that polygon is classified.

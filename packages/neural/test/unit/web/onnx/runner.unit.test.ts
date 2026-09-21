@@ -345,9 +345,10 @@ describe("defaultCountryLexiconURL", () => {
 
 describe("cross-runner parity (#727 span read)", () => {
 	test("the web runner's span unflatten matches the node ONNXRunner's, byte for byte", async () => {
-		// The (token, length, type) unflatten is duplicated in neural/onnx-runner.ts and here —
-		// two hosts, one interface. A silent divergence would make the browser decode a transposed
-		// tensor and mis-tag every span (the PLACETYPE_ORDER failure mode, one layer down).
+		// The (token, length, type) unflatten is duplicated in neural/onnx-runner.ts
+		// and here — two hosts, one interface.
+		// A silent divergence would make the browser decode a transposed tensor
+		// and mis-tag every span (the PLACETYPE_ORDER failure mode, one layer down).
 		// This pins them: the same flat buffer must produce the same nested array on both sides.
 		const SEQ_LEN = 2
 		const L = 3

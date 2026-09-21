@@ -83,9 +83,11 @@ async function matchers(locale: string): Promise<{ pop: unknown; imp: unknown }>
 
 /**
  * `max(importance)` per BIO tag for `surface` — the collapse `applyBias` performs
- * before it touches the emission matrix. A surface the FST does not accept returns
- * an empty map, which is absence (the gazetteer has nothing to say), reported by the
- * caller as a zero bias on a named tag rather than silently as 0.
+ * before it touches the emission matrix.
+ *
+ * A surface the FST does not accept returns an empty map, which is absence
+ * (the gazetteer has nothing to say), reported by the caller as a zero bias on
+ * a named tag rather than silently as 0.
  */
 function biasOf(matcher: unknown, surface: string): Map<string, number> {
 	const walk = (matcher as { walk(t: string[]): { stateID: number; accepted: boolean } | null }).walk(
@@ -169,12 +171,13 @@ for (const s of SWEEP_ROWS) {
 	const hasCoord = lat !== undefined && lon !== undefined && tol !== undefined
 	// Sweep rows grade under the base package: no overlay ships for these countries.
 	const locale = "en-us"
-	// measured, never declared. The first version of this builder wrote `popBias: 0, impBias: 0`
-	// here on the reasoning that "no FST covers Botswana", and that was wrong in the way this
-	// repo keeps finding: the arm loads the FST by locale rather than by answer-country,
-	// so an en-us row's surface is scored against the US gazetteer whatever the answer's
-	// country is. "Moscow" carries 0.3411 → 0.5465 from 33 US bearers and "Nassau"
-	// 0.0755 → 0.4234 from 8 — real bias, on rows whose correct answer is in RU and BS.
+	// measured, never declared.
+	// The first version of this builder wrote `popBias: 0, impBias: 0` here on the reasoning
+	// that "no FST covers Botswana", and that was wrong in the way this repo keeps finding:
+	// the arm loads the FST by locale rather than by answer-country, so an en-us row's
+	// surface is scored against the US gazetteer whatever the answer's country is.
+	// "Moscow" carries 0.3411 → 0.5465 from 33 US bearers and "Nassau" 0.0755 → 0.4234 from 8 —
+	// real bias, on rows whose correct answer is in RU and BS.
 	// A declared zero would have hidden the single most interesting thing about this class,
 	// which is that the gazetteer can only pull these rows toward the wrong place.
 	const { pop, imp } = await matchers(locale)

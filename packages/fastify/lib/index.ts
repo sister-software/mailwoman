@@ -38,6 +38,7 @@ const packageJson = await readPackageJSON(import.meta.url, "@mailwoman/fastify")
 /**
  * Structural shape of the runtime pipeline (`createRuntimePipeline`'s return value):
  * a function from raw input + per-call opts to a {@link PipelineResult}.
+ *
  * Kept structural so a caller can inject a fake in tests without importing the concrete factory.
  */
 export type RuntimePipeline = (raw: string, opts?: PipelineOpts) => Promise<PipelineResult>
@@ -48,30 +49,36 @@ export type RuntimePipeline = (raw: string, opts?: PipelineOpts) => Promise<Pipe
 export interface MailwomanFastifyOptions {
 	/**
 	 * A pre-built runtime pipeline (`createRuntimePipeline(...)`).
+	 *
 	 * The dependency-injection / testing path — supply this and the plugin makes no
-	 * attempt to load model weights or open a gazetteer. When omitted, the plugin
-	 * builds one lazily on first use from the paths + locale below.
+	 * attempt to load model weights or open a gazetteer.
+	 * When omitted, the plugin builds one lazily on first use from the paths + locale below.
 	 */
 	pipeline?: RuntimePipeline
 	/**
-	 * Path to a `poi.db` layer. Enables `post /poi` (without it the route answers a clean 501)
-	 * and, on the lazy-built pipeline, wires POI execution
-	 * via `createRuntimePipeline({ poiQueryKind: { poiDatabasePath } })`.
+	 * Path to a `poi.db` layer.
+	 *
+	 * Enables `post /poi` (without it the route answers a clean 501) and, on the lazy-built pipeline,
+	 * wires POI execution via `createRuntimePipeline({ poiQueryKind: { poiDatabasePath } })`.
 	 */
 	poiDatabasePath?: string
 	/**
-	 * Path to a WOF gazetteer database (a `candidate.db` or an admin `wof.db`) for the
-	 * lazy-built pipeline's resolver. Omitted → the lazy pipeline parses without a resolver
-	 * (parse works. geocode returns no coordinates). Ignored when a pre-built `pipeline` is injected.
+	 * Path to a WOF gazetteer database (a `candidate.db` or an admin `wof.db`)
+	 * for the lazy-built pipeline's resolver.
+	 *
+	 * Omitted → the lazy pipeline parses without a resolver (parse works. geocode returns no coordinates).
+	 * Ignored when a pre-built `pipeline` is injected.
 	 */
 	resolveDatabasePath?: string
 	/**
-	 * Locale for the lazily-loaded model weights + the default per-call locale
-	 * hint. Defaults to `"en-US"`.
+	 * Locale for the lazily-loaded model weights + the default per-call locale hint.
+	 *
+	 * Defaults to `"en-US"`.
 	 */
 	locale?: string
 	/**
 	 * Path prefix for every registered route (e.g. `"/geo"` → `post /geo/parse`).
+	 *
 	 * Defaults to `""` (no prefix).
 	 */
 	routePrefix?: string
@@ -79,6 +86,7 @@ export interface MailwomanFastifyOptions {
 
 /**
  * One parsed component in reading order — a `ComponentTag` + the covered text.
+ *
  * Mirrors `@mailwoman/api`'s shape.
  */
 export interface ParseComponent {
@@ -108,6 +116,7 @@ export interface NotPOIQuery {
 
 /**
  * The programmatic surface exposed on `fastify.mailwoman`.
+ *
  * Every method runs the same underlying pipeline.
  */
 export interface MailwomanDecorator {
@@ -120,10 +129,11 @@ export interface MailwomanDecorator {
 	 */
 	geocode(text: string, opts?: PipelineOpts): Promise<GeocodeResult>
 	/**
-	 * Run the POI-query path. Returns the pipeline's `POIIntentOutcome`
-	 * (intent / abstain, with results when a poi.db is wired) or {@link NotPOIQuery}
-	 * when the input wasn't POI-shaped. Throws {@link POINotConfiguredError}
-	 * when the plugin was registered without `poiDatabasePath`.
+	 * Run the POI-query path.
+	 *
+	 * Returns the pipeline's `POIIntentOutcome` (intent / abstain, with results when a poi.db is wired)
+	 * or {@link NotPOIQuery} when the input wasn't POI-shaped.
+	 * Throws {@link POINotConfiguredError} when the plugin was registered without `poiDatabasePath`.
 	 */
 	poi(text: string, opts?: PipelineOpts): Promise<POIIntentOutcome | NotPOIQuery>
 }
@@ -151,9 +161,10 @@ interface PipelineHelpers {
 
 /**
  * Lazily load the two pure decode helpers from `mailwoman`.
- * Both are needed on every parse / geocode call regardless of whether the
- * pipeline was injected, so they load once (on the first request) and cache —
- * keeping plugin registration itself free of any `@mailwoman/*` runtime import.
+ *
+ * Both are needed on every parse / geocode call regardless of whether the pipeline
+ * was injected, so they load once (on the first request) and cache — keeping plugin
+ * registration itself free of any `@mailwoman/*` runtime import.
  * Reached via subpaths (`@mailwoman/core/decoder`, `mailwoman/geocode-core`)
  * rather than the bare `mailwoman` barrel to sidestep the documented bare+subpath
  * import cycle (see agents.md § the bare-import + subpath-import cycle).
@@ -166,10 +177,11 @@ async function loadHelpers(): Promise<PipelineHelpers> {
 
 /**
  * Build the runtime pipeline lazily from the plugin options — the path taken
- * when no `pipeline` was injected. Loads the neural classifier via `@mailwoman/neural`'s
- * standard weight resolution, opens a WOF resolver when `resolveDatabasePath` is set, and
- * wires POI execution when `poiDatabasePath` is set. All imports are dynamic
- * so a consumer who injects their own pipeline never pulls this closure.
+ * when no `pipeline` was injected.
+ *
+ * Loads the neural classifier via `@mailwoman/neural`'s standard weight resolution, opens a WOF resolver
+ * when `resolveDatabasePath` is set, and wires POI execution when `poiDatabasePath` is set.
+ * All imports are dynamic so a consumer who injects their own pipeline never pulls this closure.
  */
 async function buildPipeline(opts: MailwomanFastifyOptions, locale: string): Promise<RuntimePipeline> {
 	const [{ createRuntimePipeline }, { NeuralAddressClassifier }] = await Promise.all([
@@ -228,15 +240,15 @@ function readText(request: FastifyRequest, reply: FastifyReply): string | null {
 const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, opts) => {
 	const locale = opts.locale ?? "en-US"
 	const prefix = opts.routePrefix ?? ""
-	// POI route availability is an explicit config decision: it's on iff `poiDatabasePath`
-	// was supplied. A pipeline injected without it still parses/geocodes, but `post /poi`
-	// answers a clean 501 (and `mailwoman.poi` throws) — so the route's availability is
-	// deterministic regardless of how the injected pipeline was wired.
+	// POI route availability is an explicit config decision: it's on iff `poiDatabasePath` was supplied.
+	// A pipeline injected without it still parses/geocodes, but `post /poi` answers a clean 501
+	// (and `mailwoman.poi` throws) — so the route's availability is deterministic
+	// regardless of how the injected pipeline was wired.
 	const poiEnabled = opts.poiDatabasePath !== undefined
 
-	// The pipeline + helpers resolve once, lazily. An injected pipeline is used
-	// as-is. otherwise it's built on the first request (never at registration)
-	// so `fastify.register` stays cheap and side-effect-free.
+	// The pipeline + helpers resolve once, lazily.
+	// An injected pipeline is used as-is. otherwise it's built on the first request
+	// (never at registration) so `fastify.register` stays cheap and side-effect-free.
 	let pipelinePromise: Promise<RuntimePipeline> | undefined
 
 	const getPipeline = (): Promise<RuntimePipeline> => {
@@ -317,6 +329,7 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
  * The `@mailwoman/fastify` plugin, wrapped with `fastify-plugin` so the `fastify.mailwoman`
  * decorator + the routes land on the instance the caller registered against
  * (encapsulation is broken deliberately — the decorator is meant to be shared).
+ *
  * Register with `fastify.register(mailwomanFastify, options)`.
  */
 export const mailwomanFastify = fp(pluginImpl, { fastify: ">=5", name: "@mailwoman/fastify" })

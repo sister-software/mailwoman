@@ -62,6 +62,7 @@ export interface OSMAddrRecord {
 
 /**
  * The `addr:*` tags the extract projects, in the order the record names them.
+ *
  * The rooftop builder reads the first five. the corpus jsonl carries them all.
  */
 const ADDR_TAGS = [

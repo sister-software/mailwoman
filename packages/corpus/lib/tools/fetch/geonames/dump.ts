@@ -41,7 +41,9 @@ const BASE_URL = "https://download.geonames.org/export/dump"
 
 export interface FetchGeonamesDumpOptions extends BaseFetchOptions {
 	/**
-	 * ISO alpha-2 codes, any casing. Absent → every country `countryInfo.txt` enumerates.
+	 * ISO alpha-2 codes, any casing.
+	 *
+	 * Absent → every country `countryInfo.txt` enumerates.
 	 */
 	countries?: readonly string[]
 	/**
@@ -50,7 +52,9 @@ export interface FetchGeonamesDumpOptions extends BaseFetchOptions {
 	 */
 	baseURL?: string
 	/**
-	 * Refetch a dump whose `<CC>.txt` already exists. Default false — the tool fills gaps.
+	 * Refetch a dump whose `<CC>.txt` already exists.
+	 *
+	 * Default false — the tool fills gaps.
 	 */
 	force?: boolean
 }
@@ -81,8 +85,9 @@ export interface GeonamesDumpManifest {
 	unavailable: string[]
 	/**
 	 * Present `<CC>.txt` files that are not 19-column gazetteer dumps — GeoNames' postal
-	 * exports share the same basename, and seven tier-1 postal files sat at these
-	 * paths reading as "present" until the capitals build found them capital-less.
+	 * exports share the same basename, and seven tier-1 postal files sat at these paths
+	 * reading as "present" until the capitals build found them capital-less.
+	 *
 	 * Left in place (this tool never overwrites data it did not fetch);
 	 * the fix is to move the file to its own home and rerun.
 	 */
@@ -97,6 +102,7 @@ const GAZETTEER_DUMP_COLUMNS = 19
 
 /**
  * True when the first non-empty line carries the gazetteer dump's 19 tab-separated columns.
+ *
  * Accepts a partial head read — the first line is the whole question,
  * so callers need not hand it a resident 350 MB dump.
  *

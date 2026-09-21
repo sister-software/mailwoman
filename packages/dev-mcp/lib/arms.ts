@@ -44,8 +44,9 @@ export interface ArmRunner {
  *
  * "Configuration" includes the model: `config.weights_cache` names a candidate
  * weights bundle, so shipped-vs-candidate is an ordinary two-arm comparison here
- * rather than a pair of hand-written scripts. What it cannot vary is source — both arms
- * run whatever this process imported, which is what {@link WorktreeArm} exists for.
+ * rather than a pair of hand-written scripts.
+ * What it cannot vary is source — both arms run whatever this process imported,
+ * which is what {@link WorktreeArm} exists for.
  */
 interface MailwomanArm {
 	kind: "mailwoman"
@@ -60,16 +61,18 @@ export interface ExternalArm {
 	engine: ExternalEngine
 	endpoint: string
 	/**
-	 * What the caller believes is running there. Required only when the endpoint
-	 * will not identify itself. see `external-arm.ts`'s identity probe for why an
-	 * unidentified endpoint is refused rather than scored.
+	 * What the caller believes is running there.
+	 *
+	 * Required only when the endpoint will not identify itself. see `external-arm.ts`'s
+	 * identity probe for why an unidentified endpoint is refused rather than scored.
 	 */
 	version?: string
 }
 
 /**
- * A reference geocoder as an arm. Never a grading truth — see `oracle-arm.ts`
- * for the refusal and its two reasons.
+ * A reference geocoder as an arm.
+ *
+ * Never a grading truth — see `oracle-arm.ts` for the refusal and its two reasons.
  */
 export interface OracleArm {
 	kind: "oracle"
@@ -96,6 +99,7 @@ export interface RecordedArm {
  * A `mailwoman` arm runs whatever this process imported, so two of them can only differ by
  * config — which does cover the model, via `weights_cache`, but never the code that loads
  * it. a `recorded` arm replays a past run but cannot produce a new one at an old ref.
+ *
  * Neither answers "what does my edit do", which is the question most maintainer changes are.
  */
 export interface WorktreeArm {

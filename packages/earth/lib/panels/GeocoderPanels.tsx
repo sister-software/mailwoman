@@ -98,9 +98,10 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 				</>
 			),
 			result: ({ result, selectedCandidateIndex, onSelectCandidate }) => {
-				// Display-only calibrated view: map each span's raw confidence through the calibrator
-				// when the toggle is on. A fresh copy, never a mutation of the runtime's
-				// result (the resolver and the compare read the raw nodes).
+				// Display-only calibrated view: map each span's raw confidence through
+				// the calibrator when the toggle is on.
+				// A fresh copy, never a mutation of the runtime's result
+				// (the resolver and the compare read the raw nodes).
 				const displayResult: ParseResult =
 					calibrateConfidence && calibrator
 						? {
@@ -129,16 +130,16 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			debugDrawer: ({ result }) => (
 				<DebugDrawer result={result} devMode={devMode} traceParse={traceParse} onClose={() => setDevMode(false)} />
 			),
-			// The feature inspector and its longitude/latitude/zoom readout are developer tooling,
-			// and were mounted for every visitor. They sit in MapLibre's bottom-right corner,
-			// directly above the footer strip, so on a narrow window the readout ran
-			// along the same edge as the Sources button — two unrelated things sharing
-			// one line, one of which nobody outside this repository has a use for.
+			// The feature inspector and its longitude/latitude/zoom readout are developer
+			// tooling, and were mounted for every visitor.
+			// They sit in MapLibre's bottom-right corner, directly above the footer strip, so on a
+			// narrow window the readout ran along the same edge as the Sources button — two unrelated
+			// things sharing one line, one of which nobody outside this repository has a use for.
 			// Shown under the same condition as the decode-path drawer.
 			mapControls: devMode ? <MapControls /> : null,
 			layers: ({ map }) => <LayerToggleControl map={map} />,
-			// The identity, the docs link, the commit and the credits live in
-			// `EarthFooter` so this footer and the canned runtime's cannot differ.
+			// The identity, the docs link, the commit and the credits live in `EarthFooter`
+			// so this footer and the canned runtime's cannot differ.
 			// `status` is the one thing only this path has: what is being fetched right now.
 			footer: <EarthFooter status={loadStatus} />,
 			compare: (ctx) => (

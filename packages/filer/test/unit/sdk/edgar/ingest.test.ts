@@ -122,7 +122,8 @@ describe("collectEdgarSubsidiaryRows — the happy path", () => {
 
 describe("collectEdgarSubsidiaryRows — the check cannot be bypassed", () => {
 	it("drops a registrant SEC files outside the telecom range, however good the name score", async () => {
-		// This is the WideOpenWest -> WidePoint false match, at 0.886. Without the check it writes 9 rows.
+		// This is the WideOpenWest -> WidePoint false match, at 0.886.
+		// Without the check it writes 9 rows.
 		const client = await stubClient({
 			"0001034760": {
 				cikPath: "1034760",

@@ -34,8 +34,9 @@ describe("synthesizeIntersectionRow", () => {
 	})
 
 	it("produces a meaningful fraction of BARE intersections (no locality tail) — v0.7.2", () => {
-		// The harness's intersection assertions are bare "X & Y"; v0.7.1 fumbled them because
-		// every synthetic row had a ", City, ST" tail. Verify ~60% are now tail-less.
+		// The harness's intersection assertions are bare "X & Y"; v0.7.1 fumbled them
+		// because every synthetic row had a ", City, ST" tail.
+		// Verify ~60% are now tail-less.
 		const rows = generateIntersectionRows(400, DEFAULT_US_BASES, { random: mulberry32(99) })
 		const bare = rows.filter((r) => r.components.locality == null)
 		expect(bare.length).toBeGreaterThan(rows.length * 0.4)
@@ -48,10 +49,11 @@ describe("synthesizeIntersectionRow", () => {
 	})
 
 	it("aligns to BIO with B-intersection_a before B-intersection_b", () => {
-		// NB: align.ts's default whitespace tokenizer strips standalone punctuation, so the connector
-		// ("&", "/", …) leaves no token. What matters — and what we assert — is that the two
-		// street spans label correctly and in order. The connector's label is a tokenizer detail
-		// (the production SentencePiece tokenizer keeps "&" as an O token); not the generator's interface.
+		// NB: align.ts's default whitespace tokenizer strips standalone punctuation,
+		// so the connector ("&", "/", …) leaves no token.
+		// What matters — and what we assert — is that the two street spans label correctly and in order.
+		// The connector's label is a tokenizer detail (the production SentencePiece
+		// tokenizer keeps "&" as an O token); not the generator's interface.
 		const row = synthesizeIntersectionRow(DEFAULT_US_BASES[0]!, { random: mulberry32(7) })!
 		const result = alignRow(asCanonical(row))
 		expect(result.kind).toBe("labeled")

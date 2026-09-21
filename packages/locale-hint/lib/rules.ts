@@ -14,6 +14,7 @@ import type { QueryShapeFormatsView } from "@mailwoman/query-shape"
 
 /**
  * Confidence at or above which a known-format hit counts as unambiguous.
+ *
  * Ambiguous hits — a bare 5-digit run, which reads as US, FR and DE alike —
  * arrive at 0.6, so this cleanly separates them.
  */
@@ -28,12 +29,13 @@ export interface LocaleCandidate {
 /**
  * Script-class scorer: maps the dominant character class to a default locale per script.
  *
- * - Cjk → ja-JP. The character class cannot tell Japanese from Chinese or Korean Han text, and the CJK
- *   weights are one family (`@mailwoman/neural-weights-cjk`, with `ja-jp` and `zh-cn` data-only overlays):
+ * - Cjk → ja-JP.
+ *   The character class cannot tell Japanese from Chinese or Korean Han text, and the CJK weights are
+ *   one family (`@mailwoman/neural-weights-cjk`, with `ja-jp` and `zh-cn` data-only overlays):
  *   the char encoder collapses `ja`/`zh`/`ko` to that family, so the model loaded
- *   is the same whichever tag stands here. What this tag does decide is the label
- *   a consumer reads off the hint — a Chinese-script address reports `ja-JP` —
- *   and that is a known limit of the hint's interface rather than a routing choice.
+ *   is the same whichever tag stands here.
+ *   What this tag does decide is the label a consumer reads off the hint — a Chinese-script address
+ *   reports `ja-JP` — and that is a known limit of the hint's interface rather than a routing choice.
  * - Cyrillic → ru-RU (not currently shipped. signal is still useful)
  * - Arabic → ar (similar)
  * - Alpha / alphanumeric / numeric → no script-based commit (other scorers decide)
@@ -73,7 +75,9 @@ export function scoreByPostcode(shape: QueryShapeFormatsView): LocaleCandidate |
 			case "uk_postcode":
 				return { locale: "en-GB", confidence: 0.95, reason: `format=${hit.format}` }
 			case "ca_postcode":
-				// Canadian — both en-CA and fr-CA possible. Default en-CA. FR caller can override.
+				// Canadian — both en-CA and fr-CA possible.
+				// Default en-CA.
+				// FR caller can override.
 				return { locale: "en-CA", confidence: 0.9, reason: `format=${hit.format}` }
 			case "jp_postcode":
 				return { locale: "ja-JP", confidence: 0.95, reason: `format=${hit.format}` }
@@ -95,6 +99,7 @@ export function scoreByPostcode(shape: QueryShapeFormatsView): LocaleCandidate |
 
 /**
  * Whole-input fallback: when nothing else fires, return en-US at low confidence.
+ *
  * Keeps this stage always-decisive (no `null` to the caller, ever).
  */
 export function scoreFallback(_shape: QueryShapeFormatsView): LocaleCandidate {

@@ -65,7 +65,9 @@ export function buildBIOStartMask(labels: readonly string[]): number[] {
 }
 
 /**
- * End-of-sequence transitions. By default all labels are valid endings (returns zeros).
+ * End-of-sequence transitions.
+ *
+ * By default all labels are valid endings (returns zeros).
  * Override if the trained model has learned end transitions.
  */
 export function buildBIOEndMask(labels: readonly string[]): number[] {
@@ -90,6 +92,7 @@ function isValidTransition(from: string, to: string): boolean {
  * A position-scoped transition bonus (transition-beta build, 2026-07-24): `+bonus` on every
  * transition into `toLabel` at exactly `timestep` — from any predecessor label (at `timestep === 0`
  * the "predecessor" is the sequence start, so the bonus lands on the start transition instead).
+ *
  * The placetype-pair prior emits one per pair hit at the child span's first piece
  * when its index header carries `transitionBeta`; the hook itself is generic —
  * a sparse list of adjustments, no knowledge of who produced them.
@@ -118,11 +121,14 @@ interface ViterbiTransitionAdjustment {
 export interface ViterbiInput {
 	/**
 	 * `emissions[t][k]` — log-emission for label k at timestep t.
+	 *
 	 * Pass raw logits or log-softmaxes.
 	 */
 	emissions: number[][]
 	/**
-	 * `transitions[from][to]` — additive log-score. Use `buildBIOTransitionMask` if unsure.
+	 * `transitions[from][to]` — additive log-score.
+	 *
+	 * Use `buildBIOTransitionMask` if unsure.
 	 */
 	transitions: number[][]
 	/**
@@ -135,6 +141,7 @@ export interface ViterbiInput {
 	endTransitions?: number[]
 	/**
 	 * Position-scoped transition bonuses (see {@link ViterbiTransitionAdjustment}).
+	 *
 	 * Omitted/empty = the exact pre-transition-beta decode — no behavioral term is added anywhere.
 	 */
 	transitionAdjustments?: ReadonlyArray<ViterbiTransitionAdjustment>
@@ -154,7 +161,8 @@ export interface ViterbiResult {
 /**
  * Viterbi decode: find the highest-scoring label sequence under the CRF.
  *
- * Time: O(seq_len × num_labels²). Space: O(seq_len × num_labels) for the backpointer table.
+ * Time: O(seq_len × num_labels²).
+ * Space: O(seq_len × num_labels) for the backpointer table.
  */
 export function viterbi(input: ViterbiInput): ViterbiResult {
 	const { emissions, transitions } = input
@@ -259,6 +267,7 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 
 /**
  * Convenience: argmax over per-token softmax (existing behavior).
+ *
  * Provided so callers can opt in to Viterbi only when transitions are available,
  * falling back to this cleanly.
  */

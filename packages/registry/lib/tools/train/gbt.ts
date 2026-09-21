@@ -54,24 +54,33 @@ export interface TrainDedupGBTOptions {
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
-	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * Record-matcher sources directory.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
 	 */
 	sources?: string
 	/**
-	 * State filter. Default TX.
+	 * State filter.
+	 *
+	 * Default TX.
 	 */
 	state?: string
 	/**
-	 * NPIs sampled. Default 3000.
+	 * NPIs sampled.
+	 *
+	 * Default 3000.
 	 */
 	npis?: number
 	/**
-	 * Output TS module path. Default `registry/models/dedup-gbt-en-us.ts`.
+	 * Output TS module path.
+	 *
+	 * Default `registry/models/dedup-gbt-en-us.ts`.
 	 */
 	out?: string
 	/**
-	 * Locale recorded in the model meta (the command's factory loads the matching
-	 * weights). Default en-US.
+	 * Locale recorded in the model meta (the command's factory loads the matching weights).
+	 *
+	 * Default en-US.
 	 */
 	locale?: string
 	/**
@@ -82,7 +91,9 @@ export interface TrainDedupGBTOptions {
 	 */
 	cost?: number
 	/**
-	 * Training date stamped into the meta (overridable for reproducible commits). Default today.
+	 * Training date stamped into the meta (overridable for reproducible commits).
+	 *
+	 * Default today.
 	 */
 	date?: string
 }
@@ -149,9 +160,10 @@ export async function trainDedupGBT(
 		report?.(`    cost-sensitive: negative class weighted ×${COST} (penalize over-merge)`)
 	}
 
-	// Calibrate the default link threshold. the GBT logit is not in FS-weight units. trained with
-	// class-balanced weights, so logit 0 (the balanced boundary) ignores the ~1% match base rate
-	// and over-merges. Split the NPIs 80/20, fit a calibration GBT on the 80%, and sweep the clustering
+	// Calibrate the default link threshold. the GBT logit is not in FS-weight units.
+	// trained with class-balanced weights, so logit 0 (the balanced boundary)
+	// ignores the ~1% match base rate and over-merges.
+	// Split the NPIs 80/20, fit a calibration GBT on the 80%, and sweep the clustering
 	// threshold on the held-out 20% (the metric resolveEntities actually optimizes) for F1-max.
 	// The shipped full-data model has near-identical logit calibration, so the threshold transfers. ---
 	report?.("[E] calibrating the default link threshold on a held-out NPI split…")

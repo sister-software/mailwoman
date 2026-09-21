@@ -43,12 +43,14 @@ test("CLI secrets stay private and package-owned", () => {
 /**
  * A blank environment variable must mean the same as an absent one.
  *
- * Shells, Docker and CI all produce empty strings where an operator believes they set
- * nothing: `export FOO=`, an unset `${VAR}` interpolation, a compose key with no value.
+ * Shells, Docker and CI all produce empty strings where an operator believes they set nothing:
+ * `export FOO=`, an unset `${VAR}` interpolation, a compose key with no value.
  * Any coerced-numeric schema turns that into `0`, and a `.positive()` or `.min()`
- * then rejects it — so the process dies at import, before any application code runs, citing
- * a variable nobody knowingly set. The failure lives in the interaction between `z.coerce`
- * and a constraint rather than in either one, so every coerced-numeric key gets these cases.
+ * then rejects it — so the process dies at import, before any application code runs,
+ * citing a variable nobody knowingly set.
+ *
+ * The failure lives in the interaction between `z.coerce` and a constraint
+ * rather than in either one, so every coerced-numeric key gets these cases.
  */
 const COERCED_NUMERIC_KEYS = ["MAILWOMAN_BATCH_MAX"] as const
 

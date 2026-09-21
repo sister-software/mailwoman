@@ -61,9 +61,9 @@ describe("normalizeArrowListColumn", () => {
 
 describe("readAdmittedCountries", () => {
 	it("keeps a bare NO as the string it is", async () => {
-		// YAML 1.1 resolves bare `no` to boolean false. A YAML parser here would
-		// report Norway as un-admitted while the config lists it — reproducing,
-		// inside the tool meant to surface that bug, the bug itself.
+		// YAML 1.1 resolves bare `no` to boolean false.
+		// A YAML parser here would report Norway as un-admitted while the config lists it —
+		// reproducing, inside the tool meant to surface that bug, the bug itself.
 		const path = join(root, "norway.yaml")
 
 		await writeLocalTextFile(
@@ -140,7 +140,8 @@ describe("readBoardCoverage", () => {
 		await makeDirectories(join(cases, "gb", "archived"))
 		await writeLocalJSONFile({ id: "archived", country: "GB", status: "pass" }, cases, "gb", "archived", "old.jsonl")
 
-		// The loader's /^[a-z]{2}$/ filter excludes this directory. A glob would include it and overstate the board.
+		// The loader's /^[a-z]{2}$/ filter excludes this directory.
+		// A glob would include it and overstate the board.
 		await writeLocalJSONFile({ id: "z", country: "ZZ", status: "pass" }, cases, "generalization", "passes.jsonl")
 	})
 
@@ -188,13 +189,14 @@ describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real d
 		// `getCursor(["country", "labels"])` returns `{country}` alone on the v0.17.0-era
 		// writer's databases — silently, with no error — while the v0.5.0 base returns both.
 		// A dropped label column reads as "this country has no street rows",
-		// which is indistinguishable from the truth. Before the fallback this database
-		// reported 0. it carries 825,083 street rows out of 831,800.
+		// which is indistinguishable from the truth.
+		// Before the fallback this database reported 0. it carries 825,083 street rows out of 831,800.
 		const manifest = await readLocalJSONFile<Record<string, unknown>>(CORPUS)
 
-		// The stored key is part of the artifact and both spellings are live on disk, so the reader
-		// accepts either and this test reads the same way. A test that knew only one spelling would
-		// skip on 33 of the 41 corpora built so far and report that as "not measurable here".
+		// The stored key is part of the artifact and both spellings are live on disk,
+		// so the reader accepts either and this test reads the same way.
+		// A test that knew only one spelling would skip on 33 of the 41 corpora built
+		// so far and report that as "not measurable here".
 		const entries = (manifest["slices"] ?? manifest["sh" + "ards"]) as
 			| Array<{ split?: string; path: string }>
 			| undefined
@@ -221,9 +223,9 @@ describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real d
 
 describe("buildCorpusCensus refuses an empty count", () => {
 	it("throws rather than reporting zero rows for a manifest that lists train files", async () => {
-		// The #2322 shape, and the part of it that cost the most: a refresh writes its result,
-		// so a census that read nothing replaced a cache holding 681,901,687 rows with every
-		// country at zero. A manifest naming train files and a total of zero cannot both be true,
+		// The #2322 shape, and the part of it that cost the most: a refresh writes its result, so a
+		// census that read nothing replaced a cache holding 681,901,687 rows with every country at zero.
+		// A manifest naming train files and a total of zero cannot both be true,
 		// so the zero is the instrument failing rather than a measurement.
 		await using directory = await temporaryDirectory("mw-census-empty-")
 		const scratch = directory.resolve("MANIFEST.json")
@@ -316,8 +318,9 @@ describe("readConfiguredCorpusVersion", () => {
 	}
 
 	it("reads the version out of a versioned corpus_dir", async () => {
-		// The real shape. This is the half the census never checked: the config names 0.27.0 while a cached
-		// census counted 0.26.0, and every row count silently answers about the corpus that was counted.
+		// The real shape.
+		// This is the half the census never checked: the config names 0.27.0 while a cached census
+		// counted 0.26.0, and every row count silently answers about the corpus that was counted.
 		await using scratch = await config(
 			"data:\n  corpus_dir: /data/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl\n"
 		)
@@ -326,7 +329,8 @@ describe("readConfiguredCorpusVersion", () => {
 	})
 
 	it("returns undefined rather than a guess when the config states no corpus_dir", async () => {
-		// "Cannot check" is not "they match". Returning a plausible default here would manufacture agreement.
+		// "Cannot check" is not "they match".
+		// Returning a plausible default here would manufacture agreement.
 		await using scratch = await config("data:\n  max_length: 128\n")
 
 		expect(await readConfiguredCorpusVersion(scratch.configPath)).toBeUndefined()
@@ -342,9 +346,10 @@ describe("readConfiguredCorpusVersion", () => {
 
 describe("readAdmittedCountries — the Norway shape", () => {
 	it("keeps a QUOTED NO as the string it is, and counts it", async () => {
-		// A YAML parser turns a bare `no` key into boolean false, which is the bug this
-		// reader exists to avoid reproducing. A quoted "no" must still be counted —
-		// a regex requiring a bare key silently drops Norway and reports it as never admitted.
+		// A YAML parser turns a bare `no` key into boolean false, which is the bug
+		// this reader exists to avoid reproducing.
+		// A quoted "no" must still be counted — a regex requiring a bare key silently
+		// drops Norway and reports it as never admitted.
 		await using scratch = await temporaryDirectory("mw-cfg-no-")
 		const path = scratch.resolve("c.yaml")
 

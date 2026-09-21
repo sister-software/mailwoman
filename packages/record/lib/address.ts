@@ -29,11 +29,13 @@ export interface GeoCoordinate {
 }
 
 /**
- * The resolution tier that produced a coordinate, mirroring mailwoman's
- * geocoder (`address_point` > `interpolated` > `street` > `admin`).
- * Kept as a local plain union so this package stays decoupled from the heavy geocoder runtime.
- * a `GeocodeResult.resolution_tier` maps in directly. (`street` = a street centroid for a
- * street-only query, #1042 — coarser than a house-number estimate, finer than an admin centroid.)
+ * The resolution tier that produced a coordinate, mirroring mailwoman's geocoder
+ * (`address_point` > `interpolated` > `street` > `admin`).
+ *
+ * Kept as a local plain union so this package stays decoupled from the heavy geocoder
+ * runtime. a `GeocodeResult.resolution_tier` maps in directly.
+ * (`street` = a street centroid for a street-only query, #1042 — coarser than a
+ * house-number estimate, finer than an admin centroid.)
  */
 export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin" | "venue" | "plus_code"
 
@@ -71,8 +73,10 @@ export interface AddressGeocode {
 }
 
 /**
- * The canonical address record. Composes the parser's components, the formatter's
- * match key, an optional human-readable form, and an optional resolved geocode.
+ * The canonical address record.
+ *
+ * Composes the parser's components, the formatter's match key, an optional
+ * human-readable form, and an optional resolved geocode.
  * Plain data — no behavior.
  */
 export interface PostalAddress {
@@ -103,7 +107,9 @@ export interface PostalAddress {
  */
 export interface ToPostalAddressOptions {
 	/**
-	 * Country (ISO-2 or name) for formatting. Defaults to the `country` component, else unset.
+	 * Country (ISO-2 or name) for formatting.
+	 *
+	 * Defaults to the `country` component, else unset.
 	 */
 	country?: string
 	/**
@@ -111,18 +117,23 @@ export interface ToPostalAddressOptions {
 	 */
 	raw?: string
 	/**
-	 * Also compute a human-readable `formatted` string. Default `true`.
+	 * Also compute a human-readable `formatted` string.
+	 *
+	 * Default `true`.
 	 */
 	format?: boolean
 	/**
-	 * Formatting options forwarded to the formatter. Defaults to single-line (`", "`).
+	 * Formatting options forwarded to the formatter.
+	 *
+	 * Defaults to single-line (`", "`).
 	 */
 	formatOptions?: FormatAddressOptions
 }
 
 /**
- * Build a canonical {@linkcode PostalAddress} from parsed components:
- * fills the match key (always) and a human-readable form (unless disabled).
+ * Build a canonical {@linkcode PostalAddress} from parsed components: fills the match
+ * key (always) and a human-readable form (unless disabled).
+ *
  * Attach a geocode separately with {@linkcode withGeocode} once the address is resolved.
  */
 export function toPostalAddress(components: ComponentDict, opts: ToPostalAddressOptions = {}): PostalAddress {

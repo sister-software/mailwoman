@@ -301,11 +301,11 @@ export const DEFAULT_GEONAMES_COUNTRIES = [
 /**
  * Pinned Overture release for the divisions theme (rows churn between monthly releases. never mix two).
  *
- * Overture deletes old releases — the bucket held exactly two when this was last checked,
- * so a pin survives on the order of a month and then the build fails with
- * `No files found that match the pattern`. Keep this equal to `poi/defaults.ts`'s `DEFAULT_RELEASE`:
- * two pins drifting apart is what left this one on a pruned release while POI moved,
- * and mixing two vintages inside one artifact is the thing the line above forbids.
+ * Overture deletes old releases — the bucket held exactly two when this was last checked, so a pin
+ * survives on the order of a month and then the build fails with `No files found that match the pattern`.
+ * Keep this equal to `poi/defaults.ts`'s `DEFAULT_RELEASE`: two pins drifting apart
+ * is what left this one on a pruned release while POI moved, and mixing two vintages
+ * inside one artifact is the thing the line above forbids.
  */
 export const DEFAULT_OVERTURE_RELEASE = "2026-07-22.0"
 
@@ -349,6 +349,7 @@ export const DEFAULT_CANDIDATE_OUT = "candidate-global.db"
 /**
  * The conventional source of the `importance` column (#28) — a WOF admin database
  * carrying `place_importance`, built by `mailwoman gazetteer importance`.
+ *
  * Deliberately a separate artifact from {@link DEFAULT_ADMIN_DB}: the scores are expensive to derive
  * and change on their own cadence, so the shipped admin DB has never carried the table,
  * and the candidate build joins them in by name rather than assuming one file holds both.
@@ -358,9 +359,11 @@ export const DEFAULT_IMPORTANCE_DB = "admin-global-priority-importance.db"
 /**
  * The frozen artifact's ten countries, IN its ingest order
  * (recovered from its per-country `spr.id` ranges: FI @ 9500000000000 … GB @ 9500000056075).
- * The first nine are the #920 namesake-tail set the original `--geonames-postal-countries`
- * flag carried. GB was appended in a later pass from the `GB_full` dump
- * and is 97 % of the artifact (1,839,678 of 1,895,753 rows, ~946 MB).
+ *
+ * The first nine are the #920 namesake-tail set the original `--geonames-postal-countries` flag carried.
+ * GB was appended in a later pass from the `GB_full` dump and is 97 % of the
+ * artifact (1,839,678 of 1,895,753 rows, ~946 MB).
+ *
  * Keep the order: it is what makes a rebuild id-comparable to the frozen database.
  */
 

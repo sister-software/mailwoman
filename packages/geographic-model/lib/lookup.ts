@@ -49,11 +49,13 @@ export interface GeographicModelIndex {
 	relation(id: RelationID): RelationRecord | undefined
 	/**
 	 * Every concept this one is a kind of, transitively, in code-point order.
+	 *
 	 * Empty for a concept that is a kind of nothing; `undefined` for a concept the artifact does not carry.
 	 */
 	ancestorsOf(id: ConceptID): readonly ConceptID[] | undefined
 	/**
 	 * Every derived fact whose subject is this concept, in artifact order.
+	 *
 	 * Empty for a concept nothing was derived about; `undefined` for a concept the artifact does not carry.
 	 */
 	derivedFactsAbout(id: ConceptID): readonly DerivedFactRecord[] | undefined

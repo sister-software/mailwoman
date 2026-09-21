@@ -10,9 +10,11 @@ import type { JsonObject } from "type-fest"
 
 /**
  * True when `value` carries `Symbol.iterator`: arrays, sets, maps, strings, generators.
- * `null` and `undefined` answer false. The same predicate exists in `spliterator`,
- * whose barrel also carries that library's Node fs, worker-thread and xlsx readers. this
- * module is on the browser client's static import path, so it must not reach that barrel.
+ *
+ * `null` and `undefined` answer false.
+ * The same predicate exists in `spliterator`, whose barrel also carries that library's
+ * Node fs, worker-thread and xlsx readers. this module is on the browser client's
+ * static import path, so it must not reach that barrel.
  */
 export function isIterable(value: unknown): value is Iterable<unknown> {
 	return Symbol.iterator in new Object(value)
@@ -146,6 +148,7 @@ type Falsy = false | 0 | 0n | "" | null | undefined
 
 /**
  * Typed counterpart to `Boolean` for collection filters.
+ *
  * The runtime semantics are intentionally identical: all falsy values are removed,
  * while the overload narrows them out of the resulting element type.
  */

@@ -77,8 +77,10 @@ function testDeps(latitude: number, longitude: number): GeocodeDeps {
 const INPUT = "Testtown"
 
 /**
- * The kind the mock classifier reports. A designation marker must name it — the verdict's
- * own top kind — because a designation is not raised by intent and has no kind of its own.
+ * The kind the mock classifier reports.
+ *
+ * A designation marker must name it — the verdict's own top kind — because a
+ * designation is not raised by intent and has no kind of its own.
  */
 const TEST_VERDICT_KIND: QueryKind = "locality_only"
 

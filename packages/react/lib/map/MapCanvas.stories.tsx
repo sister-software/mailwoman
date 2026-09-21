@@ -14,7 +14,9 @@ import type { Meta, StoryObj } from "@storybook/react-vite"
 import { MapCanvas, type MapCanvasStyle } from "./MapCanvas.tsx"
 
 /**
- * An offline style: one solid `background` layer. No glyphs, sprite, sources, or tiles → no network.
+ * An offline style: one solid `background` layer.
+ *
+ * No glyphs, sprite, sources, or tiles → no network.
  */
 const STUB_STYLE: MapCanvasStyle = {
 	version: 8,

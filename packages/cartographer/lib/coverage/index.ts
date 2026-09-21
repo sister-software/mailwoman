@@ -41,13 +41,16 @@ export const COVERAGE_SOURCE_LAYER = "coverage"
 
 /**
  * Fog tint — a near-black indigo reading as "unknown / unsurveyed".
+ *
  * Pushed dark (vs a mid indigo) so it holds contrast over the demo's terrain+hillshade basemap,
  * which is itself dark-green over forest where a lighter fog would simply vanish.
  */
 export const COVERAGE_FOG_COLOR = "#663399" // Rebecca Purple
 
 /**
- * Opacity of a fully-empty (`fog = 1`) cell. Covered cells scale down from here toward transparent.
+ * Opacity of a fully-empty (`fog = 1`) cell.
+ *
+ * Covered cells scale down from here toward transparent.
  */
 export const COVERAGE_MAX_FOG_OPACITY = 0.9
 
@@ -84,9 +87,11 @@ function fogFill(id: string, fogProperty: "fog" | "fog_opt"): FillLayerSpecifica
 }
 
 /**
- * The two default-off fog fills (optimistic + honest). Plain MapLibre specs — the demo adds them
- * imperatively on map-load with a `beforeID` of the first symbol layer, so the fog sits beneath
- * place labels but above basemap geometry (roads/water vanish under fog where we have no data).
+ * The two default-off fog fills (optimistic + honest).
+ *
+ * Plain MapLibre specs — the demo adds them imperatively on map-load with a `beforeID`
+ * of the first symbol layer, so the fog sits beneath place labels but above basemap
+ * geometry (roads/water vanish under fog where we have no data).
  */
 export const CoverageLayers: FillLayerSpecification[] = [
 	fogFill(CoverageLayerID.optimistic, "fog_opt"),

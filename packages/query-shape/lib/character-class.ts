@@ -48,13 +48,14 @@ const ARABIC_RANGES: ReadonlyArray<[number, number]> = [
 /**
  * Codepoint ranges per ISO 15924 script, most specific first.
  *
- * Why these exist beside `CJK_RANGES`. The class above buckets Kana, Han and Hangul as one
- * `cjk` value, and that bucket is what every consumer of a folded shape has to reason with —
- * so `서울특별시 종로구` and `東京都千代田区` are the same input as far as anything downstream can tell,
- * and the locale hint answers `ja-JP` for both. The classes are not wrong for what
- * they are for: the tokenizer breaks a token at a script transition and the decoder
- * wants to know whether a run is ideographic. They just cannot carry the distinction,
- * and the ranges to carry it were already in the file, merged.
+ * Why these exist beside `CJK_RANGES`.
+ * The class above buckets Kana, Han and Hangul as one `cjk` value, and that bucket is what every
+ * consumer of a folded shape has to reason with — so `서울특별시 종로구` and `東京都千代田区` are the same
+ * input as far as anything downstream can tell, and the locale hint answers `ja-JP` for both.
+ *
+ * The classes are not wrong for what they are for: the tokenizer breaks a token at a
+ * script transition and the decoder wants to know whether a run is ideographic.
+ * They just cannot carry the distinction, and the ranges to carry it were already in the file, merged.
  *
  * Measured against unicode'S own property rather than eyeballed: `character-class.test.ts`
  * walks every codepoint in every range below and asserts the answer equals `\p{Script=…}`.
@@ -173,11 +174,11 @@ const SCRIPT_RANGES: ReadonlyArray<readonly [ScriptCode, ReadonlyArray<[number, 
 /**
  * Codepoints Unicode calls `Common` that sit inside blocks this file otherwise reads as a script.
  *
- * They answer `Zyyy`, which takes them out of both halves of every share — and that is
- * what makes the share readable. `ブロードウェイ` is seven characters, two of them the prolonged
- * sound mark `ー`; folding that mark into neither script reports `Kana 1.00`, and the first
- * version of this table, which had no entry for it, reported `Kana 0.67 / Zzzz 0.20`
- * and made an ordinary katakana word look a fifth unrecognized.
+ * They answer `Zyyy`, which takes them out of both halves of every share —
+ * and that is what makes the share readable.
+ * `ブロードウェイ` is seven characters, two of them the prolonged sound mark `ー`; folding that mark into
+ * neither script reports `Kana 1.00`, and the first version of this table, which had no entry for it,
+ * reported `Kana 0.67 / Zzzz 0.20` and made an ordinary katakana word look a fifth unrecognized.
  *
  * The voiced marks and the middle dot are the same case: a Japanese-specific character
  * that belongs to no one script, because both kana use it.
@@ -254,6 +255,7 @@ const PUNCT_CODEPOINTS = new Set<number>([
 
 /**
  * "Connector" codepoints join adjacent tokens instead of separating them.
+ *
  * Hyphen, apostrophe, underscore — surface in "10118-1234", "O'Brien", "Saint-Denis", and similar.
  */
 const CONNECTOR_CODEPOINTS = new Set<number>([
@@ -294,10 +296,12 @@ export function classifyCodepoint(cp: number): CodepointClass {
  * The ISO 15924 script a single codepoint is written in.
  *
  * `Zyyy` is Unicode's own answer for a character that belongs to no one script —
- * a digit, a comma, a space — and it is a real answer rather than a failure: `10118` is
- * script-neutral in every language that writes it. `Zzzz` is the unknown case, which here
- * means a script this file has no ranges for. The two are kept apart because a ranked
- * script list that counted every comma would report `Zyyy` first on every input.
+ * a digit, a comma, a space — and it is a real answer rather than a failure:
+ * `10118` is script-neutral in every language that writes it.
+ * `Zzzz` is the unknown case, which here means a script this file has no ranges for.
+ *
+ * The two are kept apart because a ranked script list that counted every comma
+ * would report `Zyyy` first on every input.
  */
 export function scriptForCodepoint(cp: number): ScriptCode {
 	if (inRange(cp, COMMON_RANGES)) return "Zyyy"
@@ -385,6 +389,7 @@ export function foldInputScripts(text: string): ScriptShare[] {
 
 /**
  * Classify a token by walking its codepoints and folding to the dominant class.
+ *
  * Mixed alphanumeric (e.g. `"221B"`, `"10118-1234"`) returns `"mixed"`.
  * Pure-punct tokens return `"punct"`.
  */
@@ -500,15 +505,16 @@ export function foldInputClass(tokens: ReadonlyArray<TokenClass>): CharacterClas
 /**
  * The script a range of the input is written in, given the tokens already classified for it.
  *
- * The answer for a whole string is not the answer for its parts, and for an address the parts
- * are what a caller usually has. `逊克二分场四队, heilongjiang, china` is `Latn` 0.71 / `Hani`
- * 0.29 as a string, because the romanized province and country outweigh the Han unit —
- * but its first segment is `Hani`, its second and third are `Latn`, and a rule about how to
- * render or route the unit wants the first of those rather than the average of all three.
+ * The answer for a whole string is not the answer for its parts, and for an
+ * address the parts are what a caller usually has.
+ * `逊克二分场四队, heilongjiang, china` is `Latn` 0.71 / `Hani` 0.29 as a string,
+ * because the romanized province and country outweigh the Han unit — but its first
+ * segment is `Hani`, its second and third are `Latn`, and a rule about how to render
+ * or route the unit wants the first of those rather than the average of all three.
  *
- * Weighted by codepoints rather than by token count, so one long Han run is not
- * outvoted by three short Latin ones, and `Zyyy` tokens abstain: a range holding
- * only a house number answers `Zyyy` rather than borrowing a neighbour's script.
+ * Weighted by codepoints rather than by token count, so one long Han run is not outvoted
+ * by three short Latin ones, and `Zyyy` tokens abstain: a range holding only a house
+ * number answers `Zyyy` rather than borrowing a neighbour's script.
  * Offsets are half-open and are the ones `TokenClass.span` carries, so a `Segment`,
  * a component span or any pair of indices into the same normalized text can be passed straight in.
  */
@@ -539,8 +545,8 @@ export function scriptForRange(tokens: ReadonlyArray<TokenClass>, start: number,
 /**
  * Every token of a string with its class and its script — the whole per-token half of a `QueryShape`.
  *
- * Exported because it was typed three times: `computeQueryShape` builds it, and two
- * test files rebuilt it to feed `detectKnownFormats` and `detectRegionAbbreviations`.
+ * Exported because it was typed three times: `computeQueryShape` builds it, and two test
+ * files rebuilt it to feed `detectKnownFormats` and `detectRegionAbbreviations`.
  * Adding `script` broke all three, which is the tell — a shape assembled in more
  * than one place grows a field in one of them.
  */
@@ -554,7 +560,9 @@ export function classifyTokens(text: string): TokenClass[] {
 }
 
 /**
- * Walk a string and emit token spans (whitespace-and-punctuation-separated). Callers usually want
+ * Walk a string and emit token spans (whitespace-and-punctuation-separated).
+ *
+ * Callers usually want
  * {@linkcode classifyTokens}, which adds the class and the script to each span.
  */
 export function tokenizeForClass(text: string): SpanRange[] {

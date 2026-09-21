@@ -36,12 +36,15 @@ import type { ExternalAnswer } from "#external-arm"
  */
 export const OracleProviderName = {
 	/**
-	 * US Census Bureau. Free, unauthenticated, US-only.
+	 * US Census Bureau.
+	 *
+	 * Free, unauthenticated, US-only.
 	 */
 	Census: "census",
 	/**
-	 * Google Geocoding API. Billed per call — see the module docstring for why
-	 * its opt-in is not a tool argument.
+	 * Google Geocoding API.
+	 *
+	 * Billed per call — see the module docstring for why its opt-in is not a tool argument.
 	 */
 	Google: "google",
 } as const
@@ -49,9 +52,10 @@ export const OracleProviderName = {
 export type OracleProviderName = (typeof OracleProviderName)[keyof typeof OracleProviderName]
 
 /**
- * Where the daemon reads its oracle opt-in. Under the data root rather than the repo:
- * it names an operator's billing posture on one machine, which is not a fact about
- * the source tree and must never be committed.
+ * Where the daemon reads its oracle opt-in.
+ *
+ * Under the data root rather than the repo: it names an operator's billing posture on one
+ * machine, which is not a fact about the source tree and must never be committed.
  */
 const ORACLE_CONFIG_PATH = String(dataRootPath("dev-mcp", "oracle-config.json"))
 
@@ -71,6 +75,7 @@ export interface OracleConfig {
 
 /**
  * Conservative default cap when the config enables Google without naming one.
+ *
  * Chosen to cover one 420-row panel with margin and nothing like a sweep —
  * a cap that silently permits an unbounded run is not a cap.
  */
@@ -82,7 +87,8 @@ export async function readOracleConfig(path: string = ORACLE_CONFIG_PATH): Promi
 	try {
 		return await readLocalJSONFile<OracleConfig>(path)
 	} catch {
-		// A malformed config must not read as "enabled". Absence and garbage both mean off.
+		// A malformed config must not read as "enabled".
+		// Absence and garbage both mean off.
 		return {}
 	}
 }
@@ -95,15 +101,19 @@ export interface OracleAdmission {
 	 */
 	callsRemaining: number | null
 	/**
-	 * Why, in the caller's terms. Populated on an allow as well as a refusal, so a log of oracle
-	 * calls records the posture that was applied rather than only the ones that tripped it.
+	 * Why, in the caller's terms.
+	 *
+	 * Populated on an allow as well as a refusal, so a log of oracle calls records the
+	 * posture that was applied rather than only the ones that tripped it.
 	 */
 	reason: string
 }
 
 /**
- * Per-daemon-lifetime spend meter. Deliberately not persisted: a cap that survives a restart
- * is a budget, and a budget is the operator's to keep rather than this process's to guess at.
+ * Per-daemon-lifetime spend meter.
+ *
+ * Deliberately not persisted: a cap that survives a restart is a budget, and a budget
+ * is the operator's to keep rather than this process's to guess at.
  */
 export class OracleMeter {
 	#googleCalls = 0
@@ -114,8 +124,10 @@ export class OracleMeter {
 	}
 
 	/**
-	 * Build a meter over the daemon's config file. The constructor cannot await the config read,
-	 * so this static factory does it. callers that already hold an
+	 * Build a meter over the daemon's config file.
+	 *
+	 * The constructor cannot await the config read, so this static factory does
+	 * it. callers that already hold an
 	 * {@linkcode OracleConfig} may keep using the constructor.
 	 */
 	static async create(config?: OracleConfig): Promise<OracleMeter> {
@@ -182,11 +194,13 @@ export class OracleMeter {
 	/**
 	 * Record spend, one per query this arm issued.
 	 *
-	 * A cache hit still counts. `GoogleGeocoderClient` caches under
-	 * `$MAILWOMAN_DATA_ROOT/geocode-oracle/` and answers a repeat for free, but it
-	 * hands back `OracleGeocodeResult[]` and never says which of those cost a request —
-	 * the `cached` flag lives on the axios response inside `APIClient` and does not survive
-	 * the client's own parsing. So the meter counts queries and over-counts a warm run.
+	 * A cache hit still counts.
+	 * `GoogleGeocoderClient` caches under `$MAILWOMAN_DATA_ROOT/geocode-oracle/`
+	 * and answers a repeat for free, but it hands back `OracleGeocodeResult[]` and never says
+	 * which of those cost a request — the `cached` flag lives on the axios response
+	 * inside `APIClient` and does not survive the client's own parsing.
+	 *
+	 * So the meter counts queries and over-counts a warm run.
 	 * That is the direction to be wrong in: the failure it produces is refusing a run the
 	 * cap could have afforded, and the alternative is a cap that undercounts real spend.
 	 */
@@ -201,8 +215,9 @@ export class OracleMeter {
  * Not a default — a refusal to grade, and it holds for every input set rather than per set.
  * Two reasons, and the second is why there is no carve-out for the sets it does not apply to:
  *
- * 1. The board's `expectLat`/`expectLon` are pinned by hand by whoever fixed the bug, with these same
- *    two geocoders open as a second opinion — that is the stated purpose of `@mailwoman/geocode-oracle`.
+ * 1. The board's `expectLat`/`expectLon` are pinned by hand by whoever fixed the bug,
+ *    with these same two geocoders open as a second opinion — that is the stated
+ *    purpose of `@mailwoman/geocode-oracle`.
  *    Scoring an oracle against those points is therefore partly scoring it against itself.
  * 2. The package's own header says nothing there should ever decide whether a build ships.
  *    A rule with a list of sets it applies to becomes a rule about which set to pick.
@@ -221,6 +236,7 @@ export const ORACLE_VERDICT_NOTE =
 
 /**
  * What this module needs from a reference-geocoder client.
+ *
  * Narrower than either real one on purpose: it is the transport interface a test
  * replaces, and an injection point shaped like the whole client invites a test
  * to assert its own idea of the provider's protocol.
@@ -232,10 +248,12 @@ export interface OracleGeocoderLike extends AsyncDisposable {
 /**
  * Build the real client for a provider.
  *
- * No PER-ARM normalization. Google accepts a `country` hint and the input sets carry one,
- * and it is deliberately not passed: the pre-registered protocol sends the same raw query
- * string to every arm, and a hint given to one side is the per-arm rewriting that protocol
- * exists to forbid. It would also flatter the oracle on exactly the bare-locality rows
+ * No PER-ARM normalization.
+ * Google accepts a `country` hint and the input sets carry one, and it is deliberately
+ * not passed: the pre-registered protocol sends the same raw query string to every arm,
+ * and a hint given to one side is the per-arm rewriting that protocol exists to forbid.
+ *
+ * It would also flatter the oracle on exactly the bare-locality rows
  * where mailwoman's country scope is what is under examination.
  */
 export function createOracleClient(provider: OracleProviderName): OracleGeocoderLike {
@@ -264,11 +282,10 @@ const HTTP_NOT_FOUND = 404
 /**
  * Top-1 from a reference geocoder, projected onto the shape a cross-engine row is built from.
  *
- * A no-match becomes an answer with a reason rather than a throw, matching
- * what every other arm does: the protocol counts it a miss at every threshold,
- * and it is a different fact from a query that failed. Anything else propagates,
- * so a dead key or an exhausted quota reaches `compare.ts`'s consecutive-failure abort
- * instead of accumulating into a row of misses that reads as an arm that lost.
+ * A no-match becomes an answer with a reason rather than a throw, matching what every other arm does:
+ * the protocol counts it a miss at every threshold, and it is a different fact from a query that failed.
+ * Anything else propagates, so a dead key or an exhausted quota reaches `compare.ts`'s
+ * consecutive-failure abort instead of accumulating into a row of misses that reads as an arm that lost.
  */
 export async function answerFromOracle(client: OracleGeocoderLike, input: string): Promise<ExternalAnswer> {
 	let results: OracleGeocodeResult[]
@@ -300,10 +317,10 @@ export async function answerFromOracle(client: OracleGeocoderLike, input: string
 		lat: geocode.coordinate.latitude,
 		lon: geocode.coordinate.longitude,
 		label: top.address.formatted ?? null,
-		// The provider's own tier, reported and never thresholded — the same posture as an
-		// external engine's `layer` or `addresstype`. These vocabularies were mapped onto
-		// ours by `@mailwoman/geocode-oracle`'s parsers, whose judgement calls are exactly
-		// what `OracleGeocodeResult.raw` exists to let a human re-read.
+		// The provider's own tier, reported and never thresholded — the same posture
+		// as an external engine's `layer` or `addresstype`.
+		// These vocabularies were mapped onto ours by `@mailwoman/geocode-oracle`'s parsers,
+		// whose judgement calls are exactly what `OracleGeocodeResult.raw` exists to let a human re-read.
 		resultType: geocode.tier,
 		noResultReason: null,
 	}

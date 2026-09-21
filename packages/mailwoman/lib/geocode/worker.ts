@@ -43,8 +43,8 @@ const geoDeps = {
 	placeCountry: false,
 } as const
 
-// Parse once per address (the ~3 ms/row inference is the dominant cost):
-// share the tree between the PostalAddress (decodeAsJSON) and the geocode (parsedTree).
+// Parse once per address (the ~3 ms/row inference is the dominant cost): share the tree
+// between the PostalAddress (decodeAsJSON) and the geocode (parsedTree).
 // Coordinates are byte-identical to the two-parse path — geocodeAddress would have produced
 // this exact tree internally. only the PostalAddress now reflects the normalized parse.
 const geocodeForIngest = geocodeAddressVia({
@@ -58,7 +58,8 @@ const geocodeForIngest = geocodeAddressVia({
 })
 
 /**
- * Per-item handler the worker pool invokes. Bound to this worker's geocoder
- * and mapping at module load, so each item costs only the geocode itself.
+ * Per-item handler the worker pool invokes.
+ *
+ * Bound to this worker's geocoder and mapping at module load, so each item costs only the geocode itself.
  */
 export const handleItem = makeGeocodeHandler(geocodeForIngest, mapping)

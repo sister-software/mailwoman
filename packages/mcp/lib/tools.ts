@@ -40,6 +40,7 @@ import { z } from "zod"
 
 /**
  * The library surface every tool handler dispatches to.
+ *
  * `cli.ts` builds the real implementation.
  */
 export interface MCPToolDeps {
@@ -257,6 +258,7 @@ const FilerFamilyInputSchema = z.object({
 
 /**
  * Build the tool table for a concrete `MCPToolDeps` implementation.
+ *
  * Pure — no transport, no I/O of its own.
  */
 export function buildToolTable(deps: MCPToolDeps): MCPToolDef[] {

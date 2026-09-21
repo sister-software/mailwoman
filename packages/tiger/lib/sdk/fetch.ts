@@ -41,8 +41,9 @@ const CENSUS_HOST = "https://www2.census.gov"
 const DEFAULT_DATA_ROOT = mailwomanDataRoot()
 
 /**
- * Supported tiger levels. `tabblock20` is per state + carries geometry;
- * `place`/`addrfeat` are attribute-only.
+ * Supported tiger levels.
+ *
+ * `tabblock20` is per state + carries geometry; `place`/`addrfeat` are attribute-only.
  */
 export type TIGERFetchLevel = "tabblock20" | "place" | "addrfeat"
 
@@ -64,15 +65,21 @@ export interface FetchTIGEROptions {
 	 */
 	stateFIPS: string
 	/**
-	 * Tiger level. Default `tabblock20`.
+	 * Tiger level.
+	 *
+	 * Default `tabblock20`.
 	 */
 	level?: TIGERFetchLevel
 	/**
-	 * Vintage. Default 2020 for blocks (matches the 2020 P.L.), 2024 for place/addrfeat (current).
+	 * Vintage.
+	 *
+	 * Default 2020 for blocks (matches the 2020 P.L.), 2024 for place/addrfeat (current).
 	 */
 	vintage?: number
 	/**
-	 * Output SQLite path. Default `<dataRoot>/tiger/tiger.db` (the name the corpus `tiger` adapter reads).
+	 * Output SQLite path.
+	 *
+	 * Default `<dataRoot>/tiger/tiger.db` (the name the corpus `tiger` adapter reads).
 	 */
 	outPath?: string
 	/**
@@ -84,7 +91,9 @@ export interface FetchTIGEROptions {
 	 */
 	county?: string
 	/**
-	 * Rows per insert. Default 1000.
+	 * Rows per insert.
+	 *
+	 * Default 1000.
 	 */
 	batchSize?: number
 }
@@ -101,7 +110,9 @@ export interface FetchTIGERResult {
 }
 
 /**
- * The isp-nexus column map for `tabblock20`. Geometry rides along implicitly.
+ * The isp-nexus column map for `tabblock20`.
+ *
+ * Geometry rides along implicitly.
  */
 function blockSelectSQL(layer: string, county?: string): string {
 	const where = county ? ` WHERE COUNTYFP20 = '${county}'` : ""
@@ -172,7 +183,8 @@ function buildRow(level: TIGERFetchLevel, p: Record<string, unknown>, geometry: 
  * Scrape the addrfeat directory listing for a state's county FIPS codes.
  */
 async function discoverCounties(state: string, vintage: number): Promise<string[]> {
-	// The listing only — a small html index. The per-county archives below stay on raw `fetch`, streaming to disk.
+	// The listing only — a small html index.
+	// The per-county archives below stay on raw `fetch`, streaming to disk.
 	const html = await new APIClient({ displayName: "tiger-listing", retry: true })
 		.fetch<string>({ url: `${CENSUS_HOST}/geo/tiger/TIGER${vintage}/ADDRFEAT/`, responseType: "text" })
 		.then(pluckResponseData)
@@ -189,6 +201,7 @@ async function discoverCounties(state: string, vintage: number): Promise<string[
 
 /**
  * Fetch one state's tiger data at `level` into a SQLite DB.
+ *
  * Yields progress. returns the final tally.
  */
 export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<FetchTIGEREvent, FetchTIGERResult> {
@@ -200,9 +213,10 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 	const table = LEVEL_TABLE[level]
 
 	const cacheDir = join(dataRoot, "tiger", String(vintage), state)
-	// Default to a stable, vintage-agnostic `tiger.db` — the filename the corpus `tiger` adapter reads
-	// (run-corpus-build → `${root}/tiger/tiger.db`). The vintage is a content detail rather
-	// than a path one. the per-table idempotent delete keeps a re-fetch (newer vintage) clean.
+	// Default to a stable, vintage-agnostic `tiger.db` — the filename the corpus `tiger`
+	// adapter reads (run-corpus-build → `${root}/tiger/tiger.db`).
+	// The vintage is a content detail rather than a path one. the per-table idempotent
+	// delete keeps a re-fetch (newer vintage) clean.
 	// The download cache stays vintage-partitioned below so zips don't collide across vintages.
 	const outPath = options.outPath ?? join(dataRoot, "tiger", "tiger.db")
 	await makeDirectories(cacheDir)

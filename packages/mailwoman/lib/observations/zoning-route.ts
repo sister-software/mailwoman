@@ -71,12 +71,16 @@ import {
  */
 export interface ZoningDesignationObservation {
 	/**
-	 * Always `designated`. `unknown` produces no observation — see this file's header.
+	 * Always `designated`.
+	 *
+	 * `unknown` produces no observation — see this file's header.
 	 */
 	reading: ZoningReadingKind
 	/**
-	 * Every polygon containing the point. Usually one. several where a Local Area Plan overlays
-	 * a Development Plan over the same ground, which the publisher issues as two rows.
+	 * Every polygon containing the point.
+	 *
+	 * Usually one. several where a Local Area Plan overlays a Development Plan over
+	 * the same ground, which the publisher issues as two rows.
 	 */
 	designations: ZoningDesignation[]
 	containment: ZoningContainmentPath
@@ -102,8 +106,10 @@ export interface ZoningDesignationObservation {
 }
 
 /**
- * Why a coordinate produced no observation. Every one of these is a silence the route owes an
- * account of — an unnamed silence and a silence for the right reason read identically on a receipt.
+ * Why a coordinate produced no observation.
+ *
+ * Every one of these is a silence the route owes an account of — an unnamed silence
+ * and a silence for the right reason read identically on a receipt.
  */
 export const ZONING_REFUSALS = [
 	/**
@@ -130,8 +136,9 @@ export type ZoningDecision =
 export interface ZoningDesignationRoute extends Disposable {
 	identity: ZoningLayerIdentity
 	/**
-	 * Decide one resolved coordinate. Pure with respect to the pipeline:
-	 * it reads the layer and returns a record.
+	 * Decide one resolved coordinate.
+	 *
+	 * Pure with respect to the pipeline: it reads the layer and returns a record.
 	 *
 	 * `null` and `undefined` are both accepted because a geocode result has nullable `lat`/`lon` —
 	 * a caller that had to narrow them first would be narrowing on this route's behalf,
@@ -142,8 +149,10 @@ export interface ZoningDesignationRoute extends Disposable {
 
 export interface ZoningDesignationRouteOptions {
 	/**
-	 * The sealed layer to read. Required: there is no default layer, and a route that
-	 * guessed one would report a designation from an authority nobody asked about.
+	 * The sealed layer to read.
+	 *
+	 * Required: there is no default layer, and a route that guessed one would report
+	 * a designation from an authority nobody asked about.
 	 */
 	databasePath: string
 }

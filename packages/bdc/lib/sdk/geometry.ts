@@ -23,10 +23,11 @@ interface GeoJSONMultiPolygon {
 }
 
 /**
- * Area-weighted (shoelace) centroid of a GeoJSON `Polygon`/`MultiPolygon`'s exterior ring(s),
- * area-weighted across rings for a MultiPolygon. Interior rings/holes are still ignored —
- * a hole moves a block's centroid far less than the vertex-density skew this replaces,
- * and only 1.0% of measured blocks carry one.
+ * Area-weighted (shoelace) centroid of a GeoJSON `Polygon`/`MultiPolygon`'s exterior
+ * ring(s), area-weighted across rings for a MultiPolygon.
+ *
+ * Interior rings/holes are still ignored — a hole moves a block's centroid far less than
+ * the vertex-density skew this replaces, and only 1.0% of measured blocks carry one.
  *
  * This replaced the first version's vertex-average, whose "same res-9 cell for all
  * but pathological shapes" claim was falsified by measurement over every real tiger 2020
@@ -107,12 +108,14 @@ export function geometryCentroid(geometryJSON: string | null): { lat: number; lo
 
 /**
  * The production `blockCentroids` supplier: opens the tiger blocks database read-only
- * and probes `tabblock20.geoid` (uppercase) per lookup, decoding its GeoJSON `geometry` column
- * via {@linkcode geometryCentroid}. The factory awaits its read-only open. the per-lookup probe
- * and the `BuildBDCOptions.blockCentroids` interface stay synchronous — a plain sync function
- * (the same sync-by-interface discipline agents.md documents for the resolver ladder),
- * so the returned closure uses `node:sqlite`'s raw `.prepare()`/`.get()` directly
- * rather than Kysely. The connection is left open for the caller's process lifetime
+ * and probes `tabblock20.geoid` (uppercase) per lookup, decoding its GeoJSON
+ * `geometry` column via {@linkcode geometryCentroid}.
+ *
+ * The factory awaits its read-only open. the per-lookup probe and the
+ * `BuildBDCOptions.blockCentroids` interface stay synchronous — a plain sync function
+ * (the same sync-by-interface discipline agents.md documents for the resolver ladder), so the
+ * returned closure uses `node:sqlite`'s raw `.prepare()`/`.get()` directly rather than Kysely.
+ * The connection is left open for the caller's process lifetime
  * (a read-path lookup rather than a build) — same lifecycle as the resolver-wof-sqlite lookups.
  */
 export async function createTIGERBlockCentroidLookup(

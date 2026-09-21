@@ -18,8 +18,8 @@
  * Fold a name to its ascii match key: lower-cased, accents stripped, every run
  * of non-alphanumerics collapsed to a single space.
  *
- * This is the aggressive fold used to match a user's surface form against a
- * codex table — `"Québec"` and `"quebec"` and `"quebec"` all become `"quebec"`.
+ * This is the aggressive fold used to match a user's surface form against a codex table —
+ * `"Québec"` and `"quebec"` and `"quebec"` all become `"quebec"`.
  * It is lossy by design and never used to render anything back to a user.
  */
 export function foldName(s: string): string {
@@ -59,9 +59,9 @@ export function wordNormLower(s: string): string {
  * Fold a single token to its lowercase, diacritic-free form: lower-cased, NFD-decomposed,
  * combining marks stripped — `"Côte"` → `"cote"`, `"Tōkyō"` → `"tokyo"`.
  *
- * The shared core of the per-country token matchers. Unlike {@link foldName} it
- * does not touch punctuation or whitespace — each matcher layers its own character
- * filtering (letters-only, hyphen-keeping, suffix-stripping) on top.
+ * The shared core of the per-country token matchers.
+ * Unlike {@link foldName} it does not touch punctuation or whitespace — each matcher layers
+ * its own character filtering (letters-only, hyphen-keeping, suffix-stripping) on top.
  */
 export function foldToken(s: string): string {
 	return s

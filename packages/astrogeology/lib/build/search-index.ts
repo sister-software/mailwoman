@@ -19,6 +19,7 @@ import { type NomenclatureSearchPayload, nomenclatureTokens } from "#search/toke
 
 /**
  * Build the search artifact over the features and write it to `outPath`.
+ *
  * Answers the entry count.
  */
 export async function buildSearchIndex(

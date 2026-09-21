@@ -20,7 +20,9 @@
  */
 
 /**
- * The British thoroughfare vocabulary. Lowercase canonical forms, matched as whole tokens.
+ * The British thoroughfare vocabulary.
+ *
+ * Lowercase canonical forms, matched as whole tokens.
  * Spans the common core (`street`, `road`, `lane`, `avenue`) through the distinctively
  * British (`crescent`, `mews`, `close`, `terrace`) and the regional/landscape tail
  * (`wynd`, `brae`, `gait`, `croft`, `dene`, `spinney`, `dell`, `hollow`).
@@ -82,8 +84,10 @@ const STREET_TYPE_SET: ReadonlySet<string> = new Set(GB_STREET_TYPES)
 
 /**
  * True when a token is a British thoroughfare type word (case-insensitive, whole-token match) —
- * `Crescent`, `Mews`, `Close`, `Road`. Matches the whole token rather than a suffix, so an
- * unrelated place name (`Tokyo`, `Bordeaux`) is not flagged the way an `-endsWith` test might.
+ * `Crescent`, `Mews`, `Close`, `Road`.
+ *
+ * Matches the whole token rather than a suffix, so an unrelated place name
+ * (`Tokyo`, `Bordeaux`) is not flagged the way an `-endsWith` test might.
  */
 export function isBritishStreetWord(token: unknown): boolean {
 	if (typeof token !== "string") return false

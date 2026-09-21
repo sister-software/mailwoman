@@ -37,9 +37,11 @@ export interface IngestCounts {
 /**
  * Per-source identity: the name that goes in `source`, and the licence its rows arrive under.
  *
- * `sourceVintage` is deliberately absent here. WOF's vintage is a git commit per cloned repo,
- * Overture's is a release tag, GeoNames' is a dump date — three different kinds of thing,
- * and inventing one shared format for them would record a precision none of them has.
+ * `sourceVintage` is deliberately absent here.
+ * WOF's vintage is a git commit per cloned repo, Overture's is a release tag,
+ * GeoNames' is a dump date — three different kinds of thing, and inventing one shared
+ * format for them would record a precision none of them has.
+ *
  * The caller passes what it knows.
  */
 const SOURCE_TERMS = {
@@ -63,9 +65,11 @@ export interface AdminManifestInput {
 	 */
 	buildSHA: string
 	/**
-	 * What each contributing source was AT. Keys that no source contributed are ignored. a
-	 * contributing source with no recorded vintage is reported as `unknown` rather than omitted,
-	 * because a vintage nobody captured is a fact about the build and not a field to leave blank.
+	 * What each contributing source was AT.
+	 *
+	 * Keys that no source contributed are ignored. a contributing source with no recorded
+	 * vintage is reported as `unknown` rather than omitted, because a vintage nobody
+	 * captured is a fact about the build and not a field to leave blank.
 	 */
 	vintages?: Partial<Record<keyof IngestCounts, string>>
 	createdAt: string
@@ -75,9 +79,9 @@ export interface AdminManifestInput {
 /**
  * Compose the admin gazetteer's manifest.
  *
- * @throws When no source contributed. A gazetteer built from nothing is not a
- *   layer with an empty manifest — it is a failed build, and recording a manifest
- *   for it would make the artifact look describable.
+ * @throws When no source contributed.
+ *   A gazetteer built from nothing is not a layer with an empty manifest — it is a failed build,
+ *   and recording a manifest for it would make the artifact look describable.
  */
 export function adminLayerManifest(input: AdminManifestInput): LayerManifest {
 	const contributing = contributingSources(input.counts)
@@ -92,8 +96,9 @@ export function adminLayerManifest(input: AdminManifestInput): LayerManifest {
 		name: "admin-global-priority",
 		version: input.version,
 		schemaVersion: 1,
-		// Never `shipped`: WOF's ODbL is share-alike, which is the same reason `packages/osm`
-		// is held out of the release list. The builder ships. the artifact is built locally.
+		// Never `shipped`: WOF's ODbL is share-alike, which is the same reason
+		// `packages/osm` is held out of the release list.
+		// The builder ships. the artifact is built locally.
 		tier: LayerTier.BuildLocal,
 		license: contributing.map((key) => SOURCE_TERMS[key].license).join(" AND "),
 		attribution: contributing.map((key) => SOURCE_TERMS[key].name).join(", "),

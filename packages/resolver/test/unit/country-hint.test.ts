@@ -86,6 +86,7 @@ const CURRAMBINE_AU: ResolvedPlace = {
 
 /**
  * Backend filtered by name + placetype + country + parentID.
+ *
  * Regions match any 2-letter token (abbrev).
  */
 async function makeBackend(places: ResolvedPlace[]): Promise<ResolverBackend> {

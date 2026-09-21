@@ -40,8 +40,8 @@ export class LegProfile implements AsyncDisposable {
 	readonly #path: string
 
 	/**
-	 * @param path Where to write the ledger. An empty path writes nothing,
-	 *   which is the default for every run that did not ask to be profiled.
+	 * @param path Where to write the ledger.
+	 *   An empty path writes nothing, which is the default for every run that did not ask to be profiled.
 	 *   A non-empty one must sit outside the battery's output directory — see the file header.
 	 */
 	constructor(path: string) {
@@ -50,6 +50,7 @@ export class LegProfile implements AsyncDisposable {
 
 	/**
 	 * Run `work`, record its wall time, and hand back whatever it returned.
+	 *
 	 * A leg that throws is still recorded, because the time it spent before failing
 	 * is the number a reader is looking for.
 	 */
@@ -69,6 +70,7 @@ export class LegProfile implements AsyncDisposable {
 
 	/**
 	 * Write the ledger, or nothing when the path is empty.
+	 *
 	 * `total_ms` sums the legs, which is less than the run's wall clock: the untimed remainder
 	 * is the verdict assembly, the spec read, and whatever else sits between legs.
 	 */

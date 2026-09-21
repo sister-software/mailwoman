@@ -32,8 +32,10 @@ export interface SelectedFeature {
 const COORDINATE_DECIMALS = 4
 
 /**
- * A coordinate pair as the panel prints it: four decimals, hemisphere letters, the longitude
- * east-positive as every artifact carries it. `0` takes the positive letter.
+ * A coordinate pair as the panel prints it: four decimals, hemisphere letters,
+ * the longitude east-positive as every artifact carries it.
+ *
+ * `0` takes the positive letter.
  */
 export function formatCoordinates(centerLon: number, centerLat: number): string {
 	const lat = `${Math.abs(centerLat).toFixed(COORDINATE_DECIMALS)}° ${centerLat < 0 ? "S" : "N"}`

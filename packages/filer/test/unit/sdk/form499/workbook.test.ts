@@ -158,7 +158,8 @@ describe("toISOFilingDate", () => {
 	})
 
 	it("returns empty for anything else rather than inventing a date", () => {
-		// Empty fails assertISODate loudly at write time. A guess would fail nothing.
+		// Empty fails assertISODate loudly at write time.
+		// A guess would fail nothing.
 		expect(toISOFilingDate("")).toBe("")
 		expect(toISOFilingDate("2026-Q2")).toBe("")
 		expect(toISOFilingDate("April 1, 2025")).toBe("")

@@ -62,8 +62,8 @@ import type { SubVenueHarvestRow } from "#tools/sub/venue/lexicon"
  *   This one is a confound board entry rather than a source.
  * - `college_university` (3,697) — 2,082 `campus`, but the row names the whole institution;
  *   `campus_building` is the interior subset and is kept instead.
- * - `airport` (6,000 rows, 4,302 hits) — 4,071 of them are the token `airport` in the aerodrome's
- *   own name. Venue tier, already covered by OurAirports, and it drowns the interior signal.
+ * - `airport` (6,000 rows, 4,302 hits) — 4,071 of them are the token `airport` in the aerodrome's own name.
+ *   Venue tier, already covered by OurAirports, and it drowns the interior signal.
  * - `transport_interchange` (1 row), `rail_facility_or_service` (81 rows, 2 hits) — too small to matter.
  * - `public_transit_facility_or_service` (2,274 rows, 185 hits) — 161 are
  *   `station` naming the station itself.
@@ -87,11 +87,12 @@ export const OVERTURE_SUBVENUE_CATEGORIES: Readonly<Record<string, string>> = {
 /**
  * The `poi` and `poi_category_codes` columns this reader touches, declared locally.
  *
- * `@mailwoman/resolver-wof-sqlite` owns the full `POIDatabase` interface, and `@mailwoman/corpus`
- * does not depend on it — the same dependency-direction call `sub-venue-lexicon.ts`
- * makes for `@mailwoman/osm`'s row type. This is a read-only projection of four columns;
- * `overture-subvenue.test.ts` builds a fixture with exactly this DDL, so a column rename upstream
- * fails a test here rather than throwing at runtime against a 3.9 GB database nobody has in CI.
+ * `@mailwoman/resolver-wof-sqlite` owns the full `POIDatabase` interface,
+ * and `@mailwoman/corpus` does not depend on it — the same dependency-direction call
+ * `sub-venue-lexicon.ts` makes for `@mailwoman/osm`'s row type.
+ * This is a read-only projection of four columns; `overture-subvenue.test.ts` builds
+ * a fixture with exactly this DDL, so a column rename upstream fails a test here
+ * rather than throwing at runtime against a 3.9 GB database nobody has in CI.
  */
 interface POIReadDatabase {
 	poi: {
@@ -131,15 +132,21 @@ export async function readOvertureLayerVintage(databasePath: string): Promise<st
 
 export interface ReadOvertureSubVenuesOptions {
 	/**
-	 * Path to `poi.db`. Typically `dataRootPath("poi", "poi.db")`.
+	 * Path to `poi.db`.
+	 *
+	 * Typically `dataRootPath("poi", "poi.db")`.
 	 */
 	databasePath: string
 	/**
-	 * Category → designator map. Defaults to {@link OVERTURE_SUBVENUE_CATEGORIES}.
+	 * Category → designator map.
+	 *
+	 * Defaults to {@link OVERTURE_SUBVENUE_CATEGORIES}.
 	 */
 	categories?: Readonly<Record<string, string>>
 	/**
-	 * Restrict to these ISO 3166-1 alpha-2 countries. Omit for all four the layer carries.
+	 * Restrict to these ISO 3166-1 alpha-2 countries.
+	 *
+	 * Omit for all four the layer carries.
 	 */
 	countries?: readonly string[]
 }
@@ -165,11 +172,11 @@ export interface OvertureSubVenueRow extends SubVenueHarvestRow {
  *
  * Cold path, already async, no interface constraint — so Kysely, per the repo's inline-SQL rule.
  *
- * `category_id` is the second component of poi.db's clustered `(h3_cell, category_id, …)`
- * primary key, which reads like a full 13.7M-row scan and is not one: SQLite skip-scans the
- * leading `h3_cell` and the whole four-category read returned 9,219 rows in **1.4 s** on
- * the shipped layer (2026-08-05). A JS-side scan of every row to survey the same question
- * took 52 s, which is the number to remember if you are tempted to filter in JS instead.
+ * `category_id` is the second component of poi.db's clustered `(h3_cell, category_id, …)` primary key,
+ * which reads like a full 13.7M-row scan and is not one: SQLite skip-scans the leading `h3_cell`
+ * and the whole four-category read returned 9,219 rows in **1.4 s** on the shipped layer (2026-08-05).
+ * A JS-side scan of every row to survey the same question took 52 s, which is the
+ * number to remember if you are tempted to filter in JS instead.
  */
 export async function readOvertureSubVenues(options: ReadOvertureSubVenuesOptions): Promise<OvertureSubVenueRow[]> {
 	const categories = options.categories ?? OVERTURE_SUBVENUE_CATEGORIES

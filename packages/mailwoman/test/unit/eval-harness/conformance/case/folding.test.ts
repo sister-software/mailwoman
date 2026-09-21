@@ -36,9 +36,10 @@ import {
 import { describe, expect, it } from "vitest"
 
 /**
- * Committed board inputs, verbatim. Quoted here rather than loaded so a test
- * failure shows the exact text under discussion; `case-folding-suite.test.ts` is
- * what proves the suite's own rows still match the corpus.
+ * Committed board inputs, verbatim.
+ *
+ * Quoted here rather than loaded so a test failure shows the exact text under discussion;
+ * `case-folding-suite.test.ts` is what proves the suite's own rows still match the corpus.
  */
 const TR_STREET = "Istiklal Avenue"
 const JP_NATIVE = "りんりん, 〒506-0025 岐阜県高山市天満町3丁目 57"
@@ -242,9 +243,10 @@ describe("auditCaseFoldingSuite", () => {
 
 describe("a seeded case regression", () => {
 	/**
-	 * The pipeline stand-in that fails only on the uppercase arm — the shape both
-	 * live findings take. Seeding the regression rather than waiting for one is what
-	 * proves the failure line carries enough to diagnose from.
+	 * The pipeline stand-in that fails only on the uppercase arm — the shape both live findings take.
+	 *
+	 * Seeding the regression rather than waiting for one is what proves the failure
+	 * line carries enough to diagnose from.
 	 */
 	const observe: ConformanceObserver = async (query) => {
 		const upper = query === query.toUpperCase()

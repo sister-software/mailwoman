@@ -50,10 +50,12 @@ const LOCALE_TAG = /^[a-z]{2}-[A-Za-z]{2}$/u
  * A declaration is a country→locale map when at least two of its entries pair a country
  * code with a locale tag and those are at least half of what it holds.
  *
- * Discovered rather than listed, because a check that names its subjects cannot see the
- * fifth table somebody adds. The first version named four files. the rule below finds seven,
- * and the three it gained are `corpus`'s `LOCALE_TAG`, `localeFor` and `LOCALE_BY_COUNTRY` —
- * the last of which the constant inventory (#2219) lists as unmeasured.
+ * Discovered rather than listed, because a check that names its subjects cannot
+ * see the fifth table somebody adds.
+ * The first version named four files. the rule below finds seven, and the three it
+ * gained are `corpus`'s `LOCALE_TAG`, `localeFor` and `LOCALE_BY_COUNTRY` — the last of
+ * which the constant inventory (#2219) lists as unmeasured.
+ *
  * Both halves of the rule are required: two pairs alone admits a table of something else
  * that happens to carry a couple, and the ratio alone admits a two-entry map of anything.
  */
@@ -73,8 +75,9 @@ export interface LocaleTable {
 }
 
 /**
- * Every country→locale map one source declares, whether written as an object literal or as
- * `new Map([[…]])`. Both spellings are in use and neither is worth normalizing for this check's sake.
+ * Every country→locale map one source declares, whether written as an object literal or as `new Map([[…]])`.
+ *
+ * Both spellings are in use and neither is worth normalizing for this check's sake.
  */
 function readLocaleTables(source: ts.SourceFile, file: string): LocaleTable[] {
 	const tables: LocaleTable[] = []
@@ -215,9 +218,9 @@ export const localeTablesCheck: RepoCheck = {
 		// completeness is no longer asked of any table here — see the file header.
 		// It bound `WEIGHTS_PACKAGE_BY_COUNTRY`, which is now derived from `release.config.json` by
 		// `@mailwoman/core/release-config`'s `weightsPackageByCountry` and cannot disagree with it.
-		// The invariant moved to that derivation's own test, where a shipping locale it fails
-		// to name is a failing assertion rather than a lint finding about a copy nobody
-		// should write again. With it went this check's only read of the config.
+		// The invariant moved to that derivation's own test, where a shipping locale it fails to name
+		// is a failing assertion rather than a lint finding about a copy nobody should write again.
+		// With it went this check's only read of the config.
 		return diagnostics
 	},
 }

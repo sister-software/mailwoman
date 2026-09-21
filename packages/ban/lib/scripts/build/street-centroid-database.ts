@@ -129,8 +129,8 @@ async function main(): Promise<void> {
 	using src = new DatabaseClient<AddressPointDatabase>(args.source, { readOnly: true })
 
 	// SQLite hands a scalar function its argument as `unknown`, which erases the key brand.
-	// The value is `address_point.locality_norm`, which the shared schema declares
-	// a `NameKey` (the builder wrote it through `normalizeLocalityForKey`).
+	// The value is `address_point.locality_norm`, which the shared schema declares a
+	// `NameKey` (the builder wrote it through `normalizeLocalityForKey`).
 	// Therefore, re-minting it here restores a fact the SQL boundary dropped
 	// rather than asserting a new one — the fold is not re-applied, because a second
 	// fold of an already-folded key is what would drift.

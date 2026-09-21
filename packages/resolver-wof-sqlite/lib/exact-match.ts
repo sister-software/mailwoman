@@ -13,7 +13,9 @@ import { aliasBagExactMatch, foldQueryText } from "#fts/index"
 
 /**
  * Among `ids`, return the subset whose name or any alias equals `text` case-insensitively —
- * the exact-match tier for ranking. One indexed query over `<schema>.names`.
+ * the exact-match tier for ranking.
+ *
+ * One indexed query over `<schema>.names`.
  * When the extract has no `names` table (a slim DB built with `dropNames`, or a postcode-only extract),
  * fall back to the self-contained `place_search` FTS content: its `alt_names` column
  * is the same alias set joined on the boundary-preserving `ALIAS_SEPARATOR` (#523),
@@ -59,9 +61,10 @@ export function exactMatchIDs<DB>(
 			}
 		}
 
-		// Alias pass via the shared bag parser (#523). Separated bags (built since #523)
-		// get a true per-alias equality check, unrestricted — matching the `names`-table
-		// branch above, where an alias match counts as exact regardless of other candidates.
+		// Alias pass via the shared bag parser (#523).
+		// Separated bags (built since #523) get a true per-alias equality check,
+		// unrestricted — matching the `names`-table branch above, where an alias match
+		// counts as exact regardless of other candidates.
 		// Legacy bags (no separator) fall back to padded containment, conditioned on "no
 		// canonical exact in the pool" because their lost boundaries would otherwise
 		// false-promote interior fragments ("York" inside the alias "New York City")
@@ -74,7 +77,8 @@ export function exactMatchIDs<DB>(
 			}
 		}
 	} catch {
-		// Extract without place_search either → no exact-match tier. Falls back to weighted-sum order.
+		// Extract without place_search either → no exact-match tier.
+		// Falls back to weighted-sum order.
 	}
 
 	return out
@@ -84,8 +88,9 @@ export function exactMatchIDs<DB>(
  * Among `ids` (already known exact matches), the subset holding `text` as an
  * official name (`names.official = 1`, the
  * #940 ingest bit). Same collate nocase semantics as {@link WOFSQLitePlaceLookup.#exactMatchIDs} so the two probes
- * agree on what "equals the query" means. Fails soft on gazetteers built before #940
- * (no `official` column) — the sub-tier then behaves exactly as if `officialNameExact` were off.
+ * agree on what "equals the query" means.
+ * Fails soft on gazetteers built before #940 (no `official` column) — the sub-tier
+ * then behaves exactly as if `officialNameExact` were off.
  */
 export function officialNameIDs<DB>(
 	db: DatabaseClient<DB>,

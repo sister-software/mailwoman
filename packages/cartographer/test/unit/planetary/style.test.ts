@@ -37,7 +37,8 @@ test.each(["moon", "mars"] as const)(
 		expect(labels?.type).toBe("symbol")
 
 		// The archive carries terrarium-encoded elevation, so the relief is shaded at draw time
-		// and every body-specific colour lives here. A greyscale image could not be tinted at all.
+		// and every body-specific colour lives here.
+		// A greyscale image could not be tinted at all.
 		expect(style.sources["hillshade"]).toMatchObject({ type: "raster-dem", encoding: "terrarium" })
 
 		const relief = style.layers.find((layer) => layer.id === "planetary/hillshade")

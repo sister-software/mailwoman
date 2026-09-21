@@ -68,15 +68,18 @@ export async function generateEd25519KeyPair(): Promise<Ed25519KeyPairPEM> {
 }
 
 /**
- * The spki DER header for an Ed25519 public key: a sequence holding the AlgorithmIdentifier
- * (OID 1.3.101.112) and a 32-byte BIT string. Fixed for the algorithm,
- * so the public key's DER is this header plus the point.
+ * The spki DER header for an Ed25519 public key: a sequence holding the
+ * AlgorithmIdentifier (OID 1.3.101.112) and a 32-byte BIT string.
+ *
+ * Fixed for the algorithm, so the public key's DER is this header plus the point.
  */
 const SPKI_ED25519_HEADER = new Uint8Array([0x30, 0x2a, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x03, 0x21, 0x00])
 
 /**
- * The public half of a PKCS8 private key, as spki PEM. A private key's JWK carries its public
- * point as `x`, so an issuer holding only the private key can still say which key id it signs for.
+ * The public half of a PKCS8 private key, as spki PEM.
+ *
+ * A private key's JWK carries its public point as `x`, so an issuer holding only
+ * the private key can still say which key id it signs for.
  */
 export async function publicKeyFromPrivateKey(privateKeyPEM: string): Promise<string> {
 	const key = await crypto.subtle.importKey("pkcs8", pemToDER(privateKeyPEM), ALGORITHM, true, ["sign"])

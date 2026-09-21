@@ -59,13 +59,16 @@ export interface ConformanceSuite {
 	law: string
 	path: string
 	/**
-	 * Suite-wide checks, run before the engine loads. One message per problem,
-	 * empty when the suite is runnable.
+	 * Suite-wide checks, run before the engine loads.
+	 *
+	 * One message per problem, empty when the suite is runnable.
 	 */
 	audit: (fixtures: readonly ConformanceFixture[]) => string[]
 	/**
-	 * The extra line a finding prints under its head. Every shipped law names the transformation, without
-	 * which a violation reads as "these two strings disagreed" rather than "uppercasing broke it".
+	 * The extra line a finding prints under its head.
+	 *
+	 * Every shipped law names the transformation, without which a violation reads as
+	 * "these two strings disagreed" rather than "uppercasing broke it".
 	 */
 	detail: (fixture: ConformanceFixture) => string
 	/**
@@ -76,6 +79,7 @@ export interface ConformanceSuite {
 	 * A law whose eligibility is a property of the text — canonical form is the one shipped
 	 * example, where 83 of 651 committed rows carry a character either form can act on —
 	 * needs the second denominator as well, or its hold count implies a breadth it never exercised.
+	 *
 	 * `corpusInputs` is every committed board row's query text, supplied by the runner.
 	 */
 	coverage?: (fixtures: readonly ConformanceFixture[], corpusInputs: readonly string[]) => string

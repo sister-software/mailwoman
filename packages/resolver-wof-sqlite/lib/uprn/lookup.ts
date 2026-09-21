@@ -34,23 +34,27 @@ import type { UPRNDatabase } from "#uprn/schema"
 import { uprnFullCell } from "#uprn/schema"
 /**
  * Conservative floor on how much centre distance one unit of res-9 grid distance buys, metres.
+ *
  * Adjacent centres sit √3 × edge apart (avg edge 174.4 m → ≈302 m); the worst direction
- * across a ring costs a further ×0.866, and H3's projection distortion shrinks edges
- * by well under the slack this leaves (the true worst is ≈217 m per grid step).
+ * across a ring costs a further ×0.866, and H3's projection distortion shrinks edges by
+ * well under the slack this leaves (the true worst is ≈217 m per grid step).
  * Dividing a radius by this over-counts rings and can never miss a cell. multiplying a
  * grid distance by it under-states reach and can never end the ring walk early.
  */
 const RES9_CENTER_SPACING_FLOOR_M = 150
 
 /**
- * Conservative ceiling on a res-9 cell's centre-to-vertex distance,
- * metres (avg edge 174.4 m. distortion stays well under this).
+ * Conservative ceiling on a res-9 cell's centre-to-vertex distance, metres
+ * (avg edge 174.4 m. distortion stays well under this).
+ *
  * A point within `radiusM` of the query sits in a cell whose centre is within `radiusM` + this.
  */
 const RES9_CELL_RADIUS_CEILING_M = 300
 
 /**
- * Hard ceiling on `radiusM`. Keeps the probe bounded (10 km → ~72 rings ≈ 15.8k cells ≈ 18 `IN` chunks);
+ * Hard ceiling on `radiusM`.
+ *
+ * Keeps the probe bounded (10 km → ~72 rings ≈ 15.8k cells ≈ 18 `IN` chunks);
  * a caller who wants a wider search than "which property is this coordinate" has
  * outgrown this reader and should say so loudly.
  */
@@ -78,12 +82,15 @@ export interface UPRNNearestHit {
 
 export interface UPRNLookupOpts {
 	/**
-	 * Path to a `uprn.db` built by `mailwoman`'s gazetteer
-	 * pipeline. Opened read-only.
+	 * Path to a `uprn.db` built by `mailwoman`'s gazetteer pipeline.
+	 *
+	 * Opened read-only.
 	 */
 	databasePath?: string
 	/**
-	 * Pre-opened handle (tests / shared connections). Mutually exclusive with `databasePath`.
+	 * Pre-opened handle (tests / shared connections).
+	 *
+	 * Mutually exclusive with `databasePath`.
 	 */
 	database?: DatabaseClient<UPRNDatabase>
 }
@@ -95,14 +102,18 @@ interface UPRNRow {
 }
 
 /**
- * Node reader over `uprn.db`. `implements Disposable` so callers can
- * `using lookup = new UPRNLookup(...)` — the same precedent as {@link POILookup}.
+ * Node reader over `uprn.db`.
+ *
+ * `implements Disposable` so callers can `using lookup = new UPRNLookup(...)` —
+ * the same precedent as {@link POILookup}.
  */
 export class UPRNLookup implements Disposable {
 	#db: DatabaseClient<UPRNDatabase>
 	/**
-	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal
-	 * cannot reach it — ownership is membership rather than a flag a later branch has to check.
+	 * Resources this instance opened.
+	 *
+	 * A connection handed in by a caller is not in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
 	 */
 	readonly #resources = new DisposableStack()
 
@@ -138,11 +149,13 @@ export class UPRNLookup implements Disposable {
 	 * when no uprn lies inside the radius.
 	 *
 	 * Bounded two ways: `radiusM` is capped at {@link UPRN_MAX_NEAREST_RADIUS_M},
-	 * and rings expand outward only until no unprobed cell could beat the best hit found so far
-	 * (or the radius, when nothing has been found). The stop rule is geometric — a cell at grid
-	 * distance `g` holds no point nearer than `g` × spacing floor − cell radius, using the same
-	 * conservative constants the reach math uses — so unlike POILookup's row-count accumulation
-	 * there is no early-exit ambiguity: a break can never strand a nearer point in an unprobed ring.
+	 * and rings expand outward only until no unprobed cell could beat the best hit found
+	 * so far (or the radius, when nothing has been found).
+	 * The stop rule is geometric — a cell at grid distance `g` holds no point nearer than `g` ×
+	 * spacing floor − cell radius, using the same conservative constants the reach math uses —
+	 * so unlike POILookup's row-count accumulation there is no early-exit ambiguity:
+	 * a break can never strand a nearer point in an unprobed ring.
+	 *
 	 * This is what keeps a capped-radius call over dense ground at milliseconds instead of
 	 * a full-disk fetch (measured 6.4 s → 13 ms for a 10 km radius over central London,
 	 * 41.6M-row layer. an empty-sea miss at the cap runs the full expansion, 74 ms).

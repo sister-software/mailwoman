@@ -41,8 +41,10 @@ export interface StartRehearsalInput {
 }
 
 /**
- * The first half: the objects, and the URL to pay. The Price is the provisioned one, found by lookup
- * key as `provisionShop` finds it. a missing Price means the shop was never provisioned in this mode.
+ * The first half: the objects, and the URL to pay.
+ *
+ * The Price is the provisioned one, found by lookup key as `provisionShop` finds it.
+ * a missing Price means the shop was never provisioned in this mode.
  */
 export async function startRehearsal(stripe: Stripe, input: StartRehearsalInput): Promise<RehearsalStart> {
 	const listed = await stripe.prices.list({ lookup_keys: [input.plan], active: true, limit: 1 })
@@ -136,6 +138,7 @@ async function readClaim(fetchFn: typeof fetch, workerOrigin: string, session: s
 
 /**
  * The second half: wait for the first token, advance the clock, wait for the second.
+ *
  * The wait on the worker is a wait on Stripe's delivery, so a timeout here names
  * the webhook destination before anything else.
  */

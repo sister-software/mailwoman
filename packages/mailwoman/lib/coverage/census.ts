@@ -80,11 +80,14 @@ export interface CountryCoverage {
 	corpusStreetRows: number
 	/**
 	 * Whether the training config's `country_weights` admits it.
+	 *
 	 * A false here means the rows train nothing.
 	 */
 	admitted: boolean
 	/**
-	 * The locale package serving it, if one ships. Existence is not training — see the file header.
+	 * The locale package serving it, if one ships.
+	 *
+	 * Existence is not training — see the file header.
 	 */
 	weightsPackage?: string
 	/**
@@ -101,6 +104,7 @@ export interface CountryCoverage {
 
 /**
  * Whether a country actually trains: admitted by `country_weights` and holding corpus rows.
+ *
  * The Norway-bug predicate, shared with `mailwoman data coverage`'s renderer
  * so the two reports cannot disagree about what "trained" means.
  */
@@ -109,12 +113,15 @@ export function trains(c: Pick<CountryCoverage, "admitted" | "corpusRows">): boo
 }
 
 /**
- * The four ways the five registers disagree. Each one is a real defect class that has shipped at least once.
+ * The four ways the five registers disagree.
+ *
+ * Each one is a real defect class that has shipped at least once.
  */
 export interface CoverageMismatches {
 	/**
-	 * Rows in the corpus rather than admitted by `country_weights` —
-	 * trains on nothing. The Norway shape.
+	 * Rows in the corpus rather than admitted by `country_weights` — trains on nothing.
+	 *
+	 * The Norway shape.
 	 */
 	presentButDropped: string[]
 	/**
@@ -145,6 +152,7 @@ export interface CoverageReport {
 	configuredCorpusVersion?: string
 	/**
 	 * Set when the censused corpus and the configured corpus differ.
+	 *
 	 * Its presence means every row count in this report is about a corpus the run
 	 * does not read, so a zero is not evidence of absence.
 	 */
@@ -160,8 +168,10 @@ export interface CoverageReport {
 }
 
 /**
- * Where the cached corpus census lives. Under the data root rather than the repo:
- * it describes a build artifact rather than source, and it is regenerated rather than edited.
+ * Where the cached corpus census lives.
+ *
+ * Under the data root rather than the repo: it describes a build artifact
+ * rather than source, and it is regenerated rather than edited.
  */
 export function corpusCensusPath(): string {
 	return String(dataRootPath("corpus", "coverage-census.json"))
@@ -177,9 +187,9 @@ interface CorpusCensus {
 	/**
 	 * Train files the manifest listed that this count could not read, and how many it did read.
 	 *
-	 * A census that skipped a file still answers a number, and that number is a floor
-	 * rather than the corpus. Carrying both counts is what lets a reader tell a country
-	 * with no rows from a country whose rows were in a file nobody opened.
+	 * A census that skipped a file still answers a number, and that number is a floor rather than the corpus.
+	 * Carrying both counts is what lets a reader tell a country with no rows from a
+	 * country whose rows were in a file nobody opened.
 	 */
 	filesRead: number
 	filesListed: number
@@ -187,8 +197,10 @@ interface CorpusCensus {
 }
 
 /**
- * Arrow list columns arrive as `{list:[{element:v}]}`. Reading one as a plain array yields nothing
- * and every label-based count comes back zero — a false negative that looks exactly like a real absence.
+ * Arrow list columns arrive as `{list:[{element:v}]}`.
+ *
+ * Reading one as a plain array yields nothing and every label-based count comes back zero —
+ * a false negative that looks exactly like a real absence.
  */
 export function normalizeArrowListColumn(value: unknown, column: string): string[] {
 	const entries = Array.isArray(value)
@@ -235,9 +247,11 @@ async function* streamCorpusCensusRows(path: string): AsyncGenerator<Record<stri
  *
  * The key is a string interface with every corpus ever built, so it is read and never renamed.
  * Both spellings are live: of the 41 manifests under `$MAILWOMAN_DATA_ROOT/corpus/versioned`,
- * 8 write `slices` and 33 write the pre-rename key. A reader that knows only one
- * of them finds no files, counts no rows, and reports every country as untrained —
- * an absence indistinguishable from the real thing, and the shape this census exists to catch.
+ * 8 write `slices` and 33 write the pre-rename key.
+ *
+ * A reader that knows only one of them finds no files, counts no rows, and reports
+ * every country as untrained — an absence indistinguishable from the real thing,
+ * and the shape this census exists to catch.
  * `manifest_files` in `mailwoman_train/data/loader/corpus_files.py` is the same fallback on the Python side.
  */
 function manifestFiles(manifest: Record<string, unknown>): Array<{ split?: string; path?: string }> {
@@ -250,8 +264,8 @@ function manifestFiles(manifest: Record<string, unknown>): Array<{ split?: strin
 /**
  * Count every train row in the corpus, per country, and how many carry a street span.
  *
- * Exact rather than sampled: parquet files are grouped by source, so a stride over
- * them reads a handful of families and reports their countries as the corpus's.
+ * Exact rather than sampled: parquet files are grouped by source, so a stride over them
+ * reads a handful of families and reports their countries as the corpus's.
  * Column projection keeps the full read affordable.
  */
 export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCensus> {
@@ -288,9 +302,9 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
 	}
 
 	// A manifest that lists train files and a count of zero cannot both be true,
-	// so the count is the instrument failing. Answering zero here writes "every country
-	// trains on nothing" over a cache that held the real numbers, and the reading
-	// it produces is the one this census exists to catch.
+	// so the count is the instrument failing.
+	// Answering zero here writes "every country trains on nothing" over a cache that held
+	// the real numbers, and the reading it produces is the one this census exists to catch.
 	if (parquetFiles.length && total === 0) {
 		throw new Error(
 			`Corpus census read 0 rows from ${parquetFiles.length} train file(s) listed by ${manifestPath}, ` +
@@ -334,6 +348,7 @@ export function sameCorpusVersion(a: string, b: string): boolean {
  * This exists so a cached census can be checked against the corpus the run actually reads.
  * The two are separate artifacts that both look authoritative: the census names the corpus
  * it counted, the config names the corpus it trains on, and nothing made them agree.
+ *
  * A census of `0.26.0` answering a question about a `0.27.0` run reports a country's
  * rows as zero when the newer corpus added them — an absence indistinguishable from
  * the real thing, which is the failure this whole file exists to prevent.
@@ -366,11 +381,12 @@ export async function readConfiguredCorpusVersion(configPath: string): Promise<s
  *
  * The block is a flat `CC: weight` list, so a line scan is enough — and it preserves the
  * one thing a YAML parser would destroy here: a bare `no` key stays the string `"no"`
- * rather than becoming the boolean `false`. That retyping is the exact bug this file
- * exists partly to surface, so the reader must not reproduce it.
+ * rather than becoming the boolean `false`.
+ * That retyping is the exact bug this file exists partly to surface, so the reader must not reproduce it.
  *
- * Throws when the path names no file. An empty set means the config admits no country, and a
- * caller cannot tell that apart from a config nobody could open once both answer the same value.
+ * Throws when the path names no file.
+ * An empty set means the config admits no country, and a caller cannot tell that apart
+ * from a config nobody could open once both answer the same value.
  */
 export async function readAdmittedCountries(configPath: string): Promise<Set<string>> {
 	if (!(await pathExists(configPath))) {
@@ -564,9 +580,10 @@ export function resolveTrainingConfig(
 /**
  * The weights family whose config answers an admission question that names no family.
  *
- * The Latin family, because its `country_weights` covers every country outside the four the character
- * family trains. The choice is recorded rather than implied: reading the character config by
- * default would report 4 admitted countries for a repository whose shipped Latin graph admits 25.
+ * The Latin family, because its `country_weights` covers every country outside
+ * the four the character family trains.
+ * The choice is recorded rather than implied: reading the character config by default
+ * would report 4 admitted countries for a repository whose shipped Latin graph admits 25.
  */
 export const DEFAULT_ADMISSION_FAMILY = "en-us"
 
@@ -639,7 +656,9 @@ export interface CensusCoverageOptions {
 	 */
 	configPath: string
 	/**
-	 * Corpus manifest.json to census. Only read when the cache is missing or `refresh` is set.
+	 * Corpus manifest.json to census.
+	 *
+	 * Only read when the cache is missing or `refresh` is set.
 	 */
 	manifestPath: string
 	/**
@@ -647,11 +666,15 @@ export interface CensusCoverageOptions {
 	 */
 	casesRoot: string
 	/**
-	 * Serving gazetteer. Defaults to the data root's `wof/candidate.db`.
+	 * Serving gazetteer.
+	 *
+	 * Defaults to the data root's `wof/candidate.db`.
 	 */
 	gazetteerPath?: string
 	/**
-	 * Recount the corpus rather than reading the cache. Costs minutes.
+	 * Recount the corpus rather than reading the cache.
+	 *
+	 * Costs minutes.
 	 */
 	refresh?: boolean
 }
@@ -715,8 +738,9 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 	const configuredCorpusVersion = await readConfiguredCorpusVersion(options.configPath)
 
 	// A cached census and a config are two artifacts that both look authoritative
-	// and were never made to agree. When they name different corpora every row count
-	// below is about the wrong corpus, and reads as a real absence.
+	// and were never made to agree.
+	// When they name different corpora every row count below is about the wrong corpus,
+	// and reads as a real absence.
 	const corpusMismatch =
 		configuredCorpusVersion &&
 		census.corpusVersion !== "unknown" &&

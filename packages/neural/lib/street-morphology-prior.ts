@@ -28,25 +28,31 @@ import type { TokenLike } from "#query-shape-prior"
 
 export interface StreetMorphologyPriorOpts {
 	/**
-	 * Multiplier on the base bias before {@linkcode maxBias}
-	 * is applied. Default 1.0.
+	 * Multiplier on the base bias before {@linkcode maxBias} is applied.
+	 *
+	 * Default 1.0.
 	 */
 	biasScale?: number
 	/**
 	 * Maximum bias magnitude (logits) on the affix span itself.
-	 * Default 3.0 — same as the admin FST. The morphology signal is structurally less ambiguous than
-	 * admin names (`Avenue` is almost never anything but street-typing), so equal magnitude is justified.
+	 *
+	 * Default 3.0 — same as the admin FST.
+	 * The morphology signal is structurally less ambiguous than admin names
+	 * (`Avenue` is almost never anything but street-typing), so equal magnitude is justified.
 	 */
 	maxAffixBias?: number
 	/**
 	 * Maximum bias magnitude (logits) on the adjacent (neighbour) tokens for the `street` label.
+	 *
 	 * Default 2.0 — a touch weaker than the affix bias because the neighbour is
 	 * inferred from adjacency rather than direct match.
 	 */
 	maxNeighbourStreetBias?: number
 	/**
-	 * Magnitude of the negative bias applied to `dependent_locality` BIO labels on the
-	 * adjacent tokens. Default 2.0. This is the essential piece.
+	 * Magnitude of the negative bias applied to `dependent_locality` BIO labels on the adjacent tokens.
+	 *
+	 * Default 2.0.
+	 * This is the essential piece.
 	 */
 	dependentLocalityPenalty?: number
 }
@@ -83,7 +89,8 @@ export function buildStreetMorphologyEmissionPriors(
 	const iDepLoc = labelToCol.get("I-dependent_locality")
 
 	// If the label vocabulary doesn't include street tags at all (e.g. a Stage 1 model),
-	// there's nothing to bias toward. Return zero-matrix and let the additive pipeline no-op.
+	// there's nothing to bias toward.
+	// Return zero-matrix and let the additive pipeline no-op.
 	if (bStreet === undefined || bStreetPrefix === undefined || bStreetSuffix === undefined) {
 		return matrix
 	}
@@ -164,8 +171,9 @@ export function buildStreetMorphologyEmissionPriors(
 		}
 
 		// Apply affix bias: positive bias toward both prefix and suffix BIO labels on the matched tokens.
-		// The model's existing logits + the QueryShape prior + the adjacent context (via pass 2) determine
-		// which of {prefix, suffix} actually wins. We don't pre-commit to one.
+		// The model's existing logits + the QueryShape prior + the adjacent context
+		// (via pass 2) determine which of {prefix, suffix} actually wins.
+		// We don't pre-commit to one.
 		const affixBias = biasScale * maxAffixBias
 
 		for (let k = 0; k < affixPieceIndices.length; k++) {

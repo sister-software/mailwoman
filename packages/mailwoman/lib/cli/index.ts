@@ -18,11 +18,11 @@
 import { enableCompileCache } from "@mailwoman/core/module/runtime"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
-// The CLI compiles ~16 MB of source per invocation, and the loader/compiler/GC are ~85% of
-// a `--help` run. V8's on-disk code cache removes most of it: `--help` 1.34 s → 0.99 s,
-// `parse` 2.95 s → 2.63 s. The cache is content-addressed and self-invalidating,
-// so a stale entry is not a failure mode. an unwritable cache directory is, and a CLI
-// that cannot cache its compilation is a slow CLI rather than a broken one.
+// The CLI compiles ~16 MB of source per invocation, and the loader/compiler/GC are ~85% of a `--help` run.
+// V8's on-disk code cache removes most of it: `--help` 1.34 s → 0.99 s, `parse` 2.95 s → 2.63 s.
+// The cache is content-addressed and self-invalidating, so a stale entry is not a
+// failure mode. an unwritable cache directory is, and a CLI that cannot cache its
+// compilation is a slow CLI rather than a broken one.
 try {
 	enableCompileCache()
 } catch {}
@@ -34,9 +34,9 @@ try {
 // oxlint-disable-next-line sister-software/no-process-globals -- See above
 process.env.NODE_ENV ??= "production"
 
-// The geocode command's --timing report needs a clock that starts before command dependencies
-// are imported. Keeping the stamp here lets it attribute the otherwise invisible CLI import
-// graph without putting a profiling dependency in this deliberately tiny launcher.
+// The geocode command's --timing report needs a clock that starts before command dependencies are imported.
+// Keeping the stamp here lets it attribute the otherwise invisible CLI import graph
+// without putting a profiling dependency in this deliberately tiny launcher.
 globalThis.__mailwomanCLIStartedAt = performance.now()
 
 // `strict: false` is required rather than a relaxation: the launcher cannot enumerate the union
@@ -101,9 +101,10 @@ function dispatchCommand(): Promise<number> {
 const exitCode = await (rootVersionRequest ? printVersion() : dispatchCommand())
 
 // The notice is the last thing written, for every command and every exit code,
-// and it never changes the exit code: a failure to build it is reported on stderr and the
-// command's own result is returned. Only the cluster primary prints it — `mailwoman serve`
-// forks workers that run this same file, and one notice per process would be one per CPU.
+// and it never changes the exit code: a failure to build it is reported on stderr
+// and the command's own result is returned.
+// Only the cluster primary prints it — `mailwoman serve` forks workers that run this
+// same file, and one notice per process would be one per CPU.
 // A builtin reached through `process.getBuiltinModule` keeps this file at its one static import.
 if (process.getBuiltinModule("node:cluster").isPrimary) {
 	try {

@@ -32,8 +32,8 @@ export interface DecomposedStreet {
 /**
  * Decompose a US street name into prefix/name/suffix components.
  *
- * Conservative — only emits prefix/suffix when there's a clear directional
- * or street-type keyword. Returns the original as `street` if nothing matches.
+ * Conservative — only emits prefix/suffix when there's a clear directional or street-type keyword.
+ * Returns the original as `street` if nothing matches.
  */
 export function decomposeStreet(fullname: string): DecomposedStreet {
 	const trimmed = fullname.trim()

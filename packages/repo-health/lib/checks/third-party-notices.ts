@@ -37,7 +37,9 @@ const NOTICE_FILES: ReadonlyArray<readonly [path: string, audience: string]> = [
 ]
 
 /**
- * The package the MIT-derived modules live in. Their paths are written relative to it in every notice.
+ * The package the MIT-derived modules live in.
+ *
+ * Their paths are written relative to it in every notice.
  */
 const DERIVED_PACKAGE = "packages/core"
 
@@ -53,6 +55,7 @@ function derivedModulePaths(text: string): Set<string> {
 
 /**
  * The sentence a header carries to record the derivation.
+ *
  * A file's own header is where a reader of that file looks, and a notice
  * elsewhere in the tree does not reach them.
  */
@@ -60,6 +63,7 @@ const HEADER_MARKER = "Pelias Parser, MIT"
 
 /**
  * The condition MIT attaches to its grant, as the license states it.
+ *
  * The copy that ships has to reproduce it rather than link to it, since a consumer
  * holds the tarball and not the upstream repository.
  */
@@ -72,8 +76,8 @@ const PERMISSION_NOTICE = "shall be included in all copies or substantial portio
  * own width, so matching the license's sentence against the raw file would fail
  * on a reflow that changed nothing a licensee reads.
  *
- * `@mailwoman/normalize`'s `collapseWhitespace` is a different operation:
- * it keeps newlines as segment separators and returns an offset map for address text.
+ * `@mailwoman/normalize`'s `collapseWhitespace` is a different operation: it keeps
+ * newlines as segment separators and returns an offset map for address text.
  * This folds newlines away and returns a string.
  */
 function foldQuotedProse(text: string): string {

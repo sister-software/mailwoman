@@ -54,8 +54,9 @@ export function commandPathCandidates(segment: string): string[][] {
  * where the directory is part of the layout rather than part of what the user types.
  *
  * `gazetteer/inspect/fst.tsx` declares `fst`, so `inspect` is a namespace the user types.
- * `gazetteer/build/postcode/codepoint.tsx` declares `postcode-codepoint`,
- * so `postcode` is layout. Nothing but the declared name separates the two.
+ * `gazetteer/build/postcode/codepoint.tsx` declares `postcode-codepoint`, so `postcode` is layout.
+ *
+ * Nothing but the declared name separates the two.
  */
 export function isPrefixDirectory(directory: string, name: string): boolean {
 	return name.startsWith(`${directory}-`)
@@ -68,9 +69,11 @@ const DECLARED_NAME = /\bspec\s*=\s*\{\s*name\s*:\s*["'`]([^"'`]+)["'`]/u
  *
  * Importing a command module to learn its name runs the module: it pulls Ink, a resolver,
  * sometimes a database handle, and `mw gazetteer build` — which needs nothing
- * but a list of names — stopped answering at all. Reading the text has no side effect
- * and no cost worth measuring. A module whose spec this cannot find falls back to
- * its filename, which is what the name was before any of this.
+ * but a list of names — stopped answering at all.
+ * Reading the text has no side effect and no cost worth measuring.
+ *
+ * A module whose spec this cannot find falls back to its filename,
+ * which is what the name was before any of this.
  */
 export function declaredCommandName(source: string, fallback: string): string {
 	return DECLARED_NAME.exec(source)?.[1] ?? fallback

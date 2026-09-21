@@ -11,12 +11,14 @@ import type { Tagged } from "type-fest"
 /**
  * A Place ID uniquely identifies a place in the Google Places database and on Google Maps.
  *
- * The length of the identifier may vary. Generally, the identifier is a 27-character string,
- * however, more specific places may have longer identifiers.
+ * The length of the identifier may vary.
+ * Generally, the identifier is a 27-character string, however, more specific
+ * places may have longer identifiers.
  *
  * Place IDs appear to be base64-encoded strings, delimited by underscores and dashes.
  *
- * Note that Place IDs do change. Consider a them stale after a few days.
+ * Note that Place IDs do change.
+ * Consider a them stale after a few days.
  *
  * @category Google
  * @category Geocoding

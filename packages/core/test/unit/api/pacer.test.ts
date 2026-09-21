@@ -69,10 +69,10 @@ describe("RequestPacer", () => {
 		expect(grantTimes).toEqual([10_000, 10_100, 10_200, 10_300, 10_400])
 	})
 
-	// The pacing guarantee itself. `VirtualClock` (not the simpler `createFakeClock`)
-	// is required here: the property under test is specifically how concurrent waiters
-	// interleave when woken, and a clock that resolves every same-deadline sleeper
-	// at once cannot tell a fixed pacer from a broken one.
+	// The pacing guarantee itself.
+	// `VirtualClock` (not the simpler `createFakeClock`) is required here: the property under
+	// test is specifically how concurrent waiters interleave when woken, and a clock that
+	// resolves every same-deadline sleeper at once cannot tell a fixed pacer from a broken one.
 	it("paces N concurrent acquire() calls strictly one interval apart — no cohort ever shares an instant", async () => {
 		const INTERVAL_MS = 100
 		const TOTAL_CALLS = 40
@@ -87,9 +87,10 @@ describe("RequestPacer", () => {
 		// out 40 concurrent `acquire()` calls with no intervening async I/O.
 		const pending = Array.from({ length: TOTAL_CALLS }, () => recordedAcquire())
 
-		// The first call resolves without sleeping, but awaiting an already-resolved promise still defers
-		// its `push` to the microtask queue. Flush it here, before driving the clock — otherwise
-		// `advance()`'s own first internal await would flush it, by which point `now()` has left t=0.
+		// The first call resolves without sleeping, but awaiting an already-resolved
+		// promise still defers its `push` to the microtask queue.
+		// Flush it here, before driving the clock — otherwise `advance()`'s own first
+		// internal await would flush it, by which point `now()` has left t=0.
 		await drainMicrotasks()
 
 		await clock.advance((TOTAL_CALLS - 1) * INTERVAL_MS)
@@ -116,9 +117,10 @@ describe("RequestPacer", () => {
 		const grantTimes: number[] = []
 		const recordedAcquire = makeRecordedAcquire(pacer, clock, grantTimes)
 
-		// `VirtualClock.advance` mutates `now()` before its first internal await flushes the microtask
-		// queue, so an already-resolved `acquire()` whose continuation is still queued would record
-		// the post-advance time. Flush to quiescence first, at every point where that could happen.
+		// `VirtualClock.advance` mutates `now()` before its first internal await flushes
+		// the microtask queue, so an already-resolved `acquire()` whose continuation
+		// is still queued would record the post-advance time.
+		// Flush to quiescence first, at every point where that could happen.
 		for (let i = 0; i < SERIAL_CALLS; i++) {
 			const pending = recordedAcquire()
 

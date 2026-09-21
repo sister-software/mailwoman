@@ -73,15 +73,16 @@ test("scoreByPostcode: Canadian postcode defaults to en-CA at 0.9 (FR caller can
 })
 
 test("scoreByPostcode: confidence boundary — exactly 0.9 counts as unambiguous", () => {
-	// The filter is `>= 0.9`. A hit at exactly 0.9 must be treated as unambiguous.
+	// The filter is `>= 0.9`.
+	// A hit at exactly 0.9 must be treated as unambiguous.
 	expect(scoreByPostcode(shape({ knownFormats: [fmt("us_zip4", 0.9)] }))).toEqual({
 		locale: "en-US",
 		confidence: 0.95,
 		reason: "format=us_zip4",
 	})
 
-	// Just below the boundary: not unambiguous. `us_zip4` is not in the ambiguous-5digit
-	// fallback set, so nothing fires.
+	// Just below the boundary: not unambiguous.
+	// `us_zip4` is not in the ambiguous-5digit fallback set, so nothing fires.
 	expect(scoreByPostcode(shape({ knownFormats: [fmt("us_zip4", 0.89)] }))).toBeNull()
 })
 

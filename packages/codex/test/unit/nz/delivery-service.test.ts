@@ -75,9 +75,11 @@ describe("matchNZDeliveryService", () => {
 	})
 
 	it("recognizes 'Private Box' as the colloquial NZ alias — operator ruling 2026-06-11", () => {
-		// 'Private Box' is not a valid ADV358 type. NZ Post's live standards pages do not list it.
+		// 'Private Box' is not a valid ADV358 type.
+		// NZ Post's live standards pages do not list it.
 		// Source: adv358-address-standards.pdf (Oct 2021) + nzpost.co.nz/business/shipping-in-nz/
-		//   addressing-standards (accessed 2026-06-11). Operator authorizes recognition with citation.
+		//   addressing-standards (accessed 2026-06-11).
+		//   Operator authorizes recognition with citation.
 		expect(matchNZDeliveryService("Private Box 102")).toMatchObject({
 			type: "Private Box",
 			id: "102",

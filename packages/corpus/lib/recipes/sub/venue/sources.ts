@@ -52,7 +52,9 @@ export function defaultLexiconPath(): string {
 }
 
 /**
- * Read and parse the lexicon. Strict: a corrupt lexicon is a build failure rather than a fallback.
+ * Read and parse the lexicon.
+ *
+ * Strict: a corrupt lexicon is a build failure rather than a fallback.
  */
 export async function readSubVenueLexicon(path: string = defaultLexiconPath()): Promise<SubVenueLexiconTable> {
 	return await readLocalJSONFile<SubVenueLexiconTable>(path)
@@ -63,21 +65,26 @@ export async function readSubVenueLexicon(path: string = defaultLexiconPath()): 
 //#region Name filters
 
 /**
- * Longest venue name kept for the venue slot. The extracts carry a tail of route descriptions
- * and junction names ("Furnival Gate/Moorhead MH2", "speke hall road/hillfoot AVE")
- * that are not venue names at all. a length cap plus
+ * Longest venue name kept for the venue slot.
+ *
+ * The extracts carry a tail of route descriptions and junction names
+ * ("Furnival Gate/Moorhead MH2", "speke hall road/hillfoot AVE") that are not
+ * venue names at all. a length cap plus
  * {@link isCleanName} removes the bulk of them without a hand list.
  */
 const MAX_VENUE_NAME_LENGTH = 44
 
 /**
- * Shortest kept name. Below four characters a "name" is an airport code or a platform letter
+ * Shortest kept name.
+ *
+ * Below four characters a "name" is an airport code or a platform letter
  * rather than something that can stand in a venue slot.
  */
 const MIN_NAME_LENGTH = 4
 
 /**
  * Longest attested sub-venue string, in whitespace tokens.
+ *
  * `Terminal 1 Flugsteig B` is four and real. anything longer is a venue's own
  * name that happens to contain a designator.
  */
@@ -86,6 +93,7 @@ const MAX_ATTESTED_TOKENS = 4
 /**
  * Reject a name that is a route description, a junction, or a code rather than a name:
  * embedded `/`, `;`, `,`, `:`, parentheses, no letters, or a bare source code.
+ *
  * Measured motivation rather than taste — the GB extract's `platform` tier contributes
  * 7,549 `other`-shaped names like `kntgwdgj` and `speke hall road/hillfoot AVE`.
  */
@@ -115,8 +123,8 @@ export function isCleanName(name: string): boolean {
  *   (`opposite bricklehampton hall`, `ADJ the green`) that names a relationship rather than a place.
  *
  * Per-language and short on purpose: this is a head-token filter over four Latin
- * languages rather than a street-type gazetteer. `@mailwoman/corpus` cannot
- * reach the shipped street-type lexicon (it lives behind the gazetteer build),
+ * languages rather than a street-type gazetteer.
+ * `@mailwoman/corpus` cannot reach the shipped street-type lexicon (it lives behind the gazetteer build),
  * and a longer list here would be a second, drifting copy of it.
  */
 const NON_VENUE_HEAD_WORDS: ReadonlySet<string> = new Set([
@@ -230,6 +238,7 @@ export interface PromotedSurface {
 
 /**
  * Title-case a designator phrase for rendering (`flugsteig` → `Flugsteig`).
+ *
  * Single-token by construction: every promoted phrase in the ledger is one word.
  */
 export function titleCase(phrase: string): string {
@@ -339,9 +348,10 @@ export function hasPromotedShape(
  * {@link hasPromotedShape} plus the length cap that makes a string usable AS a sub-venue span.
  *
  * The two are separate because the difference decides which pool a name lands in.
- * `navette n2 vers terminal 2g` carries the promoted shape and is five tokens: too long to
- * be a sub-venue string, and disqualified from being a negative precisely because it does
- * contain the shape. It belongs to neither pool, and only splitting the test says so.
+ *
+ * `navette n2 vers terminal 2g` carries the promoted shape and is five tokens: too long to be a
+ * sub-venue string, and disqualified from being a negative precisely because it does contain the shape.
+ * It belongs to neither pool, and only splitting the test says so.
  */
 export function matchesPromotedShape(
 	lowerName: string,
@@ -359,12 +369,12 @@ export function matchesPromotedShape(
  *
  * Two inputs, and the difference between them is the advisory/binding split the ledger's docstring names:
  *
- * - The shipped English vocabulary (`neural/venue-structure.ts`, re-declared in
- *   the lexicon as `shipped: true`) is a flat English list with no locale gate.
+ * - The shipped English vocabulary (`neural/venue-structure.ts`, re-declared in the
+ *   lexicon as `shipped: true`) is a flat English list with no locale gate.
  *   It is promoted-by-shipping for the English legs, because the span proposer fires
  *   on it there today and the eval board's target cases are drawn from it.
- * - {@link SUBVENUE_PROMOTIONS} adds the localized surfaces and subtracts
- *   the rejections. A rejection of a shipped designator cannot un-ship it
+ * - {@link SUBVENUE_PROMOTIONS} adds the localized surfaces and subtracts the rejections.
+ *   A rejection of a shipped designator cannot un-ship it
  *   (nothing here stops the proposer firing on "Red Wing"), but it absolutely stops this
  *   recipe generating a positive: en-US `wing` produces negatives instead.
  */
@@ -410,7 +420,8 @@ export function promotedSurfacesFor(
 			phrase: promotion.phrase,
 			surface: titleCase(promotion.phrase),
 			identifierRequired: promotion.shape === "identifier-required",
-			// A promotion marks a surface usable. it does not widen the modifier grammar (the ledger's own words).
+			// A promotion marks a surface usable. it does not widen the modifier
+			// grammar (the ledger's own words).
 			// Modifier eligibility stays the designator's, and only English legs read it.
 			modifierEligible: Boolean(designator?.modifierEligible) && promotion.shape !== "identifier-required",
 		})
@@ -450,9 +461,9 @@ export interface IdentifierModel {
 /**
  * Designators whose refs the pooled fallback is built from.
  *
- * `platform` and `station` are excluded deliberately even though they are by far the
- * largest buckets (GB alone has 25,109 platform digits): a platform ref is a network
- * identifier, and its `other` bucket is 7,549 rows of `kntgwdgj`-style source codes.
+ * `platform` and `station` are excluded deliberately even though they are by far the largest
+ * buckets (GB alone has 25,109 platform digits): a platform ref is a network identifier,
+ * and its `other` bucket is 7,549 rows of `kntgwdgj`-style source codes.
  * The three kept here are the ones whose refs are what a person reads off a sign.
  */
 const POOLED_IDENTIFIER_DESIGNATORS: readonly string[] = ["gate", "terminal", "campus"]
@@ -460,10 +471,10 @@ const POOLED_IDENTIFIER_DESIGNATORS: readonly string[] = ["gate", "terminal", "c
 /**
  * Minimum usable observations before a (region, designator) uses its own identifier distribution.
  *
- * Below this the sample is noise — ES `terminal` has 5 usable refs — so the leg falls back
- * to the region's pooled gate+terminal+campus distribution, which is what the lexicon
- * measured at volume (452–655 refs per region). The fallback keeps the axis that
- * matters (the region) and drops only the per-designator refinement.
+ * Below this the sample is noise — ES `terminal` has 5 usable refs —
+ * so the leg falls back to the region's pooled gate+terminal+campus distribution,
+ * which is what the lexicon measured at volume (452–655 refs per region).
+ * The fallback keeps the axis that matters (the region) and drops only the per-designator refinement.
  */
 const MIN_OWN_SHAPE_OBSERVATIONS = 20
 
@@ -502,9 +513,9 @@ export function buildIdentifierModel(lexicon: SubVenueLexiconTable, region: stri
  * Draw one identifier for `designatorID` in this region.
  *
  * Own distribution when it has {@link MIN_OWN_SHAPE_OBSERVATIONS} usable observations,
- * else the region's pooled one. Shapes are weighted by observation count
- * and an example is drawn uniformly inside the chosen shape — the lexicon ships up
- * to eight per shape, which is the resolution available.
+ * else the region's pooled one.
+ * Shapes are weighted by observation count and an example is drawn uniformly inside the
+ * chosen shape — the lexicon ships up to eight per shape, which is the resolution available.
  */
 export function sampleIdentifier(model: IdentifierModel, designatorID: string, random: () => number): string | null {
 	const own = model.byDesignator.get(designatorID) ?? []
@@ -541,8 +552,10 @@ export interface LegPools {
 	 */
 	rejectedVenues: string[]
 	/**
-	 * Real names that contain a designator inside a longer proper name — "Lochaline Ferry
-	 * Terminal", "Kingdom Hall". The whole string is `venue`; nothing in it is `unit`.
+	 * Real names that contain a designator inside a longer proper name —
+	 * "Lochaline Ferry Terminal", "Kingdom Hall".
+	 *
+	 * The whole string is `venue`; nothing in it is `unit`.
 	 */
 	longerNames: string[]
 	/**
@@ -555,15 +568,18 @@ export interface LegPools {
 }
 
 /**
- * The name pools a source contributes. `attested` and `unpromotedShapes` come only
- * from an extract — poi.db carries no `tier` and no localized names, so it cannot say
- * which side of a shape boundary a name sits on.
+ * The name pools a source contributes.
+ *
+ * `attested` and `unpromotedShapes` come only from an extract — poi.db carries no `tier`
+ * and no localized names, so it cannot say which side of a shape boundary a name sits on.
  */
 export type NamePools = Pick<LegPools, "venues" | "attested" | "rejectedVenues" | "longerNames" | "unpromotedShapes">
 
 /**
- * The pools a source that has nothing to say contributes — en-US has no OSM extract, and DE/ES/GB are
- * outside poi.db's four countries. Empty rather than absent so a leg's merge is unconditional.
+ * The pools a source that has nothing to say contributes — en-US has no OSM extract,
+ * and DE/ES/GB are outside poi.db's four countries.
+ *
+ * Empty rather than absent so a leg's merge is unconditional.
  */
 export const EMPTY_NAME_POOLS: NamePools = {
 	venues: [],
@@ -651,11 +667,11 @@ export async function readExtractPools(path: string, query: PoolQuery): Promise<
  * Poi.db category ids this recipe reads, by category name
  * (ids are assigned per build, so they are resolved at run time out of `poi_category_codes`).
  *
- * The venue set is the transport + institution categories whose rows name a
- * whole venue — exactly what `overture-subvenue.ts` rejected as a lexicon source
- * ("4,071 of them are the token `airport` in the aerodrome's own name") and exactly what
- * a venue slot wants. The confound set is that file's rejection list read as a source of
- * negatives: `shoe_store` contributes 708 hits of `wing` because Red Wing sells boots,
+ * The venue set is the transport + institution categories whose rows name a whole venue —
+ * exactly what `overture-subvenue.ts` rejected as a lexicon source ("4,071 of them are the
+ * token `airport` in the aerodrome's own name") and exactly what a venue slot wants.
+ * The confound set is that file's rejection list read as a source of negatives:
+ * `shoe_store` contributes 708 hits of `wing` because Red Wing sells boots,
  * and that is the row this recipe needs to see with `wing` not tagged `unit`.
  */
 const POI_VENUE_CATEGORIES: readonly string[] = [

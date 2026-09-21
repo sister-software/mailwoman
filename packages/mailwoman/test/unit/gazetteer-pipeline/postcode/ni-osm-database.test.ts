@@ -141,8 +141,8 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	expect(typo.n).toBe(0)
 
 	// Medoid law: the centroid is one of the three member points — here 54.61/-5.89,
-	// the member nearest the (54.6100, -5.8900) mean. A mean-of-members build would
-	// store a coordinate on no mapped address.
+	// the member nearest the (54.6100, -5.8900) mean.
+	// A mean-of-members build would store a coordinate on no mapped address.
 	const bt3 = db.prepare("SELECT latitude, longitude FROM spr WHERE name='BT39QQ'").get() as {
 		latitude: number
 		longitude: number

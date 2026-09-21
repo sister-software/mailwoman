@@ -45,6 +45,7 @@ const escapeRegExp = (input: string): string => input.replaceAll(/[.*+?^${}()|[\
  * `parseJSONStrict` lives behind the very aliases {@link workspaceAliases} generates,
  * so importing it here would make the config depend on its own output.
  * A malformed manifest should abort the run, which is what a bare throw does.
+ *
  * The local `escapeRegExp` above is inlined for the same reason: `@mailwoman/core/strings/regexp`
  * sits behind the very aliases this file exists to generate.
  */
@@ -117,16 +118,16 @@ export default defineConfig({
 		// isolate: false — a shared module graph per worker.
 		// Measured 2026-08-01: core+neural together 8m23s → 1m30s (5.6×), full sweep 4m48s wall.
 		// Every test file used to re-transform and re-import the entire aliased workspace
-		// graph on its own. now each fork pays that once. The old isolate:true justification
-		// (libpostal's top-level await breaking `class extends` under a shared graph)
-		// no longer reproduces — #481 made the libpostal resource a lazy getter,
-		// and the structural bare/subpath interleave is covered by the side-effect
+		// graph on its own. now each fork pays that once.
+		// The old isolate:true justification (libpostal's top-level await breaking `class extends`
+		// under a shared graph) no longer reproduces — #481 made the libpostal resource a lazy
+		// getter, and the structural bare/subpath interleave is covered by the side-effect
 		// `import "@mailwoman/core"` workaround in the affected files (see agents.md).
 		//
 		// The shared-graph interface: `vi.mock` factories are only consulted at module evaluation,
 		// so a module already cached by an earlier file in the same fork is returned as-is —
-		// mocks declared against it silently never apply. Any file that mocks a shared
-		// module must call `vi.resetModules()` before importing the module under test
+		// mocks declared against it silently never apply.
+		// Any file that mocks a shared module must call `vi.resetModules()` before importing the module under test
 		// (reference: resolver-wof-sqlite/lookup-readonly-open.test.ts, neural/web-loader.tolerance.test.ts).
 		isolate: false,
 		testTimeout: 15_000,

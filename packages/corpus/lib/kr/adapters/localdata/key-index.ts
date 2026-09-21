@@ -22,8 +22,10 @@ import { type JusoLabelRow, REGION_ALIASES } from "#kr/adapters/juso/label-rows"
  * The separator between the parts of a composite key, written as an escape
  * so no NUL byte enters the source.
  *
- * A space cannot serve. A 시군구 is written with one (`수원시 장안구`), so `unitKey("A", "B C")`
- * and `unitKey("A B", "C")` would produce one key for two different places.
+ * A space cannot serve.
+ * A 시군구 is written with one (`수원시 장안구`), so `unitKey("A", "B C")` and `unitKey("A B", "C")`
+ * would produce one key for two different places.
+ *
  * No place name contains NUL.
  */
 const UNIT_SEPARATOR = "\0"

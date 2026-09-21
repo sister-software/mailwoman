@@ -70,8 +70,10 @@ export function collectPrimaryCoordinates(records: readonly SourceRecord[]): Map
  * at the same address KEY whose primary org names agree.
  *
  * Blocking on the address string is a conservative lower bound — `1504 Taub loop`
- * and `1504 Taub LP STE 100` key apart even though they are one building, so a correct merge
- * across them is still charged as an error. The coordinate grain below is the tighter reading.
+ * and `1504 Taub LP STE 100` key apart even though they are one building,
+ * so a correct merge across them is still charged as an error.
+ * The coordinate grain below is the tighter reading.
+ *
  * Neither relies on the NPPES subpart flag, which the gold set showed misses 37%.
  */
 export function buildOrgNameGrain(npiPrimary: Map<string, NPIPrimary>): TruthLabel {
@@ -134,9 +136,9 @@ export function buildOrgNameCoordGrain(npiPrimary: Map<string, NPIPrimary>, npiC
  * The H3-cell org-name truth — the same building grain keyed on a cell instead of a radius,
  * so co-location blocking is O(n) rather than O(n²).
  *
- * A robustness check on the coordinate grain rather than a replacement: a hard cell
- * boundary can split a same-building pair into adjacent cells, so this slightly
- * under-counts relative to the radius. Coarser resolutions absorb more of that.
+ * A robustness check on the coordinate grain rather than a replacement: a hard cell boundary can split
+ * a same-building pair into adjacent cells, so this slightly under-counts relative to the radius.
+ * Coarser resolutions absorb more of that.
  */
 export function buildOrgNameH3Grain(
 	npiPrimary: Map<string, NPIPrimary>,

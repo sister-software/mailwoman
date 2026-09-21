@@ -45,15 +45,21 @@ interface LatinTestRow {
  */
 export interface BuildOutlierLatinOptions {
 	/**
-	 * Rows sampled per off-map country. Default 6000.
+	 * Rows sampled per off-map country.
+	 *
+	 * Default 6000.
 	 */
 	perCountry?: number
 	/**
-	 * Overture release dir. Default `$MAILWOMAN_DATA_ROOT/overture/<OVERTURE_ADDRESSES_RELEASE>`.
+	 * Overture release dir.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/overture/<OVERTURE_ADDRESSES_RELEASE>`.
 	 */
 	overture?: PathBuilderLike
 	/**
-	 * Dataset dir the `other` rows append to. Default `<repo>/data/coarse-placer`.
+	 * Dataset dir the `other` rows append to.
+	 *
+	 * Default `<repo>/data/coarse-placer`.
 	 */
 	data?: PathBuilderLike
 }
@@ -73,8 +79,9 @@ export interface BuildOutlierLatinResult {
  * (unseen off-map countries should still route `other`). #743: PL/PT/CZ moved from `other`
  * to first-class in-map countries (they're now in COARSE_CLASSES), so they're removed here —
  * keeping them would feed contradictory gold (the same address labelled both PL and `other`).
- * That leaves BR/MX as the Latin off-map train exposure and CA/LI as the
- * heldout probe (the hard near-twins of in-map US/DE — an honest worst case).
+ *
+ * That leaves BR/MX as the Latin off-map train exposure and CA/LI as the heldout probe
+ * (the hard near-twins of in-map US/DE — an honest worst case).
  * The in-map expansion itself shrinks the off-map Latin surface, and the bulk `other`
  * exposure is non-Latin (build- outlier-exposure.ts), so the thinner Latin train set
  * is acceptable. watch other-Latin recall in the openset eval.

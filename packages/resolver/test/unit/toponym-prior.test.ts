@@ -63,9 +63,10 @@ describe("rankByImportance", () => {
 	})
 
 	it("ABSTAINS when only ONE candidate carries a measured score (positive evidence only)", () => {
-		// A missing importance means "the score source never measured this place" or "pre-split gazetteer"
-		// or "the id didn't join" — never 0. The meaning-of-zero rule: a magnitude never carries its
-		// own absence, so a lone measured 0.55 must not be read as beating an unmeasured megacity.
+		// A missing importance means "the score source never measured this place"
+		// or "pre-split gazetteer" or "the id didn't join" — never 0.
+		// The meaning-of-zero rule: a magnitude never carries its own absence, so a lone
+		// measured 0.55 must not be read as beating an unmeasured megacity.
 		const partial = [
 			place({ id: 1, name: "Whitby", country: "CA", prominence: 5.1085 }),
 			place({ id: 2, name: "Whitby", country: "GB", prominence: 4.1183, importance: 0.5496 }),
@@ -75,9 +76,10 @@ describe("rankByImportance", () => {
 	})
 
 	it("leaves UNSCORED candidates on their population rank and permutes only the scored slots", () => {
-		// The live shape: `Whitby` has 7 candidates in candidate.db and the importance
-		// artifact scores 2 of them. Abstaining on that throws the only usable signal
-		// away. zero-filling would let a scored hamlet leapfrog an unscored metropolis.
+		// The live shape: `Whitby` has 7 candidates in candidate.db and the
+		// importance artifact scores 2 of them.
+		// Abstaining on that throws the only usable signal away. zero-filling would
+		// let a scored hamlet leapfrog an unscored metropolis.
 		// Neither — the unscored rows simply sit still.
 		const live = [
 			place({ id: 1, name: "Whitby", country: "CA", prominence: 5.1085, importance: 0.5089 }),
@@ -164,9 +166,8 @@ describe("rankByImportance same-country tie band (Springfield decision, 2026-08-
 	})
 
 	it("does NOT band cross-country pairs — Windsor's 0.0042 gap still flips to GB", () => {
-		// The decided-flip guard: any band wide enough to cover Springfield (0.0164) also
-		// covers Windsor's gap. The band must therefore never compare across countries,
-		// or the four accepted flips regress.
+		// The decided-flip guard: any band wide enough to cover Springfield (0.0164) also covers Windsor's gap.
+		// The band must therefore never compare across countries, or the four accepted flips regress.
 		expect(rankByImportance(WINDSOR).map((c) => c.country)).toEqual(["GB", "CA", "US"])
 	})
 
@@ -213,9 +214,10 @@ describe("rankByImportance same-country tie band (Springfield decision, 2026-08-
 	})
 
 	it("#2272: a bearer with NO recorded population never heads its country over one the gazetteer counted", () => {
-		// The live Brussels shape. `blendImportance` returns the encyclopedic score uncapped
-		// when `referential <= 0` (`place-importance-schema.ts:153`), so an article-only row outscored
-		// a municipality of 160,553 — absence of evidence read as the strongest evidence there is.
+		// The live Brussels shape.
+		// `blendImportance` returns the encyclopedic score uncapped when `referential <= 0`
+		// (`place-importance-schema.ts:153`), so an article-only row outscored a municipality
+		// of 160,553 — absence of evidence read as the strongest evidence there is.
 		const anderlecht: ResolvedPlace[] = [
 			place({ id: 1, name: "Anderlecht", country: "BE", prominence: 5.2, population: 160_553, importance: 0.524 }),
 			place({ id: 2, name: "Anderlecht", country: "BE", prominence: 0, importance: 0.5665 }),
@@ -225,8 +227,9 @@ describe("rankByImportance same-country tie band (Springfield decision, 2026-08-
 	})
 
 	it("#2272: the partition is SAME-COUNTRY — an uncounted foreign bearer still wins on fame", () => {
-		// Scoped deliberately. Across borders an article-only score is the only evidence there is,
-		// which is why `blendImportance` leaves that branch uncapped. the cap's own docstring guards it.
+		// Scoped deliberately.
+		// Across borders an article-only score is the only evidence there is, which is why
+		// `blendImportance` leaves that branch uncapped. the cap's own docstring guards it.
 		const crossBorder: ResolvedPlace[] = [
 			place({ id: 1, name: "Whitby", country: "CA", prominence: 5.1085, population: 128_377, importance: 0.5089 }),
 			place({ id: 2, name: "Whitby", country: "GB", prominence: 4.1183, importance: 0.5496 }),

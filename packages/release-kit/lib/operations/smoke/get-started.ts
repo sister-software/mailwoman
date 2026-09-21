@@ -13,6 +13,7 @@ import { smokeGetStarted } from "#release/smoke/get-started"
 /**
  * `release.smoke-get-started` — writes only inside a scratch directory
  * (and the data root the caller names for the full leg).
+ *
  * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
  */
 export const smokeGetStartedOperation = defineOperation({

@@ -98,15 +98,20 @@ export interface SoilCapabilityDistribution {
 	 */
 	noDataShare: number
 	/**
-	 * The truncated minority tail. The five shares sum to 1.
+	 * The truncated minority tail.
+	 *
+	 * The five shares sum to 1.
 	 */
 	otherShare: number
 	/**
-	 * How much of the cell any delineation covers. Below 1 at a survey-area edge.
+	 * How much of the cell any delineation covers.
+	 *
+	 * Below 1 at a survey-area edge.
 	 */
 	mappedShare: number
 	/**
 	 * The largest class share, and the share it rests on.
+	 *
 	 * Absent when the cell carries no class at all.
 	 */
 	topClass?: string
@@ -146,7 +151,9 @@ export interface SoilSurveyAreaRecord {
 export interface SoilCapabilityReading {
 	kind: SoilReadingKind
 	/**
-	 * The cell's distribution. Present on both designated readings. absent on `unknown`.
+	 * The cell's distribution.
+	 *
+	 * Present on both designated readings. absent on `unknown`.
 	 */
 	distribution?: SoilCapabilityDistribution
 	/**
@@ -167,6 +174,7 @@ export interface SoilCapabilityReading {
 	indexCellIndex: string
 	/**
 	 * What the product does not cover, in the authority's own words.
+	 *
 	 * Carried on every reading.
 	 */
 	limits: ReadonlyArray<string>
@@ -327,16 +335,18 @@ export class SoilCapabilityLookup implements Disposable {
 	/**
 	 * Which survey area a coordinate falls in, by the delineation bounds each area's row carries.
 	 *
-	 * A rectangle rather than the outline, and that is honest about what it is: the answer names
-	 * which published survey the reading came from, and two neighbouring counties' rectangles
-	 * overlap at their corners. The reading itself does not depend on it — the cell row is
-	 * the answer — so a corner ambiguity costs a label rather than a determination.
+	 * A rectangle rather than the outline, and that is honest about what it is:
+	 * the answer names which published survey the reading came from, and two neighbouring
+	 * counties' rectangles overlap at their corners.
+	 * The reading itself does not depend on it — the cell row is the answer —
+	 * so a corner ambiguity costs a label rather than a determination.
 	 *
 	 * A linear scan, which the pilot'S 99 survey areas make free and A national build would not.
-	 * It returns on the first containing rectangle, so the pilot costs a few dozen
-	 * comparisons per geocode. At the 3,380 survey areas the country holds this wants a
-	 * bounding-box index. it is left as a scan because a structure sized for a set this
-	 * build does not hold would be untested at the size it was built for.
+	 * It returns on the first containing rectangle, so the pilot costs a few dozen comparisons per geocode.
+	 *
+	 * At the 3,380 survey areas the country holds this wants a bounding-box index.
+	 * it is left as a scan because a structure sized for a set this build does not
+	 * hold would be untested at the size it was built for.
 	 */
 	#surveyAreaAt(latitude: number, longitude: number): SoilSurveyAreaRecord | undefined {
 		for (const [index, bounds] of this.#bounds.entries()) {

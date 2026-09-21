@@ -40,7 +40,9 @@ const DEFAULT_COVERAGE_RESOLUTION = "6"
 
 /**
  * Index resolution, chosen from the `partial`-share measurement — see the workspace
- * readme for the table and the reasoning. `--measure-resolutions` re-derives it.
+ * readme for the table and the reasoning.
+ *
+ * `--measure-resolutions` re-derives it.
  */
 const DEFAULT_INDEX_RESOLUTION = "9"
 
@@ -149,8 +151,9 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 			]
 		}
 
-		// The outline is a second authority's artifact: the EA says its mapping covers all of England
-		// and does not publish where England is. Which outline was used rides in `flood_map_extent`.
+		// The outline is a second authority's artifact: the EA says its mapping covers
+		// all of England and does not publish where England is.
+		// Which outline was used rides in `flood_map_extent`.
 		const outline = options.boundary
 			? outlineFromGeoJSON(await readLocalJSONFile<unknown>(options.boundary), options.boundary)
 			: (await createONSBoundaryClient().readCountryGeometry(EA_COVERAGE_COUNTRY)).geometry

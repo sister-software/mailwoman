@@ -35,13 +35,16 @@ export function stubWorker<Schema>(db: DatabaseClient<Schema>): HTTPVFSWorker {
 }
 
 /**
- * Every connection the calling suite's fixtures open. A DisposableStack disposes once
- * and stays disposed, so each test gets a fresh one rather than reusing the emptied stack.
+ * Every connection the calling suite's fixtures open.
+ *
+ * A DisposableStack disposes once and stays disposed, so each test gets a fresh one
+ * rather than reusing the emptied stack.
  */
 let openDatabases: DisposableStack
 
 /**
  * Register the per-test DisposableStack that {@link trackDatabase} disposes into.
+ *
  * Call once at module top level.
  */
 export function registerOpenDatabases(): void {
@@ -54,7 +57,9 @@ export function registerOpenDatabases(): void {
 }
 
 /**
- * Track a fixture connection for disposal at test end. Answers the same connection for inline use.
+ * Track a fixture connection for disposal at test end.
+ *
+ * Answers the same connection for inline use.
  */
 export function trackDatabase<T extends Disposable>(db: T): T {
 	openDatabases.use(db)

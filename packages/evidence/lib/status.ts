@@ -15,16 +15,21 @@
  */
 
 /**
- * The five claims the evidence can license about a value, ordered from the strongest
- * authority to none. Each result carries exactly one. the constants are the wire values.
+ * The five claims the evidence can license about a value, ordered from the strongest authority to none.
+ *
+ * Each result carries exactly one. the constants are the wire values.
  */
 export const EpistemicStatus = {
 	/**
-	 * An authority assigned this. A uprn, a BAN address, an official postcode.
+	 * An authority assigned this.
+	 *
+	 * A uprn, a BAN address, an official postcode.
 	 */
 	Designated: "designated",
 	/**
-	 * A named source recorded it at a named vintage. An OSM node, an Overture row.
+	 * A named source recorded it at a named vintage.
+	 *
+	 * An OSM node, an Overture row.
 	 */
 	Observed: "observed",
 	/**
@@ -33,11 +38,14 @@ export const EpistemicStatus = {
 	Derived: "derived",
 	/**
 	 * No row matched. the value is the intersection of stated constraints.
+	 *
 	 * Never presentable as retrieved.
 	 */
 	Inferred: "inferred",
 	/**
-	 * The evidence does not support a claim. The answer the evidence gives rather than a failure to try.
+	 * The evidence does not support a claim.
+	 *
+	 * The answer the evidence gives rather than a failure to try.
 	 */
 	Unresolved: "unresolved",
 } as const
@@ -59,12 +67,16 @@ export const Assertion = {
 export type Assertion = (typeof Assertion)[keyof typeof Assertion]
 
 /**
- * Which proposition a source asserts about a record. A third axis, orthogonal to both of the above:
- * `EpistemicStatus` answers what may be claimed about a value, `Assertion` answers whether a
- * relationship is stated or concluded, and this answers what the publisher is talking about at all.
+ * Which proposition a source asserts about a record.
  *
- * It is recorded per field, never per source. A company register is an authority on the identifier it
- * issues, while the registered-office string on the same row is an address somebody filed with it.
+ * A third axis, orthogonal to both of the above: `EpistemicStatus` answers what may
+ * be claimed about a value, `Assertion` answers whether a relationship is stated
+ * or concluded, and this answers what the publisher is talking about at all.
+ *
+ * It is recorded per field, never per source.
+ * A company register is an authority on the identifier it issues, while the registered-office
+ * string on the same row is an address somebody filed with it.
+ *
  * One verdict for the whole source cannot record both, and the compressed form reads as
  * "trust nothing here" — which discards the identity the register does assign.
  *
@@ -73,27 +85,34 @@ export type Assertion = (typeof Assertion)[keyof typeof Assertion]
 export const AssertedProposition = {
 	/**
 	 * An entity or object exists under an identifier the publisher issues or regulates.
+	 *
 	 * A uprn, an NPI, an LEI, a company number, a siret.
 	 */
 	Identity: "identity",
 	/**
 	 * Address components or designators are assigned to an addressable object.
+	 *
 	 * A national address register.
 	 */
 	Address: "address",
 	/**
 	 * A coordinate or footprint belongs to an identified object.
+	 *
 	 * An address point, a building centroid, a parcel.
 	 */
 	Geometry: "geometry",
 	/**
-	 * An address string was supplied or used in an operational context — a filing, a registration,
-	 * a permit, a payment. The publisher attests only that it received this string.
+	 * An address string was supplied or used in an operational context — a filing,
+	 * a registration, a permit, a payment.
+	 *
+	 * The publisher attests only that it received this string.
 	 * Whether the string is correct is a separate question.
 	 */
 	Observation: "observation",
 	/**
-	 * Legal or postal structure and rendition. UPU S42, a national postal guide, an address standard.
+	 * Legal or postal structure and rendition.
+	 *
+	 * UPU S42, a national postal guide, an address standard.
 	 */
 	Grammar: "grammar",
 	/**

@@ -16,7 +16,9 @@
 import type { LocaleProfile } from "#locale/locale"
 
 /**
- * Japanese locale profile. Note the reversed hierarchy: Japan addresses run largest-to-smallest.
+ * Japanese locale profile.
+ *
+ * Note the reversed hierarchy: Japan addresses run largest-to-smallest.
  */
 export const jaJP: LocaleProfile = {
 	locale: "ja-JP",

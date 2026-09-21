@@ -15,6 +15,7 @@ import { collectNodes } from "@mailwoman/core/decoder"
 /**
  * Street-name component tags — the name-containing subtree of a `street` node
  * (`street.value` alone is the bare base: "Sheldon" for "East Sheldon Rd").
+ *
  * Mirrors the resolver's `assembleStreetValue`; used to surface the full parsed street on the result
  * so a house-grade forward consumer renders "Boulevard du Palais", not just "Palais". #1041.
  */

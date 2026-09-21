@@ -33,7 +33,8 @@ describe("jaroWinkler", () => {
 	})
 
 	it("reproduces the compound-surname asymmetry from the literature", () => {
-		// Garcia is a prefix of Garcialopez → high. Lopez falls outside the match window → 0.
+		// Garcia is a prefix of Garcialopez → high.
+		// Lopez falls outside the match window → 0.
 		expect(jaroWinkler("garcia", "garcialopez")).toBeCloseTo(0.9091, 3)
 		expect(jaroWinkler("lopez", "garcialopez")).toBe(0)
 	})

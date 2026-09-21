@@ -16,7 +16,9 @@ import type { LayerManifest } from "@mailwoman/core/layers"
 import type { CoverageBasis } from "@mailwoman/evidence"
 
 /**
- * Which artifact answered, and on what terms. Everything a reader needs to go and check the claim.
+ * Which artifact answered, and on what terms.
+ *
+ * Everything a reader needs to go and check the claim.
  */
 export interface ObservationLayerRecord {
 	name: string
@@ -114,6 +116,7 @@ export function describeCoverage(
 
 /**
  * The provenance sentence: which artifact answered, in one wording.
+ *
  * `tier` widens it for a layer whose tier is part of the claim
  * (zoning ships `build-local`, and a reader must see that on the line).
  */

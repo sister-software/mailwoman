@@ -53,7 +53,8 @@ test("pointToTileFraction: the equator sits at the vertical centre (y = z2/2)", 
 })
 
 test("pointToTileFraction: the Mercator clip latitudes map to the top and bottom edges", () => {
-	// +85.0511° → y ≈ 0 (top), −85.0511° → y ≈ z2 (bottom). The projection's vertical extent.
+	// +85.0511° → y ≈ 0 (top), −85.0511° → y ≈ z2 (bottom).
+	// The projection's vertical extent.
 	expect(pointToTileFraction(0, 0, MERCATOR_CLIP_LAT)[2]).toBeCloseTo(0, 12)
 	expect(pointToTileFraction(0, 0, -MERCATOR_CLIP_LAT)[2]).toBeCloseTo(1, 12)
 })

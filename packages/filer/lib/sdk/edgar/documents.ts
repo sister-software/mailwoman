@@ -25,9 +25,10 @@ export interface ExhibitDocument {
 }
 
 /**
- * Builds the archive folder URL for one accession. Uses `cik` unpadded
- * (`Number(cik)` is what strips the zero-padding `CIK` always carries) — edgar's archive
- * paths spell the CIK bare (`.../data/18926/...`), the opposite convention from
+ * Builds the archive folder URL for one accession.
+ *
+ * Uses `cik` unpadded (`Number(cik)` is what strips the zero-padding `CIK` always carries) —
+ * edgar's archive paths spell the CIK bare (`.../data/18926/...`), the opposite convention from
  * {@linkcode submissionsURL} above, which zero-pads. Both are real edgar conventions and both appear in this file. a
  * caller reaching for the wrong one gets a 404 rather than a wrong-but-plausible document.
  * `accessionNumber` is accepted either dashed (`"0000018926-26-000014"`, the form every edgar-facing
@@ -39,16 +40,19 @@ export function accessionArchiveURL(cik: CIK, accessionNumber: string): string {
 
 /**
  * Matches every `type` spelling edgar actually files an Exhibit 21 under
- * (`EX-21`, `EX-21.1`, `EX-21.01`, lowercase `ex-21.2`, …) while rejecting a type that merely
- * starts the same way — `EX-2`, `EX-2.1`, `EX-210`, `EX-23`, `EX-21A` are all distinct exhibits
- * rather than a spelling variant of Exhibit 21. The literal `21` must be the whole numeric part:
- * optionally followed by only a `.` and more digits, never another bare digit or letter.
+ * (`EX-21`, `EX-21.1`, `EX-21.01`, lowercase `ex-21.2`, …) while rejecting a type that
+ * merely starts the same way — `EX-2`, `EX-2.1`, `EX-210`, `EX-23`, `EX-21A` are all
+ * distinct exhibits rather than a spelling variant of Exhibit 21.
+ *
+ * The literal `21` must be the whole numeric part: optionally followed by only a `.`
+ * and more digits, never another bare digit or letter.
  */
 const EXHIBIT_21_TYPE_PATTERN = /^ex-?21(\.\d+)?$/i
 
 /**
  * One `<TAG>value` line of edgar's sgml manifest, which is a tag-per-line header format
  * rather than nested markup — `<type>`, `<sequence>` and `<filename>` have no closing tags at all.
+ *
  * Matched against recovered text, never against markup: {@linkcode parseFilingDocuments}
  * reads the index page first, which is what turns `&lt.type&gt.` back into `<type>`
  * and removes the page's own `<a>`/`<br>` elements.
@@ -119,14 +123,18 @@ export function parseFilingDocuments(cik: CIK, accessionNumber: string, headerHT
 /**
  * Narrows one accession's full document manifest to its Exhibit 21 entries
  * (see {@linkcode EXHIBIT_21_TYPE_PATTERN} for the accepted spellings).
+ *
  * Returns `[]` — never throws — when the manifest has no Exhibit 21 at all,
  * which is ordinary rather than exceptional: an absent exhibit is the filer's choice
  * (Consolidated Communications' and United States Cellular's latest 10-Ks both carry none)
- * rather than an upstream interface failure. This is the opposite posture from
+ * rather than an upstream interface failure.
+ * This is the opposite posture from
  * {@linkcode parseCompanyTickers}/{@linkcode parseTenKFilings} above, which throw on a malformed payload — those parse
- * SEC's own documented API shapes. Therefore, a mismatch there means the upstream
- * interface changed. A manifest with no Exhibit 21 hasn't broken any interface.
- * it's just a filer that didn't file one this cycle.
+ * SEC's own documented API shapes.
+ * Therefore, a mismatch there means the upstream interface changed.
+ *
+ * A manifest with no Exhibit 21 hasn't broken any interface. it's just a filer
+ * that didn't file one this cycle.
  */
 export function findExhibit21Documents(cik: CIK, accessionNumber: string, headerHTML: string): ExhibitDocument[] {
 	return parseFilingDocuments(cik, accessionNumber, headerHTML).filter((document) =>
@@ -139,8 +147,9 @@ export function findExhibit21Documents(cik: CIK, accessionNumber: string, header
  * joined with `${filing.accessionNumber}-index-headers.html`, through the shared
  * {@link SECDocumentClient} — `exhibit21.ts`'s one-method structural type
  * rather than the concrete SEC client, so a test never needs an axios harness)
- * and returns its Exhibit 21 documents. See {@linkcode findExhibit21Documents} for
- * why an absent exhibit is a `[]` result rather than a thrown error.
+ * and returns its Exhibit 21 documents.
+ * See {@linkcode findExhibit21Documents} for why an absent exhibit is a `[]` result
+ * rather than a thrown error.
  */
 export async function fetchExhibit21Documents(
 	client: SECDocumentClient,

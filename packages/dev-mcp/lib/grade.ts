@@ -22,19 +22,20 @@ import type { GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 import type { GauntletCaseTable } from "mailwoman/eval-harness/gauntlet/schema"
 
 /**
- * The z at which a two-sided 95% test rejects. Same constant the held-out layer
- * already checks on (`holdout.ts`'s `Z_CRITICAL_95_TWO_SIDED`), stated positively here
- * because this test is two-tailed in both directions rather than a one-sided floor.
+ * The z at which a two-sided 95% test rejects.
+ *
+ * Same constant the held-out layer already checks on (`holdout.ts`'s `Z_CRITICAL_95_TWO_SIDED`), stated
+ * positively here because this test is two-tailed in both directions rather than a one-sided floor.
  */
 const Z_CRITICAL_95 = 1.96
 
 /**
  * Project a committed seed row into the table shape {@link checkCase} reads.
  *
- * Written with named fields on purpose. `build-regression-db.ts` inserts the same
- * mapping positionally for bulk-load speed, so it cannot be shared as-is — but naming
- * every field here means a column added to {@link GauntletCaseTable} is a compile error
- * against this function rather than a silently-null column at grade time.
+ * Written with named fields on purpose.
+ * `build-regression-db.ts` inserts the same mapping positionally for bulk-load speed, so it cannot be
+ * shared as-is — but naming every field here means a column added to {@link GauntletCaseTable}
+ * is a compile error against this function rather than a silently-null column at grade time.
  */
 export function seedToCaseTable(seed: SeedCase): GauntletCaseTable {
 	return {
@@ -64,6 +65,7 @@ export function seedToCaseTable(seed: SeedCase): GauntletCaseTable {
 
 /**
  * Whether a case asserts anything a grader could check.
+ *
  * A row with no expectations is not a passing row — it is an ungradeable one,
  * and the two must never be added together.
  */
@@ -131,6 +133,7 @@ export interface SignificanceReading {
 
 /**
  * Normal CDF via the Abramowitz–Stegun 7.1.26 erf approximation.
+ *
  * Max absolute error 1.5e-7, which is four orders of magnitude tighter than any decision taken on it here.
  *
  * Exported for `geo-grade.ts`'s equivalence test rather than copied into it:

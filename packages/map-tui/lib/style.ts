@@ -8,15 +8,18 @@
  * Protomaps-basemap style table for the map-tui debug view.
  *
  * Defines fill, line, and label styles for each of the nine protomaps-basemap layers,
- * restricted by zoom level. Color palette calibrated for dark-terminal rendering:
- * dim fills (read as stipple density via dithering), bright lines and labels.
+ * restricted by zoom level.
+ * Color palette calibrated for dark-terminal rendering: dim fills
+ * (read as stipple density via dithering), bright lines and labels.
  */
 
 export type RGB = readonly [red: number, green: number, blue: number]
 
 /**
- * Fields shared by every style entry. `featureKinds` scopes an entry to features whose
- * `kind` tile attribute is in the list. an entry without it is the layer's catch-all.
+ * Fields shared by every style entry.
+ *
+ * `featureKinds` scopes an entry to features whose `kind` tile attribute is in the
+ * list. an entry without it is the layer's catch-all.
  * Entries are consulted in table order and the first match wins, so kind-scoped
  * entries precede the catch-all.
  */
@@ -94,6 +97,7 @@ const STYLE_TABLE: Record<string, LayerStyle[]> = {
 
 /**
  * Styles applying to a protomaps-basemap layer at a zoom, draw-ordered (fills < lines < labels).
+ *
  * Empty for unstyled or zoom-restricted layers.
  */
 export function stylesFor(layerName: string, zoom: number): LayerStyle[] {
@@ -101,9 +105,10 @@ export function stylesFor(layerName: string, zoom: number): LayerStyle[] {
 }
 
 /**
- * The one style painting a feature: the first entry whose `featureKinds` contains the
- * feature's `kind` attribute, or the first catch-all. A feature is painted at most once
- * per draw pass — kind-scoped entries recolor, they never double-paint.
+ * The one style painting a feature: the first entry whose `featureKinds` contains
+ * the feature's `kind` attribute, or the first catch-all.
+ *
+ * A feature is painted at most once per draw pass — kind-scoped entries recolor, they never double-paint.
  */
 export function styleForFeatureKind(styles: readonly LayerStyle[], featureKind: unknown): LayerStyle | null {
 	for (const style of styles) {

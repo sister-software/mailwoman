@@ -93,8 +93,10 @@ export interface StreetCentroidDatabase {
 }
 
 /**
- * The `street_centroid` columns in insert order. The builder's positional prepared statement derives
- * its placeholder list from this, so the positional order can't drift from the DDL / the reader.
+ * The `street_centroid` columns in insert order.
+ *
+ * The builder's positional prepared statement derives its placeholder list from this,
+ * so the positional order can't drift from the DDL / the reader.
  */
 export const STREET_CENTROID_COLUMNS = [
 	"street_norm",

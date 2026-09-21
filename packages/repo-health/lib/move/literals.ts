@@ -36,8 +36,8 @@ export const DATED_RECORDS: readonly string[] = [
 /**
  * The directory renames a set of file moves implies.
  *
- * A config names a directory far more often than it names a file —
- * `lib/tools/sub-venue/*.ts` is a glob, and no file path is a substring of it.
+ * A config names a directory far more often than it names a file — `lib/tools/sub-venue/*.ts`
+ * is a glob, and no file path is a substring of it.
  * Trimming the segments the two ends share leaves exactly the part that moved.
  */
 export function directoryMoves(moves: readonly ModuleMove[]): ModuleMove[] {

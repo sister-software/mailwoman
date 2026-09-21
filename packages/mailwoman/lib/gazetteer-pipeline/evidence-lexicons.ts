@@ -83,9 +83,10 @@ const LOCALITY_BIT = { locality: 1, locality_homograph: 2 }
 
 /**
  * The painter fold (word_norm) — the rule both painters apply at lookup
- * (`gazetteer_anchor.py` / `neural/gazetteer-inference.ts`): per whitespace word, strip
- * leading/trailing non-letter/digit chars (keep internal — "saint-thomas", "d'azur"), lowercase,
- * single-space join. Lexicon entry keys must use this fold or they are unreachable at paint time.
+ * (`gazetteer_anchor.py` / `neural/gazetteer-inference.ts`): per whitespace word, strip leading/trailing
+ * non-letter/digit chars (keep internal — "saint-thomas", "d'azur"), lowercase, single-space join.
+ *
+ * Lexicon entry keys must use this fold or they are unreachable at paint time.
  * Not the FST fold (`normalizeTokens` strips internal punctuation too) — the FST and painter
  * worlds fold differently by design. caught at Phase 2 when the locality builder briefly used
  * the FST fold ("Saint-Thomas" → "saintthomas" could never match the painter's "saint-thomas").
@@ -101,6 +102,7 @@ export function painterFold(surface: string): string[] {
 /**
  * Evidence-side supplemental degenerate surfaces (the `SUPPLEMENTAL_DEGENERATE_SURFACES`
  * pattern from `fst.ts`, scoped to the evidence-lexicon policy).
+ *
  * Each entry carries its receipt — a v3.19.0 flip-census row where the surface,
  * admitted through a WOF data-noise carrier, painted evidence that broke a golden parse:
  *
@@ -115,13 +117,15 @@ export const EVIDENCE_SUPPLEMENTAL_DEGENERATE_SURFACES: readonly string[] = ["sc
 
 /**
  * Law-1 directional closure (v5): whole surfaces from libpostal `directionals.txt` per curation language.
+ *
  * Loaded separately from `loadDegenerateSurfaces` on purpose — that loader is the shipped
  * FST curation policy (degenerate-surface-exclusion v1.1, baked into FST artifact trailers);
  * evidence-lexicon curation extends it without moving the FST policy.
  */
 export async function loadDirectionalSurfaces(fold: (surface: string) => string[] = painterFold): Promise<Set<string>> {
-	// Memoized on the same grounds as loadPersonNameSurfaces: static dictionaries, process-lifetime,
-	// no invalidation key. Keyed by fold identity — the FST and painter folds must not share.
+	// Memoized on the same grounds as loadPersonNameSurfaces: static dictionaries,
+	// process-lifetime, no invalidation key.
+	// Keyed by fold identity — the FST and painter folds must not share.
 	// The returned set is shared. every caller only iterates it.
 	let hit = directionalSurfacesMemo.get(fold)
 
@@ -160,6 +164,7 @@ async function scanDirectionalSurfaces(fold: (surface: string) => string[]): Pro
 
 /**
  * Law-4 region vocabulary (v5): US state names + abbreviations, painter-folded.
+ *
  * Per-country scoping lives at the call site — the set only applies when the build
  * covers the country whose region vocabulary it is.
  */
@@ -192,8 +197,8 @@ const DE_CITY_STATES: ReadonlySet<GermanStateCode> = new Set(["BE", "HB", "HH"])
  *
  * The city-states (Berlin, Hamburg, Bremen) are deliberately absent from the exclusion:
  * the US analogy does not transfer — Washington-the-state and Washington-the-city are
- * different places (a rotation hazard), while Berlin-the-Land and Berlin-the-Stadt
- * are one coextensive place whose dominant reading in user text is the locality.
+ * different places (a rotation hazard), while Berlin-the-Land and Berlin-the-Stadt are
+ * one coextensive place whose dominant reading in user text is the locality.
  * Withholding evidence there would gut the DE fold's value on the three largest cities.
  * the model owns the residual region/locality call (model-first).
  */
@@ -226,8 +231,9 @@ export function loadDERegionVocabulary(fold: (surface: string) => string[] = pai
 
 /**
  * Alt-name sub-phrase hygiene (v5): is `alt` a contiguous token subsequence
- * of `primary` (both painter-folded)? Equality doesn't count — re-adding the
- * primary through the names table is harmless.
+ * of `primary` (both painter-folded)?
+ *
+ * Equality doesn't count — re-adding the primary through the names table is harmless.
  */
 export function isSubPhraseAlias(alt: readonly string[], primary: readonly string[]): boolean {
 	if (!alt.length || alt.length >= primary.length) return false
@@ -259,8 +265,9 @@ export async function loadPersonNameSurfaces(): Promise<Set<string>> {
  * {@link computeSurfaceCountryCounts}, whose input is a rebuildable artifact. The FR and US locality-surface passes were
  * each re-reading and re-folding the whole given-names + surnames + personal-titles set.
  *
- * The returned set is shared. Every caller only probes it
- * (`clearsProminenceFloor` takes it as `ReadonlySet`); a future caller that mutates must copy first.
+ * The returned set is shared.
+ * Every caller only probes it (`clearsProminenceFloor` takes it as `ReadonlySet`);
+ * a future caller that mutates must copy first.
  */
 let personNameSurfacesMemo: Set<string> | undefined
 
@@ -297,6 +304,7 @@ async function scanPersonNameSurfaces(): Promise<Set<string>> {
 
 /**
  * Law 2 + 3 combined: is a 1-token surface prominent enough to be evidence?
+ *
  * Pure — the unit the selectivity tests exercise.
  *
  * `ownImportance` = the surface's max importance across places named it; `parentImportance` = the
@@ -318,12 +326,16 @@ export function clearsProminenceFloor(
 
 export interface BuildLocalitySurfaceLexiconOpts {
 	/**
-	 * Countries whose locality names become evidence. Default US+FR (the probe-validated pair).
+	 * Countries whose locality names become evidence.
+	 *
+	 * Default US+FR (the probe-validated pair).
 	 */
 	countries?: string[]
 	/**
-	 * Child placetypes. Default includes `neighbourhood` (the v4 register change);
-	 * pass `["locality", "localadmin"]` for a v3-parity build.
+	 * Child placetypes.
+	 *
+	 * Default includes `neighbourhood` (the v4 register change); pass
+	 * `["locality", "localadmin"]` for a v3-parity build.
 	 */
 	placetypes?: string[]
 	/**
@@ -405,8 +417,9 @@ export async function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexi
 
 	// Neighbourhood prominence rides the parent locality (v4): neighbourhoods structurally
 	// lack population rows, and refusing them on absent data is the meaning-of-zero trap —
-	// Montmartre is prominent because Paris is. Resolved via the ancestors table. a neighbourhood
-	// surface's floor input is max(own importance, parent locality/localadmin importance).
+	// Montmartre is prominent because Paris is.
+	// Resolved via the ancestors table. a neighbourhood surface's floor input is
+	// max(own importance, parent locality/localadmin importance).
 	const parentImportanceByID = new Map<number, number>()
 
 	if (placetypes.includes("neighbourhood")) {
@@ -566,16 +579,18 @@ export interface BuildStreetTypeLexiconOpts {
 
 /**
  * Street-type surfaces from the codex per-locale tables (fr/us/gb/de/ca).
+ *
  * Canonical words (rue/avenue/street/straße) are case-insensitive regardless of length —
  * "rue" is 3 letters and must match lowercase. short abbreviation variants (r, av, ST)
  * are case-sensitive uppercase `code_entries` so they never fire on lowercase
  * prose (the anchor-lexicon short-code discipline).
  *
- * V2 (the v3.19.0 flip-census fix, family F1): `code_entries` that are also US
- * state/territory abbreviations (CT/KY/ MT/PR/WY — Court/Key/Mount/Prairie/Way) are dropped.
+ * V2 (the v3.19.0 flip-census fix, family F1): `code_entries` that are also US state/territory
+ * abbreviations (CT/KY/ MT/PR/WY — Court/Key/Mount/Prairie/Way) are dropped.
  * In US mail the state reading dominates ("mountain WAY WY 82601", "susie CT WY 83101" —
- * both lost their region to street-code evidence on the state token); a suffix
- * abbreviated as one of these is rare enough that withholding evidence costs ~nothing.
+ * both lost their region to street-code evidence on the state token); a suffix abbreviated
+ * as one of these is rare enough that withholding evidence costs ~nothing.
+ *
  * Directional codes (N/S/E/W/NE/ NW/SE/SW) stay even where one collides with a state (NE) —
  * directional evidence is common and showed zero census flips.
  */
@@ -670,7 +685,8 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 		addAbbrev(d)
 	}
 
-	// V2 / family F1: state-abbreviation homograph codes never paint (see the docstring). Directionals exempt.
+	// V2 / family F1: state-abbreviation homograph codes never paint (see the docstring).
+	// Directionals exempt.
 	const DIRECTIONAL_CODES = new Set(["N", "S", "E", "W", "NE", "NW", "SE", "SW"])
 	let droppedStateCodes = 0
 

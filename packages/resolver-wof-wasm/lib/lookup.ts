@@ -84,8 +84,9 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 	}
 
 	/**
-	 * Ids whose region abbreviation exactly equals `text` (case-insensitive),
-	 * from `place_abbr`. The exact-abbrev tier signal — see the `findPlace` call site.
+	 * Ids whose region abbreviation exactly equals `text` (case-insensitive), from `place_abbr`.
+	 *
+	 * The exact-abbrev tier signal — see the `findPlace` call site.
 	 * Empty on slim DBs without the table.
 	 */
 	#abbrExactIDs(text: string): Set<number> {
@@ -116,14 +117,16 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 
 		const limit = Math.max(1, query.limit ?? 10)
 
-		// FTS5 match on place_search joined to spr. Placetype + country filters are pushed
-		// into the where clause because they reduce candidate count cheaply.
+		// FTS5 match on place_search joined to spr.
+		// Placetype + country filters are pushed into the where clause because they
+		// reduce candidate count cheaply.
 		const conditions: string[] = ["place_search MATCH ?", "spr.is_current != 0", "spr.is_deprecated = 0"]
 		const params: Array<string | number> = [ftsQuery]
 
-		// Shared placetype-equivalence expansion (core/resolver): a `locality` query must
-		// also reach `borough` / `localadmin` rows. Without it, Brooklyn-the-borough
-		// (pop 2.5M, an exact name match) was unreachable and the fuzzy "Brooklyn Park, MN" won.
+		// Shared placetype-equivalence expansion (core/resolver): a `locality` query
+		// must also reach `borough` / `localadmin` rows.
+		// Without it, Brooklyn-the-borough (pop 2.5M, an exact name match) was unreachable
+		// and the fuzzy "Brooklyn Park, MN" won.
 		// Same table the Node resolver uses — the two backends can't drift.
 		const placetypes = expandPlacetypeFilter(normalizePlacetypes(query.placetype)) as WOFPlacetype[] | null
 
@@ -137,7 +140,8 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 			params.push(query.country.toUpperCase())
 		}
 
-		// Point-in-bbox filter. Used to constrain a locality lookup to a parsed region/state's bounds
+		// Point-in-bbox filter.
+		// Used to constrain a locality lookup to a parsed region/state's bounds
 		// (e.g. "Roseville, Michigan" → only the Roseville whose centroid sits in Michigan's bbox),
 		// which the broken-in-the-slim-DB parent_id chain can't do via descendant filtering.
 		if (query.bbox) {
@@ -146,10 +150,10 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		}
 
 		// Over-fetch a pool ordered by raw BM25, then re-rank in JS
-		// (exact-name tier, then population-weighted bm25). The over-fetch is essential:
-		// a famous place can sit a few rows below a tiny same-name town on raw
-		// BM25 ("New York" loses to "West New York" by a hair), so a tight limit
-		// on bm25 alone would truncate it before the re-rank could pull it up.
+		// (exact-name tier, then population-weighted bm25).
+		// The over-fetch is essential: a famous place can sit a few rows below a tiny
+		// same-name town on raw BM25 ("New York" loses to "West New York" by a hair),
+		// so a tight limit on bm25 alone would truncate it before the re-rank could pull it up.
 		// This mirrors the post-scoring tier + population boost in resolver-wof-sqlite/lookup.ts.
 		// (v1 issued pure bm25, which is why the demo targeted West New York for "New York, NY".)
 		const hasPop = this.#hasPopulation()
@@ -208,10 +212,10 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 			.map((row) => {
 				// Alias tier: `alt_names` is the FTS row's alias bag (the slim DB's only surviving alias source),
 				// aliases joined on the boundary-preserving ALIAS_SEPARATOR (#523).
-				// The shared parser does a true per-alias equality check, unrestricted.
-				// on a legacy bag (pre-#523 slim artifact, boundaries lost) it falls back
-				// to padded containment conditioned on "no strictly exact candidate"
-				// so interior fragments ("York" inside "New York City") can't be false-promoted.
+				// The shared parser does a true per-alias equality check, unrestricted. on a
+				// legacy bag (pre-#523 slim artifact, boundaries lost) it falls back to padded
+				// containment conditioned on "no strictly exact candidate" so interior fragments
+				// ("York" inside "New York City") can't be false-promoted.
 				// Mirrors the Node resolver's alias tier (`WOFSQLitePlaceLookup.#exactMatchIDs`).
 				const aliasExact = aliasBagExactMatch(row.alt_names, normQuery, anyStrictExact)
 				const exactTier = strictExact(row) || aliasExact ? 0 : 1
@@ -233,8 +237,8 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 				lat: row.latitude,
 				lon: row.longitude,
 				parent_id: row.parent_id ?? undefined,
-				// Surface the exact-match tier so a downstream country re-rank (#369) can
-				// keep the country pin from crossing it — parity with `WOFSQLitePlaceLookup`.
+				// Surface the exact-match tier so a downstream country re-rank (#369) can keep
+				// the country pin from crossing it — parity with `WOFSQLitePlaceLookup`.
 				// See ResolvedPlace.exactMatch.
 				exactMatch: exactTier === 0,
 				bbox:
@@ -254,11 +258,14 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 	}
 
 	/**
-	 * Dual-role localities coincident with an admin id, from the
-	 * `coincident_roles` relation (#403) carried into the slim DB by build-slim.
-	 * Backs the resolver's hierarchy completion (on by default) in the browser — mirrors
-	 * `WOFSQLitePlaceLookup.coincidentLocalitiesFor`. Returns `[]` when the slim DB predates
-	 * the relation. Loaded once + memoized (the relation is ~hundreds of rows).
+	 * Dual-role localities coincident with an admin id, from the `coincident_roles`
+	 * relation (#403) carried into the slim DB by build-slim.
+	 *
+	 * Backs the resolver's hierarchy completion (on by default) in the browser —
+	 * mirrors `WOFSQLitePlaceLookup.coincidentLocalitiesFor`.
+	 * Returns `[]` when the slim DB predates the relation.
+	 *
+	 * Loaded once + memoized (the relation is ~hundreds of rows).
 	 */
 	coincidentLocalitiesFor(adminID: number | string): CoincidentLocality[] {
 		const id = typeof adminID === "number" ? adminID : Number(adminID)

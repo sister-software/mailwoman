@@ -111,9 +111,9 @@ describe("the family registry", () => {
 	})
 
 	it("serves a language's unpackaged locales, so ko-KR and zh-TW reach the character family", () => {
-		// These three ship no weights package. Listing only the packaged locales made
-		// `familyForLocale` answer undefined while `scriptFamilyBase` answered `cjk` —
-		// two declarations of one fact, disagreeing.
+		// These three ship no weights package.
+		// Listing only the packaged locales made `familyForLocale` answer undefined
+		// while `scriptFamilyBase` answered `cjk` — two declarations of one fact, disagreeing.
 		for (const locale of ["ko-KR", "zh-TW", "zh-HK", "ja"]) {
 			expect(familyForLocale(locale)?.family, locale).toBe("cjk")
 		}
@@ -131,8 +131,9 @@ describe("familyFallbackFor", () => {
 		// A family id resolves to itself, so it falls back to nothing.
 		expect(familyFallbackFor("cjk")).toBeUndefined()
 		expect(familyFallbackFor("en-us")).toBeUndefined()
-		// A Latin overlay names its base in its manifest, so resolution follows `mailwoman.baseWeights`
-		// rather than a script rule. Answering here would give resolution two sources for one fact.
+		// A Latin overlay names its base in its manifest, so resolution follows
+		// `mailwoman.baseWeights` rather than a script rule.
+		// Answering here would give resolution two sources for one fact.
 		expect(familyFallbackFor("en-GB")).toBeUndefined()
 		expect(familyFallbackFor("fr-FR")).toBeUndefined()
 		// No family claims it.

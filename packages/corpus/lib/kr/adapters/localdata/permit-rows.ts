@@ -30,12 +30,16 @@ export const SOURCE = "localdata-kr"
 export const COUNTRY = "KR"
 
 /**
- * The 영업상태명 of a business still trading. A closed one's address records somewhere that was.
+ * The 영업상태명 of a business still trading.
+ *
+ * A closed one's address records somewhere that was.
  */
 export const OPEN_STATUS = "영업/정상"
 
 /**
- * The publisher's encoding. `cp949` rather than `euc-kr` for the reason `decodeByteStream` states.
+ * The publisher's encoding.
+ *
+ * `cp949` rather than `euc-kr` for the reason `decodeByteStream` states.
  */
 const ENCODING = "cp949"
 
@@ -84,7 +88,9 @@ function toNumber(value: string): number | null {
 
 export interface ReadPermitOptions {
 	/**
-	 * Keep only these 영업상태명 values. Empty admits every status.
+	 * Keep only these 영업상태명 values.
+	 *
+	 * Empty admits every status.
 	 */
 	statuses?: readonly string[]
 }

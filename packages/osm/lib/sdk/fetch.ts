@@ -25,8 +25,10 @@ import { movePath } from "@mailwoman/core/fs/writers"
 const GEOFABRIK_BASE = "https://download.geofabrik.de"
 
 /**
- * The URL of a Geofabrik `-latest.osm.pbf` extract for a region path like `europe/france/ile-de-france`
- * or `europe/germany`. Pass the path without the `-latest.osm.pbf` suffix.
+ * The URL of a Geofabrik `-latest.osm.pbf` extract for a region path like
+ * `europe/france/ile-de-france` or `europe/germany`.
+ *
+ * Pass the path without the `-latest.osm.pbf` suffix.
  */
 export function geofabrikURL(regionPath: string): string {
 	const clean = regionPath.replaceAll(/^\/+|\/+$/g, "")
@@ -36,8 +38,9 @@ export function geofabrikURL(regionPath: string): string {
 
 /**
  * Download a Geofabrik extract to `destPath`, streaming (these run to several GB for a whole country).
- * Returns the byte count written. The caller owns where the file lands
- * (typically `$MAILWOMAN_DATA_ROOT/osm/geofabrik/`).
+ *
+ * Returns the byte count written.
+ * The caller owns where the file lands (typically `$MAILWOMAN_DATA_ROOT/osm/geofabrik/`).
  */
 export async function downloadExtract(regionPath: string, destPath: string): Promise<number> {
 	const url = geofabrikURL(regionPath)

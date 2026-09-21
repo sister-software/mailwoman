@@ -30,6 +30,7 @@ interface PlanProps {
 	price: string
 	/**
 	 * The billing basis under the price — "per month, per legal entity".
+	 *
 	 * Short enough to read as a unit rather than a claim.
 	 */
 	basis: string

@@ -46,7 +46,9 @@ import type { StreetSegmentDatabase } from "#street/segment-schema"
 export type InterpolationMethod = "address_point" | "tiger_range"
 
 /**
- * One interpolated coordinate estimate. Never an exact situs point — see `uncertaintyM`.
+ * One interpolated coordinate estimate.
+ *
+ * Never an exact situs point — see `uncertaintyM`.
  */
 export interface InterpolatedHit {
 	lat: number
@@ -60,14 +62,17 @@ export interface InterpolatedHit {
 	 */
 	method: InterpolationMethod
 	/**
-	 * `tiger_range` only. True when the matched segment side's parity agrees with
-	 * the house number (or the side is `mixed`). False = opposite-side fallback:
-	 * usually the right block, wrong side of the street.
+	 * `tiger_range` only.
+	 *
+	 * True when the matched segment side's parity agrees with the house number (or the side is `mixed`).
+	 * False = opposite-side fallback: usually the right block, wrong side of the street.
 	 */
 	parityMatched?: boolean
 	/**
-	 * `address_point` only. `both` = the query number sits between two known neighbor numbers;
-	 * `single` = neighbors exist on one side only (extrapolated, larger `uncertaintyM`).
+	 * `address_point` only.
+	 *
+	 * `both` = the query number sits between two known neighbor numbers; `single` =
+	 * neighbors exist on one side only (extrapolated, larger `uncertaintyM`).
 	 */
 	bracket?: "both" | "single"
 	/**
@@ -96,6 +101,7 @@ export interface InterpolationQuery {
 	/**
 	 * The resolved locality's coordinate — the tie-breaker when no postcode was given
 	 * and the parity-preferred covering ranges still span several postcodes.
+	 *
 	 * See {@link NEAR_MAX_KM} for the acceptance geometry.
 	 */
 	near?: { lat: number; lon: number }
@@ -131,6 +137,7 @@ interface SegmentRow {
 /**
  * The postcode group nearest `near`, under the {@link NEAR_MAX_KM} dominance geometry —
  * or null when no group qualifies (out of range, or the runner-up is too close to call).
+ *
  * A group's distance is its closest segment's first polyline vertex. a segment whose
  * geometry fails to parse prices as unreachable rather than aborting the tie-break.
  */
@@ -176,8 +183,10 @@ export class StreetInterpolator<
 > implements InterpolationLookup {
 	readonly #db: DatabaseClient<DB>
 	/**
-	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal
-	 * cannot reach it — ownership is membership rather than a flag a later branch has to check.
+	 * Resources this instance opened.
+	 *
+	 * A connection handed in by a caller is not in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
 	 */
 	readonly #resources = new DisposableStack()
 	readonly #byPostcode:
@@ -234,8 +243,9 @@ export class StreetInterpolator<
 	}
 
 	/**
-	 * The artifact's own conformal radius multiplier (#374), read from
-	 * the extract's `interp_calibration` metadata table at construction.
+	 * The artifact's own conformal radius multiplier (#374), read from the extract's
+	 * `interp_calibration` metadata table at construction.
+	 *
 	 * `undefined` = the extract predates the table (or carries no valid row) — the resolver
 	 * then applies no artifact default and callers may supply a legacy fallback.
 	 */
@@ -292,8 +302,8 @@ export class StreetInterpolator<
 		let pool = preferred.length ? preferred : rows
 		const parityMatched = preferred.length > 0
 
-		// No scope given: the covering ranges must agree on one postcode or the
-		// lookup abstains — a name spanning towns is ambiguity rather than an answer.
+		// No scope given: the covering ranges must agree on one postcode or the lookup abstains —
+		// a name spanning towns is ambiguity rather than an answer.
 		// Counted over the parity pool rather than all rows: a section-line boundary road carries a
 		// different ZIP per side ("east 13 mile road" is Fraser 48026 odd / Roseville 48066 even),
 		// and the opposite side can never hold the number it would otherwise veto.

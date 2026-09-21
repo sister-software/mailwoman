@@ -22,14 +22,18 @@ import { UPRN_COVERAGE_H3_RESOLUTION, UPRN_H3_RESOLUTION, uprnH3Cell } from "#up
 /**
  * The identity fold, on purpose: this probe keys on a coordinate rather than a name,
  * so there is no string folding for the builder and the probe to disagree about.
- * Passing the same identity as both `probeFold` and `layerFold` records that the fold axis is not in
- * play here, rather than silently omitting the check. It is not a stub.
+ *
+ * Passing the same identity as both `probeFold` and `layerFold` records that the fold
+ * axis is not in play here, rather than silently omitting the check.
+ * It is not a stub.
  */
 export const UPRN_EXISTENCE_FOLD = foldIdentity((s) => s)
 
 /**
- * The countries OS Open uprn covers. Northern Ireland is outside the product, so a `null` there
- * is unknown and must never become evidence of absence. the country check is what keeps it out.
+ * The countries OS Open uprn covers.
+ *
+ * Northern Ireland is outside the product, so a `null` there is unknown and must never
+ * become evidence of absence. the country check is what keeps it out.
  */
 export const UPRN_COVERED_COUNTRIES: ReadonlySet<string> = new Set(["GB"])
 

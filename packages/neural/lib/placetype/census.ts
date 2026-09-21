@@ -94,6 +94,7 @@ export interface PlacetypeCensusHeader {
 	/**
 	 * Global share of each projected tag across every counted child in the country — the
 	 * denominator a consumer needs to turn a node's share into a lift (`nodeShare / baseRate`).
+	 *
 	 * Shipped in the header rather than recomputed by the consumer because the base rate
 	 * is a property of the build (which placetypes were counted, over which source),
 	 * and a consumer re-deriving it from the node table would silently get a different number:
@@ -103,6 +104,7 @@ export interface PlacetypeCensusHeader {
 	baseRates: Partial<Record<ComponentTag, number>>
 	/**
 	 * Optional soft-prior bias magnitude a census hit contributes at decode time.
+	 *
 	 * Absent until a calibration task measures one — the census ships as a probeable artifact
 	 * first (R4c is data + loader + offline probe, no decode wiring), and a defaulted
 	 * number here would let an uncalibrated bias reach the decoder unnoticed.
@@ -198,26 +200,31 @@ export function serializePlacetypeCensus(header: PlacetypeCensusHeader, nodes: r
  * Minimal subset of {@link PlacetypeCensusResolver} a consumer module reads —
  * structural typing so callers depend on the shape rather than the class
  * (the same `…Like` convention as `PairIndexLike` / `QueryShapeLike`).
+ *
  * The observability rung (`placetype-pair-prior.ts`'s census probe) needs exactly
  * these two: presence (`probe`) and magnitude (`lift`).
  *
- * `share` is deliberately not on this interface. Within-parent share was measured at ~100%
- * for the dominant class everywhere, so a share-proportional consumer reads a constant —
- * `lift` (share ÷ the country base rate) is the only one of the two that varies with the
- * parent, and naming just it keeps a future consumer from reaching for the flat one.
+ * `share` is deliberately not on this interface.
+ * Within-parent share was measured at ~100% for the dominant class everywhere,
+ * so a share-proportional consumer reads a constant — `lift` (share ÷ the country base rate)
+ * is the only one of the two that varies with the parent, and naming just it keeps
+ * a future consumer from reaching for the flat one.
  */
 export interface PlacetypeCensusLike {
 	probe(parent: string): PlacetypeCensusNode | null
 	lift(parent: string, tag: ComponentTag): number
 	/**
 	 * The census header's ISO country code, when the implementation carries a header.
+	 *
 	 * Optional for the same reason `PairIndexLike.country` is: a hand-built test double may omit it.
 	 */
 	readonly country?: string
 }
 
 /**
- * Map-backed reader over PCN1 bytes. Pure JS, no Node imports — the browser runtime loads the same artifact.
+ * Map-backed reader over PCN1 bytes.
+ *
+ * Pure JS, no Node imports — the browser runtime loads the same artifact.
  */
 export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 	readonly header: PlacetypeCensusHeader
@@ -283,9 +290,11 @@ export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 	}
 
 	/**
-	 * Look up one folded parent surface. Returns `null` when the parent has no census node —
-	 * absence is not evidence (the meaning-of-zero rule): a missing node means
-	 * the gazetteer has no counted children there, which is usually coverage, .
+	 * Look up one folded parent surface.
+	 *
+	 * Returns `null` when the parent has no census node — absence is not evidence
+	 * (the meaning-of-zero rule): a missing node means the gazetteer has no counted
+	 * children there, which is usually coverage, .
 	 * Therefore, a consumer must treat `null` as neutral and never as a prohibition.
 	 */
 	probe(parent: string): PlacetypeCensusNode | null {
@@ -293,9 +302,10 @@ export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 	}
 
 	/**
-	 * The share of `parent`'s counted children projecting onto `tag` — `0` when
-	 * the parent is unknown or the tag is unseen there. Positive evidence only:
-	 * read a `0` as "no support from this artifact", never as "this tag is wrong".
+	 * The share of `parent`'s counted children projecting onto `tag` — `0`
+	 * when the parent is unknown or the tag is unseen there.
+	 *
+	 * Positive evidence only: read a `0` as "no support from this artifact", never as "this tag is wrong".
 	 */
 	share(parent: string, tag: ComponentTag): number {
 		const node = this.#nodes.get(parent)
@@ -308,6 +318,7 @@ export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 	/**
 	 * `share(parent, tag)` divided by the country's global base rate for `tag` —
 	 * how much more likely this tag is under this parent than under a parent drawn at random.
+	 *
 	 * `1` means "no different from the country at large", `0` means no support.
 	 * Returns `0` (not `Infinity`) when the base rate is absent, so a missing
 	 * denominator can never manufacture unbounded evidence.

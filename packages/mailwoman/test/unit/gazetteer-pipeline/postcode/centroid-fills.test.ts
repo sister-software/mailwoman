@@ -60,8 +60,8 @@ test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordi
 })
 
 test("GeoNames postal names each postcode's delivery city, including territories filed under their own ISO code", async () => {
-	// A delivery city is not the geographic locality: 11201 is Brooklyn inside the
-	// locality New York, and Queens uses neighbourhood names rather than the borough.
+	// A delivery city is not the geographic locality: 11201 is Brooklyn inside the locality
+	// New York, and Queens uses neighbourhood names rather than the borough.
 	// Both shapes are here on purpose.
 	await using dirDirectory = await temporaryDirectory("centroid-names-")
 	const dir = dirDirectory.path
@@ -79,8 +79,9 @@ test("GeoNames postal names each postcode's delivery city, including territories
 	ins.run(3, -1, "00601", "postalcode", "US", 0, 0) // Puerto Rico, filed as US in WOF
 
 	// GeoNames files a US territory under PR rather than US.
-	// The database files it under US. Reading only `US` rows leaves every territory
-	// postcode unnamed — 149 of them against the 2024 Census zcta list.
+	// The database files it under US.
+	// Reading only `US` rows leaves every territory postcode unnamed —
+	// 149 of them against the 2024 Census zcta list.
 	const geonamesDir = join(dir, "geonames-postal")
 
 	await makeDirectories(geonamesDir)
@@ -111,7 +112,8 @@ test("GeoNames postal names each postcode's delivery city, including territories
 
 	expect(named("11201")).toEqual(["Brooklyn"])
 	expect(named("11375")).toEqual(["Forest Hills"])
-	// The country-alias case. Without it this is [] and the postcode also keeps its (0,0) placeholder.
+	// The country-alias case.
+	// Without it this is [] and the postcode also keeps its (0,0) placeholder.
 	expect(named("00601")).toEqual(["Adjuntas"])
 
 	const pr = db.prepare("SELECT latitude FROM spr WHERE id = 3").get() as { latitude: number }
@@ -120,7 +122,8 @@ test("GeoNames postal names each postcode's delivery city, including territories
 })
 
 test("falls back to the combined dump for a country the per-country directory has no file for", async () => {
-	// The US case. `<data-root>/geonames-postal/` carries CZ, DK, FI and eight others and no US.txt,
+	// The US case.
+	// `<data-root>/geonames-postal/` carries CZ, DK, FI and eight others and no US.txt,
 	// so without this branch the whole GeoNames pass short-circuits on existsSync and writes nothing.
 	await using dirDirectory = await temporaryDirectory("centroid-combined-")
 	const dir = dirDirectory.path

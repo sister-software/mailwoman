@@ -138,8 +138,8 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		// The FCC caps this API at ten requests per minute — six seconds a call —
-		// so a national run is throttle-bound by construction and the interesting number
-		// is how much of the wall clock went to waiting rather than transferring.
+		// so a national run is throttle-bound by construction and the interesting number is
+		// how much of the wall clock went to waiting rather than transferring.
 		// Printed once the network phase is over, on stderr with the rest of the progress stream,
 		// so a rate change can be assessed against a measurement.
 		console.error(`▸ ${formatBDCThrottleStats(client.throttleStats())}`)

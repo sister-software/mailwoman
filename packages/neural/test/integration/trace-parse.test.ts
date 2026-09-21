@@ -210,7 +210,8 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		const text = "350 5th Ave"
 		const { pieces } = tokenizer.encode(text)
 		const logits = logitsWithBoost(pieces.length, 0, "B-street")
-		// LOCALE_COUNTRIES order: US first. A huge US logit clears the 0.8 detection bar.
+		// LOCALE_COUNTRIES order: US first.
+		// A huge US logit clears the 0.8 detection bar.
 		const localeLogits = [10, 0, 0, 0, 0, 0, 0, 0, 0]
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits, localeLogits) })
 
@@ -257,8 +258,8 @@ describe("NeuralAddressClassifier.traceParse", () => {
 	})
 
 	it("GB conventions pin (#1275): a clipped GB postcode is snap-repaired with NO explicit postcodeRepair opt", async () => {
-		// Characterizes the #1275 clip class: the en-gb overlay mis-tags the first piece
-		// of the outward code as region ("SK11 9PD" → region "S" + postcode "K11 9PD").
+		// Characterizes the #1275 clip class: the en-gb overlay mis-tags the first piece of
+		// the outward code as region ("SK11 9PD" → region "S" + postcode "K11 9PD").
 		// The en-gb model-card pins `requires.conventions.mode` to "gb", which loadFromWeights
 		// forwards as the classifier's `addressSystemConventions` config — reproduced here directly.
 		// The codex gb row's `postcodePattern` must open the repair check so the snap path reunites the span.
@@ -296,10 +297,10 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		const unpinned = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
 		const clippedTrace = await unpinned.traceParse(text, { spanProposer: false })
 		// The subject here is the postcode check: unpinned, the codex gb row is never consulted,
-		// so the snap path never runs and the clip stands. Assert that specifically
-		// rather than `repairs === []` — the blanket form silently also pinned "word-consistency
-		// never fires", which was true only while that repair was default-off on the classifier,
-		// and broke the moment the default matched the pipeline's.
+		// so the snap path never runs and the clip stands.
+		// Assert that specifically rather than `repairs === []` — the blanket form silently
+		// also pinned "word-consistency never fires", which was true only while that repair was
+		// default-off on the classifier, and broke the moment the default matched the pipeline's.
 		expect(clippedTrace.repairs.filter((r) => r.pass === "postcodeRepair")).toEqual([])
 		const clipped = (await unpinned.parseJSON(text)) as { postcode?: string }
 		expect(clipped.postcode).toBeDefined()
@@ -368,11 +369,11 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 	it("spanBridge repair stays piece-aligned even though the bridge MERGES tokens", async () => {
 		const tokenizer = await loadTokenizer()
-		// "P.O. Box" fragments: label the alphanumeric pieces street
-		// (a STAGE2 tag — the fake classifier runs the 21-label set, and the bridge is tag-agnostic),
-		// leave the dot pieces O. The bridge merges the fragments across the unlabeled
-		// intra-token punctuation, dropping tokens. the trace interface still promises
-		// per-piece before/after (char-offset projection).
+		// "P.O.
+		// Box" fragments: label the alphanumeric pieces street (a STAGE2 tag — the fake classifier
+		// runs the 21-label set, and the bridge is tag-agnostic), leave the dot pieces O. The bridge
+		// merges the fragments across the unlabeled intra-token punctuation, dropping tokens.
+		// the trace interface still promises per-piece before/after (char-offset projection).
 		const text = "P.O. Box 123"
 		const { pieces } = tokenizer.encode(text)
 		const oIdx = STAGE2_BIO_LABELS.indexOf("O")
@@ -380,7 +381,8 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		const iIdx = STAGE2_BIO_LABELS.indexOf("I-street")
 
 		// Each fragment starts with B- (O → I- is an illegal BIO transition the viterbi mask forbids);
-		// only a contiguous continuation piece gets I-. The dots decode O — the gaps the bridge crosses.
+		// only a contiguous continuation piece gets I-.
+		// The dots decode O — the gaps the bridge crosses.
 		const logits = pieces.map((p, idx) => {
 			const row = Array.from<number>({ length: STAGE2_BIO_LABELS.length }).fill(0)
 			const alnum = /[\p{L}\p{N}]/u.test(p.piece)
@@ -445,8 +447,8 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		const trace = await classifier.traceParse(text, { addressSystemConventions: "auto", spanProposer: false })
 
 		// `false`: the committed fixture ends at the closing brace, and this test exists
-		// so that drift is a conscious decision. Letting the printer's default newline
-		// move the pin would make a lint migration into that decision.
+		// so that drift is a conscious decision.
+		// Letting the printer's default newline move the pin would make a lint migration into that decision.
 		await expect(prettyJSON(trace, false)).toMatchFileSnapshot("../fixtures/trace-schema.snap.json")
 	})
 })

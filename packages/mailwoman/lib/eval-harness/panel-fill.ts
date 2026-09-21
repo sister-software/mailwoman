@@ -35,12 +35,15 @@ export interface StratumFillCensus {
 	selected: number
 	/**
 	 * Rows skipped because the identity join produced no coherent gold set.
+	 *
 	 * The gold reader's own census says which part of the guard refused them.
 	 */
 	droppedUngradeableGold: number
 	/**
-	 * Rows the stratum's own rule could not render. Counted apart from the gold drop
-	 * because the two name different holes — one in the gazetteer, one in the source register.
+	 * Rows the stratum's own rule could not render.
+	 *
+	 * Counted apart from the gold drop because the two name different holes —
+	 * one in the gazetteer, one in the source register.
 	 */
 	droppedUnbuildable: number
 }
@@ -56,7 +59,9 @@ export interface FillStratumOptions<Item, Row> {
 	 */
 	identify: (item: Item) => string
 	/**
-	 * Identities already taken. Mutated as rows are selected, so strata fill in order against one set.
+	 * Identities already taken.
+	 *
+	 * Mutated as rows are selected, so strata fill in order against one set.
 	 */
 	used: Set<string>
 	build: (item: Item, index: number) => StratumOutcome<Row>
@@ -76,10 +81,10 @@ export function fillStratum<Item, Row>(
 	let droppedUngradeableGold = 0
 	let droppedUnbuildable = 0
 
-	// A copy, so the caller's array is untouched. The order this walk produces is what selects
-	// the rows a frozen panel contains, and a published record names that panel's digest —
-	// so the generator is `SeededRandom`'s, seeded the way `SeededRandom` seeds it,
-	// rather than a normalisation re-typed here.
+	// A copy, so the caller's array is untouched.
+	// The order this walk produces is what selects the rows a frozen panel contains,
+	// and a published record names that panel's digest — so the generator is `SeededRandom`'s,
+	// seeded the way `SeededRandom` seeds it, rather than a normalisation re-typed here.
 	const shuffled = [...eligible]
 
 	new SeededRandom(seed).shuffle(shuffled)
@@ -126,6 +131,7 @@ export function padRowIndex(index: number): string {
 
 /**
  * The register columns a panel builder reads to select and grade a row.
+ *
  * `GeoNamesCity` satisfies it. the builders take this shape rather than that type
  * so the grouping and gold helpers below are not tied to one register's reader.
  */
@@ -183,8 +189,10 @@ export function uniqueNameEligible<Subject extends PanelSubject>(options: {
 }
 
 /**
- * The gold a panel row carries: the register's own entity and coordinate, plus the identity set
- * the concordance reached. Every benchmark here grades against this shape, so it is written once.
+ * The gold a panel row carries: the register's own entity and coordinate,
+ * plus the identity set the concordance reached.
+ *
+ * Every benchmark here grades against this shape, so it is written once.
  */
 export function goldOf<Subject extends PanelSubject>(subject: Subject, placeIDs: number[]) {
 	return {

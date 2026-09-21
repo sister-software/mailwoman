@@ -169,7 +169,8 @@ describe("resolveTree + adminCoherence (#263)", () => {
 	})
 
 	it("falls through to a same-named COUNTRY when no region holds the locality (#267 — Tbilisi, Georgia)", async () => {
-		// "Georgia" the US state vs Georgia the country. Tbilisi descends from the country, Atlanta from the state.
+		// "Georgia" the US state vs Georgia the country.
+		// Tbilisi descends from the country, Atlanta from the state.
 		const usGeorgia = {
 			id: 40,
 			name: "Georgia",
@@ -302,9 +303,10 @@ describe("resolveTree + adminCoherence (#263)", () => {
 
 	it("stays inert for a domestic (region, locality) pair — matchCountry returns null for a US state name", async () => {
 		// "Georgia" names both a country and a US state, but the fall-through must never fire
-		// when the pair is genuinely domestic. Atlanta resolves under the US state in the walk,
-		// so reconcileAdminPair's unresolved-locality branch never runs — and even if it did,
-		// a Springfield-style US token ("Illinois"/"ME") returns null from matchCountry.
+		// when the pair is genuinely domestic.
+		// Atlanta resolves under the US state in the walk, so reconcileAdminPair's
+		// unresolved-locality branch never runs — and even if it did, a Springfield-style
+		// US token ("Illinois"/"ME") returns null from matchCountry.
 		// Guards byte-stability on the domestic path.
 		const usGeorgia = {
 			id: 40,

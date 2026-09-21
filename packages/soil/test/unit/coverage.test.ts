@@ -42,15 +42,17 @@ afterAll(() => fixtures.disposeAsync())
 const { lat, lon } = FIXTURE_ORIGIN
 
 /**
- * Half the width of each fixture county, in degrees. Wide enough that resolution-6
- * cells fit wholly inside one, so a per-area build is not vacuously empty —
- * it produces cells, just not the ones on the shared edge.
+ * Half the width of each fixture county, in degrees.
+ *
+ * Wide enough that resolution-6 cells fit wholly inside one, so a per-area build is not
+ * vacuously empty — it produces cells, just not the ones on the shared edge.
  */
 const COUNTY_HALF_WIDTH = 0.9
 
 /**
- * The shared edge the two fixture counties tile along. Cells straddling it are
- * interior to the union and to neither county on its own.
+ * The shared edge the two fixture counties tile along.
+ *
+ * Cells straddling it are interior to the union and to neither county on its own.
  */
 const SHARED_EDGE_LON = lon + 5 * FIXTURE_SIDE
 
@@ -138,8 +140,9 @@ function coverageCellCount(databasePath: string): number {
 
 describe("the coverage footprint over adjacent survey areas", () => {
 	it("covers the shared border, which a per-area interior test drops", async () => {
-		// Two counties tiling along `SHARED_EDGE_LON`, each carrying a band of delineations up against that
-		// edge. Therefore, the cells straddling it are genuinely reached by mapped soil from both sides.
+		// Two counties tiling along `SHARED_EDGE_LON`, each carrying a band of
+		// delineations up against that edge.
+		// Therefore, the cells straddling it are genuinely reached by mapped soil from both sides.
 		const [westOnly, eastOnly, both] = await Promise.all([
 			build([westCounty()]).then(coverageCellCount),
 			build([eastCounty()]).then(coverageCellCount),

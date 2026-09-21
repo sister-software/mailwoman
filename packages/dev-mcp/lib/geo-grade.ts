@@ -23,6 +23,7 @@ import { wilsonInterval } from "#power"
 
 /**
  * The pre-registered distance thresholds, in kilometres.
+ *
  * Fixed by `docs/superpowers/plans/2026-08-06-local-pelias-benchmark-rig.md` §4 and adopted
  * verbatim by spec §2.4 — a threshold chosen after seeing where the arms landed is not a threshold.
  */
@@ -30,6 +31,7 @@ export const DISTANCE_THRESHOLDS_KM = [1, 5, 25] as const
 
 /**
  * The threshold a head-to-head parity claim is made at, in kilometres.
+ *
  * The coarsest of the three: at 25 km the metric is asking "did the engine find the right
  * place at all", which is the question a parity claim is about. @1 km is a rooftop-precision
  * question and the plan's own rule is that it "lives or dies on `truth_type`".
@@ -38,6 +40,7 @@ export const EQUIVALENCE_THRESHOLD_KM = 25
 
 /**
  * The pre-registered tost equivalence bound, in percentage points.
+ *
  * Two arms are declared equivalent only when the whole confidence interval for their
  * difference at {@link EQUIVALENCE_THRESHOLD_KM} sits inside ±5 pp.
  */
@@ -77,8 +80,9 @@ export function distanceKm(answer: GeoPoint, truthLat: number, truthLon: number)
 }
 
 /**
- * Whether a distance counts as a hit at one threshold. A no-result is a miss
- * at every threshold (protocol §4).
+ * Whether a distance counts as a hit at one threshold.
+ *
+ * A no-result is a miss at every threshold (protocol §4).
  */
 export function hitAt(distance: number | null, thresholdKm: number): boolean {
 	return distance !== null && distance <= thresholdKm
@@ -95,8 +99,9 @@ export function thresholdKey(thresholdKm: number): string {
  * Grade one row at one threshold.
  *
  * Deliberately a HIT/miss comparison rather than "whichever arm is closer".
- * An arm that moves a result from 40 km to 30 km has not found the address,
- * and a metric that rewards it would report progress on rows where nothing usable changed.
+ * An arm that moves a result from 40 km to 30 km has not found the address, and a metric
+ * that rewards it would report progress on rows where nothing usable changed.
+ *
  * The full distances are carried on the row for anyone who wants to read the margin.
  */
 export function gradeAtThreshold(distanceA: number | null, distanceB: number | null, thresholdKm: number): RowGrade {
@@ -112,7 +117,9 @@ export interface ThresholdReading {
 	a: number
 	b: number
 	/**
-	 * `b − a`, in percentage points. Signed: positive means arm B hit more often.
+	 * `b − a`, in percentage points.
+	 *
+	 * Signed: positive means arm B hit more often.
 	 */
 	delta_pp: number
 	of: number
@@ -153,8 +160,9 @@ export interface EquivalenceReading {
 	p_lower: number | null
 	p_upper: number | null
 	/**
-	 * `true` only when both one-sided tests reject, i.e. the difference is demonstrably
-	 * inside the bound. `false` covers two very different situations — a real difference,
+	 * `true` only when both one-sided tests reject, i.e. the difference is demonstrably inside the bound.
+	 *
+	 * `false` covers two very different situations — a real difference,
 	 * and too few rows to tell — which is why the sentence says which one this is
 	 * rather than leaving `false` to be read as "different".
 	 */
@@ -164,6 +172,7 @@ export interface EquivalenceReading {
 
 /**
  * Half the width of one proportion's Wilson interval, at the one-sided level tost is run at.
+ *
  * The instrument for the boundary cases the normal approximation cannot describe: it stays wide
  * at `p = 0` and `p = 1`, where the normal-approximation standard error collapses to zero.
  */
@@ -178,10 +187,12 @@ function wilsonHalfWidth(successes: number, n: number): number {
  *
  * Failing an equivalence test does not mean the arms differ, and it does not mean nothing
  * was learned — which of those it means depends on where the point estimate fell.
- * A difference already outside the bound is a difference. a small difference with an
- * interval too wide to place is an underpowered run. Wording both as "this is not a claim
- * that the arms differ" would flatly contradict the two-proportion z-test printed beside it,
- * which on a lopsided pair of arms reports a significant gap in the same paragraph.
+ * A difference already outside the bound is a difference. a small difference with
+ * an interval too wide to place is an underpowered run.
+ *
+ * Wording both as "this is not a claim that the arms differ" would flatly contradict
+ * the two-proportion z-test printed beside it, which on a lopsided pair of arms
+ * reports a significant gap in the same paragraph.
  */
 function equivalence(
 	deltaPP: number,
@@ -210,10 +221,12 @@ function equivalence(
  * Tost for two proportions against the pre-registered bound.
  *
  * The standard error is the independent-samples one even though the rows are paired.
- * That is the conservative direction and it is chosen on purpose: paired arms over one input set
- * are positively correlated, so the true paired variance is smaller, so this interval is wider
- * and equivalence is harder to declare. An equivalence claim that survives this test survives
- * the paired one. a claim that fails it may only be underpowered, which the sentence says.
+ * That is the conservative direction and it is chosen on purpose: paired arms over
+ * one input set are positively correlated, so the true paired variance is smaller,
+ * so this interval is wider and equivalence is harder to declare.
+ *
+ * An equivalence claim that survives this test survives the paired one. a claim that
+ * fails it may only be underpowered, which the sentence says.
  */
 export function tostEquivalence(
 	successesA: number,
@@ -251,9 +264,10 @@ export function tostEquivalence(
 	const standardErrorPP = Math.sqrt(variance) * PERCENT
 
 	if (standardErrorPP === 0) {
-		// A zero standard error is not zero uncertainty. It means both arms sat exactly at 0
-		// or exactly at 1, where the normal approximation has no variance to offer
-		// and is simply the wrong instrument: two hits out of two is not evidence of parity.
+		// A zero standard error is not zero uncertainty.
+		// It means both arms sat exactly at 0 or exactly at 1, where the normal
+		// approximation has no variance to offer and is simply the wrong instrument:
+		// two hits out of two is not evidence of parity.
 		// The Wilson interval — the same one `power.ts` derives its bounds from — still has width
 		// there, and the difference is bounded conservatively by the two half-widths together.
 		const halfWidthPP = (wilsonHalfWidth(successesA, n) + wilsonHalfWidth(successesB, n)) * PERCENT

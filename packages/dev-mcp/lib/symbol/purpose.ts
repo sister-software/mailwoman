@@ -43,6 +43,7 @@ export interface PurposeEntry {
 
 /**
  * The exported name a top-level statement declares, or `null`.
+ *
  * A variable statement contributes its first declaration, which is how `export const x = () => …`
  * is written here. a statement declaring several names is not this shape.
  */
@@ -144,6 +145,7 @@ const STOP_WORDS = new Set([
 /**
  * The first sentence of a docstring body: comment furniture and tag blocks removed,
  * newlines collapsed, and the text ended at the first sentence boundary.
+ *
  * A docstring that opens with a tag (`@file`, `@param`) contributes nothing.
  */
 export function firstSentence(doc: string): string {
@@ -220,9 +222,10 @@ async function readEntries(repoRoot: string): Promise<PurposeEntry[]> {
 interface PurposeCache {
 	/**
 	 * The commit the index was built from, plus every working-tree change at that moment —
-	 * staged, unstaged and untracked alike. All of it is needed: keying on the commit
-	 * alone goes stale over an uncommitted edit, and keying on tracked changes alone
-	 * misses a new file, which is the case this index most needs to see.
+	 * staged, unstaged and untracked alike.
+	 *
+	 * All of it is needed: keying on the commit alone goes stale over an uncommitted edit, and keying
+	 * on tracked changes alone misses a new file, which is the case this index most needs to see.
 	 */
 	head: string
 	status: string[]
@@ -272,8 +275,8 @@ export interface PurposeFinding extends PurposeEntry {
 /**
  * The declarations whose name or opening sentence answers `phrase`, best first.
  *
- * Scoring is term overlap, weighted so a word in the name counts double: a name is
- * chosen to describe the thing, while a sentence also carries the words around it.
+ * Scoring is term overlap, weighted so a word in the name counts double: a name is chosen
+ * to describe the thing, while a sentence also carries the words around it.
  * A single matching term is not enough — one shared word is what every sentence in a
  * domain has in common — so a finding needs two, or one that appears in the name.
  */

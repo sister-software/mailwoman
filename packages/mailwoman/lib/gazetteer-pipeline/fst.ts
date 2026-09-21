@@ -70,14 +70,17 @@ export const CURATION_LANGUAGES = [
 ] as const
 
 /**
- * Identifies which exclusion policy built an FST. Stamped into the artifact so a stale index
- * built under an older policy is detectable rather than silently mixed with a new one.
+ * Identifies which exclusion policy built an FST.
+ *
+ * Stamped into the artifact so a stale index built under an older policy is detectable
+ * rather than silently mixed with a new one.
  */
 export const EXCLUSION_POLICY_ID =
 	"degenerate-surface-exclusion v1.1 (libpostal stopwords+street_types, 17 langs, + supplemental)"
 
 /**
  * Function-word surfaces the libpostal dictionaries miss.
+ *
  * Each entry carries its justification — this list is curated rather than a dumping
  * ground. a candidate belongs here only when it is a common function word in a served
  * language whose libpostal stopword file lacks the bare form.
@@ -93,9 +96,11 @@ export const SUPPLEMENTAL_DEGENERATE_SURFACES: ReadonlySet<string> = new Set([
  *
  * An overlay absent here ships with no FST, which makes `--gazetteer-prior` a silent no-op for it —
  * the artifact resolves to `undefined` and the run degrades to the base model with extra steps.
- * That is why membership is worth earning rather than assuming: `es-es` and `it-it` were
- * added once a board row measured the cost. `en-au`, `en-in` and `en-nz` remain out because
- * those overlays are country-scope-only today, so there is no measured case for them yet.
+ * That is why membership is worth earning rather than assuming: `es-es`
+ * and `it-it` were added once a board row measured the cost.
+ *
+ * `en-au`, `en-in` and `en-nz` remain out because those overlays are country-scope-only
+ * today, so there is no measured case for them yet.
  */
 export const FST_LOCALES: ReadonlyMap<string, string[]> = new Map([
 	["en-us", ["US"]],
@@ -115,16 +120,19 @@ export const FST_LOCALES: ReadonlyMap<string, string[]> = new Map([
 /**
  * Every FST artifact that is a projection of the WOF admin DB, relative to the wof data-root dir.
  *
- * `fst-street-morphology.bin` is deliberately absent: it is built from the in-repo libpostal
- * dictionaries, so the admin DB's md5 says nothing about whether it is current and stamping it
- * against one would be a lie the guard then enforces. The CJK three are here despite
- * having no entry in {@link FST_LOCALES} — they were built by the pre-#1318 flow,
- * nothing can rebuild them today, and they stay frozen pending the CJK arc's importance-source
- * and WOF-geometry questions. that is a fact the check should surface rather than hide.
+ * `fst-street-morphology.bin` is deliberately absent: it is built from the in-repo
+ * libpostal dictionaries, so the admin DB's md5 says nothing about whether it is current
+ * and stamping it against one would be a lie the guard then enforces.
+ * The CJK three are here despite having no entry in {@link FST_LOCALES} —
+ * they were built by the pre-#1318 flow, nothing can rebuild them today,
+ * and they stay frozen pending the CJK arc's importance-source and WOF-geometry
+ * questions. that is a fact the check should surface rather than hide.
+ *
  * `fst-global-priority.bin` (317 MB, retired 2026-08-06 — see releasing.md) is
- * deliberately gone from this list: a retired artifact must not keep generating freshness
- * rows that read as a rebuild obligation. The public HF object outlives the template
- * on purpose. removing it is a separate, operator-approved step (#1493).
+ * deliberately gone from this list: a retired artifact must not keep generating
+ * freshness rows that read as a rebuild obligation.
+ * The public HF object outlives the template on purpose. removing it is a separate,
+ * operator-approved step (#1493).
  */
 export const ADMIN_DERIVED_FST_ARTIFACTS: readonly string[] = [
 	"fst-per-locale/fst-en-us.bin",
@@ -145,7 +153,9 @@ export interface FSTFreshnessRow {
 	artifact: string
 	present: boolean
 	/**
-	 * `undefined` = current. Otherwise the prose from `fstStaleReason`.
+	 * `undefined` = current.
+	 *
+	 * Otherwise the prose from `fstStaleReason`.
 	 */
 	staleReason?: string
 	builtAt?: string
@@ -155,12 +165,15 @@ export interface FSTFreshnessRow {
 /**
  * Check every admin-derived FST against `dbPath`, for the `gazetteer verify` freshness section.
  *
- * Why IT reports rather than fails. `gazetteer verify` checks a database, and a stale
- * FST says nothing about whether that database is sound — the arrow runs the other way.
- * The artifacts also cannot be rebuilt as a side effect of a verify: a locale FST build is
- * minutes, its output is staged, and the swap is operator-approved because an FST changes
- * decoder behaviour. So the section exists to make the drift visible at the moment the
- * operator is already looking at the gazetteer, with the command that starts fixing it.
+ * Why IT reports rather than fails.
+ * `gazetteer verify` checks a database, and a stale FST says nothing about
+ * whether that database is sound — the arrow runs the other way.
+ *
+ * The artifacts also cannot be rebuilt as a side effect of a verify: a locale FST build is minutes,
+ * its output is staged, and the swap is operator-approved because an FST changes decoder behaviour.
+ * So the section exists to make the drift visible at the moment the operator is already
+ * looking at the gazetteer, with the command that starts fixing it.
+ *
  * The caller decides what to do with the exit code. today it does nothing, and that is deliberate.
  *
  * The exclusion-policy expectation applies only to locales the current builder can produce.
@@ -219,6 +232,7 @@ function surfacesOfLine(line: string): string[] {
 
 /**
  * Load the degenerate-surface exclusion sets from the shipped libpostal dictionaries.
+ *
  * Returns normalized-join keys (`normalizeTokens(surface).join(" ")`) so they
  * compare exactly against the builder's insertion keys.
  */
@@ -229,10 +243,11 @@ export async function loadDegenerateSurfaces(
 	surfaces: Set<string>
 	stopwordTokens: Set<string>
 }> {
-	// Memoized like loadPersonNameSurfaces: static dictionaries, so process-lifetime with no
-	// invalidation key. Keyed by fold identity then language set — the FST and painter worlds fold
-	// differently by design and must not share an entry. Without this the fixture-layer test
-	// paid ~1s of dictionary parsing per build (10 builds, 11.2s); with it the file runs in ~1s.
+	// Memoized like loadPersonNameSurfaces: static dictionaries, so process-lifetime with no invalidation key.
+	// Keyed by fold identity then language set — the FST and painter worlds fold
+	// differently by design and must not share an entry.
+	// Without this the fixture-layer test paid ~1s of dictionary parsing per build
+	// (10 builds, 11.2s); with it the file runs in ~1s.
 	//
 	// ⚠ The returned sets are shared and `buildLocalitySurfaceLexicon` mutates its copy
 	// (it unions the directionals and the evidence supplemental set into `degenerate`).
@@ -313,10 +328,11 @@ async function scanDegenerateSurfaces(
 
 /**
  * Surface-ambiguity scan (survey #4): one pass over the whole admin DB
- * (every country, the builder's default placetypes) producing normalized-surface →
- * distinct-country count. Shared across all four locale builds — the count is deliberately
- * global so a US-scoped FST still knows "pierre" is also a place-surface elsewhere
- * (and, one day, that "paris" is). Primary spr names + all alt names.
+ * (every country, the builder's default placetypes) producing normalized-surface → distinct-country count.
+ *
+ * Shared across all four locale builds — the count is deliberately global so a US-scoped FST
+ * still knows "pierre" is also a place-surface elsewhere (and, one day, that "paris" is).
+ * Primary spr names + all alt names.
  */
 export async function computeSurfaceCountryCounts(dbPath: string): Promise<Map<string, number>> {
 	const { mtimeMs, size } = await statPath(dbPath)
@@ -334,16 +350,20 @@ export async function computeSurfaceCountryCounts(dbPath: string): Promise<Map<s
 /**
  * Memo for {@link computeSurfaceCountryCounts}, keyed on (path, mtimeMs, size).
  *
- * The scan streams the whole `spr` + `names` surface — millions of rows — and the locality-surface
- * build calls it once per country set. The FR and US passes in one process paid it
- * twice. measured 2026-08-02 that pair was 236.9s of a 253s CI leg.
+ * The scan streams the whole `spr` + `names` surface — millions of rows —
+ * and the locality-surface build calls it once per country set.
+ * The FR and US passes in one process paid it twice. measured 2026-08-02 that
+ * pair was 236.9s of a 253s CI leg.
  *
- * Not keyed on path alone. The WOF admin DB is a sealed readonly artifact that a rebuild replaces,
- * so a path-only memo would serve a stale scan against a new file for the life of the process.
+ * Not keyed on path alone.
+ * The WOF admin DB is a sealed readonly artifact that a rebuild replaces, so a path-only
+ * memo would serve a stale scan against a new file for the life of the process.
  *
- * The returned map is shared with every caller. Both consumers treat it as read-only — the FST
- * builder's `FSTBuildOpts.surfaceCountryCounts` is typed `ReadonlyMap`, and the locality-surface
- * builder only probes it — so no copy is made. A future caller that mutates must copy first.
+ * The returned map is shared with every caller.
+ * Both consumers treat it as read-only — the FST builder's `FSTBuildOpts.surfaceCountryCounts`
+ * is typed `ReadonlyMap`, and the locality-surface builder only probes it — so no copy is made.
+ *
+ * A future caller that mutates must copy first.
  */
 const surfaceCountryCountsMemo = new Map<string, Map<string, number>>()
 
@@ -352,9 +372,10 @@ function scanSurfaceCountryCounts(dbPath: string): Map<string, number> {
 	const placetypes = ["country", "region", "county", "locality", "localadmin", "borough", "neighbourhood"]
 	const ph = placetypes.map(() => "?").join(",")
 	// Memory shape matters: the names table runs to millions of rows (GeoNames alias folds included)
-	// and a Set per surface OOMs a default heap. Most surfaces are single-country,
-	// so store the first country as a bare string and promote to an overflow Set only on the
-	// second distinct country. rows stream via iterate() — never materialize the rowset.
+	// and a Set per surface OOMs a default heap.
+	// Most surfaces are single-country, so store the first country as a bare string
+	// and promote to an overflow Set only on the second distinct country. rows stream
+	// via iterate() — never materialize the rowset.
 	const first = new Map<string, string>()
 	const overflow = new Map<string, Set<string>>()
 
@@ -415,7 +436,9 @@ export interface BuildLocaleFSTsOpts {
 	 */
 	dbPath?: PathBuilderLike
 	/**
-	 * Output dir (default: `$MAILWOMAN_DATA_ROOT/wof/fst-per-locale-curated`). Never the shipped dir.
+	 * Output dir (default: `$MAILWOMAN_DATA_ROOT/wof/fst-per-locale-curated`).
+	 *
+	 * Never the shipped dir.
 	 */
 	outputDir?: PathBuilderLike
 	/**
@@ -447,8 +470,9 @@ export async function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): Promise<B
 		)
 	}
 
-	// Ambiguity classes (survey #4) ride the curated builds only — the uncurated control
-	// stays a pure pre-curation byte baseline. One global scan shared by every locale.
+	// Ambiguity classes (survey #4) ride the curated builds only — the uncurated
+	// control stays a pure pre-curation byte baseline.
+	// One global scan shared by every locale.
 	const surfaceCountryCounts = opts.uncurated ? undefined : await computeSurfaceCountryCounts(dbPath.toString())
 
 	if (surfaceCountryCounts) {

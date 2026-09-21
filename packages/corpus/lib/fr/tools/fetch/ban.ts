@@ -37,8 +37,9 @@ import { downloadToFile, loadManifestEntries, writeManifest } from "#tools/fetch
 const BASE_URL = "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv"
 
 /**
- * All département codes — metropolitan 01-95 (with 2A/2B for Corsica instead of 20)
- * plus overseas DOM/TOM. Codes do not change.
+ * All département codes — metropolitan 01-95 (with 2A/2B for Corsica instead of 20) plus overseas DOM/TOM.
+ *
+ * Codes do not change.
  */
 const DEPT_CODES = [
 	"01",

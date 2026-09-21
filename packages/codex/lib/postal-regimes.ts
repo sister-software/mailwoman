@@ -31,11 +31,13 @@ export const RegimeCoverage = {
 	Modeled: "modeled",
 	/**
 	 * Something partial exists and does not cover the regime's own addressing.
+	 *
 	 * The record says what is missing.
 	 */
 	Partial: "partial",
 	/**
 	 * Nothing distinguishes the regime from its parent country.
+	 *
 	 * An address written in it parses as an ordinary address of that country,
 	 * which is a stated gap rather than a decision that the regime does not exist.
 	 */
@@ -67,6 +69,7 @@ export const RegimeKind = {
 	Narrative: "narrative",
 	/**
 	 * A code that appears in real data and is not ISO 3166-1.
+	 *
 	 * Accepting one is an operational decision and states nothing about sovereignty.
 	 */
 	Operational: "operational",
@@ -76,19 +79,23 @@ export type RegimeKind = (typeof RegimeKind)[keyof typeof RegimeKind]
 
 export interface PostalRegime {
 	/**
-	 * Stable identifier, kebab-case. Never an ISO code, so a regime is never mistaken for a country.
+	 * Stable identifier, kebab-case.
+	 *
+	 * Never an ISO code, so a regime is never mistaken for a country.
 	 */
 	regimeID: string
 	name: string
 	kind: RegimeKind
 	/**
 	 * The ISO 3166-1 alpha-2 codes an address in this regime carries, or would carry.
+	 *
 	 * More than one where the regime crosses a border.
 	 */
 	iso2: readonly string[]
 	coverage: RegimeCoverage
 	/**
 	 * What an address in this regime looks like, in enough detail to recognize one.
+	 *
 	 * Written from the specification rather than measured against a corpus,
 	 * so it describes the regime and claims no row counts.
 	 */
@@ -102,9 +109,10 @@ export interface PostalRegime {
 /**
  * The seven families the global address corpus specification §7 names, as records.
  *
- * Every one reads `unmodeled` today. That is the measurement this table was written
- * to record: the repository keys addressing behavior by ISO country code throughout,
- * so none of these regimes is distinguished from its parent anywhere in the tree.
+ * Every one reads `unmodeled` today.
+ * That is the measurement this table was written to record: the repository keys
+ * addressing behavior by ISO country code throughout, so none of these regimes is
+ * distinguished from its parent anywhere in the tree.
  */
 export const POSTAL_REGIMES: readonly PostalRegime[] = [
 	{

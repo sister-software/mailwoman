@@ -113,11 +113,12 @@ describe("matchPOISubject", () => {
  * What a lookup's second hit means, which decides whether narrowing to the first
  * is an answer or an invented ordering.
  *
- * The committed phrase index returns the categories one typed phrase could name, most specific first,
- * and the first entry is the subject — which category a typed phrase reaches is #1933's question
- * and is unchanged here. An affordance rung returns every kind that affords one activity,
- * in an enumeration that is not a preference, and flags each member `searchAsSet`;
- * the whole set is then carried and the POI branch searches their union.
+ * The committed phrase index returns the categories one typed phrase could name,
+ * most specific first, and the first entry is the subject — which category a typed
+ * phrase reaches is #1933's question and is unchanged here.
+ * An affordance rung returns every kind that affords one activity, in an enumeration
+ * that is not a preference, and flags each member `searchAsSet`; the whole set is
+ * then carried and the POI branch searches their union.
  */
 describe("a lookup returning several hits", () => {
 	const preferenceList: POIPhraseLookup = (phrase) =>
@@ -182,11 +183,13 @@ describe("a lookup returning several hits", () => {
 /**
  * ANCHOR_SEPARATOR behaviour-preservation + ReDoS safety.
  *
- * The separator regex was linearized (`\s*,\s*|\s+(?:…)\s+` → `,\s*|\s(?:…)\s+`) to
- * clear CodeQL's `js/polynomial-redos` alert. `matchPOISubject` trims both the subject
- * and the remainder, so surrounding whitespace on the separator is redundant —
- * the split behaviour must be byte-identical. These cases pin the split point,
- * subject, remainder, and match for every branch, anchor word, and whitespace shape.
+ * The separator regex was linearized (`\s*,\s*|\s+(?:…)\s+` → `,\s*|\s(?:…)\s+`)
+ * to clear CodeQL's `js/polynomial-redos` alert.
+ * `matchPOISubject` trims both the subject and the remainder, so surrounding whitespace
+ * on the separator is redundant — the split behaviour must be byte-identical.
+ *
+ * These cases pin the split point, subject, remainder, and match for every branch,
+ * anchor word, and whitespace shape.
  * Values are the exact output of the pre-linearization regex (each anchor word is flanked
  * by whitespace on both sides, a comma splits regardless of surrounding whitespace).
  */
@@ -354,8 +357,8 @@ describe("ANCHOR_SEPARATOR is linear (ReDoS safety)", () => {
 describe("createKindClassifier with a poi lexicon", () => {
 	const classify = createKindClassifier({ poiLexicon: LOOKUP })
 
-	// ROAD_TO_V9 §4.4 split this row's population off `poi_query`: a bare category
-	// is `poi_category` now, and `poi_query` stays underneath it as the alternative.
+	// ROAD_TO_V9 §4.4 split this row's population off `poi_query`: a bare category is
+	// `poi_category` now, and `poi_query` stays underneath it as the alternative.
 	// Both kinds take the coordinator's POI branch, so the routing this test was protecting
 	// is unchanged — `core/pipeline/poi-branch.test.ts` is where that is asserted.
 	it("emits poi_category for a bare category phrase, with poi_query underneath", async () => {

@@ -69,6 +69,7 @@ export interface WireReleasesManifest {
 
 /**
  * Normalize a fetched releases.json into house-cased {@link ReleasesManifest} fields.
+ *
  * All manifest consumption goes through here — the wire tolerance lives in exactly one place,
  * and everything past this boundary uses the acronym convention (`hasFST` / `hasWOFDB`).
  *
@@ -87,17 +88,19 @@ export function normalizeReleasesManifest(raw: WireReleasesManifest): ReleasesMa
 			...r,
 			hasFST: r.hasFST ?? r.hasFst ?? false,
 			// The 2026-08-11 v9.1.0 manifest (live until the next model release) writes
-			// `hasWOFDb` — WOF caps, lowercase b. The 08-14 casing sweep renamed reader
-			// and writer to `hasWOFDB` but missed this third live spelling, which turned
-			// the demo's whole WOF cascade off silently for four days.
+			// `hasWOFDb` — WOF caps, lowercase b.
+			// The 08-14 casing sweep renamed reader and writer to `hasWOFDB` but missed this third
+			// live spelling, which turned the demo's whole WOF cascade off silently for four days.
 			hasWOFDB: r.hasWOFDB ?? r.hasWOFDb ?? r.hasWofDb ?? false,
 		})),
 	}
 }
 
 /**
- * Fetch + normalize the demo's releases manifest. `cache: "reload"` bypasses the (immutable-Cache-Control)
- * http cache for the version pointer so a returning visitor sees a `defaultVersion` bump.
+ * Fetch + normalize the demo's releases manifest.
+ *
+ * `cache: "reload"` bypasses the (immutable-Cache-Control) http cache for the version
+ * pointer so a returning visitor sees a `defaultVersion` bump.
  */
 export async function fetchReleasesManifest(): Promise<ReleasesManifest | null> {
 	const res = await fetchWithRetry(releasesManifestURL(DEFAULT_LOCALE), { cache: "reload" })

@@ -40,6 +40,7 @@ const MIN_ZOOM = 0
 
 /**
  * Deepest zoom the Web-Mercator tile pyramid is defined for.
+ *
  * The archive's own `maxZoom` clamps further at runtime. this is only the range a
  * flag value must fall inside to be meaningful at all.
  */
@@ -65,8 +66,10 @@ export interface BrowseArgs {
 	lat: number
 	lon: number
 	/**
-	 * Integer zoom level. The renderer draws whole tile-pyramid levels, so a fractional
-	 * flag value is rounded here rather than carried as a lie through the viewport.
+	 * Integer zoom level.
+	 *
+	 * The renderer draws whole tile-pyramid levels, so a fractional flag value is rounded here
+	 * rather than carried as a lie through the viewport.
 	 */
 	zoom: number
 }
@@ -74,24 +77,29 @@ export interface BrowseArgs {
 export type CLIArgs = { mode: "help" } | { mode: "version" } | BrowseArgs
 
 /**
- * A rejected command line. The message is user-facing: it says what was wrong
- * and what to pass instead, since the bin prints it verbatim to stderr.
+ * A rejected command line.
+ *
+ * The message is user-facing: it says what was wrong and what to pass instead,
+ * since the bin prints it verbatim to stderr.
  */
 export class CLIArgsError extends Error {
 	override name = "CLIArgsError"
 }
 
 /**
- * Environment keys the CLI reads. Passed in rather than read here so the parser stays pure.
+ * Environment keys the CLI reads.
+ *
+ * Passed in rather than read here so the parser stays pure.
  */
 export interface CLIEnvironment {
 	MAILWOMAN_TILES?: string | undefined
 }
 
 /**
- * `--help` output. It doubles as the package's key reference, so the bindings
- * listed here and the ones ./input.ts decodes are the same list said twice —
- * a key added there without a line here is a key nobody finds.
+ * `--help` output.
+ *
+ * It doubles as the package's key reference, so the bindings listed here and the ones ./input.ts
+ * decodes are the same list said twice — a key added there without a line here is a key nobody finds.
  */
 export const HELP_TEXT = `map-tui — the whole world in your terminal
 
@@ -147,9 +155,10 @@ const NUMERIC_FLAGS = new Set(["--lat", "--lon", "--zoom"])
 /**
  * Joins `--lon -122.6` into `--lon=-122.6` before `parseArgs` sees it.
  *
- * `node:util`'s parser refuses a separate value that starts with a dash — it cannot
- * tell a negative number from a mistyped flag, and says so ("argument is ambiguous").
+ * `node:util`'s parser refuses a separate value that starts with a dash — it cannot tell
+ * a negative number from a mistyped flag, and says so ("argument is ambiguous").
  * Half the planet has a negative longitude, so the space-form has to work.
+ *
  * The join is conditional on the next token parsing as a finite number, which leaves a
  * genuinely missing value (`--lon --zoom 3`) to `parseArgs` and its own error.
  */

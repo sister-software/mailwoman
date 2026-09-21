@@ -131,8 +131,8 @@ describe("ExternalGeocoderClient.probeIdentity", () => {
 
 	it("refuses an endpoint that will not say what it is, because a drop-in answers identically", async () => {
 		// Photon's search path has no version anywhere in it, so a 404 on /status
-		// leaves nothing to identify the arm by. Scoring it anyway is how a benchmark
-		// ends up comparing mailwoman against mailwoman.
+		// leaves nothing to identify the arm by.
+		// Scoring it anyway is how a benchmark ends up comparing mailwoman against mailwoman.
 		const search = {
 			features: [{ type: "Feature", geometry: { type: "Point", coordinates: [2.35, 48.85] }, properties: {} }],
 		}

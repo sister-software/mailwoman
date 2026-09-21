@@ -26,8 +26,10 @@
 import type { QueryShape } from "@mailwoman/query-shape"
 
 /**
- * How a family's graph reads its input. `sentencepiece` consumes subword ids from
- * `tokenizer.model`; `char` consumes code points indexed by `char-vocab.json`.
+ * How a family's graph reads its input.
+ *
+ * `sentencepiece` consumes subword ids from `tokenizer.model`; `char` consumes
+ * code points indexed by `char-vocab.json`.
  * The value matches the `encoder` field a model card declares.
  */
 export const FamilyEncoder = {
@@ -39,7 +41,9 @@ export type FamilyEncoder = (typeof FamilyEncoder)[keyof typeof FamilyEncoder]
 
 /**
  * The vocabulary artifact each encoder requires beside `model.onnx`.
- * A standalone family package ships both files. An overlay ships neither and resolves them from its base.
+ *
+ * A standalone family package ships both files.
+ * An overlay ships neither and resolves them from its base.
  */
 export const FAMILY_VOCABULARY_ARTIFACT: Readonly<Record<FamilyEncoder, string>> = {
 	[FamilyEncoder.SentencePiece]: "tokenizer.model",
@@ -49,14 +53,17 @@ export const FAMILY_VOCABULARY_ARTIFACT: Readonly<Record<FamilyEncoder, string>>
 /**
  * Why a routing decision named the family it named.
  *
- * `caller` is the ordinary path: no predicate claimed the input, so it runs on the
- * locale the caller opened the process with. The two script readings are distinguished
- * because they disagree on the case the segment rule exists for — a Han address line
- * beside a Latin province folds to `mixed` and only `script-segment` reaches it.
+ * `caller` is the ordinary path: no predicate claimed the input, so it runs on
+ * the locale the caller opened the process with.
+ * The two script readings are distinguished because they disagree on the case the
+ * segment rule exists for — a Han address line beside a Latin province folds to `mixed`
+ * and only `script-segment` reaches it.
  */
 export const RouteSource = {
 	/**
-	 * No family predicate claimed the input. It runs on the caller's locale.
+	 * No family predicate claimed the input.
+	 *
+	 * It runs on the caller's locale.
 	 */
 	Caller: "caller",
 	/**
@@ -68,7 +75,9 @@ export const RouteSource = {
 	 */
 	ScriptSegment: "script-segment",
 	/**
-	 * A family's locale predicate claimed the input. No family declares one today.
+	 * A family's locale predicate claimed the input.
+	 *
+	 * No family declares one today.
 	 */
 	Locale: "locale",
 } as const
@@ -92,12 +101,14 @@ export interface RoutingDecision {
 	source: RouteSource
 	/**
 	 * How strongly the reading claims the input, in `[0, 1]`.
+	 *
 	 * The script predicates are rules rather than scorers and answer `1` when they fire,
 	 * so this carries information only once a scored predicate exists.
 	 */
 	confidence: number
 	/**
 	 * Which reading declined, when `family` is `undefined`.
+	 *
 	 * Absent on a decision that named a family.
 	 */
 	abstainedBecause?: string
@@ -108,8 +119,10 @@ export interface RoutingDecision {
  */
 export interface WeightsFamily {
 	/**
-	 * The family id. It is also the locale segment `resolveWeights` uses for the graph
-	 * package, so `cjk` resolves `@mailwoman/neural-weights-cjk`.
+	 * The family id.
+	 *
+	 * It is also the locale segment `resolveWeights` uses for the graph package,
+	 * so `cjk` resolves `@mailwoman/neural-weights-cjk`.
 	 */
 	family: string
 	/**
@@ -119,6 +132,7 @@ export interface WeightsFamily {
 	encoder: FamilyEncoder
 	/**
 	 * Every locale this family serves, including the graph package's own.
+	 *
 	 * A locale appears in exactly one family, which the `weights-family` repository
 	 * check enforces against the installed `neural-weights-*` manifests.
 	 */
@@ -126,20 +140,25 @@ export interface WeightsFamily {
 	/**
 	 * Language subtags this family serves beyond the locales it packages.
 	 *
-	 * A family whose members are decided by writing system serves every locale in those languages,
-	 * packaged or not. `ko-KR` ships no weights package and still decodes on the character graph,
-	 * and so do `zh-TW` and `zh-HK`. Listing only the packaged locales made
+	 * A family whose members are decided by writing system serves every locale
+	 * in those languages, packaged or not.
+	 * `ko-KR` ships no weights package and still decodes on the character graph,
+	 * and so do `zh-TW` and `zh-HK`.
+	 *
+	 * Listing only the packaged locales made
 	 * {@linkcode familyForLocale} answer `undefined` for all three while `scriptFamilyBase`
 	 * answered `cjk`, which is the disagreement this field removes.
 	 */
 	languages?: readonly string[]
 	/**
-	 * Unicode script codes that route an input here. A family declaring none is
-	 * reachable only through the caller's locale.
+	 * Unicode script codes that route an input here.
+	 *
+	 * A family declaring none is reachable only through the caller's locale.
 	 */
 	routingScripts?: ReadonlySet<string>
 	/**
 	 * Locales that route here when a locale predicate is read.
+	 *
 	 * Declared for completeness of the contract and read by no shipping router.
 	 * Enabling one changes which graph serves an existing request,
 	 * and `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx` requires a route comparison
@@ -149,11 +168,13 @@ export interface WeightsFamily {
 }
 
 /**
- * The Latin SentencePiece family. Eight overlays declare `mailwoman.baseWeights`
- * on its graph package and ship retrieval artifacts only.
+ * The Latin SentencePiece family.
  *
- * It declares no routing predicate. Every Latin request reaches it through the caller's locale,
- * which is the behavior that predates this registry and the behavior the registry preserves.
+ * Eight overlays declare `mailwoman.baseWeights` on its graph package and ship retrieval artifacts only.
+ *
+ * It declares no routing predicate.
+ * Every Latin request reaches it through the caller's locale, which is the behavior
+ * that predates this registry and the behavior the registry preserves.
  */
 const LATIN_FAMILY: WeightsFamily = {
 	family: "en-us",
@@ -163,8 +184,10 @@ const LATIN_FAMILY: WeightsFamily = {
 }
 
 /**
- * The character family. Japanese, Chinese and Korean share one graph and one character
- * vocabulary, so the four scripts below name one family rather than three.
+ * The character family.
+ *
+ * Japanese, Chinese and Korean share one graph and one character vocabulary,
+ * so the four scripts below name one family rather than three.
  */
 const CJK_FAMILY: WeightsFamily = {
 	family: "cjk",
@@ -176,7 +199,9 @@ const CJK_FAMILY: WeightsFamily = {
 }
 
 /**
- * Every declared family. A third entry arrives with a measured graph artifact, never ahead of one.
+ * Every declared family.
+ *
+ * A third entry arrives with a measured graph artifact, never ahead of one.
  */
 export const FAMILIES: readonly WeightsFamily[] = [LATIN_FAMILY, CJK_FAMILY]
 
@@ -194,8 +219,9 @@ export function familyByID(family: string): WeightsFamily | undefined {
 /**
  * The family serving this locale, or `undefined` when no family claims it.
  *
- * A packaged locale answers first. A locale the registry does not package answers from its language
- * subtag, so `ko-KR` and `zh-TW` reach the character family without a weights package of their own.
+ * A packaged locale answers first.
+ * A locale the registry does not package answers from its language subtag, so `ko-KR`
+ * and `zh-TW` reach the character family without a weights package of their own.
  *
  * A locale absent from both is a locale with no declared graph.
  * That is a finding rather than a default — the `weights-family` check reports it —
@@ -217,8 +243,10 @@ export function familyForLocale(locale: string): WeightsFamily | undefined {
  *
  * Three cases answer `undefined`, and they are different.
  * A locale equal to a family id names the base itself, which falls back to nothing.
- * A Latin overlay names its base through `mailwoman.baseWeights` in its manifest, so resolution
- * follows that rather than a script rule. A locale no family claims has no graph at all.
+ *
+ * A Latin overlay names its base through `mailwoman.baseWeights` in its manifest,
+ * so resolution follows that rather than a script rule.
+ * A locale no family claims has no graph at all.
  *
  * Kept as its own function rather than folded into {@linkcode familyForLocale} because the
  * two answer different questions: `familyForLocale("cjk")` is the character family, and
@@ -230,8 +258,9 @@ export function familyFallbackFor(locale: string): string | undefined {
 
 	if (!family || family.family === code) return undefined
 
-	// A family with no routing predicate is reached through `mailwoman.baseWeights`, which the package
-	// manifest declares. Answering here as well would give resolution two sources for one fact.
+	// A family with no routing predicate is reached through `mailwoman.baseWeights`,
+	// which the package manifest declares.
+	// Answering here as well would give resolution two sources for one fact.
 	return family.routingScripts ? family.family : undefined
 }
 
@@ -264,33 +293,38 @@ export function familyForScript(script: string): WeightsFamily | undefined {
  * instrument: the venue rows and the Chinese unit rows overlap in how much Han they carry, and differ only in where it
  * sits.
  *
- * A Han line separated from its Latin province by whitespace alone (`六分场七队 Hunan`) has no
- * segment of its own and is not routed. Reading whitespace runs instead would reach it
- * and would also re-admit the Han venue names, so the comma is the boundary this rule reads.
+ * A Han line separated from its Latin province by whitespace alone (`六分场七队 Hunan`)
+ * has no segment of its own and is not routed.
+ * Reading whitespace runs instead would reach it and would also re-admit the Han
+ * venue names, so the comma is the boundary this rule reads.
  */
 /**
  * Whether the input opens with a run of tokens written in a script the given family serves.
  *
- * A candidate predicate, measured and unshipped. {@linkcode routeFamilyForText} does
- * not read it, and enabling it would change which graph serves an existing request.
+ * A candidate predicate, measured and unshipped. {@linkcode routeFamilyForText} does not
+ * read it, and enabling it would change which graph serves an existing request.
  * `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx` requires a route comparison
  * and a full regression board before that ships.
  *
- * It exists because {@linkcode carriesFamilySegmentFor} reads comma segments,
- * and four CN board rows write their Han unit and their Latin province in one
- * whitespace-separated run — `六分场七队 Hunan` has no comma, so no segment is wholly Han
- * and the row stays on the Latin graph. Reading whitespace runs instead would reach those four
- * and would also reach the venue rows the segment rule exists to exclude, because
- * `Far East Chinese 口福羊汤, 13 Gerrard St, London W1D 5PS` carries a whitespace-bounded Han run too.
+ * It exists because {@linkcode carriesFamilySegmentFor} reads comma segments, and four CN
+ * board rows write their Han unit and their Latin province in one whitespace-separated run —
+ * `六分场七队 Hunan` has no comma, so no segment is wholly Han and the row stays on the Latin graph.
+ * Reading whitespace runs instead would reach those four and would also reach the venue rows the
+ * segment rule exists to exclude, because `Far East Chinese 口福羊汤, 13 Gerrard St, London W1D 5PS`
+ * carries a whitespace-bounded Han run too.
  *
- * Position separates them where extent does not. In the four CN rows the Han leads
- * the input. In the venue rows the Han follows Latin words or is glued to one.
- * So this reads the first token that carries a script at all and asks whether that script is
- * the family's. Tokens carrying no script (`Zyyy` — a house number, a postal code) are skipped
+ * Position separates them where extent does not.
+ * In the four CN rows the Han leads the input.
+ *
+ * In the venue rows the Han follows Latin words or is glued to one.
+ * So this reads the first token that carries a script at all and asks whether that script is the family's.
+ *
+ * Tokens carrying no script (`Zyyy` — a house number, a postal code) are skipped
  * rather than answering, which keeps `〒150-0001 Tokyo` from being decided by its postal mark.
  *
- * It reaches no input written wholly in Latin script, so the two romaji JP board rows stay
- * where they are under it. A locale or postcode predicate is the only kind that reaches those.
+ * It reaches no input written wholly in Latin script, so the two romaji JP
+ * board rows stay where they are under it.
+ * A locale or postcode predicate is the only kind that reaches those.
  */
 export function leadsWithFamilyScriptFor(
 	shape: Pick<QueryShape, "tokenClasses">,

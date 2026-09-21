@@ -26,15 +26,21 @@ import { resolveEntities, type SourceRecord } from "#index"
  */
 export interface MatcherScaleOptions {
 	/**
-	 * Record counts to sweep. Default `[10000, 50000, 100000, 250000, 500000]`.
+	 * Record counts to sweep.
+	 *
+	 * Default `[10000, 50000, 100000, 250000, 500000]`.
 	 */
 	sizes?: number[]
 	/**
-	 * Average records per distinct place. Default 3.
+	 * Average records per distinct place.
+	 *
+	 * Default 3.
 	 */
 	dup?: number
 	/**
-	 * Fit the FS m/u with EM per size (slower). Default false.
+	 * Fit the FS m/u with EM per size (slower).
+	 *
+	 * Default false.
 	 */
 	em?: boolean
 	/**
@@ -45,6 +51,7 @@ export interface MatcherScaleOptions {
 
 /**
  * Generate N synthetic records clustered into ~N/DUP distinct "places".
+ *
  * Each place gets a coordinate in the continental-US box, a canonical key, and an org name. its DUP
  * duplicates carry a lightly-varied name and a jittered coordinate, so geo-cell + canonical-key
  * blocking groups them and scoring links them — the realistic shape of a dedup workload.
@@ -84,7 +91,9 @@ const mb = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(0)} MB`
 const sec = (ms: number) => `${(ms / 1000).toFixed(2)} s`
 
 /**
- * Pure-Node matcher scale eval — see the module doc. Emits the markdown report to stdout.
+ * Pure-Node matcher scale eval — see the module doc.
+ *
+ * Emits the markdown report to stdout.
  */
 export async function matcherScale(
 	options: MatcherScaleOptions = {},

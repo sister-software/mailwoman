@@ -56,15 +56,21 @@ export interface RelabelGoldenOptions {
 	 */
 	input: string
 	/**
-	 * Output golden version dir. Created. never overwritten in place.
+	 * Output golden version dir.
+	 *
+	 * Created. never overwritten in place.
 	 */
 	output: string
 	/**
-	 * Review-deck jsonl path. Default `<output>/review-deck.jsonl`.
+	 * Review-deck jsonl path.
+	 *
+	 * Default `<output>/review-deck.jsonl`.
 	 */
 	deck?: string
 	/**
-	 * Parent version label recorded in the manifest. Default: the input dir's basename.
+	 * Parent version label recorded in the manifest.
+	 *
+	 * Default: the input dir's basename.
 	 */
 	parentLabel?: string
 	/**
@@ -72,7 +78,9 @@ export interface RelabelGoldenOptions {
 	 */
 	commit?: string
 	/**
-	 * Passed through to {@linkcode relabelGoldenStreetRow}. Default true.
+	 * Passed through to {@linkcode relabelGoldenStreetRow}.
+	 *
+	 * Default true.
 	 */
 	splitPrefix?: boolean
 }
@@ -116,8 +124,9 @@ const DECK_WORTHY_UNCHANGED: ReadonlySet<GoldenRelabelClass> = new Set([
 ])
 
 /**
- * Relabel every `.jsonl` in a golden version dir, writing a new version dir plus a
- * review deck and a manifest that records the convention, the parent, and the counts.
+ * Relabel every `.jsonl` in a golden version dir, writing a new version dir plus a review deck
+ * and a manifest that records the convention, the parent, and the counts.
+ *
  * Non-jsonl siblings (readme, split manifests) are copied forward so the new version is
  * self-contained. nested split dirs (`dev/`, `test/`) are relabelled recursively.
  */
@@ -272,9 +281,10 @@ export async function relabelGoldenDirectory(
 
 /**
  * Render the operator-facing half of the review deck: the flagged rows first
- * (those are the ones asking for a ruling), then the classes the tool left folded
- * by name, then a sample of the ordinary corrections. The jsonl sibling carries
- * every row. this file is the one a human reads.
+ * (those are the ones asking for a ruling), then the classes the tool left folded by name,
+ * then a sample of the ordinary corrections.
+ *
+ * The jsonl sibling carries every row. this file is the one a human reads.
  */
 function renderDeckMarkdown(deck: GoldenRelabelDeckEntry[], parent: string, version: string): string {
 	const span = (components: Record<string, string>): string =>

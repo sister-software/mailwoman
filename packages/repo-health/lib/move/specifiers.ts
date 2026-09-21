@@ -34,7 +34,9 @@ export interface PackageManifest {
  */
 export interface PackageSpecifiers {
 	/**
-	 * `#`-prefixed, from the package's `imports` map. Package-private. a test file may not write one.
+	 * `#`-prefixed, from the package's `imports` map.
+	 *
+	 * Package-private. a test file may not write one.
 	 */
 	internal: string[]
 	/**
@@ -44,9 +46,11 @@ export interface PackageSpecifiers {
 }
 
 /**
- * The three ways a specifier can name a module here. The family decides who may write it —
- * a `#` import is package-private, a bare specifier is the public interface, a relative
- * path is internal to a directory — so a replacement never crosses from one to another.
+ * The three ways a specifier can name a module here.
+ *
+ * The family decides who may write it — a `#` import is package-private,
+ * a bare specifier is the public interface, a relative path is internal to a directory —
+ * so a replacement never crosses from one to another.
  */
 export const SpecifierFamily = {
 	Relative: "relative",
@@ -59,8 +63,10 @@ export type SpecifierFamily = (typeof SpecifierFamily)[keyof typeof SpecifierFam
 const SOURCE_EXTENSION = /\.(?:m|c)?[jt]sx?$/u
 
 /**
- * Which family a specifier belongs to. A replacement that changes family changes who is allowed to
- * write it, so this is the predicate a rewrite is filtered by rather than a description of one.
+ * Which family a specifier belongs to.
+ *
+ * A replacement that changes family changes who is allowed to write it, so this is the
+ * predicate a rewrite is filtered by rather than a description of one.
  */
 export function specifierFamily(specifier: string): SpecifierFamily {
 	if (specifier.startsWith(".")) return SpecifierFamily.Relative

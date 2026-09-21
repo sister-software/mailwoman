@@ -111,10 +111,11 @@ for (const locale of locales) {
 }
 
 /**
- * `arm → locale → pipeline`. The FST is chosen per (arm, locale) because `fst-<locale>.bin`
- * is country-scoped. a locale with no binary in an arm's dir gets `false`, which is the
- * same state as the `none` arm for that locale — recorded rather than papered over,
- * since it is why an out-of-reach row cannot discriminate.
+ * `arm → locale → pipeline`.
+ *
+ * The FST is chosen per (arm, locale) because `fst-<locale>.bin` is country-scoped. a locale with
+ * no binary in an arm's dir gets `false`, which is the same state as the `none` arm for that locale —
+ * recorded rather than papered over, since it is why an out-of-reach row cannot discriminate.
  */
 const pipelines = new Map<string, Map<string, ReturnType<typeof createRuntimePipeline>>>()
 
@@ -149,11 +150,15 @@ for (const arm of arms) {
 
 interface Outcome {
 	/**
-	 * Coordinate within the declared tolerance. `null` = the row asserts no coordinate.
+	 * Coordinate within the declared tolerance.
+	 *
+	 * `null` = the row asserts no coordinate.
 	 */
 	coordOK: boolean | null
 	/**
-	 * `expectPlaceID`/`expectPlaceName` matched. `null` = not asserted.
+	 * `expectPlaceID`/`expectPlaceName` matched.
+	 *
+	 * `null` = not asserted.
 	 */
 	placeOK: boolean | null
 	/**
@@ -164,6 +169,7 @@ interface Outcome {
 	resolvedName: string | null
 	/**
 	 * The row's verdict — `coordOK` when asserted, else `placeOK`.
+	 *
 	 * Used for the flip inventory.
 	 */
 	pass: boolean

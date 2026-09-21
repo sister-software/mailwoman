@@ -18,8 +18,10 @@ function nowISO(): string {
 }
 
 /**
- * Record a webhook event id. `"duplicate"` is Stripe redelivering an event this worker
- * already acted on, and the caller answers 200 with no further effect.
+ * Record a webhook event id.
+ *
+ * `"duplicate"` is Stripe redelivering an event this worker already acted on,
+ * and the caller answers 200 with no further effect.
  */
 export async function recordEventOnce(
 	ledger: Ledger,
@@ -35,8 +37,9 @@ export async function recordEventOnce(
 }
 
 /**
- * Whether a webhook event id has been acted on. Read before the handler runs;
- * `recordEventOnce` writes after it succeeds.
+ * Whether a webhook event id has been acted on.
+ *
+ * Read before the handler runs; `recordEventOnce` writes after it succeeds.
  */
 export async function eventRecorded(ledger: Ledger, eventID: string): Promise<boolean> {
 	const row = await ledger
@@ -61,6 +64,7 @@ export async function findLicense(ledger: Ledger, lid: string): Promise<LicenseR
 
 /**
  * Create the license row unless one already holds its subscription or Checkout Session.
+ *
  * `"present"` is another caller's row, which the caller reads back by subscription.
  */
 export async function createLicenseIfAbsent(ledger: Ledger, row: NewLicense): Promise<"inserted" | "present"> {
@@ -101,8 +105,9 @@ export async function setLicenseState(
 
 /**
  * Read and clear the plaintext refresh secret so it is answered to exactly one claim.
- * A read then a clear conditioned on the value read: two claims racing
- * both read it, but only the one whose clear lands a row answers it.
+ *
+ * A read then a clear conditioned on the value read: two claims racing both read it,
+ * but only the one whose clear lands a row answers it.
  * (`returning` on the update alone would answer the cleared column, which is null.)
  */
 export async function takePendingRefreshSecret(ledger: Ledger, lid: string): Promise<string | undefined> {
@@ -191,10 +196,12 @@ export async function setEmailState(
 }
 
 /**
- * Tokens whose email has not been confirmed sent: `pending` covers a crash between the insert
- * and the send, or between the provider accepting the message and the ledger recording it;
- * `failed` is a provider refusal. Both are re-sent under the invoice id. whether the
- * provider deduplicates on it is the provider's (`email/provider.ts`).
+ * Tokens whose email has not been confirmed sent: `pending` covers a crash
+ * between the insert and the send, or between the provider accepting the message
+ * and the ledger recording it; `failed` is a provider refusal.
+ *
+ * Both are re-sent under the invoice id. whether the provider deduplicates on
+ * it is the provider's (`email/provider.ts`).
  */
 export async function tokensAwaitingEmail(ledger: Ledger): Promise<LicenseTokenRow[]> {
 	return ledger.selectFrom("license_tokens").selectAll().where("email_state", "in", ["pending", "failed"]).execute()
@@ -224,8 +231,10 @@ export async function findLicenseByCheckoutSession(ledger: Ledger, sessionID: st
 }
 
 /**
- * Every license, for the reconciliation pass. The table holds one row per subscription, so the pass
- * reads it whole rather than asking Stripe what changed, which its subscription list cannot answer.
+ * Every license, for the reconciliation pass.
+ *
+ * The table holds one row per subscription, so the pass reads it whole rather than
+ * asking Stripe what changed, which its subscription list cannot answer.
  */
 export async function allLicenses(ledger: Ledger): Promise<LicenseRow[]> {
 	return ledger.selectFrom("licenses").selectAll().orderBy("created_at", "asc").execute()

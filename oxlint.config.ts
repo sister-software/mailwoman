@@ -29,15 +29,15 @@ const config = createOxlintConfig({
 	// more than the missing comment did. Public surface is where a reader has no other context.
 	constantDocs: {
 		scope: "exported",
-		// Command modules export these as framework metadata. the `description` string is
-		// the `--help` text. A JSDoc block above them can only restate it.
+		// Command modules export these as framework metadata. the `description` string is the `--help` text.
+		// A JSDoc block above them can only restate it.
 		ignoreNames: ["description", "args", "options", "alias", "isDefault"],
 	},
-	// An acronym is capitalized as a whole camelCase component: `parseJSON`, `POILookup`,
-	// `createWOFResolver`. The shipped list covers general programming vocabulary.
-	// everything below is this project's own, and the list is worth widening on sight —
-	// `outHtml` sat in three sibling files for months because a hand-maintained list
-	// only contains the acronyms someone thought to add.
+	// An acronym is capitalized as a whole camelCase component: `parseJSON`,
+	// `POILookup`, `createWOFResolver`.
+	// The shipped list covers general programming vocabulary. everything below is this project's own,
+	// and the list is worth widening on sight — `outHtml` sat in three sibling files for months
+	// because a hand-maintained list only contains the acronyms someone thought to add.
 	acronymCasing: {
 		extraAcronyms: [
 			"BIO",
@@ -56,8 +56,9 @@ const config = createOxlintConfig({
 			"WOF",
 			"ZCTA",
 		],
-		// Names whose casing is not ours to choose. Prefer a scoped disable comment at the one site
-		// that needs it — an entry here silently covers every future declaration of the same name.
+		// Names whose casing is not ours to choose.
+		// Prefer a scoped disable comment at the one site that needs it — an entry here
+		// silently covers every future declaration of the same name.
 		ignoreNames: [
 			// kysely's own dialect classes are `SqliteAdapter`/`SqliteDialect`/`SqliteDriver`; ours
 			// implement its interfaces and read as a matched pair only if they follow suit.
@@ -111,9 +112,10 @@ const config = createOxlintConfig({
 const BROWSER_REACHABLE_NEURAL_FILES = ["packages/neural/lib/*.ts"]
 
 /**
- * The Node tier, exempt from the rule below. `index.ts` is the Node entry
- * and re-exports the other three as values; `test/**` and the nested directories
- * fall outside the single-segment glob above on their own.
+ * The Node tier, exempt from the rule below.
+ *
+ * `index.ts` is the Node entry and re-exports the other three as values; `test/**`
+ * and the nested directories fall outside the single-segment glob above on their own.
  */
 const NODE_TIER_NEURAL_FILES = [
 	"packages/neural/lib/index.ts",
@@ -147,21 +149,19 @@ const NODE_ONLY_NEURAL_MODULES = [
 ]
 
 /**
- * Every Node builtin, by specifier prefix. A browser-reachable file importing one
- * of these is a bundle break whatever the module is called.
+ * Every Node builtin, by specifier prefix.
+ *
+ * A browser-reachable file importing one of these is a bundle break whatever the module is called.
  */
 const NODE_BUILTIN_PATTERN = "node:*"
 
 export default {
 	...config,
 	// The repo-local plugin (`oxlint.plugin.ts`) rides alongside the bundled Sister Software one.
-	// `comment-reflow` wraps comment prose at the oxfmt print width and lifts overflowing trailing
-	// comments onto their own line above the target. Trial: see `trial/comment-reflow`.
-	jsPlugins: [
-		...((config.jsPlugins as string[] | undefined) ?? []),
-		"./oxlint.plugin.ts",
-		{ name: "comment-reflow", specifier: "oxlint-plugin-comment-reflow" },
-	] as unknown as string[],
+	//
+	// `mailwoman/comment-reflow` lives there too, so the fork in
+	// `config/oxlint/comment-reflow/` needs no package.
+	jsPlugins: [...((config.jsPlugins as string[] | undefined) ?? []), "./oxlint.plugin.ts"],
 	overrides: [
 		...((config.overrides as unknown[] | undefined) ?? []),
 		{
@@ -218,21 +218,23 @@ export default {
 		},
 		{
 			// A redirect to `@mailwoman/core` is only actionable where the import is,
-			// and these files cannot take it. The reason is structural rather than per-call,
-			// so it is stated once here instead of as a disable comment on every line —
-			// which is what these files carried before, each repeating this paragraph in miniature.
+			// and these files cannot take it.
+			// The reason is structural rather than per-call, so it is stated once here
+			// instead of as a disable comment on every line — which is what these files carried
+			// before, each repeating this paragraph in miniature.
 			//
-			// `docs/static/**` ships standalone: the benchmark harnesses and the published
-			// server example run on node builtins with no monorepo install, which is what lets
-			// a reader copy them. `ancestrie`, `annotations` and `un-locode-lookup` are leaf
-			// packages that declare no `@mailwoman/core` dependency, and taking one drags core's
-			// ~11 MB of shipped data behind it — the same trade that keeps `un-locode-lookup`
-			// re-implementing the ray cast rather than importing `@mailwoman/spatial`.
+			// `docs/static/**` ships standalone: the benchmark harnesses and the published server example
+			// run on node builtins with no monorepo install, which is what lets a reader copy them.
+			// `ancestrie`, `annotations` and `un-locode-lookup` are leaf packages that declare
+			// no `@mailwoman/core` dependency, and taking one drags core's ~11 MB of shipped
+			// data behind it — the same trade that keeps `un-locode-lookup` re-implementing
+			// the ray cast rather than importing `@mailwoman/spatial`.
 			//
-			// Only the printer entry is lifted. `JSON.parse` still binds, because these files
-			// already answer it per site with something this override cannot say — whether a
-			// throw on corrupt input is the interface there. Lifting both would leave those
-			// six disable comments dead while reading as though they still did work.
+			// Only the printer entry is lifted.
+			// `JSON.parse` still binds, because these files already answer it per site with something
+			// this override cannot say — whether a throw on corrupt input is the interface there.
+			// Lifting both would leave those six disable comments dead while reading as
+			// though they still did work.
 			files: [
 				"docs/static/**/*.mjs",
 				"packages/ancestrie/**/*.ts",
@@ -254,9 +256,9 @@ export default {
 		},
 		{
 			// The homes `prefer-home` points at are the one place each shape is typed out:
-			// the clock helpers, the seeded generators, and `@mailwoman/spatial`, which
-			// owns Earth's radius and every reading of it. The table that names each shape,
-			// and its test, spell the constants out by necessity.
+			// the clock helpers, the seeded generators, and `@mailwoman/spatial`,
+			// which owns Earth's radius and every reading of it.
+			// The table that names each shape, and its test, spell the constants out by necessity.
 			files: [
 				"packages/core/lib/utils/time.ts",
 				"packages/core/lib/random.ts",
@@ -354,11 +356,25 @@ export default {
 		...(config.rules as Record<string, unknown>),
 		// The plugin measures a tab as four columns; oxfmt renders one as two. An indented comment is
 		// therefore measured wider than it prints, and wraps early by two columns per indent level.
-		"comment-reflow/reflow": ["warn", { printWidth: 120, trailingComments: "overflow" }],
+		// One sentence per line.
+		//
+		// A sentence that fits takes a line of its own, and only a sentence too long for the measure wraps — at a
+		// comma or before a conjunction, with a parenthetical held whole.
+		//
+		// The lead sentence of a block stands alone and the rest travel in pairs, which is the shape the
+		// hand-written comments in isp-nexus settled on. There the author wrote short paragraphs and the formatter
+		// only ever filled inside one.
+		//
+		// 90 is the measure and 120 the ceiling. The columns between are bought, by a parenthetical that would
+		// otherwise split or a tail that would otherwise strand, rather than filled. `tabWidth` matches oxfmt,
+		// whose tab is two columns. The upstream plugin assumed four and wrapped every indented comment early.
+		"mailwoman/comment-reflow": ["warn", { printWidth: 120, targetWidth: 90, tabWidth: 2, paragraphSentences: 2 }],
 		"guard-for-in": "error",
-		// The shared base sets this to `warn`. It every run prints and no run refuses.
-		// Therefore, an unused binding accumulates. `tsc` does not catch it either —
-		// `noUnusedLocals` and `noUnusedParameters` are off in `@sister.software/tsconfig`.
+		// The shared base sets this to `warn`.
+		// It every run prints and no run refuses.
+		// Therefore, an unused binding accumulates.
+		// `tsc` does not catch it either — `noUnusedLocals` and `noUnusedParameters`
+		// are off in `@sister.software/tsconfig`.
 		// Measured before promoting: those two flags over every package's source
 		// and test project report zero, so this refuses the next one rather than a backlog.
 		// The base's options are repeated verbatim because setting a severity alone drops them, and every
@@ -416,15 +432,16 @@ export default {
 		// before the first is read — the whole-buffer parse spliterator exists to avoid.
 		// Bounded-input sites keep split behind a scoped disable saying why their bound is durable.
 		"mailwoman/prefer-spliterator": "error",
-		// A helper shape that already has a home (`HELPER_HOMES` in `oxlint.plugin.ts`) is reported at the
-		// copy, with the import that replaces it. The home files themselves are exempted in `overrides`.
+		// A helper shape that already has a home (`HELPER_HOMES` in `oxlint.plugin.ts`)
+		// is reported at the copy, with the import that replaces it.
+		// The home files themselves are exempted in `overrides`.
 		"mailwoman/prefer-home": "error",
-		// `JSON.parse` throws on corrupt input and returns `any`, so every direct call
-		// site either wraps it in its own try/catch or lets the exception escape untyped.
-		// `tryParsingJSON<T>` (`@mailwoman/core/objects`) is the house wrapper: typed result,
-		// non-throwing, explicit fallback. Sites where throw-on-corrupt is the interface —
-		// sealed-artifact readers, jsonl bulk loaders that must fail loudly with
-		// position info — keep `JSON.parse` behind a scoped disable stating why.
+		// `JSON.parse` throws on corrupt input and returns `any`, so every direct call site
+		// either wraps it in its own try/catch or lets the exception escape untyped.
+		// `tryParsingJSON<T>` (`@mailwoman/core/objects`) is the house wrapper:
+		// typed result, non-throwing, explicit fallback.
+		// Sites where throw-on-corrupt is the interface — sealed-artifact readers, jsonl bulk loaders that
+		// must fail loudly with position info — keep `JSON.parse` behind a scoped disable stating why.
 		// Note the wrapper returns the fallback for non-string input, so a `JSON.parse(buffer)`
 		// site converts with an explicit `.toString()` or not at all.
 		//
@@ -433,9 +450,10 @@ export default {
 		"no-restricted-properties": restrictedPropertiesExcept(),
 		"typescript/no-explicit-any": "error",
 		"unicorn/no-new-array": "off",
-		// Several suites assert through helpers that throw rather than calling `expect` inline —
-		// `expectProposal` in the phrase-grouper catalogue, `assertDownstreamOffsetsSurvive` in
-		// the tokenizer suite. Without this the rule reads those tests as asserting nothing.
+		// Several suites assert through helpers that throw rather than calling
+		// `expect` inline — `expectProposal` in the phrase-grouper catalogue,
+		// `assertDownstreamOffsetsSurvive` in the tokenizer suite.
+		// Without this the rule reads those tests as asserting nothing.
 		"vitest/expect-expect": ["error", { assertFunctionNames: ["expect", "expect*", "assert*"] }],
 	},
 }

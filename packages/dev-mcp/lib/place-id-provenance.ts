@@ -24,27 +24,34 @@ import {
 } from "@mailwoman/core/resolver/synthetic-id-ranges"
 
 /**
- * Where a place id was minted. Each value names the fold that owns the range,
- * never the placetype or country.
+ * Where a place id was minted.
+ *
+ * Each value names the fold that owns the range, never the placetype or country.
  */
 export const PlaceIDSource = {
 	/**
 	 * A real Who's On First id, below every synthetic base.
+	 *
 	 * Resolvable on spelunker.
 	 */
 	WOF: "wof",
 	/**
-	 * Minted by the Overture `divisions` backfill for a locale with no WOF repo (`assignSyntheticIDs`
-	 * hashes the gers id into the reserved span). Not a WOF id.
+	 * Minted by the Overture `divisions` backfill for a locale with no WOF repo
+	 * (`assignSyntheticIDs` hashes the gers id into the reserved span).
+	 *
+	 * Not a WOF id.
 	 */
 	Overture: "overture",
 	/**
-	 * Minted by the GeoNames alias fold. Not a WOF id.
+	 * Minted by the GeoNames alias fold.
+	 *
+	 * Not a WOF id.
 	 */
 	GeoNames: "geonames",
 	/**
-	 * Minted by the GeoNames postal fold, which reserves its own span above
-	 * the alias fold. Not a WOF id.
+	 * Minted by the GeoNames postal fold, which reserves its own span above the alias fold.
+	 *
+	 * Not a WOF id.
 	 */
 	GeoNamesPostal: "geonames-postal",
 } as const
@@ -61,12 +68,14 @@ export interface PlaceIDProvenance {
 	id_source: PlaceIDSource
 	/**
 	 * The id AS a Who's On First id, or `null` when it is synthetic.
+	 *
 	 * Null here is a positive statement — "this place has no WOF identity" —
 	 * and is why the field is emitted even when it is null rather than omitted.
 	 */
 	wof_id: number | null
 	/**
 	 * The spelunker permalink, or `null` for a synthetic id.
+	 *
 	 * Present so a reader never has to know the URL shape, and absent so they never paste one that 404s.
 	 */
 	wof_url: string | null
@@ -75,9 +84,10 @@ export interface PlaceIDProvenance {
 /**
  * Classify a place id by the range it falls in.
  *
- * The ranges are read from the folds that mint them rather than re-declared, so a fold
- * that moves its base moves this classifier with it. They are contiguous and ascending —
- * WOF below {@link OVERTURE_ID_BASE}, then Overture, then the GeoNames alias fold at
+ * The ranges are read from the folds that mint them rather than re-declared,
+ * so a fold that moves its base moves this classifier with it.
+ * They are contiguous and ascending — WOF below {@link OVERTURE_ID_BASE},
+ * then Overture, then the GeoNames alias fold at
  * {@link GEONAMES_ID_BASE}, then the GeoNames postal fold at {@link GEONAMES_POSTAL_ID_BASE} —
  * so a single ladder classifies every id with no gap and no overlap.
  */

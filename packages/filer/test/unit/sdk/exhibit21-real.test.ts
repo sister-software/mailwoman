@@ -62,10 +62,12 @@ function normalized(html: string): string {
 }
 
 /**
- * `alti-global-2025.htm` separates its entries with nothing but a double space, so no
- * name/jurisdiction boundary exists to be found. Abstaining entirely is the required answer
- * for it — see `expected.json`'s comment. Every other vendored document states a subsidiary
- * list a reader can follow, so zero is a parser failure there rather than an abstention.
+ * `alti-global-2025.htm` separates its entries with nothing but a double space,
+ * so no name/jurisdiction boundary exists to be found.
+ *
+ * Abstaining entirely is the required answer for it — see `expected.json`'s comment.
+ * Every other vendored document states a subsidiary list a reader can follow,
+ * so zero is a parser failure there rather than an abstention.
  */
 const EXPECTED_TO_ABSTAIN_ENTIRELY = new Set(["alti-global-2025.htm"])
 
@@ -104,6 +106,7 @@ describe("parseExhibit21 — real EDGAR filings", () => {
 describe("parseExhibit21 — real EDGAR filings, fabrication audit", () => {
 	/**
 	 * Each of these was emitted as a subsidiary name by the 2026-08-03 run.
+	 *
 	 * They are all literal substrings of their document, so the substring invariant admits
 	 * every one of them — which is exactly why this assertion exists separately from it.
 	 */

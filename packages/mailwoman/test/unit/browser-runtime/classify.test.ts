@@ -57,9 +57,10 @@ function stubLookup(places: StubPlace[]): MailwomanLookupLike {
 	}
 }
 
-// The real node type. A local structural stand-in compiled only while `runCascade` took
-// a loose `{ roots: unknown[] }`; now that it takes an `AddressTree`, a fixture that
-// cannot satisfy one is a fixture that does not model what the function is given.
+// The real node type.
+// A local structural stand-in compiled only while `runCascade` took a loose
+// `{ roots: unknown[] }`; now that it takes an `AddressTree`, a fixture that cannot
+// satisfy one is a fixture that does not model what the function is given.
 //
 // `start`/`end` are required and are not decoration: the resolver reads spans.
 // They are derived from the raw string here so a fixture cannot claim an offset the text does not have.

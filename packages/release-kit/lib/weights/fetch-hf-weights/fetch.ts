@@ -40,16 +40,20 @@ import { downloadRemote, probeRemote, verifyChecksum, writeArtifact } from "#wei
 export interface FetchHFWeightsOptions {
 	/**
 	 * The checkout the recipe is read from — manifests, model cards, committed lexicons.
+	 *
 	 * Never written to unless it is also the destination.
 	 */
 	repoRoot?: string
 	/**
 	 * The model-card version naming the bucket directory.
+	 *
 	 * Defaults to the base package's card, which is what CI read.
 	 */
 	version?: string
 	/**
-	 * Where progress lines go. Defaults to stderr.
+	 * Where progress lines go.
+	 *
+	 * Defaults to stderr.
 	 */
 	log?: (line: string) => void
 }

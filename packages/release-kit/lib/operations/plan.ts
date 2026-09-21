@@ -34,8 +34,9 @@ const planSchema = z.object({
 })
 
 /**
- * `release.plan` — reads and changes nothing. Listed in `registry.ts`;
- * the description on the operation is what `mwops` prints.
+ * `release.plan` — reads and changes nothing.
+ *
+ * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
  */
 export const plan = defineOperation({
 	id: "release.plan",

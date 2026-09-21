@@ -112,6 +112,7 @@ export interface Phase2LaneReport {
 	blockedReason?: string
 	/**
 	 * The rows a blocked lane will read once it is unblocked, and what each reads today.
+	 *
 	 * Present only on a blocked lane, and never counted anywhere.
 	 */
 	plannedChecks?: { id: string; measures: string; todayReads: string }[]
@@ -132,8 +133,9 @@ export interface Phase2Receipt {
 	checks: Phase2CheckOutcome[]
 	verdict: Phase2Verdict
 	/**
-	 * Always `false`. The ruler maps measurements onto one decision. recording
-	 * it is the operator's, per #1967.
+	 * Always `false`.
+	 *
+	 * The ruler maps measurements onto one decision. recording it is the operator's, per #1967.
 	 */
 	recorded: false
 	recordingNote: string
@@ -142,6 +144,7 @@ export interface Phase2Receipt {
 export interface Phase2RunOptions extends POIBoardOptions {
 	/**
 	 * Override the frozen pre-registration — for a test that wants a synthetic definition.
+	 *
 	 * A run with no override reads the committed one.
 	 */
 	definitionPath?: string
@@ -155,11 +158,15 @@ export interface Phase2RunOptions extends POIBoardOptions {
 	 */
 	coverageDatabasePath?: string
 	/**
-	 * The committed collision census. Absent reads the one in this repository.
+	 * The committed collision census.
+	 *
+	 * Absent reads the one in this repository.
 	 */
 	collisionCensusPath?: string
 	/**
-	 * Commit sha recorded in the receipt. Defaults to the checkout's own short head.
+	 * Commit sha recorded in the receipt.
+	 *
+	 * Defaults to the checkout's own short head.
 	 */
 	gitCommit?: string
 }
@@ -427,10 +434,10 @@ async function measure(
 	}
 
 	if (needed.has("poi_board")) {
-		// `quiet` because this receipt is the report: the board's own table would print
-		// 56 rows between two of this ruler's lines. `enforce` is left off deliberately —
-		// the floors are read as a measurement here, and a breach belongs in the verdict
-		// rather than in an exit code the ruler would have to interpret.
+		// `quiet` because this receipt is the report: the board's own table would
+		// print 56 rows between two of this ruler's lines.
+		// `enforce` is left off deliberately — the floors are read as a measurement here, and a breach
+		// belongs in the verdict rather than in an exit code the ruler would have to interpret.
 		const { report } = await runPOIBoard({
 			...options,
 			quiet: true,
@@ -592,10 +599,9 @@ function comparePins(pins: Phase2ArtifactPins, artifact: Phase2ObservedArtifacts
  * Run the one frozen marker query and count the markers that reach a caller
  * with the registered code and mechanism.
  *
- * This is the only instrument that builds its own pipeline, and it needs one:
- * the probe runner grades an answer and never hands back the query-kind verdict a
- * marker is attached to. Everything the check reads comes from the definition —
- * the query, the locale, the code and the mechanism.
+ * This is the only instrument that builds its own pipeline, and it needs one: the probe runner
+ * grades an answer and never hands back the query-kind verdict a marker is attached to.
+ * Everything the check reads comes from the definition — the query, the locale, the code and the mechanism.
  */
 async function measureMarker(
 	definition: Phase2DecisionDefinition,
@@ -682,8 +688,10 @@ export async function runPhase2Decision(options: Phase2RunOptions = {}): Promise
 }
 
 /**
- * The human-readable report. Prints the frozen bar beside every measurement, so a reader
- * never has to open the definition to know what the number was compared against.
+ * The human-readable report.
+ *
+ * Prints the frozen bar beside every measurement, so a reader never has to open the
+ * definition to know what the number was compared against.
  */
 export function printPhase2Receipt(receipt: Phase2Receipt): void {
 	console.log(`\nphase-2 decision ${receipt.decisionID} v${receipt.definitionVersion}`)

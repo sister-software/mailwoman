@@ -28,6 +28,7 @@ import { basename } from "path-ts"
 
 /**
  * Derive a SQL-safe schema name from a WOF distribution filename.
+ *
  * Used by `attach database … AS <name>` so each extract gets a stable, predictable handle.
  *
  * Convention strips the `whosonfirst-data-` prefix and the `-latest.db` (or just `.db`)
@@ -58,20 +59,24 @@ export function deriveSchemaName(path: string): string {
 }
 
 /**
- * Per-extract configuration. The simple form is just a path string —
- * the schema name is derived from it. The object form lets callers override the
- * derived schema name (useful when a filename doesn't follow WOF convention)
- * or attach an extra hint about which placetypes route here.
+ * Per-extract configuration.
+ *
+ * The simple form is just a path string — the schema name is derived from it.
+ * The object form lets callers override the derived schema name (useful when a filename
+ * doesn't follow WOF convention) or attach an extra hint about which placetypes route here.
  */
 export interface ExtractConfig {
 	path: string
 	/**
-	 * Override the auto-derived schema name. Useful when the filename doesn't match WOF convention
-	 * or when you want a memorable handle. Must be a valid SQLite identifier — `[a-zA-Z_][a-zA-Z0-9_]*`.
+	 * Override the auto-derived schema name.
+	 *
+	 * Useful when the filename doesn't match WOF convention or when you want a memorable handle.
+	 * Must be a valid SQLite identifier — `[a-zA-Z_][a-zA-Z0-9_]*`.
 	 */
 	schemaName?: string
 	/**
 	 * Optional explicit list of placetypes this extract serves.
+	 *
 	 * When set, queries against any listed placetype are routed to this extract.
 	 * When omitted, routing falls back to a name-match heuristic: a extract whose `schemaName`
 	 * contains the placetype as a substring (e.g. `postalcode_us` for `postalcode` queries)
@@ -82,6 +87,7 @@ export interface ExtractConfig {
 
 /**
  * Resolved post-derivation: paired path + chosen schema name + (possibly empty) placetypes hint.
+ *
  * Used internally by `WOFSQLitePlaceLookup` so the routing logic operates on uniform structures.
  */
 export interface ResolvedExtract {
@@ -99,8 +105,8 @@ const SQLITE_IDENT_RE = /^[A-Za-z_][A-Za-z0-9_]*$/u
  * Normalize the user-provided `databasePath` opt (which may be a single string, an array
  * of strings, or an array of `ExtractConfig` objects) into a uniform `ResolvedExtract[]`.
  *
- * The first extract becomes `main` regardless of its derived schema name — that's the
- * SQLite convention. Subsequent extracts keep their derived (or override) schema name.
+ * The first extract becomes `main` regardless of its derived schema name — that's the SQLite convention.
+ * Subsequent extracts keep their derived (or override) schema name.
  */
 export function resolveExtracts(input: string | ReadonlyArray<string | ExtractConfig>): ResolvedExtract[] {
 	const list = typeof input === "string" ? [input] : input
@@ -123,8 +129,8 @@ export function resolveExtracts(input: string | ReadonlyArray<string | ExtractCo
 			)
 		}
 
-		// The first extract is always main per SQLite semantics — its derived name is
-		// informational only. Subsequent extracts must have unique non-main names.
+		// The first extract is always main per SQLite semantics — its derived name is informational only.
+		// Subsequent extracts must have unique non-main names.
 		const schemaName = i === 0 ? "main" : derived
 
 		if (i > 0 && (schemaName === "main" || seen.has(schemaName))) {
@@ -162,6 +168,7 @@ export function resolveExtracts(input: string | ReadonlyArray<string | ExtractCo
  */
 /**
  * All placetype-matching extracts, in routing order (the country-aware pick chooses among these).
+ *
  * Used by the bias path: a country-less postcode query with proximity hints fans out across
  * every matching extract and merges, because single-extract routing would hide the cross-country
  * ambiguity the hints exist to resolve ("48026" lives in postalcode-us and postalcode-intl).
@@ -202,6 +209,7 @@ export function pickExtractForPlacetype(
 		 * #920: the query's country constraint, when the caller has one. With multiple extracts matching a placetype
 		 * (postalcode-us + postalcode-geonames-tail), first-match routing sent every postcode query to
 		 * the first extract and starved the rest — a FI postcode could never reach the tail extract.
+		 *
 		 * When `country` is given and a matching extract's probed country set contains it,
 		 * that extract wins. extracts without the country are skipped. the placetype-match
 		 * order remains the tiebreak when no extract claims the country (or none was probed).

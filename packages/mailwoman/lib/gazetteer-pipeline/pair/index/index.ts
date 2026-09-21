@@ -35,8 +35,9 @@ import type { PairIndexEntry } from "@mailwoman/neural/pair"
 
 /**
  * The one child tag this arc's extractions ever emit — the city-slot candidate
- * is always a dependent_locality. The parent tag is per-row and per-source,
- * so it is a parameter rather than a constant (see
+ * is always a dependent_locality.
+ *
+ * The parent tag is per-row and per-source, so it is a parameter rather than a constant (see
  * {@link PairIndexBuilder.addRow}).
  */
 const PAIR_TAG = "dependent_locality" as const
@@ -87,8 +88,10 @@ export interface PairIndexBuildResult {
 /**
  * Nearest-rank percentile over an ascending-sorted array
  * (matches the convention `docs/articles/evals` percentile tables use).
- * `p` in `[0, 100]`. Throws on an empty array — there's no percentile of nothing,
- * and a silent `0` would hide the empty-input bug from the caller.
+ *
+ * `p` in `[0, 100]`.
+ * Throws on an empty array — there's no percentile of nothing, and a silent `0`
+ * would hide the empty-input bug from the caller.
  */
 export function nearestRankPercentile(sortedAscending: readonly number[], p: number): number {
 	if (!sortedAscending.length) {
@@ -103,6 +106,7 @@ export function nearestRankPercentile(sortedAscending: readonly number[], p: num
 /**
  * Incrementally folds (rawCity, rawDistrict) rows into deduplicated PIX1 entries,
  * tracking the skip count and the raw city word-length distribution.
+ *
  * One instance per build. call {@link addRow} per source row, then {@link finish} once.
  */
 export class PairIndexBuilder {
@@ -112,7 +116,9 @@ export class PairIndexBuilder {
 	#rowsSkipped = 0
 
 	/**
-	 * Fold one source row. `rawCity`/`rawDistrict` are the unfolded CSV cell values
+	 * Fold one source row.
+	 *
+	 * `rawCity`/`rawDistrict` are the unfolded CSV cell values
 	 * (already `.trim()`-ed by the caller's CSV read is fine either way — this trims again defensively).
 	 * A row with an empty city is skipped: PPD's district (post town) is populated on virtually every row,
 	 * but city (dependent_locality) legitimately isn't, and an empty child has nothing to pair.
@@ -211,11 +217,12 @@ export interface PairIndexHoldoutResult {
 }
 
 /**
- * Deterministically withhold a `fraction` of `entries` from a pair-index build —
- * the pair-holdout falsifier: "rebuild the GB index minus a random 10% of pairs (seed 42)"
- * so the acceptance bars can be re-anchored against a measured degradation curve
- * rather than an assumed one. Dev/eval-only — never wired into a real shipped-artifact
- * build (a shipped index always has `fraction: 0`, i.e. holds out nothing).
+ * Deterministically withhold a `fraction` of `entries` from a pair-index build — the pair-holdout
+ * falsifier: "rebuild the GB index minus a random 10% of pairs (seed 42)" so the acceptance
+ * bars can be re-anchored against a measured degradation curve rather than an assumed one.
+ *
+ * Dev/eval-only — never wired into a real shipped-artifact build
+ * (a shipped index always has `fraction: 0`, i.e. holds out nothing).
  *
  * Order-independent and seed-deterministic: entries are sorted by (child, parent)
  * before the seeded shuffle (mirrors

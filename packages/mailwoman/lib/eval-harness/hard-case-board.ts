@@ -56,8 +56,10 @@ import zod from "zod"
 import type { MutuallyAssignable, SameShape } from "#eval-harness/shape-assertions"
 
 /**
- * What a row is testing. The tag is the reporting axis — per-class deltas are how an arm's effect is
- * localized to a register, rather than averaged into a single number that hides both wins and losses.
+ * What a row is testing.
+ *
+ * The tag is the reporting axis — per-class deltas are how an arm's effect is localized to
+ * a register, rather than averaged into a single number that hides both wins and losses.
  */
 export const HARD_CASE_CLASSES = [
 	/**
@@ -128,9 +130,11 @@ export interface HardCase {
 	 */
 	probeSurface: string
 	/**
-	 * Measured `max(importance)` for {@linkcode probeSurface} under the shipped population-proxy FST,
-	 * on the BIO tag named by {@linkcode probeTag}. Recorded so a reader can tell a tie caused
-	 * by "no bias difference" from a tie caused by "bias difference the decoder ignored".
+	 * Measured `max(importance)` for {@linkcode probeSurface} under the shipped
+	 * population-proxy FST, on the BIO tag named by {@linkcode probeTag}.
+	 *
+	 * Recorded so a reader can tell a tie caused by "no bias difference" from a tie
+	 * caused by "bias difference the decoder ignored".
 	 */
 	popBias: number
 	/**
@@ -146,7 +150,9 @@ export interface HardCase {
 	expectLat?: number
 	expectLon?: number
 	/**
-	 * Great-circle tolerance (m). Never defaulted — see the file header's meaning-of-zero note.
+	 * Great-circle tolerance (m).
+	 *
+	 * Never defaulted — see the file header's meaning-of-zero note.
 	 */
 	expectToleranceM?: number
 	source: string
@@ -157,6 +163,7 @@ export interface HardCase {
 
 /**
  * Canonical key order — {@linkcode HardCase}'s declaration order.
+ *
  * Emission re-keys through this so the board's diff means something.
  */
 export const HARD_CASE_KEY_ORDER = [
@@ -182,14 +189,16 @@ export const HARD_CASE_KEY_ORDER = [
 ] as const satisfies readonly (keyof HardCase)[]
 
 /**
- * How many fields a coordinate assertion is made of — `expectLat`, `expectLon`,
- * `expectToleranceM`. The refinement below accepts 0 of them or all 3, never a partial,
- * so this is the "all" side of that rule.
+ * How many fields a coordinate assertion is made of — `expectLat`, `expectLon`, `expectToleranceM`.
+ *
+ * The refinement below accepts 0 of them or all 3, never a partial, so this is the "all" side of that rule.
  */
 const COORDINATE_ASSERTION_FIELDS = 3
 
 /**
- * The runtime shadow. `strictObject`, and the coordinate triple is refined as all-or-nothing:
+ * The runtime shadow.
+ *
+ * `strictObject`, and the coordinate triple is refined as all-or-nothing:
  * a typo'd `expectLon` that silently read as "coordinate not asserted" is exactly
  * the input-tail defect this board exists to make loud.
  */
@@ -278,8 +287,10 @@ export function canonicalizeHardCase(c: HardCase): HardCase {
 }
 
 /**
- * Load + validate the board. Order is defined (by `id`, ascending), so a hand-appended
- * row cannot change what the board is — only what a text diff looks like.
+ * Load + validate the board.
+ *
+ * Order is defined (by `id`, ascending), so a hand-appended row cannot change what
+ * the board is — only what a text diff looks like.
  *
  * Throws on the first invalid row with its 1-based line number: a board that silently drops a malformed
  * row would under-report its own size, and the arm comparison would be run on a set nobody declared.

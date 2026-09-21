@@ -71,9 +71,9 @@ async function settle<T>(get: () => T | null | undefined, timeout = 8000): Promi
 test("an animated fitBounds omits the duration KEY — passing it as undefined is what produced NaN", () => {
 	const animated = fitBoundsOptionsFor(40, true)
 
-	// `duration: undefined` would satisfy maplibre's `'duration' in options` test
-	// and coerce to NaN. The key must be absent rather than merely undefined —
-	// `toBeUndefined()` on the value would pass against the bug.
+	// `duration: undefined` would satisfy maplibre's `'duration' in options` test and coerce to NaN.
+	// The key must be absent rather than merely undefined — `toBeUndefined()` on
+	// the value would pass against the bug.
 	expect(Object.hasOwn(animated, "duration")).toBe(false)
 	expect(animated.padding).toBe(40)
 
@@ -108,9 +108,9 @@ test("a bounds target drives the live map to the box without a NaN ease frame", 
 	// Read the ref lazily: it is assigned in a callback TypeScript cannot see, so reading it directly narrows to `never`.
 	const getMap = () => mapRef?.getMap()
 
-	// The map must actually arrive. Under the bug the flight throws on frame 1
-	// and the camera never leaves (0, 51.5) — so a moved center is the assertion,
-	// and the thrown RAF frame surfaces as an unhandled error besides.
+	// The map must actually arrive.
+	// Under the bug the flight throws on frame 1 and the camera never leaves (0, 51.5) — so a moved
+	// center is the assertion, and the thrown RAF frame surfaces as an unhandled error besides.
 	const arrived = await settle(() => {
 		const center = getMap()?.getCenter()
 

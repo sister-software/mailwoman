@@ -22,7 +22,9 @@ export interface MapChip {
 	 */
 	label: string
 	/**
-	 * The query the chip stands for, handed back on press. Defaults to the label.
+	 * The query the chip stands for, handed back on press.
+	 *
+	 * Defaults to the label.
 	 */
 	value?: string
 	/**

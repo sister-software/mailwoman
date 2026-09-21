@@ -48,8 +48,9 @@ describe("agreementPattern", () => {
 })
 
 describe("estimateParameters (EM)", () => {
-	// A separable synthetic: 100 matches (mostly both-exact), 900 non-matches (mostly both-different), with
-	// coincidental partial agreement in both classes. True match rate = 0.1.
+	// A separable synthetic: 100 matches (mostly both-exact), 900 non-matches
+	// (mostly both-different), with coincidental partial agreement in both classes.
+	// True match rate = 0.1.
 	const patterns: number[][] = []
 
 	const push = (pattern: number[], n: number) => {

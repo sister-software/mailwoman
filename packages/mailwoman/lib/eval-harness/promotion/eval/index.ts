@@ -94,16 +94,18 @@ import { scoreCountryHomograph } from "#eval-harness/score/country-homograph"
 import { resolveWOFHotDB } from "#eval-harness/wof-hot-db"
 
 /**
- * Render captured sink lines the way a child process's stdout arrived: one trailing
- * newline per `report()` call. Every `.md` the runner writes goes through this,
- * so the artifacts match the pre-migration bytes.
+ * Render captured sink lines the way a child process's stdout arrived:
+ * one trailing newline per `report()` call.
+ *
+ * Every `.md` the runner writes goes through this, so the artifacts match the pre-migration bytes.
  *
  * This is the whole migration's required assumption in one line.
- * `console.log(x)` writes `x` then a newline, and zx handed the concatenation of
- * those writes back as `.stdout`; a sink that records one entry per `console.log`
- * call therefore reproduces the same bytes — including a multi-line argument
- * (one call, embedded newlines, one trailing newline) and a bare `console.log()`
- * (the empty string, one newline). Exported for `promotion-eval-sinks.test.ts`.
+ * `console.log(x)` writes `x` then a newline, and zx handed the concatenation of those writes back as
+ * `.stdout`; a sink that records one entry per `console.log` call therefore reproduces the same
+ * bytes — including a multi-line argument (one call, embedded newlines, one trailing newline)
+ * and a bare `console.log()` (the empty string, one newline).
+ *
+ * Exported for `promotion-eval-sinks.test.ts`.
  */
 export function renderLines(lines: readonly string[]): string {
 	return lines.map((line) => `${line}\n`).join("")
@@ -116,9 +118,10 @@ interface ThresholdSpec {
 	requires_bridge?: boolean
 	/**
 	 * The answer KEY the per-locale battery grades against, e.g. `data/eval/golden/v0.1.3/dev`.
-	 * Spec-declared for the same reason the conventions mask is: two eval specs that name
-	 * different golden versions are not comparable, and a default buried in a scorer makes
-	 * that invisible. Omitted = per-locale-f1's own default (v0.1.2/dev).
+	 *
+	 * Spec-declared for the same reason the conventions mask is: two eval specs that name different
+	 * golden versions are not comparable, and a default buried in a scorer makes that invisible.
+	 * Omitted = per-locale-f1's own default (v0.1.2/dev).
 	 *
 	 * Answer-key versions are never comparable across conventions — v0.1.2 folds US
 	 * street spans, v0.1.3 splits them — so a spec that moves this field must re-anchor
@@ -149,36 +152,46 @@ export interface PromotionEvalOptions {
 	 */
 	check?: string
 	/**
-	 * Tokenizer path. Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
+	 * Tokenizer path.
+	 *
+	 * Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	tokenizer?: string
 	/**
-	 * Model-card JSON. Default `neural-weights-en-us/model-card.json`.
+	 * Model-card JSON.
+	 *
+	 * Default `neural-weights-en-us/model-card.json`.
 	 */
 	card?: string
 	/**
-	 * Gazetteer lexicon JSON. Default `data/gazetteer/anchor-lexicon-v1.json`.
+	 * Gazetteer lexicon JSON.
+	 *
+	 * Default `data/gazetteer/anchor-lexicon-v1.json`.
 	 */
 	gazetteerLexicon?: string
 	/**
 	 * Package-shaped candidate weights dir `<root>/node_modules/@mailwoman/neural-weights-en-us` —
 	 * the #718-safe path that feeds anchor+gazetteer+country via loadFromWeights,
 	 * the only in-distribution grade for a country-channel model (v6.2.0+).
+	 *
 	 * Alternative to --model/--int8. takes precedence.
 	 */
 	weightsCache?: string
 	/**
 	 * Package-shaped INT8 candidate dir, same layout as {@linkcode PromotionEvalOptions.weightsCache} —
 	 * pairing them runs the dual fp32+int8 battery entirely package-shaped (#47).
+	 *
 	 * The `--model`+`--int8` dual under-feeds the country channel (channel siblings never load),
-	 * so its absolute floors are invalid and a release grade needed a second,
-	 * single-artifact `--weights-cache` run. a pair makes floors and deltas
-	 * valid in one run. Requires
+	 * so its absolute floors are invalid and a release grade needed a second, single-artifact
+	 * `--weights-cache` run. a pair makes floors and deltas valid in one run.
+	 * Requires
 	 * {@linkcode PromotionEvalOptions.weightsCache} (the fp32 arm) and excludes the `--model`/`--int8` flow.
 	 */
 	int8WeightsCache?: string
 	/**
-	 * Battery output dir. Default `/tmp/eval-<label>-<hhmm>`.
+	 * Battery output dir.
+	 *
+	 * Default `/tmp/eval-<label>-<hhmm>`.
 	 */
 	outDir?: PathBuilderLike
 	/**
@@ -191,17 +204,18 @@ export interface PromotionEvalOptions {
 }
 
 /**
- * Resolve a `--spec` value to a real file. A path that exists wins verbatim. otherwise
- * the basename is looked up in the `checks/` dir shipped beside this module —
- * `new URL`-relative for the source tree, with a compiled-tree fallback
+ * Resolve a `--spec` value to a real file.
+ *
+ * A path that exists wins verbatim. otherwise the basename is looked up in the `checks/` dir shipped
+ * beside this module — `new URL`-relative for the source tree, with a compiled-tree fallback
  * (tsc does not emit readFileSync'd JSON into `out/`, so `packages/mailwoman/out/eval-harness/` reads
  * the source-tree copy at `packages/mailwoman/lib/eval-harness/specs/`; the lint-rules.json pattern).
  * Old `scripts/eval/checks/<spec>.json` invocations therefore keep working by basename.
  *
  * The `.json` suffix is optional, because the help has always advertised "a spec name"
- * and a spec name is what people type. Before that was true, `--spec v5.3.0-family`
- * fell through to `readFileSync("v5.3.0-family")` and died on a bare enoent naming
- * a file nobody asked for — which is how it read on 2026-07-16.
+ * and a spec name is what people type.
+ * Before that was true, `--spec v5.3.0-family` fell through to `readFileSync("v5.3.0-family")`
+ * and died on a bare enoent naming a file nobody asked for — which is how it read on 2026-07-16.
  */
 /**
  * The eval specs, beside this module in the source tree — tsc emits no `.json`,
@@ -210,9 +224,11 @@ export interface PromotionEvalOptions {
 const SPECS_DIR = resolvePackagePath("mailwoman", "lib", "eval-harness", "specs")
 
 /**
- * The workspaces whose compiled output this battery loads, and therefore the ones whose staleness
- * would change a verdict. Naming too few buys a `fresh` the run has not earned, so this is the parse
- * and resolve path end to end rather than the two packages the previous check happened to look at.
+ * The workspaces whose compiled output this battery loads, and therefore the
+ * ones whose staleness would change a verdict.
+ *
+ * Naming too few buys a `fresh` the run has not earned, so this is the parse and resolve
+ * path end to end rather than the two packages the previous check happened to look at.
  */
 const EVAL_HARNESS_WORKSPACES = [
 	"packages/mailwoman",
@@ -244,6 +260,7 @@ export async function resolveThresholdSpecPath(check: string): Promise<string> {
 
 /**
  * Every eval spec shipped beside this module, newest-looking last.
+ *
  * For `--spec` errors and tooling.
  */
 export async function listEvalSpecs(): Promise<string[]> {
@@ -256,9 +273,10 @@ export async function listEvalSpecs(): Promise<string[]> {
 }
 
 /**
- * The three pre-flight guards, run before any battery: the tokenizer must be
- * comparable to the card's, `core/out` must not be stale, and every graded
- * artifact's md5 + dynamic-quant fingerprint is recorded to `provenance.txt`.
+ * The three pre-flight guards, run before any battery: the tokenizer must be comparable
+ * to the card's, `core/out` must not be stale, and every graded artifact's md5 +
+ * dynamic-quant fingerprint is recorded to `provenance.txt`.
+ *
  * Returns an exit code to propagate, or `null` when the run may proceed.
  *
  * A fail is only trustworthy if you know which bytes were graded. v1.9.2's first eval
@@ -293,11 +311,12 @@ async function runLoreGuards(env: {
 	// The battery imports the compiled tree, so a stale `out/` grades code that has
 	// been replaced and reports a verdict rather than an error.
 	//
-	// The rule lives in `@mailwoman/core/module/compiled-freshness` because the
-	// dev-MCP needs the same one for the CLI it spawns, and the two copies disagreed.
+	// The rule lives in `@mailwoman/core/module/compiled-freshness` because the dev-MCP
+	// needs the same one for the CLI it spawns, and the two copies disagreed.
 	// This one compared every source against the mtime of the `packages/core/out` DIRECTORY.
-	// `tsc` overwrites files in place and never advances that mtime, so the check warned after every
-	// successful compile. Its source glob also matched `out/*.d.ts`, comparing the emit against itself.
+	// `tsc` overwrites files in place and never advances that mtime, so the check warned
+	// after every successful compile.
+	// Its source glob also matched `out/*.d.ts`, comparing the emit against itself.
 	const freshness = await checkCompiledFreshness(String(repoRootPath()), EVAL_HARNESS_WORKSPACES)
 
 	if (!freshness.fresh && freshness.reason) {
@@ -307,17 +326,18 @@ async function runLoreGuards(env: {
 	// Record the exact artifact provenance used for this evaluation.
 	// A fail is only trustworthy if you know which bytes were graded. v1.9.2's first eval
 	// run false-FAILed (us.postcode 86.9) because it graded a stale/mislabeled artifact —
-	// the real model scored 97.5 under every config. Record md5 + the dynamic-quant
-	// fingerprint (count of DynamicQuantizeLinear nodes. 0 = fp32, >0 = int8) of every
-	// graded artifact, and hard-assert the obvious mislabels: --model must be fp32,
+	// the real model scored 97.5 under every config.
+	// Record md5 + the dynamic-quant fingerprint (count of DynamicQuantizeLinear nodes. 0 = fp32, >0 = int8)
+	// of every graded artifact, and hard-assert the obvious mislabels: --model must be fp32,
 	// --int8 must actually be quantized and differ from --model.
 	//
 	// Was `grep -c -a DynamicQuantizeLinear <path>`. grep -c counts matching lines
 	// rather than occurrences, and an ONNX file has no meaningful lines — so the number
 	// was only ever read as zero-vs-nonzero, and the scan below reproduces that reading
 	// (it counts newline-delimited chunks carrying the needle, over the raw bytes,
-	// exactly as `grep -a` treated the binary as text). Kept as a string because it is
-	// interpolated verbatim into provenance.txt and compared against the literal "0".
+	// exactly as `grep -a` treated the binary as text).
+	// Kept as a string because it is interpolated verbatim into provenance.txt
+	// and compared against the literal "0".
 	const dql = async (p: string): Promise<string> => {
 		const needle = Buffer.from("DynamicQuantizeLinear", "latin1")
 		const buffer = await readLocalBuffer(p)
@@ -430,6 +450,7 @@ async function runLoreGuards(env: {
 /**
  * Demo-cascade smoke (#524): the whole-stack parse→reconcile→resolve pass the per-layer battery
  * lacks (the 2026-06-11 lesson: #520/#521/#522 all shipped through green per-layer checks).
+ *
  * Runs on the ship artifact against the slim hot DB the demo serves.
  * Env-restricted like the other artifact-dependent legs: skips with a loud warning
  * when the DB is absent so CI stays green without it — but an eval spec that floors
@@ -495,8 +516,10 @@ async function runDemoCascadeLeg(env: {
 }
 
 /**
- * Run the full promotion-eval battery. Returns the process exit code: 0 = every floor met
- * and the mask-regression lock held, 1 = any miss, 2 = usage / lore-guard refusal.
+ * Run the full promotion-eval battery.
+ *
+ * Returns the process exit code: 0 = every floor met and the mask-regression lock held,
+ * 1 = any miss, 2 = usage / lore-guard refusal.
  */
 export async function runPromotionEval(options: PromotionEvalOptions): Promise<number> {
 	const MODEL = options.model ?? ""
@@ -512,36 +535,38 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	// Every leg takes the library thread resolution, and two ways of raising it were measured and rejected.
 	//
 	// A uniform raise is eaten by de-order's own variance.
-	// Over one battery per `MAILWOMAN_INTRA_OP_THREADS` setting the four parse-only
-	// legs scale monotonically — 279.2 s at 1 thread, 168.9 at 2, 136.1 at 4,
-	// 106.1 at 8 — but de-order does not, and its int8 arm alone spanned 191.5-315.2 s
-	// across seven runs, wider than the 22.7 s the whole battery gains going 2 -> 8.
+	// Over one battery per `MAILWOMAN_INTRA_OP_THREADS` setting the four parse-only legs
+	// scale monotonically — 279.2 s at 1 thread, 168.9 at 2, 136.1 at 4, 106.1 at 8 —
+	// but de-order does not, and its int8 arm alone spanned 191.5-315.2 s across seven runs,
+	// wider than the 22.7 s the whole battery gains going 2 -> 8.
 	// The library default of 2 stands until a repeated measurement separates the two.
 	//
 	// Raising the parse-only legs alone is worse than either.
 	// It does speed them up (per-locale fp32 79.8 s -> 51.5, the PO-box probe 37.8 -> 23.8,
-	// about 55 s across the four), but de-order, which passes no thread option and resolves half
-	// its rows through SQLite, went 191.5 s -> 311.7 and 315.2 in two runs, and the battery
-	// total 437.7 s -> 548.3 and 532.9. A leg's classifier is never disposed, so its thread
-	// pool outlives it and the later legs contend with what the earlier ones left running.
+	// about 55 s across the four), but de-order, which passes no thread option
+	// and resolves half its rows through SQLite, went 191.5 s -> 311.7 and 315.2 in two runs,
+	// and the battery total 437.7 s -> 548.3 and 532.9.
+	// A leg's classifier is never disposed, so its thread pool outlives it
+	// and the later legs contend with what the earlier ones left running.
 
-	// package-shaped (#718-safe): when --weights-cache is set, the graded artifact + its
-	// tokenizer/card are the cache's own siblings. The metric probes load it via loadFromWeights
-	// (feeding anchor + gazetteer + country — the only in-distribution grade for a country-channel model);
-	// the country-orthogonal downstream legs (preset / cascade / arena / fr-recall / mask)
-	// stay on the explicit --model path against these EFF_TOK/EFF_CARD siblings.
+	// package-shaped (#718-safe): when --weights-cache is set, the graded artifact +
+	// its tokenizer/card are the cache's own siblings.
+	// The metric probes load it via loadFromWeights (feeding anchor + gazetteer + country —
+	// the only in-distribution grade for a country-channel model); the country-orthogonal
+	// downstream legs (preset / cascade / arena / fr-recall / mask) stay on the explicit
+	// --model path against these EFF_TOK/EFF_CARD siblings.
 	//
-	// The cache layout comes from `weightsCachePackageDir` — the resolver's own function
-	// rather than a re-typed `node_modules/@mailwoman/neural-weights-en-us` literal
-	// (2026-08-06 triage). The three artifacts are then named as siblings of that directory,
-	// which is what `resolveFromPackageDir` does one layer down.
+	// The cache layout comes from `weightsCachePackageDir` — the resolver's own function rather
+	// than a re-typed `node_modules/@mailwoman/neural-weights-en-us` literal (2026-08-06 triage).
+	// The three artifacts are then named as siblings of that directory, which is
+	// what `resolveFromPackageDir` does one layer down.
 	//
 	// Not `resolveWeights({cacheRoot: WC})`, deliberately: its cache rung is a fallback.
 	// A staged bundle missing its binaries falls through to rung 1 (the installed/workspace package),
-	// which in this repo always resolves . Therefore, a mis-staged candidate would be
-	// graded as the shipped model, silently, and the verdict would carry production's
-	// numbers under the candidate's label. Naming the directory keeps the failure an
-	// enoent in the provenance guard's md5 read, three lines down.
+	// which in this repo always resolves .
+	// Therefore, a mis-staged candidate would be graded as the shipped model, silently,
+	// and the verdict would carry production's numbers under the candidate's label.
+	// Naming the directory keeps the failure an enoent in the provenance guard's md5 read, three lines down.
 	const WC = options.weightsCache ?? ""
 	const WC_PACKAGE = WC ? weightsCachePackageDir(WC, "en-us") : ""
 	const WC_MODEL = WC ? resolvePath(WC_PACKAGE, "model.onnx") : ""
@@ -601,8 +626,9 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		channelOptions.suppressGazNearPostcode = true
 	}
 
-	// Conventions channel (#511 Tier A): when the eval spec declares requires_conventions, every scorer
-	// parses with the address-system conventions mask in the declared mode ("auto" = locale-head detection).
+	// Conventions channel (#511 Tier A): when the eval spec declares requires_conventions,
+	// every scorer parses with the address-system conventions mask in the declared
+	// mode ("auto" = locale-head detection).
 	// Same interface discipline as the gaz flags — the spec is the ship config.
 	const CONV_MODE = check.requires_conventions ?? ""
 
@@ -636,9 +662,10 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		// so it keeps every de-order run.
 		const pairedNonShipArm = tag === "fp32" && Boolean(WC8 || INT8)
 
-		// Package-shaped (#718): the metric probes (which support weightsCache) load all channels —
-		// anchor + gazetteer + country — from the package. The country-orthogonal de-order
-		// watch lens stays on the explicit path against the cache siblings (EFF_TOK/EFF_CARD);
+		// Package-shaped (#718): the metric probes (which support weightsCache) load all
+		// channels — anchor + gazetteer + country — from the package.
+		// The country-orthogonal de-order watch lens stays on the explicit path
+		// against the cache siblings (EFF_TOK/EFF_CARD);
 		// m = the arm's own model when package-shaped. `wc` is the PER-battery cache root
 		// so a paired int8 arm (#47) loads its own package rather than the fp32 arm's.
 		const plOptions = wc
@@ -654,9 +681,10 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		const armCard = wc ? resolvePath(armPackage, "model-card.json") : EFF_CARD
 
 		// Each leg below captured a child's stdout into one `.md`.
-		// In-process the sink collects the same lines and `renderLines` re-adds the newline
-		// console.log would have. A bare `$` threw on a non-zero exit, aborting the run —
-		// these calls throw the same way, so the abort behavior for the metric probes is unchanged.
+		// In-process the sink collects the same lines and `renderLines` re-adds
+		// the newline console.log would have.
+		// A bare `$` threw on a non-zero exit, aborting the run — these calls throw the same way,
+		// so the abort behavior for the metric probes is unchanged.
 		const perLocaleLines: string[] = []
 
 		await profile.time("per-locale", tag, () =>
@@ -748,17 +776,19 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 						tokenizer: armTok,
 						anchorLookup: String(LK),
 						out: `${OUT_DIR}/${tag}-deorder`,
-						// A repeated gazetteer query answers from a per-run memo: 59-63% of this leg's
-						// `findPlace` calls repeat a key, and US resolve costs 25.5 ms/row without
-						// it against 7.4 with. The databases are sealed, so a query is a pure
+						// A repeated gazetteer query answers from a per-run memo: 59-63% of this leg's `findPlace`
+						// calls repeat a key, and US resolve costs 25.5 ms/row without it against 7.4 with.
+						// The databases are sealed, so a query is a pure
 						// function of its arguments. the memo shares hit objects between callers,
 						// so a caller that mutated one would change this leg's report.
 						lookupMemo: true,
 						// Five of the six runs feed no floor: the verdict reads one cell,
-						// the `native DE` anchor-on locality. It is also in the fp32↔int8 delta cap.
-						// Therefore, runs on both arms. The other five are a record, and a record wants
-						// one reading per promotion rather than two. They run on the arm that ships —
-						// the second one when the battery is paired, the only one when it is not.
+						// the `native DE` anchor-on locality.
+						// It is also in the fp32↔int8 delta cap.
+						// Therefore, runs on both arms.
+						// The other five are a record, and a record wants one reading per promotion rather than two.
+						// They run on the arm that ships — the second one when the battery is paired,
+						// the only one when it is not.
 						...(pairedNonShipArm ? { runs: ["de-native-on" as const] } : {}),
 					},
 					(line) => deorderOut.push(line),
@@ -774,9 +804,9 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 
 	// --weights-cache alone grades the single shipped package (int8) in the primary slot.
 	// the verdict reads the `fp32-*` files (its primary-artifact slot) with withInt8=false.
-	// Paired (#47), the fp32 arm takes the primary slot and the int8 arm runs the same battery
-	// from its own package, so floors and the delta cap are both graded in-distribution
-	// in one run. The --model path keeps the fp32 + optional int8 dual-artifact flow
+	// Paired (#47), the fp32 arm takes the primary slot and the int8 arm runs the same battery from
+	// its own package, so floors and the delta cap are both graded in-distribution in one run.
+	// The --model path keeps the fp32 + optional int8 dual-artifact flow
 	// (deltas valid. absolute floors under-fed — the country channel's siblings never load there).
 	if (WC) {
 		await runBattery(WC_MODEL, "fp32")
@@ -853,8 +883,9 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 				)
 			)
 		} catch (error) {
-			// The child's non-zero exit is a throw in-process. It still lands in arenas.md — the old
-			// capture merged stderr in, and a zx ProcessOutput carried the failing child's output there.
+			// The child's non-zero exit is a throw in-process.
+			// It still lands in arenas.md — the old capture merged stderr in, and a zx
+			// ProcessOutput carried the failing child's output there.
 			arenaErr.push(error instanceof Error ? (error.stack ?? error.message) : String(error))
 			arenaFailed = true
 		}
@@ -925,9 +956,9 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	// check (it catches indirect mask harms, e.g. forbidding street_suffix depressing street).
 	// Weight-dependent, so it lives on the release path here rather than Test CI (#582).
 	// Only meaningful when the spec declares a conventions mask. skipped = pass otherwise.
-	// Its status folds into the final verdict below. In-process since the eval-harness
-	// migration. the report lines land in mask-regression.md as the child capture did,
-	// and a throw is recorded there like the old child's stderr stack.
+	// Its status folds into the final verdict below.
+	// In-process since the eval-harness migration. the report lines land in mask-regression.md
+	// as the child capture did, and a throw is recorded there like the old child's stderr stack.
 	let MASK_CHECK_STATUS = 0
 
 	if (CONV_MODE) {

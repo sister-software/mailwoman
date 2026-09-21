@@ -7,17 +7,18 @@ import { createNewlineWriter, JSONSpliterator } from "spliterator"
  *
  * ## Why this exists
  *
- * Most synthetic recipe outputs are generated on demand by a recipe
- * (parametrized by --count), so re-emitting them in a new label format is just a re-run.
+ * Most synthetic recipe outputs are generated on demand by a recipe (parametrized by --count),
+ * so re-emitting them in a new label format is just a re-run.
  * A few are fixed corpora with a hand/DeepSeek-authored canonical source that is never regenerated —
  * notably `deepseek-kryptonite` (the adversarial hard-case set) and the `deepseek-translit-*` variants.
+ *
  * Their committed parquets carry whatever label format was current when they were first built.
  *
- * When the corpus label format changes (the v0.5.0 char-offset triple, #519),
- * those fixed corpora must be RE-aligned rather than regenerated — feed the
- * canonical source back through the same `alignRow` the from-source build uses,
- * so the spans land in the new format with zero drift. That is exactly what this does:
- * canonical jsonl in → labeled jsonl out, one `alignRow` per row, quarantine on miss.
+ * When the corpus label format changes (the v0.5.0 char-offset triple, #519), those fixed corpora
+ * must be RE-aligned rather than regenerated — feed the canonical source back through the same
+ * `alignRow` the from-source build uses, so the spans land in the new format with zero drift.
+ * That is exactly what this does: canonical jsonl in → labeled jsonl out,
+ * one `alignRow` per row, quarantine on miss.
  *
  * It is the uniform counterpart to `tools/overlay/kryptonite.ts`
  * (which couples to a base manifest and writes parquet directly).

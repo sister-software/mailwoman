@@ -52,7 +52,9 @@ const { values } = parseArguments({
 		"weights-cache": { type: "string" },
 		eval: { type: "string", default: String(dataRootPath("eval", "coord", "us-stratified.jsonl")) },
 		/**
-		 * Regions to read, comma-separated. Every region in the panel when absent.
+		 * Regions to read, comma-separated.
+		 *
+		 * Every region in the panel when absent.
 		 */
 		regions: { type: "string" },
 		/**
@@ -61,7 +63,9 @@ const { values } = parseArguments({
 		 */
 		by: { type: "string", default: "region" },
 		/**
-		 * Rows to read per group. `--per-region` is the older spelling of the same cap and still works.
+		 * Rows to read per group.
+		 *
+		 * `--per-region` is the older spelling of the same cap and still works.
 		 */
 		"per-group": { type: "string" },
 		"per-region": { type: "string", default: "40" },
@@ -100,6 +104,7 @@ const { values } = parseArguments({
 		 * The choreography zeroes the gazetteer clue within one piece of a postcode-anchor hit.
 		 * It was added to stop the clue on a region token from making the `B-region → B-postcode`
 		 * transition uncompetitive, which cost about 3 points of postcode.
+		 *
 		 * A declared ablation for measurement: the model was trained with the choreography,
 		 * so serving it without is a mismatch and never a shipping configuration.
 		 */
@@ -186,8 +191,10 @@ function isLocalityLabel(label: string): boolean {
 }
 
 /**
- * The margin of the locality reading at one token: the best locality label's score minus the
- * best score of any label. Zero when a locality label already wins. negative by how far it lost.
+ * The margin of the locality reading at one token: the best locality label's
+ * score minus the best score of any label.
+ *
+ * Zero when a locality label already wins. negative by how far it lost.
  */
 function localityMargin(row: readonly number[], labels: readonly string[]): number {
 	let best = Number.NEGATIVE_INFINITY
@@ -214,9 +221,10 @@ interface GroupMargins {
 	 *
 	 * A different question from {@linkcode decodedAsLocality}, and the two are easy to
 	 * read as one: the decode reading asks what label the locality's own tokens took,
-	 * and this asks what the pipeline finally answered. A row can lose the locality span
-	 * and still answer the right place from its region and postcode, so the second number is
-	 * the higher one and the gap between them is how much the region and postcode are carrying.
+	 * and this asks what the pipeline finally answered.
+	 * A row can lose the locality span and still answer the right place from its region
+	 * and postcode, so the second number is the higher one and the gap between them
+	 * is how much the region and postcode are carrying.
 	 */
 	answeredExpected: number
 	/**
@@ -227,9 +235,10 @@ interface GroupMargins {
 	decodedMargin: number
 	priorsApplied: Map<string, number>
 	/**
-	 * What won at the first locality piece instead. A margin says how far the locality
-	 * came behind. this says what it came behind, which is the difference between a
-	 * model that is unsure and one that has learned another reading.
+	 * What won at the first locality piece instead.
+	 *
+	 * A margin says how far the locality came behind. this says what it came behind, which is
+	 * the difference between a model that is unsure and one that has learned another reading.
 	 */
 	decodedAs: Map<string, number>
 	unlocated: number

@@ -41,7 +41,8 @@ describe("checkConfounds", () => {
 	})
 
 	it("warns rather than refusing, so the comparison still returns", () => {
-		// The decided behaviour (spec §6.3). A refusal an agent cannot override is a reason to bypass the tool.
+		// The decided behaviour (spec §6.3).
+		// A refusal an agent cannot override is a reason to bypass the tool.
 		expect(() => checkConfounds({ a: 1 }, { a: 2, b: 3 }, ["a"])).not.toThrow()
 	})
 
@@ -80,11 +81,11 @@ describe("assertComparableField", () => {
 
 describe("the declared vocabulary", () => {
 	it("grades a correctly-declared single change CLEAN, not ambiguous", () => {
-		// The defect this closes, found 2026-08-16 by running a real A/B:
-		// `variable: ["place_country"]` is the spelling the tool schema documents, and the
-		// effective configs differ at `placeCountry`. Compared raw, the same change was counted
-		// twice under two spellings — once as declared-but-unmoved, once as moved-but-undeclared —
-		// so every honest single-change comparison reported attribution ambiguous.
+		// The defect this closes, found 2026-08-16 by running a real A/B: `variable: ["place_country"]` is
+		// the spelling the tool schema documents, and the effective configs differ at `placeCountry`.
+		// Compared raw, the same change was counted twice under two spellings —
+		// once as declared-but-unmoved, once as moved-but-undeclared — so every honest
+		// single-change comparison reported attribution ambiguous.
 		const reading = checkConfounds({ placeCountry: true }, { placeCountry: false }, ["place_country"])
 
 		expect(reading.variable_isolation).toBe("clean")

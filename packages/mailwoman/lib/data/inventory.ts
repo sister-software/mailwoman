@@ -23,17 +23,21 @@ export const Provenance = {
 	 */
 	Manifested: "manifested",
 	/**
-	 * A built artifact with no manifest. Rebuilding it means knowing which command made it,
-	 * which is knowledge held by a person rather than by the file.
+	 * A built artifact with no manifest.
+	 *
+	 * Rebuilding it means knowing which command made it, which is knowledge held
+	 * by a person rather than by the file.
 	 */
 	Unprovenanced: "unprovenanced",
 	/**
 	 * Not ours to reproduce — a third party's artifact we keep for comparison.
+	 *
 	 * Counting these as debt would make the number unimprovable and therefore useless.
 	 */
 	Foreign: "foreign",
 	/**
 	 * The file could not be opened as a database (locked, truncated, or not SQLite).
+	 *
 	 * Reported as its own state because "we could not look" is not "it has no manifest".
 	 */
 	Unreadable: "unreadable",
@@ -44,8 +48,9 @@ export type Provenance = (typeof Provenance)[keyof typeof Provenance]
 /**
  * Directories whose contents belong to someone else, with the reason.
  *
- * Keyed on the first path segment under the data root. A list rather than a heuristic: "is this ours"
- * is a fact about intent, and guessing it from the filename is how a real gap gets excused as foreign.
+ * Keyed on the first path segment under the data root.
+ * A list rather than a heuristic: "is this ours" is a fact about intent, and guessing
+ * it from the filename is how a real gap gets excused as foreign.
  */
 export const FOREIGN_ROOTS: Record<string, string> = {
 	"pelias-rig": "a Pelias comparison rig — a third party's build, kept to measure against",
@@ -53,8 +58,10 @@ export const FOREIGN_ROOTS: Record<string, string> = {
 }
 
 /**
- * The `layer_manifest` columns worth reporting. `build_cmd` is the one that matters: it is the
- * difference between an artifact that documents its own reproduction and one that does not.
+ * The `layer_manifest` columns worth reporting.
+ *
+ * `build_cmd` is the one that matters: it is the difference between an artifact
+ * that documents its own reproduction and one that does not.
  */
 export interface LayerManifest {
 	name: string
@@ -79,12 +86,15 @@ export interface InventoryEntry {
 	 */
 	manifest?: LayerManifest
 	/**
-	 * Where a symlink points, relative to the data root when it lands inside
-	 * it. Absent for a real file.
+	 * Where a symlink points, relative to the data root when it lands inside it.
+	 *
+	 * Absent for a real file.
 	 */
 	linkTarget?: string
 	/**
-	 * Why this entry is foreign or unreadable. Absent otherwise.
+	 * Why this entry is foreign or unreadable.
+	 *
+	 * Absent otherwise.
 	 */
 	note?: string
 }
@@ -95,11 +105,13 @@ export interface InventoryReport {
 	counts: Record<Provenance, number>
 	/**
 	 * Databases that were found but not opened, because they sit under a foreign root.
+	 *
 	 * Named so the report's denominator is auditable rather than implied.
 	 */
 	skippedForeign: number
 	/**
 	 * The depth the walk stopped at, and the directories it declined to descend into.
+	 *
 	 * A report that silently bounded its own search would read as coverage.
 	 */
 	maxDepth: number
@@ -132,10 +144,10 @@ export function probeManifest(path: string): { manifest?: LayerManifest; error?:
 /**
  * Every `*.db` under `dataRoot`, to `maxDepth` path segments.
  *
- * Bounded because the data root holds source trees with millions of files
- * (a WOF checkout is ~1.2 M GeoJSON), and an unbounded walk would spend minutes in
- * directories that contain no databases. Foreign roots are not descended into at all —
- * they are counted and named, which is cheaper and states the same fact.
+ * Bounded because the data root holds source trees with millions of files (a WOF checkout is ~1.2 M GeoJSON),
+ * and an unbounded walk would spend minutes in directories that contain no databases.
+ * Foreign roots are not descended into at all — they are counted and named,
+ * which is cheaper and states the same fact.
  */
 async function findDatabases(dataRoot: string, maxDepth: number): Promise<{ paths: string[]; skippedForeign: number }> {
 	const paths: string[] = []
@@ -255,10 +267,12 @@ export function inventorySentence(report: InventoryReport): string {
 /**
  * Whether a recorded `build_cmd` names something that still exists in this repo.
  *
- * A manifest is only worth as much as its build command, and two ways of being worthless
- * were measured on the shipped artifacts. `osm/address-points-{de,gb,nz}-*.db` record
- * `node osm/out/scripts/build-rooftop-database.js`, a path the workspace regroup moved to
- * `packages/osm/...` — the literal survived the move inside a built database, where no lint can reach it.
+ * A manifest is only worth as much as its build command, and two ways of being
+ * worthless were measured on the shipped artifacts.
+ * `osm/address-points-{de,gb,nz}-*.db` record `node osm/out/scripts/build-rooftop-database.js`,
+ * a path the workspace regroup moved to `packages/osm/...` — the literal survived
+ * the move inside a built database, where no lint can reach it.
+ *
  * And `osm/address-points-au-au.db` records `node scratchpad/build-gnaf-rooftop-database.ts`,
  * which exists on the machine that built it and nowhere else, because `scratchpad/` is gitignored.
  *

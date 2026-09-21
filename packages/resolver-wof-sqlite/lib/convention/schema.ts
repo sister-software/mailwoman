@@ -19,7 +19,9 @@ import { ADDRESS_CONVENTION_TABLE } from "#convention/index"
 export interface AddressConventionTable {
 	wof_id: number
 	/**
-	 * The `Convention` record, JSON-encoded. Parsed at read time by `SqliteConventionSource`.
+	 * The `Convention` record, JSON-encoded.
+	 *
+	 * Parsed at read time by `SqliteConventionSource`.
 	 */
 	convention: string
 	/**
@@ -43,14 +45,17 @@ export interface ConventionDatabase {
 
 /**
  * The subset of a Kysely handle the convention DDL touches.
+ *
  * Kysely is invariant in its schema parameter, so naming only `schema` lets a
  * builder holding a wider handle pass it without a cast.
  */
 export type ConventionSchemaHandle = Pick<Kysely<ConventionDatabase>, "schema">
 
 /**
- * Create `address_convention`. The table name comes from {@link ADDRESS_CONVENTION_TABLE}
- * so the build script, the runtime source, and the extract auto-detect cannot drift apart.
+ * Create `address_convention`.
+ *
+ * The table name comes from {@link ADDRESS_CONVENTION_TABLE} so the build script,
+ * the runtime source, and the extract auto-detect cannot drift apart.
  */
 export async function createAddressConventionTable(db: ConventionSchemaHandle): Promise<void> {
 	await db.schema

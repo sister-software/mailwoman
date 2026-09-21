@@ -30,8 +30,8 @@ import { tieredNumber } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { decomposeStreet } from "#us/adapters/tiger/street-decompose"
 
-// Hand-curated US street name pool. Real frequency-weighted street names —
-// sampled from US Census tiger 2024 top-1000 by occurrence count.
+// Hand-curated US street name pool.
+// Real frequency-weighted street names — sampled from US Census tiger 2024 top-1000 by occurrence count.
 // Keep ~50 entries so the synthesis distribution doesn't overfit to a tiny vocabulary.
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
@@ -180,12 +180,15 @@ export interface SynthesizedStreetRow {
 export interface StreetSynthesisOpts {
 	random?: () => number
 	/**
-	 * Probability of emitting house_number alongside the street. Default 0.85.
+	 * Probability of emitting house_number alongside the street.
+	 *
+	 * Default 0.85.
 	 */
 	includeHouseNumberProb?: number
 	/**
 	 * Probability of emitting the street bare — no `, City, ST ZIP` tail and no region/locality/
 	 * postcode components (just `street_prefix`/`street`/`street_suffix` + optional `house_number`).
+	 *
 	 * Default 0 (preserves the original full-address behavior exactly, including the RNG sequence).
 	 * Set >0 to teach the model that a bare `10th Ave` / `Main St` is a street rather than a
 	 * locality — the functional-test failure cluster (bare streets mislabeled `locality`),
@@ -208,6 +211,7 @@ function randomHouseNumber(random: () => number): string {
 
 /**
  * Synthesize a US street address with decomposed Stage 3 components.
+ *
  * The street is built from prefix + name + suffix, then passed through the same
  * `decomposeStreet()` utility the tiger adapter uses — guarantees the synthetic
  * distribution matches the canonical decomposition logic.
@@ -233,9 +237,10 @@ export function synthesizeStreetRow(
 	// Pass through the same decomposeStreet tiger uses — match the training distribution.
 	const decomposed = decomposeStreet(fullStreet)
 
-	// note: country is intentionally omitted. We don't emit "USA" or "US" in the raw string,
-	// and the aligner's fuzzy match (edit distance 2) will spuriously match "US" against
-	// any 2-char token (e.g. a house number "45" is exactly 2 substitutions from "US").
+	// note: country is intentionally omitted.
+	// We don't emit "USA" or "US" in the raw string, and the aligner's fuzzy
+	// match (edit distance 2) will spuriously match "US" against any 2-char token
+	// (e.g. a house number "45" is exactly 2 substitutions from "US").
 	// The PO box synthesizer skips country for the same reason.
 	// Bare mode is guarded by `> 0` so the default (bareProb=0) consumes no RNG
 	// and reproduces the original full-address output byte-for-byte.

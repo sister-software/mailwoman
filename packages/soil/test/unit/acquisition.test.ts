@@ -50,8 +50,8 @@ describe("readServiceException", () => {
 	})
 
 	it("answers in linear time on a report whose exception element is never closed", () => {
-		// The shape a lazy `[\\s\\S]*?` scan backtracks polynomially over:
-		// an opening tag with no closing partner, in a body a network service produced.
+		// The shape a lazy `[\\s\\S]*?` scan backtracks polynomially over: an opening tag
+		// with no closing partner, in a body a network service produced.
 		// It must return the "could not read" reading rather than spend the document.
 		const unclosed = `<ServiceExceptionReport xmlns="http://www.opengis.net/ogc"><ServiceException>${"x".repeat(200_000)}`
 		const started = performance.now()
@@ -61,7 +61,8 @@ describe("readServiceException", () => {
 	})
 
 	it("never mistakes the enclosing report element for the exception it wraps", () => {
-		// `<ServiceExceptionReport …>` shares the whole prefix. Matching it captures the entire report body as the message.
+		// `<ServiceExceptionReport …>` shares the whole prefix.
+		// Matching it captures the entire report body as the message.
 		const nested = `<ServiceExceptionReport xmlns="http://www.opengis.net/ogc">
 <ServiceException>Invalid query - access denied.</ServiceException>
 </ServiceExceptionReport>`
@@ -71,8 +72,10 @@ describe("readServiceException", () => {
 })
 
 /**
- * The shape of the fgdc document nrcs ships inside every survey-area archive, trimmed to
- * the elements this layer reads. The dates and the scale are `IA153`'s real ones.
+ * The shape of the fgdc document nrcs ships inside every survey-area archive,
+ * trimmed to the elements this layer reads.
+ *
+ * The dates and the scale are `IA153`'s real ones.
  */
 const FGDC = `<metadata><idinfo><citation><citeinfo><origin>
 U.S. Department of Agriculture, Natural Resources Conservation Service
@@ -102,8 +105,8 @@ describe("readFGDCMetadata", () => {
 	it("refuses a survey area whose use constraints no longer carry the public-information sentence", () => {
 		const withoutGrant = FGDC.replace("This is public information and may be interpreted", "This is restricted and")
 
-		// That sentence is the grant this layer ships on. A build that absorbed its
-		// removal would ship an artifact under terms nobody checked.
+		// That sentence is the grant this layer ships on.
+		// A build that absorbed its removal would ship an artifact under terms nobody checked.
 		expect(() => readFGDCMetadata(withoutGrant, "IA153")).toThrow(/public information/u)
 	})
 

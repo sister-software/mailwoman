@@ -71,10 +71,12 @@ const OSM_AEROWAY_STRUCTURE_DESIGNATORS = ["terminal", "gate"] as const
 /**
  * Every venue-interior designator the span proposer recognizes, lowercased.
  *
- * Note the deliberate omission of abbreviations. Pub 28 ships them (`STE`, `bldg`) because
- * mailers write them. these words are written in full on signage and in venue addresses,
- * and a two-or-three letter abbreviation is exactly the false-positive shape the AU/NZ tables already
- * taught this lexicon to avoid ("Ms Smith" for `MS`). Add one only with a measured need.
+ * Note the deliberate omission of abbreviations.
+ * Pub 28 ships them (`STE`, `bldg`) because mailers write them. these words are written in full
+ * on signage and in venue addresses, and a two-or-three letter abbreviation is exactly the
+ * false-positive shape the AU/NZ tables already taught this lexicon to avoid ("Ms Smith" for `MS`).
+ *
+ * Add one only with a measured need.
  */
 export const VENUE_STRUCTURE_DESIGNATORS: readonly string[] = [
 	...WOF_VENUE_STRUCTURE_PLACETYPES,
@@ -85,10 +87,10 @@ export const VENUE_STRUCTURE_DESIGNATORS: readonly string[] = [
  * Positional modifiers that precede a venue-interior designator: "West Wing",
  * "Upper Concourse", "Main Building".
  *
- * A bounded structural category — compass points, vertical position, centrality —
- * not a dictionary of names. The compass terms match the directional vocabulary
- * `@mailwoman/codex` already carries for street parsing (`CA_DIRECTIONALS`);
- * the rest are the positional words that serve the same grammatical role inside a venue.
+ * A bounded structural category — compass points, vertical position, centrality — not a dictionary of names.
+ * The compass terms match the directional vocabulary `@mailwoman/codex` already
+ * carries for street parsing (`CA_DIRECTIONALS`); the rest are the positional words
+ * that serve the same grammatical role inside a venue.
  *
  * Deliberately excludes abbreviations (`N`, `W`, `NE`).
  * Postal directionals abbreviate because mailers write them that way on a street line. a
@@ -117,10 +119,11 @@ export const VENUE_STRUCTURE_MODIFIERS: readonly string[] = [
  * `gate` and `building` form ordinary street names in exactly this shape — "East Gate"
  * and "West Gate" are real GB streets, "Building Society Place" is a real street —
  * so admitting them here would turn a correct street parse into a sub-venue one.
+ *
  * The designators listed below do not name streets in the modifier+designator shape.
  *
- * Adding an entry means claiming no street is named "<modifier>
- * <entry>". Check before you do.
+ * Adding an entry means claiming no street is named "<modifier> <entry>".
+ * Check before you do.
  */
 export const MODIFIER_ELIGIBLE_STRUCTURE_DESIGNATORS: readonly string[] = [
 	"wing",

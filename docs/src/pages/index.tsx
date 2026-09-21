@@ -44,9 +44,11 @@ function HomepageHeader(): ReactNode {
 }
 
 /**
- * The five-way fork. A visitor arrives wanting one of five things — to wire it up,
- * to price it, to see whether it works at all, to make the case for it to someone else,
- * or to check the claims against published numbers — and each card ends in exactly one link.
+ * The five-way fork.
+ *
+ * A visitor arrives wanting one of five things — to wire it up, to price it, to see
+ * whether it works at all, to make the case for it to someone else, or to check the
+ * claims against published numbers — and each card ends in exactly one link.
  */
 function Fork(): ReactNode {
 	return (

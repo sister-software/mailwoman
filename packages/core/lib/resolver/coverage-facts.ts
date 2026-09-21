@@ -69,6 +69,7 @@ export interface CountryBBoxFact {
  * Facts a loaded gazetteer artifact declares about itself — read from the artifact's own
  * manifest tables at open time, carried on the {@link ResolverBackend}/{@link Resolver} handle
  * so consumers read the facts from the artifact they are actually resolving against.
+ *
  * `undefined` on the handle = the artifact predates the manifest → consumers fall
  * back to the code constants (byte-identical legacy behavior).
  */

@@ -43,12 +43,13 @@ const PATH_BUILDERS = new Set(["join", "resolve", "resolvePath", "resolvePathBui
 
 /**
  * Every site allowed to spell a `node_modules` path by hand, with the reason it is not a reach-around.
+ *
  * Keyed by repo-relative path. add an entry only with a comment that survives review.
  */
 const ALLOWED: Record<string, string> = {
-	// The oracle for that layout. A fixture built with the implementation's own
-	// helper cannot fail when the implementation is wrong, so this file spells the
-	// path out independently and ties the helper back to it.
+	// The oracle for that layout.
+	// A fixture built with the implementation's own helper cannot fail when the implementation
+	// is wrong, so this file spells the path out independently and ties the helper back to it.
 	"packages/neural/test/integration/weights/cache.test.ts":
 		"pins the cache layout independently of the helper that builds it",
 	// Probes a foreign scratch project it just created with `npm install`.
@@ -67,23 +68,25 @@ const ALLOWED: Record<string, string> = {
 	// The oracle for that farm, on the same principle as the weights-cache pair above: a fixture
 	// built with the implementation's own helper cannot fail when the implementation is wrong.
 	"packages/dev-mcp/test/unit/worktree-arm.test.ts": "pins the farm layout independently of the code that builds it",
-	// builds a scratch workspace's node_modules link so a bare `@fixture/recipes` specifier
-	// resolves the way yarn makes it resolve. The move planner under test rewrites package-subpath
-	// specifiers, and a fixture with no install layout cannot exercise that family at all.
+	// builds a scratch workspace's node_modules link so a bare `@fixture/recipes`
+	// specifier resolves the way yarn makes it resolve.
+	// The move planner under test rewrites package-subpath specifiers, and a fixture
+	// with no install layout cannot exercise that family at all.
 	"packages/repo-health/test/unit/move/plan.test.ts":
 		"builds the scratch workspace's install link; nothing exists to resolve yet",
 	// Writes a fixture cache in the npm-prefix layout `weightsCachePackageDir` reads.
 	// Spelling it out here is what makes the cache rung's test independent of the helper it is exercising.
 	"packages/neural/test/integration/weights/overlay.test.ts":
 		"builds a fixture cache in the npm-prefix layout, independently",
-	// links the checkout's node_modules into the staging tree rather than reading a
-	// package's layout — `yarn pack` needs the project context there, and the link target
-	// is the checkout root's own directory rather than another package's install dir.
+	// links the checkout's node_modules into the staging tree rather than reading a package's
+	// layout — `yarn pack` needs the project context there, and the link target is the
+	// checkout root's own directory rather than another package's install dir.
 	// Same principle as worktree-arm: nothing package-owned is being addressed by hand.
 	"packages/release-kit/lib/release/stage.ts":
 		"symlinks the checkout's node_modules into the staging tree; not a package lookup",
-	// the one home. `weightsCachePackageDir` is the inverse of a resolution rather than
-	// a substitute for one: the directory does not exist yet when the layout is needed
+	// the one home.
+	// `weightsCachePackageDir` is the inverse of a resolution rather than a
+	// substitute for one: the directory does not exist yet when the layout is needed
 	// (`npm install --prefix <cacheRoot>` is about to create it, or `stage-weights-cache.ts`
 	// is about to write a candidate bundle into it), so there is nothing to resolve.
 	// Every other site in the tree now calls this.
@@ -91,10 +94,12 @@ const ALLOWED: Record<string, string> = {
 }
 
 /**
- * Every tracked source that mentions `node_modules` at all — the AST cost
- * is paid on ~30 files rather than ~2,700. "Ours" is the set git tracks:
- * see `tracked-sources.ts` for why enumeration reads the index rather than the disk
- * (scratchpad probes, agent worktrees, and local build output must not fail a guard CI cannot reproduce).
+ * Every tracked source that mentions `node_modules` at all — the AST cost is
+ * paid on ~30 files rather than ~2,700.
+ *
+ * "Ours" is the set git tracks: see `tracked-sources.ts` for why enumeration
+ * reads the index rather than the disk (scratchpad probes, agent worktrees,
+ * and local build output must not fail a guard CI cannot reproduce).
  */
 async function listCandidateSources(context: RepoContext): Promise<string[]> {
 	const tracked = await trackedSourcePaths(context, { existingOnly: true })
@@ -140,10 +145,9 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 					? node.expression.text
 					: undefined
 
-			// A `PathBuilder` is invoked as a bare function (`dir("node_modules", pkg)`),
-			// so a descent through `node_modules` has no callee name to match —
-			// the leading segment is the tell there. Property calls are left out:
-			// `.includes("node_modules")` is a string test rather than a path.
+			// A `PathBuilder` is invoked as a bare function (`dir("node_modules", pkg)`), so a descent
+			// through `node_modules` has no callee name to match — the leading segment is the tell there.
+			// Property calls are left out: `.includes("node_modules")` is a string test rather than a path.
 			const firstArgument = node.arguments[0]
 
 			const descendsIntoNodeModules =
@@ -236,7 +240,8 @@ export const nodeModulesReacharoundCheck: RepoCheck = {
 				continue
 			}
 
-			// A stale exemption is a hole. When the site stops reaching around, the entry must go.
+			// A stale exemption is a hole.
+			// When the site stops reaching around, the entry must go.
 			if (!findReachArounds(source, key).length) {
 				diagnostics.push({
 					severity: DiagnosticSeverity.Error,

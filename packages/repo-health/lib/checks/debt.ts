@@ -25,22 +25,25 @@ import { trackedSourcePaths } from "#tracked-sources"
 
 export interface DebtCounters {
 	/**
-	 * Module-private functions in `packages/*\/lib` sharing a name with a function another
-	 * module exports, minus the marked copies — the population `private-name-shadows-export`
-	 * lists site by site. Ratchets down as copies are replaced by imports or given their reason.
+	 * Module-private functions in `packages/*\/lib` sharing a name with a function another module exports,
+	 * minus the marked copies — the population `private-name-shadows-export` lists site by site.
+	 *
+	 * Ratchets down as copies are replaced by imports or given their reason.
 	 */
 	privateNameShadows: number
 	/**
-	 * Exported functions in `packages/*\/lib` whose name spells out another package's
-	 * exported name at greater length, minus the marked pairs — the population
-	 * `export-name-affix` lists site by site. The shape a duplicate arrives in,
-	 * since an author who knew the shorter name would have imported it.
+	 * Exported functions in `packages/*\/lib` whose name spells out another package's exported name
+	 * at greater length, minus the marked pairs — the population `export-name-affix` lists site by site.
+	 *
+	 * The shape a duplicate arrives in, since an author who knew the shorter name would have imported it.
 	 */
 	exportNameAffix: number
 	/**
-	 * `{@link}` tags in `packages/*\/lib` naming a symbol nothing in the tree declares — the
-	 * population `doc-link-targets` lists site by site. A tag reads as a promise the thing exists,
-	 * and one of these was implemented as a new function rather than recognized as a broken reference.
+	 * `{@link}` tags in `packages/*\/lib` naming a symbol nothing in the tree declares —
+	 * the population `doc-link-targets` lists site by site.
+	 *
+	 * A tag reads as a promise the thing exists, and one of these was implemented as
+	 * a new function rather than recognized as a broken reference.
 	 */
 	danglingDocLinks: number
 	asNever: number
@@ -49,32 +52,37 @@ export interface DebtCounters {
 	filterBoolean: number
 	/**
 	 * Non-generated, non-test source files over 1,000 lines.
+	 *
 	 * Any file crossing 1,000 fails the check.
 	 */
 	productionFilesOver1000Lines: number
 	selfPackageImports: number
 	synchronousFilesystemCalls: number
 	/**
-	 * Raw NUL bytes in tracked TypeScript. A NUL makes grep classify the file as binary
-	 * and skip it, so a guard that carries one is invisible to the sweeps that would read
-	 * it. the escaped form (`\\0`, `\\x00`) is byte-identical at runtime and stays visible.
+	 * Raw NUL bytes in tracked TypeScript.
+	 *
+	 * A NUL makes grep classify the file as binary and skip it, so a guard that
+	 * carries one is invisible to the sweeps that would read it. the escaped form
+	 * (`\\0`, `\\x00`) is byte-identical at runtime and stays visible.
 	 */
 	rawNULBytes: number
 	/**
 	 * Occurrences of the retired vocabulary word — see {@link BANNED_VOCABULARY} for which —
 	 * in any spelling, anywhere in tracked source: identifiers, comments and string literals alike.
 	 *
-	 * This sentence does not name the word, deliberately: a case-preserving sweep once
-	 * rewrote the name to the replacement and left the doc describing a different word than
-	 * the pattern counts. One constant holds the term. prose points at the constant.
+	 * This sentence does not name the word, deliberately: a case-preserving sweep once rewrote the
+	 * name to the replacement and left the doc describing a different word than the pattern counts.
+	 * One constant holds the term. prose points at the constant.
 	 *
 	 * The vocabulary is being removed because the word stood for four different things
 	 * (corpus recipes, per-country postcode databases, WOF extracts, and the providers' region databases),
 	 * so there is no replacement synonym — each site takes the noun for the thing it actually names.
 	 * The target is zero, and this counter is the finish line: ratcheted down per PR, it can only fall.
 	 *
-	 * Counted here rather than with `grep` on purpose. Tracked sources can carry raw
-	 * NUL bytes, which `grep` treats as binary and skips silently — no error, no count.
+	 * Counted here rather than with `grep` on purpose.
+	 * Tracked sources can carry raw NUL bytes, which `grep` treats as binary
+	 * and skips silently — no error, no count.
+	 *
 	 * Measured: 3,481 occurrences with `grep -a` against 3,427 without, so a `grep`-based
 	 * ratchet would hide 54 occurrences and could certify zero while they remained.
 	 * `readLocalTextFile` has no such blind spot.
@@ -82,9 +90,11 @@ export interface DebtCounters {
 	bannedVocabulary: number
 	/**
 	 * `stack.push(...node.children)` — a hand-rolled lifo tree walk.
-	 * The idiom yields siblings in reverse text order, and a `find` over it picked the
-	 * second of two same-tag spans (#2156, #2163); `walkNodes` in `@mailwoman/core/decoder`
-	 * is the one walk, in document order. Baseline zero.
+	 *
+	 * The idiom yields siblings in reverse text order, and a `find` over it
+	 * picked the second of two same-tag spans (#2156, #2163); `walkNodes` in
+	 * `@mailwoman/core/decoder` is the one walk, in document order.
+	 * Baseline zero.
 	 */
 	handRolledTreeWalks: number
 }
@@ -119,9 +129,11 @@ function emptyCounters(): DebtCounters {
 }
 
 /**
- * Unwrap the array/readonly/parenthesized wrappers a cast target can carry, so the check
- * sees the type the author actually named. `x as never[]` is an `ArrayTypeNode` whose
- * element is the keyword, and it is exactly as unchecked as the bare form.
+ * Unwrap the array/readonly/parenthesized wrappers a cast target can carry,
+ * so the check sees the type the author actually named.
+ *
+ * `x as never[]` is an `ArrayTypeNode` whose element is the keyword,
+ * and it is exactly as unchecked as the bare form.
  */
 function unwrapTypeNode(type: ts.TypeNode): ts.TypeNode {
 	if (ts.isArrayTypeNode(type)) return unwrapTypeNode(type.elementType)
@@ -189,10 +201,11 @@ const SYNCHRONOUS_FILESYSTEM_CALLS = new Set([
 /**
  * Whether a call reaches the synchronous filesystem directly, bypassing `@mailwoman/core/fs`.
  *
- * The baseline is zero. Workspaces that do not depend on `@mailwoman/core` — `api-kit`,
- * `nuts-lookup`, `timezone-lookup`, `un-locode-lookup`, `variant-aliases` — would install core's
- * ~9 MB of data to replace a `mkdir` or a `readFileSync`, and `oxlint.config.ts` exempts those
- * files by name. they collapse the day the fs helpers can be reached without core's tarball.
+ * The baseline is zero.
+ * Workspaces that do not depend on `@mailwoman/core` — `api-kit`, `nuts-lookup`,
+ * `timezone-lookup`, `un-locode-lookup`, `variant-aliases` — would install core's ~9 MB of
+ * data to replace a `mkdir` or a `readFileSync`, and `oxlint.config.ts` exempts those files
+ * by name. they collapse the day the fs helpers can be reached without core's tarball.
  *
  * A bare identifier is counted. a property access is counted only when the receiver is spelled `fs`.
  * That receiver rule is what separates this population from two unrelated ones that share a method name:
@@ -214,6 +227,7 @@ function isSynchronousFilesystemCall(node: ts.Node): boolean {
 
 /**
  * `<stack>.push(...<expr>.children)` — the push half of a hand-rolled tree walk.
+ *
  * The pop half is any `.pop()`, which too many honest stacks share. the spread of `.children` is the tell.
  */
 function isChildrenSpreadPush(node: ts.Node): boolean {
@@ -326,20 +340,25 @@ const UNCOUNTED = [
 ]
 
 /**
- * The words being removed from the codebase, and the pattern {@link DebtCounters.bannedVocabulary}
- * counts. The third alternation is the boundary word. it stops before the North Yorkshire town
- * and the surname. The second alternation carries a negative lookahead for the letter runs
- * that continue it into an unrelated English word ("advantage") and into six place names.
- * It is case-sensitive on purpose: `availableVersions` and `localeVerdict` contain the letters
- * across a camelCase boundary that appear in eval rows and records. those survive verbatim
- * by construction rather than by allowlist. The last alternation stops before a coreutils
- * flag (` -c`, ` -d`): a shell command in a fenced block is the utility rather than the word.
+ * The words being removed from the codebase, and the pattern {@link DebtCounters.bannedVocabulary} counts.
  *
- * Keep the counter'S name free OF the word. This ratchet is written in the language it polices,
- * so the vocabulary sweep it exists to drive rewrote it: a case-preserving `shard`
- * → `extract` pass over `scripts/` renamed `shardVocabulary` to `extractVocabulary`
- * and rewrote this very pattern, so the check began measuring the replacement word
- * while still reporting a falling number. It stayed green throughout.
+ * The third alternation is the boundary word. it stops before the North Yorkshire town and the surname.
+ * The second alternation carries a negative lookahead for the letter runs that continue
+ * it into an unrelated English word ("advantage") and into six place names.
+ *
+ * It is case-sensitive on purpose: `availableVersions` and `localeVerdict` contain
+ * the letters across a camelCase boundary that appear in eval rows and records. those
+ * survive verbatim by construction rather than by allowlist.
+ * The last alternation stops before a coreutils flag (` -c`, ` -d`): a shell command
+ * in a fenced block is the utility rather than the word.
+ *
+ * Keep the counter'S name free OF the word.
+ * This ratchet is written in the language it polices, so the vocabulary sweep it exists
+ * to drive rewrote it: a case-preserving `shard` → `extract` pass over `scripts/`
+ * renamed `shardVocabulary` to `extractVocabulary` and rewrote this very pattern,
+ * so the check began measuring the replacement word while still reporting a falling number.
+ *
+ * It stayed green throughout.
  * A neutral counter name and a single pattern constant are what make that impossible to repeat.
  */
 const BANNED_VOCABULARY =
@@ -352,6 +371,7 @@ const BANNED_VOCABULARY =
  * The first version of this counter scanned only TypeScript, reported zero, and left 125
  * occurrences standing in prose, config, dictionaries and eval rows — including three
  * sentences in `agents.md` that still told the next agent the old names were current.
+ *
  * A vocabulary an agent reads is a vocabulary an agent writes, so prose is in scope.
  */
 const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason: string]> = [
@@ -462,8 +482,8 @@ export async function computeDebtCounters(context: RepoContext): Promise<DebtCou
 		const workspacePackage = workspacePackages.find(({ directory }) => path.startsWith(`${directory}/`))
 
 		// Package tests intentionally import their own package name: that is the
-		// interface this repository's test layout verifies. Self-imports remain debt in
-		// production source, where `#imports` avoid cycles/noise.
+		// interface this repository's test layout verifies.
+		// Self-imports remain debt in production source, where `#imports` avoid cycles/noise.
 		const countSelfPackageImports = !path.includes("/test/") && !/[.]test[.]tsx?$/.test(path)
 
 		visit(source, counters, workspacePackage?.name, countSelfPackageImports)

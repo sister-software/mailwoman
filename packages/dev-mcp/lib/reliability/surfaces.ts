@@ -29,9 +29,10 @@ import type { Observation } from "#reliability/index"
 /**
  * What to do with a produced component the truth row never mentions.
  *
- * `exclude` (default) keeps it out of the curve and counts it separately — correct whenever
- * truth is partial, which is every corpus wired here. `wrong` grades it as an error, correct
- * only against complete truth. on a partial corpus it measures the corpus rather than the model.
+ * `exclude` (default) keeps it out of the curve and counts it separately —
+ * correct whenever truth is partial, which is every corpus wired here.
+ * `wrong` grades it as an error, correct only against complete truth. on a partial
+ * corpus it measures the corpus rather than the model.
  */
 export const UnassertedPolicy = {
 	Exclude: "exclude",
@@ -43,11 +44,14 @@ export type UnassertedPolicy = (typeof UnassertedPolicy)[keyof typeof Unasserted
 /**
  * How a component's confidence is folded out of its tokens.
  *
- * `min` is the weakest link — a span is only as trustworthy as its least certain
- * piece — and is the default because that is the reading an eval should use.
+ * `min` is the weakest link — a span is only as trustworthy as its least certain piece —
+ * and is the default because that is the reading an eval should use.
  * `mean` exists because it is what `AddressNode.confidence` already reports (`build-tree.ts`),
  * so a caller calibrating the number a tree consumer actually reads can ask for it.
- * The two diverge most on long spans. It is where an eval decision is usually being made.
+ *
+ * The two diverge most on long spans.
+ * It is where an eval decision is usually being made.
+ *
  * Therefore, the choice travels with every result rather than being assumed.
  */
 export const ComponentAggregate = {
@@ -66,9 +70,11 @@ export interface ExcludedRows {
 /**
  * Produced components no truth row asserted — the confidence mass riding on unverified output.
  *
- * Reported beside the curve rather than inside it. On a partial-truth corpus these are mostly
- * correct components nobody wrote an assertion for, so folding them in as errors measures
- * the corpus. dropping them silently hides how much of the parse the curve does not cover.
+ * Reported beside the curve rather than inside it.
+ * On a partial-truth corpus these are mostly correct components nobody wrote an
+ * assertion for, so folding them in as errors measures the corpus. dropping them
+ * silently hides how much of the parse the curve does not cover.
+ *
  * Neither is a number worth quoting, so both facts are returned.
  */
 export interface UnassertedCohort {
@@ -80,7 +86,9 @@ export interface UnassertedCohort {
 export interface SurfaceSample {
 	observations: Observation[]
 	/**
-	 * Rows the surface could not grade, and why. Reported rather than deducted in silence.
+	 * Rows the surface could not grade, and why.
+	 *
+	 * Reported rather than deducted in silence.
 	 */
 	excluded: ExcludedRows[]
 	/**
@@ -92,6 +100,7 @@ export interface SurfaceSample {
 
 /**
  * The subset of a geocode run's fields this file reads.
+ *
  * Declared structurally so the surface can be exercised without a warm engine —
  * a full `GeocodeSession` is several gigabytes of prerequisite to test a fold.
  */
@@ -114,12 +123,14 @@ export interface EngineLike {
  * correctness rule is how a calibration number quietly stops describing what the board describes.
  *
  * A produced tag the truth row does not mention is not graded by default.
- * The strict reading — predicting a component that should not exist is exactly the error a
- * calibrated confidence must not hide — holds only against complete truth, and no corpus
- * wired here carries it: the regression board asserts a median of one component key per
- * row (534 of 591 rows assert any, max 8), golden a median of 4 and parity a median of 2,
- * against the ~7 keys a full US address has. On truth that partial, a row asserting
- * `locality` alone would grade six correctly-parsed components as hallucinations.
+ * The strict reading — predicting a component that should not exist is exactly the
+ * error a calibrated confidence must not hide — holds only against complete truth,
+ * and no corpus wired here carries it: the regression board asserts a median of one
+ * component key per row (534 of 591 rows assert any, max 8), golden a median of 4
+ * and parity a median of 2, against the ~7 keys a full US address has.
+ *
+ * On truth that partial, a row asserting `locality` alone would grade six
+ * correctly-parsed components as hallucinations.
  *
  * So the unasserted tags are counted as their own cohort rather than folded in or thrown away:
  * a reader asking the hallucination question can see how much confidence rides on
@@ -163,8 +174,9 @@ export async function decodeReliabilitySample(
 		for (const [tag, value] of Object.entries(produced)) {
 			if (!value) continue
 
-			// Both BIO positions. A tag appearing in two separate spans folds into one observation,
-			// because the result shape holds one value per tag — so one confidence is what a consumer sees,
+			// Both BIO positions.
+			// A tag appearing in two separate spans folds into one observation, because the
+			// result shape holds one value per tag — so one confidence is what a consumer sees,
 			// and splitting it here would weight a fragmented span more heavily than a clean one.
 			const carrying = tokens.filter((token) => token.label === `B-${tag}` || token.label === `I-${tag}`)
 
@@ -241,9 +253,10 @@ export async function decodeReliabilitySample(
  * fits a correction to it: the two are separate heads over separate features,
  * and a correction fitted to one does nothing for the other.
  *
- * `abstainBelow: 0` so every row yields a confidence. Production sets that to the threshold under test,
- * which would censor exactly the low-confidence rows the curve is about — a curve measured at
- * the production threshold reports only the region where the eval already agreed with itself.
+ * `abstainBelow: 0` so every row yields a confidence.
+ * Production sets that to the threshold under test, which would censor exactly the
+ * low-confidence rows the curve is about — a curve measured at the production threshold
+ * reports only the region where the eval already agreed with itself.
  *
  * The default corpus is the held-out `test` split, held out from both the training set and the
  * `val` split the temperature was fit on, so the number is not the fit reporting on itself.

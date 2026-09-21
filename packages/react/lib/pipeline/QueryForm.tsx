@@ -24,8 +24,9 @@ export interface QueryFormProps {
 	 */
 	onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void
 	/**
-	 * Override for extra `<input>` attributes (aria-combobox props,
-	 * `autoComplete`, …). Merged last.
+	 * Override for extra `<input>` attributes (aria-combobox props, `autoComplete`, …).
+	 *
+	 * Merged last.
 	 */
 	inputProps?: InputHTMLAttributes<HTMLInputElement>
 }

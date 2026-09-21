@@ -33,7 +33,9 @@ import type { PremiseLinkageReport, PremiseLinkageResultRow } from "#eval-harnes
 import { PREMISE_LINKAGE_SHAPE_CLASSES } from "#eval-harness/premise-linkage/schema"
 
 /**
- * Why the writer refused. A closed set, so a caller can branch on the reason without reading the message.
+ * Why the writer refused.
+ *
+ * A closed set, so a caller can branch on the reason without reading the message.
  */
 export const PremiseLinkageRedactionReason = {
 	UnknownKey: "unknown_key",
@@ -49,6 +51,7 @@ export type PremiseLinkageRedactionReason =
 
 /**
  * A refusal to publish, naming the value that caused it.
+ *
  * The message carries the path and the reason, never the offending value —
  * an error message is a log line, and a log line is a disclosure.
  */
@@ -66,6 +69,7 @@ export class PremiseLinkageRedactionError extends Error {
 
 /**
  * Every key the publishable report may carry, flattened.
+ *
  * A flat set rather than a path-aware schema on purpose: the question it answers is "is
  * this name one we designed", and a name nobody designed is refused wherever it appears.
  */
@@ -179,8 +183,10 @@ function walkPublishable(value: unknown, path: string, inputs: readonly string[]
 }
 
 /**
- * What the preflight reads. The rows and the inputs are checked and never written —
- * they are how the writer knows what the report was computed from.
+ * What the preflight reads.
+ *
+ * The rows and the inputs are checked and never written — they are how the writer
+ * knows what the report was computed from.
  */
 export interface PremiseLinkagePreflightInput {
 	report: PremiseLinkageReport
@@ -244,6 +250,7 @@ function checkRows(rows: readonly PremiseLinkageResultRow[]): void {
 
 /**
  * Suppress, check, and return the report that may leave the controlled environment.
+ *
  * Throws before producing anything when the run cannot be published.
  */
 export function publishableReport(input: PremiseLinkagePreflightInput): PremiseLinkageReport {
@@ -267,8 +274,9 @@ export function publishableReport(input: PremiseLinkagePreflightInput): PremiseL
 }
 
 /**
- * Write the publishable report as JSON. One `writeFile` after every check,
- * so a refusal leaves no file behind.
+ * Write the publishable report as JSON.
+ *
+ * One `writeFile` after every check, so a refusal leaves no file behind.
  */
 export async function writePremiseLinkageReport(
 	path: string,

@@ -41,6 +41,7 @@ export interface AddressSlot {
 
 /**
  * A connector: literal text that renders only between neighbours that rendered.
+ *
  * Written as the text between interpolations, never constructed by hand.
  */
 export interface AddressConnector {
@@ -48,8 +49,10 @@ export interface AddressConnector {
 }
 
 /**
- * First alternative that renders. The street line needs it and nothing else does:
- * an intersection prints as `<a> & <b>` where a street prints as its own family of tags.
+ * First alternative that renders.
+ *
+ * The street line needs it and nothing else does: an intersection prints as `<a> & <b>`
+ * where a street prints as its own family of tags.
  */
 export interface AddressAlternation {
 	readonly alternatives: readonly AddressLayout[]
@@ -58,9 +61,10 @@ export interface AddressAlternation {
 export type AddressAtom = AddressSlot | AddressConnector | AddressAlternation | AddressLayout
 
 /**
- * A layout: lines of atoms, in print order. A line break in the template starts a
- * new line. how lines are joined for single-line output is the caller's choice,
- * and per-system for the systems that join on nothing.
+ * A layout: lines of atoms, in print order.
+ *
+ * A line break in the template starts a new line. how lines are joined for single-line
+ * output is the caller's choice, and per-system for the systems that join on nothing.
  */
 export interface AddressLayout {
 	readonly lines: ReadonlyArray<readonly AddressAtom[]>
@@ -73,9 +77,9 @@ export interface AddressLayout {
 	 * Minories, London EC3N 1DE` — a comma after the street and a space before the postcode. One join per system cannot
 	 * say that, and the single-line render answered `London, EC3N 1DE`.
 	 *
-	 * Keyed by the line a break PRECEDES rather than the one it follows, because
-	 * `evaluateLines` drops a line no component filled. An index counted from the
-	 * left survives that drop, and a count of breaks does not.
+	 * Keyed by the line a break PRECEDES rather than the one it follows,
+	 * because `evaluateLines` drops a line no component filled.
+	 * An index counted from the left survives that drop, and a count of breaks does not.
 	 */
 	readonly softBreakBefore?: ReadonlySet<number>
 }
@@ -117,16 +121,20 @@ export function isLayout(atom: AddressAtom): atom is AddressLayout {
 
 /**
  * Every {@linkcode ComponentTag} as a slot, so a layout names a tag by destructuring
- * rather than by quoting it. A misspelled slot is then an unresolved identifier at compile time,
- * and the spelling stays the tag's own — `dependent_locality`, never a parallel camelCase vocabulary.
+ * rather than by quoting it.
+ *
+ * A misspelled slot is then an unresolved identifier at compile time, and the spelling
+ * stays the tag's own — `dependent_locality`, never a parallel camelCase vocabulary.
  */
 export const SLOTS: Readonly<Record<ComponentTag, AddressSlot>> = Object.freeze(
 	Object.fromEntries(COMPONENT_TAGS.map((tag) => [tag, Object.freeze({ tag })])) as Record<ComponentTag, AddressSlot>
 )
 
 /**
- * The first alternative that renders wins. Used for the street line, where an intersection
- * and a street name are two ways of saying where rather than two things to print.
+ * The first alternative that renders wins.
+ *
+ * Used for the street line, where an intersection and a street name are two ways
+ * of saying where rather than two things to print.
  */
 export function either(...alternatives: readonly AddressLayout[]): AddressAlternation {
 	return { alternatives }
@@ -137,19 +145,19 @@ export function either(...alternatives: readonly AddressLayout[]): AddressAltern
  * and coexists with one: a record may carry both a box and a street address,
  * and printing the box alone would lose the half a courier needs.
  *
- * That placement is measured rather than assumed. The engine this table replaces rendered
- * `P.O. Box 5` + `100 Main St` + `Portland, or 97214` as three lines in that order,
- * and the same shape for Germany, Australia and Great Britain. libaddressinput models
- * no box at all, which is why the slot is authored here rather than transcribed.
+ * That placement is measured rather than assumed.
+ * The engine this table replaces rendered `P.O. Box 5` + `100 Main St` + `Portland, or 97214`
+ * as three lines in that order, and the same shape for Germany, Australia and Great Britain.
+ * libaddressinput models no box at all, which is why the slot is authored here rather than transcribed.
  */
 const poBoxLine = SLOTS.po_box
 
 /**
  * The street line where the number leads: the anglophone order, and France's.
  *
- * An intersection is an alternative to the street name because it is a different way of
- * saying where rather than a second thing to print — the shape the old `composeRoad`
- * drew in its own docstring before hand-compiling it into a chain of `if` statements.
+ * An intersection is an alternative to the street name because it is a different way of saying
+ * where rather than a second thing to print — the shape the old `composeRoad` drew in
+ * its own docstring before hand-compiling it into a chain of `if` statements.
  * The box is not an alternative, so it sits outside the choice.
  */
 export const numberFirstStreet: AddressLayout = addr`${poBoxLine}
@@ -180,9 +188,9 @@ ${either(
  * The number-last line where a comma separates the name from the number —
  * `Calle Mayor, 12`, and Brazil's order.
  *
- * The separator is not cosmetic. Spain's corpus recipe renders both this form
- * and the space form on purpose, because both occur in what a person types. collapsing
- * one into the other would remove half the signal.
+ * The separator is not cosmetic.
+ * Spain's corpus recipe renders both this form and the space form on purpose, because both
+ * occur in what a person types. collapsing one into the other would remove half the signal.
  */
 export const numberLastCommaStreet: AddressLayout = addr`${poBoxLine}
 ${either(
@@ -209,8 +217,10 @@ ${either(
 )}`
 
 /**
- * Build a layout from a tagged template. A newline in the literal text starts a line. other
- * literal text is a connector. an interpolation is a slot, an alternation, or another layout.
+ * Build a layout from a tagged template.
+ *
+ * A newline in the literal text starts a line. other literal text is a connector.
+ * an interpolation is a slot, an alternation, or another layout.
  */
 export function addr(strings: TemplateStringsArray, ...values: readonly AddressAtom[]): AddressLayout {
 	const lines: AddressAtom[][] = [[]]

@@ -67,7 +67,11 @@ export function MapCompass({ bearing, onResetNorth, label, className }: MapCompa
 				<g style={{ transform: `rotate(${-bearing}deg)`, transformOrigin: "16px 16px" }}>
 					<circle cx="16" cy="16" r="12.5" className="mw-map-compass__dial" />
 
-					{/* North, then south. Two triangles meeting at the hub rather than one arrow through it. */}
+					{/*
+					 * North, then south.
+					 *
+					 * Two triangles meeting at the hub rather than one arrow through it.
+					 */}
 					<path d="M16 5.5 L20.5 16 L16 16 Z M16 5.5 L11.5 16 L16 16 Z" className="mw-map-compass__north" />
 					<path d="M16 26.5 L20.5 16 L16 16 Z M16 26.5 L11.5 16 L16 16 Z" className="mw-map-compass__south" />
 				</g>

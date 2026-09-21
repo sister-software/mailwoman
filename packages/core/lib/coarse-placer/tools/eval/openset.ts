@@ -79,15 +79,21 @@ interface ParetoPoint {
  */
 export interface EvalOpenSetOptions {
 	/**
-	 * Model artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
+	 * Model artifact dir.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
 	 */
 	model?: PathBuilderLike
 	/**
-	 * Dataset dir. Default `<repo>/data/coarse-placer`.
+	 * Dataset dir.
+	 *
+	 * Default `<repo>/data/coarse-placer`.
 	 */
 	data?: PathBuilderLike
 	/**
-	 * Mahalanobis fit rows per class. Default 2000.
+	 * Mahalanobis fit rows per class.
+	 *
+	 * Default 2000.
 	 */
 	fitPerClass?: number
 	/**
@@ -157,6 +163,7 @@ function inverse(M: Float64Array[]): number[][] {
 
 /**
  * Coarse-placer post-hoc open-set score comparison — see the module doc.
+ *
  * Emits the markdown report to stdout.
  */
 export async function evalOpenSet(
@@ -180,7 +187,9 @@ export async function evalOpenSet(
 	if (W.length !== C * D) throw new Error(`weights ${W.length} ≠ ${C}×${D}`)
 
 	/**
-	 * Raw logits (PRE-temperature) for the 12 classes. OOD scores use the geometry rather than calibration.
+	 * Raw logits (PRE-temperature) for the 12 classes.
+	 *
+	 * OOD scores use the geometry rather than calibration.
 	 */
 	function logits(raw: string): Float64Array {
 		const feats = featurize(raw)
@@ -372,8 +381,8 @@ export async function evalOpenSet(
 
 	const heldoutScored = heldout.map((r) => scoreRow(r.raw, undefined))
 
-	// Honest threshold protocol: split each probe 50/50 (deterministic by index parity)
-	// into DEV + test. The operating threshold is picked on DEV (maximizing balanced min);
+	// Honest threshold protocol: split each probe 50/50 (deterministic by index parity) into DEV + test.
+	// The operating threshold is picked on DEV (maximizing balanced min);
 	// the reported point is frozen on test — so the number is a generalization estimate
 	// rather than a threshold fit to the set it's scored on.
 	const inDev = inmapScored.filter((_, i) => i % 2 === 0)

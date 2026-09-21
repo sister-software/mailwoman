@@ -25,9 +25,11 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * Minimal npm-`files`-glob matcher (`**` crosses directories, `*` stays in one), segment-based
- * so no dynamic RegExp is ever constructed. The package.json globs use no character classes
- * or braces, so this covers the whole array — a fuller matcher would be a dependency for nothing.
+ * Minimal npm-`files`-glob matcher (`**` crosses directories, `*` stays in one),
+ * segment-based so no dynamic RegExp is ever constructed.
+ *
+ * The package.json globs use no character classes or braces, so this covers the whole
+ * array — a fuller matcher would be a dependency for nothing.
  */
 function filesGlobMatches(pattern: string, path: string): boolean {
 	const segments = pattern.split("/")
@@ -172,10 +174,11 @@ describe("resolveThresholdSpecPath", () => {
 describe("paired weights-caches (#47)", () => {
 	/**
 	 * Lay out a fake package-shaped weights cache with a model.onnx whose bytes do (int8)
-	 * or don't (fp32) carry the DynamicQuantizeLinear needle the provenance
-	 * guard scans for, plus the tokenizer + card the pre-battery reads touch.
-	 * The package dir comes from `weightsCachePackageDir` — the resolver's own
-	 * layout function, so the fixture cannot drift from what the check resolves.
+	 * or don't (fp32) carry the DynamicQuantizeLinear needle the provenance guard scans for,
+	 * plus the tokenizer + card the pre-battery reads touch.
+	 *
+	 * The package dir comes from `weightsCachePackageDir` — the resolver's own layout function,
+	 * so the fixture cannot drift from what the check resolves.
 	 * Every guard under test returns exit 2 before any battery, so no real ONNX is ever loaded.
 	 */
 	async function stageFakeCache(kind: "fp32" | "int8", salt: string): Promise<string> {

@@ -218,8 +218,9 @@ describe("triageWOFCurrency", () => {
 
 		const deprecated = summary.find((s) => s.currencyClass === CurrencyClass.DeprecatedNoSuccessor)
 
-		// Three deprecated GB rows in the fixture. Swansea is cross-band, so only Rochester +
-		// Gillingham are uncovered, and only Rochester is attested (Gillingham's dump row is S-class).
+		// Three deprecated GB rows in the fixture.
+		// Swansea is cross-band, so only Rochester + Gillingham are uncovered,
+		// and only Rochester is attested (Gillingham's dump row is S-class).
 		expect(deprecated).toMatchObject({
 			country: "GB",
 			total: 4,

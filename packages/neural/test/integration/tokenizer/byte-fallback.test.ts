@@ -108,10 +108,11 @@ describe("MailwomanTokenizer — byte-fallback offset reconstruction (paired-pun
 		expect(raw.slice(openRun[2]!.start, openRun[2]!.end)).toBe("“")
 		expect(raw.slice(closeRun[2]!.start, closeRun[2]!.end)).toBe("”")
 
-		// The piece between the two runs ("A") and everything after the second run must
-		// land on the correct offsets. A placeholder-length walk over-advances by 5 chars
-		// per 3-piece run (18 placeholder chars for 1 real char), landing deep past the
-		// end of this 15-char string and garbling every downstream span.
+		// The piece between the two runs ("A") and everything after the second run
+		// must land on the correct offsets.
+		// A placeholder-length walk over-advances by 5 chars per 3-piece run
+		// (18 placeholder chars for 1 real char), landing deep past the end of this
+		// 15-char string and garbling every downstream span.
 		const aPiece = pieces.find((p) => p.piece === "A")!
 		expect(raw.slice(aPiece.start, aPiece.end)).toBe("A")
 

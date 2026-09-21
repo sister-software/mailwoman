@@ -150,7 +150,8 @@ describe("#1902: synthetic fixtures exercise exact, wrong, refused and ambiguous
 	it("grades both arms through ONE mapper, so neither arm can hold a private definition of `exact`", () => {
 		const expected = { scheme: "uprn", id: "000000000001" }
 
-		// The open arm's state: no authoritative block at all. A refusal, never a wrong answer.
+		// The open arm's state: no authoritative block at all.
+		// A refusal, never a wrong answer.
 		expect(outcomeFor(undefined, expected)).toEqual({
 			outcome: PremiseLinkageOutcome.Refused,
 			failureCategory: PremiseLinkageFailureCategory.ArmAssertsNoIdentifier,

@@ -42,6 +42,7 @@ export interface LabelledSpan {
 	value: string
 	/**
 	 * Mailwoman's own `ComponentTag` before the mapping, present on that side only.
+	 *
 	 * The label alone cannot say which tag produced it — several collapse onto one —
 	 * so a reader chasing a disagreement needs this to know what was actually asserted.
 	 */
@@ -49,9 +50,10 @@ export interface LabelledSpan {
 }
 
 /**
- * How the two readings related on one label. `agree` and `value-differs` both
- * mean both parsers produced the label. the `*-only` pair means one did not,
- * which is a different kind of disagreement and never blended with the other.
+ * How the two readings related on one label.
+ *
+ * `agree` and `value-differs` both mean both parsers produced the label. the `*-only` pair means
+ * one did not, which is a different kind of disagreement and never blended with the other.
  */
 export const SpanVerdict = {
 	Agree: "agree",
@@ -81,6 +83,7 @@ export interface ParseComparisonRow {
 	libpostal: LabelledSpan[] | null
 	/**
 	 * Why libpostal produced nothing, when it produced nothing.
+	 *
 	 * A transport failure and a parser that found no components are different facts
 	 * and reach a reader as the same empty list otherwise.
 	 */
@@ -113,8 +116,8 @@ export function mailwomanSpans(tree: AddressTree): LabelledSpan[] {
 	const mapped = toLibpostalComponents(matches)
 
 	// Positional pairing: `toLibpostalComponents` is a `map`, so index i of its
-	// output is index i of its input. Reading the tag back by matching values would
-	// mispair a row carrying the same value under two tags.
+	// output is index i of its input.
+	// Reading the tag back by matching values would mispair a row carrying the same value under two tags.
 	return mapped.map((component, index) => ({
 		label: component.label,
 		value: component.value,
@@ -168,10 +171,10 @@ function isLabelledSpan(entry: unknown): boolean {
 /**
  * Diff two readings by label.
  *
- * Spans sharing a label are joined in reading order before comparison, because libpostal
- * emits one span per label per occurrence and mailwoman's collapse can emit a different
- * number for the same reading. Comparing occurrence-by- occurrence would report a
- * disagreement caused by segmentation rather than by either parser's answer.
+ * Spans sharing a label are joined in reading order before comparison, because libpostal emits one span
+ * per label per occurrence and mailwoman's collapse can emit a different number for the same reading.
+ * Comparing occurrence-by- occurrence would report a disagreement caused by segmentation
+ * rather than by either parser's answer.
  */
 export function diffSpans(mailwoman: readonly LabelledSpan[], libpostal: readonly LabelledSpan[]): SpanDiff[] {
 	const labels = [...new Set([...mailwoman.map((s) => s.label), ...libpostal.map((s) => s.label)])].toSorted()

@@ -51,8 +51,9 @@ const trainingAudit = z.object({
 /**
  * `release.rights-audit` — reads and changes nothing.
  *
- * Its output is a report rather than a verdict. An empty `unresolved` list means this pass found
- * nothing it could not read, which is not a statement that any artifact is cleared for any use.
+ * Its output is a report rather than a verdict.
+ * An empty `unresolved` list means this pass found nothing it could not read,
+ * which is not a statement that any artifact is cleared for any use.
  */
 export const rightsAudit = defineOperation({
 	id: "release.rights-audit",

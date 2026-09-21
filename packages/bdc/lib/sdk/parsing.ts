@@ -61,6 +61,7 @@ import type { ProviderID } from "#sdk/common"
 
 /**
  * Column positions in the FCC's 12-column availability CSV.
+ *
  * Named rather than indexed by offset so a reader can check them against the
  * header row without counting commas:
  *
@@ -104,8 +105,8 @@ export interface BDCAvailabilityRow {
  * Project one already-split CSV row onto {@linkcode BDCAvailabilityRow}.
  *
  * Separate from the iteration so the sync and async readers cannot drift in what
- * they emit — the one-function discipline. Not exported: a caller with a split
- * row wants {@linkcode readAvailabilityRowsSync}.
+ * they emit — the one-function discipline.
+ * Not exported: a caller with a split row wants {@linkcode readAvailabilityRowsSync}.
  */
 function projectRow(columns: readonly string[], providerID: ProviderID): BDCAvailabilityRow {
 	return {
@@ -121,8 +122,11 @@ function projectRow(columns: readonly string[], providerID: ProviderID): BDCAvai
 }
 
 /**
- * Shared reader options. `header: true` consumes the first row as the header even
- * in `array` mode. Quote-aware parsing keeps the 421,882 quoted-brand rows aligned.
+ * Shared reader options.
+ *
+ * `header: true` consumes the first row as the header even in `array` mode.
+ * Quote-aware parsing keeps the 421,882 quoted-brand rows aligned.
+ *
  * `crlf` already defaults to `true` for CSV (RFC 4180), so a crlf file does
  * not leak `\r` into the last column.
  */
@@ -130,11 +134,12 @@ const READER_OPTIONS = { mode: "array" } as const
 
 /**
  * Stream an FCC BDC availability CSV, yielding every data row.
+ *
  * The header row is consumed, never emitted.
  *
- * `source` is anything `spliterator` can open asynchronously — a path string, a `path-ts` builder,
- * a URL, a file handle, or an async chunk iterator. Prefer handing it the path
- * and letting it own the read: that is what keeps a 920 MB file off the heap.
+ * `source` is anything `spliterator` can open asynchronously — a path string,
+ * a `path-ts` builder, a URL, a file handle, or an async chunk iterator.
+ * Prefer handing it the path and letting it own the read: that is what keeps a 920 MB file off the heap.
  */
 export async function* readAvailabilityRows(
 	source: AsyncDataResource,
@@ -148,9 +153,8 @@ export async function* readAvailabilityRows(
 /**
  * Synchronous sibling for an in-memory buffer — fixtures and tests, never the build path.
  *
- * Kept because a test that must assert on a literal CSV should not have to stand
- * up a stream to do it. If you are reaching for this against a file on disk,
- * reach for {@linkcode readAvailabilityRows} instead.
+ * Kept because a test that must assert on a literal CSV should not have to stand up a stream to do it.
+ * If you are reaching for this against a file on disk, reach for {@linkcode readAvailabilityRows} instead.
  */
 export function* readAvailabilityRowsSync(
 	csvBuffer: Buffer | string,

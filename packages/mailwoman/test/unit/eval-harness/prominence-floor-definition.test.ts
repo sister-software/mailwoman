@@ -27,7 +27,9 @@ beforeAll(async () => {
 })
 
 /**
- * The frozen definition with one clause replaced. Structured clone so a case cannot leak into the next.
+ * The frozen definition with one clause replaced.
+ *
+ * Structured clone so a case cannot leak into the next.
  */
 function withChange(change: (draft: ProminenceFloorDefinition) => void): ProminenceFloorDefinition {
 	const draft = structuredClone(frozen)
@@ -88,7 +90,8 @@ describe("prominence-floor ruler (#2264)", () => {
 	it("refuses a gap between bands, which would drop rows with nothing reporting it", () => {
 		const problems = auditProminenceDefinition(
 			withChange((draft) => {
-				// One below the second band's floor. Therefore, 999 itself falls in no band.
+				// One below the second band's floor.
+				// Therefore, 999 itself falls in no band.
 				draft.populationBands[0]!.max = draft.populationBands[0]!.max - 1
 			})
 		)
@@ -157,10 +160,11 @@ describe("prominence-floor ruler (#2264)", () => {
 
 		expect(floors).toEqual([1, 2, 3, 4])
 
-		// A floor of F admits population 10^F. The registered set must reject at least
-		// one whole band, or the benchmark repeats the same-data panel's blind spot:
-		// every gold clearing every floor, and a rate nobody can attribute. floor_4 admits 10,000
-		// and the second band ends at 4,999, so it rejects both of the two smallest bands outright.
+		// A floor of F admits population 10^F.
+		// The registered set must reject at least one whole band, or the benchmark repeats
+		// the same-data panel's blind spot: every gold clearing every floor, and a rate
+		// nobody can attribute. floor_4 admits 10,000 and the second band ends at 4,999,
+		// so it rejects both of the two smallest bands outright.
 		const highest = Math.max(...floors)
 
 		const bandsRejectedOutright = frozen.populationBands.filter(

@@ -58,8 +58,9 @@ describe("POSTAL_REGIMES", () => {
 	})
 
 	it("reports that nothing distinguishes any of them from its parent country yet", () => {
-		// The measurement this table records. `XK` is `partial` because the source register
-		// counts it as a jurisdiction while no layout, postcode shape or lexicon names it.
+		// The measurement this table records.
+		// `XK` is `partial` because the source register counts it as a jurisdiction
+		// while no layout, postcode shape or lexicon names it.
 		const modeled = POSTAL_REGIMES.filter((regime) => regime.coverage === RegimeCoverage.Modeled)
 
 		expect(modeled.map((regime) => regime.regimeID)).toEqual([])

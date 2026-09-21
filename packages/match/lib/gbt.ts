@@ -170,8 +170,9 @@ function predictTree(t: TreeNode, x: number[]): number {
 }
 
 /**
- * A trained gradient-boosted-tree model: an additive ensemble over a
- * base log-odds. Plain JSON.
+ * A trained gradient-boosted-tree model: an additive ensemble over a base log-odds.
+ *
+ * Plain JSON.
  */
 export interface GBT {
 	trees: TreeNode[]
@@ -232,7 +233,9 @@ export function trainGBT(X: number[][], y: number[], w: number[], opts: GBTOpts)
 }
 
 /**
- * GBT score (logit) for one feature vector. Threshold-comparable like the FS weight.
+ * GBT score (logit) for one feature vector.
+ *
+ * Threshold-comparable like the FS weight.
  */
 export function gbtScore(m: GBT, x: number[]): number {
 	let f = m.base

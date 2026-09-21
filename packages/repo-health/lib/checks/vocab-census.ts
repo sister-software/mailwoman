@@ -32,6 +32,7 @@ const HIT_PATTERN = /^(.*?):(\d+):(\d+):Mailwoman\.AmbiguousShorthand(?:Code)?:'
 
 /**
  * Names that keep their spelling — `agents.md` lists them as interface-tied.
+ *
  * A hit naming one of these is a formatting fix rather than a rewrite.
  * Empty: every interface-tied identifier that carried a banned word has been renamed. add a
  * name here only when a new one must carry one, and record why in `AmbiguousShorthandCode.yml`.
@@ -62,6 +63,7 @@ export interface Hit {
 
 /**
  * A modifier only names the check when it carries meaning.
+ *
  * An article, a comment marker or a pronoun leaves the reference bare however many words precede it.
  */
 const EMPTY_MODIFIERS = new Set([
@@ -118,6 +120,7 @@ const LINE_DRIFT_WINDOW = 3
 
 /**
  * The line that actually carries `word`, nearest to Vale's reported one.
+ *
  * Falls back to the reported line when the word is nowhere in the window, so a hit is
  * never dropped — a missing modifier costs a bucket label, a dropped hit costs a site.
  */
@@ -148,6 +151,7 @@ function locate(
 
 /**
  * Classifies each Vale `--output line` record against `sources`, a map from path to that file's lines.
+ *
  * Pure, so the fixture test states its cases inline rather than writing files.
  *
  * Only the modifier a hit is bucketed by comes from the indexed line, so a stray offset
@@ -183,9 +187,11 @@ export function classify(hitLines: readonly string[], sources: ReadonlyMap<strin
 }
 
 /**
- * Which of the four words a match belongs to. Searched anywhere in the token rather than
- * at its start: the code rule matches the whole compound, so `promotion-eval` is a `gate`
- * and a prefix test files it under whichever family the fall-through names.
+ * Which of the four words a match belongs to.
+ *
+ * Searched anywhere in the token rather than at its start: the code rule matches
+ * the whole compound, so `promotion-eval` is a `gate` and a prefix test files it
+ * under whichever family the fall-through names.
  */
 export function wordFamily(word: string): "gate" | "seam" | "shard" | "cut" {
 	const lower = word.toLowerCase()
@@ -200,14 +206,17 @@ export function wordFamily(word: string): "gate" | "seam" | "shard" | "cut" {
 }
 
 /**
- * The tracked surfaces the ban covers. Dated point-in-time records are exempt by the same
- * rule that exempts them from the acronym-casing convention, and `docs/` source is included
- * because a plugin's docstring is as much committed prose as a package's.
+ * The tracked surfaces the ban covers.
+ *
+ * Dated point-in-time records are exempt by the same rule that exempts them from
+ * the acronym-casing convention, and `docs/` source is included because a plugin's
+ * docstring is as much committed prose as a package's.
  */
 const TRACKED_GLOBS = ["*.ts", "*.tsx", "corpus-python/*.py"] as const
 
 /**
  * Runs Vale over every tracked source file and returns its `--output line` records.
+ *
  * Vale is resolved through the workspace rather than the path, so the census
  * reads the same binary `yarn lint:prose` does.
  */
@@ -226,8 +235,9 @@ async function collectHits(context: RepoContext): Promise<string[]> {
 	const config = resolvePath(root, "config/vale/.vale-code-census.ini")
 
 	// Run from the repo root, because the paths are repo-relative.
-	// Run it from anywhere else and Vale resolves none of them, reports zero alerts, and exits 0 —
-	// the reading is identical to a clean tree. That is why the positive control below is not optional.
+	// Run it from anywhere else and Vale resolves none of them, reports zero alerts,
+	// and exits 0 — the reading is identical to a clean tree.
+	// That is why the positive control below is not optional.
 	// Vale exits non-zero when it reports alerts, which is this command's expected outcome.
 	// Only a process error carries the output. a spawn failure has none and must not read as zero hits.
 	const result = await runFile(vale.file, [...vale.argv, "--config", config, "--output", "line", ...files], {
@@ -245,8 +255,9 @@ async function collectHits(context: RepoContext): Promise<string[]> {
 }
 
 /**
- * A file that must always trip, so a reported zero is distinguishable from a run that
- * resolved no files. The Vale fixture is the right control precisely because it is permanent:
+ * A file that must always trip, so a reported zero is distinguishable from a run that resolved no files.
+ *
+ * The Vale fixture is the right control precisely because it is permanent:
  * every other file carrying these words is scheduled to lose them, and a control the
  * sweep eventually cleans stops proving anything on the day it matters most.
  */
@@ -254,6 +265,7 @@ const POSITIVE_CONTROL = "config/vale/fixtures/dirty.ts"
 
 /**
  * Paths whose hits do not count, and why each is excluded.
+ *
  * The set measured is every tracked source minus these — the denominator the count is reported against.
  *
  * Each states the vocabulary as data rather than using it as prose, so counting them measures

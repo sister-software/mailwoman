@@ -33,6 +33,7 @@ import { literalFilesEntries } from "#pack/verify-tarball"
 import { releaseWorkspaces } from "#release/stage"
 /**
  * The bucket's resolve root, when `$private.HF_BUCKET_RESOLVE_URL` does not name one.
+ *
  * The bucket name itself comes from `release.config.json`'s `assets.hfBucket`,
  * so a bucket move is a config edit rather than a code edit.
  */
@@ -40,6 +41,7 @@ const DEFAULT_HF_RESOLVE_ROOT = "https://huggingface.co/buckets"
 
 /**
  * The artifact that identifies the base weights package.
+ *
  * Every overlay shares this file byte for byte and declares none of its own, which is what
  * makes the base self-contained — and what makes it derivable rather than spelled `en-us`.
  */
@@ -62,6 +64,7 @@ export type ArtifactOrigin = { kind: "hf"; remoteName: string; base: string } | 
 export interface WeightsArtifactPlan {
 	/**
 	 * Repo-relative workspace path — always under `packages/`, which the destination inherits.
+	 *
 	 * The v9.2.0 release's first dispatch died because the YAML wrote `"$ws/…"`
 	 * after the regroup, so this is the field the fixture pins.
 	 */
@@ -74,6 +77,7 @@ export interface WeightsArtifactPlan {
 	origin: ArtifactOrigin
 	/**
 	 * The md5 a release model card declares for this filename, when one does.
+	 *
 	 * Absent means no card declares one — never "the bytes are unverified
 	 * because the check was skipped"; the report separates the two.
 	 */
@@ -105,6 +109,7 @@ export interface HFMaterializationReport {
 	checksumVerified: number
 	/**
 	 * Filenames no release model card declares an md5 for.
+	 *
 	 * Reported by name because a silent "0 mismatches" over an empty check set
 	 * reads exactly like a verified fetch.
 	 */
@@ -121,8 +126,10 @@ async function readWorkspaceManifest(repoRoot: string, workspace: string): Promi
 }
 
 /**
- * The workspace path for a release locale. The `packages/` prefix lives here once,
- * so a future regroup moves one line rather than every string that named a workspace.
+ * The workspace path for a release locale.
+ *
+ * The `packages/` prefix lives here once, so a future regroup moves one line
+ * rather than every string that named a workspace.
  */
 function weightsWorkspace(locale: string): string {
 	return `packages/neural-weights-${locale}`
@@ -141,8 +148,9 @@ async function trackedWorkspaceFiles(repoRoot: string, workspaces: readonly stri
  *
  * Merged across every release weights card rather than read from the base alone: the base's
  * card covers the artifacts every overlay copies (`model.onnx`, the two bundle lexicons),
- * and an overlay is free to declare its own. Two cards declaring different md5s for one filename
- * is refused outright — one bucket object cannot satisfy both, and a fetch has no basis to choose.
+ * and an overlay is free to declare its own.
+ * Two cards declaring different md5s for one filename is refused outright —
+ * one bucket object cannot satisfy both, and a fetch has no basis to choose.
  */
 async function declaredChecksums(repoRoot: string, workspaces: readonly string[]): Promise<Map<string, string>> {
 	const declared = new Map<string, string>()
@@ -223,9 +231,10 @@ export async function readBaseModelVersion(repoRoot: string): Promise<string> {
  *
  * The bundle interface says a weights release ships its Fisher, so every fine-tune off
  * that base can apply the EWC brake. the runtime never reads it and npm never carries it,
- * which is exactly why nothing else would notice its absence. head-probed with the rest so a
- * half-staged release is refused before it publishes. Both halves are probed: the YAML this
- * replaces checked only `file`, and a declared sidecar that never uploaded would have passed.
+ * which is exactly why nothing else would notice its absence. head-probed with the rest
+ * so a half-staged release is refused before it publishes.
+ * Both halves are probed: the YAML this replaces checked only `file`,
+ * and a declared sidecar that never uploaded would have passed.
  */
 export async function distributionOnlyRemoteNames(repoRoot: string, baseLocale: string): Promise<string[]> {
 	const cardPath = resolvePath(repoRoot, weightsWorkspace(baseLocale), "model-card.json")
@@ -240,10 +249,11 @@ export async function distributionOnlyRemoteNames(repoRoot: string, baseLocale: 
 /**
  * The versioned bucket directory for `version`.
  *
- * `$private.HF_BUCKET_RESOLVE_URL` replaces the `<host>/<bucket>/resolve` prefix wholesale,
- * for a mirror or a local fixture server. unset, the prefix is built from `release.config.json`'s
- * `assets.hfBucket`. Nothing about either path needs a token — the bucket is public,
- * and a credential here would only hide the day it stops being public.
+ * `$private.HF_BUCKET_RESOLVE_URL` replaces the `<host>/<bucket>/resolve` prefix
+ * wholesale, for a mirror or a local fixture server. unset, the prefix is built
+ * from `release.config.json`'s `assets.hfBucket`.
+ * Nothing about either path needs a token — the bucket is public, and a credential
+ * here would only hide the day it stops being public.
  */
 export async function hfVersionBase(repoRoot: string, version: string): Promise<string> {
 	const config = await readReleaseConfig(repoRoot)
@@ -346,8 +356,10 @@ export async function planWeightsMaterialization(
 
 /**
  * The `files` entries of `workspace` that git does not track — what the bucket
- * (or the checkout's soft-feed sources) has to supply. A nested entry is refused here
- * rather than reported missing by the tarball audit after most of the release has published.
+ * (or the checkout's soft-feed sources) has to supply.
+ *
+ * A nested entry is refused here rather than reported missing by the tarball audit
+ * after most of the release has published.
  */
 function untrackedDeclaredArtifacts(
 	workspace: string,
@@ -376,6 +388,7 @@ function untrackedDeclaredArtifacts(
 /**
  * The plans of one character-path family: its untracked `files` entries, read from
  * `<root>/<family>/v<card version>` and checked against the family's own `files_md5`.
+ *
  * The Latin cards are not consulted — a family's `model.onnx` is a different graph under the same name.
  */
 export async function planCharFamilyArtifacts(

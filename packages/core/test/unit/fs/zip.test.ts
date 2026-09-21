@@ -19,9 +19,11 @@ import ADMZip from "adm-zip"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 /**
- * Big and incompressible. A member that inflates in one pass is already finished
- * when the consumer breaks, and yauzl has released its read — such a fixture passes whether
- * or not the disposal waits, which is what a 400 KB run of one repeated character did.
+ * Big and incompressible.
+ *
+ * A member that inflates in one pass is already finished when the consumer breaks,
+ * and yauzl has released its read — such a fixture passes whether or not the disposal waits,
+ * which is what a 400 KB run of one repeated character did.
  * Random bytes keep the stream genuinely open across the break.
  */
 const BIG = incompressibleBytes(12 * 1024 * 1024)

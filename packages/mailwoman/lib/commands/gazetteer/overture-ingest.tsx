@@ -34,9 +34,10 @@ import { Box, Text } from "ink"
 import { join } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, splitCountryCodes, useCommandTask } from "#cli-kit"
-// Overture prunes old releases from the bucket (the 2026-08-19 listing held exactly one), so a stale
-// pin fails the default ingest outright. Moves together with `gazetteer-pipeline/poi/defaults.ts`'s
-// pin — see its docstring for why the two constants stay independent.
+// Overture prunes old releases from the bucket (the 2026-08-19 listing held exactly one),
+// so a stale pin fails the default ingest outright.
+// Moves together with `gazetteer-pipeline/poi/defaults.ts`'s pin — see its docstring
+// for why the two constants stay independent.
 const DEFAULT_RELEASE = "2026-07-22.0"
 
 const S3_GLOB = (release: string) =>
@@ -141,9 +142,10 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 		const countryParquet = (cc: string) => join(outDir, `addresses-${cc.toLowerCase()}.parquet`)
 
 		/**
-		 * Materialize one country into local Parquet. Column set preserves the Overture
-		 * schema verbatim (nested `sources` + `address_levels` included) plus lon/lat
-		 * decoded from the WKB point via the spatial extension.
+		 * Materialize one country into local Parquet.
+		 *
+		 * Column set preserves the Overture schema verbatim (nested `sources` + `address_levels` included)
+		 * plus lon/lat decoded from the WKB point via the spatial extension.
 		 */
 		const ingestCountry = async (cc: string): Promise<void> => {
 			const limitClause = limit ? `LIMIT ${limit}` : ""

@@ -22,11 +22,15 @@ import {
  */
 export const SubVenueTier = {
 	/**
-	 * A venue-interior structure — the `unit` side. Terminals, gates, platforms.
+	 * A venue-interior structure — the `unit` side.
+	 *
+	 * Terminals, gates, platforms.
 	 */
 	SubVenue: "subvenue",
 	/**
-	 * The containing venue — the `venue` side. Aerodromes, stations, campuses.
+	 * The containing venue — the `venue` side.
+	 *
+	 * Aerodromes, stations, campuses.
 	 */
 	Venue: "venue",
 } as const
@@ -34,9 +38,10 @@ export const SubVenueTier = {
 export type SubVenueTier = (typeof SubVenueTier)[keyof typeof SubVenueTier]
 
 /**
- * One match rule: `designatorID` wins when every `[key, value]` pair in `all` is present
- * on the feature (a conjunction within a rule). A disjunction across tags is
- * expressed as multiple rules sharing a `designatorID` — see
+ * One match rule: `designatorID` wins when every `[key, value]` pair in `all` is
+ * present on the feature (a conjunction within a rule).
+ *
+ * A disjunction across tags is expressed as multiple rules sharing a `designatorID` — see
  * {@link SUBVENUE_TAG_RULES}'s two `platform` rules and two `station` rules.
  */
 export interface SubVenueTagRule {
@@ -54,17 +59,19 @@ export interface SubVenueTagRule {
  * The tag rules, ordered — the first rule a feature satisfies wins.
  *
  * Order is required in exactly one place: a station platform commonly carries both
- * `public_transport=platform` and `railway=platform`, and an aerodrome terminal
- * building sometimes carries both `aeroway=terminal` and `building=terminal`.
- * In every such case the colliding rules share a `designatorID`, so the
- * first-wins resolution is harmless — it picks the same answer either way.
+ * `public_transport=platform` and `railway=platform`, and an aerodrome terminal building
+ * sometimes carries both `aeroway=terminal` and `building=terminal`.
+ * In every such case the colliding rules share a `designatorID`, so the first-wins
+ * resolution is harmless — it picks the same answer either way.
+ *
  * There is no pair of rules with different designators that a single real feature can satisfy,
  * because each pair requires a different value for a key a feature carries once.
  *
  * Provenance, per rule, all documented OSM tags:
  *
- * - `aeroway=terminal` / `aeroway=gate` — the two `OSM_AEROWAY_STRUCTURE_DESIGNATORS` already
- *   in the span proposer's vocabulary. This is the class that motivated the whole arc.
+ * - `aeroway=terminal` / `aeroway=gate` — the two `OSM_AEROWAY_STRUCTURE_DESIGNATORS`
+ *   already in the span proposer's vocabulary.
+ *   This is the class that motivated the whole arc.
  * - `building=terminal` — the building-classification equivalent, used where the
  *   terminal is mapped as a building rather than an aeroway feature.
  * - `public_transport=platform` / `railway=platform` — the rail equivalent.
@@ -78,10 +85,11 @@ export interface SubVenueTagRule {
  *   so treat these rows as the weakest in the table.
  *
  * Not here, deliberately: `indoor=*` (Simple Indoor Tagging).
- * `wof-osm-placetype-map.mdx` establishes that concourses and wings live in OSM's
- * indoor scheme rather than its place scheme, which makes it the natural home for the
- * `concourse`/`wing` designators — but indoor features are overwhelmingly unnamed geometry
- * primitives (`indoor=room`, `indoor=corridor`), and this extractor's yield is names.
+ * `wof-osm-placetype-map.mdx` establishes that concourses and wings live in OSM's indoor scheme
+ * rather than its place scheme, which makes it the natural home for the `concourse`/`wing`
+ * designators — but indoor features are overwhelmingly unnamed geometry primitives
+ * (`indoor=room`, `indoor=corridor`), and this extractor's yield is names.
+ *
  * Measure the named fraction before adding it.
  */
 export const SUBVENUE_TAG_RULES: SubVenueTagRule[] = [
@@ -99,14 +107,16 @@ export const SUBVENUE_TAG_RULES: SubVenueTagRule[] = [
 ]
 
 /**
- * The OSM driver layers that can carry a named transport structure: nodes
- * and closed ways/relations. `lines` is excluded — a platform mapped as an open way
- * is an edge case whose name duplicates the node or area version.
+ * The OSM driver layers that can carry a named transport structure: nodes and closed ways/relations.
+ *
+ * `lines` is excluded — a platform mapped as an open way is an edge case whose
+ * name duplicates the node or area version.
  */
 export const SUBVENUE_LAYERS = ["points", "multipolygons"] as const
 
 /**
  * Tag keys gdal's default `osmconf.ini` promotes to real OGR fields, PER layer.
+ *
  * See the module docstring for why this cannot be one flat set the way `extract-poi.ts`'s can.
  * Only the keys this extractor reads are listed. the real `attributes=` lines are longer.
  */
@@ -129,6 +139,7 @@ export function distinctSubVenueTagKeys(rules: readonly SubVenueTagRule[]): stri
  * Selects `name` and `ref` (the identifier half of `Gate A12` lives in `ref` far more reliably than in `name`),
  * every key the rule table references, and `other_tags` wholesale for the `name:<lang>` harvest.
  * The where is an `or` of the table's and-groups, pushed down so gdal scans rather than this process.
+ *
  * The pushdown is an optimization only: a gdal dialect quirk could narrow what it matches
  * but never widen it, and {@link matchSubVenueTagRule} re-checks the same table in JS
  * before any row is yielded, so no false positive survives even if the predicate were imprecise.
@@ -165,8 +176,9 @@ export function buildSubVenueSQL(layer: string, rules: readonly SubVenueTagRule[
 
 /**
  * Pure tag-rule matcher: the first rule whose `all` conjunction is fully satisfied
- * by `tags` wins, `null` when none do. `tags` is a plain key → value dict,
- * so this is unit-testable over synthetic dicts with no gdal involved.
+ * by `tags` wins, `null` when none do.
+ *
+ * `tags` is a plain key → value dict, so this is unit-testable over synthetic dicts with no gdal involved.
  */
 export function matchSubVenueTagRule(
 	tags: Readonly<Record<string, string | undefined>>,

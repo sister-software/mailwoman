@@ -25,18 +25,23 @@ export interface LocaleProfile {
 
 	/**
 	 * Npm package providing ONNX weights and tokenizer for the neural classifier in this locale.
+	 *
 	 * Optional — Phase 0 ships no weights. a locale without a weights package runs rule-only.
 	 */
 	weightsPackage?: string
 
 	/**
-	 * Rule classifier IDs active in this locale. Stable identifiers declared by `ProposalClassifier.id`.
+	 * Rule classifier IDs active in this locale.
+	 *
+	 * Stable identifiers declared by `ProposalClassifier.id`.
 	 * An empty list means the locale relies entirely on neural inference.
 	 */
 	ruleClassifiers: string[]
 
 	/**
-	 * Components this locale uses. Must be a subset of `COMPONENT_TAGS`.
+	 * Components this locale uses.
+	 *
+	 * Must be a subset of `COMPONENT_TAGS`.
 	 * The system validates this at registration.
 	 */
 	componentsSupported: ComponentTag[]

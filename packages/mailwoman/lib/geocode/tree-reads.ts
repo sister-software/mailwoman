@@ -15,6 +15,7 @@ import { countryFromPostcodeFormat } from "@mailwoman/core/resolver"
 /**
  * The resolved tree's own country — the first `resolver_country` stamp on any node
  * (constant across one address's resolved nodes), or undefined when nothing resolved with one.
+ *
  * The rooftop second pass keys on this.
  */
 export function resolvedCountryOf(tree: AddressTree): string | undefined {
@@ -54,10 +55,12 @@ export function variantAliasExemptionOf(tree: AddressTree): true | undefined {
 }
 
 /**
- * The country #42's postcode-country coherence pass scoped the walk to, read back off the
- * resolved tree's `postcode_country_scope` stamp — or the #1735 explicit-country pre-scope,
- * whose receipt exists precisely so a tree that was right from the start still gets its
- * country's rooftop database loaded. `undefined` whenever nothing was overridden.
+ * The country #42's postcode-country coherence pass scoped the walk to,
+ * read back off the resolved tree's `postcode_country_scope` stamp — or the #1735
+ * explicit-country pre-scope, whose receipt exists precisely so a tree that was right
+ * from the start still gets its country's rooftop database loaded.
+ *
+ * `undefined` whenever nothing was overridden.
  */
 export function postcodeCountryScopeOf(tree: AddressTree): string | undefined {
 	for (const n of walkNodes(tree.roots)) {
@@ -81,8 +84,8 @@ export function treePostcodeValue(tree: AddressTree): string | undefined {
  * unambiguous postcode — the bare-postcode class (#22).
  *
  * `mailwoman geocode --locale en-GB "N7 0BT"` parses to `{ street: "N7 0BT" }`
- * and returns no coordinate, while the same code inside a full address
- * (`… London, N7 0BT`) parses as a postcode and resolves to a point 38 m from the rooftop.
+ * and returns no coordinate, while the same code inside a full address (`… London, N7 0BT`)
+ * parses as a postcode and resolves to a point 38 m from the rooftop.
  * Nothing downstream can recover it: the walk only looks up a `postcode` node,
  * and span-rescore's confident-constituent guard treats the street span as un-recoverable
  * material (correctly — that guard is what stops "Ave" resolving to Ave, France).
@@ -94,9 +97,9 @@ export function treePostcodeValue(tree: AddressTree): string | undefined {
  * - Its value matches a format that is unforgeable across the systems we resolve
  *   ({@link POSTCODE_FORMAT_COUNTRY} — GB/CA/IE, the same table #928 already trusts to name a country outright).
  *
- * So it fires on `N7 0BT` and `K2P 1L4` and on nothing that is also a plausible street, venue
- * or city name. A US ZIP is out of scope by construction: `90210` alone is five digits, which the
- * model already tags `postcode`, and the format table would not distinguish it from a DE PLZ anyway.
+ * So it fires on `N7 0BT` and `K2P 1L4` and on nothing that is also a plausible street, venue or city name.
+ * A US ZIP is out of scope by construction: `90210` alone is five digits, which the model
+ * already tags `postcode`, and the format table would not distinguish it from a DE PLZ anyway.
  *
  * Mutates and returns the tree (same posture as `recognizeUSRegions`).
  */

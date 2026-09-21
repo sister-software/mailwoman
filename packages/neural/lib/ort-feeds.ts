@@ -80,14 +80,15 @@ export interface InferResult {
 	 * of length `lengthIdx + 1` tokens, typed `SEGMENT_TYPES[segmentTypeIdx]` (that axis ships in the
 	 * weights bundle's `semi-crf-transitions.json`, never hardcoded — the PLACETYPE_ORDER class).
 	 *
-	 * Absent on every pre-v3 bundle, so consumers must treat undefined as "no span decode
-	 * available" and fall back to the BIO path. Fetching it costs ~0.75 ms (CPU, S=128);
-	 * a runtime that never reads it pays nothing (ORT prunes the unfetched branch) —
-	 * measured in `docs/articles/evals/2026-07-15-v301-phase2-export.md`.
+	 * Absent on every pre-v3 bundle, so consumers must treat undefined as "no span
+	 * decode available" and fall back to the BIO path.
+	 * Fetching it costs ~0.75 ms (CPU, S=128); a runtime that never reads it pays nothing
+	 * (ORT prunes the unfetched branch) — measured in `docs/articles/evals/2026-07-15-v301-phase2-export.md`.
 	 */
 	spanScores?: number[][][]
 	/**
 	 * Max span length (the `L` axis of {@link spanScores}).
+	 *
 	 * Absent iff `spanScores` is.
 	 */
 	maxSpan?: number
@@ -114,6 +115,7 @@ export interface OutputTensor {
 /**
  * Pack the token ids into the fixed-length `input_ids`/`attention_mask` pair:
  * pad to `fixedSeqLen` with id 0 + mask 0, truncate if longer.
+ *
  * `seqLen` is the real (unpadded) length every downstream read trims to.
  */
 export function packTokenFeed(
@@ -138,8 +140,9 @@ export function packTokenFeed(
 
 /**
  * Pack a char-path encoding (`char_ids (S, W)` + `attention_mask (S)`, already S-padded by the encoder)
- * into the two int64 tensors the char graph declares. `seqLen` is the count of
- * real units, what the logits are trimmed back to.
+ * into the two int64 tensors the char graph declares.
+ *
+ * `seqLen` is the count of real units, what the logits are trimmed back to.
  */
 export function packCharFeed(
 	charIDs: ReadonlyArray<readonly number[]>,
@@ -173,9 +176,11 @@ export function packCharFeed(
 }
 
 /**
- * Pack one soft-feed channel into its `<prefix>_features` + `<prefix>_confidence` tensors,
- * zero-padded to `fixedSeqLen`. An `undefined` channel packs all zeros — the confidence=0
- * identity, the model's channel-off behavior for a graph that declares the inputs as mandatory.
+ * Pack one soft-feed channel into its `<prefix>_features` + `<prefix>_confidence`
+ * tensors, zero-padded to `fixedSeqLen`.
+ *
+ * An `undefined` channel packs all zeros — the confidence=0 identity, the model's
+ * channel-off behavior for a graph that declares the inputs as mandatory.
  */
 function packChannelFeed(
 	channel: InferChannel | undefined,
@@ -207,6 +212,7 @@ function packChannelFeed(
 
 /**
  * Pack every soft-feed channel the graph declares, in feed-name order.
+ *
  * Every channel is conditioned on the graph's declared inputs: a supplied channel
  * the graph does not declare is never fed (an undeclared feed crashes ORT),
  * and a declared channel the caller did not supply gets the zero-fill
@@ -259,9 +265,11 @@ export function packSoftChannelFeeds(
 }
 
 /**
- * Decode a session's outputs into an {@link InferResult}, trimmed to the real `seqLen`
- * (the pad tail is never real). `localeLogits` and `spanScores` are optional exactly
- * as the exports are — absent tensors yield absent fields.
+ * Decode a session's outputs into an {@link InferResult}, trimmed to the real
+ * `seqLen` (the pad tail is never real).
+ *
+ * `localeLogits` and `spanScores` are optional exactly as the exports are —
+ * absent tensors yield absent fields.
  */
 export function decodeInferOutput(
 	output: { logits?: OutputTensor; localeLogits?: OutputTensor; spanScores?: OutputTensor },
@@ -333,13 +341,17 @@ export function decodeInferOutput(
 }
 
 /**
- * Back-compat inference of the required soft-feature channels from an ONNX model's declared
- * input names (#718). A model that exports `anchor_features` / `gazetteer_features`
- * declared those channels mandatory at train time — feeding zeros is the channel-off
- * identity, but a model trained with the channel is OOD when scored without it.
+ * Back-compat inference of the required soft-feature channels from an ONNX
+ * model's declared input names (#718).
+ *
+ * A model that exports `anchor_features` / `gazetteer_features` declared those
+ * channels mandatory at train time — feeding zeros is the channel-off identity,
+ * but a model trained with the channel is OOD when scored without it.
  * Cards without a `requires` block (every pre-#718 bundle) route through here
- * so the fail-closed guard still guards them. Conventions/bridge are not graph-observable
- * (no dedicated input), so they're left undeclared here — only the card declares them.
+ * so the fail-closed guard still guards them.
+ *
+ * Conventions/bridge are not graph-observable (no dedicated input), so they're
+ * left undeclared here — only the card declares them.
  */
 export function inferRequiredChannelsFromInputs(inputNames: readonly string[]): RequiredChannels {
 	const names = new Set(inputNames)

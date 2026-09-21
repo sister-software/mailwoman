@@ -42,6 +42,7 @@ function fixture(over: Partial<ConformanceFixture> = {}): ConformanceFixture {
 
 /**
  * An observer that answers from a per-query table and counts its calls.
+ *
  * Absent queries answer with an empty parse.
  */
 function tableObserver(table: Record<string, Record<string, string>>): {
@@ -294,13 +295,13 @@ describe("gauntletObserver", () => {
 		expect(outcome.result.tier).toBe("address_point")
 		expect(outcome.result.country).toBe("United Kingdom")
 		expect(outcome.result.hierarchy[0]?.placeID).toBe("wof:101750367")
-		// No mechanism account: the shape vocabulary lives in the private dev-mcp
-		// workspace, so a shape-carrying observer is the caller's to supply.
+		// No mechanism account: the shape vocabulary lives in the private dev-mcp workspace,
+		// so a shape-carrying observer is the caller's to supply.
 		// Absent rather than empty.
 		expect(outcome.mechanismShapes).toBeUndefined()
 		// And no resolver trace either: the walk records nothing unless a sink asks it to,
-		// and this observer does not ask. Absent rather than an empty walk —
-		// the distinction `candidate_admissibility` reads.
+		// and this observer does not ask.
+		// Absent rather than an empty walk — the distinction `candidate_admissibility` reads.
 		expect(outcome.candidates).toBeUndefined()
 	})
 })

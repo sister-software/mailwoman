@@ -19,9 +19,10 @@ import { buildPostcodePrefixIndex } from "mailwoman/gazetteer-pipeline/postcode/
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 /**
- * WOF ids for the fixture. Arbitrary, but distinct and above 2^32 on one of them —
- * a US region id in the real gazetteer is 8 digits, while the NI synthetic postcode
- * ids run to 9.8e12, and the format carries them all as `f64`.
+ * WOF ids for the fixture.
+ *
+ * Arbitrary, but distinct and above 2^32 on one of them — a US region id in the real gazetteer is 8
+ * digits, while the NI synthetic postcode ids run to 9.8e12, and the format carries them all as `f64`.
  */
 const US_COUNTRY_ID = 85_633_793
 const ALPHA_ID = 85_688_001
@@ -161,8 +162,9 @@ describe("the US arm's ancestry", () => {
 		expect(built.borderStraddlingPrefixes).not.toContain("400")
 	})
 
-	// `PostcodePrefixAncestor.wofID` is an `f64` because a WOF id exceeds 2^32 — the NI synthetic
-	// postcode ids start at 9.8e12. A `u32` here would silently truncate rather than fail.
+	// `PostcodePrefixAncestor.wofID` is an `f64` because a WOF id exceeds 2^32 —
+	// the NI synthetic postcode ids start at 9.8e12.
+	// A `u32` here would silently truncate rather than fail.
 	it("carries a region id past 2^32 intact", () => {
 		expect(BETA_ID).toBeGreaterThan(2 ** 32)
 		expect(nodeFor("600")?.ancestors.map((a) => a.wofID)).toEqual([US_COUNTRY_ID, BETA_ID])

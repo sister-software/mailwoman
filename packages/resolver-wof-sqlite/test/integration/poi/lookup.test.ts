@@ -57,12 +57,14 @@ interface FixtureRow {
 const CATEGORY_IDS: Record<string, number> = { cafe: 1, fast_food: 2, museum: 3, supermarket: 4, trail: 5 }
 
 // A sparse-category instance placed at exactly gridDistance 13 from the Springfield
-// origin cell — the nm-04 boundary. A res-9 disk of radius r covers gridDistance ≤ r,
-// and the reader's loop over `maxRings` rings covers gridDistance ≤ `maxRings - 1`; so this
-// cell first appears at maxRings 14 and is missed by the old 12-ring default (covers ≤ 11).
-// The coordinate is derived from h3-js (a real ring-13 cell's center), never hardcoded —
-// same discipline as `cellFor`. This mirrors "hiking trail near Marseille",
-// whose nearest `trail` sits at gridDistance 13 (~3.9 km) in the real poi.db.
+// origin cell — the nm-04 boundary.
+// A res-9 disk of radius r covers gridDistance ≤ r, and the reader's loop over `maxRings`
+// rings covers gridDistance ≤ `maxRings - 1`; so this cell first appears at maxRings 14
+// and is missed by the old 12-ring default (covers ≤ 11).
+// The coordinate is derived from h3-js (a real ring-13 cell's center),
+// never hardcoded — same discipline as `cellFor`.
+// This mirrors "hiking trail near Marseille", whose nearest `trail` sits at
+// gridDistance 13 (~3.9 km) in the real poi.db.
 const TRAIL_GRID_DISTANCE = 13
 const SPRINGFIELD_ORIGIN = latLngToCell(SPRINGFIELD.latitude, SPRINGFIELD.longitude, POI_H3_RESOLUTION) as H3Cell
 const [TRAIL_LAT, TRAIL_LNG] = cellToLatLng(gridRingUnsafe(SPRINGFIELD_ORIGIN, TRAIL_GRID_DISTANCE)[0]!)
@@ -110,9 +112,9 @@ const MCDONALDS: FixtureRow = {
 	longitude: -89.651,
 }
 
-// A second McDonald's (same Q38076) ~280 km away in Chicago — far outside the
-// default ~4 km ring budget. The brand path is a brand-wide fetch (no k-ring),
-// so both must surface, distance-sorted (Springfield one first).
+// A second McDonald's (same Q38076) ~280 km away in Chicago — far outside the default ~4 km ring budget.
+// The brand path is a brand-wide fetch (no k-ring), so both must surface,
+// distance-sorted (Springfield one first).
 const MCDONALDS_CHICAGO: FixtureRow = {
 	name: "McDonald's (Loop)",
 	category: "fast_food",

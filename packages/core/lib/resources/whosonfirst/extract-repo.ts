@@ -34,8 +34,10 @@ export function wofRepoName(theme: "admin" | "postalcode" | "venue", country: st
 /**
  * Find a cloned repository under a repositories root, in either layout.
  *
- * Two are in use and both are legitimate. `gazetteer inspect sync` writes
- * `<root>/<owner>/<name>`, which is what the admin ingest's depth-agnostic GeoJSON glob reads.
+ * Two are in use and both are legitimate.
+ * `gazetteer inspect sync` writes `<root>/<owner>/<name>`, which is what the
+ * admin ingest's depth-agnostic GeoJSON glob reads.
+ *
  * The shipped postcode extracts were built from repositories cloned by hand as `<root>/<name>`.
  * A reader that knows one layout reports a repository that is present as missing, and every reader
  * here treats missing as "no evidence" and continues — so the wrong layout is silent rather than loud.
@@ -70,8 +72,9 @@ export async function resolveWOFDataDir(
 }
 
 /**
- * Characters per directory level. A trailing group shorter than this is its own
- * directory — `85977539` ends in `39`, not `390`.
+ * Characters per directory level.
+ *
+ * A trailing group shorter than this is its own directory — `85977539` ends in `39`, not `390`.
  */
 const ID_CHUNK = 3
 

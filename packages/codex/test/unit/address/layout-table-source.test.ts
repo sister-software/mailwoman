@@ -32,6 +32,7 @@ import { describe, expect, it } from "vitest"
 
 /**
  * Libaddressinput's placeholder vocabulary in this project's tag names.
+ *
  * `%A` is the one opaque street-address field the table expands into several tags,
  * so it compares as a single marker.
  */
@@ -50,8 +51,9 @@ const FIELD: Readonly<Record<string, string>> = {
 /**
  * The skeleton a layout prints: field names per line, street line collapsed to one marker.
  *
- * Two slots drop out. Both are authored rather than transcribed, so comparing them against
- * the source would report every country carrying one as a departure and say nothing:
+ * Two slots drop out.
+ * Both are authored rather than transcribed, so comparing them against the source would
+ * report every country carrying one as a departure and say nothing:
  *
  * - `country`, because `%R` is absent from nearly every `fmt` — libaddressinput's
  *   consumers add the destination country themselves.
@@ -83,9 +85,10 @@ function nameOf(atom: AddressAtom): string[] {
 }
 
 /**
- * The skeleton a `fmt` prints, in the same vocabulary. A placeholder this project
- * does not model drops out, which is what lets a country whose `fmt` names only such
- * fields be reported as unusable rather than as a mismatch.
+ * The skeleton a `fmt` prints, in the same vocabulary.
+ *
+ * A placeholder this project does not model drops out, which is what lets a country whose
+ * `fmt` names only such fields be reported as unusable rather than as a mismatch.
  */
 function skeletonOfFormat(fmt: string): string[][] {
 	return fmt

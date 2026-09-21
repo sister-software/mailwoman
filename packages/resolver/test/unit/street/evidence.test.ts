@@ -19,6 +19,7 @@ import { describe, expect, test } from "vitest"
 
 /**
  * A mock evidence provider: a fixed set of folded street names that "exist".
+ *
  * Fails open on anything else.
  */
 const mockEvidence = (existing: string[]): StreetLocalityEvidence => {

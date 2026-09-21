@@ -188,7 +188,8 @@ describe("resolvedSpecificity", () => {
 })
 
 describe("the ladder and the scale agree", () => {
-	// The binding assertion. A grader that froze one arm passes each half in isolation and fails here.
+	// The binding assertion.
+	// A grader that froze one arm passes each half in isolation and fails here.
 	it("orders postcode against locality the same way, on both arms", () => {
 		for (const hit of [
 			GB_UNIT,

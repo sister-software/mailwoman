@@ -7,15 +7,16 @@
  * Several province codes collide with an ISO alpha-2 country code, and a code left unattested
  * by the corpus is not merely missing: the model reads it as the country it does know.
  *
- * Two arms per province, because `NL` and `PE` fail under different conditions and one arm
- * cannot show it. `NL` contradicts the country with or without a postal code; `PE` needs the
- * postal code, and then takes the locality slot rather than the country's, destroying the city.
+ * Two arms per province, because `NL` and `PE` fail under different conditions and one arm cannot show it.
+ * `NL` contradicts the country with or without a postal code; `PE` needs the postal code,
+ * and then takes the locality slot rather than the country's, destroying the city.
+ *
  * A probe that rendered only one shape would report one of them as passing.
  *
- * The postal codes are real, read from `postalcode-ca-overture.db`, and each is the
- * one nearest its seat — the distance rides in the output so a reader can see the city
- * and the code name the same town. Selecting the province's busiest code instead
- * paired `Winnipeg` with `R0C 2Z0`, which is Stonewall, 30 km away.
+ * The postal codes are real, read from `postalcode-ca-overture.db`, and each is the one nearest its
+ * seat — the distance rides in the output so a reader can see the city and the code name the same town.
+ * Selecting the province's busiest code instead paired `Winnipeg` with `R0C 2Z0`,
+ * which is Stonewall, 30 km away.
  *
  * Run:
  *
@@ -65,10 +66,11 @@ const SEATS: Readonly<Record<string, string>> = {
 }
 
 /**
- * The first letter of a Canadian postal code names its province, which is what lets a real
- * code be found per province without a name join. Newfoundland is `A`, Nova Scotia `B`,
- * and so on. the three that share a letter with a neighbour are separated by the second
- * character, which this does not need — any code in the province serves.
+ * The first letter of a Canadian postal code names its province, which is what lets
+ * a real code be found per province without a name join.
+ *
+ * Newfoundland is `A`, Nova Scotia `B`, and so on. the three that share a letter with a neighbour are
+ * separated by the second character, which this does not need — any code in the province serves.
  */
 const POSTAL_PREFIXES: Readonly<Record<string, readonly string[]>> = {
 	AB: ["T"],
@@ -112,12 +114,13 @@ using db = new DatabaseClient<WOFDatabase>(values["postcode-db"]!)
  *
  * Nearest rather than busiest, and the distance is reported rather than assumed.
  * Ranking a province's codes by address-point count selects a rural code every time:
- * a rural code spans a whole district and holds thousands of points, while a downtown
- * code covers one block and holds single digits. Manitoba's twelve busiest are all `R0x`,
- * and the busiest of them, `R0C 2Z0` at 2,381 points, is Stonewall — 30 km from Winnipeg,
- * which is the seat it was being paired with. `Winnipeg, MB R0C 2Z0` is then an address
- * whose city and postal code name different towns, and a model that declines to commit
- * on it is behaving correctly while the probe records a failure.
+ * a rural code spans a whole district and holds thousands of points, while a
+ * downtown code covers one block and holds single digits.
+ *
+ * Manitoba's twelve busiest are all `R0x`, and the busiest of them, `R0C 2Z0` at 2,381 points,
+ * is Stonewall — 30 km from Winnipeg, which is the seat it was being paired with.
+ * `Winnipeg, MB R0C 2Z0` is then an address whose city and postal code name different towns,
+ * and a model that declines to commit on it is behaving correctly while the probe records a failure.
  *
  * The seat's own coordinate comes from the no-postcode arm this probe already runs,
  * so nothing here needs a second gazetteer and the pairing is checkable from the output.
@@ -183,9 +186,9 @@ for (const { code, name } of Object.values(CA_PROVINCES)) {
 		const input = withPostcode ? `${locality}, ${code} ${pick!.postcode}, Canada` : `${locality}, ${code}, Canada`
 		const result = withPostcode ? await deps.geocode(input, {}) : seatResult
 
-		// The row is correct when the country is Canada and the region is the code
-		// and the locality survived. A country answered as the province's own code is the
-		// contradiction. a locality answered as the code is the other failure.
+		// The row is correct when the country is Canada and the region is the code and the locality survived.
+		// A country answered as the province's own code is the contradiction. a locality
+		// answered as the code is the other failure.
 		report.push({
 			code,
 			province: name,

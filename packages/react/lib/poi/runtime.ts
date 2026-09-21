@@ -16,15 +16,18 @@ import { createPOIBrandLookup, createPOITaxonomyLookup } from "@mailwoman/poi-ta
 import type { POIRuntime } from "#poi/types"
 
 /**
- * Build the POI runtime, dynamically importing the taxonomy + brand JSON so the tables land in
- * their own chunk. A static import would inline the whole snapshot into every consumer's bundle.
+ * Build the POI runtime, dynamically importing the taxonomy + brand JSON
+ * so the tables land in their own chunk.
+ *
+ * A static import would inline the whole snapshot into every consumer's bundle.
  *
  * The lexicon unions categories then brands, mirroring the Node runtime's `poiTaxonomyLookup`
- * precedence: a phrase that matches a taxonomy category wins (the curated set); only on a
- * category miss does the chain-brand table fire, returning a `kind: "brand"` match carrying the
- * brand's canonical name + Wikidata QID. (The Node path also chains `@mailwoman/variant-aliases`
- * regional slang. the browser tester leaves that out — one fewer package + data table
- * for a demo, and the QID-keyed brand table already covers the headline brands.)
+ * precedence: a phrase that matches a taxonomy category wins (the curated set);
+ * only on a category miss does the chain-brand table fire, returning a `kind: "brand"`
+ * match carrying the brand's canonical name + Wikidata QID.
+ * (The Node path also chains `@mailwoman/variant-aliases` regional slang. the
+ * browser tester leaves that out — one fewer package + data table for a demo,
+ * and the QID-keyed brand table already covers the headline brands.)
  */
 export async function loadPOIRuntime(): Promise<POIRuntime> {
 	const [table, brandTable] = await Promise.all([

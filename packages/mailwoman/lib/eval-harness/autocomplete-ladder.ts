@@ -32,8 +32,10 @@ import { buildGauntletDeps, type GauntletDepsOptions, type GauntletGeocodeOpts }
 import { routeCountry } from "#eval-harness/gauntlet/routing"
 
 /**
- * The two arms. `parse_resolve` is what `@mailwoman/photon`'s `/api` runs on a prefix today
- * and answers one coordinate; `fst` is the autocomplete tier, answering up to `topK` suggestions.
+ * The two arms.
+ *
+ * `parse_resolve` is what `@mailwoman/photon`'s `/api` runs on a prefix today and answers
+ * one coordinate; `fst` is the autocomplete tier, answering up to `topK` suggestions.
  */
 export const LADDER_ARMS = ["parse_resolve", "fst"] as const
 
@@ -67,11 +69,13 @@ export const HEADLINE_MAX_TOLERANCE_M = 25_000
 
 /**
  * Which per-locale FST the `fst` arm reads for a row's country.
+ *
  * This is not the weights-overlay routing (`OVERLAY_LOCALE_BY_COUNTRY`), which falls back
  * to en-US for every country without an overlay: an FST is country-scoped by construction,
- * and grading a French row against the US FST would report "never" for `Paris` as a property
- * of the tier rather than of the artifact chosen. A country with no FST here answers
- * nothing on that arm and is counted out of its denominator, never graded as a miss.
+ * and grading a French row against the US FST would report "never" for `Paris` as
+ * a property of the tier rather than of the artifact chosen.
+ * A country with no FST here answers nothing on that arm and is counted out of
+ * its denominator, never graded as a miss.
  */
 export const FST_LOCALE_BY_COUNTRY: Readonly<Record<string, string>> = {
 	US: "en-us",
@@ -161,6 +165,7 @@ export interface RowArmReading {
 	firstHitFraction: number | null
 	/**
 	 * After the first hit, how many later rungs lost the truth again.
+	 *
 	 * `0` is a stable row; `null` when it never hit.
 	 */
 	churn: number | null
@@ -176,7 +181,9 @@ export interface RowArmReading {
 }
 
 /**
- * Fold rungs into the per-row readings. Pure, so the arithmetic is testable without an engine.
+ * Fold rungs into the per-row readings.
+ *
+ * Pure, so the arithmetic is testable without an engine.
  */
 export function readRow(rungs: readonly RungReading[], inputLength: number): RowArmReading {
 	const firstIndex = rungs.findIndex((rung) => rung.hit)
@@ -269,6 +276,7 @@ export interface AutocompleteLadderOptions extends GauntletDepsOptions {
 	limit?: number
 	/**
 	 * Directory of per-locale FST binaries (`fst-<locale>.bin`).
+	 *
 	 * Default `$MAILWOMAN_DATA_ROOT/wof/fst-per-locale`.
 	 */
 	fstDir?: string
@@ -463,7 +471,9 @@ export async function runAutocompleteLadder(
 }
 
 /**
- * The per-arm summary over the headline rows. Pure.
+ * The per-arm summary over the headline rows.
+ *
+ * Pure.
  */
 export function summarizeArm(arm: LadderArm, rows: readonly LadderRow[]): ArmSummary {
 	const allHeadline = rows.filter((row) => row.headline)

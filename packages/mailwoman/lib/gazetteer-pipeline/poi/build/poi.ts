@@ -158,6 +158,7 @@ async function* streamPOIRows(parquetPaths: readonly string[]): AsyncIterable<PO
 
 /**
  * A simple lon/lat rectangle — the shape a Geofabrik extract's declared bounding box takes.
+ *
  * Not a general polygon (OSM extracts are rectangular extracts); {@link bboxCoverageCells}
  * turns it into a 4-vertex ring for `polygonToCells`.
  */
@@ -228,6 +229,7 @@ export function bboxCoverageCells(
 
 /**
  * `source` literal → the manifest `license`/`attribution` pair to write.
+ *
  * Keyed by {@link BuildPOIOptions.source} so the default (`overture-places`, when `source` is omitted)
  * writes the Overture pair — an omitted `source` must produce a manifest
  * byte-identical to an explicit `"overture-places"` one.
@@ -240,17 +242,21 @@ const SOURCE_MANIFEST_DEFAULTS = {
 export interface BuildPOIOptions {
 	/**
 	 * Per-country Parquet paths from {@link ingestPlaces} — read via DuckDB.
-	 * Ignored when `rows` is given. Required unless `rows` is given.
+	 *
+	 * Ignored when `rows` is given.
+	 * Required unless `rows` is given.
 	 */
 	parquetPaths?: readonly string[]
 	/**
-	 * Injected row source — the injection point. When given, the DuckDB read is
-	 * skipped entirely (tests never touch DuckDB).
+	 * Injected row source — the injection point.
+	 *
+	 * When given, the DuckDB read is skipped entirely (tests never touch DuckDB).
 	 */
 	rows?: AsyncIterable<POISourceRow> | Iterable<POISourceRow>
 	/**
-	 * Output `poi.db` path. Removed + rebuilt if already present
-	 * (build-on-copy at the file level. see module docstring).
+	 * Output `poi.db` path.
+	 *
+	 * Removed + rebuilt if already present (build-on-copy at the file level. see module docstring).
 	 */
 	out: PathBuilderLike
 	/**
@@ -262,22 +268,27 @@ export interface BuildPOIOptions {
 	 */
 	buildSHA: string
 	/**
-	 * Layer manifest's own `version` field. Defaults to `release` — the layer
-	 * has no independent versioning yet.
+	 * Layer manifest's own `version` field.
+	 *
+	 * Defaults to `release` — the layer has no independent versioning yet.
 	 */
 	version?: string
 	/**
-	 * ISO-8601 manifest timestamp. Defaults to `new Date().toISOString()` —
-	 * callers wanting reproducible builds pass it.
+	 * ISO-8601 manifest timestamp.
+	 *
+	 * Defaults to `new Date().toISOString()` — callers wanting reproducible builds pass it.
 	 */
 	createdAt?: string
 	/**
-	 * Manifest `source` + the license/attribution pair it implies
-	 * (see {@link SOURCE_MANIFEST_DEFAULTS}). Default `"overture-places"`.
+	 * Manifest `source` + the license/attribution pair it implies (see {@link SOURCE_MANIFEST_DEFAULTS}).
+	 *
+	 * Default `"overture-places"`.
 	 */
 	source?: "overture-places" | "osm"
 	/**
-	 * Manifest distribution tier. Default {@link LayerTier.Shipped}.
+	 * Manifest distribution tier.
+	 *
+	 * Default {@link LayerTier.Shipped}.
 	 * The `--source osm` build branch passes
 	 * {@link LayerTier.BuildLocal} (ODbL share-alike. see `osm/readme.md`).
 	 */

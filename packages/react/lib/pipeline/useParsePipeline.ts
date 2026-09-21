@@ -36,7 +36,9 @@ export interface UseParsePipeline {
 	 */
 	selectedCandidate: ResolvedPlaceView | null
 	/**
-	 * Parse and resolve the current text. Safe to bind to a form's `onSubmit`.
+	 * Parse and resolve the current text.
+	 *
+	 * Safe to bind to a form's `onSubmit`.
 	 *
 	 * Pass `query` to submit a value the field has not re-rendered with yet — a preset press sets
 	 * the text and submits in one handler, and that state update is not visible to this call.

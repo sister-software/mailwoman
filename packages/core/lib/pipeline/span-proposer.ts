@@ -45,19 +45,23 @@ const SHORT_INPUT_MAX_TOKENS = 3
 const SHORT_TAIL_CONFIDENCE = 0.45
 
 /**
- * Digits in the first half of a ZIP+4. A hyphen compound with this shape is a postcode
- * rather than a house number.
+ * Digits in the first half of a ZIP+4.
+ *
+ * A hyphen compound with this shape is a postcode rather than a house number.
  */
 const ZIP5_LENGTH = 5
 
 /**
- * Confidence at which an ANNOTATION_SPAN is trusted enough to swallow the inner proposals
- * it covers. Below it both readings survive and the reconciler decides.
+ * Confidence at which an ANNOTATION_SPAN is trusted enough to swallow the inner proposals it covers.
+ *
+ * Below it both readings survive and the reconciler decides.
  */
 const CONFIDENT_ANNOTATION_MIN = 0.6
 
 /**
- * Typed kinds a span proposal may carry. See the module doc for the three cue families.
+ * Typed kinds a span proposal may carry.
+ *
+ * See the module doc for the three cue families.
  */
 export type ProposedSpanKind =
 	/** A balanced `()`/`[]` group whose content reads as an aside about the address. */
@@ -78,19 +82,25 @@ export type ProposedSpanKind =
 	| "SPLIT_HOUSE_NUMBER"
 
 /**
- * One typed span proposal. Char offsets into the raw input; `end` exclusive.
+ * One typed span proposal.
+ *
+ * Char offsets into the raw input; `end` exclusive.
  */
 export interface ProposedSpan {
 	start: number
 	end: number
 	kind: ProposedSpanKind
 	/**
-	 * 0..1. Confidence is shape-derived. consumers weight or floor it (it is never a verdict).
+	 * 0..1.
+	 *
+	 * Confidence is shape-derived. consumers weight or floor it (it is never a verdict).
 	 */
 	confidence: number
 	/**
-	 * Alternative readings of one surface share a group id (M3 dual-path: the fused and
-	 * split readings of `2/14` carry the same group). Absent for single-reading proposals.
+	 * Alternative readings of one surface share a group id
+	 * (M3 dual-path: the fused and split readings of `2/14` carry the same group).
+	 *
+	 * Absent for single-reading proposals.
 	 */
 	alternativeGroup?: number
 	/**
@@ -100,8 +110,10 @@ export interface ProposedSpan {
 }
 
 /**
- * Vocabulary the proposer conditions on — built from `@mailwoman/codex` tables by the caller
- * (`buildCodexSpanLexicon` in `@mailwoman/neural`). All token sets are lowercase.
+ * Vocabulary the proposer conditions on — built from `@mailwoman/codex` tables by
+ * the caller (`buildCodexSpanLexicon` in `@mailwoman/neural`).
+ *
+ * All token sets are lowercase.
  * An empty lexicon (the default) limits the proposer to the paired-delimiter cue family.
  */
 export interface SpanProposerLexicon {
@@ -125,15 +137,17 @@ export interface SpanProposerLexicon {
 	/**
 	 * The subset of {@link unitDesignators} naming venue-interior structure
 	 * ("concourse", "terminal", "wing", "gate", …) rather than a postal secondary unit.
+	 *
 	 * Sourced from WOF placetypes + OSM `aeroway`, never from a mail standard —
 	 * see `@mailwoman/neural`'s `venue-structure.ts`.
 	 *
-	 * Membership is carried through to the proposal's `source` so the consuming prior
-	 * can weight the two provenances differently. It has to: measured 2026-08-02,
-	 * the model's margin against `I-unit` on a sub-venue identifier runs 4.6–5.0 nats
-	 * (`B` after `Concourse` scores `B-venue` 4.24 while `I-unit` sits 17th of 33),
+	 * Membership is carried through to the proposal's `source` so the consuming
+	 * prior can weight the two provenances differently.
+	 * It has to: measured 2026-08-02, the model's margin against `I-unit` on a sub-venue identifier runs
+	 * 4.6–5.0 nats (`B` after `Concourse` scores `B-venue` 4.24 while `I-unit` sits 17th of 33),
 	 * which the shipped unit-designator scale cannot reach — while raising that shared scale
 	 * far enough drags quote marks and commas into unit spans elsewhere in the corpus.
+	 *
 	 * The two classes need different magnitudes because the model has different opinions
 	 * about them, so the lexicon has to keep them distinguishable.
 	 */
@@ -145,14 +159,17 @@ export interface SpanProposerLexicon {
 	venueStructureModifiers: ReadonlySet<string>
 	/**
 	 * The subset of {@link venueStructureDesignators} that may take a preceding modifier.
+	 *
 	 * Narrower than the full set because some designators form ordinary street names
 	 * in exactly this shape — "East Gate" is a street, "West Wing" is not — so a rule
 	 * spanning all of them converts correct street parses into sub-venue ones.
 	 */
 	modifierEligibleStructureDesignators: ReadonlySet<string>
 	/**
-	 * Global scan regex for delivery-service designator+identifier phrases, built from
-	 * the codex po_box / delivery-service tables. Must carry the `g` flag.
+	 * Global scan regex for delivery-service designator+identifier phrases,
+	 * built from the codex po_box / delivery-service tables.
+	 *
+	 * Must carry the `g` flag.
 	 */
 	deliveryService?: RegExp
 }
@@ -235,7 +252,9 @@ function tokenize(text: string): RawToken[] {
 //#region Cue family 1 — paired delimiters (M2)
 
 /**
- * Find balanced pairs for one open/close class. Returns null when any delimiter of the
+ * Find balanced pairs for one open/close class.
+ *
+ * Returns null when any delimiter of the
  * class is unbalanced (stray opener or closer) — the caller emits nothing for the class.
  */
 function findBalancedPairs(text: string, open: string, close: string): Array<{ open: number; close: number }> | null {
@@ -429,10 +448,10 @@ function proposeDesignatorPhrases(
 	}
 
 	// modifier + designator ("West Wing", "Upper Concourse") — the mirror of the shape above,
-	// where the qualifier leads rather than follows. Emitted at a lower confidence:
-	// an identifier after a designator is nearly unambiguous, while a positional word
-	// before one is a shape ordinary street names also take, so this proposal should
-	// lose to a confident encoder more readily than that one does.
+	// where the qualifier leads rather than follows.
+	// Emitted at a lower confidence: an identifier after a designator is nearly unambiguous,
+	// while a positional word before one is a shape ordinary street names also take,
+	// so this proposal should lose to a confident encoder more readily than that one does.
 	for (let i = 1; i < tokens.length; i++) {
 		const designator = tokens[i]!.stripped.toLowerCase()
 
@@ -444,8 +463,8 @@ function proposeDesignatorPhrases(
 
 		const beforeModifier = tokens[i - 2]
 
-		// A house number before the modifier makes this a street line — "12 East
-		// Gate" is an address on East Gate rather than a sub-venue of anything.
+		// A house number before the modifier makes this a street line — "12 East Gate" is
+		// an address on East Gate rather than a sub-venue of anything.
 		// The number is the discriminator the surface itself provides.
 		if (beforeModifier && /^\d{1,6}[A-Za-z]?$/.test(beforeModifier.stripped)) continue
 
@@ -493,6 +512,7 @@ const FRACTION = /^\d\/\d$/
 /**
  * #481 item 7: the "plausible but genuinely ambiguous" proposal confidence — a FUSED_NUMBER reading that is real but
  * not the only reading of the token (a trailing-fused slash compound, a hyphen at house-number position).
+ *
  * Deliberately below the confident readings (0.8–0.9) and above coin-flip,
  * and the same operating point as the phrase grouper's `NEUTRAL_PROPOSAL_CONFIDENCE` —
  * both stages express "emit, but don't let this outrank a confident reading" alike.
@@ -502,6 +522,7 @@ const AMBIGUOUS_PROPOSAL_CONFIDENCE = 0.55
 /**
  * Words that lead numbered roads ("Hwy 50/89", "Route 1/9", "I-95") — a bounded structural
  * category (road-type leaders), mirroring the phrase grouper's street-type sets.
+ *
  * The leading-designator-shape fallback must not read them as sub-premise designators:
  * a slash after a road leader is a route concurrency rather than an AU unit/house split.
  */
@@ -664,9 +685,10 @@ function proposeNumericReadings(
 					source: "hyphen:fused-alternative",
 				})
 			} else if (next && (/^\p{Lu}/u.test(next.stripped) || /^\d{1,4}(?:st|nd|rd|th)$/i.test(next.stripped))) {
-				// House-number position (a street follows — capitalized or ordinal): "69-10 47th Ave",
-				// "14-16 Smith St". Fused only — whether it is a Queens label or a range is not the
-				// parser's call (OSM models the difference with a separate tag rather than syntax).
+				// House-number position (a street follows — capitalized or ordinal):
+				// "69-10 47th Ave", "14-16 Smith St".
+				// Fused only — whether it is a Queens label or a range is not the parser's call
+				// (OSM models the difference with a separate tag rather than syntax).
 				out.push({
 					start: t.strippedStart,
 					end: t.strippedEnd,
@@ -686,14 +708,18 @@ function proposeNumericReadings(
 //#region Entry point
 
 /**
- * Propose typed spans over `text`. Pure and synchronous. safe to run on every parse.
- * Proposals may overlap freely ("possibilities not constraints"); alternatives of one
- * surface share an `alternativeGroup`. Sorted by `start`, then descending confidence.
+ * Propose typed spans over `text`.
+ *
+ * Pure and synchronous. safe to run on every parse.
+ * Proposals may overlap freely ("possibilities not constraints"); alternatives
+ * of one surface share an `alternativeGroup`.
+ *
+ * Sorted by `start`, then descending confidence.
  *
  * Designator and numeric proposals fully inside a confident (≥ 0.6) `ANNOTATION_SPAN`
- * are suppressed — bracketed asides describe the address ("(Apt 4 around back)"), and
- * the annotation proposal already carries the span. Content inside QUOTED_SPANs is
- * not suppressed (quotes wrap names rather than asides).
+ * are suppressed — bracketed asides describe the address ("(Apt 4 around back)"),
+ * and the annotation proposal already carries the span.
+ * Content inside QUOTED_SPANs is not suppressed (quotes wrap names rather than asides).
  */
 export function proposeSpans(text: string, lexicon: SpanProposerLexicon = EMPTY_SPAN_PROPOSER_LEXICON): ProposedSpan[] {
 	if (!text.length) return []

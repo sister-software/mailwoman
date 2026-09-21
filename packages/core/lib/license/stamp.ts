@@ -19,6 +19,7 @@ import { appliedLicenseBranch } from "#license/obligations"
 
 /**
  * The page the notice and the `Link: rel="license"` header point at.
+ *
  * Singular, matching `license_url` and the `license` command.
  */
 export const LICENSE_PAGE_PATH = "/license"
@@ -31,7 +32,9 @@ const NOTICE_OBLIGATION = "modified or network-served copies must offer their so
 const NOTICE_REMEDY = "A commercial license waives that obligation"
 
 /**
- * What every stamped output carries. Snake-case keys: this is a wire shape.
+ * What every stamped output carries.
+ *
+ * Snake-case keys: this is a wire shape.
  */
 export interface EngineStamp {
 	name: "mailwoman"
@@ -59,9 +62,11 @@ function noticeSentence(license: string, expiredOn?: string): string {
 }
 
 /**
- * Build the stamp. `key` is the offline verification of the configured key, or absent
- * when none is configured. The branch comes from `appliedLicenseBranch`, the function the
- * doctor calls too. the stamp passes no publication because it is offline by design.
+ * Build the stamp.
+ *
+ * `key` is the offline verification of the configured key, or absent when none is configured.
+ * The branch comes from `appliedLicenseBranch`, the function the doctor calls too.
+ * the stamp passes no publication because it is offline by design.
  */
 export function buildEngineStamp(input: {
 	version: string
@@ -82,6 +87,7 @@ export function buildEngineStamp(input: {
 
 /**
  * The stderr notice: two lines, or nothing when the commercial branch applies.
+ *
  * An expired key is the one reading whose cause the notice states, because the date tells the
  * operator what to do. every other failed reading leaves the reason to `mailwoman doctor`.
  */

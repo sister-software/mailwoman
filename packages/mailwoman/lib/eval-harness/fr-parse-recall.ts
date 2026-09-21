@@ -40,6 +40,7 @@ const STREET_TAGS = new Set(["street", "street_prefix", "street_suffix"])
 
 /**
  * The frozen 40-row OSM sample the bare-street floor is graded on.
+ *
  * A package sibling, so the same file is named from the source tree and from `out/`.
  */
 const FR_BARE_STREET_FIXTURE_PATH = resolvePackagePath(
@@ -52,6 +53,7 @@ const FR_BARE_STREET_FIXTURE_PATH = resolvePackagePath(
 
 /**
  * How many bare-street failures the report lists before it stops.
+ *
  * The fixture is 40 rows, so a dozen is enough to see the failure shape without
  * burying the rates underneath it.
  */
@@ -61,15 +63,18 @@ const MAX_REPORTED_FAILURES = 12
  * Locate a weights sibling artifact — `postcode-us.bin`, `anchor-lexicon-v1.json` —
  * the way the runtime does.
  *
- * These were read from `packages/neural-weights-en-us/` directly,
- * which is empty on a dev checkout: the linkers write into the data-root overlay.
- * Therefore, the tracked workspace stays bare. So this leg threw enoent, and the check rendered
- * the throw as `fr.bare_street_intact fail (floor 75%)` — a crash reported as a measurement,
+ * These were read from `packages/neural-weights-en-us/` directly, which is empty on
+ * a dev checkout: the linkers write into the data-root overlay.
+ * Therefore, the tracked workspace stays bare.
+ *
+ * So this leg threw enoent, and the check rendered the throw as
+ * `fr.bare_street_intact fail (floor 75%)` — a crash reported as a measurement,
  * and one indistinguishable from the French regression this floor exists to catch.
  *
- * Order matters. A candidate's own siblings come first, so grading a candidate never silently
- * mixes in the shipped lexicon. the data-root overlay is the dev-checkout answer. the tracked
- * workspace is last and is only non-empty on a release checkout where `copy-weights.ts` has run.
+ * Order matters.
+ * A candidate's own siblings come first, so grading a candidate never silently mixes in the
+ * shipped lexicon. the data-root overlay is the dev-checkout answer. the tracked workspace
+ * is last and is only non-empty on a release checkout where `copy-weights.ts` has run.
  *
  * Throws with every path it tried rather than returning a default.
  * A missing anchor lexicon changes the parse, so a silent fallback here would
@@ -101,7 +106,9 @@ async function resolveWeightsSibling(fileName: string, weightsCache?: string): P
  */
 export interface FRParseRecallOptions {
 	/**
-	 * Candidate-pair override (the v2.2.0 salvage read). Omitting {@linkcode FRParseRecallOptions.model} /
+	 * Candidate-pair override (the v2.2.0 salvage read).
+	 *
+	 * Omitting {@linkcode FRParseRecallOptions.model} /
 	 * {@linkcode FRParseRecallOptions.tokenizer} uses the installed weights package via `loadFromWeights`, unchanged. When
 	 * a pair is given, the classifier is built manually with the ship-config channels fed from
 	 * the installed package's model-independent artifacts (postcode bins + gazetteer lexicon) —
@@ -115,12 +122,15 @@ export interface FRParseRecallOptions {
 	 */
 	modelCard?: string
 	/**
-	 * Printed as a `[pair]` provenance line when set. Default `""` (no line).
+	 * Printed as a `[pair]` provenance line when set.
+	 *
+	 * Default `""` (no line).
 	 */
 	label?: string
 	/**
-	 * Eval-leg mode (#949): the frozen 40-row sample, so the bare-street
-	 * floor is reproducible anywhere (incl. CI, which has no database).
+	 * Eval-leg mode (#949): the frozen 40-row sample, so the bare-street floor is
+	 * reproducible anywhere (incl. CI, which has no database).
+	 *
 	 * Default `lib/eval-harness/fixtures/fr-bare-street-40.jsonl` in this package.
 	 */
 	fixture?: string
@@ -135,22 +145,26 @@ export interface FRParseRecallOptions {
 	 */
 	json?: string
 	/**
-	 * Package-shaped candidate weights root. When set, the anchor + lexicon
-	 * siblings are taken from the candidate rather than from the shipped overlay —
-	 * grading a candidate against the shipped lexicon measures neither.
+	 * Package-shaped candidate weights root.
+	 *
+	 * When set, the anchor + lexicon siblings are taken from the candidate rather than from
+	 * the shipped overlay — grading a candidate against the shipped lexicon measures neither.
 	 */
 	weightsCache?: string
 	/**
-	 * The enforced floor, in percent. When set, {@linkcode FRParseRecallResult.pass}
-	 * is false if the bare-intact rate falls below it — which is how the leg's old
-	 * `process.exit(1)` reaches the runner now.
+	 * The enforced floor, in percent.
+	 *
+	 * When set, {@linkcode FRParseRecallResult.pass} is false if the bare-intact rate falls
+	 * below it — which is how the leg's old `process.exit(1)` reaches the runner now.
 	 */
 	floor?: string
 }
 
 /**
- * What {@linkcode frParseRecall} returns. `pass` carries the floor verdict the script used
- * to signal with its exit code: true when no floor was given, otherwise `bareRate >= floor`.
+ * What {@linkcode frParseRecall} returns.
+ *
+ * `pass` carries the floor verdict the script used to signal with its exit code:
+ * true when no floor was given, otherwise `bareRate >= floor`.
  */
 export interface FRParseRecallResult {
 	bareIntact: number
@@ -193,9 +207,10 @@ function streetKeyOf(tree: { roots: readonly StreetKeyNode[] }): string {
 /**
  * Measure the FR bare-vs-anchored street parse-recall delta and enforce the `fr.bare_street_intact` floor.
  *
- * The report lines go to `report` and the `fail` line to `reportError`, mirroring the stdout/stderr
- * split the check captured — it wrote `${stdout}${stderr}` into `fr-bare-street.md`, so the two sinks
- * stay separate and are concatenated in that order. The floor verdict comes back as
+ * The report lines go to `report` and the `fail` line to `reportError`, mirroring
+ * the stdout/stderr split the check captured — it wrote `${stdout}${stderr}` into
+ * `fr-bare-street.md`, so the two sinks stay separate and are concatenated in that order.
+ * The floor verdict comes back as
  * {@linkcode FRParseRecallResult.pass} instead of the old `process.exit(1)`.
  */
 export async function frParseRecall(

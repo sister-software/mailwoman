@@ -42,6 +42,7 @@ export interface LicenseSigningKey {
 
 /**
  * Every signing key ever registered, with its current status.
+ *
  * `mailwoman license keygen` prints the entry to add. a key leaves this list never,
  * and changes status instead.
  */

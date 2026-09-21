@@ -53,14 +53,18 @@ export type VersionSeries = (typeof VersionSeries)[keyof typeof VersionSeries]
  * What an artifact is, which decides whose lineage it carries.
  *
  * A package ships files with unrelated provenance under one `files` array.
- * `model.onnx` carries the corpus a training run read. `tokenizer.model` carries
- * the text a tokenizer was fitted on, which is a different and usually smaller set.
- * A pair index and a postcode binary are each built from one named register.
- * A lexicon is curated. Reporting one attribution list against all of them attributes the corpus
- * to files no corpus touched, and leaves the files that do have a distinct source unattributed.
+ * `model.onnx` carries the corpus a training run read.
  *
- * Derived from the filename, because that is what the manifest gives
- * and the naming is consistent across the twelve published packages.
+ * `tokenizer.model` carries the text a tokenizer was fitted on, which is a different
+ * and usually smaller set.
+ * A pair index and a postcode binary are each built from one named register.
+ *
+ * A lexicon is curated.
+ * Reporting one attribution list against all of them attributes the corpus to files no
+ * corpus touched, and leaves the files that do have a distinct source unattributed.
+ *
+ * Derived from the filename, because that is what the manifest gives and the naming
+ * is consistent across the twelve published packages.
  * An unrecognized name reads `other` rather than being guessed into a role.
  */
 export const ArtifactRole = {
@@ -114,8 +118,10 @@ export interface ArtifactRecord {
 	md5: string | null
 	/**
 	 * `recorded` when the card's `files_md5` names this artifact.
-	 * `unrecorded` when it does not. An unrecorded digest is not a verified one, and a reader
-	 * that treated `md5: null` as "nothing to check" would read the second as the first.
+	 *
+	 * `unrecorded` when it does not.
+	 * An unrecorded digest is not a verified one, and a reader that treated `md5: null`
+	 * as "nothing to check" would read the second as the first.
 	 */
 	digest: "recorded" | "unrecorded"
 }
@@ -124,13 +130,15 @@ export interface ArtifactRecord {
  * How a source contributed, as its own entry states it.
  *
  * A single attribution list runs three different contributions together.
- * Two of `en-us`'s ten entries describe a coordinate evaluation set and no training
- * rows at all, and reading them as training attribution says the model learned from
- * data it never saw. Two more describe tokenizer-splice text, which is a different
- * and far smaller set than the training corpus.
+ * Two of `en-us`'s ten entries describe a coordinate evaluation set and no training rows at all,
+ * and reading them as training attribution says the model learned from data it never saw.
  *
- * An entry may carry more than one. `OpenAddresses CZ … tokenizer-splice training text + the oa-cz coord eval sets`
- * carries two, and flattening it to either one loses a fact the entry states.
+ * Two more describe tokenizer-splice text, which is a different and far smaller
+ * set than the training corpus.
+ *
+ * An entry may carry more than one.
+ * `OpenAddresses CZ … tokenizer-splice training text + the oa-cz coord eval sets` carries two,
+ * and flattening it to either one loses a fact the entry states.
  */
 export const SourceUse = {
 	Training: "training",
@@ -138,6 +146,7 @@ export const SourceUse = {
 	Evaluation: "evaluation",
 	/**
 	 * The entry says nothing about how the source was used.
+	 *
 	 * The pointer to `THIRD_PARTY_NOTICES.md` is the case.
 	 */
 	Unstated: "unstated",
@@ -149,9 +158,9 @@ export type SourceUse = (typeof SourceUse)[keyof typeof SourceUse]
  * The uses one attribution entry states, read from its own words.
  *
  * A reading of prose rather than of a field, so it reports what the entry says
- * and the entry travels verbatim beside it. `unstated` is returned when nothing matches,
- * never `training`: defaulting to training would turn every entry whose wording this
- * does not recognize into a claim about what the model learned from.
+ * and the entry travels verbatim beside it.
+ * `unstated` is returned when nothing matches, never `training`: defaulting to training would turn
+ * every entry whose wording this does not recognize into a claim about what the model learned from.
  */
 export function usesStatedIn(entry: string): SourceUse[] {
 	const uses: SourceUse[] = []
@@ -177,17 +186,22 @@ export function usesStatedIn(entry: string): SourceUse[] {
  */
 export interface AttributionRecord {
 	/**
-	 * The entry verbatim. Reproduced rather than summarized: the entry is the statement the
-	 * repository has made, and a paraphrase of a rights statement is a different statement.
+	 * The entry verbatim.
+	 *
+	 * Reproduced rather than summarized: the entry is the statement the repository has made,
+	 * and a paraphrase of a rights statement is a different statement.
 	 */
 	text: string
 	/**
 	 * The license the entry names, when the entry names one in the parenthetical the cards use.
+	 *
 	 * `null` when it names none, which is a gap rather than a permissive reading.
 	 */
 	licenseNamed: string | null
 	/**
-	 * What the entry says the source was used for. `["unstated"]` when it says nothing, never `["training"]`.
+	 * What the entry says the source was used for.
+	 *
+	 * `["unstated"]` when it says nothing, never `["training"]`.
 	 */
 	uses: SourceUse[]
 }
@@ -206,8 +220,9 @@ export interface InheritedLineage {
 	modelCardVersion: string | null
 	attribution: AttributionRecord[]
 	/**
-	 * The chain from this package to the graph package, longest first, when a base itself
-	 * declares a base. Cycles and an unresolvable base are reported rather than followed.
+	 * The chain from this package to the graph package, longest first, when a base itself declares a base.
+	 *
+	 * Cycles and an unresolvable base are reported rather than followed.
 	 */
 	chain: string[]
 	unresolved: string | null
@@ -227,12 +242,14 @@ export interface WeightsRightsRecord {
 	packageName: string
 	packageVersion: string
 	/**
-	 * The SPDX expression the manifest declares. The `package-license` repository
-	 * check holds it equal to the root's.
+	 * The SPDX expression the manifest declares.
+	 *
+	 * The `package-license` repository check holds it equal to the root's.
 	 */
 	license: string
 	/**
 	 * The card's own version, or `null` when the package ships no card.
+	 *
 	 * `base-latn` is the one such package.
 	 */
 	modelCardVersion: string | null
@@ -244,6 +261,7 @@ export interface WeightsRightsRecord {
 	artifacts: ArtifactRecord[]
 	/**
 	 * The card's attribution entries, from whichever of the two spellings it uses.
+	 *
 	 * An empty array means the card records none under either.
 	 */
 	attribution: AttributionRecord[]
@@ -252,16 +270,18 @@ export interface WeightsRightsRecord {
 	 * The lineage this package inherits by decoding through another package's model graph,
 	 * or `null` for a graph package.
 	 *
-	 * An overlay ships its own artifacts and no model graph, so what its rows were trained
-	 * on is a fact about the base. Naming the base and stopping leaves a consumer who
-	 * installed the overlay alone unable to see any of it, which is the state every
-	 * overlay's record was in: `base_weights` filled, `training_attribution` empty.
+	 * An overlay ships its own artifacts and no model graph, so what its rows
+	 * were trained on is a fact about the base.
+	 * Naming the base and stopping leaves a consumer who installed the overlay alone
+	 * unable to see any of it, which is the state every overlay's record was in:
+	 * `base_weights` filled, `training_attribution` empty.
 	 */
 	inherited: InheritedLineage | null
 	/**
-	 * The corpus the card names, when it names one. Not evidence of which records
-	 * reached the model: the corpus on the training volume moves, and no frozen
-	 * per-release manifest exists to compare it against.
+	 * The corpus the card names, when it names one.
+	 *
+	 * Not evidence of which records reached the model: the corpus on the training volume moves,
+	 * and no frozen per-release manifest exists to compare it against.
 	 */
 	corpusVersion: string | null
 	tokenizerVersion: string | null
@@ -317,8 +337,10 @@ function attributionEntries(card: ModelCard | null): string[] {
  * entry whose parenthetical reads `public, BDOT-derived`.
  *
  * A `null` here reports what this reader found rather than what the entry grants.
- * Two of `cjk`'s entries state their terms as 利用規約 and 이용허락범위 제한 없음, outside any parenthetical, so they
- * read `null` while naming terms. The entry text travels verbatim beside this field for that reason.
+ * Two of `cjk`'s entries state their terms as 利用規約 and 이용허락범위 제한 없음, outside any
+ * parenthetical, so they read `null` while naming terms.
+ *
+ * The entry text travels verbatim beside this field for that reason.
  */
 export function licenseNamedIn(entry: string): string | null {
 	// Every parenthetical rather than the first. An entry commonly opens with the dataset's own name — `Korean
@@ -327,9 +349,9 @@ export function licenseNamedIn(entry: string): string | null {
 	for (const match of entry.matchAll(/\(([^()]{1,120})\)/gu)) {
 		const inner = match[1]!.trim()
 
-		// A license identifier carries a version number, or a family name this repository recognizes,
-		// or the word `license` in one of its spellings. `public, BDOT-derived` carries
-		// none of the three and describes access rather than a grant.
+		// A license identifier carries a version number, or a family name this repository
+		// recognizes, or the word `license` in one of its spellings.
+		// `public, BDOT-derived` carries none of the three and describes access rather than a grant.
 		const namesLicense =
 			/\d/u.test(inner) ||
 			/\b(?:CC0|CC-BY|CC|ODbL|PDDL|OGL|OGDL|KOGL|CDLA|Etalab|MIT|Apache|Licence|License|Lizenz)\b/iu.test(inner)
@@ -361,9 +383,10 @@ function stringOrNull(value: unknown): string | null {
 }
 
 /**
- * Read one weights workspace's record. Throws when the manifest is unreadable
- * rather than returning an empty record: a rights record nobody can read must not
- * resolve to a package that ships nothing and owes nothing.
+ * Read one weights workspace's record.
+ *
+ * Throws when the manifest is unreadable rather than returning an empty record: a rights
+ * record nobody can read must not resolve to a package that ships nothing and owes nothing.
  */
 export async function readWeightsRightsRecord(repoRoot: string, workspace: string): Promise<WeightsRightsRecord> {
 	const manifest = await readPackageJSON(String(resolvePath(repoRoot, workspace, "package.json")))

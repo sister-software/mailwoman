@@ -37,6 +37,7 @@ export interface AssembleOutlierOptions {
 
 /**
  * Assemble a plausible address string from a source row.
+ *
  * Deterministic shape variant by hash.
  */
 export function assembleOutlierRow(row: Record<string, unknown>, options: AssembleOutlierOptions): string | null {

@@ -22,7 +22,9 @@ export interface MapControlButtonProps {
 	 */
 	children: ReactNode
 	/**
-	 * The control's accessible name. Required: the visible content is a mark rather than a word.
+	 * The control's accessible name.
+	 *
+	 * Required: the visible content is a mark rather than a word.
 	 */
 	label: string
 	onPress: () => void
@@ -63,7 +65,9 @@ export interface MapControlGroupProps {
 }
 
 /**
- * One capsule. Put related controls in the same group. give an unrelated one its own.
+ * One capsule.
+ *
+ * Put related controls in the same group. give an unrelated one its own.
  */
 export function MapControlGroup({ children, className }: MapControlGroupProps): ReactNode {
 	return <div className={cx("mw-map-control-group", className)}>{children}</div>

@@ -36,10 +36,11 @@ import { basename, join } from "path-ts"
 import { SSURGO_SOURCE_EPSG } from "#vocabulary"
 
 /**
- * Coordinate decimals ogr2ogr writes into the stream. Nine is well past the source's
- * own precision — the metadata states compilation to base maps meeting National
- * Map Accuracy Standards at 1 inch = 1,000 feet — and is chosen so the round trip
- * contributes nothing measurable to the area cross-check.
+ * Coordinate decimals ogr2ogr writes into the stream.
+ *
+ * Nine is well past the source's own precision — the metadata states compilation to base
+ * maps meeting National Map Accuracy Standards at 1 inch = 1,000 feet — and is chosen
+ * so the round trip contributes nothing measurable to the area cross-check.
  */
 const COORDINATE_PRECISION = 9
 
@@ -60,10 +61,12 @@ export function mapUnitShapefile(spatialDirectory: string, areaSymbol: string): 
 }
 
 /**
- * The shapefile holding a survey area's own outline. The footprint comes from here
- * and never from the union of the rated polygons — `notcom` and access-denied map units
- * are inside the footprint and carry no rating, so a footprint derived from the rated set
- * would report them as unmapped when the authority has declared exactly what they are.
+ * The shapefile holding a survey area's own outline.
+ *
+ * The footprint comes from here and never from the union of the rated polygons —
+ * `notcom` and access-denied map units are inside the footprint and carry no rating,
+ * so a footprint derived from the rated set would report them as unmapped
+ * when the authority has declared exactly what they are.
  */
 export function surveyAreaShapefile(spatialDirectory: string, areaSymbol: string): string {
 	return join(spatialDirectory, `soilsa_a_${areaSymbol.toLowerCase()}.shp`)
@@ -98,7 +101,9 @@ export interface SoilSourceIdentity {
 export interface SoilIngestOptions {
 	shapefilePath: string
 	/**
-	 * Layer inside it. Defaults to the shapefile's base name, which is what the esri driver reports.
+	 * Layer inside it.
+	 *
+	 * Defaults to the shapefile's base name, which is what the esri driver reports.
 	 */
 	layer?: string
 	/**
@@ -112,7 +117,9 @@ export interface SoilIngestOptions {
 	fidFrom?: number
 	fidTo?: number
 	/**
-	 * Stop after this many features. The fixture and smoke rungs use it. a full build does not set it.
+	 * Stop after this many features.
+	 *
+	 * The fixture and smoke rungs use it. a full build does not set it.
 	 */
 	limit?: number
 }
@@ -201,7 +208,9 @@ export async function* readSoilDelineations(
 }
 
 /**
- * Validate one raw GeoJSON feature and narrow it. Split out so the generator body stays a loop.
+ * Validate one raw GeoJSON feature and narrow it.
+ *
+ * Split out so the generator body stays a loop.
  */
 function toDelineation(
 	raw: RawFeature,
@@ -245,8 +254,10 @@ function toDelineation(
 export interface SoilFeatureSource {
 	areaSymbol: string
 	/**
-	 * What the source says it holds. The build compares its own streamed total against this,
-	 * so a short read throws instead of building a smaller county.
+	 * What the source says it holds.
+	 *
+	 * The build compares its own streamed total against this, so a short read throws
+	 * instead of building a smaller county.
 	 */
 	declaredFeatureCount: number
 	layer: string
@@ -269,9 +280,9 @@ export async function createShapefileFeatureSource(
 
 	return {
 		areaSymbol: options.areaSymbol,
-		// A range's own count is supplied by the caller, because `ogrinfo` reports the
-		// layer's total and nothing narrower. The whole-file total is still checked:
-		// the builder sums what its chunks streamed and compares that.
+		// A range's own count is supplied by the caller, because `ogrinfo` reports
+		// the layer's total and nothing narrower.
+		// The whole-file total is still checked: the builder sums what its chunks streamed and compares that.
 		declaredFeatureCount: declaredFeatureCount({
 			declared: options.declaredFeatureCount,
 			limit: options.limit,

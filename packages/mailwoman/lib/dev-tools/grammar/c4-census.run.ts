@@ -1,5 +1,6 @@
 /**
  * Threshold-free, report-only C4 boundary-feature census over the committed Gauntlet board.
+ *
  * This command changes no runtime behavior and is not a release eval.
  */
 

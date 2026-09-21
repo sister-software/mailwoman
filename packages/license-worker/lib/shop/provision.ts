@@ -48,7 +48,9 @@ export interface ProvisionInput {
 	 */
 	workerOrigin?: string
 	/**
-	 * Write to Stripe. `false` reports what a run would create and creates nothing.
+	 * Write to Stripe.
+	 *
+	 * `false` reports what a run would create and creates nothing.
 	 */
 	apply: boolean
 	log?: (line: string) => void
@@ -83,6 +85,7 @@ export type ProvisionedObject = z.infer<typeof ProvisionedObjectSchema>
 export const ProvisionReportSchema = z.object({
 	/**
 	 * The clickwrap page the Payment Links' consent collection points at.
+	 *
 	 * Stripe reads it from the account's public details, a dashboard setting with no API.
 	 * A Payment Link is created only with consent collection: the worker refuses the sessions a
 	 * link without it produces, so a refusal leaves the link `blocked` rather than half-made.
@@ -138,8 +141,8 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 	const log = input.log ?? (() => {})
 	const urls = shopURLs(input.siteOrigin)
 
-	// Consent collection is required on every link. Stripe refuses it
-	// while the account's terms URL is unset, and a refusal blocks that link
+	// Consent collection is required on every link.
+	// Stripe refuses it while the account's terms URL is unset, and a refusal blocks that link
 	// rather than creating one the worker would refuse sessions from.
 	let consent = true
 
@@ -171,8 +174,9 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 		productReport = { id: product.id, action: "created" }
 	}
 
-	// The Prices, by lookup key. A Price cannot change, and a new one is a pricing decision,
-	// so a difference is reported and left standing.
+	// The Prices, by lookup key.
+	// A Price cannot change, and a new one is a pricing decision, so a difference
+	// is reported and left standing.
 	const prices: ProvisionReport["prices"] = planRecord(() => ({ action: "missing" }))
 
 	for (const plan of SHOP_PLANS) {

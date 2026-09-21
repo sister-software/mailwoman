@@ -27,6 +27,7 @@ const DECLARATION = "docs/engineering/SCOPE.mdx"
 
 /**
  * The five tier rows as `scope.mdx` writes them, minus the evidence column's prose.
+ *
  * Every fixture starts from these and edits the one row its case is about.
  */
 const TIER_ROWS: Record<string, string[]> = {

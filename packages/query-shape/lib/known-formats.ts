@@ -7,8 +7,10 @@
 import type { KnownFormat, KnownFormatHit, TokenClass } from "#types"
 
 /**
- * Universal postcode + PO-box patterns. Each entry is a regex that matches a token
- * (or a small sequence of tokens joined by a single space) and the format it represents.
+ * Universal postcode + PO-box patterns.
+ *
+ * Each entry is a regex that matches a token (or a small sequence of tokens joined by a single space)
+ * and the format it represents.
  * Keep these patterns structural. place-name dictionaries belong elsewhere.
  */
 interface FormatPattern {
@@ -22,7 +24,9 @@ interface FormatPattern {
 	 */
 	tokenSpan: 1 | 2
 	/**
-	 * Base confidence when no locale context. Ambiguous patterns score lower.
+	 * Base confidence when no locale context.
+	 *
+	 * Ambiguous patterns score lower.
 	 */
 	confidence: number
 }
@@ -61,11 +65,13 @@ const PATTERNS: ReadonlyArray<FormatPattern> = [
 const PO_BOX_LEADERS = new Set(["po", "p.o.", "p.o", "box", "bp", "b.p.", "b.p", "casilla", "apartado"])
 
 /**
- * Whether a known-format name names a postcode shape. Every entry in {@link patterns} is one,
- * and the names follow one convention — `us_zip`, `us_zip4`, or `<cc>_postcode` —
- * which is what this reads, so a format added to the table is a postcode to every consumer the
- * moment it is named that way. The convention rather than a set, because `@mailwoman/core`'s
- * runtime pipeline cannot depend on this package and reads the same names. the test over
+ * Whether a known-format name names a postcode shape.
+ *
+ * Every entry in {@link patterns} is one, and the names follow one convention — `us_zip`,
+ * `us_zip4`, or `<cc>_postcode` — which is what this reads, so a format added to the
+ * table is a postcode to every consumer the moment it is named that way.
+ * The convention rather than a set, because `@mailwoman/core`'s runtime pipeline cannot
+ * depend on this package and reads the same names. the test over
  * {@link patterns} pins every table entry to it. `us_zip4` is the trap a naive `endsWith("_zip")` would miss.
  */
 export function isPostcodeFormat(format: string): boolean {

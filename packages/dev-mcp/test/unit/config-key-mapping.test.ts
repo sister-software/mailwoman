@@ -59,17 +59,19 @@ describe("EFFECTIVE_KEY_FOR", () => {
 	})
 
 	it("keeps `diagnose_unreachable` OUT of the tool schema on purpose", () => {
-		// It is a session option rather than a change: the answer is byte-identical whether
-		// it is on, so declaring it as the variable of a comparison would declare a variable
-		// that cannot move an outcome. The tools that read misses force it on themselves.
+		// It is a session option rather than a change: the answer is byte-identical
+		// whether it is on, so declaring it as the variable of a comparison would
+		// declare a variable that cannot move an outcome.
+		// The tools that read misses force it on themselves.
 		// If someone "fixes" the asymmetry by adding it to the schema, this is the alarm.
 		expect(Object.keys(ENGINE_CONFIG_SCHEMA.shape)).not.toContain("diagnose_unreachable")
 		expect(Object.keys(EFFECTIVE_KEY_FOR)).toContain("diagnose_unreachable")
 	})
 
 	it("passes through a declaration that is not a config key at all", () => {
-		// `["engine"]` is the correct declaration for a cross-engine comparison, where no config key can
-		// express the variable. Rejecting it would refuse the one honest declaration for that case.
+		// `["engine"]` is the correct declaration for a cross-engine comparison,
+		// where no config key can express the variable.
+		// Rejecting it would refuse the one honest declaration for that case.
 		expect(effectiveKeyFor("engine")).toBe("engine")
 		expect(effectiveKeyFor("tree_fingerprint")).toBe("tree_fingerprint")
 	})

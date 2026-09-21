@@ -22,12 +22,15 @@ import type { TimezoneDatabase } from "#schema"
 export type MultiPolygonCoords = number[][][][]
 
 /**
- * Ray-cast point-in-ring (even-odd rule). `ring` is `[[lon, lat], …]`.
+ * Ray-cast point-in-ring (even-odd rule).
+ *
+ * `ring` is `[[lon, lat], …]`.
  *
  * Deliberate duplicate of `@mailwoman/spatial`'s `pointInRing`, kept local on purpose.
  * This package has exactly one dependency — zero-dep `@mailwoman/annotations` —
- * and importing spatial to reach a fifteen-line ray cast would pull `@mailwoman/core`
- * with it, whose published tarball carries ~11 MB of libpostal/WOF/chromium-i18n data.
+ * and importing spatial to reach a fifteen-line ray cast would pull `@mailwoman/core` with it,
+ * whose published tarball carries ~11 MB of libpostal/WOF/chromium-i18n data.
+ *
  * Eleven megabytes for fifteen lines is the wrong trade for a leaf lookup package.
  * If this package ever gains a real spatial dependency, delete these and import them.
  *
@@ -74,6 +77,7 @@ export function pointInMultiPolygon(lon: number, lat: number, polygons: MultiPol
 
 /**
  * The current UTC offset (seconds) for an iana timezone, via `Intl` (no tz-db dependency).
+ *
  * Returns `undefined` if the runtime can't resolve the zone.
  */
 export function offsetSecForTimezone(tzid: string, date: Date = new Date()): number | undefined {
@@ -99,8 +103,10 @@ export function offsetSecForTimezone(tzid: string, date: Date = new Date()): num
 export class TimezoneLookup implements Disposable {
 	#db: DatabaseClient<TimezoneDatabase>
 	/**
-	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal
-	 * cannot reach it — ownership is membership rather than a flag a later branch has to check.
+	 * Resources this instance opened.
+	 *
+	 * A connection handed in by a caller is not in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
 	 */
 	readonly #resources = new DisposableStack()
 	#stmt: ReturnType<DatabaseClient["prepare"]>
@@ -111,7 +117,8 @@ export class TimezoneLookup implements Disposable {
 				? opts.database
 				: this.#resources.use(new DatabaseClient<TimezoneDatabase>(opts.databasePath, { readOnly: true }))
 
-		// Candidate features whose bbox contains the point. PIP picks the exact one.
+		// Candidate features whose bbox contains the point.
+		// PIP picks the exact one.
 		this.#stmt = this.#db.prepare(
 			`SELECT tzid, geom FROM timezone_polygons
 			 WHERE minLat <= ? AND maxLat >= ? AND minLon <= ? AND maxLon >= ?`

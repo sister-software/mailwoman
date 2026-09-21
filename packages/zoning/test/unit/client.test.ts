@@ -105,9 +105,10 @@ describe("the shipped constants", () => {
 	})
 
 	it("declares the publisher's own 54 generic types, and no more", () => {
-		// The service's coded-value domain holds 54. The data uses 55 — `N/A` on four rows —
-		// and that one is recorded as observed rather than added here, because a declaration
-		// this package wrote would be indistinguishable from one the Department made.
+		// The service's coded-value domain holds 54.
+		// The data uses 55 — `N/A` on four rows — and that one is recorded as observed
+		// rather than added here, because a declaration this package wrote would be
+		// indistinguishable from one the Department made.
 		expect(GZT_DECLARED_CODES).toHaveLength(54)
 		expect(GZT_DECLARED_CODE_SET.size).toBe(54)
 		expect(GZT_DECLARED_CODE_SET.has("N/A")).toBe(false)

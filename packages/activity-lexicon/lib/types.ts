@@ -9,10 +9,11 @@
  */
 
 /**
- * Where a record came from. Field-for-field the shape `@mailwoman/geographic-model`
- * uses for its own provenance, so a consumer carrying both never has to translate
- * between two spellings of the same idea. It is restated rather than imported
- * because this package does not depend on `@mailwoman/geographic-model`.
+ * Where a record came from.
+ *
+ * Field-for-field the shape `@mailwoman/geographic-model` uses for its own provenance,
+ * so a consumer carrying both never has to translate between two spellings of the same idea.
+ * It is restated rather than imported because this package does not depend on `@mailwoman/geographic-model`.
  */
 export interface ActivityLexiconProvenance {
 	/**
@@ -34,6 +35,7 @@ export interface ActivityLexiconProvenance {
 
 /**
  * The phrase is the subject of a query committed to this repository.
+ *
  * The strongest attestation available: the form was written down for grading
  * before it was written down for recognition.
  */
@@ -44,26 +46,32 @@ export interface CommittedQueryAttestation {
 	 */
 	reference: string
 	/**
-	 * The committed query verbatim. A reader can grep for it. a test can require the phrase to end it.
+	 * The committed query verbatim.
+	 *
+	 * A reader can grep for it. a test can require the phrase to end it.
 	 */
 	detail: string
 }
 
 /**
  * Which regular transformation produced a derived form.
+ *
  * Deliberately closed: an open list would let any pair of strings be declared related.
  */
 export type ActivityPhraseDerivation = "plural" | "nominalization" | "verb-phrase" | "possessive"
 
 /**
  * The phrase is a regular transformation of another entry in this lexicon.
+ *
  * The base carries the authority. the derivation names the transformation.
  */
 export interface DerivedFormAttestation {
 	kind: "derived-form"
 	/**
-	 * Another entry's `phrase`. The base may not itself be derived — an attestation
-	 * chain that never reaches a committed record attests nothing.
+	 * Another entry's `phrase`.
+	 *
+	 * The base may not itself be derived — an attestation chain that never reaches
+	 * a committed record attests nothing.
 	 */
 	base: string
 	derivation: ActivityPhraseDerivation
@@ -92,6 +100,7 @@ export interface RegionalRegisterAttestation {
 
 /**
  * The phrase paraphrases a clause of the activity concept's own description.
+ *
  * The clause is quoted so the citation can be checked against the compiled artifact rather than believed.
  */
 export interface ConceptDescriptionAttestation {
@@ -118,12 +127,14 @@ export type ActivityPhraseAttestation =
 export interface ActivityPhraseEntry {
 	/**
 	 * The text a person types, as a reader would write it.
+	 *
 	 * Comparison is done over the normalized form.
 	 */
 	phrase: string
 	/**
-	 * A concept identifier of kind `activity`, owned by whichever artifact the consumer
-	 * resolves against. This lexicon neither defines the concept nor claims anything about it.
+	 * A concept identifier of kind `activity`, owned by whichever artifact the consumer resolves against.
+	 *
+	 * This lexicon neither defines the concept nor claims anything about it.
 	 */
 	activity: string
 	/**
@@ -136,8 +147,10 @@ export interface ActivityPhraseEntry {
 	 */
 	locales?: ReadonlyArray<Intl.UnicodeBCP47LocaleIdentifier>
 	/**
-	 * How the entry was produced. `curated` is the only admissible value: a phrase mined
-	 * from traffic would be a measurement, and this vocabulary carries none.
+	 * How the entry was produced.
+	 *
+	 * `curated` is the only admissible value: a phrase mined from traffic would be
+	 * a measurement, and this vocabulary carries none.
 	 */
 	source: "curated"
 	attestation: ActivityPhraseAttestation
@@ -162,8 +175,8 @@ export interface ActivityPhraseLexicon {
  *
  * - `unscoped` — the entry declares no locales and answers under any.
  * - `exact` — the query's locale tag is one the entry declares.
- * - `language` — only the language subtag agrees. Weaker on purpose: a regional phrasing
- *   reached through its language alone is a guess about the region.
+ * - `language` — only the language subtag agrees.
+ *   Weaker on purpose: a regional phrasing reached through its language alone is a guess about the region.
  */
 export type ActivityPhraseLocaleScope = "unscoped" | "exact" | "language"
 

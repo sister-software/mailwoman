@@ -30,8 +30,9 @@ import type { GeocodeTrace } from "#geocode/session"
  *
  * `tag` and `confidence` are the two fields that carry presentation weight:
  * a `tag` colors the label from the shared component palette
- * (the same one the span ribbon uses, so a row and its ribbon chip are the same color), and a
- * `confidence` draws the demo's confidence chip. Both are optional because most rows are neither.
+ * (the same one the span ribbon uses, so a row and its ribbon chip are the same color),
+ * and a `confidence` draws the demo's confidence chip.
+ * Both are optional because most rows are neither.
  */
 export interface OutputLine {
 	/**
@@ -53,13 +54,17 @@ export interface OutputLine {
 	 */
 	confidence?: number
 	/**
-	 * Rendered as a badge instead of `value` — reserved for the two verdicts a reader scans for
-	 * first, the resolution tier and the kind. A badge on every row would be a badge on none.
+	 * Rendered as a badge instead of `value` — reserved for the two verdicts a reader
+	 * scans for first, the resolution tier and the kind.
+	 *
+	 * A badge on every row would be a badge on none.
 	 */
 	badge?: string
 	/**
-	 * Badge background. Carried here rather than derived at render time because the meaning is the
-	 * data's: an `admin` tier is a weaker answer than a rooftop, and only this module knows that.
+	 * Badge background.
+	 *
+	 * Carried here rather than derived at render time because the meaning is the data's:
+	 * an `admin` tier is a weaker answer than a rooftop, and only this module knows that.
 	 */
 	badgeColor?: string
 }
@@ -70,6 +75,7 @@ export interface OutputLine {
 
 /**
  * Six decimals ≈ 0.1 m — finer than any tier's uncertainty, and short enough to read.
+ *
  * Trimmed of trailing zeros (`Number(…)`) so a gazetteer centroid stored at
  * four decimals still prints as four.
  */
@@ -90,13 +96,14 @@ function formatMsFixed(ms: number): string {
 /**
  * Whether the per-span script is worth printing: the tree holds more than one writing system.
  *
- * On a single-script address the script repeats on every line and says nothing, so the pane stays
- * as it was. On a mixed one it is the only place the distinction survives — the input folds
- * to whichever script writes most of it, which for `金龍酒家, 12 Gerrard Street, London WC2H 7JS`
+ * On a single-script address the script repeats on every line and says nothing, so the pane stays as it was.
+ * On a mixed one it is the only place the distinction survives — the input folds to
+ * whichever script writes most of it, which for `金龍酒家, 12 Gerrard Street, London WC2H 7JS`
  * is Latin, and the Han venue is the span a reader is looking for.
  *
- * `Zyyy` is not a writing system for this purpose. It is what a house number
- * or a postcode answers, so counting it would make almost every address look mixed.
+ * `Zyyy` is not a writing system for this purpose.
+ * It is what a house number or a postcode answers, so counting it would make
+ * almost every address look mixed.
  */
 function scriptsWorthShowing(tree: AddressTree): boolean {
 	const scripts = new Set<string>()
@@ -112,6 +119,7 @@ function scriptsWorthShowing(tree: AddressTree): boolean {
 
 /**
  * Depth-first, parents before children, in span order — the order the address reads.
+ *
  * Children are indented so a street's prefix/suffix stay visibly subordinate to it
  * rather than looking like siblings of the locality.
  */
@@ -154,12 +162,14 @@ export interface OutputLinesInput {
 	trace?: Pick<GeocodeTrace, "kind">
 	/**
 	 * Per-phase wall clock from the session ({@link GeocodeRun.timing}).
+	 *
 	 * Absent on a caller that didn't measure — the timing section is then omitted rather than showing zeros.
 	 */
 	timing?: Record<string, number>
 	/**
-	 * A failed re-run's message. Rendered first, red, above a result that is
-	 * deliberately still the previous one.
+	 * A failed re-run's message.
+	 *
+	 * Rendered first, red, above a result that is deliberately still the previous one.
 	 */
 	errorNote?: string | null
 }
@@ -229,12 +239,13 @@ export function outputLines(input: OutputLinesInput): OutputLine[] {
 		value: result.uncertainty_m == null ? "unknown" : `${result.uncertainty_m} m`,
 	})
 
-	// The resolved place is the deepest decorated node — `hierarchy` is ordered
-	// most-specific-first, so its head is the finest place the gazetteer actually confirmed.
+	// The resolved place is the deepest decorated node — `hierarchy` is ordered most-specific-first,
+	// so its head is the finest place the gazetteer actually confirmed.
 	// Deliberately not `candidates[0]`: that is the resolver's primary node for the candidate ranking,
 	// and on a rooftop tier (where the coordinate came from a database rather than a place row)
-	// it falls back to the first resolved admin node — the region, which is not what a reader
-	// means by "resolved place". The candidate head still shows up below when it differs.
+	// it falls back to the first resolved admin node — the region, which is not
+	// what a reader means by "resolved place".
+	// The candidate head still shows up below when it differs.
 	const place = result.hierarchy.at(0)
 	const winner = result.candidates.at(0)
 

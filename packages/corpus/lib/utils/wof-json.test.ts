@@ -123,7 +123,8 @@ test("buildAncestryIndex: parent_id of null / 0 / negative terminates the walk",
 })
 
 test("buildAncestryIndex: a cycle is broken rather than looping forever", () => {
-	// Corrupt fixture: 1 → 2 → 1. The guard halts on re-visit.
+	// Corrupt fixture: 1 → 2 → 1.
+	// The guard halts on re-visit.
 	const byID = new Map<number, WOFRecord>([
 		[1, rec(1, 2)],
 		[2, rec(2, 1)],

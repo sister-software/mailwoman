@@ -12,6 +12,7 @@ export interface ExecResult {
 
 /**
  * The first result set of a Sql.js `exec` call as one object per row, keyed by column name.
+ *
  * No result set answers `[]`.
  */
 export function rowsFromExec<Row = Record<string, unknown>>(res: ExecResult[] | undefined): Row[] {

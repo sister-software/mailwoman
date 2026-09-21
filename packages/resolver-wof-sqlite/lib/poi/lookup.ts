@@ -38,14 +38,16 @@ export const POI_H3_RESOLUTION = 9
 
 /**
  * Ring budget default: 16 res-9 k-rings ≈ ~5.4 km (corner) / ~4.3 km worst-case.
+ *
  * Category path only — the brand path ignores rings entirely.
  *
- * Raised from 12 (≈4 km) after nm-04 ("hiking trail near Marseille") exposed a
- * boundary miss for sparse categories: the nearest `trail` instance sits at 3.90 km,
- * but the res-9 disk of radius 11 (maxRings 12) reaches only ~3.16 km in its worst
- * direction — the cell holding that trail isn't covered until ring 13 (maxRings 14).
+ * Raised from 12 (≈4 km) after nm-04 ("hiking trail near Marseille") exposed a boundary
+ * miss for sparse categories: the nearest `trail` instance sits at 3.90 km, but the
+ * res-9 disk of radius 11 (maxRings 12) reaches only ~3.16 km in its worst direction —
+ * the cell holding that trail isn't covered until ring 13 (maxRings 14).
  * Dense categories are unaffected: the loop breaks the ring it accumulates `limit` rows
  * (cafe@Paris fills 20 by ring 2), so this ceiling never enters their probe budget.
+ *
  * Only sparse-but-present categories that never reach `limit` scan the fuller budget — a cold,
  * one-shot `mailwoman poi` path rather than per-keystroke. 16 (not the bare threshold 14) leaves
  * ~2 rings of margin so the radius is stable against small db rebuilds, while staying ~4x
@@ -55,10 +57,11 @@ export const POI_H3_RESOLUTION = 9
 const DEFAULT_MAX_RINGS = 16
 
 /**
- * Brand sanity radius (km): the brand-wide fetch returns the global nearest at any distance,
- * so this drops hits far enough to be certainly the wrong continent — "Applebee's near Marseille"
- * comes back empty rather than with a 5,700 km hit. A product bound rather than a reach
- * cap (the index already makes the fetch cheap regardless of distance).
+ * Brand sanity radius (km): the brand-wide fetch returns the global nearest at any
+ * distance, so this drops hits far enough to be certainly the wrong continent —
+ * "Applebee's near Marseille" comes back empty rather than with a 5,700 km hit.
+ *
+ * A product bound rather than a reach cap (the index already makes the fetch cheap regardless of distance).
  */
 const BRAND_MAX_DISTANCE_KM = 500
 
@@ -70,15 +73,18 @@ const DEFAULT_LIMIT = 20
 export interface POISearchQuery {
 	/**
 	 * Poi-taxonomy category id (string side of the dictionary).
+	 *
 	 * Ignored when `brandWikidata` is also set — brand wins.
 	 */
 	categoryID?: string
 	/**
 	 * Fan-out category ids — the Overture `taxonomy.primary` leaves a single canonical category
 	 * rolls up into (e.g. `supermarket` → `grocery_store`, `organic_grocery_store`, …).
+	 *
 	 * When set, the k-ring walk probes every resolvable leaf per cell
-	 * and unions the rows. unknown leaves are skipped. Supersedes `categoryID`
-	 * (which is treated as a one-element list `[categoryID]` when this is absent).
+	 * and unions the rows. unknown leaves are skipped.
+	 * Supersedes `categoryID` (which is treated as a one-element list `[categoryID]` when this is absent).
+	 *
 	 * Ignored when `brandWikidata` is set — brand wins.
 	 */
 	categoryIDs?: string[]
@@ -91,11 +97,14 @@ export interface POISearchQuery {
 	 */
 	name?: string
 	/**
-	 * Search center. Required for category/brand queries (k-ring expansion).
+	 * Search center.
+	 *
+	 * Required for category/brand queries (k-ring expansion).
 	 */
 	center?: { latitude: number; longitude: number }
 	/**
 	 * Ring budget: how many res-9 k-rings to expand before giving up (default 16 ≈ ~5.4 km).
+	 *
 	 * Counts ring 0, so k reaches `maxRings - 1`.
 	 */
 	maxRings?: number
@@ -119,11 +128,15 @@ export interface POISearchHit {
 
 export interface POILookupOpts<DB extends POIDatabase = POIDatabase> {
 	/**
-	 * Path to a `poi.db` built by the (future) POI builder. Opened read-only.
+	 * Path to a `poi.db` built by the (future) POI builder.
+	 *
+	 * Opened read-only.
 	 */
 	databasePath?: string
 	/**
-	 * Pre-opened handle (tests / shared connections). Mutually exclusive with `databasePath`.
+	 * Pre-opened handle (tests / shared connections).
+	 *
+	 * Mutually exclusive with `databasePath`.
 	 */
 	database?: DatabaseClient<DB>
 }
@@ -150,8 +163,10 @@ type POIRow = Pick<
 export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposable {
 	#db: DatabaseClient<DB>
 	/**
-	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal
-	 * cannot reach it — ownership is membership rather than a flag a later branch has to check.
+	 * Resources this instance opened.
+	 *
+	 * A connection handed in by a caller is not in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
 	 */
 	readonly #resources = new DisposableStack()
 	readonly #categoryToID = new Map<string, number>()
@@ -227,6 +242,7 @@ export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposab
 
 	/**
 	 * Brand path: a single brand-wide indexed fetch — no k-ring.
+	 *
 	 * Fetch every row for the QID (the partial `poi_brand_wikidata` index makes this a range-scan
 	 * rather than a 13.68M full scan), haversine-sort from `center`, drop anything past
 	 * the {@link BRAND_MAX_DISTANCE_KM} sanity radius, and take the nearest `limit`.
@@ -282,9 +298,9 @@ export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposab
 				seenCells.add(cell)
 				const shortCell = shortCellToInt(cell as H3Cell)
 
-				// Fan-out: probe every resolved Overture leaf for this canonical category,
-				// unioning the rows. The post-ring distance sort + `slice(0, limit)` below
-				// dedupes the pool down to the nearest `limit`.
+				// Fan-out: probe every resolved Overture leaf for this canonical category, unioning the rows.
+				// The post-ring distance sort + `slice(0, limit)` below dedupes the
+				// pool down to the nearest `limit`.
 				for (const categoryID of categoryIDs) {
 					rows.push(...allRows<POIRow>(this.#categoryCellProbe, shortCell, categoryID, limit))
 				}
@@ -299,7 +315,9 @@ export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposab
 	}
 
 	/**
-	 * Name path: FTS5 match → hydrate by name_key. No center required. distance-sorts if one is given anyway.
+	 * Name path: FTS5 match → hydrate by name_key.
+	 *
+	 * No center required. distance-sorts if one is given anyway.
 	 *
 	 * Hydration is one batched `where name_key IN (...)` query over the FTS hits' unique `name_key`s
 	 * rather than a per-hit probe — with up to `limit` FTS hits, a per-hit probe was up to
@@ -350,9 +368,11 @@ export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposab
 	}
 
 	/**
-	 * Batched hydration for the FTS name path: `where name_key IN (?, ?, …)`, one query for the
-	 * whole batch instead of one probe per FTS hit. This is a cold path (name search only) with
-	 * variable arity per call, so the statement is prepared fresh each time rather than cached.
+	 * Batched hydration for the FTS name path: `where name_key IN (?, ?, …)`,
+	 * one query for the whole batch instead of one probe per FTS hit.
+	 *
+	 * This is a cold path (name search only) with variable arity per call,
+	 * so the statement is prepared fresh each time rather than cached.
 	 */
 	#hydrateByNameKeys(nameKeys: string[]): POIRow[] {
 		const columns = "name, category_id, brand_wikidata, latitude, longitude, country, confidence, name_key, gers_id"

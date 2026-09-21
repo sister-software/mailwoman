@@ -25,6 +25,7 @@ function shapeOf(text: string): { input: NormalizedInputLite; shape: QueryShapeL
 
 /**
  * Every kind present in a verdict — top plus alternatives.
+ *
  * The two ranked-below-incumbent intent kinds live in `alternatives` by design,
  * so a test that only reads `.kind` cannot see them.
  */
@@ -36,7 +37,9 @@ function kindsOf(text: string): Set<QueryKind> {
 }
 
 /**
- * Both registers of one query. Lowercase is not a variant here — it is the register most users type in.
+ * Both registers of one query.
+ *
+ * Lowercase is not a variant here — it is the register most users type in.
  */
 function registers(text: string): string[] {
 	return text === text.toLowerCase() ? [text] : [text, text.toLowerCase()]

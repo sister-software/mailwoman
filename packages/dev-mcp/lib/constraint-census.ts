@@ -43,9 +43,10 @@ interface ConstraintMiss {
 	value: string
 	name_key: string
 	/**
-	 * The placetype band the query was scoped to. Chosen by the model'S TAG,
-	 * which is the whole point: a wrong tag makes a row we hold unreachable,
-	 * and the miss is indistinguishable from the row not existing.
+	 * The placetype band the query was scoped to.
+	 *
+	 * Chosen by the model'S TAG, which is the whole point: a wrong tag makes a row we hold
+	 * unreachable, and the miss is indistinguishable from the row not existing.
 	 */
 	band: string
 	checks: string[]
@@ -56,8 +57,9 @@ interface ConstraintMiss {
 	elsewhere: string[]
 	/**
 	 * Candidates present on a null pick means the rows came back and lost downstream.
-	 * none means the probe itself returned an empty set. Calling a scoring filter
-	 * an empty gazetteer is the misreading this separates.
+	 * none means the probe itself returned an empty set.
+	 *
+	 * Calling a scoring filter an empty gazetteer is the misreading this separates.
 	 */
 	had_candidates: boolean
 }
@@ -65,8 +67,8 @@ interface ConstraintMiss {
 /**
  * What the census reader needs of a connection it is handed: one prepared read, and a way to end it.
  *
- * Structural rather than `DatabaseClient` itself because `OpenCensusArtifact` is
- * injectable — the tests supply a fake that answers fixed rows without opening a file.
+ * Structural rather than `DatabaseClient` itself because `OpenCensusArtifact` is injectable —
+ * the tests supply a fake that answers fixed rows without opening a file.
  * `destroy` rather than `close` is what a `DatabaseClient` offers, so the real
  * opener satisfies this without an adapter.
  */
@@ -95,8 +97,9 @@ export interface ConstraintCensusResult {
 	n_lookups: number
 	n_resolved_nothing: number
 	/**
-	 * We hold the row and could not reach it. A retrieval fix, and the only
-	 * column a cross-band retry can move.
+	 * We hold the row and could not reach it.
+	 *
+	 * A retrieval fix, and the only column a cross-band retry can move.
 	 */
 	n_reachability: number
 	/**
@@ -106,8 +109,9 @@ export interface ConstraintCensusResult {
 	n_coverage: number
 	checks: CheckReading[]
 	/**
-	 * Reachability classes, largest first: which band was probed, and
-	 * which bands actually hold the key. The largest
+	 * Reachability classes, largest first: which band was probed, and which bands actually hold the key.
+	 *
+	 * The largest
 	 * class is the one a cross-band retry should try first.
 	 */
 	by_band: Array<{ probed: string; found_in: string[]; n: number; examples: ConstraintMiss[] }>
@@ -183,9 +187,9 @@ export async function runConstraintCensus(
 	dependencies: { openArtifact?: OpenCensusArtifact } = {}
 ): Promise<ConstraintCensusResult> {
 	const set = await resolveInputSet(args.inputs ?? { kind: "board" })
-	// Tracing is the census's entire input, and the band probe is what separates
-	// reachability from coverage. Both are forced on regardless of what the caller passed —
-	// neither can change an answer, so neither is a change.
+	// Tracing is the census's entire input, and the band probe is what separates reachability from coverage.
+	// Both are forced on regardless of what the caller passed — neither can change
+	// an answer, so neither is a change.
 	const engine = await registry.acquire({ ...args.config, trace: true, diagnose_unreachable: true })
 	const dataRoot = String(engine.effective.dataRoot ?? "")
 	const opened = await (dependencies.openArtifact ?? openSealedArtifact)(`${dataRoot}/wof/candidate.db`)

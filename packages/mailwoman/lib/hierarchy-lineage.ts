@@ -59,6 +59,7 @@ export interface HierarchyEntry extends HierarchyLineageEntry {
 
 /**
  * The admin tags the hierarchy admits, most specific first.
+ *
  * The JP tiers (`municipality`, `district`, `prefecture`) sit beside their Latin counterparts
  * in the order the admin ladder uses — `municipality` above `district`, because the anchor
  * below is graded on lineage and an unscoped district can resolve a namesake.
@@ -98,9 +99,10 @@ export function lineageAnchorNode(nodes: readonly HierarchySourceNode[]): Hierar
  * Assemble the result `hierarchy` from the resolved tree's admin nodes and annotate each
  * entry's lineage standing against `anchor` (see {@link annotateHierarchyLineage}).
  *
- * `streetLocality` is the #1058 register commune: on a street-tier result with no locality
- * entry it fills the locality slot, because a street-tier `city` must come from the register,
- * never from a token of the street name. It carries no place identity, so it is never lineage-graded.
+ * `streetLocality` is the #1058 register commune: on a street-tier result with no
+ * locality entry it fills the locality slot, because a street-tier `city` must come
+ * from the register, never from a token of the street name.
+ * It carries no place identity, so it is never lineage-graded.
  */
 export function assembleHierarchy(
 	nodes: readonly HierarchySourceNode[],
@@ -150,9 +152,10 @@ export interface LineageAnchor {
 /**
  * Annotate `entries` in place with `in_winner_lineage` against `anchor`'s stamped ancestor chain.
  *
- * Grading is by place identity (`wof:<id>`), never by name — a name match across instances
- * is exactly the confusion the field exists to expose. Without a sidecar only the anchor's
- * own entry can be vouched for. every other entry stays ungraded rather than guessed.
+ * Grading is by place identity (`wof:<id>`), never by name — a name match across
+ * instances is exactly the confusion the field exists to expose.
+ * Without a sidecar only the anchor's own entry can be vouched for. every other
+ * entry stays ungraded rather than guessed.
  */
 export function annotateHierarchyLineage(
 	entries: readonly HierarchyLineageEntry[],

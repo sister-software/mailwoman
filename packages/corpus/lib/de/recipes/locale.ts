@@ -48,10 +48,11 @@ interface GermanSource {
 }
 
 /**
- * `region` is the Bundesland the source covers. OA's region column is empty for DE,
- * but the region is implied by the per-state file — the international order needs
- * it for the "City, Region Postcode" tail (v0.9.3 / #327). berlin.csv → Berlin
- * (a city-state, region==locality); sn/statewide → Sachsen.
+ * `region` is the Bundesland the source covers.
+ *
+ * OA's region column is empty for DE, but the region is implied by the per-state file —
+ * the international order needs it for the "City, Region Postcode" tail (v0.9.3 / #327).
+ * berlin.csv → Berlin (a city-state, region==locality); sn/statewide → Sachsen.
  */
 const SOURCES: GermanSource[] = [
 	{ zip: dataRootPath("oa-cache", "de__berlin.zip"), csv: "de/berlin.csv", region: "Berlin" },
@@ -59,10 +60,12 @@ const SOURCES: GermanSource[] = [
 ]
 
 /**
- * The two ascii spellings WOF uses for one German label, so a `names.deu` row can be matched
- * to the `spr.name` it spells. WOF folds `Bocklemünd` to `Bocklemuend` in one record
- * and `Schöneberg` to `Schoneberg` in another — the transliteration (`ö` → `oe`, `ß` → `ss`)
- * and the plain diacritic strip (`ö` → `o`) both occur — so a match is against either form, lower-cased.
+ * The two ascii spellings WOF uses for one German label, so a `names.deu` row
+ * can be matched to the `spr.name` it spells.
+ *
+ * WOF folds `Bocklemünd` to `Bocklemuend` in one record and `Schöneberg` to `Schoneberg`
+ * in another — the transliteration (`ö` → `oe`, `ß` → `ss`) and the plain diacritic strip
+ * (`ö` → `o`) both occur — so a match is against either form, lower-cased.
  */
 function foldGerman(surface: string): [transliterated: string, stripped: string] {
 	const lower = surface.toLowerCase()
@@ -99,10 +102,11 @@ function sameGermanLabel(left: string, right: string): boolean {
  * `spr.name` for a DE neighbourhood is the ascii-folded label. the `names` rows in
  * `deu` carry the German spelling beside unrelated labels for co-located features
  * (`Bocklemuend` → `Bocklemünd`, `Jüdischer Friedhof Bocklemünd`, `Menara-Garten`).
- * The German name is the one that spells the same label as `spr.name` under either of WOF's ascii folds
- * ({@link foldGerman}); with none, `spr.name` stands. WOF also prefixes some Ortsteile with
- * their city (`Köln-Nippes`), a form no envelope carries once the city is its own line,
- * so a leading `<locality>-` is dropped when something is left after it.
+ * The German name is the one that spells the same label as `spr.name` under either of
+ * WOF's ascii folds ({@link foldGerman}); with none, `spr.name` stands.
+ *
+ * WOF also prefixes some Ortsteile with their city (`Köln-Nippes`), a form no envelope carries once
+ * the city is its own line, so a leading `<locality>-` is dropped when something is left after it.
  */
 export function ortsteilSurface(sprName: string, deuNames: readonly string[], locality: string): string {
 	const german = deuNames.find((name) => sameGermanLabel(name, sprName)) ?? sprName
@@ -114,9 +118,11 @@ export function ortsteilSurface(sprName: string, deuNames: readonly string[], lo
 }
 
 /**
- * Every current DE neighbourhood with a locality ancestor, keyed by the folded locality
- * name → Ortsteil surfaces. Empty when the admin database is not readable. the recipe
- * then emits no Ortsteil rows and says so, rather than failing a build over an optional register.
+ * Every current DE neighbourhood with a locality ancestor, keyed by the folded
+ * locality name → Ortsteil surfaces.
+ *
+ * Empty when the admin database is not readable. the recipe then emits no Ortsteil rows
+ * and says so, rather than failing a build over an optional register.
  */
 async function readOrtsteilPool(adminDB: string): Promise<Map<string, string[]>> {
 	const pool = new Map<string, string[]>()
@@ -277,8 +283,8 @@ export const germanRecipe: CorpusRecipe = {
 
 		while (emitted < count && guard++ < count * 6) {
 			const drawn = pool[Math.floor(random() * N)]!
-			// Per-row order: `--intl-fraction` of rows render house-first /
-			// postcode-after-city (the US/feed layout), the rest in idiomatic German order.
+			// Per-row order: `--intl-fraction` of rows render house-first / postcode-after-city
+			// (the US/feed layout), the rest in idiomatic German order.
 			// Same components either way.
 			const order = random() < intlFraction ? "international" : "native"
 			// The two registers OA never wrote (#1946), each drawn independently of the order

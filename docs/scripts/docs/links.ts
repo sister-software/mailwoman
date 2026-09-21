@@ -17,8 +17,9 @@
  *   how Docusaurus reaches its index page.
  */
 
-// Node builtins on purpose. `check/docs-structure.ts` reaches this file, and the Docs
-// workflow runs it before `yarn install`, so no workspace specifier can resolve.
+// Node builtins on purpose.
+// `check/docs-structure.ts` reaches this file, and the Docs workflow runs it
+// before `yarn install`, so no workspace specifier can resolve.
 /* oxlint-disable typescript/no-restricted-imports -- runs before `yarn install`; see above */
 import { readdir, readFile } from "node:fs/promises"
 import * as path from "node:path"
@@ -30,8 +31,9 @@ import { pathExists } from "./exists.ts"
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url))
 
 /**
- * The docs package root, truncated at the `scripts/` segment rather than
- * counted upward, so moving this file to a different depth still resolves.
+ * The docs package root, truncated at the `scripts/` segment rather than counted upward,
+ * so moving this file to a different depth still resolves.
+ *
  * Same rule as `frontmatter/index.ts`'s `DOCS_ROOT`, and for the same reason.
  */
 const DOCS_ROOT = SCRIPT_DIR.slice(0, SCRIPT_DIR.lastIndexOf(`${path.sep}scripts${path.sep}`))
@@ -43,8 +45,9 @@ const SKIP_DIRECTORIES = new Set(["node_modules", "build", ".docusaurus", "stati
 
 /**
  * A markdown inline link whose target starts with `./` or `../`, with any `#anchor`
- * captured separately so it can be discarded. Reference-style definitions
- * (`[id]: ../x.md`) are out of scope. the docs tree writes none.
+ * captured separately so it can be discarded.
+ *
+ * Reference-style definitions (`[id]: ../x.md`) are out of scope. the docs tree writes none.
  */
 const RELATIVE_LINK = /\]\((\.\.?\/[^)#\s]+)(#[^)\s]*)?\)/g
 

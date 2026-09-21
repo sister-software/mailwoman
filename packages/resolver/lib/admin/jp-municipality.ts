@@ -66,12 +66,15 @@ function stamp<Pick extends { metadata?: Record<string, unknown> }>(
 }
 
 /**
- * A compound municipality probed as a scoped pair after the whole span missed: the head under
- * the node's own parent with the walk's ordinary fallback, then the tail as the head's child
- * with the parent fallback withheld, so a namesake ward or town outside the head is never
- * admissible — including one the backend re-admits through its own region-scope fallback
- * (`regionScopeMiss`). A county head usually has no key. the tail then probes under the
- * parent the walk already holds. Answers the tail when it hits, else the head, else null.
+ * A compound municipality probed as a scoped pair after the whole span missed:
+ * the head under the node's own parent with the walk's ordinary fallback,
+ * then the tail as the head's child with the parent fallback withheld, so a namesake ward
+ * or town outside the head is never admissible — including one the backend re-admits
+ * through its own region-scope fallback (`regionScopeMiss`).
+ *
+ * A county head usually has no key. the tail then probes under the parent the walk already holds.
+ * Answers the tail when it hits, else the head, else null.
+ *
  * Two probes at most, each drawn from the caller's budget (`hasBudget`).
  */
 export async function resolveCompoundMunicipality<

@@ -25,6 +25,7 @@ import type { Comparison, ComparisonLevel } from "#fellegi-sunter"
 
 /**
  * Great-circle (haversine) distance in km between two coordinates.
+ *
  * The formula's one true home is `@mailwoman/spatial`; this is a thin domain-typed
  * adapter from `match`'s `LatLon` ({ latitude, longitude }) onto the canonical
  * scalar helper — not a second implementation.
@@ -34,8 +35,10 @@ export const haversineKm = (a: LatLon, b: LatLon): number =>
 
 /**
  * A geo-distance comparison: bucket the great-circle distance between two records'
- * coordinates into ordered agreement levels. Levels must be ordered nearest first
- * by `maxKm`, the last acting as the `far` catch-all (`maxKm` omitted → unbounded).
+ * coordinates into ordered agreement levels.
+ *
+ * Levels must be ordered nearest first by `maxKm`, the last acting as the `far`
+ * catch-all (`maxKm` omitted → unbounded).
  * A missing/invalid coordinate on either side yields no evidence.
  */
 export function distanceComparison<R>(config: {
@@ -68,6 +71,7 @@ export function distanceComparison<R>(config: {
 
 /**
  * Default distance levels, nearest → far, with boundaries at rooftop / block / locality scale.
+ *
  * The m/u are illustrative seeds (EM re-estimates them); the boundaries reflect typical geocoder error.
  */
 export const DEFAULT_DISTANCE_LEVELS: ComparisonLevel[] = [
@@ -81,9 +85,12 @@ export const DEFAULT_DISTANCE_LEVELS: ComparisonLevel[] = [
  * The collapsed spatial-agreement comparison — one non-redundant geographic signal.
  *
  * The first matcher carried two spatial comparisons: canonical-address-key similarity
- * and great-circle distance. They double-count — an exact key match implies distance ≈ 0, so a
- * co-located pair banked the same evidence twice, and the redundant vote is exactly what over-merges
- * distinct providers at a shared clinic address. This folds them into one comparison:
+ * and great-circle distance.
+ * They double-count — an exact key match implies distance ≈ 0, so a co-located
+ * pair banked the same evidence twice, and the redundant vote is exactly what
+ * over-merges distinct providers at a shared clinic address.
+ *
+ * This folds them into one comparison:
  *
  * - **level 0 `same-key`** — an exact canonical-key match: the strongest tier, and the one the
  *   inverse-address-frequency adjustment rides ({@link withTermFrequency} on level 0), so agreement on
@@ -93,8 +100,9 @@ export const DEFAULT_DISTANCE_LEVELS: ComparisonLevel[] = [
  *   warrants near-agreement (the geo-first point of the whole design).
  * - Keys differ and no usable coordinate → no evidence.
  *
- * Exactly one spatial vote, no redundancy. Pass {@link DEFAULT_SPATIAL_LEVELS} or your own. index 0
- * must be the exact-key tier, indices 1…n the distance buckets nearest → far by `maxKm` (last = `far`).
+ * Exactly one spatial vote, no redundancy.
+ * Pass {@link DEFAULT_SPATIAL_LEVELS} or your own. index 0 must be the exact-key tier,
+ * indices 1…n the distance buckets nearest → far by `maxKm` (last = `far`).
  */
 export function spatialComparison<R>(config: {
 	name: string
@@ -132,6 +140,7 @@ export function spatialComparison<R>(config: {
 
 /**
  * Default levels for {@link spatialComparison}: an exact same-key tier on top of the distance buckets.
+ *
  * `m`/`u` are EM-estimable seeds (m decreasing, u increasing down the tiers. each column ≈ sums to 1).
  */
 export const DEFAULT_SPATIAL_LEVELS: ComparisonLevel[] = [

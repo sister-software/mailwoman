@@ -92,7 +92,9 @@ function buildFixtureAdmin(path: string): void {
 /**
  * A postcode extract: `spr` with placetype='postalcode', plus the `names` table
  * `createUnifiedSchema` gives every real extract — that's where `postcode/centroid-fills.ts`
- * writes the GeoNames delivery-city names (#1495). One real-coord ZIP + one placeholder 0,0.
+ * writes the GeoNames delivery-city names (#1495).
+ *
+ * One real-coord ZIP + one placeholder 0,0.
  *
  * @param withNames Build the extract without a `names` table, to cover the tolerate-and-say-so path.
  */
@@ -134,9 +136,10 @@ function buildFixturePostcodes(path: string, withNames = true): void {
 }
 
 /**
- * The admin fixture plus a `names` table and a second US region, Indiana (103),
- * whose alias bag carries `Illinois` — the shape of Hsinchu County carrying `新竹市`,
- * Hsinchu City's official name. Illinois's `names` row is official.
+ * The admin fixture plus a `names` table and a second US region, Indiana (103), whose alias bag
+ * carries `Illinois` — the shape of Hsinchu County carrying `新竹市`, Hsinchu City's official name.
+ *
+ * Illinois's `names` row is official.
  */
 function buildFixtureAdminWithVariantRegion(path: string): void {
 	buildFixtureAdmin(path)
@@ -258,8 +261,9 @@ describe("buildCandidateTable", () => {
 		const output = scratch.resolve("candidate.db")
 		buildFixtureAdmin(input)
 
-		// Georgia the country, with no place_population row — the measured state of 147 of 237 primary
-		// country records. Without the fallback it enters every prominence race at an asserted zero.
+		// Georgia the country, with no place_population row — the measured state
+		// of 147 of 237 primary country records.
+		// Without the fallback it enters every prominence race at an asserted zero.
 		using src = new DatabaseClient<WOFDatabase>(input)
 		src.exec(`INSERT INTO spr VALUES (300, 'Georgia', 'country', 'GE', 42.0, 43.5, 41.0, 40.0, 43.6, 46.7, -1, 0)`)
 
@@ -365,7 +369,8 @@ describe("buildCandidateTable", () => {
 		const output = scratch.resolve("candidate.db")
 		buildFixtureAdmin(input)
 		const result = await buildCandidateTable({ input, output })
-		// Chicago: Chi-Town + Windy City. Saint-Étienne: St Etienne = 3 aliases.
+		// Chicago: Chi-Town + Windy City.
+		// Saint-Étienne: St Etienne = 3 aliases.
 		expect(result.aliases).toBe(3)
 
 		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
@@ -483,7 +488,8 @@ describe("buildCandidateTable", () => {
 		buildFixturePostcodes(pc)
 
 		const result = await buildCandidateTable({ input, output, postcodes: [pc] })
-		// Only "Brooklyn". The extract's own '11201' names row keys to the primary and is skipped,
+		// Only "Brooklyn".
+		// The extract's own '11201' names row keys to the primary and is skipped,
 		// and 'The White House' hangs off 20500, which the coord filter never staged.
 		expect(result.postcodeAliases).toBe(1)
 
@@ -551,7 +557,9 @@ describe("buildCandidateTable", () => {
 	describe("the importance column (#28)", () => {
 		/**
 		 * A score source whose ids share nothing with the admin fixture's — the join must work anyway.
-		 * Chicago and Saint-Étienne are scored. Springfield deliberately is not (the unmeasured case).
+		 *
+		 * Chicago and Saint-Étienne are scored.
+		 * Springfield deliberately is not (the unmeasured case).
 		 */
 		function buildFixtureImportance(path: string): void {
 			using db = new DatabaseClient<WOFDatabase>(path)
@@ -653,7 +661,8 @@ describe("buildCandidateTable", () => {
 			buildFixtureAdmin(input)
 
 			const result = await buildCandidateTable({ input, output })
-			// `undefined`, not 0: the pass did not run. A 0 would claim the source matched nothing.
+			// `undefined`, not 0: the pass did not run.
+			// A 0 would claim the source matched nothing.
 			expect(result.importanceScored).toBeUndefined()
 			expect(result.importanceFiltered).toBeUndefined()
 

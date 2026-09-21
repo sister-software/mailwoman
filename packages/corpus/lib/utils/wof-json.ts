@@ -44,6 +44,7 @@ export interface WOFFeature {
 
 /**
  * Lightweight in-memory shape both adapters keep per record.
+ *
  * Geometry is intentionally dropped — it's 95% of the file weight and the adapters never consult it.
  */
 export interface WOFRecord {
@@ -69,12 +70,14 @@ export interface WOFRecord {
 }
 
 /**
- * `mz:is_current` ∈ {`1`, `-1`} → keep. `0` → drop.
+ * `mz:is_current` ∈ {`1`, `-1`} → keep.
+ *
+ * `0` → drop.
  *
  * Real WOF postalcode distros tag every row `-1` ("unknown but treated as active");
- * the Pelias importer accepts `-1` alongside `1`. Tightening the predicate to `= 1`
- * is the trap: the postalcode distros then contribute zero rows to the corpus,
- * silently, with nothing raised to notice it by.
+ * the Pelias importer accepts `-1` alongside `1`.
+ * Tightening the predicate to `= 1` is the trap: the postalcode distros then contribute
+ * zero rows to the corpus, silently, with nothing raised to notice it by.
  */
 export function isCurrentFeature(props: Record<string, unknown>): boolean {
 	const raw = props["mz:is_current"]
@@ -128,7 +131,9 @@ export function normalizeNameKey(rawKey: string): string {
 }
 
 /**
- * Result of parsing a single GeoJSON file. `null` means "skip this row" (any reason).
+ * Result of parsing a single GeoJSON file.
+ *
+ * `null` means "skip this row" (any reason).
  */
 function recordFromFeature(feature: WOFFeature): WOFRecord | null {
 	if (!feature || feature.type !== "Feature" || !feature.properties) return null
@@ -175,13 +180,15 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
 /**
  * Stream every canonical GeoJSON file under `repoDir` and yield parsed `WOFRecord`s.
  *
- * `repoDir` may point at a single cloned `whosonfirst-data-*` repo or at a parent directory
- * holding several such repos (the corpus pipeline clones all four into a shared `wof/repos/` root
- * and runs the adapter against that root). `**\/*.geojson` walks the whole tree; `-alt-`
- * siblings are skipped since they're alternate-geometry exports rather than new records.
+ * `repoDir` may point at a single cloned `whosonfirst-data-*` repo or at a parent
+ * directory holding several such repos (the corpus pipeline clones all four into a
+ * shared `wof/repos/` root and runs the adapter against that root).
+ * `**\/*.geojson` walks the whole tree; `-alt-` siblings are skipped since they're
+ * alternate-geometry exports rather than new records.
  *
- * Errors per-file (unreadable, malformed JSON, missing properties) are swallowed so one bad file
- * doesn't poison a 3 GB walk. Adapters can add stricter validation downstream if they need it.
+ * Errors per-file (unreadable, malformed JSON, missing properties) are swallowed
+ * so one bad file doesn't poison a 3 GB walk.
+ * Adapters can add stricter validation downstream if they need it.
  */
 export async function* walkFeatures(repoDir: string, opts: { signal?: AbortSignal } = {}): AsyncIterable<WOFRecord> {
 	for await (const filePath of Globerator.from("**/*.geojson", {
@@ -213,9 +220,11 @@ export async function* walkFeatures(repoDir: string, opts: { signal?: AbortSigna
 }
 
 /**
- * Build an in-memory ancestry index: `Map<wof_id, [parent, grandparent, ...]>` walking `parent_id`
- * upward and stopping at the first missing link. A cycle guard halts at any re-visit
- * (defensive — WOF data is acyclic by construction but corrupt fixtures shouldn't infinite-loop the adapter).
+ * Build an in-memory ancestry index: `Map<wof_id, [parent, grandparent, ...]>` walking
+ * `parent_id` upward and stopping at the first missing link.
+ *
+ * A cycle guard halts at any re-visit (defensive — WOF data is acyclic by construction
+ * but corrupt fixtures shouldn't infinite-loop the adapter).
  *
  * Records whose ancestors aren't in `byID` (e.g. an FR locality whose region wasn't included
  * in the cloned repo set) get a shorter chain. the variant emission gracefully degrades.

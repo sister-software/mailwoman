@@ -59,14 +59,17 @@ export function repoURL(org: string, repo: string): string {
 /**
  * What our fork of a repo is, relative to upstream.
  *
- * `"absent"` — the fork org does not hold it. `"clean"` — a fork exists carrying nothing upstream lacks.
+ * `"absent"` — the fork org does not hold it.
+ * `"clean"` — a fork exists carrying nothing upstream lacks.
+ *
  * `"diverged"` — the fork holds at least one commit upstream does not, i.e. a correction of ours.
  */
 export type ForkState = "absent" | "clean" | "diverged"
 
 /**
- * What our fork looks like. Injected so the resolver stays pure and testable. the
- * CLI passes a `gh`-backed probe, tests pass a map.
+ * What our fork looks like.
+ *
+ * Injected so the resolver stays pure and testable. the CLI passes a `gh`-backed probe, tests pass a map.
  *
  * A boolean cannot express this: "a fork exists" and "the fork holds a correction" are
  * different questions, and the fork org answers yes to the first for every WOF repo.
@@ -76,10 +79,12 @@ export type ForkProbe = (org: string, repo: string) => Promise<ForkState>
 /**
  * Resolve the origin for one WOF repo.
  *
- * Divergence rather than existence. A GitHub fork does not track its parent, so a fork
- * carrying none of our commits is a point-in-time snapshot that drifts further from
- * upstream every day it sits there. Preferring one would read older data for no benefit,
- * silently, on every fresh clone — which is why a clean fork resolves upstream and says why.
+ * Divergence rather than existence.
+ * A GitHub fork does not track its parent, so a fork carrying none of our commits is a
+ * point-in-time snapshot that drifts further from upstream every day it sits there.
+ *
+ * Preferring one would read older data for no benefit, silently, on every fresh clone —
+ * which is why a clean fork resolves upstream and says why.
  * "Prefer our fork" always meant "prefer the remote our corrections are on";
  * `diverged` is that, stated so a machine can check it.
  *
@@ -121,9 +126,11 @@ export async function resolveWOFRepoOrigin(repo: string, probe: ForkProbe): Prom
 
 /**
  * The `gh`-backed {@linkcode ForkProbe} the CLI passes — asks GitHub what our fork is
- * rather than merely whether it exists. `compare` answers `ahead_by` — commits the fork holds
- * that upstream does not — and that is the only thing that makes a fork worth preferring,
- * since the fork org holds a fork of every WOF repo whether or not we have corrected it.
+ * rather than merely whether it exists.
+ *
+ * `compare` answers `ahead_by` — commits the fork holds that upstream does not —
+ * and that is the only thing that makes a fork worth preferring, since the fork org
+ * holds a fork of every WOF repo whether or not we have corrected it.
  *
  * A throw is not "no fork": {@linkcode resolveWOFRepoOrigin} keeps that distinction, so a
  * failed lookup is recorded as upstream-with-a-caveat rather than upstream-as-established-fact.
@@ -134,8 +141,9 @@ export const githubForkProbe: ForkProbe = async (org, repo) => {
 	} catch (error) {
 		const stderr = error instanceof Error && "stderr" in error && typeof error.stderr === "string" ? error.stderr : ""
 
-		// A 404 is a real answer: the fork does not exist. Anything else (no auth, no network, rate limit)
-		// is a failed lookup, and must reach the resolver as a throw so it is not recorded as absence.
+		// A 404 is a real answer: the fork does not exist.
+		// Anything else (no auth, no network, rate limit) is a failed lookup, and must
+		// reach the resolver as a throw so it is not recorded as absence.
 		if (/HTTP 404|Not Found/i.test(`${errorMessage(error)}${stderr}`)) {
 			return "absent"
 		}

@@ -84,8 +84,9 @@ export interface PairwiseGroupingScore {
 	 */
 	recall: number | null
 	/**
-	 * `null` whenever `precision` or `recall` is `null` — an F1 over an undefined
-	 * component is undefined rather than zero (see the module docstring's worked example).
+	 * `null` whenever `precision` or `recall` is `null` — an F1 over an undefined component
+	 * is undefined rather than zero (see the module docstring's worked example).
+	 *
 	 * `0` when both are defined and `truePositivePairs === 0`
 	 * (the harmonic mean of two zeros, reported as the `0` it is rather than `NaN`).
 	 * Otherwise the ordinary harmonic mean of `precision`/`recall`.
@@ -94,9 +95,11 @@ export interface PairwiseGroupingScore {
 }
 
 /**
- * Score a `predictedSame` pairwise predicate against a `truthSame` one, over every unordered pair
- * drawn from `ids`. Both predicates are called once per pair (`ids.length` choose 2 — O(n²)) — fine
- * for an eval-scale id universe (this SDK's callers run this over tens of FRNs rather than millions);
+ * Score a `predictedSame` pairwise predicate against a `truthSame` one,
+ * over every unordered pair drawn from `ids`.
+ *
+ * Both predicates are called once per pair (`ids.length` choose 2 — O(n²)) — fine for an
+ * eval-scale id universe (this SDK's callers run this over tens of FRNs rather than millions);
  * not intended for production-scale record linkage.
  *
  * Accepting predicates rather than two group-id maps is deliberate: a truth grouping is
@@ -142,9 +145,9 @@ export function scorePairwiseGrouping<ID>(
 	const precision = predictedPositivePairs > 0 ? truePositivePairs / predictedPositivePairs : null
 	const recall = truthPositivePairs > 0 ? truePositivePairs / truthPositivePairs : null
 
-	// `null` in, `null` out — never `0`. `0` is reserved for the case both components
-	// are defined and the prediction still recovered nothing, which is a measurement.
-	// an undefined component is the absence of one.
+	// `null` in, `null` out — never `0`.
+	// `0` is reserved for the case both components are defined and the prediction still
+	// recovered nothing, which is a measurement. an undefined component is the absence of one.
 	let f1: number | null = null
 
 	if (precision !== null && recall !== null) {
@@ -168,6 +171,7 @@ export function scorePairwiseGrouping<ID>(
  * Builds a `truthSame`/`predictedSame`-shaped predicate from a group-id map —
  * the common case, where "same group" means "maps to the identical group id"
  * (a genuine partition, unlike {@linkcode scorePairwiseGrouping}'s general predicate form).
+ *
  * Two ids missing from `groupOf` entirely are never treated as "same" (both `undefined`
  * would otherwise compare equal) — every id scored must carry an explicit group assignment.
  */

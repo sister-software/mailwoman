@@ -1,5 +1,6 @@
 /**
  * Tests for the anchor-absorption counter-augmentation (#220/#723 Probe A1).
+ *
  * The required checks: (1) every template aligns cleanly (no quarantine) so the recipe
  * output is trainable, and (2) the leading 5-digit gets the context-correct label —
  * house_number when a trailing postcode is present (case-H), postcode when not (case-P).

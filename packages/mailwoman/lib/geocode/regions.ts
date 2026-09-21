@@ -18,6 +18,7 @@ import { readReleaseManifest, resolveDatabasePath, type DataReleaseManifest } fr
 
 /**
  * The per-state databases to wire into a single geocode resolve.
+ *
  * Either/both may be absent (admin-only).
  */
 export interface RegionDatabases {
@@ -26,9 +27,10 @@ export interface RegionDatabases {
 	/**
 	 * Derived street-centroid tier (#1042) — a `group BY street` roll-up of a national
 	 * register's rooftop points, keyed for a street-only query (no house number).
-	 * Supplied today only by `@mailwoman/ban`'s `BANRegionDatabaseProvider` for
-	 * FR (the US per-state {@link RegionDatabaseProvider} never opens one),
-	 * so the tier is FR-only in practice and every non-FR path stays byte-stable.
+	 *
+	 * Supplied today only by `@mailwoman/ban`'s `BANRegionDatabaseProvider` for FR
+	 * (the US per-state {@link RegionDatabaseProvider} never opens one), so the tier
+	 * is FR-only in practice and every non-FR path stays byte-stable.
 	 * Consulted below the address-point/interpolation tiers, above admin.
 	 */
 	streetCentroids?: StreetCentroidLookup
@@ -36,12 +38,14 @@ export interface RegionDatabases {
 
 /**
  * Resolve the situs/interpolation databases for a state slug (e.g. `"tx"`).
+ *
  * `null` slug → no databases.
  */
 export type RegionDatabaseResolver = (stateSlug: string | null) => RegionDatabases
 
 /**
  * Full US state name (case-folded) → lowercase 2-letter slug, from the codex table.
+ *
  * Built once — the inverse the codex doesn't ship directly.
  */
 export const US_STATE_SLUG_BY_NAME: ReadonlyMap<string, string> = new Map(
@@ -53,6 +57,7 @@ export const US_STATE_SLUG_BY_NAME: ReadonlyMap<string, string> = new Map(
 
 /**
  * Lowercase 2-letter state slug from a parsed region value / resolver name, else null.
+ *
  * Accepts the abbreviation register ("MI") and the full-name register ("Michigan", "New York") —
  * a user spells the state however they spell it, and a null here silently drops the
  * whole per-state street tier (situs + interpolation), which is how "…, Fraser MI"
@@ -98,19 +103,20 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 		}
 	}
 
-	// A slug names a US database and nothing else, but `regionToStateSlug` accepts any two-letter region,
-	// so a foreign subnational code that happens to spell a US state selects that state's rooftop
-	// database. Measured against the databases on disk: 8 of 16 Italian province codes reach
-	// one (MI→Michigan, CO→Colorado, PA→Pennsylvania, VA→Virginia, CA→California, MO→Missouri,
+	// A slug names a US database and nothing else, but `regionToStateSlug` accepts
+	// any two-letter region, so a foreign subnational code that happens to spell a
+	// US state selects that state's rooftop database.
+	// Measured against the databases on disk: 8 of 16 Italian province codes reach one
+	// (MI→Michigan, CO→Colorado, PA→Pennsylvania, VA→Virginia, CA→California, MO→Missouri,
 	// AL→Alabama, MT→Montana), 5 of 5 Spanish, 6 of 12 Brazilian, and AU's WA→Washington.
 	// IT and ES are tier-1 and write the code in ordinary postal form — `20121 Milano MI`.
 	//
-	// Nothing wrong comes back today, and the reason is not structural: the lookup keys on
-	// (postcode, street, number) or (locality, street, number), and Milano's 20xxx simply
-	// does not collide with Michigan's 48xxx–49xxx. Cádiz province is `CA`,
-	// Cadiz is a real California locality and Calle Real a real California street,
-	// so the locality variant is one coincident house number away from a rooftop-tier answer
-	// on the wrong continent — the highest-confidence thing this pipeline emits.
+	// Nothing wrong comes back today, and the reason is not structural:
+	// the lookup keys on (postcode, street, number) or (locality, street, number),
+	// and Milano's 20xxx simply does not collide with Michigan's 48xxx–49xxx.
+	// Cádiz province is `CA`, Cadiz is a real California locality and Calle Real a real California
+	// street, so the locality variant is one coincident house number away from a rooftop-tier
+	// answer on the wrong continent — the highest-confidence thing this pipeline emits.
 	//
 	// An unknown country still passes: dropping the slug there would take the street
 	// tier away from every US address whose country never resolved, which is the
@@ -161,9 +167,11 @@ export interface RegionDatabaseCacheEntry extends RegionDatabases {
 /**
  * Opens + caches per-state situs/interpolation lookups so a batch geocoding many addresses in
  * one state opens that state's (possibly multi-GB) databases once rather than once per row.
+ *
  * Versioned-data aware (#485): paths resolve through the `releases.json` manifest
- * (legacy unversioned fallback), and {@link reload} performs a zero-downtime atomic switchover
- * when a new version is published. Call {@link close} when done to release every cached handle.
+ * (legacy unversioned fallback), and {@link reload} performs a zero-downtime
+ * atomic switchover when a new version is published.
+ * Call {@link close} when done to release every cached handle.
  *
  * `for` is synchronous, so on-disk existence is probed asynchronously once instead of per call:
  * {@linkcode warm} awaits the #2029-async manifest read + `resolveDatabasePath` for
@@ -193,6 +201,7 @@ export class RegionDatabaseProvider implements Disposable {
 
 	/**
 	 * Construct a provider and warm its path map before answering.
+	 *
 	 * The constructor cannot await the #2029-async manifest read + database-path probes,
 	 * so this static factory does.
 	 */
@@ -207,8 +216,9 @@ export class RegionDatabaseProvider implements Disposable {
 
 	/**
 	 * Preload database paths for every US state/territory slug.
-	 * Awaits `resolveDatabasePath` for each slug's rooftop database and its interpolation
-	 * tier, recording the paths that exist so `for` never touches the filesystem.
+	 *
+	 * Awaits `resolveDatabasePath` for each slug's rooftop database and its interpolation tier,
+	 * recording the paths that exist so `for` never touches the filesystem.
 	 * Safe to call more than once: it re-probes the same slug set and overwrites the map,
 	 * which is how {@linkcode reload} re-reads the disk.
 	 */
@@ -256,10 +266,12 @@ export class RegionDatabaseProvider implements Disposable {
 
 	/**
 	 * Re-read the manifest, re-probe the database paths, and atomically swap any
-	 * cached database whose resolved path changed. New requests see the new version
-	 * immediately. the old handles are retired and closed on the next reload
-	 * (one-generation grace — safe because find() is synchronous, so no in-flight query
-	 * can still hold a handle once a request yields). Returns the new version map.
+	 * cached database whose resolved path changed.
+	 *
+	 * New requests see the new version immediately. the old handles are retired
+	 * and closed on the next reload (one-generation grace — safe because find() is synchronous,
+	 * so no in-flight query can still hold a handle once a request yields).
+	 * Returns the new version map.
 	 */
 	async reload(): Promise<DataReleaseManifest | null> {
 		for (const h of this.#retired) {

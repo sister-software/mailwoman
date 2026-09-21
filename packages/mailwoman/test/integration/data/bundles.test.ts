@@ -96,9 +96,9 @@ describe("artifactURL", () => {
 })
 
 describe("every bundle states its terms before it is pulled", () => {
-	// A bundle is downloaded rather than installed with the package, so its terms reach an
-	// operator through nothing the npm tarball carries. These are printed by `data pull`
-	// before the transfer, which is the moment an operator can still decline.
+	// A bundle is downloaded rather than installed with the package, so its terms
+	// reach an operator through nothing the npm tarball carries.
+	// These are printed by `data pull` before the transfer, which is the moment an operator can still decline.
 	it.each(Object.values(BUNDLES))("$name names publishers, terms and conditions", (bundle) => {
 		expect(bundle.rights.publishers.length).toBeGreaterThan(0)
 		expect(bundle.rights.terms.length).toBeGreaterThan(0)
@@ -116,9 +116,10 @@ describe("every bundle states its terms before it is pulled", () => {
 	})
 
 	it("says where each bundle's rows name their publisher, or that they do not", () => {
-		// `mailwoman data sources` checks the record above against the bytes, and it can only do that
-		// where the artifacts carry a publisher column. A bundle declaring none says so
-		// rather than being censused to an empty result, which would read as a clean check.
+		// `mailwoman data sources` checks the record above against the bytes,
+		// and it can only do that where the artifacts carry a publisher column.
+		// A bundle declaring none says so rather than being censused to an empty result,
+		// which would read as a clean check.
 		expect(BUNDLES["us"]?.sourceCensus).toStrictEqual({
 			table: "address_point",
 			column: "source",
@@ -138,6 +139,7 @@ describe("every bundle states its terms before it is pulled", () => {
 describe("resolveBundleArtifacts — maps versioned names", () => {
 	/**
 	 * A bundle must declare its terms to compile, so these fixtures carry an empty declaration.
+	 *
 	 * Empty is a fixture that states nothing rather than a bundle with no obligations,
 	 * and `describeBundleRights` has its own tests.
 	 */

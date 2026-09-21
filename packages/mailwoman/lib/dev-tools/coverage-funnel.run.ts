@@ -60,9 +60,9 @@ const { values } = parseArguments({
 /**
  * What `mailwoman_train.audits.epoch_mixture --json` writes, down to the two fields this reads.
  *
- * The emitted level is the one that answers the stage. Draw level counts what the
- * sampler pulled, and emitted level counts what survived augmentation to fill the
- * trainer's row budget — the rows a run actually trains on.
+ * The emitted level is the one that answers the stage.
+ * Draw level counts what the sampler pulled, and emitted level counts what survived
+ * augmentation to fill the trainer's row budget — the rows a run actually trains on.
  */
 interface EpochMixtureAudit {
 	emitted_level?: { by_country?: Record<string, number> }
@@ -72,11 +72,13 @@ interface EpochMixtureAudit {
 /**
  * Rows sampled per country in one audited epoch, and the epoch's total.
  *
- * A country absent from `by_country` stays absent from the map rather than
- * being written in as zero, and the funnel decides what that absence means.
- * `by_country` enumerates every country the audit drew, so a country the audit never
- * mentions drew zero of the audit's own denominator. An admitted country therefore reads
- * `blocked` with that denominator beside it, which is a measured zero rather than an unknown.
+ * A country absent from `by_country` stays absent from the map rather than being
+ * written in as zero, and the funnel decides what that absence means.
+ * `by_country` enumerates every country the audit drew, so a country the audit
+ * never mentions drew zero of the audit's own denominator.
+ *
+ * An admitted country therefore reads `blocked` with that denominator beside it,
+ * which is a measured zero rather than an unknown.
  * A country the config never admitted reads `absent`, since it had nothing to draw.
  *
  * Refuses an audit produced from a config other than the one the `admitted` stage reads.
@@ -197,8 +199,10 @@ for (const stage of FUNNEL_STAGES) {
 /**
  * How many country codes a group's cell prints before it counts the rest.
  *
- * Presentation only. The shallow groups hold over a hundred codes each, and a cell
- * carrying all of them wraps past the width a terminal table stays readable at.
+ * Presentation only.
+ * The shallow groups hold over a hundred codes each, and a cell carrying all of them
+ * wraps past the width a terminal table stays readable at.
+ *
  * `--out-json` writes every code.
  */
 const CODES_PER_GROUP_CELL = 18

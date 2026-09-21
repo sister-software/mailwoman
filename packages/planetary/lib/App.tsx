@@ -54,9 +54,11 @@ function WrongBody({ message }: { message: string }) {
 }
 
 /**
- * A search hit as a selection. `diameterKm` rides along because the camera frames by it,
- * and without it every search result and every deep link landed on the smallest-feature zoom —
- * a 4,000 km canyon framed as tightly as a 3 km crater, past the resolution the terrain archive carries.
+ * A search hit as a selection.
+ *
+ * `diameterKm` rides along because the camera frames by it, and without it every search result
+ * and every deep link landed on the smallest-feature zoom — a 4,000 km canyon framed as
+ * tightly as a 3 km crater, past the resolution the terrain archive carries.
  */
 function featureFromHit(hit: SearchHit): SelectedFeature {
 	return {
@@ -76,8 +78,8 @@ export function App() {
 
 	const [route, setRoute] = useState<PlanetaryRoute | null>(() => routeForPath(location.pathname))
 	// The feature most recently picked from a click or a search hit.
-	// A click carries the archive's whole record. The artifact lacks that record,
-	// so it is kept beside the route rather than re-read from the artifact.
+	// A click carries the archive's whole record.
+	// The artifact lacks that record, so it is kept beside the route rather than re-read from the artifact.
 	const [picked, setPicked] = useState<SelectedFeature | null>(null)
 	const search = useSearchIndex(config.artifacts.searchIndexURL)
 	// The globe's handle, published by `<PlanetaryMap>` once it exists, so the compass can read the direction.
@@ -111,9 +113,9 @@ export function App() {
 
 	const close = useCallback(() => navigate({ kind: "map" }), [navigate])
 
-	// A chip carries a feature name, which is what the artifact indexes. the first hit for
-	// an exact name is that feature. A name the artifact does not carry selects nothing
-	// rather than framing the closest other feature.
+	// A chip carries a feature name, which is what the artifact indexes. the first
+	// hit for an exact name is that feature.
+	// A name the artifact does not carry selects nothing rather than framing the closest other feature.
 	const pickByName = useCallback(
 		(name: string) => {
 			const hit = search.index?.query(name, 1).find((candidate) => candidate.name === name)

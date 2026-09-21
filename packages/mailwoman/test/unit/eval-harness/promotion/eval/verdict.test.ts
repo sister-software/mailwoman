@@ -11,7 +11,8 @@
 import { arenaColumn } from "mailwoman/eval-harness/promotion/eval/verdict"
 import { describe, expect, test } from "vitest"
 
-// Post-#1151: summarize-arenas.ts emits the neural-only shape. `neural` is the first %-column after n.
+// Post-#1151: summarize-arenas.ts emits the neural-only shape.
+// `neural` is the first %-column after n.
 const NEURAL_ONLY = [
 	"| arena | n | neural | fail | tree-valid |",
 	"| --- | --: | --: | --: | --: |",

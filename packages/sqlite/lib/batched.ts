@@ -12,9 +12,10 @@
  */
 export interface BatchedTransaction {
 	/**
-	 * Record one written row. Every `rowsPerCommit` rows the open transaction is
-	 * committed and a new one opened. answers `true` on the call that committed,
-	 * so a caller can hang a progress report off the boundary.
+	 * Record one written row.
+	 *
+	 * Every `rowsPerCommit` rows the open transaction is committed and a new one opened. answers
+	 * `true` on the call that committed, so a caller can hang a progress report off the boundary.
 	 */
 	rowWritten(): boolean
 	/**
@@ -24,6 +25,7 @@ export interface BatchedTransaction {
 	/**
 	 * Best-effort `rollback`, and it must never replace the real error: a build runs with the
 	 * journal off (nothing is ever published without the swap), so SQLite may refuse to unwind.
+	 *
 	 * What matters is that the caller sees why the ingest stopped rather than that a scratch file was tidied.
 	 */
 	rollbackQuietly(): void

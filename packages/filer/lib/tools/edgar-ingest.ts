@@ -22,6 +22,7 @@ export type { EdgarIngestReport, EdgarSkipReason } from "#sdk/edgar/ingest"
 export interface FilerEdgarIngestOptions {
 	/**
 	 * Company names to resolve — one per line in a file, or passed as an array.
+	 *
 	 * Every name is tried. a blank line is skipped rather than producing an outcome.
 	 */
 	queries: string[]

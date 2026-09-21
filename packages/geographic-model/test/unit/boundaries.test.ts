@@ -37,6 +37,7 @@ async function readManifest(specifier: string): Promise<Manifest> {
 
 /**
  * Name fragments that would announce ranking policy on the public surface.
+ *
  * Matched case-insensitively against every exported binding, so `rankBy`, `categoryWeight`,
  * and `POI_BOOSTS` all read as violations of the same rule.
  */
@@ -46,8 +47,9 @@ describe("the geographic model's recorded dependency direction", () => {
 	it("keeps @mailwoman/core free of a dependency on @mailwoman/geographic-model", async () => {
 		const core = await readManifest("@mailwoman/core/package.json")
 
-		// Name the manifest that was actually read. Without this, a specifier that resolved somewhere else
-		// would report zero declarations — the absence this test exists to distinguish from a real one.
+		// Name the manifest that was actually read.
+		// Without this, a specifier that resolved somewhere else would report zero declarations —
+		// the absence this test exists to distinguish from a real one.
 		expect(core.name).toBe("@mailwoman/core")
 
 		const declaring = (

@@ -16,11 +16,14 @@
 /**
  * Case/diacritic-insensitive fold for commune-name comparison (#1058).
  *
- * Marks are deleted, never spaced. `[^a-z0-9 ]` alone maps the combining cedilla that NFD has
- * just produced to a space, so `Besançon` keys as `besanc on` and matches nothing it should.
- * The gazetteer side of the same comparison deletes them — 0 of 32,539 distinct `locality_base`
- * keys in `street-centroids-fr.db` carry a mark — so spacing puts the two halves of one
- * comparison on different keys. Order is required: after the class filter the strip is a no-op.
+ * Marks are deleted, never spaced.
+ * `[^a-z0-9 ]` alone maps the combining cedilla that NFD has just produced to a space,
+ * so `Besançon` keys as `besanc on` and matches nothing it should.
+ *
+ * The gazetteer side of the same comparison deletes them — 0 of 32,539 distinct
+ * `locality_base` keys in `street-centroids-fr.db` carry a mark — so spacing puts
+ * the two halves of one comparison on different keys.
+ * Order is required: after the class filter the strip is a no-op.
  *
  * Not fixed here, and worth knowing before trusting the fold on a non-Latin-1 name: a letter
  * with no decomposition is dropped rather than folded (`Łódź` → `odz`, `Đà Nẵng` → `a nang`).

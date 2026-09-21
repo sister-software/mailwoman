@@ -28,8 +28,9 @@ const present = await pathExists(CANDIDATE_DB)
 
 /**
  * The bare-name panel: every primary-preference contest the ranker's docstring names,
- * the Zabiče production case the staging repoint exists for, and the Moscow
- * exact-tier rows (both readers must agree even where the answer is a known defect).
+ * the Zabiče production case the staging repoint exists for, and the Moscow exact-tier
+ * rows (both readers must agree even where the answer is a known defect).
+ *
  * "NYC" is deliberately not here: the artifact carries no `nyc` key, so Node answers
  * from its trigram fuzzy tier — which the browser reader does not implement —
  * and that one structural divergence has its own test below.

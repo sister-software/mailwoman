@@ -89,8 +89,10 @@ const STATE_SLUGS = new Set(Object.values(STATE_NAME_TO_SLUG))
 
 /**
  * Is `value` exactly a US state — its full name (e.g. "Texas") or 2-letter abbreviation (e.g. "TX")?
- * Returns the canonical 2-letter slug, else null. Whitespace/case-insensitive. rejects anything with
- * extra tokens (so a city literally named after a state is only matched when it's the whole value).
+ *
+ * Returns the canonical 2-letter slug, else null.
+ * Whitespace/case-insensitive. rejects anything with extra tokens
+ * (so a city literally named after a state is only matched when it's the whole value).
  */
 export function usStateSlug(value: string): string | null {
 	const v = value.trim().toLowerCase()
@@ -122,6 +124,7 @@ function makeRegionNode(value: string, start: number, end: number, confidence: n
 /**
  * Correct one container (an array of sibling nodes — the tree roots, or a node's children)
  * for the two mis-tag shapes, producing `region → locality` nesting.
+ *
  * Returns the rewritten sibling list.
  */
 function correctSiblings(siblings: AddressNode[]): AddressNode[] {
@@ -133,10 +136,10 @@ function correctSiblings(siblings: AddressNode[]): AddressNode[] {
 		afterSplit.push(split ?? node)
 	}
 
-	// Second, turn a locality whose whole value is a state into a region.
-	// sibling city localities nest under it. Only fires when there's exactly one
-	// state-name locality in the container (the unambiguous "City, State" shape) —
-	// avoids reparenting in a multi-locality list we don't model. ---
+	// Second, turn a locality whose whole value is a state into a region. sibling
+	// city localities nest under it.
+	// Only fires when there's exactly one state-name locality in the container
+	// (the unambiguous "City, State" shape) — avoids reparenting in a multi-locality list we don't model. ---
 	const stateIdxs = afterSplit
 		.map((n, i) => (n.tag === "locality" && usStateSlug(n.value) ? i : -1))
 		.filter((i) => i >= 0)
@@ -169,8 +172,10 @@ function correctSiblings(siblings: AddressNode[]): AddressNode[] {
 }
 
 /**
- * Split a `locality` whose value is `"City, ST"` (state in the last comma segment) into
- * region(ST) → locality(City). Returns null when the tail isn't a US state.
+ * Split a `locality` whose value is `"City, ST"` (state in the last comma segment)
+ * into region(ST) → locality(City).
+ *
+ * Returns null when the tail isn't a US state.
  */
 function splitMergedCityState(node: AddressNode): AddressNode | null {
 	const comma = node.value.lastIndexOf(",")
@@ -212,14 +217,16 @@ function correctNode(node: AddressNode): AddressNode {
 /**
  * Stamp `country_hint: "US"` on a region node whose value is a 2-letter US state abbreviation
  * (the ones the parser produced directly — "Augusta, ME" → region(ME) — as well as the ones we re-tagged).
+ *
  * The forward address-system→country linkage: the resolver constrains a hinted region's lookup to US,
  * so a two-consistent-pairs collision ("Augusta" under both Maine and Messina) resolves the US state.
  *
- * Abbreviations only, deliberately. A 2-letter "ME"/"or"/"GA" in `City, ST` position is
- * unambiguously the US state (foreign collisions like Messina/Ourense lose in US-format
- * context, and Georgia-the-country is "GE", not "GA"). A full name is genuinely ambiguous —
- * "Tbilisi, Georgia" is the country, "Atlanta, Georgia" the state — so full names are
- * left to resolve on their own name-match evidence, never pinned.
+ * Abbreviations only, deliberately.
+ * A 2-letter "ME"/"or"/"GA" in `City, ST` position is unambiguously the US state (foreign collisions
+ * like Messina/Ourense lose in US-format context, and Georgia-the-country is "GE", not "GA").
+ *
+ * A full name is genuinely ambiguous — "Tbilisi, Georgia" is the country, "Atlanta, Georgia"
+ * the state — so full names are left to resolve on their own name-match evidence, never pinned.
  */
 function annotateUSRegions(roots: readonly AddressNode[]): void {
 	for (const node of walkNodes(roots)) {
@@ -232,8 +239,9 @@ function annotateUSRegions(roots: readonly AddressNode[]): void {
 /**
  * Recognize US regions the parser missed and restructure `"City, State"` into
  * `region → locality` nesting so the resolver scopes the locality to its state (#642).
- * Mutates + returns the tree. A no-op when no US state token is found mis-tagged —
- * byte-stable for already-correct parses.
+ *
+ * Mutates + returns the tree.
+ * A no-op when no US state token is found mis-tagged — byte-stable for already-correct parses.
  */
 export function recognizeUSRegions(tree: AddressTree): AddressTree {
 	tree.roots = correctSiblings(tree.roots).map(correctNode)

@@ -19,15 +19,18 @@ import { describe, expect, it } from "vitest"
 const run = recipeRunner("trailing-region", trailingRegionRecipe, 901)
 
 /**
- * One tuple repeated with each placement. Same locality, region, country and code throughout,
- * so any difference in the emitted `raw` is the placement and nothing else.
+ * One tuple repeated with each placement.
+ *
+ * Same locality, region, country and code throughout, so any difference in the
+ * emitted `raw` is the placement and nothing else.
  */
 const base = { locality: "Portopetro", region: "Illes Balears", country: "Spain", cc: "ES", locale: "es-ES" }
 
 /**
- * The recipe varies its surfaces by row index (`read % 2`, `read % 4`), so a single tuple cannot
- * exercise a given placement's plain form reliably. Repeating it lets the assertions
- * look for a surface among the emitted rows rather than pinning one index.
+ * The recipe varies its surfaces by row index (`read % 2`, `read % 4`), so a single
+ * tuple cannot exercise a given placement's plain form reliably.
+ *
+ * Repeating it lets the assertions look for a surface among the emitted rows rather than pinning one index.
  */
 const repeat = (tuple: object, n = 8): object[] => Array.from({ length: n }, () => ({ ...tuple }))
 
@@ -61,13 +64,15 @@ describe("trailing-region postcode placement", () => {
 		const { rows } = await run(repeat({ ...tuple, postcode: "560038", postcodePlacement: "after_region" }), [])
 
 		expect(rows.some((row) => row.raw === "Bengaluru, Karnataka 560038, India")).toBe(true)
-		// The `in_structured` board row reads exactly this. A code on the locality segment would be VE's shape.
+		// The `in_structured` board row reads exactly this.
+		// A code on the locality segment would be VE's shape.
 		expect(rows.some((row) => row.raw.includes("Bengaluru 560038"))).toBe(false)
 	})
 
 	it("still labels every postcode-carrying row as the STRUCTURED source, whatever the placement", async () => {
-		// The sampler weights by `source`. A placement that leaked rows back into `synth-trailing-region`
-		// would make the new surface share the bare source's reps per row and become unweightable.
+		// The sampler weights by `source`.
+		// A placement that leaked rows back into `synth-trailing-region` would make the new
+		// surface share the bare source's reps per row and become unweightable.
 		const { rows } = await run(
 			[
 				{ ...base, postcode: "07691", postcodePlacement: "leading" },
@@ -139,8 +144,9 @@ describe("trailing-region Canadian province codes", () => {
 	})
 
 	it("writes the US state code too, which is the surface #2303 measured missing", async () => {
-		// The code reaches the model in volume through the US sources, but only ever with a street in
-		// front of the city. This recipe's `after_region` surface is the bare one: `Washington, DC 20003`.
+		// The code reaches the model in volume through the US sources, but only ever
+		// with a street in front of the city.
+		// This recipe's `after_region` surface is the bare one: `Washington, DC 20003`.
 		const us = (region: string) => ({
 			locality: "Washington",
 			region,

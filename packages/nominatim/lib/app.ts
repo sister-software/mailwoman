@@ -21,8 +21,10 @@ import { registerNominatimRoutes } from "#routes"
 export interface NominatimAppOptions {
 	/**
 	 * Emit permissive cors headers (`Access-Control-Allow-Origin: *`) on every response
-	 * and answer preflight `options` with `204`. Default `true` — browser-embedded
-	 * geocoder clients need it: a cross-origin XHR is blocked without it (#1017).
+	 * and answer preflight `options` with `204`.
+	 *
+	 * Default `true` — browser-embedded geocoder clients need it: a cross-origin
+	 * XHR is blocked without it (#1017).
 	 * Set `false` when a reverse proxy already owns the cors headers.
 	 */
 	cors?: boolean
@@ -30,6 +32,7 @@ export interface NominatimAppOptions {
 	/**
 	 * The engine stamp to carry on every response: `engine` on each jsonv2 result
 	 * and geojson collection, and the `Server` + `Link: rel="license"` headers everywhere.
+	 *
 	 * Absent when an embedding application builds the app without the `mailwoman`
 	 * package. the `nominatim` bin always passes one.
 	 */
@@ -38,6 +41,7 @@ export interface NominatimAppOptions {
 
 /**
  * The document info stamped into the emitted OpenAPI document.
+ *
  * Exported (not inlined) so the CLI's `openapi` subcommand can call `emitOpenAPIDocuments`
  * with the same info the mounted `/openapi.json` route (below, via
  * {@link attachOpenAPIDocs}) uses — one source of truth, no risk of the two drifting.
@@ -70,8 +74,9 @@ export function createNominatimApp(engine: NominatimEngine, options: NominatimAp
 	const app = new OpenAPIHono()
 
 	// Browser-embedded geocoder clients need cors or their cross-origin XHR is blocked
-	// before completing (#1017). GET-only — nominatim has no mutating routes,
-	// so unlike libpostal's cors there is no post in the methods list.
+	// before completing (#1017).
+	// GET-only — nominatim has no mutating routes, so unlike libpostal's cors
+	// there is no post in the methods list.
 	if (options.cors !== false) {
 		app.use(cors({ origin: "*", allowMethods: ["GET", "OPTIONS"], allowHeaders: ["*"], maxAge: 86_400 }))
 	}

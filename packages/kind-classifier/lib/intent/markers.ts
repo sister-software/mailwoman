@@ -27,8 +27,10 @@ import { matchPOICategory, type POIPhraseLookup } from "#poi"
 export interface IntentMarkerContext {
 	input: NormalizedInputLite
 	/**
-	 * The injected POI lexicon, when one was wired. Absent → no `poi_category` marker can
-	 * be built, which is consistent because the kind cannot fire without it either.
+	 * The injected POI lexicon, when one was wired.
+	 *
+	 * Absent → no `poi_category` marker can be built, which is consistent
+	 * because the kind cannot fire without it either.
 	 */
 	poiLexicon?: POIPhraseLookup
 	locale?: string
@@ -37,12 +39,14 @@ export interface IntentMarkerContext {
 /**
  * Build the advisories for one classified query.
  *
- * `kinds` is the full verdict — top plus alternatives — because two of the four intent kinds live
- * in `alternatives` by design (see `intent-rules.ts`). Reading only the top kind would
- * make them invisible, which is the mistake this signature exists to prevent.
+ * `kinds` is the full verdict — top plus alternatives — because two of the four intent
+ * kinds live in `alternatives` by design (see `intent-rules.ts`).
+ * Reading only the top kind would make them invisible, which is the mistake
+ * this signature exists to prevent.
  *
- * Returns `[]` when no intent kind fired. Callers surface that empty array rather than
- * dropping the field: an empty array is the classifier stating it looked.
+ * Returns `[]` when no intent kind fired.
+ * Callers surface that empty array rather than dropping the field: an empty
+ * array is the classifier stating it looked.
  */
 export function deriveIntentMarkers(
 	kinds: ReadonlyArray<{ kind: QueryKind; confidence: number }>,
@@ -64,8 +68,10 @@ export function deriveIntentMarkers(
 			evidence: {
 				tokens,
 				/**
-				 * Both readings, named. The order is stable (pair first, then the admin reading)
-				 * so a consumer can index it. it is not a ranking, and nothing downstream reads it as one.
+				 * Both readings, named.
+				 *
+				 * The order is stable (pair first, then the admin reading) so a consumer can
+				 * index it. it is not a ranking, and nothing downstream reads it as one.
 				 */
 				interpretations: ["two_toponyms", "locality_with_admin_context"],
 			},
@@ -84,6 +90,7 @@ export function deriveIntentMarkers(
 				subject,
 				/**
 				 * The plug point, named but not wired (ROAD_TO_V9 §4.4 scopes v9 to classification).
+				 *
 				 * Photon's `/api` already accepts `lat`/`lon` location-bias params — `photon/` is the
 				 * eventual consumer of this marker, and this string is the note that says where it plugs in.
 				 */

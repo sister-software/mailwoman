@@ -16,8 +16,10 @@ import { publishWorkspace, releaseItWorkspaceEnvironment } from "#pack/publish/w
 import { assertPlanHolds } from "#release/plan"
 
 /**
- * `release.publish-workspace` — writes to an external system and is reachable only through the plan →
- * execute interface. Listed in `registry.ts`; the description on the operation is what `mwops` prints.
+ * `release.publish-workspace` — writes to an external system and is reachable
+ * only through the plan → execute interface.
+ *
+ * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
  */
 export const publishWorkspaceOperation = defineOperation({
 	id: "release.publish-workspace",

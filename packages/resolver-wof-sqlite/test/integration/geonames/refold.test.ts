@@ -72,7 +72,8 @@ function freshDB(): DatabaseClient<WOFDatabase> {
 beforeAll(async () => {
 	dir = await temporaryDirectory("geonames-refold-")
 
-	// Fold A's set, in list order: BW then AT. BW's single place lands at GEONAMES_ID_BASE + 0.
+	// Fold A's set, in list order: BW then AT.
+	// BW's single place lands at GEONAMES_ID_BASE + 0.
 	await writeLocalFile(
 		row({
 			0: "933773",
@@ -109,7 +110,8 @@ test("a re-fold with a different country list leaves no name bound to another co
 
 	expect((db.prepare(`SELECT name, country FROM spr WHERE id = ?`).get(GEONAMES_ID_BASE) as Row).name).toBe("Gaborone")
 
-	// Fold B — the shorter list a downstream step defaults to. Its first place takes the id Gaborone held.
+	// Fold B — the shorter list a downstream step defaults to.
+	// Its first place takes the id Gaborone held.
 	await ingestGeonamesAliases(db, ["AT"], dir.path, () => {})
 
 	const disagreeing = db
@@ -125,8 +127,9 @@ test("a re-fold rewrites the range wholesale — no row survives from the previo
 	await ingestGeonamesAliases(db, ["BW", "AT"], dir.path, () => {})
 	await ingestGeonamesAliases(db, ["AT"], dir.path, () => {})
 
-	// Fold B declared AT only. Nothing from BW may remain — not an spr row rather than a name
-	// rather than a population. A surviving row is a row no run is accountable for.
+	// Fold B declared AT only.
+	// Nothing from BW may remain — not an spr row rather than a name rather than a population.
+	// A surviving row is a row no run is accountable for.
 	const leftovers = db
 		.prepare(
 			`SELECT (SELECT COUNT(*) FROM spr WHERE id >= ? AND country = 'BW') AS spr,

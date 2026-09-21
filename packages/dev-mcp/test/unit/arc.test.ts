@@ -16,8 +16,8 @@ import { describe, expect, it } from "vitest"
 /**
  * The protections these cases decide against, declared here rather than inherited from `scope.config.json`.
  *
- * A verdict test that reads the shipped register measures the register
- * and the arithmetic at once, and when the two disagree it cannot say which one moved.
+ * A verdict test that reads the shipped register measures the register and the arithmetic
+ * at once, and when the two disagree it cannot say which one moved.
  * The register gets its own case at the bottom of this file.
  */
 const PROTECTIONS = [
@@ -86,7 +86,8 @@ describe("decideArc", () => {
 	})
 
 	it("blocks a D-rule locale regression regardless of a winning net", () => {
-		// Iron rule 6. Net +37 does not add a regression in France.
+		// Iron rule 6.
+		// Net +37 does not add a regression in France.
 		const arc = decideArc(
 			leg("control", 0, 0, { differed: 0 }),
 			leg("null", 0, 0),
@@ -95,8 +96,9 @@ describe("decideArc", () => {
 		)
 
 		expect(arc.verdict).toBe("hold")
-		// Both tier-1 locales are reported. The list this replaced named FR and not US, so this row read
-		// `[{ country: "FR", n: 1 }]` and the two US regressions beside it raised nothing (#2278).
+		// Both tier-1 locales are reported.
+		// The list this replaced named FR and not US, so this row read `[{ country: "FR", n: 1 }]`
+		// and the two US regressions beside it raised nothing (#2278).
 		expect(arc.dRuleViolations.map((entry) => `${entry.country}:${entry.n}`)).toEqual(["FR:1", "US:2"])
 	})
 
@@ -129,8 +131,8 @@ describe("decideArc", () => {
 
 	it("holds a candidate that beats shipped but not the null", () => {
 		// The trap the arc walked into from the other side: -3 looks like a small regression
-		// and is actually an improvement over a -5 null. This one is the reverse —
-		// positive against shipped, negative against the placebo.
+		// and is actually an improvement over a -5 null.
+		// This one is the reverse — positive against shipped, negative against the placebo.
 		const arc = decideArc(
 			leg("control", 0, 0, { differed: 0 }),
 			leg("null", 12, 2),
@@ -179,8 +181,8 @@ describe("decideArc", () => {
 	})
 
 	it("renders BOTH halves of the trade, not only the regressions", () => {
-		// The first version recorded regressedInputs and not improvedInputs, so every
-		// report it produced showed the losses as addresses and the wins as a bare count.
+		// The first version recorded regressedInputs and not improvedInputs, so every report
+		// it produced showed the losses as addresses and the wins as a bare count.
 		// A candidate is a trade. a reader cannot price one with a side hidden.
 		const arc = decideArc(
 			leg("control", 0, 0, { differed: 0 }),

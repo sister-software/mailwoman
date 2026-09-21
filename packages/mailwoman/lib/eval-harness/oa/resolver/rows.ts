@@ -9,6 +9,7 @@ import { JSONSpliterator } from "spliterator"
 
 /**
  * One OpenAddresses row: a real address string plus the government point it was published with.
+ *
  * `expected` is the admin truth the resolver is graded against; `lat`/`lon` are the coordinate truth.
  */
 export interface OARow {
@@ -21,7 +22,9 @@ export interface OARow {
 }
 
 /**
- * Read the eval jsonl, capped at `limit` rows. `Infinity` reads the file whole.
+ * Read the eval jsonl, capped at `limit` rows.
+ *
+ * `Infinity` reads the file whole.
  */
 export async function readOARows(evalPath: string, limit: number): Promise<OARow[]> {
 	return (

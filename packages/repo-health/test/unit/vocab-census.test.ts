@@ -62,8 +62,9 @@ describe("the classifier reads the whole line, not only the modifier", () => {
 
 	it("finds the word when Vale's line number drifts, rather than bucketing a blank", () => {
 		// A bare `//` line shifts Vale's numbering: a hit on line 1 gets reported as line 3.
-		// Trusting the number reads an unrelated line, so the modifier comes out empty and the site
-		// lands in the read-context bucket by accident. Two files in this repository drift, both by two.
+		// Trusting the number reads an unrelated line, so the modifier comes out empty
+		// and the site lands in the read-context bucket by accident.
+		// Two files in this repository drift, both by two.
 		const source = [
 			"\t// then fail the ambiguity gate for Nassau's rows",
 			"\t//",
@@ -93,9 +94,10 @@ describe("the classifier reads the whole line, not only the modifier", () => {
 
 	it("indexes source by ABSOLUTE line number, blank lines included", () => {
 		// The check reads files with `TextSpliterator.from(..., { skipEmpty: false })`.
-		// The default drops blank lines, which shifts every line number after the first one —
-		// the hit below then classifies against the wrong source line and lands in a different bucket
-		// with nothing failing. Measured on the real corpus: the default moved 731 of 2,014 hits.
+		// The default drops blank lines, which shifts every line number after the
+		// first one — the hit below then classifies against the wrong source line
+		// and lands in a different bucket with nothing failing.
+		// Measured on the real corpus: the default moved 731 of 2,014 hits.
 		const source = ["// header", "", "\t// then fail the ambiguity gate for Nassau's rows"]
 		const [hit] = classify(["a.ts:3:22:Mailwoman.AmbiguousShorthand:'gate' is ambiguous"], new Map([["a.ts", source]]))
 

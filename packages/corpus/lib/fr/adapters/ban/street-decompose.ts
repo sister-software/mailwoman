@@ -32,8 +32,9 @@ export interface DecomposedFrStreet {
 /**
  * Decompose a French street name into prefix (leading type word) and street name.
  *
- * If the first 1-2 tokens match a known street type (allowing for multi-word like "ancien chemin"),
- * they become the prefix. Returns `{ prefix: null, street: original }` if no match.
+ * If the first 1-2 tokens match a known street type
+ * (allowing for multi-word like "ancien chemin"), they become the prefix.
+ * Returns `{ prefix: null, street: original }` if no match.
  */
 export function decomposeFrStreet(fullname: string): DecomposedFrStreet {
 	const trimmed = fullname.trim()

@@ -104,38 +104,47 @@ export interface POIBoardFixture {
 	expect: POIBoardExpect
 	/**
 	 * Whether this row's grade is counted toward the floors.
+	 *
 	 * Absent means `pass` — a row says nothing about its status only when it is expected to hold.
 	 */
 	status?: POIBoardStatus
 	/**
 	 * The live issue a tracked row's diagnosis lives on, e.g. `#1039`.
+	 *
 	 * Required on a tracked row, and refused on a counted one: a counted row that
 	 * names a defect asserts the defect is already repaired.
 	 */
 	bugRef?: string
 	/**
 	 * The committed record this row was promoted from, as `file#id` —
-	 * e.g. `semantic-utility/probe-definition.json#sem-act-us-01`, relative to
-	 * `packages/mailwoman/lib/eval-harness/`. Carried so a promoted row names the
-	 * population it came from rather than reading as authored here.
+	 * e.g. `semantic-utility/probe-definition.json#sem-act-us-01`, relative
+	 * to `packages/mailwoman/lib/eval-harness/`.
+	 *
+	 * Carried so a promoted row names the population it came from rather than reading as authored here.
 	 */
 	rowRef?: string
 	/**
-	 * Free-form authoring note. Never graded.
+	 * Free-form authoring note.
+	 *
+	 * Never graded.
 	 */
 	note?: string
 }
 
 /**
- * Every key a fixture record may carry. An unknown key is refused rather than dropped: a plain
- * object silently discards a misspelled field, so a row meant to be tracked would reach the floors
- * while reading as authored — and the board would then turn red for a reason nobody wrote.
+ * Every key a fixture record may carry.
+ *
+ * An unknown key is refused rather than dropped: a plain object silently discards a
+ * misspelled field, so a row meant to be tracked would reach the floors while reading
+ * as authored — and the board would then turn red for a reason nobody wrote.
  */
 const FIXTURE_KEYS = new Set<string>(["id", "query", "locale", "expect", "status", "bugRef", "rowRef", "note"])
 
 /**
- * The status a row grades under. Absent is `pass`, so every committed row before the
- * tracked convention existed keeps counting toward the floors without carrying a field.
+ * The status a row grades under.
+ *
+ * Absent is `pass`, so every committed row before the tracked convention existed
+ * keeps counting toward the floors without carrying a field.
  */
 function fixtureStatus(fixture: POIBoardFixture): POIBoardStatus {
 	return fixture.status ?? "pass"
@@ -150,7 +159,9 @@ export function isCountedFixture(fixture: POIBoardFixture): boolean {
 
 /**
  * Everything that must be true of the committed fixture set, checked without running anything.
- * One message per problem, each naming the row id. Empty means the set is loadable.
+ *
+ * One message per problem, each naming the row id.
+ * Empty means the set is loadable.
  *
  * Pure, so `poi-board.test.ts` exercises every refusal against synthetic rows,
  * and `runPOIBoard` refuses the real file before it builds a pipeline.
@@ -225,9 +236,10 @@ export interface CaseGrade {
 }
 
 /**
- * Grade one case against the pipeline's outcome. Pure — no I/O, no pipeline construction —
- * so this is the unit-tested core (`poi-board.test.ts`) and the live runner
- * (`runPOIBoard`) is just fixture-load + pipeline-call + this.
+ * Grade one case against the pipeline's outcome.
+ *
+ * Pure — no I/O, no pipeline construction — so this is the unit-tested core (`poi-board.test.ts`)
+ * and the live runner (`runPOIBoard`) is just fixture-load + pipeline-call + this.
  */
 export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): CaseGrade {
 	const tookPoiPath = outcome.path === "poi" && outcome.poiIntent !== undefined
@@ -367,14 +379,17 @@ export interface TrackedCase {
 	grade: CaseGrade
 	status: POIBoardStatus
 	/**
-	 * The live issue this row's diagnosis lives on. Never blank — {@linkcode auditFixtures}
-	 * refuses a tracked row without one.
+	 * The live issue this row's diagnosis lives on.
+	 *
+	 * Never blank — {@linkcode auditFixtures} refuses a tracked row without one.
 	 */
 	bugRef: string
 	rowRef?: string
 	note?: string
 	/**
-	 * True when a tracked row passed. Printed as a promotion instruction rather than silently absorbed.
+	 * True when a tracked row passed.
+	 *
+	 * Printed as a promotion instruction rather than silently absorbed.
 	 */
 	holding: boolean
 }
@@ -388,9 +403,11 @@ export interface CasePartition {
 }
 
 /**
- * Split graded cases by their fixture's status. Pure, and keyed by id rather than by position —
- * a grade whose id names no fixture is refused rather than dropped, because a dropped
- * grade leaves the floors reading a smaller board and reports as a higher pass rate.
+ * Split graded cases by their fixture's status.
+ *
+ * Pure, and keyed by id rather than by position — a grade whose id names no fixture
+ * is refused rather than dropped, because a dropped grade leaves the floors reading
+ * a smaller board and reports as a higher pass rate.
  */
 export function partitionCases(fixtures: readonly POIBoardFixture[], grades: readonly CaseGrade[]): CasePartition {
 	const byID = new Map(fixtures.map((fixture) => [fixture.id, fixture]))
@@ -506,8 +523,10 @@ export interface FloorInput {
 }
 
 /**
- * Grade a report against {@link POI_BOARD_FLOORS}. Pure — no I/O, no pipeline — so breach detection
- * is unit-tested against synthetic reports (`poi-board.test.ts`) without a live board run.
+ * Grade a report against {@link POI_BOARD_FLOORS}.
+ *
+ * Pure — no I/O, no pipeline — so breach detection is unit-tested against synthetic
+ * reports (`poi-board.test.ts`) without a live board run.
  * A category floor over an absent kind (zero cases of it) is treated as unmet rather than vacuously met.
  */
 export function evaluateFloors(report: FloorInput): FloorEvaluation {
@@ -551,7 +570,9 @@ export interface POIBoardReport {
 	 */
 	countedCases: number
 	/**
-	 * Rows carrying a tracked status. Run, graded, reported, and never counted toward the floors.
+	 * Rows carrying a tracked status.
+	 *
+	 * Run, graded, reported, and never counted toward the floors.
 	 */
 	trackedCases: number
 	/**
@@ -563,19 +584,22 @@ export interface POIBoardReport {
 	 */
 	overallPassRate: number
 	/**
-	 * Pass rate over every committed row. Report-only, and deliberately reported beside
-	 * the floor number: a reader comparing the two sees what the tracked rows cost,
-	 * rather than a single rate that hides them.
+	 * Pass rate over every committed row.
+	 *
+	 * Report-only, and deliberately reported beside the floor number: a reader comparing
+	 * the two sees what the tracked rows cost, rather than a single rate that hides them.
 	 */
 	allCasesPassRate: number
 	/**
 	 * Pre-registered floors graded against this report (spec §3.6).
+	 *
 	 * Printed on every run. enforced under `--enforce`.
 	 */
 	floors: FloorEvaluation
 	/**
-	 * Tracked rows with the record that says why. A tracked row whose `holding` is
-	 * true is printed as a promotion instruction.
+	 * Tracked rows with the record that says why.
+	 *
+	 * A tracked row whose `holding` is true is printed as a promotion instruction.
 	 */
 	tracked: TrackedCase[]
 	/**
@@ -597,9 +621,11 @@ export interface POIBoardRunResult {
  * Linear-interpolated quantile — deliberately not `percentile` from `@mailwoman/core/utils`.
  *
  * They are different estimators rather than two copies of one.
- * Core's is nearest-rank and its docstring warns against "upgrading" it, because the resolver eval
- * baselines were measured with that exact semantics. This one interpolates between the bracketing
- * order statistics, which is what the POI board's distance summaries have always reported.
+ * Core's is nearest-rank and its docstring warns against "upgrading" it, because the
+ * resolver eval baselines were measured with that exact semantics.
+ *
+ * This one interpolates between the bracketing order statistics, which is what the
+ * POI board's distance summaries have always reported.
  * Pointing this at core would shift published board numbers without changing a single measurement.
  */
 function quantile(sorted: number[], q: number): number {
@@ -816,6 +842,7 @@ function printReport(report: POIBoardReport): void {
 
 /**
  * The failing counted rows — the ones a floor breach is made of.
+ *
  * Tracked failures print in their own block above, so a reader never has to subtract
  * one list from the other to see what actually moved.
  */

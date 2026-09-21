@@ -41,7 +41,8 @@ describe("adminLayerManifest — source is derived from the run", () => {
 	})
 
 	it("refuses to stamp a manifest on a gazetteer built from nothing", () => {
-		// An empty build is a failed build. A manifest would make the artifact look describable.
+		// An empty build is a failed build.
+		// A manifest would make the artifact look describable.
 		expect(() => adminLayerManifest({ ...BASE, counts: { wof: 0, overture: 0, geonames: 0 } })).toThrow(
 			/no source ingested/
 		)

@@ -64,6 +64,7 @@ export const spec = {
  * and the TS matcher — documented in `rules.word_norm` below): per whitespace-word,
  * strip leading/trailing characters that are not Unicode letters or digits
  * (keep internal ones: "timor-leste", "u.s.a"), then rejoin single-spaced.
+ *
  * Entry keys and scanned tokens both pass through it, so "U.S.A." ≡ "u.s.a".
  */
 /**

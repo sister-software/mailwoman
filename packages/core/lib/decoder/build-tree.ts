@@ -31,6 +31,7 @@ import type { AddressNode, AddressSystem, AddressTree, DecoderToken } from "#dec
 
 /**
  * Optional caller-supplied attribution stamped on every emitted node.
+ *
  * The BIO stream comes from a single model, so there's no per-span variation —
  * one source for the whole tree.
  *
@@ -40,18 +41,25 @@ export interface BuildTreeOpts {
 	source?: string
 	sourceID?: string
 	/**
-	 * Addressing system to decode under — selects the containment hierarchy
-	 * via `containmentFor`. Stamped onto the returned `AddressTree.system`.
-	 * Omit for the default Western hierarchy. Today all systems share one map,
-	 * so this only records intent + threads the discriminator. it becomes behavioral
-	 * when a system-specific map lands (Phase 6 JP). See `containment.ts`.
+	 * Addressing system to decode under — selects the containment hierarchy via `containmentFor`.
+	 *
+	 * Stamped onto the returned `AddressTree.system`.
+	 * Omit for the default Western hierarchy.
+	 *
+	 * Today all systems share one map, so this only records intent + threads the discriminator.
+	 * it becomes behavioral when a system-specific map lands (Phase 6 JP).
+	 * See `containment.ts`.
 	 */
 	system?: AddressSystem
 	/**
-	 * Optional confidence calibrator (task #59). When provided, each span's
-	 * mean-of-token-softmax confidence is mapped through it before being stamped on the node,
-	 * so `conf=` reports a calibrated probability of correctness rather than the raw softmax.
-	 * OPT-IN — omit for the byte-stable default. Build one via `createCalibrator` (`./calibration.ts`).
+	 * Optional confidence calibrator (task #59).
+	 *
+	 * When provided, each span's mean-of-token-softmax confidence is mapped through it
+	 * before being stamped on the node, so `conf=` reports a calibrated probability
+	 * of correctness rather than the raw softmax.
+	 * OPT-IN — omit for the byte-stable default.
+	 *
+	 * Build one via `createCalibrator` (`./calibration.ts`).
 	 */
 	calibrate?: Calibrator
 }
@@ -70,19 +78,21 @@ function bioParts(label: BIOLabel): { prefix: "B" | "I" | "O"; tag: ComponentTag
 	return { prefix: label.slice(0, dash) as "B" | "I", tag: label.slice(dash + 1) as ComponentTag }
 }
 
-// Unicode-aware boundary trim: shrink (start, end) past leading/trailing chars that aren't letters
-// or numbers. Reason: BIO span boundaries from the model occasionally include a preceding comma+ space
+// Unicode-aware boundary trim: shrink (start, end) past leading/trailing chars
+// that aren't letters or numbers.
+// Reason: BIO span boundaries from the model occasionally include a preceding comma+ space
 // or trailing punctuation token (the "boundary slip" diagnosed in v0.4.0 — see PHASE_2's v0.4.0 entry).
 // The model's tag attribution is correct, only the boundary is fuzzy.
 // Trimming produces a clean canonical value and clean start/end offsets so downstream
 // consumers slicing raw[start:end] get the same string as node.value.
 //
-// exception: a trailing period directly adjacent to a word character is an abbreviation
-// marker ("Str." / "St." / "Ave."). The model includes these in the span correctly.
-// stripping them loses the abbreviation suffix. We preserve the period
-// when it is immediately preceded by \p{L}\p{N} and not separated by whitespace —
-// the slip pattern we guard against is ", 22220" / "Paris 75004," / wrapping quotes, where
-// the punctuation is isolated from the word body. (#1519 trailing-dot half)
+// exception: a trailing period directly adjacent to a word character is an
+// abbreviation marker ("Str." / "St." / "Ave.").
+// The model includes these in the span correctly. stripping them loses the abbreviation suffix.
+// We preserve the period when it is immediately preceded by \p{L}\p{N} and not separated
+// by whitespace — the slip pattern we guard against is ", 22220" / "Paris 75004,"
+// / wrapping quotes, where the punctuation is isolated from the word body.
+// (#1519 trailing-dot half)
 function trimBoundary(raw: string, start: number, end: number): { start: number; end: number } {
 	let s = start
 	let e = end
@@ -116,7 +126,8 @@ function flush(open: OpenSpan | null, raw: string, out: AddressNode[], attributi
 	if (!open) return null
 	const { start, end } = trimBoundary(raw, open.start, open.end)
 
-	// A span that trims to empty (all-punctuation) is meaningless — drop it. Confidence is moot.
+	// A span that trims to empty (all-punctuation) is meaningless — drop it.
+	// Confidence is moot.
 	if (start >= end) return null
 	const value = raw.slice(start, end)
 	const rawConfidence = open.confidences.reduce((a, b) => a + b, 0) / open.confidences.length
@@ -145,8 +156,8 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 
 		if (prefix === "O") {
 			// A zero-width or whitespace-only `O` piece is a tokenizer artifact — SentencePiece
-			// emits a standalone `▁` word-boundary marker between words and the model labels
-			// it `O` (e.g. "Saint Paul" → "▁Saint"[B-loc], "▁"[O, zero-width], "Paul"[B-loc]).
+			// emits a standalone `▁` word-boundary marker between words and the model labels it
+			// `O` (e.g. "Saint Paul" → "▁Saint"[B-loc], "▁"[O, zero-width], "Paul"[B-loc]).
 			// It is not a real component boundary, so it must not flush the open span. keeping the span alive
 			// lets the following same-tag `B-` token merge in (see the spurious-boundary repair below).
 			// A non-whitespace `O` (comma, slash, …) is a genuine separator and still flushes.

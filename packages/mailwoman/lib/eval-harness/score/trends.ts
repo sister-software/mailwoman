@@ -23,8 +23,10 @@ import { pyRound } from "@mailwoman/core/numeric"
 import { repoRootPath } from "@mailwoman/core/paths"
 
 /**
- * Tags in report order. Anything the ledger carries that is absent here still appears, sorted,
- * after the listed ones — a new tag shows up on its own rather than waiting for this list to grow.
+ * Tags in report order.
+ *
+ * Anything the ledger carries that is absent here still appears, sorted, after the listed
+ * ones — a new tag shows up on its own rather than waiting for this list to grow.
  */
 const TAG_ORDER = [
 	"micro",
@@ -44,8 +46,10 @@ const TAG_ORDER = [
 ]
 
 /**
- * Locales with a trend table, in report order. Also the discriminator for the v4.4.0-era
- * ledger shape, which put the locale dict straight at the top of `metrics`.
+ * Locales with a trend table, in report order.
+ *
+ * Also the discriminator for the v4.4.0-era ledger shape, which put the locale
+ * dict straight at the top of `metrics`.
  */
 const LOCALES = ["us", "fr", "de"]
 
@@ -55,8 +59,10 @@ const LOCALES = ["us", "fr", "de"]
 const G_PRECISION = 6
 
 /**
- * `%g`'s lower crossover exponent. C switches to scientific notation below 1e-4 and at or above
- * `10 ** G_PRECISION`; both bounds come from the format rather than from anything about eval scores.
+ * `%g`'s lower crossover exponent.
+ *
+ * C switches to scientific notation below 1e-4 and at or above `10 ** G_PRECISION`;
+ * both bounds come from the format rather than from anything about eval scores.
  */
 const G_MIN_FIXED_EXPONENT = -4
 
@@ -161,11 +167,15 @@ function normalize(run: Record<string, unknown>): LocaleScores {
 
 export interface ScoreTrendsOptions {
 	/**
-	 * The eval ledger. Default `evals/scores-by-version.json`.
+	 * The eval ledger.
+	 *
+	 * Default `evals/scores-by-version.json`.
 	 */
 	ledger?: string
 	/**
-	 * Destination markdown. Default `docs/records/evals/score-trends.md`.
+	 * Destination markdown.
+	 *
+	 * Default `docs/records/evals/score-trends.md`.
 	 */
 	out?: string
 }

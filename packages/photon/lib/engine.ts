@@ -10,8 +10,10 @@
  */
 
 /**
- * Photon feature properties — OSM-derived tag names, populated from Mailwoman's `ComponentTag`
- * / resolved place. `extent` is `[minLon, maxLat, maxLon, minLat]` per Photon's convention.
+ * Photon feature properties — OSM-derived tag names, populated from Mailwoman's
+ * `ComponentTag` / resolved place.
+ *
+ * `extent` is `[minLon, maxLat, maxLon, minLat]` per Photon's convention.
  */
 export interface PhotonProperties {
 	osm_id?: number | string
@@ -82,7 +84,9 @@ export interface PhotonReverseParams {
 }
 
 /**
- * The engine the router delegates to. Each method is optional. a missing one answers `501`.
+ * The engine the router delegates to.
+ *
+ * Each method is optional. a missing one answers `501`.
  * The real implementation backs `/api` with the FST autocomplete tier + parse→resolve,
  * and `/reverse` with the `WOFReverseGeocoder`.
  */

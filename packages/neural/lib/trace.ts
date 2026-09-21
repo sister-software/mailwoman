@@ -22,15 +22,17 @@ import type { SoftFeatureChannel } from "#soft-features"
 
 /**
  * The emission priors the decode path may compose, in application order.
+ *
  * The ordered constant is the single source for "every kind" — the decode path's
  * push sites and the empty-input return both produce records in exactly this order,
  * and the trace test asserts against it, so adding a prior without its participation
  * record is a test failure rather than a silent omission.
  *
  * `"placetypeCensus"` is the one member that is not an emission prior.
- * It is the PCN1 census observability rung: it rides the placetype-pair prior's
- * parent-candidate probes, records what the census knows about each parent, and composes
- * nothing — its `applied` is `false` by construction (see {@link TracePrior.applied}).
+ * It is the PCN1 census observability rung: it rides the placetype-pair prior's parent-candidate
+ * probes, records what the census knows about each parent, and composes nothing —
+ * its `applied` is `false` by construction (see {@link TracePrior.applied}).
+ *
  * It sits directly after `"placetypePair"` because that is where in the decode path it is
  * produced, and the ordering here is production order rather than a claim about composition.
  */
@@ -48,33 +50,38 @@ export type TracePriorKind = (typeof TRACE_PRIOR_KINDS)[number]
 
 /**
  * One prior's participation record: present for every kind.
- * `applied` reports effect rather than configuration — true only when the composed
- * prior actually carried a nonzero bias (or the mask removed at least one label).
+ *
+ * `applied` reports effect rather than configuration — true only when the composed prior
+ * actually carried a nonzero bias (or the mask removed at least one label).
  * A configured source that matched nothing reports `false`, so "why didn't my prior
  * move the emissions" is answerable from the trace alone.
  */
 export interface TracePrior {
 	kind: TracePriorKind
 	/**
-	 * Whether this prior moved anything. Always `false` on `"placetypeCensus"`,
-	 * which writes no emissions at all — a `true` there would mean somebody wired a
-	 * census bias into the decoder, which the 2026-08-04 assessment checks behind a
-	 * calibration δ the artifact deliberately doesn't carry.
+	 * Whether this prior moved anything.
+	 *
+	 * Always `false` on `"placetypeCensus"`, which writes no emissions at all — a `true`
+	 * there would mean somebody wired a census bias into the decoder, which the 2026-08-04
+	 * assessment checks behind a calibration δ the artifact deliberately doesn't carry.
 	 */
 	applied: boolean
 	/**
 	 * `placetypePair` only, and only when `applied` is true: which candidate-construction
 	 * path of the probe chain produced the bias — `"segment"` (comma-delimited segments),
 	 * `"anchored"` (the comma-free adjacent-pair path), or `"window"` (the opt-in sliding window).
+	 *
 	 * See `placetype-pair-prior.ts`'s "Probe mode" docstring section.
 	 * Absent on every other kind and whenever the prior carried no bias,
 	 * so pre-existing traces are unchanged byte-for-byte.
 	 */
 	probePath?: "segment" | "anchored" | "window"
 	/**
-	 * `placetypeCensus` only: what the PCN1 census knew about each parent surface the pair
-	 * prior's probe chain looked up on this input. Absent when no census artifact was loaded —
-	 * the feature is then entirely inert and the record is just `{kind, applied: false}`.
+	 * `placetypeCensus` only: what the PCN1 census knew about each parent surface
+	 * the pair prior's probe chain looked up on this input.
+	 *
+	 * Absent when no census artifact was loaded — the feature is then entirely inert
+	 * and the record is just `{kind, applied: false}`.
 	 */
 	census?: PlacetypeCensusObservation[]
 	/**
@@ -98,8 +105,10 @@ export type TraceRepairPass =
 	| "spanBridge"
 
 /**
- * A repair pass that changed something: per-piece BIO label sequences before and after,
- * index-aligned with `pieces`. Passes that ran but changed nothing are omitted.
+ * A repair pass that changed something: per-piece BIO label sequences before
+ * and after, index-aligned with `pieces`.
+ *
+ * Passes that ran but changed nothing are omitted.
  */
 export interface TraceRepair {
 	pass: TraceRepairPass
@@ -118,9 +127,11 @@ export interface TracePiece {
 }
 
 /**
- * The full trace of one `traceParse` call. Field-by-field provenance lives in the spec's trace
- * interface table. the one deviation from that table is that vocab ids ride on `pieces[].id`
- * rather than a parallel `ids` array (same information, one fewer alignment invariant).
+ * The full trace of one `traceParse` call.
+ *
+ * Field-by-field provenance lives in the spec's trace interface table. the one deviation
+ * from that table is that vocab ids ride on `pieces[].id` rather than a parallel
+ * `ids` array (same information, one fewer alignment invariant).
  */
 export interface NeuralParseTrace {
 	/**
@@ -143,7 +154,9 @@ export interface NeuralParseTrace {
 	 */
 	gazetteer?: SoftFeatureChannel
 	/**
-	 * Country-lexicon channel exactly as fed (#1104). Absent = channel not fed.
+	 * Country-lexicon channel exactly as fed (#1104).
+	 *
+	 * Absent = channel not fed.
 	 */
 	country?: SoftFeatureChannel
 	/**
@@ -152,6 +165,7 @@ export interface NeuralParseTrace {
 	logits: number[][]
 	/**
 	 * Locale-head output, index-aligned with `localeCountries`.
+	 *
 	 * Absent on models without the head.
 	 */
 	localeLogits?: number[]
@@ -166,6 +180,7 @@ export interface NeuralParseTrace {
 	 * from the producing model's own `LOCALE_COUNTRIES` so consumers never hardcode the
 	 * order (the PLACETYPE_ORDER dual-maintenance class — a retrained head that adds
 	 * or reorders classes would otherwise silently mislabel every downstream gauge).
+	 *
 	 * Present iff `localeLogits` is.
 	 */
 	localeCountries?: string[]
@@ -180,19 +195,24 @@ export interface NeuralParseTrace {
 	priors: TracePrior[]
 	/**
 	 * The post-prior, post-mask matrix viterbi actually decoded over.
+	 *
 	 * Equals `logits` when nothing fired.
 	 */
 	emissions: number[][]
 	/**
-	 * The label vocabulary. Index-aligned with the logits/emissions inner dimension, which may be narrower
-	 * than this list (the Stage-prefix rule: a Stage-N model loaded with Stage-N+1 labels emits only the
-	 * prefix — see labels.ts + `assertEmissionWidth`). Never wider.
+	 * The label vocabulary.
+	 *
+	 * Index-aligned with the logits/emissions inner dimension, which may be narrower than
+	 * this list (the Stage-prefix rule: a Stage-N model loaded with Stage-N+1 labels
+	 * emits only the prefix — see labels.ts + `assertEmissionWidth`).
+	 * Never wider.
 	 */
 	labels: string[]
 	/**
 	 * The decoder's label indices per piece — the raw viterbi/argmax output, captured
-	 * before the word-consistency healing vote and before every token-repair
-	 * pass (all of which appear in `repairs`; final labels live on `tokens`).
+	 * before the word-consistency healing vote and before every token-repair pass
+	 * (all of which appear in `repairs`; final labels live on `tokens`).
+	 *
 	 * This is what the heatmap's path outline means: the cell the decode chose rather than the healed result.
 	 */
 	path: number[]

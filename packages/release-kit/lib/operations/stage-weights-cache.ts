@@ -12,6 +12,7 @@ import { stageWeightsCache } from "#weights/stage-weights-cache"
 
 /**
  * `release.stage-weights-cache` — writes inside the checkout or the data root.
+ *
  * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
  */
 export const stageWeightsCacheOperation = defineOperation({

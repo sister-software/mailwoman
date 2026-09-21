@@ -45,9 +45,10 @@ export const BLANK_CELL: TableCell = { tag: "td", text: "", blocks: [] }
 
 /**
  * The nearest ancestor of `node` with one of `names`, or `null`.
+ *
  * This is the whole basis of the grid: a table is top-level when its nearest `table`
- * ancestor is `null`, a row belongs to the table that is its nearest `table`
- * ancestor, and a cell belongs to the row that is its nearest `tr` ancestor.
+ * ancestor is `null`, a row belongs to the table that is its nearest `table` ancestor,
+ * and a cell belongs to the row that is its nearest `tr` ancestor.
  * One rule, applied three times, and a nested layout table stays with the cell it sits in
  * rather than becoming a table, a row, or a cell of its own.
  */
@@ -79,6 +80,7 @@ function readCell(cell: Element): TableCell {
 /**
  * Reads every TOP-level table in `html` as rows of cells, in document order, or `null` when the
  * document states no table at all (the caller decides what to do with a document that is not tabular).
+ *
  * A row with no `<td>`/`<th>` at all — formatting cruft, an empty `<tr></tr>` — reads as `[]`, never `null`.
  *
  * Every top-level table is returned rather than just the first: a source that splits one logical table
@@ -115,8 +117,8 @@ export function extractTableRows(html: string): TableCell[][][] | null {
 
 	for (const row of findAll((element) => element.name === "tr", document)) {
 		// A row inside a nested table has that table as its nearest ancestor.
-		// It is not a key here. Therefore, the row stays with the cell it decorates
-		// instead of leaking into the top-level grid.
+		// It is not a key here.
+		// Therefore, the row stays with the cell it decorates instead of leaking into the top-level grid.
 		const table = nearestAncestor(row, TABLE_ANCESTOR)
 
 		if (table) {
@@ -141,8 +143,9 @@ export function widestRow(rows: readonly TableCell[][]): number {
 }
 
 /**
- * Right-pads every row to the table's widest row, then drops each column index
- * that is blank in every row. Per table, and column-wise — never per row.
+ * Right-pads every row to the table's widest row, then drops each column index that is blank in every row.
+ *
+ * Per table, and column-wise — never per row.
  * A row-by-row "filter out the blanks" loses the fact that a row's leading cell was blank,
  * which is often the difference between a top-level row and an indented child row,
  * and no single row carries enough evidence to tell those apart.

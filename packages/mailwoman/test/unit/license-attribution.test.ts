@@ -18,9 +18,10 @@ import { describe, expect, it, vi } from "vitest"
 
 describe("attributionReport", () => {
 	it("reads the installed weights packages rather than the source register", async () => {
-		// The register lists sources research resolved, which is a different set from the
-		// ones an installation carries. Reporting it here would tell an operator they
-		// owe attribution to publishers whose rows they do not have.
+		// The register lists sources research resolved, which is a different set
+		// from the ones an installation carries.
+		// Reporting it here would tell an operator they owe attribution to publishers
+		// whose rows they do not have.
 		const report = await attributionReport("AGPL-3.0-only OR LicenseRef-Commercial")
 
 		expect(report.engineLicense).toBe("AGPL-3.0-only OR LicenseRef-Commercial")
@@ -33,7 +34,8 @@ describe("attributionReport", () => {
 
 		if (!overlay) return
 
-		// `en-au` contributed none of these rows. They are its base's, and the field they arrive under says so.
+		// `en-au` contributed none of these rows.
+		// They are its base's, and the field they arrive under says so.
 		expect(overlay.own).toEqual([])
 		expect(overlay.inherited?.package).toBe("@mailwoman/neural-weights-en-us")
 		expect(overlay.inherited?.entries.length).toBeGreaterThan(0)
@@ -81,8 +83,8 @@ describe("renderAttributionReport", () => {
 	})
 
 	it("reports the same sources with no reference data on disk at all", async () => {
-		// The lineage is fixed when the model is trained, and this report reads
-		// installed packages through module resolution rather than the data root.
+		// The lineage is fixed when the model is trained, and this report reads installed
+		// packages through module resolution rather than the data root.
 		// Deleting every downloaded database cannot remove an entry from it, and this pins
 		// that a future edit reaching for the data root would change the answer.
 		await using empty = await temporaryDirectory("mw-no-data-root-")

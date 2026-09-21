@@ -43,8 +43,9 @@ import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record
- * can be traced back to the dataset it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const FCC_BDC_ADAPTER_ID = "fcc-bdc"
 /**
@@ -54,7 +55,9 @@ export const FCC_BDC_ADAPTER_ID = "fcc-bdc"
 export const FCC_BDC_DEFAULT_LICENSE = "Public Domain"
 
 /**
- * SQLite row shape — one row per BSL `location_id`. Columns mirror NTIARecord.
+ * SQLite row shape — one row per BSL `location_id`.
+ *
+ * Columns mirror NTIARecord.
  */
 interface BdcLocationRow {
 	location_id: number
@@ -69,7 +72,8 @@ interface BdcLocationRow {
  * Combine `zip` + optional `zip_suffix` into the canonical USPS postcode surface form.
  *
  * NTIARecord doc is ambiguous about whether `zip_suffix` is the 4-digit extension alone
- * or the full ZIP+4 string. This handles both:
+ * or the full ZIP+4 string.
+ * This handles both:
  *
  * - Bare 4-digit extension (`zip="94103"`, `zip_suffix="1234"`) → `"94103-1234"`
  * - Already-joined form (`zip_suffix="94103-1234"`) → returned as-is
@@ -91,7 +95,9 @@ export function buildPostcode(zip: string, suffix: string | null): string {
 }
 
 /**
- * Build a BDC adapter. Pure factory so multiple instances can be created in tests.
+ * Build a BDC adapter.
+ *
+ * Pure factory so multiple instances can be created in tests.
  */
 export function createFccBdcAdapter(): CorpusAdapter {
 	return {

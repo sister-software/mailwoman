@@ -65,9 +65,11 @@ const MANAGEMENT_FAMILY_ID = "management_company_name:timberline management"
 const INJECTED_FAMILY_ID = "cik:0001234567"
 
 /**
- * One eval run shared by every test below — `filerLinkageEval` builds two real SQLite artifacts
- * and runs the full clustering pass twice, so re-running it per test would multiply that
- * for no added coverage. The reproducibility test runs its own second pass on purpose.
+ * One eval run shared by every test below — `filerLinkageEval` builds two real
+ * SQLite artifacts and runs the full clustering pass twice, so re-running it per
+ * test would multiply that for no added coverage.
+ *
+ * The reproducibility test runs its own second pass on purpose.
  */
 let cached: Promise<FilerLinkageEvalResult> | undefined
 
@@ -178,11 +180,13 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 	it("gives every registrant in one truth component the SAME label, including ids only a sibling named", () => {
 		// The component roll-up, which the two-parents test above never reaches:
 		// that registrant's label is fully determined by its own accumulated set.
-		// Therefore, deleting the roll-up leaves it green. Here A names only P1 while B names P1 and P2.
-		// P1 unions them into one component, so the truth partition says one family — and both labels
-		// must therefore read `P1 + P2`. Without the roll-up A reads `P1` and B reads `P2 + P1`,
-		// the strings differ, and `groupPredicateFromMap` scores them as different truth families
-		// while the union-find says they are one: a truth partition that contradicts itself.
+		// Therefore, deleting the roll-up leaves it green.
+		// Here A names only P1 while B names P1 and P2.
+		// P1 unions them into one component, so the truth partition says one family —
+		// and both labels must therefore read `P1 + P2`.
+		// Without the roll-up A reads `P1` and B reads `P2 + P1`, the strings differ,
+		// and `groupPredicateFromMap` scores them as different truth families while the
+		// union-find says they are one: a truth partition that contradicts itself.
 		const base = buildLinkageEvalForm499Rows()
 
 		const rows = [
@@ -219,19 +223,20 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 
 	it("keeps every family id in the label when one registrant names TWO parents", () => {
 		// Unreachable on the shipped corpus, reachable on any edit that adds a registrant naming two parents.
-		// Keying the accumulator on the union-find root as it stood MID-loop dropped whichever id
-		// was recorded before a later union re-rooted the component — the partition stayed correct,
-		// the published label silently lost a name. Both parents are unique to this registrant,
-		// so its label depends only on its own accumulated set — no other registrant's
-		// contribution can put a dropped id back via the component roll-up and mask the bug.
+		// Keying the accumulator on the union-find root as it stood MID-loop dropped
+		// whichever id was recorded before a later union re-rooted the component —
+		// the partition stayed correct, the published label silently lost a name.
+		// Both parents are unique to this registrant, so its label depends only on its
+		// own accumulated set — no other registrant's contribution can put a dropped
+		// id back via the component roll-up and mask the bug.
 		//
 		// both orientations are asserted, and that is the whole test.
 		// `union` merges toward the lexicographically smaller root, so exactly one ordering
-		// of any two parent names re-roots the component away from the key the first id was
-		// filed under — and only that one orphans anything. The first version of this test
-		// fixed the Form 499 parent as "Northbridge" and the provider parent as "Southgate",
-		// which is the safe ordering: the second union re-rooted onto the existing key,
-		// nothing was dropped, and the test passed against the unfixed code.
+		// of any two parent names re-roots the component away from the key the first id
+		// was filed under — and only that one orphans anything.
+		// The first version of this test fixed the Form 499 parent as "Northbridge" and the
+		// provider parent as "Southgate", which is the safe ordering: the second union re-rooted
+		// onto the existing key, nothing was dropped, and the test passed against the unfixed code.
 		// Naming both parents per orientation removes the coin-flip.
 		const labelFor = (form499Parent: string, providerParent: string): string | undefined => {
 			const rows = [
@@ -274,10 +279,11 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 
 describe("the corpus's own invariants", () => {
 	it("never restates one row's holdingCompany inside another row's name fields", () => {
-		// The corpus docstring claims withholding cannot be defeated through a name field that
-		// happens to repeat a parent's name. Nothing checked it, and the leakage census could
-		// not see it: a legal name is an attribute rather than an ownership row, so a restated
-		// parent would sail past the check and quietly feed the entity-resolution pass.
+		// The corpus docstring claims withholding cannot be defeated through a name
+		// field that happens to repeat a parent's name.
+		// Nothing checked it, and the leakage census could not see it: a legal name is an attribute
+		// rather than an ownership row, so a restated parent would sail past the check
+		// and quietly feed the entity-resolution pass.
 		const rows = buildLinkageEvalForm499Rows()
 		const parents = rows.map((row) => row.holdingCompany).filter((name) => name !== "")
 
@@ -442,6 +448,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 	/**
 	 * The three Cascade registrants, joined to one ownership family by a relationship the builder
 	 * never emits — `subsidiary`, the shape a corporate-filing importer is specified to produce.
+	 *
 	 * Injected into the withheld artifact after the leakage check has already passed on
 	 * the untouched build, so the check stays armed while the probe runs.
 	 */
@@ -555,8 +562,8 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 			injectEvidence: (db) => injectFamilyRowsWithRelationship(db, UNRECOGNIZED_RELATIONSHIP),
 		})
 
-		// The exhaustiveness refactor briefly folded unrecognized relationships in
-		// with `management_company`, because both simply failed the ownership test.
+		// The exhaustiveness refactor briefly folded unrecognized relationships in with
+		// `management_company`, because both simply failed the ownership test.
 		// That put the one class the eval cannot reason about on the silent side of the check.
 		// It gets its own bucket so the check can refuse on it and the published census cannot hide it.
 		expect(injected.census.unrecognizedFamilyRows).toBe(3)
@@ -621,9 +628,10 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 		const providerRows = buildLinkageEvalProviderRows()
 
 		// `OWNERSHIP_BY_RELATIONSHIP` is a plain object literal, so a bare `map[relationship]`
-		// lookup inherits `Object.prototype`: "constructor" resolves to a function — truthy,
-		// and never nullish, so `??` never fires. That made `assertsOwnership("constructor")`
-		// true, which both scored an unclassifiable assertion and double-counted the row.
+		// lookup inherits `Object.prototype`: "constructor" resolves to a function —
+		// truthy, and never nullish, so `??` never fires.
+		// That made `assertsOwnership("constructor")` true, which both scored an
+		// unclassifiable assertion and double-counted the row.
 		// Therefore, the three census splits summed to 8 against a published total of 5.
 		const injected = await runLinkagePass({
 			inputs: buildFilteredEvalInputs(),
@@ -648,8 +656,9 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 	it("refuses to report a withheld build carrying a relationship it cannot classify", () => {
 		// The check's default must be the opposite of the prediction's.
 		// The prediction ignores what it does not understand (never score an unrecognized assertion);
-		// the check must refuse it (an assertion this eval cannot classify, in a build it did not write,
-		// is exactly what a leakage check exists to stop). One predicate cannot serve both.
+		// the check must refuse it (an assertion this eval cannot classify, in a build it
+		// did not write, is exactly what a leakage check exists to stop).
+		// One predicate cannot serve both.
 		expect(() =>
 			assertNoOwnershipLeak({
 				holdingCompanyNodes: 0,

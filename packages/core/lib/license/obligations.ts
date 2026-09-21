@@ -30,9 +30,13 @@ export const LicenseObligation = {
 export type LicenseObligation = (typeof LicenseObligation)[keyof typeof LicenseObligation]
 
 /**
- * What one spdx identifier is known to require. An identifier absent from this table is
- * unrecognized. The summary reports that state. The meaning-of-zero rule says that an
- * empty obligation list is a statement, and an unknown license must not read as one.
+ * What one spdx identifier is known to require.
+ *
+ * An identifier absent from this table is unrecognized.
+ * The summary reports that state.
+ *
+ * The meaning-of-zero rule says that an empty obligation list is a statement,
+ * and an unknown license must not read as one.
  */
 const KNOWN_OBLIGATIONS: ReadonlyMap<string, readonly LicenseObligation[]> = new Map<
 	string,
@@ -69,7 +73,9 @@ export interface LicenseSummary {
 	 */
 	expression: string
 	/**
-	 * The identifiers the expression names, in order. `AGPL-3.0-only or LicenseRef-Commercial` names two.
+	 * The identifiers the expression names, in order.
+	 *
+	 * `AGPL-3.0-only or LicenseRef-Commercial` names two.
 	 */
 	identifiers: string[]
 	/**
@@ -78,8 +84,10 @@ export interface LicenseSummary {
 	 */
 	obligations: LicenseObligation[]
 	/**
-	 * True when every identifier is in the known table. `noassertion`, a vendor-suffixed
-	 * identifier such as `pddl-1.0-USGov-nrcs`, or a misspelling all read false.
+	 * True when every identifier is in the known table.
+	 *
+	 * `noassertion`, a vendor-suffixed identifier such as `pddl-1.0-USGov-nrcs`,
+	 * or a misspelling all read false.
 	 */
 	recognized: boolean
 	/**
@@ -89,9 +97,11 @@ export interface LicenseSummary {
 }
 
 /**
- * Split an spdx expression into its identifiers. Handles `and`, `or`, `with`
- * (the exception is kept with its license) and parentheses. anything more exotic still splits
- * on the operators, which is enough for a summary that reports what it did not recognize.
+ * Split an spdx expression into its identifiers.
+ *
+ * Handles `and`, `or`, `with` (the exception is kept with its license)
+ * and parentheses. anything more exotic still splits on the operators, which is
+ * enough for a summary that reports what it did not recognize.
  */
 export function licenseIdentifiers(expression: string): string[] {
 	return expression
@@ -135,6 +145,7 @@ export function summarizeLicense(expression: string): LicenseSummary {
 /**
  * The branch of mailwoman's own expression that applies, from what the configured key
  * reads offline and, when a caller has asked the well-known register, what it said.
+ *
  * Only a `valid` key that the register has not retired or dropped selects the commercial branch.
  * The doctor passes both answers. the stamp, offline by design, passes the key alone.
  */
@@ -150,9 +161,10 @@ export function appliedLicenseBranch(
 
 /**
  * Choose the branch of a dual-licensed (`A or B`) expression that applies to this installation.
- * Mailwoman's own expression is `AGPL-3.0-only or LicenseRef-Commercial`: without a commercial
- * agreement the open-source branch applies, and the summary reports its obligations
- * rather than the union. An expression with no `or` is returned whole.
+ *
+ * Mailwoman's own expression is `AGPL-3.0-only or LicenseRef-Commercial`: without a commercial agreement
+ * the open-source branch applies, and the summary reports its obligations rather than the union.
+ * An expression with no `or` is returned whole.
  */
 export function chooseLicenseBranch(expression: string, options: { commercialAgreement: boolean }): string {
 	const branches = expression
@@ -177,6 +189,7 @@ const LICENSE_REF = /^LicenseRef-[A-Za-z0-9.-]+$/u
  * Whether an spdx expression may be recorded in a layer manifest: every identifier is one
  * the obligations table knows, a `LicenseRef-…` this repository defines, or `noassertion`
  * (the publisher has stated no license. the doctor reports that as degraded, which is the correct reading).
+ *
  * Anything else is refused at build time, because a manifest is sealed data
  * and a vendor-suffixed identifier such as `pddl-1.0-USGov-nrcs` would otherwise ship
  * and read as unrecognized on every machine that opens it.

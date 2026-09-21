@@ -55,7 +55,8 @@ describe("enforceWordConsistency (#727 / admin-token fragmentation)", () => {
 	})
 
 	it("forces a clean B-/I- pattern when a mid-word piece flips to a different B-", () => {
-		// `▁Loz` locality, `ère` flips to B-region → the diacritic split. Region mass wins → both region.
+		// `▁Loz` locality, `ère` flips to B-region → the diacritic split.
+		// Region mass wins → both region.
 		const r = enforceWordConsistency([{ piece: "▁Loz" }, { piece: "ère" }], [peak(1, 3), peak(3, 7)], LABELS, [1, 3])
 		expect(r.healedWords).toBe(1)
 		expect([LABELS[r.labelIndices[0]!], LABELS[r.labelIndices[1]!]]).toEqual(["B-region", "I-region"])
@@ -75,8 +76,9 @@ describe("enforceWordConsistency only arbitrates DISAGREEING words (the document
 	})
 
 	it("never flips a single-piece word (no intra-word inconsistency exists)", () => {
-		// `▁Broadway` B-street via viterbi. local mass prefers O. A one-piece word is trivially consistent —
-		// the heal must not override the decoder. (The `East Broadway` golden regression.)
+		// `▁Broadway` B-street via viterbi. local mass prefers O. A one-piece word is
+		// trivially consistent — the heal must not override the decoder.
+		// (The `East Broadway` golden regression.)
 		const r = enforceWordConsistency([{ piece: "▁Broadway" }], [peak(0, 8)], LABELS, [1])
 		expect(r.healedWords).toBe(0)
 		expect(r.labelIndices).toEqual([1])
@@ -105,7 +107,8 @@ describe("enforceWordConsistency confidence checks (#727 conditional variant)", 
 	})
 
 	it("skipByteFallbackWords leaves a word with a raw byte piece untouched", () => {
-		// RO `ț` byte-falls-back: `<0xC8> <0x9B>` pieces inside the word. The vote assumption fails → skip.
+		// RO `ț` byte-falls-back: `<0xC8> <0x9B>` pieces inside the word.
+		// The vote assumption fails → skip.
 		const pieces = [{ piece: "▁Gala" }, { piece: "<0xC8>" }, { piece: "<0x9B>" }, { piece: "i" }]
 		const emissions = [peak(1, 8), peak(3, 8), peak(3, 8), peak(1, 8)]
 		const r = enforceWordConsistency(pieces, emissions, LABELS, [1, 3, 3, 1], { skipByteFallbackWords: true })

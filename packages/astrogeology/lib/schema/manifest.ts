@@ -13,7 +13,9 @@ import { z } from "zod"
 const SHA256_HEX_LENGTH = 64
 
 /**
- * One locked source. `snapshot` is present for a nightly archive and names the day it was taken.
+ * One locked source.
+ *
+ * `snapshot` is present for a nightly archive and names the day it was taken.
  */
 export const LockedSourceSchema = z.object({
 	url: z.url(),
@@ -25,6 +27,7 @@ export const LockedSourceSchema = z.object({
 
 /**
  * `sources.lock.json`: the locked sources keyed by source id.
+ *
  * Written only by the fetch. read by every build.
  */
 export const SourcesLockSchema = z.record(z.string(), LockedSourceSchema)

@@ -92,6 +92,7 @@ async function parse(): Promise<BuildArgs> {
 
 /**
  * Enumerate the per-département BAN dumps in `csvDir`, keyed by département code.
+ *
  * Excludes the `merged` / `france` aggregates (they duplicate the per-département rows),
  * and prefers an uncompressed `.csv` over a `.csv.gz` when both exist (the same dept, faster read).
  * When `depts` is set, restricts to that list (for a fast validation build).

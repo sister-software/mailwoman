@@ -24,8 +24,9 @@ import { trackedSourcePaths } from "#tracked-sources"
 
 /**
  * A code line that builds a path into the root drawer: a `repoRootPath("scripts", …)` call
- * or a string literal that starts with `scripts/`. Comment lines are skipped,
- * because history is allowed to name the directory that was.
+ * or a string literal that starts with `scripts/`.
+ *
+ * Comment lines are skipped, because history is allowed to name the directory that was.
  */
 const ROOT_SCRIPTS_PATH = /repoRootPath(?:Builder)?\(\s*["']scripts["']|["'`]scripts\//u
 
@@ -44,9 +45,10 @@ const COMMENT_LINE = /^\s*(?:\/\/|\*|\/\*)/u
 const SELF = "packages/repo-health/lib/checks/no-root-scripts.ts"
 
 /**
- * The one library path a target may run: the `mwops` adapter is the registry's command-line
- * view, and the private CLI has no compiled bin, so `package.json`'s `mwops` target
- * names its source. Every other executable reaches CI through it.
+ * The one library path a target may run: the `mwops` adapter is the registry's command-line view,
+ * and the private CLI has no compiled bin, so `package.json`'s `mwops` target names its source.
+ *
+ * Every other executable reaches CI through it.
  */
 const REGISTERED_ADAPTERS = new Set(["packages/ops-cli/lib/cli.ts"])
 

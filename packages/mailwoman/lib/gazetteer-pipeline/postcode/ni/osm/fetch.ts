@@ -40,7 +40,9 @@ import { md5Hex } from "@mailwoman/core/utils"
 import { join } from "path-ts"
 
 /**
- * The public Overpass API endpoint. Volunteer-run. see https://operations.osmfoundation.org/policies/api/ —
+ * The public Overpass API endpoint.
+ *
+ * Volunteer-run. see https://operations.osmfoundation.org/policies/api/ —
  * the acquisition makes exactly one request against it.
  */
 export const OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter"
@@ -53,6 +55,7 @@ export const OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter"
  * Three of three attempts returned http 504: the whole-NI area query at 97 s,
  * the whole-NI bbox query at 115 s, and — decisively — a two-tenths-of-a-degree probe bbox
  * at 95 s that `overpass-api.de` answered 200 in 8 s from the same machine minutes later.
+ *
  * A mirror that cannot serve an 8-second query is an unhealthy host rather than a capacity answer.
  * Pass it via {@link AcquireNIPostcodesOptions.endpoint} if it recovers. do not
  * promote it to default on the strength of the wiki page.
@@ -60,22 +63,27 @@ export const OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter"
 export const OVERPASS_ENDPOINT_KUMI = "https://overpass.kumi.systems/api/interpreter"
 
 /**
- * The one query. Verbatim, because its md5 goes into the database's provenance
- * and a reader must be able to re-run exactly this text.
+ * The one query.
+ *
+ * Verbatim, because its md5 goes into the database's provenance and a reader
+ * must be able to re-run exactly this text.
  *
  * ## The spatial filter is a bbox rather than `area["ISO3166-2"="GB-NIR"]`
  *
  * The area form — `area["ISO3166-2"="GB-NIR"]->.ni. nwr(area.ni)["addr:postcode"~"^BT"].` —
- * is the obvious way to write this, and both attempts at it on 2026-08-05 ended in an
- * http 504 from `overpass-api.de`'s gateway. An `(area)` filter has no index to ride:
- * Overpass enumerates the region's elements and tests each, so the whole of Northern
- * Ireland is a full scan. The bbox rides the spatial index instead, and the same
- * instance answered this query 200 with 6,681,108 bytes in 36 s.
+ * is the obvious way to write this, and both attempts at it on 2026-08-05 ended
+ * in an http 504 from `overpass-api.de`'s gateway.
+ * An `(area)` filter has no index to ride: Overpass enumerates the region's elements
+ * and tests each, so the whole of Northern Ireland is a full scan.
  *
- * Be careful how much that proves. Over the same fifteen-minute window `overpass-api.de`
- * returned 504 for the bbox form too (once, at 7 s) while answering an identical
- * curl seconds earlier, and later returned 429 — the instance was flapping,
- * so the area form is not proven too expensive, only observed to fail twice.
+ * The bbox rides the spatial index instead, and the same instance answered this
+ * query 200 with 6,681,108 bytes in 36 s.
+ *
+ * Be careful how much that proves.
+ * Over the same fifteen-minute window `overpass-api.de` returned 504 for the bbox form too
+ * (once, at 7 s) while answering an identical curl seconds earlier, and later returned 429 —
+ * the instance was flapping, so the area form is not proven too expensive, only observed to fail twice.
+ *
  * The bbox form is preferred on two independent grounds regardless: it is index-backed,
  * and re-issuing a whole-region scan against a flaking volunteer endpoint is the wrong kind of retry.
  *
@@ -93,6 +101,7 @@ export const OVERPASS_ENDPOINT_KUMI = "https://overpass.kumi.systems/api/interpr
  *
  * The tag filter is `~"^BT"` — case-sensitive, which is Overpass's default for `~`.
  * A lowercase `bt3 9qq` in OSM is therefore invisible to this query.
+ *
  * That is deliberate: it is the filter the 2026-08-05 census was taken with, so the build's
  * numbers reconcile against that census rather than against a different population.
  */
@@ -114,6 +123,7 @@ export const OSM_LICENSE_URL = "https://opendatacommons.org/licenses/odbl/1-0/"
 
 /**
  * The attribution OSM requires of anyone redistributing its data or a work produced from it.
+ *
  * Not optional, and not satisfied by a link in a readme — it rides in the artifact.
  */
 export const OSM_ATTRIBUTION =
@@ -161,8 +171,10 @@ export interface OverpassElement {
 }
 
 /**
- * The Overpass JSON envelope. `osm3s.timestamp_osm_base` is the data extract this response
- * reflects — a far more useful provenance stamp than the wall clock at retrieval,
+ * The Overpass JSON envelope.
+ *
+ * `osm3s.timestamp_osm_base` is the data extract this response reflects —
+ * a far more useful provenance stamp than the wall clock at retrieval,
  * and it is why the response is kept whole rather than reduced.
  */
 export interface OverpassResponse {
@@ -179,15 +191,17 @@ export interface OverpassResponse {
 /**
  * Build the Overpass client.
  *
- * `APIClient` per `agents.md`: this is a small-body API request against a rate-limited volunteer
- * host — the exact population the rule binds. `minRequestIntervalMs` is set even
- * though the acquisition issues one request, because an unpaced client is a trap for
- * the next caller who loops it. Retry is deliberately off (the `APIClient` default):
- * an Overpass 429/504 means the server is shedding load, and the correct response to that
- * is to come back later by hand rather than to have a script re-issue a whole-region scan —
- * which is exactly what happened on 2026-08-05, when the instance flapped through five 504s
- * and a 429 before answering. `timeout` is 10 minutes, comfortably past the query's own
- * `[timeout:300]` plus the transfer of a ~7 MB body (measured: 36 s end to end).
+ * `APIClient` per `agents.md`: this is a small-body API request against a rate-limited
+ * volunteer host — the exact population the rule binds.
+ * `minRequestIntervalMs` is set even though the acquisition issues one request,
+ * because an unpaced client is a trap for the next caller who loops it.
+ *
+ * Retry is deliberately off (the `APIClient` default): an Overpass 429/504 means the
+ * server is shedding load, and the correct response to that is to come back later by hand
+ * rather than to have a script re-issue a whole-region scan — which is exactly what happened
+ * on 2026-08-05, when the instance flapped through five 504s and a 429 before answering.
+ * `timeout` is 10 minutes, comfortably past the query's own `[timeout:300]` plus
+ * the transfer of a ~7 MB body (measured: 36 s end to end).
  */
 export function createOverpassClient(): APIClient {
 	return new APIClient({
@@ -205,28 +219,33 @@ export function createOverpassClient(): APIClient {
 
 export interface AcquireNIPostcodesOptions {
 	/**
-	 * Directory the response lands in. The convention is a new dated directory
-	 * per acquisition (`$MAILWOMAN_DATA_ROOT/osm-ni-postcodes/<yyyy-MM-DD>/`),
-	 * so an acquisition never overwrites an earlier one.
+	 * Directory the response lands in.
+	 *
+	 * The convention is a new dated directory per acquisition
+	 * (`$MAILWOMAN_DATA_ROOT/osm-ni-postcodes/<yyyy-MM-DD>/`), so an acquisition
+	 * never overwrites an earlier one.
 	 */
 	destDir: string
 	/**
 	 * Reuse an existing `response.json` instead of re-querying.
+	 *
 	 * The default and the point: Overpass is a volunteer endpoint and the saved
-	 * response is the reproducibility artifact. Set `false` only to take a deliberate
-	 * new extract into a new dated directory.
+	 * response is the reproducibility artifact.
+	 * Set `false` only to take a deliberate new extract into a new dated directory.
 	 */
 	reuseExisting?: boolean
 	client?: APIClient
 	/**
-	 * Override the Overpass instance. Default {@link OVERPASS_ENDPOINT}; the endpoint
-	 * actually used is recorded in `acquisition.json` and in the database's `meta`,
-	 * because which mirror answered is part of the provenance.
+	 * Override the Overpass instance.
+	 *
+	 * Default {@link OVERPASS_ENDPOINT}; the endpoint actually used is recorded in `acquisition.json`
+	 * and in the database's `meta`, because which mirror answered is part of the provenance.
 	 */
 	endpoint?: string
 	/**
-	 * Retrieval clock, stamped into `acquisition.json`. Passed in so the module
-	 * never reads the clock implicitly.
+	 * Retrieval clock, stamped into `acquisition.json`.
+	 *
+	 * Passed in so the module never reads the clock implicitly.
 	 */
 	now?: Date
 	onPhase?: (phase: string, detail?: string) => void
@@ -262,7 +281,9 @@ export interface AcquireNIPostcodesResult {
 }
 
 /**
- * Fingerprint of the query text. Exported so the builder can record it without re-hashing prose.
+ * Fingerprint of the query text.
+ *
+ * Exported so the builder can record it without re-hashing prose.
  */
 export function niPostcodeQueryMD5(): string {
 	return md5Hex(NI_POSTCODE_OVERPASS_QUERY)
@@ -296,9 +317,9 @@ export async function acquireNIPostcodes(options: AcquireNIPostcodesOptions): Pr
 
 			// A response with no sidecar beside it is provenance-less, and an operator who
 			// copied only the bytes into place should not get a database that says "unknown".
-			// Reconstruct what is recoverable and SAY that it was reconstructed:
-			// the retrieval instant becomes the file's mtime, which is when those bytes were
-			// written, and the flag keeps that distinguishable from a first-hand stamp.
+			// Reconstruct what is recoverable and SAY that it was reconstructed: the retrieval
+			// instant becomes the file's mtime, which is when those bytes were written,
+			// and the flag keeps that distinguishable from a first-hand stamp.
 			// (The meaning-of-zero rule in its provenance form — a recovered value
 			// and a recorded one are different claims and must not read alike.)
 			if (!(await tryStat(acquisitionPath))) {
@@ -368,18 +389,20 @@ export interface NIAcquisitionSidecar {
 	attribution: string
 	tier: string
 	/**
-	 * Present and `true` only when the sidecar was rebuilt from a response file
-	 * found already on disk — so its `retrievedAt` is the file's mtime rather than
-	 * an observed request time. Absent means first-hand.
+	 * Present and `true` only when the sidecar was rebuilt from a response file found already
+	 * on disk — so its `retrievedAt` is the file's mtime rather than an observed request time.
+	 *
+	 * Absent means first-hand.
 	 */
 	reconstructed?: boolean
 }
 
 /**
- * Write `acquisition.json`. The licence block is written here rather than assembled
- * by the caller so that every path that produces a sidecar produces the same one —
- * the ODbL attribution is an obligation, and an obligation that depends on
- * which branch wrote the file is an obligation waiting to be missed.
+ * Write `acquisition.json`.
+ *
+ * The licence block is written here rather than assembled by the caller so that every path
+ * that produces a sidecar produces the same one — the ODbL attribution is an obligation,
+ * and an obligation that depends on which branch wrote the file is an obligation waiting to be missed.
  */
 async function writeAcquisitionSidecar(
 	path: string,

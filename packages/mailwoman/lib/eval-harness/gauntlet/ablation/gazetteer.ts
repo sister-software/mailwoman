@@ -68,9 +68,10 @@ interface CandidateRow {
 }
 
 /**
- * `spr`'s bbox columns are `not NULL default 0`, so an unset extent reads as `min == max` — the
- * meaning-of-zero trap this model must not fall into. Fold that to `null` at the reader,
- * once, so nothing downstream can mistake it for an extent of zero.
+ * `spr`'s bbox columns are `not NULL default 0`, so an unset extent reads as `min == max` —
+ * the meaning-of-zero trap this model must not fall into.
+ *
+ * Fold that to `null` at the reader, once, so nothing downstream can mistake it for an extent of zero.
  */
 function bboxOf(
 	minLat: number | null,
@@ -87,6 +88,7 @@ function bboxOf(
 
 /**
  * Parse the resolver's `placeID` URI (`wof:85974801`) back to a WOF id.
+ *
  * `null` for anything else — the scheme is deliberately simple (`resolver/resolve.ts`),
  * and a future non-WOF backend must not be silently read as one.
  */
@@ -118,16 +120,19 @@ export function collapseCoincident(places: readonly AblationPlace[]): AblationPl
 
 /**
  * How many candidate rows one name probe reads before collapsing.
- * The probe is a contiguous scan of one `name_key` on the clustered B-tree, so the cost
- * is bounded by the namesake cluster itself. the cap only guards the pathological keys
- * (`San José` carries 886 rows worldwide). Sized well above the corpus's worst (886)
- * so no corpus name is truncated — a truncated list would understate ambiguity,
- * which is the direction that turns an abstain into a false expectation.
+ *
+ * The probe is a contiguous scan of one `name_key` on the clustered B-tree,
+ * so the cost is bounded by the namesake cluster itself. the cap only guards the
+ * pathological keys (`San José` carries 886 rows worldwide).
+ * Sized well above the corpus's worst (886) so no corpus name is truncated — a truncated list
+ * would understate ambiguity, which is the direction that turns an abstain into a false expectation.
  */
 const NAME_PROBE_LIMIT = 2000
 
 /**
- * The two-database probe. Construct once per run. disposal releases both handles.
+ * The two-database probe.
+ *
+ * Construct once per run. disposal releases both handles.
  */
 export class AblationGazetteer implements AblationGazetteerProbe {
 	readonly available: boolean
@@ -151,10 +156,11 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	/**
 	 * Build the probe with its reverse geocoder attached.
 	 *
-	 * The dynamic import keeps this optional dependency off ordinary evaluation paths,
-	 * and `@mailwoman/resolver-wof-sqlite`'s index is not something a `mailwoman --help`
-	 * should pay for. The reverse geocoder shares this object's already-open admin
-	 * handle (`adminDatabase`), so it opens nothing and disposal stays the single owner.
+	 * The dynamic import keeps this optional dependency off ordinary evaluation paths, and
+	 * `@mailwoman/resolver-wof-sqlite`'s index is not something a `mailwoman --help` should pay for.
+	 * The reverse geocoder shares this object's already-open admin handle (`adminDatabase`),
+	 * so it opens nothing and disposal stays the single owner.
+	 *
 	 * No polygon sidecar is passed: there is no global `wof-polygons.db`, so containment
 	 * is the approximate (nearest-centroid descent) mode — good enough to name a chain,
 	 * and the chain is all this model wants from it.
@@ -189,8 +195,9 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	}
 
 	/**
-	 * Construct the probe. The existence check a constructor cannot perform is
-	 * the caller's: `missingPaths` is the answer
+	 * Construct the probe.
+	 *
+	 * The existence check a constructor cannot perform is the caller's: `missingPaths` is the answer
 	 * {@linkcode AblationGazetteer.create} computed with `pathExists`, and the constructor opens nothing while any path is
 	 * named there.
 	 */

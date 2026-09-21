@@ -15,6 +15,7 @@ import { describe, expect, it } from "vitest"
 
 /**
  * Q61 — Washington DC as WOF models it: one place carrying three placetypes at one point.
+ *
  * Not an error, and the reason the guard cannot simply drop every fanned-out id.
  */
 const Q61 = [
@@ -24,8 +25,9 @@ const Q61 = [
 ]
 
 /**
- * Q18125 — Manchester, England, also attached to two American
- * villages. Population is decisive.
+ * Q18125 — Manchester, England, also attached to two American villages.
+ *
+ * Population is decisive.
  */
 const Q18125 = [
 	{ id: 101_717_233, placetype: "locality", lat: 40.0614, lon: -76.7191, population: 2788 },
@@ -35,6 +37,7 @@ const Q18125 = [
 
 /**
  * Q1794 — Frankfurt am Main, attached to both the city and a neighbourhood 12 km out.
+ *
  * Beyond the coincidence radius, so population decides. the city wins, which is also what
  * stops the two from carrying identical importance and blurring the placetype signal.
  */
@@ -45,6 +48,7 @@ const Q1794 = [
 
 /**
  * Q340 — Montréal, canada, attached to two French communes 182 km apart, neither with a population row.
+ *
  * No evidence to pick between them and both are wrong, so the id is dropped whole.
  */
 const Q340 = [
@@ -83,7 +87,8 @@ describe("resolveConcordanceFanout", () => {
 	})
 
 	it("drops on a population TIE between distant candidates", () => {
-		// A tie is not evidence. Picking the first would be picking by row order.
+		// A tie is not evidence.
+		// Picking the first would be picking by row order.
 		const tied = [
 			{ id: 1, placetype: "locality", lat: 0, lon: 0, population: 1000 },
 			{ id: 2, placetype: "locality", lat: 10, lon: 10, population: 1000 },

@@ -38,7 +38,8 @@ export function stageCountryDisplayNames(ctx: {
 	stageRow: StageRow
 	tx: { exec(sql: string): void }
 }): number {
-	// One country row per ISO2. Where a code has several (historic rows surviving the is_current filter),
+	// One country row per ISO2.
+	// Where a code has several (historic rows surviving the is_current filter),
 	// the most populous wins — the same tiebreak the ranking uses everywhere else.
 	const countryByISO2 = new Map<string, { sid: number; a: PlaceAttrs }>()
 

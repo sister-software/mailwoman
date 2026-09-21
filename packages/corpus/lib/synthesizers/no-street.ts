@@ -88,6 +88,7 @@ export interface SynthesizedNoStreetRow {
 
 /**
  * Plain venue names — businesses without street-typing words in the name.
+ *
  * Used as the easy-mode positive class for venue detection.
  */
 const PLAIN_VENUES: ReadonlyArray<string> = [
@@ -114,9 +115,11 @@ const PLAIN_VENUES: ReadonlyArray<string> = [
 ]
 
 /**
- * Adversarial venue names — businesses whose names contain street-typing tokens
- * (Avenue, Street, Highway, Lane, Drive, Court, Plaza, Park, ...) but are themselves venues
- * rather than streets. The model must learn that these are venues despite the street-typing tokens.
+ * Adversarial venue names — businesses whose names contain street-typing
+ * tokens (Avenue, Street, Highway, Lane, Drive, Court, Plaza, Park, ...)
+ * but are themselves venues rather than streets.
+ *
+ * The model must learn that these are venues despite the street-typing tokens.
  *
  * **No leading digit+ordinal venues** (e.g. "5th Avenue Theatre", "7th Street Bistro").
  * The v0.6.2 2026-05-29 step-20K eval showed that synthesized rows starting with
@@ -156,9 +159,10 @@ const ADVERSARIAL_VENUES: ReadonlyArray<string> = [
 	"Garden Lane Florist",
 ]
 
-// Compile-time guard: every venue must not start with the digit+ordinal pattern that
-// confuses house_number recognition. If a future contributor adds a "5th Avenue
-// Theatre"- style entry, this assertion will fire at module load time.
+// Compile-time guard: every venue must not start with the digit+ordinal pattern
+// that confuses house_number recognition.
+// If a future contributor adds a "5th Avenue Theatre"- style entry,
+// this assertion will fire at module load time.
 for (const v of ADVERSARIAL_VENUES) {
 	if (/^\d+(st|nd|rd|th)\b/i.test(v)) {
 		throw new Error(
@@ -182,8 +186,9 @@ const COUNTRY_NAMES = new Map<string, ReadonlyArray<string>>([
 //#region Synthesis
 
 /**
- * Generate one no-street counter-example row for a base (locality, region, postcode, country)
- * tuple. Picks a template by weighted random. the venue templates are the critical
+ * Generate one no-street counter-example row for a base (locality, region, postcode, country) tuple.
+ *
+ * Picks a template by weighted random. the venue templates are the critical
  * counter-distribution against synth-street's decompose-mode pressure.
  */
 export function synthesizeNoStreetRow(
@@ -205,9 +210,9 @@ export function synthesizeNoStreetRow(
 	 * Write `extra` on top of the base tuple's admin components through the country's own layout.
 	 *
 	 * The layout decides the order, the separators and which components it has a slot for,
-	 * and reports the subset it printed. France absorbs the region into its postcode line,
-	 * so a row that emitted `region` regardless would carry a label whose text is not
-	 * in `raw`, and the aligner would have nothing to attach it to.
+	 * and reports the subset it printed.
+	 * France absorbs the region into its postcode line, so a row that emitted `region` regardless would
+	 * carry a label whose text is not in `raw`, and the aligner would have nothing to attach it to.
 	 */
 	const render = (
 		extra: ComponentDict,
@@ -239,10 +244,10 @@ export function synthesizeNoStreetRow(
 			return render({ venue: sample(PLAIN_VENUES, random) }, { locality: true, region: true, postcode: true })
 		}
 		case "venue-adversarial": {
-			// The venue-adversarial template name is descriptive — when selected, this branch
-			// always draws from the adversarial pool. The `adversarialVenueRatio` opt is what
-			// the outer template picker uses to bias toward this template versus the plain
-			// one. once we're inside this branch the choice is already made.
+			// The venue-adversarial template name is descriptive — when selected,
+			// this branch always draws from the adversarial pool.
+			// The `adversarialVenueRatio` opt is what the outer template picker uses to bias toward this
+			// template versus the plain one. once we're inside this branch the choice is already made.
 			return render({ venue: sample(ADVERSARIAL_VENUES, random) }, { locality: true, region: true, postcode: true })
 		}
 		case "locality-region-postcode": {
@@ -300,6 +305,7 @@ function pickTemplate(random: () => number): NoStreetTemplate {
 
 /**
  * Convenience: assert at type-level that a synthesized row carries no street-side components.
+ *
  * Used by tests + downstream consumers who want to check the interface behavior at runtime.
  */
 export const STREET_SIDE_TAGS = [

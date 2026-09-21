@@ -9,8 +9,9 @@
  */
 
 /**
- * Ranking weights for `findPlace`. Tweakable per-instance but defaults match the
- * values declared in the Phase 4.2 plan doc.
+ * Ranking weights for `findPlace`.
+ *
+ * Tweakable per-instance but defaults match the values declared in the Phase 4.2 plan doc.
  */
 export interface RankingWeights {
 	/**
@@ -46,47 +47,60 @@ export interface RankingWeights {
 	proximityBoost: number
 	/**
 	 * Magnitude of the bias-hint term inside the exact-tier prominence sort (the `bias`/viewport path).
+	 *
 	 * Deliberately population-scale (default = populationBoost) so a candidate near the
 	 * map view / the user beats a distant-but-bigger namesake — "the map view wins" is the
 	 * feature. same-region ties (all candidates far from every hint) still fall to population.
 	 */
 	biasBoost: number
 	/**
-	 * Distance (km) at which the proximity boost halves. Tune to the typical query radius.
+	 * Distance (km) at which the proximity boost halves.
+	 *
+	 * Tune to the typical query radius.
 	 */
 	proximityScaleKm: number
 	/**
 	 * Magnitude of the population boost when the candidate has a known `wof:population`.
-	 * The contribution is `populationBoost * log10(1 + population) / populationScaleLog10`, capped
-	 * at `populationBoost`. WOF only carries population for ~15% of localities (mostly larger ones);
-	 * places without it get +0 (never a penalty). Default tuned so the famous Springfield,
-	 * IL (pop ~112k) gets ~0.42 boost — enough to nudge past tiny same-name peers.
+	 *
+	 * The contribution is `populationBoost * log10(1 + population) / populationScaleLog10`,
+	 * capped at `populationBoost`.
+	 * WOF only carries population for ~15% of localities (mostly larger ones);
+	 * places without it get +0 (never a penalty).
+	 *
+	 * Default tuned so the famous Springfield, IL (pop ~112k) gets ~0.42 boost —
+	 * enough to nudge past tiny same-name peers.
 	 */
 	populationBoost: number
 	/**
 	 * Population (in log10) at which the boost reaches its full magnitude.
+	 *
 	 * Default 6 — i.e. a population of 1,000,000 gives `populationBoost` exactly.
 	 * Larger populations cap at the same value (no compounding effect for megacities).
 	 */
 	populationScaleLog10: number
 	/**
-	 * Tier candidates with an exact name/alias match above candidates that only match partially,
-	 * before the weighted-sum score is consulted. Default true.
+	 * Tier candidates with an exact name/alias match above candidates that only match
+	 * partially, before the weighted-sum score is consulted.
+	 *
+	 * Default true.
 	 *
 	 * Why this is needed (and why it aligns with — rather than overrides — the population/importance signal):
-	 * the weighted sum adds population as a large additive boost (`populationBoost`, up to +4) so that famous
-	 * places surface for unambiguous full-name queries. But population is a _prominence
-	 * prior_ — its job is to break ties among candidates that match the query equally well
-	 * (e.g. "Springfield" → Springfield IL over Springfield MA, both exact name matches).
+	 * the weighted sum adds population as a large additive boost (`populationBoost`, up to +4)
+	 * so that famous places surface for unambiguous full-name queries.
+	 * But population is a _prominence prior_ — its job is to break ties among candidates that match the
+	 * query equally well (e.g. "Springfield" → Springfield IL over Springfield MA, both exact name matches).
+	 *
 	 * It was never meant to promote a place that matches the query worse.
-	 * For a 2-letter region abbreviation that backfires: querying "ME" returns
-	 * Maine (which has the exact alias `ME`) and Missouri/ Michigan/etc.
+	 * For a 2-letter region abbreviation that backfires: querying "ME" returns Maine
+	 * (which has the exact alias `ME`) and Missouri/ Michigan/etc.
+	 *
 	 * (which do not), and Missouri's larger population (+4) overcomes Maine's bm25 edge — so "Portland,
 	 * ME" resolves its region to Missouri and the locality then cascades to the wrong state.
 	 * Tiering restores the intended ordering: **match quality is the primary key,
 	 * prominence (population) the secondary key within a tier.** Springfield-IL-over-MA
 	 * still works (both exact → same tier → population decides); ME→Maine now works
 	 * (only Maine is exact → higher tier → population never gets to override it).
+	 *
 	 * See docs/articles/evals/resolver-geo/2026-05-30-resolver-exact-match.md.
 	 *
 	 * Note: tiering re-ranks within the over-fetched candidate window (`limit * 4`);
@@ -97,11 +111,12 @@ export interface RankingWeights {
 	exactMatchTiering: boolean
 	/**
 	 * #936 option 3 — official-language names are names. When true, a candidate holding the query as an official name
-	 * (`names.official = 1`: a preferred-form name in an official language of its country, stamped at ingest)
-	 * joins the name-exact sub-tier rather than the alias-exact one, provided its
-	 * population clears {@link officialNameExactFloor}. Fixes unscoped "Åbo" → Turku
-	 * (its official Swedish name) over a hamlet literally named Åbo; population still
-	 * orders within the sub-tier, so Paris → Paris FR is untouched.
+	 * (`names.official = 1`: a preferred-form name in an official language of its country,
+	 * stamped at ingest) joins the name-exact sub-tier rather than the alias-exact one,
+	 * provided its population clears {@link officialNameExactFloor}.
+	 *
+	 * Fixes unscoped "Åbo" → Turku (its official Swedish name) over a hamlet literally named Åbo;
+	 * population still orders within the sub-tier, so Paris → Paris FR is untouched.
 	 *
 	 * Default true (operator-promoted 2026-07-03 after the pre-registered eval battery:
 	 * four intended exonym flips — Berne→Bern, Bruges→Brugge, Roma→Rome, Åbo→Turku —
@@ -112,6 +127,7 @@ export interface RankingWeights {
 	officialNameExact: boolean
 	/**
 	 * Minimum population for a candidate's official names to join the name-exact sub-tier.
+	 *
 	 * The #936 review's no-floor census measured the boundary: ≥100k holders are the
 	 * famous-exonym class (757 flips, intent-correct. 7 collisions, none harmful)
 	 * while 10k–100k holders are junk-dominated (3,481 flips led by short-form mis-tags —
@@ -123,9 +139,10 @@ export interface RankingWeights {
 }
 
 /**
- * The shipped weights. Every value is a measured decision — change one
- * and re-run the resolver eval. the per-field docs on {@link RankingWeights} say
- * what each change moves and what motivated its current value.
+ * The shipped weights.
+ *
+ * Every value is a measured decision — change one and re-run the resolver eval. the per-field
+ * docs on {@link RankingWeights} say what each change moves and what motivated its current value.
  */
 export const DEFAULT_WEIGHTS: RankingWeights = {
 	placetypeMatchBoost: 0.5,
@@ -140,13 +157,13 @@ export const DEFAULT_WEIGHTS: RankingWeights = {
 	// populationBoost is intentionally large — empirical tuning against real WOF
 	// showed BM25 gaps of 1.5-3.0 between famous places and tiny same-name peers
 	// (because the famous ones have hundreds of alt-name entries that hurt their FTS document score).
-	// To consistently surface "the famous one" for unambiguous queries like
-	// "New York" or "Chicago", the population signal needs to dominate.
+	// To consistently surface "the famous one" for unambiguous queries like "New York"
+	// or "Chicago", the population signal needs to dominate.
 	// Callers wanting a more conservative balance can drop this in the RankingWeights override.
 	//
 	// Note: this resolver uses `place_population` directly.
-	// The separate `place_importance` table (Wikipedia-derived) is consumed by the FST layer rather than
-	// here. See docs/articles/concepts/importance-vs-population.md for the two-signal interface.
+	// The separate `place_importance` table (Wikipedia-derived) is consumed by the FST layer rather than here.
+	// See docs/articles/concepts/importance-vs-population.md for the two-signal interface.
 	populationBoost: 4,
 	populationScaleLog10: 6,
 	// Exact name/alias match outranks partial match before the weighted sum (incl. population) is consulted —
@@ -160,9 +177,10 @@ export const DEFAULT_WEIGHTS: RankingWeights = {
 
 /**
  * The population contribution as a 0..1 fraction: `min(1, log10(1 + population) / populationScaleLog10)`.
+ *
  * Zero for an absent or non-positive population — and zero for a non-positive scale,
- * so a magnitude never carries its own absence. The coordinate-first locality path
- * consumes this fraction directly; {@link populationBoostTerm} scales it.
+ * so a magnitude never carries its own absence.
+ * The coordinate-first locality path consumes this fraction directly; {@link populationBoostTerm} scales it.
  */
 export function populationScaleTerm(
 	population: number | null | undefined,
@@ -176,8 +194,9 @@ export function populationScaleTerm(
 /**
  * The additive population boost: `populationBoost * populationScaleTerm(...)`,
  * capped at `populationBoost` magnitude at `10^populationScaleLog10` people.
- * Missing population contributes 0 — never a penalty. The one formula behind the Node
- * weighted sum and the wasm re-rank, so the two backends cannot drift.
+ *
+ * Missing population contributes 0 — never a penalty.
+ * The one formula behind the Node weighted sum and the wasm re-rank, so the two backends cannot drift.
  */
 export function populationBoostTerm(
 	population: number | null | undefined,

@@ -75,8 +75,8 @@ vi.mock("@mailwoman/neural/classifier", async (importOriginal) => ({
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
-// Import after the mock declarations + reset. `pair-index-resolver.ts` is not mocked,
-// so the binaries built here decode through the real reader.
+// Import after the mock declarations + reset.
+// `pair-index-resolver.ts` is not mocked, so the binaries built here decode through the real reader.
 const { PairIndexResolver, serializePairIndex } = await import("@mailwoman/neural/pair")
 const { loadNeuralClassifierFromURLs, resolvePairIndexCountry } = await import("@mailwoman/neural/web-loader")
 
@@ -127,6 +127,7 @@ function nzIndexBytes(): Uint8Array {
 
 /**
  * A fake `fetch` whose per-URL response is decided by `respond`.
+ *
  * Model/tokenizer URLs get dummy bytes (the ORT session
  *
  * - Tokenizer are mocked, so the content is irrelevant).

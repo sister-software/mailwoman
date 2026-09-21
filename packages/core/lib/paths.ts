@@ -35,10 +35,11 @@ export const RepoRootAlias = "mailwoman" as const
 
 export type RepoRootAlias = typeof RepoRootAlias
 
-// Depth shared by both trees: this file sits at `core/lib/paths.ts` and its emit at `core/out/paths.js`,
-// so "lib" here is the sibling of "out". Count from repo root to the file'S directory:
-// packages/core/lib is 3. The ancestor this file was extracted from sat one level deeper
-// (packages/core/utils, 4) and its reflection still had "out" written where this has "lib".
+// Depth shared by both trees: this file sits at `core/lib/paths.ts` and its emit at
+// `core/out/paths.js`, so "lib" here is the sibling of "out".
+// Count from repo root to the file'S directory: packages/core/lib is 3.
+// The ancestor this file was extracted from sat one level deeper (packages/core/utils, 4)
+// and its reflection still had "out" written where this has "lib".
 const PathReflection = ["packages", "core", "lib"] as const
 
 type PathReflection = typeof PathReflection
@@ -119,18 +120,21 @@ export const workspacePath = createPathResolver<RepoRootAlias>(PackagesAbsoluteP
  * (the directory containing `package.json` for this package).
  *
  * Two levels up in both trees — `core/lib/utils/repo.ts` and `core/out/utils/repo.js`
- * both sit under a direct child of `core/` — which is why this takes a fixed
- * `".."` pair rather than the mode-dependent third segment it used to carry.
+ * both sit under a direct child of `core/` — which is why this takes a fixed `".."` pair
+ * rather than the mode-dependent third segment it used to carry.
  * See the note on {@link RepoRootAbsolutePath} for why that branch is gone.
  *
  * Used to locate package-bundled assets (dictionary data) that live under the workspace root
- * rather than the repo root — so that `npm install @mailwoman/core` ships those assets
- * alongside the JS without any post-install copy step. TODO: Deprecate this
+ * rather than the repo root — so that `npm install @mailwoman/core` ships those
+ * assets alongside the JS without any post-install copy step.
+ * TODO: Deprecate this
  */
 const CorePackageAbsolutePath = resolvePath(__dirname, "..")
 /**
- * Path builder rooted at `@mailwoman/core`, so data under `core/data/` resolves the same in source
- * and compiled trees. See the `__isCompiledTree` note in this file before reaching across that boundary.
+ * Path builder rooted at `@mailwoman/core`, so data under `core/data/` resolves
+ * the same in source and compiled trees.
+ *
+ * See the `__isCompiledTree` note in this file before reaching across that boundary.
  */
 export const corePackagePathBuilder = createPathBuilderResolver<RepoRootAlias>(CorePackageAbsolutePath)
 
@@ -146,9 +150,10 @@ export type AddressResource = "chromium-i18n/ssl-address" | "libpostal" | "inter
 /**
  * Path builder relative to a address resource dictionary directory.
  *
- * Data lives at `core/data/<resource>/dictionaries/...` so the @mailwoman/core npm package
- * ships dictionaries via its `files` glob. Use {@link corePackagePathBuilder} directly for non-
- * dictionary assets (e.g. chromium-i18n/ssl-address) that don't have the `dictionaries/` subdir.
+ * Data lives at `core/data/<resource>/dictionaries/...` so the @mailwoman/core
+ * npm package ships dictionaries via its `files` glob.
+ * Use {@link corePackagePathBuilder} directly for non- dictionary assets
+ * (e.g. chromium-i18n/ssl-address) that don't have the `dictionaries/` subdir.
  */
 export function resourceDictionaryPathBuilder<A extends AddressResource, S extends string[]>(
 	resource: A,

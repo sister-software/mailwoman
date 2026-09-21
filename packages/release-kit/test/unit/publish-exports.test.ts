@@ -12,10 +12,10 @@ import {
 } from "@mailwoman/release-kit/pack/publish-exports"
 import { describe, expect, it } from "vitest"
 
-// Source lives under `lib/`, so a real dev map's `node` condition names `./lib/…`
-// while its `default`/`types` name `./out/…` without that segment — `rootDir: "./lib"`
-// strips it from the emit. The expectations below are therefore also the assertion
-// that the segment is dropped rather than carried through.
+// Source lives under `lib/`, so a real dev map's `node` condition names `./lib/…` while its
+// `default`/`types` name `./out/…` without that segment — `rootDir: "./lib"` strips it from the emit.
+// The expectations below are therefore also the assertion that the segment is dropped
+// rather than carried through.
 const DEV_MAP = {
 	"./package.json": "./package.json",
 	".": {
@@ -149,9 +149,9 @@ describe("collectExportTargets", () => {
 
 	it("exposes a source leak for assertNoSourceTargets to reject", () => {
 		// The v7.2.0 failure shape: a dev map shipped verbatim.
-		// The transform repairs every condition whose target is source, so a leak can only
-		// reach here through a shape it does not walk — a pattern target, or a nested
-		// condition it did not visit. Collecting it is what lets the refusal see it.
+		// The transform repairs every condition whose target is source, so a leak can only reach here
+		// through a shape it does not walk — a pattern target, or a nested condition it did not visit.
+		// Collecting it is what lets the refusal see it.
 		const leaked = collectExportTargets({ ".": { default: "./index.ts" } })
 		expect(leaked).toContain("./index.ts")
 	})

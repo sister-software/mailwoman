@@ -42,12 +42,14 @@ export interface ReadOGRLayerIdentityOptions {
 	path: string
 	/**
 	 * Layer inside it, asserted against what the source answers.
+	 *
 	 * Omitted, the source's first layer answers and only its presence is checked.
 	 */
 	layer?: string
 	/**
-	 * The epsg code the source must declare. A source declaring anything else is a
-	 * product change rather than a variation to absorb.
+	 * The epsg code the source must declare.
+	 *
+	 * A source declaring anything else is a product change rather than a variation to absorb.
 	 */
 	expectEPSG: number
 	/**
@@ -92,6 +94,7 @@ const OGRINFO_MAX_BUFFER = 32 * 1024 * 1024
 
 /**
  * Ordinates in a 2D extent: `minLon, minLat, maxLon, maxLat`.
+ *
  * A shorter array is a 3D or degenerate extent this reader does not understand
  * rather than a 2D one with something missing.
  */

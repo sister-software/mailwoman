@@ -19,8 +19,10 @@ import type { Kysely } from "kysely"
 export interface PolygonsTable {
 	id: number
 	/**
-	 * The GeoJSON geometry, JSON-encoded. A row that fails to parse reads as no-polygon,
-	 * never as an error — a malformed geometry must not fail the whole reverse query.
+	 * The GeoJSON geometry, JSON-encoded.
+	 *
+	 * A row that fails to parse reads as no-polygon, never as an error —
+	 * a malformed geometry must not fail the whole reverse query.
 	 */
 	geom: string
 }
@@ -31,6 +33,7 @@ export interface PolygonDatabase {
 
 /**
  * The subset of a Kysely handle the polygon DDL touches.
+ *
  * Kysely is invariant in its schema parameter, so naming only `schema` lets a
  * builder holding a wider handle pass it without a cast.
  */

@@ -11,8 +11,10 @@ import type { BroadbandServicableLocationID } from "#sdk/location"
 /**
  * Snake_case identifier for a US State or Territory.
  *
- * Loosely typed as `string` for now. The Nexus original derived this from `StateName`
- * (via `@isp.nexus/tiger`); this port drops that dependency since nothing here consumes the literal union.
+ * Loosely typed as `string` for now.
+ * The Nexus original derived this from `StateName` (via `@isp.nexus/tiger`);
+ * this port drops that dependency since nothing here consumes the literal union.
+ *
  * Tighten it against `@mailwoman/tiger`'s `StateName` if a downstream dictionary ever needs it.
  *
  * @category FCC
@@ -88,8 +90,9 @@ export type BSLFlag = (typeof BSLFlag)[keyof typeof BSLFlag]
  */
 export interface NTIARecord {
 	/**
-	 * Unique ID for the Fabric location. Remains persistent across versions,
-	 * even if the location's position or building changes.
+	 * Unique ID for the Fabric location.
+	 *
+	 * Remains persistent across versions, even if the location's position or building changes.
 	 *
 	 * @title Location ID
 	 * @pattern ^\d{10}$
@@ -107,7 +110,9 @@ export interface NTIARecord {
 	address_primary: string
 
 	/**
-	 * City name from the postal address. Also known as the locality.
+	 * City name from the postal address.
+	 *
+	 * Also known as the locality.
 	 *
 	 * @example
 	 * 	San Francisco
@@ -150,7 +155,9 @@ export interface NTIARecord {
 	zip_suffix?: string
 
 	/**
-	 * Estimate of the number of units at the location. Includes both residential and non-residential units.
+	 * Estimate of the number of units at the location.
+	 *
+	 * Includes both residential and non-residential units.
 	 *
 	 * @example
 	 * 	10
@@ -171,6 +178,7 @@ export interface NTIARecord {
 
 	/**
 	 * Code indicating the type of building at the location.
+	 *
 	 * Can be residential (R), non-residential (B), mixed (X), group quarters (G),
 	 * CAI (C), enterprise (E), or other (O).
 	 *
@@ -183,6 +191,7 @@ export interface NTIARecord {
 
 	/**
 	 * Modeled land use designation from county assessor information.
+	 *
 	 * Possible values range from 0 (Other) to 15 (Wireless).
 	 *
 	 * @example
@@ -235,6 +244,7 @@ export interface NTIARecord {
 
 	/**
 	 * Latitude coordinate of the location in decimal degrees.
+	 *
 	 * Uses WGS84 format with 5-digit precision.
 	 *
 	 * @example
@@ -248,6 +258,7 @@ export interface NTIARecord {
 
 	/**
 	 * Longitude coordinate of the location in decimal degrees.
+	 *
 	 * Uses WGS84 format with 5-digit precision.
 	 *
 	 * @example

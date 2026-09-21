@@ -50,10 +50,10 @@ describe("isAtLeastAsSpecific", () => {
 	})
 
 	it("puts a borough BELOW localadmin rather than level with it", () => {
-		// This pair was tied on the reasoning that WOF uses both for the same tier
-		// in different countries, which is true — an Alaska borough is county-tier —
-		// but a tie is not a neutral answer. It made each cover the other, and one rung up
-		// that same tie let a live NYC-shaped borough cover its own dead parent locality.
+		// This pair was tied on the reasoning that WOF uses both for the same tier in different countries,
+		// which is true — an Alaska borough is county-tier — but a tie is not a neutral answer.
+		// It made each cover the other, and one rung up that same tie let a live
+		// NYC-shaped borough cover its own dead parent locality.
 		// WOF's own containment ladder commits to sub-locality. a scale that has to pick one
 		// answer picks that one, and the Alaska reading stays wrong either way.
 		expect(isAtLeastAsSpecific("borough", "localadmin")).toBe(true)
@@ -108,8 +108,9 @@ describe("isStrictlyFiner", () => {
 
 describe("the table", () => {
 	it("carries no duplicate rank except the rungs documented as deliberate ties", () => {
-		// Two survive, and neither is an admin rung. `building+campus+venue` are three names
-		// for a thing at an address, and `country+dependency` is WOF's own sovereignty hedge.
+		// Two survive, and neither is an admin rung.
+		// `building+campus+venue` are three names for a thing at an address,
+		// and `country+dependency` is WOF's own sovereignty hedge.
 		// The admin ladder itself is now strictly ordered, because a tie there is a silent
 		// disagreement with containment — see the agreement suite below.
 		const byRank = new Map<number, string[]>()

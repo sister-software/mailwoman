@@ -65,8 +65,9 @@ export const FORM_499_WORKBOOK_KEYS = {
 	dcAgentDisplayName: "dc_agent1",
 	dcAgentOrganizationName: "dc_agent2",
 	dcAgentTelephone: "dc_agent_telephone",
-	// `DC_Agent_EMail` normalizes to `dc_agent_e_mail`, not `dc_agent_email` — the inner capital M is a
-	// word boundary to the snake-caser. Caught by `assertWorkbookHeader`, which is what it is for.
+	// `DC_Agent_EMail` normalizes to `dc_agent_e_mail`, not `dc_agent_email` —
+	// the inner capital M is a word boundary to the snake-caser.
+	// Caught by `assertWorkbookHeader`, which is what it is for.
 	dcAgentEmailAddress: "dc_agent_e_mail",
 	firstState: "alabama",
 	lastState: "wyoming",
@@ -96,6 +97,7 @@ const NOTE_KEYS = ["note1", "note2", "note3"] as const
 
 /**
  * USPS codes for the workbook's 59 jurisdiction columns, keyed by the normalized header name.
+ *
  * Territories and the Pacific atolls are included because the workbook carries them.
  * Johnston and Midway have no USPS code of their own and take their FIPS-adjacent
  * conventional abbreviations, which are recorded here rather than silently dropped.
@@ -162,14 +164,16 @@ const STATE_CODE_BY_KEY: Record<string, string> = {
 	wyoming: "WY",
 }
 
-// A cell can also arrive as a real boolean: a transformer that types the column
-// hands one through, and `cell()` normalizes it like every other scalar.
+// A cell can also arrive as a real boolean: a transformer that types the column hands
+// one through, and `cell()` normalizes it like every other scalar.
 // The union says so rather than a test asserting past it.
 type WorkbookRow = Record<string, XLSXCellValue | boolean>
 
 /**
- * One cell as a trimmed string. `null` (an empty xlsx cell), numbers and dates all
- * normalize here, so no caller has to branch on {@linkcode XLSXCellValue}'s union.
+ * One cell as a trimmed string.
+ *
+ * `null` (an empty xlsx cell), numbers and dates all normalize here, so no caller
+ * has to branch on {@linkcode XLSXCellValue}'s union.
  */
 function cell(row: WorkbookRow, key: string): string {
 	const value = row[key]
@@ -200,6 +204,7 @@ const US_DATE_PATTERN = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
  * That is deliberate and it is not silent: `lastFiledAt` becomes `valid_from`, and
  * `assertISODate` throws on a non-ISO value — so an unconverted date fails the build loudly
  * at the point it would be written, which is where a reader can see which filer caused it.
+ *
  * Emitting the raw `M/D/yyyy` here would fail the same assertion. emitting a guess would not fail at all.
  */
 export function toISOFilingDate(value: string): string {
@@ -217,6 +222,7 @@ export function toISOFilingDate(value: string): string {
 
 /**
  * Read the jurisdiction columns into sorted USPS codes.
+ *
  * A column is set when its cell is the literal `true` — the same comparison
  * `usfContributor` uses, and the same one the workbook's own values follow.
  */
@@ -264,9 +270,11 @@ export function toForm499Row(row: WorkbookRow): Form499Row {
 }
 
 /**
- * Every key {@linkcode toForm499Row} reads. A header missing any of these means the FCC
- * changed its export, and this reader would otherwise emit rows whose fields are all
- * empty strings — a silent, whole-file data loss that looks like a successful parse.
+ * Every key {@linkcode toForm499Row} reads.
+ *
+ * A header missing any of these means the FCC changed its export, and this reader
+ * would otherwise emit rows whose fields are all empty strings — a silent,
+ * whole-file data loss that looks like a successful parse.
  */
 const REQUIRED_KEYS: readonly string[] = [
 	...Object.values(FORM_499_WORKBOOK_KEYS),
@@ -296,7 +304,9 @@ export function assertWorkbookHeader(headerKeys: readonly string[]): void {
 
 export interface ParseForm499WorkbookOptions {
 	/**
-	 * Sheet to read, as a 1-based number or a name. Defaults to the first.
+	 * Sheet to read, as a 1-based number or a name.
+	 *
+	 * Defaults to the first.
 	 */
 	sheet?: number | string
 }

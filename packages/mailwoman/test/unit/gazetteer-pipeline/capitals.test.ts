@@ -79,7 +79,8 @@ describe("buildCapitalsReference", () => {
 		)
 
 		// AA: a real dump whose pplc name disagrees with the catalog.
-		// BB: a postal export on the dump filename. CC: no file at all.
+		// BB: a postal export on the dump filename.
+		// CC: no file at all.
 		await writeLocalFile(dumpRow(1, "Other Name", "P", "PPLC", "AA"), join(dir, "AA.txt"))
 
 		await writeLocalTextFile(

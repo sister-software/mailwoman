@@ -166,7 +166,8 @@ export const noFragmentRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// the split. A surface on the digit board never enters training.
+			// the split.
+			// A surface on the digit board never enters training.
 			if (excluded.has(foldNOSurface(street))) {
 				contaminated++
 
@@ -190,7 +191,8 @@ export const noFragmentRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// the signal. A street with no postcode/locality partner.
+			// the signal.
+			// A street with no postcode/locality partner.
 			// Either bare, or street+number — both are the forms board 3 measured as the
 			// headroom (bare-street-hn 0.693, slash-hn 0.650).
 			if (!number || random() < bareStreetProb) {
@@ -198,9 +200,9 @@ export const noFragmentRecipe: CorpusRecipe = {
 			} else {
 				const klass = number.includes("/") ? "slash-hn" : "street-hn"
 				// knob 3: the failing class is street + long number (Leppdalsvegen 1285 -> postcode).
-				// The digit count rather than the slash, is what tips the length prior
-				// toward postcode. Oversample those rows to fight the prior with volume
-				// and teach the street/number boundary directly.
+				// The digit count rather than the slash, is what tips the length prior toward postcode.
+				// Oversample those rows to fight the prior with volume and teach the
+				// street/number boundary directly.
 				const digits = (number.match(/\d/g) ?? []).length
 				const copies = digits >= longNumberMinDigits ? longNumberBoost : 1
 

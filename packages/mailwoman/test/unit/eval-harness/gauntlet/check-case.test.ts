@@ -147,9 +147,9 @@ describe("the place-identity check (#1507)", () => {
 
 	it("grades place identity off the RESOLVED place, not the echoed query span", () => {
 		// The Gaborone class, verbatim: the parse is perfect and `locality` echoes it,
-		// while the resolver returned an Austrian hamlet. `expect_components.locality`
-		// is green on this result. only the place check can see the failure —
-		// which is what makes reading `hierarchy[0].name` required.
+		// while the resolver returned an Austrian hamlet.
+		// `expect_components.locality` is green on this result. only the place check can see
+		// the failure — which is what makes reading `hierarchy[0].name` required.
 		const c = storedCase({
 			expect_components: stringifyJSON({ locality: "Gaborone" }),
 			expect_place_name: "Gaborone",
@@ -204,12 +204,14 @@ describe("the place-identity check (#1507)", () => {
 })
 
 describe("the component check is exact — multi-script truth is a per-row opt-in (#34)", () => {
-	// The 2026-08-10 global relaxation (any dual-script got satisfied a truth freezing one rendering) let
-	// a cross-tag bleed grade as a pass, so review converted it into the `expect_component_renderings`
-	// opt-in. The first two tests pin the reversal. the rest pin the opt-in interface itself.
+	// The 2026-08-10 global relaxation (any dual-script got satisfied a truth freezing one rendering)
+	// let a cross-tag bleed grade as a pass, so review converted it into the
+	// `expect_component_renderings` opt-in.
+	// The first two tests pin the reversal. the rest pin the opt-in interface itself.
 	it("fails a cross-script bleed against a plain expect_components truth — the Manchester case", () => {
-		// The exposure the global relaxation disclosed: a locality that swallowed the CJK venue
-		// next door graded as a pass. With no rendering interface on the row, this must fail again.
+		// The exposure the global relaxation disclosed: a locality that swallowed
+		// the CJK venue next door graded as a pass.
+		// With no rendering interface on the row, this must fail again.
 		const c = storedCase({ expect_components: stringifyJSON({ locality: "Manchester" }) })
 
 		expect(checkCase(c, result({ locality: "四季酒家 Manchester" }))).toEqual([

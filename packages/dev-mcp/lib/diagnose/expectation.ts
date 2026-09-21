@@ -14,8 +14,9 @@ import { caseCarriesTruth, seedToCaseTable } from "#grade"
 import type { ResolvedInput } from "#input-sets"
 
 /**
- * How the row was graded, and against what. `met: null` means the row asserts
- * nothing — never that it passed.
+ * How the row was graded, and against what.
+ *
+ * `met: null` means the row asserts nothing — never that it passed.
  */
 export interface ExpectationReading {
 	source: "board_case" | "corpus_row" | "none"

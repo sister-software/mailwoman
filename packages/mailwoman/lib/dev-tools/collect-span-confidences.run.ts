@@ -104,8 +104,9 @@ function tagClass(tag: string): string {
 }
 
 /**
- * Grade one predicted span against a row's gold. Returns `null` when the span is
- * unlabelable (OA can't see this tag), else `true`/`false`.
+ * Grade one predicted span against a row's gold.
+ *
+ * Returns `null` when the span is unlabelable (OA can't see this tag), else `true`/`false`.
  */
 function gradeSpan(predTag: string, predValue: string, row: CalibRow): boolean | null {
 	if (row.partial) {

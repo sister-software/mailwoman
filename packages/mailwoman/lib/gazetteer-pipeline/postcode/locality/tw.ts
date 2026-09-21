@@ -89,6 +89,7 @@ const FALLBACK_RADIUS_KM = 20
  * Cross-placetype spread, one wider than JP/KR: TW districts land on `county`
  * (direct-municipality districts), `localadmin`, `locality` (county-administered townships/cities),
  * and `neighbourhood` (the Kaohsiung/Taichung inner districts — 前金/苓雅/三民/… are `neighbourhood` in WOF).
+ *
  * Neighbourhood rows are only ever accepted name-conditional
  * (their Chinese name must match the postal district), never as bare geometric fallback —
  * 1,450 TW neighbourhoods would otherwise swallow the district tier.
@@ -155,6 +156,7 @@ export interface PostalDistrict {
 
 /**
  * Parse Chunghwa Post's `行政區經緯度(toPost).xml` (data.gov.tw dataset 25489).
+ *
  * The document is flat and regular. entries carry 行政區名 / 3碼郵遞區號 / 中心點經度 / 中心點緯度.
  */
 export async function loadPostalDistricts(path: string): Promise<PostalDistrict[]> {
@@ -555,9 +557,10 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 
 			if (!hit) {
 				// No polygon (or nothing usable in it): the JP/KR-style authoritative-name + proximity net.
-				// The en stem also rescues district rows whose WOF point fell outside their own polygon
-				// (Wanhua sits ~5 km west of 萬華區, in New Taipei). Neighbourhood rows only qualify
-				// through the name check, never by bare proximity — see the placetypes note.
+				// The en stem also rescues district rows whose WOF point fell outside their
+				// own polygon (Wanhua sits ~5 km west of 萬華區, in New Taipei).
+				// Neighbourhood rows only qualify through the name check, never by bare
+				// proximity — see the placetypes note.
 				const cands = nearby(d.lat, d.lon, FALLBACK_RADIUS_KM)
 				const districtTierNameHit = cands.find((c) => DISTRICT_TIER.has(c.place.placetype) && nameMatches(c.place))
 				const nameHit = districtTierNameHit ?? cands.find((c) => nameMatches(c.place))

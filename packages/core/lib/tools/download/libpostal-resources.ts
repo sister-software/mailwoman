@@ -38,6 +38,7 @@ const DICTIONARIES_DIR = resourceDictionaryPath("libpostal")
 
 /**
  * Sort a single dictionary file in place by code point (matching `LC_ALL=C sort`).
+ *
  * Blank lines sort to the top, exactly as `sort` orders empty strings. a trailing newline is preserved.
  */
 async function sortFileInPlace(path: string): Promise<void> {
@@ -56,9 +57,11 @@ async function sortFileInPlace(path: string): Promise<void> {
 }
 
 /**
- * Shallow-clone libpostal, alphabetize each dictionary file, and install the tree at the
- * checked-in `core/data/libpostal/dictionaries`. Refuses to clobber an existing tree
- * unless `force`. zx is lazy-imported (dev-grade dependency — the pipeline convention).
+ * Shallow-clone libpostal, alphabetize each dictionary file, and install the tree
+ * at the checked-in `core/data/libpostal/dictionaries`.
+ *
+ * Refuses to clobber an existing tree unless `force`. zx is lazy-imported
+ * (dev-grade dependency — the pipeline convention).
  */
 export async function downloadLibpostalResources(
 	options: { force?: boolean } = {},

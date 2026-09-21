@@ -70,6 +70,7 @@ const EVAL_GOLD_PATH = repoRootPath("data", "eval", "external", "intersection-re
 /**
  * Where `mailwoman situs interpolation` unpacks the per-county tiger edges shapefiles —
  * a Census download, so it sits beside the other Census vintages under `census/`.
+ *
  * `--edges-dir` overrides it.
  */
 const DEFAULT_EDGES_DIR = dataRootPath("census", "tiger2023-edges")
@@ -89,8 +90,10 @@ interface Crossing {
 }
 
 /**
- * Junction forms. Weights favor the common connectors. the tight (unpadded) variants and leading
- * phrases get enough mass to register (each ≥5%) — they're the audited gaps the old synth missed.
+ * Junction forms.
+ *
+ * Weights favor the common connectors. the tight (unpadded) variants and leading phrases
+ * get enough mass to register (each ≥5%) — they're the audited gaps the old synth missed.
  */
 interface Form {
 	id: string
@@ -111,8 +114,9 @@ const FORMS: readonly Form[] = [
 ]
 
 /**
- * Tail forms. ~55% bare (the v0.7.2 lesson: an always-present tail taught the
- * model to read post-intersection text as a locality and fumble bare "X & Y").
+ * Tail forms. ~55% bare (the v0.7.2 lesson: an always-present tail taught the model
+ * to read post-intersection text as a locality and fumble bare "X & Y").
+ *
  * City tails require a ZIP→city hit (Cook only); ZIP tails require the edge to carry a zipl.
  * Misses downgrade to the region tail.
  */
@@ -142,8 +146,9 @@ const CASES: readonly Casing[] = [
 ]
 
 /**
- * Words a connector may contribute as O tokens. The audit rejects any O token outside
- * this set — an unlabeled street/locality token would surface here.
+ * Words a connector may contribute as O tokens.
+ *
+ * The audit rejects any O token outside this set — an unlabeled street/locality token would surface here.
  */
 const CONNECTOR_O_TOKENS = new Set(["and", "at", "of", "corner", "intersection"])
 
@@ -194,8 +199,9 @@ async function readEvalExclusions(): Promise<{ nodes: Set<number>; pairs: Set<st
 
 /**
  * Extract real crossings from one county's tiger edges shapefile.
- * Same query shape as the eval builder (2 incident distinct S1* FULLNAMEs at a node,
- * both names >=6 chars), plus the edge zipl so tails can carry the crossing's own ZIP.
+ *
+ * Same query shape as the eval builder (2 incident distinct S1* FULLNAMEs at a node, both names >=6 chars),
+ * plus the edge zipl so tails can carry the crossing's own ZIP.
  * Hash-ordered for seed-stable determinism.
  */
 async function extractCrossings(
@@ -285,6 +291,7 @@ async function buildZipCityMap(): Promise<Map<string, string>> {
 
 /**
  * Render one crossing → { raw, components, formID, tailID, caseID }.
+ *
  * Components are inserted in claim order (streets first) so alignment can't grab
  * a region/postcode lookalike inside a street.
  */
@@ -339,8 +346,10 @@ function renderRow(
 
 /**
  * Label-correctness audit for one aligned row, on the RAW surface via the #519 span triple.
- * Returns a list of violations (empty = clean). Re-derives the span checks independent
- * of `alignRow`'s own assertion, so a builder bug can't vouch for itself.
+ *
+ * Returns a list of violations (empty = clean).
+ * Re-derives the span checks independent of `alignRow`'s own assertion,
+ * so a builder bug can't vouch for itself.
  */
 function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, string>>): string[] {
 	const errors: string[] = []

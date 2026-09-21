@@ -100,13 +100,15 @@ const { values, positionals } = parseArguments({
 const GEONAMES = values.geonames || dataRootPath("geonames")
 /**
  * The FTS gazetteer, read for its `concordances` + `spr` tables — the identity join.
+ *
  * The candidate backend below carries no concordance table, which is why the
  * two are separate flags rather than one.
  */
 const GAZETTEER = values.gazetteer || dataRootPath("wof", "admin-global-priority.db")
 /**
- * The backend the recording drives. Defaults to the promoted candidate table,
- * which is what the shipped geocoder reads.
+ * The backend the recording drives.
+ *
+ * Defaults to the promoted candidate table, which is what the shipped geocoder reads.
  */
 const BACKEND = values.backend || dataRootPath("wof", "candidate.db").toString()
 const OUT = values.out || repoRootPath("docs", "static", "benchmarks").toString()
@@ -213,8 +215,8 @@ async function recordPhase(): Promise<void> {
 		{
 			benchmarkID: withholdEveryDenotingRow ? `${definition.benchmarkID}-denoting` : definition.benchmarkID,
 			definitionVersion: definition.version,
-			// Which withheld-gold rule produced this fixture. The two rules define different
-			// strata, so the benchmark id alone does not identify a run.
+			// Which withheld-gold rule produced this fixture.
+			// The two rules define different strata, so the benchmark id alone does not identify a run.
 			withheldGoldRule: withholdEveryDenotingRow ? "every-denoting-row" : "concorded-ids",
 			recordedAt: isoSeconds(),
 			gitHead: await gitHead(repoRootPath()),
@@ -237,9 +239,10 @@ async function recordPhase(): Promise<void> {
 }
 
 /**
- * Every arm's `ResolveOpts`, production first. The production arm's empty bag is listed
- * explicitly: an omitted default is a missing replay key, and `replayBackend` would
- * then raise on the arm the benchmark is about.
+ * Every arm's `ResolveOpts`, production first.
+ *
+ * The production arm's empty bag is listed explicitly: an omitted default is a missing
+ * replay key, and `replayBackend` would then raise on the arm the benchmark is about.
  */
 function armOptionSets(): ResolveOpts[] {
 	return [{}, ABLATION_RESOLVE_OPTS]
@@ -292,9 +295,10 @@ const REQUIRED_MARGIN_POINTS = 8
  * What the receipt says about the fixture these results came from, or a stated absence.
  *
  * Read rather than assumed, because the two withheld-gold rules define different strata
- * and their abstention rates are not comparable. The definition alone names neither,
- * so a report headed by the definition would label a successor's numbers with the frozen
- * benchmark's id — two constructions, one heading, and a reader with no way to tell them apart.
+ * and their abstention rates are not comparable.
+ * The definition alone names neither, so a report headed by the definition would
+ * label a successor's numbers with the frozen benchmark's id — two constructions,
+ * one heading, and a reader with no way to tell them apart.
  */
 async function recordedUnder(): Promise<{ benchmarkID: string; withheldGoldRule: string }> {
 	const receipt = await tryReadLocalJSONFile<{ benchmarkID?: string; withheldGoldRule?: string }>(RECEIPT_PATH)
@@ -500,9 +504,10 @@ async function knobPhase(): Promise<void> {
 		byArm.set(label, results)
 	}
 
-	// A raised floor changes what the walk asks next, so each arm loses a different set of
-	// rows to replay misses. Scoring every arm over its own survivors would compare rates
-	// whose denominators moved. this intersection is what makes the columns comparable,
+	// A raised floor changes what the walk asks next, so each arm loses a different
+	// set of rows to replay misses.
+	// Scoring every arm over its own survivors would compare rates whose
+	// denominators moved. this intersection is what makes the columns comparable,
 	// and the count of rows it drops is reported beside them.
 	const errored = new Set(
 		[...byArm.values()].flatMap((results) => results.filter((result) => result.error).map((result) => result.rowID))

@@ -24,7 +24,9 @@
 import type { HardCaseClass } from "#eval-harness/hard-case-board"
 
 /**
- * A curated row before its numbers are filled in. `expectID` is a WOF place id. the builder reads the point.
+ * A curated row before its numbers are filled in.
+ *
+ * `expectID` is a WOF place id. the builder reads the point.
  */
 export interface Curated {
 	id: string
@@ -52,6 +54,7 @@ export const CITY_TOL = 15_000
 
 /**
  * The fragment-register rows: `comma_free` and its `comma_control` twins, US / FR / GB / DE.
+ *
  * Each entry's `note` is its justification and ships verbatim in the emitted board.
  */
 export const FRAGMENT_ROWS: Curated[] = [

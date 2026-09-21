@@ -34,7 +34,9 @@ export interface StubRequestConfig {
 	headers?: Record<string, unknown>
 	timeout?: number
 	/**
-	 * Set by a binary request path (`"arraybuffer"`). Absent on a JSON client's calls.
+	 * Set by a binary request path (`"arraybuffer"`).
+	 *
+	 * Absent on a JSON client's calls.
 	 */
 	responseType?: string
 	/**
@@ -59,6 +61,7 @@ export interface StubOutcome {
 	headers?: Record<string, string>
 	/**
 	 * A transport-level failure — no http response ever arrives.
+	 *
 	 * `code` picks the class: `ERR_NETWORK` for a dropped socket, `econnaborted`
 	 * for this attempt's own timeout firing.
 	 */
@@ -86,6 +89,7 @@ export interface StubTransport {
 	configs: StubRequestConfig[]
 	/**
 	 * `clock.now()` at each dispatch, when a clock was supplied.
+	 *
 	 * The pacing assertions read this.
 	 */
 	dispatchTimes: number[]
@@ -94,12 +98,15 @@ export interface StubTransport {
 export interface StubTransportOptions {
 	/**
 	 * Records a timestamp into {@linkcode StubTransport.dispatchTimes} on every dispatch.
+	 *
 	 * Omit when timing is not under test.
 	 */
 	clock?: { now(): number }
 	/**
-	 * The body served when an outcome names none. Defaults to `{ ok: true }`; pass the envelope
-	 * the client under test expects when it validates one (BDC's `{ data: [] }`, say).
+	 * The body served when an outcome names none.
+	 *
+	 * Defaults to `{ ok: true }`; pass the envelope the client under test expects
+	 * when it validates one (BDC's `{ data: [] }`, say).
 	 */
 	defaultBody?: unknown
 }
@@ -128,9 +135,9 @@ export function axiosLikeError(message: string, code: string, config: StubReques
  * and records every dispatch.
  *
  * It reproduces what Axios's real adapters do on a failing status — reject with an
- * Axios-shaped error carrying the response — because `validateStatus` is applied by
- * the adapter rather than by the interceptor chain. A test that resolves with a 4xx
- * instead would exercise a path the real transport never takes.
+ * Axios-shaped error carrying the response — because `validateStatus` is applied
+ * by the adapter rather than by the interceptor chain.
+ * A test that resolves with a 4xx instead would exercise a path the real transport never takes.
  */
 export function stubTransport(outcomes: StubOutcome[], options: StubTransportOptions = {}): StubTransport {
 	const { clock, defaultBody = { ok: true } } = options
@@ -181,7 +188,8 @@ export function stubTransport(outcomes: StubOutcome[], options: StubTransportOpt
 		)
 	}
 
-	// Structurally an Axios adapter. The precise `AxiosAdapter` signature isn't nameable here
-	// without importing `axios`, which the packages under test deliberately do not depend on.
+	// Structurally an Axios adapter.
+	// The precise `AxiosAdapter` signature isn't nameable here without importing `axios`,
+	// which the packages under test deliberately do not depend on.
 	return { axios: { adapter } as AxiosOverrides, calls, configs, dispatchTimes }
 }

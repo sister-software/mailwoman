@@ -21,9 +21,11 @@ export interface DescribeColumn {
 }
 
 /**
- * Pure column-choice logic over a `describe` result — no DuckDB/network in this function,
- * so it's unit-testable on its own. Overture's places-theme category struct has gone by `taxonomy`
- * (newer) and `categories` (older); prefer `taxonomy.primary` when the column is present.
+ * Pure column-choice logic over a `describe` result — no DuckDB/network in this
+ * function, so it's unit-testable on its own.
+ *
+ * Overture's places-theme category struct has gone by `taxonomy` (newer) and `categories`
+ * (older); prefer `taxonomy.primary` when the column is present.
  */
 export function chooseCategoryColumn(
 	describeRows: readonly DescribeColumn[]
@@ -55,9 +57,10 @@ export interface CountryExpression {
 /**
  * Pure column-choice logic over a `describe` result — no DuckDB/network in this function,
  * so it's unit-testable on its own (mirrors {@link chooseCategoryColumn}'s pattern).
+ *
  * The Overture places-theme has, as of the 2026-05-20.0 release, no top-level `country`
- * column (unlike the addresses theme, whose SQL this one is templated from) —
- * country instead lives inside the `addresses` list<struct<...>> column.
+ * column (unlike the addresses theme, whose SQL this one is templated from) — country
+ * instead lives inside the `addresses` list<struct<...>> column.
  * Prefers a top-level `country` column when present (a future release may add one back),
  * falling back to `addresses[1].country` (DuckDB lists are 1-based).
  *
@@ -85,7 +88,9 @@ export function chooseCountryExpression(describeRows: readonly DescribeColumn[])
 
 export interface IngestPlacesOptions {
 	/**
-	 * Pinned Overture release. Default {@link DEFAULT_RELEASE} (the same pin `overture-ingest.tsx` uses).
+	 * Pinned Overture release.
+	 *
+	 * Default {@link DEFAULT_RELEASE} (the same pin `overture-ingest.tsx` uses).
 	 */
 	release?: string
 	/**
@@ -93,7 +98,9 @@ export interface IngestPlacesOptions {
 	 */
 	countries: readonly string[]
 	/**
-	 * Output root for the per-country Parquet. Default `<data-root>/overture/<release>/places`.
+	 * Output root for the per-country Parquet.
+	 *
+	 * Default `<data-root>/overture/<release>/places`.
 	 */
 	out?: string
 	/**
@@ -117,6 +124,7 @@ export interface IngestPlacesResult {
 /**
  * Overture places-theme ingest: predicate-pushdown per-country copy into local Parquet, mirroring
  * `overture-ingest.tsx` (lazy DuckDB, `s3_region='us-west-2'`, `threads=4`, `memory_limit='8GB'`).
+ *
  * Probes the release's places schema once (`describe`) via the pure
  * {@link chooseCategoryColumn}/{@link hasBrandColumn} before issuing the per-country COPYs.
  */

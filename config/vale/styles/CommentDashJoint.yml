@@ -1,0 +1,15 @@
+## Mailwoman code-comment rule: a dash is not a semicolon.
+##
+## `CommentSemicolons` closed the semicolon and left this open, so a sentence that wanted
+## to join two clauses reached for an em dash instead: 33 semicolons survive in comments
+## against roughly 7,400 dashes joining two independent clauses (measured 2026-09-21).
+##
+## This rule fires only on that use. A paired dash around an aside, and a dash introducing
+## a noun phrase rather than a clause, both stay legal.
+##
+## Off in `.vale-code.ini` until the dash sweep lands, for the reason recorded there.
+extends: existence
+message: "'%s' joins two clauses with a dash — split the sentence or use a full stop."
+level: error
+tokens:
+  - '[—–]\s+(?:[Tt]he|[Aa]|[Aa]n|[Ii]t|[Tt]his|[Tt]hat|[Tt]hey|[Ww]e|[Tt]here|[Ee]ach|[Ee]very|[Nn]othing|[Nn]obody)\s+\w+(?:\s+\w+){0,6}\s+(?:is|are|was|were|has|have|had|does|do|did|will|would|can|could|should|must|never|only)\b'

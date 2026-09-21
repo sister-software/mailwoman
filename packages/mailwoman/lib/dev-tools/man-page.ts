@@ -33,10 +33,11 @@ export const MAN_PAGE_PATH = resolvePackagePath("mailwoman", "man", "mailwoman.1
 export const CLI_PATH = resolvePackagePath("mailwoman", "out", "cli", "index.js")
 
 /**
- * The user-facing commands a man reader cares about. `dev`, `clients`, and the model-work
- * groups (`corpus`, `eval`, `gazetteer`, `release`, `coverage`, `tiles`) are maintainer
- * surfaces — their help stays available via `--help`; putting every internal group
- * in the manual buries the six commands an installer actually runs.
+ * The user-facing commands a man reader cares about.
+ *
+ * `dev`, `clients`, and the model-work groups (`corpus`, `eval`, `gazetteer`, `release`,
+ * `coverage`, `tiles`) are maintainer surfaces — their help stays available via `--help`;
+ * putting every internal group in the manual buries the six commands an installer actually runs.
  */
 const USER_COMMANDS = ["parse", "geocode", "autocomplete", "doctor", "data", "serve"] as const
 
@@ -45,8 +46,10 @@ async function help(cliPath: string, args: string[]): Promise<string> {
 }
 
 /**
- * Escape troff-significant characters. Leading dots/quotes control troff. hyphens in
- * option names must be literal `\-` so `man` renders ascii hyphens (grep-able flags).
+ * Escape troff-significant characters.
+ *
+ * Leading dots/quotes control troff. hyphens in option names must be literal `\-`
+ * so `man` renders ascii hyphens (grep-able flags).
  */
 function troffEscape(line: string): string {
 	const escaped = line.replaceAll("\\", "\\\\").replaceAll("-", "\\-")
@@ -69,8 +72,9 @@ function preformatted(text: string): string {
 }
 
 /**
- * Render the whole page from a CLI binary's help tree. Pure with respect to the
- * filesystem — the write happens only in
+ * Render the whole page from a CLI binary's help tree.
+ *
+ * Pure with respect to the filesystem — the write happens only in
  * {@link generateManPage}, so the freshness test can render and compare without touching the tree.
  */
 export async function renderManPage(cliPath: string = CLI_PATH): Promise<string> {

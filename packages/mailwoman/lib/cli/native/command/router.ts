@@ -16,6 +16,7 @@ interface CommandModule {
 
 /**
  * The compiled command tree, whichever tree this module runs from.
+ *
  * The commands are TSX, which Node cannot load from source.
  * Therefore, the router reads `out/commands/` even when the package's `#` imports have
  * handed it the source router — the same reach `geocode-stream.ts` makes for its worker.
@@ -34,9 +35,9 @@ const commandURL = (parts: readonly string[], index = false): URL =>
  * The command names one directory of the compiled tree offers — what a user types
  * rather than what the files are called.
  *
- * A prefix directory contributes its children as `<directory>-<child>` rather than itself,
- * because that is the name they answer to. `listCommandNames` is help-only,
- * so reading one extra directory level costs nothing anyone waits on.
+ * A prefix directory contributes its children as `<directory>-<child>`
+ * rather than itself, because that is the name they answer to.
+ * `listCommandNames` is help-only, so reading one extra directory level costs nothing anyone waits on.
  */
 async function listCommandNames(directory: URL): Promise<string[]> {
 	const entries = await Globerator.from("*", { cwd: directory, withFileTypes: true, onlyFiles: false }).toArray()
@@ -59,9 +60,10 @@ async function listCommandNames(directory: URL): Promise<string[]> {
 			(child) => child.isFile() && child.name.endsWith(".js") && child.name !== "index.js"
 		)
 
-		// A prefix directory offers no command of its own, and every command under it declares the
-		// directory's name as its own prefix. The declared name is what decides it: a namespace like
-		// `gazetteer/inspect/` looks identical from the outside, and only the specs tell them apart.
+		// A prefix directory offers no command of its own, and every command under it
+		// declares the directory's name as its own prefix.
+		// The declared name is what decides it: a namespace like `gazetteer/inspect/` looks
+		// identical from the outside, and only the specs tell them apart.
 		const declared = hasIndex
 			? []
 			: await Promise.all(

@@ -34,6 +34,7 @@ const DEFAULT_DATA_ROOT = mailwomanDataRoot()
 
 /**
  * P.L. 94-171 (2020) pipe-delimited field offsets (0-based).
+ *
  * Geographic header: …|sumlev(2)|…|logrecno(7)|geoid(8)|geocode(9)|… — geocode is the
  * bare 15-char block FIPS (matches tiger GEOID20); sumlev 750 = tabulation block.
  */
@@ -49,9 +50,10 @@ const P2 = (fieldNo: number) => 76 + (fieldNo - 1)
 /**
  * Segment 2: fileid|stusab|chariter|cifsn|logrecno(4)| P3×71 | P4×73 | H1×3 — 152 fields, H1 at the tail. Verified
  * against the real file: `ca000022020.pl`'s state row reads 14,392,140 / 13,475,623
- * / 916,517, the published CA 2020 figures. `occupied + vacant === housing_units`
- * is the invariant that distinguishes a correct offset from a plausible one,
- * and {@link parseH1} refuses a row where it does not hold.
+ * / 916,517, the published CA 2020 figures.
+ *
+ * `occupied + vacant === housing_units` is the invariant that distinguishes a correct
+ * offset from a plausible one, and {@link parseH1} refuses a row where it does not hold.
  */
 export const SEG2_FIELD_COUNT = 152
 /**
@@ -74,9 +76,10 @@ export interface H1Counts {
 }
 
 /**
- * The three H1 counts from one segment-2 row. The last field carries crlf's trailing CR
- * when the file has one, so each field is trimmed before it is read as a number. a
- * row whose counts do not add up is refused rather than stored.
+ * The three H1 counts from one segment-2 row.
+ *
+ * The last field carries crlf's trailing CR when the file has one, so each field is trimmed
+ * before it is read as a number. a row whose counts do not add up is refused rather than stored.
  */
 export function parseH1(fields: readonly string[]): H1Counts {
 	if (fields.length !== SEG2_FIELD_COUNT) {
@@ -123,11 +126,15 @@ export interface FetchRedistrictingOptions {
 	 */
 	stateFIPS: string
 	/**
-	 * Decennial vintage. Default 2020 (the only P.L. 94-171 release this parses).
+	 * Decennial vintage.
+	 *
+	 * Default 2020 (the only P.L. 94-171 release this parses).
 	 */
 	vintage?: number
 	/**
-	 * Output SQLite path. Default `<dataRoot>/tiger/tiger.db` (same DB as `fetchTIGER`).
+	 * Output SQLite path.
+	 *
+	 * Default `<dataRoot>/tiger/tiger.db` (same DB as `fetchTIGER`).
 	 */
 	outPath?: string
 	/**
@@ -139,7 +146,9 @@ export interface FetchRedistrictingOptions {
 	 */
 	county?: string
 	/**
-	 * Rows per insert. Default 2000.
+	 * Rows per insert.
+	 *
+	 * Default 2000.
 	 */
 	batchSize?: number
 }
@@ -171,6 +180,7 @@ async function eachLine(path: string, fn: (line: string) => void): Promise<void>
 
 /**
  * Fetch one state's P.L. 94-171 block race counts into `pl_block`.
+ *
  * Yields progress. returns the tally.
  */
 export async function* fetchRedistricting(

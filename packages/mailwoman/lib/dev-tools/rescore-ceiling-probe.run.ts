@@ -114,9 +114,9 @@ async function main() {
 				s.swap++
 
 				// falsifier: resolve the gold locality with the row's postcode
-				// (what the rescore keeps as an anchor) and measure great-circle to truth.
-				// p50 < 10km → the swap recovers a real coordinate. scatter → the gold name
-				// resolves to a same-name collision (a label-F1 mirage, the #685 trap).
+				// (what the rescore keeps as an anchor) and measure great-circle to truth. p50 <
+				// 10km → the swap recovers a real coordinate. scatter → the gold name resolves
+				// to a same-name collision (a label-F1 mirage, the #685 trap).
 				// (0,0) placeholders are dropped — WOF ships them on some rows.
 				const tLat = Number(row.lat),
 					tLon = Number(row.lon)

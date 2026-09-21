@@ -242,9 +242,10 @@ describe("applyPostcodeShapeCoherence — ABSTENTIONS (B1-2 documented, B1-3 con
 	})
 
 	it("confounds: 'Sydney NSW 2000, Australia' stays CONFIRMED — the default country is never a signal", () => {
-		// B1-3: reached under a US default, 2000 must not be excluded — that would delete
-		// the evidence the country-scope pass needs. The mechanism has no defaultCountry
-		// input at all. the only signals are the tree's own country/region tokens.
+		// B1-3: reached under a US default, 2000 must not be excluded — that would
+		// delete the evidence the country-scope pass needs.
+		// The mechanism has no defaultCountry input at all. the only signals are
+		// the tree's own country/region tokens.
 		const roots = [postcodeNode("2000"), node({ tag: "country", value: "Australia" })]
 
 		const verdict = applyPostcodeShapeCoherence(roots)

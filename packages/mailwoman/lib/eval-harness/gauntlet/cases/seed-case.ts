@@ -41,11 +41,12 @@ export interface SeedCase {
 	 */
 	defaultCountry?: string
 	/**
-	 * The CLI locale this row runs under (`en-NZ`); the runner derives the weights
-	 * overlay from its region subtag, mirroring production's locale-hint routing.
+	 * The CLI locale this row runs under (`en-NZ`); the runner derives the weights overlay
+	 * from its region subtag, mirroring production's locale-hint routing.
+	 *
 	 * A locale hint, never a country constraint — `country` above stays the truth's country,
-	 * which for a locale row can differ (`Paris` under `en-US` is an FR row run
-	 * with the US overlay). See #1585's interface.
+	 * which for a locale row can differ (`Paris` under `en-US` is an FR row run with the US overlay).
+	 * See #1585's interface.
 	 */
 	locale?: string
 	/**
@@ -66,7 +67,9 @@ export interface SeedCase {
 	expectLat?: number
 	expectLon?: number
 	/**
-	 * Great-circle tolerance (m). Defaults at runtime when absent.
+	 * Great-circle tolerance (m).
+	 *
+	 * Defaults at runtime when absent.
 	 */
 	expectToleranceM?: number
 	expectTier?: ResolutionTier
@@ -155,18 +158,19 @@ export const SeedCaseSchema = zod.strictObject({
 })
 
 /**
- * The compile-time bridge. If you add a field to {@linkcode SeedCase}
- * and not to {@linkcode SeedCaseSchema} (or the other way round), this line is
- * where `tsc` stops you — `true satisfies never` does not compile.
+ * The compile-time bridge.
+ *
+ * If you add a field to {@linkcode SeedCase} and not to {@linkcode SeedCaseSchema}
+ * (or the other way round), this line is where `tsc` stops you — `true satisfies never` does not compile.
  */
 export const SCHEMA_MATCHES_TYPE = true satisfies SameShape<zod.infer<typeof SeedCaseSchema>, SeedCase>
 
 /**
  * The third leg: {@linkcode SEED_CASE_KEY_ORDER} must list every key rather than merely valid ones.
  *
- * Its `satisfies readonly (keyof SeedCase)[]` checks membership only, so a new field
- * that never reaches the array would be silently dropped from every emitted row
- * and from the content hash. This fails instead.
+ * Its `satisfies readonly (keyof SeedCase)[]` checks membership only, so a new field that never
+ * reaches the array would be silently dropped from every emitted row and from the content hash.
+ * This fails instead.
  */
 export const KEY_ORDER_IS_EXHAUSTIVE = true satisfies MutuallyAssignable<
 	(typeof SEED_CASE_KEY_ORDER)[number],
@@ -199,6 +203,7 @@ export function canonicalizeSeedCase(c: SeedCase): SeedCase {
 /**
  * The `gauntlet_case` row a seed case becomes: the camelCase seed keys onto the snake_case columns,
  * every absent expectation an explicit `null`, the JSON-valued expectations serialized.
+ *
  * The regression-db builder inserts through this, and a board author grades a candidate row
  * through it before committing it, so the two cannot disagree about what a seed field means.
  */

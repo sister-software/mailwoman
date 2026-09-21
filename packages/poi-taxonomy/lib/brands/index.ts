@@ -25,8 +25,9 @@ export type { BrandMatch } from "#brands/lookup-core"
 
 /**
  * Exact-phrase brand lookup against `name` + `aliases`.
- * Confidence is always 1.0 (exact match only). Deduplicated by brand,
- * sorted by `rows` descending — ties broken by `wikidata`.
+ *
+ * Confidence is always 1.0 (exact match only).
+ * Deduplicated by brand, sorted by `rows` descending — ties broken by `wikidata`.
  */
 export function lookupPOIBrand(text: string) {
 	return CORE.lookupPOIBrand(text)

@@ -42,6 +42,7 @@ export type FetchNPPESOptions = BaseFetchOptions
 
 /**
  * Scrape the NPI_Files.html index for the latest full monthly ZIP.
+ *
  * Full-replacement files match `NPPES_Data_Dissemination_<Month>_<Year>*.zip`;
  * weekly files carry a `MMDDYY_MMDDYY` date range, which we exclude.
  */

@@ -137,9 +137,10 @@ test("default (no includeAdmin) stays localities-only with no admin rows — byt
 
 	expect((db2.prepare("SELECT COUNT(*) n FROM spr WHERE placetype IN ('country','region')").get() as Row).n).toBe(0)
 
-	// No linkage — the point of the admin check. The self row is not linkage:
-	// `populateAncestors` writes one for every spr row, so withholding it just made the
-	// fold-on-copy path disagree with a full build by exactly the non-gap localities (#1514).
+	// No linkage — the point of the admin check.
+	// The self row is not linkage: `populateAncestors` writes one for every spr row,
+	// so withholding it just made the fold-on-copy path disagree with a full build
+	// by exactly the non-gap localities (#1514).
 	expect(
 		(db2.prepare("SELECT COUNT(*) n FROM ancestors WHERE ancestor_placetype IN ('country','region')").get() as Row).n
 	).toBe(0)

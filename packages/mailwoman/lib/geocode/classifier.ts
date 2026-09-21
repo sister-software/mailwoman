@@ -19,7 +19,9 @@ import type { QueryShape } from "@mailwoman/query-shape"
  */
 export interface GeocodeClassifier {
 	/**
-	 * Which encoder feeds the model. Absent reads as `sentencepiece`.
+	 * Which encoder feeds the model.
+	 *
+	 * Absent reads as `sentencepiece`.
 	 * The character path keeps the postal mark 〒 the normalizer otherwise strips:
 	 * the CJK model was trained with it and misreads the prefecture boundary without it.
 	 */
@@ -40,9 +42,11 @@ export interface GeocodeClassifier {
 			inputMode?: InputMode
 			enforceWordConsistency?: ClassifierOpts["enforceWordConsistency"]
 			/**
-			 * The gazetteer FST prior. The classifier reads this from `opts` only —
-			 * there is no config fallback, unlike `placetypePair` — so a path that cannot express
-			 * the field does not merely weaken the prior, it never constructs it (#1497).
+			 * The gazetteer FST prior.
+			 *
+			 * The classifier reads this from `opts` only — there is no config fallback,
+			 * unlike `placetypePair` — so a path that cannot express the field does not
+			 * merely weaken the prior, it never constructs it (#1497).
 			 * Absent = byte-identical to the pre-#1497 decode.
 			 */
 			fst?: ClassifierOpts["fst"]
@@ -55,8 +59,10 @@ export interface GeocodeClassifier {
 
 /**
  * The classifier that will read `input`: the routed one when the deps' classifier
- * routes by script, else itself. Every geocode entry resolves this first,
- * so the postal-mark normalization and the parse follow the same model.
+ * routes by script, else itself.
+ *
+ * Every geocode entry resolves this first, so the postal-mark normalization
+ * and the parse follow the same model.
  */
 export async function classifierForInput(classifier: GeocodeClassifier, input: string): Promise<GeocodeClassifier> {
 	return classifier.forInput ? classifier.forInput(input) : classifier

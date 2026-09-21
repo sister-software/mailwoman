@@ -117,10 +117,11 @@ describe("derivedWeightsKeyFrom", () => {
 	})
 
 	it("is INVARIANT to checkout location — the whole point of a shared store", async () => {
-		// The first version hashed absolute paths. Every runner checks out to its own work directory,
-		// so lab-1, lab-2, lab-3 and a local worktree each computed a different key over byte-identical
-		// inputs and none ever saw another's work: four store directories holding the same eleven
-		// artifacts, and a 41s pair-index-nz.bin rebuild on a runner that already had the file.
+		// The first version hashed absolute paths.
+		// Every runner checks out to its own work directory, so lab-1, lab-2, lab-3
+		// and a local worktree each computed a different key over byte-identical inputs and none
+		// ever saw another's work: four store directories holding the same eleven artifacts,
+		// and a 41s pair-index-nz.bin rebuild on a runner that already had the file.
 		const checkoutA = scratch.resolve("runner-1", "_work", "mailwoman")
 		const checkoutB = scratch.resolve("runner-2", "_work", "mailwoman")
 
@@ -149,8 +150,9 @@ describe("derivedWeightsKey", () => {
 	})
 
 	it("names the generating CLI modules, not just the config and data", () => {
-		// The whole point of the rewrite. If someone trims this list back to config+data,
-		// the currency-filter class of stale artifact comes straight back.
+		// The whole point of the rewrite.
+		// If someone trims this list back to config+data, the currency-filter class
+		// of stale artifact comes straight back.
 		expect(DERIVED_WEIGHTS_INPUTS).toContain("packages/mailwoman/lib/commands/gazetteer/pair-index.tsx")
 		expect(DERIVED_WEIGHTS_INPUTS).toContain("packages/mailwoman/lib/commands/gazetteer/postcode/binary.tsx")
 	})

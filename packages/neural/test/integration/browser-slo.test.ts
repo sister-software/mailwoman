@@ -64,11 +64,14 @@ import { basename, dirname, extname, normalize, resolvePath as resolveFilePath, 
 import { type Browser, chromium } from "playwright"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
-// MARK: Budgets. One per decomposed quantity, each naming its arm.
+// MARK: Budgets.
+// One per decomposed quantity, each naming its arm.
 
 /**
- * Raw bytes of `model.onnx`. The shipped int8 export measured 39,419,629 B (v4.4.0); the budget
- * leaves room for a quantization change without leaving room for an fp32 export (~4× larger).
+ * Raw bytes of `model.onnx`.
+ *
+ * The shipped int8 export measured 39,419,629 B (v4.4.0); the budget leaves room for a
+ * quantization change without leaving room for an fp32 export (~4× larger).
  */
 const MODEL_RAW_BYTES_BUDGET = 56_000_000
 
@@ -79,6 +82,7 @@ const TOKENIZER_RAW_BYTES_BUDGET = 4_000_000
 
 /**
  * Raw bytes of the onnxruntime-web `.wasm` the runtime requests from `wasmPaths`.
+ *
  * Which variant it asks for is ORT's decision at load time rather than ours — the first run fetched
  * the 22,867,301 B asyncify build — so the budget covers the family rather than one file name.
  * Compresses ~4× on the wire (5,580,159 B measured, against the live demo's 5.66 MB brotli figure).
@@ -91,17 +95,21 @@ const ORT_WASM_RAW_BYTES_BUDGET = 40_000_000
 const SQLITE_RUNTIME_RAW_BYTES_BUDGET = 8_000_000
 
 /**
- * Raw bytes of the bundled browser runtime JS (onnxruntime-web + the neural runner + the SentencePiece
- * core, minified). The demo's own app JS is larger — it carries React and MapLibre on top of
- * this — so read the budget as a floor moving under the client rather than as the page weight.
+ * Raw bytes of the bundled browser runtime JS (onnxruntime-web + the neural
+ * runner + the SentencePiece core, minified).
+ *
+ * The demo's own app JS is larger — it carries React and MapLibre on top of this —
+ * so read the budget as a floor moving under the client rather than as the page weight.
  */
 const RUNTIME_JS_RAW_BYTES_BUDGET = 4_000_000
 
 /**
- * Raw bytes of the evidence lexicons plus the retrieval binaries the shipped web loader fetches
- * beside the model: model card, gazetteer / country / street-type / locality-surface lexicons, the
- * postcode anchor binary, the placetype-pair index. Asserted as one class because a
- * per-artifact budget would need an edit every time a channel ships a new lexicon generation.
+ * Raw bytes of the evidence lexicons plus the retrieval binaries the shipped web
+ * loader fetches beside the model: model card, gazetteer / country / street-type /
+ * locality-surface lexicons, the postcode anchor binary, the placetype-pair index.
+ *
+ * Asserted as one class because a per-artifact budget would need an edit every
+ * time a channel ships a new lexicon generation.
  */
 const EVIDENCE_RAW_BYTES_BUDGET = 32_000_000
 
@@ -112,9 +120,11 @@ const EVIDENCE_RAW_BYTES_BUDGET = 32_000_000
 const INIT_WASM_MS_BUDGET = 12_000
 
 /**
- * Session init on the WebGPU arm. Asserted only when the browser granted a WebGPU adapter
- * and the runner's diagnostics report `webgpu` — the runner falls back to wasm silently,
- * so without that check the arm would measure the other arm under a WebGPU name.
+ * Session init on the WebGPU arm.
+ *
+ * Asserted only when the browser granted a WebGPU adapter and the runner's diagnostics
+ * report `webgpu` — the runner falls back to wasm silently, so without that check
+ * the arm would measure the other arm under a WebGPU name.
  * Headless Chromium grants a software adapter (SwiftShader) where no GPU is reachable,
  * which is why the receipt prints the adapter's identity beside the number:
  * 2,997 ms on SwiftShader is not a claim about hardware.
@@ -123,6 +133,7 @@ const INIT_WEBGPU_MS_BUDGET = 20_000
 
 /**
  * Median tokenize+infer on the wasm arm, single-threaded.
+ *
  * The 2026-06 node one-thread probe measured 41–44 ms p50/p95 on this class of model.
  */
 const WARM_P50_WASM_MS_BUDGET = 140
@@ -134,8 +145,10 @@ const WARM_P95_WASM_MS_BUDGET = 220
 
 /**
  * Http range requests a cold gazetteer session costs — opening `candidate.db` over
- * sql.js-httpvfs plus the candidate-table probes. The candidate table is clustered so a
- * probe touches a handful of B-tree pages. the demo's own measured session was 38 requests.
+ * sql.js-httpvfs plus the candidate-table probes.
+ *
+ * The candidate table is clustered so a probe touches a handful of B-tree pages.
+ * the demo's own measured session was 38 requests.
  * This budget is what fails when a schema or clustering change turns a probe into a scan.
  */
 const GAZETTEER_RANGE_REQUESTS_BUDGET = 120
@@ -179,7 +192,9 @@ const WARM_LOWERCASE_INPUTS = 4
 const WARM_ITERATIONS = 64
 
 /**
- * Discarded parses before measurement starts. The first few carry ORT's per-shape allocation.
+ * Discarded parses before measurement starts.
+ *
+ * The first few carry ORT's per-shape allocation.
  */
 const WARM_WARMUP_ITERATIONS = 8
 
@@ -195,25 +210,30 @@ const CANDIDATE_PROBE_KEYS = ["washington", "newyork", "cupertino", "anchorage",
 const CANDIDATE_PROBE_LIMIT = 8
 
 /**
- * Bytes per http range request, matching the demo's sql.js-httpvfs
- * configuration (16 SQLite pages at the candidate DB's 8 KiB page size).
+ * Bytes per http range request, matching the demo's sql.js-httpvfs configuration
+ * (16 SQLite pages at the candidate DB's 8 KiB page size).
+ *
  * Changing it changes the request count by construction.
  */
 const HTTPVFS_CHUNK_SIZE = 65_536
 
 /**
  * Chromium flags that let the WebGPU arm be attempted at all.
- * Headless Chromium ships WebGPU behind this flag and grants an adapter only where the host
- * exposes a GPU, so on a headless CI box the probe still comes back empty and the arm skips —
- * which is the honest outcome rather than a failure. The adapter's own identity goes in the receipt,
- * because a software adapter and a discrete GPU are different arms wearing the same name.
+ *
+ * Headless Chromium ships WebGPU behind this flag and grants an adapter only
+ * where the host exposes a GPU, so on a headless CI box the probe still comes back empty
+ * and the arm skips — which is the honest outcome rather than a failure.
+ * The adapter's own identity goes in the receipt, because a software adapter
+ * and a discrete GPU are different arms wearing the same name.
  */
 const WEBGPU_LAUNCH_ARGS = ["--enable-unsafe-webgpu"] as const
 
 /**
- * The candidate-table probe. `WOFCandidateTableLookup` issues this shape per resolve —
- * a contiguous probe on the `without rowid` B-tree keyed by `name_key` — and the range-fetch
- * count is a property of that access pattern rather than of the select list.
+ * The candidate-table probe.
+ *
+ * `WOFCandidateTableLookup` issues this shape per resolve — a contiguous probe on
+ * the `without rowid` B-tree keyed by `name_key` — and the range-fetch count is a
+ * property of that access pattern rather than of the select list.
  */
 const CANDIDATE_PROBE_SQL =
 	"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, neg_rank, is_primary, population " +
@@ -236,8 +256,10 @@ async function tryResolveWeights(): Promise<ResolvedWeights | null> {
 }
 
 /**
- * Ask a package where one of its files lives. Never assemble a path into another
- * package's install directory by hand — the layout is its owner's to change.
+ * Ask a package where one of its files lives.
+ *
+ * Never assemble a path into another package's install directory by hand —
+ * the layout is its owner's to change.
  */
 async function tryResolveFile(specifier: string): Promise<string | null> {
 	try {
@@ -285,9 +307,10 @@ const BUNDLE_RESOLVE_DIR = String(repoRootPath())
 // MARK: Static asset server
 
 /**
- * The class a served response is counted against. Byte accounting happens on the server
- * rather than in the browser: the server sees exactly what left the socket,
- * encoding included, and cannot be fooled by a cache hit.
+ * The class a served response is counted against.
+ *
+ * Byte accounting happens on the server rather than in the browser: the server sees exactly
+ * what left the socket, encoding included, and cannot be fooled by a cache hit.
  */
 type AssetClass = "model" | "tokenizer" | "ortWasm" | "sqliteRuntime" | "runtimeJS" | "evidence" | "gazetteerRanges"
 
@@ -347,9 +370,10 @@ const CONTENT_TYPES: Record<string, string> = {
 }
 
 /**
- * Extensions worth compressing. `.onnx`, `.model` and `.bin` are already entropy-dense —
- * the live demo serves them identity-encoded too, which is why the baseline's
- * model figure equals the file size on disk.
+ * Extensions worth compressing.
+ *
+ * `.onnx`, `.model` and `.bin` are already entropy-dense — the live demo serves them
+ * identity-encoded too, which is why the baseline's model figure equals the file size on disk.
  */
 const COMPRESSIBLE_EXTENSIONS = new Set([".html", ".js", ".mjs", ".json", ".wasm", ".map"])
 
@@ -379,9 +403,10 @@ interface RangeSpec {
 }
 
 /**
- * Parse a single-range `Range: bytes=a-b` header. Multi-range is deliberately unimplemented —
- * sql.js-httpvfs never asks for one, and half-answering a shape we do not serve
- * would corrupt the measurement instead of failing it.
+ * Parse a single-range `Range: bytes=a-b` header.
+ *
+ * Multi-range is deliberately unimplemented — sql.js-httpvfs never asks for one, and
+ * half-answering a shape we do not serve would corrupt the measurement instead of failing it.
  */
 function parseRange(header: string | undefined, size: number): RangeSpec | null {
 	if (!header) return null
@@ -562,6 +587,7 @@ async function createAssetServer(
 
 /**
  * The page-side API `/app.js` installs on `globalThis`.
+ *
  * The bundle is built with esbuild from the package's compiled `out/` tree — the artifacts
  * an npm consumer bundles — and served as `/app.js`, which is the `runtimeJS` class.
  * Declared here so every `page.evaluate` callback below is type-checked against
@@ -594,16 +620,18 @@ interface HTTPVFSHandle {
 
 declare global {
 	/**
-	 * The page-side API `/app.js` installs. Declared on the global rather than reached
-	 * through a cast at each call site, because every `page.evaluate` callback is
-	 * serialized into the browser and can close over nothing from this file.
+	 * The page-side API `/app.js` installs.
+	 *
+	 * Declared on the global rather than reached through a cast at each call site, because every
+	 * `page.evaluate` callback is serialized into the browser and can close over nothing from this file.
 	 */
 	// oxlint-disable-next-line no-var -- `declare global` adds a globalThis property only through `var`.
 	var mwSLO: BrowserSLOAPI
 
 	/**
-	 * The sql.js-httpvfs UMD's own entry point. The lowercase `b` in `Db` is that
-	 * library's export name rather than ours.
+	 * The sql.js-httpvfs UMD's own entry point.
+	 *
+	 * The lowercase `b` in `Db` is that library's export name rather than ours.
 	 */
 	// oxlint-disable-next-line no-var -- see above.
 	var createDbWorker: (
@@ -852,8 +880,8 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 	page.on("pageerror", (error) => pageErrors.push(String(error)))
 
 	page.on("console", (message) => {
-		// ORT writes its own warnings to the wasm stderr, which reaches the page as
-		// a console error (`VerifyEachNodeIsAssignedToAnEp` fires on every session).
+		// ORT writes its own warnings to the wasm stderr, which reaches the page as a console
+		// error (`VerifyEachNodeIsAssignedToAnEp` fires on every session).
 		// Reporting those as page errors trains the reader to ignore the channel,
 		// and then a real one goes unread.
 		if (message.type() === "error" && !message.text().includes("W:onnxruntime")) {
@@ -1084,8 +1112,10 @@ function formatReceipt(m: Measurement): string {
 // MARK: Suite.
 
 /**
- * The whole probe runs once: a browser launch plus a 39 MB model load per arm is not
- * something to repeat per assertion. Generous rather than a performance target.
+ * The whole probe runs once: a browser launch plus a 39 MB model load per arm
+ * is not something to repeat per assertion.
+ *
+ * Generous rather than a performance target.
  */
 const PROBE_TIMEOUT_MS = 900_000
 

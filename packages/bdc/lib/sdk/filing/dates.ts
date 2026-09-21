@@ -42,8 +42,9 @@ export interface RetrieveFilingDatesParams {
 	 */
 	filingType: BDCFilingDataType
 	/**
-	 * Bypass the client's response cache and always fetch fresh from the
-	 * API. Defaults to `false`.
+	 * Bypass the client's response cache and always fetch fresh from the API.
+	 *
+	 * Defaults to `false`.
 	 */
 	skipCache?: boolean
 }
@@ -51,9 +52,10 @@ export interface RetrieveFilingDatesParams {
 /**
  * Retrieve the FCC BDC's available filing `as_of_date`s for a given filing type.
  *
- * One `listAsOfDates` call answers every filing type — the full unfiltered response is what the
- * client caches, and this filters it down on read — so asking for a second filing type inside the
- * TTL costs no request at all. At ten requests per minute that is worth six seconds each time.
+ * One `listAsOfDates` call answers every filing type — the full unfiltered response
+ * is what the client caches, and this filters it down on read — so asking for a
+ * second filing type inside the TTL costs no request at all.
+ * At ten requests per minute that is worth six seconds each time.
  */
 export async function retrieveFilingDates(
 	client: BDCClient,

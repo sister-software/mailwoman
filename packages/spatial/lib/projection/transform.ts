@@ -35,7 +35,9 @@ import { runFile } from "@mailwoman/core/process"
  */
 export interface DatumTransformationVerdict {
 	/**
-	 * The candidate operation line proj named, verbatim. Absent when it named none.
+	 * The candidate operation line proj named, verbatim.
+	 *
+	 * Absent when it named none.
 	 */
 	best?: string
 	usable: boolean

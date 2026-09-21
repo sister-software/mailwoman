@@ -49,8 +49,10 @@ function spansOverlap(a: ClassificationProposal["span"], b: ClassificationPropos
 
 /**
  * Reduce a set of (possibly overlapping) arbitrated proposals to a coherent,
- * non-overlapping set via greedy interval selection. The output is sorted by span start
- * (the order {@link proposalsToTree} expects). Input is not mutated.
+ * non-overlapping set via greedy interval selection.
+ *
+ * The output is sorted by span start (the order {@link proposalsToTree} expects).
+ * Input is not mutated.
  *
  * @param proposals Arbitrated proposals (post policy-registry filter), any source, possibly overlapping.
  *

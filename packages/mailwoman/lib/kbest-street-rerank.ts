@@ -73,11 +73,14 @@ const ANCHOR_TAGS: ReadonlySet<string> = new Set(["country", "region"])
 
 export interface StreetRerankOpts {
 	/**
-	 * K-best decode depth. Default 5 (the measured board depth).
+	 * K-best decode depth.
+	 *
+	 * Default 5 (the measured board depth).
 	 */
 	k?: number
 	/**
 	 * G2 margin cap forwarded to {@link pickByStreetEvidence}.
+	 *
 	 * Default 2.5 (the measured value).
 	 */
 	marginCap?: number
@@ -142,8 +145,10 @@ function hypothesisStreetSurface(
  * specialist and decodes locality/region/postcode far worse than the full BIO argmax head
  * (golden fr locality 0.855→0.506, us exact −6.4pp, fr exact −35pp measured 2026-07-18).
  * Replacing the tree would trade the +street win for a locality/postcode collapse.
- * The rerank's whole value is on the street tag, so it touches only the street tokens —
- * argmax owns the rest. This also keeps the intervention minimal + positive-evidence-shaped:
+ *
+ * The rerank's whole value is on the street tag, so it touches only the street
+ * tokens — argmax owns the rest.
+ * This also keeps the intervention minimal + positive-evidence-shaped:
  * the only thing the atlas is allowed to change is the street.
  */
 function spliceStreetTree(
@@ -198,6 +203,7 @@ function spliceStreetTree(
 
 /**
  * Parse `text` and rerank the span head's k-best segmentations on street-name evidence.
+ *
  * Returns the winning tree + whether evidence moved the pick.
  * Falls back to the plain argmax tree (byte-stable) when the model exports no
  * span scores or the evidence keeps rank-1.
@@ -215,7 +221,8 @@ export async function rerankByStreetEvidence(
 ): Promise<StreetRerankResult> {
 	const trace = await classifier.traceParse(text, opts.parseOpts)
 
-	// No span head → the k-best surface doesn't exist. Byte-stable fallback to the argmax tree.
+	// No span head → the k-best surface doesn't exist.
+	// Byte-stable fallback to the argmax tree.
 	if (!trace.spanScores) {
 		return {
 			tree: buildAddressTree(trace.text, trace.tokens),
@@ -225,18 +232,19 @@ export async function rerankByStreetEvidence(
 		}
 	}
 
-	// anchor condition (2026-07-18, the full-pipeline collateral fix): the rerank
-	// arbitrates a street only on an anchorless fragment — the class it was measured on.
+	// anchor condition (2026-07-18, the full-pipeline collateral fix): the rerank arbitrates
+	// a street only on an anchorless fragment — the class it was measured on.
 	// When the argmax parse already carries a country or region anchor, the model is on
 	// structured input where it is reliable, and a name-index collision does damage: it steals
 	// a token the model correctly labeled country/region ("France, Creuse, …" → the FR street
 	// "France" overrides country; "Best Rd, VT" → the US street reranks against the FR index).
-	// Skipping anchored inputs fixes both by construction and keeps every
-	// fragment-board class (bare street ± house number carries no admin anchor).
+	// Skipping anchored inputs fixes both by construction and keeps every fragment-board
+	// class (bare street ± house number carries no admin anchor).
 	// Scored against gold, this holds golden exact to noise (us 2180→2180, fr 1308→1308, |Δ| < 0.3pp/tag)
-	// while the FR fragment board moves +17.3pp. Postcode is not an anchor: adding it removed a
-	// little US collateral but mislabels 4-digit years as postcode, killing the date-name board
-	// (0.550→0.215) — too blunt for a real gain, so the anchor set stays country+region only.
+	// while the FR fragment board moves +17.3pp.
+	// Postcode is not an anchor: adding it removed a little US collateral
+	// but mislabels 4-digit years as postcode, killing the date-name board (0.550→0.215) —
+	// too blunt for a real gain, so the anchor set stays country+region only.
 	if (trace.tokens.some((t) => ANCHOR_TAGS.has(t.label.replace(/^[BI]-/, "")))) {
 		return { tree: buildAddressTree(trace.text, trace.tokens), moved: false, rank: 0, streetSurface: "" }
 	}
@@ -259,14 +267,15 @@ export async function rerankByStreetEvidence(
 	})
 
 	// positive-evidence check on the splice: only override the argmax tree's street
-	// with a street the atlas confirms exists. This is the same principle as the
-	// pick itself — the model owns every call the atlas can't confirm wrong.
+	// with a street the atlas confirms exists.
+	// This is the same principle as the pick itself — the model owns every call the atlas can't confirm wrong.
 	// Rationale (measured 2026-07-18): always-splicing cost golden fr street −2.7pp
 	// (the span head over/under-extends the street on clean multi-component inputs,
-	// and the full BIO head is better there); filtering on "argmax has no street" was too coarse
-	// (kept argmax's wrong street on fragments). Splicing only an atlas-confirmed street holds
-	// golden to noise (segmentation street == argmax street on clean, both confirmed → no-op)
-	// and keeps the fragment win (argmax street wrong/absent, segmentation street confirmed → spliced).
+	// and the full BIO head is better there); filtering on "argmax has no street" was
+	// too coarse (kept argmax's wrong street on fragments).
+	// Splicing only an atlas-confirmed street holds golden to noise
+	// (segmentation street == argmax street on clean, both confirmed → no-op) and keeps the
+	// fragment win (argmax street wrong/absent, segmentation street confirmed → spliced).
 	// An unconfirmed street never overrides.
 	const confirmed =
 		pick.candidate.streetSurface !== "" && evidence.hasStreetName(pick.candidate.streetSurface, opts.scope)

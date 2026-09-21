@@ -32,8 +32,8 @@ import type { AddressTree } from "@mailwoman/core/decoder"
  *
  * 1. The locale head confidently reads the text as a different country's
  *    addressing (see the module docstring).
- * 2. The postcode's format implies a country set that excludes the
- *    inferred country (`formatCountries`, from the #1589 implementation).
+ * 2. The postcode's format implies a country set that excludes the inferred country
+ *    (`formatCountries`, from the #1589 implementation).
  *    `A1V 0A9` is structurally Canadian and nothing else, yet the inferred US scope
  *    used to survive it — the format evidence only reached the postalcode probe,
  *    never the walk's own scope, so `Gander` resolved to a US alias ghost.

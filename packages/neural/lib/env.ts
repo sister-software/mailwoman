@@ -16,9 +16,10 @@ import { z } from "zod"
  * Inference tuning and evaluation overrides for the neural classifier.
  */
 export const PublicNeuralEnvSchema = z.object({
-	// ONNX intra-op thread cap. Deployment-shaped rather than code-shaped:
-	// the right value depends on how many mailwoman processes share the host,
-	// which the library cannot know. See DEFAULT_INTRA_OP_THREADS.
+	// ONNX intra-op thread cap.
+	// Deployment-shaped rather than code-shaped: the right value depends on how many
+	// mailwoman processes share the host, which the library cannot know.
+	// See DEFAULT_INTRA_OP_THREADS.
 	MAILWOMAN_INTRA_OP_THREADS: blankAsAbsent(z.coerce.number().int().positive().optional()).meta({
 		title: "ONNX intra-op threads",
 		description: "Maximum ONNX Runtime intra-op worker threads for each Mailwoman process.",

@@ -22,8 +22,9 @@ export async function createUnifiedSchema(db: DatabaseClient<WOFDatabase>): Prom
 	db.exec("PRAGMA busy_timeout = 10000")
 	db.exec("PRAGMA synchronous = OFF")
 
-	// `db` wraps `db` for the DDL (the house idiom); the caller owns `db`'s lifecycle, so we don't
-	// destroy it here. The bulk INSERTs (populateAncestors + build-unified-wof) stay on the raw handle.
+	// `db` wraps `db` for the DDL (the house idiom); the caller owns `db`'s lifecycle,
+	// so we don't destroy it here.
+	// The bulk INSERTs (populateAncestors + build-unified-wof) stay on the raw handle.
 
 	await db.schema
 		.createTable("spr")
@@ -49,10 +50,10 @@ export async function createUnifiedSchema(db: DatabaseClient<WOFDatabase>): Prom
 
 	// `privateuse` carries WOF's x_<variant> kind (preferred | variant) / GeoNames' isPreferredName
 	// ("preferred" | ""). `official` is the #936 ingest bit: 1 when the row's language is an official
-	// language of the place's country (codex OFFICIAL_LANGUAGES) and the row is a preferred
-	// form — x_variant rows tagged with an official language ("MSP", "Frisco") stay 0.
-	// Primary-name mirror rows stay 0 too: the name-exact tier already consults
-	// spr.name; `official` only marks the aliases eligible to join it.
+	// language of the place's country (codex OFFICIAL_LANGUAGES) and the row is a preferred form —
+	// x_variant rows tagged with an official language ("MSP", "Frisco") stay 0.
+	// Primary-name mirror rows stay 0 too: the name-exact tier already consults spr.name;
+	// `official` only marks the aliases eligible to join it.
 	// Both are ingest-time facts, never computed at query time.
 	await db.schema
 		.createTable("names")
@@ -84,8 +85,8 @@ export async function createUnifiedSchema(db: DatabaseClient<WOFDatabase>): Prom
 		.execute()
 
 	// `ancestors` maps each place to every place above it in the hierarchy (and itself).
-	// The resolver's parent-constraint scopes a child lookup to a parent's
-	// descendants via `spr.id IN (select id from ancestors where ancestor_id = ?)`.
+	// The resolver's parent-constraint scopes a child lookup to a parent's descendants
+	// via `spr.id IN (select id from ancestors where ancestor_id = ?)`.
 	// The off-the-shelf WOF dumps ship this table. our build derives it from the parent_id
 	// chain (see populateAncestors) since we don't capture `wof:hierarchy`.
 	await db.schema
@@ -100,9 +101,13 @@ export async function createUnifiedSchema(db: DatabaseClient<WOFDatabase>): Prom
 
 /**
  * Populate the `ancestors` table by walking each place's `parent_id` chain in `spr`
- * (transitive closure, including the place itself). Idempotent: drops + rebuilds the table contents.
- * Returns the row count. Run after `spr` is fully ingested (build-unified-wof freeze phase)
- * or standalone on an existing unified DB (`scripts/add-ancestors.ts`).
+ * (transitive closure, including the place itself).
+ *
+ * Idempotent: drops + rebuilds the table contents.
+ * Returns the row count.
+ *
+ * Run after `spr` is fully ingested (build-unified-wof freeze phase) or standalone
+ * on an existing unified DB (`scripts/add-ancestors.ts`).
  * Sentinel/negative parent_ids and cycles terminate the walk. ~4 rows/place
  * average. a transaction keeps the ~5M inserts fast.
  */

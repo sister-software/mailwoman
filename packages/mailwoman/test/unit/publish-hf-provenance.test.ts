@@ -54,8 +54,8 @@ describe("verifyTrainingProvenance", () => {
 	})
 
 	it("reads the top-level attribution key, which the character-path card uses", async () => {
-		// Reading `training.data_attribution` alone reported `neural-weights-cjk` as
-		// recording nothing, when its card carries six entries under `attribution`.
+		// Reading `training.data_attribution` alone reported `neural-weights-cjk` as recording
+		// nothing, when its card carries six entries under `attribution`.
 		// A control that answers a false absence refuses a release nobody needed to block,
 		// and the absence it reports is indistinguishable from a real one.
 		const card = await cardWith({

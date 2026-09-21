@@ -79,9 +79,9 @@ describe("assertWorkspacePublishable", () => {
 	})
 
 	it("refuses the release-it workspace path shape, which carries a leading ./", () => {
-		// `@release-it-plugins/workspaces` passes `./<workspace>` through
-		// RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE. Matching the record's keys literally
-		// would admit that spelling while refusing the bare one.
+		// `@release-it-plugins/workspaces` passes `./<workspace>`
+		// through RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE.
+		// Matching the record's keys literally would admit that spelling while refusing the bare one.
 		expect(() => assertWorkspacePublishable("./packages/osm")).toThrow(/ODbL counsel sign-off pending/)
 		expect(() => assertWorkspacePublishable("./packages/osm/")).toThrow(/ODbL counsel sign-off pending/)
 	})
@@ -99,6 +99,7 @@ describe("assertWorkspacePublishable", () => {
 describe("the tarball audit refuses the two v9.2.0 manifest-promise classes", () => {
 	/**
 	 * A hand-built tarball: `package/package.json` plus whichever payload files the case ships.
+	 *
 	 * No yarn project needed — the audit reads the archive, and these fixtures pin
 	 * its refusals without packing a real workspace.
 	 */
@@ -190,8 +191,8 @@ describe("the Hugging Face materialization plan", () => {
 
 	it("puts every destination under packages/ — the lost-prefix class", async () => {
 		// The v9.2.0 release's first dispatch died on `cp … "$ws/street-type-lexicon-v3.json"`
-		// after every workspace moved under `packages/`. Destinations are now derived
-		// from one prefix in one function, and this pins it.
+		// after every workspace moved under `packages/`.
+		// Destinations are now derived from one prefix in one function, and this pins it.
 		const plans = await planWeightsMaterialization(repoRoot)
 
 		expect(plans.length).toBeGreaterThan(0)

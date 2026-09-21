@@ -32,8 +32,10 @@ import { compileGeographicModel } from "#compile"
 import { loadGeographicModelDirectory } from "#load"
 
 /**
- * The command that rewrites the committed artifact. Stated once, and quoted by the freshness test's
- * failure message, so a reader who trips it is told what to run rather than left to reconstruct it.
+ * The command that rewrites the committed artifact.
+ *
+ * Stated once, and quoted by the freshness test's failure message, so a reader who
+ * trips it is told what to run rather than left to reconstruct it.
  */
 export const REGENERATE_ARTIFACT_COMMAND =
 	"node packages/geographic-model/lib/scripts/build-artifact.ts && npx oxfmt packages/geographic-model/data/geographic-model.json"
@@ -64,8 +66,10 @@ export async function packagedModelPaths(): Promise<{ source: string; artifact: 
 }
 
 /**
- * Load the authored records and compile them. Throws with every violation if they do not load,
- * and with every reason if they load but do not compile. nothing partial is returned.
+ * Load the authored records and compile them.
+ *
+ * Throws with every violation if they do not load, and with every reason if they load
+ * but do not compile. nothing partial is returned.
  */
 export async function compileAuthoredGeographicModel(): Promise<CompiledGeographicModel> {
 	const { source } = await packagedModelPaths()
@@ -74,8 +78,10 @@ export async function compileAuthoredGeographicModel(): Promise<CompiledGeograph
 }
 
 /**
- * Read the committed artifact. The format version is checked. the records are not
- * re-validated, because they were validated on the way in.
+ * Read the committed artifact.
+ *
+ * The format version is checked. the records are not re-validated,
+ * because they were validated on the way in.
  */
 export async function readCompiledGeographicModel(): Promise<CompiledGeographicModel> {
 	const text = await readLocalTextFile((await packagedModelPaths()).artifact)

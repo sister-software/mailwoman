@@ -27,9 +27,11 @@ import {
 } from "#venue-structure"
 
 /**
- * USPS Pub-28 C2 canonicals whose designator is descriptive rather than addressing ("Building A"
- * describes the building; "Suite 9" addresses a unit). Inside a bracketed group,
- * these read as annotation content (gold convention 2 of the punctuation-stress eval).
+ * USPS Pub-28 C2 canonicals whose designator is descriptive rather than addressing
+ * ("Building A" describes the building; "Suite 9" addresses a unit).
+ *
+ * Inside a bracketed group, these read as annotation content
+ * (gold convention 2 of the punctuation-stress eval).
  */
 const WEAK_CANONICALS: ReadonlySet<string> = new Set([
 	"BUILDING",
@@ -61,9 +63,11 @@ const SCAN_EXCLUDED_DELIVERY: ReadonlySet<string> = new Set([
 
 /**
  * Convert one designator phrase from a codex table into a scan-pattern fragment.
- * Short alphabetic words (≤ 3 chars: "PO", "GPO", "RMB") are treated as initialisms with optional
- * periods/spacing — the punctuation amas tells mailers to strip but deliverable mail still
- * carries ("P.O. Box", "R.M.B 4600"). Longer words match literally with flexible whitespace.
+ *
+ * Short alphabetic words (≤ 3 chars: "PO", "GPO", "RMB") are treated as initialisms
+ * with optional periods/spacing — the punctuation amas tells mailers to strip
+ * but deliverable mail still carries ("P.O. Box", "R.M.B 4600").
+ * Longer words match literally with flexible whitespace.
  */
 function phraseToPattern(phrase: string): string {
 	return phrase
@@ -82,17 +86,18 @@ function phraseToPattern(phrase: string): string {
 
 /**
  * Build the span-proposer lexicon from the codex tables of the requested systems.
+ *
  * Defaults to every system with designator tables in the codex today.
  * The result is pure data — safe to share across parses.
  */
 export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "au", "nz"]): SpanProposerLexicon {
 	const sys = new Set<string>(systems)
 	// Venue-interior designators (WOF placetypes + OSM aeroway) join the unit vocabulary
-	// unconditionally: unlike the postal tables above they are not a property of any mail system,
-	// so keying them on a codex `system` would make "Terminal 5" parse in the US and not in
-	// the UK for no reason anyone could defend. The formatter still renders through Pub 28 —
-	// see core/resources/whosonfirst/placetypes/venue-structure.ts for why the decode
-	// and format vocabularies are deliberately different sizes.
+	// unconditionally: unlike the postal tables above they are not a property of any mail
+	// system, so keying them on a codex `system` would make "Terminal 5" parse in the US
+	// and not in the UK for no reason anyone could defend.
+	// The formatter still renders through Pub 28 — see core/resources/whosonfirst/placetypes/venue-structure.ts
+	// for why the decode and format vocabularies are deliberately different sizes.
 	const unitDesignators = new Set<string>(VENUE_STRUCTURE_DESIGNATORS)
 	const levelDesignators = new Set<string>()
 	const weakDesignators = new Set<string>()

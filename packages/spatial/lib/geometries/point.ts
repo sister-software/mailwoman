@@ -151,6 +151,7 @@ export class GeoPoint implements PointLiteral {
 	/**
 	 * Assigns the pair as GeoJSON [longitude, latitude(, altitude)] — the axis order is the interface,
 	 * never inferred from the magnitudes — and rejects a coordinate that is not on the globe.
+	 *
 	 * See {@link GeoPoint.from} for why both halves of that sentence are required.
 	 *
 	 * @throws {RangeError} When longitude is outside [-180, 180] or latitude is outside [-90, 90].
@@ -295,15 +296,16 @@ export class GeoPoint implements PointLiteral {
 	 * Two rules, both of which this constructor got wrong until 2026-08-05
 	 * (the defect was recorded in `e9bfd139` and routed around rather than fixed):
 	 *
-	 * 1. **A 2-tuple is GeoJSON [longitude, latitude]. The axis order is never inferred.** The old
-	 *    path ran the pair through `inferGeoJSONCoordOrder`, whose only signal is the [-90, 90]
-	 *    latitude range, so it transposed a pair exactly when |the second magnitude| > 90.
+	 * 1. **A 2-tuple is GeoJSON [longitude, latitude].
+	 *    The axis order is never inferred.** The old path ran the pair through
+	 *    `inferGeoJSONCoordOrder`, whose only signal is the [-90, 90] latitude range,
+	 *    so it transposed a pair exactly when |the second magnitude| > 90.
 	 *    A caller handing it `[latitude, longitude]` therefore got the pair repaired in Dallas
 	 *    and left corrupted in Berlin — behaviour selected by the data, from one code path.
 	 *    This change is a no-op for every well-formed input: a valid `[longitude, latitude]` pair
 	 *    can never have an out-of-range second element, so the heuristic never fired on one.
-	 * 2. **An out-of-range magnitude is rejected rather than repaired.**
-	 *    `[999, 999]` used to produce a GeoPoint reporting latitude 999.
+	 * 2. **An out-of-range magnitude is rejected rather than repaired.** `[999, 999]`
+	 *    used to produce a GeoPoint reporting latitude 999.
 	 *    It now returns `null` here and throws a `RangeError` from the constructor.
 	 *    Note the deliberate asymmetry with the scalar `longitude` / `latitude` setters,
 	 *    which still wrap and clamp: mutating a point is a pan gesture, where 190°.

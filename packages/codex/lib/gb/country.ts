@@ -48,7 +48,9 @@ export type UkCountryCode = keyof typeof GB_COUNTRIES
 const COUNTRY_CODE_SET: ReadonlySet<string> = new Set(Object.keys(GB_COUNTRIES))
 
 /**
- * Type-predicate for an ISO 3166-2:GB country code. Case-insensitive.
+ * Type-predicate for an ISO 3166-2:GB country code.
+ *
+ * Case-insensitive.
  */
 export function isUkCountryCode(input: unknown): input is UkCountryCode {
 	return typeof input === "string" && COUNTRY_CODE_SET.has(input.toUpperCase())
@@ -69,8 +71,9 @@ const COUNTRY_NAME_TO_CODE: ReadonlyMap<string, UkCountryCode> = (() => {
 })()
 
 /**
- * Resolve a UK constituent-country surface form (ISO code or English name) to its ISO
- * code. null if unknown. Accepts `ENG`, `England`, `Northern Ireland`, `scotland`, etc.
+ * Resolve a UK constituent-country surface form (ISO code or English name) to its ISO code. null if unknown.
+ *
+ * Accepts `ENG`, `England`, `Northern Ireland`, `scotland`, etc.
  */
 export function lookupUkCountry(input: string | null | undefined): UkCountryCode | null {
 	if (!input || typeof input !== "string") return null

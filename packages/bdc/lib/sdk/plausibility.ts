@@ -147,9 +147,11 @@ import {
 const FIXED_WIRELESS_CODES = BroadbandTechnologyCategoryToCodeSet[BroadbandTechnologyCategory.FixedWireless]
 
 /**
- * One claimed broadband-service assertion to check. Exactly one spatial field is expected
- * in practice (`geoid` wins if present — see the module docstring's claim-resolution note);
- * `plausibilityCheck` throws if none of `geoid`/`point`/`address` resolves to something usable.
+ * One claimed broadband-service assertion to check.
+ *
+ * Exactly one spatial field is expected in practice (`geoid` wins if present —
+ * see the module docstring's claim-resolution note); `plausibilityCheck` throws if
+ * none of `geoid`/`point`/`address` resolves to something usable.
  */
 export interface PlausibilityClaim {
 	address?: string
@@ -179,11 +181,13 @@ export type PlausibilityEvidence =
 	| { type: "abstain"; reason: PlausibilityAbstainReason; layer?: string }
 
 /**
- * The two non-abstain variants are {@link Evidence} observations wearing their original field names,
- * so a caller that already reads `.filing` keeps working while a caller that wants the shared
- * vocabulary can narrow on `kind`. The abstain variant deliberately does not join the union:
- * an abstain is the absence of evidence plus a reason, which `coverage_confidence` already reports,
- * and minting an evidence object for "we could not look" would put a claim where there is none.
+ * The two non-abstain variants are {@link Evidence} observations wearing their
+ * original field names, so a caller that already reads `.filing` keeps working
+ * while a caller that wants the shared vocabulary can narrow on `kind`.
+ *
+ * The abstain variant deliberately does not join the union: an abstain is the absence of
+ * evidence plus a reason, which `coverage_confidence` already reports, and minting an
+ * evidence object for "we could not look" would put a claim where there is none.
  */
 export type PlausibilitySharedEvidence =
 	Extract<PlausibilityEvidence, { kind: "observation" }> extends Evidence
@@ -191,11 +195,13 @@ export type PlausibilitySharedEvidence =
 		: never
 
 /**
- * One evidence channel's survey-completeness state for this claim, with the reason a
- * non-`"covered"` state applies. `coverage_confidence` alone folds several genuinely
- * different situations into the same `"low"`/`"insufficient_survey_data"` verdict
- * (a tech with no physical falsifier at all vs. a real poi survey gap vs. a geoid-only
- * claim with no coordinate to search from); this axis state is what tells them apart.
+ * One evidence channel's survey-completeness state for this claim, with the
+ * reason a non-`"covered"` state applies.
+ *
+ * `coverage_confidence` alone folds several genuinely different situations into the same
+ * `"low"`/`"insufficient_survey_data"` verdict (a tech with no physical falsifier at all
+ * vs. a real poi survey gap vs. a geoid-only claim with no coordinate to search from);
+ * this axis state is what tells them apart.
  * `"not_applicable"` and `"no_coordinate"` are only ever produced for the physical axis.
  * the filing axis only ever reaches `"covered"`, `"layer_missing"`, or `"cell_unsurveyed"`.
  */
@@ -226,8 +232,10 @@ export type PlausibilityCoverageAxisState =
 
 /**
  * Per-axis attribution for {@link PlausibilityBundle.coverage_confidence} —
- * see {@link PlausibilityCoverageAxisState}. Reported alongside `coverage_confidence`,
- * never in place of it: the coarse field stays the stable public surface.
+ * see {@link PlausibilityCoverageAxisState}.
+ *
+ * Reported alongside `coverage_confidence`, never in place of it: the coarse
+ * field stays the stable public surface.
  */
 export interface PlausibilityCoverageDetail {
 	filing: PlausibilityCoverageAxisState
@@ -239,18 +247,21 @@ export interface PlausibilityBundle {
 	evidence_found: PlausibilityEvidence[]
 	coverage_confidence: "high" | "low" | "insufficient_survey_data"
 	/**
-	 * Per-axis why behind `coverage_confidence`. Always present, mirroring
-	 * `block_resolution`'s always-present discipline.
+	 * Per-axis why behind `coverage_confidence`.
+	 *
+	 * Always present, mirroring `block_resolution`'s always-present discipline.
 	 */
 	coverage_detail: PlausibilityCoverageDetail
 	/**
 	 * `"geoid"` when `claim.geoid` drove the filing-evidence lookup (the exact, native path); otherwise
 	 * `"h3_cell_approximation"` (decision 4 — the point/address path's unsound-but-flagged h3 cell).
+	 *
 	 * Always present on every returned bundle.
 	 */
 	block_resolution: "geoid" | "h3_cell_approximation"
 	/**
 	 * `null` only when the bdc layer itself abstained (`deps.bdcDB` absent).
+	 *
 	 * Populated in every other case, including when the specific queried block/cell is itself unsurveyed.
 	 */
 	vintage: string | null
@@ -260,6 +271,7 @@ export interface PlausibilityBundle {
  * Structural mirror of `mailwoman/geocode-core.ts`'s `GeocodeResult` —
  * `@mailwoman/bdc` must not import from the `mailwoman` workspace
  * (`mailwoman/package.json` already depends on `@mailwoman/bdc`; the reverse edge would be circular).
+ *
  * Only the two fields this scorer actually consumes are typed here. a real `GeocodeResult` is
  * structurally assignable to this type without any adapter, so a caller wiring `deps.geocode`
  * at the CLI/MCP layer can pass a thin wrapper over `geocodeAddress` directly.
@@ -288,10 +300,11 @@ export interface PlausibilityDeps {
 }
 
 /**
- * Tech → physical-plant category mapping. Fiber implies the three infrastructure-extension
- * categories a fiber network plausibly touches. the three fixed-wireless codes imply
- * a comms tower. every other code maps to `[]` — no physical falsifier is claimed
- * for it (see {@link physicalCategoriesForTechnology}).
+ * Tech → physical-plant category mapping.
+ *
+ * Fiber implies the three infrastructure-extension categories a fiber network plausibly
+ * touches. the three fixed-wireless codes imply a comms tower. every other code maps to `[]` —
+ * no physical falsifier is claimed for it (see {@link physicalCategoriesForTechnology}).
  */
 export const PLAUSIBILITY_TECH_PHYSICAL_CATEGORIES: Readonly<Record<number, readonly string[]>> = {
 	[BroadbandTechnologyCode.OpticalCarrierFiber]: ["telecom_exchange", "telecom_cabinet", "data_center"],
@@ -311,9 +324,10 @@ export function physicalCategoriesForTechnology(technologyCode: number): readonl
 }
 
 /**
- * Ordinal rank of each `speed_bucket` label, so "at or above claimed speed"
- * is a numeric comparison rather than a string one. Mirrors the bucket order
- * `filing-landscape.ts` defines (never re-derived — decision 8).
+ * Ordinal rank of each `speed_bucket` label, so "at or above claimed speed" is
+ * a numeric comparison rather than a string one.
+ *
+ * Mirrors the bucket order `filing-landscape.ts` defines (never re-derived — decision 8).
  */
 const SPEED_BUCKET_RANK: Readonly<Record<string, number>> = {
 	[BDC_SPEED_BUCKET_UNDER_25]: 0,
@@ -323,9 +337,11 @@ const SPEED_BUCKET_RANK: Readonly<Record<string, number>> = {
 }
 
 /**
- * `true` when `filing` corroborates the claim: same `technology_code`, and `filing.speed_bucket` ranks
- * at or above the claimed download speed's own bucket. A different tech, or a same-tech
- * but lesser filing, is `false` — never disproof, just non-corroborating (spec §3.2 step 2).
+ * `true` when `filing` corroborates the claim: same `technology_code`,
+ * and `filing.speed_bucket` ranks at or above the claimed download speed's own bucket.
+ *
+ * A different tech, or a same-tech but lesser filing, is `false` — never disproof,
+ * just non-corroborating (spec §3.2 step 2).
  */
 function filingCorroborates(filing: ProviderFilingSummary, claim: PlausibilityClaim): boolean {
 	if (filing.technology_code !== claim.technologyCode) return false
@@ -411,6 +427,7 @@ async function assertLayerSpineResolution(
 /**
  * Compose filing evidence + physical evidence into one `{ claim, evidence_found, coverage_confidence }`
  * bundle — see the module docstring for the full composition rules.
+ *
  * Never emits anything expressible as "implausible": absence of a filing
  * or of nearby plant only ever surfaces as an abstain, an omitted evidence entry,
  * or a degraded `coverage_confidence` — never a negative verdict.
@@ -466,9 +483,10 @@ export async function plausibilityCheck(claim: PlausibilityClaim, deps: Plausibi
 		evidence.push({ type: "abstain", reason: "requires_bdc_layer", layer: "bdc" })
 	} else {
 		// blockResolution === "geoid" iff claim.geoid is set (see above), so exactly one of these two branches ever
-		// runs, and the `pointCell!` assertion below is safe: blockResolution
-		// === "h3_cell_approximation" only when claim.geoid is absent.
-		// It (per the throw above) means `point`. Therefore, `pointCell` — is defined.
+		// runs, and the `pointCell!` assertion below is safe: blockResolution ===
+		// "h3_cell_approximation" only when claim.geoid is absent.
+		// It (per the throw above) means `point`.
+		// Therefore, `pointCell` — is defined.
 		const landscape =
 			blockResolution === "geoid"
 				? await filingLandscape(deps.bdcDB, { geoids: [claim.geoid!] })
@@ -503,11 +521,10 @@ export async function plausibilityCheck(claim: PlausibilityClaim, deps: Plausibi
 			physicalCoverage = "layer_missing"
 			evidence.push({ type: "abstain", reason: "requires_build_local_layer", layer: "poi" })
 		} else if (!point) {
-			// Geoid-only claim, no coordinate resolvable — see the module docstring's
-			// claim-resolution note. A real capability gap rather than a missing-layer abstain:
-			// no evidence entry is fabricated, but the axis still degrades honestly for
-			// coverage_confidence, naming its own reason in `coverage_detail` rather than
-			// folding into the same generic "unknown" as `"layer_missing"`.
+			// Geoid-only claim, no coordinate resolvable — see the module docstring's claim-resolution note.
+			// A real capability gap rather than a missing-layer abstain: no evidence entry is fabricated,
+			// but the axis still degrades honestly for coverage_confidence, naming its own reason in
+			// `coverage_detail` rather than folding into the same generic "unknown" as `"layer_missing"`.
 			physicalCoverage = "no_coordinate"
 		} else {
 			const hits = await nearestInfrastructure(deps.poi.lookup, deps.poi.schemadb, {

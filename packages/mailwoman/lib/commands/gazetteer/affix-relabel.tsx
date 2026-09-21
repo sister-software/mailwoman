@@ -43,8 +43,9 @@ const GazetteerAffixRelabel: CommandComponent<typeof spec> = ({ options }) => {
 		const output = options.out ?? String(repoRootPathBuilder("data", "gazetteer", "affix-relabel-lexicon-v2.json"))
 
 		// Directionals: every single-token surface variant → canonical abbreviation.
-		// The codex maps are Maps keyed by the Pub-28 spaced names ("north west"); real US streets
-		// use the one-word form ("Northwest"). It is what a whitespace-token relabel pass can match.
+		// The codex maps are Maps keyed by the Pub-28 spaced names ("north west");
+		// real US streets use the one-word form ("Northwest").
+		// It is what a whitespace-token relabel pass can match.
 		// Therefore, we emit the abbr ("nw") and the de-spaced name ("northwest"),
 		// same surfaces matchLeadingDirectional accepts.
 		const directionals: Record<string, string> = {}
@@ -71,8 +72,8 @@ const GazetteerAffixRelabel: CommandComponent<typeof spec> = ({ options }) => {
 			suffixes,
 			// Licenses the positional split of a >=2-word name whose final word is merely
 			// name-prone-shaped when a true suffix follows ('Menlo Park | Road') — the #1569
-			// five-whys countermeasure. Loaders reading a v1 artifact (key absent)
-			// keep the old blanket rejection.
+			// five-whys countermeasure.
+			// Loaders reading a v1 artifact (key absent) keep the old blanket rejection.
 			name_prone: [...NAME_PRONE_US_SUFFIXES].toSorted(),
 		}
 

@@ -247,8 +247,10 @@ describe("createPOIIntentStage", () => {
 })
 
 /**
- * An anchor parse whose one locality node the resolver won, stamped with the resolved place's
- * country the way `decorateNode` stamps it. `undefined` leaves the node located but country-less.
+ * An anchor parse whose one locality node the resolver won, stamped with the resolved
+ * place's country the way `decorateNode` stamps it.
+ *
+ * `undefined` leaves the node located but country-less.
  */
 const resolvedAnchor = (raw: string, country: string | undefined): PipelineResult => ({
 	...anchorResult(raw),
@@ -430,8 +432,9 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 		expect(result.poiIntent?.type).toBe("intent")
 		// ROAD_TO_V9 §4.4 renamed this population: a bare category with no anchor is
 		// `poi_category`, and `poi_query` stays underneath it as the alternative.
-		// The two assertions above are the ones this test was written for and they are unchanged —
-		// the branch, and the intent it produced. The marker is what the split bought.
+		// The two assertions above are the ones this test was written for and they are
+		// unchanged — the branch, and the intent it produced.
+		// The marker is what the split bought.
 		expect(result.kind.kind).toBe("poi_category")
 		expect(result.kind.alternatives.map((a) => a.kind)).toContain("poi_query")
 		expect(result.intentMarkers.map((m) => m.code)).toEqual(["poi_category"])
@@ -448,8 +451,8 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 
 	// `hospital` is deliberately `overture`-sourced rather than a build-local
 	// (`mailwoman-infra`-sourced) category like `drinking_water`: the executor runs for
-	// every `poiQueryKind` mode, so an anchor with no resolvable center is orthogonal to
-	// the build-local abstain check (see the "bare build-local-only category" test below).
+	// every `poiQueryKind` mode, so an anchor with no resolvable center is orthogonal to the
+	// build-local abstain check (see the "bare build-local-only category" test below).
 	// What this test is for: intent-only passthrough, end-to-end, with a parsed anchor.
 	it("ON: a category phrase takes the poi path end-to-end", async () => {
 		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: true })

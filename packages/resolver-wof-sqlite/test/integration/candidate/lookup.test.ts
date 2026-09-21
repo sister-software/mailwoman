@@ -323,7 +323,8 @@ describe("WOFCandidateTableLookup", () => {
 	})
 
 	test("excludeNameRoles degrades to a no-op on an artifact without the role column", async () => {
-		// A pre-#1730 candidate DB: same columns minus name_role. The option must be ignored, never error.
+		// A pre-#1730 candidate DB: same columns minus name_role.
+		// The option must be ignored, never error.
 		const legacyPath = scratch.resolve("legacy-candidate.db")
 		using legacy = new DatabaseClient<WOFDatabase>(legacyPath)
 
@@ -517,8 +518,9 @@ describe("rankByPrimaryPreference #1893 firing mark (variantExempted)", () => {
 	})
 
 	test("a cross-country variant the exemption spares carries the mark and no penalty", () => {
-		// primary BY (neg -5.53) vs its own romanized name riding a foreign key set: variant alias, country
-		// 2, more populous than the competing primary. Exemption on: no penalty, mark present.
+		// primary BY (neg -5.53) vs its own romanized name riding a foreign key set:
+		// variant alias, country 2, more populous than the competing primary.
+		// Exemption on: no penalty, mark present.
 		const ranked = rankByPrimaryPreference(
 			[row(-6.1, 0, 2, "variant"), row(-5.53, 1, 1)],
 			5,
@@ -613,8 +615,9 @@ describe("rankByPrimaryPreference (bounded cross-country primary preference)", (
 	})
 
 	test("two unmeasured same-country rows tied on rank: the row named X outranks the row also-known-as X", () => {
-		// The village 溪洲 carries `溪州鄉` as an alias and scans first (lower spr_id); the township row
-		// is the primary. Both population 0, both neg_rank 0 — the tie used to fall to scan order.
+		// The village 溪洲 carries `溪州鄉` as an alias and scans first (lower spr_id);
+		// the township row is the primary.
+		// Both population 0, both neg_rank 0 — the tie used to fall to scan order.
 		const alias = { neg_rank: 0, is_primary: 0, country_id: 1, population: 0, name_role: "abbr" }
 		const primary = { neg_rank: 0, is_primary: 1, country_id: 1, population: 0 }
 		const ranked = rankByPrimaryPreference([alias, primary], 5)
@@ -633,17 +636,18 @@ describe("rankByPrimaryPreference (bounded cross-country primary preference)", (
 
 describe("rankByPrimaryPreference — exonym-collision band (δ=1.0 population-ratio setting, regression lock)", () => {
 	// the rule, locked here so it can't silently drift: δ=1.0 (PRIMARY_PREFERENCE_LOG10) means
-	// a cross-country alias must be ≥10x more populous than the same-key foreign primary
-	// to win. below 10x the primary wins and the alias is demoted out of the exact tier.
+	// a cross-country alias must be ≥10x more populous than the same-key foreign primary to
+	// win. below 10x the primary wins and the alias is demoted out of the exact tier.
 	// This is a population-ratio proxy for notability — the refinement to a true
 	// notability signal is tracked as a follow-up.
 	//
 	// The band the reviewer characterized on the real gazetteer, reproduced with synthetic fixtures so the
 	// class is pinned without the 3.9 GB live db: "Cancun" → Cancún MX (~5x, flips to the primary);
-	// "Florence" → Florence US (Firenze only ~9.5x, under the bar → primary); "Naples" → Napoli IT (~50x)
-	// and "Vienna" → Wien AT (~118x) stay foreign. Non-vacuous by construction: a naive unbounded
-	// `is_primary desc` fails the >10x + same-country cases (it would force the primary);
-	// a pure-population order fails the <10x case (it would keep the more-populous alias).
+	// "Florence" → Florence US (Firenze only ~9.5x, under the bar → primary);
+	// "Naples" → Napoli IT (~50x) and "Vienna" → Wien AT (~118x) stay foreign.
+	// Non-vacuous by construction: a naive unbounded `is_primary desc` fails the >10x +
+	// same-country cases (it would force the primary); a pure-population order fails
+	// the <10x case (it would keep the more-populous alias).
 	const US = 2
 	const IT = 3
 	const AT = 4
@@ -684,8 +688,8 @@ describe("rankByPrimaryPreference — exonym-collision band (δ=1.0 population-r
 	})
 
 	test("SAME-country collision is unaffected by the ratio setting — population-first at any ratio", () => {
-		// primary US 100k vs alias US 950k (same country) → no penalty → the bigger
-		// alias wins even at ~9.5x (below the cross-country bar) and is never demoted.
+		// primary US 100k vs alias US 950k (same country) → no penalty → the bigger alias
+		// wins even at ~9.5x (below the cross-country bar) and is never demoted.
 		// A naive `is_primary desc` would wrongly pick the primary here — this is the
 		// guard that the setting stays cross-country-only.
 		const ranked = rankByPrimaryPreference([pop(950_000, 0, US), pop(100_000, 1, US)], 5)
@@ -754,9 +758,9 @@ describe("rankByPrimaryPreference — variant-alias exemption (#1882, opt-in)", 
 })
 
 describe("postcode-containment coherence (#31, Mechanism 2)", () => {
-	// The B2-2 board: three same-name US localities whose population order disagrees
-	// with their distance from postcode 94101's centroid (37.75, -122.42):
-	// big (720, 1.0 M, ~550 km away), mid (721, 100 k, ~4,000 km), small (722, 10 k, ~2 km).
+	// The B2-2 board: three same-name US localities whose population order disagrees with their
+	// distance from postcode 94101's centroid (37.75, -122.42): big (720, 1.0 M, ~550 km away),
+	// mid (721, 100 k, ~4,000 km), small (722, 10 k, ~2 km).
 	// Population-first answers big. the containment rung must answer small.
 	const ANCHOR = { lat: 37.75, lon: -122.42 }
 	const SANSOME_BIG = 720
@@ -933,8 +937,12 @@ describe("WOFCandidateTableLookup — importance (#28)", () => {
 
 	/**
 	 * A score source for the lookup fixture's homonym pair.
-	 * Moscow RU is scored above Moscow, Idaho. Chicago is scored.
-	 * Lenk deliberately is not. Ids are unrelated to the admin fixture's, as they are in production.
+	 *
+	 * Moscow RU is scored above Moscow, Idaho.
+	 * Chicago is scored.
+	 *
+	 * Lenk deliberately is not.
+	 * Ids are unrelated to the admin fixture's, as they are in production.
 	 */
 	function buildFixtureImportance(path: string): void {
 		using db = new DatabaseClient<WOFDatabase>(path)
@@ -1065,15 +1073,16 @@ describe("rankByPrimaryPreference — seat preference on a coincident same-name 
 	})
 
 	test("a population-0 tie is NO EVIDENCE rather than equal evidence — the term stays off it", () => {
-		// 7,179 of the 11,377 top-slot moves an unguarded "finer wins" produced sat here. Scan order stands.
+		// 7,179 of the 11,377 top-slot moves an unguarded "finer wins" produced sat here.
+		// Scan order stands.
 		const zeroCounty = at(5, 0)
 		const zeroLocality = at(7, 0)
 		expect(rankByPrimaryPreference([zeroCounty, zeroLocality], 5, undefined, PLACETYPES)[0]!.placetype_id).toBe(5)
 	})
 
 	test("a contest between distinct places is left alone — only the seat tier is promoted", () => {
-		// The three transitions an unguarded specificity term moved most: region→county
-		// (2,973), locality→neighbourhood (2,885), postalcode→locality (2,662).
+		// The three transitions an unguarded specificity term moved most: region→county (2,973),
+		// locality→neighbourhood (2,885), postalcode→locality (2,662).
 		// None is a duplicate. all keep scan order.
 		expect(rankByPrimaryPreference([at(3), at(5)], 5, undefined, PLACETYPES)[0]!.placetype_id).toBe(3)
 		expect(rankByPrimaryPreference([at(7), at(10)], 5, undefined, PLACETYPES)[0]!.placetype_id).toBe(7)
@@ -1086,9 +1095,10 @@ describe("rankByPrimaryPreference — seat preference on a coincident same-name 
 })
 
 describe("seat preference through findPlace — where the term can and cannot reach (#1729)", () => {
-	// The walk's probes always carry a placetype filter, so the seat term only meets a tie the
-	// filter group lets co-occur. These two fixtures pin both halves of that reach: the in-group
-	// pair the term decides, and the Of-shape pair the filter partitions before any ranking runs.
+	// The walk's probes always carry a placetype filter, so the seat term only
+	// meets a tie the filter group lets co-occur.
+	// These two fixtures pin both halves of that reach: the in-group pair the term decides,
+	// and the Of-shape pair the filter partitions before any ranking runs.
 
 	test("a locality/localadmin duplicate enters ONE locality probe and the seat wins it", async () => {
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
@@ -1097,8 +1107,8 @@ describe("seat preference through findPlace — where the term can and cannot re
 
 		// localadmin is a locality-group peer (PLACETYPE_FILTER_GROUPS), so both rows are in the set…
 		expect(hits.map((h) => h.placetype).toSorted()).toEqual(["localadmin", "locality"])
-		// …and the seat tiebreak orders the town over its district even though the
-		// district is fetched first (its region id sorts lower in the clustered key).
+		// …and the seat tiebreak orders the town over its district even though the district
+		// is fetched first (its region id sorts lower in the clustered key).
 		// This ordering is the term's only corridor to an end-to-end answer — the resolver's
 		// downstream sorts are stable on equal keys (toponym-prior.ts house rule 3) —
 		// so it is the mechanism's reach rather than a cosmetic preference.
@@ -1122,9 +1132,10 @@ describe("seat preference through findPlace — where the term can and cannot re
 })
 
 describe("admin-containment re-rank through findPlace (#1717 stage 2)", () => {
-	// The fixture is the Weimar shape: 'Marwei' DE (60 k, under region Thuria) vs a
-	// more-populous US namesake (2.0 M). Population-first answers the US one. a country=US
-	// scope hides the DE one. the qualifier must answer the DE one in both postures.
+	// The fixture is the Weimar shape: 'Marwei' DE (60 k, under region Thuria)
+	// vs a more-populous US namesake (2.0 M).
+	// Population-first answers the US one. a country=US scope hides the DE one. the
+	// qualifier must answer the DE one in both postures.
 	// The board-measured mechanism (2026-08-18): the locale-inferred hard filter partitions the true
 	// instance out of the list before any comparator, so a reorder-only setting would be inert —
 	// the #1729 class, which is why these fixtures pin injection rather than just ordering.
@@ -1141,8 +1152,8 @@ describe("admin-containment re-rank through findPlace (#1717 stage 2)", () => {
 
 		// The locality-group pool holds only the wrong-instance locality (972, under no qualifier ancestry);
 		// the true instance is a neighbourhood the filter group cannot reach.
-		// The dependent-band injection admits it on containment proof and the shared partition puts
-		// it first. Without the band, this query answers 972 — the Astoria chimera's first half.
+		// The dependent-band injection admits it on containment proof and the shared partition puts it first.
+		// Without the band, this query answers 972 — the Astoria chimera's first half.
 		expect(hits[0]!.id).toBe(971)
 		expect(hits[0]!.placetype).toBe("neighbourhood")
 		expect(hits[0]!.containedByQualifier).toBe(true)

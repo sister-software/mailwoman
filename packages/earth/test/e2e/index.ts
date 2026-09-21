@@ -25,9 +25,10 @@ interface E2EFixtures {
 /* eslint-disable react-hooks/rules-of-hooks -- Playwright fixtures bind via destructured
    `use` callback. eslint's react-hooks plugin misreads this as a React Hook violation. */
 export const test = base.extend<E2EFixtures>({
-	// `console` fixture is set up first so it captures messages emitted during the geocoder
-	// fixture's own page.goto(). Playwright resolves the dependency graph by the order
-	// arguments are destructured. we destructure `console` before `page` in GeocoderFixture.
+	// `console` fixture is set up first so it captures messages emitted during
+	// the geocoder fixture's own page.goto().
+	// Playwright resolves the dependency graph by the order arguments are destructured.
+	// we destructure `console` before `page` in GeocoderFixture.
 	console: async ({ page }, use) => {
 		const fixture = new ConsoleFixture(page)
 		await use(fixture)

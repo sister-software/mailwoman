@@ -49,6 +49,7 @@ import {
 import { parseGeographicModelDocument } from "#validate"
 /**
  * The name a fact derived by `isA` inheritance carries in its `derivation` field.
+ *
  * A consumer branches on this rather than on where the record sits.
  */
 export const DERIVATION_ISA_INHERITANCE = "isa-assertion-inheritance"
@@ -61,15 +62,18 @@ export const DERIVATION_ISA_INHERITANCE = "isa-assertion-inheritance"
  */
 export const CompileIssueCode = {
 	/**
-	 * An inherited assertion would land on a concept whose kind the relation does not
-	 * accept on the asserting side. Emitting it would put a record in the artifact
-	 * that the document validator would reject if it were authored.
+	 * An inherited assertion would land on a concept whose kind the relation does
+	 * not accept on the asserting side.
+	 *
+	 * Emitting it would put a record in the artifact that the document validator
+	 * would reject if it were authored.
 	 */
 	InheritedDomainKindMismatch: "inherited_domain_kind_mismatch",
 	/**
-	 * Two derived facts claim one identifier. Reachable when an authored derived fact
-	 * takes an identifier a derivation also produces, or when authored identifiers
-	 * carry the separators the derived form is built from.
+	 * Two derived facts claim one identifier.
+	 *
+	 * Reachable when an authored derived fact takes an identifier a derivation also produces,
+	 * or when authored identifiers carry the separators the derived form is built from.
 	 */
 	DuplicateDerivedFactID: "duplicate_derived_fact_id",
 } as const
@@ -85,8 +89,10 @@ export interface CompileIssue {
 }
 
 /**
- * Thrown by {@link compileGeographicModel}. Carries every reason at once, and states them all
- * in its message, so a caller that only prints `error.message` still sees the whole list.
+ * Thrown by {@link compileGeographicModel}.
+ *
+ * Carries every reason at once, and states them all in its message, so a caller
+ * that only prints `error.message` still sees the whole list.
  */
 export class GeographicModelCompileError extends Error {
 	readonly issues: readonly CompileIssue[]
@@ -102,8 +108,9 @@ export class GeographicModelCompileError extends Error {
 }
 
 /**
- * The order derivation inputs are listed in. Grouping by table first keeps a long
- * input list readable. the identifier breaks ties inside a table.
+ * The order derivation inputs are listed in.
+ *
+ * Grouping by table first keeps a long input list readable. the identifier breaks ties inside a table.
  */
 const DERIVATION_INPUT_ORDER: readonly DerivationInputKind[] = [
 	DerivationInputKind.Concept,
@@ -116,9 +123,11 @@ const DERIVATION_INPUT_ORDER: readonly DerivationInputKind[] = [
 
 /**
  * The separator for the compound keys this module groups by.
- * `U+0000` cannot appear in a readable identifier without being visible in it, so two different
- * key tuples cannot collapse onto one string. The derived identifiers written into the artifact
- * use readable separators instead, and are checked for collisions once they are all built.
+ *
+ * `U+0000` cannot appear in a readable identifier without being visible in it,
+ * so two different key tuples cannot collapse onto one string.
+ * The derived identifiers written into the artifact use readable separators instead,
+ * and are checked for collisions once they are all built.
  */
 const KEY_SEPARATOR = "\u0000"
 
@@ -161,10 +170,12 @@ function ancestorsOfConcept(
 }
 
 /**
- * One derived fact under construction. Drafts are keyed by the proposition they state,
- * so two ancestors asserting the same thing produce one fact naming both of them as inputs,
- * while two ancestors asserting the same triple under different modality produce two facts —
- * a contradiction a consumer can see, rather than a silent choice between them.
+ * One derived fact under construction.
+ *
+ * Drafts are keyed by the proposition they state, so two ancestors asserting the same
+ * thing produce one fact naming both of them as inputs, while two ancestors asserting
+ * the same triple under different modality produce two facts — a contradiction a
+ * consumer can see, rather than a silent choice between them.
  */
 interface DerivedDraft {
 	subject: ConceptID
@@ -188,9 +199,10 @@ function draftInputs(draft: DerivedDraft): DerivationInput[] {
 }
 
 /**
- * The identifier a derived fact carries. Built from the proposition it states,
- * so it is stable across edits elsewhere in the document, and readable,
- * so a reader meeting one in a diff can tell what it says.
+ * The identifier a derived fact carries.
+ *
+ * Built from the proposition it states, so it is stable across edits elsewhere in the document,
+ * and readable, so a reader meeting one in a diff can tell what it says.
  */
 function derivedFactID(draft: DerivedDraft): string {
 	const scope = draft.countries?.length ? `:${draft.countries.join(COUNTRY_SEPARATOR)}` : ""
@@ -215,10 +227,10 @@ function draftKey(subject: ConceptID, assertion: RelationAssertion, countries: r
 /**
  * Materialize every ancestor's assertions onto their descendants.
  *
- * A concept that authors its own assertion for the same relation and target
- * inherits nothing for that pair. The authored record is the more specific one,
- * which is what `isA` means, and re-stating the pair would put two modalities for one
- * proposition into the artifact with no rule saying which of them holds.
+ * A concept that authors its own assertion for the same relation and target inherits nothing for that pair.
+ * The authored record is the more specific one, which is what `isA` means,
+ * and re-stating the pair would put two modalities for one proposition into the
+ * artifact with no rule saying which of them holds.
  */
 function deriveInheritedFacts(
 	concepts: readonly ConceptRecord[],

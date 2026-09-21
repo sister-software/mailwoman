@@ -179,9 +179,9 @@ describe("readers", () => {
 	})
 
 	it("readParquetRows raises on a file nobody wrote, where tryReadParquetRows answers null", async () => {
-		// The whole reason the two names exist. A caller that wants "no corpus
-		// yet" to read as an empty list must ASK for that, because `?? []` over the raising
-		// one produces the silent zero this package exists to prevent.
+		// The whole reason the two names exist.
+		// A caller that wants "no corpus yet" to read as an empty list must ASK for that, because
+		// `?? []` over the raising one produces the silent zero this package exists to prevent.
 		const absent = scratch.resolve("nothing-here.parquet")
 
 		await expect(readParquetRows(absent)).rejects.toThrow(/No parquet file at/)
@@ -398,7 +398,8 @@ describe("writeParquetSplits", () => {
 	})
 
 	it("rows with optional null columns round-trip through Parquet", async () => {
-		// One row with locale set, one without. Both should round-trip the relevant value.
+		// One row with locale set, one without.
+		// Both should round-trip the relevant value.
 		const rows = [
 			labeled({ source_id: "t-with", raw: "with locale", locale: "fr-FR" }),
 			labeled({ source_id: "t-without", raw: "no locale" }),

@@ -27,12 +27,15 @@ import { DiagnosticSeverity, type RepoCheck } from "#check"
 const CHECK_ID = "python-prefix-directories"
 
 /**
- * Where the Python tree lives. A path outside it is not this check's business.
+ * Where the Python tree lives.
+ *
+ * A path outside it is not this check's business.
  */
 const PYTHON_ROOT = "corpus-python/"
 
 /**
  * How many children must share a prefix before it is a family.
+ *
  * Two siblings are a coincidence often enough that the TypeScript check uses the same floor.
  */
 const GROUP_THRESHOLD = 3

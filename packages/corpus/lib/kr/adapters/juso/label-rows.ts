@@ -37,9 +37,9 @@ import { TextSpliterator } from "spliterator"
 /**
  * The publisher's encoding, for both the member names and their contents.
  *
- * `cp949`, not `euc-kr`: the register uses the UHC extension, and Node's whatwg
- * `euc-kr` reads none of it. One row in 48,000 carries such a sequence and decodes to
- * a different string with no error raised — see `decodeByteStream`.
+ * `cp949`, not `euc-kr`: the register uses the UHC extension, and Node's whatwg `euc-kr` reads none of it.
+ * One row in 48,000 carries such a sequence and decodes to a different string
+ * with no error raised — see `decodeByteStream`.
  */
 const ENCODING = "cp949"
 
@@ -66,8 +66,9 @@ const SUP = { id: 0, postcode: 3, buildingRegister: 6, buildingLocal: 7, apartme
 /**
  * Joins 도로명코드 to 읍면동일련번호, written as an escape so no NUL byte enters the source.
  *
- * Neither part has a fixed width, so a printable separator that could occur in either
- * would let two different pairs produce one key. No code contains NUL.
+ * Neither part has a fixed width, so a printable separator that could occur in
+ * either would let two different pairs produce one key.
+ * No code contains NUL.
  */
 const CODE_SEPARATOR = "\0"
 
@@ -81,6 +82,7 @@ function roadCodeKey(code: string, serial: string): string {
 /**
  * The 2026 edition writes the merged 전남광주통합특별시 where every older source —
  * the permit registry, Who's On First — still writes 전라남도 and 광주광역시.
+ *
  * A typed string in either form aligns against the register through this map.
  */
 export const REGION_ALIASES: Readonly<Record<string, string>> = {
@@ -179,7 +181,9 @@ function joinNumber(main: string, sub: string): string {
 
 export interface ReadJusoOptions {
 	/**
-	 * Stop after this many rows per 시도. For a fixture or a smoke run. omit for the whole register.
+	 * Stop after this many rows per 시도.
+	 *
+	 * For a fixture or a smoke run. omit for the whole register.
 	 */
 	maxRowsPerRegion?: number
 }

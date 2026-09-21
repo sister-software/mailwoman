@@ -62,6 +62,7 @@ import type { ResolutionTier } from "#geocode/result"
 
 /**
  * The subset of a resolver `ResolvedPlace` this module reads.
+ *
  * Structural on purpose — `AddressNode.alternatives` is `ReadonlyArray<unknown>`
  * in the decoder interface, so there is nothing to import.
  */
@@ -73,15 +74,19 @@ interface RankedPlaceLike {
 	lat?: number
 	lon?: number
 	/**
-	 * The candidate's prominence. On the candidate backend this is exactly `-effectiveNegRank`
+	 * The candidate's prominence.
+	 *
+	 * On the candidate backend this is exactly `-effectiveNegRank`
 	 * (`resolver-wof-sqlite/candidate-lookup.ts`), so a difference of two prominences is
 	 * a log10 population margin and `DECISIVE_MARGIN_LOG10` applies to it directly.
 	 *
 	 * On the FTS backend it is `min(log-population, populationBoost) + proximityTerm`, which is
 	 * a different unit: capped, and contaminated by proximity when a bias point was supplied.
-	 * The marker is therefore backend-conditional and says so in its own evidence (`marginUnit`), rather
-	 * than pretending the two are the same number. This is the same "the two backends do
-	 * not share a unit" finding the 2026-08-04 resolver-score characterization recorded.
+	 * The marker is therefore backend-conditional and says so in its own evidence
+	 * (`marginUnit`), rather than pretending the two are the same number.
+	 *
+	 * This is the same "the two backends do not share a unit" finding the 2026-08-04
+	 * resolver-score characterization recorded.
 	 */
 	prominence?: number
 	score?: number
@@ -89,6 +94,7 @@ interface RankedPlaceLike {
 
 /**
  * Turn a resolver place into the shape {@linkcode dominanceMarginLog10} reads.
+ *
  * `negRank` is `-prominence` because prominence is `-negRank` on the backend that
  * defines both. the double negation is the whole conversion and it is written out
  * rather than folded so the sign is checkable.
@@ -136,6 +142,7 @@ function primaryResolvedNode(tree: AddressTree, lat: number | null, lon: number 
 export interface DeclaredAmbiguityOpts {
 	/**
 	 * The full kind verdict — top kind plus alternatives.
+	 *
 	 * `bare_toponym` is an alternative by design (see `@mailwoman/kind-classifier`'s `intent-rules.ts`),
 	 * so a caller that passes only the top kind will never see this marker fire,
 	 * which is a silent no-op rather than an error.
@@ -204,9 +211,10 @@ export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryInten
 			margin: Number(margin.toFixed(4)),
 			decisiveMarginLog10: DECISIVE_MARGIN_LOG10,
 			/**
-			 * Named so a consumer knows what the margin is. `log10_population` on the candidate
-			 * backend. on FTS the prominence term is capped and proximity-contaminated,
-			 * which the value states rather than hides.
+			 * Named so a consumer knows what the margin is.
+			 *
+			 * `log10_population` on the candidate backend. on FTS the prominence term is capped
+			 * and proximity-contaminated, which the value states rather than hides.
 			 */
 			marginUnit: "resolver_prominence_delta",
 			coincidentCollapseKm: COINCIDENT_PLACE_KM,
@@ -221,17 +229,20 @@ export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryInten
 /**
  * The coarsest tier at which each parsed component is still located, ranked by {@linkcode tierRank}.
  *
- * A component sets a floor rather than a target. `house_number` reads `interpolated`
- * and not `address_point` because interpolation is how a house number is placed along a
- * segment — the first version of this table put the floor at `address_point` and fired on
- * `129 E Burr Oak St, Athens, MI`, an interpolated answer at 124 m uncertainty that locates
- * the house as precisely as the tier permits. `postcode` reads `street` for the same reason
- * from the other side: a postcode centroid is a street-grade answer in most address systems,
- * and a finer floor would raise this marker on every correct Dutch result.
+ * A component sets a floor rather than a target.
+ * `house_number` reads `interpolated` and not `address_point` because interpolation is
+ * how a house number is placed along a segment — the first version of this table put the
+ * floor at `address_point` and fired on `129 E Burr Oak St, Athens, MI`, an interpolated
+ * answer at 124 m uncertainty that locates the house as precisely as the tier permits.
  *
- * `unit` is deliberately absent. No layer in this repository locates a unit — there is
- * no floor or interior geometry in the artifact set — so a unit can never be "used",
- * and a floor for it would fire on every correct answer carrying one.
+ * `postcode` reads `street` for the same reason from the other side: a postcode
+ * centroid is a street-grade answer in most address systems, and a finer floor
+ * would raise this marker on every correct Dutch result.
+ *
+ * `unit` is deliberately absent.
+ * No layer in this repository locates a unit — there is no floor or interior
+ * geometry in the artifact set — so a unit can never be "used", and a floor for
+ * it would fire on every correct answer carrying one.
  *
  * The rank comes from `ablation/scoring.ts` rather than a second ladder declared here.
  * That module already orders the tiers for the deletion scorer, and two orders would let this marker
@@ -249,11 +260,14 @@ const COMPONENT_TIER_FLOOR: ReadonlyArray<readonly [tag: string, floor: Resoluti
 export interface CoarserAnswerOpts {
 	/**
 	 * The full kind verdict — top kind plus alternatives.
+	 *
 	 * The marker names the top kind, since a structured address that fell short is still a structured address.
 	 */
 	kinds: ReadonlyArray<QueryKind>
 	/**
-	 * The parsed components, by tag. Read for presence only. the values never enter the verdict.
+	 * The parsed components, by tag.
+	 *
+	 * Read for presence only. the values never enter the verdict.
 	 */
 	components: Readonly<Record<string, string | null | undefined>>
 	reachedTier: ResolutionTier
@@ -267,9 +281,8 @@ export interface CoarserAnswerOpts {
  * address without `#101` reaches at `address_point`, and the response carried no field distinguishing it from a correct
  * answer to `Athens, GA`.
  *
- * Returns `null` — never an empty marker — when nothing finer was asked for and
- * when the tier met the ask. "We checked and the answer was as fine as the question"
- * is the caller's marker array not gaining an entry.
+ * Returns `null` — never an empty marker — when nothing finer was asked for and when the tier met the ask.
+ * "We checked and the answer was as fine as the question" is the caller's marker array not gaining an entry.
  */
 export function coarserAnswerMarker(opts: CoarserAnswerOpts): QueryIntentMarker | null {
 	// `venue` and `plus_code` rank as house-grade in `tierRank`, so an entity answer

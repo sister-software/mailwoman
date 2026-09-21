@@ -13,10 +13,11 @@ import type { LoadedPairIndex } from "#web/loader"
 import { fetchBytes } from "#web/onnx-runner"
 
 /**
- * Reduce {@link LoadFromURLsOptions.country} to the bare country code the pair-index
- * restriction compares. A full locale ("en-gb") yields its country subtag ("gb") —
- * the node classifier's exact `localeCountry` derivation — and a bare code ("gb") passes
- * through unchanged (a browser-side widening: the node path only ever receives locales).
+ * Reduce {@link LoadFromURLsOptions.country} to the bare country code the pair-index restriction compares.
+ *
+ * A full locale ("en-gb") yields its country subtag ("gb") — the node classifier's
+ * exact `localeCountry` derivation — and a bare code ("gb") passes through unchanged
+ * (a browser-side widening: the node path only ever receives locales).
  * Omitted = `"en-us"` → `"us"`, the node default.
  */
 export function resolvePairIndexCountry(country: string | undefined): string {
@@ -30,6 +31,7 @@ export function resolvePairIndexCountry(country: string | undefined): string {
  * (the {@link loadPostcodeAnchorLookup} interface): each `pair-index-<cc>.bin` is optional,
  * so a 404/network failure/corrupt binary (bad magic, truncated header) is skipped with a
  * loud `console.warn` naming the URL — never a rejection that blocks the classifier load.
+ *
  * Older HF release versions ship no pair indexes at all, and the prior is a soft
  * decode channel rather than a required model input.
  *
@@ -64,16 +66,18 @@ export async function loadPairIndexes(urls: readonly string[], fetchImpl: typeof
 }
 
 /**
- * Detect the placetype-pair country subtag for one input from its structural shape
- * (#1278 phase 2). Runs the two browser-safe Stage-2 modules the runtime pipeline uses —
+ * Detect the placetype-pair country subtag for one input from its structural shape (#1278 phase 2).
+ *
+ * Runs the two browser-safe Stage-2 modules the runtime pipeline uses —
  * `@mailwoman/query-shape`'s `computeQueryShape` then `@mailwoman/locale-hint`'s
  * `detectLocale` — and reduces the resulting `LocaleHint.locale` (e.g. "en-GB") to
  * its country subtag ("gb") via {@link resolvePairIndexCountry}.
  *
- * The detection is bitter-lesson-safe by construction: locale-hint keys only off
- * universal cues (postcode format, script class), never place-name dictionaries.
+ * The detection is bitter-lesson-safe by construction: locale-hint keys only off universal
+ * cues (postcode format, script class), never place-name dictionaries.
  * So "10 Downing St, London SW1A 2AA" detects `gb` (UK postcode), but a bare "Shoreditch London" —
  * no postcode, Latin script — falls through to locale-hint's `en-US` fallback → `us`.
+ *
  * The pair prior is a soft, additive channel, so a conservative miss (no bias) is the safe failure mode.
  */
 export function detectPairIndexCountry(text: string): string {
@@ -85,12 +89,14 @@ export function detectPairIndexCountry(text: string): string {
 
 /**
  * Select the placetype-pair prior for one parse (#1278 phase 2).
+ *
  * Derives a country subtag — from an explicit `opts.country` override when given, else
  * {@link detectPairIndexCountry} over `text` — and returns the loaded index whose header country
  * matches, wrapped as a `placetypePair` option (`{ index }` alone: probe chain defaults to "auto",
  * `delta`/`transitionBeta` ride the resolver's header getters, exactly the node construction).
- * No matching index → `undefined` (the caller spreads `placetypePair: undefined`
- * → byte-stable no-prior decode, or fall-through to a config default).
+ * No matching index → `undefined` (the caller spreads `placetypePair: undefined` →
+ * byte-stable no-prior decode, or fall-through to a config default).
+ *
  * See {@link LoadResult.selectPairIndexForText} for the bound convenience + call-site example.
  */
 export function resolvePairIndexForText(

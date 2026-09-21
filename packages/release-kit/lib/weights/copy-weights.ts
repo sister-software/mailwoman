@@ -55,8 +55,9 @@ export interface CopyWeightsOptions {
 	repoRoot: string
 	/**
 	 * Where the weights workspaces are written — the source checkout (the release path),
-	 * or a #1894 preflight's staging tree. Sources always resolve against this checkout's
-	 * data root and release.config.json. only destinations move.
+	 * or a #1894 preflight's staging tree.
+	 *
+	 * Sources always resolve against this checkout's data root and release.config.json. only destinations move.
 	 */
 	destRoot?: string
 	log: (line: string) => void
@@ -76,14 +77,17 @@ interface MaterializationContext {
 	dataRoot: string
 	/**
 	 * The derived-artifact store for this checkout's inputs.
+	 *
 	 * Computed once — the key is a hash over files that do not change mid-run.
 	 */
 	derivedStore: string
 	softFeed: SoftFeedRecipe
 	/**
 	 * The repo-committed soft-feed lexicons (gazetteer #464, country #1104, street-type Option-A),
-	 * shipped-name → absolute source. The per-key base-directory rule lives in `weights-recipe.ts`;
-	 * only the built locality-surface lexicon resolves against the data root instead.
+	 * shipped-name → absolute source.
+	 *
+	 * The per-key base-directory rule lives in `weights-recipe.ts`; only the built
+	 * locality-surface lexicon resolves against the data root instead.
 	 */
 	repoCommittedSources: Map<string, string>
 	sourceLocalitySurface: string | null
@@ -102,8 +106,9 @@ interface MaterializationContext {
  * Returns true when the file was placed, which tells the caller to skip its CLI spawn.
  * A miss returns false. the caller builds and then calls {@link stashDerived}.
  *
- * Replaces the actions/cache round-trip that carried 76.3 MB at ~1.6 MB/s (48–54s per leg) to a
- * runner that already holds the source model locally. See `derived-weights-key.ts`.
+ * Replaces the actions/cache round-trip that carried 76.3 MB at ~1.6 MB/s (48–54s per leg)
+ * to a runner that already holds the source model locally.
+ * See `derived-weights-key.ts`.
  */
 async function serveFromDerivedStore(context: MaterializationContext, dir: string, filename: string): Promise<boolean> {
 	const cached = resolvePath(context.derivedStore, filename)
@@ -111,7 +116,8 @@ async function serveFromDerivedStore(context: MaterializationContext, dir: strin
 	if (!(await pathExists(cached))) return false
 
 	// A poisoned entry is worse than a miss: it reports HIT while feeding a channel
-	// nothing (#1528's empty postcode-gb.bin). Refuse, evict, rebuild.
+	// nothing (#1528's empty postcode-gb.bin).
+	// Refuse, evict, rebuild.
 	const violation = await derivedStoreServeViolation(filename, cached)
 
 	if (violation) {
@@ -123,8 +129,9 @@ async function serveFromDerivedStore(context: MaterializationContext, dir: strin
 
 	const dest = resolvePath(dir, filename)
 
-	// Unlink first. `fs.copyFile` follows a symlink at the destination and writes through it,
-	// leaving the symlink in place — and the registry refuses a tarball containing one (http 415, YN0035).
+	// Unlink first.
+	// `fs.copyFile` follows a symlink at the destination and writes through it, leaving the
+	// symlink in place — and the registry refuses a tarball containing one (http 415, YN0035).
 	// Same discipline as the rest of this module. see agents.md "symlinks in the publish tarball".
 	await removePathIfPresent(dest)
 
@@ -142,9 +149,10 @@ async function serveFromDerivedStore(context: MaterializationContext, dir: strin
  * rather than a source of truth, so a failure here costs the next run five minutes and nothing else.
  */
 async function stashDerived(context: MaterializationContext, dir: string, filename: string): Promise<void> {
-	// Never poison the store: a below-floor build must not become the artifact every future
-	// run receives as a HIT. The build-time floors are the primary check. this holds
-	// when they are bypassed (a stale-compiled builder predating them was #1528's exact shape).
+	// Never poison the store: a below-floor build must not become the artifact
+	// every future run receives as a HIT.
+	// The build-time floors are the primary check. this holds when they are bypassed
+	// (a stale-compiled builder predating them was #1528's exact shape).
 	const violation = await derivedStoreServeViolation(filename, resolvePath(dir, filename))
 
 	if (violation) {
@@ -171,9 +179,9 @@ export async function copyWeights({
 	log,
 }: CopyWeightsOptions): Promise<CopyWeightsReport> {
 	// CI release workflow sets MAILWOMAN_SKIP_WEIGHTS_COPY=1 when release_weights
-	// input is false (the default). Weights binaries live on the operator's host
-	// and aren't fetchable from CI. the workflow excludes the weights workspaces from
-	// the publish set in that mode, so skipping the copy is correct.
+	// input is false (the default).
+	// Weights binaries live on the operator's host and aren't fetchable from CI. the workflow excludes
+	// the weights workspaces from the publish set in that mode, so skipping the copy is correct.
 	if ($public.MAILWOMAN_SKIP_WEIGHTS_COPY) {
 		log("copy-weights: MAILWOMAN_SKIP_WEIGHTS_COPY set — skipping.")
 
@@ -279,8 +287,10 @@ export async function copyWeights({
 
 /**
  * Materialize the per-locale FST gazetteer binary (#1318 FST-distribution arc) into a weights workspace.
+ *
  * The source binary lives at $MAILWOMAN_DATA_ROOT/wof/fst-per-locale/fst-<locale>.bin —
- * a verbatim copy (no build step). En-nz has no FST sibling and is skipped silently (byte-stable).
+ * a verbatim copy (no build step).
+ * En-nz has no FST sibling and is skipped silently (byte-stable).
  */
 async function materializeFST(context: MaterializationContext, workspace: string, dir: string) {
 	const locale = workspace.replace(/^packages\/neural-weights-/, "")
@@ -424,9 +434,10 @@ async function materializePairIndex(context: MaterializationContext, workspace: 
 		return
 	}
 
-	// Inputs resolve against different roots, and conflating them is a real failure mode (it broke CI once):
-	// `source` and `boroughDB` are large acquired datasets under the data root, while `pairsJsonl`
-	// is a curated file checked into the repository (`data/gazetteer/london-pairs-v2.jsonl`).
+	// Inputs resolve against different roots, and conflating them is a real failure
+	// mode (it broke CI once): `source` and `boroughDB` are large acquired datasets
+	// under the data root, while `pairsJsonl` is a curated file checked into the
+	// repository (`data/gazetteer/london-pairs-v2.jsonl`).
 	// `resolvePath` lets an absolute entry pass through untouched either way.
 	const source = entry.source ? resolvePath(context.dataRoot, entry.source) : undefined
 	const boroughDB = entry.boroughDB ? resolvePath(context.dataRoot, entry.boroughDB) : undefined

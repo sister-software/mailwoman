@@ -69,8 +69,9 @@ describe("resolveExtracts", () => {
 	})
 
 	test("rejects extract name collisions on non-main extracts", () => {
-		// The first extract is always "main" regardless of its derived name. collisions only
-		// matter across the non-first entries. Two postcode extracts in a row collide.
+		// The first extract is always "main" regardless of its derived name. collisions
+		// only matter across the non-first entries.
+		// Two postcode extracts in a row collide.
 		expect(() =>
 			resolveExtracts([
 				"/tmp/whosonfirst-data-admin-us-latest.db",

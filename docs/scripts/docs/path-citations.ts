@@ -17,8 +17,9 @@
  *   them. The residual is reported with the refusals beside it so the ratio is visible rather than asserted.
  */
 
-// Node builtins on purpose. `check/docs-structure.ts` reaches this file, and the Docs
-// workflow runs it before `yarn install`, so no workspace specifier can resolve.
+// Node builtins on purpose.
+// `check/docs-structure.ts` reaches this file, and the Docs workflow runs it
+// before `yarn install`, so no workspace specifier can resolve.
 /* oxlint-disable typescript/no-restricted-imports -- runs before `yarn install`; see above */
 import { readFile } from "node:fs/promises"
 import * as path from "node:path"
@@ -30,17 +31,19 @@ import { pathExists } from "./exists.ts"
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url))
 
 /**
- * The docs package root, truncated at the `scripts/` segment rather than counted upward, so moving
- * this file to a different depth still resolves. Same rule as `./links.ts`'s `DOCS_ROOT`.
+ * The docs package root, truncated at the `scripts/` segment rather than counted upward,
+ * so moving this file to a different depth still resolves.
+ *
+ * Same rule as `./links.ts`'s `DOCS_ROOT`.
  */
 const DOCS_ROOT = SCRIPT_DIR.slice(0, SCRIPT_DIR.lastIndexOf(`${path.sep}scripts${path.sep}`))
 
 /**
  * The repository's top-level directories a citation may be rooted at.
  *
- * A path is recognized by its first segment rather than by shape,
- * because the shape alone cannot separate a repository file from a package
- * subpath specifier (`mailwoman/gazetteer-pipeline`), a URL tail, or a wire key.
+ * A path is recognized by its first segment rather than by shape, because the
+ * shape alone cannot separate a repository file from a package subpath specifier
+ * (`mailwoman/gazetteer-pipeline`), a URL tail, or a wire key.
  * Everything outside this set is not a citation this check makes a claim about.
  */
 const REPOSITORY_ROOTS = new Set([
@@ -59,9 +62,10 @@ const REPOSITORY_ROOTS = new Set([
 /**
  * Path segments whose contents are generated rather than tracked.
  *
- * A checkout that has not run `tsc -b` has no `out/`, and a docs command quoted in a
- * tutorial legitimately names one. Resolving those against the filesystem measures
- * whether the checkout is built, which is a different question.
+ * A checkout that has not run `tsc -b` has no `out/`, and a docs command quoted
+ * in a tutorial legitimately names one.
+ * Resolving those against the filesystem measures whether the checkout is built,
+ * which is a different question.
  */
 const GENERATED_SEGMENTS = new Set([".docusaurus", ".yarn", "build", "dist", "node_modules", "out"])
 
@@ -110,8 +114,9 @@ export function isPointInTimeRecord(file: string): boolean {
 }
 
 /**
- * Why a candidate was not resolved. Each value is a class of text that looks like a path
- * and is not a claim that one exists.
+ * Why a candidate was not resolved.
+ *
+ * Each value is a class of text that looks like a path and is not a claim that one exists.
  */
 export const CitationRefusal = {
 	/**
@@ -206,8 +211,8 @@ export function refusalFor(text: string): CitationRefusal | null {
 /**
  * The path a citation claims, with a trailing position and any `#anchor` removed and a trailing slash kept.
  *
- * A position suffix names a place inside the file — `:129`, `:129:4`, or the
- * `:129-131` range a review comment quotes — and an anchor names a heading inside it.
+ * A position suffix names a place inside the file — `:129`, `:129:4`, or the `:129-131`
+ * range a review comment quotes — and an anchor names a heading inside it.
  * Neither changes which file must exist.
  */
 export function citationTarget(text: string): string {

@@ -40,7 +40,9 @@ export interface PlacetypeRecord {
 	 */
 	parent_id: number
 	/**
-	 * The name of the record. This is the name of the record typically in English.
+	 * The name of the record.
+	 *
+	 * This is the name of the record typically in English.
 	 */
 	name: string
 	/**
@@ -100,6 +102,7 @@ function placetypeRecordFromRow(row: Record<string, SQLInputValue>): PlacetypeRe
  */
 /**
  * The one table {@link PlacetypeDataSource} creates and reads.
+ *
  * Declared here beside the DDL that builds it, so a column added to one is a
  * compile error against the other.
  */
@@ -135,7 +138,8 @@ export class PlacetypeDataSource implements Disposable {
 	public prepareTables(): void {
 		// Raw DDL by design: this runs in a synchronous construction path.
 		// Kysely's schema-builder is async, so migrating would force an async-factory
-		// refactor across every consumer. See agents.md.
+		// refactor across every consumer.
+		// See agents.md.
 		this.#db.exec(/* sql */ `
 
 			CREATE TABLE IF NOT EXISTS records (

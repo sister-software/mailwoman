@@ -46,8 +46,9 @@ export const configRootPath: PathBuilderResolver = ((...segments: PathBuilderLik
  * Build a path under the data root, e.g. `dataRootPath("wof", "admin-global-priority.db")`.
  *
  * Reads the env on each call, so a late environment change (or a test stub) is honored —
- * a resolver bound once at module evaluation would freeze the root to whatever the
- * first importer's environment held. The result is a
+ * a resolver bound once at module evaluation would freeze the root to whatever
+ * the first importer's environment held.
+ * The result is a
  * {@link PathBuilder}: call it to descend, `resolvePath(...)` or `.toString()` it at a string boundary.
  */
 export const dataRootPath: PathBuilderResolver = ((...segments: PathBuilderLike[]) => {
@@ -64,9 +65,11 @@ export const dataRootPath: PathBuilderResolver = ((...segments: PathBuilderLike[
  * disagreed with the writers about the directory would report the artifacts absent
  * rather than misplaced — every sibling degrades `existsSync → undefined`.
  *
- * It lives outside git deliberately. The binaries are not committed, so materializing them into
- * the tracked package directory is what made a fresh worktree unable to geocode, made `yarn test`
- * mutate tracked directories as a side effect, and put a symlink in a publish tarball (`YN0035`).
+ * It lives outside git deliberately.
+ * The binaries are not committed, so materializing them into the tracked package directory
+ * is what made a fresh worktree unable to geocode, made `yarn test` mutate tracked
+ * directories as a side effect, and put a symlink in a publish tarball (`YN0035`).
+ *
  * The data root is shared across every checkout on the machine and is not packed by anything.
  */
 export function weightsOverlayPath(locale: string, ...segments: string[]): PathBuilder {
@@ -82,6 +85,7 @@ export function mailwomanTempRoot(): PathBuilder {
 
 /**
  * Path builder under Mailwoman's temporary-file root, e.g. `tempRootPathBuilder("reg", "fr-communes.tsv")`.
+ *
  * Reads the env on each call, so a late environment change (or a test stub) is honored.
  */
 export function tempRootPathBuilder(...segments: string[]): PathBuilder {
@@ -120,27 +124,28 @@ export function cacheRootPath(...segments: string[]): string {
 
 /**
  * The default WOF extract list the FTS backend probes when no single `--wof-db` is given:
- * the global admin-priority extract plus the postcode extracts, with country-aware
- * routing in `pickExtractForPlacetype` sending each postcode query to the extract that
- * claims its country (#920). All under `dataRoot` (defaults to the configured
+ * the global admin-priority extract plus the postcode extracts, with country-aware routing in
+ * `pickExtractForPlacetype` sending each postcode query to the extract that claims its country (#920).
+ *
+ * All under `dataRoot` (defaults to the configured
  * {@link mailwomanDataRoot}. callers thread a `--data-root` option through). A fresh array each call. callers filter
  * with `existsSync`, so a deployment missing any of them degrades to whatever is present.
  *
  * This list is deliberately smaller than `DEFAULT_POSTCODE_EXTRACTS`
- * (`mailwoman/gazetteer-pipeline/index.ts`), which is the set the candidate gazetteer
- * is built from — twenty-odd extracts including the 876 MB Code-Point Open GB one.
+ * (`mailwoman/gazetteer-pipeline/index.ts`), which is the set the candidate gazetteer is
+ * built from — twenty-odd extracts including the 876 MB Code-Point Open GB one.
  * These are attached live per query, so the cost of a member is paid at every boot rather than once at
  * build time. membership here is earned by a extract the runtime cannot resolve its locales without.
  *
  * Two notes on specific members, because both look like mistakes and are not:
  *
  * - The tail extract's own contents moved on 2026-08-05.
- *   It carried GB (1,839,678 of 1,895,753 rows, ~946 MB) until Code-Point Open
- *   replaced those rows under a clean licence. it is now the nine-country namesake set
- *   FI/CZ/SK/SI/DK/no/HR/PL/SE at 26 MB. Rebuild: `mailwoman gazetteer build postcode-geonames`.
+ *   It carried GB (1,839,678 of 1,895,753 rows, ~946 MB) until Code-Point Open replaced those rows
+ *   under a clean licence. it is now the nine-country namesake set FI/CZ/SK/SI/DK/no/HR/PL/SE at 26 MB.
+ *   Rebuild: `mailwoman gazetteer build postcode-geonames`.
  * - `postalcode-ni-osm.db` is **build-local**: OSM `addr:postcode` under ODbL,
- *   never published, so on any machine that did not build it the `existsSync`
- *   filter simply drops it and GB postcode queries behave as they did before.
+ *   never published, so on any machine that did not build it the `existsSync` filter
+ *   simply drops it and GB postcode queries behave as they did before.
  *   It is listed rather than special-cased because that filter is the tier's enforcement.
  *   It is also the only GB-claiming extract in this list — the Code-Point Open extract
  *   is not here — so nothing competes with it for `BT` routing.

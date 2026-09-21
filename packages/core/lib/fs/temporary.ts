@@ -26,7 +26,8 @@ import { makeDirectories } from "#fs/writers"
  * ```
  *
  * {@linkcode move} answers this same shape rather than a bare `AsyncDisposableStack`, which is what a factory needs:
- * the stack's own `move()` drops `path`. Therefore, every caller would rebuild it by hand afterwards.
+ * the stack's own `move()` drops `path`.
+ * Therefore, every caller would rebuild it by hand afterwards.
  * {@linkcode moveWith} does that transfer and attaches what the caller asked for, so a fixture builder is one
  * statement.
  */
@@ -40,12 +41,15 @@ export interface TemporaryDirectory extends AsyncDisposable {
 	 */
 	resolve(...segments: string[]): string
 	/**
-	 * Take ownership of a resource. It is released before the directory is removed,
-	 * so a database opened on a file in here is closed while the file still exists.
+	 * Take ownership of a resource.
+	 *
+	 * It is released before the directory is removed, so a database opened on a file
+	 * in here is closed while the file still exists.
 	 */
 	use<T extends AsyncDisposable | Disposable | null | undefined>(resource: T): T
 	/**
 	 * Hand the directory and everything registered on it to a scope that outlives this one.
+	 *
 	 * This binding disposes nothing afterwards.
 	 */
 	move(): TemporaryDirectory

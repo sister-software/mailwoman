@@ -20,9 +20,10 @@ import { canonicalizeOrganizationName } from "@mailwoman/record"
 /**
  * Derive a stable `filer_family.family_id` from a holding-/management-company name's canonical
  * form — never the raw string — so `"Acme Holdings Inc"` and `"acme holdings, INC."`
- * (same underlying entity, different casing/ punctuation/legal suffix) collapse
- * onto the same family, the identical reduction `cluster-filers.ts`'s inferred
- * pass already relies on (`canonicalizeOrganizationName`, `@mailwoman/record`).
+ *
+ * (same underlying entity, different casing/ punctuation/legal suffix) collapse onto
+ * the same family, the identical reduction `cluster-filers.ts`'s inferred pass already
+ * relies on (`canonicalizeOrganizationName`, `@mailwoman/record`).
  * Namespaced by `identifierType` (`holding_company_name` vs `management_company_name`)
  * so a holding company and a different management company that happen
  * to canonicalize to the same string never collapse into one family

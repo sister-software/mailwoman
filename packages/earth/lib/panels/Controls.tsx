@@ -16,8 +16,10 @@ import type { GeoBiasError } from "#runtime/use/geo-bias"
 import styles from "./panels.module.css"
 
 /**
- * What each failure says. Short enough to sit beside the chip, and each one tells the
- * visitor what to do next rather than restating that something went wrong.
+ * What each failure says.
+ *
+ * Short enough to sit beside the chip, and each one tells the visitor what to do next
+ * rather than restating that something went wrong.
  */
 const GEO_BIAS_MESSAGE: Record<GeoBiasError, string> = {
 	denied: "Location is blocked for this site — allow it in your browser's site settings, then press again.",
@@ -47,9 +49,11 @@ export interface GeoBiasRowProps {
  * and an edge-fade mask built for a dozen example chips, and inheriting it here
  * faded the right edge of a single button for no reason.
  *
- * A failure gets a line of its own. The pressed state cannot carry it — a denial turns
- * the chip back off, which looks identical to the visitor turning it off, and the browser
- * will not prompt a second time. Therefore, pressing again appeared to do nothing at all.
+ * A failure gets a line of its own.
+ * The pressed state cannot carry it — a denial turns the chip back off, which looks
+ * identical to the visitor turning it off, and the browser will not prompt a second time.
+ *
+ * Therefore, pressing again appeared to do nothing at all.
  */
 export const GeoBiasRow: React.FC<GeoBiasRowProps> = ({ active, error, onToggle }) => (
 	<div className={styles.biasRow}>

@@ -170,9 +170,9 @@ describe("outsideExpectedCountry — artifact-declared bboxes (survey candidate 
 
 describe("COUNTRY_BBOX covers every shipping locale", () => {
 	test("a locale that ships weights has a box", async () => {
-		// An absent key fails open, so a locale without a box is indistinguishable from one the
-		// guard cleared. Read from `release.config.json` rather than a list here, so the next
-		// locale to ship is covered by this test instead of passing against a copy of the old set.
+		// An absent key fails open, so a locale without a box is indistinguishable from one the guard cleared.
+		// Read from `release.config.json` rather than a list here, so the next locale to ship
+		// is covered by this test instead of passing against a copy of the old set.
 		const config = await readReleaseConfig()
 
 		const countries = new Set(
@@ -185,8 +185,9 @@ describe("COUNTRY_BBOX covers every shipping locale", () => {
 	})
 
 	test("every box contains its country's own capital", () => {
-		// The failure a hand-written box invites is a trimmed one, and a box that has lost territory
-		// has usually lost it at an edge. A capital is the cheapest point every box must hold.
+		// The failure a hand-written box invites is a trimmed one, and a box that has
+		// lost territory has usually lost it at an edge.
+		// A capital is the cheapest point every box must hold.
 		const capitals: ReadonlyArray<readonly [string, number, number]> = [
 			["US", 38.9072, -77.0369],
 			["AU", -35.2809, 149.13],

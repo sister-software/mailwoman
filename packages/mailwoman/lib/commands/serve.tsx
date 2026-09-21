@@ -52,10 +52,11 @@ const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus 
 		// eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot cluster bootstrap. refactor pending
 		setWorkers(Array.from({ length: cpus }, () => cluster.fork()))
 
-		// Tracks whether any worker has ever reached "listening" — distinguishes a genuine boot
-		// failure (every worker died before one of them opened the port) from an ordinary shutdown
-		// after a healthy run. `cluster.on("listening", …)` mirrors the per-worker wiring in
-		// WorkerStatus, but at the primary, where the exit handler below can see it.
+		// Tracks whether any worker has ever reached "listening" — distinguishes a
+		// genuine boot failure (every worker died before one of them opened the port)
+		// from an ordinary shutdown after a healthy run.
+		// `cluster.on("listening", …)` mirrors the per-worker wiring in WorkerStatus,
+		// but at the primary, where the exit handler below can see it.
 		let anyListened = false
 		let liveWorkerCount = cpus
 
@@ -213,13 +214,14 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 			if (!preflight.ok) {
 				// Every cluster worker runs createServeEngine() independently, so with --cpus N every
 				// one of them hits this same failure and would print the identical banner N times.
-				// Node assigns cluster worker `id`s synchronously (1, 2, 3, ...) at fork() time in the
-				// primary, before any worker's async preflight resolves — so `cluster.worker.id === 1`
-				// deterministically picks the first-forked worker, regardless of which worker's
-				// preflight check happens to finish first. Only that one worker prints.
-				// the rest exit silently. Chosen over a primary-side pre-fork check
-				// (the primary doesn't otherwise call createServeEngine() at all, and duplicating its
-				// import/db-existence check there just to avoid forking would be the more invasive change)
+				// Node assigns cluster worker `id`s synchronously (1, 2, 3, ...) at fork()
+				// time in the primary, before any worker's async preflight resolves —
+				// so `cluster.worker.id === 1` deterministically picks the first-forked worker,
+				// regardless of which worker's preflight check happens to finish first.
+				// Only that one worker prints. the rest exit silently.
+				// Chosen over a primary-side pre-fork check (the primary doesn't otherwise
+				// call createServeEngine() at all, and duplicating its import/db-existence
+				// check there just to avoid forking would be the more invasive change)
 				// and over routing the message back through the primary's cluster "exit" handler
 				// (would require an IPC round-trip for what's a one-line dedupe).
 				if (cluster.worker?.id === 1) {

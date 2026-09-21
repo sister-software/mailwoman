@@ -107,8 +107,9 @@ describe("VirtualClock.runUntilSettled — the stuck-work guard", () => {
 			clearInterval(counter)
 		}
 
-		// A 5ms interval over ~120ms should fire ~24 times. A settle loop that hogs the event
-		// loop with back-to-back setImmediate turns starves it well below that.
+		// A 5ms interval over ~120ms should fire ~24 times.
+		// A settle loop that hogs the event loop with back-to-back setImmediate
+		// turns starves it well below that.
 		expect(ticks).toBeGreaterThanOrEqual(8)
 	})
 })

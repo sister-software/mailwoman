@@ -16,6 +16,7 @@ export type LogitVector = Float32Array | Float64Array | number[]
 
 /**
  * Numerically-stable softmax of `logits` written into `out` (same length).
+ *
  * The max is subtracted before exponentiation. the sum is accumulated in index order and divided
  * through in a second pass, so a caller replacing an inline softmax sees bit-identical floats.
  */

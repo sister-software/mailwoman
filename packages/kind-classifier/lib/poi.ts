@@ -21,10 +21,12 @@ const MAX_POI_SEGMENTS = 3
  */
 export interface POIPhraseMatch {
 	/**
-	 * The matched subject's identifier string. For `kind: "category"`,
-	 * a `@mailwoman/poi-taxonomy` category id. for `kind: "brand"` or `kind: "name"`,
-	 * the canonical display name. `matchPOISubject` treats it opaquely. the caller
-	 * (`mailwoman`'s `poi-intent.ts`) interprets it per `kind`.
+	 * The matched subject's identifier string.
+	 *
+	 * For `kind: "category"`, a `@mailwoman/poi-taxonomy` category id. for `kind: "brand"`
+	 * or `kind: "name"`, the canonical display name.
+	 * `matchPOISubject` treats it opaquely. the caller (`mailwoman`'s `poi-intent.ts`)
+	 * interprets it per `kind`.
 	 */
 	categoryID: string
 	matchedPhrase: string
@@ -37,8 +39,9 @@ export interface POIPhraseMatch {
 	 */
 	kind?: "category" | "brand" | "name"
 	/**
-	 * Wikidata QID, when known. `kind: "brand"` only — absent when a brand
-	 * resolved by name alone (no QID match).
+	 * Wikidata QID, when known.
+	 *
+	 * `kind: "brand"` only — absent when a brand resolved by name alone (no QID match).
 	 */
 	wikidata?: string
 	/**
@@ -61,17 +64,19 @@ export interface POIPhraseMatch {
 	 * ISO 3166-1 alpha-2 countries the authority behind this hit scopes its claim to.
 	 * Absent = the condition is true everywhere.
 	 *
-	 * A scope is a statement about establishments, so it is judged against the
-	 * country of the place being searched rather than the caller's locale:
-	 * the locale is the lens the phrase is read through, and it says nothing about
-	 * where the condition is true. `matchPOISubject` carries the value untouched. the
-	 * POI intent stage binds it once the anchor has resolved.
+	 * A scope is a statement about establishments, so it is judged against the country of
+	 * the place being searched rather than the caller's locale: the locale is the lens the
+	 * phrase is read through, and it says nothing about where the condition is true.
+	 * `matchPOISubject` carries the value untouched. the POI intent stage binds
+	 * it once the anchor has resolved.
 	 */
 	countryScope?: readonly string[]
 }
 
 /**
- * Injected phrase→category lookup. Exact-phrase, locale-aware. returns [] on miss.
+ * Injected phrase→category lookup.
+ *
+ * Exact-phrase, locale-aware. returns [] on miss.
  */
 export type POIPhraseLookup = (phrase: string, locale?: string) => ReadonlyArray<POIPhraseMatch>
 
@@ -87,20 +92,22 @@ export interface POIQuerySpan {
 }
 
 /**
- * Which lexicon this hit came from. Existing category lookups set `"category"`
- * (backward-compatible default).
+ * Which lexicon this hit came from.
+ *
+ * Existing category lookups set `"category"` (backward-compatible default).
  */
 export interface POISubjectMatch {
 	/**
 	 * The hit the subject scores under — its kind and its confidence.
+	 *
 	 * Always `matches[0]`; the two are built together in one place so they cannot disagree.
 	 */
 	match: POIPhraseMatch
 	/**
 	 * Every category the subject reaches, `match` first.
 	 *
-	 * One entry unless the lookup returned a {@link POIPhraseMatch.searchAsSet} set,
-	 * in which case it holds the whole set and the POI branch searches their union.
+	 * One entry unless the lookup returned a {@link POIPhraseMatch.searchAsSet} set, in
+	 * which case it holds the whole set and the POI branch searches their union.
 	 * The order is the order the lookup returned and states no preference:
 	 * nothing downstream may read position as rank.
 	 */
@@ -126,10 +133,12 @@ export interface POISubjectMatch {
  * Anchor separator between subject and place: comma, or near/in/at/around/to —
  * scanned left-to-right until a prefix hits the lexicon.
  *
- * Linear by construction (no polynomial ReDoS): neither alternative places an unbounded whitespace
- * quantifier _before_ its required literal — the classic `\s*`/`\s+`-then-literal backtracking shape
- * that CodeQL's `js/polynomial-redos` flags. The comma alternative starts at the literal `,`;
- * the anchor alternative starts at a single `\s` immediately before a fixed anchor word.
+ * Linear by construction (no polynomial ReDoS): neither alternative places an unbounded
+ * whitespace quantifier _before_ its required literal — the classic `\s*`/`\s+`-then-literal
+ * backtracking shape that CodeQL's `js/polynomial-redos` flags.
+ * The comma alternative starts at the literal `,`; the anchor alternative starts
+ * at a single `\s` immediately before a fixed anchor word.
+ *
  * Every remaining quantifier (`,\s*`, `…\s+`) is _trailing_ — it runs only after the
  * required literal has already matched and nothing follows it, so it never backtracks.
  * Each start offset does O(1) work, making `matchAll` O(n).
@@ -138,16 +147,18 @@ export interface POISubjectMatch {
  * `.trim()`s both the subject (text before `.index`) and the remainder (text after the match),
  * so surrounding whitespace on either side of the separator is redundant.
  * The leading `\s*`/`\s+` only shifted the match _start_ within a whitespace run —
- * trim absorbs that — while the retained _trailing_ greedy quantifier keeps
- * the match _end_ (and thus `matchAll`'s lastIndex) identical, preserving the
- * exact subsequent-match sequence. Verified: 0 divergences across 22.7k inputs
- * (systematic + fuzzed adversarial whitespace + shared-whitespace anchor/comma chains).
+ * trim absorbs that — while the retained _trailing_ greedy quantifier keeps the match _end_
+ * (and thus `matchAll`'s lastIndex) identical, preserving the exact subsequent-match sequence.
+ *
+ * Verified: 0 divergences across 22.7k inputs (systematic + fuzzed adversarial
+ * whitespace + shared-whitespace anchor/comma chains).
  */
 const ANCHOR_SEPARATOR = /,\s*|\s(near|in|at|around|to)\s+/gi
 
 /**
- * Longest subject we accept, in tokens. Eight covers compound taxonomy phrases
- * while bounding lexicon probes.
+ * Longest subject we accept, in tokens.
+ *
+ * Eight covers compound taxonomy phrases while bounding lexicon probes.
  */
 const MAX_SUBJECT_TOKENS = 8
 
@@ -155,21 +166,23 @@ const MAX_SUBJECT_TOKENS = 8
  * The categories one candidate subject reaches, from the hits the lookup returned for it.
  *
  * The whole array when the first hit declares {@link POIPhraseMatch.searchAsSet} —
- * carried as the lookup returned it, never filtered, so a rung that flagged only
- * some of its members loses nothing here and the inconsistency stays visible to
- * whoever reads the set. Otherwise the first hit alone, which is the preference-list
- * reading the committed phrase index has always had.
+ * carried as the lookup returned it, never filtered, so a rung that flagged only some of its
+ * members loses nothing here and the inconsistency stays visible to whoever reads the set.
+ * Otherwise the first hit alone, which is the preference-list reading the
+ * committed phrase index has always had.
  */
 function reachedMatches(hits: ReadonlyArray<POIPhraseMatch>): POIPhraseMatch[] {
 	return hits[0]!.searchAsSet ? [...hits] : [hits[0]!]
 }
 
 /**
- * Match a POI subject: the whole input, or the text before the first anchor separator
- * whose prefix hits the lexicon (≤ 8 tokens). Scans separator occurrences left-to-right —
- * a lexicon phrase may itself contain a bare separator word (e.g. "walk in clinic"), so the first
- * separator isn't necessarily the right split point. Returns null when the lexicon never fires —
- * including comma-ridden full addresses whose leading segment isn't a lexicon phrase.
+ * Match a POI subject: the whole input, or the text before the first anchor
+ * separator whose prefix hits the lexicon (≤ 8 tokens).
+ *
+ * Scans separator occurrences left-to-right — a lexicon phrase may itself contain a bare separator
+ * word (e.g. "walk in clinic"), so the first separator isn't necessarily the right split point.
+ * Returns null when the lexicon never fires — including comma-ridden full addresses
+ * whose leading segment isn't a lexicon phrase.
  *
  * The winning candidate's hits are carried per {@link reachedMatches}: the first hit,
  * or the whole set when the lookup declared one.
@@ -250,10 +263,12 @@ export function matchPOISubject(
 }
 
 /**
- * `poi_query` scorer over an injected lexicon. Confidence bands: whole-input lexicon hit 0.92
- * (above venue-landmark's 0.88 ceiling — an exact lexicon phrase beats a shape heuristic);
- * subject + anchor 0.9. Guards below keep venue-led full addresses (class 2) on the structured-address
- * path: a remainder that leads with a house number, or a 4+-segment input, scores 0 here.
+ * `poi_query` scorer over an injected lexicon.
+ *
+ * Confidence bands: whole-input lexicon hit 0.92 (above venue-landmark's 0.88 ceiling —
+ * an exact lexicon phrase beats a shape heuristic); subject + anchor 0.9.
+ * Guards below keep venue-led full addresses (class 2) on the structured-address path:
+ * a remainder that leads with a house number, or a 4+-segment input, scores 0 here.
  */
 export function createScorePOIQuery(
 	lookup: POIPhraseLookup,
@@ -278,11 +293,13 @@ export function createScorePOIQuery(
 }
 
 /**
- * Confidence band for a bare category. One notch above `poi_query`'s whole-input band (0.92)
- * so the anchorless subset takes the top slot from it, and only from it — every anchored POI
- * query keeps scoring `poi_query` exactly as before. The coordinator's POI branch accepts
- * both kinds, so the routing is identical either way. the split exists so the marker can
- * say "you named a category and no place", which is a different thing to tell a caller.
+ * Confidence band for a bare category.
+ *
+ * One notch above `poi_query`'s whole-input band (0.92) so the anchorless subset takes the top slot
+ * from it, and only from it — every anchored POI query keeps scoring `poi_query` exactly as before.
+ * The coordinator's POI branch accepts both kinds, so the routing is identical either
+ * way. the split exists so the marker can say "you named a category and no place",
+ * which is a different thing to tell a caller.
  */
 const POI_CATEGORY_CONFIDENCE = 0.93
 
@@ -313,6 +330,7 @@ export function createScorePOICategory(
 
 /**
  * The whole-input category hit behind a `poi_category` verdict, for the marker's evidence.
+ *
  * `null` when the input is not a bare category — same conditions as
  * {@link createScorePOICategory}, so the two cannot disagree.
  */

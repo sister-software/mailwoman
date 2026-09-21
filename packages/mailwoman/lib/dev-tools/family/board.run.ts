@@ -77,7 +77,9 @@ const lookupStatement = db.prepare(`
 `)
 
 /**
- * The one record a lookup names. Refuses zero records and a tie at the winning placetype.
+ * The one record a lookup names.
+ *
+ * Refuses zero records and a tie at the winning placetype.
  */
 function resolvePlace(lookup: PlaceLookup): PlaceRecord {
 	const parent = lookup.parent ?? ""

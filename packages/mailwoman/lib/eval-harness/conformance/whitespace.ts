@@ -89,9 +89,10 @@ export const WHITESPACE_TRANSFORMATIONS = [
 export type WhitespaceTransformationName = (typeof WHITESPACE_TRANSFORMATIONS)[number]
 
 /**
- * What a transformation acts on. It decides the reason an absent arm carries:
- * a `separator` transformation that moved nothing found no comma, a `run` one found
- * no safe run, and a `boundary` one always moves something.
+ * What a transformation acts on.
+ *
+ * It decides the reason an absent arm carries: a `separator` transformation that moved nothing
+ * found no comma, a `run` one found no safe run, and a `boundary` one always moves something.
  */
 export type WhitespaceScope = "boundary" | "run" | "separator"
 
@@ -110,8 +111,10 @@ export const WHITESPACE_TRANSFORMATION_SCOPE: Record<WhitespaceTransformationNam
 
 /**
  * Split `text` into alternating tokens and whitespace runs — even indices are tokens,
- * odd indices the runs between them. The capturing split is what lets a run-level
- * transformation rewrite one run and leave every other byte alone.
+ * odd indices the runs between them.
+ *
+ * The capturing split is what lets a run-level transformation rewrite one run
+ * and leave every other byte alone.
  */
 function splitOnWhitespaceRuns(text: string): string[] {
 	return text.split(/(\s+)/)
@@ -185,8 +188,9 @@ function rewriteSafeRuns(text: string, rewrite: (run: string) => string): string
 }
 
 /**
- * The transformation each name applies. Pure, total, and the source the suite's
- * variants are re-derived from.
+ * The transformation each name applies.
+ *
+ * Pure, total, and the source the suite's variants are re-derived from.
  *
  * The separator pair matches `[ \t]` rather than `\s`, the same class `collapseWhitespace` folds:
  * a run holding a newline is segmentation, and moving it would take the pair out of this law.
@@ -204,11 +208,11 @@ export const WHITESPACE_TRANSFORMATION_BY_NAME: Record<WhitespaceTransformationN
  * The whitespace-blind identity of a string — equal keys mean the two differ
  * by whitespace and by nothing else.
  *
- * Every non-whitespace character survives, in its original order, so this is the strongest
- * available statement of the scope rule: a whitespace transformation preserves token content
- * and token order. `\s` rather than `[ \t]` on purpose — the key is a comparison surface
- * rather than a transformation, and a pair that swapped a space for a newline must still
- * come out equal here so {@linkcode classifyWhitespaceTransformation} can refuse it by name.
+ * Every non-whitespace character survives, in its original order, so this is the strongest available
+ * statement of the scope rule: a whitespace transformation preserves token content and token order.
+ * `\s` rather than `[ \t]` on purpose — the key is a comparison surface rather than a
+ * transformation, and a pair that swapped a space for a newline must still come out equal here
+ * so {@linkcode classifyWhitespaceTransformation} can refuse it by name.
  */
 export function whitespaceBlindKey(text: string): string {
 	return text.replaceAll(/\s+/gu, "")
@@ -233,14 +237,15 @@ export function classifyWhitespaceTransformation(base: string, variant: string):
 /**
  * The declared reasons a whitespace transformation is not stateable over a given row.
  *
- * - `identity-transformation` — the transformation returns the text unchanged because the
- *   query holds nothing of the kind it acts on: no comma for a separator transformation,
- *   no whitespace at all for a run one. Such a row is the identity law wearing a
- *   whitespace label — it would hold whatever the pipeline does with spacing.
- * - `structural-identifier-space` — the query's every whitespace run sits inside a structured
- *   identifier whose format grammar fixes it (`N7 0BT`), so a run transformation has no
- *   safe run to act on. Reported apart from the identity reading because the two absences
- *   say different things, and the difference is the one this law's tradeoff turns on.
+ * - `identity-transformation` — the transformation returns the text unchanged
+ *   because the query holds nothing of the kind it acts on: no comma for a separator
+ *   transformation, no whitespace at all for a run one.
+ *   Such a row is the identity law wearing a whitespace label — it would hold
+ *   whatever the pipeline does with spacing.
+ * - `structural-identifier-space` — the query's every whitespace run sits inside a structured identifier
+ *   whose format grammar fixes it (`N7 0BT`), so a run transformation has no safe run to act on.
+ *   Reported apart from the identity reading because the two absences say different things,
+ *   and the difference is the one this law's tradeoff turns on.
  */
 export const WHITESPACE_APPLICABILITY_RULES = ["identity-transformation", "structural-identifier-space"] as const
 
@@ -255,7 +260,9 @@ export type WhitespaceApplicabilityRule = (typeof WHITESPACE_APPLICABILITY_RULES
 export interface WhitespaceApplicability {
 	applicable: boolean
 	/**
-	 * The rule that excluded it. Absent when `applicable`.
+	 * The rule that excluded it.
+	 *
+	 * Absent when `applicable`.
 	 */
 	rule?: WhitespaceApplicabilityRule
 	reason: string
@@ -264,9 +271,10 @@ export interface WhitespaceApplicability {
 /**
  * May `transformation` be stated as a whitespace law over `text`?
  *
- * Reads the text and nothing else. Unlike case folding, no locale can make a space mean
- * a different space: what makes a space required here is the identifier it sits inside,
- * which the text carries with it whatever country the row routes through.
+ * Reads the text and nothing else.
+ * Unlike case folding, no locale can make a space mean a different space:
+ * what makes a space required here is the identifier it sits inside, which the text
+ * carries with it whatever country the row routes through.
  */
 export function whitespaceApplicability(
 	text: string,
@@ -336,11 +344,14 @@ export const WHITESPACE_SUITE_PATH: string = resolvePackagePath(
  * violation would be reported for an instrument that was never pointed at the row's locale.
  *
  * {@linkcode whitespaceApplicability} is deliberately not re-checked here, and the case-folding audit's parallel check
- * is not an oversight in this one. A pair classifies only when its transformation moved
- * something, which is the whole of what applicability asks of a whitespace transformation.
- * Therefore, an inapplicable row cannot reach this function — it fails classification first,
- * naming the transformation set. The rules are required one layer out, where the suite's completeness
- * test reads them: an arm absent from a committed row must name the rule that refuses it.
+ * is not an oversight in this one.
+ * A pair classifies only when its transformation moved something, which is the whole
+ * of what applicability asks of a whitespace transformation.
+ *
+ * Therefore, an inapplicable row cannot reach this function — it fails classification
+ * first, naming the transformation set.
+ * The rules are required one layer out, where the suite's completeness test reads them:
+ * an arm absent from a committed row must name the rule that refuses it.
  */
 export function auditWhitespaceSuite(fixtures: readonly ConformanceFixture[]): string[] {
 	return auditCommonFixtureFields(fixtures, WHITESPACE_LAW, (fixture, label, problems) => {
@@ -371,6 +382,7 @@ export function auditWhitespaceSuite(fixtures: readonly ConformanceFixture[]): s
 
 /**
  * The transformation label a report line carries, e.g. `tabbed`.
+ *
  * `?` when the pair does not classify — which the audit refuses, so it can only
  * appear on a hand-built fixture that skipped the loader.
  */

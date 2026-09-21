@@ -47,9 +47,11 @@ export interface FloodZoneDefinition {
 }
 
 /**
- * The zone codes the shipped `Flood_Zones_2_3_Rivers_and_Sea` layer carries — the closed
- * set the builder validates against. Definitions are the Planning Practice Guidance's,
- * because the PPG is what defines the zones and the EA's product description says so.
+ * The zone codes the shipped `Flood_Zones_2_3_Rivers_and_Sea` layer carries —
+ * the closed set the builder validates against.
+ *
+ * Definitions are the Planning Practice Guidance's, because the PPG is what defines
+ * the zones and the EA's product description says so.
  */
 export const EA_FLOOD_ZONE_DEFINITIONS: ReadonlyArray<FloodZoneDefinition> = [
 	{
@@ -69,14 +71,17 @@ export const EA_FLOOD_ZONE_DEFINITIONS: ReadonlyArray<FloodZoneDefinition> = [
 ]
 
 /**
- * The declared domain as a membership set. A `flood_zone` value outside this is a source-schema change.
+ * The declared domain as a membership set.
+ *
+ * A `flood_zone` value outside this is a source-schema change.
  */
 export const EA_FLOOD_ZONE_CODES: ReadonlySet<string> = new Set(EA_FLOOD_ZONE_DEFINITIONS.map((zone) => zone.code))
 
 /**
- * Zone 1, which the product represents by absence. Not a row in `flood_zone_vocabulary`,
- * because the authority ships no Zone 1 polygon. carried here so a reader rendering
- * a designated-absence answer can quote the definition it rests on.
+ * Zone 1, which the product represents by absence.
+ *
+ * Not a row in `flood_zone_vocabulary`, because the authority ships no Zone 1 polygon. carried here
+ * so a reader rendering a designated-absence answer can quote the definition it rests on.
  */
 export const FLOOD_ZONE_1: FloodZoneDefinition = {
 	code: "FZ1",
@@ -102,10 +107,12 @@ export const EA_FLOOD_DATASET_ID = "04532375-a198-476e-985e-0579a0a11b47"
 export const EA_FLOOD_LAYER = "Flood_Zones_2_3_Rivers_and_Sea"
 
 /**
- * The attribution string the ISO metadata specifies. OGL v3.0 requires a re-user to "acknowledge
- * the source of the Information in your product or application by including or linking to
- * any attribution statement specified by the Information Provider(s)", so this string is not
- * decoration — it is the licence condition, and it rides in `layer_manifest.attribution`.
+ * The attribution string the ISO metadata specifies.
+ *
+ * OGL v3.0 requires a re-user to "acknowledge the source of the Information in
+ * your product or application by including or linking to any attribution statement
+ * specified by the Information Provider(s)", so this string is not decoration —
+ * it is the licence condition, and it rides in `layer_manifest.attribution`.
  */
 export const EA_FLOOD_ATTRIBUTION = "© Environment Agency copyright and/or database right 2025. All rights reserved."
 
@@ -138,6 +145,7 @@ export const EA_COVERAGE_STATEMENT_URL = `https://environment.data.gov.uk/datase
 
 /**
  * What the product does not cover, in the authority's own words.
+ *
  * Carried into the observation so a caller can see what an answer is silent about: a Zone 1 reading
  * says nothing about surface water, groundwater, sewer failure, or the residual risk behind a defence.
  */
@@ -155,7 +163,8 @@ export const EA_PRODUCT_LIMITS: ReadonlyArray<string> = [
  *
  * The ingest asserts the reprojected data lands inside this, which is the check
  * that catches a coordinate-order or projection mistake before 813,627 polygons
- * are written to the wrong side of the planet. Read 2026-08-28
+ * are written to the wrong side of the planet.
+ * Read 2026-08-28
  * from `https://environment.data.gov.uk/spatialdata/flood-map-for-planning-flood-zones/ogc/features/v1/collections`.
  */
 export const EA_DECLARED_BBOX: readonly [number, number, number, number] = [
@@ -164,6 +173,7 @@ export const EA_DECLARED_BBOX: readonly [number, number, number, number] = [
 
 /**
  * The projected CRS the published geodatabase declares.
+ *
  * The file is not in WGS84 — it is OSGB36 / British National Grid, in metres —
  * so the ingest reprojects and the builder refuses a source that declares anything else.
  */

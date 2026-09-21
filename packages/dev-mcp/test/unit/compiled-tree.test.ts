@@ -49,8 +49,8 @@ describe("checkSpawnedTreeFreshness", () => {
 	})
 
 	it("sees a stale source in a workspace OTHER than the first", async () => {
-		// The set is the point of this wrapper. A check that read only `packages/mailwoman`
-		// would answer fresh while the resolver it loads was stale.
+		// The set is the point of this wrapper.
+		// A check that read only `packages/mailwoman` would answer fresh while the resolver it loads was stale.
 		const { root } = await checkout()
 		const other = join(root, FINGERPRINTED_WORKSPACES[4])
 

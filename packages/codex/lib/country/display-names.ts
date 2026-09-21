@@ -56,8 +56,9 @@ export const DISPLAY_NAME_LOCALES: readonly Intl.UnicodeBCP47LocaleIdentifier[] 
 ]
 
 /**
- * `long` is the ordinary name, `short` supplies the abbreviations people
- * actually type (`UK`, `US`, `アメリカ`), and `narrow` occasionally differs again.
+ * `long` is the ordinary name, `short` supplies the abbreviations people actually
+ * type (`UK`, `US`, `アメリカ`), and `narrow` occasionally differs again.
+ *
  * All three are enumerated because the query register is whatever the user wrote.
  */
 export const DISPLAY_NAME_STYLES = ["long", "short", "narrow"] as const
@@ -76,21 +77,24 @@ export interface CountryDisplayName {
 	 */
 	name: string
 	/**
-	 * BCP-47 tag this surface came from. Carried so a consumer can scope by locale
-	 * rather than accepting every script for every query.
+	 * BCP-47 tag this surface came from.
+	 *
+	 * Carried so a consumer can scope by locale rather than accepting every script for every query.
 	 */
 	locale: string
 }
 
 /**
  * Two-letter sequences that are not ISO 3166-1 regions.
+ *
  * `Intl.DisplayNames.of` echoes its input for an unknown code, so the echo is the
  * miss signal — no separate region list to keep in sync.
  */
 /**
- * The AA–ZZ sweep bounds. ISO 3166-1 alpha-2 is exactly two uppercase ascii letters,
- * so enumerating the whole square and keeping what ICU recognises avoids carrying
- * a region list that would need its own upkeep.
+ * The AA–ZZ sweep bounds.
+ *
+ * ISO 3166-1 alpha-2 is exactly two uppercase ascii letters, so enumerating the whole square
+ * and keeping what ICU recognises avoids carrying a region list that would need its own upkeep.
  */
 const ASCII_A = 65
 const ASCII_Z = 90
@@ -144,8 +148,9 @@ export function* enumerateCountryDisplayNames(
 }
 
 /**
- * Every surface ICU knows for one country. Convenience over {@link enumerateCountryDisplayNames}
- * for a single lookup. the generator is the bulk path.
+ * Every surface ICU knows for one country.
+ *
+ * Convenience over {@link enumerateCountryDisplayNames} for a single lookup. the generator is the bulk path.
  */
 export function countryDisplayNames(iso2: string, locales?: readonly string[]): string[] {
 	const upper = iso2.toUpperCase()

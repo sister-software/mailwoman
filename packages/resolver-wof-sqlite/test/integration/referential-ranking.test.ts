@@ -42,7 +42,9 @@ interface FixturePlace {
 	lon: number
 	population?: number
 	/**
-	 * The fan-out-guarded Wikipedia score. `undefined` = no article — written as SQL NULL, never 0.
+	 * The fan-out-guarded Wikipedia score.
+	 *
+	 * `undefined` = no article — written as SQL NULL, never 0.
 	 */
 	encyclopedic?: number
 }
@@ -82,9 +84,11 @@ const SAINT_DENIS: FixturePlace[] = [
 ]
 
 /**
- * Build the fixture gazetteer. `withEncyclopedic` decides whether `place_importance`
- * carries the two-score split's columns at all — the pre-split state (no table) and the
- * post-split state (both columns), which is the pair the zero-delta measurement compares.
+ * Build the fixture gazetteer.
+ *
+ * `withEncyclopedic` decides whether `place_importance` carries the two-score split's
+ * columns at all — the pre-split state (no table) and the post-split state (both columns),
+ * which is the pair the zero-delta measurement compares.
  */
 function buildFixtureDB(
 	places: readonly FixturePlace[],
@@ -239,6 +243,7 @@ describe("D-rule — carrying the encyclopedic score moves no rank", () => {
 	/**
 	 * §2 R1 predicts a resolver delta of zero: the split is schema + plumbing + a carry,
 	 * and the ranking key it names (population) is the one the resolver already used.
+	 *
 	 * Predicted is not measured, so this measures it — every query runs against a pre-split
 	 * gazetteer and a post-split one, and the returned id order must be identical.
 	 */

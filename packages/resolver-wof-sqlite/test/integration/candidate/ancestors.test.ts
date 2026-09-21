@@ -154,8 +154,8 @@ describe("the candidate ancestors sidecar", () => {
 			WEIMAR_DE
 		)
 
-		// Nearest-first: county → region → country. The self row, the continent row
-		// and the edge to the absent place 999 contributed nothing.
+		// Nearest-first: county → region → country.
+		// The self row, the continent row and the edge to the absent place 999 contributed nothing.
 		expect(rows.map((r) => r.parent_spr_id)).toEqual([WEIMARER_LAND, THURINGEN, GERMANY])
 		expect(rows.map((r) => r.placetype)).toEqual(["county", "region", "country"])
 		expect(rows.map((r) => r.depth)).toEqual([1, 2, 3])

@@ -23,7 +23,9 @@ import { join } from "path-ts"
 
 export interface EnrichAdminOptions {
 	/**
-	 * Chromium-i18n ssl-address spec dir. Default: the dataset packaged with `@mailwoman/core`.
+	 * Chromium-i18n ssl-address spec dir.
+	 *
+	 * Default: the dataset packaged with `@mailwoman/core`.
 	 */
 	specsDir?: string
 }
@@ -35,8 +37,9 @@ export interface EnrichAdminResult {
 }
 
 /**
- * Enrich an admin staging DB: region-abbreviation `names` rows + the
- * `place_abbr` join table. Idempotent.
+ * Enrich an admin staging DB: region-abbreviation `names` rows + the `place_abbr` join table.
+ *
+ * Idempotent.
  */
 export async function enrichAdmin<DB>(
 	db: DatabaseClient<DB>,

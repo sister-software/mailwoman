@@ -16,6 +16,7 @@ export interface OGRProcess {
 	stdout: NodeJS.ReadableStream
 	/**
 	 * Resolves on a clean exit. rejects with the exit code and the stderr tail otherwise.
+	 *
 	 * A truncated stream reads as a short but well-formed feature list, which is exactly
 	 * the partial result that must throw rather than be reported as a smaller extract .
 	 * Therefore, consume the stream fully, then await this.
@@ -29,6 +30,7 @@ export interface OGRProcess {
 
 /**
  * Spawn `ogr2ogr` with stderr accumulated for the failure message.
+ *
  * The caller owns the stdout format (GeoJSONSeq, CSV, …) and its parsing;
  * {@link ogr2ogrGeoJSONSeq} is the GeoJSONSeq reading over this.
  */

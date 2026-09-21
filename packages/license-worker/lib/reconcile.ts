@@ -62,8 +62,9 @@ export interface ReconcileReport {
 
 export interface ReconcileOptions {
 	/**
-	 * How far back to list paid invoices, by the invoice's creation time:
-	 * the bound on recovering a subscription the ledger has never seen.
+	 * How far back to list paid invoices, by the invoice's creation time: the bound
+	 * on recovering a subscription the ledger has never seen.
+	 *
 	 * Wider than the cron interval, so one failed pass costs nothing.
 	 */
 	sinceSeconds: number
@@ -220,6 +221,7 @@ async function paymentIntentOf(stripe: Stripe, invoiceID: string): Promise<strin
 
 /**
  * Whether the charge behind an invoice has been refunded in full.
+ *
  * Stripe's `refunded` is false for a partial refund, which is the line the
  * `charge.refunded` handler draws too.
  */
@@ -234,12 +236,15 @@ async function fullyRefunded(stripe: Stripe, invoiceID: string): Promise<boolean
 }
 
 /**
- * The state Stripe's current records say a license should hold, or `undefined` when Stripe
- * has nothing to add. A full refund is final, and it is read from the charge rather than the
- * subscription, which a refund leaves `active`: a license minted by the missed-invoice sweep,
- * or one whose `charge.refunded` event never arrived, is revoked here at the cost of two
- * Stripe reads per active license per pass. A dispute that Stripe has ruled `won` hands the
- * license back to its subscription's state. any other dispute outcome leaves it revoked.
+ * The state Stripe's current records say a license should hold, or `undefined`
+ * when Stripe has nothing to add.
+ *
+ * A full refund is final, and it is read from the charge rather than the subscription,
+ * which a refund leaves `active`: a license minted by the missed-invoice sweep,
+ * or one whose `charge.refunded` event never arrived, is revoked here at the cost
+ * of two Stripe reads per active license per pass.
+ * A dispute that Stripe has ruled `won` hands the license back to its subscription's
+ * state. any other dispute outcome leaves it revoked.
  */
 async function stateStripeSays(
 	stripe: Stripe,

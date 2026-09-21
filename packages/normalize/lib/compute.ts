@@ -30,9 +30,10 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput {
 	}
 
 	// 1.5 CJK normalization — strip the postal mark 〒 (byte-fallback OOV that poisons the postcode parse)
-	// and fold full-width ascii + the ideographic space. Runs after NFC
-	// so it sees composed forms, before punctuation/whitespace so any gap left by 〒 is
-	// then collapsed. No-op off-script.
+	// and fold full-width ascii + the ideographic space.
+	// Runs after NFC so it sees composed forms, before punctuation/whitespace
+	// so any gap left by 〒 is then collapsed.
+	// No-op off-script.
 	{
 		const r = applyCjkNormalization(text, opts?.postalMark ? { postalMark: opts.postalMark } : {})
 

@@ -18,6 +18,7 @@ import { registerLibpostalRoutes } from "#routes"
 
 /**
  * 100 KiB — express.json's default cap, the closest thing to a legacy precedent for this endpoint.
+ *
  * There is no legacy 413 interface to match. the `{ error: "request body too large" }` envelope
  * below is a recorded free choice, shaped like the rest of this API's error responses.
  */
@@ -29,24 +30,27 @@ const MAX_BODY_BYTES = 102_400
 export interface LibpostalAppOptions {
 	/**
 	 * Emit permissive cors headers (`Access-Control-Allow-Origin: *`) on every response
-	 * and answer preflight `options` with `204`. Default `true` — without it,
-	 * a cross-origin XHR (including the `post /parse` preflight) is blocked outright, and
-	 * browser clients need this to work at all (#1017). Set `false` for deployments
-	 * where a reverse proxy already owns the cors headers.
+	 * and answer preflight `options` with `204`.
+	 *
+	 * Default `true` — without it, a cross-origin XHR (including the `post /parse` preflight)
+	 * is blocked outright, and browser clients need this to work at all (#1017).
+	 * Set `false` for deployments where a reverse proxy already owns the cors headers.
 	 */
 	cors?: boolean
 
 	/**
 	 * The engine stamp behind the `Server` + `Link: rel="license"` headers on every response.
-	 * Headers only: `/parse` answers a bare array by protocol, so there is no body
-	 * field to carry it. Absent when an embedding application builds the app without
-	 * the `mailwoman` package. the `libpostal` bin always passes one.
+	 *
+	 * Headers only: `/parse` answers a bare array by protocol, so there is no body field to carry it.
+	 * Absent when an embedding application builds the app without the `mailwoman`
+	 * package. the `libpostal` bin always passes one.
 	 */
 	engine?: EngineStamp
 }
 
 /**
  * The document info stamped into the emitted OpenAPI document.
+ *
  * Exported (not inlined) so the CLI's `openapi` subcommand can call `emitOpenAPIDocuments`
  * with the same info the mounted `/openapi.json` route (below, via
  * {@link attachOpenAPIDocs}) uses — one source of truth, no risk of the two drifting.

@@ -75,8 +75,10 @@ export interface NUTS {
 }
 
 /**
- * The native enrichment set. Every field is optional. an annotator fills the fields it owns. camelCase
- * throughout, structured sub-objects — the internal representation the serializers map from.
+ * The native enrichment set.
+ *
+ * Every field is optional. an annotator fills the fields it owns. camelCase throughout,
+ * structured sub-objects — the internal representation the serializers map from.
  */
 export interface AnnotationSet {
 	dms?: DMS
@@ -145,9 +147,12 @@ export interface AnnotatorInput {
 export type Annotator = (input: AnnotatorInput) => Partial<AnnotationSet> | Promise<Partial<AnnotationSet>>
 
 /**
- * Compose a set of annotators into a single runner. Calling the returned function
- * runs all annotators (concurrently) over one input and merges their results
- * into one {@link AnnotationSet}. Later annotators win on key collisions.
+ * Compose a set of annotators into a single runner.
+ *
+ * Calling the returned function runs all annotators (concurrently) over one input
+ * and merges their results into one {@link AnnotationSet}.
+ * Later annotators win on key collisions.
+ *
  * An annotator that throws is skipped, so one failing enrichment never sinks the rest.
  */
 export function composeAnnotators(annotators: Annotator[]): (input: AnnotatorInput) => Promise<AnnotationSet> {
@@ -188,8 +193,9 @@ export interface OpenCageAnnotations {
 }
 
 /**
- * Serialize the native set to OpenCage's `annotations` key names + casing,
- * for the compat APIs. Only the populated fields are emitted.
+ * Serialize the native set to OpenCage's `annotations` key names + casing, for the compat APIs.
+ *
+ * Only the populated fields are emitted.
  */
 export function toOpenCage(set: AnnotationSet): OpenCageAnnotations {
 	const out: OpenCageAnnotations = {}
@@ -315,9 +321,12 @@ export interface SchemaOrgGeoCoordinates {
 
 /**
  * A schema.org [`PostalAddress`](https://schema.org/PostalAddress) node.
- * Only populated fields are emitted (never `null`). `streetAddress` is a single
- * opaque line — the house-number/street/unit distinction is intentionally collapsed
- * (schema.org has no structured slots for them). `addressCountry` is ISO-3166 alpha-2.
+ *
+ * Only populated fields are emitted (never `null`).
+ * `streetAddress` is a single opaque line — the house-number/street/unit distinction
+ * is intentionally collapsed (schema.org has no structured slots for them).
+ *
+ * `addressCountry` is ISO-3166 alpha-2.
  */
 export interface SchemaOrgPostalAddress {
 	"@type": "PostalAddress"
@@ -335,6 +344,7 @@ export interface SchemaOrgPostalAddress {
 /**
  * A schema.org [`Place`](https://schema.org/Place) node with an embedded `PostalAddress` +
  * `GeoCoordinates` — the JSON-LD projection returned by {@link toSchemaOrg}.
+ *
  * Its `@context` makes the object valid linked data on its own.
  */
 export interface SchemaOrgPlace {
@@ -347,6 +357,7 @@ export interface SchemaOrgPlace {
 
 /**
  * The neutral resolved-address input {@link toSchemaOrg} serializes.
+ *
  * Every field is optional. an absent field is omitted from the output entirely (no `null`s).
  * Mirrors the {@link OpenCageAnnotations} precedent: one native shape,
  * a dedicated serializer per wire format.
@@ -355,11 +366,14 @@ export interface SchemaOrgInput {
 	lat?: number | null
 	lon?: number | null
 	/**
-	 * The resolved POI / venue name, when one exists. Omitted for a bare street address.
+	 * The resolved POI / venue name, when one exists.
+	 *
+	 * Omitted for a bare street address.
 	 */
 	name?: string
 	/**
 	 * The rendered street line (house number + street + unit) as one string.
+	 *
 	 * Use `@mailwoman/codex/address-format` for locale-aware rendering
 	 * or {@link composeStreetAddress} for a plain join.
 	 */
@@ -380,6 +394,7 @@ export interface SchemaOrgInput {
 /**
  * Collapse parsed street parts into one opaque `streetAddress` line — the schema.org
  * lossy-by-design collapse (house number + street + unit → a single space-joined string).
+ *
  * Parts are number-first, correct for the shipped en-US / fr-FR tiers. callers with
  * `@mailwoman/formatter` render locale-aware (e.g. de-DE number-last) instead.
  * Blank parts are dropped. an all-empty input yields `""`.

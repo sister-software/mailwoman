@@ -90,7 +90,9 @@ function report(findings: readonly ConformanceFinding[]): void {
 
 export interface ConformanceCommandOptions extends GauntletDepsOptions {
 	/**
-	 * Suite jsonl path. Absent runs every suite in {@linkcode CONFORMANCE_SUITES}.
+	 * Suite jsonl path.
+	 *
+	 * Absent runs every suite in {@linkcode CONFORMANCE_SUITES}.
 	 */
 	suite?: string
 }
@@ -106,6 +108,7 @@ export interface ConformanceLawMeasurement {
 	unmeasured: number
 	/**
 	 * The law's breadth line, when its suite registers one.
+	 *
 	 * A hold count answers whether the stated rows held, never how much of the
 	 * population the suite could have stated.
 	 */
@@ -217,6 +220,7 @@ export async function measureConformance(options: ConformanceCommandOptions = {}
 
 /**
  * Run the conformance-law suites from CLI-shaped options.
+ *
  * Returns the process exit code (0 = pass).
  */
 export async function runConformanceCommand(options: ConformanceCommandOptions = {}): Promise<number> {

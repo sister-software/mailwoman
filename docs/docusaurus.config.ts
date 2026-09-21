@@ -9,21 +9,23 @@ import glossaryRemarkPlugin from "./plugins/glossary/remark.ts"
 
 /**
  * Surfaces the glossary auto-linker must never link, whatever term claims them.
+ *
  * Two false-positive classes warrant a word a place here, both measured across the built site:
  *
  * 1. A common English word that is also a glossary alias.
- *    `state` is an alias of `region`, so every ordinary use — "the state of the
- *    pipeline", "stateless", "US state law" — tooltipped the address component.
+ *    `state` is an alias of `region`, so every ordinary use — "the state of the pipeline",
+ *    "stateless", "US state law" — tooltipped the address component.
  *    It fired on 38 pages, and almost none of them meant the component.
  * 2. A common English word that is also a glossary term in a narrower sense.
- *    `tier` is defined as the model's label tier, but the site's own vocabulary
- *    uses the word for geocode-cascade tiers, locale tiers and pricing tiers.
+ *    `tier` is defined as the model's label tier, but the site's own vocabulary uses
+ *    the word for geocode-cascade tiers, locale tiers and pricing tiers.
  *    It fired on 39 pages including pricing.mdx, where the definition on offer is the wrong one every time.
  *
- * Suppression is by surface rather than by term: `region` still links, and so does a multi-word
- * phrase that merely contains a suppressed word, like the FST alias `finite-state transducer`
- * (contains "state", still links in full). Multi-word terms like `input register` are untouched —
- * they carry their sense in the phrase, which is exactly what keeps them out of this list.
+ * Suppression is by surface rather than by term: `region` still links, and
+ * so does a multi-word phrase that merely contains a suppressed word, like the FST
+ * alias `finite-state transducer` (contains "state", still links in full).
+ * Multi-word terms like `input register` are untouched — they carry their sense in
+ * the phrase, which is exactly what keeps them out of this list.
  */
 const GLOSSARY_NO_AUTO_LINK = ["state", "tier"] as const
 
@@ -116,10 +118,10 @@ const config: Config = {
 
 	future: {
 		v4: true,
-		// rspack bundles the site now that every @mailwoman/* subpath the client reaches carries
-		// a browser condition. the geocoder page passes its cold-load and resolve specs on
-		// rspack's output. Both bundlers report maplibre-gl's dynamic `import()` of an expression
-		// twice as a "Critical dependency" warning, so that is not a bundler difference.
+		// rspack bundles the site now that every @mailwoman/* subpath the client reaches carries a
+		// browser condition. the geocoder page passes its cold-load and resolve specs on rspack's output.
+		// Both bundlers report maplibre-gl's dynamic `import()` of an expression twice as
+		// a "Critical dependency" warning, so that is not a bundler difference.
 		// The persistent cache stays off until a build has been measured with it.
 		faster: {
 			rspackBundler: true,
@@ -210,9 +212,10 @@ const config: Config = {
 					],
 				},
 				pages: {
-					// Files in src/pages/ are auto-routed. Co-located `.ts` helpers (e.g. demo/map-helpers.ts)
-					// are not pages and SSG-fail ("no default export") if routed — a latent break the
-					// install-blocked CI never surfaced. Pages here are all .tsx/.md/.mdx, so exclude `.ts`.
+					// Files in src/pages/ are auto-routed.
+					// Co-located `.ts` helpers (e.g. demo/map-helpers.ts) are not pages and SSG-fail
+					// ("no default export") if routed — a latent break the install-blocked CI never surfaced.
+					// Pages here are all .tsx/.md/.mdx, so exclude `.ts`.
 					// The other entries reproduce Docusaurus's defaults (a custom `exclude` replaces them).
 					exclude: [
 						"**/_*.{js,jsx,ts,tsx,md,mdx}",
@@ -242,7 +245,8 @@ const config: Config = {
 				},
 				sitemap: {
 					// Internal utility pages — keep them reachable but out of the sitemap
-					// (and thus out of crawler discovery). Patterns cover both slash forms.
+					// (and thus out of crawler discovery).
+					// Patterns cover both slash forms.
 					// Redirect pages to earth.mailwoman.ai. reachable, but not for crawlers.
 					ignorePatterns: ["/demo", "/demo/", "/debug", "/debug/", "/trace", "/trace/"],
 				},
@@ -266,8 +270,9 @@ const config: Config = {
 	],
 
 	themeConfig: {
-		// Default og:image / twitter:card for every page. the same card is uploaded as the
-		// GitHub repo social preview. Regenerate via docs/scripts/social-card.html.
+		// Default og:image / twitter:card for every page. the same card is uploaded
+		// as the GitHub repo social preview.
+		// Regenerate via docs/scripts/social-card.html.
 		image: "img/social-card.png",
 		colorMode: {
 			respectPrefersColorScheme: true,
@@ -293,14 +298,16 @@ const config: Config = {
 				// magenta the primary mark. navy/blue alts ship under /img for use on lighter surfaces.
 				src: "img/mailwoman-seal-magenta.svg",
 			},
-			// The doors, in reading order. `docSidebar` items point at sidebar ids declared in sidebars.ts.
+			// The doors, in reading order.
+			// `docSidebar` items point at sidebar ids declared in sidebars.ts.
 			//
 			// Resources sits after Docs: it is the evidence door
 			// (published benchmarks with their scripts, plus the capability-shape comparisons),
 			// and it is read by someone who has already met the thing being measured.
-			// Its sidebar absorbed the standalone "Field notes" navbar entry — long-form research
-			// writing belongs behind the same door as the measurements, and the navbar was
-			// heading for a seventh left-hand item. The footer's Field notes link is unchanged.
+			// Its sidebar absorbed the standalone "Field notes" navbar entry —
+			// long-form research writing belongs behind the same door as the measurements,
+			// and the navbar was heading for a seventh left-hand item.
+			// The footer's Field notes link is unchanged.
 			//
 			// Product leads Docs: a visitor who has not decided yet outnumbers the one who has,
 			// and every Product page ends in a handoff into the `developers` door.

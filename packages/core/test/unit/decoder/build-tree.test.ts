@@ -91,8 +91,9 @@ describe("buildAddressTree", () => {
 	})
 })
 
-// Boundary-trim regression coverage. Samples sourced from v0.4.0's post-hoc
-// regression diagnostic (.playpen/control/drafts/v0_4_0-regression-diagnostic.md).
+// Boundary-trim regression coverage.
+// Samples sourced from v0.4.0's post-hoc regression
+// diagnostic (.playpen/control/drafts/v0_4_0-regression-diagnostic.md).
 // The shipped v0.4.0 model occasionally emits BIO spans with leading/trailing punctuation.
 // the decoder now trims the span boundary past non-word characters. start/end tighten in sync
 // so consumers slicing raw[start:end] get the same string as node.value.
@@ -205,10 +206,11 @@ describe("buildAddressTree — boundary trim", () => {
 })
 
 // Paired-punctuation span-edge trimming (paired-punctuation audit, .superpowers/sdd/task-9-audit-report.md).
-// `trimBoundary` is generic — it strips any leading/trailing non-word character, one at a time,
-// with no notion of "pairing" at all. That's what makes it inherently safe for unbalanced paired
-// punctuation too: it never looks for a matching partner, so a lone leading quote with no closer,
-// or a lone trailing paren with no opener, trims exactly the same way a single stray comma does.
+// `trimBoundary` is generic — it strips any leading/trailing non-word character,
+// one at a time, with no notion of "pairing" at all.
+// That's what makes it inherently safe for unbalanced paired punctuation too:
+// it never looks for a matching partner, so a lone leading quote with no closer, or a lone
+// trailing paren with no opener, trims exactly the same way a single stray comma does.
 // These cases characterize that the existing mechanism (built for the v0.4.0 comma-slip class)
 // generalizes to quotes/brackets/braces/guillemets without any dedicated code.
 describe("buildAddressTree — paired-punctuation span-edge trimming", () => {
@@ -304,9 +306,10 @@ describe("buildAddressTree — paired-punctuation span-edge trimming", () => {
 	})
 })
 
-// Spurious-boundary repair. The neural model fragments some multi-word locality values into
-// two B-locality spans ("Saint Paul" → B-locality "Saint" + B-locality "Paul") — a real,
-// decode- agnostic emission bug (argmax == viterbi. see scripts/diag-saintalbans.ts).
+// Spurious-boundary repair.
+// The neural model fragments some multi-word locality values into two B-locality spans
+// ("Saint Paul" → B-locality "Saint" + B-locality "Paul") — a real, decode- agnostic
+// emission bug (argmax == viterbi. see scripts/diag-saintalbans.ts).
 // A `B-X` token that is whitespace-adjacent to an open `X` span is folded in.
 // a comma/separator keeps spans distinct.
 describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", () => {

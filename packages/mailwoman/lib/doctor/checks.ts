@@ -28,7 +28,9 @@ import type { LicenseKeyPublication } from "@mailwoman/core/license/publication"
 import type { LicenseStatusAnswer } from "@mailwoman/core/license/status"
 
 /**
- * A check's outcome. `ok` = works; `missing` = absent but fixable; `degraded` = present but impaired.
+ * A check's outcome.
+ *
+ * `ok` = works; `missing` = absent but fixable; `degraded` = present but impaired.
  */
 export const CheckStatus = {
 	OK: "ok",
@@ -52,28 +54,33 @@ export interface DoctorCheck {
 	detail: string
 	/**
 	 * What the reader loses while this check is not ok, in product terms
-	 * ("geocode can only place you in the city rather than on the street"),
-	 * not implementation terms. Present whenever `status !== "ok"` (#1577).
+	 * ("geocode can only place you in the city rather than on the street"), not implementation terms.
 	 *
-	 * A red line and a fix command say what to type. they never say whether typing it matters
-	 * to the thing the reader was actually trying to do. Every optional layer here is
-	 * genuinely optional for someone, so a bare ✗ next to "POI layer" is unreadable without
-	 * knowing that the POI layer is what makes "coffee near me" resolve at all.
+	 * Present whenever `status !== "ok"` (#1577).
+	 *
+	 * A red line and a fix command say what to type. they never say whether typing it
+	 * matters to the thing the reader was actually trying to do.
+	 * Every optional layer here is genuinely optional for someone, so a bare ✗ next to "POI layer" is
+	 * unreadable without knowing that the POI layer is what makes "coffee near me" resolve at all.
 	 */
 	consequence?: string
 	/**
-	 * The single command/URL that closes the gap. Present whenever `status !== "ok"`.
+	 * The single command/URL that closes the gap.
+	 *
+	 * Present whenever `status !== "ok"`.
 	 */
 	fix?: string
 	/**
-	 * Whether this check checks the exit code. Core checks (weights + runtime)
-	 * must be `ok` for a `0` exit. optional data-layer checks report their gap
-	 * but never fail the process (parse runs without them).
+	 * Whether this check checks the exit code.
+	 *
+	 * Core checks (weights + runtime) must be `ok` for a `0` exit. optional data-layer
+	 * checks report their gap but never fail the process (parse runs without them).
 	 */
 	core: boolean
 	/**
 	 * The license posture this check reports, when it is a license check: the expression as
 	 * recorded, the branch that applies, and the responsibility classes it is known to carry.
+	 *
 	 * Structured so a JSON consumer reads the array rather than the sentence.
 	 */
 	license?: LicensePosture
@@ -97,6 +104,7 @@ export interface LicensePosture {
 	applied: string
 	/**
 	 * The responsibility classes `applied` is known to carry.
+	 *
 	 * Empty with `recognized: true` means the license asks nothing of the operator. empty
 	 * with `recognized: false` means the doctor does not know this identifier.
 	 */
@@ -139,9 +147,11 @@ export interface SemverTriple {
 
 /**
  * Parse the minimum version out of a package.json `engines.node` range
- * (`">=24.18.0"`, `"24.18.0"`, `">= 24"`). Returns `undefined` when no
- * `<major>[.<minor>[.<patch>]]` is findable. Only the floor matters for the doctor —
- * a caret/tilde/comparator prefix is stripped and missing minor/patch default to 0.
+ * (`">=24.18.0"`, `"24.18.0"`, `">= 24"`).
+ *
+ * Returns `undefined` when no `<major>[.<minor>[.<patch>]]` is findable.
+ * Only the floor matters for the doctor — a caret/tilde/comparator prefix is stripped
+ * and missing minor/patch default to 0.
  */
 export function parseVersionFloor(engines: string): SemverTriple | undefined {
 	const match = engines.match(/(\d+)(?:\.(\d+))?(?:\.(\d+))?/u)
@@ -153,6 +163,7 @@ export function parseVersionFloor(engines: string): SemverTriple | undefined {
 
 /**
  * Parse a bare `<major>.<minor>.<patch>` runtime version (e.g. `process.versions.node`).
+ *
  * `undefined` if unparseable.
  */
 export function parseVersion(version: string): SemverTriple | undefined {
@@ -254,8 +265,9 @@ export interface LocaleOverlayObservation {
 }
 
 /**
- * Check #2 — a locale overlay (fr-fr). Informational (never core): its absence
- * is expected on an en-us-only install.
+ * Check #2 — a locale overlay (fr-fr).
+ *
+ * Informational (never core): its absence is expected on an en-us-only install.
  */
 export function localeOverlayCheck(o: LocaleOverlayObservation): DoctorCheck {
 	const base = { id: `locale-overlay-${o.locale}`, label: `Locale overlay (${o.locale})`, core: false }
@@ -297,7 +309,9 @@ const DATA_ROOT_CONSEQUENCE =
 	"database already installed elsewhere will not be found unless you point $MAILWOMAN_DATA_ROOT at it."
 
 /**
- * Check #3 — the data root. Optional: an unwritable/absent root only blocks build tooling rather than parse.
+ * Check #3 — the data root.
+ *
+ * Optional: an unwritable/absent root only blocks build tooling rather than parse.
  */
 export function dataRootCheck(o: DataRootObservation): DoctorCheck {
 	const base = { id: "data-root", label: "Data root", core: false }
@@ -328,19 +342,22 @@ export function dataRootCheck(o: DataRootObservation): DoctorCheck {
 
 /**
  * Facts about the admin gazetteer discovery, mirroring exactly what the tools pick up.
+ *
  * `resolveCandidateDBPath` reads an explicit option, then `$MAILWOMAN_CANDIDATE_DB`,
  * then the `<data-root>/wof/candidate.db` convention path, and falls back to the
  * WOF FTS databases only when none of the three is on disk.
  */
 export interface GazetteerObservation {
 	/**
-	 * A candidate.db the tools would use, from the explicit option
-	 * or `$MAILWOMAN_CANDIDATE_DB`. Green.
+	 * A candidate.db the tools would use, from the explicit option or `$MAILWOMAN_CANDIDATE_DB`.
+	 *
+	 * Green.
 	 */
 	envCandidate?: { path: string; sizeBytes?: number }
 	/**
-	 * A candidate.db at the convention path, which the tools now pick up with
-	 * nothing exported. Green.
+	 * A candidate.db at the convention path, which the tools now pick up with nothing exported.
+	 *
+	 * Green.
 	 *
 	 * Reporting this as degraded would tell a reader to export a variable that changes nothing —
 	 * `resolveCandidateDBPath` reaches the convention path on its own.
@@ -348,7 +365,9 @@ export interface GazetteerObservation {
 	conventionCandidate?: string
 	/**
 	 * A WOF admin database on disk — the FTS backend the tools fall back to
-	 * when no candidate.db is reachable. Green.
+	 * when no candidate.db is reachable.
+	 *
+	 * Green.
 	 */
 	wofDatabase?: { path: string; sizeBytes?: number }
 	/**
@@ -358,7 +377,9 @@ export interface GazetteerObservation {
 }
 
 /**
- * Check #4 — the admin gazetteer. Optional: parse runs without it. only geocode/resolve need it.
+ * Check #4 — the admin gazetteer.
+ *
+ * Optional: parse runs without it. only geocode/resolve need it.
  */
 export function gazetteerCheck(o: GazetteerObservation): DoctorCheck {
 	const base = { id: "gazetteer", label: "Admin gazetteer", core: false }
@@ -397,8 +418,9 @@ export function gazetteerCheck(o: GazetteerObservation): DoctorCheck {
  * Facts about the POI layer (mirrors `gazetteer build poi`'s default output path).
  */
 /**
- * The identity fields the doctor reads from a layer's manifest:
- * what it is (name, version, vintage) and what it asks (license, attribution).
+ * The identity fields the doctor reads from a layer's manifest: what it is
+ * (name, version, vintage) and what it asks (license, attribution).
+ *
  * One read serves both the presence check and the license posture.
  */
 export interface LayerIdentity {
@@ -423,7 +445,9 @@ export interface POIObservation {
 }
 
 /**
- * Check #5 — the POI layer. Optional: only POI-query execution needs it.
+ * Check #5 — the POI layer.
+ *
+ * Optional: only POI-query execution needs it.
  */
 export function checkPOI(o: POIObservation): DoctorCheck {
 	const base = { id: "poi-layer", label: "POI layer", core: false }
@@ -530,21 +554,25 @@ export interface RuntimeLicenseObservation {
 	 */
 	publication?: LicenseKeyPublication
 	/**
-	 * What the license worker said about the license the key names, when the key is a
-	 * self-service one and the doctor could ask. A fifth word beside the publication,
-	 * never a change to the branch: the offline token decides that.
+	 * What the license worker said about the license the key names, when the key
+	 * is a self-service one and the doctor could ask.
+	 *
+	 * A fifth word beside the publication, never a change to the branch: the offline token decides that.
 	 */
 	lidStatus?: LicenseStatusAnswer
 }
 
 /**
  * The license that governs this installation of mailwoman, and what it asks of the operator.
+ *
  * Without a valid key the AGPL-3.0-only branch applies, and the summary says
  * so in the responsibility vocabulary: attribution, share-alike on modifications,
- * and a source offer to network users (section 13). A valid key selects the commercial
- * branch. an expired, unknown, invalid or retired key is reported with its reason
- * and the open-source branch applies. The runtime behaves the same either way — this
- * check changes what is reported, never what runs. Informational, never core.
+ * and a source offer to network users (section 13).
+ * A valid key selects the commercial branch. an expired, unknown, invalid or retired
+ * key is reported with its reason and the open-source branch applies.
+ *
+ * The runtime behaves the same either way — this check changes what is reported, never what runs.
+ * Informational, never core.
  */
 export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 	const base = { id: "license-mailwoman", label: "License (mailwoman)", core: false }
@@ -590,8 +618,9 @@ export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 
 		const expiry = key.payload.expires ? `expires ${key.payload.expires}` : "no expiry"
 
-		// The worker's word about the license itself. Revoked or lapsed is a degraded posture the offline
-		// token cannot see. unknown and unreachable are reported as what they are and change nothing.
+		// The worker's word about the license itself.
+		// Revoked or lapsed is a degraded posture the offline token cannot see. unknown
+		// and unreachable are reported as what they are and change nothing.
 		if (o.lidStatus === "revoked" || o.lidStatus === "lapsed") {
 			return {
 				...base,
@@ -656,9 +685,11 @@ export interface LayerLicenseObservation {
 
 /**
  * What one attached layer database's recorded license asks of the operator.
+ *
  * The expression comes from the layer's own `layer_manifest`, never from a table in code,
- * so a layer that records `noassertion` or a vendor-suffixed identifier is reported
- * as unrecognized rather than guessed at. Informational, never core.
+ * so a layer that records `noassertion` or a vendor-suffixed identifier is
+ * reported as unrecognized rather than guessed at.
+ * Informational, never core.
  */
 export function layerLicenseCheck(o: LayerLicenseObservation): DoctorCheck {
 	const base = { id: `license-${o.id}`, label: `License (${o.label})`, core: false }
@@ -724,6 +755,7 @@ function describeObligations(obligations: readonly LicenseObligation[], recogniz
 
 /**
  * Derive the process exit code: `0` when every core check is `ok`, else `1`.
+ *
  * Optional data-layer checks report their gaps but never fail the process —
  * the meaning-of-zero rule (a missing optional layer is not a hard error).
  */

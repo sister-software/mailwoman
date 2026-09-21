@@ -12,6 +12,7 @@ import { describe, expect, it } from "vitest"
 
 /**
  * The board and parity corpora are committed, so they grade everywhere.
+ *
  * The panel and golden sets live under `$MAILWOMAN_DATA_ROOT` and are absent in CI,
  * so their suites are presence-conditional the way `weights.test.ts` checks on the dev model.
  *
@@ -22,9 +23,10 @@ const havePanel = await pathExists(String(dataRootPath("pelias-rig", "panel", "p
 const havePanel21 = await pathExists(String(dataRootPath("pelias-rig", "panel", "panel-v2.1.jsonl")))
 const haveGolden = await pathExists(String(dataRootPath("eval", "golden", "v0.1.3", "dev", "us.jsonl")))
 /**
- * The `us` holdout source only. `fr` is a 5.06 GB CSV that a reservoir draw reads
- * end to end — measured at 45.5 s against `us`'s 113 ms — so exercising it in a unit
- * suite would cost more than every other test here combined.
+ * The `us` holdout source only.
+ *
+ * `fr` is a 5.06 GB CSV that a reservoir draw reads end to end — measured at 45.5 s against `us`'s
+ * 113 ms — so exercising it in a unit suite would cost more than every other test here combined.
  */
 const haveHoldoutUS = await pathExists(String(dataRootPath("corpus", "staging", "fdic-us.csv")))
 
@@ -150,9 +152,9 @@ describe.skipIf(!haveGolden)("resolveInputSet — golden", () => {
 
 describe("resolveInputSet — parity", () => {
 	it("skips tombstones, matching the harness's own live count", async () => {
-		// `parity-corpus.ts` filters `!dropped && expect` and prints "321 live fixtures
-		// (55 tombstones skipped)". Resolving all 376 would feed fixtures a neural
-		// parser must not be graded against into the denominator.
+		// `parity-corpus.ts` filters `!dropped && expect` and prints "321 live
+		// fixtures (55 tombstones skipped)".
+		// Resolving all 376 would feed fixtures a neural parser must not be graded against into the denominator.
 		const set = await resolveInputSet({ kind: "parity" })
 
 		expect(set.n).toBe(321)
@@ -222,10 +224,10 @@ describe.skipIf(!haveHoldoutUS)("resolveInputSet — holdout", () => {
 	})
 
 	it("refuses an unknown source rather than resolving to an empty set", async () => {
-		// `source` arrives from an MCP tool call as untrusted JSON, so the refusal is a
-		// runtime check on a value the signature forbids. `Reflect.set` puts the value in
-		// the field the way the transport does, without asserting to the compiler that "de"
-		// is a HoldoutSource — which is the claim under test, and a false one.
+		// `source` arrives from an MCP tool call as untrusted JSON, so the refusal is
+		// a runtime check on a value the signature forbids.
+		// `Reflect.set` puts the value in the field the way the transport does, without asserting to
+		// the compiler that "de" is a HoldoutSource — which is the claim under test, and a false one.
 		const unknownSource: Extract<InputSetRef, { kind: "holdout" }> = { kind: "holdout" }
 
 		Reflect.set(unknownSource, "source", "de")

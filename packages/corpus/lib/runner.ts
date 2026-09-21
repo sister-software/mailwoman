@@ -87,18 +87,24 @@ export interface RunAdapterOptions {
 	outputDir: PathBuilderLike
 
 	/**
-	 * Corpus version stamped onto every row. Locked together with the tokenizer version.
+	 * Corpus version stamped onto every row.
+	 *
+	 * Locked together with the tokenizer version.
 	 */
 	corpusVersion: string
 
 	/**
-	 * Optional progress callback. Invoked every `progressEvery` rows yielded (default 1000)
-	 * and once at the end of the run. Errors thrown from this callback abort the run.
+	 * Optional progress callback.
+	 *
+	 * Invoked every `progressEvery` rows yielded (default 1000) and once at the end of the run.
+	 * Errors thrown from this callback abort the run.
 	 */
 	onProgress?: (snapshot: RunnerProgress) => void
 
 	/**
-	 * Yielded-row interval at which `onProgress` fires. Defaults to 1000.
+	 * Yielded-row interval at which `onProgress` fires.
+	 *
+	 * Defaults to 1000.
 	 * The terminal tick is always emitted regardless of this value.
 	 */
 	progressEvery?: number
@@ -126,9 +132,11 @@ export interface AdapterRunManifest {
 /**
  * Drive a single adapter to completion.
  *
- * Returns the manifest describing the run. Writes `canonical.jsonl` + `manifest.json`
- * under `outputDir/<adapter.id>/`. Throws if the output directory cannot be created,
- * if a row arrives with a missing required field, or if the abort signal fires.
+ * Returns the manifest describing the run.
+ * Writes `canonical.jsonl` + `manifest.json` under `outputDir/<adapter.id>/`.
+ *
+ * Throws if the output directory cannot be created, if a row arrives with a missing
+ * required field, or if the abort signal fires.
  */
 export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunManifest> {
 	const { adapter, adapterOptions, outputDir, corpusVersion } = opts
@@ -245,8 +253,9 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 }
 
 /**
- * Drive every adapter in a registry sequentially. Stops on the first failure
- * (caller can filter the registry before calling if partial-failure is desired).
+ * Drive every adapter in a registry sequentially.
+ *
+ * Stops on the first failure (caller can filter the registry before calling if partial-failure is desired).
  *
  * Returns the manifests in registry insertion order.
  */
@@ -272,8 +281,10 @@ export async function runAllAdapters(
 }
 
 /**
- * Validate an emitted row. Cheap. runs once per row. Catches adapter bugs early
- * so the jsonl doesn't end up half-malformed.
+ * Validate an emitted row.
+ *
+ * Cheap. runs once per row.
+ * Catches adapter bugs early so the jsonl doesn't end up half-malformed.
  */
 function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
 	if (row.source !== adapter.id) {
@@ -298,7 +309,9 @@ function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
 }
 
 /**
- * Promise-ify a single event emission. Used to await `drain` / `close` on the write stream.
+ * Promise-ify a single event emission.
+ *
+ * Used to await `drain` / `close` on the write stream.
  * Exported for `build.ts`, whose stage streams await `close` the same way. unlike
  * a bare two-listener race, the loser listener is detached so a long-lived stream
  * does not accumulate one orphan handler per wait.

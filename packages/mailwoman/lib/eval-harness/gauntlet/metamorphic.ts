@@ -62,7 +62,9 @@ interface Base {
 }
 
 /**
- * Base inputs. The postcode'd ones drive the DIR (drop-postcode) test. all drive INV + band.
+ * Base inputs.
+ *
+ * The postcode'd ones drive the DIR (drop-postcode) test. all drive INV + band.
  */
 const BASES: Base[] = [
 	{ input: "181 Rue du Chevaleret, Paris", postcode: false, locale: "fr-FR" },
@@ -82,8 +84,10 @@ const BASES: Base[] = [
 
 /**
  * Expanded→abbreviated inverse of the shared `normalize/abbreviations.ts` table
- * (imported, never duplicated — "no required trivia"). Single-letter abbreviations (N/S/E/W/R) are dropped:
- * they're ambiguous with initials, and the invariant tests only unambiguous multi-char suffix swaps.
+ * (imported, never duplicated — "no required trivia").
+ *
+ * Single-letter abbreviations (N/S/E/W/R) are dropped: they're ambiguous with initials,
+ * and the invariant tests only unambiguous multi-char suffix swaps.
  * First-wins on ambiguous long forms (FR `Boulevard` maps from both `Bd` and `Bvd` → `Bd`).
  */
 function inverseAbbrev(locale: string): Map<string, string> {
@@ -103,8 +107,9 @@ function inverseAbbrev(locale: string): Map<string, string> {
 }
 
 /**
- * Replace the first expandable long-form token with its abbreviation
- * (`Avenue`→`Ave`). Null if none present.
+ * Replace the first expandable long-form token with its abbreviation (`Avenue`→`Ave`).
+ *
+ * Null if none present.
  */
 function abbreviate(input: string, locale: string): string | null {
 	const inv = inverseAbbrev(locale)
@@ -127,6 +132,7 @@ function abbreviate(input: string, locale: string): string | null {
 
 /**
  * The longest maximal run of letters, length ≥5, leftmost on ties.
+ *
  * Null if none — nothing safe to corrupt.
  */
 function longestAlphaToken(s: string): { start: number; body: string } | null {
@@ -149,7 +155,9 @@ function longestAlphaToken(s: string): { start: number; body: string } | null {
 
 /**
  * Adjacent-char swap at the middle of the longest alphabetic token.
- * Deterministic, no RNG. Null if not applicable.
+ *
+ * Deterministic, no RNG.
+ * Null if not applicable.
  */
 function transposeMiddle(s: string): string | null {
 	const tok = longestAlphaToken(s)
@@ -215,8 +223,9 @@ const ORDINALS: ReadonlyArray<readonly [string, string]> = [
 ]
 
 /**
- * Swap the first ordinal-street token between numeral and spelled form
- * (`5th Ave`↔`Fifth Ave`). Null if none.
+ * Swap the first ordinal-street token between numeral and spelled form (`5th Ave`↔`Fifth Ave`).
+ *
+ * Null if none.
  */
 function swapOrdinal(s: string): string | null {
 	const numToWord = new Map(ORDINALS.map(([n, w]) => [n.toLowerCase(), w]))
@@ -240,6 +249,7 @@ function swapOrdinal(s: string): string | null {
 
 /**
  * Spell out the leading house-number token (`100`→`One Hundred`).
+ *
  * Bounded map — never a general algorithm.
  */
 const HOUSE_SPELL = new Map<string, string>([["100", "One Hundred"]])
@@ -290,26 +300,31 @@ const BAND: Perturbation[] = [
 
 /**
  * Known, deterministic INV failures (the pipeline is argmax + SQL — failures don't flap).
+ *
  * Each is tracked by an issue and reported as xfail: visible, but NON-blocking,
- * so the check fails only on new regressions. The loop also flags any xfail that
- * has started passing ("newly passing → drop it"), so this list can't rot into
- * false comfort — the Pelias-pass-list trap, inverted.
+ * so the check fails only on new regressions.
+ * The loop also flags any xfail that has started passing ("newly passing → drop it"),
+ * so this list can't rot into false comfort — the Pelias-pass-list trap, inverted.
  */
 /**
- * Casing/spacing are fully green (the #829 lowercase restore + trailing-punct trim
- * cleared every prior xfail with no retrain). `abbrev` holds for the EN suffix
- * swaps (Avenue→Ave, Street→St) because the model trains on both forms — but the FR
- * street-type swap below is a resolver gap rather than a model one, and it is a finding
- * rather than a reflex xfail (see note). A new deterministic INV break belongs here
- * with a tracked note, never silently conditional. The
+ * Casing/spacing are fully green (the #829 lowercase restore + trailing-punct
+ * trim cleared every prior xfail with no retrain).
+ *
+ * `abbrev` holds for the EN suffix swaps (Avenue→Ave, Street→St) because the model
+ * trains on both forms — but the FR street-type swap below is a resolver gap
+ * rather than a model one, and it is a finding rather than a reflex xfail (see note).
+ * A new deterministic INV break belongs here with a tracked note, never silently conditional.
+ *
+ * The
  * #1002 FR `Boulevard→Bd` xfail was removed 2026-07-06 with its fix: the root cause was not the FR gazetteer
  * (street_norm expands `bd` fine) but the model absorbing the undertrained "Bd" into house_number
  * ("2 Bd") pre-lookup — fixed by enabling Stage-1 `expandAbbreviations` in the geocode path
  * with the locale-unknown safe set (Bd/Bvd/Av/Imp. EN suffixes deliberately untouched).
  * Keep the anti-rot loop honest: a new deterministic INV break belongs here with
- * a tracked note, never silently conditional. The #1101 FR comma-drop xfail
- * ("181 Rue du Chevaleret, Paris" losing its rooftop) was removed 2026-08-12 when the
- * anti-rot loop flagged it newly passing — the comma-free base now holds its rooftop.
+ * a tracked note, never silently conditional.
+ *
+ * The #1101 FR comma-drop xfail ("181 Rue du Chevaleret, Paris" losing its rooftop) was removed 2026-08-12
+ * when the anti-rot loop flagged it newly passing — the comma-free base now holds its rooftop.
  */
 const KNOWN_INV_XFAIL = new Map<string, string>()
 
@@ -321,12 +336,14 @@ const KNOWN_INV_XFAIL = new Map<string, string>()
  */
 /**
  * All measured anchor-off/gazetteer-off (the harness default. the weights package ships no anchor artifacts).
+ *
  * The gazetteer soft-feed is exactly the channel that recovers a typo'd locality/street
  * in ship-config, so some of these may hold with the retrieval channels on —
  * tracked here as the anchor-off floor rather than a claim about production.
  */
-// Empty on the shipped stack. An entry belongs here only while a band perturbation misses
-// deterministically. the self-check names an entry that has started passing, and it leaves
+// Empty on the shipped stack.
+// An entry belongs here only while a band perturbation misses deterministically.
+// the self-check names an entry that has started passing, and it leaves
 // then (the Damrak locality pair left once the word-level fuzzy measure corrected the
 // corrupted locality. the `100 Centre Street, New York, NY` trio — the spelled house number
 // and the two street-token corruptions — left once the rooftop survived them).
@@ -356,7 +373,9 @@ function bump(m: Map<string, Tally>, name: string, key: keyof Tally): void {
 }
 
 /**
- * Run the metamorphic layer. Returns `pass` (no new INV/DIR/band violation beyond the tracked xfails).
+ * Run the metamorphic layer.
+ *
+ * Returns `pass` (no new INV/DIR/band violation beyond the tracked xfails).
  */
 export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): Promise<{ pass: boolean }> {
 	const deps = await buildGauntletDeps(layerDepsOptions(options))
@@ -537,7 +556,8 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 		}
 	}
 
-	// The check fails on new regressions only. A newly-passing xfail is a bookkeeping nudge rather than a failure.
+	// The check fails on new regressions only.
+	// A newly-passing xfail is a bookkeeping nudge rather than a failure.
 	const pass = invFails === 0 && dirFails === 0 && bandFails === 0
 	const trackedTotal = xfailHit.size + bandXfailHit.size
 

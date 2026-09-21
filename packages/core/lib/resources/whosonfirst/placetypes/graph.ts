@@ -8,7 +8,9 @@ import type { PlacetypeRole } from "#resources/whosonfirst/placetypes/definition
 import type { Placetype } from "#resources/whosonfirst/placetypes/Placetype"
 
 /**
- * A single node in a placetype graph. One entry per unique placetype name.
+ * A single node in a placetype graph.
+ *
+ * One entry per unique placetype name.
  */
 export interface PlacetypeGraphNode {
 	name: string
@@ -20,8 +22,10 @@ export interface PlacetypeGraphNode {
 }
 
 /**
- * A directed parent → child edge. Field names match d3-force / react-flow / cytoscape
- * conventions so the graph drops straight into common viewers.
+ * A directed parent → child edge.
+ *
+ * Field names match d3-force / react-flow / cytoscape conventions so the graph
+ * drops straight into common viewers.
  */
 export interface PlacetypeGraphLink {
 	source: string
@@ -30,6 +34,7 @@ export interface PlacetypeGraphLink {
 
 /**
  * Node-link projection of the placetype DAG rooted at a given placetype.
+ *
  * Each node and each (parent, child) edge appears exactly once — see {@linkcode generatePlacetypeGraph}
  * for why this is the preferred shape when the root has many shared descendants (e.g. `planet`).
  */
@@ -42,11 +47,12 @@ export interface PlacetypeGraph {
 /**
  * Build a node-link graph of a placetype and its descendants, optionally filtered by role.
  *
- * Unlike {@linkcode generatePlacetypeTree}, this emits each node and each
- * (parent, child) edge exactly once. WOF placetypes form a DAG with heavy descendant
- * sharing (e.g. `installation` is a leaf reachable from many parents); projecting
- * that DAG to a nested tree duplicates every shared subtree under every parent path
- * and blows up exponentially for roots like `planet` (~165 MB for the full hierarchy).
+ * Unlike {@linkcode generatePlacetypeTree}, this emits each node and each (parent, child) edge exactly once.
+ * WOF placetypes form a DAG with heavy descendant sharing
+ * (e.g. `installation` is a leaf reachable from many parents); projecting that DAG to
+ * a nested tree duplicates every shared subtree under every parent path and blows up
+ * exponentially for roots like `planet` (~165 MB for the full hierarchy).
+ *
  * The graph shape stays O(nodes + edges) regardless.
  *
  * Output is well-suited for d3-force, react-flow, cytoscape, and any other html graph viewer.

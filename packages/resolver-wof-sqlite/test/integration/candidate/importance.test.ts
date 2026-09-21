@@ -123,8 +123,9 @@ describe("ImportanceIndex.find", () => {
 	test("a same-name place beyond the check is refused, not scored", () => {
 		const index = loadImportanceIndex(sourcePath)
 
-		// A third US Warwick nowhere near either scored one: the nearest same-key place is
-		// ~1,000 km off, which is a different town. NULL, and counted as refused.
+		// A third US Warwick nowhere near either scored one: the nearest same-key place
+		// is ~1,000 km off, which is a different town.
+		// NULL, and counted as refused.
 		expect(index.find("Warwick", "US", "locality", 60, -150)).toBeNull()
 		expect(index.refused).toBe(1)
 		expect(index.matched).toBe(0)
@@ -144,7 +145,8 @@ describe("ImportanceIndex.find", () => {
 	test("the key is the SHARED fold — diacritics and non-Latin scripts reach their scores", () => {
 		const index = loadImportanceIndex(sourcePath)
 
-		// "Zurich" and "Zürich" fold to the same key. Cyrillic survives the fold intact.
+		// "Zurich" and "Zürich" fold to the same key.
+		// Cyrillic survives the fold intact.
 		expect(index.find("Zurich", "CH", "locality", 47.3769, 8.5417)).toBeCloseTo(0.6216, 4)
 		expect(index.find("Москва", "RU", "locality", 55.7558, 37.6173)).toBeCloseTo(0.953, 4)
 	})

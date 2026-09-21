@@ -23,6 +23,7 @@ const TAICHUNG = 85_679_617
 /**
  * As `names` has them: Hsinchu County lists 新竹市 as a variant beside its official 新竹縣;
  * Taoyuan's official name is still the pre-upgrade 桃園 with 桃園縣 beside it.
+ *
  * Taipei's official spelling is 台北市 with 臺北市 as a variant.
  */
 const REGIONS: TaiwanRegionName[] = [

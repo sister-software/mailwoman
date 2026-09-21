@@ -150,6 +150,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 
 	/**
 	 * All localities within MATCH_RADIUS_KM, sorted nearest-first.
+	 *
 	 * Korean place names repeat heavily across the country (homonymous villages),
 	 * so a Hangul name-match must be constrained to nearby candidates — matching globally
 	 * then taking the nearest homonym lands hundreds of km away.

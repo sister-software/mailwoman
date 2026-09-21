@@ -176,8 +176,8 @@ describe("gazetteerPrior pin (#1497)", () => {
 })
 
 describe("runResolverPins forwards BOTH halves of the prior tri-state", () => {
-	// The bug this pins: while the prior was opt-in, the builder forwarded only the
-	// truthy half (`...(options.gazetteerPrior ? { gazetteerPrior: true } : {})`).
+	// The bug this pins: while the prior was opt-in, the builder forwarded only the truthy
+	// half (`...(options.gazetteerPrior ? { gazetteerPrior: true } : {})`).
 	// After the default-on flip that silently discarded `--gazetteer-prior-off`, so the off arm
 	// graded the default configuration while its log said `gazetteerPrior=off` — the exact "two
 	// pin logs that differ only in a flag someone typed" failure the pins line exists to prevent.

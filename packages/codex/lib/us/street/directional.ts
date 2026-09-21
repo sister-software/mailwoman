@@ -14,6 +14,7 @@ import { matchCase } from "#us/street/suffix"
 
 /**
  * The 8 directional abbreviations accepted by the USPS.
+ *
  * The USPS prefers the abbreviation over the fully-spelled-out name.
  */
 export const DirectionalAbbreviation = {
@@ -185,9 +186,11 @@ export function lookupDirectional(input: unknown): DirectionalMatch | null {
 // ── Codex extract-facing helpers (mirror street-suffix's matchTrailingSuffix) ───────────────────────
 
 /**
- * If the first whitespace-separated word of `street` is a known USPS directional
- * (abbrev or name), return the canonical name, its abbreviation, and the matched surface word.
- * Null otherwise. (The leading-end counterpart of
+ * If the first whitespace-separated word of `street` is a known USPS directional (abbrev or name),
+ * return the canonical name, its abbreviation, and the matched surface word.
+ *
+ * Null otherwise.
+ * (The leading-end counterpart of
  * {@link matchTrailingSuffix}; mirrors unit-designator's `matchLeadingDesignator`.) Single-word only — the spaced "north
  * east" form is normalized to its one-word variant in real US streets, which this matches via the lookup.
  */

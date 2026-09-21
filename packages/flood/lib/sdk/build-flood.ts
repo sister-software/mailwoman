@@ -68,8 +68,9 @@ import {
 } from "#vocabulary"
 
 /**
- * Schema version of the domain tables. Bumped when a column changes meaning,
- * never for an added column a reader can ignore.
+ * Schema version of the domain tables.
+ *
+ * Bumped when a column changes meaning, never for an added column a reader can ignore.
  */
 export const FLOOD_SCHEMA_VERSION = 1
 
@@ -79,8 +80,10 @@ export const FLOOD_SCHEMA_VERSION = 1
 export type BuildFloodInput =
 	| {
 			/**
-			 * A feature source consumed IN this process. Correct for a fixture and for anything small.
-			 * it is what the batched form falls back to per chunk, so the two share one implementation.
+			 * A feature source consumed IN this process.
+			 *
+			 * Correct for a fixture and for anything small. it is what the batched form
+			 * falls back to per chunk, so the two share one implementation.
 			 */
 			source: FloodFeatureSource
 	  }
@@ -89,10 +92,11 @@ export type BuildFloodInput =
 			 * The published geodatabase, ingested in bounded chunks — one child process
 			 * per range of the authority's own feature ids.
 			 *
-			 * This is the shape a national build takes, and the reason is reproducibility rather than speed:
-			 * h3's wasm heap cannot be reset from JavaScript and does not survive an unbounded
-			 * number of polyfill calls, so a single-process build over 813,627 polygons succeeds or
-			 * fails on how the allocator happens to fragment. See `ingest-chunk.ts`.
+			 * This is the shape a national build takes, and the reason is reproducibility
+			 * rather than speed: h3's wasm heap cannot be reset from JavaScript and does not
+			 * survive an unbounded number of polyfill calls, so a single-process build over
+			 * 813,627 polygons succeeds or fails on how the allocator happens to fragment.
+			 * See `ingest-chunk.ts`.
 			 */
 			batched: {
 				geodatabasePath: string
@@ -105,7 +109,9 @@ export type BuildFloodInput =
 				objectIDTo: number
 				declaredFeatureCount: number
 				/**
-				 * Feature ids per chunk. See {@link DEFAULT_CHUNK_SIZE}.
+				 * Feature ids per chunk.
+				 *
+				 * See {@link DEFAULT_CHUNK_SIZE}.
 				 */
 				chunkSize?: number
 			}
@@ -113,7 +119,9 @@ export type BuildFloodInput =
 
 export type BuildFloodOptions = BuildFloodInput & {
 	/**
-	 * Where the sealed artifact lands. The build writes beside it and swaps.
+	 * Where the sealed artifact lands.
+	 *
+	 * The build writes beside it and swaps.
 	 */
 	out: string
 	/**
@@ -123,8 +131,10 @@ export type BuildFloodOptions = BuildFloodInput & {
 	buildCmd: string
 	buildSHA: string
 	/**
-	 * ISO-8601, supplied by the caller. Never generated here: the interface says so,
-	 * and a library-generated timestamp makes two builds of the same inputs differ.
+	 * ISO-8601, supplied by the caller.
+	 *
+	 * Never generated here: the interface says so, and a library-generated timestamp
+	 * makes two builds of the same inputs differ.
 	 */
 	createdAt: string
 	/**
@@ -132,7 +142,9 @@ export type BuildFloodOptions = BuildFloodInput & {
 	 */
 	indexResolution: number
 	/**
-	 * The resolution `layer_coverage` rows are keyed at. Must be coarser than the index resolution.
+	 * The resolution `layer_coverage` rows are keyed at.
+	 *
+	 * Must be coarser than the index resolution.
 	 */
 	coverageResolution: number
 	/**
@@ -141,6 +153,7 @@ export type BuildFloodOptions = BuildFloodInput & {
 	extent: FloodMapExtent
 	/**
 	 * The feature count a second distribution channel reports — the live WFS.
+	 *
 	 * Supplied, it is asserted against the geodatabase's own count, which is the cheapest two-path
 	 * check available and catches a stale or truncated archive before anything is written.
 	 */
@@ -164,10 +177,11 @@ export interface BuildFloodResult {
 	 */
 	storedPartialShare: number
 	/**
-	 * Features whose bounding box forced a resolution coarser than `indexResolution`, and the
-	 * resolutions the stored cell rows are actually at. Both are reported rather than
-	 * smoothed over: a reader that assumed one resolution would probe at the wrong one
-	 * and read every coarsened feature as an absence.
+	 * Features whose bounding box forced a resolution coarser than `indexResolution`,
+	 * and the resolutions the stored cell rows are actually at.
+	 *
+	 * Both are reported rather than smoothed over: a reader that assumed one resolution
+	 * would probe at the wrong one and read every coarsened feature as an absence.
 	 */
 	coarsenedFeatures: number
 	storedResolutions: number[]
@@ -314,13 +328,13 @@ interface StreamResult {
 /**
  * The relative gap between the two area readings that fails the build.
  *
- * The comparison is a spherical ring area against gdal's planar area in the source's
- * own projection, so the two never agree exactly: British National Grid's scale factor
- * runs 0.9996 at its central meridian to about 1.0004 at the edges of its usable zone,
- * contributing roughly a tenth of a percent, and the spherical approximation contributes a
- * similar amount against the ellipsoid. One percent leaves both far inside the tolerance
- * while sitting well below the error a hole-blind read produces — the zoning survey measured
- * that at 4.1% over a whole national layer, and this product's own smoke rung at 17%.
+ * The comparison is a spherical ring area against gdal's planar area in the source's own projection,
+ * so the two never agree exactly: British National Grid's scale factor runs 0.9996 at its central
+ * meridian to about 1.0004 at the edges of its usable zone, contributing roughly a tenth of a
+ * percent, and the spherical approximation contributes a similar amount against the ellipsoid.
+ * One percent leaves both far inside the tolerance while sitting well below the error
+ * a hole-blind read produces — the zoning survey measured that at 4.1% over a whole
+ * national layer, and this product's own smoke rung at 17%.
  */
 const AREA_TOLERANCE = 0.01
 
@@ -378,6 +392,7 @@ export function aggregateChunks(chunks: ReadonlyArray<FloodChunkResult>): Stream
 
 /**
  * Run the ingest as a sequence of bounded child processes, one per range of the authority's feature ids.
+ *
  * The shared chunk interface — the parent's no-handle rule, and the fail-loud handling of a
  * chunk that dies or prints nothing — lives with `ingestChunkArguments` and `runChunkProcess`.
  */
@@ -428,10 +443,12 @@ async function runBatchedIngest(
 /**
  * Resolve the touch table into the two stored cell tiers.
  *
- * Compaction happens here and only on the whole side. A zone's uniform interior
- * collapses parent-ward into a handful of coarse cells while the fringe stays fine —
- * hierarchy-respecting run-length encoding. A partial cell's parent is not partial in any
- * useful sense, so compacting the fringe would claim it covers ground it does not.
+ * Compaction happens here and only on the whole side.
+ * A zone's uniform interior collapses parent-ward into a handful of coarse cells
+ * while the fringe stays fine — hierarchy-respecting run-length encoding.
+ *
+ * A partial cell's parent is not partial in any useful sense, so compacting the
+ * fringe would claim it covers ground it does not.
  */
 function resolveCells(database: DatabaseClient<FloodDatabase>): {
 	wholeRows: number
@@ -455,9 +472,10 @@ function resolveCells(database: DatabaseClient<FloodDatabase>): {
 	let partialRows = 0
 
 	// One group per (zone, resolution): `compactCells` takes a single resolution,
-	// and an adaptively-indexed layer has several. Pooling them throws. compacting only the
-	// target group would silently drop every coarsened feature's interior — the shape of
-	// failure this repo keeps writing down, because the artifact would still build.
+	// and an adaptively-indexed layer has several.
+	// Pooling them throws. compacting only the target group would silently drop every
+	// coarsened feature's interior — the shape of failure this repo keeps writing down,
+	// because the artifact would still build.
 	for (const { zone_code: zoneCode, resolution } of zones) {
 		const wholeShort = database
 			.prepare("SELECT DISTINCT h3_cell FROM build_cell_touch WHERE zone_code = ? AND resolution = ? AND is_full = 1")

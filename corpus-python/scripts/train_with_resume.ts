@@ -1,6 +1,7 @@
 /**
- * Train Stage 1 with auto-resume on GPU hang. gfx1103 (Radeon 780M) firmware has
- * observed HW Exception ("GPU Hang") under sustained load roughly every 1-2h.
+ * Train Stage 1 with auto-resume on GPU hang. gfx1103 (Radeon 780M) firmware has observed
+ * HW Exception ("GPU Hang") under sustained load roughly every 1-2h.
+ *
  * This wrapper restarts the training process when it exits non-zero,
  * resuming from the latest step-* checkpoint.
  *

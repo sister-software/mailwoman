@@ -280,10 +280,10 @@ describe("computeExitCode + assembleReport (meaning-of-zero)", () => {
 })
 
 describe("every failing check states its consequence (#1577)", () => {
-	// The point of `consequence` is that a reader can decide whether a red line is worth
-	// acting on today. A check that fails without one has silently opted out of that
-	// interface, and nothing else in the tree would notice — so enumerate the failing
-	// branch of every check here rather than spot-checking one.
+	// The point of `consequence` is that a reader can decide whether a red line is worth acting on today.
+	// A check that fails without one has silently opted out of that interface,
+	// and nothing else in the tree would notice — so enumerate the failing branch
+	// of every check here rather than spot-checking one.
 	const failing: Array<[string, DoctorCheck]> = [
 		["weights absent", weightsCheck({ error: "Could not resolve @mailwoman/neural-weights-en-us" })],
 		[

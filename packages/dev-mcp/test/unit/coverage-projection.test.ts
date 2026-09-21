@@ -59,8 +59,9 @@ describe("projectCoverage", () => {
 	})
 
 	it("puts the mismatch FIRST in the summary, ahead of every count it invalidates", () => {
-		// A caller reads the first sentence. Burying this after "33 countries train" means the counts
-		// are read as answers before the reader learns they are about a corpus the run never opens.
+		// A caller reads the first sentence.
+		// Burying this after "33 countries train" means the counts are read as answers
+		// before the reader learns they are about a corpus the run never opens.
 		const out = projectCoverage(
 			report({
 				configuredCorpusVersion: "0.27.0-house-venue-intl",

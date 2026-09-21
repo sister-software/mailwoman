@@ -15,17 +15,19 @@ export type PlaceGeometry =
 	| { type: "MultiPolygon"; coordinates: number[][][][] }
 
 /**
- * Id → simplified admin geometry, backed by the lazily-loaded
- * `wof-polygons.db`. Async (range-loaded).
+ * Id → simplified admin geometry, backed by the lazily-loaded `wof-polygons.db`.
+ *
+ * Async (range-loaded).
  */
 export interface PolygonDB {
 	get(id: number): Promise<PlaceGeometry | null>
 }
 
 /**
- * Open the crisp-polygon DB via sql.js-httpvfs: a single `select geom where id=?`
- * touches about one page, so the browser fetches a few KB of the 19 MB file
- * rather than the whole thing. The same range-load path as the resolver DB.
+ * Open the crisp-polygon DB via sql.js-httpvfs: a single `select geom where id=?` touches about
+ * one page, so the browser fetches a few KB of the 19 MB file rather than the whole thing.
+ *
+ * The same range-load path as the resolver DB.
  */
 export async function loadPolygonDB(url: string, sqljsBaseURL: string): Promise<PolygonDB> {
 	const { loadHTTPVFSDatabase, makeHTTPVFSPolygonLookup } =

@@ -139,10 +139,10 @@ test("readAvailabilityRows: streaming from a path yields exactly what the sync b
 })
 
 test("readAvailabilityRows: a quoted field containing a NEWLINE stays in its own row", async () => {
-	// No row in the measured 920 MB TX fiber file needs this — its 12/13/14-field
-	// line counts sum exactly to `wc -l`, so no record is split across lines.
-	// The byte scanner this replaced would have desynced every subsequent row here
-	// regardless, because it quote-guarded the comma branch and not the newline branch.
+	// No row in the measured 920 MB TX fiber file needs this — its 12/13/14-field line
+	// counts sum exactly to `wc -l`, so no record is split across lines.
+	// The byte scanner this replaced would have desynced every subsequent row here regardless,
+	// because it quote-guarded the comma branch and not the newline branch.
 	// The guarantee is the point: correctness on a file nobody has measured yet.
 	const csv = [
 		"frn,provider_id,brand_name,location_id,technology,max_advertised_download_speed,max_advertised_upload_speed,low_latency,business_residential_code,state_usps,block_geoid,h3_res8_id",

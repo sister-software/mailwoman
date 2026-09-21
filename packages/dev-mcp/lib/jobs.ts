@@ -46,8 +46,8 @@ export interface JobSummary {
 /**
  * Cap on captured output per stream.
  *
- * A gauntlet log is tens of kilobytes. this is generous enough that no real run
- * is truncated, and bounded so a runaway child cannot exhaust the server's heap.
+ * A gauntlet log is tens of kilobytes. this is generous enough that no real run is truncated,
+ * and bounded so a runaway child cannot exhaust the server's heap.
  * Truncation is reported in the tail marker rather than silently applied —
  * a log that quietly lost its end would hide the verdict, which prints last.
  */
@@ -64,7 +64,9 @@ export class JobRegistry {
 	#counter = 0
 
 	/**
-	 * Spawn a child and track it. Returns immediately.
+	 * Spawn a child and track it.
+	 *
+	 * Returns immediately.
 	 */
 	start(label: string, command: string, args: string[], cwd: string): Job {
 		const jobID = `job-${++this.#counter}`
@@ -146,8 +148,10 @@ export class JobRegistry {
 	}
 
 	/**
-	 * Kill everything still running. Called on shutdown so a killed server does not
-	 * leave orphaned gauntlets holding multi-gigabyte SQLite handles.
+	 * Kill everything still running.
+	 *
+	 * Called on shutdown so a killed server does not leave orphaned gauntlets
+	 * holding multi-gigabyte SQLite handles.
 	 */
 	cancelAll(): number {
 		let cancelled = 0

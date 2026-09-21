@@ -102,6 +102,7 @@ const BASE_DATA = {
 
 /**
  * Ink's raw write ends with a trailing "\n" (an empty final split element rather than an extra row).
+ *
  * The string being split is one already-rendered terminal frame — small, bounded,
  * and never re-split or grown — so a spliterator adds nothing.
  */

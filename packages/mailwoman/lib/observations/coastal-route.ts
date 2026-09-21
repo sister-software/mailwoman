@@ -69,7 +69,9 @@ import {
  */
 export interface CoastalErosionObservation {
 	/**
-	 * Always `designated`. `unknown` produces no observation — see this file's header.
+	 * Always `designated`.
+	 *
+	 * `unknown` produces no observation — see this file's header.
 	 */
 	reading: CoastalReadingKind
 	/**
@@ -78,6 +80,7 @@ export interface CoastalErosionObservation {
 	scenario: { key: string; management: string; horizon: number; climateAllowance: string; label: string }
 	/**
 	 * Every polygon of that scenario containing the point.
+	 *
 	 * Usually one. several where the authority's own frontages overlap.
 	 */
 	designations: CoastalDesignation[]
@@ -104,8 +107,10 @@ export interface CoastalErosionObservation {
 }
 
 /**
- * Why a coordinate produced no observation. Every one of these is a silence the route owes an
- * account of — an unnamed silence and a silence for the right reason read identically on a receipt.
+ * Why a coordinate produced no observation.
+ *
+ * Every one of these is a silence the route owes an account of — an unnamed silence
+ * and a silence for the right reason read identically on a receipt.
  */
 export const COASTAL_REFUSALS = [
 	/**
@@ -136,8 +141,9 @@ export interface CoastalErosionRoute extends Disposable {
 	 */
 	scenarioKey: string
 	/**
-	 * Decide one resolved coordinate. Pure with respect to the pipeline:
-	 * it reads the layer and returns a record.
+	 * Decide one resolved coordinate.
+	 *
+	 * Pure with respect to the pipeline: it reads the layer and returns a record.
 	 *
 	 * `null` and `undefined` are both accepted because a geocode result has nullable `lat`/`lon` —
 	 * a caller that had to narrow them first would be narrowing on this route's behalf,
@@ -148,13 +154,16 @@ export interface CoastalErosionRoute extends Disposable {
 
 export interface CoastalErosionRouteOptions {
 	/**
-	 * The sealed layer to read. Required: there is no default layer, and a route that
-	 * guessed one would report a designation from an authority nobody asked about.
+	 * The sealed layer to read.
+	 *
+	 * Required: there is no default layer, and a route that guessed one would report
+	 * a designation from an authority nobody asked about.
 	 */
 	databasePath: string
 	/**
-	 * The scenario to answer under. Defaults to the least projected of the twelve —
-	 * see `DEFAULT_NCERM_SCENARIO`.
+	 * The scenario to answer under.
+	 *
+	 * Defaults to the least projected of the twelve — see `DEFAULT_NCERM_SCENARIO`.
 	 */
 	scenarioKey?: string
 }

@@ -63,8 +63,10 @@ export { FST_FORMAT_VERSION } from "#fst/format"
 const MAGIC = Buffer.from(FST_MAGIC_BYTES)
 
 /**
- * Longest ancestry chain stored per place. Deeper hierarchies are truncated at the leaf end,
- * since the specific end of the chain is what disambiguates and the country end is recoverable anyway.
+ * Longest ancestry chain stored per place.
+ *
+ * Deeper hierarchies are truncated at the leaf end, since the specific end of the chain
+ * is what disambiguates and the country end is recoverable anyway.
  */
 const MAX_CHAIN_LEN = 8
 
@@ -318,16 +320,18 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 				parentChain.push(buf.readUInt32LE(pp + 24 + ci * 4))
 			}
 
-			// v1 stored a raw population u32 here. v2–v4 the conflated `importance` float. v5
-			// the referential score. A v1 file's population is mapped through the same curve
-			// `referentialFromPopulation` uses, so its value is genuinely referential — the only
-			// generation of this format for which that can be said without reading the source database.
+			// v1 stored a raw population u32 here. v2–v4 the conflated `importance`
+			// float. v5 the referential score.
+			// A v1 file's population is mapped through the same curve `referentialFromPopulation` uses,
+			// so its value is genuinely referential — the only generation of this format for
+			// which that can be said without reading the source database.
 			const referential = isV2
 				? buf.readFloatLE(pp + 12)
 				: Math.min(1, Math.log2(1 + buf.readUInt32LE(pp + 12) / 1000) / 14)
 
-			// Per-place presence bit (v5+). A v4-and-below file has no encyclopedic channel at all,
-			// so the field stays undefined rather than reading the reserved byte as a flag.
+			// Per-place presence bit (v5+).
+			// A v4-and-below file has no encyclopedic channel at all, so the field stays undefined
+			// rather than reading the reserved byte as a flag.
 			const hasEncyclopedic =
 				isSplit && (buf.readUInt8(pp + 7) & PLACE_FLAG_HAS_ENCYCLOPEDIC) === PLACE_FLAG_HAS_ENCYCLOPEDIC
 

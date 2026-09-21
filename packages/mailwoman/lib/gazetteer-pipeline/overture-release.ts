@@ -29,6 +29,7 @@ const BUCKET_URL = "https://overturemaps-us-west-2.s3.amazonaws.com"
  */
 /**
  * What this function needs from an http client: one `fetch`.
+ *
  * Narrower than {@link APIClient} on purpose — a parameter shaped like the whole
  * client makes a test double an assertion rather than an object, and the assertion
  * then survives a signature change that the double does not.
@@ -42,10 +43,11 @@ export interface OvertureListingClient {
 }
 
 /**
- * S3 returns at most 1,000 keys per `ListObjectsV2` response and reports the truncation
- * in `IsTruncated`. A reader that only matches `<Prefix>` cannot see that field,
- * so a truncated first page reads as the whole bucket — and every release past the truncation
- * reads as pruned, which is the one answer this module exists to give correctly.
+ * S3 returns at most 1,000 keys per `ListObjectsV2` response and reports the truncation in `IsTruncated`.
+ *
+ * A reader that only matches `<Prefix>` cannot see that field, so a truncated first page
+ * reads as the whole bucket — and every release past the truncation reads as pruned,
+ * which is the one answer this module exists to give correctly.
  */
 const LISTING_PAGE_LIMIT = 100
 
@@ -74,8 +76,9 @@ export async function listOvertureReleases(client?: OvertureListingClient): Prom
 
 		const body = String(response.data)
 
-		// Every `<Prefix>` element, which includes the request echo `<Prefix>release/</Prefix>` beside the
-		// `<CommonPrefixes>` entries. The echo reduces to an empty name and is dropped with any other.
+		// Every `<Prefix>` element, which includes the request echo `<Prefix>release/</Prefix>`
+		// beside the `<CommonPrefixes>` entries.
+		// The echo reduces to an empty name and is dropped with any other.
 		for (const prefix of elementTexts(body, "Prefix", { xml: true })) {
 			const release = prefix.replace(/^release\//, "").replace(/\/$/, "")
 
@@ -107,8 +110,10 @@ export interface ReleaseCheck {
 	present: boolean
 	available: string[]
 	/**
-	 * `undefined` when the listing itself failed. An unreachable bucket is not evidence that
-	 * a release was pruned, and a build must not refuse to start because the network blinked.
+	 * `undefined` when the listing itself failed.
+	 *
+	 * An unreachable bucket is not evidence that a release was pruned, and a build
+	 * must not refuse to start because the network blinked.
 	 */
 	reachable: boolean
 	message: string
@@ -136,10 +141,11 @@ export async function checkOvertureRelease(release: string, client?: OvertureLis
 		}
 	}
 
-	// An empty listing is not an empty bucket. Overture has never held zero releases,
-	// so nothing-found means the query was wrong or the response was not the listing —
-	// and the first version of this file proved the point by dropping its own query parameters
-	// and then reporting a live pin as pruned. Zero is treated as no answer, never as absence.
+	// An empty listing is not an empty bucket.
+	// Overture has never held zero releases, so nothing-found means the query was wrong
+	// or the response was not the listing — and the first version of this file proved the
+	// point by dropping its own query parameters and then reporting a live pin as pruned.
+	// Zero is treated as no answer, never as absence.
 	if (!available.length) {
 		return {
 			release,

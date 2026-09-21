@@ -65,6 +65,7 @@ export const spec = {
 
 /**
  * The packaged skill's source directory, resolved relative to this package's root.
+ *
  * See the module docstring for why two candidate distances are tried —
  * exactly one exists on disk in any given tree.
  */

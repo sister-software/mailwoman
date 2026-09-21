@@ -27,8 +27,9 @@ describe("assessAdminCoherence — region verdicts", () => {
 	})
 
 	it("unverifiable when the winner carries no region-class ancestry (the candidate-tier finding)", () => {
-		// `Weimar, Thüringen` → Weimar TX: the qualifier was parsed, the winner has no ancestry
-		// of that class to check it against. This must not read as confirmed or contradicted.
+		// `Weimar, Thüringen` → Weimar TX: the qualifier was parsed, the winner has
+		// no ancestry of that class to check it against.
+		// This must not read as confirmed or contradicted.
 		expect(assessAdminCoherence({ region: "Thüringen" }, weimarTexas).region).toBe("unverifiable")
 	})
 
@@ -55,9 +56,9 @@ describe("assessAdminCoherence — region verdicts", () => {
 	})
 
 	it("contradicted on a cross-language variant form — the stated v1 bound", () => {
-		// "Thüringen" folds to "thuringen", the stored exonym "Thuringia" to "thuringia":
-		// fold equality cannot bridge the variant, and v1 deliberately does not consult the
-		// gazetteer's alias table. Documented in the module docstring. this test pins the bound.
+		// "Thüringen" folds to "thuringen", the stored exonym "Thuringia" to "thuringia": fold equality
+		// cannot bridge the variant, and v1 deliberately does not consult the gazetteer's alias table.
+		// Documented in the module docstring. this test pins the bound.
 		const winner: AdminCoherenceWinner = {
 			tag: "locality",
 			countryCode: "DE",
@@ -103,9 +104,9 @@ describe("assessAdminCoherence — region verdicts", () => {
 	})
 
 	it("the mislabel bridge: a COUNTRY name in the region slot confirms against country-class evidence", () => {
-		// "Batumi, Georgia" parses region="Georgia" and resolves Batumi GE —
-		// the region band (Adjara) cannot match, but the winner's country-class evidence
-		// can, and `contradicted` would be the wrong claim about the geography.
+		// "Batumi, Georgia" parses region="Georgia" and resolves Batumi GE — the region
+		// band (Adjara) cannot match, but the winner's country-class evidence can,
+		// and `contradicted` would be the wrong claim about the geography.
 		// The bridge runs through the same winnerCountryKeys the country verdict reads,
 		// so the two verdicts can never disagree about country evidence.
 		const batumi: AdminCoherenceWinner = {
@@ -197,8 +198,9 @@ describe("assessAdminCoherence — country verdicts", () => {
 	})
 
 	it("contradicted on an uncurated endonym — the stated v1 bound for the country side", () => {
-		// "Alemania" is not in the codex surface forms for DE, so neither the ISO channel nor
-		// the fold can vouch for it against a DE winner. The module never silently over-claims.
+		// "Alemania" is not in the codex surface forms for DE, so neither the ISO channel
+		// nor the fold can vouch for it against a DE winner.
+		// The module never silently over-claims.
 		const germany: AdminCoherenceWinner = { tag: "locality", countryCode: "DE" }
 
 		expect(assessAdminCoherence({ country: "Alemania" }, germany).country).toBe("contradicted")

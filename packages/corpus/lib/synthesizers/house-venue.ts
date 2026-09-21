@@ -66,8 +66,10 @@ export interface SynthesizedHouseVenueRow {
 //#region Venue pool
 
 /**
- * Plain venue names, carrying no street-typing tokens. This recipe output teaches house_number + venue
- * coexistence rather than decompose-mode pressure — adversarial venue names live in `no-street.ts`.
+ * Plain venue names, carrying no street-typing tokens.
+ *
+ * This recipe output teaches house_number + venue coexistence rather than decompose-mode
+ * pressure — adversarial venue names live in `no-street.ts`.
  */
 const PLAIN_VENUES: ReadonlyArray<string> = [
 	"Bob's Pizza",
@@ -104,12 +106,12 @@ const PLAIN_VENUES: ReadonlyArray<string> = [
 ]
 
 /**
- * GB-flavored venue names (#1366): institutional forms (Club/Centre/House/Arms/Station),
- * the "Ye" archaic register, and brand–dash–place compounds — including
- * directional-led names, because the target class is venues that open with compass
- * words ("New North Health Centre", "Southfields Station") and the base model reads
- * those as locality/street evidence. The six #1366 gauntlet fixtures' own venue
- * names are deliberately absent — the fixtures stay held-out.
+ * GB-flavored venue names (#1366): institutional forms (Club/Centre/House/Arms/Station), the "Ye"
+ * archaic register, and brand–dash–place compounds — including directional-led names, because the target
+ * class is venues that open with compass words ("New North Health Centre", "Southfields Station")
+ * and the base model reads those as locality/street evidence.
+ *
+ * The six #1366 gauntlet fixtures' own venue names are deliberately absent — the fixtures stay held-out.
  */
 const GB_VENUES: ReadonlyArray<string> = [
 	"Ye Olde Cheshire Cheese",
@@ -148,6 +150,7 @@ const GB_VENUES: ReadonlyArray<string> = [
 
 /**
  * Stand-in streets for tuples that carried no `street` field.
+ *
  * Plain names, no typing-token ambiguity.
  */
 const FALLBACK_STREETS: ReadonlyArray<string> = [
@@ -173,8 +176,9 @@ const FALLBACK_STREETS: ReadonlyArray<string> = [
 //#region House-number generator
 
 function randomHouseNumber(random: () => number): string {
-	// Generate a plain numeric house number 1-9999. No fractions/ranges — those land in
-	// `data/eval/falsehoods/numbers.jsonl` as known edge cases rather than training material.
+	// Generate a plain numeric house number 1-9999.
+	// No fractions/ranges — those land in `data/eval/falsehoods/numbers.jsonl` as
+	// known edge cases rather than training material.
 	const digits = Math.floor(random() * 4) + 1
 	const max = Math.pow(10, digits)
 	const n = Math.floor(random() * max) + 1
@@ -196,6 +200,7 @@ const GB_VENUE_POOL_RATE = 0.7
 
 /**
  * Fraction of GB rows whose house number widens into a range ("287-293").
+ *
  * Real GB venue addresses frequently span buildings. 0.15 keeps ranges a minority
  * register — pre-registered in the #1366 memo.
  */
@@ -203,6 +208,7 @@ const GB_RANGE_NUMBER_RATE = 0.15
 
 /**
  * Fraction of rows (every template order) rendered with a trailing country surface, tagged `country`.
+ *
  * The 2026-08-01 operator probe set showed that the implementation worked: the FR control
  * row ("…, 75004 Paris, France") fails on a model trained only on country-less venue rows
  * while its country-less twin passes — a trailing country makes the whole template OOD
@@ -247,9 +253,10 @@ export function synthesizeHouseVenueRow(
 	// Every row this synthesizer emits carries a venue, a street and a house number,
 	// so the surface is taught with the alternatives present rather than against them.
 
-	// GB rows draw from the GB pool 70% of the time (institutional/archaic/brand-dash-place forms,
-	// incl. directional-led names — the #1366 target class) and the shared pool otherwise. real GB
-	// registers mix both. Other locales keep the shared pool (which already carries the FR flavor).
+	// GB rows draw from the GB pool 70% of the time (institutional/archaic/brand-dash-place
+	// forms, incl. directional-led names — the #1366 target class) and the shared
+	// pool otherwise. real GB registers mix both.
+	// Other locales keep the shared pool (which already carries the FR flavor).
 	const venue = gbOrder && random() < GB_VENUE_POOL_RATE ? sample(GB_VENUES, random) : sample(PLAIN_VENUES, random)
 	const street = base.street ?? sample(FALLBACK_STREETS, random)
 	let houseNumber = base.houseNumber ?? randomHouseNumber(random)
@@ -280,9 +287,9 @@ export function synthesizeHouseVenueRow(
 	// GB's layout now marks the break before its postcode soft, so
 	// `formatAddress(…, { singleLine: true })` answers `27 Minories, London EC3N 1DE` — the form
 	// #1366 pinned and three tests assert — while the multi-line render keeps the post town and the postcode on their
-	// own lines. Migrating these four to `formatAddress` changes what the recipe
-	// emits for every locale it covers, so it is a measured change of its own
-	// rather than a consequence of the layout decision (#2313).
+	// own lines.
+	// Migrating these four to `formatAddress` changes what the recipe emits for every locale it covers,
+	// so it is a measured change of its own rather than a consequence of the layout decision (#2313).
 	let tail = frOrder
 		? `${base.postcode} ${base.locality}`
 		: gbOrder
@@ -317,6 +324,7 @@ export function synthesizeHouseVenueRow(
 /**
  * Interface: every synthesized row carries both house_number and venue
  * (the co-occurrence signal that synth-no-street's distributional shift cost the model).
+ *
  * Used by tests + downstream consumers.
  */
 export function hasHouseNumberAndVenue(components: CanonicalRow["components"]): boolean {

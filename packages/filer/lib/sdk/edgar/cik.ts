@@ -10,6 +10,7 @@ import type { Tagged } from "type-fest"
 
 /**
  * SEC edgar's Central Index Key: always a zero-padded 10-digit string.
+ *
  * Branded over `string`, mirroring
  * {@linkcode FRN}'s (`frn.ts`) identical rationale — a bare, unpadded numeric CIK would collide with itself under a
  * naive string comparison once padding is inconsistently applied.
@@ -27,6 +28,7 @@ export function isCIK(value: unknown): value is CIK {
 
 /**
  * Zero-pads a numeric or string CIK candidate to the canonical 10-digit form and validates it.
+ *
  * Returns `null` (never throws) for anything that isn't a non-negative integer fitting
  * in 10 digits — mirrors {@linkcode toFRN}'s (`frn.ts`) "malformed input is common
  * rather than exceptional" posture for a value drawn from third-party data
@@ -45,9 +47,9 @@ export function toCIK(value: string | number): CIK | null {
 /**
  * The subset of `SECClient` (`sec-client.ts`) this module needs — {@linkcode fetchCompanyTickers}/
  * {@linkcode fetchTenKFilings} take this rather than the concrete class so a test can substitute a trivial stub instead
- * of building a full axios harness. A real `createSECClient()` instance already
- * satisfies this structurally. the production caller always passes one, so this stays
- * "go through the existing SEC client", never a second fetcher.
+ * of building a full axios harness.
+ * A real `createSECClient()` instance already satisfies this structurally. the production caller
+ * always passes one, so this stays "go through the existing SEC client", never a second fetcher.
  */
 export interface SECGetClient {
 	get<T>(input: string | URL): Promise<T>
@@ -122,6 +124,7 @@ export async function fetchCompanyTickers(client: SECGetClient): Promise<Company
 
 /**
  * Edgar's `cik-lookup-data.txt` — the full registrant index, including entities without a ticker.
+ *
  * The format is one entry per line, colon-delimited:
  *
  *     company name:0001234567:
@@ -135,8 +138,8 @@ export async function fetchCompanyTickers(client: SECGetClient): Promise<Company
  *
  * **1,054,085 entries → one `resolveCIKCandidates` call scores all of them.** The
  * function does a single O(n) pass with a cheap `nameSimilarity` call per entry, which is
- * fast enough for a tool that runs once per vintage. A caller running thousands of
- * queries should build a prefix index instead. that is not this.
+ * fast enough for a tool that runs once per vintage.
+ * A caller running thousands of queries should build a prefix index instead. that is not this.
  */
 export function parseCIKLookupData(text: string): CompanyTickerEntry[] {
 	const entries: CompanyTickerEntry[] = []
@@ -173,8 +176,10 @@ export function parseCIKLookupData(text: string): CompanyTickerEntry[] {
 }
 
 /**
- * One name→CIK candidate {@linkcode resolveCIKCandidates} reports — never the answer, just a scored
- * possibility. See the module docstring for why this function refuses to pick a single winner.
+ * One name→CIK candidate {@linkcode resolveCIKCandidates} reports — never the answer,
+ * just a scored possibility.
+ *
+ * See the module docstring for why this function refuses to pick a single winner.
  */
 export interface CIKCandidate {
 	cik: CIK
@@ -200,12 +205,14 @@ export interface CIKCandidate {
 export interface ResolveCIKOptions {
 	/**
 	 * Minimum score a candidate must clear to be reported at all.
+	 *
 	 * Defaults to {@linkcode DEFAULT_MIN_SCORE} — `nameSimilarity`'s own Jaro-Winkler boost
 	 * threshold, below which two names have no meaningful similarity at all.
 	 */
 	minScore?: number
 	/**
 	 * Cap on the number of candidates returned, highest score first.
+	 *
 	 * Defaults to {@linkcode DEFAULT_CANDIDATE_LIMIT} — `company_tickers.json` carries
 	 * 10,000+ rows, and reporting the whole tail below a real match is noise.
 	 *
@@ -225,7 +232,8 @@ function canonicalOf(name: string): string {
 /**
  * Score every `tickers` entry against `companyName` (both sides reduced through
  * {@linkcode canonicalizeOrganizationName} before comparison) and return every candidate at or above `minScore`,
- * highest score first — never a single pick. See the module docstring for the false-identity-link rationale.
+ * highest score first — never a single pick.
+ * See the module docstring for the false-identity-link rationale.
  *
  * **The tie rule is the actual enforcement mechanism rather than the docstring alone.**
  * Sorting by score and reporting `score` per candidate is necessary but not sufficient —
@@ -233,21 +241,25 @@ function canonicalOf(name: string): string {
  * would otherwise see the ambiguity vanish behind a plain `.slice(0, limit)`.
  * So a genuine tie for the TOP score is reported in full regardless of `limit`: querying
  * `"American Broadband"` against a ticker file naming both `"American Broadband LLC"`
- * and `"American Broadband, Inc."` (disjoint CIKs, identical canonical form) with `limit: 1`
- * still returns both, each at score `1` — the exact 3a lesson this module exists to not repeat.
+ * and `"American Broadband, Inc."`
+ *
+ * (disjoint CIKs, identical canonical form) with `limit: 1` still returns both,
+ * each at score `1` — the exact 3a lesson this module exists to not repeat.
  * `limit` only ever trims the tail strictly below the top score.
  *
- * **Candidates are collapsed to one row per CIK before any of that runs, and the tie rule
- * depends on it.** `company_tickers.json` carries one row per ticker, so a registrant
- * filed under several share classes appears several times under a single CIK — resolving
- * `"Liberty Broadband Corporation"` on 2026-08-03 returned CIK `0001611983` four times,
- * each scoring 1.0, and the same phantom tie appeared for Comcast, AT&T, T-Mobile
- * and Telephone and Data Systems. Left uncollapsed those duplicates trip the tie rule,
- * which then suppresses `limit` and hands a caller the same company back N times as
- * though it were an unresolved ambiguity. The rule exists for a collision between different
- * companies. one company's share classes are not one. Per CIK the highest-scoring row wins
- * (first seen wins within an exact score tie, so the result is deterministic in ticker-file order),
- * which is what keeps the reported `companyName`/`ticker` the ones that actually matched.
+ * **Candidates are collapsed to one row per CIK before any of that runs,
+ * and the tie rule depends on it.** `company_tickers.json` carries one row per ticker,
+ * so a registrant filed under several share classes appears several times under a single CIK —
+ * resolving `"Liberty Broadband Corporation"` on 2026-08-03 returned CIK `0001611983`
+ * four times, each scoring 1.0, and the same phantom tie appeared for Comcast,
+ * AT&T, T-Mobile and Telephone and Data Systems.
+ * Left uncollapsed those duplicates trip the tie rule, which then suppresses `limit`
+ * and hands a caller the same company back N times as though it were an unresolved ambiguity.
+ *
+ * The rule exists for a collision between different companies. one company's share classes are not one.
+ * Per CIK the highest-scoring row wins (first seen wins within an exact score tie,
+ * so the result is deterministic in ticker-file order), which is what keeps the
+ * reported `companyName`/`ticker` the ones that actually matched.
  */
 export function resolveCIKCandidates(
 	companyName: string,

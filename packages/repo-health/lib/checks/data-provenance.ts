@@ -35,8 +35,8 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 /**
  * Extensions a `data/` directory holds that this check reads as an artifact.
  *
- * A README, a `PROVENANCE.md` and a license file are prose about the directory
- * rather than data in it. Everything else committed there is something a consumer loads.
+ * A README, a `PROVENANCE.md` and a license file are prose about the directory rather than data in it.
+ * Everything else committed there is something a consumer loads.
  */
 const ARTIFACT_EXTENSIONS: ReadonlySet<string> = new Set([".json", ".jsonl", ".csv", ".tsv", ".bin", ".txt"])
 
@@ -73,10 +73,10 @@ function immediateSubdirectories(trackedFiles: readonly string[], directory: str
  * Reads every package's `data` directory that carries a `PROVENANCE.md`
  * and reports each artifact the file does not name.
  *
- * Scoped to directories that already have one. A `data/` directory with no
- * `PROVENANCE.md` is a different claim — that the directory should have one at all —
- * and making this check assert it would turn a documentation gap in unrelated packages
- * into a failing build on the commit that adds this file.
+ * Scoped to directories that already have one.
+ * A `data/` directory with no `PROVENANCE.md` is a different claim — that the directory
+ * should have one at all — and making this check assert it would turn a documentation gap
+ * in unrelated packages into a failing build on the commit that adds this file.
  *
  * Registered in `#registry`, so `mwops health data-provenance` runs it.
  */

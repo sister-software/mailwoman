@@ -93,8 +93,9 @@ const GazetteerPostalCity: CommandComponent<typeof spec> = ({ options }) => {
 			alias.prepare("SELECT postcode, postal_city FROM postal_city_alias WHERE divergent = 1")
 		)
 
-		// DDL via the Kysely schema-builder (the house idiom); the hot insert loop below stays on the
-		// raw `node:sqlite` handle for speed. `db` wraps `db` — the two share the one connection.
+		// DDL via the Kysely schema-builder (the house idiom); the hot insert loop below
+		// stays on the raw `node:sqlite` handle for speed.
+		// `db` wraps `db` — the two share the one connection.
 		await db.schema.dropTable(POSTAL_CITY_CANDIDATE_TABLE).ifExists().execute()
 		await createPostalCityCandidateTable(db)
 

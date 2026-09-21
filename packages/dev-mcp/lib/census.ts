@@ -37,6 +37,7 @@ import { inputSetProvenance, provenanceFor } from "#tool-kit"
 
 /**
  * Mechanisms whose L1 zero is expected, each with the reason a reader can check.
+ *
  * The census reports them as `allowlisted`, never as inert — and an allowlisted mechanism
  * that unexpectedly fires is reported loudly, because the reason on file is then stale.
  */
@@ -92,7 +93,9 @@ export interface CensusAggregate {
 	 */
 	evidence_silent_rows: string[]
 	/**
-	 * Mechanisms at zero L1 across every row, minus the allowlist. The finding.
+	 * Mechanisms at zero L1 across every row, minus the allowlist.
+	 *
+	 * The finding.
 	 */
 	inert: Array<{ mechanism: string; l0_present: number; note: string }>
 	/**
@@ -102,7 +105,9 @@ export interface CensusAggregate {
 }
 
 /**
- * Aggregate one traced run per row into the census. Pure, so the arithmetic is testable without an engine.
+ * Aggregate one traced run per row into the census.
+ *
+ * Pure, so the arithmetic is testable without an engine.
  */
 export function aggregateCensus(rows: Array<{ id: string; input: string; parse: NeuralParseTrace }>): {
 	aggregate: CensusAggregate

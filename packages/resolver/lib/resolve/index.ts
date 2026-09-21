@@ -70,9 +70,10 @@ import {
 } from "#toponym-prior"
 
 /**
- * Build a `Resolver` backed by a `ResolverBackend`. The backend can be
- * any concrete impl structurally compatible with `PlaceLookup` — e.g.
- * `new WOFSQLitePlaceLookup({ databasePath }).asResolverBackend()` or a fake for tests.
+ * Build a `Resolver` backed by a `ResolverBackend`.
+ *
+ * The backend can be any concrete impl structurally compatible with `PlaceLookup` —
+ * e.g. `new WOFSQLitePlaceLookup({ databasePath }).asResolverBackend()` or a fake for tests.
  */
 export { DEFAULT_POSTCODE_MAX_MOVE_KM } from "#resolve/passes"
 
@@ -86,13 +87,14 @@ export function createWOFResolver(backend: ResolverBackend): Resolver {
  * "SW1A 1AA, UK" under the en-US default parsed correctly and still failed: the walk
  * resolved the country node to GB, but a sibling's resolution never scopes a sibling —
  * the postcode lookup ran under the locale-inferred `country=US` hard filter and missed.
+ *
  * An explicit country token is the address's own scope declaration, which outranks a
  * locale inference the same way the #912 posture ranks explicit over inferred.
  *
- * Deterministically guarded: exactly one country-tagged node, whose value
- * `matchCountry` maps to one ISO country, and whose value is not also a subdivision
- * name — "Georgia" maps to GE _and_ names a US state, so it never pre-scopes
- * (the existing coherence passes keep handling it). Returns the alpha-2 or null.
+ * Deterministically guarded: exactly one country-tagged node, whose value `matchCountry` maps
+ * to one ISO country, and whose value is not also a subdivision name — "Georgia" maps to GE
+ * _and_ names a US state, so it never pre-scopes (the existing coherence passes keep handling it).
+ * Returns the alpha-2 or null.
  */
 function explicitCountryScope(roots: readonly AddressNode[]): string | null {
 	const countryNodes = collectNodes(roots, (node) => node.tag === "country" && node.value.trim())
@@ -118,8 +120,10 @@ class WOFResolver implements Resolver {
 	readonly artifactCoverage: Resolver["artifactCoverage"]
 	/**
 	 * Optional backend methods this backend omits, each naming the default-on option it silently disables.
-	 * Computed once here rather than at each guard site so a caller can read the gap before running
-	 * a query that would quietly skip the feature. See `backend-capabilities.ts`.
+	 *
+	 * Computed once here rather than at each guard site so a caller can read the gap
+	 * before running a query that would quietly skip the feature.
+	 * See `backend-capabilities.ts`.
 	 */
 	readonly capabilityGaps: readonly BackendCapabilityGap[]
 
@@ -131,19 +135,22 @@ class WOFResolver implements Resolver {
 	}
 
 	/**
-	 * The `Resolver.findPlace` passthrough — one direct gazetteer probe for pipeline-level consumers
-	 * (#1738's dominant-bearer guard). Bound as a method so `this.#backend` stays private.
+	 * The `Resolver.findPlace` passthrough — one direct gazetteer probe for
+	 * pipeline-level consumers (#1738's dominant-bearer guard).
+	 *
+	 * Bound as a method so `this.#backend` stays private.
 	 */
 	findPlace: Resolver["findPlace"] = (query) => this.#backend.findPlace(query)
 
 	async resolveTree(tree: AddressTree, opts: ResolveOpts = {}): Promise<AddressTree> {
 		// Postcode-shape coherence (#31, Mechanism 1): the earliest pass in the tree —
-		// pure-sync and backend-free, run before `state.postcode` is read so an excluded span
-		// can never become the address's postcode. Opt-in (`postcodeShapeCoherence: true`),
-		// off by default (D-rule: demotion is the failure mode with teeth).
+		// pure-sync and backend-free, run before `state.postcode` is read so an excluded
+		// span can never become the address's postcode.
+		// Opt-in (`postcodeShapeCoherence: true`), off by default
+		// (D-rule: demotion is the failure mode with teeth).
 		// A confirmed span's narrowed systems — the intersection of its codex shape with
-		// the tree's confident sibling systems — bound the country-scope pass below. a
-		// pure subset of codex's own candidate list, so it can only narrow, never widen.
+		// the tree's confident sibling systems — bound the country-scope pass below. a pure
+		// subset of codex's own candidate list, so it can only narrow, never widen.
 		// See postcode-shape-coherence.ts.
 		const shapeVerdict = opts.postcodeShapeCoherence === true ? applyPostcodeShapeCoherence(tree.roots) : null
 
@@ -185,8 +192,8 @@ class WOFResolver implements Resolver {
 			// (the browser wasm resolver, or a gazetteer without `coincident_roles`).
 			// Pass `hierarchyCompletion: false` to opt out.
 			//
-			// Default-on is nominal on the shipped backend: `WOFCandidateTableLookup`
-			// implements no `coincidentLocalitiesFor`, so this attaches nothing there.
+			// Default-on is nominal on the shipped backend: `WOFCandidateTableLookup` implements
+			// no `coincidentLocalitiesFor`, so this attaches nothing there.
 			// Measured 2026-08-15 on FTS, which does implement it, the flag changed 0 of
 			// 837 board inputs — see ResolveOpts.hierarchyCompletion.
 			hierarchyCompletion: opts.hierarchyCompletion ?? true,
@@ -202,16 +209,17 @@ class WOFResolver implements Resolver {
 		}
 
 		// Postcode-country coherence (#42): the one pre-walk lookup pass
-		// (the shape verdict above is pure-sync, backend-free), and the only mechanism allowed to
-		// override `defaultCountry`. Its three sibling coherence passes re-pick nodes after the walk.
-		// that shape cannot work here, because what needs correcting is the walk's country scope —
+		// (the shape verdict above is pure-sync, backend-free), and the only mechanism
+		// allowed to override `defaultCountry`.
+		// Its three sibling coherence passes re-pick nodes after the walk. that shape
+		// cannot work here, because what needs correcting is the walk's country scope —
 		// which poisons the postcode node's own resolution, the postcode-consistency fallback that
 		// then drags the locality onto it, and the hard `country` filter on every admin lookup.
 		// So the verdict is taken once, up front, and the walk runs under the corrected country.
 		// Default-on (operator-promoted 2026-08-05; `false` opts out) — needs a default
 		// country to correct and both a postcode and a locality to be coherent about. abstains
-		// unless exactly one country (never the already-coherent default) makes the
-		// pair consistent. See postcode-country-coherence.ts.
+		// unless exactly one country (never the already-coherent default) makes the pair consistent.
+		// See postcode-country-coherence.ts.
 		let postcodeScope: PostcodeCountryScope | null = null
 
 		// The pass also runs with no default in force (#1585/#861 convergence): there is nothing
@@ -220,10 +228,11 @@ class WOFResolver implements Resolver {
 		// SI row coherent with the SI 6250 centroid instead of the more-populous Polish namesake.
 		// The browser cascade (which sets no default by design) is the consumer this exists for.
 		// #1735 second half: the address's own country statement scopes the walk before anything
-		// resolves — a sibling's resolution never reaches a sibling, so without this the
-		// postcode lookup in "RM10 8AB, UK" ran under the locale-inferred US filter while the
-		// country node resolved to GB beside it. Explicit-over-inferred, the #912 precedence,
-		// decided from the tree's own text. an explicit caller scope is never overridden.
+		// resolves — a sibling's resolution never reaches a sibling, so without this
+		// the postcode lookup in "RM10 8AB, UK" ran under the locale-inferred US filter
+		// while the country node resolved to GB beside it.
+		// Explicit-over-inferred, the #912 precedence, decided from the tree's own
+		// text. an explicit caller scope is never overridden.
 		let explicitScope: string | null = null
 
 		if (!state.defaultCountry || state.defaultCountryIsInferred) {
@@ -246,7 +255,8 @@ class WOFResolver implements Resolver {
 			})
 
 			if (postcodeScope) {
-				// The override. `hardCountry` is not cleared because it is never consulted while a `defaultCountry`
+				// The override.
+				// `hardCountry` is not cleared because it is never consulted while a `defaultCountry`
 				// is set (`#lookupAndPick`'s precedence chain reaches it only as the last fallback),
 				// so replacing the default is sufficient to re-scope the entire walk.
 				state.defaultCountry = postcodeScope.country
@@ -259,7 +269,8 @@ class WOFResolver implements Resolver {
 			newRoots.push(await this.#walk(root, /* parentResolved */ null, state))
 		}
 
-		// Attribution for the override, stamped on the two nodes that bought it. Additive metadata only.
+		// Attribution for the override, stamped on the two nodes that bought it.
+		// Additive metadata only.
 		if (postcodeScope) {
 			stampPostcodeCountryScope(newRoots, postcodeScope)
 		}
@@ -278,11 +289,12 @@ class WOFResolver implements Resolver {
 			}
 		}
 
-		// Dual-role hierarchy completion (#405/#415). Only when enabled, a region resolved,
-		// and the parser emitted no locality — record the dropped locality as a secondary
-		// role (an interpretation) on the resolved region node, from the backend's
-		// precomputed coincident-roles relation (#403). One node, one span, two roles —
-		// no synthesized sibling. See ResolveOpts.hierarchyCompletion.
+		// Dual-role hierarchy completion (#405/#415).
+		// Only when enabled, a region resolved, and the parser emitted no locality —
+		// record the dropped locality as a secondary role (an interpretation) on the resolved
+		// region node, from the backend's precomputed coincident-roles relation (#403).
+		// One node, one span, two roles — no synthesized sibling.
+		// See ResolveOpts.hierarchyCompletion.
 		if (state.hierarchyCompletion && state.resolvedRegion && state.resolvedRegionNode && !state.localityNodePresent) {
 			this.#completeRegionRole(state.resolvedRegion, state.resolvedRegionNode)
 		}
@@ -322,7 +334,8 @@ class WOFResolver implements Resolver {
 
 		// Address-point tier (#476): opt-in street-level exact match.
 		// After the admin walk so the tier can never disturb admin attribution —
-		// it only adds the precise coordinate. Byte-stable when opts.addressPoints is absent.
+		// it only adds the precise coordinate.
+		// Byte-stable when opts.addressPoints is absent.
 		if (opts.addressPoints) {
 			applyAddressPoint(newRoots, opts.addressPoints, opts.addressPointBboxFallback)
 		}
@@ -339,9 +352,10 @@ class WOFResolver implements Resolver {
 		// runs when every other tier left the tree unresolved, hence inert on the well-resolved US path).
 		// Explicit opt-OUT via `spanRescore: false`; byte-stable then.
 		//
-		// A refused node is skipped too. `applySpanRescore` returns early only on a tree that
-		// already holds a resolved place, so a `minWinningScore` refusal leaves exactly the state it
-		// treats as its invitation, and the recovery re-answers the lookup the floor just declined.
+		// A refused node is skipped too.
+		// `applySpanRescore` returns early only on a tree that already holds a resolved place,
+		// so a `minWinningScore` refusal leaves exactly the state it treats as its invitation,
+		// and the recovery re-answers the lookup the floor just declined.
 		// Refusing and resolving nothing are different intents. only one of them wants recovery.
 		if (opts.spanRescore !== false && state.minScoreRefusals === 0) {
 			await applySpanRescore(newRoots, tree.raw, this.#backend, opts)
@@ -357,11 +371,11 @@ class WOFResolver implements Resolver {
 			applyAddressPoint(newRoots, opts.addressPoints, opts.addressPointBboxFallback)
 		}
 
-		// Street-centroid tier (#1042): last, after span-rescore, so it can (a)
-		// union the span-rescore-recovered country into its FR/national country
-		// hints (a placer-misrouted street — "Rue Sainte-Catherine" → IT —
-		// leaves admin unresolved, and only span-rescore recovers the FR country signal)
-		// and (b) override a coarse recovered locality with the exact street centroid.
+		// Street-centroid tier (#1042): last, after span-rescore, so it can (a) union
+		// the span-rescore-recovered country into its FR/national country hints
+		// (a placer-misrouted street — "Rue Sainte-Catherine" → IT — leaves admin unresolved,
+		// and only span-rescore recovers the FR country signal) and (b) override a coarse
+		// recovered locality with the exact street centroid.
 		// Applies only when there is no house number + no existing street-level tier,
 		// so a rooftop query is untouched. byte-stable when opts.streetCentroids absent.
 		if (opts.streetCentroids) {
@@ -378,6 +392,7 @@ class WOFResolver implements Resolver {
 	 * backend query), picks the principal city ({@link pickCompletion}: population-primary, distance
 	 * tiebreak, abstain on a genuine tie), and appends an interpretation to `regionNode.interpretations`.
 	 * No-op when the backend has no relation, the region isn't a dual-role place, or it abstains.
+	 *
 	 * The region node's primary role stays `region`; the locality rides alongside.
 	 */
 	#completeRegionRole(region: CoordinateOptionalPlace, regionNode: AddressNode): void {
@@ -409,9 +424,9 @@ class WOFResolver implements Resolver {
 
 		const placetype = state.placetypeMap[node.tag as ComponentTag]
 
-		// Track locality presence for hierarchy completion (#405): completion must not fire if
-		// the parser already emitted a locality node (even one that failed to resolve) — it only
-		// fills a genuine gap. Cheap and always-on. only consulted when hierarchyCompletion is set.
+		// Track locality presence for hierarchy completion (#405): completion must not fire if the parser
+		// already emitted a locality node (even one that failed to resolve) — it only fills a genuine gap.
+		// Cheap and always-on. only consulted when hierarchyCompletion is set.
 		if (placetype === "locality") {
 			state.localityNodePresent = true
 		}
@@ -460,8 +475,8 @@ class WOFResolver implements Resolver {
 				// which is a correct coordinate under a label that will mislead the moment
 				// the same toponym appears inside a longer address.
 				//
-				// The repick metadata already marks exactly these nodes, so the correction
-				// is free: retrieval established the placetype, and the tag follows it.
+				// The repick metadata already marks exactly these nodes, so the correction is free:
+				// retrieval established the placetype, and the tag follows it.
 				// Only the race's own picks are retagged — an ordinary locality that
 				// resolved to a locality is untouched.
 				if (decorated.metadata?.["bare_country_repick"]) {
@@ -470,8 +485,8 @@ class WOFResolver implements Resolver {
 					decorated.tag = "region"
 				}
 
-				// Lineage attachment (#404): stamp the resolved place's ancestor
-				// chain onto metadata. Opt-in
+				// Lineage attachment (#404): stamp the resolved place's ancestor chain onto metadata.
+				// Opt-in
 				// + only when the backend supplies it, so the default stays byte-identical (no extra query).
 				if (state.includeAncestors && this.#backend.ancestors) {
 					decorated.metadata = { ...decorated.metadata, ancestors: this.#backend.ancestors(picked.top.id) }
@@ -499,8 +514,8 @@ class WOFResolver implements Resolver {
 	 * Which admin bands hold a value the probed band did not, keeping the country and dropping the parent.
 	 *
 	 * Bands come from `PLACETYPE_SPECIFICITY` rather than a list typed here:
-	 * that table is already the repo's answer to how coarse a placetype is,
-	 * and a second hand-kept copy would agree right up until a placetype is added.
+	 * that table is already the repo's answer to how coarse a placetype is, and a second
+	 * hand-kept copy would agree right up until a placetype is added.
 	 * Probed coarse-to-fine so the report reads down the admin ladder.
 	 */
 	async #probeOtherBands(
@@ -554,9 +569,9 @@ class WOFResolver implements Resolver {
 			query.bias = state.bias
 		}
 
-		// Pass the inherited parent constraint to the backend when available — `parentID`
-		// scopes to the resolved parent's descendants. For `country`: a resolved
-		// parent's country wins, else fall back to the caller's `defaultCountry`.
+		// Pass the inherited parent constraint to the backend when available —
+		// `parentID` scopes to the resolved parent's descendants.
+		// For `country`: a resolved parent's country wins, else fall back to the caller's `defaultCountry`.
 		// Without this top-level hint a bare "IL" over a multi-country gazetteer fuzzy-matches
 		// a foreign place (e.g. a French region) — see the Direction-C resolver eval.
 		if (parentResolved && typeof parentResolved.id === "number") {
@@ -580,9 +595,9 @@ class WOFResolver implements Resolver {
 		const countryHint = node.metadata?.["country_hint"]
 
 		// A locale-inferred default country never filters a `country`-placetype lookup:
-		// the span names a country outright, and the filter can only admit the scope country
-		// itself (bare "Germany" under the en-US default filtered out the DE row. the unresolved
-		// span then fell to a US locality whose historical alias is "Germany, Ohio").
+		// the span names a country outright, and the filter can only admit the scope country itself
+		// (bare "Germany" under the en-US default filtered out the DE row. the unresolved span
+		// then fell to a US locality whose historical alias is "Germany, Ohio").
 		// An explicit caller scope stays supreme, matching the #912 posture. parent evidence
 		// and the confident placer are untouched.
 		const defaultCountryForLookup =
@@ -605,9 +620,9 @@ class WOFResolver implements Resolver {
 			query.fuzzyCountry = state.fuzzyCountryScope
 		}
 
-		// Admin-containment re-rank (#1717 stage 2): thread the tree's region qualifier
-		// onto locality lookups so a capable backend can vouch for (and surface) the
-		// candidates that sit under it. Stands down under an explicit caller country scope
+		// Admin-containment re-rank (#1717 stage 2): thread the tree's region qualifier onto locality
+		// lookups so a capable backend can vouch for (and surface) the candidates that sit under it.
+		// Stands down under an explicit caller country scope
 		// (the #912 posture — only a locale-inferred scope is bypassable by the address's own evidence);
 		// the resolved-parent and placer scopes are left alone, since a resolved parent
 		// usually is the qualifier and the injection dedupes.
@@ -621,12 +636,12 @@ class WOFResolver implements Resolver {
 			query.regionQualifier = state.regionQualifier
 		}
 
-		// Coordinate-first: hand the sibling postcode to locality lookups so the
-		// backend can inject postcode-proximal candidates the name-match would miss.
+		// Coordinate-first: hand the sibling postcode to locality lookups so the backend
+		// can inject postcode-proximal candidates the name-match would miss.
 		// Only for locality (the placetype both `locality` and `dependent_locality` map to);
-		// other placetypes ignore it. The containment flag (#31, Mechanism 2) asks
-		// a coordinate-first backend to re-rank the candidates by proximity to the
-		// postcode's own centroid — opt-in, off by default.
+		// other placetypes ignore it.
+		// The containment flag (#31, Mechanism 2) asks a coordinate-first backend to re-rank
+		// the candidates by proximity to the postcode's own centroid — opt-in, off by default.
 		if (placetype === "locality" && state.postcode) {
 			query.postcode = state.postcode
 
@@ -636,13 +651,14 @@ class WOFResolver implements Resolver {
 		}
 
 		// #1721 resolver-interior trace. Stage orders hold the same candidate objects across re-ranks
-		// (every stage reorders, never clones), which is what lets emit assemble a per-stage rank vector
-		// per row. The no-sink walk talks to the frozen no-op recorder — zero per-event branches.
+		// (every stage reorders, never clones), which is what lets emit assemble
+		// a per-stage rank vector per row.
+		// The no-sink walk talks to the frozen no-op recorder — zero per-event branches.
 		const rec = state.traceSink ? createNodeTraceRecorder(state.traceSink) : NOOP_TRACE_RECORDER
 
-		// The query is snapshot rather than bound live. `emit` reads `ctx.query.parentID` at
-		// the END of the walk, and the parent-fallback retry `delete`s that key mid-lookup —
-		// so binding the object itself lets a later mutation rewrite history.
+		// The query is snapshot rather than bound live.
+		// `emit` reads `ctx.query.parentID` at the END of the walk, and the parent-fallback retry `delete`s
+		// that key mid-lookup — so binding the object itself lets a later mutation rewrite history.
 		// That is how 196 lookups which every one of them carried a parent came out of
 		// the constraint census reading `parentID: absent`.
 		rec.bind(node, placetype, { ...query }, state.candidatesPerLookup)
@@ -653,10 +669,11 @@ class WOFResolver implements Resolver {
 		// constraint, probes exactly the implied set — most populous hit wins,
 		// and an all-miss leaves the candidate set empty rather than falling through to the
 		// unconstrained fold: `100 00` space-strips to `10000`, which answers Troyes FR
-		// while the CZ rows sit in the artifact under both keyings. a scoped empty must stay empty
-		// (the same interface as the fuzzy tier's, #1585). The postcode-prefix prior below
-		// still gets its turn on the empty set — its index is country-scoped by construction,
-		// so it is not the fold this branch exists to avoid (the B3 tests hold that path).
+		// while the CZ rows sit in the artifact under both keyings. a scoped empty must
+		// stay empty (the same interface as the fuzzy tier's, #1585).
+		// The postcode-prefix prior below still gets its turn on the empty set —
+		// its index is country-scoped by construction, so it is not the fold this branch
+		// exists to avoid (the B3 tests hold that path).
 		if (placetype === "postalcode" && !query.country && state.postcodeFormatCountries?.length) {
 			rec.check("postcode_format_probe")
 			let best: ResolvedPlace | undefined
@@ -709,10 +726,11 @@ class WOFResolver implements Resolver {
 				}
 
 				// diagnostic only, and after every real attempt: which other bands hold this value.
-				// The answer never becomes the pick — a band the model did not ask for is not evidence
-				// about what the string means — but it separates the two facts a `null` cannot:
-				// a key we hold under another placetype is a reachability failure the tag caused,
-				// while a key nowhere is coverage. Off by default. one extra call per band per miss.
+				// The answer never becomes the pick — a band the model did not ask for is
+				// not evidence about what the string means — but it separates the two facts
+				// a `null` cannot: a key we hold under another placetype is a reachability
+				// failure the tag caused, while a key nowhere is coverage.
+				// Off by default. one extra call per band per miss.
 				if (!candidates.length && state.diagnoseUnreachable) {
 					rec.reachable(await this.#probeOtherBands(query, placetype))
 				}
@@ -720,10 +738,10 @@ class WOFResolver implements Resolver {
 				// Defensive: a backend failure should not abort the whole tree walk.
 				// Leave the node with its classifier attribution intact.
 				//
-				// The reason rides the check name. A bare `backend_error` cannot tell a
-				// closed database from a finalized statement from a genuine query fault,
-				// which is what made three full-board constraint runs unreadable —
-				// 64 of 591 rows errored and the census could not say why.
+				// The reason rides the check name.
+				// A bare `backend_error` cannot tell a closed database from a finalized statement
+				// from a genuine query fault, which is what made three full-board constraint runs
+				// unreadable — 64 of 591 rows errored and the census could not say why.
 				rec.check(`backend_error: ${(error as Error).message}`)
 				rec.emit(null)
 
@@ -733,10 +751,10 @@ class WOFResolver implements Resolver {
 
 		// Postcode-prefix prior (#31, Mechanism 3): when a `postalcode` node misses the gazetteer,
 		// derive the code's prefix and probe the injected PFX1 index (structural — never a model input).
-		// A hit resolves the node to a synthetic place (id 0), carrying a coordinate only
-		// when the index node does — the ancestry-only tier stays coordinate-free
-		// (B3-3's 0% half, meaning-of-zero). The prior's payload is returned as node
-		// metadata for #walk to stamp. Opt-in via `postcodePrefixPrior`
+		// A hit resolves the node to a synthetic place (id 0), carrying a coordinate only when the index
+		// node does — the ancestry-only tier stays coordinate-free (B3-3's 0% half, meaning-of-zero).
+		// The prior's payload is returned as node metadata for #walk to stamp.
+		// Opt-in via `postcodePrefixPrior`
 		// + `postcodePrefixIndex`; off by default (D-rule: the PCN1 posture).
 		if (!candidates.length && placetype === "postalcode" && state.postcodePrefixPrior && state.postcodePrefixIndex) {
 			const probe = probePostcodePrefix(node.value, state.postcodePrefixIndex, query.country)
@@ -764,12 +782,13 @@ class WOFResolver implements Resolver {
 			}
 		}
 
-		// The bare-toponym country race (fix B of the bare-country class): a lone locality-tagged
-		// span also races the `country` placetype, because the parser tags bare country names
-		// `locality` about half the time ("Japan", "China") and the locality filter makes the country
-		// row unreachable at any rank. Runs only for the tree's single value-containing node,
-		// so every address-shaped input is byte-stable. The locality winner's prominence arbitrates
-		// below. with no locality candidates at all, a country hit resolves the span outright.
+		// The bare-toponym country race (fix B of the bare-country class):
+		// a lone locality-tagged span also races the `country` placetype, because the
+		// parser tags bare country names `locality` about half the time ("Japan", "China")
+		// and the locality filter makes the country row unreachable at any rank.
+		// Runs only for the tree's single value-containing node, so every address-shaped input is byte-stable.
+		// The locality winner's prominence arbitrates below. with no locality candidates
+		// at all, a country hit resolves the span outright.
 		const isBareRace = placetype === "locality" && node === state.bareLocalityNode
 
 		if (isBareRace) {
@@ -854,16 +873,18 @@ class WOFResolver implements Resolver {
 			rec.stage("anchor", ranked)
 		}
 
-		// Locale-country soft prior (#27) — the #912 change's other half, at the tier that decides
-		// a bare toponym the model tagged `locality`. `--locale en-GB "Whitby"` answers Whitby,
-		// Ontario while `--default-country GB "Whitby"` answers the gold, because the CLI drops the
-		// locale-inferred country for this shape rather than choosing between "hard filter" and "nothing".
+		// Locale-country soft prior (#27) — the #912 change's other half, at the tier
+		// that decides a bare toponym the model tagged `locality`.
+		// `--locale en-GB "Whitby"` answers Whitby, Ontario while `--default-country GB "Whitby"`
+		// answers the gold, because the CLI drops the locale-inferred country for this shape
+		// rather than choosing between "hard filter" and "nothing".
 		// This is the third option: an additive bonus inside the exact tier, never a filter.
 		//
-		// Three stand-downs, in the order they matter. A `defaultCountry` makes the prior
-		// a no-op by construction (every candidate is already in it), so we skip the work
-		// rather than pretend. An `anchorPosterior` is derived from the address's own
-		// postcode — evidence, which outranks a guess about where the user is sitting.
+		// Three stand-downs, in the order they matter.
+		// A `defaultCountry` makes the prior a no-op by construction (every candidate is already in it),
+		// so we skip the work rather than pretend.
+		// An `anchorPosterior` is derived from the address's own postcode — evidence,
+		// which outranks a guess about where the user is sitting.
 		// And an absent prior is the shipped default: `ResolveOpts` documents why
 		// (the weight that flips the four bare GB rows and the weight that holds the en-US
 		// board are disjoint intervals), so this is inert unless a caller opts in.
@@ -876,18 +897,21 @@ class WOFResolver implements Resolver {
 			rec.stage("locale_prior", ranked)
 		}
 
-		// Importance-first (#17/#28). Before this key a bare famous name was decided on population
-		// alone, which is measurably the wrong prior for the class: `Whitby` answered Whitby,
-		// Ontario (128,377) over Whitby, North Yorkshire (13,130), 5,508 km from where the
-		// person meant. Fame is what a bare toponym is asking about, and the candidate build's
-		// blended `importance` column measures it. Tier-safe and positive-evidence-only
-		// (an unscored candidate keeps the rank population gave it. only the scored ones permute),
-		// so it abstains byte-stably on an artifact that predates the column.
+		// Importance-first (#17/#28).
+		// Before this key a bare famous name was decided on population alone, which is measurably
+		// the wrong prior for the class: `Whitby` answered Whitby, Ontario (128,377) over Whitby,
+		// North Yorkshire (13,130), 5,508 km from where the person meant.
+		// Fame is what a bare toponym is asking about, and the candidate build's
+		// blended `importance` column measures it.
+		// Tier-safe and positive-evidence-only (an unscored candidate keeps the rank
+		// population gave it. only the scored ones permute), so it abstains byte-stably
+		// on an artifact that predates the column.
 		//
 		// Skipped outright when an anchor posterior is in force.
-		// Fame is the prior of last resort: it answers "which one did you probably mean" only
-		// when nothing in the query answered it, and a #369 posterior is derived from the address's
-		// own postcode. Evidence outranks a prior. See `toponym-prior.ts`.
+		// Fame is the prior of last resort: it answers "which one did you probably mean" only when nothing
+		// in the query answered it, and a #369 posterior is derived from the address's own postcode.
+		// Evidence outranks a prior.
+		// See `toponym-prior.ts`.
 		if (!state.anchorPosterior) {
 			ranked = rankByImportance(ranked)
 			rec.stage("importance", ranked)
@@ -901,14 +925,13 @@ class WOFResolver implements Resolver {
 			}
 		}
 
-		// Admin-containment partition (#1717 stage 2): the last soft re-rank, after the
-		// anchor/fame keys above, because the qualifier is the address's own text — evidence,
-		// which outranks a prior. The backend already put contained rows first. this second
-		// partition is required rather than belt-and- braces: `rankByImportance` just
-		// re-ordered the exact tier by fame, and Richmond, Virginia outscores Richmond,
-		// North Yorkshire on importance — without this the change loses exactly where fame
-		// disagrees with the qualifier (the shared-function partition, tier-safe + stable,
-		// so it can never promote a contained partial match over an exact one).
+		// Admin-containment partition (#1717 stage 2): the last soft re-rank, after the anchor/fame
+		// keys above, because the qualifier is the address's own text — evidence, which outranks a prior.
+		// The backend already put contained rows first. this second partition is required
+		// rather than belt-and- braces: `rankByImportance` just re-ordered the exact tier by fame,
+		// and Richmond, Virginia outscores Richmond, North Yorkshire on importance — without this the
+		// change loses exactly where fame disagrees with the qualifier (the shared-function partition,
+		// tier-safe + stable, so it can never promote a contained partial match over an exact one).
 		// No stamps → identity → byte-stable on any backend that ignored `regionQualifier`.
 		if (containmentEligible) {
 			ranked = partitionByContainment(
@@ -920,14 +943,15 @@ class WOFResolver implements Resolver {
 			rec.stage("containment", ranked)
 		}
 
-		// Exact-type preference (#718): when the placetype-equivalence group let a broader
-		// admin tier (`macroregion`/`macrocounty`) into the candidate pool, prefer a
-		// candidate of the exact requested type over the macro fallback — a real `region`
-		// (US state, DE Bundesland, ES provincia) must win over a same-name macroregion namesake,
-		// so no real region silently downgrades to a macro. stable partition: exact-type
-		// candidates keep their (already-ranked) relative order ahead of fallbacks, so the
-		// score / anchor re-rank survives within each tier. No-op for placetypes without a
-		// macro fallback (the byte-stable default) and when every candidate is the same tier.
+		// Exact-type preference (#718): when the placetype-equivalence group let a
+		// broader admin tier (`macroregion`/`macrocounty`) into the candidate pool,
+		// prefer a candidate of the exact requested type over the macro fallback —
+		// a real `region` (US state, DE Bundesland, ES provincia) must win over a same-name
+		// macroregion namesake, so no real region silently downgrades to a macro. stable partition:
+		// exact-type candidates keep their (already-ranked) relative order ahead of fallbacks,
+		// so the score / anchor re-rank survives within each tier.
+		// No-op for placetypes without a macro fallback (the byte-stable default)
+		// and when every candidate is the same tier.
 		const hasFallbackCandidate = ranked.some((c) => isPlacetypeFallback(placetype, c.placetype))
 
 		if (hasFallbackCandidate && ranked.length > 1) {
@@ -949,12 +973,12 @@ class WOFResolver implements Resolver {
 			return null
 		}
 
-		// The admin side of the bare-toponym race. The country row wins on prominence alone —
-		// Japan-the-country (pop 126M) over Japan, Pennsylvania (pop 0) — while the region
-		// row must dominate the locality winner by {@link BARE_REGION_DOMINANCE_LOG10}
-		// in log-population: prominence saturates at the backend's populationBoost cap,
-		// so the margin is measured on the raw populations, and the margin is what keeps
-		// bare "New York" on the city (state 19.6M vs city 8.8M = 0.35, under the threshold)
+		// The admin side of the bare-toponym race.
+		// The country row wins on prominence alone — Japan-the-country (pop 126M) over Japan,
+		// Pennsylvania (pop 0) — while the region row must dominate the locality winner by
+		// {@link BARE_REGION_DOMINANCE_LOG10} in log-population: prominence saturates at the backend's
+		// populationBoost cap, so the margin is measured on the raw populations, and the margin is what
+		// keeps bare "New York" on the city (state 19.6M vs city 8.8M = 0.35, under the threshold)
 		// while bare "Georgia" promotes to the 11M state over the Vermont hamlet (margin 3.4).
 		// A bare name with no admin namesake never reaches these lines, and the displaced
 		// locality stays first among the alternatives either way.
@@ -972,10 +996,9 @@ class WOFResolver implements Resolver {
 			return { top: bareRegion, alternatives: ranked, metadata: { bare_region_repick: true } }
 		}
 
-		// Fallback-observability (#718): if the winner is a macro-type and no
-		// exact-type candidate existed for this span, annotate that a broader tier
-		// stood in for the true one. Additive — identity/coordinate are unchanged. only
-		// `metadata.resolution_quality` is stamped downstream.
+		// Fallback-observability (#718): if the winner is a macro-type and no exact-type candidate
+		// existed for this span, annotate that a broader tier stood in for the true one.
+		// Additive — identity/coordinate are unchanged. only `metadata.resolution_quality` is stamped downstream.
 		if (isPlacetypeFallback(placetype, top.placetype)) {
 			top.resolutionQuality = "fallback"
 			rec.check("placetype_fallback")
@@ -983,22 +1006,23 @@ class WOFResolver implements Resolver {
 
 		rec.emit({ id: top.id, name: top.name, source: "ranked" })
 
-		// The trace stamps (#1717 stage 2 / #1719's rule): an opted-in mechanism that cannot
-		// fire — a pre-sidecar artifact, an incapable backend — must say so in the result
-		// rather than degrade silently. The parse-side census cannot see resolver mechanisms,
-		// so these stamps are its census surface. admin_containment asserts a question
-		// was asked. variant_alias_exemption (#1893) asserts the winning candidate
-		// reached the top because the exemption spared it the cross-country penalty —
-		// the winner-level firing receipt, same posture as capital_promotion.
+		// The trace stamps (#1717 stage 2 / #1719's rule): an opted-in mechanism
+		// that cannot fire — a pre-sidecar artifact, an incapable backend — must say
+		// so in the result rather than degrade silently.
+		// The parse-side census cannot see resolver mechanisms, so these stamps are its census
+		// surface. admin_containment asserts a question was asked. variant_alias_exemption (#1893)
+		// asserts the winning candidate reached the top because the exemption spared it the
+		// cross-country penalty — the winner-level firing receipt, same posture as capital_promotion.
 		const pickMetadata = {
 			...(containmentEligible ? { admin_containment: adminContainmentVerdict(ranked) } : {}),
 			...(top.variantAliasExempted === true ? { variant_alias_exemption: true } : {}),
 			// The pick was admitted from outside the resolved parent's scope, by either widening:
-			// the resolver's own retry without the parent (the scope was set — a resolved parent
-			// with a numeric id — and the retry is the only thing that deletes it), or the backend's
-			// interior region-scope fallback, which keeps the query intact and stamps the rows
-			// it re-admitted (#1731). Stamped so `applyParentFallbackContradiction` can tell a
-			// namesake under another region from the incomplete chain both widenings exist for.
+			// the resolver's own retry without the parent (the scope was set — a resolved
+			// parent with a numeric id — and the retry is the only thing that deletes it),
+			// or the backend's interior region-scope fallback, which keeps the query intact
+			// and stamps the rows it re-admitted (#1731).
+			// Stamped so `applyParentFallbackContradiction` can tell a namesake under another
+			// region from the incomplete chain both widenings exist for.
 			...((parentResolved && typeof parentResolved.id === "number" && query.parentID === undefined) ||
 			top.regionScopeMiss === true
 				? { parent_fallback: true }
@@ -1015,10 +1039,11 @@ class WOFResolver implements Resolver {
 
 /**
  * #1880's promotion plus its firing receipt, in one place: when the promotion changes the race's leading candidate, the
- * node is stamped `capital_promotion` with the promoted candidate's country — the same
- * posture as `postcode_country_scope`, a mechanism reporting that it spoke apart from
- * whether the outcome moved, so an unchanged verdict downstream can never mean either
- * "harmless" or "never ran". Metadata-only. nothing reads it to rank.
+ * node is stamped `capital_promotion` with the promoted candidate's country — the same posture as
+ * `postcode_country_scope`, a mechanism reporting that it spoke apart from whether the outcome
+ * moved, so an unchanged verdict downstream can never mean either "harmless" or "never ran".
+ *
+ * Metadata-only. nothing reads it to rank.
  */
 function promoteCapitalsWithReceipt<
 	T extends Pick<ResolvedPlace, "score" | "name" | "country" | "lat" | "lon"> &

@@ -162,9 +162,10 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 	})
 
 	it("admits no row under the release-eligible profile while every source's terms are unread", async () => {
-		// `wof-admin` is not a register source at all, and every one of the register's 389
-		// sources reads `unchecked`. Both refusals land in the same place: a source nobody
-		// reviewed contributes nothing to a corpus that reaches a published model.
+		// `wof-admin` is not a register source at all, and every one of the register's
+		// 389 sources reads `unchecked`.
+		// Both refusals land in the same place: a source nobody reviewed contributes
+		// nothing to a corpus that reaches a published model.
 		const manifest = await buildCorpus({
 			outputDir: scratch.resolve("release-eligible"),
 			corpusVersion: "0.1.0",
@@ -183,10 +184,10 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 	})
 
 	it("keeps a refused source out of the synthetic rows fanned from it", async () => {
-		// The re-entry path P2 names: an augmentation carries its ancestor's `source`,
-		// so a check running after the fan-out would admit a refused source's rows
-		// under a synthetic label. The eligibility check runs before `synthesizeRow`,
-		// so the ancestor's refusal covers everything derived from it.
+		// The re-entry path P2 names: an augmentation carries its ancestor's `source`, so a check
+		// running after the fan-out would admit a refused source's rows under a synthetic label.
+		// The eligibility check runs before `synthesizeRow`, so the ancestor's
+		// refusal covers everything derived from it.
 		const withSynth = await buildCorpus({
 			outputDir: scratch.resolve("release-eligible-synth"),
 			corpusVersion: "0.1.0",

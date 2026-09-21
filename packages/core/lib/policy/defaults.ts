@@ -14,12 +14,14 @@ import type { ClassifierPolicy, PolicyMode } from "#policy/policy"
 
 /**
  * Build a fresh array of policies — one per `ComponentTag`, all in `mode`.
+ *
  * Returns a new array on each call. callers may mutate it freely.
  *
  * `mode` defaults to `rule_only` (the historical default — every component rule-sourced
- * until a per-tag migration). The input-shape router (#478 increment 2) passes a
- * shape-derived default (e.g. `neural_preferred` for OOD-script input) so the whole
- * table starts from the routed prior before per-tag config overlays.
+ * until a per-tag migration).
+ * The input-shape router (#478 increment 2) passes a shape-derived default
+ * (e.g. `neural_preferred` for OOD-script input) so the whole table starts from
+ * the routed prior before per-tag config overlays.
  */
 export function buildDefaultPolicies(mode: PolicyMode = "rule_only"): ClassifierPolicy[] {
 	return COMPONENT_TAGS.map<ClassifierPolicy>((component) => ({
@@ -29,7 +31,9 @@ export function buildDefaultPolicies(mode: PolicyMode = "rule_only"): Classifier
 }
 
 /**
- * Convenience accessor for a single-component default. `mode` defaults to `rule_only`.
+ * Convenience accessor for a single-component default.
+ *
+ * `mode` defaults to `rule_only`.
  */
 export function defaultPolicyFor(component: ComponentTag, mode: PolicyMode = "rule_only"): ClassifierPolicy {
 	return { component, mode }

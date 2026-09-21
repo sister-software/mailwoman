@@ -40,8 +40,9 @@ describe("usgov-nad adapter", () => {
 		expect(wh!.components.region).toBe("DC")
 		expect(wh!.components.postcode).toBe("20500")
 		// Stage 3 decomposition: NAD's structured St_PreDir/St_Name/St_PosTyp/St_PosDir
-		// become street_prefix/street/street_suffix. Pennsylvania Avenue NW has no prefix —
-		// "Avenue" is St_PosTyp and "NW" is St_PosDir, both → street_suffix.
+		// become street_prefix/street/street_suffix.
+		// Pennsylvania Avenue NW has no prefix — "Avenue" is St_PosTyp and "NW" is
+		// St_PosDir, both → street_suffix.
 		expect(wh!.components.street).toBe("Pennsylvania")
 		expect(wh!.components.street_suffix).toBe("Avenue NW")
 		expect(wh!.components.house_number).toBe("1600")

@@ -118,8 +118,9 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 		if (importanceDB) {
 			console.error(`  importance ← ${importanceDB}`)
 		} else {
-			// Say which of the two absences this is. "No importance column" from a missing artifact
-			// and from `--skip-importance` produce the same DB and want different follow-ups.
+			// Say which of the two absences this is.
+			// "No importance column" from a missing artifact and from `--skip-importance`
+			// produce the same DB and want different follow-ups.
 			console.error(
 				options.skipImportance
 					? "  importance: SKIPPED by --skip-importance — the column will be empty"

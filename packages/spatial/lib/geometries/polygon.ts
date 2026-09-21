@@ -148,6 +148,7 @@ export type MultiPolygonRings = readonly PolygonRings[]
 
 /**
  * Ray-cast a point against one linear ring — the even-odd crossing count.
+ *
  * Shoot a ray along +lon and toggle on every edge crossing.
  *
  * Points exactly on an edge are implementation-defined. either side is acceptable for geocoding,
@@ -221,6 +222,7 @@ export interface MultiPolygonLiteral<P extends PolygonPath = PolygonPath> extend
 
 /**
  * A geometry as it arrives from `JSON.parse`, or a typed literal.
+ *
  * Nothing has checked the arity of a position and `type` is whatever the source wrote,
  * so a reader narrows on `type` and casts `coordinates` — {@linkcode arealPolygons}
  * is the one place that happens for the areal types.
@@ -264,10 +266,11 @@ export function requireArealPolygons(geometry: ParsedGeometry, subject: string, 
  * Does an areal GeoJSON geometry contain the point?
  *
  * The three-valued return is the point of the function.
- * `null` means the geometry is not areal — a Point or a LineString cannot contain anything —
- * and a caller must read that as "no polygon on record", the same as a missing geometry,
- * never as a rejection. Collapsing it to `false` is how a place with a point-only record
- * gets excluded from a containment pass instead of falling through to the approximate path.
+ * `null` means the geometry is not areal — a Point or a LineString cannot contain anything — and a
+ * caller must read that as "no polygon on record", the same as a missing geometry, never as a rejection.
+ *
+ * Collapsing it to `false` is how a place with a point-only record gets excluded from
+ * a containment pass instead of falling through to the approximate path.
  *
  * `scripts/eval/pip-containment.py` grades the same containment truth against its own ray cast
  * and has to be matched BY hand if this one changes — it is the one copy no import can reach.

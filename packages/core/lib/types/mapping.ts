@@ -21,8 +21,9 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import type { Classification } from "#types/Classification"
 
 /**
- * Static mapping table. Tags not in this table map to `null`
- * (treated as "not a component" — internal classifier state).
+ * Static mapping table.
+ *
+ * Tags not in this table map to `null` (treated as "not a component" — internal classifier state).
  */
 const LEGACY_TO_COMPONENT: Partial<Record<Classification, ComponentTag>> = {
 	country: "country",
@@ -49,15 +50,17 @@ export function legacyClassificationToComponentTag(legacy: Classification): Comp
 
 /**
  * The full set of legacy tags that have a `ComponentTag` mapping.
+ *
  * Useful for adapter wrappers that filter the span graph by "which legacy tags
  * do I expect this classifier to produce."
  */
 export const MAPPED_LEGACY_CLASSIFICATIONS = Object.keys(LEGACY_TO_COMPONENT) as Classification[]
 
 /**
- * Inverse of {@link LEGACY_TO_COMPONENT}. Picks the first legacy entry
- * that maps to each component — for tags with multiple legacy aliases
- * (e.g. `intersection_a` and `intersection_b` both come from legacy `intersection`),
+ * Inverse of {@link LEGACY_TO_COMPONENT}.
+ *
+ * Picks the first legacy entry that maps to each component — for tags with multiple legacy
+ * aliases (e.g. `intersection_a` and `intersection_b` both come from legacy `intersection`),
  * the deterministic "first wins" rule is documented and tested.
  */
 const COMPONENT_TO_LEGACY: Partial<Record<ComponentTag, Classification>> = (() => {

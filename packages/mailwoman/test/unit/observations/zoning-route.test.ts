@@ -34,8 +34,10 @@ function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">
 }
 
 /**
- * The kind the mock classifier reports. A designation marker must name it — the verdict's
- * own top kind — because a designation is not raised by intent and has no kind of its own.
+ * The kind the mock classifier reports.
+ *
+ * A designation marker must name it — the verdict's own top kind — because a
+ * designation is not raised by intent and has no kind of its own.
  */
 const TEST_VERDICT_KIND: QueryKind = "locality_only"
 
@@ -236,9 +238,10 @@ describe("#1995: the zoning route on the geocode path", () => {
 				zoningDesignationRoute: route,
 			})
 
-			// An advisory here would be a determination nobody made: the location may be outside
-			// any plan area, unzoned land inside one, in a jurisdiction that has never zoned,
-			// or in one nobody has published. The refusal is named instead.
+			// An advisory here would be a determination nobody made: the location may
+			// be outside any plan area, unzoned land inside one, in a jurisdiction that
+			// has never zoned, or in one nobody has published.
+			// The refusal is named instead.
 			expect(result.intent_markers).toEqual([])
 
 			const decision = route.observe(NO_DESIGNATION.latitude, NO_DESIGNATION.longitude)

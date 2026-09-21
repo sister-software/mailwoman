@@ -28,9 +28,10 @@ import { isProcessError, runFile } from "@mailwoman/core/process"
 import { relative, resolvePath } from "path-ts"
 
 /**
- * Which Vale surface reads a file, by extension. `docs-vocab` is deliberately absent:
- * it runs the same rules over a narrower set, so a file it covers is already covered
- * by `docs` here and a second pass would report each finding twice.
+ * Which Vale surface reads a file, by extension.
+ *
+ * `docs-vocab` is deliberately absent: it runs the same rules over a narrower set, so a file it
+ * covers is already covered by `docs` here and a second pass would report each finding twice.
  */
 const CODE_EXTENSIONS = [".ts", ".tsx", ".py", ".yaml", ".yml"]
 const DOC_EXTENSIONS = [".md", ".mdx"]
@@ -84,8 +85,8 @@ async function main(): Promise<void> {
 	}).catch((error: unknown) => (isProcessError(error) ? error : null))
 
 	const output = (report?.stdout ?? "").trim()
-	// The COUNT off Vale's summary, never the word: a clean run ends
-	// `✔ 0 errors, 0 warnings …`, so a substring test for "error" blocks on every clean file.
+	// The COUNT off Vale's summary, never the word: a clean run ends `✔ 0 errors, 0 warnings …`,
+	// so a substring test for "error" blocks on every clean file.
 	// Absent summary means absent output means nothing to report.
 	const errorCount = Number(/^[✔✖]\s+(\d+)\s+error/mu.exec(output)?.[1] ?? 0)
 

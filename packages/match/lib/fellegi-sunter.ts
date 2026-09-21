@@ -70,23 +70,28 @@ export interface Comparison<R> {
 	 */
 	assess(a: R, b: R): number
 	/**
-	 * Optional term-frequency adjustment: on the levels it names, replace the level's average
-	 * `u` with the agreeing value's actual frequency, so agreement on a rare value (`Vijayan`)
-	 * outweighs agreement on a common one (`Smith`). See `withTermFrequency`.
+	 * Optional term-frequency adjustment: on the levels it names, replace the level's
+	 * average `u` with the agreeing value's actual frequency, so agreement on a rare
+	 * value (`Vijayan`) outweighs agreement on a common one (`Smith`).
+	 *
+	 * See `withTermFrequency`.
 	 */
 	termFrequency?: TermFrequencyAdjustment<R>
 }
 
 /**
  * Per-value term-frequency adjustment for a comparison (the Splink/Winkler mechanism).
- * `m` is unchanged. on an agreement level the effective `u` becomes the value's own
- * frequency, adding `log2(u_level / frequency)` to the weight — large and positive
- * for rare values, negative for common ones. Floored at
+ *
+ * `m` is unchanged. on an agreement level the effective `u` becomes the value's
+ * own frequency, adding `log2(u_level / frequency)` to the weight — large
+ * and positive for rare values, negative for common ones.
+ * Floored at
  * {@link TermFrequencyAdjustment.minimumFrequency} so an ultra-rare value can't produce an unbounded boost.
  */
 export interface TermFrequencyAdjustment<R> {
 	/**
 	 * Relative frequency of a value in the data, in (0, 1].
+	 *
 	 * Typically computed on-the-fly.
 	 */
 	frequency(value: string): number
@@ -99,12 +104,15 @@ export interface TermFrequencyAdjustment<R> {
 	 */
 	value(a: R, b: R): string | null | undefined
 	/**
-	 * Scale the adjustment in [0, 1]. Default 1.
+	 * Scale the adjustment in [0, 1].
+	 *
+	 * Default 1.
 	 */
 	weight?: number
 	/**
-	 * Floor for the looked-up frequency, bounding the boost on
-	 * ultra-rare values. Default 1e-4.
+	 * Floor for the looked-up frequency, bounding the boost on ultra-rare values.
+	 *
+	 * Default 1e-4.
 	 */
 	minimumFrequency?: number
 }
@@ -172,8 +180,10 @@ export function probabilityFromWeight(weight: number): number {
 
 /**
  * A comparison driven by a similarity function and a tier of `minSimilarity`
- * thresholds (the StatCan/Splink recipe). Levels must be ordered highest → lowest
- * similarity, the last acting as the `different` catch-all (`minSimilarity` 0).
+ * thresholds (the StatCan/Splink recipe).
+ *
+ * Levels must be ordered highest → lowest similarity, the last acting as the
+ * `different` catch-all (`minSimilarity` 0).
  * A missing value on either side yields no evidence.
  */
 export function similarityComparison<R>(config: {

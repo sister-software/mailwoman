@@ -66,12 +66,14 @@ export interface DebugData {
 	mapNote: string | null
 	/**
 	 * The session's decode-path evidence for this run (`GeocodeRun.trace`).
+	 *
 	 * Absent on a session opened without tracing, or on a bundle that could not produce one —
 	 * the evidence rows then say so rather than showing zeros.
 	 */
 	trace?: GeocodeTrace
 	/**
 	 * The session's per-phase wall clock (`GeocodeRun.timing`).
+	 *
 	 * Absent ⇒ the timing section is omitted.
 	 */
 	timing?: Record<string, number>
@@ -93,20 +95,24 @@ export interface DebugFrameProps {
 	busy?: boolean
 	/**
 	 * A failed re-run's message, rendered red at the top of the output pane.
+	 *
 	 * The interactive session keeps the previous result on screen when a geocode rejects —
-	 * the failure is one line of news rather than a reason to blank three panes — so the note needs
-	 * a home that is neither the result nor the map. Static renders pass nothing.
+	 * the failure is one line of news rather than a reason to blank three panes —
+	 * so the note needs a home that is neither the result nor the map.
+	 * Static renders pass nothing.
 	 */
 	errorNote?: string | null
 	/**
-	 * First visible line of the output pane's list. The pane owns the window
-	 * so the caller's `data` identity stays stable across a scroll — which is what
-	 * keeps the map frame from re-rendering on an arrow key.
+	 * First visible line of the output pane's list.
+	 *
+	 * The pane owns the window so the caller's `data` identity stays stable across a scroll —
+	 * which is what keeps the map frame from re-rendering on an arrow key.
 	 */
 	scrollOffset?: number
 	/**
-	 * Map-pane SGR color. Callers pass `!$public.NO_COLOR` — Ink/chalk honor
-	 * NO_COLOR on their own, raw SGR does not.
+	 * Map-pane SGR color.
+	 *
+	 * Callers pass `!$public.NO_COLOR` — Ink/chalk honor NO_COLOR on their own, raw SGR does not.
 	 */
 	color: boolean
 }
@@ -116,8 +122,9 @@ export interface DebugFrameProps {
 //#region Layout constants
 
 /**
- * Border (2) + the input line (1) + the span ribbon (1) + the five evidence
- * rows (5). See the file header.
+ * Border (2) + the input line (1) + the span ribbon (1) + the five evidence rows (5).
+ *
+ * See the file header.
  */
 const INPUT_ROW_HEIGHT = 9
 
@@ -129,15 +136,18 @@ const FOOTER_ROW_HEIGHT = 1
 /**
  * MapPane's own top+bottom border rows, plus its title line, plus its attribution
  * line — the chrome `mapPaneCellSize` must subtract from the pane row's height
- * so a requested frame fills the pane exactly. Counted directly off
+ * so a requested frame fills the pane exactly.
+ *
+ * Counted directly off
  * {@link MapPane}'s render tree: `borderStyle="round"` (2), the `paneTitle` `<Text>` (1), the right-aligned attribution
  * `<Box><Text>` when a frame is present (1).
  */
 const MAP_PANE_CHROME_ROWS = 4
 
 /**
- * MapPane's own left+right border columns. Its title/attribution lines run inside
- * that same width, so they add no additional column chrome.
+ * MapPane's own left+right border columns.
+ *
+ * Its title/attribution lines run inside that same width, so they add no additional column chrome.
  */
 const MAP_PANE_CHROME_COLUMNS = 2
 
@@ -156,6 +166,7 @@ function paneRowHeight(rows: number): number {
 /**
  * The map pane's usable content-cell budget for the map-tui renderer viewport:
  * pane width minus its own border columns, pane-row height minus MapPane's own chrome rows.
+ *
  * Exported so a live command can request a frame already sized to fit MapPane without overflow.
  */
 export function mapPaneCellSize(columns: number, rows: number): { columns: number; rows: number } {
@@ -167,6 +178,7 @@ export function mapPaneCellSize(columns: number, rows: number): { columns: numbe
 
 /**
  * How many output lines are visible at once — the scroll window's height.
+ *
  * Exported so a caller clamping its scroll offset uses the pane's own arithmetic
  * instead of a second copy of it.
  */
@@ -202,6 +214,7 @@ type Tag = AddressNode["tag"]
  * of the deepest node whose span contains it — a child's tag overrides its ancestor's on
  * the range they share, so a leaf's tag wins where one exists, and a parent's own text that
  * no child covers still gets the parent's tag rather than falling through to "no owner".
+ *
  * Indices no node covers at all stay `undefined` (the `losslessSegments` `unknown` runs).
  */
 function tagOwnership(tree: AddressTree): (Tag | undefined)[] {
@@ -239,10 +252,11 @@ export interface RibbonSegment {
 /**
  * Tile `tree.raw` into ribbon segments for the input row.
  *
- * Built on `losslessSegments` (`@mailwoman/core/decoder`, #493) for the covered/`unknown` split —
- * every character of the input belongs to exactly one segment, so the ribbon never silently
- * drops the connector text between spans (the comma-space between a street and a locality, say)
- * the way walking only leaf nodes did. Each `covered` run is further split at
+ * Built on `losslessSegments` (`@mailwoman/core/decoder`, #493) for the
+ * covered/`unknown` split — every character of the input belongs to exactly one
+ * segment, so the ribbon never silently drops the connector text between spans
+ * (the comma-space between a street and a locality, say) the way walking only leaf nodes did.
+ * Each `covered` run is further split at
  * {@link tagOwnership} boundaries so every ribbon chip carries exactly one tag's color.
  * Concatenating every segment's `value`, in order, reproduces `tree.raw` exactly —
  * the same round-trip invariant `losslessSegments` guarantees.
@@ -278,6 +292,7 @@ export function ribbonSegments(tree: AddressTree): RibbonSegment[] {
 
 /**
  * The demo's confidence tiers (`react/pipeline/ConfidenceCell.tsx`): high at 0.8, medium at 0.5.
+ *
  * Same thresholds, so a component that reads green in the browser reads green here.
  */
 const HIGH_CONFIDENCE_MIN = 0.8
@@ -383,9 +398,9 @@ function OutputRow(props: { line: OutputLine }): React.ReactElement {
 
 	if (line.kind === "error") {
 		// `@inkjs/ui`'s StatusMessage would be the natural fit and is deliberately not used:
-		// its message `<Text>` carries no wrap mode, so a long resolver error wraps to a
-		// second row and pushes a row out of a fixed-height pane — the silent-drop failure
-		// this file's header measures. Same figure, one row, truncated.
+		// its message `<Text>` carries no wrap mode, so a long resolver error wraps to a second row
+		// and pushes a row out of a fixed-height pane — the silent-drop failure this file's header measures.
+		// Same figure, one row, truncated.
 		return (
 			<Text color="red" wrap="truncate">
 				✖ {line.label}
@@ -488,9 +503,11 @@ const OutputPane = memo(function OutputPane(props: {
  * so it takes the fields it reads rather than the shared {@link DebugData} bag,
  * which is what lets `memo` see stable props across a keystroke.
  *
- * Know what this provides and what it does not. It removes React's reconciliation of the 28 `<Text>`
- * rows: worth 2.3 ms of the 12.9 ms keystroke against React's development build, and inside the noise
- * floor against its production build (measured 2026-08-13, 120×36, six interleaved pairs each).
+ * Know what this provides and what it does not.
+ * It removes React's reconciliation of the 28 `<Text>` rows: worth 2.3 ms of the 12.9 ms
+ * keystroke against React's development build, and inside the noise floor against its
+ * production build (measured 2026-08-13, 120×36, six interleaved pairs each).
+ *
  * It cannot touch the dominant cost, because Ink's `render-node-to-output` walks the whole
  * yoga tree and re-serializes it every frame no matter which subtrees React skipped — that is
  * what `incrementalRendering` is for, and the two are complementary rather than redundant.
@@ -536,9 +553,11 @@ const MapPane = memo(function MapPane(props: {
 //#region Footer
 
 /**
- * The key hints, in the order a new reader needs them: how to move focus, then what
- * the focused pane does, then how to leave. A static capture has no keyboard at all,
- * so it says what it is instead of advertising keys that do nothing.
+ * The key hints, in the order a new reader needs them: how to move focus,
+ * then what the focused pane does, then how to leave.
+ *
+ * A static capture has no keyboard at all, so it says what it is instead of
+ * advertising keys that do nothing.
  */
 const KEY_HINTS = "Tab focus   ←↑↓→ pan/scroll   +/- zoom   0 recenter   Enter re-run   q/Esc quit"
 const STATIC_HINT = "static frame — keyboard controls on a TTY"

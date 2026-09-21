@@ -35,9 +35,10 @@ export type ExtractPostcodeAnchors = typeof import("@mailwoman/neural/postcode")
  */
 export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	// Postcode-anchor fusion (opt-in via `--postcode-anchor`).
-	// The resolver supplies the admin/place identity, but its coordinate is the place centroid —
-	// legitimately tens of km from edge addresses. The postcode anchor supplies the
-	// postcode's own centroid, the finer tier between admin-centroid and street.
+	// The resolver supplies the admin/place identity, but its coordinate is the place
+	// centroid — legitimately tens of km from edge addresses.
+	// The postcode anchor supplies the postcode's own centroid, the finer tier
+	// between admin-centroid and street.
 	// The `neural+anchor` row keeps neural's admin match but takes the coordinate from the anchor
 	// when it has a placed candidate for the eval's country, else falls back to the resolver coord.
 	// So the row isolates exactly what the anchor sharpens: where rather than which place.
@@ -54,11 +55,12 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	}
 
 	// `--interpolation <segments-db>` (#483): the house-number interpolation tier
-	// (StreetInterpolator, tiger-range). Adds `interpolation` to resolveOpts. the
-	// `neural+interp` row takes the coordinate from the exact point when present,
-	// else the interpolated estimate, else the admin centroid — the full street-level
-	// coordinate cascade. The delta vs `neural+addrpt` is interpolation's lift on the
-	// long tail of valid-but-unlisted numbers the exact tier misses.
+	// (StreetInterpolator, tiger-range).
+	// Adds `interpolation` to resolveOpts. the `neural+interp` row takes the
+	// coordinate from the exact point when present, else the interpolated estimate,
+	// else the admin centroid — the full street-level coordinate cascade.
+	// The delta vs `neural+addrpt` is interpolation's lift on the long tail of
+	// valid-but-unlisted numbers the exact tier misses.
 	const interpolationDB = options.interpolation || ""
 	let interpolation: InterpolationLookup | null = null
 
@@ -72,8 +74,8 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	// so the eval reports the shipped coordinate (address_point > interpolated > admin)
 	// across all states rather than the admin centroid the neural headline alone reports.
 	// The diagnostic that motivated this: the headline read 3.3 km p50 / 10 km p90
-	// (admin centroid) while the production cascade over the same rows is ~0 m p50
-	// / 1 km p90, 85.9% within 100 m — the eval simply wasn't grading what ships.
+	// (admin centroid) while the production cascade over the same rows is ~0 m p50 / 1 km p90,
+	// 85.9% within 100 m — the eval simply wasn't grading what ships.
 	// The single-state --address-points/--interpolation flags still work for a one-state run;
 	// --cascade supersedes them with multi-state per-row selection. --data-root locates
 	// the databases (<root>/address-points/, <root>/interpolation/).
@@ -130,10 +132,11 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 }
 
 /**
- * The postcode-anchor reads' inputs. `minConfidence` is the floor below which the
- * anchor's coordinate is not trusted over the resolver's: a penalized house-number
- * span scores ~0.2 (single-country times the house-number penalty) while a genuinely
- * ambiguous real code scores at least 0.52 (valid in three countries or fewer),
+ * The postcode-anchor reads' inputs.
+ *
+ * `minConfidence` is the floor below which the anchor's coordinate is not trusted over the resolver's:
+ * a penalized house-number span scores ~0.2 (single-country times the house-number penalty)
+ * while a genuinely ambiguous real code scores at least 0.52 (valid in three countries or fewer),
  * so a 0.5 floor keeps the latter and rejects the former — a span the position prior reads
  * as a house number falls back to the resolver's coordinate (the right city centroid)
  * instead of placing the address at a far-away same-shaped ZIP.

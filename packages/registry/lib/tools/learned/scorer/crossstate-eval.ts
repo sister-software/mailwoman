@@ -59,19 +59,27 @@ export interface ScorerCrossStateEvalOptions {
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
-	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * Record-matcher sources directory.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
 	 */
 	sources?: string
 	/**
-	 * State the GBT/LR train on. Default TX.
+	 * State the GBT/LR train on.
+	 *
+	 * Default TX.
 	 */
 	trainState?: string
 	/**
-	 * Held-out state clustered. Default CA.
+	 * Held-out state clustered.
+	 *
+	 * Default CA.
 	 */
 	evalState?: string
 	/**
-	 * NPIs sampled per state. Default 2000.
+	 * NPIs sampled per state.
+	 *
+	 * Default 2000.
 	 */
 	npis?: number
 	/**
@@ -82,6 +90,7 @@ export interface ScorerCrossStateEvalOptions {
 
 /**
  * Learned-scorer cross-state generalization (#603 Tier 2) — see the module doc.
+ *
  * Emits the report to stdout.
  */
 export async function scorerCrossStateEval(
@@ -185,9 +194,10 @@ export async function scorerCrossStateEval(
 		threshold: t,
 	}))
 
-	// The shipped model (the default-on candidate): the bundled DEDUP_GBT_MODEL rather than a
-	// fresh per-run TX fit. This is the arm that justifies flipping `learnedScorer` default-on —
-	// the actual artifact every caller would get, evaluated on a state it never trained on.
+	// The shipped model (the default-on candidate): the bundled DEDUP_GBT_MODEL
+	// rather than a fresh per-run TX fit.
+	// This is the arm that justifies flipping `learnedScorer` default-on — the actual
+	// artifact every caller would get, evaluated on a state it never trained on.
 	const bundledScorer = createGBTScorer({ model: DEDUP_GBT_MODEL, comparisons, addressFrequency })
 
 	const bundledArm = armOver(quantileThresholds(evalPairs.map(([a, b]) => bundledScorer(a, b))), (t) => ({

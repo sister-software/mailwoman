@@ -9,11 +9,13 @@ import ts from "typescript"
 
 export interface ModuleSpecifierOptions {
 	/**
-	 * Keep declaration-level type-only specifiers: `import type` / `export type` declarations
-	 * and `import("x")` type positions. Node's type stripping erases those, so a guard about what runs
-	 * leaves them out (`docs/sidebars.ts` relies on that — it takes a Docusaurus type with no install);
-	 * a guard about the package interface keeps them. A specifier-level `{ type Foo }`
-	 * still emits the declaration and is collected either way.
+	 * Keep declaration-level type-only specifiers: `import type` / `export type`
+	 * declarations and `import("x")` type positions.
+	 *
+	 * Node's type stripping erases those, so a guard about what runs leaves them out
+	 * (`docs/sidebars.ts` relies on that — it takes a Docusaurus type with no install);
+	 * a guard about the package interface keeps them.
+	 * A specifier-level `{ type Foo }` still emits the declaration and is collected either way.
 	 */
 	includeTypeOnly?: boolean
 }

@@ -147,7 +147,8 @@ describe("emit → read round-trip through a real candidate build", () => {
 		expect(fi?.hardResolveRate).toBeCloseTo(0.695, 3)
 		expect(manifest.hardCountrySafelist.has("FI")).toBe(false)
 
-		// NZ: never measured — absent rather than "failed". The two states must be distinguishable.
+		// NZ: never measured — absent rather than "failed".
+		// The two states must be distinguishable.
 		expect(manifest.countryCoverage.has("NZ")).toBe(false)
 		expect(manifest.countryCoverage.has("FI")).not.toBe(manifest.countryCoverage.has("NZ"))
 	})

@@ -42,7 +42,9 @@ export interface StageWeightsCacheOptions {
 	 */
 	from?: string
 	/**
-	 * `<name-in-package>=<source path>` entries. Override whatever `from` seeded.
+	 * `<name-in-package>=<source path>` entries.
+	 *
+	 * Override whatever `from` seeded.
 	 */
 	file: string[]
 	/**
@@ -84,8 +86,10 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 
 	const omit = new Set(options.omit)
 	/**
-	 * Staged name → source path. Seeded from `from`, then overridden. last writer wins,
-	 * which is what makes `file` a divergence rather than a conflict.
+	 * Staged name → source path.
+	 *
+	 * Seeded from `from`, then overridden. last writer wins, which is what makes
+	 * `file` a divergence rather than a conflict.
 	 */
 	const staged = new Map<string, string>()
 

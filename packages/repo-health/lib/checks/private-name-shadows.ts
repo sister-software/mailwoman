@@ -24,6 +24,7 @@ import { trackedSourcePaths } from "#tracked-sources"
 
 /**
  * The comment marker that keeps a deliberate copy out of the census.
+ *
  * It must be followed by the reason, on the line above the function.
  */
 export const SHADOW_IGNORE_MARKER = "repo-health-ignore private-name-shadows-export --"

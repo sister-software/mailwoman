@@ -11,13 +11,37 @@
 
 /** Options for the comment-reflow rule. */
 export interface ReflowOptions {
-	/** Hard ceiling. No produced line exceeds it except an unbreakable token. Default: 120. */
+	/**
+	 * Hard ceiling.
+	 *
+	 * No produced line exceeds it except an unbreakable token.
+	 * Default: 120.
+	 */
 	printWidth?: number
-	/** The width prose aims for. Everything between it and `printWidth` is the balance zone. Default: 90. */
+	/**
+	 * The width prose aims for.
+	 *
+	 * Everything between it and `printWidth` is the balance zone.
+	 * Default: 90.
+	 */
 	targetWidth?: number
-	/** Columns a tab advances. Default: 2, matching oxfmt. */
+	/**
+	 * Columns a tab advances.
+	 *
+	 * Default: 2, matching oxfmt.
+	 */
 	tabWidth?: number
-	/** Placement of eligible trailing comments. Default: "overflow". */
+	/**
+	 * Sentences a paragraph may hold after the lead.
+	 *
+	 * Default: 2.
+	 */
+	paragraphSentences?: number
+	/**
+	 * Placement of eligible trailing comments.
+	 *
+	 * Default: "overflow".
+	 */
 	trailingComments?: "ignore" | "always" | "overflow"
 }
 
@@ -25,10 +49,15 @@ export const defaultOptions: Required<ReflowOptions> = {
 	printWidth: 120,
 	targetWidth: 90,
 	tabWidth: 2,
+	paragraphSentences: 2,
 	trailingComments: "overflow",
 }
 
-/** Penalties in the breaker's cost function. Tuned against the monorepo's own comments. */
+/**
+ * Penalties in the breaker's cost function.
+ *
+ * Tuned against the monorepo's own comments.
+ */
 export const weights = {
 	/** Squared cost per column a line falls short of the target. */
 	short: 1,
@@ -42,20 +71,18 @@ export const weights = {
 	lastShort: 0.25,
 	/** Flat cost per line, so an equal-cost break with fewer lines wins. */
 	line: 12,
-	/** Breaking with a parenthesis still open. Buys roughly 17 columns of overrun. */
+	/**
+	 * Breaking with a parenthesis still open.
+	 *
+	 * Buys roughly 17 columns of overrun.
+	 */
 	parenSplit: 1200,
-	/** Credit for breaking where a sentence ends. */
-	sentence: -320,
 	/** Credit for breaking after a comma, a dash, or before a conjunction. */
 	clause: -130,
 	/** Starting a line with a dash, so an em dash stays with the clause it followed. */
 	danglingDash: 700,
-	/** A sentence ending past `flushColumn` with another sentence behind it on the same line. */
-	crowdedSentence: 2200,
 	/** A last line holding one short word. */
 	orphan: 2400,
-	/** Fraction of the target past which a finished sentence pushes its successor to a new line. */
-	flushFraction: 0.6,
 	/** A last line shorter than this many columns of content counts as an orphan. */
 	orphanColumns: 24,
 } as const
@@ -149,11 +176,12 @@ export interface WrapLimits {
 
 /**
  * An abbreviation ending in a period is not a sentence boundary.
+ *
  * The list is the ones that actually occur in this repository's prose; a missed
  * entry costs a break opportunity, never a mangled sentence.
  */
 const ABBREVIATIONS =
-	/^(?:e\.g\.|i\.e\.|etc\.|vs\.|cf\.|ca\.|approx\.|no\.|fig\.|eq\.|al\.|Mr\.|Mrs\.|Ms\.|Dr\.|St\.|Inc\.|Ltd\.|[A-Z]\.)$/
+	/^(?:e\.g\.|i\.e\.|etc\.|vs\.|cf\.|ca\.|approx\.|no\.|fig\.|eq\.|al\.|Mr\.|Mrs\.|Ms\.|Dr\.|St\.|Inc\.|Ltd\.|(?:[A-Z]\.)+)$/
 
 /** Words that open a clause: breaking just before one reads as a deliberate seam. */
 const CONJUNCTIONS = new Set([
@@ -194,8 +222,6 @@ interface TokenFacts {
 	width: number
 	/** Open parentheses and brackets left behind after this token. */
 	depth: number
-	/** This token closes a sentence and another sentence follows. */
-	sentence: boolean
 	/** This token ends a clause, or the next one opens one. */
 	clause: boolean
 	/** The next token leads with a dash, which must not start a line. */
@@ -212,12 +238,6 @@ function measure(tokens: readonly string[], tabWidth: number): TokenFacts[] {
 			else if (character === ")" || character === "]") depth = Math.max(0, depth - 1)
 		}
 		const next = tokens[index + 1]
-		const sentence =
-			/[.!?][)"'\]`]*$/.test(token) &&
-			!ABBREVIATIONS.test(token) &&
-			next !== undefined &&
-			/^[A-Z`"'([]/.test(next) &&
-			depth === 0
 		const clause =
 			/[,;:][)"'\]`]*$/.test(token) ||
 			DASH.test(token) ||
@@ -225,7 +245,6 @@ function measure(tokens: readonly string[], tabWidth: number): TokenFacts[] {
 		return {
 			width: columns(token, tabWidth),
 			depth,
-			sentence,
 			clause,
 			danglingDash: next !== undefined && /^[—–]/.test(next),
 			glued: next !== undefined && isStructuralToken(next),
@@ -234,21 +253,24 @@ function measure(tokens: readonly string[], tabWidth: number): TokenFacts[] {
 }
 
 /**
- * Choose line breaks by minimizing a penalty over every legal breaking, rather than
- * filling each line until the next word does not fit. Greedy filling is what
- * strands a two-word tail on its own line and what cuts a parenthetical in half:
- * it cannot see the cost of a break until it has already committed to it.
+ * Set one sentence, choosing its breaks by minimizing a penalty over every legal breaking
+ * rather than filling each line until the next word does not fit.
  *
- * The model: a line wants to end at `target`. Falling short costs the square of the gap.
- * Running past it into the balance zone up to `max` costs four times the square,
- * so the extra columns are bought, not spent freely — a parenthetical that would otherwise
- * be split, or a tail that would otherwise be orphaned, is worth about seventeen of them.
- * Breaking where a sentence or a clause ends earns a credit, which is what pulls breaks onto punctuation.
+ * Greedy filling is what strands a two-word tail on a line of its own and what cuts a parenthetical in half.
+ * It cannot price a break until it has already taken it.
+ *
+ * A line wants to end at `target`.
+ * Falling short costs the square of the gap.
+ *
+ * Running into the balance zone up to `max` costs twice that square, and eight times
+ * it past ten columns in, so those columns are bought rather than spent.
+ * A parenthetical that would otherwise be split is worth about seventeen of them.
+ *
+ * Breaking after a comma or before a conjunction earns a credit, which is what puts the seam on punctuation.
  */
 function chooseBreaks(tokens: readonly string[], limits: WrapLimits, firstWidth: number, continuationWidth: number) {
 	const facts = measure(tokens, limits.tabWidth)
 	const count = tokens.length
-	const flushColumn = limits.target * weights.flushFraction
 	// prefix[i] is the width of tokens 0..i-1 joined by single spaces.
 	const prefix: number[] = [0]
 	for (let i = 0; i < count; i++) prefix.push(prefix[i]! + facts[i]!.width + (i > 0 ? 1 : 0))
@@ -268,11 +290,6 @@ function chooseBreaks(tokens: readonly string[], limits: WrapLimits, firstWidth:
 			const far = gap - gentle
 			penalty += weights.over * gentle * gentle + weights.overFar * far * far
 		}
-		// A sentence that ends deep into the line takes the line with it; the next one starts fresh.
-		for (let i = from; i < to - 1; i++) {
-			if (!facts[i]!.sentence) continue
-			if (lineWidth(from, i + 1) >= flushColumn) penalty += weights.crowdedSentence
-		}
 		if (last) {
 			const content = width - (from === 0 ? firstWidth : continuationWidth)
 			if (from > 0 && (to - from === 1 || content < weights.orphanColumns)) penalty += weights.orphan
@@ -280,8 +297,7 @@ function chooseBreaks(tokens: readonly string[], limits: WrapLimits, firstWidth:
 		}
 		const boundary = facts[to - 1]!
 		if (boundary.depth > 0) penalty += weights.parenSplit
-		if (boundary.sentence) penalty += weights.sentence
-		else if (boundary.clause) penalty += weights.clause
+		if (boundary.clause) penalty += weights.clause
 		if (boundary.danglingDash) penalty += weights.danglingDash
 		return penalty
 	}
@@ -305,6 +321,71 @@ function chooseBreaks(tokens: readonly string[], limits: WrapLimits, firstWidth:
 	const breaks: number[] = []
 	for (let at = count; at > 0; at = from[at]!) breaks.unshift(from[at]!)
 	return breaks
+}
+
+/**
+ * Cut prose into sentences, at a terminator followed by something that opens one.
+ *
+ * Tokenizing first is what makes this safe: a code span, a link and a `{@link}` are
+ * single tokens, so a period inside one is never a boundary.
+ * A terminator inside parentheses is not one either — an aside carries its own full stop
+ * and the sentence continues past the closing bracket.
+ */
+export function splitSentences(text: string): string[] {
+	const tokens = words(text)
+	if (!tokens) return [text]
+	const sentences: string[] = []
+	let current: string[] = []
+	let depth = 0
+	for (let i = 0; i < tokens.length; i++) {
+		const token = tokens[i]!
+		current.push(token)
+		for (const character of token) {
+			if (character === "(" || character === "[") depth++
+			else if (character === ")" || character === "]") depth = Math.max(0, depth - 1)
+		}
+		const next = tokens[i + 1]
+		if (next === undefined || depth > 0) continue
+		if (!/[.!?][)"'\]`]*$/.test(token) || ABBREVIATIONS.test(token)) continue
+		if (!/^[A-Z`"([]/.test(next)) continue
+		sentences.push(current.join(" "))
+		current = []
+	}
+	if (current.length) sentences.push(current.join(" "))
+	return sentences
+}
+
+/**
+ * Group a paragraph's sentences into the paragraphs it should have become.
+ *
+ * The lead sentence stands alone: it says what the thing is, and everything after it qualifies that.
+ * The rest travel in pairs, which is the density the hand-written comments in
+ * this codebase's ancestor settled on.
+ */
+function groupSentences(sentences: readonly string[], perParagraph: number, leadAlone: boolean): string[][] {
+	if (sentences.length < 2) return [sentences.slice()]
+	const groups: string[][] = []
+	let rest = sentences.slice()
+	if (leadAlone) {
+		groups.push([rest[0]!])
+		rest = rest.slice(1)
+	}
+	for (let i = 0; i < rest.length; i += perParagraph) groups.push(rest.slice(i, i + perParagraph))
+	return groups
+}
+
+/** Set a run of prose, one sentence per line, each sentence broken by `chooseBreaks` when it must be. */
+function wrapProse(text: string, limits: WrapLimits, first = "", continuation = "") {
+	const sentences = splitSentences(text)
+	// A tag with no description has no sentences, and its prefix is the whole line — `@deprecated` on its own.
+	if (!sentences.length) return wrap(text, limits, first, continuation)
+	const lines: string[] = []
+	for (const [index, sentence] of sentences.entries()) {
+		const wrapped = wrap(sentence, limits, index === 0 ? first : continuation, continuation)
+		if (!wrapped) return undefined
+		lines.push(...wrapped)
+	}
+	return lines
 }
 
 function wrap(text: string, limits: WrapLimits, first = "", continuation = "") {
@@ -369,11 +450,30 @@ function isStructure(line: string) {
 	)
 }
 
+/**
+ * How a block's prose is divided once it has been reflowed.
+ *
+ * `paragraphs` is off for a run of `//` comments: a blank line there is a `//` on its own,
+ * which reads as a gap in the code rather than a paragraph break.
+ * Those get one sentence per line and nothing else.
+ */
+export interface ParagraphShape {
+	paragraphs: boolean
+	perParagraph: number
+}
+
 /** Reflow comment contents, with markers already removed by the caller. */
-export function reflowText(lines: readonly string[], limits: WrapLimits, jsdoc = false): string[] {
+export function reflowText(
+	lines: readonly string[],
+	limits: WrapLimits,
+	jsdoc = false,
+	shape: ParagraphShape = { paragraphs: false, perParagraph: defaultOptions.paragraphSentences },
+): string[] {
 	const output: string[] = []
 	let fence: { marker: string; length: number } | undefined
 	let opaqueTag = false
+	// The block's opening paragraph is the one whose lead sentence stands alone.
+	let leadPending = true
 	for (let i = 0; i < lines.length; ) {
 		const line = lines[i]!
 		const fenceMatch = /^\s*(?:(?:[-+*]|\d+[.)])\s+)?(`{3,}|~{3,})/.exec(line)
@@ -406,7 +506,10 @@ export function reflowText(lines: readonly string[], limits: WrapLimits, jsdoc =
 				const completeMarkup = [parts.description, ...lines.slice(i + 1, end)].every(
 					(value) => words(value) !== undefined,
 				)
-				output.push(...((completeMarkup ? wrap(text, limits, parts.prefix, "  ") : undefined) ?? lines.slice(i, end)))
+				output.push(
+					...((completeMarkup ? wrapProse(text, limits, parts.prefix, "  ") : undefined) ?? lines.slice(i, end)),
+				)
+				leadPending = false
 				i = end
 				continue
 			}
@@ -430,7 +533,10 @@ export function reflowText(lines: readonly string[], limits: WrapLimits, jsdoc =
 				end++
 			const text = [list[2]!, ...lines.slice(i + 1, end).map((value) => value.trim())].join(" ")
 			const completeMarkup = [list[2]!, ...lines.slice(i + 1, end)].every((value) => words(value) !== undefined)
-			output.push(...((completeMarkup ? wrap(text, limits, prefix, continuation) : undefined) ?? lines.slice(i, end)))
+			output.push(
+				...((completeMarkup ? wrapProse(text, limits, prefix, continuation) : undefined) ?? lines.slice(i, end)),
+			)
+			leadPending = false
 			i = end
 			continue
 		}
@@ -453,7 +559,29 @@ export function reflowText(lines: readonly string[], limits: WrapLimits, jsdoc =
 			.map((value) => value.trim())
 			.join(" ")
 		const completeInlineMarkup = lines.slice(i, end).every((value) => words(value) !== undefined)
-		output.push(...((completeInlineMarkup ? wrap(text, limits, indent, indent) : undefined) ?? lines.slice(i, end)))
+		const groups = completeInlineMarkup
+			? groupSentences(splitSentences(text), shape.perParagraph, shape.paragraphs && leadPending)
+			: undefined
+		if (groups && shape.paragraphs) {
+			let written = false
+			for (const group of groups) {
+				const set = wrapProse(group.join(" "), limits, indent, indent)
+				if (!set) {
+					written = false
+					break
+				}
+				if (written) output.push("")
+				output.push(...set)
+				written = true
+			}
+			if (written) {
+				leadPending = false
+				i = end
+				continue
+			}
+		}
+		output.push(...((completeInlineMarkup ? wrapProse(text, limits, indent, indent) : undefined) ?? lines.slice(i, end)))
+		leadPending = false
 		i = end
 	}
 	return output
@@ -469,18 +597,26 @@ function limitsFor(options: Required<ReflowOptions>, overhead: number): WrapLimi
 }
 
 /**
- * A comment that says its piece on one line within `printWidth` is left as it is.
- * The target only governs prose that has to break, which is where a narrow measure earns
- * its keep; pulling a 108-column one-liner onto two lines buys nothing and costs a line.
+ * A comment that says its piece in one sentence on one line within `printWidth` is left as it is.
+ *
+ * The measure only governs prose that has to break, so pulling a 108-column
+ * one-liner onto two lines buys nothing and costs a line.
+ * Two sentences on one line are a different matter: that is the shape the rule
+ * exists to undo, whatever the width.
  */
 function fitsOnOneLine(lines: readonly string[], overhead: number, options: Required<ReflowOptions>) {
 	if (lines.filter((line) => line.trim()).length !== 1) return false
 	const only = lines.find((line) => line.trim())!
 	if (isStructure(only)) return false
+	if (splitSentences(only.trim()).length > 1) return false
 	return overhead + columns(only.trim(), options.tabWidth) <= options.printWidth
 }
 
-/** Format a group of standalone line comments. The first indent is external. */
+/**
+ * Format a group of standalone line comments.
+ *
+ * The first indent is external.
+ */
 export function reflowLineComments(
 	values: readonly string[],
 	indent: string,
@@ -491,7 +627,10 @@ export function reflowLineComments(
 	const overhead = columns(indent + "// ", options.tabWidth)
 	const formatted = fitsOnOneLine(lines, overhead, options)
 		? [lines.find((line) => line.trim())!.trim()]
-		: reflowText(lines, limitsFor(options, overhead))
+		: reflowText(lines, limitsFor(options, overhead), false, {
+				paragraphs: false,
+				perParagraph: options.paragraphSentences,
+			})
 	return formatted.map((line) => (line ? `// ${line}` : "//")).join(eol + indent)
 }
 
@@ -516,7 +655,7 @@ export function reflowBlockComment(
 	if (original.length === 1) {
 		// Expanding single-line metadata or examples can change parser semantics.
 		if (body.includes("@") || /`{3}|~{3}/.test(body)) return raw
-		if (sourceLineWidth <= options.printWidth) return raw
+		if (sourceLineWidth <= options.printWidth && splitSentences(body.trim()).length <= 1) return raw
 		lines = [body.trim()]
 	} else {
 		if (original[0]!.trim() || original.at(-1)!.trim()) return raw
@@ -532,7 +671,11 @@ export function reflowBlockComment(
 		}
 	}
 	const overhead = columns(plainPrefix ?? indent + " * ", options.tabWidth)
-	const formatted = reflowText(lines, limitsFor(options, overhead), jsdoc)
+	const formatted = reflowText(lines, limitsFor(options, overhead), jsdoc, {
+		// A `/* */` block whose body is indented prose keeps its own layout; only a starred block takes the shape.
+		paragraphs: plainPrefix === undefined && original.length > 1,
+		perParagraph: options.paragraphSentences,
+	})
 	if (original.length > 1 && lines.every((line, index) => line === formatted[index]) && lines.length === formatted.length)
 		return raw
 	if (plainPrefix !== undefined)

@@ -21,21 +21,25 @@ import type { Form499Row } from "#sdk/form499/index"
 import type { ProviderListRow } from "#sdk/provider-list"
 
 /**
- * The date the committed scorecard (`docs/articles/evals/2026-07-31-filer-linkage.md`) was generated
- * under. Exported so `linkage-eval.test.ts` can regenerate that exact file and byte-compare it —
+ * The date the committed scorecard (`docs/articles/evals/2026-07-31-filer-linkage.md`) was generated under.
+ *
+ * Exported so `linkage-eval.test.ts` can regenerate that exact file and byte-compare it —
  * without this pin, editing the corpus silently stales the published numbers with nothing failing.
  */
 export const PUBLISHED_LINKAGE_EVAL_DATE = "2026-07-31"
 
 /**
- * The SHA-256 {@linkcode hashLinkageEvalInputs} produces over the withheld run's inputs, as published
- * in the committed scorecard. Asserted against the freshly computed value in `linkage-eval.test.ts`.
+ * The SHA-256 {@linkcode hashLinkageEvalInputs} produces over the withheld run's inputs,
+ * as published in the committed scorecard.
+ *
+ * Asserted against the freshly computed value in `linkage-eval.test.ts`.
  */
 export const PUBLISHED_WITHHELD_INPUTS_SHA256 = "b20909439dcf6bc0d2b04da43b3b3fb11cdb9ff68313e12d3eeb78a24bacda58"
 
 /**
- * The same hash over the control run's inputs
- * (the corpus with `holdingCompany` intact). Differs from
+ * The same hash over the control run's inputs (the corpus with `holdingCompany` intact).
+ *
+ * Differs from
  * {@linkcode PUBLISHED_WITHHELD_INPUTS_SHA256} by construction — if the two ever matched, the two runs would not
  * actually differ in the field this eval claims to withhold.
  */
@@ -55,8 +59,10 @@ const FRN_SHARED_REGISTRANT_2 = toFRN("9100000011")!
 const FRN_COMANAGED = toFRN("9100000012")!
 
 /**
- * Fills every optional `Form499Row` field with an empty/false default, so each corpus row below states
- * only what's distinctive about it. Mirrors `filer-lookup.test.ts`'s `minimalForm499Row` convention.
+ * Fills every optional `Form499Row` field with an empty/false default, so each
+ * corpus row below states only what's distinctive about it.
+ *
+ * Mirrors `filer-lookup.test.ts`'s `minimalForm499Row` convention.
  */
 function evalForm499Row(
 	overrides: Partial<Form499Row> &
@@ -82,6 +88,7 @@ function evalForm499Row(
 /**
  * The authored held-out corpus — 12 Form 499 filers, written out (never sampled)
  * so every truth fact is auditable by reading this file and the eval is exactly reproducible.
+ *
  * What it deliberately covers:
  *
  * - **Two multi-filer corporate families.** "Cascade Fiber Holdings, Inc."
@@ -202,14 +209,15 @@ export function buildLinkageEvalForm499Rows(): Form499Row[] {
 
 /**
  * BDC provider-list rows layered onto a subset of the corpus above.
- * Provider `700004` is reported for both `9100000010` and `9100000011` — one registrant
- * that holds two FRN registrations, the shape {@linkcode buildTruthRegistrants} exists
- * to fold into a single scored id. Every other `providerID` maps to exactly one FRN.
  *
- * Each row's `holdingCompany` either agrees with its FRN's Form 499 value or is `null`,
- * so stripping it later never creates an internal contradiction between the two sources'
- * held-out truth. Provider `700004` reports `null` on both rows on purpose: the shared
- * registrant's parent is disclosed on one of its two Form 499 filings and nowhere else.
+ * Provider `700004` is reported for both `9100000010` and `9100000011` — one registrant that holds two
+ * FRN registrations, the shape {@linkcode buildTruthRegistrants} exists to fold into a single scored id.
+ * Every other `providerID` maps to exactly one FRN.
+ *
+ * Each row's `holdingCompany` either agrees with its FRN's Form 499 value or is `null`, so stripping
+ * it later never creates an internal contradiction between the two sources' held-out truth.
+ * Provider `700004` reports `null` on both rows on purpose: the shared registrant's
+ * parent is disclosed on one of its two Form 499 filings and nowhere else.
  */
 export function buildLinkageEvalProviderRows(): ProviderListRow[] {
 	return [
@@ -232,6 +240,7 @@ export interface LinkageEvalInputs {
 
 /**
  * The corpus verbatim — what the control run hands `buildFilerDatabase`.
+ *
  * Named for what it is (an unfiltered projection), so the withheld/control distinction
  * is visible at every call site rather than implied.
  */
@@ -254,8 +263,10 @@ export function buildFilteredEvalInputs(): LinkageEvalInputs {
 }
 
 /**
- * One registrant — the eval's unit of analysis. Usually one FRN, but an operator can hold several
- * FRN registrations, and the corpus's `bdc_provider_id` linkage says when that's the case.
+ * One registrant — the eval's unit of analysis.
+ *
+ * Usually one FRN, but an operator can hold several FRN registrations, and the
+ * corpus's `bdc_provider_id` linkage says when that's the case.
  */
 export interface LinkageEvalRegistrant {
 	/**
@@ -269,6 +280,7 @@ export interface LinkageEvalRegistrant {
 	/**
 	 * Every `filer_node` id whose family memberships belong to this registrant:
 	 * its FRN nodes plus any `bdc_provider_id` node the provider list ties to one of them.
+	 *
 	 * The prediction reads all of these — a parent disclosed on one registration is a
 	 * fact about the company rather than about that one registration.
 	 */
@@ -276,10 +288,12 @@ export interface LinkageEvalRegistrant {
 }
 
 /**
- * Fold the corpus's FRNs into registrants. Two FRNs reported under the same `bdc_provider_id`
- * are one legal entity with two registrations. scoring them as two separate ids lets the truth
- * partition assert that one company belongs to two different corporate families at once, which is not
- * a coherent thing for a truth partition to say and makes every downstream count questionable.
+ * Fold the corpus's FRNs into registrants.
+ *
+ * Two FRNs reported under the same `bdc_provider_id` are one legal entity with two
+ * registrations. scoring them as two separate ids lets the truth partition assert that one
+ * company belongs to two different corporate families at once, which is not a coherent
+ * thing for a truth partition to say and makes every downstream count questionable.
  *
  * Identity here is taken from `providerID`, a field the builder also sees — it is not withheld,
  * so using it to define the scored id universe leaks nothing about the field that is.
@@ -342,9 +356,11 @@ export function buildTruthRegistrants(
 
 /**
  * A truth group label for a registrant with no disclosed parent.
- * Embeds the representative FRN, so two unrelated standalone registrants never collide into one
- * truth family. (Every registrant that does have a parent gets the canonical family id instead,
- * so these labels are unique by construction — nothing downstream needs to special-case the prefix.)
+ *
+ * Embeds the representative FRN, so two unrelated standalone registrants never
+ * collide into one truth family.
+ * (Every registrant that does have a parent gets the canonical family id instead, so these
+ * labels are unique by construction — nothing downstream needs to special-case the prefix.)
  */
 function singletonTruthGroup(representative: FRN): string {
 	return `singleton:${representative}`
@@ -358,9 +374,10 @@ function singletonTruthGroup(representative: FRN): string {
  *
  * Keyed by {@link LinkageEvalRegistrant.representative}.
  * A registrant's parent may be disclosed on any of its Form 499 filings
- * or provider-list rows. all of them count. Registrants that name the same parent land
- * in one truth group, and a registrant naming two parents transitively joins both —
- * hence the second union-find rather than a plain map.
+ * or provider-list rows. all of them count.
+ *
+ * Registrants that name the same parent land in one truth group, and a registrant naming two
+ * parents transitively joins both — hence the second union-find rather than a plain map.
  *
  * `managementCompany` is not a truth family here: see the module docstring for why
  * operational control is held apart from ownership on both sides of this measurement.
@@ -469,9 +486,10 @@ function serializeProviderListRow(row: ProviderListRow): string {
 
 /**
  * SHA-256 over the exact bytes a run hands to `buildFilerDatabase`
- * (decision 4's "the scorecard reports … the SHA of its inputs") — computed over a
- * fixed field order (mirrors the real TSV/CSV column order), so the hash is stable
- * across Node versions and can never depend on an object-key-iteration-order accident.
+ * (decision 4's "the scorecard reports … the SHA of its inputs") — computed over a fixed
+ * field order (mirrors the real TSV/CSV column order), so the hash is stable across Node
+ * versions and can never depend on an object-key-iteration-order accident.
+ *
  * The withheld and control runs therefore publish different hashes, which is itself
  * the evidence that they differ in the field they claim to.
  */

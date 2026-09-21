@@ -64,8 +64,10 @@ function stripBIO(label: string): string {
 
 /**
  * Python `str.isdigit()`: non-empty and every character a Unicode digit.
- * Pure-numeric tokens (house_number / postcode) are context-determined rather than lexical vocab,
- * so they're excluded. `\p{Nd}` covers the decimal digits these address corpora actually contain.
+ *
+ * Pure-numeric tokens (house_number / postcode) are context-determined
+ * rather than lexical vocab, so they're excluded.
+ * `\p{Nd}` covers the decimal digits these address corpora actually contain.
  */
 function isDigit(token: string): boolean {
 	return token.length > 0 && /^\p{Nd}+$/u.test(token)
@@ -81,6 +83,7 @@ function pct(frac: number): string {
 /**
  * Format a float the way a Python f-string renders it: integer-valued floats keep one
  * decimal (1.0 -> "1.0"), everything else is its shortest decimal (0.5 -> "0.5").
+ *
  * Used for the `fraction` echo so the banner matches the Python print.
  */
 function formatPyFloat(n: number): string {
@@ -96,8 +99,9 @@ function pad(value: string, width: number): string {
 
 /**
  * The dominant tag of a counter: (tag, total, fraction).
- * Empty counter -> ("", 0, 0.0). Ties go to the first-inserted tag, mirroring
- * `Counter.most_common(1)` (stable on equal counts).
+ *
+ * Empty counter -> ("", 0, 0.0).
+ * Ties go to the first-inserted tag, mirroring `Counter.most_common(1)` (stable on equal counts).
  */
 function dominant(counter: Map<string, number>): [string, number, number] {
 	let total = 0
@@ -134,6 +138,7 @@ function bump(table: Map<string, Map<string, number>>, key: string, sub: string)
 
 /**
  * Read a corpus parquet into rows, projecting only tokens/labels/country.
+ *
  * The list columns ride out as JSON text (DuckDB `to_json`) — the same trick the gazetteer
  * builders use for nested columns — and parse back to string arrays here.
  */
@@ -180,23 +185,33 @@ export interface LintRecipeVocabOptions {
 	 */
 	recipeOutputPath: string
 	/**
-	 * Base corpus version. Default `v0.5.0`.
+	 * Base corpus version.
+	 *
+	 * Default `v0.5.0`.
 	 */
 	baseVersion?: string
 	/**
-	 * Base corpus root. Default `$MAILWOMAN_DATA_ROOT/corpus/versioned`.
+	 * Base corpus root.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/corpus/versioned`.
 	 */
 	baseRoot?: string
 	/**
-	 * Base-majority confidence floor for a contradiction. Default 0.7.
+	 * Base-majority confidence floor for a contradiction.
+	 *
+	 * Default 0.7.
 	 */
 	threshold?: number
 	/**
-	 * Minimum base support to judge a token. Default 50.
+	 * Minimum base support to judge a token.
+	 *
+	 * Default 50.
 	 */
 	minCount?: number
 	/**
-	 * Fraction of base parts to scan (proportional per-source sample below 1.0). Default 1.0.
+	 * Fraction of base parts to scan (proportional per-source sample below 1.0).
+	 *
+	 * Default 1.0.
 	 */
 	fraction?: number
 }

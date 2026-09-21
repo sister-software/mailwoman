@@ -227,11 +227,11 @@ export async function readSurveyAreaAttributes(
 /**
  * A polygon the authority drew with no soil mapping behind it.
  *
- * Three signals rather than one, because the source encodes the same fact three ways
- * and each on its own has a gap: the symbol (`notcom`, `notpub`), the name
- * (`Area not surveyed, access denied`), and the structural case of a map unit carrying no
- * components at all. A map unit with no components has nothing to rate whatever it is called,
- * and reading it as "rated nothing" rather than "no mapping" would put it in `unrated_share` —
+ * Three signals rather than one, because the source encodes the same fact three ways and each on its
+ * own has a gap: the symbol (`notcom`, `notpub`), the name (`Area not surveyed, access denied`),
+ * and the structural case of a map unit carrying no components at all.
+ * A map unit with no components has nothing to rate whatever it is called, and reading
+ * it as "rated nothing" rather than "no mapping" would put it in `unrated_share` —
  * a claim that the survey looked and declined, when it did not look.
  */
 function isNoMapping(musym: string, muname: string, componentCount: number): boolean {
@@ -247,9 +247,9 @@ function isNoMapping(musym: string, muname: string, componentCount: number): boo
  *
  * An unknown code is a source-schema change, which is the event a reader most
  * needs to hear about. coercing it to a nearest neighbour or to NULL converts
- * "the source changed" into "there is nothing here". A blank is not a violation:
- * NULL is a real state in every one of these columns and means something specific —
- * for `nirrcapcl` it means the survey did not rate the component, which is not class 8.
+ * "the source changed" into "there is nothing here".
+ * A blank is not a violation: NULL is a real state in every one of these columns and means something
+ * specific — for `nirrcapcl` it means the survey did not rate the component, which is not class 8.
  */
 function assertDeclared(declared: ReadonlySet<string>, value: string | undefined, domain: string, where: string): void {
 	if (!value) return
@@ -269,9 +269,10 @@ function nullable(value: string | undefined): string | null {
  * The nccpi v3.0 overall index per component.
  *
  * `cointerp` is the largest table in the export — 157,063 rows for `IA153`, read in 0.36 s —
- * and the overall rule is one row per component at {@link COINTERP_OVERALL_RULE_DEPTH}: 369 of 369
- * components on `IA153`, of which 327 carry a value. Sub-rules at greater depths are the
- * submodels (corn, soybeans, small grains, cotton), which this layer does not carry.
+ * and the overall rule is one row per component at {@link COINTERP_OVERALL_RULE_DEPTH}:
+ * 369 of 369 components on `IA153`, of which 327 carry a value.
+ * Sub-rules at greater depths are the submodels (corn, soybeans, small grains, cotton),
+ * which this layer does not carry.
  */
 async function readNCCPI(
 	tabularDirectory: PathBuilderLike,
@@ -319,10 +320,12 @@ export interface FGDCMetadata {
  * Read the metadata nrcs ships inside the archive.
  *
  * Targeted extraction rather than a general XML parse, and not for want of a parser —
- * `@mailwoman/core` ships `htmlparser2`. A parser recovers an unclosed element by giving
- * it the rest of the document as its content, and the two values below that throw would
- * then stamp the artifact with that content instead. {@link elementText} answers
- * `undefined` for an element it cannot read, which is what makes the throw reachable.
+ * `@mailwoman/core` ships `htmlparser2`.
+ * A parser recovers an unclosed element by giving it the rest of the document as its content,
+ * and the two values below that throw would then stamp the artifact with that content
+ * instead. {@link elementText} answers `undefined` for an element it cannot read,
+ * which is what makes the throw reachable.
+ *
  * Every value this reader cannot find is reported as `null` except the publication date
  * and the licence sentence, which throw — those two decide the artifact's vintage and
  * whether it may be shipped at all, and neither has a safe default.
@@ -409,6 +412,7 @@ function elementText(xml: string, name: string): string | undefined {
 
 /**
  * Every `<name>` element's inner text, in document order.
+ *
  * The repeating counterpart of {@link elementText}, and linear for the same reason.
  */
 function elementBlocks(xml: string, name: string): string[] {
@@ -434,8 +438,10 @@ function elementBlocks(xml: string, name: string): string[] {
 }
 
 /**
- * Fgdc dates arrive as `yyyy` or `yyyymmdd`. Both are kept as they are meant — a bare year is a
- * bare year, and padding it to January 1 would invent a precision the citation does not claim.
+ * Fgdc dates arrive as `yyyy` or `yyyymmdd`.
+ *
+ * Both are kept as they are meant — a bare year is a bare year, and padding it to
+ * January 1 would invent a precision the citation does not claim.
  */
 function normalizeFGDCDate(value: string): string {
 	const trimmed = value.trim()

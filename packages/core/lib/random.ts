@@ -55,9 +55,10 @@ export function mulberry32(seed: number): () => number {
  * bound)`.
  *
  * The walk is "swap `i` with a uniform index in `[0, i]`, counting down".
- * How that index is drawn is the sampler, and the samplers here differ
- * because each reproduces a stream baked into an artifact — the coarse-placer's
- * train/test split, the conformal calibration split, a frozen eval panel.
+ * How that index is drawn is the sampler, and the samplers here differ because each
+ * reproduces a stream baked into an artifact — the coarse-placer's train/test split,
+ * the conformal calibration split, a frozen eval panel.
+ *
  * Parameterizing the sampler rather than the generator is what lets all of them share one walk.
  * CPython's `random.shuffle` takes `randbelow` for the same reason.
  *
@@ -101,8 +102,10 @@ export function sample<T>(array: ReadonlyArray<T>, random: () => number): T {
 }
 
 /**
- * The multiplier and increment glibc's `rand()` uses. Two generators below share them and are
- * not the same stream, so the constants live here once rather than being re-typed beside each.
+ * The multiplier and increment glibc's `rand()` uses.
+ *
+ * Two generators below share them and are not the same stream, so the constants
+ * live here once rather than being re-typed beside each.
  */
 const GLIBC_LCG_MULTIPLIER = 1_103_515_245
 const GLIBC_LCG_INCREMENT = 12_345
@@ -111,16 +114,17 @@ const GLIBC_LCG_INCREMENT = 12_345
  * Glibc's LCG constants stepped with a FLOAT64 multiply, returning the raw 31-bit state.
  *
  * The float multiply is the point, and it is not a rounding detail: the state reaches 2³¹
- * and the product with the multiplier is about 2.3 × 10¹⁸, past 2⁵³ where a double
- * stops being exact. So this produces a different sequence from
+ * and the product with the multiplier is about 2.3 × 10¹⁸, past 2⁵³ where a double stops being exact.
+ * So this produces a different sequence from
  * {@link makeGlibcLcgInt32} despite the identical constants. Measured over every seed from 1 to 2,000,000, the draw the
- * two first disagree on is the 2nd for 1,963,788 seeds, the 3rd for 35,967, the 4th for 242
- * and the 5th for 3 — never the 1st, because a seed under 2⁵³/1103515245 = 8,162,279
- * keeps that first product exact. Above it they part on the first draw, which is
- * where this file's own caller sits: the conformal seed mixes to 192,663,848.
+ * two first disagree on is the 2nd for 1,963,788 seeds, the 3rd for 35,967,
+ * the 4th for 242 and the 5th for 3 — never the 1st, because a seed under
+ * 2⁵³/1103515245 = 8,162,279 keeps that first product exact.
+ * Above it they part on the first draw, which is where this file's own caller sits:
+ * the conformal seed mixes to 192,663,848.
  *
- * So a reader comparing one draw, or a few from a small seed, can conclude these are the
- * same generator. They are not, and neither is substitutable for the other.
+ * So a reader comparing one draw, or a few from a small seed, can conclude these are the same generator.
+ * They are not, and neither is substitutable for the other.
  *
  * Kept because the published conformal thresholds were selected under this one.
  * Prefer {@link mulberry32} for anything new. this exists to reproduce an artifact
@@ -136,8 +140,8 @@ export function makeGlibcLcgFloat64(seed: number): () => number {
  * Glibc's LCG constants stepped with `Math.imul`, a 32-bit wrapping multiply,
  * returning the raw 31-bit state.
  *
- * The coarse-placer's train/test split reproduces from this one,
- * so every shipped coarse-placer model was trained on the order it produces.
+ * The coarse-placer's train/test split reproduces from this one, so every shipped
+ * coarse-placer model was trained on the order it produces.
  * See {@link makeGlibcLcgFloat64} for why the two are different streams.
  */
 export function makeGlibcLcgInt32(seed: number): () => number {
@@ -149,9 +153,10 @@ export function makeGlibcLcgInt32(seed: number): () => number {
 /**
  * The Numerical-Recipes linear congruential generator — `s = s * 1664525 + 1013904223 mod 2³²`.
  *
- * Weaker than {@link mulberry32}, and kept only because its exact stream is baked into
- * shipped artifacts: the synthetic PO-box adapter's rows and the registry scorers'
- * train/test splits both reproduce from it. Prefer `mulberry32` for anything new.
+ * Weaker than {@link mulberry32}, and kept only because its exact stream is baked
+ * into shipped artifacts: the synthetic PO-box adapter's rows and the registry
+ * scorers' train/test splits both reproduce from it.
+ * Prefer `mulberry32` for anything new.
  *
  * Seed 0 is a valid state here (unlike mulberry32, which needs a non-zero one); callers that used to guard with `seed
  * || 1` keep doing so at the call site, since dropping the guard would shift their stream for that one seed.
@@ -167,7 +172,9 @@ export function makeLcg(seed: number): () => number {
 }
 
 /**
- * Seeded `random.Random`-equivalent. Backed by {@link mulberry32}.
+ * Seeded `random.Random`-equivalent.
+ *
+ * Backed by {@link mulberry32}.
  */
 export class SeededRandom {
 	readonly #next: () => number
@@ -178,28 +185,36 @@ export class SeededRandom {
 	}
 
 	/**
-	 * Float in `[0, 1)`. Mirrors Python `random.random()`.
+	 * Float in `[0, 1)`.
+	 *
+	 * Mirrors Python `random.random()`.
 	 */
 	random(): number {
 		return this.#next()
 	}
 
 	/**
-	 * Integer in `[lo, hi]` inclusive. Mirrors Python `random.randint(lo, hi)`.
+	 * Integer in `[lo, hi]` inclusive.
+	 *
+	 * Mirrors Python `random.randint(lo, hi)`.
 	 */
 	randint(lo: number, hi: number): number {
 		return lo + Math.floor(this.random() * (hi - lo + 1))
 	}
 
 	/**
-	 * One uniformly-chosen element. Mirrors Python `random.choice(seq)`.
+	 * One uniformly-chosen element.
+	 *
+	 * Mirrors Python `random.choice(seq)`.
 	 */
 	choice<T>(seq: readonly T[]): T {
 		return seq[Math.floor(this.random() * seq.length)]!
 	}
 
 	/**
-	 * `k` elements chosen with replacement. Mirrors Python `random.choices(seq, k=k)`.
+	 * `k` elements chosen with replacement.
+	 *
+	 * Mirrors Python `random.choices(seq, k=k)`.
 	 */
 	choices<T>(seq: readonly T[], k: number): T[] {
 		const out: T[] = []
@@ -212,9 +227,10 @@ export class SeededRandom {
 	}
 
 	/**
-	 * In-place Fisher-Yates shuffle. Mirrors Python `random.shuffle(x)` —
-	 * distribution-correct, but not bit-identical to CPython's `_randbelow` stream
-	 * (see the module header on the seeded-but-not- MT19937 tradeoff).
+	 * In-place Fisher-Yates shuffle.
+	 *
+	 * Mirrors Python `random.shuffle(x)` — distribution-correct, but not bit-identical to CPython's
+	 * `_randbelow` stream (see the module header on the seeded-but-not- MT19937 tradeoff).
 	 */
 	shuffle<T>(arr: T[]): void {
 		shuffleWith(arr, () => this.random())
@@ -222,9 +238,11 @@ export class SeededRandom {
 
 	/**
 	 * `k` distinct elements without replacement, as a new array.
+	 *
 	 * Mirrors Python `random.sample(seq, k)` semantics (uniform, no mutation of the input);
 	 * the selection order is partial-Fisher-Yates, which — like {@link shuffle} —
-	 * is uniform but not CPython-bit-identical. `k` must be `<= seq.length`.
+	 * is uniform but not CPython-bit-identical.
+	 * `k` must be `<= seq.length`.
 	 */
 	sample<T>(seq: readonly T[], k: number): T[] {
 		const pool = seq.slice()

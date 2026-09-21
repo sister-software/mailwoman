@@ -28,9 +28,10 @@ const SYSTEM_STYLESHEET = "packages/react/styles.css"
  * A rule, as the text gives it up: the selector list, the declarations inside
  * the braces, and the at-rules it is nested in.
  *
- * The enclosing at-rules are what separate a rule that uses a token from a rule that is
- * a material's fallback. The chip's hover background and a sticky header both paint the
- * fallback colour on purpose. only the rules inside `@supports not (backdrop-filter…)`
+ * The enclosing at-rules are what separate a rule that uses a token from a
+ * rule that is a material's fallback.
+ * The chip's hover background and a sticky header both paint the fallback
+ * colour on purpose. only the rules inside `@supports not (backdrop-filter…)`
  * and `@media (prefers-reduced-transparency: reduce)` are the fallback itself.
  */
 interface StyleRule {
@@ -137,9 +138,10 @@ function declares(body: string, property: string): boolean {
 const STATE_SELECTOR = /:(?:hover|active|disabled|focus|focus-visible|focus-within|checked|first|last|nth)|--[a-z]+$/u
 
 /**
- * Vendor pairs the bundler collapses. A minifier keeps the last of two declarations
- * carrying the same value, so the standard property has to come after its prefixed twin
- * or it is the one dropped from the output.
+ * Vendor pairs the bundler collapses.
+ *
+ * A minifier keeps the last of two declarations carrying the same value, so the standard
+ * property has to come after its prefixed twin or it is the one dropped from the output.
  */
 const VENDOR_PAIRS = ["backdrop-filter", "mask-image", "user-select", "text-stroke", "box-decoration-break"] as const
 
@@ -152,9 +154,11 @@ const VENDOR_PAIRS = ["backdrop-filter", "mask-image", "user-select", "text-stro
  * The design system carries a radius scale — `tick`, `tight`, `control`, `panel` / `sheet`,
  * `pill` — and the stylesheets carried six raw pixel values beside it (2, 3, 4, 6, 8, 10)
  * plus `999px` written out four times next to the `--radius-pill` that already said it.
- * Nothing about a raw radius is wrong on its own. the defect is that six of them cannot be told
- * apart from a decision, so two components meant to match never quite do and nobody can say
- * which value was meant. `0` and `50%` are exempt because neither is a step on any scale.
+ * Nothing about a raw radius is wrong on its own. the defect is that six of them cannot
+ * be told apart from a decision, so two components meant to match never quite do
+ * and nobody can say which value was meant.
+ *
+ * `0` and `50%` are exempt because neither is a step on any scale.
  */
 const RAW_RADIUS = /border-radius\s*:\s*[^;}]*\d+px/u
 
@@ -281,8 +285,9 @@ export function stylesheetDiagnostics(file: string, css: string): Diagnostic[] {
 }
 
 /**
- * The check the chrome arc ends on: the invariants that make two of these
- * defects impossible, and detectors for the two no invariant expresses.
+ * The check the chrome arc ends on: the invariants that make two of these defects
+ * impossible, and detectors for the two no invariant expresses.
+ *
  * Registered in `#registry` and run by `mwops health stylesheet-interface`.
  */
 export const stylesheetCheck: RepoCheck = {

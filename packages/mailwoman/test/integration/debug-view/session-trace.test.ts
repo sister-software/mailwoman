@@ -47,9 +47,9 @@ describe.skipIf(!(hasWOFDB && hasWeights))("geocode session tracing", () => {
 				const withTrace = await traced.geocode(ADDRESS)
 				const without = await plain.geocode(ADDRESS)
 
-				// The answer is the answer, traced or not. The one field a trace adds is
-				// the derivation projected from the records the sink received. it is absent
-				// rather than empty, on the untraced path.
+				// The answer is the answer, traced or not.
+				// The one field a trace adds is the derivation projected from the records the
+				// sink received. it is absent rather than empty, on the untraced path.
 				const { derivation, ...tracedResult } = withTrace.result
 
 				expect(derivation).toBeDefined()

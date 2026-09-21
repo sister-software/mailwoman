@@ -26,21 +26,25 @@ import type { SystemCode } from "#postcode/systems"
 export interface AddressSystemConventions {
 	/**
 	 * Component tags that are not grammatical in this address system.
+	 *
 	 * Typed against the union itself, so a tag that no longer exists is a compile error here
 	 * rather than a rule that silently forbids nothing.
 	 */
 	readonly forbiddenTags?: readonly ComponentTag[]
 	/**
-	 * The system's canonical postcode shape. A decoded postcode span that is a strict
-	 * sub-match of a pattern-valid string in the raw text is shape-invalid for this system
-	 * and eligible for the snap-only repair (extend/clip to the valid match — never invent a span).
+	 * The system's canonical postcode shape.
+	 *
+	 * A decoded postcode span that is a strict sub-match of a pattern-valid string in
+	 * the raw text is shape-invalid for this system and eligible for the snap-only
+	 * repair (extend/clip to the valid match — never invent a span).
 	 */
 	readonly postcodePattern?: RegExp
 }
 
 /**
- * Per-address-system ordering and formatting conventions — which component
- * leads a line, whether the postcode precedes the locality, and so on.
+ * Per-address-system ordering and formatting conventions — which component leads a line,
+ * whether the postcode precedes the locality, and so on.
+ *
  * Keyed by address system rather than country, since several share one.
  */
 export const ADDRESS_SYSTEM_CONVENTIONS: Partial<Record<SystemCode, AddressSystemConventions>> = {
@@ -51,19 +55,22 @@ export const ADDRESS_SYSTEM_CONVENTIONS: Partial<Record<SystemCode, AddressSyste
 	 * just never a trailing USPS-style street_suffix (the libpostal French dictionaries have no
 	 * trailing street-suffix class. Pub-28's suffix decomposition has no French counterpart).
 	 *
-	 * Provenance / why this is not a blanket prefix+suffix forbid (#719, 2026-06-18): an earlier model
-	 * mis-tagged the leading "Rue" as a US-style `street_suffix` (RUE is a Pub-28 suffix variant) —
-	 * the 2026-06-10 v1.1.0 promotion eval — so #511 forbade both affix tags to stop that leakage.
+	 * Provenance / why this is not a blanket prefix+suffix forbid (#719, 2026-06-18):
+	 * an earlier model mis-tagged the leading "Rue" as a US-style `street_suffix`
+	 * (RUE is a Pub-28 suffix variant) — the 2026-06-10 v1.1.0 promotion eval —
+	 * so #511 forbade both affix tags to stop that leakage.
 	 * That forbid was correct for that model but became a live production bug for the
 	 * current one: the shipped model (v1.5.0) emits the FR `street_prefix` correctly,
 	 * but the conventions mask was a hard −1e9 on every B-/I-street_prefix emission,
 	 * so the detected-FR parse could never keep a prefix — it destroyed `street_prefix`
 	 * wholesale (measured on data/eval/external/ fr-street-prefix-real.jsonl at
 	 * conventions=auto: F1 0.0 with the forbid on → 80.0 with it off. the larger real-FR eval reported the same collapse,
-	 * ~96 → ~0.6). We keep only `street_suffix` forbidden: the current model with the forbid
-	 * off shows zero FR street_suffix leakage (fp=0 on that same eval set) and FR has no
-	 * trailing street suffix, so the constraint costs nothing while still guarding against any
-	 * future suffix mis-tag. Postcode: exactly five digits (NF Z 10-011. see fr/code-postal).
+	 * ~96 → ~0.6).
+	 * We keep only `street_suffix` forbidden: the current model with the forbid off shows zero FR
+	 * street_suffix leakage (fp=0 on that same eval set) and FR has no trailing street suffix,
+	 * so the constraint costs nothing while still guarding against any future suffix mis-tag.
+	 *
+	 * Postcode: exactly five digits (NF Z 10-011. see fr/code-postal).
 	 */
 	fr: {
 		forbiddenTags: ["street_suffix"],
@@ -73,15 +80,18 @@ export const ADDRESS_SYSTEM_CONVENTIONS: Partial<Record<SystemCode, AddressSyste
 	/**
 	 * United Kingdom (Royal Mail / UK-gov postcode shape — see `gb/postcode.ts` for the full provenance note):
 	 * the postcode is variable-length alphanumeric, outward + inward (`SW1A 1AA`, `M1 1AE`, `SK11 9PD`),
-	 * the most complex shape of any system in the codex. That very shape is what makes the snap
-	 * repair valuable: the model fragments it (`SK11 9PD` → region "S" + postcode "K11 9PD")
-	 * and a fragment is a strict sub-match of the pattern-valid string in the raw text —
-	 * exactly the shape-invalid class `postcodePattern` exists to flag.
+	 * the most complex shape of any system in the codex.
+	 *
+	 * That very shape is what makes the snap repair valuable: the model fragments it
+	 * (`SK11 9PD` → region "S" + postcode "K11 9PD") and a fragment is a strict sub-match
+	 * of the pattern-valid string in the raw text — exactly the shape-invalid
+	 * class `postcodePattern` exists to flag.
 	 *
 	 * Provenance (#1275, 2026-07-24): on the GB golden board's 106 postcode rows under the en-gb bundle,
 	 * the clip class (parsed postcode = proper suffix of the truth) was 44/106 with this row
 	 * absent — the repair check never opened because `conventionsForSystem("gb")` returned null.
 	 * With the repair reachable, exact 26 → 83 and the clip class goes to zero.
+	 *
 	 * No `forbiddenTags`: no measured GB-ungrammatical tag class exists
 	 * (the FR street_suffix forbid's lesson — a forbid needs measured zero-cost receipts,
 	 * and GB street grammar shares the trailing-suffix family with US/CA).
@@ -92,7 +102,9 @@ export const ADDRESS_SYSTEM_CONVENTIONS: Partial<Record<SystemCode, AddressSyste
 }
 
 /**
- * Look up conventions for a system. Absent row = no constraints known (parse unconstrained).
+ * Look up conventions for a system.
+ *
+ * Absent row = no constraints known (parse unconstrained).
  */
 export function conventionsForSystem(system: SystemCode | null | undefined): AddressSystemConventions | null {
 	if (!system) return null

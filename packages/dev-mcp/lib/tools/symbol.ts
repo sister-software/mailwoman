@@ -24,8 +24,10 @@ import { loadPurposeIndex, searchPurpose } from "#symbol/purpose"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 
 /**
- * What the sweep does not read. Stated on every result, including the empty ones:
- * a zero here means "no declaration in the covered set", never "this symbol does not exist".
+ * What the sweep does not read.
+ *
+ * Stated on every result, including the empty ones: a zero here means "no declaration
+ * in the covered set", never "this symbol does not exist".
  */
 const NOT_COVERED = [
 	".tsx files — a component is a different reuse question",

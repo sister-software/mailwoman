@@ -14,9 +14,9 @@
  *   …) without pulling a YAML dependency into what must stay a no-install fast path in CI.
  */
 
-// Node builtins on purpose. `check-docs-structure.ts` reaches this file,
-// and the Docs workflow runs it before `yarn install`. Same reason the frontmatter
-// parser above stays hand-rolled: nothing here may need an install.
+// Node builtins on purpose.
+// `check-docs-structure.ts` reaches this file, and the Docs workflow runs it before `yarn install`.
+// Same reason the frontmatter parser above stays hand-rolled: nothing here may need an install.
 /* oxlint-disable typescript/no-restricted-imports -- runs before `yarn install`; see above */
 import { readdir, readFile } from "node:fs/promises"
 import * as path from "node:path"
@@ -26,10 +26,12 @@ import { fileURLToPath } from "node:url"
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url))
 
 /**
- * The docs package root, taken as the part of this module's path before its `scripts/` segment
- * rather than by counting `..` upward. A count encodes how deep under `scripts/` this file
- * happens to sit, so moving it down one level resolves to a directory that does not exist —
- * the failure this replaces, where the content root read as `docs/scripts/docs/articles`.
+ * The docs package root, taken as the part of this module's path before its
+ * `scripts/` segment rather than by counting `..` upward.
+ *
+ * A count encodes how deep under `scripts/` this file happens to sit, so moving it down
+ * one level resolves to a directory that does not exist — the failure this replaces,
+ * where the content root read as `docs/scripts/docs/articles`.
  * Truncating at the segment holds at any depth.
  */
 const DOCS_ROOT = SCRIPT_DIR.slice(0, SCRIPT_DIR.lastIndexOf(`${path.sep}scripts${path.sep}`))
@@ -82,6 +84,7 @@ function unquote(value: string): string {
 
 /**
  * Parse the leading `---`-fenced frontmatter block of a markdown source.
+ *
  * Returns top-level scalar fields plus the set of all declared top-level keys.
  */
 export function parseFrontmatter(source: string): { fields: Map<string, string>; declaredKeys: Set<string> } {
@@ -170,8 +173,9 @@ export function isExcludedFromBuild(page: DocPage): boolean {
 /**
  * The evals and retrospectives trees are a delegated workstream (see the coordination
  * boundary in `docs/superpowers/plans/2026-07-14-documentation-architecture-cleanup.md`);
- * their role/status adoption ships with its own check. Only the duplicate-title
- * check reads them — a title collision is site-wide by nature.
+ * their role/status adoption ships with its own check.
+ *
+ * Only the duplicate-title check reads them — a title collision is site-wide by nature.
  */
 export function isDelegatedWorkstream(page: DocPage): boolean {
 	return page.relativePath.startsWith("evals/") || page.relativePath.startsWith("retrospectives/")

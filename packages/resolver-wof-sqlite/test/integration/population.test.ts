@@ -114,7 +114,9 @@ describe("findPlace — population boost", () => {
 		const springfields = candidates.filter((c) => c.name === "Springfield")
 		expect(springfields).toHaveLength(4)
 		const ids = springfields.map((c) => c.id)
-		// MO has highest pop → first. SC has none → last. MA and IL in between in pop order.
+		// MO has highest pop → first.
+		// SC has none → last.
+		// MA and IL in between in pop order.
 		expect(ids[0]).toBe(1003) // MO
 		expect(ids[1]).toBe(1002) // MA
 		expect(ids[2]).toBe(1001) // IL
@@ -134,14 +136,15 @@ describe("findPlace — population boost", () => {
 	})
 
 	test("population boost caps at populationBoost magnitude (Tokyo doesn't exceed it)", async () => {
-		// Tokyo has 13.5M people — log10 ≈ 7.13. With populationScaleLog10 = 6 default, the raw
-		// fraction is 7.13/6 = 1.19, capped at 1. So Tokyo's boost = exactly populationBoost.
+		// Tokyo has 13.5M people — log10 ≈ 7.13.
+		// With populationScaleLog10 = 6 default, the raw fraction is 7.13/6 = 1.19, capped at 1.
+		// So Tokyo's boost = exactly populationBoost.
 		const candidates = await lookup.findPlace({ text: "Tokyo", placetype: "locality" })
 		expect(candidates).toHaveLength(1)
 		expect(candidates[0]?.population).toBe(13_500_000)
-		// We can't easily isolate the population boost from BM25, but we can check the boost
-		// caps logic by tuning the weight to a sentinel + comparing the score delta to a
-		// no-population control. Skipped for now — the formula caps deterministically in code.
+		// We can't easily isolate the population boost from BM25, but we can check the boost caps logic
+		// by tuning the weight to a sentinel + comparing the score delta to a no-population control.
+		// Skipped for now — the formula caps deterministically in code.
 	})
 
 	test("DB without place_population table → no boost, lookup still works", async () => {

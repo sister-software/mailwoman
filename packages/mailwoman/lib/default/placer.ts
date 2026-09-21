@@ -24,6 +24,7 @@ export type PlaceCountryFn = (normalizedText: string) => {
 	confidence: number
 	/**
 	 * Full per-in-map-country distribution (#244 residual).
+	 *
 	 * When set it is the `anchorPosterior`.
 	 */
 	posterior?: Record<string, number>
@@ -37,9 +38,11 @@ const DEFAULT_ABSTAIN_BELOW = 0.9
 let cached: Promise<PlaceCountryFn | null> | null = null
 
 /**
- * Lazy-load + cache the coarse-placer bundled in `@mailwoman/core` as a place-country fn
- * (the M2 open-set rule at the 0.9 operating point). The result is cached for the process;
- * `null` means the model couldn't be loaded and the caller should proceed with no prior.
+ * Lazy-load + cache the coarse-placer bundled in `@mailwoman/core` as a place-country
+ * fn (the M2 open-set rule at the 0.9 operating point).
+ *
+ * The result is cached for the process; `null` means the model couldn't be loaded
+ * and the caller should proceed with no prior.
  */
 export function loadDefaultPlaceCountry(): Promise<PlaceCountryFn | null> {
 	if (!cached) {

@@ -56,6 +56,7 @@ export interface FanoutCandidate {
 	lon: number
 	/**
 	 * WOF population, or 0 when the place has no `place_population` row.
+	 *
 	 * Zero means absent, never "a population of nobody" — {@link resolveConcordanceFanout}
 	 * refuses to treat it as a winner.
 	 */
@@ -66,6 +67,7 @@ export interface FanoutResolution {
 	verdict: "single" | "coincident" | "population" | "unresolvable"
 	/**
 	 * The place ids that keep this id's Wikipedia importance.
+	 *
 	 * Empty on `unresolvable`.
 	 */
 	keep: number[]
@@ -75,12 +77,14 @@ export interface FanoutResolution {
  * How close candidates must be to read as one place modelled several times,
  * rather than as different places sharing a Wikidata id.
  *
- * Measured rather than guessed. Intra-group max spread across the 7,061 fanned-out
- * groups: p10 0.12 km, p25 0.91, p50 2.61, p75 5.80, p90 35.84, max 8,848.
- * The distribution has a knee here — 5,044 groups sit at ≤5 km and only 1,168 more appear
- * by 25 km — so 5 km separates "the same settlement described twice" from "two towns
- * with one article between them". Frankfurt's city/neighbourhood pair at 12 km falls
- * outside deliberately: they are different places, and population picks the city.
+ * Measured rather than guessed.
+ * Intra-group max spread across the 7,061 fanned-out groups: p10 0.12 km, p25 0.91,
+ * p50 2.61, p75 5.80, p90 35.84, max 8,848.
+ *
+ * The distribution has a knee here — 5,044 groups sit at ≤5 km and only 1,168 more appear by 25 km —
+ * so 5 km separates "the same settlement described twice" from "two towns with one article between them".
+ * Frankfurt's city/neighbourhood pair at 12 km falls outside deliberately:
+ * they are different places, and population picks the city.
  */
 export const FANOUT_SPREAD_EPSILON_KM = 5
 
@@ -148,7 +152,9 @@ export function emptyFanoutStats(): FanoutStats {
 }
 
 /**
- * Fold one group's resolution into `stats`. Singletons are not counted — they are not fan-out.
+ * Fold one group's resolution into `stats`.
+ *
+ * Singletons are not counted — they are not fan-out.
  */
 export function recordFanout(
 	stats: FanoutStats,

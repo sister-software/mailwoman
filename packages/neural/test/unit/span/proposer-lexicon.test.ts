@@ -60,7 +60,8 @@ test("buildCodexSpanLexicon: no systems → only the locale-general venue-struct
 	// What remains is the venue-interior vocabulary, which is deliberately not system-conditional:
 	// a concourse is a concourse regardless of which postal authority delivers to the building,
 	// and keying it on a codex system would make "Terminal 5" parse in one country
-	// and not another for no defensible reason. Sourced from the WOF placetype vocabulary +
-	// OSM aeroway — see core/resources/whosonfirst/placetypes/venue-structure.ts.
+	// and not another for no defensible reason.
+	// Sourced from the WOF placetype vocabulary + OSM aeroway —
+	// see core/resources/whosonfirst/placetypes/venue-structure.ts.
 	expect([...lex.unitDesignators].toSorted()).toEqual([...VENUE_STRUCTURE_DESIGNATORS].toSorted())
 })

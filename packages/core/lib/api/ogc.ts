@@ -15,8 +15,10 @@ import { rootAttribute } from "#html/document"
 import { stringifyJSON } from "#json"
 
 /**
- * The error an OGC `ServiceExceptionReport` becomes. The report arrives on an http 200,
- * so nothing upstream maps it: a caller that does not ask reads the exception body as an empty answer.
+ * The error an OGC `ServiceExceptionReport` becomes.
+ *
+ * The report arrives on an http 200, so nothing upstream maps it: a caller that
+ * does not ask reads the exception body as an empty answer.
  */
 export class OGCServiceError extends Error {
 	public readonly serviceException: string
@@ -29,8 +31,9 @@ export class OGCServiceError extends Error {
 	}
 
 	/**
-	 * Did the service exceed its own query timeout? No service publishes the figure,
-	 * so the message is the only signal.
+	 * Did the service exceed its own query timeout?
+	 *
+	 * No service publishes the figure, so the message is the only signal.
 	 */
 	public get timedOut(): boolean {
 		return /timed out/iu.test(this.serviceException)
@@ -80,8 +83,9 @@ function exceptionText(body: string): string | undefined {
 }
 
 /**
- * The `<ServiceException>` text inside an OGC exception report, or `undefined` when the body
- * is not one. Split from the request so the detection is testable against captured bodies.
+ * The `<ServiceException>` text inside an OGC exception report, or `undefined` when the body is not one.
+ *
+ * Split from the request so the detection is testable against captured bodies.
  * Both shapes were taken from live services: the report arrives with an XML declaration
  * and an `xmlns` of `http://www.opengis.net/ogc`.
  */
@@ -94,8 +98,10 @@ export function readOGCServiceException(body: string): string | undefined {
 }
 
 /**
- * Refuse a text body that is an OGC exception report. Every OGC text read a layer product makes goes
- * through this before it parses, because the report shares the http 200 a real answer arrives on.
+ * Refuse a text body that is an OGC exception report.
+ *
+ * Every OGC text read a layer product makes goes through this before it parses,
+ * because the report shares the http 200 a real answer arrives on.
  */
 export function assertNoOGCServiceException(body: string, context: string): void {
 	const exception = readOGCServiceException(body)
@@ -107,6 +113,7 @@ export function assertNoOGCServiceException(body: string, context: string): void
 
 /**
  * Ordinates in a CRS84 bounding box: `minLon, minLat, maxLon, maxLat`.
+ *
  * A shorter array is a 3D extent this reader does not understand rather than
  * a 2D one with something missing.
  */
@@ -223,8 +230,8 @@ export async function readWFSFeatureCount(
 	}
 
 	// WFS 2.0 permits `numberMatched="unknown"`, which is the server declining to count
-	// rather than a count of zero. Reporting it as "no attribute" would name the
-	// wrong fact, and returning 0 would invent one.
+	// rather than a count of zero.
+	// Reporting it as "no attribute" would name the wrong fact, and returning 0 would invent one.
 	if (!/^\d+$/u.test(numberMatched)) {
 		throw new Error(
 			`${options.context}: the WFS hits response${subject} reported numberMatched=${stringifyJSON(numberMatched)} rather than a count — the server declined to count the matches, which is not the same as matching none`

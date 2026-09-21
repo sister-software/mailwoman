@@ -9,14 +9,17 @@
 /**
  * The `map-tui` bin — `npx @mailwoman/map-tui` opens a PMTiles archive as a full-screen terminal map.
  *
- * This file owns everything process-shaped so the rest of the package stays testable without one:
- * argv and the environment (parsed by ./cli-args.ts), the archive handle, signal handlers,
- * and the exit code. `MapBrowser` takes streams rather than reaching for `process` itself, which is
- * what lets the PTY smoke test drive the real bin and a unit test drive the parser with neither.
+ * This file owns everything process-shaped so the rest of the package stays
+ * testable without one: argv and the environment (parsed by ./cli-args.ts),
+ * the archive handle, signal handlers, and the exit code.
+ * `MapBrowser` takes streams rather than reaching for `process` itself, which is what lets
+ * the PTY smoke test drive the real bin and a unit test drive the parser with neither.
  *
- * Signal handling is not optional here. This is a raw-mode app on the alternate screen
- * with mouse reporting on, and there is no framework underneath to put any of that back —
- * a process killed between `start` and `restore` leaves the user with an unusable shell.
+ * Signal handling is not optional here.
+ * This is a raw-mode app on the alternate screen with mouse reporting on, and there is
+ * no framework underneath to put any of that back — a process killed between `start`
+ * and `restore` leaves the user with an unusable shell.
+ *
  * So `restore` is wired to sigint, sigterm and `exit`, and it is idempotent for exactly that reason.
  */
 

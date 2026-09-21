@@ -47,9 +47,10 @@ export interface ResultOverlayProps {
 }
 
 /**
- * Render the resolved-place outline. One geojson `<Source>` feeds a translucent
- * fill `<Layer>` and a solid line `<Layer>` — the same two layers the imperative
- * `setPlaceOutline` created, now declarative and self-cleaning.
+ * Render the resolved-place outline.
+ *
+ * One geojson `<Source>` feeds a translucent fill `<Layer>` and a solid line `<Layer>` —
+ * the same two layers the imperative `setPlaceOutline` created, now declarative and self-cleaning.
  */
 export function ResultOverlay({
 	outline,

@@ -26,7 +26,8 @@ export type { FileHandle } from "node:fs/promises"
  * Read the first `byteSize` bytes of a file, or the whole file if it is smaller.
  *
  * @param path The file to read.
- * @param byteSize How many bytes to read. Defaults to 65,536, which is enough to sniff a file's format.
+ * @param byteSize How many bytes to read.
+ *   Defaults to 65,536, which is enough to sniff a file's format.
  *
  * @returns The bytes read, as a UTF-8 string.
  * @throws Enoent when the file does not exist.
@@ -72,8 +73,9 @@ export async function readFileRange(path: PathBuilderLike, offset: number, lengt
 
 /**
  * The first segment may be a `file:` URL, which `node:fs` accepts as an object
- * and rejects as the string it prints. `resolvePath` would stringify it,
- * so a URL is passed through whole and never joined.
+ * and rejects as the string it prints.
+ *
+ * `resolvePath` would stringify it, so a URL is passed through whole and never joined.
  */
 function readTarget(pathSegments: Array<PathBuilderLike | URL>): URL | string {
 	const [first] = pathSegments
@@ -171,10 +173,10 @@ export function readLocalBuffer<S extends Array<PathBuilderLike | URL>>(...pathS
 /**
  * Drain standard input.
  *
- * A hook or a filter reads its payload from file descriptor 0, which is not a path —
- * none of the readers above accepts one, and `fsPromises.readFile` does not take a bare
- * descriptor either. Streaming the handle is the asynchronous way to say the same thing,
- * and it lives here so a caller does not re-derive it.
+ * A hook or a filter reads its payload from file descriptor 0, which is not a path — none of the
+ * readers above accepts one, and `fsPromises.readFile` does not take a bare descriptor either.
+ * Streaming the handle is the asynchronous way to say the same thing, and it lives here
+ * so a caller does not re-derive it.
  */
 export async function readStandardInput(): Promise<string> {
 	return Buffer.concat(await Array.fromAsync(process.stdin)).toString("utf8")

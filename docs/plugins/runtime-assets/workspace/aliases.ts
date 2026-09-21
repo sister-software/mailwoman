@@ -70,9 +70,10 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 	 *
 	 * The lists below are a hand-maintained mirror of several packages' `exports` maps,
 	 * so they go stale every time a subpath moves — and the failure was silent:
-	 * `resolvePackageFile` answers `null` and the alias was simply skipped,
-	 * leaving the site to resolve through the real exports map and nobody any the wiser.
+	 * `resolvePackageFile` answers `null` and the alias was simply skipped, leaving the
+	 * site to resolve through the real exports map and nobody any the wiser.
 	 * That is how `@mailwoman/resolver-wof-sqlite/geo` stayed on the list after the module was deleted.
+	 *
 	 * A named entry that cannot resolve is a defect in this file, so it throws.
 	 */
 	const requireAlias = (specifier: string, target: string | null): void => {

@@ -35,9 +35,11 @@ import { epistemicStatusFor } from "#geocode/epistemic-status"
 import type { POIExecutorLookup } from "#poi/executor"
 
 /**
- * Two poi rows closer than this are the same physical venue (door + terrace, or a chain's
- * duplicate ingest of one location), not two entities. Overture duplicates of one venue
- * measure meters apart. distinct same-name venues (a franchise) are city-scale apart.
+ * Two poi rows closer than this are the same physical venue
+ * (door + terrace, or a chain's duplicate ingest of one location), not two entities.
+ *
+ * Overture duplicates of one venue measure meters apart. distinct same-name
+ * venues (a franchise) are city-scale apart.
  */
 const SAME_ENTITY_M = 150
 
@@ -57,6 +59,7 @@ export interface ForkEntityProbeOpts {
 	lookup: POIExecutorLookup
 	/**
 	 * `true` when a token is a thoroughfare generic (the street-morphology FST).
+	 *
 	 * The probe requires this signal: without it criterion 2 cannot run, and an unrestricted probe is
 	 * the Savile Row hijack — so the caller must not invoke the probe at all when no matcher is loaded.
 	 */
@@ -72,8 +75,10 @@ function distanceM(latA: number, lonA: number, latB: number, lonB: number): numb
 }
 
 /**
- * Probe the entity layer for a fork surface. Returns the single entity the world knows
- * by this exact name, or `null` (check failed / no entity / ambiguous).
+ * Probe the entity layer for a fork surface.
+ *
+ * Returns the single entity the world knows by this exact name, or `null`
+ * (check failed / no entity / ambiguous).
  */
 export function probeForkEntity(rawQuery: string, opts: ForkEntityProbeOpts): ForkEntityHit | null {
 	const nameKey = normalizeLocalityForKey(rawQuery)
@@ -88,8 +93,8 @@ export function probeForkEntity(rawQuery: string, opts: ForkEntityProbeOpts): Fo
 	// Over-fetch: FTS ranks by bm25, and the exact-name row is not guaranteed first.
 	const hits = opts.lookup.search({ name: rawQuery, limit: 24 })
 
-	// Condition 3a — name-key exact equality only. An FTS partial ("comer" matching "Comer Park")
-	// is not the entity with this name.
+	// Condition 3a — name-key exact equality only.
+	// An FTS partial ("comer" matching "Comer Park") is not the entity with this name.
 	const exact = hits.filter((h) => h.name !== null && normalizeLocalityForKey(h.name) === nameKey)
 
 	if (!exact.length) return null
@@ -142,8 +147,9 @@ export interface ForkEntityAnswerTarget {
 }
 
 /**
- * Write a fork-to-entity answer onto the outcome: coordinate, venue tier,
- * the entity block, and — like any other resolved answer — a coherence verdict (#1724).
+ * Write a fork-to-entity answer onto the outcome: coordinate, venue tier, the entity block,
+ * and — like any other resolved answer — a coherence verdict (#1724).
+ *
  * The entity offers a country and no ancestor chain, so a stated region grades
  * `unverifiable` rather than going silently unchecked.
  */
@@ -174,15 +180,17 @@ function applyForkEntityAnswer(
 }
 
 /**
- * How far a venue entity may sit from the resolved admin anchor and still be "this
- * address's venue", meters. Wide on purpose: the anchor is a locality centroid
- * (a metro's centroid can sit 20+ km from its edges), and the check exists to separate the local
- * bearer from same-named entities in other cities rather than to assert rooftop precision.
+ * How far a venue entity may sit from the resolved admin anchor and still be "this address's venue", meters.
+ *
+ * Wide on purpose: the anchor is a locality centroid (a metro's centroid can sit 20+ km from its edges),
+ * and the check exists to separate the local bearer from same-named entities in
+ * other cities rather than to assert rooftop precision.
  */
 const VENUE_ANCHOR_THRESHOLD_M = 30_000
 
 /**
  * The same bound when the anchor is a unit-grade postcode hit rather than a centroid, meters.
+ *
  * A unit postcode names a handful of doors, so a same-named entity kilometers from it is
  * another bearer (a second campus, a chain's other branch), and the locality bound admits
  * exactly that: it replaced an answer 80 m from a venue with its namesake 9.9 km away.
@@ -193,6 +201,7 @@ const VENUE_UNIT_ANCHOR_THRESHOLD_M = 1000
 
 /**
  * The anchor the venue tier measures from, with the reach its grade allows.
+ *
  * The answer coordinate is the anchor; `radiusM` defaults to {@link VENUE_ANCHOR_THRESHOLD_M}
  * and {@link venueAnchorRadiusM} tightens it.
  */
@@ -204,6 +213,7 @@ export interface VenueAnchor {
 
 /**
  * How far the venue tier may reach from the answer it is replacing.
+ *
  * A unit-grade postcode hit ({@link isUnitGradePostcodeHit}) whose coordinate is the
  * answer resolved the walk to a handful of doors, so the venue must sit within
  * {@link VENUE_UNIT_ANCHOR_THRESHOLD_M}; every other admin or street answer is a centroid and keeps
@@ -226,8 +236,9 @@ export function venueAnchorRadiusM(anchor: { lat: number; lon: number }, roots: 
 }
 
 /**
- * Probe the entity layer for a parsed venue near a resolved anchor — the #1684
- * POI-half's first mechanism, and the anchored sibling of {@link probeForkEntity}.
+ * Probe the entity layer for a parsed venue near a resolved anchor — the #1684 POI-half's
+ * first mechanism, and the anchored sibling of {@link probeForkEntity}.
+ *
  * The fork probe requires worldwide uniqueness because a bare fork surface has no other evidence.
  * a venue-led address does — the walk already resolved its admin anchor — so the discipline here
  * is local uniqueness: exact name-key entities only, and exactly one of them within the anchor's
@@ -355,12 +366,13 @@ export function applyEntityTiers(
 }
 
 /**
- * The head segment of a qualifier-decorated venue name: everything
- * before the first dash-style separator, with any trailing parenthetical dropped.
- * Board-measured classes (2026-08-19): the input carries the marketing string
- * while the poi row carries the bare name or a differently-combined one — "Mischicks
- * Day Spa - St Andrews Lakes - Rochester, Kent" vs the row "Mischicks Day Spa -
- * St Andrews Lakes"; "The North Face - Covent Garden" vs the row "The North Face".
+ * The head segment of a qualifier-decorated venue name: everything before the first
+ * dash-style separator, with any trailing parenthetical dropped.
+ *
+ * Board-measured classes (2026-08-19): the input carries the marketing string while the
+ * poi row carries the bare name or a differently-combined one — "Mischicks Day Spa -
+ * St Andrews Lakes - Rochester, Kent" vs the row "Mischicks Day Spa - St Andrews Lakes";
+ * "The North Face - Covent Garden" vs the row "The North Face".
  * Returns null when stripping changes nothing (no second leg to run) or when the head collapses
  * to a single token (a one-word head like "The" matches everything and means nothing).
  */

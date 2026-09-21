@@ -28,8 +28,10 @@ const DECORATIVE_ONLY_PATTERN = /^[^a-z0-9]*$/i
 const LETTER_OR_DIGIT_PATTERN = /[a-z0-9]/i
 
 /**
- * Column labels that name a jurisdiction column. Exactly one of these in a header row is what licenses
- * a column mapping — the document says which column means what, so reading it is not guessing.
+ * Column labels that name a jurisdiction column.
+ *
+ * Exactly one of these in a header row is what licenses a column mapping — the document says
+ * which column means what, so reading it is not guessing.
  */
 export const JURISDICTION_HEADER_LABELS = new Set<string>([
 	"jurisdiction",
@@ -57,8 +59,10 @@ export const JURISDICTION_HEADER_LABELS = new Set<string>([
 
 /**
  * Column labels that name a column which is neither the entity name nor its jurisdiction —
- * a trade name, an ownership percentage, a tax ID. A column mapping skips these
- * when picking the name column, and every one of them is also a header label in its own right.
+ * a trade name, an ownership percentage, a tax ID.
+ *
+ * A column mapping skips these when picking the name column, and every one of
+ * them is also a header label in its own right.
  */
 export const OTHER_HEADER_LABELS = new Set<string>([
 	"% of ownership",
@@ -112,13 +116,16 @@ const KNOWN_HEADER_LABELS = new Set<string>([
 ])
 
 /**
- * Recognizes a row/line as a document header or pure-decoration row rather than a data row —
- * deliberately not substring/keyword sniffing, which would misfire on a company literally named
- * e.g. "Subsidiary Holdings LLC". Two narrow checks, both applied to every non-blank value:
- * pure decoration (no letter or digit anywhere in it, which no legal entity name can be),
- * or an exact case-insensitive match against the short fixed list of literal boilerplate
- * phrases edgar Exhibit 21 filings actually use. All-blank input is not a header/decoration
- * row (that is the empty-row/blank-name handling's job rather than this one's).
+ * Recognizes a row/line as a document header or pure-decoration row rather than a
+ * data row — deliberately not substring/keyword sniffing, which would misfire on a
+ * company literally named e.g. "Subsidiary Holdings LLC".
+ *
+ * Two narrow checks, both applied to every non-blank value: pure decoration
+ * (no letter or digit anywhere in it, which no legal entity name can be),
+ * or an exact case-insensitive match against the short fixed list of literal
+ * boilerplate phrases edgar Exhibit 21 filings actually use.
+ * All-blank input is not a header/decoration row
+ * (that is the empty-row/blank-name handling's job rather than this one's).
  */
 export function isHeaderOrDecorationRow(values: readonly string[]): boolean {
 	const nonBlank = values.filter((value) => value !== "")

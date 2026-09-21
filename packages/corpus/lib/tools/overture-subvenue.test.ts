@@ -50,6 +50,7 @@ interface FixtureDatabase {
 		name: string | null
 		/**
 		 * Mirrors the shipped column so a rename fails here. it does not mirror the fold.
+		 *
 		 * The real `poi.name_key` is `NameKey`, minted by `normalizeLocalityForKey` —
 		 * which this package cannot reach, and which no assertion here needs.
 		 * Do not copy the value expression below as if it were the fold.
@@ -182,8 +183,9 @@ test("readOvertureSubVenues stamps the CONTEXT designator from the category, not
 	const rows = await readOvertureSubVenues({ databasePath })
 	const byName = new Map(rows.map((row) => [row.name, row]))
 
-	// A campus building named "Cuddy Hall" is context `campus` — the row's category — even though
-	// the phrase inside the name names `hall`. Attribution by phrase is the lexicon builder's job.
+	// A campus building named "Cuddy Hall" is context `campus` — the row's category —
+	// even though the phrase inside the name names `hall`.
+	// Attribution by phrase is the lexicon builder's job.
 	expect(byName.get("Cuddy Hall")?.designatorID).toBe("campus")
 	expect(byName.get("North Terminal")?.designatorID).toBe("terminal")
 	expect(byName.get("Pier 39")?.designatorID).toBe("pier")

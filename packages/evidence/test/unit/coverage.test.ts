@@ -46,8 +46,8 @@ describe("requireExclusionBasis", () => {
 		expect(requireExclusionBasis({ ...BASE, cell: { basis: CoverageBasis.SourcePresent } })).toBeNull()
 	})
 
-	// The board's `locality=Tel Aviv-Yafo` class: the key "exists nowhere" only under the fold we
-	// probed with. An exclusion here is confidently wrong and indistinguishable from a true absence.
+	// The board's `locality=Tel Aviv-Yafo` class: the key "exists nowhere" only under the fold we probed with.
+	// An exclusion here is confidently wrong and indistinguishable from a true absence.
 	it("refuses when the probe fold differs from the layer's build fold", () => {
 		expect(
 			requireExclusionBasis({

@@ -35,13 +35,15 @@ import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
 /**
- * Longest OpenAddresses unit id reused verbatim. Longer values are building codes
- * or free text, so a synthetic id is substituted instead.
+ * Longest OpenAddresses unit id reused verbatim.
+ *
+ * Longer values are building codes or free text, so a synthetic id is substituted instead.
  */
 const MAX_REAL_UNIT_ID_LENGTH = 6
 
 /**
  * USPS Pub-28 C2 designators that take a secondary identifier ("Apt 4B").
+ *
  * Weighted toward the common ones the v0-parity arena failed on (Apt/Ste/Unit/Fl/Rm).
  * Standalone designators (Basement, Lobby, Penthouse) are emitted occasionally with no id.
  */
@@ -77,8 +79,10 @@ const ID_WEIGHT = 0.85
  *
  * A minority rather than a replacement: `#` reads as a unit designator here and as a private-mailbox
  * leader in `synthesizers/po-box.ts`, so the token cannot decide between them and the context has to.
- * `US_PMB_LEADERS` excludes it for the same reason. A promotion check over this recipe
- * owes a PO-box arm, since a gain on units can be paid for with a loss on `PMB #`.
+ * `US_PMB_LEADERS` excludes it for the same reason.
+ *
+ * A promotion check over this recipe owes a PO-box arm, since a gain on units
+ * can be paid for with a loss on `PMB #`.
  */
 const SIGIL_WEIGHT = 0.2
 const SYNTH_IDS: readonly string[] = ["4B", "200", "12", "3", "A", "101", "5", "2A", "310", "B", "7", "1500", "404"]
@@ -149,11 +153,12 @@ const VENUES: readonly string[] = [
 /**
  * Share of tails that write a comma before the postcode — `Athens, GA, 30601`.
  *
- * This is the counter-reading of the bare unit below, and it is here because nothing else in
- * the corpus carries it. Counted over one epoch of the shipped mixture, a bare number standing
- * alone in a later comma segment appears zero times at either level, so the position is
- * unattested in both directions: teaching `…, 101, …` as a unit without this would make the
- * unit reading the only evidence a model has for a segment users also write a postcode into.
+ * This is the counter-reading of the bare unit below, and it is here
+ * because nothing else in the corpus carries it.
+ * Counted over one epoch of the shipped mixture, a bare number standing alone in a later
+ * comma segment appears zero times at either level, so the position is unattested in both
+ * directions: teaching `…, 101, …` as a unit without this would make the unit reading
+ * the only evidence a model has for a segment users also write a postcode into.
  */
 const COMMA_POSTCODE_WEIGHT = 0.15
 
@@ -181,15 +186,16 @@ function unitIdentifier(unit: string): string | undefined {
 // Layouts: 26% full-after, 5% full-comma, 3% full-comma-bare, 18% full-first,
 // 16% bare-after, 16% bare-first, 16% venue.
 //
-// A comma before the unit is its own surface — the delimiter decides whether the
-// span reads as a unit at all, independently of which designator sits in it.
+// A comma before the unit is its own surface — the delimiter decides whether the span
+// reads as a unit at all, independently of which designator sits in it.
 // `full-comma` is carved out of `full-after` alone so every later cutoff keeps the share
 // it had, and `full-comma-bare` out of `full-comma` for the same reason.
 //
 // `full-comma-bare` writes the identifier with no designator at all —
-// `301 College Ave, 101, Athens, GA 30601` — which is the one unit surface carrying no
-// token that decides its reading. It is deliberately the smallest share and confined to
-// the comma layout: a bare id anywhere else is indistinguishable from a house number.
+// `301 College Ave, 101, Athens, GA 30601` — which is the one unit surface
+// carrying no token that decides its reading.
+// It is deliberately the smallest share and confined to the comma layout:
+// a bare id anywhere else is indistinguishable from a house number.
 const FULL_AFTER_CUTOFF = 0.26
 const FULL_COMMA_CUTOFF = 0.31
 const FULL_COMMA_BARE_CUTOFF = 0.34
@@ -199,8 +205,10 @@ const BARE_FIRST_CUTOFF = 0.84
 
 /**
  * Render a unit row in a random layout — units spread across positions, the city/state
- * tail dropped on bare rows, a recipient/venue prefixed on the venue format — so the model
- * learns to recognize the designator wherever it sits. Returns {fmt, raw, components}.
+ * tail dropped on bare rows, a recipient/venue prefixed on the venue format —
+ * so the model learns to recognize the designator wherever it sits.
+ *
+ * Returns {fmt, raw, components}.
  */
 export function renderUnit(
 	random: () => number,

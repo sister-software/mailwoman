@@ -108,8 +108,10 @@ export function openUPRNAttribution(year: number): string {
 }
 
 /**
- * The exact CSV header of the product. Verified against the 2026-08 extract. a drifted
- * header fails the build loudly rather than silently mapping columns by position.
+ * The exact CSV header of the product.
+ *
+ * Verified against the 2026-08 extract. a drifted header fails the build loudly
+ * rather than silently mapping columns by position.
  */
 export const OPEN_UPRN_HEADER = "UPRN,X_COORDINATE,Y_COORDINATE,LATITUDE,LONGITUDE"
 
@@ -121,6 +123,7 @@ const OPEN_UPRN_COLUMN_COUNT = 5
 /**
  * What `GB` means on this product: England, Scotland and Wales — the Downloads API publishes
  * a single `GB` area, and the product derives from AddressBase Premium, whose scope is GB.
+ *
  * Northern Ireland's property identifiers are administered by Land & Property Services (Pointer)
  * and appear in no OS OpenData product, so the layer's NI hole is a licensing fact rather than
  * a data-quality one — the same boundary `CODEPOINT_COVERAGE_NOTE` records for postcodes.
@@ -132,8 +135,10 @@ export const OPEN_UPRN_COVERAGE_NOTE =
 
 /**
  * Row floor for {@link buildUPRNLayer}'s truncation guard.
- * The 2026-08 extract holds 41,629,393 rows and the register only grows, so a full-source
- * build under this floor read a truncated CSV. Fixture builds pass their own floor.
+ *
+ * The 2026-08 extract holds 41,629,393 rows and the register only grows,
+ * so a full-source build under this floor read a truncated CSV.
+ * Fixture builds pass their own floor.
  */
 export const OPEN_UPRN_MINIMUM_PLAUSIBLE_ROWS = 40_000_000
 
@@ -179,7 +184,9 @@ export interface OpenUPRNVersions {
 }
 
 /**
- * Parse `versions.txt`. Label-located rather than positional, so an added line cannot shift the fields.
+ * Parse `versions.txt`.
+ *
+ * Label-located rather than positional, so an added line cannot shift the fields.
  */
 export function parseOpenUPRNVersions(text: string): OpenUPRNVersions {
 	const field = (label: string): string => {
@@ -248,6 +255,7 @@ export interface DownloadOpenUPRNOptions {
 	destDir: string
 	/**
 	 * Reuse an existing archive when it already matches OS's published md5 (the default).
+	 *
 	 * The sidecars are (re)written either way, so an archive that arrived outside this function —
 	 * a manual `curl` — becomes self-describing on the first reuse pass.
 	 */
@@ -369,6 +377,7 @@ export interface ExtractOpenUPRNResult {
 
 /**
  * Decode a small provenance text file whose encoding OS does not declare.
+ *
  * Strict UTF-8 first. a failure falls back to Latin-1, whose only plausible non-ascii
  * byte here is `0xA9` (`©`) — the Code-Point mojibake lesson.
  */
@@ -383,9 +392,9 @@ function decodeProvenanceText(bytes: Uint8Array): string {
 /**
  * Extract the CSV + provenance texts from the Open uprn archive into `<destDir>/extracted/`.
  *
- * The extracted CSV is reused when its on-disk size matches the zip entry's
- * uncompressed size exactly — the dated acquisition directory is the cache,
- * and the size check is what tells a completed extraction from one that died mid-write.
+ * The extracted CSV is reused when its on-disk size matches the zip entry's uncompressed
+ * size exactly — the dated acquisition directory is the cache, and the size check is
+ * what tells a completed extraction from one that died mid-write.
  * (Byte size rather than mtime: the zip's entries carry mode 000 and a 2026 timestamp,
  * neither of which says anything about our copy's completeness.)
  */
@@ -452,26 +461,33 @@ export async function extractOpenUPRN(options: {
 export interface BuildUPRNLayerOptions {
 	/**
 	 * Acquisition directory holding (or to hold) the archive and its `extracted/` tree.
+	 *
 	 * Default `<data-root>/os-uprn/<yyyy-MM-DD>` — a new dated directory per acquisition.
 	 */
 	sourceDir?: PathBuilderLike
 	/**
-	 * Output artifact. Default `<data-root>/uprn/uprn.db`.
+	 * Output artifact.
+	 *
+	 * Default `<data-root>/uprn/uprn.db`.
 	 * Built to a staging path and atomically swapped into place.
 	 */
 	out?: PathBuilderLike
 	/**
 	 * Skip the network entirely and use whatever is already in `sourceDir`.
+	 *
 	 * Fails if no archive is there.
 	 */
 	offline?: boolean
 	/**
 	 * Build clock — the default-path datestamp and the `created_at` fallback.
+	 *
 	 * Passed in so the module never reads the clock implicitly (the `defaultGazetteerVersion` convention).
 	 */
 	now?: Date
 	/**
-	 * ISO-8601 `layer_manifest.created_at`. Caller-supplied per the layer interface. defaults to `now`.
+	 * ISO-8601 `layer_manifest.created_at`.
+	 *
+	 * Caller-supplied per the layer interface. defaults to `now`.
 	 */
 	createdAt?: string
 	/**
@@ -480,12 +496,14 @@ export interface BuildUPRNLayerOptions {
 	 */
 	buildSHA: string
 	/**
-	 * Truncation-guard floor. Default {@link OPEN_UPRN_MINIMUM_PLAUSIBLE_ROWS};
-	 * fixture builds pass their own.
+	 * Truncation-guard floor.
+	 *
+	 * Default {@link OPEN_UPRN_MINIMUM_PLAUSIBLE_ROWS}; fixture builds pass their own.
 	 */
 	minimumPlausibleRows?: number
 	/**
 	 * Injected extraction result — the fixture path, the `build-poi.ts` `rows` precedent.
+	 *
 	 * Skips download and unzip entirely. provenance still comes from `sourceDir`'s
 	 * `acquisition.json` when one is present.
 	 */
@@ -524,7 +542,9 @@ export interface BuildUPRNLayerResult {
 	osVersion: string
 	versions: OpenUPRNVersions
 	/**
-	 * Every violated check, in words. Empty on a clean build. the caller decides whether to fail on them.
+	 * Every violated check, in words.
+	 *
+	 * Empty on a clean build. the caller decides whether to fail on them.
 	 */
 	mismatches: string[]
 	durationMs: number
@@ -737,8 +757,9 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 
 	phase("coverage", `${coverage.size.toLocaleString()} res-${UPRN_COVERAGE_H3_RESOLUTION} cells`)
 
-	// OS designates the product complete for GB, so observed cells are `designated`/1.0 — a miss inside
-	// one is evidence of absence. Unobserved cells stay absent (unknown), per the meaning-of-zero rule.
+	// OS designates the product complete for GB, so observed cells are `designated`/1.0 —
+	// a miss inside one is evidence of absence.
+	// Unobserved cells stay absent (unknown), per the meaning-of-zero rule.
 	await writeLayerCoverage(
 		kdb,
 		[...coverage.entries()]

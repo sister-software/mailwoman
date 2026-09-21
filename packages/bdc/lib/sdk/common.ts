@@ -170,12 +170,14 @@ export interface RawBDCFile {
 	/**
 	 * 2-digit state or territory FIPS code.
 	 *
-	 * Loosely typed as `string` for now. The Nexus original was `AdminLevel1Code` (via `@isp.nexus/tiger`);
-	 * this port drops that dependency, same as `data-collection.ts`'s `FCCStateID`.
+	 * Loosely typed as `string` for now.
+	 * The Nexus original was `AdminLevel1Code` (via `@isp.nexus/tiger`); this port drops
+	 * that dependency, same as `data-collection.ts`'s `FCCStateID`.
+	 *
 	 * Tighten it against `@mailwoman/tiger` if a downstream dictionary ever needs the literal union.
 	 *
-	 * Nullable in live data for rows not scoped to a specific state
-	 * (e.g. Provider-category rows). Guarded in
+	 * Nullable in live data for rows not scoped to a specific state (e.g. Provider-category rows).
+	 * Guarded in
 	 * {@linkcode parseRawBDCFile} — a null value parses to an empty `stateCode` string.
 	 */
 	state_fips: string | null
@@ -187,13 +189,15 @@ export interface RawBDCFile {
 	 */
 	state_name: string
 	/**
-	 * Nullable in live data for rows not scoped to a specific provider
-	 * (e.g. State/Summary-category rows). Guarded in
+	 * Nullable in live data for rows not scoped to a specific provider (e.g. State/Summary-category rows).
+	 *
+	 * Guarded in
 	 * {@linkcode parseRawBDCFile} — a null value parses to a `providerID` of `0`.
 	 */
 	provider_id: string | null
 	/**
 	 * Nullable in live data — travels with `provider_id` (see above).
+	 *
 	 * Guarded in {@linkcode parseRawBDCFile} — a null value parses to an empty `providerName` string.
 	 */
 	provider_name: string | null
@@ -231,7 +235,9 @@ export interface BDCFile {
 	 */
 	subcategory: BDCSubCategory
 	/**
-	 * The technology codes in the file. Empty when the raw `technology_code` was `null`.
+	 * The technology codes in the file.
+	 *
+	 * Empty when the raw `technology_code` was `null`.
 	 */
 	technologyCodes: Set<BroadbandTechnologyCode>
 	/**
@@ -242,13 +248,16 @@ export interface BDCFile {
 	 */
 	stateCode: string
 	/**
-	 * The provider ID associated with the file. `0` when the raw `provider_id`
-	 * was `null` (no specific provider — see
+	 * The provider ID associated with the file.
+	 *
+	 * `0` when the raw `provider_id` was `null` (no specific provider — see
 	 * {@linkcode RawBDCFile}).
 	 */
 	providerID: ProviderID
 	/**
-	 * The provider name associated with the file. Empty string when the raw `provider_name` was `null`.
+	 * The provider name associated with the file.
+	 *
+	 * Empty string when the raw `provider_name` was `null`.
 	 */
 	providerName: string
 	/**

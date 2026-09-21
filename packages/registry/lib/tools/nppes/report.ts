@@ -59,7 +59,9 @@ export interface NPPESReportInput {
 	 */
 	addressFrequency: TermFrequencyTable
 	/**
-	 * The setting progression in order. The first row is the bare baseline, the last the full stack.
+	 * The setting progression in order.
+	 *
+	 * The first row is the bare baseline, the last the full stack.
 	 */
 	progression: readonly SettingScore[]
 	/**
@@ -69,7 +71,9 @@ export interface NPPESReportInput {
 	defaultOutOfBox: Score
 	sweep: readonly SweepArm[]
 	/**
-	 * The best-F1 arm. Must be an element of {@linkcode sweep} — the table stars it by identity.
+	 * The best-F1 arm.
+	 *
+	 * Must be an element of {@linkcode sweep} — the table stars it by identity.
 	 */
 	best: SweepArm
 	entityCount: number

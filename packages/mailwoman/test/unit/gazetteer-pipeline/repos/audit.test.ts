@@ -42,8 +42,10 @@ async function reposRoot(): Promise<PathBuilder> {
  * The commit dates are pinned: a git commit hash covers author + committer timestamps, so two
  * same-content clones only hash identically when both commits land in the same wall-clock second.
  * Fast local runs always did. a loaded CI runner sometimes straddled the boundary,
- * and the "duplicated" fixture read as diverged — a flake that surfaced twice on 2026-08-18
- * before the mechanism was pinned. With the dates fixed, identical content ⇒ identical hash, always.
+ * and the "duplicated" fixture read as diverged — a flake that surfaced twice
+ * on 2026-08-18 before the mechanism was pinned.
+ *
+ * With the dates fixed, identical content ⇒ identical hash, always.
  */
 async function clone(dir: PathBuilderLike, marker: string): Promise<void> {
 	const env = childEnv({

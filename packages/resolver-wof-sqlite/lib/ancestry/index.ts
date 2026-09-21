@@ -19,8 +19,11 @@ import { allRows } from "@mailwoman/core/utils"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
- * WOF placetype → containment depth, coarsest = 1. Higher = finer.
+ * WOF placetype → containment depth, coarsest = 1.
+ *
+ * Higher = finer.
  * Placetypes we never resolve (continent, empire, …) map to 0 and sort last.
+ *
  * Not the same table as the FST's `PLACETYPE_ORDER` (fst-serialize.ts) —
  * that one is a serialization order, this one is containment depth.
  */
@@ -59,6 +62,7 @@ export interface AncestorPlaceRow {
 
 /**
  * The ancestor lineage of `id` — self excluded, nearest-first.
+ *
  * Returns `[]` when the place has no recorded ancestry.
  * Not memoized here; `WOFSQLitePlaceLookup` keeps its own per-id cache.
  */

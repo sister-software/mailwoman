@@ -42,6 +42,7 @@ export interface AutocompleteSuggestion {
 	placetype: string
 	/**
 	 * The referential likelihood the suggestion is ranked by (ROAD_TO_V9 §2).
+	 *
 	 * Autocomplete answers "which place does the user mean", so it ranks referentially
 	 * like everything else. encyclopedic importance rides along on
 	 * {@link AutocompleteSuggestion.encyclopedic} for display and never enters the order.
@@ -49,6 +50,7 @@ export interface AutocompleteSuggestion {
 	referential: number
 	/**
 	 * Encyclopedic (Wikipedia) importance, when the FST artifact carries one for this place.
+	 *
 	 * `undefined` = no article, or a pre-v5 binary — never 0.
 	 */
 	encyclopedic?: number
@@ -63,8 +65,10 @@ export interface AutocompleteOpts {
 	maxExpansionDepth?: number
 	/**
 	 * Collapse same-name suggestions to the single highest-referential one.
+	 *
 	 * Off by default (the CLI surfaces distinct same-name places — New York the city vs the county);
-	 * a typeahead wants it on so the dropdown isn't four "New London"s. (#587)
+	 * a typeahead wants it on so the dropdown isn't four "New London"s.
+	 * (#587)
 	 */
 	dedupeByName?: boolean
 }
@@ -76,6 +80,7 @@ const PER_BRANCH = 4
 
 /**
  * The top-`k` entries by referential likelihood (descending).
+ *
  * Avoids sorting/allocating when `entries` is small — and that shortcut is part
  * of the observable interface: at or under `k` the insertion order is served,
  * which decides suggestion order among referential ties.
@@ -97,10 +102,11 @@ class FSTReader implements AncestrieReaderLike<PlaceEntry> {
 
 	/**
 	 * Parent chains of the entries this reader has served, id-keyed.
-	 * A place's chain is identical across its surfaces (it is place-row data),
-	 * so last-write-wins is safe. The algorithm asks {@link FSTReader.ancestorsOf} only
-	 * for ids it just received from {@link FSTReader.entriesAt}, so serving from this
-	 * memo answers every real call without an artifact-wide id index.
+	 *
+	 * A place's chain is identical across its surfaces (it is place-row data), so last-write-wins is safe.
+	 * The algorithm asks {@link FSTReader.ancestorsOf} only for ids it just received
+	 * from {@link FSTReader.entriesAt}, so serving from this memo answers every
+	 * real call without an artifact-wide id index.
 	 */
 	readonly #chains = new Map<number, number[]>()
 
@@ -143,7 +149,9 @@ class FSTReader implements AncestrieReaderLike<PlaceEntry> {
 }
 
 /**
- * Autocomplete from the current prefix. Returns suggestions ranked referential-descending.
+ * Autocomplete from the current prefix.
+ *
+ * Returns suggestions ranked referential-descending.
  */
 export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteOpts = {}): AutocompleteResult {
 	const normalizedTokens = normalizeTokens(query)
@@ -152,8 +160,9 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 		...(opts.maxSuggestions === undefined ? {} : { maxSuggestions: opts.maxSuggestions }),
 		...(opts.maxExpansionDepth === undefined ? {} : { maxExpansionDepth: opts.maxExpansionDepth }),
 		perBranchLimit: PER_BRANCH,
-		// The dedupe key is the display name rather than the token path: two surfaces
-		// of one name must still collapse. (#587)
+		// The dedupe key is the display name rather than the token path:
+		// two surfaces of one name must still collapse.
+		// (#587)
 		...(opts.dedupeByName ? { dedupe: (s: AncestrieSuggestion<PlaceEntry>) => s.payload!.name.toLowerCase() } : {}),
 	})
 

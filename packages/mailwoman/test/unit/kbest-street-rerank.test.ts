@@ -30,7 +30,9 @@ const grammar = (): SemiCRFTransitions => {
 }
 
 /**
- * A trace over "Rue Corsier" (2 tokens). `spanScores` optional — omit to exercise the fallback.
+ * A trace over "Rue Corsier" (2 tokens).
+ *
+ * `spanScores` optional — omit to exercise the fallback.
  */
 const trace = (spanScores?: number[][][]): NeuralParseTrace =>
 	({
@@ -53,9 +55,11 @@ const mockEvidence = (existing: string[]): StreetLocalityEvidence => {
 }
 
 /**
- * SpanScores[token][length-1][type]. Tuned so the top-2 k-best are: H1 (rank-1, score 10):
- * street "Rue" (0,1) + locality "Corsier" (1,1) H2 (rank-2, score 8): street "Rue
- * Corsier" (0,2) margin 2 ≤ 2.5 (G2 ok). Everything else deeply negative.
+ * SpanScores[token][length-1][type].
+ *
+ * Tuned so the top-2 k-best are: H1 (rank-1, score 10): street "Rue" (0,1) + locality
+ * "Corsier" (1,1) H2 (rank-2, score 8): street "Rue Corsier" (0,2) margin 2 ≤ 2.5 (G2 ok).
+ * Everything else deeply negative.
  */
 const NEG = -100
 

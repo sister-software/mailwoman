@@ -150,9 +150,10 @@ const PORTLAND_ME: ResolvedPlace = {
 }
 
 /**
- * Backend filtered by name equality (regions also match their two-letter `abbrev`), placetype,
- * country, and `parentID` (descendant scope). Models the hard `spr.country` filter:
- * a query with `country` set never returns a foreign row.
+ * Backend filtered by name equality (regions also match their two-letter `abbrev`),
+ * placetype, country, and `parentID` (descendant scope).
+ *
+ * Models the hard `spr.country` filter: a query with `country` set never returns a foreign row.
  */
 async function makeBackend(places: ResolvedPlace[]): Promise<ResolverBackend> {
 	return {

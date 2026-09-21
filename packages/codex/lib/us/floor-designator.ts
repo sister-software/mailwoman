@@ -48,6 +48,7 @@ export interface USFloorDesignator {
 	variants: readonly string[]
 	/**
 	 * True when Appendix C2 marks this designator as "Requires a Secondary Number" (floor, basement).
+	 *
 	 * False for standalone types (penthouse, lobby) that name a specific floor-analog without an identifier.
 	 */
 	requiresNumber: boolean
@@ -55,6 +56,7 @@ export interface USFloorDesignator {
 
 /**
  * USPS Pub 28 C2 floor-class secondary unit designators.
+ *
  * Verbatim from the publication. see the module header for the per-row provenance.
  * Ordered with the most-common numbered form first.
  */
@@ -72,8 +74,10 @@ export type USFloorDesignatorName = (typeof US_FLOOR_DESIGNATORS)[number]["name"
 
 /**
  * Inverse lookup: every surface form (canonical name, approved abbreviation, or Appendix C2 variant)
- * → its canonical designator name. Lowercase-keyed for case-insensitive matching:
- * `"fl"` → `"floor"`, `"bsmt"` → `"basement"`, `"ph"` → `"penthouse"`.
+ * → its canonical designator name.
+ *
+ * Lowercase-keyed for case-insensitive matching: `"fl"` → `"floor"`,
+ * `"bsmt"` → `"basement"`, `"ph"` → `"penthouse"`.
  */
 export const US_FLOOR_DESIGNATOR_LOOKUP: ReadonlyMap<string, USFloorDesignatorName> = (() => {
 	const out = new Map<string, USFloorDesignatorName>()
@@ -93,8 +97,9 @@ export const US_FLOOR_DESIGNATOR_LOOKUP: ReadonlyMap<string, USFloorDesignatorNa
 })()
 
 /**
- * All lowercase surface tokens for the floor-class designators — the set the span
- * proposer populates `levelDesignators` with when wiring the US codex address system.
+ * All lowercase surface tokens for the floor-class designators — the set the span proposer
+ * populates `levelDesignators` with when wiring the US codex address system.
+ *
  * Includes canonical names, approved abbreviations, and Appendix C2 variants.
  */
 export const US_FLOOR_DESIGNATOR_TOKENS: ReadonlySet<string> = new Set(US_FLOOR_DESIGNATOR_LOOKUP.keys())
@@ -109,6 +114,7 @@ export const US_FLOOR_DESIGNATOR_PREFERRED_ABBR: Readonly<Record<USFloorDesignat
 /**
  * Look up a USPS floor-class designator (by canonical name, abbreviation, or any Appendix C2 variant)
  * and return the canonical name + approved abbreviation.
+ *
  * Returns null if the token isn't a recognized floor-class designator.
  */
 export function lookupFloorDesignator(input: string | null | undefined): {

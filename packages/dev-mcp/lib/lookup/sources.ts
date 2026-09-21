@@ -50,9 +50,9 @@ const DEFAULT_ENTRY_LIMIT = 10
  * Which key reached a candidate row.
  *
  * The runtime cascade tries these in order and a caller who only saw `exact`
- * would read a qualifier hit as an absence. `fuzzy` is deliberately not here:
- * the FTS5-trigram typo tier corrects a misspelling into a different string,
- * so running it would report a hit for a surface the gazetteer has never held.
+ * would read a qualifier hit as an absence.
+ * `fuzzy` is deliberately not here: the FTS5-trigram typo tier corrects a misspelling into a
+ * different string, so running it would report a hit for a surface the gazetteer has never held.
  */
 const CandidateRoute = {
 	/**
@@ -61,6 +61,7 @@ const CandidateRoute = {
 	Exact: "exact",
 	/**
 	 * The key with a locality qualifier removed ("Lenk im Simmental" → `lenk`).
+	 *
 	 * Primary-name rows only, matching the runtime: a stripped probe that answers
 	 * through an alias is a scrape rather than a qualifier match.
 	 */
@@ -104,18 +105,22 @@ interface CandidateEntry extends PlaceIDProvenance {
 	importance: number | null
 	/**
 	 * The #1730 name-role stamp (`abbr` / `gloss` / `variant`), `null` for an unstamped row.
+	 *
 	 * Absent (not null) when the artifact predates the column — the same tri-state the runtime reader uses.
 	 */
 	name_role?: string | null
 	/**
 	 * The score source's split channels for this place, joined by `spr_id` when
 	 * {@link CandidateLookupOptions.importance} was provided: an object when the source holds a row,
-	 * `null` when it does not. Absent when no importance DB was given — never conflate the two.
+	 * `null` when it does not.
+	 * Absent when no importance DB was given — never conflate the two.
 	 */
 	importance_split?: { referential: number; encyclopedic: number | null } | null
 	/**
 	 * The place id this row points at, named for WOF's `spr` table (Standard Place Response)
-	 * because that is the schema it came from. It is a real WOF id only when
+	 * because that is the schema it came from.
+	 *
+	 * It is a real WOF id only when
 	 * {@link PlaceIDProvenance.wof_id} is non-null — roughly half the gazetteer is Overture-
 	 * or GeoNames-minted and carries an id in a reserved synthetic range that looks identical.
 	 */
@@ -247,11 +252,12 @@ export function lookupCandidate<DB>(
 		let key = exactKey
 		let found = probe(exactKey)
 
-		// The runtime's own extra keys, IN its order. The whitespace fold comes first because
-		// `findPlace` applies it at the top, before the cascade — and the order is required
-		// rather than cosmetic: measured against the shipped candidate.db, "1012 LG" strips to `1012`
-		// and resolves the NL PC6 unit to the 4-digit stem in NL *and* DK, while its own row
-		// sits under `1012lg`. Strip-first coarsens a hit it should never have reached.
+		// The runtime's own extra keys, IN its order.
+		// The whitespace fold comes first because `findPlace` applies it at the top,
+		// before the cascade — and the order is required rather than cosmetic: measured against
+		// the shipped candidate.db, "1012 LG" strips to `1012` and resolves the NL PC6 unit
+		// to the 4-digit stem in NL *and* DK, while its own row sits under `1012lg`.
+		// Strip-first coarsens a hit it should never have reached.
 		if (!found.total) {
 			const fusedKey = normalizeLocalityForKey(query.replaceAll(/\s+/g, ""))
 
@@ -388,6 +394,7 @@ export interface CandidateDelta {
 	query: string
 	/**
 	 * Rows the primary artifact returned that the compare artifact did not, and the reverse.
+	 *
 	 * Identity is `(spr_id, name)` — several names ride one key per place, and a refolded
 	 * artifact re-keys Overture-minted ids, so a twin appearing on both sides of this pair
 	 * is usually the same settlement under a new id rather than two places.
@@ -402,6 +409,7 @@ export interface CandidateDelta {
 
 /**
  * Diff two artifacts' answers to the same queries, row-aligned by query index.
+ *
  * Covers the returned rows only — both sides truncate at the caller's limit, so a delta over deep key
  * populations needs the limit raised to cover them. the tool's note says so beside the numbers.
  */
@@ -471,9 +479,11 @@ export interface WOFExtract<DB> {
  *
  * The two answer different questions and only together cover the extract.
  * `fts` is what the resolver can reach. the FTS5 content is built with
- * `is_current != 0 and is_deprecated = 0` applied, so a deprecated record is not merely filtered
- * at query time — it was never indexed. `names-exact` is the byte-exact probe on the indexed
- * `names` table, which carries deprecated records and is the only cheap way to see them.
+ * `is_current != 0 and is_deprecated = 0` applied, so a deprecated record is not
+ * merely filtered at query time — it was never indexed.
+ *
+ * `names-exact` is the byte-exact probe on the indexed `names` table, which carries
+ * deprecated records and is the only cheap way to see them.
  */
 const WOFRoute = {
 	Fts: "fts",
@@ -493,6 +503,7 @@ interface WOFEntry extends PlaceIDProvenance {
 	longitude: number
 	/**
 	 * The containing place's id, straight off `spr.parent_id`.
+	 *
 	 * Emitted because a same-name pair is only readable as a duplicate — a district
 	 * and its seat — when the parent link is visible. without it the two rows look
 	 * like two unrelated places that happen to tie.
@@ -502,9 +513,9 @@ interface WOFEntry extends PlaceIDProvenance {
 	 * `place_population.population`, or `null` when the place has no row there.
 	 *
 	 * Null is absence and 0 is a recorded zero, and the resolver reads them differently:
-	 * `referentialFromPopulation` treats both as no evidence, but only one of them is a
-	 * claim the source made. Emitted because population is what `neg_rank` and `referential`
-	 * are computed from, so a ranking question cannot be answered without it.
+	 * `referentialFromPopulation` treats both as no evidence, but only one of them is a claim the source made.
+	 * Emitted because population is what `neg_rank` and `referential` are computed from,
+	 * so a ranking question cannot be answered without it.
 	 */
 	population: number | null
 }
@@ -524,8 +535,9 @@ const SPR_COLUMNS =
 
 /**
  * Left rather than inner: a place with no `place_population` row must still appear,
- * carrying `population: null`. An inner join would drop it and the miss would
- * read as the extract not holding the place at all.
+ * carrying `population: null`.
+ *
+ * An inner join would drop it and the miss would read as the extract not holding the place at all.
  */
 const SPR_JOINS = "LEFT JOIN place_population pop ON pop.id = spr.id"
 
@@ -552,20 +564,22 @@ function wofStatements(from: string, order: string, scoped: boolean): { rows: st
  * Probe the WOF admin + postcode extracts — the source data behind the FTS backend,
  * and behind `candidate.db`'s build.
  *
- * Read this next to `candidate`: a string the candidate table misses and this one holds is a build gap
- * rather than a data gap. `Sultan Qaboos` is the worked example — absent from `candidate.db`,
- * reached here through the FTS index's `alt_names` column as `مدينة السلطان قابوس` in OM.
+ * Read this next to `candidate`: a string the candidate table misses and this
+ * one holds is a build gap rather than a data gap.
+ * `Sultan Qaboos` is the worked example — absent from `candidate.db`, reached here
+ * through the FTS index's `alt_names` column as `مدينة السلطان قابوس` in OM.
  *
  * Two routes, because one index cannot answer both halves.
  * The `place_search` FTS5 content is populated with `is_current != 0 and is_deprecated = 0` applied at
  * build time, so it can never show a deprecated record. the `names` table can, and is indexed.
+ *
  * Rows the resolver cannot see are counted and named but kept OUT of `entries`, so a name
  * whose every record is deprecated reports the third state — known to WOF, nothing downstream.
  *
- * The FTS route ANDs tokens over `name` and `alt_names`, so a match is not a claim that the extract
- * stores this exact string. read the returned `name`. The `names` route is byte-exact
- * under the index's binary collation, so case and punctuation matter there —
- * which is why a double miss says what was checked rather than "WOF does not have it".
+ * The FTS route ANDs tokens over `name` and `alt_names`, so a match is not a claim
+ * that the extract stores this exact string. read the returned `name`.
+ * The `names` route is byte-exact under the index's binary collation, so case and punctuation matter
+ * there — which is why a double miss says what was checked rather than "WOF does not have it".
  */
 export function lookupWOF<DB>(
 	extracts: WOFExtract<DB>[],
@@ -636,10 +650,10 @@ export function lookupWOF<DB>(
 		const extractNote = failed.length ? ` ${failed.length} probe(s) failed: ${failed.join("; ")}.` : ""
 		const scopeNote = country ? ` Scoped to country ${country}: a key held only outside it reads as 0 here.` : ""
 
-		// `scanned` counts a place once per route that reaches it, so it is an upper
-		// bound on distinct records and `entries.length` is a lower one — exact
-		// when the list was not truncated. Reporting the pair beats reporting either alone,
-		// which is how the previous note's returned-count came to be read as a corpus total.
+		// `scanned` counts a place once per route that reaches it, so it is an upper bound on distinct
+		// records and `entries.length` is a lower one — exact when the list was not truncated.
+		// Reporting the pair beats reporting either alone, which is how the previous
+		// note's returned-count came to be read as a corpus total.
 		const truncated = entries.length < scanned
 
 		const denominator = truncated
@@ -708,10 +722,10 @@ const POI_SELECT =
 /**
  * Probe `poi.db` on `name_key` — the same {@link normalizeLocalityForKey} fold the POI build writes.
  *
- * The count is exact and unbounded. Measured on the 13.68 M-row shipped `poi.db`:
- * `mcdonalds` (19,340 rows) counts in 1.3 ms warm and 3,158 ms on the first probe
- * against a cold page cache — worth knowing before reading a slow first call as a hang,
- * and not worth trading the true denominator for.
+ * The count is exact and unbounded.
+ * Measured on the 13.68 M-row shipped `poi.db`: `mcdonalds` (19,340 rows) counts in 1.3
+ * ms warm and 3,158 ms on the first probe against a cold page cache — worth knowing
+ * before reading a slow first call as a hang, and not worth trading the true denominator for.
  */
 export function lookupPOI<DB>(db: DatabaseClient<DB>, queries: string[], options: POILookupOptions = {}): LookupRow[] {
 	const limit = options.limit ?? DEFAULT_ENTRY_LIMIT
@@ -777,8 +791,10 @@ export function lookupPOI<DB>(db: DatabaseClient<DB>, queries: string[], options
 }
 
 /**
- * One codex fact about a string. `table` names which reference table answered, because "the codex
- * knows this" is four unrelated questions and a caller acting on the wrong one is the failure mode.
+ * One codex fact about a string.
+ *
+ * `table` names which reference table answered, because "the codex knows this" is four
+ * unrelated questions and a caller acting on the wrong one is the failure mode.
  */
 interface CodexEntry {
 	table: string
@@ -790,8 +806,9 @@ interface CodexEntry {
  * a secondary unit designator, a directional, or a US state?
  *
  * Pure — no artifact, so this source can never be unavailable.
- * The postcode answer is a shape test and says so: `68161` matches the US,
- * German and French five-digit shapes, and the shape alone cannot split them.
+ * The postcode answer is a shape test and says so: `68161` matches the US, German
+ * and French five-digit shapes, and the shape alone cannot split them.
+ *
  * Membership is what `candidate` and `postcode` answer.
  */
 export function lookupCodex(queries: string[]): LookupRow[] {
@@ -869,6 +886,7 @@ export interface PostcodeAnchorResolver {
 export interface PostcodeLookupOptions {
 	/**
 	 * The span mode the loaded package's model card declares.
+	 *
 	 * Read, never assumed: `alnum-run` (the default when a card declares nothing) splits on
 	 * every non-alphanumeric character, so it can never key a code written with a space.
 	 */
@@ -880,15 +898,16 @@ export interface PostcodeLookupOptions {
  * sibling in the resolved weights package rather than a gazetteer.
  *
  * The key is `span.replace(" ", "").toUpperCase()`, the train painter's normalization,
- * which is what makes `SW1A 2AA` reachable at all. Two readings this must keep apart:
+ * which is what makes `SW1A 2AA` reachable at all.
+ * Two readings this must keep apart:
  *
  * - A record whose lat and lon are both 0 is a measured zero: the postcode is a member,
  *   the artifact holds no centroid for it, and the channel feeds a country posterior
  *   with a (0, 0) centroid. 414 of `postcode-us.bin`'s 42,317 keys are like this.
  * - Under a card declaring `alnum-run`, a key containing a space-joined pair is
  *   present in the artifact and unreachable at serve — the scan produces `SW1A`
- *   and `2AA` separately and never the joined key. The row is a hit and the note says
- *   the running model is not fed it, because those are different facts.
+ *   and `2AA` separately and never the joined key.
+ *   The row is a hit and the note says the running model is not fed it, because those are different facts.
  */
 export function lookupPostcodeAnchor(
 	resolver: PostcodeAnchorResolver,
@@ -897,8 +916,9 @@ export function lookupPostcodeAnchor(
 ): LookupRow[] {
 	return queries.map((query) => {
 		const key = query.replaceAll(/\s+/g, "").toUpperCase()
-		// An alnum run cannot span a non-alphanumeric character, so a query carrying one can only be keyed
-		// under `shaped`. This is the scan's definition rather than a heuristic about postcode shapes.
+		// An alnum run cannot span a non-alphanumeric character, so a query carrying
+		// one can only be keyed under `shaped`.
+		// This is the scan's definition rather than a heuristic about postcode shapes.
 		const reachableByScan = options.spanMode === "shaped" || !/[^\p{L}\p{N}]/u.test(query.trim())
 		const rows = resolver.lookup(key)
 

@@ -51,7 +51,8 @@ describe("parseCORESRegistration — real CORES detail pages", () => {
 	it("keeps the legal name and the brand as SEPARATE surfaces — the reason this client exists", async () => {
 		const registration = parseCORESRegistration(KNOLOGY_FRN, await fixture("frn-0001753557-knology-wow.html"))
 
-		// One FRN, three spellings, no name-only join between them. Form 499 knows this carrier by neither.
+		// One FRN, three spellings, no name-only join between them.
+		// Form 499 knows this carrier by neither.
 		expect(registration?.entityName).toBe("Knology Total Communications, Inc.")
 		expect(registration?.contactOrganization).toBe("WOW! Internet, Cable and Phone")
 		expect(registration?.entityName).not.toBe(registration?.contactOrganization)

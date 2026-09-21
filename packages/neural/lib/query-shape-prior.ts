@@ -32,8 +32,9 @@
  */
 
 /**
- * Minimal subset of `QueryShape` this module consumes. Compatible with `@mailwoman/query-shape`'s
- * exported `QueryShape` type by shape — no import required.
+ * Minimal subset of `QueryShape` this module consumes.
+ *
+ * Compatible with `@mailwoman/query-shape`'s exported `QueryShape` type by shape — no import required.
  */
 import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
 
@@ -73,17 +74,20 @@ export interface TokenLike {
 }
 
 /**
- * The BIO label a non-postcode `KnownFormat` biases. Postcode formats are not listed here:
- * they are decided by name through {@linkcode isPostcodeFormat}, so a format added to the detector's
- * table reaches this prior on the day it is named and no second list has to be kept in step.
+ * The BIO label a non-postcode `KnownFormat` biases.
+ *
+ * Postcode formats are not listed here: they are decided by name through
+ * {@linkcode isPostcodeFormat}, so a format added to the detector's table reaches this
+ * prior on the day it is named and no second list has to be kept in step.
  */
 const FORMAT_TO_LABEL: ReadonlyMap<string, string> = new Map([["po_box", "B-po_box"]])
 
 /**
- * The BIO label {@linkcode buildEmissionPriors} biases for one format hit, or `undefined`
- * when the format names no label. A hit whose format the detector produces
- * but nothing here maps contributes zero bias and raises nothing, so `formatCoverage`
- * in the unit suite asserts every detector format resolves.
+ * The BIO label {@linkcode buildEmissionPriors} biases for one format hit,
+ * or `undefined` when the format names no label.
+ *
+ * A hit whose format the detector produces but nothing here maps contributes zero bias and
+ * raises nothing, so `formatCoverage` in the unit suite asserts every detector format resolves.
  */
 function formatLabel(format: string): string | undefined {
 	return isPostcodeFormat(format) ? "B-postcode" : FORMAT_TO_LABEL.get(format)
@@ -91,13 +95,17 @@ function formatLabel(format: string): string | undefined {
 
 export interface BuildPriorsOpts {
 	/**
-	 * Maximum bias magnitude (in log-odds units). Default 1.0 — adds up to ~e^1 ≈ 2.7× odds to
-	 * the favored label. Confidence-scaled, so a 0.6-confidence format hit gets +0.6 max bias.
+	 * Maximum bias magnitude (in log-odds units).
+	 *
+	 * Default 1.0 — adds up to ~e^1 ≈ 2.7× odds to the favored label.
+	 * Confidence-scaled, so a 0.6-confidence format hit gets +0.6 max bias.
 	 */
 	biasScale?: number
 	/**
-	 * Raw input text — enables the scoped locality bias (bare admin doubletons only. see
-	 * `applyScopedLocalityBias`). Without it the digit guard cannot run, so the locality bias never fires.
+	 * Raw input text — enables the scoped locality bias
+	 * (bare admin doubletons only. see `applyScopedLocalityBias`).
+	 *
+	 * Without it the digit guard cannot run, so the locality bias never fires.
 	 */
 	inputText?: string
 }
@@ -152,11 +160,13 @@ export function buildEmissionPriors(
 }
 
 /**
- * The scoped locality bias — the 2026-07-17 rebuild of the retired backward-walk version
- * (see the header). It fires only on the bare admin doubleton the original was built
- * for ("New York, NY", "Washington, DC" — a region-ambiguous city name before its state
- * abbreviation, the gauntlet `us-new-york-nyc` regression case) and structurally cannot
- * reach the venue/street inputs the old walk broke on. Guards, in order:
+ * The scoped locality bias — the 2026-07-17 rebuild of the retired backward-walk version (see the header).
+ *
+ * It fires only on the bare admin doubleton the original was built for
+ * ("New York, NY", "Washington, DC" — a region-ambiguous city name before its state
+ * abbreviation, the gauntlet `us-new-york-nyc` regression case) and structurally
+ * cannot reach the venue/street inputs the old walk broke on.
+ * Guards, in order:
  *
  * 1. No digits anywhere in the input — any house number / postcode means this is not an admin-only
  *    query, and the M1 failure class ("… 26 Cedar Lane, Danville VT") always carries digits.
@@ -168,6 +178,7 @@ export function buildEmissionPriors(
  * It was dead in production — the classifier passes tokenizer pieces whose
  * spans include the trailing comma, so the string comparison never matched
  * (and "New York, NY", the gauntlet regression case, needs the bias despite naming its own state).
+ *
  * Deliberately dropped. the bias is soft, so a confident region emission on a
  * true state restatement still wins.
  */
@@ -212,7 +223,9 @@ function applyScopedLocalityBias(
 const SCOPED_LOCALITY_BIAS = 2
 
 /**
- * Element-wise add two matrices of equal shape. Returns a new matrix.
+ * Element-wise add two matrices of equal shape.
+ *
+ * Returns a new matrix.
  */
 export function addEmissionMatrix(emissions: number[][], priors: number[][]): number[][] {
 	if (!priors.length) return emissions.map((row) => row.slice())

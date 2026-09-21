@@ -35,13 +35,16 @@ import {
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record
- * can be traced back to the dataset it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const SYNTH_PO_BOX_ADAPTER_ID = "synth-po-box"
 /**
- * License for the synthetic PO-box rows. The output is generated, but it inherits the
- * terms of the real tuples it is derived from, so the attribution travels with it.
+ * License for the synthetic PO-box rows.
+ *
+ * The output is generated, but it inherits the terms of the real tuples it is
+ * derived from, so the attribution travels with it.
  */
 export const SYNTH_PO_BOX_LICENSE = "Synthetic — derived from CC-BY / public-domain input tuples"
 
@@ -52,26 +55,33 @@ export interface PoBoxInputRow extends PoBoxBaseTuple {
 
 export interface SynthPoBoxAdapterOptions {
 	/**
-	 * How many PO box variants to emit per input tuple. Each variant picks a different leader
-	 * (and possibly a different number / noise level). Default 1.
+	 * How many PO box variants to emit per input tuple.
+	 *
+	 * Each variant picks a different leader (and possibly a different number / noise level).
+	 * Default 1.
 	 */
 	variantsPerInput?: number
 	/**
 	 * Probability (0..1) of emitting a PMB-with-street variant when both the input
-	 * has a street and the locale supports PMB. Default 0.15.
+	 * has a street and the locale supports PMB.
+	 *
+	 * Default 0.15.
 	 */
 	pmbRatio?: number
 	/**
-	 * Deterministic seed for reproducible synthesis. Default Date.now().
+	 * Deterministic seed for reproducible synthesis.
+	 *
+	 * Default Date.now().
 	 */
 	seed?: number
 	/**
 	 * Probability (0..1), evaluated per input tuple, of also emitting one US military/diplomatic
 	 * PO-box row (`PSC/CMR/Unit <id> Box <box>, APO/FPO/DPO AA/AE/AP <zip>`, #517).
-	 * These rows are self-contained — they draw no field from the input tuple, so
-	 * military volume scales with the input stream size. Default 0 (off) —
-	 * the adapter's interface is "one row per input"; the corpus build recipe opts in to
-	 * seed the rare-but-real military class without changing the default.
+	 *
+	 * These rows are self-contained — they draw no field from the input tuple,
+	 * so military volume scales with the input stream size.
+	 * Default 0 (off) — the adapter's interface is "one row per input"; the corpus build
+	 * recipe opts in to seed the rare-but-real military class without changing the default.
 	 */
 	militaryRatio?: number
 }

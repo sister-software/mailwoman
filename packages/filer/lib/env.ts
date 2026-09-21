@@ -10,8 +10,9 @@ import { $private as corePrivate, liveEnv } from "@mailwoman/core/env"
 import { z } from "zod"
 
 /**
- * Request identity for the filer crosswalk's upstream
- * clients. Never log their values.
+ * Request identity for the filer crosswalk's upstream clients.
+ *
+ * Never log their values.
  */
 export const PrivateFilerEnvSchema = z.object({
 	SEC_EDGAR_USER_AGENT: z
@@ -24,8 +25,10 @@ export const PrivateFilerEnvSchema = z.object({
 		}),
 	/**
 	 * Descriptive User-Agent for the FCC cores lookup (`filer/lib/sdk/cores-client.ts`).
-	 * Optional in a way `SEC_EDGAR_USER_AGENT` is not: SEC 403s a request that fails to identify itself,
-	 * FCC does not. Falls back to `SEC_EDGAR_USER_AGENT` — the same contact address — when unset.
+	 *
+	 * Optional in a way `SEC_EDGAR_USER_AGENT` is not: SEC 403s a request that
+	 * fails to identify itself, FCC does not.
+	 * Falls back to `SEC_EDGAR_USER_AGENT` — the same contact address — when unset.
 	 */
 	FCC_CORES_USER_AGENT: z.string().optional().meta({
 		title: "FCC CORES User-Agent",
@@ -35,6 +38,8 @@ export const PrivateFilerEnvSchema = z.object({
 })
 
 /**
- * Live filer credentials over core's. Never log their values.
+ * Live filer credentials over core's.
+ *
+ * Never log their values.
  */
 export const $private = liveEnv(PrivateFilerEnvSchema, corePrivate)

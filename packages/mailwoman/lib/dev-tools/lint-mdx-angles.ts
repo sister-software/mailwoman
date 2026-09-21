@@ -21,10 +21,12 @@ import { TextSpliterator } from "spliterator"
 
 /**
  * The build-breaking class is `<55`-style numeric prose and `{word`-style MDX JSX expressions.
+ *
  * Uppercase `<Component>` is legitimate MDX JSX and lowercase `<word>` is usually real html —
  * flagging them false-positives on valid docs (bit the pipeline-interface page, night-11).
  * Braces joined 2026-06-11: bare `{word` in prose is an MDX JSX expression —
  * `{raw, components}` broke main's SSG with `ReferenceError: raw is not defined`.
+ *
  * Same fix menu: backtick it.
  */
 const RAW_ANGLE = /<[0-9]|\{[a-zA-Z]/
@@ -34,7 +36,9 @@ const RAW_ANGLE = /<[0-9]|\{[a-zA-Z]/
  */
 export interface LintMDXAnglesOptions {
 	/**
-	 * Files to check. Default: staged `docs/**` markdown (the pre-commit mode).
+	 * Files to check.
+	 *
+	 * Default: staged `docs/**` markdown (the pre-commit mode).
 	 */
 	files?: string[]
 }

@@ -48,7 +48,9 @@ import {
 export const MODEL_MANIFEST_FILENAME = "model.json"
 
 /**
- * The keys a source file may use. They are the document's tables, minus the manifest's `version`.
+ * The keys a source file may use.
+ *
+ * They are the document's tables, minus the manifest's `version`.
  */
 const TABLE_FIELDS = ["relations", "concepts", "mappings", "observations", "derivedFacts"] as const
 
@@ -58,19 +60,23 @@ const MANIFEST_FIELDS = ["version"] as const
 
 /**
  * The document path a record occupies, e.g. `$.concepts[7]` or `$.concepts[7].assertions[1]`.
+ *
  * Group 3 is present only for an assertion, which is the one record that nests.
  */
 const RECORD_PATH_PATTERN = /^\$\.([A-Za-z]+)\[(\d+)\](?:\.assertions\[(\d+)\])?/u
 
 /**
- * Every way loading can fail. The document validator's whole vocabulary, plus the
- * one failure only a loader meets: a file that is not JSON at all.
+ * Every way loading can fail.
+ *
+ * The document validator's whole vocabulary, plus the one failure only a loader meets:
+ * a file that is not JSON at all.
  */
 export const LoadIssueCode = {
 	...ValidationIssueCode,
 	/**
-	 * A source file could not be parsed as JSON. Emitted by the loader alone. the
-	 * document validator is handed values, never text.
+	 * A source file could not be parsed as JSON.
+	 *
+	 * Emitted by the loader alone. the document validator is handed values, never text.
 	 */
 	MalformedJSON: "malformed_json",
 } as const
@@ -120,8 +126,10 @@ export function formatSourcedIssues(issues: readonly SourcedIssue[]): string {
 }
 
 /**
- * Thrown when a model directory does not load. Carries every issue, and states them all
- * in its message, so a caller that only prints `error.message` still sees the whole list.
+ * Thrown when a model directory does not load.
+ *
+ * Carries every issue, and states them all in its message, so a caller that only
+ * prints `error.message` still sees the whole list.
  */
 export class GeographicModelLoadError extends Error {
 	readonly issues: readonly SourcedIssue[]
@@ -153,8 +161,9 @@ interface MergeState {
 	tables: Record<TableField, unknown[]>
 	origins: Map<string, RecordOrigin>
 	/**
-	 * Table → identifier → the file that used it first. The validator reports the second
-	 * claimant, so this is what names the other half of the pair.
+	 * Table → identifier → the file that used it first.
+	 *
+	 * The validator reports the second claimant, so this is what names the other half of the pair.
 	 */
 	firstClaims: Map<string, Map<string, string>>
 	version?: string
@@ -167,10 +176,11 @@ function sourced(file: string, issues: readonly ValidationIssue[]): SourcedIssue
 /**
  * Parse one source file, or report why it could not be parsed.
  *
- * The house wrapper lives in `@mailwoman/core/objects`, and this package takes no dependency
- * on `@mailwoman/core` — the boundary record keeps world semantics out of core, and a
- * build-time loader is not the reason to reverse it. The parser's own message is also the
- * useful half of the report here, which a wrapper returning a fallback discards.
+ * The house wrapper lives in `@mailwoman/core/objects`, and this package takes no
+ * dependency on `@mailwoman/core` — the boundary record keeps world semantics out of core,
+ * and a build-time loader is not the reason to reverse it.
+ * The parser's own message is also the useful half of the report here,
+ * which a wrapper returning a fallback discards.
  */
 function readSourceJSON(file: GeographicModelSourceFile, issues: SourcedIssue[]): unknown {
 	try {
@@ -309,9 +319,10 @@ function attribute(state: MergeState, issue: ValidationIssue): SourcedIssue {
 /**
  * Merge authoring files into one document, then validate the merged document.
  *
- * The files are sorted by path before anything is read, so any enumeration order produces the
- * same tables in the same order. Throws {@link GeographicModelLoadError} with every issue,
- * each addressed to its source file. returns nothing partial.
+ * The files are sorted by path before anything is read, so any enumeration order
+ * produces the same tables in the same order.
+ * Throws {@link GeographicModelLoadError} with every issue, each addressed to
+ * its source file. returns nothing partial.
  */
 export function mergeGeographicModelFiles(files: readonly GeographicModelSourceFile[]): GeographicModelDocument {
 	const state: MergeState = {

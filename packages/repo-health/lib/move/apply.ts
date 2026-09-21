@@ -40,6 +40,7 @@ export interface ModuleMoveResult {
 	pathLiterals: PathLiteralRewrite[]
 	/**
 	 * Rewritten specifiers re-resolved to their target against the moved tree.
+	 *
 	 * Equal to `rewrites.length` on success. a shortfall throws rather than returning.
 	 */
 	verified: number
@@ -75,9 +76,9 @@ function editsByFile(plan: ModuleMovePlan): Map<string, TextEdit[]> {
 /**
  * Remove each source directory the moves emptied, and each parent that empties with it.
  *
- * `git mv` moves files and leaves the directory standing, so a checkout keeps
- * an empty `sub-venue/` next to the new `sub/venue/`. Git does not track it,
- * which is worse than harmless: it makes the old layout look like it survived,
+ * `git mv` moves files and leaves the directory standing, so a checkout keeps an
+ * empty `sub-venue/` next to the new `sub/venue/`.
+ * Git does not track it, which is worse than harmless: it makes the old layout look like it survived,
  * and it is what an existence check reads when asking whether a path still means anything.
  */
 async function removeEmptiedDirectories(repoRoot: string, directories: readonly string[]): Promise<void> {
@@ -100,9 +101,11 @@ async function removeEmptiedDirectories(repoRoot: string, directories: readonly 
 /**
  * Delete what each moved source used to emit.
  *
- * `tsc -b --clean` does not: nothing claims the output of a source that is no longer there,
- * so it survives every rebuild. A stale `out/cli.js` then answers — it is a complete, loadable
- * module compiled from the old tree — and the first thing it does is import a path that moved.
+ * `tsc -b --clean` does not: nothing claims the output of a source that is no
+ * longer there, so it survives every rebuild.
+ * A stale `out/cli.js` then answers — it is a complete, loadable module compiled from
+ * the old tree — and the first thing it does is import a path that moved.
+ *
  * Removing it here is what makes the next build's absence mean absence.
  */
 async function removeOrphanedOutput(repoRoot: string, moves: readonly ModuleMove[]): Promise<void> {

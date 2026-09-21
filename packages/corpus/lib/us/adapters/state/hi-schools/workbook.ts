@@ -12,7 +12,9 @@ import type { XLSXCellValue } from "spliterator"
 export const STATE_HI_SCHOOL_SHEETS = ["HIDOE", "PCS"] as const
 
 /**
- * Columns required to construct a corpus row. Fetch validation uses the same interface as the adapter.
+ * Columns required to construct a corpus row.
+ *
+ * Fetch validation uses the same interface as the adapter.
  */
 export const STATE_HI_SCHOOL_REQUIRED_COLUMNS = ["code", "name", "address", "city", "zip"] as const
 

@@ -156,9 +156,10 @@ describe("the sealed artifact", () => {
 			n: number
 		}
 
-		// A polyfill keyed on cell centres returns nothing for a 5 m square, and a feature indexed to
-		// nothing reads downstream as an absence — the failure the per-part zero-cell guard exists
-		// to make impossible. At resolution 9, that would be 86.8% of the real product's polygons.
+		// A polyfill keyed on cell centres returns nothing for a 5 m square,
+		// and a feature indexed to nothing reads downstream as an absence — the failure
+		// the per-part zero-cell guard exists to make impossible.
+		// At resolution 9, that would be 86.8% of the real product's polygons.
 		expect(sliver.n).toBeGreaterThan(0)
 	})
 
@@ -255,9 +256,9 @@ describe("the vocabulary decision", () => {
 	})
 
 	it("measures the crosswalk as NON-FUNCTIONAL over an (authority, code) pair", () => {
-		// The same local code assigned two different generic types by the same authority —
-		// which is the whole argument for carrying the local code verbatim and for the
-		// edge table being empty. Nationally: 52 of 795 pairs.
+		// The same local code assigned two different generic types by the same authority — which is
+		// the whole argument for carrying the local code verbatim and for the edge table being empty.
+		// Nationally: 52 of 795 pairs.
 		expect(result.crosswalk.pairs).toBeGreaterThan(0)
 		expect(result.crosswalk.nonFunctionalPairs).toBe(1)
 		expect(result.crosswalk.worst[0]?.crosswalkCodes).toEqual(["R2", "R3"])
@@ -304,9 +305,9 @@ describe("the plan is part of the claim", () => {
 		const reading = lookup.lookup(INSIDE_ZONE_A.latitude, INSIDE_ZONE_A.longitude)
 		const designation = reading.designations[0]!
 
-		// `currentPlan = 1` means not superseded. Whether the window has closed is `validTo`,
-		// and the comparison against a date is the caller's — 2,363 of the real product's
-		// 85,330 rows carry a `validTo` already in the past.
+		// `currentPlan = 1` means not superseded.
+		// Whether the window has closed is `validTo`, and the comparison against a date is the
+		// caller's — 2,363 of the real product's 85,330 rows carry a `validTo` already in the past.
 		expect(designation.plan.currentPlan).toBe(1)
 		expect(designation.plan.validFrom).toBeTruthy()
 		expect(designation.plan.validTo).toBeTruthy()
@@ -473,9 +474,9 @@ describe("the area cross-check", () => {
 	})
 
 	it("leaves the publisher's figure ABSENT where it was not read, rather than defaulting it to its own", () => {
-		// A receipt printing "publisher 205.4 km², 0.000% apart" for a check that never ran is
-		// the one shape a reader cannot tell from a pass. The fixture build supplies no
-		// publisher figure, so the reading's witness is absent.
+		// A receipt printing "publisher 205.4 km², 0.000% apart" for a check that never
+		// ran is the one shape a reader cannot tell from a pass.
+		// The fixture build supplies no publisher figure, so the reading's witness is absent.
 		expect(result.area.witness).toBe("absent")
 	})
 

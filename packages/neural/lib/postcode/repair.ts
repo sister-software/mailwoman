@@ -63,8 +63,10 @@ export type { RepairResult } from "#span/repair"
  */
 export interface PostcodeMatch extends SpanMatch {
 	/**
-	 * "alnum" shapes may ADD over container labels. "numeric" shapes may only snap an existing
-	 * span. a "designated" shape (the digits behind a postal marker) may overwrite any label.
+	 * "alnum" shapes may ADD over container labels.
+	 *
+	 * "numeric" shapes may only snap an existing span. a "designated" shape
+	 * (the digits behind a postal marker) may overwrite any label.
 	 */
 	kind: "alnum" | "numeric" | "designated"
 }
@@ -72,10 +74,11 @@ export interface PostcodeMatch extends SpanMatch {
 /**
  * Per-country postcode shape patterns, ordered most-specific → least.
  *
- * The table itself is data, in `@mailwoman/codex/postcode-shapes`, because two runtimes read it:
- * this module, and the Python trainer's `features/postcode_shapes.py`, which paints the
- * train-side anchor on the spans this finds. Held as two typed copies they drifted twice,
- * each time leaving the trainer painting one fewer shape than inference.
+ * The table itself is data, in `@mailwoman/codex/postcode-shapes`, because two runtimes
+ * read it: this module, and the Python trainer's `features/postcode_shapes.py`,
+ * which paints the train-side anchor on the spans this finds.
+ * Held as two typed copies they drifted twice, each time leaving the trainer
+ * painting one fewer shape than inference.
  */
 export const POSTCODE_PATTERNS: ReadonlyArray<{
 	label: string
@@ -84,9 +87,10 @@ export const POSTCODE_PATTERNS: ReadonlyArray<{
 }> = POSTCODE_SHAPES
 
 /**
- * Labels a postcode span is allowed to overwrite when the model emitted no
- * postcode at all (ADD path). These are the geographic-container tags postcodes
- * get confused with per the diagnostic ("often labeled as locality or O").
+ * Labels a postcode span is allowed to overwrite when the model emitted no postcode at all (ADD path).
+ *
+ * These are the geographic-container tags postcodes get confused with per the
+ * diagnostic ("often labeled as locality or O").
  * Structural tags (house_number, street*, unit, po_box, venue, …) are intentionally absent
  * so we never clobber a confidently-labeled street/number with a false postcode.
  */
@@ -112,6 +116,7 @@ export function collectMatches(text: string): PostcodeMatch[] {
 
 /**
  * Repair postcode label spans in a decoded token sequence using per-country regexes.
+ *
  * Returns a new token array (inputs are not mutated) plus a change count.
  */
 export function repairPostcodeLabels(text: string, input: readonly DecoderToken[]): RepairResult {
@@ -154,9 +159,10 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 		// back to the city — reassign them to locality and demote the city's leading B
 		// so the prefix + city form one span ("Pl"+"auen"+"Vogtl" → "Plauen Vogtl").
 		// A standalone neighbour with no following locality (a country, "Paris 75008 France")
-		// keeps the historical clip-to-O. This is the decoder-side repair for the
-		// cross-tag postcode→city absorption diagnosed in the PR3 Pilot A postmortem
-		// (+36pp DE exact-locality, no-op on US, where the postcode sits at the end with nothing to trim).
+		// keeps the historical clip-to-O.
+		// This is the decoder-side repair for the cross-tag postcode→city absorption
+		// diagnosed in the PR3 Pilot A postmortem (+36pp DE exact-locality, no-op on US,
+		// where the postcode sits at the end with nothing to trim).
 		const trailing: number[] = []
 
 		for (let j = overlap.at(-1)! + 1; j < tokens.length && isTagLabel(tokens[j]!.label, "postcode"); j++) {
@@ -186,10 +192,12 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 
 // repairLeadingHouseNumber (#723) was removed 2026-06-24.
 // It relabelled a leading 5-digit postcode → house_number under conventions=auto (US) —
-// an override that contradicted the model's own label, which the project's repair discipline
-// forbids (a repair may add spans on O-tokens or snap boundaries, never re-classify a token from
-// one entity to another). Net on the US golden set it was −302 postcode / +16 house_number. an
-// anchor-ablation probe showed the model is 100% correct on the target rows once the binary
-// postcode anchor (which fires on a leading number that is a valid ZIP elsewhere) is removed.
-// The disambiguation is being absorbed model-side: a region-congruence anchor upgrade + augmented
-// postcode-leading extracts. See the 2026-06-24 postmortem + DeepSeek consult 019ef789.
+// an override that contradicted the model's own label, which the project's repair
+// discipline forbids (a repair may add spans on O-tokens or snap boundaries,
+// never re-classify a token from one entity to another).
+// Net on the US golden set it was −302 postcode / +16 house_number. an anchor-ablation
+// probe showed the model is 100% correct on the target rows once the binary postcode anchor
+// (which fires on a leading number that is a valid ZIP elsewhere) is removed.
+// The disambiguation is being absorbed model-side: a region-congruence anchor
+// upgrade + augmented postcode-leading extracts.
+// See the 2026-06-24 postmortem + DeepSeek consult 019ef789.

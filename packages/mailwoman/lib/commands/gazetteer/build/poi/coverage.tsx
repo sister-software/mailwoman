@@ -42,13 +42,17 @@ import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 const DEFAULT_COVERAGE_RESOLUTION = "6"
 
 /**
- * The pilot class. Named in the taxonomy with an `osmTag` of `amenity=pharmacy`, so both
- * inventories are selected by the same declaration rather than by two hand-written predicates.
+ * The pilot class.
+ *
+ * Named in the taxonomy with an `osmTag` of `amenity=pharmacy`, so both inventories are
+ * selected by the same declaration rather than by two hand-written predicates.
  */
 const DEFAULT_CATEGORY = "pharmacy"
 
 /**
- * `admin_level` of a French région or a German Land. The level a bounded region is usually named at.
+ * `admin_level` of a French région or a German Land.
+ *
+ * The level a bounded region is usually named at.
  */
 const DEFAULT_ADMIN_LEVEL = "4"
 

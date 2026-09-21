@@ -77,8 +77,10 @@ interface RungReading {
 	 */
 	refused?: string
 	/**
-	 * What changed against the previous rung. Null on step 0, where there is no previous rung — which is
-	 * a different fact from a delta whose every list is empty, and the rendering keeps them apart.
+	 * What changed against the previous rung.
+	 *
+	 * Null on step 0, where there is no previous rung — which is a different fact from a
+	 * delta whose every list is empty, and the rendering keeps them apart.
 	 */
 	delta: RungDelta | null
 	error?: string
@@ -89,6 +91,7 @@ interface LadderReading {
 	rungs: RungReading[]
 	/**
 	 * The first rung whose components or coordinate differ from the rung below it.
+	 *
 	 * `null` means the whole ladder answered identically with reportable result.
 	 */
 	first_divergence: { step: number; input: string; tags: string[]; moved_km: number | null } | null
@@ -130,7 +133,8 @@ function diffRungs(previous: RungReading, current: RungReading): RungDelta {
 		}
 	}
 
-	// A null coordinate on either side is not distance zero. Abstention is its own outcome and the tier fields carry it.
+	// A null coordinate on either side is not distance zero.
+	// Abstention is its own outcome and the tier fields carry it.
 	const moved =
 		previous.lat !== null && previous.lon !== null && current.lat !== null && current.lon !== null
 			? haversineKm(previous.lat, previous.lon, current.lat, current.lon)
@@ -174,8 +178,9 @@ function renderLadder(reading: Omit<LadderReading, "rendered">): string {
 
 		const cells = tags.map((tag, i) => (rung.components[tag] ?? ABSENT).padEnd(widths[i]!))
 		const mark = reading.first_divergence?.step === rung.step ? " ←" : ""
-		// A refusal is stated on the row itself. Its cells are all `absent`, which without this
-		// reads as a parse that found nothing rather than a completed parse that was thrown away.
+		// A refusal is stated on the row itself.
+		// Its cells are all `absent`, which without this reads as a parse that found nothing
+		// rather than a completed parse that was thrown away.
 		const refusal = rung.refused ? `  REFUSED as ${rung.refused} — parse discarded, not failed` : ""
 
 		lines.push(`  ${rung.input.padEnd(inputWidth)}  ${cells.join("  ")}  ${rung.tier}${mark}${refusal}`)

@@ -38,31 +38,38 @@ import { ConsoleLogger, type IRuntimeLogger } from "#logging/index"
  */
 export interface DiskStorageOptions {
 	/**
-	 * The directory cache entries live in. Created on first write (recursively).
+	 * The directory cache entries live in.
+	 *
+	 * Created on first write (recursively).
 	 */
 	directory: PathBuilderLike
 	/**
 	 * An additional, domain-specific check run against every entry before it is written.
+	 *
 	 * Return `false` (or throw) to drop the write. the entry is removed
 	 * rather than persisted, so the next request re-fetches.
 	 *
 	 * This is the hook for "a 200 whose body isn't what this API is supposed to return".
-	 * Some upstreams (SEC edgar among them) serve an html error page with a 200
-	 * status. persisting one under a permanent TTL poisons that URL forever.
+	 * Some upstreams (SEC edgar among them) serve an html error page with a 200 status.
+	 * persisting one under a permanent TTL poisons that URL forever.
+	 *
 	 * The structural checks below (serializable, finite `createdAt`/`ttl`) always run regardless.
 	 */
 	validate?: (value: NotEmptyStorageValue) => boolean
 	/**
 	 * Where rejected writes and unreadable entries are reported.
+	 *
 	 * Defaults to a `disk-storage`-prefixed console logger.
 	 */
 	logger?: IRuntimeLogger
 }
 
 /**
- * Whether a storage value is one worth persisting. `loading` is an in-flight marker with no
- * reusable body — it belongs in memory (see {@linkcode buildDiskStorage}'s in-process overlay),
- * not in a file that would outlive the process that wrote it and block every later request for that key.
+ * Whether a storage value is one worth persisting.
+ *
+ * `loading` is an in-flight marker with no reusable body — it belongs in memory
+ * (see {@linkcode buildDiskStorage}'s in-process overlay), not in a file that would
+ * outlive the process that wrote it and block every later request for that key.
  */
 function isPersistableState(value: NotEmptyStorageValue): boolean {
 	return value.state !== "loading"
@@ -76,6 +83,7 @@ function isPersistableState(value: NotEmptyStorageValue): boolean {
  * `null`, and `null` reads back as `0` in the interceptor's `createdAt + ttl < Date.now()` expiry test.
  * An `Infinity` TTL — the obvious way to spell "cache this immutable document forever" —
  * would therefore round-trip into an entry that is expired the instant it is read.
+ *
  * Rejecting it loudly beats silently caching nothing.
  */
 function hasFiniteTiming(value: NotEmptyStorageValue): boolean {
@@ -91,10 +99,10 @@ function hasFiniteTiming(value: NotEmptyStorageValue): boolean {
  *
  * An in-process overlay Map sits in front of the files, and it is required for two reasons:
  *
- * 1. `loading` markers live there instead of on disk. That keeps the interceptor's stampede guard
- *    working (a concurrent second request for the same key sees `loading` and waits on the first)
- *    without a file write per request, and without an interrupted process leaving
- *    a `loading` marker on disk forever.
+ * 1. `loading` markers live there instead of on disk.
+ *    That keeps the interceptor's stampede guard working (a concurrent second request for
+ *    the same key sees `loading` and waits on the first) without a file write per request,
+ *    and without an interrupted process leaving a `loading` marker on disk forever.
  * 2. A value being written stays there until its `rename` lands.
  *    Without that, `set()` clearing the `loading` marker before the file exists opens a window
  *    where the key is in neither place, and a concurrent reader gets `empty` for a
@@ -107,8 +115,9 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 
 	/**
 	 * Values visible to this process ahead of (or instead of) the files: `loading` markers,
-	 * which are never persisted, and entries mid-write, which are dropped once their
-	 * `rename` lands. See the function docstring.
+	 * which are never persisted, and entries mid-write, which are dropped once their `rename` lands.
+	 *
+	 * See the function docstring.
 	 */
 	const overlay = new Map<string, StorageValue>()
 
@@ -128,6 +137,7 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 
 	/**
 	 * Serialize `value`, or return `null` when it must not reach disk.
+	 *
 	 * Every rejection path is logged with the key so a maintainer seeing a cache
 	 * that never fills has something to grep for.
 	 */
@@ -204,8 +214,9 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 			overlay.set(key, value)
 
 			const finalPath = entryPath(key)
-			// Unique per write — `process.pid` separates processes, `randomUUID()` separates concurrent
-			// writes inside one. A deterministic name here is the enoent/interleaving bug in the file header.
+			// Unique per write — `process.pid` separates processes, `randomUUID()`
+			// separates concurrent writes inside one.
+			// A deterministic name here is the enoent/interleaving bug in the file header.
 			const buildingPath = `${finalPath}.${process.pid}.${crypto.randomUUID()}.building`
 
 			try {
@@ -213,15 +224,16 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 				await writeLocalFile(serialized, buildingPath)
 				await movePath(buildingPath, finalPath)
 			} catch (error) {
-				// A cache write follows a successful request. If the write fails, the request still succeeds.
+				// A cache write follows a successful request.
+				// If the write fails, the request still succeeds.
 				//
-				// `axios-cache-interceptor` awaits `set()` inside its response `onFulfilled`,
-				// so throwing from here rejects a request whose http response already succeeded —
-				// the body is discarded. Worse, it escapes as a bare `Error`: no `status`,
-				// so `isTransientResourceError` reads it as false and a caller following the documented
-				// interface is told never to retry. Any filesystem failure does this: `eacces` on a
-				// directory whose mode changed (reproduced with a `0o500` parent, which also showed
-				// three concurrent gets yielding one rejection and two successes for the same response),
+				// `axios-cache-interceptor` awaits `set()` inside its response `onFulfilled`, so throwing
+				// from here rejects a request whose http response already succeeded — the body is discarded.
+				// Worse, it escapes as a bare `Error`: no `status`, so `isTransientResourceError` reads
+				// it as false and a caller following the documented interface is told never to retry.
+				// Any filesystem failure does this: `eacces` on a directory whose mode changed
+				// (reproduced with a `0o500` parent, which also showed three concurrent
+				// gets yielding one rejection and two successes for the same response),
 				// `emfile` under a concurrent crawl, a rename race, a transient I/O error.
 				// Not being able to cache is a cache miss.
 				logger.warn(`Could not persist ${key} (continuing as a cache miss): ${errorMessage(error)}`)

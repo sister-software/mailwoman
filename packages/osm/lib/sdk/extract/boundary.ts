@@ -26,6 +26,7 @@ import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr-stream"
 
 /**
  * The OSM driver layer administrative boundaries land in.
+ *
  * Relations and closed ways both surface here.
  */
 const BOUNDARY_LAYER = "multipolygons"
@@ -33,6 +34,7 @@ const BOUNDARY_LAYER = "multipolygons"
 /**
  * Same allowlist discipline as `extract-poi.ts`'s `SAFE_TAG_TOKEN`, widened to the
  * characters a real place name carries (`Île-de-France`, `Provence-Alpes-Côte d'Azur`).
+ *
  * The value is interpolated into an ogrsql string literal, so an apostrophe is admissible only
  * because it is doubled below. every other quoting metacharacter is refused outright.
  */
@@ -40,6 +42,7 @@ const SAFE_NAME = /^[\p{L}\p{N} '’\-.()/]+$/u
 
 /**
  * `admin_level` is compared as an ogrsql string literal.
+ *
  * OSM only ever carries small integers here.
  */
 const SAFE_ADMIN_LEVEL = /^[0-9]{1,2}$/
@@ -68,6 +71,7 @@ export interface OSMBoundary extends OSMBoundaryQuery {
 
 /**
  * Build the ogrsql select+where for one boundary query.
+ *
  * Exported for unit testing — no `ogr2ogr` involved.
  *
  * Throws if `name` or `adminLevel` falls outside the allowlists above,
@@ -98,6 +102,7 @@ export function buildBoundarySQL(query: OSMBoundaryQuery): string {
 
 /**
  * Read the one boundary matching `query` out of `pbfPath`.
+ *
  * Throws when the extract holds no match or more than one.
  */
 export async function extractOSMBoundary(pbfPath: string, query: OSMBoundaryQuery): Promise<OSMBoundary> {

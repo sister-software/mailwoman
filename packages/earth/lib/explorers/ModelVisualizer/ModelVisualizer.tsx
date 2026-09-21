@@ -35,6 +35,7 @@ const labelText = (label: string): string => tagOf(label) || label
 
 /**
  * Fallback locale-head axis for traces produced before `localeCountries` rode with the logits.
+ *
  * Live traces are self-describing — never extend this list. the model's own axis wins.
  * (Mirrors neural/address-system.ts LOCALE_COUNTRIES as of 2026-07. the PLACETYPE_ORDER
  * dual-maintenance class is exactly why the trace now carries the axis itself.)

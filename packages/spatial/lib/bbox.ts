@@ -18,6 +18,7 @@ const KM_PER_DEGREE_LATITUDE = 111
 
 /**
  * Floor for cos(latitude) so a polar bbox stays finite.
+ *
  * See {@linkcode bboxAround}.
  */
 const MIN_COS_LATITUDE = 1e-6
@@ -471,9 +472,9 @@ export class GeoBoundingBox {
 /**
  * A flat latitude/longitude range, as a query filter rather than a model.
  *
- * Distinct from {@linkcode GeoBoundingBox} on purpose: that is a class carrying a projection
- * and private state, which an SQL row cannot be. This is the plain shape a spatial-index
- * query is built from — four numbers, no behaviour.
+ * Distinct from {@linkcode GeoBoundingBox} on purpose: that is a class carrying a
+ * projection and private state, which an SQL row cannot be.
+ * This is the plain shape a spatial-index query is built from — four numbers, no behaviour.
  */
 export interface LatLonBounds {
 	minLat: number
@@ -486,10 +487,12 @@ export interface LatLonBounds {
  * Approximate bounds `radiusKM` in each direction around a point.
  *
  * The spherical-Earth equirectangular approximation: 1° latitude ≈ 111 km globally,
- * 1° longitude ≈ 111 km × cos(lat). It is a filter rather than an answer — it over-selects
- * near the poles and along a long east-west span, and a caller is expected to re-check
- * survivors with an exact haversine distance. That is what makes the approximation safe:
- * it may admit a point it should not, and never excludes one it should keep.
+ * 1° longitude ≈ 111 km × cos(lat).
+ * It is a filter rather than an answer — it over-selects near the poles and along a long east-west
+ * span, and a caller is expected to re-check survivors with an exact haversine distance.
+ *
+ * That is what makes the approximation safe: it may admit a point it should not,
+ * and never excludes one it should keep.
  */
 export function bboxAround(lat: number, lon: number, radiusKM: number): LatLonBounds {
 	const latDelta = radiusKM / KM_PER_DEGREE_LATITUDE

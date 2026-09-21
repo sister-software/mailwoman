@@ -30,8 +30,10 @@ import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 /**
- * Rules whose token list stays out of the digest. Each of these bans a word, so printing the
- * word to open a session plants it. A finding names the rule, and the rule file holds the list.
+ * Rules whose token list stays out of the digest.
+ *
+ * Each of these bans a word, so printing the word to open a session plants it.
+ * A finding names the rule, and the rule file holds the list.
  */
 const WITHHELD_TOKENS = new Set([
 	"AmbiguousShorthand",
@@ -42,8 +44,10 @@ const WITHHELD_TOKENS = new Set([
 ])
 
 /**
- * Rules that exist for a surface other than a reply. `.vale-chat.ini` loads the whole
- * style directory, so a source-comment variant is loaded and reports the same site twice.
+ * Rules that exist for a surface other than a reply.
+ *
+ * `.vale-chat.ini` loads the whole style directory, so a source-comment variant
+ * is loaded and reports the same site twice.
  * The digest names the reply-facing one only.
  */
 const CODE_SURFACE_ONLY = new Set(["AmbiguousShorthandCode", "CommentSemicolons"])
@@ -54,6 +58,7 @@ export interface ValeRule {
 	message: string
 	/**
 	 * A `substitution` rule states what to write in its swap map.
+	 *
 	 * An `existence` rule states it in a token list.
 	 */
 	extends: string
@@ -98,8 +103,10 @@ function swapPairs(source: string): Array<[string, string]> {
 }
 
 /**
- * The rules `.vale-chat.ini` leaves on. `BasedOnStyles = styles` turns the whole directory on,
- * so the config's job here is the `styles.X = no` lines that turn one back off.
+ * The rules `.vale-chat.ini` leaves on.
+ *
+ * `BasedOnStyles = styles` turns the whole directory on, so the config's job here
+ * is the `styles.X = no` lines that turn one back off.
  */
 function disabledRules(config: string): Set<string> {
 	const off = new Set<string>()
@@ -114,12 +121,12 @@ function disabledRules(config: string): Set<string> {
 }
 
 /**
- * Every rule file under the style directory, repo-relative, including the
- * `Grammar/` subdirectory that Vale addresses as `styles.Grammar.<name>`.
- * Read from git rather than from the directory, because `@mailwoman/core/fs` owns every
- * `node:fs` call in the tree and exposes no listing; `trackedFiles` is the enumerator
- * the repo already uses. An untracked rule file is therefore absent from the digest,
- * which is correct — the rule set is committed.
+ * Every rule file under the style directory, repo-relative, including the `Grammar/`
+ * subdirectory that Vale addresses as `styles.Grammar.<name>`.
+ *
+ * Read from git rather than from the directory, because `@mailwoman/core/fs` owns every `node:fs`
+ * call in the tree and exposes no listing; `trackedFiles` is the enumerator the repo already uses.
+ * An untracked rule file is therefore absent from the digest, which is correct — the rule set is committed.
  */
 function ruleFiles(repoRoot: string): Promise<string[]> {
 	// One `*` and not `**`: git's pathspec wildcard crosses `/`, so this reaches `Grammar/` too,
@@ -169,6 +176,7 @@ export async function readChatRules(repoRoot = String(repoRootPath())): Promise<
 /**
  * A message is written around Vale's `%s`, and its grammar depends on the placeholder staying
  * in position — "Remove the stock form %s" and "%s is filler" need different subjects.
+ *
  * Rendering it as `<match>` keeps every sentence correct without rewriting any of them.
  */
 function asRule(message: string): string {

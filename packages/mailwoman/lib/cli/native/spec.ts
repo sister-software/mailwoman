@@ -21,8 +21,9 @@ interface OptionSpecBase {
 	multiple?: boolean
 	required?: boolean
 	/**
-	 * The flag this option used to be spelled as. It keeps working, with a notice
-	 * on stderr, and never appears in help.
+	 * The flag this option used to be spelled as.
+	 *
+	 * It keeps working, with a notice on stderr, and never appears in help.
 	 *
 	 * A CLI flag is a interface with whatever scripts already call it, so a rename that removes
 	 * the old spelling breaks them at the moment of the rename with no way to find out first.
@@ -85,12 +86,14 @@ export interface ParsedCommand {
  * Collapse an intersection of mapped types into one object type, preserving each property's optionality.
  *
  * {@linkcode OptionsOf} builds its required and optional halves separately, because a single mapped type cannot vary `?`
- * per key. Without this the editor shows the intersection and an error names one half of it.
+ * per key.
+ * Without this the editor shows the intersection and an error names one half of it.
  */
 type OneObject<Shape> = { [Key in keyof Shape]: Shape[Key] }
 
 /**
  * The value stored in a flag's property, before {@linkcode OptionSpec.multiple} is applied.
+ *
  * A `choices` list narrows the property to that union rather than leaving it `string`,
  * which is what a hand-written `Options` already did.
  */
@@ -105,8 +108,9 @@ type OptionScalar<Option> = Option extends { type: "boolean" }
 type OptionValueOf<Option> = Option extends { multiple: true } ? Array<OptionScalar<Option>> : OptionScalar<Option>
 
 /**
- * The flags the router always supplies a value for: one carrying a `default`,
- * and one declared `required`. Every other flag is absent unless the user passes it.
+ * The flags the router always supplies a value for: one carrying a `default`, and one declared `required`.
+ *
+ * Every other flag is absent unless the user passes it.
  */
 type AlwaysPresentFlag<Options> = {
 	[Flag in keyof Options]: Options[Flag] extends { default: unknown }
@@ -119,13 +123,14 @@ type AlwaysPresentFlag<Options> = {
 /**
  * A command's options object, derived from its own `spec`.
  *
- * The router writes each flag's value to the property `optionPropertyName` derives from it,
- * so a property spelled any other way is never written to and the flag parses, validates,
- * and does nothing. A restated `interface Options` can disagree that way silently. a
- * derived one cannot, because the disagreement becomes a compile error at the read site.
+ * The router writes each flag's value to the property `optionPropertyName` derives from it, so a
+ * property spelled any other way is never written to and the flag parses, validates, and does nothing.
+ * A restated `interface Options` can disagree that way silently. a derived one cannot,
+ * because the disagreement becomes a compile error at the read site.
  *
- * A flag carrying a `default`, or marked `required`, is always supplied
- * and its property is required. Every other property is optional.
+ * A flag carrying a `default`, or marked `required`, is always supplied and its property is required.
+ * Every other property is optional.
+ *
  * `choices` narrows the property to that union; `multiple` widens it to an array.
  */
 export type OptionsOf<Spec extends CommandSpec> = Spec["options"] extends infer Options
@@ -371,7 +376,9 @@ function optionLabel(name: string, option: OptionSpec): string {
 }
 
 /**
- * Render detailed help. This is the only parser path that imports cliui.
+ * Render detailed help.
+ *
+ * This is the only parser path that imports cliui.
  */
 export async function renderCommandHelp(spec: CommandSpec): Promise<string> {
 	const { cliui } = await import("@isaacs/cliui/min")
@@ -499,8 +506,10 @@ export async function runNativeCommand(
 }
 
 /**
- * Render one Ink element and answer the process exit code — the tail shared by the debug view
- * and the filesystem command router. Ink loads lazily, so the ordinary data path never pays for it.
+ * Render one Ink element and answer the process exit code — the tail shared by
+ * the debug view and the filesystem command router.
+ *
+ * Ink loads lazily, so the ordinary data path never pays for it.
  */
 export async function renderInkCommand(element: React.ReactElement): Promise<number> {
 	const { render } = await import("ink")

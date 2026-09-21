@@ -75,8 +75,9 @@ import {
 } from "#vocabulary"
 
 /**
- * Schema version of the domain tables. Bumped when a column changes meaning,
- * never for an added column a reader can ignore.
+ * Schema version of the domain tables.
+ *
+ * Bumped when a column changes meaning, never for an added column a reader can ignore.
  */
 export const COASTAL_SCHEMA_VERSION = 1
 
@@ -84,10 +85,11 @@ export const COASTAL_SCHEMA_VERSION = 1
  * Feature ids per chunk process.
  *
  * Sized against the measured ceiling on the sibling product rather than guessed:
- * single-process runs over that layer died after roughly 510,000 and 798,000 features
- * as h3's wasm heap fragmented. ncerm's largest layer holds 7,501 features, so this
- * default puts one whole layer in one process. That ceiling makes the build reproducible
- * rather than the fact that this product happens to sit far below it.
+ * single-process runs over that layer died after roughly 510,000 and 798,000
+ * features as h3's wasm heap fragmented. ncerm's largest layer holds 7,501 features,
+ * so this default puts one whole layer in one process.
+ * That ceiling makes the build reproducible rather than the fact that this
+ * product happens to sit far below it.
  */
 export const DEFAULT_CHUNK_SIZE = 100_000
 
@@ -97,8 +99,10 @@ export const DEFAULT_CHUNK_SIZE = 100_000
 export type BuildCoastalInput =
 	| {
 			/**
-			 * A feature source consumed IN this process. Correct for a fixture and for anything small.
-			 * it is what the batched form falls back to per chunk, so the two share one implementation.
+			 * A feature source consumed IN this process.
+			 *
+			 * Correct for a fixture and for anything small. it is what the batched form
+			 * falls back to per chunk, so the two share one implementation.
 			 */
 			source: CoastalFeatureSource
 	  }
@@ -110,11 +114,15 @@ export type BuildCoastalInput =
 			batched: {
 				geodatabasePath: string
 				/**
-				 * Which scenarios to build. Defaults to all twelve.
+				 * Which scenarios to build.
+				 *
+				 * Defaults to all twelve.
 				 */
 				scenarioKeys?: ReadonlyArray<string>
 				/**
-				 * Feature ids per chunk. See {@link DEFAULT_CHUNK_SIZE}.
+				 * Feature ids per chunk.
+				 *
+				 * See {@link DEFAULT_CHUNK_SIZE}.
 				 */
 				chunkSize?: number
 				/**
@@ -126,7 +134,9 @@ export type BuildCoastalInput =
 
 export type BuildCoastalOptions = BuildCoastalInput & {
 	/**
-	 * Where the sealed artifact lands. The build writes beside it and swaps.
+	 * Where the sealed artifact lands.
+	 *
+	 * The build writes beside it and swaps.
 	 */
 	out: string
 	/**
@@ -136,8 +146,10 @@ export type BuildCoastalOptions = BuildCoastalInput & {
 	buildCmd: string
 	buildSHA: string
 	/**
-	 * ISO-8601, supplied by the caller. Never generated here: the interface says so,
-	 * and a library-generated timestamp makes two builds of the same inputs differ.
+	 * ISO-8601, supplied by the caller.
+	 *
+	 * Never generated here: the interface says so, and a library-generated timestamp
+	 * makes two builds of the same inputs differ.
 	 */
 	createdAt: string
 	/**
@@ -145,11 +157,14 @@ export type BuildCoastalOptions = BuildCoastalInput & {
 	 */
 	indexResolution: number
 	/**
-	 * The resolution `layer_coverage` rows are keyed at. Must be coarser than the index resolution.
+	 * The resolution `layer_coverage` rows are keyed at.
+	 *
+	 * Must be coarser than the index resolution.
 	 */
 	coverageResolution: number
 	/**
 	 * The feature counts a second distribution channel reports, per layer — the live WFS.
+	 *
 	 * Supplied, each is asserted against what the build streamed for that layer,
 	 * which is the cheapest two-path check available and catches a stale or truncated archive.
 	 */
@@ -173,10 +188,11 @@ export interface BuildCoastalResult {
 	 */
 	storedPartialShare: number
 	/**
-	 * Features whose bounding box forced a resolution coarser than `indexResolution`, and the
-	 * resolutions the stored cell rows are actually at. Both are reported rather than
-	 * smoothed over: a reader that assumed one resolution would probe at the wrong one
-	 * and read every coarsened feature as an absence.
+	 * Features whose bounding box forced a resolution coarser than `indexResolution`,
+	 * and the resolutions the stored cell rows are actually at.
+	 *
+	 * Both are reported rather than smoothed over: a reader that assumed one resolution
+	 * would probe at the wrong one and read every coarsened feature as an absence.
 	 */
 	coarsenedFeatures: number
 	storedResolutions: number[]
@@ -296,12 +312,13 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 			).map((row) => row.resolution)
 
 			// no secondary indexes, and that is A decision rather than an omission.
-			// Both probes this artifact serves are already primary-key probes: the cell table's
-			// `(h3_cell, area_id)` key answers `where h3_cell = ?` as a range scan of a handful of rows,
-			// and a scenario filter over those few rows costs nothing. the geometry table is probed
-			// by `area_id`, its own key. A `(scenario_key, h3_cell)` index over a `without rowid`
-			// table carries the primary key in every entry, so it would roughly double the cell
-			// tier to serve a scan that is already short — size for a reader that does not exist.
+			// Both probes this artifact serves are already primary-key probes: the cell
+			// table's `(h3_cell, area_id)` key answers `where h3_cell = ?` as a range scan
+			// of a handful of rows, and a scenario filter over those few rows costs nothing.
+			// the geometry table is probed by `area_id`, its own key.
+			// A `(scenario_key, h3_cell)` index over a `without rowid` table carries the
+			// primary key in every entry, so it would roughly double the cell tier to serve
+			// a scan that is already short — size for a reader that does not exist.
 			const totalCellRows = ingested.wholeCellRows + ingested.partialCellRows
 
 			return {
@@ -437,9 +454,10 @@ export function assertNoNegativeClaim(cells: ReadonlyArray<CoverageCell>): void 
 
 /**
  * Run the ingest as a sequence of bounded child processes — one per scenario layer,
- * then one for the two ground-instability layers. The shared chunk interface —
- * the parent's no-handle rule, and the fail-loud handling of a chunk that dies
- * or prints nothing — lives with `ingestChunkArguments` and `runChunkProcess`.
+ * then one for the two ground-instability layers.
+ *
+ * The shared chunk interface — the parent's no-handle rule, and the fail-loud handling of a
+ * chunk that dies or prints nothing — lives with `ingestChunkArguments` and `runChunkProcess`.
  */
 async function runBatchedIngest(
 	tmpPath: string,

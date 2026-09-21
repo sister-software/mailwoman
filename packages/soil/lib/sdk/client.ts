@@ -42,28 +42,32 @@ import { saverestToISODate } from "#sdk/tabular"
 // Re-exported so a caller branching on this client's failures needs exactly one import.
 
 /**
- * The tabular endpoint. Anonymous: no key, no account, and no rate-limit header on any observed response.
+ * The tabular endpoint.
+ *
+ * Anonymous: no key, no account, and no rate-limit header on any observed response.
  */
 export const SDA_POST_REST_URL = "https://sdmdataaccess.nrcs.usda.gov/Tabular/post.rest"
 
 /**
  * Minimum spacing between Soil Data Access requests, in milliseconds.
  *
- * Nrcs publishes no rate limit for this service and returned no rate-limit header on any request,
- * so this is courtesy pacing rather than a published ceiling — stated as such rather than dressed
- * up as a measured limit. It costs an acquisition run nothing: a whole-state build makes one
- * catalogue call, and the verification's per-point calls are measured at 1.8 s each anyway.
+ * Nrcs publishes no rate limit for this service and returned no rate-limit header
+ * on any request, so this is courtesy pacing rather than a published ceiling —
+ * stated as such rather than dressed up as a measured limit.
+ * It costs an acquisition run nothing: a whole-state build makes one catalogue call,
+ * and the verification's per-point calls are measured at 1.8 s each anyway.
  */
 export const SDA_MIN_REQUEST_INTERVAL_MS = 500
 
 /**
  * How long a cached Soil Data Access response stays fresh.
  *
- * Twelve hours, chosen against the product's cadence rather than a wall-clock
- * intuition: nrcs performs one coordinated Annual Soils Refresh, on October 1.
- * Grouping `sacatalog` by year of `saverest` returns 2016: 1, 2025: 3,323,
- * 2026: 56 — 98.3% of survey areas carry a single version date from one refresh
- * rather than a per-area drift. A shorter TTL buys nothing.
+ * Twelve hours, chosen against the product's cadence rather than a wall-clock intuition:
+ * nrcs performs one coordinated Annual Soils Refresh, on October 1.
+ * Grouping `sacatalog` by year of `saverest` returns 2016: 1, 2025: 3,323, 2026: 56 — 98.3%
+ * of survey areas carry a single version date from one refresh rather than a per-area drift.
+ *
+ * A shorter TTL buys nothing.
  */
 const SDA_CACHE_TTL_MS = 12 * 60 * 60 * 1000
 

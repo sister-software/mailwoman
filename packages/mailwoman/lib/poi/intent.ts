@@ -36,6 +36,7 @@ interface POINameSearch {
 
 /**
  * Adapt a POI FTS reader into positive, exact-name evidence for the kind classifier.
+ *
  * FTS supplies candidates. the normalized equality check is the check,
  * so a fuzzy/token-overlap result can never reroute an address.
  */
@@ -71,8 +72,8 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 	let categoryHits = lookupPOICategory(phrase, locale)
 
 	// The taxonomy stays exact-phrase. this adapter supplies a deliberately small
-	// English morphology layer for query heads. Positive evidence is still required:
-	// the singularized phrase must itself hit the taxonomy.
+	// English morphology layer for query heads.
+	// Positive evidence is still required: the singularized phrase must itself hit the taxonomy.
 	if (!categoryHits.length && (!locale || locale.toLowerCase().startsWith("en"))) {
 		const words = phrase.trim().split(/\s+/)
 		const tail = words.at(-1)
@@ -167,6 +168,7 @@ export interface POIIntentStageDeps {
 	lookup: POIPhraseLookup
 	/**
 	 * Parses the anchor remainder ("Springfield IL") through the address pipeline.
+	 *
 	 * Callers must hand in a pipeline without the poi stage (recursion guard) — `createRuntimePipeline` does.
 	 */
 	parseAnchor: (text: string, opts?: PipelineOpts) => Promise<PipelineResult>
@@ -219,9 +221,10 @@ export function createPOIIntentStage(
 			intent.anchor = { text: matched.remainder, tree: anchor.tree }
 		}
 
-		// The place binding (#1999). A hit's `countryScope` is a claim about establishments,
-		// so it is judged against the country the anchor resolved to — which exists
-		// only now, after the anchor parse — and never against the caller's locale.
+		// The place binding (#1999).
+		// A hit's `countryScope` is a claim about establishments, so it is judged
+		// against the country the anchor resolved to — which exists only now,
+		// after the anchor parse — and never against the caller's locale.
 		// Recorded on the intent whether or not it removed anything, so a receipt can say
 		// which country the set was bound to and what fell out.
 		if (intent.subject.kind === "category") {
@@ -248,11 +251,12 @@ export function createPOIIntentStage(
 /**
  * What the anchor's country does to a reached set: which categories stay searchable and which fall out.
  *
- * A category stays when any hit reaching it holds where the anchor is — an unscoped
- * hit holds everywhere, a scoped one holds when its list names the anchor's country.
- * A `null` anchor country admits no scoped hit: a claim the curator scoped
- * to a place cannot be checked without knowing the place, and searching as
- * though it held would answer with a category the data there may not carry.
+ * A category stays when any hit reaching it holds where the anchor is — an unscoped hit
+ * holds everywhere, a scoped one holds when its list names the anchor's country.
+ * A `null` anchor country admits no scoped hit: a claim the curator scoped to a
+ * place cannot be checked without knowing the place, and searching as though it held
+ * would answer with a category the data there may not carry.
+ *
  * Order is the lookup's own enumeration, and it still states no preference.
  *
  * `null` when no hit carries a scope at all — there was nothing to bind,

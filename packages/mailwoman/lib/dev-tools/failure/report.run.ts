@@ -264,9 +264,10 @@ async function runFailureReport(): Promise<void> {
 	}
 
 	// Render the MDX report that Docusaurus includes in the evaluation tree.
-	// MDX-safe: every dynamic cell is backtick-wrapped (angle brackets / braces stay literal in a code span)
-	// with pipes + backticks escaped, so an address like "U12/345 <x>" can't break the table
-	// or trip the MDX angle-lint. Trades are marked in markdown (**N (+Δ)**), not color.
+	// MDX-safe: every dynamic cell is backtick-wrapped
+	// (angle brackets / braces stay literal in a code span) with pipes + backticks escaped,
+	// so an address like "U12/345 <x>" can't break the table or trip the MDX angle-lint.
+	// Trades are marked in markdown (**N (+Δ)**), not color.
 
 	const outPath = flags.out || "docs/articles/evals/competitive-parity/failure-report.mdx"
 	const stamp = flags.date || isoDate()
@@ -419,9 +420,9 @@ ${diffTable}
 
 	await writeLocalFile(mdx, outPath)
 
-	// The machine-readable twin of the MDX above. It goes under `$MAILWOMAN_TEMP_ROOT`
-	// rather than a repo-relative path, which git ignores — a file written there
-	// exists only on the machine that wrote it.
+	// The machine-readable twin of the MDX above.
+	// It goes under `$MAILWOMAN_TEMP_ROOT` rather than a repo-relative path, which git ignores —
+	// a file written there exists only on the machine that wrote it.
 	const jsonPath = tempRootPath("failure-report.json")
 
 	await writeLocalJSONFile({ summary, records: all }, jsonPath)

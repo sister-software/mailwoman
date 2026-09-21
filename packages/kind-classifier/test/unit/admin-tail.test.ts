@@ -77,9 +77,9 @@ describe("an admin tail carrying a postcode", () => {
 	})
 
 	it("declines when the postcode hit falls outside the last segment", () => {
-		// The detectors are speculative and multi-country. `3215 SE` reports as an
-		// nl_postcode, and removing it would leave `Clinton St, Portland OR` — alpha,
-		// and a locality query where a street address was typed.
+		// The detectors are speculative and multi-country.
+		// `3215 SE` reports as an nl_postcode, and removing it would leave `Clinton St, Portland OR` —
+		// alpha, and a locality query where a street address was typed.
 		expect(kindOf("3215 SE Clinton St, Portland OR")).toBe("structured_address")
 
 		// The same restriction declines a postcode-led tail, which no US address writes and
@@ -89,8 +89,8 @@ describe("an admin tail carrying a postcode", () => {
 
 	it("declines input carrying no letter, which the character class alone calls alpha", () => {
 		// `computeQueryShape("???")` reports `alpha`, because `foldInputClass` answers
-		// `alpha` for input carrying no classified token. Neither `locality_only`
-		// nor its `bare_toponym` refinement may read that as a place name.
+		// `alpha` for input carrying no classified token.
+		// Neither `locality_only` nor its `bare_toponym` refinement may read that as a place name.
 		expect(kindOf("???")).toBe("vague")
 		expect(kindOf("!!!")).toBe("vague")
 	})

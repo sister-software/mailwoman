@@ -43,10 +43,11 @@ import { moduleSpecifierLiterals } from "#ts-ast"
 const SOURCE_STEM = /\.(?:m|c)?[jt]sx?$/u
 
 /**
- * Every tracked `package.json`, read as a manifest. Reading the file rather than
- * importing it is the rule this repository enforces elsewhere for a different reason —
- * a JSON import lands in `out/` and rewrites the package scope of the compiled tree —
- * and it is the only form available here anyway, since the set is discovered at runtime.
+ * Every tracked `package.json`, read as a manifest.
+ *
+ * Reading the file rather than importing it is the rule this repository enforces elsewhere for a
+ * different reason — a JSON import lands in `out/` and rewrites the package scope of the compiled
+ * tree — and it is the only form available here anyway, since the set is discovered at runtime.
  */
 export async function readPackageManifests(context: RepoContext): Promise<PackageManifest[]> {
 	const files = context.trackedFiles.filter((file) => file.endsWith("/package.json") && !file.includes("node_modules/"))
@@ -178,7 +179,8 @@ export async function planModuleMoves(context: RepoContext, moves: readonly Modu
 
 		if (!text) return manifest
 
-		// A manifest this operation just spliced must parse. If it does not, the splice was wrong and the plan is void.
+		// A manifest this operation just spliced must parse.
+		// If it does not, the splice was wrong and the plan is void.
 		const parsed = parseJSONStrict<Pick<PackageManifest, "imports" | "exports">>(text)
 
 		return { ...manifest, imports: parsed.imports, exports: parsed.exports }

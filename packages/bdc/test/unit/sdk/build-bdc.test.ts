@@ -319,6 +319,7 @@ describe("buildBDCDatabase — multi-BSL block-grain collapse", () => {
 	 * 3 rows sharing the same (geoid, provider_id, technology_code, speeds, low_latency,
 	 * business_residential_code) triple — only `location_id` differs, exactly the shape a real FCC
 	 * per-provider CSV produces for a block carrying multiple Broadband Serviceable Locations.
+	 *
 	 * The staging pass's natural key includes `location_id`, so all 3 survive staging
 	 * as distinct rows (this is not the exact-duplicate case `fixtureRows` covers) —
 	 * the materialize step must then collapse them to exactly 1 row in the default mode,
@@ -404,14 +405,16 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 	}
 
 	/**
-	 * `provider_id` 700001 carries two FRN edges — the decision 6 cardinality `bdc_provider`
-	 * cannot express. FRN_LATE's own most recent form-499 filing (2026-05-20)
-	 * postdates FRN_EARLY's (2026-01-15), so FRN_LATE must win the primary-FRN pick.
+	 * `provider_id` 700001 carries two FRN edges — the decision 6 cardinality `bdc_provider` cannot express.
+	 *
+	 * FRN_LATE's own most recent form-499 filing (2026-05-20) postdates FRN_EARLY's
+	 * (2026-01-15), so FRN_LATE must win the primary-FRN pick.
 	 * `provider_id` 700002 carries exactly one FRN (FRN_SOLO) — no filer.db query
-	 * is needed to resolve its primary FRN. Also seeds `provider_id` 700001's two
-	 * conflicting `holding_company_name` edges — the same cardinality problem `frn` has,
-	 * proving both discarded values stay recoverable from filer.db even though
-	 * `bdc_provider.holding_company` can only hold one (here: neither, since they conflict).
+	 * is needed to resolve its primary FRN.
+	 *
+	 * Also seeds `provider_id` 700001's two conflicting `holding_company_name` edges — the same
+	 * cardinality problem `frn` has, proving both discarded values stay recoverable from filer.db even
+	 * though `bdc_provider.holding_company` can only hold one (here: neither, since they conflict).
 	 */
 	async function seedTwoFRNFixture(db: DatabaseClient<FilerDatabase>): Promise<void> {
 		await createFilerNodeTable(db)
@@ -613,14 +616,14 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 			.where("provider_id", "=", 700_004)
 			.executeTakeFirstOrThrow()
 
-		// Two rows, but the same holding_company on both — one distinct value rather than
-		// two rows worth of ambiguity — still populates. Proves the shortcut compares
-		// the distinct SET rather than just "was there only one row".
+		// Two rows, but the same holding_company on both — one distinct value
+		// rather than two rows worth of ambiguity — still populates.
+		// Proves the shortcut compares the distinct SET rather than just "was there only one row".
 		expect(repeatValueProvider.frn).toBe(FRN_SOLO)
 		expect(repeatValueProvider.holding_company).toBe("Repeat Holdco")
 
-		// The discarded FRN (FRN_EARLY) is not lost — decision 6's whole premise
-		// is that filer.db, untouched by this build, still retains every edge.
+		// The discarded FRN (FRN_EARLY) is not lost — decision 6's whole premise is that
+		// filer.db, untouched by this build, still retains every edge.
 		// Recover it back out through the public reader, `filerLookup`.
 		// Same for the two conflicting holding_company values `bdc_provider` couldn't keep either.
 		const crosswalk = await filerLookup(filerDB, { bdcProviderID: 700_001, asOf: "2026-12-31" })
@@ -745,13 +748,13 @@ describe("peekProviderID", () => {
 
 describe("buildBDCDatabase — malformed provider_id via csvPaths (the production ingest path)", () => {
 	// `peekProviderID` needs a finiteness guard rather than a bare `Number.parseInt(...) as ProviderID`.
-	// A non-numeric provider_id field parses to NaN, which binds to `bdc_stage.provider_id`
-	// (integer not NULL) as SQLite NULL — `insert or ignore` then silently drops every
-	// row of the file, miscounted as ordinary `deduped` rows rather than surfaced
-	// as the malformed-file error it actually is. This test goes through `csvPaths`
-	// (the real filesystem-reading production path `readAvailabilityRowsFromCSVPaths` uses),
-	// not the `rows:` test injection point, so the test checks that malformed CSV
-	// input is rejected from disk onward.
+	// A non-numeric provider_id field parses to NaN, which binds to
+	// `bdc_stage.provider_id` (integer not NULL) as SQLite NULL — `insert or ignore`
+	// then silently drops every row of the file, miscounted as ordinary `deduped` rows
+	// rather than surfaced as the malformed-file error it actually is.
+	// This test goes through `csvPaths` (the real filesystem-reading production path
+	// `readAvailabilityRowsFromCSVPaths` uses), not the `rows:` test injection point,
+	// so the test checks that malformed CSV input is rejected from disk onward.
 	it("rejects the whole build, naming the malformed CSV, instead of silently absorbing its rows as deduped", async () => {
 		const malformedCSVPath = resolvePackagePath(
 			"@mailwoman/bdc",

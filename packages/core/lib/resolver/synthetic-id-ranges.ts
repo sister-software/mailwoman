@@ -17,7 +17,9 @@
  */
 
 /**
- * Overture-sourced admin rows (`fold-overture`). Above any real WOF id.
+ * Overture-sourced admin rows (`fold-overture`).
+ *
+ * Above any real WOF id.
  */
 export const OVERTURE_ID_BASE = 8_000_000_000_000
 
@@ -62,8 +64,10 @@ export const CZ_DISTRICT_ID_BASE = 9_850_000_000_000
 export const TW_DISTRICT_ID_BASE = 9_900_000_000_000
 
 /**
- * Every synthetic range, ascending. The test over this table is what keeps the bases distinct
- * and spaced. a builder reads its own constant above and never this list.
+ * Every synthetic range, ascending.
+ *
+ * The test over this table is what keeps the bases distinct and spaced. a builder
+ * reads its own constant above and never this list.
  */
 export const SYNTHETIC_ID_RANGES: ReadonlyArray<{ readonly name: string; readonly base: number }> = [
 	{ name: "overture", base: OVERTURE_ID_BASE },
@@ -79,6 +83,7 @@ export const SYNTHETIC_ID_RANGES: ReadonlyArray<{ readonly name: string; readonl
 
 /**
  * The smallest room any range is given before the next base.
+ *
  * Code-Point Open, the largest occupant, holds 1.75 M ids.
  */
 export const SYNTHETIC_ID_RANGE_MIN_WIDTH = 50_000_000_000

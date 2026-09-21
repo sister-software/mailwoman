@@ -21,8 +21,10 @@ import { describe, expect, it } from "vitest"
 
 /**
  * The first feature of the real EA product, verbatim from the published geodatabase:
- * a 128 m² square off Great Yarmouth. Carried here because it is the smallest real thing
- * the source contains, and the trap it demonstrates is not hypothetical.
+ * a 128 m² square off Great Yarmouth.
+ *
+ * Carried here because it is the smallest real thing the source contains,
+ * and the trap it demonstrates is not hypothetical.
  */
 const TINY_REAL_FEATURE = [
 	[
@@ -110,8 +112,9 @@ describe("classifyFeatureCells", () => {
  *
  * The differential below is the two-path discipline applied to this module's own optimization.
  * Two of its shortcuts — a part that fits inside one cell, and a part too narrow to
- * contain one — replace an h3 call with a claim about geometry, and a claim about
- * geometry that is subtly wrong produces a well-formed wrong index rather than an error.
+ * contain one — replace an h3 call with a claim about geometry, and a claim about geometry
+ * that is subtly wrong produces a well-formed wrong index rather than an error.
+ *
  * Measured over the real product before it landed: 60,000 features at resolution 9, zero disagreements.
  */
 function referenceClassification(polygons: number[][][][], resolution: number) {

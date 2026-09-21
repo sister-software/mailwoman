@@ -38,6 +38,7 @@ const LEADING_HAN = /^[\p{Script=Han}〇\d]+/u
 
 /**
  * Admin prefixes a CJK address writes in front of the settlement, coarsest first.
+ *
  * Each is matched at the start of what remains, so `云南省临沧市孟定农场三分场二队` peels `云南省` (province),
  * `临沧市` (city), and hands `孟定农场三分场二队` to the unit reader.
  */

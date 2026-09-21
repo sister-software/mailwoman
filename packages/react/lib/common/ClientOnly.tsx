@@ -26,7 +26,9 @@ function subscribeNever(): () => void {
 
 export interface ClientOnlyProps {
 	/**
-	 * Rendered once mounted in the browser. A thunk so its (browser-only) imports never run on the server.
+	 * Rendered once mounted in the browser.
+	 *
+	 * A thunk so its (browser-only) imports never run on the server.
 	 */
 	children: () => ReactNode
 	/**

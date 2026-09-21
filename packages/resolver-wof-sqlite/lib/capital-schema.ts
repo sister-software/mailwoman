@@ -28,8 +28,10 @@ import { hasTable } from "#sqlite-utils"
 export const CAPITAL_TABLE = "capital"
 
 /**
- * One reference entry as the artifact stores it. `level` is the reference vocabulary
- * (`national` | `admin1`) kept as text — the reader validates on load rather than trusting bytes.
+ * One reference entry as the artifact stores it.
+ *
+ * `level` is the reference vocabulary (`national` | `admin1`) kept as text —
+ * the reader validates on load rather than trusting bytes.
  */
 export interface CapitalTable {
 	country: string
@@ -43,8 +45,10 @@ export interface CapitalTable {
 }
 
 /**
- * Create the table on a build in progress. Async because Kysely's schema-builder is.
- * called from the candidate build's DDL phase alongside the other typed builders.
+ * Create the table on a build in progress.
+ *
+ * Async because Kysely's schema-builder is. called from the candidate build's
+ * DDL phase alongside the other typed builders.
  */
 export async function createCapitalTable<DB extends { capital: CapitalTable }>(db: Kysely<DB>): Promise<void> {
 	await db.schema

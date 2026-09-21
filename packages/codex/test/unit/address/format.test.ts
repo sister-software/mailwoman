@@ -260,8 +260,10 @@ describe("formatAddressRow", () => {
 
 describe("the script a row renders in", () => {
 	/**
-	 * The same Hong Kong address in both registers. Rendering either through one country-keyed layout
-	 * prints one of them in an order nobody writes, which is the whole reason the selection exists.
+	 * The same Hong Kong address in both registers.
+	 *
+	 * Rendering either through one country-keyed layout prints one of them in an order
+	 * nobody writes, which is the whole reason the selection exists.
 	 */
 	const HK_LATIN: ComponentDict = {
 		street: "Jordan Road",

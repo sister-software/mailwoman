@@ -23,6 +23,7 @@ import { $ } from "zx"
 
 /**
  * The generated surfaces, each with the generator that owns it.
+ *
  * Adding a version-stamped generated document means adding a row here —
  * the prepare job stages exactly these paths.
  */

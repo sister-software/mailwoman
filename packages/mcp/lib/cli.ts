@@ -85,18 +85,21 @@ const { values } = parseArguments({
 })
 
 /**
- * `--poi-db` wires `mailwoman_poi_search`
- * (and, via the same pipeline, `mailwoman_parse`'s `poi: true` path) to a real `poi.db`.
+ * `--poi-db` wires `mailwoman_poi_search` (and, via the same pipeline,
+ * `mailwoman_parse`'s `poi: true` path) to a real `poi.db`.
+ *
  * Absent → intent-only (parses the query, extracts the subject/anchor, never executes a lookup).
  */
 const poiDatabasePath = values["poi-db"]
 
 /**
- * The shared classifier + resolver, built exactly once on the first call that needs them
- * (see the module header). `NeuralAddressClassifier.loadFromWeights` auto-resolves the
- * bundled `en-US` weights. the resolver backend prefers a configured candidate gazetteer
- * (`$MAILWOMAN_CANDIDATE_DB`) and otherwise falls back to the admin-only WOF extracts
- * already on the data root — same selection `nominatim`/`photon`'s CLIs make.
+ * The shared classifier + resolver, built exactly once on the first call that
+ * needs them (see the module header).
+ *
+ * `NeuralAddressClassifier.loadFromWeights` auto-resolves the bundled `en-US` weights. the
+ * resolver backend prefers a configured candidate gazetteer (`$MAILWOMAN_CANDIDATE_DB`)
+ * and otherwise falls back to the admin-only WOF extracts already on the data root —
+ * same selection `nominatim`/`photon`'s CLIs make.
  */
 let corePromise:
 	| Promise<{
@@ -109,9 +112,10 @@ let corePromise:
 /**
  * The four tools that need {@link loadCore} — every path
  * through `getPlainPipeline`/`getPoiPipeline`/`resolveGeocode`.
+ *
  * `mailwoman_layer_manifest`, `mailwoman_bdc_filing_landscape`, `mailwoman_filer_lookup`
- * and `mailwoman_filer_family` never call it, so they keep working when this
- * fails; `mailwoman_plausibility_check` only reaches it when it geocodes.
+ * and `mailwoman_filer_family` never call it, so they keep working when this fails;
+ * `mailwoman_plausibility_check` only reaches it when it geocodes.
  * Named in both guard messages below because an agent that just got one needs to know what it can still do.
  */
 const CORE_BACKED_TOOLS = "mailwoman_parse, mailwoman_geocode, mailwoman_poi_search, mailwoman_overpass_export"
@@ -157,9 +161,10 @@ function loadCore(): Promise<{
 		const backend = await createResolverBackend(resolverMod, { wofPaths, candidateDB })
 		const resolver = createWOFResolver(backend)
 
-		// Same discipline for the model weights. `@mailwoman/neural-weights-en-us` is a declared dependency
-		// of this package as of 2026-08-03 — before that a standalone `npm install @mailwoman/mcp`
-		// resolved nothing and every core-backed tool answered with `resolveWeights`' raw not-found text.
+		// Same discipline for the model weights.
+		// `@mailwoman/neural-weights-en-us` is a declared dependency of this package as of
+		// 2026-08-03 — before that a standalone `npm install @mailwoman/mcp` resolved nothing
+		// and every core-backed tool answered with `resolveWeights`' raw not-found text.
 		// The guard keeps that text (it already names the exact fix command) and adds what
 		// an agent mid-conversation needs next: which tools are down and which are not.
 		let classifier: ScriptRoutedClassifier<NeuralAddressClassifier>
@@ -220,11 +225,13 @@ async function getPoiPipeline(dbPath: string | undefined): Promise<Pipeline> {
 }
 
 /**
- * `plausibilityCheck`'s geocode dep — reuses the same shared classifier+resolver `deps.geocode`
- * builds from (see the module header's laziness note). `deriveGeocodeRegister`/the
- * formatted register is the geocode dep's concern, so it is wired at this CLI/MCP layer
- * rather than inside `plausibility.ts`. The real return type (`GeocodeResult`) is
- * structurally assignable to `plausibility.ts`'s minimal `GeocodeLike` — no adapter needed.
+ * `plausibilityCheck`'s geocode dep — reuses the same shared classifier+resolver
+ * `deps.geocode` builds from (see the module header's laziness note).
+ *
+ * `deriveGeocodeRegister`/the formatted register is the geocode dep's concern,
+ * so it is wired at this CLI/MCP layer rather than inside `plausibility.ts`.
+ * The real return type (`GeocodeResult`) is structurally assignable to `plausibility.ts`'s
+ * minimal `GeocodeLike` — no adapter needed.
  */
 async function resolveGeocode(address: string) {
 	const { classifier, resolver, databases } = await loadCore()

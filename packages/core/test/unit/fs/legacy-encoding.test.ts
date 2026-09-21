@@ -19,7 +19,9 @@ import { decodeByteStream, decodeBytes } from "@mailwoman/core/fs/streams"
 import { describe, expect, it } from "vitest"
 
 /**
- * `더샾오피스텔` in CP949. The `98 de` pair is the UHC extension `샾`, which EUC-KR proper does not carry.
+ * `더샾오피스텔` in CP949.
+ *
+ * The `98 de` pair is the UHC extension `샾`, which EUC-KR proper does not carry.
  */
 const THE_SHARP = Uint8Array.from([0xb4, 0xf5, 0x98, 0xde, 0xbf, 0xc0, 0xc7, 0xc7, 0xbd, 0xba, 0xc5, 0xda])
 

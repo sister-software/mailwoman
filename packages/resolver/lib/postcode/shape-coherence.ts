@@ -81,10 +81,12 @@ import { collectNodes, walkNodes, type AddressNode } from "@mailwoman/core/decod
 
 /**
  * The codex address systems a sibling signal can speak for — the universe
- * `candidateSystemsForPostcode` can return, in the upper-case ISO form this module's signals
- * are emitted in (`SystemCode` itself is lower-case). Signals from countries with no
- * codex address system are filtered out before the intersection test, so such a country
- * can never manufacture an empty intersection (the false-exclusion trap. see the header).
+ * `candidateSystemsForPostcode` can return, in the upper-case ISO form this module's
+ * signals are emitted in (`SystemCode` itself is lower-case).
+ *
+ * Signals from countries with no codex address system are filtered out
+ * before the intersection test, so such a country can never manufacture an empty
+ * intersection (the false-exclusion trap. see the header).
  * Derived from codex's own list so a system added there is admitted here in the same change.
  */
 const SYSTEM_UNIVERSE: ReadonlySet<string> = new Set<string>(SYSTEM_CODES.map((system) => system.toUpperCase()))
@@ -96,9 +98,10 @@ const SYSTEM_UNIVERSE: ReadonlySet<string> = new Set<string>(SYSTEM_CODES.map((s
  */
 export interface PostcodeShapeVerdict {
 	/**
-	 * The narrowed candidate systems (upper-case) of the first confirmed postcode node —
-	 * the one `firstPostcodeValue` will pick — to thread into `findPostcodeCountryScope`
-	 * as its candidate list. Undefined when no postcode node was confirmed.
+	 * The narrowed candidate systems (upper-case) of the first confirmed postcode node — the one
+	 * `firstPostcodeValue` will pick — to thread into `findPostcodeCountryScope` as its candidate list.
+	 *
+	 * Undefined when no postcode node was confirmed.
 	 */
 	narrowing?: string[]
 	/**
@@ -118,6 +121,7 @@ export interface PostcodeShapeVerdict {
 /**
  * Collect the sibling country signals: the country node (territory-mapped), the region node
  * (`matchSubdivision` + `country_hint`), each filtered to the codex SystemCode universe.
+ *
  * The tree is walked once for all postcode spans — sibling evidence is tree-level rather than per-span.
  */
 function collectSiblingSystems(roots: readonly AddressNode[]): Set<string> {
@@ -140,9 +144,10 @@ function collectSiblingSystems(roots: readonly AddressNode[]): Set<string> {
 		}
 
 		if (n.tag === "region") {
-			// (a) The region's value as a subdivision ("CA" → US, "on" → CA — the US-wins tiebreak for
-			// "CA" is matchSubdivision's own). (b) The `country_hint` stamp annotateUSRegions writes
-			// on 2-letter US state abbreviations — the same evidence via the pipeline's other path.
+			// (a) The region's value as a subdivision ("CA" → US, "on" → CA —
+			// the US-wins tiebreak for "CA" is matchSubdivision's own).
+			// (b) The `country_hint` stamp annotateUSRegions writes on 2-letter US state
+			// abbreviations — the same evidence via the pipeline's other path.
 			const sub = matchSubdivision(n.value)
 
 			if (sub && SYSTEM_UNIVERSE.has(sub.country.toUpperCase())) {
@@ -163,7 +168,9 @@ function collectSiblingSystems(roots: readonly AddressNode[]): Set<string> {
 /**
  * Run the shape-coherence verdict over every `postcode` span in the tree, mutating the excluded
  * spans in place (the retag / exclusion stamp) and stamping confirmed spans' narrowed systems.
- * Pure-sync: no backend, no queries. See the header for the full rule.
+ *
+ * Pure-sync: no backend, no queries.
+ * See the header for the full rule.
  */
 export function applyPostcodeShapeCoherence(roots: readonly AddressNode[]): PostcodeShapeVerdict {
 	const verdict: PostcodeShapeVerdict = { confirmed: [], excluded: [], abstained: [] }
@@ -220,7 +227,8 @@ export function applyPostcodeShapeCoherence(roots: readonly AddressNode[]): Post
 		}
 
 		// No confident siblings — the same abstention posture postcode-country-coherence.ts:269
-		// takes on zero-or-two coherent countries. Never guess with the shape alone.
+		// takes on zero-or-two coherent countries.
+		// Never guess with the shape alone.
 		verdict.abstained.push(code)
 	}
 
@@ -229,9 +237,11 @@ export function applyPostcodeShapeCoherence(roots: readonly AddressNode[]): Post
 
 /**
  * True when a node is a postcode span this pass excluded but could not retag
- * (the letter-containing compound corner). The resolve's postcode consumers
- * (`firstPostcodeValue`, the walk's postcode lookup, the post-walk postcode passes) all skip these,
- * which is what "strip the postcode tag's contribution" means for a span that keeps its tag.
+ * (the letter-containing compound corner).
+ *
+ * The resolve's postcode consumers (`firstPostcodeValue`, the walk's postcode lookup,
+ * the post-walk postcode passes) all skip these, which is what "strip the postcode
+ * tag's contribution" means for a span that keeps its tag.
  */
 export function isShapeExcludedPostcode(node: AddressNode): boolean {
 	return node.tag === "postcode" && node.metadata?.["postcode_shape_excluded"] === true

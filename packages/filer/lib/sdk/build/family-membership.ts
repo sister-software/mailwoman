@@ -27,12 +27,14 @@ import { mintFamilyID } from "#sdk/family-id"
 export interface FamilyMembershipFact {
 	/**
 	 * The edge's `from_node_id` — an FRN or `bdcProviderID` node.
+	 *
 	 * Becomes `filer_family.node_id`.
 	 */
 	memberNodeID: string
 	/**
-	 * The edge's `to_node_id` — the holding-/management-company node whose raw name
-	 * produced `family_id`. Becomes `filer_family.naming_node_id`.
+	 * The edge's `to_node_id` — the holding-/management-company node whose raw name produced `family_id`.
+	 *
+	 * Becomes `filer_family.naming_node_id`.
 	 */
 	namingNodeID: string
 	/**
@@ -41,6 +43,7 @@ export interface FamilyMembershipFact {
 	identifierType: string
 	/**
 	 * The RAW company name, canonicalized by {@linkcode mintFamilyID}.
+	 *
 	 * Never written verbatim to `filer_family`; the raw spelling lives on the
 	 * `filer_node` `namingNodeID` points at.
 	 */
@@ -51,6 +54,7 @@ export interface FamilyMembershipFact {
 	relationship: string
 	/**
 	 * One of {@link FilerEdgeAssertion} — copied from the accompanying edge, never re-derived.
+	 *
 	 * Required rather than defaulted to `Authoritative`: a new family writer must state the
 	 * strength of its claim on purpose, and a default would let an inferred one inherit
 	 * authority by omission — the exact conflation criterion 2 exists to prevent.
@@ -78,13 +82,14 @@ export interface FamilyMembershipFact {
  *
  * {@link FamilyMembershipFact.namingNodeID} is the company node this row's `family_id` was minted from — the edge's
  * `to_node_id`, which every caller has already minted immediately above its call.
- * It is deliberately taken as a field rather than re-derived from `identifierType`/`name`
- * here, so the family row and the edge can never name two different nodes.
- * Persisting it is what lets `filer-lookup.ts`'s `readFamilyDisplayNames` recover the
- * raw spelling by a plain join instead of re-running `canonicalizeOrganizationName` at
- * read time against a sealed, separately-versioned artifact — see `schema.ts`'s file
- * header for the drift that closed. Adding it pushed this function's positional arity
- * past the linter's `max-params` ceiling, hence the single options argument.
+ * It is deliberately taken as a field rather than re-derived from `identifierType`/`name` here,
+ * so the family row and the edge can never name two different nodes.
+ *
+ * Persisting it is what lets `filer-lookup.ts`'s `readFamilyDisplayNames` recover the raw spelling by
+ * a plain join instead of re-running `canonicalizeOrganizationName` at read time against a sealed,
+ * separately-versioned artifact — see `schema.ts`'s file header for the drift that closed.
+ * Adding it pushed this function's positional arity past the linter's `max-params`
+ * ceiling, hence the single options argument.
  */
 export function insertFamilyMembership(insFamily: StatementSync, fact: FamilyMembershipFact): void {
 	const familyID = mintFamilyID(fact.identifierType, fact.name)

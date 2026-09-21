@@ -50,6 +50,7 @@ function detectWhitespacePattern(text: string): WhitespacePattern {
 
 /**
  * Compute a `QueryShape` from a string or normalized input.
+ *
  * Microseconds-cheap, pure-function.
  *
  * @example

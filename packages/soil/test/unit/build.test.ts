@@ -123,8 +123,9 @@ describe("what each reading says", () => {
 
 		const distribution = reading.distribution!
 
-		// 45/35/20 across three classes. The top class is class 2 and it holds well under half,
-		// which is exactly the case a winner-class schema would report as "class 2" full stop.
+		// 45/35/20 across three classes.
+		// The top class is class 2 and it holds well under half, which is exactly the
+		// case a winner-class schema would report as "class 2" full stop.
 		expect(distribution.topClass).toBe("2")
 		expect(distribution.topClassShare).toBeLessThan(0.5)
 		expect(Object.keys(distribution.classShares).length).toBeGreaterThan(1)

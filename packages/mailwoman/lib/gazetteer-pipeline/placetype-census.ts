@@ -36,10 +36,12 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
  * {@link buildPlacetypeCensus} unmapped and turn a build into a throw at the worst moment.
  * Sorted to keep the diff readable when WOF grows the vocabulary.
  *
- * Pinned to `WhosOnFirstPlacetype` (`@mailwoman/core/resources/whosonfirst`) with `satisfies`,
- * the same discipline `WOF_VENUE_STRUCTURE_PLACETYPES` uses: this list stops compiling if it names
- * something outside the vocabulary. The type is the authority on membership. this array exists
- * because a type union cannot be enumerated at runtime, which is what the completeness test needs.
+ * Pinned to `WhosOnFirstPlacetype` (`@mailwoman/core/resources/whosonfirst`)
+ * with `satisfies`, the same discipline `WOF_VENUE_STRUCTURE_PLACETYPES` uses:
+ * this list stops compiling if it names something outside the vocabulary.
+ * The type is the authority on membership. this array exists because a type union cannot
+ * be enumerated at runtime, which is what the completeness test needs.
+ *
  * A hand-maintained copy drifted once already — it was missing `custom`.
  */
 export const WOF_PLACETYPES = [
@@ -81,8 +83,10 @@ export const WOF_PLACETYPES = [
 ] as const satisfies readonly WhosOnFirstPlacetype[]
 
 /**
- * WOF placetype → `ComponentTag` projection, the executable copy of plan/reference/placetype-evidence.mdx's
- * table. A `null` value means "in the vocabulary, deliberately not projected"
+ * WOF placetype → `ComponentTag` projection, the executable copy of
+ * plan/reference/placetype-evidence.mdx's table.
+ *
+ * A `null` value means "in the vocabulary, deliberately not projected"
  * (context-only placetypes: metroarea, timezone, and the out-of-grammar continent/ocean rows) —
  * distinct from a placetype missing from this map entirely, which is an unmapped
  * placetype the builder will refuse to count silently.
@@ -112,11 +116,11 @@ export const PLACETYPE_PROJECTION: Readonly<Record<string, ComponentTag | null>>
 	disputed: "country",
 	postalcode: "postcode",
 	venue: "venue",
-	// Venue sub-structure. A WOF `building`/`campus` place carries a venue name
-	// ("Empire State Building", "MIT Campus"); the interior subdivisions carry a unit designator
-	// ("Concourse B", "Terminal 4", "West Wing"). The admin build stocks none of these today —
-	// that is the ingest allowlist (`ADMIN_PLACETYPES`), not the source, and measuring
-	// the difference is what `mailwoman gazetteer granularity` exists for.
+	// Venue sub-structure.
+	// A WOF `building`/`campus` place carries a venue name ("Empire State Building", "MIT Campus");
+	// the interior subdivisions carry a unit designator ("Concourse B", "Terminal 4", "West Wing").
+	// The admin build stocks none of these today — that is the ingest allowlist (`ADMIN_PLACETYPES`),
+	// not the source, and measuring the difference is what `mailwoman gazetteer granularity` exists for.
 	building: "venue",
 	campus: "venue",
 	arcade: "unit",
@@ -178,8 +182,9 @@ export interface PlacetypeCensusBuildResult {
 /**
  * Count each parent's children through the projection table, for one country.
  *
- * Read-only against the admin DB. The child and parent must share a country — a cross-border ancestor
- * link (WOF carries some) would attribute a child's evidence to the wrong locale's artifact.
+ * Read-only against the admin DB.
+ * The child and parent must share a country — a cross-border ancestor link (WOF carries some)
+ * would attribute a child's evidence to the wrong locale's artifact.
  */
 export function buildPlacetypeCensus(adminDBPath: string, country: string): PlacetypeCensusBuildResult {
 	using db = new DatabaseClient<WOFDatabase>(adminDBPath, { readOnly: true })

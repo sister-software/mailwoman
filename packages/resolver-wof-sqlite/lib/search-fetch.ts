@@ -21,6 +21,7 @@ import type { RankingWeights } from "#ranking-weights"
 import type { FindPlaceQuery, WOFPlacetype } from "#types"
 /**
  * Query length at or below which the FTS window is widened.
+ *
  * A two- or three-character query is almost always a region abbreviation, where the exact match
  * can otherwise fall outside the window behind higher-bm25 partial hits — "NY" losing to "New York".
  */
@@ -28,16 +29,18 @@ const SHORT_QUERY_MAX_LENGTH = 3
 
 /**
  * Over-fetch floor for short (≤3-char) queries — region abbreviations like "NY"/"VT".
+ *
  * An exact-abbrev holder's BM25 is poor (long multilingual alt-name document),
  * so the normal `limit * 4` window can drop it before `exactMatchTiering` promotes
  * it. 200 comfortably covers every same-abbrev region across the 12-country gazetteer
- * (a 2-letter token matches a few dozen regions at most) while staying a cheap
- * region-placetype fetch. See the `#fuzzyNameMatch` over-fetch comment.
+ * (a 2-letter token matches a few dozen regions at most) while staying a cheap region-placetype fetch.
+ * See the `#fuzzyNameMatch` over-fetch comment.
  */
 const SHORT_QUERY_OVERFETCH = 200
 
 /**
  * How many rows the population-ordered companion fetch (#905) adds to the candidate pool.
+ *
  * Small on purpose: its only job is to guarantee the famous holders of a name enter the
  * pool at all — for "Paris"-class floods the bm25 window is saturated by thousands of
  * tiny same-name rows and no boost inside the bm25-based order BY can rescue a candidate
@@ -60,18 +63,21 @@ export interface RawSearchRow {
 	max_longitude: number | null
 	population: number | null // from the place_population aux table. null when missing
 	/**
-	 * From `place_importance.encyclopedic` when the extract's table carries the two-score
-	 * split columns. NULL means the place has no Wikipedia article, or the extract
-	 * predates the split — absence either way, and never 0 (ROAD_TO_V9 §2).
+	 * From `place_importance.encyclopedic` when the extract's table carries the two-score split columns.
+	 *
+	 * NULL means the place has no Wikipedia article, or the extract predates the split —
+	 * absence either way, and never 0 (ROAD_TO_V9 §2).
 	 */
 	encyclopedic: number | null
 }
 
 /**
- * Fetch the raw candidate rows for a name match on one extract: the BM25-ordered window over
- * `place_search` (widened for short queries), plus the population-ordered companion fetch that
- * keeps the prominent holders of a name pool-complete. `schemaName` is the routed extract's
- * bare schema name — validated at construction, so it is interpolated directly.
+ * Fetch the raw candidate rows for a name match on one extract: the BM25-ordered
+ * window over `place_search` (widened for short queries), plus the population-ordered
+ * companion fetch that keeps the prominent holders of a name pool-complete.
+ *
+ * `schemaName` is the routed extract's bare schema name — validated at construction,
+ * so it is interpolated directly.
  */
 export function fetchSearchRows<DB>(options: {
 	db: DatabaseClient<DB>
@@ -110,11 +116,13 @@ export function fetchSearchRows<DB>(options: {
 	const ftsLimit =
 		query.text.trim().length <= SHORT_QUERY_MAX_LENGTH ? Math.max(limit * 4, SHORT_QUERY_OVERFETCH) : limit * 4
 
-	// Filter out historical / superseded / deprecated places by default — they live in the same spr
-	// table but should never win a contemporary lookup. `is_current = 0` is the only WOF
-	// value that means "not current"; both `-1` (modern) and `1` (legacy) mean current.
-	// See #91. Note: with schema-qualified `from` the bare `place_search` reference in `match`
-	// resolves to the `from` table — required by FTS5 parser, see extracts.ts header comment.
+	// Filter out historical / superseded / deprecated places by default — they live in
+	// the same spr table but should never win a contemporary lookup.
+	// `is_current = 0` is the only WOF value that means "not current"; both `-1` (modern)
+	// and `1` (legacy) mean current.
+	// See #91.
+	// Note: with schema-qualified `from` the bare `place_search` reference in `match` resolves
+	// to the `from` table — required by FTS5 parser, see extracts.ts header comment.
 	const where: string[] = ["place_search MATCH ?", "spr.is_current != 0", "spr.is_deprecated = 0"]
 	const params: SQLInputValue[] = [ftsQuery]
 
@@ -142,14 +150,16 @@ export function fetchSearchRows<DB>(options: {
 
 	if (useBboxJoin) {
 		joinClause += ` JOIN ${sch}.${PLACE_BBOX_TABLE} bbox ON bbox.id = spr.id`
-		// aabb intersection — both bbox sides must overlap. R*Tree handles this in O(log n).
+		// aabb intersection — both bbox sides must overlap.
+		// R*Tree handles this in O(log n).
 		const filterBox = query.bbox || bboxAround(query.near!.lat, query.near!.lon, query.near!.maxDistanceKm!)
 		where.push("bbox.min_lat <= ? AND bbox.max_lat >= ?", "bbox.min_lon <= ? AND bbox.max_lon >= ?")
 		params.push(filterBox.maxLat, filterBox.minLat, filterBox.maxLon, filterBox.minLon)
 	}
 
-	// left join the population aux table when present. Missing-on-this-extract means the
-	// select just doesn't include the population column. the post-scoring loop treats it as 0.
+	// left join the population aux table when present.
+	// Missing-on-this-extract means the select just doesn't include the population
+	// column. the post-scoring loop treats it as 0.
 	const extractHasPopulation = hasPopulationIndex.get(sch) === true
 
 	const populationSelect = extractHasPopulation
@@ -219,8 +229,9 @@ export function fetchSearchRows<DB>(options: {
 	// ("Paris" matches thousands of gap-fill villages) the bm25-based window above cannot
 	// admit the famous holder — its bm25 is length-poisoned by the row's alias bulk
 	// (measured ~15 pts, vs a +4.0 boost cap), so FR Paris never even reaches post-scoring.
-	// This fetch makes the prominent holders of a name pool-complete BY construction. the exact-tier
-	// sort below decides whether they win. Skipped without a population index (nothing to order by).
+	// This fetch makes the prominent holders of a name pool-complete BY construction.
+	// the exact-tier sort below decides whether they win.
+	// Skipped without a population index (nothing to order by).
 	if (extractHasPopulation) {
 		const popStmt = db.prepare(`
 			SELECT

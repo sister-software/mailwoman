@@ -21,8 +21,10 @@ export interface CoordRow {
 	lat?: number
 	lon?: number
 	/**
-	 * The row's own country, when the set carries one. A single-locale set carries none
-	 * and takes the reader's default, so every row need not repeat the same code.
+	 * The row's own country, when the set carries one.
+	 *
+	 * A single-locale set carries none and takes the reader's default,
+	 * so every row need not repeat the same code.
 	 */
 	country?: string
 	expected?: { locality?: string; region?: string; postcode?: string }
@@ -52,6 +54,7 @@ export interface CoordPanel {
 	localities: PanelLocality[]
 	/**
 	 * Rows whose expected locality carried a trailing parenthetical, stripped before grading.
+	 *
 	 * Counted so a caller can see how much of the panel the normalizer changed.
 	 */
 	qualifiersStripped: number
@@ -120,9 +123,9 @@ export function renderAdmin(place: PanelLocality, extra: ComponentDict = {}): st
  * admin surface splits on (#2308).
  *
  * Membership is `US_STREET_SUFFIX_LOOKUP`: every Pub-28 canonical and every variant
- * rather than the curated name-prone subset. The narrower list moves rows between buckets
- * and moves every bucket's rate with them, so which bucket a row lands in is a property
- * of the word list, and the word list has to be the whole table.
+ * rather than the curated name-prone subset.
+ * The narrower list moves rows between buckets and moves every bucket's rate with them, so which
+ * bucket a row lands in is a property of the word list, and the word list has to be the whole table.
  */
 export function suffixTail(locality: string): string | undefined {
 	const last = locality

@@ -127,10 +127,10 @@ describe("synthesizePoBoxRow", () => {
 	})
 
 	it("refuses a country no layout names, rather than writing it in US order", () => {
-		// The box vocabulary still folds an unknown country to en-US, which is what
-		// `poBoxTemplateLocale` decides. The order comes from the country's own layout,
-		// and 55 of the 252 shipped country records carry no usable skeleton —
-		// so a row for one of those is absent rather than invented.
+		// The box vocabulary still folds an unknown country to en-US, which is
+		// what `poBoxTemplateLocale` decides.
+		// The order comes from the country's own layout, and 55 of the 252 shipped country records
+		// carry no usable skeleton — so a row for one of those is absent rather than invented.
 		expect(poBoxTemplateLocale("ZZ")).toBe("en-US")
 
 		const row = synthesizePoBoxRow(

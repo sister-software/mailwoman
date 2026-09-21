@@ -11,8 +11,9 @@ import { $private as corePrivate, liveEnv } from "@mailwoman/core/env"
 import { z } from "zod"
 
 /**
- * Stripe secret keys for shop reconciliation, one per mode so a live write is
- * a deliberate act. Never log their values.
+ * Stripe secret keys for shop reconciliation, one per mode so a live write is a deliberate act.
+ *
+ * Never log their values.
  */
 const PrivateShopEnvSchema = z.object({
 	/**
@@ -34,6 +35,8 @@ const PrivateShopEnvSchema = z.object({
 })
 
 /**
- * Live shop credentials over core's. Never log their values.
+ * Live shop credentials over core's.
+ *
+ * Never log their values.
  */
 export const $private = liveEnv(PrivateShopEnvSchema, corePrivate)

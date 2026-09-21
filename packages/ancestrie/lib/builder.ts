@@ -136,8 +136,10 @@ function canonicalizeTrie(root: TrieNode): CanonicalState[] {
 }
 
 /**
- * Label the primary-parent forest with pre/post intervals from a single counter, visiting roots and
- * sibling lists in ascending-id order. Throws on a primary-parent cycle — an entry a root cannot reach.
+ * Label the primary-parent forest with pre/post intervals from a single counter,
+ * visiting roots and sibling lists in ascending-id order.
+ *
+ * Throws on a primary-parent cycle — an entry a root cannot reach.
  */
 function labelForest(entriesByID: ReadonlyMap<number, EntryMeta>): IntervalForest {
 	const childrenOf = new Map<number, number[]>()
@@ -229,9 +231,11 @@ export class AncestrieBuilder {
 	}
 
 	/**
-	 * Add one entry. May be called several times with the same `id` under different token
-	 * sequences (aliases); the id-carried fields — rank, parents, payload — must be identical
-	 * on every add, and a divergence throws rather than silently keeping one.
+	 * Add one entry.
+	 *
+	 * May be called several times with the same `id` under different token sequences (aliases);
+	 * the id-carried fields — rank, parents, payload — must be identical on every add,
+	 * and a divergence throws rather than silently keeping one.
 	 */
 	add(entry: AncestrieEntry): void {
 		const normalize = this.normalizeToken
@@ -283,7 +287,9 @@ export class AncestrieBuilder {
 
 	/**
 	 * Seal into the versioned binary: canonicalize the trie, label the primary-parent
-	 * forest with pre/post intervals, and serialize. Throws on a primary-parent cycle.
+	 * forest with pre/post intervals, and serialize.
+	 *
+	 * Throws on a primary-parent cycle.
 	 * Does not consume the builder — sealing twice yields identical bytes.
 	 */
 	seal(options: SealOptions = {}): Uint8Array {

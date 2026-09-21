@@ -56,7 +56,9 @@ interface CompareRow {
 	 */
 	compareNode: ParsedComponent | null
 	/**
-	 * Confidence delta (compare − primary). Positive = improved, negative = regressed.
+	 * Confidence delta (compare − primary).
+	 *
+	 * Positive = improved, negative = regressed.
 	 */
 	delta: number | null
 	/**
@@ -71,6 +73,7 @@ interface CompareRow {
 
 /**
  * Build a unified diff table of component rows across two parses.
+ *
  * Row identity is by source-order position (primary-first, then interleaving).
  * For each primary node we look for a compare node covering the same character span.
  * when the tag differs, both sides are shown as a "tag-changed" row.
@@ -93,8 +96,8 @@ function computeCompareRows(primary: ParseResult, compare: ParseResult): Compare
 		}
 	}
 
-	// Walk primary nodes. paired compare nodes are removed from the map so leftovers
-	// surface as compare-only. Unspanned nodes are matched positionally.
+	// Walk primary nodes. paired compare nodes are removed from the map so leftovers surface as compare-only.
+	// Unspanned nodes are matched positionally.
 	const handledSpans = new Set<string>()
 	let cUnspannedIdx = 0
 

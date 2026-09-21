@@ -16,6 +16,8 @@ import { PrivateReleaseEnvSchema, PublicReleaseEnvSchema } from "./schema.ts"
 export const $public = liveEnv(PublicReleaseEnvSchema, resolverPublic)
 
 /**
- * Live release credentials over core's. Never log their values.
+ * Live release credentials over core's.
+ *
+ * Never log their values.
  */
 export const $private = liveEnv(PrivateReleaseEnvSchema, corePrivate)

@@ -62,12 +62,15 @@ import {
  */
 export interface AuthorityDesignationObservation {
 	/**
-	 * `designated` or `designated_absence`. Never `unknown`: that reading produces no observation.
+	 * `designated` or `designated_absence`.
+	 *
+	 * Never `unknown`: that reading produces no observation.
 	 */
 	reading: FloodReadingKind
 	/**
-	 * The authority's code, verbatim. Absent on a designated absence, which the
-	 * authority represents by publishing nothing.
+	 * The authority's code, verbatim.
+	 *
+	 * Absent on a designated absence, which the authority represents by publishing nothing.
 	 */
 	code?: string
 	/**
@@ -101,8 +104,10 @@ export interface AuthorityDesignationObservation {
 }
 
 /**
- * Why a coordinate produced no observation. Every one of these is a silence the route owes an
- * account of — an unnamed silence and a silence for the right reason read identically on a receipt.
+ * Why a coordinate produced no observation.
+ *
+ * Every one of these is a silence the route owes an account of — an unnamed silence
+ * and a silence for the right reason read identically on a receipt.
  */
 export const DESIGNATION_REFUSALS = [
 	/**
@@ -128,8 +133,9 @@ export type DesignationDecision =
 export interface AuthorityDesignationRoute extends Disposable {
 	identity: FloodLayerIdentity
 	/**
-	 * Decide one resolved coordinate. Pure with respect to the pipeline:
-	 * it reads the layer and returns a record.
+	 * Decide one resolved coordinate.
+	 *
+	 * Pure with respect to the pipeline: it reads the layer and returns a record.
 	 *
 	 * `null` and `undefined` are both accepted because a geocode result has nullable `lat`/`lon` —
 	 * a caller that had to narrow them first would be narrowing on this route's behalf,
@@ -140,8 +146,10 @@ export interface AuthorityDesignationRoute extends Disposable {
 
 export interface AuthorityDesignationRouteOptions {
 	/**
-	 * The sealed layer to read. Required: there is no default layer, and a route that
-	 * guessed one would report a designation from an authority nobody asked about.
+	 * The sealed layer to read.
+	 *
+	 * Required: there is no default layer, and a route that guessed one would report
+	 * a designation from an authority nobody asked about.
 	 */
 	databasePath: string
 }

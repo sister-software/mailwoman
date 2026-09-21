@@ -70,8 +70,8 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		// 11 valid rows (1 dropped: ZZ state) — exact number depends on
-		// which fixture rows the address-formatter renders into a non-empty `raw`.
+		// 11 valid rows (1 dropped: ZZ state) — exact number depends on which fixture
+		// rows the address-formatter renders into a non-empty `raw`.
 		// The strict equality below catches any future drift in the format pipeline.
 		expect(m.yielded).toBe(11)
 		const rows = await loadRows()

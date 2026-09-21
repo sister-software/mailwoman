@@ -69,9 +69,9 @@ const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 		const audit = await auditReposRoot(root, { readCommits: false })
 		const repos = [...new Set([...audit.repos.map((r) => r.name), ...requested])].toSorted()
 
-		// Existing clones live under `<root>/<owner>/<name>` when nested. prefer
-		// wherever the repo already is. The existence probes are materialized up front
-		// because `planReposSync`'s `directoryFor` is a synchronous callback.
+		// Existing clones live under `<root>/<owner>/<name>` when nested. prefer wherever the repo already is.
+		// The existence probes are materialized up front because `planReposSync`'s
+		// `directoryFor` is a synchronous callback.
 		const directories = new Map<string, string>()
 
 		for (const repo of repos) {
@@ -108,14 +108,14 @@ const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 						await runFile("git", ["-C", plan.directory, "merge", "--ff-only", "origin/HEAD"])
 						performed.push(`fast-forwarded ${plan.repo}`)
 					} else if (plan.action === SyncAction.RepointRequired && options.repoint) {
-						// The previous remote is kept as `upstream`. Losing the address of the repo
-						// we fork from would make the next upstream sync a guess.
+						// The previous remote is kept as `upstream`.
+						// Losing the address of the repo we fork from would make the next upstream sync a guess.
 						await runFile("git", ["-C", plan.directory, "remote", "rename", "origin", "upstream"])
 						await runFile("git", ["-C", plan.directory, "remote", "add", "origin", plan.origin.url])
 						await runFile("git", ["-C", plan.directory, "fetch", "--quiet", "origin"])
 
-						// The rename carried `branch.<name>.remote` along with it,
-						// so the branch now tracks the remote we just moved away from.
+						// The rename carried `branch.<name>.remote` along with it, so the branch
+						// now tracks the remote we just moved away from.
 						// Re-point the tracking too, or the next `git pull` here pulls upstream
 						// over the corrections this whole command exists to preserve.
 						const branch = (

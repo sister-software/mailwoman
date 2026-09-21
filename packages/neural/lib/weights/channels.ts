@@ -20,17 +20,20 @@ import { PostcodeBinaryResolver } from "#postcode/binary-resolver"
 export { inferRequiredChannelsFromInputs } from "#ort-feeds"
 
 /**
- * The structured `requires` block of a `model-card.json` (#718) — the declared ship-config
- * the model was trained against. The ProductionScorer reads this and fails closed
- * when a declared channel isn't actually fed (silent OOD is the #566/#685 trap).
+ * The structured `requires` block of a `model-card.json` (#718) — the declared
+ * ship-config the model was trained against.
+ *
+ * The ProductionScorer reads this and fails closed when a declared channel isn't
+ * actually fed (silent OOD is the #566/#685 trap).
  * Each channel is optional. a missing channel means "not declared" (treated as not-required).
  */
 export interface RequiredChannels {
 	/**
-	 * Postcode-anchor channel (#239/#240). `span_mode` declares which substrings
-	 * the runtime should look up — omit (or `alnum-run`) for every model trained
-	 * before 2026-08-05, `shaped` for a model trained against a lookup with
-	 * letter-containing keys (see `neural/anchor-inference.ts`'s `AnchorSpanMode`).
+	 * Postcode-anchor channel (#239/#240).
+	 *
+	 * `span_mode` declares which substrings the runtime should look up — omit (or `alnum-run`)
+	 * for every model trained before 2026-08-05, `shaped` for a model trained against a lookup
+	 * with letter-containing keys (see `neural/anchor-inference.ts`'s `AnchorSpanMode`).
 	 * Declaring `shaped` on a model that never saw those keys changes the encoder's input for
 	 * nothing. declaring `alnum-run` on one that did leaves its GB/NL postcodes unanchored.
 	 */
@@ -44,7 +47,9 @@ export interface RequiredChannels {
 	 */
 	country?: { required: boolean }
 	/**
-	 * Address-system conventions (#511 Tier A). `mode` mirrors `ParseOpts.addressSystemConventions`.
+	 * Address-system conventions (#511 Tier A).
+	 *
+	 * `mode` mirrors `ParseOpts.addressSystemConventions`.
 	 */
 	conventions?: { required: boolean; mode?: "auto" | string }
 	/**
@@ -57,12 +62,14 @@ export interface RequiredChannels {
 	suppress_gazetteer_near_postcode?: boolean
 	/**
 	 * Street-type evidence channel (Option-A bundle, Phase 3).
+	 *
 	 * `lexicon` names the artifact generation the model trained against —
 	 * see {@linkcode EVIDENCE_LEXICON_FAMILIES}.
 	 */
 	street_type?: { required: boolean; lexicon?: string }
 	/**
 	 * Locality-surface evidence channel (Option-A bundle, Phase 3).
+	 *
 	 * `lexicon` names the artifact generation the model trained against —
 	 * see {@linkcode EVIDENCE_LEXICON_FAMILIES}.
 	 */
@@ -153,6 +160,7 @@ export async function readDeclaredArtifactFile(
 /**
  * Read + parse a `model-card.json` into a plain object, or `undefined` when the card is absent,
  * unreadable, or not an object — the shared defensive preamble of every card reader below.
+ *
  * Each reader keeps its own "present but corrupt" checks: a malformed declared
  * interface is a loud artifact bug rather than a silent re-default.
  */
@@ -178,6 +186,7 @@ async function readModelCardObject(
 /**
  * Load an `AnchorLookup` from either a PCB1 binary or a JSON pilot lookup (#718 D1) —
  * the two on-disk shapes a weights package's postcode→anchor artifact takes.
+ *
  * Shared by the Node classifier loader and the ProductionScorer.
  */
 export async function loadAnchorLookup(source: { path: PathBuilderLike; binary: boolean }): Promise<AnchorLookup> {
@@ -198,17 +207,21 @@ const warnedUnfedChannels = new Set<string>()
 
 /**
  * Build the loud-degrade warner for one weights package (#718 D1) — the Node mirror
- * of the web loader's `warnOnUnfedTrainedChannels`. A card that declares a channel
- * required, paired with a package that didn't ship (or could not parse) its data,
- * runs that channel off. Structural fallback (the parse still works), loud console
+ * of the web loader's `warnOnUnfedTrainedChannels`.
+ *
+ * A card that declares a channel required, paired with a package that didn't ship
+ * (or could not parse) its data, runs that channel off.
+ * Structural fallback (the parse still works), loud console
  * (a silently anchor-off anchor-trained model is the #566/#685 OOD crater this exists to surface).
  *
- * Bound TO A package, and deduped per (channel, package) — it was once per channel per process
- * until #1516. One process routinely loads several packages (the gauntlet grades six locale overlays),
- * so channel-only dedupe meant the first degraded package spoke and every later one was suppressed,
- * while the line named no package at all. Both halves produced the same wrong reading:
- * an operator whose `postcode-us.bin` was present and feeding, watching a different
- * overlay degrade, was told "no postcode-<cc>.bin found in the weights package".
+ * Bound TO A package, and deduped per (channel, package) — it was once per channel per process until #1516.
+ * One process routinely loads several packages (the gauntlet grades six locale overlays),
+ * so channel-only dedupe meant the first degraded package spoke and every later one
+ * was suppressed, while the line named no package at all.
+ *
+ * Both halves produced the same wrong reading: an operator whose `postcode-us.bin`
+ * was present and feeding, watching a different overlay degrade, was told "no
+ * postcode-<cc>.bin found in the weights package".
  *
  * @param weightsPackage How to identify the package in the message — locale plus resolved directory.
  */
@@ -232,8 +245,9 @@ export function unfedChannelWarner(weightsPackage: string): (channel: UnfedChann
  * Why an unfed anchor channel is worth a warning for this package, or `undefined` when it is not.
  *
  * The condition the #1516 fix turns on, in one place because it is the whole substance of the fix.
- * The old test was `requires.anchor.required && nothing loaded`, and `requires`
- * describes the trained encoder — shared by every overlay that inherits the base model.
+ * The old test was `requires.anchor.required && nothing loaded`, and `requires` describes
+ * the trained encoder — shared by every overlay that inherits the base model.
+ *
  * So the en-gb overlay, which ships no `postcode-gb.bin` on purpose under the #1476 mitigation,
  * warned on every load. the line named no package and fired once per process, so an operator whose
  * `postcode-us.bin` was present and feeding read it as the primary locale's binary having gone missing.
@@ -254,11 +268,12 @@ export async function unfedAnchorDetail(packageDir: PathBuilderLike | undefined)
 
 /**
  * Read the structured `requires` block from a `model-card.json` (#718). defensive:
- * returns `undefined` when the card is absent, unreadable, or has no `requires`
- * field (callers then infer the required channels from the ONNX graph —
- * see `inferRequiredChannelsFromInputs`). Throws only when the field is present
- * but corrupt (not an object, or a channel entry with a non-boolean `required`) —
- * a malformed declared interface is a loud artifact bug rather than a silent re-default.
+ * returns `undefined` when the card is absent, unreadable, or has no `requires` field
+ * (callers then infer the required channels from the ONNX graph — see `inferRequiredChannelsFromInputs`).
+ *
+ * Throws only when the field is present but corrupt
+ * (not an object, or a channel entry with a non-boolean `required`) — a malformed
+ * declared interface is a loud artifact bug rather than a silent re-default.
  */
 /**
  * The card's `encoder` block read from a file — the node-side twin of `encoderDescriptorFromCard` (#2164).
@@ -351,10 +366,12 @@ export async function readRequiredChannels(
 }
 
 /**
- * One tag's certified capability under a (tier × address-system) cell of the capability manifest
- * (#718/#719). `maskOffF1` is the model's measured per-tag exact-match F1 with the conventions
- * mask off; `maskOnF1` is the same with the mask on — recorded only for tags some codex
- * `forbiddenTags` row suppresses, because that's the only place the loader's delta check consults it.
+ * One tag's certified capability under a (tier × address-system) cell of the
+ * capability manifest (#718/#719).
+ *
+ * `maskOffF1` is the model's measured per-tag exact-match F1 with the conventions mask off;
+ * `maskOnF1` is the same with the mask on — recorded only for tags some codex `forbiddenTags`
+ * row suppresses, because that's the only place the loader's delta check consults it.
  */
 export interface TagCapability {
 	/**
@@ -362,17 +379,21 @@ export interface TagCapability {
 	 */
 	maskOffF1: number
 	/**
-	 * Measured per-tag F1 (percent) with the mask on. Present only for codex-forbidden tags.
+	 * Measured per-tag F1 (percent) with the mask on.
+	 *
+	 * Present only for codex-forbidden tags.
 	 */
 	maskOnF1?: number
 }
 
 /**
  * The `capabilities` block of a `model-card.json` (#718/#719): per serving tier
- * (`server` = anchor+gazetteer; `pocket` = anchor-only) × per codex address-system × per tag,
- * the model's certified per-tag capability. The `createScorer` loader reads this to fail closed
- * when a conventions mask would forbid a tag the model is certified to emit — the structural fix
- * that makes the D2/#719 bug-class (a mask destroying a demonstrated capability) impossible.
+ * (`server` = anchor+gazetteer; `pocket` = anchor-only) × per codex address-system
+ * × per tag, the model's certified per-tag capability.
+ *
+ * The `createScorer` loader reads this to fail closed when a conventions mask would
+ * forbid a tag the model is certified to emit — the structural fix that makes the D2/#719
+ * bug-class (a mask destroying a demonstrated capability) impossible.
  *
  * Shape: `capabilities[tier][system][tag] = { maskOffF1, maskOnF1? }`.
  * A `$comment` provenance key may sit alongside the tier keys and is ignored by readers.
@@ -383,9 +404,11 @@ export type CapabilityManifest = Record<string, Record<string, Record<string, Ta
  * Read the `capabilities` block from a `model-card.json` (#718/#719). defensive, mirroring
  * `readRequiredChannels`: returns `undefined` when the card is absent, unreadable, or has no
  * `capabilities` field (a pre-#718 card → the loader's delta check is skipped, back-compat).
- * Throws only when the field is present but not an object — a corrupt declared interface is a
- * loud artifact bug rather than a silent skip. Tier/system/tag sub-shapes are read leniently
- * (a malformed cell simply yields no capability claim — `undefined` from `lookupTagCapability`).
+ *
+ * Throws only when the field is present but not an object — a corrupt declared
+ * interface is a loud artifact bug rather than a silent skip.
+ * Tier/system/tag sub-shapes are read leniently (a malformed cell simply yields no
+ * capability claim — `undefined` from `lookupTagCapability`).
  */
 export async function readCapabilityManifest(
 	modelCardPath: PathBuilderLike | undefined
@@ -408,9 +431,11 @@ export async function readCapabilityManifest(
 }
 
 /**
- * Resolve `capabilities[tier][system][tag]` to a `TagCapability`, returning `undefined` for any
- * missing/malformed cell (a tag the model is not certified for — the loader treats that as legal: the
- * model can't emit it, so a mask can't destroy it). Skips the `$comment` provenance key.
+ * Resolve `capabilities[tier][system][tag]` to a `TagCapability`, returning `undefined`
+ * for any missing/malformed cell (a tag the model is not certified for — the loader
+ * treats that as legal: the model can't emit it, so a mask can't destroy it).
+ *
+ * Skips the `$comment` provenance key.
  */
 export function lookupTagCapability(
 	manifest: CapabilityManifest | undefined,
@@ -439,6 +464,7 @@ export interface CRFTransitions {
 
 /**
  * Read learned CRF transition parameters from `crf-transitions.json`.
+ *
  * Returns `undefined` when the file is missing or malformed — callers fall
  * back to the structural BIO mask only.
  */
@@ -473,6 +499,7 @@ export async function readCRFTransitions(crfPath: PathBuilderLike | undefined): 
 
 /**
  * Read the `labels` array from a `model-card.json` file.
+ *
  * Returns `undefined` when the file is missing, unreadable, malformed, or has no
  * `labels` field — callers should fall back to their compile-time default in that case
  * (the loader interface: the JS-side default tracks the most recent shipped stage, so a card without

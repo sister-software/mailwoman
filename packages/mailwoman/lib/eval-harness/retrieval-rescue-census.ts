@@ -27,11 +27,12 @@ import { DEFAULT_TOL_M } from "#eval-harness/gauntlet/check-case"
  * - `correct_as_is` — the delivered answer is inside tolerance. no rescue question arises.
  * - `entity_rescued_already` — the #1585 wire fired (the result includes `entity`)
  *   and the answer is correct: the current mechanism already performed the rescue.
- * - `rescue_available_entity` — delivered answer wrong. the unconditional fork-entity
- *   probe holds a hit inside tolerance. The check (incumbent resolved) is what
- *   stands between the row and the right answer.
- * - `rescue_available_rank` — delivered answer wrong. a NON-winning entry of the resolver's own
- *   `candidates` list is inside tolerance. The ranking rather than the retrieval, lost the row.
+ * - `rescue_available_entity` — delivered answer wrong. the unconditional
+ *   fork-entity probe holds a hit inside tolerance.
+ *   The check (incumbent resolved) is what stands between the row and the right answer.
+ * - `rescue_available_rank` — delivered answer wrong. a NON-winning entry of the
+ *   resolver's own `candidates` list is inside tolerance.
+ *   The ranking rather than the retrieval, lost the row.
  * - `rescue_available_both` — both of the above hold.
  * - `no_rescue_on_hand` — delivered answer wrong and neither source holds the truth:
  *   these rows need retrieval or parse work rather than rescue plumbing.
@@ -71,8 +72,10 @@ export interface RescueRowInput {
 	 */
 	entityFired: boolean
 	/**
-	 * The unconditional fork-entity probe's hit for this input, when a `declared_fork` marker rode
-	 * and the probe was asked ignoring check 1. Undefined = probe not applicable or no hit.
+	 * The unconditional fork-entity probe's hit for this input, when a `declared_fork`
+	 * marker rode and the probe was asked ignoring check 1.
+	 *
+	 * Undefined = probe not applicable or no hit.
 	 */
 	unconditionalEntityHit?: RescueCandidate
 	/**
@@ -96,8 +99,10 @@ export interface RescueRowReport {
 	 */
 	rescueRank?: number
 	/**
-	 * The row is correct as delivered while an unconditional entity hit exists — the set a
-	 * check loosening puts at risk. Reported beside the classification, never instead of it.
+	 * The row is correct as delivered while an unconditional entity hit exists —
+	 * the set a check loosening puts at risk.
+	 *
+	 * Reported beside the classification, never instead of it.
 	 */
 	checkProtects: boolean
 }
@@ -109,7 +114,9 @@ function within(lat: number, lon: number, row: RescueRowInput): boolean {
 }
 
 /**
- * Classify one row. Pure: every input is a value, no lookups.
+ * Classify one row.
+ *
+ * Pure: every input is a value, no lookups.
  */
 export function classifyRescueRow(row: RescueRowInput): {
 	classification: RescueClass

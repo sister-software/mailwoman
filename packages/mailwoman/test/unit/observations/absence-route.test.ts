@@ -77,8 +77,9 @@ async function readCommittedModel(): Promise<CompiledGeographicModel> {
 
 interface ScratchLayerOptions {
 	/**
-	 * The classes the layer holds. One is the ordinary case. two is what the
-	 * pooled-completeness refusal is about.
+	 * The classes the layer holds.
+	 *
+	 * One is the ordinary case. two is what the pooled-completeness refusal is about.
 	 */
 	categories?: string[]
 	cells?: { h3Cell: number; completeness: number; basis: CoverageBasis; observedRows: number }[]
@@ -253,9 +254,10 @@ describe("the conjunction's other half — the artifact", () => {
 		expect(decision).toEqual({ fired: false, refusal: "no_affordance_assertion" })
 	})
 
-	// The committed artifact affords `obtain_medication` from both wave-1 classes. the pilot
-	// layer surveys `pharmacy`. So `drugstore` is a class the artifact can speak about
-	// and the layer cannot, which is a different refusal from a class the artifact never heard of.
+	// The committed artifact affords `obtain_medication` from both wave-1 classes.
+	// the pilot layer surveys `pharmacy`.
+	// So `drugstore` is a class the artifact can speak about and the layer cannot,
+	// which is a different refusal from a class the artifact never heard of.
 	it("refuses a category the artifact affords but the layer never surveyed", async () => {
 		const route = await routeOver()
 
@@ -267,9 +269,10 @@ describe("the conjunction's other half — the artifact", () => {
 	})
 
 	// The union: an activity afforded by two classes puts two classes in one search,
-	// and the layer's completeness covers one of them. "No establishment affording this
-	// activity is here" would then be a claim about premises the survey never looked for,
-	// so the whole searched set has to be the surveyed class or the cell is not decidable.
+	// and the layer's completeness covers one of them.
+	// "No establishment affording this activity is here" would then be a claim about
+	// premises the survey never looked for, so the whole searched set has to be the
+	// surveyed class or the cell is not decidable.
 	it("refuses a searched union that reaches past the surveyed class", async () => {
 		const route = await routeOver()
 		const outcome = answered("pharmacy", POINTS.surveyedEmpty)

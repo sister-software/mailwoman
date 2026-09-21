@@ -43,6 +43,7 @@ function isRoleValue(value: unknown): value is PageRole {
 /**
  * A field counts as declared when it has a non-empty scalar value, or is present as a non-scalar value
  * the caller has already normalized to `true` (see `check-docs-structure.ts`'s `toFrontmatterRecord`).
+ *
  * `undefined`, `null`, and `""` all count as not-declared.
  */
 function isDeclared(frontmatter: Record<string, unknown>, key: string): boolean {

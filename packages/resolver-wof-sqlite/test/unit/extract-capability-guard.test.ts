@@ -57,6 +57,7 @@ const writeSprOnly = (path: string): void => {
 
 /**
  * A extract with nothing in it, under a name that routes.
+ *
  * A truncated or zero-byte file reads exactly like this.
  */
 const writeEmpty = (path: string): void => {
@@ -150,7 +151,8 @@ describe("extract capability guard", () => {
 			message = (error as Error).message
 		}
 
-		// The message must not assert a table the file does not have. That claim was false for this shape.
+		// The message must not assert a table the file does not have.
+		// That claim was false for this shape.
 		expect(message).not.toMatch(/carries "spr"/)
 		expect(message).toMatch(/named for a routed placetype/)
 		expect(message).toMatch(/die mid-SELECT/)

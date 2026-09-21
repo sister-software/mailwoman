@@ -28,11 +28,13 @@ export type UserLocation = { lat: number; lon: number } | { country: string } | 
 
 /**
  * Opaque placetype-pair prior handle (placetype-pair-prior arc, #1278).
+ *
  * `@mailwoman/core` carries no neural dependency, so this is a pure passthrough:
  * core never constructs or inspects it — it threads the value verbatim from
  * {@link PipelineOpts.placetypePair} into {@link ClassifierOpts.placetypePair}, and on into the neural classifier's
  * `parse` opts, where it is typed concretely (`PlacetypePairPriorOpts | false`).
  * The browser demo produces it via `@mailwoman/neural/web-loader`'s `LoadResult.selectPairIndexForText`.
+ *
  * `undefined` (the default) is the byte-stable no-prior decode.
  */
 export type PlacetypePairPassthrough = object | false
@@ -45,6 +47,7 @@ export interface PipelineOpts {
 	userLocation?: UserLocation
 	/**
 	 * Explicit input register (operator Decision A / GTM B10 — see {@link InputMode}).
+	 *
 	 * When unset the pipeline derives it from the kind classifier's verdict via
 	 * {@link deriveInputMode}. Endpoint wrappers set their register default here
 	 * (validation/batch → `"formatted"`, autocomplete/demo search → `"fragmented"`).
@@ -52,6 +55,7 @@ export interface PipelineOpts {
 	inputMode?: InputMode
 	/**
 	 * Disable fast-path shortcuts. always run the full pipeline.
+	 *
 	 * Does not bypass the poi_query branch — that's a routing decision
 	 * (the kind classifier + `stages.poiIntent`), not a fast-path shortcut,
 	 * so a `poi_query`-classified input still takes the poi branch regardless of this flag.
@@ -63,19 +67,27 @@ export interface PipelineOpts {
 	resolveOpts?: ResolveOpts
 	/**
 	 * #690: title-case detected all-caps ascii input before the Stage 3 classifier (helps on all-caps registry/compliance
-	 * data). Threaded to `ClassifierOpts.normalizeCase`. Detection-restricted
+	 * data).
+	 *
+	 * Threaded to `ClassifierOpts.normalizeCase`.
+	 * Detection-restricted
 	 *
 	 * - **Default-on** (#895 settled drift D2. the classifier applies it when unset) —
-	 *   byte-stable for mixed-case input either way. Pass `false` to restore the raw-case parse.
+	 *   byte-stable for mixed-case input either way.
+	 *   Pass `false` to restore the raw-case parse.
 	 */
 	normalizeCase?: boolean
 	/**
-	 * Placetype-pair prior (placetype-pair-prior arc, #1278) — an opaque, per-parse decode-channel handle
-	 * threaded verbatim to `ClassifierOpts.placetypePair` (and on to the neural classifier's `parse`).
+	 * Placetype-pair prior (placetype-pair-prior arc, #1278) — an opaque,
+	 * per-parse decode-channel handle threaded verbatim to `ClassifierOpts.placetypePair`
+	 * (and on to the neural classifier's `parse`).
+	 *
 	 * The browser demo derives it per input via `@mailwoman/neural/web-loader`'s
 	 * `LoadResult.selectPairIndexForText` (locale-hint over the text shape) so a GB/NZ input
 	 * gets its dependent_locality-resurrecting prior while a US/FR input stays byte-stable.
-	 * `undefined` (default) = no prior. See {@link PlacetypePairPassthrough}.
+	 * `undefined` (default) = no prior.
+	 *
+	 * See {@link PlacetypePairPassthrough}.
 	 */
 	placetypePair?: PlacetypePairPassthrough
 	/**
@@ -102,6 +114,7 @@ export interface PipelineOpts {
 
 /**
  * Minimal structural shape `NormalizedInput` must satisfy.
+ *
  * Compatible with @mailwoman/normalize.
  */
 export interface NormalizedInputLite {
@@ -111,7 +124,9 @@ export interface NormalizedInputLite {
 }
 
 /**
- * Minimal structural shape `QueryShape` must satisfy. Compatible with @mailwoman/query-shape.
+ * Minimal structural shape `QueryShape` must satisfy.
+ *
+ * Compatible with @mailwoman/query-shape.
  */
 export interface QueryShapeLite {
 	knownFormats: ReadonlyArray<{
@@ -124,15 +139,16 @@ export interface QueryShapeLite {
 	/**
 	 * ISO 15924 scripts the input is written in, ranked by share of its script-containing characters.
 	 *
-	 * It stands beside `characterClass` rather than replacing it, because they answer
-	 * different questions: the class says whether a run is ideographic or numeric,
-	 * which is what the tokenizer and the decoder ask, and folds Kana, Han and Hangul to
-	 * one `cjk` value to do it. A consumer that needs the writing system reads here.
+	 * It stands beside `characterClass` rather than replacing it, because they answer different
+	 * questions: the class says whether a run is ideographic or numeric, which is what the tokenizer
+	 * and the decoder ask, and folds Kana, Han and Hangul to one `cjk` value to do it.
+	 * A consumer that needs the writing system reads here.
 	 */
 	scripts?: ReadonlyArray<{ script: string; share: number }>
 	/**
-	 * Per-token class and script. Optional so a hand-built shape stays valid;
-	 * `computeQueryShape` always supplies it.
+	 * Per-token class and script.
+	 *
+	 * Optional so a hand-built shape stays valid; `computeQueryShape` always supplies it.
 	 *
 	 * The per-token script is the half a fold cannot reconstruct:
 	 * `金龍酒家, 12 Gerrard Street, London WC2H 7JS` folds to `mixed`, and `mixed` names no script,
@@ -156,19 +172,23 @@ export interface LocaleHint {
 	alternatives: ReadonlyArray<{ locale: Intl.UnicodeBCP47LocaleIdentifier; confidence: number }>
 	source: "caller" | "environment" | "machine" | "detected" | "ensemble"
 	/**
-	 * The ISO 15924 scripts the input is written in, ranked by share of its script-containing
-	 * characters. Empty when nothing in the input names a script — a bare postcode does not.
+	 * The ISO 15924 scripts the input is written in, ranked by share of its script-containing characters.
+	 *
+	 * Empty when nothing in the input names a script — a bare postcode does not.
 	 *
 	 * Separate from `locale`, and added because it had nowhere else to go.
-	 * `locale` is one BCP-47 tag, so a Hangul address and a kanji address both
-	 * had to be reported under one of them, and the rule that picks it answers
-	 * `ja-JP` for every CJK input. on the Korean reference set that is every row.
+	 * `locale` is one BCP-47 tag, so a Hangul address and a kanji address both had to
+	 * be reported under one of them, and the rule that picks it answers `ja-JP` for
+	 * every CJK input. on the Korean reference set that is every row.
+	 *
 	 * The tag is not wrong about routing — the character path is one weights family for Japanese,
 	 * Korean and Chinese — it is wrong about what it says, and a consumer reading the hint
 	 * could not tell "Japanese" from "a script I cannot resolve a language for".
 	 *
-	 * This field lets it say the second. `locale` keeps its current meaning
-	 * and its current values. a consumer that wants the writing system reads here.
+	 * This field lets it say the second.
+	 * `locale` keeps its current meaning and its current values. a consumer that
+	 * wants the writing system reads here.
+	 *
 	 * Script narrows language where it is diagnostic — Hangul decides Korean on 37 of 37 rows of
 	 * the Korean reference set — and does not where it is not: Han is shared, and kana decides
 	 * Japanese on 356 of 11,946 JP gold rows, because 県/市/区 and most place names are written in Han.
@@ -179,7 +199,9 @@ export interface LocaleHint {
 	 */
 	script?: ReadonlyArray<{ script: string; confidence: number }>
 	/**
-	 * Diagnostic provenance for inferred preferences. Locale and timezone remain independent signals.
+	 * Diagnostic provenance for inferred preferences.
+	 *
+	 * Locale and timezone remain independent signals.
 	 */
 	evidence?: {
 		intlLocale?: string
@@ -238,30 +260,37 @@ export type QueryKind =
 	| "poi_category"
 
 /**
- * The advisory codes an intent kind can raise. Named per the suggestion-layer
- * plan's rules (`docs/superpowers/plans/2026-08-05-suggestion-layer.md` § Naming):
+ * The advisory codes an intent kind can raise.
+ *
+ * Named per the suggestion-layer plan's rules (`docs/superpowers/plans/2026-08-05-suggestion-layer.md` § Naming):
  * never `*Coherence` (that vocabulary belongs to the passes that decide what the answer is),
- * and never `correction`/`validation`. This surface only ever reports.
+ * and never `correction`/`validation`.
+ * This surface only ever reports.
  */
 export const QueryIntentCode = {
 	/**
 	 * The query named a place, and the gazetteer's answer for that name is not decisive.
+	 *
 	 * Raised at resolve time (the margin is a property of the candidate list rather than of the string),
 	 * so the classifier never emits it.
 	 */
 	DeclaredAmbiguity: "declared_ambiguity",
 	/**
 	 * The query admits two whole readings and the pipeline is not choosing between them.
+	 *
 	 * `evidence.interpretations` names both.
 	 */
 	DeclaredFork: "declared_fork",
 	/**
 	 * The query is relative to the asker and no focus point was supplied.
+	 *
 	 * `evidence.parameter` names the parameter that would carry one.
 	 */
 	FocusPointRequired: "focus_point_required",
 	/**
-	 * The query resolved to a POI taxonomy category. `evidence.categoryID` carries it.
+	 * The query resolved to a POI taxonomy category.
+	 *
+	 * `evidence.categoryID` carries it.
 	 */
 	POICategory: "poi_category",
 	/**
@@ -307,31 +336,39 @@ export type QueryIntentCode = (typeof QueryIntentCode)[keyof typeof QueryIntentC
 /**
  * One advisory the intent vocabulary raised about a query.
  *
- * Shaped after {@link PipelineFault} on purpose, and for the same reason: the caller needs
- * to tell "the pipeline considered this and had something to say" apart from "the pipeline
- * said nothing". A marker never changes which answer wins — it is additive, attributed,
- * and always accompanied by the ordinary result. `mechanism` follows the `family:rule`
- * convention `PhraseProposal.source` established (`core/pipeline/span-proposer.ts`),
- * so every marker names the rule that produced it rather than asserting itself.
+ * Shaped after {@link PipelineFault} on purpose, and for the same reason: the caller needs to tell
+ * "the pipeline considered this and had something to say" apart from "the pipeline said nothing".
+ * A marker never changes which answer wins — it is additive, attributed,
+ * and always accompanied by the ordinary result.
+ *
+ * `mechanism` follows the `family:rule` convention `PhraseProposal.source`
+ * established (`core/pipeline/span-proposer.ts`), so every marker names the rule
+ * that produced it rather than asserting itself.
  */
 export interface QueryIntentMarker {
 	/**
-	 * The intent kind that raised this marker. Present in {@link QueryKindResult} as either the top `kind`
-	 * or an entry in `alternatives` — a marker whose kind appears in neither is a bug in the producer.
+	 * The intent kind that raised this marker.
+	 *
+	 * Present in {@link QueryKindResult} as either the top `kind` or an entry in `alternatives` —
+	 * a marker whose kind appears in neither is a bug in the producer.
 	 */
 	kind: QueryKind
 	code: QueryIntentCode
 	/**
-	 * `family:rule` — `kind:bare_toponym`, `kind:route_pair`,
-	 * `resolver:dominance_margin`. Never `"unknown"`.
+	 * `family:rule` — `kind:bare_toponym`, `kind:route_pair`, `resolver:dominance_margin`.
+	 *
+	 * Never `"unknown"`.
 	 */
 	mechanism: string
 	/**
-	 * Human-readable, for a surface that shows it. Not machine-stable. branch on `code`.
+	 * Human-readable, for a surface that shows it.
+	 *
+	 * Not machine-stable. branch on `code`.
 	 */
 	message: string
 	/**
 	 * The measurement behind the marker, so it is auditable rather than assertive.
+	 *
 	 * Absent when the rule that fired had nothing to measure (meaning-of-zero: absent, never an empty object).
 	 */
 	evidence?: Record<string, unknown>
@@ -343,6 +380,7 @@ export interface QueryKindResult {
 	alternatives: ReadonlyArray<{ kind: QueryKind; confidence: number }>
 	/**
 	 * Advisories raised by the intent vocabulary (ROAD_TO_V9 §4).
+	 *
 	 * Optional on this interface — a pre-intent classifier (including `runtime-pipeline.ts`'s built-in default)
 	 * simply doesn't set it — but `PipelineResult.intentMarkers` is always an array,
 	 * so a consumer reading the result never has to distinguish "absent" from "empty".
@@ -354,17 +392,21 @@ export interface QueryKindResult {
  * The input register (operator Decision A, 2026-07-28 — the Option-A evidence-bundle verdict):
  * `fragmented` is the map-search register (a human typing "belleville" or "12 rue de la paix"); `formatted`
  * is the validation/record register (a checkout form or CRM row submitting a full postal address).
+ *
  * The evidence-bundle channels feed only in fragmented mode — three training runs showed
  * they lift the fragment register (admin-street homonym +0.765 lower+heal) while degrading
  * full-address parses (the flip census, `.superpowers/sdd/progress.md` 2026-07-28).
  * Explicitly settable on every surface (CLI/API); when unset, {@link deriveInputMode}
- * maps the kind-classifier's verdict. Endpoint defaults (GTM B10): validation/batch/CSV
- * → formatted. autocomplete/demo search → fragmented. plain parse → derived.
+ * maps the kind-classifier's verdict.
+ *
+ * Endpoint defaults (GTM B10): validation/batch/CSV → formatted. autocomplete/demo
+ * search → fragmented. plain parse → derived.
  */
 export type InputMode = "fragmented" | "formatted"
 
 /**
  * Map a {@link QueryKind} to its {@link InputMode} register.
+ *
  * Multi-component postal specifications (`structured_address`/`po_box`/`intersection`) are the
  * formatted register. single-thing lookups (postcode, locality, landmark, POI, vague) are fragments.
  * Never keyed on case — lowercase is the primary user register (operator doctrine).
@@ -388,6 +430,7 @@ export function deriveInputMode(kind: QueryKind): InputMode {
 /**
  * The structured POI intent — the pluggable boundary between detection (kind classifier),
  * the executors (Plan 3's poi.db SQL compiler), and the export formats (OverpassQL emitter).
+ *
  * Category ids are `@mailwoman/poi-taxonomy` ids carried as plain strings —
  * core stays lexicon-free. the branded type lives with the data package.
  * Spec §3.2: docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md
@@ -397,21 +440,26 @@ export interface POIIntent {
 		| {
 				kind: "category"
 				/**
-				 * Every category the subject reaches. One id unless the subject lookup returned
-				 * a set to be searched together — an activity afforded by several establishment
-				 * kinds reaches one id per kind — in which case the executor searches the union
-				 * and the candidate ordering decides the answer. The order is the lookup's enumeration
-				 * and states no preference: nothing may read position as rank.
+				 * Every category the subject reaches.
+				 *
+				 * One id unless the subject lookup returned a set to be searched together —
+				 * an activity afforded by several establishment kinds reaches one id per kind — in
+				 * which case the executor searches the union and the candidate ordering decides the answer.
+				 * The order is the lookup's enumeration and states no preference:
+				 * nothing may read position as rank.
 				 */
 				categoryIDs: string[]
 				matched: string
 				/**
-				 * How the set was bound to the place, present only when at least one reached
-				 * category carried a country scope. `anchorCountry` is the resolved anchor's
-				 * ISO 3166-1 alpha-2 country, or `null` when no anchor resolved to one —
-				 * and `null` admits no scoped claim. `excludedCategoryIDs` are the categories
-				 * every one of whose authorities scoped its claim to countries that do not
-				 * include it. they were reached by the phrase and are not in `categoryIDs`.
+				 * How the set was bound to the place, present only when at least one
+				 * reached category carried a country scope.
+				 *
+				 * `anchorCountry` is the resolved anchor's ISO 3166-1 alpha-2 country, or `null`
+				 * when no anchor resolved to one — and `null` admits no scoped claim.
+				 * `excludedCategoryIDs` are the categories every one of whose authorities
+				 * scoped its claim to countries that do not include it. they were reached
+				 * by the phrase and are not in `categoryIDs`.
+				 *
 				 * A set that empties this way abstains as `country_scope_excluded`.
 				 */
 				countryBinding?: { anchorCountry: string | null; excludedCategoryIDs: string[] }
@@ -453,8 +501,9 @@ export interface POIResult {
 	 */
 	gersID: string | null
 	/**
-	 * Read-time WOF ancestry, deepest-first — the paid-down half of the poiQueryKind
-	 * register row's debt. Attached by the executor only when a reverse geocoder was wired
+	 * Read-time WOF ancestry, deepest-first — the paid-down half of the poiQueryKind register row's debt.
+	 *
+	 * Attached by the executor only when a reverse geocoder was wired
 	 * (`runtime-pipeline.ts`'s lazy `WOFReverseGeocoder`); house meaning-of-zero style —
 	 * absent (the key is omitted), never an empty array or `undefined`-valued,
 	 * when no reverse geocoder is available.
@@ -464,23 +513,30 @@ export interface POIResult {
 }
 
 /**
- * Outcome of the poi-intent stage. `abstain` = the query is POI-shaped
- * but unanswerable as asked (e.g. no executor wired for a build-local-only category) —
- * surfaces map it to their native empty-result envelope instead of a mangled parse.
+ * Outcome of the poi-intent stage.
+ *
+ * `abstain` = the query is POI-shaped but unanswerable as asked
+ * (e.g. no executor wired for a build-local-only category) — surfaces map it to their
+ * native empty-result envelope instead of a mangled parse.
  */
 export type POIIntentOutcome =
 	| { type: "intent"; intent: POIIntent; results?: POIResult[] }
 	| { type: "abstain"; reason: string }
 
 /**
- * Stage 2.7 phrase grouper output. Coarse phrase-shape hypothesis attached to a `Section`
- * (sub-Span of the tokenized input). The classifier (Stage 3) conditions on these proposals so it can
- * answer the simpler "what type is this proposed span?" instead of jointly discovering boundaries
- * and types. The reconciler (Stage 5) consumes them as boundary candidates for joint decoding.
+ * Stage 2.7 phrase grouper output.
+ *
+ * Coarse phrase-shape hypothesis attached to a `Section` (sub-Span of the tokenized input).
+ * The classifier (Stage 3) conditions on these proposals so it can answer the simpler
+ * "what type is this proposed span?" instead of jointly discovering boundaries and types.
+ *
+ * The reconciler (Stage 5) consumes them as boundary candidates for joint decoding.
  *
  * Taxonomy is purely structural — no place-name knowledge.
- * A `LOCALITY_PHRASE` proposal is "this looks shaped like a multi-word capitalized phrase that
- * could be a city name" — not "this is New York." Typing the span is the classifier's job.
+ * A `LOCALITY_PHRASE` proposal is "this looks shaped like a multi-word capitalized
+ * phrase that could be a city name" — not "this is New York."
+ *
+ * Typing the span is the classifier's job.
  *
  * See `docs/articles/concepts/the-knowledge-ladder.md` § Phrase grouper for the design rationale.
  */
@@ -494,11 +550,14 @@ export type PhraseKind =
 	| "HYPHENATED_COMPOUND"
 
 /**
- * One phrase proposal emitted by Stage 2.7. The interface:
+ * One phrase proposal emitted by Stage 2.7.
+ *
+ * The interface:
  *
  * - `span`: the input span (a sub-span of the tokenized input) the proposal applies to.
  * - `kindHypothesis`: structural shape this span looks like.
- * - `confidence`: 0..1 score. Used by downstream stages to weight proposals.
+ * - `confidence`: 0..1 score.
+ *   Used by downstream stages to weight proposals.
  *
  * Per "possibilities not constraints", emit a proposal whenever a rule fires — overlapping proposals
  * over the same tokens are expected (e.g. `Saint Petersburg` may surface as one `LOCALITY_PHRASE`
@@ -511,7 +570,9 @@ export interface PhraseProposal {
 }
 
 /**
- * Stage 2.7 interface. Structural — any of the rule-based grouper (`@mailwoman/phrase-grouper`),
+ * Stage 2.7 interface.
+ *
+ * Structural — any of the rule-based grouper (`@mailwoman/phrase-grouper`),
  * a learned span proposer (future), or a fake for tests satisfies this.
  * Async so the coordinator can stay uniform even when implementations call into models.
  */
@@ -521,6 +582,7 @@ export interface PhraseGrouper {
 
 /**
  * Stage 3 interface: classifier that turns a text into an `AddressTree`.
+ *
  * Structural — any of `@mailwoman/neural`'s `NeuralAddressClassifier`,
  * a rule-based classifier, or a fake for tests satisfies this.
  */
@@ -541,19 +603,21 @@ export interface FSTMatcherLike {
 export interface ClassifierOpts {
 	queryShape?: QueryShapeLite
 	/**
-	 * The input register (see {@link InputMode}). `formatted` runs the evidence-bundle
-	 * channels deliberately off. the pipeline passes an explicit mode on every parse
-	 * (caller override or {@link deriveInputMode} of the kind verdict).
+	 * The input register (see {@link InputMode}).
+	 *
+	 * `formatted` runs the evidence-bundle channels deliberately off. the pipeline passes an
+	 * explicit mode on every parse (caller override or {@link deriveInputMode} of the kind verdict).
 	 */
 	inputMode?: InputMode
 	fst?: FSTMatcherLike
 	fstBiasScale?: number
 	/**
-	 * Street-morphology matcher. In the pipeline this is the signal source for the FST
-	 * street-context check (#1315), always paired with zeroed `fstStreetMorphologyOpts` —
-	 * the morphology emission prior measured US-golden-negative (−48, 2026-07-25 decomposition)
-	 * and stays off on the production paths. it remains reachable via direct
-	 * `classifier.parse` for measured, opt-in use.
+	 * Street-morphology matcher.
+	 *
+	 * In the pipeline this is the signal source for the FST street-context check (#1315),
+	 * always paired with zeroed `fstStreetMorphologyOpts` — the morphology emission prior
+	 * measured US-golden-negative (−48, 2026-07-25 decomposition) and stays off on the production
+	 * paths. it remains reachable via direct `classifier.parse` for measured, opt-in use.
 	 */
 	fstStreetMorphology?: FSTMatcherLike
 	/**
@@ -566,14 +630,17 @@ export interface ClassifierOpts {
 	postcodeRepair?: boolean
 	/**
 	 * #690: title-case a detected all-caps ascii input before the model (all-caps registry/compliance data is partly
-	 * OOD). Detection-restricted — mixed-case + non-ascii input is untouched. **Default-on**
+	 * OOD).
+	 *
+	 * Detection-restricted — mixed-case + non-ascii input is untouched. **Default-on**
 	 * (#895 settled drift D2); `false` restores the raw-case parse.
 	 */
 	normalizeCase?: boolean
 	/**
-	 * Per-word BIO consistency repair (#727): force each SentencePiece word whose pieces disagree
-	 * in type to one tag via a confidence-weighted vote. Structural mirror of
-	 * `@mailwoman/neural`'s `WordConsistencyOpts` (core carries no neural dependency) —
+	 * Per-word BIO consistency repair (#727): force each SentencePiece word whose pieces
+	 * disagree in type to one tag via a confidence-weighted vote.
+	 *
+	 * Structural mirror of `@mailwoman/neural`'s `WordConsistencyOpts` (core carries no neural dependency) —
 	 * see `neural/word-consistency.ts` for the semantics of each check.
 	 */
 	enforceWordConsistency?:
@@ -591,9 +658,10 @@ export interface ClassifierOpts {
 /**
  * The word-consistency setting production parses ship with (2026-07-15): heal intra-word
  * tag disagreement, with the punctuation-separator + byte-fallback conditions on
- * and no confidence floor — the configuration that cleared golden us/fr/adversarial and
- * the parity floors with zero per-file regressions. One constant so the pipeline's
- * `safeClassify`, `parseForGeocode`, and the eval harness can't drift apart.
+ * and no confidence floor — the configuration that cleared golden us/fr/adversarial
+ * and the parity floors with zero per-file regressions.
+ *
+ * One constant so the pipeline's `safeClassify`, `parseForGeocode`, and the eval harness can't drift apart.
  */
 export const WORD_CONSISTENCY_SHIP_DEFAULT = {
 	skipByteFallbackWords: true,
@@ -606,8 +674,10 @@ export interface AddressClassifier {
 
 /**
  * The Stage-2 locale detector the coordinator calls: the normalized input
- * and its shape in, a {@link LocaleHint} out. The caller's hint wins outright.
- * an environment locale sits below it and above inferred machine preferences.
+ * and its shape in, a {@link LocaleHint} out.
+ *
+ * The caller's hint wins outright. an environment locale sits below it
+ * and above inferred machine preferences.
  * `@mailwoman/locale-hint` implements it over the query shape alone.
  */
 export type LocaleDetector = (
@@ -621,9 +691,10 @@ export type LocaleDetector = (
 ) => Promise<LocaleHint>
 
 /**
- * Injectable stage implementations. All optional — when a stage is absent,
- * the coordinator either skips it (resolver) or substitutes a no-op stub
- * (normalize / queryShape / `@mailwoman/locale-check` stage / kind classifier).
+ * Injectable stage implementations.
+ *
+ * All optional — when a stage is absent, the coordinator either skips it (resolver) or substitutes
+ * a no-op stub (normalize / queryShape / `@mailwoman/locale-check` stage / kind classifier).
  * The classifier is required for the full pipeline path. without it, the coordinator
  * can only fast-path on QueryShape known-formats.
  */
@@ -633,12 +704,14 @@ export interface RuntimePipelineStages {
 	detectLocale?: LocaleDetector
 	classifyKind?: (input: NormalizedInputLite, shape: QueryShapeLite, locale: LocaleHint) => Promise<QueryKindResult>
 	/**
-	 * Coarse country router (#244). A `(normalizedText) → { country, confidence, posterior? }`
-	 * predictor (a `CoarsePlacer`-backed fn); `country: null` ⇒ abstained, `"other"` ⇒ off-map.
+	 * Coarse country router (#244).
+	 *
+	 * A `(normalizedText) → { country, confidence, posterior? }` predictor
+	 * (a `CoarsePlacer`-backed fn); `country: null` ⇒ abstained, `"other"` ⇒ off-map.
 	 * When provided, a confident IN-MAP guess becomes a soft country prior fed into the resolver's
 	 * #369 `anchorPosterior` re-rank (boosts the right-country candidate, never filters);
-	 * it defers to a caller-supplied posterior (a stronger postcode anchor)
-	 * and is a no-op on abstain/other. Off by default → byte-stable.
+	 * it defers to a caller-supplied posterior (a stronger postcode anchor) and is a no-op on abstain/other.
+	 * Off by default → byte-stable.
 	 *
 	 * `posterior` (residual upgrade) is the full per-in-map-country distribution: when present it is the
 	 * `anchorPosterior` (so the resolver breaks country-ambiguous ties with its own place-level evidence);
@@ -658,19 +731,24 @@ export interface RuntimePipelineStages {
 	 */
 	poiIntent?: (input: NormalizedInputLite, locale: LocaleHint, opts?: PipelineOpts) => Promise<POIIntentOutcome | null>
 	/**
-	 * Stage 2.7 phrase grouper. Emits coherent input-unit proposals consumed by Stage 3 (as conditioning)
-	 * and Stage 5 (as boundary candidates). Hard dep in v0.5.0. pre-v0.5.0 callers run
-	 * with no grouper and the result `phraseProposals` field is empty.
+	 * Stage 2.7 phrase grouper.
+	 *
+	 * Emits coherent input-unit proposals consumed by Stage 3 (as conditioning)
+	 * and Stage 5 (as boundary candidates).
+	 * Hard dep in v0.5.0. pre-v0.5.0 callers run with no grouper and the result
+	 * `phraseProposals` field is empty.
 	 */
 	groupPhrases?: (input: NormalizedInputLite, shape: QueryShapeLite, locale: LocaleHint) => Promise<PhraseProposal[]>
 	classifier?: AddressClassifier
 	/**
-	 * Pre-built FST gazetteer matcher. When provided, gazetteer matches produce
-	 * additive emission biases during classification.
+	 * Pre-built FST gazetteer matcher.
+	 *
+	 * When provided, gazetteer matches produce additive emission biases during classification.
 	 */
 	fst?: FSTMatcherLike
 	/**
 	 * Street-morphology matcher — the signal source for the FST street-context check (#1315).
+	 *
 	 * Consumed only with the morphology emission prior zeroed at the classify call sites
 	 * (the emission prior is US-golden-negative. the check alone is golden-flat and fragment-positive).
 	 * Effective only when `fst` is also present.
@@ -680,8 +758,9 @@ export interface RuntimePipelineStages {
 	/**
 	 * The gazetteer backend (lower-level than `resolver`), enabling the reconciler's
 	 * concordance axes (#478): a bounded pre-fetch turns it into the resolver-candidate +
-	 * parent-chain lookups `reconcileSpans` scores with. Optional — absent,
-	 * reconcile runs classifier-only (today's behavior, byte-stable).
+	 * parent-chain lookups `reconcileSpans` scores with.
+	 *
+	 * Optional — absent, reconcile runs classifier-only (today's behavior, byte-stable).
 	 */
 	resolverBackend?: ResolverBackend
 }
@@ -690,6 +769,7 @@ export type PipelineTiming = Record<string, number>
 
 /**
  * The stages whose defensive wrapper degrades instead of aborting the pipeline.
+ *
  * One id per `safe*` wrapper in `runtime-pipeline.ts`; the ids are the wrapper's
  * rather than the timing map's, because a fault is about the injected stage (`classifier`),
  * not the phase that ran it (`token-classify`).

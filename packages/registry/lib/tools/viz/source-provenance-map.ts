@@ -21,27 +21,39 @@ import { type MapFeatureData, toMapHTML } from "#index"
  */
 export interface SourceProvenanceMapOptions {
 	/**
-	 * State (lowercase postal). Default ny.
+	 * State (lowercase postal).
+	 *
+	 * Default ny.
 	 */
 	state?: string
 	/**
-	 * Address-point DB path. Default `$MAILWOMAN_DATA_ROOT/address-points/address-points-us-<state>.db`.
+	 * Address-point DB path.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/address-points/address-points-us-<state>.db`.
 	 */
 	db?: string
 	/**
-	 * Output html path. Default `/tmp/source-provenance.html`.
+	 * Output html path.
+	 *
+	 * Default `/tmp/source-provenance.html`.
 	 */
 	outHTML?: string
 	/**
-	 * Keep ~1/N of NAD points. Default 700.
+	 * Keep ~1/N of NAD points.
+	 *
+	 * Default 700.
 	 */
 	nadMod?: number
 	/**
-	 * Keep ~1/N of OpenAddresses points. Default 120.
+	 * Keep ~1/N of OpenAddresses points.
+	 *
+	 * Default 120.
 	 */
 	oaMod?: number
 	/**
-	 * Per-source marker cap. Default 7000.
+	 * Per-source marker cap.
+	 *
+	 * Default 7000.
 	 */
 	cap?: number
 }

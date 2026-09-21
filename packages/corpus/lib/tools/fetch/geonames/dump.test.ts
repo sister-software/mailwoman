@@ -131,7 +131,8 @@ describe("fetchGeonamesDumps", () => {
 
 		const outRoot = scratch.path
 
-		// AA is already a real dump. BB is a 12-column postal export squatting on the dump filename.
+		// AA is already a real dump.
+		// BB is a 12-column postal export squatting on the dump filename.
 		await writeLocalFile(dumpRow(1, "Aa City", "PPLC", "AA"), join(outRoot, "AA.txt"))
 
 		await writeLocalTextFile(

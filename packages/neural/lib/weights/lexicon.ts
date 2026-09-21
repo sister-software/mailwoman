@@ -20,10 +20,11 @@ import { readRequiredChannels } from "#weights/channels"
  * The evidence-bundle lexicon families, and the legacy filename each resolved by
  * before the card named its own (#1510).
  *
- * Why this exists. `resolveWeights` used to probe two literal filenames —
- * `street-type-lexicon-v3.json` and `locality-surface-lexicon-v6.json` —
- * while both the shipped v4.0.1 recipe and the v4.2.0 candidate train against
- * locality-surface **v7** (`/data/gazetteer/locality-surface-lexicon-v7.json`).
+ * Why this exists.
+ * `resolveWeights` used to probe two literal filenames — `street-type-lexicon-v3.json` and
+ * `locality-surface-lexicon-v6.json` — while both the shipped v4.0.1 recipe and the v4.2.0 candidate
+ * train against locality-surface **v7** (`/data/gazetteer/locality-surface-lexicon-v7.json`).
+ *
  * Serving therefore fed the channel a different lexicon generation than training painted,
  * and nothing said so: the v6 file exists, the channel loads, the parse works.
  * The Run B check had to stage v7's content under the v6 filename to score the candidate faithfully —
@@ -42,9 +43,11 @@ export const EVIDENCE_LEXICON_FAMILIES = {
 export type EvidenceLexiconChannel = keyof typeof EVIDENCE_LEXICON_FAMILIES
 
 /**
- * A train/serve lexicon mismatch (#1510): the card names one generation of an evidence lexicon
- * and the weights package ships a different one. Thrown at load time, from {@linkcode resolveWeights},
- * naming both versions — the whole point is that this can never again be a silent downgrade.
+ * A train/serve lexicon mismatch (#1510): the card names one generation of an evidence
+ * lexicon and the weights package ships a different one.
+ *
+ * Thrown at load time, from {@linkcode resolveWeights}, naming both versions —
+ * the whole point is that this can never again be a silent downgrade.
  */
 export class LexiconVersionMismatchError extends Error {
 	constructor(message: string) {
@@ -55,6 +58,7 @@ export class LexiconVersionMismatchError extends Error {
 
 /**
  * Warn-once bookkeeping for the undeclared-lexicon back-compat path.
+ *
  * Keyed by `channel:card` so a process that loads two different bundles hears about both,
  * while repeated loads of the same bundle warn once.
  */
@@ -62,6 +66,7 @@ const warnedUndeclaredLexicon = new Set<string>()
 
 /**
  * Every generation of `family` a directory ships, e.g. `["locality-surface-lexicon-v6.json"]`.
+ *
  * Used only to build the mismatch message — naming what is there is what makes the error actionable.
  */
 async function shippedLexiconGenerations(dir: PathBuilder, prefix: string): Promise<string[]> {
@@ -76,7 +81,9 @@ async function shippedLexiconGenerations(dir: PathBuilder, prefix: string): Prom
 
 /**
  * Resolve one evidence-bundle lexicon for a weights package, from the card's declaration
- * rather than a hard-coded filename (#1510). The ladder, and why each rung is shaped the way it is:
+ * rather than a hard-coded filename (#1510).
+ *
+ * The ladder, and why each rung is shaped the way it is:
  *
  * 1. The card names a generation and the package ships that exact file → resolve it.
  *    The train/serve congruent case.
@@ -90,12 +97,13 @@ async function shippedLexiconGenerations(dir: PathBuilder, prefix: string): Prom
  * 4. The card names nothing → the legacy filename, with a one-time warning.
  *    Every bundle published before 2026-08-06.
  *
- * Package-dir only — deliberately not the `baseWeights` fallback the model card
- * and `fst-street-morphology.bin` take, even though the lexicons are locale-general
- * and the dedup would "work". Adding it was tried and reverted while closing #1511:
- * a data-only overlay that ships no lexicon of its own would start resolving the base
- * package's, which silently turns both evidence channels on for every overlay in the repo
+ * Package-dir only — deliberately not the `baseWeights` fallback the model card and
+ * `fst-street-morphology.bin` take, even though the lexicons are locale-general and the dedup would "work".
+ * Adding it was tried and reverted while closing #1511: a data-only overlay
+ * that ships no lexicon of its own would start resolving the base package's,
+ * which silently turns both evidence channels on for every overlay in the repo
  * (de-de, es-es, it-it, en-in, en-nz, fr-fr) in one commit, on locales no board has graded.
+ *
  * An overlay that wants the bundle links its own copy and says so in its `files` array.
  * that is one locale's measured decision rather than seven unmeasured ones.
  */

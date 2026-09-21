@@ -58,7 +58,10 @@ describe("countryFromPostcodeFormat (#928)", () => {
 	})
 
 	it("GB / CA / IE formats never collide", () => {
-		// GB inward is 3 chars (\d[A-Z]{2}). CA ends \d[A-Z]\d. IE unique part is 4 alnum. Mutually exclusive.
+		// GB inward is 3 chars (\d[A-Z]{2}).
+		// CA ends \d[A-Z]\d.
+		// IE unique part is 4 alnum.
+		// Mutually exclusive.
 		expect(countryFromPostcodeFormat("E4 9AZ")).toBe("GB")
 		expect(countryFromPostcodeFormat("K2P 1L4")).toBe("CA")
 		expect(countryFromPostcodeFormat("D02 AF30")).toBe("IE")
@@ -123,10 +126,10 @@ describe("extractGeocodeResult — resolved-place surfacing (#1014)", () => {
 })
 
 describe("extractGeocodeResult — a component the answer did not follow (#2301)", () => {
-	// `Nawāda, 744301`: 744301 is an Andaman and Nicobar Islands code, the walk
-	// selects Nawada in Bihar, and the resolver refuses to relocate the coordinate
-	// 1,914 km onto Port Blair. Both components are still in the result. without this
-	// field nothing in it says they name different places.
+	// `Nawāda, 744301`: 744301 is an Andaman and Nicobar Islands code, the walk selects Nawada
+	// in Bihar, and the resolver refuses to relocate the coordinate 1,914 km onto Port Blair.
+	// Both components are still in the result. without this field nothing in it
+	// says they name different places.
 	const refused = (): AddressTree => ({
 		raw: "Nawāda, 744301",
 		roots: [
@@ -393,10 +396,12 @@ describe("recognizeBarePostcode (#22)", () => {
 
 describe("extractGeocodeResult — unit-grade postcodes lead the admin ladder (#977 NL, #22 GB)", () => {
 	/**
-	 * The GB shape of the defect: `29 Brecknock Road, London, N7 0BT` resolves both
-	 * the locality (the London centroid, 51.5005/-0.1094) and the unit postcode
-	 * (`N70BT`, 51.5500/-0.1307 — 38 m from the rooftop truth), and the admin ladder returned
-	 * London, 5.6 km out. Coordinates are the live `candidate.db` rows, read 2026-08-10.
+	 * The GB shape of the defect: `29 Brecknock Road, London, N7 0BT` resolves
+	 * both the locality (the London centroid, 51.5005/-0.1094) and the unit
+	 * postcode (`N70BT`, 51.5500/-0.1307 — 38 m from the rooftop truth),
+	 * and the admin ladder returned London, 5.6 km out.
+	 *
+	 * Coordinates are the live `candidate.db` rows, read 2026-08-10.
 	 */
 	const gbTree = (postcodeName = "N70BT"): AddressTree => ({
 		raw: "29 Brecknock Road, London, N7 0BT",
@@ -548,6 +553,7 @@ describe("parseForGeocode — query-shape emission prior (#981)", () => {
 
 	/**
 	 * A recording classifier: captures the opts geocode-core hands the model.
+	 *
 	 * Lets us assert the query-shape prior the runtime pipeline applies
 	 * (`core/pipeline/runtime-pipeline.ts` → `safeClassify`) now reaches the geocode
 	 * path too — without loading a real model.
@@ -662,11 +668,13 @@ describe("the #404 lineage-attachment wiring (#1717)", () => {
 describe("#1537: a famous namesake the model reads as a `street` keeps its candidate list", () => {
 	/**
 	 * The live shape the issue reports, reduced to a fixture.
-	 * The model tags a bare `Springfield` / `Berlin` / `Moscow` as a `street` (they read as street names),
-	 * so the admin walk resolves nothing and the #370 span-rescore tier is the only thing that
-	 * recovers the place. It used to decorate the injected node with an empty alternatives list,
-	 * so `candidates` came back holding one entry and `declared_ambiguity` — whose whole
-	 * trigger is a top-1-vs-top-2 margin — could not fire for the very class it exists for.
+	 *
+	 * The model tags a bare `Springfield` / `Berlin` / `Moscow` as a `street`
+	 * (they read as street names), so the admin walk resolves nothing and the #370
+	 * span-rescore tier is the only thing that recovers the place.
+	 * It used to decorate the injected node with an empty alternatives list, so `candidates`
+	 * came back holding one entry and `declared_ambiguity` — whose whole trigger is a
+	 * top-1-vs-top-2 margin — could not fire for the very class it exists for.
 	 */
 	const SPRINGFIELDS: ResolvedPlace[] = [
 		{

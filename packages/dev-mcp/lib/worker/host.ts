@@ -54,20 +54,23 @@ type WorkerMessage = ReadyMessage | ResultMessage
 
 export interface WorkerHostOptions {
 	/**
-	 * Absolute path to the worker entry module. A parameter rather than a constant
-	 * so the crash/restart implementation is testable against a stub child that
-	 * can be told to hang, crash, or answer garbage.
+	 * Absolute path to the worker entry module.
+	 *
+	 * A parameter rather than a constant so the crash/restart implementation is testable
+	 * against a stub child that can be told to hang, crash, or answer garbage.
 	 */
 	workerPath: string
 	workerArgs: string[]
 	/**
 	 * Milliseconds to wait for the handshake before declaring a boot failure.
+	 *
 	 * The worker's boot imports the whole mailwoman graph, which is seconds rather than milliseconds.
 	 */
 	handshakeTimeoutMs?: number
 	/**
-	 * Where the child's stdout/stderr are drained to. Defaults to the host process's stderr —
-	 * never stdout, which on the shim is the MCP channel.
+	 * Where the child's stdout/stderr are drained to.
+	 *
+	 * Defaults to the host process's stderr — never stdout, which on the shim is the MCP channel.
 	 */
 	log?: NodeJS.WritableStream
 }
@@ -82,6 +85,7 @@ const CRASH_WINDOW_MS = 60_000
 
 /**
  * How long a sigterm'd child gets to run its cleanup handler before sigkill.
+ *
  * Generous because the worker's teardown closes SQLite handles and cancels spawned jobs.
  */
 const TERM_GRACE_MS = 5000
@@ -109,9 +113,11 @@ export interface RestartReport {
 	tools_changed: boolean
 	aborted_calls: number
 	/**
-	 * Empty when the worker held no running job. A failure to ask is reported in {@link killed_jobs_note}
-	 * rather than as an empty list, because "nothing was running" and "I could not find
-	 * out" are different facts and only one of them means a relaunch is unnecessary.
+	 * Empty when the worker held no running job.
+	 *
+	 * A failure to ask is reported in {@link killed_jobs_note} rather than as an empty list,
+	 * because "nothing was running" and "I could not find out" are different facts
+	 * and only one of them means a relaunch is unnecessary.
 	 */
 	killed_jobs: KilledJob[]
 	killed_jobs_note?: string

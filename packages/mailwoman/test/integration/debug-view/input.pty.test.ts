@@ -105,6 +105,7 @@ async function driveInput(keys: string[]): Promise<string> {
 
 /**
  * Every `value=[…]` the probe rendered, in stream order — the field's edit history.
+ *
  * Not de-duplicated: the same value can be reached twice (both word deletes here land on `hello `),
  * and a `Set` would hide the second behind the first, which is exactly the assertion
  * this test needs to make about the last frame.

@@ -35,6 +35,7 @@ import { conventionCandidateDBPath, existingWOFDatabasePaths } from "#resolver-b
 
 /**
  * One real pair per codex system — a postcode that exists and the locality it belongs to.
+ *
  * The pass needs both halves, so a system whose postcodes are present but whose localities
  * are not still reads as unreachable, which is correct: the mechanism would abstain there.
  */

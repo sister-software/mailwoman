@@ -25,9 +25,9 @@ import type { BDCFile, RawBDCFile } from "@mailwoman/bdc/sdk/common"
 import type { FCCAsOfDateEntry } from "@mailwoman/bdc/sdk/filing-dates"
 import { createFakeClock, maxCountInSlidingWindow, VirtualClock } from "@mailwoman/core/api/test-clocks"
 import { type StubOutcome, stubTransport, type StubTransport } from "@mailwoman/core/api/test-transport"
-// `ResourceError` is used both as a value (`toBeInstanceOf`) and as a type
-// (`as ResourceError`). The value arrives via the post-reset dynamic import below.
-// a `const` carries no type side, so the type position needs its own static import.
+// `ResourceError` is used both as a value (`toBeInstanceOf`) and as a type (`as ResourceError`).
+// The value arrives via the post-reset dynamic import below. a `const` carries no
+// type side, so the type position needs its own static import.
 // Type-only, so it never evaluates the mocked module chain.
 import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
 import { crc32 } from "@mailwoman/core/fs/compression"
@@ -39,12 +39,11 @@ import { Globerator } from "spliterator/node/fs"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // `$private` (`@mailwoman/core/env`) is a live getter over `{ ...dotEnv, ...process.env }` —
-// `dotEnv` is read from the repo's real `.env` once at module load,
-// so `vi.stubEnv(..., undefined)` alone can't hide real FCC_MAP_USERNAME/FCC_MAP_API_KEY
-// values committed there: the merge falls back to `dotEnv`'s value regardless of what
-// the test stubs on `process.env`. Mock the module directly so the no-credentials
-// test below is isolated from whatever the ambient environment actually contains
-// (live-data finding — this broke the first time real credentials landed in `.env`).
+// `dotEnv` is read from the repo's real `.env` once at module load, so `vi.stubEnv(..., undefined)`
+// alone can't hide real FCC_MAP_USERNAME/FCC_MAP_API_KEY values committed there:
+// the merge falls back to `dotEnv`'s value regardless of what the test stubs on `process.env`.
+// Mock the module directly so the no-credentials test below is isolated from whatever the ambient environment
+// actually contains (live-data finding — this broke the first time real credentials landed in `.env`).
 // Every other test in this file passes explicit `username`/`apiKey` options
 // and never reads `$private`, so this mock doesn't affect them.
 vi.mock("@mailwoman/bdc/env", async (importOriginal) => {
@@ -189,8 +188,8 @@ describe("createBDCClient: header-pair auth and URL building", () => {
 	})
 
 	it("APPENDS the path to the base rather than RESOLVING it, so no path can redirect the credentials off-host", async () => {
-		// `new URL(path, BDC_API_BASE_URL)` would resolve an absolute-looking path
-		// to another origin and carry the `username`/`hash_value` pair there.
+		// `new URL(path, BDC_API_BASE_URL)` would resolve an absolute-looking path to
+		// another origin and carry the `username`/`hash_value` pair there.
 		// Concatenation cannot: the host is already fixed by the time the path is appended.
 		const transport = bdcTransport([{ body: { data: [] } }, { body: { data: [] } }])
 		const client = clientFor(transport)
@@ -313,17 +312,18 @@ describe("createBDCClient: the throttle meter", () => {
 	})
 
 	it("unions concurrent waits instead of summing them, so waiting can never exceed elapsed", async () => {
-		// Under a fan-out every caller sleeps at once and each wait is longer than the
-		// last (6s, 12s, …), so summing them reports more waiting than the run took:
-		// the first version of this meter printed `78m 0s (2000%)` for a 40-call fan-out
-		// that finished in 3m54s. What the operator is assessing is what share of the
-		// wall clock went to the throttle, which only the union answers.
+		// Under a fan-out every caller sleeps at once and each wait is longer than the last
+		// (6s, 12s, …), so summing them reports more waiting than the run took: the first version
+		// of this meter printed `78m 0s (2000%)` for a 40-call fan-out that finished in 3m54s.
+		// What the operator is assessing is what share of the wall clock went to the
+		// throttle, which only the union answers.
 		//
-		// Deliberately under `BDC_DEFAULT_REQUESTS_PER_MINUTE`, so only the interval limit fires and
-		// `waits` is exactly one per call after the first. At 12 this also crossed the
-		// per-minute budget, and once that limit's cooldown was corrected to a full window
-		// (it had been releasing N back to back every `60000/N` ms — a 10x overrun) the extra
-		// budget waits made the count ambiguous. Union-vs-sum is what this test is for. isolate it.
+		// Deliberately under `BDC_DEFAULT_REQUESTS_PER_MINUTE`, so only the interval limit fires
+		// and `waits` is exactly one per call after the first.
+		// At 12 this also crossed the per-minute budget, and once that limit's cooldown was corrected
+		// to a full window (it had been releasing N back to back every `60000/N` ms — a 10x overrun)
+		// the extra budget waits made the count ambiguous.
+		// Union-vs-sum is what this test is for. isolate it.
 		const FAN_OUT = 8
 
 		const clock = new VirtualClock()
@@ -357,12 +357,15 @@ describe("createBDCClient: the throttle meter", () => {
 	 * The composed steady state of both limits, at the shipped defaults — pinned
 	 * because `createBDCClient` and
 	 * {@link BDCThrottleStats.cooldowns} both describe it in prose, and both used to describe it wrongly: they claimed
-	 * the budget's cooldown "computes to <= 0" / is of "near-zero duration" once the
-	 * interval limit has spaced the dispatches, so the budget was said to cost nothing.
-	 * It is a real 6 s wait. `APIClient` measures the cooldown to the end of the minute the
-	 * window opened in, and after nine 6 s intervals only 54 s of that minute is spent.
+	 * the budget's cooldown "computes to <= 0" / is of "near-zero duration" once the interval
+	 * limit has spaced the dispatches, so the budget was said to cost nothing.
+	 * It is a real 6 s wait.
 	 *
-	 * Nothing checked either claim, which is how they survived. This is the check.
+	 * `APIClient` measures the cooldown to the end of the minute the window opened in,
+	 * and after nine 6 s intervals only 54 s of that minute is spent.
+	 *
+	 * Nothing checked either claim, which is how they survived.
+	 * This is the check.
 	 */
 	it("both checks composed: 10 requests per 66s, with a real 6s budget cooldown between windows", async () => {
 		const WINDOWS = 2
@@ -525,9 +528,9 @@ describe("createBDCClient: the binary download path", () => {
 		// A multi-hundred-megabyte zip through a JSON-validating disk cache is wrong twice over:
 		// it cannot be read back, and `downloadBDCFile` already writes the extracted CSV to disk itself.
 		//
-		// An empty cache directory alone would not prove this — the storage layer's
-		// own `validate` check rejects a zip too, so the directory stays empty
-		// either way and the assertion would pass with `cache: false` deleted.
+		// An empty cache directory alone would not prove this — the storage layer's own
+		// `validate` check rejects a zip too, so the directory stays empty either way
+		// and the assertion would pass with `cache: false` deleted.
 		// What distinguishes "the request bypassed the cache" from "the cache refused the
 		// write" is the rejection itself: `buildDiskStorage` warns on every write it drops,
 		// so a silent run is the proof that the interceptor never saw this response.
@@ -615,8 +618,8 @@ describe("downloadBDCFile: end to end over the migrated client", () => {
 	})
 })
 
-// The interface an ingestion run depends on. Each branch is decided from `status`
-// and `isTransientResourceError()` alone — never from message text.
+// The interface an ingestion run depends on.
+// Each branch is decided from `status` and `isTransientResourceError()` alone — never from message text.
 describe("createBDCClient: the caller's failure taxonomy, decided without reading any message", () => {
 	async function failureFor(outcomes: StubOutcome[], maxAttempts = 2): Promise<unknown> {
 		const client = clientFor(bdcTransport(outcomes), { maxAttempts, baseRetryDelayMs: 1 })
@@ -818,10 +821,12 @@ const ZIP_EOCD_BYTES = 22
 const ZIP_VERSION = 20
 
 /**
- * Build a single-entry, stored (uncompressed) zip archive — the shape an FCC availability
- * download has, minus the deflate. Hand-assembled rather than pulled from a fixture file
- * or a new dependency: `yauzl-promise` (the extractor under test) reads zips
- * and does not write them, and a committed binary fixture would be unreadable in review.
+ * Build a single-entry, stored (uncompressed) zip archive — the shape an FCC
+ * availability download has, minus the deflate.
+ *
+ * Hand-assembled rather than pulled from a fixture file or a new dependency:
+ * `yauzl-promise` (the extractor under test) reads zips and does not write them,
+ * and a committed binary fixture would be unreadable in review.
  */
 function storedZip(filename: string, contents: string): Buffer {
 	const name = Buffer.from(filename, "utf8")

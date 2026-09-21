@@ -136,9 +136,10 @@ describe("resolveTree + postcodeConsistency (Change A)", () => {
 	})
 
 	it("DEFAULTS the cap to 300 km, so an unset option refuses this 577 km move", async () => {
-		// The default changed from unbounded on 2026-09-15. Measured on 5,300 real addresses
-		// the pass's wins are all step-2 re-picks, so no arm from a cap of zero upward differs
-		// from unbounded by a row (docs/records/evals/2026-09-15-postcode-move-cap.md).
+		// The default changed from unbounded on 2026-09-15.
+		// Measured on 5,300 real addresses the pass's wins are all step-2 re-picks,
+		// so no arm from a cap of zero upward differs from unbounded by a
+		// row (docs/records/evals/2026-09-15-postcode-move-cap.md).
 		const resolver = createWOFResolver(await makeBackend([PC, SP_FAR]))
 
 		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {

@@ -29,8 +29,10 @@ import type { SameDataPanelRow } from "#eval-harness/same-data/fixture"
 import type { GeoNamesCity } from "#eval-harness/same-data/panel"
 
 /**
- * One panel row. The same shape the same-data fixture, arms and scorer already read, plus the band
- * it was drawn from — so the recorder, the replay and the metrics need no second row interface.
+ * One panel row.
+ *
+ * The same shape the same-data fixture, arms and scorer already read, plus the band it was
+ * drawn from — so the recorder, the replay and the metrics need no second row interface.
  */
 export interface ProminencePanelRow extends SameDataPanelRow {
 	band: string
@@ -49,8 +51,10 @@ export interface ProminencePanelResult {
 }
 
 /**
- * The provenance every row carries. The register is the per-country dump rather than a
- * single filtered table, so the row names which country's file it came from.
+ * The provenance every row carries.
+ *
+ * The register is the per-country dump rather than a single filtered table,
+ * so the row names which country's file it came from.
  */
 function panelProvenance(definition: ProminenceFloorDefinition): SameDataPanelRow["source"] {
 	return {

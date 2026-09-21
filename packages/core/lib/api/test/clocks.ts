@@ -14,31 +14,36 @@ import type { ClockLike } from "#api/clock"
 
 /**
  * How much real time {@linkcode VirtualClock.runUntilSettled} tolerates with
- * nothing pending before declaring the work stuck. Finite, so a genuinely blocked
- * test reports what happened instead of timing out.
+ * nothing pending before declaring the work stuck.
  *
- * This used to be a budget of 1000 idle event-loop turns, on the stated assumption that "a real
- * `readFile` resolves in a handful of turns". Turns are not time: an idle turn is a `setImmediate`
- * round-trip costing microseconds, so the whole budget expired in single-digit milliseconds
- * while the I/O it was waiting for took tens. On an unloaded machine the race happened
- * to go the right way. Under load it did not, and the guard fired on working code —
- * observed 2026-08-02 on the lab at load 15.25 and then on a hosted GitHub runner,
+ * Finite, so a genuinely blocked test reports what happened instead of timing out.
+ *
+ * This used to be a budget of 1000 idle event-loop turns, on the stated assumption
+ * that "a real `readFile` resolves in a handful of turns".
+ * Turns are not time: an idle turn is a `setImmediate` round-trip costing microseconds, so the
+ * whole budget expired in single-digit milliseconds while the I/O it was waiting for took tens.
+ *
+ * On an unloaded machine the race happened to go the right way.
+ * Under load it did not, and the guard fired on working code — observed
+ * 2026-08-02 on the lab at load 15.25 and then on a hosted GitHub runner,
  * in `filer/sdk/sec-client.test.ts` and `bdc/sdk/client.test.ts`.
  *
  * Measured with `performance.now()`, not `Date.now()`: consumers run under
- * `vi.useFakeTimers({ toFake: ["Date"] })`, which freezes `Date` while leaving `performance`
- * and `setTimeout` real. A Date-based budget would never expire inside those blocks,
- * so genuinely stuck work would hang exactly where this is supposed to report it.
+ * `vi.useFakeTimers({ toFake: ["Date"] })`, which freezes `Date` while leaving
+ * `performance` and `setTimeout` real.
+ * A Date-based budget would never expire inside those blocks, so genuinely stuck
+ * work would hang exactly where this is supposed to report it.
  */
 const IDLE_BUDGET_MS = 5000
 
 /**
  * Idle turns to spin on {@linkcode drainMicrotasks} before backing off to real sleeps.
  *
- * The spin is the fast path — work that is one promise-chain away settles within a
- * few turns and should not pay a timer. Past that the wait is on something real,
- * and continuing to spin actively harms it: back-to-back `setImmediate` turns
- * monopolize the event loop and starve the very I/O the loop is waiting for.
+ * The spin is the fast path — work that is one promise-chain away settles within
+ * a few turns and should not pay a timer.
+ * Past that the wait is on something real, and continuing to spin actively harms it: back-to-back
+ * `setImmediate` turns monopolize the event loop and starve the very I/O the loop is waiting for.
+ *
  * That feedback loop is why the old guard got worse exactly when the machine was busiest.
  */
 const IDLE_SPIN_TURNS = 50
@@ -49,9 +54,10 @@ const IDLE_SPIN_TURNS = 50
 const IDLE_BACKOFF_MS = 1
 
 /**
- * Run every queued microtask to quiescence. A `setImmediate` is scheduled behind the
- * entire microtask queue, so awaiting one guarantees any in-flight promise chain
- * has settled as far as it can without more real time.
+ * Run every queued microtask to quiescence.
+ *
+ * A `setImmediate` is scheduled behind the entire microtask queue, so awaiting one guarantees
+ * any in-flight promise chain has settled as far as it can without more real time.
  */
 export function drainMicrotasks(): Promise<void> {
 	return new Promise<void>((resolve) => {
@@ -60,8 +66,9 @@ export function drainMicrotasks(): Promise<void> {
 }
 
 /**
- * Yield the event loop for `ms` of real time — a real macrotask no
- * virtual clock drives. Used by
+ * Yield the event loop for `ms` of real time — a real macrotask no virtual clock drives.
+ *
+ * Used by
  * {@linkcode VirtualClock.runUntilSettled}'s idle backoff (so pending real I/O is serviced instead of competing with a
  * `setImmediate` spin), and by suites that need progress the clock cannot see.
  */
@@ -87,8 +94,10 @@ export interface FakeClock extends ClockLike {
 }
 
 /**
- * A simple, immediately-resolving fake clock. Fine for every sequential assertion
- * (nothing racing the clock), but not sufficient for a concurrency test — see {@linkcode VirtualClock}.
+ * A simple, immediately-resolving fake clock.
+ *
+ * Fine for every sequential assertion (nothing racing the clock), but not sufficient
+ * for a concurrency test — see {@linkcode VirtualClock}.
  */
 export function createFakeClock(startAt = 0): FakeClock {
 	let current = startAt
@@ -176,10 +185,11 @@ export class VirtualClock implements ClockLike {
 	 * whenever the real event loop goes idle.
 	 *
 	 * {@linkcode advance} alone is not enough once the code under test interleaves virtual sleeps with real asynchrony —
-	 * a paced client whose limit sits downstream of an on-disk cache spends several
-	 * real event-loop turns in `readFile` before it ever registers its `sleep()`.
-	 * A caller that drains once and then advances finds nothing pending, jumps the
-	 * clock past the deadlines that are registered a moment later, and the test hangs.
+	 * a paced client whose limit sits downstream of an on-disk cache spends several real
+	 * event-loop turns in `readFile` before it ever registers its `sleep()`.
+	 * A caller that drains once and then advances finds nothing pending, jumps the clock
+	 * past the deadlines that are registered a moment later, and the test hangs.
+	 *
 	 * This polls instead: drain, and if any sleep is pending, advance to the earliest
 	 * deadline. if none is, yield and look again.
 	 *

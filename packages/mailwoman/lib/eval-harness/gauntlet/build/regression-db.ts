@@ -34,6 +34,7 @@ import {
 
 /**
  * Where to read the corpus from and where to write the DB.
+ *
  * Both default to the real ones. a test overrides them to build a fixture-scale
  * artifact without going near `$MAILWOMAN_DATA_ROOT`.
  */

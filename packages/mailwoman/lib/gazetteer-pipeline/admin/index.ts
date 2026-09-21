@@ -50,12 +50,15 @@ import {
 
 export interface BuildAdminOptions {
 	/**
-	 * WOF repos root. Default `<data-root>/wof/repos`.
+	 * WOF repos root.
+	 *
+	 * Default `<data-root>/wof/repos`.
 	 */
 	dataDir?: string
 	/**
-	 * Output artifact path. Default `<data-root>/wof/admin-global-priority.rebuild.db`
-	 * (staging — swap deliberately).
+	 * Output artifact path.
+	 *
+	 * Default `<data-root>/wof/admin-global-priority.rebuild.db` (staging — swap deliberately).
 	 */
 	out?: string
 	overtureCountries?: readonly string[]
@@ -71,8 +74,9 @@ export interface BuildAdminOptions {
 	concurrency?: number
 	batchCommitSize?: number
 	/**
-	 * Build-log path. Default `<repo>/data/gazetteer/wof-build-manifest.json`;
-	 * absent file → the append is skipped.
+	 * Build-log path.
+	 *
+	 * Default `<repo>/data/gazetteer/wof-build-manifest.json`; absent file → the append is skipped.
 	 */
 	buildLogPath?: string
 	onPhase?: (phase: string, detail?: string) => void
@@ -89,7 +93,9 @@ export interface BuildAdminResult {
 }
 
 /**
- * Run the full admin-gazetteer build. See the module docstring for the phase order and why it's fixed.
+ * Run the full admin-gazetteer build.
+ *
+ * See the module docstring for the phase order and why it's fixed.
  */
 export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdminResult> {
 	const t0 = performance.now()
@@ -254,8 +260,8 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	phase("seal")
 	await sealDatabase(out)
 
-	// Build log — an auto-appended record (what ran, when, fingerprint),
-	// so the manifest can't lag the artifact again (#1015's reconstruct-from-artifact).
+	// Build log — an auto-appended record (what ran, when, fingerprint), so the manifest
+	// can't lag the artifact again (#1015's reconstruct-from-artifact).
 	// The recipe itself lives in defaults.ts.
 	const buildLogPath = opts.buildLogPath ?? repoRootPath("data", "gazetteer", "wof-build-manifest.json")
 

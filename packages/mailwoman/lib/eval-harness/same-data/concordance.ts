@@ -41,23 +41,26 @@ const GEONAMES_SOURCE = "gn:id"
 
 /**
  * WOF placetypes that carry the tier a `cities15000.txt` row denotes.
+ *
  * `localadmin` is admitted beside `locality` because WOF splits the city tier across both,
  * the same equivalence the resolver's own placetype groups use.
  */
 const CITY_TIER = new Set(["locality", "localadmin"])
 
 /**
- * How far a concorded WOF row may sit from the register's coordinate and still be
- * the same place. Set at the wrong-area threshold the benchmark already registers,
+ * How far a concorded WOF row may sit from the register's coordinate and still be the same place.
+ *
+ * Set at the wrong-area threshold the benchmark already registers,
  * so one distance means one thing throughout.
  */
 export const GOLD_COHERENCE_KM = 25
 
 /**
- * Identifiers per `IN` clause. SQLite's default host-parameter ceiling is 999,
- * and staying under it keeps the filter in SQL — the alternative, scanning the table's
- * 2,057,196 `gn:id` rows into JavaScript and filtering there, materializes two million
- * objects on a host that also runs this repository's CI runners.
+ * Identifiers per `IN` clause.
+ *
+ * SQLite's default host-parameter ceiling is 999, and staying under it keeps the filter in SQL —
+ * the alternative, scanning the table's 2,057,196 `gn:id` rows into JavaScript and filtering there,
+ * materializes two million objects on a host that also runs this repository's CI runners.
  */
 const IDENTIFIERS_PER_QUERY = 900
 
@@ -108,8 +111,9 @@ export interface GoldSubject {
 }
 
 /**
- * Why a geonameid produced no gold. Each count names a different hole,
- * and they are never summed into one number.
+ * Why a geonameid produced no gold.
+ *
+ * Each count names a different hole, and they are never summed into one number.
  */
 export interface GoldCensus {
 	subjects: number
@@ -123,7 +127,9 @@ export interface GoldCensus {
 
 export interface GoldSets {
 	/**
-	 * Geonameid → the WOF ids that denote it, ascending. Only coherent sets appear.
+	 * Geonameid → the WOF ids that denote it, ascending.
+	 *
+	 * Only coherent sets appear.
 	 */
 	byGeonameID: Map<string, number[]>
 	census: GoldCensus

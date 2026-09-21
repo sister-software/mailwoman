@@ -38,8 +38,8 @@ import { readOATuples, type CorpusRecipe } from "#recipes/scaffold"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
-// v2: the country token is decoupled from the skeleton's locale and drawn from a broad
-// pool — every ISO canonical name + every curated surface form (endonyms/abbrevs).
+// v2: the country token is decoupled from the skeleton's locale and drawn from a broad pool —
+// every ISO canonical name + every curated surface form (endonyms/abbrevs).
 // Surface forms are over-weighted so endonyms/abbrevs ("Deutschland","USA","NL") get strong signal.
 
 const COUNTRY_FORM_POOL = (() => {
@@ -186,7 +186,9 @@ const FULL_CUTOFF = 0.8
 const FULL_NEWLINE_CUTOFF = 0.92
 
 /**
- * Render the address body in native-ish order. `country` null → a country-absent negative row.
+ * Render the address body in native-ish order.
+ *
+ * `country` null → a country-absent negative row.
  */
 function renderCountry(
 	random: () => number,
@@ -324,8 +326,10 @@ const houseNo = (random: () => number): string => String(1 + Math.floor(random()
 const HOMOGRAPH_WITH_STREET_SHARE = 0.6
 
 /**
- * A homograph contrast row: ~half render the surface as `country` (foreign city), half
- * as the US `region`/`locality` (US ZIP, no country). Returns iso2 for provenance.
+ * A homograph contrast row: ~half render the surface as `country` (foreign city),
+ * half as the US `region`/`locality` (US ZIP, no country).
+ *
+ * Returns iso2 for provenance.
  */
 function renderHomograph(random: () => number): {
 	fmt: string

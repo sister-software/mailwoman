@@ -26,8 +26,9 @@ import { copyWeights } from "#weights/copy-weights"
 import { fetchHFWeights, reportHFMaterialization } from "#weights/fetch-hf-weights/index"
 
 /**
- * Where the staged weights artifacts come from. `repo` reads this machine's data root,
- * `hf` reads the public bucket CI publishes from.
+ * Where the staged weights artifacts come from.
+ *
+ * `repo` reads this machine's data root, `hf` reads the public bucket CI publishes from.
  */
 export const WEIGHTS_SOURCES = ["repo", "hf"] as const
 
@@ -42,6 +43,7 @@ export interface ReleasePreflightOptions {
 	version?: string
 	/**
 	 * The caller'S staging directory: written into and never removed.
+	 *
 	 * Absent, a scratch directory is made and owned here.
 	 */
 	staging?: string
@@ -65,6 +67,7 @@ export interface ReleasePreflightReport {
 
 /**
  * Stage, materialize, pack and audit every release workspace.
+ *
  * Answers the report. the verdict is `fail` when any release workspace does not pack to a tarball
  * honoring its manifest, or when the release list's named-absence identity does not hold.
  */
@@ -78,10 +81,10 @@ export async function releasePreflight(options: ReleasePreflightOptions): Promis
 	const startedAt = performance.now()
 	await using resources = new AsyncDisposableStack()
 
-	// Two ownership rules, and they are separate. A `--staging` root is the caller'S directory: this
-	// operation writes into it and never removes it. The one it makes itself is its own,
-	// and `--keep` withholds removal so the staged tree survives for inspection —
-	// registering it is what decides that, rather than a branch at the far end.
+	// Two ownership rules, and they are separate.
+	// A `--staging` root is the caller'S directory: this operation writes into it and never removes it.
+	// The one it makes itself is its own, and `--keep` withholds removal so the staged tree survives
+	// for inspection — registering it is what decides that, rather than a branch at the far end.
 	let stagingRoot = options.staging
 
 	if (!stagingRoot) {
@@ -117,7 +120,8 @@ export async function releasePreflight(options: ReleasePreflightOptions): Promis
 
 	log(`release list: ${identity.publishCount} workspaces`)
 
-	// 2. Stage + materialize + audit. Both sources write into the staging tree only, so the two legs differ
+	// 2. Stage + materialize + audit.
+	//    Both sources write into the staging tree only, so the two legs differ
 	// in where the bytes come from and in nothing the audit can see.
 	log(`staging tracked tree → ${stagingRoot}`)
 	await stageReleaseTree(repoRoot, stagingRoot)

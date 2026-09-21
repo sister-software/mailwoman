@@ -52,6 +52,7 @@ export interface NPPESStateSample {
 export interface NPPESSample extends NPPESStateSample {
 	/**
 	 * Corpus-wide address-frequency table — the inverse-frequency signal.
+	 *
 	 * Counted over every practice address in the registry rather than just the sample,
 	 * so the sharing structure is a corpus statistic rather than a sampling artifact.
 	 */

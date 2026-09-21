@@ -52,9 +52,11 @@ const { values } = parseArguments({
 })
 
 /**
- * Jurisdictions this project models separately from any ISO 3166-1 code, each because its addresses
- * are not expressible in the code's own grammar. Adding a row here is a claim that the
- * jurisdiction needs its own parser behaviour, so each carries the reason.
+ * Jurisdictions this project models separately from any ISO 3166-1 code, each
+ * because its addresses are not expressible in the code's own grammar.
+ *
+ * Adding a row here is a claim that the jurisdiction needs its own parser behaviour,
+ * so each carries the reason.
  */
 const SUB_JURISDICTIONS: ReadonlyArray<{ code: string; within: string; why: string }> = [
 	{ code: "XK", within: "XK", why: "Kosovo — operational, non-ISO, present in real data" },
@@ -73,7 +75,9 @@ const SUB_JURISDICTIONS: ReadonlyArray<{ code: string; within: string; why: stri
 interface JurisdictionRow {
 	code: string
 	/**
-	 * The ISO code whose registers answer for this row. Equal to `code` for an ordinary jurisdiction.
+	 * The ISO code whose registers answer for this row.
+	 *
+	 * Equal to `code` for an ordinary jurisdiction.
 	 */
 	joinsTo: string
 	subJurisdiction: boolean
@@ -88,8 +92,9 @@ interface JurisdictionRow {
 	corpusRows: number
 	corpusStreetRows: number
 	/**
-	 * True when the training config's `country_weights` admits it and the corpus
-	 * holds rows for it. Either one alone trains nothing.
+	 * True when the training config's `country_weights` admits it and the corpus holds rows for it.
+	 *
+	 * Either one alone trains nothing.
 	 */
 	trains: boolean
 	gazetteerPlaces: number
@@ -118,7 +123,9 @@ const byCountry = new Map(report.countries.map((c) => [c.country, c]))
 
 /**
  * The conventions table is keyed by address system rather than by country,
- * and a system serves several countries. `us` covers US; `gb` covers GB.
+ * and a system serves several countries.
+ *
+ * `us` covers US; `gb` covers GB.
  * No system currently spans more than its own code, so the lookup is the lower-cased code —
  * when one does, this is the line that has to learn about it.
  */
@@ -134,8 +141,8 @@ function rowFor(code: string, joinsTo: string, subJurisdiction: boolean): Jurisd
 		subJurisdiction,
 		layout: layoutForCountry(joinsTo) !== null,
 		conventions: hasConventions(joinsTo),
-		// A sub-jurisdiction has no register of its own. It reads its parent's numbers,
-		// and reporting them as the sub-jurisdiction's own would double-count.
+		// A sub-jurisdiction has no register of its own.
+		// It reads its parent's numbers, and reporting them as the sub-jurisdiction's own would double-count.
 		// Zero here says "no separate reading exists", which is the true statement.
 		corpusRows: subJurisdiction ? 0 : (c?.corpusRows ?? 0),
 		corpusStreetRows: subJurisdiction ? 0 : (c?.corpusStreetRows ?? 0),

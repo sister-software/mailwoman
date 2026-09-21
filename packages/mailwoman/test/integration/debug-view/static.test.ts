@@ -130,9 +130,9 @@ describe("runStaticDebug --debug-size floor", () => {
 	})
 
 	test("the floor is exactly the frame's fixed chrome plus a 6-row map pane", async () => {
-		// The floor is arithmetic rather than taste: 19 rows leaves the map pane 5 content rows,
-		// 20 leaves it 6. Asserting the pair is what keeps the constant and `mapPaneCellSize`
-		// from drifting apart the next time a row is added to the input area.
+		// The floor is arithmetic rather than taste: 19 rows leaves the map pane 5 content rows, 20 leaves it 6.
+		// Asserting the pair is what keeps the constant and `mapPaneCellSize` from drifting
+		// apart the next time a row is added to the input area.
 		expect(mapPaneCellSize(60, 20).rows).toBe(6)
 		expect(mapPaneCellSize(60, 19).rows).toBe(5)
 

@@ -50,8 +50,9 @@ export async function removeStagingArtifacts(ingestPath: string): Promise<void> 
 }
 
 /**
- * Freeze the staging database: checkpoint the WAL away, drop back to a
- * sidecar-free journal mode, and give the query planner its statistics.
+ * Freeze the staging database: checkpoint the WAL away, drop back to a sidecar-free
+ * journal mode, and give the query planner its statistics.
+ *
  * Run after the last write and before {@link vacuumDatabaseInto}.
  */
 export function freezeStagingDatabase<DB>(db: DatabaseClient<DB>): void {
@@ -87,9 +88,10 @@ export async function buildDatabaseFTS<DB>(
 }
 
 /**
- * The close ceremony for a builder that writes its output database IN place
- * (no staging + `vacuum into`): drop to a sidecar-free journal mode, analyze,
- * check integrity, compact. The caller seals afterwards.
+ * The close ceremony for a builder that writes its output database IN place (no staging + `vacuum into`):
+ * drop to a sidecar-free journal mode, analyze, check integrity, compact.
+ *
+ * The caller seals afterwards.
  */
 export function finalizeSealedBuild<DB>(db: DatabaseClient<DB>, path: string): void {
 	db.exec("PRAGMA journal_mode = DELETE")
@@ -101,6 +103,7 @@ export function finalizeSealedBuild<DB>(db: DatabaseClient<DB>, path: string): v
 
 /**
  * What a database records when a rebuild cannot recover a provenance field.
+ *
  * A sentinel string rather than an empty one: a consumer reading `source_release: ""`
  * cannot tell "no release label exists" from "nobody looked", and the meaning-of-zero
  * rule says those are different claims.
@@ -109,6 +112,7 @@ export const UNKNOWN_PROVENANCE = "unknown (offline rebuild, no acquisition.json
 
 /**
  * Recover the `acquisition.json` sidecar an acquisition step wrote beside its download.
+ *
  * Absent is not fatal — the caller substitutes {@link UNKNOWN_PROVENANCE} and says so in the database.
  */
 export async function readAcquisitionSidecar<Sidecar>(sourceDir: string): Promise<Sidecar | null> {

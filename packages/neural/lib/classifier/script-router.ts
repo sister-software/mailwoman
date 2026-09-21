@@ -51,9 +51,10 @@ import {
 /**
  * The family claiming a comma segment of this input, or `undefined`.
  *
- * Families are read in declaration order. Two families claiming the same script
- * would make that order decide the answer. The `weights-family` repository check
- * refuses a script claimed twice, so the order changes nothing.
+ * Families are read in declaration order.
+ * Two families claiming the same script would make that order decide the answer.
+ *
+ * The `weights-family` repository check refuses a script claimed twice, so the order changes nothing.
  */
 function familyForSegment(shape: Pick<QueryShape, "tokenClasses" | "segments">): string | undefined {
 	for (const entry of FAMILIES) {
@@ -79,15 +80,17 @@ export function carriesFamilySegment(shape: Pick<QueryShape, "tokenClasses" | "s
  * What {@linkcode routeFamilyForText} would answer with the leading-run reading added,
  * without changing what it answers today.
  *
- * A candidate for measurement. No serving path calls it.
+ * A candidate for measurement.
+ * No serving path calls it.
+ *
  * `route-census.run.ts` runs it beside the shipped router so the rows the reading
  * moves can be counted on the whole board before anybody proposes shipping it —
  * the board is hand-authored and over-represents the defect it was written for,
  * so the 13 rows the proposal was built from are not the population to decide on.
  *
- * The reading is tried last. A row the shipped router already names keeps its answer,
- * so this can only add routes, which makes the difference between the two columns
- * the exact set of rows a change would move.
+ * The reading is tried last.
+ * A row the shipped router already names keeps its answer, so this can only add routes,
+ * which makes the difference between the two columns the exact set of rows a change would move.
  */
 export function routeFamilyWithLeadingRun(text: string): RoutingDecision {
 	const shipped = routeFamilyForText(text)
@@ -116,11 +119,12 @@ export function routeFamilyWithLeadingRun(text: string): RoutingDecision {
  * Chome-57 Tenmanmachi, Takayama, Gifu 506-0025, Japan` — and no script predicate can claim either, because there is no
  * non-Latin character in them to read.
  *
- * `scoreByPostcode` maps four unambiguous formats to locales, and `jp_postcode`
- * is the only one whose locale belongs to a family declaring routing scripts.
- * `us_zip4`, `uk_postcode` and `ca_postcode` name Latin locales, and the
- * Latin family is reached through the caller rather than through a predicate,
- * so a postcode reading that named it would be indistinguishable from abstaining.
+ * `scoreByPostcode` maps four unambiguous formats to locales, and `jp_postcode` is the
+ * only one whose locale belongs to a family declaring routing scripts.
+ * `us_zip4`, `uk_postcode` and `ca_postcode` name Latin locales, and the Latin family
+ * is reached through the caller rather than through a predicate, so a postcode reading
+ * that named it would be indistinguishable from abstaining.
+ *
  * The ambiguous five-digit fallback is excluded by the confidence floor.
  *
  * Tried last and only on an abstention, for the same reason {@linkcode routeFamilyWithLeadingRun} is:
@@ -147,9 +151,10 @@ export function routeFamilyWithPostcode(text: string): RoutingDecision {
 /**
  * The confidence a postcode reading must carry before it may name a family.
  *
- * `scoreByPostcode` answers 0.95 for a format it calls unambiguous and 0.5 for the five-digit fallback
- * it resolves to `en-US` as a global plurality. A floor between them admits the first
- * and refuses the second, so a bare five-digit group never decides which graph reads an address.
+ * `scoreByPostcode` answers 0.95 for a format it calls unambiguous and 0.5 for the
+ * five-digit fallback it resolves to `en-US` as a global plurality.
+ * A floor between them admits the first and refuses the second, so a bare five-digit
+ * group never decides which graph reads an address.
  */
 const POSTCODE_ROUTE_CONFIDENCE = 0.9
 
@@ -191,8 +196,10 @@ export function scriptFamilyForText(text: string): string | undefined {
 }
 
 /**
- * What the router reads from a classifier: the parse entries and the weights-package metadata
- * the session forwards. A `NeuralAddressClassifier` satisfies it. so does a test stub.
+ * What the router reads from a classifier: the parse entries and the weights-package
+ * metadata the session forwards.
+ *
+ * A `NeuralAddressClassifier` satisfies it. so does a test stub.
  */
 export type RoutableClassifier = Pick<
 	NeuralAddressClassifier,
@@ -202,11 +209,14 @@ export type RoutableClassifier = Pick<
 export interface ScriptRoutedClassifierOpts<C extends RoutableClassifier = RoutableClassifier> {
 	/**
 	 * The classifier for the locale the caller asked for.
+	 *
 	 * Every input reaches it unless its script names a family.
 	 */
 	primary: C
 	/**
-	 * Load the family's classifier (`cjk`). Called once per family. a rejection marks the family unavailable.
+	 * Load the family's classifier (`cjk`).
+	 *
+	 * Called once per family. a rejection marks the family unavailable.
 	 */
 	loadFamily: (family: string) => Promise<C>
 	/**
@@ -241,8 +251,10 @@ export class ScriptRoutedClassifier<C extends RoutableClassifier = RoutableClass
 	}
 
 	/**
-	 * The primary's encoder. A per-input reading is {@link forInput}: the normalizer's postal-mark
-	 * decision must follow the classifier that will run rather than the one the process was opened with.
+	 * The primary's encoder.
+	 *
+	 * A per-input reading is {@link forInput}: the normalizer's postal-mark decision must
+	 * follow the classifier that will run rather than the one the process was opened with.
 	 */
 	get encoder(): RoutableClassifier["encoder"] {
 		return this.primary.encoder

@@ -36,7 +36,9 @@ export interface ParquetFieldDefinition {
 export type ParquetSchemaDefinition<T> = Record<Extract<keyof T, string>, ParquetFieldDefinition>
 
 /**
- * A single Parquet row shape. The index signature allows callers to carry source fields before projection.
+ * A single Parquet row shape.
+ *
+ * The index signature allows callers to carry source fields before projection.
  *
  * Optional fields are represented as null in the Arrow table and read back as null.
  */
@@ -59,7 +61,9 @@ export interface ParquetRow {
 }
 
 /**
- * Column names emitted into every parquet file. Matches `ParquetRow`.
+ * Column names emitted into every parquet file.
+ *
+ * Matches `ParquetRow`.
  */
 export const PARQUET_COLUMNS = [
 	"raw",
@@ -79,9 +83,10 @@ export const PARQUET_COLUMNS = [
 ] as const
 
 /**
- * The DuckDB type each column is read and written as. Paired with {@linkcode PARQUET_COLUMNS}
- * so a `read_json` column map and a `copy` select list are built from one list
- * rather than two that can disagree.
+ * The DuckDB type each column is read and written as.
+ *
+ * Paired with {@linkcode PARQUET_COLUMNS} so a `read_json` column map and a `copy`
+ * select list are built from one list rather than two that can disagree.
  */
 export const PARQUET_COLUMN_TYPES: Record<(typeof PARQUET_COLUMNS)[number], string> = {
 	raw: "VARCHAR",
@@ -104,8 +109,10 @@ export const PARQUET_COLUMN_TYPES: Record<(typeof PARQUET_COLUMNS)[number], stri
    and the rule has no way to tell the two apart. */
 
 /**
- * Parquet schema for `LabeledRow` per #18 §4. Optional fields use `optional: true`;
- * repeated UTF8 columns capture tokens/labels arrays. Compression is per-column snappy.
+ * Parquet schema for `LabeledRow` per #18 §4.
+ *
+ * Optional fields use `optional: true`; repeated UTF8 columns capture tokens/labels arrays.
+ * Compression is per-column snappy.
  */
 export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
 	raw: { type: "UTF8", compression: PARQUET_COMPRESSION },

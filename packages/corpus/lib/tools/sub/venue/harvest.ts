@@ -41,21 +41,25 @@ import type { IdentifierShape, SubVenueSurface } from "#tools/sub/venue/table"
 /**
  * One row of a harvestable source, as read back off jsonl or out of a layer database.
  *
- * Source-neutral by design, and verified so in wave 2: an Overture Places row from
- * the `airport_terminal` category is `{ designatorID, name }` and fits unchanged.
- * What did not fit was the harvest function's hardcoded `osm:name` source stamp — see
- * `overture-subvenue.ts`'s docstring. Declared locally so the builder does not import `@mailwoman/osm`
+ * Source-neutral by design, and verified so in wave 2: an Overture Places row from the
+ * `airport_terminal` category is `{ designatorID, name }` and fits unchanged.
+ * What did not fit was the harvest function's hardcoded `osm:name` source stamp —
+ * see `overture-subvenue.ts`'s docstring.
+ *
+ * Declared locally so the builder does not import `@mailwoman/osm`
  * (which `@mailwoman/corpus` does not depend on) just to name a shape it reads from a file.
  */
 export interface SubVenueHarvestRow {
 	/**
 	 * The designator the source's rule assigned to the feature.
-	 * Not necessarily the record a matched phrase names — see this file's header on
-	 * phrase attribution. Carried into {@link SubVenueSurface.context}.
+	 *
+	 * Not necessarily the record a matched phrase names — see this file's header on phrase attribution.
+	 * Carried into {@link SubVenueSurface.context}.
 	 */
 	designatorID: string
 	/**
 	 * `venue` (station, airport, campus) or `sub_venue`, when the source's rule assigns one.
+	 *
 	 * The harvest itself does not read it. the sub-venue recipe fills its venue slot from it.
 	 */
 	tier?: string
@@ -67,8 +71,8 @@ export interface SubVenueHarvestRow {
 /**
  * Classify an OSM `ref` into an {@link IdentifierShape} class.
  *
- * The classes are the ones Berlin's gates actually produced, plus the two aviation
- * forms the corpus task names (`Terminal 2F` is digit-letter, `Concourse B` is letter).
+ * The classes are the ones Berlin's gates actually produced, plus the two aviation forms
+ * the corpus task names (`Terminal 2F` is digit-letter, `Concourse B` is letter).
  * `range` covers both separators OSM uses for a gate serving more than one stand: `16-18` and `0/1`.
  */
 export function classifyIdentifier(ref: string): string {
@@ -90,9 +94,11 @@ export function classifyIdentifier(ref: string): string {
 /**
  * How many real `ref` values each {@link IdentifierShape} keeps.
  *
- * Eight rather than "all" and not one. The field exists so a recipe author can see what
- * a class actually contains — GB's `other` class turned out to be semicolon multi-values
- * (`1.2.3`, `13.14`), which one example would have hidden and which the class name does not say.
+ * Eight rather than "all" and not one.
+ * The field exists so a recipe author can see what a class actually contains —
+ * GB's `other` class turned out to be semicolon multi-values (`1.2.3`, `13.14`),
+ * which one example would have hidden and which the class name does not say.
+ *
  * Eight fits a terminal line and covers the variety inside every class the GB extract produced.
  * The count lives in `observations`; this is a sample rather than a census.
  */
@@ -110,7 +116,9 @@ export interface HarvestOptions {
 	 */
 	source?: string
 	/**
-	 * ISO 3166-1 alpha-2 of the extract or partition. `""` when unknown.
+	 * ISO 3166-1 alpha-2 of the extract or partition.
+	 *
+	 * `""` when unknown.
 	 */
 	region?: string
 }
@@ -118,9 +126,10 @@ export interface HarvestOptions {
 /**
  * Harvest attested phrases and identifier shapes out of a source's rows.
  *
- * `index` gates the name harvest — a name contributes only when it contains a phrase
- * already in the table. That filter is the whole reason this function is safe to run
- * over raw OSM: see this file's header for the Berlin measurement that motivated it.
+ * `index` gates the name harvest — a name contributes only when it contains a phrase already in the table.
+ * That filter is the whole reason this function is safe to run over raw OSM:
+ * see this file's header for the Berlin measurement that motivated it.
+ *
  * The index also decides attribution: a hit is a surface of the record the phrase names,
  * and the row's own designator is recorded as `context`.
  *
@@ -215,8 +224,10 @@ export function extractAttestedPhrases(
 }
 
 /**
- * Read a jsonl file of {@link SubVenueHarvestRow}s. Blank lines and unparseable rows are skipped rather
- * than fatal — an extract is a build output, and one malformed line should not cost the whole lexicon.
+ * Read a jsonl file of {@link SubVenueHarvestRow}s.
+ *
+ * Blank lines and unparseable rows are skipped rather than fatal — an extract is a
+ * build output, and one malformed line should not cost the whole lexicon.
  */
 export async function readSubVenueJSONL(path: string): Promise<SubVenueHarvestRow[]> {
 	const out: SubVenueHarvestRow[] = []

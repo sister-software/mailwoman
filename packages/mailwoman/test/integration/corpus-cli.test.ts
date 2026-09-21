@@ -18,6 +18,7 @@ import { describe, expect, test, vi } from "vitest"
 
 /**
  * Wall-clock budget for a CLI spawn — see the note in `mailwoman/commands/geocode.test.ts`.
+ *
  * A single spawn costs ~5.6 s, 2.7 s of it node boot alone.
  */
 const CLI_SPAWN_TIMEOUT_MS = 45_000

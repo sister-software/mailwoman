@@ -69,6 +69,7 @@ const MAX_CANDIDATE_LENGTH = 500
 
 /**
  * The stream position the per-source subsample draws from.
+ *
  * Fixed rather than supplied, because the point is that two runs over one corpus choose
  * the same seeds. a caller-supplied seed would make that the caller's problem to remember.
  */
@@ -111,31 +112,44 @@ interface GoldenCandidate {
 export interface ExpandGoldenOptions {
 	/**
 	 * Corpus test-split parquet path(s), comma-separated.
+	 *
 	 * Default: the v0.2.0 test parquet file under the data root.
 	 */
 	corpus?: string
 	/**
-	 * Total seeds to process. Default `100` (pilot).
+	 * Total seeds to process.
+	 *
+	 * Default `100` (pilot).
 	 */
 	count?: number
 	/**
-	 * Variants requested per seed. Default `5`.
+	 * Variants requested per seed.
+	 *
+	 * Default `5`.
 	 */
 	variants?: number
 	/**
-	 * Jsonl output path. Default `data/eval/golden/candidates/expand-<ts>.jsonl`.
+	 * Jsonl output path.
+	 *
+	 * Default `data/eval/golden/candidates/expand-<ts>.jsonl`.
 	 */
 	output?: string
 	/**
-	 * LLM provider. Default `deepseek`.
+	 * LLM provider.
+	 *
+	 * Default `deepseek`.
 	 */
 	provider?: "deepseek" | "anthropic"
 	/**
-	 * Model id. Default depends on provider.
+	 * Model id.
+	 *
+	 * Default depends on provider.
 	 */
 	model?: string
 	/**
-	 * Parallel LLM calls. Default `4`.
+	 * Parallel LLM calls.
+	 *
+	 * Default `4`.
 	 */
 	concurrency?: number
 	/**
@@ -156,6 +170,7 @@ export interface ExpandGoldenSummary {
 
 /**
  * Decode BIO labels + tokens into a verified components map.
+ *
  * Mirrors the Python `decode_components` in mailwoman_train/eval.py —
  * first-occurrence-wins per tag, contiguous B-X/I-X runs concatenated with a single
  * space (the canonical separator used by corpus alignment).
@@ -269,15 +284,16 @@ async function loadSeeds(
 		report?.(`    ${src}: ${pool.length}`)
 	}
 
-	// Round-robin sample. Each source gives floor(count / nSources) seeds. rounding goes to
-	// sources in alphabetical order. If a pool is smaller than its target, take all of it.
+	// Round-robin sample.
+	// Each source gives floor(count / nSources) seeds. rounding goes to sources in alphabetical order.
+	// If a pool is smaller than its target, take all of it.
 	const sources = Array.from(bySource.keys()).toSorted()
 	const perSource = Math.floor(count / sources.length)
 	const remainder = count - perSource * sources.length
 	const picked: Seed[] = []
 	// One stream across every source, so the same inputs choose the same seeds on every run
-	// and two sources do not draw the same positions. The previous shuffle called
-	// `Math.random()` under a comment promising determinism.
+	// and two sources do not draw the same positions.
+	// The previous shuffle called `Math.random()` under a comment promising determinism.
 	const random = new SeededRandom(SUBSAMPLE_SEED)
 
 	for (let i = 0; i < sources.length; i++) {

@@ -27,8 +27,10 @@ import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
 import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 
 /**
- * Canonical voie type (lowercase, accent-kept) → its most common written abbreviation, from the codex
- * table's first entry. Types with no attested abbreviation stay canonical in the abbreviated form.
+ * Canonical voie type (lowercase, accent-kept) → its most common written abbreviation,
+ * from the codex table's first entry.
+ *
+ * Types with no attested abbreviation stay canonical in the abbreviated form.
  */
 const FR_VOIE_ABBREV: Record<string, string> = Object.fromEntries(
 	Object.entries(FR_VOIE_TYPES).flatMap(([canonical, abbrevs]) => (abbrevs[0] ? [[canonical, abbrevs[0]]] : []))
@@ -110,15 +112,16 @@ export const frBareStreetRecipe: CorpusRecipe = {
 			// Four surfaces over the same tuple, cycled deterministically.
 			// The comma form was the original change. the comma-free form is the colloquial
 			// register users actually type ('12 rue de Rome Paris' — the street↔locality
-			// boundary with no delimiter, the fr-fr panel's named loss); the abbreviated form
-			// is the typeahead register the geocoder-tester FR sample attests at scale. and the
-			// bare-street-only form is the absence counterweight — without it, every delimiter-free
-			// surface in the mix ends in a locality, the model learns "trailing span = locality"
-			// as categorical, and bare street names across locales flip to locality wholesale
-			// (the v4.5.0 no-promote's measured erosion: 'Calle de Alcalá', 'Madison Square West',
-			// and comer's fork all fell to that prior). Tags are identical where present. each
-			// component value is the span as written (BIO alignment binds value to surface);
-			// the bare form carries no number and no locality because the surface has neither.
+			// boundary with no delimiter, the fr-fr panel's named loss); the abbreviated
+			// form is the typeahead register the geocoder-tester FR sample attests at scale.
+			// and the bare-street-only form is the absence counterweight — without it,
+			// every delimiter-free surface in the mix ends in a locality, the model learns
+			// "trailing span = locality" as categorical, and bare street names across locales flip
+			// to locality wholesale (the v4.5.0 no-promote's measured erosion: 'Calle de Alcalá',
+			// 'Madison Square West', and comer's fork all fell to that prior).
+			// Tags are identical where present. each component value is the span as written
+			// (BIO alignment binds value to surface); the bare form carries no number
+			// and no locality because the surface has neither.
 			const form = read % 4
 			const prefixSurface = form >= 2 ? (FR_VOIE_ABBREV[prefix.toLowerCase()] ?? prefix) : prefix
 

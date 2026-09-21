@@ -110,9 +110,10 @@ export const NCERM_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/open-g
 export const NCERM_DATASET_URL = `https://environment.data.gov.uk/dataset/${NCERM_DATASET_ID}`
 
 /**
- * The projected CRS every published layer declares. The file is not in WGS84 —
- * it is OSGB36 / British National Grid, in metres — so the ingest reprojects
- * and the builder refuses a source that declares anything else.
+ * The projected CRS every published layer declares.
+ *
+ * The file is not in WGS84 — it is OSGB36 / British National Grid, in metres —
+ * so the ingest reprojects and the builder refuses a source that declares anything else.
  */
 export const NCERM_SOURCE_EPSG = 27_700
 
@@ -120,10 +121,11 @@ export const NCERM_SOURCE_EPSG = 27_700
  * The bounding box the OGC API Features collections declare for the twelve erosion-zone
  * layers, in CRS84 order `[minLon, minLat, maxLon, maxLat]`.
  *
- * The ingest asserts every reprojected vertex lands inside this, which is the check that
- * catches a coordinate-order or projection mistake before 89,371 polygons are written
- * to the wrong side of the planet. The two ground-instability collections declare
- * tighter boxes inside this one, so the same assertion serves all fourteen.
+ * The ingest asserts every reprojected vertex lands inside this, which is the check
+ * that catches a coordinate-order or projection mistake before 89,371 polygons
+ * are written to the wrong side of the planet.
+ * The two ground-instability collections declare tighter boxes inside this one,
+ * so the same assertion serves all fourteen.
  */
 export const NCERM_DECLARED_BBOX: readonly [number, number, number, number] = [
 	-6.985185754838781, 49.88191020135657, 2.066346185189053, 55.81031119080681,
@@ -150,8 +152,10 @@ export type CoastalManagementScenario = (typeof CoastalManagementScenario)[keyof
  */
 export interface CoastalScenario {
 	/**
-	 * The key this package identifies the scenario by, everywhere: `NFI_2055_0CC`, `SMP_2105_95CC`,
-	 * and so on. It is the source's own layer name with the `NCERM_` prefix removed.
+	 * The key this package identifies the scenario by, everywhere: `NFI_2055_0CC`,
+	 * `SMP_2105_95CC`, and so on.
+	 *
+	 * It is the source's own layer name with the `NCERM_` prefix removed.
 	 */
 	key: string
 	/**
@@ -172,10 +176,10 @@ export interface CoastalScenario {
 	 * The cumulative-erosion-distance column, in metres.
 	 *
 	 * Its name varies PER layer and that is the trap: `nfi2055_0` on NFI/2055/0CC,
-	 * `smp2105_95` on SMP/2105/95CC. A builder that read one fixed column name would find the
-	 * column missing on eleven of the twelve layers, which `ogr2ogr` reports as a SQL error
-	 * rather than as a silent null — but a builder that coalesced it would write NULL
-	 * distances for eleven scenarios and report a successful build.
+	 * `smp2105_95` on SMP/2105/95CC.
+	 * A builder that read one fixed column name would find the column missing on eleven of the twelve
+	 * layers, which `ogr2ogr` reports as a SQL error rather than as a silent null — but a builder that
+	 * coalesced it would write NULL distances for eleven scenarios and report a successful build.
 	 */
 	distanceColumn: string
 	label: string
@@ -215,7 +219,8 @@ function scenarioOf(management: CoastalManagementScenario, horizon: number, clim
 		management,
 		horizon,
 		climateAllowance,
-		// `0CC` → `_0`, `70CC` → `_70`. The column drops the `CC` and lowercases the management code.
+		// `0CC` → `_0`, `70CC` → `_70`.
+		// The column drops the `CC` and lowercases the management code.
 		distanceColumn: `${management.toLowerCase()}${horizon}_${climateAllowance.replace("CC", "")}`,
 		label: `${MANAGEMENT_LABELS[management]}, ${HORIZON_LABELS[horizon]} (${horizon}), ${ALLOWANCE_LABELS[climateAllowance]}`,
 	}
@@ -243,11 +248,13 @@ export const NCERM_SCENARIOS_BY_KEY: ReadonlyMap<string, CoastalScenario> = new 
 /**
  * The scenario a reading answers under when a caller names none.
  *
- * Not an arbitrary pick, and never A hidden one — every reading names the scenario it answered under,
- * so a caller can see which of the twelve spoke. Among them this is the least projected:
- * `NFI` assumes no future works are delivered rather than assuming a plan's delivery,
- * `0CC` is the present-day allowance rather than a sea-level-rise projection, and `2055`
- * is the nearer of the two horizons. A caller wanting another scenario names it.
+ * Not an arbitrary pick, and never A hidden one — every reading names the scenario
+ * it answered under, so a caller can see which of the twelve spoke.
+ * Among them this is the least projected: `NFI` assumes no future works are delivered
+ * rather than assuming a plan's delivery, `0CC` is the present-day allowance
+ * rather than a sea-level-rise projection, and `2055` is the nearer of the two horizons.
+ *
+ * A caller wanting another scenario names it.
  */
 export const DEFAULT_NCERM_SCENARIO = "NFI_2055_0CC"
 
@@ -282,20 +289,23 @@ export const NCERM_ALL_LAYERS: ReadonlyArray<string> = [
 
 /**
  * The feature total the geodatabase and the WFS both report.
+ *
  * Measured both ways on the 2024 edition and identical.
  */
 export const NCERM_DECLARED_FEATURE_COUNT = 89_371
 
 /**
- * The blank value this product uses. A single space, on 87 rows.
+ * The blank value this product uses.
+ *
+ * A single space, on 87 rows.
  */
 export const NCERM_BLANK = " "
 
 /**
  * The Shoreline Management Plan policy domain — `mt_smp` and `lt_smp` pooled.
  *
- * Nine spellings for eight policies, because the two fields disagree on the spacing
- * around one slash. Both are members. neither is normalized.
+ * Nine spellings for eight policies, because the two fields disagree on the spacing around one slash.
+ * Both are members. neither is normalized.
  */
 export const NCERM_POLICY_VALUES: ReadonlySet<string> = new Set([
 	"Hold The Line",
@@ -311,6 +321,7 @@ export const NCERM_POLICY_VALUES: ReadonlySet<string> = new Set([
 
 /**
  * The policy-interpretation domain — `mt_smp_int` and `lt_smp_int`.
+ *
  * This is the field that says what the policy means for erosion.
  */
 export const NCERM_POLICY_INTERPRETATIONS: ReadonlyArray<CoastalTermDefinition> = [

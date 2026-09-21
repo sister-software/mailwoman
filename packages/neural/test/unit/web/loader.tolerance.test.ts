@@ -74,8 +74,8 @@ vi.mock("@mailwoman/neural/classifier", async (importOriginal) => ({
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
-// Import after the mock declarations + reset. `postcode-binary-resolver.ts` is not mocked,
-// so the binaries we build here decode through the real reader.
+// Import after the mock declarations + reset.
+// `postcode-binary-resolver.ts` is not mocked, so the binaries we build here decode through the real reader.
 const { serializePostcodeBinary } = await import("@mailwoman/neural/postcode")
 const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web-loader")
 

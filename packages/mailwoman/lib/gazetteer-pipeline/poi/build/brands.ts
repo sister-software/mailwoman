@@ -41,8 +41,9 @@ import { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "#gazetteer-pipeline/poi/def
 export { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "#gazetteer-pipeline/poi/defaults"
 
 /**
- * The brand table's own schema/data version — bump when the shape or matching
- * semantics change. Independent of
+ * The brand table's own schema/data version — bump when the shape or matching semantics change.
+ *
+ * Independent of
  * {@link POIBrandSourceLayer.version}, which tracks the source `poi.db`'s own layer-manifest version.
  */
 export const BRAND_TABLE_VERSION = "0.2.0"
@@ -56,6 +57,7 @@ export function defaultPOIDatabasePath(): PathBuilder {
 
 /**
  * Default commit location: `poi-taxonomy/data/brands.json`.
+ *
  * Resolved via `repoRootPath` (source-vs-compiled-tree-aware — see `core/utils/repo.ts`)
  * rather than a hand-rolled relative path off `import.meta.dirname`: this module's directory
  * depth relative to the repo root differs between source (`mailwoman/gazetteer-pipeline/poi/`)
@@ -118,10 +120,13 @@ interface RawBrandAggregate {
 
 /**
  * Pure aggregation core — no sqlite in this function, so it's unit-testable directly against a fixture.
- * Per QID: `rows` is the sum of every observed `(wikidata, name)` count; `name` is the modal
- * (highest-count) variant, ties broken alphabetically; `aliases` are every other variant clearing the
- * noise floor `max(3, 1% of rows)` (guards against typo/OCR-noise variants swelling the alias list),
- * sorted alphabetically. QIDs whose total falls under `minRows` are dropped entirely.
+ *
+ * Per QID: `rows` is the sum of every observed `(wikidata, name)` count;
+ * `name` is the modal (highest-count) variant, ties broken alphabetically;
+ * `aliases` are every other variant clearing the noise floor `max(3, 1% of rows)`
+ * (guards against typo/OCR-noise variants swelling the alias list), sorted alphabetically.
+ * QIDs whose total falls under `minRows` are dropped entirely.
+ *
  * QIDs whose modal name covers less than `dominance` of the total
  * (default {@link DEFAULT_DOMINANCE} = 0.5) are also dropped entirely — a modal share under
  * the floor means the QID is systematically mistagged across many unrelated names rather than
@@ -184,26 +189,35 @@ export function aggregateBrands(
 
 export interface BuildBrandTableOptions {
 	/**
-	 * A built `poi.db` to read. Ignored when `rows` is given.
+	 * A built `poi.db` to read.
+	 *
+	 * Ignored when `rows` is given.
 	 * Required (along with `sourceLayer`, or it's read from here too) unless `rows` is given.
 	 */
 	dbPath?: PathBuilderLike
 	/**
-	 * Injected row source — the injection point. When given, `node:sqlite` is never touched.
+	 * Injected row source — the injection point.
+	 *
+	 * When given, `node:sqlite` is never touched.
 	 */
 	rows?: Iterable<BrandNameCount>
 	/**
 	 * Injected source-layer identity — bypasses reading `dbPath`'s layer manifest.
+	 *
 	 * Required when `rows` is given without `dbPath`.
 	 */
 	sourceLayer?: POIBrandSourceLayer
 	minRows?: number
 	/**
-	 * Dominance floor — see {@link aggregateBrands}. Defaults to {@link DEFAULT_DOMINANCE}.
+	 * Dominance floor — see {@link aggregateBrands}.
+	 *
+	 * Defaults to {@link DEFAULT_DOMINANCE}.
 	 */
 	dominance?: number
 	/**
-	 * The brand table's own `version` field. Defaults to {@link BRAND_TABLE_VERSION}.
+	 * The brand table's own `version` field.
+	 *
+	 * Defaults to {@link BRAND_TABLE_VERSION}.
 	 */
 	version?: string
 }

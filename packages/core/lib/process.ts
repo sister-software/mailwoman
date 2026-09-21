@@ -83,8 +83,10 @@ export function isProcessError(error: unknown): error is ProcessError {
 }
 
 /**
- * Options for {@linkcode runFile}: the builtin's. Output is always decoded as UTF-8. an
- * `encoding` here is accepted for the callers that spell it and changes nothing.
+ * Options for {@linkcode runFile}: the builtin's.
+ *
+ * Output is always decoded as UTF-8. an `encoding` here is accepted for the
+ * callers that spell it and changes nothing.
  */
 export type RunFileOptions = ExecFileOptions & { cwd?: PathBuilderLike }
 
@@ -110,7 +112,9 @@ export async function runFile(
 }
 
 /**
- * Options for {@linkcode runFileSync}: the builtin's. Output is always decoded as UTF-8.
+ * Options for {@linkcode runFileSync}: the builtin's.
+ *
+ * Output is always decoded as UTF-8.
  */
 export interface RunFileSyncOptions extends Omit<ExecFileSyncOptions, "cwd"> {
 	cwd?: PathBuilderLike
@@ -138,6 +142,7 @@ export function runFileSync(
 
 /**
  * Run a shell command line synchronously and answer stdout.
+ *
  * Reach for {@linkcode runFileSync} unless the command needs the shell —
  * an argument list does not get re-parsed, quoted or expanded.
  */
@@ -151,8 +156,10 @@ export function runShellSync(command: string, options: ExecSyncOptions & { cwd?:
 export type SpawnProcessOptions = SpawnOptions & { cwd?: PathBuilderLike }
 
 /**
- * Start a command and hand its {@linkcode ChildProcess} to the caller, who owns the streams,
- * the exit event and the kill. For a command whose output is the whole result,
+ * Start a command and hand its {@linkcode ChildProcess} to the caller,
+ * who owns the streams, the exit event and the kill.
+ *
+ * For a command whose output is the whole result,
  * {@linkcode runFile} is the shorter path.
  *
  * Without a `stdio` option every stream is a pipe, and the answer says so in its type —
@@ -194,6 +201,7 @@ export function spawnProcess(
 
 /**
  * Options for {@linkcode spawnProcessSync}: the builtin's.
+ *
  * Streams are always decoded as UTF-8.
  */
 export type SpawnProcessSyncOptions = SpawnSyncOptions & { cwd?: PathBuilderLike }

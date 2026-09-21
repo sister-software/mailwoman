@@ -20,8 +20,10 @@ import type { NUTSDatabase } from "#schema"
  * Normalized geometry: an array of polygons, each `[outerRing, ...holes]`, each ring `[[lon,lat],…]`.
  */
 /**
- * Nuts code lengths by level. The code is hierarchical and fixed-width per level —
- * a two-letter country prefix plus one digit per level — so the length is the level.
+ * Nuts code lengths by level.
+ *
+ * The code is hierarchical and fixed-width per level — a two-letter country prefix
+ * plus one digit per level — so the length is the level.
  */
 const NUTS_1_LENGTH = 3
 
@@ -38,12 +40,15 @@ const NUTS_3_LENGTH = 5
 export type MultiPolygonCoords = number[][][][]
 
 /**
- * Ray-cast point-in-ring (even-odd rule). `ring` is `[[lon, lat], …]`.
+ * Ray-cast point-in-ring (even-odd rule).
+ *
+ * `ring` is `[[lon, lat], …]`.
  *
  * Deliberate duplicate of `@mailwoman/spatial`'s `pointInRing`, kept local on purpose.
  * This package has exactly one dependency — zero-dep `@mailwoman/annotations` —
- * and importing spatial to reach a fifteen-line ray cast would pull `@mailwoman/core`
- * with it, whose published tarball carries ~11 MB of libpostal/WOF/chromium-i18n data.
+ * and importing spatial to reach a fifteen-line ray cast would pull `@mailwoman/core` with it,
+ * whose published tarball carries ~11 MB of libpostal/WOF/chromium-i18n data.
+ *
  * Eleven megabytes for fifteen lines is the wrong trade for a leaf lookup package.
  * If this package ever gains a real spatial dependency, delete these and import them.
  *
@@ -117,13 +122,15 @@ const GEOMETRY_CACHE_LIMIT = 256
 export class NUTSLookup implements Disposable {
 	#db: DatabaseClient<NUTSDatabase>
 	/**
-	 * The connection this instance opened. A connection handed in by a caller is
-	 * not retained here, so disposal cannot reach it.
+	 * The connection this instance opened.
+	 *
+	 * A connection handed in by a caller is not retained here, so disposal cannot reach it.
 	 */
 	readonly #ownedDatabase?: DatabaseClient<NUTSDatabase>
 	#byLevelBox: ReturnType<DatabaseClient["prepare"]>
 	/**
 	 * Parsed geometry by nuts id, most recently used last.
+	 *
 	 * The table is read-only, so an entry never goes stale. the cache is bounded because the
 	 * shipped `nuts.db` carries 14.3 MB of geometry JSON over 2,010 regions, and a lookup
 	 * service that answers points across the whole EU would otherwise hold every region parsed.

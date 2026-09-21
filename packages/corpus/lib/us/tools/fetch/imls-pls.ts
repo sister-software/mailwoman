@@ -40,6 +40,7 @@ import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/downlo
 
 /**
  * The PLS FY 2023 bulk CSV ZIP (most recent as of 2026-05).
+ *
  * If IMLS publishes a newer year, update this URL.
  */
 const ZIP_URL = "https://www.imls.gov/sites/default/files/2025-08/pls_fy2023_csv.zip"
@@ -93,8 +94,9 @@ export async function fetchIMLSPLS(
 		return { fetched: 0, skipped: 0, failed: 1, failedCodes: [SLUG] }
 	}
 
-	// Discover the outlet-level CSV inside the ZIP. Outlet files match: pls_fy*outlet*.csv
-	// (case-insensitive) Administrative-entity files match: pls_fy*ae*.csv — we skip those.
+	// Discover the outlet-level CSV inside the ZIP.
+	// Outlet files match: pls_fy*outlet*.csv (case-insensitive) Administrative-entity
+	// files match: pls_fy*ae*.csv — we skip those.
 	report?.("  Inspecting ZIP contents ...")
 	const entries = (await listZipEntries(zipDest)).map((entry) => entry.name)
 

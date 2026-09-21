@@ -72,13 +72,17 @@ export interface NearestInfrastructureOptions {
 	center: PointLiteral
 	/**
 	 * Poi-taxonomy category ids to search — fans out to `POILookup.search`'s `categoryIDs`
-	 * (union across every resolved leaf, nearest-first). Typically `["telecom_exchange", "tower_comms"]`.
+	 * (union across every resolved leaf, nearest-first).
+	 *
+	 * Typically `["telecom_exchange", "tower_comms"]`.
 	 */
 	categoryIDs: string[]
 	limit?: number
 	/**
-	 * Ring budget. Default {@link NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS} (32) —
-	 * not `POILookup`'s own internal default (16); see this module's docstring.
+	 * Ring budget.
+	 *
+	 * Default {@link NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS} (32) — not `POILookup`'s
+	 * own internal default (16); see this module's docstring.
 	 */
 	maxRings?: number
 }
@@ -107,9 +111,10 @@ export async function nearestInfrastructure(
 
 	for (const hit of hits) {
 		if (hit.categoryID === null) {
-			// `categoryIDs` above always constrains the k-ring probe to real (non-zero) category ids
-			// (see POILookup#searchKRing), so a hit here always carries the category it was found under —
-			// this can't happen without a corrupted poi.db. Guard rather than silently coerce to "".
+			// `categoryIDs` above always constrains the k-ring probe to real (non-zero) category
+			// ids (see POILookup#searchKRing), so a hit here always carries the category it
+			// was found under — this can't happen without a corrupted poi.db.
+			// Guard rather than silently coerce to "".
 			throw new Error(`nearestInfrastructure: hit ${stringifyJSON(hit.name)} has no categoryID`)
 		}
 

@@ -115,9 +115,10 @@ beforeAll(async () => {
 	insert.run(teichKey, teichKey, "3", null, "04509", "krensitz", "Teichstraße", 51.52, 12.45, "osm", "r")
 	// An OSM-shaped row with no scope of its own — the case the bbox rung exists for.
 	insert.run("mill lane", "mill lane", "7", null, null, null, "Mill Lane", 51.5, -0.1, "osm", "r")
-	// A NAD-shaped US row whose city field is abbreviated — the Texas extract writes `addi` for
-	// Addison on 5,174 rows. The board's `us-addison-zip-75001` (status pass) is this row. a
-	// locality check that reads the truncation as a different place loses it to interpolation.
+	// A NAD-shaped US row whose city field is abbreviated — the Texas extract
+	// writes `addi` for Addison on 5,174 rows.
+	// The board's `us-addison-zip-75001` (status pass) is this row. a locality check that
+	// reads the truncation as a different place loses it to interpolation.
 	const airportKey = normalizeStreetForKey("Airport Pkwy")
 
 	insert.run(
@@ -172,7 +173,8 @@ describe("AddressPointSqliteLookup", () => {
 	})
 
 	it("never range-splits or suffix-folds the unit-containing and box shapes", () => {
-		// AU slash convention: '5/7' is unit 5 of house 7 — not a range. The ladder must not derive '5'.
+		// AU slash convention: '5/7' is unit 5 of house 7 — not a range.
+		// The ladder must not derive '5'.
 		expect(lookup.find({ street: "Osborne Drive", number: "5/32", postcode: "4505" })).toBeNull()
 		// Fractional house numbers survive untouched — '32 1/2' is neither a spaced suffix nor a range.
 		expect(lookup.find({ street: "Osborne Drive", number: "32 1/2", postcode: "4505" })).toBeNull()
@@ -254,10 +256,9 @@ describe("the postcode rung's locality contradiction (#1631)", () => {
 		expect(fullKeys.find({ street: "Teichstraße", number: "3", postcode: "04509" })).not.toBeNull()
 	})
 
-	// `us-addison-zip-75001`: the US extract's key is the NAD abbreviation `addi`,
-	// the query says Addison. An abbreviated key steers the choice among same-postcode rows
-	// but never refuses one, so the postcode-only row answers at rooftop. exact
-	// comparison sent this row to interpolation 198 m away.
+	// `us-addison-zip-75001`: the US extract's key is the NAD abbreviation `addi`, the query says Addison.
+	// An abbreviated key steers the choice among same-postcode rows but never refuses one, so the
+	// postcode-only row answers at rooftop. exact comparison sent this row to interpolation 198 m away.
 	it("never refuses on the locality under the US extract, whose keys are abbreviated (#1631 follow-up)", () => {
 		const hit = lookup.find({ street: "Airport Pkwy", number: "4900", postcode: "75001", locality: "Addison" })
 
@@ -286,8 +287,9 @@ describe("a zh extract — the Taiwanese register keyed by 縣市 + 鄉鎮市區
 
 		const insert = kdb.prepare(`INSERT INTO address_point VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`)
 
-		// The register's own surfaces: 臺 in the 縣市, full-width digits and 號 on the number, the 里 in
-		// admin_code, no postcode. Two 中正區 exist (臺北市, 基隆市), so the scope key carries the 縣市 too.
+		// The register's own surfaces: 臺 in the 縣市, full-width digits and 號 on the number,
+		// the 里 in admin_code, no postcode.
+		// Two 中正區 exist (臺北市, 基隆市), so the scope key carries the 縣市 too.
 		const rows: Array<[string, string, string, string | null, string]> = [
 			["臺北市中正區", "重慶南路一段", "１２２號", null, "建國里"],
 			["基隆市中正區", "中正路", "１２２號", null, "正義里"],

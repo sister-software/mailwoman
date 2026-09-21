@@ -15,13 +15,14 @@ const moduleDir = import.meta.dirname
 /**
  * Absolute path to `data/<filename>`.
  *
- * `data/` sits at the package root (it is a `files` entry), and this module sits
- * either at that root — running from source — or under `out/` when compiled.
+ * `data/` sits at the package root (it is a `files` entry), and this module sits either
+ * at that root — running from source — or under `out/` when compiled.
  * So there are exactly two places to look rather than three.
  *
- * The probe tests for the file. Probing by attempting a parse, as the per-table loaders used to,
- * folds two different failures into one: a corrupt `taxonomy.json` throws, gets swallowed as "not
- * this candidate", and the package reports a missing table it is in fact looking straight at.
+ * The probe tests for the file.
+ * Probing by attempting a parse, as the per-table loaders used to, folds two different
+ * failures into one: a corrupt `taxonomy.json` throws, gets swallowed as "not this candidate",
+ * and the package reports a missing table it is in fact looking straight at.
  *
  * A local copy of `@mailwoman/core/module/packaged-data`'s `resolvePackagedDataPath`,
  * kept here to preserve this package's zero-dependency interface.

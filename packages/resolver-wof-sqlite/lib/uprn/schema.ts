@@ -47,7 +47,9 @@ export const UPRN_H3_RESOLUTION = 9
 export const UPRN_COVERAGE_H3_RESOLUTION = 6
 
 /**
- * One uprn point. `uprn` is the rowid alias, so the primary probe (`coordinateOf`) is a rowid B-tree hit.
+ * One uprn point.
+ *
+ * `uprn` is the rowid alias, so the primary probe (`coordinateOf`) is a rowid B-tree hit.
  */
 export interface UPRNTable {
 	/**
@@ -120,8 +122,9 @@ export async function createUPRNMetaTable(db: Kysely<UPRNDatabase>): Promise<voi
 }
 
 /**
- * Secondary index for the `nearestUPRN` ring probe. Builders call this
- * after the bulk load (index-after-load).
+ * Secondary index for the `nearestUPRN` ring probe.
+ *
+ * Builders call this after the bulk load (index-after-load).
  */
 export async function createUPRNIndexes(db: Kysely<UPRNDatabase>): Promise<void> {
 	await db.schema.createIndex("uprn_h3_cell").on("uprn").column("h3_cell").execute()

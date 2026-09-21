@@ -29,9 +29,10 @@ interface SeedPoint {
 }
 
 async function seedPoints(db: DatabaseClient<AddressPointDatabase>, points: SeedPoint[]): Promise<void> {
-	// Shared table builder (the same `mailwoman situs address-points` uses) so this fixture
-	// can't drift from the production shape. `kdb` wraps `db` for the DDL. the test owns
-	// `db`'s lifecycle (closed in afterAll), so we don't destroy `kdb`.
+	// Shared table builder (the same `mailwoman situs address-points` uses)
+	// so this fixture can't drift from the production shape.
+	// `kdb` wraps `db` for the DDL. the test owns `db`'s lifecycle (closed in afterAll),
+	// so we don't destroy `kdb`.
 	const kdb = db
 	await createAddressPointTable(kdb)
 

@@ -102,6 +102,7 @@ type RulesRecord = Partial<Record<string, string[]>>
 
 /**
  * Load the frozen rules baseline: `input → the top solution's classifications`.
+ *
  * This replaces the deleted live `createAddressParser().parse(...)` call —
  * the record is a byte-stable snapshot of that exact parser (PR #1092).
  */
@@ -144,9 +145,10 @@ const fold = (s: string) => s.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
 async function weightsPresent(): Promise<boolean> {
 	try {
-		// ASK the resolver. This probed `packages/neural-weights-en-us/model.onnx` directly,
-		// which is true only while the dev linker materializes binaries into that
-		// package — and a skip-guard that stops matching does not fail, it skips.
+		// ASK the resolver.
+		// This probed `packages/neural-weights-en-us/model.onnx` directly, which is
+		// true only while the dev linker materializes binaries into that package —
+		// and a skip-guard that stops matching does not fail, it skips.
 		// Therefore, the suite disappears from the run reporting success.
 		// The repo has already paid for this once: the workspace regroup left this literal behind
 		// and both this suite and `api-engine.test.ts` went quiet until someone counted the skips.
@@ -256,9 +258,10 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 				}
 
 				try {
-					// The rules parse is read from the frozen phase-0 capture (PR #1092), not produced
-					// live — the v1 parser is deleted. `v0RecordToTree` rebuilds the flat record into
-					// a tree exactly as the live arm did, so the coordinate comparison is unchanged.
+					// The rules parse is read from the frozen phase-0 capture (PR #1092),
+					// not produced live — the v1 parser is deleted.
+					// `v0RecordToTree` rebuilds the flat record into a tree exactly as the live
+					// arm did, so the coordinate comparison is unchanged.
 					const record = rulesGolden.get(fx.input) ?? {}
 					const tree = v0RecordToTree(fx.input, record).tree
 					rulesCoord = finestResolvedCoordinate(await resolver.resolveTree(tree, opts))
@@ -293,17 +296,20 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 				console.error(`[informational] parse-tag ${label}: ${a.hit}/${a.total} = ${a.rate.toFixed(4)} (non-enforcing)`)
 			}
 
-			// P1. Coordinate acceptability
+			// P1.
+			// Coordinate acceptability
 			const both = rows.filter((r) => r.both)
 			const streetPass = both.filter((r) => r.hasStreet && !r.streetFail)
 			const streetPassWithin1km = streetPass.filter((r) => r.delta! <= 1).length
 			const acceptRate = streetPass.length ? streetPassWithin1km / streetPass.length : 1
 
-			// P2. Guard false positives on the coordinate-safe structured set
+			// P2.
+			// Guard false positives on the coordinate-safe structured set
 			const safeStructured = both.filter((r) => r.delta! <= 5 && r.kind === "structured_address")
 			const guardFalsePositives = safeStructured.filter((r) => r.implausible).length
 
-			// P3. Garbage-tail residual after kind-router + plausibility guard
+			// P3.
+			// Garbage-tail residual after kind-router + plausibility guard
 			const tail = both.filter((r) => r.hasStreet && r.streetFail && r.delta! > 25)
 			const tailStructured = tail.filter((r) => r.kind === "structured_address")
 			const residual = tailStructured.filter((r) => !r.implausible).length
@@ -327,8 +333,8 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 				"coordinate acceptability: street-PASS neural geocode within 1km of rules"
 			).toBeGreaterThanOrEqual(0.9)
 
-			// P2 — Receipt: 0/81 coord-safe structured fixtures trip the guard. fresh:
-			// 0/78. Zero false fallbacks is
+			// P2 — Receipt: 0/81 coord-safe structured fixtures trip the guard. fresh: 0/78.
+			// Zero false fallbacks is
 			//      the guard's whole justification — a non-zero here means it would bounce good geocodes to fallback.
 			expect(guardFalsePositives, "plausibility-guard false fallbacks on coord-safe structured fixtures").toBe(0)
 

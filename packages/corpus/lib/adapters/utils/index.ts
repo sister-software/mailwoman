@@ -35,14 +35,16 @@ import type { CanonicalRow, CorpusAdapter } from "#types"
 /**
  * Lookup table for corpus adapters.
  *
- * The CLI's `npx mailwoman corpus run <adapter-id>` resolves `<adapter-id>` against
- * this registry. the same registry is iterated by the `corpus build` pipeline.
+ * The CLI's `npx mailwoman corpus run <adapter-id>` resolves `<adapter-id>` against this
+ * registry. the same registry is iterated by the `corpus build` pipeline.
  * Adapters do not self-register at module load — they're added explicitly
  * so the dependency graph stays traceable.
  */
 export interface AdapterRegistry {
 	/**
-	 * Add an adapter. Throws if `adapter.id` is already registered.
+	 * Add an adapter.
+	 *
+	 * Throws if `adapter.id` is already registered.
 	 */
 	register(adapter: CorpusAdapter): void
 
@@ -63,8 +65,10 @@ export interface AdapterRegistry {
 }
 
 /**
- * Default in-memory registry. The runner constructs one per invocation. the CLI re-uses a shared
- * singleton (`defaultAdapterRegistry`) populated by `./adapters/index.ts` as adapters come online.
+ * Default in-memory registry.
+ *
+ * The runner constructs one per invocation. the CLI re-uses a shared singleton
+ * (`defaultAdapterRegistry`) populated by `./adapters/index.ts` as adapters come online.
  */
 export class InMemoryAdapterRegistry implements AdapterRegistry {
 	#byID = new Map<string, CorpusAdapter>()
@@ -91,8 +95,10 @@ export class InMemoryAdapterRegistry implements AdapterRegistry {
 }
 
 /**
- * Process-wide default registry. Populated by `./adapters/index.ts` as adapters are built. imported by
- * the CLI. Tests should construct their own `InMemoryAdapterRegistry` to avoid cross-test pollution.
+ * Process-wide default registry.
+ *
+ * Populated by `./adapters/index.ts` as adapters are built. imported by the CLI.
+ * Tests should construct their own `InMemoryAdapterRegistry` to avoid cross-test pollution.
  */
 export const defaultAdapterRegistry = new InMemoryAdapterRegistry()
 
@@ -100,9 +106,9 @@ export const defaultAdapterRegistry = new InMemoryAdapterRegistry()
  * Deterministic content-addressed source id.
  *
  * For adapters whose upstream source has no native primary key (CSV rows, GeoJSON features),
- * the runner expects a stable id so dedup, holdout manifests, and resumability work
- * across reruns. This helper produces one by hashing the adapter id and a canonical
- * serialization of the components dict (keys sorted, values verbatim).
+ * the runner expects a stable id so dedup, holdout manifests, and resumability work across reruns.
+ * This helper produces one by hashing the adapter id and a canonical serialization
+ * of the components dict (keys sorted, values verbatim).
  *
  * Output format: `<adapterID>-<first-12-hex-chars-of-sha256>`. 48 bits of entropy
  * is enough for ~17M rows per adapter before the expected collision count exceeds 1
@@ -114,7 +120,9 @@ export function stableSourceID(adapterID: string, components: Partial<Record<Com
 
 /**
  * {@link stableSourceID} over arbitrary disambiguator keys — a variant index, a slot number, anything that is not a
- * `ComponentTag`. Every key handed in is sorted and hashed either way. only the key vocabulary differs,
+ * `ComponentTag`.
+ *
+ * Every key handed in is sorted and hashed either way. only the key vocabulary differs,
  * and the narrow signature above is what stops an adapter hashing a misspelled component name.
  */
 export function stableSourceIDFromParts(
@@ -137,11 +145,13 @@ export function stableSourceIDFromParts(
  * This decides where the house number ends and the street begins for every US CSV adapter,
  * so an edge case fixed here is fixed for all of them.
  *
- * The remainder must stay `(\S.*)` and must not become `(.+)`: `\s+` and `.` both match
- * a tab, so `\s+(.+)$` lets the engine split a run of tabs between the two groups
- * every possible way before failing — quadratic backtracking on attacker-shaped input.
- * Requiring a non-space start removes the overlap. Group 2 is trimmed by the caller either way,
- * so the two forms are indistinguishable on real input. only the failure cost differs.
+ * The remainder must stay `(\S.*)` and must not become `(.+)`: `\s+` and `.` both match a tab,
+ * so `\s+(.+)$` lets the engine split a run of tabs between the two groups every possible way
+ * before failing — quadratic backtracking on attacker-shaped input.
+ * Requiring a non-space start removes the overlap.
+ *
+ * Group 2 is trimmed by the caller either way, so the two forms are indistinguishable
+ * on real input. only the failure cost differs.
  */
 export const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(\S.*)$/
 
@@ -184,9 +194,9 @@ export function splitStreetLine(line: string): SplitStreetLine | null {
  * a lower-cased form set. libpostal format: `canonical|abbr|abbr|...` — every form is indexed.
  *
  * `resourceDictionaryPath` already resolves both layouts — `core/data/...` from source
- * and from the packaged `out/` tree. The candidate list this replaced named it twice
- * and then guessed a third path off `process.cwd()`, and swallowed every error
- * while probing, so a corrupt dictionary reported as a missing one.
+ * and from the packaged `out/` tree.
+ * The candidate list this replaced named it twice and then guessed a third path off `process.cwd()`,
+ * and swallowed every error while probing, so a corrupt dictionary reported as a missing one.
  *
  * The largest libpostal dictionary is 8.4 KB, and each caller runs this once per process at module load.
  */
@@ -215,9 +225,11 @@ export async function loadLibpostalDictionary(language: string, filename: string
  * Canonical dedup key for a row.
  *
  * Two rows that share this key are treated as duplicates and only the first wins.
- * The key is built from `country`, the sorted `components` dict, and a normalized `raw`
- * (lower-cased, whitespace collapsed). License and provenance fields are intentionally excluded
- * so the same address from multiple adapters is recognized as a duplicate.
+ * The key is built from `country`, the sorted `components` dict, and a normalized
+ * `raw` (lower-cased, whitespace collapsed).
+ *
+ * License and provenance fields are intentionally excluded so the same address
+ * from multiple adapters is recognized as a duplicate.
  *
  * Synthetic rows are never deduplicated against natural rows: `synth.method` is folded
  * into the key when present, ensuring each augmentation variant survives.
@@ -234,8 +246,8 @@ export function canonicalDedupKey(row: CanonicalRow): string {
 /**
  * Streaming SHA-256 hasher.
  *
- * The runner feeds every jsonl line into one of these so the per-adapter checksum
- * can be recorded in `manifest.json` without a second pass over the jsonl.
+ * The runner feeds every jsonl line into one of these so the per-adapter checksum can
+ * be recorded in `manifest.json` without a second pass over the jsonl.
  * Implementation is a one-line wrapper, but giving it a name keeps the runner's
  * hash-tracking intent obvious.
  */

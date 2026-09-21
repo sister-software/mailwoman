@@ -27,7 +27,9 @@ export interface MeasureSoilResolutionsOptions extends SoilIngestOptions, Resolu
 export interface SoilResolutionReport {
 	delineations: number
 	/**
-	 * The count the shapefile declares for itself. A run whose streamed total differs read a truncated file.
+	 * The count the shapefile declares for itself.
+	 *
+	 * A run whose streamed total differs read a truncated file.
 	 */
 	declaredFeatureCount: number
 	measurements: SoilCellIndexMeasurement[]

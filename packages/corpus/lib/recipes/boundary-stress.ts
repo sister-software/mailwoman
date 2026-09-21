@@ -24,7 +24,10 @@ import { alignRow } from "#utils"
  * (recover the 84% locality drop on bare "City, state" rows without becoming a locality-first majority),
  * and house-number-before:after = 7:3 (FR's dominant order is number-before. 30%
  * after breaks the order-bias shortcut without risking FR hn-before accuracy).
- * The three original non-number shapes keep the bulk. Weights sum to 1.0.
+ *
+ * The three original non-number shapes keep the bulk.
+ * Weights sum to 1.0.
+ *
  * Key order is required — it drives the cumulative thresholds below.
  */
 const WEIGHTS: Record<BoundaryStressTemplate, number> = {

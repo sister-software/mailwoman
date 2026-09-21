@@ -7,8 +7,8 @@
 /**
  * End-to-end smoke of the `map-tui` bin, driven through a real pty.
  *
- * A pty is not a nicety here: the app only takes over the screen when stdin can be
- * put in raw mode, so a piped-stdio child would render nothing and exit on EOF.
+ * A pty is not a nicety here: the app only takes over the screen when stdin can be put
+ * in raw mode, so a piped-stdio child would render nothing and exit on EOF.
  * `script` supplies one — `-e` returns the child's exit code, and `stty` inside the command
  * sets a window size, since a pty created without a controlling terminal reports 0x0.
  *
@@ -33,8 +33,10 @@ const MOUSE_SGR_DISABLE = `${ESC}[?1006l`
 const BRAILLE_PATTERN = /[⠀-⣿]/u
 
 /**
- * The status bar's coordinate/zoom field, which doubles as the ready signal — its first appearance
- * means a frame has been rendered and raw mode is on. Therefore, keystrokes will land.
+ * The status bar's coordinate/zoom field, which doubles as the ready signal —
+ * its first appearance means a frame has been rendered and raw mode is on.
+ *
+ * Therefore, keystrokes will land.
  */
 const STATUS_PATTERN = /-?\d+\.\d{4},-?\d+\.\d{4} z\d+/g
 

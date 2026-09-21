@@ -42,7 +42,9 @@ import { prettyJSON } from "@mailwoman/core/json"
 import { join } from "path-ts"
 
 /**
- * The OS Downloads API root. Public, unauthenticated for OpenData products.
+ * The OS Downloads API root.
+ *
+ * Public, unauthenticated for OpenData products.
  */
 export const OS_DOWNLOADS_API_BASE = "https://api.os.uk/downloads/v1"
 
@@ -52,8 +54,10 @@ export const OS_DOWNLOADS_API_BASE = "https://api.os.uk/downloads/v1"
 export const CODEPOINT_PRODUCT_ID = "CodePointOpen"
 
 /**
- * The licence Code-Point Open is published under. Named exactly as OS names it,
- * because the database's `meta` table stores this verbatim and a consumer greps it.
+ * The licence Code-Point Open is published under.
+ *
+ * Named exactly as OS names it, because the database's `meta` table stores
+ * this verbatim and a consumer greps it.
  */
 export const CODEPOINT_LICENSE = "Open Government Licence v3.0"
 
@@ -66,13 +70,16 @@ export const CODEPOINT_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/op
  * The three-line attribution block OS requires of anyone redistributing
  * Code-Point Open, plus the OGL reference.
  *
- * All three lines are mandatory and each names a different rightsholder: OS for the geometry,
- * **Royal Mail** for the postcodes themselves, and **National Statistics** for the ONS
- * administrative codes carried on every row. Shipping only the OS line — the common mistake,
- * and the one GeoNames' readme makes in reverse by naming only Royal Mail — is not compliance.
+ * All three lines are mandatory and each names a different rightsholder:
+ * OS for the geometry, **Royal Mail** for the postcodes themselves, and **National
+ * Statistics** for the ONS administrative codes carried on every row.
+ * Shipping only the OS line — the common mistake, and the one GeoNames' readme makes
+ * in reverse by naming only Royal Mail — is not compliance.
  *
  * `year` is the year of your publication rather than the year of the OS release.
- * OGL attribution tracks the redistribution. That is the whole reason this is a function.
+ * OGL attribution tracks the redistribution.
+ *
+ * That is the whole reason this is a function.
  * The archive's own `Doc/licence.txt` in the 2026-05 extract reads `2026` on all three lines.
  */
 export function codePointAttribution(year: number): string {
@@ -97,7 +104,9 @@ export interface CodePointDownload {
 	 */
 	size: number
 	/**
-	 * The download URL. Ends in `&redirect`; OS 302s to a CDN object.
+	 * The download URL.
+	 *
+	 * Ends in `&redirect`; OS 302s to a CDN object.
 	 */
 	url: string
 	/**
@@ -121,8 +130,10 @@ export interface CodePointProduct {
 	id: string
 	name: string
 	/**
-	 * OS's release label, e.g. `2026-05`. Distinct from the internal `dataset version number`
-	 * in the archive's `Doc/metadata.txt` (`2026.2.0` for this extract) — both are recorded.
+	 * OS's release label, e.g. `2026-05`.
+	 *
+	 * Distinct from the internal `dataset version number` in the archive's `Doc/metadata.txt`
+	 * (`2026.2.0` for this extract) — both are recorded.
 	 */
 	version: string
 }
@@ -132,13 +143,18 @@ export interface CodePointProduct {
  * fact about it and the one a reader is most likely to assume wrongly.
  *
  * Code-Point Open covers **England, Scotland and Wales only**.
- * It does not cover Northern Ireland, and it does not cover the Isle of Man
- * or the Channel Islands. The country codes on the 2026-05 rows are exactly three —
- * `E92000001`, `S92000003`, `W92000004` — with no `N92000002` among 1,747,841 rows.
- * NI postcodes (the `BT` area) are administered by Land & Property Services and are not in
- * any OS OpenData product. ONS's OGL grant for postcode products explicitly excludes NI data.
- * So a database built from this source has a real, permanent `BT` hole, and the hole is a licensing
- * fact rather than a data-quality one. Report it. do not fill it from an unlicensed source.
+ * It does not cover Northern Ireland, and it does not cover the Isle of Man or the Channel Islands.
+ *
+ * The country codes on the 2026-05 rows are exactly three — `E92000001`, `S92000003`,
+ * `W92000004` — with no `N92000002` among 1,747,841 rows.
+ * NI postcodes (the `BT` area) are administered by Land & Property Services
+ * and are not in any OS OpenData product.
+ *
+ * ONS's OGL grant for postcode products explicitly excludes NI data.
+ * So a database built from this source has a real, permanent `BT` hole,
+ * and the hole is a licensing fact rather than a data-quality one.
+ *
+ * Report it. do not fill it from an unlicensed source.
  */
 export const CODEPOINT_COVERAGE_NOTE =
 	"Code-Point Open covers England, Scotland and Wales only (country codes E92000001/S92000003/W92000004). " +
@@ -214,11 +230,14 @@ export const NORTHERN_IRELAND_OPTIONS_NOTE =
 /**
  * Build the OS Downloads API client.
  *
- * `APIClient` per `agents.md`: these are small JSON API requests, which is exactly the population
- * the rule binds. Pacing is set anyway even though OS publishes no documented limit for the
- * open Downloads API — two requests per acquisition cannot approach any ceiling, and an unpaced
- * client is a trap for the next caller who loops it. Retry is bounded because a transient
- * 5xx on a metadata call should not fail a 14 MB acquisition that has not started yet.
+ * `APIClient` per `agents.md`: these are small JSON API requests, which is
+ * exactly the population the rule binds.
+ * Pacing is set anyway even though OS publishes no documented limit for the open
+ * Downloads API — two requests per acquisition cannot approach any ceiling,
+ * and an unpaced client is a trap for the next caller who loops it.
+ *
+ * Retry is bounded because a transient 5xx on a metadata call should not fail a
+ * 14 MB acquisition that has not started yet.
  */
 export function createOSDownloadsClient(): APIClient {
 	return new APIClient({
@@ -239,7 +258,9 @@ export async function fetchCodePointProduct(client: APIClient = createOSDownload
 }
 
 /**
- * List the downloadable archives. Two entries as of 2026-05: CSV and GeoPackage, both whole-GB.
+ * List the downloadable archives.
+ *
+ * Two entries as of 2026-05: CSV and GeoPackage, both whole-GB.
  */
 export async function fetchCodePointDownloads(
 	client: APIClient = createOSDownloadsClient()
@@ -254,14 +275,17 @@ export async function fetchCodePointDownloads(
 
 export interface DownloadCodePointOptions {
 	/**
-	 * Directory the archive lands in. The caller owns it — the convention is a new
-	 * dated directory per acquisition (`$MAILWOMAN_DATA_ROOT/codepoint/<yyyy-MM-DD>/`)
-	 * so an acquisition never overwrites an earlier one.
+	 * Directory the archive lands in.
+	 *
+	 * The caller owns it — the convention is a new dated directory per acquisition
+	 * (`$MAILWOMAN_DATA_ROOT/codepoint/<yyyy-MM-DD>/`) so an acquisition never overwrites an earlier one.
 	 */
 	destDir: string
 	/**
-	 * Which archive to take. `CSV` is what the database builder parses; `GeoPackage`
-	 * carries the same rows behind a gdal dependency we do not need.
+	 * Which archive to take.
+	 *
+	 * `CSV` is what the database builder parses; `GeoPackage` carries the same
+	 * rows behind a gdal dependency we do not need.
 	 */
 	format?: "CSV" | "GeoPackage"
 	/**
@@ -270,7 +294,9 @@ export interface DownloadCodePointOptions {
 	client?: APIClient
 	/**
 	 * Skip the download when the destination already exists and matches the upstream md5.
-	 * The default. Set `false` to force a re-pull.
+	 *
+	 * The default.
+	 * Set `false` to force a re-pull.
 	 */
 	reuseExisting?: boolean
 	onPhase?: (phase: string, detail?: string) => void
@@ -310,13 +336,14 @@ export interface DownloadCodePointResult {
  * the rule binds API requests — small bodies, repeated calls, rate-limited hosts —
  * and the two metadata GETs above honour it through
  * {@link createOSDownloadsClient}. The archive is a file transfer streamed to disk. Caching a 14 MB body in the response
- * cache is pointless when the dated directory is the cache, there is one
- * request to pace, and axios buffers a non-stream response type in memory.
+ * cache is pointless when the dated directory is the cache, there is one request to pace,
+ * and axios buffers a non-stream response type in memory.
  * Same call as `osm/sdk/fetch.ts` and `tiger/sdk/download.ts`.
  *
- * The md5 check is not ceremony. A truncated or CDN-corrupted archive still unzips far enough to
- * yield plausible CSVs, and the failure would surface as a quietly short postcode count in a 1.7
- * M-row database — the kind of defect that reads as a data change rather than a transfer error.
+ * The md5 check is not ceremony.
+ * A truncated or CDN-corrupted archive still unzips far enough to yield plausible CSVs,
+ * and the failure would surface as a quietly short postcode count in a 1.7 M-row database —
+ * the kind of defect that reads as a data change rather than a transfer error.
  */
 export async function downloadCodePointOpen(options: DownloadCodePointOptions): Promise<DownloadCodePointResult> {
 	const { destDir, format = "CSV", reuseExisting = true } = options

@@ -41,14 +41,16 @@ import { readCommands, type CommandNode, type OptionSpec } from "./cli-schema.ts
 //#region Scope policy
 
 /**
- * The command groups this page documents in full. `""` is the root of `commands/`,
- * i.e. the commands invoked as `mailwoman <name>` with no group.
+ * The command groups this page documents in full.
+ *
+ * `""` is the root of `commands/`, i.e. the commands invoked as `mailwoman <name>` with no group.
  * Every command found in these groups is emitted, so adding a sibling command needs no edit here.
  */
 export const DOCUMENTED_GROUPS: readonly string[] = ["", "data", "skill", "clients", "registry"]
 
 /**
  * One line per top-level group the page does not document, stating what the group is for.
+ *
  * Every group discovered outside {@link DOCUMENTED_GROUPS} must appear here —
  * {@link collectCLISurface} throws otherwise, so a new group is impossible to add
  * without deciding whether a consumer needs it.
@@ -86,7 +88,9 @@ export interface CLIFlag {
 	 */
 	type: string
 	/**
-	 * The default, already rendered for the table. `—` when the flag has none.
+	 * The default, already rendered for the table.
+	 *
+	 * `—` when the flag has none.
 	 */
 	default: string
 	/**
@@ -174,9 +178,11 @@ function renderFlag(name: string, option: OptionSpec): string {
 }
 
 /**
- * The `Default` column. Absolute paths are suppressed: `geocode --data-root` defaults to the
- * resolved data root, so printing the value would bake the generating machine's filesystem
- * into a published page. Each such flag's description already states which variable it reads.
+ * The `Default` column.
+ *
+ * Absolute paths are suppressed: `geocode --data-root` defaults to the resolved data root,
+ * so printing the value would bake the generating machine's filesystem into a published page.
+ * Each such flag's description already states which variable it reads.
  */
 export function renderDefault(value: unknown): string {
 	if (value === undefined) return "—"
@@ -198,12 +204,15 @@ export function renderDefault(value: unknown): string {
 
 /**
  * Make a source-authored help string safe as MDX table-cell text.
- * Docusaurus compiles `.mdx` through micromark's JSX extension, so a bare `<address>` is an element
- * and a bare `{ checks: [...] }` is an expression — both build-breaking or content-eating
- * (the class `mailwoman dev lint mdx-angles` catches). Entities render as the literal characters
- * and cannot be parsed as syntax. The pipe escape is the table's own requirement,
- * and the asterisk escape is `oxfmt`'s: a literal `*` in prose (`place_bbox R*Tree`) is
- * emphasis syntax, and leaving it raw makes the emitted file fail `--check`.
+ *
+ * Docusaurus compiles `.mdx` through micromark's JSX extension, so a bare `<address>`
+ * is an element and a bare `{ checks: [...] }` is an expression — both build-breaking
+ * or content-eating (the class `mailwoman dev lint mdx-angles` catches).
+ * Entities render as the literal characters and cannot be parsed as syntax.
+ *
+ * The pipe escape is the table's own requirement, and the asterisk escape is
+ * `oxfmt`'s: a literal `*` in prose (`place_bbox R*Tree`) is emphasis syntax,
+ * and leaving it raw makes the emitted file fail `--check`.
  */
 export function escapeCell(text: string): string {
 	return text
@@ -451,7 +460,9 @@ function renderCommand(command: CLICommand): string {
 }
 
 /**
- * Render the whole page. Pure — the same {@link CLISurface} always produces the same bytes.
+ * Render the whole page.
+ *
+ * Pure — the same {@link CLISurface} always produces the same bytes.
  */
 export function renderCLIReference(surface: CLISurface): string {
 	const documentedCount = surface.documented.reduce((total, group) => total + group.commands.length, 0)
@@ -564,7 +575,9 @@ export function renderCLIReference(surface: CLISurface): string {
 export const OUTPUT_PATH = repoRootPath("docs", "articles", "developers", "reference", "cli.mdx")
 
 /**
- * Render the page and write it. Returns the rendered text so a caller can compare rather than write.
+ * Render the page and write it.
+ *
+ * Returns the rendered text so a caller can compare rather than write.
  */
 export async function generateCLIReference(): Promise<string> {
 	const surface = await collectCLISurface()

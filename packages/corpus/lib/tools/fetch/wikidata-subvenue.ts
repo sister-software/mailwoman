@@ -67,17 +67,20 @@ import { writeManifest } from "#tools/fetch/download/index"
 const SLUG = "wikidata-subvenue"
 
 /**
- * The sparql endpoint. Public, no credential.
+ * The sparql endpoint.
+ *
+ * Public, no credential.
  */
 export const WDQS_ENDPOINT = "https://query.wikidata.org/sparql"
 
 /**
  * The `User-Agent` every request carries.
  *
- * Not decoration. The Wikimedia user-agent policy blocks requests whose agent is absent,
- * generic, or a library default, and wdqs enforces it — an unidentified client gets
- * a 403 that no amount of retrying fixes. The policy asks for a tool name, a URL,
- * and a contact address, all three of which are here.
+ * Not decoration.
+ * The Wikimedia user-agent policy blocks requests whose agent is absent, generic, or a library default,
+ * and wdqs enforces it — an unidentified client gets a 403 that no amount of retrying fixes.
+ *
+ * The policy asks for a tool name, a URL, and a contact address, all three of which are here.
  */
 export const WIKIDATA_USER_AGENT =
 	"mailwoman/1.0 (https://github.com/sister-software/mailwoman; teffen@sister.software) corpus-subvenue-fetch"
@@ -90,10 +93,10 @@ export const WIKIDATA_USER_AGENT =
  * rather than to sit against a ceiling: one query per second is far inside anything wdqs
  * objects to, and at this volume the whole fetch still completes in seconds.
  *
- * Set as `minRequestIntervalMs` rather than `requestsPerMinute` deliberately —
- * `agents.md` records that `requestsPerMinute` is a budget model whose cooldown
- * lets N requests go out back to back, so it does not deliver N per minute
- * and is not the check that holds a rate. The interval is.
+ * Set as `minRequestIntervalMs` rather than `requestsPerMinute` deliberately — `agents.md`
+ * records that `requestsPerMinute` is a budget model whose cooldown lets N requests go out
+ * back to back, so it does not deliver N per minute and is not the check that holds a rate.
+ * The interval is.
  */
 const WDQS_MIN_REQUEST_INTERVAL_MS = 1000
 
@@ -110,27 +113,31 @@ const WDQS_REQUEST_TIMEOUT_MS = 90_000
 const WDQS_MAX_ATTEMPTS = 3
 
 /**
- * How long a cached sparql response stays fresh. A week: the class labels this pulls
- * change on the timescale at which someone edits a Wikidata concept's German alias,
- * which is to say rarely, and a re-run inside a working session should not re-ask.
+ * How long a cached sparql response stays fresh.
+ *
+ * A week: the class labels this pulls change on the timescale at which someone edits a Wikidata concept's
+ * German alias, which is to say rarely, and a re-run inside a working session should not re-ask.
  */
 const WDQS_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
 /**
  * One Wikidata concept whose labels are a designator's multilingual surface set.
  *
- * `designatorID` is the mailwoman-side vocabulary term, matching
- * `neural/venue-structure.ts`'s `VENUE_STRUCTURE_DESIGNATORS` wherever the two overlap.
+ * `designatorID` is the mailwoman-side vocabulary term, matching `neural/venue-structure.ts`'s
+ * `VENUE_STRUCTURE_DESIGNATORS` wherever the two overlap.
  * `qid` was resolved by `wbsearchentities` and hand-checked against the entity's English
  * description (recorded below) on 2026-08-04 — a QID picked by search alone is how you
  * end up pulling the labels of a Bronx neighbourhood called Concourse.
  *
- * `wing` is absent and that is a finding rather than an oversight: Wikidata
- * has no clean concept for "wing of a building". `wbsearchentities` for "wing"
- * returns a surname, two English villages, a rugby position and a drone company.
+ * `wing` is absent and that is a finding rather than an oversight: Wikidata has
+ * no clean concept for "wing of a building".
+ * `wbsearchentities` for "wing" returns a surname, two English villages,
+ * a rugby position and a drone company.
+ *
  * Since `wing` is the single most valuable designator in the arc — `West Wing` is the
- * one modifier case that already parses, and `East Wing` is the one that does not — its
- * localized surfaces have to come from somewhere else. See the wave-1 report.
+ * one modifier case that already parses, and `East Wing` is the one that does not —
+ * its localized surfaces have to come from somewhere else.
+ * See the wave-1 report.
  */
 export interface SubVenueConcept {
 	designatorID: string
@@ -143,7 +150,9 @@ export interface SubVenueConcept {
 }
 
 /**
- * The concept table. Eight ids, each verified against its English description on 2026-08-04.
+ * The concept table.
+ *
+ * Eight ids, each verified against its English description on 2026-08-04.
  */
 export const SUBVENUE_CONCEPTS: readonly SubVenueConcept[] = [
 	{ designatorID: "terminal", qid: "Q849706", gloss: "airport terminal — part of an airport" },
@@ -183,11 +192,14 @@ export function buildDesignatorLabelQuery(concepts: readonly SubVenueConcept[] =
 /**
  * Build the instance-label query — every item that is an `instance of`
  * (through any `subclass of` chain) an airport terminal, with all of its labels.
+ *
  * Measured at 246 items / 775 labels on 2026-08-04, well inside wdqs's 60-second budget.
  *
  * A caveat worth knowing before trusting a row: Wikidata's P31 on these is not clean.
- * `Q1322696` (Kigali International Airport) is typed as an airport terminal, so the result set mixes
- * airports in with terminals. The consumer filters. this module fetches what the query returns.
+ * `Q1322696` (Kigali International Airport) is typed as an airport terminal,
+ * so the result set mixes airports in with terminals.
+ *
+ * The consumer filters. this module fetches what the query returns.
  */
 export function buildTerminalInstanceQuery(classQID: string = TERMINAL_CLASS_QID): string {
 	return `SELECT ?item ?lang ?label WHERE {
@@ -207,8 +219,10 @@ export interface SPARQLResults {
 }
 
 /**
- * Whether a decoded body is a sparql results envelope. Used as the cache's write validator so an html
- * error page served under a 200 is never persisted for the next run to destructure into `undefined`.
+ * Whether a decoded body is a sparql results envelope.
+ *
+ * Used as the cache's write validator so an html error page served under a 200 is
+ * never persisted for the next run to destructure into `undefined`.
  */
 export function isSPARQLResults(value: unknown): value is SPARQLResults {
 	return typeof value === "object" && value !== null && Array.isArray((value as SPARQLResults).results?.bindings)
@@ -216,18 +230,22 @@ export function isSPARQLResults(value: unknown): value is SPARQLResults {
 
 export interface CreateWikidataClientOptions {
 	/**
-	 * On-disk response-cache root. Defaults to a `http-cache` directory beside the fetch output.
+	 * On-disk response-cache root.
+	 *
+	 * Defaults to a `http-cache` directory beside the fetch output.
 	 */
 	cacheDir: string
 	/**
 	 * Time source powering the pacer and the retry backoff.
+	 *
 	 * Defaults to the system clock. tests inject a fake so no suite ever sleeps a real second.
 	 */
 	clock?: ClockLike
 	/**
 	 * Axios overrides, merged over this client's defaults. the test injection point —
-	 * pass an `adapter` and no live call is made. Overriding `headers` wholesale
-	 * would drop the required `User-Agent`, so don't.
+	 * pass an `adapter` and no live call is made.
+	 *
+	 * Overriding `headers` wholesale would drop the required `User-Agent`, so don't.
 	 */
 	axios?: ConstructorParameters<typeof APIClient>[0]["axios"]
 }
@@ -262,9 +280,10 @@ export function createWikidataClient(options: CreateWikidataClientOptions): Wiki
 			storage: buildDiskStorage({
 				directory: options.cacheDir,
 				// `value.data` is the cached response; `value.data.data` is its body.
-				// Passing the response here instead of the body is a silent-failure trap — the predicate
-				// returns false for every entry and every run re-fetches while logging "rejected by
-				// the configured validate() predicate". Caught on the first live run, 2026-08-04.
+				// Passing the response here instead of the body is a silent-failure trap —
+				// the predicate returns false for every entry and every run re-fetches
+				// while logging "rejected by the configured validate() predicate".
+				// Caught on the first live run, 2026-08-04.
 				validate: (value) => isSPARQLResults(value.data?.data),
 			}),
 			ttl: WDQS_CACHE_TTL_MS,

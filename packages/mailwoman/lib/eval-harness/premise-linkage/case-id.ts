@@ -16,15 +16,18 @@
 import { sha256Hex } from "@mailwoman/core/hash"
 
 /**
- * Hex characters kept from the digest. Sixty-four bits of identifier: long enough that a
- * run's rows do not collide, short enough that nobody mistakes it for something to look up.
+ * Hex characters kept from the digest.
+ *
+ * Sixty-four bits of identifier: long enough that a run's rows do not collide,
+ * short enough that nobody mistakes it for something to look up.
  */
 const CASE_ID_LENGTH = 16
 
 /**
- * The shortest salt this harness will run with. Below this a salt is enumerable,
- * and an enumerable salt is no salt: the holder of the register recovers every
- * published case identifier by trying them all.
+ * The shortest salt this harness will run with.
+ *
+ * Below this a salt is enumerable, and an enumerable salt is no salt: the holder of the
+ * register recovers every published case identifier by trying them all.
  */
 const MINIMUM_SALT_LENGTH = 16
 

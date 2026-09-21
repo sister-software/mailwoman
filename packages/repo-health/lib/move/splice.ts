@@ -14,17 +14,21 @@ import { stringifyJSON } from "@mailwoman/core/json"
 
 export interface TextEdit {
 	/**
-	 * What must sit at these offsets. A mismatch throws rather than writing: an offset that
-	 * has drifted names a different string with exactly the same confidence as the right one.
+	 * What must sit at these offsets.
+	 *
+	 * A mismatch throws rather than writing: an offset that has drifted names a different
+	 * string with exactly the same confidence as the right one.
 	 */
 	expected: string
 	replacement: string
 	start: number
 	end: number
 	/**
-	 * Whether the offsets bracket a quote pair. A module specifier and a manifest target
-	 * are quoted, so the quote character is read from the text and written back —
-	 * a single-quoted specifier stays single-quoted and the formatter has nothing to undo.
+	 * Whether the offsets bracket a quote pair.
+	 *
+	 * A module specifier and a manifest target are quoted, so the quote character is read
+	 * from the text and written back — a single-quoted specifier stays single-quoted
+	 * and the formatter has nothing to undo.
 	 * A path in a shell command or a sentence is not.
 	 */
 	quoted: boolean

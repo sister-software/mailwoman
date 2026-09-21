@@ -25,8 +25,9 @@ import { CSVSpliterator } from "spliterator"
 import { createReadStream } from "spliterator/node/fs"
 
 /**
- * One BAN address point. Every field but `rep`/`postcode`/`city`/`lieuDit` is
- * guaranteed present by the source.
+ * One BAN address point.
+ *
+ * Every field but `rep`/`postcode`/`city`/`lieuDit` is guaranteed present by the source.
  */
 export interface BANAddrRecord {
 	/**
@@ -50,9 +51,11 @@ export interface BANAddrRecord {
 	 */
 	city: string | null
 	/**
-	 * `nom_ld` ("nom du lieu-dit") — the hamlet/place name below the commune, cleaned
-	 * via {@link cleanLieuDit}. Filled on 6.94% of BAN rows nationally. null on the rest
-	 * and on any row whose raw value is junk/duplicate (see
+	 * `nom_ld` ("nom du lieu-dit") — the hamlet/place name below the commune,
+	 * cleaned via {@link cleanLieuDit}.
+	 *
+	 * Filled on 6.94% of BAN rows nationally. null on the rest and on any row
+	 * whose raw value is junk/duplicate (see
 	 * {@link cleanLieuDit} for the filter breakdown — survey: `.superpowers/sdd/deploc-world-survey.md`, FR section,
 	 * 2026-07-22).
 	 */
@@ -104,17 +107,21 @@ const LIEU_DIT_PLACEHOLDER_PATTERN = /^_[0-9]+$/
 
 /**
  * `"ancienne commune : <name>"` — real signal (a merged commune's former name),
- * but the survey explicitly flags it as needing a strip/parse step rather than raw-label use
- * (survey: 3,709 rows, 0.2% of filled). Dropped here rather than mis-emitted as a literal
- * lieu-dit surface. parsing this bucket into its own signal is deferred, unscoped work.
+ * but the survey explicitly flags it as needing a strip/parse step rather than
+ * raw-label use (survey: 3,709 rows, 0.2% of filled).
+ *
+ * Dropped here rather than mis-emitted as a literal lieu-dit surface. parsing this
+ * bucket into its own signal is deferred, unscoped work.
  */
 const LIEU_DIT_ANCIENNE_COMMUNE_PREFIX_PATTERN = /^ancienne commune\s*:/i
 
 /**
  * Clean a raw `nom_ld` value against the survey's junk/dup breakdown.
- * Of the 6.94% of BAN rows carrying a `nom_ld` value, ~6.6% of those are junk or an exact duplicate
- * of the commune name — this filters them out so only the clean ~93.4% (~1.69M rows nationally)
- * survive to {@link BANAddrRecord.lieuDit}. Exported for testing.
+ *
+ * Of the 6.94% of BAN rows carrying a `nom_ld` value, ~6.6% of those are junk
+ * or an exact duplicate of the commune name — this filters them out so only the clean
+ * ~93.4% (~1.69M rows nationally) survive to {@link BANAddrRecord.lieuDit}.
+ * Exported for testing.
  */
 export function cleanLieuDit(raw: string | undefined, commune: string | null): string | null {
 	const trimmed = raw?.trim()
@@ -156,9 +163,11 @@ async function openCSV(csvPath: string): Promise<AsyncIterable<Uint8Array | stri
 }
 
 /**
- * Stream every address point from one BAN département dump, geometry taken straight
- * from the source `lon`/`lat` (WGS84). Rows with a non-finite coordinate or an empty
- * `nom_voie`/`numero` are skipped (yield-side filtering is the caller's job for anything finer).
+ * Stream every address point from one BAN département dump, geometry taken
+ * straight from the source `lon`/`lat` (WGS84).
+ *
+ * Rows with a non-finite coordinate or an empty `nom_voie`/`numero` are skipped
+ * (yield-side filtering is the caller's job for anything finer).
  * The `rep` suffix is normalised to lower-case or null.
  */
 export async function* extractBANAddrPoints(csvPath: string): AsyncGenerator<BANAddrRecord> {
@@ -179,9 +188,8 @@ export async function* extractBANAddrPoints(csvPath: string): AsyncGenerator<BAN
 		const street = row.nom_voie?.trim()
 
 		if (!numero || !street) continue
-		// Guard the empty-string trap: `Number("")` is 0 (finite), which would
-		// write a bogus (0,0) point — . Therefore, require a non-empty coord string
-		// before parsing, then the finite check catches garbage.
+		// Guard the empty-string trap: `Number("")` is 0 (finite), which would write a bogus (0,0) point — .
+		// Therefore, require a non-empty coord string before parsing, then the finite check catches garbage.
 		const lonStr = row.lon?.trim()
 		const latStr = row.lat?.trim()
 

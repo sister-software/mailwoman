@@ -73,22 +73,27 @@ export * from "#tools/sub/venue/wikidata"
 /**
  * Apply the curation decisions to a surface list, IN place on a copy.
  *
- * A promotion binds `(designatorID, phrase, locale)`. A surface matches when it names the same
- * record with the same phrase and its language is the locale's language or the untagged `und` —
- * the default `name` tag carries no language, and a German extract's untagged `Halle 2` is German.
+ * A promotion binds `(designatorID, phrase, locale)`.
+ * A surface matches when it names the same record with the same phrase and its language
+ * is the locale's language or the untagged `und` — the default `name` tag carries no
+ * language, and a German extract's untagged `Halle 2` is German.
  *
- * Region is the subtle half. A surface attested in an extract carries that extract's region
- * and matches only its own locale. A surface with `region: ""` is region-free —
- * a Wikidata label or a derived head noun — and a promotion reaches it only
- * when no rejection exists for the same designator, phrase and language anywhere else.
+ * Region is the subtle half.
+ * A surface attested in an extract carries that extract's region and matches only its own locale.
+ *
+ * A surface with `region: ""` is region-free — a Wikidata label or a derived head noun —
+ * and a promotion reaches it only when no rejection exists for the same designator,
+ * phrase and language anywhere else.
  * That guard is not decoration: `pier` is promoted for en-GB and rejected for en-US,
- * and without it the en-GB decision would curate the region-free English surface and hand
- * `Pier 1 Imports` the promotion en-US was refused. Where no rejection competes —
- * `terminal` in `es`, `ターミナル` in `ja` — the region-free surface is the whole point,
- * since a language's designator does not stop at a border.
+ * and without it the en-GB decision would curate the region-free English surface
+ * and hand `Pier 1 Imports` the promotion en-US was refused.
  *
- * Rejections mark nothing themselves. They exist in `promotions[]` as the record of a decision taken,
- * so the next reader meets en-GB `hall`'s 3,204 bus stops before re-proposing it rather than after.
+ * Where no rejection competes — `terminal` in `es`, `ターミナル` in `ja` — the region-free
+ * surface is the whole point, since a language's designator does not stop at a border.
+ *
+ * Rejections mark nothing themselves.
+ * They exist in `promotions[]` as the record of a decision taken, so the next reader
+ * meets en-GB `hall`'s 3,204 bus stops before re-proposing it rather than after.
  */
 export function applyPromotions(
 	surfaces: readonly SubVenueSurface[],
@@ -135,6 +140,7 @@ export interface SubVenueHarvest {
 
 /**
  * Everything {@link buildSubVenueLexicon} needs, already parsed.
+ *
  * Keeping the builder off the filesystem is what makes it deterministic
  * and testable without fixtures on disk.
  */
@@ -145,6 +151,7 @@ export interface BuildSubVenueLexiconInput {
 	wikidata: unknown | null
 	/**
 	 * Every harvestable source, in the order they should contribute.
+	 *
 	 * Order matters only for the surface index: a source can match a phrase an
 	 * earlier source introduced, never a later one.
 	 */
@@ -154,21 +161,25 @@ export interface BuildSubVenueLexiconInput {
 	 */
 	sources: readonly SubVenueLexiconSource[]
 	/**
-	 * Curation decisions. Defaults to the committed {@link SUBVENUE_PROMOTIONS}; pass an empty array to
-	 * build the pre-curation table (which is what the promotion census itself is taken against).
+	 * Curation decisions.
+	 *
+	 * Defaults to the committed {@link SUBVENUE_PROMOTIONS}; pass an empty array to build
+	 * the pre-curation table (which is what the promotion census itself is taken against).
 	 */
 	promotions?: readonly SubVenuePromotion[]
 }
 
 /**
- * Build the lexicon table. Pure and deterministic — same inputs, byte-identical output.
+ * Build the lexicon table.
+ *
+ * Pure and deterministic — same inputs, byte-identical output.
  *
  * Order of operations is required in three places:
  *
  * 1. Seed surfaces are inserted before anything else, so `terminal` indexes to the
  *    `terminal` designator rather than to whichever Wikidata alias sorts first.
- * 2. Head nouns are derived after Wikidata and before the harvests, because `ターミナル`
- *    has to exist as a surface before a Japanese extract can be searched for it.
+ * 2. Head nouns are derived after Wikidata and before the harvests, because `ターミナル` has
+ *    to exist as a surface before a Japanese extract can be searched for it.
  *    That ordering is the entire reason the Japan harvest finds anything — see `provenance.md`.
  * 3. Promotions are applied last, over the union, so a decision can promote a
  *    surface whichever source produced it.
@@ -268,8 +279,9 @@ export function buildSubVenueLexicon(input: BuildSubVenueLexiconInput): SubVenue
 	const promotions = [...(input.promotions ?? SUBVENUE_PROMOTIONS)]
 	const curated = applyPromotions(surfaces, promotions)
 
-	// Deterministic order everywhere. `localeCompare` matches the tie-break discipline
-	// `generate-taxonomy.ts` and `build-brands.ts` already use.
+	// Deterministic order everywhere.
+	// `localeCompare` matches the tie-break discipline `generate-taxonomy.ts`
+	// and `build-brands.ts` already use.
 	designators.sort((a, b) => a.id.localeCompare(b.id))
 	modifiers.sort((a, b) => a.id.localeCompare(b.id))
 
@@ -332,6 +344,7 @@ export interface SubVenueExtractInput {
 export interface GenerateSubVenueLexiconOptions {
 	/**
 	 * Directory holding the `mailwoman corpus fetch wikidata-subvenue` output.
+	 *
 	 * Omit to build the seed-only table.
 	 */
 	wikidataDir?: string
@@ -341,12 +354,15 @@ export interface GenerateSubVenueLexiconOptions {
 	extracts?: readonly SubVenueExtractInput[]
 	/**
 	 * Already-read Overture rows (`readOvertureSubVenues`), grouped by the caller.
+	 *
 	 * Kept as a parameter rather than a path so this function stays free of a 3.9 GB
 	 * database dependency — the CLI opens `poi.db`, this assembles.
 	 */
 	overtureRows?: readonly (SubVenueHarvestRow & { country: string })[]
 	/**
-	 * `poi.db`'s layer vintage, for `sources[]`. Only read when `overtureRows` is non-empty.
+	 * `poi.db`'s layer vintage, for `sources[]`.
+	 *
+	 * Only read when `overtureRows` is non-empty.
 	 */
 	overtureVintage?: string
 	/**
@@ -377,8 +393,9 @@ export async function generateSubVenueLexicon(options: GenerateSubVenueLexiconOp
 			id: "wikidata",
 			origin: manifest.endpoint ?? "https://query.wikidata.org/sparql",
 			license: manifest.license ?? "CC0",
-			// The date only. A full ISO timestamp would make every re-fetch a diff in the
-			// committed artifact for no information a reader of a vocabulary table can act on.
+			// The date only.
+			// A full ISO timestamp would make every re-fetch a diff in the committed artifact
+			// for no information a reader of a vocabulary table can act on.
 			retrieved: (manifest.downloaded_at ?? "").slice(0, 10),
 			rows: labelFile?.rows ?? 0,
 		})
@@ -391,9 +408,10 @@ export async function generateSubVenueLexicon(options: GenerateSubVenueLexiconOp
 
 		sources.push({
 			id: `osm:${extract.region.toLowerCase()}`,
-			// The extract's name, never its path. `agents.md` forbids re-hardcoding the
-			// lab data root anywhere, and a committed artifact carrying `/mnt/playpen/...`
-			// would do exactly that while telling a reader on another machine nothing.
+			// The extract's name, never its path.
+			// `agents.md` forbids re-hardcoding the lab data root anywhere,
+			// and a committed artifact carrying `/mnt/playpen/...` would do exactly that
+			// while telling a reader on another machine nothing.
 			// `great-britain` identifies the Geofabrik region, which is the fact that matters.
 			origin: `OpenStreetMap via Geofabrik (${basename(extract.path, ".jsonl")})`,
 			license: "ODbL (OpenStreetMap)",

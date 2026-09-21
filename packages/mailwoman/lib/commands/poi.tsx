@@ -70,9 +70,11 @@ type Options = OptionsOf<typeof spec>
 /**
  * Try to build the WOF resolver (same backend selector `geocode.tsx`/`parse.tsx --resolve` use), so an
  * anchor remainder resolves to lat/lon and `--db` category/brand queries can compute a search center.
- * Lazy + optional: an absent gazetteer or an unbuilt `@mailwoman/resolver-wof-sqlite` peer
- * degrades to no resolver (today's pre-wiring behavior) rather than failing the probe —
- * a stderr note explains what's missing. Caller owns closing the returned handle's backend lookup.
+ *
+ * Lazy + optional: an absent gazetteer or an unbuilt `@mailwoman/resolver-wof-sqlite`
+ * peer degrades to no resolver (today's pre-wiring behavior) rather than failing
+ * the probe — a stderr note explains what's missing.
+ * Caller owns closing the returned handle's backend lookup.
  */
 async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver } & Disposable) | undefined> {
 	const { resolvePOIResolverPaths } = await import("#resolver-backend")
@@ -146,9 +148,10 @@ async function formatOverpassBlock(intent: POIIntent): Promise<string> {
 }
 
 /**
- * Compact ancestry suffix, e.g. "· Springfield, IL, US" — locality/region/country
- * entries, coarsest-last (the hierarchy's own deepest-first order reversed),
- * skipping other placetypes (county, neighbourhood, …) to keep the table narrow.
+ * Compact ancestry suffix, e.g. "· Springfield, IL, US" — locality/region/country entries,
+ * coarsest-last (the hierarchy's own deepest-first order reversed), skipping other
+ * placetypes (county, neighbourhood, …) to keep the table narrow.
+ *
  * Empty string when `ancestry` is absent (no reverse geocoder wired) or carries none
  * of those three tiers (e.g. open-ocean/approximate misses).
  */
@@ -220,7 +223,8 @@ async function runPOI(input: string, options: Options): Promise<string> {
 	const { createRuntimePipeline } = await import("#index")
 
 	// #1108: an attempted-but-failed encoder load is never silent — absent weights get an install hint,
-	// a corrupt bundle surfaces its underlying error. Stderr only. stdout stays the probe output.
+	// a corrupt bundle surfaces its underlying error.
+	// Stderr only. stdout stays the probe output.
 	const classifier = await loadClassifierTolerant(options.locale, { onDegrade: reportToStderr })
 	const resolverHandle = await tryLoadResolver(options)
 

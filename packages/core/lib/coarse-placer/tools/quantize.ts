@@ -33,11 +33,15 @@ const INT8_MAX = 127
  */
 export interface QuantizeCoarsePlacerOptions {
 	/**
-	 * Fp32 artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
+	 * Fp32 artifact dir.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
 	 */
 	in?: PathBuilderLike
 	/**
-	 * Int8 output dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model-int8`.
+	 * Int8 output dir.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model-int8`.
 	 */
 	out?: PathBuilderLike
 }

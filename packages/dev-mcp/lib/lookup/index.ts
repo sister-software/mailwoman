@@ -28,13 +28,17 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
 /**
- * Sources a lookup can address. Each answers a different "does it know this?"
- * and they are not interchangeable — a surface the FST accepts can still be absent from
- * the candidate table, which is the shape most resolve failures take.
+ * Sources a lookup can address.
+ *
+ * Each answers a different "does it know this?" and they are not interchangeable —
+ * a surface the FST accepts can still be absent from the candidate table,
+ * which is the shape most resolve failures take.
  */
 export const LookupSource = {
 	/**
-	 * The gazetteer FST the emission prior reads. Answers what bias the decoder would receive.
+	 * The gazetteer FST the emission prior reads.
+	 *
+	 * Answers what bias the decoder would receive.
 	 */
 	FST: "fst",
 	/**
@@ -42,28 +46,33 @@ export const LookupSource = {
 	 */
 	StreetMorphology: "street_morphology",
 	/**
-	 * Stage-1 deterministic preprocessing. Answers what the model is actually FED,
-	 * which is not what the user typed.
+	 * Stage-1 deterministic preprocessing.
+	 *
+	 * Answers what the model is actually FED, which is not what the user typed.
 	 */
 	Normalize: "normalize",
 	/**
 	 * The candidate gazetteer (`candidate.db`) — the default resolver backend.
+	 *
 	 * Keyed on `name_key`, never `name`.
 	 */
 	Candidate: "candidate",
 	/**
 	 * The WOF admin + postcode extracts behind the FTS backend.
+	 *
 	 * Answers what the source data holds, including the deprecated records the
 	 * resolver's own query filters out.
 	 */
 	WOF: "wof",
 	/**
 	 * `poi.db` — the POI layer the fork→entity probe reads.
+	 *
 	 * Keyed on `name_key` like the candidate table.
 	 */
 	POI: "poi",
 	/**
 	 * `@mailwoman/codex` — the pure postal reference tables.
+	 *
 	 * Postcode shapes, USPS suffixes, unit designators, directionals, US states.
 	 * No artifact, so it can never be unavailable.
 	 */
@@ -80,12 +89,16 @@ export type LookupSource = (typeof LookupSource)[keyof typeof LookupSource]
 export interface LookupRow {
 	query: string
 	/**
-	 * Whether the source knows the string at all. `false` is absence and must never be read as a zero.
+	 * Whether the source knows the string at all.
+	 *
+	 * `false` is absence and must never be read as a zero.
 	 */
 	hit: boolean
 	/**
-	 * What the source says. `null` when `hit` is false — the field is absent rather than empty,
-	 * so a caller cannot accidentally iterate a "zero results" list that was really a miss.
+	 * What the source says.
+	 *
+	 * `null` when `hit` is false — the field is absent rather than empty, so a caller
+	 * cannot accidentally iterate a "zero results" list that was really a miss.
 	 */
 	entries: unknown[] | null
 	/**
@@ -100,12 +113,14 @@ export interface LookupResult {
 	/**
 	 * Which artifact answered — the resolved path, plus whatever else decides the reading
 	 * (the locale and declared span mode for the anchor, the engine for the FST).
+	 *
 	 * Absent when there was no artifact to name: the unavailable envelope says why in
 	 * `unavailable_reason`, and `codex`/`normalize` read no file at all.
 	 */
 	provenance?: Record<string, unknown>
 	/**
 	 * Absent when the source's artifact could not be opened.
+	 *
 	 * Reported rather than degraded, because a lookup that silently answers "no" for
 	 * every query because a file is missing is the worst possible answer.
 	 */
@@ -113,9 +128,10 @@ export interface LookupResult {
 	/**
 	 * One entry per locale when several were asked for — the same queries against each locale's own artifact.
 	 *
-	 * Present instead OF `rows` for a sweep. A locale whose artifact is missing carries its own
-	 * `unavailable_reason` here rather than dropping out of the map: five shipped overlays ship
-	 * no FST at all, and a locale absent from the result reads as a locale that knew nothing.
+	 * Present instead OF `rows` for a sweep.
+	 * A locale whose artifact is missing carries its own `unavailable_reason` here
+	 * rather than dropping out of the map: five shipped overlays ship no FST at all,
+	 * and a locale absent from the result reads as a locale that knew nothing.
 	 */
 	by_locale?: Record<string, { artifact?: string; rows: LookupRow[]; unavailable_reason?: string }>
 	notes: string[]
@@ -129,8 +145,8 @@ interface FSTLike {
 /**
  * Probe the gazetteer FST, reporting the collapse the decoder would see rather than the raw entry list.
  *
- * The per-place ranking inside a name is invisible to the emission prior —
- * it takes `max(importance)` per BIO tag, and only four placetypes reach a tag at all.
+ * The per-place ranking inside a name is invisible to the emission prior — it takes
+ * `max(importance)` per BIO tag, and only four placetypes reach a tag at all.
  * Reporting anything finer would overstate what the gazetteer can do here.
  */
 export function lookupFST(

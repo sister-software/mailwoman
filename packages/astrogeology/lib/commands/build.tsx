@@ -88,7 +88,9 @@ export interface BuildReport {
 }
 
 /**
- * Build one body. `report` receives a line per phase.
+ * Build one body.
+ *
+ * `report` receives a line per phase.
  */
 export async function buildBody(
 	body: BuildableBodyID,

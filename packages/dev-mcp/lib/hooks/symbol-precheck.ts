@@ -57,5 +57,6 @@ async function main(): Promise<void> {
 try {
 	await main()
 } catch {
-	// Silence is the interface. See the header.
+	// Silence is the interface.
+	// See the header.
 }

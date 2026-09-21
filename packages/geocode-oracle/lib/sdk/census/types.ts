@@ -43,14 +43,18 @@ import type {
 } from "@mailwoman/tiger"
 
 /**
- * Which mtdb vintage the locator searches. Benchmarks are re-issued twice yearly.
+ * Which mtdb vintage the locator searches.
+ *
+ * Benchmarks are re-issued twice yearly.
  *
  * A const object rather than an `enum` (the isp-nexus original used one) —
  * `erasableSyntaxOnly` is on repo-wide.
  */
 export const CensusBenchmarkName = {
 	/**
-	 * Public Address Ranges — Current Benchmark. The default: whatever mtdb extract is newest.
+	 * Public Address Ranges — Current Benchmark.
+	 *
+	 * The default: whatever mtdb extract is newest.
 	 */
 	Current: "Public_AR_Current",
 	/**
@@ -58,7 +62,9 @@ export const CensusBenchmarkName = {
 	 */
 	ACS2023: "Public_AR_ACS2023",
 	/**
-	 * Public Address Ranges — Census 2020 Benchmark. The one to pair with the 2020 vintage.
+	 * Public Address Ranges — Census 2020 Benchmark.
+	 *
+	 * The one to pair with the 2020 vintage.
 	 */
 	Census2020: "Public_AR_Census2020",
 } as const
@@ -71,8 +77,10 @@ export type CensusBenchmarkName = (typeof CensusBenchmarkName)[keyof typeof Cens
 /**
  * Which geography vintage a `geographies/*` lookup reports blocks/tracts against.
  *
- * Benchmark and vintage must agree. `Public_AR_Current` pairs with `Current_Current`,
- * and `Public_AR_Census2020` with `Census2020_Census2020`; a mismatched pair is rejected by the API.
+ * Benchmark and vintage must agree.
+ * `Public_AR_Current` pairs with `Current_Current`, and `Public_AR_Census2020` with
+ * `Census2020_Census2020`; a mismatched pair is rejected by the API.
+ *
  * The client's two methods each pin a compatible pair rather than exposing them as independent knobs.
  */
 export const CensusVintageName = {
@@ -127,9 +135,9 @@ export interface CensusTigerLine {
 /**
  * The Census geocoder's decomposition of a matched street address.
  *
- * Every value comes back uppercase. That is the provider's form (USPS Publication 28),
- * not a normalization this package applies — contrast `google-parser.ts`,
- * which explicitly removed the original's uppercasing because it was ours.
+ * Every value comes back uppercase.
+ * That is the provider's form (USPS Publication 28), not a normalization this package applies —
+ * contrast `google-parser.ts`, which explicitly removed the original's uppercasing because it was ours.
  *
  * Seven slots, and mailwoman's `ComponentTag` vocabulary has four for the same span.
  * `census-parser.ts` documents the fold.
@@ -168,7 +176,9 @@ export interface CensusAddressComponents {
 	 */
 	suffixQualifier: string
 	/**
-	 * The city, uppercase. `locality` in mailwoman's vocabulary.
+	 * The city, uppercase.
+	 *
+	 * `locality` in mailwoman's vocabulary.
 	 */
 	city: string
 	/**
@@ -176,8 +186,9 @@ export interface CensusAddressComponents {
 	 */
 	state: AdminLevel1Abbreviation | string
 	/**
-	 * The ZIP code. The geocoder returns the five-digit form. the plus-four
-	 * variant is admitted for completeness.
+	 * The ZIP code.
+	 *
+	 * The geocoder returns the five-digit form. the plus-four variant is admitted for completeness.
 	 */
 	zip: ZipCode | ZipCodePlusFour | string
 	/**
@@ -200,8 +211,9 @@ export interface CensusAddressMatch {
 	 *
 	 * Typed `string`, unlike the isp-nexus original, which annotated this field as
 	 * `PostalAddressPart.FormattedAddress` — an enum member used in type position,
-	 * which is the literal type of that member's value. The field was therefore
-	 * declared to hold the string `"formattedAddress"` rather than an address.
+	 * which is the literal type of that member's value.
+	 * The field was therefore declared to hold the string `"formattedAddress"` rather than an address.
+	 *
 	 * It typechecked because every consumer only passed it on to something taking a `string`.
 	 */
 	matchedAddress: string
@@ -217,6 +229,7 @@ export interface CensusAddressMatch {
 
 /**
  * A `Census Blocks` entry from a `geographies/*` lookup.
+ *
  * Every field is a tiger attribute. the types come from `@mailwoman/tiger`.
  */
 export interface CensusBlockGeography {

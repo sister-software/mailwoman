@@ -37,7 +37,9 @@ export const RaceDotsTileSetID = TileSetSourceID("race-dots-la")
 export const RACE_DOTS_SOURCE_LAYER = "dots"
 
 /**
- * The togglable categories. Each becomes its own default-off layer + LayerToggleControl checkbox.
+ * The togglable categories.
+ *
+ * Each becomes its own default-off layer + LayerToggleControl checkbox.
  */
 export const RaceDotsCategories = [
 	{ id: "race-dots-white", label: "Race · White", color: "#1f78b4", match: ["white"] },
@@ -72,8 +74,10 @@ function dotLayer(id: string, color: string, cats: readonly string[]): CircleLay
 }
 
 /**
- * One default-off circle layer per category. Plain MapLibre specs — the demo adds them imperatively
- * on map-load with a `beforeID` of the first symbol layer, so the dots sit beneath place labels.
+ * One default-off circle layer per category.
+ *
+ * Plain MapLibre specs — the demo adds them imperatively on map-load with a `beforeID`
+ * of the first symbol layer, so the dots sit beneath place labels.
  */
 export const RaceDotsLayers: CircleLayerSpecification[] = RaceDotsCategories.map((c) =>
 	dotLayer(c.id, c.color, c.match)

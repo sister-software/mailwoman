@@ -11,6 +11,7 @@ import type { CreateTableBuilder, Kysely } from "kysely"
 
 /**
  * The subset of a Kysely handle a schema module's DDL touches.
+ *
  * Kysely is invariant in its schema parameter, so naming only the member the
  * builders call lets a caller pass its own wider handle.
  */

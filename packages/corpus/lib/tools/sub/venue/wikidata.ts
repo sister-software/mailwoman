@@ -61,8 +61,9 @@ export function surfacesFromWikidata(
 		if (!phrase) continue
 
 		const source = binding.kind?.value === "alt" ? "wikidata:alt" : "wikidata:label"
-		// A concept can carry the same string as both a label and an alias, and across dialect subtags
-		// (`zh`, `zh-cn`, `zh-hans` all say 航站楼). Key the dedupe on the tuple that identifies a row.
+		// A concept can carry the same string as both a label and an alias, and across
+		// dialect subtags (`zh`, `zh-cn`, `zh-hans` all say 航站楼).
+		// Key the dedupe on the tuple that identifies a row.
 		const key = `${phrase}\0${recordID}\0${lang}\0${source}`
 
 		if (seen.has(key)) continue

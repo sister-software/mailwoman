@@ -109,8 +109,9 @@ export const DEPLOY_TARGETS: readonly DeployTarget[] = [
 export const DEPLOY_TARGET_IDS: readonly DeployTargetID[] = DEPLOY_TARGETS.map((target) => target.id)
 
 /**
- * Root files every target's build reads. A change to one deploys everything,
- * because no workspace closure names it.
+ * Root files every target's build reads.
+ *
+ * A change to one deploys everything, because no workspace closure names it.
  */
 export const ROOT_BUILD_PATHS: readonly string[] = [
 	"package.json",
@@ -147,6 +148,7 @@ export interface DeploySelection {
 
 /**
  * The targets a set of changed paths reaches, given each target's closure as workspace names.
+ *
  * Pure, so the rule is testable without a checkout.
  */
 export function selectDeployTargets(

@@ -53,7 +53,9 @@ const TX_INTERPOLATION_DB = dataRootPath("interpolation", "interpolation-us-tx.d
 const CLI_SPAWN_TIMEOUT_MS = 45_000
 
 /**
- * Per-test budget. Must exceed {@link CLI_SPAWN_TIMEOUT_MS} plus time queued on the spawn lock.
+ * Per-test budget.
+ *
+ * Must exceed {@link CLI_SPAWN_TIMEOUT_MS} plus time queued on the spawn lock.
  */
 const CLI_TEST_TIMEOUT_MS = 120_000
 
@@ -172,9 +174,9 @@ describe("geocode argument validation", () => {
 			await withCLISpawnLockAsync(() =>
 				runFile(process.execPath, [CLI_PATH, "geocode", "123 Main St, Anytown, TX 78000"], {
 					encoding: "utf8",
-					// Unset the env var and point the data root at an empty dir: since the proximity-bias
-					// pass, geocode auto-attaches the wofExtractPaths default set when the env
-					// is absent — on a standard data root that now succeeds (the new interface).
+					// Unset the env var and point the data root at an empty dir: since the proximity-bias pass,
+					// geocode auto-attaches the wofExtractPaths default set when the env is absent —
+					// on a standard data root that now succeeds (the new interface).
 					// The error interface only survives when no default database exists either.
 					env: childEnv({ MAILWOMAN_WOF_DB: undefined, MAILWOMAN_DATA_ROOT: emptyDataRoot }),
 					timeout: CLI_SPAWN_TIMEOUT_MS,
@@ -199,6 +201,7 @@ const hasTxDatabases = hasTxAddressPoints && hasTxInterpolation
 
 /**
  * Integration: compiled CLI geocodes a real Round Rock, TX address with explicit database overrides.
+ *
  * Expects a street-level coordinate near 30.5, -97.6 (Round Rock area).
  */
 describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxDatabases)(

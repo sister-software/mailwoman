@@ -29,8 +29,10 @@ import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street/n
 import type { SameDataCandidate } from "#eval-harness/same-data/fixture"
 
 /**
- * Admin tags deepest-first. The same order the frozen ruler's `selectedCandidateRule` declares,
- * so the baseline's subject and the scored arm's selection are read off the tree the same way.
+ * Admin tags deepest-first.
+ *
+ * The same order the frozen ruler's `selectedCandidateRule` declares, so the baseline's
+ * subject and the scored arm's selection are read off the tree the same way.
  */
 export const ADMIN_TAG_DEPTH = [
 	"locality",
@@ -50,6 +52,7 @@ const COUNTRY_PLACETYPES = new Set(["country", "dependency", "disputed"])
 
 /**
  * The similarity floor below which the baseline abstains rather than selecting its best partial match.
+ *
  * Registered rather than tuned: a resolver that always answers cannot be measured on
  * abstention, and a floor chosen after results would be the decision rule moving.
  */
@@ -96,14 +99,18 @@ export interface BaselineSelection {
 	confidence: number
 	components: BaselineScoreComponents | null
 	/**
-	 * Why it abstained, when it did. Named so an abstention is a claim rather than an omission.
+	 * Why it abstained, when it did.
+	 *
+	 * Named so an abstention is a claim rather than an omission.
 	 */
 	abstainedBecause?: "no_admin_node" | "empty_pool" | "below_similarity_floor"
 }
 
 /**
- * The weights, registered. Exact agreement outranks any qualifier. a qualifier outranks
- * similarity. similarity breaks what remains, and the pool's canonical order breaks an exact tie.
+ * The weights, registered.
+ *
+ * Exact agreement outranks any qualifier. a qualifier outranks similarity. similarity
+ * breaks what remains, and the pool's canonical order breaks an exact tie.
  */
 const WEIGHT = { exact: 4, countryQualifier: 2, regionQualifier: 1, similarity: 1 } as const
 
@@ -168,6 +175,7 @@ function countryScopeFromPool(qualifiers: readonly string[], pool: readonly Same
 
 /**
  * The pool id of a region candidate one of the qualifiers names, or null.
+ *
  * Used as a one-level containment check: the baseline has no ancestry, so it can only ask
  * whether a candidate's immediate parent is the named region.
  */
@@ -186,8 +194,10 @@ function regionScopeFromPool(qualifiers: readonly string[], pool: readonly SameD
 }
 
 /**
- * Select from the pool, or abstain. Deterministic: the pool arrives in canonical order
- * and every tie is broken by that order, so two runs over one fixture answer identically.
+ * Select from the pool, or abstain.
+ *
+ * Deterministic: the pool arrives in canonical order and every tie is broken by that order,
+ * so two runs over one fixture answer identically.
  */
 export function selectBaseline(tree: AddressTree, pool: readonly SameDataCandidate[]): BaselineSelection {
 	const { subject, qualifiers } = subjectAndQualifiers(tree)

@@ -22,9 +22,11 @@ export interface Observation {
 	kind: "observation"
 	source: string
 	/**
-	 * The vintage the source recorded this at. `null` when the record does not carry one —
-	 * the gazetteer trace, for instance, names the row it picked and not the extract's date —
-	 * and a `null` is the statement that it was not recorded, which a fabricated date could never be.
+	 * The vintage the source recorded this at.
+	 *
+	 * `null` when the record does not carry one — the gazetteer trace, for instance,
+	 * names the row it picked and not the extract's date — and a `null` is the statement
+	 * that it was not recorded, which a fabricated date could never be.
 	 */
 	vintage: string | null
 	value: unknown
@@ -61,9 +63,10 @@ export function observation(source: string, vintage: string | null, value: unkno
 }
 
 /**
- * A relation stated by a source is authoritative and carries no score. one we
- * concluded is inferred and may. A score on an authoritative relation is refused,
- * because it means the link was concluded rather than stated.
+ * A relation stated by a source is authoritative and carries no score. one we concluded is inferred and may.
+ *
+ * A score on an authoritative relation is refused, because it means the link
+ * was concluded rather than stated.
  */
 export function relation(input: RelationInput): Relation {
 	if (input.assertion === Assertion.Authoritative && input.score !== undefined) {

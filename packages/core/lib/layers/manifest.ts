@@ -15,7 +15,9 @@ import { LayerFreshnessPolicy, LayerTier, type layerschemahandle } from "#layers
 import { assertAdmissibleLicenseExpression } from "#license/obligations"
 
 /**
- * Which spine columns a layer carries. At least one key is required.
+ * Which spine columns a layer carries.
+ *
+ * At least one key is required.
  */
 export interface SpineKeys {
 	h3?: { column: string; resolution: number }
@@ -63,7 +65,9 @@ export interface CoverageCell {
 	h3Cell: number
 	completeness: number
 	/**
-	 * What `completeness` rests on. A writer that omits it is declaring
+	 * What `completeness` rests on.
+	 *
+	 * A writer that omits it is declaring
 	 * {@link CoverageBasis.SourcePresent} — the weakest reading — because a builder that
 	 * has not thought about basis is recording source presence whether or not it says so.
 	 */
@@ -187,6 +191,7 @@ export function singleManifestRow(
  * Shared BY every layer reader, and separate from the identity check on purpose.
  * `readLayerManifest` above is the Kysely path. a reader that opens the artifact with `node:sqlite`
  * for its own synchronous probes reads the same single row and needs the same mapping.
+ *
  * What such readers do not share is how they recognize their own layer — most match a
  * fixed name, and a layer whose name carries a build's region suffix matches a prefix
  * instead — so the mapping lives here and the assertion stays with the caller.
@@ -286,8 +291,10 @@ export interface PolygonLayerBuildStamp {
 	buildCmd: string
 	buildSHA: string
 	/**
-	 * ISO-8601, supplied by the caller. Never generated here: the interface says so,
-	 * and a library-generated timestamp makes two builds of the same inputs differ.
+	 * ISO-8601, supplied by the caller.
+	 *
+	 * Never generated here: the interface says so, and a library-generated timestamp
+	 * makes two builds of the same inputs differ.
 	 */
 	createdAt: string
 	/**
@@ -339,7 +346,9 @@ export function polygonLayerManifest(
 }
 
 /**
- * Insert the single manifest row. Call exactly once, from the layer's build script.
+ * Insert the single manifest row.
+ *
+ * Call exactly once, from the layer's build script.
  */
 export async function writeLayerManifest(db: layerschemahandle, manifest: LayerManifest): Promise<void> {
 	assertManifestInvariants(manifest)
@@ -365,7 +374,9 @@ export async function writeLayerManifest(db: layerschemahandle, manifest: LayerM
 }
 
 /**
- * Read + validate the manifest. Throws if the table is empty, multi-row, or invalid.
+ * Read + validate the manifest.
+ *
+ * Throws if the table is empty, multi-row, or invalid.
  */
 export async function readLayerManifest(db: layerschemahandle): Promise<LayerManifest> {
 	const rows = await db.selectFrom("layer_manifest").selectAll().execute()

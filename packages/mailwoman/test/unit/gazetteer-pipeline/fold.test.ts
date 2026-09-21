@@ -156,8 +156,8 @@ test("foldGeonamesIntoAdmin: a country list covering the source's coverage passe
 
 	expect(result.refoldedCountries).toEqual(["AT"])
 
-	// The dumps are absent, so both countries skip — and the pre-existing row is
-	// gone anyway, because the fold rewrites its range rather than patching it.
+	// The dumps are absent, so both countries skip — and the pre-existing row is gone anyway,
+	// because the fold rewrites its range rather than patching it.
 	// A silent survivor is what bound Gaborone's names to an Austrian village.
 	using folded = new DatabaseClient<WOFDatabase>(adminOut, { readOnly: true })
 	const left = folded.prepare("SELECT COUNT(*) AS n FROM spr WHERE id >= 9000000000000").get() as { n: number }

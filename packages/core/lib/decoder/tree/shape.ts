@@ -23,10 +23,13 @@ import { walkNodes } from "#decoder/tree/walk"
 import type { AddressNode, AddressTree } from "#decoder/types"
 
 /**
- * True when every node in the tree either carries `tag` or bears no value — i.e. the only
- * evidence in the parse is `tag`-shaped. A tag-matching node counts even when its value is
- * empty (the guard asks "did the parser emit this shape", not "is the span non-blank");
- * any other tag with a non-empty value disqualifies. False for a tree with no `tag` node at all.
+ * True when every node in the tree either carries `tag` or bears no value —
+ * i.e. the only evidence in the parse is `tag`-shaped.
+ *
+ * A tag-matching node counts even when its value is empty
+ * (the guard asks "did the parser emit this shape", not "is the span non-blank");
+ * any other tag with a non-empty value disqualifies.
+ * False for a tree with no `tag` node at all.
  */
 export function isBareTreeOf(tree: AddressTree, tag: ComponentTag): boolean {
 	let sawTag = false
@@ -41,9 +44,10 @@ export function isBareTreeOf(tree: AddressTree, tag: ComponentTag): boolean {
 }
 
 /**
- * The tree's single value-containing node, or null when the tree holds none
- * or more than one. Callers check on the returned node's `tag` — the quantifier
- * ("this is the whole query") is what this walk answers.
+ * The tree's single value-containing node, or null when the tree holds none or more than one.
+ *
+ * Callers check on the returned node's `tag` — the quantifier ("this is the whole query")
+ * is what this walk answers.
  */
 export function loneValueNode(tree: AddressTree): AddressNode | null {
 	let lone: AddressNode | null = null
@@ -83,8 +87,8 @@ export interface FlatTreeNode {
 	 * The resolver's answer for this span, when one won.
 	 *
 	 * Carried for the same reason `source` is: a projection that keeps only the text
-	 * and the tag cannot tell a span that resolved to a different place from one that
-	 * did not move at all, and those are a ranking problem and a non-event respectively.
+	 * and the tag cannot tell a span that resolved to a different place from one that did
+	 * not move at all, and those are a ranking problem and a non-event respectively.
 	 * `alternatives` is reduced to its length — the retrieval breadth is what a consumer reads,
 	 * and handing over the candidate objects invites a walk this projection exists to have already done.
 	 */

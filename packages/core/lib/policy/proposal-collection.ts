@@ -23,9 +23,10 @@ import type { ClassificationProposal, ClassifierContext, ProposalClassifier } fr
 /**
  * Run every classifier against every section, concatenate the results.
  *
- * Classifiers that throw are isolated — their failure logs but does not block other
- * classifiers' proposals from being collected. (Per the `ProposalClassifier` interface,
- * implementations are supposed to swallow errors, but defense-in-depth lives here.)
+ * Classifiers that throw are isolated — their failure logs but does not block
+ * other classifiers' proposals from being collected.
+ * (Per the `ProposalClassifier` interface, implementations are supposed to swallow
+ * errors, but defense-in-depth lives here.)
  */
 export async function collectProposals(
 	sections: readonly Section[],
@@ -52,8 +53,9 @@ export async function collectProposals(
 }
 
 /**
- * Optional policy filter. An explicit `policy` registry is authoritative. without
- * one the input is returned unchanged.
+ * Optional policy filter.
+ *
+ * An explicit `policy` registry is authoritative. without one the input is returned unchanged.
  */
 export function filterByPolicy(
 	proposals: readonly ClassificationProposal[],

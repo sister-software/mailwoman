@@ -16,6 +16,7 @@ import { describe, expect, it } from "vitest"
 
 /**
  * `n` observations at one confidence, of which `correct` are right.
+ *
  * Strata are irrelevant to the math and left empty.
  */
 function at(confidence: number, n: number, correct: number): Observation[] {
@@ -45,9 +46,9 @@ describe("reliabilityCurve", () => {
 	})
 
 	it("weights ECE by bin population and takes MCE as the worst single bin", () => {
-		// 90 observations off by 0.1 and 10 off by 0.55. The two diverge on purpose:
-		// a rare, badly calibrated bin barely moves ECE and dominates MCE, so quoting one
-		// where the other was meant reverses the reading.
+		// 90 observations off by 0.1 and 10 off by 0.55.
+		// The two diverge on purpose: a rare, badly calibrated bin barely moves ECE
+		// and dominates MCE, so quoting one where the other was meant reverses the reading.
 		const curve = reliabilityCurve([...at(0.9, 90, 72), ...at(0.55, 10, 0)], 10)
 
 		expect(curve.ece).toBeCloseTo(0.9 * 0.1 + 0.1 * 0.55, 10)

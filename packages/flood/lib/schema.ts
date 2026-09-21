@@ -37,12 +37,15 @@ import { sql, type Kysely } from "kysely"
  */
 export const FloodCellContainment = {
 	/**
-	 * Every point in the cell is inside the zone. Answered from the index alone, with no geometry read.
+	 * Every point in the cell is inside the zone.
+	 *
+	 * Answered from the index alone, with no geometry read.
 	 */
 	Whole: "whole",
 	/**
-	 * The zone boundary crosses the cell. The index has narrowed the candidate
-	 * polygons. the point test decides.
+	 * The zone boundary crosses the cell.
+	 *
+	 * The index has narrowed the candidate polygons. the point test decides.
 	 */
 	Partial: "partial",
 } as const
@@ -60,12 +63,16 @@ export interface FloodZoneAreaTable {
 	 */
 	area_id: string
 	/**
-	 * The authority's value, verbatim (`FZ2` / `FZ3`). Never re-spelled, never mapped onto a severity
-	 * scale: two authorities that both publish "flood zones" are not publishing the same thing.
+	 * The authority's value, verbatim (`FZ2` / `FZ3`).
+	 *
+	 * Never re-spelled, never mapped onto a severity scale: two authorities that both
+	 * publish "flood zones" are not publishing the same thing.
 	 */
 	zone_code: string
 	/**
-	 * A finer classification where the source has one. NULL for the EA product, which publishes none.
+	 * A finer classification where the source has one.
+	 *
+	 * NULL for the EA product, which publishes none.
 	 */
 	zone_subtype: string | null
 	/**
@@ -78,16 +85,18 @@ export interface FloodZoneAreaTable {
 	origin: string | null
 	/**
 	 * The map panel a feature belongs to, where the source publishes one.
+	 *
 	 * NULL for the EA product.
 	 */
 	panel_id: string | null
 	/**
 	 * The authority's own date for this feature, ISO-8601, where it publishes one.
 	 *
-	 * NULL for every EA row, and that is a recorded limit rather than an oversight: the published
-	 * attribute set carries no per-feature date, while the product itself retains sections of an older
-	 * model "whilst we make improvements to the data". So the layer cannot state a per-feature
-	 * vintage, and `layer_manifest.source_vintage` is the only granularity available.
+	 * NULL for every EA row, and that is a recorded limit rather than an oversight:
+	 * the published attribute set carries no per-feature date, while the product itself
+	 * retains sections of an older model "whilst we make improvements to the data".
+	 * So the layer cannot state a per-feature vintage, and `layer_manifest.source_vintage`
+	 * is the only granularity available.
 	 */
 	effective_date: string | null
 	min_lat: number
@@ -103,18 +112,21 @@ export interface FloodZoneAreaTable {
 /**
  * Per (cell, zone): does the zone cover the whole cell, or only part of it?
  *
- * Keyed on `(h3_cell, zone_code)` rather than on a polygon, because the question a reader asks is
- * about the zone. A cell wholly inside any FZ3 polygon answers `FZ3` whichever polygon that was.
+ * Keyed on `(h3_cell, zone_code)` rather than on a polygon, because the question
+ * a reader asks is about the zone.
+ * A cell wholly inside any FZ3 polygon answers `FZ3` whichever polygon that was.
  */
 export interface FloodZoneCellTable {
 	/**
-	 * 48-bit short H3 cell. Mixed-resolution: `whole` rows are compacted parent-ward,
-	 * `partial` rows stay at the index resolution.
+	 * 48-bit short H3 cell.
+	 *
+	 * Mixed-resolution: `whole` rows are compacted parent-ward, `partial` rows stay at the index resolution.
 	 */
 	h3_cell: number
 	/**
-	 * The resolution this row's cell was captured at. A short cell does not name its own
-	 * resolution, and a table that mixes them cannot be probed without it.
+	 * The resolution this row's cell was captured at.
+	 *
+	 * A short cell does not name its own resolution, and a table that mixes them cannot be probed without it.
 	 */
 	resolution: number
 	zone_code: string
@@ -151,9 +163,10 @@ export interface FloodZoneCellAreaTable {
 export interface FloodMapExtentTable {
 	extent_id: string
 	/**
-	 * What the authority says about this footprint. `mapped` for the EA's England
-	 * statement. a source with an availability layer of its own (fema's is layer 0)
-	 * writes its published categories here instead.
+	 * What the authority says about this footprint.
+	 *
+	 * `mapped` for the EA's England statement. a source with an availability layer of its
+	 * own (fema's is layer 0) writes its published categories here instead.
 	 */
 	status: string
 	/**
@@ -167,6 +180,7 @@ export interface FloodMapExtentTable {
 	statement_url: string
 	/**
 	 * Who drew the outline the statement's named area was realized from, and when.
+	 *
 	 * Not the flood authority: the EA says "all of England" and does not publish where England is.
 	 */
 	boundary_source: string
@@ -209,15 +223,17 @@ export interface FloodDatabase extends layerschemadatabase {
 }
 
 /**
- * The subset of a Kysely handle the DDL touches. Same reasoning as `layerschemahandle`:
- * Kysely is invariant in its schema parameter, so naming only the members these
- * functions call lets a caller pass its own wider handle.
+ * The subset of a Kysely handle the DDL touches.
+ *
+ * Same reasoning as `layerschemahandle`: Kysely is invariant in its schema parameter,
+ * so naming only the members these functions call lets a caller pass its own wider handle.
  */
 export type FloodSchemaHandle = Pick<Kysely<FloodDatabase>, "schema">
 
 /**
- * Create `flood_zone_area`. A plain rowid table on purpose — the `rings` blob is
- * exactly the payload `without rowid` penalizes.
+ * Create `flood_zone_area`.
+ *
+ * A plain rowid table on purpose — the `rings` blob is exactly the payload `without rowid` penalizes.
  */
 export async function createFloodZoneAreaTable(db: FloodSchemaHandle): Promise<void> {
 	const table = db.schema
@@ -234,8 +250,9 @@ export async function createFloodZoneAreaTable(db: FloodSchemaHandle): Promise<v
 }
 
 /**
- * Create `flood_zone_cell` — the summary tier. Small fixed-width rows probed by
- * their exact primary key, which is the `without rowid` shape.
+ * Create `flood_zone_cell` — the summary tier.
+ *
+ * Small fixed-width rows probed by their exact primary key, which is the `without rowid` shape.
  */
 export async function createFloodZoneCellTable(db: FloodSchemaHandle): Promise<void> {
 	const table = db.schema.createTable("flood_zone_cell")

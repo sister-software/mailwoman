@@ -72,8 +72,10 @@ export interface UnresolvedSpecifier {
 	file: string
 	specifier: string
 	/**
-	 * What was tried and why nothing was accepted. A plan carrying one of these is refused
-	 * rather than applied: a specifier nobody can prove is a specifier nobody should write.
+	 * What was tried and why nothing was accepted.
+	 *
+	 * A plan carrying one of these is refused rather than applied: a specifier nobody
+	 * can prove is a specifier nobody should write.
 	 */
 	reason: string
 }
@@ -82,19 +84,23 @@ export interface ModuleMovePlan {
 	moves: ModuleMove[]
 	rewrites: SpecifierRewrite[]
 	/**
-	 * `exports`/`imports` targets the moves invalidate. A subpath KEY never changes: it is
-	 * the package's interface, and a file moving underneath it is not a consumer's business.
+	 * `exports`/`imports` targets the moves invalidate.
+	 *
+	 * A subpath KEY never changes: it is the package's interface, and a file moving
+	 * underneath it is not a consumer's business.
 	 */
 	manifestRewrites: ManifestRewrite[]
 	/**
 	 * Repo-relative paths written as text — a hook command, a lint glob, a `Usage:`
-	 * line — that the moves invalidate. Nothing checks these, which is why the
-	 * operation that breaks them is the one that reports them.
+	 * line — that the moves invalidate.
+	 *
+	 * Nothing checks these, which is why the operation that breaks them is the one that reports them.
 	 */
 	pathLiterals: PathLiteralRewrite[]
 	unresolved: UnresolvedSpecifier[]
 	/**
 	 * Files read to find the rewrites, against the tracked-source total they were drawn from.
+	 *
 	 * The pre-filter in `plan.ts` is what separates the two numbers. a reader
 	 * comparing them can see whether it did any work.
 	 */

@@ -45,9 +45,10 @@ const POLICY_MODES: readonly PolicyMode[] = ["rule_only", "neural_only", "both",
 const POLICY_SPEC_RE = /^([a-z_]+)=([a-z_]+)$/u
 
 /**
- * Shown at the top of `mailwoman parse --help`. The one thing it has to
- * settle is parse-vs-geocode (#1577): the two commands take the same argument
- * and the difference is invisible until you have run both.
+ * Shown at the top of `mailwoman parse --help`.
+ *
+ * The one thing it has to settle is parse-vs-geocode (#1577): the two commands take the
+ * same argument and the difference is invisible until you have run both.
  *
  * Keep this short enough to draw the parse/geocode line without swamping command help.
  */
@@ -224,7 +225,8 @@ function ParseTask({
 		}
 
 		// Guard said degraded (user declined the download, download failed, or --degraded):
-		// the real pipeline minus the encoder. "unavailable" falls through to runPipeline's legacy chain.
+		// the real pipeline minus the encoder.
+		// "unavailable" falls through to runPipeline's legacy chain.
 		if (weightsOutcome === "declined") {
 			return runDegraded(input, options)
 		}
@@ -268,8 +270,10 @@ async function tryBuildFST(options: ParseOptions): Promise<FSTMatcher | undefine
 }
 
 /**
- * Tree → resolved tree via the WOF backend. When `options.candidates` is set, asks the resolver
- * for top-(N+1) candidates per node so the runner-ups land on `AddressNode.alternatives`
+ * Tree → resolved tree via the WOF backend.
+ *
+ * When `options.candidates` is set, asks the resolver for top-(N+1)
+ * candidates per node so the runner-ups land on `AddressNode.alternatives`
  * (where N is the requested alternative count; +1 because the top winner is also in the limit).
  */
 async function resolveWithCandidates(
@@ -372,13 +376,15 @@ async function serializeTree(
 			return prettyJSON(decodeAsTuples(tree))
 		default:
 			// JSON: when --candidates is requested, dump the full AddressTree
-			// (carries alternatives on each node). Otherwise stay libpostal-compat (flat tag→value).
+			// (carries alternatives on each node).
+			// Otherwise stay libpostal-compat (flat tag→value).
 			return opts.includeAlternatives ? prettyJSON(tree) : prettyJSON(decodeAsJSON(tree))
 	}
 }
 
 /**
  * The generic degraded-mode banner (stderr — stdout stays machine-parseable).
+ *
  * Emitted when the guard hands back a `declined` outcome
  * (interactive "n" / `--degraded` / a failed download) — the paths that never attempt an
  * encoder load, so `tryLoadNeural`'s precise absent-vs-load-error warning didn't fire.
@@ -394,8 +400,9 @@ function emitDegradedBanner(options: ParseOptions): void {
 
 /**
  * #40 — announce every stage the coordinator degraded past. `runPipeline` catches a classifier / grouper / resolver
- * throw and keeps going (`PipelineResult.faults`), which used to mean a crashed
- * model produced a tidy-looking parse with nothing on stdout or stderr to say.
+ * throw and keeps going (`PipelineResult.faults`), which used to mean a crashed model
+ * produced a tidy-looking parse with nothing on stdout or stderr to say.
+ *
  * The same `⚠` register applies to the encoder-load warnings above. stderr only,
  * so stdout stays the machine-readable parse.
  */
@@ -409,10 +416,11 @@ function emitFaultWarnings(result: { faults: ReadonlyArray<{ stage: string; name
 }
 
 /**
- * Encoder-less structural parse (plan 3), without the banner: the real pipeline
- * stages (normalize → query-shape → locale-hint → kind → grouper fast-paths) with
- * no neural classifier. The tree carries what the structural stages can prove
- * (postcode_only / locality_only fast-paths populate it. free-form addresses may yield an empty tree).
+ * Encoder-less structural parse (plan 3), without the banner: the real pipeline stages
+ * (normalize → query-shape → locale-hint → kind → grouper fast-paths) with no neural classifier.
+ *
+ * The tree carries what the structural stages can prove (postcode_only / locality_only
+ * fast-paths populate it. free-form addresses may yield an empty tree).
  * The caller owns the degraded notice — either {@link emitDegradedBanner}
  * or the precise absent/load-error warning `tryLoadNeural` already printed —
  * so no path degrades silently, and none double-warns.
@@ -439,8 +447,11 @@ async function runDegraded(input: string, options: ParseOptions): Promise<string
 }
 
 /**
- * Default path: runtime pipeline. Lazy-loads the neural classifier + optional resolver.
+ * Default path: runtime pipeline.
+ *
+ * Lazy-loads the neural classifier + optional resolver.
  * Returns the parsed tree serialized in the requested format.
+ *
  * When the encoder is unavailable, degrades to the structural-pipeline stages
  * (normalize → query-shape → kind → grouper fast-paths) rather than any rules parser.
  */
@@ -452,9 +463,10 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 	// which the guard answers with `declined` before we get here (see ParseTask).
 	const classifier = await tryLoadNeural(options)
 
-	// When the encoder isn't loaded and there's no resolver/debug work to do, the full pipeline
-	// can only emit QueryShape fast-path structure. Route to the structural path so the CLI
-	// still produces useful output for the fast-path kinds (postcode_only, locality_only).
+	// When the encoder isn't loaded and there's no resolver/debug work to do,
+	// the full pipeline can only emit QueryShape fast-path structure.
+	// Route to the structural path so the CLI still produces useful output for the
+	// fast-path kinds (postcode_only, locality_only).
 	// `--debug` stays on the pipeline so the operator gets the requested PipelineResult JSON shape.
 	if (!classifier && !options.resolve && !options.debug) {
 		// `tryLoadNeural` already emitted the precise warning, so the generic banner would double up.
@@ -490,8 +502,8 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 		resolveOpts.postcodeContainmentCoherence = true
 	}
 
-	// Scope the resolver so a bare region abbreviation (`NY`) resolves to the
-	// intended country's place rather than a higher-priority foreign homonym.
+	// Scope the resolver so a bare region abbreviation (`NY`) resolves to the intended
+	// country's place rather than a higher-priority foreign homonym.
 	// Inferred from --locale unless --default-country overrides (or is `none`).
 	// Only meaningful on the --resolve path. harmless otherwise.
 	if (options.resolve) {
@@ -534,7 +546,8 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 	}
 
 	// #727 phase-4c: the rerank is default-on — `createRuntimePipeline` lazy-loads the bundled FR index when the model
-	// ships a span head (a no-op otherwise). `--no-street-evidence-rerank` passes `false` to disable it.
+	// ships a span head (a no-op otherwise).
+	// `--no-street-evidence-rerank` passes `false` to disable it.
 	const streetEvidence = options.streetEvidenceRerank ? undefined : (false as const)
 
 	const { createRuntimePipeline } = await import("#index")
@@ -575,10 +588,11 @@ function formatMs(ms: number): string {
 }
 
 /**
- * Run the runtime pipeline N times against a single input and report per-stage timing
- * percentiles + heap delta. The first 5 iterations are warmup (excluded from stats)
- * so JIT + lazy-imports settle before measurement. Useful for catching regressions
- * when training models or coordinator changes affect inference cost.
+ * Run the runtime pipeline N times against a single input and report per-stage
+ * timing percentiles + heap delta.
+ *
+ * The first 5 iterations are warmup (excluded from stats) so JIT + lazy-imports settle before measurement.
+ * Useful for catching regressions when training models or coordinator changes affect inference cost.
  */
 async function runBenchmark(input: string, options: ParseOptions, iterations: number): Promise<string> {
 	// `--degraded` is the encoder-less benchmark: the weights guard never runs on
@@ -702,6 +716,7 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
 /**
  * `undefined` so the caller degrades to the structural pipeline (postcode_only /
  * locality_only fast-paths still resolve; `npx mailwoman parse …` always produces output).
+ *
  * The #1108 absent-vs-corrupt distinction lives in
  * {@link loadClassifierTolerant}; the warning goes to stderr, never stdout, so piped stdout parsing is unaffected.
  */
@@ -716,8 +731,9 @@ async function tryLoadNeural(
 }
 
 /**
- * Serialize the full pipeline result for `--debug`. Shows tree + timing + path + kind
- * so callers can see which stage owned which output.
+ * Serialize the full pipeline result for `--debug`.
+ *
+ * Shows tree + timing + path + kind so callers can see which stage owned which output.
  */
 async function serializeResult(
 	result: Awaited<ReturnType<ReturnType<typeof createRuntimePipeline>>>,
@@ -787,9 +803,10 @@ async function runNeural(
 	if (policyOverrides.length) {
 		// Policy path: containment nesting is lost — see proposals-to-tree.ts for why.
 		const proposalCls = createNeuralProposalClassifier({ id: `neural-cli-${options.locale}`, classifier: neural })
-		// Without rule classifiers in the CLI loop, the registry's default rule_only would drop
-		// every neural proposal and produce empty output. Default every component to neural_only
-		// when --neural --policy is used, then layer the user's overrides on top.
+		// Without rule classifiers in the CLI loop, the registry's default rule_only
+		// would drop every neural proposal and produce empty output.
+		// Default every component to neural_only when --neural --policy is used,
+		// then layer the user's overrides on top.
 		const policy = InMemoryPolicyRegistry.withDefaults()
 
 		for (const entry of policy.entries()) {

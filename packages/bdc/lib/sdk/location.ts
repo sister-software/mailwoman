@@ -35,8 +35,9 @@ export type BroadbandServicableLocationID = Tagged<string, "BroadbandServicableL
 /**
  * Type-predicate for checking if a value appears to be a valid Broadband Servicable Location ID.
  *
- * Accepts only a 10-digit string. A `number` input is always rejected, even if its digits
- * would otherwise match — numeric storage would silently drop meaningful leading zeros.
+ * Accepts only a 10-digit string.
+ * A `number` input is always rejected, even if its digits would otherwise match —
+ * numeric storage would silently drop meaningful leading zeros.
  *
  * @internal
  */

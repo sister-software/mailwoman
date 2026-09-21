@@ -40,8 +40,10 @@ const CONVENTIONAL_EMPTY_PATTERNS = new Set(["#*"])
 
 /**
  * The half of a workspace `tsconfig.json` that decides whether a tracked source is emitted:
- * the `include` and `exclude` globs as written. `extends` is not followed — every emitting workspace
- * states both locally — and a config that states neither makes no claim, so it admits every source.
+ * the `include` and `exclude` globs as written.
+ *
+ * `extends` is not followed — every emitting workspace states both locally —
+ * and a config that states neither makes no claim, so it admits every source.
  */
 export interface CompileScope {
 	include?: readonly string[]
@@ -50,6 +52,7 @@ export interface CompileScope {
 
 /**
  * A tsconfig glob as a matcher over workspace-relative paths.
+ *
  * `**` spans directories, `*` stays inside one segment, and an entry with no wildcard
  * names a path and everything under it (`out`, `node_modules`, `.docusaurus`).
  */
@@ -84,8 +87,9 @@ export function compilerAdmits(scope: CompileScope, path: string): boolean {
 }
 
 /**
- * The workspace's compile scope, or an empty one (admits everything) when it carries no
- * `tsconfig.json`. Read through TypeScript's own jsonc parser: the configs carry line comments.
+ * The workspace's compile scope, or an empty one (admits everything) when it carries no `tsconfig.json`.
+ *
+ * Read through TypeScript's own jsonc parser: the configs carry line comments.
  */
 export async function readCompileScope(repoRoot: string, workspace: string): Promise<CompileScope> {
 	const configPath = resolvePath(repoRoot, workspace, "tsconfig.json")

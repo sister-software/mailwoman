@@ -30,8 +30,9 @@ function resolvedTree(tag: string, raw = "x"): AddressTree {
 const bare = (raw: string): AddressTree => ({ raw, roots: [] })
 
 /**
- * A locality resolved at `lat`/`lon`. A locality rather than a country,
- * so guard A passes it whatever the coordinate.
+ * A locality resolved at `lat`/`lon`.
+ *
+ * A locality rather than a country, so guard A passes it whatever the coordinate.
  */
 function localityAt(lat: number, lon: number, raw = "x"): AddressTree {
 	const tree = resolvedTree("locality", raw)

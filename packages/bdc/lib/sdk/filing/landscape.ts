@@ -49,15 +49,16 @@ export interface FilingLandscapeQuery {
 }
 
 /**
- * One provider/technology/speed-bucket group's block count within the query —
- * `block_count` is the number of distinct queried blocks carrying this exact combination,
- * never a raw row count. A block can carry multiple `bdc_availability` rows for the same
+ * One provider/technology/speed-bucket group's block count within the query — `block_count` is
+ * the number of distinct queried blocks carrying this exact combination, never a raw row count.
+ *
+ * A block can carry multiple `bdc_availability` rows for the same
  * (provider_id, technology_code) pair even in the default (non-`includeLocationIDs`)
  * build mode: `build-bdc.ts`'s materialize-time collapse merges to one row per distinct
  * (geoid, provider_id, technology_code, speeds, low_latency, business_residential_code) tuple
  * rather than one row per (geoid, provider_id, technology_code) triple — so Broadband
- * Serviceable Locations at the same triple with differing speeds/flags survive as separate
- * rows and can land in different `speed_bucket`s here (see that file's docstring).
+ * Serviceable Locations at the same triple with differing speeds/flags survive as separate rows
+ * and can land in different `speed_bucket`s here (see that file's docstring).
  * This `block_count`'s distinct is exactly what keeps that from double-counting
  * the block itself when it does.
  */
@@ -184,9 +185,10 @@ export async function filingLandscape(
 	const requestedUnits: ReadonlyArray<string | number> = query.geoids ?? query.h3Cells!
 	const unitColumn = query.geoids ? ("geoid" as const) : ("h3_cell" as const)
 
-	// Candidate res-9 cell per requested unit. `h3Cells` queries already carry the cell directly;
-	// `geoids` queries can only derive one from the block's own rows — a geoid with none
-	// has no candidate at all (never guessed), so it falls straight to unknown below.
+	// Candidate res-9 cell per requested unit.
+	// `h3Cells` queries already carry the cell directly; `geoids` queries can only
+	// derive one from the block's own rows — a geoid with none has no candidate at all
+	// (never guessed), so it falls straight to unknown below.
 	const candidateCellByUnit = new Map<string | number, number>()
 
 	if (query.geoids) {

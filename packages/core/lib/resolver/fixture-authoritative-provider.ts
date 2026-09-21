@@ -34,8 +34,10 @@ export interface FixtureAuthoritativeRule {
 
 export interface FixtureAuthoritativeProviderOptions {
 	/**
-	 * Rules checked in order. the first hit answers. No hit → a `refused` response, because a fixture
-	 * that silently "matches nothing" is indistinguishable from a fixture that was never consulted.
+	 * Rules checked in order. the first hit answers.
+	 *
+	 * No hit → a `refused` response, because a fixture that silently "matches nothing"
+	 * is indistinguishable from a fixture that was never consulted.
 	 */
 	rules: ReadonlyArray<FixtureAuthoritativeRule>
 	/**
@@ -48,8 +50,9 @@ export interface FixtureAuthoritativeProviderOptions {
 const FIXTURE_ATTRIBUTION = "Synthetic fixture data — not derived from any licensed source"
 
 /**
- * Build a fixture provider from rules. The returned provider is pure and synchronous
- * under the hood. the async signature is the interface's.
+ * Build a fixture provider from rules.
+ *
+ * The returned provider is pure and synchronous under the hood. the async signature is the interface's.
  */
 export function createFixtureAuthoritativeProvider(
 	options: FixtureAuthoritativeProviderOptions
@@ -75,6 +78,7 @@ export function createFixtureAuthoritativeProvider(
 
 /**
  * A ready-made exact match for one synthetic premise, for the common one-rule test.
+ *
  * The uprn-shaped identifier sits in a 0-prefixed range no real uprn occupies.
  */
 export function fixtureExactMatch(overrides: Partial<AuthoritativeMatch> = {}): AuthoritativeResponse {

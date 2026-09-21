@@ -32,7 +32,9 @@ import { escapeHTML } from "@mailwoman/core/strings/escape"
  */
 export interface YardstickFigureOptions {
 	/**
-	 * Output SVG path. Default `docs/records/evals/charts/dedup-yardstick.svg` (relative to cwd).
+	 * Output SVG path.
+	 *
+	 * Default `docs/records/evals/charts/dedup-yardstick.svg` (relative to cwd).
 	 */
 	outSVG?: string
 }

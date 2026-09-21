@@ -26,8 +26,10 @@ import type { ClassificationProposal } from "#types"
 export type PolicyMode = "rule_only" | "neural_only" | "both" | "neural_preferred" | "rule_preferred"
 
 /**
- * A single policy entry. Locale-less entries are the global default. locale-scoped
- * entries override the global default for that locale.
+ * A single policy entry.
+ *
+ * Locale-less entries are the global default. locale-scoped entries override
+ * the global default for that locale.
  */
 export interface ClassifierPolicy {
 	component: ComponentTag
@@ -40,7 +42,9 @@ export interface ClassifierPolicy {
 	confidence_threshold?: number
 
 	/**
-	 * Locale scope. If absent, the entry applies to every locale unless overridden by a locale-specific entry.
+	 * Locale scope.
+	 *
+	 * If absent, the entry applies to every locale unless overridden by a locale-specific entry.
 	 */
 	locale?: string
 }
@@ -51,6 +55,7 @@ export interface ClassifierPolicy {
 export interface PolicyRegistry {
 	/**
 	 * Look up the effective policy for a (component, locale) pair.
+	 *
 	 * A locale-specific entry wins over a global one. if neither exists,
 	 * the registry-wide default (`rule_only`, no threshold) is returned.
 	 */
@@ -58,6 +63,7 @@ export interface PolicyRegistry {
 
 	/**
 	 * Apply policy filtering to a flat list of proposals.
+	 *
 	 * Output is a new array. the input is not mutated.
 	 */
 	apply(proposals: readonly ClassificationProposal[], locale?: string): ClassificationProposal[]

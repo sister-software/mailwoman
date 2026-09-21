@@ -37,9 +37,9 @@ export class ConsoleFixture {
 
 			if (isIgnored(text)) return
 
-			// The browser's own network-error lines ("Failed to load resource: … 404") name
-			// no url in their text — it rides `location()`. Without it, a failing suite says
-			// only that something 404'd, which is undiagnosable from CI output.
+			// The browser's own network-error lines ("Failed to load resource: … 404")
+			// name no url in their text — it rides `location()`.
+			// Without it, a failing suite says only that something 404'd, which is undiagnosable from CI output.
 			const location = msg.location().url
 
 			this.events.push({
@@ -73,6 +73,7 @@ export class ConsoleFixture {
 	/**
 	 * Throw if any captured event matches the FAIL_PATTERNS list
 	 * (style/terrain races, MapLibre teardown errors, sqlite/onnx unhandled throws).
+	 *
 	 * Pass-through for events that are merely noisy.
 	 */
 	assertNoFailEvents(): void {

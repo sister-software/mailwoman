@@ -12,8 +12,10 @@ import { blankAsAbsent } from "@mailwoman/core/env/utils"
 import { z } from "zod"
 
 /**
- * The feature record every artifact carries. The optional strings take the shapefile's `""` as absence.
- * the coordinates are the normalized ones (east-positive, −180..180), never the source's 0..360.
+ * The feature record every artifact carries.
+ *
+ * The optional strings take the shapefile's `""` as absence. the coordinates are the
+ * normalized ones (east-positive, −180..180), never the source's 0..360.
  */
 export const PlanetaryNomenclatureFeatureSchema = z.object({
 	id: z.string().min(1),

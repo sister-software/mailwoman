@@ -43,15 +43,18 @@ import { join, type PathBuilderLike } from "path-ts"
 import type { WOFDatabase } from "#schema"
 
 /**
- * Column count of a GeoNames postal-code TSV row. Short rows are truncated or blank
- * and are skipped. See the allCountries.zip readme for the field list.
+ * Column count of a GeoNames postal-code TSV row.
+ *
+ * Short rows are truncated or blank and are skipped.
+ * See the allCountries.zip readme for the field list.
  */
 const GEONAMES_POSTAL_COLUMNS = 11
 
 /**
- * The #920 name law: reduce a postcode to the sanitized-query token shape — strip every
- * non-letter/number — so the stored name matches what `sanitizeFTSQuery` produces from the
- * parsed postcode token. `"110 00"` → `"11000"`, `"11-041"` → `"11041"`, `"AD500"` → `"AD500"`.
+ * The #920 name law: reduce a postcode to the sanitized-query token shape — strip every non-letter/number —
+ * so the stored name matches what `sanitizeFTSQuery` produces from the parsed postcode token.
+ *
+ * `"110 00"` → `"11000"`, `"11-041"` → `"11041"`, `"AD500"` → `"AD500"`.
  */
 export function normalizePostcodeName(raw: string): string {
 	return raw.replaceAll(/[^\p{L}\p{N}]/gu, "")
@@ -68,6 +71,7 @@ export type PostcodePoint = readonly [number, number]
  * The counts are not stated in `@mailwoman/evidence`'s vocabulary.
  * `EpistemicStatus` says what may be claimed about a value and belongs to the answering path,
  * where `epistemicStatusFor` derives it. these two integers describe the source dump.
+ *
  * Naming them `observed` / `derived` here would give those words a second, local meaning.
  */
 export interface MedoidSupport {
@@ -80,8 +84,10 @@ export interface MedoidSupport {
 	 */
 	rows: number
 	/**
-	 * Distinct coordinates among them. One means every row named the same point, which in a dump
-	 * whose coordinates are computed is one value inherited N times rather than N sources agreeing.
+	 * Distinct coordinates among them.
+	 *
+	 * One means every row named the same point, which in a dump whose coordinates are
+	 * computed is one value inherited N times rather than N sources agreeing.
 	 */
 	distinctPoints: number
 }
@@ -94,15 +100,17 @@ export interface MedoidSupport {
  * and admin divisions, averaging neighbouring codes where the match fails,
  * so one computed value reaches every row that matched it.
  *
- * Measured across the 109 country dumps: 72,610 postcodes are carried by more than
- * one row, and 18,279 of those (25.2%) have every member at one identical point.
+ * Measured across the 109 country dumps: 72,610 postcodes are carried by more than one row,
+ * and 18,279 of those (25.2%) have every member at one identical point.
  * Thailand is 88.4% of its multi-row codes, Japan 99.0%, Ukraine 51.2%, India 37.1%.
+ *
  * TH 10230 is the worked case — `Lat Phrao` and `Khanna Yao`, both Bangkok districts,
  * both published at 14.3333 / 99.9167, about 90 km from either.
  *
- * Exact equality rather than a proximity radius. `collapseCoincident` in the gauntlet ablation
- * answers a different question — which ranked candidates are the same physical place,
- * within `COINCIDENT_PLACE_KM` — and two surveyed settlements 200 m apart are two points here.
+ * Exact equality rather than a proximity radius.
+ * `collapseCoincident` in the gauntlet ablation answers a different question —
+ * which ranked candidates are the same physical place, within `COINCIDENT_PLACE_KM` —
+ * and two surveyed settlements 200 m apart are two points here.
  */
 function collapseDuplicatePoints(points: readonly PostcodePoint[]): PostcodePoint[] {
 	const seen = new Set<string>()
@@ -125,21 +133,25 @@ function collapseDuplicatePoints(points: readonly PostcodePoint[]): PostcodePoin
  *
  * A postcode whose evidence is several scattered points has no single "true" centre,
  * and the tempting answer — average them — puts the code somewhere no address is.
- * The night-31 experiment measured that as a p50 tax severe enough to fail SK/SI/HR
- * at 1.10–1.94 km CI: the mean displaced coordinates that were already correct.
+ * The night-31 experiment measured that as a p50 tax severe enough to fail SK/SI/HR at
+ * 1.10–1.94 km CI: the mean displaced coordinates that were already correct.
+ *
  * The medoid stays on a real observation, so a single-member group is exactly its own point
  * and a multi-member group is one of its members.
  *
  * That bound applies only while the members are distinct, so duplicate points are
- * collapsed first: N rows at one coordinate carry one value, and counting them separately
- * weights it by how many settlements inherited it. Collapsing changes no answer
- * where the points differ — the mean of distinct points is the mean the law intends — and
+ * collapsed first: N rows at one coordinate carry one value, and counting them
+ * separately weights it by how many settlements inherited it.
+ * Collapsing changes no answer where the points differ — the mean of distinct
+ * points is the mean the law intends — and
  * {@link MedoidSupport.distinctPoints} reports how many points the answer rested on.
  *
  * Distance is squared-Euclidean in degrees rather than haversine.
- * At the scale a postcode spans, the ranking the two produce is the same, and this one carries
- * no trig into a per-group inner loop. Ties go to the earliest member, which makes the result
- * a pure function of the input order — the property a rebuilt extract's ids depend on.
+ * At the scale a postcode spans, the ranking the two produce is the same,
+ * and this one carries no trig into a per-group inner loop.
+ *
+ * Ties go to the earliest member, which makes the result a pure function of the
+ * input order — the property a rebuilt extract's ids depend on.
  *
  * Exported (rather than inlined at each ingest) because it is the second half of the #920 pair:
  * every postcode source that groups member points — GeoNames postal, OSM `addr:postcode` —
@@ -213,6 +225,7 @@ export interface GeonamesPostalIngestResult {
  * Fold GeoNames postcodes for `countries` into an open unified/postcode ingest DB: one `spr` row
  * per distinct normalized postcode (placetype `postalcode`, medoid centroid, degenerate bbox),
  * the normalized form as `name`, and the display form as an extra `names` row when it differs.
+ *
  * The caller owns the FTS rebuild (rows ride the standard freeze phase).
  */
 export async function ingestGeonamesPostal(
@@ -251,9 +264,10 @@ export async function ingestGeonamesPostal(
 		// Group member settlement points per normalized code. remember one display form.
 		const members = new Map<string, { display: string; pts: Array<[number, number]> }>()
 
-		// Streamed: a national dump is a caller-supplied size — GB's is 177 MB, and only the
-		// caller knows which country is next. `header: false` is required. the GeoNames postal
-		// dump is headerless, so row 1 would be consumed as column names and its postcode lost.
+		// Streamed: a national dump is a caller-supplied size — GB's is 177 MB,
+		// and only the caller knows which country is next.
+		// `header: false` is required. the GeoNames postal dump is headerless,
+		// so row 1 would be consumed as column names and its postcode lost.
 		for await (const cols of readUnquotedTSV(file)) {
 			if (cols.length < GEONAMES_POSTAL_COLUMNS) continue
 			const display = cols[1]!.trim()

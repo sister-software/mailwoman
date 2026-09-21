@@ -14,8 +14,9 @@ import { isPresent } from "@mailwoman/core/objects"
 import type { LocaleBaseTuple } from "#synthesizers/locale"
 
 /**
- * One labelled piece of the line. Pieces inside a group are space-joined. groups
- * are joined by the register's separator.
+ * One labelled piece of the line.
+ *
+ * Pieces inside a group are space-joined. groups are joined by the register's separator.
  */
 export interface Piece {
 	text: string
@@ -25,8 +26,10 @@ export interface Piece {
 export type Group = Piece[]
 
 /**
- * Surface register. Every eval in this repo gets a lowercase leg because lowercase is the
- * register users type — Google Maps taught them — so every recipe output has to carry one.
+ * Surface register.
+ *
+ * Every eval in this repo gets a lowercase leg because lowercase is the register users type —
+ * Google Maps taught them — so every recipe output has to carry one.
  */
 export const Register = {
 	Canonical: "canonical",

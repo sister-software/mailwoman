@@ -26,6 +26,7 @@ const NON_PROSE_ELEMENTS = new Set(["script", "style", "template"])
 /**
  * Element names whose boundaries end a line rather than separating two words —
  * pass to {@linkcode htmlToLayoutText} when reading one logical entry per line.
+ *
  * A minified document with no literal newline anywhere in it still separates one entry per line this way.
  */
 export const BLOCK_ELEMENTS: ReadonlySet<string> = new Set([
@@ -63,16 +64,18 @@ export const BLOCK_ELEMENTS: ReadonlySet<string> = new Set([
 ])
 
 /**
- * The text of an html fragment with source whitespace runs intact — the reading for a
- * document that states its columns as runs of spaces. Entities are decoded,
- * and every whitespace character the document states survives as itself: a caller
- * splitting on a run must include U+00A0 in its own character class, since `&nbsp;`
- * and `&#160;` are the same character and `[ \t]` matches neither.
+ * The text of an html fragment with source whitespace runs intact — the reading for
+ * a document that states its columns as runs of spaces.
+ *
+ * Entities are decoded, and every whitespace character the document states survives as
+ * itself: a caller splitting on a run must include U+00A0 in its own character class,
+ * since `&nbsp;` and `&#160;` are the same character and `[ \t]` matches neither.
  *
  * Markup between two text runs inserts one separator, and only where the source states none —
  * so `<td>a</td><td>b</td>` separates into two values while `a <b>b</b>` stays single-spaced,
  * and neither fabricates the 2+-space run a caller would read as a column boundary.
  * A run of markup is one separation rather than one per tag: `</p><p>` inserts a single break.
+ *
  * An element in `lineBreakElements` makes that separator a newline, unconditionally —
  * a line boundary the document states is not a spacing judgment.
  */
@@ -117,9 +120,10 @@ export function htmlToLayoutText(html: string, lineBreakElements?: ReadonlySet<s
 }
 
 /**
- * The prose text of an html fragment: the same reading, whitespace collapsed to single
- * spaces and trimmed. This is the reading for a value compared or stored as text —
- * one table cell, a service `licenseInfo` block, a tile attribution.
+ * The prose text of an html fragment: the same reading, whitespace collapsed to single spaces and trimmed.
+ *
+ * This is the reading for a value compared or stored as text — one table cell,
+ * a service `licenseInfo` block, a tile attribution.
  */
 export function htmlToText(html: string): string {
 	return normalizeWhitespace(htmlToLayoutText(html))

@@ -60,6 +60,7 @@ export interface ErrorAnalysisOptions {
 	golden?: string
 	/**
 	 * Candidate ONNX (requires `tokenizer` + `modelCard`).
+	 *
 	 * Omit for the shipped dev weights.
 	 */
 	model?: string
@@ -77,13 +78,15 @@ export interface ErrorAnalysisOptions {
 	postcodeRepair?: boolean
 	/**
 	 * Parse with the production word-consistency heal (`WORD_CONSISTENCY_SHIP_DEFAULT`, 2026-07-15).
+	 *
 	 * Off by default so pre-flip baselines stay reproducible. pass it to grade
 	 * the shipped pipeline configuration.
 	 */
 	wordConsistency?: boolean
 	/**
-	 * Strict ship-config feed (#718): fail closed if a model-card-declared
-	 * channel can't be fed. Default true.
+	 * Strict ship-config feed (#718): fail closed if a model-card-declared channel can't be fed.
+	 *
+	 * Default true.
 	 */
 	strict?: boolean
 }
@@ -107,7 +110,9 @@ async function loadGolden(dir: string): Promise<GoldenEntry[]> {
 }
 
 /**
- * Run the categorized error analysis. Markdown report on stdout, progress on stderr.
+ * Run the categorized error analysis.
+ *
+ * Markdown report on stdout, progress on stderr.
  * Returns a process exit code: 0 = report emitted, 1 = usage error.
  */
 export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<number> {

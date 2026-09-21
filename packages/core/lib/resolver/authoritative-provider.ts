@@ -25,16 +25,19 @@
 import type { ComponentTag } from "@mailwoman/codex/component"
 
 /**
- * One parsed component as the provider receives it: the tag, the surface text, and
- * where in the normalized query it came from. Spans let a provider that scores per-field
- * report which input characters each of its canonical fields answers.
+ * One parsed component as the provider receives it: the tag, the surface text,
+ * and where in the normalized query it came from.
+ *
+ * Spans let a provider that scores per-field report which input characters
+ * each of its canonical fields answers.
  */
 export interface AuthoritativeQueryComponent {
 	tag: ComponentTag
 	value: string
 	/**
-	 * Character offsets into {@link AuthoritativeQuery.normalizedQuery}, when the pipeline
-	 * still holds them. Absent for components assembled from multiple spans.
+	 * Character offsets into {@link AuthoritativeQuery.normalizedQuery}, when the pipeline still holds them.
+	 *
+	 * Absent for components assembled from multiple spans.
 	 */
 	start?: number
 	end?: number
@@ -55,7 +58,9 @@ export interface AuthoritativeQuery {
 	normalizedQuery: string
 	components: ReadonlyArray<AuthoritativeQueryComponent>
 	/**
-	 * ISO 3166-1 alpha-2, when inferred or declared. Absent when the pipeline could not commit to one.
+	 * ISO 3166-1 alpha-2, when inferred or declared.
+	 *
+	 * Absent when the pipeline could not commit to one.
 	 */
 	countryCode?: string
 	/**
@@ -65,6 +70,7 @@ export interface AuthoritativeQuery {
 	/**
 	 * Mailwoman's own confidence in the parse, [0, 1], when the decode produced one —
 	 * an adapter may use it to choose between a strict and a fuzzy provider query.
+	 *
 	 * Absent means unmeasured, never zero.
 	 */
 	parseConfidence?: number
@@ -81,8 +87,10 @@ export const AuthoritativeMatchStatus = {
 export type AuthoritativeMatchStatus = (typeof AuthoritativeMatchStatus)[keyof typeof AuthoritativeMatchStatus]
 
 /**
- * One place the provider asserted. Every field is the provider'S claim, carried verbatim —
- * nothing here is a Mailwoman inference, which is exactly what makes the block auditable downstream.
+ * One place the provider asserted.
+ *
+ * Every field is the provider'S claim, carried verbatim — nothing here is a Mailwoman
+ * inference, which is exactly what makes the block auditable downstream.
  */
 export interface AuthoritativeMatch {
 	/**
@@ -91,36 +99,42 @@ export interface AuthoritativeMatch {
 	providerPlaceID: string
 	/**
 	 * Authoritative object identifiers by scheme, e.g. `{ uprn: "100023336956" }`.
+	 *
 	 * Schemes are lowercase keys owned by the adapter. a provider that supplies none omits the field.
 	 */
 	objectIDs?: Readonly<Record<string, string>>
 	/**
-	 * Canonical address fields as the provider returned them, keyed by the
-	 * provider's own field names. Deliberately not remapped to {@link ComponentTag}:
-	 * a lossy remap would overwrite the assertion this interface exists to preserve.
+	 * Canonical address fields as the provider returned them, keyed by the provider's own field names.
+	 *
+	 * Deliberately not remapped to {@link ComponentTag}: a lossy remap would overwrite
+	 * the assertion this interface exists to preserve.
 	 * An adapter may additionally offer a mapped view. this field is the record.
 	 */
 	canonicalFields?: Readonly<Record<string, string>>
 	latitude?: number
 	longitude?: number
 	/**
-	 * The provider's stated precision or tier for the coordinate, in the provider's own
-	 * vocabulary (e.g. a rooftop/parcel/centroid label). Verbatim — the resolver's own
-	 * tier taxonomy does not apply to an assertion Mailwoman did not make.
+	 * The provider's stated precision or tier for the coordinate, in the provider's
+	 * own vocabulary (e.g. a rooftop/parcel/centroid label).
+	 *
+	 * Verbatim — the resolver's own tier taxonomy does not apply to an assertion Mailwoman did not make.
 	 */
 	coordinatePrecision?: string
 	matchStatus: AuthoritativeMatchStatus
 	/**
 	 * The provider's own match score, when it states one.
+	 *
 	 * Scale is provider-defined. ordinal only.
 	 */
 	providerScore?: number
 }
 
 /**
- * The overall shape of a provider's answer. `matches` is non-empty exactly when `status` is `matched`
- * or `ambiguous`; an ambiguous response carries every candidate the provider returned, in the
- * provider's order — collapsing to the first would manufacture a certainty the provider refused.
+ * The overall shape of a provider's answer.
+ *
+ * `matches` is non-empty exactly when `status` is `matched` or `ambiguous`; an ambiguous
+ * response carries every candidate the provider returned, in the provider's order —
+ * collapsing to the first would manufacture a certainty the provider refused.
  */
 export const AuthoritativeResponseStatus = {
 	/**
@@ -128,13 +142,16 @@ export const AuthoritativeResponseStatus = {
 	 */
 	Matched: "matched",
 	/**
-	 * The provider returned candidates it could not decide
-	 * between. All of them are here.
+	 * The provider returned candidates it could not decide between.
+	 *
+	 * All of them are here.
 	 */
 	Ambiguous: "ambiguous",
 	/**
-	 * The provider declined to answer — out of coverage, below its own confidence floor, or the query
-	 * shape is outside its scope. Not an error and not a miss: the provider spoke, and said no.
+	 * The provider declined to answer — out of coverage, below its own confidence floor,
+	 * or the query shape is outside its scope.
+	 *
+	 * Not an error and not a miss: the provider spoke, and said no.
 	 */
 	Refused: "refused",
 } as const
@@ -153,12 +170,15 @@ export interface AuthoritativeResponse {
 	attribution?: string
 	/**
 	 * License or terms identifier suitable for downstream display (an spdx id, a product terms name).
+	 *
 	 * Carried so a consumer can keep provider-derived records under the provider's
 	 * terms without consulting anything outside the result.
 	 */
 	license?: string
 	/**
-	 * When the provider answered, ISO-8601. Absent when the transport does not surface it.
+	 * When the provider answered, ISO-8601.
+	 *
+	 * Absent when the transport does not surface it.
 	 */
 	retrievedAt?: string
 	/**
@@ -168,7 +188,9 @@ export interface AuthoritativeResponse {
 }
 
 /**
- * A configured authoritative provider. One method, asynchronous, backend-neutral.
+ * A configured authoritative provider.
+ *
+ * One method, asynchronous, backend-neutral.
  *
  * A thrown error is a transport failure (network, auth, timeout) and is the adapter's to surface —
  * it is not a refusal, which is a well-formed {@link AuthoritativeResponse} with `status: "refused"`.
@@ -177,6 +199,7 @@ export interface AuthoritativeResponse {
 export interface AuthoritativeProvider {
 	/**
 	 * Stable provider name for provenance stamps (e.g. an adapter package's registered name).
+	 *
 	 * Lowercase kebab, owned by the adapter.
 	 */
 	readonly name: string

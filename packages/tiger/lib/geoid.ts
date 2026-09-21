@@ -238,15 +238,21 @@ export const GeoIDPart = {
 	 */
 	Place: "place_code",
 	/**
-	 * The tract code part of a GeoID. The third most granular part.
+	 * The tract code part of a GeoID.
+	 *
+	 * The third most granular part.
 	 */
 	Tract: "tract_code",
 	/**
-	 * The block group code part of a GeoID. The second most granular part.
+	 * The block group code part of a GeoID.
+	 *
+	 * The second most granular part.
 	 */
 	BlockGroup: "block_group_code",
 	/**
-	 * The block code part of a GeoID. The most granular part.
+	 * The block code part of a GeoID.
+	 *
+	 * The most granular part.
 	 */
 	Block: "block_code",
 } as const
@@ -288,7 +294,9 @@ export const GeoIDPartLength = {
 } as const satisfies Record<GeoIDPart, number>
 
 /**
- * A GeoID parsed to the block level. The most granular level.
+ * A GeoID parsed to the block level.
+ *
+ * The most granular level.
  *
  * @title Parsed GeoID Block Level
  * @public
@@ -305,7 +313,9 @@ export interface ParsedGeoIDBlockLevel {
 }
 
 /**
- * A GeoID parsed to the block group level. The second most granular level.
+ * A GeoID parsed to the block group level.
+ *
+ * The second most granular level.
  *
  * @internal
  */
@@ -319,7 +329,9 @@ export interface ParsedGeoIDBlockGroupLevel {
 }
 
 /**
- * A GeoID parsed to the tract level. The third most granular level.
+ * A GeoID parsed to the tract level.
+ *
+ * The third most granular level.
  *
  * @internal
  */
@@ -340,7 +352,9 @@ export interface ParsedGeoIDTractLevel {
 export type ParsedGeoIDPartial = Partial<Record<GeoIDPart, string>>
 
 /**
- * A GeoID parsed to the county-subdivision level. The fourth most granular level.
+ * A GeoID parsed to the county-subdivision level.
+ *
+ * The fourth most granular level.
  *
  * @internal
  */
@@ -354,7 +368,9 @@ export interface ParsedGeoIDCountySubDivisionLevel {
 }
 
 /**
- * A GeoID parsed to the county level. The fifth most granular level.
+ * A GeoID parsed to the county level.
+ *
+ * The fifth most granular level.
  *
  * @internal
  */
@@ -368,7 +384,9 @@ export interface ParsedGeoIDCountyLevel {
 }
 
 /**
- * A GeoID parsed to the state level. The least granular level.
+ * A GeoID parsed to the state level.
+ *
+ * The least granular level.
  *
  * @internal
  */

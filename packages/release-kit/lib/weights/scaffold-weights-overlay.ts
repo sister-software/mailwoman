@@ -88,6 +88,7 @@ export async function scaffoldWeightsOverlay(
 
 	/**
 	 * BCP-47 in, lowercase package suffix out: `es-ES` → `es-es`.
+	 *
 	 * The workspace directory, the package name and every register use this form.
 	 * the original casing is kept only for the model card's `locale` field,
 	 * which is the one place the tag is a tag rather than an identifier.
@@ -107,6 +108,7 @@ export async function scaffoldWeightsOverlay(
 
 	/**
 	 * Read the root version rather than a sibling package's.
+	 *
 	 * `prepare-version` refuses to bump a tree that is not version-synced, so a new workspace must
 	 * be born at the root version — the v8.4.0 bdc/filer drift is what that guard exists to catch.
 	 */
@@ -121,8 +123,8 @@ export async function scaffoldWeightsOverlay(
 			description: `${localeTag} weights overlay for mailwoman — data-only; shares the base model with ${basePackage}.`,
 			license: "AGPL-3.0",
 			type: "module",
-			// `directory` names this package. It is the field that has been wrong every
-			// time an overlay was created by copying a sibling.
+			// `directory` names this package.
+			// It is the field that has been wrong every time an overlay was created by copying a sibling.
 			repository: {
 				type: "git",
 				url: "https://github.com/sister-software/mailwoman.git",
@@ -162,11 +164,12 @@ export async function scaffoldWeightsOverlay(
 		".npmignore"
 	)
 
-	// The dev linker, emitted rather than copied. This step used to be a printed instruction
-	// reading "copy the closest sibling's build block", and that is precisely how es-es
-	// and it-it came to ship de-de's docstring — describing German addresses,
-	// in packages whose code was correct. Generating it leaves nothing to copy. the
-	// magnitudes below are placeholders the author is told to calibrate.
+	// The dev linker, emitted rather than copied.
+	// This step used to be a printed instruction reading "copy the closest sibling's build
+	// block", and that is precisely how es-es and it-it came to ship de-de's docstring —
+	// describing German addresses, in packages whose code was correct.
+	// Generating it leaves nothing to copy. the magnitudes below are placeholders
+	// the author is told to calibrate.
 	await writeLocalTextFile(
 		base
 			? `/**
@@ -248,9 +251,10 @@ await materializeDevOverlay({
 	)
 
 	/**
-	 * Insert `entry` into a JSON array-valued key, immediately after `after`,
-	 * preserving tab indentation. Returns false when the entry is already present
-	 * so re-running the command is a no-op rather than a duplicate.
+	 * Insert `entry` into a JSON array-valued key, immediately after `after`, preserving tab indentation.
+	 *
+	 * Returns false when the entry is already present so re-running the command
+	 * is a no-op rather than a duplicate.
 	 */
 	async function registerInJSONArray(file: string, findAfter: string, entry: string): Promise<boolean> {
 		const path = repoPath(file)
@@ -265,9 +269,9 @@ await materializeDevOverlay({
 
 	const registered: string[] = []
 
-	// 1. Root workspaces. The field is `packages/*` plus literals, so a new overlay directory
-	//    is covered by the glob the moment it exists. a literal entry is only written
-	//    when no pattern already names the directory.
+	// 1. Root workspaces.
+	//    The field is `packages/*` plus literals, so a new overlay directory is covered by the glob the
+	//    moment it exists. a literal entry is only written when no pattern already names the directory.
 	const rootPath = repoPath("package.json")
 	const rootPkg = await readLocalJSONFile<{ workspaces: string[] }>(rootPath)
 

@@ -12,8 +12,9 @@ import type { ComponentTag } from "#component"
 /**
  * Mapping from mailwoman's address-component tags to the resolver's placetype taxonomy.
  *
- * Partial on purpose: a tag absent from the map is not queried, and the resolver pass leaves its
- * classifier attribution untouched. Omission is therefore a routing decision rather than an oversight.
+ * Partial on purpose: a tag absent from the map is not queried, and the resolver
+ * pass leaves its classifier attribution untouched.
+ * Omission is therefore a routing decision rather than an oversight.
  */
 export type PlacetypeMap = Partial<Record<ComponentTag, string>>
 
@@ -28,8 +29,9 @@ export type PlacetypeMap = Partial<Record<ComponentTag, string>>
  * a municipality a `locality` (its filter group admits the `borough` wards and `localadmin`),
  * and a district (大字 / 町名) sits in the `locality` band beside the neighbourhoods.
  * Measured on 300 JP board rows: with these entries and the JP rungs on the admin ladder,
- * 271 resolve within 15 km. without them, 0. Only the character-path CJK model
- * emits the tags, so no Latin parse reaches these rows.
+ * 271 resolve within 15 km. without them, 0.
+ *
+ * Only the character-path CJK model emits the tags, so no Latin parse reaches these rows.
  */
 export const DEFAULT_PLACETYPE_MAP: PlacetypeMap = {
 	country: "country",
@@ -63,10 +65,12 @@ const COUNTRY_PLACETYPE_OVERRIDES: Readonly<Record<string, PlacetypeMap>> = {
 }
 
 /**
- * The placetype map for a resolve scoped to `countryCode` (ISO alpha-2, any case): the default
- * map with the country's overrides applied, or the default map itself when the country has none
- * or is unknown. The identity of the default object is preserved in that case, so a caller
- * comparing maps to decide whether a second resolve is needed reads "unchanged" correctly.
+ * The placetype map for a resolve scoped to `countryCode` (ISO alpha-2, any case):
+ * the default map with the country's overrides applied, or the default map itself
+ * when the country has none or is unknown.
+ *
+ * The identity of the default object is preserved in that case, so a caller comparing
+ * maps to decide whether a second resolve is needed reads "unchanged" correctly.
  */
 export function placetypeMapForCountry(countryCode: string | null | undefined): PlacetypeMap {
 	const overrides = countryCode ? COUNTRY_PLACETYPE_OVERRIDES[countryCode.toLowerCase()] : undefined
@@ -75,37 +79,43 @@ export function placetypeMapForCountry(countryCode: string | null | undefined): 
 }
 
 /**
- * Placetype-equivalence groups for lookup filtering. WOF splits a single addressing
- * tier across several placetypes, but an address's span can name any of them.
+ * Placetype-equivalence groups for lookup filtering.
+ *
+ * WOF splits a single addressing tier across several placetypes, but an address's span can name any of them.
  * A backend that filters to the one "obvious" placetype makes the equivalents unreachable,
  * so a fuzzy same-name place in the wrong tier wins instead.
  *
  * Three tiers are affected (the value of each entry is the set the SQL filter should accept.
  * the first entry is the canonical/requested type, which extract routing keys off):
  *
- * - **`locality`** — `locality` (most cities), `borough`
- *   (Brooklyn, the Paris arrondissements, the London boroughs), and `localadmin`
- *   (FR communes, US towns/townships in New England). Without the group, Brooklyn-the-borough
- *   (pop 2.5M) was unreachable and the fuzzy "Brooklyn Park, MN" won.
- * - **`region`** — `region` + `macroregion` (#718). WOF does not model every country's
- *   top-level civil division as `region`: Italian regions (Lombardia, Veneto, Toscana…)
- *   are `macroregion` (their provinces are `region`), and the post-2016 French régions
- *   (Île-de-France) are `macroregion` too. An address's `region` span names exactly those,
- *   so a `region`-only filter resolved them to nothing (confirmed against the IT/FR eval rows).
+ * - **`locality`** — `locality` (most cities), `borough` (Brooklyn, the Paris arrondissements,
+ *   the London boroughs), and `localadmin` (FR communes, US towns/townships in New England).
+ *   Without the group, Brooklyn-the-borough (pop 2.5M) was unreachable
+ *   and the fuzzy "Brooklyn Park, MN" won.
+ * - **`region`** — `region` + `macroregion` (#718).
+ *   WOF does not model every country's top-level civil division as `region`: Italian
+ *   regions (Lombardia, Veneto, Toscana…) are `macroregion` (their provinces are `region`),
+ *   and the post-2016 French régions (Île-de-France) are `macroregion` too.
+ *   An address's `region` span names exactly those, so a `region`-only filter resolved
+ *   them to nothing (confirmed against the IT/FR eval rows).
  *   US states / DE Bundesländer / ES provincias are genuine `region`, so the exact-type
  *   match is preferred in ranking (see the resolve.ts fallback-quality annotation) —
  *   the macro is the recall safety net rather than a demotion.
- * - **`county`** — `county` + `macrocounty` (#718). The `subregion` ComponentTag maps to `county` via
+ * - **`county`** — `county` + `macrocounty` (#718).
+ *   The `subregion` ComponentTag maps to `county` via
  *   {@link DEFAULT_PLACETYPE_MAP}; WOF carries `macrocounty` for FR départements-grouping / DE / GB tiers above the
- *   county. Proactive (no eval row exercises `subregion` today) but symmetric with `region` —
- *   biasing to inclusion, since a missed resolution costs more than a too-broad candidate
- *   (which is QA-visible). Same exact-type preference applies.
+ *   county.
+ *   Proactive (no eval row exercises `subregion` today) but symmetric with `region` — biasing to
+ *   inclusion, since a missed resolution costs more than a too-broad candidate (which is QA-visible).
+ *
+ *   Same exact-type preference applies.
  *
  * This table is the single source of truth for that expansion, shared by every lookup
  * backend (`@mailwoman/core/resolver-wof-sqlite`, `@mailwoman/core/resolver-wof-wasm`,
  * and the demo's httpvfs lookup) so the Node and browser resolvers can't drift.
- * Keyed by the requested placetype. Placetypes without an entry pass through unchanged —
- * an explicit `placetype: "borough"` query stays narrow.
+ * Keyed by the requested placetype.
+ *
+ * Placetypes without an entry pass through unchanged — an explicit `placetype: "borough"` query stays narrow.
  */
 export const PLACETYPE_FILTER_GROUPS: Readonly<Record<string, readonly string[]>> = {
 	locality: ["locality", "borough", "localadmin"],
@@ -116,6 +126,7 @@ export const PLACETYPE_FILTER_GROUPS: Readonly<Record<string, readonly string[]>
 /**
  * Expand a placetype filter through {@link PLACETYPE_FILTER_GROUPS}, deduplicated
  * and order-preserving (the first entry stays first — extract routing keys off it).
+ *
  * `null`/`undefined` (no filter) passes through untouched.
  */
 export function expandPlacetypeFilter(placetypes: null): null
@@ -140,6 +151,7 @@ export function expandPlacetypeFilter(placetypes: readonly string[] | null): str
 /**
  * Macro/broader-tier members of {@link PLACETYPE_FILTER_GROUPS} — the recall safety net a
  * query may fall through to when no candidate of the exact requested placetype exists (#718).
+ *
  * Deliberately scoped to the `macro*` tiers only: the `locality` group's `borough`/`localadmin`
  * are genuine peers (Brooklyn-the-borough is a first-class locality answer,
  * #404-class), not fallbacks — so they must not be deprioritized or annotated. Only `macroregion`/`macrocounty` are a
@@ -153,9 +165,11 @@ const MACRO_FALLBACK_PLACETYPES: ReadonlySet<string> = new Set(["macroregion", "
  * {@link PLACETYPE_FILTER_GROUPS} expansion), rather than the exact type (#718)?
  *
  * `region` → `region` is exact (false); `region` → `macroregion` is a fallback (true).
- * Scoped to the `macro*` tiers (see {@link MACRO_FALLBACK_PLACETYPES}) so the `locality` group's
- * borough/localadmin peers stay exact. The resolver uses this to (a) prefer an exact-type candidate
- * in ranking and (b) annotate `resolutionQuality: "fallback"` when only a macro-type matched.
+ * Scoped to the `macro*` tiers (see {@link MACRO_FALLBACK_PLACETYPES})
+ * so the `locality` group's borough/localadmin peers stay exact.
+ *
+ * The resolver uses this to (a) prefer an exact-type candidate in ranking and (b)
+ * annotate `resolutionQuality: "fallback"` when only a macro-type matched.
  * A placetype outside the requested group, or any non-macro member, is treated as exact (false).
  */
 export function isPlacetypeFallback(requestedPlacetype: string, candidatePlacetype: string): boolean {

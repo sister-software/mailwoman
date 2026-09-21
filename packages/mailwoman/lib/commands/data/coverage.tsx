@@ -61,8 +61,8 @@ const CoverageCommand: CommandComponent<typeof spec> = ({ options }) => {
 		const repoRoot = String(repoRootPath())
 
 		// The config is named by `scope.config.json` rather than discovered.
-		// Both discovery orders are wrong here: the mtime sort sorts a total tie
-		// after a checkout, and the version scheme sorts neither lexically nor numerically.
+		// Both discovery orders are wrong here: the mtime sort sorts a total tie after a checkout,
+		// and the version scheme sorts neither lexically nor numerically.
 		// The report names the config it read either way.
 		const config = resolveTrainingConfig(await readScopeConfig(), { requested: options.config })
 		const manifestPath = await newestManifest()
@@ -95,8 +95,10 @@ const CoverageCommand: CommandComponent<typeof spec> = ({ options }) => {
 export default CoverageCommand
 
 /**
- * The checklist form. Mismatches first — they are the rows nobody is looking at,
- * and each one is a defect class that has shipped at least once.
+ * The checklist form.
+ *
+ * Mismatches first — they are the rows nobody is looking at, and each one is a
+ * defect class that has shipped at least once.
  */
 /**
  * How many empty-but-admitted codes to name before eliding.

@@ -45,46 +45,58 @@ export interface SpanRescoreOptions {
 	postcode?: string
 	/**
 	 * Reject a candidate whose coordinate is farther than this (km) from the postcode anchor.
-	 * The check only fires when the postcode resolves to a point in the backend.
-	 * otherwise it can't and the match is accepted (so it never penalizes a backend
-	 * without postcode coverage). 0 disables. Default 50.
+	 *
+	 * The check only fires when the postcode resolves to a point in the backend. otherwise it can't
+	 * and the match is accepted (so it never penalizes a backend without postcode coverage). 0 disables.
+	 * Default 50.
 	 */
 	thresholdKm?: number
 	/**
-	 * Max contiguous raw tokens to treat as one locality span. Default 4.
+	 * Max contiguous raw tokens to treat as one locality span.
+	 *
+	 * Default 4.
 	 */
 	maxSpanTokens?: number
 	/**
-	 * Min confidence for a street/house_number/postcode node to count as a
-	 * span-blocking constituent. Default 0.7.
+	 * Min confidence for a street/house_number/postcode node to count as a span-blocking constituent.
+	 *
+	 * Default 0.7.
 	 */
 	confidentThreshold?: number
 	/**
 	 * #942 postal-compound recovery. A globbed postcode span ("1382 Kožljek") normally (a) fails to anchor (the compound
 	 * matches no bare-code gazetteer row) and (b) blocks its own trailing city tokens from recovery.
+	 *
 	 * When on: the anchor retries with the postcode's code-shaped (digit-containing)
 	 * token subset, and an unresolved postcode node blocks only those code tokens —
-	 * the residual name tokens become span material. Street/affix blocking is
-	 * untouched (the "Ave, France" guard). Default false.
+	 * the residual name tokens become span material.
+	 * Street/affix blocking is untouched (the "Ave, France" guard).
+	 *
+	 * Default false.
 	 */
 	postalCompoundRecovery?: boolean
 	/**
 	 * #17 bare-toponym soft country. When the span covers the whole unqualified input, treat {@link country} as an
 	 * additive prior instead of a hard gazetteer filter
 	 * (see the block comment on {@link findRescoreCandidate}'s bare branch).
+	 *
 	 * Default true; `false` restores the hard filter byte-for-byte.
 	 */
 	bareToponymSoftCountry?: boolean
 	/**
-	 * Weight of that prior, in log10-population units. Default {@link DEFAULT_COUNTRY_PRIOR_WEIGHT} (2).
+	 * Weight of that prior, in log10-population units.
+	 *
+	 * Default {@link DEFAULT_COUNTRY_PRIOR_WEIGHT} (2).
 	 * A large value makes the country effectively hard again without changing the
 	 * code path. 0 removes the locale's say entirely.
 	 */
 	bareToponymCountryWeight?: number
 	/**
 	 * Admit a proper sub-span only when every token it leaves behind is a subdivision code
-	 * or a number — see `remainderIsContext` in this module for the rule and the five
-	 * rows a blanket refusal would lose. Default false.
+	 * or a number — see `remainderIsContext` in this module for the rule
+	 * and the five rows a blanket refusal would lose.
+	 *
+	 * Default false.
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 }
@@ -116,21 +128,24 @@ export interface RescoreCandidate {
 	 */
 	postcodeVerified: boolean
 	/**
-	 * The same-span namesake runner-ups — the other exact-name matches this recovery's own
-	 * lookup already returned, in the backend's rank order, minus the winner and minus
-	 * anything the postcode check rejected. Empty when the span named exactly one place.
+	 * The same-span namesake runner-ups — the other exact-name matches this recovery's
+	 * own lookup already returned, in the backend's rank order, minus the winner
+	 * and minus anything the postcode check rejected.
+	 *
+	 * Empty when the span named exactly one place.
 	 *
 	 * #1537: these were being discarded. A name the model reads as a `street` ("Springfield", "Berlin", "Manchester",
 	 * "Moscow", "Fulda") never reaches the admin walk, so the whole tree comes back unresolved
-	 * and this tier is what recovers it — and it decorated the injected node with no
-	 * alternatives at all. The result was that the geocode path's `candidates` array held
-	 * one entry, and the top-1-vs-top-2 dominance margin that `declared_ambiguity` reads
-	 * was uncomputable, for exactly the famous-homonym class that marker exists for.
+	 * and this tier is what recovers it — and it decorated the injected node with no alternatives at all.
+	 * The result was that the geocode path's `candidates` array held one entry, and the
+	 * top-1-vs-top-2 dominance margin that `declared_ambiguity` reads was uncomputable,
+	 * for exactly the famous-homonym class that marker exists for.
+	 *
 	 * Measured on the shipped candidate backend, 2026-08-07: those five queries returned 1 candidate each
 	 * while `Cambridge`/`Athens`/`Paris` — the same class, but parsed as `locality` — returned 4-5.
 	 *
-	 * The winner is unchanged by their presence: the pick is still the first
-	 * check-passing exact match, and these are the ones that came after it.
+	 * The winner is unchanged by their presence: the pick is still the first check-passing
+	 * exact match, and these are the ones that came after it.
 	 * This costs no extra query — they were in the same `findPlace` response.
 	 */
 	alternatives: ResolvedPlace[]
@@ -158,9 +173,11 @@ function tokenizeRaw(raw: string): RawTok[] {
 }
 
 /**
- * The code-shaped (digit-containing) token subset of a postcode string — "1382 Kožljek" → "1382",
- * "SW1A 1AA London" → "SW1A 1AA". The #942 recovery resolves this against the gazetteer's
- * bare-code rows when the globbed compound fails. Empty string when no token carries a digit.
+ * The code-shaped (digit-containing) token subset of a postcode string —
+ * "1382 Kožljek" → "1382", "SW1A 1AA London" → "SW1A 1AA".
+ *
+ * The #942 recovery resolves this against the gazetteer's bare-code rows when the globbed compound fails.
+ * Empty string when no token carries a digit.
  */
 export function postcodeCodeSubset(postcode: string): string {
 	return postcode
@@ -171,19 +188,22 @@ export function postcodeCodeSubset(postcode: string): string {
 }
 
 /**
- * Over-fetch for the #17 bare-toponym probe. Without a country filter the top 5 worldwide
- * bearers of a common name are often all in one country, and the candidate the soft
- * prior exists to promote sits below the fold — "Warwick" puts five US rows ahead of
- * Warwick, Warwickshire. The backend orders by the same population key either way,
- * so a wider window only admits more of the same list.
+ * Over-fetch for the #17 bare-toponym probe.
+ *
+ * Without a country filter the top 5 worldwide bearers of a common name are often all in
+ * one country, and the candidate the soft prior exists to promote sits below the fold —
+ * "Warwick" puts five US rows ahead of Warwick, Warwickshire.
+ * The backend orders by the same population key either way, so a wider window
+ * only admits more of the same list.
  */
 const BARE_TOPONYM_FETCH = 20
 
 /**
- * True when the tree names its own admin context — a region, subregion, country, postcode
- * or house number the parser read out of the input. Such a query is not relying on a locale
- * guess, so the #17 soft-country prior stands down and the hard filter keeps its say:
- * this is what holds 'Berlin, Wisconsin' on Berlin, Wisconsin.
+ * True when the tree names its own admin context — a region, subregion, country,
+ * postcode or house number the parser read out of the input.
+ *
+ * Such a query is not relying on a locale guess, so the #17 soft-country prior stands down
+ * and the hard filter keeps its say: this is what holds 'Berlin, Wisconsin' on Berlin, Wisconsin.
  */
 function hasAdminQualifier(roots: readonly AddressNode[]): boolean {
 	return (
@@ -237,24 +257,27 @@ export function hasResolvedPlace(
 /**
  * Char ranges of confident street / house_number / postcode constituents, including the
  * street affixes (`street_prefix` / `street_suffix`) — a locality span must not overlap them.
+ *
  * The affixes matter: a confident "Ave" in "350 5th Ave, NY" is a street suffix
  * rather than a locality, and without this guard the recovery exact-matches it against
  * a same-named place ("Ave", France) and injects a bogus locality.
  */
 /**
- * Ranges of multi-token `country` / `region` spans, used to block their interior tokens
- * from being re-read as standalone places. The whole span itself stays probeable —
- * only proper sub-spans are refused.
+ * Ranges of multi-token `country` / `region` spans, used to block their interior
+ * tokens from being re-read as standalone places.
  *
- * The parse grouping is the claim: when the model binds `Papua`, `New` and `Guinea`
- * into one country span, `New` is a modifier inside a name rather than a name.
+ * The whole span itself stays probeable — only proper sub-spans are refused.
+ *
+ * The parse grouping is the claim: when the model binds `Papua`, `New` and `Guinea` into
+ * one country span, `New` is a modifier inside a name rather than a name.
  * Probing it anyway matches a real US place (`New`, wof:1276997945) and pins the address
  * to Kentucky — an answer strictly worse than none, because it is confident and wrong.
  *
  * Deliberately not confidence-conditioned, unlike {@link confidentRanges}.
  * The country node has score 0.68 in that case, under the 0.7 bar, and a low-confidence
- * grouping is still a grouping: the tokens were read as one name either way,
- * and the interior of a name the parse doubts is not thereby a better standalone candidate.
+ * grouping is still a grouping: the tokens were read as one name either way, and the
+ * interior of a name the parse doubts is not thereby a better standalone candidate.
+ *
  * Single-token spans are excluded — there is no interior to guard.
  */
 function multiTokenNameInteriors(roots: readonly AddressNode[], raw: string): Array<[number, number]> {
@@ -362,6 +385,7 @@ function confidentRanges(
 
 /**
  * Find the best locality the raw text exact-matches in the gazetteer.
+ *
  * Returns null when nothing matches (or the postcode check rejects every match).
  * Callers test `hasResolvedPlace` first.
  */
@@ -383,9 +407,10 @@ export async function findRescoreCandidate(
 
 	if (postcode && thresholdKm > 0) {
 		// #961: both anchor probes are postalcode-typed. Untyped, a truncated code fragment (v5.3.0
-		// emits "250 Zabiče" → subset "250") name-matches arbitrary places ("Chak No 250", PK) and
-		// the false anchor then excludes the true village. A typed miss leaves anchor=null → the
-		// match is accepted unrestricted, which is the correct degradation for an unverifiable code.
+		// emits "250 Zabiče" → subset "250") name-matches arbitrary places ("Chak No 250", PK)
+		// and the false anchor then excludes the true village.
+		// A typed miss leaves anchor=null → the match is accepted unrestricted,
+		// which is the correct degradation for an unverifiable code.
 		const pcHits = await backend.findPlace({ text: postcode, country, placetype: "postalcode", limit: 2 })
 		const a = pcHits.find((h) => h.lat !== 0 || h.lon !== 0)
 
@@ -413,9 +438,10 @@ export async function findRescoreCandidate(
 	const avoid = confidentRanges(roots, threshold, raw, opts.postalCompoundRecovery ?? false)
 	const streets = streetRanges(roots)
 
-	// A span touching a hard range is refused. A span touching an affix is refused
-	// unless it strictly contains that affix — which is what separates `Ave`
-	// (the span is the suffix) from `Eden Prairie` (the suffix is one token inside a longer name).
+	// A span touching a hard range is refused.
+	// A span touching an affix is refused unless it strictly contains that affix —
+	// which is what separates `Ave` (the span is the suffix) from `Eden Prairie`
+	// (the suffix is one token inside a longer name).
 	// The rest of such a span still has to clear the hard ranges, so a `5th Ave` sitting
 	// inside a confident `street` stays refused by the first test.
 	const overlapsAvoid = (s: number, e: number) =>
@@ -433,8 +459,8 @@ export async function findRescoreCandidate(
 	const isNameInterior = (s: number, e: number) =>
 		nameInteriors.some(([ns, ne]) => s >= ns && e <= ne && !(s === ns && e === ne))
 
-	// Enumerate contiguous token windows up to `maxSpan`, then probe them longest first BY
-	// character extent. The first exact match returns, so this order is the decision.
+	// Enumerate contiguous token windows up to `maxSpan`, then probe them longest first BY character extent.
+	// The first exact match returns, so this order is the decision.
 	//
 	// The gold locality is usually the longer, more-specific name — "Tomaszów Mazowiecki" over its
 	// own ambiguous prefix "Tomaszów" — and character extent measures that directly where token
@@ -464,39 +490,43 @@ export async function findRescoreCandidate(
 	spans.sort((a, b) => b.end - b.start - (a.end - a.start) || a.start - b.start)
 
 	// #17 bare-toponym soft country. The caller's `country` is a locale default rather than knowledge — the #961
-	// block below already says so, and for a bare city name it is the only country
-	// signal there is, which makes hard-filtering on it the worst possible use of it.
+	// block below already says so, and for a bare city name it is the only country signal
+	// there is, which makes hard-filtering on it the worst possible use of it.
 	// Measured through the compiled CLI on 2026-08-10: `--locale en-US 'Zürich'` returned
 	// Zurich, Kansas (population 81) 8,043 km off, and `--locale en-GB 'Zürich'` returned
 	// nothing at all, because GB holds no Zurich to filter down to.
 	//
-	// So for this one query shape the filter is demoted to an additive prior: probe the gazetteer unscoped,
-	// then rank with `rankByCountryPrior` so an in-country place may be up to 100x smaller and still win.
+	// So for this one query shape the filter is demoted to an additive prior:
+	// probe the gazetteer unscoped, then rank with `rankByCountryPrior` so an in-country
+	// place may be up to 100x smaller and still win.
 	// This is the #912 change ("Paris under en-US must not be hard-scoped to Paris, Texas")
 	// applied at the tier that actually decides the class — #912 lives upstream in the CLI
 	// and keys on a `locality`-tagged tree, but the model reads a bare famous name as a `street`,
 	// so the shape that needs it most is exactly the shape that guard cannot see.
 	//
-	// The shape check is deliberately narrow. `qualified` below is the D-rule guard:
-	// a postcode, a region, a country or a house number in the tree means the address
-	// named its own context and a locale guess is no longer the only evidence — 'Berlin,
-	// Wisconsin' keeps resolving to Berlin, Wisconsin. And the span must cover the whole input:
-	// a sub-span of a longer query is not a bare toponym, so "Weimar Thüringen" falls
-	// back to the country-scoped probe that lands the gold.
+	// The shape check is deliberately narrow.
+	// `qualified` below is the D-rule guard: a postcode, a region, a country or a house
+	// number in the tree means the address named its own context and a locale guess is no
+	// longer the only evidence — 'Berlin, Wisconsin' keeps resolving to Berlin, Wisconsin.
+	// And the span must cover the whole input: a sub-span of a longer query is not a bare toponym,
+	// so "Weimar Thüringen" falls back to the country-scoped probe that lands the gold.
 	/**
 	 * The tokens a sub-span probe leaves behind, when they read as an administrative qualifier.
 	 *
-	 * `WA Sammamish` recovers `Sammamish` and discards `WA` — and `WA` is the token that decides
-	 * which Sammamish. The backend already answers containment through `regionQualifier`;
-	 * nothing was asking it. Measured against the shipped artifact: `Irvington` alone ranks
-	 * Irvington NY (population 6,417) over Irvington NJ (61,323) on the fame prior, and `Irvington`
-	 * with `regionQualifier: "NJ"` stamps the New Jersey row contained and lifts it to rank 1.
+	 * `WA Sammamish` recovers `Sammamish` and discards `WA` — and `WA` is the
+	 * token that decides which Sammamish.
+	 * The backend already answers containment through `regionQualifier`; nothing was asking it.
 	 *
-	 * A remainder is admitted on shape rather than by a country table: one token of 2 or 3
-	 * uppercase ascii letters, which is what a subdivision code written on an address line looks
-	 * like in every register that uses one. Admitting more is unsafe rather than merely noisy —
-	 * a bare `de`, the commonest function word in FR/ES/PT/IT addresses, matches a region-class row
-	 * and reorders the pool, while `16`, `Ave`, `Street` and `1382` leave it untouched.
+	 * Measured against the shipped artifact: `Irvington` alone ranks Irvington NY
+	 * (population 6,417) over Irvington NJ (61,323) on the fame prior, and `Irvington` with
+	 * `regionQualifier: "NJ"` stamps the New Jersey row contained and lifts it to rank 1.
+	 *
+	 * A remainder is admitted on shape rather than by a country table: one token of 2
+	 * or 3 uppercase ascii letters, which is what a subdivision code written on an
+	 * address line looks like in every register that uses one.
+	 * Admitting more is unsafe rather than merely noisy — a bare `de`, the commonest function
+	 * word in FR/ES/PT/IT addresses, matches a region-class row and reorders the pool,
+	 * while `16`, `Ave`, `Street` and `1382` leave it untouched.
 	 */
 	const qualifierRemainder = (span: { start: number; end: number }): string | undefined => {
 		const outside = toks.filter((t) => t.end <= span.start || t.start >= span.end)
@@ -512,10 +542,11 @@ export async function findRescoreCandidate(
 	 * Whether every token a sub-span leaves behind is context rather than identity.
 	 *
 	 * A sub-span probe truncates the input, and what it dropped decides whether the result is a recovery.
-	 * A subdivision code or a postcode qualifies the name and survives being dropped,
-	 * since `regionQualifier` carries it to the backend — `WA Sammamish` → `Sammamish`,
-	 * `16 Sillod` → `Sillod`. A word of the name does not: `Fort Worth` → `Worth`
-	 * answers Worth, Illinois, population 10,494, 1,304 km away.
+	 * A subdivision code or a postcode qualifies the name and survives being dropped, since
+	 * `regionQualifier` carries it to the backend — `WA Sammamish` → `Sammamish`, `16 Sillod` → `Sillod`.
+	 *
+	 * A word of the name does not: `Fort Worth` → `Worth` answers Worth, Illinois,
+	 * population 10,494, 1,304 km away.
 	 *
 	 * The test is on what the remainder is rather than on the span being proper. Refusing every proper sub-span of a
 	 * multi-token locality was measured on the frozen fixture and rejected: it also refuses `NV Sparks`, `SCT
@@ -582,32 +613,34 @@ export async function findRescoreCandidate(
 					placetype: "locality",
 					limit: 5,
 					...(wholeSpan ? {} : { primaryOnly: true }),
-					// The qualifier the sub-span left behind. A backend without the ancestors sidecar
-					// ignores it and stamps nothing, which is the same answer as not asking.
+					// The qualifier the sub-span left behind.
+					// A backend without the ancestors sidecar ignores it and stamps nothing,
+					// which is the same answer as not asking.
 					...(qualifier === undefined ? {} : { regionQualifier: qualifier }),
 				})
 
 		// #1546: no primary-name re-check here — the backend's `exactMatch` is the name-or-alias surface
 		// equality (the names table / alt_names bag), so a query matches a place
-		// when any stored name equals it. Re-comparing only the primary name folded to
-		// [a-z0-9 ] excluded exactly the non-Latin-primary class: Москва folds to ""
-		// and could never equal "moscow", so Moscow RU never entered the list and Moscow,
-		// Idaho won by default among the Latin-named bearers — population- first ranking starved
-		// rather than violated. The alias surface is the recall. ranking then does its job.
+		// when any stored name equals it.
+		// Re-comparing only the primary name folded to [a-z0-9 ] excluded exactly the
+		// non-Latin-primary class: Москва folds to "" and could never equal "moscow",
+		// so Moscow RU never entered the list and Moscow, Idaho won by default among the
+		// Latin-named bearers — population- first ranking starved rather than violated.
+		// The alias surface is the recall. ranking then does its job.
 		// The postcode check below still applies to every admitted candidate, Moscow RU included.
 		//
 		// #17: importance-first within the admitted set. The key is the #28 blended fame prior
-		// (`PlaceCandidate.importance`, produced by the candidate build) — the only key that
-		// separates the bare GB panel rows. on an artifact predating the column it abstains
-		// and changes no pick. See `toponym-prior.ts`. It runs after the country
-		// prior deliberately: fame is the stronger signal when it has been measured,
-		// and leaves an unscored candidate exactly where population put it.
+		// (`PlaceCandidate.importance`, produced by the candidate build) — the only key that separates the
+		// bare GB panel rows. on an artifact predating the column it abstains and changes no pick.
+		// See `toponym-prior.ts`.
+		// It runs after the country prior deliberately: fame is the stronger signal when it
+		// has been measured, and leaves an unscored candidate exactly where population put it.
 		const ranked = rankByImportance(hits.filter((h) => h.exactMatch && (h.lat !== 0 || h.lon !== 0)))
 
 		// The same partition the walk applies for the same reason: `rankByImportance` has
 		// just re-ordered the tier by fame, which is where the qualifier is needed most —
-		// `Irvington` ranks the New York bearer (population 6,417, importance 0.4565)
-		// over the New Jersey one (61,323, 0.4258), and the recovered `NJ` says which.
+		// `Irvington` ranks the New York bearer (population 6,417, importance 0.4565) over
+		// the New Jersey one (61,323, 0.4258), and the recovered `NJ` says which.
 		// Tier-safe, stable, and positive-evidence-only: with no stamps it is the identity,
 		// so a backend that ignored `regionQualifier` is byte-stable.
 		const exact =
@@ -629,8 +662,8 @@ export async function findRescoreCandidate(
 			// (no postcode→point coverage), the match is unrestricted — returned, but flagged lower-precision.
 			//
 			// #1537: carry the rest of the same lookup's exact matches as the namesake runner-ups. Check-filtered on the
-			// same rule as the winner — a candidate the postcode check rejected is not
-			// a namesake worth offering, it is a place the evidence already excluded.
+			// same rule as the winner — a candidate the postcode check rejected is not a
+			// namesake worth offering, it is a place the evidence already excluded.
 			// Rank order is the backend's, preserved by `filter`.
 			return {
 				text: sp.text,
@@ -646,13 +679,13 @@ export async function findRescoreCandidate(
 	// #961 joint country recovery: the caller's `country` is a locale default rather than knowledge — the
 	// CLI's en-US default scoped both the anchor and the village probe to US, so the SI floor
 	// never fired through geocode-core while the same rows resolved 25/25 on the resolver harness.
-	// When the scoped pass finds nothing and a postcode is present, re-probe the spans
-	// unscoped (the admin gazetteer is one extract, all countries), then verify each
-	// exact candidate against the postcode's code subset resolved in the candidate's own
-	// country (postcode extracts route by country). A cross-country promotion is accepted
-	// only postcode-verified within the radius — never unverified — so a US-shaped query
-	// can't wander abroad on a name coincidence (the 48026 guard: resolved trees never
-	// reach this code, and unresolved ones must pass the joint postcode check).
+	// When the scoped pass finds nothing and a postcode is present, re-probe
+	// the spans unscoped (the admin gazetteer is one extract, all countries),
+	// then verify each exact candidate against the postcode's code subset resolved in
+	// the candidate's own country (postcode extracts route by country).
+	// A cross-country promotion is accepted only postcode-verified within the radius — never
+	// unverified — so a US-shaped query can't wander abroad on a name coincidence (the 48026 guard:
+	// resolved trees never reach this code, and unresolved ones must pass the joint postcode check).
 	if (opts.postalCompoundRecovery && postcode && thresholdKm > 0) {
 		const code = postcodeCodeSubset(postcode) || postcode.trim()
 
@@ -680,10 +713,10 @@ export async function findRescoreCandidate(
 				const verified = pcHits.find((p) => p.lat !== 0 || p.lon !== 0)
 
 				if (verified && haversineKm(verified.lat, verified.lon, h.lat, h.lon) <= thresholdKm) {
-					// No alternatives from this pass, deliberately. Admission here is per-candidate
-					// postcode verification — one `findPlace` per runner-up — and the class it
-					// serves is the opposite of the namesake one: a postcode is present and has
-					// already picked the country, so there is nothing ambiguous left to declare.
+					// No alternatives from this pass, deliberately.
+					// Admission here is per-candidate postcode verification — one `findPlace` per runner-up —
+					// and the class it serves is the opposite of the namesake one: a postcode is present
+					// and has already picked the country, so there is nothing ambiguous left to declare.
 					// The bare-toponym queries #1537 is about never reach this branch (it requires a postcode).
 					return { text: sp.text, start: sp.start, end: sp.end, place: h, postcodeVerified: true, alternatives: [] }
 				}

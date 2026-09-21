@@ -33,8 +33,8 @@ import { APIClient, type APIClientConfig, type ClockLike, systemClock } from "@m
 /**
  * Default pacing, in milliseconds between dispatches.
  *
- * This reads a public redirect on somebody else's service for the sake of authoring
- * OUR test data, so the interval is deliberately unhurried rather than tuned.
+ * This reads a public redirect on somebody else's service for the sake of authoring OUR
+ * test data, so the interval is deliberately unhurried rather than tuned.
  * `requestsPerMinute` alone does not hold a rate — its cooldown subtracts the elapsed gap,
  * so N alone dispatches N requests every 60/N seconds — which is why the interval is set directly.
  */
@@ -43,16 +43,18 @@ export const MAP_LINK_MIN_INTERVAL_MS = 1200
 /**
  * The status range this resolver treats as a successful answer: 2xx and 3xx.
  *
- * A share link answers with a redirect, so the usual "2xx only" predicate would classify
- * the one status we are here for as a failure. Written as plain constants
- * rather than taken from axios's `HttpStatusCode`, because pulling a runtime dependency
- * into this package for two integers is a worse trade than naming them.
+ * A share link answers with a redirect, so the usual "2xx only" predicate would
+ * classify the one status we are here for as a failure.
+ * Written as plain constants rather than taken from axios's `HttpStatusCode`, because pulling
+ * a runtime dependency into this package for two integers is a worse trade than naming them.
  */
 const LOWEST_ANSWERING_STATUS = 200
 const FIRST_ERROR_STATUS = 400
 
 /**
- * Where a resolved coordinate came from. The distinction is required — see the file header.
+ * Where a resolved coordinate came from.
+ *
+ * The distinction is required — see the file header.
  */
 export type MapLinkCoordinateSource = "place-pin" | "viewport-centre"
 
@@ -65,12 +67,15 @@ export interface MapLinkResolution {
 	latitude?: number
 	longitude?: number
 	/**
-	 * `place-pin` is the coordinate to pin. `viewport-centre` means the link carried no `!3d`/`!4d` pair
-	 * and this is the camera position — usable for a coarse case, never for a rooftop tolerance.
+	 * `place-pin` is the coordinate to pin.
+	 *
+	 * `viewport-centre` means the link carried no `!3d`/`!4d` pair and this is the camera
+	 * position — usable for a coarse case, never for a rooftop tolerance.
 	 */
 	source?: MapLinkCoordinateSource
 	/**
 	 * The place name Google put in the URL path, when it carried one.
+	 *
 	 * Useful for catching a link that resolves to a different place than the caller
 	 * believed — the failure a coordinate alone cannot show.
 	 */
@@ -96,8 +101,10 @@ const VIEWPORT_PATTERN = /@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/
 const NAME_PATTERN = /\/place\/([^/@]+)/
 
 /**
- * Parse an expanded Google Maps URL. Exported separately from the fetch so the parsing rules
- * are testable without a network, which is the half that actually carries the defects.
+ * Parse an expanded Google Maps URL.
+ *
+ * Exported separately from the fetch so the parsing rules are testable without a network,
+ * which is the half that actually carries the defects.
  */
 export function parseMapURL(url: string, expandedURL: string): MapLinkResolution {
 	const name = NAME_PATTERN.exec(expandedURL)?.[1]
@@ -145,11 +152,15 @@ export function parseMapURL(url: string, expandedURL: string): MapLinkResolution
  */
 export interface CreateMapLinkResolverOptions {
 	/**
-	 * Milliseconds between dispatches. Defaults to {@linkcode MAP_LINK_MIN_INTERVAL_MS}.
+	 * Milliseconds between dispatches.
+	 *
+	 * Defaults to {@linkcode MAP_LINK_MIN_INTERVAL_MS}.
 	 */
 	minRequestIntervalMs?: number
 	/**
-	 * Injected for tests, so timing never sleeps. See `@mailwoman/core/api/test-clocks`.
+	 * Injected for tests, so timing never sleeps.
+	 *
+	 * See `@mailwoman/core/api/test-clocks`.
 	 */
 	clock?: ClockLike
 }
@@ -174,8 +185,10 @@ export function createMapLinkResolver(options: CreateMapLinkResolverOptions = {}
 		client,
 
 		/**
-		 * Resolve one link. Never throws for an unresolvable link — that is a reported row, because
-		 * a batch that drops rows silently produces a case file whose denominator nobody can reconstruct.
+		 * Resolve one link.
+		 *
+		 * Never throws for an unresolvable link — that is a reported row, because a batch that
+		 * drops rows silently produces a case file whose denominator nobody can reconstruct.
 		 */
 		async resolve(url: string): Promise<MapLinkResolution> {
 			try {

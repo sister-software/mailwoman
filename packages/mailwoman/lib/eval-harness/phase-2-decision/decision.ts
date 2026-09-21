@@ -47,8 +47,10 @@ export {
 } from "#eval-harness/phase-2-decision/outcomes"
 
 /**
- * The closed set of instruments a check may read. Adding one is a reviewed change to this file
- * and to the runner that produces its readings — never a string invented in the definition.
+ * The closed set of instruments a check may read.
+ *
+ * Adding one is a reviewed change to this file and to the runner that produces its
+ * readings — never a string invented in the definition.
  */
 export const PHASE2_INSTRUMENTS = [
 	"semantic_utility_probe",
@@ -109,16 +111,19 @@ export function instrumentFor(measurement: Phase2Measurement): Phase2Instrument 
 }
 
 /**
- * A lane is either measurable now or blocked. There is no third state:
- * a lane whose instrument merely happens not to have run is a harness break,
- * and the runner refuses rather than reporting it as a lane state.
+ * A lane is either measurable now or blocked.
+ *
+ * There is no third state: a lane whose instrument merely happens not to have run is a
+ * harness break, and the runner refuses rather than reporting it as a lane state.
  */
 export const PHASE2_LANE_STATUSES = ["measurable", "blocked"] as const
 
 export type Phase2LaneStatus = (typeof PHASE2_LANE_STATUSES)[number]
 
 /**
- * What a check decides. `control` checks assert nothing moved; `target` checks assert a capability.
+ * What a check decides.
+ *
+ * `control` checks assert nothing moved; `target` checks assert a capability.
  */
 export const PHASE2_CHECK_ROLES = ["target", "control"] as const
 
@@ -138,15 +143,19 @@ export const PHASE2_TARGET_TIERS = ["resolution", "evidence"] as const
 export type Phase2TargetTier = (typeof PHASE2_TARGET_TIERS)[number]
 
 /**
- * How an observation is compared against its bar. All three take a whole row count.
+ * How an observation is compared against its bar.
+ *
+ * All three take a whole row count.
  */
 export const PHASE2_BAR_KINDS = ["at_least", "at_most", "exactly"] as const
 
 export type Phase2BarKind = (typeof PHASE2_BAR_KINDS)[number]
 
 /**
- * Where a check's baseline number comes from. No lane of this phase ran before its
- * implementation merged, so `merged-pr-receipt` is the ordinary case rather than the exception.
+ * Where a check's baseline number comes from.
+ *
+ * No lane of this phase ran before its implementation merged, so `merged-pr-receipt`
+ * is the ordinary case rather than the exception.
  */
 export const PHASE2_BASELINE_SOURCES = ["merged-pr-receipt", "committed-receipt", "committed-artifact"] as const
 
@@ -194,7 +203,9 @@ export interface Phase2Baseline {
 export interface Phase2Check {
 	id: string
 	/**
-	 * The lane this check belongs to. A check naming a `blocked` lane is refused.
+	 * The lane this check belongs to.
+	 *
+	 * A check naming a `blocked` lane is refused.
 	 */
 	lane: string
 	role: Phase2CheckRole
@@ -208,8 +219,10 @@ export interface Phase2Check {
 	 */
 	numerator: string
 	/**
-	 * The registered denominator. Never "the rows that answered" — a probe that stops being
-	 * able to read a row reports a lower numerator rather than a smaller board.
+	 * The registered denominator.
+	 *
+	 * Never "the rows that answered" — a probe that stops being able to read a row
+	 * reports a lower numerator rather than a smaller board.
 	 */
 	denominator: number
 	baseline: Phase2Baseline
@@ -222,6 +235,7 @@ export interface Phase2Check {
 
 /**
  * A row a blocked lane will measure once it is unblocked.
+ *
  * Registered so the blocked lane is described rather than omitted, and never scored.
  */
 export interface Phase2PlannedCheck {
@@ -264,8 +278,10 @@ export interface Phase2DefaultBarRow {
 	check: string
 	state: Phase2DefaultBarState
 	/**
-	 * Check ids that satisfy this row. Required non-empty on a `met` row: a row asserting
-	 * itself satisfied without naming the measurement that satisfied it is prose.
+	 * Check ids that satisfy this row.
+	 *
+	 * Required non-empty on a `met` row: a row asserting itself satisfied without
+	 * naming the measurement that satisfied it is prose.
 	 */
 	satisfiedBy: string[]
 	note: string
@@ -273,8 +289,10 @@ export interface Phase2DefaultBarRow {
 
 export interface Phase2Thresholds {
 	/**
-	 * How many control checks may miss their bar. Zero: a capability bought by moving
-	 * something that already worked is not a result this program can act on.
+	 * How many control checks may miss their bar.
+	 *
+	 * Zero: a capability bought by moving something that already worked is not
+	 * a result this program can act on.
 	 */
 	controlRegressionTolerance: number
 	/**
@@ -282,20 +300,24 @@ export interface Phase2Thresholds {
 	 */
 	minimumResolutionChecks: number
 	/**
-	 * How many `evidence`-tier target checks must hold. Required by both decisions:
-	 * the authorized surface serves a category with the authority that chose it,
-	 * so the evidence half is not an alternative to the resolution half.
+	 * How many `evidence`-tier target checks must hold.
+	 *
+	 * Required by both decisions: the authorized surface serves a category with the authority
+	 * that chose it, so the evidence half is not an alternative to the resolution half.
 	 */
 	minimumEvidenceChecks: number
 	/**
-	 * How many lanes must report. Equal to the registered measurable-lane count — an instrument
-	 * that could not run leaves a lane unreported, and an unreported lane is not a passing one.
+	 * How many lanes must report.
+	 *
+	 * Equal to the registered measurable-lane count — an instrument that could not run
+	 * leaves a lane unreported, and an unreported lane is not a passing one.
 	 */
 	requiredMeasurableLanes: number
 }
 
 /**
  * The artifacts every measurement was registered against.
+ *
  * Recorded, compared, and reported — never a decision input.
  *
  * A run on a rebuilt `poi.db` or a bumped weights package is still a run.
@@ -644,6 +666,7 @@ function auditDefaultChangeBar(definition: Phase2DecisionDefinition): string[] {
 
 /**
  * Everything that must be true of a definition, checked without running anything.
+ *
  * One message per problem, each naming the field, lane or check id.
  * Empty means the definition is executable.
  */
@@ -784,7 +807,9 @@ export function evaluatePhase2Checks(
 }
 
 /**
- * Count one run. The denominators are the registered check counts.
+ * Count one run.
+ *
+ * The denominators are the registered check counts.
  */
 export function computePhase2Counts(
 	definition: Phase2DecisionDefinition,
@@ -808,15 +833,17 @@ export function computePhase2Counts(
 /**
  * Map measured checks onto exactly one decision, against the frozen thresholds.
  *
- * Order is required, and it is #1928's order. A control miss is checked first
- * and stops under both decisions: a capability bought by moving something that already
- * worked is not a result to act on. proceed-AS-authorized is checked before evidence-only,
- * and requires both tiers — the surface the integration record authorizes serves a category
- * together with the authority that chose it, so the evidence half is a component of proceeding
- * rather than an alternative to it. evidence-only is then exactly the record's §7 outcome:
- * the observation surface holds and the recognition capability did not reach its bar.
+ * Order is required, and it is #1928's order.
+ * A control miss is checked first and stops under both decisions: a capability bought by
+ * moving something that already worked is not a result to act on. proceed-AS-authorized
+ * is checked before evidence-only, and requires both tiers — the surface the integration
+ * record authorizes serves a category together with the authority that chose it,
+ * so the evidence half is a component of proceeding rather than an alternative to it.
+ * evidence-only is then exactly the record's §7 outcome: the observation surface holds
+ * and the recognition capability did not reach its bar.
  *
- * A blocked lane changes no arithmetic. It changes `coverage`, and it is named in the reasons on every run.
+ * A blocked lane changes no arithmetic.
+ * It changes `coverage`, and it is named in the reasons on every run.
  */
 export function decidePhase2(
 	definition: Phase2DecisionDefinition,

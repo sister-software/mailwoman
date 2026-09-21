@@ -267,6 +267,7 @@ async function buildDatabase(
  * Fold the freshly-built database into a copy of an existing candidate
  * gazetteer, mirroring `build-candidate` pass-4's row construction
  * (placetype_id=9, region_id=0, neg_rank=0, is_primary=1, bbox falls back to the centroid).
+ *
  * The fast path to a demo-ready DB without a full rebuild.
  */
 async function foldIntoCandidate(

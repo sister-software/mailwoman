@@ -74,9 +74,10 @@ const AIRY_1830_A = 6_377_563.396
 const AIRY_1830_B = 6_356_256.909
 
 /**
- * Semi-major axis of the GRS80 ellipsoid, in metres. WGS84's own semi-major axis
- * is identical. the two ellipsoids differ only in the flattening's last digits
- * (~0.1 mm at the pole), far below this module's error budget.
+ * Semi-major axis of the GRS80 ellipsoid, in metres.
+ *
+ * WGS84's own semi-major axis is identical. the two ellipsoids differ only in the
+ * flattening's last digits (~0.1 mm at the pole), far below this module's error budget.
  */
 const GRS80_A = 6_378_137
 
@@ -107,23 +108,30 @@ const NATIONAL_GRID_E0 = 400_000
 
 /**
  * Northing of the National Grid's true origin (the "false northing"), in metres.
+ *
  * Negative because the true origin sits south-west of the grid's own zero.
  */
 const NATIONAL_GRID_N0 = -100_000
 
 /**
- * Arc-seconds → radians. The Helmert rotations are published in arc-seconds.
+ * Arc-seconds → radians.
+ *
+ * The Helmert rotations are published in arc-seconds.
  */
 const ARCSEC_TO_RAD = Math.PI / (180 * 3600)
 
 /**
- * Parts-per-million → unitless scale. The Helmert scale factor is published in ppm.
+ * Parts-per-million → unitless scale.
+ *
+ * The Helmert scale factor is published in ppm.
  */
 const PPM = 1e-6
 
 /**
- * Convergence threshold for the meridional-arc iteration in {@link osgb36GridToAiryLatLon},
- * in metres of northing. OS's guide specifies 0.01 mm. this is that figure.
+ * Convergence threshold for the meridional-arc iteration in
+ * {@link osgb36GridToAiryLatLon}, in metres of northing.
+ *
+ * OS's guide specifies 0.01 mm. this is that figure.
  * It bounds the northing residual rather than the latitude, which is why it is
  * expressed in metres and compared against `northing - N0 - M`.
  */
@@ -145,14 +153,15 @@ const GEODETIC_LATITUDE_TOLERANCE_RAD = 1e-13
  * parameter is negated — valid to well inside the transform's own metre-scale error because the
  * rotations are microradian-scale and the second-order terms of a proper inversion are sub-millimetre.
  *
- * The rotation convention is **Position Vector** (epsg method 1033), not Coordinate
- * Frame Rotation (epsg 1032). The two differ only in the sign of the three rotations,
- * which is why citing the method code matters more than it looks: paste these numbers into
- * a library expecting 1032 and every result moves by roughly 20 m with no error raised.
+ * The rotation convention is **Position Vector** (epsg method 1033),
+ * not Coordinate Frame Rotation (epsg 1032).
+ * The two differ only in the sign of the three rotations, which is why citing the method
+ * code matters more than it looks: paste these numbers into a library expecting 1032
+ * and every result moves by roughly 20 m with no error raised.
  *
- * Getting a sign wrong here does not produce a subtly worse answer. it produces a
- * coordinate tens to hundreds of metres out, in a consistent direction — which reads
- * as a plausible coordinate. That is what the Annexe D test is for.
+ * Getting a sign wrong here does not produce a subtly worse answer. it produces a coordinate tens
+ * to hundreds of metres out, in a consistent direction — which reads as a plausible coordinate.
+ * That is what the Annexe D test is for.
  */
 const OSGB36_TO_WGS84_HELMERT = {
 	/**
@@ -187,6 +196,7 @@ const OSGB36_TO_WGS84_HELMERT = {
 
 /**
  * A geodetic position on an unspecified ellipsoid, in degrees.
+ *
  * Which ellipsoid is the caller's business — the whole point of this module is that
  * the same numbers mean different places on Airy 1830 and on GRS80.
  */
@@ -206,11 +216,15 @@ export interface GeodeticLatLon {
  */
 export interface NationalGridPoint {
 	/**
-	 * Easting in metres. Valid GB values run roughly 0…700,000.
+	 * Easting in metres.
+	 *
+	 * Valid GB values run roughly 0…700,000.
 	 */
 	easting: number
 	/**
-	 * Northing in metres. Valid GB values run roughly 0…1,300,000.
+	 * Northing in metres.
+	 *
+	 * Valid GB values run roughly 0…1,300,000.
 	 */
 	northing: number
 }
@@ -301,11 +315,14 @@ export function osgb36GridToAiryLatLon({ easting, northing }: NationalGridPoint)
 /**
  * Convert OSGB36 geodetic lat/lon (Airy 1830) to WGS84 lat/lon (GRS80) via the seven-parameter Helmert.
  *
- * This is the approximate half — see the module docstring for the ±5 m budget and when it stops being
- * acceptable. Heights are not modelled: the input is treated as sitting on the Airy ellipsoid
- * and the output's ellipsoidal height is discarded. For a horizontal postcode centroid that
- * costs well under a metre. for anything vertical it is wrong by the ~50 m geoid–ellipsoid
- * separation over GB, so this function does not pretend to return a height.
+ * This is the approximate half — see the module docstring for the ±5 m budget
+ * and when it stops being acceptable.
+ * Heights are not modelled: the input is treated as sitting on the Airy ellipsoid
+ * and the output's ellipsoidal height is discarded.
+ *
+ * For a horizontal postcode centroid that costs well under a metre. for anything
+ * vertical it is wrong by the ~50 m geoid–ellipsoid separation over GB,
+ * so this function does not pretend to return a height.
  */
 export function osgb36AiryToWGS84({ latitude, longitude }: GeodeticLatLon): GeodeticLatLon {
 	const { tx, ty, tz, scalePPM, rx, ry, rz } = OSGB36_TO_WGS84_HELMERT
@@ -364,6 +381,7 @@ export function osgb36AiryToWGS84({ latitude, longitude }: GeodeticLatLon): Geod
  * Does not validate that the input lies within the grid's GB extent: `{easting: 0, northing: 0}`
  * is a real point in the Atlantic south-west of the Scillies, and Code-Point Open uses
  * exactly that to mean "no coordinate available" (its 865 positional-quality-90 rows).
+ *
  * Callers must filter those rows themselves — a zero here is a legitimate coordinate,
  * so this module cannot tell the difference.
  */

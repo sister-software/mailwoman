@@ -28,8 +28,10 @@ import {
 import { WITHHELD_CANDIDATE_FIELDS } from "#eval-harness/same-data/fixture"
 
 /**
- * The two registered strata, in fill order. They draw from disjoint geonameid pools,
- * so the withheld-gold rows are never the rows whose gold was also graded present.
+ * The two registered strata, in fill order.
+ *
+ * They draw from disjoint geonameid pools, so the withheld-gold rows are never
+ * the rows whose gold was also graded present.
  */
 export const PROMINENCE_STRATA = ["unambiguous", "gold_absent"] as const
 
@@ -46,8 +48,10 @@ export interface ProminenceBand {
 	id: string
 	min: number
 	/**
-	 * Zero means unbounded. A band is `min <= population <= max`, and a row with no recorded
-	 * population is in no band — absence of a count is not a count of zero.
+	 * Zero means unbounded.
+	 *
+	 * A band is `min <= population <= max`, and a row with no recorded population is
+	 * in no band — absence of a count is not a count of zero.
 	 */
 	max: number
 }
@@ -65,8 +69,10 @@ export interface ProminenceArmDefinition {
 	id: ProminenceArm
 	description: string
 	/**
-	 * The `ResolveOpts` the arm pins. Absent on the default arm, where an empty object
-	 * and "the defaults" would be indistinguishable in the record.
+	 * The `ResolveOpts` the arm pins.
+	 *
+	 * Absent on the default arm, where an empty object and "the defaults" would
+	 * be indistinguishable in the record.
 	 */
 	resolveOpts?: { minWinningScore: number }
 }
@@ -124,19 +130,23 @@ export interface ProminenceFloorDefinition {
 }
 
 /**
- * The committed ruler: the population bands, the two selection rules, the arm floors, the sampling seed
- * and the decision rule. Named from the package root because `tsc` emits no `.json` into `out/`.
+ * The committed ruler: the population bands, the two selection rules, the arm floors,
+ * the sampling seed and the decision rule.
+ *
+ * Named from the package root because `tsc` emits no `.json` into `out/`.
  */
 export const PROMINENCE_DEFINITION_PATH = preregistrationPath("prominence-floor", "benchmark-definition.json")
 
 /**
- * The freeze record pinning that ruler's content hash. A definition change
- * bumps both the version and this hash.
+ * The freeze record pinning that ruler's content hash.
+ *
+ * A definition change bumps both the version and this hash.
  */
 export const PROMINENCE_FREEZE_PATH = preregistrationPath("prominence-floor", "benchmark-freeze.json")
 
 /**
  * The population band a count falls in, or null when it falls in none.
+ *
  * A row with no recorded population reaches here as `undefined` and is refused
  * rather than bucketed at zero.
  */
@@ -147,8 +157,10 @@ export function bandFor(bands: readonly ProminenceBand[], population: number | u
 }
 
 /**
- * Whether the benchmark is executable as written. Each problem names what a runner could
- * not do with the definition, so a refusal reads as an instruction rather than a verdict.
+ * Whether the benchmark is executable as written.
+ *
+ * Each problem names what a runner could not do with the definition, so a refusal
+ * reads as an instruction rather than a verdict.
  */
 export function auditProminenceDefinition(definition: ProminenceFloorDefinition): string[] {
 	const problems: string[] = [

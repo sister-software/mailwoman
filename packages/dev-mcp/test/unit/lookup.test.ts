@@ -9,8 +9,10 @@ import { describe, expect, it } from "vitest"
 
 /**
  * A stub FST keyed on the joined token path, carrying the entries the real
- * `fst-en-us.bin` returns for these surfaces. The importances are the measured ones,
- * so the zero below is the real gazetteer's zero rather than a convenient one.
+ * `fst-en-us.bin` returns for these surfaces.
+ *
+ * The importances are the measured ones, so the zero below is the real gazetteer's zero
+ * rather than a convenient one.
  */
 function stubFST(entries: Record<string, Array<{ wofID: number; placetype: string; referential: number }>>) {
 	const paths = Object.keys(entries)
@@ -38,10 +40,10 @@ describe("lookupFST", () => {
 	})
 
 	it("separates a zero-importance hit from a firing one", () => {
-		// `applyBias` computes `importance * biasScale * maxBias * …` and keeps a tag only when
-		// that exceeds the running max, which starts at 0. So a BIO-mapped entry at
-		// importance 0 contributes nothing to the decoder, and a caller reading only `hit`
-		// and `importance` cannot tell that from a bias the decoder acts on.
+		// `applyBias` computes `importance * biasScale * maxBias * …` and keeps a tag only
+		// when that exceeds the running max, which starts at 0.
+		// So a BIO-mapped entry at importance 0 contributes nothing to the decoder, and a caller
+		// reading only `hit` and `importance` cannot tell that from a bias the decoder acts on.
 		const [inert] = lookupFST(fst, tokens, ["Juan"])
 
 		expect(inert!.entries).toEqual([{ tag: "locality", importance: 0, fires: false }])
@@ -49,7 +51,8 @@ describe("lookupFST", () => {
 	})
 
 	it("keeps a MISS apart from a zero", () => {
-		// The whole point. `Juan` is known and scored zero; `Sultan Qaboos` is not known at all.
+		// The whole point.
+		// `Juan` is known and scored zero; `Sultan Qaboos` is not known at all.
 		// A caller that conflated them would read "the gazetteer gives this no weight"
 		// for a surface the gazetteer has never heard of.
 		const [known, unknown] = lookupFST(fst, tokens, ["Juan", "Sultan Qaboos"])
@@ -114,8 +117,9 @@ describe("lookupNormalize", () => {
 
 describe("loadFSTArtifact", () => {
 	it("reports an unresolved path as unavailable rather than as an empty source", async () => {
-		// A source whose artifact is missing answers "no" to everything, which reads as
-		// absence for every query. That is the one answer this must never give silently.
+		// A source whose artifact is missing answers "no" to everything,
+		// which reads as absence for every query.
+		// That is the one answer this must never give silently.
 		expect(await loadFSTArtifact(undefined, () => stubFST({}))).toEqual({
 			unavailable: "No artifact path was resolved for this source.",
 		})

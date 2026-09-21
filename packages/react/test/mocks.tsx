@@ -37,8 +37,10 @@ export function makePOIRuntime(): POIRuntime {
 }
 
 /**
- * A fake taxonomy-runtime that classifies everything as a POI query and matches "chevron" as a
- * brand (QID Q319642). No category record — brands carry a name + QID rather than a taxonomy id.
+ * A fake taxonomy-runtime that classifies everything as a POI query
+ * and matches "chevron" as a brand (QID Q319642).
+ *
+ * No category record — brands carry a name + QID rather than a taxonomy id.
  */
 export function makeBrandPOIRuntime(): POIRuntime {
 	const lookup = {

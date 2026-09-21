@@ -31,9 +31,9 @@ export default function DocRootLayout({ children }: Props): ReactNode {
 	const sidebar = useDocsSidebar()
 	const [hiddenSidebarContainer, setHiddenSidebarContainer] = useState(false)
 
-	// The band shows on section pages (not the single-category licensing sidebar)
-	// and hides on scroll-down. `useHideableNavbar` is the same scroll-direction hook the
-	// real navbar uses. we pass `showSubHeader` so it no-ops when there's no band.
+	// The band shows on section pages (not the single-category licensing sidebar) and hides on scroll-down.
+	// `useHideableNavbar` is the same scroll-direction hook the real navbar uses. we
+	// pass `showSubHeader` so it no-ops when there's no band.
 	const showSubHeader = useIsDocsSection()
 	const { navbarRef, isNavbarVisible } = useHideableNavbar(showSubHeader)
 	const subHeaderHidden = showSubHeader && !isNavbarVisible

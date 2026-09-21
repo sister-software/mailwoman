@@ -12,9 +12,10 @@
 import type { CommercialPlan } from "#plans"
 
 /**
- * The agreement version the Payment Links carry as metadata and the worker
- * records on every license. Bumping it is a new terms page, new Payment Links,
- * and a new value in each environment's `AGREEMENT_VERSION`.
+ * The agreement version the Payment Links carry as metadata and the worker records on every license.
+ *
+ * Bumping it is a new terms page, new Payment Links, and a new value in each
+ * environment's `AGREEMENT_VERSION`.
  */
 export const AGREEMENT_VERSION = "commercial-2026-10"
 
@@ -44,6 +45,7 @@ export const SHOP_MARK = "commercial-license"
  * What Checkout collects from a buyer beyond the payment, spread into a Payment Link
  * and into a Checkout Session built for a rehearsal alike: the licensee's legal name,
  * a billing address, consent to the terms, and the metadata the worker reads a session by.
+ *
  * One function, so the two cannot drift.
  */
 export interface CheckoutCollection {

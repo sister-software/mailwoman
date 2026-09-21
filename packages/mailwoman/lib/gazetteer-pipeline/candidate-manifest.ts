@@ -58,18 +58,22 @@ export async function ancestorIdentity(adminDBPath: string): Promise<string> {
 
 export interface CandidateManifestInput {
 	/**
-	 * The admin gazetteer this candidate was built from. Read for its manifest, never for its rows.
+	 * The admin gazetteer this candidate was built from.
+	 *
+	 * Read for its manifest, never for its rows.
 	 */
 	adminDBPath: string
 	/**
 	 * How many postcode and locality databases contributed.
+	 *
 	 * Recorded because a candidate built with no databases is a different artifact from
 	 * one built with twenty-four, and nothing else in the file says which it is.
 	 */
 	databaseCounts: { postcodes: number; localities: number }
 	/**
-	 * Whether an importance database was folded in. A candidate without it ranks differently,
-	 * and the difference is invisible from the schema.
+	 * Whether an importance database was folded in.
+	 *
+	 * A candidate without it ranks differently, and the difference is invisible from the schema.
 	 */
 	importance: boolean
 	buildSHA: string

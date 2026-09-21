@@ -44,8 +44,10 @@ function NotFound({ pathname }: { pathname: string }) {
 }
 
 /**
- * The real geocoder, with the host panels. The map renders at the default centre at once. the geolocation
- * answer moves the bias when it arrives, so nothing waits on the network before the first paint.
+ * The real geocoder, with the host panels.
+ *
+ * The map renders at the default centre at once. the geolocation answer moves the bias
+ * when it arrives, so nothing waits on the network before the first paint.
  */
 function RealGeocoder({ route, query }: { route: Route; query: string | null }) {
 	const initialCenter = useBrowserGeolocation(PRODUCTION_CONFIG)
@@ -76,9 +78,9 @@ function RealGeocoder({ route, query }: { route: Route; query: string | null }) 
 			runtime={handle.runtime}
 			panels={panels}
 			defaultAddress={query ?? DEFAULT_ADDRESS}
-			// A permalink answers on arrival. `defaultAddress` only pre-fills the field,
-			// so a link carrying `?q=` used to land on the world view with the address
-			// sitting in the box, unrun — the one thing a shared link must not do.
+			// A permalink answers on arrival.
+			// `defaultAddress` only pre-fills the field, so a link carrying `?q=` used to land on the world
+			// view with the address sitting in the box, unrun — the one thing a shared link must not do.
 			// Only the URL's query goes here: a cold visit still pre-fills the demo address without
 			// spending the visitor's first seconds resolving an address they never asked for.
 			initialQuery={query}
@@ -102,10 +104,12 @@ function writeQueryToURL(query: string): void {
 }
 
 /**
- * The app's identity and source credits. They belong to the page rather than to the runtime,
- * so the canned runtime the smoke and the stories mount shows the same footer the real
- * one does — the same component the real panels use rather than a second copy of it,
- * which is how the commit link came to render here and nowhere a visitor could see it.
+ * The app's identity and source credits.
+ *
+ * They belong to the page rather than to the runtime, so the canned runtime the smoke
+ * and the stories mount shows the same footer the real one does — the same component
+ * the real panels use rather than a second copy of it, which is how the commit link
+ * came to render here and nowhere a visitor could see it.
  */
 const IDENTITY_PANELS: GeocoderPanels = {
 	footer: <EarthFooter />,

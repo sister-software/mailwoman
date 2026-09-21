@@ -38,6 +38,7 @@ const REC_TAIL = 5
 
 /**
  * Latitude quantization scale — `latQ = round(lat / 90 × 32767)`, giving ~300 m resolution.
+ *
  * The single home for the PCB1/PFX1 grid: `postcode-prefix-index.ts` imports these
  * so the two formats decode coordinates identically.
  */
@@ -81,8 +82,10 @@ function encodeKey(s: string, width: number, out: Uint8Array, offset: number): v
 }
 
 /**
- * Serialize postcode entries into the flat binary. Entries are sorted by (postcode, country)
- * so equal postcodes land in adjacent records. Run in Node. consumed by {@link PostcodeBinaryResolver}.
+ * Serialize postcode entries into the flat binary.
+ *
+ * Entries are sorted by (postcode, country) so equal postcodes land in adjacent records.
+ * Run in Node. consumed by {@link PostcodeBinaryResolver}.
  */
 export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[]): Uint8Array {
 	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
@@ -142,6 +145,7 @@ export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[])
 
 /**
  * Pure-JS, browser-safe postcode resolver over the flat binary.
+ *
  * Implements the same `lookup()` interface as the SQLite `WOFPostcodeLookup`,
  * so `extractPostcodeAnchors` is agnostic to which backs it.
  */
@@ -228,10 +232,10 @@ export class PostcodeBinaryResolver {
 	 * Decode the whole binary into an {@link AnchorLookup} (`Map<postcode, AnchorEntry>`) for the
 	 * neural anchor channel (#239/#240): each postcode → a uniform posterior over its member countries
 	 *
-	 * - The mean of its non-zero centroids. This is the browser-side equivalent of the
-	 *   pilot postcode→anchor lookup the model trained against, built live from the
-	 *   shipped binary instead of a precomputed JSON. Records are stored sorted by
-	 *   (postcode, country), so equal keys are contiguous.
+	 * - The mean of its non-zero centroids.
+	 *   This is the browser-side equivalent of the pilot postcode→anchor lookup the model
+	 *   trained against, built live from the shipped binary instead of a precomputed JSON.
+	 *   Records are stored sorted by (postcode, country), so equal keys are contiguous.
 	 */
 	toAnchorLookup(): AnchorLookup {
 		const out: AnchorLookup = new Map()

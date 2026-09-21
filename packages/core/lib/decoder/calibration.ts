@@ -51,8 +51,9 @@ export interface CalibrationTable {
 export type Calibrator = (rawConfidence: number) => number
 
 /**
- * Build a calibrator from an isotonic lookup table. The mapping is
- * piecewise-linear between bin centers and clamped to the table's range outside it
+ * Build a calibrator from an isotonic lookup table.
+ *
+ * The mapping is piecewise-linear between bin centers and clamped to the table's range outside it
  * (the table is monotone non-decreasing by construction, so the interpolation is monotone too).
  * Accepts either the full `CalibrationTable` or a bare `CalibrationBin[]`.
  */

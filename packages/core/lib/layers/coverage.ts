@@ -121,6 +121,7 @@ export function assertNoCellsFinerThanIndex(
 
 /**
  * The measurement knobs every layer's resolution instrument shares.
+ *
  * The driver loops stay per product: what a stream yields, how scenarios partition it,
  * and what each report carries genuinely differ.
  */
@@ -174,6 +175,7 @@ const M2_PER_KM2 = 1_000_000
 /**
  * An {@link AreaAgreement} whose witness is stated: either the source published a figure
  * and the gap is against it, or it published none and there is nothing TO agree with.
+ *
  * The no-witness case is a type rather than a zero, because a `relativeGap` of 0 is
  * indistinguishable from a pass, and a check that never ran must not read as one.
  */
@@ -208,6 +210,7 @@ export function areaAgreementFrom(streamed: StreamedAreaTotals, sourceM2: number
 
 /**
  * Refuse an artifact whose rings do not add up to the area the source itself reports.
+ *
  * A reading with no witness has nothing to disagree with and passes through —
  * its type is what keeps that from reading as a pass.
  *

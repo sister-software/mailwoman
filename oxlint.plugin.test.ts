@@ -160,8 +160,10 @@ test("prefer-home names the git home for a shell-out string in a literal or a te
 })
 
 /**
- * A `for` header, by its three clauses. `from` is the `<base>.length - <n>` initializer,
- * so a test can vary the descent without restating the whole node.
+ * A `for` header, by its three clauses.
+ *
+ * `from` is the `<base>.length - <n>` initializer, so a test can vary the
+ * descent without restating the whole node.
  */
 function forLoop(options: {
 	from?: number
@@ -202,8 +204,10 @@ function forLoop(options: {
 }
 
 /**
- * `base[index]`. `property` carries its `type` because the rule reads it: a swap of two variable
- * indices is a shuffle, a swap where one index is a literal is heapsort's extraction phase.
+ * `base[index]`.
+ *
+ * `property` carries its `type` because the rule reads it: a swap of two variable indices
+ * is a shuffle, a swap where one index is a literal is heapsort's extraction phase.
  */
 function indexRead(base: string, index: string): TestNode {
 	return {
@@ -271,8 +275,9 @@ test("prefer-home names shuffleWith for a re-typed Fisher-Yates, destructured or
 	expect(destructured).toHaveLength(1)
 	expect(destructured[0]).toContain("`@mailwoman/core/random`")
 	// The home is `shuffleWith`, not `SeededRandom.shuffle`.
-	// Three of the four copies could not use the class: each pins its own stream, and the class seeds
-	// mulberry32 internally. Naming it would send a reader to the one home that cannot serve them.
+	// Three of the four copies could not use the class: each pins its own stream,
+	// and the class seeds mulberry32 internally.
+	// Naming it would send a reader to the one home that cannot serve them.
 	expect(destructured[0]).toContain("shuffleWith")
 	expect(reportsFor("prefer-home", forLoop({ body: temporarySwap("rows") }))).toHaveLength(1)
 })
@@ -309,9 +314,10 @@ test("prefer-home stays silent on loops that are not a shuffle", () => {
 
 	expect(reportsFor("prefer-home", forLoop({ body: across }))).toEqual([])
 
-	// Heapsort's extraction phase: counts down from the last index, stops at 1, swaps two computed
-	// indices of one array. It satisfies every clause except that one index is the literal 0 —
-	// a shuffle swaps the loop variable with a drawn index, and neither is a constant.
+	// Heapsort's extraction phase: counts down from the last index, stops at 1,
+	// swaps two computed indices of one array.
+	// It satisfies every clause except that one index is the literal 0 — a shuffle swaps
+	// the loop variable with a drawn index, and neither is a constant.
 	const heapsort: TestNode = {
 		type: "BlockStatement",
 		range: [0, 0],

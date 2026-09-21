@@ -14,7 +14,9 @@ import { join } from "path-ts"
 
 /**
  * The manifest records the path the builder wrote under, which is the Modal volume mount
- * rather than this checkout's data root. Both spell the same tree below their first segment.
+ * rather than this checkout's data root.
+ *
+ * Both spell the same tree below their first segment.
  */
 const MANIFEST_ROOT = "/data/"
 

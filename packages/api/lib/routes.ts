@@ -51,8 +51,9 @@ import {
 } from "#schema"
 
 /**
- * Default `post /v1/batch` row cap when {@link RegisterMailwomanAPIRoutesOptions.batchMax}
- * is omitted. This is the standalone-engine default rather than derived from env —
+ * Default `post /v1/batch` row cap when {@link RegisterMailwomanAPIRoutesOptions.batchMax} is omitted.
+ *
+ * This is the standalone-engine default rather than derived from env —
  * `mailwoman serve` always passes the env-derived value explicitly
  * (`$public.MAILWOMAN_BATCH_MAX`, default 1000. see `mailwoman/lib/env/schema.ts`).
  */
@@ -65,12 +66,15 @@ const startedAt = Date.now()
  */
 export interface RegisterMailwomanAPIRoutesOptions {
 	/**
-	 * Max `addresses` rows accepted by `post /v1/batch`. Default {@link DEFAULT_BATCH_MAX}.
+	 * Max `addresses` rows accepted by `post /v1/batch`.
+	 *
+	 * Default {@link DEFAULT_BATCH_MAX}.
 	 */
 	batchMax?: number
 
 	/**
 	 * The engine stamp attached as `engine` to every `/v1` success body.
+	 *
 	 * Absent: no field is added.
 	 */
 	engine?: EngineStamp
@@ -249,8 +253,10 @@ const metricsRoute = createRoute({
 /**
  * `components` accepts `string | string[]` per key on the wire
  * (a caller may pass every span a multi-span match covered); `formatAddress`/`canonicalKey`
- * want a single string per `ComponentTag`. Multi-span values collapse to their first span
- * here — the formatter template owns joining semantics rather than this route.
+ * want a single string per `ComponentTag`.
+ *
+ * Multi-span values collapse to their first span here — the formatter template
+ * owns joining semantics rather than this route.
  */
 function toComponentDict(components: Record<string, string | string[]>): ComponentDict {
 	const out: ComponentDict = {}

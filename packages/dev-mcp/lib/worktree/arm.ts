@@ -54,9 +54,10 @@ import { FINGERPRINTED_WORKSPACES } from "#tree-fingerprint"
 export const WORKING_TREE_REF = "WORKTREE"
 
 /**
- * Written into whichever checkout the arm runs in — including, for {@link WORKING_TREE_REF},
- * the operator's own. Named with a leading dot and removed in a `finally`
- * so a crashed child cannot leave it in a tracked tree.
+ * Written into whichever checkout the arm runs in — including,
+ * for {@link WORKING_TREE_REF}, the operator's own.
+ *
+ * Named with a leading dot and removed in a `finally` so a crashed child cannot leave it in a tracked tree.
  */
 const RUNNER_FILENAME = ".mwdev-arm-runner.ts"
 
@@ -144,9 +145,9 @@ async function linkNodeModules(mainRoot: string, worktree: string): Promise<void
 /**
  * The script the child runs, written into the worktree rather than committed.
  *
- * Written rather than committed on purpose: a committed runner would only exist
- * at refs that already have it, so the arm could not reach backwards past its
- * own introduction — which is most of the refs anyone wants to compare against.
+ * Written rather than committed on purpose: a committed runner would only exist at refs
+ * that already have it, so the arm could not reach backwards past its own introduction —
+ * which is most of the refs anyone wants to compare against.
  * Its imports resolve inside the worktree, so it is the ref's pipeline that answers.
  *
  * It reads one JSON request on stdin and writes one `WorktreeAnswer` on stdout, so nothing is
@@ -223,19 +224,20 @@ export async function runWorktreeArm(args: {
 
 	// The uncommitted working tree, which no git ref can name and which is the arm a
 	// maintainer reaches for most: "what I have edited" against "what is committed".
-	// It needs no worktree and no farm — the main checkout already has both — only its own
-	// process, which is the entire point. Spawning it through the same runner as a ref arm
-	// is what keeps the comparison honest: one script, one config path, so a difference
-	// between the arms is a difference in source rather than in how each side was invoked.
+	// It needs no worktree and no farm — the main checkout already has both —
+	// only its own process, which is the entire point.
+	// Spawning it through the same runner as a ref arm is what keeps the comparison honest:
+	// one script, one config path, so a difference between the arms is a difference
+	// in source rather than in how each side was invoked.
 	const live = ref === WORKING_TREE_REF
 
 	await using resources = new AsyncDisposableStack()
 
 	// The working-tree arm owns nothing: it runs in the main checkout.
-	// A ref arm owns a scratch parent, and its teardown is ordered: git releases the worktree,
-	// then the directory under it goes, then the prune clears the admin entry for a
-	// directory that is now gone. The stack unwinds last-in, first-out, so registering in
-	// the reverse of that order is what states it — prune first, so prune runs last.
+	// A ref arm owns a scratch parent, and its teardown is ordered: git releases the worktree, then the
+	// directory under it goes, then the prune clears the admin entry for a directory that is now gone.
+	// The stack unwinds last-in, first-out, so registering in the reverse of that
+	// order is what states it — prune first, so prune runs last.
 	if (!live) {
 		resources.defer(() => {
 			runFileSync("git", ["worktree", "prune"], { cwd: repoRoot, stdio: "pipe" })
@@ -297,8 +299,9 @@ export async function runWorktreeArm(args: {
 
 		return { commit, answers: parsed.answers, setupMs, runMs: Date.now() - runStartedAt }
 	} finally {
-		// The live arm runs IN the operator's checkout, so its runner is the one piece of litter a
-		// comparison could leave in a tracked tree. Remove it on every path, including a child crash.
+		// The live arm runs IN the operator's checkout, so its runner is the one piece
+		// of litter a comparison could leave in a tracked tree.
+		// Remove it on every path, including a child crash.
 		if (live) {
 			await removePathIfPresent(runnerPath)
 		}

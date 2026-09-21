@@ -8,8 +8,9 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectoryExclusive, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-// Re-export the internals for testing. The script's CLI entry is conditioned on
-// `runIfScript(import.meta, …)`, so importing the module is side-effect-free.
+// Re-export the internals for testing.
+// The script's CLI entry is conditioned on `runIfScript(import.meta, …)`,
+// so importing the module is side-effect-free.
 import { audit } from "@mailwoman/corpus/tools/audit"
 // Lightweight integration smoke against the actual corpus on this host.
 // Skipped when the data isn't present (CI / fresh clones); only the
@@ -51,10 +52,11 @@ describe.skipIf(!hasCorpus)("audit — integration", () => {
 
 describe("audit — config parser", () => {
 	it("parses source_weights block without bleeding into sibling keys (val_rows etc.)", async () => {
-		// White-box: re-import the parser via dynamic import + grep on stdout would couple us
-		// to printer formatting. Instead, write a small config + call audit() against an empty
-		// corpus dir. we verify the warning-output for "no parquet files" mentions the right
-		// sources (proving the parser found exactly the configured ones and not val_rows).
+		// White-box: re-import the parser via dynamic import + grep on stdout would
+		// couple us to printer formatting.
+		// Instead, write a small config + call audit() against an empty corpus dir. we
+		// verify the warning-output for "no parquet files" mentions the right sources
+		// (proving the parser found exactly the configured ones and not val_rows).
 		await using tmpDirectory = await temporaryDirectory("audit-parser-test-")
 		const tmp = tmpDirectory.path
 		// Empty train/ subdir so the printer enters the per-source report block + emits the "weighted

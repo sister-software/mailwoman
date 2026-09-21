@@ -5,14 +5,18 @@
  */
 
 /**
- * A kibibyte. Named so a `< 1024` guard reads as a threshold rather than a magic number —
+ * A kibibyte.
+ *
+ * Named so a `< 1024` guard reads as a threshold rather than a magic number —
  * several fetchers use it to reject a response too small to be the archive they asked for.
  */
 export const BYTES_PER_KIB = 1024
 
 export interface ByteFormatterOptions {
 	/**
-	 * Prefix an explicit `+` on a positive value. For a delta, where the sign is the information.
+	 * Prefix an explicit `+` on a positive value.
+	 *
+	 * For a delta, where the sign is the information.
 	 * A negative always carries its own sign.
 	 */
 	signed?: boolean
@@ -25,9 +29,9 @@ export interface ByteFormatterOptions {
 /**
  * Byte counts as a human reads them, in whichever of the two bases the number was actually measured in.
  *
- * Both bases, spelled correctly. A formatter that divides by 1024 and prints `KB` is
- * off by 2.4% at KB and 10% by TB, and the label is the only thing telling a reader
- * which it did — so the choice is named at the call site:
+ * Both bases, spelled correctly.
+ * A formatter that divides by 1024 and prints `KB` is off by 2.4% at KB and 10% by TB, and the
+ * label is the only thing telling a reader which it did — so the choice is named at the call site:
  *
  * - {@linkcode ByteFormatter.formatIEC} for anything a machine measured — heap,
  *   file size on disk, buffer length.
@@ -35,9 +39,9 @@ export interface ByteFormatterOptions {
  *   Disk capacity, download sizes and GitHub's own API are quoted in powers of ten.
  *   rendering GitHub's `41.3 GB` as `38.5 GiB` is correct arithmetic and the wrong answer.
  *
- * Rendering goes through `Intl.NumberFormat`, so the unit and the decimal separator
- * follow the locale. Pass an explicit locale when a caller needs a stable string —
- * a test asserting an exact rendering rather than a line printed for a human.
+ * Rendering goes through `Intl.NumberFormat`, so the unit and the decimal separator follow the locale.
+ * Pass an explicit locale when a caller needs a stable string — a test asserting
+ * an exact rendering rather than a line printed for a human.
  */
 export class ByteFormatter {
 	public static SI_UNITS = ["byte", "kilobyte", "megabyte", "gigabyte", "terabyte"] as const

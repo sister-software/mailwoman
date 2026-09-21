@@ -38,11 +38,15 @@ interface DatasetRow {
  */
 export interface BuildDatasetOptions {
 	/**
-	 * Rows sampled per country. Default 50000.
+	 * Rows sampled per country.
+	 *
+	 * Default 50000.
 	 */
 	perCountry?: number
 	/**
-	 * Dataset output dir. Default `<repo>/data/coarse-placer`.
+	 * Dataset output dir.
+	 *
+	 * Default `<repo>/data/coarse-placer`.
 	 */
 	data?: PathBuilderLike
 }
@@ -99,8 +103,9 @@ export async function buildDataset(
 	const TRAIN_GLOB = dataRootPath("corpus", "versioned", "v0.5.0", "corpus-v0.5.0", "train", "*.parquet")
 
 	// #244/#928 AU expansion: the v0.5.0 pin carries only ~5.9k AU rows. the v0.9.2 G-NAF extract carries
-	// 150k real Australian addresses. AU rides the same corpus sampling path as `countries`,
-	// just from its own glob — the (country, glob) pairs below unify the two.
+	// 150k real Australian addresses.
+	// AU rides the same corpus sampling path as `countries`, just from its own glob —
+	// the (country, glob) pairs below unify the two.
 	const AU_GLOB = dataRootPath(
 		"corpus",
 		"versioned",

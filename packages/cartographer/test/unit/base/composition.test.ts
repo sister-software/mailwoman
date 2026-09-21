@@ -76,9 +76,10 @@ test("Composer: partial light/sky options merge over the defaults", () => {
 	expect(composer.sky["sky-color"]).toBe("#abcdef")
 })
 
-// Terrain + DEM-source tests parked (mobile performance): the `terrain` getter and the terrain
-// DEM source are commented out in `composition.ts`. Re-enable the code and these tests together
-// when DEM is reconsidered. (The hillshade DEM source is still injected.)
+// Terrain + DEM-source tests parked (mobile performance): the `terrain` getter
+// and the terrain DEM source are commented out in `composition.ts`.
+// Re-enable the code and these tests together when DEM is reconsidered.
+// (The hillshade DEM source is still injected.)
 /* oxlint-disable vitest/no-commented-out-tests -- parked deliberately. see the note above */
 /*
 test("Composer: terrain source defaults to the terrain tileset id", () => {

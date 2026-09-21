@@ -73,9 +73,10 @@ export async function readGauntletInputs(dir: PathBuilderLike = GAUNTLET_CASES_D
 					}
 				}
 			} catch {
-				// A file this cannot read or parse is skipped. The gauntlet loader is what validates
-				// the board corpus and reports the file and line. a recipe stopping its build
-				// over one malformed row would turn an advisory check into a blocked build.
+				// A file this cannot read or parse is skipped.
+				// The gauntlet loader is what validates the board corpus and reports the file
+				// and line. a recipe stopping its build over one malformed row would turn
+				// an advisory check into a blocked build.
 				continue
 			}
 		}

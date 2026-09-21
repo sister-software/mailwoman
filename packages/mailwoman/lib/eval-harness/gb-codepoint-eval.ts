@@ -65,11 +65,12 @@ const THRESHOLDS_KM = [1, 5, 25] as const
 const PQ_NO_COORDINATE = 90
 
 /**
- * Every postcode in the acquisition, folded to unspaced-uppercase — the existence oracle
- * for the typo leg. A mutated final letter frequently lands on a real neighbouring unit
- * ("AB55 4BD" → "AB55 4BE"), and resolving those is correct behavior. only a mutant absent
- * from the register demands abstention. Reasoning "the mutant almost never exists" was
- * measured wrong on the first run (346/600 resolved), which is why this set exists.
+ * Every postcode in the acquisition, folded to unspaced-uppercase — the existence oracle for the typo leg.
+ *
+ * A mutated final letter frequently lands on a real neighbouring unit ("AB55 4BD" → "AB55 4BE"),
+ * and resolving those is correct behavior. only a mutant absent from the register demands abstention.
+ * Reasoning "the mutant almost never exists" was measured wrong on the first run
+ * (346/600 resolved), which is why this set exists.
  */
 async function allPostcodes(csvDir: string): Promise<Set<string>> {
 	const out = new Set<string>()

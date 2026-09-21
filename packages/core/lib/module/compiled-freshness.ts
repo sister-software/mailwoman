@@ -39,6 +39,7 @@ export interface TimestampedFile {
 
 /**
  * Whether a TypeScript source can contribute to a workspace's compiled output.
+ *
  * Mirrors the workspace tsconfig exclusions without treating every directory named
  * `test` as non-emitting: production modules such as `debug-view/test/input-probe.ts`
  * compile and must still make the check stale.
@@ -55,6 +56,7 @@ function isEmittingSource(workspaceRoot: string, path: string): boolean {
 
 /**
  * Newest mtime under a directory, restricted to files matching a predicate.
+ *
  * Answers `null` when the directory does not exist, which a caller must tell apart
  * from "old" — a missing `out/` means never compiled rather than stale.
  */
@@ -110,8 +112,9 @@ export interface CompiledFreshness {
 	newestSource: TimestampedFile | null
 	newestCompiled: TimestampedFile | null
 	/**
-	 * Why it is not fresh, or `null` when it is. Written as the action,
-	 * because that is what the reader needs.
+	 * Why it is not fresh, or `null` when it is.
+	 *
+	 * Written as the action, because that is what the reader needs.
 	 */
 	reason: string | null
 }
@@ -119,10 +122,10 @@ export interface CompiledFreshness {
 /**
  * Compare the newest source file against the newest compiled output across the named workspaces.
  *
- * `workspaces` are repo-relative directories, and each caller states its own set:
- * the dev-MCP names the workspaces a spawned CLI will load, while a battery names the
- * ones its harness imports. A caller that names too few gets a `fresh` it has not earned,
- * so the set belongs with the caller that knows what it loads.
+ * `workspaces` are repo-relative directories, and each caller states its own set: the dev-MCP names
+ * the workspaces a spawned CLI will load, while a battery names the ones its harness imports.
+ * A caller that names too few gets a `fresh` it has not earned, so the set belongs
+ * with the caller that knows what it loads.
  */
 export async function checkCompiledFreshness(
 	repoRoot: string,

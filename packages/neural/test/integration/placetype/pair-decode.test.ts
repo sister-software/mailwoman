@@ -96,8 +96,9 @@ describe("placetype-pair prior — decode-order integration", () => {
 			enforceWordConsistency: true,
 		})
 
-		// Baseline sanity — without the placetypePair prior, this exact weak/fragmented logit set really
-		// does trigger a wordConsistency heal. This shows that fragmentation changes the decode.
+		// Baseline sanity — without the placetypePair prior, this exact weak/fragmented
+		// logit set really does trigger a wordConsistency heal.
+		// This shows that fragmentation changes the decode.
 		const baseline = await classifier.traceParse(text, { spanProposer: false })
 		expect(baseline.repairs.find((r) => r.pass === "wordConsistency")).toBeDefined()
 
@@ -170,13 +171,15 @@ describe("placetype-pair prior — decode-order integration", () => {
 describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusion fixture)", () => {
 	/**
 	 * The task-8 path-fusion lattice, reconstructed on the fixture tokenizer:
-	 * the emission-side δ (6.0) wins nothing — "shoreditch"'s fused street run (8 + 7 + 7 = 22)
-	 * outscores the biased dependent_locality reading (6 + 6 + 6 = 18) by 4, more than
-	 * the per-piece emission gap but less than β=5. So a beta-less decode keeps the
-	 * fused path (the measured current-main behavior on the 17 comma-free GB rows),
-	 * and the transitionBeta artifact flips it — the probe's recovery mechanism,
-	 * end-to-end through `#decode` → viterbi. Comma-free input, `probeMode` omitted:
-	 * the auto chain's anchored leg is the one that fires, matching the production population.
+	 * the emission-side δ (6.0) wins nothing — "shoreditch"'s fused street run
+	 * (8 + 7 + 7 = 22) outscores the biased dependent_locality reading (6 + 6 + 6 = 18) by 4,
+	 * more than the per-piece emission gap but less than β=5.
+	 *
+	 * So a beta-less decode keeps the fused path (the measured current-main behavior
+	 * on the 17 comma-free GB rows), and the transitionBeta artifact flips it —
+	 * the probe's recovery mechanism, end-to-end through `#decode` → viterbi.
+	 * Comma-free input, `probeMode` omitted: the auto chain's anchored leg is the
+	 * one that fires, matching the production population.
 	 */
 	function fusedLogits(): number[][] {
 		const logits = [zeroRow(), zeroRow(), zeroRow(), zeroRow()]

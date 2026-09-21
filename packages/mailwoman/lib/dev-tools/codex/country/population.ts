@@ -34,6 +34,7 @@ const DEFAULT_OUT = resolvePackagePath("@mailwoman/codex", "lib", "country", "po
 
 /**
  * Tab positions this tool reads from `countryInfo.txt`'s 19-column rows.
+ *
  * Named so the parse states which columns it believes in. a GeoNames format change fails
  * the count guard below rather than silently reading the wrong column.
  */
@@ -58,7 +59,9 @@ const SEPARATOR_MINIMUM = 10_000
  */
 export interface GenerateCountryPopulationOptions {
 	/**
-	 * Output path override. Default: `codex/country/population.ts` (the committed table).
+	 * Output path override.
+	 *
+	 * Default: `codex/country/population.ts` (the committed table).
 	 */
 	out?: string
 }

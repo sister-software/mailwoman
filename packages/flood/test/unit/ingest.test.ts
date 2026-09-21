@@ -23,7 +23,9 @@ unknown id, Inverse of British National Grid + Ballpark geographic offset from O
 `
 
 /**
- * The same command with the grid installed. The only change is the missing trailing clause.
+ * The same command with the grid installed.
+ *
+ * The only change is the missing trailing clause.
  */
 const GRID_PRESENT = `Candidate operations found: 2
 Note: using '--spatial-test intersects' would bring more results (9)

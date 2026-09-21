@@ -32,13 +32,16 @@ export interface BANExtracts {
 }
 
 /**
- * Opens + caches per-country BAN rooftop lookups. A non-US geocode consults `for(country)`; the first
- * hit for a country opens its extract (with the matching street locale) once, subsequent calls reuse it.
+ * Opens + caches per-country BAN rooftop lookups.
+ *
+ * A non-US geocode consults `for(country)`; the first hit for a country opens its
+ * extract (with the matching street locale) once, subsequent calls reuse it.
  *
  * `for` is synchronous, so on-disk existence is probed asynchronously once instead of per call:
  * {@linkcode warm} awaits `pathExists` for every supported country × extract-tier combination
- * and records what exists; `for` consults that map. Prefer {@linkcode BANRegionDatabaseProvider.create},
- * which constructs and warms before answering — a provider constructed directly must be warmed
+ * and records what exists; `for` consults that map.
+ * Prefer {@linkcode BANRegionDatabaseProvider.create}, which constructs
+ * and warms before answering — a provider constructed directly must be warmed
  * before its first `for`, or it answers `{}` for every country.
  */
 export class BANRegionDatabaseProvider implements Disposable {
@@ -56,6 +59,7 @@ export class BANRegionDatabaseProvider implements Disposable {
 
 	/**
 	 * Construct a provider and warm its existence map before answering.
+	 *
 	 * The constructor cannot await the probe, so this static factory does. a caller that
 	 * constructs directly must {@linkcode warm} before the first `for`.
 	 */

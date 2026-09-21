@@ -41,6 +41,7 @@ import { resolvePath, type PathBuilderLike } from "path-ts"
 
 /**
  * Admin placetypes the triage covers — the bands an address's locality span resolves against.
+ *
  * Regions and countries are excluded: their non-current records are historical polities,
  * a different question with different evidence.
  */
@@ -48,16 +49,18 @@ const TRIAGE_PLACETYPES = ["locality", "localadmin", "borough"] as const
 
 /**
  * Placetypes searched for a live cover — wider than the subject bands on purpose.
- * WOF's January 2019 GB batch demoted cities out of the locality band while leaving a
- * same-named county/region standing: `Swansea` (pop 300,352) is reachable only as a principal
- * area 6.1 km from the city, and bare `Newport` now races six live namesake localities
- * with the 161k Welsh city absent from the band. A cover in another band is a different
- * fact from no cover at all, and the ledger has to say which.
+ *
+ * WOF's January 2019 GB batch demoted cities out of the locality band while leaving
+ * a same-named county/region standing: `Swansea` (pop 300,352) is reachable only
+ * as a principal area 6.1 km from the city, and bare `Newport` now races six live
+ * namesake localities with the 161k Welsh city absent from the band.
+ * A cover in another band is a different fact from no cover at all, and the ledger has to say which.
  */
 const COVER_PLACETYPES = ["locality", "localadmin", "borough", "county", "macrocounty", "region"] as const
 
 /**
  * Radius for "is this place already covered by a live record", km.
+ *
  * Matches the currency backfill's check radius, and for the same reason:
  * a locality centroid and its live twin can sit kilometres apart, while a same-named
  * place in another region is a different place entirely.
@@ -89,10 +92,11 @@ export type CurrencyClass = (typeof CurrencyClass)[keyof typeof CurrencyClass]
  *   `Town of Gilbert` over live `Gilbert`, `Arrondissement de Lyon` over live `Lyon`.
  *   This verdict is what keeps the legal-form class out of the hole count —
  *   a same-name-string test alone called 21,010 US rows holes, and the samples were
- *   `Commonwealth of Pennsylvania` and `Town of Cary`. Directional: `Telford` inside live
- *   `Telford and Wrekin` is not a cover, because no query for Telford resolves through it.
- * - `covered_cross_band` — a live record of the same name nearby, but at a different
- *   placetype: the place answers at coarser granularity and loses its in-band race.
+ *   `Commonwealth of Pennsylvania` and `Town of Cary`.
+ *   Directional: `Telford` inside live `Telford and Wrekin` is not a cover,
+ *   because no query for Telford resolves through it.
+ * - `covered_cross_band` — a live record of the same name nearby, but at a different placetype:
+ *   the place answers at coarser granularity and loses its in-band race.
  *   `Swansea` and `Newport` are the measured cases.
  * - `uncovered` — no live record nearby bears or contains the name.
  *   The class a reviewer must judge (`Telford`).
@@ -113,6 +117,7 @@ export type CoverageVerdict = (typeof CoverageVerdict)[keyof typeof CoverageVerd
 export interface TriageAttestation {
 	/**
 	 * `unmeasured` when no dump exists for the country: the pass could not look.
+	 *
 	 * That differs from looking and finding nothing (the meaning-of-zero rule).
 	 */
 	state: "attested" | "unattested" | "unmeasured"
@@ -139,6 +144,7 @@ export interface TriageRow {
 	longitude: number
 	/**
 	 * The record's own population, or 0 when the artifact carries none.
+	 *
 	 * Zero here is WOF's absence rather than a measured zero.
 	 */
 	population: number
@@ -162,6 +168,7 @@ export interface TriageSummary {
 	uncovered: number
 	/**
 	 * Uncovered rows a second source attests — the review queue's head.
+	 *
 	 * `undefined` when the country has no dump, so a zero here always means "looked and found none".
 	 */
 	uncoveredAttested?: number
@@ -173,11 +180,15 @@ export interface TriageOptions {
 	 */
 	adminDB: string
 	/**
-	 * Per-country GeoNames dump directory. Countries without a `<CC>.txt` are reported `unmeasured`.
+	 * Per-country GeoNames dump directory.
+	 *
+	 * Countries without a `<CC>.txt` are reported `unmeasured`.
 	 */
 	geonamesDir?: PathBuilderLike
 	/**
-	 * Restrict to these ISO-3166 alpha-2 countries. Omit for every country the artifact holds.
+	 * Restrict to these ISO-3166 alpha-2 countries.
+	 *
+	 * Omit for every country the artifact holds.
 	 */
 	countries?: readonly string[]
 	/**
@@ -203,11 +214,12 @@ interface LiveRecord {
 
 /**
  * The shared fold for this pass: diacritic-stripped, lower-cased, whitespace-collapsed.
+ *
  * Deliberately not `normalizeLocalityForKey` — that is the resolver's key discipline,
- * and importing it here would tie a reporting pass to a runtime interface it must be
- * free to outlive. And deliberately not `@mailwoman/normalize`'s `stripCombiningMarks`
- * either (NFD, no case/space fold): this fold decomposes under nfkd, so compatibility
- * forms fold too, and the triage artifact was built under it.
+ * and importing it here would tie a reporting pass to a runtime interface it must be free to outlive.
+ * And deliberately not `@mailwoman/normalize`'s `stripCombiningMarks` either
+ * (NFD, no case/space fold): this fold decomposes under nfkd, so compatibility forms
+ * fold too, and the triage artifact was built under it.
  */
 function fold(value: string): string {
 	return value
@@ -219,7 +231,9 @@ function fold(value: string): string {
 }
 
 /**
- * Does a live neighbour cover this place? Exact name first, then containment in either direction — see
+ * Does a live neighbour cover this place?
+ *
+ * Exact name first, then containment in either direction — see
  * {@link CoverageVerdict} for why containment is the required half.
  */
 function judgeCoverage(
@@ -252,10 +266,11 @@ function judgeCoverage(
 			continue
 		}
 
-		// directional, and the direction is the whole point: the dead name must contain a
-		// live one, because then the place is reachable by the shorter name people type
-		// (`Town of Gilbert` over live `Gilbert`). The reverse is not a cover — `Telford`
-		// sits inside live `Telford and Wrekin`, and nothing answers a query for Telford.
+		// directional, and the direction is the whole point: the dead name must contain
+		// a live one, because then the place is reachable by the shorter name people
+		// type (`Town of Gilbert` over live `Gilbert`).
+		// The reverse is not a cover — `Telford` sits inside live `Telford and Wrekin`,
+		// and nothing answers a query for Telford.
 		// An empty live key would `includes()`-match everything, so it never participates.
 		const contains =
 			live.key.length > 0 &&
@@ -328,6 +343,7 @@ async function loadAttestors(
 
 /**
  * Triage one admin gazetteer's non-current records into a reviewable ledger.
+ *
  * Read-only: opens the artifact `readOnly` and writes nothing.
  */
 export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResult> {

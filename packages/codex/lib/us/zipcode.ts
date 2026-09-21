@@ -48,8 +48,10 @@ export type ZipCodeDigit = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 export type ZipCode = Tagged<string, "ZipCode">
 
 /**
- * The extended ZIP code format includes the five-digit ZIP code followed by a hyphen and four
- * additional digits. This extended format is used to provide more precise location information.
+ * The extended ZIP code format includes the five-digit ZIP code followed by a hyphen
+ * and four additional digits.
+ *
+ * This extended format is used to provide more precise location information.
  *
  * - The first 3 digits of the ZIP code represent a specific central mail processing facility,
  * - The last 2 digits of the ZIP code represent a specific post office or delivery area.
@@ -86,6 +88,7 @@ export type ExtractStateFromZipCode<Zip extends ZipCode | ZipCodePlusFour> =
 
 /**
  * Record of US state abbreviations to their corresponding ZIP code prefix (the leading digit).
+ *
  * A cheap geographic prior: a 5-digit code's first digit narrows it to a band of states,
  * which the parser can weigh against the surrounding city/state tokens.
  *

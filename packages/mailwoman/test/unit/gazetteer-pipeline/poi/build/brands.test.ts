@@ -55,7 +55,8 @@ describe("aggregateBrands", () => {
 	})
 
 	it("applies the noise floor max(3, 1% of rows) to aliases, dropping sub-floor variants", () => {
-		// rows total = 1000 -> floor = max(3, 10) = 10. An 8-row variant is noise. a 10-row variant clears it.
+		// rows total = 1000 -> floor = max(3, 10) = 10.
+		// An 8-row variant is noise. a 10-row variant clears it.
 		const rows: BrandNameCount[] = [
 			{ wikidata: "Q1", name: "Main Co", n: 982 },
 			{ wikidata: "Q1", name: "Main Co Alt Spelling", n: 10 },
@@ -67,7 +68,8 @@ describe("aggregateBrands", () => {
 	})
 
 	it("uses the flat floor of 3 when 1% of rows is smaller", () => {
-		// rows total = 30 -> floor = max(3, 0.3) = 3. A 2-row variant is noise. a 3-row variant clears it.
+		// rows total = 30 -> floor = max(3, 0.3) = 3.
+		// A 2-row variant is noise. a 3-row variant clears it.
 		const rows: BrandNameCount[] = [
 			{ wikidata: "Q1", name: "Main Co", n: 25 },
 			{ wikidata: "Q1", name: "Clears Floor", n: 3 },

@@ -39,9 +39,12 @@ import { oaResolverEval } from "#eval-harness/oa/resolver/eval"
 /**
  * The six runs, in the order they execute and by the name each writes its `.md`/`.log` under.
  *
- * `de-native-on` is the only one a promotion floor reads — the `native DE` anchor-on
- * cell of the 2x2 is `de.native_locality`. It is also in the fp32↔int8 delta cap.
- * Therefore, that run executes on both arms. The other five are recorded rather than floored.
+ * `de-native-on` is the only one a promotion floor reads — the `native DE`
+ * anchor-on cell of the 2x2 is `de.native_locality`.
+ * It is also in the fp32↔int8 delta cap.
+ *
+ * Therefore, that run executes on both arms.
+ * The other five are recorded rather than floored.
  */
 export const DE_ORDER_RUNS = ["de-native-on", "de-native-off", "de-intl-on", "de-intl-off", "us-on", "fr-on"] as const
 
@@ -94,41 +97,56 @@ const RUN_PLAN: readonly DeOrderRun[] = [
  */
 export interface DeOrderEvalOptions {
 	/**
-	 * Candidate ONNX. Required.
+	 * Candidate ONNX.
+	 *
+	 * Required.
 	 */
 	model?: string
 	/**
-	 * Candidate model-card. Required.
+	 * Candidate model-card.
+	 *
+	 * Required.
 	 */
 	card?: string
 	/**
-	 * SentencePiece tokenizer. Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
+	 * SentencePiece tokenizer.
+	 *
+	 * Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	tokenizer?: string
 	/**
-	 * Anchor lookup JSON. Default: the pilot lookup under `$MAILWOMAN_DATA_ROOT`.
+	 * Anchor lookup JSON.
+	 *
+	 * Default: the pilot lookup under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	anchorLookup?: string
 	/**
-	 * Where the six per-run `.md`/`.log` pairs land. Default `/tmp/order-eval`.
+	 * Where the six per-run `.md`/`.log` pairs land.
+	 *
+	 * Default `/tmp/order-eval`.
 	 */
 	out?: string
 	/**
 	 * Row cap applied to each of the six runs (0/omitted = all rows).
 	 *
-	 * Profiling only. The six corpora are 3,000 rows each except the US no-regression run at 10,000,
+	 * Profiling only.
+	 * The six corpora are 3,000 rows each except the US no-regression run at 10,000,
 	 * and a capped run reads the first N rows in file order — which is not a stratified sample.
+	 *
 	 * A capped run's locality percentages are therefore not comparable with a floor reading,
 	 * and `promotion-eval.ts` never passes this.
 	 */
 	limit?: number
 	/**
 	 * Answer a repeated `findPlace` query from a per-run memo (see `OAResolverEvalOptions.lookupMemo`).
+	 *
 	 * Each of the six runs keeps its own memo, because each builds its own rig.
 	 */
 	lookupMemo?: boolean
 	/**
-	 * Which of {@linkcode DE_ORDER_RUNS} to execute. Omitted runs all six.
+	 * Which of {@linkcode DE_ORDER_RUNS} to execute.
+	 *
+	 * Omitted runs all six.
 	 *
 	 * A run not selected prints its heading with `skipped` and its 2x2 cell reads `—`,
 	 * so a cell nobody measured cannot be read as a cell that measured nothing.
@@ -147,9 +165,10 @@ export interface DeOrderEvalOptions {
 }
 
 /**
- * What {@linkcode deOrderEval} returns. `ok` is false only for the usage refusal
- * the script signalled with exit 1 (missing model/card) — the check tolerated
- * that exit code, and tolerates this the same way.
+ * What {@linkcode deOrderEval} returns.
+ *
+ * `ok` is false only for the usage refusal the script signalled with exit 1 (missing model/card) —
+ * the check tolerated that exit code, and tolerates this the same way.
  */
 export interface DeOrderEvalResult {
 	ok: boolean
@@ -157,9 +176,10 @@ export interface DeOrderEvalResult {
 }
 
 /**
- * Run the both-order robustness battery. Every report line goes through `report`
- * (stdout parity) and the usage refusal through `reportError`, matching the
- * `${stdout}${stderr}` capture the runner writes into `<tag>-deorder.md`.
+ * Run the both-order robustness battery.
+ *
+ * Every report line goes through `report` (stdout parity) and the usage refusal through `reportError`,
+ * matching the `${stdout}${stderr}` capture the runner writes into `<tag>-deorder.md`.
  */
 export async function deOrderEval(
 	options: DeOrderEvalOptions = {},
@@ -229,8 +249,9 @@ export async function deOrderEval(
 
 	// Pull the neural locality-match % out of a result .md (the "| **neural** | XX.X% |" row).
 	const loc = async (name: DeOrderRunName): Promise<string> => {
-		// A run nobody asked for reads `—`, not empty. An empty cell is what a selected run leaves
-		// when it wrote no locality row, and the two readings are different facts.
+		// A run nobody asked for reads `—`, not empty.
+		// An empty cell is what a selected run leaves when it wrote no locality row,
+		// and the two readings are different facts.
 		if (!selected.has(name)) return "—"
 
 		let md: string

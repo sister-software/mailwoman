@@ -48,6 +48,7 @@ const SLUG = "ourairports"
 
 /**
  * The GitHub Pages mirror the project itself publishes.
+ *
  * `ourairports.com/data/*.csv` 302s here, so pointing at the mirror directly saves
  * a redirect and is the URL the project's own readme gives.
  */
@@ -56,12 +57,12 @@ const BASE_URL = "https://davidmegginson.github.io/ourairports-data"
 /**
  * The files worth having, and why each one.
  *
- * `airports.csv` is the payload. The other three are small joins that turn its codes
- * into text: `countries.csv` and `regions.csv` expand `iso_country`/`iso_region`
- * into names (a corpus line needs "Germany", not "DE"), and `runways.csv` is the
- * only file carrying per-airport sub-structure of any kind — runway designators,
- * which are not sub-venue designators (nobody addresses mail to a runway) but are worth
- * having on disk as the negative class if the sub-venue recipe ever needs one.
+ * `airports.csv` is the payload.
+ * The other three are small joins that turn its codes into text: `countries.csv` and `regions.csv`
+ * expand `iso_country`/`iso_region` into names (a corpus line needs "Germany", not "DE"),
+ * and `runways.csv` is the only file carrying per-airport sub-structure of any kind —
+ * runway designators, which are not sub-venue designators (nobody addresses mail to a runway)
+ * but are worth having on disk as the negative class if the sub-venue recipe ever needs one.
  */
 const FILES = ["airports.csv", "countries.csv", "regions.csv", "runways.csv"] as const
 
@@ -74,6 +75,7 @@ interface OurAirportsFileEntry {
 	bytes: number
 	/**
 	 * The upstream `Last-Modified`, when the CDN gave one.
+	 *
 	 * This is the data's vintage; `downloaded_at` is only when we asked.
 	 * `corpus/agents.md` has the standing warning that a file's mtime is not its data's vintage —
 	 * recording the upstream header is how a later refresh decision gets made on the right number.
@@ -90,8 +92,10 @@ interface OurAirportsManifest {
 }
 
 /**
- * Read the upstream `Last-Modified` with a head. Returns `null` on any failure —
- * provenance metadata is nice to have and must never fail a download that otherwise succeeded.
+ * Read the upstream `Last-Modified` with a head.
+ *
+ * Returns `null` on any failure — provenance metadata is nice to have
+ * and must never fail a download that otherwise succeeded.
  */
 async function readLastModified(url: string): Promise<string | null> {
 	try {

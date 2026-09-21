@@ -19,8 +19,10 @@ import type { DualRole, MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm
 import type { FSTMatcherLike, MailwomanClassifierLike } from "#browser-runtime/types"
 
 /**
- * Project the cascade's hits onto the package's {@link ResolvedPlaceView} — the shape `useParsePipeline`
- * and the result panels consume. Shared by both demo parse paths so the projection cannot drift.
+ * Project the cascade's hits onto the package's {@link ResolvedPlaceView} —
+ * the shape `useParsePipeline` and the result panels consume.
+ *
+ * Shared by both demo parse paths so the projection cannot drift.
  */
 export function projectCascadeHits(
 	hits: ReadonlyArray<{ id: number; name: string; placetype: string; lat: number; lon: number; score: number }>
@@ -51,13 +53,16 @@ export const DEFAULT_LOCALE = "en-us"
 export const DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, DC 20500"
 
 /**
- * Demo preset addresses. Each carries its `country` (ISO code) — the placetype-pair-prior
- * country pin (#1278 phase 2's `{country}` override): structural routing (locale-check)
- * genuinely can't detect every locale from text shape (NZ's 4-digit postcode isn't distinctive),
- * so a preset pins its country and {@link pairCountryForInput} hands it to `selectPairIndexForText`
- * when the input still equals the preset text. Free-typed input (no exact preset match) falls back to
- * structural detection — GB-with-postcode auto-fires. NZ free-text stays unfired
- * (the accepted consequence of structural routing, the #1308-sibling reality).
+ * Demo preset addresses.
+ *
+ * Each carries its `country` (ISO code) — the placetype-pair-prior country pin
+ * (#1278 phase 2's `{country}` override): structural routing (locale-check) genuinely
+ * can't detect every locale from text shape (NZ's 4-digit postcode isn't distinctive),
+ * so a preset pins its country and {@link pairCountryForInput} hands it to
+ * `selectPairIndexForText` when the input still equals the preset text.
+ * Free-typed input (no exact preset match) falls back to structural detection — GB-with-postcode auto-fires.
+ *
+ * NZ free-text stays unfired (the accepted consequence of structural routing, the #1308-sibling reality).
  *
  * See also `PIPELINE_PRESETS` in `@mailwoman/react` (pipeline/presets.ts) — the package
  * carries its own preset list. reconciling the two lists is tracked outside this file.
@@ -92,12 +97,15 @@ export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string; country:
 
 /**
  * The placetype-pair country PIN for one input (#1278 phase 2's `{country}` override).
- * Returns a preset's `country` when `input` still exactly equals that preset's
- * text (trimmed), else `undefined` → the caller lets structural detection decide.
+ *
+ * Returns a preset's `country` when `input` still exactly equals that preset's text (trimmed),
+ * else `undefined` → the caller lets structural detection decide.
  * This is the stale-pin rule: the pin is tied to the preset's identity (its text), so the
  * instant the user edits the input it no longer matches and the parse drops to structural
  * locale-check detection — clean and stateless (no "active preset" tracking to drift).
- * GB-with-postcode still auto-fires structurally. NZ free-text stays unfired.
+ *
+ * GB-with-postcode still auto-fires structurally.
+ * NZ free-text stays unfired.
  */
 export function pairCountryForInput(input: string): string | undefined {
 	const trimmed = input.trim()
@@ -141,6 +149,7 @@ export interface ClassifyStageResult {
  * (the `/demo` map's `runParseWithBias` and the MDX-embed `PipelineExplorer`'s `runParse`):
  * the 4-way pipeline import, the query-shape + kind pass, the neural `runPipeline`,
  * and the tree flatten — with the two front-half timings captured.
+ *
  * The caller owns resolution (`runCascade`, plus the map path's street tier / anchor fallback)
  * and the staged `onStage` progress ticks.
  *
@@ -149,9 +158,10 @@ export interface ClassifyStageResult {
  * one insertion point for both paths.
  */
 /**
- * Per-parse placetype-pair prior selector (placetype-pair-prior arc, #1278), the shape the web loader's
- * `LoadResult.selectPairIndexForText` exposes. Given the input text it runs
- * locale-check over the text shape (postcode format / script, never place names)
+ * Per-parse placetype-pair prior selector (placetype-pair-prior arc, #1278),
+ * the shape the web loader's `LoadResult.selectPairIndexForText` exposes.
+ *
+ * Given the input text it runs locale-check over the text shape (postcode format / script, never place names)
  * and returns the matching loaded index wrapped as an opaque `placetypePair` opt —
  * or `undefined` when no loaded index matches (byte-stable no-prior).
  * Typed opaquely here because the docs bundle carries no neural type dependency;
@@ -170,6 +180,7 @@ export interface ClassifyStageDeps {
 	fst?: FSTMatcherLike | null
 	/**
 	 * The optional street-morphology matcher — the #1315 street-context check's signal source.
+	 *
 	 * The check only fires when both this and `fst` are wired (core's `streetContextRequirementFor`),
 	 * matching the node runtime pipeline's default. a `null`/omitted matcher parses
 	 * with the check off, exactly the pre-artifact demo behavior.
@@ -178,6 +189,7 @@ export interface ClassifyStageDeps {
 	/**
 	 * The per-parse placetype-pair prior selector (#1278) — the loaded {@link SelectPairIndex},
 	 * or `null`/omitted when no pair index was staged for this release.
+	 *
 	 * When present, `runClassifyStage` calls it on the input and passes the result as the pipeline's
 	 * `placetypePair` opt. the GB/NZ dependent_locality prior fires while US/FR inputs stay byte-stable.
 	 */
@@ -186,15 +198,18 @@ export interface ClassifyStageDeps {
 
 export interface ClassifyStageHooks {
 	/**
-	 * Fired after the (synchronous) query-shape + kind pass, immediately before the neural
-	 * pipeline runs. Drives the staged progress UI's "Running neural classifier…" transition.
+	 * Fired after the (synchronous) query-shape + kind pass, immediately before the neural pipeline runs.
+	 *
+	 * Drives the staged progress UI's "Running neural classifier…" transition.
 	 * Both callers wire it to their `onStage(1)`.
 	 */
 	onClassifierStart?: () => void
 }
 
 /**
- * Run the shared classify front-half. See {@link ClassifyStageResult} / {@link ClassifyStageDeps}.
+ * Run the shared classify front-half.
+ *
+ * See {@link ClassifyStageResult} / {@link ClassifyStageDeps}.
  */
 export async function runClassifyStage(
 	input: string,
@@ -251,9 +266,11 @@ export async function runClassifyStage(
 
 /**
  * Dual-role (#402) resolution, shared by both parse paths: whether the resolved
- * pin doubles as another admin tier. Best-effort + optional — a placeless pin
- * (`id === 0`, e.g. the map path's anchor/street synthesized hits), a lookup with no `coincidentRolesFor`,
- * an empty relation, or a failed query all resolve to `undefined` (no dual-role badge).
+ * pin doubles as another admin tier.
+ *
+ * Best-effort + optional — a placeless pin (`id === 0`, e.g. the map path's anchor/street synthesized hits),
+ * a lookup with no `coincidentRolesFor`, an empty relation, or a failed query
+ * all resolve to `undefined` (no dual-role badge).
  */
 export async function resolveDualRoles(
 	lookup: MailwomanLookupLike,

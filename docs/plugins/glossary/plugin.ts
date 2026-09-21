@@ -40,6 +40,7 @@ import { isSuppressedSurface } from "./remark.ts"
 
 /**
  * Upstream's options plus the `noAutoLink` surface list this wrapper's homonym guard reads.
+ *
  * Passed to both this plugin and the remark plugin from docusaurus.config.ts, from one shared
  * constant, so the linker and the backlink scan cannot disagree about which surfaces link.
  */
@@ -116,6 +117,7 @@ const MAX_BACKLINKS_PER_TERM = 8
 /**
  * Does `needle` occur in `text` as a whole word (with the upstream matcher's plural allowance),
  * outside a capitalized multi-word phrase and not on the `noAutoLink` list?
+ *
  * Mirrors remark.ts's two guards on raw text.
  */
 function referencesPhrase(

@@ -119,10 +119,10 @@ export function mapUnitProfile(
 	}
 
 	// A map unit whose components carry no weight at all publishes no readable proportion,
-	// so nothing can be apportioned from it. It is marked `no_mapping` upstream for
-	// exactly this reason. reaching here with a zero total means the upstream check
-	// and this one disagree, and answering with an empty distribution would silently
-	// drop the delineation's area out of every share.
+	// so nothing can be apportioned from it.
+	// It is marked `no_mapping` upstream for exactly this reason. reaching here with a zero
+	// total means the upstream check and this one disagree, and answering with an empty
+	// distribution would silently drop the delineation's area out of every share.
 	if (total <= 0) {
 		return { classShares: new Map(), unrated: 0, notRateable: 0, noData: 1 }
 	}
@@ -143,10 +143,10 @@ export function mapUnitProfile(
 			continue
 		}
 
-		// A NULL rating means the survey did not rate this component, and why it did not
-		// is what separates the two buckets. A miscellaneous area is a non-soil area —
-		// rock outcrop, water — that the capability rating does not apply to.
-		// a named soil with no rating is one the survey chose not to rate.
+		// A NULL rating means the survey did not rate this component, and why it did
+		// not is what separates the two buckets.
+		// A miscellaneous area is a non-soil area — rock outcrop, water — that the capability rating
+		// does not apply to. a named soil with no rating is one the survey chose not to rate.
 		// Read as one number they would both say "not arable", which neither of them says.
 		if (component.compkind === "Miscellaneous area") {
 			notRateable += weight
@@ -217,9 +217,10 @@ export function reduceCell(
 		if (!covered) {
 			// Every child centre fell outside every delineation reaching the cell.
 			// The cell is touched — the index says so — but no lattice point landed inside,
-			// which happens when a sliver clips a corner. Reporting shares over nothing
-			// would divide by zero. reporting a mapped share of zero is the truthful answer,
-			// and the row is dropped by the caller rather than stored as an all-zero distribution.
+			// which happens when a sliver clips a corner.
+			// Reporting shares over nothing would divide by zero. reporting a mapped
+			// share of zero is the truthful answer, and the row is dropped by the caller
+			// rather than stored as an all-zero distribution.
 			return {
 				row: emptyRow(h3Cell, candidates.length),
 				topClassUnderHalf: false,
@@ -337,8 +338,10 @@ function assembleRow(
 }
 
 /**
- * A cell no lattice point landed inside. `mapped_share` zero says exactly that, and the caller drops it
- * rather than storing an all-zero distribution that would read as a surveyed cell holding nothing.
+ * A cell no lattice point landed inside.
+ *
+ * `mapped_share` zero says exactly that, and the caller drops it rather than storing an
+ * all-zero distribution that would read as a surveyed cell holding nothing.
  */
 function emptyRow(h3Cell: number, delineations: number): SoilCapabilityCellTable {
 	return {
@@ -367,9 +370,10 @@ function round(value: number): number {
 }
 
 /**
- * The sum of a stored row's five shares. Exported because the invariant it checks —
- * that they sum to 1 — is what makes `other_share` required rather than decorative,
- * and a test that could not state the sum could not pin it.
+ * The sum of a stored row's five shares.
+ *
+ * Exported because the invariant it checks — that they sum to 1 — is what makes `other_share`
+ * required rather than decorative, and a test that could not state the sum could not pin it.
  */
 export function shareTotal(row: SoilCapabilityCellTable): number {
 	const classes = parseJSONStrict<Record<string, number>>(row.class_shares)

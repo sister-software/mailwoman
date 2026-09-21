@@ -21,6 +21,7 @@ import { describe, expect, test } from "vitest"
 
 /**
  * The subset of the model card this parity guard reads.
+ *
  * Deliberately partial — a field is added here only when an assertion below needs it.
  */
 interface ModelCard {
@@ -37,9 +38,10 @@ interface ModelCard {
 }
 
 /**
- * One evidence-lexicon channel as a card declares it. `lexicon` names the generation
- * the model trained against, and declaring it is what arms the #1510 mismatch guard —
- * `resolveEvidenceLexicon` only compares generations on the declared branch,
+ * One evidence-lexicon channel as a card declares it.
+ *
+ * `lexicon` names the generation the model trained against, and declaring it is what arms the #1510
+ * mismatch guard — `resolveEvidenceLexicon` only compares generations on the declared branch,
  * so an undeclared channel silently falls back to a legacy filename with no guard at all.
  */
 interface EvidenceChannel {
@@ -81,22 +83,26 @@ describe("fr-fr ↔ en-us model-card parity (#721 — fr-fr ships en-us's model 
  * The subset case is not a smaller claim, it is a wrong one.
  * A declared block suppresses the graph-inference back-compat path, so a missing channel is
  * not inferred — it is dropped, and `required` defaulting to false means nothing fails closed.
+ *
  * That is how en-gb ran the whole bundle off on a model trained with it (#1511),
  * and the same gap was later found on fr-fr, en-au and en-nz.
  *
- * An overlay with no block is deliberately exempt: `ProductionScorer` then infers the channels
- * from the ONNX graph. The base supplies the right set, so the overlay gets it for free.
+ * An overlay with no block is deliberately exempt: `ProductionScorer`
+ * then infers the channels from the ONNX graph.
+ * The base supplies the right set, so the overlay gets it for free.
  */
 const OVERLAYS_WITH_CARDS = ["fr-fr", "en-gb", "en-au", "en-nz", "de-de", "es-es", "it-it", "en-in"] as const
 
 /**
  * The channels whose declaration also names an artifact generation.
+ *
  * These are the ones that drifted.
  */
 const EVIDENCE_CHANNELS = ["locality_surface", "street_type"] as const
 
 /**
  * Drop the `$`-prefixed annotation keys before comparing.
+ *
  * They carry per-card history and are expected to differ. the declaration
  * they annotate is what has to match.
  */

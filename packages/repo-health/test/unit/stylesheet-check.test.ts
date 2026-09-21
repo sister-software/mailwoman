@@ -18,8 +18,9 @@ import { stylesheetDiagnostics } from "@mailwoman/repo-health/checks/stylesheet-
 import { describe, expect, it } from "vitest"
 
 /**
- * The path the system-wide invariants are asserted on. A stylesheet at any other
- * path is only run through the detectors.
+ * The path the system-wide invariants are asserted on.
+ *
+ * A stylesheet at any other path is only run through the detectors.
  */
 const SYSTEM = "packages/react/styles.css"
 const OTHER = "packages/earth/lib/styles/app.css"

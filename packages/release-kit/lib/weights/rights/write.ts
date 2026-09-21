@@ -68,6 +68,7 @@ export async function weightsRightsRecords(repoRoot: string): Promise<WeightsRig
 
 /**
  * Whether the committed file at `path` already holds `expected`.
+ *
  * A missing or unreadable file reads as different rather than as equal, so a first run writes it.
  */
 async function licenseDiffers(repoRoot: string, workspace: string, expected: string): Promise<boolean> {

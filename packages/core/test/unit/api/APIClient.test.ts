@@ -30,9 +30,9 @@ describe("APIClient: disposal", () => {
 	it("reaches a caching storage whose asyncDispose lives on the prototype", async () => {
 		let disposeCount = 0
 
-		// The regression case: [Symbol.asyncDispose] on the prototype chain rather than
-		// an own property. The pre-migration predicate (Object.hasOwn on the instance)
-		// never matched this shape, leaving cache disposal as dead code.
+		// The regression case: [Symbol.asyncDispose] on the prototype chain rather than an own property.
+		// The pre-migration predicate (Object.hasOwn on the instance) never matched
+		// this shape, leaving cache disposal as dead code.
 		const storagePrototype = {
 			async [Symbol.asyncDispose](): Promise<void> {
 				disposeCount += 1
@@ -122,9 +122,10 @@ describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", ()
 	})
 
 	it("delivers no more than requestsPerMinute inside any sliding minute", async () => {
-		// The rate, which is what the option promises — not the schedule, which is what every
-		// other test here asserts. That gap is how a 10x overrun shipped: the budget released
-		// N back to back then waited `60000/N` ms, so a stated 10/minute sustained 100/minute,
+		// The rate, which is what the option promises — not the schedule,
+		// which is what every other test here asserts.
+		// That gap is how a 10x overrun shipped: the budget released N back to back
+		// then waited `60000/N` ms, so a stated 10/minute sustained 100/minute,
 		// and no test failed because they all encoded the implemented spacing.
 		const BUDGET = 10
 		const clock = new VirtualClock()
@@ -153,10 +154,11 @@ describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", ()
 
 	it("still throttles a serial run", async () => {
 		// The full minute rather than `60000 / requestsPerMinute`.
-		// This constant used to be 30_000 — the spacing between two requests — which encoded the
-		// very defect it read as guarding: a budget of 2 released 2, waited 30s, released 2 more,
-		// i.e. 4/minute against a stated 2. Measured on a bare client at `requestsPerMinute: 10`,
-		// a 20-call fan-out arrived `[0 x10, 6000 x10]` — 20 in one sliding minute, a sustained 100/minute.
+		// This constant used to be 30_000 — the spacing between two requests —
+		// which encoded the very defect it read as guarding: a budget of 2 released 2,
+		// waited 30s, released 2 more, i.e. 4/minute against a stated 2.
+		// Measured on a bare client at `requestsPerMinute: 10`, a 20-call fan-out arrived
+		// `[0 x10, 6000 x10]` — 20 in one sliding minute, a sustained 100/minute.
 		const COOLDOWN_MS = 60_000
 
 		const clock = new VirtualClock()
@@ -414,11 +416,10 @@ describe("APIClient: bounded retry (A3)", () => {
 
 describe("APIClient: the pacing check sits downstream of the cache (I2)", () => {
 	it("does not pace a cache HIT — only a request that actually reaches the network", async () => {
-		// The check used to live in `fetch()`, upstream of the cache interceptor,
-		// so every hit burned a full pacer sleep: measured 1 dispatch, 5 hits,
-		// five 111ms sleeps for zero network traffic. `/Archives/` documents are cached for
-		// a century by design, so warm re-runs are the expected mode for a bulk crawl —
-		// at 100k cached documents that is ~3 hours of sleeping at an empty network.
+		// The check used to live in `fetch()`, upstream of the cache interceptor, so every hit burned
+		// a full pacer sleep: measured 1 dispatch, 5 hits, five 111ms sleeps for zero network traffic.
+		// `/Archives/` documents are cached for a century by design, so warm re-runs are the expected mode
+		// for a bulk crawl — at 100k cached documents that is ~3 hours of sleeping at an empty network.
 		const REPEATS = 6
 
 		const clock = createFakeClock()
@@ -510,9 +511,10 @@ describe("APIClient: every retry attempt takes its own pacer grant (I6/M-R)", ()
 
 describe("APIClient: the pacer and the cooldown compose (I4)", () => {
 	it("re-acquires a pacer grant after a cooldown, instead of spending a stale one", async () => {
-		// A grant is a claim on a specific instant. Taking one and then blocking on a cooldown leaves
-		// it stale, and every caller holding a stale grant spends it the moment the cooldown lifts —
-		// measured as four pairs dispatching 0ms apart against a documented 100ms minimum.
+		// A grant is a claim on a specific instant.
+		// Taking one and then blocking on a cooldown leaves it stale, and every caller
+		// holding a stale grant spends it the moment the cooldown lifts — measured as four
+		// pairs dispatching 0ms apart against a documented 100ms minimum.
 		// Latent while no client sets both, which is precisely why nothing caught it.
 		const INTERVAL_MS = 100
 		const FAN_OUT = 8

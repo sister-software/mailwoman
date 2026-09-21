@@ -56,16 +56,17 @@
 
 import { sql, type Kysely } from "kysely"
 
-// Type-only and circular on purpose (candidate-schema extends CandidateAncestorsDatabase):
-// Kysely's DB parameter is invariant, so the DDL functions must take the full
-// database type their caller holds. Erased at runtime.
+// Type-only and circular on purpose (candidate-schema extends CandidateAncestorsDatabase): Kysely's DB
+// parameter is invariant, so the DDL functions must take the full database type their caller holds.
+// Erased at runtime.
 import type { CandidateDatabase } from "#candidate/schema"
 import type { NameKey } from "#street/normalize"
 
 /**
- * The deepest chain the sidecar stores per place. WOF containment within the resolvable
- * placetypes (country … microhood) never legitimately exceeds this. anything past it
- * is source noise the build drops (and counts) rather than stores.
+ * The deepest chain the sidecar stores per place.
+ *
+ * WOF containment within the resolvable placetypes (country … microhood) never legitimately
+ * exceeds this. anything past it is source noise the build drops (and counts) rather than stores.
  */
 export const MAX_ANCESTOR_DEPTH = 8
 
@@ -115,8 +116,9 @@ export interface CandidateAncestorTable {
 }
 
 /**
- * Pre/post-order labels over the canonical-parent forest — one row per place
- * with recorded ancestry (see the module docstring for absence semantics).
+ * Pre/post-order labels over the canonical-parent forest — one row per place with
+ * recorded ancestry (see the module docstring for absence semantics).
+ *
  * `pre < post` always. labels are unique across the artifact.
  */
 export interface CandidateIntervalTable {
@@ -127,6 +129,7 @@ export interface CandidateIntervalTable {
 
 /**
  * The sidecar tables, for a `Kysely` view over the candidate DB.
+ *
  * `CandidateDatabase` (candidate-schema.ts) extends this, so the builder's
  * one typed client sees both families.
  */
@@ -136,8 +139,9 @@ export interface CandidateAncestorsDatabase {
 }
 
 /**
- * The `candidate_ancestor` columns in clustered-key order — the first two are
- * the primary key, and the builder's positional `insert` binds by this order.
+ * The `candidate_ancestor` columns in clustered-key order — the first two are the
+ * primary key, and the builder's positional `insert` binds by this order.
+ *
  * Keep in sync with {@link CandidateAncestorTable}.
  */
 export const CANDIDATE_ANCESTOR_COLUMNS = [
@@ -150,8 +154,10 @@ export const CANDIDATE_ANCESTOR_COLUMNS = [
 ] as const
 
 /**
- * Create the clustered closure table. The builder inserts in `(spr_id, depth)` order
- * so the B-tree leaves are contiguous per place — the byte-range read discipline.
+ * Create the clustered closure table.
+ *
+ * The builder inserts in `(spr_id, depth)` order so the B-tree leaves are contiguous
+ * per place — the byte-range read discipline.
  */
 export async function createCandidateAncestorTable(db: Kysely<CandidateDatabase>): Promise<void> {
 	await db.schema
@@ -169,7 +175,9 @@ export async function createCandidateAncestorTable(db: Kysely<CandidateDatabase>
 }
 
 /**
- * Create the interval-label table. Small rows probed by primary key — the `without rowid` win case.
+ * Create the interval-label table.
+ *
+ * Small rows probed by primary key — the `without rowid` win case.
  */
 export async function createCandidateIntervalTable(db: Kysely<CandidateDatabase>): Promise<void> {
 	await db.schema
@@ -191,6 +199,7 @@ export interface IntervalLabel {
 
 /**
  * Does `outer` contain `inner` along the canonical hierarchy?
+ *
  * Reflexive: a place contains itself (containment degenerates to identity,
  * the same reading the admin-coherence check gives a self-match).
  * The shared function for every consumer of the labels — a re-derived comparison risks

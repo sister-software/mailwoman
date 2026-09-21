@@ -32,6 +32,7 @@ export interface InterpCalibrationTable {
 
 /**
  * Measured 12-state seed table (a partial sweep. the full 50 was abandoned at the >85 °C heat ceiling).
+ *
  * Mirrors `data/calibration/interp-radius-conformal.json` (#584).
  */
 export const INTERP_RADIUS_CALIBRATION: InterpCalibrationTable = {
@@ -53,7 +54,9 @@ export const INTERP_RADIUS_CALIBRATION: InterpCalibrationTable = {
 }
 
 /**
- * The conformal multiplier for a parsed region. `stateSlug` is the lowercase 2-letter slug from
+ * The conformal multiplier for a parsed region.
+ *
+ * `stateSlug` is the lowercase 2-letter slug from
  * {@link regionToStateSlug} (e.g. `"tx"`); falls back to the table's conservative `default` for an unmeasured or absent
  * region.
  */

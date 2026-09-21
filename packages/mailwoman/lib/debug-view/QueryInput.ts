@@ -31,10 +31,12 @@ import { createElement, type ReactElement } from "react"
 export interface InputState {
 	value: string
 	/**
-	 * UTF-16 offset the cursor sits before, in `[0, value.length]`, and never inside a surrogate pair —
-	 * every move and every delete in this module steps by whole codepoints, so `value.slice(cursor)`
-	 * is always a valid string. (Ink measures and indexes in UTF-16 too. keeping the offset
-	 * in the same units as the render is what makes the two agree. See {@link stepLeft}.)
+	 * UTF-16 offset the cursor sits before, in `[0, value.length]`, and never inside a
+	 * surrogate pair — every move and every delete in this module steps by whole codepoints,
+	 * so `value.slice(cursor)` is always a valid string.
+	 *
+	 * (Ink measures and indexes in UTF-16 too. keeping the offset in the same units as
+	 * the render is what makes the two agree. See {@link stepLeft}.)
 	 */
 	cursor: number
 }
@@ -84,9 +86,11 @@ function clampCursor(value: string, index: number): number {
  * What survives from a typed or pasted run: CR/LF/tab runs collapse to one space,
  * other control characters are dropped, and everything else is kept.
  *
- * Collapsing rather than rejecting is the point. Pasting a multi-line address into a one-line
- * field is a thing people do constantly, and refusing the whole paste because it contains a
- * newline drops the address on the floor with no feedback — the field just doesn't respond.
+ * Collapsing rather than rejecting is the point.
+ * Pasting a multi-line address into a one-line field is a thing people do constantly,
+ * and refusing the whole paste because it contains a newline drops the address on
+ * the floor with no feedback — the field just doesn't respond.
+ *
  * `12 Rue de Rivoli\n75001 Paris` becomes the query it obviously means.
  */
 function printableRun(input: string): string {
@@ -154,9 +158,9 @@ export function applyKey(state: InputState, input: string, key: Key): InputState
 	}
 
 	if (key.ctrl) {
-		// The readline set, spelled out. Every one of these arrives as a bare letter
-		// (Ink resolves ctrl+letter to the letter), so anything not listed has to fall
-		// through to the drop below — inserting it is the bug.
+		// The readline set, spelled out.
+		// Every one of these arrives as a bare letter (Ink resolves ctrl+letter to the letter),
+		// so anything not listed has to fall through to the drop below — inserting it is the bug.
 		switch (input) {
 			case "w":
 				return deleteRange({ value, cursor }, wordStart(value, cursor), cursor)

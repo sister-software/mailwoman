@@ -45,14 +45,15 @@ import {
 /**
  * Concurrency for the clone fan-out.
  *
- * Fixed rather than `availableParallelism()`: these are network transfers of hundreds
- * of megabytes, so the ceiling is bandwidth and GitHub's patience rather than cores.
+ * Fixed rather than `availableParallelism()`: these are network transfers of hundreds of
+ * megabytes, so the ceiling is bandwidth and GitHub's patience rather than cores.
  * A 128-core host opening 128 clones serves nobody.
  */
 const CONCURRENCY = 8
 
 /**
  * Above this many repositories the final list is summarized instead of printed in full.
+ *
  * The `▸` lines above it are complete either way — this bounds the closing frame rather than the record.
  */
 const MAX_LISTED_CHECKS = 25
@@ -129,9 +130,9 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 			})
 
 			// where each repo comes from is resolved per repo rather than assumed to be upstream.
-			// `gh repo list` enumerates the upstream org, so the discovered `url` always
-			// names upstream — cloning from it would pull upstream data over the corrections
-			// our fork carries (the January 2019 GB deprecation batch is the first, #1742).
+			// `gh repo list` enumerates the upstream org, so the discovered `url` always names
+			// upstream — cloning from it would pull upstream data over the corrections our
+			// fork carries (the January 2019 GB deprecation batch is the first, #1742).
 			// Existing clones are not re-pointed here: `synchronizeRepo` pulls in place
 			// and never rewrites a remote, so this fixes new clones only.
 			// `gazetteer repos-sync` reports and re-points the existing ones.
@@ -147,11 +148,11 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 						console.error(`▸ ${name}: ${origin.reason}`)
 					}
 
-					// `owner` is the directory, and it stays upstream even when the bytes come
-					// from our fork. The destination is `<root>/<owner>/<name>`, so keying it
-					// on the resolved org would give one repo two homes — and `ingestWOF` globs
-					// the whole root, so the build would read both and resolve the conflict
-					// by FastGlob enumeration order (`repos-audit.ts` documents that hazard).
+					// `owner` is the directory, and it stays upstream even when the bytes come from our fork.
+					// The destination is `<root>/<owner>/<name>`, so keying it on the resolved
+					// org would give one repo two homes — and `ingestWOF` globs the whole root,
+					// so the build would read both and resolve the conflict by FastGlob enumeration
+					// order (`repos-audit.ts` documents that hazard).
 					// One repo, one directory, whichever remote filled it.
 					return { name, url: origin.url, owner: WOF_REPO_OWNER }
 				})

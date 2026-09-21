@@ -65,7 +65,9 @@ export interface TaiwanRegionName {
 }
 
 /**
- * The 縣市 → WOF region match. Three rungs, each answering only when it names exactly one region:
+ * The 縣市 → WOF region match.
+ *
+ * Three rungs, each answering only when it names exactly one region:
  *
  * 1. The official `zho` name (`新竹市` → Hsinchu City, never Hsinchu County, which also lists `新竹市` as a variant);
  * 2. Any Han name, when only one region carries it.
@@ -101,6 +103,7 @@ export function matchTaiwanRegion(regionName: string, regions: readonly TaiwanRe
 
 /**
  * The register's spelling plus its 臺/台 twin, the two forms a person types.
+ *
  * A name carrying neither character has no twin and yields itself alone.
  */
 export function districtNameVariants(name: string): string[] {
@@ -131,20 +134,26 @@ export interface TaiwanDistrictGroup {
 export interface BuildTWDistrictsOptions {
 	/**
 	 * The Overture release directory under `<data-root>/overture/`.
+	 *
 	 * Default {@link OVERTURE_ADDRESSES_RELEASE}.
 	 */
 	release?: string
 	/**
-	 * The Taiwan addresses parquet. Default `<data-root>/overture/<release>/addresses-tw.parquet`.
+	 * The Taiwan addresses parquet.
+	 *
+	 * Default `<data-root>/overture/<release>/addresses-tw.parquet`.
 	 */
 	parquetPath?: string
 	/**
 	 * The admin WOF database the 縣市 names are matched against.
+	 *
 	 * Default `<data-root>/wof/admin-global-priority.db`.
 	 */
 	adminPath?: string
 	/**
-	 * Output database. Default `<data-root>/wof/localities-tw-districts.db`.
+	 * Output database.
+	 *
+	 * Default `<data-root>/wof/localities-tw-districts.db`.
 	 */
 	out?: string
 	/**
@@ -192,8 +201,10 @@ function readTaiwanRegions(admin: DatabaseClient<WOFDatabase>): TaiwanRegionName
 }
 
 /**
- * Aggregate the parquet into one group per (縣市, 鄉鎮市區). DuckDB's `quantile_cont` gives the median
- * and the p5/p95 envelope in one scan. BigInt counts are narrowed at the boundary.
+ * Aggregate the parquet into one group per (縣市, 鄉鎮市區).
+ *
+ * DuckDB's `quantile_cont` gives the median and the p5/p95 envelope in one scan.
+ * BigInt counts are narrowed at the boundary.
  */
 async function readDistrictGroups(parquetPath: string, threads: number | undefined): Promise<TaiwanDistrictGroup[]> {
 	let DuckDBInstance: typeof import("@duckdb/node-api").DuckDBInstance
@@ -240,8 +251,10 @@ async function readDistrictGroups(parquetPath: string, threads: number | undefin
 }
 
 /**
- * Build the sealed Taiwan districts database. Not re-exported from a barrel —
- * the command lazy-imports it (optional-peer discipline, same as the NZ and CZ builders).
+ * Build the sealed Taiwan districts database.
+ *
+ * Not re-exported from a barrel — the command lazy-imports it
+ * (optional-peer discipline, same as the NZ and CZ builders).
  */
 export async function buildTWDistrictsDatabase(opts: BuildTWDistrictsOptions = {}): Promise<BuildTWDistrictsResult> {
 	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")

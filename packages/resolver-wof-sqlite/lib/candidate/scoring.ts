@@ -21,6 +21,7 @@ import type { FindPlaceQuery, PlaceCandidate, WOFPlacetype } from "#types"
  * Score one raw FTS row into a `PlaceCandidate`: the weighted sum over the negated BM25
  * baseline, the placetype / country / parent boosts, the length penalty, the proximity
  * and population terms, and the carried fields (referential, encyclopedic, bbox) consumers read.
+ *
  * `queryLen` is the query text's length, hoisted out of the per-row loop.
  */
 export function candidateFromSearchRow(
@@ -57,9 +58,9 @@ export function candidateFromSearchRow(
 	const extraLen = Math.max(0, row.name.length - queryLen - 3)
 	score -= (weights.lengthPenaltyWeight * extraLen) / 10
 
-	// Proximity boost: only applied when the query carries `near` and the candidate has
-	// real coordinates. The formula decays smoothly with distance so close-but-not-exact
-	// hits still benefit. tunable via proximityBoost + proximityScaleKm.
+	// Proximity boost: only applied when the query carries `near` and the candidate has real coordinates.
+	// The formula decays smoothly with distance so close-but-not-exact hits still
+	// benefit. tunable via proximityBoost + proximityScaleKm.
 	let distanceKm: number | undefined
 	// The best decayed-distance term over `near` + every `bias` point
 	// (each point's term is scaled by its weight. the maximum wins — a candidate near any hint is "nearby").
@@ -95,7 +96,8 @@ export function candidateFromSearchRow(
 	}
 
 	// Population boost: capped at `populationBoost` magnitude at `10^populationScaleLog10` people.
-	// Missing population → no contribution. Never penalizes.
+	// Missing population → no contribution.
+	// Never penalizes.
 	const popTerm = populationBoostTerm(row.population, weights)
 	score += popTerm
 
@@ -127,7 +129,8 @@ export function candidateFromSearchRow(
 		candidate.referential = referentialFromPopulation(row.population)
 	}
 
-	// Carried for consumers (annotations / API surfaces). No ranking site reads it.
+	// Carried for consumers (annotations / API surfaces).
+	// No ranking site reads it.
 	if (row.encyclopedic !== null) {
 		candidate.encyclopedic = row.encyclopedic
 	}
@@ -149,8 +152,9 @@ export function candidateFromSearchRow(
 }
 
 /**
- * Order `candidates` IN place — the exact-match tier first when the extract
- * can answer the name probes, otherwise plain weighted-score order.
+ * Order `candidates` IN place — the exact-match tier first when the extract can
+ * answer the name probes, otherwise plain weighted-score order.
+ *
  * Every candidate is stamped with its `exactMatch` flag on the way through.
  */
 export function rankCandidates<DB>(
@@ -166,11 +170,13 @@ export function rankCandidates<DB>(
 
 	// Exact-match tiering: a candidate whose name or any alias equals the query
 	// text (case-folded) ranks above any partial match, with the weighted-sum score
-	// (incl. population) breaking ties within a tier. See the RankingWeights.exactMatchTiering
-	// docstring for why this aligns the population prior rather than overriding it.
-	// One cheap indexed lookup over the candidate ids. Runs even for a single candidate
-	// so `exactMatch` is stamped consistently (parity with the wasm lookup) — a sole alias hit
-	// ("New York City" → New York) must still carry the flag the demo cascade / #369 re-rank read.
+	// (incl. population) breaking ties within a tier.
+	// See the RankingWeights.exactMatchTiering docstring for why this aligns the
+	// population prior rather than overriding it.
+	// One cheap indexed lookup over the candidate ids.
+	// Runs even for a single candidate so `exactMatch` is stamped consistently
+	// (parity with the wasm lookup) — a sole alias hit ("New York City" → New York)
+	// must still carry the flag the demo cascade / #369 re-rank read.
 	if (weights.exactMatchTiering && candidates.length) {
 		const exactIDs = exactMatchIDs(
 			db,
@@ -188,25 +194,27 @@ export function rankCandidates<DB>(
 
 		if (exactIDs.size) {
 			// #905: within the exact tier, population is the primary key and the weighted score
-			// only breaks population ties. Exactness saturates text relevance, and the
-			// bm25 residue inside `score` is length-noise (see the fetch-site comment),
-			// so letting it order the tier is what sent unscoped "Paris" to an Ohio township.
+			// only breaks population ties.
+			// Exactness saturates text relevance, and the bm25 residue inside `score` is
+			// length-noise (see the fetch-site comment), so letting it order the tier is
+			// what sent unscoped "Paris" to an Ohio township.
 			// The partial tier keeps score order — text relevance still means something there.
 			// This makes the exactMatchTiering docstring literal: match quality primary, prominence within.
 			//
 			// #912 sub-tier: a name-exact candidate (spr.name equals the query) outranks an
 			// alias-exact one ('Paris' the place beats 'Paris Township' held via alias 'Paris').
-			// The place's own name is a stronger identity claim than an alias — aliases exist
-			// to widen recall rather than to tie primaries. ME→Maine is untouched:
-			// 'ME' name-exact-matches nothing, so the alias sub-tier still decides there.
+			// The place's own name is a stronger identity claim than an alias —
+			// aliases exist to widen recall rather than to tie primaries.
+			// ME→Maine is untouched: 'ME' name-exact-matches nothing, so the alias sub-tier still decides there.
 			// Population orders within each sub-tier as before.
 			const needle = foldQueryText(query.text)
 
 			// #936 option 3: an official name (preferred form in an official language of the place's
-			// country, `names.official = 1`) counts as the place's own name for the sub-tier — "Åbo" is
-			// Turku's name rather than merely its alias. Floor-conditioned on the holder's population
-			// (see the RankingWeights docstring for the measured 100k boundary). officialIDs ⊆ exactIDs
-			// by construction (official rows are names rows), so only the sub-tier kind changes.
+			// country, `names.official = 1`) counts as the place's own name for the sub-tier —
+			// "Åbo" is Turku's name rather than merely its alias.
+			// Floor-conditioned on the holder's population (see the RankingWeights docstring
+			// for the measured 100k boundary). officialIDs ⊆ exactIDs by construction
+			// (official rows are names rows), so only the sub-tier kind changes.
 			const officialIDs = weights.officialNameExact
 				? officialNameIDs(
 						db,
@@ -227,17 +235,18 @@ export function rankCandidates<DB>(
 			}
 
 			// With proximity hints (near/bias), prominence (population + nearness, same units)
-			// replaces raw population as the within-tier key — the 48026 rule:
-			// the map view or the user's location breaks a cross-country postcode tie.
+			// replaces raw population as the within-tier key — the 48026 rule: the map view
+			// or the user's location breaks a cross-country postcode tie.
 			// Without hints, referential ordering decides.
 			//
-			// ROAD_TO_V9 §2: this is the site that "orders namesakes", so it is the site
-			// that has to say what it orders by. `compareReferential` is referential desc
-			// with raw population as the tiebreak, which is provably the same order as the
-			// `(b.population ?? 0) - (a.population ?? 0)` it replaces — referential is strictly
-			// increasing in population below saturation and constant above it, and the tiebreak
-			// restores the order in the saturated tail. Measured zero-delta rather than assumed:
-			// see `place-importance-schema.test.ts` and `resolver-referential-ranking.test.ts`.
+			// ROAD_TO_V9 §2: this is the site that "orders namesakes", so it is the
+			// site that has to say what it orders by.
+			// `compareReferential` is referential desc with raw population as the tiebreak,
+			// which is provably the same order as the `(b.population ?? 0) - (a.population ?? 0)`
+			// it replaces — referential is strictly increasing in population below saturation
+			// and constant above it, and the tiebreak restores the order in the saturated tail.
+			// Measured zero-delta rather than assumed: see `place-importance-schema.test.ts`
+			// and `resolver-referential-ranking.test.ts`.
 			// Encyclopedic importance is not, and must not become, an input here.
 			const hasHints = !!query.near || (query.bias?.length ?? 0) > 0
 

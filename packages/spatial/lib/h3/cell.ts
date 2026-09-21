@@ -13,7 +13,9 @@ import { cellToParent, isValidCell } from "h3-js"
 import type { Tagged } from "type-fest"
 
 /**
- * The finest resolution H3 defines. Resolutions run `[0, H3_MAX_RESOLUTION]`.
+ * The finest resolution H3 defines.
+ *
+ * Resolutions run `[0, H3_MAX_RESOLUTION]`.
  */
 export const H3_MAX_RESOLUTION = 15
 
@@ -21,8 +23,9 @@ export const H3_MAX_RESOLUTION = 15
  * A H3 cell index, full 64 bits.
  *
  * Written as 15 hex characters because the top nibble of a cell index is always zero:
- * bit 63 is reserved, and the 4-bit mode field that follows is `1` for a cell, which lands
- * entirely inside the second nibble. That is why every cell index printed here begins with `8`.
+ * bit 63 is reserved, and the 4-bit mode field that follows is `1` for a cell,
+ * which lands entirely inside the second nibble.
+ * That is why every cell index printed here begins with `8`.
  *
  * @type {string}
  * @title H3 Cell Index
@@ -36,6 +39,7 @@ export type H3Cell = Tagged<string, "H3Cell">
  * Delegates to h3-js rather than testing the surface shape.
  * The shape is necessary but nowhere near sufficient — `000000000000000`, `fffffffffffffff`
  * and `123456789abcdef` are all fifteen lowercase hex characters and none of them is a cell.
+ *
  * A guard that returns `value is H3Cell` on those hands the caller a branded type it has not earned,
  * and the error surfaces later inside h3-js with no reference to where the bad value entered.
  */
@@ -84,8 +88,8 @@ export function shortenH3Cell(cell: H3Cell): H3CellShort {
 /**
  * Rebuild a full H3 cell index from a short cell captured at `resolution`.
  *
- * The short form drops only the mode and resolution nibbles, so reconstruction is a
- * straight concatenation: `"8"` (cell mode) + the resolution nibble + the 52 bits verbatim.
+ * The short form drops only the mode and resolution nibbles, so reconstruction is a straight
+ * concatenation: `"8"` (cell mode) + the resolution nibble + the 52 bits verbatim.
  * The result is the identical index `latLngToCell` would have produced at that resolution.
  *
  * `resolution` is a required piece of external knowledge — a short cell does not name its own resolution, so the caller
@@ -174,8 +178,9 @@ export function recoverShortCellResolution(cells: readonly number[], context = "
 				expandH3Cell(short, resolution)
 				valid.push(resolution)
 			} catch {
-				// A resolution the short cell does not expand at. Every cell expands at exactly one,
-				// so this is the ordinary case for fifteen of the sixteen probes.
+				// A resolution the short cell does not expand at.
+				// Every cell expands at exactly one, so this is the ordinary case for
+				// fifteen of the sixteen probes.
 			}
 		}
 

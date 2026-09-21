@@ -67,6 +67,7 @@ export interface AgreementRow {
 	serviceInside: boolean
 	/**
 	 * The local code the service reports at the point, where it reports one.
+	 *
 	 * Compared verbatim against the artifact's, because carrying the code verbatim
 	 * is what this layer is for: two paths that agree on containment and disagree
 	 * on the code would be a silent vocabulary defect.
@@ -76,9 +77,10 @@ export interface AgreementRow {
 	/**
 	 * Metres from the point to the nearest edge of any polygon the service returned nearby.
 	 *
-	 * Carried on every row rather than only the tolerated ones, because it is what separates a real
-	 * defect from the two channels rendering the same edge differently — and a receipt that omits
-	 * it forces a re-run. `undefined` means the service returned no polygon at all near the point.
+	 * Carried on every row rather than only the tolerated ones, because it is what
+	 * separates a real defect from the two channels rendering the same edge differently —
+	 * and a receipt that omits it forces a re-run.
+	 * `undefined` means the service returned no polygon at all near the point.
 	 */
 	nearestEdgeMetres?: number
 }
@@ -131,6 +133,7 @@ export const OUTSIDE_PUBLICATION_POINTS: ReadonlyArray<{ label: string; latitude
 
 /**
  * Half-width of the bounding box the service is asked for, in degrees.
+ *
  * About 11 m at this latitude — wide enough that a polygon containing the point is
  * certainly returned, narrow enough that the response stays small.
  */
@@ -140,9 +143,10 @@ const PROBE_HALF_WIDTH_DEGREES = 0.0001
  * How close to a service-polygon edge a disagreement is attributed to the channels'
  * differing coordinate precision rather than to the conversion.
  *
- * Half a metre. The two channels render the same edge from the same source coordinates
- * through different rounding, so a point between the two renderings lands on opposite sides.
- * half a metre is far below any real zoning boundary and far above the rounding difference.
+ * Half a metre.
+ * The two channels render the same edge from the same source coordinates through different
+ * rounding, so a point between the two renderings lands on opposite sides. half a metre
+ * is far below any real zoning boundary and far above the rounding difference.
  */
 const BOUNDARY_TOLERANCE_METRES = 0.5
 
@@ -180,8 +184,9 @@ export interface VerifyZoningOptions {
 	databasePath: string
 	readServiceFeatures: ServiceFeatureReader
 	/**
-	 * Points to re-ask the service about. A caller samples them from the artifact —
-	 * see {@link sampleAgreementPoints}.
+	 * Points to re-ask the service about.
+	 *
+	 * A caller samples them from the artifact — see {@link sampleAgreementPoints}.
 	 */
 	points: ReadonlyArray<{ label: string; latitude: number; longitude: number; localCode?: string }>
 	outsidePoints?: ReadonlyArray<{ label: string; latitude: number; longitude: number }>
@@ -315,10 +320,11 @@ async function readServiceContainment(
  * Draw a reproducible sample of points from the artifact — interior points of
  * stored polygons, spread across authorities.
  *
- * Spread across authorities rather than drawn from one, because 30 local authorities publish
- * 581 distinct local codes between them and a sample from one would verify one authority's
- * conversion while reporting on all of them. The stride discipline — keys chosen before any
- * geometry is read, deterministic rather than random — is `strideSampleInteriorPoints`'s.
+ * Spread across authorities rather than drawn from one, because 30 local authorities
+ * publish 581 distinct local codes between them and a sample from one would verify
+ * one authority's conversion while reporting on all of them.
+ * The stride discipline — keys chosen before any geometry is read, deterministic
+ * rather than random — is `strideSampleInteriorPoints`'s.
  */
 export function sampleAgreementPoints(
 	databasePath: string,

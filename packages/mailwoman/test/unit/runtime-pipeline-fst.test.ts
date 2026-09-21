@@ -19,8 +19,10 @@ import { join, type PathBuilderLike } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 /**
- * Build a minimal but real FST binary (one locality entry, "testville") via the actual
- * builder + serializer — no hand-rolled bytes. Returns the written file path.
+ * Build a minimal but real FST binary (one locality entry, "testville") via the
+ * actual builder + serializer — no hand-rolled bytes.
+ *
+ * Returns the written file path.
  */
 async function writeTinyFST(dir: PathBuilderLike): Promise<string> {
 	const dbPath = join(dir, "tiny-wof.db")

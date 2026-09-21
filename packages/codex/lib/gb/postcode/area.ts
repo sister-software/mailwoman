@@ -30,8 +30,9 @@ import type { UkCountryCode } from "#gb/country"
 const NORTHERN_IRELAND_AREAS = ["BT"] as const
 
 /**
- * Scotland's postcode areas. TD (Galashiels) straddles the border with England
- * and is assigned to Scotland as its majority country.
+ * Scotland's postcode areas.
+ *
+ * TD (Galashiels) straddles the border with England and is assigned to Scotland as its majority country.
  */
 const SCOTLAND_AREAS = [
 	"AB", // Aberdeen
@@ -53,8 +54,9 @@ const SCOTLAND_AREAS = [
 ] as const
 
 /**
- * Wales's postcode areas. SY (Shrewsbury) straddles the border with England
- * and is assigned to Wales as its majority country.
+ * Wales's postcode areas.
+ *
+ * SY (Shrewsbury) straddles the border with England and is assigned to Wales as its majority country.
  */
 const WALES_AREAS = [
 	"CF", // Cardiff
@@ -67,6 +69,7 @@ const WALES_AREAS = [
 
 /**
  * The explicit non-England postcode areas, area → constituent country.
+ *
  * England is intentionally absent: it is the default (the great majority of UK areas are English),
  * so listing it would be both enormous and a maintenance trap.
  * Keeping only the non-England set makes the default transparent — anything not named here is England.
@@ -81,10 +84,12 @@ export const GB_POSTCODE_AREA_COUNTRY: Record<string, UkCountryCode> = {
  * The two postcode areas whose assignment in {@link GB_POSTCODE_AREA_COUNTRY} is a majority call
  * rather than a fact — TD (Galashiels) straddles the Scotland/England border and SY (Shrewsbury)
  * straddles the Wales/England border, and both carry real postcodes on the other side of the line.
- * The header above documents them in prose. this is the same knowledge in a form a build can read,
- * so an artifact that asserts ancestry per postcode district can withhold the constituent
- * country here instead of asserting a coin-flip. Consumers that only want the coarse
- * majority answer keep using {@link countryOfPostcodeArea} and ignore this.
+ *
+ * The header above documents them in prose. this is the same knowledge in a form a build
+ * can read, so an artifact that asserts ancestry per postcode district can withhold
+ * the constituent country here instead of asserting a coin-flip.
+ * Consumers that only want the coarse majority answer keep using
+ * {@link countryOfPostcodeArea} and ignore this.
  */
 export const GB_BORDER_STRADDLING_AREAS: ReadonlySet<string> = new Set(["TD", "SY"])
 
@@ -96,9 +101,10 @@ function isAreaShape(area: unknown): area is string {
 }
 
 /**
- * The constituent country a postcode area belongs to. Returns the explicit country for
- * a known non-England area (e.g. `BT` → `NIR`, `G` → `SCT`, `CF` → `WLS`), and `ENG`
- * as the default for any other validly-shaped area — England is by far the largest,
+ * The constituent country a postcode area belongs to.
+ *
+ * Returns the explicit country for a known non-England area (e.g. `BT` → `NIR`, `G` → `SCT`, `CF` → `WLS`),
+ * and `ENG` as the default for any other validly-shaped area — England is by far the largest,
  * so the default is transparent and the non-England exceptions live in
  * {@link GB_POSTCODE_AREA_COUNTRY}. Returns null for clearly-invalid input (not one-or-two letters), so a malformed
  * token is not silently called England.
@@ -111,6 +117,7 @@ export function countryOfPostcodeArea(area: unknown): UkCountryCode | null {
 
 /**
  * The constituent country a whole postcode resolves to, by extracting its area.
+ *
  * `BT1 1AA` → `NIR`, `EH1 1BB` → `SCT`, `CF10 1AA` → `WLS`, `SW1A 1AA` → `ENG`.
  * Null if the input has no extractable postcode area.
  */

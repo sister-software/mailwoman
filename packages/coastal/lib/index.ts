@@ -91,6 +91,7 @@ export const CoastalReadingKind = {
 	Designated: "designated",
 	/**
 	 * No erosion polygon of that scenario contains the point.
+	 *
 	 * Never an absence reading — see this file's header.
 	 */
 	Unknown: "unknown",
@@ -131,6 +132,7 @@ export interface CoastalDesignation {
 	shorelineManagementPlan?: { number: number; name: string; policyUnit: string }
 	/**
 	 * The medium- and long-term policy and its interpretation, where the scenario carries one.
+	 *
 	 * Absent on the NFI scenarios, where the source publishes none because no intervention is assumed.
 	 */
 	policy?: {
@@ -141,8 +143,10 @@ export interface CoastalDesignation {
 	}
 	defenceType?: string
 	/**
-	 * 2024, or 0 on the 87 rows the authority publishes with blank policy and defence fields
-	 * and documents no meaning for. Carried rather than coerced.
+	 * 2024, or 0 on the 87 rows the authority publishes with blank policy
+	 * and defence fields and documents no meaning for.
+	 *
+	 * Carried rather than coerced.
 	 */
 	publishedYear?: number
 	/**
@@ -157,14 +161,18 @@ export interface CoastalDesignation {
 export interface CoastalErosionReading {
 	kind: CoastalReadingKind
 	/**
-	 * The scenario this reading answered under. Present on every reading, including `unknown`:
-	 * an answer whose scenario a reader cannot see is an answer to an unknown question.
+	 * The scenario this reading answered under.
+	 *
+	 * Present on every reading, including `unknown`: an answer whose scenario a
+	 * reader cannot see is an answer to an unknown question.
 	 */
 	scenario: CoastalScenario
 	/**
 	 * Every polygon of that scenario containing the point, ordered by `area_id`.
-	 * Usually one. several where the authority's own frontages overlap, which its `maxoverlap` column records
-	 * on about half the rows of a measured layer. Empty on `unknown`.
+	 *
+	 * Usually one. several where the authority's own frontages overlap, which its
+	 * `maxoverlap` column records on about half the rows of a measured layer.
+	 * Empty on `unknown`.
 	 */
 	designations: CoastalDesignation[]
 	/**
@@ -192,7 +200,9 @@ export interface CoastalErosionReading {
 }
 
 /**
- * One ground-instability polygon containing a point. A different hazard, answered by its own method.
+ * One ground-instability polygon containing a point.
+ *
+ * A different hazard, answered by its own method.
  */
 export interface CoastalGroundInstabilityReading {
 	areaID: string
@@ -294,10 +304,11 @@ export class CoastalErosionLookup implements Disposable {
 			"SELECT area_id, containment FROM coastal_zone_cell WHERE h3_cell = ? AND scenario_key = ?"
 		)
 
-		// two statements, and the split is the point. The attributes and the bbox are read without
-		// the blob, because the bbox is the ray cast's prefilter: pulling hundreds of thousands
-		// of vertices off disk only to reject the polygon on a rectangle would make the prefilter
-		// cost more than the test it replaces. A `whole` cell never reads the blob at all.
+		// two statements, and the split is the point.
+		// The attributes and the bbox are read without the blob, because the bbox is the ray
+		// cast's prefilter: pulling hundreds of thousands of vertices off disk only to reject the
+		// polygon on a rectangle would make the prefilter cost more than the test it replaces.
+		// A `whole` cell never reads the blob at all.
 		this.#selectArea = this.#database.prepare(
 			"SELECT area_id, frontage_id, distance_m, smp_no, smp_name, smp_pu, mt_policy, mt_policy_interp, lt_policy, " +
 				"lt_policy_interp, defence_type, published_year, min_lat, min_lon, max_lat, max_lon " +
@@ -310,8 +321,8 @@ export class CoastalErosionLookup implements Disposable {
 			"SELECT h3_cell, completeness, basis, observed_rows FROM layer_coverage WHERE h3_cell = ?"
 		)
 
-		// 160 rows, so the bounding-box prefilter is a table scan and that is the cheapest
-		// correct thing. The blob is read separately for the same reason as above.
+		// 160 rows, so the bounding-box prefilter is a table scan and that is the cheapest correct thing.
+		// The blob is read separately for the same reason as above.
 		this.#selectInstability = this.#database.prepare(
 			"SELECT area_id, kind, location, local_authority, smp_no, smp_name, smp_policy_units, rear_scarp_probability " +
 				"FROM coastal_ground_instability WHERE ? BETWEEN min_lon AND max_lon AND ? BETWEEN min_lat AND max_lat " +

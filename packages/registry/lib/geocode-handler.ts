@@ -13,8 +13,10 @@ import type { SourceRecord } from "#types"
 /**
  * Build the handler `geocodeStream` runs per normalized record: recompute the joined address
  * string from `record.raw` + `mapping.address` (the worker can't receive the original closure),
- * geocode it via `geocode`, and attach the result. Records with no mapped address pass
- * through untouched (no geocode call). The default separator matches
+ * geocode it via `geocode`, and attach the result.
+ *
+ * Records with no mapped address pass through untouched (no geocode call).
+ * The default separator matches
  * {@link ingestRow}'s `addressSeparator`.
  */
 export function makeGeocodeHandler(

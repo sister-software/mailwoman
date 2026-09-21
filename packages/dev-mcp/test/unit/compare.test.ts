@@ -22,6 +22,7 @@ import { stubEngine, stubEngineRegistry } from "../stub-registry.ts"
 
 /**
  * Every comparison writes its answers to the run store.
+ *
  * Redirected here so a test run never touches the operator's store under `$MAILWOMAN_DATA_ROOT`,
  * and so the retention sweep each write triggers has nothing real to prune.
  */
@@ -56,9 +57,10 @@ function registryAt(point: { lat: number | null; lon: number | null }): EngineRe
 					resolution_tier: point.lat === null ? "none" : "admin",
 					locality: "stub",
 					region: null,
-					// Required on `GeocodeResult`, and the mailwoman arm reads its answer through the
-					// gauntlet projection — which walks it. A double missing it throws inside the arm,
-					// and every row then scores as a query failure, which reads as an arm that lost.
+					// Required on `GeocodeResult`, and the mailwoman arm reads its answer
+					// through the gauntlet projection — which walks it.
+					// A double missing it throws inside the arm, and every row then scores as
+					// a query failure, which reads as an arm that lost.
 					// A stated identity, so the tri-state pin below checks the one-sided comparison: the
 					// mailwoman arm carries place_ids and the external arm cannot — incomparable, never "same".
 					hierarchy: [{ tag: "locality", value: "stub", name: "stub", placeID: "wof:101" }],
@@ -206,9 +208,10 @@ describe("mwdev_compare — external arm", () => {
 	})
 
 	it('keeps identity tri-state: an external arm states none, so rows are incomparable — never "same"', async () => {
-		// The diverged coordinates guarantee rows land in rows_changed, so the absence assertion below
-		// inspects real rows rather than an empty list. The stub mailwoman arm states place_ids
-		// (registryAt's hierarchy carries wof:101); Pelias structurally cannot.
+		// The diverged coordinates guarantee rows land in rows_changed, so the absence
+		// assertion below inspects real rows rather than an empty list.
+		// The stub mailwoman arm states place_ids (registryAt's hierarchy carries wof:101);
+		// Pelias structurally cannot.
 		const result = await comparison(registryAt(ANDORRA_LA_VELLA), [
 			{ body: peliasBody(LES_ESCALDES) },
 			{ body: peliasBody(ANDORRA_LA_VELLA) },

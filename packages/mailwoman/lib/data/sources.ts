@@ -30,10 +30,11 @@ import { readReleaseManifest } from "#data/release"
 /**
  * The two shapes a bundle's artifacts carry a publisher stamp in, as one schema.
  *
- * It names both tables `BundleSourceCensus.table` can hold rather than describing one artifact,
- * so the table a record names is a member of `keyof CensusSchema` and Kysely checks the query
- * without a cast. Only the stamp column is declared on each: this reader selects that column
- * and a count, and a column it never reads would be a claim about a schema nobody checks.
+ * It names both tables `BundleSourceCensus.table` can hold rather than describing
+ * one artifact, so the table a record names is a member of `keyof CensusSchema`
+ * and Kysely checks the query without a cast.
+ * Only the stamp column is declared on each: this reader selects that column and a count,
+ * and a column it never reads would be a claim about a schema nobody checks.
  *
  * An artifact shape added to the union in `BundleSourceCensus` is a compile error here
  * until it is added here too, which is the point of the union.
@@ -63,21 +64,25 @@ export interface BundleSourceCensusResult {
 	status: "censused" | "none-recorded-in-the-artifacts" | "nothing-on-disk"
 	/**
 	 * Artifacts read, and artifacts the data root does not hold.
+	 *
 	 * A census over part of a bundle is reported as partial rather than presented as the bundle's composition.
 	 */
 	artifactsRead: number
 	artifactsAbsent: number
 	/**
-	 * Artifacts the census's declared family excludes. They are outside what this census covers
-	 * rather than missing from it, so they neither reduce the share denominator nor read as a failure.
+	 * Artifacts the census's declared family excludes.
+	 *
+	 * They are outside what this census covers rather than missing from it,
+	 * so they neither reduce the share denominator nor read as a failure.
 	 */
 	artifactsOutOfScope: number
 	tallies: SourceTally[]
 	totalRows: number
 	/**
-	 * What could not be read, one message per artifact. An artifact present
-	 * but unreadable is named here rather than being counted as absent, since the two
-	 * mean different things to somebody checking a download.
+	 * What could not be read, one message per artifact.
+	 *
+	 * An artifact present but unreadable is named here rather than being counted as absent,
+	 * since the two mean different things to somebody checking a download.
 	 */
 	problems: string[]
 }

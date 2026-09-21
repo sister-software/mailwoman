@@ -22,7 +22,8 @@ describe("blendImportance", () => {
 	})
 
 	it("caps an article-floor score below a population-attested rival: Tó PT vs Tô BF", () => {
-		// Tó PT: pop 136, its article scores 0.3375. Tô BF: pop 16,026, no article, blend 0.2921.
+		// Tó PT: pop 136, its article scores 0.3375.
+		// Tô BF: pop 16,026, no article, blend 0.2921.
 		const toPT = blendImportance(0.0131, 0.3375)
 		const toBF = blendImportance(0.2921, null)
 
@@ -31,7 +32,8 @@ describe("blendImportance", () => {
 	})
 
 	it("keeps the ratified Whitby GB flip over the larger Whitby CA", () => {
-		// Whitby GB: pop 13,130, encyclopedic 0.5496. Whitby CA: pop 128,377, encyclopedic 0.4809.
+		// Whitby GB: pop 13,130, encyclopedic 0.5496.
+		// Whitby CA: pop 128,377, encyclopedic 0.4809.
 		const whitbyGB = blendImportance(0.2729, 0.5496)
 		const whitbyCA = blendImportance(0.5011, 0.4809)
 

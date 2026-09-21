@@ -55,15 +55,21 @@ export interface CoverageReconciliationOptions {
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
-	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * Record-matcher sources directory.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
 	 */
 	sources?: string
 	/**
-	 * Rows kept per source. Default 2000.
+	 * Rows kept per source.
+	 *
+	 * Default 2000.
 	 */
 	cap?: number
 	/**
-	 * State filter. Default TX.
+	 * State filter.
+	 *
+	 * Default TX.
 	 */
 	state?: string
 	/**

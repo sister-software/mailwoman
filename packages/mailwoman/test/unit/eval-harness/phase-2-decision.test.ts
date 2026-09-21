@@ -56,6 +56,7 @@ const freeze = await readLocalJSONFile<Phase2FreezeRecord>(PHASE2_FREEZE_PATH)
 
 /**
  * The committed receipt's shape, narrowed to what this suite reads.
+ *
  * Typing it here rather than importing the runner's `Phase2Receipt` keeps the pure
  * suite free of the module that loads a pipeline.
  */

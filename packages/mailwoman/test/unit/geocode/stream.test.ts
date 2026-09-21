@@ -14,6 +14,7 @@ const fakeWorker = workspacePath("mailwoman", "lib", "test-fixtures", "fake-geoc
 /**
  * What `fake-geocode-worker.js` writes into the `address` slot instead of a geocode:
  * the config locale it was handed and the number of mapped address columns.
+ *
  * Reading it back is how the wiring becomes observable without a model.
  */
 interface WiringEcho {
@@ -21,8 +22,9 @@ interface WiringEcho {
 	cols: number
 }
 
-// The fake worker smuggles the echo through the `address` slot, so the value genuinely is not a
-// `PostalAddress`. Read the slot as what it is on this wire — unknown JSON — and assert once from there.
+// The fake worker smuggles the echo through the `address` slot, so the value
+// genuinely is not a `PostalAddress`.
+// Read the slot as what it is on this wire — unknown JSON — and assert once from there.
 const echoOf = (record: SourceRecord): WiringEcho => (record as { address?: unknown }).address as WiringEcho
 
 async function* records(n: number): AsyncIterableIterator<SourceRecord> {

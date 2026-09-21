@@ -16,10 +16,12 @@ import type { PlacetypeID } from "#fst/types"
  * (mirrors `REQUIRED_PAIR_INDEX_SCHEMA`'s role for PIX1 — see `fst-freshness.ts`).
  *
  * One constant for the writer and both readers, deliberately.
- * The browser reader's acceptance criterion was a separate `MAX_VERSION` number from the
- * layout branches, and it drifted twice: left stale at 2 when the v4 wide-state layout shipped
- * (rejecting every real artifact), and stale again at 4 through the v5 two-score split
- * until the line moved by hand. A check that is the writer's version cannot drift from it.
+ * The browser reader's acceptance criterion was a separate `MAX_VERSION` number from
+ * the layout branches, and it drifted twice: left stale at 2 when the v4 wide-state
+ * layout shipped (rejecting every real artifact), and stale again at 4 through
+ * the v5 two-score split until the line moved by hand.
+ *
+ * A check that is the writer's version cannot drift from it.
  */
 export const FST_FORMAT_VERSION = 5
 
@@ -34,8 +36,10 @@ export const HEADER_SIZE = 32
 export const EDGE_ENTRY_SIZE = 8
 
 /**
- * Format version that widened the per-state edge and place counters from 16 to 32 bits, growing the
- * state entry from 12 to 16 bytes. Readers branch on it to stay backward-compatible with v2/v3 files.
+ * Format version that widened the per-state edge and place counters from 16 to 32 bits,
+ * growing the state entry from 12 to 16 bytes.
+ *
+ * Readers branch on it to stay backward-compatible with v2/v3 files.
  */
 export const VERSION_WIDE_STATE_COUNTERS = 4
 
@@ -80,6 +84,7 @@ export const ENCYCLOPEDIC_OFFSET = 56
 
 /**
  * `placeFlags` bit 0 (byte `pp+7`, v5+): this place carries an encyclopedic score.
+ *
  * Per-place rather than per-file because absence is the common case — roughly 89% of
  * the 2026-08-05 gazetteer has no Wikipedia article — and a file-level flag would
  * force every one of those rows to claim a 0 it never had.
@@ -87,14 +92,17 @@ export const ENCYCLOPEDIC_OFFSET = 56
 export const PLACE_FLAG_HAS_ENCYCLOPEDIC = 1
 
 /**
- * File magic, "FST\0" as bytes. A reader rejects anything not starting with
- * these four bytes before parsing further.
+ * File magic, "FST\0" as bytes.
+ *
+ * A reader rejects anything not starting with these four bytes before parsing further.
  */
 export const FST_MAGIC_BYTES: readonly number[] = [0x46, 0x53, 0x54, 0x00]
 
 /**
- * Placetypes in hierarchy order, largest first. The index into this array is what
- * gets written into a place entry, so Reordering it invalidates every existing file.
+ * Placetypes in hierarchy order, largest first.
+ *
+ * The index into this array is what gets written into a place entry,
+ * so Reordering it invalidates every existing file.
  * Append instead, and bump the version.
  */
 export const PLACETYPE_ORDER: readonly PlacetypeID[] = [

@@ -37,8 +37,9 @@ const DEFAULT_PROGRESS_STRIDE_BYTES = 16 * 1024 * 1024
 export interface StreamToDiskOptions {
 	url: string
 	/**
-	 * Where the finished file lands. The transfer writes to `${destination}.part`
-	 * and renames on a clean finish.
+	 * Where the finished file lands.
+	 *
+	 * The transfer writes to `${destination}.part` and renames on a clean finish.
 	 */
 	destination: PathBuilderLike
 	/**
@@ -52,8 +53,10 @@ export interface StreamToDiskOptions {
 	headers?: Record<string, string>
 	onProgress?: (message: string) => void
 	/**
-	 * Bytes between progress reports. Scale it to the transfer: the default suits a
-	 * several-hundred-megabyte archive, and leaves a 13 MB one reporting once.
+	 * Bytes between progress reports.
+	 *
+	 * Scale it to the transfer: the default suits a several-hundred-megabyte archive,
+	 * and leaves a 13 MB one reporting once.
 	 */
 	progressStrideBytes?: number
 	/**
@@ -61,8 +64,9 @@ export interface StreamToDiskOptions {
 	 *
 	 * A status code is a poor diagnosis on a host that reuses one.
 	 * The soil download service answers 400 rather than 404 for a version date it does not hold,
-	 * so the bare status sends a reader looking for a malformed request instead of a stale
-	 * catalogue date. Return `undefined` for a status the caller has nothing to add about.
+	 * so the bare status sends a reader looking for a malformed request instead of a stale catalogue date.
+	 *
+	 * Return `undefined` for a status the caller has nothing to add about.
 	 */
 	describeStatus?: (status: number) => string | undefined
 }

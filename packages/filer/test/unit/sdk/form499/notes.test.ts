@@ -105,8 +105,9 @@ describe("parseForm499Notes — never infers", () => {
 	})
 
 	it("treats a corrected `account` spelling as unrecognized rather than absorbing the change silently", () => {
-		// The source's typo is `accout`. A vintage that fixes it must surface as a rising
-		// unrecognized count, which is how anyone would ever notice the template changed.
+		// The source's typo is `accout`.
+		// A vintage that fixes it must surface as a rising unrecognized count,
+		// which is how anyone would ever notice the template changed.
 		const lifecycle = parseForm499Notes([
 			"This legal entity account has been closed because their Form 499 filing is now submitted on a consolidated basis.",
 		])
@@ -149,7 +150,8 @@ describe("isCeasedFiler", () => {
 	})
 
 	it("is FALSE for a company that still exists but left telecom", () => {
-		// 2,981 rows say this. Reading it as "gone" would erase a live company that can still be a parent.
+		// 2,981 rows say this.
+		// Reading it as "gone" would erase a live company that can still be a parent.
 		expect(
 			isCeasedFiler(
 				parseForm499Notes(["This company still exists, however it is no longer providing telecommunications services."])

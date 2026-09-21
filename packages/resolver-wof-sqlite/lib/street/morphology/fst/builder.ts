@@ -33,9 +33,11 @@ import { FSTMatcher, normalizeTokens } from "#fst/matcher"
 import type { FSTProvenance, PlaceEntry } from "#fst/types"
 
 /**
- * Reserved synthetic wofID base for street-morphology entries. 32-bit unsigned, well above any
- * realistic WOF allocation. Reusing the same base across rebuilds keeps IDs stable for any consumer
- * that caches them. See [[project-schema-storage-decision]] for the reserved range policy.
+ * Reserved synthetic wofID base for street-morphology entries. 32-bit unsigned,
+ * well above any realistic WOF allocation.
+ *
+ * Reusing the same base across rebuilds keeps IDs stable for any consumer that caches them.
+ * See [[project-schema-storage-decision]] for the reserved range policy.
  */
 const STREET_AFFIX_WOFID_BASE = 1_900_000_000
 
@@ -48,19 +50,23 @@ export interface BuildStreetMorphologyFSTOpts {
 	dictionariesDir: string
 	/**
 	 * Optional locale filter — only ingest these locale subfolders.
+	 *
 	 * Defaults to all that have a `street_types.txt`.
 	 */
 	locales?: string[]
 	/**
-	 * Minimum length (in characters, post-normalization) of variant surface forms
-	 * to insert into the trie. Defaults to 3.
+	 * Minimum length (in characters, post-normalization) of variant surface forms to insert into the trie.
 	 *
-	 * Rationale: libpostal's street_types dictionaries contain 1-2 character abbreviations
-	 * (`a`, `b`, `av`, `bd`, `br`, ...) that collide with non-affix tokens at parse time —
-	 * notably US state abbreviations (`or`, `CA`, `ND`, `NY`), single-letter unit designators,
-	 * and arbitrary short tokens. Empirically these collisions push the morphology prior
-	 * to mis-tag state abbreviations as `street_suffix`. A minimum length of 3 retains
-	 * useful forms (`ave`, `blvd`, `rue`, `str`) while filtering out the noise.
+	 * Defaults to 3.
+	 *
+	 * Rationale: libpostal's street_types dictionaries contain 1-2 character
+	 * abbreviations (`a`, `b`, `av`, `bd`, `br`, ...) that collide with non-affix
+	 * tokens at parse time — notably US state abbreviations (`or`, `CA`, `ND`, `NY`),
+	 * single-letter unit designators, and arbitrary short tokens.
+	 * Empirically these collisions push the morphology prior to mis-tag state
+	 * abbreviations as `street_suffix`.
+	 *
+	 * A minimum length of 3 retains useful forms (`ave`, `blvd`, `rue`, `str`) while filtering out the noise.
 	 */
 	minVariantLength?: number
 	/**
@@ -80,6 +86,7 @@ export interface BuildStreetMorphologyFSTResult {
 
 /**
  * Parse one `street_types.txt` line into `{ canonical, variants }`.
+ *
  * Canonical is the first token (pre-`|`); variants are all whitespace-stripped
  * non-empty tokens including the canonical.
  *
@@ -168,7 +175,8 @@ export async function buildStreetMorphologyFST(
 
 	progress("collect", `Collected ${canonicalToVariants.size} canonical affixes`)
 
-	// Assign stable synthetic wofIDs. Sort canonicals for determinism.
+	// Assign stable synthetic wofIDs.
+	// Sort canonicals for determinism.
 	const sortedCanonicals = [...canonicalToVariants.keys()].toSorted()
 	const canonicalToWOFID = new Map<string, number>()
 
@@ -176,8 +184,9 @@ export async function buildStreetMorphologyFST(
 		canonicalToWOFID.set(sortedCanonicals[i]!, STREET_AFFIX_WOFID_BASE + i)
 	}
 
-	// Build the trie. Each variant is inserted as a token sequence pointing to its canonical's
-	// PlaceEntry — so all variants of "avenue" (av/ave/aven/...) lead to the same terminal entry.
+	// Build the trie.
+	// Each variant is inserted as a token sequence pointing to its canonical's PlaceEntry —
+	// so all variants of "avenue" (av/ave/aven/...) lead to the same terminal entry.
 	const nodes: FSTNode[] = [{ edges: new Map(), places: [] }]
 
 	function insertName(tokens: string[], entry: PlaceEntry): void {
@@ -216,11 +225,12 @@ export async function buildStreetMorphologyFST(
 			placetype: "street_affix",
 			name: canonical,
 			parentChain: [],
-			// Fixed referential score: street affixes are structurally
-			// unambiguous (Avenue is almost never anything but street-typing).
-			// The morphology prior caps bias separately. this value just feeds the cap formula
-			// `referential * cap`. No encyclopedic field — a street affix is not a place
-			// and has no article. absence here is the correct statement.
+			// Fixed referential score: street affixes are structurally unambiguous
+			// (Avenue is almost never anything but street-typing).
+			// The morphology prior caps bias separately. this value just feeds the
+			// cap formula `referential * cap`.
+			// No encyclopedic field — a street affix is not a place and has no article.
+			// absence here is the correct statement.
 			referential: 1,
 			lat: 0,
 			lon: 0,

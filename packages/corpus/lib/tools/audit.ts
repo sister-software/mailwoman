@@ -27,6 +27,7 @@ const DOMINANT_SOURCE_SHARE = 0.4
 
 /**
  * How far the leading source may outweigh the runner-up before the mix is flagged.
+ *
  * Catches the case where no single source clears {@link DOMINANT_SOURCE_SHARE}
  * but the distribution is still lopsided.
  */
@@ -40,6 +41,7 @@ export interface AuditOpts {
 	configPath?: string
 	/**
 	 * Sample at most N parquet files per split when counting sources.
+	 *
 	 * Default 100 for speed. bump to read the full set on a slow run.
 	 * The first row of each file determines its source — corpus-v0.2.0+ files are 100%
 	 * source-segregated, so a one-row read is authoritative.
@@ -68,6 +70,7 @@ interface ParsedConfig {
 
 /**
  * Try parsing a training YAML's source_weights as a minimal regex-based extract.
+ *
  * We don't pull in a YAML lib for this script — the syntax is so small that a regex
  * over the source_weights block is sufficient + keeps the script dep-free.
  */
@@ -130,9 +133,9 @@ async function scanParquetFiles(corpusDir: PathBuilderLike, sampleCount: number)
 		const splitMap: Record<string, number> = {}
 
 		// We can't read parquet without a dep, so we infer source from filenames where possible.
-		// The corpus build typically writes deterministically by source — fall back to "<unknown>"
-		// when filename gives no hint. For accurate per-source counts on real corpora,
-		// the manifest.json route below is preferred.
+		// The corpus build typically writes deterministically by source —
+		// fall back to "<unknown>" when filename gives no hint.
+		// For accurate per-source counts on real corpora, the manifest.json route below is preferred.
 		for (const f of sampled) {
 			const inferred = inferSourceFromFilename(f)
 			splitMap[inferred] = (splitMap[inferred] ?? 0) + 1
@@ -155,7 +158,8 @@ async function scanParquetFiles(corpusDir: PathBuilderLike, sampleCount: number)
 function inferSourceFromFilename(filename: string): string {
 	// Many corpus builds write part-<source>-<n>.parquet or part-<n>.parquet.
 	// The latter (current build at corpus-v0.3.0) gives no source signal in the filename —
-	// see manifestScan() for the authoritative path. Return "<unknown>" so the caller flags this case.
+	// see manifestScan() for the authoritative path.
+	// Return "<unknown>" so the caller flags this case.
 	const m = basename(filename).match(/part-([\w-]+)-\d+\.parquet$/)
 
 	if (m && m[1] !== undefined) return m[1]
@@ -164,11 +168,14 @@ function inferSourceFromFilename(filename: string): string {
 }
 
 /**
- * Known source name prefixes. Corpus-v0.3.0 uses these as `source_id` prefixes. matching against
- * the longest prefix that fits a given `first_source_id` recovers the canonical source name.
+ * Known source name prefixes.
  *
- * Order matters: longer prefixes must be tried first so `usgov-nad-...` matches `usgov-nad`
- * rather than `usgov`. Sorted descending by length at use site.
+ * Corpus-v0.3.0 uses these as `source_id` prefixes. matching against the longest prefix
+ * that fits a given `first_source_id` recovers the canonical source name.
+ *
+ * Order matters: longer prefixes must be tried first so `usgov-nad-...` matches
+ * `usgov-nad` rather than `usgov`.
+ * Sorted descending by length at use site.
  */
 const KNOWN_SOURCE_PREFIXES: ReadonlyArray<string> = [
 	"wof-admin",
@@ -207,13 +214,17 @@ function sourceFromID(sourceID: string, knownPrefixes: readonly string[]): strin
 }
 
 /**
- * Prefer reading manifest.json when present — uses each file's `first_source_id` + prefix
- * matching to recover the source name. Falls back to scanParquetFiles when manifest is absent.
+ * Prefer reading manifest.json when present — uses each file's `first_source_id` +
+ * prefix matching to recover the source name.
+ *
+ * Falls back to scanParquetFiles when manifest is absent.
  *
  * Note: corpus-v0.3.0 files can mix sources (see `last_source_id` differing from `first_source_id`).
- * The first-row source is an approximation. reading the parquet's full source column would be
- * authoritative but requires a parquet dep. For audit purposes the first-row approximation
- * is accurate within ~5% for the corpus-v0.3.0 shape (most files are >95% one source).
+ * The first-row source is an approximation. reading the parquet's full source column
+ * would be authoritative but requires a parquet dep.
+ *
+ * For audit purposes the first-row approximation is accurate within ~5% for the
+ * corpus-v0.3.0 shape (most files are >95% one source).
  */
 async function manifestScan(
 	corpusDir: PathBuilderLike,
@@ -283,9 +294,10 @@ function buildAuditRows(stats: Record<string, number>, weights: Record<string, n
 	}
 
 	// Flag the dominator: empirically calibrated against the v0.3.0 → v0.4.0 retrospective.
-	// v0.3.0 had usgov-nad at 52% effective sample (1.9× ban); the resulting label-space dilution
-	// was responsible for the coarse-F1 regression. So flag a source as "concentration warning"
-	// when it's above 40% effective sample or more than 1.5× the next-highest.
+	// v0.3.0 had usgov-nad at 52% effective sample (1.9× ban); the resulting label-space
+	// dilution was responsible for the coarse-F1 regression.
+	// So flag a source as "concentration warning" when it's above 40% effective sample
+	// or more than 1.5× the next-highest.
 	const numeric = rows.filter((r) => typeof r.effectiveSamplePct === "number") as Array<
 		AuditRow & { effectiveSamplePct: number }
 	>

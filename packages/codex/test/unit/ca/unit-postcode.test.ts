@@ -37,7 +37,8 @@ describe("CA urban LDU", () => {
 	it("promotes only on an EXACT hit, never on a coarsened one", () => {
 		expect(isUnitGradePostcodeHit("M1J 1A8", "m1j1a8")).toBe(true)
 		expect(isUnitGradePostcodeHit("M1J 1A8", "M1J1A8")).toBe(true)
-		// The resolver answered with the FSA. Area-class, and promoting it is the trade the epoch convention forbids.
+		// The resolver answered with the FSA.
+		// Area-class, and promoting it is the trade the epoch convention forbids.
 		expect(isUnitGradePostcodeHit("M1J 1A8", "m1j")).toBe(false)
 		expect(isUnitGradePostcodeHit("M1J 1A8", undefined)).toBe(false)
 	})

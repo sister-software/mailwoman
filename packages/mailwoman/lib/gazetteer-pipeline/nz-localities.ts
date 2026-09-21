@@ -42,14 +42,16 @@ import { CSVSpliterator } from "spliterator"
 
 /**
  * Minimum address points a (city, district) group needs before it warrants a database row.
+ *
  * Below this the "centroid" is a handful of rural delivery points and the name is as likely a farm
  * check as a locality. 5 keeps 3,000-odd real localities and drops the tail of one-off strings.
  */
 const MIN_GROUP_POINTS = 5
 
 /**
- * NZ geographic sanity envelope, WGS-84 — generous around the mainland plus the
- * Chathams (~-44, -176.5) and the subantarctic islands (Campbell Island ~-52.5).
+ * NZ geographic sanity envelope, WGS-84 — generous around the mainland plus the Chathams
+ * (~-44, -176.5) and the subantarctic islands (Campbell Island ~-52.5).
+ *
  * A point outside it is source noise (a wrong-hemisphere or null-island row), not a New Zealand address.
  */
 const NZ_LAT_MIN = -53
@@ -60,11 +62,14 @@ const NZ_LON_MAX = 180
 export interface BuildNZLocalitiesOptions {
 	/**
 	 * The linz-derived OpenAddresses NZ countrywide CSV.
+	 *
 	 * Default `<data-root>/openaddresses/extracted/nz/countrywide.csv`.
 	 */
 	csvPath?: PathBuilderLike
 	/**
-	 * Output database. Default `<data-root>/wof/localities-nz-linz.db`.
+	 * Output database.
+	 *
+	 * Default `<data-root>/wof/localities-nz-linz.db`.
 	 */
 	out?: PathBuilderLike
 }
@@ -95,8 +100,10 @@ function percentileSorted(sorted: readonly number[], p: number): number {
 }
 
 /**
- * Build the sealed NZ locality database. Not re-exported from a barrel — the command
- * lazy-imports it (optional-peer discipline, same as the NL PC6 builder).
+ * Build the sealed NZ locality database.
+ *
+ * Not re-exported from a barrel — the command lazy-imports it
+ * (optional-peer discipline, same as the NL PC6 builder).
  */
 export async function buildNZLocalitiesDatabase(
 	opts: BuildNZLocalitiesOptions = {}

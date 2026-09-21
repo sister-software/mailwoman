@@ -82,10 +82,11 @@ export const GZT_ATTRIBUTION =
  * `noassertion` is the honest value and IT is not A placeholder.
  * Three published statements disagree about the grant — see {@link GZT_LICENSE_CONTRADICTION} —
  * and the manifest column is a string a consumer reads as the terms it may rely on.
- * Writing `CC-BY-4.0` there while an all-rights-reserved clause names a licensor would
- * be this program asserting a grant nobody made. leaving the column empty would read
- * as a layer whose licence nobody looked at. `noassertion` is spdx's own token for a
- * determination that has not been made, which is exactly the state.
+ *
+ * Writing `CC-BY-4.0` there while an all-rights-reserved clause names a licensor
+ * would be this program asserting a grant nobody made. leaving the column empty
+ * would read as a layer whose licence nobody looked at.
+ * `noassertion` is spdx's own token for a determination that has not been made, which is exactly the state.
  *
  * {@linkcode assertTierMatchesLicense} refuses a `shipped` build while this holds, so moving the tier takes a
  * deliberate edit at a guard that names the reason rather than a manifest field nobody notices.
@@ -105,6 +106,7 @@ export const GZT_LICENSE_CONTRADICTION =
 
 /**
  * The projected CRS the service and its bulk export both declare.
+ *
  * The source is not in WGS84 — it is IRENET95 / Irish Transverse Mercator, in metres —
  * so the ingest reprojects and refuses a source declaring anything else.
  */
@@ -136,10 +138,10 @@ export const GZT_CROSSWALK_SCHEME = "IE-GZT"
 /**
  * The Department's second, coarser national code (`SZO`, Standardised Zoning Objective).
  *
- * Carried as published rather than derived. Measured over the whole national set it is a
- * strict coarsening of the generic type — no generic type maps to more than one `SZO` —
- * but the roll-up is the Department's to change, so re-deriving it here would
- * replace a published fact with this package's arithmetic.
+ * Carried as published rather than derived.
+ * Measured over the whole national set it is a strict coarsening of the generic type —
+ * no generic type maps to more than one `SZO` — but the roll-up is the Department's to change,
+ * so re-deriving it here would replace a published fact with this package's arithmetic.
  */
 export const GZT_ROLLUP_SCHEME = "IE-SZO"
 
@@ -169,9 +171,10 @@ export interface ZoningTermDefinition {
  * The Department's declared generic-type domain, verbatim from the service's
  * own `GZT Code` coded-value domain.
  *
- * Fifty-four declared against fifty-five used. `N/A` appears on 4 of 85,330 rows and in no
- * domain, so the ingest records it as observed-but-undeclared rather than adding it here —
- * a declaration this package wrote would be indistinguishable from one the Department made.
+ * Fifty-four declared against fifty-five used.
+ * `N/A` appears on 4 of 85,330 rows and in no domain, so the ingest records it as
+ * observed-but-undeclared rather than adding it here — a declaration this package
+ * wrote would be indistinguishable from one the Department made.
  */
 export const GZT_DECLARED_CODES: ReadonlyArray<ZoningTermDefinition> = [
 	{ code: "P1", label: "Agriculture" },
@@ -236,9 +239,10 @@ export const GZT_DECLARED_CODES: ReadonlyArray<ZoningTermDefinition> = [
 export const GZT_DECLARED_CODE_SET: ReadonlySet<string> = new Set(GZT_DECLARED_CODES.map((term) => term.code))
 
 /**
- * The `PLAN_LEVEL` domain, verbatim. `SDZ` is declared and used on no row of the
- * current edition. it is carried anyway, because the domain is the Department's
- * statement of what a plan may be rather than a census of what it is.
+ * The `PLAN_LEVEL` domain, verbatim.
+ *
+ * `SDZ` is declared and used on no row of the current edition. it is carried anyway, because the
+ * domain is the Department's statement of what a plan may be rather than a census of what it is.
  */
 export const GZT_PLAN_LEVELS: ReadonlyArray<ZoningTermDefinition> = [
 	{ code: "DP", label: "Development Plan" },
@@ -287,16 +291,17 @@ export const ProvenanceGrade = {
 export type ProvenanceGrade = (typeof ProvenanceGrade)[keyof typeof ProvenanceGrade]
 
 /**
- * The grade every row of this artifact carries. A government department
- * republishing local authorities' adopted plans.
+ * The grade every row of this artifact carries.
+ *
+ * A government department republishing local authorities' adopted plans.
  */
 export const GZT_PROVENANCE_GRADE: ProvenanceGrade = ProvenanceGrade.Authoritative
 
 /**
  * What the product does not state, in the Department's own words.
  *
- * Carried onto every reading, because a caller holding a zone code cannot see from
- * it that the answer is a generalised republication rather than the plan itself.
+ * Carried onto every reading, because a caller holding a zone code cannot see from it
+ * that the answer is a generalised republication rather than the plan itself.
  * The first of these is the sharpest constraint the Department states, and it is why this
  * layer reports what a plan assigns at a location and never what may be built there.
  */

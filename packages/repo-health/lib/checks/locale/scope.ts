@@ -39,15 +39,17 @@ const REGISTER = "scope.config.json"
 
 /**
  * A tier row opens with the tier number in bold, `| **1 — first-class, floor-enforced** | US, FR | …`.
+ *
  * The em dash and the label are the doc's prose and are deliberately not matched:
  * a row renamed is not a row moved.
  */
 const TIER_ROW = /^\|\s*\*\*(\d)\s/
 
 /**
- * A country code as the table spells one. The locales cell is a comma-separated list
- * and nothing else, so anything that is not two uppercase letters in that cell is
- * a parse failure rather than a country to skip quietly.
+ * A country code as the table spells one.
+ *
+ * The locales cell is a comma-separated list and nothing else, so anything that is not two
+ * uppercase letters in that cell is a parse failure rather than a country to skip quietly.
  */
 const COUNTRY_CODE = /^[A-Z]{2}$/
 

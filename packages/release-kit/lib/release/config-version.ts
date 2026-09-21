@@ -13,6 +13,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 
 /**
  * Replace the top-level `"version"` line, requiring exactly one match of the current value.
+ *
  * Throws when the line is absent (a reformatted or hand-edited file — bump it by hand
  * and fix the formatter drift) or when the current version does not match
  * (the sync check's job, restated here so a caller cannot skip it).

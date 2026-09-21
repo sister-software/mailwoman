@@ -21,6 +21,7 @@ let scratch: TemporaryDirectory
 
 /**
  * `mstab.txt` is five columns: table, physical name, label, description, file base name.
+ *
  * The file name is the last column and is not derivable from the table name —
  * `component` lives in `comp.txt`, `sacatalog` in `sacatlog.txt`.
  */
@@ -71,7 +72,8 @@ describe("the tabular dictionary", () => {
 		const dictionary = await readTabularDictionary(scratch.path)
 		const table = await readTable(scratch.path, dictionary, "widget", ["widget_key", "widget_name"])
 
-		// The file holds three newline bytes and two records. A line-splitting reader would report three.
+		// The file holds three newline bytes and two records.
+		// A line-splitting reader would report three.
 		expect(table.recordCount).toBe(2)
 		expect(table.rows).toHaveLength(2)
 		expect(table.rows[1]!.widget_name).toContain("with a newline")

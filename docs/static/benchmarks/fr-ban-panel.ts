@@ -64,14 +64,18 @@ import { basename, join, resolvePath } from "path-ts"
 const HERE = import.meta.dirname
 
 /**
- * The weights locale. The `fr-FR` package is a data-only overlay: it ships the French
- * postcode, pair-index and FST artifacts and takes `model.onnx` from the base package,
- * which is what `versions.modelCard` against `versions.model` records in the result file.
+ * The weights locale.
+ *
+ * The `fr-FR` package is a data-only overlay: it ships the French postcode, pair-index
+ * and FST artifacts and takes `model.onnx` from the base package, which is what
+ * `versions.modelCard` against `versions.model` records in the result file.
  */
 const LOCALE = "fr-FR"
 
 /**
- * The committed draw seed. Changing it changes the panel, so it is a constant and not a flag.
+ * The committed draw seed.
+ *
+ * Changing it changes the panel, so it is a constant and not a flag.
  */
 const SEED = 20_260_804
 
@@ -81,27 +85,32 @@ const SEED = 20_260_804
 const PANEL_SIZE = 100
 
 /**
- * Rowids drawn before deduplication. One row is kept per postcode, so the draw has to
- * over-sample: dense postcodes (a Paris arrondissement carries tens of thousands of points)
- * are hit repeatedly and counted once.
+ * Rowids drawn before deduplication.
+ *
+ * One row is kept per postcode, so the draw has to over-sample: dense postcodes
+ * (a Paris arrondissement carries tens of thousands of points) are hit repeatedly and counted once.
  */
 const DRAW_SIZE = 1200
 
 /**
- * Rows averaged to place a postcode's centroid. Capped so a dense postcode does not dominate the run.
+ * Rows averaged to place a postcode's centroid.
+ *
+ * Capped so a dense postcode does not dominate the run.
  */
 const CENTROID_SAMPLE = 2000
 
 /**
  * A returned coordinate within this distance of BAN's own is counted as the exact row.
+ *
  * One meter is below the precision BAN publishes, so a hit at this radius means
  * the same row was found rather than a neighbouring one.
  */
 const EXACT_ROW_KM = 0.001
 
 /**
- * A resolved coordinate this far from its postcode's centroid counts as routed to the right
- * postcode area. French postcodes are not one size — a Paris arrondissement spans about 2 km,
+ * A resolved coordinate this far from its postcode's centroid counts as routed to the right postcode area.
+ *
+ * French postcodes are not one size — a Paris arrondissement spans about 2 km,
  * a rural postcode can span 20 — so this is a routing check and not a precision claim.
  * The precision claim is the distance table.
  */
@@ -128,13 +137,16 @@ if (!dataRoot) {
 	// oxlint-disable-next-line sister-software/no-process-globals -- shipped doc asset
 	process.exit(1)
 
-	// `process.exit` is typed `never`, but only when the checker can see this branch ends. Throwing states it.
+	// `process.exit` is typed `never`, but only when the checker can see this branch ends.
+	// Throwing states it.
 	throw new Error("unreachable")
 }
 
 /**
- * The checked data root. Module-level narrowing does not reach into a function body,
- * so the guard's result is bound once here rather than re-asserted at every use.
+ * The checked data root.
+ *
+ * Module-level narrowing does not reach into a function body, so the guard's result
+ * is bound once here rather than re-asserted at every use.
  */
 const DATA_ROOT: string = dataRoot
 
@@ -166,8 +178,10 @@ interface PanelRow {
 }
 
 /**
- * One graded answer. `km` is null when the pipeline returned no coordinate, which is a different
- * reading from a coordinate that landed far away — {@link summarize} keeps the two apart.
+ * One graded answer.
+ *
+ * `km` is null when the pipeline returned no coordinate, which is a different reading
+ * from a coordinate that landed far away — {@link summarize} keeps the two apart.
  */
 interface GradedRecord {
 	km: number | null
@@ -178,8 +192,10 @@ interface GradedRecord {
 //#region Address rendering
 
 /**
- * Title-case a BAN `locality_norm` value. The column is lowercased and accent-stripped
- * by the extract builder, so `orleans` renders as `Orleans` and never as `Orléans`.
+ * Title-case a BAN `locality_norm` value.
+ *
+ * The column is lowercased and accent-stripped by the extract builder,
+ * so `orleans` renders as `Orleans` and never as `Orléans`.
  * That loss is real and the published page carries it as a caveat: every panel
  * row asks the pipeline for an unaccented commune.
  */
@@ -278,15 +294,17 @@ async function resample(): Promise<void> {
 
 /**
  * The three versions a differing re-run has to be able to tell apart: the code,
- * the model, and the reference data. Without them a reader whose numbers disagree
- * with the published ones cannot tell data drift from code drift, which is the whole
- * value of publishing the result file next to the script.
+ * the model, and the reference data.
+ *
+ * Without them a reader whose numbers disagree with the published ones cannot tell data drift
+ * from code drift, which is the whole value of publishing the result file next to the script.
  *
  * `resolveWeights` runs the same resolution order the classifier does, so this
  * reports the artifact that was loaded rather than the one that was asked for —
  * including the base-package fallback the `fr-FR` overlay takes for its `model.onnx`.
- * Paths are dereferenced because a development checkout symlinks them into the
- * workspace, and the symlink name says nothing about which checkpoint is behind it.
+ * Paths are dereferenced because a development checkout symlinks them into the workspace,
+ * and the symlink name says nothing about which checkpoint is behind it.
+ *
  * The BAN release itself is recorded separately, on the committed panel file,
  * because it is a property of the addresses rather than of the run.
  */
@@ -318,8 +336,8 @@ function summarize(records: GradedRecord[]) {
 	const distances = records.flatMap((r) => (r.km === null ? [] : [r.km]))
 	const within = (km: number): number => records.filter((r) => r.km !== null && r.km <= km).length
 	// Bucketed on the tier that answered, which is `none` for a row that returned no coordinate:
-	// `resolution_tier` reports where the cascade ended rather than whether it produced
-	// anything. Therefore, it still reads "admin" on a row that answered nothing.
+	// `resolution_tier` reports where the cascade ended rather than whether it produced anything.
+	// Therefore, it still reads "admin" on a row that answered nothing.
 	// Every row on this panel resolved, so the two bucketings agree here — the guard
 	// is in place so they cannot silently disagree on a future run.
 	const tiers: Record<string, number> = {}

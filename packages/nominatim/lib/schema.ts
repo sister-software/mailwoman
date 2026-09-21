@@ -106,8 +106,10 @@ const NominatimStatusArtifactSchema = z
 	.openapi("NominatimStatusArtifact")
 
 /**
- * The `/status` payload. `mailwoman` is a native extension block — upstream Nominatim
- * has no equivalent, and a client that does not know it ignores it.
+ * The `/status` payload.
+ *
+ * `mailwoman` is a native extension block — upstream Nominatim has no equivalent,
+ * and a client that does not know it ignores it.
  */
 export const NominatimStatusSchema = z
 	.object({
@@ -130,6 +132,7 @@ export const ErrorSchema = z
 /**
  * The schema.org [`GeoCoordinates`](https://schema.org/GeoCoordinates) node —
  * mirrors `@mailwoman/annotations`'s `SchemaOrgGeoCoordinates` interface.
+ *
  * Hand-modeled locally (no import from `@mailwoman/annotations`), matching this file's
  * existing wire-schema convention: each surface owns its own doc-accuracy schemas
  * rather than sharing a schema across the package boundary.
@@ -174,6 +177,7 @@ export const SchemaOrgPlaceSchema = z
 
 /**
  * A jsonv2/json result as a route returns it — the result plus the optional `engine` stamp.
+ *
  * Named because it is a union arm: an unnamed arm is inlined, and a generated client
  * then names the variant after its position.
  */
@@ -189,9 +193,11 @@ export const StampedNominatimFeatureCollectionSchema = stampedResponseSchema(
 )
 
 /**
- * The real `/search` 200 response union (#1052 doc accuracy): a jsonv2/json result array by default,
- * a `format=geojson` FeatureCollection, or a `format=jsonld` array of schema.org `Place`
- * objects — see `routes.ts`'s search handler. Doc-only. the wire behavior is unchanged.
+ * The real `/search` 200 response union (#1052 doc accuracy): a jsonv2/json result
+ * array by default, a `format=geojson` FeatureCollection, or a `format=jsonld` array
+ * of schema.org `Place` objects — see `routes.ts`'s search handler.
+ *
+ * Doc-only. the wire behavior is unchanged.
  */
 export const NominatimSearchResponseSchema = z
 	.union([
@@ -203,16 +209,19 @@ export const NominatimSearchResponseSchema = z
 
 /**
  * The real `/reverse` 200 response union (#1052 doc accuracy): a single jsonv2/json result,
- * `null` when unresolved, a `format=geojson` FeatureCollection, or a `format=jsonld` schema.org
- * `Place` — see `routes.ts`'s reverse handler. Doc-only. the wire behavior is unchanged.
+ * `null` when unresolved, a `format=geojson` FeatureCollection, or a `format=jsonld`
+ * schema.org `Place` — see `routes.ts`'s reverse handler.
+ *
+ * Doc-only. the wire behavior is unchanged.
  */
 export const NominatimReverseResponseSchema = z
 	.union([StampedNominatimResultSchema, z.null(), StampedNominatimFeatureCollectionSchema, SchemaOrgPlaceSchema])
 	.openapi("NominatimReverseResponse")
 
 /**
- * The real `/lookup` 200 response union (#1052 doc accuracy): a jsonv2/json
- * result array by default, or a `format=geojson` FeatureCollection.
+ * The real `/lookup` 200 response union (#1052 doc accuracy): a jsonv2/json result
+ * array by default, or a `format=geojson` FeatureCollection.
+ *
  * There is no `jsonld` branch — a legacy quirk preserved verbatim by `routes.ts`'s
  * lookup handler (`format=jsonld` falls through to the raw jsonv2 array there),
  * so this union stays two-wide, unlike `/search`'s three-wide union.

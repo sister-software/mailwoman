@@ -17,7 +17,9 @@ import type { CoverageBasis } from "@mailwoman/evidence"
 import { sql, type Kysely } from "kysely"
 
 /**
- * Distribution tier of a layer. Shipped = permissive-license, published by us.
+ * Distribution tier of a layer.
+ *
+ * Shipped = permissive-license, published by us.
  */
 export const LayerTier = {
 	Shipped: "shipped",
@@ -50,7 +52,9 @@ export const LayerFreshnessPolicy = {
 export type LayerFreshnessPolicy = (typeof LayerFreshnessPolicy)[keyof typeof LayerFreshnessPolicy]
 
 /**
- * The single-row layer identity record. See {@link LayerManifest} for the parsed form.
+ * The single-row layer identity record.
+ *
+ * See {@link LayerManifest} for the parsed form.
  */
 export interface LayerManifestTable {
 	name: string
@@ -98,7 +102,9 @@ export interface LayerCoverageTable {
 	 */
 	completeness: number
 	/**
-	 * What the `completeness` value rests on. One of {@link CoverageBasis}.
+	 * What the `completeness` value rests on.
+	 *
+	 * One of {@link CoverageBasis}.
 	 *
 	 * NULL means the row predates this column, and must be read as {@link CoverageBasis.SourcePresent} —
 	 * the weakest reading, because that is what every layer built before the column was writing.
@@ -112,6 +118,7 @@ export interface LayerCoverageTable {
 
 /**
  * Pass to `new DatabaseClient<layerschemadatabase>(...)`
+ *
  * (or intersect into a layer's own schema).
  */
 export interface layerschemadatabase {
@@ -125,6 +132,7 @@ export interface layerschemadatabase {
  * Kysely is invariant in its schema parameter, so a `Kysely<POIDatabase>` is not assignable
  * to `Kysely<layerschemadatabase>` even when `POIDatabase extends layerschemadatabase`.
  * The incompatibility is in `transaction()` and `with()`, which the interface never calls.
+ *
  * Naming only the members it does call lets a layer pass its own handle directly.
  * The alternative — a cast at every call site — does not merely skip one check:
  * it disarms every column-level guarantee these two tables carry, including any added later.
@@ -132,7 +140,9 @@ export interface layerschemadatabase {
 export type layerschemahandle = Pick<Kysely<layerschemadatabase>, "insertInto" | "schema" | "selectFrom">
 
 /**
- * Create `layer_manifest`. Single row enforced by `name` PK + the writer's insert-once discipline.
+ * Create `layer_manifest`.
+ *
+ * Single row enforced by `name` PK + the writer's insert-once discipline.
  */
 export async function createLayerManifestTable(db: layerschemahandle): Promise<void> {
 	await db.schema

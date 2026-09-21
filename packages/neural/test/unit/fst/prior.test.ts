@@ -172,12 +172,13 @@ describe("buildFSTEmissionPriors", () => {
 	})
 
 	it("folds trailing punctuation into the preceding word's bias, not into a separate placeholder", () => {
-		// The word boundary is ▁ only: a punctuation-only piece with no leading
-		// ▁ is unconditionally interior to whatever word is still active.
-		// There is deliberately no look-ahead distinguishing "mid-word hyphen" from "trailing comma
-		// before a new ▁ word" — the grouper cannot see the next piece, and the splits that matter
-		// ("Stockton-on-Tees" etc.) don't need it. So the comma below joins the "Washington" group
-		// and carries its bias rather than getting an all-zero placeholder row of its own.
+		// The word boundary is ▁ only: a punctuation-only piece with no leading ▁ is
+		// unconditionally interior to whatever word is still active.
+		// There is deliberately no look-ahead distinguishing "mid-word hyphen" from
+		// "trailing comma before a new ▁ word" — the grouper cannot see the next piece,
+		// and the splits that matter ("Stockton-on-Tees" etc.) don't need it.
+		// So the comma below joins the "Washington" group and carries its bias
+		// rather than getting an all-zero placeholder row of its own.
 		// Nothing is lost by the coarser rule: "▁DC" opens its own group regardless.
 		const fst = mockFST(new Map([["washington", [{ wofID: 7, placetype: "locality", referential: 0.85 }]]]))
 
@@ -335,10 +336,11 @@ describe("normalizeFSTToken", () => {
 	})
 
 	it("leaves spaces intact (Zs, not punctuation) — hyphen/space equivalence comes from the caller's split-then-join", () => {
-		// Spaces (U+0020) are Unicode category Zs (separator), not P or S, so normalizeFSTToken
-		// leaves them intact. Each word is normalized separately via groupPiecesIntoWords,
-		// then words are joined with no separator — that's where "Stockton on Tees" becomes
-		// "stocktonontees" (same as "Stockton-on-Tees" after hyphen strip).
+		// Spaces (U+0020) are Unicode category Zs (separator), not P or S,
+		// so normalizeFSTToken leaves them intact.
+		// Each word is normalized separately via groupPiecesIntoWords, then words are joined
+		// with no separator — that's where "Stockton on Tees" becomes "stocktonontees"
+		// (same as "Stockton-on-Tees" after hyphen strip).
 		const stockton = normalizeFSTToken("Stockton")
 		const on = normalizeFSTToken("on")
 		const tees = normalizeFSTToken("Tees")
@@ -390,10 +392,11 @@ describe("groupPiecesIntoWords with normalizeFSTToken", () => {
 })
 
 describe("groupPiecesIntoWords — interior punctuation (real fixture tokenizer)", () => {
-	// Interior punctuation (a hyphen/apostrophe with no leading ▁) must continue the current
-	// word, never reset it. A punctuation-only piece that sets `current = null` silently
-	// drops every subsequent piece up to the next ▁ — these five real-tokenizer splits are
-	// where that happens. See the module docstring's "word boundary is ▁ only" section.
+	// Interior punctuation (a hyphen/apostrophe with no leading ▁) must continue
+	// the current word, never reset it.
+	// A punctuation-only piece that sets `current = null` silently drops every subsequent
+	// piece up to the next ▁ — these five real-tokenizer splits are where that happens.
+	// See the module docstring's "word boundary is ▁ only" section.
 
 	it('groups "Stockton-on-Tees" into a single word ("stocktonontees"), not a truncated fragment', async () => {
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
@@ -460,9 +463,9 @@ describe("groupPiecesIntoWords — interior punctuation (real fixture tokenizer)
 		const { pieces } = tokenizer.encode("Stockton , Lancashire")
 		// Real split: ["▁Stock","ton","▁",",","▁Lan","ca","shire"] — the space
 		// before the comma tokenizes as its own bare "▁" piece, and the comma itself
-		// (no leading ▁, no active word) stands alone too. Two raw empty groups land between
-		// "Stockton" and "Lancashire" rather than one, but the property that matters —
-		// the two real words never fuse into a single group/window — holds either way.
+		// (no leading ▁, no active word) stands alone too.
+		// Two raw empty groups land between "Stockton" and "Lancashire" rather than one, but the property
+		// that matters — the two real words never fuse into a single group/window — holds either way.
 		const groups = groupPiecesIntoWords(pieces)
 		expect(groups.filter((g) => g.fstToken === "")).toHaveLength(2)
 		const nonEmptyGroups = groups.filter((g) => g.fstToken !== "")
@@ -471,12 +474,13 @@ describe("groupPiecesIntoWords — interior punctuation (real fixture tokenizer)
 })
 
 describe("groupPiecesIntoWords — byte-fallback placeholder never leaks into fstToken (paired-punctuation audit)", () => {
-	// The small fixture tokenizer's deliberately tiny vocab hits SentencePiece byte-fallback
-	// (`<0xHH>` pieces) on curly quotes, guillemets, and even ascii braces/brackets —
-	// not just non-Latin scripts. `hasAlnum` must never read the placeholder text
-	// ("<0x7B>" — hex digits and letters) as real alnum content: it would inject garbage into fstToken
-	// ("0x7bblock" instead of "block"), corrupting every FST/pair-index probe key for a place
-	// name written with one of these characters. See `.superpowers/sdd/task-9-audit-report.md`.
+	// The small fixture tokenizer's deliberately tiny vocab hits SentencePiece
+	// byte-fallback (`<0xHH>` pieces) on curly quotes, guillemets, and even ascii
+	// braces/brackets — not just non-Latin scripts.
+	// `hasAlnum` must never read the placeholder text ("<0x7B>" — hex digits and letters) as real
+	// alnum content: it would inject garbage into fstToken ("0x7bblock" instead of "block"),
+	// corrupting every FST/pair-index probe key for a place name written with one of these characters.
+	// See `.superpowers/sdd/task-9-audit-report.md`.
 
 	it('folds "{Block C}, Leeds" to clean words, no "0x7b"/"0x7d" garbage', async () => {
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
@@ -508,8 +512,8 @@ describe.skipIf(!haveProductionTokenizer)(
 	() => {
 		// The bare-▁ split is more common in the production tokenizer (v0.9.0-multisplice)
 		// than in the small test fixture: it hits short common words ("on", "upon", "super")
-		// and a trailing single-letter abbreviation ("IL"). Each case below asserts full
-		// group recovery rather than merely a non-empty result.
+		// and a trailing single-letter abbreviation ("IL").
+		// Each case below asserts full group recovery rather than merely a non-empty result.
 		const cases: Array<{ raw: string; expected: string[] }> = [
 			{ raw: "Stockton on the Forest", expected: ["stockton", "on", "the", "forest"] },
 			{ raw: "Newcastle upon Tyne", expected: ["newcastle", "upon", "tyne"] },

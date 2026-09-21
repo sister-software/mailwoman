@@ -29,12 +29,15 @@ const hasCLICompiled = await pathExists(CLI_PATH)
 
 /**
  * Wall-clock budget for a CLI spawn — see the note in `geocode.test.ts`.
+ *
  * A single spawn costs ~5.6 s, 2.7 s of it node boot alone.
  */
 const CLI_SPAWN_TIMEOUT_MS = 45_000
 
 /**
- * Per-test budget. Must exceed {@link CLI_SPAWN_TIMEOUT_MS} plus time queued on the spawn lock.
+ * Per-test budget.
+ *
+ * Must exceed {@link CLI_SPAWN_TIMEOUT_MS} plus time queued on the spawn lock.
  */
 const CLI_TEST_TIMEOUT_MS = 120_000
 
@@ -90,8 +93,9 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 			)
 
 		// The old sync form ran `spawn()` and then re-ran it inside `expect(spawn).not.toThrow()` —
-		// the second run is the idempotence assertion. An async rejection is invisible to
-		// that form, so await both runs: either one failing rejects this test.
+		// the second run is the idempotence assertion.
+		// An async rejection is invisible to that form, so await both runs:
+		// either one failing rejects this test.
 		await spawn()
 		await spawn()
 

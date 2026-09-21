@@ -99,6 +99,7 @@ export interface VerifyReleaseMetadataOptions {
 
 /**
  * The directory `docs/docusaurus.config.ts` publishes (`path: "articles"`).
+ *
  * A status page outside it is not the page a reader opens, so citing the shipped model there proves nothing.
  */
 const PUBLISHED_DOCS_ROOT = "docs/articles/"
@@ -131,13 +132,16 @@ export interface SurfaceResult {
 	surface: string
 	ok: boolean
 	/**
-	 * On OK: a one-line summary. On failure: the actionable remediation (may be multi-line).
+	 * On OK: a one-line summary.
+	 *
+	 * On failure: the actionable remediation (may be multi-line).
 	 */
 	message: string
 }
 
 /**
  * Read the shipped model version — the `version` field of the weights bundle's model card.
+ *
  * This is the anchor for every check: not npm / package.json, so a code-only release
  * (which bumps npm but leaves the card untouched) is judged against the model it actually ships.
  */
@@ -183,9 +187,10 @@ async function checkLedger(version: string, ledgerPath: string): Promise<Surface
 
 /**
  * Parse the releases.mdx version matrix into ordered data rows.
- * A data row is a `|`-delimited table line whose first cell carries a version-like token.
- * the header and `---` separator rows are skipped. The "## The matrix" table is the
- * only one whose rows look like this, so a global scan is safe.
+ *
+ * A data row is a `|`-delimited table line whose first cell carries a version-like
+ * token. the header and `---` separator rows are skipped.
+ * The "## The matrix" table is the only one whose rows look like this, so a global scan is safe.
  */
 function parseMatrixRows(markdown: string): MatrixRow[] {
 	const rows: MatrixRow[] = []
@@ -217,6 +222,7 @@ function parseMatrixRows(markdown: string): MatrixRow[] {
 
 /**
  * The version on the matrix row carrying the `(current)` marker, or null when no row does.
+ *
  * Shared with `check-release-parity.ts`, which compares this surface against npm latest.
  */
 export function currentMatrixVersion(markdown: string): string | null {
@@ -342,8 +348,10 @@ export interface VerifyReleaseMetadataReport {
 }
 
 /**
- * Check every surface for the shipped model version. Throws when any surface is stale, with
- * each remediation already reported through `log`, so a caller's exit code follows the verdict.
+ * Check every surface for the shipped model version.
+ *
+ * Throws when any surface is stale, with each remediation already reported through `log`,
+ * so a caller's exit code follows the verdict.
  */
 export async function verifyReleaseMetadata(
 	options: VerifyReleaseMetadataOptions
@@ -357,9 +365,9 @@ export async function verifyReleaseMetadata(
 	const paths = {
 		cardPath: resolvePath(repoRoot, options.card ?? "packages/neural-weights-en-us/model-card.json"),
 		ledgerPath: resolvePath(repoRoot, options.ledger ?? "evals/scores-by-version.json"),
-		// Not an archive, despite the directory. `docs/records/site-2026-08/releases.mdx`
-		// is the maintained release matrix — agents.md names it as where a version
-		// with no ledger row carries its headline, and it took 10.0.0 in `76c08d950`.
+		// Not an archive, despite the directory.
+		// `docs/records/site-2026-08/releases.mdx` is the maintained release matrix — agents.md names it as
+		// where a version with no ledger row carries its headline, and it took 10.0.0 in `76c08d950`.
 		// It is deliberately unpublished, so there is no live page to move this to.
 		releasesPath: resolvePath(repoRoot, options.releases ?? "docs/records/site-2026-08/releases.mdx"),
 		statusPath: resolvePath(repoRoot, statusRelative),

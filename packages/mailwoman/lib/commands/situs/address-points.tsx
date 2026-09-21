@@ -236,7 +236,8 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 
 		// Provenance accounting: per-dataset counts across all rows returned by DuckDB (pre-JS drop).
 		// When --license-filter is active DuckDB already dropped the ineligible rows,
-		// so this reflects the kept set. `totalReturned` feeds the kept-vs-dropped summary below.
+		// so this reflects the kept set.
+		// `totalReturned` feeds the kept-vs-dropped summary below.
 		const datasetCounts = new Map<string, number>()
 		let kept = 0
 		let totalReturned = 0
@@ -411,9 +412,10 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 			schemaVersion: 1,
 			tier: LayerTier.BuildLocal,
 			// The manifest admits only an spdx expression the obligations table knows.
-			// The US build records Overture's theme license. which source datasets it kept is the
-			// attribution beside it, since a database built with a different allow-list carries different
-			// per-dataset terms. A national build records the theme license and the register's own.
+			// The US build records Overture's theme license. which source datasets it
+			// kept is the attribution beside it, since a database built with a different
+			// allow-list carries different per-dataset terms.
+			// A national build records the theme license and the register's own.
 			license: COUNTRY ? licenseForOvertureCountry(COUNTRY) : "CDLA-Permissive-2.0",
 			attribution: `Overture addresses (${(allowedDatasets.size ? [...allowedDatasets] : sortedDatasets.map(([dataset]) => dataset)).toSorted().join(", ")})`,
 			source: "overture-addresses",

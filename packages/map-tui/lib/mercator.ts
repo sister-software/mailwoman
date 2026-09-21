@@ -66,6 +66,7 @@ export function wrapLongitude(lon: number): number {
 
 /**
  * Subpixel dimensions of one braille cell — 2 columns wide, 4 rows tall.
+ *
  * The unit every projection-to-cell conversion works in, shared by the renderer
  * and the browser so both sides of the frame boundary agree on the grid.
  */

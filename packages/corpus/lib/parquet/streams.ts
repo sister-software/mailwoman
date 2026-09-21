@@ -14,6 +14,7 @@ import { connectDuckDB, escapeSQLIdentifier, escapeSQLString } from "#parquet/du
 
 /**
  * DuckDB hands a list column back as `{ items: [...] }`.
+ *
  * Unwrap it so a row reads the way the schema declares it, recursively,
  * because a nested list arrives nested the same way.
  */
@@ -40,7 +41,9 @@ export function validateRowLimit(value: number): number {
 
 export interface ParquetRowStreamOptions {
 	/**
-	 * Columns to project. Every column when omitted.
+	 * Columns to project.
+	 *
+	 * Every column when omitted.
 	 *
 	 * A column the file does not carry raises rather than coming back absent: a projection
 	 * that silently drops a field hands the consumer a well-formed row with the field missing,

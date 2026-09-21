@@ -21,14 +21,18 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import type { Span } from "#tokenization/index"
 
 /**
- * Sections in Mailwoman are sub-Spans of the tokenized input (split by boundary
- * characters: commas, line breaks, etc.). They are surfaced as `Span` instances in
- * `TokenContext.sections`; this alias documents the call-site intent.
+ * Sections in Mailwoman are sub-Spans of the tokenized input
+ * (split by boundary characters: commas, line breaks, etc.).
+ *
+ * They are surfaced as `Span` instances in `TokenContext.sections`;
+ * this alias documents the call-site intent.
  */
 export type Section = Span
 
 /**
- * Source of a `ClassificationProposal`. Drives policy decisions and downstream telemetry.
+ * Source of a `ClassificationProposal`.
+ *
+ * Drives policy decisions and downstream telemetry.
  *
  * - `rule`: emitted by a legacy rule classifier through the adapter.
  * - `neural`: emitted by an ONNX-backed sequence classifier.
@@ -66,20 +70,24 @@ export interface ClassificationProposal {
 	source: ClassificationProposalSource
 
 	/**
-	 * Identifier of the specific classifier instance. Rule wrappers use the legacy
-	 * classifier's stable id (e.g. `house_number`, `postcode`, `whos_on_first`).
+	 * Identifier of the specific classifier instance.
+	 *
+	 * Rule wrappers use the legacy classifier's stable id (e.g. `house_number`, `postcode`, `whos_on_first`).
 	 * Neural classifiers use a versioned model id like `neural-v0.3.1-en-us`.
 	 */
 	source_id: string
 
 	/**
-	 * Solver penalty applied to this proposal. Higher penalty makes the proposal
-	 * less likely to appear in the winning solution.
+	 * Solver penalty applied to this proposal.
+	 *
+	 * Higher penalty makes the proposal less likely to appear in the winning solution.
 	 */
 	penalty: number
 
 	/**
-	 * Opaque metadata for debugging and telemetry. Never consulted by the solver.
+	 * Opaque metadata for debugging and telemetry.
+	 *
+	 * Never consulted by the solver.
 	 * Common keys: `languages`, `flags`, `legacyClassification`.
 	 */
 	metadata?: Record<string, unknown>
@@ -113,18 +121,23 @@ export interface ClassifierContext {
  */
 export interface ProposalClassifier {
 	/**
-	 * Stable identifier. Used as `source_id` on emitted proposals.
+	 * Stable identifier.
+	 *
+	 * Used as `source_id` on emitted proposals.
 	 */
 	readonly id: string
 
 	/**
-	 * Components this classifier may emit. Enforced — proposals for tags outside
-	 * this list are dropped by the adapter with a warning.
+	 * Components this classifier may emit.
+	 *
+	 * Enforced — proposals for tags outside this list are dropped by the adapter with a warning.
 	 */
 	readonly emits: readonly ComponentTag[]
 
 	/**
-	 * Locales this classifier serves. `"*"` means locale-agnostic.
+	 * Locales this classifier serves.
+	 *
+	 * `"*"` means locale-agnostic.
 	 *
 	 * The policy layer uses this to skip classifiers that aren't relevant to the requested locale.
 	 */
@@ -136,14 +149,16 @@ export interface ProposalClassifier {
 	ready?(): Promise<void>
 
 	/**
-	 * Classify a section. Implementations must not throw — return an empty array
-	 * on failure and log via the project logger.
+	 * Classify a section.
+	 *
+	 * Implementations must not throw — return an empty array on failure and log via the project logger.
 	 */
 	classify(section: Section, context: ClassifierContext): Promise<ClassificationProposal[]>
 }
 
 /**
  * Convenience: synchronous classifier (legacy rule wrappers usually fit here).
+ *
  * The adapter wraps these into the async `ProposalClassifier` interface so the solver path stays uniform.
  */
 export interface SyncProposalClassifier {

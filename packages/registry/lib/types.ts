@@ -39,8 +39,9 @@ export interface SourceRecord {
 	 * Additional secondary-identifier fields, normalized — anything that helps tell
 	 * two records apart or confirm they're the same beyond name/org/address/phone
 	 * (an authorized-official name, a provider taxonomy, a license number…).
-	 * Used as extra comparisons + corroborators when the model is built with matching
-	 * `discriminators`. Keyed by a stable field name the model references.
+	 *
+	 * Used as extra comparisons + corroborators when the model is built with matching `discriminators`.
+	 * Keyed by a stable field name the model references.
 	 */
 	attributes?: Record<string, string>
 	/**
@@ -95,11 +96,12 @@ export interface EntityGeoData {
 
 /**
  * Feature properties the map renderer consumes — {@link EntityGeoData} with every
- * field optional, plus an unconstrained `bucket`. The renderer assigns a color per
- * distinct bucket value in first-seen order and builds its legend from that set,
- * so a bucket is any categorical label rather than only a {@link ReconciliationBucket};
- * and a collection assembled from something other than resolved entities
- * (raw address points, links read back from a file) carries no entity id or display name.
+ * field optional, plus an unconstrained `bucket`.
+ *
+ * The renderer assigns a color per distinct bucket value in first-seen order and builds
+ * its legend from that set, so a bucket is any categorical label rather than only a
+ * {@link ReconciliationBucket}; and a collection assembled from something other than resolved
+ * entities (raw address points, links read back from a file) carries no entity id or display name.
  */
 export type MapFeatureData = Partial<Omit<EntityGeoData, "bucket">> & { bucket?: string }
 

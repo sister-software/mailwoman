@@ -15,8 +15,10 @@
  */
 
 /**
- * Verb paths that only read. Matched against the leading arguments, so `eval` covers
- * `eval gauntlet`, `eval promote` and the rest — with the one exception carved out below.
+ * Verb paths that only read.
+ *
+ * Matched against the leading arguments, so `eval` covers `eval gauntlet`, `eval promote`
+ * and the rest — with the one exception carved out below.
  */
 const ALLOWED_PREFIXES: readonly string[][] = [
 	["parse"],
@@ -68,8 +70,10 @@ function matchesPrefix(args: readonly string[], prefix: readonly string[]): bool
 export interface AllowlistVerdict {
 	allowed: boolean
 	/**
-	 * Why, in the words a caller needs. Populated on a refusal and on an allow, so a log of
-	 * calls records the boundary that was applied rather than only the ones that tripped it.
+	 * Why, in the words a caller needs.
+	 *
+	 * Populated on a refusal and on an allow, so a log of calls records the boundary
+	 * that was applied rather than only the ones that tripped it.
 	 */
 	reason: string
 }

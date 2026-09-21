@@ -41,7 +41,8 @@ test("parseOSMHstore: decodes GDAL's quoted-pair rendering", () => {
 })
 
 test("parseOSMHstore: a comma INSIDE a value does not split the pair", () => {
-	// The reason this is a scanner and not a `.split(",")`. Real OSM names carry commas.
+	// The reason this is a scanner and not a `.split(",")`.
+	// Real OSM names carry commas.
 	expect(parseOSMHstore(`"name"=>"Terminal 1, Departures","aeroway"=>"terminal"`)).toEqual({
 		name: "Terminal 1, Departures",
 		aeroway: "terminal",

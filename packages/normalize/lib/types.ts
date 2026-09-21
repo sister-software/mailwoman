@@ -46,7 +46,9 @@ export interface NormalizedInput {
 	transforms: NormalizationTransform[]
 
 	/**
-	 * `normalized[i]` came from `raw[offsetMap[i]]`. Length === normalized.length.
+	 * `normalized[i]` came from `raw[offsetMap[i]]`.
+	 *
+	 * Length === normalized.length.
 	 */
 	offsetMap: number[]
 
@@ -63,24 +65,32 @@ export interface NormalizeOpts {
 	locale?: string
 
 	/**
-	 * Apply locale-aware lowercasing. Default: false (preserve case for downstream consumers).
+	 * Apply locale-aware lowercasing.
+	 *
+	 * Default: false (preserve case for downstream consumers).
 	 */
 	caseFold?: boolean
 
 	/**
-	 * Expand known abbreviations (`St` → `Street`, `NW` → `Northwest`, etc.). Default: false.
+	 * Expand known abbreviations (`St` → `Street`, `NW` → `Northwest`, etc.).
+	 *
+	 * Default: false.
 	 */
 	expandAbbreviations?: boolean
 
 	/**
-	 * Skip Unicode NFC. Only use for debugging — production callers should leave on.
+	 * Skip Unicode NFC.
+	 *
+	 * Only use for debugging — production callers should leave on.
 	 */
 	skipNFC?: boolean
 	/**
 	 * What the CJK pass does with the postal mark 〒 (U+3012).
-	 * `strip` (the default) drops it: it is byte-fallback OOV for the SentencePiece tokenizer
-	 * and fragments the digits after it. `keep` leaves it in place for a classifier whose vocabulary
-	 * carries it — the character-path CJK model was trained with the mark in front of every postcode,
+	 *
+	 * `strip` (the default) drops it: it is byte-fallback OOV for the SentencePiece
+	 * tokenizer and fragments the digits after it.
+	 * `keep` leaves it in place for a classifier whose vocabulary carries it —
+	 * the character-path CJK model was trained with the mark in front of every postcode,
 	 * and without it misreads the prefecture boundary (`885-0061 宮崎県都城市…` → prefecture `崎県都`).
 	 */
 	postalMark?: "strip" | "keep"

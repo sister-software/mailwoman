@@ -20,8 +20,9 @@ export const PublicCorpusEnvSchema = z.object({
 })
 
 /**
- * Credentials the corpus acquisition and golden-expansion tooling
- * send. Never log their values.
+ * Credentials the corpus acquisition and golden-expansion tooling send.
+ *
+ * Never log their values.
  */
 export const PrivateCorpusEnvSchema = z.object({
 	// OpenAddresses batch-download API token (`corpus/lib/tools/fetch/openaddresses.ts`).
@@ -46,6 +47,8 @@ export const PrivateCorpusEnvSchema = z.object({
 export const $public = liveEnv(PublicCorpusEnvSchema, corePublic)
 
 /**
- * Live corpus credentials over core's. Never log their values.
+ * Live corpus credentials over core's.
+ *
+ * Never log their values.
  */
 export const $private = liveEnv(PrivateCorpusEnvSchema, corePrivate)

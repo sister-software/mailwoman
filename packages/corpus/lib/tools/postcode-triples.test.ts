@@ -36,9 +36,10 @@ afterAll(() => root[Symbol.asyncDispose]())
  * Write a GeoNames-shaped export as `[country, postcode, place, admin1, admin2]`.
  *
  * The real file has twelve columns and the reader takes four of them from non-adjacent
- * positions — place is 2, admin1 is 3, admin2 is 5. Writing them in argument order
- * and padding the gap keeps the fixture readable while still exercising the real offsets.
- * a fixture that packed them adjacently would pass against a reader with the wrong index.
+ * positions — place is 2, admin1 is 3, admin2 is 5.
+ * Writing them in argument order and padding the gap keeps the fixture readable
+ * while still exercising the real offsets. a fixture that packed them adjacently
+ * would pass against a reader with the wrong index.
  */
 async function writeExport(
 	name: string,
@@ -83,7 +84,8 @@ describe("readTriplesFromGeonames", () => {
 	})
 
 	it("drops a row with NO region rather than emitting a blank one", async () => {
-		// ZA's export is 100% place and 0% admin1. A blank region would look like data and teach nothing.
+		// ZA's export is 100% place and 0% admin1.
+		// A blank region would look like data and teach nothing.
 		const path = await writeExport("blank.txt", [
 			["PT", "1000-001", "Alvalade", "", "Lisboa"],
 			["PT", "1000-002", "Alvalade", "Lisboa", "Lisboa"],
@@ -122,11 +124,11 @@ describe("readTriplesFromGeonames", () => {
 	})
 
 	it("reads BR from the default column, where the municipality sits in column 3 and admin2 alike", async () => {
-		// `BR 69945-000 Acrelândia Acre 01 Acrelândia 1200013` — the municipality is written
-		// twice and the state is admin1, so the US `place` override would be a no-op here
-		// and the default is already right. Placement is attested by two `br_*` board rows
-		// carrying locality, region and CEP in that order — `Caxias do Sul, RS 95090-020, Brazil`
-		// and `Brasília - Federal District, 70390-100, Brazil`.
+		// `BR 69945-000 Acrelândia Acre 01 Acrelândia 1200013` — the municipality is
+		// written twice and the state is admin1, so the US `place` override would be
+		// a no-op here and the default is already right.
+		// Placement is attested by two `br_*` board rows carrying locality, region and CEP in that order —
+		// `Caxias do Sul, RS 95090-020, Brazil` and `Brasília - Federal District, 70390-100, Brazil`.
 		const path = await writeExport("br.txt", [["BR", "69945-000", "Acrelândia", "Acre", "Acrelândia"]])
 
 		const [row] = await readTriplesFromGeonames("BR", path, "Brazil", acceptAll)
@@ -138,10 +140,10 @@ describe("readTriplesFromGeonames", () => {
 	})
 
 	it("takes the CITY from the column that country's export puts it in, which is inverted for the US", async () => {
-		// `US 94901 San Rafael California CA Marin` — column 3 is the city and admin2 is the county,
-		// the inverse of PT/MX/IN. The default mapping would emit `Marin` as the locality
-		// and train a county as a city, which is the `Mahatma Gandhi Road` defect this
-		// reader's header records, from the other direction.
+		// `US 94901 San Rafael California CA Marin` — column 3 is the city
+		// and admin2 is the county, the inverse of PT/MX/IN.
+		// The default mapping would emit `Marin` as the locality and train a county as a city,
+		// which is the `Mahatma Gandhi Road` defect this reader's header records, from the other direction.
 		const path = await writeExport("us.txt", [
 			["US", "94901", "San Rafael", "California", "Marin"],
 			["US", "60639", "Chicago", "Illinois", "Cook"],
@@ -213,8 +215,8 @@ describe("applyCountryBudget", () => {
 	})
 
 	it("bounds a country a per-locality quota cannot", () => {
-		// IN has 128,152 distinct localities, so even a quota of one leaves it
-		// contributing 63,533 rows against 39,790 from the other seven combined.
+		// IN has 128,152 distinct localities, so even a quota of one leaves it contributing
+		// 63,533 rows against 39,790 from the other seven combined.
 		// Without this the recipe teaches the trailing surface as an Indian fact.
 		const triples = [
 			...Array.from({ length: 50 }, (_, i) => make("IN", `village-${i}`, String(i))),
@@ -234,7 +236,8 @@ describe("applyCountryBudget", () => {
 	})
 
 	it("drops a country the budget does not name, rather than letting it through uncapped", () => {
-		// An unnamed country is one nobody sized. Passing it through is how a source silently dominates a recipe output.
+		// An unnamed country is one nobody sized.
+		// Passing it through is how a source silently dominates a recipe output.
 		const triples = [make("FR", "Lyon", "69000"), make("MX", "Puebla", "72000")]
 
 		expect(applyCountryBudget(triples, new Map([["FR", 10]])).map((row) => row.cc)).toEqual(["FR"])
@@ -317,8 +320,9 @@ describe("localityWrittenForm", () => {
 })
 
 /**
- * A fixture pair of gazetteers on the unified schema: a Balearic and a Zamoran
- * postcode whose parents resolve, plus a postcode whose parent has no region.
+ * A fixture pair of gazetteers on the unified schema: a Balearic and a Zamoran postcode
+ * whose parents resolve, plus a postcode whose parent has no region.
+ *
  * Names carry the WOF shape #1673 measured: `spr.name` is the English exonym
  * or the stripped Castilian, the `spa` preferred form is accented, and the `cat`
  * preferred form of a Castilian province names the whole community.

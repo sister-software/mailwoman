@@ -49,8 +49,9 @@ vi.mock("onnxruntime-web/webgpu", () => {
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
-// Import after the ORT mock. The tokenizer + classifier are not mocked here — the load runs
-// the real tokenizer + classifier so the parse below exercises the real shared decode.
+// Import after the ORT mock.
+// The tokenizer + classifier are not mocked here — the load runs the real tokenizer +
+// classifier so the parse below exercises the real shared decode.
 const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web-loader")
 
 const SEQ = 128
@@ -70,9 +71,11 @@ function col(label: string): number {
 }
 
 /**
- * The task-8 path-fusion lattice as a canned [1, SEQ, L] logits tensor: rows 0-2 are "shoreditch"'s fused
- * street run, row 3 is a decisive "london" locality. Rows past the real pieces stay zero
- * (the runner trims to seqLen, and the loader's warmup `infer([0])` reads only row 0 — harmless).
+ * The task-8 path-fusion lattice as a canned [1, SEQ, L] logits tensor: rows 0-2 are
+ * "shoreditch"'s fused street run, row 3 is a decisive "london" locality.
+ *
+ * Rows past the real pieces stay zero (the runner trims to seqLen, and the loader's
+ * warmup `infer([0])` reads only row 0 — harmless).
  */
 function fusedLatticeSession(): void {
 	const flat = new Float32Array(SEQ * L)
@@ -156,8 +159,9 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 	})
 
 	test("PER-PARSE selection reaches decode: a selected resolver fed as ParseOpts.placetypePair flips the SAME lattice", async () => {
-		// Load with no country posture → no config default. The prior can only come from the per-parse
-		// selection, so the flip below is proof the selected resolver threads through the shared decode.
+		// Load with no country posture → no config default.
+		// The prior can only come from the per-parse selection, so the flip below is proof
+		// the selected resolver threads through the shared decode.
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
 		const result = await loadNeuralClassifierFromURLs(baseOpts([GB_INDEX]))
 		warn.mockRestore()

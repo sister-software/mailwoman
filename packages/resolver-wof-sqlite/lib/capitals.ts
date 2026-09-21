@@ -25,6 +25,7 @@ import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
  * Capital status of one candidate: national capital, admin-1 seat, or neither.
+ *
  * Numeric so the resolver's promotion can compare levels.
  */
 export const CAPITAL_LEVEL = {
@@ -74,6 +75,7 @@ interface IndexedPoint {
 
 /**
  * Country-bucketed capital points with the three-conjunct identity probe.
+ *
  * Construct from the parsed reference file's `entries` — the loader that reads the file off disk
  * lives with the path owners (`mailwoman`'s resolver backend), keeping this module platform-free.
  */
@@ -103,6 +105,7 @@ export class CapitalIndex {
 
 	/**
 	 * The highest capital level whose entry passes all three conjuncts for this place.
+	 *
 	 * `none` — never a throw — for a missing name, country, or coordinate,
 	 * an unknown country, or no matching entry.
 	 */

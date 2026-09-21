@@ -32,8 +32,9 @@ export function applyNFC(input: string): NFCResult {
 }
 
 /**
- * Estimate per-output-codepoint offsets. Walks both strings in parallel. emits
- * the next source index for each output position.
+ * Estimate per-output-codepoint offsets.
+ *
+ * Walks both strings in parallel. emits the next source index for each output position.
  */
 function estimateNFCMap(input: string, output: string): number[] {
 	const map: number[] = []

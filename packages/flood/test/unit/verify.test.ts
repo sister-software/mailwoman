@@ -28,9 +28,10 @@ import { rectangleRing } from "@mailwoman/spatial"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 /**
- * A service that answers every point with one polygon carrying `zone`,
- * drawn `offsetDegrees` away from the fixture's own FZ3 square so the nearest-vertex
- * distance is under this test's control. `null` answers with nothing.
+ * A service that answers every point with one polygon carrying `zone`, drawn `offsetDegrees` away
+ * from the fixture's own FZ3 square so the nearest-vertex distance is under this test's control.
+ *
+ * `null` answers with nothing.
  */
 function scriptedService(zone: string | null | undefined, offsetDegrees = 0): ServiceFeatureReader {
 	return async () =>
@@ -173,10 +174,9 @@ describe("verifyFloodDatabase", () => {
 	})
 
 	it("FAILS the negative half on a point the footprint does cover — the check has teeth", async () => {
-		// Inside the fixture's extent and outside every polygon, so the artifact
-		// answers the designated absence. The negative half must not pass on it:
-		// an artifact that answered a designation everywhere would slip through a check
-		// that only ever asked about places it happened to be silent.
+		// Inside the fixture's extent and outside every polygon, so the artifact answers the designated absence.
+		// The negative half must not pass on it: an artifact that answered a designation everywhere
+		// would slip through a check that only ever asked about places it happened to be silent.
 		const result = await verifyFloodDatabase({
 			databasePath,
 			readServiceFeatures: scriptedService(null),

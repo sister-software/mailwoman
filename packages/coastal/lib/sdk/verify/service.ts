@@ -13,13 +13,16 @@ import { NCERM_SCENARIOS_BY_KEY } from "#vocabulary"
 
 /**
  * Half-width of the bbox the service is asked for, in degrees.
+ *
  * About 11 m at this latitude — wide enough that a polygon containing the point is
  * certainly returned, narrow enough that the response stays small.
  */
 const PROBE_HALF_WIDTH_DEGREES = 0.0001
 
 /**
- * Features per service request. The probe bbox is metres wide, so this is a ceiling rather than a page size.
+ * Features per service request.
+ *
+ * The probe bbox is metres wide, so this is a ceiling rather than a page size.
  */
 const SERVICE_FEATURE_LIMIT = 200
 

@@ -30,8 +30,9 @@ import { departementInfo, type DepartementCode, type DepartementInfo } from "#fr
 import { FR_REGIONS, type FrenchRegionInfo } from "#fr/region"
 
 /**
- * A French postcode: five digits (`75008`). Same shape as a US ZIP or a German PLZ —
- * the shape alone does not disambiguate the country.
+ * A French postcode: five digits (`75008`).
+ *
+ * Same shape as a US ZIP or a German PLZ — the shape alone does not disambiguate the country.
  *
  * @category Postal
  * @type string
@@ -40,6 +41,7 @@ import { FR_REGIONS, type FrenchRegionInfo } from "#fr/region"
  */
 /**
  * Postcode at which Corsica splits between departments 2A (Corse-du-Sud) and 2B (Haute-Corse).
+ *
  * Both share the 20xxx range, so the numeric boundary is the only way to tell them apart.
  */
 const CORSICA_2A_2B_BOUNDARY = 20_200
@@ -52,8 +54,10 @@ export type CodePostal = Tagged<string, "CodePostal">
 export const CODE_POSTAL_PATTERN = /^\d{5}$/
 
 /**
- * Normalize a code-postal surface form to the bare five digits: strip an `F-` country courtesy prefix
- * and surrounding whitespace (`F-75008` → `75008`). Returns null if the result is not five digits.
+ * Normalize a code-postal surface form to the bare five digits: strip an `F-` country
+ * courtesy prefix and surrounding whitespace (`F-75008` → `75008`).
+ *
+ * Returns null if the result is not five digits.
  */
 export function normalizeCodePostal(raw: unknown): CodePostal | null {
 	if (typeof raw !== "string") return null
@@ -70,10 +74,14 @@ export function isCodePostal(input: unknown): input is CodePostal {
 }
 
 /**
- * The département code a postcode belongs to. The clean rule plus its two exceptions:
+ * The département code a postcode belongs to.
  *
- * - `20xxx` → Corsica. The split is by the rest of the code: roughly `20000`–`20199` → `2A`
- *   (Ajaccio side), `20200`+ → `2B` (Bastia side). Approximate at the boundary, exact for the bulk.
+ * The clean rule plus its two exceptions:
+ *
+ * - `20xxx` → Corsica.
+ *   The split is by the rest of the code: roughly `20000`–`20199` → `2A` (Ajaccio side),
+ *   `20200`+ → `2B` (Bastia side).
+ *   Approximate at the boundary, exact for the bulk.
  * - `970`–`976`xx → an overseas DOM, keyed by the three-digit prefix (`971`–`974`, `976`).
  * - Otherwise the first two digits are the département number.
  *
@@ -90,7 +98,8 @@ export function departementOfCodePostal(codePostal: unknown): DepartementCode | 
 	}
 
 	if (cp.startsWith("97") || cp.startsWith("98")) {
-		// Overseas: three-digit prefix. Only the five DOM are départements.
+		// Overseas: three-digit prefix.
+		// Only the five DOM are départements.
 		const dom = cp.slice(0, 3)
 
 		return departementInfo(dom) ? (dom as DepartementCode) : null

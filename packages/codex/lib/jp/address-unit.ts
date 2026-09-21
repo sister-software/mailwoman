@@ -33,7 +33,8 @@
  *
  * - 都 (to) — metropolis. only Tokyo.
  * - 道 (dō) — circuit. only Hokkaido.
- * - 府 (fu) — urban prefecture. Osaka and Kyoto.
+ * - 府 (fu) — urban prefecture.
+ *   Osaka and Kyoto.
  * - 県 (ken) — prefecture. the other 43.
  * - 市 (shi) — city.
  * - 区 (ku) — ward (a subdivision of a designated city, e.g. Tokyo's 23 special wards).
@@ -67,17 +68,19 @@ export type JapaneseBlockMarker = (typeof JP_BLOCK_MARKERS)[number]
 const ADMIN_SUFFIX_SET: ReadonlySet<string> = new Set(JP_ADMIN_SUFFIXES)
 
 /**
- * True when a single kanji is one of the {@link JP_ADMIN_SUFFIXES} admin-area
- * markers (`都`, `市`, `区`, …). Strictly single-character: a multi-character input
- * (even one ending in a suffix) is not a suffix on its own.
+ * True when a single kanji is one of the {@link JP_ADMIN_SUFFIXES} admin-area markers (`都`, `市`, `区`, …).
+ *
+ * Strictly single-character: a multi-character input (even one ending in a suffix)
+ * is not a suffix on its own.
  */
 export function isJapaneseAdminSuffix(ch: unknown): ch is JapaneseAdminSuffix {
 	return typeof ch === "string" && ADMIN_SUFFIX_SET.has(ch)
 }
 
 /**
- * Strip a trailing admin-area suffix kanji from a place name,
- * exposing the bare name (`東京都` → `東京`, `大阪市` → `大阪`, `千代田区` → `千代田`).
+ * Strip a trailing admin-area suffix kanji from a place name, exposing the bare
+ * name (`東京都` → `東京`, `大阪市` → `大阪`, `千代田区` → `千代田`).
+ *
  * Leaves a name untouched if it does not end in an admin suffix.
  *
  * Hokkaido (`北海道`) is the deliberate exception: its name ends in 道 but is indivisible, so it is

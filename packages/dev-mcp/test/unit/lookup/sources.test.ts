@@ -210,10 +210,11 @@ describe("lookupCandidate", () => {
 	})
 
 	it("tries the whitespace fold BEFORE the qualifier strip", async () => {
-		// Measured against the shipped candidate.db: strip-first sends `1012 LG` to `1012`,
-		// resolving the NL PC6 unit to its 4-digit stem (and to a DK row) while the unit's own
-		// record sits under `1012lg`. The runtime folds whitespace at the top of findPlace,
-		// so this order is the runtime's rather than a preference.
+		// Measured against the shipped candidate.db: strip-first sends `1012 LG` to
+		// `1012`, resolving the NL PC6 unit to its 4-digit stem (and to a DK row)
+		// while the unit's own record sits under `1012lg`.
+		// The runtime folds whitespace at the top of findPlace, so this order is
+		// the runtime's rather than a preference.
 		const db = await candidateFixture()
 		const [row] = lookupCandidate(db, ["1012 LG"])
 

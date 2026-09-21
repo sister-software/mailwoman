@@ -96,9 +96,10 @@ export const sourcesTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 		const asked = countries ?? []
 		const missing = asked.filter((code) => !byCountry[code]?.length)
 
-		// When the caller named countries, an artifact holding none of them is noise — 29 lines of
-		// zeros buries the two that matter. The absence is still reported, in `summary` and by a
-		// country's empty `by_country` entry. what is dropped is the per-artifact restatement of it.
+		// When the caller named countries, an artifact holding none of them is noise —
+		// 29 lines of zeros buries the two that matter.
+		// The absence is still reported, in `summary` and by a country's empty `by_country`
+		// entry. what is dropped is the per-artifact restatement of it.
 		const relevant = countries
 			? rows.filter((row) => !row.readable || Object.values(row.countries ?? {}).some((n) => n > 0))
 			: rows

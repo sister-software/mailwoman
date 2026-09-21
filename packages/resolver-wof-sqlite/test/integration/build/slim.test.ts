@@ -212,8 +212,9 @@ describe("buildSlimWOFDatabase", () => {
 		const output = scratch.resolve("slim.db")
 		buildFixtureWOF(source)
 
-		// Both the demo plugin and build-demo-assets.ts pass `--in ""` when the custom postcode DB
-		// isn't built yet. The empty path must be skipped rather than treated as a missing file.
+		// Both the demo plugin and build-demo-assets.ts pass `--in ""` when the
+		// custom postcode DB isn't built yet.
+		// The empty path must be skipped rather than treated as a missing file.
 		const result = await buildSlimWOFDatabase({ inputs: ["", source, ""], output, topLocalitiesPerCountry: 1 })
 		expect(result.rowCounts.spr).toBe(5) // 1 country + 1 region + 1 locality + 2 postcodes
 	})

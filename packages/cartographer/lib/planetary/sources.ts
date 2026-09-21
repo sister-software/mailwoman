@@ -14,9 +14,10 @@ import { TileSetSourceID } from "#styles/sources"
 export const PlanetaryNomenclatureSourceID = TileSetSourceID("nomenclature")
 
 /**
- * The elevation source a body's relief is shaded from. The archive carries
- * terrarium-encoded height rather than a shaded picture, so the shading happens at
- * draw time and each body can be tinted from the style.
+ * The elevation source a body's relief is shaded from.
+ *
+ * The archive carries terrarium-encoded height rather than a shaded picture,
+ * so the shading happens at draw time and each body can be tinted from the style.
  */
 export const PlanetaryHillshadeSourceID = TileSetSourceID("hillshade")
 

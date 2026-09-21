@@ -35,8 +35,10 @@ import { PLACETYPE_PROJECTION } from "#gazetteer-pipeline/placetype-census"
 export { DEFAULT_COVERAGE_FLOOR } from "#gazetteer-pipeline/defaults"
 
 /**
- * The containment rungs, shallowest first. `postcode` is deliberately absent: it is an orthogonal
- * channel (the postcode-anchor path already ships, and `postalcode` has its own build),
+ * The containment rungs, shallowest first.
+ *
+ * `postcode` is deliberately absent: it is an orthogonal channel
+ * (the postcode-anchor path already ships, and `postalcode` has its own build),
  * and folding it into a depth ladder would make "bottoms out at" incoherent.
  */
 export const LADDER: readonly ComponentTag[] = [
@@ -66,9 +68,10 @@ export const SUB_LOCALITY_RUNGS: ReadonlySet<ComponentTag> = new Set<ComponentTa
 export const PARENT_PLACETYPES: readonly string[] = ["locality", "localadmin"]
 
 /**
- * WOF placetypes projecting onto a rung, sorted. Derived from {@link PLACETYPE_PROJECTION}
- * rather than hand-listed, so adding a placetype to the projection table
- * automatically widens the rung it belongs to.
+ * WOF placetypes projecting onto a rung, sorted.
+ *
+ * Derived from {@link PLACETYPE_PROJECTION} rather than hand-listed, so adding a placetype
+ * to the projection table automatically widens the rung it belongs to.
  */
 export function placetypesForRung(rung: ComponentTag): string[] {
 	return Object.entries(PLACETYPE_PROJECTION)
@@ -78,8 +81,10 @@ export function placetypesForRung(rung: ComponentTag): string[] {
 }
 
 /**
- * One rung's measurement for one country. A rung the builder looked AT and found empty is a present row
- * of zeroes. a rung with no measurable source is absent from {@link CountryGranularity.rungs} entirely.
+ * One rung's measurement for one country.
+ *
+ * A rung the builder looked AT and found empty is a present row of zeroes. a rung with
+ * no measurable source is absent from {@link CountryGranularity.rungs} entirely.
  * Collapsing those two would violate the meaning-of-zero requirement inside the artifact.
  */
 export interface RungMeasurement {
@@ -88,14 +93,17 @@ export interface RungMeasurement {
 	 */
 	nodes: number
 	/**
-	 * How many of {@link nodes} are Overture-backfilled (`OVERTURE_ID_BASE <= id < GEONAMES_ID_BASE`)
-	 * rather than real WOF. For the Overture backfill set the locality rung and above are
-	 * Overture, so a report that hid this would present self-comparison as corroboration.
+	 * How many of {@link nodes} are Overture-backfilled
+	 * (`OVERTURE_ID_BASE <= id < GEONAMES_ID_BASE`) rather than real WOF.
+	 *
+	 * For the Overture backfill set the locality rung and above are Overture,
+	 * so a report that hid this would present self-comparison as corroboration.
 	 */
 	overtureBackfilled: number
 	/**
-	 * How many of {@link nodes} come from the GeoNames alias fold
-	 * (`id >= GEONAMES_ID_BASE`). Split out from
+	 * How many of {@link nodes} come from the GeoNames alias fold (`id >= GEONAMES_ID_BASE`).
+	 *
+	 * Split out from
 	 * {@link overtureBackfilled} because a single `id >= OVERTURE_ID_BASE` test sweeps these in and mislabels every
 	 * GeoNames-only country's rows as Overture.
 	 */
@@ -123,8 +131,10 @@ export interface CountryGranularity {
 }
 
 /**
- * Build a `case` expression projecting a placetype column onto a rung name, generated from
- * the projection table so it cannot drift from it. Placetypes projecting onto nothing in
+ * Build a `case` expression projecting a placetype column onto a rung name,
+ * generated from the projection table so it cannot drift from it.
+ *
+ * Placetypes projecting onto nothing in
  * {@link ladder} fall through to NULL and are filtered by the caller's `where`.
  */
 function rungCaseExpression(column: string): string {
@@ -145,9 +155,11 @@ function ladderPlacetypes(): string[] {
 /**
  * Measure the depth ladder for every country in the admin DB.
  *
- * Read-only. Three grouped queries: node counts per (country, rung) with the source split,
- * distinct covered parents per (country, rung) through `ancestors`, and the locality-class
- * denominator. The projection runs in SQL because a parent with both a borough child
+ * Read-only.
+ * Three grouped queries: node counts per (country, rung) with the source split, distinct
+ * covered parents per (country, rung) through `ancestors`, and the locality-class denominator.
+ *
+ * The projection runs in SQL because a parent with both a borough child
  * and a neighbourhood child must count once toward `dependent_locality` —
  * counting distinct parents per placetype and summing in JS would double it.
  */

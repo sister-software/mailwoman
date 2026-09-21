@@ -65,23 +65,26 @@ const HTTP_NOT_FOUND = 404
 const SLUG = "geonames-postal"
 
 /**
- * GeoNames' own export directory. One zip per ISO alpha-2 code, each holding
- * `<CC>.txt` plus the shared `readme.txt`.
+ * GeoNames' own export directory.
+ *
+ * One zip per ISO alpha-2 code, each holding `<CC>.txt` plus the shared `readme.txt`.
  */
 const BASE_URL = "https://download.geonames.org/export/zip"
 
 /**
  * Countries fetched when the caller names none.
  *
- * These are the ones the corpus wants and cannot get from `postalcode-intl.db`'s
- * `parent_id` route — see the header for why that route covers exactly five countries.
+ * These are the ones the corpus wants and cannot get from `postalcode-intl.db`'s `parent_id`
+ * route — see the header for why that route covers exactly five countries.
  * Venezuela is deliberately absent because GeoNames does not publish it.
  */
 export const GEONAMES_POSTAL_DEFAULT_COUNTRIES = ["PT", "AU", "NZ", "IE", "BR", "ZA", "MX"] as const
 
 export interface FetchGeonamesPostalOptions extends BaseFetchOptions {
 	/**
-	 * ISO alpha-2 codes, in any casing. Defaults to {@linkcode GEONAMES_POSTAL_DEFAULT_COUNTRIES}.
+	 * ISO alpha-2 codes, in any casing.
+	 *
+	 * Defaults to {@linkcode GEONAMES_POSTAL_DEFAULT_COUNTRIES}.
 	 */
 	countries?: readonly string[]
 	/**
@@ -107,8 +110,10 @@ interface GeonamesPostalManifest {
 	downloaded_at: string
 	files: GeonamesPostalFileEntry[]
 	/**
-	 * Countries asked for and not published by GeoNames, recorded so a later reader does not spend the
-	 * fetch again to rediscover it. An absence here is a fact about the source rather than about the run.
+	 * Countries asked for and not published by GeoNames, recorded so a later reader
+	 * does not spend the fetch again to rediscover it.
+	 *
+	 * An absence here is a fact about the source rather than about the run.
 	 */
 	unavailable: string[]
 }
@@ -154,9 +159,9 @@ export async function fetchGeonamesPostal(
 			const message = error instanceof Error ? error.message : String(error)
 
 			// A 404 here means GeoNames does not publish the country at all, which is a different
-			// finding from a failed transfer and the one a caller planning a recipe output
-			// needs to see. Branch on the typed status: matching message prose classified a
-			// 500 as "unpublished" whenever the URL happened to contain the substring 404 —
+			// finding from a failed transfer and the one a caller planning a recipe output needs to see.
+			// Branch on the typed status: matching message prose classified a 500 as
+			// "unpublished" whenever the URL happened to contain the substring 404 —
 			// an ephemeral test-server port did exactly that in CI.
 			if (error instanceof HTTPStatusError && error.status === HTTP_NOT_FOUND) {
 				report?.(`✗ ${country}: GeoNames does not publish a postal export for this country`)

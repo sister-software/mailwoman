@@ -73,8 +73,9 @@ describe("thresholdTable", () => {
 
 describe("tostEquivalence", () => {
 	it("declines to claim parity from an underpowered run, and says that is what happened", () => {
-		// Identical rates on 20 rows. The point estimate is exactly 0pp — the reading a naive
-		// eyeball calls parity — and the interval is far too wide to place inside ±5pp.
+		// Identical rates on 20 rows.
+		// The point estimate is exactly 0pp — the reading a naive eyeball calls parity —
+		// and the interval is far too wide to place inside ±5pp.
 		const reading = tostEquivalence(16, 16, 20)
 
 		expect(reading.delta_pp).toBe(0)
@@ -121,7 +122,8 @@ describe("tostEquivalence — the degenerate sample", () => {
 
 	it("never calls a total wipeout equivalent, which is the other way to reach a zero standard error", () => {
 		// pA = 1 and pB = 0 both sit at the edge. Therefore, the pooled variance is zero while the arms are as far apart as
-		// they can be. An equivalence test that keys on the standard error alone declares parity here.
+		// they can be.
+		// An equivalence test that keys on the standard error alone declares parity here.
 		const reading = tostEquivalence(50, 0, 50)
 
 		expect(reading.delta_pp).toBe(-100)

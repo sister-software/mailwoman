@@ -35,9 +35,11 @@ import type { CanadianProvinceCode } from "#ca/province"
 const POSTAL_CODE_LENGTH = 6
 
 /**
- * A Canadian postcode: `A1A 1A1`. Six alphanumeric characters in a strict
- * Letter-Digit-Letter-Digit-Letter-Digit pattern, conventionally written with a single space
- * after the third. Unlike the other systems' bare five digits, the shape alone already says "Canada".
+ * A Canadian postcode: `A1A 1A1`.
+ *
+ * Six alphanumeric characters in a strict Letter-Digit-Letter-Digit-Letter-Digit pattern,
+ * conventionally written with a single space after the third.
+ * Unlike the other systems' bare five digits, the shape alone already says "Canada".
  *
  * @category Postal
  * @type string
@@ -47,16 +49,20 @@ const POSTAL_CODE_LENGTH = 6
 export type PostalCode = Tagged<string, "CaPostalCode">
 
 /**
- * The Canadian postal-code shape. The valid first letters exclude `D F I O Q U W Z`
- * (never used to open a postcode); the interior letters additionally exclude `D F I O Q U`
- * (the visually ambiguous ones). The space between FSA and LDU is optional in the raw form.
+ * The Canadian postal-code shape.
+ *
+ * The valid first letters exclude `D F I O Q U W Z` (never used to open a postcode);
+ * the interior letters additionally exclude `D F I O Q U` (the visually ambiguous ones).
+ * The space between FSA and LDU is optional in the raw form.
  */
 export const CA_POSTAL_CODE_PATTERN = /^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z] ?\d[ABCEGHJ-NPRSTV-Z]\d$/i
 
 /**
- * Normalize a postal-code surface form to canonical `A1A 1A1`: uppercase and ensure exactly one
- * space between the FSA (first three chars) and the LDU (last three) — `K1A0B1` → `K1A 0B1`,
- * `k1a 0b1` → `K1A 0B1`. Returns null if the input is not a valid Canadian postcode.
+ * Normalize a postal-code surface form to canonical `A1A 1A1`: uppercase and ensure
+ * exactly one space between the FSA (first three chars) and the LDU (last three) —
+ * `K1A0B1` → `K1A 0B1`, `k1a 0b1` → `K1A 0B1`.
+ *
+ * Returns null if the input is not a valid Canadian postcode.
  */
 export function normalizeCaPostalCode(raw: unknown): PostalCode | null {
 	if (typeof raw !== "string") return null
@@ -76,9 +82,10 @@ export function isCaPostalCode(input: unknown): input is PostalCode {
 }
 
 /**
- * FSA first letter → province/territory. Clean (one province per letter) except `X`,
- * shared by the Northwest Territories and Nunavut, and the large provinces
- * that span several letters: Ontario owns `K L M N P` and Quebec owns `G H J`.
+ * FSA first letter → province/territory.
+ *
+ * Clean (one province per letter) except `X`, shared by the Northwest Territories and Nunavut,
+ * and the large provinces that span several letters: Ontario owns `K L M N P` and Quebec owns `G H J`.
  * Letters `D F I O Q U W Z` never open a Canadian postcode and so do not appear here.
  */
 export const FSA_LETTER_TO_PROVINCE: Record<string, CanadianProvinceCode | CanadianProvinceCode[]> = {
@@ -104,6 +111,7 @@ export const FSA_LETTER_TO_PROVINCE: Record<string, CanadianProvinceCode | Canad
 
 /**
  * The province/territory a postcode belongs to, via its FSA first letter.
+ *
  * Returns the single code for the clean letters, the `["NT", "NU"]` pair for
  * the shared `X`, and null if the input is not a valid Canadian postcode
  * (or its first letter has no province, which the pattern already forbids).
@@ -118,6 +126,7 @@ export function provinceOfPostalCode(postalCode: unknown): CanadianProvinceCode 
 
 /**
  * True when a postcode is rural: its second character (the FSA's first digit) is `0`.
+ *
  * Canada Post uses a `0` in that position to mark the lower-density delivery zones
  * (rural routes, small communities) — the contrast with the urban `1`–`9` FSAs.
  * Returns false for a non-code.

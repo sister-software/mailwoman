@@ -37,6 +37,7 @@ export class ArcGISServiceError extends Error {
 
 /**
  * The error envelope inside an ArcGIS JSON body, or `undefined` when the body is an answer.
+ *
  * Only an object whose `error` carries a string `message` counts: a feature
  * attribute that happens to be named `error` is data.
  */

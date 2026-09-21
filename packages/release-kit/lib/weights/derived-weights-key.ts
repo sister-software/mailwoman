@@ -34,11 +34,13 @@ import { Globerator } from "spliterator/node/fs"
  * The first entry mirrors the retired workflow cache key.
  * The rest are what that key missed: the modules that generate the binaries — each source
  * module paired with its compiled counterpart, because the build spawns the compiled CLI.
+ *
  * Hashing source alone re-created the #1528 poisoning in cache form: a stale-compiled
  * builder under already-fixed source computes the fixed key, builds with the broken code,
  * and the store then serves that artifact to every fresh-compiled run forever.
  * With the compiled bytes in the key, a stale compile keys separately from a fresh one,
  * so its output can never be served to a checkout whose compiled tree differs.
+ *
  * (Transitive compiled imports are deliberately not hashed — that would invalidate
  * the store on every unrelated commit and delete its reason to exist. the direct
  * builder modules are where both real incidents lived.)
@@ -59,9 +61,10 @@ export const DERIVED_WEIGHTS_INPUTS: readonly string[] = [
 ]
 
 /**
- * The `data/gazetteer` payload, matched the way the retired workflow key matched
- * it (`*.json` + `*.jsonl`). Enumerated rather than hardcoded so a new extract is
- * picked up without a code change — the opposite trade from
+ * The `data/gazetteer` payload, matched the way the retired workflow key matched it (`*.json` + `*.jsonl`).
+ *
+ * Enumerated rather than hardcoded so a new extract is picked up without a
+ * code change — the opposite trade from
  * {@link DERIVED_WEIGHTS_INPUTS}, where an explicit list is the point.
  */
 async function gazetteerDataPaths(): Promise<string[]> {
@@ -75,6 +78,7 @@ async function gazetteerDataPaths(): Promise<string[]> {
 /**
  * The postcode pipeline modules the postcode-binary command calls into — source and compiled,
  * enumerated like the data payload so a new module joins the key without a code change.
+ *
  * The #1527 fix lived here, one import below the command module the explicit list carried,
  * which is how the stale build escaped the key.
  */
@@ -106,11 +110,16 @@ async function postcodePipelinePaths(): Promise<string[]> {
  */
 export interface DerivedWeightsInput {
 	/**
-	 * Repo-relative identity of the input. Hashed. Must not vary by checkout location.
+	 * Repo-relative identity of the input.
+	 *
+	 * Hashed.
+	 * Must not vary by checkout location.
 	 */
 	name: string
 	/**
-	 * Absolute path to read. Not hashed — see {@link derivedWeightsKeyFrom}.
+	 * Absolute path to read.
+	 *
+	 * Not hashed — see {@link derivedWeightsKeyFrom}.
 	 */
 	path: string
 }
@@ -130,15 +139,18 @@ async function derivedWeightsInputs(): Promise<DerivedWeightsInput[]> {
 }
 
 /**
- * Hash an explicit input list. Exported for testing. production callers want {@link derivedWeightsKey}.
+ * Hash an explicit input list.
+ *
+ * Exported for testing. production callers want {@link derivedWeightsKey}.
  *
  * Sorted by name, so the caller's ordering cannot change the key.
  * Each entry contributes its name and its bytes.
  *
  * ⚠ The name is repo-relative and the absolute path is deliberately not hashed.
- * Hashing absolute paths was the first version's bug: every GitHub runner checks out
- * to its own work directory, so lab-1, lab-2, lab-3 and a local worktree each computed
- * a different key over byte-identical inputs and none of them ever saw another's work.
+ * Hashing absolute paths was the first version's bug: every GitHub runner checks out to
+ * its own work directory, so lab-1, lab-2, lab-3 and a local worktree each computed a
+ * different key over byte-identical inputs and none of them ever saw another's work.
+ *
  * It surfaced as four store directories holding the same eleven artifacts, and as a 41s
  * `pair-index-nz.bin` rebuild on a runner where that exact file was already on disk under a different key.
  *
@@ -166,8 +178,10 @@ export async function derivedWeightsKeyFrom(inputs: readonly DerivedWeightsInput
 }
 
 /**
- * The key for this checkout's derived weights. Identical across checkouts with identical input
- * content, wherever they live on disk — that invariance is the whole point of the store.
+ * The key for this checkout's derived weights.
+ *
+ * Identical across checkouts with identical input content, wherever they live on disk —
+ * that invariance is the whole point of the store.
  */
 export async function derivedWeightsKey(): Promise<string> {
 	return derivedWeightsKeyFrom(await derivedWeightsInputs())
@@ -188,6 +202,7 @@ export function derivedWeightsDir(key: string): string {
  * A `postcode-<cc>.bin` is refused when its PCB1 header is malformed or its record count sits
  * below the lowest calibrated floor for that country — for GB that is the outward floor, so a
  * legitimate outward-granularity bin is never false-refused while the empty/collapsed class always is.
+ *
  * The calibrated per-granularity check remains the builder's. this one only has the header to read.
  *
  * Non-postcode entries (pair indexes) pass — their reader validates a typed header

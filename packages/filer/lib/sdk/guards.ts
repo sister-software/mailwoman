@@ -22,6 +22,7 @@ const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
  * Validates `value` is an ISO `yyyy-MM-DD` date before it is written into a `valid_from`
  * (or `valid_to`) column — applied at every site in `build-filer.ts` and `cluster-filers.ts`
  * (and any future filer.db writer) that writes either temporal column.
+ *
  * One implementation, shared, so the rule can't drift between writers.
  *
  * `valid_from` participates in every downstream `asOf`-scoped predicate (`filer-lookup.ts`'s `valid_from <= asOf`) as a
@@ -34,10 +35,11 @@ const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
  * crosswalk as empty against a filer.db that actually has the data (reviewer probe, `build-filer.ts`'s final 3a review:
  * a fully populated filer.db built with `sourceVintage: "2026-Q2"` returned `identifiers: []`/`primary_frn: null`).
  *
- * Thrown rather than coerced: there is no honest way to turn a whole-file vintage label into a
- * per-edge date without fabricating one. The caller must supply a real ISO date through a field
- * dedicated to that purpose (`BuildFilerOptions.validFrom`, `ClusterFilersOptions.validFrom`)
- * instead of relying on this function (or any other) to guess one from a label.
+ * Thrown rather than coerced: there is no honest way to turn a whole-file vintage
+ * label into a per-edge date without fabricating one.
+ * The caller must supply a real ISO date through a field dedicated to that purpose
+ * (`BuildFilerOptions.validFrom`, `ClusterFilersOptions.validFrom`) instead of relying
+ * on this function (or any other) to guess one from a label.
  */
 // repo-health-ignore export-name-affix -- a guard that refuses a malformed value; `isoDate` formats and validates none.
 export function assertISODate(value: string, context: string, caller = "buildFilerDatabase"): string {

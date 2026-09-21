@@ -70,7 +70,8 @@ describe("probeForkEntity", () => {
 	})
 
 	it("THE HIJACK GUARD: a street-generic token stands the probe down even with a unique entity", () => {
-		// poi.db's real state: exactly one poi named 'savile row'. Without check 2 this would resolve.
+		// poi.db's real state: exactly one poi named 'savile row'.
+		// Without check 2 this would resolve.
 		const lookup = stubLookup([{ name: "Savile Row", categoryID: "clothing_store", lat: 51, lon: -2, country: "GB" }])
 
 		expect(probeForkEntity("Savile Row", { lookup, isStreetGeneric: REAL_GENERICS })).toBeNull()
@@ -132,9 +133,10 @@ describe("probeVenueNearAnchor (#1684's venue tier)", () => {
 	})
 
 	it("honors a tightened reach — a unit-postcode anchor refuses the namesake 9.9 km away", () => {
-		// The board row: the walk answered "University of Chichester, Bognor Regis" to its unit postcode,
-		// 80 m from the campus, and the only same-named entity in the metro was the other campus,
-		// 9.87 km away. Under the locality reach that entity is locally unique and replaces a better answer.
+		// The board row: the walk answered "University of Chichester, Bognor Regis"
+		// to its unit postcode, 80 m from the campus, and the only same-named entity
+		// in the metro was the other campus, 9.87 km away.
+		// Under the locality reach that entity is locally unique and replaces a better answer.
 		const bognor = { lat: 50.7876, lon: -0.6717 }
 		const lookup = stubLookup([{ name: "University of Chichester", lat: 50.8455, lon: -0.7756, country: "GB" }])
 
@@ -196,9 +198,9 @@ describe("probeVenueNearAnchorFolded (the qualifier-folding second leg)", () => 
 	})
 
 	it("abstains when the folded head matches TWO local entities — the chain-branch class", () => {
-		// The query's decoration exists on no row (the exact leg abstains), and the folded head matches
-		// both metro branches — a genuine ambiguity. A query naming an existing branch
-		// verbatim is the exact leg's win rather than this leg's problem.
+		// The query's decoration exists on no row (the exact leg abstains), and the folded
+		// head matches both metro branches — a genuine ambiguity.
+		// A query naming an existing branch verbatim is the exact leg's win rather than this leg's problem.
 		const lookup = stubLookup([
 			{ name: "The North Face - Covent Garden", lat: 51.512, lon: -0.123, country: "GB" },
 			{ name: "The North Face - Oxford Street", lat: 51.515, lon: -0.141, country: "GB" },

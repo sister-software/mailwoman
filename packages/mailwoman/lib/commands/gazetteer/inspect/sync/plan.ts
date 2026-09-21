@@ -26,8 +26,10 @@ export interface DiscoveredRepo {
 	name: string
 	url: string
 	/**
-	 * GitHub's reported size. It under-states the checkout by roughly 7×: GitHub reports
-	 * the packed size, and these repos unpack to millions of small GeoJSON files.
+	 * GitHub's reported size.
+	 *
+	 * It under-states the checkout by roughly 7×: GitHub reports the packed size,
+	 * and these repos unpack to millions of small GeoJSON files.
 	 * Measured on a `--countries tr` sync: three repositories reported as 83.4 MB occupied 633 MB once cloned.
 	 */
 	diskUsageKB?: number
@@ -130,9 +132,9 @@ export function selectRepos(discovered: readonly DiscoveredRepo[], options: Sele
 	const byName = new Map(discovered.map((entry) => [entry.name, entry]))
 	const wanted = new Set<string>()
 
-	// An explicitly named repository must exist. Before this check an unmatched name
-	// filtered the list to nothing and the command reported a successful sync of the
-	// placetypes repo alone, so a typo read as a completed job.
+	// An explicitly named repository must exist.
+	// Before this check an unmatched name filtered the list to nothing and the command reported
+	// a successful sync of the placetypes repo alone, so a typo read as a completed job.
 	for (const name of extractDelimited(options.repos)) {
 		if (!byName.has(name)) {
 			const suggestion = nearestName(name, discovered)
@@ -151,8 +153,8 @@ export function selectRepos(discovered: readonly DiscoveredRepo[], options: Sele
 		wanted.add(name)
 	}
 
-	// A country expands to the repositories it might have. only a country with none at
-	// all is an error. Most countries carry an admin repository and no postalcode one,
+	// A country expands to the repositories it might have. only a country with none at all is an error.
+	// Most countries carry an admin repository and no postalcode one,
 	// so requiring both would refuse the common case.
 	for (const code of extractDelimited(options.countries)) {
 		const candidates = countryRepoNames(code).filter((name) => byName.has(name))

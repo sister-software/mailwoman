@@ -78,11 +78,12 @@ using db = new DatabaseClient<CandidateDatabase>(values["candidate-db"]!)
 /**
  * How far a candidate row may sit from the panel's own coordinate and still be that row's gold place.
  *
- * Wide enough for a centroid-vs-rooftop offset on a large locality, narrow enough to refuse
- * a namesake one region over — 21 US localities are named Ramsey, and the panel coordinate
- * is the only thing that says which one a row means. A place the panel cannot identify
- * within it is reported as `gold_not_found` rather than folded into a miss, because "we
- * could not name the right answer" and "the run named the wrong one" are different findings.
+ * Wide enough for a centroid-vs-rooftop offset on a large locality, narrow enough
+ * to refuse a namesake one region over — 21 US localities are named Ramsey,
+ * and the panel coordinate is the only thing that says which one a row means.
+ * A place the panel cannot identify within it is reported as `gold_not_found`
+ * rather than folded into a miss, because "we could not name the right answer"
+ * and "the run named the wrong one" are different findings.
  */
 const GOLD_MAX_KM = 25
 
@@ -143,8 +144,10 @@ async function carriesKey(sprID: number, key: NameKey): Promise<boolean> {
 const deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
 
 /**
- * Rows whose country has no layout able to write them. Counted and reported rather than dropped:
- * a panel that shrank silently would move every rate below it without saying why.
+ * Rows whose country has no layout able to write them.
+ *
+ * Counted and reported rather than dropped: a panel that shrank silently would
+ * move every rate below it without saying why.
  */
 let unrenderable = 0
 

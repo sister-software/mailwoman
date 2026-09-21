@@ -63,7 +63,8 @@ const neural = new NeuralAddressClassifier({
 	suppressGazetteerNearPostcode: true,
 })
 
-// TODO: susceptible to drft. Grab this from the codex package.
+// TODO: susceptible to drft.
+// Grab this from the codex package.
 const COMMON_SUFFIXES = new Set([
 	"st",
 	"street",

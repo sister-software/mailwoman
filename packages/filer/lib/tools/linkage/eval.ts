@@ -42,9 +42,10 @@ const EVAL_SOURCE_VINTAGE = "2026-eval-v1"
 const EVAL_VALID_FROM = "2026-01-01"
 
 /**
- * The `asOf` date every `filer_family` read in this eval is scoped to —
- * a fixed constant, later than the latest `lastFiledAt` in the corpus
- * and never "today", for the same reproducibility reason as the two constants above.
+ * The `asOf` date every `filer_family` read in this eval is scoped to — a fixed
+ * constant, later than the latest `lastFiledAt` in the corpus and never "today",
+ * for the same reproducibility reason as the two constants above.
+ *
  * A family membership is a temporal fact in this schema (`valid_from`/`valid_to`),
  * so "predicted same family" is only well-defined relative to a date. this is that date.
  */
@@ -59,6 +60,7 @@ const EVAL_BUILD_SHA = "filer-linkage-eval"
 
 /**
  * What a built artifact actually contains that bears on ownership — counted rather than asserted.
+ *
  * The withheld artifact is not family-row-free: two `filer_family` rows reach it from
  * the corpus's management-company disclosures, so the one page whose credibility rests
  * on the withholding being real has to measure the artifact rather than describe it.
@@ -79,33 +81,40 @@ export interface LeakageCensus {
 	/**
 	 * `filer_edge` rows whose relationship asserts ownership ({@linkcode OWNERSHIP_BY_RELATIONSHIP}) —
 	 * today `holding_company`, and `parent_company`/`subsidiary` the moment a writer emits one.
+	 *
 	 * Note that an ownership edge alone moves no score: see {@linkcode renderWhySection}.
 	 */
 	ownershipEdges: number
 	/**
-	 * `filer_family` rows the prediction will score — every membership whose relationship asserts
-	 * ownership ({@linkcode OWNERSHIP_BY_RELATIONSHIP}). Must be 0 in the withheld build.
+	 * `filer_family` rows the prediction will score — every membership whose relationship
+	 * asserts ownership ({@linkcode OWNERSHIP_BY_RELATIONSHIP}).
+	 *
+	 * Must be 0 in the withheld build.
 	 */
 	scoredFamilyRows: number
 	/**
-	 * `filer_family` rows carrying a recognized relationship that asserts something
-	 * other than ownership — today that is `management_company` only, since no writer
-	 * emits a `same_entity` family row. Non-zero in both runs: `managementCompany` is
-	 * not the field under test, and the prediction ignores these.
+	 * `filer_family` rows carrying a recognized relationship that asserts something other than ownership —
+	 * today that is `management_company` only, since no writer emits a `same_entity` family row.
+	 *
+	 * Non-zero in both runs: `managementCompany` is not the field under test,
+	 * and the prediction ignores these.
 	 */
 	nonOwnershipFamilyRows: number
 	/**
 	 * `filer_family` rows whose relationship is not a {@linkcode FilerRelationship} value at all —
 	 * impossible from any shipped writer, so a non-zero count means a row this build did not write.
+	 *
 	 * Counted separately rather than folded into either bucket, and the check refuses on it:
 	 * an assertion the eval cannot classify is exactly what a leakage check should stop on
 	 * rather than something to file under "not ownership" and pass.
 	 */
 	unrecognizedFamilyRows: number
 	/**
-	 * Every `filer_family` row in the artifact. Published alongside the splits
-	 * so a relationship class nobody anticipated cannot hide between them — and, since the
-	 * three splits are exhaustive by construction, so the reader can check they sum to this.
+	 * Every `filer_family` row in the artifact.
+	 *
+	 * Published alongside the splits so a relationship class nobody anticipated cannot
+	 * hide between them — and, since the three splits are exhaustive by construction,
+	 * so the reader can check they sum to this.
 	 */
 	familyRows: number
 }
@@ -136,48 +145,53 @@ const OWNERSHIP_BY_RELATIONSHIP = {
 	[FilerRelationship.HoldingCompany]: true,
 	[FilerRelationship.ParentCompany]: true,
 	[FilerRelationship.Subsidiary]: true,
-	// Identity continuity over time rather than control. A supersession chain
-	// says one registration became another. scoring it as ownership would let a
-	// withheld-parent run credit itself for recovering a family fact it never saw.
+	// Identity continuity over time rather than control.
+	// A supersession chain says one registration became another. scoring it as ownership would
+	// let a withheld-parent run credit itself for recovering a family fact it never saw.
 	// Operator ruling, 2026-08-07 — see FilerRelationship.SupersededBy.
 	[FilerRelationship.SupersededBy]: false,
 } as const satisfies Record<FilerRelationship, boolean>
 
 /**
- * Does this relationship assert ownership? Single source of truth for
+ * Does this relationship assert ownership?
+ *
+ * Single source of truth for
  * {@linkcode readLeakageCensus}'s "scored" count and {@linkcode readRegistrantFamilies}'s
- * filter, so the census can never promise to police rows the prediction quietly scored,
- * or vice versa. An unrecognized value is treated as NON-ownership: it cannot come
- * from `FilerRelationship` (the pin above makes that a compile error), so it is a raw
- * string read back from a `filer_family`/`filer_edge` row this build did not write,
- * and silently scoring an unknown assertion as ownership is the failure this exists to stop.
+ * filter, so the census can never promise to police rows the prediction quietly scored, or vice versa.
+ * An unrecognized value is treated as NON-ownership: it cannot come from `FilerRelationship`
+ * (the pin above makes that a compile error), so it is a raw string read back from a
+ * `filer_family`/`filer_edge` row this build did not write, and silently scoring an
+ * unknown assertion as ownership is the failure this exists to stop.
  *
  * **The {@linkcode isRecognizedRelationship} guard is required rather than belt-and-braces.**
  * `OWNERSHIP_BY_RELATIONSHIP` is a plain object literal, so a bare index lookup inherits
- * `Object.prototype`: `relationship === "constructor"` (or `"toString"`, or `"__proto__"`) resolves
- * to a function, which is truthy and never nullish. Therefore, `??` does not fire
- * and the lookup answers `true` for a string it does not classify — the precise failure
- * the paragraph above says it exists to stop. Measured through the real builder:
- * three injected `constructor` family rows score as ownership and land in the unrecognized
- * bucket, so the three census splits sum to 8 against a published total of 5.
+ * `Object.prototype`: `relationship === "constructor"` (or `"toString"`, or `"__proto__"`)
+ * resolves to a function, which is truthy and never nullish.
+ * Therefore, `??` does not fire and the lookup answers `true` for a string it does not
+ * classify — the precise failure the paragraph above says it exists to stop.
+ *
+ * Measured through the real builder: three injected `constructor` family rows score as ownership and
+ * land in the unrecognized bucket, so the three census splits sum to 8 against a published total of 5.
  */
 function assertsOwnership(relationship: string): boolean {
 	return isRecognizedRelationship(relationship) && OWNERSHIP_BY_RELATIONSHIP[relationship as FilerRelationship]
 }
 
 /**
- * Is this relationship one {@linkcode OWNERSHIP_BY_RELATIONSHIP} actually
- * classifies? Distinct from
+ * Is this relationship one {@linkcode OWNERSHIP_BY_RELATIONSHIP} actually classifies?
+ *
+ * Distinct from
  * {@linkcode assertsOwnership} because the prediction and the check want opposite defaults for a string neither
  * recognizes, and one predicate cannot serve both.
  *
- * The prediction must not score an assertion it does not understand, so unknown → not
- * ownership → ignored. The check exists to refuse publication when the withheld build holds
- * ownership facts it should never have seen, and "a relationship this eval does not recognize,
- * in a build it did not write" is precisely the case it should refuse rather than quietly
- * bucket as non-ownership. Collapse the two call sites onto `assertsOwnership` alone
- * and the check narrows to nothing on exactly that case: three injected `transfer_of_control`
- * family rows leave `scoredFamilyRows: 0` and the check silent.
+ * The prediction must not score an assertion it does not understand, so unknown → not ownership → ignored.
+ * The check exists to refuse publication when the withheld build holds ownership facts it should
+ * never have seen, and "a relationship this eval does not recognize, in a build it did not
+ * write" is precisely the case it should refuse rather than quietly bucket as non-ownership.
+ *
+ * Collapse the two call sites onto `assertsOwnership` alone and the check narrows
+ * to nothing on exactly that case: three injected `transfer_of_control` family
+ * rows leave `scoredFamilyRows: 0` and the check silent.
  */
 function isRecognizedRelationship(relationship: string): boolean {
 	return Object.hasOwn(OWNERSHIP_BY_RELATIONSHIP, relationship)
@@ -206,10 +220,12 @@ async function readLeakageCensus(db: DatabaseClient<FilerDatabase>): Promise<Lea
 }
 
 /**
- * Hard check on the withheld build (decision 4). The leakage exclusion is structural —
+ * Hard check on the withheld build (decision 4).
+ *
+ * The leakage exclusion is structural —
  * {@linkcode buildFilteredEvalInputs} is the only thing that builds what the builder receives — but "structural" is an
- * argument, and this is a check: if any ownership artifact survives into the withheld
- * build, the eval refuses to report a number rather than reporting a flattered one.
+ * argument, and this is a check: if any ownership artifact survives into the withheld build,
+ * the eval refuses to report a number rather than reporting a flattered one.
  * Runs against the census taken straight off the build, before any injected evidence,
  * so a deliberate probe can still be measured without disarming the check.
  */
@@ -237,8 +253,9 @@ interface RegistrantFamilies {
 	 */
 	predicted: Map<FRN, string[]>
 	/**
-	 * Every family id any of the registrant's nodes belongs to, management
-	 * included. Reported, never scored.
+	 * Every family id any of the registrant's nodes belongs to, management included.
+	 *
+	 * Reported, never scored.
 	 */
 	observed: Map<FRN, string[]>
 }
@@ -325,8 +342,9 @@ export interface LinkageEvalRun {
 	inputsSHA256: string
 	score: PairwiseGroupingScore
 	/**
-	 * The entity-resolution pass's own counters. Reported as context —
-	 * this eval's prediction does not read its output.
+	 * The entity-resolution pass's own counters.
+	 *
+	 * Reported as context — this eval's prediction does not read its output.
 	 */
 	inferred: InferredClusterResult
 	census: LeakageCensus
@@ -352,24 +370,28 @@ export interface LinkageEvalPassOptions {
 	label: string
 	/**
 	 * Whether `holdingCompany` was cleared from `inputs`.
+	 *
 	 * Arms {@linkcode assertNoOwnershipLeak}.
 	 */
 	holdingCompanyWithheld: boolean
 	/**
 	 * Writes evidence into the built artifact after the leakage check has passed and
-	 * before the prediction is read — the injection point the standing "this baseline
-	 * can be beaten" test uses to simulate an evidence channel that does not exist yet.
-	 * Never set by {@linkcode filerLinkageEval} itself: the two published runs measure builds
-	 * nobody touched. Ordering is the point — the check still polices what the builder produced
-	 * from a withheld input, so a probe can add ownership facts without disarming it.
+	 * before the prediction is read — the injection point the standing "this baseline can
+	 * be beaten" test uses to simulate an evidence channel that does not exist yet.
+	 *
+	 * Never set by {@linkcode filerLinkageEval} itself: the two published runs measure builds nobody touched.
+	 * Ordering is the point — the check still polices what the builder produced from a
+	 * withheld input, so a probe can add ownership facts without disarming it.
 	 */
 	injectEvidence?: (db: DatabaseClient<FilerDatabase>) => Promise<void>
 }
 
 /**
- * One pass: build a scratch `filer.db` from one projection, run the shipped clustering over it, census it,
- * read each registrant's corporate families, score. Exported so a test can run the same
- * code path with injected evidence rather than reimplementing the pipeline beside it.
+ * One pass: build a scratch `filer.db` from one projection, run the shipped clustering
+ * over it, census it, read each registrant's corporate families, score.
+ *
+ * Exported so a test can run the same code path with injected evidence
+ * rather than reimplementing the pipeline beside it.
  */
 export async function runLinkagePass(options: LinkageEvalPassOptions): Promise<LinkageEvalRun> {
 	const { inputs, registrants, truthGroupOf, label, holdingCompanyWithheld, injectEvidence } = options
@@ -437,15 +459,19 @@ export interface FilerLinkageEvalOptions {
 	 */
 	outMd?: string
 	/**
-	 * Overrides the report's dated H1 — for regenerating the committed scorecard on a later day,
-	 * and for reproducibility tests that need byte-identical markdown across two runs
-	 * that don't fall on the same wall-clock date. Without it the report cannot be
-	 * regenerated without editing code. Defaults to today.
+	 * Overrides the report's dated H1 — for regenerating the committed scorecard on
+	 * a later day, and for reproducibility tests that need byte-identical markdown
+	 * across two runs that don't fall on the same wall-clock date.
+	 *
+	 * Without it the report cannot be regenerated without editing code.
+	 * Defaults to today.
 	 */
 	date?: string
 	/**
-	 * Print the markdown to stdout. Defaults to `true` — the CLI's whole
-	 * output. Tests pass `false`.
+	 * Print the markdown to stdout.
+	 *
+	 * Defaults to `true` — the CLI's whole output.
+	 * Tests pass `false`.
 	 */
 	printMarkdown?: boolean
 }
@@ -464,8 +490,9 @@ export interface FilerLinkageEvalResult {
 }
 
 /**
- * Run the corporate-family recovery eval — see the module docstring for the
- * experiment design. Builds two scratch `filer.db` artifacts from the same corpus
+ * Run the corporate-family recovery eval — see the module docstring for the experiment design.
+ *
+ * Builds two scratch `filer.db` artifacts from the same corpus
  * (one with `holdingCompany` withheld, one without), scores each against the
  * held-out truth, and renders the markdown scorecard.
  */

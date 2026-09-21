@@ -104,9 +104,10 @@ describe("mwdev_job", () => {
 	}
 
 	it("distinguishes a graded FAIL from a crash", async () => {
-		// The gauntlet exits 1 on a `fail` verdict, so `state: "failed"` is what a
-		// healthy failing run looks like. Those need different responses from a reader,
-		// so the difference is stated rather than inferred from an exit code.
+		// The gauntlet exits 1 on a `fail` verdict, so `state: "failed"` is what
+		// a healthy failing run looks like.
+		// Those need different responses from a reader, so the difference is stated
+		// rather than inferred from an exit code.
 		const result = await runToCompletion(FAIL_SCRIPT, 1)
 
 		expect(result["state"]).toBe("failed")

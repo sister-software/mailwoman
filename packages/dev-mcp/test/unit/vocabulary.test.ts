@@ -32,7 +32,8 @@ const stub = (absent: string) => ({
 
 describe("measureLine", () => {
 	it("counts a fallback per BYTE, which is why a shattered word costs more pieces than characters", () => {
-		// "ư" is 2 UTF-8 bytes. Therefore, one absent character becomes two pieces.
+		// "ư" is 2 UTF-8 bytes.
+		// Therefore, one absent character becomes two pieces.
 		const line = measureLine(stub("ư"), "Đư", false)
 
 		expect(line.characters).toBe(2)

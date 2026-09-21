@@ -34,6 +34,7 @@ type EntryStream = Awaited<ReturnType<Entry["openReadStream"]>>
 
 /**
  * The one place this package touches yauzl's own lifecycle.
+ *
  * Every reader below ends an archive by leaving scope, so `close()` is called here and nowhere else.
  */
 async function openStreamingArchive(
@@ -65,6 +66,7 @@ async function openStreamingArchive(
 export interface ZipNameOptions {
 	/**
 	 * An `iconv-lite` label — `cp949`, `shift_jis`, `gbk`.
+	 *
 	 * Omit when the archive's names are ascii or properly flagged UTF-8,
 	 * which is every other archive this repository reads.
 	 */
@@ -92,6 +94,7 @@ function entryName(entry: Entry, options?: ZipNameOptions): string {
  * Node's own `Readable[Symbol.asyncDispose]` cannot serve here.
  * A consumer that stops early has already destroyed the stream with an `AbortError`, and that disposer
  * waits on the stream's end event and re-raises it — turning a deliberate `break` into a throw.
+ *
  * Destroying without a reason ends the stream on every path and reports none of them.
  */
 async function openEntryStream(entry: Entry, options?: ZipFileOptions): Promise<EntryStream & AsyncDisposable> {
@@ -101,10 +104,10 @@ async function openEntryStream(entry: Entry, options?: ZipFileOptions): Promise<
 		[Symbol.asyncDispose]: async () => {
 			// A member read to its end has already released yauzl's read, and its `close` has
 			// already been delivered — so waiting for that event here would wait forever.
-			// `readableEnded` is the test that separates the two paths: true after a
-			// full read, false after a `take` or a `break`. `closed` is not the test,
-			// because Node sets it when the close event is queued rather than delivered,
-			// so a guard on it skips the wait on the path that needs it.
+			// `readableEnded` is the test that separates the two paths: true after a full read,
+			// false after a `take` or a `break`.
+			// `closed` is not the test, because Node sets it when the close event is queued
+			// rather than delivered, so a guard on it skips the wait on the path that needs it.
 			if (contents.readableEnded) return
 
 			const closed = once(contents, "close").catch(() => undefined)
@@ -181,6 +184,7 @@ export type ZipEntrySelector = string | RegExp
 export interface ZipEntryInfo {
 	/**
 	 * The archive-internal path, e.g. `it/countrywide.csv`.
+	 *
 	 * Directory entries keep their trailing slash.
 	 */
 	name: string
@@ -215,9 +219,10 @@ export async function listZipEntries(archivePath: PathBuilderLike, options?: Zip
 /**
  * Stream one member's decompressed bytes out of an archive on disk.
  *
- * Nothing beyond the central directory and the inflate window is held in memory, so this is bounded
- * by the consumer rather than by the member's size. A consumer that stops early — a `take`,
- * a `break` — destroys the member stream and closes the archive on the way out.
+ * Nothing beyond the central directory and the inflate window is held in memory,
+ * so this is bounded by the consumer rather than by the member's size.
+ * A consumer that stops early — a `take`, a `break` — destroys the member stream
+ * and closes the archive on the way out.
  *
  * @category Files
  * @throws If no member matches `selector`.
@@ -270,7 +275,9 @@ export async function extractZipEntry(
 
 export interface ExtractZipEntriesOptions {
 	/**
-	 * Which members to write. Omit for every member.
+	 * Which members to write.
+	 *
+	 * Omit for every member.
 	 */
 	selector?: ZipEntrySelector
 	/**

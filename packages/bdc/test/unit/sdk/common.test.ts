@@ -92,8 +92,8 @@ test("compareStateCodeAsc: sorts a 3-element array ascending by state FIPS code"
 })
 
 test("parseRawBDCFile: State-category row with a null technology_code parses to an empty technologyCodes set", () => {
-	// Live-data finding (FCC smoke test): `/map/downloads/listAvailabilityData`
-	// returns `technology_code: null` for at least some State-category rows.
+	// Live-data finding (FCC smoke test): `/map/downloads/listAvailabilityData` returns
+	// `technology_code: null` for at least some State-category rows.
 	// See `.superpowers/sdd/2026-07-30-bdc-2b-plan/live-smoke-findings.md`.
 	const raw: RawBDCFile = {
 		...rawFixture,

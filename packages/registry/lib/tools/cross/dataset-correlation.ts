@@ -50,24 +50,33 @@ export interface CrossDatasetCorrelationOptions {
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
-	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * Record-matcher sources directory.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
 	 */
 	sources?: string
 	/**
-	 * Rows kept per source for geocoding (state-scoped). Default 300.
+	 * Rows kept per source for geocoding (state-scoped).
+	 *
+	 * Default 300.
 	 */
 	cap?: number
 	/**
-	 * State filter. Default TX.
+	 * State filter.
+	 *
+	 * Default TX.
 	 */
 	state?: string
 	/**
-	 * The inverse-address-frequency change is a corpus statistic — it can't be synthesized
-	 * from the geocoded sample. By default we scan the full files (cheap, parse-free) for an
-	 * in-state corpus-wide frequency table and feed it to the matcher, so the proven #617
-	 * change actually bites on a sub-sampled run. The scan adds a full pass over the 4.8 GB
-	 * NPPES file (~5 min); `--no-corpus-frequency` skips it and falls back to resolveEntities'
-	 * zero-config input-scoped default (#86). Default true.
+	 * The inverse-address-frequency change is a corpus statistic — it can't be
+	 * synthesized from the geocoded sample.
+	 *
+	 * By default we scan the full files (cheap, parse-free) for an in-state corpus-wide frequency table
+	 * and feed it to the matcher, so the proven #617 change actually bites on a sub-sampled run.
+	 * The scan adds a full pass over the 4.8 GB NPPES file (~5 min); `--no-corpus-frequency`
+	 * skips it and falls back to resolveEntities' zero-config input-scoped default (#86).
+	 *
+	 * Default true.
 	 */
 	corpusFrequency?: boolean
 	/**
@@ -100,6 +109,7 @@ function composeAddress(row: Record<string, string>, columns: string | string[] 
 /**
  * FCC RHC funding commitments — two addressable entities per row (a Filing HCP and a Participating HCP),
  * each exploded into its own record (the #618 B1 two-entity-per-row case).
+ *
  * Composed after the shared {@link buildSpecs} trio, which this probe correlates against.
  */
 const commitmentsSpec = (S: string, STATE: string): SourceSpec => ({
@@ -141,6 +151,7 @@ const commitmentsSpec = (S: string, STATE: string): SourceSpec => ({
 
 /**
  * Cross-dataset correlation (#618) — see the module doc.
+ *
  * Emits the markdown report to stdout.
  */
 export async function crossDatasetCorrelation(
@@ -256,18 +267,19 @@ export async function crossDatasetCorrelation(
 	geocoder[Symbol.dispose]()
 	report?.(`    ${records.length} records; geocoded ${geo}/${total} (${((100 * geo) / total).toFixed(1)}%)`)
 
-	// Resolve records to canonical entities using the default-on proven changes. spatial
-	// (A1) + inverse-address-frequency. We feed the corpus-wide table when we built one.
-	// otherwise resolveEntities auto-computes the input-scoped default. ---
+	// Resolve records to canonical entities using the default-on proven changes.
+	// spatial (A1) + inverse-address-frequency.
+	// We feed the corpus-wide table when we built one. otherwise resolveEntities
+	// auto-computes the input-scoped default. ---
 	report?.("[D] resolving across sources…")
 
-	// learnedScorer:false — the GBT default is calibrated for same-dataset dedup,
-	// where "same address + different name" means distinct co-located providers (reject).
-	// cross-dataset linkage is the opposite objective: "same address + different name"
-	// is the prototypical signal of the same facility under a different operational
-	// name across sources. The dedup GBT rejects exactly those true cross-source links
-	// (measured: cross-source 219→166, triple-source 10→1), so this flow uses the recall-appropriate
-	// FS baseline. (A cross-objective GBT threshold is the documented follow-up — #655.)
+	// learnedScorer:false — the GBT default is calibrated for same-dataset dedup, where "same
+	// address + different name" means distinct co-located providers (reject). cross-dataset
+	// linkage is the opposite objective: "same address + different name" is the prototypical
+	// signal of the same facility under a different operational name across sources.
+	// The dedup GBT rejects exactly those true cross-source links (measured: cross-source 219→166,
+	// triple-source 10→1), so this flow uses the recall-appropriate FS baseline.
+	// (A cross-objective GBT threshold is the documented follow-up — #655.)
 	const { entities, candidatePairs } = resolveEntities(records, {
 		trainEM: true,
 		learnedScorer: false,

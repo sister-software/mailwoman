@@ -122,11 +122,12 @@ describe("shuffleWith", () => {
 			fromFloat64.push(float64())
 		}
 
-		// Same multiplier and increment, and the first step agrees: 1234567 × 1103515245 is about
-		// 1.4e15, still under 2^53 where a double is exact. The state then grows past it,
-		// `*` starts rounding where `Math.imul` wraps at 32 bits, and the sequences part company
-		// on the second step. So neither file's stream can be served by the other's generator,
-		// and a reader comparing only the first value would conclude the opposite.
+		// Same multiplier and increment, and the first step agrees: 1234567 × 1103515245
+		// is about 1.4e15, still under 2^53 where a double is exact.
+		// The state then grows past it, `*` starts rounding where `Math.imul` wraps at 32 bits,
+		// and the sequences part company on the second step.
+		// So neither file's stream can be served by the other's generator, and a reader
+		// comparing only the first value would conclude the opposite.
 		expect(fromInt32[0]).toBe(fromFloat64[0])
 		expect(fromInt32[1]).not.toBe(fromFloat64[1])
 		expect(fromInt32).not.toStrictEqual(fromFloat64)
@@ -161,9 +162,9 @@ describe("shuffleWith", () => {
 			}
 		}
 
-		// And the sampler is why: handing the same generator to `shuffleWith`, which
-		// scales a float instead, does not reproduce it. Routing this call site through
-		// the float sampler would have silently moved the split.
+		// And the sampler is why: handing the same generator to `shuffleWith`,
+		// which scales a float instead, does not reproduce it.
+		// Routing this call site through the float sampler would have silently moved the split.
 		const mixed = (20_260_913 * 2_654_435_761 + 1) & 0xff_ff_ff_ff
 		const scaled = makeGlibcLcgFloat64(mixed)
 		const viaFloat = Array.from({ length: 64 }, (_, index) => index)

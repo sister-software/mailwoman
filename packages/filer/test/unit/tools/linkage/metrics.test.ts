@@ -13,7 +13,8 @@ import { describe, expect, it } from "vitest"
 
 describe("scorePairwiseGrouping", () => {
 	it("scores a perfect prediction as precision/recall/F1 all 1", () => {
-		// truth: {a,b} together, {c,d} together. Prediction agrees exactly.
+		// truth: {a,b} together, {c,d} together.
+		// Prediction agrees exactly.
 		const truth = new Map([
 			["a", "g1"],
 			["b", "g1"],
@@ -59,7 +60,8 @@ describe("scorePairwiseGrouping", () => {
 		expect(score.truthPositivePairs).toBe(1) // {a,b}
 		expect(score.precision).toBeNull()
 		expect(score.recall).toBe(0)
-		// I2: precision is undefined here, so F1 is undefined too — not 0. "Made no positive call" is not "scored zero".
+		// I2: precision is undefined here, so F1 is undefined too — not 0.
+		// "Made no positive call" is not "scored zero".
 		expect(score.f1).toBeNull()
 	})
 
@@ -111,7 +113,8 @@ describe("scorePairwiseGrouping", () => {
 	})
 
 	it("reports F1 as 0 (not null) when BOTH components are defined and nothing was recovered — a measured miss", () => {
-		// truth: {a,b} together. prediction: {c,d} together. Both denominators are populated, zero overlap.
+		// truth: {a,b} together. prediction: {c,d} together.
+		// Both denominators are populated, zero overlap.
 		const truth = new Map([
 			["a", "g1"],
 			["b", "g1"],

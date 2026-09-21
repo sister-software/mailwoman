@@ -64,9 +64,10 @@ export interface AgreementRow {
 	/**
 	 * Metres from the point to the nearest edge of any polygon the service returned nearby.
 	 *
-	 * Carried on every row rather than only the tolerated ones, because it is what separates a real
-	 * defect from the two channels rendering the same edge differently — and a receipt that omits
-	 * it forces a re-run. `undefined` means the service returned no polygon at all near the point.
+	 * Carried on every row rather than only the tolerated ones, because it is what
+	 * separates a real defect from the two channels rendering the same edge differently —
+	 * and a receipt that omits it forces a re-run.
+	 * `undefined` means the service returned no polygon at all near the point.
 	 */
 	nearestEdgeMetres?: number
 }
@@ -119,15 +120,17 @@ export interface VerifyCoastalOptions {
 	databasePath: string
 	readServiceFeatures: ServiceFeatureReader
 	/**
-	 * Points to re-ask the service about. A caller samples them from the artifact —
-	 * see {@link sampleAgreementPoints}.
+	 * Points to re-ask the service about.
+	 *
+	 * A caller samples them from the artifact — see {@link sampleAgreementPoints}.
 	 */
 	points: ReadonlyArray<{ label: string; latitude: number; longitude: number; scenarioKey: string }>
 	outsidePoints?: ReadonlyArray<{ label: string; latitude: number; longitude: number }>
 	/**
-	 * The scenario the negative half is asked under. Every scenario must answer
-	 * `unknown` at these points. one is checked because the negative half is about the
-	 * artifact's extent rather than about a scenario's semantics.
+	 * The scenario the negative half is asked under.
+	 *
+	 * Every scenario must answer `unknown` at these points. one is checked because the
+	 * negative half is about the artifact's extent rather than about a scenario's semantics.
 	 */
 	outsideScenarioKey: string
 	onProgress?: (message: string) => void

@@ -67,16 +67,17 @@ describe("aggregateChunks", () => {
 		expect(merged.crosswalkPairs).toHaveLength(1)
 		expect(merged.crosswalkPairs[0]![2]).toEqual(["C2.1", "M1", "R2"])
 
-		// each chunk alone looks like A function. That is the whole reason the pairs
-		// merge here rather than being decided per chunk.
+		// each chunk alone looks like A function.
+		// That is the whole reason the pairs merge here rather than being decided per chunk.
 		expect(nonFunctionalPairs([["CO", "Special Policy Area", ["C2.1"]]])).toHaveLength(0)
 		expect(nonFunctionalPairs(merged.crosswalkPairs)).toHaveLength(1)
 	})
 
 	it("keeps a local code that contains spaces intact across the merge", () => {
 		// The pair key joins two free-text values, and a local code routinely contains spaces —
-		// `Special Policy Area`, `RA - Rural Area`. A key a reader had to split back apart
-		// would mangle exactly the vocabulary this layer carries verbatim.
+		// `Special Policy Area`, `RA - Rural Area`.
+		// A key a reader had to split back apart would mangle exactly the vocabulary
+		// this layer carries verbatim.
 		const merged = aggregateChunks([
 			chunk({ crosswalkPairs: [["ME", "RA - Rural Area", ["P5"]]] }),
 			chunk({ crosswalkPairs: [["ME", "RA - Rural Area", ["P1"]]] }),

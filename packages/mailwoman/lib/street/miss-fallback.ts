@@ -14,6 +14,7 @@ import type { ResolveOpts } from "@mailwoman/core/resolver"
 
 /**
  * Retry a lone street-tagged token as a locality only after a null result and when no fork is declared.
+ *
  * The retry omits inferred country constraints but preserves an explicit default country.
  */
 export async function applyStreetMissFallback(

@@ -5,7 +5,9 @@
  */
 
 /**
- * Independent host/browser preferences. A timezone is evidence, never a locale conversion.
+ * Independent host/browser preferences.
+ *
+ * A timezone is evidence, never a locale conversion.
  */
 export interface MachinePreferences {
 	locale?: Intl.UnicodeBCP47LocaleIdentifier

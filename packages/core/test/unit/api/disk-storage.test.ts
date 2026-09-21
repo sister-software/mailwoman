@@ -184,9 +184,10 @@ describe("buildDiskStorage: validate BEFORE writing", () => {
 	})
 
 	it("refuses a non-finite ttl, which JSON would silently turn into an already-expired entry", async () => {
-		// `JSON.stringify(Infinity)` is `"null"`, and `null` reads back as 0 in the interceptor's
-		// `createdAt + ttl < Date.now()` expiry test — so "cache forever" would round-trip
-		// into "expired the instant it is read". Rejecting loudly beats caching nothing.
+		// `JSON.stringify(Infinity)` is `"null"`, and `null` reads back as 0 in the
+		// interceptor's `createdAt + ttl < Date.now()` expiry test — so "cache forever"
+		// would round-trip into "expired the instant it is read".
+		// Rejecting loudly beats caching nothing.
 		const storage = buildDiskStorage({ directory: directory.path })
 
 		await storage.set("forever", cachedValue({ immutable: true }, Number.POSITIVE_INFINITY))
@@ -251,6 +252,7 @@ describe("buildDiskStorage: atomic write with a per-write-unique temp name", () 
 describe("buildDiskStorage: a failed cache write is a cache miss, not a request failure", () => {
 	/**
 	 * Make `directory.path` unwritable and report whether it took.
+	 *
 	 * Running as root defeats mode bits entirely, and a test that silently passes
 	 * because it could not reproduce the condition is worse than one that says so.
 	 */
@@ -292,8 +294,8 @@ describe("buildDiskStorage: a failed cache write is a cache miss, not a request 
 	it("leaves a SUCCESSFUL response intact through APIClient when the cache write fails", async () => {
 		// The interface, end to end: `axios-cache-interceptor` awaits `storage.set` inside its response
 		// `onFulfilled`, so a throwing write rejects a request whose http response already succeeded.
-		// It escapes as a bare `Error` — no `status` — which `isTransientResourceError`
-		// reads as false, so a caller is told the failure is permanent and drops the work.
+		// It escapes as a bare `Error` — no `status` — which `isTransientResourceError` reads
+		// as false, so a caller is told the failure is permanent and drops the work.
 		// Any filesystem error does this. reproduced here with a `0o500` parent.
 		if (!(await makeUnwritable())) {
 			await restore()

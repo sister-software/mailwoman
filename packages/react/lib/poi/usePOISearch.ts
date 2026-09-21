@@ -29,14 +29,18 @@ export interface UsePOISearchOptions {
 	 */
 	loadRuntime?: LoadPOIRuntime
 	/**
-	 * Injected live-search probe. Absent ⇒ the live-results affordance is disabled.
+	 * Injected live-search probe.
+	 *
+	 * Absent ⇒ the live-results affordance is disabled.
 	 */
 	runLiveSearch?: POILiveSearch
 	/**
 	 * Whether the injected probe can serve brand subjects (fetch by Wikidata QID).
+	 *
 	 * Default false: brand subjects show the intent + QID chip but no live-search affordance.
 	 * The docs' httpvfs probe leaves this off — brand-wide row hydration is pathological
 	 * over byte-range (measured) — so brand live search is a server-side-backend capability.
+	 *
 	 * Category live search is unaffected either way.
 	 */
 	brandLiveSearch?: boolean
@@ -64,7 +68,9 @@ export interface UsePOISearch {
 	 */
 	canSearchLive: boolean
 	/**
-	 * Kick off a live search for the current subject. No-op when {@link canSearchLive} is false.
+	 * Kick off a live search for the current subject.
+	 *
+	 * No-op when {@link canSearchLive} is false.
 	 */
 	searchLive: () => Promise<void>
 }
@@ -106,6 +112,7 @@ export function usePOISearch({
 	const [runtime, setRuntime] = useState<POIRuntime | null>(null)
 	/**
 	 * The classify result keyed BY the query that produced it.
+	 *
 	 * The visible result is derived during render (`storedResult.query === trimmedText ? … : null`),
 	 * so a new query invalidates the old answer by derivation — the effect never writes state
 	 * synchronously to "reset", which is the react(set-state-in-effect) shape the lint bump rightly flags.
@@ -119,10 +126,11 @@ export function usePOISearch({
 	const debouncedText = useDebouncedValue(text, debounceMs)
 	const trimmedText = debouncedText.trim()
 
-	// The load fires exactly once on mount regardless of whether the caller passes a fresh
-	// `loadRuntime` closure each render (an inline `async () => …` would otherwise retrigger
-	// the effect → reload → re-render loop). `useEffectEvent` reads the latest closure
-	// without joining the dependency list — the runtime is a load-once resource.
+	// The load fires exactly once on mount regardless of whether
+	// the caller passes a fresh `loadRuntime` closure each render
+	// (an inline `async () => …` would otherwise retrigger the effect → reload → re-render loop).
+	// `useEffectEvent` reads the latest closure without joining the dependency list —
+	// the runtime is a load-once resource.
 	const loadRuntimeEvent = useEffectEvent(() => loadRuntime())
 
 	useEffect(() => {
@@ -165,9 +173,9 @@ export function usePOISearch({
 				return
 			}
 
-			// Brand subject: the lexicon carries the brand's canonical name as
-			// `categoryID` + its Wikidata QID. No category record, no OverpassQL
-			// (brands are searched by QID against the layer's `brand_wikidata` index rather than OSM tags).
+			// Brand subject: the lexicon carries the brand's canonical name as `categoryID` + its Wikidata QID.
+			// No category record, no OverpassQL (brands are searched by QID against the
+			// layer's `brand_wikidata` index rather than OSM tags).
 			if ((matched.match.kind ?? "category") === "brand") {
 				setStoredResult({
 					query: trimmed,

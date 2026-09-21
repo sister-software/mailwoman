@@ -40,8 +40,10 @@ function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">
 }
 
 /**
- * The kind the mock classifier reports. A designation marker must name it — the verdict's
- * own top kind — because a designation is not raised by intent and has no kind of its own.
+ * The kind the mock classifier reports.
+ *
+ * A designation marker must name it — the verdict's own top kind — because a
+ * designation is not raised by intent and has no kind of its own.
  */
 const TEST_VERDICT_KIND: QueryKind = "locality_only"
 
@@ -153,8 +155,9 @@ describe("#1993: the coastal-erosion route on the geocode path", () => {
 		expect(marker.mechanism).toBe("layer:coastal_erosion")
 		expect(marker.kind).toBe(TEST_VERDICT_KIND)
 
-		// The scenario is in the sentence. A message reading "at erosion risk" without naming which of
-		// twelve questions it answers would let a 2105 projection be taken for a present-day designation.
+		// The scenario is in the sentence.
+		// A message reading "at erosion risk" without naming which of twelve questions it
+		// answers would let a 2105 projection be taken for a present-day designation.
 		expect(marker.message).toMatch(/under scenario NFI_2055_0CC/u)
 		expect(marker.message).toMatch(/No Future Intervention/u)
 		expect(marker.message).toMatch(/not whether a property will erode/u)
@@ -211,8 +214,9 @@ describe("#1993: the coastal-erosion route on the geocode path", () => {
 			coastalErosionRoute: route,
 		})
 
-		// The inversion of the flood route, and the whole reason this layer is the second one: an advisory
-		// here would be a determination nobody made. The refusal is named instead.
+		// The inversion of the flood route, and the whole reason this layer is the second one:
+		// an advisory here would be a determination nobody made.
+		// The refusal is named instead.
 		expect(result.intent_markers).toEqual([])
 
 		const decision = route.observe(NO_DESIGNATION.latitude, NO_DESIGNATION.longitude)

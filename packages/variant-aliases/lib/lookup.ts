@@ -27,6 +27,7 @@ const TABLE = await loadTable()
 
 /**
  * Indexed by lowercased variant string for O(1) lookup.
+ *
  * Multiple entries can share the same variant key (e.g. ambiguous "takeaway" only matches GB
  * but not AU if both list it differently), so each entry is an array of all aliases that share the key.
  */
@@ -81,8 +82,9 @@ export function resolveLocaleScope(
  *   This is intentionally weaker because regional variants are by definition regional.
  * - No match when neither holds.
  *
- * Returns all matches sorted by confidence descending. Multi-locale variants
- * (like "petrol station" → en-GB/en-AU/en-NZ/en-ZA) return one entry per locale list — the caller picks.
+ * Returns all matches sorted by confidence descending.
+ * Multi-locale variants (like "petrol station" → en-GB/en-AU/en-NZ/en-ZA) return
+ * one entry per locale list — the caller picks.
  */
 export function lookupVariantAliases(text: string, locale: string): AliasLookupResult[] {
 	const norm = text.trim().toLowerCase()

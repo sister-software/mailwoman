@@ -32,18 +32,24 @@ import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db
 
 export interface BuildCZDistrictsOptions {
 	/**
-	 * The GeoNames CZ places file. Default `<data-root>/geonames/CZ.txt`.
+	 * The GeoNames CZ places file.
+	 *
+	 * Default `<data-root>/geonames/CZ.txt`.
 	 */
 	sourcePath?: string
 	/**
-	 * Output database. Default `<data-root>/wof/localities-cz-districts.db`.
+	 * Output database.
+	 *
+	 * Default `<data-root>/wof/localities-cz-districts.db`.
 	 */
 	out?: string
 }
 
 /**
- * Build the sealed CZ-districts database. Not re-exported from a barrel — the command
- * lazy-imports it (optional-peer discipline, same as the NL PC6 and NZ builders).
+ * Build the sealed CZ-districts database.
+ *
+ * Not re-exported from a barrel — the command lazy-imports it
+ * (optional-peer discipline, same as the NL PC6 and NZ builders).
  */
 export async function buildCZDistrictsDatabase(
 	opts: BuildCZDistrictsOptions = {}

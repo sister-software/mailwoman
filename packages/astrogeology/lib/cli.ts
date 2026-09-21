@@ -24,7 +24,11 @@ interface CommandModule {
 }
 
 /**
- * The compiled command modules. The commands are TSX. It Node cannot load from source.
+ * The compiled command modules.
+ *
+ * The commands are TSX.
+ * It Node cannot load from source.
+ *
  * Therefore, the bin reads `out/commands/` even when it runs from `lib/`; `lib/`
  * and `out/` are siblings, so one spelling serves both trees.
  */

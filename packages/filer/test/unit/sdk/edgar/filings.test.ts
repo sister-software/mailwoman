@@ -141,9 +141,10 @@ describe("resolveCIKCandidates — the no-name-only-match check (required, 3a's 
 	})
 
 	it("reports ONE candidate for a registrant filed under several share classes", () => {
-		// `company_tickers.json` carries one row per ticker, so a registrant with several share
-		// classes appears several times under one CIK. Measured 2026-08-03: "Liberty Broadband
-		// Corporation" came back as the same CIK four times, each scoring 1.0.
+		// `company_tickers.json` carries one row per ticker, so a registrant with several
+		// share classes appears several times under one CIK.
+		// Measured 2026-08-03: "Liberty Broadband Corporation" came back as the
+		// same CIK four times, each scoring 1.0.
 		const shareClasses: CompanyTickerEntry[] = [
 			{ cik: toCIK("0001611983")!, ticker: "LBRDA", title: "Liberty Broadband Corp" },
 			{ cik: toCIK("0001611983")!, ticker: "LBRDB", title: "Liberty Broadband Corp" },

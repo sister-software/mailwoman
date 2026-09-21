@@ -36,6 +36,7 @@ const POI_VERDICT: QueryKindResult = { kind: "poi_query", confidence: 0.9, alter
 
 /**
  * A verdict that named the POI reading below its structural incumbent.
+ *
  * The marker still has a kind to name, and it is the one in `alternatives`.
  */
 const ALTERNATIVE_VERDICT: QueryKindResult = {

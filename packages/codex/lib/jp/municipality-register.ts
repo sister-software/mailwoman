@@ -35,7 +35,9 @@ export interface JapaneseInnerShiTown {
 }
 
 /**
- * The six towns, from KEN_ALL (1,892 municipalities). Ordered by prefecture code.
+ * The six towns, from KEN_ALL (1,892 municipalities).
+ *
+ * Ordered by prefecture code.
  */
 export const JP_INNER_SHI_TOWNS: readonly JapaneseInnerShiTown[] = [
 	{ prefecture: "北海道", county: "余市郡", town: "余市町" },
@@ -53,8 +55,9 @@ export const JP_INNER_SHI_TOWNS: readonly JapaneseInnerShiTown[] = [
 export const JP_INNER_SHI_TOWN_NAMES: readonly string[] = JP_INNER_SHI_TOWNS.flatMap((t) => [t.county + t.town, t.town])
 
 /**
- * The characters a municipality surface must absorb from what follows it
- * to become one of the register's names, or null when no name extends it.
+ * The characters a municipality surface must absorb from what follows it to become
+ * one of the register's names, or null when no name extends it.
+ *
  * `following` is the text after the surface. the answer is a prefix of it.
  * A surface that already is a register name answers null: nothing to absorb.
  */

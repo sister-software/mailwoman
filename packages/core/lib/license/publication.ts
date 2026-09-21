@@ -24,10 +24,11 @@ export function licenseKeysWellKnownURL(): string {
 }
 
 /**
- * Whether mailwoman.ai still lists a key id as active. Two of the answers are not verdicts,
- * and they stay apart because they call for different actions: `unreachable` is a network
- * answer (no route, a timeout, the site failing), where `unpublished` means the site
- * answered and had no register to give, which is a deployment that dropped the file.
+ * Whether mailwoman.ai still lists a key id as active.
+ *
+ * Two of the answers are not verdicts, and they stay apart because they call for different actions:
+ * `unreachable` is a network answer (no route, a timeout, the site failing), where `unpublished`
+ * means the site answered and had no register to give, which is a deployment that dropped the file.
  * Offline verification stands under both, and the doctor says which.
  */
 export type LicenseKeyPublication = "listed" | "retired" | "unlisted" | "unpublished" | "unreachable"
@@ -46,6 +47,7 @@ const HTTP_INTERNAL_SERVER_ERROR = 500
 
 /**
  * The site's own word that nothing is at the path: a 4xx.
+ *
  * A 5xx says the site is failing, which is `unreachable`.
  */
 function siteAnsweredWithout(error: unknown): boolean {
@@ -53,16 +55,19 @@ function siteAnsweredWithout(error: unknown): boolean {
 }
 
 /**
- * A register, by shape. Anything else the site hands back at the path
- * (a soft 404 page, a redirect's html) is not one, whatever status it came with.
+ * A register, by shape.
+ *
+ * Anything else the site hands back at the path (a soft 404 page, a redirect's html)
+ * is not one, whatever status it came with.
  */
 function isRegister(document: unknown): document is Pick<PublishedLicenseKeys, "keys"> {
 	return typeof document === "object" && document !== null && Array.isArray((document as { keys?: unknown }).keys)
 }
 
 /**
- * Ask the well-known register about one key id. Bounded to a few seconds so a doctor
- * run on a machine without a route to mailwoman.ai does not hang on it.
+ * Ask the well-known register about one key id.
+ *
+ * Bounded to a few seconds so a doctor run on a machine without a route to mailwoman.ai does not hang on it.
  */
 export async function confirmLicenseKeyPublished(
 	kid: string,

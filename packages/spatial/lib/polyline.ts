@@ -27,8 +27,9 @@ export function clampFraction(t: number): number {
 /**
  * The point at fraction `t` of a polyline's total arc length (haversine), plus that total in km.
  *
- * `t` is assumed clamped to `[0, 1]`. A zero-length polyline yields its first vertex
- * and a length of 0, so a degenerate segment still produces a usable coordinate rather than NaN.
+ * `t` is assumed clamped to `[0, 1]`.
+ * A zero-length polyline yields its first vertex and a length of 0, so a degenerate
+ * segment still produces a usable coordinate rather than NaN.
  */
 export function pointAlong(
 	polyline: readonly [number, number][],

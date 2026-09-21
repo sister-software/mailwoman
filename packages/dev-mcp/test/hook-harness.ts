@@ -12,7 +12,9 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import { runFileSync } from "@mailwoman/core/process"
 
 /**
- * The half of a hook's answer every suite here reads. A hook that says nothing answers an empty document.
+ * The half of a hook's answer every suite here reads.
+ *
+ * A hook that says nothing answers an empty document.
  */
 export interface HookOutput {
 	hookSpecificOutput?: {
@@ -24,8 +26,9 @@ export interface HookOutput {
 }
 
 /**
- * Run `hookPath` over `payload`. A payload given as a string is sent verbatim,
- * which is how a malformed one is tested.
+ * Run `hookPath` over `payload`.
+ *
+ * A payload given as a string is sent verbatim, which is how a malformed one is tested.
  */
 export function runHook(hookPath: string, payload: unknown): HookOutput {
 	const stdout = runFileSync("node", [hookPath], {

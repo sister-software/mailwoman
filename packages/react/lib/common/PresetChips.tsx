@@ -14,6 +14,7 @@ export interface Preset {
 	value: string
 	/**
 	 * ISO country code for the placetype-pair country pin (#1278 phase 2's `{country}` override).
+	 *
 	 * Optional: a host that wires the pair prior hands this to `selectPairIndexForText`
 	 * when the input still equals this preset's text, so a locale structural routing can't
 	 * detect (NZ's 4-digit postcode isn't distinctive) still fires the dependent_locality prior.

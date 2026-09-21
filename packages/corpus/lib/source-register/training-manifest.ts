@@ -29,12 +29,14 @@ import { LicenseReviewState, type LicenseDecision, type SourceOperation } from "
  */
 export interface TrainingSourceRecord {
 	/**
-	 * The adapter id stamped into every row's `source`. This is the join key to the
-	 * register's `sourceID` where the register carries one.
+	 * The adapter id stamped into every row's `source`.
+	 *
+	 * This is the join key to the register's `sourceID` where the register carries one.
 	 */
 	source: string
 	/**
 	 * Rows this source contributed after license exclusion and eligibility, before augmentation.
+	 *
 	 * A synthetic row is counted under the source it was fanned from rather than as a source of its own.
 	 */
 	rows: number
@@ -43,8 +45,10 @@ export interface TrainingSourceRecord {
 	 */
 	license: string
 	/**
-	 * The register's decision for that license when the build ran, or `null` when the register named no
-	 * decision for it. `null` is the ordinary case for an adapter whose id is not a register source.
+	 * The register's decision for that license when the build ran, or `null`
+	 * when the register named no decision for it.
+	 *
+	 * `null` is the ordinary case for an adapter whose id is not a register source.
 	 */
 	decision: {
 		licenseID: string
@@ -52,6 +56,7 @@ export interface TrainingSourceRecord {
 		electedTerms: string | null
 		/**
 		 * The operations the elected grant permitted at build time.
+		 *
 		 * An operation absent from this list was `unreviewed` or `refused`, which are different
 		 * answers and both recorded on the decision rather than flattened here.
 		 */
@@ -77,8 +82,10 @@ export interface TrainingManifest {
 	 */
 	sources: TrainingSourceRecord[]
 	/**
-	 * Sources the build refused, with the reasons. Kept beside the included ones
-	 * because a release record has to show what was left out as well as what went in.
+	 * Sources the build refused, with the reasons.
+	 *
+	 * Kept beside the included ones because a release record has to show what
+	 * was left out as well as what went in.
 	 */
 	refused: Record<string, readonly string[]>
 	totalRows: number

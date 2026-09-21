@@ -28,8 +28,9 @@ import styles from "./styles.module.css"
 // ── Constants ───────────────────────────────────────────────────────────
 
 /**
- * Residual bands the chart colours against, in the loss units
- * plotted. Presentation only.
+ * Residual bands the chart colours against, in the loss units plotted.
+ *
+ * Presentation only.
  */
 const RESIDUAL_TIGHT = 1.5
 

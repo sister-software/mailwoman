@@ -19,8 +19,9 @@ function byteTransform(stream: CompressionStream | DecompressionStream): {
 } {
 	// `pipeThrough` rejects the native transform: its readable side is `NonSharedUint8Array`
 	// and its writable side is `BufferSource`, neither of which matches `ReadableStream<Uint8Array>`.
-	// Wrapping the writer bridges both. Keep the `new Uint8Array(chunk)` copy —
-	// `Uint8Array<ArrayBufferLike>` may sit on a SharedArrayBuffer, which `BufferSource` excludes.
+	// Wrapping the writer bridges both.
+	// Keep the `new Uint8Array(chunk)` copy — `Uint8Array<ArrayBufferLike>` may sit
+	// on a SharedArrayBuffer, which `BufferSource` excludes.
 	// The copy produces a non-shared buffer.
 	const writer = stream.writable.getWriter()
 
@@ -62,6 +63,7 @@ export function gunzipChunks(source: AsyncIterable<Uint8Array | string>): Readab
 /**
  * The CRC-32 and synchronous gzip `node:zlib` offers, for a checksum over a buffer
  * already in memory and for a response body compressed inside a request handler.
+ *
  * Everything streamed goes through {@linkcode gunzipChunks}.
  */
 export { crc32, gzipSync } from "node:zlib"

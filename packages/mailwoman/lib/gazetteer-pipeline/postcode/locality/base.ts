@@ -316,11 +316,12 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 
 	console.log(`  ${locs.length} localities`)
 
-	// Two 0.1°-cell (~11km) grid indexes. `grid` (by centroid) drives the radius candidate set;
-	// `bgrid` (by bbox-spanned cells — a locality is registered in every cell its bounding box overlaps)
-	// drives the containing-PIP, so it checks only the localities whose bbox could cover the point
-	// instead of a linear scan over all of them. At GB scale (2.7M postcodes × 11.7K localities)
-	// that's the difference between minutes and ~an hour.
+	// Two 0.1°-cell (~11km) grid indexes.
+	// `grid` (by centroid) drives the radius candidate set; `bgrid`
+	// (by bbox-spanned cells — a locality is registered in every cell its bounding box overlaps)
+	// drives the containing-PIP, so it checks only the localities whose bbox could
+	// cover the point instead of a linear scan over all of them.
+	// At GB scale (2.7M postcodes × 11.7K localities) that's the difference between minutes and ~an hour.
 	const grid = new ProximityGrid<number>({
 		cellOf: (lon, lat) => [pyRound(lon * 10), pyRound(lat * 10)],
 		positionOf: (idx) => [locs[idx]!.clat, locs[idx]!.clon],

@@ -119,8 +119,9 @@ describe("decodeReliabilitySample", () => {
 	})
 
 	it("EXCLUDES a row with no component truth rather than grading it", async () => {
-		// A literal input carries no truth. Counting it as wrong would manufacture errors out
-		// of rows nobody asserted anything about. counting it as right would do the opposite.
+		// A literal input carries no truth.
+		// Counting it as wrong would manufacture errors out of rows nobody asserted
+		// anything about. counting it as right would do the opposite.
 		// Both are worse than saying so.
 		const run: GeocodeRunLike = {
 			result: { components: { street: "Main St" } },
@@ -151,8 +152,8 @@ describe("decodeReliabilitySample", () => {
 
 	it("ignores a component whose tokens are not in the trace, and says the row scored nothing", async () => {
 		// The result and the trace can disagree: a component assembled by a repair
-		// after the decode has no token carrying its tag. There is no confidence to grade there,
-		// and inventing one would be the whole defect.
+		// after the decode has no token carrying its tag.
+		// There is no confidence to grade there, and inventing one would be the whole defect.
 		const sample = await decodeReliabilitySample(
 			stubEngine({
 				result: { components: { locality: "Springfield" } },

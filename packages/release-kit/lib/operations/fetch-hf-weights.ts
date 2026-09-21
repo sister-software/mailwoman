@@ -13,6 +13,7 @@ import { fetchHFWeights, reportHFMaterialization } from "#weights/fetch-hf-weigh
 
 /**
  * `release.fetch-hf-weights` — writes inside the checkout or the data root.
+ *
  * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
  */
 export const fetchHFWeightsOperation = defineOperation({

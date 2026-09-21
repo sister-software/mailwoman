@@ -77,10 +77,10 @@ describe("the locale registers", () => {
 })
 
 describe("the stylesheet interface", () => {
-	// This case is the one that was missing. `.mw-map-sheet__handle` painted a button
-	// background and stated no color from the day the spacing-scale refactor shipped,
-	// and the check that says so ran nowhere: `yarn lint`'s health leg names four
-	// checks by id and no workflow runs `mwops health all`.
+	// This case is the one that was missing.
+	// `.mw-map-sheet__handle` painted a button background and stated no color from the
+	// day the spacing-scale refactor shipped, and the check that says so ran nowhere:
+	// `yarn lint`'s health leg names four checks by id and no workflow runs `mwops health all`.
 	test("the design system's resets are present and no rule leaves an interactive surface uncolored", async () => {
 		const context = await collectRepoContext()
 

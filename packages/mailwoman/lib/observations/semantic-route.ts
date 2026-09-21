@@ -92,6 +92,7 @@ import { readCommittedModel } from "#observations/committed-model"
 
 /**
  * The relation the frozen vertical defines, and the only one this route reads.
+ *
  * An assertion under any other relation is not an affordance, and the route refuses an
  * artifact that does not define this one rather than answering "no kinds afford it" —
  * an unreadable relation and an unasserted one are different findings.
@@ -100,6 +101,7 @@ const AFFORDS_RELATION = "affords"
 
 /**
  * The external vocabulary a mapping must translate into for the executor to be able to use it.
+ *
  * A concept that affords the activity but maps into no POI category cannot be searched for,
  * which the route reports rather than hides.
  */
@@ -128,6 +130,7 @@ export interface SemanticObservation {
 	phraseProvenance: SourceProvenance
 	/**
 	 * What attests the surface form itself — the class of record and the record.
+	 *
 	 * A category chosen from a phrase nobody can trace is the failure this program exists
 	 * to avoid, and the assertion's provenance does not cover it: that one says why a
 	 * pharmacy affords the activity rather than why this string names it.
@@ -145,10 +148,12 @@ export interface SemanticObservation {
 	 */
 	declaredLocales: string[] | null
 	/**
-	 * The country the caller's locale named, or `null` when it named none — the lens the
-	 * phrase was read through. It is not what the assertion's country scope was tested
-	 * against: that is the resolved anchor's country, which the POI intent stage binds
-	 * after this observation is recorded and reports on the intent's `countryBinding`.
+	 * The country the caller's locale named, or `null` when it named none —
+	 * the lens the phrase was read through.
+	 *
+	 * It is not what the assertion's country scope was tested against: that is the resolved
+	 * anchor's country, which the POI intent stage binds after this observation is recorded
+	 * and reports on the intent's `countryBinding`.
 	 */
 	localeCountry: string | null
 	activity: string
@@ -174,11 +179,12 @@ export interface SemanticObservation {
 	 */
 	categoryID: string
 	/**
-	 * How many mapped entity kinds the activity reached on this firing —
-	 * the set handed to the POI branch before the anchor's country was bound.
+	 * How many mapped entity kinds the activity reached on this firing — the set handed
+	 * to the POI branch before the anchor's country was bound.
+	 *
 	 * One observation is recorded per member, each naming its own assertion and mapping,
-	 * and every one of them carries this same count. A receipt showing it is what
-	 * distinguishes a genuinely singular reach from a set that collapsed quietly.
+	 * and every one of them carries this same count.
+	 * A receipt showing it is what distinguishes a genuinely singular reach from a set that collapsed quietly.
 	 */
 	mappedKindCount: number
 	modelVersion: string
@@ -207,8 +213,9 @@ export interface SemanticRouteIdentity {
  */
 export interface SemanticObservationRoute {
 	/**
-	 * The lexicon rung. Returns `[]` for every phrase that does not end in a
-	 * declared activity form the locale admits.
+	 * The lexicon rung.
+	 *
+	 * Returns `[]` for every phrase that does not end in a declared activity form the locale admits.
 	 */
 	lookup: POIPhraseLookup
 	identity: SemanticRouteIdentity
@@ -225,11 +232,14 @@ export interface SemanticObservationRoute {
 export interface SemanticObservationRouteOptions {
 	/**
 	 * Override the compiled artifact — for a test that wants a synthetic model.
+	 *
 	 * Absent reads the committed one.
 	 */
 	model?: CompiledGeographicModel
 	/**
-	 * Override the declared lexicon. Absent reads the committed one.
+	 * Override the declared lexicon.
+	 *
+	 * Absent reads the committed one.
 	 */
 	lexicon?: ActivityPhraseLexicon
 }
@@ -256,9 +266,9 @@ interface ReachedKind {
  * Which entity kinds assert `affords` against this activity and map into a POI
  * category, in concept code-point order.
  *
- * The order is a stable enumeration and not a preference, and it is never used to choose: every member
- * is returned and the POI branch searches their union. Deciding which of several kinds
- * answers best would be the candidate ordering this program does not author.
+ * The order is a stable enumeration and not a preference, and it is never used to choose:
+ * every member is returned and the POI branch searches their union.
+ * Deciding which of several kinds answers best would be the candidate ordering this program does not author.
  *
  * Country scope is not applied here, or anywhere in this route: the assertion's scope is met by
  * the country of the resolved anchor, which exists only after the intent stage has parsed the anchor.
@@ -398,9 +408,9 @@ export async function createSemanticObservationRoute(
 		)
 	}
 
-	// Longest declared phrase first, so `pick up a prescription` beats the bare
-	// `prescription` it ends with. Ties break on the phrase itself, so the winner is a
-	// property of the lexicon rather than of the order it was written in.
+	// Longest declared phrase first, so `pick up a prescription` beats the bare `prescription` it ends with.
+	// Ties break on the phrase itself, so the winner is a property of the lexicon
+	// rather than of the order it was written in.
 	const ordered = resolved.toSorted(
 		(left, right) =>
 			right.normalized.length - left.normalized.length || compareByCodePoint(left.normalized, right.normalized)
@@ -456,15 +466,16 @@ export async function createSemanticObservationRoute(
 				categoryID: String(mapping.externalID),
 				matchedPhrase: declared.entry.phrase,
 				// The confidence the committed exact-phrase rung reports for the same kind of hit:
-				// `1` for a phrase used everywhere or one the locale names outright, and the
-				// halved value `@mailwoman/variant-aliases` reports when only the language agrees.
+				// `1` for a phrase used everywhere or one the locale names outright, and the halved
+				// value `@mailwoman/variant-aliases` reports when only the language agrees.
 				// It selects a query kind. it orders no candidate, and no number here was chosen to make one win.
 				// Every member of a set carries the same value, so the set cannot be ranked by it either.
 				confidence: localeMatch.confidence,
 				// These matches are one afforded set rather than a preference list: the POI branch searches their union.
 				searchAsSet: true,
-				// The assertion's claim rides with the match for the intent stage to bind against the anchor's
-				// country. It is not applied here: the anchor has not been parsed yet when this runs.
+				// The assertion's claim rides with the match for the intent stage to
+				// bind against the anchor's country.
+				// It is not applied here: the anchor has not been parsed yet when this runs.
 				...(assertion.countries?.length
 					? { countryScope: assertion.countries.map((scoped) => scoped.toUpperCase()) }
 					: {}),

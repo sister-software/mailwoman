@@ -32,8 +32,10 @@ export const LICENSE_FILE = "LICENSE.md"
 export const PROVENANCE_FILE = "PROVENANCE.json"
 
 /**
- * The provenance record as it is written to disk. Field names are snake_case to match
- * `model-card.json`, which is the file a reader of this one will open next.
+ * The provenance record as it is written to disk.
+ *
+ * Field names are snake_case to match `model-card.json`, which is the file a
+ * reader of this one will open next.
  */
 export interface ProvenanceDocument {
 	$comment: string
@@ -46,6 +48,7 @@ export interface ProvenanceDocument {
 	base_weights: string | null
 	/**
 	 * What this package inherits by decoding through another package's graph.
+	 *
 	 * `null` for a graph package.
 	 */
 	inherited_lineage: {
@@ -62,8 +65,9 @@ export interface ProvenanceDocument {
 		status: "recorded" | "none-recorded-in-this-package"
 		entries: Array<{ text: string; license_named: string | null; uses: string[] }>
 		/**
-		 * How many entries state each use. An entry may state more than one,
-		 * so these do not sum to the entry count.
+		 * How many entries state each use.
+		 *
+		 * An entry may state more than one, so these do not sum to the entry count.
 		 */
 		by_use: Record<string, number>
 	}
@@ -85,6 +89,7 @@ const SERIES_MEANING: Readonly<Record<string, string>> = {
 
 /**
  * The questions this record leaves open, each phrased as the question rather than as a finding.
+ *
  * A reader has to be able to tell a package with no recorded training inputs from a package trained
  * on nothing, and an artifact with no recorded digest from an artifact whose digest was checked.
  */
@@ -119,8 +124,8 @@ function unresolvedQuestions(record: WeightsRightsRecord): string[] {
 	}
 
 	// A list that runs training, tokenizer and evaluation contributions together reads as
-	// though every source in it trained the model. Naming the split lets a reader see
-	// which entries describe rows the model never learned from.
+	// though every source in it trained the model.
+	// Naming the split lets a reader see which entries describe rows the model never learned from.
 	const evaluationOnly = record.attribution.filter(
 		(entry) => entry.uses.includes("evaluation") && !entry.uses.includes("training")
 	)

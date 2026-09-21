@@ -55,8 +55,10 @@ const SCORERS: ReadonlyArray<KindScorer> = [
 ]
 
 /**
- * Rank a scored list and shape it into a verdict. Shared by the lexicon-free and lexicon-wired
- * paths so the two cannot drift in how they break ties or build `alternatives`.
+ * Rank a scored list and shape it into a verdict.
+ *
+ * Shared by the lexicon-free and lexicon-wired paths so the two cannot drift in
+ * how they break ties or build `alternatives`.
  */
 function rank(scored: Array<{ kind: QueryKind; confidence: number }>): QueryKindResult {
 	scored.sort((a, b) => b.confidence - a.confidence)
@@ -71,15 +73,18 @@ function rank(scored: Array<{ kind: QueryKind; confidence: number }>): QueryKind
 }
 
 /**
- * Every kind whose verdict carries `intentMarkers`. Checked before the marker
- * builder runs so the hot path — a structured address, where none of these fire —
- * pays one set membership test per kind and nothing else.
+ * Every kind whose verdict carries `intentMarkers`.
+ *
+ * Checked before the marker builder runs so the hot path — a structured address,
+ * where none of these fire — pays one set membership test per kind and nothing else.
  */
 const MARKER_KINDS: ReadonlySet<QueryKind> = new Set<QueryKind>(["route_pair", "near_me", "poi_category"])
 
 /**
- * Attach markers to a verdict, or return it untouched. Separate from {@link rank}
- * because the lexicon-wired path needs to merge `poi_query`/`poi_category` in first.
+ * Attach markers to a verdict, or return it untouched.
+ *
+ * Separate from {@link rank} because the lexicon-wired path needs to merge
+ * `poi_query`/`poi_category` in first.
  */
 function withIntentMarkers(
 	verdict: QueryKindResult,
@@ -129,17 +134,20 @@ export async function classifyKind(
  */
 export interface KindClassifierOpts {
 	/**
-	 * POI phrase lexicon (spec §3.1). When present, `poi_query` and `poi_category` scorers
-	 * join the rule set — injected, never imported, so this package stays dictionary-free.
+	 * POI phrase lexicon (spec §3.1).
+	 *
+	 * When present, `poi_query` and `poi_category` scorers join the rule set — injected,
+	 * never imported, so this package stays dictionary-free.
 	 * Absent → the returned classifier is behaviorally identical to {@link classifyKind}.
 	 */
 	poiLexicon?: POIPhraseLookup
 }
 
 /**
- * Build a kind classifier. Without opts this is exactly the default {@link classifyKind};
- * with a `poiLexicon` it additionally scores `poi_query` + `poi_category` (ROAD_TO_V9 §4.4)
- * and merges them into the ranked result.
+ * Build a kind classifier.
+ *
+ * Without opts this is exactly the default {@link classifyKind}; with a `poiLexicon` it additionally
+ * scores `poi_query` + `poi_category` (ROAD_TO_V9 §4.4) and merges them into the ranked result.
  */
 export function createKindClassifier(
 	opts: KindClassifierOpts = {}

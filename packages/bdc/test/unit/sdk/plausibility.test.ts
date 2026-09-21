@@ -75,9 +75,9 @@ const SPRINGFIELD_RES6_PARENT_FULL = cellToParent(SPRINGFIELD_RES9_FULL, 6) as H
 const SPRINGFIELD_RES6_PARENT_SHORT = res9ShortCellToRes6Parent(SPRINGFIELD_RES9_SHORT)
 
 // A sibling res-9 cell sharing springfield's res-6 parent but carrying no bdc_availability rows
-// of its own — the "covered res-6 parent, zero filings in this exact cell" positive-absence
-// case (filing-landscape.ts's own docstring: the h3Cells query path is the only way to exercise
-// this, since geoid-mode's "no rows ⇒ no candidate cell" shortcut can never produce it).
+// of its own — the "covered res-6 parent, zero filings in this exact cell" positive-absence case
+// (filing-landscape.ts's own docstring: the h3Cells query path is the only way to exercise this,
+// since geoid-mode's "no rows ⇒ no candidate cell" shortcut can never produce it).
 // Derived from h3-js, never hardcoded.
 const SPRINGFIELD_SIBLING_RES9_FULL = cellToChildren(SPRINGFIELD_RES6_PARENT_FULL, 9).find(
 	(cell) => cell !== SPRINGFIELD_RES9_FULL
@@ -690,9 +690,10 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion", 
 
 	it("throws when poi.db's recorded resolution disagrees with BDC_H3_RESOLUTION, with poi wired ALONE (no bdcDB)", async () => {
 		await using poi = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
-		// Same mismatch as above, but with bdcDB never wired at all — the case an assertion checking
-		// both layers being present would skip entirely. `pointCell` (below) is still derived
-		// from BDC_H3_RESOLUTION regardless, so poi's own resolution must be checked here too.
+		// Same mismatch as above, but with bdcDB never wired at all — the case an assertion
+		// checking both layers being present would skip entirely.
+		// `pointCell` (below) is still derived from BDC_H3_RESOLUTION regardless,
+		// so poi's own resolution must be checked here too.
 		using poischemadb = await openpoischemadb(6)
 		using poiLookup = new POILookup({ databasePath: poi.path })
 
@@ -744,6 +745,7 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion", 
 /**
  * The §7-2b acceptance criteria — one describe per criterion, mapped 1:1 to the four bullets
  * in `docs/superpowers/plans/2026-07-30-bdc-2b-plan.md`'s "The §7-2b checks" section.
+ *
  * Several criteria' behavioral claims are already proven by the suites above — `plausibility.ts`'s own
  * module docstring says as much ("this module is designed for them but doesn't assert them itself").
  * Where that's true, the test below asserts the criterion's specific claim against a
@@ -777,7 +779,8 @@ describe("§7-2b criteria", () => {
 				{ bdcDB: bdc.db, poi: { lookup: poiLookup, schemadb: poischemadb } }
 			)
 
-			// The core claim: absence never manufactures a negative entry. It just isn't there.
+			// The core claim: absence never manufactures a negative entry.
+			// It just isn't there.
 			expect(bundle.evidence_found).toEqual([])
 			expect(bundle.coverage_detail).toEqual({ filing: "covered", physical: "covered" })
 			// Both axes are genuinely covered -> "high", not "insufficient_survey_data" —
@@ -898,10 +901,10 @@ describe("§7-2b criteria", () => {
 
 		it("PLAUSIBILITY_BUNDLE_KEYS (the key-set pin) is non-empty — a hollowed-out pin object would make the compile-time guard above vacuous", () => {
 			// The pin's real teeth are the `satisfies` clause itself, which is compile-time only —
-			// to check it by hand, temporarily add a field to `PlausibilityBundle`, rebuild `bdc/out`,
-			// confirm `tsc` fails here, then revert. This runtime assertion is only the same
-			// non-empty backstop the union pins' own `toHaveLength(16)` above provides —
-			// it can't observe a missing key the way `tsc` does.
+			// to check it by hand, temporarily add a field to `PlausibilityBundle`,
+			// rebuild `bdc/out`, confirm `tsc` fails here, then revert.
+			// This runtime assertion is only the same non-empty backstop the union pins' own
+			// `toHaveLength(16)` above provides — it can't observe a missing key the way `tsc` does.
 			expect(Object.keys(PLAUSIBILITY_BUNDLE_KEYS)).toHaveLength(6)
 		})
 	})

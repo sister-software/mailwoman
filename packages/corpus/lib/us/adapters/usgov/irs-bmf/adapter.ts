@@ -26,8 +26,9 @@ import { splitStreetLine, stableSourceID } from "#adapters/utils"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record
- * can be traced back to the dataset it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const USGOV_IRS_BMF_ADAPTER_ID = "usgov-irs-bmf"
 /**
@@ -37,7 +38,9 @@ export const USGOV_IRS_BMF_ADAPTER_ID = "usgov-irs-bmf"
 export const USGOV_IRS_BMF_DEFAULT_LICENSE = "Public Domain"
 
 /**
- * PO box in its many written forms: "PO BOX 12", "P.O. BOX 12", "P O BOX 12", "POB 12", "BOX 12".
+ * PO box in its many written forms: "PO BOX 12", "P.O.
+ *
+ * BOX 12", "P O BOX 12", "POB 12", "BOX 12".
  */
 const PO_BOX = /^\s*(?:P\.?\s?O\.?\s*BOX|POB|BOX)\s+\w/i
 

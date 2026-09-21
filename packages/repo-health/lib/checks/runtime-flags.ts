@@ -34,9 +34,10 @@ const REGISTER = "docs/engineering/reference/runtime-flags.mdx"
 const PLAUSIBLE_REGISTER_SIZE = 20
 
 /**
- * Register rows name their flag in leading backticks. A struck row (`~~`flag`~~`)
- * is a record of something that no longer exists and is skipped — striking is how a
- * removed flag keeps its measurement without claiming to be live.
+ * Register rows name their flag in leading backticks.
+ *
+ * A struck row (`~~`flag`~~`) is a record of something that no longer exists and is skipped —
+ * striking is how a removed flag keeps its measurement without claiming to be live.
  */
 export function registerFlags(markdown: string): string[] {
 	const flags = new Set<string>()
@@ -57,6 +58,7 @@ export function registerFlags(markdown: string): string[] {
 
 /**
  * Flags with no test, each with the reason it is allowed to have none.
+ *
  * An entry here is a debt with a name rather than an exemption — the point of the list
  * is that it is short enough to read and every line carries who owes what.
  */

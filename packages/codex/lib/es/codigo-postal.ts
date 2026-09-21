@@ -26,14 +26,18 @@ import type { Tagged } from "type-fest"
 export type CodigoPostal = Tagged<string, "CodigoPostal">
 
 /**
- * Shape of a Spanish código postal — five digits. Identical in shape to a French code postal,
- * a German PLZ and a US ZIP. disambiguation is the parser's job rather than the pattern's.
+ * Shape of a Spanish código postal — five digits.
+ *
+ * Identical in shape to a French code postal, a German PLZ and a US ZIP. disambiguation
+ * is the parser's job rather than the pattern's.
  */
 export const CODIGO_POSTAL_PATTERN = /^\d{5}$/
 
 /**
- * Normalize a código-postal surface form to the bare five digits: trim surrounding whitespace
- * (`" 28001 "` → `"28001"`). Returns null when the result is not a five-digit code.
+ * Normalize a código-postal surface form to the bare five digits: trim surrounding
+ * whitespace (`" 28001 "` → `"28001"`).
+ *
+ * Returns null when the result is not a five-digit code.
  */
 export function normalizeCodigoPostal(raw: unknown): CodigoPostal | null {
 	if (typeof raw !== "string") return null
@@ -60,6 +64,7 @@ export function parseCodigoPostal(input: string): CodigoPostal | null {
 
 /**
  * The two-digit province prefix (`"28001"` → `"28"`), or `null` for a non-postcode.
+ *
  * Callers map it through their own province table. this module deliberately does not
  * ship one, since the campaign that needed it only needs the shape.
  */

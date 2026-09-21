@@ -24,8 +24,8 @@ import { SqliteDialect } from "#dialect/index"
  * A SQLite client for one database file: a Kysely query builder over `node:sqlite`,
  * plus the two raw statements Kysely cannot express.
  *
- * The client opens the file. A caller says which file and which schema. it
- * never builds the connection itself.
+ * The client opens the file.
+ * A caller says which file and which schema. it never builds the connection itself.
  *
  * ```ts
  * using kdb = new DatabaseClient<MySchema>("db.sqlite", { readOnly: true })
@@ -35,6 +35,7 @@ import { SqliteDialect } from "#dialect/index"
  * the type argument here and a second one on the handle — with nothing to make them agree.
  * It also split ownership: `SqliteDriver.destroy()` closes whatever connection it was given,
  * so a shared handle has two owners and the first `destroy()` closes it under the other.
+ *
  * One construction gives one schema, one owner, and a lifetime `using` can end.
  *
  * `exec` and `prepare` reach the same connection for work Kysely does not model.
@@ -45,14 +46,16 @@ import { SqliteDialect } from "#dialect/index"
  * Schema-agnostic by construction — none of these members mentions `DB` — so a
  * `DatabaseClient<AnySchema>` satisfies it and a helper need not name its caller's schema.
  * That matters because Kysely is invariant in `DB`: a parameter typed `DatabaseClient`
- * (the empty default) would reject every real client. This is the narrowing the
- * `mailwoman/no-database-handle-cast` rule prescribes, applied to the raw side.
+ * (the empty default) would reject every real client.
+ *
+ * This is the narrowing the `mailwoman/no-database-handle-cast` rule prescribes, applied to the raw side.
  */
 export type RawStatements = Pick<DatabaseClient, "exec" | "prepare" | "function" | "destroy"> & Disposable
 
 export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposable {
 	/**
 	 * A memory-only database, for tests and other ephemeral work.
+	 *
 	 * The connection is open until the client is disposed.
 	 */
 	public static temp<DB = Database>(): DatabaseClient<DB> {
@@ -154,9 +157,9 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
 	 * finalized statement) would see a connection that should have been gone.
 	 * `node:sqlite`'s `close()` is synchronous, so `using` closes the file before the scope ends.
 	 *
-	 * Kysely's own driver state is not unwound here. It holds this one connection
-	 * and nothing else, and a query issued afterwards fails on the closed handle
-	 * rather than on a pool that thinks it is alive.
+	 * Kysely's own driver state is not unwound here.
+	 * It holds this one connection and nothing else, and a query issued afterwards fails
+	 * on the closed handle rather than on a pool that thinks it is alive.
 	 */
 	[Symbol.dispose](): void {
 		this.#database[Symbol.dispose]()
@@ -165,6 +168,7 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
 
 /**
  * The `node:sqlite` types a caller needs when it holds a statement or binds a value.
+ *
  * Re-exported so nothing has to reach past this package for them.
  */
 export type { DatabaseSyncOptions, SQLInputValue, SQLOutputValue, StatementSync } from "node:sqlite"

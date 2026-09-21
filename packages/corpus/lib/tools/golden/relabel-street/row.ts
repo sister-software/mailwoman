@@ -69,6 +69,7 @@ import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 
 /**
  * A golden-set row, as stored one-per-line in `us.jsonl` / `fr.jsonl` / `adversarial.jsonl`.
+ *
  * Only the fields this tool reads are modeled. every other key rides through untouched.
  */
 export interface GoldenStreetRow {
@@ -81,7 +82,9 @@ export interface GoldenStreetRow {
 }
 
 /**
- * What the tool decided about one row. Every value except the two `split-*` classes means "left folded".
+ * What the tool decided about one row.
+ *
+ * Every value except the two `split-*` classes means "left folded".
  */
 export type GoldenRelabelClass =
 	| "split-suffix"
@@ -97,8 +100,10 @@ export type GoldenRelabelClass =
 	| "untrimmed-street"
 
 /**
- * A review trigger on a row the tool did change. A flag is never an adjudication —
- * it marks the row for the operator's deck, and the split is applied either way.
+ * A review trigger on a row the tool did change.
+ *
+ * A flag is never an adjudication — it marks the row for the operator's deck,
+ * and the split is applied either way.
  */
 export interface GoldenRelabelFlag {
 	kind: "name-prone-suffix" | "venue-context" | "remainder-is-affix"
@@ -110,7 +115,9 @@ export interface GoldenRelabelFlag {
  */
 export interface GoldenRelabelResult {
 	/**
-	 * The row to write. Identical object reference when nothing changed.
+	 * The row to write.
+	 *
+	 * Identical object reference when nothing changed.
 	 */
 	row: GoldenStreetRow
 	changed: boolean
@@ -129,10 +136,11 @@ export interface GoldenRelabelResult {
 // ── The name-prone suffix set ──────────────────────────────────────────────
 
 /**
- * Pub-28 canonicals that are also ordinary head nouns of proper names — "Lincoln Park",
- * "Boston Common", "Willow Brook". A split on one of these is still applied
- * (the table is the table), but the row lands in the review deck because the trailing
- * word may belong to the name rather than to the street type.
+ * Pub-28 canonicals that are also ordinary head nouns of proper names —
+ * "Lincoln Park", "Boston Common", "Willow Brook".
+ *
+ * A split on one of these is still applied (the table is the table), but the row lands in the
+ * review deck because the trailing word may belong to the name rather than to the street type.
  *
  * Chosen against the surfaces this golden set actually carries (park 6, green 5, hill 7,
  * heights 3, hollow 3, brook 3, pass 3 — the whole flagged class is 60 rows of 1,906)
@@ -149,6 +157,7 @@ interface TailSplit {
 
 /**
  * Split `s` at its last whitespace run, returning the three pieces verbatim.
+ *
  * Null when there is no interior whitespace, when the head would be empty, or
  * when `s` carries leading/trailing whitespace (a golden row is stored trimmed. an
  * untrimmed one is reported rather than silently normalized).
@@ -214,8 +223,9 @@ function withStreetSpans(
  */
 export interface RelabelStreetRowOptions {
 	/**
-	 * Also lift a folded leading directional out into
-	 * `street_prefix`. Default true.
+	 * Also lift a folded leading directional out into `street_prefix`.
+	 *
+	 * Default true.
 	 *
 	 * On by default because the fold applies both ways and the answer key has to be corrected on both, or the correction
 	 * is not a correction: 207 of the 1,682 split dev rows (12.3%) still opened with a directional after the suffix move
@@ -227,6 +237,7 @@ export interface RelabelStreetRowOptions {
 
 /**
  * Decide, and apply, the US street-span split for one golden row.
+ *
  * Pure: never mutates its argument, and returns the same object reference when the row is left alone.
  */
 export function relabelGoldenStreetRow(
@@ -314,8 +325,9 @@ export function relabelGoldenStreetRow(
 		rowClass = "split-prefix-only"
 	}
 
-	// The invariant this tool exists to keep: the spans plus the whitespace between them
-	// are the original span, byte for byte. Anything else means a token was rewritten.
+	// The invariant this tool exists to keep: the spans plus the whitespace between
+	// them are the original span, byte for byte.
+	// Anything else means a token was rewritten.
 	const rebuilt = `${prefix ? prefix + prefixGap : ""}${name}${suffix ? suffixGap + suffix : ""}`
 
 	if (rebuilt !== street) {
@@ -338,10 +350,11 @@ export function relabelGoldenStreetRow(
 		})
 	}
 
-	// Narrow on purpose: a name that happens to be a Pub-28 canonical is not interesting
-	// ("Mountain Rd", "Valley Dr", "Mills Ln" are ordinary streets, and flagging them buried
-	// the deck — 108 rows of noise on the first run). A name that is a bare directional is:
-	// "East Rd" leaves `street: "East"`, which is a direction rather than a name.
+	// Narrow on purpose: a name that happens to be a Pub-28 canonical is not
+	// interesting ("Mountain Rd", "Valley Dr", "Mills Ln" are ordinary streets,
+	// and flagging them buried the deck — 108 rows of noise on the first run).
+	// A name that is a bare directional is: "East Rd" leaves `street: "East"`,
+	// which is a direction rather than a name.
 	if (isStreetDirectionalToken(name)) {
 		flags.push({
 			kind: "remainder-is-affix",

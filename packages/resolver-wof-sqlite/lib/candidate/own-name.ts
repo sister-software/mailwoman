@@ -28,13 +28,16 @@
 import { levenshteinSimilarity } from "@mailwoman/match/comparators"
 
 /**
- * Edit-similarity floor for the variant verdict. The measured band: nearest admitted pair
- * 0.875 (`adamovka`/`adamowka`), nearest refused pair 0.833 (`lievin`/`levin`).
+ * Edit-similarity floor for the variant verdict.
+ *
+ * The measured band: nearest admitted pair 0.875 (`adamovka`/`adamowka`),
+ * nearest refused pair 0.833 (`lievin`/`levin`).
  */
 export const VARIANT_SIMILARITY_MIN = 0.85
 
 /**
  * BGN/pcgn-flavored Cyrillic romanization, folded to the name-key alphabet.
+ *
  * Digraph outputs (zh, kh, ts, ch, sh, shch, yu, ya) match the dominant transliteration
  * conventions the gazetteer's Latin aliases actually use. the `w`/`v` and `kh`/`h` style
  * variance between systems is what the edit-similarity threshold absorbs.
@@ -81,8 +84,10 @@ const CYRILLIC_TO_LATIN: Record<string, string> = {
 }
 
 /**
- * Leading-word abbreviations expanded before comparison, so `st georges` meets `saint george s`
- * inside the edit threshold. Whole-word only — `st` inside `stanley` never expands.
+ * Leading-word abbreviations expanded before comparison, so `st georges` meets
+ * `saint george s` inside the edit threshold.
+ *
+ * Whole-word only — `st` inside `stanley` never expands.
  */
 const NAME_ABBREVIATIONS: ReadonlyArray<[RegExp, string]> = [
 	[/\bst\b/g, "saint"],
@@ -106,6 +111,7 @@ export function expandNameAbbreviations(key: string): string {
 
 /**
  * Romanize a folded name key to the a–z0–9/space alphabet.
+ *
  * `null` when characters outside the covered scripts remain — an unhandled
  * script is no verdict rather than a mismatch.
  */
@@ -127,7 +133,9 @@ export function romanizeNameKey(key: string): string | null {
 
 /**
  * Edit similarity between a holder's primary name key and one of its alias keys,
- * both romanized and abbreviation-expanded. `null` when either side's script is uncovered.
+ * both romanized and abbreviation-expanded.
+ *
+ * `null` when either side's script is uncovered.
  */
 // repo-health-ignore export-name-affix -- romanizes and expands abbreviations first;
 // `nameSimilarity` compares as given.

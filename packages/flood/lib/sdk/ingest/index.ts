@@ -64,7 +64,9 @@ export interface FloodIngestOptions {
 	 */
 	geodatabasePath: string
 	/**
-	 * Layer inside it. Defaults to the EA's published layer name.
+	 * Layer inside it.
+	 *
+	 * Defaults to the EA's published layer name.
 	 */
 	layer?: string
 	/**
@@ -72,12 +74,14 @@ export interface FloodIngestOptions {
 	 */
 	limit?: number
 	/**
-	 * The epsg code the source must declare. A source declaring anything else is a
-	 * product change rather than a variation to absorb.
+	 * The epsg code the source must declare.
+	 *
+	 * A source declaring anything else is a product change rather than a variation to absorb.
 	 */
 	expectEPSG?: number
 	/**
 	 * The extent every reprojected vertex must land inside.
+	 *
 	 * Defaults to the EA collection's own declaration.
 	 */
 	declaredBBox?: readonly [number, number, number, number]
@@ -94,9 +98,10 @@ export interface FloodIngestOptions {
 }
 
 /**
- * Coordinate decimals ogr2ogr writes into the stream. Nine is ~0.1 mm at this latitude —
- * far past the source's own precision, and chosen so the reprojection contributes
- * nothing measurable to the area cross-check.
+ * Coordinate decimals ogr2ogr writes into the stream.
+ *
+ * Nine is ~0.1 mm at this latitude — far past the source's own precision, and chosen
+ * so the reprojection contributes nothing measurable to the area cross-check.
  */
 const COORDINATE_PRECISION = 9
 
@@ -193,7 +198,9 @@ export async function* readFloodSourceFeatures(options: FloodIngestOptions): Asy
 }
 
 /**
- * Validate one raw GeoJSON feature and narrow it. Split out so the generator body stays a loop.
+ * Validate one raw GeoJSON feature and narrow it.
+ *
+ * Split out so the generator body stays a loop.
  */
 function toSourceFeature(
 	raw: RawFeature,
@@ -233,8 +240,10 @@ function toSourceFeature(
  */
 export interface FloodFeatureSource {
 	/**
-	 * What the source says it holds. The build compares its own streamed total against this,
-	 * so a short read throws instead of building a smaller England.
+	 * What the source says it holds.
+	 *
+	 * The build compares its own streamed total against this, so a short read throws
+	 * instead of building a smaller England.
 	 */
 	declaredFeatureCount: number
 	layer: string
@@ -255,9 +264,9 @@ export async function createGeodatabaseFeatureSource(
 	const identity = await readFloodSourceIdentity(options)
 
 	return {
-		// A range's own count is supplied by the caller, because `ogrinfo` reports the
-		// layer's total and nothing narrower. The whole-file total is still checked:
-		// the builder sums what its chunks streamed and compares that.
+		// A range's own count is supplied by the caller, because `ogrinfo` reports
+		// the layer's total and nothing narrower.
+		// The whole-file total is still checked: the builder sums what its chunks streamed and compares that.
 		declaredFeatureCount: declaredFeatureCount({
 			declared: options.declaredFeatureCount,
 			limit: options.limit,

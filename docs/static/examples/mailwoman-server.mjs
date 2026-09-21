@@ -21,12 +21,13 @@ const PORT = Number(process.env.PORT ?? 3000)
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 
 // Geocoding is opt-in on a gazetteer being there, not on anything being configured.
-// `resolveCandidateDBPath` is the shipped helper for exactly this: it tries an explicit path,
-// then `$MAILWOMAN_CANDIDATE_DB`, then `<data-root>/wof/candidate.db`, and returns undefined
-// unless one of them is a file that exists. That last position is why an image needs only
-// its volume mount, and the existence check is why a first run without one still boots:
-// a truthiness check on the variable would open a file that is not there and kill the process
-// with SQLITE_CANTOPEN before it bound a port. Same guard the published image's server.mjs uses.
+// `resolveCandidateDBPath` is the shipped helper for exactly this: it tries an
+// explicit path, then `$MAILWOMAN_CANDIDATE_DB`, then `<data-root>/wof/candidate.db`,
+// and returns undefined unless one of them is a file that exists.
+// That last position is why an image needs only its volume mount, and the existence check is
+// why a first run without one still boots: a truthiness check on the variable would open a
+// file that is not there and kill the process with SQLITE_CANTOPEN before it bound a port.
+// Same guard the published image's server.mjs uses.
 const candidateDB = resolveCandidateDBPath()
 
 let resolver

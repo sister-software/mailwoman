@@ -20,6 +20,7 @@ import { assertDatabaseIntegrity } from "@mailwoman/sqlite/sealed-db"
 export interface FreezeAdminOptions {
 	/**
 	 * Repos root for the `wof:hierarchy` −4 backfill (#440/#832 — NYC/London-class multi-parent orphans).
+	 *
 	 * Omit only in fixture tests. a real build without it leaves those metros
 	 * unreachable by the region-descendant filter.
 	 */
@@ -72,9 +73,9 @@ export async function freezeAdmin(
 	const ancestorRows = populateAncestors(db)
 
 	// Index `ancestors(id)` now — before the −4 backfill probes it.
-	// `createUnifiedIndexes` (below) builds this same index, but it runs after the backfill.
-	// without it here the backfill's per-candidate lookups full-scan the closure table each
-	// time (#1015). `if not exists` keeps the later createUnifiedIndexes a no-op.
+	// `createUnifiedIndexes` (below) builds this same index, but it runs after the backfill. without
+	// it here the backfill's per-candidate lookups full-scan the closure table each time (#1015).
+	// `if not exists` keeps the later createUnifiedIndexes a no-op.
 	phase("ancestors-index")
 	db.exec("CREATE INDEX IF NOT EXISTS ancestors_by_id ON ancestors(id)")
 
@@ -99,8 +100,9 @@ export async function freezeAdmin(
 		}
 	}
 
-	// Dual-role-place relation (#403, epic #402) — needs `ancestors` + `spr` bbox + `place_population`,
-	// all present by now. Drives the resolver's hierarchy completion (on by default).
+	// Dual-role-place relation (#403, epic #402) — needs `ancestors` + `spr` bbox +
+	// `place_population`, all present by now.
+	// Drives the resolver's hierarchy completion (on by default).
 	phase("coincident-roles")
 	const roles = buildCoincidentRoles(db)
 

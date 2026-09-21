@@ -15,8 +15,10 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * The one workspace these fixtures build. A caller names its own set, so the tests name one
- * rather than importing a list from a package that happens to have one.
+ * The one workspace these fixtures build.
+ *
+ * A caller names its own set, so the tests name one rather than importing a list
+ * from a package that happens to have one.
  */
 const WORKSPACE = "packages/probe"
 
@@ -73,8 +75,8 @@ describe("checkCompiledFreshness", () => {
 	})
 
 	it("reads the newest EMITTED FILE rather than the out/ directory's own mtime", async () => {
-		// `tsc` overwrites in place, and a directory's mtime moves only when an entry is added
-		// or removed. A check anchored on the directory therefore never advances on a recompile.
+		// `tsc` overwrites in place, and a directory's mtime moves only when an entry is added or removed.
+		// A check anchored on the directory therefore never advances on a recompile.
 		// Measured on `packages/core`, the directory read 2026-09-14T17:36:04Z against a newest emit of
 		// 2026-09-19T02:33:12Z, so the battery's own copy of this warned after every successful compile.
 		const { root, workspace } = await checkout()
@@ -83,7 +85,8 @@ describe("checkCompiledFreshness", () => {
 
 		await writeLocalTextFile("export const x = 1\n", compiled)
 		await writeLocalTextFile("export const x = 1\n", source)
-		// The directory is left far in the past. Only the file inside it is current.
+		// The directory is left far in the past.
+		// Only the file inside it is current.
 		await touch(join(workspace, "out"), -600_000)
 		await touch(source, -60_000)
 		await touch(compiled, 0)

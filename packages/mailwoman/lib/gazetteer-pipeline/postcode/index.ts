@@ -36,23 +36,33 @@ export interface BuildPostcodeDatabaseOptions {
 	 */
 	country: string
 	/**
-	 * WOF repos root. Default `<data-root>/wof/repos`.
+	 * WOF repos root.
+	 *
+	 * Default `<data-root>/wof/repos`.
 	 */
 	reposDir?: string
 	/**
-	 * Output artifact. Default `<data-root>/wof/postalcode-<cc>.rebuild.db` (staging — swap deliberately).
+	 * Output artifact.
+	 *
+	 * Default `<data-root>/wof/postalcode-<cc>.rebuild.db` (staging — swap deliberately).
 	 */
 	out?: string
 	/**
-	 * Census zcta Gazetteer file (US pass 1). Default `<data-root>/census/2024_Gaz_zcta_national.txt`.
+	 * Census zcta Gazetteer file (US pass 1).
+	 *
+	 * Default `<data-root>/census/2024_Gaz_zcta_national.txt`.
 	 */
 	zctaPath?: PathBuilderLike
 	/**
-	 * GeoNames postal dump dir. Default `<data-root>/geonames-postal`.
+	 * GeoNames postal dump dir.
+	 *
+	 * Default `<data-root>/geonames-postal`.
 	 */
 	geonamesPostalDir?: PathBuilderLike
 	/**
-	 * Admin gazetteer for the parent/ancestor borrows. Default the live `admin-global-priority.db`.
+	 * Admin gazetteer for the parent/ancestor borrows.
+	 *
+	 * Default the live `admin-global-priority.db`.
 	 */
 	adminPath?: string
 	onPhase?: (phase: string, detail?: string) => void
@@ -68,7 +78,9 @@ export interface BuildPostcodeDatabaseResult {
 }
 
 /**
- * Build one country's sealed postcode database. See the module docstring for the fill ladder.
+ * Build one country's sealed postcode database.
+ *
+ * See the module docstring for the fill ladder.
  */
 export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions): Promise<BuildPostcodeDatabaseResult> {
 	const phase = opts.onPhase ?? (() => {})

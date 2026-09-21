@@ -18,6 +18,7 @@ import { repoRootPathBuilder } from "#paths"
 
 /**
  * One country's placetype-pair index inputs, as `softFeed.pairIndexByCountry[<cc>]` writes them.
+ *
  * Entries are heterogeneous — `gb` names a `source` CSV, `us` only a `boroughDB` —
  * so every field is optional and unknown keys pass.
  */
@@ -49,8 +50,9 @@ export interface SoftFeedRecipe {
 
 /**
  * A char-path base package's binaries (#2164), keyed by script family (`cjk`).
- * Paths are data-root relative, like `weights.model`. The vocabulary is committed in
- * the package too. the recipe's copy keeps it in step with the graph.
+ *
+ * Paths are data-root relative, like `weights.model`.
+ * The vocabulary is committed in the package too. the recipe's copy keeps it in step with the graph.
  */
 export interface CharWeightsRecipe {
 	model: string
@@ -104,9 +106,9 @@ export function shippingLocales(config: Pick<ReleaseConfig, "locales" | "charWei
 /**
  * Country → the locale package that scopes it, derived from {@link shippingLocales} rather than restated.
  *
- * The region subtag of a locale package is the country it scopes — `en-au`
- * scopes AU, `zh-cn` scopes CN — so a hand-written table is a second copy of
- * `release.config.json`'s two lists, and the copy is what goes stale when a locale ships.
+ * The region subtag of a locale package is the country it scopes — `en-au` scopes AU,
+ * `zh-cn` scopes CN — so a hand-written table is a second copy of `release.config.json`'s
+ * two lists, and the copy is what goes stale when a locale ships.
  * `repo-health`'s `locale-tables` check exists because that copy existed.
  *
  * Existence is not training: a country here has a package that scopes it,
@@ -128,8 +130,9 @@ export function weightsPackageByCountry(config: Pick<ReleaseConfig, "locales" | 
 }
 
 /**
- * The lexicons that are committed to the repository, by the name they take in a
- * weights package and the `softFeed` key that names their repo-relative source.
+ * The lexicons that are committed to the repository, by the name they take in a weights
+ * package and the `softFeed` key that names their repo-relative source.
+ *
  * The locality-surface lexicon is not here: it is built, lives in the data root,
  * and is resolved by `softFeed.localitySurfaceLexicon` against that root instead.
  */

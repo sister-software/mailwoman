@@ -16,6 +16,7 @@ export interface PlanetaryView {
 
 /**
  * Everything one body's build needs that the other's differs in.
+ *
  * The artifact URLs pin one pipeline publish, the way Earth's resource versions pin
  * one gazetteer build. a republish moves the pin by a commit here.
  */
@@ -42,9 +43,10 @@ export interface PlanetaryMapConfig {
 	 */
 	terrainCredit: string
 	/**
-	 * Named features offered as chips under the search field, so a visitor who does not know
-	 * the nomenclature has somewhere to start. Each string is searched exactly as typed,
-	 * so it must match a feature name in the body's search artifact.
+	 * Named features offered as chips under the search field, so a visitor who does
+	 * not know the nomenclature has somewhere to start.
+	 *
+	 * Each string is searched exactly as typed, so it must match a feature name in the body's search artifact.
 	 */
 	exampleFeatures: ReadonlyArray<string>
 	tiles: {

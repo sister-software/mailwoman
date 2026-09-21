@@ -27,10 +27,12 @@ let cacheRoot: TemporaryDirectory
 
 /**
  * This file spells the layout OUT BY hand on purpose (2026-08-06 triage).
+ *
  * Everywhere else in the tree that literal moved to {@linkcode weightsCachePackageDir},
  * because a layout re-typed in eight places is a layout that can drift.
  * Here it is the oracle: this is the file that pins what `resolveWeights`' cache rung finds,
  * and a fixture built with the implementation's own helper cannot fail when the implementation is wrong.
+ *
  * The helper is tied back to the independent spelling by the last test in this file instead.
  */
 async function layoutCachedPackage(files: string[]): Promise<string> {

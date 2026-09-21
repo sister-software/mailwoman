@@ -47,16 +47,21 @@ export function defaultStreetMorphologyArtifactPath(): PathBuilder {
 export interface LoadStreetMorphologyFSTOpts {
 	/**
 	 * Explicit artifact path (e.g. a weights-package sibling).
+	 *
 	 * When given it is the only artifact probed — missing or unreadable degrades
 	 * straight to the dictionary build, never a throw.
 	 */
 	artifactPath?: PathBuilderLike
 	/**
-	 * Dictionaries dir for the build fallback. Defaults to core's bundled libpostal dictionaries.
+	 * Dictionaries dir for the build fallback.
+	 *
+	 * Defaults to core's bundled libpostal dictionaries.
 	 */
 	dictionariesDir?: PathBuilderLike
 	/**
-	 * Unreadable-artifact diagnostics. Defaults to silent (the caller owns its warn channel).
+	 * Unreadable-artifact diagnostics.
+	 *
+	 * Defaults to silent (the caller owns its warn channel).
 	 */
 	onWarn?: (message: string) => void
 }

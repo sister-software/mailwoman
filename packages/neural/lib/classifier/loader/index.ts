@@ -32,15 +32,17 @@ import type { ResolvedWeights, ResolveWeightsOpts } from "#weights"
  * Resolution order: explicit paths in `opts` → `@mailwoman/neural-weights-<locale>`
  * package → throws a single actionable error.
  *
- * **Node-only.** The dynamic imports keep `ONNXRunner` (onnxruntime-node) + `resolveWeights`
- * (uses Node fs) out of the static dependency graph, so this file can be bundled for the
- * browser through `@mailwoman/neural/web-loader`. Calling this method in a browser will
- * throw at runtime — use `loadNeuralClassifierFromURLs` from that subpath instead.
+ * **Node-only.** The dynamic imports keep `ONNXRunner` (onnxruntime-node) +
+ * `resolveWeights` (uses Node fs) out of the static dependency graph, so this file can
+ * be bundled for the browser through `@mailwoman/neural/web-loader`.
+ * Calling this method in a browser will throw at runtime — use
+ * `loadNeuralClassifierFromURLs` from that subpath instead.
  */
 /**
  * {@link loadClassifierFromWeights} for the caller's locale, wrapped so an input whose script names another weights
- * family (`cjk` for Han, kana and Hangul) runs on that family's classifier,
- * loaded once on first use from the same resolution options (cache root, overlay root).
+ * family (`cjk` for Han, kana and Hangul) runs on that family's classifier, loaded once
+ * on first use from the same resolution options (cache root, overlay root).
+ *
  * A family whose package is absent is reported once on stderr and its inputs stay on the primary.
  */
 export async function loadScriptRoutedClassifier(
@@ -70,9 +72,10 @@ export async function loadClassifierFromWeights(
 		intraOpNumThreads?: number
 		/**
 		 * Explicit `placetype-census-<cc>.bin` path, overriding the build-local
-		 * data-root lookup (`loadPlacetypeCensus`). For a harness that built a census
-		 * to a scratch directory — the data root is read-only on the lab host,
-		 * so "build it and point at it" is the only way to exercise a fresh artifact.
+		 * data-root lookup (`loadPlacetypeCensus`).
+		 *
+		 * For a harness that built a census to a scratch directory — the data root is read-only on
+		 * the lab host, so "build it and point at it" is the only way to exercise a fresh artifact.
 		 * A wrong-country file is still refused by the loader's header check.
 		 */
 		placetypeCensusPath?: string
@@ -115,10 +118,11 @@ export async function loadClassifierFromWeights(
 	/* oxlint-enable typescript/no-restricted-imports */
 	const resolved: ResolvedWeights = await resolveWeights(opts)
 
-	// The vocabulary belongs to the model, so an overlay that shares a base model inherits it
-	// rather than restating it. A carrier package's own card describes the overlay — its version,
-	// its own artifacts — and omitting `labels` there is correct. copying them in would be a second
-	// copy to go stale on the next retrain. Falling back is what keeps the two facts in one place.
+	// The vocabulary belongs to the model, so an overlay that shares a base model
+	// inherits it rather than restating it.
+	// A carrier package's own card describes the overlay — its version, its own artifacts — and omitting
+	// `labels` there is correct. copying them in would be a second copy to go stale on the next retrain.
+	// Falling back is what keeps the two facts in one place.
 	const labels =
 		(await readLabelsFromModelCard(resolved.modelCardPath)) ??
 		(await readLabelsFromModelCard(resolved.baseModelCardPath))
@@ -159,13 +163,15 @@ export async function loadClassifierFromWeights(
 		charEncoder ? undefined : MailwomanTokenizer.loadFromFile(resolved.tokenizerPath),
 		ONNXRunner.create(resolved.modelPath, {
 			executionProviders: opts.executionProviders,
-			// Cap the intra-op pool. Left unset, ORT sizes it to the core count, so N concurrent
-			// processes each claim the whole machine — the multiplier behind the CLI spawn-test timeouts.
+			// Cap the intra-op pool.
+			// Left unset, ORT sizes it to the core count, so N concurrent processes each claim
+			// the whole machine — the multiplier behind the CLI spawn-test timeouts.
 			// Measured 2026-08-03 over 120 parses: 1 thread costs 18.3 ms/parse against 9.3
 			// for all-cores (a 97% regression — the parallelism is doing work), 2 costs 12.5,
 			// and 4 is 9.2 — flat against the default while claiming a quarter of the threads.
-			// So the cap is free at 4 and expensive at 1. do not "simplify" it downward without
-			// re-running that curve. Explicit opt > deployment env > compromise default.
+			// So the cap is free at 4 and expensive at 1. do not "simplify" it downward
+			// without re-running that curve.
+			// Explicit opt > deployment env > compromise default.
 			// The env layer exists because the right value is a property of how many
 			// processes share the host, which this library cannot see.
 			intraOpNumThreads: opts.intraOpNumThreads ?? $public.MAILWOMAN_INTRA_OP_THREADS ?? DEFAULT_INTRA_OP_THREADS,
@@ -179,7 +185,8 @@ export async function loadClassifierFromWeights(
 	// so every consumer (ResolveRouter, GeocodeRouter, geocode.tsx, the CLI)
 	// transparently gains them with no callsite change.
 	//
-	// soft: each channel is best-effort. A caller-passed `postcodeAnchorLookup` always wins.
+	// soft: each channel is best-effort.
+	// A caller-passed `postcodeAnchorLookup` always wins.
 	// When the model-card declares a channel required but the package didn't ship its data, we warn once
 	// (mirroring the web loader's `warnOnUnfedTrainedChannels`) and run that channel off — never crash.
 	const declared = await readRequiredChannels(resolved.modelCardPath)
@@ -265,19 +272,20 @@ export async function loadClassifierFromWeights(
 	const localitySurfaceLexicon = lexicons.locality_surface
 
 	// Placetype-pair index sibling (placetype-pair-prior arc): construct a PairIndexResolver
-	// when the package shipped one for this country. hard country check — an index
-	// built for one country must never bias a parse resolved for a different locale
-	// (a mismatch is a packaging bug rather than something to apply anyway): the index
-	// header's `country` must equal the resolved locale's country subtag, or the default
-	// is skipped with a single warning naming both. Unlike the anchor/gazetteer/country
-	// soft-feed channels above, there is no "declared required" fail-closed case here —
-	// the prior is opt-in plumbing, so a missing/mismatched index degrades silently to
-	// the byte-stable no-prior default, loud only via the eval warning.
+	// when the package shipped one for this country. hard country check —
+	// an index built for one country must never bias a parse resolved for a different
+	// locale (a mismatch is a packaging bug rather than something to apply anyway):
+	// the index header's `country` must equal the resolved locale's country subtag,
+	// or the default is skipped with a single warning naming both.
+	// Unlike the anchor/gazetteer/country soft-feed channels above, there is no "declared
+	// required" fail-closed case here — the prior is opt-in plumbing, so a missing/mismatched
+	// index degrades silently to the byte-stable no-prior default, loud only via the eval warning.
 	//
-	// Header peek before construction: the country check reads only the magic + header block
-	// via `peekPairIndexHeader` — no entry parsing, no Map build — so a mismatched index never
-	// pays the full-parse cost just to be discarded. The `PairIndexResolver` constructor
-	// (which does walk every entry) only runs once the eval has already confirmed the country match.
+	// Header peek before construction: the country check reads only the magic +
+	// header block via `peekPairIndexHeader` — no entry parsing, no Map build —
+	// so a mismatched index never pays the full-parse cost just to be discarded.
+	// The `PairIndexResolver` constructor (which does walk every entry) only runs
+	// once the eval has already confirmed the country match.
 	let placetypePair: PlacetypePairPriorOpts | undefined
 
 	if (resolved.pairIndexPath) {
@@ -288,11 +296,11 @@ export async function loadClassifierFromWeights(
 
 			if (peekedHeader.country === localeCountry) {
 				// `parentDelta` (#46, the whole-edge parent bias) rides the artifact, exactly as `delta`
-				// and `transitionBeta` do — the prior reads `PairIndexResolver.parentDelta`
-				// off the header, so a calibrated locale (us/gb/nz/fr at 5) is default-on
-				// and an unmeasured one (de/in/es/it, no header field) stays off, with no code here
-				// knowing which is which. The env is an override for eval sweeps only and wins
-				// when set. see `MAILWOMAN_PAIR_PARENT_DELTA` in `neural/lib/env.ts`.
+				// and `transitionBeta` do — the prior reads `PairIndexResolver.parentDelta` off the header,
+				// so a calibrated locale (us/gb/nz/fr at 5) is default-on and an unmeasured one
+				// (de/in/es/it, no header field) stays off, with no code here knowing which is which.
+				// The env is an override for eval sweeps only and wins when set. see
+				// `MAILWOMAN_PAIR_PARENT_DELTA` in `neural/lib/env.ts`.
 				placetypePair = {
 					index: new PairIndexResolver(pairIndexBytes),
 					...($public.MAILWOMAN_PAIR_PARENT_DELTA === undefined
@@ -322,9 +330,10 @@ export async function loadClassifierFromWeights(
 		opts.placetypeCensusPath
 	)
 
-	// Near-postcode gazetteer choreography + conventions mode: drive them off the card's declared
-	// ship-config (mirrors createScorer / the browser loader defaults), inert when the source
-	// channel is absent. Byte-stable for a non-anchor card (no `requires` → all undefined/false).
+	// Near-postcode gazetteer choreography + conventions mode: drive them off the
+	// card's declared ship-config (mirrors createScorer / the browser loader defaults),
+	// inert when the source channel is absent.
+	// Byte-stable for a non-anchor card (no `requires` → all undefined/false).
 	// The anchor span mode is card-declared too, never inferred: an undeclared card
 	// leaves it undefined and the channel keeps the alnum-run scan verbatim.
 	const suppressGazetteerNearPostcode =
@@ -353,9 +362,10 @@ export async function loadClassifierFromWeights(
 		modelPath: resolved.modelPath,
 		weightsSource: resolved.source,
 		...(suppressGazetteerNearPostcode ? { suppressGazetteerNearPostcode } : {}),
-		// The card's `mode` is an open string. a non-SystemCode value degrades to a null conventions row
-		// downstream (`conventionsForSystem` on an unknown code), never a throw — so the widening cast
-		// is runtime-safe. An overlay card may pin a concrete system here (en-gb pins "gb", #1275)
+		// The card's `mode` is an open string. a non-SystemCode value degrades to a
+		// null conventions row downstream (`conventionsForSystem` on an unknown code),
+		// never a throw — so the widening cast is runtime-safe.
+		// An overlay card may pin a concrete system here (en-gb pins "gb", #1275)
 		// when the locale head's auto detection under-fires for the bundle's own locale.
 		...(addressSystemConventions ? { addressSystemConventions: addressSystemConventions as "auto" | SystemCode } : {}),
 	})

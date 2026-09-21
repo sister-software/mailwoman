@@ -30,8 +30,10 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import type { CountryBBoxFact } from "@mailwoman/core/resolver"
 
 /**
- * Resolution granularity, coarse → fine. A resolved node's {@link AddressNode.tag} places
- * it on this ladder. the geocode a caller serves comes from the finest resolved node.
+ * Resolution granularity, coarse → fine.
+ *
+ * A resolved node's {@link AddressNode.tag} places it on this ladder. the geocode
+ * a caller serves comes from the finest resolved node.
  * Tags absent here (unit, po_box, intersection halves, …) are treated as
  * street-tier specificity when resolved.
  */
@@ -65,6 +67,7 @@ export interface ResolvedCoordinate {
 /**
  * Walk a resolved {@link AddressTree} and return the finest resolved place —
  * the node carrying a resolver-supplied coordinate at the deepest granularity tier.
+ *
  * Returns `null` when nothing resolved (no node carries a `lat`/`lon`).
  * Ties break toward the first node in document order.
  */
@@ -141,6 +144,7 @@ export const COUNTRY_BBOX: Readonly<Record<string, readonly [number, number, num
 
 /**
  * True when the coordinate lies outside `countryCode`'s coarse bbox.
+ *
  * Unknown country codes are fail-open (false).
  *
  * When `bboxes` (artifact-declared boxes, {@link GazetteerArtifactCoverage.countryBBoxes})
@@ -177,9 +181,10 @@ export function outsideExpectedCountry(
 export interface PlausibilityVerdict {
 	implausible: boolean
 	/**
-	 * Set when `implausible` is true. `country-centroid` = resolved no finer than
-	 * a country (guard A); `outside-expected-country` = the served coordinate lies
-	 * outside the expected country's bbox (guard B).
+	 * Set when `implausible` is true.
+	 *
+	 * `country-centroid` = resolved no finer than a country (guard A); `outside-expected-country`
+	 * = the served coordinate lies outside the expected country's bbox (guard B).
 	 */
 	reason?: "country-centroid" | "outside-expected-country"
 	/**
@@ -190,8 +195,9 @@ export interface PlausibilityVerdict {
 
 export interface PlausibilityOpts {
 	/**
-	 * ISO-2 country the resolution is expected to land in, when the caller
-	 * knows it (a locale hint, a parsed country, a fixture's gold country).
+	 * ISO-2 country the resolution is expected to land in, when the caller knows it
+	 * (a locale hint, a parsed country, a fixture's gold country).
+	 *
 	 * Enables guard B: a coordinate outside this country's coarse bbox is
 	 * implausible — the cross-country-jump class guard A structurally cannot catch
 	 * (`1210a IA 10 W IA` → a coordinate ~10,000 km from the US was country-centroid-free
@@ -201,9 +207,10 @@ export interface PlausibilityOpts {
 	expectedCountry?: string
 	/**
 	 * Artifact-declared guard-B boxes (the loaded gazetteer's `country_bbox` manifest,
-	 * via `resolver.artifactCoverage?.countryBBoxes`). When supplied they replace
-	 * the built-in {@link COUNTRY_BBOX} table wholesale. omitted → the constant
-	 * (byte-identical fallback for artifacts predating the manifest).
+	 * via `resolver.artifactCoverage?.countryBBoxes`).
+	 *
+	 * When supplied they replace the built-in {@link COUNTRY_BBOX} table wholesale. omitted
+	 * → the constant (byte-identical fallback for artifacts predating the manifest).
 	 */
 	countryBBoxes?: ReadonlyMap<string, CountryBBoxFact>
 }
@@ -211,9 +218,11 @@ export interface PlausibilityOpts {
 /**
  * Decide whether a resolved tree's geocode is implausible for a structured address —
  * the cheap guard the v7 hybrid check runs after routing an input to the neural parser (#38).
- * Trips when the finest resolved place is a bare `country` centroid (guard A), or — when the caller
- * supplies `expectedCountry` — when the served coordinate falls outside that country's coarse bbox
- * (guard B). An unresolved tree (nothing to serve) is plausible: there is no garbage to serve.
+ *
+ * Trips when the finest resolved place is a bare `country` centroid (guard A),
+ * or — when the caller supplies `expectedCountry` — when the served coordinate
+ * falls outside that country's coarse bbox (guard B).
+ * An unresolved tree (nothing to serve) is plausible: there is no garbage to serve.
  */
 export function isImplausibleResolution(tree: AddressTree, opts: PlausibilityOpts = {}): PlausibilityVerdict {
 	const coordinate = finestResolvedCoordinate(tree)

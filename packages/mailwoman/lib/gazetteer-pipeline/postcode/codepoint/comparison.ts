@@ -37,9 +37,11 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 const M_PER_KM = 1000
 
 /**
- * A postcode present in one database and absent from the other, summarized by postcode area
- * rather than listed. The full list runs to six figures. the area histogram is what tells you
- * whether a gap is structural (a whole area missing) or diffuse (churn spread across all of them).
+ * A postcode present in one database and absent from the other, summarized by
+ * postcode area rather than listed.
+ *
+ * The full list runs to six figures. the area histogram is what tells you whether a gap
+ * is structural (a whole area missing) or diffuse (churn spread across all of them).
  */
 export interface AreaHistogram {
 	total: number
@@ -64,8 +66,9 @@ export interface DeltaDistribution {
 	 */
 	over1km: number
 	/**
-	 * Share further apart than 10 km. At this distance the two sources are naming
-	 * different places rather than rounding differently.
+	 * Share further apart than 10 km.
+	 *
+	 * At this distance the two sources are naming different places rather than rounding differently.
 	 */
 	over10km: number
 }
@@ -86,17 +89,22 @@ export interface ProbeResult {
 
 /**
  * The "only in the incumbent" set, split into the three things it actually contains.
+ *
  * Reporting it as one number is what makes a swap look like a 92,704-postcode
  * regression. the split is what makes it a decision.
  */
 export interface IncumbentOnlyBreakdown {
 	total: number
 	/**
-	 * `BT` — Northern Ireland. A permanent, licence-driven gap in Code-Point Open.
+	 * `BT` — Northern Ireland.
+	 *
+	 * A permanent, licence-driven gap in Code-Point Open.
 	 */
 	northernIreland: number
 	/**
-	 * `IM`/`GY`/`JE` — Isle of Man, Guernsey, Jersey. Outside Great Britain, same licence shape as NI.
+	 * `IM`/`GY`/`JE` — Isle of Man, Guernsey, Jersey.
+	 *
+	 * Outside Great Britain, same licence shape as NI.
 	 */
 	crownDependencies: number
 	/**
@@ -119,7 +127,9 @@ export interface CodePointCheckReport {
 	incumbentOnlyBreakdown: IncumbentOnlyBreakdown
 	delta: DeltaDistribution
 	/**
-	 * Northern Ireland, counted explicitly. See the module docstring.
+	 * Northern Ireland, counted explicitly.
+	 *
+	 * See the module docstring.
 	 */
 	northernIreland: {
 		incumbentBTRows: number
@@ -127,8 +137,9 @@ export interface CodePointCheckReport {
 	}
 	/**
 	 * Non-GB Crown-dependency areas the incumbent carries and Code-Point does
-	 * not (Isle of Man, Guernsey, Jersey). Same licensing shape as the NI rows
-	 * and worth separating for the same reason.
+	 * not (Isle of Man, Guernsey, Jersey).
+	 *
+	 * Same licensing shape as the NI rows and worth separating for the same reason.
 	 */
 	crownDependencies: {
 		incumbentRows: Record<string, number>
@@ -138,12 +149,15 @@ export interface CodePointCheckReport {
 }
 
 /**
- * Postcode areas covering Northern Ireland. Exactly one — `BT` is the whole province.
+ * Postcode areas covering Northern Ireland.
+ *
+ * Exactly one — `BT` is the whole province.
  */
 const NORTHERN_IRELAND_AREAS = ["BT"] as const
 
 /**
  * Crown-dependency postcode areas: Isle of Man, Guernsey, Jersey.
+ *
  * Outside Great Britain, and outside Code-Point Open.
  */
 const CROWN_DEPENDENCY_AREAS = ["IM", "GY", "JE"] as const
@@ -152,19 +166,22 @@ const CROWN_DEPENDENCY_AREAS = ["IM", "GY", "JE"] as const
  * Hand-checked probes — postcodes whose real-world location is independently known,
  * so a coordinate can be judged as right or wrong rather than merely as different.
  *
- * Chosen for (a) being individually verifiable by a reader, and (b) spanning
- * England, Scotland and Wales plus both coordinate extremes of the join.
+ * Chosen for (a) being individually verifiable by a reader, and (b) spanning England,
+ * Scotland and Wales plus both coordinate extremes of the join.
  * `expected` is the landmark's own position. a Code-Point centroid is the postcode unit's
  * mean delivery point, so tens of metres of offset is correct behaviour and not error.
+ *
  * The looser entries (the three city-centre probes near 500-900 m) are loose because the
  * landmark coordinate is a district rather than a door — both databases agree with each
  * other there to within 3 m, which is the comparison this list is actually making.
  *
  * The Senedd probe is `CF99 1SN` and that is not a typo.
- * It was originally `CF99 1NA`, which the first eval run reported absent from Code-Point Open
- * and present in the incumbent. Chasing it found the real story rather than a bug: the Senedd's
- * postcode changed from `CF99 1NA` to `CF99 1SN` in 2021, Code-Point Open 2026-05 carries only
- * the current one, and the incumbent GeoNames snapshot still carries the retired one 114 m away.
+ * It was originally `CF99 1NA`, which the first eval run reported absent from
+ * Code-Point Open and present in the incumbent.
+ *
+ * Chasing it found the real story rather than a bug: the Senedd's postcode changed from
+ * `CF99 1NA` to `CF99 1SN` in 2021, Code-Point Open 2026-05 carries only the current one,
+ * and the incumbent GeoNames snapshot still carries the retired one 114 m away.
  * That single row is the whole 33,761-postcode "only in incumbent" residual in miniature —
  * those are terminated postcodes rather than missing coverage.
  */
@@ -183,6 +200,7 @@ export const CODEPOINT_PROBES = [
 
 /**
  * The #920 sanitized form — every non-letter/number stripped.
+ *
  * Both databases store this as `spr.name`, so it is the join key.
  * Duplicated from `resolver-wof-sqlite/geonames-postal.ts` rather than imported
  * because that package is an optional peer and this check must run without it.
@@ -205,6 +223,7 @@ export interface RunCodePointCheckOptions {
 	codepointPath: string
 	/**
 	 * The incumbent, e.g. the frozen `<data-root>/wof/frozen-backup-2026-08-04/postalcode-geonames-tail.db`.
+	 *
 	 * Opened read-only — this tool never writes to either input.
 	 */
 	incumbentPath: string
@@ -212,11 +231,13 @@ export interface RunCodePointCheckOptions {
 }
 
 /**
- * Run the check. Both databases are opened read-only. nothing is written anywhere.
+ * Run the check.
  *
- * Memory: the incumbent's GB rows are held in a `Map` of ~1.84 M entries (~250 MB)
- * so the join is a single pass over each side rather than a SQL `attach` join
- * across two 800 MB+ files. Measured at ~40 s end to end.
+ * Both databases are opened read-only. nothing is written anywhere.
+ *
+ * Memory: the incumbent's GB rows are held in a `Map` of ~1.84 M entries (~250 MB) so the join
+ * is a single pass over each side rather than a SQL `attach` join across two 800 MB+ files.
+ * Measured at ~40 s end to end.
  */
 export function runCodePointCheck(options: RunCodePointCheckOptions): CodePointCheckReport {
 	const phase = options.onPhase ?? (() => {})
@@ -304,9 +325,9 @@ export function runCodePointCheck(options: RunCodePointCheckOptions): CodePointC
 
 		phase("stats", `${deltas.length.toLocaleString()} joined postcodes`)
 
-		// Sorted once here. `percentile` copies-and-sorts internally, which is
-		// the right default for a small sample and the wrong one for 1.7 M values
-		// read four times — so the quantiles are taken off this array directly.
+		// Sorted once here.
+		// `percentile` copies-and-sorts internally, which is the right default for a small sample and the
+		// wrong one for 1.7 M values read four times — so the quantiles are taken off this array directly.
 		// `percentile` is still used for the shape of the index arithmetic.
 		deltas.sort((a, b) => a - b)
 
@@ -406,8 +427,10 @@ export function runCodePointCheck(options: RunCodePointCheckOptions): CodePointC
 }
 
 /**
- * Render the report as plain lines. Kept separate from {@link runCodePointCheck}
- * so the numbers can be consumed programmatically without parsing prose.
+ * Render the report as plain lines.
+ *
+ * Kept separate from {@link runCodePointCheck} so the numbers can be consumed
+ * programmatically without parsing prose.
  */
 export function formatCodePointCheckReport(report: CodePointCheckReport): string[] {
 	const topAreas = (histogram: AreaHistogram, n = 8): string =>

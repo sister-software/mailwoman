@@ -26,14 +26,17 @@ import type { GeocodeTrace } from "#geocode/session"
 
 /**
  * What a row shows where the datum genuinely does not exist.
+ *
  * One constant, because "the model has no locale head" and "no channel was fed"
  * must not read as two different kinds of nothing.
  */
 export const ABSENT = "—"
 
 /**
- * Field separator inside one row. Two spaces rather than a glyph: the rows are already dense,
- * and a punctuation mark between every field costs columns the token stream wants.
+ * Field separator inside one row.
+ *
+ * Two spaces rather than a glyph: the rows are already dense, and a punctuation mark
+ * between every field costs columns the token stream wants.
  */
 const FIELD_GAP = "  "
 
@@ -46,9 +49,10 @@ function fields(parts: Array<string | null>): string {
 //#region Rows
 
 /**
- * How many locale-head classes the row names. The head's axis is nine countries
- * wide. the tail is uniformly flat on a confident parse, and three entries is what
- * fits beside the rest of the row on a narrow pane.
+ * How many locale-head classes the row names.
+ *
+ * The head's axis is nine countries wide. the tail is uniformly flat on a confident parse,
+ * and three entries is what fits beside the rest of the row on a narrow pane.
  */
 const LOCALE_HEAD_ENTRIES = 3
 
@@ -99,6 +103,7 @@ export function localeHeadRow(trace: GeocodeTrace | undefined): string {
  * The SentencePiece stream exactly as fed, pieces space-separated with the `▁`
  * word-start sentinel intact (it is the tokenizer's own mark for "a word starts here",
  * and dropping it hides the fertility question every digit-ownership bug is asked in).
+ *
  * The count leads so it survives the caller's truncation, which eats the tail.
  */
 export function tokensRow(trace: GeocodeTrace | undefined): string {

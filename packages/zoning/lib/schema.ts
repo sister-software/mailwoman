@@ -42,12 +42,15 @@ import { sql, type Kysely } from "kysely"
  */
 export const ZoningCellContainment = {
 	/**
-	 * Every point in the cell is inside the zone. Answered from the index alone, with no geometry read.
+	 * Every point in the cell is inside the zone.
+	 *
+	 * Answered from the index alone, with no geometry read.
 	 */
 	Whole: "whole",
 	/**
-	 * The zone boundary crosses the cell. The index has narrowed the candidate
-	 * polygons. the point test decides.
+	 * The zone boundary crosses the cell.
+	 *
+	 * The index has narrowed the candidate polygons. the point test decides.
 	 */
 	Partial: "partial",
 } as const
@@ -55,30 +58,39 @@ export const ZoningCellContainment = {
 export type ZoningCellContainment = (typeof ZoningCellContainment)[keyof typeof ZoningCellContainment]
 
 /**
- * One authority zoning polygon, verbatim. A plain rowid table: it holds a geometry blob,
- * which is the one shape `without rowid` hurts.
+ * One authority zoning polygon, verbatim.
+ *
+ * A plain rowid table: it holds a geometry blob, which is the one shape `without rowid` hurts.
  */
 export interface ZoningAreaTable {
 	/**
-	 * The authority's own feature id, as published. Unique across the product — measured,
-	 * `objectid` runs 1 to 85,330 with no repeat — so it needs no scoping prefix, and a
-	 * prefix would put this package's key into a column that claims to be the publisher's.
+	 * The authority's own feature id, as published.
+	 *
+	 * Unique across the product — measured, `objectid` runs 1 to 85,330 with no repeat —
+	 * so it needs no scoping prefix, and a prefix would put this package's key into
+	 * a column that claims to be the publisher's.
 	 */
 	area_id: string
 	/**
-	 * The authority that adopted the plan. FK to `zoning_jurisdiction`.
+	 * The authority that adopted the plan.
+	 *
+	 * FK to `zoning_jurisdiction`.
 	 */
 	jurisdiction_id: string
 	/**
-	 * The plan this zone belongs to. FK to `zoning_plan`.
+	 * The plan this zone belongs to.
+	 *
+	 * FK to `zoning_plan`.
 	 * A zone without a plan is not a claim: it exists inside a named Development Plan
 	 * or Local Area Plan with a stated validity window, and a layer that dropped the plan
 	 * and kept the zone would be answering a question no authority asked.
 	 */
 	plan_id: string
 	/**
-	 * `ZONE_ORIG` — the authority'S own zone code, verbatim, in its own spelling including case
-	 * and trailing space. Compared case-insensitively where it must be compared. never stored normalized.
+	 * `ZONE_ORIG` — the authority'S own zone code, verbatim, in its own spelling
+	 * including case and trailing space.
+	 *
+	 * Compared case-insensitively where it must be compared. never stored normalized.
 	 */
 	local_code: string
 	/**
@@ -87,16 +99,20 @@ export interface ZoningAreaTable {
 	local_description: string | null
 	/**
 	 * `ZONE_LINK` — the authority's own link to the plan text.
+	 *
 	 * A live host, unlike the crosswalk's.
 	 */
 	local_code_url: string | null
 	/**
-	 * `ZONE_GZT` — the Department's national generic type, beside the local code and never
-	 * instead of it. NULL where a publisher ships no crosswalk.
+	 * `ZONE_GZT` — the Department's national generic type, beside the local code and never instead of it.
+	 *
+	 * NULL where a publisher ships no crosswalk.
 	 */
 	crosswalk_code: string | null
 	/**
-	 * Which crosswalk `crosswalk_code` belongs to. NULL with the above.
+	 * Which crosswalk `crosswalk_code` belongs to.
+	 *
+	 * NULL with the above.
 	 */
 	crosswalk_scheme: string | null
 	/**
@@ -108,7 +124,9 @@ export interface ZoningAreaTable {
 	 */
 	crosswalk_rollup: string | null
 	/**
-	 * One of {@link ProvenanceGrade}. `not NULL` with a `check` that refuses a blank.
+	 * One of {@link ProvenanceGrade}.
+	 *
+	 * `not NULL` with a `check` that refuses a blank.
 	 */
 	provenance_grade: string
 	min_lat: number
@@ -167,8 +185,9 @@ export interface ZoningJurisdictionTable {
 	jurisdiction_id: string
 	name: string
 	/**
-	 * The publisher's own code, verbatim. `Fl` for Fingal against `CL`, `CO`,
-	 * `DU` for the rest — do not repair.
+	 * The publisher's own code, verbatim.
+	 *
+	 * `Fl` for Fingal against `CL`, `CO`, `DU` for the rest — do not repair.
 	 */
 	source_code: string
 	country: string
@@ -185,9 +204,10 @@ export interface ZoningVocabularyTable {
 	scheme: string
 	code: string
 	/**
-	 * The publisher's own words. For an observed-but-undeclared code this is the
-	 * description the data carries on its rows, or the code itself where the data
-	 * carries none — never a label this package wrote.
+	 * The publisher's own words.
+	 *
+	 * For an observed-but-undeclared code this is the description the data carries on its rows,
+	 * or the code itself where the data carries none — never a label this package wrote.
 	 */
 	label: string
 	/**
@@ -195,10 +215,12 @@ export interface ZoningVocabularyTable {
 	 */
 	definition: string | null
 	/**
-	 * NULL for the Irish generic types. Every one of the 85,330 rows links its definition to
-	 * `viewer.myplan.ie`, which has no A or aaaa record, and three candidate replacements on
-	 * the live host answer http 404 . Therefore, the definitions behind the 54 code-to-label
-	 * pairs were not retrievable and this column is not filled in with a plausible one.
+	 * NULL for the Irish generic types.
+	 *
+	 * Every one of the 85,330 rows links its definition to `viewer.myplan.ie`, which has no A
+	 * or aaaa record, and three candidate replacements on the live host answer http 404 .
+	 * Therefore, the definitions behind the 54 code-to-label pairs were not retrievable
+	 * and this column is not filled in with a plausible one.
 	 */
 	definition_url: string | null
 	/**
@@ -210,8 +232,9 @@ export interface ZoningVocabularyTable {
 	 */
 	declared: number
 	/**
-	 * How many rows of this artifact carry the code. A census a reader checks a closed
-	 * domain against, rather than a claim about the world.
+	 * How many rows of this artifact carry the code.
+	 *
+	 * A census a reader checks a closed domain against, rather than a claim about the world.
 	 */
 	observed_rows: number
 }
@@ -234,7 +257,9 @@ export interface ZoningCrosswalkEdgeTable {
 	to_scheme: string
 	to_code: string
 	/**
-	 * The body that authored this edge. Never us.
+	 * The body that authored this edge.
+	 *
+	 * Never us.
 	 */
 	authored_by: string
 }
@@ -248,13 +273,16 @@ export interface ZoningCrosswalkEdgeTable {
  */
 export interface ZoningCellTable {
 	/**
-	 * 48-bit short H3 cell. Mixed-resolution: `whole` rows are compacted parent-ward,
-	 * `partial` rows stay at the resolution the feature was indexed at.
+	 * 48-bit short H3 cell.
+	 *
+	 * Mixed-resolution: `whole` rows are compacted parent-ward, `partial` rows stay
+	 * at the resolution the feature was indexed at.
 	 */
 	h3_cell: number
 	/**
-	 * The resolution this row's cell was captured at. A short cell does not name its own
-	 * resolution, and a table that mixes them cannot be probed without it.
+	 * The resolution this row's cell was captured at.
+	 *
+	 * A short cell does not name its own resolution, and a table that mixes them cannot be probed without it.
 	 */
 	resolution: number
 	area_id: string
@@ -306,15 +334,17 @@ export interface ZoningDatabase extends layerschemadatabase {
 }
 
 /**
- * The subset of a Kysely handle the DDL touches. Same reasoning as `layerschemahandle`:
- * Kysely is invariant in its schema parameter, so naming only the members these
- * functions call lets a caller pass its own wider handle.
+ * The subset of a Kysely handle the DDL touches.
+ *
+ * Same reasoning as `layerschemahandle`: Kysely is invariant in its schema parameter,
+ * so naming only the members these functions call lets a caller pass its own wider handle.
  */
 export type ZoningSchemaHandle = Pick<Kysely<ZoningDatabase>, "schema">
 
 /**
- * Create `zoning_area`. A plain rowid table on purpose — the `rings` blob is
- * exactly the payload `without rowid` penalizes.
+ * Create `zoning_area`.
+ *
+ * A plain rowid table on purpose — the `rings` blob is exactly the payload `without rowid` penalizes.
  */
 export async function createZoningAreaTable(db: ZoningSchemaHandle): Promise<void> {
 	const table = db.schema
@@ -396,7 +426,9 @@ export async function createZoningVocabularyTable(db: ZoningSchemaHandle): Promi
 }
 
 /**
- * Create `zoning_crosswalk_edge`. Created empty for Ireland — see the interface's docstring.
+ * Create `zoning_crosswalk_edge`.
+ *
+ * Created empty for Ireland — see the interface's docstring.
  */
 export async function createZoningCrosswalkEdgeTable(db: ZoningSchemaHandle): Promise<void> {
 	await db.schema
@@ -411,8 +443,9 @@ export async function createZoningCrosswalkEdgeTable(db: ZoningSchemaHandle): Pr
 }
 
 /**
- * Create `zoning_cell` — the summary tier. Small fixed-width rows probed by their
- * exact primary key, which is the `without rowid` shape.
+ * Create `zoning_cell` — the summary tier.
+ *
+ * Small fixed-width rows probed by their exact primary key, which is the `without rowid` shape.
  */
 export async function createZoningCellTable(db: ZoningSchemaHandle): Promise<void> {
 	const table = db.schema.createTable("zoning_cell")

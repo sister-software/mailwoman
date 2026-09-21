@@ -118,8 +118,8 @@ const ITEM: ResolvedInput = { id: "row-1", input: "Weimar, Thüringen", country:
 
 describe("collectParseFacts — known formats against the parse", () => {
 	it("matches a postcode hit against the postcode component under a different offset frame", () => {
-		// The detector's spans are offsets into the normalized input, component values
-		// are taken from the RAW one, so the comparison folds both to characters.
+		// The detector's spans are offsets into the normalized input, component values are
+		// taken from the RAW one, so the comparison folds both to characters.
 		// "SW1A 1AA" vs "sw1a1aa" is the same assertion.
 		const facts = collectParseFacts(
 			traceOf({ queryShape: { knownFormats: [{ format: "uk_postcode", confidence: 1, span: { body: "SW1A 1AA" } }] } }),
@@ -181,8 +181,8 @@ describe("collectRetrievalFacts — ranks and the flip stage", () => {
 	})
 
 	it("keeps a trace with no resolver records apart from a walk that performed no lookups", () => {
-		// One is a trace that predates the records. the other is the walk stating it had nothing
-		// resolvable. Folding them together would let an old trace read as a retrieval failure.
+		// One is a trace that predates the records. the other is the walk stating it had nothing resolvable.
+		// Folding them together would let an old trace read as a retrieval failure.
 		expect(collectRetrievalFacts(undefined).lookups).toBeNull()
 		expect(collectRetrievalFacts([]).lookups).toEqual([])
 	})
@@ -442,8 +442,8 @@ describe("assembleAccount — the terminal states", () => {
 	it("flags a coordinate when the resolver trace records no lookup", () => {
 		// The resolver trace records the walk's own lookups.
 		// A famous name the model tagged `street` is never queried by the walk
-		// (`street` is not in the placetype map) and is answered by the post-walk
-		// span-rescore, which resolves through the backend directly and emits no record.
+		// (`street` is not in the placetype map) and is answered by the post-walk span-rescore,
+		// which resolves through the backend directly and emits no record.
 		// Measured on "Frankfurt": a resolved locality with a placeID beside `resolver: []`.
 		const resolved = assembleAccount(ITEM, run({ trace: traceOf() }), NO_EXPECTATION)
 

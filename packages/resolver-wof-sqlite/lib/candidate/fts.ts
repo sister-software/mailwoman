@@ -29,12 +29,14 @@ import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
  * Name of the FTS5 trigram virtual table this module owns.
+ *
  * The reader conditions its fuzzy fallback on it.
  */
 export const CANDIDATE_FTS_TABLE = "candidate_fts"
 
 /**
  * Build (or rebuild) {@link CANDIDATE_FTS_TABLE} from the materialized `candidate` table.
+ *
  * Call after the candidate B-tree is populated (build pipeline) or against an
  * existing candidate DB (migration).
  */

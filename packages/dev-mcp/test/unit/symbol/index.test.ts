@@ -85,7 +85,8 @@ describe("findDeclarations", () => {
 	})
 
 	it("does not report a nested declaration", () => {
-		// `unreachable` sits inside api-kit's `percentile`. Nobody can import it, so nobody can duplicate it.
+		// `unreachable` sits inside api-kit's `percentile`.
+		// Nobody can import it, so nobody can duplicate it.
 		expect(findDeclarations(["unreachable"], { cwd: FIXTURE_ROOT }).get("unreachable")).toBeUndefined()
 	})
 
@@ -219,9 +220,9 @@ describe("selectReportable", () => {
 	})
 
 	it("suppresses a name that is declared everywhere and exported nowhere", () => {
-		// `main` had 34 declaration sites at the time this rule was chosen and not one
-		// of them is importable. A stoplist would have to name it. this rule derives it,
-		// which is the difference that keeps the rule from going stale.
+		// `main` had 34 declaration sites at the time this rule was chosen and not one of them is importable.
+		// A stoplist would have to name it. this rule derives it, which is the
+		// difference that keeps the rule from going stale.
 		const found = new Map([["main", [declarationSite("scripts/a.ts", false), declarationSite("scripts/b.ts", false)]]])
 
 		expect(selectReportable(found, { writingFile: "scripts/c.ts" })).toEqual([])

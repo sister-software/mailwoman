@@ -148,8 +148,8 @@ describe("WOFSQLitePlaceLookup — multi-extract ATTACH", () => {
 	test("placetype with no matching extract falls back to main", async () => {
 		const adminPath = scratch.resolve("whosonfirst-data-admin-us-latest.db")
 		buildAdminExtract(adminPath)
-		// Only admin extract — no postcode extract. A postalcode query falls back to main,
-		// returns nothing because admin has no postalcodes.
+		// Only admin extract — no postcode extract.
+		// A postalcode query falls back to main, returns nothing because admin has no postalcodes.
 		using lookup = new WOFSQLitePlaceLookup({ databasePath: [adminPath] })
 
 		const r = await lookup.findPlace({ text: "62701", placetype: "postalcode" })

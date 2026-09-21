@@ -109,6 +109,7 @@ afterEach(async () => {
 
 /**
  * Resolve the Weimar tree and read the verdicts the way the geocode assembly does.
+ *
  * `adminCoherence: false` pins the
  * #263 re-pick out of the way — this test is about the stamp and the verdict rather than about any mechanism that might
  * one day fix the pick.
@@ -132,7 +133,8 @@ describe("admin coherence over the candidate backend's ancestors sidecar", () =>
 		const { winner, fragment } = await verdictFor("Thüringen", true)
 
 		// The ranking is untouched: population-first still answers Weimar, Texas —
-		// with the disambiguator in the input. That is the #1717 defect, faithfully reproduced.
+		// with the disambiguator in the input.
+		// That is the #1717 defect, faithfully reproduced.
 		const stamped = winner as AddressNode
 
 		expect(stamped.lat).toBeCloseTo(29.7, 1)

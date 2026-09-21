@@ -65,6 +65,7 @@ import { stateOption } from "#tools/shared"
 export interface NPPESDedupBenchmarkOptions {
 	/**
 	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
+	 *
 	 * Model-swap overrides (`--model`/`--tokenizer`/`--model-card`) are the command's
 	 * factory config rather than tool options.
 	 */
@@ -74,24 +75,33 @@ export interface NPPESDedupBenchmarkOptions {
 	 */
 	geocodeStream?: EvalGeocodeStream
 	/**
-	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * Record-matcher sources directory.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
 	 */
 	sources?: string
 	/**
-	 * State filter. Default TX.
+	 * State filter.
+	 *
+	 * Default TX.
 	 */
 	state?: string
 	/**
-	 * NPIs sampled. Default 300.
+	 * NPIs sampled.
+	 *
+	 * Default 300.
 	 */
 	maxNpis?: number
 	/**
-	 * EM-train the FS arms (label-free). Default true; `--no-train-em` uses the seeds.
+	 * EM-train the FS arms (label-free).
+	 *
+	 * Default true; `--no-train-em` uses the seeds.
 	 */
 	trainEm?: boolean
 	/**
 	 * #694 A/B: reproduce the pre-flip ingest (space-joined address columns + `normalizeCase` off). Default off (the
 	 * validated flip: comma-join + #690 all-caps normalization).
+	 *
 	 * Same data + GBT, only the flip toggled — so a delta here is attributable to the flip.
 	 */
 	legacyJoin?: boolean
@@ -105,17 +115,22 @@ export interface NPPESDedupBenchmarkOptions {
 	 */
 	dumpOvermerges?: string
 	/**
-	 * H3 resolution for the org-name-h3 truth grain. Default 11 (≈25 m edge).
+	 * H3 resolution for the org-name-h3 truth grain.
+	 *
+	 * Default 11 (≈25 m edge).
 	 */
 	h3Res?: number
 	/**
-	 * Geocode the sample across a worker pool ({@linkcode geocodeStream}) instead of the
-	 * serial in-process path. Heavy per-row work (ONNX parse + WOF SQLite) → threading
-	 * pays. measured ~1.5× at 2 workers, coordinates identical.
+	 * Geocode the sample across a worker pool ({@linkcode geocodeStream})
+	 * instead of the serial in-process path.
+	 *
+	 * Heavy per-row work (ONNX parse + WOF SQLite) → threading pays. measured
+	 * ~1.5× at 2 workers, coordinates identical.
 	 */
 	parallelGeocode?: boolean
 	/**
 	 * Worker-pool concurrency for {@linkcode parallelGeocode}.
+	 *
 	 * Default 2 (geocode is I/O-bound).
 	 */
 	geoConcurrency?: number
@@ -126,7 +141,9 @@ export interface NPPESDedupBenchmarkOptions {
 }
 
 /**
- * The #617 NPPES dedup benchmark — see the module doc. Emits the markdown report to stdout.
+ * The #617 NPPES dedup benchmark — see the module doc.
+ *
+ * Emits the markdown report to stdout.
  */
 export async function nppesDedupBenchmark(
 	options: NPPESDedupBenchmarkOptions,
@@ -174,8 +191,8 @@ export async function nppesDedupBenchmark(
 	let records: SourceRecord[]
 
 	if (PARALLEL_GEOCODE) {
-		// Threaded geocode: normalize on the main thread, then hand records to a
-		// worker pool that each rebuild the classifier/resolver/extracts from config.
+		// Threaded geocode: normalize on the main thread, then hand records to a worker
+		// pool that each rebuild the classifier/resolver/extracts from config.
 		// `address` is a single pre-joined column here, so `--legacy-join` (a separator toggle)
 		// is a no-op for this path; `normalizeCase` follows the worker default (on).
 		if (!options.geocodeStream) {
@@ -247,8 +264,8 @@ export async function nppesDedupBenchmark(
 	// (geocode once, resolve many — config is cheap). ---
 	report?.(`[D] resolving the setting progression${TRAIN_EM ? " (EM-trained)" : ""}…`)
 
-	// learnedScorer:false throughout — this benchmark studies the FS comparison-model settings
-	// (#617/#625). The learned scorer is now default-on, so it must be pinned off here
+	// learnedScorer:false throughout — this benchmark studies the FS comparison-model settings (#617/#625).
+	// The learned scorer is now default-on, so it must be pinned off here
 	// or every row would silently be the GBT. the learned scorer is measured separately
 	// (learned-scorer-clustering-eval / -crossstate-eval).
 	const progression = buildSettings(addressFrequency).map((l) => {
@@ -261,12 +278,11 @@ export async function nppesDedupBenchmark(
 
 	// The shipped out-of-box default (#86): no setting config at all → resolveEntities
 	// auto-computes an input-scoped address-frequency table + collapsed spatial.
-	// On this deliberately-sub-sampled corpus the auto table is sparse (few repeats),
-	// so the inverse-frequency signal is near-inert and F1 collapses to ≈baseline —
-	// not a regression, just the honest truth that IDF is a corpus statistic you
-	// can't synthesize from a sample. On a full-dataset dedup the input is the corpus
-	// and this default reaches the baseline. the CLI passes a corpus-wide table built
-	// from the full source files so even a geocoded sub-sample benefits.
+	// On this deliberately-sub-sampled corpus the auto table is sparse (few repeats), so the
+	// inverse-frequency signal is near-inert and F1 collapses to ≈baseline — not a regression,
+	// just the honest truth that IDF is a corpus statistic you can't synthesize from a sample.
+	// On a full-dataset dedup the input is the corpus and this default reaches the baseline. the CLI
+	// passes a corpus-wide table built from the full source files so even a geocoded sub-sample benefits.
 	const defaultRes = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: 0 })
 	const defaultOutOfBox = score(defaultRes.entities, npiLabel)
 
@@ -300,10 +316,11 @@ export async function nppesDedupBenchmark(
 		`    default F1 ${(100 * base.score.f1).toFixed(1)}% → best F1 ${(100 * best.score.f1).toFixed(1)}% @ threshold ${best.t}`
 	)
 
-	// Score the same clusters against NPI-level and entity-level truth. reveal how much of the apparent
-	// over-merge is NPI over-segmentation (one org / many subpart-NPIs, where merging is correct)
-	// rather than model error. Two production configs: the FS full setting stack and the
-	// shipped default (GBT, default-on) — each fed the corpus-wide address-frequency table. ---
+	// Score the same clusters against NPI-level and entity-level truth.
+	// reveal how much of the apparent over-merge is NPI over-segmentation
+	// (one org / many subpart-NPIs, where merging is correct) rather than model error.
+	// Two production configs: the FS full setting stack and the shipped default
+	// (GBT, default-on) — each fed the corpus-wide address-frequency table. ---
 	const entityCount = new Set(records.map((r) => entityLabel(r))).size
 	const orgCount = new Set(records.map((r) => orgNameLabel(r))).size
 	const fsNPI = bestSetting.score

@@ -26,31 +26,45 @@ import { stringifyJSON } from "@mailwoman/core/json"
  */
 export interface RaceDotsMapOptions {
 	/**
-	 * Dots tileset URL the page reads client-side. Default `http://localhost:8899/race-dots-oc.pmtiles`.
+	 * Dots tileset URL the page reads client-side.
+	 *
+	 * Default `http://localhost:8899/race-dots-oc.pmtiles`.
 	 */
 	pmtilesURL?: string
 	/**
-	 * Output html path. Default `/tmp/race-dots-oc.html`.
+	 * Output html path.
+	 *
+	 * Default `/tmp/race-dots-oc.html`.
 	 */
 	out?: string
 	/**
-	 * People represented by one dot (title/legend copy only). Default 5.
+	 * People represented by one dot (title/legend copy only).
+	 *
+	 * Default 5.
 	 */
 	per?: number
 	/**
-	 * Page title. Default derives from `per`.
+	 * Page title.
+	 *
+	 * Default derives from `per`.
 	 */
 	title?: string
 	/**
-	 * Initial map center longitude. Default -117.83 (Orange County, CA).
+	 * Initial map center longitude.
+	 *
+	 * Default -117.83 (Orange County, CA).
 	 */
 	lng?: number
 	/**
-	 * Initial map center latitude. Default 33.68.
+	 * Initial map center latitude.
+	 *
+	 * Default 33.68.
 	 */
 	lat?: number
 	/**
-	 * Initial map zoom. Default 9.4.
+	 * Initial map zoom.
+	 *
+	 * Default 9.4.
 	 */
 	zoom?: number
 }

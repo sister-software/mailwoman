@@ -294,13 +294,14 @@ describe("gradeCase — address expectation", () => {
 })
 
 describe("the committed poi-board fixture set", () => {
-	// The composition register. Exact rather than a range, because the floors were
-	// re-registered against the counted number (#1960) and that is the one that must not move
-	// without an argument: 51 counted rows. The committed total and the tracked count move
-	// whenever a failure class is committed to the surface every candidate is graded on,
-	// which is what the tracked convention is for. A row added or a status flipped without
-	// this test moving is a floor denominator changing in silence — so the counted assertion
-	// is the required one, and the other two say which kind of change happened.
+	// The composition register.
+	// Exact rather than a range, because the floors were re-registered against the counted number
+	// (#1960) and that is the one that must not move without an argument: 51 counted rows.
+	// The committed total and the tracked count move whenever a failure class is committed to
+	// the surface every candidate is graded on, which is what the tracked convention is for.
+	// A row added or a status flipped without this test moving is a floor denominator
+	// changing in silence — so the counted assertion is the required one,
+	// and the other two say which kind of change happened.
 	it("carries 56 cases — 51 counted toward the floors, plus 5 tracked", () => {
 		expect(fixtures).toHaveLength(56)
 		expect(fixtures.filter((f) => isCountedFixture(f))).toHaveLength(51)
@@ -436,8 +437,9 @@ describe("evaluateFloors — breach detection", () => {
 		return { overallPassRate: total > 0 ? pass / total : 0, byExpectKind }
 	}
 
-	// The committed v1.1 standing (2026-07-20 promotion battery): 33/37 results, 8/8 abstain, 6/6 address
-	// → 47/51 = 92.2% overall. All three floors met (overall 92.2% ≥ 90%, both hard floors 100%).
+	// The committed v1.1 standing (2026-07-20 promotion battery): 33/37 results,
+	// 8/8 abstain, 6/6 address → 47/51 = 92.2% overall.
+	// All three floors met (overall 92.2% ≥ 90%, both hard floors 100%).
 	const shipping = report({
 		results: { total: 37, pass: 33 },
 		abstain: { total: 8, pass: 8 },

@@ -27,6 +27,7 @@ import type React from "react"
  * a `tty.WriteStream` over a socket, carrying `fd`, `rows`, `cursorTo`, `getColorDepth`
  * and the rest of `net.Socket` — while reading only `columns`, `isTTY` and `write`.
  * No double can be assignable in either direction, so no single assertion is legal.
+ *
  * What the shape below provides is that everything other than the gap is still checked:
  * the frames live outside the class and `write` keeps the base signature,
  * so the only unchecked claim is the one the comment names.
@@ -34,9 +35,10 @@ import type React from "react"
 class CaptureStream extends Duplex {
 	columns: number
 	// `boolean`, not the literal `false`: `WriteStream` declares `isTTY: true`,
-	// and a literal type on this side leaves the two mutually unassignable, which is what
-	// forces an assertion through `unknown`. The value stays false — Ink resolves its
-	// interactive mode from it, and a static render wants the non-interactive single frame.
+	// and a literal type on this side leaves the two mutually unassignable,
+	// which is what forces an assertion through `unknown`.
+	// The value stays false — Ink resolves its interactive mode from it,
+	// and a static render wants the non-interactive single frame.
 	isTTY = false
 
 	readonly #frames: string[]

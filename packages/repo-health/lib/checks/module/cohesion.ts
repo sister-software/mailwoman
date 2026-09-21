@@ -22,17 +22,20 @@ import { trackedSourcePaths } from "#tracked-sources"
  */
 export const MODULE_COHESION_THRESHOLDS = {
 	/**
-	 * Newman's modularity of the best partition found. A module whose helpers all feed
-	 * one entry point scores near zero however many helpers there are.
+	 * Newman's modularity of the best partition found.
+	 *
+	 * A module whose helpers all feed one entry point scores near zero however many helpers there are.
 	 */
 	modularity: 0.35,
 	/**
 	 * Members a community needs before it counts toward a reported pair.
+	 *
 	 * A lone declaration is a helper rather than a responsibility.
 	 */
 	communityMembers: 2,
 	/**
 	 * Distinct imported specifiers a community needs before it counts toward a reported pair.
+	 *
 	 * One shared import is what a facade of same-shaped wrappers looks like —
 	 * `@mailwoman/core/fs/readers` partitions into eleven such groups and is correct as written.
 	 */
@@ -44,9 +47,10 @@ const MAX_PASSES = 20
 const GAIN_EPSILON = 1e-9
 
 /**
- * One top-level declaration that holds a value. Type-only declarations are left out
- * of the graph deliberately: a type referenced by every group joins all of them,
- * and one partition of nineteen declarations is the result.
+ * One top-level declaration that holds a value.
+ *
+ * Type-only declarations are left out of the graph deliberately: a type referenced by every
+ * group joins all of them, and one partition of nineteen declarations is the result.
  */
 interface ValueDeclaration {
 	name: string
@@ -114,6 +118,7 @@ function topLevelValues(source: ts.SourceFile): ValueDeclaration[] {
 
 /**
  * Every value binding an import introduces, mapped to the specifier it came from.
+ *
  * Type-only imports are skipped: they are erased before anything runs,
  * so they say nothing about what a declaration does.
  */
@@ -308,9 +313,10 @@ function describe(community: DeclarationCommunity): string {
 }
 
 /**
- * Advisory partition of a module's declaration graph. A warning names the two groups
- * and the dependencies that separate them. it proposes which declarations move together
- * and does not claim the module is wrong.
+ * Advisory partition of a module's declaration graph.
+ *
+ * A warning names the two groups and the dependencies that separate them. it proposes
+ * which declarations move together and does not claim the module is wrong.
  */
 export const moduleCohesionCheck: RepoCheck = {
 	id: "module-cohesion",

@@ -61,8 +61,9 @@ export async function* readNomenclatureRows(
 }
 
 /**
- * The declutter table: the smallest diameter, in kilometres, that appears at each zoom,
- * largest first. A feature smaller than every row appears at {@link SMALLEST_FEATURE_ZOOM}.
+ * The declutter table: the smallest diameter, in kilometres, that appears at each zoom, largest first.
+ *
+ * A feature smaller than every row appears at {@link SMALLEST_FEATURE_ZOOM}.
  * Cartographic decluttering rather than ranking.
  */
 const DECLUTTER_STEPS: ReadonlyArray<readonly [minDiameterKm: number, zoom: number]> = [
@@ -139,8 +140,9 @@ export interface NomenclatureBuildOptions {
 }
 
 /**
- * The tippecanoe run. `-r1` turns off density-based point dropping,
- * so the per-feature `minzoom` is the only declutter.
+ * The tippecanoe run.
+ *
+ * `-r1` turns off density-based point dropping, so the per-feature `minzoom` is the only declutter.
  */
 export async function buildNomenclaturePMTiles(options: NomenclatureBuildOptions): Promise<{ command: string[] }> {
 	const args = [

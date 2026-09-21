@@ -33,7 +33,9 @@ import { layers, namedFlavor } from "@protomaps/basemaps"
 import type { MapFeatureData } from "#types"
 
 /**
- * MapLibre GL release the page pins (CDN + SRI). Matches the workspace's `maplibre-gl` major.
+ * MapLibre GL release the page pins (CDN + SRI).
+ *
+ * Matches the workspace's `maplibre-gl` major.
  */
 const MAPLIBRE_VERSION = "5.24.0"
 const MAPLIBRE_JS_SRI = "sha384-5+cfbwT0iiub6VsQAdn6yz16nr6sDiQoHx6tm4O8OVYXHYOxcffFmCJBL0dgdvGp"
@@ -48,6 +50,7 @@ const MAPLIBRE_CSS_SRI = "sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HP
  * mirror can't be fetched cross-origin (`cartographer/base/composition.ts` flags the same:
  * "Currently upstream URLs. we mirror these … but no public route fronts that bucket yet").
  * The upstream assets target the v4 schema, matching the `basemap-v4` tiles.
+ *
  * Swap to the house mirror once it has a cors-enabled route.
  */
 const BASEMAP_SOURCE_ID = "basemap-v4"
@@ -62,11 +65,15 @@ export type MapFlavor = "light" | "dark" | "white" | "grayscale" | "black"
 
 export interface MapHTMLOptions {
 	/**
-	 * Document `<title>` + on-map heading. Default: "Mailwoman — resolved entities".
+	 * Document `<title>` + on-map heading.
+	 *
+	 * Default: "Mailwoman — resolved entities".
 	 */
 	title?: string
 	/**
-	 * Protomaps basemap flavor. Default: "light" (data points read cleanly over it).
+	 * Protomaps basemap flavor.
+	 *
+	 * Default: "light" (data points read cleanly over it).
 	 */
 	flavor?: MapFlavor
 	/**
@@ -95,6 +102,7 @@ const CROSS_COLOR = "#e8590c"
 
 /**
  * Escape a value for safe inlining inside a `<script>` as JSON.
+ *
  * `JSON.stringify` alone isn't enough — a record value containing `</script>` would close the
  * block early. escaping `<`/`>`/`&` to `\uXXXX` keeps the JSON valid and makes a breakout impossible.
  */
@@ -107,9 +115,11 @@ function sourceCount(props: MapFeatureData): number {
 }
 
 /**
- * Render `geojson` (a {@link toGeoJSON} / reconciliation FeatureCollection) as a complete,
- * standalone html document. Entities without a coordinate are already absent from those
- * collections. an empty collection renders a friendly empty state rather than a broken map.
+ * Render `geojson` (a {@link toGeoJSON} / reconciliation FeatureCollection) as
+ * a complete, standalone html document.
+ *
+ * Entities without a coordinate are already absent from those collections. an empty
+ * collection renders a friendly empty state rather than a broken map.
  */
 export function toMapHTML(
 	geojson: GeoFeatureCollection<PointLiteral, MapFeatureData>,
@@ -147,8 +157,9 @@ export function toMapHTML(
 		return sourceCount(props) >= 2 ? CROSS_COLOR : SINGLE_COLOR
 	}
 
-	// Precompute the per-feature color (`_color`) so the circle layer is a simple `["get","_color"]`,
-	// and the bounding box, both at generate time. The data is copied (not mutated in place).
+	// Precompute the per-feature color (`_color`) so the circle layer is a simple
+	// `["get","_color"]`, and the bounding box, both at generate time.
+	// The data is copied (not mutated in place).
 	let minLng = Infinity
 	let minLat = Infinity
 	let maxLng = -Infinity

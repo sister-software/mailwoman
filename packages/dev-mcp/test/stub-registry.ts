@@ -31,7 +31,9 @@ const STUB_FINGERPRINT: TreeFingerprint = {
 }
 
 /**
- * Build a registry double. Pass only the members the case under test actually reads.
+ * Build a registry double.
+ *
+ * Pass only the members the case under test actually reads.
  */
 export function stubEngineRegistry(overrides: Partial<EngineRegistryLike> = {}): EngineRegistryLike {
 	return {
@@ -52,7 +54,9 @@ export function stubEngineRegistry(overrides: Partial<EngineRegistryLike> = {}):
 }
 
 /**
- * Build an engine double. Pass the session behaviour the case reads. everything else is filled in.
+ * Build an engine double.
+ *
+ * Pass the session behaviour the case reads. everything else is filled in.
  *
  * `session` is asserted rather than completed on purpose, and it is the only assertion here:
  * `GeocodeSession` is the real pipeline's surface, far wider than any test drives,
@@ -72,18 +76,20 @@ export function stubEngine(overrides: StubEngineOverrides): Engine {
 }
 
 /**
- * What a case may set on {@link stubEngine}. `session` is required because a tool that acquires
- * an engine always reaches it, and a default one would answer every query with the same silence.
+ * What a case may set on {@link stubEngine}.
+ *
+ * `session` is required because a tool that acquires an engine always reaches it,
+ * and a default one would answer every query with the same silence.
  */
 export interface StubEngineOverrides {
 	/**
 	 * The session behaviour this case drives, asserted to `GeocodeSession` inside {@link stubEngine}.
 	 *
-	 * `unknown` rather than `Partial<GeocodeSession>`: a partial checks each member it does
-	 * carry against the real signature, and every case here returns a trimmed geocode result
-	 * on purpose, so the partial rejects them all. One documented assertion in one place
-	 * is what this file provides — the eight it replaces each asserted the whole registry,
-	 * so a renamed registry method went unnoticed in all of them.
+	 * `unknown` rather than `Partial<GeocodeSession>`: a partial checks each member
+	 * it does carry against the real signature, and every case here returns a trimmed
+	 * geocode result on purpose, so the partial rejects them all.
+	 * One documented assertion in one place is what this file provides — the eight it replaces each
+	 * asserted the whole registry, so a renamed registry method went unnoticed in all of them.
 	 */
 	session: unknown
 	engineID?: string

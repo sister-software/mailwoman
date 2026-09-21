@@ -21,6 +21,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 /**
  * The minimal interface a release-manifest entry must satisfy.
+ *
  * Hosts extend this with their own fields.
  */
 export interface ReleaseBase {
@@ -50,6 +51,7 @@ export interface ReleaseManifest<TRelease extends ReleaseBase = ReleaseBase> {
 
 /**
  * The progress channel handed to the host's `loadAssets`.
+ *
  * The host reports load progress + the resolved backend + the staged step labels/index through
  * these setters (all no-op once the load is superseded/aborted), while the hook owns the terminal
  * state (revealing the assets + clearing progress on success, surfacing the error on failure).
@@ -81,29 +83,39 @@ export interface AssetsLoadContext {
 	setBackend: (backend: string) => void
 	/**
 	 * Report bytes received over bytes expected for the asset downloading right now, in [0, 1].
+	 *
 	 * Pass `null` when nothing is in flight or the response declares no length.
 	 *
-	 * The staged step index cannot carry this: the model is fetched before the first
-	 * step is entered, so a step-derived bar holds one value for the whole transfer.
+	 * The staged step index cannot carry this: the model is fetched before the first step
+	 * is entered, so a step-derived bar holds one value for the whole transfer.
 	 * This is what moves during it.
 	 */
 	setByteFraction: (fraction: number | null) => void
 }
 
 /**
- * The injected loaders the hook orchestrates. Nothing here is model- or map-aware — the host owns all that.
+ * The injected loaders the hook orchestrates.
+ *
+ * Nothing here is model- or map-aware — the host owns all that.
  */
 export interface ReleaseRuntimeConfig<TAssets, TRelease extends ReleaseBase = ReleaseBase> {
 	/**
-	 * Fetch + normalize the releases manifest. Returns `null` when no
-	 * manifest is available (the surface then shows nothing selectable).
-	 * Rejecting surfaces `errorMessage`. Runs once on mount.
+	 * Fetch + normalize the releases manifest.
+	 *
+	 * Returns `null` when no manifest is available (the surface then shows nothing selectable).
+	 * Rejecting surfaces `errorMessage`.
+	 *
+	 * Runs once on mount.
 	 */
 	loadManifest: (signal: AbortSignal) => Promise<ReleaseManifest<TRelease> | null>
 	/**
 	 * Load the full asset bundle for one release — the classifier, FST, WOF lookup,
-	 * calibrator, whatever the host needs. Runs on every version or `forceWASM` change.
-	 * Report progress via `ctx`; return the bundle. Rejecting surfaces `errorMessage`.
+	 * calibrator, whatever the host needs.
+	 *
+	 * Runs on every version or `forceWASM` change.
+	 * Report progress via `ctx`; return the bundle.
+	 *
+	 * Rejecting surfaces `errorMessage`.
 	 * Bail early when `ctx.signal.aborted` — the hook discards a superseded result regardless.
 	 */
 	loadAssets: (release: TRelease, ctx: AssetsLoadContext) => Promise<TAssets>
@@ -195,9 +207,9 @@ export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = Rele
 /**
  * Drive the shared version → asset-bundle load state machine over a host-injected loader.
  *
- * Sequence: on mount `loadManifest` runs and its `defaultVersion` becomes the selection.
- * each version (or `forceWASM`) change reloads the bundle via `loadAssets`, the previous
- * load aborted first. The assets are revealed atomically when `loadAssets` resolves
+ * Sequence: on mount `loadManifest` runs and its `defaultVersion` becomes the selection. each version
+ * (or `forceWASM`) change reloads the bundle via `loadAssets`, the previous load aborted first.
+ * The assets are revealed atomically when `loadAssets` resolves
  * (so `ready` flips exactly once per load), and consumers wait on `ready`.
  */
 export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = ReleaseBase>(
@@ -216,8 +228,8 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 	const [loadingByteFraction, setLoadingByteFraction] = useState<number | null>(null)
 	const [forceWASM, setForceWASMState] = useState(false)
 
-	// Latest-ref the injected loaders: a host that re-creates them each render
-	// (an inline arrow) must not retrigger the load effects, which key only on version/backend.
+	// Latest-ref the injected loaders: a host that re-creates them each render (an inline arrow)
+	// must not retrigger the load effects, which key only on version/backend.
 	// The effects read `.current` at run time.
 	const loadManifestRef = useRef(config.loadManifest)
 	const loadAssetsRef = useRef(config.loadAssets)
@@ -308,8 +320,8 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 				const loaded = await loadAssetsRef.current(release, ctx)
 
 				if (signal.aborted) {
-					// It resolved anyway, so it allocated anyway. Dropping it here is what
-					// leaked a model on every rapid version switch.
+					// It resolved anyway, so it allocated anyway.
+					// Dropping it here is what leaked a model on every rapid version switch.
 					await disposeAssetsRef.current?.(loaded)
 
 					return

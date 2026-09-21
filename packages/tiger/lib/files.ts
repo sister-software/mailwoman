@@ -45,7 +45,9 @@ export const TIGERFileExtension = {
 	 */
 	Attributes: ".dbf",
 	/**
-	 * Coordinate system information. Describes the projection of the geographic data.
+	 * Coordinate system information.
+	 *
+	 * Describes the projection of the geographic data.
 	 */
 	Projection: ".prj",
 	/**

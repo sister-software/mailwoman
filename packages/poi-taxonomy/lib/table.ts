@@ -16,9 +16,10 @@ export type { CategoryMatch, POITaxonomyLookup } from "#lookup/core"
 export type { BrandMatch, POIBrandLookup } from "#brands/lookup-core"
 
 /**
- * Builds a {@link POITaxonomyLookup} bound to `table`. Throws when a synonym's
- * `categoryID` points at an unknown category — same integrity check as the node entry,
- * just run against whatever table the caller injects.
+ * Builds a {@link POITaxonomyLookup} bound to `table`.
+ *
+ * Throws when a synonym's `categoryID` points at an unknown category — same integrity
+ * check as the node entry, just run against whatever table the caller injects.
  */
 export function createPOITaxonomyLookup(table: POITaxonomyTable) {
 	return createLookupCore(table)

@@ -132,7 +132,8 @@ describe("repairUnitLabels", () => {
 
 	it("does NOT add over a structural tag (Apt where the number is a confident house_number)", () => {
 		const text = "Apt 4"
-		// pathological: model labeled "4" as house_number. ADD must be blocked.
+		// pathological: model labeled "4" as house_number.
+		// ADD must be blocked.
 		const tokens = [tok("Apt", 0, 3, "O"), tok("4", 4, 5, "B-house_number")]
 		const { tokens: out, changed } = repairUnitLabels(text, tokens)
 		expect(changed).toBe(0)

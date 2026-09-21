@@ -103,9 +103,10 @@ export interface DanglingLink {
 }
 
 /**
- * This module's own repo-relative path, excluded from the sweep it performs: the header has
- * to spell the tag shapes it looks for, and `{@link foo}` in an explanation is an example
- * rather than a promise. `debt.ts` excludes itself from its own vocabulary count for the same reason.
+ * This module's own repo-relative path, excluded from the sweep it performs: the header has to spell
+ * the tag shapes it looks for, and `{@link foo}` in an explanation is an example rather than a promise.
+ *
+ * `debt.ts` excludes itself from its own vocabulary count for the same reason.
  */
 const SELF = "packages/repo-health/lib/checks/doc-link-targets.ts"
 

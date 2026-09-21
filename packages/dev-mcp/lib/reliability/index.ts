@@ -10,9 +10,10 @@
 /**
  * One graded confidence.
  *
- * `strata` is free-form on purpose. A surface knows what its own useful splits are — tag
- * and locale for the decode path, expected/predicted country for the placer — and a fixed
- * field list would either omit one or force every surface to carry the others empty.
+ * `strata` is free-form on purpose.
+ * A surface knows what its own useful splits are — tag and locale for the decode path,
+ * expected/predicted country for the placer — and a fixed field list would either omit one
+ * or force every surface to carry the others empty.
  */
 export interface Observation {
 	confidence: number
@@ -25,13 +26,17 @@ export interface ReliabilityBin {
 	upper: number
 	n: number
 	/**
-	 * `null` on an empty bin. Zero would be a claim about a mean nothing contributed to.
+	 * `null` on an empty bin.
+	 *
+	 * Zero would be a claim about a mean nothing contributed to.
 	 */
 	mean_confidence: number | null
 	accuracy: number | null
 	/**
-	 * `accuracy - mean_confidence`, signed. Negative is overconfidence — the direction that lets a
-	 * caller trust a wrong answer — and an unsigned gap cannot tell it from the harmless direction.
+	 * `accuracy - mean_confidence`, signed.
+	 *
+	 * Negative is overconfidence — the direction that lets a caller trust a wrong answer —
+	 * and an unsigned gap cannot tell it from the harmless direction.
 	 */
 	gap: number | null
 }
@@ -41,12 +46,14 @@ export interface ReliabilityCurve {
 	accuracy: number | null
 	/**
 	 * Expected calibration error: the population-weighted mean absolute gap.
+	 *
 	 * `null` on an empty sample, because 0 there and 0 on a perfect model are
 	 * the same number and opposite facts.
 	 */
 	ece: number | null
 	/**
 	 * Maximum calibration error: the worst single bin, unweighted.
+	 *
 	 * Reported beside ECE rather than instead of it — a rare, badly calibrated bin barely
 	 * moves ECE and dominates MCE, so the pair says something neither says alone.
 	 */
@@ -59,14 +66,17 @@ export interface ThresholdRow {
 	admitted: number
 	admitted_share: number
 	/**
-	 * Accuracy among the admitted. `null` when nothing is admitted — an eval that admits
-	 * nothing has no precision, and reporting 0 there reads as an eval that admits only errors.
+	 * Accuracy among the admitted.
+	 *
+	 * `null` when nothing is admitted — an eval that admits nothing has no precision,
+	 * and reporting 0 there reads as an eval that admits only errors.
 	 */
 	precision_above: number | null
 	errors_admitted: number
 	/**
-	 * Correct observations the eval turned away. The cost side of the trade,
-	 * which a precision column alone hides.
+	 * Correct observations the eval turned away.
+	 *
+	 * The cost side of the trade, which a precision column alone hides.
 	 */
 	correct_below: number
 }
@@ -74,8 +84,9 @@ export interface ThresholdRow {
 /**
  * Equal-width bins over [0, 1].
  *
- * Empty bins are retained. A model whose confidences never enter the low bins is itself the finding,
- * and a table that silently starts at 0.8 reads as a narrower measurement rather than as a wider result.
+ * Empty bins are retained.
+ * A model whose confidences never enter the low bins is itself the finding, and a table that
+ * silently starts at 0.8 reads as a narrower measurement rather than as a wider result.
  */
 export function reliabilityCurve(sample: readonly Observation[], binCount: number): ReliabilityCurve {
 	const bins: Observation[][] = Array.from({ length: binCount }, () => [])
@@ -122,9 +133,9 @@ export function reliabilityCurve(sample: readonly Observation[], binCount: numbe
 /**
  * What a confidence floor at each threshold would actually buy.
  *
- * The curve says whether the number is honest. this says what to do with it,
- * and they are different questions — a well-calibrated surface can still have no threshold
- * worth setting, because the admitted-error count at every useful recall is too high.
+ * The curve says whether the number is honest. this says what to do with it, and they are
+ * different questions — a well-calibrated surface can still have no threshold worth setting,
+ * because the admitted-error count at every useful recall is too high.
  * Both columns of the trade are reported: a precision figure alone hides the
  * correct answers the check throws away.
  */
@@ -155,10 +166,10 @@ export interface ErrorClass {
 /**
  * The confusions an eval at `threshold` lets through, most frequent first.
  *
- * Restricted to the admitted errors on purpose. A hard filter's cost is asymmetric —
- * an admitted error scopes the whole downstream resolve to the wrong answer, while a
- * rejection only forgoes the narrowing — so the per-class rate above the eval is the number
- * that decides whether the eval is safe, and the overall confusion matrix is not.
+ * Restricted to the admitted errors on purpose.
+ * A hard filter's cost is asymmetric — an admitted error scopes the whole downstream resolve to
+ * the wrong answer, while a rejection only forgoes the narrowing — so the per-class rate above the
+ * eval is the number that decides whether the eval is safe, and the overall confusion matrix is not.
  *
  * Requires `expected` and `predicted` strata. a surface without them
  * (the decode path grades a value against a label and has no second class to name)

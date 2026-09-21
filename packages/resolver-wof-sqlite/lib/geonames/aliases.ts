@@ -35,6 +35,7 @@ import type { WOFDatabase } from "#schema"
 
 /**
  * The four tables the alias fold writes into the range it owns.
+ *
  * The purge and the ingest must agree on this list — a table written
  * but not purged is exactly the #1514 defect.
  */
@@ -54,14 +55,17 @@ const FOLD_OWNED_TABLES = ["spr", "names", "place_population", "ancestors"] as c
  * skipped unpopulated places entirely — so the previous run's names, ancestry
  * and populations stayed bound to ids now describing other places.
  *
- * Measured on the live 2026-08-05 artifact: a 14-country re-fold over the 161-country fold baked
- * into `admin-global-priority.db` put 522,184 of 2,110,096 name rows in the range (24.7 %)
- * on a place from a different country. Gaborone/BW at id 9000000121151 became Aichegg/AT
- * and kept all 26 of its names. Kinshasa's 16,000,000 population landed on a Lithuanian hamlet.
+ * Measured on the live 2026-08-05 artifact: a 14-country re-fold over the 161-country
+ * fold baked into `admin-global-priority.db` put 522,184 of 2,110,096 name rows in
+ * the range (24.7 %) on a place from a different country.
+ * Gaborone/BW at id 9000000121151 became Aichegg/AT and kept all 26 of its names.
  *
- * The upper bound is not the end of the id space. Each later extract owns a range above
- * this one — GeoNames-postal @ 9.5e12, NL-PC6 @ 9.6e12, Code-Point @ 9.7e12, NI @ 9.8e12 —
- * and a purge that ran past {@link GEONAMES_POSTAL_ID_BASE} would delete them.
+ * Kinshasa's 16,000,000 population landed on a Lithuanian hamlet.
+ *
+ * The upper bound is not the end of the id space.
+ * Each later extract owns a range above this one — GeoNames-postal @ 9.5e12,
+ * NL-PC6 @ 9.6e12, Code-Point @ 9.7e12, NI @ 9.8e12 — and a purge that ran past
+ * {@link GEONAMES_POSTAL_ID_BASE} would delete them.
  */
 export function purgeGeonamesAliasRange<DB>(db: DatabaseClient<DB>): Record<string, number> {
 	const removed: Record<string, number> = {}
@@ -94,17 +98,20 @@ export interface GeonamesIngestProgress {
 	 */
 	skipped: boolean
 	/**
-	 * Alternate names the admission rule refused. A build reporting only names written cannot
-	 * tell a country whose source carries few names from one whose names the fold threw away,
-	 * and those were indistinguishable downstream for as long as the rule tested script.
+	 * Alternate names the admission rule refused.
+	 *
+	 * A build reporting only names written cannot tell a country whose source carries few
+	 * names from one whose names the fold threw away, and those were indistinguishable
+	 * downstream for as long as the rule tested script.
 	 */
 	aliasesRefused?: number
 }
 
 /**
- * The one rendering of a fold progress event. Three call sites reported the same
- * event in three hand-written spellings, so a field added to the event reached
- * whichever of them its author happened to open.
+ * The one rendering of a fold progress event.
+ *
+ * Three call sites reported the same event in three hand-written spellings, so a field
+ * added to the event reached whichever of them its author happened to open.
  */
 export function formatGeonamesIngestProgress(event: GeonamesIngestProgress, missingFile?: string): string {
 	if (event.skipped) {
@@ -144,9 +151,9 @@ async function parseAlternateNamesV2(
 	// Do not condition on isPreferredName instead — it's sparse annotation rather than a
 	// signal (Turku's sv "Åbo" is unflagged. FI has 1,746 flags across the whole dump).
 	//
-	// Both passes stream the file rather than sharing one materialized array:
-	// Norway's V2 dump is 33 MB, and a second read off the page cache costs less than
-	// holding half a million line strings. `header: false` — the dump is headerless.
+	// Both passes stream the file rather than sharing one materialized array: Norway's V2 dump is 33 MB,
+	// and a second read off the page cache costs less than holding half a million line strings.
+	// `header: false` — the dump is headerless.
 	const historicNames = new Set<string>()
 
 	for await (const f of readUnquotedTSV(v2File)) {
@@ -165,7 +172,8 @@ async function parseAlternateNamesV2(
 		if (!wanted.has(gid)) continue
 		const lang = f[2] ?? ""
 
-		// ISO 639 codes are 2-3 letters. GeoNames' pseudo-codes (post, link, iata, wkdt, …) are 4+.
+		// ISO 639 codes are 2-3 letters.
+		// GeoNames' pseudo-codes (post, link, iata, wkdt, …) are 4+.
 		if (!/^[a-z]{2,3}$/.test(lang)) continue
 		const alt = (f[3] ?? "").trim()
 
@@ -198,12 +206,15 @@ async function parseAlternateNamesV2(
 }
 
 /**
- * Fold the GeoNames `P`-class places (+ their alt-names, in every script) for `countries` into
- * `db`'s `spr` / `names` / `place_population` tables. Returns the total places ingested.
+ * Fold the GeoNames `P`-class places (+ their alt-names, in every script) for
+ * `countries` into `db`'s `spr` / `names` / `place_population` tables.
  *
- * `onProgress` receives one event per country (default: a stderr line, matching the
- * build scripts' legacy output). The caller must rebuild `place_search` afterward
- * (`buildPlaceSearchFTS(db, { drop: true })`) for the new names to reach the candidate build's alias pass.
+ * Returns the total places ingested.
+ *
+ * `onProgress` receives one event per country (default: a stderr line,
+ * matching the build scripts' legacy output).
+ * The caller must rebuild `place_search` afterward (`buildPlaceSearchFTS(db, { drop: true })`)
+ * for the new names to reach the candidate build's alias pass.
  */
 export async function ingestGeonamesAliases(
 	db: DatabaseClient<WOFDatabase>,
@@ -222,12 +233,15 @@ export async function ingestGeonamesAliases(
 		/**
 		 * #936: directory of per-country alternateNamesV2 dumps
 		 * (`download.geonames.org/export/dump/alternatenames/<CC>.zip` → `<CC>.txt`).
+		 *
 		 * When a country's file is present, alias rows gain their language tag,
 		 * `privateuse` ("preferred" from `isPreferredName`), and the `official` bit
 		 * (language is CLDR-official for the country, colloquial/historic excluded —
 		 * the rule the #936 risk probe measured at 7 new name-exact collisions globally).
 		 * The main dump's bare `alternatenames` list still decides which rows exist.
-		 * V2 only decorates them. Missing file = the pre-#936 untagged behavior rather than an error.
+		 *
+		 * V2 only decorates them.
+		 * Missing file = the pre-#936 untagged behavior rather than an error.
 		 */
 		alternateDir?: PathBuilderLike
 	}
@@ -239,6 +253,7 @@ export async function ingestGeonamesAliases(
 
 	/**
 	 * The display rule, for `spr.name` and the A-class admin names.
+	 *
 	 * A row's display name stays in one script because consumers render it beside Latin siblings.
 	 * which names are reachable is `cleanAlias`'s question, and the two are separate on purpose.
 	 */
@@ -249,13 +264,14 @@ export async function ingestGeonamesAliases(
 	}
 
 	/**
-	 * GeoNames packs parenthesized asides, pipe-joined lists and bracketed qualifiers into
-	 * `alternatenames`. Refusing those is what the display rule's character class was doing
-	 * that still needs doing. refusing a script is not. This fold is the only path by
-	 * which a place in a fold country acquires a name in its own script, so a script
-	 * test here decides whether a country is reachable in its own writing at all —
-	 * Hong Kong carried six Han lookup keys, all of them the country row's, and every
-	 * one of its eighteen districts was reachable only in romanization.
+	 * GeoNames packs parenthesized asides, pipe-joined lists and bracketed qualifiers into `alternatenames`.
+	 *
+	 * Refusing those is what the display rule's character class was doing that
+	 * still needs doing. refusing a script is not.
+	 * This fold is the only path by which a place in a fold country acquires a name in its
+	 * own script, so a script test here decides whether a country is reachable in its own
+	 * writing at all — Hong Kong carried six Han lookup keys, all of them the country row's,
+	 * and every one of its eighteen districts was reachable only in romanization.
 	 *
 	 * Measured over the 161-country fold set: 1,662,953 alternate names admitted
 	 * under the display rule, 345,555 further names admitted here — Arabic 138,897,
@@ -265,6 +281,7 @@ export async function ingestGeonamesAliases(
 
 	/**
 	 * The length band, carried over from the display rule unchanged.
+	 *
 	 * Two characters is a real place name in a Han script (上海) and noise in none. sixty
 	 * is longer than any name in the dumps and refuses a field that ran together.
 	 */
@@ -290,7 +307,8 @@ export async function ingestGeonamesAliases(
 	const populationInsert = db.prepare(`INSERT OR REPLACE INTO place_population (id, population) VALUES (?, ?)`)
 
 	// #267 admin linkage: ancestor rows (locality→region→country) so parentID scoping + adminCoherence reach
-	// the gap countries. Only used for a country in opts.adminForCountries.
+	// the gap countries.
+	// Only used for a country in opts.adminForCountries.
 	const ancestorInsert = db.prepare(
 		`INSERT INTO ancestors (id, ancestor_id, ancestor_placetype, lastmodified) VALUES (?, ?, ?, 0)`
 	)
@@ -308,7 +326,8 @@ export async function ingestGeonamesAliases(
 	db.exec("BEGIN")
 
 	// #1514: clear the range before writing it. Inside the transaction, so a fold that throws leaves the
-	// DB as it found it rather than half-purged. See purgeGeonamesAliasRange for why the ids demand this.
+	// DB as it found it rather than half-purged.
+	// See purgeGeonamesAliasRange for why the ids demand this.
 	purgeGeonamesAliasRange(db)
 
 	for (const cc of countries) {
@@ -327,13 +346,14 @@ export async function ingestGeonamesAliases(
 		const v2File = opts?.alternateDir ? join(opts.alternateDir, `${cc}.txt`) : undefined
 		const readV2 = Boolean(v2File && (await pathExists(v2File)))
 
-		// Survey pass. The dump is streamed — no's is 71 MB and only the caller knows
-		// which country comes next — so what a later pass needs has to be collected here
-		// rather than re-scanned off a materialized array. Two things qualify, and both are small:
-		// the P-class geonameid set the V2 decoration is restricted to, and the handful of A-class rows
-		// the admin pre-pass writes (one PCL* + the ADM1s). Everything else is re-read
-		// in the emit pass below. Neither is wanted without V2 tags or admin, and
-		// then the pass is skipped rather than read for nothing.
+		// Survey pass.
+		// The dump is streamed — no's is 71 MB and only the caller knows which country comes next — so what
+		// a later pass needs has to be collected here rather than re-scanned off a materialized array.
+		// Two things qualify, and both are small: the P-class geonameid set the V2 decoration is
+		// restricted to, and the handful of A-class rows the admin pre-pass writes (one PCL* + the ADM1s).
+		// Everything else is re-read in the emit pass below.
+		// Neither is wanted without V2 tags or admin, and then the pass is skipped
+		// rather than read for nothing.
 		//
 		// GeoNames dump columns (0-indexed): 0 geonameid, 1 name, 2 asciiname, 3 alternatenames,
 		// 4 lat, 5 lon, 6 feature_class, 7 feature_code, 10 admin1 code, 14 pop.
@@ -423,10 +443,10 @@ export async function ingestGeonamesAliases(
 			sprInsert.run(nid, parentID, name, "locality", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
 			namesInsert.run(nid, name, "locality", cc, "", "", 0, 0)
 
-			// The self row is unconditional (#1514). `populateAncestors` writes one for
-			// every spr row it sees, so a full build's freeze phase produces it either way —
-			// but the freeze does not run on the fold-on-copy path, and since the purge
-			// now clears this range the fold has to emit everything the closure would.
+			// The self row is unconditional (#1514).
+			// `populateAncestors` writes one for every spr row it sees, so a full build's freeze phase
+			// produces it either way — but the freeze does not run on the fold-on-copy path, and
+			// since the purge now clears this range the fold has to emit everything the closure would.
 			// Measured on the 161-country fold: 212,993 self rows, exactly the non-gap countries'
 			// localities, which is what the base artifact carried and a fold-on-copy lost.
 			ancestorInsert.run(nid, nid, "locality")

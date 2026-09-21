@@ -68,8 +68,8 @@ export async function removeIfPresent(dest: string): Promise<void> {
 /**
  * Symlink one soft-feed sibling into an overlay, warning rather than failing when the source is absent.
  *
- * Every one of these artifacts is optional by design — the runtime has a fallback
- * for each, so a fresh worktree that has not built the gazetteer still geocodes.
+ * Every one of these artifacts is optional by design — the runtime has a fallback for each,
+ * so a fresh worktree that has not built the gazetteer still geocodes.
  * That is why the miss prints the consequence instead of throwing: the operator needs to know
  * which channel just resolved off rather than to have the link step abort.
  */
@@ -108,13 +108,16 @@ export const PAIR_INDEX_TRANSITION_BETA = 5
 /**
  * The whole-edge parent-bias magnitude (#46, default-on 2026-08-04) at the verdict's
  * recommended δ=5 — see `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`.
+ *
  * Only the measured locales (us/gb/nz/fr) pass it. the D-rule's answer to an unmeasured
  * locale is a per-locale absence rather than an inherited magnitude.
  */
 export const PAIR_INDEX_PARENT_DELTA = 5
 
 /**
- * What one pair-index build has to say about itself. Everything else is shared.
+ * What one pair-index build has to say about itself.
+ *
+ * Everything else is shared.
  */
 export interface PairIndexOverlay {
 	/**
@@ -122,38 +125,47 @@ export interface PairIndexOverlay {
 	 */
 	packageDir: string
 	/**
-	 * ISO country code passed to `gazetteer pair-index --country`, and the suffix of the built
-	 * artifact (`de` → `pair-index-de.bin`). Not the locale tag: `en-in` builds `pair-index-in.bin`.
+	 * ISO country code passed to `gazetteer pair-index --country`, and the suffix
+	 * of the built artifact (`de` → `pair-index-de.bin`).
+	 *
+	 * Not the locale tag: `en-in` builds `pair-index-in.bin`.
 	 */
 	country: string
 	/**
 	 * Calibrated magnitudes the locale's bars were measured at.
-	 * Baked into the artifact's PIX1 header, which is how the freshness check notices a
-	 * change to any of them. An absent `transitionBeta`/`parentDelta` means the flag is
-	 * not passed and the header carries no such key — a real state, distinct from zero
-	 * (see `PairIndexHeader.parentDelta`). The whole calibration feeds both the build flags
-	 * and the staleness expectation, so the two cannot disagree.
+	 *
+	 * Baked into the artifact's PIX1 header, which is how the freshness check notices a change to any of them.
+	 * An absent `transitionBeta`/`parentDelta` means the flag is not passed and the header
+	 * carries no such key — a real state, distinct from zero (see `PairIndexHeader.parentDelta`).
+	 *
+	 * The whole calibration feeds both the build flags and the staleness expectation,
+	 * so the two cannot disagree.
 	 */
 	delta: number
 	transitionBeta?: number
 	parentDelta?: number
 	/**
 	 * Source files whose md5s the build records, in the order `gazetteer pair-index` records them.
+	 *
 	 * The freshness guard compares every one against the existing header (#1734):
 	 * a partial comparison leaves the guard blind to the rest, and a stale artifact
 	 * then keeps reporting itself fresh while the data it was built from has moved.
 	 * Empty means the build's source cannot be file-hashed (fr's BAN directory)
-	 * and freshness rests on the magnitudes alone. Default: the WOF admin DB.
+	 * and freshness rests on the magnitudes alone.
+	 *
+	 * Default: the WOF admin DB.
 	 */
 	sources?: string[]
 	/**
-	 * Inputs that must exist before a build is attempted — a missing one warns
-	 * and returns, because a fresh clone has no data root and `yarn test` invokes the
-	 * linkers to verify auto-resolve. Default: `sources`.
+	 * Inputs that must exist before a build is attempted — a missing one warns and returns,
+	 * because a fresh clone has no data root and `yarn test` invokes the linkers to verify auto-resolve.
+	 *
+	 * Default: `sources`.
 	 */
 	inputs?: string[]
 	/**
 	 * Extra CLI args naming the build's sources (`--source`, `--borough-db`, `--pairs-jsonl`, `--ban-dir`).
+	 *
 	 * Default: `--borough-db <admin db>`.
 	 */
 	extraArgs?: string[]
@@ -173,7 +185,9 @@ export interface PairIndexHeaderFields {
 	parentDelta: number | undefined
 	schemaVersion: number
 	/**
-	 * One md5 per source the build read, in fold order. Empty on a header that recorded none.
+	 * One md5 per source the build read, in fold order.
+	 *
+	 * Empty on a header that recorded none.
 	 */
 	sourceMD5s: string[]
 }
@@ -181,6 +195,7 @@ export interface PairIndexHeaderFields {
 /**
  * Minimal PIX1 header reader — magic + header only, reimplemented so a data-only weights package
  * gains no dependency on `@mailwoman/neural` (which pulls onnxruntime-node) to read a few fields.
+ *
  * `neural/pair-index-resolver.ts`'s own header parse is the source of truth this must follow.
  *
  * Shared by the overlay build below and by the four hand-written base linkers
@@ -225,6 +240,7 @@ const MD5_HEX_LENGTH = 32
 /**
  * Md5 of `path`, cached in a standard `md5sum`-format sidecar (`<hash> <filename>`) beside it
  * so a multi-gigabyte source is hashed once per change rather than once per linker run.
+ *
  * The sidecar is trusted only when at least as new as the source. a missing
  * or stale sidecar recomputes and rewrites, so the cache self-heals.
  *
@@ -258,6 +274,7 @@ export async function md5FileWithSidecar(path: string): Promise<string> {
 
 /**
  * The calibrated magnitudes a linker bakes into its artifact.
+ *
  * `undefined` means the flag is not passed and the header carries no such key —
  * a real state, distinct from zero (see `PairIndexHeader.parentDelta`), so the comparison
  * below is `!==` against `undefined` rather than a truthiness test.
@@ -269,10 +286,10 @@ export interface PairIndexCalibration {
 }
 
 /**
- * Why an existing `pair-index-*.bin` is stale against `expected`, or `undefined`
- * when its header matches. Covers the format (schemaVersion) and every calibrated
- * magnitude. source-md5 freshness stays with the caller, because each base linker
- * passes a different set of sources and only it knows what they are.
+ * Why an existing `pair-index-*.bin` is stale against `expected`, or `undefined` when its header matches.
+ *
+ * Covers the format (schemaVersion) and every calibrated magnitude. source-md5 freshness stays with the
+ * caller, because each base linker passes a different set of sources and only it knows what they are.
  *
  * One place so a magnitude added to the header cannot be checked by some linkers and not others —
  * which is exactly how three of the four base linkers ended up unable to notice a schema bump.
@@ -299,15 +316,17 @@ export function pairIndexStaleReason(
 }
 
 /**
- * The PIX1 schema this tree's reader requires. Must equal `KNOWN_SCHEMA_VERSION` in
- * `neural/pair-index-resolver.ts` — they are two ends of one fact, and this copy exists only
- * because a data-only overlay must not gain a dependency on `@mailwoman/neural` (onnxruntime-node)
- * to read one header field. Bump both in the same commit. a schema bump that leaves this
- * behind makes every dev checkout rebuild-loop or serve an artifact the runtime refuses.
+ * The PIX1 schema this tree's reader requires.
  *
- * The freshness guard must compare it: a guard that checks only delta + source md5
- * reads a format-obsolete binary as "current" and leaves every dev checkout with
- * artifacts the runtime refuses — the R5 freshness-guard lesson, format edition.
+ * Must equal `KNOWN_SCHEMA_VERSION` in `neural/pair-index-resolver.ts` — they are two
+ * ends of one fact, and this copy exists only because a data-only overlay must not gain
+ * a dependency on `@mailwoman/neural` (onnxruntime-node) to read one header field.
+ * Bump both in the same commit. a schema bump that leaves this behind makes every dev
+ * checkout rebuild-loop or serve an artifact the runtime refuses.
+ *
+ * The freshness guard must compare it: a guard that checks only delta + source md5 reads
+ * a format-obsolete binary as "current" and leaves every dev checkout with artifacts
+ * the runtime refuses — the R5 freshness-guard lesson, format edition.
  * Also compared by the four hand-written base linkers (`neural-weights-{en-us,en-gb,en-nz,fr-fr}`), which
  * import this constant rather than re-typing the number.
  */
@@ -319,17 +338,19 @@ export const REQUIRED_PAIR_INDEX_SCHEMA = 3
  *
  * Why IT warns rather than rebuilds, unlike its pair-index sibling above.
  * A pair index is seconds of work and the linker owns its whole recipe.
- * A locale FST is a multi-minute build whose output goes to a staging dir on purpose —
- * the swap into `fst-per-locale/` is operator-approved after the battery, because an
- * FST changes decoder behaviour and the D-rule does not let that land unmeasured.
- * So the guard's job is to make the drift impossible to miss, and to name the
- * command that starts fixing it. It is also why a stale FST is never fatal:
- * the artifact is a decode-time bias list, and a dev tree must still run.
  *
- * The source-side half of the comparison lives here rather than in `fst-freshness.ts`
- * for the same reason `pairIndexStaleReason` splits: only the caller knows
- * which database it built against. All three FST-linking base packages build against
- * the same one, so they share this rather than each pinning it.
+ * A locale FST is a multi-minute build whose output goes to a staging dir on purpose —
+ * the swap into `fst-per-locale/` is operator-approved after the battery, because an FST
+ * changes decoder behaviour and the D-rule does not let that land unmeasured.
+ * So the guard's job is to make the drift impossible to miss, and to name the command that starts fixing it.
+ *
+ * It is also why a stale FST is never fatal: the artifact is a decode-time bias list,
+ * and a dev tree must still run.
+ *
+ * The source-side half of the comparison lives here rather than in `fst-freshness.ts` for the same
+ * reason `pairIndexStaleReason` splits: only the caller knows which database it built against.
+ * All three FST-linking base packages build against the same one, so they share this
+ * rather than each pinning it.
  */
 export async function warnIfFSTStale(fstPath: string, locale: string): Promise<void> {
 	const warning = await fstFreshnessWarning({
@@ -348,6 +369,7 @@ export async function warnIfFSTStale(fstPath: string, locale: string): Promise<v
  * (`$MAILWOMAN_DATA_ROOT/wof/fst-per-locale/`) into an overlay so `resolveWeights`
  * surfaces `fstPath` in dev and the runtime pipeline can auto-wire the gazetteer +
  * street-context check, then run {@link warnIfFSTStale} on the linked artifact.
+ *
  * The publish flow stages the real binary (release-sequenced).
  */
 export async function linkLocaleFST(destDir: string, locale: string): Promise<void> {
@@ -367,9 +389,11 @@ export async function linkLocaleFST(destDir: string, locale: string): Promise<vo
 /**
  * Symlink the sealed locale-general street-morphology FST
  * (`$MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin`, `mailwoman gazetteer build street-morphology`)
- * into an overlay so `resolveWeights` surfaces `streetMorphologyPath` in dev and the street-context
- * check (#1315) deserializes the artifact instead of rebuilding from the libpostal dictionaries
- * per process. Missing is non-fatal — the runtime loader's dictionary-build fallback covers it.
+ * into an overlay so `resolveWeights` surfaces `streetMorphologyPath` in dev
+ * and the street-context check (#1315) deserializes the artifact instead of
+ * rebuilding from the libpostal dictionaries per process.
+ *
+ * Missing is non-fatal — the runtime loader's dictionary-build fallback covers it.
  */
 export async function linkStreetMorphologyFST(destDir: string): Promise<void> {
 	await linkSoftFeedSibling(
@@ -380,12 +404,14 @@ export async function linkStreetMorphologyFST(destDir: string): Promise<void> {
 }
 
 /**
- * Why an existing artifact may be trusted without a rebuild, or `undefined` when it must
- * be rebuilt (with the reason already printed). The skip requires both halves (#1734):
- * the header magnitudes + format (`pairIndexStaleReason`) and the header's
- * `sourceMD5s` against the current sources' md5s. Magnitudes alone read a source
- * change as "current" whenever pair counts happen not to move the calibrated numbers —
- * the R5 freshness-guard lesson, which resurfaced in the 2026-08-18 admin swap.
+ * Why an existing artifact may be trusted without a rebuild, or `undefined`
+ * when it must be rebuilt (with the reason already printed).
+ *
+ * The skip requires both halves (#1734): the header magnitudes + format (`pairIndexStaleReason`)
+ * and the header's `sourceMD5s` against the current sources' md5s.
+ * Magnitudes alone read a source change as "current" whenever pair counts happen not to move the
+ * calibrated numbers — the R5 freshness-guard lesson, which resurfaced in the 2026-08-18 admin swap.
+ *
  * A source that is not on disk to re-hash leaves the magnitudes as the best available answer
  * (the "missing source, can't build" branch below would fire anyway if a rebuild were needed).
  */
@@ -469,11 +495,13 @@ async function pairIndexIsFresh(
 /**
  * Build `pair-index-<country>.bin` into the overlay, skipping the work when the artifact on disk
  * was already built at these magnitudes from the sources on disk (see {@link pairIndexIsFresh}).
+ *
  * The calibration object drives both the staleness expectation and the CLI flags,
  * so a magnitude cannot be checked by the guard and dropped from the build.
  *
- * Exits non-zero on a failed build. Missing inputs (an unbuilt CLI, an absent source) warn and return
- * instead: a fresh clone has neither, and `yarn test` invokes this to verify auto-resolve,
+ * Exits non-zero on a failed build.
+ * Missing inputs (an unbuilt CLI, an absent source) warn and return instead:
+ * a fresh clone has neither, and `yarn test` invokes this to verify auto-resolve,
  * so a hard failure there would be a failure to have run a build yet rather than a real fault.
  */
 export async function buildPairIndexOverlay(overlay: PairIndexOverlay): Promise<void> {
@@ -570,6 +598,7 @@ export interface SoftFeedLink {
 /**
  * The committed soft-feed lexicons as links, by channel, read from `release.config.json`
  * so the filename a manifest links is the one the release ships.
+ *
  * `streetType` is offered for completeness. the manifests link the evidence lexicons
  * by the generation their card names instead (`evidenceLexiconsFromCard`).
  */
@@ -612,30 +641,34 @@ export interface WeightsCard {
 }
 
 /**
- * What one locale's `scripts/link-dev-weights.ts` declares, so an overlay
- * is a manifest plus a call rather than a script cloned from a sibling.
+ * What one locale's `scripts/link-dev-weights.ts` declares, so an overlay is a
+ * manifest plus a call rather than a script cloned from a sibling.
+ *
  * Every step is optional and runs only when named, in a fixed order: model pair,
  * soft-feed siblings, card-named evidence lexicons, postcode binary, pair index, FSTs.
  */
 export interface DevOverlayManifest {
 	/**
-	 * The overlay's locale tag, lower-case. The workspace is `neural-weights-<locale>`
-	 * and the artifacts land in `$MAILWOMAN_DATA_ROOT/weights/<locale>/`, never in the
-	 * tracked package: the binaries are not in git, so materializing them there made a
-	 * fresh worktree unable to geocode, made `yarn test` mutate a tracked directory,
-	 * and put a symlink into a publish tarball (`YN0035`).
+	 * The overlay's locale tag, lower-case.
+	 *
+	 * The workspace is `neural-weights-<locale>` and the artifacts land in
+	 * `$MAILWOMAN_DATA_ROOT/weights/<locale>/`, never in the tracked package: the binaries
+	 * are not in git, so materializing them there made a fresh worktree unable to geocode,
+	 * made `yarn test` mutate a tracked directory, and put a symlink into a publish tarball (`YN0035`).
 	 */
 	locale: string
 	/**
-	 * What happens to `model.onnx` + `tokenizer.model`. `link`: the pair is symlinked
-	 * from the paths `release.config.json`'s `weights` block names under the data
-	 * root (`$MAILWOMAN_DEV_MODEL` / `$MAILWOMAN_DEV_TOKENIZER` override them), and
-	 * when `digestCard` names a workspace the linked default bytes must match that workspace's
-	 * card `files_md5` — the #397 drift guard, which fails loud instead of grading the wrong
-	 * model. an override skips the check and says so. `inherit`: the package declares
-	 * `mailwoman.baseWeights`, so any local pair is removed — a stale local file shadows the
-	 * base fallback and silently serves outdated bytes. Omitted: the pair is left to
-	 * `packages/release-kit/lib/weights/link-weights-overlay.ts`, the recipe writer.
+	 * What happens to `model.onnx` + `tokenizer.model`.
+	 *
+	 * `link`: the pair is symlinked from the paths `release.config.json`'s `weights` block names
+	 * under the data root (`$MAILWOMAN_DEV_MODEL` / `$MAILWOMAN_DEV_TOKENIZER` override them),
+	 * and when `digestCard` names a workspace the linked default bytes must match
+	 * that workspace's card `files_md5` — the #397 drift guard, which fails loud
+	 * instead of grading the wrong model. an override skips the check and says so.
+	 * `inherit`: the package declares `mailwoman.baseWeights`, so any local pair is removed —
+	 * a stale local file shadows the base fallback and silently serves outdated bytes.
+	 *
+	 * Omitted: the pair is left to `packages/release-kit/lib/weights/link-weights-overlay.ts`, the recipe writer.
 	 */
 	model?: { kind: "link"; digestCard?: string } | { kind: "inherit" } | { kind: "char"; family: string }
 	/**
@@ -644,8 +677,9 @@ export interface DevOverlayManifest {
 	softFeed?: ReadonlyArray<SoftFeedLink>
 	/**
 	 * Link the evidence lexicons the overlay's own card names under `requires.<channel>.lexicon`,
-	 * so the generation comes from the card the loader reads and a card bump moves the
-	 * artifact with it. `street-type-lexicon-v*.json` is committed under `data/gazetteer/`;
+	 * so the generation comes from the card the loader reads and a card bump moves the artifact with it.
+	 *
+	 * `street-type-lexicon-v*.json` is committed under `data/gazetteer/`;
 	 * `locality-surface-lexicon-v*.json` is 7–13 MB and lives in the data root.
 	 */
 	evidenceLexiconsFromCard?: boolean
@@ -702,15 +736,17 @@ async function readWeightsCard(workspace: string): Promise<WeightsCard | undefin
 }
 
 /**
- * Link the base model pair from the release recipe and, when a digest card is named, hold
- * the linked default bytes to that card's `files_md5`. The recipe and the card are the
- * two registers a ship bumps in lockstep. a path bumped without the card, or the reverse,
- * fails here rather than after an eval shift graded against the wrong weights.
+ * Link the base model pair from the release recipe and, when a digest card is named,
+ * hold the linked default bytes to that card's `files_md5`.
+ *
+ * The recipe and the card are the two registers a ship bumps in lockstep. a path bumped without the card,
+ * or the reverse, fails here rather than after an eval shift graded against the wrong weights.
  */
 /**
- * A char-path base (#2164): the graph and its sealed vocabulary from `release.config.json`'s
- * `charWeights[family]`, no tokenizer. The dev overlay carries both
- * so `resolveWeights` finds the package whole.
+ * A char-path base (#2164): the graph and its sealed vocabulary from
+ * `release.config.json`'s `charWeights[family]`, no tokenizer.
+ *
+ * The dev overlay carries both so `resolveWeights` finds the package whole.
  */
 async function linkCharModel(destDir: string, family: string): Promise<void> {
 	const recipe = (await readReleaseConfig()).charWeights?.[family]
@@ -806,6 +842,7 @@ async function linkBaseModelPair(destDir: string, digestCard: string | undefined
 
 /**
  * Build a postcode binary from a WOF postcode extract, skip-if-present.
+ *
  * A missing CLI or extract is a warning (the anchor channel resolves off for that country);
  * a build that runs and fails is an error.
  */
@@ -854,6 +891,7 @@ async function buildPostcodeBinary(
 
 /**
  * Materialize one locale's dev overlay from its manifest.
+ *
  * The steps run in the order {@link DevOverlayManifest} documents, each independent on disk,
  * and the result includes what a locale-specific step needs afterwards.
  */

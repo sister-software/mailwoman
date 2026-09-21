@@ -16,6 +16,7 @@ import { classifyTokens, foldInputClass } from "@mailwoman/query-shape/character
 import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
 /**
  * Longest input still plausible as a bare venue or landmark name.
+ *
  * Beyond it the query is carrying an address as well, and belongs to the structured-address scorer.
  */
 const MAX_LANDMARK_LENGTH = 50
@@ -27,6 +28,7 @@ const MAX_POSTCODE_ONLY_LENGTH = 16
 
 /**
  * Share of the input the postcode must occupy before `postcode_only` fires.
+ *
  * Below it the query is carrying something else too — a locality, a street — and another kind should win.
  */
 const MIN_POSTCODE_COVERAGE = 0.7
@@ -42,6 +44,7 @@ export const MAX_LOCALITY_ONLY_LENGTH = 30
 
 /**
  * Word count of a short capitalized phrase — the shape of a venue name like `Empire State Building`.
+ *
  * Wider than this and the phrase is more likely a full address line.
  */
 const VENUE_PHRASE_MIN_WORDS = 2
@@ -58,6 +61,7 @@ const LONG_VENUE_PHRASE_MAX_WORDS = 6
 
 /**
  * Length at which a single-segment alphanumeric input reads as a full postcode rather than a fragment.
+ *
  * Shorter alphanumeric inputs score lower because they are as likely to be a unit number.
  */
 const ALPHANUMERIC_POSTCODE_MIN_LENGTH = 15
@@ -90,6 +94,7 @@ const INTERSECTION_PATTERNS = [
 
 /**
  * `po_box` rule: high-confidence iff QueryShape detected a po_box format hit.
+ *
  * Confidence comes directly from the hit. covers all locale variants (US "PO Box 123", FR "BP 42", etc.).
  */
 export function scorePoBox(_input: NormalizedInputLite, shape: QueryShapeLike): number {
@@ -117,6 +122,7 @@ export function scoreIntersection(input: NormalizedInputLite, _shape: QueryShape
 
 /**
  * `landmark` rule: text begins with a landmark-leader phrase.
+ *
  * These inputs are not addresses proper — they describe a location relative to another place.
  */
 export function scoreLandmark(input: NormalizedInputLite, _shape: QueryShapeLike): number {
@@ -131,6 +137,7 @@ export function scoreLandmark(input: NormalizedInputLite, _shape: QueryShapeLike
 
 /**
  * Split on whitespace + commas and drop empty words — the word grammar shared with `intent-rules.ts`.
+ *
  * Dropping empties matters: a trailing comma or doubled separator otherwise yields an empty string
  * that inflates the word count and falsifies every-word predicates like the proper-case check below.
  */
@@ -141,9 +148,10 @@ export function wordsOf(text: string): string[] {
 /**
  * True when a word is USPS street-suffix vocabulary that unambiguously signals
  * an address — the full Pub-28 table via `@mailwoman/codex`, minus its curated
- * name-prone canonicals (park, field, hill, lake, …). Those double as ordinary
- * proper-name heads ("Wrigley Field", "Menlo Park"), and disqualifying on them
- * would reject the very venue and place names the rules below exist to capture.
+ * name-prone canonicals (park, field, hill, lake, …).
+ *
+ * Those double as ordinary proper-name heads ("Wrigley Field", "Menlo Park"), and disqualifying
+ * on them would reject the very venue and place names the rules below exist to capture.
  * Shared with `intent-rules.ts` so both rule sets read one definition.
  */
 export function isDisqualifyingStreetSuffix(word: string): boolean {
@@ -156,10 +164,11 @@ export function isDisqualifyingStreetSuffix(word: string): boolean {
  * The input with every postcode span removed, and the separators the removal orphaned collapsed away.
  *
  * A postcode is the one digit run that carries no information about whether the query names a street.
- * Read over `Thomas, WV 26292` the whole-input character class is `alphanumeric`
- * and the shape reports a known-format hit, and both readings describe the postcode
- * rather than the name in front of it. Read over what this returns — `Thomas, WV` —
- * the class is `alpha`, which is the question the locality rules mean to ask (#2342).
+ * Read over `Thomas, WV 26292` the whole-input character class is `alphanumeric` and the shape reports
+ * a known-format hit, and both readings describe the postcode rather than the name in front of it.
+ *
+ * Read over what this returns — `Thomas, WV` — the class is `alpha`, which is the
+ * question the locality rules mean to ask (#2342).
  *
  * Non-postcode formats are left in place: they are evidence of some other structure,
  * and removing them would hide it.
@@ -187,10 +196,10 @@ export function withoutPostcodeSpans(text: string, shape: QueryShapeLike): strin
 /**
  * True when the text carries at least one letter in any script.
  *
- * The rules that admit a place name read `characterClass === "alpha"` to mean "no
- * address grammar", and that reading is silent about whether any name is present:
- * `foldInputClass` answers `alpha` for input carrying no classified token at all, so `"???"`
- * and `""` both read alpha. A name has to be asserted rather than inferred from the class.
+ * The rules that admit a place name read `characterClass === "alpha"` to mean "no address grammar",
+ * and that reading is silent about whether any name is present: `foldInputClass` answers
+ * `alpha` for input carrying no classified token at all, so `"???"` and `""` both read alpha.
+ * A name has to be asserted rather than inferred from the class.
  */
 export function carriesLetter(text: string): boolean {
 	return /\p{L}/u.test(text)
@@ -207,10 +216,11 @@ export function carriesLetter(text: string): boolean {
  * This runs on every classify, so it allocates nothing until a postcode hit exists.
  */
 function mergedPostcodeSpans(shape: QueryShapeLike): Array<{ start: number; end: number }> {
-	// Only a hit inside the last segment counts. The detectors are speculative and multi-country,
-	// so a leading house number attracts one: `3215 SE Clinton St, Portland OR` reports
-	// `3215 SE` as an nl_postcode, and removing that leaves `Clinton St, Portland OR`,
-	// which reads alpha and turns a full street address into a locality query.
+	// Only a hit inside the last segment counts.
+	// The detectors are speculative and multi-country, so a leading house number attracts
+	// one: `3215 SE Clinton St, Portland OR` reports `3215 SE` as an nl_postcode,
+	// and removing that leaves `Clinton St, Portland OR`, which reads alpha
+	// and turns a full street address into a locality query.
 	// An admin tail carries its postcode in its last segment, which is the property that separates the two.
 	//
 	// A shape stating no segment spans gets no removal, which is the reading these rules had before #2342.
@@ -250,9 +260,10 @@ function mergedPostcodeSpans(shape: QueryShapeLike): Array<{ start: number; end:
 }
 
 /**
- * `landmark` rule (venue/named-place variant): short capitalized input with no street suffixes,
- * no postcode hits, and no region abbreviations. Captures "Pier 39", "Empire State
- * Building", "Wrigley Field", "Grand Central Terminal".
+ * `landmark` rule (venue/named-place variant): short capitalized input with no street
+ * suffixes, no postcode hits, and no region abbreviations.
+ *
+ * Captures "Pier 39", "Empire State Building", "Wrigley Field", "Grand Central Terminal".
  *
  * Fires at moderate confidence (0.65) — below structured_address (0.9) so addresses always win,
  * but above vague (0.3) so the pipeline can route landmark queries to the venue resolver.
@@ -358,8 +369,8 @@ export function scoreLocalityOnly(input: NormalizedInputLite, shape: QueryShapeL
 		return 0
 	}
 
-	// A postcode this rule cannot place in the last segment is a format hit
-	// like any other, so it rejects — the reading this rule had before #2342.
+	// A postcode this rule cannot place in the last segment is a format hit like any other,
+	// so it rejects — the reading this rule had before #2342.
 	// Treating it as absent instead would admit an input whose postcode sits wherever the
 	// detector found it, which is what the last-segment restriction exists to refuse.
 	const removable = carriesPostcode ? mergedPostcodeSpans(shape) : []
@@ -373,20 +384,21 @@ export function scoreLocalityOnly(input: NormalizedInputLite, shape: QueryShapeL
 
 	if (!carriesLetter(withoutPostcode)) return 0
 
-	// The remainder must fold to `alpha`. Two readings answer that without re-tokenizing,
-	// and this rule runs on every classify, so it reaches the fold only when neither shortcut applies:
+	// The remainder must fold to `alpha`.
+	// Two readings answer that without re-tokenizing, and this rule runs on every classify,
+	// so it reaches the fold only when neither shortcut applies:
 	//
 	// - An input the shape already calls `alpha` stays alpha once characters are removed from it.
 	// - An input carrying no postcode has an empty remainder-to-input difference,
 	//   so the shape's own class is the answer, which is what this rule read before #2342.
 	//
-	// Otherwise the fold runs on the remainder through the same function
-	// `computeQueryShape` uses, which is what keeps the two readings from drifting apart.
-	// A house number leaves digits in the remainder, so this test also rejects every street-led
-	// input: the remainder of `153 Holloway Rd, London N7 8LX` is `153 Holloway Rd London`,
-	// which folds to alphanumeric. A separate leading-digit test would be unreachable here,
-	// and applied to the raw input it would reject `26292 Thomas, WV`, whose leading
-	// digits are the postcode rather than a house number.
+	// Otherwise the fold runs on the remainder through the same function `computeQueryShape`
+	// uses, which is what keeps the two readings from drifting apart.
+	// A house number leaves digits in the remainder, so this test also rejects
+	// every street-led input: the remainder of `153 Holloway Rd, London N7 8LX` is
+	// `153 Holloway Rd London`, which folds to alphanumeric.
+	// A separate leading-digit test would be unreachable here, and applied to the raw input it would
+	// reject `26292 Thomas, WV`, whose leading digits are the postcode rather than a house number.
 	if (shape.characterClass !== "alpha") {
 		if (!carriesPostcode) return 0
 
@@ -404,6 +416,7 @@ export function scoreLocalityOnly(input: NormalizedInputLite, shape: QueryShapeL
 
 /**
  * `structured_address` rule: looks like a real multi-component address.
+ *
  * Either has multiple segments or is long and mixed-class.
  */
 export function scoreStructuredAddress(input: NormalizedInputLite, shape: QueryShapeLike): number {
@@ -414,12 +427,13 @@ export function scoreStructuredAddress(input: NormalizedInputLite, shape: QueryS
 
 	// Multi-segment input with mixed character class = high confidence structured.
 	//
-	// The branch additionally requires digits that survive removing the postcode — a house number,
-	// a unit, a numbered street. A postcode alone is not evidence of street material, so an
-	// admin tail must not reach 0.9 on the strength of it: without that test the branch returns
-	// 0.9 for `Thomas, WV 26292`, which outranks `locality_only`'s 0.85 and leaves the change
-	// in `scoreLocalityOnly` with no effect (#2342). The remainder is built only here,
-	// because the other branches never consult it and this rule runs on every classify.
+	// The branch additionally requires digits that survive removing the postcode —
+	// a house number, a unit, a numbered street.
+	// A postcode alone is not evidence of street material, so an admin tail must not reach 0.9 on the
+	// strength of it: without that test the branch returns 0.9 for `Thomas, WV 26292`, which outranks
+	// `locality_only`'s 0.85 and leaves the change in `scoreLocalityOnly` with no effect (#2342).
+	// The remainder is built only here, because the other branches never consult it
+	// and this rule runs on every classify.
 	if (
 		segCount >= 2 &&
 		shape.characterClass === "alphanumeric" &&
@@ -443,8 +457,8 @@ export function scoreStructuredAddress(input: NormalizedInputLite, shape: QueryS
 /**
  * `vague` rule: nothing else fired with high confidence — input is ambiguous.
  *
- * Returns a moderate baseline so `vague` always shows up as an alternative, even when other
- * rules dominate. The coordinator decides whether to trust vague as the primary kind.
+ * Returns a moderate baseline so `vague` always shows up as an alternative, even when other rules dominate.
+ * The coordinator decides whether to trust vague as the primary kind.
  */
 export function scoreVague(_input: NormalizedInputLite, _shape: QueryShapeLike): number {
 	return 0.3

@@ -25,18 +25,22 @@ import { join } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
- * One lieu-dit pair in the pair-index entry shape. Raw surfaces — the caller applies the
- * same `normalizeFSTToken` fold as every other source, keeping one normalization owner.
+ * One lieu-dit pair in the pair-index entry shape.
+ *
+ * Raw surfaces — the caller applies the same `normalizeFSTToken` fold as every
+ * other source, keeping one normalization owner.
  */
 export interface LieuDitPair {
 	child: string
 	parent: string
 	tag: "dependent_locality"
 	/**
-	 * Always `locality` (PIX2 / schema 3). The parent surface is BAN's `nom_commune`
-	 * (`record.city` below) — the commune, which is the French postal locality line and the slot
-	 * every FR address writes after the postcode. There is no per-row variation to read here:
-	 * BAN carries exactly one commune column and every row's parent comes from it.
+	 * Always `locality` (PIX2 / schema 3).
+	 *
+	 * The parent surface is BAN's `nom_commune` (`record.city` below) — the commune, which is
+	 * the French postal locality line and the slot every FR address writes after the postcode.
+	 * There is no per-row variation to read here: BAN carries exactly one commune column
+	 * and every row's parent comes from it.
 	 */
 	parentTag: "locality"
 }

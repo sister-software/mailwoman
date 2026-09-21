@@ -23,16 +23,17 @@ import type { GeocodeResult } from "#geocode/result"
 
 /**
  * The map pane's initial zoom for a freshly-geocoded result, before any interactive pan/zoom.
+ *
  * Tight for a house-grade fix. progressively wider for whatever admin tier the resolve actually reached,
  * so an admin-only fallback doesn't open on a single-building zoom over a whole region or country.
  */
 export function initialZoomForTier(result: GeocodeResult): number {
 	if (result.resolution_tier === "address_point" || result.resolution_tier === "interpolated") return 15
 
-	// `hierarchy` is ordered most specific first (`GeocodeResult.hierarchy`: "locality → country"), so the
-	// head is the finest place the resolver decorated. Reading `.at(-1)` took the country
-	// instead and opened every admin-tier answer at the whole-country zoom 4: a bare "Portland,
-	// Oregon" resolved its locality and then showed North America.
+	// `hierarchy` is ordered most specific first (`GeocodeResult.hierarchy`: "locality → country"),
+	// so the head is the finest place the resolver decorated.
+	// Reading `.at(-1)` took the country instead and opened every admin-tier answer at the whole-country
+	// zoom 4: a bare "Portland, Oregon" resolved its locality and then showed North America.
 	const leaf = result.hierarchy.at(0)?.tag
 
 	if (leaf === "locality" || leaf === "dependent_locality") return 11
@@ -49,6 +50,7 @@ export function initialZoomForTier(result: GeocodeResult): number {
 /**
  * `--debug` is its own rendered surface (a captured Ink frame) — combining it with a `--format`
  * shorthand, or with an explicit non-default `--format` value, has no defensible reading.
+ *
  * Thrown with {@link CommandError} so it reports through the standard error state
  * (exit code 1) on the static path. the interactive session runs the same guard as the
  * first statement of its mount effect, before it takes the alternate screen, matching
@@ -73,13 +75,14 @@ export function assertDebugFormatSanity(options: GeocodeCommandOptions): void {
 
 /**
  * The smallest frame `mapPaneCellSize` can turn into a map-tui viewport that actually renders.
+ *
  * Below it, `mapPaneCellSize`'s row math goes non-positive before `MapRenderer` ever runs:
  * measured 2026-08-13, `100x5` (`mapPaneCellSize` rows -3) crashes with a raw
  * `RangeError: Invalid typed array length: -4608` from `new RGBAGrid` deep inside map-tui,
  * and a size whose map-pane row budget lands at 0 renders with the panes overlapping garbled.
  *
- * The row floor is `DebugFrame`'s fixed chrome plus the 6 map rows that were the
- * smallest legible pane: input area 9 + footer 1 + MapPane's own 4 = 14, so 20.
+ * The row floor is `DebugFrame`'s fixed chrome plus the 6 map rows that were the smallest
+ * legible pane: input area 9 + footer 1 + MapPane's own 4 = 14, so 20.
  * (It was 14 while the input area was 4 rows and there was no footer — the evidence rows
  * and the key hints moved the floor rather than a change of mind about how small a map may be.)
  */
@@ -88,6 +91,7 @@ const MIN_DEBUG_ROWS = 20
 
 /**
  * A COLSxROWS pair's floor violation as reportable text, or null when it clears the floor.
+ *
  * One function decides the verdict and names the minimum, so the two surfaces that report
  * it can never disagree about where the floor sits: the static path prefixes `--debug-size`
  * and rejects, while the interactive session prefixes `terminal` and degrades the map pane

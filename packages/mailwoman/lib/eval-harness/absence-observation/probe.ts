@@ -49,7 +49,9 @@ export const ABSENCE_EXPECTED_OUTCOMES = ["absence_observation", ...ABSENCE_REFU
 export type AbsenceExpectedOutcome = (typeof ABSENCE_EXPECTED_OUTCOMES)[number]
 
 /**
- * The row groups. `target` rows expect the observation. the three control groups expect a named silence.
+ * The row groups.
+ *
+ * `target` rows expect the observation. the three control groups expect a named silence.
  */
 export const ABSENCE_ROW_GROUPS = ["target", "outside_coverage", "wrong_class", "cell_populated"] as const
 
@@ -66,6 +68,7 @@ export interface AbsenceProbeRow {
 	expectedOutcome: AbsenceExpectedOutcome
 	/**
 	 * Whether this row needs the semantic phrase route injected to reach a category at all.
+	 *
 	 * An activity-phrased row without it never forms a POI intent, which would read as
 	 * the absence route staying silent when in fact the query never reached it.
 	 */
@@ -80,6 +83,7 @@ export interface AbsenceProbeRow {
 	searchedCategories?: string[]
 	/**
 	 * How the anchor was derived — the cell first, the place second.
+	 *
 	 * Stated per row so a reader can re-derive it.
 	 */
 	anchorDerivation: string
@@ -108,6 +112,7 @@ export interface AbsenceProbeDefinition {
 	rowsNote: string
 	/**
 	 * How many registered rows must hit their registered outcome.
+	 *
 	 * Equal to the row count: this probe asserts a conjunction, and a conjunction with a tolerance is not one.
 	 */
 	requiredRowHolds: number
@@ -145,6 +150,7 @@ export function absenceProbeDefinitionHash(definition: AbsenceProbeDefinition): 
 
 /**
  * Everything that must be true of a definition, checked without running anything.
+ *
  * One message per problem, each naming the field or row id.
  * Empty means the definition is executable.
  */
@@ -255,12 +261,14 @@ export interface AbsenceRowOutcome {
 	searchedCategories?: string[]
 	/**
 	 * Named when the row registers a searched set and the observed one differs.
+	 *
 	 * The outcome may still match — a route that fired over a set nobody registered
 	 * is exactly the breach this field exists to name.
 	 */
 	searchedSetBreach?: string
 	/**
 	 * The observation the row produced, when it produced one.
+	 *
 	 * Absent — the key omitted — on a silent row.
 	 */
 	observationLine?: string
@@ -309,9 +317,10 @@ export function computeAbsenceCounts(
 }
 
 /**
- * The two decisions this probe admits. There is no middle: the asymmetry either
- * holds over every registered row or it does not, and a partial asymmetry is a
- * route that fires somewhere nobody registered.
+ * The two decisions this probe admits.
+ *
+ * There is no middle: the asymmetry either holds over every registered row or it does not,
+ * and a partial asymmetry is a route that fires somewhere nobody registered.
  */
 export const ABSENCE_DECISIONS = ["HOLDS", "BREACHED"] as const
 

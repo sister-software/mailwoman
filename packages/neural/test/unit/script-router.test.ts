@@ -81,6 +81,7 @@ describe("scriptFamilyForText", () => {
 describe("routeFamilyWithLeadingRun", () => {
 	/**
 	 * The four CN board rows the shipped router leaves on the Latin graph.
+	 *
 	 * Each writes its Han unit and its Latin province in one whitespace-separated run,
 	 * so no comma segment is wholly Han and `carriesFamilySegment` abstains.
 	 */
@@ -93,6 +94,7 @@ describe("routeFamilyWithLeadingRun", () => {
 
 	/**
 	 * The four board rows that pass today with Han or Hangul inside a Latin line.
+	 *
 	 * A reading that moves one of these changes the graph serving a checking row,
 	 * and two of them are GB, which `scope.config.json` names in `dRuleProtected`.
 	 */
@@ -113,9 +115,9 @@ describe("routeFamilyWithLeadingRun", () => {
 	})
 
 	it("keeps the shipped router's answer wherever that router names a family", () => {
-		// Tried last and only on an abstention, which is what makes the difference between
-		// the two arms exactly the rows the reading adds. A reading that could also
-		// change an existing answer would need its own comparison.
+		// Tried last and only on an abstention, which is what makes the difference
+		// between the two arms exactly the rows the reading adds.
+		// A reading that could also change an existing answer would need its own comparison.
 		for (const input of ["富山県中新川郡上市町大岩148-7", "逊克二分场四队, HEILONGJIANG, CHINA", "新加坡"]) {
 			expect(routeFamilyWithLeadingRun(input).family).toBe(scriptFamilyForText(input))
 		}

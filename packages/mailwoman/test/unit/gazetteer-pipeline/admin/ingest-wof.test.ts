@@ -40,7 +40,8 @@ function feature(id: number, props: Record<string, unknown>): string {
 
 await makeDirectories(DATA_DIR)
 
-// France-shaped: both centroids present, 600 km apart. The ingest must store lbl:, whole.
+// France-shaped: both centroids present, 600 km apart.
+// The ingest must store lbl:, whole.
 await writeLocalFile(
 	feature(1, {
 		"geom:latitude": 42.191716,

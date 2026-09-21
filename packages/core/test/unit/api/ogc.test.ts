@@ -13,6 +13,7 @@ import { describe, expect, it } from "vitest"
 
 /**
  * The one method {@linkcode readWFSFeatureCount} reaches.
+ *
  * `fetch` resolves a full axios response. only `data` is read, so the stub states that field
  * and asserts the shape once rather than hand-building headers and a config.
  */

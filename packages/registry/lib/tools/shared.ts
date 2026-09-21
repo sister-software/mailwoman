@@ -42,8 +42,9 @@ export interface SourceSpec {
 	 */
 	inState: (row: Record<string, string>) => boolean
 	/**
-	 * Optional: a row carries ≥1 addressable entity — yield each as its
-	 * own row. Default identity.
+	 * Optional: a row carries ≥1 addressable entity — yield each as its own row.
+	 *
+	 * Default identity.
 	 */
 	explode?: (row: Record<string, string>) => Record<string, string>[]
 }
@@ -143,11 +144,12 @@ export const inTXBBOX = (lat: number, lon: number): boolean =>
 /**
  * NPPES registry column headers, by the short name the probes read them under.
  *
- * The NPI registry export is a ~330-column TSV with headers this long, so every
- * probe that touches it needs this map, and five of them had grown their own copy.
+ * The NPI registry export is a ~330-column TSV with headers this long, so every probe
+ * that touches it needs this map, and five of them had grown their own copy.
  * The copies were a nested superset chain rather than a disagreement -- each new
  * probe took the previous one's map and appended what it additionally read --
  * so this is the widest of the five, and no consumer loses a column.
+ *
  * Reading extra keys costs nothing: they are inert strings, and nothing enumerates this
  * object (checked: no `Object.keys`/`values`/`entries`/spread over it anywhere in `tools/`),
  * so adding a column can never change a probe's behavior.
@@ -184,12 +186,14 @@ export const MIN_GROUP_SIZE = 5
 
 /**
  * Gradient-descent epochs for {@link trainLogisticRegression}.
+ *
  * Fixed rather than early-stopped so seeds stay comparable.
  */
 export const TRAINING_EPOCHS = 400
 
 /**
  * Smallest mean F1 gap counted as a real difference between models rather than seed noise.
+ *
  * Verdicts inside ±this are reported as a tie.
  */
 export const MIN_MEANINGFUL_F1_DELTA = 0.02
@@ -205,10 +209,12 @@ export const LR_LEARNING_RATE = 0.1
 export const LR_L2 = 1e-3
 
 /**
- * L2-regularized logistic regression by batch gradient descent ({@link TRAINING_EPOCHS} epochs) —
- * the probes' linear arm. `w` carries the per-sample class weights
- * (the caller up-weights the rare class). Returns the linear scorer: the logit
- * rather than the probability, threshold-comparable across a fixed feature layout.
+ * L2-regularized logistic regression by batch gradient descent
+ * ({@link TRAINING_EPOCHS} epochs) — the probes' linear arm.
+ *
+ * `w` carries the per-sample class weights (the caller up-weights the rare class).
+ * Returns the linear scorer: the logit rather than the probability,
+ * threshold-comparable across a fixed feature layout.
  */
 export function trainLogisticRegression(
 	X: readonly (readonly number[])[],
@@ -259,8 +265,10 @@ export function trainLogisticRegression(
 
 /**
  * `n + 1` evenly-spaced order statistics of an already-sorted sample, de-duplicated —
- * the candidate split thresholds a GBT node considers. `[0]` for an empty sample so a degenerate
- * feature still yields one (useless but well-formed) threshold rather than an empty split set.
+ * the candidate split thresholds a GBT node considers.
+ *
+ * `[0]` for an empty sample so a degenerate feature still yields one
+ * (useless but well-formed) threshold rather than an empty split set.
  */
 export function uniqueQuantiles(sorted: readonly number[], n: number): number[] {
 	if (!sorted.length) return [0]
@@ -375,8 +383,9 @@ export interface ColocatedScan {
 }
 
 /**
- * Stream in-state type-2 (organization) providers from the registry —
- * one record per row at its practice address, grouped by `addressFrequencyKey`.
+ * Stream in-state type-2 (organization) providers from the registry — one record per
+ * row at its practice address, grouped by `addressFrequencyKey`.
+ *
  * Geocode-free on purpose, so it runs at large caps in seconds.
  */
 export async function scanColocatedProviders(options: {
@@ -439,6 +448,7 @@ export interface ColocatedPair {
 	b: ColocatedProvider
 	/**
 	 * The distinct-NPI providers at the shared address, length ≥ 2.
+	 *
 	 * One array reference per group, so a consumer tracking group-level tallies
 	 * can detect the group boundary by identity.
 	 */
@@ -447,6 +457,7 @@ export interface ColocatedPair {
 
 /**
  * Every unordered pair of distinct NPIs sharing a practice-address key — the over-merge population.
+ *
  * Providers are de-duplicated per address by NPI (first record wins); single-NPI addresses yield nothing.
  */
 export function* colocatedDistinctPairs(
@@ -474,6 +485,7 @@ export function* colocatedDistinctPairs(
 
 /**
  * The TX facility source specs the cross-source probes share.
+ *
  * `cross-dataset-correlation` composes these with its own commitments spec
  * (the exploded two-entity-per-row source).
  */
@@ -541,8 +553,9 @@ const CROSS_SOURCE_HYPERPARAMS: GBTHyperparameters = { rounds: 120, depth: 3, lr
 const FIT_SPLIT_FRACTION = 0.8
 
 /**
- * One assembled input row for a cross-source trainer. `npi` carries the cross-system
- * join key (an NPI or a CCN) — it rides `record.id` as the held-out label.
+ * One assembled input row for a cross-source trainer.
+ *
+ * `npi` carries the cross-system join key (an NPI or a CCN) — it rides `record.id` as the held-out label.
  */
 export interface CrossSourceRow extends Record<string, string> {
 	npi: string
@@ -604,8 +617,9 @@ export interface TrainCrossSourceModelOptions {
 	 */
 	exportPrefix: string
 	/**
-	 * Assemble the emitted `<prefix>_META` object. The caller owns field names and order
-	 * so a retrain diffs cleanly against its committed module.
+	 * Assemble the emitted `<prefix>_META` object.
+	 *
+	 * The caller owns field names and order so a retrain diffs cleanly against its committed module.
 	 */
 	meta: (figures: CrossSourceTrainingFigures) => Record<string, unknown>
 	report?: (line: string) => void

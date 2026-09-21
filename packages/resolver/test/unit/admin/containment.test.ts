@@ -50,8 +50,9 @@ interface StampSpec {
 }
 
 /**
- * A backend whose locality candidates carry containment stamps only
- * when the query asked (`regionQualifier` present) — the capable-backend interface.
+ * A backend whose locality candidates carry containment stamps only when the query
+ * asked (`regionQualifier` present) — the capable-backend interface.
+ *
  * Region lookups miss (the fixture region resolves nothing, like Thüringen under a US scope).
  */
 async function makeBackend(
@@ -185,9 +186,9 @@ describe("the walk's deciding site (#1729 reach interface)", () => {
 
 	it("the contained candidate wins even when fame disagrees — the partition outranks rankByImportance", async () => {
 		// The uncontained namesake is more important (Richmond VA vs Richmond, North Yorkshire):
-		// fame alone re-orders it to the front, so a setting that only trusted
-		// the backend's incoming order would lose here. This is the reach proof:
-		// the walk's own partition must run after the fame key.
+		// fame alone re-orders it to the front, so a setting that only trusted the
+		// backend's incoming order would lose here.
+		// This is the reach proof: the walk's own partition must run after the fame key.
 		const { locality } = await resolveWith(
 			[
 				{ id: 1, country: "US", importance: 0.9, contained: false },

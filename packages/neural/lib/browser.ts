@@ -28,5 +28,6 @@ export * from "#postcode/binary-resolver"
 export * from "#soft-features"
 export * from "#tokenizer"
 // `./placetype-pair-prior.ts` is reached only through the classifier's decode,
-// so callers need the option shape and not the module. A `type` re-export is fully erased.
+// so callers need the option shape and not the module.
+// A `type` re-export is fully erased.
 export type { PlacetypePairPriorOpts, PlacetypePairPriorResult } from "#placetype/pair-prior"

@@ -178,9 +178,9 @@ describe("streamRows (lazy delimited ingest)", () => {
 	})
 
 	it("preserves empty fields — consecutive delimiters do not collapse (NPPES-style alignment)", async () => {
-		// The regression spliterator 3.1.0's column tokenizer failed: a row with
-		// consecutive empties must keep every column, or every value after the
-		// empty run shifts left (a 330-col NPPES row collapses to ~40 + misaligns).
+		// The regression spliterator 3.1.0's column tokenizer failed: a row with consecutive
+		// empties must keep every column, or every value after the empty run shifts left
+		// (a 330-col NPPES row collapses to ~40 + misaligns).
 		// Fixed upstream in 3.2.0. pinned here because it's fatal if it regresses.
 		const file = join(await tmp(), "f.tsv")
 		await writeLocalTextFile("npi\torg\tlast\tfirst\tstate\n123\t\t\t\tNE\n", file)

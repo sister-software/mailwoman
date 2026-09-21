@@ -58,6 +58,7 @@ const PIN_PATTERNS: Record<keyof BoardPins, RegExp> = {
 
 /**
  * Read the committed constants out of the pin test's source.
+ *
  * Throws when a constant is missing or duplicated — a reshaped test file needs a human rather than a guess.
  */
 export function readCommittedPins(testText: string): BoardPins {
@@ -79,9 +80,11 @@ export function readCommittedPins(testText: string): BoardPins {
 }
 
 /**
- * Rewrite exactly the three constant lines to `pins`, leaving every other byte — the dated history
- * comments above each constant included — untouched. Validates via {@link readCommittedPins}
- * first, so a reshaped file refuses instead of being partially rewritten.
+ * Rewrite exactly the three constant lines to `pins`, leaving every other byte —
+ * the dated history comments above each constant included — untouched.
+ *
+ * Validates via {@link readCommittedPins} first, so a reshaped file refuses
+ * instead of being partially rewritten.
  */
 export function writeCommittedPins(testText: string, pins: BoardPins): string {
 	readCommittedPins(testText)
@@ -96,8 +99,9 @@ export interface PinCheck {
 	measured: BoardPins
 	committed: BoardPins
 	/**
-	 * The pin names whose measured and committed values
-	 * differ. Empty = the pins hold.
+	 * The pin names whose measured and committed values differ.
+	 *
+	 * Empty = the pins hold.
 	 */
 	stale: Array<keyof BoardPins>
 }
@@ -116,6 +120,7 @@ export async function checkBoardPins(): Promise<PinCheck> {
 
 /**
  * Rewrite the committed constants to the measured values, then re-check.
+ *
  * Returns the verifying check, whose `stale` must be empty — a non-empty result
  * after an update means the file reshaped under us.
  */

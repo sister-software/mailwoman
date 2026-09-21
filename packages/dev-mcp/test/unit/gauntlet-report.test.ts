@@ -58,7 +58,8 @@ describe("parseGauntletReport", () => {
 	})
 
 	it("does not count a tracked non-blocking row as a counted failure", () => {
-		// The `~` rows are non-blocking. Folding them in would inflate the failure count that a verdict rests on.
+		// The `~` rows are non-blocking.
+		// Folding them in would inflate the failure count that a verdict rests on.
 		expect(parseGauntletReport(STDOUT, STDERR).counted_failures.every((f) => !f.includes("andorra"))).toBe(true)
 	})
 

@@ -78,7 +78,9 @@ export function nomenclatureMetadata(body: BuildableBodyID, buildVersion: string
 }
 
 /**
- * The block for a body's hillshade archive. `sourceProduct` names the DEM the shading came from.
+ * The block for a body's hillshade archive.
+ *
+ * `sourceProduct` names the DEM the shading came from.
  */
 export function hillshadeMetadata(body: BuildableBodyID, buildVersion: string, sourceProduct: string): PMTilesMetadata {
 	return {

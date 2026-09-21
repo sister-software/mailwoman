@@ -35,8 +35,9 @@ export interface UseGeocodeOptions {
 	 */
 	defaultText: string
 	/**
-	 * Read the current viewport bias (the map center) at
-	 * submit time. Absent → no bias.
+	 * Read the current viewport bias (the map center) at submit time.
+	 *
+	 * Absent → no bias.
 	 */
 	getBias?: () => MapBias | null
 }

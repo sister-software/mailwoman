@@ -59,8 +59,9 @@ export const diffParseTool = (deps: DevToolDeps): DevTool => ({
 			...(weightsCache ? { weights_cache: weightsCache } : {}),
 		})
 
-		// participation guard. `EngineConfig` is a plain object, so a mistyped key is dropped
-		// in silence and both arms run the same weights — the tool then reports "0 differ",
+		// participation guard.
+		// `EngineConfig` is a plain object, so a mistyped key is dropped in silence
+		// and both arms run the same weights — the tool then reports "0 differ",
 		// which reads as "the candidate is identical" and is really "the change never ran".
 		// That happened on this tool's first live call (`weightsCacheRoot` for `weights_cache`),
 		// so the engine is asked what it actually loaded rather than trusted to have taken the key.
@@ -96,9 +97,9 @@ export const diffParseTool = (deps: DevToolDeps): DevTool => ({
 		const shown = changesOnly ? diffs.filter((d) => !d.identical) : diffs
 		const rendered = shown.slice(0, RENDERED_LIMIT).map((d) => renderParseDiff(d))
 
-		// Which event dominates is the diagnosis. A run whose changes are mostly `retagged`
-		// is mislabelling. one whose changes are mostly `moved` has a boundary problem.
-		// one that is mostly `confidence` has not decided anything yet.
+		// Which event dominates is the diagnosis.
+		// A run whose changes are mostly `retagged` is mislabelling. one whose changes are mostly
+		// `moved` has a boundary problem. one that is mostly `confidence` has not decided anything yet.
 		const events: Record<string, number> = {}
 
 		for (const d of shown) {

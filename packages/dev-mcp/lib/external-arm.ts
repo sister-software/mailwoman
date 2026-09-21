@@ -34,8 +34,10 @@ import { isRecordLike } from "@mailwoman/core/objects"
 import { type GeoFeatureCollection, isPointLiteral, isValidLatitude, isValidLongitude } from "@mailwoman/spatial"
 
 /**
- * The engines this arm can speak to. Each is a drop-in target mailwoman already ships a
- * compatible server for, which is exactly why the identity probe below exists.
+ * The engines this arm can speak to.
+ *
+ * Each is a drop-in target mailwoman already ships a compatible server for,
+ * which is exactly why the identity probe below exists.
  */
 export const ExternalEngine = {
 	Pelias: "pelias",
@@ -80,51 +82,61 @@ export const EXTERNAL_ARM_MIN_REQUEST_INTERVAL_MS = 50
 const MAX_ATTEMPTS = 3
 
 /**
- * Base delay for the retry backoff, in milliseconds. Attempt n waits `BASE_RETRY_DELAY_MS * 2^(n-1)`
- * unless the response carried a `Retry-After`, which wins.
+ * Base delay for the retry backoff, in milliseconds.
+ *
+ * Attempt n waits `BASE_RETRY_DELAY_MS * 2^(n-1)` unless the response carried a `Retry-After`, which wins.
  */
 const BASE_RETRY_DELAY_MS = 250
 
 /**
  * Per-attempt socket-inactivity timeout for one geocode query, in milliseconds.
+ *
  * Matches the rig scorer's 20 s, which is generous for a loopback service
  * and is really a bound on "the process is up but wedged".
  */
 const REQUEST_TIMEOUT_MS = 20_000
 
 /**
- * The query the identity probe sends. Never scored, and never mixed with the input set —
- * its only job is to make the search path answer once so the response envelope can
- * be read for a version. A short, unambiguous, universally-indexed place name,
- * so an endpoint holding any data at all responds to it.
+ * The query the identity probe sends.
+ *
+ * Never scored, and never mixed with the input set — its only job is to make the search
+ * path answer once so the response envelope can be read for a version.
+ * A short, unambiguous, universally-indexed place name, so an endpoint holding
+ * any data at all responds to it.
  */
 const IDENTITY_PROBE_QUERY = "Paris"
 
 /**
- * How many results to ask for. One, always: the protocol scores top-1, and asking
- * for more invites a later reader to quietly pick a better one.
+ * How many results to ask for.
+ *
+ * One, always: the protocol scores top-1, and asking for more invites a later
+ * reader to quietly pick a better one.
  */
 const TOP_N = 1
 
 /**
  * What one arm answered for one input.
  *
- * `noResultReason` is the whole point of the shape. A geocoder that returns an empty array
- * has said something specific — it does not hold this address — and that is not the same
- * fact as a query that failed, nor a score of zero. Both still count as a miss at every
- * threshold under the pre-registered protocol, but the result reports which happened.
+ * `noResultReason` is the whole point of the shape.
+ * A geocoder that returns an empty array has said something specific — it does not hold
+ * this address — and that is not the same fact as a query that failed, nor a score of zero.
+ *
+ * Both still count as a miss at every threshold under the pre-registered protocol,
+ * but the result reports which happened.
  */
 export interface ExternalAnswer {
 	lat: number | null
 	lon: number | null
 	/**
 	 * The engine's own label for what it matched, verbatim.
+	 *
 	 * Not compared across engines — it is here so a human reading a changed row can see
 	 * that one arm answered with a country and the other with a rooftop.
 	 */
 	label: string | null
 	/**
 	 * The answer's place-identity chain (mailwoman arms only — the resolved hierarchy's placeIDs, finest first).
+	 *
 	 * A coordinate diff is blind to a wrong-instance win under a nearly-right coordinate
 	 * (the Astoria class: the correct Queens point under the Oregon placeID), and the
 	 * 2026-08-18 band-injection battery needed a hand-written probe for exactly this.
@@ -134,6 +146,7 @@ export interface ExternalAnswer {
 	place_ids?: string[]
 	/**
 	 * The engine's own type/layer for the top result (Pelias `layer`, Photon `type`, Nominatim `addresstype`).
+	 *
 	 * Reported, never thresholded: these vocabularies are not the same vocabulary.
 	 */
 	resultType: string | null
@@ -154,6 +167,7 @@ export interface ExternalArmIdentity {
 	version: string | null
 	/**
 	 * Where {@link ExternalArmIdentity.version} came from.
+	 *
 	 * `caller-declared` means the endpoint would not confirm it and the caller asserted it —
 	 * a claim on the record rather than an observation.
 	 */
@@ -164,6 +178,7 @@ export interface ExternalArmIdentity {
 	response_version: string | null
 	/**
 	 * Which path answered the reachability probe, and what the search path said.
+	 *
 	 * Present so a failure to identify the arm can be read rather than guessed at.
 	 */
 	probe: { status_path: string | null; status_http: number | null; search_ok: boolean }
@@ -171,8 +186,10 @@ export interface ExternalArmIdentity {
 }
 
 /**
- * Per-engine wire protocol. One record per engine rather than a switch at each call site,
- * so adding an engine is a table entry and cannot half-land.
+ * Per-engine wire protocol.
+ *
+ * One record per engine rather than a switch at each call site, so adding an
+ * engine is a table entry and cannot half-land.
  */
 interface EngineProtocol {
 	/**
@@ -225,11 +242,13 @@ function readCoordinate(value: unknown, isValid: (candidate: number) => boolean)
  * Top-1 out of a GeoJSON FeatureCollection — the shape Pelias and Photon share.
  *
  * Typed and validated through `@mailwoman/spatial` (`GeoFeatureCollection`, `isPointLiteral`)
- * rather than through either drop-in's own schema. `@mailwoman/photon` and `@mailwoman/nominatim`
- * do define the response shapes, and reusing one here would have been the obvious economy —
- * but this client exists to measure an upstream engine, and parsing its answer through our
- * reimplementation's idea of the format would make it blind to exactly the divergences the
- * comparison is for. RFC 7946 is shared ground. a drop-in's schema is a claim under test.
+ * rather than through either drop-in's own schema.
+ * `@mailwoman/photon` and `@mailwoman/nominatim` do define the response shapes,
+ * and reusing one here would have been the obvious economy — but this client exists to
+ * measure an upstream engine, and parsing its answer through our reimplementation's idea
+ * of the format would make it blind to exactly the divergences the comparison is for.
+ *
+ * RFC 7946 is shared ground. a drop-in's schema is a claim under test.
  *
  * A feature whose geometry is not a point is a no-result with a reason rather than a skip to
  * the second feature: the protocol scores position one, and an engine that answered with an
@@ -255,9 +274,9 @@ function readGeoJSONTop(body: unknown, typeKey: string): ExternalAnswer {
 		return { lat: null, lon: null, label, resultType, noResultReason: "the top feature carried no point geometry" }
 	}
 
-	// GeoJSON orders a position [lon, lat]. Reading it the other way round is
-	// the classic silent failure: it lands every result in the wrong hemisphere
-	// and still produces a plausible distance for anything near the equator.
+	// GeoJSON orders a position [lon, lat].
+	// Reading it the other way round is the classic silent failure: it lands every result in the
+	// wrong hemisphere and still produces a plausible distance for anything near the equator.
 	const [lon, lat] = feature.geometry.coordinates
 
 	if (!isValidLatitude(lat) || !isValidLongitude(lon)) {
@@ -372,10 +391,10 @@ export function assertScorableEndpoint(endpoint: string): string {
 /**
  * One external geocoder, paced and bounded-retried, answering the pre-registered protocol and nothing else.
  *
- * Response caching is deliberately off. Every other client in this repo caches
- * because it is re-reading a slow remote index. here the endpoint's answer is the
- * measurement, and a cached one would be scored against an identity probe taken now —
- * reporting a vintage the number did not come from.
+ * Response caching is deliberately off.
+ * Every other client in this repo caches because it is re-reading a slow remote index.
+ * here the endpoint's answer is the measurement, and a cached one would be scored against
+ * an identity probe taken now — reporting a vintage the number did not come from.
  */
 export class ExternalGeocoderClient extends APIClient {
 	readonly engine: ExternalEngine
@@ -390,8 +409,8 @@ export class ExternalGeocoderClient extends APIClient {
 			...overrides,
 			axios: {
 				timeout: REQUEST_TIMEOUT_MS,
-				// Nominatim's usage policy requires a caller to identify itself,
-				// and a local rig inherits the upstream default configuration that enforces it.
+				// Nominatim's usage policy requires a caller to identify itself, and a local
+				// rig inherits the upstream default configuration that enforces it.
 				// Sent to all three: no engine minds being told who is asking.
 				headers: { "User-Agent": "mailwoman-dev-mcp" },
 				...overrides.axios,
@@ -421,8 +440,10 @@ export class ExternalGeocoderClient extends APIClient {
 	 * Ask the endpoint what it is, without scoring anything.
 	 *
 	 * Two requests: the engine's own status path, then one throwaway search.
-	 * Both are needed. The status path is where Nominatim keeps its data vintage and upstream
-	 * Photon its import date. the search envelope is where Pelias keeps its version.
+	 * Both are needed.
+	 *
+	 * The status path is where Nominatim keeps its data vintage and upstream Photon its
+	 * import date. the search envelope is where Pelias keeps its version.
 	 * An endpoint that 404s the status path is not thereby broken — a compatible drop-in need not
 	 * implement it — but it is thereby unidentified, which the caller is told rather than left to assume.
 	 */
@@ -438,8 +459,8 @@ export class ExternalGeocoderClient extends APIClient {
 			statusHTTP = status.status
 			statusPath = this.#protocol.statusPath
 		} catch (error) {
-			// A status path that answers 404 is a fact about the implementation
-			// rather than about reachability, so the probe continues to the search path.
+			// A status path that answers 404 is a fact about the implementation rather than
+			// about reachability, so the probe continues to the search path.
 			// Only a transport-class failure means "not up", and the search attempt below is what settles that.
 			statusHTTP = readErrorStatus(error)
 		}
@@ -499,9 +520,9 @@ export class ExternalGeocoderClient extends APIClient {
 			version,
 			version_source: read.version === null ? "caller-declared" : "endpoint",
 			data_vintage: read.data_vintage,
-			// Neither is exposed by any of these APIs. Carried as explicit nulls
-			// because the benchmark plan's §7 names them as arm columns, and an absent
-			// key reads as unexamined rather than as unavailable.
+			// Neither is exposed by any of these APIs.
+			// Carried as explicit nulls because the benchmark plan's §7 names them as arm columns,
+			// and an absent key reads as unexamined rather than as unavailable.
 			system_scope: null,
 			interpolation_enabled: null,
 			response_version: read.response_version,

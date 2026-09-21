@@ -24,8 +24,9 @@ const DISCOVERED: readonly DiscoveredRepo[] = [
 describe("assertDestinationNotARepoName", () => {
 	it("refuses a repository name in the destination slot", () => {
 		// The trap that cost 65 GB: the name lands on the positional.
-		// It is the destination directory. Therefore, no `--repos` filter is applied
-		// and the whole org syncs into a directory named after one repo.
+		// It is the destination directory.
+		// Therefore, no `--repos` filter is applied and the whole org syncs into
+		// a directory named after one repo.
 		expect(() => assertDestinationNotARepoName("whosonfirst-data-admin-tr")).toThrow(/--repos/)
 	})
 

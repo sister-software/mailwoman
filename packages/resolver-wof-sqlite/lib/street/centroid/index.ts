@@ -37,6 +37,7 @@ import {
 
 /**
  * The weighted-centroid + extent + provenance an aggregate probe projects.
+ *
  * `lat` is null when nothing matched.
  */
 interface AggRow {
@@ -52,6 +53,7 @@ interface AggRow {
 
 /**
  * Weighted-centroid aggregate over a where-filtered set.
+ *
  * `SUM(coord*n)/SUM(n)` reconstructs the grand centroid.
  */
 const AGG_SELECT =
@@ -76,8 +78,8 @@ export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 	/**
 	 * @param dbPath Extract path.
 	 * @param opts.streetLocale The street-normalization locale this extract was
-	 *   built with — must match, or every key misses. Defaults to `"fr"`
-	 *   (BAN is the French national register. the tier is FR-only today).
+	 *   built with — must match, or every key misses.
+	 *   Defaults to `"fr"` (BAN is the French national register. the tier is FR-only today).
 	 */
 	constructor(dbPath: string, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#db = new DatabaseClient<StreetCentroidDatabase>(dbPath, { readOnly: true })

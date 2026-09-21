@@ -41,6 +41,7 @@ export interface FulfilDependencies {
 	email: EmailProvider
 	/**
 	 * The clock, in milliseconds; `Date.now` unless a test injects one.
+	 *
 	 * Read where a date decides a state.
 	 */
 	now?: () => number
@@ -53,8 +54,9 @@ export type FulfilOutcome =
 /**
  * The license row for a Checkout Session: created on first sight with a fresh lid and refresh secret,
  * read back after, and read back all the same when a concurrent caller's row landed first.
- * Mints no token; `invoice.paid` does. The refresh secret is stored by digest
- * and held in plaintext only until the first claim reads it.
+ *
+ * Mints no token; `invoice.paid` does.
+ * The refresh secret is stored by digest and held in plaintext only until the first claim reads it.
  */
 export async function ensureLicenseFromCheckoutSession(
 	env: LicenseWorkerEnv,
@@ -229,8 +231,10 @@ export async function fulfilInvoice(
 }
 
 /**
- * The answer for an invoice whose token exists. A crash between the insert and the send
- * leaves the email pending, and the retry that finds the token sends it.
+ * The answer for an invoice whose token exists.
+ *
+ * A crash between the insert and the send leaves the email pending,
+ * and the retry that finds the token sends it.
  */
 async function alreadyMinted(deps: FulfilDependencies, token: LicenseTokenRow): Promise<FulfilOutcome> {
 	if (token.email_state !== "sent") {
@@ -245,15 +249,18 @@ async function alreadyMinted(deps: FulfilDependencies, token: LicenseTokenRow): 
 }
 
 /**
- * What one send attempt came to. `failed` is the provider's refusal, recorded as such
- * so the reconciliation pass sends again. A failure to record either answer throws
- * instead: the row keeps its earlier state and the pass sends again, which after an
- * accepted send is the one window in which a licensee can receive the message twice.
+ * What one send attempt came to.
+ *
+ * `failed` is the provider's refusal, recorded as such so the reconciliation pass sends again.
+ * A failure to record either answer throws instead: the row keeps its earlier state
+ * and the pass sends again, which after an accepted send is the one window in
+ * which a licensee can receive the message twice.
  */
 export type SendOutcome = { state: "sent" } | { state: "failed"; reason: string }
 
 /**
  * Send a token to its licensee under the invoice id and record the outcome.
+ *
  * The refresh secret rides along while the plaintext is still pending, so a re-send
  * before the first claim includes what the first would have.
  */

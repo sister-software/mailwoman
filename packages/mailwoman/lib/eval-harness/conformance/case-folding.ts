@@ -49,9 +49,9 @@ export const CASE_FOLDING_LAW = "case-folding-invariance"
  * - `upper` — the shouting register: a pasted spreadsheet cell, a scanned form, a legacy mainframe export.
  * - `lower` — the mobile register, and the one the house treats as first-class rather than degraded.
  * - `mixed` — title case, the autocapitalize register: every token's first cased
- *   character capitalized, the rest folded down. Named `mixed` rather than `title`
- *   because what the law tests is a case pattern that is neither extreme, and title
- *   case is the reproducible member of that class a user actually produces.
+ *   character capitalized, the rest folded down.
+ *   Named `mixed` rather than `title` because what the law tests is a case pattern that is neither
+ *   extreme, and title case is the reproducible member of that class a user actually produces.
  */
 export const CASE_TRANSFORMATIONS = ["upper", "lower", "mixed"] as const
 
@@ -77,8 +77,9 @@ function titleCaseToken(token: string): string {
 }
 
 /**
- * The transformation each name applies. Pure, total, and the source the suite's
- * variants are re-derived from.
+ * The transformation each name applies.
+ *
+ * Pure, total, and the source the suite's variants are re-derived from.
  *
  * `mixed` splits on the whitespace runs themselves (the capturing split keeps them),
  * so the transformation cannot collapse or insert whitespace — which would take
@@ -99,8 +100,9 @@ export const CASE_TRANSFORMATION_BY_NAME: Record<CaseTransformationName, (text: 
  *
  * Upper-then-lower rather than a bare `toLowerCase`, because a bare fold leaves `ß` distinct from `SS`
  * and would then report `Friedrichstraße` / `friedrichstrasse` as differing by more than case.
- * Routing through uppercase first performs the expansion Unicode's full case folding
- * performs (`ß → ss`), and JavaScript's own final-sigma rule keeps `ΟΔΟΣ` / `οδος` matching.
+ * Routing through uppercase first performs the expansion Unicode's full case folding performs
+ * (`ß → ss`), and JavaScript's own final-sigma rule keeps `ΟΔΟΣ` / `οδος` matching.
+ *
  * There is no `String.prototype.caseFold`; this is the composition that stands in for it.
  */
 export function caseFoldKey(text: string): string {
@@ -135,9 +137,9 @@ export function classifyCaseTransformation(base: string, variant: string): CaseT
  *   pipeline does with casing, and its holding would be counted as evidence that casing is handled.
  * - `locale-sensitive-casing` — the row's locale maps the cases of a letter differently
  *   from the root locale, so a root-locale transformation changes which letter is written.
- *   Turkish and Azeri separate dotted `i`/`İ` from dotless `ı`/`I`, and Lithuanian retains
- *   the dot on a lowercase `i`/`j` under an accent. Unicode records all three in
- *   `SpecialCasing.txt` as the only locale-conditional casing rules.
+ *   Turkish and Azeri separate dotted `i`/`İ` from dotless `ı`/`I`, and Lithuanian
+ *   retains the dot on a lowercase `i`/`j` under an accent.
+ *   Unicode records all three in `SpecialCasing.txt` as the only locale-conditional casing rules.
  */
 export const CASE_APPLICABILITY_RULES = ["identity-transformation", "locale-sensitive-casing"] as const
 
@@ -160,14 +162,16 @@ const LOCALE_SENSITIVE_CASING: Record<string, { characters: string; note: string
 /**
  * One applicability reading: whether the transformation may be stated as a law for this text, and why.
  *
- * The reason is populated on both verdicts. An exclusion that says only "not applicable"
- * makes the reader re-derive the rule from the text, and a row silently dropped from
- * a law suite is the absence this layer exists to refuse.
+ * The reason is populated on both verdicts.
+ * An exclusion that says only "not applicable" makes the reader re-derive the rule from the text,
+ * and a row silently dropped from a law suite is the absence this layer exists to refuse.
  */
 export interface CaseApplicability {
 	applicable: boolean
 	/**
-	 * The rule that excluded it. Absent when `applicable`.
+	 * The rule that excluded it.
+	 *
+	 * Absent when `applicable`.
 	 */
 	rule?: CaseApplicabilityRule
 	reason: string
@@ -231,8 +235,10 @@ export const CASE_FOLDING_SUITE_PATH: string = resolvePackagePath(
  * Empty means the suite states this law and only this law — which is the claim the
  * DoD's fourth item makes, and the only form of it that is executable.
  *
- * The `caseCountry` requirement is not bookkeeping. A row graded with no country routes
- * through the base en-US weights package. It carries no pair index for the row's country.
+ * The `caseCountry` requirement is not bookkeeping.
+ * A row graded with no country routes through the base en-US weights package.
+ *
+ * It carries no pair index for the row's country.
  * Therefore, its dependent locality silently never fires and a case-folding violation
  * is reported for an instrument that was never pointed at the row's locale.
  */
@@ -277,6 +283,7 @@ export function auditCaseFoldingSuite(fixtures: readonly ConformanceFixture[]): 
 
 /**
  * The transformation label a report line carries, e.g. `upper`.
+ *
  * `?` when the pair does not classify — which the audit refuses, so it can only
  * appear on a hand-built fixture that skipped the loader.
  */

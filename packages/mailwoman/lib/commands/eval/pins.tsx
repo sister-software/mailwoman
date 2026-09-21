@@ -57,6 +57,7 @@ const STALE_PIN_ISSUE_TITLE = "board pins are stale on main"
 
 /**
  * Open the deduplicated stale-pin issue, or comment on the open one.
+ *
  * Answers what it did, for the command's output.
  */
 async function reportStalePins(drift: string, testPath: string): Promise<string> {

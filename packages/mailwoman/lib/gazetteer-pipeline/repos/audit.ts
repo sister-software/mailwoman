@@ -50,12 +50,15 @@ export interface ClonedRepo {
 	layouts: CloneLayout[]
 	/**
 	 * True when the layouts resolve to the same directory — a symlink rather than a second checkout.
+	 *
 	 * The ingest does not follow the alias, and one directory can never diverge from itself.
 	 */
 	aliased: boolean
 	/**
 	 * `head` per layout, so a duplicate can be reported as same-commit or diverged
-	 * rather than merely as duplicated. Absent for a directory that is not a git checkout.
+	 * rather than merely as duplicated.
+	 *
+	 * Absent for a directory that is not a git checkout.
 	 */
 	commits: Partial<Record<CloneLayout, string>>
 	/**
@@ -71,18 +74,22 @@ export interface ReposAudit {
 	repos: ClonedRepo[]
 	/**
 	 * Repos present in both layouts as independent checkouts.
+	 *
 	 * Named separately because the count is the finding.
 	 */
 	duplicated: ClonedRepo[]
 	/**
 	 * Repos reachable through both layouts via a symlink — one physical copy.
+	 *
 	 * The ingest skips the symlinked layout, and the directory cannot diverge in
 	 * the way {@link ReposAudit.duplicated} can.
 	 */
 	aliased: ClonedRepo[]
 	/**
-	 * Duplicated repos whose two copies are at different commits — the state where the ingest's
-	 * result depends on enumeration order. Empty is the good case and is reported as such.
+	 * Duplicated repos whose two copies are at different commits — the state
+	 * where the ingest's result depends on enumeration order.
+	 *
+	 * Empty is the good case and is reported as such.
 	 */
 	diverged: ClonedRepo[]
 }
@@ -117,8 +124,9 @@ function headOf(dir: string): string | undefined {
 /**
  * Walk the repos root and report every clone, its layout(s) and its vintage.
  *
- * Only two levels are examined, because only two layouts exist: a repo directly under the root,
- * and a repo under an owner directory. Anything deeper is a repo's own contents.
+ * Only two levels are examined, because only two layouts exist: a repo directly
+ * under the root, and a repo under an owner directory.
+ * Anything deeper is a repo's own contents.
  */
 export async function auditReposRoot(
 	root: PathBuilderLike,
@@ -138,7 +146,8 @@ export async function auditReposRoot(
 		try {
 			realPaths.set(name, [...(realPaths.get(name) ?? []), await realPath(dir)])
 		} catch {
-			// Unresolvable (a broken link). Left out of the alias comparison rather than guessed at.
+			// Unresolvable (a broken link).
+			// Left out of the alias comparison rather than guessed at.
 		}
 
 		if (options.readCommits !== false) {
@@ -173,7 +182,8 @@ export async function auditReposRoot(
 			continue
 		}
 
-		// An owner directory. Its children are the nested layout. a name that is itself a repo was handled above.
+		// An owner directory.
+		// Its children are the nested layout. a name that is itself a repo was handled above.
 		for await (const child of Globerator.from("*", { cwd: full, withFileTypes: true, onlyFiles: false })) {
 			const childPath = join(full, child.name)
 

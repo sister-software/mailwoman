@@ -23,14 +23,17 @@ function policyKey(component: ComponentTag, locale: string | undefined): string 
 }
 
 /**
- * Concrete registry implementation. Construct empty with `new InMemoryPolicyRegistry()`
- * and load entries via `set()`, or pre-load defaults via `InMemoryPolicyRegistry.withDefaults()`.
+ * Concrete registry implementation.
+ *
+ * Construct empty with `new InMemoryPolicyRegistry()` and load entries via `set()`,
+ * or pre-load defaults via `InMemoryPolicyRegistry.withDefaults()`.
  */
 export class InMemoryPolicyRegistry implements PolicyRegistry {
 	#entries = new Map<string, ClassifierPolicy>()
 
 	/**
 	 * Build a registry pre-loaded with `mode` for every component (default `rule_only`).
+	 *
 	 * The input-shape router (#478) passes a shape-derived default so the whole
 	 * table starts from the routed prior.
 	 */
@@ -45,7 +48,9 @@ export class InMemoryPolicyRegistry implements PolicyRegistry {
 	}
 
 	/**
-	 * Install a policy entry. Replaces any prior entry with the same key.
+	 * Install a policy entry.
+	 *
+	 * Replaces any prior entry with the same key.
 	 */
 	set(policy: ClassifierPolicy): void {
 		this.#entries.set(policyKey(policy.component, policy.locale), policy)

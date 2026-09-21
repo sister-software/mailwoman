@@ -21,8 +21,9 @@ export interface POIBoardOptions {
 	weightsCacheRoot?: string
 	fixturesPath?: string
 	/**
-	 * Sealed poi.db to query. Defaults to the standard data-root layer path —
-	 * see `gazetteer build poi`'s own default.
+	 * Sealed poi.db to query.
+	 *
+	 * Defaults to the standard data-root layer path — see `gazetteer build poi`'s own default.
 	 */
 	db?: PathBuilderLike
 	/**
@@ -48,9 +49,9 @@ export interface POIBoardOptions {
 	 * consulted only after the committed lexicon and the POI name lookup have both
 	 * returned nothing (`CreateRuntimePipelineOpts.poiSemanticLookup`).
 	 *
-	 * Carried on the board's own options so a probe measuring an injected route
-	 * runs through the same construction the board does. Absent — the default —
-	 * constructs the pipeline the board has always constructed.
+	 * Carried on the board's own options so a probe measuring an injected route runs
+	 * through the same construction the board does.
+	 * Absent — the default — constructs the pipeline the board has always constructed.
 	 */
 	poiSemanticLookup?: POIPhraseLookup
 	/**
@@ -60,6 +61,7 @@ export interface POIBoardOptions {
 	 * that ships, and a floor measured under an opt-in rung would describe a pipeline no caller runs.
 	 * On, it measures the activity-phrase family — the rows whose subject reaches no committed
 	 * lexicon entry, and which therefore take no POI branch at all with the rung absent.
+	 *
 	 * Ignored when {@linkcode poiSemanticLookup} is supplied directly.
 	 */
 	semanticObservation?: boolean
@@ -69,6 +71,7 @@ export interface POIBoardOptions {
  * Build the WOF resolver, mirroring `commands/poi.tsx`'s `tryLoadResolver`: candidate-table
  * backend when configured, else the FTS admin database set, else no resolver at all
  * (anchored category cases then abstain `anchor_required`, exactly like the CLI probe degrades).
+ *
  * Caller owns closing the returned handle.
  */
 async function loadResolver(
@@ -110,9 +113,10 @@ async function loadResolver(
 }
 
 /**
- * Which lookup answered anchor resolution. Reported rather than re-derived:
- * `createResolverBackend` falls back to the convention candidate path, so a caller that
- * reads only its own options names the wrong backend on any box where that file exists.
+ * Which lookup answered anchor resolution.
+ *
+ * Reported rather than re-derived: `createResolverBackend` falls back to the convention candidate path,
+ * so a caller that reads only its own options names the wrong backend on any box where that file exists.
  */
 export type POIBoardResolverBackend = "candidate" | "wof-fts" | "none"
 
@@ -134,10 +138,10 @@ export interface POIBoardPipelineHandle extends Disposable {
  * (`NeuralAddressClassifier.loadFromWeights` + the shared resolver-backend selector + `createRuntimePipeline({
  * poiQueryKind: { poiDatabasePath } })`).
  *
- * Extracted so a probe that grades with {@link gradeCase} runs against the same
- * construction the board does. A second copy of these four calls would let the two drift —
- * a different backend or a different weights locale would change what the probe measures
- * while the grader stayed identical, and the difference would read as a pipeline result.
+ * Extracted so a probe that grades with {@link gradeCase} runs against the same construction the board does.
+ * A second copy of these four calls would let the two drift — a different backend
+ * or a different weights locale would change what the probe measures while the grader
+ * stayed identical, and the difference would read as a pipeline result.
  */
 export async function createPOIBoardPipeline(options: POIBoardOptions = {}): Promise<POIBoardPipelineHandle> {
 	const db = resolvePath(options.db ?? dataRootPath("poi", "poi.db"))

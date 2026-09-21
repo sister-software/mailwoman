@@ -79,8 +79,8 @@ function recordingBackend(
 			if (!into.has(key)) {
 				// The stored query is parsed back from the key rather than kept by reference.
 				// The walk reuses and mutates its query object after the call returns — it adds
-				// `parentID` once a parent resolves — so a stored reference ends up describing
-				// a question that was never asked, and the fixture's key and query disagree.
+				// `parentID` once a parent resolves — so a stored reference ends up describing a
+				// question that was never asked, and the fixture's key and query disagree.
 				// Round-tripping through the key also makes the two agree by construction.
 				into.set(key, {
 					key,
@@ -104,15 +104,17 @@ export interface RecordCensus {
 	lookups: number
 	candidates: number
 	/**
-	 * Candidate answers the gold filter withheld during recording, counted across
-	 * every question asked. Zero everywhere except the withheld-gold stratum. a
-	 * non-zero value on a `goldPresent` row would be a defect.
+	 * Candidate answers the gold filter withheld during recording, counted across every question asked.
+	 *
+	 * Zero everywhere except the withheld-gold stratum. a non-zero value on a
+	 * `goldPresent` row would be a defect.
 	 */
 	removedGold: number
 	/**
-	 * Set when an arm's walk raised while recording. The row is still written —
-	 * a walk that failed under one option set may have recorded useful keys under another —
-	 * and the run receipt carries the count.
+	 * Set when an arm's walk raised while recording.
+	 *
+	 * The row is still written — a walk that failed under one option set may have recorded
+	 * useful keys under another — and the run receipt carries the count.
 	 */
 	error?: string
 }
@@ -121,32 +123,39 @@ export interface RecordInputs {
 	panel: readonly SameDataPanelRow[]
 	backend: ResolverBackend
 	/**
-	 * Turn one raw query into the frozen parse. Injected so the recorder does not decide which model runs.
+	 * Turn one raw query into the frozen parse.
+	 *
+	 * Injected so the recorder does not decide which model runs.
 	 */
 	parse: (query: string) => Promise<AddressTree>
 	/**
 	 * Every arm's `ResolveOpts`, so the recording covers each arm's questions.
+	 *
 	 * The production arm's empty option bag must be included explicitly —
 	 * an omitted default is a missing key at replay.
 	 */
 	armOptions: ReadonlyArray<ResolveOpts>
 	/**
 	 * Withhold every row denoting the gold place rather than only the ids the concordance linked.
+	 *
 	 * Off by default, and the default is what keeps `same-data-resolver-v1`
 	 * and `prominence-floor-v1` byte-stable on a re-record.
 	 *
 	 * Why it exists: the gold identity set is built from the `gn:id` concordance,
 	 * and the gazetteer carries **285,478 of its 2,689,326 populated localities twice** —
-	 * 10.6% share a folded name with a `localadmin` within 5 km, and 264,523 of those name that
-	 * twin as their depth-1 ancestor. Removing the concorded id leaves the twin answerable,
-	 * so an arm returning it is graded as selecting where no correct candidate exists.
-	 * It named the right place. Measured on `same-data-resolver-v1`: 10 of 100 withheld-gold
-	 * rows, and three of the five rows published as exemplars of confident failure —
+	 * 10.6% share a folded name with a `localadmin` within 5 km, and 264,523 of
+	 * those name that twin as their depth-1 ancestor.
+	 * Removing the concorded id leaves the twin answerable, so an arm returning it is
+	 * graded as selecting where no correct candidate exists.
+	 *
+	 * It named the right place.
+	 * Measured on `same-data-resolver-v1`: 10 of 100 withheld-gold rows,
+	 * and three of the five rows published as exemplars of confident failure —
 	 * `Langfang` 2.8 km, `Matsusaka` 1.3 km, `Troyes` 0.6 km.
 	 *
-	 * Turning it on changes what the stratum means, so it belongs to a successor definition rather than
-	 * a version bump of a benchmark whose arms have run. `benchmark-freeze.json` states
-	 * the reason: a rule editable after a result is visible asserts nothing.
+	 * Turning it on changes what the stratum means, so it belongs to a successor definition
+	 * rather than a version bump of a benchmark whose arms have run.
+	 * `benchmark-freeze.json` states the reason: a rule editable after a result is visible asserts nothing.
 	 */
 	withholdEveryDenotingRow?: boolean
 }
@@ -165,9 +174,10 @@ export interface RecordResult {
 const SAME_SETTLEMENT_KM = 5
 
 /**
- * The diacritic-folded comparison surface. Deliberately not the resolver's `foldName`:
- * that one empties a non-Latin name, so `東京` and `Москва` would fold equal to each other
- * and to every other non-Latin row.
+ * The diacritic-folded comparison surface.
+ *
+ * Deliberately not the resolver's `foldName`: that one empties a non-Latin name, so `東京`
+ * and `Москва` would fold equal to each other and to every other non-Latin row.
  */
 function settlementKey(name: string): string {
 	return name
@@ -180,7 +190,8 @@ function settlementKey(name: string): string {
 /**
  * What the recorder withholds for one row, or null when the row carries its gold.
  *
- * The default is id equality — the rule `same-data-resolver-v1` was frozen under. Under
+ * The default is id equality — the rule `same-data-resolver-v1` was frozen under.
+ * Under
  * {@link RecordInputs.withholdEveryDenotingRow} it also withholds a row whose folded name equals the gold's within
  * {@link SAME_SETTLEMENT_KM}, which is the settlement-identity rule: the gazetteer carries one place at two admin tiers
  * and the concordance links only one of them.
@@ -202,8 +213,9 @@ function withholdPredicate(
 
 		if (!place.name || settlementKey(place.name) !== goldKey) return false
 
-		// Both halves are required. `Batāla` (IN) and `Batala` (IN) fold equal and sit 1,421 km apart —
-		// a real namesake, and withholding it would remove a candidate the stratum is entitled to offer.
+		// Both halves are required.
+		// `Batāla` (IN) and `Batala` (IN) fold equal and sit 1,421 km apart — a real namesake,
+		// and withholding it would remove a candidate the stratum is entitled to offer.
 		return haversineKm(place.lat, place.lon, row.gold.lat, row.gold.lon) <= SAME_SETTLEMENT_KM
 	}
 }

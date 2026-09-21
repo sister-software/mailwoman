@@ -38,6 +38,7 @@ export async function currentBranch(repoRoot: PathBuilderLike): Promise<string> 
 
 /**
  * `git status --porcelain` lines for tracked files with uncommitted changes.
+ *
  * Untracked files are excluded on purpose: materialized weights binaries and compiled
  * `out/` trees are gitignored, and a publish path creates both before it publishes.
  * Pathspecs narrow the reading to the paths named.
@@ -55,6 +56,7 @@ export async function dirtyTrackedFiles(repoRoot: PathBuilderLike, pathspecs: st
  * The sibling {@linkcode dirtyTrackedFiles} answers a publish path's question —
  * which committed files have moved — and excludes what a build creates.
  * This answers a cache's question: has anything at all changed since a derived artifact was built.
+ *
  * A key built from the narrower reading goes stale over a staged edit and over a new file,
  * and a stale index reports that a helper written an hour ago does not exist.
  */
@@ -66,8 +68,9 @@ export async function workingTreeStatus(repoRoot: PathBuilderLike, pathspecs: st
 }
 
 /**
- * The repo-relative paths that differ between two commits, added, modified,
- * renamed or deleted alike, read NUL-delimited so an unusual path survives.
+ * The repo-relative paths that differ between two commits, added, modified, renamed
+ * or deleted alike, read NUL-delimited so an unusual path survives.
+ *
  * Both commits must be present in the checkout: a shallow clone that lacks `base` fails
  * here with git's own message rather than answering an empty list.
  */
@@ -79,6 +82,7 @@ export async function changedFiles(repoRoot: PathBuilderLike, base: string, head
 
 /**
  * Every tracked path, repo-relative, optionally narrowed by git pathspecs.
+ *
  * Read NUL-delimited so a path with a newline or a non-ascii byte survives. the 64
  * MiB buffer covers this repository's listing several times over.
  */
@@ -116,11 +120,13 @@ export async function workingTreeFiles(repoRoot: PathBuilderLike, pathspecs: str
  * and a path a fixture invents are both absent from the tree and neither is a defect.
  *
  * `--no-renames` is what makes it answer the question asked.
- * With rename detection on, `--name-only` prints a rename's destination and the
- * old path never appears, so the reading is a set of paths that all still exist.
- * Turning detection off makes every move a deletion of the old path, which is the name
- * a stale literal holds. Measured on this repository: 11,696 paths over 4,398 commits
- * in 205 ms, against 11,483 for the reading that answers the wrong set.
+ * With rename detection on, `--name-only` prints a rename's destination and the old
+ * path never appears, so the reading is a set of paths that all still exist.
+ *
+ * Turning detection off makes every move a deletion of the old path,
+ * which is the name a stale literal holds.
+ * Measured on this repository: 11,696 paths over 4,398 commits in 205 ms,
+ * against 11,483 for the reading that answers the wrong set.
  */
 export async function movedAwayPaths(repoRoot: PathBuilderLike): Promise<Set<string>> {
 	const output = await git(

@@ -76,8 +76,10 @@ interface Args {
 	/**
 	 * #478: also grade the assembled runtime pipeline (`createRuntimePipeline` — normalize → kind/ fast-path → grouper →
 	 * reconcile → classify), not just the raw neural classifier.
-	 * This is the #566-lesson eval: a pipeline regression (e.g. a reconcile/arbitration change) is invisible
-	 * when the eval grades raw neural. Off by default → the existing raw-neural report is byte-stable.
+	 *
+	 * This is the #566-lesson eval: a pipeline regression (e.g. a reconcile/arbitration change)
+	 * is invisible when the eval grades raw neural.
+	 * Off by default → the existing raw-neural report is byte-stable.
 	 */
 	assembled: boolean
 }
@@ -210,6 +212,7 @@ function localeFromFilename(file: string): string {
 
 /**
  * Recursively unwrap a literal object expression like `{ street: ["Main St"] }` into a plain JS object.
+ *
  * Returns `null` for anything that isn't a literal-of-literals (we intentionally don't
  * try to evaluate variables or computed properties — none of the test files use those).
  */
@@ -305,12 +308,13 @@ async function discoverAssertions(testsDir: string): Promise<ExtractedAssertion[
 	const all: ExtractedAssertion[] = []
 
 	for await (const entry of Globerator.from("*.test.ts", { cwd: testsDir, absolute: false })) {
-		// Only the address.*.test.ts / addressit.*.test.ts / venue.*.test.ts /
-		// intersection.test.ts / compound_street.test.ts / place.*.test.ts / transit.test.ts /
-		// libpostal.test.ts / functional.test.ts use the `assert(input, ...expected)` shape.
+		// Only the address.*.test.ts / addressit.*.test.ts / venue.*.test.ts / intersection.test.ts
+		// / compound_street.test.ts / place.*.test.ts / transit.test.ts / libpostal.test.ts
+		// / functional.test.ts use the `assert(input, ...expected)` shape.
 		// CLI integration tests (resolve-flag, benchmark-flag, runtime-pipeline, etc.)
-		// use vitest's `test()` directly. We extract from all .test.ts files and skip the
-		// ones with zero matching calls — the extractor is a no-op on those.
+		// use vitest's `test()` directly.
+		// We extract from all .test.ts files and skip the ones with zero matching calls —
+		// the extractor is a no-op on those.
 		const filePath = join(testsDir, entry)
 
 		try {
@@ -350,6 +354,7 @@ const VISIBLE_TAGS = new Set([
 
 /**
  * Fold the neural classifier's Stage 3 component tags into the visible classification set.
+ *
  * The fold is principled but lossy:
  *
  * - `street_prefix` + `street_prefix_particle` + `street` + `street_suffix` → `street`
@@ -357,9 +362,9 @@ const VISIBLE_TAGS = new Set([
  * - `intersection_a` + `intersection_b` → `street` (two separate values, matching the fixtures' `{street: ["Main St",
  *   "Second Ave"]}` shape for intersections).
  * - `house_number`, `unit`, `venue`, `country`, `region`, `locality`, `postcode` → identity.
- * - `dependent_locality`, `subregion`, `attention`, `po_box`, `cedex`, JP-specific
- *   tags → dropped (no fixture equivalent). The dropped tags are surfaced in the
- *   per-assertion report so the harness consumer can see what was lost.
+ * - `dependent_locality`, `subregion`, `attention`, `po_box`, `cedex`,
+ *   JP-specific tags → dropped (no fixture equivalent).
+ *   The dropped tags are surfaced in the per-assertion report so the harness consumer can see what was lost.
  */
 function neuralTreeToVisibleRecord(flat: Partial<Record<ComponentTag, string>>): {
 	record: ClassificationRecord
@@ -423,8 +428,9 @@ function neuralTreeToVisibleRecord(flat: Partial<Record<ComponentTag, string>>):
 //#region Comparison — case-insensitive superset match
 
 /**
- * Pass if every tag in `expected` is present in `actual` and the actual
- * value (string-equality, case-folded, trimmed) contains the expected value.
+ * Pass if every tag in `expected` is present in `actual` and the actual value
+ * (string-equality, case-folded, trimmed) contains the expected value.
+ *
  * We accept `actual` being a superset because the neural parser may emit extra components
  * the test doesn't pin down (e.g. it labels a country when the test only asserted street).
  */
@@ -441,8 +447,9 @@ function expectedMatchesActual(expected: ClassificationRecord, actual: Classific
 		for (let i = 0; i < expectedValues.length; i++) {
 			if (normLoose(expectedValues[i]!) !== normLoose(actualValues[i]!)) {
 				// Allow substring containment in either direction — the neural parser sometimes over-
-				// or under-spans (e.g. "5th Avenue" vs "Avenue"). The fixture suite is the
-				// authority on the expected span. we count a substring match as a partial pass.
+				// or under-spans (e.g. "5th Avenue" vs "Avenue").
+				// The fixture suite is the authority on the expected span. we count a
+				// substring match as a partial pass.
 				const exp = normLoose(expectedValues[i]!)
 				const act = normLoose(actualValues[i]!)
 
@@ -489,9 +496,10 @@ async function runAssertion(
 	parseOpts: Parameters<NeuralAddressClassifier["parse"]>[1],
 	pipeline?: ReturnType<typeof createRuntimePipeline>
 ): Promise<AssertionResult> {
-	// neural — one tree, loose semantics: pass if any of the expected solutions is matched by
-	// the top-1 neural output. This is the natural reading for a single-result parser. the
-	// fixtures' multi-solution structure came from the retired multi-hypothesis rules API.
+	// neural — one tree, loose semantics: pass if any of the expected solutions
+	// is matched by the top-1 neural output.
+	// This is the natural reading for a single-result parser. the fixtures' multi-solution
+	// structure came from the retired multi-hypothesis rules API.
 	const tree = await neuralClassifier.parse(a.input, parseOpts)
 	const flat = decodeAsJSON(tree)
 	const { record: neuralRecord, dropped } = neuralTreeToVisibleRecord(flat)
@@ -500,8 +508,9 @@ async function runAssertion(
 
 	// #478 assembled-pipeline arm: grade the full `runPipeline` parse (what production runs) — same
 	// loose top-1 semantics + tree→visible-record conversion as neural.
-	// Off unless `--assembled` wired the pipeline. This is the #566-lesson measurement:
-	// an assembled-pipeline regression is invisible against raw-neural F1.
+	// Off unless `--assembled` wired the pipeline.
+	// This is the #566-lesson measurement: an assembled-pipeline regression is
+	// invisible against raw-neural F1.
 	let assembledPass: boolean | undefined
 	let assembledRecord: ClassificationRecord | undefined
 

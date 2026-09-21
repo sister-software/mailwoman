@@ -27,6 +27,7 @@ import type { ResolveOpts, Resolver } from "@mailwoman/core/resolver"
 
 /**
  * `ResolveOpts` minus the non-serializable live lookup handles.
+ *
  * What actually crosses the wire.
  */
 export type SerializableResolveOpts = Omit<ResolveOpts, "addressPoints" | "interpolation">
@@ -52,7 +53,9 @@ export interface RemoteResolverOpts {
 	 */
 	endpoint: string
 	/**
-	 * Injectable fetch (tests / custom agents). Defaults to the global `fetch`.
+	 * Injectable fetch (tests / custom agents).
+	 *
+	 * Defaults to the global `fetch`.
 	 *
 	 * Typed by what this module reads — `ok`, `status`, `statusText`, `json()` — rather than the
 	 * full `fetch`, whose `Response` carries a body stream and headers no code here touches.
@@ -60,11 +63,15 @@ export interface RemoteResolverOpts {
 	 */
 	fetch?: RemoteResolverFetch
 	/**
-	 * Per-request timeout in ms. Default 10000.
+	 * Per-request timeout in ms.
+	 *
+	 * Default 10000.
 	 */
 	timeoutMs?: number
 	/**
-	 * Extra headers (auth, tracing). `Content-Type: application/json` is always set.
+	 * Extra headers (auth, tracing).
+	 *
+	 * `Content-Type: application/json` is always set.
 	 */
 	headers?: Record<string, string>
 }

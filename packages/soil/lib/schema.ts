@@ -41,12 +41,15 @@ import { sql, type Kysely } from "kysely"
  */
 export const SoilCellContainment = {
 	/**
-	 * Every point in the cell is inside the delineation. Answered from the index alone, with no geometry read.
+	 * Every point in the cell is inside the delineation.
+	 *
+	 * Answered from the index alone, with no geometry read.
 	 */
 	Whole: "whole",
 	/**
-	 * The delineation's boundary crosses the cell. The index has narrowed the
-	 * candidates. the point test decides.
+	 * The delineation's boundary crosses the cell.
+	 *
+	 * The index has narrowed the candidates. the point test decides.
 	 */
 	Partial: "partial",
 } as const
@@ -61,9 +64,10 @@ export interface SoilMapUnitAreaTable {
 	/**
 	 * `<areasymbol>:<ordinal>` — the survey area plus this delineation's position in
 	 * the authority's own shapefile order. ssurgo publishes no per-delineation key of
-	 * its own (`mukey` names the MAP unit, and one map unit has many delineations), so
-	 * the ordinal is what makes a row nameable at all. Text, so a source that starts
-	 * publishing a non-numeric id needs no schema change.
+	 * its own (`mukey` names the MAP unit, and one map unit has many delineations),
+	 * so the ordinal is what makes a row nameable at all.
+	 *
+	 * Text, so a source that starts publishing a non-numeric id needs no schema change.
 	 */
 	area_id: string
 	/**
@@ -89,13 +93,15 @@ export interface SoilMapUnitAreaTable {
  */
 export interface SoilMapUnitCellTable {
 	/**
-	 * 48-bit short H3 cell. Mixed-resolution: `whole` rows are compacted parent-ward,
-	 * `partial` rows stay at the index resolution.
+	 * 48-bit short H3 cell.
+	 *
+	 * Mixed-resolution: `whole` rows are compacted parent-ward, `partial` rows stay at the index resolution.
 	 */
 	h3_cell: number
 	/**
-	 * The resolution this row's cell was captured at. A short cell does not name its own
-	 * resolution, and a table that mixes them cannot be probed without it.
+	 * The resolution this row's cell was captured at.
+	 *
+	 * A short cell does not name its own resolution, and a table that mixes them cannot be probed without it.
 	 */
 	resolution: number
 	area_id: string
@@ -112,28 +118,35 @@ export interface SoilMapUnitTable {
 	mukey: string
 	areasymbol: string
 	/**
-	 * The map unit symbol. `notcom` and `notpub` are meaningful values here rather than
-	 * codes to skip: they name a polygon the authority drew with no soil mapping behind it.
+	 * The map unit symbol.
+	 *
+	 * `notcom` and `notpub` are meaningful values here rather than codes to skip:
+	 * they name a polygon the authority drew with no soil mapping behind it.
 	 */
 	musym: string
 	muname: string
 	/**
 	 * `Consociation` | `Complex` | `Association` | `Undifferentiated group`,
-	 * from the authority's declared domain. A complex is nrcs's statement that two
-	 * or more soils are intermingled and cannot be separated at the mapping scale —
-	 * the mixture is the survey's finding rather than this layer's loss.
+	 * from the authority's declared domain.
+	 *
+	 * A complex is nrcs's statement that two or more soils are intermingled and cannot be separated
+	 * at the mapping scale — the mixture is the survey's finding rather than this layer's loss.
 	 */
 	mukind: string | null
 	mustatus: string | null
 	/**
-	 * The full conditional string, verbatim. NULL is not "not prime farmland": `Not prime farmland`
-	 * is itself a declared value, and NULL means the map unit carries no farmland classification at all.
+	 * The full conditional string, verbatim.
+	 *
+	 * NULL is not "not prime farmland": `Not prime farmland` is itself a declared value,
+	 * and NULL means the map unit carries no farmland classification at all.
 	 */
 	farmlndcl: string | null
 	/**
-	 * Which of {@link FarmlandScope} `farmlndcl` falls under — federal criteria travel
-	 * between states, delegated ones do not. Derived once at build time so a consumer
-	 * never has to re-read 7 CFR 657.5 to know whether two rows are comparable.
+	 * Which of {@link FarmlandScope} `farmlndcl` falls under — federal criteria
+	 * travel between states, delegated ones do not.
+	 *
+	 * Derived once at build time so a consumer never has to re-read 7 CFR 657.5 to know
+	 * whether two rows are comparable.
 	 */
 	farmland_scope: string
 	/**
@@ -141,13 +154,16 @@ export interface SoilMapUnitTable {
 	 */
 	niccdcd: string | null
 	/**
-	 * And the share that class actually covers. The pair is the pattern this layer's cell
-	 * reduction reproduces at cell grain, so carrying both makes the two comparable.
+	 * And the share that class actually covers.
+	 *
+	 * The pair is the pattern this layer's cell reduction reproduces at cell grain,
+	 * so carrying both makes the two comparable.
 	 */
 	niccdcdpct: number | null
 	/**
 	 * Whether this map unit is a polygon with no soil mapping behind it — `notcom`,
 	 * `notpub`, access denied, or a map unit carrying no components at all.
+	 *
 	 * Such a map unit contributes to `nodata_share` and never to a class share.
 	 */
 	no_mapping: number
@@ -171,7 +187,9 @@ export interface SoilComponentTable {
 	 */
 	compkind: string | null
 	/**
-	 * Nonirrigated Land Capability Class, `"1"`–`"8"`. NULL means not rated, never class 8.
+	 * Nonirrigated Land Capability Class, `"1"`–`"8"`.
+	 *
+	 * NULL means not rated, never class 8.
 	 */
 	nirrcapcl: string | null
 	/**
@@ -179,14 +197,17 @@ export interface SoilComponentTable {
 	 */
 	nirrcapscl: string | null
 	/**
-	 * The irrigated rating. NULL on 85.1% of national components, because it is populated only
-	 * where irrigation is a considered use — so its absence is a statement about the rating's
-	 * applicability rather than about the land, and it is carried but never reduced.
+	 * The irrigated rating.
+	 *
+	 * NULL on 85.1% of national components, because it is populated only where irrigation
+	 * is a considered use — so its absence is a statement about the rating's applicability
+	 * rather than about the land, and it is carried but never reduced.
 	 */
 	irrcapcl: string | null
 	irrcapscl: string | null
 	/**
 	 * The nccpi v3.0 overall index in [0, 1], under its own rule name.
+	 *
 	 * Never blended with the capability class.
 	 */
 	nccpi_v3: number | null
@@ -195,10 +216,10 @@ export interface SoilComponentTable {
 /**
  * The shared artifact both consumers read: one row per cell, the index reduced once.
  *
- * The result-level observation takes {@link SoilCapabilityCellTable.top_class} with
- * the share it rests on; #1683's affordance vector takes `class_shares` plus the four
- * absence shares as its axis. One artifact, one aggregation, one set of provenance rows,
- * and no possibility of the two consumers disagreeing about what the ground is.
+ * The result-level observation takes {@link SoilCapabilityCellTable.top_class} with the share it
+ * rests on; #1683's affordance vector takes `class_shares` plus the four absence shares as its axis.
+ * One artifact, one aggregation, one set of provenance rows, and no possibility of
+ * the two consumers disagreeing about what the ground is.
  */
 export interface SoilCapabilityCellTable {
 	/**
@@ -209,6 +230,7 @@ export interface SoilCapabilityCellTable {
 	h3_cell: number
 	/**
 	 * JSON: the authority's class codes mapped to their area-weighted share, sorted by descending share.
+	 *
 	 * Shares above the declared truncation floor only. the remainder is in `other_share`.
 	 */
 	class_shares: string
@@ -226,8 +248,10 @@ export interface SoilCapabilityCellTable {
 	 */
 	nodata_share: number
 	/**
-	 * The truncated minority tail. Stored explicitly so the five shares always sum to 1
-	 * and a reader can see how much was folded away rather than inferring it from a gap.
+	 * The truncated minority tail.
+	 *
+	 * Stored explicitly so the five shares always sum to 1 and a reader can see how
+	 * much was folded away rather than inferring it from a gap.
 	 */
 	other_share: number
 	/**
@@ -241,8 +265,9 @@ export interface SoilCapabilityCellTable {
 	 */
 	mapped_share: number
 	/**
-	 * The largest class share, and the share it rests on — the result-level consumer's
-	 * reading, and nrcs's own `niccdcd`/`niccdcdpct` pattern at cell grain.
+	 * The largest class share, and the share it rests on — the result-level consumer's reading,
+	 * and nrcs's own `niccdcd`/`niccdcdpct` pattern at cell grain.
+	 *
 	 * NULL when the cell carries no class at all, which is a real answer: a cell that is
 	 * 100% `unrated_share` is complete and holds no capability reading whatsoever.
 	 */
@@ -250,13 +275,16 @@ export interface SoilCapabilityCellTable {
 	top_class_share: number | null
 	/**
 	 * Which weighting produced the shares — {@link SOIL_SHARE_WEIGHTING}.
+	 *
 	 * Stored per row rather than only in the manifest, because a later build at a
 	 * different weighting must not read as the same claim.
 	 */
 	weighting: string
 	/**
-	 * How many delineations reached this cell. The denominator behind every share above,
-	 * and the number that separates a confident single-delineation cell from a crowded one.
+	 * How many delineations reached this cell.
+	 *
+	 * The denominator behind every share above, and the number that separates a
+	 * confident single-delineation cell from a crowded one.
 	 */
 	delineations: number
 }
@@ -298,12 +326,14 @@ export interface SoilSurveyAreaTable {
 	source_scale: number | null
 	/**
 	 * The scale the map units were digitized at, from `legend.projectscale` — 12000 for `IA153`.
+	 *
 	 * A different number from `source_scale` and a different fact: one is how finely
 	 * the ground was walked, the other how finely it was drawn.
 	 */
 	mapping_scale: number | null
 	/**
 	 * The area the authority publishes for the survey area, in acres.
+	 *
 	 * The independent witness the ring-area check compares against.
 	 */
 	area_acres: number | null
@@ -359,14 +389,17 @@ export interface SoilDatabase extends layerschemadatabase {
 }
 
 /**
- * The subset of a Kysely handle the DDL touches. Kysely is invariant in its schema parameter,
- * so naming only the members these functions call lets a caller pass its own wider handle.
+ * The subset of a Kysely handle the DDL touches.
+ *
+ * Kysely is invariant in its schema parameter, so naming only the members these
+ * functions call lets a caller pass its own wider handle.
  */
 export type SoilSchemaHandle = Pick<Kysely<SoilDatabase>, "schema">
 
 /**
- * Create `soil_map_unit_area`. A plain rowid table on purpose — the `rings` blob
- * is exactly the payload `without rowid` penalizes.
+ * Create `soil_map_unit_area`.
+ *
+ * A plain rowid table on purpose — the `rings` blob is exactly the payload `without rowid` penalizes.
  */
 export async function createSoilMapUnitAreaTable(db: SoilSchemaHandle): Promise<void> {
 	const table = db.schema
@@ -379,8 +412,9 @@ export async function createSoilMapUnitAreaTable(db: SoilSchemaHandle): Promise<
 }
 
 /**
- * Create `soil_map_unit_cell` — the containment index. Small fixed-width rows
- * probed by their exact primary key.
+ * Create `soil_map_unit_cell` — the containment index.
+ *
+ * Small fixed-width rows probed by their exact primary key.
  */
 export async function createSoilMapUnitCellTable(db: SoilSchemaHandle): Promise<void> {
 	const table = db.schema.createTable("soil_map_unit_cell")

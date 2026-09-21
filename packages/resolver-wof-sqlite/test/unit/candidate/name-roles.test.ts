@@ -310,7 +310,8 @@ describe("stampNameRoles: the key-tail census", () => {
 			[]
 		)
 
-		// Toledo is below the threshold, so it is not in the denominator. New York is, and carries no role.
+		// Toledo is below the threshold, so it is not in the denominator.
+		// New York is, and carries no role.
 		expect(keyTailPlaces).toBe(2)
 		expect(keyTailWithRole).toBe(1)
 	})

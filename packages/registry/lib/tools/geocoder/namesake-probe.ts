@@ -44,6 +44,7 @@ const CASES: Array<{ city: string; zip: string; tx: [number, number]; namesake: 
 
 /**
  * Admin-tier wrong-region probe (#619 tail) — see the module doc.
+ *
  * Prints one line per variant to stdout.
  */
 export async function geocoderNamesakeProbe(

@@ -33,24 +33,26 @@ import { canonicalizeSeedCase, type SeedCase, SeedCaseSchema } from "#eval-harne
 
 /**
  * An ISO-3166 alpha-2 country directory, lowercase — the layout key.
+ *
  * Matches `postalcode-<cc>-overture.db` in `gazetteer-pipeline`, which is
  * where the repo's per-`cc` convention already lives.
  */
 const COUNTRY_DIR = /^[a-z]{2}$/
 
 /**
- * How much of an unparseable line to quote back. A corpus row is one JSON object per line
- * and the longest here is ~1.4 kB of `note` prose — echoing it whole buries the
- * file:line that actually locates the problem.
+ * How much of an unparseable line to quote back.
+ *
+ * A corpus row is one JSON object per line and the longest here is ~1.4 kB of `note` prose —
+ * echoing it whole buries the file:line that actually locates the problem.
  */
 const MALFORMED_EXCERPT_CHARS = 60
 
 /**
  * The committed corpus root.
  *
- * `new URL`-relative for the source tree with a compiled-tree fallback — tsc emits
- * no `.jsonl` into `out/`, so `mailwoman/out/eval-harness/gauntlet/cases/` reads the
- * source-tree copy. Same bridge as `baseline-assert.ts`'s `resolveBaselineFilePath`
+ * `new URL`-relative for the source tree with a compiled-tree fallback — tsc emits no `.jsonl`
+ * into `out/`, so `mailwoman/out/eval-harness/gauntlet/cases/` reads the source-tree copy.
+ * Same bridge as `baseline-assert.ts`'s `resolveBaselineFilePath`
  * and `promotion-eval.ts`'s `resolveThresholdSpecPath`.
  */
 export const CASES_DIR: string = resolvePackagePath("mailwoman", "lib", "eval-harness", "gauntlet", "cases")
@@ -58,9 +60,9 @@ export const CASES_DIR: string = resolvePackagePath("mailwoman", "lib", "eval-ha
 /**
  * A malformed corpus row, named by file and line.
  *
- * A bare `SyntaxError: Unexpected token }` over a 192-row corpus spread across 29
- * files is not a diagnosis. Every throw out of {@linkcode loadRegressionCases} carries
- * `<file>:<line>` and, for a schema failure, the offending path.
+ * A bare `SyntaxError: Unexpected token }` over a 192-row corpus spread across 29 files is not a diagnosis.
+ * Every throw out of {@linkcode loadRegressionCases} carries `<file>:<line>`
+ * and, for a schema failure, the offending path.
  */
 export class CorpusRowError extends Error {
 	constructor(file: string, line: number, detail: string, options?: ErrorOptions) {
@@ -70,8 +72,10 @@ export class CorpusRowError extends Error {
 }
 
 /**
- * Read one `<cc>/*.jsonl` file. Blank lines are skipped. the line counter still counts them,
- * so the number in an error is the number your editor shows.
+ * Read one `<cc>/*.jsonl` file.
+ *
+ * Blank lines are skipped. the line counter still counts them, so the number in
+ * an error is the number your editor shows.
  */
 async function loadCorpusFile(path: string, expectedCC: string): Promise<SeedCase[]> {
 	const rows: SeedCase[] = []
@@ -106,9 +110,9 @@ async function loadCorpusFile(path: string, expectedCC: string): Promise<SeedCas
 			throw new CorpusRowError(path, line, `does not match SeedCase — ${detail}`)
 		}
 
-		// The dir is the country claim. A row filed under the wrong `cc` still loads
-		// and still runs, so nothing downstream would ever notice. the listing it
-		// was filed under would just be quietly wrong.
+		// The dir is the country claim.
+		// A row filed under the wrong `cc` still loads and still runs, so nothing downstream
+		// would ever notice. the listing it was filed under would just be quietly wrong.
 		if (result.data.country.toLowerCase() !== expectedCC) {
 			throw new CorpusRowError(
 				path,
@@ -152,8 +156,9 @@ export async function loadRegressionCases(dir: PathBuilderLike = CASES_DIR): Pro
 			const previous = seen.get(c.id)
 
 			if (previous) {
-				// `id` is the regression DB's primary KEY, so a duplicate would fail the build
-				// with a constraint error naming neither file. Fail here instead, naming both.
+				// `id` is the regression DB's primary KEY, so a duplicate would fail the
+				// build with a constraint error naming neither file.
+				// Fail here instead, naming both.
 				throw new Error(`duplicate case id "${c.id}" — in ${basename(previous)} and cases/${cc}/`)
 			}
 
@@ -168,11 +173,11 @@ export async function loadRegressionCases(dir: PathBuilderLike = CASES_DIR): Pro
 /**
  * A content hash of a loaded corpus — canonical row keys, sorted, `sha256`.
  *
- * Order-independent on purpose: it answers "are these the same cases?", never "were
- * they read in the same order?". `load.test.ts` pins it, and that pin is what carried
- * the 2026-08-05 TS-array → jsonl migration across the commit that deleted the array —
- * the hash was measured against the array while both existed, so a later edit that
- * changes corpus content has to change the pin deliberately.
+ * Order-independent on purpose: it answers "are these the same cases?",
+ * never "were they read in the same order?".
+ * `load.test.ts` pins it, and that pin is what carried the 2026-08-05 TS-array → jsonl
+ * migration across the commit that deleted the array — the hash was measured against the array
+ * while both existed, so a later edit that changes corpus content has to change the pin deliberately.
  */
 export function regressionCorpusHash(rows: readonly SeedCase[]): string {
 	return sha256Hex(

@@ -39,7 +39,9 @@
  */
 export const AdminSource = {
 	/**
-	 * Cloned WOF GeoJSON repos, ingested by presence. Not list-driven — see the module docstring.
+	 * Cloned WOF GeoJSON repos, ingested by presence.
+	 *
+	 * Not list-driven — see the module docstring.
 	 */
 	WOF: "wof",
 	/**
@@ -47,8 +49,10 @@ export const AdminSource = {
 	 */
 	Overture: "overture",
 	/**
-	 * The GeoNames fold, `DEFAULT_GEONAMES_COUNTRIES`. Despite the ingest function's name it writes
-	 * `spr` places rather than only alternate names: the rows are `locality` with `parent_id = -1`.
+	 * The GeoNames fold, `DEFAULT_GEONAMES_COUNTRIES`.
+	 *
+	 * Despite the ingest function's name it writes `spr` places rather than only
+	 * alternate names: the rows are `locality` with `parent_id = -1`.
 	 */
 	GeoNames: "geonames",
 } as const
@@ -98,10 +102,11 @@ export interface SourceConflict {
  * Map every country to the sources that serve it, from the three lists.
  *
  * `wofCountries` is passed in rather than read from `DEFAULT_WOF_PRIORITY_COUNTRIES`
- * because that list is a declaration and the WOF leg is presence-driven: what actually gets
- * ingested is whatever is cloned. A caller checking a build should pass what is on disk.
- * a caller checking the recipe should pass the list. Conflating them is how a clone
- * that nobody declared, or a declaration nobody cloned, reads as fine.
+ * because that list is a declaration and the WOF leg is presence-driven:
+ * what actually gets ingested is whatever is cloned.
+ * A caller checking a build should pass what is on disk. a caller checking the recipe should pass the list.
+ *
+ * Conflating them is how a clone that nobody declared, or a declaration nobody cloned, reads as fine.
  */
 export function countrySourceMap(lists: {
 	wofCountries: readonly string[]

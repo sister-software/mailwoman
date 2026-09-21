@@ -56,7 +56,8 @@ describe("ancestorIdentity — the four states", () => {
 	})
 
 	it("says the ancestor PREDATES the interface, which is the live state today", async () => {
-		// Every admin build before phase 3 has no manifest. This is measured rather than hypothetical.
+		// Every admin build before phase 3 has no manifest.
+		// This is measured rather than hypothetical.
 		const root = await scratch()
 		using db = new DatabaseClient<WOFDatabase>(join(root, "admin.db"))
 

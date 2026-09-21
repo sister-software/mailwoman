@@ -33,7 +33,9 @@ interface FixturePlace {
 	 */
 	alt_names?: string[]
 	/**
-	 * Ancestor chain (not including self). Used to seed the `ancestors` table.
+	 * Ancestor chain (not including self).
+	 *
+	 * Used to seed the `ancestors` table.
 	 */
 	ancestor_ids?: number[]
 }
@@ -109,8 +111,9 @@ const FIXTURE: FixturePlace[] = [
 		country: "FR",
 		lat: 48.85,
 		lon: 2.34,
-		// The canonical name also lives in `names` in a real WOF distribution — required for the exact-match
-		// tier (#exactMatchIDs queries `names`, not `spr`). Same shape as Brooklyn below.
+		// The canonical name also lives in `names` in a real WOF distribution —
+		// required for the exact-match tier (#exactMatchIDs queries `names`, not `spr`).
+		// Same shape as Brooklyn below.
 		alt_names: ["Paris", "Pari", "París", "パリ", "巴黎"],
 		ancestor_ids: [85_633_723],
 	},
@@ -225,7 +228,8 @@ function buildFixtureDB(path = ":memory:"): DatabaseClient<WOFDatabase> {
 	// Schema mirrors the real WOF SQLite distribution at data.geocode.earth
 	// (subset of columns we actually read. full schema is documented in `schema.ts`).
 	// WOF lifecycle: both `is_current = -1` (modern) and `is_current = 1` (legacy)
-	// mean current; `0` means not current. See #91.
+	// mean current; `0` means not current.
+	// See #91.
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY,
@@ -347,8 +351,8 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 	})
 
 	test('"Brooklyn" locality query reaches the exact-named borough over the fuzzy "Brooklyn Park" locality', async () => {
-		// The live-demo bug (2026-06-11): with the borough excluded, the only
-		// locality-typed match was the partial "Brooklyn Park" → resolved to Minnesota.
+		// The live-demo bug (2026-06-11): with the borough excluded, the only locality-typed
+		// match was the partial "Brooklyn Park" → resolved to Minnesota.
 		// The expansion makes the exact-named borough reachable, and exact-match tiering puts it on top.
 		const candidates = await lookup.findPlace({ text: "Brooklyn", placetype: "locality" })
 		expect(candidates.length).toBeGreaterThan(0)
@@ -431,9 +435,10 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 	})
 
 	test("alias-bag boundary: a query straddling two aliases is never exact on a names-less DB (#523)", async () => {
-		// "York New" straddles the bag "Old York <sep> New City": its tokens and-match the row,
-		// but the exact tier must not promote it. Pre-#523 the bag was space-joined and the padded
-		// containment check (' old york new city ' ⊇ ' york new ') false-promoted exactly this shape.
+		// "York New" straddles the bag "Old York <sep> New City": its tokens and-match
+		// the row, but the exact tier must not promote it.
+		// Pre-#523 the bag was space-joined and the padded containment check
+		// (' old york new city ' ⊇ ' york new ') false-promoted exactly this shape.
 		const db = buildFixtureDB()
 		const withFTS = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
 		withFTS[Symbol.dispose]()
@@ -482,12 +487,13 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 	})
 
 	test("SMOKE: a sealed 0444 on-disk extract opens and still answers FTS queries end-to-end", async () => {
-		// smoke test rather than the regression guard: SQLite silently downgrades a write-mode
-		// open to read-only on an owned 0444 file, so this passes under the old `readOnly: false`
-		// too — it does not distinguish old from new code. It proves a genuinely sealed file
-		// resolves end-to-end. The real invariant (the open mode chosen per `buildFTS` —
-		// read-only on every query path, read-write only for the FTS build) is enforced by
-		// the DatabaseSync construction spy in `lookup-readonly-open.test.ts`.
+		// smoke test rather than the regression guard: SQLite silently downgrades a
+		// write-mode open to read-only on an owned 0444 file, so this passes under the old
+		// `readOnly: false` too — it does not distinguish old from new code.
+		// It proves a genuinely sealed file resolves end-to-end.
+		// The real invariant (the open mode chosen per `buildFTS` — read-only on every
+		// query path, read-write only for the FTS build) is enforced by the DatabaseSync
+		// construction spy in `lookup-readonly-open.test.ts`.
 		await using dirDirectory = await temporaryDirectory("mw-wof-ro-")
 		const dir = dirDirectory.path
 		const dbPath = join(dir, "admin-fixture.db")

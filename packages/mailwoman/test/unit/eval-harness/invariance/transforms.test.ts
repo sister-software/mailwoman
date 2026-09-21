@@ -88,9 +88,9 @@ describe("abbreviation-swap", () => {
 
 	it("the Saint-prefix guard isn't index-0-only — protects a mid-string 'St <Name>' and swaps the real suffix instead", () => {
 		// The reviewer's reproduction: a naive index-0-only guard misses "St" here
-		// (it's the third token rather than the first) and corrupts "St Andrews" into
-		// "Street Andrews". The fix must both (a) leave "St Andrews" alone and (b) still
-		// find the standalone "Street" suffix token later in the string.
+		// (it's the third token rather than the first) and corrupts "St Andrews" into "Street Andrews".
+		// The fix must both (a) leave "St Andrews" alone and (b) still find the
+		// standalone "Street" suffix token later in the string.
 		expect(swap("The Vicarage, St Andrews Street, Cambridge")).toBe("The Vicarage, St Andrews St, Cambridge")
 	})
 
@@ -135,9 +135,9 @@ describe("whitespace-jitter", () => {
 	})
 
 	it("returns null when whitespace is present but none of it is a literal space (guard must match the mutation)", () => {
-		// The mutation only doubles literal " " characters. A guard that accepts any
-		// `\s` (tabs, etc.) but finds no space to double is a silent no-op invariant —
-		// the transform claims it ran but nothing actually changed.
+		// The mutation only doubles literal " " characters.
+		// A guard that accepts any `\s` (tabs, etc.) but finds no space to double is a silent
+		// no-op invariant — the transform claims it ran but nothing actually changed.
 		expect(getTransform("whitespace-jitter").apply("A\tB")).toBeNull()
 	})
 })

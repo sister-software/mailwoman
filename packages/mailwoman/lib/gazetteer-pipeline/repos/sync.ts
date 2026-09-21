@@ -32,8 +32,10 @@ import { runFileSync } from "@mailwoman/core/process"
 import { type ForkProbe, type RepoOrigin, resolveWOFRepoOrigin } from "#gazetteer-pipeline/wof/repo-origin"
 
 /**
- * What the sync would do to one repo. Every value except {@link SyncAction.Clone}
- * and {@link SyncAction.FastForward} leaves the working tree untouched.
+ * What the sync would do to one repo.
+ *
+ * Every value except {@link SyncAction.Clone} and {@link SyncAction.FastForward}
+ * leaves the working tree untouched.
  */
 export const SyncAction = {
 	/**
@@ -50,6 +52,7 @@ export const SyncAction = {
 	UpToDate: "up-to-date",
 	/**
 	 * The clone's `origin` is not the resolved origin — typically upstream while a fork exists.
+	 *
 	 * Reported, never acted on without an explicit opt-in, because it changes what the next build reads.
 	 */
 	RepointRequired: "repoint-required",
@@ -71,8 +74,10 @@ export const SyncAction = {
 export type SyncAction = (typeof SyncAction)[keyof typeof SyncAction]
 
 /**
- * The observable state of one checkout. Every field is read, never inferred — `undefined`
- * means the question could not be answered here, which is different from a negative answer.
+ * The observable state of one checkout.
+ *
+ * Every field is read, never inferred — `undefined` means the question could not be
+ * answered here, which is different from a negative answer.
  */
 export interface CloneState {
 	exists: boolean
@@ -83,7 +88,9 @@ export interface CloneState {
 	originURL?: string
 	dirty?: boolean
 	/**
-	 * Commits on head that the tracked upstream lacks. `undefined` when no upstream is tracked.
+	 * Commits on head that the tracked upstream lacks.
+	 *
+	 * `undefined` when no upstream is tracked.
 	 */
 	ahead?: number
 	behind?: number
@@ -180,9 +187,10 @@ function git(cwd: string, args: string[]): string {
 }
 
 /**
- * Read one checkout's state. Each probe is independently guarded: a repo with no
- * tracked upstream still reports its remote and vintage, rather than collapsing
- * to "unknown" because one question had no answer.
+ * Read one checkout's state.
+ *
+ * Each probe is independently guarded: a repo with no tracked upstream still reports its remote
+ * and vintage, rather than collapsing to "unknown" because one question had no answer.
  */
 export async function inspectClone(directory: string): Promise<CloneState> {
 	if (!(await pathExists(directory))) return { exists: false, isRepository: false }
@@ -202,11 +210,11 @@ export async function inspectClone(directory: string): Promise<CloneState> {
 	}
 
 	// Compared against origin's branch rather than `@{u}`.
-	// `git remote rename origin upstream` rewrites `branch.<name>.remote`, so after a
-	// re-point the tracked upstream is the remote we moved away from — and a clone sitting
-	// exactly level with its fork reports as carrying unpushed commits, which the planner
-	// then refuses to touch. Measured on the GB checkout the moment the re-point landed:
-	// `head...@{u}` answered `35 0` while `head` and `origin/master` were the same sha.
+	// `git remote rename origin upstream` rewrites `branch.<name>.remote`, so after a re-point
+	// the tracked upstream is the remote we moved away from — and a clone sitting exactly level
+	// with its fork reports as carrying unpushed commits, which the planner then refuses to touch.
+	// Measured on the GB checkout the moment the re-point landed: `head...@{u}` answered `35 0`
+	// while `head` and `origin/master` were the same sha.
 	const branch = read(["rev-parse", "--abbrev-ref", "HEAD"])
 
 	const counts =
@@ -234,9 +242,11 @@ export async function inspectClone(directory: string): Promise<CloneState> {
 /**
  * Plan the sync for a set of repos without touching anything.
  *
- * `fetchFirst` updates remote-tracking refs so `behind` is measured against the remote's actual
- * tip rather than whatever this machine last heard. Skipping it reports a stale
- * clone as up-to-date, which is the failure the whole command exists to prevent .
+ * `fetchFirst` updates remote-tracking refs so `behind` is measured against the
+ * remote's actual tip rather than whatever this machine last heard.
+ * Skipping it reports a stale clone as up-to-date, which is the failure the
+ * whole command exists to prevent .
+ *
  * Therefore, it defaults on, and turning it off is for offline inspection.
  */
 export async function planReposSync(options: {

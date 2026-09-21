@@ -50,15 +50,21 @@ import type { NamesTable, SprTable, WOFDatabase } from "#schema"
 
 export interface BuildSlimOptions {
 	/**
-	 * Input WOF SQLite distributions. Each should already have spr / names / place_population tables.
+	 * Input WOF SQLite distributions.
+	 *
+	 * Each should already have spr / names / place_population tables.
 	 */
 	inputs: string[]
 	/**
-	 * Output path for the slim DB. Will be overwritten if it exists.
+	 * Output path for the slim DB.
+	 *
+	 * Will be overwritten if it exists.
 	 */
 	output: string
 	/**
-	 * Country codes to keep (ISO 2-letter). Defaults to `["US"]`.
+	 * Country codes to keep (ISO 2-letter).
+	 *
+	 * Defaults to `["US"]`.
 	 */
 	countries?: string[]
 	/**
@@ -67,10 +73,12 @@ export interface BuildSlimOptions {
 	topLocalitiesPerCountry?: number
 	/**
 	 * Drop the `names` table after the FTS index is built (default false).
-	 * `place_search` is a self-contained FTS5 (no external `content=`), so once it's
-	 * built `names` is only the build-time source — the resolver queries `place_search` +
-	 * `spr` + `place_population` + `coincident_roles` and never reads `names` at runtime.
+	 *
+	 * `place_search` is a self-contained FTS5 (no external `content=`), so once it's built
+	 * `names` is only the build-time source — the resolver queries `place_search` + `spr` +
+	 * `place_population` + `coincident_roles` and never reads `names` at runtime.
 	 * Dropping it is the single biggest size win (~2/3 of the file for a multi-locale build. see #359).
+	 *
 	 * A future consumer that needs raw alt-names at runtime should ship a separate extract
 	 * rather than re-bloat the hot DB.
 	 */
@@ -116,6 +124,7 @@ const ANCESTOR_PLACETYPES = ["country", "region", "county", "borough", "macroreg
 
 /**
  * Tables copied verbatim (schema + filtered rows) from each source DB.
+ *
  * Anything else is dropped.
  */
 const COPIED_TABLES = ["spr", "names", PLACE_POPULATION_TABLE] as const
@@ -134,10 +143,12 @@ interface PlacePopulationTable {
 }
 
 /**
- * Kysely schema for the build phase. Mirrors the resolver-facing tables, plus the ATTACHed
- * `src.*` tables so the row-copying queries can name the source schema in `selectFrom` without
- * falling back to raw SQL. attach itself is still raw — Kysely doesn't model it — but everything
- * downstream (the select-insert step that does the actual filtering work) goes through the builder.
+ * Kysely schema for the build phase.
+ *
+ * Mirrors the resolver-facing tables, plus the ATTACHed `src.*` tables so the row-copying
+ * queries can name the source schema in `selectFrom` without falling back to raw SQL.
+ * attach itself is still raw — Kysely doesn't model it — but everything downstream
+ * (the select-insert step that does the actual filtering work) goes through the builder.
  */
 interface BuildSchema {
 	spr: SprTable
@@ -169,10 +180,11 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 		await removePath(opts.output)
 	}
 
-	// Open the output DB and create the empty schema. We discover the schema from the first
-	// input (raw sqlite_master read — Kysely doesn't model that) so the output mirrors
-	// source column ordering / types. `create table AS select` flattens types to dynamic,
-	// which would break callers that rely on column-affinity behavior.
+	// Open the output DB and create the empty schema.
+	// We discover the schema from the first input (raw sqlite_master read — Kysely doesn't model that)
+	// so the output mirrors source column ordering / types.
+	// `create table AS select` flattens types to dynamic, which would break callers
+	// that rely on column-affinity behavior.
 	const out = new DatabaseClient<BuildSchema>(opts.output)
 	let result: BuildSlimResult
 
@@ -187,13 +199,14 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 				.get(table) as { sql?: string } | undefined
 
 			if (createSQL?.sql) {
-				// Raw DDL by design (introspect-and-replay): we exec the source DB's
-				// own create table string read from sqlite_master, so a static Kysely
-				// builder can't express it. See agents.md.
+				// Raw DDL by design (introspect-and-replay): we exec the source DB's own create
+				// table string read from sqlite_master, so a static Kysely builder can't express it.
+				// See agents.md.
 				out.exec(createSQL.sql)
 			} else if (table === PLACE_POPULATION_TABLE) {
-				// Older source builds may predate the aux table — create it empty so the per-source
-				// copy + ranking have somewhere to land. Sparse-by-design. missing rows are fine.
+				// Older source builds may predate the aux table — create it empty
+				// so the per-source copy + ranking have somewhere to land.
+				// Sparse-by-design. missing rows are fine.
 				out.exec(PLACE_POPULATION_DDL)
 			} else {
 				throw new Error(`source DB ${inputs[0]} is missing required table '${table}'`)
@@ -211,9 +224,9 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 
 		// Build the resolver virtual tables on the trimmed row set.
 		// Both place_search (FTS5) and place_bbox (R*Tree) derive purely from spr + names —
-		// no geojson needed (see fts.ts). The population aux table is not rebuilt here:
-		// it was copied verbatim above, and fts.ts only (re)builds it when a `geojson`
-		// table is present, which the slim DB intentionally has not.
+		// no geojson needed (see fts.ts).
+		// The population aux table is not rebuilt here: it was copied verbatim above, and fts.ts only
+		// (re)builds it when a `geojson` table is present, which the slim DB intentionally has not.
 		progress("fts", "building place_search / place_bbox on slim DB")
 
 		buildPlaceSearchFTS(out, {
@@ -221,11 +234,12 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 			onProgress: (phase, name) => progress("fts", `${phase} ${name}`),
 		})
 
-		// Materialize region/state abbreviations into a standalone `place_abbr (id, abbr)` table
-		// before `names` is (optionally) dropped. The full DB lets the resolver tier an exact-abbrev
-		// match by querying `names` (`#exactMatchIDs`), but the slim DB drops `names` for size —
-		// so the browser resolver gets its own tiny lookup (~hundreds of rows) to do the same
-		// data-driven exact-abbrev tiering ("VT" → Vermont rather than a token-matching foreign region)
+		// Materialize region/state abbreviations into a standalone `place_abbr (id, abbr)`
+		// table before `names` is (optionally) dropped.
+		// The full DB lets the resolver tier an exact-abbrev match by querying `names`
+		// (`#exactMatchIDs`), but the slim DB drops `names` for size — so the browser
+		// resolver gets its own tiny lookup (~hundreds of rows) to do the same data-driven
+		// exact-abbrev tiering ("VT" → Vermont rather than a token-matching foreign region)
 		// instead of the demo's hardcoded region-abbreviation map (since deleted).
 		// Sourced from the `language='abbr'` rows `add-region-abbrevs.ts` wrote,
 		// already filtered to surviving spr ids via the names copy.
@@ -330,7 +344,8 @@ async function copyFromSource(
 			.onConflict((oc) => oc.doNothing())
 			.execute()
 
-		// 2. Top-K localities by population. Population lives in the pre-built `place_population`
+		// 2. Top-K localities by population.
+		//    Population lives in the pre-built `place_population`
 		// aux table — left-join it so localities without a population row still qualify (sorted last).
 		// If the extract has no population table, fall back to a deterministic id ordering.
 		progress("locality", `${inputPath}: top-${topLocalities} localities by population`)
@@ -393,10 +408,11 @@ async function copyFromSource(
 
 		// 6. Carry the coincident_roles relation (#402) when this source has it (the admin DB), so the
 		// slim/demo DB supports dual-role hierarchy completion (on by default).
-		// Filtered to surviving spr ids → no orphans. Tiny (~hundreds of rows).
+		// Filtered to surviving spr ids → no orphans.
+		// Tiny (~hundreds of rows).
 		// `ancestors` is intentionally not copied (huge
-		// + build-only), so we copy the derived table rather than rebuild
-		//   it. Raw SQL — conditional +
+		// + build-only), so we copy the derived table rather than rebuild it.
+		//   Raw SQL — conditional +
 		// not in the Kysely build schema.
 		const relationSchema = out
 			.prepare(`SELECT sql FROM src.sqlite_master WHERE type = 'table' AND name = 'coincident_roles'`)

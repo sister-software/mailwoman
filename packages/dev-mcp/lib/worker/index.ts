@@ -117,9 +117,10 @@ process.on("message", (message: WorkerInbound) => {
 			return
 		}
 
-		// Validate here rather than in the shim: the split moved the SDK's schema enforcement out of the
-		// call path, and an unvalidated handler turns a stale-schema client's mis-shaped argument into a
-		// deep, misattributed TypeError (a tally array arriving as its JSON text reached `paths.map`).
+		// Validate here rather than in the shim: the split moved the SDK's schema
+		// enforcement out of the call path, and an unvalidated handler turns a
+		// stale-schema client's mis-shaped argument into a deep, misattributed TypeError
+		// (a tally array arriving as its JSON text reached `paths.map`).
 		// Parsing also applies the schema's defaults.
 		const parsed = tool.inputSchema.safeParse(message.args)
 

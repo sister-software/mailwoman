@@ -27,9 +27,10 @@ import { TextSpliterator } from "spliterator"
 import { lintReply, renderVerdict } from "#hooks/vale/check-core"
 
 /**
- * The reply text, preferring the payload's `last_assistant_message` and falling back to
- * the transcript. The fallback exists because a silently absent field would read as "the
- * reply was clean" — a false negative indistinguishable from a real absence.
+ * The reply text, preferring the payload's `last_assistant_message` and falling back to the transcript.
+ *
+ * The fallback exists because a silently absent field would read as "the reply was clean" —
+ * a false negative indistinguishable from a real absence.
  */
 async function readReply(payload: Record<string, unknown> | null): Promise<string> {
 	const direct = payload?.last_assistant_message

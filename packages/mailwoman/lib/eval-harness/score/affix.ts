@@ -32,23 +32,29 @@ import {
  */
 export interface ScoreAffixOptions {
 	/**
-	 * ONNX artifact to grade. Empty/omitted is legal alongside {@linkcode ScoreAffixOptions.weightsCache}.
+	 * ONNX artifact to grade.
+	 *
+	 * Empty/omitted is legal alongside {@linkcode ScoreAffixOptions.weightsCache}.
 	 * The value also feeds the report header verbatim (its last two path segments),
 	 * so an empty string renders the same empty slot the child process did.
 	 */
 	model?: string
 	/**
-	 * Eval jsonl. Default `data/eval/external/street-affix-real.jsonl`.
+	 * Eval jsonl.
+	 *
+	 * Default `data/eval/external/street-affix-real.jsonl`.
 	 */
 	file?: string
 	/**
-	 * A gazetteer-trained model must be fed the lexicon (+ the paired postcode suppression)
-	 * at inference, else the zero-filled clue is a train/inference mismatch that
-	 * wrecks segmentation. Pass for v1.0.0+.
+	 * A gazetteer-trained model must be fed the lexicon (+ the paired postcode suppression) at
+	 * inference, else the zero-filled clue is a train/inference mismatch that wrecks segmentation.
+	 *
+	 * Pass for v1.0.0+.
 	 */
 	gazetteerLexicon?: string
 	/**
 	 * Write the machine-readable sidecar here — the interface the check verdict reads.
+	 *
 	 * The markdown is presentation.
 	 */
 	json?: string
@@ -69,6 +75,7 @@ export interface ScoreAffixOptions {
 	 * Package-shaped (#718-safe): `<root>` loads model + tokenizer + card + all soft
 	 * channels (anchor + gazetteer + country) from the package via `loadFromWeights` —
 	 * the only in-distribution grade for a country-channel model (v6.2.0+).
+	 *
 	 * Takes precedence over the explicit {@linkcode ScoreAffixOptions.model} path.
 	 */
 	weightsCache?: string
@@ -112,8 +119,10 @@ const TAGS = [
 ] as const
 
 /**
- * Score one eval file's unfolded per-tag P/R/F1. Every narration line goes through `report`, one call
- * per line, so the check's captured markdown matches the child-process stdout it replaced byte-for-byte.
+ * Score one eval file's unfolded per-tag P/R/F1.
+ *
+ * Every narration line goes through `report`, one call per line, so the check's captured
+ * markdown matches the child-process stdout it replaced byte-for-byte.
  */
 export async function scoreAffix(
 	options: ScoreAffixOptions = {},

@@ -25,8 +25,10 @@
  */
 export interface PopulationCorrection {
 	/**
-	 * The GeoNames id from the WOF record's own `concordances` row makes this a correction
-	 * rather than a substitution. The two sources describe the same place because WOF says so.
+	 * The GeoNames id from the WOF record's own `concordances` row makes this a
+	 * correction rather than a substitution.
+	 *
+	 * The two sources describe the same place because WOF says so.
 	 * Therefore, the correction preserves the source identity.
 	 */
 	geonamesID: string
@@ -48,8 +50,9 @@ export interface PopulationCorrection {
 /**
  * WOF id → the corrected population.
  *
- * One entry, because one row has been followed. Adding a second is the same work again:
- * read the row's `gn:id`, confirm the coordinates agree, and state what the second source says.
+ * One entry, because one row has been followed.
+ * Adding a second is the same work again: read the row's `gn:id`, confirm the
+ * coordinates agree, and state what the second source says.
  */
 export const POPULATION_CORRECTIONS: Readonly<Record<number, PopulationCorrection>> = {
 	102_030_887: {

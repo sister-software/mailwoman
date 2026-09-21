@@ -52,15 +52,18 @@ const RATIO = Number(args.ratio ?? 10)
 const RARE_NAME_MAX = Number(args.bearers ?? 3)
 
 /**
- * Placetypes a locality's same-name parent may be. A locality nested inside a same-name `region` is
- * the ordinary capital-of-its-region shape (Luxembourg, Djibouti, Kuwait City) and is not this defect.
+ * Placetypes a locality's same-name parent may be.
+ *
+ * A locality nested inside a same-name `region` is the ordinary capital-of-its-region
+ * shape (Luxembourg, Djibouti, Kuwait City) and is not this defect.
  */
 const PARENT_PLACETYPES = ["county", "localadmin", "borough"]
 
 /**
- * Aurangabad, Maharashtra — renamed Chhatrapati Sambhajinagar, a city of roughly 1.2
- * million whose `locality` row records 19,172. The row this detector was written for,
- * reported at the end so a run says whether it still reaches it.
+ * Aurangabad, Maharashtra — renamed Chhatrapati Sambhajinagar, a city of roughly
+ * 1.2 million whose `locality` row records 19,172.
+ *
+ * The row this detector was written for, reported at the end so a run says whether it still reaches it.
  */
 const AURANGABAD_MAHARASHTRA = 102_030_887
 
@@ -69,9 +72,10 @@ using db = new DatabaseClient<WOFDatabase>(String(args.admin ?? dataRootPath("wo
 })
 
 /**
- * The comparison surface. Diacritic-folded and case-folded, but not emptied for a
- * non-Latin name the way the resolver's `foldName` is — a Han or Cyrillic locality
- * would otherwise fold equal to its parent by both being empty.
+ * The comparison surface.
+ *
+ * Diacritic-folded and case-folded, but not emptied for a non-Latin name the way the resolver's `foldName`
+ * is — a Han or Cyrillic locality would otherwise fold equal to its parent by both being empty.
  */
 const nameKey = (name: string): string =>
 	name
@@ -90,8 +94,9 @@ interface Row {
 	parentPopulation: number
 	ratio: number
 	/**
-	 * Localities of this name in this country. High means a common village name. a
-	 * handful means a real settlement and its namesakes.
+	 * Localities of this name in this country.
+	 *
+	 * High means a common village name. a handful means a real settlement and its namesakes.
 	 */
 	nameBearers: number
 }

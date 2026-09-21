@@ -26,10 +26,12 @@ const HTTP_PARTIAL_CONTENT = 206
 
 /**
  * Run one transfer up to `1 + retries` times, pausing `retryDelayMs` between attempts.
- * A government portal drops a multi-hundred-megabyte connection often enough that a collection fetch
- * which lets the first `TypeError: terminated` propagate loses the whole run to one file.
- * the per-file loop calls the transfer through this and records the failure only once the
- * attempts are spent. The last error is rethrown so the caller can name the file it lost.
+ *
+ * A government portal drops a multi-hundred-megabyte connection often enough that
+ * a collection fetch which lets the first `TypeError: terminated` propagate loses
+ * the whole run to one file. the per-file loop calls the transfer through this
+ * and records the failure only once the attempts are spent.
+ * The last error is rethrown so the caller can name the file it lost.
  */
 export async function withRetries<T>(
 	transfer: () => Promise<T>,
@@ -66,13 +68,15 @@ async function bytesOnDisk(path: string): Promise<number> {
 
 /**
  * Download `url` to `dest` in ranges, resuming from whatever the `.tmp` sibling already holds.
+ *
  * For a host that drops a long connection every few megabytes but answers `Range` with 206
  * (the Korean address portal does both, measured at 0.9–12 MB per connection against a 181 MB file),
- * a whole-body transfer never finishes and a plain retry starts over. this one asks for the
- * remainder each time and keeps what landed. The total comes from the first `Content-Range`,
- * and the loop gives up after `maxConnections` connections so a host that keeps
- * answering 206 with no bytes cannot spin. Answers the byte count written. throws
- * when the host answers anything but 206 for a range.
+ * a whole-body transfer never finishes and a plain retry starts over. this one
+ * asks for the remainder each time and keeps what landed.
+ * The total comes from the first `Content-Range`, and the loop gives up after `maxConnections`
+ * connections so a host that keeps answering 206 with no bytes cannot spin.
+ *
+ * Answers the byte count written. throws when the host answers anything but 206 for a range.
  */
 export async function resumableDownload(options: {
 	url: string

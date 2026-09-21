@@ -13,6 +13,7 @@ const rightsFileState = z.object({ file: z.string(), changed: z.boolean() })
 
 /**
  * `release.write-rights-files` — writes inside the checkout.
+ *
  * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
  */
 export const writeRightsFiles = defineOperation({

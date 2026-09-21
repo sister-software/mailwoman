@@ -33,7 +33,9 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import type { AddressSystem } from "#decoder/types"
 
 /**
- * Preferred-parent ordering for each tag. Empty / missing = always root.
+ * Preferred-parent ordering for each tag.
+ *
+ * Empty / missing = always root.
  */
 export const WESTERN_PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>> = {
 	// Universal coarse — containment follows geographic granularity.
@@ -51,10 +53,11 @@ export const WESTERN_PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>> = 
 	street_suffix: ["street"],
 	// A CN production team can carry a house number with no street at all (`古北口村南关生产队6号`).
 	house_number: ["street", "locality_unit"],
-	// `venue` is here for the SUB-venue case — `Terminal 5` of `Heathrow Airport`, `Gate 12` of
-	// `Manchester Airport`. The table modelled `attention: ["venue"]` but not a unit of a venue,
-	// so `validateTree` reported a correct, passing parse (gb-subvenue-heathrow-terminal) as a
-	// stranded dependent: the interface was narrower than the capability the board already tests.
+	// `venue` is here for the SUB-venue case — `Terminal 5` of `Heathrow Airport`,
+	// `Gate 12` of `Manchester Airport`.
+	// The table modelled `attention: ["venue"]` but not a unit of a venue, so `validateTree`
+	// reported a correct, passing parse (gb-subvenue-heathrow-terminal) as a stranded dependent:
+	// the interface was narrower than the capability the board already tests.
 	unit: ["street", "house_number", "venue"],
 	intersection_a: ["street", "locality"],
 	intersection_b: ["street", "locality"],
@@ -80,18 +83,21 @@ export const WESTERN_PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>> = 
 /**
  * The containment map for a given addressing system.
  *
- * Currently every system maps to {@link WESTERN_PARENT_OF} — the indirection exists so a future
- * system-specific map (e.g. Japanese block addressing) can be introduced without touching the tree
- * builder or validator. `undefined` (the common case — system not yet detected) uses the default.
+ * Currently every system maps to {@link WESTERN_PARENT_OF} — the indirection exists
+ * so a future system-specific map (e.g. Japanese block addressing) can be introduced
+ * without touching the tree builder or validator.
+ * `undefined` (the common case — system not yet detected) uses the default.
  */
 export function containmentFor(_system?: AddressSystem): Partial<Record<ComponentTag, ComponentTag[]>> {
-	// Single system today. The parameter is intentionally consumed lazily — adding
-	// `case "japanese":` here is the entire surface area for a new system's hierarchy.
+	// Single system today.
+	// The parameter is intentionally consumed lazily — adding `case "japanese":`
+	// here is the entire surface area for a new system's hierarchy.
 	return WESTERN_PARENT_OF
 }
 
 /**
  * Backwards-compatible alias for the default (Western) containment map.
+ *
  * Prefer `containmentFor()` in new code so the system parameter threads through.
  * this export remains for existing call sites.
  */

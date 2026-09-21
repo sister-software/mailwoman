@@ -69,13 +69,15 @@ function nextTick(): Promise<void> {
 
 /**
  * Wrap every function-valued method on `userEvent` so the interaction —
- * and one trailing tick — run inside act(). The trailing tick is what captures updates
- * decoupled from the event (the clipboard case); a debounced update lands later still
- * and is caught by the act-wrapped `vi.waitFor` the test awaits next.
+ * and one trailing tick — run inside act().
+ *
+ * The trailing tick is what captures updates decoupled from the event (the clipboard case); a debounced
+ * update lands later still and is caught by the act-wrapped `vi.waitFor` the test awaits next.
  */
 function wrapUserEvent(): void {
-	// `UserEvent` is @testing-library's own interface of named methods, so it is not assignable to an
-	// index signature in either direction. Iterating it by key is the whole point of this wrapper.
+	// `UserEvent` is @testing-library's own interface of named methods, so it is not
+	// assignable to an index signature in either direction.
+	// Iterating it by key is the whole point of this wrapper.
 	const target = userEvent as unknown as Record<string, TaggableFn>
 
 	for (const key of Object.keys(target)) {
@@ -106,10 +108,11 @@ const DEFAULT_WAIT_INTERVAL = 50
 
 /**
  * Poll `callback` until it stops throwing (or `timeout` elapses), advancing
- * React inside act() between tries. Each iteration awaits a full `act()`
- * (draining that round's microtasks + a timer tick), so effect chains flush a step at
- * a time. the callback then runs synchronously outside act — the only out-of-act code,
- * and being sync it offers no point for a stray update to escape the act scope.
+ * React inside act() between tries.
+ *
+ * Each iteration awaits a full `act()` (draining that round's microtasks + a timer tick),
+ * so effect chains flush a step at a time. the callback then runs synchronously outside act — the
+ * only out-of-act code, and being sync it offers no point for a stray update to escape the act scope.
  *
  * Drop-in for `vi.waitFor` over this suite's usage (synchronous assertion callbacks).
  * An async callback is still awaited, but none of the tests here pass one.
@@ -126,8 +129,8 @@ async function actWaitFor<T>(
 	for (;;) {
 		try {
 			// Call synchronously and only `await` a genuinely-thenable result.
-			// `await`-ing a plain value still yields a microtask, and a component
-			// promise queued behind it would fire setState in that gap — outside act.
+			// `await`-ing a plain value still yields a microtask, and a component promise
+			// queued behind it would fire setState in that gap — outside act.
 			// None of this suite's callbacks are async, so the sync path is the norm.
 			const result = callback()
 
@@ -193,8 +196,9 @@ export async function actDelay(ms = 0): Promise<void> {
 }
 
 /**
- * Install the act() wrappers on the shared `userEvent` /
- * `vi` singletons. Idempotent.
+ * Install the act() wrappers on the shared `userEvent` / `vi` singletons.
+ *
+ * Idempotent.
  */
 export function installActWrappers(): void {
 	wrapUserEvent()

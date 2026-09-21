@@ -81,8 +81,8 @@ export async function readCommands(
 		if (!/\.[cm]?js$/u.test(entry) || entry.endsWith(".d.js")) continue
 		const module = (await import(pathToFileURL(path).href)) as { spec?: CommandSpec; default?: unknown; run?: unknown }
 		const fileName = entry.replace(/\.[cm]?js$/u, "")
-		// The declared name, so a file that moves into a prefix directory keeps the name
-		// users type. `index` is the one exception: it is a position rather than a name,
+		// The declared name, so a file that moves into a prefix directory keeps the name users type.
+		// `index` is the one exception: it is a position rather than a name,
 		// and the parent folds it into the directory's own entry.
 		const name = fileName === "index" ? fileName : (module.spec?.name ?? fileName)
 

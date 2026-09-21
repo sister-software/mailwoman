@@ -73,9 +73,9 @@ export interface TabularDictionary {
  * Column positions in `mstab.txt` and `mstabcol.txt` themselves.
  *
  * These two are the only positions this module hard-codes, and they cannot be looked up
- * because they are what the lookup is built from. Both files declare themselves
- * in `mstabcol.txt`, so the assertions below check the bootstrap against the
- * archive's own account of it rather than trusting it.
+ * because they are what the lookup is built from.
+ * Both files declare themselves in `mstabcol.txt`, so the assertions below check the
+ * bootstrap against the archive's own account of it rather than trusting it.
  */
 const MSTAB_TABLE_NAME = 0
 const MSTAB_FILE_NAME = 4
@@ -85,6 +85,7 @@ const MSTABCOL_COLUMN_NAME = 2
 
 /**
  * Declared widths of the two bootstrap files, asserted before either is read as a dictionary.
+ *
  * A different width means the metadata format changed, and reading positions out of
  * a changed format is how a builder mis-reads every column at once.
  */
@@ -228,10 +229,11 @@ export interface DomainMember {
 }
 
 /**
- * Column positions in `msdomdet.txt`. Declared in `mstabcol.txt` under table
- * `msdomdet`, so unlike the two bootstrap files above these could be looked up —
- * they are named here because the domain read runs before any dictionary-driven read
- * and the file is five columns wide by its own declaration.
+ * Column positions in `msdomdet.txt`.
+ *
+ * Declared in `mstabcol.txt` under table `msdomdet`, so unlike the two bootstrap files
+ * above these could be looked up — they are named here because the domain read runs
+ * before any dictionary-driven read and the file is five columns wide by its own declaration.
  */
 const MSDOMDET_WIDTH = 5
 
@@ -271,8 +273,9 @@ export function domainCodes(members: ReadonlyArray<DomainMember>, domain: string
 /**
  * `M/D/yyyy H:MM:SS` (and the `MM/DD/yyyy HH:MM:SS` the tabular export writes) to an ISO date.
  *
- * The two channels spell the same instant differently — Soil Data Access answers `9/9/2025 1:57:25 PM`
- * and the shipped `sacatlog.txt` writes `09/09/2025 13:57:25` — and the download URL needs `2025-09-09`.
+ * The two channels spell the same instant differently — Soil Data Access answers
+ * `9/9/2025 1:57:25 PM` and the shipped `sacatlog.txt` writes `09/09/2025 13:57:25` —
+ * and the download URL needs `2025-09-09`.
  * Parsing to a date rather than slicing the string is what makes both channels agree.
  *
  * @throws {Error} When the value is not one of those shapes.

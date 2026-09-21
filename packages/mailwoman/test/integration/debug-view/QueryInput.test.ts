@@ -156,8 +156,9 @@ describe("applyKey", () => {
 	})
 
 	it("keeps a pasted multi-line address instead of dropping the whole paste", () => {
-		// A paste arrives as one `input`. Rejecting it because it contains a newline dropped
-		// the address on the floor with no feedback — the field simply didn't respond.
+		// A paste arrives as one `input`.
+		// Rejecting it because it contains a newline dropped the address on the floor
+		// with no feedback — the field simply didn't respond.
 		expect(applyKey({ value: "", cursor: 0 }, "12 Rue de Rivoli\n75001 Paris", key())).toEqual({
 			value: "12 Rue de Rivoli 75001 Paris",
 			cursor: 28,

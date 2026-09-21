@@ -112,9 +112,10 @@ describe("sanitizeFTSQuery — punctuation stripping (existing behavior, regress
 
 describe("sanitizeFTSQuery — intra-token punctuation SPLITS for non-postcode queries (#945)", () => {
 	test("hyphenated locality resolves — `Thiron-Gardais` reaches the FTS as two terms", async () => {
-		// The old fuse produced the single term `ThironGardais`, matching nothing: the unicode61 tokenizer
-		// indexes the stored name as `thiron` + `gardais`. This class was masked for years
-		// because pre-splice models never emitted hyphen-preserved span values (#945).
+		// The old fuse produced the single term `ThironGardais`, matching nothing:
+		// the unicode61 tokenizer indexes the stored name as `thiron` + `gardais`.
+		// This class was masked for years because pre-splice models never emitted
+		// hyphen-preserved span values (#945).
 		const r = await lookup.findPlace({ text: "Thiron-Gardais", placetype: "locality" })
 
 		expect(r).toHaveLength(1)
@@ -136,10 +137,11 @@ describe("sanitizeFTSQuery — intra-token punctuation SPLITS for non-postcode q
 	})
 
 	test("postcode-typed queries KEEP the #920 fused name-law shape", async () => {
-		// A spaced/hyphenated postcode query must still fuse per token — the postal names are stored
-		// collapsed. `62-701` fused per-token is `62701`, matching the stored row. split it would
-		// be `"62" "701"`, which unicode61 also tokenizes to match — but the fuse is the interface
-		// the geonames-postal name law was built against. Therefore, pin it explicitly.
+		// A spaced/hyphenated postcode query must still fuse per token — the postal names are stored collapsed.
+		// `62-701` fused per-token is `62701`, matching the stored row. split it would
+		// be `"62" "701"`, which unicode61 also tokenizes to match — but the fuse is the
+		// interface the geonames-postal name law was built against.
+		// Therefore, pin it explicitly.
 		const r = await lookup.findPlace({ text: "62-701", placetype: "postalcode" })
 
 		expect(r).toHaveLength(1)

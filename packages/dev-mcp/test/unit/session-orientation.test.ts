@@ -18,9 +18,11 @@ const HOOK = resolvePackagePath("@mailwoman/dev-mcp", "lib", "hooks", "session-o
 const REPO_ROOT = String(repoRootPath())
 
 /**
- * Roughly 2,500 tokens at four bytes each. The signature digest this replaces measured
- * near 88,000 tokens for the same tree, and would not survive a compaction. if the listing
- * grows past this, drop the per-workspace subpath limit rather than the budget.
+ * Roughly 2,500 tokens at four bytes each.
+ *
+ * The signature digest this replaces measured near 88,000 tokens for the same tree,
+ * and would not survive a compaction. if the listing grows past this, drop the
+ * per-workspace subpath limit rather than the budget.
  */
 const BYTE_BUDGET = 10_000
 

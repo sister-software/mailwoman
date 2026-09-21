@@ -15,7 +15,9 @@
 
 /**
  * The admin database a fold output was made from, by name: `<x>-geonames.db`
- * or `<x>-geonames-<stamp>.db` → `<x>.db`. Null when the path does not look like a fold output.
+ * or `<x>-geonames-<stamp>.db` → `<x>.db`.
+ *
+ * Null when the path does not look like a fold output.
  */
 export function foldSourceAdminPath(foldPath: string): string | null {
 	const match = /^(.*)-geonames(?:-[^/]*)?\.db$/u.exec(foldPath)
@@ -31,9 +33,10 @@ export interface FoldStaleness {
 }
 
 /**
- * The staleness verdict for a fold output: the admin database it derives from was modified
- * after the fold was written. Null when the fold is at least as new as its source,
- * or when `adminModified` is absent (no source found).
+ * The staleness verdict for a fold output: the admin database it derives from
+ * was modified after the fold was written.
+ *
+ * Null when the fold is at least as new as its source, or when `adminModified` is absent (no source found).
  */
 export function foldStaleness(
 	foldPath: string,

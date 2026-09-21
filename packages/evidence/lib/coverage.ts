@@ -14,9 +14,11 @@
  */
 
 /**
- * What a `completeness` value rests on. The magnitude alone cannot be acted on: a cell recorded
- * at `1.0` because an authority designates the set complete, and a cell recorded at `1.0`
- * because the source happened to return rows there, license entirely different conclusions.
+ * What a `completeness` value rests on.
+ *
+ * The magnitude alone cannot be acted on: a cell recorded at `1.0` because an authority
+ * designates the set complete, and a cell recorded at `1.0` because the source happened
+ * to return rows there, license entirely different conclusions.
  *
  * Only {@link CoverageBasis.Designated} and {@link CoverageBasis.Surveyed} can support an exclusion —
  * "the thing you asked for is not here". {@link CoverageBasis.SourcePresent} supports presence
@@ -24,18 +26,24 @@
  */
 export const CoverageBasis = {
 	/**
-	 * An authority declares the set complete for this cell — BAN holding every address in a commune,
-	 * OS declaring OS Open uprn complete for GB. A miss inside a designated cell is evidence of absence.
+	 * An authority declares the set complete for this cell — BAN holding every address
+	 * in a commune, OS declaring OS Open uprn complete for GB.
+	 *
+	 * A miss inside a designated cell is evidence of absence.
 	 */
 	Designated: "designated",
 	/**
-	 * We measured completeness ourselves against an independent reference, and `completeness`
-	 * carries that measurement. A miss is evidence of absence in proportion to the value.
+	 * We measured completeness ourselves against an independent reference,
+	 * and `completeness` carries that measurement.
+	 *
+	 * A miss is evidence of absence in proportion to the value.
 	 */
 	Surveyed: "surveyed",
 	/**
 	 * The source returned rows in this cell and we recorded that.
-	 * Says nothing about what the source missed. A miss here is unknown, never absence.
+	 *
+	 * Says nothing about what the source missed.
+	 * A miss here is unknown, never absence.
 	 */
 	SourcePresent: "source_present",
 } as const
@@ -62,6 +70,7 @@ export interface CoverageScope {
 	basis: CoverageBasis
 	/**
 	 * The fold both the layer's builder and this probe used.
+	 *
 	 * Their agreement is what licensed the exclusion.
 	 */
 	fold: string
@@ -86,9 +95,11 @@ export interface RequireExclusionInput {
 	cell: { basis?: CoverageBasis | null } | undefined
 	/**
 	 * Identity of the fold this probe folded its key with.
+	 *
 	 * Not a hand-written label: three packages export a function named `foldName` and all
 	 * three compute different answers (`Ångström` → `a ngstro m` / `angstrom` / `angstrom`),
-	 * so a name is not an identity. Derive it with {@link foldIdentity}.
+	 * so a name is not an identity.
+	 * Derive it with {@link foldIdentity}.
 	 */
 	probeFold: string
 	/**
@@ -101,14 +112,17 @@ export interface RequireExclusionInput {
 	country?: string
 	/**
 	 * ISO-2 upper-case countries this probe can answer for.
+	 *
 	 * Omit for an unscoped probe.
 	 */
 	countries?: ReadonlySet<string>
 }
 
 /**
- * The only constructor for an {@link Exclusion}. Returns `null` — never throws — on every refusal,
- * because a refusal is the ordinary case and a caller must fail open to whatever ranking it already had.
+ * The only constructor for an {@link Exclusion}.
+ *
+ * Returns `null` — never throws — on every refusal, because a refusal is the ordinary case
+ * and a caller must fail open to whatever ranking it already had.
  */
 export function requireExclusionBasis(input: RequireExclusionInput): Exclusion | null {
 	if (!input.cell) return null
@@ -132,12 +146,15 @@ export function requireExclusionBasis(input: RequireExclusionInput): Exclusion |
 }
 
 /**
- * Inputs a fold identity is computed over. Each exercises one axis a fold can differ on:
- * a word-internal diacritic (the axis `resolver/fold-name.ts` gets wrong — it maps the
- * combining mark to a space, splitting the word), a diacritic adjacent to punctuation
- * (which hides that bug), hyphens, periods, apostrophes, case, collapsing whitespace,
- * and a non-Latin script. Adding an input changes every identity, which is correct:
- * it is a new distinction two folds may differ on. Never reorder — identity is order-dependent.
+ * Inputs a fold identity is computed over.
+ *
+ * Each exercises one axis a fold can differ on: a word-internal diacritic
+ * (the axis `resolver/fold-name.ts` gets wrong — it maps the combining mark to a space, splitting the word),
+ * a diacritic adjacent to punctuation (which hides that bug), hyphens, periods,
+ * apostrophes, case, collapsing whitespace, and a non-Latin script.
+ * Adding an input changes every identity, which is correct: it is a new distinction two folds may differ on.
+ *
+ * Never reorder — identity is order-dependent.
  */
 export const FOLD_PROBE_CORPUS: readonly string[] = [
 	"Besançon",

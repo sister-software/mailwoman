@@ -59,9 +59,11 @@ export const TELECOM_SIC_CODES: ReadonlySet<string> = new Set([
 ])
 
 /**
- * Why a candidate was or was not corroborated. A caller reporting a run needs to distinguish these —
- * a `pinned` acceptance is an operator decision to audit, an `sic` acceptance is a source agreeing,
- * and `no-sic` is a gap in what edgar published rather than a judgment about the company.
+ * Why a candidate was or was not corroborated.
+ *
+ * A caller reporting a run needs to distinguish these — a `pinned` acceptance is an
+ * operator decision to audit, an `sic` acceptance is a source agreeing, and `no-sic`
+ * is a gap in what edgar published rather than a judgment about the company.
  */
 export const CIKCorroborationBasis = {
 	/**
@@ -69,16 +71,21 @@ export const CIKCorroborationBasis = {
 	 */
 	TelecomSIC: "telecom-sic",
 	/**
-	 * An operator pinned this CIK explicitly. The SIC was not consulted.
+	 * An operator pinned this CIK explicitly.
+	 *
+	 * The SIC was not consulted.
 	 */
 	Pinned: "pinned",
 	/**
-	 * A real SIC, outside the accepted set. The most common rejection,
-	 * and the one that caught both false matches.
+	 * A real SIC, outside the accepted set.
+	 *
+	 * The most common rejection, and the one that caught both false matches.
 	 */
 	NonTelecomSIC: "non-telecom-sic",
 	/**
-	 * Edgar published no SIC for this registrant. Nothing to corroborate against. not a judgment.
+	 * Edgar published no SIC for this registrant.
+	 *
+	 * Nothing to corroborate against. not a judgment.
 	 */
 	NoSIC: "no-sic",
 } as const
@@ -98,15 +105,18 @@ export interface CIKCorroborationVerdict {
 export interface CIKCorroborationOptions {
 	/**
 	 * CIKs an operator has decided are telecom carriers despite their SIC.
+	 *
 	 * Checked before the SIC, so a pin is a decision rather than a tiebreak.
 	 *
-	 * This is the escape valve for the Bandwidth/Ooma class — real carriers SEC files under a
-	 * software SIC. Keep it a list of specific registrants with a reason recorded alongside. the
-	 * moment it grows into a range it has become the widened allowlist this design rejected.
+	 * This is the escape valve for the Bandwidth/Ooma class — real carriers SEC files under a software SIC.
+	 * Keep it a list of specific registrants with a reason recorded alongside. the moment
+	 * it grows into a range it has become the widened allowlist this design rejected.
 	 */
 	pinnedCIKs?: ReadonlySet<string>
 	/**
-	 * SIC codes accepted as corroborating. Defaults to {@linkcode TELECOM_SIC_CODES}.
+	 * SIC codes accepted as corroborating.
+	 *
+	 * Defaults to {@linkcode TELECOM_SIC_CODES}.
 	 * Overridable so a caller working a different vertical does not have to fork the check —
 	 * not so a telecom run can quietly widen it.
 	 */

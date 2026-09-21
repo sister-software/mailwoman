@@ -32,23 +32,29 @@ export interface NeuralProposalClassifierConfig {
 	 */
 	id: string
 	/**
-	 * The underlying neural classifier. Typed by the one method the adapter calls,
-	 * so a caller may supply anything that parses — a real classifier, a remote one,
-	 * a test double — without asserting it is the whole class.
+	 * The underlying neural classifier.
+	 *
+	 * Typed by the one method the adapter calls, so a caller may supply anything that parses —
+	 * a real classifier, a remote one, a test double — without asserting it is the whole class.
 	 */
 	classifier: Pick<NeuralAddressClassifier, "parse">
 	/**
-	 * Component tags this classifier may emit. Defaults to the Stage 2 tag set
-	 * (coarse + venue/street/house_number). v0.2.0 Stage 1 models never decode to the fine
-	 * tags anyway, so the broader default is forwards-compat without back-compat risk.
+	 * Component tags this classifier may emit.
+	 *
+	 * Defaults to the Stage 2 tag set (coarse + venue/street/house_number). v0.2.0 Stage 1 models never
+	 * decode to the fine tags anyway, so the broader default is forwards-compat without back-compat risk.
 	 */
 	emits?: readonly ComponentTag[]
 	/**
-	 * Locales this classifier is active for. `["*"]` (locale-agnostic) by default.
+	 * Locales this classifier is active for.
+	 *
+	 * `["*"]` (locale-agnostic) by default.
 	 */
 	locales?: readonly (string | "*")[]
 	/**
-	 * Default penalty applied to emitted proposals. Default 0.
+	 * Default penalty applied to emitted proposals.
+	 *
+	 * Default 0.
 	 */
 	penalty?: number
 }
@@ -62,17 +68,19 @@ export function createNeuralProposalClassifier(cfg: NeuralProposalClassifierConf
 	const penalty = cfg.penalty ?? 0
 
 	async function classify(section: Section, _ctx: ClassifierContext): Promise<ClassificationProposal[]> {
-		// Postcode regex repair on by default (v0.7 #35, operator-signed): +135/0 on the postcode
-		// harness, model-independent. Fixes the SentencePiece-fragmentation misses (GB/CA/NL/…).
+		// Postcode regex repair on by default (v0.7 #35, operator-signed):
+		// +135/0 on the postcode harness, model-independent.
+		// Fixes the SentencePiece-fragmentation misses (GB/CA/NL/…).
 		const tree = await cfg.classifier.parse(section.body, { postcodeRepair: true })
 		const proposals: ClassificationProposal[] = []
 		const sectionOffset = section.start
 
 		const visit = (node: AddressNode): void => {
 			if (emitsSet.has(node.tag)) {
-				// Emit a structurally-Span-shaped record. We intentionally avoid `Span.from(...)` here:
-				// the tokenization module performs filesystem-bound module-init (libpostal data dir scan)
-				// which we don't want to force on every consumer of the proposal-classifier.
+				// Emit a structurally-Span-shaped record.
+				// We intentionally avoid `Span.from(...)` here: the tokenization module performs
+				// filesystem-bound module-init (libpostal data dir scan) which we don't want
+				// to force on every consumer of the proposal-classifier.
 				// The solver and policy registry read `start` / `end` / `body` only. if a downstream
 				// consumer needs the full Span behavior (graph membership, classifications, …),
 				// it should re-construct via Span.from(p.span.body, { start: p.span.start }).

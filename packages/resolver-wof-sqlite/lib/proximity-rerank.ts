@@ -63,9 +63,10 @@ export interface ProximityBias {
 }
 
 /**
- * The candidate fields the re-rank reads and writes. Structural rather than a
- * concrete candidate type, so the Node reader's `PlaceCandidate` and the browser
- * twin's row shape both satisfy it without an adapter.
+ * The candidate fields the re-rank reads and writes.
+ *
+ * Structural rather than a concrete candidate type, so the Node reader's `PlaceCandidate`
+ * and the browser twin's row shape both satisfy it without an adapter.
  */
 export interface ProximityRerankable {
 	lat: number
@@ -75,8 +76,10 @@ export interface ProximityRerankable {
 }
 
 /**
- * Population plus nearness on one additive scale. Exported for tests and for a caller that
- * wants the value without the sort. ordinary callers want {@link applyProximityRerank}.
+ * Population plus nearness on one additive scale.
+ *
+ * Exported for tests and for a caller that wants the value without the sort.
+ * ordinary callers want {@link applyProximityRerank}.
  */
 export function combinedProminence(candidate: ProximityRerankable, bias: readonly ProximityBias[]): number {
 	const popBase = candidate.prominence ?? candidate.score
@@ -100,11 +103,13 @@ export function combinedProminence(candidate: ProximityRerankable, bias: readonl
 }
 
 /**
- * Re-order `candidates` in place by {@link combinedProminence}, persisting each combined
- * value into `prominence` so the resolver walk's own `prominence ?? score` sort carries
- * the bias order rather than undoing it. Stable within equal prominence, preserving the
- * population order the index already gave. A caller with no bias hints must not call this —
- * the no-bias path is plain population order by construction.
+ * Re-order `candidates` in place by {@link combinedProminence}, persisting each
+ * combined value into `prominence` so the resolver walk's own `prominence ?? score`
+ * sort carries the bias order rather than undoing it.
+ *
+ * Stable within equal prominence, preserving the population order the index already gave.
+ * A caller with no bias hints must not call this — the no-bias path is plain
+ * population order by construction.
  */
 export function applyProximityRerank<T extends ProximityRerankable>(
 	candidates: T[],

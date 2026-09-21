@@ -38,12 +38,15 @@ export type PlaceTier = "address_point" | "interpolated"
 /**
  * The resolved-place shape the map render consumes — the pipeline {@link ResolvedPlaceView}
  * plus the map-only extras the demo's `ResolvedHit` carries (bbox, street tier + uncertainty),
- * and an optional PRE-fetched crisp polygon. Extending `ResolvedPlaceView` keeps the
- * map render aligned with the shared parse result. the extras are additive.
+ * and an optional PRE-fetched crisp polygon.
+ *
+ * Extending `ResolvedPlaceView` keeps the map render aligned with the shared
+ * parse result. the extras are additive.
  */
 export interface ResolvedMapPlace extends ResolvedPlaceView {
 	/**
 	 * The place's bounding box, when the gazetteer carries one (admin places).
+	 *
 	 * Absent for anchor-centroid postcodes.
 	 */
 	bbox?: PlaceBBox
@@ -57,6 +60,7 @@ export interface ResolvedMapPlace extends ResolvedPlaceView {
 	uncertaintyM?: number
 	/**
 	 * The crisp admin polygon, when the host has already fetched it from the sibling polygon DB.
+	 *
 	 * Its presence drives the polygon path. the async fetch itself stays out of this
 	 * pure function (a runtime concern in a later phase).
 	 */
@@ -64,8 +68,10 @@ export interface ResolvedMapPlace extends ResolvedPlaceView {
 }
 
 /**
- * The camera target the render computes. `center` (fly to a point at a zoom) has a declarative
- * equivalent — a consumer can feed it to a controlled `viewState` (see {@link cameraToViewState}).
+ * The camera target the render computes.
+ *
+ * `center` (fly to a point at a zoom) has a declarative equivalent — a consumer can
+ * feed it to a controlled `viewState` (see {@link cameraToViewState}).
  * `bounds` (fit a box with pixel padding) does not — `fitBounds` needs the map's pixel
  * dimensions, so it is applied imperatively by `<ResultCamera>`.
  */
@@ -78,7 +84,9 @@ export type MapCameraTarget =
  */
 export interface MapPlaceRenderSpec {
 	/**
-	 * Marker position(s) as `[lon, lat]`. Single-element today. an array leaves room for multi-marker later.
+	 * Marker position(s) as `[lon, lat]`.
+	 *
+	 * Single-element today. an array leaves room for multi-marker later.
 	 */
 	markers: LngLat[]
 	/**
@@ -113,10 +121,12 @@ const FIT_PADDING = 40
 const MIN_EXTENT_DEG = 0.001
 
 /**
- * Map a resolved place to its declarative render spec. Pure — same input,
- * same output, no side effects. The `place` arrives fully resolved
- * (crisp polygon pre-fetched into `place.geometry` when available), so this is the honest inverse
- * of the old redraw effect with the imperative map mutation and the async DB load removed.
+ * Map a resolved place to its declarative render spec.
+ *
+ * Pure — same input, same output, no side effects.
+ * The `place` arrives fully resolved (crisp polygon pre-fetched into `place.geometry` when available),
+ * so this is the honest inverse of the old redraw effect with the imperative
+ * map mutation and the async DB load removed.
  */
 export function computeMapPlaceRenderSpec(place: ResolvedMapPlace): MapPlaceRenderSpec {
 	const markers: LngLat[] = [[place.lon, place.lat]]
@@ -177,9 +187,12 @@ export function computeMapPlaceRenderSpec(place: ResolvedMapPlace): MapPlaceRend
 /**
  * The declarative camera path: reshape a `center` target into a `viewState` patch a
  * controlled `<MapCanvas viewState>` can apply directly (a hard jump, no animation).
- * Returns `null` for a `bounds` target — fitting a box to the viewport needs the
- * map's pixel dimensions. It only the live map has. Therefore, that case is applied
- * imperatively by `<ResultCamera>`. Pure + node-testable.
+ *
+ * Returns `null` for a `bounds` target — fitting a box to the viewport needs the map's pixel dimensions.
+ * It only the live map has.
+ *
+ * Therefore, that case is applied imperatively by `<ResultCamera>`.
+ * Pure + node-testable.
  */
 export function cameraToViewState(
 	camera: MapCameraTarget

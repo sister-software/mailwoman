@@ -22,16 +22,18 @@ import { type UnknownSpan, unknownSpans } from "#decoder/unknown-spans"
 /**
  * A span the flat projection could not represent, and why.
  *
- * The flat map holds one value per tag, so a tree carrying two `locality` spans emits one
- * and the other ceases to exist. `region: null` then means both "the input named no
- * region" and "the input named one, we parsed it, and the projection deleted it" —
- * and #1755 is what that costs: the #1748 trailing region is parsed, tagged `locality`,
- * and dropped here, which is why no decode change could ever move that class.
+ * The flat map holds one value per tag, so a tree carrying two `locality` spans
+ * emits one and the other ceases to exist.
+ * `region: null` then means both "the input named no region" and "the input named one,
+ * we parsed it, and the projection deleted it" — and #1755 is what that costs:
+ * the #1748 trailing region is parsed, tagged `locality`, and dropped here,
+ * which is why no decode change could ever move that class.
  */
 export interface DroppedSpan {
 	/**
-	 * The tag the span carried. Always one already present in the output —
-	 * a drop happens because the slot was taken.
+	 * The tag the span carried.
+	 *
+	 * Always one already present in the output — a drop happens because the slot was taken.
 	 */
 	tag: ComponentTag
 	/**
@@ -50,12 +52,14 @@ export interface DroppedSpan {
 export interface SerializeJSONOpts {
 	/**
 	 * Add an `unknown` array of the all-O spans the model left unclassified (#493).
+	 *
 	 * Default false — keeps the output libpostal-compatible (a flat tag→value map)
 	 * unless the caller asks for the gaps.
 	 */
 	includeUnknown?: boolean
 	/**
 	 * Add a `dropped` array naming every span first-occurrence-wins discarded (#1755).
+	 *
 	 * Default false, keeping the output libpostal-compatible. the geocode path opts in,
 	 * because a silently deleted component is the one thing a caller cannot recover for itself.
 	 */
@@ -109,8 +113,8 @@ export function decodeAsJSON(
 	}
 
 	// Always emit `unknown` (even `[]`) when asked — a consumer that opted in can
-	// iterate it without a presence check. Omitting-when-empty was a libpostal-flat-map
-	// instinct that doesn't fit the opt-in path.
+	// iterate it without a presence check.
+	// Omitting-when-empty was a libpostal-flat-map instinct that doesn't fit the opt-in path.
 	if (opts.includeUnknown) {
 		out.unknown = unknownSpans(tree)
 	}

@@ -24,14 +24,17 @@ import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 
 /**
  * Licenses that require share-alike / create a copyleft obligation on derived works (Tier C).
+ *
  * The `--exclude-share-alike` convenience expands to this; `allowShareAlike: false` adapters also use it.
  */
 export const SHARE_ALIKE_PATTERN = /^ODbL|^Open Database License|^CC-BY-SA|^CC-SA/i
 
 /**
- * Compile a `--exclude-licenses` spec (comma-separated, e.g. `"ODbL,CC-BY-SA"`) into anchored,
- * case-insensitive prefix patterns. Each entry matches a license string that starts with it,
- * so `CC-BY-SA` catches `CC-BY-SA-3.0`, `CC-BY-SA-4.0`, etc. Regex metacharacters are escaped —
+ * Compile a `--exclude-licenses` spec (comma-separated, e.g. `"ODbL,CC-BY-SA"`)
+ * into anchored, case-insensitive prefix patterns.
+ *
+ * Each entry matches a license string that starts with it, so `CC-BY-SA` catches
+ * `CC-BY-SA-3.0`, `CC-BY-SA-4.0`, etc. Regex metacharacters are escaped —
  * the spec is a literal license prefix rather than a user-supplied regex.
  */
 export function compileLicenseExcludes(spec: string): RegExp[] {

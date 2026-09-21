@@ -30,8 +30,9 @@ import { stableSourceID } from "#adapters/utils"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record
- * can be traced back to the dataset it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const GEONAMES_POSTAL_ADAPTER_ID = "geonames-postal"
 /**
@@ -92,8 +93,9 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 				if (!postcode || !locality) continue
 				const region = (rec[GEONAMES_POSTAL_COLUMNS.admin1Name] ?? "").trim()
 
-				// Postcode-first (international) variants. Skip the region variant when admin1 just
-				// repeats the place (common for city-states / micro-admin) to avoid "X X" noise.
+				// Postcode-first (international) variants.
+				// Skip the region variant when admin1 just repeats the place
+				// (common for city-states / micro-admin) to avoid "X X" noise.
 				const variants: Array<{ slot: string; comp: CanonicalRow["components"]; raw: string }> = [
 					{ slot: "pl", comp: { postcode, locality }, raw: `${postcode} ${locality}` },
 				]

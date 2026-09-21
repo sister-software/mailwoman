@@ -49,6 +49,7 @@ import { AddressRole } from "#types"
 
 /**
  * The `origin` value the research pass gives its eight repeated discovery lookups.
+ *
  * Every row carrying it is dropped.
  */
 const DISCOVERY_RAIL_ORIGIN = "global_research_rail"
@@ -58,9 +59,11 @@ const DISCOVERY_RAIL_ORIGIN = "global_research_rail"
  *
  * A NUL would be the collision-free choice and is the wrong one here: `oxfmt` normalizes a
  * unicode escape for it into the byte itself, so the escape does not survive a format pass.
- * A raw NUL in source is what `repo-health`'s `rawNULBytes` counter exists to keep out, because a
- * sweep that would read the line cannot see it. A solidus is safe instead of merely convenient —
- * an ISO 3166-1 code is two letters and a sector is kebab-case, so neither part can contain one.
+ * A raw NUL in source is what `repo-health`'s `rawNULBytes` counter exists to keep out,
+ * because a sweep that would read the line cannot see it.
+ *
+ * A solidus is safe instead of merely convenient — an ISO 3166-1 code is two letters
+ * and a sector is kebab-case, so neither part can contain one.
  */
 const KEY_SEPARATOR = "/"
 
@@ -110,6 +113,7 @@ const GEOMETRY_BY_NAME: Readonly<Record<string, SourceGeometry>> = {
 
 /**
  * The research pass writes a source's propositions as one string.
+ *
  * Closed, because a spelling this does not carry is a vocabulary the register
  * has not agreed to rather than a row to guess at.
  */
@@ -122,7 +126,8 @@ const ASSERTS_BY_ROLE: Readonly<Record<string, readonly AddressSourceRecord["ass
  * The access labels the research pass recorded, each with the id prefix
  * and note a decision derived from it carries.
  *
- * These are label kinds rather than decisions. A decision is scoped to one publisher in one jurisdiction by
+ * These are label kinds rather than decisions.
+ * A decision is scoped to one publisher in one jurisdiction by
  * {@link scopedLicenseID}, so the register carries one per source and an election cannot reach past the grant it was
  * made about.
  *
@@ -243,8 +248,9 @@ export interface BuildSourceRegisterOptions {
 	 */
 	inventoryPath: PathBuilderLike
 	/**
-	 * The functional-authority CSV, discovery lookups
-	 * included. This build drops them.
+	 * The functional-authority CSV, discovery lookups included.
+	 *
+	 * This build drops them.
 	 */
 	sourcesPath: PathBuilderLike
 	outPath: PathBuilderLike
@@ -252,10 +258,12 @@ export interface BuildSourceRegisterOptions {
 	 * Licence decisions somebody made by reading a publisher's terms, applied over the
 	 * `unchecked` defaults this build derives from the research pass's access labels.
 	 *
-	 * An input rather than an edit of the output. The register is generated
-	 * and {@linkcode buildSourceRegister} rewrites it whole, so a decision recorded in the
-	 * output would be erased by the next rebuild with no error — the loss this separation
-	 * exists to prevent (#2351). A path that does not exist is read as no decisions recorded.
+	 * An input rather than an edit of the output.
+	 * The register is generated and {@linkcode buildSourceRegister} rewrites it whole,
+	 * so a decision recorded in the output would be erased by the next rebuild with no error —
+	 * the loss this separation exists to prevent (#2351).
+	 *
+	 * A path that does not exist is read as no decisions recorded.
 	 */
 	decisionsPath?: PathBuilderLike
 	version: string
@@ -372,6 +380,7 @@ interface LicenseScope {
 	scopedTo: string
 	/**
 	 * The jurisdiction and `scopedTo` folded by {@link partyKey}.
+	 *
 	 * Two rows whose keys agree name one party in one jurisdiction, however they spell it.
 	 */
 	partyKey: string
@@ -396,8 +405,9 @@ function partyKey(value: string): string {
 }
 
 /**
- * The id fragment for a party. It is the party's key, trimmed so one long
- * ministry name does not dominate the id.
+ * The id fragment for a party.
+ *
+ * It is the party's key, trimmed so one long ministry name does not dominate the id.
  *
  * Trimming is the only step that can bring two genuinely different parties
  * to the same fragment, which is why
@@ -412,30 +422,35 @@ function idFragment(partyKeyValue: string): string {
 /**
  * The license id for one source row, scoped to the party a reviewer would read.
  *
- * A license decision records what somebody concluded by opening a publisher's terms, so it can
- * only be as wide as the grant it describes. Keying it by the research pass's access label alone
- * made one decision span every source carrying that label: `CHECK NATIONAL / DATASET TERMS`
- * covered 247 of 389 sources across 222 publishers, and `Free` covered 99.
+ * A license decision records what somebody concluded by opening a publisher's terms,
+ * so it can only be as wide as the grant it describes.
+ * Keying it by the research pass's access label alone made one decision span every
+ * source carrying that label: `CHECK NATIONAL / DATASET TERMS` covered 247 of 389
+ * sources across 222 publishers, and `Free` covered 99.
+ *
  * Electing one of those would have granted every source under it on a single reading.
  *
  * So the id carries the publisher when the row names one, and the source id when it does not.
  * A row with no publisher comes from the original memo, which recorded no owner column,
  * and scoping it to itself cannot over-grant.
  *
- * The jurisdiction is part of the scope because a publisher name is not unique
- * across states. The research pass wrote `Ministry of Justice` for Belarus,
- * Lebanon and Timor-Leste, `Ministry of Commerce and Industry` for five countries,
+ * The jurisdiction is part of the scope because a publisher name is not unique across states.
+ * The research pass wrote `Ministry of Justice` for Belarus, Lebanon
+ * and Timor-Leste, `Ministry of Commerce and Industry` for five countries,
  * and `Commercial-registration authority` as a description rather than a name.
+ *
  * A publisher-only scope would let one reading of a Lebanese ministry's terms grant Belarus.
  *
  * The cost is that a publisher genuinely serving several jurisdictions gets one decision per
  * jurisdiction — INSEE covers mainland France and nine overseas territories, so it gets ten.
  * A reviewer who reads INSEE's terms once records that conclusion against ten ids,
- * which is a small explicit act. The alternative fails the other way, and an over-wide
- * election is the failure that cannot be undone by review.
+ * which is a small explicit act.
  *
- * This changes granularity rather than state. Every decision still reads `unchecked`,
- * and `ingestEligibilityProblems` still refuses every source.
+ * The alternative fails the other way, and an over-wide election is the failure
+ * that cannot be undone by review.
+ *
+ * This changes granularity rather than state.
+ * Every decision still reads `unchecked`, and `ingestEligibilityProblems` still refuses every source.
  */
 function scopedLicenseID(
 	statementID: string,
@@ -579,11 +594,13 @@ const UNRESOLVED_COLUMN_PLACEHOLDERS: ReadonlySet<string> = new Set(["varies", "
 /**
  * A column's value, or `undefined` when the research pass left it unresolved.
  *
- * Reads the column rather than ignoring it. The build ignored these three entirely,
- * which put a populated column in the source CSV and an empty field in the register with
- * nothing recording why — a reader comparing the two would reasonably conclude the build
- * was dropping usable data. Anything outside the placeholder set is returned, so a value
- * somebody fills in later reaches the register or fails the build rather than being lost.
+ * Reads the column rather than ignoring it.
+ * The build ignored these three entirely, which put a populated column in the source CSV
+ * and an empty field in the register with nothing recording why — a reader comparing
+ * the two would reasonably conclude the build was dropping usable data.
+ *
+ * Anything outside the placeholder set is returned, so a value somebody fills in later
+ * reaches the register or fails the build rather than being lost.
  */
 export function readUnresolvedColumn(value: string | undefined, column: string, row: number): string | undefined {
 	const trimmed = (value ?? "").trim()
@@ -630,10 +647,12 @@ interface LicenseDecisionsFile {
  * A file that exists and cannot be parsed raises: it was put there on purpose
  * and reading it as empty would silently drop somebody's recorded work.
  *
- * This function validates no decision it reads. `auditAddressSourceRegister` already refuses
- * an elected record missing its terms, retrieved copy or reason, and a refused record missing
- * its reason, and `buildSourceRegister` throws when that audit fails, so an incomplete
- * decision fails the build either way. Checking here as well would give one rule two homes.
+ * This function validates no decision it reads.
+ * `auditAddressSourceRegister` already refuses an elected record missing its terms, retrieved
+ * copy or reason, and a refused record missing its reason, and `buildSourceRegister` throws
+ * when that audit fails, so an incomplete decision fails the build either way.
+ *
+ * Checking here as well would give one rule two homes.
  */
 async function readLicenseDecisions(decisionsPath: PathBuilderLike | undefined): Promise<Map<string, LicenseDecision>> {
 	if (!decisionsPath || !(await pathExists(decisionsPath))) return new Map()
@@ -696,8 +715,9 @@ export async function buildSourceRegister(options: BuildSourceRegisterOptions): 
 	const register: AddressSourceRegister = {
 		registerID: "address-source-register",
 		version: options.version,
-		// Filled below, once every other field is in place. The digest covers the rest of the
-		// register, so it cannot be computed while the object is still being assembled.
+		// Filled below, once every other field is in place.
+		// The digest covers the rest of the register, so it cannot be computed
+		// while the object is still being assembled.
 		contentDigest: "",
 		provenance: {
 			source: "mailwoman-research",

@@ -64,15 +64,21 @@ export interface CrossSourceThresholdSweepOptions {
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
-	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * Record-matcher sources directory.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
 	 */
 	sources?: string
 	/**
-	 * Rows kept per source. Default 2000.
+	 * Rows kept per source.
+	 *
+	 * Default 2000.
 	 */
 	cap?: number
 	/**
-	 * State filter. Default TX.
+	 * State filter.
+	 *
+	 * Default TX.
 	 */
 	state?: string
 	/**
@@ -93,8 +99,10 @@ const entitySources = (e: ResolvedEntity): Set<string> =>
 	new Set(e.records.map((r) => r.source).filter((s): s is string => !!s))
 
 /**
- * Label-free precision proxy: does this cross-source entity carry the same phone in records from two
- * different sources? (Phone isn't the join key, so a match is independent corroboration of same-facility.)
+ * Label-free precision proxy: does this cross-source entity carry the same phone
+ * in records from two different sources?
+ *
+ * (Phone isn't the join key, so a match is independent corroboration of same-facility.)
  * Entities where no two cross-source records both have a phone are "unknown" —
  * we only count corroborated / contradicted among those that can be checked.
  */

@@ -25,6 +25,7 @@ export interface PlanetaryBody {
 	shape: "sphere" | "ellipsoid"
 	/**
 	 * Metres per degree of arc on the mean sphere: 2πR / 360.
+	 *
 	 * The hillshade's vertical scale, and the only place a degree becomes a length in this package.
 	 */
 	metresPerDegree: number
@@ -34,10 +35,11 @@ export interface PlanetaryBody {
 const metresPerDegree = (radiusKm: number): number => (2 * Math.PI * radiusKm * 1000) / 360
 
 /**
- * The two bodies the pipeline builds, keyed by id. The reference bodies, control networks
- * and longitude conventions are the ones the usgs nomenclature shapefiles declare
- * (`GCS_Moon_2000`, `GCS_Mars_2000`); the radii come from `@mailwoman/spatial`,
- * so a distance on either body scales by the same number the app measures with.
+ * The two bodies the pipeline builds, keyed by id.
+ *
+ * The reference bodies, control networks and longitude conventions are the ones the usgs
+ * nomenclature shapefiles declare (`GCS_Moon_2000`, `GCS_Mars_2000`); the radii come from
+ * `@mailwoman/spatial`, so a distance on either body scales by the same number the app measures with.
  */
 export const BODIES = {
 	moon: {

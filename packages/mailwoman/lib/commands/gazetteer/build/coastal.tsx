@@ -41,8 +41,10 @@ import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 const DEFAULT_COVERAGE_RESOLUTION = "6"
 
 /**
- * Index resolution, chosen from the per-scenario `partial`-share measurement — see the
- * workspace readme for the table and the reasoning. `--measure-resolutions` re-derives it.
+ * Index resolution, chosen from the per-scenario `partial`-share measurement —
+ * see the workspace readme for the table and the reasoning.
+ *
+ * `--measure-resolutions` re-derives it.
  */
 const DEFAULT_INDEX_RESOLUTION = "10"
 
@@ -118,10 +120,11 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 
 		console.error(`▸ product vintage: ${sourceVintage}`)
 
-		// OGL v3.0 makes the attribution statement a licence condition, so a change in it
-		// changes what a re-user has to publish. Read from the structured record and compared
-		// against the constant the artifact is stamped with. the abstract's copy is doubled
-		// and its first copy carries no year, which is why the parse refuses a yearless one.
+		// OGL v3.0 makes the attribution statement a licence condition, so a change
+		// in it changes what a re-user has to publish.
+		// Read from the structured record and compared against the constant the artifact is
+		// stamped with. the abstract's copy is doubled and its first copy carries no year,
+		// which is why the parse refuses a yearless one.
 		if (!options.offline) {
 			assertAttributionUnchanged(await client.readAttributionStatement())
 		}
@@ -167,8 +170,8 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 		const out = options.out ?? dataRootPath("coastal", "coastal-england.db").toString()
 		const buildSHA = resolveBuildSHA(repoRootPath().toString())
 
-		// The declared count comes from the source's own per-layer totals,
-		// so a short read throws rather than building a shorter coastline.
+		// The declared count comes from the source's own per-layer totals, so a short
+		// read throws rather than building a shorter coastline.
 		// A `--limit` run declares the limited total for the same reason.
 		const identity = await createGeodatabaseFeatureSource({
 			geodatabasePath,

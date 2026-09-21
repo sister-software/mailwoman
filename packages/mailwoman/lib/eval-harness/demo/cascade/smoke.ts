@@ -61,12 +61,15 @@ import { resolveWOFHotDB, wofHotStageDir } from "#eval-harness/wof-hot-db"
  */
 export interface DemoCascadeSmokeOptions {
 	/**
-	 * Staged demo release directory. Defaults beneath `$MAILWOMAN_TEMP_ROOT`;
-	 * every artifact below defaults to a sibling of it.
+	 * Staged demo release directory.
+	 *
+	 * Defaults beneath `$MAILWOMAN_TEMP_ROOT`; every artifact below defaults to a sibling of it.
 	 */
 	stageDir?: string
 	/**
-	 * Hot DB path. Falls back to `$MAILWOMAN_WOF_HOT_DB`, then `<stageDir>/wof-hot.db`.
+	 * Hot DB path.
+	 *
+	 * Falls back to `$MAILWOMAN_WOF_HOT_DB`, then `<stageDir>/wof-hot.db`.
 	 */
 	db?: string
 	model?: string
@@ -78,7 +81,9 @@ export interface DemoCascadeSmokeOptions {
 	 */
 	gazetteerLexicon?: string
 	/**
-	 * Smoke rows jsonl. Default `data/eval/external/demo-cascade-smoke.jsonl`.
+	 * Smoke rows jsonl.
+	 *
+	 * Default `data/eval/external/demo-cascade-smoke.jsonl`.
 	 */
 	file?: string
 	/**
@@ -93,9 +98,11 @@ export interface DemoCascadeSmokeOptions {
 }
 
 /**
- * What {@linkcode demoCascadeSmoke} returns. `exitCode` carries what the script signalled
- * with `process.exit`: 0 = the run completed (row failures are in the table + sidecar.
- * the check verdict enforces any floor), 2 = missing artifacts or malformed rows.
+ * What {@linkcode demoCascadeSmoke} returns.
+ *
+ * `exitCode` carries what the script signalled with `process.exit`: 0 = the run completed
+ * (row failures are in the table + sidecar. the check verdict enforces any floor),
+ * 2 = missing artifacts or malformed rows.
  * The check reports a non-zero code and continues, exactly as it did with the child.
  */
 export interface DemoCascadeSmokeResult {
@@ -121,9 +128,10 @@ interface RowResult {
  * `runPipeline` + grouper audit → the demo's `runCascade` over the slim hot DB —
  * and assert the resolved WOF place ID of the top hit.
  *
- * The table goes to `report` (the runner captures it into `cascade-smoke.md`); preflight refusals
- * and `explain` narration go to `reportError`, which is where the child's stderr went — captured
- * and dropped. A preflight refusal therefore leaves an empty `cascade-smoke.md` and a non-zero
+ * The table goes to `report` (the runner captures it into `cascade-smoke.md`);
+ * preflight refusals and `explain` narration go to `reportError`, which is
+ * where the child's stderr went — captured and dropped.
+ * A preflight refusal therefore leaves an empty `cascade-smoke.md` and a non-zero
  * {@linkcode DemoCascadeSmokeResult.exitCode}, which is exactly what the child process produced.
  */
 export async function demoCascadeSmoke(
@@ -133,10 +141,10 @@ export async function demoCascadeSmoke(
 ): Promise<DemoCascadeSmokeResult> {
 	// lazy, deliberately: `mailwoman` does not depend on `@mailwoman/resolver-wof-wasm`,
 	// and the CLI's module walk (`mailwoman --help`) loads this file in every clean install —
-	// a top-level import here failed the ci:smoke clean-install leg the day it was
-	// added (2026-08-06). The cascade leg is dev-only (it needs a local wof-hot.db),
-	// so the dependency loads only when the leg actually runs. in a clean install without
-	// the package the leg fails here, loudly, naming the import.
+	// a top-level import here failed the ci:smoke clean-install leg the day it was added (2026-08-06).
+	// The cascade leg is dev-only (it needs a local wof-hot.db), so the dependency
+	// loads only when the leg actually runs. in a clean install without the package
+	// the leg fails here, loudly, naming the import.
 	const { runCascade } = await import("@mailwoman/resolver-wof-wasm/browser-cascade")
 	const STAGE = options.stageDir || wofHotStageDir()
 	const DB = options.db || resolveWOFHotDB(String(STAGE))

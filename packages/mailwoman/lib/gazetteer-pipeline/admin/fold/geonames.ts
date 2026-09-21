@@ -29,11 +29,13 @@ export interface FoldGeonamesOptions {
 	countries: readonly string[]
 	/**
 	 * GeoNames per-country dump dir (download.geonames.org/export/dump).
+	 *
 	 * Default `<data-root>/geonames`.
 	 */
 	geonamesDir?: string
 	/**
 	 * AlternateNamesV2 dir (…/export/dump/alternatenames).
+	 *
 	 * Default `<data-root>/geonames-alternate`.
 	 */
 	alternateDir?: string

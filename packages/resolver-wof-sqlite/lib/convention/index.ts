@@ -33,7 +33,9 @@ export interface ScoringWeights {
 }
 
 /**
- * A geographically-scoped resolution profile. Namespaced sections grow per phase;
+ * A geographically-scoped resolution profile.
+ *
+ * Namespaced sections grow per phase;
  * #289 ships the dispatch + scoring sections (`candidateStrategies` + `scoringWeights`).
  * Later phases add `fieldMapping` (locale semantics for `locator[]`), `tokenNormalization`, etc.
  */
@@ -44,6 +46,7 @@ export interface Convention {
 	candidateStrategies?: string[]
 	/**
 	 * Weights for `postcode_area_resolution`'s soft-score.
+	 *
 	 * Partial — a layer may nudge one weight and inherit the rest from the layers below
 	 * it (`resolveConvention` fills any gaps from WORLD_DEFAULT).
 	 */
@@ -52,6 +55,7 @@ export interface Convention {
 
 /**
  * A fully-resolved convention: every field present, weights complete.
+ *
  * What `resolveConvention` returns and what strategies consume.
  */
 export interface ResolvedConvention {
@@ -60,9 +64,11 @@ export interface ResolvedConvention {
 }
 
 /**
- * The base layer every ancestor chain starts from. Reproduces the pre-engine coordinate-first
- * behavior exactly: try `postcode_area_resolution`, else fall back to fuzzy name match. soft-score
- * weights 0.6 / 0.3 / 0.1. Changing these changes EU behavior — don't, without a byte-stability run.
+ * The base layer every ancestor chain starts from.
+ *
+ * Reproduces the pre-engine coordinate-first behavior exactly: try `postcode_area_resolution`,
+ * else fall back to fuzzy name match. soft-score weights 0.6 / 0.3 / 0.1.
+ * Changing these changes EU behavior — don't, without a byte-stability run.
  */
 export const WORLD_DEFAULT: ResolvedConvention = {
 	candidateStrategies: ["postcode_area_resolution", "fallback_fuzzy_name_match"],
@@ -70,26 +76,33 @@ export const WORLD_DEFAULT: ResolvedConvention = {
 }
 
 /**
- * The strategy names the backend registers. The single source of truth shared by the
- * dispatch registry and the build-time validator, so an authored convention that names a
- * non-existent strategy is caught at build (loud) rather than silently skipped at runtime.
+ * The strategy names the backend registers.
+ *
+ * The single source of truth shared by the dispatch registry and the build-time validator,
+ * so an authored convention that names a non-existent strategy is caught at build (loud)
+ * rather than silently skipped at runtime.
  */
 export const BUILTIN_STRATEGY_NAMES = ["postcode_area_resolution", "fallback_fuzzy_name_match"] as const
 
 /**
- * Table name for the convention asset (#290). Carried here so the build script,
- * the runtime source, and the extract auto-detect all agree.
+ * Table name for the convention asset (#290).
+ *
+ * Carried here so the build script, the runtime source, and the extract auto-detect all agree.
  */
 export const ADDRESS_CONVENTION_TABLE = "address_convention"
 
 /**
- * A named resolution primitive. Returns `null` to abstain (condition unmet / no data) → the
- * dispatcher tries the next strategy. returns an array (possibly empty) to claim the result.
+ * A named resolution primitive.
+ *
+ * Returns `null` to abstain (condition unmet / no data) → the dispatcher tries the
+ * next strategy. returns an array (possibly empty) to claim the result.
  */
 export type Strategy = (query: FindPlaceQuery, convention: ResolvedConvention) => Promise<PlaceCandidate[] | null>
 
 /**
- * Look up a convention record by WOF polygon id. Returns `undefined` when the polygon has no override.
+ * Look up a convention record by WOF polygon id.
+ *
+ * Returns `undefined` when the polygon has no override.
  */
 export interface ConventionSource {
 	get(wofID: number): Convention | undefined
@@ -97,6 +110,7 @@ export interface ConventionSource {
 
 /**
  * In-memory convention source seeded from a `{ wofID: Convention }` map.
+ *
  * Empty for the EU locales (they ride `WORLD_DEFAULT`); JP / KR / TW add
  * rows. #290 replaces this with a sqlite-backed source built from source,
  * same distributable-asset discipline as `postcode-locality-intl.db`.
@@ -115,9 +129,10 @@ export class SeedConventionSource implements ConventionSource {
 
 /**
  * Deep-merge convention layers, later (more-specific) layers winning per field.
- * `candidateStrategies` is replaced wholesale — a convention names its full ordered list,
- * it does not append. `scoringWeights` is merged key-by-key so a locality can
- * nudge one weight without restating the others.
+ *
+ * `candidateStrategies` is replaced wholesale — a convention names its full
+ * ordered list, it does not append.
+ * `scoringWeights` is merged key-by-key so a locality can nudge one weight without restating the others.
  */
 export function mergeConventions(base: Convention, ...overrides: Array<Convention | undefined>): Convention {
 	const out: Convention = {
@@ -141,9 +156,11 @@ export function mergeConventions(base: Convention, ...overrides: Array<Conventio
 }
 
 /**
- * Resolve the effective convention for a place given its ancestor chain, ordered most-general
- * → most-specific (country, region, …, locality). Starts from `WORLD_DEFAULT`
- * so every field is defined regardless of which (if any) ancestors carry an override.
+ * Resolve the effective convention for a place given its ancestor chain,
+ * ordered most-general → most-specific (country, region, …, locality).
+ *
+ * Starts from `WORLD_DEFAULT` so every field is defined regardless of
+ * which (if any) ancestors carry an override.
  */
 export function resolveConvention(source: ConventionSource, ancestorIDs: readonly number[]): ResolvedConvention {
 	const layers = ancestorIDs.map((id) => source.get(id))

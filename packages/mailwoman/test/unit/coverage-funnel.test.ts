@@ -241,8 +241,9 @@ describe("readCoverageFunnel", () => {
 	})
 
 	it("reads a country the config never admitted as absent rather than blaming the sampler", async () => {
-		// AQ carries no census row, so it is not admitted. It cannot draw, and reporting it as
-		// a sampling failure would attribute the admission filter's decision to the sampler.
+		// AQ carries no census row, so it is not admitted.
+		// It cannot draw, and reporting it as a sampling failure would attribute the
+		// admission filter's decision to the sampler.
 		const report = await funnel({
 			sampledRows: new Map([["US", 250_000]]),
 			sampledTotal: 250_000,

@@ -41,8 +41,9 @@ import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest
 
 /**
  * Provenance tag for the baked `interp_calibration` row — the split-conformal
- * multi-region recalibration this build selects its multiplier from
- * (`docs/articles/evals/calibration/2026-06-14-interp-multiregion-recalibration.md`).
+ * multi-region recalibration this build selects its multiplier
+ * from (`docs/articles/evals/calibration/2026-06-14-interp-multiregion-recalibration.md`).
+ *
  * Bump when the calibration source of record (`interp-calibration.ts` /
  * `data/calibration/interp-radius-conformal.json`) is re-measured.
  */
@@ -235,8 +236,9 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		{
 			using kdb = new DatabaseClient<StreetSegmentDatabase>(tmpOut)
 			kdb.exec("PRAGMA journal_mode = WAL;")
-			// DDL via the shared street-segment-schema builder (the table the reader + tests use) so this
-			// producer can't drift. DuckDB below is the raw spatial reader. the hot insert stays on `db`.
+			// DDL via the shared street-segment-schema builder (the table the reader + tests use)
+			// so this producer can't drift.
+			// DuckDB below is the raw spatial reader. the hot insert stays on `db`.
 
 			await createStreetSegmentTable(kdb)
 			await writeInterpCalibration(kdb, calibration)
@@ -347,7 +349,8 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 			buildCmd: "mailwoman situs interpolation-database",
 			buildSHA: buildSHA(String(repoRootPath())),
 			freshnessPolicy: LayerFreshnessPolicy.Sealed,
-			// No H3, no WOF id, no address-id — see `SpineKeys.street`. Every probe joins on `street_norm`.
+			// No H3, no WOF id, no address-id — see `SpineKeys.street`.
+			// Every probe joins on `street_norm`.
 			spineKeys: { street: { column: "street_norm" } },
 			createdAt: new Date().toISOString(),
 		})

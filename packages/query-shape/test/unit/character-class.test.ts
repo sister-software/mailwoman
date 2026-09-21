@@ -169,6 +169,7 @@ describe("tokenizeForClass", () => {
 describe("scriptForCodepoint", () => {
 	/**
 	 * Unicode's own script property, as the engine reports it.
+	 *
 	 * The hand ranges exist for speed — `computeQueryShape` promises microseconds and runs per
 	 * keystroke — and this is what keeps them honest as Unicode moves: every codepoint the table
 	 * claims is checked against `\p{Script=…}` rather than against a reading of the table.
@@ -207,13 +208,15 @@ describe("scriptForCodepoint", () => {
 	 *
 	 * Asserting only that what we claim is a script really is one stops the table over-claiming
 	 * and says nothing about what it misses — and a range cannot express an exception,
-	 * so a block holding two scripts gets drawn through. Both of this file's misses were that:
-	 * `COMMON_RANGES` took `0x3000..0x303f` whole, and Unicode assigns 々 (U+3005) and 〇
-	 * (U+3007) inside it to Han. it took `0x3099..0x30a0` whole, and U+309D..309F are Hiragana.
+	 * so a block holding two scripts gets drawn through.
+	 * Both of this file's misses were that: `COMMON_RANGES` took `0x3000..0x303f` whole,
+	 * and Unicode assigns 々 (U+3005) and 〇 (U+3007) inside it to Han. it took
+	 * `0x3099..0x30a0` whole, and U+309D..309F are Hiragana.
 	 *
-	 * The allowance is per script rather than global, and each number is a measurement of
-	 * what is left uncovered rather than a target. Tightening one is a change with its own
-	 * evidence. a number that grows is a script the table stopped answering for.
+	 * The allowance is per script rather than global, and each number is a measurement
+	 * of what is left uncovered rather than a target.
+	 * Tightening one is a change with its own evidence. a number that grows is a
+	 * script the table stopped answering for.
 	 */
 	const UNCOVERED_ALLOWANCE: Readonly<Record<string, number>> = {
 		// Hentaigana, the historic hiragana variants, at U+1B002 and above.
@@ -249,8 +252,8 @@ describe("scriptForCodepoint", () => {
 	})
 
 	it("reads the two characters that were drawn through a block boundary", () => {
-		// 々 in 代々木 and 佐々木, 〇 in an all-zero ward number, ゝ in a name written with the hiragana iteration
-		// mark. Each sat inside a range this file called Common because the block is mostly common.
+		// 々 in 代々木 and 佐々木, 〇 in an all-zero ward number, ゝ in a name written with the hiragana iteration mark.
+		// Each sat inside a range this file called Common because the block is mostly common.
 		expect(scriptForCodepoint(0x30_05)).toBe("Hani")
 		expect(scriptForCodepoint(0x30_07)).toBe("Hani")
 		expect(scriptForCodepoint(0x30_9d)).toBe("Hira")
@@ -266,7 +269,8 @@ describe("scriptForCodepoint", () => {
 	})
 
 	it("says Zzzz for a script it has no ranges for, rather than folding it into a neighbour", () => {
-		// Devanagari ग. An address in a script this file does not carry is a script it cannot name,
+		// Devanagari ग.
+		// An address in a script this file does not carry is a script it cannot name,
 		// and saying so is what lets a consumer tell that apart from "no script here".
 		expect(scriptForCodepoint(0x09_17)).toBe("Zzzz")
 	})
@@ -277,7 +281,8 @@ describe("scriptForRange", () => {
 
 	it("answers per segment, which is not what the whole string answers", () => {
 		// The string reads Latin, because the romanized province and country outweigh the Han unit.
-		// The unit reads Han. A rule about how to render or route the unit wants the second answer.
+		// The unit reads Han.
+		// A rule about how to render or route the unit wants the second answer.
 		const shape = computeQueryShape(CHINESE_UNIT)
 
 		expect(shape.scripts[0]!.script).toBe("Latn")
@@ -345,7 +350,8 @@ describe("foldInputScripts", () => {
 	})
 
 	it("answers an empty list when nothing in the input names a script", () => {
-		// A bare postcode is not Latin. It is script-neutral, and an empty list says so where a default would not.
+		// A bare postcode is not Latin.
+		// It is script-neutral, and an empty list says so where a default would not.
 		expect(foldInputScripts("10118")).toEqual([])
 	})
 

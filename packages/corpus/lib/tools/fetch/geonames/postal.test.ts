@@ -28,8 +28,10 @@ let baseURL: string
 let outRoot: PathBuilderLike
 
 /**
- * The manifest as written. `parseJSONStrict` rather than a tolerant parse:
- * a corrupt manifest here is a test failure rather than a fallback.
+ * The manifest as written.
+ *
+ * `parseJSONStrict` rather than a tolerant parse: a corrupt manifest here is
+ * a test failure rather than a fallback.
  */
 async function readManifest(): Promise<{
 	unavailable: string[]
@@ -41,7 +43,9 @@ async function readManifest(): Promise<{
 
 beforeAll(async () => {
 	server = createServer((req, res) => {
-		// PT is published. VE is not. Anything else is a 500, so a transfer failure stays distinguishable from both.
+		// PT is published.
+		// VE is not.
+		// Anything else is a 500, so a transfer failure stays distinguishable from both.
 		if (req.url === "/PT.zip") {
 			res.writeHead(200)
 			res.end("pt-payload")
@@ -50,8 +54,8 @@ beforeAll(async () => {
 			res.end("not found")
 		} else if (req.url === "/v404/ZZ.zip") {
 			// The regression route: a 500 whose URL contains the substring "404".
-			// CI drew an ephemeral server port containing "404" and the prose-matching
-			// classifier filed a transfer failure as "GeoNames does not publish this country".
+			// CI drew an ephemeral server port containing "404" and the prose-matching classifier
+			// filed a transfer failure as "GeoNames does not publish this country".
 			// The path plants the same substring deterministically.
 			res.writeHead(500)
 			res.end("boom")

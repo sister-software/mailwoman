@@ -44,7 +44,9 @@ export type SpanDeltaKind = "added" | "removed" | "retagged" | "moved" | "confid
 export interface SpanDelta {
 	kind: SpanDeltaKind
 	/**
-	 * The tag on each side. Equal unless `kind` is `retagged`, and one side is absent for `added`/`removed`.
+	 * The tag on each side.
+	 *
+	 * Equal unless `kind` is `retagged`, and one side is absent for `added`/`removed`.
 	 */
 	tagBefore?: string
 	tagAfter?: string
@@ -56,11 +58,13 @@ export interface SpanDelta {
 	confidenceAfter?: number
 	/**
 	 * `after - before`, present only when both sides are.
+	 *
 	 * Negative means the arm under test is less sure.
 	 */
 	confidenceDelta?: number
 	/**
 	 * Where the assertion came from — `rule`, `neural`, `resolver`.
+	 *
 	 * A span whose tag is unchanged but whose source moved from `resolver` to `neural`
 	 * lost its gazetteer backing, which no tag-level diff can show.
 	 */
@@ -85,6 +89,7 @@ export interface ParseDiff {
 	spans: SpanDelta[]
 	/**
 	 * The locale/country call and how sure each arm was of it.
+	 *
 	 * A parse that changed nothing else but moved its country confidence across the
 	 * scope threshold will geocode somewhere else entirely.
 	 */
@@ -267,8 +272,9 @@ export const CONFIDENCE_NOISE_FLOOR = 0.02
 /**
  * Render a diff the way a reader reads one — the address first, then the spans that moved under it.
  *
- * Address-first is the point. An aggregate that reports "18 regressed" without the strings
- * is the shape that let a venue-destroying regression read as a routine count for five runs.
+ * Address-first is the point.
+ * An aggregate that reports "18 regressed" without the strings is the shape that let
+ * a venue-destroying regression read as a routine count for five runs.
  */
 export function renderParseDiff(diff: ParseDiff, options: { context?: boolean } = {}): string {
 	const lines: string[] = [diff.input]

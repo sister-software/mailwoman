@@ -26,9 +26,10 @@ import { JSONSpliterator } from "spliterator"
 /**
  * Default check corpus. ratified 2026-07-13 to the triaged set (321 live / 55 tombstones):
  * the 22 rules-era no-solution assertions plus 33 gold-triage tombstones
- * (rules-idiosyncratic fixtures a neural parser should not be graded against —
- * solver-permutation probes, autocomplete-era jitter, self-admitted TODOs. each
- * carries a `dropped` reason). Proposal
+ * (rules-idiosyncratic fixtures a neural parser should not be graded against — solver-permutation
+ * probes, autocomplete-era jitter, self-admitted TODOs. each carries a `dropped` reason).
+ *
+ * Proposal
  *
  * - Per-fixture rationale: `docs/articles/evals/competitive-parity/2026-07-13-parity-gold-triage.md`.
  *   The pre-#875 v1 corpus stays reproducible via
@@ -62,7 +63,9 @@ export interface ParityFixture {
 	 */
 	source: string
 	/**
-	 * ComponentTag-keyed gold (top rules solution's hand-written expectation). Absent on tombstones.
+	 * ComponentTag-keyed gold (top rules solution's hand-written expectation).
+	 *
+	 * Absent on tombstones.
 	 */
 	expect?: Record<string, string[]>
 	/**
@@ -80,7 +83,9 @@ export interface ParityFixture {
 }
 
 /**
- * Pre-registered floors (plan 2, 2026-07-13). Shared verbatim with the held swap checks.
+ * Pre-registered floors (plan 2, 2026-07-13).
+ *
+ * Shared verbatim with the held swap checks.
  */
 export const PARITY_FLOORS = [
 	{ label: "house_number", floor: 0.97, tags: ["house_number"] },
@@ -95,16 +100,18 @@ export interface ParityEvalOptions {
 	modelCardPath?: string
 	fixturesPath?: string
 	/**
-	 * Grade a candidate laid out as a package-shaped weights dir
-	 * (`<cacheRoot>/node_modules/@mailwoman/neural-weights-<locale>`).
+	 * Grade a candidate laid out as a package-shaped weights
+	 * dir (`<cacheRoot>/node_modules/@mailwoman/neural-weights-<locale>`).
+	 *
 	 * Prefer this over modelPath/tokenizerPath for candidates: the explicit-path branch feeds no sibling
 	 * channels (anchor/gazetteer/calibration) and grades a crippled model — the #718 zero-fill trap.
 	 */
 	weightsCacheRoot?: string
 	/**
-	 * Probe 0 (campaign runbook): feed the decode-time street-morphology emission
-	 * bias, built from the in-repo libpostal `street_types` dictionaries
-	 * (all locales). Zero-training change.
+	 * Probe 0 (campaign runbook): feed the decode-time street-morphology emission bias,
+	 * built from the in-repo libpostal `street_types` dictionaries (all locales).
+	 *
+	 * Zero-training change.
 	 */
 	streetMorphology?: boolean
 	/**
@@ -116,8 +123,9 @@ export interface ParityEvalOptions {
 	 */
 	gazetteerPrior?: boolean
 	/**
-	 * Ship-config word-consistency heal (default true since the 2026-07-15 check
-	 * revision — production parses heal, so the eval grades the healed parse).
+	 * Ship-config word-consistency heal (default true since the 2026-07-15 check revision —
+	 * production parses heal, so the eval grades the healed parse).
+	 *
 	 * Pass `false` to reproduce pre-heal baselines.
 	 */
 	wordConsistency?: boolean
@@ -164,9 +172,9 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 
 			console.log(`gazetteer prior ON (${fstPath})`)
 		} else {
-			// Loud rather than silent. A requested prior that resolves nothing scores lower
-			// with no signal of its own, which reads as a model difference — #1516's shape,
-			// and the reason five overlays needed #1705.
+			// Loud rather than silent.
+			// A requested prior that resolves nothing scores lower with no signal of its own, which
+			// reads as a model difference — #1516's shape, and the reason five overlays needed #1705.
 			console.warn(
 				"gazetteer prior REQUESTED but this weights package ships no FST — the channel is OFF and these numbers " +
 					"are the base model's. Do not compare them against a prior-on arm."
@@ -203,15 +211,17 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 	for (const fixture of live) {
 		const expect = fixture.expect!
 
-		// Ship-config parse (check-revision 2026-07-15): production's safeClassify/parseForGeocode
-		// heal with WORD_CONSISTENCY_SHIP_DEFAULT, so the check must grade the same parse the
-		// swapped surfaces serve. Floors unchanged. Pre-heal continuity: `--no-word-consistency`.
+		// Ship-config parse (check-revision 2026-07-15): production's
+		// safeClassify/parseForGeocode heal with WORD_CONSISTENCY_SHIP_DEFAULT,
+		// so the check must grade the same parse the swapped surfaces serve.
+		// Floors unchanged.
+		// Pre-heal continuity: `--no-word-consistency`.
 		// Production config parity (#1146): the query-shape emission prior is fed on every path
 		// production parses on — `safeClassify` in the runtime pipeline, and `geocode-core`
 		// since #981 (which fixed this same divergence for the drop-in servers).
-		// Without it this check graded a starved parse. A no-op on inputs carrying no known
-		// format and no region abbrev, so the bare `street, city` class is byte-stable.
-		// it warrants its keep on the digit-span / region-abbrev rows.
+		// Without it this check graded a starved parse.
+		// A no-op on inputs carrying no known format and no region abbrev, so the bare `street, city`
+		// class is byte-stable. it warrants its keep on the digit-span / region-abbrev rows.
 		const byTag = groupTuplesByTag(
 			await classifier.parse(fixture.input, {
 				postcodeRepair: true,

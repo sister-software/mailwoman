@@ -40,6 +40,7 @@ interface SeedRegion {
  * Build a fixture in the production shape: a pre-built `place_population` aux table
  * (no geojson — `build-unified-wof` extracts `wof:population` into this table at ingest),
  * so the population boost is actually active (the plain lookup.test.ts seed has no population path).
+ *
  * Opened with `buildFTS: true` by the lookup. the lazy FTS build leaves the pre-existing
  * `place_population` untouched (it only (re)builds it from geojson, which we don't carry).
  */
@@ -95,19 +96,20 @@ function buildDB(regions: SeedRegion[]): DatabaseClient<WOFDatabase> {
 	return db
 }
 
-// Maine (exact alias "ME", no population) vs a populous state whose name token also matches "ME"
-// but is not an exact match. "ME Plains" stands in for the real states that surfaced as
-// non-exact "ME" candidates. Maine has no population so the boost asymmetry is unambiguous:
-// with a large `populationBoost`, ME-Plains gets a big lift and Maine gets +0 —
-// so without tiering the populous non-match strictly outranks the exact match (the bug),
-// and with tiering the exact match wins regardless (the fix).
+// Maine (exact alias "ME", no population) vs a populous state whose name token
+// also matches "ME" but is not an exact match.
+// "ME Plains" stands in for the real states that surfaced as non-exact "ME" candidates.
+// Maine has no population so the boost asymmetry is unambiguous: with a large `populationBoost`,
+// ME-Plains gets a big lift and Maine gets +0 — so without tiering the populous non-match strictly
+// outranks the exact match (the bug), and with tiering the exact match wins regardless (the fix).
 const REGIONS: SeedRegion[] = [
 	{ id: 1, name: "Maine", country: "US", lat: 45.3, lon: -69.2, aliases: ["ME"] },
 	{ id: 2, name: "ME Plains", country: "US", lat: 38.4, lon: -92.5, population: 6_196_156 },
 ]
 
 // Large boost magnitude so the populous decoy's lift dwarfs any BM25 gap.
-// Maine (no population) gets +0. Makes the tiering-off case reliably pick the populous non-match.
+// Maine (no population) gets +0.
+// Makes the tiering-off case reliably pick the populous non-match.
 const POP_DOMINATES: Partial<RankingWeights> = { populationBoost: 1000, populationScaleLog10: 6 }
 
 let lookup: WOFSQLitePlaceLookup
@@ -182,10 +184,10 @@ describe("findPlace — exact-match tiering", () => {
 		// An exact-abbrev holder ("NY" → New York) whose BM25 for the bare 2-letter token is poor —
 		// its long multilingual alt-name document dilutes the score — sinks below the normal
 		// `limit * 4` over-fetch window, behind a crowd of regions that merely token-match "ny".
-		// Without widening the window for short queries it never enters the candidate pool,
-		// so exact-match tiering can't promote it and a token-matching decoy wins
-		// (the real-DB "NY → Highland, GB" bug). With the widening, New York is in the pool
-		// and tiering lifts it. No `country` hint — this is the bare, no-context path.
+		// Without widening the window for short queries it never enters the candidate pool, so exact-match
+		// tiering can't promote it and a token-matching decoy wins (the real-DB "NY → Highland, GB" bug).
+		// With the widening, New York is in the pool and tiering lifts it.
+		// No `country` hint — this is the bare, no-context path.
 		const decoys: SeedRegion[] = Array.from({ length: 60 }, (_, i) => ({
 			id: 1000 + i,
 			name: `Ny Province ${i}`, // tokenizes to include "ny" → matches `match 'ny'`; short doc → good BM25
@@ -239,8 +241,9 @@ describe("findPlace — exact-match tiering", () => {
 	})
 
 	// The 48026 rule (proximity bias): two same-name postcode rows on different continents —
-	// with no hints, population-first picks the bigger one. with a bias point near the smaller,
-	// the prominence sort follows the hint. Soft only: both candidates still return.
+	// with no hints, population-first picks the bigger one. with a bias point near
+	// the smaller, the prominence sort follows the hint.
+	// Soft only: both candidates still return.
 	test("bias re-ranks a cross-country postcode tie; absent bias = population order", async () => {
 		const db = buildDB([
 			{ id: 31, name: "48026", country: "IT", lat: 44.37, lon: 12.03, placetype: "postalcode", population: 12_000 },

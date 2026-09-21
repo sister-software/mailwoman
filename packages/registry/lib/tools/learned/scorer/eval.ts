@@ -79,23 +79,33 @@ export interface ScorerPairwiseEvalOptions {
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
-	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * Record-matcher sources directory.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
 	 */
 	sources?: string
 	/**
-	 * State filter. Default TX.
+	 * State filter.
+	 *
+	 * Default TX.
 	 */
 	state?: string
 	/**
-	 * NPIs sampled. Default 1500.
+	 * NPIs sampled.
+	 *
+	 * Default 1500.
 	 */
 	npis?: number
 	/**
-	 * Base prng seed. Default 1.
+	 * Base prng seed.
+	 *
+	 * Default 1.
 	 */
 	seed?: number
 	/**
-	 * Train/test splits averaged. Default 8.
+	 * Train/test splits averaged.
+	 *
+	 * Default 8.
 	 */
 	seeds?: number
 	/**
@@ -106,6 +116,7 @@ export interface ScorerPairwiseEvalOptions {
 
 /**
  * Learned-scorer pairwise probe (#603) — see the module doc.
+ *
  * Emits the markdown report to stdout.
  */
 export async function scorerPairwiseEval(
@@ -147,8 +158,8 @@ export async function scorerPairwiseEval(
 
 	geocoder[Symbol.dispose]()
 
-	// Block records and extract the collapsed-spatial and address-frequency features.
-	// comparisons. EM-fit it for the FS baseline. ---
+	// Block records and extract the collapsed-spatial and address-frequency features. comparisons.
+	// EM-fit it for the FS baseline. ---
 	report?.("[D] blocking + features…")
 	const model = buildDefaultModel({ collapseSpatial: true, addressFrequency })
 	const { pairs } = block(records, defaultBlockingKeys())
@@ -181,6 +192,7 @@ export async function scorerPairwiseEval(
 	/**
 	 * One train/test split (by NPI): train the L2 logistic regression on the train pairs,
 	 * then score the held-out test pairs with both the LR and the EM-fitted FS scorer.
+	 *
 	 * The FS model is seed-independent (fit unsupervised on all pairs); only the LR weights
 	 * and the test subset move with the seed, so repeating over seeds bounds split variance.
 	 */
@@ -381,7 +393,8 @@ export async function scorerPairwiseEval(
 		"",
 	]
 
-	// Linear vs tree: does a non-linear model extract more than the LR? (The probe's open question.)
+	// Linear vs tree: does a non-linear model extract more than the LR?
+	// (The probe's open question.)
 	const treeVerdict =
 		meanGbtVsLr > MIN_MEANINGFUL_DELTA && gbtBeatsLr >= SEEDS - 1
 			? `**The tree extends the linear gain** — GBT beats the LR by ΔAUC ${sgn(meanGbtVsLr)}${f4(meanGbtVsLr)} ` +

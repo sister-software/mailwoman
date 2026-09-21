@@ -39,10 +39,12 @@ const cliBin = await mailwomanCLIPath()
  * A locale with no `@mailwoman/neural-weights-*` workspace package — resolution can never succeed.
  *
  * Was `de-DE` until 2026-08-02, when campaign R9 shipped `@mailwoman/neural-weights-de-de`
- * and made the "absent" locale resolvable. Every assertion here inverted at once: the CLI stopped
- * warning because it found real weights, and `expected '' to contain 'neural weights not found'`
- * is what that looks like. `pt-BR` has no carrier package today. if one ever ships,
- * this breaks the same way and wants the same one-line move.
+ * and made the "absent" locale resolvable.
+ * Every assertion here inverted at once: the CLI stopped warning because it found real weights,
+ * and `expected '' to contain 'neural weights not found'` is what that looks like.
+ *
+ * `pt-BR` has no carrier package today. if one ever ships, this breaks the same way
+ * and wants the same one-line move.
  */
 const ABSENT_LOCALE = "pt-BR"
 const ABSENT_PACKAGE = "@mailwoman/neural-weights-pt-br"
@@ -129,7 +131,8 @@ describe("#1108 loud weights fallback — weights ABSENT (non-interactive / pipe
 
 		expect(code).toBe(0)
 		expect(stderr).toContain("neural weights not found")
-		// Silence point 2: --debug used to fall through with no notice. It must now be loud.
+		// Silence point 2: --debug used to fall through with no notice.
+		// It must now be loud.
 		const result = parseStdoutJSON(stdout) as Record<string, unknown>
 		expect(result).toHaveProperty("input")
 		expect(result).toHaveProperty("path")
@@ -197,8 +200,8 @@ describe("#1108 — the interactive/declined degraded banner is unchanged (regre
 	}, 30_000)
 })
 
-// End-to-end --resolve degraded path (exit 0 with a real resolver) —
-// conditioned on a WOF SQLite distribution, mirroring resolve-flag.test.ts.
+// End-to-end --resolve degraded path (exit 0 with a real resolver) — conditioned on
+// a WOF SQLite distribution, mirroring resolve-flag.test.ts.
 // Runs only where a WOF DB is on disk. proves the warning + degraded output + exit 0
 // combination the audit's test (1) calls for on the full --resolve path.
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))

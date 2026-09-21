@@ -73,6 +73,7 @@ export type POIOutcomeShape = (typeof POI_OUTCOME_SHAPES)[number]
 
 /**
  * Read the outcome shape off the projection of one pipeline result.
+ *
  * Total over the vocabulary above — every reachable combination of `path` and `poiIntent`
  * names exactly one shape, so a caller never has to represent "could not tell".
  */
@@ -86,6 +87,7 @@ export function poiOutcomeShape(outcome: POIBoardOutcome): POIOutcomeShape {
 
 /**
  * The closed set of comparators this probe may register.
+ *
  * One entry today. adding one is a reviewed instrument, never an inline callback in the definition file.
  */
 export const PROBE_COMPARATORS = ["poi_board_assembled_answer"] as const
@@ -93,9 +95,10 @@ export const PROBE_COMPARATORS = ["poi_board_assembled_answer"] as const
 export type ProbeComparatorName = (typeof PROBE_COMPARATORS)[number]
 
 /**
- * Grade one row with a registered comparator. Refuses an unregistered name with
- * the name in the message — a comparator silently defaulted to another instrument
- * would report a number nobody could trace to a interface.
+ * Grade one row with a registered comparator.
+ *
+ * Refuses an unregistered name with the name in the message — a comparator silently
+ * defaulted to another instrument would report a number nobody could trace to a interface.
  */
 export function gradeWithComparator(
 	comparator: ProbeComparatorName,
@@ -110,7 +113,9 @@ export function gradeWithComparator(
 }
 
 /**
- * The three decisions the parent program admits. Exactly one is recorded at #1930.
+ * The three decisions the parent program admits.
+ *
+ * Exactly one is recorded at #1930.
  */
 export const PROBE_DECISIONS = ["GO", "DIAGNOSTIC-ONLY", "STOP-REDESIGN"] as const
 
@@ -122,8 +127,10 @@ export type ProbeDecision = (typeof PROBE_DECISIONS)[number]
  */
 export interface ProbeTargetRow extends POIBoardFixture {
 	/**
-	 * Where the query form is attested. Route (a) commits these rows before the semantic
-	 * arm exists, so the record has to say what the form is not: invented to pass.
+	 * Where the query form is attested.
+	 *
+	 * Route (a) commits these rows before the semantic arm exists, so the record
+	 * has to say what the form is not: invented to pass.
 	 */
 	attestedIn: string
 	/**
@@ -145,7 +152,9 @@ export interface ProbeTargetRow extends POIBoardFixture {
 }
 
 /**
- * The two control groups. Both decide. see the module header for why one alone is vacuous.
+ * The two control groups.
+ *
+ * Both decide. see the module header for why one alone is vacuous.
  */
 export const PROBE_CONTROL_GROUPS = ["same_category", "adjacent"] as const
 
@@ -167,6 +176,7 @@ export interface ProbeControlRow {
 	expect: POIBoardExpect
 	/**
 	 * The grade the row holds at baseline, and the grade it must still hold.
+	 *
 	 * `controlRegressionTolerance` is the number of rows allowed to move off this.
 	 */
 	expectedGrade: "pass"
@@ -187,8 +197,9 @@ export interface ProbeMetric {
 }
 
 /**
- * The frozen decision thresholds. Numbers rather than adjectives, and all of
- * them `>=` bars over stated denominators.
+ * The frozen decision thresholds.
+ *
+ * Numbers rather than adjectives, and all of them `>=` bars over stated denominators.
  */
 export interface ProbeThresholds {
 	/**
@@ -197,6 +208,7 @@ export interface ProbeThresholds {
 	minimumPrimaryNumerator: number
 	/**
 	 * GO — and it must gain at least this many rows over the frozen baseline.
+	 *
 	 * Stated as well as the absolute bar because a baseline that is not zero would make
 	 * the absolute bar reachable without the observation moving anything.
 	 */
@@ -212,6 +224,7 @@ export interface ProbeThresholds {
 	minimumDiagnosticDelta: number
 	/**
 	 * How many control rows may move off `expectedGrade`.
+	 *
 	 * Zero: a control regression is a stop under both decisions.
 	 */
 	controlRegressionTolerance: number
@@ -301,6 +314,7 @@ export function probeDefinitionHash(definition: SemanticProbeDefinition): string
 
 /**
  * Everything that must be true of a definition, checked without running anything.
+ *
  * One message per problem, each naming the field or row id.
  * Empty means the definition is executable.
  */
@@ -550,11 +564,12 @@ export interface ProbeVerdict {
 /**
  * Map measured counts onto exactly one decision, against the frozen thresholds and the frozen baseline.
  *
- * Order is required. A control regression is checked first and stops under both decisions:
- * a target delta bought by breaking the venue-noun form of the same query is
- * not a result the program can act on. GO is checked before diagnostic-only
- * because a row that passes the comparator necessarily reached the POI branch,
- * so the diagnostic condition holds whenever the primary one does.
+ * Order is required.
+ * A control regression is checked first and stops under both decisions: a target delta bought
+ * by breaking the venue-noun form of the same query is not a result the program can act on.
+ *
+ * GO is checked before diagnostic-only because a row that passes the comparator necessarily
+ * reached the POI branch, so the diagnostic condition holds whenever the primary one does.
  */
 export function decideProbe(definition: SemanticProbeDefinition, counts: ProbeCounts): ProbeVerdict {
 	const thresholds = definition.thresholds

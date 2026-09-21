@@ -11,7 +11,9 @@ import { z } from "zod"
 
 /**
  * FCC Broadband Map (BDC) public-API credentials (`bdc/lib/sdk/client.ts`) —
- * username + hash_value header auth. Never log their values.
+ * username + hash_value header auth.
+ *
+ * Never log their values.
  */
 export const PrivateBDCEnvSchema = z.object({
 	FCC_MAP_USERNAME: z.string().optional().meta({
@@ -25,6 +27,8 @@ export const PrivateBDCEnvSchema = z.object({
 })
 
 /**
- * Live BDC credentials over core's. Never log their values.
+ * Live BDC credentials over core's.
+ *
+ * Never log their values.
  */
 export const $private = liveEnv(PrivateBDCEnvSchema, corePrivate)

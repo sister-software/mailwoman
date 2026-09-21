@@ -35,7 +35,9 @@ export interface TokenSpan {
 	start: number
 
 	/**
-	 * Exclusive end offset in the source string. `text === source.slice(start, end)`.
+	 * Exclusive end offset in the source string.
+	 *
+	 * `text === source.slice(start, end)`.
 	 */
 	end: number
 }
@@ -50,17 +52,21 @@ export interface Tokenizer {
 /**
  * Whitespace + punctuation tokenizer (pure JS).
  *
- * Tokens are maximal runs of unicode word characters (`\p{L}` letters, `\p{N}` digits, `\p{M}`
- * marks, plus `'`, `-`, `_`). Everything else — whitespace, punctuation, symbols — is treated
- * as a separator and **not** emitted as a token. The resulting spans cover the original
- * string only on token regions. in-between regions belong to no token.
+ * Tokens are maximal runs of unicode word characters
+ * (`\p{L}` letters, `\p{N}` digits, `\p{M}` marks, plus `'`, `-`, `_`).
+ * Everything else — whitespace, punctuation, symbols — is treated as a separator
+ * and **not** emitted as a token.
+ *
+ * The resulting spans cover the original string only on token regions.
+ * in-between regions belong to no token.
  *
  * This is intentionally lossy at the edges (alignment can still label every meaningful span).
  * A future SentencePiece tokenizer will preserve all bytes via byte-fallback.
  */
 export function whitespaceTokenizer(): Tokenizer {
 	// Maximal runs of letters/digits/marks plus the joiners common to addresses
-	// (apostrophe, hyphen, underscore). Comma/space/period etc. are not in the set.
+	// (apostrophe, hyphen, underscore).
+	// Comma/space/period etc. are not in the set.
 	const tokenRe = /[\p{L}\p{N}\p{M}'_-]+/gu
 
 	return {
@@ -88,10 +94,11 @@ const HAN = /\p{Script=Han}/u
 /**
  * Whitespace tokenizer for Latin runs, one token PER character for Han runs.
  *
- * The CJK sibling model is character-level (CharCNN), so a per-character token is the unit
- * it labels. the Latin tail of a mixed row (`赵光三分场二十九队, Heilongjiang, China`) keeps the
- * word tokens the Latin aligner has always used. Spans still come back as `[start, end)`
- * offsets over the source string, so the aligner's span-overlap rule needs no change.
+ * The CJK sibling model is character-level (CharCNN), so a per-character token is the
+ * unit it labels. the Latin tail of a mixed row (`赵光三分场二十九队, Heilongjiang, China`)
+ * keeps the word tokens the Latin aligner has always used.
+ * Spans still come back as `[start, end)` offsets over the source string,
+ * so the aligner's span-overlap rule needs no change.
  */
 export function cjkAwareTokenizer(): Tokenizer {
 	const base = whitespaceTokenizer()

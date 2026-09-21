@@ -91,13 +91,17 @@ const FLAG_HAS_RADIUS = 0b0000_0010
 const MAX_U8_LEN = 255
 
 /**
- * Largest integer an f64 represents exactly. WOF IDs are asserted against it at serialize time
- * so a future ID beyond the safe range fails the build rather than round-tripping to a neighbour.
+ * Largest integer an f64 represents exactly.
+ *
+ * WOF IDs are asserted against it at serialize time so a future ID beyond the safe
+ * range fails the build rather than round-tripping to a neighbour.
  */
 const MAX_EXACT_WOF_ID = Number.MAX_SAFE_INTEGER
 
 /**
- * One admin surface a prefix asserts. Interned in the file's ancestor dictionary.
+ * One admin surface a prefix asserts.
+ *
+ * Interned in the file's ancestor dictionary.
  */
 export interface PostcodePrefixAncestor {
 	/**
@@ -124,14 +128,18 @@ export interface PostcodePrefixNode {
 	 */
 	prefix: string
 	/**
-	 * Admin ancestry the prefix asserts, coarsest-first. Empty when the prefix asserts none —
-	 * which is a real answer rather than a build failure: a GB outward code in one of the two
-	 * documented border-straddling postcode areas asserts the United Kingdom and nothing finer.
+	 * Admin ancestry the prefix asserts, coarsest-first.
+	 *
+	 * Empty when the prefix asserts none — which is a real answer rather than a build failure:
+	 * a GB outward code in one of the two documented border-straddling postcode
+	 * areas asserts the United Kingdom and nothing finer.
 	 */
 	ancestors: readonly PostcodePrefixAncestor[]
 	/**
-	 * Centroid latitude. Absent (with {@link PostcodePrefixNode.lon}) for the
-	 * ancestry-only tier. Never `0`-as-absent.
+	 * Centroid latitude.
+	 *
+	 * Absent (with {@link PostcodePrefixNode.lon}) for the ancestry-only tier.
+	 * Never `0`-as-absent.
 	 */
 	lat?: number
 	lon?: number
@@ -142,8 +150,9 @@ export interface PostcodePrefixNode {
 	 */
 	radiusP95Km?: number
 	/**
-	 * Units observed under this prefix at build time — the denominator behind
-	 * `radiusP95Km`, and, for a partial source, the number that says how partial.
+	 * Units observed under this prefix at build time — the denominator behind `radiusP95Km`,
+	 * and, for a partial source, the number that says how partial.
+	 *
 	 * It is an observation, never a claim about how many units exist.
 	 */
 	unitCount: number
@@ -177,6 +186,7 @@ export interface PostcodePrefixHeader {
 	levels: readonly string[]
 	/**
 	 * The numbering authority the prefixes came from rather than the gazetteer they were joined to.
+	 *
 	 * M-3 is the receipt: 7.9% of US ZIPs disagree with their own gazetteer parent's state
 	 * because a firm/unique ZIP names an organization's mail processor rather than the code's
 	 * range, so an index derived from `spr.parent_id` bakes that misattribution in.
@@ -206,8 +216,9 @@ export interface PostcodePrefixHeader {
 	 */
 	coverageNote: string
 	/**
-	 * Optional soft-prior bias magnitude. Absent until a calibration task measures one —
-	 * a defaulted number here would
+	 * Optional soft-prior bias magnitude.
+	 *
+	 * Absent until a calibration task measures one — a defaulted number here would
 	 * let an uncalibrated bias reach the decoder unnoticed (PCN1's rule, verbatim). B3-1 ships data + loader + offline
 	 * probe with no decode wiring, so nothing reads this yet.
 	 */
@@ -412,7 +423,9 @@ export interface PostcodePrefixIndexLike {
 }
 
 /**
- * Map-backed reader over PFX1 bytes. Pure JS, no Node imports — the browser runtime loads the same artifact.
+ * Map-backed reader over PFX1 bytes.
+ *
+ * Pure JS, no Node imports — the browser runtime loads the same artifact.
  */
 export class PostcodePrefixIndexResolver implements PostcodePrefixIndexLike {
 	readonly header: PostcodePrefixHeader
@@ -504,7 +517,9 @@ export class PostcodePrefixIndexResolver implements PostcodePrefixIndexLike {
 	}
 
 	/**
-	 * Every node, in the file's sorted order. The round-trip verification reads this. a runtime consumer wants
+	 * Every node, in the file's sorted order.
+	 *
+	 * The round-trip verification reads this. a runtime consumer wants
 	 * {@link PostcodePrefixIndexResolver.probe}.
 	 */
 	nodes(): IterableIterator<PostcodePrefixNode> {
@@ -512,10 +527,12 @@ export class PostcodePrefixIndexResolver implements PostcodePrefixIndexLike {
 	}
 
 	/**
-	 * Look up one prefix. Returns `null` when the index has no node for it —
-	 * absence is not evidence. Read the header's `coverageNote` before treating a
-	 * miss as anything but neutral: for a partial register a miss means unattested,
-	 * and for a complete one it means the prefix is not in the numbering plan.
+	 * Look up one prefix.
+	 *
+	 * Returns `null` when the index has no node for it — absence is not evidence.
+	 * Read the header's `coverageNote` before treating a miss as anything but neutral:
+	 * for a partial register a miss means unattested, and for a complete one it
+	 * means the prefix is not in the numbering plan.
 	 */
 	probe(prefix: string): PostcodePrefixNode | null {
 		return this.#nodes.get(prefix) ?? null

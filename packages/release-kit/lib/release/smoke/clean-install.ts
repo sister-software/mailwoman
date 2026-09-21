@@ -22,12 +22,14 @@ import { packWorkspaces } from "#release/workspace-closure"
 
 /**
  * The `mailwoman` CLI's full first-party runtime closure.
+ *
  * Every `@mailwoman/*` package the CLI can load at runtime must be packed here —
  * otherwise `npm install` pulls it from the registry (the published, possibly-stale version),
  * and the smoke tests new-source-CLI against an old-registry dependency.
  * That exact skew shipped a red main after the v5.0.0 acronym rename: `mailwoman`
  * imported the renamed `createWOFResolver`, but `@mailwoman/resolver` wasn't packed,
  * so npm resolved the pre-rename 4.16.2 and the CLI crashed on a missing export.
+ *
  * Packing the closure makes the test source-coherent (new-vs-new).
  */
 const WORKSPACES: Record<string, string> = {
@@ -69,8 +71,8 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/sentencepiece-wasm": "packages/sentencepiece-wasm",
 	"@mailwoman/neural": "packages/neural",
 	// The weights bundles — data-only, but real deps of photon/nominatim/fastify
-	// (all in this closure), so on a version-bumped release branch npm would otherwise
-	// chase the not-yet-published registry version (the v7.6.0 etarget chicken-and-egg).
+	// (all in this closure), so on a version-bumped release branch npm would otherwise chase
+	// the not-yet-published registry version (the v7.6.0 etarget chicken-and-egg).
 	// Packing them also makes the smoke test the actual weight packaging instead of
 	// the registry's previous release — the postcode-de.bin
 	// class (a soft-feed sibling silently missing from a shipped tarball) is only visible this way.
@@ -110,10 +112,10 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/libpostal": "packages/libpostal",
 	"@mailwoman/photon": "packages/photon",
 	"@mailwoman/nominatim": "packages/nominatim",
-	// The Fastify plugin. Its entrypoint's only eager runtime import is `fastify-plugin`
-	// (a declared dep) — `mailwoman`/`@mailwoman/core` are reached via dynamic
-	// import() on the first request, and `fastify` is a type-only (peer) import —
-	// so IMPORT_CHECK below loads it without fastify installed.
+	// The Fastify plugin.
+	// Its entrypoint's only eager runtime import is `fastify-plugin` (a declared dep) —
+	// `mailwoman`/`@mailwoman/core` are reached via dynamic import() on the first request, and `fastify`
+	// is a type-only (peer) import — so IMPORT_CHECK below loads it without fastify installed.
 	"@mailwoman/fastify": "packages/fastify",
 	// `@mailwoman/mcp`'s bin (`out/cli.js`, the `mailwoman-mcp` entry) connects an stdio
 	// transport at module scope, so IMPORT_CHECK below (which imports the package entrypoint —
@@ -131,8 +133,8 @@ const WORKSPACES: Record<string, string> = {
 	// imports the authority-designation route on the presence of a `flood.db`,
 	// and `--help`'s command-module load reaches `gazetteer build flood`.
 	"@mailwoman/flood": "packages/flood",
-	// The soil layer reader is a declared dependency of `mailwoman`,
-	// so npm resolves it at install time whether or not any code path reaches it.
+	// The soil layer reader is a declared dependency of `mailwoman`, so npm resolves
+	// it at install time whether or not any code path reaches it.
 	// Its runtime reach is narrower than flood's above: `gazetteer build soil` imports the
 	// SDK inside its task rather than at module scope, so only `geocode-session`'s dynamic
 	// route load reaches the package, and only where a `soil.db` is on disk.
@@ -171,20 +173,23 @@ const IMPORT_CHECK = [
 ]
 
 /**
- * Leaves whose tarball must import without the umbrella (no unrelated hoisting) — the undeclared-dep
- * guard the closure phase can't provide. Each leaf installs with its declared first-party
- * closure supplied as local tarballs, derived from the manifests by {@link firstPartyClosure}
- * rather than typed here: a hand list drifts the moment a manifest gains a `workspace:*`
- * dependency, and the drift is invisible on main, where npm resolves the missing tarball
- * from the registry at the current version, and fatal on a release branch, where the bumped
- * version exists nowhere (`@mailwoman/evidence@9.4.0`, etarget, the v9.4.0 release PR).
+ * Leaves whose tarball must import without the umbrella (no unrelated hoisting) —
+ * the undeclared-dep guard the closure phase can't provide.
+ *
+ * Each leaf installs with its declared first-party closure supplied as local tarballs,
+ * derived from the manifests by {@link firstPartyClosure} rather than typed here:
+ * a hand list drifts the moment a manifest gains a `workspace:*` dependency,
+ * and the drift is invisible on main, where npm resolves the missing tarball from the
+ * registry at the current version, and fatal on a release branch, where the bumped version
+ * exists nowhere (`@mailwoman/evidence@9.4.0`, etarget, the v9.4.0 release PR).
  */
 const STANDALONE_LEAVES: readonly string[] = ["@mailwoman/core"]
 
 /**
- * The first-party runtime closure of one packed workspace: every `@mailwoman/*`
- * / `mailwoman` name reachable through `dependencies`, `optionalDependencies`
- * and `peerDependencies` (npm installs peers), transitively, read from the manifests on disk.
+ * The first-party runtime closure of one packed workspace: every `@mailwoman/*` / `mailwoman`
+ * name reachable through `dependencies`, `optionalDependencies` and `peerDependencies`
+ * (npm installs peers), transitively, read from the manifests on disk.
+ *
  * `assertClosureComplete` has already refused a `workspace:*` edge that leaves the
  * pack set, so every name found here has a tarball.
  */
@@ -213,6 +218,7 @@ async function firstPartyClosure(repoRoot: string, leaf: string): Promise<string
 
 /**
  * The tools `@mailwoman/mcp` registers (`mcp/tools.ts` + the bdc/filer additions, 2026-07-31).
+ *
  * The bin-exec leg asserts exactly this set — a name list rather than a count,
  * so drift names the missing or unexpected tool instead of printing "expected N, got M".
  */
@@ -229,15 +235,19 @@ const MCP_EXPECTED_TOOLS = [
 ]
 
 /**
- * Bin-exec leg for `@mailwoman/mcp` (2026-07-20). IMPORT_CHECK imports the package
- * entrypoint (server.ts + tools.ts); it never runs `cli.ts`, whose own static imports
- * (`mailwoman/geocode-core`, `mailwoman/poi-overpass`, the SDK's stdio transport) can pull an undeclared
- * dep that only surfaces when the bin actually boots. This spawns the installed `mailwoman-mcp`
- * bin over stdio, hand-writes the two newline-delimited JSON-RPC frames of the MCP handshake
+ * Bin-exec leg for `@mailwoman/mcp` (2026-07-20).
+ *
+ * IMPORT_CHECK imports the package entrypoint (server.ts + tools.ts); it never runs `cli.ts`, whose
+ * own static imports (`mailwoman/geocode-core`, `mailwoman/poi-overpass`, the SDK's stdio transport)
+ * can pull an undeclared dep that only surfaces when the bin actually boots.
+ * This spawns the installed `mailwoman-mcp` bin over stdio,
+ * hand-writes the two newline-delimited JSON-RPC frames of the MCP handshake
  * (`initialize` → `notifications/initialized` → `tools/list`; no SDK client needed),
  * asserts exactly five tools, then closes stdin and asserts the process exits cleanly —
- * the whole exchange bounded by `timeoutMs` (~30s). A missing dep, a non-zero exit,
- * a wrong tool count, or a hung process all fail the smoke here, before publish.
+ * the whole exchange bounded by `timeoutMs` (~30s).
+ *
+ * A missing dep, a non-zero exit, a wrong tool count, or a hung process all
+ * fail the smoke here, before publish.
  */
 async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number> {
 	const binPath = join(projDir, "node_modules", ".bin", "mailwoman-mcp")
@@ -392,6 +402,7 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 
 /**
  * Run a command with stdin ignored and both output streams captured, answering stdout.
+ *
  * Throws the builtin's error (which carries stdout and stderr) on a non-zero exit.
  */
 function run(cmd: string, args: string[], cwd: string): string {
@@ -399,10 +410,12 @@ function run(cmd: string, args: string[], cwd: string): string {
 }
 
 /**
- * Closure-completeness guard: every `workspace:*` @mailwoman dep of a packed workspace must itself be
- * in workspaces. An unpacked one doesn't fail here on main — npm silently resolves the registry
- * version (the stale-dependency skew this smoke exists to catch) — and hard-fails with etarget on
- * a version-bumped release branch (the v7.6.0 chicken-and-egg: neural-weights, then variant-aliases).
+ * Closure-completeness guard: every `workspace:*` @mailwoman dep of a packed
+ * workspace must itself be in workspaces.
+ *
+ * An unpacked one doesn't fail here on main — npm silently resolves the registry version
+ * (the stale-dependency skew this smoke exists to catch) — and hard-fails with etarget on a
+ * version-bumped release branch (the v7.6.0 chicken-and-egg: neural-weights, then variant-aliases).
  * Fail loud at pack time instead, naming the edge.
  */
 async function assertClosureComplete(repoRoot: string): Promise<void> {
@@ -442,6 +455,7 @@ export interface SmokeCleanInstallReport {
 
 /**
  * Pack the closure, install it into a throwaway project, and run the CLI plus every import probe.
+ *
  * Throws on the first failure with the failing command's stdout and stderr attached to the message.
  */
 export async function smokeCleanInstall({ repoRoot, log }: SmokeCleanInstallOptions): Promise<SmokeCleanInstallReport> {
@@ -465,8 +479,8 @@ export async function smokeCleanInstall({ repoRoot, log }: SmokeCleanInstallOpti
 
 		// Read the entry from the installed manifest's `bin` rather than spelling the compiled path here.
 		// Spelling it encodes a layout the published package is free to change: the entry moved
-		// from `out/cli.js` to `out/cli/index.js` and this probe kept invoking a file that
-		// no longer ships, so the smoke reported a missing module instead of a working CLI.
+		// from `out/cli.js` to `out/cli/index.js` and this probe kept invoking a file that no
+		// longer ships, so the smoke reported a missing module instead of a working CLI.
 		// The manifest is the consumer's own interface, which is what this probe exists to exercise,
 		// and reading it consults the installed tree rather than the monorepo's graph.
 		const installedRoot = join(proj, "node_modules", "mailwoman")
@@ -508,14 +522,15 @@ export async function smokeCleanInstall({ repoRoot, log }: SmokeCleanInstallOpti
 
 		log(`[smoke]   → ${toolCount} tools listed, bin shut down cleanly`)
 
-		// Standalone-leaf guard (#core-zx, 2026-07-18). The phase above installs the
-		// whole `mailwoman` closure into one project, so a hoisted-but-undeclared dep
-		// is always present in node_modules — it cannot catch a leaf package whose own
-		// manifest is missing a runtime dep. Install each dependency-clean leaf with only
-		// its declared first-party closure and import it. An undeclared import
-		// (the v7.0.0 `zx` bug, which the closure phase hid because `mailwoman` declares `zx`)
-		// crashes here and nowhere else. The first-party closure comes from the manifests so npm
-		// never pulls a stale registry version (the source-skew this file's header warns about).
+		// Standalone-leaf guard (#core-zx, 2026-07-18).
+		// The phase above installs the whole `mailwoman` closure into one project,
+		// so a hoisted-but-undeclared dep is always present in node_modules — it cannot
+		// catch a leaf package whose own manifest is missing a runtime dep.
+		// Install each dependency-clean leaf with only its declared first-party closure and import it.
+		// An undeclared import (the v7.0.0 `zx` bug, which the closure phase hid
+		// because `mailwoman` declares `zx`) crashes here and nowhere else.
+		// The first-party closure comes from the manifests so npm never pulls a stale
+		// registry version (the source-skew this file's header warns about).
 		for (const leaf of STANDALONE_LEAVES) {
 			const leafDir = WORKSPACES[leaf]!
 			const firstPartyDependencies = await firstPartyClosure(repoRoot, leaf)

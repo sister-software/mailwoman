@@ -69,9 +69,9 @@ const child = spawnProcess(command, args, {
 
 child.unref()
 
-// This process owns the handle. the child holds its own copy of the descriptor across
-// the fork, so closing here does not disturb it. Leaving it open would keep the
-// event loop alive and defeat the point of `unref`.
+// This process owns the handle. the child holds its own copy of the descriptor
+// across the fork, so closing here does not disturb it.
+// Leaving it open would keep the event loop alive and defeat the point of `unref`.
 await log.close()
 
 console.log(`launched pid ${child.pid} in its own session`)

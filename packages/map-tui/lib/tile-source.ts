@@ -75,9 +75,10 @@ export function readAttribution(metadata: unknown): string {
 }
 
 /**
- * Plain text out of an html fragment via `htmlparser2`'s event parser —
- * a hand scan misreads `<` inside attribute values and unclosed tags, and the
- * parser's own entity decoding covers the full named set a metadata field can carry.
+ * Plain text out of an html fragment via `htmlparser2`'s event parser — a hand scan
+ * misreads `<` inside attribute values and unclosed tags, and the parser's own entity
+ * decoding covers the full named set a metadata field can carry.
+ *
  * Local rather than `@mailwoman/core`'s `htmlToText`: this package stays standalone by design,
  * and one attribution string does not price core's shipped data into every consumer.
  */

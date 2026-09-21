@@ -15,9 +15,10 @@ import type { WOFDatabase } from "#schema"
 import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
- * The official name of every current region, keyed `${country id}\0${name key}` → region id,
- * from the source `names` table's `official` bit. Empty when the source carries
- * no `names` table (a fixture, or an extract shape).
+ * The official name of every current region, keyed `${country id}\0${name key}` →
+ * region id, from the source `names` table's `official` bit.
+ *
+ * Empty when the source carries no `names` table (a fixture, or an extract shape).
  *
  * This is the positive evidence behind the one alias refusal below: a name is refused from a
  * region's bag only when another region of the same country holds it as its official name.
@@ -87,8 +88,8 @@ export function explodeAliasBags(
 		const seen = new Set<string>([a.pkey])
 		const isRegion = a.ptid === opts.regionPlacetypeID
 
-		// The writer space-pads each separator and appends a trailing one,
-		// so every piece arrives with surrounding whitespace and the last one is empty.
+		// The writer space-pads each separator and appends a trailing one, so every piece
+		// arrives with surrounding whitespace and the last one is empty.
 		// `normalizeLocalityForKey` folds both away, and the empty tail falls out at the `!k` guard below.
 		for (const piece of alt.split(ALIAS_SEPARATOR)) {
 			const k = normalizeLocalityForKey(piece)

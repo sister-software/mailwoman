@@ -96,9 +96,9 @@ describe("declaredAmbiguityMarker", () => {
 
 	test("collapses the coincident WOF twin before measuring — the trap that would fire on every capital", () => {
 		// Paris the `locality` and Paris the `localadmin`: same city, same population, ~0.3 km apart.
-		// A RAW top-2 margin here is 0.01, which is under the threshold. the 10 km collapse
-		// is what makes the number mean anything. Without it this assertion returns a marker
-		// and every major city in the world reads as ambiguous.
+		// A RAW top-2 margin here is 0.01, which is under the threshold. the 10 km
+		// collapse is what makes the number mean anything.
+		// Without it this assertion returns a marker and every major city in the world reads as ambiguous.
 		const tree = treeOf({ name: "Paris", lat: 48.8566, lon: 2.3522, prominence: 6.32 }, [
 			{ name: "Paris", placetype: "localadmin", lat: 48.8589, lon: 2.347, prominence: 6.31 },
 			{ name: "Paris", lat: 33.6609, lon: -95.5555, prominence: 4.4 },
@@ -180,9 +180,10 @@ describe("coarserAnswerMarker", () => {
 	})
 
 	test("an INTERPOLATED answer locates a house number, so it raises nothing", () => {
-		// `129 E Burr Oak St, Athens, MI` — 124 m uncertainty, and the house is placed
-		// as precisely as the tier allows. The first version of the floor table read
-		// `address_point` here and reported a shortfall on a correct answer.
+		// `129 E Burr Oak St, Athens, MI` — 124 m uncertainty, and the house is
+		// placed as precisely as the tier allows.
+		// The first version of the floor table read `address_point` here
+		// and reported a shortfall on a correct answer.
 		expect(
 			coarserAnswerMarker({
 				kinds: STRUCTURED,

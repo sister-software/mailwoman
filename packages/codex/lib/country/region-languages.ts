@@ -34,9 +34,11 @@ export function officialLanguagesAlpha3(country: string): readonly string[] {
 }
 
 /**
- * The languages a region's addresses are written in: the country's official languages first,
- * then the region's co-official ones. `regionOfficialName` is the region's name in the
- * country's first official language, the key the per-country tables use.
+ * The languages a region's addresses are written in: the country's official
+ * languages first, then the region's co-official ones.
+ *
+ * `regionOfficialName` is the region's name in the country's first official language,
+ * the key the per-country tables use.
  */
 export function regionLanguagesAlpha3(country: string, regionOfficialName: string): readonly string[] {
 	const official = officialLanguagesAlpha3(country)

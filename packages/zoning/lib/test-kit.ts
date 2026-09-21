@@ -37,12 +37,16 @@ import type { ZoningFeatureSource, ZoningSourceFeature } from "#sdk/ingest/index
 import { GZT_SOURCE_EPSG, GZT_UNZONED_LOCAL_CODE } from "#vocabulary"
 
 /**
- * The exterior ring builder, under this service's convention. Clockwise.
+ * The exterior ring builder, under this service's convention.
+ *
+ * Clockwise.
  */
 export const exteriorRing = clockwiseRing
 
 /**
- * The hole ring builder, under this service's convention. Counter-clockwise.
+ * The hole ring builder, under this service's convention.
+ *
+ * Counter-clockwise.
  */
 export const holeRing = counterClockwiseRing
 
@@ -52,8 +56,10 @@ export const holeRing = counterClockwiseRing
 export const FIXTURE_ORIGIN = { lon: -5.99, lat: 53.3 } as const
 
 /**
- * Side of a fixture zone, in degrees. About 1.1 km at this latitude — several res-10
- * cells across, so a zone has a real interior and a real fringe.
+ * Side of a fixture zone, in degrees.
+ *
+ * About 1.1 km at this latitude — several res-10 cells across, so a zone has
+ * a real interior and a real fringe.
  */
 export const FIXTURE_SIDE = 0.01
 
@@ -125,9 +131,9 @@ export function fixtureFeature(
  * holes. a second plan over the same ground as the first. a zone smaller than a cell.
  * and a zone the authority states as unzoned.
  *
- * The overlap between plans is the point. A point inside the first zone must
- * answer with both rows, each naming its own plan — which is what proves a plan
- * is part of the claim rather than a parameter of it.
+ * The overlap between plans is the point.
+ * A point inside the first zone must answer with both rows, each naming its own plan —
+ * which is what proves a plan is part of the claim rather than a parameter of it.
  */
 export function fixtureFeatures(): ZoningSourceFeature[] {
 	const { lon, lat } = FIXTURE_ORIGIN

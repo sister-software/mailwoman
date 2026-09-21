@@ -43,6 +43,7 @@ const defaultNormalize = (value: string): string => value.trim().toLowerCase().r
 
 /**
  * Build a {@link TermFrequencyTable} from an iterable of values (e.g. every `given` name in the dataset).
+ *
  * Values are normalized (default: trim + lowercase + collapse whitespace) before counting,
  * and `frequency()` normalizes its argument the same way, so callers pass raw field values.
  */
@@ -76,10 +77,12 @@ export function buildTermFrequencyTable(
 }
 
 /**
- * Attach a term-frequency adjustment to a comparison. By default it applies to the exact level
- * (index 0) and looks up the value via `value(a, b)` — usually the agreeing field extracted
- * from one side. Returns a new comparison. the underlying `assess` and levels are untouched,
- * so this composes with EM (which re-estimates the base `m`/`u` the adjustment sits on top of).
+ * Attach a term-frequency adjustment to a comparison.
+ *
+ * By default it applies to the exact level (index 0) and looks up the value via
+ * `value(a, b)` — usually the agreeing field extracted from one side.
+ * Returns a new comparison. the underlying `assess` and levels are untouched, so this
+ * composes with EM (which re-estimates the base `m`/`u` the adjustment sits on top of).
  */
 export function withTermFrequency<R>(
 	comparison: Comparison<R>,
@@ -87,15 +90,21 @@ export function withTermFrequency<R>(
 		table: TermFrequencyTable
 		value: (a: R, b: R) => string | null | undefined
 		/**
-		 * Level indices to adjust. Default `[0]` (the exact level).
+		 * Level indices to adjust.
+		 *
+		 * Default `[0]` (the exact level).
 		 */
 		levels?: Iterable<number>
 		/**
-		 * Scale in [0, 1]. Default 1.
+		 * Scale in [0, 1].
+		 *
+		 * Default 1.
 		 */
 		weight?: number
 		/**
-		 * Frequency floor bounding the boost on ultra-rare values. Default 1e-4.
+		 * Frequency floor bounding the boost on ultra-rare values.
+		 *
+		 * Default 1e-4.
 		 */
 		minimumFrequency?: number
 	}

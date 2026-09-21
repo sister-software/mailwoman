@@ -87,6 +87,7 @@ export type BIOLabel = (typeof BIO_LABELS)[number]
 
 /**
  * The street-name family in assembly order: prefix, particle, name, suffix.
+ *
  * The order is part of the interface — a street surface is assembled by
  * concatenating these tags' values in this order.
  */

@@ -103,12 +103,14 @@ export interface ZoningIngestOptions {
 	 */
 	limit?: number
 	/**
-	 * The epsg code the source must declare. A source declaring anything else is a
-	 * product change rather than a variation to absorb.
+	 * The epsg code the source must declare.
+	 *
+	 * A source declaring anything else is a product change rather than a variation to absorb.
 	 */
 	expectEPSG?: number
 	/**
 	 * The extent every reprojected vertex must land inside.
+	 *
 	 * Defaults to the Department's own declaration.
 	 */
 	declaredBBox?: readonly [number, number, number, number]
@@ -120,8 +122,10 @@ export interface ZoningIngestOptions {
 	 * Ranges rather than an offset because `objectid` is the source's stable key —
 	 * a range names the same features on every run, which an offset into a result set does not.
 	 *
-	 * A narrower range costs A whole pass. The source is one GeoJSON document
-	 * rather than an indexed store, so ogr2ogr scans all 247 MB for every range.
+	 * A narrower range costs A whole pass.
+	 * The source is one GeoJSON document rather than an indexed store,
+	 * so ogr2ogr scans all 247 MB for every range.
+	 *
 	 * The national set fits inside one chunk at the default bound, so that cost is not paid on a full build.
 	 */
 	objectIDFrom?: number
@@ -140,17 +144,20 @@ export interface ZoningSourceIdentity {
 	featureCount: number
 	layer: string
 	/**
-	 * The source's own attribute field names. A `-select` naming a column this set does
-	 * not hold makes ogr2ogr write an empty column rather than refuse, so the query is
-	 * built from the set rather than from a schema read off a sibling publication.
+	 * The source's own attribute field names.
+	 *
+	 * A `-select` naming a column this set does not hold makes ogr2ogr write
+	 * an empty column rather than refuse, so the query is built from the set
+	 * rather than from a schema read off a sibling publication.
 	 */
 	fields: ReadonlySet<string>
 }
 
 /**
- * Coordinate decimals ogr2ogr writes into the stream. Nine is ~0.1 mm at this latitude —
- * far past the source's own precision, and chosen so the reprojection contributes
- * nothing measurable to the area cross-check.
+ * Coordinate decimals ogr2ogr writes into the stream.
+ *
+ * Nine is ~0.1 mm at this latitude — far past the source's own precision, and chosen
+ * so the reprojection contributes nothing measurable to the area cross-check.
  */
 const COORDINATE_PRECISION = 9
 
@@ -164,8 +171,10 @@ const COORDINATE_PRECISION = 9
 const BBOX_MARGIN_DEGREES = 0.01
 
 /**
- * The attribute columns the ingest reads. Every one is required: this product publishes a single
- * schema, and a column that vanished would be a product change rather than a variation to absorb.
+ * The attribute columns the ingest reads.
+ *
+ * Every one is required: this product publishes a single schema, and a column that
+ * vanished would be a product change rather than a variation to absorb.
  */
 export const ZONING_SOURCE_FIELDS: ReadonlyArray<string> = [
 	"OBJECTID",
@@ -202,8 +211,9 @@ export async function readZoningSourceIdentity(options: ZoningIngestOptions): Pr
 	const missing = ZONING_SOURCE_FIELDS.filter((field) => field !== "OBJECTID" && !identity.fields.has(field))
 
 	// `-select` on a missing column makes ogr2ogr write an empty column rather than refuse,
-	// so a schema change would arrive as a stream of nulls: every local code blank, every plan unnamed,
-	// and a well-formed artifact describing nothing. Refused here instead, by name.
+	// so a schema change would arrive as a stream of nulls: every local code blank,
+	// every plan unnamed, and a well-formed artifact describing nothing.
+	// Refused here instead, by name.
 	if (missing.length) {
 		throw new Error(
 			`zoning ingest: ${options.exportPath} carries no ${missing.join(", ")} column(s) — ogr2ogr writes a missing column as empty rather than refusing, so a schema change would arrive as a stream of blank codes`
@@ -235,9 +245,10 @@ function whereClause(options: ZoningIngestOptions): string[] {
 }
 
 /**
- * A published value, as a string or null. An empty string is not NULL here
- * for the local code, which is the one column this layer exists to repeat:
- * a blank one is refused by the ingest rather than stored.
+ * A published value, as a string or null.
+ *
+ * An empty string is not NULL here for the local code, which is the one column this layer
+ * exists to repeat: a blank one is refused by the ingest rather than stored.
  */
 function blankToNull(value: string | undefined): string | null {
 	if (value === undefined) return null
@@ -365,8 +376,10 @@ function normalizePolygons(wkt: string, label: string): MultiPolygonRings {
  */
 export interface ZoningFeatureSource {
 	/**
-	 * What the source says it holds. The build compares its own streamed total against this,
-	 * so a short read throws instead of building a smaller country.
+	 * What the source says it holds.
+	 *
+	 * The build compares its own streamed total against this, so a short read throws
+	 * instead of building a smaller country.
 	 */
 	declaredFeatureCount: number
 	epsg: number

@@ -96,7 +96,9 @@ export interface JSONLToParquetOptions {
 	 */
 	output: string
 	/**
-	 * Parquet row-group size. Default 50000.
+	 * Parquet row-group size.
+	 *
+	 * Default 50000.
 	 */
 	rowGroupSize?: number
 }
@@ -152,9 +154,9 @@ export async function jsonlToParquet(
 	}
 
 	// Stage the validated rows to a temp ndjson, then let DuckDB type + write them.
-	// Streaming keeps memory O(1) on the Node side (the Python original buffered every column
-	// into memory first). The staging directory owns the write stream, so it is closed
-	// before the directory is removed — and a mid-stream span-triple failure leaves no orphan.
+	// Streaming keeps memory O(1) on the Node side (the Python original buffered every column into memory first).
+	// The staging directory owns the write stream, so it is closed before the directory
+	// is removed — and a mid-stream span-triple failure leaves no orphan.
 	await using staging = await temporaryDirectory("mw-jsonl-to-parquet-")
 	const stagePath = join(staging.path, "rows.ndjson")
 	const stage = staging.use(openWriteStream(stagePath, { encoding: "utf8" }))
@@ -173,8 +175,9 @@ export async function jsonlToParquet(
 		if (!line) continue
 		const row = parseJSONStrict<Record<string, unknown>>(line)
 		assertSpanTriple(row, lineNo)
-		// Write the validated line verbatim. DuckDB's `read_json` projects to the explicit `columns`
-		// map below (extra keys dropped, absent keys → NULL — matching the Python `row.get(c)`).
+		// Write the validated line verbatim.
+		// DuckDB's `read_json` projects to the explicit `columns` map below
+		// (extra keys dropped, absent keys → NULL — matching the Python `row.get(c)`).
 		stage.write(line + "\n")
 
 		rows++

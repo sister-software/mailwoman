@@ -49,6 +49,7 @@ import { parseExhibit21 } from "#sdk/exhibit21/index"
 
 /**
  * The subset of `SECClient` this module needs — JSON reads plus raw document reads.
+ *
  * A real `createSECClient()` satisfies it structurally, and a test substitutes an
  * object literal rather than building an axios harness.
  */
@@ -58,7 +59,9 @@ export interface SECIngestClient {
 }
 
 /**
- * Why a registrant produced no rows. Each is ordinary. none is an error.
+ * Why a registrant produced no rows.
+ *
+ * Each is ordinary. none is an error.
  */
 export const EdgarSkipReason = {
 	/**
@@ -82,7 +85,9 @@ export const EdgarSkipReason = {
 	 */
 	NoExhibit21: "no-exhibit-21",
 	/**
-	 * The Exhibit 21 parsed to zero subsidiaries. `parseExhibit21` counts what it abstained from.
+	 * The Exhibit 21 parsed to zero subsidiaries.
+	 *
+	 * `parseExhibit21` counts what it abstained from.
 	 */
 	NoSubsidiaries: "no-subsidiaries",
 } as const
@@ -90,8 +95,10 @@ export const EdgarSkipReason = {
 export type EdgarSkipReason = (typeof EdgarSkipReason)[keyof typeof EdgarSkipReason]
 
 /**
- * One registrant's outcome. Present for every input name, including the ones that produced rows,
- * so a report can be read end-to-end without joining it back to the request list.
+ * One registrant's outcome.
+ *
+ * Present for every input name, including the ones that produced rows, so a report
+ * can be read end-to-end without joining it back to the request list.
  */
 export interface EdgarIngestOutcome {
 	query: string
@@ -103,6 +110,7 @@ export interface EdgarIngestOutcome {
 	subsidiaries: number
 	/**
 	 * What `parseExhibit21` recognized as an entry but could not confidently reduce.
+	 *
 	 * A high count against a low `subsidiaries` is the signal that a layout is unhandled —
 	 * the whole reason the parser counts rather than drops.
 	 */
@@ -119,9 +127,10 @@ export interface EdgarIngestReport {
 
 export interface EdgarIngestOptions extends CIKCorroborationOptions {
 	/**
-	 * Minimum name score a candidate must clear. Passed straight to `resolveCIKCandidates`;
-	 * its default applies when omitted. Not a substitute for corroboration —
-	 * raising it does not make a confident wrong match right.
+	 * Minimum name score a candidate must clear.
+	 *
+	 * Passed straight to `resolveCIKCandidates`; its default applies when omitted.
+	 * Not a substitute for corroboration — raising it does not make a confident wrong match right.
 	 */
 	minScore?: number
 	/**
@@ -131,8 +140,10 @@ export interface EdgarIngestOptions extends CIKCorroborationOptions {
 }
 
 /**
- * Edgar's submissions payload for one registrant. Only the two fields this module reads are declared —
- * `sic` for the corroboration check, and the rest is handed to `parseTenKFilings` untouched.
+ * Edgar's submissions payload for one registrant.
+ *
+ * Only the two fields this module reads are declared — `sic` for the corroboration check,
+ * and the rest is handed to `parseTenKFilings` untouched.
  */
 interface SubmissionsPayload {
 	sic?: unknown
@@ -184,10 +195,10 @@ async function resolveCorroboratedCIK(
 	corroborated.sort((a, b) => b.score - a.score)
 
 	// Ambiguity is a genuine TIE at the top rather than "more than one survived".
-	// A slower-scoring candidate that also happened to be a telecom company is not ambiguity —
-	// it's noise the score already ranked. With the 7,998-entry ticker file this never
-	// diverged from `corroborated.length > 1`; with the 1,054,085-entry cik-lookup-data
-	// it catches 10 of 24 names as false ambiguities.
+	// A slower-scoring candidate that also happened to be a telecom company is not
+	// ambiguity — it's noise the score already ranked.
+	// With the 7,998-entry ticker file this never diverged from `corroborated.length > 1`;
+	// with the 1,054,085-entry cik-lookup-data it catches 10 of 24 names as false ambiguities.
 	if (corroborated.length > 1 && corroborated[0]!.score === corroborated[1]!.score) {
 		// A pinned CIK at the top score breaks the tie — the operator already decided this
 		// registrant is in scope, which is a decision about identity rather than just corroboration.
@@ -210,8 +221,9 @@ async function collectForFiling(
 	client: SECIngestClient,
 	filing: TenKFiling
 ): Promise<{ rows: EdgarSubsidiaryRow[]; unparseable: number }> {
-	// edgar occasionally 404s a filing document that objectively exists — a transient fetch failure
-	// rather than a missing filing. Catching here rather than letting a single 404 kill the whole run.
+	// edgar occasionally 404s a filing document that objectively exists —
+	// a transient fetch failure rather than a missing filing.
+	// Catching here rather than letting a single 404 kill the whole run.
 	let documents: { url: string }[]
 
 	try {
@@ -252,15 +264,17 @@ async function collectForFiling(
  * Resolve each `queries` name to a corroborated registrant and collect its most
  * recent 10-K's Exhibit 21 disclosures.
  *
- * `tickers` is edgar's registrant index. `company_tickers.json` covers only registrants
- * with A ticker — 7,998 distinct CIKs, and none of Cellco Partnership, Windstream, Zayo,
- * Brightspeed, Consolidated, Hargray or Altice. This sector is majority private-equity-owned,
- * so a caller should build this list from `cik-lookup-data.txt` instead. the parameter
- * takes whatever index the caller assembled rather than fetching one itself.
+ * `tickers` is edgar's registrant index.
+ * `company_tickers.json` covers only registrants with A ticker — 7,998 distinct CIKs,
+ * and none of Cellco Partnership, Windstream, Zayo, Brightspeed, Consolidated, Hargray or Altice.
  *
- * Only the most recent 10-K is read. A registrant's older filings restate the same
- * family with an earlier vintage, and ingesting all of them would multiply rows without
- * adding facts — a deliberate scope choice rather than an oversight.
+ * This sector is majority private-equity-owned, so a caller should build this
+ * list from `cik-lookup-data.txt` instead. the parameter takes whatever index the
+ * caller assembled rather than fetching one itself.
+ *
+ * Only the most recent 10-K is read.
+ * A registrant's older filings restate the same family with an earlier vintage, and ingesting all of
+ * them would multiply rows without adding facts — a deliberate scope choice rather than an oversight.
  */
 export async function collectEdgarSubsidiaryRows(
 	client: SECIngestClient,

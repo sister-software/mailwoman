@@ -42,8 +42,10 @@ const fixture = {
 type Options = OptionsOf<typeof fixture>
 
 /**
- * The property each flag binds to. The type and the runtime are both checked against this list
- * rather than against each other, so a test failure names which half moved.
+ * The property each flag binds to.
+ *
+ * The type and the runtime are both checked against this list rather than against
+ * each other, so a test failure names which half moved.
  */
 const EXPECTED_PROPERTIES = [
 	"locale",

@@ -18,7 +18,8 @@ export { PrivateMailwomanEnvSchema, PublicMailwomanEnvSchema } from "./schema.ts
 export const $public = liveEnv(PublicMailwomanEnvSchema, resolverPublic)
 
 /**
- * Live secrets for the CLI's publishing and evaluation commands over
- * core's. Never log their values.
+ * Live secrets for the CLI's publishing and evaluation commands over core's.
+ *
+ * Never log their values.
  */
 export const $private = liveEnv(PrivateMailwomanEnvSchema, corePrivate)

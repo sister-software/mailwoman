@@ -40,7 +40,9 @@ export interface PlaceMarkerProps {
 }
 
 /**
- * A single resolved-place marker. Wraps `react-map-gl`'s `<Marker>` with the demo's default color.
+ * A single resolved-place marker.
+ *
+ * Wraps `react-map-gl`'s `<Marker>` with the demo's default color.
  */
 export function PlaceMarker({
 	longitude,

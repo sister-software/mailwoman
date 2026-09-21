@@ -301,11 +301,11 @@ describe("peekPairIndexHeader", () => {
 	})
 
 	it("succeeds on a header-only-valid buffer whose entry section is truncated — the constructor throws on the same bytes", () => {
-		// Serialize a normal index, then truncate everything after the header + pairCount fields —
-		// the header block itself is untouched and fully valid, but the entry bytes it
-		// declares (pairCount > 0) don't exist. This is the eval's real-world shape:
-		// a caller that peeks before constructing must never pay for (or trip over) a full parse
-		// when it's about to discard the result on a country mismatch.
+		// Serialize a normal index, then truncate everything after the header +
+		// pairCount fields — the header block itself is untouched and fully valid,
+		// but the entry bytes it declares (pairCount > 0) don't exist.
+		// This is the eval's real-world shape: a caller that peeks before constructing must never pay for
+		// (or trip over) a full parse when it's about to discard the result on a country mismatch.
 		const bytes = serializePairIndex(HEADER, ENTRIES)
 		const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 		const headerLen = view.getUint32(4, true)

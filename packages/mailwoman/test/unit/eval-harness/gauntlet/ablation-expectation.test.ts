@@ -45,7 +45,9 @@ import {
 import { describe, expect, it } from "vitest"
 
 /**
- * A gazetteer place. `negRank` is `-log10(population + 1)`, so a bigger place is a smaller number.
+ * A gazetteer place.
+ *
+ * `negRank` is `-log10(population + 1)`, so a bigger place is a smaller number.
  */
 function place(over: Partial<AblationPlace> & { id: number; name: string; placetype: string }): AblationPlace {
 	return {
@@ -91,8 +93,10 @@ const LADDER: AblationLadder = ablationLadderFromChain(
 )
 
 /**
- * A gazetteer that answers from fixtures. `named` honours the country filter only —
- * the bbox filter is the reader's job and is covered where it matters (`ablation-gazetteer.ts`).
+ * A gazetteer that answers from fixtures.
+ *
+ * `named` honours the country filter only — the bbox filter is the reader's job
+ * and is covered where it matters (`ablation-gazetteer.ts`).
  */
 function fakeGazetteer(over: Partial<AblationGazetteerProbe> = {}): AblationGazetteerProbe {
 	const byName: Record<string, AblationPlace[]> = {
@@ -275,9 +279,10 @@ describe("deriveExpectedRung — computed from what REMAINS", () => {
  * The circularity guard.
  *
  * An expectation derived from the variant's own output would grade the pipeline
- * against itself and pass everything. `deriveExpectedRung` takes no result argument,
- * so the direct version cannot compile. these pin the property so a later "just peek at
- * the answer" refactor fails loudly instead of quietly making the layer useless.
+ * against itself and pass everything.
+ * `deriveExpectedRung` takes no result argument, so the direct version cannot compile.
+ * these pin the property so a later "just peek at the answer" refactor fails loudly
+ * instead of quietly making the layer useless.
  */
 describe("the expectation is INVARIANT to the variant's output", () => {
 	const gz = fakeGazetteer()
@@ -294,7 +299,8 @@ describe("the expectation is INVARIANT to the variant's output", () => {
 		]
 
 		for (const outcome of outcomes) {
-			// Grading consumes the outcome. deriving must not. Re-derive after each grade and compare.
+			// Grading consumes the outcome. deriving must not.
+			// Re-derive after each grade and compare.
 			gradeAgainstLadder({ expected, ladder: LADDER, ...outcome, slot: "absent", anchorRungDepth: 0 })
 
 			expect(deriveExpectedRung(remaining, LADDER, gz)).toEqual(expected)
@@ -332,9 +338,9 @@ describe("residualWords — the corpus types less than the input carries", () =>
 		expect(residualWords("742 A B, IL", { region: "IL" })).toEqual([])
 	})
 
-	// `fr-chevaleret-rooftop` asserts only its postcode. Deleting it leaves the model
-	// an empty component set, and an empty set used to read as "nothing names a place"
-	// → abstain → the correct rooftop graded overconfident.
+	// `fr-chevaleret-rooftop` asserts only its postcode.
+	// Deleting it leaves the model an empty component set, and an empty set used to read
+	// as "nothing names a place" → abstain → the correct rooftop graded overconfident.
 	it("turns an otherwise-ABSTAIN expectation into an unconstrained one", () => {
 		const gz = fakeGazetteer()
 
@@ -441,7 +447,8 @@ describe("gradeAgainstLadder", () => {
 		expect(graded.grade).toBe("wrong")
 	})
 
-	// S-2 finding 3: the slot came back filled with a different token. A good coordinate does not redeem that.
+	// S-2 finding 3: the slot came back filled with a different token.
+	// A good coordinate does not redeem that.
 	it("fails a SUBSTITUTION even when the coordinate is perfect", () => {
 		const graded = gradeAgainstLadder({
 			...base,
@@ -470,7 +477,8 @@ describe("gradeAgainstLadder", () => {
 
 	describe("the anchor floor — a deletion is charged only for what IT cost", () => {
 		it("reads a variant that matches its already-coarse anchor as held, not as a loss", () => {
-			// The anchor was already at the locality rung. the variant lands there too. Nothing was lost.
+			// The anchor was already at the locality rung. the variant lands there too.
+			// Nothing was lost.
 			const graded = gradeAgainstLadder({
 				...base,
 				anchorRungDepth: 1,
@@ -520,8 +528,8 @@ describe("buildCaseLadder", () => {
 		expect((built as { anchorSource: string }).anchorSource).toBe("pipeline-anchor")
 	})
 
-	// The Bermuda class: the reverse walk starts from `place_bbox`, so a country whose
-	// bbox is degenerate is invisible and its points are attributed to a large neighbour.
+	// The Bermuda class: the reverse walk starts from `place_bbox`, so a country whose bbox
+	// is degenerate is invisible and its points are attributed to a large neighbour.
 	// The corpus's own country column is the check.
 	it("refuses a ladder whose containment country contradicts the corpus", () => {
 		const built = buildCaseLadder({ lat: 32.3, lon: -64.87 }, 1, gz, { lat: 32.3, lon: -64.87 }, "BM")

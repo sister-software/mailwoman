@@ -59,6 +59,7 @@ interface BuildOpts {
 
 /**
  * Builds a minimal valid FST binary buffer in the v1/v2 layout.
+ *
  * Mirrors fst-serialize.ts closely enough to round-trip through the web deserializer,
  * but kept hand-rolled so the test asserts the format the reader actually expects
  * (not whatever the Node serializer happens to emit at v4).
@@ -305,8 +306,9 @@ describe("deserializeFSTWeb", () => {
 //#region deserializeFSTWeb — v1 importance derivation
 
 test("deserializeFSTWeb: v1 derives importance from a population u32 via the log2 curve", () => {
-	// v1 stores population (u32) in the importance slot. the reader maps it through
-	// min(1, log2(1 + pop/1000) / 14). For pop = 1000: log2(2)/14 = 1/14 ≈ 0.0714.
+	// v1 stores population (u32) in the importance slot. the reader maps it
+	// through min(1, log2(1 + pop/1000) / 14).
+	// For pop = 1000: log2(2)/14 = 1/14 ≈ 0.0714.
 	const nodes: FixtureNode[] = [
 		{ edges: [["t", 1]], places: [] },
 		{ edges: [], places: [{ wofID: 1, placetype: "locality", name: "T", referential: 1000, lat: 0, lon: 0 }] },
@@ -339,9 +341,9 @@ test("deserializeFSTWeb: version 0 is rejected", () => {
 })
 
 test("deserializeFSTWeb: a version above MAX_VERSION (now 5) is rejected", () => {
-	// MAX_VERSION tracks the serializer's version (5, the two-score split):
-	// v3/v4/v5 parse, v6+ is rejected. This assertion is why the check stops drifting —
-	// it fails the moment the serializer bumps and the reader's check does not.
+	// MAX_VERSION tracks the serializer's version (5, the two-score split): v3/v4/v5 parse, v6+ is rejected.
+	// This assertion is why the check stops drifting — it fails the moment the
+	// serializer bumps and the reader's check does not.
 	const bytes = buildFSTBuffer(PARIS_FIXTURE)
 	new DataView(bytes.buffer).setUint16(4, 6, true)
 	expect(() => deserializeFSTWeb(bytes)).toThrow(/version 6 unsupported/i)

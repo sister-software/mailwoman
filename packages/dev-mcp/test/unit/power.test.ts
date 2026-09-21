@@ -17,7 +17,8 @@ describe("zeroEventUpperBound", () => {
 	})
 
 	it("is tighter than the rule-of-three approximation, which is why it is used", () => {
-		// The approximation gives 3/10 = 0.30. At the small n where this is read, the gap is 4 percentage points.
+		// The approximation gives 3/10 = 0.30.
+		// At the small n where this is read, the gap is 4 percentage points.
 		expect(zeroEventUpperBound(10)).toBeLessThan(3 / 10)
 	})
 

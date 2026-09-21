@@ -58,8 +58,8 @@ describe("realizeFloodMapExtent", () => {
 		const extent = realize(GEOMETRY)
 
 		expect(extent.coverageCells.size).toBeGreaterThan(0)
-		// The conservative interior test drops the fringe, so the footprint is
-		// strictly smaller than a raw polyfill of the same rectangle would be.
+		// The conservative interior test drops the fringe, so the footprint is strictly
+		// smaller than a raw polyfill of the same rectangle would be.
 		// A cell wrongly called interior claims a determination nobody made.
 		expect(extent.bbox).toEqual({ minLat: 52, minLon: -1, maxLat: 53, maxLon: 0 })
 	})

@@ -41,7 +41,9 @@ export interface OaReportInput {
 }
 
 /**
- * Render the run's markdown report. Pure — every number comes from `input`.
+ * Render the run's markdown report.
+ *
+ * Pure — every number comes from `input`.
  */
 export async function renderOaResolverReport(input: OaReportInput): Promise<string> {
 	const {
@@ -156,8 +158,8 @@ export async function renderOaResolverReport(input: OaReportInput): Promise<stri
 				lines.push(`  ≤ ${m} m: ${((100 * within) / Math.max(1, ierrs.length)).toFixed(1)}%`)
 			}
 
-			// Dump all full-parse misses for the standalone database-membership
-			// categorization (segment-not-found vs in-database-range-miss vs normalization).
+			// Dump all full-parse misses for the standalone database-membership categorization
+			// (segment-not-found vs in-database-range-miss vs normalization).
 			// Bump cap done at collection site.
 			if (diagMisses.length) {
 				await writeLocalTextFile(diagMisses.join("\n"), "/tmp/interp-misses.txt")

@@ -28,17 +28,21 @@ import { hasColumn, hasTable } from "#sqlite-utils"
 export interface SQLiteStreetNameLookupOpts {
 	/**
 	 * ISO-2 (upper-case) countries this index answers for.
+	 *
 	 * Default `["FR"]` (the BAN street-centroids instance).
 	 */
 	countries?: Iterable<string>
 	/**
-	 * Table name. Default `street_centroid`.
+	 * Table name.
+	 *
+	 * Default `street_centroid`.
 	 */
 	table?: string
 }
 
 /**
  * A {@link StreetLocalityEvidence} backed by a street-name SQLite index.
+ *
  * Positive evidence only: any doubt (missing table, read miss) returns `false`,
  * so the rerank fails open to the model's ranking.
  */
@@ -56,10 +60,10 @@ export class SQLiteStreetNameLookup implements StreetLocalityEvidence, Disposabl
 
 		// Degrade gracefully on an empty/tableless extract — a no-op miss, never a crash (#568 discipline).
 		if (hasTable(this.#db, table)) {
-			// Prefer the #727 phase-4c `name_key` column (foldStreetSurface, indexed by
-			// `idx_sc_name` for a direct seek); fall back to `street_norm` on a pre-rebuild
-			// extract (a skip-scan, but correct). The fold used to build `name_key` must
-			// match `foldStreetSurface` here (the fold-parity interface).
+			// Prefer the #727 phase-4c `name_key` column
+			// (foldStreetSurface, indexed by `idx_sc_name` for a direct seek); fall back to
+			// `street_norm` on a pre-rebuild extract (a skip-scan, but correct).
+			// The fold used to build `name_key` must match `foldStreetSurface` here (the fold-parity interface).
 			const keyCol = hasColumn(this.#db, table, "name_key") ? "name_key" : "street_norm"
 			this.#byName = this.#db.prepare(`SELECT 1 FROM ${table} WHERE ${keyCol} = ? LIMIT 1`)
 

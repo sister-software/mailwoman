@@ -28,9 +28,10 @@ import {
 import { provenanceFor } from "#tool-kit"
 
 /**
- * The confidence surfaces this tool can grade. Each is a distinct head over distinct
- * features — they share a reliability diagram and nothing else — so adding one means
- * adding a sample function rather than widening an existing one.
+ * The confidence surfaces this tool can grade.
+ *
+ * Each is a distinct head over distinct features — they share a reliability diagram and nothing
+ * else — so adding one means adding a sample function rather than widening an existing one.
  */
 export const ReliabilitySurface = {
 	Decode: "decode",
@@ -49,17 +50,20 @@ export type ReliabilitySurface = (typeof ReliabilitySurface)[keyof typeof Reliab
 const PLACER_TEST_SPLIT = ["data", "coarse-placer", "test.jsonl"] as const
 
 /**
- * The eval positions the placer work actually argued over, so a reader comparing against
- * that record does not have to re-derive the rows. A caller may pass their own. these
- * are a starting table rather than a claim about where the eval belongs.
+ * The eval positions the placer work actually argued over, so a reader comparing
+ * against that record does not have to re-derive the rows.
+ *
+ * A caller may pass their own. these are a starting table rather than a claim about where the eval belongs.
  */
 const DEFAULT_THRESHOLDS = [0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 0.99] as const
 
 const DEFAULT_BIN_COUNT = 10
 
 /**
- * Which strata each surface can split by. Fixed per surface rather than free-form: a caller asking to
- * stratify a decode curve by `expected` would get one group called `(unset)` and read it as a finding.
+ * Which strata each surface can split by.
+ *
+ * Fixed per surface rather than free-form: a caller asking to stratify a decode curve
+ * by `expected` would get one group called `(unset)` and read it as a finding.
  */
 const STRATA_FOR: Record<ReliabilitySurface, readonly string[]> = {
 	[ReliabilitySurface.Decode]: ["tag", "country", "address_kind"],
@@ -89,9 +93,9 @@ export async function runReliability(registry: EngineRegistryLike, args: Record<
 	const overall = reliabilityCurve(sample.observations, binCount)
 	const check = thresholdTable(sample.observations, thresholds)
 
-	// Read at the lowest threshold that admits anything, so the classes describe an
-	// eval someone could actually set. A threshold admitting nothing has no admitted
-	// errors to rank, which reads as a clean confusion matrix.
+	// Read at the lowest threshold that admits anything, so the classes describe
+	// an eval someone could actually set.
+	// A threshold admitting nothing has no admitted errors to rank, which reads as a clean confusion matrix.
 	const thresholdForClasses = check.find((row) => row.admitted > 0)?.threshold ?? thresholds[0] ?? 0
 
 	const reading = describeObservedRate({
@@ -183,9 +187,9 @@ function summarize(
 		return `No gradeable observations on the ${surface} surface, so nothing was measured. ${powerSentence}`
 	}
 
-	// The most useful single row: the highest threshold that still admits a majority
-	// of what it could. Named rather than left to the reader, because a table's rows
-	// are all equally prominent and its point is not.
+	// The most useful single row: the highest threshold that still admits a majority of what it could.
+	// Named rather than left to the reader, because a table's rows are all equally
+	// prominent and its point is not.
 	const workable = check.toReversed().find((row) => row.admitted_share >= 0.5)
 
 	const thresholdSentence = workable

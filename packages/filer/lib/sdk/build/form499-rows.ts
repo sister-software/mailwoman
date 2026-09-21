@@ -24,20 +24,23 @@ import type { Form499Lifecycle } from "#sdk/form499/notes"
  *
  * **Two clocks, and they disagree on 40% of ceased filers.** Form 499 is an annual filing,
  * so a carrier that ceased operating on 2013-09-08 still files the form on 2014-04-01.
- * `lastFiledAt` is an administrative date; `ceasedAt` is an operational one, and nothing makes
- * the second later than the first. Measured on the 2025-12-07 vintage: of 9,706 dated cessations,
- * 5,714 postdate the last filing, **3,916 predate it**, and 76 fall on the same day.
+ * `lastFiledAt` is an administrative date; `ceasedAt` is an operational one,
+ * and nothing makes the second later than the first.
+ *
+ * Measured on the 2025-12-07 vintage: of 9,706 dated cessations, 5,714 postdate the
+ * last filing, **3,916 predate it**, and 76 fall on the same day.
  *
  * Writing `valid_to = ceasedAt` unconditionally against `valid_from = lastFiledAt`
  * would produce an inverted or empty window on those 3,992 — and the half-open
  * predicate `valid_from <= t < valid_to` matches nothing across one.
  * Every affected filer would vanish from every `asOf` read, silently, with no error
- * and no missing row to notice. That is strictly worse than leaving the window open,
- * which is at least visibly incomplete.
+ * and no missing row to notice.
  *
- * So: close the window only when the two dates order coherently, and count the abstentions
- * ({@link BuildFilerResult.cessationWindowAbstained}). The date itself is never lost —
- * it is staged as a `ceased_at` attribute on every ceased filer regardless.
+ * That is strictly worse than leaving the window open, which is at least visibly incomplete.
+ *
+ * So: close the window only when the two dates order coherently, and count the
+ * abstentions ({@link BuildFilerResult.cessationWindowAbstained}).
+ * The date itself is never lost — it is staged as a `ceased_at` attribute on every ceased filer regardless.
  */
 export function closeableCessationDate(ceasedAt: string | undefined, validFrom: string): string | null {
 	if (!ceasedAt) return null
@@ -69,6 +72,7 @@ export interface Form499LifecycleTotals {
 /**
  * One 499 row's lifecycle writes: a `ceased_at` attribute, one `cessation_reason` attribute
  * per recognized reason, and a `SupersededBy` edge when the FCC named a successor filer.
+ *
  * Returns the `valid_to` the caller should stamp on that row's relationship edges —
  * see {@linkcode closeableCessationDate} for when that is `null` and why.
  *
@@ -148,8 +152,10 @@ export interface Form499FRNContext {
 	lastFiledAt: string
 	/**
 	 * `valid_to` for this row's expiring relationship edges, or `null` —
-	 * see {@linkcode closeableCessationDate}. The `FRN↔form499ID` identity edge remains
-	 * valid for the company's lifetime because the identifiers denote one filer.
+	 * see {@linkcode closeableCessationDate}.
+	 *
+	 * The `FRN↔form499ID` identity edge remains valid for the company's lifetime
+	 * because the identifiers denote one filer.
 	 * Only assertions that can expire get closed.
 	 */
 	relationshipValidTo: string | null
@@ -157,13 +163,15 @@ export interface Form499FRNContext {
 
 /**
  * One 499 row's FRN-anchored writes: `FRN↔form499ID` (always),
- * `FRN↔holdingCompanyName`/`FRN↔managementCompanyName` (when the corresponding field is non-empty,
- * each its own edge + `filer_family` row) — see `build-filer.ts`'s module docstring,
- * "Edges emitted" section. Also records this row's legal name into `legalNameByFRN` for
+ * `FRN↔holdingCompanyName`/`FRN↔managementCompanyName`
+ * (when the corresponding field is non-empty, each its own edge + `filer_family` row) —
+ * see `build-filer.ts`'s module docstring, "Edges emitted" section.
+ *
+ * Also records this row's legal name into `legalNameByFRN` for
  * {@linkcode processEdgarSubsidiaryRow}'s corroboration match, keeping the latest `lastFiledAt` per FRN. Returns the
  * number of edge opportunities declined (0, 1, or 2 — see `BuildFilerResult.skipped`'s docstring),
- * for the caller to add to its own running total. Its own function so the 499 loop
- * stays under the linter's `max-statements` ceiling.
+ * for the caller to add to its own running total.
+ * Its own function so the 499 loop stays under the linter's `max-statements` ceiling.
  */
 export function processForm499FRNRelationships(
 	insNode: StatementSync,

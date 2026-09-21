@@ -169,9 +169,10 @@ describe("WOFWasmPlaceLookup", () => {
 
 		try {
 			const matches = await lookup.findPlace({ text: "VT", placetype: "region", limit: 5 })
-			// 'Vermontstate' holds the exact abbrev "VT" (place_abbr 110→VT, tiny pop); 'Vt Plains'
-			// only token-matches "vt" with a huge population. The exact-abbrev tier must win —
-			// the data-driven replacement for the demo's hardcoded region-abbreviation map (since deleted).
+			// 'Vermontstate' holds the exact abbrev "VT" (place_abbr 110→VT, tiny pop);
+			// 'Vt Plains' only token-matches "vt" with a huge population.
+			// The exact-abbrev tier must win — the data-driven replacement for the demo's
+			// hardcoded region-abbreviation map (since deleted).
 			expect(matches[0]?.id).toBe(110)
 			expect(matches[0]?.name).toBe("Vermontstate")
 			expect(matches[0]?.exactMatch).toBe(true)
@@ -226,8 +227,8 @@ describe("WOFWasmPlaceLookup", () => {
 		const lookup = new WOFWasmPlaceLookup({ db })
 
 		try {
-			// Live-demo bug (2026-06-11): a strict placetype='locality' filter
-			// excluded the borough, so "Brooklyn" resolved to Brooklyn Park, MN.
+			// Live-demo bug (2026-06-11): a strict placetype='locality' filter excluded
+			// the borough, so "Brooklyn" resolved to Brooklyn Park, MN.
 			// The shared expansion (locality → locality + borough + localadmin) makes the
 			// exact-named borough reachable. exact tiering puts it first.
 			const matches = await lookup.findPlace({ text: "Brooklyn", placetype: "locality", limit: 5 })
@@ -243,9 +244,8 @@ describe("WOFWasmPlaceLookup", () => {
 		const lookup = new WOFWasmPlaceLookup({ db })
 
 		try {
-			// Mirrors "brooklyn, new york, ny": the parsed region's bbox
-			// constrains the locality lookup. Pre-expansion this returned nothing
-			// (the borough was filtered out, Brooklyn Park is outside the bbox),
+			// Mirrors "brooklyn, new york, ny": the parsed region's bbox constrains the locality lookup.
+			// Pre-expansion this returned nothing (the borough was filtered out, Brooklyn Park is outside the bbox),
 			// and the cascade silently fell back to the unconstrained — wrong — hit.
 			const matches = await lookup.findPlace({
 				text: "Brooklyn",
@@ -280,8 +280,8 @@ describe("WOFWasmPlaceLookup", () => {
 
 		try {
 			// "York New" token-matches both Twin Hamlet (bag "Old York <sep> New City")
-			// and New York (name + alias "New York City"). Pre-#523,
-			// the space-joined bags let the padded containment check false-promote both
+			// and New York (name + alias "New York City").
+			// Pre-#523, the space-joined bags let the padded containment check false-promote both
 			// (' old york new city ' and ' new york new york city ' each contain ' york new ').
 			// With the separator, no candidate may claim the exact tier.
 			const straddle = await lookup.findPlace({ text: "York New", placetype: "locality", limit: 5 })

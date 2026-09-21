@@ -40,6 +40,7 @@ const STRIP_CONFIG: DOMPurifyConfig = { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }
 
 /**
  * Every tag and attribute removed. only text content survives, entity-encoded for an html sink.
+ *
  * For decoded plain text — comparison, storage — use {@link stripHTMLToText}.
  */
 export function stripHTML(untrustedHTML: string): string {
@@ -50,9 +51,10 @@ export function stripHTML(untrustedHTML: string): string {
 
 /**
  * The text content of untrusted html: tags gone, entities decoded, script/style bodies discarded.
- * A real parse, so a `<` inside an attribute value, an unclosed tag, or a comment cannot
- * corrupt the reading the way a regex scan can. Whitespace arrives as the source wrote it —
- * collapse it at the caller if the caller compares.
+ *
+ * A real parse, so a `<` inside an attribute value, an unclosed tag, or a comment
+ * cannot corrupt the reading the way a regex scan can.
+ * Whitespace arrives as the source wrote it — collapse it at the caller if the caller compares.
  */
 export function stripHTMLToText(untrustedHTML: string): string {
 	assertSanitizerSupported("stripHTMLToText")
@@ -62,9 +64,10 @@ export function stripHTMLToText(untrustedHTML: string): string {
 
 /**
  * Refuses to answer anywhere DOMPurify cannot sanitize.
- * A passthrough wearing a TrustedHTML wrapper is worse than a thrown error: the sink
- * accepts it and the page ships the untrusted markup. With `isomorphic-dompurify`
- * this holds only in an environment with neither a DOM nor jsdom.
+ *
+ * A passthrough wearing a TrustedHTML wrapper is worse than a thrown error:
+ * the sink accepts it and the page ships the untrusted markup.
+ * With `isomorphic-dompurify` this holds only in an environment with neither a DOM nor jsdom.
  */
 function assertSanitizerSupported(callerName: string): void {
 	if (!DOMPurify.isSupported) {
@@ -90,6 +93,7 @@ function policy(
 
 /**
  * `mw-escape` — every character of markup renders as literal text.
+ *
  * The grade for values that are text and must never be interpreted:
  * user queries echoed into the page, error strings.
  */
@@ -98,16 +102,20 @@ export function escapeTrustPolicy(): ReturnType<typeof trustedTypes.createPolicy
 }
 
 /**
- * `mw-sanitize` — {@link sanitizeHTML} as a policy. The grade for values that are legitimately
- * html from a source we render but do not author: tile attributions, service-provided rich text.
+ * `mw-sanitize` — {@link sanitizeHTML} as a policy.
+ *
+ * The grade for values that are legitimately html from a source we render
+ * but do not author: tile attributions, service-provided rich text.
  */
 export function sanitizeTrustPolicy(): ReturnType<typeof trustedTypes.createPolicy> {
 	return policy("mw-sanitize", (untrustedHTML) => sanitizeHTML(untrustedHTML))
 }
 
 /**
- * `mw-strip-html` — {@link stripHTML} as a policy. The grade for values whose markup
- * carries no meaning we want: license fields compared or displayed as text.
+ * `mw-strip-html` — {@link stripHTML} as a policy.
+ *
+ * The grade for values whose markup carries no meaning we want: license fields
+ * compared or displayed as text.
  */
 export function stripHTMLTrustPolicy(): ReturnType<typeof trustedTypes.createPolicy> {
 	return policy("mw-strip-html", (untrustedHTML) => stripHTML(untrustedHTML))

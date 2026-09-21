@@ -14,6 +14,7 @@ import { normalizeNameKey, type WOFRecord } from "#utils"
 
 /**
  * The order an admin hierarchy is written in, smallest unit first.
+ *
  * A country that writes largest-first reverses it.
  */
 const HIERARCHY_ORDER: readonly ComponentTag[] = [
@@ -27,9 +28,11 @@ const HIERARCHY_ORDER: readonly ComponentTag[] = [
 
 /**
  * Render an admin-hierarchy variant: the components it carries, in hierarchy order,
- * joined the way the country joins a line. This is a gazetteer query rather than a postal
- * address, which is why it does not go through a layout — a country whose postal layout
- * drops the region would collapse `Paris, Île-de-France` back into `Paris`.
+ * joined the way the country joins a line.
+ *
+ * This is a gazetteer query rather than a postal address, which is why it does
+ * not go through a layout — a country whose postal layout drops the region would
+ * collapse `Paris, Île-de-France` back into `Paris`.
  */
 function renderHierarchy(
 	components: Partial<Record<ComponentTag, string>>,
@@ -59,6 +62,7 @@ function renderHierarchy(
  * Must be the **OpenCage-canonical** surface form: the `address-formatter` library expands some
  * country names en route to its output (e.g. `"United States"` → `"United States of America"`).
  * If `components.country` and the formatted `raw` disagree, alignment will fail downstream.
+ *
  * Keying off the canonical form keeps the two in lockstep.
  *
  * Phase 1 US + FR only. extend as new locales come online.
@@ -71,8 +75,9 @@ export const COUNTRY_DISPLAY_NAME: Record<string, string> = {
 }
 
 /**
- * BCP-47 locale defaulting for the corpus row's `locale`
- * field. Defaulted by country.
+ * BCP-47 locale defaulting for the corpus row's `locale` field.
+ *
+ * Defaulted by country.
  */
 export const LOCALE_BY_COUNTRY: Record<string, string> = {
 	US: "en-US",
@@ -98,6 +103,7 @@ export interface WOFVariantSpec {
 export interface NameSlotOptions {
 	/**
 	 * Canonical surface for the record's own `"default"` slot.
+	 *
 	 * Default `rec.name` verbatim. the admin adapter substitutes the OpenCage-canonical
 	 * {@link COUNTRY_DISPLAY_NAME} for country records.
 	 */

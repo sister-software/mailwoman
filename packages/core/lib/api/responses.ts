@@ -15,10 +15,11 @@ import { ResourceError } from "#errors/schema"
 /**
  * Whether an http status is a 2xx success.
  *
- * Exists so a caller that opts out of throwing — `validateStatus: () => true`, for a graceful
- * non-2xx path — can still ask the question by name. Written against axios's own `HttpStatusCode`
- * because this package already owns that dependency. a consumer package spelling `>= 200 && < 300`
- * inline would either name two bare thresholds or take an undeclared dependency to avoid it.
+ * Exists so a caller that opts out of throwing — `validateStatus: () => true`,
+ * for a graceful non-2xx path — can still ask the question by name.
+ * Written against axios's own `HttpStatusCode` because this package already owns that
+ * dependency. a consumer package spelling `>= 200 && < 300` inline would either name
+ * two bare thresholds or take an undeclared dependency to avoid it.
  */
 export function isSuccessStatus(status: number): boolean {
 	return status >= HttpStatusCode.Ok && status < HttpStatusCode.MultipleChoices
@@ -107,8 +108,10 @@ export const ResourceErrorKind = {
 	 */
 	Response: "response",
 	/**
-	 * The request was rejected before (or independently of) the network — a caller-initiated cancel,
-	 * a malformed config. Never transient: re-issuing the identical request can only fail identically.
+	 * The request was rejected before (or independently of) the network —
+	 * a caller-initiated cancel, a malformed config.
+	 *
+	 * Never transient: re-issuing the identical request can only fail identically.
 	 */
 	Request: "request",
 	/**
@@ -166,7 +169,8 @@ export function resourceErrorKind(error: unknown): ResourceErrorKind | null {
  *
  * This stays `true` even after a client exhausted its own bounded attempts:
  * the client's ceiling is a statement about one call, while a caller's requeue is a new,
- * separate attempt budget minutes or hours later. Callers branch on this plus
+ * separate attempt budget minutes or hours later.
+ * Callers branch on this plus
  * {@linkcode ResourceError.status} — 404 to skip, 403 to abort — and never on message text.
  */
 export function isTransientResourceError(error: unknown): boolean {
@@ -237,16 +241,19 @@ function responseReason(status: number): string {
  * - Every non-401 http status used to rethrow the raw `AxiosError`, so `status`-based branching
  *   (404 → skip, 403 → abort) had to reach into `error.response`. 401's own message and URN changed too.
  *
- * The earlier claim that `econnaborted`/`etimedout`/`ERR_CANCELED` resolved the chain with
- * `undefined` was wrong for every shape axios actually produces: the old `if (!response) throw` ran
- * before that `switch`, and axios never attaches a `response` to a timeout or a cancellation,
- * so a real one threw `axios:response:missing` 500 — a misclassified 500 rather than a
- * `TypeError` at the caller. Note the `return` arms were not unreachable in general,
- * only unreachable via axios: reaching the `switch` required a response to be present,
- * and an error carrying both a `response` and `econnaborted` did resolve with `undefined`.
+ * The earlier claim that `econnaborted`/`etimedout`/`ERR_CANCELED` resolved the
+ * chain with `undefined` was wrong for every shape axios actually produces: the old
+ * `if (!response) throw` ran before that `switch`, and axios never attaches a `response`
+ * to a timeout or a cancellation, so a real one threw `axios:response:missing` 500 —
+ * a misclassified 500 rather than a `TypeError` at the caller.
+ * Note the `return` arms were not unreachable in general, only unreachable via axios:
+ * reaching the `switch` required a response to be present, and an error carrying both
+ * a `response` and `econnaborted` did resolve with `undefined`.
+ *
  * Stock adapters never pair those, but this repo's own `axiosLikeError(message, code, config, response)`
- * helper builds that shape in one argument. No regression follows from any of this —
- * the sole call site has no `.catch`, and every shape that rejects now also rejected before.
+ * helper builds that shape in one argument.
+ * No regression follows from any of this — the sole call site has no `.catch`,
+ * and every shape that rejects now also rejected before.
  *
  * @internal
  */
@@ -301,16 +308,18 @@ export async function delegateAxiosError(error: unknown): Promise<never> {
 	}
 
 	if (networkErrorCode === "ENOTFOUND") {
-		// deliberately no connectivity probe. An earlier version issued a live `head` here
-		// to word the message as "are we connected to the internet?" rather than "could
-		// not resolve host". It cost one unbounded, un-timed-out request per exhausted
-		// DNS failure — with a never-settling `fetch` the client never settled at all —
+		// deliberately no connectivity probe.
+		// An earlier version issued a live `head` here to word the message as "are we
+		// connected to the internet?" rather than "could not resolve host".
+		// It cost one unbounded, un-timed-out request per exhausted DNS failure —
+		// with a never-settling `fetch` the client never settled at all —
 		// and no test could reach it: deleting the whole branch caused 0 of 269 failures,
 		// and the hermetic no-live-network harness could not see it either, because the
 		// probe swallowed its own synchronously-throwing `fetch` stub into `false`.
-		// Making the probe incapable of throwing is exactly what made it invisible to the
-		// guard meant to catch it. The classification is identical either way — network-class,
-		// transient — so the whole thing bought one message string.
+		// Making the probe incapable of throwing is exactly what made it invisible
+		// to the guard meant to catch it.
+		// The classification is identical either way — network-class, transient —
+		// so the whole thing bought one message string.
 		throw taggedResourceError(
 			error,
 			HttpStatusCode.ServiceUnavailable,

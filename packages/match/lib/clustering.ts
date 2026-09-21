@@ -46,19 +46,21 @@ export interface ClusterOptions {
 	 * - `"average"` — agglomerative average-linkage refinement within each connected component:
 	 *   two sub-clusters merge only when the average weight of the links between them clears
 	 *   the threshold, so a lone weak bridge no longer fuses two otherwise-dense groups.
-	 *   The documented over-merge fix (Dedupe). Falls back to single-linkage for any
-	 *   component larger than {@link maxAverageLinkageComponent}.
+	 *   The documented over-merge fix (Dedupe).
+	 *   Falls back to single-linkage for any component larger than {@link maxAverageLinkageComponent}.
 	 */
 	linkage?: "single" | "average"
 	/**
-	 * Components larger than this skip the O(k³) average-linkage refine
-	 * and keep single-linkage. Default 64.
+	 * Components larger than this skip the O(k³) average-linkage refine and keep single-linkage.
+	 *
+	 * Default 64.
 	 */
 	maxAverageLinkageComponent?: number
 }
 
 /**
  * Refine one connected component by agglomerative average-linkage.
+ *
  * Starts with every member a singleton and repeatedly merges the cluster pair
  * with the highest _average_ inter-cluster link weight while that average is at
  * or above `threshold`; clusters with no link between them never merge.
@@ -109,9 +111,11 @@ function averageLinkageRefine<R>(members: R[], edges: Array<[number, number, num
 }
 
 /**
- * Cluster records into canonical entities by connected components of the above-threshold
- * link graph. Every input record lands in exactly one cluster — a record with no
- * qualifying link is a singleton. Links referencing a record not in `records` are ignored.
+ * Cluster records into canonical entities by connected components of the above-threshold link graph.
+ *
+ * Every input record lands in exactly one cluster — a record with no qualifying link is a singleton.
+ * Links referencing a record not in `records` are ignored.
+ *
  * Reference identity is used, so pass the same record objects to both arguments.
  */
 export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>, opts: ClusterOptions): R[][] {
@@ -228,8 +232,10 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 }
 
 /**
- * Pick a cluster's most complete record as its canonical representative — the one with the
- * fewest empty fields (`null` / `undefined` / `""`). Ties keep the earliest.
+ * Pick a cluster's most complete record as its canonical representative —
+ * the one with the fewest empty fields (`null` / `undefined` / `""`).
+ *
+ * Ties keep the earliest.
  * A basic, generic canonicalizer. field-level merging across the cluster is the
  * application's job (it knows which source to trust).
  */

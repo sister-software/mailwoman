@@ -133,14 +133,15 @@ export async function writeParquetFile(rows: readonly ParquetRow[], path: PathBu
 		.setMaxRowGroupSize(ROW_GROUP_SIZE)
 		.build()
 
-	// parquet-wasm serializes key-value metadata through a hash map, whose order is
-	// not stable between writes. File identity and provenance live in manifest.json,
-	// so omitting file metadata preserves deterministic bytes.
+	// parquet-wasm serializes key-value metadata through a hash map, whose order is not stable between writes.
+	// File identity and provenance live in manifest.json, so omitting file
+	// metadata preserves deterministic bytes.
 	await writeLocalBuffer(writeParquet(wasmTable, properties), path)
 }
 
 /**
  * Per-file metadata captured in `manifest.json`, one entry per `.parquet` file of a split.
+ *
  * The `slices` key it sits under is the wire interface the Python loader reads
  * (`manifest_files` in `corpus_files.py`, with its pre-rename fallback); every corpus
  * on disk carries it, so the key name is not the writer's to change.
@@ -157,6 +158,7 @@ export interface ParquetFileDescriptor {
 	last_source_id: string
 	/**
 	 * The file's corpus source slug, when the writer knows it.
+	 *
 	 * `audit.ts` prefers this over inferring the source from `first_source_id`'s prefix;
 	 * {@linkcode writeParquetSplits} itself writes multi-source files and leaves it unset.
 	 */
@@ -175,7 +177,9 @@ export interface ParquetManifest {
 
 export interface WriteParquetSplitsOptions {
 	/**
-	 * Root output directory. The corpus version directory is created beneath it.
+	 * Root output directory.
+	 *
+	 * The corpus version directory is created beneath it.
 	 */
 	outputDir: PathBuilderLike
 
@@ -185,15 +189,18 @@ export interface WriteParquetSplitsOptions {
 	corpusVersion: string
 
 	/**
-	 * Max rows per `.parquet` file. Default 1,000,000 per the Phase 1 plan.
+	 * Max rows per `.parquet` file.
+	 *
+	 * Default 1,000,000 per the Phase 1 plan.
 	 */
 	rowsPerFile?: number
 }
 
 /**
- * Pre-partitioned labeled-row streams, one per split. Callers (`buildCorpus`) decide each
- * row's split inline at align time via `splitForRow` and route rows to the matching stream,
- * eliminating the prior `Map<source_id, SplitName>` O(n) lookup table.
+ * Pre-partitioned labeled-row streams, one per split.
+ *
+ * Callers (`buildCorpus`) decide each row's split inline at align time via `splitForRow` and route
+ * rows to the matching stream, eliminating the prior `Map<source_id, SplitName>` O(n) lookup table.
  *
  * Splits with no rows can be omitted (or passed as an empty iterable);
  * {@linkcode writeParquetSplits} skips them.

@@ -52,9 +52,10 @@ const MAX_ABS_LONGITUDE = 180
  * How the deepest returned place was confirmed:
  *
  * - `"polygon"` — the point ray-cast inside the place's real (DP-simplified) admin boundary.
- * - `"approximate"` — the place has no polygon on record. it won by nearest-centroid among the candidates
- *   whose bbox (or parent) contains the point. The same honesty convention as the demo's
- *   approximate circles — country-dependent data reality, surfaced instead of hidden.
+ * - `"approximate"` — the place has no polygon on record. it won by nearest-centroid
+ *   among the candidates whose bbox (or parent) contains the point.
+ *   The same honesty convention as the demo's approximate circles — country-dependent
+ *   data reality, surfaced instead of hidden.
  */
 export type ContainmentKind = "polygon" | "approximate"
 
@@ -62,6 +63,7 @@ export interface ReverseGeocodeResult {
 	/**
 	 * The containment chain, deepest-first (`[0]` is the winning place, then its ancestors up to country) —
 	 * the same tree shape forward resolution attaches via `includeAncestors`.
+	 *
 	 * Empty when no candidate's bbox contains the point (open ocean, or outside the gazetteer's coverage).
 	 */
 	hierarchy: PlaceCandidate[]
@@ -75,6 +77,7 @@ export interface WOFReverseGeocoderOpts {
 	/**
 	 * Path to the admin gazetteer DB (e.g. `admin-global-priority.db`) — must carry `spr`,
 	 * `ancestors`, and the package-built `place_bbox` R*Tree (`mailwoman gazetteer build fts`).
+	 *
 	 * Mutually exclusive with `adminDatabase`.
 	 */
 	adminDBPath?: string
@@ -85,6 +88,7 @@ export interface WOFReverseGeocoderOpts {
 	/**
 	 * Path to the polygon sidecar DB (`wof-polygons.db`, table `polygons(id, geom)`). optional —
 	 * without it every result is `containment: "approximate"` (centroid-only mode).
+	 *
 	 * Mutually exclusive with `polygonDatabase`.
 	 */
 	polygonDBPath?: string
@@ -97,20 +101,26 @@ export interface WOFReverseGeocoderOpts {
 export interface ReverseGeocodeOpts {
 	/**
 	 * Restrict the hierarchy to these placetypes (both the bbox candidates and the descent tiers).
+	 *
 	 * Default: every admin placetype the gazetteer carries.
-	 * E.g. `["region", "county", "locality"]` to skip the neighbourhood grain.
+	 * E.g.
+	 *
+	 * `["region", "county", "locality"]` to skip the neighbourhood grain.
 	 */
 	placetypes?: WOFPlacetype[]
 	/**
-	 * Cap on the bbox candidate fetch. Default 128 — comfortably covers a dense metro
-	 * (the most bbox-overlapping point we've measured is a few dozen neighbourhoods + the admin chain).
+	 * Cap on the bbox candidate fetch.
+	 *
+	 * Default 128 — comfortably covers a dense metro (the most bbox-overlapping point
+	 * we've measured is a few dozen neighbourhoods + the admin chain).
 	 */
 	maxCandidates?: number
 	/**
-	 * Approximate (nearest-centroid) steps further than this from the query point are
-	 * not taken — keeps a sparse gazetteer from "refining" to a far-away sibling.
-	 * Polygon-confirmed steps ignore it (containment is exact regardless of
-	 * centroid distance). Default 25 km.
+	 * Approximate (nearest-centroid) steps further than this from the query point are not
+	 * taken — keeps a sparse gazetteer from "refining" to a far-away sibling.
+	 *
+	 * Polygon-confirmed steps ignore it (containment is exact regardless of centroid distance).
+	 * Default 25 km.
 	 */
 	maxApproximateKm?: number
 }
@@ -120,6 +130,7 @@ const DEFAULT_MAX_APPROXIMATE_KM = 25
 
 /**
  * The tier ladder for the approximate descent, coarsest-first.
+ *
  * Each tier is attempted among the current winner's descendants. a tier with no rows
  * is skipped (e.g. counties without localadmins jump straight to locality).
  */
@@ -170,8 +181,10 @@ export class WOFReverseGeocoder implements Disposable {
 	readonly #polygons: DatabaseClient<WOFDatabase> | null
 	readonly #ownsPolygons: boolean
 	/**
-	 * Parsed-geometry cache. Reverse queries cluster geographically (an eval run hits the same
-	 * ~15 county polygons 1400 times), so caching the JSON.parse pays for itself immediately.
+	 * Parsed-geometry cache.
+	 *
+	 * Reverse queries cluster geographically (an eval run hits the same ~15 county polygons 1400 times),
+	 * so caching the JSON.parse pays for itself immediately.
 	 * Bounded — cleared wholesale at the cap rather than LRU-tracked. the polygons are
 	 * DP-simplified and small, the cap exists only to keep a long-lived server process honest.
 	 */
@@ -219,18 +232,22 @@ export class WOFReverseGeocoder implements Disposable {
 
 	/**
 	 * Resolve a WGS-84 point to its containing admin hierarchy.
-	 * Async for symmetry with `PlaceLookup.findPlace` (the work is sync `node:sqlite`
-	 * underneath — same convention). Thin wrapper over {@link reverseGeocodeSync}.
+	 *
+	 * Async for symmetry with `PlaceLookup.findPlace`
+	 * (the work is sync `node:sqlite` underneath — same convention).
+	 * Thin wrapper over {@link reverseGeocodeSync}.
 	 */
 	async reverseGeocode(lat: number, lon: number, opts: ReverseGeocodeOpts = {}): Promise<ReverseGeocodeResult> {
 		return this.reverseGeocodeSync(lat, lon, opts)
 	}
 
 	/**
-	 * Synchronous core of {@link reverseGeocode} — every step underneath is already sync `node:sqlite`,
-	 * so this is the real implementation. the async method above exists only for call-site
-	 * symmetry with `PlaceLookup.findPlace`. Exposed directly for callers that can't await
-	 * mid-call (e.g. `mailwoman/poi-executor.ts`'s `createPOIExecutor`, whose `POIIntentOutcome`
+	 * Synchronous core of {@link reverseGeocode} — every step underneath is already
+	 * sync `node:sqlite`, so this is the real implementation. the async method above
+	 * exists only for call-site symmetry with `PlaceLookup.findPlace`.
+	 *
+	 * Exposed directly for callers that can't await mid-call
+	 * (e.g. `mailwoman/poi-executor.ts`'s `createPOIExecutor`, whose `POIIntentOutcome`
 	 * return type is synchronous by interface — see `poi-intent.ts`'s `deps.execute`).
 	 */
 	reverseGeocodeSync(lat: number, lon: number, opts: ReverseGeocodeOpts = {}): ReverseGeocodeResult {
@@ -246,8 +263,9 @@ export class WOFReverseGeocoder implements Disposable {
 		const maxApproximateKm = opts.maxApproximateKm ?? DEFAULT_MAX_APPROXIMATE_KM
 		const candidates = this.#bboxCandidates(lat, lon, opts)
 
-		// PIP walk, smallest-bbox-first: the first polygon that contains the point is the deepest
-		// polygon-confirmable place. Polygon-rejected candidates are bbox false positives — dropped.
+		// PIP walk, smallest-bbox-first: the first polygon that contains the point
+		// is the deepest polygon-confirmable place.
+		// Polygon-rejected candidates are bbox false positives — dropped.
 		let winner: CandidateRow | null = null
 		let winnerConfirmed = false
 		const pointOnly: CandidateRow[] = []

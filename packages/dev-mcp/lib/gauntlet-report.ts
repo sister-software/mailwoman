@@ -35,8 +35,9 @@ interface GauntletLayerReport {
 export interface GauntletReport {
 	/**
 	 * `pass` / `fail` as the run printed it, or `null` when no verdict line appeared —
-	 * a crash, or a run killed before it finished. Never defaulted to `fail`:
-	 * "did not finish" and "finished and failed" are different facts.
+	 * a crash, or a run killed before it finished.
+	 *
+	 * Never defaulted to `fail`: "did not finish" and "finished and failed" are different facts.
 	 */
 	verdict: string | null
 	layers: GauntletLayerReport[]
@@ -49,13 +50,15 @@ export interface GauntletReport {
 	 * when the log carried no firing line.
 	 *
 	 * Named for the mechanism it measures rather than for "the pin under test",
-	 * because those are usually not the same thing: pin `gazetteerPrior` and this
-	 * still reports coherence, which is the only pass that prints a firing count.
+	 * because those are usually not the same thing: pin `gazetteerPrior` and this still
+	 * reports coherence, which is the only pass that prints a firing count.
 	 * Reading it as the pinned pin's firing rate would be a fabricated number.
 	 */
 	postcode_country_coherence_fired_on: { n: number; of: number } | null
 	/**
-	 * Refused rows, verbatim, in log order. These are the rows a verdict rests on.
+	 * Refused rows, verbatim, in log order.
+	 *
+	 * These are the rows a verdict rests on.
 	 */
 	counted_failures: string[]
 	/**
@@ -64,6 +67,7 @@ export interface GauntletReport {
 	now_passing: string[]
 	/**
 	 * What could not be extracted, and from which pattern.
+	 *
 	 * Read this before trusting an absent field.
 	 */
 	unparsed: string[]
@@ -75,10 +79,10 @@ export interface GauntletReport {
  * The lines this file recognises by shape rather than by regex — the pins line,
  * the promote line — are matched with `startsWith` / `indexOf` instead.
  * Both wanted an ambiguous quantifier to express (`(.*pins.*|.*=.*)$` and `(.*?)\s+now passes`),
- * which backtracks quadratically on a long non-matching line and which CodeQL flags
- * as polynomial ReDoS. A gauntlet log is our own output rather than hostile input,
- * so the practical exposure was small — but the string version is both shorter
- * and unconditionally linear, so there was nothing to trade away.
+ * which backtracks quadratically on a long non-matching line and which CodeQL flags as polynomial ReDoS.
+ *
+ * A gauntlet log is our own output rather than hostile input, so the practical exposure was small —
+ * but the string version is both shorter and unconditionally linear, so there was nothing to trade away.
  */
 const HEADER = /^=== Gauntlet · (\S+) \((\d+)\/(\d+) counted cases pass(?:, (\d+) tracked)?\)/
 const VERDICT = /^verdict: (PASS|FAIL)/

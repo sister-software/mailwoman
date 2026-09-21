@@ -22,8 +22,10 @@ import type { CapitalTable } from "#capital-schema"
 import type { NameKey } from "#street/normalize"
 
 /**
- * One candidate row. `name_key` + the four small int keys + `neg_rank` + `spr_id` form the
- * clustered primary key. the rest is denormalized so a resolve is one probe (no join to `spr`).
+ * One candidate row.
+ *
+ * `name_key` + the four small int keys + `neg_rank` + `spr_id` form the clustered primary
+ * key. the rest is denormalized so a resolve is one probe (no join to `spr`).
  * Coordinates + bbox + name are nullable at the SQL level (a postcode extract row may lack a bbox).
  */
 export interface CandidateTable {
@@ -90,15 +92,16 @@ export interface CandidateTable {
 	importance: number | null
 	/**
 	 * The name'S detected role on this row, or NULL (#1730).
+	 *
 	 * Two build-time detectors stamp `is_primary = 0` rows only:
 	 *
 	 * - `'abbr'` — provenance-based: the surface is a WOF `variant` name in one of
 	 *   the place's country's official languages (or English) — the #936 signal,
 	 *   measured at a 13× key-collision rate vs preferred names.
-	 * - `'gloss'` — anomaly-based: the row belongs to a place whose key
-	 *   count crosses the gloss threshold with a non-admin placetype
-	 *   and no measured prominence (population absent and importance unmeasured) —
-	 *   the translation-gloss fingerprint (#1730's sweep; `Poisson` → a US fish-name place).
+	 * - `'gloss'` — anomaly-based: the row belongs to a place whose key count crosses
+	 *   the gloss threshold with a non-admin placetype and no measured prominence
+	 *   (population absent and importance unmeasured) — the translation-gloss fingerprint
+	 *   (#1730's sweep; `Poisson` → a US fish-name place).
 	 *   Provenance cannot separate a gloss from an exonym (WOF imported both as `x_preferred`),
 	 *   which is why this detector is an anomaly test and stamps only the certain core.
 	 *
@@ -126,6 +129,7 @@ export interface PlacetypeCodeTable {
 
 /**
  * The candidate database schema for `new DatabaseClient<CandidateDatabase>(...)`.
+ *
  * Extends the ancestors sidecar (`candidate_ancestor` + `candidate_interval` —
  * see candidate-ancestors-schema.ts for the encoding decision), so the builder's
  * one typed client covers every table in the artifact.
@@ -175,9 +179,11 @@ export const CANDIDATE_COLUMNS = [
 ] as const
 
 /**
- * Create the code dictionaries + the transient staging table — called before the
- * build's load passes. `cand_stage` mirrors {@link CandidateTable} but every column
- * is nullable (the loader fills them positionally). Pass a
+ * Create the code dictionaries + the transient staging table — called before the build's load passes.
+ *
+ * `cand_stage` mirrors {@link CandidateTable} but every column is nullable
+ * (the loader fills them positionally).
+ * Pass a
  * {@link DatabaseClient} (or any `Kysely`) over the candidate DB.
  */
 export async function createCandidateStagingTables(db: Kysely<CandidateDatabase>): Promise<void> {
@@ -217,6 +223,7 @@ export async function createCandidateStagingTables(db: Kysely<CandidateDatabase>
 
 /**
  * Create the clustered `without rowid` lookup table — called after staging, before the vacuum.
+ *
  * The first six columns form the clustered primary key (population-ranked via `neg_rank`).
  */
 export async function createCandidateTable(db: Kysely<CandidateDatabase>): Promise<void> {

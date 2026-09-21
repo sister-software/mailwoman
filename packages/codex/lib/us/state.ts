@@ -90,6 +90,7 @@ const STATE_ABBREVIATION_SET: ReadonlySet<string> = new Set(US_STATE_ABBREVIATIO
 
 /**
  * Type-predicate for a USPS state-or-territory abbreviation.
+ *
  * Case-insensitive (`"ca"` and `"CA"` both pass), since the abbreviation arrives from raw address text.
  */
 export function isUSStateAbbreviation(input: unknown): input is USStateAbbreviation {
@@ -107,9 +108,10 @@ export function formatAsUSStateAbbreviation(value: string): USStateAbbreviation 
 
 /**
  * Full names for the 50 states, DC, and the five primary territories, keyed by USPS abbreviation.
- * The names half of the closed region vocabulary — where the country/state homographs
- * live ("Georgia", "Washington"), which the gazetteer-anchor lexicon needs to flag
- * candidate-tag collisions. Source: USPS Publication 28, Appendix B.
+ *
+ * The names half of the closed region vocabulary — where the country/state homographs live
+ * ("Georgia", "Washington"), which the gazetteer-anchor lexicon needs to flag candidate-tag collisions.
+ * Source: USPS Publication 28, Appendix B.
  */
 export const US_STATE_BY_ABBREVIATION = {
 	AL: "Alabama",
@@ -177,6 +179,7 @@ export const US_STATE_NAMES: readonly string[] = Object.values(US_STATE_BY_ABBRE
 
 /**
  * Folded state/territory name, or the abbreviation itself, → the USPS abbreviation.
+ *
  * Built diacritic-insensitive so a source that writes the name plainly resolves
  * the same as one that does not.
  */

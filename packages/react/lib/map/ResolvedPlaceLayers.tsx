@@ -28,12 +28,15 @@ export interface ResolvedPlaceLayersProps {
 	spec: MapPlaceRenderSpec | null
 	/**
 	 * Apply the computed camera target via {@link ResultCamera}. @default true.
+	 *
 	 * Set false when the consumer drives the camera itself
 	 * (e.g. a controlled `<MapCanvas viewState>` fed by {@link cameraToViewState}).
 	 */
 	applyCamera?: boolean
 	/**
-	 * Animate the camera move. Forwarded to {@link ResultCamera}. @default true
+	 * Animate the camera move.
+	 *
+	 * Forwarded to {@link ResultCamera}. @default true
 	 */
 	animateCamera?: boolean
 	/**

@@ -107,9 +107,10 @@ const BBOX_SOURCE = "2026-07-15 coordinate-parity receipt harness (scratchpad/co
  * (`resolver/plausibility.ts`), derived from that constant rather than declared beside it.
  *
  * The two were separate literals with a test asserting them equal.
- * That test compared the numbers and not the membership, and both tables were missing
- * the same four shipping locales. Membership is checked in `plausibility.test.ts`
- * against `release.config.json` instead.
+ * That test compared the numbers and not the membership, and both tables were
+ * missing the same four shipping locales.
+ *
+ * Membership is checked in `plausibility.test.ts` against `release.config.json` instead.
  *
  * `source` is stamped here: provenance belongs to the artifact record rather than to the fallback constant.
  */

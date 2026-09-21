@@ -30,9 +30,11 @@ import { readZoningFeatures, readZoningSourceIdentity, type ZoningIngestOptions 
 
 export interface MeasureResolutionsOptions extends ZoningIngestOptions, ResolutionMeasurementOptions {
 	/**
-	 * Also run a centre-in-polygon polyfill per feature per resolution, to report what
-	 * a polyfill-only index would have dropped. On by default: it is the column the
-	 * resolution is chosen on, and its cost is one extra h3 call per feature.
+	 * Also run a centre-in-polygon polyfill per feature per resolution, to report
+	 * what a polyfill-only index would have dropped.
+	 *
+	 * On by default: it is the column the resolution is chosen on, and its cost
+	 * is one extra h3 call per feature.
 	 */
 	measurePolyfill?: boolean
 }
@@ -40,7 +42,9 @@ export interface MeasureResolutionsOptions extends ZoningIngestOptions, Resoluti
 export interface ResolutionMeasurementReport {
 	features: number
 	/**
-	 * The count the source declares for itself. A run whose streamed total differs read a truncated file.
+	 * The count the source declares for itself.
+	 *
+	 * A run whose streamed total differs read a truncated file.
 	 */
 	declaredFeatureCount: number
 	measurements: CellIndexMeasurement[]
@@ -81,8 +85,9 @@ export async function measureZoningCellResolutions(
 		}
 	}
 
-	// A range or an authority selector narrows the population on purpose, so the declared total is
-	// only a check on a whole pass. Narrowed runs report what they read and assert nothing about it.
+	// A range or an authority selector narrows the population on purpose,
+	// so the declared total is only a check on a whole pass.
+	// Narrowed runs report what they read and assert nothing about it.
 	const narrowed =
 		options.limit !== undefined || options.authorityCode !== undefined || options.objectIDFrom !== undefined
 

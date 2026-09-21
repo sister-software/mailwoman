@@ -49,6 +49,7 @@ export function resolvePackagePathFrom(base: string, packageName: string, ...seg
 
 /**
  * The `mailwoman` block this repository's own manifests may carry.
+ *
  * A data-only weights overlay names the base package it shares `model.onnx`
  * and `tokenizer.model` with, which is the field `@mailwoman/neural` follows to find them.
  */

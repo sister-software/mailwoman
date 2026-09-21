@@ -28,19 +28,27 @@ interface TestRow {
  */
 export interface EvalQuantCompareOptions {
 	/**
-	 * Fp32 artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
+	 * Fp32 artifact dir.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
 	 */
 	fp32?: PathBuilderLike
 	/**
-	 * Int8 artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model-int8`.
+	 * Int8 artifact dir.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model-int8`.
 	 */
 	int8?: PathBuilderLike
 	/**
-	 * Abstention threshold. Default 0.5.
+	 * Abstention threshold.
+	 *
+	 * Default 0.5.
 	 */
 	abstain?: number
 	/**
-	 * Dataset dir (`test.jsonl`). Default `<repo>/data/coarse-placer`.
+	 * Dataset dir (`test.jsonl`).
+	 *
+	 * Default `<repo>/data/coarse-placer`.
 	 */
 	data?: PathBuilderLike
 }
@@ -66,6 +74,7 @@ export interface EvalQuantCompareResult {
 
 /**
  * Coarse-placer int8-vs-fp32 comparison — see the module doc.
+ *
  * Emits the report to stdout.
  */
 export async function evalQuantCompare(options: EvalQuantCompareOptions = {}): Promise<EvalQuantCompareResult> {

@@ -17,8 +17,10 @@ const REGIONAL_INDICATOR_BASE = 0x1_f1_e6
 const A_UPPER = "A".charCodeAt(0)
 
 /**
- * The flag emoji for an ISO 3166-1 alpha-2 country code, formed from the two Regional
- * Indicator Symbols (`US` → 🇺🇸). Returns `""` for anything that is not two ascii letters.
+ * The flag emoji for an ISO 3166-1 alpha-2 country code, formed from the two
+ * Regional Indicator Symbols (`US` → 🇺🇸).
+ *
+ * Returns `""` for anything that is not two ascii letters.
  */
 export function countryFlag(alpha2: string): string {
 	const code = alpha2.toUpperCase()
@@ -29,8 +31,10 @@ export function countryFlag(alpha2: string): string {
 }
 
 /**
- * Fill the country-reference fields (ISO 3166 alpha-2, flag, calling code, currency) from
- * a resolved country code. Abstains on anything that isn't two ascii letters.
+ * Fill the country-reference fields (ISO 3166 alpha-2, flag, calling code, currency)
+ * from a resolved country code.
+ *
+ * Abstains on anything that isn't two ascii letters.
  */
 export const countryReferenceAnnotator: Annotator = ({ countryCode }): Partial<AnnotationSet> => {
 	if (!countryCode || !/^[A-Za-z]{2}$/.test(countryCode)) return {}

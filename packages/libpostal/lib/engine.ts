@@ -68,6 +68,7 @@ const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_part
 
 /**
  * Flatten a neural `AddressTree` to reading-order raw matches for {@link LibpostalEngine.parse}.
+ *
  * The street node and its street-name children collapse into one `street` match
  * (libpostal's `road` is the full name); other children (house_number, unit) emit as their own matches.
  * Values join with a single space — original inter-part punctuation is not reconstructed.
@@ -111,9 +112,11 @@ export function treeToParseMatches(tree: AddressTree): ParseMatch[] {
 }
 
 /**
- * The parsing engine the router delegates to. `parse` is required; `expand` is optional
- * (a missing one answers `501`). The CLI wires `parse` to Mailwoman's neural parser
- * (`@mailwoman/neural`) and `expand` to `@mailwoman/normalize`.
+ * The parsing engine the router delegates to.
+ *
+ * `parse` is required; `expand` is optional (a missing one answers `501`).
+ * The CLI wires `parse` to Mailwoman's neural parser (`@mailwoman/neural`)
+ * and `expand` to `@mailwoman/normalize`.
  */
 export interface LibpostalEngine {
 	parse(query: string): Promise<ParseMatch[]>

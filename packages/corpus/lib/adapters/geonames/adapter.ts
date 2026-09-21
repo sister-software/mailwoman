@@ -37,8 +37,9 @@ import { stableSourceID } from "#adapters/utils"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record
- * can be traced back to the dataset it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const GEONAMES_ADAPTER_ID = "geonames"
 /**
@@ -51,8 +52,9 @@ export const GEONAMES_DEFAULT_LICENSE = "CC-BY-4.0"
  * GeoNames main-table column indices (0-based. see the export readme).
  *
  * Exported because the register's layout is one fact with more than one reader —
- * `@mailwoman/mailwoman`'s same-data benchmark panel reads `cities15000.txt`, which is the same
- * table filtered by population. A second hand-typed copy would drift the day GeoNames adds a column.
+ * `@mailwoman/mailwoman`'s same-data benchmark panel reads `cities15000.txt`,
+ * which is the same table filtered by population.
+ * A second hand-typed copy would drift the day GeoNames adds a column.
  */
 export const GEONAMES_MAIN_COLUMNS = {
 	geonameid: 0,
@@ -76,7 +78,9 @@ const COL = GEONAMES_MAIN_COLUMNS
 const NON_CURRENT_PPL = new Set(["PPLH", "PPLQ", "PPLW", "PPLCH"])
 
 /**
- * Load `admin1CodesASCII.txt` → Map("<CC>.<admin1>" → region name). Empty map if absent.
+ * Load `admin1CodesASCII.txt` → Map("<CC>.<admin1>" → region name).
+ *
+ * Empty map if absent.
  */
 async function loadAdmin1(dir: string): Promise<Map<string, string>> {
 	const map = new Map<string, string>()
@@ -95,7 +99,9 @@ async function loadAdmin1(dir: string): Promise<Map<string, string>> {
 }
 
 /**
- * Load `countryInfo.txt` → Map(ISO → country name). Empty map if absent.
+ * Load `countryInfo.txt` → Map(ISO → country name).
+ *
+ * Empty map if absent.
  * The file is `#`-commented.
  */
 async function loadCountries(dir: string): Promise<Map<string, string>> {

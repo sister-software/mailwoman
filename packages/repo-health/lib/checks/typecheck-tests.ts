@@ -21,7 +21,9 @@ import { TextSpliterator } from "spliterator"
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
 
 /**
- * How many `tsc` invocations to keep in flight. Each is single-threaded and mostly CPU-bound.
+ * How many `tsc` invocations to keep in flight.
+ *
+ * Each is single-threaded and mostly CPU-bound.
  */
 const CONCURRENCY = Math.max(2, Math.min(8, cpuCount() - 2))
 
@@ -32,8 +34,10 @@ const CONCURRENCY = Math.max(2, Math.min(8, cpuCount() - 2))
 const TEST_PROJECT = /^(?:packages\/)?[^/]+\/tsconfig\.test\.json$/
 
 /**
- * Run `tsc` against one workspace's test project. A non-zero exit carries the diagnostics
- * on stdout, so a rejected promise is the normal path for a workspace with errors.
+ * Run `tsc` against one workspace's test project.
+ *
+ * A non-zero exit carries the diagnostics on stdout, so a rejected promise is
+ * the normal path for a workspace with errors.
  */
 async function typecheck(workspace: string, repoRoot: string): Promise<Diagnostic[]> {
 	const config = join(workspace, "tsconfig.test.json")

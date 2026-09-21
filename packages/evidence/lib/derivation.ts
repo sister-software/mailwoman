@@ -40,8 +40,10 @@ export interface DerivationInput {
 }
 
 /**
- * Shape a derivation for a reader. The result is frozen and holds copies of the nodes,
- * so a caller that keeps mutating its own record cannot change what was reported.
+ * Shape a derivation for a reader.
+ *
+ * The result is frozen and holds copies of the nodes, so a caller that keeps
+ * mutating its own record cannot change what was reported.
  */
 export function projectDerivation(input: DerivationInput): DerivationProjection {
 	const constraints = Object.freeze(input.nodes.map((node) => Object.freeze({ ...node })))

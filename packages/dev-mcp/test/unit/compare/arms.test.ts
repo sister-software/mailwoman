@@ -27,6 +27,7 @@ const ANDORRA_LA_VELLA = { lat: 42.5063174, lon: 1.5218355 }
 
 /**
  * A registry whose engine answers one fixed coordinate.
+ *
  * `hierarchy` is present because the mailwoman arm reads its answer through
  * the gauntlet projection, which walks it.
  */
@@ -116,9 +117,9 @@ const BOARD_AD = { kind: "board", country: "AD" }
 
 describe("mwdev_compare — an oracle arm", () => {
 	it("refuses to grade even when every row carries a truth coordinate", async () => {
-		// The board's AD rows all pin expectLat/expectLon, so this comparison could be
-		// graded on distance. It is not, because the board's coordinates were pinned by
-		// hand with these same geocoders open as a second opinion.
+		// The board's AD rows all pin expectLat/expectLon, so this comparison could be graded on distance.
+		// It is not, because the board's coordinates were pinned by hand with these
+		// same geocoders open as a second opinion.
 		const oracle = oracleAt(ANDORRA_LA_VELLA)
 
 		const result = (await runCompare(
@@ -228,8 +229,8 @@ describe("mwdev_compare — an oracle arm", () => {
 
 describe("mwdev_compare — a truthless comparison", () => {
 	it("reports arm separation rather than a fabricated zero", async () => {
-		// The failure this closes: without truth both distances are null, so the
-		// threshold rule finds no verdict to cross and every row reads as identical.
+		// The failure this closes: without truth both distances are null, so the threshold
+		// rule finds no verdict to cross and every row reads as identical.
 		// `describeObservedRate` then turns "0 of N differed" into "tight enough to read as a real
 		// absence" — a claim of no difference between two arms that never agreed on anything.
 		const result = (await runCompare(

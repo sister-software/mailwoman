@@ -39,24 +39,31 @@ import type { Tagged } from "type-fest"
 
 /**
  * A concept identifier, e.g. `pharmacy`, `obtain_medication`.
+ *
  * Branded — convert via {@link toConceptID}.
  */
 export type ConceptID = Tagged<string, "GeographicConceptID">
 
 /**
- * Brand a raw string as a {@link ConceptID}. Purely a compile-time assertion. the string is unchanged.
+ * Brand a raw string as a {@link ConceptID}.
+ *
+ * Purely a compile-time assertion. the string is unchanged.
  */
 export function toConceptID(id: string): ConceptID {
 	return id as ConceptID
 }
 
 /**
- * A relation identifier, e.g. `affords`. Branded — convert via {@link toRelationID}.
+ * A relation identifier, e.g. `affords`.
+ *
+ * Branded — convert via {@link toRelationID}.
  */
 export type RelationID = Tagged<string, "GeographicRelationID">
 
 /**
- * Brand a raw string as a {@link RelationID}. Purely a compile-time assertion. the string is unchanged.
+ * Brand a raw string as a {@link RelationID}.
+ *
+ * Purely a compile-time assertion. the string is unchanged.
  */
 export function toRelationID(id: string): RelationID {
 	return id as RelationID
@@ -64,24 +71,31 @@ export function toRelationID(id: string): RelationID {
 
 /**
  * The identifier of one authored {@link RelationAssertion}.
+ *
  * Branded — convert via {@link toRuleID}.
  */
 export type RuleID = Tagged<string, "GeographicRuleID">
 
 /**
- * Brand a raw string as a {@link RuleID}. Purely a compile-time assertion. the string is unchanged.
+ * Brand a raw string as a {@link RuleID}.
+ *
+ * Purely a compile-time assertion. the string is unchanged.
  */
 export function toRuleID(id: string): RuleID {
 	return id as RuleID
 }
 
 /**
- * The identifier of one {@link ExternalMappingRecord}. Branded — convert via {@link toMappingID}.
+ * The identifier of one {@link ExternalMappingRecord}.
+ *
+ * Branded — convert via {@link toMappingID}.
  */
 export type MappingID = Tagged<string, "GeographicMappingID">
 
 /**
- * Brand a raw string as a {@link MappingID}. Purely a compile-time assertion. the string is unchanged.
+ * Brand a raw string as a {@link MappingID}.
+ *
+ * Purely a compile-time assertion. the string is unchanged.
  */
 export function toMappingID(id: string): MappingID {
 	return id as MappingID
@@ -89,32 +103,41 @@ export function toMappingID(id: string): MappingID {
 
 /**
  * The identifier of one {@link SourceObservationRecord}.
+ *
  * Branded — convert via {@link toObservationID}.
  */
 export type ObservationID = Tagged<string, "GeographicObservationID">
 
 /**
- * Brand a raw string as an {@link ObservationID}. Purely a compile-time assertion. the string is unchanged.
+ * Brand a raw string as an {@link ObservationID}.
+ *
+ * Purely a compile-time assertion. the string is unchanged.
  */
 export function toObservationID(id: string): ObservationID {
 	return id as ObservationID
 }
 
 /**
- * The identifier of one {@link DerivedFactRecord}. Branded — convert via {@link toDerivedFactID}.
+ * The identifier of one {@link DerivedFactRecord}.
+ *
+ * Branded — convert via {@link toDerivedFactID}.
  */
 export type DerivedFactID = Tagged<string, "GeographicDerivedFactID">
 
 /**
- * Brand a raw string as a {@link DerivedFactID}. Purely a compile-time assertion. the string is unchanged.
+ * Brand a raw string as a {@link DerivedFactID}.
+ *
+ * Purely a compile-time assertion. the string is unchanged.
  */
 export function toDerivedFactID(id: string): DerivedFactID {
 	return id as DerivedFactID
 }
 
 /**
- * The complete set of concept kinds. Three, deliberately: the first executable record set
- * needs an establishment class, an activity, and the place class an establishment is sited in.
+ * The complete set of concept kinds.
+ *
+ * Three, deliberately: the first executable record set needs an establishment class,
+ * an activity, and the place class an establishment is sited in.
  * Widening this vocabulary is a reviewed schema revision, which is the review cost the
  * program accepted in exchange for refusing speculative upper-ontology breadth.
  */
@@ -128,8 +151,9 @@ export const ConceptKind = {
 	 */
 	Establishment: "establishment",
 	/**
-	 * Something a person does, e.g. `obtain_medication`. The identifier is owned here.
-	 * any statistics fitted against it are owned by #1683.
+	 * Something a person does, e.g. `obtain_medication`.
+	 *
+	 * The identifier is owned here. any statistics fitted against it are owned by #1683.
 	 */
 	Activity: "activity",
 } as const
@@ -182,12 +206,15 @@ export const RelationSemantics = {
 export type RelationSemantics = (typeof RelationSemantics)[keyof typeof RelationSemantics]
 
 /**
- * A concept's authoring lifecycle. It says whether a consumer should read the record,
- * and nothing about how much the record is worth.
+ * A concept's authoring lifecycle.
+ *
+ * It says whether a consumer should read the record, and nothing about how much the record is worth.
  */
 export const ConceptStatus = {
 	/**
-	 * Authored rather than yet reviewed. A compiler may refuse to emit it.
+	 * Authored rather than yet reviewed.
+	 *
+	 * A compiler may refuse to emit it.
 	 */
 	Draft: "draft",
 	Active: "active",
@@ -201,6 +228,7 @@ export type ConceptStatus = (typeof ConceptStatus)[keyof typeof ConceptStatus]
 
 /**
  * The external vocabularies a concept can be mapped into.
+ *
  * One today, and the mapping record below is typed against it directly. a second vocabulary
  * turns {@link ExternalMappingRecord} into a union discriminated on `vocabulary`.
  */
@@ -214,7 +242,9 @@ export const ExternalVocabulary = {
 export type ExternalVocabulary = (typeof ExternalVocabulary)[keyof typeof ExternalVocabulary]
 
 /**
- * Where a record came from. `source` is required and non-empty on every record that carries provenance:
+ * Where a record came from.
+ *
+ * `source` is required and non-empty on every record that carries provenance:
  * a record whose source is blank is indistinguishable from a record nobody stands behind.
  */
 export interface SourceProvenance {
@@ -239,9 +269,10 @@ export interface SourceProvenance {
 }
 
 /**
- * One relation's definition. Relations are vocabulary rather than claims: the record
- * says what the relation means and which concept kinds may stand on either side of it,
- * and asserts nothing about any particular pair.
+ * One relation's definition.
+ *
+ * Relations are vocabulary rather than claims: the record says what the relation means and
+ * which concept kinds may stand on either side of it, and asserts nothing about any particular pair.
  */
 export interface RelationRecord {
 	id: RelationID
@@ -259,6 +290,7 @@ export interface RelationRecord {
 	symmetric: boolean
 	/**
 	 * The relation reading the same edge in the other direction.
+	 *
 	 * When present it must resolve, and the relation it names must name this one back.
 	 */
 	inverse?: RelationID
@@ -267,6 +299,7 @@ export interface RelationRecord {
 
 /**
  * One authored claim, attached to the concept it is about.
+ *
  * This is curated semantics — what a curator states holds rather than what a
  * dataset was observed to contain.
  */
@@ -276,8 +309,10 @@ export interface RelationAssertion {
 	target: ConceptID
 	modality: Modality
 	/**
-	 * ISO 3166-1 alpha-2 codes the claim is scoped to. Absent means the curator scoped it
-	 * to nowhere in particular, which is a weaker statement than scoping it to everywhere.
+	 * ISO 3166-1 alpha-2 codes the claim is scoped to.
+	 *
+	 * Absent means the curator scoped it to nowhere in particular, which is a weaker
+	 * statement than scoping it to everywhere.
 	 */
 	countries?: string[]
 	provenance: SourceProvenance
@@ -292,8 +327,9 @@ export interface ConceptRecord {
 	description: string
 	kind: ConceptKind
 	/**
-	 * Broader concepts this one is a kind of. May be empty. may not name this concept,
-	 * directly or around a cycle.
+	 * Broader concepts this one is a kind of.
+	 *
+	 * May be empty. may not name this concept, directly or around a cycle.
 	 */
 	isA: ConceptID[]
 	assertions: RelationAssertion[]
@@ -303,6 +339,7 @@ export interface ConceptRecord {
 
 /**
  * A translation from an external vocabulary's identifier into a concept owned here.
+ *
  * It carries no semantics of its own: it says which external identifier names
  * the same thing, and on whose authority.
  */
@@ -311,8 +348,9 @@ export interface ExternalMappingRecord {
 	concept: ConceptID
 	vocabulary: ExternalVocabulary
 	/**
-	 * The identifier in the external vocabulary. Typed as a `POICategoryID`
-	 * because `poi-taxonomy` is the only member of
+	 * The identifier in the external vocabulary.
+	 *
+	 * Typed as a `POICategoryID` because `poi-taxonomy` is the only member of
 	 * {@link ExternalVocabulary}; a second member makes this field a per-vocabulary type.
 	 */
 	externalID: POICategoryID
@@ -322,9 +360,10 @@ export interface ExternalMappingRecord {
 /**
  * A proposition a named external source states, recorded in this model's vocabulary.
  *
- * It is kept out of the concept table on purpose. An observation is evidence about the world that
- * someone else collected. promoting one into an authored assertion is a curation decision that
- * has to be made and provenanced explicitly, never by the record sitting in a convenient place.
+ * It is kept out of the concept table on purpose.
+ * An observation is evidence about the world that someone else collected. promoting
+ * one into an authored assertion is a curation decision that has to be made
+ * and provenanced explicitly, never by the record sitting in a convenient place.
  */
 export interface SourceObservationRecord {
 	id: ObservationID
@@ -354,8 +393,9 @@ export const DerivationInputKind = {
 export type DerivationInputKind = (typeof DerivationInputKind)[keyof typeof DerivationInputKind]
 
 /**
- * One record a derivation read. The union is discriminated on `kind` so the
- * identifier's brand matches the table it resolves against.
+ * One record a derivation read.
+ *
+ * The union is discriminated on `kind` so the identifier's brand matches the table it resolves against.
  */
 export type DerivationInput =
 	| { kind: typeof DerivationInputKind.Concept; id: ConceptID }
@@ -366,12 +406,15 @@ export type DerivationInput =
 	| { kind: typeof DerivationInputKind.DerivedFact; id: DerivedFactID }
 
 /**
- * A fact a named procedure computed from named inputs. Never hand-authored:
+ * A fact a named procedure computed from named inputs.
+ *
+ * Never hand-authored:
  * #1926's compiler writes this table, and the validator refuses a fact whose
  * derivation is unnamed or whose inputs do not resolve.
  *
- * There is no provenance field. The derivation plus the inputs is the provenance and the
- * stronger kind — a source string can be copied onto a record that did not come from it,
+ * There is no provenance field.
+ * The derivation plus the inputs is the provenance and the stronger kind —
+ * a source string can be copied onto a record that did not come from it,
  * while an input list either resolves or the document does not validate.
  */
 export interface DerivedFactRecord {
@@ -381,7 +424,9 @@ export interface DerivedFactRecord {
 	 */
 	derivation: string
 	/**
-	 * Every record the derivation read. At least one, and each must resolve.
+	 * Every record the derivation read.
+	 *
+	 * At least one, and each must resolve.
 	 */
 	inputs: DerivationInput[]
 	subject: ConceptID

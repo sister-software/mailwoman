@@ -51,6 +51,7 @@ export interface StreetPointHit {
 
 /**
  * Exact situs point — async twin of `AddressPointSqliteLookup`.
+ *
  * Postcode scope first, locality fallback.
  */
 export class HTTPVFSAddressPointLookup {
@@ -134,6 +135,7 @@ export interface StreetInterpHit {
 
 /**
  * Tiger-range interpolation — async twin of `StreetInterpolator`.
+ *
  * Postcode-scoped. abstains on cross-ZIP ambiguity.
  */
 export class HTTPVFSInterpolator {
@@ -178,7 +180,8 @@ export class HTTPVFSInterpolator {
 
 		if (!rows.length) return null
 
-		// Parity preference: exact side → 'mixed' → opposite side (flagged). Mirrors StreetInterpolator.
+		// Parity preference: exact side → 'mixed' → opposite side (flagged).
+		// Mirrors StreetInterpolator.
 		const wantOdd = n % 2 === 1
 		const exact = rows.filter((r) => r.parity === (wantOdd ? "odd" : "even"))
 		const mixed = rows.filter((r) => r.parity === "mixed")

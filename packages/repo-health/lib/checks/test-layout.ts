@@ -69,11 +69,11 @@ export const testLayoutCheck: RepoCheck = {
 				const sourceText = await readLocalTextFile(filePath)
 				const sourceFile = ts.createSourceFile(filePath, sourceText, ts.ScriptTarget.Latest, true)
 
-				// Type-only specifiers count here: tests are consumers of the package interface,
-				// types included. A relative specifier that stays inside `test/` names a test
-				// helper, which has no interface to bypass. one that leaves `test/` reaches
-				// the package's source by location, and the `#` map is refused in tests by
-				// `mailwoman/no-private-import-in-test`, so the module needs an `exports` entry instead.
+				// Type-only specifiers count here: tests are consumers of the package interface, types included.
+				// A relative specifier that stays inside `test/` names a test helper, which has no
+				// interface to bypass. one that leaves `test/` reaches the package's source by location,
+				// and the `#` map is refused in tests by `mailwoman/no-private-import-in-test`,
+				// so the module needs an `exports` entry instead.
 				const testRoot = resolvePath(workspaceRoot, "test")
 
 				for (const specifier of moduleSpecifiers(sourceFile, { includeTypeOnly: true })) {

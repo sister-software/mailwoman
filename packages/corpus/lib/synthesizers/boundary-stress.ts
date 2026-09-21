@@ -99,10 +99,12 @@ export interface SynthesizedBoundaryStressRow {
 }
 
 /**
- * Multi-word street names — the suffix boundary only bites when "Club" could
- * be read as part of the name. Single-word names alone teach nothing about
- * the suffix edge. Multi-word names are what make the suffix boundary bite
+ * Multi-word street names — the suffix boundary only bites when "Club" could be read as part of the name.
+ *
+ * Single-word names alone teach nothing about the suffix edge.
+ * Multi-word names are what make the suffix boundary bite
  * (the model must not read the trailing suffix word as part of the name).
+ *
  * Kept diverse so the recipe output teaches the boundary rather than the lexeme.
  */
 const MULTIWORD_STREETS = [
@@ -284,10 +286,13 @@ const FR_NAMES = [
 /**
  * Org/venue prefixes for the bare-locality shape — the v1.6.0 locality drop hit org-prefixed
  * real rows hardest ("lisbon public library, …, Lisbon ND"; "Alburg Health Center").
- * Teaching the locality with a leading venue keeps the model emitting it on facility-style
- * addresses (NPPES/HRSA shapes). `venue` is a base ComponentTag. #511-linted
- * 2026-06-18 (scripts/lint-venue-vocab — scan of nppes/hrsa/tiger/nad/wof-admin):
- * every token here is venue-dominant in the base, so the recipe output agrees with it.
+ *
+ * Teaching the locality with a leading venue keeps the model emitting it on
+ * facility-style addresses (NPPES/HRSA shapes).
+ * `venue` is a base ComponentTag. #511-linted 2026-06-18
+ * (scripts/lint-venue-vocab — scan of nppes/hrsa/tiger/nad/wof-admin): every token here
+ * is venue-dominant in the base, so the recipe output agrees with it.
+ *
  * The first draft was naive — 9 terms were dropped because their tokens are dominantly
  * street/locality and would contradict the base the way Madison-as-street did (#511):
  * "Fire" 93% street, "Veterans" 94% street, "City" 68% locality, "Hall" 63% street,
@@ -315,10 +320,12 @@ const VENUES = [
 
 /**
  * Localities derived from the base corpus (#511): every name here is verified
- * locality-dominant in the training data (B-locality ≫ I-street), so the recipe output
- * agrees with the base instead of fighting it. The night's targeted scan caught the prior
- * vocab (Madison, Portland, Springfield IL…) at 92–100% street in the base ("Madison Ave"),
- * the "5th Avenue Theatre" #511 trap. See 2026-06-17-locality-vocab-fix.
+ * locality-dominant in the training data (B-locality ≫ I-street), so the recipe
+ * output agrees with the base instead of fighting it.
+ *
+ * The night's targeted scan caught the prior vocab (Madison, Portland, Springfield IL…)
+ * at 92–100% street in the base ("Madison Ave"), the "5th Avenue Theatre" #511 trap.
+ * See 2026-06-17-locality-vocab-fix.
  */
 const US_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Albuquerque", region: "NM", postcode: "87102", country: "US" },
@@ -354,10 +361,11 @@ const US_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 /**
  * FR localities derived from the FR (ban) parquet files specifically — where these famous cities
  * are 95–99% locality-dominant (Paris 515605/24789, Marseille 247014/1752, Lyon 106239/3114).
- * NB: the all-files scan falsely flagged them street-dominant by undersampling
- * the FR block (parts 180–209) and mixing in US street-contexts. the FR-block
- * scan is the honest distribution. Dept-diverse (28 depts), region empty
- * (French addresses carry no region token. the generator's region-optional path handles it).
+ *
+ * NB: the all-files scan falsely flagged them street-dominant by undersampling the FR block
+ * (parts 180–209) and mixing in US street-contexts. the FR-block scan is the honest distribution.
+ * Dept-diverse (28 depts), region empty (French addresses carry no region token.
+ * the generator's region-optional path handles it).
  */
 const FR_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Paris", region: "", postcode: "75003", country: "FR" },
@@ -380,10 +388,9 @@ const FR_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Rambouillet", region: "", postcode: "78120", country: "FR" },
 ]
 
-// NB: no DE_TUPLES — German cities are street-dominated too ("Berliner Straße"),
-// and the base yielded zero locality-dominant DE towns in the scan,
-// so house-number-after-street is FR-only here. DE's native-order number-after-street
-// is covered by the dedicated `german` recipe (source `synth-german`).
+// NB: no DE_TUPLES — German cities are street-dominated too ("Berliner Straße"), and the base
+// yielded zero locality-dominant DE towns in the scan, so house-number-after-street is FR-only here.
+// DE's native-order number-after-street is covered by the dedicated `german` recipe (source `synth-german`).
 const houseNumber = (random: () => number): string => String(1 + Math.floor(random() * 4999))
 const localeFor: Record<string, string> = { US: "en-US", FR: "fr-FR", DE: "de-DE" }
 
@@ -397,8 +404,9 @@ const ALL_TEMPLATES: readonly BoundaryStressTemplate[] = [
 ]
 
 /**
- * Synthesize one boundary-stress row. `base` is optional — when omitted,
- * a locale-appropriate tuple is drawn from the internal pools
+ * Synthesize one boundary-stress row.
+ *
+ * `base` is optional — when omitted, a locale-appropriate tuple is drawn from the internal pools
  * (so the generator is self-contained. a build script can pass real tuples for scale + diversity).
  * Every component value is a verbatim substring of `raw`, so `alignRow` locates + BIO-labels it.
  */
@@ -474,9 +482,9 @@ export function synthesizeBoundaryStressRow(
 
 		if (template === "house-number-before-street") {
 			// The confounding mirror of house-number-after-street: the same FR street
-			// vocab with the number before the name. A balanced before:after mix
-			// (the build/recipe sets the ratio, ~7:3 to keep US house_number 99.8% safe) teaches
-			// the model a street-adjacent number is a house_number by form rather than position —
+			// vocab with the number before the name.
+			// A balanced before:after mix (the build/recipe sets the ratio, ~7:3 to keep US house_number 99.8% safe)
+			// teaches the model a street-adjacent number is a house_number by form rather than position —
 			// the probe found v1.6.0 confidently absorbs the trailing number into street (I-street
 			// P=0.96), the order-bias.
 			const raw = `${hn} ${name}, ${b.postcode} ${b.locality}`

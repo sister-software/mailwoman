@@ -38,7 +38,8 @@ beforeEach(() => {
 			VALUES (?, NULL, ?, ?, 'DE', ?, ?, ?, ?, ?, ?, 1, 0)`
 	)
 
-	// Germany 900 ⊃ Berlin region 910 ⊃ coincident locality 911 (city-state). Brandenburg: 920 + far town 921.
+	// Germany 900 ⊃ Berlin region 910 ⊃ coincident locality 911 (city-state).
+	// Brandenburg: 920 + far town 921.
 	spr.run(900, "Germany", "country", 51.1, 10.4, 47.3, 5.9, 55.1, 15)
 	spr.run(910, "Berlin", "region", 52.52, 13.4, 52.22, 13.1, 52.82, 13.7)
 	spr.run(911, "Berlin", "locality", 52.52, 13.4, 52.42, 13.3, 52.62, 13.5)

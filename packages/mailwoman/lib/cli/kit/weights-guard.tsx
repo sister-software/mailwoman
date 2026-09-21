@@ -35,8 +35,9 @@ import React, { useEffect, useState } from "react"
 export type WeightsOutcome = "neural" | "declined" | "unavailable"
 
 /**
- * Probe whether weights resolve for a locale without loading the
- * model. Cheap (fs checks only).
+ * Probe whether weights resolve for a locale without loading the model.
+ *
+ * Cheap (fs checks only).
  */
 export async function probeWeights(
 	locale?: string,
@@ -52,7 +53,9 @@ export async function probeWeights(
 }
 
 /**
- * The npm invocation that populates the weights cache. Pure — unit-tested; `spec` defaults to `latest`.
+ * The npm invocation that populates the weights cache.
+ *
+ * Pure — unit-tested; `spec` defaults to `latest`.
  */
 export function buildWeightsInstallArgs(
 	locale: string | undefined,
@@ -167,9 +170,11 @@ type GuardPhase =
 	| { phase: "settled"; outcome: WeightsOutcome }
 
 /**
- * Interactive guard around model-requiring commands. See the module docstring for
- * the outcome interface. The prompt renders only on a raw-mode-capable stdin.
- * everything else settles immediately without painting UI.
+ * Interactive guard around model-requiring commands.
+ *
+ * See the module docstring for the outcome interface.
+ * The prompt renders only on a raw-mode-capable stdin. everything else settles
+ * immediately without painting UI.
  */
 export function WeightsGuard({
 	locale,

@@ -105,6 +105,7 @@ export function renderMetricsTable(
 
 /**
  * The abstention metrics, which only the withheld-gold stratum can carry.
+ *
  * Reported apart so an absent-candidate failure mode is never pooled away.
  */
 export function renderAbstentionTable(

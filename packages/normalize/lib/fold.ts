@@ -7,6 +7,7 @@
 
 /**
  * Lower-case, whitespace runs collapsed to one space, ends trimmed.
+ *
  * The fold every string comparison applies before it compares. it keeps punctuation
  * and diacritics, so `Saint-Étienne` and `Saint-Etienne` stay distinct.
  */
@@ -15,8 +16,9 @@ export function foldCaseWhitespace(input: string): string {
 }
 
 /**
- * Combining marks removed after NFD decomposition: `é` → `e`, `ł` unchanged
- * (it is not a base plus a mark). Case and whitespace are untouched.
+ * Combining marks removed after NFD decomposition: `é` → `e`, `ł` unchanged (it is not a base plus a mark).
+ *
+ * Case and whitespace are untouched.
  */
 export function stripCombiningMarks(input: string): string {
 	return input.normalize("NFD").replaceAll(/\p{M}/gu, "")

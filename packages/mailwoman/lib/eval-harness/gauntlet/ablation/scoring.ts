@@ -21,6 +21,7 @@ import type { ResolutionTier } from "#eval-harness/gauntlet/schema"
 
 /**
  * Fold to the comparison form used for slot classification: lowercase, alphanumerics only.
+ *
  * `BT3 9QQ` and `bt39qq` are the same postcode; `1600` and `BT3 9QQ` are not.
  */
 function foldValue(value: string | null): string {
@@ -29,6 +30,7 @@ function foldValue(value: string | null): string {
 
 /**
  * What the ablated arm did with the deleted component's slot.
+ *
  * `substituted` is the S-2 finding-3 class and the one a completion nudge has to fear:
  * the slot reads as filled, so a naive layer abstains — or confirms a house number as a postcode.
  */
@@ -41,9 +43,10 @@ export function classifySlot(deleted: string, emitted: string | null): SlotOutco
 }
 
 /**
- * Coarseness rank: higher is more precise. The tier ladder is
- * `address_point → interpolated → street → admin`, and a deletion that walks down it
- * has cost the user precision even when the coordinate barely moved.
+ * Coarseness rank: higher is more precise.
+ *
+ * The tier ladder is `address_point → interpolated → street → admin`, and a deletion that
+ * walks down it has cost the user precision even when the coordinate barely moved.
  */
 export function tierRank(tier: ResolutionTier): number {
 	switch (tier) {
@@ -67,8 +70,10 @@ export function isTierDrop(anchor: ResolutionTier, ablated: ResolutionTier): boo
 }
 
 /**
- * Score one deletion against its own anchor. Pure: the two {@linkcode GauntletResult}s
- * are the only inputs, so the scoring rule is testable without the ~9 GB database set.
+ * Score one deletion against its own anchor.
+ *
+ * Pure: the two {@linkcode GauntletResult}s are the only inputs, so the scoring
+ * rule is testable without the ~9 GB database set.
  */
 export function scoreAblation(
 	anchor: GauntletResult,
@@ -88,8 +93,8 @@ export function scoreAblation(
 	return {
 		displacementKm,
 		// A row whose own anchor never resolved is not gradable — reporting it as held
-		// would be the meaning-of-zero trap one level down. A resolved anchor with an
-		// unresolved ablated arm is broken: the answer is gone.
+		// would be the meaning-of-zero trap one level down.
+		// A resolved anchor with an unresolved ablated arm is broken: the answer is gone.
 		broken: !anchorResolved ? null : !ablatedResolved ? true : displacementKm! > toleranceKm,
 		tierDrop: isTierDrop(anchor.tier, ablated.tier),
 		unresolved: !ablatedResolved,
@@ -100,6 +105,7 @@ export function scoreAblation(
 
 /**
  * Fold per-row outcomes into the (component, locale) map.
+ *
  * A pair with no rows produces no cell — see
  * {@linkcode AblationCell.support}.
  */

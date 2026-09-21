@@ -22,10 +22,10 @@ import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 const SOURCE = "https://raw.githubusercontent.com/mledoze/countries/master/countries.json"
 
 /**
- * The committed output path, anchored at the `@mailwoman/codex` package root
- * rather than at this module, so it names the same file from the source tree,
- * `out/`, and a published tarball. The codegen is repo-only: it rewrites codex's
- * checked-in source, which is why the target is a `lib/` path.
+ * The committed output path, anchored at the `@mailwoman/codex` package root rather than at
+ * this module, so it names the same file from the source tree, `out/`, and a published tarball.
+ *
+ * The codegen is repo-only: it rewrites codex's checked-in source, which is why the target is a `lib/` path.
  */
 const DEFAULT_OUT = resolvePackagePath("@mailwoman/codex", "lib", "country", "reference-data.ts")
 
@@ -51,7 +51,9 @@ interface CountryReferenceEntry {
  */
 export interface GenerateCountryReferenceOptions {
 	/**
-	 * Output path override. Default: `codex/country/reference-data.ts` (the committed table).
+	 * Output path override.
+	 *
+	 * Default: `codex/country/reference-data.ts` (the committed table).
 	 */
 	out?: string
 }

@@ -93,8 +93,8 @@ export const weightsReconciliationCheck: RepoCheck = {
 			// this package stopped shipping, and a reader checking it would find nothing to check.
 			//
 			// A `$`-prefixed key is the annotation convention these cards use throughout —
-			// `$comment`, `$comment_661` — and names no file. Reading one as a filename
-			// would report a defect in every card that documents itself.
+			// `$comment`, `$comment_661` — and names no file.
+			// Reading one as a filename would report a defect in every card that documents itself.
 			for (const digested of Object.keys(card.files_md5 ?? {})) {
 				if (digested.startsWith("$")) continue
 

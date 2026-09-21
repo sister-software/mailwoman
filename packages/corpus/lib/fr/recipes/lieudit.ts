@@ -60,6 +60,7 @@ interface LieuDitTuple {
 
 /**
  * Enumerate `adresses-<dept>.csv[.gz]` files in `banDir`, one path per département.
+ *
  * Excludes the `merged`/`france` aggregates (they duplicate the per-département rows)
  * and, when both a `.csv` and a `.csv.gz` exist for the same dept
  * (observed on disk for 13/2A/48/69/75 — a stale re-fetch artifact), prefers the
@@ -209,9 +210,8 @@ export const frLieuditRecipe: CorpusRecipe = {
 				components.postcode = t.postcode
 			}
 
-			// The envelope form: house+street line, the lieu-dit alone on its own line,
-			// postcode+commune line. That is La Poste's line 5, and it is what `FR`'s
-			// layout prints — this recipe used to restate it.
+			// The envelope form: house+street line, the lieu-dit alone on its own line, postcode+commune line.
+			// That is La Poste's line 5, and it is what `FR`'s layout prints — this recipe used to restate it.
 			let raw = formatAddress(components, "FR")
 
 			if (!raw) {

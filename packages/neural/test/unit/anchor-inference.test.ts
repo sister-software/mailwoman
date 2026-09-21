@@ -80,7 +80,9 @@ describe("buildAnchorFeatures — alignment onto SP pieces", () => {
 })
 
 /**
- * The 2026-08-05 train-parity fix (`docs/records/evals/2026-08-05-en-gb-anchor-off.md`). Two obligations:
+ * The 2026-08-05 train-parity fix (`docs/records/evals/2026-08-05-en-gb-anchor-off.md`).
+ *
+ * Two obligations:
  *
  * 1. The default stays byte-identical to the pre-fix scan — graded against a verbatim
  *    copy of it rather than against a hash, so the oracle is readable.
@@ -90,6 +92,7 @@ describe("buildAnchorFeatures — alignment onto SP pieces", () => {
 describe("buildAnchorFeatures — span modes", () => {
 	/**
 	 * `buildAnchorFeatures`'s span collection as it stood before the fix, verbatim.
+	 *
 	 * The oracle for obligation 1.
 	 */
 	function legacyBuildAnchorFeatures(
@@ -233,7 +236,8 @@ describe("buildAnchorFeatures — span modes", () => {
 	})
 
 	it("(c) an unknown GB unit falls back to its outward district, painting the WHOLE unit span", () => {
-		// SW1A 1AA is not in V2. its outward SW1A is. NI codes behave the same way — Code-Point Open has none.
+		// SW1A 1AA is not in V2. its outward SW1A is.
+		// NI codes behave the same way — Code-Point Open has none.
 		const text = "London SW1A 1AA"
 		const spanStart = text.indexOf("SW1A 1AA")
 		const pieces = piecesFor(text)
@@ -264,6 +268,7 @@ describe("buildAnchorFeatures — span modes", () => {
  *
  * `POSTCODE_PATTERNS`' alphanumeric shapes require `[A-Z]`, so `collectMatches` finds nothing in raw
  * lowercase and the shaped keyer fired 0/120 on the gb-golden board when case normalization was off.
+ *
  * The default parse path never saw it because `normalizeInputCase` restores GB postcode
  * casing first (every GB letter run is ≤2 characters, which `restoreLowerInput` uppercases) —
  * but lowercase is the user register, and a `normalizeCase: false` parse lost
@@ -338,9 +343,10 @@ describe("buildAnchorFeatures — shaped mode case-folds before shape detection 
 })
 
 /**
- * A2 of ROAD_TO_V9 §1 — the ship obligation check. A lookup carrying keys only the
- * shaped keyer can reach, next to a card that does not declare `span_mode: "shaped"`,
- * is a channel that loads clean and feeds zeros on every row it exists for.
+ * A2 of ROAD_TO_V9 §1 — the ship obligation check.
+ *
+ * A lookup carrying keys only the shaped keyer can reach, next to a card that does not declare
+ * `span_mode: "shaped"`, is a channel that loads clean and feeds zeros on every row it exists for.
  */
 describe("shapedKeyerObligationViolation", () => {
 	const withUnits: AnchorLookup = new Map<string, AnchorEntry>([

@@ -7,9 +7,11 @@
 export interface POIBoardResultsExpect {
 	kind: "results"
 	/**
-	 * Exactly one of `categoryID` / `brandWikidata` is set per fixture — the grader checks the top
-	 * result's matching field. `brandWikidata` cases (part 2 of the brand-lexicon work) assert the
-	 * top result's `POIResult.brandWikidata` equals this QID; `categoryID` cases are unchanged from v1.
+	 * Exactly one of `categoryID` / `brandWikidata` is set per fixture —
+	 * the grader checks the top result's matching field.
+	 *
+	 * `brandWikidata` cases (part 2 of the brand-lexicon work) assert the top result's
+	 * `POIResult.brandWikidata` equals this QID; `categoryID` cases are unchanged from v1.
 	 */
 	categoryID?: string
 	brandWikidata?: string

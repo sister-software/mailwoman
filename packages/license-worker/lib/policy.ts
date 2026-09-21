@@ -22,8 +22,9 @@ import { LicenseState } from "#ledger/schema"
 export type PublicLicenseStatus = "active" | "lapsed" | "revoked"
 
 /**
- * The word the public routes answer for a state. `review` reads `active`:
- * the customer paid, and the question is the operator's.
+ * The word the public routes answer for a state.
+ *
+ * `review` reads `active`: the customer paid, and the question is the operator's.
  */
 export function publicLicenseStatus(state: LicenseState): PublicLicenseStatus {
 	return state === LicenseState.Review ? LicenseState.Active : state

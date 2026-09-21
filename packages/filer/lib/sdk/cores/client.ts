@@ -69,28 +69,31 @@ import { $private } from "#env"
  * Requests/second this client paces at by default.
  *
  * **cores publishes no rate limit**, which is a reason for restraint rather than licence.
- * SEC states 10/s and this client sits far below that on an endpoint whose operator
- * has said nothing: a full enrichment pass over the ~18.6k FRNs in the Form 499 filer
- * database takes about 78 minutes at this rate, and it is a once-per-vintage job whose
- * results are cached on disk. Raise it only with a reason better than impatience.
+ * SEC states 10/s and this client sits far below that on an endpoint whose operator has said nothing:
+ * a full enrichment pass over the ~18.6k FRNs in the Form 499 filer database takes about 78
+ * minutes at this rate, and it is a once-per-vintage job whose results are cached on disk.
+ *
+ * Raise it only with a reason better than impatience.
  */
 export const CORES_DEFAULT_REQUESTS_PER_SECOND = 4
 
 /**
- * Hard ceiling regardless of what a caller asks for. Not derived from a published policy —
- * there isn't one — so it is set where a sustained crawl still looks like a
- * well-behaved client to an operator reading their access log.
+ * Hard ceiling regardless of what a caller asks for.
+ *
+ * Not derived from a published policy — there isn't one — so it is set where a sustained
+ * crawl still looks like a well-behaved client to an operator reading their access log.
  */
 export const CORES_MAX_REQUESTS_PER_SECOND = 8
 
 const MS_PER_SECOND = 1000
 
 /**
- * How long a cached registration stays fresh. A cores record changes when an entity
- * updates its contact details — the two records sampled on 2026-08-07 carried
- * `Last Updated` timestamps from April and May 2026 — so this is a slow-moving
- * but genuinely mutable resource. Seven days keeps a multi-day build from re-fetching
- * while still noticing a change within a release cycle.
+ * How long a cached registration stays fresh.
+ *
+ * A cores record changes when an entity updates its contact details — the two records
+ * sampled on 2026-08-07 carried `Last Updated` timestamps from April and May 2026 —
+ * so this is a slow-moving but genuinely mutable resource.
+ * Seven days keeps a multi-day build from re-fetching while still noticing a change within a release cycle.
  */
 const DEFAULT_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
@@ -98,15 +101,19 @@ const HTTP_OK = 200
 const HTTP_MULTIPLE_CHOICES = 300
 
 /**
- * The only host this client will send a request to. Matching is exact (a `Set` lookup on the hostname),
- * never a suffix check — `apps.fcc.gov.attacker.example` must not match, and an
- * `.endsWith(".fcc.gov")` test would admit it. Mirrors `sec-client.ts`'s allowlist rationale.
+ * The only host this client will send a request to.
+ *
+ * Matching is exact (a `Set` lookup on the hostname), never a suffix check —
+ * `apps.fcc.gov.attacker.example` must not match, and an `.endsWith(".fcc.gov")` test would admit it.
+ * Mirrors `sec-client.ts`'s allowlist rationale.
  */
 const CORES_ALLOWED_HOSTS = new Set(["apps.fcc.gov"])
 
 /**
- * Reject a URL this client must not send. Throws a {@linkcode ResourceError} whose URN kind
- * is `request` — never transient, since re-issuing the identical URL fails identically.
+ * Reject a URL this client must not send.
+ *
+ * Throws a {@linkcode ResourceError} whose URN kind is `request` — never transient,
+ * since re-issuing the identical URL fails identically.
  */
 function assertCORESHost(url: URL): void {
 	assertAllowedHost(url, {
@@ -129,21 +136,28 @@ export { coresDetailURL, fetchCORESRegistration, type CORESDocumentClient } from
 export interface CreateCORESClientOptions {
 	/**
 	 * Descriptive User-Agent. cores does not require one — unlike SEC.
-	 * It 403s without it. Therefore, this never throws when unset.
-	 * It is sent anyway because identifying a crawler to the operator of an
-	 * unmetered public endpoint is the courtesy that keeps it unmetered.
+	 *
+	 * It 403s without it.
+	 * Therefore, this never throws when unset.
+	 *
+	 * It is sent anyway because identifying a crawler to the operator of an unmetered
+	 * public endpoint is the courtesy that keeps it unmetered.
 	 * Defaults to `$private.FCC_CORES_USER_AGENT`, then `$private.SEC_EDGAR_USER_AGENT`
 	 * (same contact address, already configured), then a package-identifying fallback.
 	 */
 	userAgent?: string
 	/**
-	 * Desired requests/second, clamped to `[1, CORES_MAX_REQUESTS_PER_SECOND]`. Defaults to
+	 * Desired requests/second, clamped to `[1, CORES_MAX_REQUESTS_PER_SECOND]`.
+	 *
+	 * Defaults to
 	 * {@linkcode CORES_DEFAULT_REQUESTS_PER_SECOND}.
 	 */
 	requestsPerSecond?: number
 	clock?: ClockLike
 	/**
-	 * On-disk cache root. Defaults to `dataRootPath("fcc", "cores", "cache")`.
+	 * On-disk cache root.
+	 *
+	 * Defaults to `dataRootPath("fcc", "cores", "cache")`.
 	 */
 	cacheDir?: string
 	cacheTTLMs?: number
@@ -152,8 +166,9 @@ export interface CreateCORESClientOptions {
 	requestTimeoutMs?: number
 	/**
 	 * Axios overrides, merged over this client's defaults.
-	 * The test injection point — every test passes an `adapter` here so no test performs a
-	 * live request. Overriding `headers` wholesale drops the User-Agent, so don't.
+	 *
+	 * The test injection point — every test passes an `adapter` here so no test performs a live request.
+	 * Overriding `headers` wholesale drops the User-Agent, so don't.
 	 */
 	axios?: APIClientConfig["axios"]
 }
@@ -165,6 +180,7 @@ export interface CORESClientConfig extends APIClientConfig {
 /**
  * Only a non-empty string body is worth persisting: every cores response is an html document,
  * so an empty body is a truncated fetch rather than a legitimately empty record.
+ *
  * There is no Axios-level parse step on a text response to lean on, which makes this
  * the only check between a truncated page and a cache entry.
  */
@@ -175,8 +191,9 @@ function isCacheableCORESBody(value: { data?: { data?: unknown } }): boolean {
 }
 
 /**
- * An FCC cores client. See the file header for why this reads the html detail page
- * rather than the documented JSON API.
+ * An FCC cores client.
+ *
+ * See the file header for why this reads the html detail page rather than the documented JSON API.
  */
 export class CORESClient extends APIClient<CORESClientConfig> {
 	/**
@@ -198,7 +215,9 @@ export class CORESClient extends APIClient<CORESClientConfig> {
 }
 
 /**
- * Create an FCC cores client. Never throws for a missing User-Agent — cores does not require one.
+ * Create an FCC cores client.
+ *
+ * Never throws for a missing User-Agent — cores does not require one.
  */
 export function createCORESClient(options: CreateCORESClientOptions = {}): CORESClient {
 	const userAgent =

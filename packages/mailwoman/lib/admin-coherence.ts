@@ -60,13 +60,17 @@ import { REGION_CLASS_PLACETYPES, regionKeys } from "@mailwoman/resolver-wof-sql
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 
 /**
- * One admin-coherence verdict. See the module docstring for the exact meaning of each — in particular,
- * `unverifiable` is an absence-of-evidence claim about the winner, never about the parse.
+ * One admin-coherence verdict.
+ *
+ * See the module docstring for the exact meaning of each — in particular, `unverifiable`
+ * is an absence-of-evidence claim about the winner, never about the parse.
  */
 type AdminCoherenceVerdict = "confirmed" | "contradicted" | "unstated" | "unverifiable"
 
 /**
- * The per-component verdicts. Both members are always present when the report exists
+ * The per-component verdicts.
+ *
+ * Both members are always present when the report exists
  * (the `intent_markers` discipline: state the empty case — `unstated` is the explicit "no
  * qualifier" claim, so an optional member would be a second way to say the same thing).
  * The report as a whole is what's optional: absent means the geocode resolved no winner to check against.
@@ -77,8 +81,10 @@ export interface AdminCoherenceReport {
 }
 
 /**
- * The parsed admin qualifiers — the raw spans off the address tree's `region` / `country` nodes
- * (the parse view rather than the resolved view). Empty / whitespace-only reads as absent.
+ * The parsed admin qualifiers — the raw spans off the address tree's `region` /
+ * `country` nodes (the parse view rather than the resolved view).
+ *
+ * Empty / whitespace-only reads as absent.
  */
 export interface ParsedAdminQualifiers {
 	region?: string | undefined
@@ -153,9 +159,10 @@ function intersects(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
 }
 
 /**
- * The winner's country-class evidence keys: the resolver-stamped alpha-2 expanded through
- * the codex tables into every spelling the check can vouch for, plus any country-placetype
- * ancestors. One assembly, two consumers — the country verdict compares against it,
+ * The winner's country-class evidence keys: the resolver-stamped alpha-2 expanded through the
+ * codex tables into every spelling the check can vouch for, plus any country-placetype ancestors.
+ *
+ * One assembly, two consumers — the country verdict compares against it,
  * and the region verdict's mislabel bridge (below) does too, so the two verdicts can
  * never disagree about what counts as country-class evidence.
  */
@@ -194,9 +201,9 @@ function regionVerdict(parsedRegion: string | undefined, winner: AdminCoherenceW
 	if (!parsed) return "unstated"
 
 	// The winner is a region resolution — the qualifier is the thing that resolved,
-	// so containment degenerates to identity. The resolver's own binding
-	// (alias-aware, unlike the fold) is the match evidence here. re-checking it under
-	// fold-equality would misread every alias hit as a contradiction.
+	// so containment degenerates to identity.
+	// The resolver's own binding (alias-aware, unlike the fold) is the match evidence here.
+	// re-checking it under fold-equality would misread every alias hit as a contradiction.
 	if (winner.tag === "region") return "confirmed"
 
 	const regionAncestors = (winner.ancestry ?? []).filter((a) => REGION_CLASS_PLACETYPES.has(a.placetype))
@@ -234,6 +241,7 @@ function countryVerdict(parsedCountry: string | undefined, winner: AdminCoherenc
 
 /**
  * Assess the parsed admin qualifiers against the winning candidate.
+ *
  * Pure — no I/O, no lookup, no side effects. call it once at result assembly, only when a
  * winner exists (no winner → no report, absence meaning "nothing resolved to check against").
  */
@@ -260,8 +268,9 @@ export interface AdminCoherenceSourceNode {
 /**
  * The assembly-point adapter: derive the parsed qualifiers
  * (the `region` / `country` node spans — the parse view) and the winner's checkable
- * ancestry (the `resolver_country` stamp + any `metadata.ancestors` chain)
- * off the resolved tree's nodes, and return a spreadable result fragment.
+ * ancestry (the `resolver_country` stamp + any `metadata.ancestors` chain) off the
+ * resolved tree's nodes, and return a spreadable result fragment.
+ *
  * `winner` is the admin-ladder pick; `fallbackWinner` is the primary resolved node the
  * street-backed tiers report instead (the resolution context the coordinate was scoped by).
  * No winner at all → an empty fragment: the `admin_coherence` field stays absent, which is a
@@ -304,6 +313,7 @@ export interface AdminCoherenceTreeNode extends AdminCoherenceSourceNode {
 /**
  * Coherence for a fork-to-entity answer (#1724): a forked answer carries a verdict like any
  * other resolved answer -- absence means "nothing resolved to check", and something did.
+ *
  * The entity offers a country and no ancestor chain, so a stated region grades
  * `unverifiable` rather than going silently unchecked.
  */

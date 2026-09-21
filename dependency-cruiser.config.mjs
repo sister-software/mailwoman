@@ -18,8 +18,10 @@
 const GENERATED_TREES = "(?:^|/)(?:out|dist|node_modules|public/sqljs|sentencepiece[.]mjs)(?:/|$)"
 
 /**
- * Modules an external runner, a bundler, or an export condition loads BY path, so no import
- * names them and `no-orphans` cannot see the edge. Each entry states who does the loading.
+ * Modules an external runner, a bundler, or an export condition loads BY path,
+ * so no import names them and `no-orphans` cannot see the edge.
+ *
+ * Each entry states who does the loading.
  */
 const LOADED_WITHOUT_AN_IMPORT = [
 	// Test-runner and build-tool configs. The preset exempts babel and webpack by name; these are the ones this

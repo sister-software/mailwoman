@@ -11,8 +11,9 @@
 import type { Generated, Insertable, Selectable } from "kysely"
 
 /**
- * The four states a license moves through, as the `license_state` column's check
- * constraint spells them. What moves a license between them is `policy.ts`.
+ * The four states a license moves through, as the `license_state` column's check constraint spells them.
+ *
+ * What moves a license between them is `policy.ts`.
  */
 export const LicenseState = {
 	Active: "active",

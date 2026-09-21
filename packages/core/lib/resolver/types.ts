@@ -43,9 +43,11 @@ export type {
 } from "#resolver/lookup-types"
 
 /**
- * One candidate place returned by a resolver. Mirrors the shape used by
- * `@mailwoman/core/resolver-wof-sqlite`'s `PlaceCandidate` — kept structurally compatible
- * so a callsite holding a `PlaceCandidate` can be passed where a `ResolvedPlace` is expected.
+ * One candidate place returned by a resolver.
+ *
+ * Mirrors the shape used by `@mailwoman/core/resolver-wof-sqlite`'s `PlaceCandidate` —
+ * kept structurally compatible so a callsite holding a `PlaceCandidate` can be passed
+ * where a `ResolvedPlace` is expected.
  */
 export interface ResolvedPlace {
 	/**
@@ -64,8 +66,9 @@ export interface ResolvedPlace {
 	 * ISO 3166-1 alpha-2 country code, if known.
 	 *
 	 * Optional because "if known" is literal: a candidate can carry no country,
-	 * and `rankByImportance` has a branch for it. The type said `string` while that branch
-	 * existed, so the test proving the branch had to assert past the signature.
+	 * and `rankByImportance` has a branch for it.
+	 * The type said `string` while that branch existed, so the test proving the
+	 * branch had to assert past the signature.
 	 */
 	country?: string
 	/**
@@ -81,7 +84,9 @@ export interface ResolvedPlace {
 	 */
 	parent_id?: number | string
 	/**
-	 * Resolver-defined ranking score. Higher = better fit for the query.
+	 * Resolver-defined ranking score.
+	 *
+	 * Higher = better fit for the query.
 	 * Scale is implementation- defined. callers should treat as ordinal.
 	 */
 	score: number
@@ -98,6 +103,7 @@ export interface ResolvedPlace {
 	prominence?: number
 	/**
 	 * Raw population from the backend's record, when carried (`PlaceCandidate.population` mirrors it).
+	 *
 	 * Absent means unknown, never zero — the meaning-of-zero rule.
 	 * The bare-toponym race's region-dominance rule reads this because
 	 * {@link ResolvedPlace.prominence} saturates at the backend's population cap and erases the margins it needs.
@@ -107,16 +113,19 @@ export interface ResolvedPlace {
 	 * Referential likelihood in [0, 1] — population-anchored, the named form of the key
 	 * namesake ranking has always used (ROAD_TO_V9 §2, ratified 2026-08-06: "the importance of
 	 * a knowledge-base article is not the probability that this is the place the user means").
+	 *
 	 * Absent when the backend has no population for the place.
 	 */
 	referential?: number
 	/**
 	 * Strict encyclopedia-evidence importance in [0, 1] — carried FOR consumers, never ranked on.
 	 *
-	 * Reserved slot: it awaits a strict-channel source. Only a backend reading a post-split
-	 * `place_importance` table can populate it, and today the FTS backend's clauses emit NULL
-	 * for everything (no shipped admin DB carries the split columns), so nothing produces it
-	 * and nothing consumes it. The blended prior the ranking reads is
+	 * Reserved slot: it awaits a strict-channel source.
+	 * Only a backend reading a post-split `place_importance` table can populate it, and today the FTS
+	 * backend's clauses emit NULL for everything (no shipped admin DB carries the split columns),
+	 * so nothing produces it and nothing consumes it.
+	 *
+	 * The blended prior the ranking reads is
 	 * {@link ResolvedPlace.importance} — keep the two apart.
 	 *
 	 * Ranking on this channel is forbidden even once populated.
@@ -135,6 +144,7 @@ export interface ResolvedPlace {
 	 * The blend is deliberate — it is the only scale on which every bearer of a name is scored comparably
 	 * (the strict channel reaches eleven countries and is blind on CA/AU/RU, exactly the homonym
 	 * contests the prior exists to settle. see `candidate-schema.ts` → `CandidateTable.importance`).
+	 *
 	 * Consumed by `rankByImportance` (`resolver/toponym-prior.ts`), a soft tier-safe re-rank, never a filter.
 	 *
 	 * Absent means unmeasured — the score source had no row, the join refused it,
@@ -143,55 +153,65 @@ export interface ResolvedPlace {
 	 */
 	importance?: number
 	/**
-	 * Set by the backend when this candidate is an exact name/alias match for the
-	 * query (vs a partial token match). The postcode-anchor re-rank (#369) uses it as
-	 * the primary key so a country posterior can pin the country without crossing the
-	 * exact-match tier: "ME" under a confident US posterior stays Maine (US exact)
-	 * rather than promoting the more-populous Missouri (US partial), and still beats Messina
-	 * (IT exact) on the posterior within the exact tier. Absent → treated as non-exact
-	 * (backends that don't tier omit it. the re-rank degrades to a plain score+posterior).
+	 * Set by the backend when this candidate is an exact name/alias match for
+	 * the query (vs a partial token match).
+	 *
+	 * The postcode-anchor re-rank (#369) uses it as the primary key so a country posterior can
+	 * pin the country without crossing the exact-match tier: "ME" under a confident US posterior
+	 * stays Maine (US exact) rather than promoting the more-populous Missouri (US partial),
+	 * and still beats Messina (IT exact) on the posterior within the exact tier.
+	 * Absent → treated as non-exact (backends that don't tier omit it. the re-rank
+	 * degrades to a plain score+posterior).
 	 */
 	exactMatch?: boolean
 	/**
 	 * Set when the resolver detected that the address's postcode and its parsed locality name
 	 * point to geographically different places (a transposed / wrong-for-the-city postcode).
+	 *
 	 * Surfaced onto the resolved node's metadata as `postcode_city_mismatch` so callers
 	 * can lower confidence or flag the conflict instead of silently mislocating.
 	 */
 	mismatch?: boolean
 	/**
-	 * Fallback-observability marker (#718). Set to `"fallback"` by the resolver when this span
-	 * resolved to a placetype-equivalence-group member (a macro-type — `macroregion`/`macrocounty`)
+	 * Fallback-observability marker (#718).
+	 *
+	 * Set to `"fallback"` by the resolver when this span resolved to a
+	 * placetype-equivalence-group member (a macro-type — `macroregion`/`macrocounty`)
 	 * because no candidate of the exact requested placetype (`region`/`county`) existed.
-	 * It does not change the resolved identity or coordinate — it only annotates that a
-	 * broader admin tier stood in for the true one, so a downstream consumer / QA pass can see
-	 * a macroregion was used in lieu of a region. Surfaced onto the resolved node's metadata
-	 * as `resolution_quality`. Absent when the exact placetype matched (the normal case).
+	 * It does not change the resolved identity or coordinate — it only annotates that
+	 * a broader admin tier stood in for the true one, so a downstream consumer / QA
+	 * pass can see a macroregion was used in lieu of a region.
+	 *
+	 * Surfaced onto the resolved node's metadata as `resolution_quality`.
+	 * Absent when the exact placetype matched (the normal case).
 	 */
 	resolutionQuality?: "fallback"
 	/**
 	 * The admin-containment verdict for this candidate (#1717 stage 2) — TRI-state,
 	 * and the absence is required (meaning-of-zero): `true` = the backend's ancestors
 	 * sidecar vouches that this candidate sits under the query's parsed region qualifier;
-	 * `false` = the backend evaluated containment and could not vouch for it; `undefined` =
-	 * the question was never asked — the setting is off, the query carried no qualifier, or
-	 * the backend/artifact cannot answer (no sidecar). Set only by backends implementing
-	 * `FindPlaceQuery.regionQualifier`; consumed by the resolver walk's `adminContainmentRerank`
-	 * partition, which must never read `undefined` as "not contained".
+	 * `false` = the backend evaluated containment and could not vouch for it; `undefined`
+	 * = the question was never asked — the setting is off, the query carried no qualifier,
+	 * or the backend/artifact cannot answer (no sidecar).
+	 *
+	 * Set only by backends implementing `FindPlaceQuery.regionQualifier`; consumed by the resolver
+	 * walk's `adminContainmentRerank` partition, which must never read `undefined` as "not contained".
 	 */
 	containedByQualifier?: boolean
 	/**
 	 * #1731: `true` when a `parentID` region scope was applied, missed across the whole probe cascade, and the backend's
-	 * unscoped fallback produced this row — the re-admission path where a
-	 * wrong-instance namesake enters (the Astoria class: no locality-group row exists
-	 * under the parent, so the fallback answers population-first from anywhere).
+	 * unscoped fallback produced this row — the re-admission path where a wrong-instance
+	 * namesake enters (the Astoria class: no locality-group row exists under the parent,
+	 * so the fallback answers population-first from anywhere).
+	 *
 	 * Absent when the question never arose (no parent scope, or the scoped probe answered).
 	 * Backend-optional. the resolver-interior trace (#1721) surfaces it as a check.
 	 */
 	regionScopeMiss?: boolean
 	/**
-	 * The #1882 variant-alias exemption's firing mark (#1893): this candidate's row
-	 * would have taken the cross-country alias penalty and the exemption prevented it.
+	 * The #1882 variant-alias exemption's firing mark (#1893): this candidate's row would
+	 * have taken the cross-country alias penalty and the exemption prevented it.
+	 *
 	 * Present only when the exemption changed the row's treatment. absent everywhere else —
 	 * including on backends that never run the primary-preference ranker (the wasm FTS lookup),
 	 * where absence means the mechanism was not evaluated, never that it declined to fire.
@@ -200,8 +220,10 @@ export interface ResolvedPlace {
 }
 
 /**
- * Pull-based interface for a single resolver query. The resolver knows nothing about
- * `AddressTree` — it just answers "what place is named X, optionally constrained by Y?"
+ * Pull-based interface for a single resolver query.
+ *
+ * The resolver knows nothing about `AddressTree` — it just answers "what place
+ * is named X, optionally constrained by Y?"
  *
  * Structurally compatible with `PlaceLookup` from `@mailwoman/core/resolver-wof-sqlite`
  * so the latter satisfies this interface without an adapter shim.
@@ -213,24 +235,29 @@ export interface ResolverBackend {
 		placetype?: string | string[]
 		country?: string
 		/**
-		 * ISO-3166 alpha-2 scoping the typo-fuzzy tier only (#1585): exact
-		 * and qualifier-strip probes stay worldwide, the corrected-key probes honor it,
-		 * and a scoped-empty fuzzy abstains instead of falling through to a world-fuzzy candidate.
-		 * Backends without a fuzzy tier ignore it. Ignored when `country` is set (already narrower).
+		 * ISO-3166 alpha-2 scoping the typo-fuzzy tier only (#1585): exact and qualifier-strip
+		 * probes stay worldwide, the corrected-key probes honor it, and a scoped-empty
+		 * fuzzy abstains instead of falling through to a world-fuzzy candidate.
+		 *
+		 * Backends without a fuzzy tier ignore it.
+		 * Ignored when `country` is set (already narrower).
 		 */
 		fuzzyCountry?: string
 		parentID?: number | string
 		/**
 		 * Sibling postcode string, when the address carries one.
+		 *
 		 * A coordinate-first backend uses it to inject postcode-proximal locality candidates
-		 * (the postcode→locality table) and soft-score them against the parsed name — recovering
-		 * localities the name-match alone misses. Backends without postcode support ignore it.
+		 * (the postcode→locality table) and soft-score them against the parsed name —
+		 * recovering localities the name-match alone misses.
+		 * Backends without postcode support ignore it.
 		 */
 		postcode?: string
 		/**
 		 * Postcode-containment coherence (#31, Mechanism 2) — when set, a coordinate-first backend
 		 * may re-rank locality candidates by distance to the sibling postcode's own centroid
 		 * (bounded by a 25 km containment check) instead of answering blind population-first.
+		 *
 		 * Opt-in, strictly beneath the #741 exact `(name_key, postcode)` probe.
 		 * backends without postcode support ignore it.
 		 */
@@ -242,6 +269,7 @@ export interface ResolverBackend {
 		/**
 		 * Restrict name matching to primary-keyed rows — set by probes whose query surface is
 		 * a RE-reading (a token taken out of a longer classified span) rather than a naming.
+		 *
 		 * The #1626 rationale, generalized: `Savile Row`'s token `Row` never named Rhu's
 		 * historical alias, so the alias tier must not answer it. a whole-input bare toponym did
 		 * name whatever it matches (Москва's exonym rows included) and keeps the alias tier.
@@ -249,38 +277,46 @@ export interface ResolverBackend {
 		 */
 		primaryOnly?: boolean
 		/**
-		 * Alias-row name roles the probe refuses to answer through (#1730) — set by the bare-toponym
-		 * side races with `abbr`/`gloss`. A lone bare token matching only an abbreviation row
-		 * ("Tó" folded onto Toledo's "TO") or a translation-gloss row is a weak re-reading
-		 * rather than a naming. role-NULL alias rows (the exonym tier, the country display names)
-		 * stay fully open, which is what `primaryOnly` could never express.
+		 * Alias-row name roles the probe refuses to answer through (#1730) —
+		 * set by the bare-toponym side races with `abbr`/`gloss`.
+		 *
+		 * A lone bare token matching only an abbreviation row ("Tó" folded onto Toledo's "TO")
+		 * or a translation-gloss row is a weak re-reading rather than a naming. role-NULL
+		 * alias rows (the exonym tier, the country display names) stay fully open,
+		 * which is what `primaryOnly` could never express.
 		 * Backends without a role column ignore it — an older artifact degrades to today's behavior.
 		 */
 		excludeNameRoles?: readonly string[]
 		/**
-		 * The tree's parsed region qualifier, verbatim (#1717 stage 2) — set by the
-		 * resolver on locality lookups when `ResolveOpts.adminContainmentRerank` is on.
+		 * The tree's parsed region qualifier, verbatim (#1717 stage 2) — set by the resolver
+		 * on locality lookups when `ResolveOpts.adminContainmentRerank` is on.
+		 *
 		 * A capable backend resolves the qualifier to its own region-class rows and (a) stamps
-		 * every returned candidate's `containedByQualifier`, (b) ranks contained candidates ahead
-		 * of uncontained ones, and (c) may ADD contained same-name candidates its other filters
-		 * (a locale-inferred country scope) would have hidden — additive only, never a filter, so
-		 * a qualifier that matches nothing changes nothing. Backends without a containment source
-		 * ignore it (candidates then carry no stamp, which the walk reports as `unavailable`).
+		 * every returned candidate's `containedByQualifier`, (b) ranks contained candidates
+		 * ahead of uncontained ones, and (c) may ADD contained same-name candidates its
+		 * other filters (a locale-inferred country scope) would have hidden — additive only,
+		 * never a filter, so a qualifier that matches nothing changes nothing.
+		 * Backends without a containment source ignore it
+		 * (candidates then carry no stamp, which the walk reports as `unavailable`).
 		 */
 		regionQualifier?: string
 		limit?: number
 	}): Promise<ResolvedPlace[]>
 	/**
-	 * The dual-role locality (or localities) coincident with an admin place id, from the
-	 * precomputed coincident-roles relation (#403). Drives {@link ResolveOpts.hierarchyCompletion}:
-	 * when the parse drops the locality of a city-state / capital-seat region, the resolver completes
-	 * it from here instead of re-querying. optional — backends without the relation omit it,
-	 * and completion no-ops. Synchronous: it's an in-memory map lookup once the relation is loaded.
+	 * The dual-role locality (or localities) coincident with an admin place id,
+	 * from the precomputed coincident-roles relation (#403).
+	 *
+	 * Drives {@link ResolveOpts.hierarchyCompletion}: when the parse drops the locality of
+	 * a city-state / capital-seat region, the resolver completes it from here instead of
+	 * re-querying. optional — backends without the relation omit it, and completion no-ops.
+	 * Synchronous: it's an in-memory map lookup once the relation is loaded.
 	 */
 	coincidentLocalitiesFor?(adminID: number | string): CoincidentLocality[]
 	/**
 	 * The ancestor lineage of a resolved place — its containment chain
-	 * (county → region → country), nearest-first. Backs
+	 * (county → region → country), nearest-first.
+	 *
+	 * Backs
 	 * {@link ResolveOpts.includeAncestors} (#404): the Pelias/Nominatim "always-attach-the-hierarchy" enrichment. optional
 	 * — backends without it omit it, and the attachment is skipped.
 	 * Synchronous: a memoized read of the gazetteer's `ancestors` table.
@@ -296,10 +332,10 @@ export interface ResolverBackend {
 /**
  * An optional {@link ResolverBackend} method the loaded backend does not implement, and what that costs.
  *
- * Optional methods let a backend be valid while omitting a capability — but the options
- * they serve can still default to on, in which case the feature reports success
- * and does nothing. This type carries the absence as data so a caller can read it
- * instead of inferring it from a result that looks complete.
+ * Optional methods let a backend be valid while omitting a capability — but the options they
+ * serve can still default to on, in which case the feature reports success and does nothing.
+ * This type carries the absence as data so a caller can read it instead of
+ * inferring it from a result that looks complete.
  */
 export interface BackendCapabilityGap {
 	/**
@@ -359,8 +395,8 @@ export interface CoincidentLocality extends ResolvedPlace {
  *
  * - `score` — the pick carries `resolver_score: 0`, which the candidate backend writes
  *   when the gazetteer records no population for it.
- * - `containment` — `admin_containment` reads `no_contained_candidate`:
- *   the query named a qualifier, the probe ran, and no candidate sat inside it.
+ * - `containment` — `admin_containment` reads `no_contained_candidate`: the query
+ *   named a qualifier, the probe ran, and no candidate sat inside it.
  *   `unavailable` is not this, because the backend could not answer.
  * - `either` — either reading.
  *
@@ -369,44 +405,57 @@ export interface CoincidentLocality extends ResolvedPlace {
  * 524 of 586, `containment` leaves the unpinned failure list untouched, and `either`
  * leaves one identical to `score`'s, so its second condition fires on no row.
  *
- * A reading cannot reach past a country scope. The brake lifts on `Port Louis` under `score`
- * and the answer is unchanged, because the recovery inherits the resolve's scope —
- * it returns Port Louis (MU) unscoped and `Louis` (US) under the locale-inferred US one.
+ * A reading cannot reach past a country scope.
+ * The brake lifts on `Port Louis` under `score` and the answer is unchanged,
+ * because the recovery inherits the resolve's scope — it returns Port Louis (MU) unscoped
+ * and `Louis` (US) under the locale-inferred US one.
  */
 export type WeakResolutionReading = "score" | "containment" | "either"
 
 /**
- * Options for `resolveTree`. All optional with sensible defaults.
+ * Options for `resolveTree`.
+ *
+ * All optional with sensible defaults.
  */
 
 export interface ResolveOpts {
 	/**
 	 * Hard cap on how many backend lookups one tree may issue.
-	 * Default 10. Prevents a tree with dozens of candidate nodes from triggering dozens of queries.
+	 *
+	 * Default 10.
+	 * Prevents a tree with dozens of candidate nodes from triggering dozens of queries.
 	 */
 	maxLookups?: number
 	/**
 	 * Minimum candidate score before resolver attribution wins over the classifier's.
-	 * Default 0. A higher threshold makes the resolver more conservative — it leaves more nodes
-	 * with classifier provenance. Score scale is implementation-defined. tune per backend.
+	 *
+	 * Default 0.
+	 * A higher threshold makes the resolver more conservative — it leaves more
+	 * nodes with classifier provenance.
+	 *
+	 * Score scale is implementation-defined. tune per backend.
 	 */
 	minWinningScore?: number
 	/**
 	 * Maximum candidates to request from the backend per lookup.
+	 *
 	 * Default 5 — we only use the top candidate after post-scoring, but the backend
 	 * may benefit from over-fetching for ranking.
 	 */
 	candidatesPerLookup?: number
 	/**
-	 * Default ISO-3166 alpha-2 country to constrain top-level lookups to, when no
-	 * resolved parent has supplied a country yet. Without it, a bare component
-	 * over a multi-country gazetteer (e.g. "IL") can fuzzy-match a foreign place.
+	 * Default ISO-3166 alpha-2 country to constrain top-level lookups to,
+	 * when no resolved parent has supplied a country yet.
+	 *
+	 * Without it, a bare component over a multi-country gazetteer (e.g. "IL") can fuzzy-match a foreign place.
 	 * Callers should set this from the detected locale (the pipeline's locale-hint).
+	 *
 	 * A resolved parent's country still overrides it deeper in the tree.
 	 */
 	defaultCountry?: string
 	/**
 	 * True when {@link defaultCountry} was inferred from the locale rather than user-declared.
+	 *
 	 * A `country`-placetype lookup under an inferred scope is a self-contradiction —
 	 * the query names a country outright, and the filter can only admit the scope country
 	 * itself (bare `Germany` under the default en-US locale filtered out the DE row
@@ -422,56 +471,69 @@ export interface ResolveOpts {
 	 * foreign match still resolves (`Paris` under en-US), but a typo correction stays inside
 	 * the hinted country, and a scoped-empty correction abstains rather than falling through
 	 * to a world-fuzzy candidate (`Stanmore Bay` under en-NZ must not answer Banmore IN).
+	 *
 	 * Never a country filter on exact matches — the fuzzy tier is the only consumer.
 	 */
 	fuzzyCountryScope?: string
 	/**
-	 * Ordered proximity-bias points (viewport center first, then user location, …), each optionally
-	 * weighted (default 1.0). Soft ranking signal only — candidates near a bias point win prominence
-	 * ties (the ambiguous-postcode case: "48026" follows the map view to Michigan or Italy);
+	 * Ordered proximity-bias points (viewport center first, then user location, …),
+	 * each optionally weighted (default 1.0).
+	 *
+	 * Soft ranking signal only — candidates near a bias point win prominence ties
+	 * (the ambiguous-postcode case: "48026" follows the map view to Michigan or Italy);
 	 * recall and filters are untouched, and omitting it keeps ranking byte-identical.
 	 * Callers: the CLI's `--bias lat,lon[:weight]`, the demo's viewport/user hints, `GeocodeDeps.bias`.
 	 */
 	bias?: Array<{ lat: number; lon: number; weight?: number }>
 	/**
-	 * When a resolved parent constrains a child lookup (`parentID` is passed to the
-	 * backend as a hard descendant filter) and that filtered lookup returns nothing, retry
-	 * the lookup once without the parent constraint. Guards against an incomplete
-	 * gazetteer hierarchy (a real locality whose ancestor chain is missing its region)
-	 * or a mis-resolved parent silently turning a resolvable node unresolved.
+	 * When a resolved parent constrains a child lookup
+	 * (`parentID` is passed to the backend as a hard descendant filter) and that filtered
+	 * lookup returns nothing, retry the lookup once without the parent constraint.
+	 *
+	 * Guards against an incomplete gazetteer hierarchy (a real locality whose ancestor chain is
+	 * missing its region) or a mis-resolved parent silently turning a resolvable node unresolved.
 	 * The country constraint is retained on the retry, so resolution still can't wander cross-border.
-	 * Default true. Set false to measure the strict-parent baseline.
+	 *
+	 * Default true.
+	 * Set false to measure the strict-parent baseline.
 	 */
 	parentFallback?: boolean
 	/**
 	 * Override the default ComponentTag → resolver-placetype mapping.
-	 * When set, this map fully replaces `DEFAULT_PLACETYPE_MAP` — start from the default
-	 * by spreading it (`{ ...DEFAULT_PLACETYPE_MAP, ... }`) if you want to extend
-	 * rather than replace. The fully- replacing semantics let callers narrow the resolver scope
+	 *
+	 * When set, this map fully replaces `DEFAULT_PLACETYPE_MAP` — start from the default by
+	 * spreading it (`{ ...DEFAULT_PLACETYPE_MAP, ... }`) if you want to extend rather than replace.
+	 * The fully- replacing semantics let callers narrow the resolver scope
 	 * (e.g. drop `locality` if the backend doesn't ship locality data for the current locale)
 	 * without awkward `undefined`-as-delete tricks.
 	 */
 	placetypeMap?: PlacetypeMap
 	/**
-	 * Optional locale hint. Currently unused by the v1 resolver but reserved
-	 * so the interface doesn't break when locale-aware resolvers land in 4.4+.
+	 * Optional locale hint.
+	 *
+	 * Currently unused by the v1 resolver but reserved so the interface doesn't break
+	 * when locale-aware resolvers land in 4.4+.
 	 */
 	locale?: string
 	/**
 	 * Optional postcode-anchor country posterior (#369) — a `{ countryCode: probability }` map
 	 * derived from the address's postcode (e.g. `@mailwoman/neural`'s `extractPostcodeAnchors`).
+	 *
 	 * When provided, locality candidates are re-ranked by
 	 * `score + anchorWeight * posterior[candidate.country]` before the top is picked, so a
 	 * postcode that pins the country can pull the right-country place over a higher-BM25 foreign
 	 * namesake (the "Berlin DE vs Berlin US" class the #59 anchor→resolver harness measured).
 	 * Off by default — omit it and resolution is byte-identical.
+	 *
 	 * Country signal only, so it touches locality lookups only. admin parents
 	 * already carry country via `parentID`.
 	 */
 	anchorPosterior?: Record<string, number>
 	/**
 	 * Weight on the anchor's country posterior in the locality re-rank (#369).
-	 * Default 2.0 (the value the harness swept). Only consulted when `anchorPosterior` is set.
+	 *
+	 * Default 2.0 (the value the harness swept).
+	 * Only consulted when `anchorPosterior` is set.
 	 */
 	anchorWeight?: number
 	/**
@@ -483,22 +545,27 @@ export interface ResolveOpts {
 	 * The #912 guard in the CLI is why — it drops the locale-inferred country entirely
 	 * for a bare-locality tree, because as a hard filter that country is a disaster
 	 * (`--locale en-US "Zürich"` hard-scoped to US returns Zurich, Kansas, population 81).
+	 *
 	 * Dropping it is the right call for a filter and the wrong call for a prior,
 	 * and this field is the third option: `rankByCountryPrior` (`resolver/toponym-prior.ts`)
 	 * adds {@link localeCountryPriorWeight} to an in-country candidate's prominence,
 	 * within the exact tier, never as a filter.
 	 *
 	 * **Undefined by default, and the CLI leaves it undefined** — this is an OPT-IN change
-	 * (`--locale-country-prior`), not a shipped default, and the reason is measured
-	 * rather than cautious. In log10-population units the weight needed to flip the
-	 * four bare GB panel rows is ≥ 0.99 (Whitby CA 5.11 over GB 4.12), and the weight
-	 * that leaves the en-US board intact is < 0.07 (Cambridge CA 5.14 over US 5.07).
+	 * (`--locale-country-prior`), not a shipped default, and the reason is measured rather than cautious.
+	 * In log10-population units the weight needed to flip the four bare GB panel rows
+	 * is ≥ 0.99 (Whitby CA 5.11 over GB 4.12), and the weight that leaves the en-US
+	 * board intact is < 0.07 (Cambridge CA 5.14 over US 5.07).
+	 *
 	 * The two intervals are disjoint, and they interleave: `Athens` (GR over US, gap 0.38)
-	 * and `Cambridge` (0.07) sit below `Warwick` (0.41) and `Epping` (0.41), so no threshold, margin
-	 * or rank rule separates the class either. Population plus a locale cannot answer this question.
-	 * The key that can is `importance` — the blended global toponym prior, which ranks all four
-	 * the right way round and whose consumer (`rankByImportance`) is already wired here. the #28
-	 * candidate build produces it. See `scratchpad/resolver-plumbing-receipt-2026-08-10.md`.
+	 * and `Cambridge` (0.07) sit below `Warwick` (0.41) and `Epping` (0.41),
+	 * so no threshold, margin or rank rule separates the class either.
+	 * Population plus a locale cannot answer this question.
+	 *
+	 * The key that can is `importance` — the blended global toponym prior,
+	 * which ranks all four the right way round and whose consumer (`rankByImportance`)
+	 * is already wired here. the #28 candidate build produces it.
+	 * See `scratchpad/resolver-plumbing-receipt-2026-08-10.md`.
 	 *
 	 * Ignored whenever a {@link defaultCountry} or an {@link anchorPosterior} is in force:
 	 * a hard scope makes the prior a no-op by construction, and a posterior derived from the
@@ -506,18 +573,23 @@ export interface ResolveOpts {
 	 */
 	localeCountryPrior?: string
 	/**
-	 * Weight of {@link localeCountryPrior}, in log10(population + 1) — the candidate backend's
-	 * own `prominence` scale. Default `DEFAULT_COUNTRY_PRIOR_WEIGHT` (2): "the in-country place
-	 * may be up to 100x smaller and still win". Only consulted when `localeCountryPrior` is set.
+	 * Weight of {@link localeCountryPrior}, in log10(population + 1) —
+	 * the candidate backend's own `prominence` scale.
+	 *
+	 * Default `DEFAULT_COUNTRY_PRIOR_WEIGHT` (2): "the in-country place may be
+	 * up to 100x smaller and still win".
+	 * Only consulted when `localeCountryPrior` is set.
 	 */
 	localeCountryPriorWeight?: number
 	/**
 	 * #1880 — capital status of a candidate (2 national capital, 1 admin-1 seat, 0 neither), answered by the caller's
 	 * reference against the candidate's own name + country + coordinates.
+	 *
 	 * Consumed by the resolver's bounded capital promotion
 	 * (`resolver/toponym-prior.ts` — the bare-toponym class only, after the fame key).
-	 * Structural rather than a named import because this package must not depend on
-	 * the reference's home. Undefined → no promotion, byte-stable.
+	 * Structural rather than a named import because this package must not depend on the reference's home.
+	 *
+	 * Undefined → no promotion, byte-stable.
 	 */
 	capitalLevel?: (place: { name: string; country?: string; lat: number; lon: number }) => number
 	/**
@@ -534,6 +606,7 @@ export interface ResolveOpts {
 	hardCountry?: string
 	/**
 	 * Recover the dropped locality in a dual-role-place address (#405, epic #402).
+	 *
 	 * Many places occupy multiple admin tiers under one name — city-states
 	 * (Berlin/Hamburg/Bremen = city == state), capital-seat provinces (Milano, Madrid),
 	 * UK unitary authorities — and in the international-order layout `…, Berlin, Berlin <PC>`
@@ -542,16 +615,20 @@ export interface ResolveOpts {
 	 *
 	 * When this is on and a region resolved and the tree has no locality node,
 	 * the resolver consults the backend's precomputed coincident-roles relation
-	 * ({@link ResolverBackend.coincidentLocalitiesFor}, #403) for a same-name coincident locality
-	 * and synthesizes a node from it. The relation is the gazetteer's own structure
-	 * (same name + descendant + centroid-coincidence, derived at build time), so the runtime is an O(1)
-	 * membership lookup — no magic distance constant. When an admin maps to several same-name
-	 * localities, the most populous wins (the principal city), nearest-centroid breaks
-	 * a population tie, and a genuine tie abstains (no completion) rather than guess.
-	 * The synthesized node carries `metadata.resolver_synthesized = true` (+ `relationship_type`) —
-	 * it has no span in the raw input. On by default (#402): it only fires for a dual-role
-	 * region whose locality the parser dropped, and no-ops entirely when the backend has no
-	 * relation (the browser wasm resolver, or a gazetteer without the `coincident_roles` table).
+	 * ({@link ResolverBackend.coincidentLocalitiesFor}, #403) for a same-name
+	 * coincident locality and synthesizes a node from it.
+	 * The relation is the gazetteer's own structure (same name + descendant + centroid-coincidence,
+	 * derived at build time), so the runtime is an O(1) membership lookup — no magic distance constant.
+	 *
+	 * When an admin maps to several same-name localities, the most populous wins
+	 * (the principal city), nearest-centroid breaks a population tie, and a genuine
+	 * tie abstains (no completion) rather than guess.
+	 * The synthesized node carries `metadata.resolver_synthesized = true`
+	 * (+ `relationship_type`) — it has no span in the raw input.
+	 *
+	 * On by default (#402): it only fires for a dual-role region whose locality
+	 * the parser dropped, and no-ops entirely when the backend has no relation
+	 * (the browser wasm resolver, or a gazetteer without the `coincident_roles` table).
 	 * Pass `false` to opt out.
 	 */
 	/**
@@ -562,29 +639,36 @@ export interface ResolveOpts {
 	addressPoints?: AddressPointLookup
 	/**
 	 * Pass the resolved locality's bbox to the address-point lookup as a final scope (#247).
-	 * For extracts whose points carry no postcode/locality of their own (OSM addr nodes often don't),
-	 * the postcode/locality probes miss and the lookup falls through to a `(street, number)`
-	 * probe within the box. Off by default — US situs never sets it, so the bbox arg is
-	 * simply never supplied and its postcode/locality probes are byte-identical.
+	 *
+	 * For extracts whose points carry no postcode/locality of their own
+	 * (OSM addr nodes often don't), the postcode/locality probes miss and the lookup
+	 * falls through to a `(street, number)` probe within the box.
+	 * Off by default — US situs never sets it, so the bbox arg is simply never supplied
+	 * and its postcode/locality probes are byte-identical.
 	 */
 	addressPointBboxFallback?: boolean
 	/**
-	 * House-number interpolation tier (#483): consulted only when the exact address-point
-	 * tier ({@link addressPoints}) did not stamp the street node — the "after the exact-point
-	 * fall-through" semantics. On hit, stamps the estimate onto the street node's metadata under
-	 * a distinct key (`interpolated_point`, `resolution_tier: "interpolated"`, `uncertainty_m`) —
-	 * never `address_point`, so a consumer reading the exact key never
-	 * gets an estimate mislabeled as exact. Opt-in. absent = byte-stable.
+	 * House-number interpolation tier (#483): consulted only when the exact
+	 * address-point tier ({@link addressPoints}) did not stamp the street node — the
+	 * "after the exact-point fall-through" semantics.
+	 *
+	 * On hit, stamps the estimate onto the street node's metadata under a distinct key
+	 * (`interpolated_point`, `resolution_tier: "interpolated"`, `uncertainty_m`) — never `address_point`,
+	 * so a consumer reading the exact key never gets an estimate mislabeled as exact.
+	 * Opt-in. absent = byte-stable.
+	 *
 	 * Independent of {@link addressPoints} (either, both, or neither may be passed).
 	 */
 	interpolation?: InterpolationLookup
 	/**
 	 * Conformal calibration multiplier override for the interpolation tier's `uncertainty_m` (#374).
+	 *
 	 * The raw radius is half the matched tiger segment length — an honest-but-tight prior:
-	 * a split-conformal calibration on 1562 Travis-County interp hits (2026-06-14) found it
-	 * covers only ~72% of true errors, and that multiplying by **Q̂ ≈ 1.70** yields a calibrated
-	 * 90% bound (91.5% empirical). When a factor applies, `applyInterpolation` reports
-	 * `uncertainty_m = round(raw × factor)` and preserves the raw value under `uncertainty_raw_m`.
+	 * a split-conformal calibration on 1562 Travis-County interp hits (2026-06-14)
+	 * found it covers only ~72% of true errors, and that multiplying by **Q̂ ≈ 1.70**
+	 * yields a calibrated 90% bound (91.5% empirical).
+	 * When a factor applies, `applyInterpolation` reports `uncertainty_m = round(raw × factor)`
+	 * and preserves the raw value under `uncertainty_raw_m`.
 	 *
 	 * The factor is a property of the calibration SET the artifact was built against,
 	 * so it ships IN the artifact:
@@ -592,6 +676,7 @@ export interface ResolveOpts {
 	 * time) is the default whenever this option is absent.
 	 * Absent + artifact-silent = raw heuristic (byte-stable — extracts predating the metadata
 	 * table. production callers fall back to their in-code per-region table for those).
+	 *
 	 * Report: docs/articles/evals/calibration/2026-06-14-interp-radius-calibration.md.
 	 *
 	 * @internal Instrument knob (D3) — measurement decomposition + legacy-extract fallback only. the artifact header is
@@ -601,10 +686,12 @@ export interface ResolveOpts {
 	/**
 	 * Street-centroid tier (#1042): consulted for a street-only query
 	 * (a street/thoroughfare with no house number) that neither the address-point
-	 * nor the interpolation tier can serve. On a hit, injects/stamps a resolved `street`
-	 * node carrying the street's centroid under a distinct metadata key (`street_centroid`,
-	 * `resolution_tier: "street"`, `uncertainty_m`) — never `address_point`/`interpolated_point`,
-	 * so a consumer reading the exact keys never gets a coarse centroid mislabeled as a rooftop.
+	 * nor the interpolation tier can serve.
+	 *
+	 * On a hit, injects/stamps a resolved `street` node carrying the street's centroid under a
+	 * distinct metadata key (`street_centroid`, `resolution_tier: "street"`, `uncertainty_m`) —
+	 * never `address_point`/`interpolated_point`, so a consumer reading the exact keys
+	 * never gets a coarse centroid mislabeled as a rooftop.
 	 * The thoroughfare + commune are recovered raw-text-first (the FR no-street
 	 * class mis-parses the thoroughfare as a locality — #901 composition-insensitive), so the tier rides the model where
 	 * it works and recovers where it fails.
@@ -614,26 +701,34 @@ export interface ResolveOpts {
 	 * ("Avenue des Champs-Élysées, Paris") is a bare-locality tree the placer is skipped on,
 	 * and the placer mis-routes some French streets ("Rue Sainte-Catherine" → IT).
 	 * So the tier probes a union of candidate countries — {@link streetCountryHints}
-	 * (pre-resolution: defaultCountry + the unrestricted placer) plus the countries the
-	 * tree actually resolved to — and the exact (street, base-commune) match is itself the
-	 * country filter. Opt-in. absent = byte-stable. Never fires when a house number is
-	 * present (rooftop tiers untouched) or when a street-level coordinate already resolved.
+	 * (pre-resolution: defaultCountry + the unrestricted placer) plus the countries the tree actually
+	 * resolved to — and the exact (street, base-commune) match is itself the country filter.
+	 *
+	 * Opt-in. absent = byte-stable.
+	 * Never fires when a house number is present (rooftop tiers untouched) or
+	 * when a street-level coordinate already resolved.
 	 */
 	streetCentroids?: (country: string) => StreetCentroidLookup | undefined
 	/**
-	 * Ordered pre-resolution country hints for the {@link streetCentroids} tier — the caller's defaultCountry
-	 * and the (unrestricted) coarse-placer country. The tier unions these with the
-	 * resolved-tree countries. Absent = only the resolved countries are tried.
+	 * Ordered pre-resolution country hints for the {@link streetCentroids} tier —
+	 * the caller's defaultCountry and the (unrestricted) coarse-placer country.
+	 *
+	 * The tier unions these with the resolved-tree countries.
+	 * Absent = only the resolved countries are tried.
 	 */
 	streetCountryHints?: readonly string[]
 	/**
-	 * Span-rescore tier (#370). When the tree resolved nothing, recover a dropped/fragmented
-	 * locality from the raw text: enumerate raw-token spans, exact-match the same-country
-	 * gazetteer (longest-wins + postcode-consistency check), and inject the recovered
-	 * locality as a resolved node. Targets the EU no-result tail the model leaves when it
-	 * fragments an accented locality token ("Grudziądz" → "Grudzi"+"dz", #555). **Default-on**
-	 * (promoted 2026-06-25 — same-harness EU+AU +1pp @25km, zero regressions); set `false` to
-	 * opt out (byte-stable then). Never disturbs a tree that already resolved (the #685 brake).
+	 * Span-rescore tier (#370).
+	 *
+	 * When the tree resolved nothing, recover a dropped/fragmented locality from the
+	 * raw text: enumerate raw-token spans, exact-match the same-country gazetteer
+	 * (longest-wins + postcode-consistency check), and inject the recovered locality as a resolved node.
+	 * Targets the EU no-result tail the model leaves when it fragments an
+	 * accented locality token ("Grudziądz" → "Grudzi"+"dz", #555). **Default-on**
+	 * (promoted 2026-06-25 — same-harness EU+AU +1pp @25km, zero regressions);
+	 * set `false` to opt out (byte-stable then).
+	 *
+	 * Never disturbs a tree that already resolved (the #685 brake).
 	 * Validated in `docs/articles/evals/experiments/2026-06-23-370-span-rescore.mdx` +
 	 * `2026-06-25-eu-competitive-standing.md`.
 	 */
@@ -656,8 +751,8 @@ export interface ResolveOpts {
 	 * that carry no identity at all, or that belong to a different component of the same address.
 	 *
 	 * The blanket version — refuse every proper sub-span of a multi-token locality —
-	 * was measured on the frozen fixture and rejected: it loses `NV Sparks`,
-	 * `SCT Cumbernauld`, `IN Fort Wayne`, `CA National City` and `IA Council Bluffs`.
+	 * was measured on the frozen fixture and rejected: it loses `NV Sparks`, `SCT Cumbernauld`,
+	 * `IN Fort Wayne`, `CA National City` and `IA Council Bluffs`.
 	 * Each of those leaves a subdivision code, so the narrow test keeps them.
 	 *
 	 * **Default off, and the measurement refused the default rather than failing to reach one.**
@@ -669,10 +764,12 @@ export interface ResolveOpts {
 	 * The 996-case regression board reads 524/586 either way, with the same 62 failures name for name.
 	 *
 	 * What refuses the default is a shape none of those carries in its counted rows:
-	 * a remainder that is another place name. `Lagoa da Conceição, Florianópolis`
-	 * and `Morro Dois Irmãos, Rio de Janeiro` recover the city from the last segment,
-	 * and the remainder is a neighbourhood or a venue — not a qualifier the rule can admit,
-	 * and not a word of the recovered name either. Both lose their locality with this on.
+	 * a remainder that is another place name.
+	 * `Lagoa da Conceição, Florianópolis` and `Morro Dois Irmãos, Rio de Janeiro` recover
+	 * the city from the last segment, and the remainder is a neighbourhood or a venue —
+	 * not a qualifier the rule can admit, and not a word of the recovered name either.
+	 *
+	 * Both lose their locality with this on.
 	 * Three other tracked rows trade a wrong coordinate for an abstention,
 	 * which is the rule working as intended.
 	 */
@@ -681,23 +778,24 @@ export interface ResolveOpts {
 	 * Which reading of "resolved weakly" lifts the #685 span-rescore brake,
 	 * or unset to take a `placeID` at face value.
 	 *
-	 * `applySpanRescore` declines whenever any node carries a `placeID`,
-	 * which is what keeps it from second-guessing a working coordinate.
+	 * `applySpanRescore` declines whenever any node carries a `placeID`, which is
+	 * what keeps it from second-guessing a working coordinate.
 	 * The reading names the evidence on which a `placeID` is not such a coordinate;
 	 * {@linkcode
 	 * WeakResolutionReading} carries what each one reads and what the regression board measured for it.
 	 *
-	 * **Default unset**, which is the shipped brake. Promoting `score` needs the promotion
-	 * battery rather than the board alone: one changed row out of 586 is inside the
-	 * range a hand-authored panel can produce by construction.
+	 * **Default unset**, which is the shipped brake.
+	 * Promoting `score` needs the promotion battery rather than the board alone: one changed
+	 * row out of 586 is inside the range a hand-authored panel can produce by construction.
 	 */
 	spanRescoreWeakResolution?: WeakResolutionReading
 	/**
 	 * Postal-compound recovery inside the span-rescore tier (#942).
+	 *
 	 * The knife-edge no-street query shape ("Kožljek 7, 1382 Kožljek") fails as a compound:
 	 * the parse globs the trailing city into the postcode span ("1382 Kožljek"), which
-	 * then (a) resolves as neither postcode nor locality and (b) blocks its own city
-	 * tokens from span-rescore's recovery (a confident postcode span is avoided).
+	 * then (a) resolves as neither postcode nor locality and (b) blocks its own city tokens
+	 * from span-rescore's recovery (a confident postcode span is avoided).
 	 * Proven training-composition-insensitive on #901 — five vehicles including a full
 	 * from-scratch retrain all tip this class, so the floor lives here, model-independently.
 	 *
@@ -715,13 +813,15 @@ export interface ResolveOpts {
 	postalCompoundRecovery?: boolean
 	/**
 	 * Postcode-disambiguated locality selection (#370 "Change A").
+	 *
 	 * When set, and a locality resolves far from a resolved sibling postcode,
 	 * re-pick the same-named candidate (from the lookup's already- captured `alternatives`)
-	 * nearest the postcode. if none reconciles within the radius, fall the
-	 * coordinate back to the postcode point and flag `postcode_city_mismatch`.
-	 * Targets the dominant failure mode on the EU/AU panel — a same-named town resolved
-	 * to the wrong instance while the postcode that would disambiguate it sits resolved
-	 * in the same tree (e.g. "06260 Saint-Pierre" → 617 km off, postcode 06260 correct).
+	 * nearest the postcode. if none reconciles within the radius, fall the coordinate
+	 * back to the postcode point and flag `postcode_city_mismatch`.
+	 * Targets the dominant failure mode on the EU/AU panel — a same-named town resolved to
+	 * the wrong instance while the postcode that would disambiguate it sits resolved in the
+	 * same tree (e.g. "06260 Saint-Pierre" → 617 km off, postcode 06260 correct).
+	 *
 	 * Only bites where the backend resolved the postcode to a point
 	 * (so it composes with postcode coverage, #193).
 	 *
@@ -732,41 +832,49 @@ export interface ResolveOpts {
 	 */
 	postcodeConsistency?: boolean
 	/**
-	 * Check radius (km) for {@link postcodeConsistency} — a locality farther than this from
-	 * the resolved postcode is re-picked or demoted. Default 50.
+	 * Check radius (km) for {@link postcodeConsistency} — a locality farther than
+	 * this from the resolved postcode is re-picked or demoted.
+	 *
+	 * Default 50.
 	 */
 	postcodeConsistencyThresholdKm?: number
 	/**
-	 * How far {@link postcodeConsistency}'s last resort — falling a locality's coordinate onto the
-	 * postcode point — is allowed to move the answer. Beyond this the coordinate stays on the
-	 * locality the walk selected and the node is flagged `postcode_city_mismatch` without
-	 * `coordinate_source`, so the disagreement is still reported and the answer still names one place.
+	 * How far {@link postcodeConsistency}'s last resort — falling a locality's coordinate
+	 * onto the postcode point — is allowed to move the answer.
+	 *
+	 * Beyond this the coordinate stays on the locality the walk selected
+	 * and the node is flagged `postcode_city_mismatch` without `coordinate_source`,
+	 * so the disagreement is still reported and the answer still names one place.
 	 *
 	 * {@link postcodeConsistencyThresholdKm} bounds whether the fallback fires. without this, nothing bounds how far it
-	 * then moves the answer. `Nawāda, 744301` is the measured case: `744301` is an Andaman
-	 * and Nicobar Islands code, the walk selects Nawada in Bihar, and the fallback relocates
-	 * the coordinate 1,914 km to Port Blair while the result keeps Nawada's place id,
-	 * so the id and the coordinate name different places.
+	 * then moves the answer.
+	 * `Nawāda, 744301` is the measured case: `744301` is an Andaman and Nicobar Islands code,
+	 * the walk selects Nawada in Bihar, and the fallback relocates the coordinate 1,914 km to Port Blair
+	 * while the result keeps Nawada's place id, so the id and the coordinate name different places.
 	 *
-	 * The fallback's premise is that "a postcode is unambiguous within a country in
-	 * a way a town name is not". A postcode carries no checksum, so a transposed one
-	 * is a valid code naming a real place, and a code retired since the address was
-	 * written names wherever it now points. Neither is detectable from the code alone.
-	 * disagreement with the other components is the available signal.
+	 * The fallback's premise is that "a postcode is unambiguous within a country in a way a town name is not".
+	 * A postcode carries no checksum, so a transposed one is a valid code naming a real place,
+	 * and a code retired since the address was written names wherever it now points.
 	 *
-	 * **Default 300 km.** The pass does two separable things — re-pick the same-named candidate
-	 * nearest the postcode, then, failing that, fall the coordinate onto the postcode point —
-	 * and only the second is bounded here. Measured across 5,300 real addresses
-	 * published with their government point (FR 3,000, US 2,000, CZ 150, PL 150),
-	 * the pass changes 213 answers and the fallback changes none of them:
-	 * every arm from a cap of zero upward is row-for-row identical to unbounded.
+	 * Neither is detectable from the code alone. disagreement with the other
+	 * components is the available signal.
+	 *
+	 * **Default 300 km.** The pass does two separable things — re-pick the same-named
+	 * candidate nearest the postcode, then, failing that, fall the coordinate onto
+	 * the postcode point — and only the second is bounded here.
+	 * Measured across 5,300 real addresses published with their government point
+	 * (FR 3,000, US 2,000, CZ 150, PL 150), the pass changes 213 answers and the fallback changes
+	 * none of them: every arm from a cap of zero upward is row-for-row identical to unbounded.
+	 *
 	 * So a cap does not undo #370's wins on that population, because they are re-picks.
 	 *
-	 * 300 km is where the two available bounds meet. Postcode-to-settlement distance for
-	 * agreeing pairs (800,762 rows, 33 countries, admin1 corroborating) reads p95 25.0 km
-	 * and p99 153.3 km, so 300 km admits every relocation a correct postcode could require. on the
-	 * frozen same-data panel it takes contradictory wrong-area from 67.0% to 19.0% with selection
-	 * accuracy flat at 71.7%. Record: `docs/records/evals/2026-09-15-postcode-move-cap.md`.
+	 * 300 km is where the two available bounds meet.
+	 * Postcode-to-settlement distance for agreeing pairs (800,762 rows, 33 countries, admin1 corroborating)
+	 * reads p95 25.0 km and p99 153.3 km, so 300 km admits every relocation a correct
+	 * postcode could require. on the frozen same-data panel it takes contradictory
+	 * wrong-area from 67.0% to 19.0% with selection accuracy flat at 71.7%.
+	 *
+	 * Record: `docs/records/evals/2026-09-15-postcode-move-cap.md`.
 	 *
 	 * Set `Infinity` for the pre-2026-09-15 unbounded behaviour.
 	 * FI and SI carried two of #370's three promotion counts and no coordinate set for
@@ -793,14 +901,15 @@ export interface ResolveOpts {
 	 * Its geometry can: this pass asks, per candidate country from codex's shape test,
 	 * whether the postcode resolves there and a same-named locality sits within
 	 * {@link postcodeCountryCoherenceThresholdKm} of it — then scopes the whole walk to the country where the pair is
-	 * consistent. Measured over 800 real pairs (400 US ZIP+city, 400 FR CP+commune):
+	 * consistent.
+	 * Measured over 800 real pairs (400 US ZIP+city, 400 FR CP+commune):
 	 * **zero** border crossings at both the 15 km and 25 km radii.
 	 *
-	 * Soft by construction, per the positive-evidence-only rule: the caller's
-	 * `defaultCountry` is tested first and a coherent default always wins
-	 * (returning immediately, ≤2 lookups, byte-identical walk), and both zero coherent countries
-	 * and two-or-more abstain. It fires only when a `defaultCountry` is in force and the tree
-	 * carries both a postcode and a locality and the default cannot make them consistent.
+	 * Soft by construction, per the positive-evidence-only rule: the caller's `defaultCountry` is tested
+	 * first and a coherent default always wins (returning immediately, ≤2 lookups, byte-identical walk),
+	 * and both zero coherent countries and two-or-more abstain.
+	 * It fires only when a `defaultCountry` is in force and the tree carries both a postcode
+	 * and a locality and the default cannot make them consistent.
 	 *
 	 * **Default on** (operator-promoted 2026-08-05 after the D-rule evidence in
 	 * `docs/records/evals/2026-08-05-postcode-coherence-default-on-evidence.md`: the standard
@@ -812,13 +921,15 @@ export interface ResolveOpts {
 	 *
 	 * Reach is bounded by codex's `candidateSystemsForPostcode` and the attached gazetteer:
 	 * measured 2026-08-05 it can speak for US/DE/FR/GB on the production FTS extract set
-	 * and additionally CA/AU on the candidate table. JP and NZ have a codex address system with
-	 * no postcode rows behind it, so the pass abstains there at the cost of its two lookups.
+	 * and additionally CA/AU on the candidate table.
+	 * JP and NZ have a codex address system with no postcode rows behind it,
+	 * so the pass abstains there at the cost of its two lookups.
 	 */
 	postcodeCountryCoherence?: boolean
 	/**
 	 * Check radius (km) for {@link postcodeCountryCoherence} — how near a same-named
 	 * locality must sit to the resolved postcode to count that country as consistent.
+	 *
 	 * Default 25 (what the 800-pair scale run measured. the confound board returned
 	 * identical verdicts at 15, 25 and 50, so the pass is not radius-tuned).
 	 */
@@ -826,18 +937,20 @@ export interface ResolveOpts {
 	/**
 	 * Postcode-shape coherence (#31, Mechanism 1, `resolver/postcode-shape-coherence.ts`) —
 	 * shape as confidence and exclusion, downstream of the siblings.
-	 * The decoder sometimes tags a house number as `postcode` when its digits form a foreign
-	 * postcode shape ("1200" in a Longmont CO address is accepted only by the AU/NZ 4-digit
-	 * shape while every sibling placetype says US). This pre-walk pass intersects each
-	 * postcode span's codex candidate systems with the systems the tree's country
-	 * / region / `country_hint` siblings assert: a non-empty intersection confirms
-	 * the span (additive `postcode_shape_systems` stamp, byte-identical resolution);
-	 * an empty intersection with confident siblings excludes it
-	 * (a digit-only span is demoted to `house_number`, a letter-containing one keeps its tag with a
-	 * `postcode_shape_excluded` stamp — either way the span's contribution to the resolve is stripped);
-	 * no confident siblings abstain. `defaultCountry` is never evidence
-	 * (B1-3's confound: "Sydney NSW 2000, Australia" reached with a US default must not have
-	 * its 2000 excluded — that row is exactly what {@link postcodeCountryCoherence} rescues).
+	 *
+	 * The decoder sometimes tags a house number as `postcode` when its digits form a
+	 * foreign postcode shape ("1200" in a Longmont CO address is accepted only by the
+	 * AU/NZ 4-digit shape while every sibling placetype says US).
+	 * This pre-walk pass intersects each postcode span's codex candidate systems with the systems
+	 * the tree's country / region / `country_hint` siblings assert: a non-empty intersection
+	 * confirms the span (additive `postcode_shape_systems` stamp, byte-identical resolution);
+	 * an empty intersection with confident siblings excludes it (a digit-only span is demoted to
+	 * `house_number`, a letter-containing one keeps its tag with a `postcode_shape_excluded` stamp —
+	 * either way the span's contribution to the resolve is stripped); no confident siblings abstain.
+	 *
+	 * `defaultCountry` is never evidence (B1-3's confound: "Sydney NSW 2000,
+	 * Australia" reached with a US default must not have its 2000 excluded —
+	 * that row is exactly what {@link postcodeCountryCoherence} rescues).
 	 * Confirmed spans narrow the country-scope pass's candidate list to the
 	 * intersection (a pure subset, safe).
 	 *
@@ -849,13 +962,16 @@ export interface ResolveOpts {
 	postcodeShapeCoherence?: boolean
 	/**
 	 * Postcode-containment coherence (#31, Mechanism 2) — the reverse arrow, generalized.
+	 *
 	 * When a locality-wanting query carries a postcode and the #741 exact `(name_key, postcode)`
 	 * probe misses, a coordinate-first backend resolves the postcode's centroid once
 	 * and re-ranks the name candidates by distance to it, bounded by a 25 km containment rate —
 	 * "Paris TX 75460" and "Paris 75001" differ by which candidate the postcode is near,
-	 * and the population ranking cannot see that. Strictly beneath the #741 short-circuit
-	 * (B2-1: byte-identical wherever the fast path fires); no in-radius candidate → unchanged
-	 * (B2-2's postcode-removed arm). Rides `FindPlaceQuery.postcodeContainmentCoherence` to the backend.
+	 * and the population ranking cannot see that.
+	 * Strictly beneath the #741 short-circuit (B2-1: byte-identical wherever the fast path fires);
+	 * no in-radius candidate → unchanged (B2-2's postcode-removed arm).
+	 *
+	 * Rides `FindPlaceQuery.postcodeContainmentCoherence` to the backend.
 	 *
 	 * **Default off.** The promotion decision must measure it jointly with {@link postcodeConsistency}
 	 * (B2-3: the arms agree on ≥98%), because this rung partially subsumes #370 —
@@ -866,9 +982,10 @@ export interface ResolveOpts {
 	/**
 	 * Postcode-prefix prior (#31, Mechanism 3) — the partial-code prior for postcodes the full-code
 	 * gazetteer does not carry (#1480's abstention, e.g. a BT unit with no permissive source behind it).
+	 *
 	 * When a `postalcode` lookup misses and a {@link postcodePrefixIndex} for the query's
-	 * country is supplied, derive the code's prefix (GB: outward — the compact form
-	 * minus its trailing 3 unit chars. US: the first 3 digits) and probe the index.
+	 * country is supplied, derive the code's prefix (GB: outward — the compact form minus
+	 * its trailing 3 unit chars. US: the first 3 digits) and probe the index.
 	 * A hit resolves the node from the prefix's centroid and/or ancestry: `metadata.postcode_prefix`,
 	 * `postcode_prefix_ancestors` (+ `postcode_prefix_radius_p95_km` when the artifact measured one),
 	 * and `coordinate_source: "postcode_prefix"` only when the node actually carries a
@@ -884,41 +1001,48 @@ export interface ResolveOpts {
 	postcodePrefixPrior?: boolean
 	/**
 	 * #1589 — countries the parsed postcode's format implies (the #928 unforgeable singles plus the shared `NNN NN`
-	 * CZ/SK/SE/GR family). Applied by the `postalcode` lookup only when no explicit country selection
-	 * applies (an explicit `defaultCountry` outranks format evidence, which outranks a locale hint):
+	 * CZ/SK/SE/GR family).
+	 *
+	 * Applied by the `postalcode` lookup only when no explicit country selection applies
+	 * (an explicit `defaultCountry` outranks format evidence, which outranks a locale hint):
 	 * the lookup probes exactly the implied countries, keeps the most populous hit, and abstains
 	 * when all miss rather than falling through to a fold-colliding unconstrained probe.
 	 */
 	postcodeFormatCountries?: readonly string[]
 	/**
-	 * The PFX1 postcode-prefix index to probe when {@link postcodePrefixPrior} is on — injected by
-	 * the pipeline (loaded from `$MAILWOMAN_DATA_ROOT/postcode-prefix/postcode-prefix-<cc>.bin`),
-	 * never constructed here. Structural (`PostcodePrefixIndexLike`), so the resolver
-	 * consumes an index built in `@mailwoman/neural` without depending on it (B3-5).
+	 * The PFX1 postcode-prefix index to probe when {@link postcodePrefixPrior} is on — injected by the pipeline
+	 * (loaded from `$MAILWOMAN_DATA_ROOT/postcode-prefix/postcode-prefix-<cc>.bin`), never constructed here.
+	 *
+	 * Structural (`PostcodePrefixIndexLike`), so the resolver consumes an index built
+	 * in `@mailwoman/neural` without depending on it (B3-5).
 	 */
 	postcodePrefixIndex?: PostcodePrefixIndexLike
 	/**
-	 * Admin descendant-consistency (#263). When a region resolved but its child
-	 * locality did not — the greedy region pick (name + population) chose a foreign
-	 * namesake whose descendants hold no such locality ("Portland, ME" → Messina IT;
+	 * Admin descendant-consistency (#263).
+	 *
+	 * When a region resolved but its child locality did not — the greedy region pick (name + population)
+	 * chose a foreign namesake whose descendants hold no such locality ("Portland, ME" → Messina IT;
 	 * "Portland" then finds nothing beneath it and falls back to the region centroid) —
 	 * re-pick the (region, locality) pair jointly against the gazetteer's containment graph:
 	 * the best same-named locality that descends from one of the region's same-named candidates.
-	 * "Portland" descends from Maine rather than Messina, so the pair resolves to
-	 * (Maine, Portland-Maine). Generalizes to every country with no country prior and no list.
+	 * "Portland" descends from Maine rather than Messina, so the pair resolves to (Maine, Portland-Maine).
+	 *
+	 * Generalizes to every country with no country prior and no list.
 	 * Costs one unscoped locality lookup per triggering admin pair. only fires
 	 * where a locality fell through, so the well-resolved path is byte-identical.
-	 * Needs {@link ResolverBackend.ancestors}; no-op without it. **Default-on**
-	 * (#895 settled drift D1 — the geocode path had run it since #837 while raw
-	 * `resolveTree` callers silently didn't); byte-stable wherever nothing fell through
-	 * or the backend lacks `ancestors`. Pass `false` to opt out.
+	 *
+	 * Needs {@link ResolverBackend.ancestors}; no-op without it. **Default-on** (#895 settled drift D1 —
+	 * the geocode path had run it since #837 while raw `resolveTree` callers silently didn't);
+	 * byte-stable wherever nothing fell through or the backend lacks `ancestors`.
+	 * Pass `false` to opt out.
 	 */
 	adminCoherence?: boolean
 	/**
-	 * Dual-role completion (#387, generalized by #405). Some places are two things at once —
-	 * Singapore is a country and a city, Washington DC a region and a locality —
-	 * but the address writes one span, so the tree resolves a region and carries no
-	 * locality node even though the place genuinely is one.
+	 * Dual-role completion (#387, generalized by #405).
+	 *
+	 * Some places are two things at once — Singapore is a country and a city, Washington DC a
+	 * region and a locality — but the address writes one span, so the tree resolves a region
+	 * and carries no locality node even though the place genuinely is one.
 	 *
 	 * When a region resolved and no locality span is present, this asks the gazetteer's
 	 * `coincident_roles` relation (#403, via {@link ResolverBackend.coincidentLocalitiesFor})
@@ -931,47 +1055,54 @@ export interface ResolveOpts {
 	 * `candidate.db` carries no such table — so the guard returns and no interpretation is attached.
 	 * `Resolver.capabilityGaps` reports that at construction rather than leaving it silent.
 	 *
-	 * Measured 2026-08-15 on the FTS backend, which does implement both: toggling this
-	 * flag changed **0 of 837** board inputs. The capability and its measured value on
-	 * everything we currently test is zero, which is why `candidate.db` was not grown to
-	 * support it (#1667, closed not-planned). Reopen on a consumer that needs it.
+	 * Measured 2026-08-15 on the FTS backend, which does implement both:
+	 * toggling this flag changed **0 of 837** board inputs.
+	 * The capability and its measured value on everything we currently test is zero,
+	 * which is why `candidate.db` was not grown to support it (#1667, closed not-planned).
+	 *
+	 * Reopen on a consumer that needs it.
 	 *
 	 * `false` opts out. byte-stable either way on any backend lacking the relation.
 	 */
 	hierarchyCompletion?: boolean
 	/**
-	 * Attach each resolved node's ancestor lineage (#404) — the containment chain
-	 * (county → region → country) the backend's {@link ResolverBackend.ancestors} returns —
-	 * onto `metadata.ancestors`. The Pelias/Nominatim "always-attach-the-hierarchy"
-	 * enrichment, so a consumer gets the full admin ladder from a single resolved place.
+	 * Attach each resolved node's ancestor lineage (#404) — the containment chain (county → region → country)
+	 * the backend's {@link ResolverBackend.ancestors} returns — onto `metadata.ancestors`.
+	 *
+	 * The Pelias/Nominatim "always-attach-the-hierarchy" enrichment, so a consumer
+	 * gets the full admin ladder from a single resolved place.
 	 * Off by default: omit it and resolution is byte-identical (and there's no extra query).
+	 *
 	 * Only attaches to nodes the resolver actually resolved.
 	 */
 	includeAncestors?: boolean
 	/**
 	 * Admin-containment re-rank (#1717 stage 2) — make a parsed region qualifier
-	 * participate in locality-candidate selection. `Weimar, Thüringen` under the en-US
-	 * locale resolves to Weimar, Texas: the locale-inferred `defaultCountry` becomes
-	 * a hard `country` filter on the locality lookup, so the candidate pool is all-US
-	 * before any comparator runs — the qualifier the parse got right never reaches the deciding
-	 * site (the #1729 lesson, measured again here: the DE row is simply not in the list).
+	 * participate in locality-candidate selection.
+	 *
+	 * `Weimar, Thüringen` under the en-US locale resolves to Weimar, Texas: the locale-inferred
+	 * `defaultCountry` becomes a hard `country` filter on the locality lookup, so the candidate pool
+	 * is all-US before any comparator runs — the qualifier the parse got right never reaches the
+	 * deciding site (the #1729 lesson, measured again here: the DE row is simply not in the list).
 	 * The coherence passes cannot reach this class either: `applyAdminCoherence` needs
 	 * the locality to have failed, `applyRegionCountryCoherence` expands only the codex
 	 * US+CA subdivision table, and there is no postcode for #42 to re-scope by.
 	 *
-	 * When on, the walk threads the tree's first region-tagged span onto every locality lookup
-	 * (`FindPlaceQuery.regionQualifier`); a capable backend answers containment from its ancestors
-	 * sidecar — stamping `ResolvedPlace.containedByQualifier` and adding contained same-name
-	 * candidates a locale-inferred country scope hid — and the walk finishes with a tier-safe stable
-	 * partition: contained candidates ahead of uncontained ones, within the exact-match tier,
-	 * preserving each group's relative order. The partition runs after the fame/anchor re-ranks
-	 * because the qualifier is the address's own text — evidence, which outranks a prior
+	 * When on, the walk threads the tree's first region-tagged span onto every locality
+	 * lookup (`FindPlaceQuery.regionQualifier`); a capable backend answers containment
+	 * from its ancestors sidecar — stamping `ResolvedPlace.containedByQualifier`
+	 * and adding contained same-name candidates a locale-inferred country scope hid —
+	 * and the walk finishes with a tier-safe stable partition: contained candidates ahead of
+	 * uncontained ones, within the exact-match tier, preserving each group's relative order.
+	 * The partition runs after the fame/anchor re-ranks because the
+	 * qualifier is the address's own text — evidence, which outranks a prior
 	 * (the same precedence `anchorPosterior` holds over `rankByImportance`).
 	 *
-	 * Soft by construction: candidates are only ever added or reordered, never dropped,
-	 * so a qualifier that matches nothing (or contains no same-name candidate) leaves
-	 * the answer byte-identical. Stands down under an explicit caller `defaultCountry`
+	 * Soft by construction: candidates are only ever added or reordered, never dropped, so a qualifier
+	 * that matches nothing (or contains no same-name candidate) leaves the answer byte-identical.
+	 * Stands down under an explicit caller `defaultCountry`
 	 * (the #912 posture: only a locale-inferred scope is bypassable by the address's own evidence).
+	 *
 	 * Each locality pick records `metadata.admin_containment`:
 	 * `"contained"` (the sidecar vouched for at least one candidate),
 	 * `"no_contained_candidate"` (evaluated, none contained), or `"unavailable"`
@@ -986,8 +1117,9 @@ export interface ResolveOpts {
 	/**
 	 * Resolver-interior trace sink (#1721): when set, the walk emits one {@link ResolveNodeTrace}
 	 * per candidate lookup — the query as sent, the candidate table with per-stage ranks,
-	 * every check that fired, and the pick's provenance — so "the right row was present at
-	 * rank 3 and lost to the fame term" is a recorded fact instead of a spelunking result.
+	 * every check that fired, and the pick's provenance — so "the right row was present at rank 3
+	 * and lost to the fame term" is a recorded fact instead of a spelunking result.
+	 *
 	 * Absent (the default) the walk does zero trace bookkeeping and stays byte-identical.
 	 * the sink is a hot-path opt-in for debug surfaces, never a production default.
 	 */
@@ -1007,12 +1139,13 @@ export interface ResolveOpts {
 }
 
 /**
- * One candidate as the resolver's deciding site saw it — the fields the ranking stages
- * actually read, plus a per-stage rank vector. `ranks` carries one entry per stage that RAN,
- * in execution order (`initial` = the backend's own order. then whichever of `anchor`,
- * `locale_prior`, `importance`, `containment`, `exact_type` were active); a stage a candidate
- * set never went through is absent, never defaulted. The vector is what makes loss
- * attributable: the stage whose entry moved a row down is the term it lost to.
+ * One candidate as the resolver's deciding site saw it — the fields the ranking
+ * stages actually read, plus a per-stage rank vector.
+ *
+ * `ranks` carries one entry per stage that RAN, in execution order (`initial` = the backend's own order.
+ * then whichever of `anchor`, `locale_prior`, `importance`, `containment`, `exact_type` were active);
+ * a stage a candidate set never went through is absent, never defaulted.
+ * The vector is what makes loss attributable: the stage whose entry moved a row down is the term it lost to.
  */
 export interface ResolveCandidateTrace {
 	id: string | number
@@ -1081,9 +1214,10 @@ export interface ResolveNodeTrace {
 /**
  * The interface implemented by `createWOFResolver` and any future resolver factories.
  *
- * `resolveTree` returns a new `AddressTree` rather than mutating — keeps the input safe to
- * inspect after the call. The new tree's `roots` are fresh `AddressNode` objects. nodes the
- * resolver didn't touch are structurally cloned with their classifier attribution preserved.
+ * `resolveTree` returns a new `AddressTree` rather than mutating — keeps the
+ * input safe to inspect after the call.
+ * The new tree's `roots` are fresh `AddressNode` objects. nodes the resolver didn't
+ * touch are structurally cloned with their classifier attribution preserved.
  */
 export interface Resolver {
 	resolveTree(tree: AddressTree, opts?: ResolveOpts): Promise<AddressTree>
@@ -1091,6 +1225,7 @@ export interface Resolver {
 	 * Direct gazetteer probe, passed through from the {@link ResolverBackend} —
 	 * for pipeline-level consumers that need one lookup outside a tree walk
 	 * (the #1738 dominant-bearer guard on the coarse placer's hard-country promotion is the first).
+	 *
 	 * Optional like the members below: a resolver without it degrades its consumers
 	 * to their without-the-probe behavior, never to a crash.
 	 */
@@ -1102,9 +1237,12 @@ export interface Resolver {
 	 */
 	artifactCoverage?: GazetteerArtifactCoverage
 	/**
-	 * Optional backend methods this resolver's backend does not implement, each naming the default-on
-	 * option it silently disables. Empty means every default-on option has the support it needs.
-	 * absent means the resolver predates the check. See {@link BackendCapabilityGap}.
+	 * Optional backend methods this resolver's backend does not implement,
+	 * each naming the default-on option it silently disables.
+	 *
+	 * Empty means every default-on option has the support it needs. absent means
+	 * the resolver predates the check.
+	 * See {@link BackendCapabilityGap}.
 	 */
 	capabilityGaps?: readonly BackendCapabilityGap[]
 }

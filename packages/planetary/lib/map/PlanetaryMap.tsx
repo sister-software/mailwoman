@@ -31,6 +31,7 @@ export interface PlanetaryMapProps {
 	onSelect: (feature: SelectedFeature) => void
 	/**
 	 * The live map, once react-map-gl has instantiated it, and `null` again on unmount.
+	 *
 	 * The chrome sits outside this component and cannot reach the handle through `useMap()`;
 	 * the compass reads its direction from here.
 	 */
@@ -63,9 +64,10 @@ export function PlanetaryMap({ config, selected, onSelect, onMapReady }: Planeta
 	// Read once: a viewport in the URL wins over the body's opening view for the first render only.
 	const initial = useMemo(() => viewportFromSearch(location.search) ?? config.initialView, [config])
 
-	// The deepest zoom the body's terrain archive carries, read from the live source once it
-	// resolves its TileJSON. The two bodies do not publish the same depth, so a framing clamp
-	// that used a constant would over-zoom one of them the first time either was rebuilt.
+	// The deepest zoom the body's terrain archive carries, read from the live
+	// source once it resolves its TileJSON.
+	// The two bodies do not publish the same depth, so a framing clamp that used a
+	// constant would over-zoom one of them the first time either was rebuilt.
 	const [maxTerrainZoom, setMaxTerrainZoom] = useState<number | undefined>(undefined)
 
 	useEffect(() => {

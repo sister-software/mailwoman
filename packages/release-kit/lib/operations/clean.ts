@@ -27,8 +27,9 @@ const cleanOutput = z.object({
 
 /**
  * `release.clean` — remove generated workspace output, build metadata,
- * and Docker's non-workspace TypeScript output. A package name limits the cleanup
- * to one registered workspace. absent means the entire checkout.
+ * and Docker's non-workspace TypeScript output.
+ *
+ * A package name limits the cleanup to one registered workspace. absent means the entire checkout.
  */
 export const cleanOperation = defineOperation({
 	id: "release.clean",

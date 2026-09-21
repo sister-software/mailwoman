@@ -45,6 +45,7 @@ export type { RepairResult } from "#span/repair"
 
 /**
  * A detected secondary-unit substring with its char range.
+ *
  * Units carry no confidence class — every pattern here requires an explicit designator,
  * so there is no `kind` split like postcode-repair's.
  */
@@ -52,6 +53,7 @@ type UnitMatch = SpanMatch
 
 /**
  * Secondary-unit shape patterns, ordered most-specific → least.
+ *
  * Case-insensitive (unit designators appear in every casing in real data).
  * The identifier is a 1-5 digit number with an optional trailing letter ("4B"), a single
  * letter ("STE D"), or a letter+digits — kept tight so we don't swallow following words.
@@ -83,13 +85,17 @@ const OUTSIDE = "O" as DecoderToken["label"]
 
 /**
  * Tags a unit span is allowed to overwrite on the ADD path.
+ *
  * The v0.7.2 arena showed the dominant failure for bare designator-led units
- * ("Flat 2 14 Smith St", "APT 2 …") is the model labeling the whole designator+identifier run
- * as `locality` — not leaving it `O`. An explicit designator + identifier is a high-confidence
- * "this is a unit" shape (a real locality/suburb name never has that form), so — exactly like
- * postcode-repair's ADD_OVER_TAGS — we let it reclaim a `locality`/`dependent_locality` span.
- * Structural tags (house_number, street*, postcode, po_box, region, country, venue) stay off
- * the list so a confident parse is never clobbered. (`O` is always eligible.)
+ * ("Flat 2 14 Smith St", "APT 2 …") is the model labeling the whole designator+identifier
+ * run as `locality` — not leaving it `O`.
+ * An explicit designator + identifier is a high-confidence "this is a unit" shape
+ * (a real locality/suburb name never has that form), so — exactly like postcode-repair's
+ * ADD_OVER_TAGS — we let it reclaim a `locality`/`dependent_locality` span.
+ *
+ * Structural tags (house_number, street*, postcode, po_box, region, country, venue)
+ * stay off the list so a confident parse is never clobbered.
+ * (`O` is always eligible.)
  */
 const ADD_OVER_TAGS = new Set<string>(["locality", "dependent_locality"])
 
@@ -102,6 +108,7 @@ function collectMatches(text: string): UnitMatch[] {
 
 /**
  * Repair secondary-unit label spans in a decoded token sequence using designator regexes.
+ *
  * Returns a new token array (inputs are not mutated) plus a change count.
  */
 export function repairUnitLabels(text: string, input: readonly DecoderToken[]): RepairResult {

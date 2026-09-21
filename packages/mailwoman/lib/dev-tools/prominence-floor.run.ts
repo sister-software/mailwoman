@@ -67,13 +67,15 @@ const { values, positionals } = parseArguments({
 const GEONAMES = values.geonames || dataRootPath("geonames")
 /**
  * The FTS gazetteer, read for its `concordances` + `spr` tables — the identity join.
+ *
  * The candidate backend below carries no concordance table, which is why the
  * two are separate flags rather than one.
  */
 const GAZETTEER = values.gazetteer || dataRootPath("wof", "admin-global-priority.db")
 /**
- * The backend the recording drives. Defaults to the promoted candidate table,
- * which is what the shipped geocoder reads.
+ * The backend the recording drives.
+ *
+ * Defaults to the promoted candidate table, which is what the shipped geocoder reads.
  */
 const BACKEND = values.backend || dataRootPath("wof", "candidate.db").toString()
 const OUT = values.out || repoRootPath("docs", "static", "benchmarks").toString()
@@ -86,9 +88,10 @@ const SCORE_PATH = `${OUT}/prominence-floor-report.md`
 
 /**
  * The frozen decision rule's two conditions, in percentage points.
- * They are prose in `benchmark-definition.json`: the false-selection rate must fall by
- * at least 10 percentage points against the default arm in every band, and selection
- * accuracy must not fall more than 5 percentage points below the default arm's in any band.
+ *
+ * They are prose in `benchmark-definition.json`: the false-selection rate must fall by at
+ * least 10 percentage points against the default arm in every band, and selection accuracy
+ * must not fall more than 5 percentage points below the default arm's in any band.
  * So they are named here rather than carried as data: adding them to the definition
  * after the freeze would move the content hash the freeze record pins.
  */
@@ -97,6 +100,7 @@ const ALLOWED_ACCURACY_COST_POINTS = 5
 
 /**
  * Every arm's `ResolveOpts`, in the definition's order.
+ *
  * The default arm's empty bag is listed explicitly: an omitted default is a missing replay key,
  * and `replayBackend` would raise on the arm the benchmark compares against.
  */
@@ -250,8 +254,9 @@ async function scorePhase(): Promise<void> {
 	const panelByID = new Map(panel.map((row) => [row.id, row]))
 	const bandOf = new Map(panel.map((row) => [row.id, row.band]))
 
-	// A raised floor changes what the walk asks next, so each arm loses a different set of rows to replay
-	// misses. Scoring each arm over its own survivors would compare rates whose denominators moved.
+	// A raised floor changes what the walk asks next, so each arm loses a different
+	// set of rows to replay misses.
+	// Scoring each arm over its own survivors would compare rates whose denominators moved.
 	const errored = new Set(results.filter((result) => result.error).map((result) => result.rowID))
 	const scored = results.filter((result) => !errored.has(result.rowID))
 	const survivors = new Map([...panelByID].filter(([id]) => !errored.has(id)))

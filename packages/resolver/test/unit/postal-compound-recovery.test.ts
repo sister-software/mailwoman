@@ -201,9 +201,9 @@ describe("postal-compound recovery (#942)", () => {
 
 describe("#961 joint country recovery — the locale-default trap", () => {
 	// The CLI's en-US locale default scoped both the anchor and the village probe to US,
-	// so the SI floor never fired through geocode-core. The joint pass probes spans unscoped
-	// and verifies each candidate against the postcode resolved in the candidate's own country —
-	// cross-country promotion only postcode-verified, never unrestricted.
+	// so the SI floor never fired through geocode-core.
+	// The joint pass probes spans unscoped and verifies each candidate against the postcode resolved in
+	// the candidate's own country — cross-country promotion only postcode-verified, never unrestricted.
 	it("recovers under a WRONG defaultCountry via the postcode-verified joint pass", async () => {
 		const resolver = createWOFResolver(await makeBackend())
 		const out = await resolver.resolveTree(failingTree(), { defaultCountry: "US" })

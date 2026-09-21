@@ -45,10 +45,10 @@ export async function stampLayerManifest(path: string, manifest: LayerManifest):
 /**
  * The git sha of the tree that ran a build, for `layer_manifest.build_sha`.
  *
- * Degrades to `unknown` rather than throwing. A build run outside a checkout —
- * a container, an unpacked tarball — is a legitimate build, and refusing to stamp a
- * manifest over a missing git binary would leave the artifact with no provenance at all,
- * which is the state this phase exists to reduce.
+ * Degrades to `unknown` rather than throwing.
+ * A build run outside a checkout — a container, an unpacked tarball — is a legitimate build,
+ * and refusing to stamp a manifest over a missing git binary would leave the artifact
+ * with no provenance at all, which is the state this phase exists to reduce.
  */
 export function buildSHA(repoRoot: string): string {
 	try {

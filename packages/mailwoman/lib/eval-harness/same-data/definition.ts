@@ -30,8 +30,10 @@ import {
 import { WITHHELD_CANDIDATE_FIELDS } from "#eval-harness/same-data/fixture"
 
 /**
- * The five registered strata, in fill order. Order is meaningful: strata draw from disjoint
- * geonameid pools, and a later stratum's eligibility rule excludes every row an earlier one took.
+ * The five registered strata, in fill order.
+ *
+ * Order is meaningful: strata draw from disjoint geonameid pools, and a later stratum's
+ * eligibility rule excludes every row an earlier one took.
  */
 export const SAME_DATA_STRATA = [
 	"unambiguous",
@@ -51,9 +53,10 @@ export const SAME_DATA_ARMS = ["mailwoman", "baseline", "ablation"] as const
 export type SameDataArm = (typeof SAME_DATA_ARMS)[number]
 
 /**
- * One stratum's registered rule. `correctIsAbstention` is the only per-stratum
- * scoring difference, and it exists because a stratum whose gold is withheld from
- * the fixture has no correct selection by construction.
+ * One stratum's registered rule.
+ *
+ * `correctIsAbstention` is the only per-stratum scoring difference, and it exists because a
+ * stratum whose gold is withheld from the fixture has no correct selection by construction.
  */
 export interface SameDataStratumDefinition {
 	id: SameDataStratum
@@ -68,8 +71,10 @@ export interface SameDataArmDefinition {
 	id: SameDataArm
 	description: string
 	/**
-	 * The `ResolveOpts` the arm pins. Present on the ablation arm. absent on the arms that run
-	 * library defaults, where an empty object and "the defaults" would be indistinguishable.
+	 * The `ResolveOpts` the arm pins.
+	 *
+	 * Present on the ablation arm. absent on the arms that run library defaults,
+	 * where an empty object and "the defaults" would be indistinguishable.
 	 */
 	resolveOpts?: Record<string, boolean>
 }
@@ -103,8 +108,9 @@ export interface SameDataBenchmarkDefinition {
 		seed: number
 		order: string
 		/**
-		 * The target row count per stratum. A stratum whose eligible pool cannot
-		 * reach it is reported at its achieved n.
+		 * The target row count per stratum.
+		 *
+		 * A stratum whose eligible pool cannot reach it is reported at its achieved n.
 		 */
 		rowsPerStratum: number
 		/**
@@ -132,14 +138,17 @@ export interface SameDataBenchmarkDefinition {
 }
 
 /**
- * The committed ruler: the claim boundary, the five selection rules, the sampling seed
- * and the decision rule. Named from the package root because `tsc` emits no `.json` into `out/`.
+ * The committed ruler: the claim boundary, the five selection rules,
+ * the sampling seed and the decision rule.
+ *
+ * Named from the package root because `tsc` emits no `.json` into `out/`.
  */
 export const SAME_DATA_DEFINITION_PATH = preregistrationPath("same-data", "benchmark-definition.json")
 
 /**
- * The freeze record pinning that ruler's content hash. A definition change
- * bumps both the version and this hash.
+ * The freeze record pinning that ruler's content hash.
+ *
+ * A definition change bumps both the version and this hash.
  */
 export const SAME_DATA_FREEZE_PATH = preregistrationPath("same-data", "benchmark-freeze.json")
 
@@ -153,8 +162,10 @@ export function withheldFixtureFields(definition: SameDataBenchmarkDefinition): 
 }
 
 /**
- * Whether the benchmark is executable as written. Each problem names what a runner could
- * not do with the definition, so a refusal reads as an instruction rather than a verdict.
+ * Whether the benchmark is executable as written.
+ *
+ * Each problem names what a runner could not do with the definition, so a refusal
+ * reads as an instruction rather than a verdict.
  */
 export function auditSameDataDefinition(definition: SameDataBenchmarkDefinition): string[] {
 	const problems: string[] = [...duplicateRowIDProblems(definition.strata), ...duplicateRowIDProblems(definition.arms)]

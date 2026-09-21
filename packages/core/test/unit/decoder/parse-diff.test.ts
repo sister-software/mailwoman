@@ -17,7 +17,9 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder/types"
 import { describe, expect, it } from "vitest"
 
 /**
- * Build a tree from flat spans. The diff reads through `flattenTreeNodes`, so roots are enough.
+ * Build a tree from flat spans.
+ *
+ * The diff reads through `flattenTreeNodes`, so roots are enough.
  */
 function tree(...nodes: Array<[string, string, number, number, number, string?]>): AddressTree {
 	return {
@@ -108,7 +110,8 @@ describe("diffParse", () => {
 	})
 
 	it("surfaces a span that kept its tag but LOST its resolver backing", () => {
-		// Same tag, same text, same span — and it stopped being gazetteer-backed. No tag-level diff can show this.
+		// Same tag, same text, same span — and it stopped being gazetteer-backed.
+		// No tag-level diff can show this.
 		const before = tree(["locality", "London", 29, 35, 0.95, "resolver"])
 		const after = tree(["locality", "London", 29, 35, 0.95, "neural"])
 

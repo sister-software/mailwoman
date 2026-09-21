@@ -28,14 +28,16 @@ export interface Box {
 }
 
 /**
- * How far off north the compass check turns the map. Any direction past the
- * control's own dead zone would do. this one is far enough that a needle drawn at
- * the wrong angle is visible in a failure screenshot.
+ * How far off north the compass check turns the map.
+ *
+ * Any direction past the control's own dead zone would do. this one is far enough that
+ * a needle drawn at the wrong angle is visible in a failure screenshot.
  */
 const BEARING_OFF_NORTH = 42
 
 /**
  * How many pointer moves the scoped-query check drives.
+ *
  * Enough that the hook's per-frame throttle lets several through, and few enough
  * that the walk stays inside one test's budget.
  */
@@ -43,6 +45,7 @@ const POINTER_MOVES = 8
 
 /**
  * The chrome pieces that float over a map, by selector.
+ *
  * A missing one is skipped rather than failed: the planetary apps carry no chip row on
  * every route, and a test for one app must not fail on the other's absences.
  */
@@ -56,9 +59,10 @@ export const CHROME_SELECTORS = [
 ] as const
 
 /**
- * Two boxes overlap when they share any area. Touching edges do not count —
- * a sheet ending exactly on the footer's top edge is correct, and the sub-pixel
- * rounding a browser reports would otherwise make that a failure.
+ * Two boxes overlap when they share any area.
+ *
+ * Touching edges do not count — a sheet ending exactly on the footer's top edge is correct,
+ * and the sub-pixel rounding a browser reports would otherwise make that a failure.
  */
 export function boxesOverlap(a: Box, b: Box, tolerance = 1): boolean {
 	return (
@@ -92,8 +96,9 @@ async function visibleBoxes(page: Page): Promise<Map<string, Box>> {
 /**
  * No two floating pieces of chrome occupy the same pixels.
  *
- * A side sheet is exempt, because on a phone it is deliberately the whole panel laid over
- * everything else — the overlap there is the design. Every other pair has to clear.
+ * A side sheet is exempt, because on a phone it is deliberately the whole panel laid
+ * over everything else — the overlap there is the design.
+ * Every other pair has to clear.
  */
 export async function expectNoChromeOverlap(page: Page): Promise<void> {
 	const boxes = [...(await visibleBoxes(page))].filter(([selector]) => selector !== ".mw-map-sheet--side")
@@ -171,10 +176,10 @@ export async function expectSheetOpensAndCloses(page: Page, opener: Locator): Pr
 /**
  * Every control in the map's column that opens a sheet opens exactly one, and closes it both ways.
  *
- * The controls are read off the page rather than named here, so an app that mounts a
- * different set is held to the same interface and a control added later is covered
- * without this file changing. A control that opens no sheet — a compass, a zoom button —
- * is skipped, which is what keeps the walk honest about what it actually checked.
+ * The controls are read off the page rather than named here, so an app that mounts a different
+ * set is held to the same interface and a control added later is covered without this file changing.
+ * A control that opens no sheet — a compass, a zoom button — is skipped,
+ * which is what keeps the walk honest about what it actually checked.
  *
  * @returns The accessible names of the controls that were exercised.
  */
@@ -214,6 +219,7 @@ export async function expectEverySheetControlCloses(page: Page): Promise<string[
  * `visibility: hidden`, and an element clipped away by an ancestor's `overflow` keeps both.
  * The sources popover shipped exactly that way — present, carrying the right credits,
  * and erased by the footer strip's own `overflow-x` — and a `toBeVisible` test passed over it.
+ *
  * Hit-testing is what tells the difference, because a clipped element receives no hits.
  */
 export async function expectReachable(page: Page, selector: string): Promise<void> {
@@ -237,11 +243,12 @@ export async function expectReachable(page: Page, selector: string): Promise<voi
 /**
  * Every `queryRenderedFeatures` the page runs while the pointer moves names the layers it wants.
  *
- * Unscoped, that call walks the whole style: measured at 64.3 ms returning 4,819 features
- * over the 79-layer basemap at zoom 14 in Manhattan, against 5.7 ms and 44 features
- * scoped to the 11 label layers. One per pointer move is the map's entire frame budget,
- * and nothing about the page looks wrong when it happens — which is why it is a interface
- * rather than a timing assertion, and why a timing assertion would be the flaky way to write this.
+ * Unscoped, that call walks the whole style: measured at 64.3 ms returning 4,819
+ * features over the 79-layer basemap at zoom 14 in Manhattan, against 5.7 ms
+ * and 44 features scoped to the 11 label layers.
+ * One per pointer move is the map's entire frame budget, and nothing about the page looks wrong
+ * when it happens — which is why it is a interface rather than a timing assertion,
+ * and why a timing assertion would be the flaky way to write this.
  *
  * @param handle The global the app republishes its map instance under.
  */
@@ -305,9 +312,9 @@ export async function expectCompassFollowsBearing(page: Page, handle: string): P
 	// from this module — every value it needs is an argument.
 	await page.evaluate(
 		({ name, degrees }) => {
-			// The app republishes its map instance under a well-known global for exactly
-			// this kind of driving. `Reflect.get` reads it without asserting anything
-			// about `globalThis`, which carries no index signature.
+			// The app republishes its map instance under a well-known global for exactly this kind of driving.
+			// `Reflect.get` reads it without asserting anything about `globalThis`,
+			// which carries no index signature.
 			const published = Reflect.get(globalThis, name) as { setBearing(value: number): void } | undefined
 
 			published?.setBearing(degrees)

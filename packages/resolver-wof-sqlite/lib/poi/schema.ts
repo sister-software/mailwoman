@@ -19,7 +19,9 @@ import { sql, type Kysely } from "kysely"
 import type { NameKey } from "#street/normalize"
 
 /**
- * One POI row. Clustered PK: h3_cell → category_id → neg_rank → rowid_key.
+ * One POI row.
+ *
+ * Clustered PK: h3_cell → category_id → neg_rank → rowid_key.
  */
 export interface POITable {
 	/**
@@ -160,8 +162,9 @@ export async function createPOITable(db: Kysely<POIDatabase>): Promise<void> {
 }
 
 /**
- * Secondary index for the FTS-hydration path. Builders call this after the
- * bulk materialize (index-after-load).
+ * Secondary index for the FTS-hydration path.
+ *
+ * Builders call this after the bulk materialize (index-after-load).
  */
 export async function createPOINameKeyIndex(db: Kysely<POIDatabase>): Promise<void> {
 	await db.schema.createIndex("poi_name_key").on("poi").column("name_key").execute()
@@ -169,12 +172,14 @@ export async function createPOINameKeyIndex(db: Kysely<POIDatabase>): Promise<vo
 
 /**
  * Secondary index for the brand path — a brand-wide fetch by `brand_wikidata` (no `h3_cell` prefix).
- * Brand rows are globally sparse (~0.31% of poi.db, median nearest tagged instance ~110 km),
- * so the k-ring walk can never reach them. the reader instead fetches all of a brand's rows
- * and distance-sorts. Without this index that is a full-table scan (~600 ms);
- * with it, a range-scan (<1 ms p50). partial (`where brand_wikidata is not NULL`)
- * so the ~99.7% of rows that carry no QID never enter the B-tree — the index holds only
- * the ~43k branded rows. Builders call this after the bulk materialize (index-after-load),
+ *
+ * Brand rows are globally sparse (~0.31% of poi.db, median nearest tagged instance ~110 km), so the
+ * k-ring walk can never reach them. the reader instead fetches all of a brand's rows and distance-sorts.
+ * Without this index that is a full-table scan (~600 ms); with it, a range-scan (<1 ms p50).
+ * partial (`where brand_wikidata is not NULL`) so the ~99.7% of rows that carry no QID
+ * never enter the B-tree — the index holds only the ~43k branded rows.
+ *
+ * Builders call this after the bulk materialize (index-after-load),
  * same phase as {@link createPOINameKeyIndex}.
  */
 export async function createPOIBrandIndex(db: Kysely<POIDatabase>): Promise<void> {
@@ -193,6 +198,7 @@ export const POI_FTS_TABLE = "poi_search"
 
 /**
  * FTS5 stays raw SQL by project rule (Kysely can't express virtual tables).
+ *
  * Content-keyed by name_key.
  */
 export function createPOISearchFTS<DB>(db: DatabaseClient<DB>): void {

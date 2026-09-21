@@ -74,8 +74,9 @@ describe("runDoctor (injected boundaries)", () => {
 		const report = await runDoctor(healthyDeps())
 		expect(report.exitCode).toBe(0)
 
-		// runtime first (#1577): a stale node or an unloadable native binding explains every later line,
-		// so it has to be read first. Weights follow, then the optional data layers, then the overlays.
+		// runtime first (#1577): a stale node or an unloadable native binding explains
+		// every later line, so it has to be read first.
+		// Weights follow, then the optional data layers, then the overlays.
 		expect(report.checks.map((c) => c.id)).toEqual([
 			"node-version",
 			"onnxruntime",
@@ -442,8 +443,8 @@ describe("runDoctor (injected boundaries)", () => {
 })
 
 // The one dependency that is not injected in the suite above:
-// `defaultDoctorDeps` reads `engines.node` from mailwoman's own manifest,
-// located by self-reference (`resolvePackageDirectory("mailwoman")("package.json")`).
+// `defaultDoctorDeps` reads `engines.node` from mailwoman's own manifest, located by
+// self-reference (`resolvePackageDirectory("mailwoman")("package.json")`).
 // It touches the filesystem by construction — that is the thing under test —
 // and it degrades to ">=0" on any failure, so a broken resolution would otherwise show
 // up only as a doctor report that silently stops enforcing the Node floor.

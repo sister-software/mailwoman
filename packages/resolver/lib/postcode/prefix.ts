@@ -59,13 +59,16 @@
 import type { PostcodePrefixIndexLike, PostcodePrefixNode, ResolvedPlace } from "@mailwoman/core/resolver"
 
 /**
- * A resolved place that may carry no coordinate. `ResolvedPlace` requires
- * `lat`/`lon` (every gazetteer row has a value, even the 0,0 unlocated sentinel),
+ * A resolved place that may carry no coordinate.
+ *
+ * `ResolvedPlace` requires `lat`/`lon` (every gazetteer row has a value, even the 0,0 unlocated sentinel),
  * and the prefix prior's ancestry-only tier must express absence as `undefined` instead —
  * B3-3: inventing a centroid would reproduce the `BT3 9QQ` → Sheffield defect #1480.
  * `decorateNode` copies `lat`/`lon` onto the node verbatim, so an undefined coordinate
- * stays absent on the node — the meaning-of-zero rule. Widened only at this boundary:
- * gazetteer places (always coordinate-containing) remain plain `ResolvedPlace`.
+ * stays absent on the node — the meaning-of-zero rule.
+ *
+ * Widened only at this boundary: gazetteer places (always coordinate-containing)
+ * remain plain `ResolvedPlace`.
  */
 export type CoordinateOptionalPlace = Omit<ResolvedPlace, "lat" | "lon"> & { lat?: number; lon?: number }
 
@@ -82,6 +85,7 @@ const MIN_US_SECTION_CODE_LENGTH = 3
 
 /**
  * Derive the prefix the index is keyed by, per the artifact's own country law.
+ *
  * Returns null (abstain) for a country with no derivation law, or a code too short to carry a prefix.
  */
 export function derivePostcodePrefix(code: string, country?: string): string | null {
@@ -119,9 +123,11 @@ export interface PostcodePrefixProbeResult {
 }
 
 /**
- * Probe the index for `code`'s prefix. Two abstention checks, in order: the index's country
- * must match the query's country scope (or the scope is absent), and the derivation law must
- * yield a prefix the index carries. Returns null to abstain — never throws, never guesses.
+ * Probe the index for `code`'s prefix.
+ *
+ * Two abstention checks, in order: the index's country must match the query's country scope
+ * (or the scope is absent), and the derivation law must yield a prefix the index carries.
+ * Returns null to abstain — never throws, never guesses.
  */
 export function probePostcodePrefix(
 	code: string,
@@ -145,6 +151,7 @@ export function probePostcodePrefix(
 
 /**
  * Build the synthetic `ResolvedPlace` a prefix hit resolves a `postalcode` node to.
+ *
  * `id: 0` — it is not a gazetteer row (the same sentinel `applyPostcodeConsistency` uses for its
  * displaced place, resolve.ts) — and the coordinate is present only when the node carries one,
  * so an ancestry-only hit stays coordinate-free by construction (B3-3's 0% half).

@@ -71,11 +71,12 @@ describe("expandAbbreviations — fr-FR", () => {
 })
 
 describe("expandAbbreviations — es-ES / es-MX", () => {
-	// `Av.` is Avenida in Spanish and Avenue in French. Until 2026-08-05 there was no
-	// Spanish table at all, so every `es-*` locale fell through to the en-US default
-	// and `Av.` went unexpanded, while the locale-unknown set the geocode path uses expanded
-	// it to the english "Avenue". Both MX rows in the 2026-08-05 gauntlet batch record the
-	// second half of that (mx-op3-san-miguel-canada-zapopan, pr-op3-place-at-the-sea-ponce)
+	// `Av.` is Avenida in Spanish and Avenue in French.
+	// Until 2026-08-05 there was no Spanish table at all, so every `es-*` locale fell
+	// through to the en-US default and `Av.` went unexpanded, while the locale-unknown
+	// set the geocode path uses expanded it to the english "Avenue".
+	// Both MX rows in the 2026-08-05 gauntlet batch record the second half of
+	// that (mx-op3-san-miguel-canada-zapopan, pr-op3-place-at-the-sea-ponce)
 	// and had to leave `street` unasserted because of it.
 	it("expands Av. → Avenida, not Avenue", () => {
 		const r = expandAbbreviations("Av. Aurelio Ortega 460", "es-MX")

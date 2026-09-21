@@ -37,8 +37,10 @@ const FRN_ZETA = toFRN("0004444444")!
 
 /**
  * Row A: a fully-populated 499 filing — FRN present, both company fields present,
- * every attribute-containing field populated. Row B: an unregistered filer
- * (no FRN — legitimate per decision 3 rather than malformed) with most optional fields blank.
+ * every attribute-containing field populated.
+ *
+ * Row B: an unregistered filer (no FRN — legitimate per decision 3 rather than malformed)
+ * with most optional fields blank.
  */
 function form499FixtureRows(): Form499Row[] {
 	return [
@@ -86,6 +88,7 @@ function form499FixtureRows(): Form499Row[] {
 /**
  * `providerID` 130077 carries two rows with different FRNs
  * (decision 6 cardinality — must survive as two distinct edges, never folded/last-wins).
+ *
  * Row 2's `holdingCompany` is `null` (legitimate — must be counted as `skipped`, never thrown).
  * `providerID` 130080 is a second, independent provider.
  */

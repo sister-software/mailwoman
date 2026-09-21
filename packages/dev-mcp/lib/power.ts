@@ -54,24 +54,29 @@ export function wilsonInterval(successes: number, n: number, z = 1.96): { low: n
  *
  * A judgement rather than a measurement — there is no experiment that fixes it.
  * It is set at 1% because that is roughly the `n = 300` mark (`1 − 0.05^(1/300) = 0.99%`),
- * i.e. the point where a zero rests on a set larger than any panel anyone has assembled
- * by hand here. The 2026-08-15 probe used 10, whose bound is 25.9%.
+ * i.e. the point where a zero rests on a set larger than any panel anyone has assembled by hand here.
+ *
+ * The 2026-08-15 probe used 10, whose bound is 25.9%.
  */
 const ABSENCE_CLAIM_MAX_UPPER_BOUND = 0.01
 
 /**
- * How an input set was chosen. `hand-picked` is the one that warrants the extra sentence —
- * a full board carries its own denominator, and a declared subset carries the predicate that chose it.
+ * How an input set was chosen.
+ *
+ * `hand-picked` is the one that warrants the extra sentence — a full board carries its
+ * own denominator, and a declared subset carries the predicate that chose it.
  *
  * `random-draw` is separate from `subset` because the two support opposite claims.
  * A declared subset is chosen by a predicate and generalizes to nothing beyond it. a random draw
  * from a 26-million-row register is the one subset here whose rate estimates the population's.
+ *
  * Collapsing them would print "declared-subset" over the only sample in this file that is not one.
  */
 export type Selection = "full" | "subset" | "hand-picked" | "random-draw"
 
 /**
  * How each selection reads inside the observed-rate sentence.
+ *
  * A full board says nothing — its denominator already is the population — so it contributes
  * an empty string. every other kind names itself where a reader will trip over it.
  */
@@ -88,13 +93,15 @@ export interface ObservedRate {
 	selection: Selection
 	/**
 	 * What one event is, in the caller's own words, e.g. "differed" or "regressed".
+	 *
 	 * Used to build the sentence.
 	 */
 	eventLabel: string
 	/**
-	 * The size of the set this sample was drawn from, when the caller took a subset of
-	 * something larger. Naming it turns "0 of 10" into "0 of 10, out of 837 available",
-	 * which is the comparison that makes a panel look small.
+	 * The size of the set this sample was drawn from, when the caller took a subset of something larger.
+	 *
+	 * Naming it turns "0 of 10" into "0 of 10, out of 837 available", which is the
+	 * comparison that makes a panel look small.
 	 */
 	populationN?: number
 }
@@ -106,11 +113,14 @@ export interface PowerReading {
 	upperBound95: number | null
 	interval95: { low: number; high: number } | null
 	/**
-	 * The sentence. Callers put this in `summary` verbatim — see the module docstring for why it is prose.
+	 * The sentence.
+	 *
+	 * Callers put this in `summary` verbatim — see the module docstring for why it is prose.
 	 */
 	sentence: string
 	/**
 	 * True when the sample cannot support a claim of absence.
+	 *
 	 * Machine-readable so a wrapper can act on it, but it is the sentence that does the work.
 	 */
 	supportsAbsenceClaim: boolean

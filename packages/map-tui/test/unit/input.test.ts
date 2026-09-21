@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest"
 
 /**
  * The events from one chunk, for the majority of cases that leave nothing pending.
+ *
  * Anything asserting about the held fragment calls {@link decodeInputChunk} directly.
  */
 function eventsOf(chunk: string): MapTUIInput[] {
@@ -50,8 +51,8 @@ describe("decodeInputChunk", () => {
 
 	it("separates quit from interrupt", () => {
 		expect(eventsOf("q")).toEqual([{ kind: "quit" }])
-		// An ESC whose next byte cannot continue a sequence is the Esc
-		// KEY (here it quits twice — once for the Esc, once for the `q`).
+		// An ESC whose next byte cannot continue a sequence is the Esc KEY
+		// (here it quits twice — once for the Esc, once for the `q`).
 		// A trailing ESC is held instead. the escape-fragment suite below covers that.
 		expect(eventsOf(`${ESC}q`)).toEqual([{ kind: "quit" }, { kind: "quit" }])
 		expect(eventsOf("\u0003")).toEqual([{ kind: "interrupt" }])
@@ -97,8 +98,9 @@ describe("decodeInputChunk", () => {
 		expect(eventsOf(`${ESC}[<64;5;5Mq`)).toEqual([{ kind: "wheel", delta: 1, column: 4, row: 4 }, { kind: "quit" }])
 	})
 
-	// Everything below is one bug: the fallback used to answer "Esc key" — i.e. quit —
-	// for any escape it had no rule for. Every case here quit the browser.
+	// Everything below is one bug: the fallback used to answer "Esc key" —
+	// i.e. quit — for any escape it had no rule for.
+	// Every case here quit the browser.
 	describe("escape sequences the decoder has no rule for", () => {
 		it("swallows an SS3 function key instead of quitting", () => {
 			// F1..F4 on xterm are ESC O P..S — two bytes shorter than a CSI, so the CSI sweep never saw them.
@@ -131,8 +133,8 @@ describe("decodeInputChunk", () => {
 		})
 
 		it("reassembles a mouse report the kernel split in two", () => {
-			// The bug this rework exists for: no exotic key needed, just a read boundary inside a
-			// drag report. The first half used to decode as a quit and end the session mid-drag.
+			// The bug this rework exists for: no exotic key needed, just a read boundary inside a drag report.
+			// The first half used to decode as a quit and end the session mid-drag.
 			const first = decodeInputChunk(`${ESC}[<32;12`)
 
 			expect(first.events).toEqual([])
@@ -145,9 +147,9 @@ describe("decodeInputChunk", () => {
 		})
 
 		it("stops holding a fragment that has stopped being plausible", () => {
-			// An unterminated string sequence would otherwise grow the held fragment for the life
-			// of the process. Dropping emits nothing, which is the safe failure — flushing it
-			// back through the decoder is what read sequence bodies as keys in the first place.
+			// An unterminated string sequence would otherwise grow the held fragment for the life of the process.
+			// Dropping emits nothing, which is the safe failure — flushing it back through
+			// the decoder is what read sequence bodies as keys in the first place.
 			const runaway = decodeInputChunk(`${ESC}]52;c;${"A".repeat(70_000)}`)
 
 			expect(runaway.events).toEqual([])

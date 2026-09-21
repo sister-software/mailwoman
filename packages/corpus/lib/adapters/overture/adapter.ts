@@ -38,8 +38,9 @@ import { stableSourceID } from "#adapters/utils"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record
- * can be traced back to the dataset it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const OVERTURE_ADAPTER_ID = "overture"
 /**
@@ -60,15 +61,18 @@ interface OvertureCorpusRow {
 }
 
 /**
- * Whether an Overture `unit` value is a secondary-unit designator — something
- * with a digit in it, or one bare word (`EG`, `Penthouse`) — rather than a name.
+ * Whether an Overture `unit` value is a secondary-unit designator — something with a
+ * digit in it, or one bare word (`EG`, `Penthouse`) — rather than a name.
+ *
  * Overture-SG writes the estate or building name in this field
  * (91,818 of 142,210 rows carry a multi-word name such as `serangoon garden estate`) and the
  * literal `NIL` on 47,407 more, where every other country's rows carry a digit-containing unit
  * or nothing (DE 3,084 digit-containing of 40,837 non-empty. NL and ES none name-shaped).
- * A name taught as `unit` teaches that a trailing proper name is one, which is the shape
- * of the `#NNN`-unit defect the corpus exists to fix. Such a value is dropped here. a
- * register recipe that wants the building name as a `venue` reads the jsonl itself.
+ * A name taught as `unit` teaches that a trailing proper name is one, which is the
+ * shape of the `#NNN`-unit defect the corpus exists to fix.
+ *
+ * Such a value is dropped here. a register recipe that wants the building name
+ * as a `venue` reads the jsonl itself.
  */
 export function unitFieldIsDesignator(value: string): boolean {
 	const trimmed = value.trim()

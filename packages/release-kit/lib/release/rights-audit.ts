@@ -41,12 +41,14 @@ import { weightsRightsRecords } from "#weights/rights/write"
 export interface SourceRegisterAudit {
 	sources: number
 	/**
-	 * Sources with no eligibility problem. Zero is the reading today and is a measurement
-	 * rather than a placeholder.
+	 * Sources with no eligibility problem.
+	 *
+	 * Zero is the reading today and is a measurement rather than a placeholder.
 	 */
 	eligible: number
 	/**
 	 * Each distinct refusal, with how many sources it refuses.
+	 *
 	 * A source refused several ways counts under each.
 	 */
 	refusals: Array<{ because: string; sources: number }>
@@ -75,26 +77,30 @@ export interface PackageRightsAudit {
 	modelCardVersion: string | null
 	artifacts: number
 	/**
-	 * Artifacts whose digest the card records. The remainder read `unrecorded`,
-	 * which is a different answer from verified.
+	 * Artifacts whose digest the card records.
+	 *
+	 * The remainder read `unrecorded`, which is a different answer from verified.
 	 */
 	digestsRecorded: number
 	attributionEntries: number
 	/**
 	 * Entries whose text names no license this reader could find.
+	 *
 	 * The entry may still state terms outside a parenthetical, which is why this
 	 * counts entries rather than declaring them unlicensed.
 	 */
 	entriesNamingNoLicense: number
 	/**
 	 * Entries stating a use that is evaluation or tokenizer text rather than training rows.
+	 *
 	 * These attribute data the model did not learn from.
 	 */
 	entriesNotTraining: number
 	/**
-	 * Entries stating no use at all. Whether the source trained the model is unrecorded,
-	 * which is a different answer from recorded as not having trained it —
-	 * counting the two together would report an absence as a measurement.
+	 * Entries stating no use at all.
+	 *
+	 * Whether the source trained the model is unrecorded, which is a different answer from recorded as
+	 * not having trained it — counting the two together would report an absence as a measurement.
 	 */
 	entriesStatingNoUse: number
 	/**
@@ -103,6 +109,7 @@ export interface PackageRightsAudit {
 	foreignAttribution: number
 	/**
 	 * The chain to the package owning the model graph, for a data-only overlay.
+	 *
 	 * Empty for a graph package.
 	 */
 	lineage: string[]
@@ -112,6 +119,7 @@ export interface PackageRightsAudit {
 	lineageUnresolved: string | null
 	/**
 	 * Whether the manifest's `files` array carries both generated rights filenames.
+	 *
 	 * A file committed and not listed never reaches a consumer.
 	 */
 	shipsRightsFiles: boolean
@@ -124,8 +132,9 @@ export interface PackageRightsAudit {
 export interface TrainingRecordAudit {
 	package: string
 	/**
-	 * The corpus the card names as prose, or `null`. It is not an identifier
-	 * and cannot be joined to a manifest.
+	 * The corpus the card names as prose, or `null`.
+	 *
+	 * It is not an identifier and cannot be joined to a manifest.
 	 */
 	corpusNamed: string | null
 	/**
@@ -153,7 +162,9 @@ export interface RightsAudit {
 	 */
 	established: string[]
 	/**
-	 * What it could not, each with why. A release decision reads this list rather than the absence of errors.
+	 * What it could not, each with why.
+	 *
+	 * A release decision reads this list rather than the absence of errors.
 	 */
 	unresolved: string[]
 }
@@ -161,8 +172,8 @@ export interface RightsAudit {
 /**
  * Where a frozen training manifest would be read from, relative to the repository root.
  *
- * A corpus build writes it beside the corpus it produced, under the data root, which no
- * release path reads. The repository copy is the one a release can check, and none exists yet.
+ * A corpus build writes it beside the corpus it produced, under the data root, which no release path reads.
+ * The repository copy is the one a release can check, and none exists yet.
  */
 const FROZEN_MANIFESTS_DIRECTORY = "packages/corpus/data/training-manifests"
 
@@ -170,8 +181,8 @@ const FROZEN_MANIFESTS_DIRECTORY = "packages/corpus/data/training-manifests"
  * The register's admissions and refusals.
  *
  * `readAddressSourceRegister` resolves the committed path itself and throws
- * when the register's digest or its own audit fails, so reaching the loop below
- * means the counts describe a register that was regenerated rather than hand-edited.
+ * when the register's digest or its own audit fails, so reaching the loop below means
+ * the counts describe a register that was regenerated rather than hand-edited.
  * There is no field for that here because a failure never returns.
  */
 async function auditRegister(): Promise<SourceRegisterAudit> {
@@ -318,7 +329,9 @@ async function auditTraining(
 }
 
 /**
- * The whole pass. Reads the checkout and changes nothing.
+ * The whole pass.
+ *
+ * Reads the checkout and changes nothing.
  */
 export async function auditRights(repoRoot: string): Promise<RightsAudit> {
 	const records = await weightsRightsRecords(repoRoot)

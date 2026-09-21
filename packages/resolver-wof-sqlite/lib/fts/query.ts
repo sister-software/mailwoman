@@ -25,8 +25,8 @@ export function normalizePlacetypes(p: FindPlaceQuery["placetype"]): WOFPlacetyp
  * Per-token rules:
  *
  * - Strip all punctuation except trailing `*` from each whitespace-separated token.
- * - **Trailing `*`** is preserved as FTS5 **prefix syntax** — `627*` becomes the literal
- *   `627*` (unquoted). The caller signaled they want a prefix. respect that.
+ * - **Trailing `*`** is preserved as FTS5 **prefix syntax** — `627*` becomes the literal `627*` (unquoted).
+ *   The caller signaled they want a prefix. respect that.
  * - All other tokens are wrapped in `"..."` as a single-word phrase.
  *   Conservative — handles apostrophes, parens, accented input, etc. safely.
  * - Multiple tokens join with implicit `and`.
@@ -62,11 +62,12 @@ export function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }):
 			continue
 		}
 
-		// Everything else splits on intra-token punctuation — the behavior the docstring always
-		// promised ("St. (Petersburg)" → two phrases). The old code deleted punctuation instead,
-		// fusing "Thiron-Gardais" into the unmatchable single term `ThironGardais` while the FTS
-		// doc holds two terms (#945 — the entire hyphenated-name class missed at the raw lookup.
-		// masked for years because pre-splice tokenizers never emitted hyphen-preserved values).
+		// Everything else splits on intra-token punctuation — the behavior the docstring
+		// always promised ("St. (Petersburg)" → two phrases).
+		// The old code deleted punctuation instead, fusing "Thiron-Gardais" into the
+		// unmatchable single term `ThironGardais` while the FTS doc holds two terms
+		// (#945 — the entire hyphenated-name class missed at the raw lookup. masked for years
+		// because pre-splice tokenizers never emitted hyphen-preserved values).
 		const parts = trimmed.split(/[^\p{L}\p{N}]+/u).filter((part) => part.length)
 
 		if (!parts.length) continue

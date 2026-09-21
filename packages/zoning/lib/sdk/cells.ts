@@ -40,8 +40,8 @@ import { polygonToCells } from "h3-js"
  * Would a centre-IN-polygon polyfill return nothing for this feature?
  *
  * The measurement that forced this layer's index to take cell-touches-polygon:
- * at resolution 9 `polygonToCells` returns an empty set for the great majority
- * of Irish zoning polygons, because no cell centre falls inside them.
+ * at resolution 9 `polygonToCells` returns an empty set for the great majority of
+ * Irish zoning polygons, because no cell centre falls inside them.
  * A builder indexing only the polyfill output would drop every one of them silently.
  */
 export function polyfillFindsNothing(polygons: MultiPolygonRings, resolution: number): boolean {
@@ -72,8 +72,9 @@ export interface CellIndexMeasurement {
 	 */
 	partialCells: number
 	/**
-	 * `partialCells / touchedCells`. Reported, and not what the resolution is
-	 * chosen on — see this file's header.
+	 * `partialCells / touchedCells`.
+	 *
+	 * Reported, and not what the resolution is chosen on — see this file's header.
 	 */
 	partialShare: number
 	/**
@@ -86,6 +87,7 @@ export interface CellIndexMeasurement {
 	storedCellRows: number
 	/**
 	 * How many polygons name a cell, over the cells the layer reaches.
+	 *
 	 * This is what a probe pays: a cell naming eight candidates is eight bounding-box
 	 * tests and up to eight ray casts.
 	 */
@@ -97,7 +99,9 @@ export interface CellIndexMeasurement {
 	multiCandidateShare: number
 	/**
 	 * Features a centre-in-polygon polyfill would have returned nothing for —
-	 * see {@link polyfillFindsNothing}. `undefined` where the measurement did not run it.
+	 * see {@link polyfillFindsNothing}.
+	 *
+	 * `undefined` where the measurement did not run it.
 	 */
 	polyfillZeroCellFeatures?: number
 	/**
@@ -115,9 +119,10 @@ export interface CellIndexMeasurement {
  * Accumulate one resolution's cell index over a stream of features.
  *
  * The whole set is held as short-cell strings rather than the integers the tables store,
- * because `compactCells` is an h3-js function over full indexes and round-tripping at every step
- * would cost more than the strings do. The candidate counter is keyed by the 48-bit integer instead:
- * it is the larger of the two at every candidate resolution, and it is never handed back to h3.
+ * because `compactCells` is an h3-js function over full indexes and round-tripping
+ * at every step would cost more than the strings do.
+ * The candidate counter is keyed by the 48-bit integer instead: it is the larger of the
+ * two at every candidate resolution, and it is never handed back to h3.
  */
 export class ZoningCellIndex {
 	readonly resolution: number

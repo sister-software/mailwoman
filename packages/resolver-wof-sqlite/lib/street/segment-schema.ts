@@ -20,13 +20,15 @@ import type { Kysely } from "kysely"
 import type { RouteKey } from "#street/normalize"
 
 /**
- * One tiger street-segment edge: a `(from_hn, to_hn)` house-number range on one `side` of a named
- * street, with the geometry the interpolator walks. `min_hn`/`max_hn` are the sorted
- * bounds (the probe filters on them); `parity` is `odd`/`even`/`mixed`.
+ * One tiger street-segment edge: a `(from_hn, to_hn)` house-number range on one `side`
+ * of a named street, with the geometry the interpolator walks.
+ *
+ * `min_hn`/`max_hn` are the sorted bounds (the probe filters on them); `parity` is `odd`/`even`/`mixed`.
  */
 export interface StreetSegmentTable {
 	/**
 	 * `canonicalizeRouteKey(normalizeStreetForKey(street))` — the build/query-consistent probe key.
+	 *
 	 * The column name says `street_norm`, but the value carries the route fold on
 	 * top of the street fold, which is why the brand is
 	 * {@link RouteKey}: builder and probe both apply both folds, and a plain street key bound here misses every
@@ -75,10 +77,11 @@ export interface StreetSegmentTable {
 }
 
 /**
- * The extract's single-row calibration metadata (#374 doctrine, 2026-07-26): the conformal
- * radius multiplier is a property of the calibration SET the artifact was built against —
- * so it ships IN the artifact (the pair-index δ precedent, `neural/pair-index-resolver.ts`),
- * not in caller code. Written once by the builder. read at open time by
+ * The extract's single-row calibration metadata (#374 doctrine, 2026-07-26): the conformal radius
+ * multiplier is a property of the calibration SET the artifact was built against — so it ships IN
+ * the artifact (the pair-index δ precedent, `neural/pair-index-resolver.ts`), not in caller code.
+ *
+ * Written once by the builder. read at open time by
  * {@link StreetInterpolator}. Extracts built before this table exists simply lack it — the reader degrades to
  * `undefined` and callers fall back to the in-code per-region table (never patch shipped DBs — rebuild).
  */
@@ -107,8 +110,10 @@ export interface StreetSegmentDatabase {
 }
 
 /**
- * The `street_segment` columns in insert order. The builder's positional prepared statement derives
- * its placeholder list from this, so the positional order can't drift from the DDL / the reader.
+ * The `street_segment` columns in insert order.
+ *
+ * The builder's positional prepared statement derives its placeholder list from this,
+ * so the positional order can't drift from the DDL / the reader.
  */
 export const STREET_SEGMENT_COLUMNS = [
 	"street_norm",
@@ -149,10 +154,12 @@ export async function createStreetSegmentTable(db: Kysely<StreetSegmentDatabase>
 }
 
 /**
- * Create + populate the single-row `interp_calibration` metadata table (see {@link InterpCalibrationRow}) —
- * called once by the extract builder, after the value is selected from the calibration source
- * of record. Build-time only (async Kysely is fine here); the read side is the raw sync
- * probe in {@link StreetInterpolator}'s constructor, per the sync-by-interface doctrine.
+ * Create + populate the single-row `interp_calibration` metadata table
+ * (see {@link InterpCalibrationRow}) — called once by the extract builder,
+ * after the value is selected from the calibration source of record.
+ *
+ * Build-time only (async Kysely is fine here); the read side is the raw sync probe in
+ * {@link StreetInterpolator}'s constructor, per the sync-by-interface doctrine.
  */
 export async function writeInterpCalibration(
 	db: Kysely<StreetSegmentDatabase>,

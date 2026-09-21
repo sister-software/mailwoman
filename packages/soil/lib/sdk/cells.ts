@@ -79,8 +79,10 @@ export interface SoilCellIndexMeasurement {
 	 */
 	partialShare: number
 	/**
-	 * Whole cells after `compactCells`. Expected to be close to `wholeCells` here rather than far
-	 * below it: compaction needs a uniform interior, and small delineations do not produce one.
+	 * Whole cells after `compactCells`.
+	 *
+	 * Expected to be close to `wholeCells` here rather than far below it: compaction
+	 * needs a uniform interior, and small delineations do not produce one.
 	 */
 	compactedWholeCells: number
 	/**
@@ -115,8 +117,9 @@ export class SoilCellIndex {
 	readonly #whole = new Set<string>()
 	readonly #touched = new Set<string>()
 	/**
-	 * `cell → delineation ids`. Every touched cell, so the mean below is over the
-	 * real population rather than over the fringe alone.
+	 * `cell → delineation ids`.
+	 *
+	 * Every touched cell, so the mean below is over the real population rather than over the fringe alone.
 	 */
 	readonly #byCell = new Map<string, Set<string>>()
 

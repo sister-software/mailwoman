@@ -49,7 +49,9 @@ const { values } = parseArguments({
 		"per-region": { type: "string", default: "120" },
 		out: { type: "string", default: String(dataRootPath("eval", "coord", "us-stratified.jsonl")) },
 		/**
-		 * The GeoNames postal export to draw from. Defaults to the standard fetch out-root for the country.
+		 * The GeoNames postal export to draw from.
+		 *
+		 * Defaults to the standard fetch out-root for the country.
 		 */
 		source: { type: "string" },
 		quota: { type: "string", default: String(DEFAULT_LOCALITY_QUOTA) },
@@ -106,8 +108,10 @@ function shapeOf(locality: string): string {
 }
 
 /**
- * A deterministic comparator that shuffles a bucket. Seeded so two runs of this tool write the same
- * panel: a panel that changes between draws cannot be used to compare two models measured a day apart.
+ * A deterministic comparator that shuffles a bucket.
+ *
+ * Seeded so two runs of this tool write the same panel: a panel that changes between
+ * draws cannot be used to compare two models measured a day apart.
  */
 function seededOrder(size: number): (a: unknown, b: unknown) => number {
 	const next = mulberry32(size)
@@ -127,9 +131,11 @@ function seededOrder(size: number): (a: unknown, b: unknown) => number {
 }
 
 /**
- * Keyed by the stratum the draw is even across. The region form is the one the panel writes out —
- * GeoNames publishes `California`, never `CA`, and the surface under test is the code —
- * so folding here keeps the shortfall report and the rows speaking the same vocabulary.
+ * Keyed by the stratum the draw is even across.
+ *
+ * The region form is the one the panel writes out — GeoNames publishes `California`,
+ * never `CA`, and the surface under test is the code — so folding here keeps the
+ * shortfall report and the rows speaking the same vocabulary.
  */
 const byStratum = new Map<string, Array<(typeof quotaed)[number] & { written: string }>>()
 

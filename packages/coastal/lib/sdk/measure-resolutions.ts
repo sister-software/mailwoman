@@ -32,7 +32,9 @@ import { NCERM_SCENARIOS_BY_KEY } from "#vocabulary"
 
 export interface MeasureResolutionsOptions extends CoastalIngestOptions, ResolutionMeasurementOptions {
 	/**
-	 * Which scenarios to measure. Defaults to all twelve.
+	 * Which scenarios to measure.
+	 *
+	 * Defaults to all twelve.
 	 */
 	scenarioKeys?: ReadonlyArray<string>
 }
@@ -40,8 +42,9 @@ export interface MeasureResolutionsOptions extends CoastalIngestOptions, Resolut
 export interface ResolutionMeasurementReport {
 	features: number
 	/**
-	 * The count each measured layer declares for itself. A run whose streamed
-	 * total differs read a truncated file.
+	 * The count each measured layer declares for itself.
+	 *
+	 * A run whose streamed total differs read a truncated file.
 	 */
 	declaredFeatureCounts: Record<string, number>
 	measurements: CellIndexMeasurement[]

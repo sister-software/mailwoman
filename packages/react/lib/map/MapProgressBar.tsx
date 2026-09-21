@@ -21,12 +21,15 @@ import { cx } from "#common/cx"
 
 export interface MapProgressBarProps {
 	/**
-	 * Whether the bar is showing at all. It stays mounted through its fade
-	 * rather than unmounting on the transition.
+	 * Whether the bar is showing at all.
+	 *
+	 * It stays mounted through its fade rather than unmounting on the transition.
 	 */
 	active: boolean
 	/**
-	 * Completed steps over total steps, in [0, 1]. Omit for work whose length is unknown.
+	 * Completed steps over total steps, in [0, 1].
+	 *
+	 * Omit for work whose length is unknown.
 	 */
 	fraction?: number | null
 	/**

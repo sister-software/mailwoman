@@ -12,9 +12,10 @@ import type { ReactNode } from "react"
 
 export interface AboutProps {
 	/**
-	 * Wrap the prose in its own `<details>` disclosure. Set false where the host
-	 * is already the disclosure — inside a sheet opened by an About button,
-	 * a summary repeating that button's words is one control too many.
+	 * Wrap the prose in its own `<details>` disclosure.
+	 *
+	 * Set false where the host is already the disclosure — inside a sheet opened by an
+	 * About button, a summary repeating that button's words is one control too many.
 	 *
 	 * @default true
 	 */

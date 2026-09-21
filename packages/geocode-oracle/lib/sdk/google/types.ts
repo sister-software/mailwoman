@@ -30,12 +30,14 @@
  * The `status` field every Geocoding API response carries — Google's IN-band error channel.
  *
  * This is the single most important thing about this API.
- * Every one of these arrives under **http 200**, including the ones that mean "your key
- * is invalid" and "you are over quota". A client that only inspects the http status
- * treats a `REQUEST_DENIED` as a successful geocode with zero results, caches it,
- * and reports an empty answer forever. `google-client.ts` maps each of these onto a
- * `ResourceError` with a synthetic http status so callers branch on `error.status` /
- * `isTransientResourceError(error)` exactly as they do for every other client in this repo.
+ * Every one of these arrives under **http 200**, including the ones that mean
+ * "your key is invalid" and "you are over quota".
+ *
+ * A client that only inspects the http status treats a `REQUEST_DENIED` as a successful
+ * geocode with zero results, caches it, and reports an empty answer forever.
+ * `google-client.ts` maps each of these onto a `ResourceError` with a synthetic http status
+ * so callers branch on `error.status` / `isTransientResourceError(error)` exactly
+ * as they do for every other client in this repo.
  *
  * @see https://developers.google.com/maps/documentation/geocoding/requests-geocoding#StatusCodes
  */
@@ -45,8 +47,10 @@ export const GoogleGeocoderStatus = {
 	 */
 	OK: "OK",
 	/**
-	 * The geocode succeeded but returned no results. A legitimate, cacheable answer:
-	 * the address does not resolve, and asking again tomorrow will not change that.
+	 * The geocode succeeded but returned no results.
+	 *
+	 * A legitimate, cacheable answer: the address does not resolve, and asking
+	 * again tomorrow will not change that.
 	 */
 	ZeroResults: "ZERO_RESULTS",
 	/**
@@ -66,19 +70,23 @@ export const GoogleGeocoderStatus = {
 	 */
 	InvalidRequest: "INVALID_REQUEST",
 	/**
-	 * A server-side error. Google's own documentation says to retry.
+	 * A server-side error.
+	 *
+	 * Google's own documentation says to retry.
 	 */
 	UnknownError: "UNKNOWN_ERROR",
 } as const
 
 /**
  * The `status` field every Geocoding API response carries.
+ *
  * See {@linkcode GoogleGeocoderStatus}.
  */
 export type GoogleGeocoderStatus = (typeof GoogleGeocoderStatus)[keyof typeof GoogleGeocoderStatus]
 
 /**
  * How precise Google considers the returned coordinate.
+ *
  * Maps onto mailwoman's `ResolutionTier` in `google-parser.ts` — that mapping is
  * what lets an oracle run fill a `SeedCase.expectTier`.
  */
@@ -108,8 +116,10 @@ export const GoogleLocationType = {
 export type GoogleLocationType = (typeof GoogleLocationType)[keyof typeof GoogleLocationType]
 
 /**
- * One `address_components` entry. `types` is an array because Google tags a single component with
- * every category that applies to it (a component is routinely both `locality` and `political`).
+ * One `address_components` entry.
+ *
+ * `types` is an array because Google tags a single component with every category that
+ * applies to it (a component is routinely both `locality` and `political`).
  */
 export interface GoogleAddressComponent {
 	/**
@@ -127,7 +137,9 @@ export interface GoogleAddressComponent {
 }
 
 /**
- * A `{ lat, lng }` pair. Structurally identical to `@googlemaps/google-maps-services-js`'s `LatLngLiteral`,
+ * A `{ lat, lng }` pair.
+ *
+ * Structurally identical to `@googlemaps/google-maps-services-js`'s `LatLngLiteral`,
  * which is what `GeoPoint`'s constructor overload and `GeoPoint.toGoogleLatLngLiteral()` speak.
  */
 export interface GoogleLatLngLiteral {
@@ -166,11 +178,13 @@ export interface GoogleGeometry {
 export interface GooglePlusCode {
 	/**
 	 * The globally unambiguous form, e.g. `"8FW4V75V+8Q"`.
+	 *
 	 * This is the one carried onto `OracleGeocodeResult.plusCode`.
 	 */
 	global_code: string
 	/**
 	 * The shortened form relative to a named locality, e.g. `"V75V+8Q Paris, France"`.
+	 *
 	 * Only present when a suitable reference locality exists.
 	 */
 	compound_code?: string
@@ -197,8 +211,9 @@ export interface GoogleGeocodeResult {
 	 */
 	types: string[]
 	/**
-	 * Set (and only set) when Google could not match the query as given and fell back
-	 * to something looser. Absent means exact, which is why
+	 * Set (and only set) when Google could not match the query as given and fell back to something looser.
+	 *
+	 * Absent means exact, which is why
 	 * {@linkcode OracleGeocodeResult.partialMatch} coerces rather than passes through.
 	 */
 	partial_match?: boolean
@@ -209,14 +224,17 @@ export interface GoogleGeocodeResult {
 }
 
 /**
- * The full response body. `results` is always present (empty on `ZERO_RESULTS`);
- * `error_message` only accompanies a failing `status`.
+ * The full response body.
+ *
+ * `results` is always present (empty on `ZERO_RESULTS`); `error_message` only
+ * accompanies a failing `status`.
  */
 export interface GoogleGeocodeResponse {
 	results: GoogleGeocodeResult[]
 	status: GoogleGeocoderStatus | string
 	/**
 	 * Google's human-readable explanation of a failing `status`.
+	 *
 	 * Never contains the API key — it is safe to surface in an error message, and `google-client.ts` does.
 	 */
 	error_message?: string

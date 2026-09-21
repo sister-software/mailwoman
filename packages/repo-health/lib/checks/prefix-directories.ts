@@ -175,11 +175,11 @@ export function findPrefixGroups(
 export function planPrefixMoves(groups: readonly PrefixGroup[], trackedFiles: readonly string[]): ModuleMove[] {
 	const moves: ModuleMove[] = []
 
-	// A directory that is itself moving carries its contents with it,
-	// so a group inside one would claim the same file twice with two destinations —
-	// `lib/cli-native/command-router.ts` is both a `cli-` member through its directory
-	// and a `command-` member in its own right. The outer move wins this pass and the
-	// check re-reads afterwards. that is what the fix's repeated passes are for.
+	// A directory that is itself moving carries its contents with it, so a group inside one
+	// would claim the same file twice with two destinations — `lib/cli-native/command-router.ts`
+	// is both a `cli-` member through its directory and a `command-` member in its own right.
+	// The outer move wins this pass and the check re-reads afterwards. that is
+	// what the fix's repeated passes are for.
 	const movingDirectories = groups.flatMap((group) =>
 		group.members.filter((member) => member.kind === "directory" && member.name !== group.prefix).map((m) => m.path)
 	)

@@ -110,8 +110,9 @@ describe("synthesizeLocaleRow (generic)", () => {
 		const row = synthesizeLocaleRow(madrid, "ES", { random: keepAll })!
 		expect(row).not.toBeNull()
 		expect(row.locale).toBe("es-ES")
-		// ES renders "Calle Mayor, 12, 28013 Madrid" — house after street (a comma between them, unlike German),
-		// postcode before city. The order is what the recipe teaches.
+		// ES renders "Calle Mayor, 12, 28013 Madrid" — house after street
+		// (a comma between them, unlike German), postcode before city.
+		// The order is what the recipe teaches.
 		expect(row.raw.indexOf("Calle Mayor")).toBeLessThan(row.raw.indexOf("12"))
 		expect(row.raw).toContain("28013 Madrid")
 	})

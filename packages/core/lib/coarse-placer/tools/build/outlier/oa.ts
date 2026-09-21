@@ -52,15 +52,21 @@ interface OaTestRow {
  */
 export interface BuildOutlierOAOptions {
 	/**
-	 * Extracted OpenAddresses root. Default `$MAILWOMAN_DATA_ROOT/openaddresses/extracted`.
+	 * Extracted OpenAddresses root.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/openaddresses/extracted`.
 	 */
 	oaDir?: PathBuilderLike
 	/**
-	 * Row cap per off-map country. Default 6000.
+	 * Row cap per off-map country.
+	 *
+	 * Default 6000.
 	 */
 	perCountry?: number
 	/**
-	 * Dataset dir the `other` rows append to. Default `<repo>/data/coarse-placer`.
+	 * Dataset dir the `other` rows append to.
+	 *
+	 * Default `<repo>/data/coarse-placer`.
 	 */
 	data?: PathBuilderLike
 }
@@ -83,9 +89,10 @@ const IN_MAP = new Set<string>(COUNTRIES)
 
 /**
  * Language/region families for the leave-one-family-out split.
+ *
  * Off-map countries OA's europe+asia zips plausibly carry. the actual train/heldout
- * set is intersected with what's on disk at runtime. heldout families are
- * the generalization probe (the model never sees a single row from them).
+ * set is intersected with what's on disk at runtime. heldout families are the
+ * generalization probe (the model never sees a single row from them).
  * Off-map families, intersected at runtime with what OA's europe+asia zips actually carry
  * (verified on disk: ae at au be cz dk ee fi gr il is kw kz lt lu lv nc nz pl pt qa ro sa se sg si sk).
  */

@@ -26,8 +26,9 @@ import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record
- * can be traced back to the dataset it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const USGOV_IMLS_PLS_ADAPTER_ID = "usgov-imls-pls"
 /**
@@ -93,9 +94,8 @@ export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
 					region: state.abbreviation,
 					postcode: zip,
 					// #552: no subregion — US postal addresses don't surface the county, so emitting
-					// subregion creates a phantom component with no raw-span to align to,
-					// quarantining ~21% of rows. The county is still available in the source
-					// CSV. it just isn't a postal-surface component here.
+					// subregion creates a phantom component with no raw-span to align to, quarantining ~21% of rows.
+					// The county is still available in the source CSV. it just isn't a postal-surface component here.
 				}
 
 				const rendered = formatAddressRow(components, "US", { singleLine: true })

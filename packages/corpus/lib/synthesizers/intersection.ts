@@ -97,7 +97,9 @@ const SUFFIXES = ["St", "Ave", "Blvd", "Rd", "Dr", "Ln", "Way", "Pl", "Ct", "Pkw
 const DIRECTIONALS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"] as const satisfies readonly DirectionalAbbreviation[]
 
 /**
- * Connectors between the two streets. Whitespace-padded forms keep tokens clean for alignment.
+ * Connectors between the two streets.
+ *
+ * Whitespace-padded forms keep tokens clean for alignment.
  * `@` added in v0.7.2 — the harness uses it ("Main St @ Second Ave") and v0.7.1 had never seen it.
  */
 const CONNECTORS = [" & ", " and ", " at ", " / ", " @ "] as const
@@ -142,8 +144,10 @@ function buildStreetName(random: () => number): string {
 }
 
 /**
- * Synthesize one US intersection row. Returns null on the rare degenerate case where the
- * two streets collide (so alignment never has two identical surface forms to disambiguate).
+ * Synthesize one US intersection row.
+ *
+ * Returns null on the rare degenerate case where the two streets collide
+ * (so alignment never has two identical surface forms to disambiguate).
  */
 export function synthesizeIntersectionRow(
 	base: IntersectionBaseTuple,
@@ -170,9 +174,10 @@ export function synthesizeIntersectionRow(
 
 	const components: CanonicalRow["components"] = { intersection_a: a, intersection_b: b }
 
-	// v0.7.2: ~60% bare (no locality tail). v0.7.1 always appended ", City, ST", so the model learned
-	// to read post-intersection text as a locality and fumbled the harness's bare "X & Y" cases
-	// (mislabeling the second street as a locality). Match the eval distribution.
+	// v0.7.2: ~60% bare (no locality tail). v0.7.1 always appended ", City, ST",
+	// so the model learned to read post-intersection text as a locality and fumbled the
+	// harness's bare "X & Y" cases (mislabeling the second street as a locality).
+	// Match the eval distribution.
 	const bare = random() < 0.6
 	let raw: string
 

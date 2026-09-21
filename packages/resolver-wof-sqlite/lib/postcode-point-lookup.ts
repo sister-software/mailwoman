@@ -24,7 +24,9 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { WOFDatabase } from "#schema"
 
 /**
- * A gazetteer hit. `lat`/`lon` of 0 means the postcode is known but has no centroid (no admin parent).
+ * A gazetteer hit.
+ *
+ * `lat`/`lon` of 0 means the postcode is known but has no centroid (no admin parent).
  */
 export interface PostcodePlace {
 	country: string

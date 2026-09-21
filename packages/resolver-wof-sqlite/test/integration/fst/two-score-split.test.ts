@@ -18,7 +18,9 @@ import {
 import { describe, expect, it } from "vitest"
 
 /**
- * The v4 place-entry stride. Hard-coded rather than imported: the point of
+ * The v4 place-entry stride.
+ *
+ * Hard-coded rather than imported: the point of
  * {@link downgradeToV4} is to write bytes the current serializer no longer can.
  */
 const V4_PLACE_ENTRY_SIZE = 56

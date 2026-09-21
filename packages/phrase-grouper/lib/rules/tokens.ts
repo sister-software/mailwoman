@@ -9,6 +9,7 @@ import { Span } from "@mailwoman/core/tokenization"
 
 /**
  * One token within a segment — absolute offsets into the normalized input.
+ *
  * Built by `tokenizeSegment` from a (segment-text, segment-start) pair.
  */
 export interface SegmentToken {
@@ -20,11 +21,11 @@ export interface SegmentToken {
 const WHITESPACE = /\s+/
 
 /**
- * Neutral baseline confidence for phrase proposals when no structural
- * cue (position, length, known suffix/prefix/marker, format-hit) lifts
- * or penalizes the score. Each rule adds bonuses on top of this base
- * (e.g. +0.15 for 2-token locality runs, +0.1 for tail-of-last-segment) and subtracts
- * penalties (e.g. −0.2 for a known US region name that isn't at segment-tail).
+ * Neutral baseline confidence for phrase proposals when no structural cue
+ * (position, length, known suffix/prefix/marker, format-hit) lifts or penalizes the score.
+ *
+ * Each rule adds bonuses on top of this base (e.g. +0.15 for 2-token locality runs, +0.1 for tail-of-last-segment)
+ * and subtracts penalties (e.g. −0.2 for a known US region name that isn't at segment-tail).
  */
 export const NEUTRAL_PROPOSAL_CONFIDENCE = 0.55
 
@@ -40,6 +41,7 @@ export const US_REGION_NAMES: ReadonlySet<string> = new Set(
 
 /**
  * Split a segment body into whitespace-separated tokens.
+ *
  * Offsets are absolute into the original input (caller supplies the segment's `start` offset).
  * Deliberately not `@mailwoman/query-shape`'s tokenizer: that one yields code-point
  * class runs for the whole input, while this one carries segment-relative → absolute span math for the proposal spans —
@@ -69,6 +71,7 @@ export const SHORT_VENUE_RUN_CONFIDENCE = 0.5
 
 /**
  * Confidence added to a place-name run by its token count.
+ *
  * Longer runs are less likely to be a coincidental adjacency, so they warrant more —
  * the curve flattens past four tokens.
  */

@@ -61,15 +61,19 @@ export type FrenchRegionCode = keyof typeof FR_REGIONS
 const REGION_CODE_SET: ReadonlySet<string> = new Set(Object.keys(FR_REGIONS))
 
 /**
- * Type-predicate for an ISO 3166-2:FR region code. Case-insensitive.
+ * Type-predicate for an ISO 3166-2:FR region code.
+ *
+ * Case-insensitive.
  */
 export function isFrenchRegionCode(input: unknown): input is FrenchRegionCode {
 	return typeof input === "string" && REGION_CODE_SET.has(input.toUpperCase())
 }
 
 /**
- * Folded region name / code → ISO 3166-2:FR code. Built diacritic-insensitive so the resolver's
- * surface form (`Île-de-France`, or an unaccented `Ile-de-France`) maps regardless of accents.
+ * Folded region name / code → ISO 3166-2:FR code.
+ *
+ * Built diacritic-insensitive so the resolver's surface form
+ * (`Île-de-France`, or an unaccented `Ile-de-France`) maps regardless of accents.
  * Mirrors `de/bundesland.ts`'s `lookupGermanState`, the same role: fold a region surface form
  * to one code so a resolver eval can compare like-for-like without a US-USPS-shaped matcher.
  */

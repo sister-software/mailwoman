@@ -1,5 +1,6 @@
 /**
  * Report-only predicates for the decoder-grammar census.
+ *
  * These functions observe a completed decode. they do not score, repair, or replace it.
  */
 
@@ -97,6 +98,7 @@ export interface LocatedTruthSpan {
 
 /**
  * Locate only component truth that occurs exactly once in the input.
+ *
  * Partial or repeated truth cannot determine whether a detector firing is right and is deliberately omitted.
  */
 export function locateUniqueComponentTruth(
@@ -128,8 +130,9 @@ export function locateUniqueComponentTruth(
  *
  * A boundary inside a uniquely located expected component is a true positive.
  * A boundary exactly on a uniquely located expected component edge is a false positive
- * unless another asserted component contains it. Everything else remains unclassified
- * rather than treating absent truth as negative truth.
+ * unless another asserted component contains it.
+ *
+ * Everything else remains unclassified rather than treating absent truth as negative truth.
  */
 export function gradeBoundaryTruth(boundary: number, truth: ReadonlyArray<LocatedTruthSpan>): BoundaryTruthGrade {
 	if (truth.some((span) => span.start < boundary && boundary < span.end)) return "true_positive"
@@ -189,8 +192,10 @@ function scoredEntries(entries: ReadonlyArray<FSTPlaceEntryLike>): RegistryScore
 }
 
 /**
- * Compare BIO-mapped entries accepting the complete piece sequence with entries accepting
- * any proper nested sequence. Absence is `null`, never a score of zero.
+ * Compare BIO-mapped entries accepting the complete piece sequence with entries
+ * accepting any proper nested sequence.
+ *
+ * Absence is `null`, never a score of zero.
  */
 export function completeSpanRegistryReceipt(
 	matches: ReadonlyArray<FSTAcceptedMatch>,

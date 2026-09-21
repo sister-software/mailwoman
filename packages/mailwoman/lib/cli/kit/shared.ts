@@ -48,7 +48,8 @@ export type ParsedCommandComponent<Options = Record<string, never>, Args extends
  * This is the annotation a command wants: naming `typeof spec` leaves the
  * flags as the one declaration, where
  * {@linkcode ParsedCommandComponent} takes an options type a command had to write beside its spec and keep in agreement
- * with it. `ParsedCommandComponent` stays for a command that names its options type for another reason.
+ * with it.
+ * `ParsedCommandComponent` stays for a command that names its options type for another reason.
  */
 export type CommandComponent<Spec extends CommandSpec, Args extends unknown[] = string[]> = ParsedCommandComponent<
 	OptionsOf<Spec>,
@@ -67,9 +68,10 @@ export type CommandTaskState<T> =
 	| { status: "error"; message: string }
 
 /**
- * Run a command's one-shot async task and own the exit-code discipline:
- * rejection renders the error state and exits 1. resolution exits with
- * `exitCode(result)` (default 0) — always after the final frame committed.
+ * Run a command's one-shot async task and own the exit-code discipline: rejection
+ * renders the error state and exits 1. resolution exits with `exitCode(result)`
+ * (default 0) — always after the final frame committed.
+ *
  * Replaces the copy-pasted useEffect/useState/setImmediate dance in every command.
  */
 /* oxlint-disable react-hooks/exhaustive-deps -- One-shot by design: the task/exitCode closures
@@ -98,6 +100,7 @@ export function useCommandTask<T>(task: () => Promise<T>, exitCode?: (result: T)
 
 /**
  * The lifecycle of a {@linkcode lazyComponent}'s import.
+ *
  * Deliberately the same three states as
  * {@linkcode CommandTaskState}: a deferred import is a one-shot async task that happens to resolve to a component.
  */
@@ -114,16 +117,16 @@ type LazyComponentState<P extends object> =
  * `load` runs in an effect instead, and the wrapper renders nothing until it resolves.
  *
  * Nothing on screen for one frame is the right fallback here and not a placeholder:
- * Ink erases the previous frame when it draws, so a "loading…" line taller than zero
- * is a line the real first frame has to scrub. Commands that want a spinner own one
- * inside the loaded component, where it can outlive the load.
+ * Ink erases the previous frame when it draws, so a "loading…" line taller than
+ * zero is a line the real first frame has to scrub.
+ * Commands that want a spinner own one inside the loaded component, where it can outlive the load.
  *
- * A rejected import is a command failure, and it takes {@linkcode useCommandTask}'s exact
- * interface: the message renders red and the process exits 1 from a `setImmediate`,
- * after the frame has committed. That matters here more than for an ordinary task —
- * the usual reason a deferred import rejects is a missing optional peer dependency,
- * and the alternative is an unhandled rejection: node's default handler prints a
- * react-reconciler stack over whatever the command had drawn and takes the exit code with it.
+ * A rejected import is a command failure, and it takes {@linkcode useCommandTask}'s exact interface:
+ * the message renders red and the process exits 1 from a `setImmediate`, after the frame has committed.
+ * That matters here more than for an ordinary task — the usual reason a deferred
+ * import rejects is a missing optional peer dependency, and the alternative is an
+ * unhandled rejection: node's default handler prints a react-reconciler stack over
+ * whatever the command had drawn and takes the exit code with it.
  *
  * `React.lazy`/`Suspense` would express the happy path too, but its fallback lands
  * in the same erase path and Ink has no error boundary — a throw in render escapes
@@ -206,6 +209,7 @@ export interface Check {
 
 /**
  * The ✓/✗ check-list + pass/fail renderer (extracted from `gazetteer verify`).
+ *
  * Pass `verdict` to append the summary line.
  */
 export function CheckList({ checks, verdict }: { checks: readonly Check[]; verdict?: boolean }): React.ReactElement {
@@ -253,8 +257,10 @@ export function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined
 }
 
 /**
- * Write one progress line to stderr — the `report` callback every long-running command
- * threads through its pipeline. Stderr, so stdout stays machine-readable.
+ * Write one progress line to stderr — the `report` callback every long-running
+ * command threads through its pipeline.
+ *
+ * Stderr, so stdout stays machine-readable.
  */
 export function reportToStderr(line: string): void {
 	console.error(line)
@@ -266,12 +272,15 @@ export function reportToStderr(line: string): void {
 export interface CommandTaskResultProps<T> {
 	state: CommandTaskState<T>
 	/**
-	 * Rendered while the task runs. A string is wrapped in `<Text>`; omit it to render nothing.
+	 * Rendered while the task runs.
+	 *
+	 * A string is wrapped in `<Text>`; omit it to render nothing.
 	 */
 	running?: React.ReactNode
 	/**
-	 * The done line's body, rendered after the `✓ `. Defaults to `String(result)` —
-	 * the plain-string result shape.
+	 * The done line's body, rendered after the `✓ `.
+	 *
+	 * Defaults to `String(result)` — the plain-string result shape.
 	 */
 	done?: (result: T) => React.ReactNode
 }
@@ -322,14 +331,17 @@ export function splitUSStateCodes(raw: string | undefined): USStateAbbreviation[
 
 /**
  * A count flag: a non-negative integer, or `fallback` when the flag is absent.
+ *
  * Throws on anything else.
  *
  * The reason this is a function and not `Number(raw) || fallback`: zero is falsy, so that idiom
  * silently answers the fallback for a flag whose whole purpose is to switch something off.
- * `corpus slice --variants 0` asks the po-box recipe to emit its self-contained military rows
- * and none of its tuple-driven ones; `Number("0") || 1` read it as one and the recipe output
- * came out at 10,558 rows against the 5,279 requested. A typo is refused for the same reason
- * rather than falling back — a count nobody asked for is a row count nobody chose.
+ * `corpus slice --variants 0` asks the po-box recipe to emit its self-contained
+ * military rows and none of its tuple-driven ones; `Number("0") || 1` read it as one
+ * and the recipe output came out at 10,558 rows against the 5,279 requested.
+ *
+ * A typo is refused for the same reason rather than falling back — a count nobody
+ * asked for is a row count nobody chose.
  */
 export function countOption(raw: string | undefined, fallback: number): number {
 	if (raw == null) return fallback
@@ -457,6 +469,7 @@ export function runProcessOrFail(
 /**
  * Load the neural classifier, degrading to `undefined` with a precise warning (#1108)
  * so a consumer can't attribute silently-degraded output to the neural parser.
+ *
  * Two failure modes are distinguished:
  *
  * - Weights absent (package not installed / carries no binaries) → an install hint, no scary error text.

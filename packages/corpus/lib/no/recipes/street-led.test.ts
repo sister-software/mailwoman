@@ -58,7 +58,8 @@ describe("no-street-led board split", () => {
 	})
 
 	it("skips a reserved surface — KEEPING diacritics (the whole hazard)", async () => {
-		// The board writes lowercased-NFC surfaces. `tømmerlien` with the ø intact.
+		// The board writes lowercased-NFC surfaces.
+		// `tømmerlien` with the ø intact.
 		const { stats, rows } = await run(TUPLES, ["tømmerlien"])
 
 		expect(stats.contaminated).toBe(1)
@@ -70,8 +71,8 @@ describe("no-street-led board split", () => {
 
 	it("does NOT skip when the reserved surface differs only by a stripped diacritic", async () => {
 		// If this recipe ever regresses to fr-fragment's diacritic-stripping norm,
-		// `tommerlien` (no ø) would match `Tømmerlien` and this row would be
-		// wrongly excluded. It must not be.
+		// `tommerlien` (no ø) would match `Tømmerlien` and this row would be wrongly excluded.
+		// It must not be.
 		const { stats } = await run(TUPLES, ["tommerlien"])
 
 		expect(stats.contaminated).toBe(0)

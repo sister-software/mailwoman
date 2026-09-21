@@ -16,15 +16,18 @@ import { stringifyJSON } from "@mailwoman/core/json"
  */
 export interface GeocodeFirstSurfaceOptions {
 	/**
-	 * Illustrative prior λ. Production's record matcher uses λ=1e-4
-	 * (calibrated for the full multi-field model with phone
+	 * Illustrative prior λ.
 	 *
-	 * - Spatial exact-key); here we want the boundary visible in a two-axis
-	 *   projection. Default 0.02.
+	 * Production's record matcher uses λ=1e-4 (calibrated for the full multi-field model with phone
+	 *
+	 * - Spatial exact-key); here we want the boundary visible in a two-axis projection.
+	 *   Default 0.02.
 	 */
 	lambda?: number
 	/**
-	 * Output html path. Default `/tmp/geocode-first-surface.html`.
+	 * Output html path.
+	 *
+	 * Default `/tmp/geocode-first-surface.html`.
 	 */
 	outHTML?: string
 }
@@ -103,7 +106,9 @@ export async function geocodeFirstSurface(
 	 */
 	const pGeocodeFirst = (sim: number, km: number) => probabilityFromWeight(PRIOR + nameWeight(sim) + distanceWeight(km))
 
-	// ── Grid. X = string similarity 0→1. Y = geographic distance, sampled denser near 0 (log-ish) so
+	// ── Grid.
+	// X = string similarity 0→1.
+	// Y = geographic distance, sampled denser near 0 (log-ish) so
 	//    the meaningful same-building / same-block transitions aren't a single pixel. ────────────────
 
 	const NX = 60
@@ -127,7 +132,8 @@ export async function geocodeFirstSurface(
 	const zString = surface(pStringFirst)
 	const zGeo = surface(pGeocodeFirst)
 
-	// ── The two trap points. (sim, km) chosen to sit in the off-diagonal quadrants. ─────────────────
+	// ── The two trap points.
+	// (sim, km) chosen to sit in the off-diagonal quadrants. ─────────────────
 
 	interface Trap {
 		label: string
@@ -144,8 +150,9 @@ export async function geocodeFirstSurface(
 			km: 15, // plotted on the far plateau (real distance ~1500 km. clamped into view)
 		},
 		{
-			// "St" → "Street" canonicalizes to a high (not exact) name agreement. the trailing "Apt 2" keeps
-			// it off 1.0. Lands in the 0.88 "high" tier — same place, drifted-but-recognizable string.
+			// "St" → "Street" canonicalizes to a high (not exact) name agreement. the
+			// trailing "Apt 2" keeps it off 1.0.
+			// Lands in the 0.88 "high" tier — same place, drifted-but-recognizable string.
 			label: "123 Main St vs 123 Main Street Apt 2",
 			detail: "same building, drifted string",
 			sim: 0.9,
@@ -174,8 +181,8 @@ export async function geocodeFirstSurface(
 		prior: PRIOR,
 	}
 
-	// Every `<`, not only `</script>`: `<!--` also leaves script-data state in the
-	// html tokenizer, after which a later `</script>` no longer ends the element.
+	// Every `<`, not only `</script>`: `<!--` also leaves script-data state in the html
+	// tokenizer, after which a later `</script>` no longer ends the element.
 	// `\u003c` is the same string to a JSON reader.
 	const safe = stringifyJSON(data).replaceAll("<", "\\u003c")
 

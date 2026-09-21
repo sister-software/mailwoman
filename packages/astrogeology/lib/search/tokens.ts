@@ -13,11 +13,11 @@ import type { BuildableBodyID } from "#bodies"
 /**
  * What a suggestion carries back: enough to place and frame the feature without a second lookup.
  *
- * `diameterKm` is what a camera needs to choose a zoom, and its absence is not a neutral
- * gap: a framing function given no diameter falls to its smallest-feature branch,
- * so every search result and every deep link framed a 4,000 km canyon exactly as
- * tightly as a 3 km crater. `featureTypeCode` rides along for the same reason —
- * a reader that has the feature should not need the tile to describe it.
+ * `diameterKm` is what a camera needs to choose a zoom, and its absence is not a neutral gap:
+ * a framing function given no diameter falls to its smallest-feature branch, so every search
+ * result and every deep link framed a 4,000 km canyon exactly as tightly as a 3 km crater.
+ * `featureTypeCode` rides along for the same reason — a reader that has the
+ * feature should not need the tile to describe it.
  *
  * Both are optional because the IAU gazetteer leaves them unset for some features,
  * and an absent diameter is a real reading rather than a zero.

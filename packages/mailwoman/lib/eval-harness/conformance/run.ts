@@ -54,7 +54,9 @@ export interface ConformanceFinding {
 	fixture: ConformanceFixture
 	reading: ComparatorReading
 	/**
-	 * Did the observed relation match the expected one? `undecidable` never holds.
+	 * Did the observed relation match the expected one?
+	 *
+	 * `undecidable` never holds.
 	 */
 	held: boolean
 }
@@ -62,10 +64,10 @@ export interface ConformanceFinding {
 /**
  * Wrap a Gauntlet `geocode` as an observer, projecting through `toGauntletResult`.
  *
- * Takes the function rather than the whole {@linkcode GauntletDeps} so a law suite can
- * hand over a warm session's geocode without this module acquiring an opinion about how
- * the engine was built. No mechanism account is attached — the shape vocabulary lives in
- * the private dev-mcp workspace, and an observer that wants shapes supplies its own.
+ * Takes the function rather than the whole {@linkcode GauntletDeps} so a law suite can hand over a
+ * warm session's geocode without this module acquiring an opinion about how the engine was built.
+ * No mechanism account is attached — the shape vocabulary lives in the private dev-mcp
+ * workspace, and an observer that wants shapes supplies its own.
  */
 export function gauntletObserver(geocode: GauntletDeps["geocode"]): ConformanceObserver {
 	return async (query, context) => ({ result: toGauntletResult(await geocode(query, context)) })
@@ -75,8 +77,8 @@ export function gauntletObserver(geocode: GauntletDeps["geocode"]): ConformanceO
  * The same observer with the resolver's interior attached — one trace record per
  * backend lookup, which is what `candidate_admissibility` reads.
  *
- * A second observer rather than a flag on the first, because the walk's trace
- * bookkeeping is a real cost the four answer-axis laws have no use for.
+ * A second observer rather than a flag on the first, because the walk's trace bookkeeping
+ * is a real cost the four answer-axis laws have no use for.
  * `command.ts` chooses between them by reading the comparators the loaded rows actually name,
  * so a run that states no candidate law pays nothing.
  */
@@ -91,9 +93,9 @@ export function tracedGauntletObserver(geocodeTraced: GauntletDeps["geocodeTrace
 /**
  * Run every fixture and report which laws held.
  *
- * `pass` is true only when every fixture held. A suite with no fixtures returns
- * `pass: false`: an empty run is not a clean run, and reporting one as passing is
- * how a mis-pointed fixture path becomes a green check.
+ * `pass` is true only when every fixture held.
+ * A suite with no fixtures returns `pass: false`: an empty run is not a clean run,
+ * and reporting one as passing is how a mis-pointed fixture path becomes a green check.
  */
 export async function runConformanceFixtures(
 	fixtures: readonly ConformanceFixture[],
@@ -118,6 +120,7 @@ export async function runConformanceFixtures(
 export interface ConformanceSummary {
 	/**
 	 * Findings from `status: pass` rows that were violated.
+	 *
 	 * These, and only these, decide {@linkcode pass}.
 	 */
 	failures: ConformanceFinding[]
@@ -126,8 +129,10 @@ export interface ConformanceSummary {
 	 */
 	tracked: ConformanceFinding[]
 	/**
-	 * Tracked rows whose law now holds. Printed as a promotion instruction: a tracked list nobody
-	 * prunes stops being a record of known defects and becomes a place rows go to be forgotten.
+	 * Tracked rows whose law now holds.
+	 *
+	 * Printed as a promotion instruction: a tracked list nobody prunes stops being a
+	 * record of known defects and becomes a place rows go to be forgotten.
 	 */
 	newlyHolding: ConformanceFinding[]
 	/**
@@ -196,8 +201,8 @@ export function summarizeConformanceRun(findings: readonly ConformanceFinding[])
  * Render one finding as the line a law suite prints.
  *
  * Names, in this order: the law, the fixture id, the committed row it was drawn from
- * when it has one, the comparator, the expected and observed relations,
- * both queries, what the comparator read, and every difference it found.
+ * when it has one, the comparator, the expected and observed relations, both queries,
+ * what the comparator read, and every difference it found.
  * A violation reported without the row it came from is a claim about a synthetic pair. with it,
  * a reader can go back to the population and ask how common the shape is.
  */

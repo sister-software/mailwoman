@@ -58,12 +58,13 @@ const { values: rawValues } = parseArguments({
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as { db?: string; n?: string; out?: string }
 
-// The resolved-tree readers are the shared `mailwoman/eval-harness/oa-resolver/tree-hits` helpers —
-// the home the oa-resolver-eval copies moved to. `mostSpecific` there delegates
-// to the production resolver ladder (`mostSpecificResolved`), replacing the flat
-// `placetypeSpecificity` sort this file carried. Note the sibling `fr-admin-split-eval.ts`
-// deliberately keeps its own flat ranking (the post-#945 locality-over-postcode convention),
-// which the shared ladder would not preserve on the postcode-vs-locality axis.
+// The resolved-tree readers are the shared `mailwoman/eval-harness/oa-resolver/tree-hits`
+// helpers — the home the oa-resolver-eval copies moved to.
+// `mostSpecific` there delegates to the production resolver ladder (`mostSpecificResolved`),
+// replacing the flat `placetypeSpecificity` sort this file carried.
+// Note the sibling `fr-admin-split-eval.ts` deliberately keeps its own flat ranking
+// (the post-#945 locality-over-postcode convention), which the shared ladder would
+// not preserve on the postcode-vs-locality axis.
 
 /**
  * --- args ----------------------------------------------------------------------------------------.
@@ -116,9 +117,11 @@ const resolver = createWOFResolver(backend)
 const resolveOpts = { defaultCountry: "FR" }
 
 /**
- * Unresolved penalty = the coordinate the geocoder actually falls back to when the place
- * isn't found: the country centroid. Makes the three states comparable on one error metric
- * (resolved point if found, else country-centroid) instead of averaging over different resolved subsets.
+ * Unresolved penalty = the coordinate the geocoder actually falls back to
+ * when the place isn't found: the country centroid.
+ *
+ * Makes the three states comparable on one error metric (resolved point if found, else country-centroid)
+ * instead of averaging over different resolved subsets.
  */
 const FR_CENTROID = { lat: 46.6, lon: 2.5 }
 

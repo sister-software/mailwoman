@@ -80,13 +80,17 @@ export interface RegisteredBaseline {
 	 */
 	value: number
 	/**
-	 * Allowed relative deviation, either direction. Defaults to the file's `default_tolerance_rel`.
+	 * Allowed relative deviation, either direction.
+	 *
+	 * Defaults to the file's `default_tolerance_rel`.
 	 * Widening this to silence a real deviation is the drift failure — re-register instead.
 	 */
 	tolerance_rel?: number
 	/**
-	 * Absolute tolerance. Takes precedence over `tolerance_rel` when declared — use it for small-count
-	 * metrics whose relative band is meaningless (one fixture out of 63 moves a rate of 1/63 by 100%).
+	 * Absolute tolerance.
+	 *
+	 * Takes precedence over `tolerance_rel` when declared — use it for small-count metrics
+	 * whose relative band is meaningless (one fixture out of 63 moves a rate of 1/63 by 100%).
 	 * Required when `value` is 0, where relative deviation is undefined.
 	 */
 	tolerance_abs?: number
@@ -109,9 +113,10 @@ export interface RegisteredBaseline {
 }
 
 /**
- * Maps a harness's own metric keys to baseline ids. Exists because the mapping isn't derivable:
- * v264 has no span head, so oracle-k's segment decode is the summed-BIO stand-in
- * (`@v264-summed-bio`) while its token decode is the real thing (`@v264`).
+ * Maps a harness's own metric keys to baseline ids.
+ *
+ * Exists because the mapping isn't derivable: v264 has no span head, so oracle-k's segment decode
+ * is the summed-BIO stand-in (`@v264-summed-bio`) while its token decode is the real thing (`@v264`).
  */
 export interface BaselineProfile {
 	description: string
@@ -207,8 +212,10 @@ export async function resolveProfile(name: string): Promise<BaselineProfile> {
 }
 
 /**
- * Check a harness's readings against a profile. Metric keys the profile doesn't map are ignored —
- * a profile declares what it can vouch for rather than everything a harness happens to compute.
+ * Check a harness's readings against a profile.
+ *
+ * Metric keys the profile doesn't map are ignored — a profile declares what it can vouch for
+ * rather than everything a harness happens to compute.
  */
 export async function assertProfile(name: string, readings: Record<string, number>): Promise<BaselineVerdict> {
 	const profile = await resolveProfile(name)
@@ -225,8 +232,10 @@ export async function assertProfile(name: string, readings: Record<string, numbe
 }
 
 /**
- * Check observations against the registry. An unregistered id is a violation rather than
- * a pass — an unverifiable reading is exactly the state both incidents were in.
+ * Check observations against the registry.
+ *
+ * An unregistered id is a violation rather than a pass — an unverifiable reading
+ * is exactly the state both incidents were in.
  */
 export async function assertBaselines(observations: BaselineObservation[]): Promise<BaselineVerdict> {
 	const file = await loadBaselineFile()
@@ -243,9 +252,10 @@ export async function assertBaselines(observations: BaselineObservation[]): Prom
 
 		const tolerance = baseline.tolerance_rel ?? file.default_tolerance_rel
 
-		// An absolute tolerance wins when declared. Small-count metrics (a street-evidence rate of 1/63)
-		// have a meaningless relative band — one fixture moves it 100% — so those rows opt out of
-		// relative checking entirely. A zero-valued row must declare one. relative is undefined.
+		// An absolute tolerance wins when declared.
+		// Small-count metrics (a street-evidence rate of 1/63) have a meaningless relative band —
+		// one fixture moves it 100% — so those rows opt out of relative checking entirely.
+		// A zero-valued row must declare one. relative is undefined.
 		if (baseline.tolerance_abs !== undefined || baseline.value === 0) {
 			const toleranceAbs = baseline.tolerance_abs ?? 0
 			const drift = Math.abs(observation.observed - baseline.value)
@@ -345,7 +355,9 @@ export function formatVerdict(verdict: BaselineVerdict): string {
 }
 
 /**
- * Assert, or throw. The one-liner a harness puts before it prints anything.
+ * Assert, or throw.
+ *
+ * The one-liner a harness puts before it prints anything.
  */
 export async function guardReport(observations: BaselineObservation[]): Promise<void> {
 	const verdict = await assertBaselines(observations)

@@ -77,12 +77,14 @@ const npmWrite = $({ stdio: ["inherit", "inherit", "pipe"] })
 
 /**
  * Put text on the clipboard of whatever terminal sits at the far end of the connection,
- * via the OSC 52 escape sequence. Over SSH this reaches the _local_ machine with no forwarding
- * and no agent — the bytes ride the same stream as everything else on screen.
+ * via the OSC 52 escape sequence.
  *
- * Inside tmux this needs `set-clipboard on`. The default, `external`, sets the clipboard
- * from tmux's own copy-mode but silently discards sequences that applications emit —
- * the copy appears to work and nothing arrives.
+ * Over SSH this reaches the _local_ machine with no forwarding and no agent —
+ * the bytes ride the same stream as everything else on screen.
+ *
+ * Inside tmux this needs `set-clipboard on`.
+ * The default, `external`, sets the clipboard from tmux's own copy-mode but silently
+ * discards sequences that applications emit — the copy appears to work and nothing arrives.
  *
  * Returns whether the sequence was written. the terminal on the other end may
  * still ignore it, which is not detectable from here.
@@ -99,8 +101,8 @@ function copyToTerminalClipboard(text: string): boolean {
  * Run an npm write op, watching its stderr for the approval URL and pushing the first one to the clipboard.
  *
  * The listener only reads — zx already forwards piped stderr to the terminal,
- * so writing here would print npm's output twice. A URL can straddle a chunk boundary,
- * hence the rolling window rather than a per-chunk match.
+ * so writing here would print npm's output twice.
+ * A URL can straddle a chunk boundary, hence the rolling window rather than a per-chunk match.
  */
 async function runNPMWrite(proc: ProcessPromise, log: (line: string) => void): Promise<void> {
 	let tail = ""
@@ -130,8 +132,9 @@ async function runNPMWrite(proc: ProcessPromise, log: (line: string) => void): P
  *
  * The registry matches `claims.workflow_ref.file` literally against the workflow path
  * carried by the OIDC token, and it never checks that the claim names a real file.
- * A claim that names nothing is accepted at configuration time and then denies every
- * CI publish with a bare `E404 Not Found - PUT` naming neither trust nor the workflow.
+ * A claim that names nothing is accepted at configuration time and then denies every CI
+ * publish with a bare `E404 Not Found - PUT` naming neither trust nor the workflow.
+ *
  * This stat is the last cheap moment to catch that: once the config is on file it must be read
  * and revoked, and each of those steps costs its own interactive 2FA approval.
  */
@@ -146,8 +149,10 @@ async function assertWorkflowExists(options: BlessPackageOptions): Promise<void>
 }
 
 /**
- * A candidate's manifest. `name` is required because every caller below publishes, tags
- * or reports under it, and a manifest without one cannot be blessed at all.
+ * A candidate's manifest.
+ *
+ * `name` is required because every caller below publishes, tags or reports under it,
+ * and a manifest without one cannot be blessed at all.
  */
 async function readPkg(dir: string): Promise<PackageJSONLike<{ name: string }>> {
 	return await readPackageJSON<{ name: string }>(join(dir, "package.json"))
@@ -203,11 +208,11 @@ async function packAndPublish(dir: string, options: BlessPackageOptions): Promis
 	// and the audit below has a tarball worth auditing.
 	await packWorkspaceForPublish(dir, tgz)
 
-	// A first publish is the one that most needs this: it is the path taken
-	// when CI could not create the package, on a workspace whose derived binaries may
-	// never have been materialized locally. neural-weights-en-in@8.6.0 went out from here
-	// as three metadata files describing a 4.3 MB index that was not in the tarball,
-	// and npm accepted it. Published versions are immutable.
+	// A first publish is the one that most needs this: it is the path taken when CI could
+	// not create the package, on a workspace whose derived binaries may never have been
+	// materialized locally. neural-weights-en-in@8.6.0 went out from here as three metadata
+	// files describing a 4.3 MB index that was not in the tarball, and npm accepted it.
+	// Published versions are immutable.
 	const audit = verifyTarball(tgz)
 
 	log(`• ${pkg.name}: tarball verified — ${formatTarballAudit(audit)}`)
@@ -256,10 +261,10 @@ async function trust(dir: string, options: BlessPackageOptions): Promise<boolean
 	log(`• ${pkg.name}: configuring trusted publisher…`)
 	log(`    npm ${args.join(" ")}`)
 
-	// There is no cheap way to ask whether trust is already on file: `npm trust list`
-	// needs the same second factor as the write, and reading it under `.quiet()` would
-	// swallow npm's approval URL — which it prints to stderr — leaving the operator staring
-	// at a silent process. So attempt the write unconditionally and let npm arbitrate.
+	// There is no cheap way to ask whether trust is already on file: `npm trust list` needs
+	// the same second factor as the write, and reading it under `.quiet()` would swallow npm's
+	// approval URL — which it prints to stderr — leaving the operator staring at a silent process.
+	// So attempt the write unconditionally and let npm arbitrate.
 	// Failure never blocks the publishes. npm has already printed the reason to this
 	// terminal, so only the retry command needs restating.
 	try {
@@ -271,8 +276,8 @@ async function trust(dir: string, options: BlessPackageOptions): Promise<boolean
 	} catch (error) {
 		// The create endpoint is not idempotent: a package that already carries a trust config
 		// answers 409 whatever that config says, so a stale one (wrong workflow file, wrong repo)
-		// is indistinguishable from a correct one here. Name that case, because the repair
-		// is a revoke rather than a retry — retrying returns 409 forever.
+		// is indistinguishable from a correct one here.
+		// Name that case, because the repair is a revoke rather than a retry — retrying returns 409 forever.
 		const stderr = String((error as { stderr?: string } | undefined)?.stderr ?? error)
 
 		if (/\b409\b/.test(stderr)) {
@@ -319,8 +324,9 @@ export async function blessPackages(options: BlessPackageOptions): Promise<Bless
 
 		blessed.push({ name: (await readPkg(d)).name, published, trusted })
 
-		// Rate-limit guard between calls. It doubles as the window in which npm's auth grant
-		// is still warm, so a run of packages usually costs one approval rather than one each.
+		// Rate-limit guard between calls.
+		// It doubles as the window in which npm's auth grant is still warm, so a run of
+		// packages usually costs one approval rather than one each.
 		await $`sleep 2`
 	}
 

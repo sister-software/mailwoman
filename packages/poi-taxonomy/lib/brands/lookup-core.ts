@@ -45,7 +45,9 @@ export function createBrandLookupCore(table: POIBrandTable): POIBrandLookup {
 	const byWikidata: ReadonlyMap<string, BrandRecord> = new Map(table.brands.map((b) => [b.wikidata, b]))
 
 	/**
-	 * Lowercased phrase index. Sources, in insertion order: each brand's `name`, then its `aliases`.
+	 * Lowercased phrase index.
+	 *
+	 * Sources, in insertion order: each brand's `name`, then its `aliases`.
 	 * Multiple brands may share a phrase (distinct QIDs happening to use the same display string) —
 	 * `lookupPOIBrand` dedupes per brand and sorts the survivors deterministically.
 	 */
@@ -60,9 +62,10 @@ export function createBrandLookupCore(table: POIBrandTable): POIBrandLookup {
 	})
 
 	/**
-	 * Exact-phrase brand lookup. Deduplicated by brand
-	 * (a QID can only appear once, keeping its first-seen matched phrase), sorted by `rows`
-	 * descending — ties broken by `wikidata` code-point order for determinism.
+	 * Exact-phrase brand lookup.
+	 *
+	 * Deduplicated by brand (a QID can only appear once, keeping its first-seen matched phrase),
+	 * sorted by `rows` descending — ties broken by `wikidata` code-point order for determinism.
 	 */
 	function lookupPOIBrand(text: string): BrandMatch[] {
 		const norm = text.trim().toLowerCase()

@@ -72,8 +72,9 @@ const SPRINGFIELD_CENTER = {
 	coordinates: [SPRINGFIELD.longitude, SPRINGFIELD.latitude] as [number, number],
 }
 
-// A remote center, ~280 km from Springfield — far outside even this module's 32-ring (~11 km)
-// default, and with no fixture rows anywhere nearby. The sparse-result acceptance case.
+// A remote center, ~280 km from Springfield — far outside even this module's 32-ring
+// (~11 km) default, and with no fixture rows anywhere nearby.
+// The sparse-result acceptance case.
 const REMOTE = { latitude: 41.8781, longitude: -87.6298 }
 
 // Exactly gridDistance 20 from the Springfield origin cell — inside the 32-ring default

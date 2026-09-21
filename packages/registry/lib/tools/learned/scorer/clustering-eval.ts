@@ -68,27 +68,39 @@ export interface ScorerClusteringEvalOptions {
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
-	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * Record-matcher sources directory.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
 	 */
 	sources?: string
 	/**
-	 * State filter. Default TX.
+	 * State filter.
+	 *
+	 * Default TX.
 	 */
 	state?: string
 	/**
-	 * NPIs sampled. Default 2000.
+	 * NPIs sampled.
+	 *
+	 * Default 2000.
 	 */
 	npis?: number
 	/**
-	 * Train fraction of the NPI split. Default 0.67.
+	 * Train fraction of the NPI split.
+	 *
+	 * Default 0.67.
 	 */
 	split?: number
 	/**
-	 * Base prng seed. Default 1.
+	 * Base prng seed.
+	 *
+	 * Default 1.
 	 */
 	seed?: number
 	/**
-	 * Held-out-NPI splits averaged. Default 4.
+	 * Held-out-NPI splits averaged.
+	 *
+	 * Default 4.
 	 */
 	seeds?: number
 	/**
@@ -99,6 +111,7 @@ export interface ScorerClusteringEvalOptions {
 
 /**
  * Learned-scorer clustering A/B (#603 Tier 2) — see the module doc.
+ *
  * Emits the markdown report to stdout.
  */
 export async function scorerClusteringEval(
@@ -168,6 +181,7 @@ export async function scorerClusteringEval(
 	 * One held-out-NPI split: train the GBT + LR on train pairs, then cluster the eval records
 	 * three ways (FS baseline, GBT scorer, LR scorer) through the same `resolveEntities`
 	 * pipeline, sweeping the link threshold finely for each and taking best F1.
+	 *
 	 * The geocode is shared across seeds. only the split, the trained scorers,
 	 * and the eval subset move with the seed.
 	 */

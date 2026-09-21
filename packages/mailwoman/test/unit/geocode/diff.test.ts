@@ -51,8 +51,8 @@ const INPUT = "27 Minories, London EC3N 1DE"
 
 describe("diffGeocode", () => {
 	it("attributes a move to the PARSE when the parse changed", () => {
-		// The resolver was asked a different question. Retrieval is not the suspect
-		// and a distance delta alone would have pointed at it.
+		// The resolver was asked a different question.
+		// Retrieval is not the suspect and a distance delta alone would have pointed at it.
 		const before: GeocodeArm = {
 			tree: tree(["locality", "London", 13, 19, 0.9, "wof:101750367", 51.5, -0.12, 3]),
 			lat: 51.5,

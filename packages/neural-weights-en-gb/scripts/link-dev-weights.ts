@@ -38,17 +38,19 @@ import {
 import { resolvePath } from "path-ts"
 
 /**
- * Secondary pair sources (campaign R2/R3/R4b). Named here rather than inline at the
- * call site because the freshness guard has to md5 the same files the build reads —
- * when those two lists drift apart the guard silently blesses a stale artifact.
+ * Secondary pair sources (campaign R2/R3/R4b).
+ *
+ * Named here rather than inline at the call site because the freshness guard has to md5 the same files
+ * the build reads — when those two lists drift apart the guard silently blesses a stale artifact.
  */
 const PPD_SOURCE_CSV = String(dataRootPath("ppd", "2026-07-22", "gb-tuples.csv"))
 const BOROUGH_DB = String(dataRootPath("wof", "admin-global-priority.db"))
 const LONDON_PAIRS_JSONL = String(repoRootPath("data", "gazetteer", "london-pairs-v2.jsonl"))
 /**
- * Northern Ireland neighbourhood pairs (campaign R7). A separate file rather than
- * merged into the London one, so each source keeps its own provenance md5 in the header
- * and the freshness guard can tell which of them moved.
+ * Northern Ireland neighbourhood pairs (campaign R7).
+ *
+ * A separate file rather than merged into the London one, so each source keeps its own
+ * provenance md5 in the header and the freshness guard can tell which of them moved.
  */
 const NI_PAIRS_JSONL = String(repoRootPath("data", "gazetteer", "ni-pairs-v1.jsonl"))
 /**
@@ -93,11 +95,13 @@ const overlay = await materializeDevOverlay({
 // The GB anchor binary is the one artifact whose correctness depends on which model is
 // loaded, so it is built only when the card says the model can use it.
 //
-// The history in one paragraph. This script used to build the bin unconditionally. #1467 removed it,
-// because the encoder's GB anchor slot (slot 4 of `LOCALE_ORDER`, `neural/anchor-inference.ts`)
-// had taken no gradient — every recipe's `anchor_lookup_path` was `pilot-anchor-lookup.json`,
-// 67,708 keys, zero letter-containing, US/DE/FR only. Feeding slot 4 on a model that never trained it
-// cost 24 exact postcodes on the 120-row gb-golden board (294/318 anchor-on vs 318/318 anchor-off).
+// The history in one paragraph.
+// This script used to build the bin unconditionally. #1467 removed it, because the
+// encoder's GB anchor slot (slot 4 of `LOCALE_ORDER`, `neural/anchor-inference.ts`) had
+// taken no gradient — every recipe's `anchor_lookup_path` was `pilot-anchor-lookup.json`,
+// 67,708 keys, zero letter-containing, US/DE/FR only.
+// Feeding slot 4 on a model that never trained it cost 24 exact postcodes on the
+// 120-row gb-golden board (294/318 anchor-on vs 318/318 anchor-off).
 // Then a bare `existsSync` skip turned out to be worse than never building: a bin left by
 // an older checkout is found package-dir-relative and silently re-enables the regression
 // with no warning, because a present artifact is exactly what the loader expects.
@@ -126,6 +130,7 @@ const GB_POSTCODE_EXTRACT = "postalcode-gb-codepoint.db"
 /**
  * Keys the built binary must carry (1,746,976 units + 2,863 outward districts) —
  * the GB half of the training lookup `pilot-anchor-lookup-v2` verbatim.
+ *
  * `gazetteer postcode-binary` enforces its own floor and exits nonzero below it,
  * so this number is documentation rather than a second check.
  */

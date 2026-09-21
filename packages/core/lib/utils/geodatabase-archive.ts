@@ -35,7 +35,9 @@ export interface DownloadZippedGeodatabaseOptions {
 	 */
 	url: string
 	/**
-	 * The product's ISO revision date. The cache is keyed on it.
+	 * The product's ISO revision date.
+	 *
+	 * The cache is keyed on it.
 	 */
 	revisionDate: string
 	/**

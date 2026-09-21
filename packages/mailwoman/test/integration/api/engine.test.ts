@@ -49,9 +49,10 @@ const describeIfStack = describe.skipIf(!hasStack)
  */
 async function weightsPresent(): Promise<boolean> {
 	try {
-		// ASK the resolver. This probed `packages/neural-weights-en-us/model.onnx` directly,
-		// which is true only while the dev linker materializes binaries into that
-		// package — and a skip-guard that stops matching does not fail, it skips.
+		// ASK the resolver.
+		// This probed `packages/neural-weights-en-us/model.onnx` directly, which is
+		// true only while the dev linker materializes binaries into that package —
+		// and a skip-guard that stops matching does not fail, it skips.
 		// Therefore, the suite disappears from the run reporting success.
 		// The repo has already paid for this once: the workspace regroup left this literal behind
 		// and both this suite and `api-engine.test.ts` went quiet until someone counted the skips.
@@ -123,11 +124,11 @@ describe("api-engine — /health (run unconditionally, never throws)", () => {
 		expect(typeof body.data.interpolation_states).toBe("number")
 	})
 
-	// `readModelCard`'s first non-env candidate is `import.meta.resolve` of the weights
-	// package's card. Pin the resolver itself rather than just the observable: the third
-	// candidate is a CWD-relative dev-tree path (`neural-weights-en-us/model-card.json`)
-	// which happens to exist when the suite runs from the repo root, so the /health
-	// assertion below would survive a broken resolution. This one would not.
+	// `readModelCard`'s first non-env candidate is `import.meta.resolve` of the weights package's card.
+	// Pin the resolver itself rather than just the observable: the third candidate is a CWD-relative
+	// dev-tree path (`neural-weights-en-us/model-card.json`) which happens to exist when the suite
+	// runs from the repo root, so the /health assertion below would survive a broken resolution.
+	// This one would not.
 	test("the weights card resolves through the package graph, not the CWD-relative dev fallback", () => {
 		expect(resolveModulePath("@mailwoman/neural-weights-en-us/model-card.json")).toBe(
 			workspacePath("neural-weights-en-us", "model-card.json")

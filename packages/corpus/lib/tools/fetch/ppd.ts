@@ -23,6 +23,7 @@ const quote = (value: string): string => (value ? `"${value.replaceAll('"', '""'
 /**
  * Convert PPD rows (`id,price,date,postcode,type,new,tenure,paon,saon,street,locality,town,district,county,cat,status`
  * — headerless) into OA-shaped tuple lines via `write`, applying the skip rules + title-casing.
+ *
  * Accepts a plain array of rows (tests) or a streamed async source (the real 31M-row extraction).
  */
 export async function extractPPDTuples(
@@ -90,8 +91,8 @@ export async function extractPPDTuples(
  * Stream `inputPath` (PPD CSV) → `outputPath` (OA-shaped tuples CSV), returning the row-count stats.
  */
 async function runPPDExtract(inputPath: string, outputPath: string): Promise<PPDExtractStats> {
-	// No `encoding` — CSVSpliterator delimits raw bytes and decodes
-	// utf-8 itself (see readTuples in recipes/international/locale.ts).
+	// No `encoding` — CSVSpliterator delimits raw bytes and decodes utf-8 itself
+	// (see readTuples in recipes/international/locale.ts).
 	// `header: false` yields every row as data — PPD ships no header row.
 	const rows = CSVSpliterator.fromAsync<string[]>(openReadStream(inputPath), {
 		header: false,

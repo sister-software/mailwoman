@@ -30,6 +30,7 @@ export const PublicReleaseEnvSchema = z.object({
 	}),
 	/**
 	 * Set to `0` to publish without a sigstore provenance attestation.
+	 *
 	 * Provenance is otherwise on by default under GitHub Actions — this exists
 	 * so a release blocked by a sigstore or registry outage can still ship.
 	 */
@@ -65,8 +66,9 @@ export const PublicReleaseEnvSchema = z.object({
 })
 
 /**
- * Credentials used by package publication and weights
- * staging. Never log their values.
+ * Credentials used by package publication and weights staging.
+ *
+ * Never log their values.
  */
 export const PrivateReleaseEnvSchema = z.object({
 	RELEASE_IT_WORKSPACES_OTP: z.string().optional().meta({

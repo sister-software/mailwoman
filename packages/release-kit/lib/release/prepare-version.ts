@@ -45,8 +45,9 @@ export interface PrepareReleaseVersionReport {
 	currentVersion: string
 	resolvedVersion: string
 	/**
-	 * Versioned files written: root + every release workspace +
-	 * `release.config.json`. Zero under `checkOnly`.
+	 * Versioned files written: root + every release workspace + `release.config.json`.
+	 *
+	 * Zero under `checkOnly`.
 	 */
 	filesWritten: number
 }

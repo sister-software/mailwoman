@@ -103,7 +103,9 @@ export type FloodContainmentPath = (typeof FloodContainmentPath)[keyof typeof Fl
 export interface FloodZoneReading {
 	kind: FloodReadingKind
 	/**
-	 * The authority's zone code, verbatim. Present on a `designated` reading. absent on the other two.
+	 * The authority's zone code, verbatim.
+	 *
+	 * Present on a `designated` reading. absent on the other two.
 	 */
 	zoneCode?: string
 	/**
@@ -113,6 +115,7 @@ export interface FloodZoneReading {
 	definition?: FloodZoneDefinition
 	/**
 	 * The polygon the ray cast matched, on a `ray_cast` reading.
+	 *
 	 * Named so a reader can fetch and draw it.
 	 */
 	areaID?: string
@@ -130,6 +133,7 @@ export interface FloodZoneReading {
 	indexCellIndex: string
 	/**
 	 * What the product does not cover, in the authority's own words.
+	 *
 	 * Carried on every reading, because a Zone 1 answer is silent about surface water, groundwater
 	 * and defended-area residual risk, and a caller cannot see that from the zone code.
 	 */
@@ -146,8 +150,8 @@ export interface FloodLayerIdentity {
 	/**
 	 * Every resolution `flood_zone_cell` stores a row at, coarsest first — the ancestor chain a probe walks.
 	 *
-	 * Several, and necessarily so: the whole tier is compacted parent-ward, and a
-	 * polygon too large for h3's allocator at the index resolution was indexed coarser.
+	 * Several, and necessarily so: the whole tier is compacted parent-ward, and a polygon
+	 * too large for h3's allocator at the index resolution was indexed coarser.
 	 * A reader that probed one resolution would read every row at the others as an absence.
 	 */
 	cellResolutions: number[]
@@ -214,10 +218,10 @@ export class FloodZoneLookup implements Disposable {
 			"SELECT area_id FROM flood_zone_cell_area WHERE h3_cell = ? ORDER BY area_id"
 		)
 
-		// two statements, and the split is the point. The bbox is the prefilter,
-		// so it is read without the blob: the largest features in this product carry
-		// hundreds of thousands of vertices, and pulling one off disk only to reject it on
-		// a rectangle would make the prefilter cost more than the test it replaces.
+		// two statements, and the split is the point.
+		// The bbox is the prefilter, so it is read without the blob: the largest features in
+		// this product carry hundreds of thousands of vertices, and pulling one off disk only to
+		// reject it on a rectangle would make the prefilter cost more than the test it replaces.
 		this.#selectAreaBounds = this.#database.prepare(
 			"SELECT zone_code, min_lat, min_lon, max_lat, max_lon FROM flood_zone_area WHERE area_id = ?"
 		)

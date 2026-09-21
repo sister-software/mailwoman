@@ -29,9 +29,9 @@ test("smartSnakeCase: all-caps with spaces collapses non-word runs to single und
 })
 
 test("smartSnakeCase: dotted all-caps acronym normalizes periods away (U.S.A. -> USA)", () => {
-	// Regression: the all-caps branch used to operate on the original `name`,
-	// not the period-stripped `normalizedName`, so "U.S.A." yielded "U_S_A_"
-	// instead of the documented "USA". Fixed in this PR.
+	// Regression: the all-caps branch used to operate on the original `name`, not the period-stripped
+	// `normalizedName`, so "U.S.A." yielded "U_S_A_" instead of the documented "USA".
+	// Fixed in this PR.
 	expect(smartSnakeCase("U.S.A.")).toBe("USA")
 })
 

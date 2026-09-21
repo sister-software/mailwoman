@@ -406,8 +406,9 @@ describe("filingLandscape — Check 4: vintage-or-throw", () => {
 			blockCentroids,
 		})
 
-		// `buildBDCDatabase` seals (chmod 0444). Unseal so the manifest row can be deleted,
-		// per `openBuiltClient`'s `write: true` mode (throws `SealedArtifactError` while still sealed).
+		// `buildBDCDatabase` seals (chmod 0444).
+		// Unseal so the manifest row can be deleted, per `openBuiltClient`'s `write: true`
+		// mode (throws `SealedArtifactError` while still sealed).
 		await changeMode(corruptOut, 0o644)
 		expect(await pathExists(corruptOut)).toBe(true)
 

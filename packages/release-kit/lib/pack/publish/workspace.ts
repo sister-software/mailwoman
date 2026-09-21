@@ -115,9 +115,10 @@ export async function publishWorkspace(options: PublishWorkspaceOptions): Promis
 
 	await packWorkspaceForPublish(cwd, tarballPath)
 
-	// Step 2: verify the tarball contains what the manifest promises — every concrete exports target,
-	// every literal `files` entry (see verify-tarball.ts for the en-in incident that guard exists for),
-	// and every `bin` target. Throws with every violation listed.
+	// Step 2: verify the tarball contains what the manifest promises —
+	// every concrete exports target, every literal `files` entry
+	// (see verify-tarball.ts for the en-in incident that guard exists for), and every `bin` target.
+	// Throws with every violation listed.
 	const audit = verifyTarball(tarballPath)
 	const tarballAudit = formatTarballAudit(audit)
 
@@ -135,9 +136,9 @@ export async function publishWorkspace(options: PublishWorkspaceOptions): Promis
 		publishArgs.push("--otp", options.otp)
 	}
 
-	// npm can only mint a provenance attestation from a CI provider it supports,
-	// so this is conditioned on GitHub Actions rather than on CI generally: a local
-	// `yarn release` passing --provenance fails outright, with no OIDC token to sign against.
+	// npm can only mint a provenance attestation from a CI provider it supports, so this
+	// is conditioned on GitHub Actions rather than on CI generally: a local `yarn release`
+	// passing --provenance fails outright, with no OIDC token to sign against.
 	// Trusted Publishing works either way — the attestation is the part that needs the CI identity.
 	//
 	// MAILWOMAN_NPM_PROVENANCE=0 turns it off, so a release blocked by a sigstore or registry outage can still ship.

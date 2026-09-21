@@ -30,8 +30,8 @@ test("renderBuildInfo emits the four fields as tab-indented JSON with a trailing
 })
 
 test("revision and commit are the same revision at two lengths", () => {
-	// The pair exists because a production smoke reads `revision` and compares
-	// it against a short form, while a commit URL wants the whole thing.
+	// The pair exists because a production smoke reads `revision` and compares it
+	// against a short form, while a commit URL wants the whole thing.
 	// A build writing two different revisions would be a defect this names.
 	const text = renderBuildInfo({
 		app: "mailwoman-earth",

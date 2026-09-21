@@ -56,13 +56,15 @@ export interface SourceCensusRow {
 	tables: number
 	/**
 	 * Present only when the artifact carries an `spr` table — the shape every gazetteer extract shares.
+	 *
 	 * A file without one is reported with `readable: false` and a reason rather than a zero.
 	 */
 	countries?: Record<string, number>
 	join: JoinCapability[]
 	/**
-	 * Whether any row carries a usable `parent_id`. A extract whose every row reads `-1`
-	 * cannot be walked upward, and that is invisible from a row count.
+	 * Whether any row carries a usable `parent_id`.
+	 *
+	 * A extract whose every row reads `-1` cannot be walked upward, and that is invisible from a row count.
 	 */
 	parentLinked?: boolean
 	readable: boolean
@@ -76,7 +78,9 @@ function tableNames(db: DatabaseClient<WOFDatabase>): string[] {
 }
 
 /**
- * Census one SQLite artifact. Never throws — an unreadable file is a finding rather than an error.
+ * Census one SQLite artifact.
+ *
+ * Never throws — an unreadable file is a finding rather than an error.
  */
 export async function censusArtifact(path: string, countries?: readonly string[]): Promise<SourceCensusRow> {
 	const artifact = path.split("/").pop() ?? path

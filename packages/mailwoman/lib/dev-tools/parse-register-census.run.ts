@@ -11,8 +11,8 @@
  * dropout for either channel — so the share of input that classifies into `formatted`
  * is the share served without evidence the model always had while learning.
  *
- * That share is the quantity a dropout curriculum would exist to serve,
- * and it has never been counted. Read it before building the knob.
+ * That share is the quantity a dropout curriculum would exist to serve, and it has never been counted.
+ * Read it before building the knob.
  *
  * The register comes from `deriveGeocodeRegister`, the same function the geocode path calls,
  * so this counts what production does rather than a re-derivation of it.
@@ -92,8 +92,10 @@ for (const locale of ["us", "fr", "adversarial"]) {
 }
 
 /**
- * The coordinate panels the locality arc is graded on. Their rows are rendered rather than
- * stored, so the bare admin surface this census exists to size is only visible here.
+ * The coordinate panels the locality arc is graded on.
+ *
+ * Their rows are rendered rather than stored, so the bare admin surface this
+ * census exists to size is only visible here.
  */
 for (const panel of ["us", "us-shape-stratified"]) {
 	const path = String(dataRootPath("eval", "coord", `${panel}.jsonl`))
@@ -111,6 +113,7 @@ for (const panel of ["us", "us-shape-stratified"]) {
 
 /**
  * A corpus sample, which is the distribution the model learned the channels under.
+ *
  * `raw` is the rendered surface each training row presents to the tokenizer.
  */
 if (values.corpus) {

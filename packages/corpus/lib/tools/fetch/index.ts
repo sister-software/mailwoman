@@ -159,7 +159,9 @@ export * from "#us/tools/fetch/tiger-full"
 export * from "#tools/fetch/wikidata-subvenue"
 
 /**
- * The fetch-source registry: id → module entry point. Each entry point takes its own options interface.
+ * The fetch-source registry: id → module entry point.
+ *
+ * Each entry point takes its own options interface.
  */
 export const FETCH_SOURCES = {
 	"acra-sg": fetchACRASG,

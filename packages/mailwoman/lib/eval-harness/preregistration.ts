@@ -34,9 +34,9 @@ export function preregistrationPath(directory: string, name: string): string {
  * Canonical JSON for hashing: keys sorted at every depth, array order preserved,
  * no insignificant whitespace.
  *
- * The hash covers content rather than bytes so a formatter pass cannot break the
- * freeze and a reordered key cannot slip past it. Array order is meaningful —
- * row order is reported order — so it is never sorted.
+ * The hash covers content rather than bytes so a formatter pass cannot break the freeze
+ * and a reordered key cannot slip past it.
+ * Array order is meaningful — row order is reported order — so it is never sorted.
  */
 export function canonicalJSON(value: unknown): string {
 	if (value === null || typeof value !== "object") return stringifyJSON(value) ?? "null"
@@ -58,9 +58,11 @@ export function definitionContentHash(definition: unknown): string {
 }
 
 /**
- * The freeze record every pre-registration commits beside its definition: the definition's
- * identity and the content hash that pins it. The identity field's name varies per ruler
- * (`probeID`, `decisionID`), so the loader takes it as a parameter rather than declaring it here.
+ * The freeze record every pre-registration commits beside its definition:
+ * the definition's identity and the content hash that pins it.
+ *
+ * The identity field's name varies per ruler (`probeID`, `decisionID`),
+ * so the loader takes it as a parameter rather than declaring it here.
  */
 export interface FrozenDefinitionFreezeRecord {
 	definition: string
@@ -215,6 +217,7 @@ export interface WeightsIdentity {
 	weightsLocale: string
 	/**
 	 * Md5 of the resolved `model.onnx`, which is what distinguishes two arms.
+	 *
 	 * A staged candidate's `model-card.json` can be a symlink into the shared data root,
 	 * so two caches holding different graphs read the same `weightsVersion`; the bytes never do.
 	 */
@@ -255,6 +258,7 @@ export interface PreregisteredArtifactIdentity extends WeightsIdentity {
 	poiDatabasePath: string
 	/**
 	 * The database's own `layer_manifest` row, or the reason it could not be read.
+	 *
 	 * Never silently absent: an unstamped artifact and an unreadable one are different
 	 * findings, and both matter to a reproduction.
 	 */

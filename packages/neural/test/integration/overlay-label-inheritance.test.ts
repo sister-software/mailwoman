@@ -26,8 +26,10 @@ import { readLabelsFromModelCard } from "@mailwoman/neural/weights-channels"
 import { describe, expect, test } from "vitest"
 
 /**
- * Every locale with a weights workspace. Spelled out rather than discovered: a carrier added without
- * being listed here is exactly the case that broke, so the list failing to grow is itself the signal.
+ * Every locale with a weights workspace.
+ *
+ * Spelled out rather than discovered: a carrier added without being listed here is
+ * exactly the case that broke, so the list failing to grow is itself the signal.
  */
 const LOCALES = ["en-US", "en-GB", "fr-FR", "de-DE", "en-IN", "es-ES", "it-IT", "en-NZ"] as const
 

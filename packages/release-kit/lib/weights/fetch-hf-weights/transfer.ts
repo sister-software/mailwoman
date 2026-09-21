@@ -32,28 +32,31 @@ import type { WeightsArtifactPlan } from "#weights/fetch-hf-weights/plan"
 /**
  * The bucket client.
  *
- * The house rule routes API requests through `APIClient` and exempts multi-gigabyte
- * file transfers, where a buffered body is untenable and response caching is nonsense.
+ * The house rule routes API requests through `APIClient` and exempts multi-gigabyte file
+ * transfers, where a buffered body is untenable and response caching is nonsense.
  * These objects sit on the API side of that line: the largest is `model.onnx` at 39,419,629 bytes
  * and the whole set is under ~70 MB (measured 2026-08-25 against the v9.1.0 directory),
  * each one is md5-checked after arrival, and each is fetched exactly once per run —
  * so a buffered body costs one artifact's worth of memory and a stream would add nothing.
+ *
  * What `APIClient` does provide is the reason the YAML this replaces passed
  * `--retry 6 --retry-all-errors` to every curl: Hugging Face throttles the public
  * bucket from CI, and a 429 read as a missing artifact is the one answer that would
  * have a release believe its weights were never staged.
  *
- * No pacer, deliberately. One run is a score of concurrent HEADs and then sequential
- * whole-object GETs against a public CDN the browser demo already reads at
- * higher concurrency. retry is the only rate control this path has ever needed,
- * and an invented interval would be a number no measurement supports.
+ * No pacer, deliberately.
+ * One run is a score of concurrent HEADs and then sequential whole-object GETs against a public
+ * CDN the browser demo already reads at higher concurrency. retry is the only rate control this
+ * path has ever needed, and an invented interval would be a number no measurement supports.
  */
 const bucketClient = new APIClient({ displayName: "release-hf-weights", retry: true })
 
 /**
- * Head-probe one bucket object. Returns the failure's message rather than a bare boolean: a throttled
- * or unroutable probe is indistinguishable from an unstaged artifact at the call site, and "missing"
- * is the answer that would send an operator to re-run a staging step that already succeeded.
+ * Head-probe one bucket object.
+ *
+ * Returns the failure's message rather than a bare boolean: a throttled or unroutable probe
+ * is indistinguishable from an unstaged artifact at the call site, and "missing" is the
+ * answer that would send an operator to re-run a staging step that already succeeded.
  */
 export async function probeRemote(url: string): Promise<string | null> {
 	try {
@@ -66,8 +69,10 @@ export async function probeRemote(url: string): Promise<string | null> {
 }
 
 /**
- * Download one bucket object whole. Axios's node adapter answers `arraybuffer` with a `Buffer`;
- * its fetch adapter answers with an `ArrayBuffer`, so both shapes are accepted.
+ * Download one bucket object whole.
+ *
+ * Axios's node adapter answers `arraybuffer` with a `Buffer`; its fetch adapter
+ * answers with an `ArrayBuffer`, so both shapes are accepted.
  */
 export async function downloadRemote(url: string): Promise<Buffer> {
 	const response = await bucketClient.fetch<ArrayBuffer | Buffer>({ url, responseType: "arraybuffer" })
@@ -79,10 +84,12 @@ export async function downloadRemote(url: string): Promise<Buffer> {
 /**
  * Write `bytes` to a workspace file.
  *
- * Unlink first. `writeFileSync` follows a symlink at the destination and writes through it,
- * leaving the symlink in place — and the registry refuses a tarball containing one
- * (http 415, YN0035). A dev checkout's weights workspaces are full of symlinks,
- * and the staging tree can inherit one, so the discipline applies to both destinations.
+ * Unlink first.
+ * `writeFileSync` follows a symlink at the destination and writes through it, leaving the
+ * symlink in place — and the registry refuses a tarball containing one (http 415, YN0035).
+ *
+ * A dev checkout's weights workspaces are full of symlinks, and the staging tree can
+ * inherit one, so the discipline applies to both destinations.
  * Same rule as `copy-weights.ts`; see agents.md "symlinks in the publish tarball".
  */
 export async function writeArtifact(destination: string, bytes: Buffer): Promise<void> {

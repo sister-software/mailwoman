@@ -42,8 +42,10 @@ const { values, positionals } = parseArguments({
 })
 
 /**
- * The arms, by the artifact each one is. `pop` fell back to population because its
- * source DB has no `place_importance` table; `imp` carries the real Wikipedia join.
+ * The arms, by the artifact each one is.
+ *
+ * `pop` fell back to population because its source DB has no `place_importance` table;
+ * `imp` carries the real Wikipedia join.
  * Both stamps are readable in the binaries' provenance tails.
  */
 const ARMS: Record<string, string> = {

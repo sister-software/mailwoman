@@ -24,6 +24,7 @@ import type { Kysely } from "kysely"
  * `is_containing=1` marks the authoritative tier — the locality whose polygon contains the
  * postcode centroid (the polygon builds) or the name-confirmed municipality (the CJK builds).
  * `is_containing=0` rows are the proximity candidates the resolver soft-scores against.
+ *
  * `distance_km` is 0 for a containment hit and the haversine distance otherwise.
  * `aliases` is a `|`-joined alt-name list, nullable because the DDL never constrained it.
  */
@@ -39,6 +40,7 @@ export interface PostcodeLocalityTable {
 
 /**
  * Provenance / license / build-statistics key-value pairs.
+ *
  * Every database carries one, and its contents are per-builder.
  */
 export interface PostcodeLocalityMetaTable {
@@ -63,10 +65,10 @@ export type PostcodeLocalitySchemaHandle = Pick<Kysely<PostcodeLocalityDatabase>
  * Whether the statement carries `if not exists`.
  *
  * Required rather than defaulted: the databases divide into accumulative builds,
- * where one shared database is filled country by country in successive runs
- * and the second run must find the table already there, and single-country rebuilds,
- * which drop and recreate. Silently defaulting either way turns a mismatched call
- * site into a wrong artifact instead of a compile error.
+ * where one shared database is filled country by country in successive runs and the second run
+ * must find the table already there, and single-country rebuilds, which drop and recreate.
+ * Silently defaulting either way turns a mismatched call site into a wrong artifact
+ * instead of a compile error.
  */
 export interface PostcodeLocalityDDLOptions {
 	ifNotExists: boolean

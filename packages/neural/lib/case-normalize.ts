@@ -18,6 +18,7 @@
 
 /**
  * A Latin-script letter, in either case and with any diacritic.
+ *
  * Case conversion is applied to Latin script only: other scripts are either uncased or carry
  * locale-sensitive rules (Turkish dotted and dotless I, Greek final sigma) that the length guard
  * in {@link titleCaseInput} would refuse run by run anyway, so they are left alone as a whole.
@@ -50,20 +51,24 @@ const ASCII_LOWER_A = 97
  */
 const ASCII_LOWER_Z = 122
 /**
- * Cased letters an input needs before it counts as uniformly-cased
- * rather than shouting punctuation or a stray token. The floor exists so a digit-
- * or punctuation-only input is not treated as a whole shouting address.
+ * Cased letters an input needs before it counts as uniformly-cased rather than
+ * shouting punctuation or a stray token.
+ *
+ * The floor exists so a digit- or punctuation-only input is not treated as a whole shouting address.
  */
 const MIN_CASED_LETTERS = 3
 
 /**
  * True when `text` is latin-script all-caps: every letter in it is Latin script,
  * it has at least three uppercase letters, and no lowercase letter anywhere.
+ *
  * Diacritics are admitted (`RUE DU faubourg saint-honorÉ` qualifies): an accented uppercase
  * input reaches the model as single-character pieces otherwise, which is the #1938 defect.
- * A letter from another script disqualifies the whole input, because its case rules
- * are locale-sensitive and can change length. The 3-letter floor avoids treating a
- * digit/punctuation-only or tiny-token input as a whole shouting address.
+ * A letter from another script disqualifies the whole input, because its case
+ * rules are locale-sensitive and can change length.
+ *
+ * The 3-letter floor avoids treating a digit/punctuation-only or tiny-token
+ * input as a whole shouting address.
  */
 export function isAllCapsInput(text: string): boolean {
 	let upper = 0
@@ -151,6 +156,7 @@ export function restoreLowerInput(text: string): string {
 /**
  * Normalize a shouting or whispering ascii input to canonical mixed-case before the
  * model. mixed-case and accented/non-Latin input pass through byte-identically.
+ *
  * The parser's #690 (all-caps) + #829 (all-lowercase) hook.
  */
 export function normalizeInputCase(text: string): string {

@@ -28,10 +28,12 @@ import { packWorkspaceForPublish } from "#pack/pack-workspace"
 import { verifyTarball } from "#pack/verify-tarball"
 
 /**
- * The root workspaces that sit outside `.release-it.json`'s publish list, each with the reason
- * a reader can state. The identity check below fails on any absence not in this record —
- * "expected 51, found 50" sends someone counting. naming the unexpected workspace is
- * the actionable version, and this record is the data the check owns.
+ * The root workspaces that sit outside `.release-it.json`'s publish list,
+ * each with the reason a reader can state.
+ *
+ * The identity check below fails on any absence not in this record — "expected 51,
+ * found 50" sends someone counting. naming the unexpected workspace is the actionable
+ * version, and this record is the data the check owns.
  */
 export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 	docs: "private Docusaurus site — never publishes",
@@ -61,9 +63,10 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
  * ODbL-derived extraction code that counsel has not signed off.
  *
  * Every entry is refused rather than the rights-held ones alone.
- * A private workspace reaching this path is a mistake too, and one rule cannot drift
- * from a classification it does not carry. Publishing a held-out workspace means
- * removing its entry, which is an edit a reviewer sees.
+ * A private workspace reaching this path is a mistake too, and one rule cannot
+ * drift from a classification it does not carry.
+ *
+ * Publishing a held-out workspace means removing its entry, which is an edit a reviewer sees.
  */
 export function assertWorkspacePublishable(workspacePath: string): void {
 	const workspace = workspacePath.replace(/^\.\//, "").replace(/\/$/, "")
@@ -79,6 +82,7 @@ export function assertWorkspacePublishable(workspacePath: string): void {
 
 /**
  * The publish set, verbatim from `.release-it.json` — the list both CI phases derive from.
+ *
  * Throws on a missing, empty, or non-string list: every caller treats this as the full
  * bump/publish surface, and an empty read must never be mistaken for zero workspaces.
  */
@@ -123,8 +127,10 @@ export interface ReleaseListIdentity {
 }
 
 /**
- * The named-absence identity: root `workspaces` minus the release list must equal the sanctioned set
- * exactly. Every discrepancy is reported by name, so the failure is actionable without counting.
+ * The named-absence identity: root `workspaces` minus the release list must
+ * equal the sanctioned set exactly.
+ *
+ * Every discrepancy is reported by name, so the failure is actionable without counting.
  */
 export async function checkReleaseListIdentity(repoRoot: PathBuilderLike): Promise<ReleaseListIdentity> {
 	const root = await readWorkspaceDirectories(repoRoot)
@@ -171,9 +177,10 @@ export async function stageReleaseTree(repoRoot: string, stagingRoot: string): P
 }
 
 /**
- * One workspace's pack-and-audit outcome. `failures` is empty on a clean pack. a
- * pack that could not even produce a tarball reports the thrown message as its
- * single failure rather than aborting the sweep.
+ * One workspace's pack-and-audit outcome.
+ *
+ * `failures` is empty on a clean pack. a pack that could not even produce a tarball
+ * reports the thrown message as its single failure rather than aborting the sweep.
  */
 export interface WorkspaceAuditResult {
 	workspace: string
@@ -181,6 +188,7 @@ export interface WorkspaceAuditResult {
 	failures: string[]
 	/**
 	 * Entry counts from the tarball audit, for the per-workspace report line.
+	 *
 	 * Absent when the pack or the audit failed.
 	 */
 	counts?: { literalFiles: number; exportTargets: number; binTargets: number }

@@ -42,8 +42,9 @@ import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter
 const MAX_ANCESTRY_DEPTH = 6
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record
- * can be traced back to the dataset it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const WOF_ADMIN_JP_ADAPTER_ID = "wof-admin-jp"
 
@@ -130,8 +131,10 @@ export function synthesizeJpAddress(
 }
 
 /**
- * Build the JP adapter. Reads from the unified global WOF SQLite, walks admin chains
- * starting from neighbourhoods, and yields canonical rows.
+ * Build the JP adapter.
+ *
+ * Reads from the unified global WOF SQLite, walks admin chains starting from
+ * neighbourhoods, and yields canonical rows.
  */
 export function createWOFAdminJpAdapter(): CorpusAdapter {
 	return {

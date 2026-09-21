@@ -40,6 +40,7 @@ import type { FSTProvenance } from "#fst/types"
 
 /**
  * Fixed header size in bytes — mirrors `fst-serialize.ts`'s `HEADER_SIZE`.
+ *
  * Duplicated rather than exported across because this module reads the header by seek
  * (never buffering the file), and the serializer's constant is private to its own read/write pair.
  */
@@ -57,6 +58,7 @@ const PROVENANCE_OFFSET_FIELD = 28
 
 /**
  * First serializer version carrying the trailing provenance block.
+ *
  * Below this a file has no place to put a stamp, so "unstamped" is a statement
  * about the format rather than about the builder.
  */
@@ -103,8 +105,10 @@ export interface FSTStampFields {
 export interface FSTExpectation {
 	source: FSTSourceIdentity
 	/**
-	 * Serializer version to require. Defaults to {@link FST_FORMAT_VERSION} — the version
-	 * this tree writes — so a caller cannot forget the format half of the comparison.
+	 * Serializer version to require.
+	 *
+	 * Defaults to {@link FST_FORMAT_VERSION} — the version this tree writes —
+	 * so a caller cannot forget the format half of the comparison.
 	 * Override only to check against a specific older floor.
 	 */
 	formatVersion?: number
@@ -113,9 +117,11 @@ export interface FSTExpectation {
 
 /**
  * Read an artifact's stamp without deserializing it — a header seek plus the trailer,
- * three reads totalling a few kilobytes. The distinction matters: `fst-global-priority.bin`
- * is 317 MB and this runs on every `yarn test` via the weights linkers, so `readFileSync` +
- * `readFSTProvenance` would trade a freshness guard for a slower test suite and nobody would keep it.
+ * three reads totalling a few kilobytes.
+ *
+ * The distinction matters: `fst-global-priority.bin` is 317 MB and this runs on every
+ * `yarn test` via the weights linkers, so `readFileSync` + `readFSTProvenance` would
+ * trade a freshness guard for a slower test suite and nobody would keep it.
  *
  * Returns `undefined` for a file that is absent, too small, or not an FST at all —
  * none of which is this function's business to diagnose.
@@ -134,7 +140,8 @@ export async function peekFSTStampFields(path: string): Promise<FSTStampFields |
 	const trailerStart = header.readUInt32LE(PROVENANCE_OFFSET_FIELD)
 
 	// 0 = "this build wrote no trailer" (the serializer's own encoding); anything past EOF is a
-	// truncated file. Both read as "no stamp", which is what the caller does with them anyway.
+	// truncated file.
+	// Both read as "no stamp", which is what the caller does with them anyway.
 	if (trailerStart === 0 || trailerStart + 4 > size) return { formatVersion, provenance: undefined }
 
 	const jsonLength = (await readFileRange(path, trailerStart, 4)).readUInt32LE(0)
@@ -147,21 +154,25 @@ export async function peekFSTStampFields(path: string): Promise<FSTStampFields |
 }
 
 /**
- * Re-exported from `@mailwoman/core/hash`. This package's own test imports it from here,
- * and the sidecar convention below is what it is for.
+ * Re-exported from `@mailwoman/core/hash`.
+ *
+ * This package's own test imports it from here, and the sidecar convention below is what it is for.
  */
 
 /**
  * The source identity an FST build should stamp, or a check should compare against.
  *
- * Uses the `.md5` sidecar convention the weights linkers already established on this exact file:
- * `<path>.md5` in md5sum(1) format (`<hash> <filename>`), trusted only while its mtime is at
- * least the source's. An older sidecar is recomputed. Without it the admin DB costs 7.3 s per
- * call and the guard would be quietly disabled by whoever noticed `yarn test` got slower.
+ * Uses the `.md5` sidecar convention the weights linkers already established
+ * on this exact file: `<path>.md5` in md5sum(1) format (`<hash> <filename>`),
+ * trusted only while its mtime is at least the source's.
+ * An older sidecar is recomputed.
  *
- * `refreshSidecar` writes the recomputed digest back. Best-effort: a sealed data root
- * or a read-only mount fails the write and the caller still gets its answer,
- * because refusing to check freshness on a read-only tree would be the wrong trade.
+ * Without it the admin DB costs 7.3 s per call and the guard would be quietly
+ * disabled by whoever noticed `yarn test` got slower.
+ *
+ * `refreshSidecar` writes the recomputed digest back.
+ * Best-effort: a sealed data root or a read-only mount fails the write and the caller still gets
+ * its answer, because refusing to check freshness on a read-only tree would be the wrong trade.
  */
 export async function readWOFSourceIdentity(
 	source: PathBuilderLike,
@@ -246,8 +257,9 @@ export function fstStaleReason(fields: FSTStampFields | undefined, expected: FST
 		return `source db ${provenance.sourceDBMD5.slice(0, 8)} → ${expected.source.md5.slice(0, 8)} (built ${provenance.builtAt})`
 	}
 
-	// Reached only when the md5s agree, so a size disagreement means one of the two was recorded
-	// against a different file than it was hashed from. Cheap to check, and it never fires by accident.
+	// Reached only when the md5s agree, so a size disagreement means one of the two
+	// was recorded against a different file than it was hashed from.
+	// Cheap to check, and it never fires by accident.
 	if (provenance.sourceDBBytes !== undefined && provenance.sourceDBBytes !== expected.source.bytes) {
 		return `source db size ${provenance.sourceDBBytes} → ${expected.source.bytes} at a matching md5 — one of the two is misrecorded`
 	}

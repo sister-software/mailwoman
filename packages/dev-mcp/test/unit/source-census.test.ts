@@ -97,8 +97,8 @@ describe("censusArtifact", () => {
 	})
 
 	it("reports a country asked for and ABSENT as a zero, not a missing key", async () => {
-		// A missing key reads as "not measured". The caller is deciding whether to go
-		// and acquire data, and those are opposite conclusions.
+		// A missing key reads as "not measured".
+		// The caller is deciding whether to go and acquire data, and those are opposite conclusions.
 		const row = await censusArtifact(root.resolve("wof", "postalcode-intl.db"), ["FR", "VE"])
 
 		expect(row.countries).toEqual({ FR: 3, VE: 0 })

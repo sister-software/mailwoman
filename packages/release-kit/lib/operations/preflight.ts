@@ -13,6 +13,7 @@ import { releasePreflight, WEIGHTS_SOURCES, type WeightsSource } from "#release/
 
 /**
  * `release.preflight` — writes inside the checkout or the data root.
+ *
  * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
  */
 export const preflight = defineOperation({

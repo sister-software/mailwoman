@@ -19,8 +19,9 @@ const DEFAULT_TEXT = "1600 Pennsylvania Ave NW, Washington, DC 20500"
 
 export interface LiveModelVisualizerProps {
 	/**
-	 * Trace an input through the decode path. Resolves null when the classifier
-	 * is not ready or the trace fails.
+	 * Trace an input through the decode path.
+	 *
+	 * Resolves null when the classifier is not ready or the trace fails.
 	 */
 	traceParse: (input: string) => Promise<ParseTraceLike | null>
 	/**

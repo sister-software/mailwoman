@@ -32,23 +32,33 @@ import { colocatedDistinctPairs, scanColocatedProviders, stateOption } from "#to
  */
 export interface GoldSetSampleOptions {
 	/**
-	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * Record-matcher sources directory.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
 	 */
 	sources?: string
 	/**
-	 * Providers sampled from the registry. Default 200000.
+	 * Providers sampled from the registry.
+	 *
+	 * Default 200000.
 	 */
 	cap?: number
 	/**
-	 * State filter. Default TX.
+	 * State filter.
+	 *
+	 * Default TX.
 	 */
 	state?: string
 	/**
-	 * Org-name Jaccard collision threshold. Default 0.7.
+	 * Org-name Jaccard collision threshold.
+	 *
+	 * Default 0.7.
 	 */
 	tau?: number
 	/**
-	 * Adjudication sample size. Default 300.
+	 * Adjudication sample size.
+	 *
+	 * Default 300.
 	 */
 	n?: number
 	/**
@@ -90,8 +100,8 @@ export async function goldSetSample(
 	const { byAddr, kept } = await scanColocatedProviders({ registryPath: REGISTRY, state: STATE, cap: CAP })
 	report?.(`    ${kept} providers at ${byAddr.size} addresses`)
 
-	// Hard pairs: co-located, name-similar (≥τ), distinct NPIs that programmatic
-	// truth can't confidently collapse (not subparts of the same parent).
+	// Hard pairs: co-located, name-similar (≥τ), distinct NPIs that programmatic truth
+	// can't confidently collapse (not subparts of the same parent).
 	// Tag the programmatic verdict so adjudication can grade it.
 	const hard: HardPair[] = []
 
@@ -116,8 +126,9 @@ export async function goldSetSample(
 			sameTaxonomy: sameTax,
 			bothSubpartSameParent: false,
 			// Programmatic heuristic verdict (what an entity-level rule would say, beyond the flagged subparts):
-			// same authorized official ⇒ likely one org. different official + different specialty
-			// ⇒ likely distinct. The whole point is to adjudicate whether this is right.
+			// same authorized official ⇒ likely one org. different official + different
+			// specialty ⇒ likely distinct.
+			// The whole point is to adjudicate whether this is right.
 			programmaticVerdict: sameAuth ? "same-entity" : "distinct",
 			adjudication: null,
 		})

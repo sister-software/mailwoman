@@ -37,8 +37,9 @@ import { type HiSchoolRow, schoolCellText, STATE_HI_SCHOOL_SHEETS } from "#us/ad
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record
- * can be traced back to the dataset it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const STATE_HI_SCHOOLS_ADAPTER_ID = "state-hi-schools"
 /**

@@ -175,9 +175,10 @@ describe("runInvarianceSuite", () => {
 	it("--baseline severity check: candidate LOST where baseline only DEGRADED is a NEW (enforcing) violation, not pre-existing", async () => {
 		// The case the severity check exists for: baseline drops `unit` on comma-drop
 		// (degraded — non-critical), candidate drops `house_number` on the same pair (`lost` — critical).
-		// Severity-blind matching (both sides merely "non-invariant") would wrongly call
-		// this pre-existing and let it through. A candidate verdict that is worse than the
-		// baseline's on the same (row, transform) must always count as a new violation.
+		// Severity-blind matching (both sides merely "non-invariant") would wrongly
+		// call this pre-existing and let it through.
+		// A candidate verdict that is worse than the baseline's on the same (row, transform)
+		// must always count as a new violation.
 		const brokenRow: InvarianceRow = { ...row, transforms: ["comma-drop"] }
 
 		const candidateParse: ParseFn = async (raw): Promise<Record<string, string>> =>

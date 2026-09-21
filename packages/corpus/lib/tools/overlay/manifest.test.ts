@@ -48,10 +48,11 @@ describe("rerootBaseFilePath", () => {
 describe("baseManifestFiles", () => {
 	it("reads a manifest written before the 2026-09-01 rename", () => {
 		// Every corpus built before that date lists its parquets under the old key,
-		// and a built corpus is an immutable artifact. The rename moved this reader and the
-		// trainer's without migrating them: the trainer measured `v0.28.0-reviewed-postcode-tail`
-		// declaring 706 train files and resolving one. An overlay assembled from a base read
-		// as empty carries no base files at all, which is a corpus of only the overlay.
+		// and a built corpus is an immutable artifact.
+		// The rename moved this reader and the trainer's without migrating them: the trainer
+		// measured `v0.28.0-reviewed-postcode-tail` declaring 706 train files and resolving one.
+		// An overlay assembled from a base read as empty carries no base files at all,
+		// which is a corpus of only the overlay.
 		expect(baseManifestFiles(manifestWith(PRE_RENAME_FILES_KEY, ["a.parquet", "b.parquet"]))).toEqual([
 			{ path: "a.parquet" },
 			{ path: "b.parquet" },

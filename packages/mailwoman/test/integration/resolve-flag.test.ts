@@ -45,12 +45,13 @@ describe("--resolve option validation", () => {
 
 describe("npx mailwoman parse --resolve error paths", () => {
 	test("--resolve with no gazetteer at all exits non-zero with a clear message", async () => {
-		// As of the pipeline-default flip, --resolve works without --neural — the runtime pipeline
-		// handles classification + resolution end-to-end. The remaining error path is "no
-		// gazetteer available", which means both backends unreachable: no WOF database
-		// and no candidate.db. `MAILWOMAN_CANDIDATE_DB=none` is what pins the second one off —
-		// leaving it unset lets the convention path answer, and on any machine that has run
-		// `data pull candidate` the command then succeeds and this test's premise is gone.
+		// As of the pipeline-default flip, --resolve works without --neural —
+		// the runtime pipeline handles classification + resolution end-to-end.
+		// The remaining error path is "no gazetteer available", which means both backends
+		// unreachable: no WOF database and no candidate.db.
+		// `MAILWOMAN_CANDIDATE_DB=none` is what pins the second one off — leaving it unset lets
+		// the convention path answer, and on any machine that has run `data pull candidate`
+		// the command then succeeds and this test's premise is gone.
 		await expect(
 			runFile("node", [cliBin, "parse", "--resolve", "123 Main St"], {
 				env: childEnv({ MAILWOMAN_WOF_DB: "", MAILWOMAN_CANDIDATE_DB: "none" }),
@@ -71,8 +72,9 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 
 		// The XML root is always present.
 		expect(result.stdout).toContain("<address raw=")
-		// At least one node gained resolver attribution. The exact wof id varies by FTS ranking,
-		// but the `place="wof:<digits>"` shape + the `lat=` / `lon=` attrs are stable.
+		// At least one node gained resolver attribution.
+		// The exact wof id varies by FTS ranking, but the `place="wof:<digits>"`
+		// shape + the `lat=` / `lon=` attrs are stable.
 		expect(result.stdout).toMatch(/src="resolver:[a-z_]+:\d+"/)
 		expect(result.stdout).toMatch(/place="wof:\d+"/)
 		expect(result.stdout).toMatch(/lat="-?\d+\.\d+"/)
@@ -105,8 +107,8 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 	}, 60_000)
 
 	test("--candidates surfaces runner-up resolutions in XML", async () => {
-		// "Springfield, Illinois" — the region qualifier helps the model produce
-		// a resolvable tag. WOF returns multiple Springfields (or, PA, MA, etc.).
+		// "Springfield, Illinois" — the region qualifier helps the model produce a resolvable tag.
+		// WOF returns multiple Springfields (or, PA, MA, etc.).
 		// With --candidates 5 we expect at least one <alternative> element on the resolved node.
 		const result = await runFile(
 			"node",
@@ -128,8 +130,8 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 			{ env: childEnv({ MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" }), maxBuffer: 4 * 1024 * 1024 }
 		)
 
-		// JSON with --candidates dumps the full AddressTree rather than the libpostal-flat
-		// projection. The tree carries `roots` with nodes that have `alternatives`
+		// JSON with --candidates dumps the full AddressTree rather than the libpostal-flat projection.
+		// The tree carries `roots` with nodes that have `alternatives`
 		// (possibly on nested children in containment-nesting trees like region → locality).
 		const tree = parseJSONStrict<Record<string, unknown>>(stripAnsiSpinner(result.stdout))
 		expect(tree).toHaveProperty("raw")

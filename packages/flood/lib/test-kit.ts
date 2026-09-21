@@ -36,8 +36,10 @@ import { EA_FLOOD_LAYER, EA_SOURCE_EPSG } from "#vocabulary"
 export const FIXTURE_ORIGIN = { lon: 1.9, lat: 52.6 } as const
 
 /**
- * Side of a fixture zone square, in degrees. About 1.1 km at this latitude —
- * several res-9 cells across, so a square has a real interior and a real fringe.
+ * Side of a fixture zone square, in degrees.
+ *
+ * About 1.1 km at this latitude — several res-9 cells across, so a square has
+ * a real interior and a real fringe.
  */
 export const FIXTURE_SIDE = 0.01
 

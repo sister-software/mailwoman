@@ -27,6 +27,7 @@ interface FakeResult {
 
 /**
  * A registry whose engine answers from a table keyed by input.
+ *
  * An input the table does not name throws, which is how the errored-rung path is exercised.
  */
 function fakeRegistry(answers: Record<string, FakeResult>): EngineRegistryLike {
@@ -115,7 +116,8 @@ describe("minimal-pair ladders", () => {
 		const result = await runMinimalPairs(registry, { ladders: [{ rungs: ["a", "b"] }] })
 
 		expect(result.ladders[0]!.rungs[1]!.delta?.moved_km).toBeNull()
-		// The components are identical, so the only thing that diverged is the abstention flip. It must still be caught.
+		// The components are identical, so the only thing that diverged is the abstention flip.
+		// It must still be caught.
 		expect(result.ladders[0]!.first_divergence?.step).toBe(1)
 	})
 

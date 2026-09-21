@@ -53,8 +53,9 @@ function filesystemCache(config: Configuration, alias: Record<string, string>): 
 }
 
 /**
- * Docusaurus calls `configureWebpack` synchronously, so the alias map is resolved by
- * the caller — the plugin factory, which Docusaurus does await — and handed in here.
+ * Docusaurus calls `configureWebpack` synchronously, so the alias map is resolved by the
+ * caller — the plugin factory, which Docusaurus does await — and handed in here.
+ *
  * Resolving it at this point would return a promise the lifecycle never unwraps.
  */
 export function configureRuntimeWebpack(

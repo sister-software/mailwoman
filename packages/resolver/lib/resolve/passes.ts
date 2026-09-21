@@ -30,6 +30,7 @@ import { findRescoreCandidate, hasResolvedPlace, postcodeCodeSubset } from "#spa
 
 /**
  * Cap on candidates recorded per {@link ResolveNodeTrace} — the trace is a record rather than a dump.
+ *
  * The count past the cap is reported in `candidatesTruncated`, so absence of a row is never silent.
  */
 const TRACE_CANDIDATE_CAP = 10
@@ -45,9 +46,10 @@ const TRACE_CANDIDATE_CAP = 10
 const FINEST_DIAGNOSTIC_BAND = PLACETYPE_SPECIFICITY["microhood"]!
 
 /**
- * The coarse end of the probe window. `country` and no coarser: a name matching
- * at `continent` or `planet` says nothing about a mislabeled admin span,
- * and the walk resolves the country from its own node anyway.
+ * The coarse end of the probe window.
+ *
+ * `country` and no coarser: a name matching at `continent` or `planet` says nothing about
+ * a mislabeled admin span, and the walk resolves the country from its own node anyway.
  */
 const COARSEST_DIAGNOSTIC_BAND = PLACETYPE_SPECIFICITY["country"]!
 
@@ -63,8 +65,10 @@ export const DIAGNOSTIC_BANDS: readonly string[] = Object.entries(PLACETYPE_SPEC
 	.map(([placetype]) => placetype)
 
 /**
- * Per-lookup trace bookkeeping (#1721). `#lookupAndPick` talks to one of these unconditionally —
- * a real recorder when `ResolveOpts.traceSink` is set, the frozen
+ * Per-lookup trace bookkeeping (#1721).
+ *
+ * `#lookupAndPick` talks to one of these unconditionally — a real recorder
+ * when `ResolveOpts.traceSink` is set, the frozen
  * {@link NOOP_TRACE_RECORDER} otherwise — so the hot path carries no per-event branches
  * and the no-sink walk costs a handful of empty calls per node.
  */
@@ -196,15 +200,17 @@ export interface ResolutionState {
 	defaultCountry?: string
 	/**
 	 * Whether {@link defaultCountry} came from the locale rather than the caller.
+	 *
 	 * Consulted only by `country`-placetype lookups, which skip an inferred scope —
 	 * see `ResolveOpts.defaultCountryIsInferred`.
 	 */
 	defaultCountryIsInferred: boolean
 	/**
-	 * The tree's single value-containing node when it is locality-tagged (the bare-toponym shape),
-	 * else null. Checks the country-placetype sibling race in `#lookupAndPick` —
-	 * a bare name can be a country the parser tagged `locality` ("Japan", "China"), and the
-	 * locality placetype filter makes the country row unreachable no matter how it ranks.
+	 * The tree's single value-containing node when it is locality-tagged (the bare-toponym shape), else null.
+	 *
+	 * Checks the country-placetype sibling race in `#lookupAndPick` — a bare name can be a
+	 * country the parser tagged `locality` ("Japan", "China"), and the locality placetype
+	 * filter makes the country row unreachable no matter how it ranks.
 	 */
 	bareLocalityNode: AddressNode | null
 	parentFallback: boolean
@@ -214,14 +220,17 @@ export interface ResolutionState {
 	 */
 	postcode?: string
 	/**
-	 * Postcode-containment coherence (#31, Mechanism 2) — forwarded to locality lookups
-	 * so a coordinate-first backend can re-rank name candidates by proximity to the
-	 * postcode's own centroid. Opt-in. off by default.
+	 * Postcode-containment coherence (#31, Mechanism 2) — forwarded to locality lookups so a
+	 * coordinate-first backend can re-rank name candidates by proximity to the postcode's own centroid.
+	 *
+	 * Opt-in. off by default.
 	 */
 	postcodeContainmentCoherence: boolean
 	/**
-	 * Postcode-prefix prior (#31, Mechanism 3) — on a `postalcode` miss, derive the
-	 * code's prefix and probe `postcodePrefixIndex`. Opt-in. off by default.
+	 * Postcode-prefix prior (#31, Mechanism 3) — on a `postalcode` miss,
+	 * derive the code's prefix and probe `postcodePrefixIndex`.
+	 *
+	 * Opt-in. off by default.
 	 */
 	postcodePrefixPrior: boolean
 	/**
@@ -235,6 +244,7 @@ export interface ResolutionState {
 	/**
 	 * #1585 — the locale hint's country, forwarded to the backend as `fuzzyCountry` on every primary lookup. Scopes the
 	 * typo-fuzzy tier only. exact matches stay worldwide.
+	 *
 	 * See `ResolveOpts.fuzzyCountryScope`.
 	 */
 	fuzzyCountryScope?: string
@@ -248,11 +258,15 @@ export interface ResolutionState {
 	 */
 	bias?: Array<{ lat: number; lon: number; weight?: number }>
 	/**
-	 * Postcode-anchor country posterior (#369). Undefined = no re-rank (byte-stable default).
+	 * Postcode-anchor country posterior (#369).
+	 *
+	 * Undefined = no re-rank (byte-stable default).
 	 */
 	anchorPosterior?: Record<string, number>
 	/**
-	 * Weight on the posterior in the locality re-rank. Only used when `anchorPosterior` is set.
+	 * Weight on the posterior in the locality re-rank.
+	 *
+	 * Only used when `anchorPosterior` is set.
 	 */
 	anchorWeight: number
 	/**
@@ -261,16 +275,22 @@ export interface ResolutionState {
 	traceSink?: (record: ResolveNodeTrace) => void
 	/**
 	 * Re-probe a resolved-nothing lookup across the other admin bands and record which hold it.
-	 * Diagnostic only — never reaches the pick. See `ResolveOpts.diagnoseUnreachable`.
+	 *
+	 * Diagnostic only — never reaches the pick.
+	 * See `ResolveOpts.diagnoseUnreachable`.
 	 */
 	diagnoseUnreachable?: boolean
 	/**
 	 * #27 locale-country soft prior for the bare-toponym admin walk. Undefined = no prior (the shipped default) →
-	 * byte-stable. See `ResolveOpts.localeCountryPrior` for the calibration and why it ships opt-in.
+	 * byte-stable.
+	 *
+	 * See `ResolveOpts.localeCountryPrior` for the calibration and why it ships opt-in.
 	 */
 	localeCountryPrior?: string
 	/**
-	 * Weight of that prior in log10-population units. Only consulted when `localeCountryPrior` is set.
+	 * Weight of that prior in log10-population units.
+	 *
+	 * Only consulted when `localeCountryPrior` is set.
 	 */
 	localeCountryPriorWeight: number
 	/**
@@ -282,23 +302,30 @@ export interface ResolutionState {
 	 */
 	hardCountry?: string
 	/**
-	 * Dual-role hierarchy completion (#405). Off by default → byte-stable.
+	 * Dual-role hierarchy completion (#405).
+	 *
+	 * Off by default → byte-stable.
 	 */
 	hierarchyCompletion: boolean
 	/**
 	 * Attach ancestor lineage to each resolved node (#404).
+	 *
 	 * Off by default → byte-stable.
 	 */
 	includeAncestors: boolean
 	/**
-	 * Admin-containment re-rank (#1717 stage 2). Off by default → byte-stable.
+	 * Admin-containment re-rank (#1717 stage 2).
+	 *
+	 * Off by default → byte-stable.
 	 * See `ResolveOpts.adminContainmentRerank`.
 	 */
 	adminContainmentRerank: boolean
 	/**
 	 * The tree's first parsed region-tagged span, extracted once up front
-	 * (the `postcode` pattern above — region and locality are siblings, so the top-down walk wouldn't
-	 * otherwise let the locality lookup see it). Only consulted when
+	 * (the `postcode` pattern above — region and locality are siblings, so the top-down
+	 * walk wouldn't otherwise let the locality lookup see it).
+	 *
+	 * Only consulted when
 	 * {@link adminContainmentRerank} is on.
 	 */
 	regionQualifier?: string
@@ -319,11 +346,12 @@ export interface ResolutionState {
 }
 
 /**
- * Pick the completion locality when an admin maps to several coincident same-name
- * candidates (#405). referential likelihood is the primary signal — the principal city
- * is the populous one, and it can sit farther from the admin centroid than a tiny
- * same-name hamlet (the Niigata case from #403). Nearest centroid breaks a referential
- * tie. a genuine tie (same population and distance) abstains rather than guess.
+ * Pick the completion locality when an admin maps to several coincident same-name candidates (#405).
+ * referential likelihood is the primary signal — the principal city is the populous one, and it
+ * can sit farther from the admin centroid than a tiny same-name hamlet (the Niigata case from #403).
+ *
+ * Nearest centroid breaks a referential tie. a genuine tie (same population and distance)
+ * abstains rather than guess.
  *
  * ROAD_TO_V9 §2: `compareReferential` is referential desc with raw population as its own
  * tiebreak, which is the same order as the plain `b.population - a.population` it replaced —
@@ -365,10 +393,12 @@ export function firstPostcodeValue(roots: readonly AddressNode[]): string | unde
 
 /**
  * Span-rescore tier (#370): opt-in last-resort locality recovery.
+ *
  * Runs only when the tree resolved nothing (the #685 brake — never disturb a working coordinate).
  * Enumerates raw-token spans, exact- matches the same-country gazetteer
- * (longest-wins + postcode-consistency check. see `span-rescore.ts`), and on a hit
- * injects a resolved `locality` node decorated exactly like a normally-resolved one.
+ * (longest-wins + postcode-consistency check. see `span-rescore.ts`), and on a hit injects
+ * a resolved `locality` node decorated exactly like a normally-resolved one.
+ *
  * Default-on (#370, promoted 2026-06-25); byte-stable opt-out via `opts.spanRescore: false`.
  * Async (it queries the backend), so it's awaited.
  */
@@ -428,10 +458,10 @@ export async function applySpanRescore(
 	}
 
 	// #1537: the same-span namesake runner-ups rather than an empty list. A name the model reads as a `street`
-	// ("Springfield", "Berlin", "Moscow") never reaches the admin walk,
-	// so this tier is the only thing that resolves it — and decorating with `[]`
-	// meant the geocode path's `candidates` held one entry and the dominance margin
-	// `declared_ambiguity` reads was uncomputable for exactly the famous-homonym class.
+	// ("Springfield", "Berlin", "Moscow") never reaches the admin walk, so this tier
+	// is the only thing that resolves it — and decorating with `[]` meant the geocode
+	// path's `candidates` held one entry and the dominance margin `declared_ambiguity`
+	// reads was uncomputable for exactly the famous-homonym class.
 	// The winner is unchanged (see findRescoreCandidate); this is additive.
 	decorateNode(node, hit.place, hit.alternatives)
 	// `rescore_postcode_verified` carries the check's precision signal as an explicit handle — not folded into the
@@ -457,8 +487,9 @@ export async function applySpanRescore(
 
 /**
  * #942: find the first confident-but-unresolved postcode node whose value is a polluted compound ("1382 Kožljek"),
- * resolve its code-shaped token subset as a `postalcode`, and decorate the node
- * from that hit (`postal_compound_recovered` metadata marks the provenance).
+ * resolve its code-shaped token subset as a `postalcode`, and decorate the node from
+ * that hit (`postal_compound_recovered` metadata marks the provenance).
+ *
  * No-op when every postcode node resolved, the value has no digit-containing tokens,
  * or the subset equals the full value (then the walk already tried it).
  */
@@ -593,8 +624,9 @@ export function applyPostcodeConsistency(
 		}
 
 		// Past the cap the postcode is the likelier error of the two, so the answer
-		// keeps the locality it selected. The disagreement is still reported;
-		// `coordinate_source` is absent because the coordinate was not moved.
+		// keeps the locality it selected.
+		// The disagreement is still reported; `coordinate_source` is absent
+		// because the coordinate was not moved.
 		if (gapKm > maxMoveKm) {
 			node.metadata = { ...node.metadata, postcode_city_mismatch: true, postcode_move_refused_km: gapKm }
 

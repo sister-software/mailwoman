@@ -42,8 +42,10 @@ import type { InterpolatedHit, InterpolationQuery, StreetInterpolator } from "#i
 import { hasTable, prepareAll, type PreparedAll } from "#sqlite-utils"
 import { canonicalizeRouteKey, type RouteKey, streetKeyVariants } from "#street/normalize"
 /**
- * Extrapolation cap for a single-sided bracket: at most one pair-span beyond the nearest known
- * point (`t = 2`). Past it, the two-point line carries no evidence about the query number.
+ * Extrapolation cap for a single-sided bracket: at most one pair-span beyond
+ * the nearest known point (`t = 2`).
+ *
+ * Past it, the two-point line carries no evidence about the query number.
  */
 const MAX_EXTRAPOLATION_T = 2
 
@@ -71,8 +73,10 @@ export class AddressPointInterpolator<
 > implements InterpolationLookup {
 	readonly #db: DatabaseClient<DB>
 	/**
-	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal
-	 * cannot reach it — ownership is membership rather than a flag a later branch has to check.
+	 * Resources this instance opened.
+	 *
+	 * A connection handed in by a caller is not in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
 	 */
 	readonly #resources = new DisposableStack()
 	readonly #fallback: StreetInterpolator | undefined

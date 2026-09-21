@@ -46,23 +46,33 @@ interface Sample {
  */
 export interface TrainCoarsePlacerOptions {
 	/**
-	 * SGD epochs. Default 12.
+	 * SGD epochs.
+	 *
+	 * Default 12.
 	 */
 	epochs?: number
 	/**
-	 * Initial learning rate (decays per epoch). Default 0.1.
+	 * Initial learning rate (decays per epoch).
+	 *
+	 * Default 0.1.
 	 */
 	lr?: number
 	/**
-	 * L2 regularization. Default 1e-6.
+	 * L2 regularization.
+	 *
+	 * Default 1e-6.
 	 */
 	l2?: number
 	/**
-	 * Artifact output dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
+	 * Artifact output dir.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
 	 */
 	out?: PathBuilderLike
 	/**
-	 * Dataset dir (`{train,val}.jsonl`). Default `<repo>/data/coarse-placer`.
+	 * Dataset dir (`{train,val}.jsonl`).
+	 *
+	 * Default `<repo>/data/coarse-placer`.
 	 */
 	data?: PathBuilderLike
 }
@@ -119,10 +129,11 @@ export async function trainCoarsePlacer(
 	const W = new Float32Array(C * D)
 	const b = new Float32Array(C)
 
-	// Deterministic, so a rerun splits the same way. The stream is the INT32 glibc LCG
-	// and not mulberry32, because every shipped model was trained on the order it produces;
-	// `makeGlibcLcgFloat64` shares its constants and is a different sequence, so the two are
-	// not interchangeable. Swapping either for mulberry32 is a retrain rather than a refactor.
+	// Deterministic, so a rerun splits the same way.
+	// The stream is the INT32 glibc LCG and not mulberry32, because every shipped model
+	// was trained on the order it produces; `makeGlibcLcgFloat64` shares its constants
+	// and is a different sequence, so the two are not interchangeable.
+	// Swapping either for mulberry32 is a retrain rather than a refactor.
 	const step = makeGlibcLcgInt32(1_234_567)
 	const rand = (): number => step() / 0x7f_ff_ff_ff
 	const shuffle = (arr: Sample[]): void => shuffleWith(arr, rand)

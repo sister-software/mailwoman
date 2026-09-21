@@ -172,7 +172,8 @@ describe("defaultHoldouts", () => {
 	})
 
 	it("names the three French departments by postcode prefix as well as by region", () => {
-		// The same three places, in the component BAN emits. Corse 20, Creuse 23, Lozère 48.
+		// The same three places, in the component BAN emits.
+		// Corse 20, Creuse 23, Lozère 48.
 		expect(policyOf(defaultHoldouts().FR).postcodePrefixes).toEqual(["20", "23", "48"])
 	})
 
@@ -186,8 +187,9 @@ describe("defaultHoldouts", () => {
 	})
 
 	it("gives every GB prefix two letters, so one area cannot swallow another", () => {
-		// `L` is Liverpool and `LL` is Llandudno. A one-letter prefix matches by `startsWith`,
-		// so it would hold out both, and the holdout would be larger than the one anybody reviewed.
+		// `L` is Liverpool and `LL` is Llandudno.
+		// A one-letter prefix matches by `startsWith`, so it would hold out both,
+		// and the holdout would be larger than the one anybody reviewed.
 		const prefixes = policyOf(defaultHoldouts().GB).postcodePrefixes ?? []
 
 		for (const prefix of prefixes) {
@@ -222,7 +224,8 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 	it("trains on a BAN row from any other department", () => {
 		expect(splitForRow(banRow("ban-paris", "75001"))).toBe("train")
 		expect(splitForRow(banRow("ban-lyon", "69001"))).toBe("train")
-		// 02 is Aisne. A prefix match reads the first two digits, so a leading zero stays distinct from 20.
+		// 02 is Aisne.
+		// A prefix match reads the first two digits, so a leading zero stays distinct from 20.
 		expect(splitForRow(banRow("ban-aisne", "02000"))).toBe("train")
 	})
 

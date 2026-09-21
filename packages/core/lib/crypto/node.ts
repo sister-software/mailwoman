@@ -21,8 +21,8 @@ export type SHA3Seed = string | number | boolean | null | Date | undefined
 /**
  * Input accepted by {@link simpleSHA3}.
  *
- * Arrays preserve insertion order. Object inputs are hashed using the order
- * returned by {@link Object.values}.
+ * Arrays preserve insertion order.
+ * Object inputs are hashed using the order returned by {@link Object.values}.
  *
  * @internal
  */

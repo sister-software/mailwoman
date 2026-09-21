@@ -27,7 +27,9 @@ import type { CommandSpec, OptionsOf } from "#cli/native/spec"
  */
 export interface HarnessCommandOptions<Spec extends CommandSpec, T> {
 	/**
-	 * The process exit code, read off the task's result. Absent means 0 on success. an error is 1 either way.
+	 * The process exit code, read off the task's result.
+	 *
+	 * Absent means 0 on success. an error is 1 either way.
 	 */
 	exitCode?: (result: T) => number
 	/**
@@ -35,10 +37,10 @@ export interface HarnessCommandOptions<Spec extends CommandSpec, T> {
 	 *
 	 * The options are passed so the condition is named at the call site
 	 * rather than assumed here: a command that prints under `--json` writes
-	 * `(result, options) => (options.json ? result.report : undefined)`, which keeps the
-	 * flag that decides it in the file that declares it. A command whose task narrates
-	 * on stdout omits this entirely — most of the commands under `commands/eval/` do,
-	 * and rendering anything would duplicate their output.
+	 * `(result, options) => (options.json ? result.report : undefined)`, which keeps
+	 * the flag that decides it in the file that declares it.
+	 * A command whose task narrates on stdout omits this entirely — most of the commands
+	 * under `commands/eval/` do, and rendering anything would duplicate their output.
 	 */
 	json?: (result: T, options: OptionsOf<Spec>) => unknown
 }
@@ -56,8 +58,9 @@ export interface HarnessCommandOptions<Spec extends CommandSpec, T> {
  *
  * `_spec` is read only by the type checker, and it is the reason this takes three arguments:
  * it anchors `Spec` so `run`'s options are typed from the command's own declaration
- * and `T` infers from what `run` returns. Naming both explicitly instead — TypeScript
- * has no partial inference — costs every call site the result type spelled out.
+ * and `T` infers from what `run` returns.
+ * Naming both explicitly instead — TypeScript has no partial inference —
+ * costs every call site the result type spelled out.
  */
 export function harnessCommand<Spec extends CommandSpec, T>(
 	_spec: Spec,

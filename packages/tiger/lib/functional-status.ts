@@ -12,6 +12,7 @@
 export const TIGERFunctionalStatus = {
 	/**
 	 * Active government providing primary general-purpose functions.
+	 *
 	 * Active entity (federally recognized entities only).
 	 */
 	ActiveGovernment: "A",

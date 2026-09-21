@@ -70,11 +70,14 @@ import {
  */
 export interface SoilCapabilityObservation {
 	/**
-	 * `designated` or `designated_no_rating`. Never `unknown`: that reading produces no observation.
+	 * `designated` or `designated_no_rating`.
+	 *
+	 * Never `unknown`: that reading produces no observation.
 	 */
 	reading: SoilReadingKind
 	/**
 	 * The largest class share, and the share it rests on.
+	 *
 	 * Absent on a designated-no-rating reading, which is the survey saying it
 	 * mapped this ground and rated nothing here.
 	 */
@@ -86,6 +89,7 @@ export interface SoilCapabilityObservation {
 	topClassDefinition?: string
 	/**
 	 * The whole distribution, including the four absence shares and the truncated tail.
+	 *
 	 * What #1683's signal consumer reads directly from the artifact, carried here
 	 * so the two consumers can be checked against each other.
 	 */
@@ -109,8 +113,10 @@ export interface SoilCapabilityObservation {
 }
 
 /**
- * Why a coordinate produced no observation. Every one of these is a silence the route owes an
- * account of — an unnamed silence and a silence for the right reason read identically on a receipt.
+ * Why a coordinate produced no observation.
+ *
+ * Every one of these is a silence the route owes an account of — an unnamed silence
+ * and a silence for the right reason read identically on a receipt.
  */
 export const SOIL_DESIGNATION_REFUSALS = [
 	/**
@@ -136,8 +142,9 @@ export type SoilDesignationDecision =
 export interface SoilCapabilityRoute extends Disposable {
 	identity: SoilLayerIdentity
 	/**
-	 * Decide one resolved coordinate. Pure with respect to the pipeline:
-	 * it reads the layer and returns a record.
+	 * Decide one resolved coordinate.
+	 *
+	 * Pure with respect to the pipeline: it reads the layer and returns a record.
 	 *
 	 * `null` and `undefined` are both accepted because a geocode result has nullable `lat`/`lon` —
 	 * a caller that had to narrow them first would be narrowing on this route's behalf,
@@ -148,8 +155,10 @@ export interface SoilCapabilityRoute extends Disposable {
 
 export interface SoilCapabilityRouteOptions {
 	/**
-	 * The sealed layer to read. Required: there is no default layer, and a route that
-	 * guessed one would report a survey from a region nobody asked about.
+	 * The sealed layer to read.
+	 *
+	 * Required: there is no default layer, and a route that guessed one would report
+	 * a survey from a region nobody asked about.
 	 */
 	databasePath: string
 }

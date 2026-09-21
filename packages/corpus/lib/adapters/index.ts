@@ -43,15 +43,18 @@ import { usgovNADAdapter } from "#us/adapters/usgov/nad/adapter"
 import { usgovNPPESAdapter } from "#us/adapters/usgov/nppes/adapter"
 
 /**
- * Built-in adapters. Order is significant: `corpus build` iterates this list to
- * drive every adapter in turn. Coarse-first (admin → postcode), then street-level
- * (BAN FR, tiger US, OpenAddresses global), then adversarial-source (FCC BDC US, HRSA fqhc US).
+ * Built-in adapters.
+ *
+ * Order is significant: `corpus build` iterates this list to drive every adapter in turn.
+ * Coarse-first (admin → postcode), then street-level (BAN FR, tiger US, OpenAddresses global),
+ * then adversarial-source (FCC BDC US, HRSA fqhc US).
  *
  * The `usgov-samhsa-treatment-locator` adapter is intentionally absent from this list —
- * the samhsa Open Data Foundry bulk CSV the adapter was written against is
- * no longer publicly distributed (see issue #33, 2026-05-17 investigation).
- * The factory + named export remain available so the adapter can be hand-registered if
- * an operator obtains a compatible CSV (foia, partner channel, upstream restoration).
+ * the samhsa Open Data Foundry bulk CSV the adapter was written against is no longer
+ * publicly distributed (see issue #33, 2026-05-17 investigation).
+ * The factory + named export remain available so the adapter can be hand-registered if an
+ * operator obtains a compatible CSV (foia, partner channel, upstream restoration).
+ *
  * Re-add it here once a stable public source returns.
  */
 export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [

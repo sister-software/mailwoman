@@ -54,25 +54,31 @@ import { softmax } from "#viterbi"
 export interface WordConsistencyOpts {
 	/**
 	 * Skip the heal when the vote's mean p(bestType) across the word is below this floor.
+	 *
 	 * The unrestricted variant's failure mode (the 2026-06-19 promotion eval) was
 	 * amplifying noise on rows where the per-piece confidence is itself unreliable —
-	 * a low-confidence vote is exactly that signature. `0` (default) never skips.
+	 * a low-confidence vote is exactly that signature.
+	 * `0` (default) never skips.
 	 */
 	minMeanConfidence?: number
 	/**
 	 * Skip healing any word containing a raw byte-fallback piece (`<0xNN>`).
-	 * On byte-soup words the confidence-weighted-vote premise ("the surviving pieces are trustworthy") breaks —
-	 * see the module docstring's outcome outcome. Default false.
+	 *
+	 * On byte-soup words the confidence-weighted-vote premise ("the surviving pieces are trustworthy")
+	 * breaks — see the module docstring's outcome outcome.
+	 * Default false.
 	 */
 	skipByteFallbackWords?: boolean
 	/**
-	 * Treat a pure-punctuation piece (no letters/digits) as a word-group separator,
-	 * like whitespace. Punctuation is never word-content for tag purposes, but SentencePiece
-	 * can emit it as a continuation piece that joins the preceding word's group —
-	 * `Ave` + `,` — where its `O` label manufactures a fake intra-word disagreement
-	 * and the vote kills the real span (the 2026-07-15 golden `street_suffix`→O class).
-	 * Also keeps the halves of a slash compound (`12/345` = unit 12 + house number 345)
-	 * voting independently. Default false.
+	 * Treat a pure-punctuation piece (no letters/digits) as a word-group separator, like whitespace.
+	 *
+	 * Punctuation is never word-content for tag purposes, but SentencePiece can emit
+	 * it as a continuation piece that joins the preceding word's group — `Ave` + `,` —
+	 * where its `O` label manufactures a fake intra-word disagreement and the vote kills
+	 * the real span (the 2026-07-15 golden `street_suffix`→O class).
+	 * Also keeps the halves of a slash compound (`12/345` = unit 12 + house number 345) voting independently.
+	 *
+	 * Default false.
 	 */
 	splitOnPunctuation?: boolean
 }
@@ -89,11 +95,14 @@ const BYTE_FALLBACK = /^<0x[0-9A-Fa-f]{2}>$/
 
 /**
  * Interpret the `MAILWOMAN_WORD_CONSISTENCY` env string as a heal setting.
+ *
  * `"1"` = the original unconditional vote.
  *
- * The other two values are spelled here because they are the wire interface rather than prose:
- * the string an operator sets has to appear verbatim or this docstring stops describing
- * the parser below it. Renaming the value is a separate, operator-approved change (#2077).
+ * The other two values are spelled here because they are the wire interface
+ * rather than prose: the string an operator sets has to appear verbatim
+ * or this docstring stops describing the parser below it.
+ * Renaming the value is a separate, operator-approved change (#2077).
+ *
  * `"conditional"` = the #727 thresholded preset (slash grouping + byte-fallback skip, no confidence floor);
  * `"conditional:<floor>"` adds a `minMeanConfidence` floor (e.g. `"conditional:0.5"`).
  * Anything else (unset included) = off.
@@ -143,18 +152,19 @@ function labelType(label: string): string {
 /**
  * Rewrite per-piece label indices so every `▁`-delimited word carries one tag,
  * chosen by a confidence-weighted vote over the post-prior `emissions`.
+ *
  * See the module docstring.
  *
  * @param pieces SentencePiece pieces (the `▁`-marked surface is the word-boundary signal).
  * @param emissions Per-piece × per-label scores after all priors/masks
- *   (the distribution the argmax would see). Softmaxed per piece for the vote
- *   so each piece's confidence carries its weight.
+ *   (the distribution the argmax would see).
+ *   Softmaxed per piece for the vote so each piece's confidence carries its weight.
  * @param labels The BIO label vocabulary (index ↔ label).
- * @param labelIndices The current per-piece decision
- *   (viterbi path or argmax). Not mutated.
+ * @param labelIndices The current per-piece decision (viterbi path or argmax).
+ *   Not mutated.
  * @param opts Optional conditions on the heal (confidence floor, byte-fallback skip, slash grouping) —
- *   the #727-tracked "confidence-thresholded variant". Omitted = the original
- *   unconditional behavior, byte-identical.
+ *   the #727-tracked "confidence-thresholded variant".
+ *   Omitted = the original unconditional behavior, byte-identical.
  */
 export function enforceWordConsistency(
 	pieces: ReadonlyArray<{ piece: string }>,
@@ -185,7 +195,8 @@ export function enforceWordConsistency(
 	const healedConfidence = new Map<number, number>()
 	let healedWords = 0
 
-	// Group pieces into words. A word = a `▁`-started piece + its non-`▁` continuations.
+	// Group pieces into words.
+	// A word = a `▁`-started piece + its non-`▁` continuations.
 	// A bare `▁` (whitespace-only) piece is a separator — it ends the current word and joins no word
 	// (its label is left as-is, matching the decoder's "zero-width O is not a boundary" handling).
 	const words: number[][] = []
@@ -212,8 +223,9 @@ export function enforceWordConsistency(
 		}
 
 		if (opts?.splitOnPunctuation && PUNCTUATION_ONLY.test(content)) {
-			// Punctuation separator — `12/345`'s halves vote independently. a trailing `,` never joins
-			// `Ave`'s group. The piece itself joins no word (its label is left as-is, like whitespace).
+			// Punctuation separator — `12/345`'s halves vote independently. a trailing `,`
+			// never joins `Ave`'s group.
+			// The piece itself joins no word (its label is left as-is, like whitespace).
 			flush()
 
 			continue
@@ -223,8 +235,9 @@ export function enforceWordConsistency(
 			flush()
 			cur = [i]
 		} else {
-			// Continuation. (An orphan continuation with no started word — shouldn't happen
-			// since the input's first piece is `▁`-marked — defensively starts its own word.)
+			// Continuation.
+			// (An orphan continuation with no started word — shouldn't happen since the input's
+			// first piece is `▁`-marked — defensively starts its own word.)
 			cur.push(i)
 		}
 	}

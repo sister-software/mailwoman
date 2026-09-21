@@ -33,6 +33,7 @@ function localityNode(value: string, lat: number, lon: number): AddressNode {
 
 /**
  * Build a fake pipeline whose result is fixed except for the echoed input.
+ *
  * `poiIntent` is attached when supplied.
  */
 function fakePipeline(overrides: Partial<PipelineResult> = {}): RuntimePipeline {

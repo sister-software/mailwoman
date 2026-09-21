@@ -52,7 +52,9 @@ import { valeCommand } from "@mailwoman/core/vale"
 import { $ } from "zx"
 
 /**
- * One Vale alert, as emitted by `--output=JSON`. Only the fields this check reads are typed.
+ * One Vale alert, as emitted by `--output=JSON`.
+ *
+ * Only the fields this check reads are typed.
  */
 interface ValeAlert {
 	Check: string
@@ -63,6 +65,7 @@ interface ValeAlert {
 
 /**
  * Vale's `--output=JSON` document: file path -> alerts.
+ *
  * An entirely clean run emits `{}`.
  */
 type ValeReport = Record<string, ValeAlert[]>
@@ -89,6 +92,7 @@ interface StyleLeg {
 	cleanFixture: string
 	/**
 	 * The error-severity count the dirty fixture produces today (measured rather than estimated).
+	 *
 	 * It is a `>=` bar, so adding a rule plus its fixture line passes without a bump.
 	 * Only a rule that stops firing fails.
 	 */

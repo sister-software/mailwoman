@@ -59,8 +59,9 @@ export function assertCorpusIsNonEmpty(rows: readonly SeedCase[], dir: PathBuild
 }
 
 /**
- * Write (or replace) the one-row build stamp. Call inside the builder,
- * against the same handle that wrote the cases.
+ * Write (or replace) the one-row build stamp.
+ *
+ * Call inside the builder, against the same handle that wrote the cases.
  */
 export async function writeCorpusStamp(
 	kdb: DatabaseClient<GauntletDatabase>,
@@ -79,7 +80,9 @@ export async function writeCorpusStamp(
 }
 
 /**
- * Read the stamp out of a built DB. `null` means the table is absent — a DB built before the stamp existed.
+ * Read the stamp out of a built DB.
+ *
+ * `null` means the table is absent — a DB built before the stamp existed.
  */
 export async function readCorpusStamp(kdb: DatabaseClient<GauntletDatabase>): Promise<CorpusStamp | null> {
 	// Presence probe first: selecting from a missing table throws a driver error whose
@@ -103,14 +106,15 @@ export async function readCorpusStamp(kdb: DatabaseClient<GauntletDatabase>): Pr
 /**
  * Throw unless the DB's stamp matches the corpus committed on disk right now.
  *
- * Called by every runner before it grades anything. The message names both hashes and the
- * likely cause, because the two ways to reach it need opposite fixes: an artifact older than
- * the corpus wants a rebuild, and a build made from a stale `out/` wants a recompile first.
+ * Called by every runner before it grades anything.
+ * The message names both hashes and the likely cause, because the two ways to
+ * reach it need opposite fixes: an artifact older than the corpus wants a rebuild,
+ * and a build made from a stale `out/` wants a recompile first.
  *
  * @param kdb An open handle on the built DB.
- * @param liveRows The corpus as committed. Injectable so a test can pose "state B"
- *   without touching the repo's own `cases/`; the default reads the real corpus,
- *   which is what every caller in the product wants.
+ * @param liveRows The corpus as committed.
+ *   Injectable so a test can pose "state B" without touching the repo's own `cases/`;
+ *   the default reads the real corpus, which is what every caller in the product wants.
  */
 export async function assertCorpusStampFresh(
 	kdb: DatabaseClient<GauntletDatabase>,

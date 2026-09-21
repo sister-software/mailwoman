@@ -19,12 +19,16 @@ import { MERCATOR_LATITUDE_MAX, MERCATOR_LATITUDE_MIN } from "#coordinate/bounds
 const GEOHASH_BITS_PER_CHAR = 5
 
 /**
- * Southern limit of the mgrs lettered bands. Below it mgrs is undefined and the UPS grid applies instead.
+ * Southern limit of the mgrs lettered bands.
+ *
+ * Below it mgrs is undefined and the UPS grid applies instead.
  */
 const MGRS_LAT_MIN = -80
 
 /**
- * Northern limit of the mgrs lettered bands. Band X is extended to 84°, so there is no 84–90° band.
+ * Northern limit of the mgrs lettered bands.
+ *
+ * Band X is extended to 84°, so there is no 84–90° band.
  */
 const MGRS_LAT_MAX = 84
 
@@ -168,8 +172,10 @@ const unixEpochJulian = 2_440_587.5
 
 /**
  * Sunrise / solar-noon / sunset for a coordinate on a date, as UTC epoch seconds,
- * via the standard sunrise equation. `rise` and `set` are absent during polar day or polar
- * night (the sun never crosses the horizon); `noon` (solar transit) is always present.
+ * via the standard sunrise equation.
+ *
+ * `rise` and `set` are absent during polar day or polar night (the sun never crosses the horizon);
+ * `noon` (solar transit) is always present.
  */
 export function sunTimes(
 	lat: number,
@@ -200,7 +206,9 @@ export function sunTimes(
 }
 
 /**
- * Mgrs / UTM (WGS84). The forward Transverse Mercator series + the military grid lettering.
+ * Mgrs / UTM (WGS84).
+ *
+ * The forward Transverse Mercator series + the military grid lettering.
  */
 const UTM_A = 6_378_137
 const UTM_F = 1 / 298.257223563

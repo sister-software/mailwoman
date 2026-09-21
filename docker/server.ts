@@ -51,6 +51,7 @@ const DATA_ROOT = mailwomanDataRoot()
 /**
  * The WOF extract set to attach: {@link resolveWOFDatabasePaths} selects it
  * (the `$MAILWOMAN_WOF_DB` comma-separated override, else the conventional per-extract `wof/` paths).
+ *
  * An explicit list is the operator's statement and passes through unfiltered. the conventional
  * set is probed, so a deployment missing a extract degrades to what is present.
  */
@@ -63,7 +64,9 @@ function wofPaths(): Promise<string[]> {
 }
 
 /**
- * Build the wired engine. `parse` + `health` always; `geocode` + `batch` only when a gazetteer resolves.
+ * Build the wired engine.
+ *
+ * `parse` + `health` always; `geocode` + `batch` only when a gazetteer resolves.
  */
 async function buildEngine<T extends GeocodeOutcomeLike = GeocodeOutcomeLike>() {
 	const engine: MailwomanAPIEngine<T> = {

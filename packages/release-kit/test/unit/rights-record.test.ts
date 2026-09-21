@@ -54,7 +54,8 @@ describe("licenseNamedIn", () => {
 	})
 
 	it("returns null for a parenthetical that describes access rather than a grant", () => {
-		// The OA PL entry. `public` states that the download costs nothing, which is not a license,
+		// The OA PL entry.
+		// `public` states that the download costs nothing, which is not a license,
 		// and reading it as one would turn the gap this record exists to report into an answer.
 		expect(licenseNamedIn("OpenAddresses PL — GUGiK / PRG (public, BDOT-derived): tokenizer-splice text")).toBeNull()
 	})
@@ -72,8 +73,9 @@ describe("usesStatedIn", () => {
 	})
 
 	it("reads an entry describing only an evaluation set as evaluation", () => {
-		// `en-us` carries two of these. Reading them as training attribution says the model learned
-		// from rows it never saw, and dropping them loses an attribution the source still requires.
+		// `en-us` carries two of these.
+		// Reading them as training attribution says the model learned from rows it never saw,
+		// and dropping them loses an attribution the source still requires.
 		expect(
 			usesStatedIn("OpenAddresses SI — GURS (CC-BY per OA source): oa-si coord eval set (free-rider validation)")
 		).toEqual(["evaluation"])
@@ -134,8 +136,8 @@ describe("readWeightsRightsRecords", () => {
 		try {
 			const [record] = await readWeightsRightsRecords(tree.root, ["packages/neural-weights-fixture"])
 
-			// README.md documents the package, so it is not an artifact whose provenance
-			// is in question. The glob is not a literal entry at all.
+			// README.md documents the package, so it is not an artifact whose provenance is in question.
+			// The glob is not a literal entry at all.
 			expect(record!.artifacts.map((artifact) => artifact.path)).toEqual(["model.onnx", "fst-fixture.bin"])
 			expect(record!.artifacts.map((artifact) => artifact.digest)).toEqual(["recorded", "unrecorded"])
 
@@ -333,8 +335,8 @@ describe("readWeightsRightsRecords", () => {
 			expect(records[1]!.versionSeries).toBe(VersionSeries.Overlay)
 			expect(records[1]!.baseWeights).toBe("@mailwoman/neural-weights-graph")
 
-			// The overlay's own number. Reading the graph's 9.1.0 here would state that
-			// this package ships the suffix-boundary model.
+			// The overlay's own number.
+			// Reading the graph's 9.1.0 here would state that this package ships the suffix-boundary model.
 			expect(renderProvenance(records[1]!).model_card_version).toBe("6.5.0")
 		} finally {
 			await tree.dispose()

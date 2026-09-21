@@ -25,8 +25,10 @@ export interface SearchHit {
 	 */
 	featureTypeCode?: string
 	/**
-	 * What the camera needs to choose a zoom. Absent for a feature the gazetteer gives
-	 * no diameter, which a caller must read as unknown rather than as zero.
+	 * What the camera needs to choose a zoom.
+	 *
+	 * Absent for a feature the gazetteer gives no diameter, which a caller must
+	 * read as unknown rather than as zero.
 	 */
 	diameterKm?: number
 	centerLon: number
@@ -34,8 +36,10 @@ export interface SearchHit {
 }
 
 /**
- * The payload the build wrote beside every entry. Read through the schema rather than cast, so an
- * artifact from a build with a different payload fails at load rather than as `undefined` in the panel.
+ * The payload the build wrote beside every entry.
+ *
+ * Read through the schema rather than cast, so an artifact from a build with a different
+ * payload fails at load rather than as `undefined` in the panel.
  */
 const SearchPayloadSchema = z.object({
 	id: z.string().min(1),
@@ -117,14 +121,18 @@ export class PlanetarySearch {
 
 export interface LoadSearchIndexOptions {
 	/**
-	 * How the artifact's bytes are read. `fetch` by default. a test reads a fixture from disk.
+	 * How the artifact's bytes are read.
+	 *
+	 * `fetch` by default. a test reads a fixture from disk.
 	 */
 	readBytes?: (url: string) => Promise<Uint8Array>
 }
 
 /**
- * Fetch the artifact and open it. Throws on a failed fetch or bytes that are not a sealed ancestrie,
- * so a wrong version pin fails at startup rather than answering nothing to every query.
+ * Fetch the artifact and open it.
+ *
+ * Throws on a failed fetch or bytes that are not a sealed ancestrie, so a wrong version
+ * pin fails at startup rather than answering nothing to every query.
  */
 export async function loadSearchIndex(url: string, options: LoadSearchIndexOptions = {}): Promise<PlanetarySearch> {
 	let bytes: Uint8Array

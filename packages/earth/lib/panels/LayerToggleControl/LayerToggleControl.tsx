@@ -19,8 +19,9 @@ import type { MapInstance } from "react-map-gl/maplibre"
 
 import styles from "./styles.module.css"
 
-// Order matters: first match wins. Labels go first so road-label / earth-label /
-// address-label don't get pulled into the Roads / Landuse buckets.
+// Order matters: first match wins.
+// Labels go first so road-label / earth-label / address-label don't get pulled
+// into the Roads / Landuse buckets.
 /**
  * Patterns grouping map layers into the toggles shown in the control, so related layers switch together.
  */
@@ -58,9 +59,10 @@ interface LayerGroup {
 }
 
 /**
- * Bucket the style's layers by prefix. The resolver's own output (`mailwoman-*`)
- * is skipped: it is transient result geometry rather than part of the basemap,
- * and a visitor switching it off would lose the marker for their answer.
+ * Bucket the style's layers by prefix.
+ *
+ * The resolver's own output (`mailwoman-*`) is skipped: it is transient result geometry rather
+ * than part of the basemap, and a visitor switching it off would lose the marker for their answer.
  */
 function readGroups(map: MapInstance): LayerGroup[] {
 	const layers = map.getStyle()?.layers ?? []
@@ -88,7 +90,9 @@ function readGroups(map: MapInstance): LayerGroup[] {
 
 export interface LayerToggleControlProps {
 	/**
-	 * The live map. `null` before react-map-gl instantiates it, which is when the control renders nothing.
+	 * The live map.
+	 *
+	 * `null` before react-map-gl instantiates it, which is when the control renders nothing.
 	 */
 	map: MapInstance | null
 }

@@ -1,5 +1,6 @@
 /**
  * Cross-language parity for the country-lexicon matcher (#1104).
+ *
  * These assertions mirror corpus-python's test_country_lexicon.py — if the TS matcher drifts
  * from the Python one, the model sees different clues at inference than it trained on.
  * The inline lexicon matches the Python fixture exactly.

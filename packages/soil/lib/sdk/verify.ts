@@ -98,12 +98,14 @@ export interface VerifySoilResult {
 }
 
 /**
- * Points outside the pilot region, named. Each is a place rather than a bare pair of numbers:
- * a coordinate a reader cannot name is a coordinate nobody can check.
+ * Points outside the pilot region, named.
  *
- * Every neighbouring state is included, because the failure this half catches
- * is a footprint that leaked past the survey-area outlines — and a footprint
- * accidentally clipped to "the Midwest" would pass a one-state check.
+ * Each is a place rather than a bare pair of numbers: a coordinate a reader
+ * cannot name is a coordinate nobody can check.
+ *
+ * Every neighbouring state is included, because the failure this half catches is a
+ * footprint that leaked past the survey-area outlines — and a footprint accidentally
+ * clipped to "the Midwest" would pass a one-state check.
  * Two of these sit close to the Iowa border on purpose: the outline test is conservative,
  * so a near-border point must read unknown rather than borrow Iowa's coverage.
  */
@@ -122,10 +124,12 @@ export const OUTSIDE_PILOT_POINTS: ReadonlyArray<{ label: string; latitude: numb
  * How close to a delineation edge a disagreement is attributed to the channels'
  * differing rendering rather than to the conversion.
  *
- * One metre. The published shapefile carries nine decimals through this package's ingest and Soil
- * Data Access renders its own geometry independently. nrcs's own positional-accuracy statement
- * says the difference between a boundary's field location and its digitized location "is unknown",
+ * One metre.
+ * The published shapefile carries nine decimals through this package's ingest and Soil Data
+ * Access renders its own geometry independently. nrcs's own positional-accuracy statement says
+ * the difference between a boundary's field location and its digitized location "is unknown",
  * so this tolerance is about the two renderings agreeing rather than about ground truth.
+ *
  * One metre is far below the median delineation, which is 24,863 m² — about 158 m across.
  */
 const BOUNDARY_TOLERANCE_METRES = 1
@@ -134,8 +138,9 @@ export interface VerifySoilOptions {
 	databasePath: string
 	client: Pick<SoilDataAccessClient, "mukeyAtPoint">
 	/**
-	 * Points to re-ask the service about. A caller samples them from the artifact —
-	 * see {@link sampleAgreementPoints}.
+	 * Points to re-ask the service about.
+	 *
+	 * A caller samples them from the artifact — see {@link sampleAgreementPoints}.
 	 */
 	points: ReadonlyArray<{ label: string; latitude: number; longitude: number }>
 	outsidePoints?: ReadonlyArray<{ label: string; latitude: number; longitude: number }>
@@ -242,10 +247,10 @@ function candidateDelineations(
 		}>) {
 			// dedupe on the delineation, never on its MAP unit.
 			// A delineation reached through two resolutions is one delineation
-			// and must be tested once. two different delineations of the same map
-			// unit are two shapes covering different ground and must both be tested.
-			// Keying on the map unit drops the second, and it drops it silently — the point
-			// test simply finds nothing and the row reads as a disagreement with the authority.
+			// and must be tested once. two different delineations of the same map unit are
+			// two shapes covering different ground and must both be tested.
+			// Keying on the map unit drops the second, and it drops it silently — the point test
+			// simply finds nothing and the row reads as a disagreement with the authority.
 			// Measured at Iowa scale: one point in 60, where the artifact's own geometry does contain
 			// the point and the index-driven read could not reach the delineation that holds it.
 			if (seen.has(row.area_id)) continue
@@ -262,8 +267,9 @@ function candidateDelineations(
  * Which map unit the artifact's own geometry puts at a point, and how far the
  * point is from that delineation's nearest edge.
  *
- * The cell index narrows. the ray cast decides. The edge distance is measured against
- * every candidate, so a near-miss is reported with a distance rather than with nothing.
+ * The cell index narrows. the ray cast decides.
+ * The edge distance is measured against every candidate, so a near-miss is reported
+ * with a distance rather than with nothing.
  */
 function localDelineationAt(
 	database: DatabaseClient<SoilDatabase>,

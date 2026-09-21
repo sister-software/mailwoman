@@ -36,36 +36,44 @@ export type { InferResult } from "#ort-feeds"
 
 export interface ONNXRunnerOpts {
 	/**
-	 * If true, load the model immediately in `create()`. Default false.
+	 * If true, load the model immediately in `create()`.
+	 *
+	 * Default false.
 	 */
 	warmup?: boolean
 	/**
 	 * Fixed sequence length the model expects. v0.1.0 / v0.2.0 quantization baked in 128
 	 * (the training-time max position) even though the fp32 export specified dynamic axes —
-	 * re-quantize with a different shape to override. Inputs shorter than this are padded
-	 * with id `0` and masked out via attention_mask=0. inputs longer are truncated.
+	 * re-quantize with a different shape to override.
+	 *
+	 * Inputs shorter than this are padded with id `0` and masked out via
+	 * attention_mask=0. inputs longer are truncated.
 	 */
 	fixedSeqLen?: number
 	/**
 	 * ONNX Runtime execution providers to try, in priority order — e.g. `["cuda", "cpu"]`
 	 * or `["webgpu", "cpu"]`. **Default `["cpu"]`** (unchanged behavior).
-	 * GPU providers (`cuda`, `webgpu`) throw at session-create when their
-	 * runtime/driver is absent rather than soft-falling-back, so this is **guarded**:
-	 * if the requested list fails to initialize, the runner retries on CPU alone.
-	 * The cost of a failed GPU probe is a one-time sub-`100 ms` hit at load, so a GPU box
-	 * lights up and a CPU box pays ~nothing. `cpu` is always appended if not present.
+	 *
+	 * GPU providers (`cuda`, `webgpu`) throw at session-create when their runtime/driver
+	 * is absent rather than soft-falling-back, so this is **guarded**: if the requested
+	 * list fails to initialize, the runner retries on CPU alone.
+	 * The cost of a failed GPU probe is a one-time sub-`100 ms` hit at load,
+	 * so a GPU box lights up and a CPU box pays ~nothing.
+	 *
+	 * `cpu` is always appended if not present.
 	 */
 	executionProviders?: string[]
 	/**
 	 * Cap ONNX Runtime's intra-op thread pool — the threads a single operator splits its work across.
 	 *
 	 * Unset means ORT sizes the pool to the machine's core count.
-	 * That is the right default for a server running one session over long sequences,
-	 * and the wrong one for the shape this repo actually runs: short addresses, frequently several
-	 * processes at once. Every CLI invocation is its own session, so N concurrent processes
-	 * each claim every core, and the oversubscription surfaces as latency rather than error —
-	 * measured 2026-08-03, eight concurrent `mailwoman geocode` calls took 8.75 s against a
-	 * 10 s test timeout on an otherwise idle 16-core box, where one alone took 5.62 s.
+	 * That is the right default for a server running one session over long sequences, and the wrong one
+	 * for the shape this repo actually runs: short addresses, frequently several processes at once.
+	 *
+	 * Every CLI invocation is its own session, so N concurrent processes each claim every core,
+	 * and the oversubscription surfaces as latency rather than error — measured 2026-08-03,
+	 * eight concurrent `mailwoman geocode` calls took 8.75 s against a 10 s test timeout
+	 * on an otherwise idle 16-core box, where one alone took 5.62 s.
 	 *
 	 * Set it when the caller knows it is one of many, or when sequences are short enough
 	 * that thread coordination costs more than the parallelism returns.
@@ -82,26 +90,31 @@ export const DEFAULT_FIXED_SEQ_LEN = 128
  * Intra-op thread cap applied by `NeuralAddressClassifier.loadFromWeights`,
  * overridable per-process via `MAILWOMAN_INTRA_OP_THREADS`.
  *
- * There is no value that is right FOR both regimes, which is why this is a knob with a
- * compromise default rather than a tuned constant. Measured on a 16-core box:
+ * There is no value that is right FOR both regimes, which is why this is a knob
+ * with a compromise default rather than a tuned constant.
+ * Measured on a 16-core box:
  *
- * - One process, 120 warm parses: 1 thread 18.3 ms/parse, 2 threads 12.5, 4 threads 9.2,
- *   ORT's all-cores default 9.3. More threads win. the parallelism is doing real work.
+ * - One process, 120 warm parses: 1 thread 18.3 ms/parse, 2 threads 12.5,
+ *   4 threads 9.2, ORT's all-cores default 9.3.
+ *   More threads win. the parallelism is doing real work.
  * - Four concurrent processes, full geocode: 1 thread 32 req/s each, 2 threads 45, 4 threads 33.
  *   Fewer threads win, because N processes each sizing a pool to the machine oversubscribe it N-fold.
  *
- * Two is the compromise: it costs a single process ~35% latency against its own optimum,
- * and provides a four-process server ~36% throughput against the single-process
- * optimum applied blindly. A server that knows its own worker count should set
- * `MAILWOMAN_INTRA_OP_THREADS` to roughly cores/workers instead of accepting this.
+ * Two is the compromise: it costs a single process ~35% latency against its own optimum, and
+ * provides a four-process server ~36% throughput against the single-process optimum applied blindly.
+ * A server that knows its own worker count should set `MAILWOMAN_INTRA_OP_THREADS`
+ * to roughly cores/workers instead of accepting this.
  *
- * Re-derive both curves before changing it. They are properties of the model and the box,
- * and the single-process one alone will point at the wrong answer.
+ * Re-derive both curves before changing it.
+ * They are properties of the model and the box, and the single-process one
+ * alone will point at the wrong answer.
  */
 export const DEFAULT_INTRA_OP_THREADS = 2
 
 /**
- * The `{data, dims}` view `decodeInferOutput` reads. The float32 dtype is the
+ * The `{data, dims}` view `decodeInferOutput` reads.
+ *
+ * The float32 dtype is the
  * export interface's rather than a runtime check.
  */
 function outputTensor(tensor: ort.Tensor): OutputTensor {
@@ -129,7 +142,9 @@ export class ONNXRunner {
 	}
 
 	/**
-	 * Load by path. Reads the model lazily unless `warmup` is true.
+	 * Load by path.
+	 *
+	 * Reads the model lazily unless `warmup` is true.
 	 */
 	static async create(modelPath: PathBuilderLike, opts: ONNXRunnerOpts = {}): Promise<ONNXRunner> {
 		const runner = new ONNXRunner(modelPath, null, opts)
@@ -172,6 +187,7 @@ export class ONNXRunner {
 	/**
 	 * Create the session on the configured execution providers, guarded: GPU providers (`cuda`/`webgpu`)
 	 * throw at create-time when their runtime/driver is missing, so on failure we retry on CPU alone.
+	 *
 	 * A box with the GPU runtime uses it. a box without one transparently lands on CPU.
 	 */
 	private async createSession(bytes: Uint8Array): Promise<ort.InferenceSession> {
@@ -203,8 +219,9 @@ export class ONNXRunner {
 	 * Run inference on a single token id sequence — see {@link InferFunction} for the parameter interface.
 	 *
 	 * Pads to `fixedSeqLen` (default 128) with id 0 + mask 0. truncates if longer.
-	 * Output is trimmed back to the actual input length. Every soft-feed channel is
-	 * present-conditional on the graph's declared inputs, with the zero-fill
+	 * Output is trimmed back to the actual input length.
+	 *
+	 * Every soft-feed channel is present-conditional on the graph's declared inputs, with the zero-fill
 	 * confidence=0 identity for a declared-but-unsupplied channel (`packSoftChannelFeeds`).
 	 */
 	infer: InferFunction = async (tokenIDs, anchor, gazetteer, country, evidence) => {
@@ -244,8 +261,10 @@ export class ONNXRunner {
 
 	/**
 	 * Run a char-path graph (`char_ids` + `attention_mask`, no `input_ids`; #2164) on one encoding.
-	 * The encoder already padded to S, so no fixed sequence length applies. the output is trimmed to the
-	 * real unit count. The char path is channel-free by interface, so no soft-feed tensors are packed.
+	 *
+	 * The encoder already padded to S, so no fixed sequence length applies. the
+	 * output is trimmed to the real unit count.
+	 * The char path is channel-free by interface, so no soft-feed tensors are packed.
 	 */
 	inferChars: InferCharsFunction = async (charIDs, attentionMask) => {
 		const session = await this.ensureSession()
@@ -267,6 +286,7 @@ export class ONNXRunner {
 
 	/**
 	 * The model's declared input names (loads the session if not already loaded).
+	 *
 	 * Used by the ProductionScorer (#718) back-compat path: when a model-card has no `requires`
 	 * block, the required soft-feature channels are inferred from the graph — a model exporting
 	 * `anchor_features` / `gazetteer_features` declared those channels mandatory at train time.

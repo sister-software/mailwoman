@@ -60,6 +60,7 @@ export const POI_FREQ_MIN = 100
 
 /**
  * Minimum share of the token's poi occurrences held by its top category class.
+ *
  * The class grain (food, retail, civic, …) is deliberate: single-token evidence rarely
  * separates `mexican_restaurant` from `taco_restaurant`, but reliably separates
  * "this names a food venue" from "this names a place".
@@ -89,7 +90,9 @@ interface SourceLexicon {
 }
 
 /**
- * Apply the composed bars. Pure, deterministic, sorted by token — the byte-identity interface.
+ * Apply the composed bars.
+ *
+ * Pure, deterministic, sorted by token — the byte-identity interface.
  */
 export function buildVenueWordHintTable(source: SourceLexicon, sourceMD5: string): VenueWordHintTable {
 	const hints: Record<string, VenueWordHint> = {}

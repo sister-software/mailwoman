@@ -52,15 +52,17 @@ export function createSkySpec(spec?: Partial<SkySpecification>): SkySpecificatio
 
 /**
  * The glyph host every style composed here reads fonts from.
+ *
  * The Protomaps font set, mirrored under the public bucket so a style never
  * depends on an upstream host at render time.
  */
 export const PROTOMAPS_GLYPHS_URL = "https://public.mailwoman.ai/protomaps/fonts/{fontstack}/{range}.pbf"
 
 /**
- * The Earth sprite. It must match the basemap schema version: the v4 sprite
- * carries the icons the v4 theme's layers reference by name, so a style over a
- * different basemap version needs a different sprite.
+ * The Earth sprite.
+ *
+ * It must match the basemap schema version: the v4 sprite carries the icons the v4 theme's layers
+ * reference by name, so a style over a different basemap version needs a different sprite.
  */
 export const PROTOMAPS_SPRITE_URL = "https://public.mailwoman.ai/protomaps/sprites/v4/light"
 
@@ -71,17 +73,21 @@ export interface StyleSpecificationComposition {
 	sky?: Partial<SkySpecification>
 	terrain?: Partial<TerrainSpecification>
 	/**
-	 * The layer list every `layers` entry inserts into. Earth's basemap layers by
-	 * default. a body with no roads, water or buildings brings its own.
+	 * The layer list every `layers` entry inserts into.
+	 *
+	 * Earth's basemap layers by default. a body with no roads, water or buildings brings its own.
 	 */
 	baseLayers?: LayerSpecification[]
 	/**
-	 * The `hillshade` source. Earth's terrarium DEM by default; `null` adds no such source.
+	 * The `hillshade` source.
+	 *
+	 * Earth's terrarium DEM by default; `null` adds no such source.
 	 */
 	hillshadeSource?: SourceSpecification | null
 	/**
-	 * The sprite URL. Earth's Protomaps v4 sprite by default; `null` omits the key,
-	 * for a style with no icons.
+	 * The sprite URL.
+	 *
+	 * Earth's Protomaps v4 sprite by default; `null` omits the key, for a style with no icons.
 	 */
 	sprite?: string | null
 	glyphs?: string

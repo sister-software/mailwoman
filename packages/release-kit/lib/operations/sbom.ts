@@ -12,6 +12,7 @@ import { generateSBOM } from "#release/sbom"
 
 /**
  * `release.sbom` — writes inside the checkout or the data root.
+ *
  * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
  */
 export const sbom = defineOperation({

@@ -7,8 +7,9 @@
 
 /**
  * Fold `[key, count]` entries into `target`, adding counts rather than replacing them —
- * the merge every chunked build's aggregation repeats. Why the counts add is a fact
- * about each product's chunking, stated at its call site.
+ * the merge every chunked build's aggregation repeats.
+ *
+ * Why the counts add is a fact about each product's chunking, stated at its call site.
  */
 export function mergeCountsInto<Key>(target: Map<Key, number>, entries: Iterable<readonly [Key, number]>): void {
 	for (const [key, count] of entries) {

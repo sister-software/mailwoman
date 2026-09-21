@@ -90,8 +90,9 @@ export interface ZoningItemRecord {
 	 */
 	accessInformation: string
 	/**
-	 * `licenseInfo`, verbatim, with its markup stripped. Read rather than trusted from
-	 * the constant, so a change in the terms is visible at build time.
+	 * `licenseInfo`, verbatim, with its markup stripped.
+	 *
+	 * Read rather than trusted from the constant, so a change in the terms is visible at build time.
 	 */
 	licenseInfo: string
 	/**
@@ -167,9 +168,9 @@ export class GZTClient extends APIClient<APIClientConfig> {
 	/**
 	 * The feature count the service reports, and the epsg code it declares.
 	 *
-	 * The second path in the build's agreement check: the same authority, a different
-	 * distribution channel. An archive whose feature count disagrees with the live service
-	 * is not a file this build should be writing into a sealed artifact.
+	 * The second path in the build's agreement check: the same authority, a different distribution channel.
+	 * An archive whose feature count disagrees with the live service is not a file
+	 * this build should be writing into a sealed artifact.
 	 */
 	public async readServiceIdentity(): Promise<{ featureCount: number; epsg: number; maxRecordCount: number }> {
 		const { data } = await this.fetch<{
@@ -206,9 +207,11 @@ export class GZTClient extends APIClient<APIClientConfig> {
 	 * The sum of the Department's own `Shape__Area` column, in square metres.
 	 *
 	 * The one number that settles the hole question, and it has to come from the service
-	 * because the bulk export drops the column. Read with the holes the rings total 5,444.5 km²;
-	 * read without them, 5,666.6 km². The difference is 4.1% of area and, far more importantly,
-	 * a ray cast that answers "inside" for every location a plan carved out.
+	 * because the bulk export drops the column.
+	 * Read with the holes the rings total 5,444.5 km²; read without them, 5,666.6 km².
+	 *
+	 * The difference is 4.1% of area and, far more importantly, a ray cast that
+	 * answers "inside" for every location a plan carved out.
 	 */
 	public async readShapeAreaSum(): Promise<number> {
 		const { data } = await this.fetch<{ features?: Array<{ attributes?: Record<string, number> }> }>({
@@ -239,8 +242,8 @@ export class GZTClient extends APIClient<APIClientConfig> {
 	/**
 	 * Ask the Hub for a bulk GeoJSON export and return the URL it answers with.
 	 *
-	 * `redirect=false` asks for the job record rather than a redirect, so this call reads a small
-	 * JSON body. The URL it returns is the one that 302s — see {@link downloadZoningExport}.
+	 * `redirect=false` asks for the job record rather than a redirect, so this call reads a small JSON body.
+	 * The URL it returns is the one that 302s — see {@link downloadZoningExport}.
 	 *
 	 * @throws {Error} When the job is not `Completed`, or names no result URL.
 	 *   A partial job that answered with a status and no URL would otherwise present as an empty download.
@@ -311,12 +314,13 @@ export class GZTClient extends APIClient<APIClientConfig> {
  * Refuse an attribution the published item no longer matches.
  *
  * Read AT build time rather than trusted from the constant.
- * The constant is what the artifact is stamped with offline. this is the live value it
- * is reconciled with when the network is available. The check is on the department'S
- * credit line and on the Tailte Éireann clause separately, because they are two
- * different statements and the second is the one that holds this layer at `build-local`:
- * an item that dropped it would be a licence change worth hearing about, and an item
- * that dropped only the credit line would be a different one.
+ * The constant is what the artifact is stamped with offline. this is the live value
+ * it is reconciled with when the network is available.
+ *
+ * The check is on the department'S credit line and on the Tailte Éireann clause separately,
+ * because they are two different statements and the second is the one that holds this layer
+ * at `build-local`: an item that dropped it would be a licence change worth hearing about,
+ * and an item that dropped only the credit line would be a different one.
  *
  * @throws {Error} When either half of {@link GZT_ATTRIBUTION} is no longer in the item's own fields.
  */

@@ -55,8 +55,8 @@ export const CANONICAL_FORM_LAW = "canonical-form-invariance"
 /**
  * The two canonical normalization forms this law states, and the only two a committed row may name.
  *
- * - `nfd` — canonical decomposition: every composed character split into its
- *   base plus its combining marks, and every Hangul syllable split into jamo.
+ * - `nfd` — canonical decomposition: every composed character split into its base plus
+ *   its combining marks, and every Hangul syllable split into jamo.
  *   The register a macOS filesystem API, some input methods and some text pipelines produce.
  * - `nfc` — canonical composition: the inverse, and the form the web platform,
  *   most databases and this pipeline's own Stage 1 emit.
@@ -71,8 +71,9 @@ export const CANONICAL_FORMS = ["nfd", "nfc"] as const
 export type CanonicalFormName = (typeof CANONICAL_FORMS)[number]
 
 /**
- * The transformation each name applies. Pure, total, and the source the suite's
- * variants are re-derived from.
+ * The transformation each name applies.
+ *
+ * Pure, total, and the source the suite's variants are re-derived from.
  */
 export const CANONICAL_TRANSFORMATION_BY_NAME: Record<CanonicalFormName, (text: string) => string> = {
 	nfd: (text) => text.normalize("NFD"),
@@ -107,7 +108,8 @@ export function canonicallyVariant(text: string): boolean {
  *
  * `mixed` is a real state and not a bookkeeping leftover: a string assembled from
  * two sources can carry a composed `é` beside a decomposed one and then neither form
- * while being canonically equivalent to both. A text that is not
+ * while being canonically equivalent to both.
+ * A text that is not
  * {@linkcode canonicallyVariant} reads `nfc`, because it is — both forms are the same bytes.
  */
 export const CANONICAL_FORM_STATES = ["nfc", "nfd", "mixed"] as const
@@ -144,15 +146,17 @@ export function classifyCanonicalTransformation(base: string, variant: string): 
 /**
  * The declared reasons a canonical transformation is not stateable over a given row.
  *
- * - `no-canonical-variance` — the query's two canonical forms are the same bytes, so neither
- *   arm moves anything. Plain ascii, and every script whose characters carry no canonical
- *   decomposition, land here. Such a row is the identity law wearing a canonical-form label,
- *   and its holding would be counted as evidence that the forms are handled.
- * - `already-in-target-form` — the query is canonically variant, and it is already written
- *   in the form this arm composes or decomposes toward, so this arm alone is the identity
- *   while its sibling states the law. Reported apart from the first reading because "this
- *   query has nothing to decompose" and "this query is already decomposed" are different
- *   absences, and the second one says which direction the row does state.
+ * - `no-canonical-variance` — the query's two canonical forms are the same bytes,
+ *   so neither arm moves anything.
+ *   Plain ascii, and every script whose characters carry no canonical decomposition, land here.
+ *   Such a row is the identity law wearing a canonical-form label, and its holding
+ *   would be counted as evidence that the forms are handled.
+ * - `already-in-target-form` — the query is canonically variant, and it is already
+ *   written in the form this arm composes or decomposes toward, so this arm alone
+ *   is the identity while its sibling states the law.
+ *   Reported apart from the first reading because "this query has nothing to
+ *   decompose" and "this query is already decomposed" are different absences,
+ *   and the second one says which direction the row does state.
  */
 export const CANONICAL_APPLICABILITY_RULES = ["no-canonical-variance", "already-in-target-form"] as const
 
@@ -167,7 +171,9 @@ export type CanonicalApplicabilityRule = (typeof CANONICAL_APPLICABILITY_RULES)[
 export interface CanonicalApplicability {
 	applicable: boolean
 	/**
-	 * The rule that excluded it. Absent when `applicable`.
+	 * The rule that excluded it.
+	 *
+	 * Absent when `applicable`.
 	 */
 	rule?: CanonicalApplicabilityRule
 	reason: string
@@ -237,14 +243,15 @@ export interface CanonicalFormCoverage {
 	/**
 	 * Of the eligible rows, how many this suite states a byte-distinct arm over.
 	 *
-	 * Counted by the committed row a fixture names, which is what makes the ratio a ratio:
-	 * the denominator counts rows, two rows can carry the same query text, and one row
-	 * can carry several arms. Keying on the text would report the first pair as one
-	 * and keying on the fixture would report the second as several.
+	 * Counted by the committed row a fixture names, which is what makes the ratio a ratio: the denominator
+	 * counts rows, two rows can carry the same query text, and one row can carry several arms.
+	 * Keying on the text would report the first pair as one and keying on the
+	 * fixture would report the second as several.
 	 */
 	transformed: number
 	/**
 	 * The eligible rows counted by the form they are already written in.
+	 *
 	 * This is the number that says which arms the corpus can state: a population that
 	 * is entirely NFC can state the decompose arm and nothing else.
 	 */
@@ -345,6 +352,7 @@ export function auditCanonicalFormSuite(fixtures: readonly ConformanceFixture[])
 
 /**
  * The transformation label a report line carries, e.g. `nfd`.
+ *
  * `?` when the pair does not classify — which the audit refuses, so it can only
  * appear on a hand-built fixture that skipped the loader.
  */

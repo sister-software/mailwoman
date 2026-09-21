@@ -61,9 +61,11 @@ function locate(raw: string, value: string, from: number): [number, number] | nu
 }
 
 /**
- * Convert a v0 flat `ClassificationRecord` into an `AddressTree` by synthesizing char-aligned `B-<tag>`
- * tokens and running the canonical tree builder. Values are placed left-to-right with a cursor
- * so repeated values ("New York, New York") don't collide on the same span.
+ * Convert a v0 flat `ClassificationRecord` into an `AddressTree` by synthesizing
+ * char-aligned `B-<tag>` tokens and running the canonical tree builder.
+ *
+ * Values are placed left-to-right with a cursor so repeated values ("New York, New York")
+ * don't collide on the same span.
  */
 export function v0RecordToTree(raw: string, record: ClassificationRecord): AdaptResult {
 	// Collect (tag, value) pairs, then place them in order of first appearance
@@ -79,8 +81,9 @@ export function v0RecordToTree(raw: string, record: ClassificationRecord): Adapt
 	const placements: Array<{ tag: string; start: number; end: number }> = []
 	let dropped = 0
 
-	// Greedy left-to-right: for each pair (sorted by earliest possible position), claim the next
-	// free occurrence past the cursor. Sorting by first-occurrence keeps multi-value order sane.
+	// Greedy left-to-right: for each pair (sorted by earliest possible position),
+	// claim the next free occurrence past the cursor.
+	// Sorting by first-occurrence keeps multi-value order sane.
 	pairs.sort((a, b) => {
 		const ia = raw.toLowerCase().indexOf(a.value.toLowerCase())
 		const ib = raw.toLowerCase().indexOf(b.value.toLowerCase())

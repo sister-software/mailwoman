@@ -47,19 +47,27 @@ const WEAK_SIMILARITY_MIN = 0.3
  */
 export interface DedupCeilingOptions {
 	/**
-	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * Record-matcher sources directory.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
 	 */
 	sources?: string
 	/**
-	 * Providers sampled from the registry. Default 50000.
+	 * Providers sampled from the registry.
+	 *
+	 * Default 50000.
 	 */
 	cap?: number
 	/**
-	 * State filter. Default TX.
+	 * State filter.
+	 *
+	 * Default TX.
 	 */
 	state?: string
 	/**
-	 * Org-name Jaccard collision threshold. Default 0.7.
+	 * Org-name Jaccard collision threshold.
+	 *
+	 * Default 0.7.
 	 */
 	tau?: number
 	/**
@@ -140,11 +148,11 @@ export async function dedupCeiling(
 		}
 	}
 
-	// Derive the precision ceiling from co-located distinct-NPI records. pairs, either
-	// merge (wrong) or hold them apart using name/org. It can separate the `separable`
-	// (and most `mid`) pairs but not the `collide` ones. So the irreducible false-merge
-	// rate among co-located distinct pairs is collide/pairs. an oracle's precision on
-	// the co-located decision is bounded by how many merges it makes that are correct.
+	// Derive the precision ceiling from co-located distinct-NPI records. pairs,
+	// either merge (wrong) or hold them apart using name/org.
+	// It can separate the `separable` (and most `mid`) pairs but not the `collide` ones.
+	// So the irreducible false-merge rate among co-located distinct pairs is collide/pairs. an oracle's
+	// precision on the co-located decision is bounded by how many merges it makes that are correct.
 	// We report the collision rate directly and a precision-ceiling band
 	// (optimistic: only `collide` over-merge. conservative: `collide` + half of `mid`).
 	// Recall is not the binding constraint here (NPPES same-NPI records almost always share

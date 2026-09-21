@@ -14,9 +14,10 @@ import { createRuntimePipeline } from "#index"
 export interface ParseCallOpts {
 	/**
 	 * Per-call locale hint — the row's country-derived tag (e.g. `en-GB` for a GB row).
+	 *
 	 * Threaded into the pipeline's normalize / query-shape / locale-hint stages
-	 * exactly as a production caller hint would be. The classifier itself is loaded
-	 * once per run from `ModelSelectOptions.locale`.
+	 * exactly as a production caller hint would be.
+	 * The classifier itself is loaded once per run from `ModelSelectOptions.locale`.
 	 */
 	locale?: string
 }
@@ -36,21 +37,25 @@ export interface ModelSelectOptions {
 	/**
 	 * Package-shaped weights dir (`<root>/node_modules/@mailwoman/neural-weights-<locale>`) —
 	 * #718-safe, resolves model + tokenizer + card + anchor/gazetteer siblings via `loadFromWeights`.
-	 * Preferred over `model` for grading a candidate whose vocab differs (splice), and the
-	 * only correct grade for a country-channel model. Alternative to `model`.
+	 * Preferred over `model` for grading a candidate whose vocab differs (splice),
+	 * and the only correct grade for a country-channel model.
+	 * Alternative to `model`.
 	 */
 	weightsCache?: string
 	/**
 	 * BCP-47-ish locale tag for weights-package resolution (which classifier + FST is loaded).
-	 * Default `en-US`. This is the RUN's locale — the per-row parse locale is derived
-	 * from each fixture row's country via `localeForCountry`.
+	 *
+	 * Default `en-US`.
+	 * This is the RUN's locale — the per-row parse locale is derived from each
+	 * fixture row's country via `localeForCountry`.
 	 */
 	locale?: string
 }
 
 /**
- * The suite's fixture rows are keyed by ISO country code. the production pipeline wants a BCP-47
- * locale tag. These are the tags for the four countries `suite.jsonl` carries (DE, FR, GB, US),
+ * The suite's fixture rows are keyed by ISO country code. the production pipeline wants a BCP-47 locale tag.
+ *
+ * These are the tags for the four countries `suite.jsonl` carries (DE, FR, GB, US),
  * and nothing more: the gauntlet's `OVERLAY_LOCALE_BY_COUNTRY` lists the overlay locales
  * (GB, NZ, DE, IN, ES, IT) and this table lists the suite's, and they overlap on GB and DE only.
  * An unlisted country falls back to en-US, so a row added for a country that ships an overlay
@@ -91,17 +96,20 @@ async function buildClassifier(opts: ModelSelectOptions): Promise<NeuralAddressC
 }
 
 /**
- * Build a `ParseFn` from model-select options. Exported so `--baseline` can
- * build a second, independent classifier.
+ * Build a `ParseFn` from model-select options.
+ *
+ * Exported so `--baseline` can build a second, independent classifier.
  *
  * Routing (#1516): every parse runs through the production path — `createRuntimePipeline` —
- * not the raw `classifier.parse` the old runner used. That is the point of the probe: the
- * release Gauntlet measures the user-visible pipeline, and a metamorphic probe that bypasses it
- * (no #690 case normalization, no locale-hint, no kind/grouping stages, no weights-package FST auto-load)
- * manufactures violations the shipped path never exhibits — and misses the D-rule regressions
- * that do ride the pipeline stages. With a `weightsCache` classifier this is fully
- * production-faithful: `loadFromWeights` surfaces `fstPath`, which `createRuntimePipeline`'s
- * `autoLoadWeightsFST` uses to load the locale FST from the weights package.
+ * not the raw `classifier.parse` the old runner used.
+ * That is the point of the probe: the release Gauntlet measures the user-visible pipeline,
+ * and a metamorphic probe that bypasses it (no #690 case normalization, no locale-hint,
+ * no kind/grouping stages, no weights-package FST auto-load) manufactures violations the shipped
+ * path never exhibits — and misses the D-rule regressions that do ride the pipeline stages.
+ *
+ * With a `weightsCache` classifier this is fully production-faithful: `loadFromWeights`
+ * surfaces `fstPath`, which `createRuntimePipeline`'s `autoLoadWeightsFST` uses
+ * to load the locale FST from the weights package.
  * The `--model` scorer path carries no FST (matching the gauntlet's legacy `createScorer`
  * modes — the FST belongs to the weights package rather than the scorer).
  */

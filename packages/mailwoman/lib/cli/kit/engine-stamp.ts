@@ -29,8 +29,10 @@ export interface ResolvedEngineStamp {
 let resolved: Promise<ResolvedEngineStamp> | undefined
 
 /**
- * Resolve the stamp for this process. Memoized: the manifest and the configured key do
- * not change while a process runs, and every stamped output must agree.
+ * Resolve the stamp for this process.
+ *
+ * Memoized: the manifest and the configured key do not change while a process runs,
+ * and every stamped output must agree.
  */
 export function resolveEngineStamp(): Promise<ResolvedEngineStamp> {
 	resolved ??= (async () => {

@@ -68,8 +68,9 @@ export async function lintReply(reply: string): Promise<ValeAlert[]> {
 
 /**
  * The rule's guidance with the match's own name factored out, so one grouped line
- * carries the message once instead of once per hit. Message templates vary
- * ("'%s' is …", the stock-form template, and templates with no substitution at all),
+ * carries the message once instead of once per hit.
+ *
+ * Message templates vary ("'%s' is …", the stock-form template, and templates with no substitution at all),
  * so the fallbacks keep every shape readable.
  */
 function ruleGuidance(alert: ValeAlert): string {
@@ -136,6 +137,7 @@ function formatAlerts(alerts: ValeAlert[], opening: string): string {
 
 /**
  * The single decision both platform adapters wrap in their own output JSON.
+ *
  * Null when the reply is clean.
  */
 export function renderVerdict(alerts: ValeAlert[]): ProseVerdict | null {

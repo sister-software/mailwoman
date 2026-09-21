@@ -10,6 +10,7 @@ import type { FRN } from "#frn"
 
 /**
  * One cores registration record, exactly as the detail page states it.
+ *
  * Every field is optional because the page omits a row rather than emitting an empty one,
  * and an absent contact fax says nothing about the entity.
  *
@@ -19,15 +20,18 @@ import type { FRN } from "#frn"
 export interface CORESRegistration {
 	frn: FRN
 	/**
-	 * The legal name the entity registered under. Not necessarily the name anyone uses for it:
-	 * FRN `0001753557` registers as `"Knology Total Communications, Inc."` while operating as WOW!.
+	 * The legal name the entity registered under.
+	 *
+	 * Not necessarily the name anyone uses for it: FRN `0001753557` registers as
+	 * `"Knology Total Communications, Inc."` while operating as WOW!.
 	 */
 	entityName?: string
 	/**
-	 * Cores's own entity-type string, verbatim (e.g. `"Private Sector , Corporation"` — the
-	 * stray space before the comma is in the source). Deliberately not parsed into a union:
-	 * the vocabulary is unenumerated and a caller that needs a classification should
-	 * corroborate rather than trust a string split.
+	 * Cores's own entity-type string, verbatim (e.g. `"Private Sector , Corporation"` —
+	 * the stray space before the comma is in the source).
+	 *
+	 * Deliberately not parsed into a union: the vocabulary is unenumerated and a caller
+	 * that needs a classification should corroborate rather than trust a string split.
 	 */
 	entityType?: string
 	/**
@@ -50,6 +54,7 @@ export interface CORESRegistration {
 	contactFax?: string
 	/**
 	 * Raw `MM/DD/yyyy hh:mm:ss AM/PM` timestamps exactly as served.
+	 *
 	 * Not parsed to a `Date` here — the same discipline `Form499Row.lastFiledAt` follows,
 	 * so a caller that needs a temporal value performs (and can validate) its own
 	 * conversion rather than inheriting a silent one.
@@ -60,6 +65,7 @@ export interface CORESRegistration {
 
 /**
  * Maps a cores row label to its {@linkcode CORESRegistration} field.
+ *
  * Keyed on the label reduced to lowercase letters and digits only, so `"ContactPhone:"`
  * and `"Contact Phone:"` — the page ships both spellings, the phone and fax rows having
  * lost their space — land on one key without a separate alias per variant.
@@ -89,13 +95,15 @@ const CASE_SENSITIVE_PUNCTUATION_PATTERN = /[:@()-]/
 
 /**
  * Tokens that stay upper-case through the title-casing pass.
+ *
  * Without these, `comcast cable communications, LLC` title-cases to `… , Llc`,
  * which is not a spelling anyone uses and would reach a product surface verbatim.
  *
  * Deliberately only initialisms whose conventional rendering is all-caps.
  * `Ltd`, `Corp` and `Inc` are absent because their conventional rendering is title case,
- * which the pass already produces. Matched on the token with trailing punctuation
- * stripped, so `LLC,` and `LLC.` both hit.
+ * which the pass already produces.
+ *
+ * Matched on the token with trailing punctuation stripped, so `LLC,` and `LLC.` both hit.
  */
 const UPPERCASE_TOKENS = new Set(["llc", "lc", "lp", "llp", "pllc", "pc", "pa", "usa", "us", "dba", "inc's"])
 
@@ -104,8 +112,10 @@ const UPPERCASE_TOKENS = new Set(["llc", "lc", "lp", "llp", "pllc", "pc", "pa", 
  * Nexus's `normalizeDataCell` idea, kept because FCC data mixes `windstream services LLC`
  * with `Lumen Technologies Inc.` in the same column.
  *
- * The guard is what makes it safe. A string carrying both cases is already deliberately
- * cased and is returned untouched, so `WOW! Internet, Cable and Phone` survives.
+ * The guard is what makes it safe.
+ * A string carrying both cases is already deliberately cased and is returned untouched,
+ * so `WOW! Internet, Cable and Phone` survives.
+ *
  * A string containing `:`, `@`, `(`, `)` or `-` is left alone too: those mark addresses,
  * emails and phone numbers, where re-casing corrupts rather than tidies.
  * Entity-form initialisms are restored to upper case afterwards ({@linkcode UPPERCASE_TOKENS}).
@@ -148,10 +158,11 @@ export function recaseUniform(value: string): string {
 export function parseCORESRegistration(frn: FRN, html: string): CORESRegistration | null {
 	const fields: Partial<Record<keyof CORESRegistration, string>> = {}
 
-	// The page states one label/value pair per row. Read as a grid rather than by pattern:
-	// `/<td[^>]*>([\s\S]*?)<\/td>/` over a network-supplied page backtracks polynomially on a
-	// body with many `<td` repetitions and no closing partner (CodeQL `js/polynomial-redos`),
-	// and the parser answers the same question without a scan that can be made to spend the document.
+	// The page states one label/value pair per row.
+	// Read as a grid rather than by pattern: `/<td[^>]*>([\s\S]*?)<\/td>/` over a
+	// network-supplied page backtracks polynomially on a body with many `<td` repetitions
+	// and no closing partner (CodeQL `js/polynomial-redos`), and the parser answers the
+	// same question without a scan that can be made to spend the document.
 	for (const rows of extractTableRows(html) ?? []) {
 		for (const row of rows) {
 			const label = row.find((cell) => cell.tag === "th")?.text

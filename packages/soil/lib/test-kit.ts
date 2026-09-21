@@ -37,13 +37,17 @@ import type { SurveyAreaAttributes } from "#sdk/survey-area"
 export const FIXTURE_ORIGIN = { lat: 41.6, lon: -93.6 }
 
 /**
- * Degrees per fixture square side. About 1.6 km at this latitude — several resolution-9
- * cells across, so a fixture square has both an interior and a fringe.
+ * Degrees per fixture square side.
+ *
+ * About 1.6 km at this latitude — several resolution-9 cells across,
+ * so a fixture square has both an interior and a fringe.
  */
 export const FIXTURE_SIDE = 0.015
 
 /**
- * The fixture map units. Each one exists to exercise exactly one reading.
+ * The fixture map units.
+ *
+ * Each one exists to exercise exactly one reading.
  */
 export function fixtureMapUnits(areaSymbol = "XX001"): SoilMapUnitTable[] {
 	return [
@@ -116,8 +120,10 @@ export function fixtureMapUnits(areaSymbol = "XX001"): SoilMapUnitTable[] {
 }
 
 /**
- * The fixture components. `mu-mixed` is 45/35/20 across three classes, which is the case
- * a winner-class schema would report as "class 2" and this one reports as a mixture.
+ * The fixture components.
+ *
+ * `mu-mixed` is 45/35/20 across three classes, which is the case a winner-class schema
+ * would report as "class 2" and this one reports as a mixture.
  */
 export function fixtureComponents(): SoilComponentTable[] {
 	return [

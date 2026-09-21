@@ -52,6 +52,7 @@ import { runProcessOrFail } from "#cli/kit/shared"
 
 /**
  * The four surfaces every emitter + generated client covers.
+ *
  * Order matches the salvaged readme's table, mailwoman last (the new fourth module).
  */
 export const CLIENT_SURFACES = ["photon", "nominatim", "libpostal", "mailwoman"] as const
@@ -69,11 +70,13 @@ const FLAVORS = ["3.1", "3.0"] as const
  *
  * Read from the workspace's own `bin` rather than assembled from a literal emit path.
  * The literal was `out/cli.js` and went stale twice: once when the 2026-08-14 regroup moved
- * the workspaces, and again when the prefix-directory pass moved `mailwoman`'s `lib/cli.ts`
- * to `lib/cli/index.ts`, so its emit became `out/cli/index.js` while the other three
- * kept the flat name. Both times a clean, successful compile read as a missing emitter,
- * and the second time it failed inside a release run. `bin` is the manifest's declaration of
- * where the entry point is. the emit layout underneath it is free to move.
+ * the workspaces, and again when the prefix-directory pass moved `mailwoman`'s `lib/cli.ts` to
+ * `lib/cli/index.ts`, so its emit became `out/cli/index.js` while the other three kept the flat name.
+ *
+ * Both times a clean, successful compile read as a missing emitter,
+ * and the second time it failed inside a release run.
+ * `bin` is the manifest's declaration of where the entry point is. the emit
+ * layout underneath it is free to move.
  *
  * Resolved through `workspacePath`, never by treating the workspace name as a
  * repo-root segment — that was the first failure's shape.
@@ -94,11 +97,12 @@ export async function emitterCLIPath(surface: ClientSurface): Promise<string> {
 
 /**
  * The two repo-root license files (verified present: `LICENSE.md` — AGPL-3.0-only + a
- * Commercial-License pointer — and `commercial-LICENSE.md` — the full commercial agreement text)
- * that every generated package's spdx expression (`AGPL-3.0-only or LicenseRef-Commercial`)
- * references. Both artifacts must carry both files verbatim: an agpl conveyance
- * requires the license text to travel with the source, and `LicenseRef-Commercial`
- * is meaningless without the referenced text alongside it.
+ * Commercial-License pointer — and `commercial-LICENSE.md` — the full commercial agreement text) that
+ * every generated package's spdx expression (`AGPL-3.0-only or LicenseRef-Commercial`) references.
+ *
+ * Both artifacts must carry both files verbatim: an agpl conveyance requires
+ * the license text to travel with the source, and `LicenseRef-Commercial` is
+ * meaningless without the referenced text alongside it.
  */
 const LICENSE_FILENAMES = ["LICENSE.md", "COMMERCIAL-LICENSE.md"] as const
 
@@ -137,7 +141,9 @@ interface GenerateClientsReceipt {
 
 export interface GenerateClientsOptions {
 	/**
-	 * Output root. Default `<repo>/clients-build` (gitignored).
+	 * Output root.
+	 *
+	 * Default `<repo>/clients-build` (gitignored).
 	 */
 	outDir?: string
 	/**
@@ -514,10 +520,12 @@ function pythonReadme(): string {
 /**
  * Write the pyproject.toml + readme.md + `mailwoman_client/__init__.py` + `py.typed` +
  * license texts — the salvaged layout, adapted for the fourth `mailwoman` module.
- * No `examples/` dir: the salvaged `search_berlin.py` example wasn't wired into either
- * `[tool.setuptools.packages.find]` (wheel) or a manifest.in (sdist), so it was silently
- * dropped from both built artifacts. The readme's own "Usage" section already carries the
- * same snippet inline, so it isn't lost — just not duplicated as a file that never shipped.
+ *
+ * No `examples/` dir: the salvaged `search_berlin.py` example wasn't wired into
+ * either `[tool.setuptools.packages.find]` (wheel) or a manifest.in (sdist),
+ * so it was silently dropped from both built artifacts.
+ * The readme's own "Usage" section already carries the same snippet inline,
+ * so it isn't lost — just not duplicated as a file that never shipped.
  */
 async function assemblePythonPackage(
 	pythonDir: string,
@@ -838,6 +846,7 @@ async function assembleRustCrate(
 /**
  * `cargo check --examples` — stronger than a bare `cargo check` (which skips example targets by default)
  * so `examples/basic.rs` is verified against the current vendored spec on every run.
+ *
  * See the module docstring for why this matters: the salvaged example had already drifted once.
  */
 function verifyRust(rustDir: string, phase: (p: string, d?: string) => void): void {
@@ -846,7 +855,9 @@ function verifyRust(rustDir: string, phase: (p: string, d?: string) => void): vo
 }
 
 /**
- * Run the full pipeline. See the module docstring for the phase order and the `--examples` verify note.
+ * Run the full pipeline.
+ *
+ * See the module docstring for the phase order and the `--examples` verify note.
  */
 export async function generateClients(opts: GenerateClientsOptions = {}): Promise<GenerateClientsResult> {
 	const t0 = performance.now()

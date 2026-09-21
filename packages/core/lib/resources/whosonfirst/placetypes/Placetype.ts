@@ -46,7 +46,8 @@ export class Placetype implements Disposable {
 	/**
 	 * A map of placetypes indexed by their Brooklyn Integers ID.
 	 *
-	 * Note that these IDs are not in any specific order. Avoid using them for sorting.
+	 * Note that these IDs are not in any specific order.
+	 * Avoid using them for sorting.
 	 */
 	static #byID = new Map<number, Placetype>()
 

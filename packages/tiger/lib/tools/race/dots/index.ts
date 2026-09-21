@@ -38,19 +38,27 @@ const MAX_PLACEMENT_TRIES = 60
  */
 export interface RaceDotsOptions {
 	/**
-	 * Tiger SQLite DB (`tabblock20` ⋈ `pl_block`). Default `$MAILWOMAN_DATA_ROOT/tiger/tiger-oc.db`.
+	 * Tiger SQLite DB (`tabblock20` ⋈ `pl_block`).
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/tiger/tiger-oc.db`.
 	 */
 	db?: string
 	/**
-	 * Output ndjson path. Default `/tmp/race-dots.ndjson`.
+	 * Output ndjson path.
+	 *
+	 * Default `/tmp/race-dots.ndjson`.
 	 */
 	out?: string
 	/**
-	 * People represented by one dot. Default 10.
+	 * People represented by one dot.
+	 *
+	 * Default 10.
 	 */
 	per?: number
 	/**
-	 * Tippecanoe layer name. Default `dots`.
+	 * Tippecanoe layer name.
+	 *
+	 * Default `dots`.
 	 */
 	layer?: string
 }
@@ -120,8 +128,9 @@ export async function raceDots(
 	// Heavy dep, lazy-imported so loading the tools barrel stays cheap.
 	const { default: booleanContains } = await import("@turf/boolean-contains")
 
-	// A block geometry is one or more polygons. Pick a sub-polygon weighted by bbox area,
-	// then rejection-sample inside it with a turf containment test (handles holes + winding correctly).
+	// A block geometry is one or more polygons.
+	// Pick a sub-polygon weighted by bbox area, then rejection-sample inside it with
+	// a turf containment test (handles holes + winding correctly).
 	function randomPointIn(polys: PolygonCoords[], areas: number[], totalArea: number): [number, number] | null {
 		let r = Math.random() * totalArea
 		let pick = 0

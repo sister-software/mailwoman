@@ -33,7 +33,9 @@ export interface FloorReading {
 	 */
 	observed: number | null
 	/**
-	 * `observed − floor`, or `null` when unmeasured. Negative means the floor was missed.
+	 * `observed − floor`, or `null` when unmeasured.
+	 *
+	 * Negative means the floor was missed.
 	 */
 	margin: number | null
 	pass: boolean
@@ -66,13 +68,17 @@ export interface EvalReport {
 	/**
 	 * The pre-filled `eval ledger-append` command the eval prints on a pass, or `null`.
 	 *
-	 * Surfaced, never RUN. Appending to the ledger is a repo write and a claim about a shipped version.
-	 * the eval runs on candidates that may never ship. See {@link EvalReport.ledger_note}.
+	 * Surfaced, never RUN.
+	 * Appending to the ledger is a repo write and a claim about a shipped version.
+	 * the eval runs on candidates that may never ship.
+	 *
+	 * See {@link EvalReport.ledger_note}.
 	 */
 	ledger_command: string | null
 	ledger_note: string
 	/**
 	 * The recompile-before-eval refusal, verbatim, when the eval's own lore guard fired.
+	 *
 	 * Passed through rather than worked around: that guard is correct, and a tool
 	 * that swallowed it would grade a stale tree.
 	 */
@@ -197,9 +203,9 @@ export async function readEvalReport(outDir: string, stdout: string, stderr: str
 /**
  * One line for the `summary` an agent relays.
  *
- * Names `graded_artifact` before the verdict. An eval verdict without it invites the
- * exact confound the field's own docstring records — someone diffs two verdicts,
- * sees a delta, and attributes to the model what was a precision difference.
+ * Names `graded_artifact` before the verdict.
+ * An eval verdict without it invites the exact confound the field's own docstring records —
+ * someone diffs two verdicts, sees a delta, and attributes to the model what was a precision difference.
  */
 export function summarizeEvalReport(report: EvalReport): string {
 	if (!report.verdict) {
@@ -225,8 +231,8 @@ export function summarizeEvalReport(report: EvalReport): string {
 /**
  * Artifacts the card itself declares, beyond the three the layout check covers.
  *
- * Read from `files_md5` rather than from a list here, so a card that starts
- * declaring a new sibling is checked without anyone remembering to update this file.
+ * Read from `files_md5` rather than from a list here, so a card that starts declaring
+ * a new sibling is checked without anyone remembering to update this file.
  * `$comment` is a documentation key rather than an artifact.
  */
 async function declaredArtifacts(packageDir: PathBuilderLike): Promise<string[]> {
@@ -258,9 +264,9 @@ async function declaredArtifacts(packageDir: PathBuilderLike): Promise<string[]>
  * rather than a re-typed `node_modules/@mailwoman/…` literal — the 2026-08-06
  * triage lesson recorded at the eval's own call site.
  *
- * @returns `kind` distinguishes a wrong-shaped root from a correctly-shaped one that
- *   is under-staged. the two need different fixes and one message for both sends the
- *   reader to the wrong place. `paths` is empty when well-formed.
+ * @returns `kind` distinguishes a wrong-shaped root from a correctly-shaped one that is under-staged.
+ *   the two need different fixes and one message for both sends the reader to the wrong place.
+ *   `paths` is empty when well-formed.
  */
 export async function missingWeightsCacheArtifacts(
 	cacheRoot: PathBuilderLike,

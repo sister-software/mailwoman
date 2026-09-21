@@ -67,8 +67,8 @@ export class SqliteDriver implements Driver {
 	}
 
 	async acquireConnection(): Promise<DatabaseConnection> {
-		// SQLite only has one single connection. We use a mutex here to wait
-		// until the single connection has been released.
+		// SQLite only has one single connection.
+		// We use a mutex here to wait until the single connection has been released.
 		await this.#connectionMutex.lock()
 
 		// biome-ignore lint/style/noNonNullAssertion: :shrug:

@@ -34,6 +34,7 @@ export interface ConfiguredLicenseToken {
 
 /**
  * The token this installation has configured: the environment variable first, the key file second.
+ *
  * `undefined` when neither is set. a blank file reads as absent.
  */
 export async function readConfiguredLicenseToken(): Promise<ConfiguredLicenseToken | undefined> {

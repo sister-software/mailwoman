@@ -27,11 +27,15 @@ export interface MapFooterProps {
 	 */
 	identity?: ReactNode
 	/**
-	 * Beside the identity: what is loading right now. Absent when nothing is.
+	 * Beside the identity: what is loading right now.
+	 *
+	 * Absent when nothing is.
 	 */
 	status?: ReactNode
 	/**
-	 * The credits, one entry per source. Shown in the popover the attribution button opens.
+	 * The credits, one entry per source.
+	 *
+	 * Shown in the popover the attribution button opens.
 	 */
 	attribution?: ReactNode[]
 	/**

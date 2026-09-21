@@ -30,20 +30,25 @@ interface ArtifactState {
 	path: string
 	exists: boolean
 	/**
-	 * Bytes, or `null` when absent. A size that moved is the cheapest signal that a swap happened.
+	 * Bytes, or `null` when absent.
+	 *
+	 * A size that moved is the cheapest signal that a swap happened.
 	 */
 	bytes: number | null
 	modified: string | null
 	/**
-	 * The link target when the path is a symlink. `candidate.db` is a pointer by design —
-	 * `gazetteer promote` swaps it — so the target name carries the build's identity
-	 * and the path alone does not.
+	 * The link target when the path is a symlink.
+	 *
+	 * `candidate.db` is a pointer by design — `gazetteer promote` swaps it —
+	 * so the target name carries the build's identity and the path alone does not.
 	 */
 	linkTarget: string | null
 	/**
 	 * `true` when the file is read-only, which is how a sealed build is distinguished
-	 * from one still being written. An unsealed artifact is one a verify step refused,
-	 * and must never be measured against as if it had passed.
+	 * from one still being written.
+	 *
+	 * An unsealed artifact is one a verify step refused, and must never be
+	 * measured against as if it had passed.
 	 */
 	sealed: boolean | null
 }
@@ -61,8 +66,10 @@ export interface ProvenanceReport {
 	dataRoot: string
 	artifacts: ArtifactState[]
 	/**
-	 * Read from the stamp `gazetteer repos-sync` writes. Absent when that has never been
-	 * run here — which is reported as absence rather than as "the repos are current".
+	 * Read from the stamp `gazetteer repos-sync` writes.
+	 *
+	 * Absent when that has never been run here — which is reported as absence
+	 * rather than as "the repos are current".
 	 */
 	repos: RepoVintage[] | null
 	reposStampPath: string
@@ -90,7 +97,8 @@ async function artifactState(name: string, path: string): Promise<ArtifactState>
 		bytes: stat.size,
 		modified: stat.mtime.toISOString(),
 		linkTarget: link.isSymbolicLink() ? await readLink(path) : null,
-		// The house convention seals a finished database 0444. Owner-write means it is not finished.
+		// The house convention seals a finished database 0444.
+		// Owner-write means it is not finished.
 		sealed: (stat.mode & 0o200) === 0,
 	}
 }
@@ -104,8 +112,10 @@ export interface ProvenanceOptions {
 }
 
 /**
- * Assemble the provenance report. Every field is read. nothing is derived from a convention
- * that might not hold, which is why an absent file is reported as absent rather than defaulted.
+ * Assemble the provenance report.
+ *
+ * Every field is read. nothing is derived from a convention that might not hold,
+ * which is why an absent file is reported as absent rather than defaulted.
  */
 export async function runProvenance(options: ProvenanceOptions = {}): Promise<ProvenanceReport> {
 	const { dataRootPath, mailwomanDataRoot, repoRootPath } = await import("@mailwoman/core/utils")
@@ -141,7 +151,8 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 			repos = stamp.repos ?? []
 			reposStampAge = (await statPath(reposStampPath)).mtime.toISOString()
 		} catch {
-			// A corrupt stamp is reported as no stamp. Guessing at its contents would be worse than saying nothing.
+			// A corrupt stamp is reported as no stamp.
+			// Guessing at its contents would be worse than saying nothing.
 			repos = null
 		}
 	}
@@ -151,9 +162,10 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 
 	if (await pathExists(buildLogPath)) {
 		try {
-			// The build appends to `notes` — verified against the committed file rather than
-			// assumed from the key's name. Each entry is one dated line carrying the record counts,
-			// the Overture release and whether it was swapped live.
+			// The build appends to `notes` — verified against the committed file
+			// rather than assumed from the key's name.
+			// Each entry is one dated line carrying the record counts, the Overture release
+			// and whether it was swapped live.
 			const log = (await readLocalJSONFile(buildLogPath)) as { notes?: unknown }
 			const entries = Array.isArray(log.notes) ? log.notes.filter((n): n is string => typeof n === "string") : []
 

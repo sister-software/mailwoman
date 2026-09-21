@@ -41,6 +41,7 @@ import type { Kysely } from "kysely"
 
 /**
  * One availability row from the FCC's per-provider BDC CSV.
+ *
  * In the default build mode this is one row per distinct
  * (geoid, provider_id, technology_code, speeds, low_latency, business_residential_code)
  * tuple — not one row per (block, provider, technology) triple. a triple whose BSLs carry
@@ -72,8 +73,10 @@ export interface BDCAvailabilityTable {
 }
 
 /**
- * Provider dictionary keyed on `provider_id`. Populated by the registry join (2a decision 8) behind
- * the optional `BuildBDCOptions.providers` (`bdc/sdk/build-bdc.ts`'s `populateBDCProviderTable`);
+ * Provider dictionary keyed on `provider_id`.
+ *
+ * Populated by the registry join (2a decision 8) behind the optional
+ * `BuildBDCOptions.providers` (`bdc/sdk/build-bdc.ts`'s `populateBDCProviderTable`);
  * when that option is omitted (the default), this table stays empty.
  * No FK constraint against `bdc_availability.provider_id` — SQLite doesn't enforce FKs
  * without `pragma foreign_keys`, and the join happens at read time rather than write time.
@@ -83,6 +86,7 @@ export interface BDCAvailabilityTable {
  * one `provider_id` carry multiple `frn` values — and conflicting `holding_company` strings —
  * across its rows (`parseProviderList` preserves every one of them. see `filer/sdk/provider-list.ts`).
  * A single-row-per-provider table cannot express that cardinality.
+ *
  * `filer.db` (`@mailwoman/filer`) is the source of truth: it retains every `provider_id`↔`frn`
  * (and `provider_id`↔`holding_company_name`) edge, never folded or last-wins.
  * When `bdc.db` is built with `BuildBDCOptions.providers` supplied:
@@ -95,9 +99,10 @@ export interface BDCAvailabilityTable {
  *   fully recoverable from `filer.db`.
  * - `holding_company` gets the same single-distinct-value shortcut `frn` gets:
  *   when a `provider_id`'s rows carry exactly one distinct non-null `holding_company` string,
- *   there is no conflict to resolve, so it's populated directly — no rule needed, same as a
- *   single-FRN provider needs no `filerDB` query. When they carry more than one distinct value,
- *   that ambiguity is the real conflict decision 6 refuses to paper over with last-wins
+ *   there is no conflict to resolve, so it's populated directly — no rule needed,
+ *   same as a single-FRN provider needs no `filerDB` query.
+ *   When they carry more than one distinct value, that ambiguity is
+ *   the real conflict decision 6 refuses to paper over with last-wins
  *   (`holding_company` has no most-recent-filing-date rule the way `frn` does), so it stays NULL
  *   and every discarded value remains recoverable from `filer.db`'s `holding_company_name`
  *   edges — the identical discipline `frn`'s primary pick already applies.
@@ -133,6 +138,7 @@ export const BDC_COVERAGE_H3_RESOLUTION = 6
 /**
  * Create `bdc_availability` as a plain rowid table, plus the `h3_cell` range-scan index
  * (bundled here since every reader depends on it — see the file header for the clustering rationale).
+ *
  * Call {@link createBDCGeoidIndex} separately, after bulk load, for the geoid point-lookup path.
  */
 export async function createBDCAvailabilityTable(db: Kysely<BDCDatabase>): Promise<void> {
@@ -169,6 +175,7 @@ export async function createBDCProviderTable(db: Kysely<BDCDatabase>): Promise<v
 
 /**
  * Secondary index for the geoid point-lookup path (the public spatial join key).
+ *
  * Call after the bulk materialize (index-after-load), same discipline as poi.db's secondary indexes.
  */
 export async function createBDCGeoidIndex(db: Kysely<BDCDatabase>): Promise<void> {

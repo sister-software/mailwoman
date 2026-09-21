@@ -274,8 +274,8 @@ describe("StreetInterpolator", () => {
 
 // #374 doctrine: the conformal radius multiplier is a property of the calibration set the artifact was
 // built against, so it ships in the extract's `interp_calibration` metadata table
-// and is read once at open time. A extract predating the table (the shipped fleet)
-// reads `undefined` — never a throw, never a guess.
+// and is read once at open time.
+// A extract predating the table (the shipped fleet) reads `undefined` — never a throw, never a guess.
 describe("StreetInterpolator — artifact-carried radius calibration (#374)", () => {
 	it("reads the extract's baked multiplier at open time", async () => {
 		await using kdb = DatabaseClient.temp<StreetSegmentDatabase>()
@@ -322,8 +322,8 @@ describe("StreetInterpolator — artifact-carried radius calibration (#374)", ()
  */
 describe("StreetInterpolator — parity-first ambiguity, near tie-break, key variants", () => {
 	it("answers without a postcode when PARITY selects a single ZIP (the boundary-road class)", () => {
-		// 151 is odd. only the 05601 odd side can hold it. The even 05602 namesake used
-		// to veto this via the pre-parity postcode count.
+		// 151 is odd. only the 05601 odd side can hold it.
+		// The even 05602 namesake used to veto this via the pre-parity postcode count.
 		const hit = interpolator.find({ street: "Main St", number: "151" })
 
 		expect(hit).not.toBeNull()

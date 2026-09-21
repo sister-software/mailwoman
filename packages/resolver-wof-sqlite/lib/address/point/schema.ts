@@ -22,9 +22,12 @@ import type { Kysely } from "kysely"
 import type { NameKey, RouteKey, StreetKey } from "#street/normalize"
 
 /**
- * One rooftop address point. `(street_norm, number)` within a `postcode` (preferred)
- * or `locality_norm` scope is the lookup; `street_key` is the #483 route-fold key
- * for interpolation. Coordinates are non-null (the builder drops non-finite coords).
+ * One rooftop address point.
+ *
+ * `(street_norm, number)` within a `postcode` (preferred) or `locality_norm` scope is
+ * the lookup; `street_key` is the #483 route-fold key for interpolation.
+ * Coordinates are non-null (the builder drops non-finite coords).
+ *
  * `unit`/`postcode`/`locality_norm` are nullable (not every source carries all three).
  */
 export interface AddressPointTable {
@@ -34,6 +37,7 @@ export interface AddressPointTable {
 	street_norm: StreetKey
 	/**
 	 * `canonicalizeRouteKey(street_norm)` — the route-fold key (#483 Method 2).
+	 *
 	 * Its own brand, so it cannot be interchanged with the plain `street_norm` above.
 	 */
 	street_key: RouteKey
@@ -67,9 +71,10 @@ export interface AddressPointTable {
 	 */
 	admin_code: string | null
 	/**
-	 * The register's own certification flag for the point
-	 * (BAN `certification_commune`: 1 certified by the commune, 0 not), or null for a
-	 * source that states none. A basis is never inferred from a share of these.
+	 * The register's own certification flag for the point (BAN `certification_commune`:
+	 * 1 certified by the commune, 0 not), or null for a source that states none.
+	 *
+	 * A basis is never inferred from a share of these.
 	 */
 	certified: number | null
 }
@@ -85,15 +90,17 @@ export interface AddressPointDatabase {
  * The subset of a Kysely handle the `address_point` DDL touches — the parameter type its builders take.
  *
  * Kysely is invariant in its schema parameter (the incompatibility is in `transaction()`),
- * so a extract that extends `AddressPointTable` — OSM adds `h3_cell` —
- * cannot pass its own handle to a `Kysely<AddressPointDatabase>` parameter.
+ * so a extract that extends `AddressPointTable` — OSM adds `h3_cell` — cannot pass
+ * its own handle to a `Kysely<AddressPointDatabase>` parameter.
  * Naming only `schema` lets it, and the DDL below needs nothing else.
  */
 export type AddressPointSchemaHandle = Pick<Kysely<AddressPointDatabase>, "schema">
 
 /**
- * The `address_point` columns in insert order. The builder's positional prepared statement derives
- * its placeholder list from this, so the positional order can't drift from the DDL / the reader.
+ * The `address_point` columns in insert order.
+ *
+ * The builder's positional prepared statement derives its placeholder list from this,
+ * so the positional order can't drift from the DDL / the reader.
  */
 export const ADDRESS_POINT_COLUMNS = [
 	"street_norm",

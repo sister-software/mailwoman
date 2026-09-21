@@ -50,9 +50,10 @@ async function weightsDir(root: string, locale: string, files: Record<string, st
 const BINARIES = { "model.onnx": "onnx", "tokenizer.model": "sp" }
 
 /**
- * A locale with no published package, so module resolution misses and the ladder falls
- * through to the probes under test. Using a real locale would make the result depend on
- * whether someone had linked dev weights.
+ * A locale with no published package, so module resolution misses and the ladder
+ * falls through to the probes under test.
+ *
+ * Using a real locale would make the result depend on whether someone had linked dev weights.
  */
 const ABSENT = "xx-xx"
 
@@ -124,9 +125,9 @@ describe("resolveWeights — the artifact report", () => {
 		expect(by.get("model.onnx")?.origin).toBe(WeightsOrigin.Overlay)
 		expect(by.get("model-card.json")?.origin).toBe(WeightsOrigin.Overlay)
 
-		// An artifact the overlay does not carry is reported with a null origin
-		// rather than omitted. Omitting it would make "this checkout has no FST"
-		// and "this build never had an FST field" the same shape.
+		// An artifact the overlay does not carry is reported with a null origin rather than omitted.
+		// Omitting it would make "this checkout has no FST" and "this build never
+		// had an FST field" the same shape.
 		const fst = by.get("fst-xx-xx.bin")
 
 		expect(fst).toBeDefined()

@@ -68,8 +68,8 @@ describe("computeTreeFingerprint", () => {
 
 	it("throws rather than fingerprinting nothing", async () => {
 		// A walk that finds no files produces a digest that matches every other empty walk,
-		// which would disable the staleness guard silently. `corpus-stamp.ts` names the
-		// same shape: an empty loader on both sides agrees.
+		// which would disable the staleness guard silently.
+		// `corpus-stamp.ts` names the same shape: an empty loader on both sides agrees.
 		await using emptyDirectory = await temporaryDirectory("mwdev-empty-")
 		const empty = emptyDirectory.path
 
@@ -102,8 +102,8 @@ describe("staleEngineMessage", () => {
 		expect(message).toContain("cannot evict an imported module")
 		// The assertion this test's name always claimed and never made.
 		// The message used to end `Restart the MCP server (or call mwdev_daemon with action "reload")`,
-		// so it prescribed both — and the reload half is the one that rebuilds sessions
-		// around the same module graph and reports a clean fingerprint over stale code.
+		// so it prescribed both — and the reload half is the one that rebuilds sessions around
+		// the same module graph and reports a clean fingerprint over stale code.
 		// A "not a reload" guard has to check for the absence.
 		expect(message).not.toMatch(/action "reload"|call mwdev_daemon/)
 		expect(message.toLowerCase()).toContain("separate process")

@@ -22,12 +22,15 @@ import type { PostalCityAliasDatabase } from "#postal/city/alias/schema"
 
 export interface WOFPostalCityAliasLookupOpts {
 	/**
-	 * Path to a `postal-city-alias-<cc>.db` built by
-	 * `build-postal-city-alias.ts`. Opened read-only.
+	 * Path to a `postal-city-alias-<cc>.db` built by `build-postal-city-alias.ts`.
+	 *
+	 * Opened read-only.
 	 */
 	databasePath?: string
 	/**
-	 * Pre-opened handle (tests / shared connections). Mutually exclusive with `databasePath`.
+	 * Pre-opened handle (tests / shared connections).
+	 *
+	 * Mutually exclusive with `databasePath`.
 	 */
 	database?: DatabaseClient<PostalCityAliasDatabase>
 }
@@ -51,15 +54,19 @@ export interface PostalCityAlias {
 }
 
 /**
- * Reader over `postal_city_alias`. The only query is a postcode-scoped probe for divergent rows
+ * Reader over `postal_city_alias`.
+ *
+ * The only query is a postcode-scoped probe for divergent rows
  * (where the postal name differs from the geographic name — the rows that carry alias signal),
  * issued via the typed Kysely query builder against {@link PostalCityAliasDatabase}.
  */
 export class WOFPostalCityAliasLookup implements Disposable {
 	#db: DatabaseClient<PostalCityAliasDatabase>
 	/**
-	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal
-	 * cannot reach it — ownership is membership rather than a flag a later branch has to check.
+	 * Resources this instance opened.
+	 *
+	 * A connection handed in by a caller is not in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
 	 */
 	readonly #resources = new DisposableStack()
 
@@ -75,6 +82,7 @@ export class WOFPostalCityAliasLookup implements Disposable {
 
 	/**
 	 * Divergent postal-city aliases for a postcode (empty when the postcode isn't in the table).
+	 *
 	 * The scorer groups these by normalized `geoLocality` and appends the `postalCity`
 	 * surfaces to the matching candidate locality's alias set.
 	 */

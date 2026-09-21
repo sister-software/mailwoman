@@ -60,8 +60,8 @@ export async function valeCommand(base: string): Promise<ValeCommand> {
  * stderr with exit code 1 — the same exit code a prose finding produces, from the same command.
  * A caller reading only the exit status reports a failed prose check for a failed download.
  *
- * The postinstall fetches the binary from `api.github.com` with no Authorization
- * header, so an address that has spent its anonymous quota receives 403.
+ * The postinstall fetches the binary from `api.github.com` with no Authorization header,
+ * so an address that has spent its anonymous quota receives 403.
  * `.yarnrc.yml` filters that failure to a warning so an install still completes without it,
  * which is why the absence surfaces here rather than at install time.
  */

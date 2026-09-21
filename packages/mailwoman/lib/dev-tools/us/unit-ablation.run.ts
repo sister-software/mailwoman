@@ -5,11 +5,13 @@
  * #101, Athens, GA 30601` answers a city centroid, because the word designators are attested and the bare `#` is not.
  * The rows below hold everything else constant and vary only the designator.
  *
- * The private-mailbox ARM is not decoration. `#` reads as a unit designator on a
- * street address and as a private-mailbox leader in `synthesizers/po-box.ts` —
- * `US_PMB_LEADERS` excludes it for exactly that reason — so teaching one reading
- * can be paid for with the other. A run that reports the unit rows recovering
- * and says nothing about `PMB 123` has measured half of the change.
+ * The private-mailbox ARM is not decoration.
+ * `#` reads as a unit designator on a street address and as a private-mailbox leader
+ * in `synthesizers/po-box.ts` — `US_PMB_LEADERS` excludes it for exactly that reason —
+ * so teaching one reading can be paid for with the other.
+ *
+ * A run that reports the unit rows recovering and says nothing about `PMB 123`
+ * has measured half of the change.
  *
  * Run:
  *
@@ -59,8 +61,10 @@ const UNIT_ROWS: ReadonlyArray<{ input: string; expectUnit: string | null; note:
 ]
 
 /**
- * The private-mailbox arm. `PMB 123` answers `po_box` today and must keep it; `PMB #123`
- * does not, and is here so a change that fixes it is visible rather than silent.
+ * The private-mailbox arm.
+ *
+ * `PMB 123` answers `po_box` today and must keep it; `PMB #123` does not, and is here
+ * so a change that fixes it is visible rather than silent.
  */
 const PMB_ROWS: ReadonlyArray<{ input: string; expectPOBox: string }> = [
 	{ input: "PMB 123, 4400 Ashton Dr, Sarasota, FL 34233", expectPOBox: "PMB 123" },

@@ -17,9 +17,11 @@ import styles from "./styles.module.css"
 export { DOCS_SECTIONS } from "./sections.ts"
 
 /**
- * True when the active sidebar is one of the switcher's sections — i.e. a docs page
- * that should show the band. The single-category licensing sidebar is excluded,
- * so its pages keep the stock layout (no band, no offsets).
+ * True when the active sidebar is one of the switcher's sections —
+ * i.e. a docs page that should show the band.
+ *
+ * The single-category licensing sidebar is excluded, so its pages keep the
+ * stock layout (no band, no offsets).
  */
 export function useIsDocsSection(): boolean {
 	const sidebar = useDocsSidebar()
@@ -33,10 +35,11 @@ interface SectionLinkProps {
 }
 
 /**
- * One section tab. Its own hook (`useLayoutDocsSidebar`) resolves the destination
- * from the _target_ sidebar's entry link — so cross-section links work even though
- * only the active sidebar's items are in context. One hook per instance keeps the
- * rules-of-hooks interface clean across the fixed `DOCS_SECTIONS` list.
+ * One section tab.
+ *
+ * Its own hook (`useLayoutDocsSidebar`) resolves the destination from the _target_ sidebar's entry
+ * link — so cross-section links work even though only the active sidebar's items are in context.
+ * One hook per instance keeps the rules-of-hooks interface clean across the fixed `DOCS_SECTIONS` list.
  */
 const SectionLink: FC<SectionLinkProps> = ({ section, active }) => {
 	const href = useLayoutDocsSidebar(section.id).link?.path

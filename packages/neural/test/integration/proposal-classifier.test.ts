@@ -41,6 +41,7 @@ const haveModel = await pathExists(MODEL_PATH)
 
 /**
  * The coarse tags the v0.2.0 model is expected to reach at least one of.
+ *
  * Typed so a tag that leaves the union stops compiling rather than silently never matching.
  */
 const COARSE_TAGS: readonly ComponentTag[] = ["region", "locality", "postcode"]

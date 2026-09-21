@@ -76,10 +76,11 @@ const node = (
 ): AddressNode => ({ tag, value, start, end, confidence: 0.9, children })
 
 /**
- * The malformed parse, nested the way the decoder nests — country at the root,
- * admin depth downward, which is the shape `Maracaibo, Zulia, Venezuela` produces
- * today (`country > region > locality`). Here `Zulia` occupies the locality slot
- * and `Maracaibo` sits outside the winner's lineage, which is what the report's trace shows.
+ * The malformed parse, nested the way the decoder nests — country at the root, admin depth downward,
+ * which is the shape `Maracaibo, Zulia, Venezuela` produces today (`country > region > locality`).
+ *
+ * Here `Zulia` occupies the locality slot and `Maracaibo` sits outside the winner's
+ * lineage, which is what the report's trace shows.
  */
 const MALFORMED_PARSE: AddressTree = {
 	raw: "Maracaibo 4001, Zulia, Venezuela",

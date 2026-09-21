@@ -75,17 +75,21 @@ const ES_ES_DICT: ReadonlyArray<AbbreviationEntry> = [
  *
  * `Av` violates that criterion and is here anyway — a tracked defect rather than an oversight.
  * It was admitted on the claim that it "reads Avenue in both", which is true of en/fr
- * and false of es/pt, where it is Avenida. So Spanish input through the geocode
- * path acquires an english street type: the 2026-08-05 gauntlet batch caught "Av.
- * Los Meros" → "Avenue Los Meros" and "Av. Aurelio Ortega" → "Avenue Aurelio Ortega",
- * and both rows (`pr-op3-place-at-the-sea-ponce`, `mx-op3-san-miguel-canada-zapopan`) had
- * to leave `street` unasserted because of it. Dropping the entry is not a table edit:
- * `fr-op3-halles-market-bonneuil` is a passing row that asserts street "Avenue de la
- * Convention" and an `address_point` tier, so it pins the current behaviour and a removal
- * has to be measured on a resolver-gauntlet run. The real repair is upstream —
- * the geocode path hardcodes `locale: "und"` because Stage 1 precedes the parse,
- * and `@mailwoman/locale-hint` cannot presently detect Spanish (it scores script class +
- * known postcode formats, and a 5-digit ES/MX code is indistinguishable from a US ZIP).
+ * and false of es/pt, where it is Avenida.
+ *
+ * So Spanish input through the geocode path acquires an english street type:
+ * the 2026-08-05 gauntlet batch caught "Av.
+ * Los Meros" → "Avenue Los Meros" and "Av.
+ *
+ * Aurelio Ortega" → "Avenue Aurelio Ortega", and both rows (`pr-op3-place-at-the-sea-ponce`,
+ * `mx-op3-san-miguel-canada-zapopan`) had to leave `street` unasserted because of it.
+ * Dropping the entry is not a table edit: `fr-op3-halles-market-bonneuil` is a passing row
+ * that asserts street "Avenue de la Convention" and an `address_point` tier, so it pins
+ * the current behaviour and a removal has to be measured on a resolver-gauntlet run.
+ *
+ * The real repair is upstream — the geocode path hardcodes `locale: "und"` because Stage 1 precedes
+ * the parse, and `@mailwoman/locale-hint` cannot presently detect Spanish (it scores script
+ * class + known postcode formats, and a 5-digit ES/MX code is indistinguishable from a US ZIP).
  */
 const LOCALE_UNKNOWN_DICT: ReadonlyArray<AbbreviationEntry> = [
 	{ from: "Bd", to: "Boulevard" },
@@ -99,8 +103,8 @@ function getDictionary(locale: string | undefined): ReadonlyArray<AbbreviationEn
 	const lc = (locale ?? "en-US").toLowerCase()
 
 	// BCP-47 "und" (undetermined) — the caller knows it does not know the locale
-	// yet (the geocode path expands before the parse). Only the collision-free multi-locale
-	// set applies; `undefined` keeps its historical en-US default.
+	// yet (the geocode path expands before the parse).
+	// Only the collision-free multi-locale set applies; `undefined` keeps its historical en-US default.
 	if (lc === "und") return LOCALE_UNKNOWN_DICT
 
 	if (lc.startsWith("fr")) return FR_FR_DICT
@@ -115,10 +119,11 @@ function getDictionary(locale: string | undefined): ReadonlyArray<AbbreviationEn
 }
 
 /**
- * The per-locale abbreviation table (short↔long), exposed so consumers can reuse the
- * same data instead of duplicating it. The metamorphic gauntlet inverts this table
- * to generate expanded→abbreviated perturbations (`Avenue`→`Ave`); the "no required
- * trivia" rule means that data lives in exactly one place — here.
+ * The per-locale abbreviation table (short↔long), exposed so consumers can reuse
+ * the same data instead of duplicating it.
+ *
+ * The metamorphic gauntlet inverts this table to generate expanded→abbreviated perturbations
+ * (`Avenue`→`Ave`); the "no required trivia" rule means that data lives in exactly one place — here.
  */
 export function abbreviationDictionary(locale?: string): ReadonlyArray<AbbreviationEntry> {
 	return getDictionary(locale)
@@ -131,12 +136,15 @@ export interface AbbreviationResult {
 }
 
 /**
- * Expand known abbreviations. Walks the input token-by-token (whitespace-delimited) and rewrites
- * matching tokens to their canonical long form. The output map points every char of the
- * expanded form to its position in the original short form (first char of input token).
+ * Expand known abbreviations.
  *
- * Case rules: match case-insensitively. Output form preserves the dictionary's canonical
- * casing (`St` → `Street`, `st` → `Street`, `ST` → `Street`).
+ * Walks the input token-by-token (whitespace-delimited) and rewrites matching
+ * tokens to their canonical long form.
+ * The output map points every char of the expanded form to its position in the
+ * original short form (first char of input token).
+ *
+ * Case rules: match case-insensitively.
+ * Output form preserves the dictionary's canonical casing (`St` → `Street`, `st` → `Street`, `ST` → `Street`).
  */
 export function expandAbbreviations(input: string, locale?: string): AbbreviationResult {
 	const dict = getDictionary(locale)

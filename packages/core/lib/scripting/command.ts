@@ -9,6 +9,7 @@
 
 /**
  * An expected command failure whose message is safe to show directly.
+ *
  * The original failure belongs in `cause`.
  */
 export class CommandError extends Error {

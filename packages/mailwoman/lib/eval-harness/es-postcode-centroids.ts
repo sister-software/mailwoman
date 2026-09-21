@@ -27,29 +27,37 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
  */
 export interface ESPostcodeCentroidsOptions {
 	/**
-	 * ISO country code selecting the Overture addresses parquet +
-	 * output name. Default `ES`.
+	 * ISO country code selecting the Overture addresses parquet + output name.
+	 *
+	 * Default `ES`.
 	 */
 	country?: string
 	/**
 	 * Postcode digit length for the leading-zero-preserving lpad: 5 for ES/DE/FR/IT/NL, 4 for AT/CH/DK.
-	 * `0` = no lpad (use the raw Overture form). Default 5.
+	 *
+	 * `0` = no lpad (use the raw Overture form).
+	 * Default 5.
 	 */
 	pcLen?: number
 	/**
-	 * Overture addresses parquet. Default: the addresses-theme pin
-	 * (`OVERTURE_ADDRESSES_RELEASE`) under `$MAILWOMAN_DATA_ROOT`.
+	 * Overture addresses parquet.
+	 *
+	 * Default: the addresses-theme pin (`OVERTURE_ADDRESSES_RELEASE`) under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	parquet?: string
 	/**
-	 * Output SQLite DB. Default `$MAILWOMAN_DATA_ROOT/wof/postalcode-<cc>-overture.db`.
+	 * Output SQLite DB.
 	 *
-	 * The `postalcode-` prefix is required rather than cosmetic: `deriveSchemaName` turns the
-	 * filename into the attached SQL schema name and `pickExtractsForPlacetype` routes by testing
-	 * it against the placetype, which is `postalcode`. A database spelled `postcode-` matches
-	 * no branch and is silently never queried. The sibling `postcode-locality-*.db` family
-	 * keeps the shorter prefix on purpose — those carry a `postcode_locality` relation table
-	 * and no `spr`, so they are never routed as place databases in the first place.
+	 * Default `$MAILWOMAN_DATA_ROOT/wof/postalcode-<cc>-overture.db`.
+	 *
+	 * The `postalcode-` prefix is required rather than cosmetic: `deriveSchemaName` turns
+	 * the filename into the attached SQL schema name and `pickExtractsForPlacetype`
+	 * routes by testing it against the placetype, which is `postalcode`.
+	 * A database spelled `postcode-` matches no branch and is silently never queried.
+	 *
+	 * The sibling `postcode-locality-*.db` family keeps the shorter prefix on purpose —
+	 * those carry a `postcode_locality` relation table and no `spr`, so they are
+	 * never routed as place databases in the first place.
 	 */
 	out?: string
 }
@@ -91,10 +99,9 @@ export async function buildESPostcodeCentroids(options: ESPostcodeCentroidsOptio
 	// Per-postcode centroid: mean of points within 3σ of the per-postcode mean (population stddev).
 	// ES postcodes are 5-digit. left-pad numeric codes so leading zeros survive
 	// (eval truth uses "01001"). pcLen 0 = no lpad (use the raw Overture form).
-	// Correct when both the candidate database and the eval/query come from Overture
-	// (same surface form), and the only safe choice for non-numeric formats
-	// (PT "xxxx-XXX", SK/CZ "XXX XX", LV "LV-xxxx"). A positive pcLen left-pads numeric
-	// codes to that width (the GeoNames-comparison case the ES build used).
+	// Correct when both the candidate database and the eval/query come from Overture (same surface form),
+	// and the only safe choice for non-numeric formats (PT "xxxx-XXX", SK/CZ "XXX XX", LV "LV-xxxx").
+	// A positive pcLen left-pads numeric codes to that width (the GeoNames-comparison case the ES build used).
 	const pcExpr =
 		PC_LEN > 0
 			? `CASE WHEN regexp_full_match(trim(CAST(postcode AS VARCHAR)), '[0-9]{1,${PC_LEN}}') THEN lpad(trim(CAST(postcode AS VARCHAR)), ${PC_LEN}, '0') ELSE trim(CAST(postcode AS VARCHAR)) END`

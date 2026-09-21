@@ -58,12 +58,15 @@ export interface NSULAssignedPoint {
 
 export interface NSULLookupOpts {
 	/**
-	 * Path to a `nsul.db` built by `mailwoman`'s gazetteer
-	 * pipeline. Opened read-only.
+	 * Path to a `nsul.db` built by `mailwoman`'s gazetteer pipeline.
+	 *
+	 * Opened read-only.
 	 */
 	databasePath?: string
 	/**
-	 * Pre-opened handle (tests / shared connections). Mutually exclusive with `databasePath`.
+	 * Pre-opened handle (tests / shared connections).
+	 *
+	 * Mutually exclusive with `databasePath`.
 	 */
 	database?: DatabaseClient<NSULDatabase>
 }
@@ -81,14 +84,18 @@ interface PointRow {
 }
 
 /**
- * Node reader over `nsul.db`. `implements Disposable` so callers can
- * `using lookup = new NSULLookup(...)` — the same precedent as `UPRNLookup`.
+ * Node reader over `nsul.db`.
+ *
+ * `implements Disposable` so callers can `using lookup = new NSULLookup(...)` —
+ * the same precedent as `UPRNLookup`.
  */
 export class NSULLookup implements Disposable {
 	#db: DatabaseClient<NSULDatabase>
 	/**
-	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal
-	 * cannot reach it — ownership is membership rather than a flag a later branch has to check.
+	 * Resources this instance opened.
+	 *
+	 * A connection handed in by a caller is not in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
 	 */
 	readonly #resources = new DisposableStack()
 
@@ -126,10 +133,11 @@ export class NSULLookup implements Disposable {
 	}
 
 	/**
-	 * Every uprn the register assigns to one unit postcode, with its published point,
-	 * in ascending uprn order. The key is compacted through {@link compactPostcode} first,
-	 * so `PO21 1HR` and `PO211HR` answer identically. An empty array is the register's
-	 * answer, scoped as the module docstring says.
+	 * Every uprn the register assigns to one unit postcode, with its published point, in ascending uprn order.
+	 *
+	 * The key is compacted through {@link compactPostcode} first, so `PO21 1HR`
+	 * and `PO211HR` answer identically.
+	 * An empty array is the register's answer, scoped as the module docstring says.
 	 */
 	uprnsForPostcode(postcode: string): NSULAssignedPoint[] {
 		return this.#pointsProbe(compactPostcode(postcode)).map((row) => ({

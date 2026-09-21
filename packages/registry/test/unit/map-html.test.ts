@@ -9,8 +9,9 @@ import type { EntityGeoData } from "@mailwoman/registry/types"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { describe, expect, it } from "vitest"
 
-// The collection shape `toMapHTML` consumes. Its properties are EntityGeoData rather than an open record —
-// typing them loosely meant every call site in this file was passing something toMapHTML rejects.
+// The collection shape `toMapHTML` consumes.
+// Its properties are EntityGeoData rather than an open record — typing them loosely
+// meant every call site in this file was passing something toMapHTML rejects.
 // Was a dead `GeoJsonFeatureCollection` import from ./types.ts (never exported there);
 // repointed to the real @mailwoman/spatial type as part of the #875 casing sweep.
 type EntityFeatureCollection = GeoFeatureCollection<PointLiteral, EntityGeoData>

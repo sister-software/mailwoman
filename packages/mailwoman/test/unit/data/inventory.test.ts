@@ -75,7 +75,8 @@ describe("takeInventory — the four states stay distinct", () => {
 
 		await manifested(join(root, "poi", "poi.db"), "poi", "mailwoman gazetteer build poi")
 		bare(join(root, "wof", "candidate.db"))
-		// Not SQLite at all. "We could not look" must not read as "it has no manifest".
+		// Not SQLite at all.
+		// "We could not look" must not read as "it has no manifest".
 		await writeLocalTextFile("this is not a database", join(root, "wof", "broken.db"))
 
 		const report = await takeInventory({ dataRoot: root })
@@ -195,8 +196,9 @@ describe("rebuildHint", () => {
 describe("buildCommandGaps — a manifest is only worth its build command", () => {
 	it("flags a path the workspace regroup moved", async () => {
 		// Measured on the shipped osm databases: they record `node osm/out/scripts/build-rooftop-database.js`,
-		// which now lives under `packages/osm/`. The literal survived the move inside a built database,
-		// where no lint reaches it, and the artifact still passes every "has a manifest" check.
+		// which now lives under `packages/osm/`.
+		// The literal survived the move inside a built database, where no lint reaches it,
+		// and the artifact still passes every "has a manifest" check.
 		const root = await dataRoot()
 
 		expect(await buildCommandGaps("node osm/out/scripts/build-rooftop-database.js", root)).toEqual([

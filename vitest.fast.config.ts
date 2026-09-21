@@ -1,5 +1,7 @@
 /**
- * Fast, hermetic tests. A file belongs here by living under a workspace's `test/unit/` directory.
+ * Fast, hermetic tests.
+ *
+ * A file belongs here by living under a workspace's `test/unit/` directory.
  */
 import { defineConfig, mergeConfig } from "vitest/config"
 

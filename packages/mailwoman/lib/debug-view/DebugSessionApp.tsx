@@ -59,7 +59,9 @@ export interface DebugSessionAppProps {
 type SessionPhase = "loading" | "ready" | "busy" | "fatal"
 
 /**
- * What the map pane is looking at. Null state means "follow the result" —
+ * What the map pane is looking at.
+ *
+ * Null state means "follow the result" —
  * {@link resultViewport} re-derives it from the geocode, which is what makes a
  * fresh query re-center without the user pressing anything.
  */
@@ -70,8 +72,10 @@ interface Viewport {
 }
 
 /**
- * The session's long-lived handles. `renderer` is null when there is no usable tile archive;
- * `mapNote` says why, and is what the map pane shows in its place.
+ * The session's long-lived handles.
+ *
+ * `renderer` is null when there is no usable tile archive; `mapNote` says why,
+ * and is what the map pane shows in its place.
  */
 interface Resources {
 	session: GeocodeSession
@@ -98,17 +102,20 @@ const NO_TILES_NOTE = "no tiles: set $MAILWOMAN_TILES or --tiles"
 const UNRESOLVED_NOTE = "unresolved: no coordinate"
 
 /**
- * One arrow keypress, in map-tui device pixels. The renderer's grid is 2 device
- * pixels per braille cell across and 4 down, so a single step of 12 moves the
- * view 6 cells horizontally and 3 cells vertically — visibly a nudge on both axes
- * rather than a screenful, and the same physical distance either way.
+ * One arrow keypress, in map-tui device pixels.
+ *
+ * The renderer's grid is 2 device pixels per braille cell across and 4 down, so a single
+ * step of 12 moves the view 6 cells horizontally and 3 cells vertically — visibly a nudge
+ * on both axes rather than a screenful, and the same physical distance either way.
  */
 const PAN_STEP_PIXELS = 12
 
 /**
- * Web-Mercator's latitude cutoff. Panning past it is not a clipped view, it is a
- * division by zero: `lonLatToWorldPx(±90)` takes `log((1 + sin φ) / (1 - sin φ))`
- * and returns a non-finite world pixel, which the next viewport carries into the renderer.
+ * Web-Mercator's latitude cutoff.
+ *
+ * Panning past it is not a clipped view, it is a division by zero: `lonLatToWorldPx(±90)`
+ * takes `log((1 + sin φ) / (1 - sin φ))` and returns a non-finite world pixel,
+ * which the next viewport carries into the renderer.
  * Clamping the center is what keeps a held arrow key from walking off the map.
  */
 const MAX_MERCATOR_LATITUDE = 85.05112878
@@ -158,6 +165,7 @@ function pannedViewport(view: Viewport, dx: number, dy: number): Viewport {
 
 /**
  * Zoom by whole steps, clamped to the archive's own range.
+ *
  * Whole steps keep the stored zoom equal to the one `MapRenderer` renders at
  * (it rounds and clamps internally), so the pan math above and the pixels on screen agree.
  */
@@ -174,6 +182,7 @@ function zoomedViewport(view: Viewport, delta: number, source: TileSource | null
 
 /**
  * Open the session, the tile archive, and geocode the starting query.
+ *
  * Tile trouble degrades (the pane becomes a note); anything else throws,
  * and the caller turns it into the fatal phase.
  */
@@ -202,8 +211,9 @@ function closeResources(resources: Resources | null): void {
 	resources.session[Symbol.dispose]()
 
 	void resources.source?.[Symbol.asyncDispose]().catch(() => {
-		// Teardown is best-effort. This runs after the terminal has already been restored and
-		// while the process is on its way out, so a rejected close has nobody left to tell —
+		// Teardown is best-effort.
+		// This runs after the terminal has already been restored and while the
+		// process is on its way out, so a rejected close has nobody left to tell —
 		// and an unhandled rejection would take the exit code with it.
 	})
 }
@@ -232,10 +242,11 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 	const [viewport, setViewport] = useState<Viewport | null>(null)
 	const [scrollOffset, setScrollOffset] = useState(0)
 
-	// Monotonic request IDs. Every async completion below compares its own ID against
-	// the ref before touching state, so a slow frame or a slow geocode that lands
-	// after a newer one was started is discarded rather than overwriting it —
-	// the classic out-of-order-render artifact when a held arrow key outruns tile IO.
+	// Monotonic request IDs.
+	// Every async completion below compares its own ID against the ref before touching state,
+	// so a slow frame or a slow geocode that lands after a newer one was started is
+	// discarded rather than overwriting it — the classic out-of-order-render artifact
+	// when a held arrow key outruns tile IO.
 	const frameRequestRef = useRef(0)
 	const runRequestRef = useRef(0)
 
@@ -532,10 +543,10 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 
 	//#region Render
 
-	// Memoized because `DebugFrame`'s panes are memoized: a fresh object literal per
-	// render would defeat every one of them, and the map pane is the expensive one —
-	// 28 rows of truecolor braille whose longest line is ~1 kB of SGR, re-measured by
-	// `string-width` and re-tokenized by `ansi-tokenize` on any prop identity change.
+	// Memoized because `DebugFrame`'s panes are memoized: a fresh object literal per render
+	// would defeat every one of them, and the map pane is the expensive one — 28 rows of
+	// truecolor braille whose longest line is ~1 kB of SGR, re-measured by `string-width`
+	// and re-tokenized by `ansi-tokenize` on any prop identity change.
 	// Typing in the input row changes none of these values.
 	//
 	// The scroll offset is deliberately not in here: it rides its own prop into the

@@ -115,6 +115,7 @@ export function nsulAttribution(year: number): string {
 
 /**
  * The exact CSV header of every region file, verified against Epoch 127 (June 2026).
+ *
  * A drifted header fails the build loudly rather than silently mapping `pcds` by position.
  */
 export const NSUL_HEADER =
@@ -124,22 +125,26 @@ export const NSUL_HEADER =
 
 /**
  * Field count of {@link NSUL_HEADER} — a line splitting to anything else is malformed.
+ *
  * The file is quote-free by construction (every field is a code or a number),
  * so a plain comma split is exact.
  */
 const NSUL_COLUMN_COUNT = 29
 
 /**
- * Column positions read from each line. Every other column is a statistical
- * geography this layer does not carry.
+ * Column positions read from each line.
+ *
+ * Every other column is a statistical geography this layer does not carry.
  */
 const UPRN_COLUMN = 0
 const PCDS_COLUMN = 3
 
 /**
- * The eleven nsul region files that together are Great Britain: the nine English regions,
- * Scotland and Wales. The archive is refused when its `Data/` members are not exactly this
- * set — a missing region is a truncated Britain and an extra one is a product change,
+ * The eleven nsul region files that together are Great Britain: the nine
+ * English regions, Scotland and Wales.
+ *
+ * The archive is refused when its `Data/` members are not exactly this set —
+ * a missing region is a truncated Britain and an extra one is a product change,
  * and neither may pass as a smaller or larger row count.
  */
 export const NSUL_REGIONS = ["EE", "EM", "LN", "NE", "NW", "SC", "SE", "SW", "WA", "WM", "YH"] as const
@@ -148,9 +153,11 @@ export type NSULRegion = (typeof NSUL_REGIONS)[number]
 
 /**
  * Row floor for {@link buildNSULLayer}'s truncation guard.
- * Epoch 127 writes 40,833,043 rows from 41,546,385 lines (the rest have no Code-Point postcode
- * or no Open uprn point) and the register only grows, so a full-source build under
- * this floor read a truncated archive. Fixture builds pass their own.
+ *
+ * Epoch 127 writes 40,833,043 rows from 41,546,385 lines
+ * (the rest have no Code-Point postcode or no Open uprn point) and the register only grows,
+ * so a full-source build under this floor read a truncated archive.
+ * Fixture builds pass their own.
  */
 export const NSUL_MINIMUM_PLAUSIBLE_ROWS = 35_000_000
 
@@ -164,8 +171,9 @@ export const NSUL_COVERAGE_NOTE =
 	"AND OS Open UPRN publishes a coordinate for it; the two skipped counts are in nsul_meta.quality_drops."
 
 /**
- * A unit postcode as nsul writes it: outward code (area letters, district digit,
- * optional sub-district), one space, inward code (sector digit, two unit letters).
+ * A unit postcode as nsul writes it: outward code (area letters, district digit, optional sub-district),
+ * one space, inward code (sector digit, two unit letters).
+ *
  * `GIR 0AA` is the one non-geographic code Code-Point Open carries.
  */
 const PCDS_SHAPE = /^(?:[A-Z]{1,2}\d[A-Z\d]? \d[A-Z]{2}|GIR 0AA)$/
@@ -200,6 +208,7 @@ const MONTHS: Record<string, { number: string; name: string }> = {
 
 /**
  * What one nsul data line is, for the accounting identity.
+ *
  * Exactly one class per line, so the five counters sum to the lines read.
  */
 export type NSULLineClass =
@@ -210,8 +219,9 @@ export type NSULLineClass =
 /**
  * Classify one data line of an nsul region file.
  *
- * Crlf-terminated in the wild: the `\r` is stripped at the reader boundary or the last column
- * carries it into every value (the G-NAF lesson). A line is malformed when its field count is not
+ * Crlf-terminated in the wild: the `\r` is stripped at the reader boundary
+ * or the last column carries it into every value (the G-NAF lesson).
+ * A line is malformed when its field count is not
  * {@link NSUL_COLUMN_COUNT}, when `uprn` is not a literal digit string within the safe-integer
  * range, or when a non-empty `pcds` does not have a unit-postcode shape — a postcode-shaped
  * column holding anything else is a defect to be counted rather than a key to be stored.
@@ -240,6 +250,7 @@ export function classifyNSULLine(line: string): NSULLineClass {
 
 /**
  * Strip the header line's crlf terminator and compare it to {@link NSUL_HEADER}.
+ *
  * Returns the header as found when it drifts, `null` when it matches.
  */
 export function nsulHeaderDrift(rawLine: string): string | null {
@@ -385,8 +396,9 @@ export async function openNSULArchive(sourceDir: string): Promise<{
 
 /**
  * The newest vintage directory under `<data-root>/nsul/` holding an nsul archive —
- * the default source when the caller names none. Vintage directories are `yyyy-MM`,
- * so lexical order is chronological order.
+ * the default source when the caller names none.
+ *
+ * Vintage directories are `yyyy-MM`, so lexical order is chronological order.
  */
 export async function resolveLatestNSULSourceDir(root = String(dataRootPath("nsul"))): Promise<string> {
 	const candidates = await Globerator.from("*", {
@@ -416,25 +428,34 @@ export async function resolveLatestNSULSourceDir(root = String(dataRootPath("nsu
 export interface BuildNSULLayerOptions {
 	/**
 	 * Acquisition directory holding the archive, its `.md5` sidecar and `item.json`.
+	 *
 	 * Default: the newest vintage directory under `<data-root>/nsul/` that holds
 	 * an archive ({@link resolveLatestNSULSourceDir}).
 	 */
 	sourceDir?: PathBuilderLike
 	/**
-	 * Output artifact. Default `<data-root>/nsul/nsul.db`.
+	 * Output artifact.
+	 *
+	 * Default `<data-root>/nsul/nsul.db`.
 	 * Built to a staging path and atomically swapped into place.
 	 */
 	out?: string
 	/**
-	 * The `uprn.db` whose coordinates are joined in. Default `<data-root>/uprn/uprn.db`.
+	 * The `uprn.db` whose coordinates are joined in.
+	 *
+	 * Default `<data-root>/uprn/uprn.db`.
 	 */
 	uprnDatabasePath?: string
 	/**
-	 * Build clock — the `created_at` fallback. Passed in so the module never reads the clock implicitly.
+	 * Build clock — the `created_at` fallback.
+	 *
+	 * Passed in so the module never reads the clock implicitly.
 	 */
 	now?: Date
 	/**
-	 * ISO-8601 `layer_manifest.created_at`. Caller-supplied per the layer interface. defaults to `now`.
+	 * ISO-8601 `layer_manifest.created_at`.
+	 *
+	 * Caller-supplied per the layer interface. defaults to `now`.
 	 */
 	createdAt?: string
 	/**
@@ -443,11 +464,14 @@ export interface BuildNSULLayerOptions {
 	 */
 	buildSHA: string
 	/**
-	 * Truncation-guard floor. Default {@link NSUL_MINIMUM_PLAUSIBLE_ROWS}; fixture builds pass their own.
+	 * Truncation-guard floor.
+	 *
+	 * Default {@link NSUL_MINIMUM_PLAUSIBLE_ROWS}; fixture builds pass their own.
 	 */
 	minimumPlausibleRows?: number
 	/**
 	 * Injected region sources plus the vintage they carry — the fixture path.
+	 *
 	 * Skips the archive entirely. provenance still comes from `sourceDir`'s sidecars when present.
 	 */
 	sources?: { vintage: NSULVintage; regions: NSULRegionSource[] }
@@ -475,12 +499,15 @@ export interface BuildNSULLayerResult {
 	skippedDuplicate: number
 	/**
 	 * Lines whose `pcds` is empty — the postcode is not in Code-Point Open.
+	 *
 	 * Expected non-zero. recorded, never a defect.
 	 */
 	skippedNoPostcode: number
 	/**
-	 * Lines whose uprn `uprn.db` holds no point for. Expected small and non-zero
-	 * (the two products are extracted from AddressBase at different dates); recorded, never a defect.
+	 * Lines whose uprn `uprn.db` holds no point for.
+	 *
+	 * Expected small and non-zero (the two products are extracted from AddressBase at different dates);
+	 * recorded, never a defect.
 	 */
 	skippedNoCoordinate: number
 	/**
@@ -498,7 +525,9 @@ export interface BuildNSULLayerResult {
 	 */
 	uprnLayerVersion: string
 	/**
-	 * Every violated check, in words. Empty on a clean build. the caller decides whether to fail on them.
+	 * Every violated check, in words.
+	 *
+	 * Empty on a clean build. the caller decides whether to fail on them.
 	 */
 	mismatches: string[]
 	durationMs: number
@@ -563,14 +592,15 @@ interface IngestNSULSourcesOptions {
 }
 
 /**
- * The ingest loop: stream every region, classify every line, join the coordinate, write,
- * and account. Throws on header drift. the caller owns the transaction and rolls it back.
+ * The ingest loop: stream every region, classify every line, join the coordinate, write, and account.
+ *
+ * Throws on header drift. the caller owns the transaction and rolls it back.
  */
 async function ingestNSULSources(options: IngestNSULSourcesOptions): Promise<NSULIngestCounts> {
 	const { sources, coordinateOf, write, parentCell, checkpoint, phase } = options
 	const coverage = new Map<number, number>()
-	// res-9 short cell → res-6 short cell. Rows cluster many to a res-9 cell,
-	// so the parent walk runs once per cell rather than once per row.
+	// res-9 short cell → res-6 short cell.
+	// Rows cluster many to a res-9 cell, so the parent walk runs once per cell rather than once per row.
 	const parentOf = new Map<number, number>()
 	const readByRegion = Object.fromEntries(NSUL_REGIONS.map((region) => [region, 0])) as Record<NSULRegion, number>
 	let read = 0
@@ -667,8 +697,11 @@ async function ingestNSULSources(options: IngestNSULSourcesOptions): Promise<NSU
 }
 
 /**
- * The checks, in words. ONS publishes no row-count manifest for the collection, so they
- * are internal consistency plus the truncation floor. Empty on a clean build.
+ * The checks, in words.
+ *
+ * ONS publishes no row-count manifest for the collection, so they are internal
+ * consistency plus the truncation floor.
+ * Empty on a clean build.
  */
 export function nsulMismatches(counts: NSULIngestCounts, minimumPlausibleRows: number): string[] {
 	const { read, inserted, skippedMalformed, skippedDuplicate, skippedNoPostcode, skippedNoCoordinate } = counts
@@ -845,8 +878,8 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	phase("coverage", `${coverage.size.toLocaleString()} res-${NSUL_COVERAGE_H3_RESOLUTION} cells`)
 
 	// ONS designates the register complete for GB, so observed cells are `designated`/1.0 —
-	// a miss inside one is evidence of absence. Unobserved cells stay absent (unknown),
-	// per the meaning-of-zero rule.
+	// a miss inside one is evidence of absence.
+	// Unobserved cells stay absent (unknown), per the meaning-of-zero rule.
 	await writeLayerCoverage(
 		kdb,
 		[...coverage.entries()]

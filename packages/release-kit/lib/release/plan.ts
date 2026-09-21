@@ -103,6 +103,7 @@ export async function computeReleasePlan(repoRoot: string): Promise<ReleasePlan>
 
 /**
  * Read a plan file and refuse unless the checkout still matches it.
+ *
  * Answers the recomputed plan so the caller publishes from what it verified.
  */
 export async function assertPlanHolds(repoRoot: string, planPath: string): Promise<ReleasePlan> {

@@ -74,7 +74,9 @@ export interface CompiledGeographicModel {
 	 */
 	schemaVersion: number
 	/**
-	 * The authored document's own `version`. Never a build date.
+	 * The authored document's own `version`.
+	 *
+	 * Never a build date.
 	 */
 	modelVersion: string
 	relations: readonly RelationRecord[]
@@ -84,6 +86,7 @@ export interface CompiledGeographicModel {
 	inheritanceClosure: readonly InheritanceClosureEntry[]
 	/**
 	 * The authored derived facts, plus every fact the compiler's derivations produced.
+	 *
 	 * Each names the procedure that wrote it and every record that procedure read.
 	 */
 	derivedFacts: readonly DerivedFactRecord[]
@@ -98,6 +101,7 @@ export interface CompiledGeographicModel {
 
 /**
  * Rebuild `value` with every object's keys in code-point order, at every depth.
+ *
  * Arrays keep their order — ordering those is the compiler's job, and doing it
  * here would silently reorder authored data.
  */
@@ -122,10 +126,13 @@ function canonicalize(value: unknown): unknown {
 /**
  * The artifact's canonical bytes: tab-indented, one trailing newline, keys in code-point order.
  *
- * Tab indentation and the trailing newline match the repository's other committed JSON tables
- * (`taxonomy.json`, `brands.json`). A committed copy of these bytes is the generator's output
- * run through `oxfmt`, which inlines short arrays . Therefore, a freshness check compares
- * the parsed artifact against a fresh compile, and a byte comparison compares two compiles.
+ * Tab indentation and the trailing newline match the repository's other committed
+ * JSON tables (`taxonomy.json`, `brands.json`).
+ * A committed copy of these bytes is the generator's output run through `oxfmt`,
+ * which inlines short arrays .
+ *
+ * Therefore, a freshness check compares the parsed artifact against a fresh compile,
+ * and a byte comparison compares two compiles.
  */
 export function serializeCompiledModel(model: CompiledGeographicModel): string {
 	return prettyJSON(canonicalize(model))
@@ -143,8 +150,10 @@ export class GeographicModelArtifactError extends Error {
 }
 
 /**
- * The tables every artifact carries. A reader that finds one missing refuses
- * rather than answering every question about that table with an empty list.
+ * The tables every artifact carries.
+ *
+ * A reader that finds one missing refuses rather than answering every question
+ * about that table with an empty list.
  */
 const ARTIFACT_TABLES = [
 	"concepts",

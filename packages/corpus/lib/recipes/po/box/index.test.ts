@@ -68,8 +68,8 @@ describe("po-box military rows", () => {
 describe("po-box source labelling", () => {
 	it("takes `--source-name`, so a military-only output carries its own reps per row", async () => {
 		// `synth-po-box` is absent from the shipped Latin config's mixture,
-		// so rows under that label are dropped at load. An output built for the #517 class
-		// needs a source of its own or it cannot be weighted at all.
+		// so rows under that label are dropped at load.
+		// An output built for the #517 class needs a source of its own or it cannot be weighted at all.
 		const { rows } = await run(TUPLES, [], { variants: 0, militaryRatio: 1, sourceName: "synth-po-box-military" })
 
 		expect(rows.every((row) => row.source === "synth-po-box-military")).toBe(true)

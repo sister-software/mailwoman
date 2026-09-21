@@ -45,7 +45,9 @@ export const JSON_STRINGIFY: RestrictedProperty = {
 }
 
 /**
- * Every entry, in the order a reader meets them. Private: the list is reached through
+ * Every entry, in the order a reader meets them.
+ *
+ * Private: the list is reached through
  * {@linkcode restrictedPropertiesExcept}, so no caller can pass a partial one by hand.
  */
 const RESTRICTED_PROPERTIES: readonly RestrictedProperty[] = [JSON_PARSE, JSON_STRINGIFY]
