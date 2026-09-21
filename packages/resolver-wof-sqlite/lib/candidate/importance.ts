@@ -126,12 +126,15 @@ export class ImportanceIndex {
 	 */
 	matched = 0
 	/**
-	 * Places {@link find} refused — the key matched a scored group, but the nearest member
-	 * of it was outside the radius, so it is a different place wearing the same name.
+	 * Places {@link find} refused.
+	 *
+	 * The key matched a scored group, but the nearest member of it was outside the radius,
+	 * so it is a different place wearing the same name.
 	 *
 	 * This is the number worth watching across rebuilds.
-	 * A jump means the score source and the admin source have drifted apart and the join
-	 * is being asked to guess. it does not mean the radius is too tight.
+	 * A jump means the score source and the admin source have drifted apart
+	 * and the join is being asked to guess.
+	 * It does not mean the radius is too tight.
 	 */
 	refused = 0
 
@@ -145,8 +148,9 @@ export class ImportanceIndex {
 	 * and `placetype`, or null when there is no such place within {@link IMPORTANCE_JOIN_RADIUS_KM}.
 	 *
 	 * Null is unmeasured.
-	 * Never substitute a zero, and never fall back to a population-derived value here —
-	 * the source column already carries that fallback where it has one, and inventing a
+	 * Never substitute a zero, and never fall back to a population-derived value here.
+	 *
+	 * The source column already carries that fallback where it has one, and inventing a
 	 * second one would make an absence indistinguishable from a measurement.
 	 */
 	find(name: string, country: string | null, placetype: string | null, lat: number, lon: number): number | null {
@@ -184,17 +188,17 @@ export class ImportanceIndex {
 
 /**
  * Read `place_importance` (joined to `spr` for the name/country/placetype/centroid)
- * out of a WOF admin database into an
- * {@link ImportanceIndex}.
+ * out of a WOF admin database into an {@link ImportanceIndex}.
  *
- * Only current, non-deprecated places are indexed — a superseded row's score belongs
- * to a place the gazetteer no longer carries, and letting it win the nearest-centroid
- * contest would hand a live place a dead one's fame.
+ * Only current, non-deprecated places are indexed.
+ * A superseded row's score belongs to a place the gazetteer no longer carries,
+ * and letting it win the nearest-centroid contest would hand a live place a dead one's fame.
  *
  * The whole table is held in memory on purpose.
- * The 2026-08-10 source holds 676,790 scored places in 544,823 groups,
- * and the build probes it once for every one of its ~4.8 M places. the alternative
- * is a prepared statement per place against a 3.7 GB database.
+ * The 2026-08-10 source holds 676,790 scored places in 544,823 groups, and the
+ * build probes it once for every one of its ~4.8 M places.
+ *
+ * The alternative is a prepared statement per place against a 3.7 GB database.
  *
  * Measured end to end, loading the index plus probing all 4.48 M locality-tier places takes 25 s.
  */

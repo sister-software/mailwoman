@@ -53,12 +53,13 @@ function extractRegionAncestry(pc: DatabaseClient<WOFDatabase>, attrs: Map<numbe
  * Fold one extract (`spr` rows at `extractPlacetype` carrying real coordinates) in,
  * then pass 4b: the alias names hanging off that same extract's `names` table.
  *
- * Self-contained by construction — it shares only the staging statement
- * and the code dictionaries with the admin passes above it, and nothing downstream
- * reads anything it produces except the counters it returns.
+ * Self-contained by construction.
+ * It shares only the staging statement and the code dictionaries with the admin passes above it,
+ * and nothing downstream reads anything it produces except the counters it returns.
+ *
  * The one thing it writes beyond the staging table is a depth-1 closure row for
- * a row whose extract names its region (see
- * {@link extractRegionAncestry}), so the pick's stamped ancestors agree with the scope it was found under.
+ * a row whose extract names its region (see {@link extractRegionAncestry}),
+ * so the pick's stamped ancestors agree with the scope it was found under.
  */
 export function foldExtract(ctx: {
 	/**
@@ -95,10 +96,11 @@ export function foldExtract(ctx: {
 		`INSERT OR IGNORE INTO ${CANDIDATE_ANCESTOR_TABLE} VALUES (${CANDIDATE_ANCESTOR_COLUMNS.map(() => "?").join(", ")})`
 	)
 
-	// The region's own closure rows, as the sidecar pass wrote them. A scoped row inherits the whole chain above its
-	// region — macroregion, country — not the region alone: the widened-scope refusal reads a pick's stamped ancestors
-	// against the parent the walk resolved, and a 縣市 that resolves to its macroregion record (`桃園市`, which WOF names
-	// only at that tier) would otherwise contradict a lineage that stops at the region.
+	// The region's own closure rows, as the sidecar pass wrote them.
+	// A scoped row inherits the whole chain above its region — macroregion, country — not the region alone:
+	// the widened-scope refusal reads a pick's stamped ancestors against the parent the walk resolved,
+	// and a 縣市 that resolves to its macroregion record (`桃園市`, which WOF names only at that tier)
+	// would otherwise contradict a lineage that stops at the region.
 	const regionChain = out.prepare(
 		`SELECT depth, parent_spr_id, parent_placetype_id, parent_name, parent_name_key FROM ${CANDIDATE_ANCESTOR_TABLE} WHERE spr_id = ? ORDER BY depth`
 	)
@@ -128,8 +130,8 @@ export function foldExtract(ctx: {
 		const rid = regionOf.get(id) ?? 0
 
 		// region_id from the extract's own ancestry when it names one, else 0
-		// (a postcode is unique by name+country — no same-name disambiguation); neg_rank 0
-		// (no population). bbox = the row's own min/max (falls back to the centroid point).
+		// (a postcode is unique by name+country — no same-name disambiguation); neg_rank 0 (no population).
+		// Bbox = the row's own min/max (falls back to the centroid point).
 		const a: PlaceAttrs = {
 			cid: ccID(r.country as string | null),
 			rid,

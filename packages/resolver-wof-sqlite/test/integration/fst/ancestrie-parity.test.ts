@@ -333,8 +333,7 @@ for (const locale of ["en-gb", "es-es", "it-it"]) {
 		it("answers identically across the derived + curated battery", async () => {
 			const stamp = await peekFSTStampFields(artifactPath)
 
-			// v5 = the two-score split. A stale-format artifact would pin parity against bytes production
-			// no longer ships — fail loudly instead.
+			// v5 = the two-score split. A stale-format artifact would pin parity against bytes production no longer ships — fail loudly instead.
 			expect(stamp?.formatVersion).toBe(5)
 
 			const matcher = deserializeFST(await readLocalBuffer(artifactPath))

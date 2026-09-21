@@ -33,8 +33,8 @@ describe("CapitalIndex.levelOfPlace", () => {
 	})
 
 	it("refuses a capital-ADJACENT namesake inside the radius — the iteration-1 false-positive class", () => {
-		// North Salt Lake sits ~10 km from the Utah seat and was promoted by the coordinate-only
-		// match. its name is not in Salt Lake City's name set, so the name conjunct excludes it.
+		// North Salt Lake sits ~10 km from the Utah seat and was promoted by the coordinate-only match.
+		// Its name is not in Salt Lake City's name set, so the name conjunct excludes it.
 		expect(index.levelOfPlace("North Salt Lake", "US", 40.8477, -111.9227)).toBe(CAPITAL_LEVEL.none)
 		expect(index.levelOfPlace("Salt Lake City", "US", 40.7608, -111.891)).toBe(CAPITAL_LEVEL.admin1)
 	})

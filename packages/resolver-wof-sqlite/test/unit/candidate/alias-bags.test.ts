@@ -106,7 +106,8 @@ describe("explodeAliasBags", () => {
 		const { nAlias, keyCounts } = run([{ id: 204, alt: bag("Tolete", "TOLETE", "Toletum") }], attrs)
 
 		expect(nAlias).toBe(2)
-		// toledo + tolete + toletum — the repeat does not inflate the gloss detector's signal.
+		// toledo + tolete + toletum.
+		// The repeat does not inflate the gloss detector's signal.
 		expect(keyCounts.get(204)).toBe(3)
 	})
 

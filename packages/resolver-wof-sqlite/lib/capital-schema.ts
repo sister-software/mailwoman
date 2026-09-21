@@ -47,8 +47,8 @@ export interface CapitalTable {
 /**
  * Create the table on a build in progress.
  *
- * Async because Kysely's schema-builder is. called from the candidate build's
- * DDL phase alongside the other typed builders.
+ * Async because Kysely's schema-builder is.
+ * Called from the candidate build's DDL phase alongside the other typed builders.
  */
 export async function createCapitalTable<DB extends { capital: CapitalTable }>(db: Kysely<DB>): Promise<void> {
 	await db.schema
@@ -62,8 +62,9 @@ export async function createCapitalTable<DB extends { capital: CapitalTable }>(d
 }
 
 /**
- * Read the whole reference out of an artifact, or `null` when the artifact predates the table —
- * the caller then falls back to its next source rather than treating an old artifact as "no
+ * Read the whole reference out of an artifact, or `null` when the artifact predates the table.
+ *
+ * The caller then falls back to its next source rather than treating an old artifact as "no
  * capitals" (the meaning-of-zero rule: a missing table is unmeasured, an empty one is a finding).
  */
 export function readCapitalPoints<DB>(db: DatabaseClient<DB>): CapitalPoint[] | null {

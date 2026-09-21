@@ -59,11 +59,11 @@ export function candidateFromSearchRow(
 	score -= (weights.lengthPenaltyWeight * extraLen) / 10
 
 	// Proximity boost: only applied when the query carries `near` and the candidate has real coordinates.
-	// The formula decays smoothly with distance so close-but-not-exact hits still
-	// benefit. tunable via proximityBoost + proximityScaleKm.
+	// The formula decays smoothly with distance so close-but-not-exact hits still benefit.
+	// Tunable via proximityBoost + proximityScaleKm.
 	let distanceKm: number | undefined
 	// The best decayed-distance term over `near` + every `bias` point
-	// (each point's term is scaled by its weight. the maximum wins — a candidate near any hint is "nearby").
+	// (each point's term is scaled by its weight. The maximum wins — a candidate near any hint is "nearby").
 	// Carried into the exact-tier prominence sort below when hints are present.
 	let proximityTerm = 0
 
@@ -124,8 +124,9 @@ export function candidateFromSearchRow(
 
 	if (row.population !== null && row.population > 0) {
 		candidate.population = row.population
-		// The named ranking key (ROAD_TO_V9 §2). derived rather than stored — a pure function of
-		// the population already on this row, so it cannot drift from what the ordering uses.
+		// The named ranking key (ROAD_TO_V9 §2).
+		// Derived rather than stored.
+		// A pure function of the population already on this row, so it cannot drift from what the ordering uses.
 		candidate.referential = referentialFromPopulation(row.population)
 	}
 
@@ -152,8 +153,10 @@ export function candidateFromSearchRow(
 }
 
 /**
- * Order `candidates` IN place — the exact-match tier first when the extract can
- * answer the name probes, otherwise plain weighted-score order.
+ * Order `candidates` IN place.
+ *
+ * The exact-match tier first when the extract can answer the name probes,
+ * otherwise plain weighted-score order.
  *
  * Every candidate is stamped with its `exactMatch` flag on the way through.
  */
@@ -170,13 +173,13 @@ export function rankCandidates<DB>(
 
 	// Exact-match tiering: a candidate whose name or any alias equals the query
 	// text (case-folded) ranks above any partial match, with the weighted-sum score
-	// (incl. population) breaking ties within a tier.
+	// (incl. Population) breaking ties within a tier.
 	// See the RankingWeights.exactMatchTiering docstring for why this aligns the
 	// population prior rather than overriding it.
 	// One cheap indexed lookup over the candidate ids.
-	// Runs even for a single candidate so `exactMatch` is stamped consistently
-	// (parity with the wasm lookup) — a sole alias hit ("New York City" → New York)
-	// must still carry the flag the demo cascade / #369 re-rank read.
+	// Runs even for a single candidate so `exactMatch` is stamped consistently (parity with the wasm lookup).
+	// A sole alias hit ("New York City" → New York) must still carry the flag
+	// the demo cascade / #369 re-rank read.
 	if (weights.exactMatchTiering && candidates.length) {
 		const exactIDs = exactMatchIDs(
 			db,
@@ -193,28 +196,12 @@ export function rankCandidates<DB>(
 		}
 
 		if (exactIDs.size) {
-			// #905: within the exact tier, population is the primary key and the weighted score
-			// only breaks population ties.
-			// Exactness saturates text relevance, and the bm25 residue inside `score` is
-			// length-noise (see the fetch-site comment), so letting it order the tier is
-			// what sent unscoped "Paris" to an Ohio township.
-			// The partial tier keeps score order — text relevance still means something there.
-			// This makes the exactMatchTiering docstring literal: match quality primary, prominence within.
+			// #905: within the exact tier, population is the primary key and the weighted score only breaks population ties. Exactness saturates text relevance, and the bm25 residue inside `score` is length-noise (see the fetch-site comment), so letting it order the tier is what sent unscoped "Paris" to an Ohio township. The partial tier keeps score order — text relevance still means something there. This makes the exactMatchTiering docstring literal: match quality primary, prominence within.
 			//
-			// #912 sub-tier: a name-exact candidate (spr.name equals the query) outranks an
-			// alias-exact one ('Paris' the place beats 'Paris Township' held via alias 'Paris').
-			// The place's own name is a stronger identity claim than an alias —
-			// aliases exist to widen recall rather than to tie primaries.
-			// ME→Maine is untouched: 'ME' name-exact-matches nothing, so the alias sub-tier still decides there.
-			// Population orders within each sub-tier as before.
+			// #912 sub-tier: a name-exact candidate (spr.name equals the query) outranks an alias-exact one ('Paris' the place beats 'Paris Township' held via alias 'Paris'). The place's own name is a stronger identity claim than an alias — aliases exist to widen recall rather than to tie primaries. ME→Maine is untouched: 'ME' name-exact-matches nothing, so the alias sub-tier still decides there. Population orders within each sub-tier as before.
 			const needle = foldQueryText(query.text)
 
-			// #936 option 3: an official name (preferred form in an official language of the place's
-			// country, `names.official = 1`) counts as the place's own name for the sub-tier —
-			// "Åbo" is Turku's name rather than merely its alias.
-			// Floor-conditioned on the holder's population (see the RankingWeights docstring
-			// for the measured 100k boundary). officialIDs ⊆ exactIDs by construction
-			// (official rows are names rows), so only the sub-tier kind changes.
+			// #936 option 3: an official name (preferred form in an official language of the place's country, `names.official = 1`) counts as the place's own name for the sub-tier — "Åbo" is Turku's name rather than merely its alias. Floor-conditioned on the holder's population (see the RankingWeights docstring for the measured 100k boundary). officialIDs ⊆ exactIDs by construction (official rows are names rows), so only the sub-tier kind changes.
 			const officialIDs = weights.officialNameExact
 				? officialNameIDs(
 						db,

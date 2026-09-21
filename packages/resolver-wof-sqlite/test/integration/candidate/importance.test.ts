@@ -30,8 +30,8 @@ let sourcePath: string
 /**
  * A score source in the shape `admin-global-priority-importance.db` has: `spr` + `place_importance`.
  *
- * Ids here are deliberately nothing like the ids a candidate build would carry —
- * the join must not depend on them.
+ * Ids here are deliberately nothing like the ids a candidate build would carry.
+ * The join must not depend on them.
  */
 function buildFixtureSource(path: string): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -106,8 +106,9 @@ describe("ImportanceIndex.find", () => {
 	test("scores a place whose id the two artifacts DISAGREE about (the whole reason the join is by name)", () => {
 		const index = loadImportanceIndex(sourcePath)
 
-		// The candidate side's Whitby rows carry unrelated ids. only name + country + placetype + position
-		// are used, so both bearers score — including the foreign homonym the ranking exists to demote.
+		// The candidate side's Whitby rows carry unrelated ids.
+		// Only name + country + placetype + position are used, so both bearers score —
+		// including the foreign homonym the ranking exists to demote.
 		expect(index.find("Whitby", "GB", "locality", 54.4796, -0.6251)).toBeCloseTo(0.5496, 4)
 		expect(index.find("Whitby", "CA", "locality", 43.8975, -78.9428)).toBeCloseTo(0.5089, 4)
 	})
@@ -116,7 +117,8 @@ describe("ImportanceIndex.find", () => {
 		const index = loadImportanceIndex(sourcePath)
 
 		expect(index.find("Warwick", "US", "locality", 41.7001, -71.4162)).toBeCloseTo(0.5055, 4)
-		// The Georgia one must not inherit Rhode Island's 0.5055 — that is the fan-out defect.
+		// The Georgia one must not inherit Rhode Island's 0.5055.
+		// That is the fan-out defect.
 		expect(index.find("Warwick", "US", "locality", 33.2137, -83.9224)).toBeCloseTo(0.3729, 4)
 	})
 

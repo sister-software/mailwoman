@@ -29,8 +29,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
  */
 async function buildAliasDB(): Promise<DatabaseClient<PostalCityAliasDatabase>> {
 	const kdb = DatabaseClient.temp<PostalCityAliasDatabase>()
-	// `kdb` wraps `db` for the DDL. the test owns `db`'s lifecycle
-	// (reader.destroy()/aliasDB.destroy()), so we don't destroy `kdb`.
+	// `kdb` wraps `db` for the DDL.
+	// The test owns `db`'s lifecycle (reader.destroy()/aliasDB.destroy()), so we don't destroy `kdb`.
 
 	await createPostalCityAliasTable(kdb)
 
@@ -136,8 +136,8 @@ describe("postal-city alias coordinate-first wiring (#475)", () => {
 	})
 
 	it("an unrelated postcode (no alias) is byte-stable with the reader attached", async () => {
-		// Reader attached, but 37013 isn't queried — a postcode with no divergent
-		// alias must behave exactly as without the reader.
+		// Reader attached, but 37013 isn't queried.
+		// A postcode with no divergent alias must behave exactly as without the reader.
 		// Here the distractor still wins (no alias rescues Nashville).
 		aliasDB = await buildAliasDB()
 

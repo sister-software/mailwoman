@@ -48,9 +48,10 @@ export async function createUnifiedSchema(db: DatabaseClient<WOFDatabase>): Prom
 		.addColumn("lastmodified", "integer", (c) => c.notNull().defaultTo(0))
 		.execute()
 
-	// `privateuse` carries WOF's x_<variant> kind (preferred | variant) / GeoNames' isPreferredName
-	// ("preferred" | ""). `official` is the #936 ingest bit: 1 when the row's language is an official
-	// language of the place's country (codex OFFICIAL_LANGUAGES) and the row is a preferred form —
+	// `privateuse` carries WOF's x_<variant> kind (preferred | variant) / GeoNames'
+	// isPreferredName ("preferred" | "").
+	// `official` is the #936 ingest bit: 1 when the row's language is an official language
+	// of the place's country (codex OFFICIAL_LANGUAGES) and the row is a preferred form —
 	// x_variant rows tagged with an official language ("MSP", "Frisco") stay 0.
 	// Primary-name mirror rows stay 0 too: the name-exact tier already consults spr.name;
 	// `official` only marks the aliases eligible to join it.
@@ -87,8 +88,9 @@ export async function createUnifiedSchema(db: DatabaseClient<WOFDatabase>): Prom
 	// `ancestors` maps each place to every place above it in the hierarchy (and itself).
 	// The resolver's parent-constraint scopes a child lookup to a parent's descendants
 	// via `spr.id IN (select id from ancestors where ancestor_id = ?)`.
-	// The off-the-shelf WOF dumps ship this table. our build derives it from the parent_id
-	// chain (see populateAncestors) since we don't capture `wof:hierarchy`.
+	// The off-the-shelf WOF dumps ship this table.
+	// Our build derives it from the parent_id chain (see populateAncestors)
+	// since we don't capture `wof:hierarchy`.
 	await db.schema
 		.createTable("ancestors")
 		.ifNotExists()
@@ -108,8 +110,8 @@ export async function createUnifiedSchema(db: DatabaseClient<WOFDatabase>): Prom
  *
  * Run after `spr` is fully ingested (build-unified-wof freeze phase) or standalone
  * on an existing unified DB (`scripts/add-ancestors.ts`).
- * Sentinel/negative parent_ids and cycles terminate the walk. ~4 rows/place
- * average. a transaction keeps the ~5M inserts fast.
+ * Sentinel/negative parent_ids and cycles terminate the walk. ~4 rows/place average.
+ * A transaction keeps the ~5M inserts fast.
  */
 export function populateAncestors<DB>(db: DatabaseClient<DB>): number {
 	db.exec("DELETE FROM ancestors")
@@ -176,8 +178,7 @@ export async function createUnifiedIndexes(db: DatabaseClient<WOFDatabase>): Pro
 		.columns(["other_source", "other_id"])
 		.execute()
 
-	// ancestor_id is the hot column (parent-constraint queries `where ancestor_id = ?`);
-	// id supports the reverse lookup.
+	// ancestor_id is the hot column (parent-constraint queries `where ancestor_id = ?`); id supports the reverse lookup.
 	await db.schema.createIndex("ancestors_by_ancestor").ifNotExists().on("ancestors").column("ancestor_id").execute()
 	await db.schema.createIndex("ancestors_by_id").ifNotExists().on("ancestors").column("id").execute()
 }

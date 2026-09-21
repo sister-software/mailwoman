@@ -41,8 +41,9 @@ interface SeedRegion {
  * (no geojson — `build-unified-wof` extracts `wof:population` into this table at ingest),
  * so the population boost is actually active (the plain lookup.test.ts seed has no population path).
  *
- * Opened with `buildFTS: true` by the lookup. the lazy FTS build leaves the pre-existing
- * `place_population` untouched (it only (re)builds it from geojson, which we don't carry).
+ * Opened with `buildFTS: true` by the lookup.
+ * The lazy FTS build leaves the pre-existing `place_population` untouched
+ * (it only (re)builds it from geojson, which we don't carry).
  */
 function buildDB(regions: SeedRegion[]): DatabaseClient<WOFDatabase> {
 	const db = DatabaseClient.temp<WOFDatabase>()
@@ -134,11 +135,7 @@ describe("findPlace — exact-match tiering", () => {
 		expect(results[0]!.id).toBe(2) // the populous non-exact match — pre-fix behavior
 	})
 
-	// #912 sub-tier: the query is one place's own name and only an alias of the other. The name
-	// holder must win even when the alias holder is more populous — 'Paris'
-	// (the capital's own name) over 'Paris Township' (alias 'Paris'), scale-model edition.
-	// ME→Maine (alias-exact, no name-exact competitor) is covered by the tests above
-	// and must keep passing unchanged.
+	// #912 sub-tier: the query is one place's own name and only an alias of the other. The name holder must win even when the alias holder is more populous — 'Paris' (the capital's own name) over 'Paris Township' (alias 'Paris'), scale-model edition. ME→Maine (alias-exact, no name-exact competitor) is covered by the tests above and must keep passing unchanged.
 	test("#912: name-exact outranks alias-exact regardless of population", async () => {
 		const db = buildDB([
 			{ id: 11, name: "Capitalia", country: "FR", lat: 48.8, lon: 2.3, population: 50_000 },
@@ -213,9 +210,7 @@ describe("findPlace — exact-match tiering", () => {
 		expect(results[0]!.name).toBe("New York")
 	})
 
-	// #924: the NL retry ladder — spaced full-form queries reach unspaced full-code rows (block
-	// level), and unknown letter pairs fall to the 4-digit stem.
-	// Country-restricted: the same shape under another country must not retry.
+	// #924: the NL retry ladder — spaced full-form queries reach unspaced full-code rows (block level), and unknown letter pairs fall to the 4-digit stem. Country-restricted: the same shape under another country must not retry.
 	test("#924: NL postcode ladder — joined form first, stem second, country-restricted", async () => {
 		const db = buildDB([
 			{ id: 21, name: "1012LG", country: "NL", lat: 52.377, lon: 4.898, placetype: "postalcode" },
@@ -241,8 +236,8 @@ describe("findPlace — exact-match tiering", () => {
 	})
 
 	// The 48026 rule (proximity bias): two same-name postcode rows on different continents —
-	// with no hints, population-first picks the bigger one. with a bias point near
-	// the smaller, the prominence sort follows the hint.
+	// with no hints, population-first picks the bigger one.
+	// With a bias point near the smaller, the prominence sort follows the hint.
 	// Soft only: both candidates still return.
 	test("bias re-ranks a cross-country postcode tie; absent bias = population order", async () => {
 		const db = buildDB([
@@ -293,9 +288,10 @@ describe("findPlace — exact-match tiering", () => {
 	})
 
 	test("candidates carry the spr bbox (WASM-lookup parity — the demo cascade's region constraint reads it)", async () => {
-		// Without candidate.bbox the cascade's region→bbox constraint is dead on the Node backend
-		// and locality disambiguation falls to population ranking (Springfield IL → MO, caught by the
-		// #524 smoke eval). The fixture seeds min/max as centroid ±0.5.
+		// Without candidate.bbox the cascade's region→bbox constraint is dead on
+		// the Node backend and locality disambiguation falls to population ranking
+		// (Springfield IL → MO, caught by the #524 smoke eval).
+		// The fixture seeds min/max as centroid ±0.5.
 		lookup = new WOFSQLitePlaceLookup({ database: buildDB(REGIONS), buildFTS: true })
 		const results = await lookup.findPlace({ text: "Maine", placetype: "region", country: "US" })
 		expect(results[0]!.name).toBe("Maine")

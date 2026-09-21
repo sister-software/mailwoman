@@ -37,16 +37,17 @@ export const PLACE_SEARCH_TABLE = "place_search"
  * The separator must therefore be an indexed token that sits between the aliases
  * and breaks positional adjacency.
  *
- * Empirical probe (node:sqlite, `tokenize = 'unicode61 remove_diacritics 2'` — the exact config below). Bag = the
- * aliases "York" and "New City" joined by each candidate separator. query = the cross-boundary phrase `match '"york
- * new"'`:
+ * Empirical probe (node:sqlite, `tokenize = 'unicode61 remove_diacritics 2'` — the exact config below).
+ * Bag = the aliases "York" and "New City" joined by each candidate separator.
+ * Query = the cross-boundary phrase `match '"york new"'`:
  *
  * - `' '` (the pre-#523 join, no separator) — false HIT
  * - `' ; '` (punctuation) — false HIT
  * - `' \u2016 '` (double vertical line) — false HIT
  * - `' \x1F '` (ascii unit separator) — false HIT
- * - `' \uE000 '` (PUA, this constant) — no match, while `'"york"'` and `'"new city"'`
- *   still match the bag individually under every variant above.
+ * - `' \uE000 '` (PUA, this constant).
+ *   No match, while `'"york"'` and `'"new city"'` still match the bag individually
+ *   under every variant above.
  *
  * U+E000 works because unicode61 classifies it (category Co — neither space nor punctuation)
  * as a token character, so the standalone `\uE000` between aliases is indexed as its
@@ -54,15 +55,15 @@ export const PLACE_SEARCH_TABLE = "place_search"
  * The remaining requirements also hold:
  *
  * - **Unreachable from queries**: `sanitizeFTSQuery` (Node + wasm resolvers) strips
- *   everything outside `\p{L}\p{N}` from token bodies, and U+E000 is neither —
- *   no user query can ever address the separator token.
+ *   everything outside `\p{L}\p{N}` from token bodies, and U+E000 is neither.
+ *   No user query can ever address the separator token.
  *   The demo's `sanitizeFTS` strips it explicitly.
  * - **Never in place names**: PUA codepoints are unassigned by definition.
- *   real-world WOF names don't carry them.
+ *   Real-world WOF names don't carry them.
  *   Defensively, the insert below also strips any embedded U+E000 from source names
  *   so a poisoned row can't forge an alias boundary.
- * - **Survives GROUP_CONCAT**: verified — `GROUP_CONCAT(name, ' ' || char(57344) || ' ')`
- *   emits the codepoint intact (`57344` = 0xE000).
+ * - **Survives GROUP_CONCAT**: verified.
+ *   `GROUP_CONCAT(name, ' ' || char(57344) || ' ')` emits the codepoint intact (`57344` = 0xE000).
  * - **Cost**: one extra token per alias boundary in the FTS document.
  *   Marginal BM25 length-norm impact, on a column whose length stats are already the known #189 problem.
  *
@@ -87,8 +88,9 @@ const ALIAS_SEPARATOR_CODEPOINT = ALIAS_SEPARATOR.codePointAt(0) as number
  * The query/name fold every exact-tier comparison uses: lowercase, trim, collapse internal whitespace.
  *
  * The `alt_names` bag is compared alias-by-alias against a query folded this way,
- * so the fold lives beside the bag parser — every consumer (the Node resolver's exact tier,
- * the wasm resolver, the name-exact sub-tier sort) folds through this one function.
+ * so the fold lives beside the bag parser.
+ * Every consumer (the Node resolver's exact tier, the wasm resolver, the name-exact sub-tier sort)
+ * folds through this one function.
  */
 export function foldQueryText(input: string): string {
 	return input.toLowerCase().trim().replaceAll(/\s+/g, " ")
@@ -105,9 +107,10 @@ export function foldQueryText(input: string): string {
  *
  * - **Separated bags** (built since #523): aliases joined with {@link ALIAS_SEPARATOR},
  *   plus a trailing separator so even a single-alias bag self-identifies as separator-formatted.
- *   Split + per-alias equality — a true exact-alias check, matching the semantics of the
- *   full `names` table (`names.name = ? collate nocase`), so it runs unrestricted: an alias
- *   match is an exact match whether or not another candidate matched on its canonical name.
+ *   Split + per-alias equality.
+ *   A true exact-alias check, matching the semantics of the full `names` table
+ *   (`names.name = ? Collate nocase`), so it runs unrestricted: an alias match is an
+ *   exact match whether or not another candidate matched on its canonical name.
  * - **Legacy bags** (pre-#523 artifacts, e.g. an already-deployed slim DB):
  *   aliases space-joined, boundaries lost.
  *   Falls back to the historical padded-containment check, conditioned on `anyStrictExact` — unrestricted
@@ -149,8 +152,8 @@ export const PLACE_BBOX_TABLE = "place_bbox"
  * Sparse — WOF only populates this field for ~15% of localities (and mostly larger ones);
  * missing means no boost, never a penalty.
  *
- * Built upstream by `scripts/build-unified-wof.ts` at ingest (and copied through by `build-slim`) —
- * this module consumes it, never builds it.
+ * Built upstream by `scripts/build-unified-wof.ts` at ingest (and copied through by `build-slim`).
+ * This module consumes it, never builds it.
  *
  * Schema: `(id integer primary KEY, population integer not NULL)`.
  * Plain table rather than virtual.
@@ -158,9 +161,11 @@ export const PLACE_BBOX_TABLE = "place_bbox"
 export const PLACE_POPULATION_TABLE = "place_population"
 
 /**
- * Name of the auxiliary table holding the two salience scores per place — `referential` (population-anchored, the
- * ranking backbone) and `encyclopedic` (the Wikipedia join, NULL when there is no article). Built by `mailwoman
- * gazetteer importance`; schema and derivations in `place-importance-schema.ts`.
+ * Name of the auxiliary table holding the two salience scores per place.
+ *
+ * `referential` (population-anchored, the ranking backbone) and `encyclopedic`
+ * (the Wikipedia join, NULL when there is no article).
+ * Built by `mailwoman gazetteer importance`; schema and derivations in `place-importance-schema.ts`.
  *
  * The lookup reads only `encyclopedic` from it, and only to carry the value
  * onto the result — referential is derived from the population already joined,
@@ -221,12 +226,13 @@ export interface BuildPlaceSearchFTSOpts {
  * Build (or rebuild, with `drop: true`) the `place_search` FTS5 virtual table and the `place_bbox`
  * R*Tree virtual table from the existing `spr` + `names` tables in a WOF SQLite distribution.
  *
- * The FTS5 index is used for name-based `match` queries. the R*Tree is used for bbox + proximity filtering.
+ * The FTS5 index is used for name-based `match` queries.
+ * The R*Tree is used for bbox + proximity filtering.
  * Both are pure SQLite — no extensions required.
  *
- * Returns a `BuildPlaceSearchFTSResult` summary.
- * Idempotent when `drop: false` — re-running against an already-indexed DB
- * skips whichever indexes already exist.
+ * @returns a `BuildPlaceSearchFTSResult` summary.
+ *   Idempotent when `drop: false` — re-running against an already-indexed DB
+ *   skips whichever indexes already exist.
  */
 export function buildPlaceSearchFTS<DB>(
 	db: DatabaseClient<DB>,
@@ -322,8 +328,8 @@ export function buildPlaceSearchFTS<DB>(
 
 		// Only index places that have non-zero coordinates and a real bbox.
 		// WOF stores both the centroid (latitude/longitude) and the bounding box (min_*/max_*).
-		// A subset of rows have all-zero coordinates — likely placeholders for deprecated / unmapped
-		// entries. the is_current / is_deprecated filter mostly catches them, but we double-check at insert.
+		// A subset of rows have all-zero coordinates — likely placeholders for deprecated / unmapped entries.
+		// The is_current / is_deprecated filter mostly catches them, but we double-check at insert.
 		db.exec(`
 			INSERT INTO ${PLACE_BBOX_TABLE} (id, min_lat, max_lat, min_lon, max_lon)
 			SELECT

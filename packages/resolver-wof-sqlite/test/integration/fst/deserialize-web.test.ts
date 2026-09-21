@@ -191,7 +191,8 @@ function buildFSTBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 			view.setUint16(pp + 6, 0, true) // pad
 			view.setUint32(pp + 8, intern(place.name), true)
 
-			// referential: float32 for v2. for v1 the field is interpreted as a raw population u32.
+			// referential: float32 for v2.
+			// For v1 the field is interpreted as a raw population u32.
 			if (version >= 2) {
 				view.setFloat32(pp + 12, place.referential, true)
 			} else {
@@ -306,8 +307,8 @@ describe("deserializeFSTWeb", () => {
 //#region deserializeFSTWeb — v1 importance derivation
 
 test("deserializeFSTWeb: v1 derives importance from a population u32 via the log2 curve", () => {
-	// v1 stores population (u32) in the importance slot. the reader maps it
-	// through min(1, log2(1 + pop/1000) / 14).
+	// v1 stores population (u32) in the importance slot.
+	// The reader maps it through min(1, log2(1 + pop/1000) / 14).
 	// For pop = 1000: log2(2)/14 = 1/14 ≈ 0.0714.
 	const nodes: FixtureNode[] = [
 		{ edges: [["t", 1]], places: [] },
@@ -342,8 +343,8 @@ test("deserializeFSTWeb: version 0 is rejected", () => {
 
 test("deserializeFSTWeb: a version above MAX_VERSION (now 5) is rejected", () => {
 	// MAX_VERSION tracks the serializer's version (5, the two-score split): v3/v4/v5 parse, v6+ is rejected.
-	// This assertion is why the check stops drifting — it fails the moment the
-	// serializer bumps and the reader's check does not.
+	// This assertion is why the check stops drifting.
+	// It fails the moment the serializer bumps and the reader's check does not.
 	const bytes = buildFSTBuffer(PARIS_FIXTURE)
 	new DataView(bytes.buffer).setUint16(4, 6, true)
 	expect(() => deserializeFSTWeb(bytes)).toThrow(/version 6 unsupported/i)

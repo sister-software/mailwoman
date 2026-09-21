@@ -85,7 +85,8 @@ beforeAll(async () => {
 	// Routes nowhere — spelled `postcode` where the placetype is `postalcode`.
 	writeSprOnly(dir.resolve("postcode-x.db"))
 	writeRelationOnly(dir.resolve("postcode-locality-intl.db"))
-	// Routes by name and carries nothing at all — the shape `postalcode-fr.db` had on disk.
+	// Routes by name and carries nothing at all.
+	// The shape `postalcode-fr.db` had on disk.
 	writeEmpty(dir.resolve("postalcode-empty.db"))
 })
 

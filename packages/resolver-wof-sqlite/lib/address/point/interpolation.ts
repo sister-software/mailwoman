@@ -200,7 +200,8 @@ function interpolateFromNeighbors(rows: readonly PointRow[], n: number): Interpo
 	}
 
 	// Single-sided: extrapolate along the two nearest known numbers on the populated side.
-	// `near` is the anchor closest to n, `far` the next one out. t > 1 by construction.
+	// `near` is the anchor closest to n, `far` the next one out.
+	// T > 1 by construction.
 	const side = below ? anchors.slice(-2) : anchors.slice(0, 2)
 
 	if (side.length < 2) return null

@@ -85,12 +85,14 @@ export function exactMatchIDs<DB>(
 }
 
 /**
- * Among `ids` (already known exact matches), the subset holding `text` as an
- * official name (`names.official = 1`, the
- * #940 ingest bit). Same collate nocase semantics as {@link WOFSQLitePlaceLookup.#exactMatchIDs} so the two probes
- * agree on what "equals the query" means.
- * Fails soft on gazetteers built before #940 (no `official` column) — the sub-tier
- * then behaves exactly as if `officialNameExact` were off.
+ * Among `ids` (already known exact matches), the subset holding `text` as an official
+ * name (`names.official = 1`, the #940 ingest bit).
+ *
+ * Same collate nocase semantics as {@link WOFSQLitePlaceLookup.#exactMatchIDs}
+ * so the two probes agree on what "equals the query" means.
+ * Fails soft on gazetteers built before #940 (no `official` column).
+ *
+ * The sub-tier then behaves exactly as if `officialNameExact` were off.
  */
 export function officialNameIDs<DB>(
 	db: DatabaseClient<DB>,

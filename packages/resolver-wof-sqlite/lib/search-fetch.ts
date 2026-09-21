@@ -104,20 +104,21 @@ export function fetchSearchRows<DB>(options: {
 		weights,
 	} = options
 
-	// Over-fetch so post-scoring + exact-match tiering have room to re-rank. short queries (a 2–3-char
-	// region abbreviation like "NY"/"VT") are the danger case the `exactMatchTiering` docstring flags:
-	// the exact-abbrev holder's BM25 is poor (its long multilingual alt-name document tanks the score),
-	// so under the normal `limit * 4` window it drops out of the candidate pool before tiering can
-	// promote it — "NY" then resolves to a token-matching foreign region (Highland, GB) instead of New
-	// York. Widen the window for short queries so the exact match is always present to be tiered.
+	// Over-fetch so post-scoring + exact-match tiering have room to re-rank.
+	// Short queries (a 2–3-char region abbreviation like "NY"/"VT") are the danger case
+	// the `exactMatchTiering` docstring flags: the exact-abbrev holder's BM25 is poor
+	// (its long multilingual alt-name document tanks the score), so under the normal
+	// `limit * 4` window it drops out of the candidate pool before tiering can promote it —
+	// "NY" then resolves to a token-matching foreign region (Highland, GB) instead of New York.
+	// Widen the window for short queries so the exact match is always present to be tiered.
 	// (Cross-country abbrev collisions — "VT" is both Vermont and Viterbo — still need a country/
-	// postcode signal to disambiguate. this only rescues the window-drop class rather than genuine ambiguity.
-	// With a `country` hint every abbrev resolves. bare + no-context lifts 7→10/15 US states.)
+	// postcode signal to disambiguate. This only rescues the window-drop class rather than genuine
+	// ambiguity. With a `country` hint every abbrev resolves. Bare + no-context lifts 7→10/15 US states.)
 	const ftsLimit =
 		query.text.trim().length <= SHORT_QUERY_MAX_LENGTH ? Math.max(limit * 4, SHORT_QUERY_OVERFETCH) : limit * 4
 
-	// Filter out historical / superseded / deprecated places by default — they live in
-	// the same spr table but should never win a contemporary lookup.
+	// Filter out historical / superseded / deprecated places by default.
+	// They live in the same spr table but should never win a contemporary lookup.
 	// `is_current = 0` is the only WOF value that means "not current"; both `-1` (modern)
 	// and `1` (legacy) mean current.
 	// See #91.
@@ -142,8 +143,9 @@ export function fetchSearchRows<DB>(options: {
 	}
 
 	// Bbox + near-with-radius are SQL-level filters via the R*Tree.
-	// We only emit the join when the active extract has the R*Tree. missing-but-requested is
-	// silently treated as no-bbox- filter so legacy DBs / extracts-without-bbox don't crash.
+	// We only emit the join when the active extract has the R*Tree.
+	// Missing-but-requested is silently treated as no-bbox- filter so legacy DBs
+	// / extracts-without-bbox don't crash.
 	const extractHasBbox = hasBboxIndex.get(sch) === true
 	const useBboxJoin = (query.bbox || query.near?.maxDistanceKm !== undefined) && extractHasBbox
 	let joinClause = `JOIN ${sch}.spr ON spr.id = place_search.wof_id`
@@ -158,8 +160,8 @@ export function fetchSearchRows<DB>(options: {
 	}
 
 	// left join the population aux table when present.
-	// Missing-on-this-extract means the select just doesn't include the population
-	// column. the post-scoring loop treats it as 0.
+	// Missing-on-this-extract means the select just doesn't include the population column.
+	// The post-scoring loop treats it as 0.
 	const extractHasPopulation = hasPopulationIndex.get(sch) === true
 
 	const populationSelect = extractHasPopulation
@@ -178,17 +180,12 @@ export function fetchSearchRows<DB>(options: {
 	// Push the population boost into the order BY when the index is available, so famous places
 	// (whose long alt-name lists hurt BM25) actually make it into the over-fetch window.
 	// The TS post-scoring will still compute the same boost for the final score.
-	// this just ensures the candidate set is right.
+	// This just ensures the candidate set is right.
 	//
 	// Formula: rank_adjusted = bm25 - populationBoost * min(1.0, log10(1 + pop) / scaleLog10)
 	// Lower rank_adjusted = better (matches SQLite's bm25 convention of "more negative = better").
 	//
-	// #905 — do not reach for bm25 column weights here. Measured falsification (2026-07-02): FTS5's
-	// bm25 length normalization is polluted by the row's total document size, so identical
-	// 1-token `name` docs read −16.0 (empty alt_names) vs −0.43 (2.7 KB alt_names) even with the
-	// alt_names column weighted to zero — no weighting isolates name relevance in this schema.
-	// The famous- holder guarantee lives in the population-ordered companion fetch below
-	// instead, and the exact tier breaks ties by population in the post-scoring sort.
+	// #905 — do not reach for bm25 column weights here. Measured falsification (2026-07-02): FTS5's bm25 length normalization is polluted by the row's total document size, so identical 1-token `name` docs read −16.0 (empty alt_names) vs −0.43 (2.7 KB alt_names) even with the alt_names column weighted to zero. No weighting isolates name relevance in this schema. The famous- holder guarantee lives in the population-ordered companion fetch below instead, and the exact tier breaks ties by population in the post-scoring sort.
 	const orderByExpr = extractHasPopulation
 		? `(bm25(place_search) - ? * MIN(1.0, COALESCE(log10(1.0 + ${PLACE_POPULATION_TABLE}.population), 0) / ?))`
 		: "bm25(place_search)"
@@ -225,13 +222,7 @@ export function fetchSearchRows<DB>(options: {
 
 	const rawRows = allRows<RawSearchRow>(stmt, ...params)
 
-	// #905 companion fetch: the same `match`, ordered by population alone. For name floods
-	// ("Paris" matches thousands of gap-fill villages) the bm25-based window above cannot
-	// admit the famous holder — its bm25 is length-poisoned by the row's alias bulk
-	// (measured ~15 pts, vs a +4.0 boost cap), so FR Paris never even reaches post-scoring.
-	// This fetch makes the prominent holders of a name pool-complete BY construction.
-	// the exact-tier sort below decides whether they win.
-	// Skipped without a population index (nothing to order by).
+	// #905 companion fetch: the same `match`, ordered by population alone. For name floods ("Paris" matches thousands of gap-fill villages) the bm25-based window above cannot admit the famous holder. Its bm25 is length-poisoned by the row's alias bulk (measured ~15 pts, vs a +4.0 boost cap), so FR Paris never even reaches post-scoring. This fetch makes the prominent holders of a name pool-complete BY construction. The exact-tier sort below decides whether they win. Skipped without a population index (nothing to order by).
 	if (extractHasPopulation) {
 		const popStmt = db.prepare(`
 			SELECT

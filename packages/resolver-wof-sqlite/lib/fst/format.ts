@@ -54,15 +54,15 @@ export const WIDE_STATE_ENTRY_SIZE = 16
 export const NARROW_STATE_ENTRY_SIZE = 12
 
 /**
- * First format version carrying the trailing metadata block. older files simply have none.
+ * First format version carrying the trailing metadata block.
+ * Older files simply have none.
  */
 export const VERSION_WITH_METADATA = 3
 
 /**
  * Format version that split the single `importance` float into `referential` +
  * `encyclopedic` (ROAD_TO_V9 §2 R1), growing the place entry from 56 to 60 bytes
- * and claiming the previously-reserved `pp+7` byte as
- * {@link PLACE_FLAG_HAS_ENCYCLOPEDIC}.
+ * and claiming the previously-reserved `pp+7` byte as {@link PLACE_FLAG_HAS_ENCYCLOPEDIC}.
  */
 export const VERSION_TWO_SCORE_SPLIT = 5
 

@@ -94,8 +94,8 @@ export interface FSTProvenance {
 	importanceSource?: string
 	sourceDB?: string
 	/**
-	 * MD5 of the source database's bytes at build time — the artifact's link to
-	 * the gazetteer it is a projection of.
+	 * MD5 of the source database's bytes at build time.
+	 * The artifact's link to the gazetteer it is a projection of.
 	 *
 	 * `sourceDB` records the path, which is exactly the field that cannot change when the bytes
 	 * behind it do: the admin DB is a sealed readonly artifact that a rebuild replaces in place.
@@ -105,8 +105,8 @@ export interface FSTProvenance {
 	 * Compared by `fst-freshness.ts`.
 	 *
 	 * `undefined` = built before the stamp existed (every artifact predating 2026-08-05).
-	 * Never conflate that with "built from a database whose md5 is unknown" —
-	 * the freshness check reports the two in different words.
+	 * Never conflate that with "built from a database whose md5 is unknown".
+	 * The freshness check reports the two in different words.
 	 */
 	sourceDBMD5?: string
 	/**
@@ -142,12 +142,17 @@ export interface BuildFSTOpts {
 	placetypes?: PlacetypeID[]
 	languages?: string[]
 	/**
-	 * Degenerate-surface curation (build-time. the ASR-contextual-biasing "prune the bias list" discipline). A name whose
-	 * full normalized token sequence joins to a member of this set is never inserted — the surface carries no
-	 * discriminative value as a bias key (bare function words: "la"; bare street-type words: "boulevard"). The FST is a
-	 * bias list rather than the gazetteer of record — the resolver's candidate tables are untouched, so excluded places
-	 * stay findable. they just stop nudging the decoder on degenerate keys. Keys must be `normalizeTokens(...).join("
-	 * ")`.
+	 * Degenerate-surface curation (build-time. The ASR-contextual-biasing "prune the bias list" discipline).
+	 *
+	 * A name whose full normalized token sequence joins to a member of this set is never inserted.
+	 * The surface carries no discriminative value as a bias key
+	 * (bare function words: "la"; bare street-type words: "boulevard").
+	 *
+	 * The FST is a bias list rather than the gazetteer of record.
+	 * The resolver's candidate tables are untouched, so excluded places stay findable.
+	 *
+	 * They just stop nudging the decoder on degenerate keys.
+	 * Keys must be `normalizeTokens(...).join(" ")`.
 	 */
 	excludeSurfaces?: ReadonlySet<string>
 	/**
@@ -167,14 +172,15 @@ export interface BuildFSTOpts {
 	 * with a place carrying that surface.
 	 *
 	 * When supplied, every inserted place row records the count for its accepting
-	 * surface (`PlaceEntry.crossCountryBranches`) — an entry accessible under several
-	 * surfaces records each surface's own count.
+	 * surface (`PlaceEntry.crossCountryBranches`).
+	 * An entry accessible under several surfaces records each surface's own count.
+	 *
 	 * Serialized into the place row's former `_pad` byte with presence signaled by
 	 * header flags bit0, so version stays put and pre-ambiguity artifacts read as "no
 	 * data" (never "0 branches" — the meaning-of-zero rule).
 	 *
-	 * No decoder consumes it yet. consumers (FST-prior tempering, the Option-A evidence channel)
-	 * arrive behind their own measured checks.
+	 * No decoder consumes it yet.
+	 * Consumers (FST-prior tempering, the Option-A evidence channel) arrive behind their own measured checks.
 	 */
 	surfaceCountryCounts?: ReadonlyMap<string, number>
 	onProgress?: (phase: string, detail?: string) => void

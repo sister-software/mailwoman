@@ -46,7 +46,7 @@ export function defaultStreetMorphologyArtifactPath(): PathBuilder {
 
 export interface LoadStreetMorphologyFSTOpts {
 	/**
-	 * Explicit artifact path (e.g. a weights-package sibling).
+	 * Explicit artifact path (e.g. A weights-package sibling).
 	 *
 	 * When given it is the only artifact probed — missing or unreadable degrades
 	 * straight to the dictionary build, never a throw.

@@ -66,7 +66,8 @@ import { resurrectCurrencyHoles } from "#currency-backfill"
 import type { WOFDatabase } from "#schema"
 import { normalizeLocalityForKey } from "#street/normalize"
 
-// The build's interface is this module path. the passes behind it live in `./candidate/`.
+// The build's interface is this module path.
+// The passes behind it live in `./candidate/`.
 // Re-exported here so a consumer never has to know which pass owns which name.
 export { stageCountryDisplayNames } from "#candidate/country-display-names"
 export { GLOSS_EXCLUDED_PLACETYPES, GLOSS_KEY_THRESHOLD } from "#candidate/name-roles"
@@ -82,8 +83,9 @@ export interface BuildCandidateOptions {
 	 */
 	output: string
 	/**
-	 * The capital-status reference entries (#1880) to carry in-artifact —
-	 * the parsed `data/gazetteer/capitals-v1.json` entries, passed by the caller
+	 * The capital-status reference entries (#1880) to carry in-artifact.
+	 *
+	 * The parsed `data/gazetteer/capitals-v1.json` entries, passed by the caller
 	 * because this module publishes to npm and must not read repo-root paths.
 	 *
 	 * Absent → the `capital` table is not created, and the session loader falls
@@ -93,34 +95,38 @@ export interface BuildCandidateOptions {
 	/**
 	 * Optional postcode extracts (`spr` rows with `placetype='postalcode'` + real coords, e.g. postalcode-us.db) —
 	 * folded in as `postalcode` candidate rows so `findPlace(postalcode)` resolves a ZIP
-	 * directly (the demo's primary postcode path. the postcode-*.bin anchor stays the fallback).
+	 * directly (the demo's primary postcode path. The postcode-*.bin anchor stays the fallback).
 	 *
 	 * Matches the slim wof-hot.db, which took one such postcode DB.
 	 *
-	 * Each extract's `names` table is folded in too (#1495) — that's where the GeoNames delivery-city
-	 * names live ("Brooklyn" for 11201), and they were previously reachable only through FTS.
+	 * Each extract's `names` table is folded in too (#1495).
+	 * That's where the GeoNames delivery-city names live ("Brooklyn" for 11201),
+	 * and they were previously reachable only through FTS.
 	 */
 	postcodes?: string[]
 	/**
 	 * Optional locality extracts (`spr` rows with `placetype='locality'` + real coords,
-	 * e.g. localities-nz-linz.db — the
-	 * #1564 NZ suburb tier) — folded through the same extract loop as the postcode extracts, staged as `locality`
-	 * candidate rows with unmeasured population (`neg_rank 0`: a extract row ranks behind
-	 * any populated namesake and wins only where its key is the answer).
+	 * e.g. localities-nz-linz.db — the #1564 NZ suburb tier) — folded through the same
+	 * extract loop as the postcode extracts, staged as `locality` candidate rows with
+	 * unmeasured population (`neg_rank 0`: a extract row ranks behind any populated namesake
+	 * and wins only where its key is the answer).
+	 *
 	 * Each extract's `names` table folds as aliases, `is_primary = 0`, same as the delivery-city pass.
 	 *
-	 * An extract whose `ancestors` table names an admin region for a row gives that row
-	 * the region's scope (`region_id`) plus closure rows for the region and the region's
-	 * own chain above it. an extract without one stays unscoped, as before.
+	 * An extract whose `ancestors` table names an admin region for a row gives that row the region's
+	 * scope (`region_id`) plus closure rows for the region and the region's own chain above it.
+	 * An extract without one stays unscoped, as before.
 	 */
 	localities?: string[]
 	/**
-	 * Optional WOF admin database carrying a `place_importance` table — the source of the
-	 * `importance` column (#28), the toponym-fame prior that decides the bare-city-name class.
+	 * Optional WOF admin database carrying a `place_importance` table.
 	 *
-	 * Joined by `(name_key, country, placetype)` + nearest centroid rather than
-	 * by id. see `candidate-importance.ts` for why the id join silently drops the
-	 * foreign homonyms the prior exists to demote.
+	 * The source of the `importance` column (#28), the toponym-fame prior that
+	 * decides the bare-city-name class.
+	 *
+	 * Joined by `(name_key, country, placetype)` + nearest centroid rather than by id.
+	 * See `candidate-importance.ts` for why the id join silently drops the foreign
+	 * homonyms the prior exists to demote.
 	 *
 	 * Omit it and every row's `importance` is NULL — unmeasured, which is what the consumer's
 	 * positive-evidence-only rule already treats as "do not participate".
@@ -139,11 +145,13 @@ export interface BuildCandidateOptions {
 	 * When this option is set, pass 1c resurrects a dead locality only under three conditions,
 	 * positive evidence throughout: no live same-name row of any placetype near the dead
 	 * record (a distant same-name row is a namesake and does not block — Rochester,
-	 * Northumberland pop 318 must not veto Rochester, Kent); an independent GeoNames
-	 * P-class attestation of the same folded name within
-	 * {@link CURRENCY_BACKFILL_RADIUS_KM}; and the attestor at or above {@link CURRENCY_BACKFILL_POP_FLOOR}. The staged
-	 * row keeps the real WOF id, name, centroid and bbox — GeoNames only attests the place
-	 * and supplies the population that lets it stand in prominence races.
+	 * Northumberland pop 318 must not veto Rochester, Kent); an independent GeoNames P-class
+	 * attestation of the same folded name within {@link CURRENCY_BACKFILL_RADIUS_KM};
+	 * and the attestor at or above {@link CURRENCY_BACKFILL_POP_FLOOR}.
+	 *
+	 * The staged row keeps the real WOF id, name, centroid and bbox.
+	 * GeoNames only attests the place and supplies the population that lets it stand in prominence races.
+	 *
 	 * `countries` are judged only where `<cc>.txt` exists under `geonamesDir`;
 	 * absent dumps are skipped loudly.
 	 */
@@ -205,7 +213,8 @@ export interface BuildCandidateResult {
 	 */
 	ancestorPlaces: number
 	/**
-	 * Places that received a pre/post interval label — the canonical-parent forest's node count.
+	 * Places that received a pre/post interval label.
+	 * The canonical-parent forest's node count.
 	 *
 	 * Places outside it (no recorded ancestry, extract rows, cycle-skipped) have no label:
 	 * containment against them is unverifiable, never false.
@@ -215,16 +224,18 @@ export interface BuildCandidateResult {
 	 * Places that took an `importance` score from the join (#28).
 	 *
 	 * `undefined` and `0` mean different things.
-	 * `undefined` is "the pass did not run" — no score source was given.
+	 * `undefined` is "the pass did not run".
+	 * No score source was given.
 	 *
 	 * A `0` would be the source matching nothing, which is a finding.
 	 * Never collapse the two.
 	 */
 	importanceScored?: number
 	/**
-	 * Places whose `(name_key, country, placetype)` matched a scored group
-	 * but whose nearest scored centroid was outside
-	 * {@link IMPORTANCE_JOIN_RADIUS_KM} — a different town wearing the same name, refused rather than scored.
+	 * Places whose `(name_key, country, placetype)` matched a scored group but whose
+	 * nearest scored centroid was outside {@link IMPORTANCE_JOIN_RADIUS_KM}.
+	 *
+	 * A different town wearing the same name, refused rather than scored.
 	 *
 	 * Worth watching across rebuilds: a jump here means the score source and the admin
 	 * source have drifted apart, and the join is being asked to guess.
@@ -240,8 +251,9 @@ export interface BuildCandidateResult {
 	 */
 	roleAbbr: number
 	/**
-	 * Admin places whose staged key count reached {@link GLOSS_KEY_THRESHOLD} —
-	 * the sweep's tail, reported so the stamped fraction has its denominator.
+	 * Admin places whose staged key count reached {@link GLOSS_KEY_THRESHOLD}.
+	 *
+	 * The sweep's tail, reported so the stamped fraction has its denominator.
 	 */
 	keyTailPlaces: number
 	/**
@@ -266,8 +278,9 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 
 	await createCandidateStagingTables(kdb)
 
-	// Build compact country and placetype code maps for clustered keys. assigned here. the
-	// rows are bulk-inserted via kdb once the passes have discovered every code. ---
+	// Build compact country and placetype code maps for clustered keys.
+	// Assigned here.
+	// The rows are bulk-inserted via kdb once the passes have discovered every code. ---
 	const ccodes = new Map<string, number>()
 	const ptcodes = new Map<string, number>()
 
@@ -350,8 +363,8 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	// The hot path — millions of clustered rows.
 	// Kept a single positional prepared statement (the fastest node:sqlite insert)
 	// rather than a per-row query builder.
-	// Placeholders come from CANDIDATE_COLUMNS so the column count can't drift. the
-	// positional run() args below must stay in CANDIDATE_COLUMNS order.
+	// Placeholders come from CANDIDATE_COLUMNS so the column count can't drift.
+	// The positional run() args below must stay in CANDIDATE_COLUMNS order.
 	const insStage = kdb.prepare(`INSERT INTO cand_stage VALUES (${CANDIDATE_COLUMNS.map(() => "?").join(", ")})`)
 
 	// Stage primary names and attributes reused by later alias passes.
@@ -377,12 +390,13 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		// A zero population on a country row is a WOF absence artifact, never a real zero —
 		// 147 of 237 primary country records carried none (measured 2026-08-18, #1650), which ranked
 		// those nations below any namesake hamlet in every prominence race ("Georgia" → Georgia VT).
-		// The codex table is the secondary source. a country absent from it too stays at zero honestly.
+		// The codex table is the secondary source.
+		// A country absent from it too stays at zero honestly.
 		// The join carries NULL through rather than coalesce-ing it to zero: `place_population`'s
 		// minimum is 1 over 1,520,369 rows, so an absent row is the only way a place has no number,
 		// and 3,275,445 of the 4,770,674 current places are absent from it.
-		// Every reader already treats null and a non-positive alike, so this changes no ranking —
-		// it stops the artifact asserting a count for two thirds of the gazetteer.
+		// Every reader already treats null and a non-positive alike, so this changes no ranking.
+		// It stops the artifact asserting a count for two thirds of the gazetteer.
 		const wofPop = r.pop === null || r.pop === undefined ? null : Number(r.pop)
 
 		// A reviewed correction wins over both readings below, because it is the only figure someone
@@ -488,8 +502,8 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		}).toLocaleString()} country surfaces`
 	)
 
-	// Backfill cross-source currency before later candidate passes. the alias pass
-	// so a resurrected place's alt names explode like any primary's. ---
+	// Backfill cross-source currency before later candidate passes.
+	// The alias pass so a resurrected place's alt names explode like any primary's. ---
 	if (opts.currencyBackfill) {
 		const nBackfill = await resurrectCurrencyHoles({
 			src,

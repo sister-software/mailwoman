@@ -259,8 +259,8 @@ describe("POILookup", () => {
 		using lk = new POILookup({ databasePath: dbPath })
 
 		const hits = lk.search({ brandWikidata: "Q38076", center: SPRINGFIELD })
-		// Both Q38076 rows surface: the near Springfield one and the ~280 km Chicago one —
-		// the brand path is a brand-wide fetch rather than a k-ring walk, so the Chicago
+		// Both Q38076 rows surface: the near Springfield one and the ~280 km Chicago one.
+		// The brand path is a brand-wide fetch rather than a k-ring walk, so the Chicago
 		// row (far outside the ~4 km ring budget) is reached.
 		expect(hits.map((h) => h.name)).toEqual(["McDonald's", "McDonald's (Loop)"])
 		expect(hits.every((h) => h.brandWikidata === "Q38076")).toBe(true)
@@ -333,7 +333,8 @@ describe("POILookup", () => {
 		using lk = new POILookup({ databasePath: dbPath })
 
 		expect(lk.search({ categoryID: "trail", center: SPRINGFIELD }).map((h) => h.name)).toEqual(["Ridge Trail"])
-		// The old 12-ring budget (covers gridDistance ≤ 11) does not — this is the exact boundary miss nm-04 exposed.
+		// The old 12-ring budget (covers gridDistance ≤ 11) does not.
+		// This is the exact boundary miss nm-04 exposed.
 		expect(lk.search({ categoryID: "trail", center: SPRINGFIELD, maxRings: 12 })).toEqual([])
 		// It first appears at maxRings 14 (disk radius 13) — the bare threshold the default clears with 2 rings of margin.
 		expect(lk.search({ categoryID: "trail", center: SPRINGFIELD, maxRings: 13 })).toEqual([])

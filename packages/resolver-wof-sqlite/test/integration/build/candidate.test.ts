@@ -91,8 +91,9 @@ function buildFixtureAdmin(path: string): void {
 
 /**
  * A postcode extract: `spr` with placetype='postalcode', plus the `names` table
- * `createUnifiedSchema` gives every real extract — that's where `postcode/centroid-fills.ts`
- * writes the GeoNames delivery-city names (#1495).
+ * `createUnifiedSchema` gives every real extract.
+ *
+ * That's where `postcode/centroid-fills.ts` writes the GeoNames delivery-city names (#1495).
  *
  * One real-coord ZIP + one placeholder 0,0.
  *
@@ -136,8 +137,10 @@ function buildFixturePostcodes(path: string, withNames = true): void {
 }
 
 /**
- * The admin fixture plus a `names` table and a second US region, Indiana (103), whose alias bag
- * carries `Illinois` — the shape of Hsinchu County carrying `新竹市`, Hsinchu City's official name.
+ * The admin fixture plus a `names` table and a second US region, Indiana (103),
+ * whose alias bag carries `Illinois`.
+ *
+ * The shape of Hsinchu County carrying `新竹市`, Hsinchu City's official name.
  *
  * Illinois's `names` row is official.
  */
@@ -327,7 +330,8 @@ describe("buildCandidateTable", () => {
 			)
 
 		try {
-			// Gloss core: every alias of the double-absent place stamps. its primary never does.
+			// Gloss core: every alias of the double-absent place stamps.
+			// Its primary never does.
 			expect(role("fish")[0]).toMatchObject({ role: "gloss" })
 			expect(role("vis")[0]).toMatchObject({ role: "gloss" })
 			expect(role("poisson")[0]).toMatchObject({ role: null, primary: 1 })
@@ -335,8 +339,9 @@ describe("buildCandidateTable", () => {
 			// Prominence rescue: same key volume, measured population — no gloss stamp.
 			expect(role("bigtown")[0]).toMatchObject({ role: null })
 
-			// Abbr provenance: official-language variant stamps. non-official variant
-			// does not. the preferred-name alias does not.
+			// Abbr provenance: official-language variant stamps.
+			// Non-official variant does not.
+			// The preferred-name alias does not.
 			expect(role(normalizeLocalityForKey("Chi-Town"))[0]).toMatchObject({ role: "abbr", primary: 0 })
 			expect(role(normalizeLocalityForKey("Windy City"))[0]).toMatchObject({ role: null })
 			expect(role(normalizeLocalityForKey("St Etienne"))[0]).toMatchObject({ role: null })
@@ -403,7 +408,8 @@ describe("buildCandidateTable", () => {
 		buildFixturePostcodes(pc)
 
 		const result = await buildCandidateTable({ input, output, postcodes: [pc] })
-		// The real-coord 60601 + 11201 survive. the 0,0 placeholder 20500 is filtered.
+		// The real-coord 60601 + 11201 survive.
+		// The 0,0 placeholder 20500 is filtered.
 		expect(result.postcodes).toBe(2)
 
 		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
@@ -505,8 +511,7 @@ describe("buildCandidateTable", () => {
 		expect(brooklyn!.country).toBe("US")
 		expect(brooklyn!.latitude).toBeCloseTo(40.694, 3)
 		expect(brooklyn!.min_lat).toBeCloseTo(40.68, 2)
-		// `is_primary = 0` — the rank/demotion contest must treat it as an alias
-		// rather than a canonical postcode name.
+		// `is_primary = 0` — the rank/demotion contest must treat it as an alias rather than a canonical postcode name.
 		expect(brooklyn!.is_primary).toBe(0)
 
 		// The primary row is untouched by the new pass.
@@ -556,7 +561,8 @@ describe("buildCandidateTable", () => {
 
 	describe("the importance column (#28)", () => {
 		/**
-		 * A score source whose ids share nothing with the admin fixture's — the join must work anyway.
+		 * A score source whose ids share nothing with the admin fixture's.
+		 * The join must work anyway.
 		 *
 		 * Chicago and Saint-Étienne are scored.
 		 * Springfield deliberately is not (the unmeasured case).
@@ -649,7 +655,8 @@ describe("buildCandidateTable", () => {
 
 			using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
-			// A postcode has no toponym fame. the score source's 60601 row must not leak onto it.
+			// A postcode has no toponym fame.
+			// The score source's 60601 row must not leak onto it.
 			expect(importanceOf(db, "60601")).toEqual([null])
 			// …including the delivery-city alias hanging off the same postcode row.
 			expect(importanceOf(db, normalizeLocalityForKey("Brooklyn"))).toEqual([null])
@@ -804,8 +811,9 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 	}
 
 	/**
-	 * GeoNames dump lines: 19 tab-separated columns. the pass reads 1 name, 2 ascii,
-	 * 4 lat, 5 lon, 6 feature_class, 14 population.
+	 * GeoNames dump lines: 19 tab-separated columns.
+	 *
+	 * The pass reads 1 name, 2 ascii, 4 lat, 5 lon, 6 feature_class, 14 population.
 	 */
 	function geonamesLine(id: number, name: string, lat: number, lon: number, fclass: string, pop: number): string {
 		const f = Array.from({ length: 19 }).fill("")

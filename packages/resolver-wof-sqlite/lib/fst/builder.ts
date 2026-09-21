@@ -181,8 +181,8 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	// `place_importance` column, because a legacy row that got a Wikipedia score overwrote
 	// whatever population would have said and the two are indistinguishable afterwards.
 	// Encyclopedic rides along for consumers and is never handed to the decoder.
-	// `loadImportanceSplit` handles all four schema generations. the source it reports
-	// is stamped into provenance so an artifact says which one it read.
+	// `loadImportanceSplit` handles all four schema generations.
+	// The source it reports is stamped into provenance so an artifact says which one it read.
 	progress("importance", "Loading referential + encyclopedic scores")
 	const split = loadImportanceSplit(db)
 
@@ -232,8 +232,8 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	const nodes: FSTNode[] = [{ edges: new Map(), places: [] }]
 
 	// Degenerate-surface curation (see BuildFSTOpts.excludeSurfaces).
-	// Applied to the whole normalized surface only — a multi-token name containing
-	// a function word ("los angeles") is never affected.
+	// Applied to the whole normalized surface only.
+	// A multi-token name containing a function word ("los angeles") is never affected.
 	const excludeSurfaces = opts.excludeSurfaces
 	const excludeAllTokensOf = opts.excludeAllTokensOf
 	let excludedCount = 0
@@ -344,9 +344,9 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	const matcher = FSTMatcher.fromNodes(nodes)
 
 	// The build stamp (2026-08-05).
-	// `sourceDB` alone was never enough to tell a reader whether this artifact matches
-	// the database at that path — the admin DB is sealed and replaced by a rebuild,
-	// so the path is constant across every generation of it.
+	// `sourceDB` alone was never enough to tell a reader whether this artifact
+	// matches the database at that path.
+	// The admin DB is sealed and replaced by a rebuild, so the path is constant across every generation of it.
 	// Hashing costs 7.3 s for the 5.27 GB admin DB and is free whenever the `.md5`
 	// sidecar is current, which the admin build already writes.
 	// `sourceIdentity` lets a caller that already knows the digest

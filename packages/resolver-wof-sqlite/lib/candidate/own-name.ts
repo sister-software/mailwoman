@@ -39,8 +39,8 @@ export const VARIANT_SIMILARITY_MIN = 0.85
  * BGN/pcgn-flavored Cyrillic romanization, folded to the name-key alphabet.
  *
  * Digraph outputs (zh, kh, ts, ch, sh, shch, yu, ya) match the dominant transliteration
- * conventions the gazetteer's Latin aliases actually use. the `w`/`v` and `kh`/`h` style
- * variance between systems is what the edit-similarity threshold absorbs.
+ * conventions the gazetteer's Latin aliases actually use.
+ * The `w`/`v` and `kh`/`h` style variance between systems is what the edit-similarity threshold absorbs.
  */
 const CYRILLIC_TO_LATIN: Record<string, string> = {
 	а: "a",
@@ -112,8 +112,8 @@ export function expandNameAbbreviations(key: string): string {
 /**
  * Romanize a folded name key to the a–z0–9/space alphabet.
  *
- * `null` when characters outside the covered scripts remain — an unhandled
- * script is no verdict rather than a mismatch.
+ * `null` when characters outside the covered scripts remain.
+ * An unhandled script is no verdict rather than a mismatch.
  */
 export function romanizeNameKey(key: string): string | null {
 	let out = ""

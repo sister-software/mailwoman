@@ -43,9 +43,9 @@ export interface AutocompleteSuggestion {
 	/**
 	 * The referential likelihood the suggestion is ranked by (ROAD_TO_V9 §2).
 	 *
-	 * Autocomplete answers "which place does the user mean", so it ranks referentially
-	 * like everything else. encyclopedic importance rides along on
-	 * {@link AutocompleteSuggestion.encyclopedic} for display and never enters the order.
+	 * Autocomplete answers "which place does the user mean", so it ranks referentially like everything else.
+	 * Encyclopedic importance rides along on {@link AutocompleteSuggestion.encyclopedic}
+	 * for display and never enters the order.
 	 */
 	referential: number
 	/**
@@ -92,10 +92,7 @@ function topByReferential(entries: readonly PlaceEntry[], k: number): PlaceEntry
 }
 
 /**
- * {@link FSTMatcher} presented through ancestrie's storage interface. Records carry the {@link PlaceEntry} itself as the
- * payload, so the entry that wins the algorithm's shallowest-depth rule is the entry
- * whose fields the suggestion reports — a side lookup keyed on id could pick a different
- * surface's row (`crossCountryBranches` differs per surface).
+ * {@link FSTMatcher} presented through ancestrie's storage interface. Records carry the {@link PlaceEntry} itself as the payload, so the entry that wins the algorithm's shallowest-depth rule is the entry whose fields the suggestion reports. A side lookup keyed on id could pick a different surface's row (`crossCountryBranches` differs per surface).
  */
 class FSTReader implements AncestrieReaderLike<PlaceEntry> {
 	readonly #fst: FSTMatcher
@@ -151,7 +148,7 @@ class FSTReader implements AncestrieReaderLike<PlaceEntry> {
 /**
  * Autocomplete from the current prefix.
  *
- * Returns suggestions ranked referential-descending.
+ * @returns suggestions ranked referential-descending.
  */
 export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteOpts = {}): AutocompleteResult {
 	const normalizedTokens = normalizeTokens(query)
@@ -171,7 +168,8 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 		normalizedTokens,
 		depth: result.depth,
 		suggestions: result.suggestions.map((s) => {
-			// Every record this adapter serves carries its entry. the assertion documents the invariant.
+			// Every record this adapter serves carries its entry.
+			// The assertion documents the invariant.
 			const entry = s.payload!
 
 			return {

@@ -36,24 +36,25 @@ import type { WOFDatabase } from "#schema"
 /**
  * The four tables the alias fold writes into the range it owns.
  *
- * The purge and the ingest must agree on this list — a table written
- * but not purged is exactly the #1514 defect.
+ * The purge and the ingest must agree on this list.
+ * A table written but not purged is exactly the #1514 defect.
  */
 const FOLD_OWNED_TABLES = ["spr", "names", "place_population", "ancestors"] as const
 
 /**
- * Clear everything the alias fold owns — `[GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE)` across {@link
- * FOLD_OWNED_TABLES}
- * — so a fold's output is a function of its country list and dumps alone, never of what the DB happened to hold first.
+ * Clear everything the alias fold owns — `[GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE)`
+ * across {@link FOLD_OWNED_TABLES} — so a fold's output is a function of its country list
+ * and dumps alone, never of what the DB happened to hold first.
  * Returns the rows removed per table.
  *
  * This exists because the synthetic id is a position (`GEONAMES_ID_BASE + n`,
  * counted across the country list in order), not a derivation from the geonameid:
  * change the list, its order, or a dump's contents and every subsequent id shifts.
- * Without the purge, a second fold overwrote the `spr` prefix it reached (`insert or replace`)
- * while its `names`/`ancestors` rows merely appended (bare `insert`) and `place_population`
- * skipped unpopulated places entirely — so the previous run's names, ancestry
- * and populations stayed bound to ids now describing other places.
+ * Without the purge, a second fold overwrote the `spr` prefix it reached
+ * (`insert or replace`) while its `names`/`ancestors` rows merely appended (bare `insert`)
+ * and `place_population` skipped unpopulated places entirely.
+ *
+ * So the previous run's names, ancestry and populations stayed bound to ids now describing other places.
  *
  * Measured on the live 2026-08-05 artifact: a 14-country re-fold over the 161-country
  * fold baked into `admin-global-priority.db` put 522,184 of 2,110,096 name rows in
@@ -94,7 +95,8 @@ export interface GeonamesIngestProgress {
 	 */
 	places: number
 	/**
-	 * True when the country's `<CC>.txt` dump was missing — the country is skipped rather than fatal.
+	 * True when the country's `<CC>.txt` dump was missing.
+	 * The country is skipped rather than fatal.
 	 */
 	skipped: boolean
 	/**
@@ -144,12 +146,14 @@ async function parseAlternateNamesV2(
 	// V2 columns (0-indexed): 1 geonameid, 2 isolanguage, 3 name, 4 isPreferredName,
 	// 5 isShortName, 6 isColloquial, 7 isHistoric, 8 from, 9 to.
 	//
-	// Two passes, because historic-ness is a fact about the name rather than the row: GeoNames splits
-	// one spelling across rows — Malabo carries "Santa Isabel" as (es, unflagged) and as (no-language,
-	// isHistoric=1, to=1973). Officialness must see the flags from every row for the spelling, or the
-	// colonial-era name sails through on the language-tagged row (the #936 review's Malabo finding).
-	// Do not condition on isPreferredName instead — it's sparse annotation rather than a
-	// signal (Turku's sv "Åbo" is unflagged. FI has 1,746 flags across the whole dump).
+	// Two passes, because historic-ness is a fact about the name rather than the row:
+	// GeoNames splits one spelling across rows.
+	// Malabo carries "Santa Isabel" as (es, unflagged) and as (no-language, isHistoric=1, to=1973).
+	// Officialness must see the flags from every row for the spelling, or the colonial-era
+	// name sails through on the language-tagged row (the #936 review's Malabo finding).
+	// Do not condition on isPreferredName instead.
+	// It's sparse annotation rather than a signal (Turku's sv "Åbo" is unflagged.
+	// FI has 1,746 flags across the whole dump).
 	//
 	// Both passes stream the file rather than sharing one materialized array: Norway's V2 dump is 33 MB,
 	// and a second read off the page cache costs less than holding half a million line strings.
@@ -223,23 +227,23 @@ export async function ingestGeonamesAliases(
 	onProgress?: (event: GeonamesIngestProgress) => void,
 	opts?: {
 		/**
-		 * #267: the countries for which to also fold the GeoNames A-class admin (pcli country + ADM1 regions) and link each
-		 * locality's `parent_id` + ancestry chain (locality → region → country).
+		 * #267: the countries for which to also fold the GeoNames A-class admin (pcli country + ADM1 regions) and link each locality's `parent_id` + ancestry chain (locality → region → country).
 		 *
 		 * PER-country because a country that already carries WOF admin would double up — pass only
 		 * the zero-coverage gap countries (the coverage-expansion targets), never the EU alias set.
+		 *
 		 * Without admin, a gap country's localities are orphans (`parent_id=-1`, no ancestors),
 		 * so `parentID` scoping and adminCoherence can't reach them and "Tbilisi, GE" can't resolve.
 		 */
 		adminForCountries?: ReadonlySet<string>
 		/**
-		 * #936: directory of per-country alternateNamesV2 dumps
-		 * (`download.geonames.org/export/dump/alternatenames/<CC>.zip` → `<CC>.txt`).
+		 * #936: directory of per-country alternateNamesV2 dumps (`download.geonames.org/export/dump/alternatenames/<CC>.zip` → `<CC>.txt`).
 		 *
 		 * When a country's file is present, alias rows gain their language tag,
 		 * `privateuse` ("preferred" from `isPreferredName`), and the `official` bit
 		 * (language is CLDR-official for the country, colloquial/historic excluded —
 		 * the rule the #936 risk probe measured at 7 new name-exact collisions globally).
+		 *
 		 * The main dump's bare `alternatenames` list still decides which rows exist.
 		 *
 		 * V2 only decorates them.
@@ -257,7 +261,7 @@ export async function ingestGeonamesAliases(
 	 * The display rule, for `spr.name` and the A-class admin names.
 	 *
 	 * A row's display name stays in one script because consumers render it beside Latin siblings.
-	 * which names are reachable is `cleanAlias`'s question, and the two are separate on purpose.
+	 * Which names are reachable is `cleanAlias`'s question, and the two are separate on purpose.
 	 */
 	const clean = (s: string): string | null => {
 		const t = s.trim()
@@ -268,12 +272,13 @@ export async function ingestGeonamesAliases(
 	/**
 	 * GeoNames packs parenthesized asides, pipe-joined lists and bracketed qualifiers into `alternatenames`.
 	 *
-	 * Refusing those is what the display rule's character class was doing that
-	 * still needs doing. refusing a script is not.
-	 * This fold is the only path by which a place in a fold country acquires a name in its
-	 * own script, so a script test here decides whether a country is reachable in its own
-	 * writing at all — Hong Kong carried six Han lookup keys, all of them the country row's,
-	 * and every one of its eighteen districts was reachable only in romanization.
+	 * Refusing those is what the display rule's character class was doing that still needs doing.
+	 * Refusing a script is not.
+	 *
+	 * This fold is the only path by which a place in a fold country acquires a name in its own script,
+	 * so a script test here decides whether a country is reachable in its own writing at all.
+	 * Hong Kong carried six Han lookup keys, all of them the country row's, and every
+	 * one of its eighteen districts was reachable only in romanization.
 	 *
 	 * Measured over the 161-country fold set: 1,662,953 alternate names admitted
 	 * under the display rule, 345,555 further names admitted here — Arabic 138,897,
@@ -284,8 +289,8 @@ export async function ingestGeonamesAliases(
 	/**
 	 * The length band, carried over from the display rule unchanged.
 	 *
-	 * Two characters is a real place name in a Han script (上海) and noise in none. sixty
-	 * is longer than any name in the dumps and refuses a field that ran together.
+	 * Two characters is a real place name in a Han script (上海) and noise in none.
+	 * Sixty is longer than any name in the dumps and refuses a field that ran together.
 	 */
 	const NAME_MIN_LENGTH = 2
 	const NAME_MAX_LENGTH = 60
@@ -308,9 +313,7 @@ export async function ingestGeonamesAliases(
 
 	const populationInsert = db.prepare(`INSERT OR REPLACE INTO place_population (id, population) VALUES (?, ?)`)
 
-	// #267 admin linkage: ancestor rows (locality→region→country) so parentID scoping + adminCoherence reach
-	// the gap countries.
-	// Only used for a country in opts.adminForCountries.
+	// #267 admin linkage: ancestor rows (locality→region→country) so parentID scoping + adminCoherence reach the gap countries. Only used for a country in opts.adminForCountries.
 	const ancestorInsert = db.prepare(
 		`INSERT INTO ancestors (id, ancestor_id, ancestor_placetype, lastmodified) VALUES (?, ?, ?, 0)`
 	)
@@ -327,9 +330,7 @@ export async function ingestGeonamesAliases(
 	let total = 0
 	db.exec("BEGIN")
 
-	// #1514: clear the range before writing it. Inside the transaction, so a fold that throws leaves the
-	// DB as it found it rather than half-purged.
-	// See purgeGeonamesAliasRange for why the ids demand this.
+	// #1514: clear the range before writing it. Inside the transaction, so a fold that throws leaves the DB as it found it rather than half-purged. See purgeGeonamesAliasRange for why the ids demand this.
 	purgeGeonamesAliasRange(db)
 
 	for (const cc of countries) {
@@ -380,14 +381,10 @@ export async function ingestGeonamesAliases(
 			}
 		}
 
-		// #936: V2 tags for this country's P-class rows — geonameid → exact alias spelling → tag. The V2
-		// dump repeats one spelling under several languages ("Åbo" sv/da/no);
-		// the merged tag is official / preferred if any qualifying row is.
+		// #936: V2 tags for this country's P-class rows — geonameid → exact alias spelling → tag. The V2 dump repeats one spelling under several languages ("Åbo" sv/da/no); the merged tag is official / preferred if any qualifying row is.
 		const v2 = readV2 ? await parseAlternateNamesV2(v2File!, cc, wanted) : undefined
 
-		// #267 admin pre-pass (gap countries): fold the country (pcli) + regions (ADM1), self+ancestry them, and
-		// build the admin1→region map the localities link through.
-		// Point bbox (GeoNames gives a centroid only).
+		// #267 admin pre-pass (gap countries): fold the country (pcli) + regions (ADM1), self+ancestry them, and build the admin1→region map the localities link through. Point bbox (GeoNames gives a centroid only).
 		let countryID = -1
 		const adminMap = new Map<string, number>()
 
@@ -402,7 +399,8 @@ export async function ingestGeonamesAliases(
 				if (f[7]?.startsWith("PCL")) {
 					// Any country-level political entity — pcli (independent), pcld (dependent territory),
 					// pclf (freely associated), pcls (special administrative region: HK/MO/PS).
-					// All are the country tier. restricting to pcli left those ~17 territories without a country row.
+					// All are the country tier.
+					// Restricting to pcli left those ~17 territories without a country row.
 					if (countryID >= 0) continue // one country row
 					countryID = id++
 					sprInsert.run(countryID, -1, aname, "country", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
@@ -440,8 +438,9 @@ export async function ingestGeonamesAliases(
 			// #267: link to the locality's region (else country) for gap countries; -1 (orphan) otherwise.
 			const regionID = addAdmin ? (adminMap.get(f[10] ?? "") ?? -1) : -1
 			const parentID = regionID >= 0 ? regionID : addAdmin && countryID >= 0 ? countryID : -1
-			// Point bbox — a GeoNames row is a centroid. the candidate's region-bbox
-			// disambiguation just sees it as contained in itself, fine for a locality.
+			// Point bbox — a GeoNames row is a centroid.
+			// The candidate's region-bbox disambiguation just sees it as contained
+			// in itself, fine for a locality.
 			sprInsert.run(nid, parentID, name, "locality", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
 			namesInsert.run(nid, name, "locality", cc, "", "", 0, 0)
 

@@ -74,10 +74,12 @@ export interface BuildSlimOptions {
 	/**
 	 * Drop the `names` table after the FTS index is built (default false).
 	 *
-	 * `place_search` is a self-contained FTS5 (no external `content=`), so once it's built
-	 * `names` is only the build-time source — the resolver queries `place_search` + `spr` +
-	 * `place_population` + `coincident_roles` and never reads `names` at runtime.
-	 * Dropping it is the single biggest size win (~2/3 of the file for a multi-locale build. see #359).
+	 * `place_search` is a self-contained FTS5 (no external `content=`),
+	 * so once it's built `names` is only the build-time source.
+	 * The resolver queries `place_search` + `spr` + `place_population` + `coincident_roles`
+	 * and never reads `names` at runtime.
+	 *
+	 * Dropping it is the single biggest size win (~2/3 of the file for a multi-locale build. See #359).
 	 *
 	 * A future consumer that needs raw alt-names at runtime should ship a separate extract
 	 * rather than re-bloat the hot DB.
@@ -147,7 +149,7 @@ interface PlacePopulationTable {
  *
  * Mirrors the resolver-facing tables, plus the ATTACHed `src.*` tables so the row-copying
  * queries can name the source schema in `selectFrom` without falling back to raw SQL.
- * attach itself is still raw — Kysely doesn't model it — but everything downstream
+ * Attach itself is still raw — Kysely doesn't model it — but everything downstream
  * (the select-insert step that does the actual filtering work) goes through the builder.
  */
 interface BuildSchema {
@@ -164,8 +166,9 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 	const topLocalities = opts.topLocalitiesPerCountry ?? 1000
 	const progress = opts.onProgress ?? (() => {})
 
-	// Callers pass `""` for extracts that don't exist yet (e.g. a not-yet-built custom postcode DB).
-	// Skip empties up front. require every remaining path to exist.
+	// Callers pass `""` for extracts that don't exist yet (e.g. A not-yet-built custom postcode DB).
+	// Skip empties up front.
+	// Require every remaining path to exist.
 	const inputs = opts.inputs.filter((p) => p.length)
 
 	if (!inputs.length) throw new Error("no input WOF dbs provided")
@@ -206,15 +209,16 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 			} else if (table === PLACE_POPULATION_TABLE) {
 				// Older source builds may predate the aux table — create it empty
 				// so the per-source copy + ranking have somewhere to land.
-				// Sparse-by-design. missing rows are fine.
+				// Sparse-by-design.
+				// Missing rows are fine.
 				out.exec(PLACE_POPULATION_DDL)
 			} else {
 				throw new Error(`source DB ${inputs[0]} is missing required table '${table}'`)
 			}
 		}
 
-		// primary KEY on spr.id + place_population.id come from the schemas we copied. an
-		// explicit index on names.id helps the per-id insert select later.
+		// primary KEY on spr.id + place_population.id come from the schemas we copied.
+		// An explicit index on names.id helps the per-id insert select later.
 		out.exec(`CREATE INDEX IF NOT EXISTS names_id_idx ON names(id);`)
 
 		// Pull rows from each input.
@@ -237,9 +241,9 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 		// Materialize region/state abbreviations into a standalone `place_abbr (id, abbr)`
 		// table before `names` is (optionally) dropped.
 		// The full DB lets the resolver tier an exact-abbrev match by querying `names`
-		// (`#exactMatchIDs`), but the slim DB drops `names` for size — so the browser
-		// resolver gets its own tiny lookup (~hundreds of rows) to do the same data-driven
-		// exact-abbrev tiering ("VT" → Vermont rather than a token-matching foreign region)
+		// (`#exactMatchIDs`), but the slim DB drops `names` for size.
+		// So the browser resolver gets its own tiny lookup (~hundreds of rows) to do the same
+		// data-driven exact-abbrev tiering ("VT" → Vermont rather than a token-matching foreign region)
 		// instead of the demo's hardcoded region-abbreviation map (since deleted).
 		// Sourced from the `language='abbr'` rows `add-region-abbrevs.ts` wrote,
 		// already filtered to surviving spr ids via the names copy.
@@ -302,9 +306,9 @@ async function copyFromSource(
 ): Promise<void> {
 	// attach avoids any "load source into memory" step — SQLite walks both files in place.
 	// We need a fresh temp copy because some WOF distributions ship as read-only filesystem
-	// mounts and attach will still want a writable journal on the side. copying to /tmp
-	// dodges that without mutating the canonical files in /mnt/playpen/mailwoman-data/wof/.
-	// attach / detach stay raw — Kysely doesn't model them.
+	// mounts and attach will still want a writable journal on the side.
+	// Copying to /tmp dodges that without mutating the canonical files in /mnt/playpen/mailwoman-data/wof/.
+	// Attach / detach stay raw — Kysely doesn't model them.
 	await using tmpScratch = await temporaryDirectory("mailwoman-slim-src-")
 	const scratchPath = tmpScratch.resolve("src.db")
 
@@ -314,7 +318,8 @@ async function copyFromSource(
 
 	try {
 		// Does this extract carry the pre-built population aux table?
-		// The admin source does. a bare postcode extract might not.
+		// The admin source does.
+		// A bare postcode extract might not.
 		// The locality ranking + population copy below adapt accordingly.
 		const srcHasPopulation = Boolean(
 			out.prepare(`SELECT 1 FROM src.sqlite_master WHERE type = 'table' AND name = '${PLACE_POPULATION_TABLE}'`).get()

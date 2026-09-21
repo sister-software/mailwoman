@@ -16,7 +16,8 @@
  * Ordered roughly from coarsest (country) to finest (address).
  * See https://github.com/whosonfirst/whosonfirst-placetypes for the authoritative definitions of each.
  *
- * Phase 4.2 only emits the ones we actually look up. the union is open enough to extend later.
+ * Phase 4.2 only emits the ones we actually look up.
+ * The union is open enough to extend later.
  */
 export type WOFPlacetype =
 	| "country"
@@ -67,40 +68,47 @@ export interface PlaceCandidate {
 	 *
 	 * It is what lets a consumer see that two candidates in one answer denote
 	 * one settlement at two admin tiers.
-	 * The gazetteer carries 285,478 populated localities that share a folded name with
-	 * a `localadmin` within 5 km, and 264,523 of those (92.7%) name that twin as their
-	 * depth-1 ancestor — so the pair is legible from this field alone.
+	 * The gazetteer carries 285,478 populated localities that share a folded name with a `localadmin`
+	 * within 5 km, and 264,523 of those (92.7%) name that twin as their depth-1 ancestor.
+	 * So the pair is legible from this field alone.
 	 *
-	 * The backend reports the containment. whether two rows are one place is the consumer's call,
-	 * because a `localadmin` sometimes covers hamlets the settlement does not.
+	 * The backend reports the containment.
+	 * Whether two rows are one place is the consumer's call, because a `localadmin`
+	 * sometimes covers hamlets the settlement does not.
 	 */
 	parent_id?: number
 	score: number
 	distanceKm?: number
 	/**
-	 * True when this candidate's name or an alias exactly equals the query (the exact-match tier from
-	 * {@link RankingWeights.exactMatchTiering}). Surfaced so a downstream country re-rank (#369's postcode anchor in
-	 * `resolveTree`) can pin the country without crossing the tier — see the `exactMatch`
-	 * field on `@mailwoman/core`'s `ResolvedPlace`.
+	 * True when this candidate's name or an alias exactly equals the query
+	 * (the exact-match tier from {@link RankingWeights.exactMatchTiering}).
+	 *
+	 * Surfaced so a downstream country re-rank (#369's postcode anchor in `resolveTree`)
+	 * can pin the country without crossing the tier — see the `exactMatch` field
+	 * on `@mailwoman/core`'s `ResolvedPlace`.
 	 */
 	exactMatch?: boolean
 	/**
 	 * Combined prominence (population term + best proximity-bias term, same additive units) —
-	 * populated by the FTS lookup. the exact-tier sort orders by this instead of raw population
-	 * when the query carried proximity hints (`near`/`bias`).
+	 * populated by the FTS lookup.
+	 *
+	 * The exact-tier sort orders by this instead of raw population when the query
+	 * carried proximity hints (`near`/`bias`).
 	 */
 	prominence?: number
 	/**
 	 * Population from WOF's `wof:population` property.
 	 *
-	 * Only present when the candidate has it on record — WOF carries population
-	 * for ~15% of localities (mostly larger ones).
+	 * Only present when the candidate has it on record.
+	 * WOF carries population for ~15% of localities (mostly larger ones).
 	 * Absent does not mean zero, just unknown.
 	 */
 	population?: number
 	/**
-	 * Referential likelihood in [0, 1] — `referentialFromPopulation(population)`, the named form of the
-	 * prominence key this resolver has always ranked namesakes by (ROAD_TO_V9 §2, ratified 2026-08-06).
+	 * Referential likelihood in [0, 1].
+	 *
+	 * `referentialFromPopulation(population)`, the named form of the prominence key this
+	 * resolver has always ranked namesakes by (ROAD_TO_V9 §2, ratified 2026-08-06).
 	 *
 	 * It is a strictly-increasing function of {@link PlaceCandidate.population} below
 	 * `REFERENTIAL_SATURATION_POPULATION` and constant above it, so ordering by it —
@@ -125,7 +133,8 @@ export interface PlaceCandidate {
 	 *
 	 * Saint-Denis is why this is not a ranking key: the Seine-Saint-Denis suburb
 	 * (pop 96,128) scores 0.1173 while the Aude hamlet (pop 418) scores 0.5683.
-	 * Consumers that want to display salience read this. the ranking never does.
+	 * Consumers that want to display salience read this.
+	 * The ranking never does.
 	 */
 	encyclopedic?: number
 	/**
@@ -144,16 +153,18 @@ export interface PlaceCandidate {
 	/**
 	 * Bounding box from WOF's `spr.{min,max}_{latitude,longitude}` columns.
 	 *
-	 * Coarse outline for the place — a city's bbox is the city's full extent,
-	 * a postcode's is roughly the postcode polygon's envelope.
-	 * Optional because not all callers ask for it. implementations are free to omit
-	 * when the underlying schema lacks the columns.
+	 * Coarse outline for the place.
+	 * A city's bbox is the city's full extent, a postcode's is roughly the postcode polygon's envelope.
+	 *
+	 * Optional because not all callers ask for it.
+	 * Implementations are free to omit when the underlying schema lacks the columns.
 	 */
 	bbox?: GeoBbox
 	/**
 	 * Set by the coordinate-first path when the chosen locality and the sibling
-	 * postcode's containing locality are geographically far apart — the postcode
-	 * and the parsed city name disagree (a transposed / wrong-for-the-city postcode).
+	 * postcode's containing locality are geographically far apart.
+	 *
+	 * The postcode and the parsed city name disagree (a transposed / wrong-for-the-city postcode).
 	 *
 	 * The candidate is still returned (the name wins for the locality), but the flag lets
 	 * callers lower confidence / surface the conflict rather than silently mislocate.
@@ -161,10 +172,14 @@ export interface PlaceCandidate {
 	 */
 	mismatch?: boolean
 	/**
-	 * Admin-containment stamp (#1717 stage 2) — TRI-state, mirroring `ResolvedPlace.containedByQualifier`
-	 * in `@mailwoman/core`: `true` = the ancestors sidecar vouches this candidate sits under the query's
-	 * {@link FindPlaceQuery.regionQualifier}. `false` = evaluated and not vouched for. absent = never evaluated (no
-	 * qualifier on the query, or an artifact without the sidecar).
+	 * Admin-containment stamp (#1717 stage 2).
+	 *
+	 * TRI-state, mirroring `ResolvedPlace.containedByQualifier` in `@mailwoman/core`:
+	 * `true` = the ancestors sidecar vouches this candidate sits under the
+	 * query's {@link FindPlaceQuery.regionQualifier}.
+	 * `false` = evaluated and not vouched for.
+	 *
+	 * Absent = never evaluated (no qualifier on the query, or an artifact without the sidecar).
 	 * Absence is required — the resolver walk reads it as `unavailable`, never as "not contained".
 	 */
 	containedByQualifier?: boolean
@@ -173,8 +188,9 @@ export interface PlaceCandidate {
 	 * in `@mailwoman/core`: present only when this candidate's row would have taken the
 	 * cross-country alias penalty and the exemption prevented it.
 	 *
-	 * Emitted by the candidate-table backend alone — the wasm FTS lookup never runs the ranker,
-	 * and its candidates omit the field (not evaluated, never "did not fire").
+	 * Emitted by the candidate-table backend alone.
+	 * The wasm FTS lookup never runs the ranker, and its candidates omit the field
+	 * (not evaluated, never "did not fire").
 	 */
 	variantAliasExempted?: true
 }
@@ -204,7 +220,9 @@ export interface GeoBbox {
 /**
  * Query against the resolver.
  *
- * `text` is the only required field. everything else narrows the search.
+ * `text` is the only required field.
+ * Everything else narrows the search.
+ *
  * When `country` and `parentID` are both set, `parentID` wins (it's more specific).
  *
  * `near` and `bbox` are independent.
@@ -212,7 +230,7 @@ export interface GeoBbox {
  * but distant candidates aren't dropped.
  *
  * `bbox` is a hard filter — only candidates whose bbox intersects the query bbox are
- * returned (uses the package-built R*Tree index when present. if the index is missing
+ * returned (uses the package-built R*Tree index when present. If the index is missing
  * the option is silently ignored to preserve backwards compatibility).
  *
  * `near` may carry `maxDistanceKm` to escalate from a boost to a hard filter — candidates further
@@ -254,16 +272,21 @@ export interface FindPlaceQuery {
 	 */
 	parentID?: number
 	/**
-	 * Sibling postcode. When set on a `locality` query and a `postcode_locality` table is present, triggers the
-	 * coordinate-first soft-score path: postcode→candidate localities are injected and scored `0.6·S_pc + 0.3·S_name +
-	 * 0.1·S_pop` against the FTS name-match set, recovering small localities the name-match alone misses. Ignored when no
-	 * postcode_locality extract is present.
+	 * Sibling postcode.
+	 *
+	 * When set on a `locality` query and a `postcode_locality` table is present,
+	 * triggers the coordinate-first soft-score path: postcode→candidate localities are injected
+	 * and scored `0.6·S_pc + 0.3·S_name + 0.1·S_pop` against the FTS name-match set,
+	 * recovering small localities the name-match alone misses.
+	 * Ignored when no postcode_locality extract is present.
 	 */
 	postcode?: string
 	/**
-	 * Postcode-containment coherence (#31, Mechanism 2) — when true on a locality query that
-	 * also carries `postcode`, candidate rows within `POSTCODE_CONTAINMENT_THRESHOLD_KM` of the
-	 * postcode's own centroid sort by distance first, the rest appended in their original order.
+	 * Postcode-containment coherence (#31, Mechanism 2).
+	 *
+	 * When true on a locality query that also carries `postcode`, candidate rows
+	 * within `POSTCODE_CONTAINMENT_THRESHOLD_KM` of the postcode's own centroid sort
+	 * by distance first, the rest appended in their original order.
 	 *
 	 * Set by the resolver from `ResolveOpts.postcodeContainmentCoherence`;
 	 * absent → the population-first order is untouched (byte-identical).

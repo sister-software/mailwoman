@@ -153,8 +153,7 @@ beforeAll(() => {
 				[0.001, 4],
 			],
 		},
-		// Stored under the canonical route key (as the builder writes it from tiger's
-		// "State Rte 100") — the query side must fold "VT route 100" to the same key.
+		// Stored under the canonical route key (as the builder writes it from tiger's "State Rte 100"). The query side must fold "VT route 100" to the same key.
 		{
 			street_norm: "state route 100",
 			side: "L",
@@ -272,10 +271,7 @@ describe("StreetInterpolator", () => {
 	})
 })
 
-// #374 doctrine: the conformal radius multiplier is a property of the calibration set the artifact was
-// built against, so it ships in the extract's `interp_calibration` metadata table
-// and is read once at open time.
-// A extract predating the table (the shipped fleet) reads `undefined` — never a throw, never a guess.
+// #374 doctrine: the conformal radius multiplier is a property of the calibration set the artifact was built against, so it ships in the extract's `interp_calibration` metadata table and is read once at open time. A extract predating the table (the shipped fleet) reads `undefined` — never a throw, never a guess.
 describe("StreetInterpolator — artifact-carried radius calibration (#374)", () => {
 	it("reads the extract's baked multiplier at open time", async () => {
 		await using kdb = DatabaseClient.temp<StreetSegmentDatabase>()
@@ -287,8 +283,9 @@ describe("StreetInterpolator — artifact-carried radius calibration (#374)", ()
 		const calibrated = new StreetInterpolator({ database: kdb })
 
 		expect(calibrated.radiusCalibration).toBe(1.7)
-		// find() itself never applies the multiplier — the raw radius stays the honest half-segment
-		// value (conformal-calibrate measures this); the resolver owns the multiplication.
+		// find() itself never applies the multiplier.
+		// The raw radius stays the honest half-segment value (conformal-calibrate measures this);
+		// the resolver owns the multiplication.
 		const hit = calibrated.find({ street: "Main St", number: "150", postcode: "05601" })
 		expect(hit).not.toBeNull()
 		expect(hit!.uncertaintyM).toBeGreaterThan(40)
@@ -316,13 +313,15 @@ describe("StreetInterpolator — artifact-carried radius calibration (#374)", ()
 })
 
 /**
- * The 2026-08-14 retrieval rungs, pinned on the two live failures that motivated them (both operator-reported): `18295
- * East 13 Mile Road, Fraser MI` (section-line boundary road — parity decides the ZIP) and `10 Saint Pauls PL St,
- * Brooklyn New York` (doubled type + saint↔st register split + borough-namesake near tie-break).
+ * The 2026-08-14 retrieval rungs, pinned on the two live failures that
+ * motivated them (both operator-reported): `18295 East 13 Mile Road, Fraser MI`
+ * (section-line boundary road — parity decides the ZIP) and `10 Saint Pauls PL St, Brooklyn New York`
+ * (doubled type + saint↔st register split + borough-namesake near tie-break).
  */
 describe("StreetInterpolator — parity-first ambiguity, near tie-break, key variants", () => {
 	it("answers without a postcode when PARITY selects a single ZIP (the boundary-road class)", () => {
-		// 151 is odd. only the 05601 odd side can hold it.
+		// 151 is odd.
+		// Only the 05601 odd side can hold it.
 		// The even 05602 namesake used to veto this via the pre-parity postcode count.
 		const hit = interpolator.find({ street: "Main St", number: "151" })
 
@@ -369,8 +368,7 @@ describe("StreetInterpolator — parity-first ambiguity, near tie-break, key var
 						[0.001, 0.18],
 					],
 				},
-				// The register-split pair: NYC-style key in 33333, saint-style keys in two far ZIPs so
-				// the `saint` variant alone can never answer.
+				// The register-split pair: NYC-style key in 33333, saint-style keys in two far ZIPs so the `saint` variant alone can never answer.
 				{
 					street_norm: "st pauls place",
 					side: "R",
@@ -438,8 +436,9 @@ describe("StreetInterpolator — parity-first ambiguity, near tie-break, key var
 
 		it("advances the key-variant ladder past a wrong-register variant that covers but cannot answer", () => {
 			// "Saint Pauls PL St": the doubled-type collapse gives `saint pauls place`,
-			// which reaches the two far ZIPs and fails the near check — the ladder must go on
-			// to `st pauls place` and answer from 33333 rather than stopping at "rows found".
+			// which reaches the two far ZIPs and fails the near check.
+			// The ladder must go on to `st pauls place` and answer from 33333
+			// rather than stopping at "rows found".
 			const hit = nearInterp.find({ street: "Saint Pauls PL St", number: "10", near: { lat: 0.01, lon: 0 } })
 
 			expect(hit).not.toBeNull()

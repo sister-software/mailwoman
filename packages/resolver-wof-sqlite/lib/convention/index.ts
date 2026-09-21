@@ -35,13 +35,14 @@ export interface ScoringWeights {
 /**
  * A geographically-scoped resolution profile.
  *
- * Namespaced sections grow per phase;
- * #289 ships the dispatch + scoring sections (`candidateStrategies` + `scoringWeights`).
+ * Namespaced sections grow per phase; #289 ships the dispatch + scoring sections
+ * (`candidateStrategies` + `scoringWeights`).
  * Later phases add `fieldMapping` (locale semantics for `locator[]`), `tokenNormalization`, etc.
  */
 export interface Convention {
 	/**
-	 * Ordered strategy names the dispatcher runs. the first to return a non-null result wins.
+	 * Ordered strategy names the dispatcher runs.
+	 * The first to return a non-null result wins.
 	 */
 	candidateStrategies?: string[]
 	/**
@@ -67,7 +68,9 @@ export interface ResolvedConvention {
  * The base layer every ancestor chain starts from.
  *
  * Reproduces the pre-engine coordinate-first behavior exactly: try `postcode_area_resolution`,
- * else fall back to fuzzy name match. soft-score weights 0.6 / 0.3 / 0.1.
+ * else fall back to fuzzy name match.
+ * Soft-score weights 0.6 / 0.3 / 0.1.
+ *
  * Changing these changes EU behavior — don't, without a byte-stability run.
  */
 export const WORLD_DEFAULT: ResolvedConvention = {
@@ -94,15 +97,15 @@ export const ADDRESS_CONVENTION_TABLE = "address_convention"
 /**
  * A named resolution primitive.
  *
- * Returns `null` to abstain (condition unmet / no data) → the dispatcher tries the
- * next strategy. returns an array (possibly empty) to claim the result.
+ * @returns `null` to abstain (condition unmet / no data) → the dispatcher tries the next strategy.
+ *   Returns an array (possibly empty) to claim the result.
  */
 export type Strategy = (query: FindPlaceQuery, convention: ResolvedConvention) => Promise<PlaceCandidate[] | null>
 
 /**
  * Look up a convention record by WOF polygon id.
  *
- * Returns `undefined` when the polygon has no override.
+ * @returns `undefined` when the polygon has no override.
  */
 export interface ConventionSource {
 	get(wofID: number): Convention | undefined
@@ -130,8 +133,9 @@ export class SeedConventionSource implements ConventionSource {
 /**
  * Deep-merge convention layers, later (more-specific) layers winning per field.
  *
- * `candidateStrategies` is replaced wholesale — a convention names its full
- * ordered list, it does not append.
+ * `candidateStrategies` is replaced wholesale.
+ * A convention names its full ordered list, it does not append.
+ *
  * `scoringWeights` is merged key-by-key so a locality can nudge one weight without restating the others.
  */
 export function mergeConventions(base: Convention, ...overrides: Array<Convention | undefined>): Convention {

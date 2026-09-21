@@ -128,7 +128,7 @@ describe("buildPlaceSearchFTS", () => {
 		// New City" must not phrase-match "york new".
 		// Without the separator token, FTS5 assigns the aliases' tokens consecutive positions
 		// and the cross-boundary phrase falsely matches (see the ALIAS_SEPARATOR probe table
-		// in fts.ts — punctuation separators do not fix this. only an indexed token does).
+		// in fts.ts — punctuation separators do not fix this. Only an indexed token does).
 		db.exec(`
 			INSERT INTO spr VALUES (5, NULL, 'Twin Hamlet', 'locality', 'US', 40.0, -80.0, 39.9, 40.1, -80.1, -79.9, -1, 0);
 			INSERT INTO names (id, language, name) VALUES (5, 'eng', 'York');
@@ -246,7 +246,8 @@ describe("buildPlaceSearchFTS", () => {
 
 		// Add one place tagged with the legacy convention (`is_current = 1`).
 		// WOF mixes both conventions; ~42% of admin-US rows carry `1` rather than `-1`.
-		// The filter must accept both — the Phase 4.2 regression was excluding all of these.
+		// The filter must accept both.
+		// The Phase 4.2 regression was excluding all of these.
 		db.exec(`
 			INSERT INTO spr VALUES (
 				1000, NULL, 'Legacy Place', 'locality', 'US',

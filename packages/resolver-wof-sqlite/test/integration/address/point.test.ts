@@ -63,7 +63,8 @@ beforeAll(async () => {
 		null
 	)
 
-	// A source that carries the range verbatim — the exact key must win over the low-end retry.
+	// A source that carries the range verbatim.
+	// The exact key must win over the low-end retry.
 	insert.run(
 		"osborne drive",
 		"osborne drive",
@@ -115,10 +116,10 @@ beforeAll(async () => {
 	insert.run(teichKey, teichKey, "3", null, "04509", "krensitz", "Teichstraße", 51.52, 12.45, "osm", "r")
 	// An OSM-shaped row with no scope of its own — the case the bbox rung exists for.
 	insert.run("mill lane", "mill lane", "7", null, null, null, "Mill Lane", 51.5, -0.1, "osm", "r")
-	// A NAD-shaped US row whose city field is abbreviated — the Texas extract
-	// writes `addi` for Addison on 5,174 rows.
-	// The board's `us-addison-zip-75001` (status pass) is this row. a locality check that
-	// reads the truncation as a different place loses it to interpolation.
+	// A NAD-shaped US row whose city field is abbreviated.
+	// The Texas extract writes `addi` for Addison on 5,174 rows.
+	// The board's `us-addison-zip-75001` (status pass) is this row.
+	// A locality check that reads the truncation as a different place loses it to interpolation.
 	const airportKey = normalizeStreetForKey("Airport Pkwy")
 
 	insert.run(
@@ -166,9 +167,11 @@ describe("AddressPointSqliteLookup", () => {
 	it("bridges letter-suffix spacing in both directions, then falls to the base number", () => {
 		expect(lookup.find({ street: "Rue de l'Église", number: "3a", postcode: "67530" })?.lat).toBe(48.4771)
 		expect(lookup.find({ street: "Rue de l'Église", number: "3 a", postcode: "67530" })?.lat).toBe(48.4771)
-		// No 19a and no "19 a" on Forest Road — the base-number rung answers 19's parcel.
+		// No 19a and no "19 a" on Forest Road.
+		// The base-number rung answers 19's parcel.
 		expect(lookup.find({ street: "Forest Road", number: "19a", postcode: "7250" })?.lat).toBe(-41.4316)
-		// No 4, "4 a", or 4a anywhere — the whole ladder stays null.
+		// No 4, "4 a", or 4a anywhere.
+		// The whole ladder stays null.
 		expect(lookup.find({ street: "Rue de l'Église", number: "4a", postcode: "67530" })).toBeNull()
 	})
 
@@ -186,7 +189,7 @@ describe("AddressPointSqliteLookup", () => {
 	})
 
 	it("unit siblings share the building coordinate through every rung", () => {
-		// The fixture has unit rows for 32 (unit 6 etc. in the real register. here the plain row) —
+		// The fixture has unit rows for 32 (unit 6 etc. in the real register. Here the plain row) —
 		// a range surface resolving through the low-end rung lands the same building coordinate the
 		// plain-number probe returns, so a unit-containing query can never be worse than its base.
 		const base = lookup.find({ street: "Osborne Drive", number: "32", postcode: "4505" })
@@ -257,8 +260,9 @@ describe("the postcode rung's locality contradiction (#1631)", () => {
 	})
 
 	// `us-addison-zip-75001`: the US extract's key is the NAD abbreviation `addi`, the query says Addison.
-	// An abbreviated key steers the choice among same-postcode rows but never refuses one, so the
-	// postcode-only row answers at rooftop. exact comparison sent this row to interpolation 198 m away.
+	// An abbreviated key steers the choice among same-postcode rows but never refuses one,
+	// so the postcode-only row answers at rooftop.
+	// Exact comparison sent this row to interpolation 198 m away.
 	it("never refuses on the locality under the US extract, whose keys are abbreviated (#1631 follow-up)", () => {
 		const hit = lookup.find({ street: "Airport Pkwy", number: "4900", postcode: "75001", locality: "Addison" })
 

@@ -158,7 +158,8 @@ test("a stale population cannot outlive the place it belonged to", async () => {
 
 	await ingestGeonamesAliases(db, ["AT"], dir.path, () => {})
 
-	// Wien now holds that id and the fixture gives it no population — so there must be no row at all.
+	// Wien now holds that id and the fixture gives it no population.
+	// So there must be no row at all.
 	const pop = db.prepare(`SELECT population FROM place_population WHERE id = ?`).get(GEONAMES_ID_BASE) as
 		| Row
 		| undefined
@@ -203,9 +204,7 @@ test("every folded locality gets its self-ancestor row, admin fold or not", asyn
 })
 
 test("the purge stops at the GeoNames-POSTAL namespace above it", async () => {
-	// The alias fold owns [9e12, 9.5e12). The postal fold, the NL-PC6 extract (9.6e12), Code-Point
-	// (9.7e12) and NI (9.8e12) each own their own range — a purge that ran to the end of the id space
-	// would silently delete them.
+	// The alias fold owns [9e12, 9.5e12). The postal fold, the NL-PC6 extract (9.6e12), Code-Point (9.7e12) and NI (9.8e12) each own their own range. A purge that ran to the end of the id space would silently delete them.
 	await using db = freshDB()
 
 	db.prepare(`INSERT INTO names (id, name, placetype, country, language, privateuse, official, lastmodified)

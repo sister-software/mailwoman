@@ -14,9 +14,10 @@ import { normalizeLocalityForKey } from "#street/normalize"
  * Fold every country surface ICU knows onto that country's candidate row (#1678 thread 1).
  *
  * A bare `格鲁吉亚` (Georgia the country) resolved to nothing while `佐治亚州` (Georgia the US state)
- * resolved correctly, and the model gave both the same wrong `locality` tag —
- * so the tag was never the variable. 140 of 237 country rows are synthetic and carry a
+ * resolved correctly, and the model gave both the same wrong `locality` tag.
+ * So the tag was never the variable. 140 of 237 country rows are synthetic and carry a
  * canonical English name and nothing else, and WOF holds no Chinese country names at all.
+ *
  * The GeoNames alias fold now admits every script, but it reaches only the fold's own country set
  * and names a place from its dump row, so it supplies a country surface for no country outside that set.
  *
@@ -28,8 +29,8 @@ import { normalizeLocalityForKey } from "#street/normalize"
  * The display `name` stays whatever the gazetteer already had, so resolving `格鲁吉亚`
  * answers with the Georgia country row rather than renaming it.
  *
- * Returns the row count so the caller can report it — a zero means ICU supplied nothing,
- * which is a different fact from the pass not having run.
+ * @returns the row count so the caller can report it.
+ *   A zero means ICU supplied nothing, which is a different fact from the pass not having run.
  */
 export function stageCountryDisplayNames(ctx: {
 	attrs: Map<number, PlaceAttrs>
@@ -39,8 +40,8 @@ export function stageCountryDisplayNames(ctx: {
 	tx: { exec(sql: string): void }
 }): number {
 	// One country row per ISO2.
-	// Where a code has several (historic rows surviving the is_current filter),
-	// the most populous wins — the same tiebreak the ranking uses everywhere else.
+	// Where a code has several (historic rows surviving the is_current filter), the most populous wins.
+	// The same tiebreak the ranking uses everywhere else.
 	const countryByISO2 = new Map<string, { sid: number; a: PlaceAttrs }>()
 
 	for (const [sid, a] of ctx.attrs) {
@@ -70,8 +71,8 @@ export function stageCountryDisplayNames(ctx: {
 
 		const k = normalizeLocalityForKey(name)
 
-		// The country's own key is already staged as its primary. insert or ignore at
-		// materialization dedupes the rest, so this only skips the obvious self-alias.
+		// The country's own key is already staged as its primary.
+		// Insert or ignore at materialization dedupes the rest, so this only skips the obvious self-alias.
 		if (!k || k === target.a.pkey) continue
 
 		ctx.stageRow(k, target.a, target.sid, 0)

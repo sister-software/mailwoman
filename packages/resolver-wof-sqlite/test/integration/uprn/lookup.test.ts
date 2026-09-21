@@ -114,7 +114,7 @@ describe("nearestUPRN", () => {
 	})
 
 	it("ranks by true distance when several points are in radius", () => {
-		// Between A and B, nearer B — both are inside 300 m of the query.
+		// Between A and B, nearer B. Both are inside 300 m of the query.
 		const query = { lat: 51.5025, lon: -0.141 }
 		const hit = lookup.nearestUPRN(query.lat, query.lon, 300)
 

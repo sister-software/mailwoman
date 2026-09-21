@@ -71,13 +71,14 @@ export interface SprTable {
  * Alternate names per place, keyed by language tag subfields (BCP-47 components).
  *
  * Joins back to `spr.id` via `id` (not `place_id` — the real WOF schema uses the same column name
- * as the spr primary key. this is a normal join across two tables with the same FK column name).
+ * as the spr primary key. This is a normal join across two tables with the same FK column name).
  *
- * No `kind` column in real WOF — the FTS build just concatenates all names per id.
+ * No `kind` column in real WOF.
+ * The FTS build just concatenates all names per id.
  *
- * `official` (#936 ingest bit, our unified builds only. absent in real WOF dumps)
- * marks a preferred-form name in an official language of the place's country —
- * the aliases eligible to join the name-exact tier under the option-3 rule.
+ * `official` (#936 ingest bit, our unified builds only. Absent in real WOF dumps) marks
+ * a preferred-form name in an official language of the place's country.
+ * The aliases eligible to join the name-exact tier under the option-3 rule.
  * See `unified-schema.ts` for the full interface.
  */
 export interface NamesTable {
@@ -100,8 +101,8 @@ export interface NamesTable {
  * Per-place GeoJSON blob.
  *
  * Centroid lat/lon are already exposed via `spr.{latitude,longitude}`
- * so the resolver doesn't need to parse this. we keep the table modeled in case
- * Phase 4.3 wants the full geometry for bbox / polygon work.
+ * so the resolver doesn't need to parse this.
+ * We keep the table modeled in case Phase 4.3 wants the full geometry for bbox / polygon work.
  */
 export interface GeojsonTable {
 	id: number
@@ -129,8 +130,11 @@ export interface AncestorsTable {
  * `place_population` — `id → wof:population`, split off `spr` so a population-rank
  * join is a single indexed probe.
  *
- * Written by the build/augment ingest + the GeoNames backfill. read by the candidate build's `neg_rank`.
- * WOF carries population for ~15% of localities. absent = unknown rather than zero.
+ * Written by the build/augment ingest + the GeoNames backfill.
+ * Read by the candidate build's `neg_rank`.
+ *
+ * WOF carries population for ~15% of localities.
+ * Absent = unknown rather than zero.
  */
 export interface PlacePopulationTable {
 	id: number
@@ -152,7 +156,8 @@ export interface PlaceAbbrTable {
  * `concordances` — external-id cross-references per place (`id → (other_source, other_id)`),
  * e.g. a GeoNames or Overture gers id.
  *
- * Metadata only. not part of the resolve path.
+ * Metadata only.
+ * Not part of the resolve path.
  */
 export interface ConcordancesTable {
 	id: number
@@ -162,12 +167,12 @@ export interface ConcordancesTable {
 }
 
 /**
- * `coincident_roles` (#402) — the dual-role relation: a place that is both an admin region
- * and a locality (Berlin the city-state).
+ * `coincident_roles` (#402).
+ *
+ * The dual-role relation: a place that is both an admin region and a locality (Berlin the city-state).
  *
  * One row per (admin, locality) pair the resolver can complete a hierarchy with.
- * Surfaced by
- * {@link MailwomanLookupLike.coincidentRolesFor}.
+ * Surfaced by {@link MailwomanLookupLike.coincidentRolesFor}.
  */
 export interface CoincidentRolesTable {
 	admin_id: number
@@ -182,8 +187,10 @@ export interface CoincidentRolesTable {
  * The full schema we hand to `Kysely<WOFDatabase>` / `new DatabaseClient<WOFDatabase>(...)`.
  *
  * Tables not listed here will fail type-checked queries — by design.
- * The reader ({@link WOFSQLitePlaceLookup}) already consumes this. the build/augment writers adopt it
- * so a column rename is a compile error on both sides (the drift that bit the corpus tiger adapter).
+ * The reader ({@link WOFSQLitePlaceLookup}) already consumes this.
+ *
+ * The build/augment writers adopt it so a column rename is a compile error on both
+ * sides (the drift that bit the corpus tiger adapter).
  */
 /**
  * The provenance row every built extract carries: source fingerprints travelling with

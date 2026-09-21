@@ -69,7 +69,8 @@ export interface AddressPointTable {
 	 * The source register's stable administrative key for the point's commune
 	 * or municipality — BAN's `code_insee`.
 	 *
-	 * A display name (`locality_norm`) is not a key. the coverage basis is computed per this key.
+	 * A display name (`locality_norm`) is not a key.
+	 * The coverage basis is computed per this key.
 	 */
 	admin_code: string | null
 	/**
@@ -89,7 +90,8 @@ export interface AddressPointDatabase {
 }
 
 /**
- * The subset of a Kysely handle the `address_point` DDL touches — the parameter type its builders take.
+ * The subset of a Kysely handle the `address_point` DDL touches.
+ * The parameter type its builders take.
  *
  * Kysely is invariant in its schema parameter (the incompatibility is in `transaction()`),
  * so a extract that extends `AddressPointTable` — OSM adds `h3_cell` — cannot pass

@@ -72,9 +72,9 @@ const MD5_HEX_LENGTH = 32
 /**
  * What an FST was built from, recorded so a later reader can tell whether that thing still exists.
  *
- * `bytes` is not redundant with `md5` — it is the field that survives a truncated
- * or half-written source and makes the mismatch legible in the warning
- * ("5,273,722,880 → 5,372,076,032" names the rebuild. a hex delta does not).
+ * `bytes` is not redundant with `md5`.
+ * It is the field that survives a truncated or half-written source and makes the mismatch legible
+ * in the warning ("5,273,722,880 → 5,372,076,032" names the rebuild. A hex delta does not).
  */
 export interface FSTSourceIdentity {
 	md5: string
@@ -97,10 +97,11 @@ export interface FSTStampFields {
  * What a caller expects the artifact to have been built from.
  *
  * `exclusionPolicy` is optional and caller-supplied on purpose.
- * The policy id lives in `mailwoman/gazetteer-pipeline/fst.ts`
- * (which depends on this package rather than the other way round), so only the caller knows
- * which policy it means — the same split as the pair-index guard, where the format+magnitude
- * half is shared and the source-md5 half stays with the script that knows its sources.
+ * The policy id lives in `mailwoman/gazetteer-pipeline/fst.ts` (which depends on this package
+ * rather than the other way round), so only the caller knows which policy it means.
+ *
+ * The same split as the pair-index guard, where the format+magnitude half is shared
+ * and the source-md5 half stays with the script that knows its sources.
  */
 export interface FSTExpectation {
 	source: FSTSourceIdentity
@@ -116,15 +117,16 @@ export interface FSTExpectation {
 }
 
 /**
- * Read an artifact's stamp without deserializing it — a header seek plus the trailer,
- * three reads totalling a few kilobytes.
+ * Read an artifact's stamp without deserializing it.
+ *
+ * A header seek plus the trailer, three reads totalling a few kilobytes.
  *
  * The distinction matters: `fst-global-priority.bin` is 317 MB and this runs on every
  * `yarn test` via the weights linkers, so `readFileSync` + `readFSTProvenance` would
  * trade a freshness guard for a slower test suite and nobody would keep it.
  *
- * Returns `undefined` for a file that is absent, too small, or not an FST at all —
- * none of which is this function's business to diagnose.
+ * @returns `undefined` for a file that is absent, too small, or not an FST at all —
+ *   none of which is this function's business to diagnose.
  */
 export async function peekFSTStampFields(path: string): Promise<FSTStampFields | undefined> {
 	if (!(await pathExists(path))) return undefined
@@ -230,8 +232,9 @@ const sourceIdentityMemo = new Map<string, FSTSourceIdentity>()
  *
  * The order is deliberate: format first (a version-obsolete file is stale whatever its source says),
  * then the presence of a stamp, then the source identity, then the build policy.
- * Each returns prose a reader can act on — the reasons are printed verbatim
- * into {@link formatFSTStaleWarning}.
+ * Each returns prose a reader can act on.
+ *
+ * The reasons are printed verbatim into {@link formatFSTStaleWarning}.
  */
 export function fstStaleReason(fields: FSTStampFields | undefined, expected: FSTExpectation): string | undefined {
 	if (!fields) return "unreadable or not an FST artifact"
@@ -274,8 +277,9 @@ export function fstStaleReason(fields: FSTStampFields | undefined, expected: FST
 /**
  * The whole check, for a caller that has a path and a source DB and wants a warning string or nothing.
  *
- * Returns `undefined` when the artifact is current or when it is absent — an absent artifact is a
- * different problem with a different message, and every existing caller already reports it in place.
+ * @returns `undefined` when the artifact is current or when it is absent.
+ *   An absent artifact is a different problem with a different message,
+ *   and every existing caller already reports it in place.
  */
 export async function fstFreshnessWarning({
 	fstPath,

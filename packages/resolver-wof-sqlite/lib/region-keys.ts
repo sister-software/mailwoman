@@ -36,9 +36,11 @@ export const REGION_CLASS_PLACETYPES: ReadonlySet<string> = new Set(["region", "
  *
  * Ireland writes `Co. Westmeath` where WOF stores `Westmeath`, so the prefix defeats the fold and
  * every Irish county qualifier read `contradicted` on the first board census (2026-08-17, five rows).
- * The stripped form is added to the key set, never substituted — `County Durham` is a real name
- * whose stripped variant simply also matches, and a set union can only widen confirmation,
- * so the closure is monotone: `contradicted → confirmed` is the only movement it can cause.
+ * The stripped form is added to the key set, never substituted.
+ *
+ * `County Durham` is a real name whose stripped variant simply also matches,
+ * and a set union can only widen confirmation, so the closure is monotone:
+ * `contradicted → confirmed` is the only movement it can cause.
  */
 const COUNTY_QUALIFIER_PREFIXES = ["county", "co.", "co"] as const
 
@@ -89,12 +91,15 @@ function withoutSuffix(value: string, suffixes: readonly string[]): string {
 }
 
 /**
- * The comparable keys a region string expands to: its own fold
- * (the shared candidate.db `name_key` normalizer,
- * {@link normalizeLocalityForKey} — build side and check side agree by construction). a county-prefix-stripped variant.
- * the codex subdivision expansions — the disjoint US+CA table always, plus the country-scoped
- * table when the caller knows a country (`WA` under AU is Western Australia. under US,
- * Washington — the collision that keeps AU out of the unscoped table).
+ * The comparable keys a region string expands to: its own fold (the shared candidate.db `name_key`
+ * normalizer, {@link normalizeLocalityForKey} — build side and check side agree by construction).
+ *
+ * A county-prefix-stripped variant.
+ * The codex subdivision expansions.
+ *
+ * The disjoint US+CA table always, plus the country-scoped table when the caller
+ * knows a country (`WA` under AU is Western Australia. Under US, Washington —
+ * the collision that keeps AU out of the unscoped table).
  * Every expansion lands the canonical name and code folds in the set, so `IL`/`Illinois`
  * and `WA`/`Western Australia` meet from either side.
  */
@@ -119,9 +124,9 @@ export function regionKeys(value: string, countryAlpha2?: string): Set<string> {
 		}
 	}
 
-	// The empty fold stays IN the set on purpose — the admin-coherence verdicts have
-	// always compared the empty key (two empty-folding strings intersect → `confirmed`),
-	// and this move must not shift a verdict.
+	// The empty fold stays IN the set on purpose.
+	// The admin-coherence verdicts have always compared the empty key
+	// (two empty-folding strings intersect → `confirmed`), and this move must not shift a verdict.
 	// A consumer probing a table by key filters the empty string out itself.
 	return keys
 }
@@ -136,11 +141,12 @@ export function regionKeys(value: string, countryAlpha2?: string): Set<string> {
  * counties under `county donegal` with no bare `donegal` key (measured on the shipped
  * candidate.db — the qualifier probe missed every Irish county until this variant landed).
  *
- * Adding `county <key>` restores the two-sidedness for the one stored-form family with an
- * evidenced case. the union is monotone (a wider qualifier set can only find more bearers,
- * each of which must still genuinely contain a candidate before anything moves).
- * The suffix sibling (`<key> province`) is deliberately absent — no stored-form case
- * has been evidenced, and a change without a board does not get built.
+ * Adding `county <key>` restores the two-sidedness for the one stored-form family with an evidenced case.
+ * The union is monotone (a wider qualifier set can only find more bearers, each of
+ * which must still genuinely contain a candidate before anything moves).
+ *
+ * The suffix sibling (`<key> province`) is deliberately absent.
+ * No stored-form case has been evidenced, and a change without a board does not get built.
  */
 export function regionQualifierProbeKeys(value: string, countryAlpha2?: string): Set<string> {
 	const keys = regionKeys(value, countryAlpha2)

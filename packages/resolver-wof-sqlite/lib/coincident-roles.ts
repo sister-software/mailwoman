@@ -46,7 +46,8 @@ import { tableExists } from "@mailwoman/sqlite/introspection"
 
 import type { WOFDatabase } from "#schema"
 /**
- * Table of places that hold more than one admin role — a locality that is also its county seat.
+ * Table of places that hold more than one admin role.
+ * A locality that is also its county seat.
  *
  * Written by the gazetteer build, read by the resolver when a coincident locality has to be chosen.
  */
@@ -117,7 +118,8 @@ interface CandidateRow {
 /**
  * Derive the coincident-roles relation into `db`.
  *
- * Additive — only creates/replaces the `coincident_roles` table. never touches `spr`/`names`/`ancestors`.
+ * Additive — only creates/replaces the `coincident_roles` table.
+ * Never touches `spr`/`names`/`ancestors`.
  * Idempotent.
  */
 export function buildCoincidentRoles(
@@ -196,11 +198,12 @@ export function buildCoincidentRoles(
 			const tolerance = Math.max(toleranceFraction * diag, minToleranceKm)
 
 			if (dist > tolerance) continue
-			// v1 is region-tier only: a place is a `city-state` when its centroid coincides with the
-			// region's (Berlin/Hamburg), else `capital-seat` (a region named after its principal city, e.g.
-			// Milano province → Milano comune). `consolidated-county` is reserved for a future county-tier
-			// pass (US SF/Denver) — excluded from v1 because county-tier same-name coincidences are
-			// dominated by French cantons / JP counties that don't hit the parser-drops-locality failure.
+			// v1 is region-tier only: a place is a `city-state` when its centroid
+			// coincides with the region's (Berlin/Hamburg), else `capital-seat`
+			// (a region named after its principal city, e.g. Milano province → Milano comune).
+			// `consolidated-county` is reserved for a future county-tier pass (US SF/Denver) —
+			// excluded from v1 because county-tier same-name coincidences are dominated by
+			// French cantons / JP counties that don't hit the parser-drops-locality failure.
 			const relationshipType = dist <= cityStateMaxKm ? "city-state" : "capital-seat"
 			insert.run(c.admin_id, c.locality_id, relationshipType, c.admin_placetype, dist, c.pop)
 
@@ -233,8 +236,8 @@ export function coincidentRolesExists<DB>(db: DatabaseClient<DB>): boolean {
 /**
  * Load the relation into an in-memory map keyed by `admin_id` for O(1) runtime lookup (#405).
  *
- * Each admin may map to multiple same-name descendants. the consumer disambiguates
- * (min distance → population → abstain).
+ * Each admin may map to multiple same-name descendants.
+ * The consumer disambiguates (min distance → population → abstain).
  * Returns an empty map when the table is absent.
  */
 export function loadCoincidentRoles<DB>(db: DatabaseClient<DB>): Map<number, CoincidentRole[]> {
@@ -278,8 +281,10 @@ export function loadCoincidentRoles<DB>(db: DatabaseClient<DB>): Map<number, Coi
 }
 
 /**
- * The relation joined with `spr`, as an in-memory map keyed by `admin_id` — the resolver-facing view of
- * {@link loadCoincidentRoles}, carrying the canonical name and coordinates each coincident locality resolves to.
+ * The relation joined with `spr`, as an in-memory map keyed by `admin_id`.
+ *
+ * The resolver-facing view of {@link loadCoincidentRoles}, carrying the canonical name
+ * and coordinates each coincident locality resolves to.
  * Returns an empty map when the relation table is absent.
  */
 export function loadCoincidentLocalities<DB>(db: DatabaseClient<DB>): Map<number, CoincidentLocality[]> {

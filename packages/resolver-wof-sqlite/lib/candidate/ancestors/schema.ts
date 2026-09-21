@@ -65,8 +65,8 @@ import type { NameKey } from "#street/normalize"
 /**
  * The deepest chain the sidecar stores per place.
  *
- * WOF containment within the resolvable placetypes (country … microhood) never legitimately
- * exceeds this. anything past it is source noise the build drops (and counts) rather than stores.
+ * WOF containment within the resolvable placetypes (country … microhood) never legitimately exceeds this.
+ * Anything past it is source noise the build drops (and counts) rather than stores.
  */
 export const MAX_ANCESTOR_DEPTH = 8
 
@@ -78,7 +78,7 @@ export const CANDIDATE_ANCESTOR_TABLE = "candidate_ancestor"
 
 /**
  * The interval-label table's name — the closure table's seal-time sibling.
- * existence-restricted the same way.
+ * Existence-restricted the same way.
  */
 export const CANDIDATE_INTERVAL_TABLE = "candidate_interval"
 
@@ -119,7 +119,8 @@ export interface CandidateAncestorTable {
  * Pre/post-order labels over the canonical-parent forest — one row per place with
  * recorded ancestry (see the module docstring for absence semantics).
  *
- * `pre < post` always. labels are unique across the artifact.
+ * `pre < post` always.
+ * Labels are unique across the artifact.
  */
 export interface CandidateIntervalTable {
 	spr_id: number
@@ -139,8 +140,9 @@ export interface CandidateAncestorsDatabase {
 }
 
 /**
- * The `candidate_ancestor` columns in clustered-key order — the first two are the
- * primary key, and the builder's positional `insert` binds by this order.
+ * The `candidate_ancestor` columns in clustered-key order.
+ *
+ * The first two are the primary key, and the builder's positional `insert` binds by this order.
  *
  * Keep in sync with {@link CandidateAncestorTable}.
  */
@@ -169,7 +171,7 @@ export async function createCandidateAncestorTable(db: Kysely<CandidateDatabase>
 		.addColumn("parent_name", "text", (c) => c.notNull())
 		.addColumn("parent_name_key", "text", (c) => c.notNull())
 		.addPrimaryKeyConstraint("candidate_ancestor_pk", ["spr_id", "depth"])
-		// `without rowid` has no first-class builder. the raw modifier is the idiomatic fallback.
+		// `without rowid` has no first-class builder. The raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }
@@ -190,7 +192,8 @@ export async function createCandidateIntervalTable(db: Kysely<CandidateDatabase>
 }
 
 /**
- * One place's interval label — the shape both sides of a containment comparison read.
+ * One place's interval label.
+ * The shape both sides of a containment comparison read.
  */
 export interface IntervalLabel {
 	pre: number

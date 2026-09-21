@@ -87,9 +87,10 @@ export interface UPRNDatabase extends layerschemadatabase {
 }
 
 /**
- * The full res-9 cell for a uprn point — the one derivation both the builder
- * and every consumer share, so a fixture built by a test and a row built by the real
- * ingest can never disagree on which cell a coordinate keys to.
+ * The full res-9 cell for a uprn point.
+ *
+ * The one derivation both the builder and every consumer share, so a fixture built by a test
+ * and a row built by the real ingest can never disagree on which cell a coordinate keys to.
  */
 export function uprnFullCell(latitude: number, longitude: number): H3Cell {
 	return latLngToCell(latitude, longitude, UPRN_H3_RESOLUTION) as H3Cell

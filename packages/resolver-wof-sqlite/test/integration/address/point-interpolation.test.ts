@@ -31,8 +31,8 @@ interface SeedPoint {
 async function seedPoints(db: DatabaseClient<AddressPointDatabase>, points: SeedPoint[]): Promise<void> {
 	// Shared table builder (the same `mailwoman situs address-points` uses)
 	// so this fixture can't drift from the production shape.
-	// `kdb` wraps `db` for the DDL. the test owns `db`'s lifecycle (closed in afterAll),
-	// so we don't destroy `kdb`.
+	// `kdb` wraps `db` for the DDL.
+	// The test owns `db`'s lifecycle (closed in afterAll), so we don't destroy `kdb`.
 	const kdb = db
 	await createAddressPointTable(kdb)
 
@@ -58,9 +58,7 @@ beforeAll(async () => {
 		// Both-sided bracket fixture: known points at 100 and 200.
 		{ street_key: "main street", number: "100", postcode: "05601", lat: 0, lon: 0 },
 		{ street_key: "main street", number: "200", postcode: "05601", lat: 0, lon: 0.001 },
-		// Self-exclusion fixture on its own street: a point AT the queryable number 150,
-		// deliberately far off the street line — querying 150 must interpolate the
-		// 100/200 bracket, never answer from this row.
+		// Self-exclusion fixture on its own street: a point AT the queryable number 150, deliberately far off the street line — querying 150 must interpolate the 100/200 bracket, never answer from this row.
 		{ street_key: "elm street", number: "100", postcode: "05601", lat: 0, lon: 0 },
 		{ street_key: "elm street", number: "150", postcode: "05601", lat: 0.5, lon: 0.5 },
 		{ street_key: "elm street", number: "200", postcode: "05601", lat: 0, lon: 0.001 },
@@ -184,7 +182,8 @@ describe("AddressPointInterpolator", () => {
 		const tiger = new StreetInterpolator({ database: segDB })
 		const ladder = new AddressPointInterpolator({ database: db, fallback: tiger })
 
-		// 'lone lane' has one point — Method 2 cannot bracket. tiger answers, flagged as such.
+		// 'lone lane' has one point — Method 2 cannot bracket.
+		// Tiger answers, flagged as such.
 		const hit = ladder.find({ street: "Lone Ln", number: "51", postcode: "05601" })
 		expect(hit).not.toBeNull()
 		expect(hit!.method).toBe("tiger_range")

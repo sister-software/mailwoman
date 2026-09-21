@@ -48,10 +48,11 @@ export const POI_H3_RESOLUTION = 9
  * Dense categories are unaffected: the loop breaks the ring it accumulates `limit` rows
  * (cafe@Paris fills 20 by ring 2), so this ceiling never enters their probe budget.
  *
- * Only sparse-but-present categories that never reach `limit` scan the fuller budget — a cold,
- * one-shot `mailwoman poi` path rather than per-keystroke. 16 (not the bare threshold 14) leaves
- * ~2 rings of margin so the radius is stable against small db rebuilds, while staying ~4x
+ * Only sparse-but-present categories that never reach `limit` scan the fuller budget.
+ * A cold, one-shot `mailwoman poi` path rather than per-keystroke. 16 (not the bare threshold 14)
+ * leaves ~2 rings of margin so the radius is stable against small db rebuilds, while staying ~4x
  * tighter than the board's 25 km "roughly right place" window (no wrong-city false positives).
+ *
  * The browser reader passes its own smaller `maxRings` and is untouched.
  */
 const DEFAULT_MAX_RINGS = 16
@@ -81,8 +82,9 @@ export interface POISearchQuery {
 	 * Fan-out category ids — the Overture `taxonomy.primary` leaves a single canonical category
 	 * rolls up into (e.g. `supermarket` → `grocery_store`, `organic_grocery_store`, …).
 	 *
-	 * When set, the k-ring walk probes every resolvable leaf per cell
-	 * and unions the rows. unknown leaves are skipped.
+	 * When set, the k-ring walk probes every resolvable leaf per cell and unions the rows.
+	 * Unknown leaves are skipped.
+	 *
 	 * Supersedes `categoryID` (which is treated as a one-element list `[categoryID]` when this is absent).
 	 *
 	 * Ignored when `brandWikidata` is set — brand wins.
@@ -120,7 +122,7 @@ export interface POISearchHit {
 	country: string
 	confidence: number
 	/**
-	 * Overture gers id — nullable metadata only, never a key (the #470 rule. see `POITable.gers_id`).
+	 * Overture gers id — nullable metadata only, never a key (the #470 rule. See `POITable.gers_id`).
 	 */
 	gersID: string | null
 	distanceM?: number
@@ -246,7 +248,8 @@ export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposab
 	 * Fetch every row for the QID (the partial `poi_brand_wikidata` index makes this a range-scan
 	 * rather than a 13.68M full scan), haversine-sort from `center`, drop anything past
 	 * the {@link BRAND_MAX_DISTANCE_KM} sanity radius, and take the nearest `limit`.
-	 * Returns the true nearest at any distance — the reach ceiling k-ring hits on sparse brand rows is gone.
+	 * Returns the true nearest at any distance.
+	 * The reach ceiling k-ring hits on sparse brand rows is gone.
 	 */
 	#searchBrand(brandWikidata: string, center: { latitude: number; longitude: number }, limit: number): POISearchHit[] {
 		const rows = allRows<POIRow>(this.#brandProbe, brandWikidata)
@@ -317,7 +320,8 @@ export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposab
 	/**
 	 * Name path: FTS5 match → hydrate by name_key.
 	 *
-	 * No center required. distance-sorts if one is given anyway.
+	 * No center required.
+	 * Distance-sorts if one is given anyway.
 	 *
 	 * Hydration is one batched `where name_key IN (...)` query over the FTS hits' unique `name_key`s
 	 * rather than a per-hit probe — with up to `limit` FTS hits, a per-hit probe was up to

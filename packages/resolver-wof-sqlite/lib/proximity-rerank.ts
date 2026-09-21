@@ -79,7 +79,7 @@ export interface ProximityRerankable {
  * Population plus nearness on one additive scale.
  *
  * Exported for tests and for a caller that wants the value without the sort.
- * ordinary callers want {@link applyProximityRerank}.
+ * Ordinary callers want {@link applyProximityRerank}.
  */
 export function combinedProminence(candidate: ProximityRerankable, bias: readonly ProximityBias[]): number {
 	const popBase = candidate.prominence ?? candidate.score
@@ -108,8 +108,8 @@ export function combinedProminence(candidate: ProximityRerankable, bias: readonl
  * sort carries the bias order rather than undoing it.
  *
  * Stable within equal prominence, preserving the population order the index already gave.
- * A caller with no bias hints must not call this — the no-bias path is plain
- * population order by construction.
+ * A caller with no bias hints must not call this.
+ * The no-bias path is plain population order by construction.
  */
 export function applyProximityRerank<T extends ProximityRerankable>(
 	candidates: T[],

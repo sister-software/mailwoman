@@ -26,7 +26,8 @@ export function normalizePlacetypes(p: FindPlaceQuery["placetype"]): WOFPlacetyp
  *
  * - Strip all punctuation except trailing `*` from each whitespace-separated token.
  * - **Trailing `*`** is preserved as FTS5 **prefix syntax** — `627*` becomes the literal `627*` (unquoted).
- *   The caller signaled they want a prefix. respect that.
+ *   The caller signaled they want a prefix.
+ *   Respect that.
  * - All other tokens are wrapped in `"..."` as a single-word phrase.
  *   Conservative — handles apostrophes, parens, accented input, etc. safely.
  * - Multiple tokens join with implicit `and`.
@@ -36,7 +37,7 @@ export function normalizePlacetypes(p: FindPlaceQuery["placetype"]): WOFPlacetyp
  * - `"Paris"` → `"Paris"` (phrase)
  * - `"627*"` → `627*` (prefix)
  * - `"St. (Petersburg)"` → `"St" "Petersburg"` (two phrases, and-joined)
- * - `"Thiron-Gardais"` → `"Thiron" "Gardais"` (intra-token punctuation splits — #945. fusing to
+ * - `"Thiron-Gardais"` → `"Thiron" "Gardais"` (intra-token punctuation splits — #945. Fusing to
  *   `ThironGardais` matched nothing because the FTS doc tokenizes the hyphenated name as two terms)
  * - `"110 00"` with `fuseTokens` (postcode-typed) → `"110" "00"` per-token fused — the #920 name law
  * - `"Pari* TX"` → `Pari* "TX"` (mixed prefix + phrase)
@@ -51,8 +52,7 @@ export function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }):
 		if (!trimmed) continue
 		const hasPrefixStar = trimmed.endsWith("*")
 
-		// #920 name law (postcode-typed queries only): delete intra-token punctuation and fuse the
-		// remainder — postal names are stored in this collapsed shape ("SW1A" stays one term).
+		// #920 name law (postcode-typed queries only): delete intra-token punctuation and fuse the remainder — postal names are stored in this collapsed shape ("SW1A" stays one term).
 		if (opts?.fuseTokens) {
 			const body = trimmed.replaceAll(/[^\p{L}\p{N}]/gu, "")
 
@@ -66,7 +66,7 @@ export function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }):
 		// always promised ("St. (Petersburg)" → two phrases).
 		// The old code deleted punctuation instead, fusing "Thiron-Gardais" into the
 		// unmatchable single term `ThironGardais` while the FTS doc holds two terms
-		// (#945 — the entire hyphenated-name class missed at the raw lookup. masked for years
+		// (#945 — the entire hyphenated-name class missed at the raw lookup. Masked for years
 		// because pre-splice tokenizers never emitted hyphen-preserved values).
 		const parts = trimmed.split(/[^\p{L}\p{N}]+/u).filter((part) => part.length)
 

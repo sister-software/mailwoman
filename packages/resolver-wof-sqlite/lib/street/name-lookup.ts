@@ -58,7 +58,8 @@ export class SQLiteStreetNameLookup implements StreetLocalityEvidence, Disposabl
 		this.#db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
 		const table = opts.table ?? "street_centroid"
 
-		// Degrade gracefully on an empty/tableless extract — a no-op miss, never a crash (#568 discipline).
+		// Degrade gracefully on an empty/tableless extract.
+		// A no-op miss, never a crash (#568 discipline).
 		if (hasTable(this.#db, table)) {
 			// Prefer the #727 phase-4c `name_key` column
 			// (foldStreetSurface, indexed by `idx_sc_name` for a direct seek); fall back to
@@ -81,9 +82,9 @@ export class SQLiteStreetNameLookup implements StreetLocalityEvidence, Disposabl
 
 		if (!norm) return false
 
-		// Scoped lookups tighten precision when the hypothesis carries a
-		// locality/postcode. a scoped miss falls back to the unscoped probe
-		// (index incompleteness in the scope column is not evidence of absence — positive-evidence rule).
+		// Scoped lookups tighten precision when the hypothesis carries a locality/postcode.
+		// A scoped miss falls back to the unscoped probe (index incompleteness in the scope
+		// column is not evidence of absence — positive-evidence rule).
 		if (
 			scope?.locality &&
 			this.#byNameLocality &&

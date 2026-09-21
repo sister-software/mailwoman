@@ -21,8 +21,8 @@ export interface PolygonsTable {
 	/**
 	 * The GeoJSON geometry, JSON-encoded.
 	 *
-	 * A row that fails to parse reads as no-polygon, never as an error —
-	 * a malformed geometry must not fail the whole reverse query.
+	 * A row that fails to parse reads as no-polygon, never as an error.
+	 * A malformed geometry must not fail the whole reverse query.
 	 */
 	geom: string
 }

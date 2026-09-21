@@ -38,8 +38,9 @@ import { uprnFullCell } from "#uprn/schema"
  * Adjacent centres sit √3 × edge apart (avg edge 174.4 m → ≈302 m); the worst direction
  * across a ring costs a further ×0.866, and H3's projection distortion shrinks edges by
  * well under the slack this leaves (the true worst is ≈217 m per grid step).
- * Dividing a radius by this over-counts rings and can never miss a cell. multiplying a
- * grid distance by it under-states reach and can never end the ring walk early.
+ * Dividing a radius by this over-counts rings and can never miss a cell.
+ *
+ * Multiplying a grid distance by it under-states reach and can never end the ring walk early.
  */
 const RES9_CENTER_SPACING_FLOOR_M = 150
 
@@ -158,7 +159,7 @@ export class UPRNLookup implements Disposable {
 	 *
 	 * This is what keeps a capped-radius call over dense ground at milliseconds instead of
 	 * a full-disk fetch (measured 6.4 s → 13 ms for a 10 km radius over central London,
-	 * 41.6M-row layer. an empty-sea miss at the cap runs the full expansion, 74 ms).
+	 * 41.6M-row layer. An empty-sea miss at the cap runs the full expansion, 74 ms).
 	 *
 	 * @throws {RangeError} When `radiusM` is not a positive finite number, or exceeds the cap.
 	 */
@@ -175,8 +176,8 @@ export class UPRNLookup implements Disposable {
 		const seenCells = new Set<string>()
 		let best: UPRNNearestHit | null = null
 
-		// `ring` is H3 grid distance. the loop terminates because the break bound is
-		// at most radiusM, which the RangeError above caps.
+		// `ring` is H3 grid distance.
+		// The loop terminates because the break bound is at most radiusM, which the RangeError above caps.
 		for (let ring = 0; ; ring++) {
 			// A cell at grid distance `ring` holds no point nearer than this.
 			// Once it exceeds what could still win — the best hit so far, or the radius itself —

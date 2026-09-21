@@ -99,8 +99,7 @@ describe("StreetCentroidSqliteLookup", () => {
 
 	beforeAll(async () => {
 		fixture = await seedExtract([
-			// "Place Bellecour" split across two arrondissement/postcode rows, both base-commune "lyon". The
-			// weighted centroid over the two rows weights by point_count (10 @ lon 4.83, 30 @ lon 4.85).
+			// "Place Bellecour" split across two arrondissement/postcode rows, both base-commune "lyon". The weighted centroid over the two rows weights by point_count (10 @ lon 4.83, 30 @ lon 4.85).
 			{
 				street_norm: "place bellecour",
 				postcode: "69002",
@@ -158,7 +157,8 @@ describe("StreetCentroidSqliteLookup", () => {
 	})
 
 	it("probes by base commune, folding a query arrondissement, and WEIGHTED-aggregates across rows", () => {
-		// (10 @ 4.83 + 30 @ 4.85) / 40 = 4.845 — the point-count-weighted centroid rather than the plain mean 4.84.
+		// (10 @ 4.83 + 30 @ 4.85) / 40 = 4.845.
+		// The point-count-weighted centroid rather than the plain mean 4.84.
 		const hit = lookup.find({ street: "Place Bellecour", locality: "Lyon 2e Arrondissement" })
 		expect(hit).not.toBeNull()
 		expect(hit!.lon).toBeCloseTo(4.845, 4)

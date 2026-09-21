@@ -151,7 +151,8 @@ describe("WOFReverseGeocoder over the fixture gazetteer", () => {
 	test("polygon containment is reported when the deepest place IS polygon-confirmed", async () => {
 		const { admin, polygons } = buildFixture()
 		using rg = new WOFReverseGeocoder({ adminDatabase: admin, polygonDatabase: polygons })
-		// Restrict to the polygon-containing tiers — the deepest is then county A, PIP-confirmed.
+		// Restrict to the polygon-containing tiers.
+		// The deepest is then county A, PIP-confirmed.
 		const result = await rg.reverseGeocode(44, -72, { placetypes: ["country", "region", "county"] })
 		expect(result.containment).toBe("polygon")
 		expect(result.hierarchy[0]).toMatchObject({ id: 3, placetype: "county" })
@@ -162,8 +163,9 @@ describe("WOFReverseGeocoder over the fixture gazetteer", () => {
 		using rg = new WOFReverseGeocoder({ adminDatabase: admin })
 		const result = await rg.reverseGeocode(44, -72)
 		expect(result.containment).toBe("approximate")
-		// Bbox false positives can't be vetoed without polygons. the smallest containing bbox
-		// (a county) still anchors the walk and the descent still reaches the village.
+		// Bbox false positives can't be vetoed without polygons.
+		// The smallest containing bbox (a county) still anchors the walk
+		// and the descent still reaches the village.
 		expect(result.hierarchy[0]?.name).toBe("Middlewich Village")
 	})
 
@@ -200,8 +202,9 @@ const POLYGONS_DB = $public.MAILWOMAN_WOF_POLYGONS_DB
 describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 	"against the production gazetteer (MAILWOMAN_WOF_ADMIN_DB + MAILWOMAN_WOF_POLYGONS_DB)",
 	() => {
-		// Construct in beforeAll rather than the describe body — the body runs at collection
-		// time even when the suite is skipped, and would try to open the (absent) DBs.
+		// Construct in beforeAll rather than the describe body.
+		// The body runs at collection time even when the suite is skipped,
+		// and would try to open the (absent) DBs.
 		let rg: WOFReverseGeocoder
 
 		beforeAll(() => {

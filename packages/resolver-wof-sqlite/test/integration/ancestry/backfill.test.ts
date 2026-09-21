@@ -96,8 +96,8 @@ test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its paren
 	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
 
-	// New York City: the multi-parent locality, already repaired by an earlier pass —
-	// it has a full ancestor set, so it is not a candidate this time.
+	// New York City: the multi-parent locality, already repaired by an earlier pass.
+	// It has a full ancestor set, so it is not a candidate this time.
 	const nycID = 85_977_539
 	const brooklynID = 421_205_765
 	const nyStateID = 85_688_543
@@ -115,8 +115,8 @@ test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its paren
 		db.prepare("INSERT INTO ancestors VALUES (?, ?, ?, 0)").run(nycID, aid, pt)
 	}
 
-	// Brooklyn: parent_id points at NYC, so the parent_id closure produced exactly self + NYC
-	// and stopped — NYC's own parent_id is the -4 sentinel.
+	// Brooklyn: parent_id points at NYC, so the parent_id closure produced exactly self + NYC and stopped.
+	// NYC's own parent_id is the -4 sentinel.
 	// Two ancestor rows, which the previous "<= 1 ancestor row" candidate test excluded,
 	// leaving the borough with no region ancestor.
 	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'borough')").run(brooklynID)
@@ -126,7 +126,8 @@ test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its paren
 	const dataRoot = root.resolve("whosonfirst-data", "whosonfirst-data-admin-us", "data")
 	await makeDirectories(join(dataRoot, "421", "205", "765"))
 
-	// Brooklyn's real source hierarchy — the whole chain is present even though parent_id is not -4.
+	// Brooklyn's real source hierarchy.
+	// The whole chain is present even though parent_id is not -4.
 	await writeLocalJSONFile(
 		{
 			properties: {
@@ -164,7 +165,8 @@ test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its paren
 	expect(byPlacetype.find((row) => row.pt === "country")?.aid).toBe(usID)
 	expect(byPlacetype.filter((row) => row.aid === nycID)).toHaveLength(1)
 
-	// NYC itself was never a candidate — it already had a country ancestor.
+	// NYC itself was never a candidate.
+	// It already had a country ancestor.
 	expect(db.prepare("SELECT COUNT(*) AS n FROM ancestors WHERE id = ?").get(nycID)).toEqual({ n: 4 })
 
 	const again = await backfillAncestorsFromHierarchy(db, [dataRoot])
@@ -175,12 +177,14 @@ test("backfillAncestorsFromHierarchy: survives more candidates than SQLite's bou
 	await using db = DatabaseClient.temp<WOFDatabase>()
 	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
-	// Production always carries ancestors_by_id (unified-schema.ts) and the freeze runs its index phase
-	// before this backfill. without it the correlated not exists is quadratic over 33k rows.
+	// Production always carries ancestors_by_id (unified-schema.ts) and the freeze
+	// runs its index phase before this backfill.
+	// Without it the correlated not exists is quadratic over 33k rows.
 	db.exec("CREATE INDEX ancestors_by_id ON ancestors(id)")
 
-	// node:sqlite caps a statement at 32,766 bound variables. the 2026-08-04 wide-coverage admin
-	// build carried 67,521 country-less candidates. 33,000 self-only places reproduce the overflow.
+	// node:sqlite caps a statement at 32,766 bound variables.
+	// The 2026-08-04 wide-coverage admin build carried 67,521 country-less candidates.
+	// 33,000 self-only places reproduce the overflow.
 	const insertSpr = db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'locality')")
 	const insertAnc = db.prepare("INSERT INTO ancestors VALUES (?, ?, 'locality', 0)")
 	db.exec("BEGIN")
@@ -195,7 +199,8 @@ test("backfillAncestorsFromHierarchy: survives more candidates than SQLite's bou
 	// Empty roots: every geojson probe misses without touching the filesystem 33,000 times.
 	const result = await backfillAncestorsFromHierarchy(db, [])
 
-	// No geojson exists for any of them — every candidate is skipped, none fixed.
+	// No geojson exists for any of them.
+	// Every candidate is skipped, none fixed.
 	// The assertion that matters is that the pass completes at all instead of
 	// throwing "too many SQL variables".
 	expect(result.placesFixed).toBe(0)

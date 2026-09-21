@@ -205,7 +205,8 @@ describe("stampNameRoles: the gloss anomaly detector", () => {
 			[]
 		)
 
-		// Both are in the tail the detector reports on. neither is stamped.
+		// Both are in the tail the detector reports on.
+		// Neither is stamped.
 		expect(keyTailPlaces).toBe(2)
 		expect(roleGloss).toBe(0)
 	})

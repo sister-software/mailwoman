@@ -112,10 +112,7 @@ describe("region-abbreviation resolution (#440/#441)", () => {
 	})
 
 	it("constrains the locality lookup to the region's descendants — the right-state town beats a larger namesake", async () => {
-		// Vermont = region id 10. "Sheldon" has a Vermont town (pop 932) and a larger Iowa town
-		// (pop 5455).
-		// With the region constraint the Iowa town is filtered out (not a descendant of Vermont),
-		// so the correct Vermont Sheldon wins despite its smaller population.
+		// Vermont = region id 10. "Sheldon" has a Vermont town (pop 932) and a larger Iowa town (pop 5455). With the region constraint the Iowa town is filtered out (not a descendant of Vermont), so the correct Vermont Sheldon wins despite its smaller population.
 		const r = await lookup.findPlace({ text: "Sheldon", placetype: "locality", parentID: 10, country: "US" })
 		expect(r[0]?.id).toBe(30)
 		expect(r.some((p) => p.id === 31)).toBe(false)

@@ -86,8 +86,8 @@ const SAINT_DENIS: FixturePlace[] = [
 /**
  * Build the fixture gazetteer.
  *
- * `withEncyclopedic` decides whether `place_importance` carries the two-score split's
- * columns at all — the pre-split state (no table) and the post-split state (both columns),
+ * `withEncyclopedic` decides whether `place_importance` carries the two-score split's columns at all.
+ * The pre-split state (no table) and the post-split state (both columns),
  * which is the pair the zero-delta measurement compares.
  */
 function buildFixtureDB(
@@ -213,7 +213,8 @@ describe("Saint-Denis — ranking is referential", () => {
 		const results = await lookup.findPlace({ text: "Saint-Denis" })
 
 		expect(results[0]!.id).toBe(9_000_000_590_797)
-		// And the suburb still beats the hamlet — the pair §2 actually names is unaffected.
+		// And the suburb still beats the hamlet.
+		// The pair §2 actually names is unaffected.
 		const ids = results.map((r) => r.id)
 		expect(ids.indexOf(101_751_155)).toBeLessThan(ids.indexOf(101_896_431))
 	})
@@ -244,8 +245,9 @@ describe("D-rule — carrying the encyclopedic score moves no rank", () => {
 	 * §2 R1 predicts a resolver delta of zero: the split is schema + plumbing + a carry,
 	 * and the ranking key it names (population) is the one the resolver already used.
 	 *
-	 * Predicted is not measured, so this measures it — every query runs against a pre-split
-	 * gazetteer and a post-split one, and the returned id order must be identical.
+	 * Predicted is not measured, so this measures it.
+	 * Every query runs against a pre-split gazetteer and a post-split one,
+	 * and the returned id order must be identical.
 	 */
 	const QUERIES: ReadonlyArray<{ label: string; text: string }> = [
 		{ label: "bare namesake", text: "Saint-Denis" },

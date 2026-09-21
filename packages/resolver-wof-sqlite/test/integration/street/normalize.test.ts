@@ -79,7 +79,7 @@ describe("normalizeLocalityForKey", () => {
 describe("canonicalizeRouteKey", () => {
 	it("folds TIGER and E911/Overture route spellings to the same key", () => {
 		// tiger "State Rte 100" → normalizeStreetForKey → "state route 100" already.
-		// the E911 spelling needs the designator fold to meet it.
+		// The E911 spelling needs the designator fold to meet it.
 		expect(canonicalizeRouteKey(normalizeStreetForKey("State Rte 100"))).toBe("state route 100")
 		expect(canonicalizeRouteKey(normalizeStreetForKey("VT ROUTE 100"))).toBe("state route 100")
 		expect(canonicalizeRouteKey(normalizeStreetForKey("US Hwy 5"))).toBe("us route 5")
@@ -98,7 +98,8 @@ describe("canonicalizeRouteKey", () => {
 	it("never folds non-route names", () => {
 		expect(canonicalizeRouteKey(normalizeStreetForKey("State Street"))).toBe("state street")
 		expect(canonicalizeRouteKey(normalizeStreetForKey("Old Route 100"))).toBe("old route 100")
-		// Bare "Route N" stays unfolded — the designator (US vs state) is unknown.
+		// Bare "Route N" stays unfolded.
+		// The designator (US vs state) is unknown.
 		expect(canonicalizeRouteKey(normalizeStreetForKey("Route 100"))).toBe("route 100")
 	})
 })
@@ -174,8 +175,8 @@ describe("streetLocaleForSurface (the Québec surface router)", () => {
 		expect(streetLocaleForSurface("Fifth Avenue", "en")).toBe("en")
 		expect(streetLocaleForSurface("Grosvenor Place", "en")).toBe("en")
 		expect(streetLocaleForSurface("1 Avenue NE", "en")).toBe("en")
-		// "Main St": st abbreviates Street here, and the fr rules would expand it to saint —
-		// the lead-anchored predicate is what keeps that fold away from English surfaces.
+		// "Main St": st abbreviates Street here, and the fr rules would expand it to saint.
+		// The lead-anchored predicate is what keeps that fold away from English surfaces.
 		expect(streetLocaleForSurface("Main St", "en")).toBe("en")
 	})
 

@@ -17,7 +17,8 @@ describe("blendImportance", () => {
 	})
 
 	it("keeps the encyclopedic value untouched when there is no population evidence", () => {
-		// referential 0 means "unmeasured", not "tiny" — there is nothing to bound the article against.
+		// referential 0 means "unmeasured", not "tiny".
+		// There is nothing to bound the article against.
 		expect(blendImportance(0, 0.6677)).toBe(0.6677)
 	})
 

@@ -125,14 +125,17 @@ describe("buildSlimWOFDatabase", () => {
 			.all()
 			.map((r) => (r as { id: number }).id)
 
-		// Top-1 locality = Chicago (200). ancestors 100/101. postcodes 300/301.
+		// Top-1 locality = Chicago (200).
+		// Ancestors 100/101.
+		// Postcodes 300/301.
 		expect(nameIDs).toEqual([100, 200, 300])
 		// Paris (400) and Mascoutah (202) names must be gone.
 		expect(nameIDs).not.toContain(400)
 		expect(nameIDs).not.toContain(202)
 
 		// place_population is filtered to surviving spr ids: ancestors 100/101 + top-1 locality 200.
-		// Postcodes (300/301) have no population row. trimmed places (202/400) are gone.
+		// Postcodes (300/301) have no population row.
+		// Trimmed places (202/400) are gone.
 		const popIDs = slim
 			.prepare(`SELECT id FROM place_population ORDER BY id`)
 			.all()
@@ -258,7 +261,8 @@ describe("buildSlimWOFDatabase", () => {
 		using slim = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 		const rows = slim.prepare(`SELECT id, abbr FROM place_abbr ORDER BY abbr`).all()
-		// Illinois keeps its abbr. the trimmed locality's is gone (names was pre-filtered to surviving ids).
+		// Illinois keeps its abbr.
+		// The trimmed locality's is gone (names was pre-filtered to surviving ids).
 		// And place_abbr persists even though dropNames removed the source `names` table.
 		expect(rows).toEqual([{ id: 101, abbr: "IL" }])
 		expect(slim.prepare(`SELECT 1 FROM sqlite_master WHERE name='names'`).get()).toBeUndefined()

@@ -29,10 +29,9 @@ export interface StreetSegmentTable {
 	/**
 	 * `canonicalizeRouteKey(normalizeStreetForKey(street))` — the build/query-consistent probe key.
 	 *
-	 * The column name says `street_norm`, but the value carries the route fold on
-	 * top of the street fold, which is why the brand is
-	 * {@link RouteKey}: builder and probe both apply both folds, and a plain street key bound here misses every
-	 * numbered-route row.
+	 * The column name says `street_norm`, but the value carries the route fold on top of
+	 * the street fold, which is why the brand is {@link RouteKey}: builder and probe both
+	 * apply both folds, and a plain street key bound here misses every numbered-route row.
 	 */
 	street_norm: RouteKey
 	/**
@@ -81,9 +80,11 @@ export interface StreetSegmentTable {
  * multiplier is a property of the calibration SET the artifact was built against — so it ships IN
  * the artifact (the pair-index δ precedent, `neural/pair-index-resolver.ts`), not in caller code.
  *
- * Written once by the builder. read at open time by
- * {@link StreetInterpolator}. Extracts built before this table exists simply lack it — the reader degrades to
- * `undefined` and callers fall back to the in-code per-region table (never patch shipped DBs — rebuild).
+ * Written once by the builder.
+ * Read at open time by {@link StreetInterpolator}.
+ *
+ * Extracts built before this table exists simply lack it — the reader degrades to `undefined`
+ * and callers fall back to the in-code per-region table (never patch shipped DBs — rebuild).
  */
 export interface InterpCalibrationRow {
 	/**

@@ -129,8 +129,9 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 	const buf = Buffer.alloc(totalSize)
 	let pos = 0
 
-	// Read the versioned binary header. flags bit0 (survey #4, 2026-07-27): place rows carry
-	// surface-ambiguity data in the former _pad byte (pp+6 = crossCountryBranches u8, pp+7 reserved).
+	// Read the versioned binary header.
+	// Flags bit0 (survey #4, 2026-07-27): place rows carry surface-ambiguity data in the
+	// former _pad byte (pp+6 = crossCountryBranches u8, pp+7 reserved).
 	// Presence-signaled here so version stays put: pre-ambiguity artifacts read
 	// flags=0 → readers expose `undefined`, never a fake 0.
 	const hasAmbiguity = nodes.some((n) => n.places.some((p) => p.crossCountryBranches !== undefined))
@@ -322,9 +323,9 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 
 			// v1 stored a raw population u32 here. v2–v4 the conflated `importance`
 			// float. v5 the referential score.
-			// A v1 file's population is mapped through the same curve `referentialFromPopulation` uses,
-			// so its value is genuinely referential — the only generation of this format for
-			// which that can be said without reading the source database.
+			// A v1 file's population is mapped through the same curve `referentialFromPopulation`
+			// uses, so its value is genuinely referential.
+			// The only generation of this format for which that can be said without reading the source database.
 			const referential = isV2
 				? buf.readFloatLE(pp + 12)
 				: Math.min(1, Math.log2(1 + buf.readUInt32LE(pp + 12) / 1000) / 14)

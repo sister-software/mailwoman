@@ -53,7 +53,8 @@ import { Globerator } from "spliterator/node/fs"
 import type { WOFDatabase } from "#schema"
 
 /**
- * Genuinely top-level placetypes — they never have (or need) an ancestor, so skip them.
+ * Genuinely top-level placetypes.
+ * They never have (or need) an ancestor, so skip them.
  */
 const TOP_PLACETYPES = new Set(["country", "continent", "empire", "ocean", "marinearea", "planet"])
 
@@ -115,9 +116,10 @@ export async function discoverAdminDataRoots(reposRoot: PathBuilderLike): Promis
 
 // `<placetype>_id` key → ancestor placetype.
 // WOF hierarchy keys are e.g. region_id, county_id.
-// Self is filtered downstream by the `aid === id` check, so we do not special-case locality
-// here: for a locality candidate `locality_id` is self (dropped by aid===id), but for a
-// neighbourhood candidate `locality_id` is its parent locality — a real ancestor we must keep.
+// Self is filtered downstream by the `aid === id` check, so we do not special-case
+// locality here: for a locality candidate `locality_id` is self (dropped by aid===id),
+// but for a neighbourhood candidate `locality_id` is its parent locality.
+// A real ancestor we must keep.
 function placetypeFromKey(key: string): string | null {
 	if (!key.endsWith("_id")) return null
 
@@ -129,7 +131,8 @@ function placetypeFromKey(key: string): string | null {
  * before reaching a country, by reading `wof:hierarchy` from its source geojson
  * under `geojsonRoots` (see {@link discoverAdminDataRoots}).
  *
- * Runs inside a single transaction. caller owns connection lifecycle (open, WAL checkpoint, close).
+ * Runs inside a single transaction.
+ * Caller owns connection lifecycle (open, WAL checkpoint, close).
  *
  * `opts.maxID` bounds the candidate scan to ids below it — pass the synthetic-id base
  * (`OVERTURE_ID_BASE`, 8e12) so the backfill considers only real WOF places.

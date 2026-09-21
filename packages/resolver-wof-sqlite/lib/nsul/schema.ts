@@ -34,8 +34,9 @@ import type { layerschemadatabase } from "@mailwoman/core/layers"
 import { sql, type Kysely } from "kysely"
 
 /**
- * Resolution of the `h3_cell` column — the same res-9 spine `uprn.db` keys on,
- * because the value is copied from it.
+ * Resolution of the `h3_cell` column.
+ *
+ * The same res-9 spine `uprn.db` keys on, because the value is copied from it.
  */
 export const NSUL_H3_RESOLUTION = 9
 
@@ -58,8 +59,7 @@ export interface UPRNPostcodeTable {
 	 */
 	pcds: string
 	/**
-	 * {@link pcds} with the space removed (`RG404HR`) — the form Code-Point Open's `spr.name` carries, and the column
-	 * `uprnsForPostcode` probes.
+	 * {@link pcds} with the space removed (`RG404HR`). The form Code-Point Open's `spr.name` carries, and the column `uprnsForPostcode` probes.
 	 */
 	pcds_compact: string
 	/**
@@ -126,9 +126,9 @@ export async function createNSULMetaTable(db: Kysely<NSULDatabase>): Promise<voi
  * The `pcds_compact` index the `uprnsForPostcode` probe reads.
  *
  * Builders call this after the bulk load (index-after-load).
- * There is no index on the spaced `pcds`: it is derivable from `pcds_compact` through
- * {@link compactPostcode}, and a second index over 40 million rows would add nothing a caller cannot get by compacting
- * its key first.
+ * There is no index on the spaced `pcds`: it is derivable from `pcds_compact`
+ * through {@link compactPostcode}, and a second index over 40 million rows would
+ * add nothing a caller cannot get by compacting its key first.
  */
 export async function createNSULIndexes(db: Kysely<NSULDatabase>): Promise<void> {
 	await db.schema.createIndex("uprn_postcode_pcds_compact").on("uprn_postcode").column("pcds_compact").execute()

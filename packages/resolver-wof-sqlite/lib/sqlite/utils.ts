@@ -10,9 +10,9 @@ import { allRows, getRow } from "@mailwoman/core/utils"
 import type { DatabaseClient, SQLInputValue } from "@mailwoman/sqlite/client"
 import { hasColumn as columnExists, tableExists } from "@mailwoman/sqlite/introspection"
 
-// The row-shape assertion itself lives in `core` so the readers that cannot depend
-// on this package reach the same helper. re-exported here because this module is
-// where this package's readers already look for it.
+// The row-shape assertion itself lives in `core` so the readers that cannot
+// depend on this package reach the same helper.
+// Re-exported here because this module is where this package's readers already look for it.
 
 /**
  * A prepared single-row query whose parameter tuple remains visible to TypeScript.
@@ -52,10 +52,13 @@ export function prepareAll<Parameters extends SQLInputValue[], Row, DB>(
 }
 
 /**
- * True when `name` is a table in the open database. The street-level lookups use this to degrade gracefully on an
- * empty/tableless extract — an interrupted `build-*-extract.ts`, or a stray 0-byte file (e.g. `sqlite3 <missing>.db
- * "…"` creates one) — rather than throwing `no such table` at construction and taking down a whole state's geocode
- * (#568). A missing table makes the lookup a no-op miss.
+ * True when `name` is a table in the open database.
+ *
+ * The street-level lookups use this to degrade gracefully on an empty/tableless
+ * extract — an interrupted `build-*-extract.ts`, or a stray 0-byte file
+ * (e.g. `sqlite3 <missing>.db "…"` creates one) — rather than throwing `no such table`
+ * at construction and taking down a whole state's geocode (#568).
+ * A missing table makes the lookup a no-op miss.
  */
 export function hasTable<DB>(db: DatabaseClient<DB>, name: string): boolean {
 	try {
@@ -72,11 +75,13 @@ export function hasTable<DB>(db: DatabaseClient<DB>, name: string): boolean {
  * layer down: an artifact built before a column was added is still a valid artifact,
  * and a reader that unconditionally names the new column in its `select` turns "this
  * gazetteer is a build behind" into `no such column` at the first keystroke.
- * Probe once at construction and shape the query — `table_info` is a pragma,
- * so it must not sit on a per-query path.
+ * Probe once at construction and shape the query.
+ *
+ * `table_info` is a pragma, so it must not sit on a per-query path.
  *
  * Note the interpolation: pragma does not take bound parameters, so `table` is spliced.
- * Every caller passes a module-level constant. never pass user input.
+ * Every caller passes a module-level constant.
+ * Never pass user input.
  */
 export function hasColumn<DB>(db: DatabaseClient<DB>, table: string, column: string): boolean {
 	try {

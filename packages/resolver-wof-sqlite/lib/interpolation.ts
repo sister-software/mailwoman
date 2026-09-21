@@ -95,12 +95,15 @@ export interface InterpolationQuery {
 	street: string
 	number: string
 	/**
-	 * ZIP scope — strongly preferred. without it common street names abstain (see module doc).
+	 * ZIP scope — strongly preferred.
+	 * Without it common street names abstain (see module doc).
 	 */
 	postcode?: string
 	/**
-	 * The resolved locality's coordinate — the tie-breaker when no postcode was given
-	 * and the parity-preferred covering ranges still span several postcodes.
+	 * The resolved locality's coordinate.
+	 *
+	 * The tie-breaker when no postcode was given and the parity-preferred covering
+	 * ranges still span several postcodes.
 	 *
 	 * See {@link NEAR_MAX_KM} for the acceptance geometry.
 	 */
@@ -108,11 +111,13 @@ export interface InterpolationQuery {
 }
 
 /**
- * Acceptance geometry for the `near` tie-break: the winning postcode group's closest segment
- * must sit within this many kilometres of `near`, and the runner-up group must be at least
- * {@link NEAR_DOMINANCE} times farther. Both measured on the two live failures: Brooklyn's
- * `st pauls place` 11226 segment is ~2 km from the Brooklyn centroid with Great Neck's 11021 at
- * ~24 km (12×); Fraser's `east 13 mile road` 48026 is ~2 km with Mecosta's namesake ~190 km away.
+ * Acceptance geometry for the `near` tie-break: the winning postcode group's closest
+ * segment must sit within this many kilometres of `near`, and the runner-up group
+ * must be at least {@link NEAR_DOMINANCE} times farther.
+ *
+ * Both measured on the two live failures: Brooklyn's `st pauls place` 11226 segment
+ * is ~2 km from the Brooklyn centroid with Great Neck's 11021 at ~24 km (12×);
+ * Fraser's `east 13 mile road` 48026 is ~2 km with Mecosta's namesake ~190 km away.
  * A near-tie between groups is genuine ambiguity and stays an abstention.
  */
 const NEAR_MAX_KM = 25
@@ -138,8 +143,8 @@ interface SegmentRow {
  * The postcode group nearest `near`, under the {@link NEAR_MAX_KM} dominance geometry —
  * or null when no group qualifies (out of range, or the runner-up is too close to call).
  *
- * A group's distance is its closest segment's first polyline vertex. a segment whose
- * geometry fails to parse prices as unreachable rather than aborting the tie-break.
+ * A group's distance is its closest segment's first polyline vertex.
+ * A segment whose geometry fails to parse prices as unreachable rather than aborting the tie-break.
  */
 function nearestPostcodeGroup(pool: readonly SegmentRow[], near: { lat: number; lon: number }): SegmentRow[] | null {
 	const groups = new Map<string, { rows: SegmentRow[]; km: number }>()
@@ -223,12 +228,7 @@ export class StreetInterpolator<
 			)
 		}
 
-		// #374 doctrine: the conformal radius multiplier is a property of the calibration set the artifact was
-		// built against, so it ships in the extract's `interp_calibration` metadata
-		// table (street-segment-schema.ts) and is read here, once, at open time —
-		// sync raw `.prepare()` per the sync-by-interface doctrine (agents.md).
-		// Extracts predating the table (the pre-2026-07 fleet) yield `undefined`; callers
-		// then fall back to their in-code table, byte-identically.
+		// #374 doctrine: the conformal radius multiplier is a property of the calibration set the artifact was built against, so it ships in the extract's `interp_calibration` metadata table (street-segment-schema.ts) and is read here, once, at open time — sync raw `.prepare()` per the sync-by-interface doctrine (agents.md). Extracts predating the table (the pre-2026-07 fleet) yield `undefined`; callers then fall back to their in-code table, byte-identically.
 		if (hasTable(this.#db, "interp_calibration")) {
 			const row = this.#db.prepare("SELECT radius_multiplier FROM interp_calibration LIMIT 1").get() as
 				| { radius_multiplier: unknown }
@@ -264,9 +264,9 @@ export class StreetInterpolator<
 
 		// Key-variant ladder (see `streetKeyVariants`): the literal key first,
 		// then the doubled-type collapse and the saint↔st register swap.
-		// A variant advances the ladder when it produces no answer rather than merely no rows —
-		// a wrong-register key can cover the number in far-away towns and then fail the ambiguity check
-		// ("saint pauls place" reaches Nassau's rows. the Brooklyn answer lives under "st pauls place"),
+		// A variant advances the ladder when it produces no answer rather than merely no rows.
+		// A wrong-register key can cover the number in far-away towns and then fail the ambiguity check
+		// ("saint pauls place" reaches Nassau's rows. The Brooklyn answer lives under "st pauls place"),
 		// and stopping at rows would eclipse the right variant.
 		for (const variant of streetKeyVariants(query.street)) {
 			const streetNorm = canonicalizeRouteKey(variant)
@@ -293,8 +293,7 @@ export class StreetInterpolator<
 	#answerFromRows(rows: SegmentRow[], n: number, query: InterpolationQuery): InterpolatedHit | null {
 		if (!rows.length) return null
 
-		// Parity preference: exact side first, then 'mixed' (matches either),
-		// then the opposite side as a flagged fallback.
+		// Parity preference: exact side first, then 'mixed' (matches either), then the opposite side as a flagged fallback.
 		const wantOdd = n % 2 === 1
 		const exact = rows.filter((r) => r.parity === (wantOdd ? "odd" : "even"))
 		const mixed = rows.filter((r) => r.parity === "mixed")
@@ -302,14 +301,14 @@ export class StreetInterpolator<
 		let pool = preferred.length ? preferred : rows
 		const parityMatched = preferred.length > 0
 
-		// No scope given: the covering ranges must agree on one postcode or the lookup abstains —
-		// a name spanning towns is ambiguity rather than an answer.
+		// No scope given: the covering ranges must agree on one postcode or the lookup abstains.
+		// A name spanning towns is ambiguity rather than an answer.
 		// Counted over the parity pool rather than all rows: a section-line boundary road carries a
 		// different ZIP per side ("east 13 mile road" is Fraser 48026 odd / Roseville 48066 even),
 		// and the opposite side can never hold the number it would otherwise veto.
-		// When several postcodes survive parity, the caller's resolved-locality
-		// coordinate breaks the tie by segment proximity under the dominance geometry
-		// of {@link NEAR_MAX_KM} — a near-tie stays an abstention.
+		// When several postcodes survive parity, the caller's resolved-locality coordinate breaks
+		// the tie by segment proximity under the dominance geometry of {@link NEAR_MAX_KM}.
+		// A near-tie stays an abstention.
 		if (!query.postcode) {
 			const postcodes = new Set(pool.map((r) => r.postcode ?? ""))
 

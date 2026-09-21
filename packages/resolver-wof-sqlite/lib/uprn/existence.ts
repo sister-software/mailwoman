@@ -32,15 +32,17 @@ export const UPRN_EXISTENCE_FOLD = foldIdentity((s) => s)
 /**
  * The countries OS Open uprn covers.
  *
- * Northern Ireland is outside the product, so a `null` there is unknown and must never
- * become evidence of absence. the country check is what keeps it out.
+ * Northern Ireland is outside the product, so a `null` there is unknown
+ * and must never become evidence of absence.
+ * The country check is what keeps it out.
  */
 export const UPRN_COVERED_COUNTRIES: ReadonlySet<string> = new Set(["GB"])
 
 export interface UPRNAbsenceInput {
 	lookup: UPRNLookup
 	/**
-	 * The same file the lookup reads. the layer interface tables live beside the points.
+	 * The same file the lookup reads.
+	 * The layer interface tables live beside the points.
 	 */
 	schemadb: layerschemahandle
 	latitude: number

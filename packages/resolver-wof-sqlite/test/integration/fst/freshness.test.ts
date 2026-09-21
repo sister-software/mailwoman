@@ -33,9 +33,9 @@ const TMP = await temporaryDirectory("fst-freshness-")
 afterAll(() => TMP[Symbol.asyncDispose]())
 
 /**
- * A two-token FST ("aa" → "bb") with one place, so the serialized artifact has a
- * real string table, edge table and place table between the header and the trailer —
- * the trailer offset must be computed rather than guessed.
+ * A two-token FST ("aa" → "bb") with one place, so the serialized artifact has a real
+ * string table, edge table and place table between the header and the trailer.
+ * The trailer offset must be computed rather than guessed.
  */
 function fixtureMatcher(): FSTMatcher {
 	return FSTMatcher.fromNodes([
@@ -107,7 +107,7 @@ describe("readWOFSourceIdentity", () => {
 
 		expect(identity.md5).toBe(await md5File(path))
 		expect(identity.bytes).toBe(3)
-		// md5sum(1) format: "<hash>  <basename>".
+		// md5sum(1) format: "<hash> <basename>".
 		expect(await readLocalTextFile(`${path}.md5`)).toBe(`${identity.md5}  sidecar-source.db\n`)
 	})
 
@@ -127,8 +127,8 @@ describe("readWOFSourceIdentity", () => {
 		const lie = "11111111111111111111111111111111"
 		await writeLocalTextFile(`${lie}  trusted-sidecar.db\n`, `${path}.md5`)
 
-		// The lie proves the sidecar was read rather than the file re-hashed — the property
-		// that keeps the guard cheap enough to leave switched on for a 5 GB source.
+		// The lie proves the sidecar was read rather than the file re-hashed.
+		// The property that keeps the guard cheap enough to leave switched on for a 5 GB source.
 		expect((await readWOFSourceIdentity(path)).md5).toBe(lie)
 	})
 })
@@ -209,8 +209,7 @@ describe("fstStaleReason", () => {
 	})
 
 	it("flags a format older than the tree writes even when the source matches", async () => {
-		// The R5 lesson in format edition: a guard comparing only the source reads
-		// a format-obsolete artifact as current.
+		// The R5 lesson in format edition: a guard comparing only the source reads a format-obsolete artifact as current.
 		const path = await writeFST(
 			"format-stale.bin",
 			provenanceOf({ sourceDBMD5: SOURCE_IDENTITY.md5, sourceDBBytes: SOURCE_IDENTITY.bytes })

@@ -37,8 +37,9 @@ export const CAPITAL_LEVEL = {
 export type CapitalLevel = (typeof CAPITAL_LEVEL)[keyof typeof CAPITAL_LEVEL]
 
 /**
- * How far a candidate row may sit from the reference point and still read as the same place —
- * a centroid-convention allowance (GeoNames point vs WOF centroid on a metro-scale city),
+ * How far a candidate row may sit from the reference point and still read as the same place.
+ *
+ * A centroid-convention allowance (GeoNames point vs WOF centroid on a metro-scale city),
  * not a catchment: the name-membership conjunct is what excludes neighbours inside the radius.
  */
 export const CAPITAL_MATCH_RADIUS_KM = 25
@@ -55,8 +56,8 @@ export interface CapitalPoint {
 	longitude: number
 	level: "national" | "admin1"
 	/**
-	 * Folded name keys (name + romanization + alternate names, `normalizeLocalityForKey` fold) —
-	 * the membership set for the name conjunct.
+	 * Folded name keys (name + romanization + alternate names, `normalizeLocalityForKey` fold).
+	 * The membership set for the name conjunct.
 	 */
 	k: string[]
 }
@@ -76,8 +77,9 @@ interface IndexedPoint {
 /**
  * Country-bucketed capital points with the three-conjunct identity probe.
  *
- * Construct from the parsed reference file's `entries` — the loader that reads the file off disk
- * lives with the path owners (`mailwoman`'s resolver backend), keeping this module platform-free.
+ * Construct from the parsed reference file's `entries`.
+ * The loader that reads the file off disk lives with the path owners
+ * (`mailwoman`'s resolver backend), keeping this module platform-free.
  */
 export class CapitalIndex {
 	readonly #byCountry = new Map<string, IndexedPoint[]>()

@@ -61,7 +61,9 @@ export function deriveSchemaName(path: string): string {
 /**
  * Per-extract configuration.
  *
- * The simple form is just a path string — the schema name is derived from it.
+ * The simple form is just a path string.
+ * The schema name is derived from it.
+ *
  * The object form lets callers override the derived schema name (useful when a filename
  * doesn't follow WOF convention) or attach an extra hint about which placetypes route here.
  */
@@ -129,7 +131,8 @@ export function resolveExtracts(input: string | ReadonlyArray<string | ExtractCo
 			)
 		}
 
-		// The first extract is always main per SQLite semantics — its derived name is informational only.
+		// The first extract is always main per SQLite semantics.
+		// Its derived name is informational only.
 		// Subsequent extracts must have unique non-main names.
 		const schemaName = i === 0 ? "main" : derived
 
@@ -162,8 +165,10 @@ export function resolveExtracts(input: string | ReadonlyArray<string | ExtractCo
  *    (e.g. `postalcode_us` matches `postalcode`), use it.
  * 3. Otherwise, fall back to `main`.
  *
- * This deliberately doesn't union across extracts — BM25 scores aren't comparable across
- * separately- indexed corpora, and the typical mailwoman query has a single placetype anyway.
+ * This deliberately doesn't union across extracts.
+ * BM25 scores aren't comparable across separately- indexed corpora, and the typical
+ * mailwoman query has a single placetype anyway.
+ *
  * If a caller needs cross-extract results they can issue two `findPlace` calls.
  */
 /**
@@ -206,13 +211,13 @@ export function pickExtractForPlacetype(
 	placetype: string | undefined,
 	opts?: {
 		/**
-		 * #920: the query's country constraint, when the caller has one. With multiple extracts matching a placetype
-		 * (postalcode-us + postalcode-geonames-tail), first-match routing sent every postcode query to
-		 * the first extract and starved the rest — a FI postcode could never reach the tail extract.
+		 * #920: the query's country constraint, when the caller has one. With multiple extracts matching a placetype (postalcode-us + postalcode-geonames-tail), first-match routing sent every postcode query to the first extract and starved the rest. A FI postcode could never reach the tail extract.
 		 *
-		 * When `country` is given and a matching extract's probed country set contains it,
-		 * that extract wins. extracts without the country are skipped. the placetype-match
-		 * order remains the tiebreak when no extract claims the country (or none was probed).
+		 * When `country` is given and a matching extract's probed country set contains it, that extract wins.
+		 *
+		 * Extracts without the country are skipped.
+		 * The placetype-match order remains the tiebreak when no extract claims
+		 * the country (or none was probed).
 		 */
 		country?: string
 		/**

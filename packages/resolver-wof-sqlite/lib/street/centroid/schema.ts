@@ -25,10 +25,14 @@ import type { Kysely } from "kysely"
 import type { NameKey, StreetKey } from "#street/normalize"
 
 /**
- * One street roll-up. `(street_norm, postcode, locality_base)` is unique. `lat`/`lon` are the unweighted mean of the
- * group's member address points (each source row = one point), so a cross-group weighted mean (`SUM(lat*point_count) /
- * SUM(point_count)`) reconstructs the grand centroid. `min_/max_lat/lon` are the group's extent (the reader turns the
- * bbox diagonal into an honest `uncertainty_m`).
+ * One street roll-up.
+ *
+ * `(street_norm, postcode, locality_base)` is unique.
+ * `lat`/`lon` are the unweighted mean of the group's member address
+ * points (each source row = one point), so a cross-group weighted mean
+ * (`SUM(lat*point_count) / SUM(point_count)`) reconstructs the grand centroid.
+ *
+ * `min_/max_lat/lon` are the group's extent (the reader turns the bbox diagonal into an honest `uncertainty_m`).
  */
 export interface StreetCentroidTable {
 	/**
@@ -72,17 +76,11 @@ export interface StreetCentroidTable {
 	 */
 	release: string
 	/**
-	 * #727 phase-4c: `foldStreetSurface(street_raw)` — the interface-fold street-name existence key for
-	 * {@link StreetLocalityEvidence}. Distinct from `street_norm` (the `street-normalize` geocoding key): the
-	 * name-evidence rerank folds the model's street surface with the same
-	 * `foldStreetSurface` used to build this column (the fold-parity interface),
-	 * so it must not drift from `street_norm`'s richer normalizer.
-	 * Indexed (`idx_sc_name`) for a direct seek.
+	 * #727 phase-4c: `foldStreetSurface(street_raw)`. The interface-fold street-name existence key for {@link StreetLocalityEvidence}. Distinct from `street_norm` (the `street-normalize` geocoding key): the name-evidence rerank folds the model's street surface with the same `foldStreetSurface` used to build this column (the fold-parity interface), so it must not drift from `street_norm`'s richer normalizer. Indexed (`idx_sc_name`) for a direct seek.
 	 *
-	 * Deliberately unbranded despite the `name_key` column name: `foldStreetSurface`
-	 * is a different fold from the
-	 * {@link NameKey} one every other `name_key` column carries, and giving it that brand would invite exactly the
-	 * cross-fold probe the brands exist to stop.
+	 * Deliberately unbranded despite the `name_key` column name: `foldStreetSurface` is a
+	 * different fold from the {@link NameKey} one every other `name_key` column carries,
+	 * and giving it that brand would invite exactly the cross-fold probe the brands exist to stop.
 	 */
 	name_key: string
 }
@@ -141,9 +139,11 @@ export async function createStreetCentroidTable(db: Kysely<StreetCentroidDatabas
 }
 
 /**
- * Create the probe indexes: the two geocoding-scope indexes (postcode, locality-base) the resolver reader
- * relies on, plus `idx_sc_name` — the #727 phase-4c name-existence key for a direct `name_key = ?` seek
- * (the unscoped fragment lookup. without it that query skip-scans `idx_sc_postcode` at ~5 ms/probe).
+ * Create the probe indexes: the two geocoding-scope indexes (postcode, locality-base)
+ * the resolver reader relies on, plus `idx_sc_name`.
+ *
+ * The #727 phase-4c name-existence key for a direct `name_key = ?` seek
+ * (the unscoped fragment lookup. Without it that query skip-scans `idx_sc_postcode` at ~5 ms/probe).
  */
 export async function createStreetCentroidIndexes(db: Kysely<StreetCentroidDatabase>): Promise<void> {
 	await db.schema.createIndex("idx_sc_postcode").on("street_centroid").columns(["postcode", "street_norm"]).execute()
