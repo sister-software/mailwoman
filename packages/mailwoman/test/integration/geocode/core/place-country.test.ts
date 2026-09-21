@@ -130,8 +130,8 @@ describe("geocodeAddress — the dominant-bearer guard on hardCountry (#1738)", 
 	})
 
 	/**
-	 * A street + locality tree, not bare-locality, so the placer block runs
-	 * (the #912 change skips bare trees).
+	 * A street + locality tree rather than bare-locality, so the placer block
+	 * runs (the #912 change skips bare trees).
 	 */
 	const treeWithLocality = (locality: string): AddressTree => ({
 		raw: `1001 Rue X, ${locality}`,

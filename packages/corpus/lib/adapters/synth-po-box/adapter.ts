@@ -103,7 +103,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 
 			// TextSpliterator streams string lines.
 			// The per-line tryParsingJSON below keeps this reader tolerant of malformed rows
-			// (skipped++), so TextSpliterator + a non-throwing parse, not JSONSpliterator,
+			// (skipped++), so TextSpliterator + a non-throwing parse rather than JSONSpliterator,
 			// which would throw on the first bad line.
 			const lines = TextSpliterator.fromAsync(options.inputPath)
 

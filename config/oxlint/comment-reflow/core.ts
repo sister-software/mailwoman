@@ -63,9 +63,9 @@ export const weights = {
 	zone: 10,
 	/** Squared cost per column past `target + zone`, which is where lines start to look long. */
 	overFar: 8,
-	/** The last line is charged this fraction of the shortfall, so a paragraph ends balanced, not stranded. */
+	/** The last line is charged this fraction of the shortfall, so a paragraph ends balanced rather than stranded. */
 	lastShort: 0.25,
-	/** Flat cost per line, so an equal-cost break with fewer lines wins. */
+	/** Flat charge per line, so the shorter of two equal solutions wins. */
 	line: 12,
 	/**
 	 * Breaking with a parenthesis still open.
@@ -84,7 +84,10 @@ export const weights = {
 	orphanParagraph: 60,
 } as const
 
-/** Count Unicode code points; a tab advances to the next `tabWidth` stop. */
+/**
+ * Count Unicode code points.
+ * A tab advances to the next `tabWidth` stop.
+ */
 export function columns(text: string, tabWidth: number = defaultOptions.tabWidth): number {
 	let width = 0
 	for (const character of text) {
@@ -97,8 +100,8 @@ export function columns(text: string, tabWidth: number = defaultOptions.tabWidth
  * Comments carrying a tool directive or legal text must remain byte-for-byte intact.
  *
  * The tool names are only half of a directive, so each has to be followed by the word that makes it one.
- * Upstream matched the name alone, which made every comment citing `…-v8-cjk-regs.md` or a Vite
- * config protected, and a protected comment is one this rule never touches and never reports.
+ * Upstream matched the name alone, which made every comment citing `…-v8-cjk-regs.md` or a
+ * Vite config exempt, and an exempt comment is one this rule never touches and never reports.
  */
 export function isProtected(text: string): boolean {
 	const directive =
@@ -182,13 +185,13 @@ export interface WrapLimits {
 /**
  * An abbreviation ending in a period is not a sentence boundary.
  *
- * The list is the ones that actually occur in this repository's prose; a missed
- * entry costs a break opportunity, never a mangled sentence.
+ * The list is the ones that actually occur in this repository's prose.
+ * A missed entry costs a break opportunity, never a mangled sentence.
  */
 const ABBREVIATIONS =
 	/^(?:e\.g\.|i\.e\.|etc\.|vs\.|cf\.|ca\.|approx\.|no\.|fig\.|eq\.|al\.|Mr\.|Mrs\.|Ms\.|Dr\.|St\.|Inc\.|Ltd\.|(?:[A-Z]\.)+)$/
 
-/** Words that open a clause: breaking just before one reads as a deliberate seam. */
+/** Words that open a clause: breaking just before one reads as a deliberate choice. */
 const CONJUNCTIONS = new Set([
 	"and",
 	"but",
@@ -261,7 +264,8 @@ function measure(tokens: readonly string[], tabWidth: number): TokenFacts[] {
  * Set one sentence, choosing its breaks by minimizing a penalty over every legal breaking
  * rather than filling each line until the next word does not fit.
  *
- * Greedy filling is what strands a two-word tail on a line of its own and what cuts a parenthetical in half.
+ * Greedy filling is what strands a two-word tail on a line of its own
+ * and what splits a parenthetical in half.
  * It cannot price a break until it has already taken it.
  *
  * A line wants to end at `target`.
@@ -271,7 +275,8 @@ function measure(tokens: readonly string[], tabWidth: number): TokenFacts[] {
  * it past ten columns in, so those columns are bought rather than spent.
  * A parenthetical that would otherwise be split is worth about seventeen of them.
  *
- * Breaking after a comma or before a conjunction earns a credit, which is what puts the seam on punctuation.
+ * Breaking after a comma or before a conjunction earns a credit, which is
+ * what puts the break on punctuation.
  */
 function chooseBreaks(tokens: readonly string[], limits: WrapLimits, firstWidth: number, continuationWidth: number) {
 	const facts = measure(tokens, limits.tabWidth)
@@ -329,7 +334,7 @@ function chooseBreaks(tokens: readonly string[], limits: WrapLimits, firstWidth:
 }
 
 /**
- * Cut prose into sentences, at a terminator followed by something that opens one.
+ * Split prose into sentences at a terminator followed by something that opens one.
  *
  * Tokenizing first is what makes this safe: a code span, a link and a `{@link}` are
  * single tokens, so a period inside one is never a boundary.
@@ -651,8 +656,8 @@ export function reflowLineComments(
 }
 
 /**
- * Format an entire block token; preserve code and nonstandard block layouts. sourceLineWidth
- * includes surrounding syntax when checking a single-line block.
+ * Format an entire block token, preserving code and nonstandard block layouts.
+ * sourceLineWidth includes surrounding syntax when checking a single-line block.
  */
 export function reflowBlockComment(
 	raw: string,
@@ -688,7 +693,8 @@ export function reflowBlockComment(
 	}
 	const overhead = columns(plainPrefix ?? indent + " * ", options.tabWidth)
 	const formatted = reflowText(lines, limitsFor(options, overhead), jsdoc, {
-		// A `/* */` block whose body is indented prose keeps its own layout; only a starred block takes the shape.
+		// A `/* */` block whose body is indented prose keeps its own layout.
+		// Only a starred block takes the shape.
 		paragraphs: plainPrefix === undefined && original.length > 1,
 		perParagraph: options.paragraphSentences,
 	})

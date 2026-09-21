@@ -122,7 +122,7 @@ describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", ()
 	})
 
 	it("delivers no more than requestsPerMinute inside any sliding minute", async () => {
-		// The rate, which is what the option promises, not the schedule,
+		// The rate, which is what the option promises rather than the schedule,
 		// which is what every other test here asserts.
 		// That gap is how a 10x overrun shipped: the budget released N back to back
 		// then waited `60000/N` ms, so a stated 10/minute sustained 100/minute,

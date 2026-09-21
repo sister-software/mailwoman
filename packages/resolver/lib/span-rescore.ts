@@ -130,7 +130,7 @@ export interface RescoreCandidate {
 	 * can threshold on it without a hidden per-country coverage map.
 	 *
 	 * Deliberately not folded into the calibrated `confidence`.
-	 * That would break the isotonic guarantee (a true calibrated 0.83 must not be
+	 * That would void the isotonic guarantee (a true calibrated 0.83 must not be
 	 * confused with a rescore plug-in estimate).
 	 */
 	postcodeVerified: boolean

@@ -10,7 +10,7 @@
  *   comments against roughly 7,400 dashes doing a semicolon's work.
  *
  *   Only that use moves. A paired dash around an aside stays, and so does a dash introducing a noun phrase. Roughly a
- *   third of the joints convert; what is left is appositive, or has a right-hand clause opening with a word that
+ *   third of the joints convert. What is left is appositive, or has a right-hand clause opening with a word that
  *   cannot start a sentence, and both want an author rather than a script.
  *
  *   Paragraphs are joined before rewriting and emitted as one line each. `mailwoman/comment-reflow` re-breaks them
@@ -40,10 +40,14 @@ const IMPERATIVES = /^(?:see|read|revisit|compare|note|use|prefer|check|run|trea
  *
  * `which` opens a relative clause and `and` a coordination, so a full stop in front
  * of either stands a fragment up where the sentence only wanted a comma.
- * `never`, `only` and `not` head an antithesis and take the same comma.
+ * `never` and `only` head an antithesis and take the same comma.
+ *
+ * `not` is deliberately absent. A comma in front of it reads as the antithesis it is, but the
+ * `Negation` rule refuses `, not` at error level, and `CommentDashJoint` leaves a dash in front of
+ * a noun phrase alone, so the dash stays.
  */
 const COMMA_OPENERS =
-	/^(?:which|and|but|or|nor|yet|rather|while|whereas|though|although|because|since|including|not|never|with|for|leaving|making|giving|taking)\b/i
+	/^(?:which|and|but|or|nor|yet|rather|while|whereas|though|although|because|since|including|never|with|for|leaving|making|giving|taking)\b/i
 
 /**
  * A line that carries its own layout, in `mailwoman/comment-reflow`'s own terms.
@@ -221,9 +225,9 @@ function sweepBody(lines: readonly string[]): string[] {
 /**
  * Lift a trailing `Returns …` or `Throws …` sentence into the tag that already carries that meaning.
  *
- * A block that already has the tag keeps its prose, since the lift would say it twice.
+ * A block that already has the tag keeps its prose, since lifting it would say the same thing twice.
  * A block whose whole description is that one sentence keeps it too,
- * since the lift would leave the symbol undescribed.
+ * since lifting it would leave the symbol undescribed.
  */
 function liftTagSentence(body: readonly string[], tags: readonly string[]) {
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- One comment block, already resident as lines.
@@ -331,7 +335,7 @@ export function sweepSource(source: string, fileName = "file.ts"): string {
 
 		const body = stripped as string[]
 
-		// A directive run is the linter's, not the author's.
+		// A directive run belongs to the linter rather than the author.
 		if (body.some((line) => /^\s*(?:eslint|oxlint|prettier|@ts-|#region|#endregion|\/)/.test(line))) return group
 
 		const marked = sweepBody(body).map((line) => (line.trim() ? `${indent}// ${line}` : `${indent}//`))

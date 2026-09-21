@@ -402,7 +402,7 @@ function combineCoverage(
  * the filing-lookup cell (bdc side, via `pointCell`) and the coverage-cell join key
  * `readLayerCoverage` is read against (poi side, via `res9ShortCellToRes6Parent(pointCell)`).
  *
- * Checked independently per layer, whenever that layer is wired, not only
+ * Checked independently per layer, whenever that layer is wired rather than only
  * when `bdcDB` and `poi` are wired together.
  * A poi-only call still needs poi's own recorded resolution checked, because `pointCell` is computed
  * unconditionally from `BDC_H3_RESOLUTION` and still drives the poi coverage-cell read below.

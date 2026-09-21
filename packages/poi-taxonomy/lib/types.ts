@@ -89,7 +89,7 @@ export interface CategoryRecord {
 	 *
 	 * Used by umbrella query categories whose leaves remain independently meaningful
 	 * (`place_of_worship` maps several faith-specific categories).
-	 * Absent preserves the canonicalization behavior for aliases such as `supermarket` → `grocery_store`.
+	 * Absent leaves aliases such as `supermarket` → `grocery_store` canonicalized as before.
 	 */
 	retainOvertureLeaves?: boolean
 }

@@ -63,7 +63,7 @@ export interface InfrastructureHit {
 	name: string | null
 	distanceM: number
 	/**
-	 * Res-9 short H3 cell of the hit itself, not the (coarser) coverage cell.
+	 * Res-9 short H3 cell of the hit itself rather than the (coarser) coverage cell.
 	 * See `coverage.h3Cell` for that.
 	 */
 	h3Cell: number

@@ -64,7 +64,7 @@ function isRuntimeImportLine(line: string): boolean {
 
 	if (!/^(import|export)\b/.test(trimmed)) return false
 
-	// `import type … ` / `export type … ` erase entirely, not a runtime import.
+	// `import type … ` / `export type … ` erase entirely rather than a runtime import.
 	return !/^(import|export)\s+type\b/.test(trimmed)
 }
 

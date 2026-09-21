@@ -5,7 +5,7 @@
  * @file The comment-reflow rule: which comments are eligible, and where a trailing one lands.
  *
  * Adapted from oxlint-plugin-comment-reflow (MIT, © Diego Haz). The eligibility and trailing-comment plumbing is
- * upstream's; the width options and the breaker behind them are ours.
+ * upstream's. The width options and the breaker behind them are ours.
  */
 
 import type { Comment, CreateRule, ESTree, SourceCode } from "@oxlint/plugins"

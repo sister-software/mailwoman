@@ -663,8 +663,8 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 
 				resolved = centroid
 					? (() => {
-							// Coverage cell must be derived as the res-9 cell's H3 hierarchy parent,
-							// not a second, independent `latLngToCell(centroid, 6)` call.
+							// Coverage cell must be derived as the res-9 cell's H3 hierarchy parent
+							// rather than a second, independent `latLngToCell(centroid, 6)` call.
 							// H3's cell hierarchy is not geometrically exact: a point's directly-indexed res-6 cell
 							// and its res-9 cell's `cellToParent(…, 6)` disagree for a real fraction of
 							// points (~6% empirically over conus — hexagon/pentagon boundary artifacts).

@@ -16,7 +16,7 @@
  *   assembled coordinate, a strict parse, a component map and a mechanism-account shape are different
  *   observable interfaces, and a universal equality function would either reject a legitimate
  *   transformation or hide a changed identity behind a nearby coordinate. `expect` names one of three
- *   relations, and `status` one of three verdict roles — a violated row is tracked rather than deleted, and
+ *   relations, and `status` one of three verdict roles. A violated row is tracked rather than deleted, and
  *   never re-stated as `expect: diverges`, which would make the suite assert the defect. A fixture that
  *   omits the comparator, or names one that does not exist, is refused at load with its own id in the
  *   message — never skipped, never defaulted. A skipped row reports as an absence, and an absence is what a

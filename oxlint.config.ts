@@ -362,7 +362,7 @@ export default {
 	],
 	rules: {
 		...(config.rules as Record<string, unknown>),
-		// The plugin measures a tab as four columns; oxfmt renders one as two.
+		// The plugin measures a tab as four columns, and oxfmt renders one as two.
 		// An indented comment is therefore measured wider than it prints,
 		// and wraps early by two columns per indent level.
 		// One sentence per line.

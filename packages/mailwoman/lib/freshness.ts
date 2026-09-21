@@ -179,8 +179,8 @@ async function readArtifact({ name, path }: FreshnessArtifact): Promise<Artifact
 /**
  * Report the provenance of the artifacts a session opened.
  *
- * Call this once, at boot, with the paths the process actually resolved,
- * not with everything in the data root.
+ * Call this once, at boot, with the paths the process actually resolved
+ * rather than with everything in the data root.
  * A server holds its database handles open for its whole life, so the artifact it is
  * serving from is the one it opened at start, whatever a later symlink swap points at.
  */

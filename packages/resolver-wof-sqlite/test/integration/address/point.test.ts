@@ -176,7 +176,7 @@ describe("AddressPointSqliteLookup", () => {
 	})
 
 	it("never range-splits or suffix-folds the unit-containing and box shapes", () => {
-		// AU slash convention: '5/7' is unit 5 of house 7, not a range.
+		// AU slash convention: '5/7' is unit 5 of house 7 rather than a range.
 		// The ladder must not derive '5'.
 		expect(lookup.find({ street: "Osborne Drive", number: "5/32", postcode: "4505" })).toBeNull()
 		// Fractional house numbers survive untouched — '32 1/2' is neither a spaced suffix nor a range.

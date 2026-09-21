@@ -287,8 +287,8 @@ export function auditCaseFoldingSuite(fixtures: readonly ConformanceFixture[]): 
 /**
  * The transformation label a report line carries, e.g. `upper`.
  *
- * `?` when the pair does not classify, which the audit refuses, so it can only
- * appear on a hand-built fixture that skipped the loader.
+ * `?` when the pair does not classify.
+ * The audit refuses that, so it can only appear on a hand-built fixture that skipped the loader.
  */
 export function describeCaseTransformation(fixture: ConformanceFixture): string {
 	return classifyCaseTransformation(fixture.base, fixture.variant) ?? "?"

@@ -428,8 +428,8 @@ export function auditPunctuationSuite(fixtures: readonly ConformanceFixture[]): 
 /**
  * The transformation label a report line carries, e.g. `comma-removed`.
  *
- * `?` when the pair does not classify, which the audit refuses, so it can only
- * appear on a hand-built fixture that skipped the loader.
+ * `?` when the pair does not classify.
+ * The audit refuses that, so it can only appear on a hand-built fixture that skipped the loader.
  */
 export function describePunctuationTransformation(fixture: ConformanceFixture): string {
 	return classifyPunctuationTransformation(fixture.base, fixture.variant) ?? "?"

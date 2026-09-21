@@ -120,7 +120,7 @@ export const NZ_PRIVATE_BOX_ALIAS = {
 	 */
 	type: "Private Box",
 	/**
-	 * The description of validity status, not a valid ADV358 Delivery Service Type.
+	 * The description of validity status rather than a valid ADV358 Delivery Service Type.
 	 *
 	 * A colloquial NZ synonym for a numbered PO Box (same format as "PO Box <number>").
 	 */
@@ -203,8 +203,8 @@ export interface NZDeliveryServiceMatch {
 	 */
 	id?: string
 	/**
-	 * True when the matched form is the colloquial "Private Box" alias,
-	 * not a valid ADV358 Delivery Service Type.
+	 * True when the matched form is the colloquial "Private Box" alias
+	 * rather than a valid ADV358 Delivery Service Type.
 	 *
 	 * Absent (undefined) for all standard ADV358 types.
 	 */

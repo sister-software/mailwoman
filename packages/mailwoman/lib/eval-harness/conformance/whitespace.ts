@@ -386,8 +386,8 @@ export function auditWhitespaceSuite(fixtures: readonly ConformanceFixture[]): s
 /**
  * The transformation label a report line carries, e.g. `tabbed`.
  *
- * `?` when the pair does not classify, which the audit refuses, so it can only
- * appear on a hand-built fixture that skipped the loader.
+ * `?` when the pair does not classify.
+ * The audit refuses that, so it can only appear on a hand-built fixture that skipped the loader.
  */
 export function describeWhitespaceTransformation(fixture: ConformanceFixture): string {
 	return classifyWhitespaceTransformation(fixture.base, fixture.variant) ?? "?"

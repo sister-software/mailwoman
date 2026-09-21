@@ -202,9 +202,9 @@ export interface CIKCandidate {
 	 * both reduced through {@linkcode canonicalizeOrganizationName} before comparison
 	 * ({@linkcode nameSimilarity}, `@mailwoman/match`).
 	 *
-	 * `1` means the two names are identical once legal designations are stripped, which is
-	 * exactly the case that can still mean two different companies (see the module docstring),
-	 * so a score of `1` is not itself a license to pick.
+	 * `1` means the two names are identical once legal designations are stripped.
+	 * That is exactly the case that can still mean two different companies
+	 * (see the module docstring), so a score of `1` is not itself a license to pick.
 	 */
 	score: number
 }

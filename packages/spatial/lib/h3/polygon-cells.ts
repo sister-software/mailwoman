@@ -273,8 +273,8 @@ export function classifyFeatureCells(
 
 				// An empty answer for a real part is an allocator failure wearing a result's clothes,
 				// and it has to be caught here rather than after the whole feature. h3-js sizes its
-				// output buffer with `_calloc`, and a `_calloc` that fails returns the null pointer,
-				// which in wasm is ordinary writable memory, so the call reports success
+				// output buffer with `_calloc`, and a `_calloc` that fails returns the null pointer.
+				// In wasm that is ordinary writable memory, so the call reports success
 				// and the reader hands back an array of zeros, i.e. nothing.
 				// Every part with a non-degenerate bounding box touches at least one cell,
 				// so zero is impossible as an answer.

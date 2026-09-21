@@ -176,8 +176,8 @@ interface Outcome {
 	pass: boolean
 }
 
-// nfkd + mark-strip on purpose, not `@mailwoman/normalize`'s `stripCombiningMarks` (NFD, no case fold):
-// this fold also folds compatibility forms, matching the board's frozen grading.
+// nfkd + mark-strip on purpose rather than `@mailwoman/normalize`'s `stripCombiningMarks`
+// (NFD, no case fold): this fold also folds compatibility forms, matching the board's frozen grading.
 const norm = (s: string): string =>
 	s
 		.toLowerCase()

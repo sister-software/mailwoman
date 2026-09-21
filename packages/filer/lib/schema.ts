@@ -393,8 +393,8 @@ export interface FilerFamilyTable {
  *
  * Any reader that hard-depends on either (`filer-lookup.ts`'s `families` field, `family-rollup.ts`'s
  * `familyRollup`) must refuse an artifact reporting an earlier `schema_version` with a descriptive,
- * rebuild-pointing error, not a raw "no such table: filer_family" surfaced straight from
- * SQLite (a `schema_version: 1` artifact hit exactly that before this guard existed).
+ * rebuild-pointing error rather than a raw "no such table: filer_family" surfaced straight
+ * from SQLite (a `schema_version: 1` artifact hit exactly that before this guard existed).
  */
 export const FILER_FAMILY_SCHEMA_VERSION = 2
 

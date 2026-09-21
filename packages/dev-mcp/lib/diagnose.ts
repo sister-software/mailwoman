@@ -253,7 +253,7 @@ export interface ParseFacts {
 	 * Why {@link ParseFacts.kind} is null, when it is.
 	 *
 	 * The classifier is skipped when a caller pinned the register, which is a fact
-	 * about the call, not a zero-confidence verdict.
+	 * about the call rather than a zero-confidence verdict.
 	 */
 	kind_absent_reason?: string
 	input_mode: string

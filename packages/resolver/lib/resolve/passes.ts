@@ -460,8 +460,8 @@ export async function applySpanRescore(
 
 	// #1537: the same-span namesake runner-ups rather than an empty list. A name the model reads as a `street` ("Springfield", "Berlin", "Moscow") never reaches the admin walk, so this tier is the only thing that resolves it — and decorating with `[]` meant the geocode path's `candidates` held one entry and the dominance margin `declared_ambiguity` reads was uncomputable for exactly the famous-homonym class. The winner is unchanged (see findRescoreCandidate); this is additive.
 	decorateNode(node, hit.place, hit.alternatives)
-	// `rescore_postcode_verified` carries the check's precision signal as an explicit handle,
-	// not folded into the calibrated `confidence`, which would violate the isotonic bound
+	// `rescore_postcode_verified` carries the check's precision signal as an explicit handle
+	// rather than folded into the calibrated `confidence`, which would violate the isotonic bound
 	// (a true calibrated 0.83 must not be confused with a rescore plug-in estimate. DeepSeek 2026-06-23).
 	// True = postcode check fired (high-precision); false = unrestricted
 	// (no postcode→point coverage for this country, ~83%-precision).

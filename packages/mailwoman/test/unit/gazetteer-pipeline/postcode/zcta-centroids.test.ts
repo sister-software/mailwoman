@@ -156,7 +156,7 @@ describe("fillGeonamesPlaceholders", () => {
 		expect(r21638.latitude).toBeCloseTo((38.9573 + 38.9713) / 2, 4)
 		expect(r21638.longitude).toBeCloseTo((-76.1966 + -76.0636) / 2, 4)
 
-		// 90210 keeps the zcta coord, not overwritten by GeoNames.
+		// 90210 keeps the zcta coord rather than overwritten by GeoNames.
 		expect(byName("90210")).toEqual({ latitude: 34.100517, longitude: -118.41463 })
 
 		// Real WOF coord (10001) untouched.

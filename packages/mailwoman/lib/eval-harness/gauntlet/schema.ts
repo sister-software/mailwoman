@@ -167,7 +167,7 @@ export interface GauntletCaseTable {
  *
  * Exists because `regression.db` is a derived artifact with no link back to its source:
  * on 2026-08-06 `eval gauntlet-build regression-db` rebuilt it from a stale compiled tree
- * (an `out/` loader still holding the deleted pre-jsonl case array), printed "built",
+ * (an `out/` loader still exposing the deleted pre-jsonl case array), printed "built",
  * and every check afterwards graded a corpus nobody had.
  * Nothing in the DB could contradict it.
  *

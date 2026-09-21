@@ -52,8 +52,8 @@ import { DebugSessionApp } from "./DebugSessionApp.tsx"
  * and both are released in `finally`, so a mid-render throw — a corrupt tiles archive,
  * say — still closes every handle.
  *
- * Exported for `static.test.ts` only, not part of this module's consumer-facing surface
- * (`GeocodeDebugCommand`); no caller outside this directory should import it.
+ * Exported for `static.test.ts` only rather than part of this module's consumer-facing
+ * surface (`GeocodeDebugCommand`); no caller outside this directory should import it.
  */
 export async function runStaticDebug(input: string, options: GeocodeCommandOptions): Promise<string> {
 	if (!input.trim().length) {

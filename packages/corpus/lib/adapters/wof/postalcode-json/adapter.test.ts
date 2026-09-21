@@ -124,7 +124,7 @@ describe("wof-postalcode-json adapter against fixture", () => {
 		// one postcode (5003) points at it.
 		// The postcode adapter currently uses canonical wof:name for ancestors
 		// (cross-product with ancestor name variants is a future synthesis concern).
-		// Verify the canonical-name behavior so a future change to localize ancestors is a deliberate decision.
+		// Pin the canonical-name reading so a future change to localize ancestors is a deliberate decision.
 		await runAdapter({
 			adapter: createWOFPostalcodeAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "US" },

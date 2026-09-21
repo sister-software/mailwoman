@@ -128,8 +128,8 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 
 		// An interpolated template: splice the literal chunks together with a NUL standing in for each `${…}`
 		// (a NUL cannot be a path separator, so it can never manufacture a segment boundary that isn't there).
-		// The segment test below then sees the chunks instead of the raw source,
-		// which begins with a backtick, and so could never match the leading-segment anchor.
+		// The segment test below then sees the chunks instead of the raw source.
+		// The raw source begins with a backtick, and so could never match the leading-segment anchor.
 		if (ts.isTemplateExpression(node)) {
 			return node.head.text + node.templateSpans.map((span) => `\0${span.literal.text}`).join("")
 		}

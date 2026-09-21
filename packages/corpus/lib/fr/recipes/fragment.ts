@@ -92,8 +92,8 @@ const HOUSE_NUMBERS = [
 const ALNUM_SUFFIXES = ["bis", "ter", "A", "B"]
 
 // Recipe-fidelity: this accent-stripping fold is the surface key every committed
-// fr-fragment recipe output and the fragment board's reserved list were built with,
-// not the diacritic-keeping `foldNOSurface` the Norwegian recipes share.
+// fr-fragment recipe output and the fragment board's reserved list were built with
+// rather than the diacritic-keeping `foldNOSurface` the Norwegian recipes share.
 const norm = (value: string): string =>
 	value
 		.normalize("NFD")

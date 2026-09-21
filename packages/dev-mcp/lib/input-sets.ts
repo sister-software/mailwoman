@@ -281,7 +281,7 @@ function truthCounts(cases: SeedCase[]): ResolvedInputSet["hasTruth"] {
  *
  * A board subset reports what it excluded rather than merely what it kept.
  * That asymmetry is the point: a caller who filters to `country: "gb"` is told
- * which countries just left the measurement, in the same object that carries the result.
+ * which countries just left the measurement, in the same object as the rows it kept.
  */
 export async function resolveInputSet(ref: InputSetRef): Promise<ResolvedInputSet> {
 	switch (ref.kind) {

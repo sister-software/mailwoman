@@ -32,7 +32,8 @@ import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 /**
  * A file the recipe names that can be materialized by copying or linking it.
  *
- * `shippedName` is the filename the artifact must carry in a weights directory, not its source basename.
+ * `shippedName` is the filename the artifact must carry in a weights directory
+ * rather than its source basename.
  * They differ, and the difference is the interface: `resolveFromPackageDir` finds
  * siblings by fixed name, so an artifact placed under its source name resolves to nothing
  * and reports absence rather than failing.

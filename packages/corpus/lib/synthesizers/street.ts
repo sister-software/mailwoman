@@ -189,7 +189,7 @@ export interface StreetSynthesisOpts {
 	 * Probability of emitting the street bare — no `, City, ST ZIP` tail and no region/locality/
 	 * postcode components (just `street_prefix`/`street`/`street_suffix` + optional `house_number`).
 	 *
-	 * Default 0 (preserves the original full-address behavior exactly, including the RNG sequence).
+	 * Default 0 (leaves the original full-address output exactly as it was, including the RNG sequence).
 	 * Set >0 to teach the model that a bare `10th Ave` / `Main St` is a street rather than a
 	 * locality — the functional-test failure cluster (bare streets mislabeled `locality`),
 	 * the bare-format analogue of the v0.7.x intersection-bare fix.

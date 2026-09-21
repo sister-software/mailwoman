@@ -9,7 +9,7 @@
  *   `mailwoman/comment-reflow` to re-break. That leaves out every comment the rule will not touch, and a legal
  *   header is one of them: joining its paragraphs produces a single 700-column line nothing will ever break again.
  *
- *   This pass carries the Vale rule's own token, so what it leaves behind is exactly what the rule reports. The edit
+ *   This pass uses the Vale rule's own token, so what it leaves behind is exactly what the rule reports. The edit
  *   is local. The dash and the space holding it become a full stop, or a comma where the right half glosses the left
  *   rather than standing on its own, and the author's line structure is untouched. Run `yarn fix:oxlint` afterwards
  *   so the rule can re-break the paragraphs it does own.
@@ -409,7 +409,7 @@ export function sweepSource(source: string, fileName: string): string {
 
 		const body = lines as string[]
 
-		// A directive run is the linter's, not the author's.
+		// A directive run belongs to the linter rather than the author.
 		if (body.some((line) => /^\s*(?:\/|#region|#endregion)/.test(line))) return group
 
 		return rewrite(group.replace(/\n$/, ""), body) + (group.endsWith("\n") ? "\n" : "")

@@ -68,8 +68,8 @@ export interface MailwomanAPIOptions {
 }
 
 /**
- * Short, single-line summary of a zod validation failure for the envelope's
- * `detail` field, not the full `ZodError`, which is multi-line and carries internal
+ * Short, single-line summary of a zod validation failure for the envelope's `detail` field
+ * rather than the full `ZodError`, which is multi-line and carries internal
  * path/code detail not meant for a wire response.
  */
 function summarizeValidationError(error: { issues: Array<{ path: PropertyKey[]; message: string }> }): string {

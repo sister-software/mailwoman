@@ -150,7 +150,7 @@ export interface ZoningPlan {
 	/**
 	 * The publisher's `CURRENT_PLAN` flag, carried as published.
 	 *
-	 * `1` means not superseded, not "in force today".
+	 * `1` means not superseded rather than "in force today".
 	 */
 	currentPlan: number
 }

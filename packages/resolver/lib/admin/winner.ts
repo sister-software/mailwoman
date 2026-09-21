@@ -74,7 +74,7 @@ export const ADMIN_LADDER_LOCALITY_FIRST: ReadonlyArray<string> = [
  *
  * The first two are needed together because a full unit shape the resolver answered
  * with a coarser stem is area-grade, whatever the user typed.
- * `country` is separate evidence and answers a different question, not how tight this code is,
+ * `country` is separate evidence and answers a different question: not how tight this code is,
  * but whether this address system's codes are tighter than its localities at all.
  */
 export interface ResolvedPostcodeHit {

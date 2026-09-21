@@ -215,7 +215,7 @@ export function poiLayerURL(): string {
  * A state not in this set falls through to the WOF admin centroid.
  * National rollout (#735, 2026-06-21): the 50-state situs (#476/#567, 124.9M US address points) +
  * tiger interp extracts are hosted, so any US address resolves to its building
- * (`address_point`, ≤10 m) or a calibrated interp estimate, not a city centroid.
+ * (`address_point`, ≤10 m) or a calibrated interp estimate rather than a city centroid.
  *
  * `vi` = US Virgin Islands.
  * (`il` is the whole state incl. Cook. The separate `il-cook` build extract is not hosted.)

@@ -43,8 +43,8 @@ import type { Kysely } from "kysely"
  * One availability row from the FCC's per-provider BDC CSV.
  *
  * In the default build mode this is one row per distinct
- * (geoid, provider_id, technology_code, speeds, low_latency, business_residential_code)
- * tuple, not one row per (block, provider, technology) triple.
+ * (geoid, provider_id, technology_code, speeds, low_latency, business_residential_code) tuple
+ * rather than one row per (block, provider, technology) triple.
  * A triple whose BSLs carry differing speed tiers keeps multiple rows here (see `build-bdc.ts`'s docstring).
  */
 export interface BDCAvailabilityTable {

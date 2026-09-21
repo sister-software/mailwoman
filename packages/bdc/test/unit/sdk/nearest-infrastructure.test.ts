@@ -187,7 +187,7 @@ async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promi
 }
 
 /**
- * A minimal `layerschemadatabase`-only fixture, not poi.db's own coverage table.
+ * A minimal `layerschemadatabase`-only fixture rather than poi.db's own coverage table.
  *
  * Proves the coverage join runs against whatever database the caller passes,
  * independent of poi.db's own coverage.

@@ -174,8 +174,8 @@ describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () =>
 			// Same input, different country scope, demonstrably different place.
 			// History: this probe used `--default-country none` and asserted the unscoped ranking picks
 			// the more-populous foreign twin (itself replacing the NY→Scotland probe #595 found dead).
-			// That premise broke on current gazetteer artifacts — unscoped ranking now keeps US namesakes
-			// (#905, pre-existing on main, invisible in CI because this suite needs the lab DB).
+			// Current gazetteer artifacts no longer match that premise — unscoped ranking now keeps US
+			// namesakes (#905, pre-existing on main, invisible in CI because this suite needs the lab DB).
 			// Probing an explicit scope flip tests the same mechanism without depending on
 			// global-ranking policy. adminCoherence is pinned off so the probe observes
 			// scoping alone (default-on since #895 — asserted separately below).

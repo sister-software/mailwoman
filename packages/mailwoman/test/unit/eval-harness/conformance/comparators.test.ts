@@ -335,8 +335,8 @@ describe("candidate_admissibility", () => {
 
 	// The distinction the mechanism-shape comparator keeps for its own axis:
 	// an empty walk is a reading, an absent trace is not.
-	// Two runs that performed no lookup share no pool, so they are undecidable,
-	// not the absence of a trace, and not agreement.
+	// Two runs that performed no lookup share no pool, so they are undecidable
+	// rather than an absent trace or an agreement.
 	it("keeps an empty walk apart from an absent trace", () => {
 		const reading = compareOutcomes(REFINEMENT, traced([]), traced([]))
 

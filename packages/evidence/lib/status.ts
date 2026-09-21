@@ -17,7 +17,7 @@
 /**
  * The five claims the evidence can license about a value, ordered from the strongest authority to none.
  *
- * Each result carries exactly one.
+ * Each answer names exactly one.
  * The constants are the wire values.
  */
 export const EpistemicStatus = {

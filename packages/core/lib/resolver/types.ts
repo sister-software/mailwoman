@@ -817,8 +817,8 @@ export interface ResolveOpts {
 	 * What refuses the default is a shape none of those carries in its counted rows:
 	 * a remainder that is another place name.
 	 * `Lagoa da Conceição, Florianópolis` and `Morro Dois Irmãos, Rio de Janeiro` recover
-	 * the city from the last segment, and the remainder is a neighbourhood or a venue,
-	 * not a qualifier the rule can admit, and not a word of the recovered name either.
+	 * the city from the last segment, and the remainder is a neighbourhood or a venue
+	 * rather than a qualifier the rule can admit, and not a word of the recovered name either.
 	 *
 	 * Both lose their locality with this on.
 	 * Three other tracked rows trade a wrong coordinate for an abstention,

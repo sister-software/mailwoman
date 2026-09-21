@@ -360,7 +360,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		]
 
 		// `transitionBeta` and `parentDelta` are spread conditionally so an omitted
-		// flag writes no header key at all, not a null/0.
+		// flag writes no header key at all rather than a null/0.
 		// For both, an absent key means the mechanism is off, which is a different statement from "off
 		// because the magnitude happens to be zero", and the reader treats them that way. schemaVersion +
 		// tagTable are stamped by serializePairIndex — format-owned rather than builder claims.

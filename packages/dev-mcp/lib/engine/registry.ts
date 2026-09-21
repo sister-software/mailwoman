@@ -345,8 +345,8 @@ export class EngineRegistry implements EngineRegistryLike {
 	/**
 	 * Compute the boot fingerprint, then construct.
 	 *
-	 * The boot fingerprint is the tree the process imported, not the tree any
-	 * individual engine was built from.
+	 * The boot fingerprint is the tree the process imported rather than the tree
+	 * any individual engine was built from.
 	 * Those differ after a reload, and the difference is required: a registry with no resident
 	 * engine has nothing stale to compare against, so without this the first call after a
 	 * reload builds and stamps the new fingerprint onto answers produced by the old modules.

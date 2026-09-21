@@ -222,8 +222,9 @@ function foldToComponents(flat: Partial<Record<ComponentTag, string>>, foldStree
 	}
 
 	if (xs.length) {
-		// Unfolded mode passes them through as their own tags, which is what the golden labels them as
-		// (`intersection_a` / `intersection_b`), so the fold was mis-scoring those rows in both directions.
+		// Unfolded mode passes them through as their own tags.
+		// That is what the golden labels them as (`intersection_a` / `intersection_b`),
+		// so the fold was mis-scoring those rows in both directions.
 		if (foldStreetParts) {
 			out.street = [out.street, ...xs].filter(isPresent).join(" ")
 		} else {

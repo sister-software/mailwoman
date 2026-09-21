@@ -28,7 +28,7 @@ import type { Comparison, ComparisonLevel } from "#fellegi-sunter"
  *
  * The formula's one true home is `@mailwoman/spatial`; this is a thin domain-typed
  * adapter from `match`'s `LatLon` ({ latitude, longitude }) onto the canonical
- * scalar helper, not a second implementation.
+ * scalar helper rather than a second implementation.
  */
 export const haversineKm = (a: LatLon, b: LatLon): number =>
 	greatCircleKm(a.latitude, a.longitude, b.latitude, b.longitude)
