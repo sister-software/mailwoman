@@ -365,14 +365,17 @@ reading recorded against what a page said cannot be rechecked once it says somet
 Measured 2026-09-21 by unpacking `@mailwoman/core@10.0.0` from the registry. Its `data/` directory
 holds four families, and the notices named three.
 
-| directory                     | files | named in the notices                          |
-| ----------------------------- | ----: | --------------------------------------------- |
-| `data/libpostal/`             |   825 | yes                                           |
-| `data/chromium-i18n/`         |   253 | yes                                           |
-| `data/internal/dictionaries/` |    34 | libpostal yes, Who's On First at a wrong path |
-| `data/coarse-placer/`         |     2 | no                                            |
+Each row's directory is written as the tarball carries it, under `package/data/`. In the checkout the
+same directories sit under `packages/core/data/`.
 
-`data/coarse-placer/` is `weights.bin` and `meta.json`: a multinomial logistic-regression classifier
+| directory in the tarball | files | named in the notices                          |
+| ------------------------ | ----: | --------------------------------------------- |
+| `libpostal/`             |   825 | yes                                           |
+| `chromium-i18n/`         |   253 | yes                                           |
+| `internal/dictionaries/` |    34 | libpostal yes, Who's On First at a wrong path |
+| `coarse-placer/`         |     2 | no                                            |
+
+`packages/core/data/coarse-placer/` is `weights.bin` and `meta.json`: a multinomial logistic-regression classifier
 over 29 country classes on a 65,536-dimension hashed feature space, trained by
 `mailwoman placer train`. It is first-party work, so no third-party license attaches to the artifact.
 What it was trained on is recorded nowhere. Three places would carry it and each is silent: the
@@ -394,10 +397,10 @@ itself. Every artifact in `packages/core/data/` is a level down, in `libpostal/`
 scope and the check would find zero artifacts to name and pass. Writing that record is worth doing
 because the record is what a reader opens, and it would not be enforced by this check as written.
 
-The Who's On First path was also wrong. Both notice copies said the dictionaries are under
-`data/whosonfirst/`, which holds **0 files** in the tarball; they are at
-`data/internal/dictionaries/whosonfirst/`. A consumer following the notice to find the material found
-nothing. Both copies are corrected.
+The Who's On First path was also wrong. Both notice copies sent a reader to a `whosonfirst`
+directory directly under `data/`, which holds **0 files** in the tarball. The dictionaries are three
+levels in, at `packages/core/data/internal/dictionaries/whosonfirst/`. A consumer following the
+notice to find the material found nothing. Both copies are corrected.
 
 ### The `us` bundle carries its own publisher list, and the record had the wrong majority
 
