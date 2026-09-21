@@ -210,7 +210,7 @@ export const BUNDLES: Record<string, DataBundle> = {
 			publishers: ["Who's On First", "GeoNames"],
 			terms: [
 				"Who's On First: Creative Commons Zero covers the format and structure, in those words, and the dataset is also a modification of existing open data whose sources carry their own terms. The text as retrieved on 2026-09-21 is archived at packages/corpus/data/licenses/whosonfirst-licenses.md.",
-				"GeoNames: Creative Commons Attribution.",
+				"GeoNames: Creative Commons Attribution 4.0, the version its export readme names. Its about page names the license without a version. Both as retrieved on 2026-09-21, archived at packages/corpus/data/licenses/geonames-publication.md.",
 			],
 			conditions: [
 				"Link back to the Who's On First license. Its own text makes the link required and crediting the project recommended, which is the one place those two differ.",
@@ -236,10 +236,15 @@ export const BUNDLES: Record<string, DataBundle> = {
 		],
 		rights: {
 			publishers: ["Overture Maps Foundation"],
-			terms: ["Overture Places theme: CDLA-Permissive-2.0."],
-			conditions: ["Attribute Overture Maps Foundation contributors."],
+			terms: [
+				"Overture Places theme: CDLA-Permissive-2.0. The text as retrieved on 2026-09-21 is archived at packages/corpus/data/licenses/cdla-permissive-2.0.md.",
+			],
+			conditions: [
+				"Supply the text of the agreement with the data if you share it. That is the condition §2.1 states on sharing, and it asks for the agreement rather than for a contributor's name.",
+				"Nothing is required of a model trained on these rows. §3.1 states the agreement imposes no restriction or obligation on Results, and §5.4 defines Results to include machine learning models.",
+			],
 			unresolved: [
-				"Which upstream projects the Overture Places theme drew each row from, and whether any of them carries a condition beyond the CDLA attribution.",
+				"Which upstream projects the Overture Places theme drew each row from, and what each of those requires. §3.1 is a statement about this agreement and reaches no other source's terms.",
 			],
 		},
 	},
