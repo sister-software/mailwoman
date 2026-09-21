@@ -110,8 +110,9 @@ describe("buildPOIDatabase", () => {
 		expect(result.rows).toBe(30)
 		expect(result.skipped).toBe(2)
 		expect(result.categories).toBe(3)
-		// Per-country counts: 15 rows kept for each of US/FR (3 categories × 5 rows) — the 2 skipped
-		// non-finite-coordinate rows (both nominally "US") are not counted, per the Map's interface.
+		// Per-country counts: 15 rows kept for each of US/FR (3 categories × 5 rows).
+		// The 2 skipped non-finite-coordinate rows (both nominally "US") are not counted,
+		// per the Map's interface.
 		expect(Object.fromEntries(result.countries)).toEqual({ US: 15, FR: 15 })
 
 		// The completed artifact has no write bits.
@@ -121,14 +122,15 @@ describe("buildPOIDatabase", () => {
 		// dispose paths race to close() the same DatabaseSync and one throws "database is not open".
 		using kdb = new DatabaseClient<POIDatabase>(out, { readOnly: true })
 
-		// Category codes round-trip by first sight. zero remains uncategorized.
+		// Category codes round-trip by first sight.
+		// Zero remains uncategorized.
 		const codes = (await kdb.selectFrom("poi_category_codes").selectAll().execute()) as POICategoryCodeTable[]
 		expect(codes.map((c) => c.category).toSorted()).toEqual(["cafe", "museum", "restaurant"])
 		expect(codes.every((c) => c.id > 0)).toBe(true)
 		const cafeID = codes.find((c) => c.category === "cafe")!.id
 
-		// Clustered disk order makes the first (h3_cell, category_id) row authoritative. no order BY —
-		// relying on the without rowid clustered-key order) is the best-confidence one. ---
+		// Clustered disk order makes the first (h3_cell, category_id) row authoritative.
+		// No order BY — relying on the without rowid clustered-key order) is the best-confidence one. ---
 		const group = await kdb
 			.selectFrom("poi")
 			.select(["h3_cell", "confidence"])
@@ -211,12 +213,14 @@ describe("buildPOIDatabase", () => {
 })
 
 /**
- * Extract-bbox coverage polyfill (decision 5) — the pure helper `--source osm` uses
- * in place of the Overture path's "rows-present ⇒ 1" coverage.
+ * Extract-bbox coverage polyfill (decision 5).
  *
- * Springfield IL sits well inside this small bbox. the bbox spans several res-6 cells,
- * so an empty `rows` list (or rows clustered in only one spot) always leaves at least one
- * cell with `observedRows: 0` to exercise decision 5's "well-surveyed, none found" case.
+ * The pure helper `--source osm` uses in place of the Overture path's "rows-present ⇒ 1" coverage.
+ *
+ * Springfield IL sits well inside this small bbox.
+ * The bbox spans several res-6 cells, so an empty `rows` list
+ * (or rows clustered in only one spot) always leaves at least one cell with
+ * `observedRows: 0` to exercise decision 5's "well-surveyed, none found" case.
  */
 describe("bboxCoverageCells", () => {
 	const bbox: BBox = { minLon: -89.7, minLat: 39.7, maxLon: -89.6, maxLat: 39.85 }
@@ -369,22 +373,25 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 })
 
 /**
- * Builder/reader res-6 coverage-cell agreement — `bboxCoverageCells`
- * (the `--source osm` build branch's coverage aggregator, decision 5) must key a row's observed
- * count off `cellToParent(res9Cell, 6)`, never a direct `latLngToCell(row, 6)`: the default
- * (non-override) rows-derived coverage path just above in this same file's `buildPOIDatabase`
- * (~:592) and every layer reader (`res9ShortCellToRes6Parent` in `bdc/sdk/filing-landscape.ts`,
- * `plausibility.ts`, `nearest-infrastructure.ts`) derive it the parent way, and a builder
- * that disagrees with its readers about the spine is the recurring failure class here.
+ * Builder/reader res-6 coverage-cell agreement.
+ *
+ * `bboxCoverageCells` (the `--source osm` build branch's coverage aggregator, decision 5)
+ * must key a row's observed count off `cellToParent(res9Cell, 6)`, never a direct
+ * `latLngToCell(row, 6)`: the default (non-override) rows-derived coverage path
+ * just above in this same file's `buildPOIDatabase` (~:592) and every layer reader
+ * (`res9ShortCellToRes6Parent` in `bdc/sdk/filing-landscape.ts`, `plausibility.ts`,
+ * `nearest-infrastructure.ts`) derive it the parent way, and a builder that disagrees
+ * with its readers about the spine is the recurring failure class here.
  *
  * H3's cell hierarchy is not geometrically exact, so the two derivations disagree
  * for a real fraction of points (~6.56% measured over 20k conus points):
  * a row's observed count could land on a neighbouring cell, or be dropped entirely
  * when its direct-res-6 cell isn't a member of the bbox polyfill.
  *
- * `DIVERGENT_POINT` is reused verbatim from `bdc/sdk/filing-landscape.test.ts`'s own brute-force-found
- * divergent point — the H3 math is generic (no domain data involved), so the exact same
- * coordinate reproduces the exact same res-6 divergence regardless of which layer is asking.
+ * `DIVERGENT_POINT` is reused verbatim from `bdc/sdk/filing-landscape.test.ts`'s
+ * own brute-force-found divergent point.
+ * The H3 math is generic (no domain data involved), so the exact same coordinate
+ * reproduces the exact same res-6 divergence regardless of which layer is asking.
  */
 const DIVERGENT_POINT = { latitude: 37.119, longitude: -79.6658 }
 
@@ -393,7 +400,7 @@ describe("bboxCoverageCells — builder/reader res-6 coverage-cell agreement (2b
 
 	it("keys a row's observed count off cellToParent(res9Cell, 6), never a direct latLngToCell(row, 6)", () => {
 		// Prove this point is genuinely divergent before trusting the rest of the test — if this
-		// assertion ever stops holding (e.g. an h3-js upgrade changes cell boundaries), the point needs
+		// assertion ever stops holding (e.g. An h3-js upgrade changes cell boundaries), the point needs
 		// re-selecting via a fresh brute-force search, exactly as noted in filing-landscape.test.ts.
 		const oldBuggyCell = shortCellToInt(latLngToCell(DIVERGENT_POINT.latitude, DIVERGENT_POINT.longitude, 6) as H3Cell)
 		const res9Cell = latLngToCell(DIVERGENT_POINT.latitude, DIVERGENT_POINT.longitude, 9) as H3Cell

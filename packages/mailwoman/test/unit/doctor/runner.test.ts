@@ -23,7 +23,8 @@ import {
 import { describe, expect, it } from "vitest"
 
 /**
- * A fully-healthy set of dependencies. individual tests override just the fields they exercise.
+ * A fully-healthy set of dependencies.
+ * Individual tests override just the fields they exercise.
  */
 function healthyDeps(): DoctorDeps {
 	return {

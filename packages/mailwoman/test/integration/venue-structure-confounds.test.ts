@@ -58,8 +58,8 @@ let classifier: NeuralAddressClassifier | undefined
 try {
 	classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 } catch {
-	// Lean checkout with no materialized weights — the suite skips rather than fails,
-	// matching the other model-conditional suites in this leg.
+	// Lean checkout with no materialized weights.
+	// The suite skips rather than fails, matching the other model-conditional suites in this leg.
 	classifier = undefined
 }
 

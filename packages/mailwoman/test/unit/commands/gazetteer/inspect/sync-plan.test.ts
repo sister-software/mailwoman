@@ -72,7 +72,8 @@ describe("selectRepos", () => {
 	})
 
 	it("refuses a name that matched nothing, and suggests the near miss", () => {
-		// Today an unmatched filter syncs only the placetypes repo and reports "1 of 1" — a typo reads as success.
+		// Today an unmatched filter syncs only the placetypes repo and reports "1 of 1".
+		// A typo reads as success.
 		expect(() => selectRepos(DISCOVERED, { repos: "whosonfirst-data-admin-turkey" })).toThrow(
 			/whosonfirst-data-admin-tr/
 		)

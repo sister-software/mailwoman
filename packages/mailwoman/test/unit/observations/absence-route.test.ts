@@ -79,7 +79,8 @@ interface ScratchLayerOptions {
 	/**
 	 * The classes the layer holds.
 	 *
-	 * One is the ordinary case. two is what the pooled-completeness refusal is about.
+	 * One is the ordinary case.
+	 * Two is what the pooled-completeness refusal is about.
 	 */
 	categories?: string[]
 	cells?: { h3Cell: number; completeness: number; basis: CoverageBasis; observedRows: number }[]
@@ -255,7 +256,7 @@ describe("the conjunction's other half — the artifact", () => {
 	})
 
 	// The committed artifact affords `obtain_medication` from both wave-1 classes.
-	// the pilot layer surveys `pharmacy`.
+	// The pilot layer surveys `pharmacy`.
 	// So `drugstore` is a class the artifact can speak about and the layer cannot,
 	// which is a different refusal from a class the artifact never heard of.
 	it("refuses a category the artifact affords but the layer never surveyed", async () => {

@@ -112,8 +112,9 @@ describe("runCascade (shared resolveTree over the candidate lookup)", () => {
 			{ id: 12, name: "Austria", placetype: "country", country: "AT", lat: 47.6, lon: 14.1, score: 2, bbox: AT_BBOX },
 		])
 
-		// The country token is the locality's admin context — the parse tree nests it above
-		// the locality (same shape the phrase-grouper emits), which is what arms the pass.
+		// The country token is the locality's admin context.
+		// The parse tree nests it above the locality (same shape the phrase-grouper emits),
+		// which is what arms the pass.
 		const hits = await runCascade(
 			lookup,
 			tree("Vienna, Austria", [node("country", "Austria", [node("locality", "Vienna")])]),
@@ -146,8 +147,7 @@ describe("runCascade (shared resolveTree over the candidate lookup)", () => {
 		// `N7 0BT` resolves its own full unit code (~15 addresses) — categorically tighter
 		// than the London centroid, so it pins above the locality, same as Node's ladder.
 		const lookup = stubLookup([
-			// `nameKeys` carries the spaced query surface; `name` stays the gazetteer's canonical unspaced
-			// form — the exact pair isUnitGradePostcodeHit compares.
+			// `nameKeys` carries the spaced query surface; `name` stays the gazetteer's canonical unspaced form — the exact pair isUnitGradePostcodeHit compares.
 			{
 				id: 30,
 				name: "N70BT",
@@ -171,8 +171,9 @@ describe("runCascade (shared resolveTree over the candidate lookup)", () => {
 	})
 
 	test("cross-country postcode check: a foreign postcode match cannot out-pin the parsed city", async () => {
-		// "10115"-class: the postcode string resolves to a DE row, the city is a US locality —
-		// the locality wins the pin. the postcode stays in the hit list.
+		// "10115"-class: the postcode string resolves to a DE row, the city is a US
+		// locality — the locality wins the pin.
+		// The postcode stays in the hit list.
 		const lookup = stubLookup([
 			{ id: 30, name: "10115", placetype: "postalcode", country: "DE", lat: 52.53, lon: 13.38, score: 2 },
 			{ id: 31, name: "New York", placetype: "locality", country: "US", lat: 40.71, lon: -74, score: 9 },

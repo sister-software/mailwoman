@@ -106,8 +106,10 @@ function armNamed(report: PremiseLinkageReport, arm: string): PremiseLinkageArmR
 }
 
 /**
- * Run something that must refuse, and hand back the refusal itself — a reason and a path are
- * what the writer promises, and a message match would pass on a refusal for the wrong reason.
+ * Run something that must refuse, and hand back the refusal itself.
+ *
+ * A reason and a path are what the writer promises, and a message match would
+ * pass on a refusal for the wrong reason.
  */
 function refusalFrom(run: () => unknown): PremiseLinkageRedactionError {
 	try {
@@ -482,8 +484,8 @@ describe("#1902: the Mailwoman-only arm uses the production pipeline, unchanged"
 
 		expect(openRows.length).toBeGreaterThan(0)
 
-		// `none` is the recorded provider precisely because the arm consulted one and got
-		// nothing back — the block is absent, so every open row reports the structural refusal.
+		// `none` is the recorded provider precisely because the arm consulted one and got nothing back.
+		// The block is absent, so every open row reports the structural refusal.
 		expect(openRows.every((row) => row.failureCategory === PremiseLinkageFailureCategory.ArmAssertsNoIdentifier)).toBe(
 			true
 		)

@@ -21,7 +21,8 @@ import { describe, expect, test } from "vitest"
 const cliBin = await mailwomanCLIPath()
 
 /**
- * Strip ansi escapes + ink spinner frames. isolate the JSON payload.
+ * Strip ansi escapes + ink spinner frames.
+ * Isolate the JSON payload.
  */
 function extractJSON(stdout: string): unknown {
 	const ansi = /\[[0-9;]*[a-zA-Z]/gu
@@ -40,7 +41,8 @@ function extractJSON(stdout: string): unknown {
 describe("parse --debug (runtime pipeline)", () => {
 	test("US ZIP+4 fast-path emits PipelineResult with path='fast-path' + timing + tree", async () => {
 		// Bare US ZIP+4 hits the fast-path (postcode_only kind, unambiguous us_zip4 hit).
-		// Doesn't require neural weights — the fast-path tree is built from QueryShape.
+		// Doesn't require neural weights.
+		// The fast-path tree is built from QueryShape.
 		const { stdout } = await runFile(process.execPath, [cliBin, "parse", "--debug", "10118-1234"], {
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,

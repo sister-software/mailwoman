@@ -155,8 +155,7 @@ describe("mostSpecific", () => {
 		expect(mostSpecific([unranked])).toBe(unranked)
 	})
 
-	// #1773: the postcode rung is the one that is not a constant, and this harness had no postcode case at all — which
-	// is how a flat scale graded every panel on the arm production takes for only some of them.
+	// #1773: the postcode rung is the one that is not a constant, and this harness had no postcode case at all — which is how a flat scale graded every panel on the arm production takes for only some of them.
 	const areaPostcode: Resolved = {
 		id: 5,
 		name: "62701",
@@ -258,9 +257,9 @@ describe("resolveOptsFrom", () => {
 	})
 
 	it("carries a ZERO cap, which is the arm that separates the re-pick from the coordinate fallback", () => {
-		// `0` is falsy and the surrounding pins are presence-tested. a truthiness
-		// check here would drop the one arm that refuses every fall, and the run would
-		// report the shipped numbers under the arm's name.
+		// `0` is falsy and the surrounding pins are presence-tested.
+		// A truthiness check here would drop the one arm that refuses every fall,
+		// and the run would report the shipped numbers under the arm's name.
 		expect(resolveOptsFrom({ postcodeConsistencyMaxMoveKm: 0 }, "none")).toEqual({ postcodeConsistencyMaxMoveKm: 0 })
 
 		expect(resolveOptsFrom({ postcodeConsistencyMaxMoveKm: 300 }, "none")).toEqual({

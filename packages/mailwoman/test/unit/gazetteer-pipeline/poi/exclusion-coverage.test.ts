@@ -115,7 +115,8 @@ describe("buildExclusionCoverage", () => {
 			geometry: REGION,
 			resolution: RESOLUTION,
 			subject: shared,
-			// Same places, but only three of the names survive — the rest read as a different inventory.
+			// Same places, but only three of the names survive.
+			// The rest read as a different inventory.
 			reference: shared.map((row, i) => (i < 3 ? row : { ...row, name: `Boulangerie ${i}` })),
 		})
 

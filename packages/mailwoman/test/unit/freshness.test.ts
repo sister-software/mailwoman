@@ -32,7 +32,8 @@ async function scratch(): Promise<string> {
 }
 
 /**
- * A stamped artifact, written through `stampLayerManifest` — the same writer every builder uses.
+ * A stamped artifact, written through `stampLayerManifest`.
+ * The same writer every builder uses.
  *
  * The fixture is deliberately not hand-rolled SQL: a reader tested against a table this
  * test invented would keep passing after the interface's own writer changed shape,

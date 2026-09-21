@@ -94,7 +94,8 @@ async function driveInput(keys: string[]): Promise<string> {
 		await delay(KEYSTROKE_GAP_MS)
 	}
 
-	// Escape is the probe's quit. the kill is the belt-and-braces for a frame that never arrived.
+	// Escape is the probe's quit.
+	// The kill is the belt-and-braces for a frame that never arrived.
 	child.stdin.write(ESC)
 	await delay(KEYSTROKE_GAP_MS)
 	child.kill("SIGKILL")

@@ -26,9 +26,9 @@ const CLI_SPAWN_TIMEOUT_MS = 45_000
 /**
  * Vitest's own per-test budget.
  *
- * It has to exceed {@link CLI_SPAWN_TIMEOUT_MS} plus time queued on the spawn lock — a per-test
- * timeout below the child's timeout means vitest kills the test before the thing it is measuring
- * can report, which reads as "timed out" with no indication of what actually took the time.
+ * It has to exceed {@link CLI_SPAWN_TIMEOUT_MS} plus time queued on the spawn lock.
+ * A per-test timeout below the child's timeout means vitest kills the test before the thing it is
+ * measuring can report, which reads as "timed out" with no indication of what actually took the time.
  */
 const CLI_TEST_TIMEOUT_MS = 90_000
 
@@ -90,9 +90,7 @@ describe("npx mailwoman corpus list", () => {
 	test(
 		"exits 0 and includes every registered adapter id",
 		async () => {
-			// NODE_NO_WARNINGS=1 silences Node deprecation chatter (e.g. DEP0040
-			// punycode noise from a transitive dep on Node 22) that would otherwise pollute
-			// stderr and break the `stderr === ""` assertion.
+			// NODE_NO_WARNINGS=1 silences Node deprecation chatter (e.g. DEP0040 punycode noise from a transitive dep on Node 22) that would otherwise pollute stderr and break the `stderr === ""` assertion.
 			const { stdout, stderr } = await withCLISpawnLockAsync(() =>
 				runFile("node", [cliBin, "corpus", "list"], {
 					timeout: CLI_SPAWN_TIMEOUT_MS,

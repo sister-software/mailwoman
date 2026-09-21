@@ -29,7 +29,8 @@ async function fixtureDB(): Promise<DatabaseClient<WOFDatabase>> {
 	ins.run(1, -1, "Testland", "country", "TL", 2, 2, 1, 1, 3, 3)
 	ins.run(2, 1, "Testregion", "region", "TL", 1.5, 1.5, 1, 1, 2, 2)
 	ins.run(3, 2, "Testtown", "locality", "TL", 1.5, 1.5, 1.4, 1.4, 1.6, 1.6)
-	// The US spot-check target (VT→Vermont) — every real admin DB carries US.
+	// The US spot-check target (VT→Vermont).
+	// Every real admin DB carries US.
 	ins.run(85_688_763, -1, "Vermont", "region", "US", 44, -72.7, 42.7, -73.4, 45, -71.5)
 	await enrichAdmin(db)
 	await buildFTS(db)

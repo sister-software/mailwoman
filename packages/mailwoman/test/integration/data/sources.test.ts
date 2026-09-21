@@ -27,8 +27,9 @@ afterAll(() => fixtures.disposeAsync())
 /**
  * A bundle declaring one artifact per given local path, with a census over `address_point.source`.
  *
- * The rights declaration is required to compile, and an empty one states nothing rather than
- * describing a bundle with no obligations — the same fixture convention `bundles.test.ts` uses.
+ * The rights declaration is required to compile, and an empty one states nothing
+ * rather than describing a bundle with no obligations.
+ * The same fixture convention `bundles.test.ts` uses.
  */
 function bundleOver(localPaths: readonly string[], census: DataBundle["sourceCensus"]): DataBundle {
 	return {

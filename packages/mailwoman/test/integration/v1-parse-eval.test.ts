@@ -103,8 +103,8 @@ type RulesRecord = Partial<Record<string, string[]>>
 /**
  * Load the frozen rules baseline: `input → the top solution's classifications`.
  *
- * This replaces the deleted live `createAddressParser().parse(...)` call —
- * the record is a byte-stable snapshot of that exact parser (PR #1092).
+ * This replaces the deleted live `createAddressParser().parse(...)` call.
+ * The record is a byte-stable snapshot of that exact parser (PR #1092).
  */
 async function loadRulesGolden(): Promise<Map<string, RulesRecord>> {
 	const byInput = new Map<string, RulesRecord>()
@@ -258,8 +258,8 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 				}
 
 				try {
-					// The rules parse is read from the frozen phase-0 capture (PR #1092),
-					// not produced live — the v1 parser is deleted.
+					// The rules parse is read from the frozen phase-0 capture (PR #1092), not produced live.
+					// The v1 parser is deleted.
 					// `v0RecordToTree` rebuilds the flat record into a tree exactly as the live
 					// arm did, so the coordinate comparison is unchanged.
 					const record = rulesGolden.get(fx.input) ?? {}
@@ -282,7 +282,7 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 				})
 			}
 
-			// informational: the old parse-tag agreement (non-enforcing. drives Track B)
+			// informational: the old parse-tag agreement (non-enforcing. Drives Track B)
 			const agreement = (label: string) => {
 				const scored = rows.filter((r) => r.agree[label] !== undefined)
 				const hit = scored.filter((r) => r.agree[label]).length
@@ -326,14 +326,16 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 				`[check] P3 garbage-tail residual (structured, street-fail, Δ>25km, guard-miss): ${residual}/${rows.length} = ${(100 * residualRate).toFixed(2)}% (bound 2.0%; receipt 0.9% = 3/321)`
 			)
 
-			// P1 — Receipt: 98.6% within 1km when the neural street parse is correct. fresh: 76/80 = 0.950.
+			// P1 — Receipt: 98.6% within 1km when the neural street parse is correct.
+			// Fresh: 76/80 = 0.950.
 			//      Floor 0.90 sits below both with margin. When the model parses the street right, the geocode is safe.
 			expect(
 				acceptRate,
 				"coordinate acceptability: street-PASS neural geocode within 1km of rules"
 			).toBeGreaterThanOrEqual(0.9)
 
-			// P2 — Receipt: 0/81 coord-safe structured fixtures trip the guard. fresh: 0/78.
+			// P2 — Receipt: 0/81 coord-safe structured fixtures trip the guard.
+			// Fresh: 0/78.
 			// Zero false fallbacks is
 			//      the guard's whole justification — a non-zero here means it would bounce good geocodes to fallback.
 			expect(guardFalsePositives, "plausibility-guard false fallbacks on coord-safe structured fixtures").toBe(0)

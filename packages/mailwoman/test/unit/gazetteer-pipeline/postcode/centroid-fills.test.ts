@@ -13,7 +13,8 @@ import { join } from "path-ts"
 import { expect, test } from "vitest"
 
 test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordinates untouched", async () => {
-	// The staging database: two postcodes — one placeholder (parented), one already placed.
+	// The staging database: two postcodes.
+	// One placeholder (parented), one already placed.
 	await using dirDirectory = await temporaryDirectory("centroid-fills-")
 	const dir = dirDirectory.path
 	const databasePath = join(dir, "postalcode-tl.db")

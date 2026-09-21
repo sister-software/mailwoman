@@ -61,9 +61,10 @@ import { poiTaxonomyLookup } from "mailwoman/poi"
 import { beforeAll, describe, expect, test } from "vitest"
 
 /**
- * The scorer set as it stood before ROAD_TO_V9 §4 — a verbatim replay of `classify.ts`'s
- * list at commit `4ebd955`, minus the three intent scorers and the POI pair
- * (which are lexicon-restricted and unreachable from `classifyKindSync`).
+ * The scorer set as it stood before ROAD_TO_V9 §4.
+ *
+ * A verbatim replay of `classify.ts`'s list at commit `4ebd955`, minus the three intent scorers
+ * and the POI pair (which are lexicon-restricted and unreachable from `classifyKindSync`).
  */
 const PRE_INTENT_SCORERS: ReadonlyArray<{
 	kind: QueryKind
@@ -115,8 +116,10 @@ beforeAll(async () => {
 /**
  * A floor rather than the current count.
  *
- * The failure worth catching is a corpus that loads short — a truncated read or a silently-filtered
- * set makes every zero-reclassification claim below vacuous while still passing.
+ * The failure worth catching is a corpus that loads short.
+ * A truncated read or a silently-filtered set makes every zero-reclassification
+ * claim below vacuous while still passing.
+ *
  * Growth is the normal operation: a board row lands most working days, and an exact pin
  * turns each one into a red build in a file nobody editing the board would think to open.
  *
@@ -152,10 +155,10 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 	)
 
 	test("the LEXICON-WIRED classifier's top slot is byte-identical on every corpus row (#1649)", async () => {
-		// The geocode path now injects createKindClassifier({ poiLexicon }) for first refusal. an
-		// address-shaped row whose top kind flips to a poi kind would silently abstain from geocoding.
-		// The category-query rows themselves are excluded — they are thing-queries
-		// and flipping is their entire point (each one's id carries the -cat- infix).
+		// The geocode path now injects createKindClassifier({ poiLexicon }) for first refusal.
+		// An address-shaped row whose top kind flips to a poi kind would silently abstain from geocoding.
+		// The category-query rows themselves are excluded.
+		// They are thing-queries and flipping is their entire point (each one's id carries the -cat- infix).
 		const classify = createKindClassifier({ poiLexicon: poiTaxonomyLookup })
 		const flipped: Array<{ input: string; sync: string; wired: string }> = []
 
@@ -200,13 +203,15 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 	/**
 	 * The measured residual, pinned by name.
 	 *
-	 * `route_pair` cannot be separated from a two-token single place name by structure alone —
-	 * that separation needs to know Guatemala is a country and Jaya is not, which is a gazetteer fact.
+	 * `route_pair` cannot be separated from a two-token single place name by structure alone.
+	 * That separation needs to know Guatemala is a country and Jaya is not, which is a gazetteer fact.
+	 *
 	 * The morphology guard in `intent-rules.ts` (head particles, tail generics, reduplication) takes
 	 * the corpus population from 12 rows to these 4, and the rest is irreducible at Stage 2.5.
 	 *
-	 * That is not a defect being tolerated — it is the reason ROAD_TO_V9 §4.3
-	 * specifies a declared fork rather than a router.
+	 * That is not a defect being tolerated.
+	 * It is the reason ROAD_TO_V9 §4.3 specifies a declared fork rather than a router.
+	 *
 	 * All four rows keep their existing top kind (`locality_only`, asserted above),
 	 * keep their register, take the same path, and resolve to the same answer.
 	 *
@@ -220,10 +225,12 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 	// and world-structures boards (306 → 514 cases).
 	// The 15 additions are all bare famous-street rows ('Avenida Alvear', 'Gran Vía' …) — single street-name
 	// surfaces with no structural anchor, exactly the declared-fork shape the marker exists for.
-	// Deliberate pin move, reviewed row-by-row. not silent growth. 2026-08-11: corpus 514 → 523 with the
-	// bare-foreign-postcode board (#1589) — 9 postcode surfaces ('100 00', 'SW1A 1AA', 'N7 0BT', …),
-	// then 523 → 530 with the #1585 fuzzy-scope board (bare toponyms + two exact-match controls).
-	// None are fork-shaped. the fork list is unchanged.
+	// Deliberate pin move, reviewed row-by-row.
+	// Not silent growth. 2026-08-11: corpus 514 → 523 with the bare-foreign-postcode board
+	// (#1589) — 9 postcode surfaces ('100 00', 'SW1A 1AA', 'N7 0BT', …), then 523 → 530
+	// with the #1585 fuzzy-scope board (bare toponyms + two exact-match controls).
+	// None are fork-shaped.
+	// The fork list is unchanged.
 	const EXPECTED_FORK_ROWS = [
 		"Antigua Guatemala",
 		"Avenida Alvear",
@@ -246,8 +253,9 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 		const marked: Array<{ input: string; codes: string[]; kind: QueryKind }> = []
 
 		for (const raw of corpus) {
-			// The #1649 category-query rows carry intent markers by design — they are the thing-query
-			// board rather than the irreducible address-shaped fork this exhaustive list pins.
+			// The #1649 category-query rows carry intent markers by design.
+			// They are the thing-query board rather than the irreducible address-shaped
+			// fork this exhaustive list pins.
 			if (CATEGORY_QUERY_INPUTS.has(raw)) continue
 
 			for (const text of [raw, raw.toLowerCase()]) {

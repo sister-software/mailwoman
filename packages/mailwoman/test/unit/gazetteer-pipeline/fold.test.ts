@@ -53,7 +53,8 @@ test("foldGeonamesIntoAdmin: a SEALED admin source yields a writable staging cop
 	const emptyDumps = root.resolve("geonames-empty")
 	await makeDirectories(emptyDumps)
 
-	// Zero countries: no dump files needed — the place_search rebuild alone exercises the write path.
+	// Zero countries: no dump files needed.
+	// The place_search rebuild alone exercises the write path.
 	const result = await foldGeonamesIntoAdmin({
 		adminIn,
 		adminOut,
@@ -101,9 +102,7 @@ test("foldGeonamesIntoAdmin: overwrites a stale prior copy, sealed or not", asyn
 })
 
 test("foldGeonamesIntoAdmin: refuses a fold that would drop the source's existing alias coverage", async () => {
-	// #1514. `buildAdmin` bakes a 161-country fold into every admin artifact, and the fold rewrites its
-	// whole id range — so folding a narrower list against one deletes the difference.
-	// The 2026-08-05 build did exactly that with the old 14-country default and nothing said a word.
+	// #1514. `buildAdmin` bakes a 161-country fold into every admin artifact, and the fold rewrites its whole id range — so folding a narrower list against one deletes the difference. The 2026-08-05 build did exactly that with the old 14-country default and nothing said a word.
 	const adminIn = root.resolve("admin-prefolded.db")
 
 	await buildSealed(adminIn, (db) => {

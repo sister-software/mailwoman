@@ -39,7 +39,8 @@ describe("three-law selectivity — pure units", () => {
 	})
 
 	it("law 3: metros clear the person-name tier, given names do not", () => {
-		// paris/lyon/nancy are IN the name lists — the tiered floor keeps them at metro prominence.
+		// paris/lyon/nancy are IN the name lists.
+		// The tiered floor keeps them at metro prominence.
 		expect(clearsProminenceFloor("paris", 0.85, personNames)).toBe(true)
 		expect(clearsProminenceFloor("lyon", 0.6, personNames)).toBe(true)
 		// A given-name homograph at ordinary-town prominence is refused…
@@ -182,12 +183,13 @@ describe("street-type lexicon build", () => {
 		expect(built.skippedRegionVocabulary).toBeGreaterThanOrEqual(4)
 		const j = await readLocalJSONFile<StreetTypeLexicon>(tmp)
 
-		// "mountain WAY WY 82601" / "susie CT WY 83101" — the state token must carry no street evidence.
+		// "mountain WAY WY 82601" / "susie CT WY 83101".
+		// The state token must carry no street evidence.
 		for (const code of ["WY", "CT", "KY", "MT", "PR"]) {
 			expect(j.code_entries[code], code).toBeUndefined()
 		}
 
-		// Directional codes stay (single-letter CA forms. none collide with a state).
+		// Directional codes stay (single-letter CA forms. None collide with a state).
 		expect(j.code_entries.N).toBe(1)
 		expect(j.code_entries.W).toBe(1)
 		// The canonical words behind the dropped codes are untouched.

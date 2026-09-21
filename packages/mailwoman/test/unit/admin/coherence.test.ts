@@ -58,7 +58,8 @@ describe("assessAdminCoherence — region verdicts", () => {
 	it("contradicted on a cross-language variant form — the stated v1 bound", () => {
 		// "Thüringen" folds to "thuringen", the stored exonym "Thuringia" to "thuringia": fold equality
 		// cannot bridge the variant, and v1 deliberately does not consult the gazetteer's alias table.
-		// Documented in the module docstring. this test pins the bound.
+		// Documented in the module docstring.
+		// This test pins the bound.
 		const winner: AdminCoherenceWinner = {
 			tag: "locality",
 			countryCode: "DE",
@@ -104,8 +105,8 @@ describe("assessAdminCoherence — region verdicts", () => {
 	})
 
 	it("the mislabel bridge: a COUNTRY name in the region slot confirms against country-class evidence", () => {
-		// "Batumi, Georgia" parses region="Georgia" and resolves Batumi GE — the region
-		// band (Adjara) cannot match, but the winner's country-class evidence can,
+		// "Batumi, Georgia" parses region="Georgia" and resolves Batumi GE.
+		// The region band (Adjara) cannot match, but the winner's country-class evidence can,
 		// and `contradicted` would be the wrong claim about the geography.
 		// The bridge runs through the same winnerCountryKeys the country verdict reads,
 		// so the two verdicts can never disagree about country evidence.
@@ -137,8 +138,8 @@ describe("assessAdminCoherence — region verdicts", () => {
 	})
 
 	it("the bridge is MONOTONE: a non-country region qualifier still reads exactly as before", () => {
-		// A genuine wrong-instance row must stay contradicted — the bridge only fires when the parsed
-		// region genuinely names the winner's own country.
+		// A genuine wrong-instance row must stay contradicted.
+		// The bridge only fires when the parsed region genuinely names the winner's own country.
 		const georgetownTexas: AdminCoherenceWinner = {
 			tag: "locality",
 			countryCode: "US",
@@ -150,8 +151,8 @@ describe("assessAdminCoherence — region verdicts", () => {
 
 		expect(assessAdminCoherence({ region: "Penang" }, georgetownTexas).region).toBe("contradicted")
 
-		// And with no region-class ancestry and no country match, the faithful verdict stays
-		// unverifiable — the bridge never converts an unanswerable question into a decided one.
+		// And with no region-class ancestry and no country match, the faithful verdict stays unverifiable.
+		// The bridge never converts an unanswerable question into a decided one.
 		const bare: AdminCoherenceWinner = { tag: "locality", countryCode: "US" }
 
 		expect(assessAdminCoherence({ region: "Thüringen" }, bare).region).toBe("unverifiable")
@@ -285,7 +286,7 @@ describe("regionVerdict — the fold-bound closures (2026-08-18)", () => {
 		)
 
 		// A US winner whose ancestry claims Western Australia is genuinely incoherent.
-		// the scoped table must not bridge it.
+		// The scoped table must not bridge it.
 		expect(report.region).toBe("contradicted")
 	})
 

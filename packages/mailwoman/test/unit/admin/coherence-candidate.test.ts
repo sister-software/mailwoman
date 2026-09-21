@@ -110,9 +110,9 @@ afterEach(async () => {
 /**
  * Resolve the Weimar tree and read the verdicts the way the geocode assembly does.
  *
- * `adminCoherence: false` pins the
- * #263 re-pick out of the way — this test is about the stamp and the verdict rather than about any mechanism that might
- * one day fix the pick.
+ * `adminCoherence: false` pins the #263 re-pick out of the way.
+ * This test is about the stamp and the verdict rather than about any mechanism
+ * that might one day fix the pick.
  */
 async function verdictFor(regionValue: string, includeAncestors: boolean) {
 	const resolver = createWOFResolver(lookup)

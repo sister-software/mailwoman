@@ -24,6 +24,7 @@ interface PlaceFixture {
 	lon: number
 	/**
 	 * `-log10(population + 1)` negated — i.e. `log10(population + 1)`.
+	 *
 	 * Bigger = more populous, matching the resolver's `prominence` on the candidate backend.
 	 */
 	prominence: number
@@ -96,8 +97,8 @@ describe("declaredAmbiguityMarker", () => {
 
 	test("collapses the coincident WOF twin before measuring — the trap that would fire on every capital", () => {
 		// Paris the `locality` and Paris the `localadmin`: same city, same population, ~0.3 km apart.
-		// A RAW top-2 margin here is 0.01, which is under the threshold. the 10 km
-		// collapse is what makes the number mean anything.
+		// A RAW top-2 margin here is 0.01, which is under the threshold.
+		// The 10 km collapse is what makes the number mean anything.
 		// Without it this assertion returns a marker and every major city in the world reads as ambiguous.
 		const tree = treeOf({ name: "Paris", lat: 48.8566, lon: 2.3522, prominence: 6.32 }, [
 			{ name: "Paris", placetype: "localadmin", lat: 48.8589, lon: 2.347, prominence: 6.31 },
@@ -114,7 +115,8 @@ describe("declaredAmbiguityMarker", () => {
 	})
 
 	test("declines — rather than declaring decisive — when there is nothing to rank", () => {
-		// One candidate is not a contest. a marker either way would be a claim about a measurement that was never made.
+		// One candidate is not a contest.
+		// A marker either way would be a claim about a measurement that was never made.
 		const tree = treeOf({ name: "Ouagadougou", lat: 12.3714, lon: -1.5197, prominence: 6.3 }, [])
 
 		expect(declaredAmbiguityMarker({ kinds: BARE, tree, lat: 12.3714, lon: -1.5197 })).toBeNull()

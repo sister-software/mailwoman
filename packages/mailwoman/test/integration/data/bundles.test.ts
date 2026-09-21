@@ -269,7 +269,8 @@ describe("needsDownload — the present/missing/stale decision", () => {
 	})
 
 	it("md5 is checked before content-length when both are present", () => {
-		// Same size, different md5 — a same-size corruption/edit must still be caught.
+		// Same size, different md5.
+		// A same-size corruption/edit must still be caught.
 		expect(needsDownload({ exists: true, sizeBytes: 100, md5: "abc123" }, { contentLength: 100, md5: "def456" })).toBe(
 			true
 		)

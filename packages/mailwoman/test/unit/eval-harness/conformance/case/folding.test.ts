@@ -151,8 +151,8 @@ describe("caseApplicability", () => {
 
 	it("reports the identity rule first when both bear on the same row", () => {
 		// The same Turkish row is already title case, so `mixed` moves nothing.
-		// Both rules would exclude it. the one that fires is the one that says the
-		// pair could never have tested anything.
+		// Both rules would exclude it.
+		// The one that fires is the one that says the pair could never have tested anything.
 		expect(caseApplicability(TR_STREET, "mixed", "TR").rule).toBe("identity-transformation")
 	})
 
@@ -243,7 +243,8 @@ describe("auditCaseFoldingSuite", () => {
 
 describe("a seeded case regression", () => {
 	/**
-	 * The pipeline stand-in that fails only on the uppercase arm — the shape both live findings take.
+	 * The pipeline stand-in that fails only on the uppercase arm.
+	 * The shape both live findings take.
 	 *
 	 * Seeding the regression rather than waiting for one is what proves the failure
 	 * line carries enough to diagnose from.

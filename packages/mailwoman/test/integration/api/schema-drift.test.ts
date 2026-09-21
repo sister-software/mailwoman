@@ -106,12 +106,14 @@ export type _SchemaAcceptsRealResult = Expect<IsAssignable<GeocodeResult, KnownI
 export type _ResultAcceptsSchema = Expect<IsAssignable<Inferred, GeocodeResult>>
 
 /**
- * Every `GeocodeResult` field name, as a `satisfies` object — TypeScript itself enforces this list can't
- * drift from the interface (add, remove, or rename a `GeocodeResult` field and this stops compiling).
+ * Every `GeocodeResult` field name, as a `satisfies` object.
+ *
+ * TypeScript itself enforces this list can't drift from the interface
+ * (add, remove, or rename a `GeocodeResult` field and this stops compiling).
  *
  * Exists so the runtime check below has something concrete to compare against.
- * JS has no reflection over a TS interface, so some hardcoded list is unavoidable for
- * a runtime assertion — this is the compile-time-guarded version of one.
+ * JS has no reflection over a TS interface, so some hardcoded list is unavoidable for a runtime assertion.
+ * This is the compile-time-guarded version of one.
  */
 const GEOCODE_RESULT_FIELD_NAMES = {
 	input: true,
@@ -146,10 +148,10 @@ const GEOCODE_RESULT_FIELD_NAMES = {
 } satisfies Record<keyof GeocodeResult, true>
 
 test("GeocodeOutcomeSchema field set matches GeocodeResult (runtime backstop — the compile-time pin above, via `yarn compile`, is the primary alarm; see file header)", () => {
-	// This is deliberately independent of the type-level `_KeysMatch` above: it inspects the real,
-	// already-constructed `GeocodeOutcomeSchema.shape` at runtime, so it also fires under plain `yarn
-	// vitest run` (no `tsc` required) — a second, cheaper signal for the same class of drift the
-	// compile-time pin exists to catch.
+	// This is deliberately independent of the type-level `_KeysMatch` above:
+	// it inspects the real, already-constructed `GeocodeOutcomeSchema.shape` at runtime,
+	// so it also fires under plain `yarn vitest run` (no `tsc` required) — a second,
+	// cheaper signal for the same class of drift the compile-time pin exists to catch.
 	const schemaKeys = Object.keys(GeocodeOutcomeSchema.shape).toSorted()
 	const resultKeys = Object.keys(GEOCODE_RESULT_FIELD_NAMES).toSorted()
 

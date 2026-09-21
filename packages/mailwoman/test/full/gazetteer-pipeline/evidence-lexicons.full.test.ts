@@ -82,7 +82,7 @@ describe.skipIf(!(await pathExists(ADMIN_DB)))("locality-surface build — integ
 
 		// The lexicon still carries the ordinary locality surfaces the census rows need.
 		// (Not casper/ powell: Casper WY is a given-name homograph at 0.42 < the 0.45 law-3 tier,
-		// Powell WY is below the law-2 floor — both were absent from v4 too. their census
+		// Powell WY is below the law-2 floor — both were absent from v4 too. Their census
 		// flips were family-F1 street-code evidence, fixed in the street lexicon.)
 		for (const s of ["fargo", "minot", "rutland", "plainfield", "cheyenne"]) {
 			expect(j.entries[s], s).toBeDefined()

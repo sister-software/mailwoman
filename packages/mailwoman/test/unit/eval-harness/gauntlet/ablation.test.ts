@@ -235,7 +235,8 @@ describe("scoreAblation — one deletion against its own anchor", () => {
 	})
 
 	it("breaks when the deletion moves the coordinate past the row's own tolerance", () => {
-		// ~1.1 km north of the anchor. inside a 5 km band and outside an 80 m rooftop pin.
+		// ~1.1 km north of the anchor.
+		// Inside a 5 km band and outside an 80 m rooftop pin.
 		const moved = result({ lat: 40.7584 })
 
 		expect(scoreAblation(result(), moved, "75013", "postcode", 5).broken).toBe(false)
@@ -280,7 +281,8 @@ describe("isTierDrop — coarsening costs the user precision even at zero displa
 })
 
 /**
- * A row outcome with the fields a cell aggregates. the rest is filler the aggregation never reads.
+ * A row outcome with the fields a cell aggregates.
+ * The rest is filler the aggregation never reads.
  */
 function row(over: Partial<AblationRowOutcome>): AblationRowOutcome {
 	return {
@@ -305,9 +307,8 @@ function row(over: Partial<AblationRowOutcome>): AblationRowOutcome {
 		slot: "absent",
 		emitted: null,
 		// The expectation-model fields (2026-08-05).
-		// A fixture that omitted them would
-		// let `aggregateCells` count an `undefined` grade, which is how a histogram
-		// silently grows a tenth bucket nobody reads.
+		// A fixture that omitted them would let `aggregateCells` count an `undefined` grade,
+		// which is how a histogram silently grows a tenth bucket nobody reads.
 		expectedRung: "base",
 		expectedRungDepth: 0,
 		expectedWhy: "fixture",
@@ -479,8 +480,8 @@ describe("ablationBoardID — a cell without a board is not a measurement", () =
  * The CLI → layer plumbing, pinned for the reason `pin-pin.test.ts` pins the
  * resolver pin: a dropped option does not throw.
  *
- * A dropped `--components` runs the whole corpus and prints a map that looks exactly like
- * the one asked for. a dropped `--limit` turns a smoke run into a forty-minute one.
+ * A dropped `--components` runs the whole corpus and prints a map that looks exactly like the one asked for.
+ * A dropped `--limit` turns a smoke run into a forty-minute one.
  */
 describe("runAblationOptions — a CLI flag reaches the layer", () => {
 	it("carries the three ablation options alongside the shared model/pin ladder", () => {

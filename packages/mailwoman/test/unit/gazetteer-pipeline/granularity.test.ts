@@ -53,8 +53,9 @@ describe("SUB_LOCALITY_RUNGS", () => {
 /**
  * A fixture DB with the `spr`/`ancestors` shape the ladder reads.
  *
- * `node:sqlite` cannot share an `:memory:` DB across connections and the builder opens its own
- * read-only handle, so this writes a temp file — the same approach `placetype-census.test.ts` uses.
+ * `node:sqlite` cannot share an `:memory:` DB across connections and the builder
+ * opens its own read-only handle, so this writes a temp file.
+ * The same approach `placetype-census.test.ts` uses.
  *
  * Shape: GB has two locality parents (London, Quiet Town).
  * London carries a borough and a neighbourhood child, which must count as one
@@ -110,7 +111,8 @@ describe("buildGranularityLadder", () => {
 		const rows = buildGranularityLadder(ladderFixtureDB())
 		const gb = rows.find((row) => row.country === "GB")
 
-		// London has a borough child and a neighbourhood child. both project onto dependent_locality.
+		// London has a borough child and a neighbourhood child.
+		// Both project onto dependent_locality.
 		expect(gb?.rungs.dependent_locality?.nodes).toBe(2)
 		expect(gb?.rungs.dependent_locality?.parentsCovered).toBe(1)
 	})

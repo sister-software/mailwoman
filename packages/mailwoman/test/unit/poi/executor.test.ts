@@ -89,7 +89,8 @@ describe("createPOIExecutor", () => {
 
 	it("category fan-out: probes the injected Overture leaves and re-tags hits to the canonical seed id", () => {
 		const seenQueries: POISearchQuery[] = []
-		// The db stores the raw Overture leaf id on each row — the executor must re-tag it back to `supermarket`.
+		// The db stores the raw Overture leaf id on each row.
+		// The executor must re-tag it back to `supermarket`.
 		const groceryHit: POISearchHit = { ...HOSPITAL_HIT, name: "Jewel-Osco", categoryID: "grocery_store" }
 
 		const executor = createPOIExecutor({
@@ -229,8 +230,8 @@ describe("createPOIExecutor", () => {
 		expect(outcome.results!.map((result) => result.name)).toEqual(["near drugstore", "far pharmacy"])
 	})
 
-	// Two seeds rolling up into a shared leaf probe it once — a repeated leaf would
-	// return the same rows twice and read as two premises at one coordinate.
+	// Two seeds rolling up into a shared leaf probe it once.
+	// A repeated leaf would return the same rows twice and read as two premises at one coordinate.
 	it("union: probes a leaf two seeds share exactly once", () => {
 		const seenQueries: POISearchQuery[] = []
 

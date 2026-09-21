@@ -92,8 +92,8 @@ const PREFLIGHT_TIMEOUT_MS = 30_000
 /**
  * Wall-clock budget for a server to bind and answer its health route.
  *
- * Model load (ONNX + tokenizer +, for photon/nominatim, opening the resolver backend) is the dominant
- * cost. measured under 3 s warm on an idle box, so 30 s leaves comfortable margin under load.
+ * Model load (ONNX + tokenizer +, for photon/nominatim, opening the resolver backend) is the dominant cost.
+ * Measured under 3 s warm on an idle box, so 30 s leaves comfortable margin under load.
  */
 const HEALTHY_TIMEOUT_MS = 30_000
 
@@ -106,8 +106,8 @@ const HEALTHY_TIMEOUT_MS = 30_000
 const TEST_TIMEOUT_MS = 150_000
 
 /**
- * The `data pull candidate` step in the conditional suite streams ~1.65 GB. this
- * budget is network-bound rather than CPU-bound.
+ * The `data pull candidate` step in the conditional suite streams ~1.65 GB.
+ * This budget is network-bound rather than CPU-bound.
  */
 const PULL_TIMEOUT_MS = 600_000
 
@@ -135,8 +135,7 @@ function spawnServer(
 	cliPath: string,
 	args: string[],
 	env: NodeJS.ProcessEnv,
-	// The http drop-ins never read stdin, so it stays closed for them. `@mailwoman/mcp` is its stdin — the
-	// JSON-RPC transport runs over it — so the MCP round-trip below opens it.
+	// The http drop-ins never read stdin, so it stays closed for them. `@mailwoman/mcp` is its stdin — the JSON-RPC transport runs over it — so the MCP round-trip below opens it.
 	stdin: "ignore" | "pipe" = "ignore"
 ): SpawnedServer {
 	const child = spawnProcess("node", [cliPath, ...args], { env, stdio: [stdin, "pipe", "pipe"] })
@@ -157,8 +156,8 @@ function spawnServer(
  * Poll `GET /` until it answers 200 (every drop-in's landing route — always registered,
  * unconditional on data-root state) or `deadlineMs` elapses.
  *
- * Also fails fast if the child exits before ever becoming healthy — a crash loop
- * should not eat the whole timeout budget.
+ * Also fails fast if the child exits before ever becoming healthy.
+ * A crash loop should not eat the whole timeout budget.
  */
 async function waitForHealthy(server: SpawnedServer, port: number, deadlineMs: number): Promise<void> {
 	const deadline = Date.now() + deadlineMs
@@ -215,9 +214,10 @@ async function stopServer(server: SpawnedServer): Promise<void> {
  * Drive an MCP stdio server through one round trip: `initialize`, `notifications/initialized`,
  * then each requested JSON-RPC call in order, resolving to the results in the same order.
  *
- * Hand-rolled rather than pulled from `@modelcontextprotocol/sdk` because the
- * point of the test is the wire — a client object that reconnects, retries
- * or reshapes an error would hide exactly the behaviour being asserted.
+ * Hand-rolled rather than pulled from `@modelcontextprotocol/sdk` because the point of the test is the wire.
+ * A client object that reconnects, retries or reshapes an error would hide
+ * exactly the behaviour being asserted.
+ *
  * The transport is newline-delimited JSON both ways (`StdioServerTransport`),
  * so a line-buffered reader is the whole protocol.
  */
@@ -363,11 +363,12 @@ describe.skipIf(!hasLibpostalCLI)("mailwoman-libpostal serve — cold start, zer
 			// The claim under test is "weights only, zero data artifacts" —
 			// not "the workspace package carries weights".
 			// A consumer install satisfies the weights half natively
-			// (the published package ships the binaries. the clean-install smoke owns that claim).
-			// A dev checkout deliberately does not (#1733: `link-dev-weights` populates the data-root
-			// overlay, never the tracked package — the YN0035/worktree hazards), so seed the scratch
-			// root's overlay from whatever this environment resolves. the child then proves the
-			// data-independence half on every box, through the same overlay rung a dev run uses.
+			// (the published package ships the binaries. The clean-install smoke owns that claim).
+			// A dev checkout deliberately does not (#1733: `link-dev-weights` populates the
+			// data-root overlay, never the tracked package — the YN0035/worktree hazards),
+			// so seed the scratch root's overlay from whatever this environment resolves.
+			// The child then proves the data-independence half on every box,
+			// through the same overlay rung a dev run uses.
 			const { resolveWeights } = await import("@mailwoman/neural/weights")
 
 			let seed: { modelPath: string; tokenizerPath: string; modelCardPath?: string | undefined }
@@ -481,7 +482,7 @@ describe.skipIf(!isFull || !hasMailwomanCLI || !hasPhotonCLI || !hasNominatimCLI
 			async () => {
 				const reuseRoot = $public.MAILWOMAN_COLD_START_DATA_ROOT
 				// A `--data-root` supplied through the environment is the caller's and is never removed.
-				// the one this test makes is registered on the file's fixture stack by `freshDataRoot`.
+				// The one this test makes is registered on the file's fixture stack by `freshDataRoot`.
 				const dataRoot = reuseRoot ?? (await freshDataRoot())
 
 				await withCLISpawnLockAsync(() =>

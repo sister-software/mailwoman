@@ -58,13 +58,11 @@ beforeAll(async () => {
 			copyright: "The data included in this document is from www.openstreetmap.org.",
 		},
 		elements: [
-			// BT3 9QQ across three elements, two of them ways — the medoid must land on one of the three,
-			// and the mean (54.6100, -5.8900) is deliberately not a member.
+			// BT3 9QQ across three elements, two of them ways. The medoid must land on one of the three, and the mean (54.6100, -5.8900) is deliberately not a member.
 			node(1, "BT3 9QQ", 54.6, -5.88),
 			way(2, "BT3 9QQ", 54.61, -5.89),
 			way(3, "BT3 9QQ", 54.62, -5.9),
-			// Lowercase + a doubled inner space: both normalize to the same single-space uppercase code, so
-			// this is one postcode with two attestations rather than two codes and a typo.
+			// Lowercase + a doubled inner space: both normalize to the same single-space uppercase code, so this is one postcode with two attestations rather than two codes and a typo.
 			node(4, "bt1 5gs", 54.597, -5.93),
 			node(5, "BT1  5GS", 54.598, -5.931),
 			// The malformed value the real acquisition contains exactly one of.
@@ -100,14 +98,16 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	expect(result.stats.points).toBe(5)
 	expect(result.stats.skippedMalformed).toBe(1)
 	expect(result.stats.skippedNoCoordinate).toBe(1)
-	// A drop counter says something broke. the named value says which value it was.
+	// A drop counter says something broke.
+	// The named value says which value it was.
 	// `"BT36 4RU,"` is a typo rather than a bug.
 	expect(result.stats.malformedValues).toEqual({ "BT36 4RU,": 1 })
 	// Ways and relations are not a footnote — 2 of the 5 surviving points come from `center`.
 	expect(result.stats.pointsByType).toEqual({ node: 3, way: 2 })
 	expect(result.districts).toBe(2)
 	expect(result.sectors).toBe(2)
-	// Every internal identity holds. nothing is silently unaccounted for.
+	// Every internal identity holds.
+	// Nothing is silently unaccounted for.
 	expect(result.reconciliationFailures).toEqual([])
 	// The data extract rather than the wall clock — the date that actually describes the rows.
 	expect(result.osmTimestamp).toBe("2026-08-05T13:14:01Z")
@@ -117,7 +117,8 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 
 	await using db = new DatabaseClient<WOFDatabase>(out, { readOnly: true })
 
-	// Name law: `spr.name` is the sanitized-query token shape. the display form is an alt `names` row.
+	// Name law: `spr.name` is the sanitized-query token shape.
+	// The display form is an alt `names` row.
 	const names = db.prepare("SELECT id, name FROM spr ORDER BY name").all() as Array<{ id: number; name: string }>
 	expect(names.map((n) => n.name)).toEqual(["BT15GS", "BT39QQ"])
 	// Ids come from this database's own range, and sorting by name makes them a function
@@ -199,7 +200,8 @@ test("buildPostcodeNIOSM: a response modified since acquisition is refused, not 
 		join(dir, "response.json")
 	)
 
-	// A sidecar recording a different md5 — the shape a half-edited acquisition dir takes.
+	// A sidecar recording a different md5.
+	// The shape a half-edited acquisition dir takes.
 	await writeLocalJSONFile(
 		{ endpoint: "x", query: "y", queryMD5: "z", retrievedAt: "t", bytes: 1, md5: "0".repeat(32) },
 		join(dir, "acquisition.json")

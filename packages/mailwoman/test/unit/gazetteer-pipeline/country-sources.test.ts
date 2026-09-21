@@ -75,8 +75,8 @@ describe("sourceConflicts", () => {
 
 	it("accepts a baseline country, because that trade was measured", () => {
 		// CZ: 9,800 of its 11,904 GeoNames names are already in Overture.
-		// Duplication, and deliberate — FI in the same set gains ~12,000 names Overture lacks,
-		// so dropping the fold is a coverage decision.
+		// Duplication, and deliberate.
+		// FI in the same set gains ~12,000 names Overture lacks, so dropping the fold is a coverage decision.
 		expect(
 			sourceConflicts(countrySourceMap({ wofCountries: [], overtureCountries: ["CZ"], geonamesCountries: ["CZ"] }))
 		).toEqual([])
@@ -148,8 +148,9 @@ describe("planCountryMove", () => {
 
 	it("writes BOTH halves of a move — add to the target, remove from the source", () => {
 		// The half nothing enforced.
-		// Adding a country by cloning is half the job. the other half is removing it from whichever
-		// list serves it today, and the build ships either way because verifyAdmin tests floors.
+		// Adding a country by cloning is half the job.
+		// The other half is removing it from whichever list serves it today,
+		// and the build ships either way because verifyAdmin tests floors.
 		const plan = planCountryMove({
 			country: "tr",
 			target: AdminSource.WOF,
@@ -181,7 +182,8 @@ describe("planCountryMove", () => {
 
 	it("multiplies the packed size out to the checkout cost", () => {
 		// GitHub reports packed size.
-		// Quoting it is how 65 GB arrived unannounced. a --countries tr sync reported 83.4 MB and wrote 633 MB.
+		// Quoting it is how 65 GB arrived unannounced.
+		// A --countries tr sync reported 83.4 MB and wrote 633 MB.
 		const plan = planCountryMove({
 			country: "TR",
 			target: AdminSource.WOF,

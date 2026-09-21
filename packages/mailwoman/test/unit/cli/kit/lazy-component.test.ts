@@ -78,7 +78,8 @@ describe("lazyComponent — a rejected import", () => {
 
 		expect(code).toBe(1)
 		expect(stdout).toMatch(/geocode --debug requires the optional @mailwoman\/map-tui package/u)
-		// Expected command guidance omits a stack. unexpected errors retain theirs.
+		// Expected command guidance omits a stack.
+		// Unexpected errors retain theirs.
 		expect(stdout).not.toMatch(/\s+at\s/u)
 		expect(stderr).toBe("")
 	}, 30_000)

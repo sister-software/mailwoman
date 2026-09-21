@@ -94,7 +94,8 @@ const INSIDE_BAND = {
 }
 
 /**
- * Well away from every fixture band — the reading this layer must never turn into a reassurance.
+ * Well away from every fixture band.
+ * The reading this layer must never turn into a reassurance.
  */
 const NO_DESIGNATION = { latitude: FIXTURE_ORIGIN.lat + 0.2, longitude: FIXTURE_ORIGIN.lon + 0.2 }
 

@@ -405,8 +405,9 @@ describe("the decision the ruler maps to", () => {
 		expect(verdict.defaultChangeBarUnmetRows).toEqual([1, 2, 3, 4, 5, 6, 7, 9])
 		expect(verdict.reasons).toContainEqual(expect.stringContaining("this decision authorizes no default change"))
 
-		// The same measurements against a definition whose default bar reads met on every
-		// row still decide the same thing — the register is recorded, never read.
+		// The same measurements against a definition whose default bar reads met on
+		// every row still decide the same thing.
+		// The register is recorded, never read.
 		const copy = await readLocalJSONFile<Phase2DecisionDefinition>(PHASE2_DEFINITION_PATH)
 
 		for (const row of copy.defaultChangeBar) {

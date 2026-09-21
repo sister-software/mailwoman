@@ -299,9 +299,8 @@ describe("the committed poi-board fixture set", () => {
 	// (#1960) and that is the one that must not move without an argument: 51 counted rows.
 	// The committed total and the tracked count move whenever a failure class is committed to
 	// the surface every candidate is graded on, which is what the tracked convention is for.
-	// A row added or a status flipped without this test moving is a floor denominator
-	// changing in silence — so the counted assertion is the required one,
-	// and the other two say which kind of change happened.
+	// A row added or a status flipped without this test moving is a floor denominator changing in silence.
+	// So the counted assertion is the required one, and the other two say which kind of change happened.
 	it("carries 56 cases — 51 counted toward the floors, plus 5 tracked", () => {
 		expect(fixtures).toHaveLength(56)
 		expect(fixtures.filter((f) => isCountedFixture(f))).toHaveLength(51)
@@ -476,7 +475,8 @@ describe("evaluateFloors — breach detection", () => {
 	})
 
 	it("breaches on a single abstain miss (100% floor is hard) even when overall clears 90%", () => {
-		// 7/8 abstain is a single false-positive. overall 50/51 still ≥ 90%, but the abstain floor is 100%.
+		// 7/8 abstain is a single false-positive.
+		// Overall 50/51 still ≥ 90%, but the abstain floor is 100%.
 		const evaluation = evaluateFloors(
 			report({
 				results: { total: 37, pass: 37 },
@@ -661,9 +661,9 @@ describe("the promoted semantic-utility family (#1960)", () => {
 			expect(fixture.bugRef, fixture.id).toMatch(/^#\d+$/u)
 		}
 
-		// The route-dependent three await the phase-2 decision that would reach them on
-		// the default path. the French row is tracked as a defect, because its baseline
-		// is a confident wrong answer rather than a miss.
+		// The route-dependent three await the phase-2 decision that would reach them on the default path.
+		// The French row is tracked as a defect, because its baseline is a confident
+		// wrong answer rather than a miss.
 		const byRef = new Map(promoted.map((f) => [f.id, f]))
 
 		expect(byRef.get("sem-act-us-01")).toMatchObject({ status: "improvement_target", bugRef: "#1997" })

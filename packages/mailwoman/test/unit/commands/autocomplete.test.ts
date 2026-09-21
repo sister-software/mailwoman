@@ -109,8 +109,7 @@ let fixtureBinPath: string
 beforeAll(async () => {
 	fixtureMatcher = buildFixtureMatcher(FIXTURE_PLACES)
 
-	// Write the serialized fixture to a temp file so runAutocomplete
-	// (which reads from disk) can be tested end-to-end.
+	// Write the serialized fixture to a temp file so runAutocomplete (which reads from disk) can be tested end-to-end.
 	const buf = serializeFST(fixtureMatcher)
 	fixtureBinPath = tempRootPath(`mailwoman-fst-fixture-${Date.now()}.bin`)
 	await writeLocalFile(buf, fixtureBinPath)
@@ -129,8 +128,9 @@ describe("normalizeTokens symmetry", () => {
 
 	it("applies NFKC — composed characters are normalized but diacritics are preserved", () => {
 		// normalizeTokens applies nfkc + lowercase + punctuation strip.
-		// It does not decompose or strip diacritics — that's intentional so that "José" and "Jose"
-		// are treated as distinct tokens at both build time and query time (symmetry preserved).
+		// It does not decompose or strip diacritics.
+		// That's intentional so that "José" and "Jose" are treated as distinct tokens
+		// at both build time and query time (symmetry preserved).
 		const tokens = normalizeTokens("San José")
 		expect(tokens).toEqual(["san", "josé"])
 	})
@@ -230,7 +230,8 @@ describe("runAutocomplete — disk round-trip", () => {
 		const entries = await runAutocomplete("United", { fstPath: fixtureBinPath, limit: 5 })
 		const us = entries.find((e) => e.wofID === 85_633_793)
 		expect(us).toBeDefined()
-		// Float32 round-trip may introduce tiny epsilon. check within tolerance.
+		// Float32 round-trip may introduce tiny epsilon.
+		// Check within tolerance.
 		expect(us!.referential).toBeCloseTo(0.99, 1)
 	})
 })
@@ -246,7 +247,8 @@ describe("resolveFSTPath", () => {
 		vi.stubEnv("MAILWOMAN_FST_BIN", undefined)
 
 		try {
-			// Lowercase on both halves — the name `gazetteer-pipeline/fst.ts` actually writes.
+			// Lowercase on both halves.
+			// The name `gazetteer-pipeline/fst.ts` actually writes.
 			// This assertion previously restated the resolver's own spelling,
 			// so it agreed with the code and with no artifact.
 			expect(String(resolveFSTPath())).toBe(String(dataRootPath("wof", "fst-per-locale", "fst-en-us.bin")))

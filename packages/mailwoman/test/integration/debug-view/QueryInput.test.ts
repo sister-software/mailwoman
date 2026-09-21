@@ -12,8 +12,10 @@ import { applyKey, wordStart, type InputState } from "mailwoman/debug-view/Query
 import { describe, expect, it } from "vitest"
 
 /**
- * A `Key` with every flag off but the named ones — Ink hands the handler a fully-populated
- * object, so a partial one would let a branch pass here that a real keypress never reaches.
+ * A `Key` with every flag off but the named ones.
+ *
+ * Ink hands the handler a fully-populated object, so a partial one would let a
+ * branch pass here that a real keypress never reaches.
  */
 function key(pressed: Partial<Key> = {}): Key {
 	return {
@@ -52,7 +54,8 @@ describe("wordStart", () => {
 	})
 
 	it("is whitespace-delimited, so punctuation inside a token is not a boundary", () => {
-		// The addresses this field edits are full of commas. stopping at one would make ⌥⌫ take half a word.
+		// The addresses this field edits are full of commas.
+		// Stopping at one would make ⌥⌫ take half a word.
 		expect(wordStart("3215 SE Clinton St, Portland", 28)).toBe(20)
 		// A trailing space is skipped first, so this takes `St,` whole — comma included rather than stopping before it.
 		expect(wordStart("3215 SE Clinton St, ", 20)).toBe(16)
@@ -75,9 +78,7 @@ describe("applyKey", () => {
 	})
 
 	it("forward-deletes on Delete, leaving the cursor where it was", () => {
-		// Ink names the two apart and so does the keyboard: `backspace` is the key above Enter, `delete` is the
-		// navigation cluster's forward Delete (ESC[3~). Folding them together made Delete eat the character behind
-		// the cursor.
+		// Ink names the two apart and so does the keyboard: `backspace` is the key above Enter, `delete` is the navigation cluster's forward Delete (ESC[3~). Folding them together made Delete eat the character behind the cursor.
 		expect(applyKey({ value: "hello world", cursor: 5 }, "", key({ delete: true }))).toEqual({
 			value: "helloworld",
 			cursor: 5,
@@ -132,8 +133,8 @@ describe("applyKey", () => {
 
 	it("steps and deletes by whole codepoints, not UTF-16 units", () => {
 		// "St 🏠" is 6 UTF-16 units: the house is a surrogate pair.
-		// Stepping by one unit leaves a lone surrogate — a string that renders as `�`
-		// and that the tokenizer never saw in training.
+		// Stepping by one unit leaves a lone surrogate.
+		// A string that renders as `�` and that the tokenizer never saw in training.
 		const HOUSE = "St 🏠"
 
 		expect(HOUSE).toHaveLength(5)
@@ -146,9 +147,9 @@ describe("applyKey", () => {
 		// Forward Delete takes the whole codepoint too.
 		expect(applyKey({ value: HOUSE, cursor: 3 }, "", key({ delete: true }))).toEqual({ value: "St ", cursor: 3 })
 
-		// A cursor handed in mid-pair snaps to the pair's start
-		// (offset 4 → 3, the way a browser refuses to put a caret inside a grapheme)
-		// and the edit applies from there — the space goes, the house survives intact.
+		// A cursor handed in mid-pair snaps to the pair's start (offset 4 → 3, the way a
+		// browser refuses to put a caret inside a grapheme) and the edit applies from there.
+		// The space goes, the house survives intact.
 		expect(applyKey({ value: HOUSE, cursor: 4 }, "", key({ backspace: true }))).toEqual({
 			value: "St🏠",
 			cursor: 2,

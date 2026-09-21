@@ -117,8 +117,7 @@ describe("createRuntimePipeline — wiring", () => {
 	it("offsetMap on normalized input lets consumers map back to raw chars", async () => {
 		const pipeline = createRuntimePipeline({})
 		const result = await pipeline("350  5th Ave")
-		// normalized = "350 5th Ave" (length 11); raw = "350  5th Ave" (length 12)
-		// offsetMap[4] should be 5 (the '5' in raw, after skipping the second space).
+		// normalized = "350 5th Ave" (length 11); raw = "350 5th Ave" (length 12) offsetMap[4] should be 5 (the '5' in raw, after skipping the second space).
 		const map = (result.normalized as { offsetMap?: number[] }).offsetMap
 		expect(map).toBeDefined()
 		expect(map?.[4]).toBe(5)

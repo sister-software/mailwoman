@@ -171,7 +171,8 @@ describe("buildUPRNLayer (fixture)", () => {
 		expect(manifest.attribution).toContain("© Crown copyright and database right 2026")
 		expect(manifest.spineKeys.h3).toEqual({ column: "h3_cell", resolution: 9 })
 
-		// Coverage: the res-6 parent of a fixture point is designated-complete. an unsurveyed cell is unknown.
+		// Coverage: the res-6 parent of a fixture point is designated-complete.
+		// An unsurveyed cell is unknown.
 		const parent = shortCellToInt(
 			cellToParent(uprnFullCell(FIXTURE_POINTS[0]!.lat, FIXTURE_POINTS[0]!.lon), UPRN_COVERAGE_H3_RESOLUTION) as H3Cell
 		)

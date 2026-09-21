@@ -96,9 +96,9 @@ describe("whitespace transformations", () => {
 	})
 
 	it("leaves the postcode's own space alone on both run transformations", () => {
-		// The two renderings above already show it. asserted here as the claim
-		// rather than as a side effect of a longer string, because it is the whole reason
-		// the run transformations are not a plain `replaceAll`.
+		// The two renderings above already show it.
+		// Asserted here as the claim rather than as a side effect of a longer string,
+		// because it is the whole reason the run transformations are not a plain `replaceAll`.
 		expect(WHITESPACE_TRANSFORMATION_BY_NAME.repeated(GB_DOWNING)).toContain("SW1A 2AA")
 		expect(WHITESPACE_TRANSFORMATION_BY_NAME.tabbed(GB_DOWNING)).toContain("SW1A 2AA")
 		expect(WHITESPACE_TRANSFORMATION_BY_NAME.repeated(GB_BARE_POSTCODE)).toBe(GB_BARE_POSTCODE)
@@ -279,7 +279,8 @@ describe("auditWhitespaceSuite", () => {
 
 describe("a seeded whitespace regression", () => {
 	/**
-	 * The pipeline stand-in that fails only on the tabbed arm — the shape the live finding takes.
+	 * The pipeline stand-in that fails only on the tabbed arm.
+	 * The shape the live finding takes.
 	 *
 	 * Seeding the regression rather than waiting for one is what proves the failure
 	 * line carries enough to diagnose from.

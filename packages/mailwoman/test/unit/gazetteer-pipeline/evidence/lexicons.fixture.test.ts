@@ -143,9 +143,9 @@ afterEach(() => scratch[Symbol.asyncDispose]())
 /**
  * Build against the fixture and return the emitted surface map plus the build's counters.
  *
- * Naming trap, called out because both halves are spelled "entries": `built.entries` is a count (`BuiltLexicon.entries:
- * number`) while the lexicon file's `entries` is the surface→bitmask MAP. The map comes back as `surfaces` so the two
- * cannot be confused at a call site.
+ * Naming trap, called out because both halves are spelled "entries": `built.entries` is a count
+ * (`BuiltLexicon.entries: number`) while the lexicon file's `entries` is the surface→bitmask MAP.
+ * The map comes back as `surfaces` so the two cannot be confused at a call site.
  */
 let buildSeq = 0
 
@@ -176,7 +176,8 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 		expect(surfaces.lyon).toBeDefined()
 		// A given name at ordinary-town prominence is refused — the Rue-Joseph hazard.
 		expect(surfaces.joseph).toBeUndefined()
-		// A non-name surface at comparable prominence passes. only law 2 applies to it.
+		// A non-name surface at comparable prominence passes.
+		// Only law 2 applies to it.
 		expect(surfaces.rennes).toBeDefined()
 	})
 

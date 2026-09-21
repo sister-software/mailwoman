@@ -60,8 +60,8 @@ describe("classifyRescueRow", () => {
 	})
 
 	it("keeps check_protects a SEPARATE flag on a correct row with an entity hit", () => {
-		// Loosening the check reorders which mechanism answers even when both are right —
-		// that row belongs in the risk list without leaving the correct_as_is count.
+		// Loosening the check reorders which mechanism answers even when both are right.
+		// That row belongs in the risk list without leaving the correct_as_is count.
 		const graded = classifyRescueRow(
 			row({
 				...PARIS,

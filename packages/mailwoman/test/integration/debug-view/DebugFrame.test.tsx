@@ -136,8 +136,7 @@ describe("DebugFrame", () => {
 	it("the ribbon losslessly reconstructs the input, connector text included", () => {
 		const segments = ribbonSegments(TREE)
 
-		// #493 round trip: concatenating every segment's value reproduces the raw input exactly — the ", " between
-		// the street and the locality must survive as an `unknown` segment rather than vanish.
+		// #493 round trip: concatenating every segment's value reproduces the raw input exactly. The ", " between the street and the locality must survive as an `unknown` segment rather than vanish.
 		expect(segments.map((segment) => segment.value).join("")).toBe(TREE.raw)
 		expect(segments.some((segment) => segment.tag == null && segment.value.includes(","))).toBe(true)
 	})
@@ -253,7 +252,7 @@ describe("DebugFrame", () => {
 		const cellCount = cellSize.columns * cellSize.rows
 		// Every cell inked with a distinctive marker char, so a dropped frame row is visible directly
 		// (a naive total-line-count check can't tell "rendered" from "silently clipped" — Ink doesn't
-		// grow a Box past its declared `height` when children overflow it. it drops rows to fit,
+		// grow a Box past its declared `height` when children overflow it. It drops rows to fit,
 		// which keeps the outer line count unchanged and would pass a line-count-only assertion).
 		const MARKER_CODEPOINT = "#".codePointAt(0)!
 

@@ -28,8 +28,8 @@ afterAll(() => fixtures.disposeAsync())
  * Minimal npm-`files`-glob matcher (`**` crosses directories, `*` stays in one),
  * segment-based so no dynamic RegExp is ever constructed.
  *
- * The package.json globs use no character classes or braces, so this covers the whole
- * array — a fuller matcher would be a dependency for nothing.
+ * The package.json globs use no character classes or braces, so this covers the whole array.
+ * A fuller matcher would be a dependency for nothing.
  */
 function filesGlobMatches(pattern: string, path: string): boolean {
 	const segments = pattern.split("/")
@@ -40,7 +40,8 @@ function filesGlobMatches(pattern: string, path: string): boolean {
 			const segment = segments[s]
 
 			if (segment === "**") {
-				// `**` consumes zero or more whole path segments. try every split.
+				// `**` consumes zero or more whole path segments.
+				// Try every split.
 				for (let skip = p; skip <= parts.length; skip++) {
 					if (matchFrom(s + 1, skip)) return true
 				}
@@ -58,7 +59,8 @@ function filesGlobMatches(pattern: string, path: string): boolean {
 }
 
 /**
- * One path segment against one glob segment — `*` matches any in-segment run, everything else is literal.
+ * One path segment against one glob segment.
+ * `*` matches any in-segment run, everything else is literal.
  */
 function segmentMatches(glob: string, segment: string): boolean {
 	const pieces = glob.split("*")
@@ -72,7 +74,8 @@ function segmentMatches(glob: string, segment: string): boolean {
 
 		if (found === -1) return false
 
-		// A literal after the leading `*` may start anywhere. a leading literal must anchor at 0.
+		// A literal after the leading `*` may start anywhere.
+		// A leading literal must anchor at 0.
 		if (i === 0 && found !== 0) return false
 		at = found + piece.length
 	}

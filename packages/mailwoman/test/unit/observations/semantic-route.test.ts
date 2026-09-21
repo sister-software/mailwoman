@@ -171,8 +171,9 @@ describe("the committed lexicon against the committed artifact", () => {
 
 	// Both wave-1 kinds, in code-point order.
 	// The identity enumerates what the declared activities can reach through the artifact,
-	// before any country scope is applied — a receipt that named only the kind a given query
-	// admitted could not tell a scope refusing a class from an artifact never carrying it.
+	// before any country scope is applied.
+	// A receipt that named only the kind a given query admitted could not tell a scope
+	// refusing a class from an artifact never carrying it.
 	it("reaches both POI categories wave 1 maps", () => {
 		expect(committedRoute.identity.reachableCategoryIDs).toEqual(["drugstore", "pharmacy"])
 	})
@@ -419,7 +420,8 @@ describe("a plural affordance", () => {
 
 	// Every member carries the same confidence, so nothing in the set can be ranked
 	// off the value the query surface reads.
-	// The number selects a query kind. it orders no candidate.
+	// The number selects a query kind.
+	// It orders no candidate.
 	it("gives every member of the set the same confidence", () => {
 		const confidences = new Set(committedRoute.lookup("prescription", "en-US").map((hit) => hit.confidence))
 
@@ -456,8 +458,9 @@ describe("a plural affordance", () => {
 	})
 
 	// The committed route driven through the surface that used to narrow, at both locales.
-	// Both reach two: the drugstore assertion is scoped to the US, and that scope is a fact about where
-	// drugstores are rather than about who is asking — so a French caller is not what narrows the set.
+	// Both reach two: the drugstore assertion is scoped to the US, and that scope is a
+	// fact about where drugstores are rather than about who is asking.
+	// So a French caller is not what narrows the set.
 	// A French anchor is (`poi/intent.test.ts`), and the scope rides on the match so the stage can read it.
 	it("reaches the query surface as the same two categories under a French caller and a US caller", () => {
 		const fr = matchPOISubject("prescription near Toulouse", "fr-FR", committedRoute.lookup)
@@ -488,9 +491,9 @@ describe("a plural affordance", () => {
 	})
 
 	// The route narrows the set by nothing.
-	// The committed drugstore assertion is US-scoped, and that scope is carried on the match
-	// for the intent stage to bind against the anchor's country. here France reaches both
-	// and every observation reports the whole set.
+	// The committed drugstore assertion is US-scoped, and that scope is carried on the
+	// match for the intent stage to bind against the anchor's country.
+	// Here France reaches both and every observation reports the whole set.
 	// Strip the scope off the record and the only thing that changes is that the match stops carrying it.
 	it("carries the assertion's country scope on the match instead of applying it", async () => {
 		const hits = committedRoute.lookup("prescription", "fr-FR")
@@ -518,9 +521,9 @@ describe("the assertion's country scope", () => {
 	 * That is what makes silence readable here — with `pharmacy` still in the set, every one
 	 * of these queries would answer something and the scope's effect would be a length.
 	 *
-	 * Nothing about the scope itself is synthetic — `countries: ["US"]` is the value the
-	 * artifact carries, so a curator who widened or dropped it would move these tests
-	 * rather than leave them agreeing with a clone.
+	 * Nothing about the scope itself is synthetic.
+	 * `countries: ["US"]` is the value the artifact carries, so a curator who widened
+	 * or dropped it would move these tests rather than leave them agreeing with a clone.
 	 */
 	async function usScopedRoute(): Promise<ReturnType<typeof createSemanticObservationRoute>> {
 		return await scratchRoute((model, lexicon) => {
@@ -537,8 +540,8 @@ describe("the assertion's country scope", () => {
 		expect(drugstore?.assertions[0]?.countries).toEqual(["US"])
 	})
 
-	// The claim is about establishments, so the caller's locale cannot decide it —
-	// a French caller asking about Denver is asking about US drugstores.
+	// The claim is about establishments, so the caller's locale cannot decide it.
+	// A French caller asking about Denver is asking about US drugstores.
 	// The route answers identically under every locale and under none, and the scope
 	// rides on the match for the intent stage to judge against the anchor.
 	it("carries the scope under every locale, since the claim binds to the anchor and not the caller", async () => {
@@ -613,7 +616,7 @@ describe("the assertion's country scope", () => {
 
 	// Only the locale scope is read inside the phrase search.
 	// The longer phrase wins recognition under every caller and states its assertion's scope.
-	// whether the condition is true where the anchor is, is the intent stage's question,
+	// Whether the condition is true where the anchor is, is the intent stage's question,
 	// and a set it empties abstains rather than falling back to a phrase the user did not use.
 	it("takes the longer phrase under every caller and carries the scope for the stage to bind", async () => {
 		const route = await scratchRoute((model, lexicon) => {

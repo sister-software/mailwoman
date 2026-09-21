@@ -21,7 +21,8 @@ import { describe, expect, test } from "vitest"
 /**
  * Gers-shaped ids.
  *
- * Real ones are opaque 32-char hex strings. the shape matters only in that the hash sees the whole string.
+ * Real ones are opaque 32-char hex strings.
+ * The shape matters only in that the hash sees the whole string.
  */
 const GERS = [
 	"08f2ab12c4d5e6f708192a3b4c5d6e7f",
@@ -65,8 +66,8 @@ describe("assignSyntheticIDs", () => {
 
 		for (const id of ids) {
 			expect(id).toBeGreaterThanOrEqual(OVERTURE_ID_BASE)
-			// The GeoNames alias fold owns everything from 9e12 up. overlapping it would
-			// make one source's rows silently readable as the other's.
+			// The GeoNames alias fold owns everything from 9e12 up.
+			// Overlapping it would make one source's rows silently readable as the other's.
 			expect(id).toBeLessThan(9_000_000_000_000)
 		}
 	})
@@ -91,9 +92,9 @@ describe("assignSyntheticIDs", () => {
 
 describe("the bulk-write statements bind against the real unified schema", () => {
 	// The column tuples are checked against the `WOFDatabase` interface at compile time.
-	// The tables are created by `createUnifiedSchema`'s DDL, which is a separate
-	// artifact — a column renamed in one and not the other type-checks perfectly
-	// and then fails partway through a multi-hour build.
+	// The tables are created by `createUnifiedSchema`'s DDL, which is a separate artifact.
+	// A column renamed in one and not the other type-checks perfectly and
+	// then fails partway through a multi-hour build.
 	// Binding a row against the real schema is the only thing that catches that.
 	async function openUnified(): Promise<DatabaseClient<WOFDatabase>> {
 		const db = DatabaseClient.temp<WOFDatabase>()
@@ -122,9 +123,7 @@ describe("the bulk-write statements bind against the real unified schema", () =>
 		expect(db.prepare("SELECT population FROM place_population WHERE id = ?").get(id)).toEqual({ population: 1234 })
 		expect(db.prepare("SELECT name FROM names WHERE id = ?").get(id)).toEqual({ name: "Testville" })
 
-		// #1884: the Wikidata concordance rides the same `wd:id` source the WOF ingest writes and the
-		// `gazetteer importance` join reads (`where c.other_source = 'wd:id'`) —
-		// the predicate is the interface, so it is asserted literally.
+		// #1884: the Wikidata concordance rides the same `wd:id` source the WOF ingest writes and the `gazetteer importance` join reads (`where c.other_source = 'wd:id'`). The predicate is the interface, so it is asserted literally.
 		expect(db.prepare("SELECT other_id FROM concordances WHERE id = ? AND other_source = 'wd:id'").get(id)).toEqual({
 			other_id: "Q140147",
 		})

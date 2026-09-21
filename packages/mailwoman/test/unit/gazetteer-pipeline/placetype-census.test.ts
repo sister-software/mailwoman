@@ -19,9 +19,11 @@ import {
 import { describe, expect, it } from "vitest"
 
 /**
- * Build an in-memory DB with the `spr`/`ancestors` shape the census reads, then hand its
- * path-less handle to the builder via a temp file — `node:sqlite` cannot share an `:memory:`
- * DB across connections, and the builder opens its own read-only handle by design.
+ * Build an in-memory DB with the `spr`/`ancestors` shape the census reads,
+ * then hand its path-less handle to the builder via a temp file.
+ *
+ * `node:sqlite` cannot share an `:memory:` DB across connections, and the builder
+ * opens its own read-only handle by design.
  */
 async function fixtureDB(): Promise<string> {
 	const path = `/tmp/census-fixture-${process.pid}-${Math.random().toString(36).slice(2)}.db`
@@ -109,12 +111,14 @@ describe("buildPlacetypeCensus", () => {
 		const result = buildPlacetypeCensus(await fixtureDB(), "GB")
 		const parents = result.nodes.map((node) => node.parent).toSorted()
 
-		// "Quiet Town" has only a locality child — no discriminative mass, so it stays out.
+		// "Quiet Town" has only a locality child.
+		// No discriminative mass, so it stays out.
 		expect(parents).toEqual(["London"])
 
 		const london = result.nodes.find((node) => node.parent === "London")
 
-		// Shoreditch (neighbourhood) + Camden (borough) project onto one tag. the IE child and the metroarea do not count.
+		// Shoreditch (neighbourhood) + Camden (borough) project onto one tag.
+		// The IE child and the metroarea do not count.
 		expect(london?.counts.dependent_locality).toBe(2)
 		expect(london?.total).toBe(2)
 	})

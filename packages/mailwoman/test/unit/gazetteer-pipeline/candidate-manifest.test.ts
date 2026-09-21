@@ -92,7 +92,8 @@ describe("ancestorIdentity — the four states", () => {
 describe("candidateLayerManifest", () => {
 	it("records the ancestor as its source, not the ancestor's sources", async () => {
 		// Restating "whosonfirst+overture+geonames" here would be true of the ancestor
-		// and unfalsifiable of this file — it could not say which admin build this came from.
+		// and unfalsifiable of this file.
+		// It could not say which admin build this came from.
 		const root = await scratch()
 
 		manifested(join(root, "admin.db"), "admin-global-priority", "2026-08-17.0")
@@ -129,8 +130,7 @@ describe("candidateLayerManifest", () => {
 	})
 
 	it("declares the spine that joins back to the ancestor", async () => {
-		// `spr_id` only means something against a known admin build, which is the
-		// reason the chain is worth having at all.
+		// `spr_id` only means something against a known admin build, which is the reason the chain is worth having at all.
 		const manifest = await candidateLayerManifest({ ...BASE, adminDBPath: join(await scratch(), "n.db") })
 
 		expect(manifest.spineKeys).toEqual({ wofID: "spr_id" })

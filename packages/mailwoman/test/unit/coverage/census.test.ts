@@ -114,7 +114,8 @@ describe("readAdmittedCountries", () => {
 	})
 
 	it("throws on a missing config rather than answering with an empty admitted set", async () => {
-		// An empty set is a real answer — a config can admit nothing.
+		// An empty set is a real answer.
+		// A config can admit nothing.
 		// Returning it for a file nobody could open gives the caller one value for two
 		// different facts, and the caller reports whichever it assumes.
 		await expect(readAdmittedCountries(join(root, "nope.yaml"))).rejects.toThrow(/no training config at/)
@@ -158,7 +159,8 @@ describe("readBoardCoverage", () => {
 	})
 
 	it("attributes a row by its own country field, not its directory", async () => {
-		// Board rows live in a directory by convention and carry their country explicitly. the two disagree in practice.
+		// Board rows live in a directory by convention and carry their country explicitly.
+		// The two disagree in practice.
 		expect((await readBoardCoverage(join(root, "cases"))).get("IE")).toEqual({ rows: 1, passed: 1 })
 	})
 
@@ -190,7 +192,8 @@ describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real d
 		// writer's databases — silently, with no error — while the v0.5.0 base returns both.
 		// A dropped label column reads as "this country has no street rows",
 		// which is indistinguishable from the truth.
-		// Before the fallback this database reported 0. it carries 825,083 street rows out of 831,800.
+		// Before the fallback this database reported 0.
+		// It carries 825,083 street rows out of 831,800.
 		const manifest = await readLocalJSONFile<Record<string, unknown>>(CORPUS)
 
 		// The stored key is part of the artifact and both spellings are live on disk,
@@ -348,8 +351,8 @@ describe("readAdmittedCountries — the Norway shape", () => {
 	it("keeps a QUOTED NO as the string it is, and counts it", async () => {
 		// A YAML parser turns a bare `no` key into boolean false, which is the bug
 		// this reader exists to avoid reproducing.
-		// A quoted "no" must still be counted — a regex requiring a bare key silently
-		// drops Norway and reports it as never admitted.
+		// A quoted "no" must still be counted.
+		// A regex requiring a bare key silently drops Norway and reports it as never admitted.
 		await using scratch = await temporaryDirectory("mw-cfg-no-")
 		const path = scratch.resolve("c.yaml")
 

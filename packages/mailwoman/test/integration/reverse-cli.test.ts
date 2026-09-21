@@ -148,7 +148,8 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 		}, 60_000)
 
 		test("centroid-only mode (no polygon DB) returns approximate containment", async () => {
-			// Deliberately strip the polygons DB — every result must be approximate.
+			// Deliberately strip the polygons DB.
+			// Every result must be approximate.
 			const result = await runFile("node", [cliBin, "reverse", "40.7128", "-74.0060"], {
 				env: { ...ENV, MAILWOMAN_WOF_POLYGONS_DB: "" },
 				maxBuffer: 4 * 1024 * 1024,

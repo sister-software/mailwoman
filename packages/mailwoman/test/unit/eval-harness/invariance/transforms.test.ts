@@ -103,8 +103,8 @@ describe("abbreviation-swap", () => {
 	})
 
 	it("does NOT treat a phrase-final 'St,' (own trailing punctuation) as a Saint-prefix, even before a capitalized place name", () => {
-		// "St" here closes the street phrase right before the next comma-delimited component —
-		// the own-trailing-punctuation discriminator rather than the following-word one, is what correctly
+		// "St" here closes the street phrase right before the next comma-delimited component.
+		// The own-trailing-punctuation discriminator rather than the following-word one, is what correctly
 		// lets this swap even though "Portland" (like "Andrews") is a capitalized non-suffix word.
 		expect(swap("6220 SE Salmon St, Portland, OR 97215, USA")).toBe("6220 SE Salmon Street, Portland, OR 97215, USA")
 	})

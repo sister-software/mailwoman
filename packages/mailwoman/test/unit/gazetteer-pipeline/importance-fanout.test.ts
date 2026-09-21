@@ -38,8 +38,9 @@ const Q18125 = [
 /**
  * Q1794 — Frankfurt am Main, attached to both the city and a neighbourhood 12 km out.
  *
- * Beyond the coincidence radius, so population decides. the city wins, which is also what
- * stops the two from carrying identical importance and blurring the placetype signal.
+ * Beyond the coincidence radius, so population decides.
+ * The city wins, which is also what stops the two from carrying identical importance
+ * and blurring the placetype signal.
  */
 const Q1794 = [
 	{ id: 101_913_837, placetype: "locality", lat: 50.1155, lon: 8.6842, population: 763_380 },
@@ -123,7 +124,8 @@ describe("resolveConcordanceFanout", () => {
 	})
 
 	it("measures spread across the WHOLE group, not just the first pair", () => {
-		// First two are coincident. the third is 6,000 km away.
+		// First two are coincident.
+		// The third is 6,000 km away.
 		// A pairwise-first implementation would call this coincident and keep the outlier.
 		const straggler = [
 			{ id: 1, placetype: "locality", lat: 50, lon: 8, population: 100 },

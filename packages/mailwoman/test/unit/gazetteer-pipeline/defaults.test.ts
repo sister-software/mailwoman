@@ -26,7 +26,8 @@ test("the canonical coverage recipe holds its reconstructed shape (see #1015/#10
 		expect(DEFAULT_OVERTURE_COUNTRIES).not.toContain(cc)
 	}
 
-	// No duplicates. all ISO-2 uppercase.
+	// No duplicates.
+	// All ISO-2 uppercase.
 	for (const list of [DEFAULT_WOF_PRIORITY_COUNTRIES, DEFAULT_OVERTURE_COUNTRIES, DEFAULT_GEONAMES_COUNTRIES]) {
 		expect(new Set(list).size).toBe(list.length)
 

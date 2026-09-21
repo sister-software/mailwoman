@@ -33,8 +33,7 @@ test("wofExtractPaths: builds the admin + postcode + tail + intl + NL-PC6 + NI-O
 		"/data/wof/postalcode-geonames-tail.db",
 		"/data/wof/postalcode-intl.db",
 		"/data/wof/postalcode-nl-pc6.db",
-		// Build-local (ODbL): present only on the machine that built it, which is exactly why it can be
-		// listed unconditionally — every caller filters with `existsSync`, and that filter is the tier.
+		// Build-local (ODbL): present only on the machine that built it, which is exactly why it can be listed unconditionally. Every caller filters with `existsSync`, and that filter is the tier.
 		"/data/wof/postalcode-ni-osm.db",
 	])
 })
@@ -76,8 +75,8 @@ test("resolveCandidateDBPath: falls back to <data-root>/wof/candidate.db, and 'n
 	// An explicit path still outranks the convention.
 	expect(await resolveCandidateDBPath(THIS_FILE)).toBe(THIS_FILE)
 
-	// `none` is the opt-out, and it has to beat the convention path — otherwise there is
-	// no way back to the FTS backend on a machine that has pulled the gazetteer.
+	// `none` is the opt-out, and it has to beat the convention path.
+	// Otherwise there is no way back to the FTS backend on a machine that has pulled the gazetteer.
 	expect(await resolveCandidateDBPath("none")).toBeUndefined()
 	setEnv("MAILWOMAN_CANDIDATE_DB", "none")
 	expect(await resolveCandidateDBPath()).toBeUndefined()

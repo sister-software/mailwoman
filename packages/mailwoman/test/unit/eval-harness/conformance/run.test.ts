@@ -385,8 +385,8 @@ describe("tracedGauntletObserver", () => {
 
 describe("the unmeasured verdict bucket", () => {
 	/**
-	 * A pair whose refined table sits at its window with a base candidate missing —
-	 * the one shape that reads `unmeasured` rather than deciding.
+	 * A pair whose refined table sits at its window with a base candidate missing.
+	 * The one shape that reads `unmeasured` rather than deciding.
 	 */
 	const unmeasuredObserver: ConformanceObserver = async (query) => ({
 		result: (await tableObserver(HELD_TABLE).observe(query, undefined)).result,

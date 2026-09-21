@@ -88,8 +88,8 @@ describe("the Korean reference set", () => {
 
 describe("the Chinese organizational-units board", () => {
 	it("finds Han on every row, and Latin at the head of most of them", () => {
-		// `逊克二分场四队, heilongjiang, china` — the unit is Han, the province and country
-		// are romanized, and Latin writes more of the row.
+		// `逊克二分场四队, heilongjiang, china`.
+		// The unit is Han, the province and country are romanized, and Latin writes more of the row.
 		// A predicate over `script[0]` alone would read this board as Latin.
 		expect(chineseRows).toHaveLength(21)
 
@@ -102,8 +102,8 @@ describe("the Chinese organizational-units board", () => {
 	})
 
 	it("is the case the folded character class cannot express", () => {
-		// Eighteen of the rows fold to `mixed`, and `mixed` names no script at all — so a router
-		// reading the fold sees nothing to route on and the Han unit goes to the Latin model.
+		// Eighteen of the rows fold to `mixed`, and `mixed` names no script at all.
+		// So a router reading the fold sees nothing to route on and the Han unit goes to the Latin model.
 		// The other three carry no romanized province (`三分场八队`) and fold to `cjk`,
 		// which is the bucket that cannot tell them from Korean.
 		const classes = chineseRows.map((row) => computeQueryShape(row).characterClass)

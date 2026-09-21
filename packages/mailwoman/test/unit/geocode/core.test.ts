@@ -65,7 +65,8 @@ describe("countryFromPostcodeFormat (#928)", () => {
 		expect(countryFromPostcodeFormat("E4 9AZ")).toBe("GB")
 		expect(countryFromPostcodeFormat("K2P 1L4")).toBe("CA")
 		expect(countryFromPostcodeFormat("D02 AF30")).toBe("IE")
-		// Belfast (Northern Ireland) uses GB postcodes — BT must stay GB, never IE.
+		// Belfast (Northern Ireland) uses GB postcodes.
+		// BT must stay GB, never IE.
 		expect(countryFromPostcodeFormat("BT1 5GS")).toBe("GB")
 	})
 
@@ -128,8 +129,8 @@ describe("extractGeocodeResult — resolved-place surfacing (#1014)", () => {
 describe("extractGeocodeResult — a component the answer did not follow (#2301)", () => {
 	// `Nawāda, 744301`: 744301 is an Andaman and Nicobar Islands code, the walk selects Nawada
 	// in Bihar, and the resolver refuses to relocate the coordinate 1,914 km onto Port Blair.
-	// Both components are still in the result. without this field nothing in it
-	// says they name different places.
+	// Both components are still in the result.
+	// Without this field nothing in it says they name different places.
 	const refused = (): AddressTree => ({
 		raw: "Nawāda, 744301",
 		roots: [
@@ -481,9 +482,9 @@ describe("extractGeocodeResult — unit-grade postcodes lead the admin ladder (#
 })
 
 describe("extractGeocodeResult — street-tier locality from the register commune (#1058)", () => {
-	// "Rue Sainte-Catherine, Bordeaux": the street-centroid tier matched the register's (street, commune)
-	// pair and stamped `street_locality: "Bordeaux"` on the street node. span-rescore's
-	// speculative locality ("Rue", the street's first token — a real commune in the Somme)
+	// "Rue Sainte-Catherine, Bordeaux": the street-centroid tier matched the register's
+	// (street, commune) pair and stamped `street_locality: "Bordeaux"` on the street node.
+	// Span-rescore's speculative locality ("Rue", the street's first token — a real commune in the Somme)
 	// was dropped by the resolver for contradicting the register.
 	const streetTierTree = (): AddressTree => ({
 		raw: "Rue Sainte-Catherine, Bordeaux",
@@ -661,8 +662,9 @@ describe("the #404 lineage-attachment wiring (#1717)", () => {
 	})
 })
 
-// The Decision-A retry rider's suite lived here until 2026-08-19 — retired with the rider (#1694, the
-// #486 policy): measured zero effect on the board, its failure subset, and 600 fresh register records.
+// The Decision-A retry rider's suite lived here until 2026-08-19 — retired
+// with the rider (#1694, the #486 policy): measured zero effect on the board,
+// its failure subset, and 600 fresh register records.
 // Single-pass behavior is pinned structurally by test/geocode-core-single-parse.test.ts.
 
 describe("#1537: a famous namesake the model reads as a `street` keeps its candidate list", () => {

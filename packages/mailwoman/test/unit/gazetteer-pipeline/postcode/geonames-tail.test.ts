@@ -77,7 +77,8 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 
 	await using db = new DatabaseClient<WOFDatabase>(out, { readOnly: true })
 
-	// Name law: `spr.name` is the sanitized-query token shape. the display form is an alt `names` row.
+	// Name law: `spr.name` is the sanitized-query token shape.
+	// The display form is an alt `names` row.
 	const names = db.prepare("SELECT name FROM spr WHERE country='CZ' ORDER BY name").all() as Array<{ name: string }>
 	expect(names.map((n) => n.name)).toEqual(["11000", "12000"])
 
@@ -107,7 +108,8 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 	const anc = db.prepare("SELECT COUNT(*) AS n FROM ancestors").get() as { n: number }
 	expect(anc.n).toBe(3)
 
-	// Provenance travels IN the artifact — the licence obligation the frozen database never carried.
+	// Provenance travels IN the artifact.
+	// The licence obligation the frozen database never carried.
 	const meta = new Map(
 		(db.prepare("SELECT key, value FROM meta").all() as Array<{ key: string; value: string }>).map((r) => [
 			r.key,

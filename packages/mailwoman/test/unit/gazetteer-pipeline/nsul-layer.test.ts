@@ -153,8 +153,9 @@ describe("nsulAttribution", () => {
 })
 
 /**
- * The fixture `uprn.db`: three points. uprn 5 is deliberately absent so a register
- * row naming it becomes `skipped-no-coordinate`.
+ * The fixture `uprn.db`: three points.
+ *
+ * Uprn 5 is deliberately absent so a register row naming it becomes `skipped-no-coordinate`.
  */
 const UPRN_POINTS = [
 	{ uprn: 14_000_003, lat: 51.3742681, lon: -0.8682259 },
@@ -302,7 +303,8 @@ describe("buildNSULLayer (fixture)", () => {
 		expect(manifest.sourceVintage).toBe("2026-06 (Epoch 127)")
 		expect(manifest.spineKeys.h3).toEqual({ column: "h3_cell", resolution: 9 })
 
-		// Coverage: the res-6 parent of a written point is designated-complete. an unsurveyed cell is unknown.
+		// Coverage: the res-6 parent of a written point is designated-complete.
+		// An unsurveyed cell is unknown.
 		const parent = shortCellToInt(
 			cellToParent(uprnFullCell(UPRN_POINTS[0]!.lat, UPRN_POINTS[0]!.lon), NSUL_COVERAGE_H3_RESOLUTION) as H3Cell
 		)

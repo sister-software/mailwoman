@@ -85,7 +85,9 @@ const INSIDE_ZONE = {
 }
 
 /**
- * Well away from every fixture zone — the reading this layer must never turn into "no restriction applies".
+ * Well away from every fixture zone.
+ *
+ * The reading this layer must never turn into "no restriction applies".
  */
 const NO_DESIGNATION = { latitude: FIXTURE_ORIGIN.lat + 0.2, longitude: FIXTURE_ORIGIN.lon + 0.2 }
 

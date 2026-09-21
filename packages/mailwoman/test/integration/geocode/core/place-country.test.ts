@@ -170,7 +170,7 @@ describe("geocodeAddress — the dominant-bearer guard on hardCountry (#1738)", 
 	// This test asserted `anchorPosterior` survived a disagreeing bearer — "the placer's
 	// posterior stays the soft anchor the worldwide race weighs".
 	// At `COARSE_PLACER_ANCHOR_WEIGHT = 1` that anchor is not soft: the within-tier key
-	// is `(prominence ?? score) + w · posterior[country]`, so on `Queen Street, Bristol`
+	// is `(prominence ?? Score) + w · posterior[country]`, so on `Queen Street, Bristol`
 	// a 0.9261 posterior gap overturned GB Bristol's 0.884776 prominence lead
 	// and the answer moved 5,274 km to Connecticut.
 	// A prior that decides is not a prior.

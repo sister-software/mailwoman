@@ -26,9 +26,9 @@ describe("wilson", () => {
 	})
 
 	it("matches a hand-computed value — 3/15 is the Paris cell that motivated this board", () => {
-		// Standard Wilson, z=1.96, computed independently:
-		//   p=0.2, denom=1+3.8416/15=1.25611, centre=0.32805, spread=1.96*sqrt(0.010667+0.004268)=0.23953
-		//   => [(0.32805-0.23953)/1.25611, (0.32805+0.23953)/1.25611] = [0.070474, 0.451859]
+		// Standard Wilson, z=1.96, computed independently: p=0.2, denom=1+3.8416/15=1.25611,
+		// centre=0.32805, spread=1.96*sqrt(0.010667+0.004268)=0.23953 =>
+		// [(0.32805-0.23953)/1.25611, (0.32805+0.23953)/1.25611] = [0.070474, 0.451859]
 		// i.e. "3/15" means "somewhere between 7% and 45%".
 		// That is not a measurement, and the whole point of this board is to stop anyone quoting it as one.
 		const ci = wilson(3, 15)

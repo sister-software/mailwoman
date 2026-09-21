@@ -42,8 +42,9 @@ const MODULE_COUNT_CEILING = 200
 /**
  * `registerHooks` covers ESM and CJS.
  *
- * `node:` builtins are excluded — they are resident before the CLI starts and counting
- * them would make the number depend on the Node version rather than on this repo.
+ * `node:` builtins are excluded.
+ * They are resident before the CLI starts and counting them would make the number
+ * depend on the Node version rather than on this repo.
  */
 const COUNTING_HOOK =
 	"data:text/javascript," +

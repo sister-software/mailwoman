@@ -48,7 +48,8 @@ describe("geocodeStream (wiring, fake worker)", () => {
 		}
 
 		expect(out).toHaveLength(50)
-		// Every record geocoded. config (locale) + mapping (address col count) reached the worker.
+		// Every record geocoded.
+		// Config (locale) + mapping (address col count) reached the worker.
 		expect(out.every((r) => echoOf(r).tag === "en-US")).toBe(true)
 		expect(echoOf(out[0]!).cols).toBe(2)
 

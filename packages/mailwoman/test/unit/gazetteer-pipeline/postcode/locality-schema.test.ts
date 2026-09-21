@@ -66,7 +66,7 @@ describe("createPostcodeLocalityTable", () => {
 			{ cid: 1, name: "country", type: "TEXT", notnull: 1 },
 			{ cid: 2, name: "locality_id", type: "INTEGER", notnull: 1 },
 			{ cid: 3, name: "locality_name", type: "TEXT", notnull: 1 },
-			// The only nullable column — a `|`-joined alt-name list the CJK builds may have nothing for.
+			// The only nullable column. A `|`-joined alt-name list the CJK builds may have nothing for.
 			{ cid: 4, name: "aliases", type: "TEXT", notnull: 0 },
 			{ cid: 5, name: "distance_km", type: "REAL", notnull: 1 },
 			{ cid: 6, name: "is_containing", type: "INTEGER", notnull: 1 },
@@ -93,7 +93,8 @@ describe("createPostcodeLocalityTable", () => {
 		await expect(createPostcodeLocalityIndex(kdb, { ifNotExists: true })).resolves.toBeUndefined()
 		await expect(createPostcodeLocalityMetaTable(kdb, { ifNotExists: true })).resolves.toBeUndefined()
 
-		// Without the flag the same statement is an error — that is what makes a rebuild build a rebuild.
+		// Without the flag the same statement is an error.
+		// That is what makes a rebuild build a rebuild.
 		await expect(createPostcodeLocalityTable(kdb, { ifNotExists: false })).rejects.toThrow(/already exists/)
 	})
 })

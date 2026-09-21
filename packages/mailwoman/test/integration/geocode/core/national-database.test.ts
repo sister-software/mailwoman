@@ -46,7 +46,9 @@ function captureResolver(): { resolver: Resolver; seen: ResolveOpts[] } {
 const emptyTree: AddressTree = { raw: "x", roots: [] }
 
 /**
- * A sentinel address-point lookup — the cascade only assigns it to `opts.addressPoints`, never calls `find`.
+ * A sentinel address-point lookup.
+ *
+ * The cascade only assigns it to `opts.addressPoints`, never calls `find`.
  */
 const sentinel = (): AddressPointLookup => ({ find: vi.fn(() => null) })
 const banLookup = sentinel()

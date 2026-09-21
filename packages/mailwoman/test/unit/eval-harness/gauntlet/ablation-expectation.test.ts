@@ -95,8 +95,8 @@ const LADDER: AblationLadder = ablationLadderFromChain(
 /**
  * A gazetteer that answers from fixtures.
  *
- * `named` honours the country filter only — the bbox filter is the reader's job
- * and is covered where it matters (`ablation-gazetteer.ts`).
+ * `named` honours the country filter only.
+ * The bbox filter is the reader's job and is covered where it matters (`ablation-gazetteer.ts`).
  */
 function fakeGazetteer(over: Partial<AblationGazetteerProbe> = {}): AblationGazetteerProbe {
 	const byName: Record<string, AblationPlace[]> = {
@@ -226,8 +226,9 @@ describe("deriveExpectedRung — computed from what REMAINS", () => {
 		expect(expected).toMatchObject({ kind: "rung", depth: 0 })
 	})
 
-	// The operator's own example: dropping the country from an address the region still
-	// pins must not be graded as a break — the surviving evidence keeps the deep rung.
+	// The operator's own example: dropping the country from an address the region
+	// still pins must not be graded as a break.
+	// The surviving evidence keeps the deep rung.
 	it("keeps the deep rung when only the country goes", () => {
 		const expected = deriveExpectedRung(
 			{ locality: "Springfield", region: "Illinois", street: "Evergreen Terrace", house_number: "742" },
@@ -246,7 +247,8 @@ describe("deriveExpectedRung — computed from what REMAINS", () => {
 		expect(deriveExpectedRung({ country: "United States" }, LADDER, gz)).toMatchObject({ kind: "rung", depth: 4 })
 	})
 
-	// The headline case: a bare ambiguous name with nothing else to lean on. abstaining is the correct answer.
+	// The headline case: a bare ambiguous name with nothing else to lean on.
+	// Abstaining is the correct answer.
 	it("expects ABSTENTION for a bare name no population winner settles", () => {
 		const expected = deriveExpectedRung({ locality: "Springfield" }, LADDER, gz)
 
@@ -281,7 +283,8 @@ describe("deriveExpectedRung — computed from what REMAINS", () => {
  * An expectation derived from the variant's own output would grade the pipeline
  * against itself and pass everything.
  * `deriveExpectedRung` takes no result argument, so the direct version cannot compile.
- * these pin the property so a later "just peek at the answer" refactor fails loudly
+ *
+ * These pin the property so a later "just peek at the answer" refactor fails loudly
  * instead of quietly making the layer useless.
  */
 describe("the expectation is INVARIANT to the variant's output", () => {
@@ -299,7 +302,8 @@ describe("the expectation is INVARIANT to the variant's output", () => {
 		]
 
 		for (const outcome of outcomes) {
-			// Grading consumes the outcome. deriving must not.
+			// Grading consumes the outcome.
+			// Deriving must not.
 			// Re-derive after each grade and compare.
 			gradeAgainstLadder({ expected, ladder: LADDER, ...outcome, slot: "absent", anchorRungDepth: 0 })
 
@@ -459,7 +463,8 @@ describe("gradeAgainstLadder", () => {
 		})
 
 		expect(graded.grade).toBe("substituted")
-		// The geometry stays readable — the row is a hazard rather than a mystery.
+		// The geometry stays readable.
+		// The row is a hazard rather than a mystery.
 		expect(graded.achievedRungDepth).toBe(0)
 	})
 
@@ -477,7 +482,8 @@ describe("gradeAgainstLadder", () => {
 
 	describe("the anchor floor — a deletion is charged only for what IT cost", () => {
 		it("reads a variant that matches its already-coarse anchor as held, not as a loss", () => {
-			// The anchor was already at the locality rung. the variant lands there too.
+			// The anchor was already at the locality rung.
+			// The variant lands there too.
 			// Nothing was lost.
 			const graded = gradeAgainstLadder({
 				...base,

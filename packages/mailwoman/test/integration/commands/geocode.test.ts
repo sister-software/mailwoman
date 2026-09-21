@@ -44,11 +44,14 @@ const TX_INTERPOLATION_DB = dataRootPath("interpolation", "interpolation-us-tx.d
 /**
  * Wall-clock budget for a CLI spawn.
  *
- * The old 10 s was set against an imagined fast path. Measured 2026-08-03 on an idle 16-core box, one `mailwoman
- * geocode` takes 5.62 s end to end — 2.73 s of it node boot plus this CLI's import graph, before any model is touched —
- * so the margin was 1.8x. Eight concurrent spawns reach 8.75 s, 87% of the old budget, and vitest runs test files in
- * parallel. That is why these "flaked": not randomness, a deterministic threshold sitting just under a floor nobody had
- * measured. A generous budget costs nothing on a passing test.
+ * The old 10 s was set against an imagined fast path.
+ * Measured 2026-08-03 on an idle 16-core box, one `mailwoman geocode` takes 5.62 s end to end — 2.73 s
+ * of it node boot plus this CLI's import graph, before any model is touched — so the margin was 1.8x.
+ *
+ * Eight concurrent spawns reach 8.75 s, 87% of the old budget, and vitest runs test files in parallel.
+ * That is why these "flaked": not randomness, a deterministic threshold sitting
+ * just under a floor nobody had measured.
+ * A generous budget costs nothing on a passing test.
  */
 const CLI_SPAWN_TIMEOUT_MS = 45_000
 

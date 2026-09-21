@@ -82,8 +82,9 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 	}, 60_000)
 
 	test("respects --resolve-db explicit path override (matches env default)", async () => {
-		// Use the same input as the first test — the neural classifier needs enough context to tag
-		// component spans. bare single-token names like "Houston" alone often parse to nothing.
+		// Use the same input as the first test.
+		// The neural classifier needs enough context to tag component spans.
+		// Bare single-token names like "Houston" alone often parse to nothing.
 		const result = await runFile(
 			"node",
 			[cliBin, "parse", "--neural", "--resolve", "--resolve-db", wofPath, "--format", "xml", "Springfield, Illinois"],

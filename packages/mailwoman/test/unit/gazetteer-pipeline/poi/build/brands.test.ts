@@ -56,7 +56,8 @@ describe("aggregateBrands", () => {
 
 	it("applies the noise floor max(3, 1% of rows) to aliases, dropping sub-floor variants", () => {
 		// rows total = 1000 -> floor = max(3, 10) = 10.
-		// An 8-row variant is noise. a 10-row variant clears it.
+		// An 8-row variant is noise.
+		// A 10-row variant clears it.
 		const rows: BrandNameCount[] = [
 			{ wikidata: "Q1", name: "Main Co", n: 982 },
 			{ wikidata: "Q1", name: "Main Co Alt Spelling", n: 10 },
@@ -69,7 +70,8 @@ describe("aggregateBrands", () => {
 
 	it("uses the flat floor of 3 when 1% of rows is smaller", () => {
 		// rows total = 30 -> floor = max(3, 0.3) = 3.
-		// A 2-row variant is noise. a 3-row variant clears it.
+		// A 2-row variant is noise.
+		// A 3-row variant clears it.
 		const rows: BrandNameCount[] = [
 			{ wikidata: "Q1", name: "Main Co", n: 25 },
 			{ wikidata: "Q1", name: "Clears Floor", n: 3 },
@@ -131,8 +133,9 @@ describe("aggregateBrands — dominance floor", () => {
 			{ wikidata: "Q1", name: "Everything Else", n: 50 },
 		]
 
-		// Two variants tied at 50/50 — the modal share is exactly 0.5 regardless of which name the
-		// alphabetical tie-break picks. what matters here is the QID survives the floor at the boundary.
+		// Two variants tied at 50/50.
+		// The modal share is exactly 0.5 regardless of which name the alphabetical tie-break picks.
+		// What matters here is the QID survives the floor at the boundary.
 		const brands = aggregateBrands(rows, 1)
 		expect(brands.map((b) => b.wikidata)).toEqual(["Q1"])
 	})
@@ -165,8 +168,8 @@ describe("aggregateBrands — dominance floor", () => {
 			{ wikidata: "Q1", name: "Also Minority", n: 60 },
 		]
 
-		// Clears a generous minRows (100 total >= 1) but modal share 60/100 = 0.6 ... raise the bar
-		// to prove the floor bites independently: use a custom dominance above the modal share.
+		// Clears a generous minRows (100 total >= 1) but modal share 60/100 = 0.6 ...
+		// Raise the bar to prove the floor bites independently: use a custom dominance above the modal share.
 		expect(aggregateBrands(rows, 1, 0.7).map((b) => b.wikidata)).toEqual([])
 		expect(aggregateBrands(rows, 1, 0.5).map((b) => b.wikidata)).toEqual(["Q1"])
 	})

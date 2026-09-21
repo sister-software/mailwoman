@@ -92,8 +92,8 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 				})
 			)
 
-		// The old sync form ran `spawn()` and then re-ran it inside `expect(spawn).not.toThrow()` —
-		// the second run is the idempotence assertion.
+		// The old sync form ran `spawn()` and then re-ran it inside `expect(spawn).not.toThrow()`.
+		// The second run is the idempotence assertion.
 		// An async rejection is invisible to that form, so await both runs:
 		// either one failing rejects this test.
 		await spawn()
@@ -125,8 +125,9 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 		const skillDir = join(cwd, ".claude", "skills", "mailwoman")
 		const staleFile = join(skillDir, "stale-reference.md")
 
-		// Plant a file that a hypothetical older install left behind and the current shipped skill
-		// no longer carries — a merge-only copy (bare cpSync) would leave this in place forever.
+		// Plant a file that a hypothetical older install left behind and the current
+		// shipped skill no longer carries.
+		// A merge-only copy (bare cpSync) would leave this in place forever.
 		await makeDirectories(skillDir)
 		await writeLocalTextFile("belongs to an older skill version; must not survive a reinstall", staleFile)
 

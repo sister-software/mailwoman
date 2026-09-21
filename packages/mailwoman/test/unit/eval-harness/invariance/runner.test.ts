@@ -324,7 +324,8 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 			["pennsylvania", "en-US"],
 		] as const)
 
-		// Same fake parser on both sides — this is a locale-threading test rather than a regression test.
+		// Same fake parser on both sides.
+		// This is a locale-threading test rather than a regression test.
 		await runInvarianceSuite({ rows, parse, baselineParse: parse })
 
 		expect(calls.length).toBeGreaterThan(0)
@@ -339,8 +340,8 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 
 	it("--baseline: a pair the candidate holds but the baseline violated is GAINED — reported, non-blocking", async () => {
 		// The measured #1516 shape: the baseline's original parse never emits the row's critical
-		// components (the quoted venue's street), so the whole row is a gained capability. on top
-		// of that, this pair specifically flips — candidate invariant where baseline degraded.
+		// components (the quoted venue's street), so the whole row is a gained capability.
+		// On top of that, this pair specifically flips — candidate invariant where baseline degraded.
 		const row: InvarianceRow = {
 			id: "gb-quoted-gain",
 			raw: "The Grange, Fishburn, Stockton-on-Tees",
@@ -383,10 +384,10 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 	})
 
 	it("--baseline: violations on a row the baseline never parsed are gained-capability residuals — reported, non-blocking", async () => {
-		// The measured #1516 shape for gb-quoted-venue: the baseline (v4.0.1) never emits
-		// the venue's street in any register, so the row's baseline original has no
-		// critical components. the candidate (v4.2.0) gained the street in 7/8 registers
-		// and loses it only on the register-flat tail (quoted + comma-dropped).
+		// The measured #1516 shape for gb-quoted-venue: the baseline (v4.0.1) never emits the
+		// venue's street in any register, so the row's baseline original has no critical components.
+		// The candidate (v4.2.0) gained the street in 7/8 registers and loses it only
+		// on the register-flat tail (quoted + comma-dropped).
 		// Those residual lost/degraded pairs are gains rather than regressions.
 		const row: InvarianceRow = {
 			id: "gb-quoted-residual",

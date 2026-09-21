@@ -171,9 +171,9 @@ describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () =>
 			// `Paris, TX`, no postcode (a postcode would re-pin the country via the #369 anchor).
 			// The en-US default scopes "Paris" to Paris, texas (~33.7°N); an explicit
 			// `--default-country FR` scopes it to Paris, france (~48.9°N).
-			// Same input, different country scope, demonstrably different place. history:
-			// this probe used `--default-country none` and asserted the unscoped ranking picks the
-			// more-populous foreign twin (itself replacing the NY→Scotland probe #595 found dead).
+			// Same input, different country scope, demonstrably different place.
+			// History: this probe used `--default-country none` and asserted the unscoped ranking picks
+			// the more-populous foreign twin (itself replacing the NY→Scotland probe #595 found dead).
 			// That premise broke on current gazetteer artifacts — unscoped ranking now keeps US namesakes
 			// (#905, pre-existing on main, invisible in CI because this suite needs the lab DB).
 			// Probing an explicit scope flip tests the same mechanism without depending on
