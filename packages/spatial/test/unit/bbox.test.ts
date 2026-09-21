@@ -12,8 +12,7 @@ const BBOX_2D = [-74.1, 40.6, -73.9, 40.9]
 const BBOX_3D = [-74.1, 40.6, 0, -73.9, 40.9, 100]
 
 test("is2DBBox: a length-4 tuple is 2D; a length-6 tuple is not", () => {
-	// Regression: this guard used to check length === 6 (a copy of is3DBBox),
-	// so it never recognized a real 2D bbox.
+	// Regression: this guard used to check length === 6 (a copy of is3DBBox), so it never recognized a real 2D bbox.
 	expect(is2DBBox(BBOX_2D)).toBe(true)
 	expect(is2DBBox(BBOX_3D)).toBe(false)
 })

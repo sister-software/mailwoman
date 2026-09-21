@@ -59,8 +59,8 @@ describe("recoverNearestPlusCode", () => {
 	})
 
 	it("shifts to the nearest bearer across a prefix-cell edge", () => {
-		// 2222+22 decodes at the low corner of every prefix cell. a reference just below a
-		// cell boundary must recover the cell above-left of naive prefixing.
+		// 2222+22 decodes at the low corner of every prefix cell.
+		// A reference just below a cell boundary must recover the cell above-left of naive prefixing.
 		const cell = recoverNearestPlusCode("2222+22", 46.999, 7.999)!
 
 		expect(cell.lat).toBeCloseTo(47.0000625, 6)

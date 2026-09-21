@@ -41,8 +41,8 @@ function offsetMeters(a: { latitude: number; longitude: number }, b: { latitude:
  * Coordinate Systems in Great Britain" (V3.6, © OS 2020) — the OSGB36 geodetic coordinates
  * and the eastings/northings they project to.
  *
- * C.1 runs it forwards, C.2 backwards. we test the backwards direction,
- * which is the one this module implements.
+ * C.1 runs it forwards, C.2 backwards.
+ * We test the backwards direction, which is the one this module implements.
  */
 const ANNEXE_C_GRID = { easting: 651_409.903, northing: 313_177.27 }
 const ANNEXE_C_OSGB36 = { latitude: dms(52, 39, 27.2531), longitude: dms(1, 43, 4.5177) }
@@ -56,7 +56,8 @@ const ANNEXE_C_OSGB36 = { latitude: dms(52, 39, 27.2531), longitude: dms(1, 43, 
  * Annexe D uses the same Helmert this module does, so agreement here proves the implementation —
  * the parameter signs, the Position-Vector rotation convention, the cartesian round trip.
  *
- * It says nothing about how close the Helmert is to OSTN15 truth. that is the separate 40-point test below.
+ * It says nothing about how close the Helmert is to OSTN15 truth.
+ * That is the separate 40-point test below.
  */
 const ANNEXE_D_GRID = { easting: 422_297.792, northing: 412_878.741 }
 const ANNEXE_D_OSGB36 = { latitude: dms(53, 36, 42.2972), longitude: -dms(1, 39, 46.5416) }
@@ -67,8 +68,10 @@ const ANNEXE_D_ETRS89 = { latitude: dms(53, 36, 43.1653), longitude: -dms(1, 39,
  * (`OSTN15_OSGM15_TestInput_*`), each pairing a published OSGB36 easting/northing with
  * the published ETRS89 latitude/longitude of the same physical point.
  *
- * OSTN15 is the exact transformation. these residuals therefore measure the Helmert
- * approximation, which is the number the module's ±5 m promise is about.
+ * OSTN15 is the exact transformation.
+ * These residuals therefore measure the Helmert approximation, which is the
+ * number the module's ±5 m promise is about.
+ *
  * Six of the forty are inlined — chosen to span the extremes rather than to sample evenly,
  * because the error is a smooth field and only its corners are informative.
  *
@@ -127,9 +130,9 @@ test("the Helmert stays inside 5 m of OSTN15 truth across the GB extremes", () =
 		expect(offsetMeters(got, { latitude, longitude }), id).toBeLessThan(5)
 	}
 
-	// The bar is a promise rather than a description — the mainland points are far
-	// better than it, and pinning that keeps a regression that doubles the mainland
-	// error from hiding under an offshore-sized budget.
+	// The bar is a promise rather than a description.
+	// The mainland points are far better than it, and pinning that keeps a regression that
+	// doubles the mainland error from hiding under an offshore-sized budget.
 	const bristol = OSTN15_POINTS.find((p) => p.id === "TP08")!
 
 	expect(offsetMeters(osgb36ToWGS84(bristol), bristol)).toBeLessThan(1)
@@ -141,8 +144,9 @@ test("osgb36ToWGS84 places known GB landmarks where they actually are", () => {
 	// These catch the failure mode the Caister example cannot: a sign flip or axis swap that
 	// stays self-consistent at one point in Norfolk but puts London in the North Sea.
 	//
-	// The bar is 100 m because the two quantities are not the same thing — a Code-Point centroid
-	// is the mean of a postcode unit's delivery points, and the landmark is a single door.
+	// The bar is 100 m because the two quantities are not the same thing.
+	// A Code-Point centroid is the mean of a postcode unit's delivery points,
+	// and the landmark is a single door.
 	// Buckingham Palace's grounds alone are wider than the residual being measured.
 	const cases = [
 		{ name: "SW1A 1AA (Buckingham Palace)", grid: { easting: 529_090, northing: 179_645 }, lat: 51.5014, lon: -0.1419 },
@@ -164,7 +168,7 @@ test("osgb36ToWGS84 places known GB landmarks where they actually are", () => {
 
 test("osgb36ToWGS84 spans the GB extent without the series diverging", () => {
 	// Redfearn's series is a truncated expansion in distance from the central meridian.
-	// it is well-behaved across GB but not everywhere.
+	// It is well-behaved across GB but not everywhere.
 	// Pin the corners so a change to the series terms cannot quietly break the far south-west
 	// or the Northern Isles while London still looks right.
 	const scilly = osgb36ToWGS84({ easting: 90_000, northing: 10_000 })
@@ -182,8 +186,9 @@ test("osgb36ToWGS84 spans the GB extent without the series diverging", () => {
 test("the grid origin is a real Atlantic coordinate, not a sentinel", () => {
 	// Code-Point Open writes 0,0 for its 865 no-coordinate rows, but 0,0 is a valid
 	// grid point (south-west of the Scillies).
-	// The module cannot detect the sentinel and must not try — this pins that interface
-	// so nobody "helpfully" adds a zero check here instead of filtering at the call site.
+	// The module cannot detect the sentinel and must not try.
+	// This pins that interface so nobody "helpfully" adds a zero check here
+	// instead of filtering at the call site.
 	const origin = osgb36ToWGS84({ easting: 0, northing: 0 })
 
 	expect(origin.latitude).toBeCloseTo(49.7668, 3)

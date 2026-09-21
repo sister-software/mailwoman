@@ -31,9 +31,9 @@ import { shortCellToInt, type H3Cell } from "#h3/cell"
 /**
  * The rings a polyfill walks: every polygon's outer ring.
  *
- * Holes are deliberately not subtracted here — a hole would only ever remove cells,
- * and the interior test below re-checks every returned cell's vertices against the full
- * geometry (holes included), so a hole cannot survive into the result.
+ * Holes are deliberately not subtracted here.
+ * A hole would only ever remove cells, and the interior test below re-checks every returned cell's
+ * vertices against the full geometry (holes included), so a hole cannot survive into the result.
  */
 function outerRings(geometry: ParsedGeometry): PolygonRings {
 	const polygons = arealPolygons(geometry)
@@ -48,10 +48,11 @@ function outerRings(geometry: ParsedGeometry): PolygonRings {
 /**
  * The outline's bounding rectangle, for pre-clipping a reference inventory that can only be probed by range.
  *
- * A coarse filter and nothing more — it contains the outline and is never the outline.
- * The exact clip is
- * {@link interiorCoverageCellSet}; using this rectangle as the region would claim survey over every corner the outline
- * does not reach.
+ * A coarse filter and nothing more.
+ * It contains the outline and is never the outline.
+ *
+ * The exact clip is {@link interiorCoverageCellSet}; using this rectangle as the region
+ * would claim survey over every corner the outline does not reach.
  */
 export function geometryBBox(geometry: ParsedGeometry): {
 	minLon: number

@@ -53,7 +53,7 @@ export interface DecodedPlusCode {
 /**
  * A syntactically-valid full plus code: exactly 8 digits, `+`, then 2 or 3 digits.
  *
- * (The spec allows padded and longer forms. addresses carry the 10–11 digit register,
+ * (The spec allows padded and longer forms. Addresses carry the 10–11 digit register,
  * which is all this reader accepts.)
  */
 export function isFullPlusCode(token: string): boolean {
@@ -73,7 +73,7 @@ export function isShortPlusCode(token: string): boolean {
 /**
  * Decode a full plus code to its cell.
  *
- * Returns null on anything `isFullPlusCode` rejects.
+ * @returns null on anything `isFullPlusCode` rejects.
  */
 export function decodePlusCode(code: string): DecodedPlusCode | null {
 	if (!isFullPlusCode(code)) return null
@@ -115,8 +115,10 @@ export function decodePlusCode(code: string): DecodedPlusCode | null {
 }
 
 /**
- * Encode the pair digits of a coordinate to `length` digits (length ≤ 10, even) — the prefix implementation
- * {@link recoverNearestPlusCode} needs. not a general encoder.
+ * Encode the pair digits of a coordinate to `length` digits (length ≤ 10, even).
+ *
+ * The prefix implementation {@link recoverNearestPlusCode} needs.
+ * Not a general encoder.
  */
 function encodePairDigits(lat: number, lon: number, length: number): string {
 	let latVal = Math.min(Math.max(lat + 90, 0), 180 - 1e-12)
@@ -144,7 +146,7 @@ function encodePairDigits(lat: number, lon: number, length: number): string {
  * prepend the reference's prefix at the missing precision, then shift the candidate cell
  * by whole prefix-resolutions when a neighboring cell center sits closer to the reference.
  *
- * Returns the decoded nearest cell, or null for an invalid short code.
+ * @returns the decoded nearest cell, or null for an invalid short code.
  */
 export function recoverNearestPlusCode(shortCode: string, refLat: number, refLon: number): DecodedPlusCode | null {
 	if (!isShortPlusCode(shortCode)) return null
@@ -155,8 +157,8 @@ export function recoverNearestPlusCode(shortCode: string, refLat: number, refLon
 
 	if (!candidate) return null
 
-	// The prefix pins the cell modulo its own resolution. the nearest bearer of the short
-	// code may sit one prefix-cell away (the reference near a cell edge).
+	// The prefix pins the cell modulo its own resolution.
+	// The nearest bearer of the short code may sit one prefix-cell away (the reference near a cell edge).
 	// Shift by whole prefix-resolutions, never past the poles.
 	const LAT_MIN = -90
 	const LAT_MAX = 90

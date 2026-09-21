@@ -309,8 +309,9 @@ export class GeoPoint implements PointLiteral {
 	 *    It now returns `null` here and throws a `RangeError` from the constructor.
 	 *    Note the deliberate asymmetry with the scalar `longitude` / `latitude` setters,
 	 *    which still wrap and clamp: mutating a point is a pan gesture, where 190°.
-	 *    This means -170° is right. parsing one is a claim about the world, where an impossible
-	 *    magnitude means the input was malformed and any repair invents a location.
+	 *    This means -170° is right.
+	 *    Parsing one is a claim about the world, where an impossible magnitude means
+	 *    the input was malformed and any repair invents a location.
 	 *
 	 * A 0/0 result is treated as the "missing coordinate" sentinel (Null Island) and also returns `null`.
 	 */

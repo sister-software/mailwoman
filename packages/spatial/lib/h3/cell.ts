@@ -37,8 +37,10 @@ export type H3Cell = Tagged<string, "H3Cell">
  * Is `value` a real H3 cell index?
  *
  * Delegates to h3-js rather than testing the surface shape.
- * The shape is necessary but nowhere near sufficient — `000000000000000`, `fffffffffffffff`
- * and `123456789abcdef` are all fifteen lowercase hex characters and none of them is a cell.
+ * The shape is necessary but nowhere near sufficient.
+ *
+ * `000000000000000`, `fffffffffffffff` and `123456789abcdef` are all fifteen
+ * lowercase hex characters and none of them is a cell.
  *
  * A guard that returns `value is H3Cell` on those hands the caller a branded type it has not earned,
  * and the error surfaces later inside h3-js with no reference to where the bad value entered.
@@ -74,9 +76,9 @@ const SHORT_CELL_MASK = 0xf_ff_ff_ff_ff_ff_ffn
  * and nothing is inferred: the short form carries the cell losslessly for every resolution, and
  * {@link expandH3Cell} reverses it exactly once you tell it which resolution the cell was captured at.
  *
- * Zero-padded to a fixed 13 characters, so the hex form orders and compares the same way the integer
- * {@link shortCellToInt} packs does. Base cells 0-7 leave the leading nibble zero, and an unpadded string would both
- * mis-sort and mis-expand.
+ * Zero-padded to a fixed 13 characters, so the hex form orders and compares the
+ * same way the integer {@link shortCellToInt} packs does.
+ * Base cells 0-7 leave the leading nibble zero, and an unpadded string would both mis-sort and mis-expand.
  */
 export function shortenH3Cell(cell: H3Cell): H3CellShort {
 	const cellBigInt = BigInt(`0x${cell}`)
@@ -92,11 +94,14 @@ export function shortenH3Cell(cell: H3Cell): H3CellShort {
  * concatenation: `"8"` (cell mode) + the resolution nibble + the 52 bits verbatim.
  * The result is the identical index `latLngToCell` would have produced at that resolution.
  *
- * `resolution` is a required piece of external knowledge — a short cell does not name its own resolution, so the caller
- * has to supply the one the cell was shortened at. Supplying the wrong one is caught rather than tolerated: a mismatch
- * leaves digits past the stated resolution set to something other than `7`, which H3 rejects, and this throws instead
- * of returning an index that downstream `cellToParent` calls would refuse with `Cell arguments had incompatible
- * resolutions`.
+ * `resolution` is a required piece of external knowledge.
+ * A short cell does not name its own resolution, so the caller has to supply
+ * the one the cell was shortened at.
+ *
+ * Supplying the wrong one is caught rather than tolerated: a mismatch leaves digits
+ * past the stated resolution set to something other than `7`, which H3 rejects,
+ * and this throws instead of returning an index that downstream `cellToParent` calls
+ * would refuse with `Cell arguments had incompatible resolutions`.
  *
  * @throws {RangeError} If `resolution` is not an integer in `[0, 15]`,
  *   or `h3CellShort` is wider than 13 hex characters.
@@ -151,9 +156,9 @@ export function shortCellToInt(cell: H3Cell): number {
  *
  * A short cell drops the resolution nibble, so a table of them does not say what resolution it
  * is keyed at — and every `layer_coverage` reader needs that number to derive a probe's coverage cell.
- * It is recoverable because
- * {@link expandH3Cell} validates: a short cell expands to a valid index at exactly one resolution, so trying all
- * sixteen and keeping the one that survives is an exact answer rather than an inference.
+ * It is recoverable because {@link expandH3Cell} validates: a short cell expands to
+ * a valid index at exactly one resolution, so trying all sixteen and keeping the one
+ * that survives is an exact answer rather than an inference.
  *
  * Shared rather than copied, because both failure modes it names are silent in a second copy.
  * A table that mixes resolutions read at one of them reports every cell at the other as

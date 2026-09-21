@@ -40,8 +40,10 @@ export type PlanetaryBodyID = "earth" | "moon" | "mars"
 /**
  * Mean radii in kilometres.
  *
- * Earth's is the value `radii` scales to its units. the Moon's and Mars's are the IAU mean radii the usgs
- * planetary products reference (the Moon as a sphere. Mars's mean radius, its DEM being on the areoid).
+ * Earth's is the value `radii` scales to its units.
+ * The Moon's and Mars's are the IAU mean radii the usgs planetary products reference
+ * (the Moon as a sphere. Mars's mean radius, its DEM being on the areoid).
+ *
  * A distance on a body other than Earth is meaningless without one of these.
  */
 export const BODY_RADII_KM = {
@@ -96,8 +98,8 @@ export function haversine(point1: GeoPointInput, point2: GeoPointInput, unit: Ea
 }
 
 /**
- * Great-circle distance on the named body. {@link haversine} is this function
- * on Earth. a caller with a body passes it here.
+ * Great-circle distance on the named body. {@link haversine} is this function on Earth.
+ * A caller with a body passes it here.
  *
  * The Null-Island sentinel of the object form applies: a `(0, 0)` input answers `NaN`.
  *
@@ -133,13 +135,17 @@ export function haversineKm(aLat: number, aLon: number, bLat: number, bLon: numb
 }
 
 /**
- * Metres per degree of latitude — the scale {@link segmentDistanceMetres} reports in,
- * and the constant the bounding-box estimates in `#h3/polygon-cells` are built on.
+ * Metres per degree of latitude.
+ *
+ * The scale {@link segmentDistanceMetres} reports in, and the constant the
+ * bounding-box estimates in `#h3/polygon-cells` are built on.
  */
 export const METRES_PER_DEGREE = 111_320
 
 /**
- * Square metres in a square kilometre — the conversion every polygon layer's area receipt reports through.
+ * Square metres in a square kilometre.
+ *
+ * The conversion every polygon layer's area receipt reports through.
  */
 export const M2_PER_KM2 = 1_000_000
 
@@ -173,15 +179,17 @@ export function segmentDistanceMetres(
 	const vy = to[1]! - from[1]!
 	const lengthSquared = vx * vx + vy * vy
 
-	// A zero-length segment is a repeated vertex. the distance to it is the distance to the point.
+	// A zero-length segment is a repeated vertex.
+	// The distance to it is the distance to the point.
 	const t = lengthSquared === 0 ? 0 : Math.max(0, Math.min(1, (px * vx + py * vy) / lengthSquared))
 
 	return Math.hypot(px - t * vx, py - t * vy) * METRES_PER_DEGREE
 }
 
 /**
- * Metres from a point to the nearest ring edge of an areal geometry — `Infinity`
- * when the geometry bounds no area or carries no segment.
+ * Metres from a point to the nearest ring edge of an areal geometry.
+ *
+ * `Infinity` when the geometry bounds no area or carries no segment.
  *
  * To the edge rather than to the nearest vertex: a point a centimetre from a long edge can
  * be metres from every vertex of it, so a vertex distance overstates the gap without bound —

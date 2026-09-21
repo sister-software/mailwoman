@@ -71,7 +71,8 @@ export function assessDatumTransformation(summary: string): DatumTransformationV
 }
 
 /**
- * The target every layer ingest reprojects to — H3 takes WGS84 latitude and longitude.
+ * The target every layer ingest reprojects to.
+ * H3 takes WGS84 latitude and longitude.
  */
 export const WGS84_EPSG = 4326
 

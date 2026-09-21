@@ -182,10 +182,10 @@ function openRings(blob: Uint8Array): {
 /**
  * Is the point inside the stored geometry?
  *
- * Even-odd within each polygon's own ring list, inside-any-polygon across them — the orientation-free rule
- * {@linkcode pointInPolygon} states, applied without allocating the ring arrays. Reading a hole as an exterior ring is
- * what this rule leaves unchanged: a point inside a hole crosses two rings
- * and comes out even, whichever way either ring winds.
+ * Even-odd within each polygon's own ring list, inside-any-polygon across them — the orientation-free
+ * rule {@linkcode pointInPolygon} states, applied without allocating the ring arrays.
+ * Reading a hole as an exterior ring is what this rule leaves unchanged: a point inside
+ * a hole crosses two rings and comes out even, whichever way either ring winds.
  */
 export function pointInEncodedRings(blob: Uint8Array, lon: number, lat: number): boolean {
 	const { ringCount, pointCounts, polygonIndices, coordinates } = openRings(blob)
@@ -261,7 +261,8 @@ export function decodeRings(blob: Uint8Array): DecodedRings {
 }
 
 /**
- * Mean Earth radius in metres — the sphere the ring areas below are measured on.
+ * Mean Earth radius in metres.
+ * The sphere the ring areas below are measured on.
  */
 const EARTH_RADIUS_M = 6_371_008.8
 
@@ -271,14 +272,19 @@ const EARTH_RADIUS_M = 6_371_008.8
  *
  * The sign is the whole point: an orientation-respecting sum over a polygon's rings
  * subtracts its holes, while a sum of absolute values adds them.
- * Comparing the two against the source's own area figure is what tells a builder whether it has
- * read the holes at all — the failure mode is silent, because a hole read as an exterior ring
- * produces a perfectly well-formed polygon that simply covers more ground than the authority mapped.
+ * Comparing the two against the source's own area figure is what tells a builder
+ * whether it has read the holes at all.
  *
- * Which winding is positive is A interface rather than A detail, because a builder whose source encodes hole roles by
- * orientation reads roles off this sign. It is the opposite of the standard planar shoelace: this sum runs `(lonᵢ −
- * lonⱼ)` against the shoelace's `(xⱼ − xᵢ)`, so a ring `@mailwoman/spatial`'s own {@link rectangleRing} builds
- * counter-clockwise answers negative here. `@mailwoman/zoning` is the caller that depends on it, and
+ * The failure mode is silent, because a hole read as an exterior ring produces a perfectly
+ * well-formed polygon that simply covers more ground than the authority mapped.
+ *
+ * Which winding is positive is A interface rather than A detail, because a builder
+ * whose source encodes hole roles by orientation reads roles off this sign.
+ * It is the opposite of the standard planar shoelace: this sum runs `(lonᵢ − lonⱼ)`
+ * against the shoelace's `(xⱼ − xᵢ)`, so a ring `@mailwoman/spatial`'s own
+ * {@link rectangleRing} builds counter-clockwise answers negative here.
+ *
+ * `@mailwoman/zoning` is the caller that depends on it, and
  * `packages/zoning/test/unit/ring-roles.test.ts` pins the sign directly.
  */
 export function ringSignedAreaM2(ring: ReadonlyArray<readonly number[]>): number {
@@ -399,8 +405,10 @@ export interface EncodedArea {
 /**
  * A point inside one stored polygon, for a verification sampler.
  *
- * The bounding-box centre is tried first. where it is not inside — a crescent, a band hugging a river,
- * a polygon with a hole through its middle — a small deterministic grid over the box is scanned.
+ * The bounding-box centre is tried first.
+ * Where it is not inside — a crescent, a band hugging a river, a polygon with a hole
+ * through its middle — a small deterministic grid over the box is scanned.
+ *
  * A polygon no grid point lands inside is refused (`undefined`) rather than approximated,
  * because a sample point that is not actually inside the polygon turns an
  * agreement check into a check on the sampler.
@@ -439,8 +447,9 @@ export function interiorPointOfEncodedRings(
 }
 
 /**
- * Whether a stored polygon's precomputed bounding box contains the point — the ray cast's
- * prefilter, so the blob is only pulled off disk for a polygon that could contain the point.
+ * Whether a stored polygon's precomputed bounding box contains the point.
+ *
+ * The ray cast's prefilter, so the blob is only pulled off disk for a polygon that could contain the point.
  */
 export function bboxContains(
 	bounds: Pick<EncodedArea, "min_lat" | "min_lon" | "max_lat" | "max_lon">,

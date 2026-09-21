@@ -15,8 +15,9 @@ import {
 import { getBaseCellNumber, latLngToCell } from "h3-js"
 import { expect, test } from "vitest"
 
-// A real resolution-9 cell (White House, 38.8977, -77.0365) from h3-js itself rather than
-// a synthetic hex string — this exercises the actual encoding shortCellToInt is packing.
+// A real resolution-9 cell (White House, 38.8977, -77.0365) from h3-js itself
+// rather than a synthetic hex string.
+// This exercises the actual encoding shortCellToInt is packing.
 const CELL = latLngToCell(38.8977, -77.0365, 9) as H3Cell
 
 // Every resolution H3 defines, so the round-trip is asserted across the whole range
@@ -49,8 +50,8 @@ test("expandH3Cell: round-trips a cell whose base cell zeroes the leading nibble
 	expect(expandH3Cell(shortenH3Cell(cell), 15)).toBe(cell)
 })
 
-// A short cell derived from an integer key has lost its leading zeros. expansion
-// has to restore them rather than shift the digit path.
+// A short cell derived from an integer key has lost its leading zeros.
+// Expansion has to restore them rather than shift the digit path.
 test("expandH3Cell: accepts an unpadded short cell recovered from its integer form", () => {
 	const cell = latLngToCell(64.3025, 135.29175, 15) as H3Cell
 	const unpadded = shortCellToInt(cell).toString(16) as H3CellShort
@@ -79,8 +80,8 @@ test("expandH3Cell: rejects a short cell wider than the encoding holds", () => {
 
 test("isH3Cell rejects well-shaped strings that are not cells", () => {
 	// Fifteen lowercase hex characters each, so a shape check passes all four.
-	// Only the third is a real cell — the guard has to know the difference,
-	// because its return type claims it does.
+	// Only the third is a real cell.
+	// The guard has to know the difference, because its return type claims it does.
 	expect(isH3Cell("000000000000000")).toBe(false)
 	expect(isH3Cell("fffffffffffffff")).toBe(false)
 	expect(isH3Cell("123456789abcdef")).toBe(false)

@@ -127,22 +127,25 @@ export function isSolidPolygonPath(input: PolygonLiteral<PolygonPath>): boolean 
 /**
  * A linear ring as the containment predicates read it: positions of `[lon, lat, …]`.
  *
- * Deliberately looser than {@link LineStringPath} — the ray cast only ever indexes `[0]` and `[1]`,
- * and the callers arrive with different position types (`[number, number, ...number[]]` from the
- * resolver's GeoJSON reader, plain `number[][]` from a `JSON.parse` of a stored geometry column).
+ * Deliberately looser than {@link LineStringPath}.
+ * The ray cast only ever indexes `[0]` and `[1]`, and the callers arrive with different
+ * position types (`[number, number, ...number[]]` from the resolver's GeoJSON reader,
+ * plain `number[][]` from a `JSON.parse` of a stored geometry column).
+ *
  * A tight tuple type here would force a cast at every call site and add nothing the predicate uses.
  */
 export type ContainmentRing = readonly (readonly number[])[]
 
 /**
- * One polygon's rings: `[exterior, ...holes]` — a `Polygon`'s `coordinates`, read loosely (see
- * {@linkcode ContainmentRing}).
+ * One polygon's rings: `[exterior, ...holes]`.
+ *
+ * A `Polygon`'s `coordinates`, read loosely (see {@linkcode ContainmentRing}).
  */
 export type PolygonRings = readonly ContainmentRing[]
 
 /**
- * A feature's polygons — `MultiPolygon` coordinates, with a bare `Polygon` lifted into the same shape by
- * {@linkcode arealPolygons}.
+ * A feature's polygons — `MultiPolygon` coordinates, with a bare `Polygon` lifted
+ * into the same shape by {@linkcode arealPolygons}.
  */
 export type MultiPolygonRings = readonly PolygonRings[]
 
@@ -151,8 +154,9 @@ export type MultiPolygonRings = readonly PolygonRings[]
  *
  * Shoot a ray along +lon and toggle on every edge crossing.
  *
- * Points exactly on an edge are implementation-defined. either side is acceptable for geocoding,
- * where admin boundaries are Douglas-Peucker–simplified before they ever reach us.
+ * Points exactly on an edge are implementation-defined.
+ * Either side is acceptable for geocoding, where admin boundaries are
+ * Douglas-Peucker–simplified before they ever reach us.
  */
 export function pointInRing(lon: number, lat: number, ring: ContainmentRing): boolean {
 	let inside = false
@@ -230,8 +234,9 @@ export interface MultiPolygonLiteral<P extends PolygonPath = PolygonPath> extend
 export type ParsedGeometry = GeometryLiteral | { type: string; coordinates?: unknown }
 
 /**
- * A geometry's polygons in the `MultiPolygon` coordinate shape, whichever areal type it
- * arrived as — `null` when the geometry is not areal (a Point or a LineString bounds no area).
+ * A geometry's polygons in the `MultiPolygon` coordinate shape, whichever areal type it arrived as.
+ *
+ * `null` when the geometry is not areal (a Point or a LineString bounds no area).
  *
  * The one place a `Polygon` is lifted to `[rings]`; a caller that must refuse a
  * non-areal geometry does so on the `null`, with its own message.
@@ -272,8 +277,9 @@ export function requireArealPolygons(geometry: ParsedGeometry, subject: string, 
  * Collapsing it to `false` is how a place with a point-only record gets excluded from
  * a containment pass instead of falling through to the approximate path.
  *
- * `scripts/eval/pip-containment.py` grades the same containment truth against its own ray cast
- * and has to be matched BY hand if this one changes — it is the one copy no import can reach.
+ * `scripts/eval/pip-containment.py` grades the same containment truth against its
+ * own ray cast and has to be matched BY hand if this one changes.
+ * It is the one copy no import can reach.
  */
 export function geometryContains(
 	geometry: ParsedGeometry | null | undefined,
@@ -292,10 +298,12 @@ export function geometryContains(
  * and counter-clockwise — the exterior winding.
  *
  * Shared because the winding is A convention and A second copy is A second place FOR IT TO drift.
- * Three layer builders hand-build rectangles for their fixture rungs, and each pairs this with
- * {@link reversedRing} to make a hole. A copy whose hole is wound the same way as its exterior
- * produces a fixture that passes every structural check and tests nothing about hole handling —
- * which is the exact failure the area cross-check exists to catch in production data.
+ * Three layer builders hand-build rectangles for their fixture rungs, and each
+ * pairs this with {@link reversedRing} to make a hole.
+ *
+ * A copy whose hole is wound the same way as its exterior produces a fixture that
+ * passes every structural check and tests nothing about hole handling — which is the
+ * exact failure the area cross-check exists to catch in production data.
  */
 export function rectangleRing(minLon: number, minLat: number, maxLon: number, maxLat: number): number[][] {
 	return [

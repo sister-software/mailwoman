@@ -144,9 +144,10 @@ function enclosingCell(box: DegreeBox, resolution: number): string | undefined {
 /**
  * Could a shape this size contain a whole cell?
  *
- * A hexagon's minimum width is twice its inradius, and its inradius is `edge × √3/2` —
- * so a bounding box narrower than `edge × √3` in either direction cannot enclose one,
+ * A hexagon's minimum width is twice its inradius, and its inradius is `edge × √3/2`.
+ * So a bounding box narrower than `edge × √3` in either direction cannot enclose one,
  * and the `containmentFull` polyfill is guaranteed to return nothing.
+ *
  * The comparison is deliberately permissive: a wrong `true` costs one polyfill call,
  * while a wrong `false` would demote a whole cell to a partial one, which the ray
  * cast still answers correctly but more slowly.
@@ -165,8 +166,9 @@ function canContainCell(box: DegreeBox, resolution: number): boolean {
  */
 export interface FeatureCells {
 	/**
-	 * The resolution this feature was indexed at — the target, or coarser
-	 * where the target's estimate did not fit.
+	 * The resolution this feature was indexed at.
+	 *
+	 * The target, or coarser where the target's estimate did not fit.
 	 */
 	resolution: number
 	/**
@@ -231,13 +233,14 @@ export function classifyFeatureCells(
 	let touched = new Set<string>()
 	let full = new Set<string>()
 
-	// the budget is A prediction and the retry is what makes IT NON-fatal. `estimateCellCount` is a bounding-box
-	// approximation of what h3 will reserve, and h3's own reservation depends on the polygon's shape and on what the wasm
-	// heap already holds — measured over the EA product, a run that had classified 350,000 features threw `Memory
-	// allocation failed (code: 13)` on a feature that classified cleanly on its own. So an allocation failure steps the
-	// resolution down and tries again rather than ending the build, and only a feature that fails at
-	// {@link MIN_INDEX_RESOLUTION} is refused: a coarser cell is a real answer, and a skipped feature is an invented
-	// absence.
+	// the budget is A prediction and the retry is what makes IT NON-fatal.
+	// `estimateCellCount` is a bounding-box approximation of what h3 will reserve, and h3's
+	// own reservation depends on the polygon's shape and on what the wasm heap already holds —
+	// measured over the EA product, a run that had classified 350,000 features threw
+	// `Memory allocation failed (code: 13)` on a feature that classified cleanly on its own.
+	// So an allocation failure steps the resolution down and tries again rather than ending
+	// the build, and only a feature that fails at {@link MIN_INDEX_RESOLUTION} is refused:
+	// a coarser cell is a real answer, and a skipped feature is an invented absence.
 	for (;;) {
 		try {
 			touched = new Set<string>()
@@ -323,8 +326,8 @@ export function classifyFeatureCells(
 		)
 	}
 
-	// A cell can be full for one polygon of a MultiPolygon and merely touched by
-	// another. full wins, because the point is inside either way.
+	// A cell can be full for one polygon of a MultiPolygon and merely touched by another.
+	// Full wins, because the point is inside either way.
 	const partial: H3Cell[] = []
 
 	for (const cell of touched) {
@@ -340,9 +343,9 @@ export function classifyFeatureCells(
  * Split a cell set into same-resolution groups — what `compactCells` requires,
  * and what an adaptively-indexed layer cannot assume it already has.
  *
- * Pooling mixed resolutions throws inside h3. compacting only the target-resolution
- * group would silently drop every coarsened feature's interior, which is the
- * shape of failure that still produces an artifact.
+ * Pooling mixed resolutions throws inside h3.
+ * Compacting only the target-resolution group would silently drop every coarsened feature's
+ * interior, which is the shape of failure that still produces an artifact.
  */
 export function groupCellsByResolution(cells: Iterable<string>): string[][] {
 	const groups = new Map<number, string[]>()
@@ -364,10 +367,13 @@ export function groupCellsByResolution(cells: Iterable<string>): string[][] {
 /**
  * Compact a cell set that may span several resolutions.
  *
- * `compactCells` takes one resolution at a time, and an adaptively-indexed layer's coarsened
- * features sit at another — so the set is grouped before compaction rather than pooled.
- * Pooling would throw. compacting only the target-resolution group would silently drop every
- * coarsened feature's interior, which is the shape of failure that still produces an artifact.
+ * `compactCells` takes one resolution at a time, and an adaptively-indexed
+ * layer's coarsened features sit at another.
+ * So the set is grouped before compaction rather than pooled.
+ *
+ * Pooling would throw.
+ * Compacting only the target-resolution group would silently drop every coarsened feature's
+ * interior, which is the shape of failure that still produces an artifact.
  */
 export function compactAcrossResolutions(cells: Iterable<string>): string[] {
 	const compacted: string[] = []
@@ -430,8 +436,9 @@ export function featureCellRows(cells: FeatureCells): Array<{
 	for (const cell of cells.partial) {
 		const short = shortCellToInt(cell)
 
-		// A cell cannot be both for one polygon. the classifier already subtracts the whole set, and this
-		// is belt and braces against a compaction that produced a parent the partial set also names.
+		// A cell cannot be both for one polygon.
+		// The classifier already subtracts the whole set, and this is belt and braces against
+		// a compaction that produced a parent the partial set also names.
 		if (wholeShort.has(short)) continue
 
 		rows.push({ h3Cell: short, resolution: cells.resolution, containment: "partial" })
@@ -443,10 +450,10 @@ export function featureCellRows(cells: FeatureCells): Array<{
 /**
  * The coverage cell a row at `cell` belongs to.
  *
- * `cellToParent` of the finer cell, never a fresh `latLngToCell` at the coarse resolution:
- * every existing reader in this repo derives a coverage cell that way, and the two
- * agree for a point but not for a cell — a re-derivation from a representative point
- * would put a fringe row in a neighbouring coverage cell.
+ * `cellToParent` of the finer cell, never a fresh `latLngToCell` at the coarse
+ * resolution: every existing reader in this repo derives a coverage cell that way,
+ * and the two agree for a point but not for a cell.
+ * A re-derivation from a representative point would put a fringe row in a neighbouring coverage cell.
  */
 export function coverageCellFor(cell: H3Cell, coverageResolution: number): H3Cell {
 	return cellToParent(cell, coverageResolution) as H3Cell
