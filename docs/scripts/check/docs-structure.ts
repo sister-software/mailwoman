@@ -177,9 +177,10 @@ function checkFrontmatterLegacy(pages: DocPage[]): string[] {
  * Flattens a `DocPage`'s parsed frontmatter into the plain `Record<string, unknown>`
  * shape `validatePage` expects.
  *
- * Declared keys with a scalar value carry that value. a declared key whose value is nested/non-scalar
- * (an array, a block scalar — `docs-frontmatter.ts`'s parser records the key but not the value)
- * carries `true`, which is enough for a presence check but nothing a role rule here reads for content.
+ * Declared keys with a scalar value carry that value.
+ * A declared key whose value is nested/non-scalar (an array, a block scalar —
+ * `docs-frontmatter.ts`'s parser records the key but not the value) carries `true`,
+ * which is enough for a presence check but nothing a role rule here reads for content.
  */
 function toFrontmatterRecord(page: DocPage): Record<string, unknown> {
 	const record: Record<string, unknown> = {}

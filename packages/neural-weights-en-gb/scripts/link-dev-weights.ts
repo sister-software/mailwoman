@@ -59,8 +59,8 @@ const NI_PAIRS_JSONL = String(repoRootPath("data", "gazetteer", "ni-pairs-v1.jso
  */
 const GB_REGIONS_JSONL = String(repoRootPath("data", "gazetteer", "gb-regions-v1.jsonl"))
 
-// Hierarchy campaign R2+R3: the WOF borough pairs + the checked-in onspd London ward
-// pairs join the build — without these flags a dev rebuild would silently drop them.
+// Hierarchy campaign R2+R3: the WOF borough pairs + the checked-in onspd London ward pairs join the build.
+// Without these flags a dev rebuild would silently drop them.
 // The `sources` list is what the shared freshness guard md5s, in the order the
 // build records them (CSV, borough DB, pairs JSONLs).
 const softFeed = await committedSoftFeedLinks()
@@ -109,8 +109,10 @@ const overlay = await materializeDevOverlay({
 // The check that resolves both states is the card's `requires.anchor.span_mode`.
 // `shaped` is declared only by a model trained against a lookup with letter-containing keys
 // (`pilot-anchor-lookup-v2` and after), and that is precisely the model for which the bin helps.
-// So: declared `shaped` → build it. anything else → remove any stale copy, loudly.
-// No flag, no lockstep constant to forget — the same card the loader reads decides.
+// So: declared `shaped` → build it.
+// Anything else → remove any stale copy, loudly.
+// No flag, no lockstep constant to forget.
+// The same card the loader reads decides.
 //
 // Receipts either way: `docs/records/evals/2026-08-05-en-gb-anchor-off.md` (the anchor-off mitigation)
 // and `docs/records/evals/2026-08-05-v420-base-anchor-v2-run-b.md` (the retrain that warrants it back).
@@ -125,8 +127,9 @@ const POSTCODE_BIN_DEST = resolvePath(overlay.destDir, "postcode-gb.bin")
  * 1,746,976 units, every one placed.
  *
  * The retired GeoNames-lineage `postalcode-gb.db` is not it.
- * Coverage gap, measured: zero Northern Ireland (`BT`) codes — the shaped keyer's
- * outward fallback is what carries those rows.
+ * Coverage gap, measured: zero Northern Ireland (`BT`) codes.
+ *
+ * The shaped keyer's outward fallback is what carries those rows.
  */
 const GB_POSTCODE_EXTRACT = "postalcode-gb-codepoint.db"
 

@@ -628,7 +628,8 @@ describe("§7-3a criteria", () => {
 						source_vintage: "2026-Q2",
 						valid_from: "2026-06-30",
 					}),
-					// Each FRN's own most recent form-499 filing. FRN_LATE's is the later filing date.
+					// Each FRN's own most recent form-499 filing.
+					// FRN_LATE's is the later filing date.
 					authoritativeEdge({
 						from_node_id: FRN_EARLY,
 						to_node_id: FORM_EARLY,
@@ -771,7 +772,11 @@ describe("§7-3a criteria", () => {
 			await db
 				.insertInto("filer_edge")
 				.values([
-					// Provider↔FRN edges dated well before either test's asOf. The primary-FRN cardinality (>1 FRN identifier) must already be visible in `identifiers` at both query points. Only the two form-499 filing edges below vary between "still open" and "closed" across the two asOf values.
+					// Provider↔FRN edges dated well before either test's asOf.
+					// The primary-FRN cardinality (>1 FRN identifier) must already be visible
+					// in `identifiers` at both query points.
+					// Only the two form-499 filing edges below vary between "still open"
+					// and "closed" across the two asOf values.
 					authoritativeEdge({
 						from_node_id: PROVIDER_NODE,
 						to_node_id: FRN_IN_FORCE,
@@ -997,11 +1002,7 @@ describe("§7-3a criteria", () => {
 describe("§7-3b criteria", () => {
 	describe("1. Family and entity cluster are never conflated (required)", () => {
 		/**
-		 * Structural half: {@link FilerLookupCluster} (`cluster_id`/`members`) and {@link FilerLookupFamily}
-		 * (`family_id`/`relationship`) are shapes with no field in common — assigning one to a variable typed as the other
-		 * is a compile error (`@ts-expect-error` below asserts exactly that). Only `tsc` (`yarn typecheck:tests`) checks
-		 * this. `yarn vitest run` alone (esbuild, types stripped) skips the `@ts-expect-error` line entirely, so the
-		 * runtime half in the next test is what actually fails if the two rollups ever get folded together.
+		 * Structural half: {@link FilerLookupCluster} (`cluster_id`/`members`) and {@link FilerLookupFamily} (`family_id`/`relationship`) are shapes with no field in common — assigning one to a variable typed as the other is a compile error (`@ts-expect-error` below asserts exactly that). Only `tsc` (`yarn typecheck:tests`) checks this. `yarn vitest run` alone (esbuild, types stripped) skips the `@ts-expect-error` line entirely, so the runtime half in the next test is what actually fails if the two rollups ever get folded together.
 		 */
 		it("FilerLookupCluster and FilerLookupFamily are structurally incompatible types", () => {
 			const clusterShaped: FilerLookupCluster = { cluster_id: "authoritative:x", members: ["a", "b"] }
@@ -1229,7 +1230,7 @@ describe("§7-3b criteria", () => {
 				distinctClusterIDs.add(row.cluster_id)
 			}
 
-			// the assertion: 3 distinct cluster_ids — never one shared cluster_id across the 3 FRNs.
+			// the assertion: 3 distinct cluster_ids, never one shared cluster_id across the 3 FRNs.
 			expect(distinctClusterIDs.size).toBe(3)
 
 			const asOf = "2026-12-31"
@@ -1238,7 +1239,7 @@ describe("§7-3b criteria", () => {
 			const result2 = await filerLookup(db, { frn: FRN_2, asOf })
 			const result3 = await filerLookup(db, { frn: FRN_3, asOf })
 
-			// Each FRN's own entity cluster is just itself + its own form499ID — never any of the other two FRNs.
+			// Each FRN's own entity cluster is just itself + its own form499ID, never any of the other two FRNs.
 			expect(result1.cluster?.members).not.toContain(`${FilerIdentifierType.FRN}:${FRN_2}`)
 			expect(result1.cluster?.members).not.toContain(`${FilerIdentifierType.FRN}:${FRN_3}`)
 			expect(result2.cluster?.members).not.toContain(`${FilerIdentifierType.FRN}:${FRN_1}`)
@@ -1883,7 +1884,7 @@ describe("§7-3b criteria", () => {
 			expect(hasCIKIdentifier).toBe(false)
 
 			// criterion 1/2 extended, positive half: the family membership does surface,
-			// on the family-shaped field — and it surfaces AS an inference.
+			// on the family-shaped field, and it surfaces AS an inference.
 			// `assertion: inferred` plus a `match_score` is the whole difference between this row
 			// and a Form 499 holding-company membership the filer itself filed.
 			// Before those two fields existed this entry was byte-identical to one, which is how a
@@ -1899,7 +1900,7 @@ describe("§7-3b criteria", () => {
 			])
 
 			// The CIK gets its own singleton entity-cluster assignment (every filer_node row lands
-			// in exactly one, per clusterAuthoritativeComponents's own interface) — but never the
+			// in exactly one, per clusterAuthoritativeComponents's own interface), but never the
 			// FRN's cluster: the disclosure edge (cik -> subsidiary name) is relationship: Subsidiary
 			// rather than same_entity, so readAuthoritativeGroups correctly never unions it with anything.
 			const cikCluster = await db

@@ -296,7 +296,7 @@ export async function ingestCoastalChunk(
  *
  * Every domain here was read across all twelve published layers rather than one,
  * because a domain taken from a single layer throws on the day another layer carries
- * its ninth value — and the two policy fields already disagree with each other on the
+ * its ninth value, and the two policy fields already disagree with each other on the
  * spelling of one policy, which a single-field census would have missed.
  */
 function assertDeclaredDomains(feature: CoastalSourceFeature): void {

@@ -97,11 +97,11 @@ const EvalGauntlet = harnessCommand(
 				weightsCacheRoot: options.weightsCache,
 				// ablation only.
 				// An absent flag must stay absent (→ every ablatable tag), so an empty string never becomes an
-				// empty filter — which would silently measure nothing and print a map of one header row.
+				// empty filter, which would silently measure nothing and print a map of one header row.
 				...(components ? { components: extractDelimited(components) } : {}),
 				// An unset flag must stay unset rather than become an explicit pin either way.
 				// The schema supplies its `false` default for both halves, and forwarding one
-				// verbatim would pin the change forever — which is exactly how the 2026-08-05
+				// verbatim would pin the change forever, which is exactly how the 2026-08-05
 				// default-on flip could have gone unnoticed by the standard eval.
 				// Neither flag set keeps "no flag" meaning "grade whatever production does".
 				postcodeCountryCoherence: options.postcodeCountryCoherence

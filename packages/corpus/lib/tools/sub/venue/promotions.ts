@@ -109,7 +109,9 @@ export interface SubVenuePromotion {
  * recipe will want that does not exist yet.
  */
 export const SUBVENUE_PROMOTIONS: readonly SubVenuePromotion[] = [
-	// ── wing ──────────────────────────────────────────────────────────────────────────────────────── The designator the corpus task's board rests on (`West Wing` is the one modifier case that already parses), and the cleanest per-locale split in the whole exercise.
+	// ── wing ──────────────────────────────────────────────────────────────────────────────────────── The
+	// designator the corpus task's board rests on (`West Wing` is the one modifier case that already parses),
+	// and the cleanest per-locale split in the whole exercise.
 	{
 		designatorID: "wing",
 		phrase: "wing",
@@ -153,7 +155,10 @@ export const SUBVENUE_PROMOTIONS: readonly SubVenuePromotion[] = [
 		census: "poi.db 2026-05-20.0, full scan 2026-08-05 (FR partition, 721,352 rows)",
 	},
 
-	// ── hall ──────────────────────────────────────────────────────────────────────────────────────── Wave 1 flagged `hall` as per-locale poison on a GB number alone. Two locales measured. Both reject, and for different reasons, which is the part worth keeping.
+	// ── hall ────────────────────────────────────────────────────────────────────────────────────────
+	// Wave 1 flagged `hall` as per-locale poison on a GB number alone.
+	// Two locales measured.
+	// Both reject, and for different reasons, which is the part worth keeping.
 	{
 		designatorID: "hall",
 		phrase: "hall",
@@ -216,7 +221,9 @@ export const SUBVENUE_PROMOTIONS: readonly SubVenuePromotion[] = [
 		census: "france.jsonl 2026-08-05 (251,260 rows), 40 hits; all 19 shape hits enumerated",
 	},
 
-	// ── gate ──────────────────────────────────────────────────────────────────────────────────────── The English surface ships and is deliberately not modifier-eligible. These decide its localized forms, and the two land on opposite sides for a reason worth keeping.
+	// ── gate ────────────────────────────────────────────────────────────────────────────────────────
+	// The English surface ships and is deliberately not modifier-eligible.
+	// These decide its localized forms, and the two land on opposite sides for a reason worth keeping.
 	{
 		designatorID: "gate",
 		phrase: "flugsteig",
@@ -248,7 +255,9 @@ export const SUBVENUE_PROMOTIONS: readonly SubVenuePromotion[] = [
 		census: "france.jsonl 2026-08-05 (251,260 rows), 946 hits; all 36 shape hits enumerated",
 	},
 
-	// ── pier ──────────────────────────────────────────────────────────────────────────────────────── New in wave 2, and the second clean per-locale split: promotable in en-GB, killed in en-US by a furniture chain whose name is exactly the designator+identifier shape.
+	// ── pier ────────────────────────────────────────────────────────────────────────────────────────
+	// New in wave 2, and the second clean per-locale split: promotable in en-GB, killed in
+	// en-US by a furniture chain whose name is exactly the designator+identifier shape.
 	{
 		designatorID: "pier",
 		phrase: "pier",
@@ -277,7 +286,10 @@ export const SUBVENUE_PROMOTIONS: readonly SubVenuePromotion[] = [
 		census: "poi.db 2026-05-20.0, full 13,681,698-row scan 2026-08-05",
 	},
 
-	// ── terminal ──────────────────────────────────────────────────────────────────────────────────── The English surface already ships. These promote the localized forms, which is what a non-English recipe line needs and what wave 1 had none of.
+	// ── terminal ────────────────────────────────────────────────────────────────────────────────────
+	// The English surface already ships.
+	// These promote the localized forms, which is what a non-English recipe line needs
+	// and what wave 1 had none of.
 	{
 		designatorID: "terminal",
 		phrase: "terminal",

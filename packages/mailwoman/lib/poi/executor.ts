@@ -76,11 +76,11 @@ export interface POIExecutorOpts {
  *
  * Abstain precedence:
  *
- * 1. `requires_build_local_layer` — a build-local category with no local rows. Fires with no lookup configured at all
- *    (trivially: no db, no local rows possible) as well as with a lookup present that comes back empty for the
- *    category.
- * 2. `anchor_required` — a category/brand subject with a lookup present but no resolvable center (name subjects don't need
- *    one. The FTS path searches un-anchored).
+ * 1. `requires_build_local_layer` — a build-local category with no local rows.
+ *    Fires with no lookup configured at all (trivially: no db, no local rows possible)
+ *    as well as with a lookup present that comes back empty for the category.
+ * 2. `anchor_required` — a category/brand subject with a lookup present but no resolvable
+ *    center (name subjects don't need one. The FTS path searches un-anchored).
  * 3. No lookup + non-build-local subject → the bare intent, unchanged (intent-only mode).
  * 4. Otherwise: run `lookup.search(...)` and attach the mapped results.
  */

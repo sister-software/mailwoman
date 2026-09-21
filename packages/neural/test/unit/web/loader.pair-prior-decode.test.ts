@@ -202,7 +202,7 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 		const loadedJSON = await loaded.classifier.parseJSON("Shoreditch London", { spanProposer: false, placetypePair })
 		const priorFreeJSON = await priorFree.classifier.parseJSON("Shoreditch London", { spanProposer: false })
 
-		// The unselected load keeps the encoder's fused street reading — and matches the index-free parse exactly.
+		// The unselected load keeps the encoder's fused street reading, and matches the index-free parse exactly.
 		expect(loadedJSON).toEqual(priorFreeJSON)
 		expect(loadedJSON.street).toBe("Shoreditch")
 		expect(loadedJSON.locality).toBe("London")

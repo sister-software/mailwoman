@@ -84,13 +84,15 @@ const COMPONENT_RULES: readonly ComponentRule[] = [
 	{ types: ["street_number"], tag: "house_number", form: "short" },
 	{ types: ["route"], tag: "street", form: "long" },
 	// Google splits a unit designator across three types depending on how the address was written.
-	// Any of them is the unit line. the first one present wins.
+	// Any of them is the unit line.
+	// The first one present wins.
 	{ types: ["subpremise"], tag: "unit", form: "short" },
 	{ types: ["room"], tag: "unit", form: "short" },
 	{ types: ["floor"], tag: "unit", form: "short" },
 	{ types: ["post_box"], tag: "po_box", form: "short" },
-	// A named building or business. `premise` is the building itself. the POI types are what a query
-	// like "Eiffel Tower" comes back as.
+	// A named building or business.
+	// `premise` is the building itself.
+	// The POI types are what a query like "Eiffel Tower" comes back as.
 	{ types: ["premise"], tag: "venue", form: "long" },
 	{ types: ["point_of_interest", "establishment"], tag: "venue", form: "long" },
 	{ types: ["postal_code"], tag: "postcode", form: "long" },
@@ -98,12 +100,12 @@ const COMPONENT_RULES: readonly ComponentRule[] = [
 	{ types: ["locality"], tag: "locality", form: "long" },
 	{ types: ["sublocality", "sublocality_level_1"], tag: "dependent_locality", form: "long" },
 	{ types: ["neighborhood"], tag: "dependent_locality", form: "long" },
-	// The GB fall-through described in this table's docstring. Unreachable unless `postal_town`
-	// already took the `locality` tag.
+	// The GB fall-through described in this table's docstring.
+	// Unreachable unless `postal_town` already took the `locality` tag.
 	{ types: ["locality"], tag: "dependent_locality", form: "long" },
 	{ types: ["administrative_area_level_2"], tag: "subregion", form: "long" },
-	// `region` takes its form from the country — see REGION_ABBREVIATION_COUNTRIES. The `form` here is
-	// the fallback used when the country is unknown.
+	// `region` takes its form from the country — see REGION_ABBREVIATION_COUNTRIES.
+	// The `form` here is the fallback used when the country is unknown.
 	{ types: ["administrative_area_level_1"], tag: "region", form: "long" },
 	{ types: ["country"], tag: "country", form: "short" },
 ]
@@ -118,10 +120,12 @@ const COMPONENT_RULES: readonly ComponentRule[] = [
  * `Nordrhein-Westfalen`, not `NW`; Google has a `short_name` for both regardless,
  * and taking it would produce a `region` no parser will ever see in real input.
  *
- * The United States, Canada, Australia, Mexico and Brazil are the cases where the opposite
- * is true — `NY`, `on`, `NSW`, `JAL`, `SP` are what appears on the envelope.
+ * The United States, Canada, Australia, Mexico and Brazil are the cases where the opposite is true.
+ * `NY`, `on`, `NSW`, `JAL`, `SP` are what appears on the envelope.
  *
- * When this is wrong FOR your case, read `raw.address_components` — both forms are always there.
+ * When this is wrong FOR your case, read `raw.address_components`.
+ * Both forms are always there.
+ *
  * This is a default that makes the common case right rather than a claim about postal law.
  */
 const REGION_ABBREVIATION_COUNTRIES = new Set(["US", "CA", "AU", "MX", "BR"])
@@ -193,9 +197,9 @@ export function buildGoogleComponents(result: GoogleGeocodeResult): ComponentDic
 
 	// ZIP+4 arrives as a separate component, and an address written with one writes
 	// it hyphenated onto the ZIP (`10001-1234`).
-	// Appending is what makes the oracle's `postcode` comparable to a parser output
-	// for the same input. leaving the suffix on `raw` alone would make every ZIP+4
-	// case look like a mismatch on the last five characters.
+	// Appending is what makes the oracle's `postcode` comparable to a parser output for the same input.
+	// Leaving the suffix on `raw` alone would make every ZIP+4 case look like a
+	// mismatch on the last five characters.
 	const postcodeSuffix = index.get("postal_code_suffix")
 
 	if (components.postcode && postcodeSuffix?.long_name) {
@@ -212,11 +216,12 @@ export function buildGoogleComponents(result: GoogleGeocodeResult): ComponentDic
  * `GEOMETRIC_CENTER` is not: Google documents it as the centre of "a polyline (for example, a street)
  * or polygon (region)", which spans both the `street` and `admin` tiers depending on which shape it was.
  *
- * A `route` value in the result's own `types` identifies a street. otherwise
- * this reports `admin`, which under-claims.
- * That direction is deliberate — an oracle that over-claims precision is worse
- * than one that under-claims, because a case author pinning `expectTier` from it
- * would encode a tolerance the parser can never earn.
+ * A `route` value in the result's own `types` identifies a street.
+ * Otherwise this reports `admin`, which under-claims.
+ *
+ * That direction is deliberate.
+ * An oracle that over-claims precision is worse than one that under-claims, because a case
+ * author pinning `expectTier` from it would encode a tolerance the parser can never earn.
  *
  * A missing `location_type` returns `null` rather than a guess.
  * Read `raw.geometry` when it does.
@@ -265,8 +270,8 @@ export function parseGoogleGeocodeResult(result: GoogleGeocodeResult): OracleGeo
 
 	const geocode: AddressGeocode = {
 		coordinate,
-		// The tier is required on `AddressGeocode`, and `admin` is the weakest claim
-		// available — the right value for "Google did not say".
+		// The tier is required on `AddressGeocode`, and `admin` is the weakest claim available.
+		// The right value for "Google did not say".
 		// `raw.geometry.location_type` is the ground truth when this matters.
 		tier: toResolutionTier(result) ?? "admin",
 		uncertaintyMeters: null,

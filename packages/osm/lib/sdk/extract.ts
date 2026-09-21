@@ -29,7 +29,7 @@ export interface OSMAddrRecord {
 	housenumber: string
 	/**
 	 * `addr:street` — null when the point carries no street tag
-	 * (the association gap. counted rather than written).
+	 * (the association gap. Counted rather than written).
 	 */
 	street: string | null
 	postcode: string | null
@@ -40,8 +40,8 @@ export interface OSMAddrRecord {
 	 */
 	unit: string | null
 	/**
-	 * `addr:place` — the named scheme or estate that stands in for a street where none is named (Pakistan's `DHA Phase
-	 * 6`, `Gulshan e Iqbal Block 2`).
+	 * `addr:place` — the named scheme or estate that stands in for a street where none
+	 * is named (Pakistan's `DHA Phase 6`, `Gulshan e Iqbal Block 2`).
 	 */
 	place: string | null
 	/**
@@ -63,7 +63,8 @@ export interface OSMAddrRecord {
 /**
  * The `addr:*` tags the extract projects, in the order the record names them.
  *
- * The rooftop builder reads the first five. the corpus jsonl carries them all.
+ * The rooftop builder reads the first five.
+ * The corpus jsonl carries them all.
  */
 const ADDR_TAGS = [
 	"housenumber",
@@ -149,9 +150,7 @@ async function* runLayer(pbfPath: string, layer: string): AsyncGenerator<OSMAddr
 }
 
 /**
- * Stream every `features with `addr:housenumber` from a PBF extract (nodes + building polygons), geometry reduced to a
- * representative coordinate. Records with no `addr:street` are still yielded (street === null) so the caller can count
- * the association gap before deciding to write them.
+ * Stream every `features with `addr:housenumber` from a PBF extract (nodes + building polygons), geometry reduced to a representative coordinate. Records with no `addr:street` are still yielded (street === null) so the caller can count the association gap before deciding to write them.
  */
 export async function* extractAddrPoints(pbfPath: string): AsyncGenerator<OSMAddrRecord> {
 	for (const layer of ADDR_LAYERS) {

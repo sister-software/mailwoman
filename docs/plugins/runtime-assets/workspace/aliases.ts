@@ -25,27 +25,29 @@ const DIRECTORY_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: 
 	...["decoder", "tokenization", "types", "resources", "pipeline"].map(
 		(subpath) => ["@mailwoman/core", subpath] as const
 	),
-	// Moved here from FILE_SUBPATHS when the prefix fold made `resolve` a directory: `resolve.ts` +
-	// `resolve-passes.ts` became `resolve/{index,passes}.ts`. Same subpath, different resolver — and
-	// `requireAlias` refused the docs build until it was listed on the right side, which is the point.
+	// Moved here from FILE_SUBPATHS when the prefix fold made `resolve` a directory:
+	// `resolve.ts` + `resolve-passes.ts` became `resolve/{index,passes}.ts`.
+	// Same subpath, different resolver, and `requireAlias` refused the docs build
+	// until it was listed on the right side, which is the point.
 	["@mailwoman/resolver", "resolve"],
 ]
 
 const FILE_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: string]> = [
-	// `geo` was here until 2026-09-01 and had been dead for some time: `@mailwoman/resolver-wof-sqlite` dropped
-	// the `./geo` subpath when its geometry helpers moved to `@mailwoman/spatial`, and `lib/geo.ts` went with
-	// them. Nothing noticed, because a missing target only warned. {@link requireAlias} now refuses instead —
-	// a hand-listed entry naming a module that does not exist is a bug by definition, and this list is the
-	// mirror that goes stale every time a subpath moves.
-	// These are the browser-safe leaves: each keeps a per-file subpath so the site bundle never pulls
-	// the Node-only siblings that share its directory entry.
+	// `geo` was here until 2026-09-01 and had been dead for some time:
+	// `@mailwoman/resolver-wof-sqlite` dropped the `./geo` subpath when its geometry
+	// helpers moved to `@mailwoman/spatial`, and `lib/geo.ts` went with them.
+	// Nothing noticed, because a missing target only warned. {@link requireAlias} now refuses instead.
+	// A hand-listed entry naming a module that does not exist is a bug by definition,
+	// and this list is the mirror that goes stale every time a subpath moves.
+	// These are the browser-safe leaves: each keeps a per-file subpath so the site bundle
+	// never pulls the Node-only siblings that share its directory entry.
 	...["fst/deserialize-web", "fst/matcher", "fst/types", "street/normalize", "fst/autocomplete", "fts/index"].map(
 		(subpath) => ["@mailwoman/resolver-wof-sqlite", subpath] as const
 	),
 	["@mailwoman/core", "objects"],
-	// Was `["@mailwoman/core", "kysley/dialect"]` — the dialect lives in `@mailwoman/sqlite` now, and `core`
-	// exports nothing kysley-shaped at all. Second dead entry this list was carrying; `requireAlias` found it
-	// the moment it was armed.
+	// Was `["@mailwoman/core", "kysley/dialect"]` — the dialect lives in `@mailwoman/sqlite`
+	// now, and `core` exports nothing kysley-shaped at all.
+	// Second dead entry this list was carrying; `requireAlias` found it the moment it was armed.
 	["@mailwoman/sqlite", "dialect"],
 	["@mailwoman/resolver", "span-rescore"],
 ]
@@ -71,7 +73,7 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 	 * Alias a specifier this file named, refusing a target that does not resolve.
 	 *
 	 * The lists below are a hand-maintained mirror of several packages' `exports` maps,
-	 * so they go stale every time a subpath moves — and the failure was silent:
+	 * so they go stale every time a subpath moves, and the failure was silent:
 	 * `resolvePackageFile` answers `null` and the alias was simply skipped, leaving the
 	 * site to resolve through the real exports map and nobody any the wiser.
 	 * That is how `@mailwoman/resolver-wof-sqlite/geo` stayed on the list after the module was deleted.
@@ -102,8 +104,9 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 	)
 
 	for (const [packageName, subpath] of FILE_SUBPATHS) {
-		// A subpath is a public export KEY, and the file under it can be either `<subpath>.ts` or
-		// `<subpath>/index.ts` — the key does not change when a module grows siblings and becomes a directory.
+		// A subpath is a public export KEY, and the file under it can be either
+		// `<subpath>.ts` or `<subpath>/index.ts`.
+		// The key does not change when a module grows siblings and becomes a directory.
 		const target =
 			(await resolvePackageFile(packageName, subpath)) ?? (await resolvePackageFile(packageName, `${subpath}/index`))
 

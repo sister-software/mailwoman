@@ -143,8 +143,9 @@ export interface ReleaseRuntimeConfig<TAssets, TRelease extends ReleaseBase = Re
  *
  * This is the loader state, deliberately distinct from {@link GeocoderRuntime}
  * (the injected runtime interface `<Geocoder>` consumes).
- * A host builds a {@link GeocoderRuntime} by pairing this loader state (assets + backend + version)
- * with the map surface (style, overlays, bias, parse) — see the map subpath's `GeocoderRuntime`.
+ * A host builds a {@link GeocoderRuntime} by pairing this loader state
+ * (assets + backend + version) with the map surface (style, overlays, bias, parse).
+ * See the map subpath's `GeocoderRuntime`.
  */
 export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = ReleaseBase> {
 	/**
@@ -241,8 +242,8 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 	// The bundle currently owning resources, held in a ref because the cleanup that must dispose it cannot see state.
 	const liveAssetsRef = useRef<TAssets | null>(null)
 
-	// Latest manifest for the version-load effect, so it can resolve the release without depending
-	// on `manifest` identity — which would double-fire the load the instant the manifest
+	// Latest manifest for the version-load effect, so it can resolve the release without
+	// depending on `manifest` identity, which would double-fire the load the instant the manifest
 	// first arrives (the selection transition null → defaultVersion already fires it once).
 	const manifestRef = useRef<ReleaseManifest<TRelease> | null>(null)
 

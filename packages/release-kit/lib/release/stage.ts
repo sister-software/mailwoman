@@ -155,10 +155,12 @@ export async function checkReleaseListIdentity(repoRoot: PathBuilderLike): Promi
 /**
  * Materialize the release tree into `stagingRoot`:
  *
- * 1. `git archive head` — tracked files only, so the staging tree can never leak uncommitted work into an audit and the
- *    source checkout is never written to.
- * 2. Each release workspace's compiled `out/` copied in — tarballs ship compiled JS + `.d.ts`, and `out/` is gitignored.
- * 3. The checkout's `node_modules` symlinked in. `yarn pack` needs the project context, reads it, and never writes it.
+ * 1. `git archive head` — tracked files only, so the staging tree can never leak
+ *    uncommitted work into an audit and the source checkout is never written to.
+ * 2. Each release workspace's compiled `out/` copied in — tarballs ship compiled
+ *    JS + `.d.ts`, and `out/` is gitignored.
+ * 3. The checkout's `node_modules` symlinked in.
+ *    `yarn pack` needs the project context, reads it, and never writes it.
  *
  * The caller owns `stagingRoot`'s lifecycle.
  * An existing tree at that path is replaced.

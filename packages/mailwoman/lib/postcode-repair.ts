@@ -31,8 +31,9 @@ import type { QueryShape } from "@mailwoman/query-shape"
  * Two exclusions, both measured rather than reasoned:
  *
  * - Five-digit families (us_zip / fr / de): `12345` in `12345 Main St` is a house number.
- * - `nl_postcode` (`\d{4} [A-Z]{2}`): **"3215 SE" in "3215 SE Clinton St" matches it** — a US house number plus a
- *   directional. The session-trace invariance test caught the first draft of this set eating exactly that span.
+ * - `nl_postcode` (`\d{4} [A-Z]{2}`): **"3215 SE" in "3215 SE Clinton St" matches it** —
+ *   a US house number plus a directional.
+ *   The session-trace invariance test caught the first draft of this set eating exactly that span.
  */
 const REPAIRABLE_POSTCODE_FORMATS: ReadonlySet<string> = new Set(["uk_postcode", "ca_postcode"])
 
@@ -53,7 +54,9 @@ const MISREAD_TAGS: ReadonlySet<string> = new Set([
 	"street_suffix",
 	"street_prefix",
 	"unit",
-	// "PO33 4DE" — the Portsmouth/Isle of Wight area reads as a PO Box. A real PO Box surface ("PO Box 123") can never match a letter-digit postcode format span, so the format check keeps this safe.
+	// "PO33 4DE" — the Portsmouth/Isle of Wight area reads as a PO Box.
+	// A real PO Box surface ("PO Box 123") can never match a letter-digit postcode
+	// format span, so the format check keeps this safe.
 	"po_box",
 ])
 

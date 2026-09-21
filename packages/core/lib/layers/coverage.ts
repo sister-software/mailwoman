@@ -196,7 +196,7 @@ export type AreaAgreementReading =
 	  }
 
 /**
- * Both readings of a build's streamed ring areas against the source's own figure —
+ * Both readings of a build's streamed ring areas against the source's own figure,
  * or the stated absence of one.
  */
 export function areaAgreementFrom(streamed: StreamedAreaTotals, sourceM2: number | undefined): AreaAgreementReading {

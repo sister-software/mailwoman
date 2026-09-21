@@ -63,7 +63,8 @@ describe("nameSimilarity", () => {
 	})
 
 	it("recovers the compound case J-W misses via the edit-distance fallback", () => {
-		// jaroWinkler("lopez","garcialopez") is 0. the fallback lifts it well above 0.
+		// jaroWinkler("lopez","garcialopez") is 0.
+		// The fallback lifts it well above 0.
 		expect(nameSimilarity("Lopez", "Garcialopez")).toBeGreaterThan(0.4)
 	})
 

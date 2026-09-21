@@ -25,8 +25,8 @@ const SMALL_FEATURE_ZOOM = 9
 /**
  * How far past the terrain archive's deepest zoom the camera may go.
  *
- * One level of over-zoom is a sharp enough upsample to read as terrain. three,
- * which is where an unclamped small-feature framing landed against a zoom-6 archive,
+ * One level of over-zoom is a sharp enough upsample to read as terrain.
+ * Three, which is where an unclamped small-feature framing landed against a zoom-6 archive,
  * is a grey blur with the tile boundaries showing.
  */
 const OVERZOOM_ALLOWANCE = 1
@@ -58,7 +58,8 @@ function framingZoomForDiameter(diameterKm: number | undefined): number {
 }
 
 /**
- * Whether the viewer asked for reduced motion. a camera move then jumps instead of flying.
+ * Whether the viewer asked for reduced motion.
+ * A camera move then jumps instead of flying.
  *
  * Answers false where `matchMedia` does not exist, so a test environment without
  * a window gets the animated default.

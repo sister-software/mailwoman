@@ -4,53 +4,34 @@
 //
 // why belgium
 //
-// Belgium is not a measured locale. No Belgian rooftop register ships, and no `nl-be` or `fr-be`
-// weights package exists, so a Belgian user today installs the base weights and resolves against the
-// global admin gazetteer. This panel measures what that actually gets them, which is a different
-// question from the one a tier-1 locale answers. It also carries the case Belgium is uniquely good
-// for: five Brussels streets appear twice, once in Dutch and once in French, so a bilingual pair
-// tests whether two surface forms of the same street reach the same place.
+// Belgium is not a measured locale. No Belgian rooftop register ships, and no `nl-be` or `fr-be` weights package exists, so a Belgian user today installs the base weights and resolves against the global admin gazetteer. This panel measures what that actually gets them, which is a different question from the one a tier-1 locale answers. It also carries the case Belgium is uniquely good for: five Brussels streets appear twice, once in Dutch and once in French, so a bilingual pair tests whether two surface forms of the same street reach the same place.
 //
 // three arms
 //
-//   base            base weights, nothing configured — what `npm install` plus a gazetteer gives you.
-//   fr-overlay      the French weights overlay, nothing else changed — does the nearest measured
+//   base base weights, nothing configured. What `npm install` plus a gazetteer gives you. Fr-overlay the French weights overlay, nothing else changed — does the nearest measured
 //                   locale help a country that is half French-speaking?
-//   country-pinned  base weights with `defaultCountry: "be"` — what a reader who knows their file is
+//   country-pinned base weights with `defaultCountry: "be"` — what a reader who knows their file is
 //                   Belgian would actually set.
 //
-// Each arm answers a question a reader arrives with. None of them is a Belgian model, because there
-// is no Belgian model.
+// Each arm answers a question a reader arrives with. None of them is a Belgian model, because there is no Belgian model.
 //
 // what is graded, and against what
 //
-// There is no Belgian ground-truth coordinate set here, so nothing on this page claims a distance to
-// a true rooftop. Four things are measurable without one:
+// There is no Belgian ground-truth coordinate set here, so nothing on this page claims a distance to a true rooftop. Four things are measurable without one:
 //
 //   1. Resolution — did a coordinate come back at all, and at which tier.
-//   2. Country routing — is the coordinate inside Belgium's bounding box, and does the result name be.
-//      This is the real risk: Belgian place names collide with Dutch, French and Slovenian ones, so a
-//      cross-border miss is the failure mode worth catching. The first two arms leave the country
-//      unpinned so this is earned rather than assumed; the third pins it, which is the point of it.
-//   3. Locality — does the resolved commune match the one the address belongs to, reported as three
-//      separate counts (parsed span, gazetteer name match, name match and inside Belgium). The last
-//      is the metric; see `localityChecks` for why the first two are not. The accepted forms are
-//      committed in `be-panel.json`, one list per row, covering the Dutch, French and English
-//      spellings a gazetteer may carry.
-//   4. Bilingual agreement — for each of the five pairs, how far apart the two language forms land.
-//      This one needs no ground truth at all: the two rows name the same street, so any distance
-//      between them is the pipeline disagreeing with itself.
+//   2. Country routing — is the coordinate inside Belgium's bounding box, and does the result name be. This is the real risk: Belgian place names collide with Dutch, French and Slovenian ones, so a cross-border miss is the failure mode worth catching. The first two arms leave the country unpinned so this is earned rather than assumed; the third pins it, which is the point of it.
+//   3. Locality — does the resolved commune match the one the address belongs to, reported as three separate counts (parsed span, gazetteer name match, name match and inside Belgium). The last is the metric; see `localityChecks` for why the first two are not. The accepted forms are committed in `be-panel.json`, one list per row, covering the Dutch, French and English spellings a gazetteer may carry.
+//   4. Bilingual agreement — for each of the five pairs, how far apart the two language forms land. This one needs no ground truth at all: the two rows name the same street, so any distance between them is the pipeline disagreeing with itself.
 //
 // usage
 //
 //   npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us \
 //               @mailwoman/neural-weights-fr-fr @mailwoman/resolver \
 //               @mailwoman/resolver-wof-sqlite @mailwoman/spatial
-//   mailwoman data pull candidate
-//   node be-panel.mjs --data-root <DATA_ROOT> --out be-results.json
+//   mailwoman data pull candidate node be-panel.mjs --data-root <DATA_ROOT> --out be-results.json
 //
-// `--data-root` defaults to $MAILWOMAN_DATA_ROOT. The candidate gazetteer is read from
-// <DATA_ROOT>/wof/candidate.db. No other artifact is needed — that is the point of the panel.
+// `--data-root` defaults to $MAILWOMAN_DATA_ROOT. The candidate gazetteer is read from <DATA_ROOT>/wof/candidate.db. No other artifact is needed. That is the point of the panel.
 
 // oxlint-disable-next-line typescript/no-restricted-imports -- shipped doc asset (node builtins only; runs in a reader's project)
 import { mkdir, readFile, realpath, writeFile } from "node:fs/promises"
@@ -132,8 +113,7 @@ function fold(name) {
  * number here says the parser found a token, not that anything was resolved.
  *
  * `nameMatched` reads only the nodes the resolver decorated (`result.hierarchy`).
- * It says the gazetteer returned a place carrying an accepted name —
- * and a place name is not unique on Earth.
+ * It says the gazetteer returned a place carrying an accepted name, and a place name is not unique on Earth.
  *
  * `resolved` is `nameMatched` and the coordinate landing inside Belgium.
  * That conjunct is the metric, and it is the one this panel needs:
@@ -168,8 +148,8 @@ function inBox(box, lat, lon) {
 /**
  * Which weights actually answered, for one locale.
  *
- * `resolveWeights` runs the same resolution order the classifier does, so this
- * reports the artifact that was loaded rather than the one that was asked for —
+ * `resolveWeights` runs the same resolution order the classifier does,
+ * so this reports the artifact that was loaded rather than the one that was asked for,
  * including the base-package fallback an overlay locale takes for its `model.onnx`.
  * Paths are dereferenced because a development checkout symlinks them into the workspace,
  * and the symlink name says nothing about which checkpoint is behind it.
@@ -352,8 +332,8 @@ const report = {
 	ranAt: new Date().toISOString(),
 	elapsedMs: Date.now() - startedAt,
 	panel: { rows: panel.rows.length, bbox: panel.bbox },
-	// The panel carries no data release because there is no Belgian register to carry one from —
-	// the only reference artifact is the gazetteer, and it is stamped below.
+	// The panel carries no data release because there is no Belgian register to carry one from.
+	// The only reference artifact is the gazetteer, and it is stamped below.
 	versions: await versionStamp(),
 	config: {
 		gazetteer: "candidate.db",

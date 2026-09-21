@@ -215,11 +215,12 @@ export class OracleMeter {
  * Not a default — a refusal to grade, and it holds for every input set rather than per set.
  * Two reasons, and the second is why there is no carve-out for the sets it does not apply to:
  *
- * 1. The board's `expectLat`/`expectLon` are pinned by hand by whoever fixed the bug, with these same two geocoders open
- *    as a second opinion. That is the stated purpose of `@mailwoman/geocode-oracle`. Scoring an oracle against those
- *    points is therefore partly scoring it against itself.
- * 2. The package's own header says nothing there should ever decide whether a build ships. A rule with a list of sets it
- *    applies to becomes a rule about which set to pick.
+ * 1. The board's `expectLat`/`expectLon` are pinned by hand by whoever fixed the bug,
+ *    with these same two geocoders open as a second opinion.
+ *    That is the stated purpose of `@mailwoman/geocode-oracle`.
+ *    Scoring an oracle against those points is therefore partly scoring it against itself.
+ * 2. The package's own header says nothing there should ever decide whether a build ships.
+ *    A rule with a list of sets it applies to becomes a rule about which set to pick.
  */
 export const ORACLE_GRADE_MODE = "diff-only" as const
 
@@ -227,7 +228,7 @@ export const ORACLE_GRADE_MODE = "diff-only" as const
  * Carried on every oracle comparison so the refusal to grade travels with the result.
  *
  * A reader who sees differing rows and no verdict, with no sentence saying why,
- * will supply their own — and the one they supply is a score.
+ * will supply their own, and the one they supply is a score.
  */
 export const ORACLE_VERDICT_NOTE =
 	"An oracle arm is never a grading truth, so this comparison is diff-only and its verdict is null however the " +

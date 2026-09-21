@@ -89,7 +89,7 @@ export async function downloadRemote(url: string): Promise<Buffer> {
  *
  * Unlink first.
  * `writeFileSync` follows a symlink at the destination and writes through it, leaving the
- * symlink in place — and the registry refuses a tarball containing one (http 415, YN0035).
+ * symlink in place, and the registry refuses a tarball containing one (http 415, YN0035).
  *
  * A dev checkout's weights workspaces are full of symlinks, and the staging tree can
  * inherit one, so the discipline applies to both destinations.

@@ -44,7 +44,7 @@ import type { Kysely } from "kysely"
  *
  * In the default build mode this is one row per distinct
  * (geoid, provider_id, technology_code, speeds, low_latency, business_residential_code)
- * tuple — not one row per (block, provider, technology) triple.
+ * tuple, not one row per (block, provider, technology) triple.
  * A triple whose BSLs carry differing speed tiers keeps multiple rows here (see `build-bdc.ts`'s docstring).
  */
 export interface BDCAvailabilityTable {
@@ -93,19 +93,23 @@ export interface BDCAvailabilityTable {
  * (and `provider_id`↔`holding_company_name`) edge, never folded or last-wins.
  * When `bdc.db` is built with `BuildBDCOptions.providers` supplied:
  *
- * - `frn` holds only the primary FRN — the one carrying the most recent Form 499 filing date, per
- *   `@mailwoman/filer/sdk`'s `readFRNFilingCandidates` + `pickPrimaryFRN` (imported into `build-bdc.ts`, never
- *   reimplemented — that query's half-open `valid_from`/`valid_to` scoping is easy to get wrong, and a second
- *   implementation would be a second place to get it wrong). Every other FRN that `provider_id` carries is discarded
- *   here but stays fully recoverable from `filer.db`.
- * - `holding_company` gets the same single-distinct-value shortcut `frn` gets: when a `provider_id`'s rows carry exactly
- *   one distinct non-null `holding_company` string, there is no conflict to resolve, so it's populated directly. No
- *   rule needed, same as a single-FRN provider needs no `filerDB` query. When they carry more than one distinct value,
- *   that ambiguity is the real conflict decision 6 refuses to paper over with last-wins (`holding_company` has no
- *   most-recent-filing-date rule the way `frn` does), so it stays NULL and every discarded value remains recoverable
- *   from `filer.db`'s `holding_company_name` edges. The identical discipline `frn`'s primary pick already applies.
- * - `brand_name` stays NULL unconditionally: the provider list carries no brand-name column at all, primary or otherwise,
- *   so there is nothing to populate it from.
+ * - `frn` holds only the primary FRN — the one carrying the most recent Form 499 filing
+ *   date, per `@mailwoman/filer/sdk`'s `readFRNFilingCandidates` + `pickPrimaryFRN`
+ *   (imported into `build-bdc.ts`, never reimplemented — that query's half-open `valid_from`/`valid_to`
+ *   scoping is easy to get wrong, and a second implementation would be a second place to get it wrong).
+ *   Every other FRN that `provider_id` carries is discarded here but stays
+ *   fully recoverable from `filer.db`.
+ * - `holding_company` gets the same single-distinct-value shortcut `frn` gets:
+ *   when a `provider_id`'s rows carry exactly one distinct non-null `holding_company` string,
+ *   there is no conflict to resolve, so it's populated directly.
+ *   No rule needed, same as a single-FRN provider needs no `filerDB` query.
+ *   When they carry more than one distinct value, that ambiguity is
+ *   the real conflict decision 6 refuses to paper over with last-wins
+ *   (`holding_company` has no most-recent-filing-date rule the way `frn` does), so it stays NULL
+ *   and every discarded value remains recoverable from `filer.db`'s `holding_company_name` edges.
+ *   The identical discipline `frn`'s primary pick already applies.
+ * - `brand_name` stays NULL unconditionally: the provider list carries no brand-name
+ *   column at all, primary or otherwise, so there is nothing to populate it from.
  */
 export interface BDCProviderTable {
 	/**

@@ -250,8 +250,8 @@ interface CounterfactualMove extends MoveReading {
 }
 
 /**
- * The distance half of a move, with no setting attached — what {@link measureMove}
- * can know from two answers alone.
+ * The distance half of a move, with no setting attached.
+ * What {@link measureMove} can know from two answers alone.
  */
 export interface MoveReading {
 	moved_km: number | null

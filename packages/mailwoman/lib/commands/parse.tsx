@@ -458,7 +458,7 @@ async function runDegraded(input: string, options: ParseOptions): Promise<string
  */
 async function runPipeline(input: string, options: ParseOptions): Promise<string> {
 	// `tryLoadNeural` emits its own precise (absent vs. corrupt/load-error) stderr warning
-	// when the load fails, so an attempted-but-failed encoder load is never silent — including on
+	// when the load fails, so an attempted-but-failed encoder load is never silent, including on
 	// the --resolve/--debug paths, which don't route through the degraded banner below (#1108).
 	// Every route into this function attempts the load: the deliberate skip is `--degraded`,
 	// which the guard answers with `declined` before we get here (see ParseTask).
@@ -821,7 +821,8 @@ async function runNeural(
 		const filtered = filterByPolicy(proposals, policy, options.locale)
 		tree = proposalsToTree(input, filtered)
 	} else {
-		// Resolve path without policy — keep containment by going through the decoder directly.
+		// Resolve path without policy.
+		// Keep containment by going through the decoder directly.
 		tree = await neural.parse(input, { inputMode: options.inputMode })
 	}
 

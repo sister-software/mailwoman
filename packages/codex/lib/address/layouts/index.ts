@@ -303,7 +303,7 @@ ${attention}`,
 	//
 	// Hong Kong writes both.
 	// The Chinese form is `九龍油尖旺佐敦道21號` and the English form is `21 Jordan Road, Yau Tsim Mong, Kowloon`,
-	// and this table holds one layout per country, so it holds the Latin one —
+	// and this table holds one layout per country, so it holds the Latin one,
 	// which is what `isLargestFirstSystem("HK") === false` already asserts
 	// and `LINE_JOINS`'s absent HK entry already assumes.
 	// The local-script order returns when the table is keyed by (country, script).

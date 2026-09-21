@@ -126,8 +126,9 @@ export interface GauntletDepsOptions {
 	 * what the verdict decides on this path.
 	 * `geocodeParseInputs` derives the register from its own `classifyKindSync` call
 	 * and consults `deps.classifyKind` only for the thing-query refusal, so replacing
-	 * the classifier alone leaves the decode byte-identical — measured at 633/1,132 in
-	 * both arms on the shape panel, which reads exactly like a real null.
+	 * the classifier alone leaves the decode byte-identical.
+	 *
+	 * Measured at 633/1,132 in both arms on the shape panel, which reads exactly like a real null.
 	 *
 	 * `deps.inputMode` is therefore set from {@link deriveInputMode} as well,
 	 * and it wins over the internal call.
@@ -389,7 +390,7 @@ async function assertShippedModelMatchesCard(materializedMd5: string): Promise<v
  * and en-nz has no WOF NZ postcode database to build one from.
  *
  * A hardcoded list would call both of those supported states broken, and would need editing
- * every time a locale's posture changed — which is the same drift the card exists to prevent.
+ * every time a locale's posture changed, which is the same drift the card exists to prevent.
  *
  * A package that does not resolve at all is not this guard's business: that is
  * `classifierFor`'s loud base-only fallback, a different failure with a different
@@ -468,7 +469,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// The default path asks the resolver rather than naming a directory.
 	// It used to read the en-us weights package's model path outright, which was the same
 	// file the loader below would pick only while the dev linker happened to materialize
-	// into that package — and the whole block was wrapped in `existsSync`.
+	// into that package, and the whole block was wrapped in `existsSync`.
 	// Therefore, the day the binaries live anywhere else
 	// (a data-root overlay, the user cache, a consumer's node_modules) the stamp goes quiet,
 	// `assertShippedModelMatchesCard` never runs, and the check grades a model it never verified.
@@ -715,7 +716,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		try {
 			deps = { fst: deserializeFST(await readLocalBuffer(fstPath)), streetMorphology: (await loadMorph()).matcher }
 		} catch (error) {
-			// A missing or unreadable artifact degrades to no prior, which is the incumbent behaviour —
+			// A missing or unreadable artifact degrades to no prior, which is the incumbent behaviour,
 			// but it is named, because a silently absent prior scores lower and reads as a model difference.
 			console.error(
 				`[gauntlet] gazetteer prior unavailable at ${fstPath}: ${(error as Error).message} — grading without it`
@@ -862,8 +863,10 @@ export interface GauntletResult {
 	 */
 	capital_promotion?: string
 	/**
-	 * The #1882 exemption's firing receipt (#1893), projected verbatim — present (`true`) only when the
-	 * winning candidate reached the top because the exemption spared it the cross-country alias penalty.
+	 * The #1882 exemption's firing receipt (#1893), projected verbatim.
+	 *
+	 * Present (`true`) only when the winning candidate reached the top because the
+	 * exemption spared it the cross-country alias penalty.
 	 */
 	variant_alias_exemption?: true
 	/**

@@ -33,7 +33,8 @@ export interface MapProgressBarProps {
 	 */
 	fraction?: number | null
 	/**
-	 * The bar's accessible name — what is loading, in a few words.
+	 * The bar's accessible name.
+	 * What is loading, in a few words.
 	 */
 	label: string
 	className?: string

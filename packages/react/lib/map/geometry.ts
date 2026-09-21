@@ -89,7 +89,7 @@ export function approxCircleGeometry(lat: number, lon: number, bbox?: PlaceBBox)
 }
 
 /**
- * A circle of an exact radius in meters — for the street-level uncertainty (#377):
+ * A circle of an exact radius in meters, for the street-level uncertainty (#377):
  * a 10 m situs floor or a calibrated interp radius.
  *
  * Unlike {@link approxCircleGeometry} (clamped to a ~ZIP-sized 0.5 km floor for admin fallbacks),

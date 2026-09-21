@@ -33,7 +33,9 @@ test("wofExtractPaths: builds the admin + postcode + tail + intl + NL-PC6 + NI-O
 		"/data/wof/postalcode-geonames-tail.db",
 		"/data/wof/postalcode-intl.db",
 		"/data/wof/postalcode-nl-pc6.db",
-		// Build-local (ODbL): present only on the machine that built it, which is exactly why it can be listed unconditionally. Every caller filters with `existsSync`, and that filter is the tier.
+		// Build-local (ODbL): present only on the machine that built it, which is
+		// exactly why it can be listed unconditionally.
+		// Every caller filters with `existsSync`, and that filter is the tier.
 		"/data/wof/postalcode-ni-osm.db",
 	])
 })

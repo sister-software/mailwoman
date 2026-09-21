@@ -228,8 +228,8 @@ export const US_IDENTIFIER_REGION_BORROWED_FROM = "GB"
  * Two consequences set the size:
  *
  * 1. A source's share of an epoch is `weight / Σweights`, independent of how many rows it has.
- * 2. **A source that exhausts is deleted from the multinomial** — there is no cycling. Under-size the recipe output and
- *    its nominal reps per row are fiction for the rest of the epoch.
+ * 2. **A source that exhausts is deleted from the multinomial** — there is no cycling.
+ *    Under-size the recipe output and its nominal reps per row are fiction for the rest of the epoch.
  *
  * Measured against the shipped `v4.1.0-gb-venue-l1e4-2k` weight table: 33 sources summing to 144.5.
  * At the reps per row the B11 GB-venue exercise settled on for a hard rare class — 12.0,
@@ -796,8 +796,10 @@ function emptyStats(leg: SubVenueLeg, pools: LegPools, promotedCount: number): S
 }
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour
- * it exists to exercise, and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder.
+ *
+ * See the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
  */
 export const subVenueRecipe: CorpusRecipe = {
 	name: "sub-venue",

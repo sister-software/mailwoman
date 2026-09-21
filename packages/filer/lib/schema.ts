@@ -161,22 +161,26 @@ export type FilerEdgeAssertion = (typeof FilerEdgeAssertion)[keyof typeof FilerE
  * A scheme that cannot distinguish a holding company from a parent CIK from a transfer-of-control,
  * and had no way to express a corporate-family fact (`filer_family`) at all.
  *
- * - `SameEntity` — the two nodes denote the same underlying filer under different identifiers (an FRN and its Form 499
- *   ID, a BDC `provider_id` and its FRN) — the crosswalk's original, still-dominant edge meaning, and the only kind
+ * - `SameEntity` — the two nodes denote the same underlying filer under different
+ *   identifiers (an FRN and its Form 499 ID, a BDC `provider_id` and its FRN) —
+ *   the crosswalk's original, still-dominant edge meaning, and the only kind
  *   {@link FilerNodeTable} entity-clustering (`cluster-filers.ts`) ever asserts.
  * - `HoldingCompany` — the target node is the source node's holding company (an ownership fact).
- * - `ManagementCompany` — the target node operates/manages the source node without owning it — operational control, never
- *   collapsed into `HoldingCompany` (spec §3.1 finding 1: ownership and operational control are different assertions).
- * - `ParentCompany` — the target is the source's parent in a corporate-family rollup ({@link FilerFamilyTable}), distinct
- *   from `HoldingCompany`: a parent-company relationship is a family-tree fact rather than necessarily an ownership
- *   filing.
- * - `Subsidiary` — the inverse of `ParentCompany`, kept as its own value (never just "read backwards") so a row's
- *   `relationship` always describes the edge in the direction it was asserted, without requiring the reader to know
- *   which side is the source.
- * - `SupersededBy` — the source registration was replaced by the target one. Identity continuity over time, and
- *   deliberately not an ownership or control fact: it says this registration became that registration, and nothing
- *   about who owns either. Written from Form 499's `Replaced by filer <id>` note (`form499-notes.ts`), which the FCC
- *   states on 2,826 filers in the 2025-12-07 vintage, 2,820 of whose targets resolve to a filer in the same file.
+ * - `ManagementCompany` — the target node operates/manages the source node without
+ *   owning it — operational control, never collapsed into `HoldingCompany`
+ *   (spec §3.1 finding 1: ownership and operational control are different assertions).
+ * - `ParentCompany` — the target is the source's parent in a corporate-family rollup
+ *   ({@link FilerFamilyTable}), distinct from `HoldingCompany`: a parent-company
+ *   relationship is a family-tree fact rather than necessarily an ownership filing.
+ * - `Subsidiary` — the inverse of `ParentCompany`, kept as its own value (never just "read backwards")
+ *   so a row's `relationship` always describes the edge in the direction it was asserted,
+ *   without requiring the reader to know which side is the source.
+ * - `SupersededBy` — the source registration was replaced by the target one.
+ *   Identity continuity over time, and deliberately not an ownership or control fact:
+ *   it says this registration became that registration, and nothing about who owns either.
+ *   Written from Form 499's `Replaced by filer <id>` note (`form499-notes.ts`),
+ *   which the FCC states on 2,826 filers in the 2025-12-07 vintage, 2,820 of whose
+ *   targets resolve to a filer in the same file.
  *
  *   Two consequences a reader has to hold.
  *   First, the edge is directional in time as well as in identity.
@@ -233,7 +237,9 @@ export interface FilerEdgeTable {
 	/**
 	 * One of {@link FilerRelationship} (decisions 1, 2).
 	 *
-	 * Orthogonal to `assertion` — see the file header and {@link FilerRelationship}'s own docstring.
+	 * Orthogonal to `assertion`.
+	 * See the file header and {@link FilerRelationship}'s own docstring.
+	 *
 	 * Not part of {@link createFilerEdgeTable}'s primary key: see that function's
 	 * docstring for why a same-instant conflicting `relationship` from one source is
 	 * a contradiction to reject rather than a plurality to store.
@@ -352,8 +358,9 @@ export interface FilerFamilyTable {
 	 * `authoritative` is a membership the source document states directly
 	 * (a Form 499 row naming its own holding company); `inferred` is one a matcher
 	 * concluded (edgar's subsidiary-name→FRN corroboration).
-	 * Read surfaces must keep the two distinguishable — see the file header for
-	 * why `source` cannot stand in for this.
+	 * Read surfaces must keep the two distinguishable.
+	 *
+	 * See the file header for why `source` cannot stand in for this.
 	 */
 	assertion: string
 	/**
@@ -373,7 +380,7 @@ export interface FilerFamilyTable {
 	 * Null for authoritative memberships, and a check constraint enforces that
 	 * direction (see {@link createFilerFamilyTable}).
 	 * An inferred membership carrying no score tells a caller nothing about how far to trust it,
-	 * so every inferred writer should populate this — but, matching `filer_edge`'s own
+	 * so every inferred writer should populate this, but, matching `filer_edge`'s own
 	 * permissiveness ({@link FilerEdgeTable.match_score} is likewise nullable on inferred rows),
 	 * that direction is a writer's obligation rather than a constraint.
 	 */
@@ -386,7 +393,7 @@ export interface FilerFamilyTable {
  *
  * Any reader that hard-depends on either (`filer-lookup.ts`'s `families` field, `family-rollup.ts`'s
  * `familyRollup`) must refuse an artifact reporting an earlier `schema_version` with a descriptive,
- * rebuild-pointing error — not a raw "no such table: filer_family" surfaced straight from
+ * rebuild-pointing error, not a raw "no such table: filer_family" surfaced straight from
  * SQLite (a `schema_version: 1` artifact hit exactly that before this guard existed).
  */
 export const FILER_FAMILY_SCHEMA_VERSION = 2
@@ -414,7 +421,7 @@ export const FILER_FAMILY_SCHEMA_VERSION = 2
 export const FILER_SCHEMA_VERSION = 3
 
 /**
- * Filer.db's own single-row identity/provenance record (decision 2) — not the layer-interface
+ * Filer.db's own single-row identity/provenance record (decision 2), not the layer-interface
  * `layer_manifest` from `@mailwoman/core/layers`; filer.db is deliberately not a
  * layer-interface artifact in 3a (no coordinates until ASR lands in Phase 3c).
  *
@@ -465,17 +472,19 @@ export async function createFilerNodeTable(db: Kysely<FilerDatabase>): Promise<v
 }
 
 /**
- * Create `filer_edge` with the composite PK `(from_node_id, to_node_id, source, valid_from)` —
- * see the file header for the provenance-plurality rationale (decision 7 / criterion 1)
+ * Create `filer_edge` with the composite PK `(from_node_id, to_node_id, source, valid_from)`.
+ *
+ * See the file header for the provenance-plurality rationale (decision 7 / criterion 1)
  * and why this stays a plain rowid table rather than `without rowid`.
  *
  * Call {@link createFilerEdgeToNodeIndex} separately, after bulk load,
  * for the reverse (in-edges) traversal path.
  *
  * `relationship` (decisions 1, 2) is deliberately not part of the primary key, even
- * though it's every bit as required as `assertion`: the PK's job is telling apart
- * different provenance (a different source, or the same source at a later vintage) —
- * two rows are a legitimate plurality there.
+ * though it's every bit as required as `assertion`: the PK's job is telling apart different
+ * provenance (a different source, or the same source at a later vintage).
+ * Two rows are a legitimate plurality there.
+ *
  * Two rows from the same source at the same `valid_from` for the same pair is a different
  * situation: if `relationship` were in the key, one source could assert both `"same_entity"`
  * and `"holding_company"` for the identical `(from, to)` pair at the identical instant,
@@ -594,16 +603,18 @@ export async function createFilerClusterIndex(db: Kysely<FilerDatabase>): Promis
  * every rollup — regressing the "expose the plurality within one family, never guess which
  * spelling is right" rule this SDK follows everywhere else (`identifiers`' cardinality fidelity,
  * `inferred_links` kept separate from `cluster`, family membership never deduped across sources).
- * This is not the `relationship` situation: two spellings under one source at
- * one instant are two things the filer really did report, a plurality to store —
- * where two conflicting `relationship` values for one pair are two incompatible
+ * This is not the `relationship` situation: two spellings under one source at one
+ * instant are two things the filer really did report, a plurality to store.
+ *
+ * Where two conflicting `relationship` values for one pair are two incompatible
  * claims about what that pair means, a contradiction to reject.
  *
- * **`assertion` is excluded from the key for that same reason** and the reason
- * it is excluded from `filer_edge`'s key too: one source, at one instant,
- * grading the identical membership both `authoritative` and `inferred` is a contradiction
- * rather than a plurality — two sources disagreeing about the strength of the same
- * fact already produce two rows, because `source` is in the key.
+ * **`assertion` is excluded from the key for that same reason** and the reason it is
+ * excluded from `filer_edge`'s key too: one source, at one instant, grading the identical
+ * membership both `authoritative` and `inferred` is a contradiction rather than a plurality.
+ * Two sources disagreeing about the strength of the same fact already produce two rows,
+ * because `source` is in the key.
+ *
  * It gets the same blank-rejecting check as `relationship`: `not NULL` alone would accept `''`,
  * and a blank assertion is worse than a wrong one, since it matches neither half of
  * every criterion-2 read (`= 'authoritative'` and `= 'inferred'` would both miss it)

@@ -17,7 +17,7 @@ import type { FloodDatabase } from "#schema"
  *
  * Both kinds are required.
  * A sample drawn only from inside polygons never exercises the designated-absence reading,
- * which is the reading this product's Zone-1-as-absence design turns on — and an artifact that
+ * which is the reading this product's Zone-1-as-absence design turns on, and an artifact that
  * answered `unknown` everywhere except inside a polygon would pass a polygon-only sample.
  *
  * The stride discipline — keys chosen before any geometry is read, deterministic

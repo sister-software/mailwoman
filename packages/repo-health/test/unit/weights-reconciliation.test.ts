@@ -83,7 +83,7 @@ describe("weightsReconciliationCheck", () => {
 	})
 
 	it("refuses an overlay pinned to a base at another version", async () => {
-		// Every workspace releases in lockstep, so this means a release did not land whole —
+		// Every workspace releases in lockstep, so this means a release did not land whole,
 		// and `yarn pack` freezes `workspace:*` against whichever version the sibling reads at pack time.
 		const tree = await treeWith([
 			{ locale: "en-us", version: "10.0.0", files: ["model.onnx", "model-card.json"] },

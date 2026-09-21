@@ -43,7 +43,7 @@ const DEFAULT_HF_RESOLVE_ROOT = "https://huggingface.co/buckets"
  * The artifact that identifies the base weights package.
  *
  * Every overlay shares this file byte for byte and declares none of its own, which is what
- * makes the base self-contained — and what makes it derivable rather than spelled `en-us`.
+ * makes the base self-contained, and what makes it derivable rather than spelled `en-us`.
  */
 const MODEL_FILENAME = "model.onnx"
 
@@ -79,8 +79,8 @@ export interface WeightsArtifactPlan {
 	/**
 	 * The md5 a release model card declares for this filename, when one does.
 	 *
-	 * Absent means no card declares one — never "the bytes are unverified
-	 * because the check was skipped"; the report separates the two.
+	 * Absent means no card declares one, never "the bytes are unverified because the
+	 * check was skipped"; the report separates the two.
 	 */
 	expectedMD5?: string
 }
@@ -333,7 +333,7 @@ export async function planWeightsMaterialization(
 
 	// Character-path families (`release.config.json` `charWeights`): each is its own base,
 	// staged under its own bucket directory at its own card version, verified against its
-	// own card — and planned only once its workspace is in the release list, because a
+	// own card, and planned only once its workspace is in the release list, because a
 	// planned object the bucket does not hold refuses every release until it is staged.
 	const released = new Set(await releaseWorkspaces(repoRoot))
 
@@ -360,8 +360,9 @@ export async function planWeightsMaterialization(
 }
 
 /**
- * The `files` entries of `workspace` that git does not track — what the bucket
- * (or the checkout's soft-feed sources) has to supply.
+ * The `files` entries of `workspace` that git does not track.
+ *
+ * What the bucket (or the checkout's soft-feed sources) has to supply.
  *
  * A nested entry is refused here rather than reported missing by the tarball audit
  * after most of the release has published.

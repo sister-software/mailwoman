@@ -61,8 +61,9 @@ describe("an admin tail carrying a postcode", () => {
 	})
 
 	it.each([
-		// A locality whose last word is USPS street-suffix vocabulary. These are 379 of the 1,132 rows on the
-		// shape-stratified panel, so a rule that rejects the suffix word rejects the bucket this fix exists for.
+		// A locality whose last word is USPS street-suffix vocabulary.
+		// These are 379 of the 1,132 rows on the shape-stratified panel, so a rule that
+		// rejects the suffix word rejects the bucket this fix exists for.
 		"Pine Grove, WV 26419",
 		"Folly Beach, SC 29439",
 		"Wiley Ford, WV 26767",
@@ -98,8 +99,8 @@ describe("an admin tail carrying a postcode", () => {
 
 describe("an address carrying street material", () => {
 	it.each([
-		// A leading house number is the structural cue the kind classifier routes on. It is present here and absent
-		// from every row above.
+		// A leading house number is the structural cue the kind classifier routes on.
+		// It is present here and absent from every row above.
 		"153 Holloway Rd, London N7 8LX",
 		"350 5th Ave, New York, NY 10118",
 		"1600 Pennsylvania Ave NW, Washington, DC 20500",

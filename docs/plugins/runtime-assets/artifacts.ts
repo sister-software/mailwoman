@@ -44,16 +44,18 @@ export function relativeImportSpecifiers(source: string): string[] {
  * MapLibre derives its default worker URL from `import.meta.url` and answers an
  * empty string when that is not an `http(s):` URL.
  * The docs client bundle is classic-script output, so webpack inlines `import.meta.url`
- * as the `file:` path of `maplibre-gl.mjs` on the build host. the empty URL
- * then spawns the page itself as the worker, which dies at its first byte of html.
+ * as the `file:` path of `maplibre-gl.mjs` on the build host.
+ *
+ * The empty URL then spawns the page itself as the worker, which dies at its first byte of html.
  *
  * No error reaches the console, `map.loaded()` stays false, and no tile is ever requested.
  * The site sets `setWorkerUrl` to the staged copy (`docs/src/shared/maplibre/worker/index.ts`),
  * which is same-origin and .
  * Therefore, loads as a module worker.
  *
- * Staging from the installed package, at build time, is what keeps the worker at the same
- * version as the bundled main thread. a committed copy would drift on the next dependency bump.
+ * Staging from the installed package, at build time, is what keeps the worker at
+ * the same version as the bundled main thread.
+ * A committed copy would drift on the next dependency bump.
  *
  * @param destDir - E.g. static/mailwoman/maplibre
  */

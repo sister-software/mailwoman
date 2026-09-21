@@ -55,7 +55,9 @@ const wikidataFixture = {
 				label: { value: "空港ターミナル" },
 				kind: { value: "label" },
 			},
-			// A second Japanese label, which is what makes the shared-substring head derivation possible at all. A group of one has nothing to share. The real pull carries five.
+			// A second Japanese label, which is what makes the shared-substring head derivation possible at all.
+			// A group of one has nothing to share.
+			// The real pull carries five.
 			{
 				item: { value: "http://www.wikidata.org/entity/Q849706" },
 				lang: { value: "ja" },

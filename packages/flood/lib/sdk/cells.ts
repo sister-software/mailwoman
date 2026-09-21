@@ -31,7 +31,8 @@ interface ZoneAccumulator {
 }
 
 /**
- * What one resolution's index came out as — the numbers the resolution choice is made from.
+ * What one resolution's index came out as.
+ * The numbers the resolution choice is made from.
  */
 export interface CellIndexMeasurement {
 	resolution: number
@@ -87,9 +88,10 @@ export class FloodCellIndex {
 	/**
 	 * `partial cell → area ids`.
 	 *
-	 * Populated for every touched cell and pruned at {@link FloodCellIndex.finish} once the
-	 * whole-cell sets are known — a cell that turns out whole for its zone needs no candidate
-	 * list, and which cells those are is not decided until every feature has been seen.
+	 * Populated for every touched cell and pruned at {@link FloodCellIndex.finish}
+	 * once the whole-cell sets are known.
+	 * A cell that turns out whole for its zone needs no candidate list, and
+	 * which cells those are is not decided until every feature has been seen.
 	 */
 	readonly #candidates = new Map<string, Set<string>>()
 
@@ -141,8 +143,10 @@ export class FloodCellIndex {
 	 * Compaction is where the size interface is paid: a zone's uniform interior collapses
 	 * parent-ward into a handful of coarse cells and only the fringe stays fine,
 	 * which is hierarchy-respecting run-length encoding.
-	 * It is applied to the whole set only — a partial cell's parent is not partial in any
-	 * useful sense, and compacting it would claim the fringe covers ground it does not.
+	 * It is applied to the whole set only.
+	 *
+	 * A partial cell's parent is not partial in any useful sense, and compacting it
+	 * would claim the fringe covers ground it does not.
 	 */
 	finish(): {
 		zoneCells: Array<{ h3Cell: number; resolution: number; zoneCode: string; containment: "whole" | "partial" }>

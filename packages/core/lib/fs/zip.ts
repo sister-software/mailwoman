@@ -341,15 +341,15 @@ export async function extractZipEntries(
 }
 
 /**
- * Verify every member's CRC-32 against the value its central-directory header
- * claims — what `unzip -t` is for.
+ * Verify every member's CRC-32 against the value its central-directory header claims.
+ * What `unzip -t` is for.
  *
  * This is a corruption check on a download, so it decompresses everything and keeps nothing.
  * The archive is read one member at a time and the checksum is folded chunk by chunk,
  * so memory is bounded by the inflate window.
  *
  * The CRC is computed here rather than delegated to yauzl's `validateCrc32`,
- * which asserts `Cannot validate CRC32 for uncompressed data` on a stored member —
+ * which asserts `Cannot validate CRC32 for uncompressed data` on a stored member,
  * and a corrupt stored member is precisely what this is meant to catch.
  * Folding it locally covers both storage methods with one path.
  *

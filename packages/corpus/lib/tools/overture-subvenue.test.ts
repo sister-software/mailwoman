@@ -53,7 +53,7 @@ interface FixtureDatabase {
 		 * Mirrors the shipped column so a rename fails here.
 		 * It does not mirror the fold.
 		 *
-		 * The real `poi.name_key` is `NameKey`, minted by `normalizeLocalityForKey` —
+		 * The real `poi.name_key` is `NameKey`, minted by `normalizeLocalityForKey`,
 		 * which this package cannot reach, and which no assertion here needs.
 		 * Do not copy the value expression below as if it were the fold.
 		 */

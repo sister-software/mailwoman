@@ -107,7 +107,7 @@ describe("ImportanceIndex.find", () => {
 		const index = loadImportanceIndex(sourcePath)
 
 		// The candidate side's Whitby rows carry unrelated ids.
-		// Only name + country + placetype + position are used, so both bearers score —
+		// Only name + country + placetype + position are used, so both bearers score,
 		// including the foreign homonym the ranking exists to demote.
 		expect(index.find("Whitby", "GB", "locality", 54.4796, -0.6251)).toBeCloseTo(0.5496, 4)
 		expect(index.find("Whitby", "CA", "locality", 43.8975, -78.9428)).toBeCloseTo(0.5089, 4)
@@ -165,7 +165,7 @@ describe("ImportanceIndex.find", () => {
 
 		expect(index.find("Whitby", "US", "locality", 54.4796, -0.6251)).toBeNull()
 		expect(index.find("Nowhereton", "US", "locality", 0, 0)).toBeNull()
-		// An empty-folding name can't be keyed either — and must not throw.
+		// An empty-folding name can't be keyed either, and must not throw.
 		expect(index.find("  ", "US", "locality", 0, 0)).toBeNull()
 	})
 })

@@ -268,7 +268,7 @@ export function auditAddressSourceRegister(register: AddressSourceRegister): str
  * would name the formatter's output and break whenever the formatter changed.
  *
  * `JSON.parse` preserves key insertion order, so re-serializing a parsed register reproduces the order
- * the build wrote — which means a hand edit that reorders keys also fails, and that is a hand edit.
+ * the build wrote, which means a hand edit that reorders keys also fails, and that is a hand edit.
  */
 export function registerContentDigest(register: AddressSourceRegister): string {
 	const { contentDigest: _omitted, ...rest } = register

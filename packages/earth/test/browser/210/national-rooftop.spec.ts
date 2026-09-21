@@ -1,9 +1,9 @@
 // National US rooftop rollout (#735) check: with the 50-state situs/interp
 // extracts hosted, an address in a newly-rolled state must resolve to its building
 // (the situs `address_point` coord), not the WOF admin city-centroid (km away).
-// Each case is a real row pulled from that state's situs extract, so the truth
-// coord is the extract's coord. we grade the assembled coordinate within ~500 m
-// (tight enough to distinguish rooftop from a centroid fallback, loose enough for any normalization).
+// Each case is a real row pulled from that state's situs extract, so the truth coord is the extract's coord.
+// We grade the assembled coordinate within ~500 m (tight enough to distinguish rooftop
+// from a centroid fallback, loose enough for any normalization).
 // Representative spread: TX/GA/WA urban + MT rural.
 import { expect, test } from "../../e2e/index.ts"
 
@@ -17,7 +17,8 @@ const CASES: Array<{
 	lat: number
 	lon: number
 	/**
-	 * A measured defect the case documents until it is fixed. the test is expected to fail while it stands.
+	 * A measured defect the case documents until it is fixed.
+	 * The test is expected to fail while it stands.
 	 */
 	knownFailure?: string
 }> = [

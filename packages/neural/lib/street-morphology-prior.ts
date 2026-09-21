@@ -219,7 +219,7 @@ export function buildStreetMorphologyEmissionPriors(
 /**
  * Walk word groups outward from `fromGroupIdx` in `direction` (+1 or -1),
  * skipping empty groups (whitespace / punctuation), and return the first non-empty
- * group encountered — or `null` if no such neighbour exists.
+ * group encountered, or `null` if no such neighbour exists.
  */
 function findNeighbour(groups: WordGroup[], fromGroupIdx: number, direction: 1 | -1): WordGroup | null {
 	for (let i = fromGroupIdx + direction; i >= 0 && i < groups.length; i += direction) {

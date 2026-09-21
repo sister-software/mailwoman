@@ -150,7 +150,7 @@ export interface CoverageRow {
  * Shared BY every polygon layer'S reader, and the reason is the second line of it.
  * A NULL `basis` is an artifact built before the column existed.
  *
- * It was recording source presence, so that is what it must read back as —
+ * It was recording source presence, so that is what it must read back as,
  * never a stronger basis than the builder actually had.
  *
  * Four readers writing that rule separately is four places for one of them to write
@@ -472,7 +472,7 @@ export async function readLayerCoverage(db: layerschemahandle, h3Cell: number): 
 		h3Cell: row.h3_cell,
 		completeness: row.completeness,
 		// A NULL basis is an artifact built before the column existed.
-		// It was recording source presence, so that is what it reads back as —
+		// It was recording source presence, so that is what it reads back as,
 		// never a stronger basis than the builder actually had.
 		basis: (row.basis as CoverageBasis | null) ?? CoverageBasis.SourcePresent,
 		observedRows: row.observed_rows,

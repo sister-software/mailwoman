@@ -490,7 +490,7 @@ export async function readWeightsRightsRecords(
  * Follows `mailwoman.baseWeights` rather than assuming one hop, since a base may itself declare one.
  * A cycle and a base outside the set both stop the walk and are reported in `unresolved`,
  * because a lineage that cannot be resolved is a different answer from a lineage
- * that is empty — and this record exists to keep those apart.
+ * that is empty, and this record exists to keep those apart.
  */
 function resolveInherited(
 	record: WeightsRightsRecord,

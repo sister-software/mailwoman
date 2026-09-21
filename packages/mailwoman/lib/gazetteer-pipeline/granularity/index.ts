@@ -52,8 +52,9 @@ export const LADDER: readonly ComponentTag[] = [
 ]
 
 /**
- * Rungs measured by parent-coverage share rather than node presence — everything below
- * the locality backbone, which is the denominator those shares are taken against.
+ * Rungs measured by parent-coverage share rather than node presence.
+ *
+ * Everything below the locality backbone, which is the denominator those shares are taken against.
  */
 export const SUB_LOCALITY_RUNGS: ReadonlySet<ComponentTag> = new Set<ComponentTag>([
 	"dependent_locality",

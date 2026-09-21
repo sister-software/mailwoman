@@ -65,7 +65,8 @@ export interface CategoryRecord {
 	 * The OSM tag this category maps to, `key=value` form (e.g. `amenity=hospital`) —
 	 * consumed by the OverpassQL export emitter.
 	 *
-	 * Curated alongside the category. not an Overture field.
+	 * Curated alongside the category.
+	 * Not an Overture field.
 	 */
 	osmTag?: string
 	source: CategorySource
@@ -115,7 +116,8 @@ export interface SynonymEntry {
 export interface POITaxonomyTable {
 	version: string
 	/**
-	 * Overture release the category snapshot was taken from. null until Plan 3 lands the full snapshot.
+	 * Overture release the category snapshot was taken from.
+	 * Null until Plan 3 lands the full snapshot.
 	 */
 	overtureRelease: string | null
 	categories: CategoryRecord[]

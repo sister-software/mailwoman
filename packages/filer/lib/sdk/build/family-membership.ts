@@ -88,9 +88,11 @@ export interface FamilyMembershipFact {
  * It is deliberately taken as a field rather than re-derived from `identifierType`/`name` here,
  * so the family row and the edge can never name two different nodes.
  *
- * Persisting it is what lets `filer-lookup.ts`'s `readFamilyDisplayNames` recover the raw spelling by
- * a plain join instead of re-running `canonicalizeOrganizationName` at read time against a sealed,
- * separately-versioned artifact — see `schema.ts`'s file header for the drift that closed.
+ * Persisting it is what lets `filer-lookup.ts`'s `readFamilyDisplayNames` recover the
+ * raw spelling by a plain join instead of re-running `canonicalizeOrganizationName`
+ * at read time against a sealed, separately-versioned artifact.
+ * See `schema.ts`'s file header for the drift that closed.
+ *
  * Adding it pushed this function's positional arity past the linter's `max-params`
  * ceiling, hence the single options argument.
  */

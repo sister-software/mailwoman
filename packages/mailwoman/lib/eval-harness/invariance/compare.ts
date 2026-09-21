@@ -90,8 +90,8 @@ export function compareComponents(
 
 		if (!o) {
 			// Not present in the original.
-			// A hallucinated value on the transformed side still yields the `lost` verdict — see the
-			// header doc comment (a wrong-but-confident rooftop is worse than a graceful fallback).
+			// A hallucinated value on the transformed side still yields the `lost` verdict.
+			// See the header doc comment (a wrong-but-confident rooftop is worse than a graceful fallback).
 			if (t) {
 				criticalBroken = true
 				diff.push(`${tag}: ∅ → "${transformed[tag]}" (hallucinated)`)

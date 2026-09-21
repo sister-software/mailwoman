@@ -17,10 +17,13 @@
 export type JSONValue = string | number | boolean | null | JSONValue[] | { [key: string]: JSONValue }
 
 /**
- * A caller-supplied per-token normalizer (case folding, diacritic stripping, script folding — the consumer's domain).
- * This is the tokenizer-normalization boundary: the same function must be applied on the build side ({@link
- * AncestrieBuilderOptions.normalizeToken}) and the query side ({@link AutocompleteOptions.normalizeToken}), or queries
- * will silently miss — the package never normalizes on its own.
+ * A caller-supplied per-token normalizer (case folding, diacritic stripping,
+ * script folding — the consumer's domain).
+ *
+ * This is the tokenizer-normalization boundary: the same function must be applied on
+ * the build side ({@link AncestrieBuilderOptions.normalizeToken}) and the query side
+ * ({@link AutocompleteOptions.normalizeToken}), or queries will silently miss.
+ * The package never normalizes on its own.
  */
 export type TokenNormalizer = (token: string) => string
 
@@ -35,7 +38,8 @@ export interface AncestrieEntry {
 	/**
 	 * The lexical surface as a token sequence, already tokenized by the caller.
 	 *
-	 * At least one token. tokens must be non-empty after normalization.
+	 * At least one token.
+	 * Tokens must be non-empty after normalization.
 	 */
 	tokens: readonly string[]
 
@@ -49,7 +53,8 @@ export interface AncestrieEntry {
 	 *
 	 * Empty for a root.
 	 * The first element is the primary parent: interval containment (`contains`, `descendantsOf`)
-	 * answers over the primary-parent forest only. the full list is preserved and surfaced verbatim.
+	 * answers over the primary-parent forest only.
+	 * The full list is preserved and surfaced verbatim.
 	 */
 	parentIDs: readonly number[]
 
@@ -61,8 +66,9 @@ export interface AncestrieEntry {
 	rank: number
 
 	/**
-	 * Optional per-entry cargo: raw bytes are returned verbatim. any other value is
-	 * serialized as JSON at build time and parsed back on read.
+	 * Optional per-entry cargo: raw bytes are returned verbatim.
+	 *
+	 * Any other value is serialized as JSON at build time and parsed back on read.
 	 */
 	payload?: Uint8Array | JSONValue
 }
@@ -70,9 +76,11 @@ export interface AncestrieEntry {
 /**
  * A decoded entry as a reader returns it.
  *
- * `TPayload` is the consumer's cargo type. A sealed artifact answers with what the format can carry (`Uint8Array |
- * JSONValue`, the default); an {@link AncestrieReaderLike} adapter over the consumer's own storage may answer with any
- * in-memory value — the algorithm half of this package passes payloads through verbatim and never inspects them.
+ * `TPayload` is the consumer's cargo type.
+ * A sealed artifact answers with what the format can carry (`Uint8Array | JSONValue`, the default); an
+ * {@link AncestrieReaderLike} adapter over the consumer's own storage may answer with any in-memory value.
+ *
+ * The algorithm half of this package passes payloads through verbatim and never inspects them.
  */
 export interface AncestrieRecord<TPayload = Uint8Array | JSONValue> {
 	id: number
@@ -124,8 +132,8 @@ export interface AncestrieSuggestion<TPayload = Uint8Array | JSONValue> {
 	/**
 	 * The tokens beyond what was typed.
 	 *
-	 * Empty for an exact match. for a partial last token the first element is
-	 * the completed token ("yor" → "york").
+	 * Empty for an exact match.
+	 * For a partial last token the first element is the completed token ("yor" → "york").
 	 */
 	completionTokens: string[]
 
@@ -196,21 +204,22 @@ export interface AutocompleteResult<TPayload = Uint8Array | JSONValue> {
 /**
  * The storage interface: what the algorithm half of this package ({@link autocomplete}) requires of a reader.
  *
- * The sealed {@link Ancestrie} class is the canonical implementation. a consumer whose
- * entries live in its own structure — an in-memory trie, a different binary format — supplies
- * an adapter instead of re-implementing the algorithm (`@mailwoman/resolver-wof-sqlite`'s
- * FST gazetteer is the worked example: its `FST\0` artifacts predate this package and stay
- * in their own format, so its `fst-autocomplete` wraps the matcher in this interface).
+ * The sealed {@link Ancestrie} class is the canonical implementation.
+ * A consumer whose entries live in its own structure — an in-memory trie,
+ * a different binary format — supplies an adapter instead of re-implementing the algorithm
+ * (`@mailwoman/resolver-wof-sqlite`'s FST gazetteer is the worked example: its `FST\0` artifacts predate
+ * this package and stay in their own format, so its `fst-autocomplete` wraps the matcher in this interface).
  *
  * Order interfaces the algorithm observes:
  *
  * - `entriesAt(stateID)` with no limit answers every accepting entry, in the reader's stored order.
- * - `entriesAt(stateID, limit)` answers the top-`limit` entries by rank, descending. A sealed artifact serves a prefix of
- *   its rank-sorted storage. an adapter over unsorted storage must select by rank itself. Order among rank ties is the
- *   reader's own, and is observable in suggestion order — two readers over the same entries may legitimately differ
- *   there.
- * - `ancestorsOf` decorates suggestions' `chain`. A reader that materializes lineage per entry may serve it from its
- *   records rather than walking a graph.
+ * - `entriesAt(stateID, limit)` answers the top-`limit` entries by rank, descending.
+ *   A sealed artifact serves a prefix of its rank-sorted storage.
+ *   An adapter over unsorted storage must select by rank itself.
+ *   Order among rank ties is the reader's own, and is observable in suggestion order —
+ *   two readers over the same entries may legitimately differ there.
+ * - `ancestorsOf` decorates suggestions' `chain`.
+ *   A reader that materializes lineage per entry may serve it from its records rather than walking a graph.
  */
 export interface AncestrieReaderLike<TPayload = Uint8Array | JSONValue> {
 	walk(tokens: readonly string[]): AncestrieMatch | null

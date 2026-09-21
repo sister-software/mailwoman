@@ -216,7 +216,7 @@ function closeResources(resources: Resources | null): void {
 	void resources.source?.[Symbol.asyncDispose]().catch(() => {
 		// Teardown is best-effort.
 		// This runs after the terminal has already been restored and while the
-		// process is on its way out, so a rejected close has nobody left to tell —
+		// process is on its way out, so a rejected close has nobody left to tell,
 		// and an unhandled rejection would take the exit code with it.
 	})
 }
@@ -406,7 +406,7 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 			)
 
 		return () => {
-			// Invalidates whatever is in flight — including on unmount, where the archive is about to close.
+			// Invalidates whatever is in flight, including on unmount, where the archive is about to close.
 			frameRequestRef.current++
 		}
 	}, [run, viewport, resources, size.columns, size.rows])
@@ -425,7 +425,7 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 			if (!resources || phase === "busy" || !query) return
 
 			setPhase("busy")
-			// The previous attempt's failure is stale the moment a new one starts —
+			// The previous attempt's failure is stale the moment a new one starts,
 			// leaving it up through the busy window reads as if this query had already failed.
 			setErrorNote(null)
 

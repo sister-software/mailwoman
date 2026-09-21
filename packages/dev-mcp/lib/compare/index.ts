@@ -94,8 +94,9 @@ import { worktreeArmRunner } from "#worktree/runner"
 /**
  * What the caller asked for on the grading axis.
  *
- * `auto` picks `truth` where the set has it — see spec §5.5: a diff is not a verdict,
- * and the failure this whole surface exists for was a diff-only result read as a truth result.
+ * `auto` picks `truth` where the set has it.
+ * See spec §5.5: a diff is not a verdict, and the failure this whole surface exists
+ * for was a diff-only result read as a truth result.
  */
 export type GradeRequest = "auto" | "truth" | "diff-only"
 

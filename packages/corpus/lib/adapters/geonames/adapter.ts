@@ -165,7 +165,7 @@ export function createGeonamesAdapter(): CorpusAdapter {
 				const region = admin1.get(`${cc}.${(rec[COL.admin1] ?? "").trim()}`)
 				const country = countries.get(cc)
 
-				// Two hierarchy variants (domestic + international order) — but only emit
+				// Two hierarchy variants (domestic + international order), but only emit
 				// the distinct ones the available names support.
 				const variants: Array<{ slot: string; comp: CanonicalRow["components"]; raw: string }> = []
 

@@ -34,7 +34,8 @@
 /**
  * SentencePiece renders a byte it cannot represent as `<0xNN>`.
  *
- * This is the whole measurement — everything else is aggregation over it.
+ * This is the whole measurement.
+ * Everything else is aggregation over it.
  */
 const BYTE_PIECE = /^<0x[0-9A-Fa-f]{2}>$/
 

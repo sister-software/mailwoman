@@ -76,7 +76,11 @@ const BASES: Base[] = [
 	{ input: "350 5th Ave, New York, NY", postcode: false, locale: "en-US" },
 	{ input: "Unter den Linden 77, 10117 Berlin", postcode: true, locale: "de-DE" }, // DE rooftop tier (D10)
 	{ input: "Damrak 1, 1012 LG Amsterdam", postcode: false, locale: "nl-NL" }, // NL rooftop tier (D10); NL postcode ≠ \d{5}, so INV-only
-	// Added for the abbrev + number-spell classes (the original 7 carry no expandable suffix, no ordinal, no spell-able house number). Verified landmark coordinates cited in the design doc. The metamorphic relations are self-referential (perturbed-vs-clean), so the base only needs to resolve sanely.
+	// Added for the abbrev + number-spell classes (the original 7 carry no expandable
+	// suffix, no ordinal, no spell-able house number).
+	// Verified landmark coordinates cited in the design doc.
+	// The metamorphic relations are self-referential (perturbed-vs-clean),
+	// so the base only needs to resolve sanely.
 	{ input: "350 Fifth Avenue, New York, NY", postcode: false, locale: "en-US" }, // Empire State Building (≈40.7484, -73.9857)
 	{ input: "100 Centre Street, New York, NY", postcode: false, locale: "en-US" }, // Manhattan Municipal Building (≈40.7132, -74.0041)
 	{ input: "2 Boulevard du Palais, 75001 Paris", postcode: false, locale: "fr-FR" }, // Palais de la Cité (≈48.8556, 2.3450)
@@ -281,7 +285,11 @@ const INV: Perturbation[] = [
 	{ name: "ws", f: (s) => s.replaceAll(" ", "  ") },
 	{ name: "trail-dot", f: (s) => `${s}.` },
 	{ name: "comma-tight", f: (s) => s.replaceAll(", ", ",") }, // surface-form: drop the space after a comma
-	// Delimiter-free invariant (#1101): a whitespace-only address (commas removed, tokens still space-separated) must resolve identically — whitespace-only is 64% of the parity gold. The fix half (punctuation-drop training augmentation) closes any deterministic failure this surfaces. A failing base lands in KNOWN_INV_XFAIL with a #1101 note until then.
+	// Delimiter-free invariant (#1101): a whitespace-only address
+	// (commas removed, tokens still space-separated) must resolve identically —
+	// whitespace-only is 64% of the parity gold.
+	// The fix half (punctuation-drop training augmentation) closes any deterministic failure this surfaces.
+	// A failing base lands in KNOWN_INV_XFAIL with a #1101 note until then.
 	{ name: "comma-drop", f: (s) => s.replaceAll(",", "") },
 	{ name: "abbrev", f: (s, base) => abbreviate(s, base.locale) }, // expanded→abbreviated suffix (trained both ways)
 ]
@@ -308,9 +316,9 @@ const BAND: Perturbation[] = [
  * Casing/spacing are fully green (the #829 lowercase restore + trailing-punct
  * trim cleared every prior xfail with no retrain).
  *
- * `abbrev` holds for the EN suffix swaps (Avenue→Ave, Street→St) because the model
- * trains on both forms — but the FR street-type swap below is a resolver gap
- * rather than a model one, and it is a finding rather than a reflex xfail (see note).
+ * `abbrev` holds for the EN suffix swaps (Avenue→Ave, Street→St) because the model trains on
+ * both forms, but the FR street-type swap below is a resolver gap rather than a model one,
+ * and it is a finding rather than a reflex xfail (see note).
  * A new deterministic INV break belongs here with a tracked note, never silently conditional.
  *
  * The #1002 FR `Boulevard→Bd` xfail was removed 2026-07-06 with its fix:

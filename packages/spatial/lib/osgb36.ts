@@ -165,7 +165,7 @@ const GEODETIC_LATITUDE_TOLERANCE_RAD = 1e-13
  * and every result moves by roughly 20 m with no error raised.
  *
  * Getting a sign wrong here does not produce a subtly worse answer.
- * It produces a coordinate tens to hundreds of metres out, in a consistent direction —
+ * It produces a coordinate tens to hundreds of metres out, in a consistent direction,
  * which reads as a plausible coordinate.
  * That is what the Annexe D test is for.
  */
@@ -324,8 +324,9 @@ export function osgb36GridToAiryLatLon({ easting, northing }: NationalGridPoint)
 /**
  * Convert OSGB36 geodetic lat/lon (Airy 1830) to WGS84 lat/lon (GRS80) via the seven-parameter Helmert.
  *
- * This is the approximate half — see the module docstring for the ±5 m budget
- * and when it stops being acceptable.
+ * This is the approximate half.
+ * See the module docstring for the ±5 m budget and when it stops being acceptable.
+ *
  * Heights are not modelled: the input is treated as sitting on the Airy ellipsoid
  * and the output's ellipsoidal height is discarded.
  *

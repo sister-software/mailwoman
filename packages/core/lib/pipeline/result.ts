@@ -24,7 +24,7 @@ import type {
  * carries whatever the remaining stages could prove.
  * What the fault provides the caller is the ability to tell "the model faulted
  * and the rule-based stages filled the tree back in" apart from "the model ran
- * and found nothing" — which, before #40, was impossible from the outside.
+ * and found nothing", which, before #40, was impossible from the outside.
  *
  * See the `safeClassify` docstring for the measured failure this was written against.
  */
@@ -40,7 +40,8 @@ export interface PipelineFault {
 	name: string
 	message: string
 	/**
-	 * The value the stage threw, verbatim — kept so a caller can rethrow it or read its stack.
+	 * The value the stage threw, verbatim.
+	 * Kept so a caller can rethrow it or read its stack.
 	 *
 	 * Not JSON-serializable in the useful sense.
 	 * Serialize `stage`/`name`/`message` when you need this on a wire.

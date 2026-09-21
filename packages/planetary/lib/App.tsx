@@ -113,8 +113,8 @@ export function App() {
 
 	const close = useCallback(() => navigate({ kind: "map" }), [navigate])
 
-	// A chip carries a feature name, which is what the artifact indexes. the first
-	// hit for an exact name is that feature.
+	// A chip carries a feature name, which is what the artifact indexes.
+	// The first hit for an exact name is that feature.
 	// A name the artifact does not carry selects nothing rather than framing the closest other feature.
 	const pickByName = useCallback(
 		(name: string) => {

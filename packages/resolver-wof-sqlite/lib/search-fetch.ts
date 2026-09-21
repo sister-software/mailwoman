@@ -42,7 +42,7 @@ const SHORT_QUERY_OVERFETCH = 200
  * How many rows the population-ordered companion fetch (#905) adds to the candidate pool.
  *
  * Small on purpose: its only job is to guarantee the famous holders of a name enter the
- * pool at all — for "Paris"-class floods the bm25 window is saturated by thousands of
+ * pool at all, for "Paris"-class floods the bm25 window is saturated by thousands of
  * tiny same-name rows and no boost inside the bm25-based order BY can rescue a candidate
  * whose bm25 is length-poisoned by ~15 points (see the fetch-site comment).
  */

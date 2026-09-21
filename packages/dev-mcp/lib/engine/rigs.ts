@@ -140,7 +140,7 @@ interface ContainerState {
 	name: string
 	/**
 	 * The runtime's own status string (`Up 2 minutes`, `Exited (0) 3 days ago`, `Created`),
-	 * or `absent` when no container by that name exists — which is a different fact
+	 * or `absent` when no container by that name exists, which is a different fact
 	 * from a stopped one: absent means the rig was never built here, and building
 	 * it is the manual half this module refuses to do.
 	 */

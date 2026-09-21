@@ -342,9 +342,13 @@ function visit(
  * one says less than it appears to.
  */
 const UNCOUNTED = [
-	// The runtime mirror and the idiom over it call the builtins on purpose. Counting them would measure the implementation rather than its callers.
+	// The runtime mirror and the idiom over it call the builtins on purpose.
+	// Counting them would measure the implementation rather than its callers.
 	"packages/core/lib/fs/",
-	// this file counts itself otherwise, and the count could never reach zero: {@link BANNED_VOCABULARY} has to spell the word it bans. Excluded for the same reason as the line above. The implementation is not a caller.
+	// this file counts itself otherwise, and the count could never reach zero:
+	// {@link BANNED_VOCABULARY} has to spell the word it bans.
+	// Excluded for the same reason as the line above.
+	// The implementation is not a caller.
 	SELF,
 ]
 
@@ -381,7 +385,7 @@ const BANNED_VOCABULARY =
  *
  * The count is over every tracked text file rather than just `.ts`/`.tsx`.
  * The first version of this counter scanned only TypeScript, reported zero, and left 125
- * occurrences standing in prose, config, dictionaries and eval rows — including three
+ * occurrences standing in prose, config, dictionaries and eval rows, including three
  * sentences in `agents.md` that still told the next agent the old names were current.
  *
  * A vocabulary an agent reads is a vocabulary an agent writes, so prose is in scope.
@@ -401,7 +405,19 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	["config/vale/fixtures/", "Vale fixtures whose purpose is to keep failing, permanently"],
 	[".claude/output-styles/", "the same refusal list, mirrored for agent replies"],
 	["AGENTS.md", "carries that refusal list, plus the note recording that this family reached zero"],
-	// records are not exempt, and that is a deliberate reversal. They were exempt on the reasoning that rewriting a record falsifies it — but a record names paths and identifiers rather than measurements, and a retired name in a record is read as a live one by the next agent. Every number, date and verdict is untouched. Only the spelling of things that were renamed moved with them. Operator direction, and the reason given was the operative one: agents pick the vocabulary back up from prose. Content rather than vocabulary. `shardza`, `sechshard` and `shykshard` are transliterated place names; `Bosshardt` and `Rashard` are real people's names. The eval rows are dated notes on committed board cases. Renaming any of them would corrupt data to satisfy a style rule.
+	// records are not exempt, and that is a deliberate reversal.
+	// They were exempt on the reasoning that rewriting a record falsifies it,
+	// but a record names paths and identifiers rather than measurements, and a retired
+	// name in a record is read as a live one by the next agent.
+	// Every number, date and verdict is untouched.
+	// Only the spelling of things that were renamed moved with them.
+	// Operator direction, and the reason given was the operative one:
+	// agents pick the vocabulary back up from prose.
+	// Content rather than vocabulary.
+	// `shardza`, `sechshard` and `shykshard` are transliterated place names;
+	// `Bosshardt` and `Rashard` are real people's names.
+	// The eval rows are dated notes on committed board cases.
+	// Renaming any of them would corrupt data to satisfy a style rule.
 	["packages/core/data/", "libpostal dictionaries — real given names and surnames"],
 	["data/", "address rows and reference tables carry real place names: Golden Gate Bridge, South Gate, Cut Bank"],
 	[

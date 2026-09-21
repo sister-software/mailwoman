@@ -22,7 +22,8 @@ import { readPackagedTable } from "#packaged-data"
 /**
  * One mined hint row.
  *
- * Rates are per-million tokens of the respective name corpus. shares are of the token's poi occurrences.
+ * Rates are per-million tokens of the respective name corpus.
+ * Shares are of the token's poi occurrences.
  */
 export interface VenueWordHint {
 	/**
@@ -65,8 +66,9 @@ const HINTS = new Map<string, VenueWordHint>(Object.entries(TABLE.hints))
 /**
  * The mined class hint for a single lowercased token, or `null` when the survey has nothing to say.
  *
- * Callers pass one token — the table is token-grained by construction. n-gram extraction
- * from longer queries belongs to the kind classifier, mirroring the phrase-lookup interface.
+ * Callers pass one token — the table is token-grained by construction.
+ * N-gram extraction from longer queries belongs to the kind classifier,
+ * mirroring the phrase-lookup interface.
  */
 export function venueWordHint(token: string): VenueWordHint | null {
 	return HINTS.get(token.toLowerCase()) ?? null

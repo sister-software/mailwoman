@@ -195,7 +195,7 @@ const LEGAL_NAME_ATTRIBUTE_KEY = "legal_name"
  *
  * `exactDiscriminators` (`frn`/`form499ID`/`providerID`) then contribute their own
  * "different" level (`m: 0.25, u: 0.92` → `log2(0.25/0.92) ≈ -1.88` bits each) whenever
- * a candidate pair's code sets don't overlap — which, for two different authoritative
+ * a candidate pair's code sets don't overlap, which, for two different authoritative
  * components, is the common case (their code sets are disjoint by construction.
  * Components sharing a code would already be one authoritative component).
  * Worst case, all three discriminators disagree: `-13.29 + 6.32 - 3×1.88 ≈ -12.61` bits.
@@ -220,15 +220,16 @@ const IDENTIFIER_VETO_KEYS = ["frn", "form499ID", "providerID"] as const
  * Hard veto (decision 5's real enforcement mechanism. See the module docstring's "identifier veto" section).
  *
  * `true` when `a` and `b` share at least one code across any of {@link IDENTIFIER_VETO_KEYS}.
- * In this domain, identifiers are authoritative — two different FRNs mean two different
- * registrants, full stop, no matter how similar the names look.
+ * In this domain, identifiers are authoritative.
+ *
+ * Two different FRNs mean two different registrants, full stop, no matter how similar the names look.
  *
  * A value missing on either side is not evidence of "different".
  * It's silence on that dimension, so it never contributes to the veto
  * (only a value present and disjoint on both sides counts, exactly like `resolveEntities`'s
  * own `similarityComparison` treats a missing value as "no evidence", not "different").
  *
- * Returns `false` — no shared identifier, i.e. veto territory — when `a`/`b` have no identifier in
+ * @returns `false` — no shared identifier, i.e. veto territory — when `a`/`b` have no identifier in
  * common on any of the three types (including when one or both sides carry no identifier data at all).
  */
 export function hasSharedIdentifier(a: SourceRecord, b: SourceRecord): boolean {
@@ -340,8 +341,8 @@ export interface ClusterFilersOptions {
 	 * This field is also the "same run" identity the same-vintage-rebuild half of
 	 * cross-vintage supersession keys on (see the module docstring).
 	 *
-	 * Never written into `valid_from`/`valid_to` directly — see
-	 * {@link ClusterFilersOptions.validFrom} for that.
+	 * Never written into `valid_from`/`valid_to` directly.
+	 * See {@link ClusterFilersOptions.validFrom} for that.
 	 */
 	sourceVintage: string
 	/**
@@ -386,7 +387,7 @@ function chunk<T>(items: readonly T[], size: number): T[][] {
  * Deduplicate + sort, then whitespace-join — the "code-set string" shape
  * {@linkcode ClusterFilersOptions}'s callers (and `resolveEntities`'s `exactDiscriminators`) expect.
  *
- * Returns `""` for an empty input, which the caller treats as "no attribute"
+ * @returns `""` for an empty input, which the caller treats as "no attribute"
  * (never a false `"different"` signal — see {@linkcode buildInferredRecords}).
  */
 function codeSetString(values: Iterable<string>): string {
@@ -613,16 +614,20 @@ async function buildInferredRecords(db: Kysely<FilerDatabase>): Promise<SourceRe
  *
  * Writes:
  *
- * - `filer_cluster` rows (`assertion: "inferred"`) for every record `resolveEntities` considered — singletons included,
- *   so every scored node gets an inferred assignment, mirroring pass (a)'s own completeness. Idempotent the same way as
- *   pass (a) (see the module docstring): cleared and rewritten wholesale, every run.
- * - `filer_edge` rows (`assertion: "inferred"`) for every entity with more than one member: one edge per
- *   non-representative member → the entity's `representative`, carrying `match_score` (the entity's `cohesion` — the
- *   weakest intra-cluster link weight; `resolveEntities` doesn't expose the individual pairwise weights behind a larger
- *   entity, so this is the honest single number available) and `evidence` (the full membership, as JSON). Made
- *   idempotent/current every run, same-vintage or not, by clearing this run's own vintage first and closing out any
- *   still-open earlier-vintage row (see the module docstring's "cross-vintage supersession" section) so a link that no
- *   longer holds never lingers as falsely "still valid".
+ * - `filer_cluster` rows (`assertion: "inferred"`) for every record `resolveEntities`
+ *   considered — singletons included, so every scored node gets an inferred assignment,
+ *   mirroring pass (a)'s own completeness.
+ *   Idempotent the same way as pass (a) (see the module docstring): cleared
+ *   and rewritten wholesale, every run.
+ * - `filer_edge` rows (`assertion: "inferred"`) for every entity with more than one member:
+ *   one edge per non-representative member → the entity's `representative`, carrying
+ *   `match_score` (the entity's `cohesion` — the weakest intra-cluster link weight;
+ *   `resolveEntities` doesn't expose the individual pairwise weights behind a larger entity,
+ *   so this is the honest single number available) and `evidence` (the full membership, as JSON).
+ *   Made idempotent/current every run, same-vintage or not, by clearing this
+ *   run's own vintage first and closing out any still-open earlier-vintage row
+ *   (see the module docstring's "cross-vintage supersession" section) so a link that
+ *   no longer holds never lingers as falsely "still valid".
  */
 export async function clusterInferredLinks(
 	db: Kysely<FilerDatabase>,
@@ -630,8 +635,9 @@ export async function clusterInferredLinks(
 ): Promise<InferredClusterResult> {
 	const progress = options.onProgress ?? (() => {})
 
-	// Fails fast, before any query/write — see ClusterFilersOptions.validFrom's docstring
-	// and assertISODate's: a vintage label like "2026-cluster-v1" must never reach valid_from/valid_to.
+	// Fails fast, before any query/write.
+	// See ClusterFilersOptions.validFrom's docstring and assertISODate's: a vintage
+	// label like "2026-cluster-v1" must never reach valid_from/valid_to.
 	const validFrom = assertISODate(options.validFrom, "options.validFrom", "clusterInferredLinks")
 
 	const records = await buildInferredRecords(db)
@@ -645,7 +651,7 @@ export async function clusterInferredLinks(
 		// Block on the exact canonicalized organization name instead.
 		blockingKeys: [exactKey((record: SourceRecord) => record.organization?.canonical)],
 		// Wired through for documentation/config parity
-		// (and in case `requireCorroboration`/`trainEM` are ever enabled here) — but note the
+		// (and in case `requireCorroboration`/`trainEM` are ever enabled here), but note the
 		// actual weight for every pair comes from `scorer` below rather than from resolveEntities'
 		// own internal model built from this config (see scoreWithIdentifierVeto's docstring).
 		exactDiscriminators: [...IDENTIFIER_VETO_KEYS],
@@ -655,7 +661,8 @@ export async function clusterInferredLinks(
 		// Redundant with `scorer` below (a custom `scorer` already bypasses the learned-scorer branch entirely)
 		// but kept explicit for intent.
 		learnedScorer: false,
-		// The hard identifier veto — see the module docstring and scoreWithIdentifierVeto's own docstring.
+		// The hard identifier veto.
+		// See the module docstring and scoreWithIdentifierVeto's own docstring.
 		// Two records with no shared frn/form499ID/providerID code are forced to -Infinity here,
 		// unconditionally, before name similarity is ever consulted.
 		scorer: scoreWithIdentifierVeto,

@@ -52,8 +52,8 @@ const DATA_ROOT = mailwomanDataRoot()
  * The WOF extract set to attach: {@link resolveWOFDatabasePaths} selects it
  * (the `$MAILWOMAN_WOF_DB` comma-separated override, else the conventional per-extract `wof/` paths).
  *
- * An explicit list is the operator's statement and passes through unfiltered. the conventional
- * set is probed, so a deployment missing a extract degrades to what is present.
+ * An explicit list is the operator's statement and passes through unfiltered.
+ * The conventional set is probed, so a deployment missing a extract degrades to what is present.
  */
 function wofPaths(): Promise<string[]> {
 	const paths = resolveWOFDatabasePaths()
@@ -103,7 +103,7 @@ async function buildEngine<T extends GeocodeOutcomeLike = GeocodeOutcomeLike>() 
 
 	// Geocode/batch need both the weights (for the parse step) and a gazetteer.
 	// A missing/unopenable gazetteer leaves these methods undefined so @mailwoman/api answers
-	// 503 (the clean degrade) — and, in its own try, never takes parse down with it.
+	// 503 (the clean degrade), and, in its own try, never takes parse down with it.
 	if (classifier) {
 		const candidateDB = await resolveCandidateDBPath()
 		const paths = await wofPaths()
@@ -141,7 +141,7 @@ async function buildEngine<T extends GeocodeOutcomeLike = GeocodeOutcomeLike>() 
 
 				console.error(`[mailwoman] gazetteer found — /v1/geocode + /v1/batch enabled (data root: ${DATA_ROOT})`)
 			} catch (error) {
-				// Gazetteer present but unopenable (e.g. a WAL-mode DB on a read-only mount).
+				// Gazetteer present but unopenable (e.g. A WAL-mode DB on a read-only mount).
 				// Degrade to parse-only rather than crash; /v1/geocode + /v1/batch answer 503.
 				console.error(
 					`[mailwoman] gazetteer at ${DATA_ROOT} could not be opened — /v1/geocode + /v1/batch answer 503: ${error}`

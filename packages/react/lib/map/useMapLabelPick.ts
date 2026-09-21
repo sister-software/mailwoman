@@ -72,7 +72,7 @@ function labelNameAt(map: MapInstance, point: MapLayerMouseEvent["point"], layer
 export function useMapLabelPick(map: MapInstance | null, onPick: (name: string) => void): void {
 	// The subscription depends on the MAP alone.
 	// `useGeocode` returns a fresh object every render, so a callback built from it is
-	// new every render too — with `onPick` in the dependency list these map listeners
+	// new every render too, with `onPick` in the dependency list these map listeners
 	// were torn down and re-added on every keystroke in the search field.
 	// `useEffectEvent` is the shape for exactly this: an event handler that always
 	// sees the latest props without being a reactive dependency.

@@ -292,7 +292,7 @@ export interface CoarserAnswerOpts {
  */
 export function coarserAnswerMarker(opts: CoarserAnswerOpts): QueryIntentMarker | null {
 	// `venue` and `plus_code` rank as house-grade in `tierRank`, so an entity answer
-	// and a decoded plus code satisfy every floor here and raise nothing — which is correct:
+	// and a decoded plus code satisfy every floor here and raise nothing, which is correct:
 	// a resolved venue is the place the query asked about.
 	const reached = tierRank(opts.reachedTier)
 
@@ -300,7 +300,8 @@ export function coarserAnswerMarker(opts: CoarserAnswerOpts): QueryIntentMarker 
 
 	if (!unused.length) return null
 
-	// The finest floor any unused component sets — what the answer would have had to reach to use all of them.
+	// The finest floor any unused component sets.
+	// What the answer would have had to reach to use all of them.
 	let floorTier = unused[0]![1]
 
 	for (const [, floor] of unused) {

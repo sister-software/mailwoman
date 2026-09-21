@@ -181,7 +181,8 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 
 	/**
 	 * The full number ladder for one normalized street key: exact, then the range low-end,
-	 * then letter-suffix spacing with the base-number fall — see each rung's note in place.
+	 * then letter-suffix spacing with the base-number fall.
+	 * See each rung's note in place.
 	 */
 	#findForKey(
 		streetNorm: StreetKey,

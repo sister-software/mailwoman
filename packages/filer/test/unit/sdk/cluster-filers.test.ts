@@ -760,7 +760,7 @@ describe("clusterInferredLinks — cross-vintage supersession", () => {
 
 		expect(secondRun).toHaveLength(1)
 		expect(secondRun[0]?.valid_to).toBeNull()
-		// valid_from is the separate, always-ISO `validFrom` option — never the (non-ISO) sourceVintage label.
+		// valid_from is the separate, always-ISO `validFrom` option, never the (non-ISO) sourceVintage label.
 		expect(secondRun[0]?.valid_from).toBe("2026-07-01")
 	})
 

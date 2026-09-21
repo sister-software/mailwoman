@@ -23,9 +23,10 @@ export function argument(config: CommandArgumentMetadata): string {
 }
 
 /**
- * The version of the `mailwoman` package this process ships in — read from the
- * package's own manifest via `resolvePackagePath`, so dev checkouts, `out/` trees,
- * and published installs all answer the same file.
+ * The version of the `mailwoman` package this process ships in.
+ *
+ * Read from the package's own manifest via `resolvePackagePath`, so dev checkouts,
+ * `out/` trees, and published installs all answer the same file.
  *
  * @throws {TypeError} When the manifest carries no string version — a broken install
  * rather than a formatting choice.

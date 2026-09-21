@@ -183,7 +183,7 @@ export interface BBox {
  * though the whole extract region was in fact covered by the source.
  *
  * An explicit `observedRows: 0` cell carries the meaning "surveyed, nothing found
- * here" — never conflate it with a cell absent from `layer_coverage` entirely
+ * here", never conflate it with a cell absent from `layer_coverage` entirely
  * (unsurveyed/unknown, the interface's meaning-of-zero rule).
  *
  * Rows whose H3 cell falls outside the bbox's own polyfilled cell set are not represented

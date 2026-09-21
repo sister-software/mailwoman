@@ -189,7 +189,7 @@ function wilsonHalfWidth(successes: number, n: number): number {
  * The equivalence verdict as a sentence, which has three readings and not two.
  *
  * Failing an equivalence test does not mean the arms differ, and it does not mean nothing
- * was learned — which of those it means depends on where the point estimate fell.
+ * was learned, which of those it means depends on where the point estimate fell.
  * A difference already outside the bound is a difference.
  *
  * A small difference with an interval too wide to place is an underpowered run.

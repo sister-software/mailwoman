@@ -45,8 +45,8 @@ const GEOCODER_UNAVAILABLE_DETAIL =
  *
  * `subject` is a wire value rather than a label.
  * `<subject> not available` is published verbatim in the http API reference table
- * and in the docker deploy guide, so a caller branching on it is doing what the
- * docs told them to — and `/v1/resolve` answers `resolver`, not `geocoder`,
+ * and in the docker deploy guide, so a caller branching on it is doing what
+ * the docs told them to, and `/v1/resolve` answers `resolver`, not `geocoder`,
  * because the method it found missing is `engine.resolveTree`.
  *
  * Rename this function freely.

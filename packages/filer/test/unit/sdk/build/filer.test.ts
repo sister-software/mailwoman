@@ -275,8 +275,8 @@ describe("buildFilerDatabase", () => {
 			expect(edge.source_vintage.length).toBeGreaterThan(0)
 			expect(edge.assertion).toBe("authoritative")
 			expect(edge.valid_from.length).toBeGreaterThan(0)
-			// sourceVintage above ("2026-Q1") is deliberately not ISO — valid_from must never inherit that shape
-			// : every edge's valid_from is ISO YYYY-MM-DD regardless of source.
+			// sourceVintage above ("2026-Q1") is deliberately not ISO — valid_from must never
+			// inherit that shape : every edge's valid_from is ISO YYYY-MM-DD regardless of source.
 			expect(edge.valid_from).toMatch(/^\d{4}-\d{2}-\d{2}$/)
 		}
 	})
@@ -302,7 +302,7 @@ describe("buildFilerDatabase", () => {
 			expect(edge.to_node_id).not.toContain("John Doe")
 		}
 
-		// DC-agent fields still recorded — but only as plain attributes, never as relationship evidence.
+		// DC-agent fields still recorded, but only as plain attributes, never as relationship evidence.
 		const dcAgentAttr = await db
 			.selectFrom("filer_attribute")
 			.selectAll()
@@ -404,7 +404,9 @@ describe("buildFilerDatabase", () => {
 		const out = scratch.resolve("filer.db")
 
 		const malformedRows: ProviderListRow[] = [
-			// Two different, unrelated providers, both with a blank frn. Without the guard these would silently share one degenerate `frn:` node, falsely asserting they are the same filer.
+			// Two different, unrelated providers, both with a blank frn.
+			// Without the guard these would silently share one degenerate `frn:` node,
+			// falsely asserting they are the same filer.
 			{ providerID: 900_001, frn: "" as ProviderListRow["frn"], holdingCompany: null },
 			{ providerID: 900_002, frn: "" as ProviderListRow["frn"], holdingCompany: null },
 		]

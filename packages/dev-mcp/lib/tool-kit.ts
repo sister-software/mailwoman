@@ -54,7 +54,7 @@ export interface Provenance {
  * The input-set half of a provenance block, on its own.
  *
  * An external arm has no engine, no tree fingerprint and no effective config, but it is
- * measured over exactly the same rows — and the denominators, hash and selection kind are
+ * measured over exactly the same rows, and the denominators, hash and selection kind are
  * the half that must be identical across a comparison's two arms whatever either arm is.
  */
 export function inputSetProvenance(set: ResolvedInputSet): Provenance["input_set"] {
@@ -104,7 +104,7 @@ export function provenanceFor(
  * should come from rather than merely accepting a number.
  *
  * Declared out of line because the union nests four calls deep inside the set schema, which
- * `unicorn/max-nested-calls` refuses — and rightly: a reader should meet this shape under its own name.
+ * `unicorn/max-nested-calls` refuses, and rightly: a reader should meet this shape under its own name.
  */
 const LITERAL_INPUT_WITH_TRUTH_SCHEMA = z.object({
 	input: z.string().min(1),
@@ -265,7 +265,7 @@ export function componentsOf(run: GeocodeRun): Record<string, string> {
  * `--debug` pane shows are returnable here.
  * Both forms go back: the structured trace is what makes evidence diffable across arms,
  * and the rendered rows are what let a human read it in a transcript without an
- * agent paraphrasing — which is where detail goes missing.
+ * agent paraphrasing, which is where detail goes missing.
  */
 /**
  * The parse trace without its matrices.
@@ -491,16 +491,17 @@ export interface ComparedRow {
 	issues_a: string[]
 	issues_b: string[]
 	/**
-	 * Whether the two arms' place-identity chains differ — present only when both
-	 * arms stated one (see `ExternalAnswer.place_ids`).
+	 * Whether the two arms' place-identity chains differ.
+	 *
+	 * Present only when both arms stated one (see `ExternalAnswer.place_ids`).
 	 *
 	 * Deliberately outside `differed`: the coordinate-level zero-diff interface
 	 * batteries pin on is unchanged, and identity is its own claim.
 	 */
 	identity_differed?: boolean
 	/**
-	 * Whether the two arms answered with different result tiers — present only
-	 * when both arms answered and stated one.
+	 * Whether the two arms answered with different result tiers.
+	 * Present only when both arms answered and stated one.
 	 *
 	 * Outside `differed` for the same reason as identity: a tier is a claim about
 	 * the answer rather than its coordinate.

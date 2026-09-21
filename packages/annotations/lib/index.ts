@@ -77,8 +77,9 @@ export interface NUTS {
 /**
  * The native enrichment set.
  *
- * Every field is optional. an annotator fills the fields it owns. camelCase throughout,
- * structured sub-objects — the internal representation the serializers map from.
+ * Every field is optional.
+ * An annotator fills the fields it owns. camelCase throughout, structured sub-objects —
+ * the internal representation the serializers map from.
  */
 export interface AnnotationSet {
 	dms?: DMS
@@ -322,8 +323,10 @@ export interface SchemaOrgGeoCoordinates {
  * A schema.org [`PostalAddress`](https://schema.org/PostalAddress) node.
  *
  * Only populated fields are emitted (never `null`).
- * `streetAddress` is a single opaque line — the house-number/street/unit distinction
- * is intentionally collapsed (schema.org has no structured slots for them).
+ * `streetAddress` is a single opaque line.
+ *
+ * The house-number/street/unit distinction is intentionally collapsed
+ * (schema.org has no structured slots for them).
  *
  * `addressCountry` is ISO-3166 alpha-2.
  */
@@ -357,7 +360,9 @@ export interface SchemaOrgPlace {
 /**
  * The neutral resolved-address input {@link toSchemaOrg} serializes.
  *
- * Every field is optional. an absent field is omitted from the output entirely (no `null`s).
+ * Every field is optional.
+ * An absent field is omitted from the output entirely (no `null`s).
+ *
  * Mirrors the {@link OpenCageAnnotations} precedent: one native shape,
  * a dedicated serializer per wire format.
  */
@@ -394,9 +399,11 @@ export interface SchemaOrgInput {
  * Collapse parsed street parts into one opaque `streetAddress` line — the schema.org
  * lossy-by-design collapse (house number + street + unit → a single space-joined string).
  *
- * Parts are number-first, correct for the shipped en-US / fr-FR tiers. callers with
- * `@mailwoman/formatter` render locale-aware (e.g. de-DE number-last) instead.
- * Blank parts are dropped. an all-empty input yields `""`.
+ * Parts are number-first, correct for the shipped en-US / fr-FR tiers.
+ * Callers with `@mailwoman/formatter` render locale-aware (e.g. de-DE number-last) instead.
+ *
+ * Blank parts are dropped.
+ * An all-empty input yields `""`.
  */
 export function composeStreetAddress(parts: { houseNumber?: string; street?: string; unit?: string }): string {
 	return [parts.houseNumber, parts.street, parts.unit]
@@ -406,12 +413,18 @@ export function composeStreetAddress(parts: { houseNumber?: string; street?: str
 }
 
 /**
- * Serialize a resolved address into a schema.org `Place` JSON-LD object — `Place { geo: GeoCoordinates, address:
- * PostalAddress }` (#1052). An output projection, lossy by design: `streetAddress` is one opaque string, and
- * tiers/confidence/provenance don't fit the core vocabulary, so they're dropped rather than shoehorned into an
- * extension property. Only populated fields are emitted — absent fields are omitted entirely (never `null`).
- * `addressCountry` is ISO-3166 alpha-2 (uppercased). `geo` is emitted only when both coordinates are finite. the
- * `address` block only when at least one address field is present.
+ * Serialize a resolved address into a schema.org `Place` JSON-LD object —
+ * `Place { geo: GeoCoordinates, address: PostalAddress }` (#1052).
+ *
+ * An output projection, lossy by design: `streetAddress` is one opaque string,
+ * and tiers/confidence/provenance don't fit the core vocabulary, so they're dropped
+ * rather than shoehorned into an extension property.
+ * Only populated fields are emitted — absent fields are omitted entirely (never `null`).
+ *
+ * `addressCountry` is ISO-3166 alpha-2 (uppercased).
+ * `geo` is emitted only when both coordinates are finite.
+ *
+ * The `address` block only when at least one address field is present.
  */
 export function toSchemaOrg(input: SchemaOrgInput): SchemaOrgPlace {
 	const place: SchemaOrgPlace = { "@context": "https://schema.org", "@type": "Place" }

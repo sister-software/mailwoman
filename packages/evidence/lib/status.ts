@@ -17,7 +17,8 @@
 /**
  * The five claims the evidence can license about a value, ordered from the strongest authority to none.
  *
- * Each result carries exactly one. the constants are the wire values.
+ * Each result carries exactly one.
+ * The constants are the wire values.
  */
 export const EpistemicStatus = {
 	/**
@@ -37,7 +38,8 @@ export const EpistemicStatus = {
 	 */
 	Derived: "derived",
 	/**
-	 * No row matched. the value is the intersection of stated constraints.
+	 * No row matched.
+	 * The value is the intersection of stated constraints.
 	 *
 	 * Never presentable as retrieved.
 	 */
@@ -78,7 +80,7 @@ export type Assertion = (typeof Assertion)[keyof typeof Assertion]
  * string on the same row is an address somebody filed with it.
  *
  * One verdict for the whole source cannot record both, and the compressed form reads as
- * "trust nothing here" — which discards the identity the register does assign.
+ * "trust nothing here", which discards the identity the register does assign.
  *
  * The constants are the wire values.
  */
@@ -116,7 +118,8 @@ export const AssertedProposition = {
 	 */
 	Grammar: "grammar",
 	/**
-	 * Postal routing that is not geographic hierarchy. bfpo, APO/FPO/DPO, a foreign postcode prefix.
+	 * Postal routing that is not geographic hierarchy.
+	 * Bfpo, APO/FPO/DPO, a foreign postcode prefix.
 	 */
 	Routing: "routing",
 } as const

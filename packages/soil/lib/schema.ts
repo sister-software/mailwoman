@@ -83,7 +83,8 @@ export interface SoilMapUnitAreaTable {
 	max_lat: number
 	max_lon: number
 	/**
-	 * The authority's ring coordinates, unsimplified — see `@mailwoman/spatial`'s ring blob for the layout.
+	 * The authority's ring coordinates, unsimplified.
+	 * See `@mailwoman/spatial`'s ring blob for the layout.
 	 */
 	rings: Uint8Array
 }

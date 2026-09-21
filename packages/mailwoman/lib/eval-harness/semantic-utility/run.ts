@@ -75,8 +75,9 @@ export interface ProbeRowObservation extends SemanticObservation {
 }
 
 /**
- * What the run did about the injected semantic route — read from the route that
- * was built, never from the arm label.
+ * What the run did about the injected semantic route.
+ *
+ * Read from the route that was built, never from the arm label.
  */
 export interface ProbeSemanticRouteRecord extends Partial<SemanticRouteIdentity> {
 	/**
@@ -119,7 +120,7 @@ export interface SemanticProbeOptions extends POIBoardOptions {
 	 */
 	arm?: ProbeArm
 	/**
-	 * Override the frozen pre-registration — for a test that wants a synthetic definition.
+	 * Override the frozen pre-registration, for a test that wants a synthetic definition.
 	 *
 	 * A run with no override reads the committed one.
 	 */

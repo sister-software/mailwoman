@@ -100,9 +100,9 @@ import { resolveWOFHotDB } from "#eval-harness/wof-hot-db"
  * Every `.md` the runner writes goes through this, so the artifacts match the pre-migration bytes.
  *
  * This is the whole migration's required assumption in one line.
- * `console.log(x)` writes `x` then a newline, and zx handed the concatenation of those writes back as
- * `.stdout`; a sink that records one entry per `console.log` call therefore reproduces the same
- * bytes — including a multi-line argument (one call, embedded newlines, one trailing newline)
+ * `console.log(x)` writes `x` then a newline, and zx handed the concatenation of those writes
+ * back as `.stdout`; a sink that records one entry per `console.log` call therefore reproduces
+ * the same bytes, including a multi-line argument (one call, embedded newlines, one trailing newline)
  * and a bare `console.log()` (the empty string, one newline).
  *
  * Exported for `promotion-eval-sinks.test.ts`.
@@ -223,7 +223,7 @@ export interface PromotionEvalOptions {
  * The `.json` suffix is optional, because the help has always advertised "a spec name"
  * and a spec name is what people type.
  * Before that was true, `--spec v5.3.0-family` fell through to `readFileSync("v5.3.0-family")`
- * and died on a bare enoent naming a file nobody asked for — which is how it read on 2026-07-16.
+ * and died on a bare enoent naming a file nobody asked for, which is how it read on 2026-07-16.
  */
 /**
  * The eval specs, beside this module in the source tree — tsc emits no `.json`,
@@ -461,7 +461,7 @@ async function runLoreGuards(env: {
  *
  * Runs on the ship artifact against the slim hot DB the demo serves.
  * Env-restricted like the other artifact-dependent legs: skips with a loud warning
- * when the DB is absent so CI stays green without it — but an eval spec that floors
+ * when the DB is absent so CI stays green without it, but an eval spec that floors
  * `cascade.demo_smoke` will then fail on the missing sidecar (by design).
  *
  * Its own function because it is self-contained and `runPromotionEval` is at the statement ceiling.
@@ -854,7 +854,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	// lacks (the 2026-06-11 lesson: #520/#521/#522 all shipped through green per-layer checks).
 	// Runs on the ship artifact against the slim hot DB the demo serves.
 	// Env-restricted like the other artifact-dependent legs: skips with a loud warning
-	// when the DB is absent so CI stays green without it — but an eval spec that floors
+	// when the DB is absent so CI stays green without it, but an eval spec that floors
 	// `cascade.demo_smoke` will then fail on the missing sidecar (by design).
 	await profile.time("demo-cascade", undefined, () =>
 		runDemoCascadeLeg({

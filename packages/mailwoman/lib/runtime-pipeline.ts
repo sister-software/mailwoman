@@ -153,8 +153,8 @@ export interface CreateRuntimePipelineOpts {
 	 * Coarse country router (#244, soft prior) — **default-on (#244 M2, after the misroute check).** A
 	 * confident in-map guess becomes a soft country prior the resolver re-rank boosts (never filters).
 	 *
-	 * - `undefined` (default) → the bundled placer ({@link loadDefaultPlaceCountry}, open-set @ 0.9) is lazy-loaded on the
-	 *   first pipeline call and applied (no prior if the model can't be resolved).
+	 * - `undefined` (default) → the bundled placer ({@link loadDefaultPlaceCountry}, open-set @ 0.9) is
+	 *   lazy-loaded on the first pipeline call and applied (no prior if the model can't be resolved).
 	 * - A function → use it (a custom placer / threshold).
 	 * - `false` → disabled (no prior. Byte-stable pre-M2 behavior).
 	 *
@@ -197,10 +197,12 @@ export interface CreateRuntimePipelineOpts {
 	 * positive-evidence-conditional street-splice into the argmax tree
 	 * (golden-safe: 0.000 golden regression, +16.9pp FR fragment street, measured 2026-07-18).
 	 *
-	 * - `undefined` (default) → **default-on**: when the classifier ships a span grammar (a v3+ span-head bundle), the
-	 *   bundled FR index ({@link loadDefaultStreetEvidence}, `street-centroids-fr.db`) is lazy-loaded on the first call
-	 *   and the Stage-3 classifier reranks the street. A pre-v3 (span-less) classifier, or a missing database, → no-op
-	 *   (byte-stable): the rerank can only ADD an atlas-confirmed street, never remove a model call.
+	 * - `undefined` (default) → **default-on**: when the classifier ships
+	 *   a span grammar (a v3+ span-head bundle), the bundled FR index
+	 *   ({@link loadDefaultStreetEvidence}, `street-centroids-fr.db`) is lazy-loaded on
+	 *   the first call and the Stage-3 classifier reranks the street.
+	 *   A pre-v3 (span-less) classifier, or a missing database, → no-op (byte-stable):
+	 *   the rerank can only ADD an atlas-confirmed street, never remove a model call.
 	 * - A `StreetLocalityEvidence` → use it (a custom / multi-country index).
 	 * - `false` → disabled (no rerank).
 	 */
@@ -215,13 +217,14 @@ export interface CreateRuntimePipelineOpts {
 	 * same pipeline with the poi stage off (recursion guard).
 	 * An explicit `classifyKind` override wins over the poi-aware default.
 	 *
-	 * - `undefined` (default) — same as `true`: intent-only mode. The stage extracts the intent but never executes it
-	 *   (today's Plan-2 behavior), except the build-local abstain still fires (`requires_build_local_layer` needs no db —
-	 *   see `poi-executor.ts`).
+	 * - `undefined` (default) — same as `true`: intent-only mode.
+	 *   The stage extracts the intent but never executes it (today's Plan-2 behavior), except the
+	 *   build-local abstain still fires (`requires_build_local_layer` needs no db — see `poi-executor.ts`).
 	 * - `true` — explicit intent-only mode, same as the default.
-	 * - `{ poiDatabasePath }` — additionally executes: a `POILookup` is constructed lazily on the first pipeline call
-	 *   (mirrors the {@link placeCountry} lazy-load pattern so this factory stays synchronous) and wired into the
-	 *   executor, so a matched intent comes back with `results` attached (or an `anchor_required` abstain).
+	 * - `{ poiDatabasePath }` — additionally executes: a `POILookup` is constructed lazily
+	 *   on the first pipeline call (mirrors the {@link placeCountry} lazy-load pattern
+	 *   so this factory stays synchronous) and wired into the executor, so a matched intent
+	 *   comes back with `results` attached (or an `anchor_required` abstain).
 	 * - `false` — disabled: the pipeline is byte-identical to pre-flag builds.
 	 */
 	poiQueryKind?: boolean | { poiDatabasePath?: PathBuilderLike }
@@ -505,8 +508,9 @@ export function createRuntimePipeline(
 	// #727 phase-4c default-on: with no explicit `streetEvidence` (and not `false`), auto-load the bundled FR index once on the first call — but only if the classifier ships a span grammar (else there is no k-best to rerank). Resolved lazily for the same reason placeCountry is: keep the factory synchronous. An explicitly-passed index already wrapped the classifier above.
 	let streetEvidenceResolved = opts.streetEvidence !== undefined
 
-	// FST-distribution arc: auto-load the weights-package gazetteer (and the check's morphology matcher)
-	// on the first call — same lazy convention (file I/O stays out of the synchronous factory).
+	// FST-distribution arc: auto-load the weights-package gazetteer
+	// (and the check's morphology matcher) on the first call.
+	// Same lazy convention (file I/O stays out of the synchronous factory).
 	// Skipped entirely on explicit opt-out (`fst: false`) or when the caller shipped their own matcher.
 	const autoFST = opts.fst === undefined
 	let fstResolved = !autoFST

@@ -52,7 +52,7 @@ export const ADMIN_LADDER_POSTCODE_FIRST: ReadonlyArray<string> = [
  * The admin fallback order everywhere else: the locality tiers lead
  * and the postcode sits between them and `region`.
  *
- * This is the #945 epoch convention and the default rather than the universal answer —
+ * This is the #945 epoch convention and the default rather than the universal answer,
  * which address systems leave it is `AREA_POSTCODE_FINER_THAN_LOCALITY`'s question,
  * and that table carries the per-country measurement.
  */
@@ -74,7 +74,7 @@ export const ADMIN_LADDER_LOCALITY_FIRST: ReadonlyArray<string> = [
  *
  * The first two are needed together because a full unit shape the resolver answered
  * with a coarser stem is area-grade, whatever the user typed.
- * `country` is separate evidence and answers a different question — not how tight this code is,
+ * `country` is separate evidence and answers a different question, not how tight this code is,
  * but whether this address system's codes are tighter than its localities at all.
  */
 export interface ResolvedPostcodeHit {

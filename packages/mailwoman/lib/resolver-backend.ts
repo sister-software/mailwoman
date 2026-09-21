@@ -39,8 +39,10 @@ import { join, resolvePath, type PathBuilderLike } from "path-ts"
 import { $public } from "#env"
 
 /**
- * The candidate gazetteer's conventional home — where `mailwoman data pull candidate`
- * writes it, and where every caller looks when nothing points somewhere else.
+ * The candidate gazetteer's conventional home.
+ *
+ * Where `mailwoman data pull candidate` writes it, and where every caller looks
+ * when nothing points somewhere else.
  */
 export function conventionCandidateDBPath(dataRoot: PathBuilderLike = mailwomanDataRoot()): string {
 	return resolvePath(dataRoot, "wof", "candidate.db")

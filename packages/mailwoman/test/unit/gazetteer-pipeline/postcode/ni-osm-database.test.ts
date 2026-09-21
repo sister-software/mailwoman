@@ -58,11 +58,14 @@ beforeAll(async () => {
 			copyright: "The data included in this document is from www.openstreetmap.org.",
 		},
 		elements: [
-			// BT3 9QQ across three elements, two of them ways. The medoid must land on one of the three, and the mean (54.6100, -5.8900) is deliberately not a member.
+			// BT3 9QQ across three elements, two of them ways.
+			// The medoid must land on one of the three, and the mean (54.6100, -5.8900)
+			// is deliberately not a member.
 			node(1, "BT3 9QQ", 54.6, -5.88),
 			way(2, "BT3 9QQ", 54.61, -5.89),
 			way(3, "BT3 9QQ", 54.62, -5.9),
-			// Lowercase + a doubled inner space: both normalize to the same single-space uppercase code, so this is one postcode with two attestations rather than two codes and a typo.
+			// Lowercase + a doubled inner space: both normalize to the same single-space uppercase code,
+			// so this is one postcode with two attestations rather than two codes and a typo.
 			node(4, "bt1 5gs", 54.597, -5.93),
 			node(5, "BT1  5GS", 54.598, -5.931),
 			// The malformed value the real acquisition contains exactly one of.

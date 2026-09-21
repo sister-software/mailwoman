@@ -526,8 +526,8 @@ const noPrivateImportInTestRule: Rule = {
  * `fileURLToPath(import.meta.resolve(…))` is string plumbing around a question with a typed answer.
  *
  * `@mailwoman/core/module/resolvers` owns it: `resolveModulePath` for a file a
- * specifier names, `resolvePackageDirectory` for a package's root. a module's own
- * neighbours are `resolvePath(import.meta.dirname, …)`.
+ * specifier names, `resolvePackageDirectory` for a package's root.
+ * A module's own neighbours are `resolvePath(import.meta.dirname, …)`.
  */
 const noImportMetaResolveRule: Rule = {
 	meta: {
@@ -563,9 +563,10 @@ const noImportMetaResolveRule: Rule = {
 }
 
 /**
- * `resolvePath(import.meta.dirname, "../../x")` names a file by counting directories
- * up from wherever this module sits — a count that changes when the module moves
- * and differs between the source tree and `out/`.
+ * `resolvePath(import.meta.dirname, "../../x")` names a file by counting
+ * directories up from wherever this module sits.
+ *
+ * A count that changes when the module moves and differs between the source tree and `out/`.
  *
  * A package's own file is `resolvePackagePath("<package>", …)`; a repository file is `repoRootPath(…)`.
  * Descending from the module's own directory (`"fixtures/x.json"`) is not the problem and stays.
@@ -653,14 +654,15 @@ function isVariableIndex(node: AstNode | undefined): boolean {
 }
 
 /**
- * Whether a `for` header counts down from a length to 1: `for (let i = xs.length - 1. i > 0. i--)`,
+ * Whether a `for` header counts down from a length to 1: `for (let i = xs.length - 1. I > 0. I--)`,
  * or the same written `i >= 1`.
  *
  * All three clauses are required, and they are not sufficient on their own —
  * heapsort's extraction phase satisfies every one of them.
- * What the body check adds is that both swapped indices are variables. see {@link isVariableIndex}.
+ * What the body check adds is that both swapped indices are variables.
+ * See {@link isVariableIndex}.
  *
- * Known miss: a loop whose bound is hoisted (`const n = xs.length. for (let i = n - 1. …)`)
+ * Known miss: a loop whose bound is hoisted (`const n = xs.length. For (let i = n - 1. …)`)
  * reads as a plain descent and is not reported.
  * Widening the init clause to any identifier would report every backwards loop in
  * the repository, which is a worse trade for a suggestion rule.
@@ -688,8 +690,9 @@ function isDescendingFromLength(node: AstNode): boolean {
 /**
  * Whether a loop body swaps two computed indices of one array.
  *
- * Two forms, because both are written here: the destructured `[xs[i], xs[j]] = [xs[j], xs[i]]`, and the temporary `tmp
- * = xs[i]; xs[i] = xs[j]; xs[j] = tmp`, which shows up as two index writes to the same base.
+ * Two forms, because both are written here: the destructured `[xs[i], xs[j]] = [xs[j], xs[i]]`,
+ * and the temporary `tmp = xs[i]; xs[i] = xs[j]; xs[j] = tmp`, which shows up
+ * as two index writes to the same base.
  *
  * Reads the body's own statements rather than walking the subtree.
  * A generic walk over an oxlint node's values follows its back-references and never terminates,
@@ -796,9 +799,7 @@ const preferHomeRule: Rule = {
 	},
 	create(context: RuleContext) {
 		/**
-		 * The quasis of tagged templates seen so far. A tagged template is a DSL rather than a string built by hand —
-		 * `addr\`${locality} ${region} ${postcode}`` in codex's layout table is the order this rule points people at — and
-		 * the walk visits the tag before its quasi, so recording it here is enough to skip it below.
+		 * The quasis of tagged templates seen so far. A tagged template is a DSL rather than a string built by hand — `addr\`${locality} ${region} ${postcode}`` in codex's layout table is the order this rule points people at — and the walk visits the tag before its quasi, so recording it here is enough to skip it below.
 		 */
 		const tagged = new WeakSet<object>()
 
@@ -880,11 +881,14 @@ const preferHomeRule: Rule = {
 }
 
 /**
- * A package re-exporting another workspace package's names (`export { X } from "@mailwoman/core"`, `export * from
- * "@mailwoman/core/resolver"`) gives one declaration two public homes, and a reader can no longer tell from an import
- * which package owns a type. The declaring package is the only public home: a consumer imports `Resolver` from
- * `@mailwoman/core/resolver`, never through `@mailwoman/resolver`. `node:*` and third-party re-exports are not in scope
- * — `@mailwoman/core/fs` re-exporting `node:stream` is the funnel that keeps the builtin out of every other package —
+ * A package re-exporting another workspace package's names (`export { X } from "@mailwoman/core"`,
+ * `export * from "@mailwoman/core/resolver"`) gives one declaration two public homes,
+ * and a reader can no longer tell from an import which package owns a type.
+ *
+ * The declaring package is the only public home: a consumer imports `Resolver` from
+ * `@mailwoman/core/resolver`, never through `@mailwoman/resolver`.
+ * `node:*` and third-party re-exports are not in scope — `@mailwoman/core/fs` re-exporting
+ * `node:stream` is the funnel that keeps the builtin out of every other package —
  * and a package's own `#` map is the module naming its siblings rather than a foreign name.
  */
 const noCrossPackageReexportRule: Rule = {

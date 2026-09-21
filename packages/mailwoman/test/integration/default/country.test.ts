@@ -46,8 +46,8 @@ const CLI_TEST_TIMEOUT_MS = 120_000
  * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs
  * seconds before any assertion runs and then queues behind {@link withCLISpawnLockAsync}.
  * A per-test annotation has to be remembered on each new test, and the one that forgets
- * inherits the global 15s — which kills the test before the thing being measured
- * can report, surfacing as a bare timeout with no attribution.
+ * inherits the global 15s, which kills the test before the thing being measured can report,
+ * surfacing as a bare timeout with no attribution.
  */
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 

@@ -261,7 +261,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	// matching `HealthRouter`'s "answers even when broken" interface.
 	const health: MailwomanAPIEngine["health"] = () => buildHealthData()
 
-	// Parse needs only the model weights — not the gazetteer.
+	// Parse needs only the model weights, not the gazetteer.
 	// Load them independently of the WOF-data check below so `/v1/parse` answers
 	// whenever weights resolve, even on a geocode-degraded boot.
 	// The classifier instance loaded here is reused by the geocode stack below — weights load once per boot.

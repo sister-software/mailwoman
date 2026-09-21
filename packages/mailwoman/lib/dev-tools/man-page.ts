@@ -85,7 +85,8 @@ export async function renderManPage(cliPath: string = CLI_PATH): Promise<string>
 	const version = (await runFile("node", [cliPath, "--version"])).stdout.trim()
 
 	const sections: string[] = [
-		// No date field on purpose: the page regenerates from the help tree, and a wall-clock stamp would make the freshness test fail on every calendar day rather than on real drift.
+		// No date field on purpose: the page regenerates from the help tree, and a wall-clock stamp
+		// would make the freshness test fail on every calendar day rather than on real drift.
 		`.TH MAILWOMAN 1 "" "mailwoman ${version}" "User Commands"`,
 		".SH NAME",
 		"mailwoman \\- calibrated, retrieval\\-augmented postal\\-address parser and geocoder",

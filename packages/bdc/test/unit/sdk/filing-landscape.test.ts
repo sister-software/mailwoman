@@ -98,14 +98,15 @@ const PROVIDER_A = 130_077
 const PROVIDER_B = 130_080
 
 /**
- * 5 rows, one location each (`includeLocationIDs` stays default-off. one row per (geoid,
+ * 5 rows, one location each (`includeLocationIDs` stays default-off. One row per (geoid,
  * provider, technology) triple keeps the block-grain collapse a no-op, so `result.rows`
  * and the hand-computed census in criterion 3 agree without any surprise collapsing):
  *
  * - SF: provider A / tech 50 / 1000 Mbps (gigabit), provider B / tech 40 / 80 Mbps (25-100)
- * - NY: provider A / tech 50 / 1000 Mbps (gigabit — same bucket/tech/provider as SF, block_count sums to 2), provider B /
- *   tech 10 / 10 Mbps (under-25)
- * - Divergent: provider A / tech 30 / 500 Mbps (100-1000) — not queried by Criteria 1–4, only by the fix-round-1 tests.
+ * - NY: provider A / tech 50 / 1000 Mbps (gigabit — same bucket/tech/provider as SF,
+ *   block_count sums to 2), provider B / tech 10 / 10 Mbps (under-25)
+ * - Divergent: provider A / tech 30 / 500 Mbps (100-1000) — not queried by Criteria 1–4,
+ *   only by the fix-round-1 tests.
  */
 function fixtureRows(): BDCAvailabilityRow[] {
 	return [
@@ -282,7 +283,7 @@ describe("filingLandscape — Check 2 (extended): coverage-check is required, no
 
 		// SF's rows must not leak into filings now that SF is unknown: the SF-only
 		// (PROVIDER_B/tech40/25-100) entry must be absent entirely, and the gigabit entry
-		// PROVIDER_A/tech50 shares with NY must drop from block_count 2 to 1 (NY only) —
+		// PROVIDER_A/tech50 shares with NY must drop from block_count 2 to 1 (NY only),
 		// never silently kept at 2 as if SF still counted as surveyed.
 		expect(result.filings).toEqual([
 			{ provider_id: PROVIDER_A, technology_code: 50, speed_bucket: BDC_SPEED_BUCKET_GIGABIT, block_count: 1 },
@@ -436,8 +437,8 @@ describe("speed bucket boundaries", () => {
 
 	describe("SQL CASE agrees with the JS mirror at every boundary", () => {
 		// One geoid per boundary value, all at the same centroid
-		// (the geoid string rather than location, is what `filingLandscape` groups on) —
-		// same provider/tech throughout, so the only thing that can split the resulting
+		// (the geoid string rather than location, is what `filingLandscape` groups on).
+		// Same provider/tech throughout, so the only thing that can split the resulting
 		// groups is the SQL case's bucketing of `max_advertised_download_speed`.
 		const BOUNDARY_PROVIDER = 999_001
 		const BOUNDARY_TECH = 99

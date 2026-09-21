@@ -460,7 +460,7 @@ export class BDCClient extends APIClient<BDCClientConfig> {
 	 * in (the validator requires a `data`-keyed object), and even if it accepted one,
 	 * serializing a multi-hundred-megabyte archive through `JSON.stringify` into a
 	 * hash-named file would be a second copy of a thing `downloadBDCFile` already
-	 * writes to disk itself — which is also where its real cache check lives
+	 * writes to disk itself, which is also where its real cache check lives
 	 * (it returns the extracted CSV's path without issuing any request when that file exists).
 	 *
 	 * Two disk copies of the same archive, one of them unreadable.
@@ -483,9 +483,9 @@ export class BDCClient extends APIClient<BDCClientConfig> {
 	/**
 	 * What this client has spent waiting on the throttle so far.
 	 *
-	 * At six seconds a grant, a bulk ingest is throttle-bound by construction, and this is the
-	 * measurement to assess a rate change against — see {@linkcode formatBDCThrottleStats}
-	 * for the one-line rendering `gazetteer build bdc` prints.
+	 * At six seconds a grant, a bulk ingest is throttle-bound by construction,
+	 * and this is the measurement to assess a rate change against.
+	 * See {@linkcode formatBDCThrottleStats} for the one-line rendering `gazetteer build bdc` prints.
 	 */
 	public throttleStats(): BDCThrottleStats {
 		return this.config.readThrottleStats()
@@ -639,7 +639,7 @@ export function createBDCClient(options: CreateBDCClientOptions = {}): BDCClient
 		// `minRequestIntervalMs` is the limit that actually spaces dispatches,
 		// and it is what makes this client honor 10/minute.
 		//
-		// The budget is still declared rather than dropped — and it is not free.
+		// The budget is still declared rather than dropped, and it is not free.
 		// The two limits compose (both must clear), so the budget's cooldown still fires, and it
 		// is a real wait: `APIClient` measures that cooldown to the end of the minute the window
 		// opened in, while the interval limit has by then spent only `(N-1) * 60000/N` ms of it.

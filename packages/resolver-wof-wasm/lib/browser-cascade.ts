@@ -50,7 +50,8 @@ export interface MailwomanLookupLike {
 		/**
 		 * Soft proximity hints (#938 — the demo's map viewport / user location).
 		 *
-		 * With bias present, exact-tier candidates near a hint sort ahead of distant ones. never a hard filter.
+		 * With bias present, exact-tier candidates near a hint sort ahead of distant ones.
+		 * Never a hard filter.
 		 * Absent → population-first order.
 		 */
 		bias?: Array<{ lat: number; lon: number; weight?: number }>
@@ -143,20 +144,24 @@ const WOF_RANK_REGION = 4
  * The rows here are the demo's own ordering and deliberately not `PLACETYPE_SPECIFICITY`:
  * `neighbourhood` sits below `locality` because that is the pin a viewer wants,
  * where the shared scale ranks it above because it covers less ground.
- * What is not the demo's own is where a postcode sits against the locality — that question has one
- * answer, and it comes from `@mailwoman/codex` for both sides (see {@link PIN_RANK_POSTCODE_FIRST}).
+ * What is not the demo's own is where a postcode sits against the locality.
+ *
+ * That question has one answer, and it comes from `@mailwoman/codex` for both
+ * sides (see {@link PIN_RANK_POSTCODE_FIRST}).
  */
 const PIN_RANK: Record<string, number> = {
 	locality: 5,
 	borough: 4,
 	localadmin: 4,
 	neighbourhood: 4,
-	// An area-class postcode sits below the whole locality tier rather than below `locality` alone. `borough` and `localadmin`
-	// are not peers of that tier, they are it — `PLACETYPE_FILTER_GROUPS.locality` is `{locality, borough, localadmin}`
-	// because a New England civil town is `localadmin` in WOF. Ranked at 4.5 this pinned the postcode on 404 of 2,000 US
-	// panel rows where Node returns the town, and the town was closer on 65.6% of them: `344 East Sheldon Rd, Sheldon,
-	// VT 05450` read 10.73 km from its ZIP centroid and 1.49 km from Sheldon. It still outranks `county`, so a
-	// bare-postcode query pins.
+	// An area-class postcode sits below the whole locality tier rather than below `locality` alone.
+	// `borough` and `localadmin` are not peers of that tier, they are it.
+	// `PLACETYPE_FILTER_GROUPS.locality` is `{locality, borough, localadmin}`
+	// because a New England civil town is `localadmin` in WOF.
+	// Ranked at 4.5 this pinned the postcode on 404 of 2,000 US panel rows where Node returns the
+	// town, and the town was closer on 65.6% of them: `344 East Sheldon Rd, Sheldon, VT 05450`
+	// read 10.73 km from its ZIP centroid and 1.49 km from Sheldon.
+	// It still outranks `county`, so a bare-postcode query pins.
 	postalcode: 3.5,
 	county: 3,
 	macrocounty: 3,
@@ -259,11 +264,13 @@ export async function runCascade(
 	const resolver = createWOFResolver(backend)
 
 	// adminCoherence is the point of the convergence (the passes the old cascade approximated);
-	// spanRescore + hierarchyCompletion ride their shared defaults. No defaultCountry — the demo is
-	// global by design (the placer/population ranking routes, never a hardcoded country).
-	// bias (#938): the map viewport (and optional geolocation) as soft proximity hints — an in-view
-	// namesake sorts ahead of a distant one at equal exact-tier, and no-bias stays byte-identical
-	// (48026 → Fraser MI vs Russi IT, the rule the library check pins). Omitted when empty.
+	// spanRescore + hierarchyCompletion ride their shared defaults.
+	// No defaultCountry — the demo is global by design
+	// (the placer/population ranking routes, never a hardcoded country).
+	// Bias (#938): the map viewport (and optional geolocation) as soft proximity hints.
+	// An in-view namesake sorts ahead of a distant one at equal exact-tier, and no-bias stays
+	// byte-identical (48026 → Fraser MI vs Russi IT, the rule the library check pins).
+	// Omitted when empty.
 	const resolved = (await resolver.resolveTree(tree, {
 		adminCoherence: true,
 		...(bias && bias.length ? { bias } : {}),
@@ -347,7 +354,8 @@ export async function runCascade(
 	// international postcode (10115 = Berlin DE and a New York US ZIP shape) must
 	// not out-pin the parsed city across countries.
 	// When the top pin is a postcode whose country differs from the resolved locality's,
-	// the locality wins the pin. the postcode stays in the list.
+	// the locality wins the pin.
+	// The postcode stays in the list.
 	const top = collected[0]!
 	const localityEntry = collected.find((c) => c.rank === WOF_RANK_LOCALITY || c.rank === WOF_RANK_REGION)
 

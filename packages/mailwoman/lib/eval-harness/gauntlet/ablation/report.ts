@@ -28,7 +28,7 @@ export { ABLATION_ABSENT } from "#eval-harness/gauntlet/ablation/expectation"
 /**
  * Render one cell for the matrix: `broken/support` plus the p90 displacement.
  *
- * A missing cell or a zero-support one renders as {@linkcode ABLATION_ABSENT} — never `0`, never `0.0%`.
+ * A missing cell or a zero-support one renders as {@linkcode ABLATION_ABSENT}, never `0`, never `0.0%`.
  * This is the meaning-of-zero rule at the only place a human reads the map and the
  * reason the renderer takes `AblationCell | undefined` rather than a number.
  */
@@ -68,8 +68,7 @@ function cellKey(component: string, locale: string): string {
 export function renderAblationMarkdown(
 	cells: readonly AblationCell[],
 	/**
-	 * The per-row outcomes behind `cells`. Needed because percentiles do not aggregate: a global p90 has to be taken over
-	 * the pooled displacements rather than over the per-cell p90s. Pass `[]` to render the matrix alone.
+	 * The per-row outcomes behind `cells`. Needed because percentiles do not aggregate: a global p90 has to be taken over the pooled displacements rather than over the per-cell p90s. Pass `[]` to render the matrix alone.
 	 */
 	rows: readonly AblationRowOutcome[],
 	meta: {

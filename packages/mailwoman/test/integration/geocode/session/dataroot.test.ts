@@ -41,7 +41,8 @@ describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weigh
 		// when the session was given a different root.
 		// Pre-fix, `artifacts.fstPath` pointed exactly there.
 		const outcome = await createGeocodeSession(
-			// The production defaults factory rather than a hand-built literal — the same lockstep factory the dev-mcp registry derives from, so this pin cannot drift from the shipped configuration.
+			// The production defaults factory rather than a hand-built literal — the same lockstep factory
+			// the dev-mcp registry derives from, so this pin cannot drift from the shipped configuration.
 			createGeocodeCommandOptions({
 				locale: "en-US",
 				dataRoot: BOGUS_ROOT.path.toString(),

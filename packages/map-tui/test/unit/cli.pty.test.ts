@@ -33,8 +33,9 @@ const MOUSE_SGR_DISABLE = `${ESC}[?1006l`
 const BRAILLE_PATTERN = /[⠀-⣿]/u
 
 /**
- * The status bar's coordinate/zoom field, which doubles as the ready signal —
- * its first appearance means a frame has been rendered and raw mode is on.
+ * The status bar's coordinate/zoom field, which doubles as the ready signal.
+ *
+ * Its first appearance means a frame has been rendered and raw mode is on.
  *
  * Therefore, keystrokes will land.
  */
@@ -52,8 +53,9 @@ const TEST_TIMEOUT_MS = 40_000
 
 /**
  * `script` is util-linux's, and this test's `-e` / `-c` spelling is too. macOS
- * ships a BSD `script` with different flags. rather than maintain two invocations
- * for a smoke test, the suite runs where CI runs.
+ * ships a BSD `script` with different flags.
+ *
+ * Rather than maintain two invocations for a smoke test, the suite runs where CI runs.
  */
 async function hasLinuxScript(): Promise<boolean> {
 	if (process.platform !== "linux") return false
@@ -160,7 +162,8 @@ describe.skipIf(!HAS_LINUX_SCRIPT)("map-tui bin (pty)", () => {
 			expect(samples.length).toBeGreaterThanOrEqual(4)
 			expect(samples.some((sample) => sample.endsWith("z13"))).toBe(true)
 
-			// The terminal must be exactly as it was found — anything less leaves an unusable shell.
+			// The terminal must be exactly as it was found.
+			// Anything less leaves an unusable shell.
 			expect(output).toContain(MOUSE_SGR_DISABLE)
 			expect(output).toContain(CURSOR_SHOW)
 			expect(output).toContain(ALT_SCREEN_EXIT)

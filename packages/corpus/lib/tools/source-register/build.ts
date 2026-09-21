@@ -588,8 +588,8 @@ async function readSources(
  * and none carries an `upstream` value at all.
  * Those two strings are the pass saying it did not determine the field,
  * so carrying them onto a record would turn "nobody looked" into a value a consumer
- * reads as an answer — and `ingestEligibilityProblems` would then stop reporting
- * the two blockers that apply to every source in the register.
+ * reads as an answer, and `ingestEligibilityProblems` would then stop reporting the
+ * two blockers that apply to every source in the register.
  */
 const UNRESOLVED_COLUMN_PLACEHOLDERS: ReadonlySet<string> = new Set(["varies", "country-specific", "unknown", "n/a"])
 

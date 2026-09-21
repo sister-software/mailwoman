@@ -148,7 +148,7 @@ export interface PerLocaleF1Options {
 	 *
 	 * Default false, which parses every row with no `inputMode` at all.
 	 * The classifier reads an absent register as `fragmented`, so that default feeds
-	 * `streetTypeLexicon` and `localitySurfaceLexicon` to every row — including the
+	 * `streetTypeLexicon` and `localitySurfaceLexicon` to every row, including the
 	 * 1,896 of 2,660 `us.jsonl` rows production withholds them from.
 	 *
 	 * Both readings are wanted: the existing one to compare against every floor reduce
@@ -222,7 +222,7 @@ function foldToComponents(flat: Partial<Record<ComponentTag, string>>, foldStree
 	}
 
 	if (xs.length) {
-		// Unfolded mode passes them through as their own tags — which is what the golden labels them as
+		// Unfolded mode passes them through as their own tags, which is what the golden labels them as
 		// (`intersection_a` / `intersection_b`), so the fold was mis-scoring those rows in both directions.
 		if (foldStreetParts) {
 			out.street = [out.street, ...xs].filter(isPresent).join(" ")
@@ -471,8 +471,8 @@ export async function perLocaleF1(
 		])
 
 		// Anchor + gazetteer feed.
-		// Default-on (the standard paths) so an anchor-trained model is scored in-distribution —
-		// see the DEFAULT_* note above for why omitting these silently collapses the admin tags.
+		// Default-on (the standard paths) so an anchor-trained model is scored in-distribution.
+		// See the DEFAULT_* note above for why omitting these silently collapses the admin tags.
 		// `--no-anchor` opts out.
 		// An explicit `--model-anchor-lookup`/`--gazetteer-lexicon` overrides the default path.
 		// The runner harmlessly skips inputs a plainer ONNX doesn't declare.

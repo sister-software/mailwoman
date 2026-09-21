@@ -170,7 +170,7 @@ async function placerRun(registry: EngineRegistryLike, args: Record<string, unkn
 			note: "coarse-placer surface: no geocode engine is involved, so no engine_id or input_set applies",
 		},
 		nRequested: sample.observations.length + sample.excluded.reduce((total, entry) => total + entry.n, 0),
-		// The whole held-out split is the population this surface has, so it is `full` — not a claim
+		// The whole held-out split is the population this surface has, so it is `full`, not a claim
 		// that it represents every address, which the split's own construction already bounds.
 		selection: "full",
 		eventLabel: "misplaced country",

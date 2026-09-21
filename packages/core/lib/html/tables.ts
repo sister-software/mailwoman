@@ -146,7 +146,7 @@ export function widestRow(rows: readonly TableCell[][]): number {
 /**
  * Right-pads every row to the table's widest row, then drops each column index that is blank in every row.
  *
- * Per table, and column-wise — never per row.
+ * Per table, and column-wise, never per row.
  * A row-by-row "filter out the blanks" loses the fact that a row's leading cell was blank,
  * which is often the difference between a top-level row and an indented child row,
  * and no single row carries enough evidence to tell those apart.

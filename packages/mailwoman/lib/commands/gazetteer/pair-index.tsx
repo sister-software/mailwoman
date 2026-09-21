@@ -135,8 +135,8 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 		["Schwabing", "München"],
 	],
 	// R6: the FR instance.
-	// These are lieux-dits under their communes (BAN `nom_ld`) rather than quartiers —
-	// see gazetteer-pipeline/lieudit-pairs.ts for why the French source differs from the US one.
+	// These are lieux-dits under their communes (BAN `nom_ld`) rather than quartiers.
+	// See gazetteer-pipeline/lieudit-pairs.ts for why the French source differs from the US one.
 	fr: [
 		["Pinsonnac", "Montpeyroux"],
 		["Line", "Salignac-Eyvigues"],
@@ -150,14 +150,18 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
  * so every source has to name the slot it read.
  * The evidence for each:
  *
- * - `registerDistrict` — the `--source` CSV's `district` column. On GB's PPD tuples that is the post town
- *   (`corpus/src/database-recipes/locale.ts`'s `districtAsLocality` check reads it as the locality line); on the NZ
- *   linz/OpenAddresses countrywide export it is the town/city above the suburb in `city`. Both are the locality slot.
- * - `secondaryPairsJSONL` — the `--pairs-jsonl` files. All three shipped ones pair a neighbourhood-class child with a
- *   town: `london-pairs-v2.jsonl` (966 London wards ∪ neighbourhoods under "London", R3/R4b), `ni-pairs-v1.jsonl` (87
- *   Belfast-area, R7), `gb-regions-v1.jsonl` (10,708 Scotland/Wales/England villages under their post town or civil
- *   parish, R8 — with the parish's administrative suffix stripped precisely so the parent reads as the town an address
- *   writes). A line may override with its own `parentTag` when a future source is not that shape.
+ * - `registerDistrict` — the `--source` CSV's `district` column.
+ *   On GB's PPD tuples that is the post town (`corpus/src/database-recipes/locale.ts`'s
+ *   `districtAsLocality` check reads it as the locality line); on the NZ linz/OpenAddresses
+ *   countrywide export it is the town/city above the suburb in `city`.
+ *   Both are the locality slot.
+ * - `secondaryPairsJSONL` — the `--pairs-jsonl` files.
+ *   All three shipped ones pair a neighbourhood-class child with a town:
+ *   `london-pairs-v2.jsonl` (966 London wards ∪ neighbourhoods under "London", R3/R4b),
+ *   `ni-pairs-v1.jsonl` (87 Belfast-area, R7), `gb-regions-v1.jsonl`
+ *   (10,708 Scotland/Wales/England villages under their post town or civil parish, R8 — with the parish's
+ *   administrative suffix stripped precisely so the parent reads as the town an address writes).
+ *   A line may override with its own `parentTag` when a future source is not that shape.
  *
  * The two remaining sources state their own and are not in this table:
  * `--borough-db` reads the WOF parent row's placetype per pair (`borough-pairs.ts`),
@@ -172,8 +176,8 @@ const SOURCE_PARENT_TAGS = {
  * Split a comma-separated path list, tolerating whitespace and an absent value.
  *
  * Each secondary source stays its own file rather than being pre-merged into a blob,
- * so every one keeps a distinct provenance md5 in the header — which is what lets
- * a freshness guard notice that exactly one of them changed.
+ * so every one keeps a distinct provenance md5 in the header, which is what lets a
+ * freshness guard notice that exactly one of them changed.
  */
 function splitPathList(value: string | undefined): string[] {
 	return extractDelimited(value)
@@ -314,7 +318,8 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 				// Streamed — a `--pairs-jsonl` path is whatever the operator points at,
 				// and the onspd ward export already runs to hundreds of thousands of rows.
 				// A line may carry its own `parentTag`; all three shipped files are (neighbourhood, post town)
-				// sets, so absent means `SOURCE_PARENT_TAGS.secondaryPairsJSONL` — see that table's evidence line.
+				// sets, so absent means `SOURCE_PARENT_TAGS.secondaryPairsJSONL`.
+				// See that table's evidence line.
 				// The per-line key exists so a future source of a different shape declares itself
 				// rather than inheriting a reading that was only ever true of these three.
 				for await (const pair of JSONSpliterator.fromAsync<{
@@ -355,7 +360,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		]
 
 		// `transitionBeta` and `parentDelta` are spread conditionally so an omitted
-		// flag writes no header key at all — not a null/0.
+		// flag writes no header key at all, not a null/0.
 		// For both, an absent key means the mechanism is off, which is a different statement from "off
 		// because the magnitude happens to be zero", and the reader treats them that way. schemaVersion +
 		// tagTable are stamped by serializePairIndex — format-owned rather than builder claims.

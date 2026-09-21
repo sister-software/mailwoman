@@ -26,7 +26,8 @@ import { assembleStreetName } from "#street/name-assembly"
  *
  * - `address_point` — rooftop / parcel centroid. uncertainty_m is a small floor (~1 m)
  * - `interpolated` — house-number estimate. uncertainty_m is honest (calibrated bracket span)
- * - `street` — street centroid for a street-only query (#1042); uncertainty_m is half the street's bbox diagonal
+ * - `street` — street centroid for a street-only query (#1042); uncertainty_m
+ *   is half the street's bbox diagonal
  * - `admin` — admin centroid. uncertainty_m is null (no sub-locality estimate available)
  */
 export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin" | "venue" | "plus_code"
@@ -97,7 +98,7 @@ export interface GeocodeResult {
 	 *
 	 * A rooftop matched against a register its authority declares complete is `designated`;
 	 * the same rooftop matched against a crowdsourced extract is `observed`.
-	 * Same tier, different authority — and reporting only the tier silently upgrades one into the other.
+	 * Same tier, different authority, and reporting only the tier silently upgrades one into the other.
 	 *
 	 * Derived by `epistemicStatusFor`, the one place the mapping lives.
 	 */
@@ -106,16 +107,17 @@ export interface GeocodeResult {
 	 * The derivation behind this answer, present only when the caller asked for
 	 * it by supplying a resolver trace sink.
 	 *
-	 * Projected from the resolver-interior trace (#1721) rather than separately recorded —
+	 * Projected from the resolver-interior trace (#1721) rather than separately recorded,
 	 * with no trace sink the walk does zero bookkeeping and stays byte-identical, and that property
 	 * is what makes this safe to ship on by default for debug surfaces and off everywhere else.
 	 */
 	derivation?: DerivationProjection
 	/**
-	 * The entity the fork→entity probe resolved (#1585's entity half) — present only
-	 * when the `venue` tier answered: the decoder declared a fork, the incumbent path
-	 * produced no coordinate, and exactly one poi.db entity bears the query's exact
-	 * name (see `fork-entity.ts` for the three checks).
+	 * The entity the fork→entity probe resolved (#1585's entity half).
+	 *
+	 * Present only when the `venue` tier answered: the decoder declared a fork,
+	 * the incumbent path produced no coordinate, and exactly one poi.db entity bears the
+	 * query's exact name (see `fork-entity.ts` for the three checks).
 	 *
 	 * Positive evidence only.
 	 * Absent everywhere else.
@@ -257,10 +259,11 @@ export interface GeocodeResult {
 	 */
 	variant_alias_exemption?: true
 	/**
-	 * Query-intent advisories (ROAD_TO_V9 §4) — what the intent vocabulary had to say about
-	 * the question, alongside the answer. **Always present**; an empty array is this path
-	 * stating that the vocabulary looked and found nothing, which is a different claim
-	 * from a missing field (the {@link `PipelineResult.faults`} discipline).
+	 * Query-intent advisories (ROAD_TO_V9 §4).
+	 *
+	 * What the intent vocabulary had to say about the question, alongside the answer. **Always
+	 * present**; an empty array is this path stating that the vocabulary looked and found nothing,
+	 * which is a different claim from a missing field (the {@link `PipelineResult.faults`} discipline).
 	 *
 	 * Nothing here changed the answer.
 	 * Three of the four markers are raised by the kind classifier from the string alone.

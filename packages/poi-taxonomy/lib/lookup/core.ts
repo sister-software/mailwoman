@@ -24,10 +24,13 @@ export interface CategoryMatch {
 	 */
 	confidence: number
 	/**
-	 * What put the phrase in the index: a curated synonym row, or the category's own id or label spelled as a phrase. At
-	 * equal confidence a synonym outranks an identity phrase — a curator wrote the redirect on purpose, and an id that
-	 * happens to read as English is not evidence anyone meant that branch (`drugstore` → `pharmacy` in en-US, `credit
-	 * union` → `bank`, `motel` → `hotel`).
+	 * What put the phrase in the index: a curated synonym row, or the category's own id
+	 * or label spelled as a phrase.
+	 *
+	 * At equal confidence a synonym outranks an identity phrase.
+	 * A curator wrote the redirect on purpose, and an id that happens
+	 * to read as English is not evidence anyone meant that branch
+	 * (`drugstore` → `pharmacy` in en-US, `credit union` → `bank`, `motel` → `hotel`).
 	 */
 	phraseSource: "synonym" | "identity"
 }
@@ -57,8 +60,8 @@ const MIN_TYPO_LENGTH = 5
 /**
  * Builds the matching core over an in-memory {@link POITaxonomyTable}.
  *
- * Throws at construction when a synonym's `categoryID` points at an unknown category —
- * the same integrity check regardless of how the table was loaded.
+ * @throws at construction when a synonym's `categoryID` points at an unknown category.
+ * The same integrity check regardless of how the table was loaded.
  */
 export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	const byID: ReadonlyMap<string, CategoryRecord> = new Map(table.categories.map((c) => [c.id, c]))
@@ -103,9 +106,10 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	 * Exact-phrase category lookup.
 	 *
 	 * `locale` selects locale-restricted synonyms with the variant-aliases semantics
-	 * (`@mailwoman/variant-aliases`' `resolveLocaleScope` owns that rule. the copies here
-	 * stay local to keep this package dependency-free): exact locale 1.0, language-only 0.5,
-	 * otherwise no match. unrestricted phrases always match at 1.0.
+	 * (`@mailwoman/variant-aliases`' `resolveLocaleScope` owns that rule. The copies here stay local to
+	 * keep this package dependency-free): exact locale 1.0, language-only 0.5, otherwise no match.
+	 * Unrestricted phrases always match at 1.0.
+	 *
 	 * Deduplicated by category (best confidence wins), sorted by confidence descending, and at equal
 	 * confidence a curated synonym before an identity phrase ({@link CategoryMatch.phraseSource}).
 	 *
@@ -203,8 +207,8 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	/**
 	 * One-edit recovery over the same locale-restricted phrase index.
 	 *
-	 * Returns a result only when the best edit distance maps to exactly one
-	 * category. ambiguity is an abstention.
+	 * @returns a result only when the best edit distance maps to exactly one category.
+	 * Ambiguity is an abstention.
 	 * Short inputs are excluded because one edit is too permissive.
 	 */
 	function lookupPOICategoryTypo(text: string, locale?: string): CategoryMatch[] {
@@ -277,7 +281,7 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	 * Resolve a canonical seed category id to the Overture `taxonomy.primary` leaf ids
 	 * a built `poi.db` stores for it (the missing translation layer).
 	 *
-	 * Returns the category's `overtureCategories` when it declares a non-empty list, else `[seedID]`
+	 * @returns the category's `overtureCategories` when it declares a non-empty list, else `[seedID]`
 	 * (identity — the default for the 21 seeds whose id already equals its Overture leaf).
 	 * An unknown seed id resolves to `[]` — a clean miss, mirroring `getPOICategory`'s undefined.
 	 */

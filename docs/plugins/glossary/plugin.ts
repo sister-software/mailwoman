@@ -110,7 +110,8 @@ interface DocsPluginContent {
 }
 
 /**
- * Backlinks shown per term card. the rest is summarized as "+N more".
+ * Backlinks shown per term card.
+ * The rest is summarized as "+N more".
  */
 const MAX_BACKLINKS_PER_TERM = 8
 
@@ -246,10 +247,12 @@ export default function mailwomanGlossaryPlugin(context: LoadContext, options: M
 					count: counts.get(key) ?? 0,
 				}))
 
-			// Upstream also writes this file. preserved in case a future package version reads it back.
+			// Upstream also writes this file.
+			// Preserved in case a future package version reads it back.
 			await createData("remark-glossary-data.json", stringifyJSON({ terms: glossary.terms ?? [], routePath }))
 
-			// Same shape upstream publishes — the tooltip theme component reads it via usePluginData.
+			// Same shape upstream publishes.
+			// The tooltip theme component reads it via usePluginData.
 			setGlobalData({ terms: glossary.terms ?? [], routePath })
 		},
 

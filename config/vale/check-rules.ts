@@ -206,7 +206,7 @@ async function runVale(config: string, fixture: string): Promise<{ alerts: ValeA
 
 	// Vale writes a config or rule-file error to stderr and leaves stdout empty.
 	// Parsing that empty string raises `Expected JSON input, got` and names neither the rule file
-	// nor the reason, so a malformed token in a style reads as a defect in this script —
+	// nor the reason, so a malformed token in a style reads as a defect in this script.
 	// `did not find expected node content` is the message that was being thrown away.
 	if (!result.stdout.trim()) {
 		const detail = result.stderr.trim() || `exit ${result.exitCode ?? 0} with no output`

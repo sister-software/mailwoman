@@ -143,7 +143,7 @@ export interface ResolveWeightsOpts {
 	 * Explicit `model-card.json` path (for the label vocab) on the explicit model+tokenizer path.
 	 *
 	 * When omitted, falls back to a `model-card.json` co-located with `modelPath`.
-	 * Without a card, labels default to `STAGE2_BIO_LABELS` — which silently mis-decodes
+	 * Without a card, labels default to `STAGE2_BIO_LABELS`, which silently mis-decodes
 	 * a STAGE3 (33-label) model into empty/garbage parses.
 	 *
 	 * Pass this (or co-locate the card) when evaluating a custom STAGE3 checkpoint via explicit paths.
@@ -353,9 +353,11 @@ export interface ResolvedWeights {
 	 * shipped beside the resolved model.
 	 *
 	 * `undefined` when the package doesn't ship one.
-	 * Country-specific BY design — see {@link resolvePairIndexSibling}: unlike the
-	 * model/tokenizer/model-card, this artifact never falls back to a `baseWeights` package
-	 * (a shared base ships no locale-specific pairs to offer. En-us has none, en-gb ships its own locally).
+	 * Country-specific BY design.
+	 *
+	 * See {@link resolvePairIndexSibling}: unlike the model/tokenizer/model-card,
+	 * this artifact never falls back to a `baseWeights` package (a shared base ships no
+	 * locale-specific pairs to offer. En-us has none, en-gb ships its own locally).
 	 *
 	 * Read by `loadFromWeights` to construct a `PairIndexResolver` for the `placetypePair` prior default.
 	 */
@@ -381,8 +383,7 @@ export interface ResolvedWeights {
 	 */
 	packageDir?: PathBuilder
 	/**
-	 * Every known sibling artifact, with where it came from — or `null` on both fields
-	 * when it did not resolve.
+	 * Every known sibling artifact, with where it came from, or `null` on both fields when it did not resolve.
 	 *
 	 * Required rather than diagnostic.
 	 * Only `model.onnx` and `tokenizer.model` make resolution fail.
@@ -711,7 +712,7 @@ async function resolveFromPackageDir(
 	// The locale tag's region subtag (`en-us` → `us`) names the PCB1 binary.
 	const country = locale.split("-")[1] ?? ""
 	const anchorLookupPath = await resolveAnchorLookupSibling(packageDir, country)
-	// Tier `"pocket"` is anchor-only — never surface the gazetteer lexicon (the loader then skips it).
+	// Tier `"pocket"` is anchor-only, never surface the gazetteer lexicon (the loader then skips it).
 	const gazetteerCandidate = resolvePath(packageDir, "anchor-lexicon-v1.json")
 
 	const gazetteerLexiconPath =
@@ -948,11 +949,13 @@ export async function loadPlacetypeCensus(
 
 /**
  * #1177 base-overlay dedup: resolve the base weights package a locale package overlays. A data-only weights package
- * (fr-fr/en-gb/en-nz, and future CA/MX overlays) can declare `"mailwoman": { "baseWeights":
- * "@mailwoman/neural-weights-en-us" }` in its package.json to share the base `model.onnx` + `tokenizer.model` rather
- * than ship a byte-identical copy. Returns the resolved base package dir, or `undefined` when the field is absent or
- * the base package can't be resolved (in which case the caller keeps the local model paths — no behavior change for a
- * self-contained package).
+ * (fr-fr/en-gb/en-nz, and future CA/MX overlays) can declare
+ * `"mailwoman": { "baseWeights": "@mailwoman/neural-weights-en-us" }` in its package.json to
+ * share the base `model.onnx` + `tokenizer.model` rather than ship a byte-identical copy.
+ *
+ * Returns the resolved base package dir, or `undefined` when the field is absent
+ * or the base package can't be resolved (in which case the caller keeps the local
+ * model paths — no behavior change for a self-contained package).
  */
 async function resolveBaseWeightsDir(
 	packageDir: PathBuilderLike,

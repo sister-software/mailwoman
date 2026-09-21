@@ -14,7 +14,7 @@ import type { AdminLevel1Code, FIPSStateCode } from "#state"
  * A 4-digit number assigned by the Census to uniquely identify a block.
  *
  * ```txt
- * (State Code)━━┳┓   ┏┳┳┳┳┳━━(Tract Code)
+ * (State Code)━━┳┓ ┏┳┳┳┳┳━━(Tract Code)
  *               482012231001050
  *                 ┗╋┛      ┗┻┻┻━(Block Code)
  *            (County Code)
@@ -36,7 +36,7 @@ export type FIPSBlockCode = Tagged<string, "FIPSBlockCode">
  * A 15-digit number assigned by the Census to uniquely identify a block.
  *
  * ```txt
- * (State Code)━━┳┓   ┏┳┳┳┳┳━━(Tract Code)
+ * (State Code)━━┳┓ ┏┳┳┳┳┳━━(Tract Code)
  *               482012231001050
  *                 ┗╋┛      ┗┻┻┻━(Block Code)
  *            (County Code)
@@ -57,7 +57,7 @@ export type FIPSBlockGeoID = Tagged<string, "FIPSBlockGeoID">
  * A 1-digit number assigned by the Census to uniquely identify a block group.
  *
  * ```txt
- * (State Code)━━┳┓   ┏┳┳┳┳┳━━(Tract Code)
+ * (State Code)━━┳┓ ┏┳┳┳┳┳━━(Tract Code)
  *               060133740002###
  *                 ┗╋┛      ┗━(Block Group Code)
  *            (County Code)
@@ -79,7 +79,7 @@ export type FIPSBlockGroupCode = Tagged<string, "FIPSBlockGroupCode">
  * A 6-digit number assigned by the Census to uniquely identify a tract.
  *
  * ```txt
- * (State Code)━━┳┓   ┏┳┳┳┳┳━━(Tract Code)
+ * (State Code)━━┳┓ ┏┳┳┳┳┳━━(Tract Code)
  *               06013374000####
  *                 ┗╋┛
  *            (County Code)
@@ -101,7 +101,7 @@ export type FIPSTractCode = Tagged<string, "FIPSTractCode">
  * An 11-digit number assigned by the Census to uniquely identify a tract.
  *
  * ```txt
- * (State Code)━━┳┓   ┏┳┳┳┳┳━━(Tract Code)
+ * (State Code)━━┳┓ ┏┳┳┳┳┳━━(Tract Code)
  *               06013374000####
  *                 ┗╋┛
  *            (County Code)
@@ -122,7 +122,7 @@ export type FIPSTractGeoID = Tagged<string, "FIPSTractGeoID">
  * A 5-digit number assigned by the Census to uniquely identify a county sub-division.
  *
  * ```txt
- * (State Code)━━┳┓   ┏┳┳┳┳━━(County Sub-Division Code)
+ * (State Code)━━┳┓ ┏┳┳┳┳━━(County Sub-Division Code)
  *               0601337400#####
  *                 ┗╋┛
  *            (County Code)

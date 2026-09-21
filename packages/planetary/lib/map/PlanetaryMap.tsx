@@ -42,8 +42,8 @@ export function PlanetaryMap({ config, selected, onSelect, onMapReady }: Planeta
 	const mapRef = useRef<MapRef>(null)
 
 	// The map announces itself through `onLoad`; nothing polls for it.
-	// The chrome sits outside this component, so a ref assignment would not re-render it —
-	// the handle goes up to the parent as state instead.
+	// The chrome sits outside this component, so a ref assignment would not re-render it.
+	// The handle goes up to the parent as state instead.
 	const publishMap = useCallback(
 		(event: { target: ReturnType<MapRef["getMap"]> }) => onMapReady?.(event.target),
 		[onMapReady]

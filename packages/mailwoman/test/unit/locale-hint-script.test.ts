@@ -149,7 +149,7 @@ describe("the regression board", () => {
 	 * The three sets above are chosen for the scripts they carry.
 	 *
 	 * This one is the board every other check runs against, so it says what the hint reports
-	 * over the rows the product is actually graded on — and what it has none of.
+	 * over the rows the product is actually graded on, and what it has none of.
 	 */
 	it("reads Han off thirteen rows across CN, JP and SG, and leaves their locale alone", async () => {
 		const cases = await loadRegressionCases()

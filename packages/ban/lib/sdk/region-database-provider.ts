@@ -25,8 +25,9 @@ import { streetLocaleForBANCountry, supportedBANCountries } from "#sdk/street-lo
 export interface BANExtracts {
 	addressPoints?: AddressPointSqliteLookup
 	/**
-	 * The #1042 derived street-centroid tier — a `group BY street` roll-up,
-	 * for a street-only query (no house number).
+	 * The #1042 derived street-centroid tier.
+	 *
+	 * A `group BY street` roll-up, for a street-only query (no house number).
 	 */
 	streetCentroids?: StreetCentroidSqliteLookup
 }
@@ -40,9 +41,10 @@ export interface BANExtracts {
  * `for` is synchronous, so on-disk existence is probed asynchronously once
  * instead of per call: {@linkcode warm} awaits `pathExists` for every supported country
  * × extract-tier combination and records what exists; `for` consults that map.
- * Prefer {@linkcode BANRegionDatabaseProvider.create}, which constructs
- * and warms before answering — a provider constructed directly must be warmed
- * before its first `for`, or it answers `{}` for every country.
+ * Prefer {@linkcode BANRegionDatabaseProvider.create}, which constructs and warms before answering.
+ *
+ * A provider constructed directly must be warmed before its first `for`,
+ * or it answers `{}` for every country.
  */
 export class BANRegionDatabaseProvider implements Disposable {
 	readonly #dataRoot: string
@@ -60,8 +62,8 @@ export class BANRegionDatabaseProvider implements Disposable {
 	/**
 	 * Construct a provider and warm its existence map before answering.
 	 *
-	 * The constructor cannot await the probe, so this static factory does. a caller that
-	 * constructs directly must {@linkcode warm} before the first `for`.
+	 * The constructor cannot await the probe, so this static factory does.
+	 * A caller that constructs directly must {@linkcode warm} before the first `for`.
 	 */
 	static async create(dataRoot: string): Promise<BANRegionDatabaseProvider> {
 		const provider = new BANRegionDatabaseProvider(dataRoot)
@@ -113,7 +115,7 @@ export class BANRegionDatabaseProvider implements Disposable {
 
 		const entry: BANExtracts = {}
 
-		// Only countries with a registered street locale and an on-disk extract — never key with the wrong rules.
+		// Only countries with a registered street locale and an on-disk extract, never key with the wrong rules.
 		if (supportedBANCountries().includes(cc)) {
 			const locale = streetLocaleForBANCountry(cc)
 			const path = this.#addressPointsPath(cc)

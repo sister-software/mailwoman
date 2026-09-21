@@ -104,8 +104,9 @@ export interface CandidateAncestorTable {
 	 */
 	parent_placetype_id: number
 	/**
-	 * The ancestor's canonical display name — what {@link Ancestor.name} serves,
-	 * matching the FTS backend's register.
+	 * The ancestor's canonical display name.
+	 *
+	 * What {@link Ancestor.name} serves, matching the FTS backend's register.
 	 */
 	parent_name: string
 	/**

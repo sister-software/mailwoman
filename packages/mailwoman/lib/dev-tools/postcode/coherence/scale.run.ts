@@ -97,7 +97,7 @@ const PANELS: Record<string, { path: string; country: string; misScope: string; 
 /**
  * The impossible default the regime probe pins.
  *
- * Not an ISO-3166 assignment, so no codex address system can claim it and step 1 always fails —
+ * Not an ISO-3166 assignment, so no codex address system can claim it and step 1 always fails,
  * which is the point: it isolates what the alternative countries decide.
  */
 const IMPOSSIBLE_DEFAULT = "ZZ"

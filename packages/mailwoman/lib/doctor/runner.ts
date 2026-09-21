@@ -209,8 +209,8 @@ async function defaultConventionCandidatePath(dataRoot: string): Promise<string 
  * Open a POI db read-only, read its layer manifest, and narrow it to the identity fields doctor prints.
  */
 /**
- * Open a layer db read-only and read the identity fields of its manifest —
- * what the layer is and what it asks.
+ * Open a layer db read-only and read the identity fields of its manifest.
+ * What the layer is and what it asks.
  */
 async function readLayerIdentity(path: string): Promise<LayerIdentity> {
 	using kdb = new DatabaseClient<layerschemadatabase>(path, { readOnly: true })

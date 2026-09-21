@@ -47,8 +47,8 @@ describe("admitting an Overture division name", () => {
 	/**
 	 * The defect, pinned as the behaviour this predicate must not have.
 	 *
-	 * The old rule admits Volapük and Lojban because constructed languages are written
-	 * in Latin, and refuses Chinese because it is not — which is how Singapore
+	 * The old rule admits Volapük and Lojban because constructed languages are
+	 * written in Latin, and refuses Chinese because it is not, which is how Singapore
 	 * came to carry 228 names, none of them in Han.
 	 */
 	it("differs from the old rule exactly where the old rule tested script", () => {

@@ -127,7 +127,8 @@ export interface CandidateWindow {
 	 */
 	key: string
 	/**
-	 * The bare-concatenation fold (no separator) — see the module docstring's "dual-key probe" note.
+	 * The bare-concatenation fold (no separator).
+	 * See the module docstring's "dual-key probe" note.
 	 *
 	 * Identical to {@link key} for a single-word candidate.
 	 * Only diverges for a genuine multi-word one.
@@ -334,7 +335,7 @@ export function trailingSegmentPostcodeTake(tokens: readonly string[], shape: Re
  * Commune" (see {@link LEADING_POSTCODE_COUNTRIES}).
  *
  * Anchored full-match against the country shape exactly like the trailing form, so this can
- * only ever remove a run that is a postcode for that country — never an ordinary leading word.
+ * only ever remove a run that is a postcode for that country, never an ordinary leading word.
  * Only the probe key changes.
  * The segment itself and every emitted span are untouched.
  */
@@ -351,8 +352,9 @@ export function leadingSegmentPostcodeTake(tokens: readonly string[], shape: Reg
 }
 
 /**
- * Build one candidate per comma-delimited segment of the input (segment mode) —
- * see the module docstring's "Segment mode" section for the venue-confound rationale.
+ * Build one candidate per comma-delimited segment of the input (segment mode).
+ *
+ * See the module docstring's "Segment mode" section for the venue-confound rationale.
  *
  * Groups sharing a segment index are always contiguous in `nonEmptyGroups`
  * (both lists are built in text order), so a single forward pass over the precomputed
@@ -428,8 +430,8 @@ export function disjoint(a: CandidateWindow, b: CandidateWindow): boolean {
  * which equals the concat form of "Stockton on Tees") — the same dual-key bridging
  * logic as {@link probeWindowPair}, applied to the identity question.
  *
- * Two genuinely different places can only collide here if their folds collide, i.e. they carry
- * the same name text — which is exactly the population the convention rule is scoped to.
+ * Two genuinely different places can only collide here if their folds collide, i.e. they
+ * carry the same name text, which is exactly the population the convention rule is scoped to.
  */
 export function sharesFoldForm(a: CandidateWindow, b: CandidateWindow): boolean {
 	return a.key === b.key || a.key === b.concatKey || a.concatKey === b.key || a.concatKey === b.concatKey

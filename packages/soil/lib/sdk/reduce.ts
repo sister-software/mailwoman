@@ -56,9 +56,10 @@ export const WEIGHT_LATTICE_DEPTH = 2
 /**
  * Class shares below this are folded into `other_share` rather than stored.
  *
- * One percent, which sits below the lattice's own 2.04% granularity, so nothing a single child
- * cell produces is truncated — what lands here is the long tail that component percentages
- * create inside a child (a 1%-weight component inside one child cell contributes 0.02%).
+ * One percent, which sits below the lattice's own 2.04% granularity,
+ * so nothing a single child cell produces is truncated.
+ * What lands here is the long tail that component percentages create inside a child
+ * (a 1%-weight component inside one child cell contributes 0.02%).
  * Truncating a long tail is legitimate.
  *
  * Doing it silently is not, which is why the remainder is stored explicitly and the shares still sum to 1.
@@ -100,10 +101,10 @@ export interface MapUnitProfile {
  * it is a polygon the authority drew with no soil mapping behind it, and reading it as
  * a low class would be the reassuring wrong number §3.2 of the survey is about.
  *
- * The split across components is by `comppct_r`, the component's representative
- * percentage of its map unit, normalized by the total actually present rather than
- * assumed to be 100 — measured on `IA153` all 152 map units sum to exactly 100,
- * and a national build must not depend on that holding everywhere.
+ * The split across components is by `comppct_r`, the component's representative percentage
+ * of its map unit, normalized by the total actually present rather than assumed to be 100.
+ * Measured on `IA153` all 152 map units sum to exactly 100, and a national build
+ * must not depend on that holding everywhere.
  */
 export function mapUnitProfile(
 	mapUnit: Pick<SoilMapUnitTable, "no_mapping">,

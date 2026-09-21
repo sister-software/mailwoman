@@ -101,7 +101,7 @@ describe("the never-stale shim", () => {
 			//
 			// Deliberately not `new_boot_fingerprint === previous_boot_fingerprint`.
 			// That digest covers the newest source mtime and `git status --porcelain`
-			// (`tree-fingerprint.ts`), so it moves whenever anything writes into the checkout —
+			// (`tree-fingerprint.ts`), so it moves whenever anything writes into the checkout,
 			// and under `yarn test` 866 other files run alongside this one, at least one of
 			// which re-populates the weights overlay by design.
 			// The assertion held only while nothing else touched the tree, which is true

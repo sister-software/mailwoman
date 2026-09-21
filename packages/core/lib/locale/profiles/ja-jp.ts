@@ -33,7 +33,8 @@ export const jaJP: LocaleProfile = {
 		"sub_block",
 		"building_number",
 		"building_name",
-		// D4 (v8 JP encoder design): compact numbers ("2-3-16") are one whole-span house_number. The block/sub_block/building_number fine tags label the kanji-designator long form only.
+		// D4 (v8 JP encoder design): compact numbers ("2-3-16") are one whole-span house_number.
+		// The block/sub_block/building_number fine tags label the kanji-designator long form only.
 		"house_number",
 	],
 	policy: [],

@@ -33,8 +33,8 @@ export interface LoadSlimOpts {
 	 * Required in browser builds because the default URL is resolved relative to
 	 * the worker script, which bundlers usually rewrite.
 	 *
-	 * Most bundlers will let you do `new URL("../node_modules/@sqlite.org/sqlite-wasm/sqlite-wasm/jswasm/sqlite3.wasm",
-	 * import.meta.url).href`.
+	 * Most bundlers will let you
+	 * do `new URL("../node_modules/@sqlite.org/sqlite-wasm/sqlite-wasm/jswasm/sqlite3.wasm", import.meta.url).href`.
 	 *
 	 * Leave unset to use the runtime's defaults (works in Node + worker contexts
 	 * where the path is resolvable directly).
@@ -52,16 +52,18 @@ export interface LoadSlimOpts {
 /**
  * Loads + opens the slim WOF DB.
  *
- * Returns `{ db, sqlite3 }` — `db` is the open Database; `sqlite3` is the runtime
- * handle (in case the caller wants to call other OO1 APIs on it).
+ * Returns `{ db, sqlite3 }`.
+ * `db` is the open Database; `sqlite3` is the runtime handle
+ * (in case the caller wants to call other OO1 APIs on it).
  *
  * Caller is responsible for disposing the returned database with {@link disposeSlimWOFDatabase} when done.
  */
 export async function loadSlimWOFDatabase(opts: LoadSlimOpts): Promise<{ db: Database; sqlite3: Sqlite3Static }> {
 	const bytes = typeof opts.source === "string" ? await fetchBytes(opts.source, opts.fetchImpl) : opts.source
 
-	// sqlite3InitModule's TS signature lies about its options bag — the runtime does accept
-	// the Emscripten-style {print, printErr, locateFile} options shown in the upstream docs.
+	// sqlite3InitModule's TS signature lies about its options bag.
+	// The runtime does accept the Emscripten-style {print, printErr, locateFile}
+	// options shown in the upstream docs.
 	// Cast to `any` for the call site rather than shadowing the typed wrapper for the entire file.
 	const sqlite3 = await (sqlite3InitModule as (opts: Record<string, unknown>) => Promise<Sqlite3Static>)({
 		print: () => {}, // suppress stdout from the WASM runtime
@@ -71,13 +73,13 @@ export async function loadSlimWOFDatabase(opts: LoadSlimOpts): Promise<{ db: Dat
 
 	// OO1 transient-DB constructor: opens an in-memory DB then we restore the file
 	// bytes into it via `sqlite3.capi.sqlite3_deserialize`.
-	// This is the official way to "open a Uint8Array as a database" — `new DB(":memory:")`
-	// followed by deserialize is faster than create table + insert-from-dump
-	// and preserves the on-disk b-tree pages directly.
+	// This is the official way to "open a Uint8Array as a database".
+	// `new DB(":memory:")` followed by deserialize is faster than create table +
+	// insert-from-dump and preserves the on-disk b-tree pages directly.
 	const db = new sqlite3.oo1.DB(":memory:", "ct")
 
-	// `allocFromTypedArray` has shape constraints across sqlite-wasm versions. the
-	// explicit alloc + HEAPU8.set pattern is the lowest-common-denominator path
+	// `allocFromTypedArray` has shape constraints across sqlite-wasm versions.
+	// The explicit alloc + HEAPU8.set pattern is the lowest-common-denominator path
 	// and avoids the "expecting 8/16/32/64" heap-shape mismatch seen on Node builds.
 	const p = sqlite3.wasm.alloc(bytes.byteLength)
 	const heap = sqlite3.wasm.heap8u()

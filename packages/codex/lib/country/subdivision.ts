@@ -90,7 +90,7 @@ const SUBDIVISION_LOOKUP: ReadonlyMap<string, SubdivisionMatch> = (() => {
  * or co-official French name for CA. accents optional) to its `{ code, name, country }`.
  *
  * Case- and diacritic-insensitive.
- * Returns null for anything that isn't a US state or Canadian province/territory —
+ * Returns null for anything that isn't a US state or Canadian province/territory,
  * including bare country tokens (use {@link matchCountry} for those).
  */
 export function matchSubdivision(token: string | null | undefined): SubdivisionMatch | null {

@@ -89,8 +89,9 @@ export interface NormalizeOpts {
 	 *
 	 * `strip` (the default) drops it: it is byte-fallback OOV for the SentencePiece
 	 * tokenizer and fragments the digits after it.
-	 * `keep` leaves it in place for a classifier whose vocabulary carries it —
-	 * the character-path CJK model was trained with the mark in front of every postcode,
+	 * `keep` leaves it in place for a classifier whose vocabulary carries it.
+	 *
+	 * The character-path CJK model was trained with the mark in front of every postcode,
 	 * and without it misreads the prefecture boundary (`885-0061 宮崎県都城市…` → prefecture `崎県都`).
 	 */
 	postalMark?: "strip" | "keep"

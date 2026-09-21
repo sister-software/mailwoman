@@ -132,7 +132,7 @@ describe("admin coherence over the candidate backend's ancestors sidecar", () =>
 	test("the qualifier the ranking ignored becomes a DECIDED contradiction — the flip from unverifiable", async () => {
 		const { winner, fragment } = await verdictFor("Thüringen", true)
 
-		// The ranking is untouched: population-first still answers Weimar, Texas —
+		// The ranking is untouched: population-first still answers Weimar, Texas,
 		// with the disambiguator in the input.
 		// That is the #1717 defect, faithfully reproduced.
 		const stamped = winner as AddressNode

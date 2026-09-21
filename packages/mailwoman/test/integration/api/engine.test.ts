@@ -45,13 +45,15 @@ const hasStack = (await pathExists(wofPath)) && (await pathExists(txSitus))
 const describeIfStack = describe.skipIf(!hasStack)
 
 /**
- * `/v1/parse` needs only the model weights — check its own tests independently of the WOF/TX stack above.
+ * `/v1/parse` needs only the model weights.
+ *
+ * Check its own tests independently of the WOF/TX stack above.
  */
 async function weightsPresent(): Promise<boolean> {
 	try {
 		// ASK the resolver.
-		// This probed `packages/neural-weights-en-us/model.onnx` directly, which is
-		// true only while the dev linker materializes binaries into that package —
+		// This probed `packages/neural-weights-en-us/model.onnx` directly,
+		// which is true only while the dev linker materializes binaries into that package,
 		// and a skip-guard that stops matching does not fail, it skips.
 		// Therefore, the suite disappears from the run reporting success.
 		// The repo has already paid for this once: the workspace regroup left this literal behind

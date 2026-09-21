@@ -92,7 +92,7 @@ export interface GeocodeSessionOptions {
 	 * full agreement US 54/99 → 57/99 and AU 9/20 → 10/20.
 	 *
 	 * The effect appears entirely in the precision half that `parity-corpus.ts` documents
-	 * the floors cannot see, so a floors-only reading reports "no change" — which is why the
+	 * the floors cannot see, so a floors-only reading reports "no change", which is why the
 	 * promotion rests on the full-agreement and spurious columns rather than the floor table.
 	 *
 	 * Known residual, carried deliberately: under fr-FR weights the US bucket moves 54/99 → 53/99.
@@ -828,12 +828,12 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	 *
 	 * `parseForGeocode` and `geocodeParseInputs` must be handed the same object: every field on
 	 * it (`normalizeInput`, `normalizeCase`, `inputMode`) changes what the classifier is given,
-	 * so two separately-built dep objects are two decodes that can silently diverge —
+	 * so two separately-built dep objects are two decodes that can silently diverge,
 	 * which is the exact failure the shared derivation exists to prevent.
 	 *
 	 * `fst` and `streetMorphology` belong here for a reason the type alone does not show.
 	 * This path parses once up front and hands the tree to `geocodeAddress` as `parsedTree`,
-	 * so `geocodeAddress` never re-parses — which means the copies it receives are dead
+	 * so `geocodeAddress` never re-parses, which means the copies it receives are dead
 	 * and this is the only parse the prior can reach.
 	 *
 	 * Omitting them here made `--gazetteer-prior` construct the FST, pass it on,

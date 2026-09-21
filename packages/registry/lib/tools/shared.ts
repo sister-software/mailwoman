@@ -110,7 +110,7 @@ export const std = (xs: readonly number[]): number => {
 	return Math.sqrt(xs.map((x) => (x - m) ** 2).reduce((a, b) => a + b, 0) / Math.max(1, xs.length))
 }
 
-// note(phase4): pct keeps the fraction-in/no-%-suffix shape — not core formatPercent's
+// note(phase4): pct keeps the fraction-in/no-%-suffix shape, not core formatPercent's
 // numerator/denominator interface (call sites append their own "%").
 export const pct = (x: number): string => (100 * x).toFixed(1)
 

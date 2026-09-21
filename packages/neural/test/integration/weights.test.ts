@@ -116,7 +116,7 @@ function ensureDevWeightsLinked(...locales: readonly string[]): void {
 // helpers, never a hardcoded path.
 //
 // There is deliberately no `haveGBWofDB` guard any more (2026-08-05): en-gb stopped building
-// postcode-gb.bin, so the GB WOF postcode extract is no longer a precondition for any test here —
+// postcode-gb.bin, so the GB WOF postcode extract is no longer a precondition for any test here,
 // and a guard that names a file nothing reads skips tests for a reason that no longer exists.
 const CLI_PATH = workspacePath("mailwoman", "out", "cli", "index.js")
 const haveCLI = await pathExists(CLI_PATH)
@@ -329,7 +329,7 @@ describe("resolveWeights — package auto-resolve", () => {
 	// and each failure mode has its own repair, so neither assertion substitutes for the other.
 	// Restated 2026-08-06 (ROAD_TO_V9 §1 A4) as a coupling rather than a bare absence.
 	// #1467's rule was "en-gb ships no postcode binary", which was right for a model
-	// whose GB anchor slot took no gradient — but it is a rule with an expiry date,
+	// whose GB anchor slot took no gradient, but it is a rule with an expiry date,
 	// and a flat `not.toContain` gives the promotion no way to satisfy it except by deletion.
 	// The durable invariant underneath is the pairing: the binary's unit keys are only reachable
 	// when the card declares `span_mode: "shaped"`, so the two must move together.
@@ -354,8 +354,9 @@ describe("resolveWeights — package auto-resolve", () => {
 		expect(files).toContain("pair-index-gb.bin")
 	})
 
-	// Base-overlay dedup, en-nz form: model/tokenizer/lexicon-less resolution details are
-	// all shared with the en-gb case above — what's new here is the postcode-less posture.
+	// Base-overlay dedup, en-nz form: model/tokenizer/lexicon-less resolution details
+	// are all shared with the en-gb case above.
+	// What's new here is the postcode-less posture.
 	// En-nz ships no postcode-nz.bin (no WOF NZ postcode extract exists — the overlay's
 	// model-card `no_postcode_bin` follow-up), so `anchorLookupPath` must come back undefined
 	// while `pair-index-nz.bin` and the overlay-local model-card still resolve from the package dir.
@@ -514,8 +515,8 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
 			// Setup precondition: confirm the pair is genuinely probe OK in this build
 			// before trusting the parse below to prove anything about the flip.
-			// "Holland Fen" is folded to a space-preserved token ("holland fen") rather than concatenated —
-			// see pair-index-resolver.ts's header doc on how normalizeFSTToken folds interior whitespace.
+			// "Holland Fen" is folded to a space-preserved token ("holland fen") rather than concatenated.
+			// See pair-index-resolver.ts's header doc on how normalizeFSTToken folds interior whitespace.
 			expect(resolver.probe("holland fen", "lincoln")?.tag).toBe("dependent_locality")
 
 			// GB_WIDE_MARGIN_ADDRESS is deliberately comma-less
@@ -540,7 +541,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 	// comma-free GB register row from the probe's 17-row fused-path population.
 	// Measured against the model 7.0.0 from-scratch base
 	// (both legs per row against scratchpad/en-nz-ship-verify/transition-probe-rows.json),
-	// 15 of the 17 rows self-recover beta-less — including Hedon and Ashby Parva,
+	// 15 of the 17 rows self-recover beta-less, including Hedon and Ashby Parva,
 	// which never recovered at any β on the fine-tune lineage.
 	// Glenfield (margin 3.10) was the pinned discriminator on that base.
 	//

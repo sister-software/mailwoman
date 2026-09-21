@@ -30,8 +30,8 @@ export interface Box {
 /**
  * How far off north the compass check turns the map.
  *
- * Any direction past the control's own dead zone would do. this one is far enough that
- * a needle drawn at the wrong angle is visible in a failure screenshot.
+ * Any direction past the control's own dead zone would do.
+ * This one is far enough that a needle drawn at the wrong angle is visible in a failure screenshot.
  */
 const BEARING_OFF_NORTH = 42
 
@@ -61,8 +61,9 @@ export const CHROME_SELECTORS = [
 /**
  * Two boxes overlap when they share any area.
  *
- * Touching edges do not count — a sheet ending exactly on the footer's top edge is correct,
- * and the sub-pixel rounding a browser reports would otherwise make that a failure.
+ * Touching edges do not count.
+ * A sheet ending exactly on the footer's top edge is correct, and the sub-pixel
+ * rounding a browser reports would otherwise make that a failure.
  */
 export function boxesOverlap(a: Box, b: Box, tolerance = 1): boolean {
 	return (
@@ -96,8 +97,8 @@ async function visibleBoxes(page: Page): Promise<Map<string, Box>> {
 /**
  * No two floating pieces of chrome occupy the same pixels.
  *
- * A side sheet is exempt, because on a phone it is deliberately the whole panel laid
- * over everything else — the overlap there is the design.
+ * A side sheet is exempt, because on a phone it is deliberately the whole panel laid over everything else.
+ * The overlap there is the design.
  * Every other pair has to clear.
  */
 export async function expectNoChromeOverlap(page: Page): Promise<void> {
@@ -150,9 +151,10 @@ export async function expectNothingUnderTheFooter(page: Page): Promise<void> {
 /**
  * A control that opens a sheet closes it again, and the sheet carries its own close.
  *
- * Both halves matter and for different reasons: on a wide screen the opening control stays
- * beside the sheet, and on a phone the sheet covers it — so a sheet without its own close is
- * one a phone cannot dismiss, and a control that cannot toggle is one a pointer cannot undo.
+ * Both halves matter and for different reasons: on a wide screen the opening control
+ * stays beside the sheet, and on a phone the sheet covers it.
+ * So a sheet without its own close is one a phone cannot dismiss, and a control
+ * that cannot toggle is one a pointer cannot undo.
  */
 export async function expectSheetOpensAndCloses(page: Page, opener: Locator): Promise<void> {
 	const sheet = page.locator(".mw-map-sheet--side")
@@ -196,7 +198,8 @@ export async function expectEverySheetControlCloses(page: Page): Promise<string[
 		const opened = await page.locator(".mw-map-sheet--side").count()
 
 		if (opened === 0) {
-			// Nothing opened, so there is nothing to close. leave the control as it was found.
+			// Nothing opened, so there is nothing to close.
+			// Leave the control as it was found.
 			await control.click()
 
 			continue
@@ -246,8 +249,8 @@ export async function expectReachable(page: Page, selector: string): Promise<voi
  * Unscoped, that call walks the whole style: measured at 64.3 ms returning 4,819
  * features over the 79-layer basemap at zoom 14 in Manhattan, against 5.7 ms
  * and 44 features scoped to the 11 label layers.
- * One per pointer move is the map's entire frame budget, and nothing about the page looks wrong
- * when it happens — which is why it is a interface rather than a timing assertion,
+ * One per pointer move is the map's entire frame budget, and nothing about the page looks
+ * wrong when it happens, which is why it is a interface rather than a timing assertion,
  * and why a timing assertion would be the flaky way to write this.
  *
  * @param handle The global the app republishes its map instance under.
@@ -308,8 +311,8 @@ export async function expectCompassFollowsBearing(page: Page, handle: string): P
 	await expect(compass, "a compass is mounted").toHaveCount(1)
 	await expect(compass).toBeHidden()
 
-	// The callback is serialized and runs in the browser, so it closes over nothing
-	// from this module — every value it needs is an argument.
+	// The callback is serialized and runs in the browser, so it closes over nothing from this module.
+	// Every value it needs is an argument.
 	await page.evaluate(
 		({ name, degrees }) => {
 			// The app republishes its map instance under a well-known global for exactly this kind of driving.

@@ -38,11 +38,12 @@ export interface TermFrequencyTable {
 	readonly distinct: number
 }
 
-// Local by design: `@mailwoman/record`'s per-field normalizers are the shared home. match takes no record dependency.
+// Local by design: `@mailwoman/record`'s per-field normalizers are the shared home.
+// Match takes no record dependency.
 const defaultNormalize = (value: string): string => value.trim().toLowerCase().replaceAll(/\s+/g, " ")
 
 /**
- * Build a {@link TermFrequencyTable} from an iterable of values (e.g. every `given` name in the dataset).
+ * Build a {@link TermFrequencyTable} from an iterable of values (e.g. Every `given` name in the dataset).
  *
  * Values are normalized (default: trim + lowercase + collapse whitespace) before counting,
  * and `frequency()` normalizes its argument the same way, so callers pass raw field values.
@@ -81,8 +82,10 @@ export function buildTermFrequencyTable(
  *
  * By default it applies to the exact level (index 0) and looks up the value via
  * `value(a, b)` — usually the agreeing field extracted from one side.
- * Returns a new comparison. the underlying `assess` and levels are untouched, so this
- * composes with EM (which re-estimates the base `m`/`u` the adjustment sits on top of).
+ * Returns a new comparison.
+ *
+ * The underlying `assess` and levels are untouched, so this composes with EM
+ * (which re-estimates the base `m`/`u` the adjustment sits on top of).
  */
 export function withTermFrequency<R>(
 	comparison: Comparison<R>,

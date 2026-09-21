@@ -101,8 +101,10 @@ function regionCodeSurface(cc: string, region: string): string | null {
 }
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour
- * it exists to exercise, and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder.
+ *
+ * See the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
  */
 export const trailingRegionRecipe: CorpusRecipe = {
 	name: "trailing-region",
@@ -144,10 +146,11 @@ export const trailingRegionRecipe: CorpusRecipe = {
 			const components: Record<string, string> = { locality, region }
 
 			// left context.
-			// Without it every row begins with the locality, and the recipe teaches that
-			// the first named segment is the locality — measured on the v4.8.0 candidate:
-			// `Ye Three Lords, 27 Minories, London EC3N 1DE` came back `locality: "Ye Three Lords"` with the
-			// venue and street gone, and 11 of its 25 regressions were venue-led rows across seven countries.
+			// Without it every row begins with the locality, and the recipe teaches
+			// that the first named segment is the locality.
+			// Measured on the v4.8.0 candidate: `Ye Three Lords, 27 Minories, London EC3N 1DE`
+			// came back `locality: "Ye Three Lords"` with the venue and street gone,
+			// and 11 of its 25 regressions were venue-led rows across seven countries.
 			// The house-number prefix does not supply it, because a number before the
 			// locality does not teach that a name can precede one.
 			if (dependentLocality && dependentLocality !== locality) {

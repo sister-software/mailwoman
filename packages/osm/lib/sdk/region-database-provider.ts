@@ -34,9 +34,10 @@ export interface OSMExtracts {
  * `for` is synchronous, so on-disk existence is probed asynchronously once instead of
  * per call: {@linkcode warm} awaits `pathExists` for every supported country's extract
  * and records what exists; `for` consults that map.
- * Prefer {@linkcode OSMRegionDatabaseProvider.create}, which constructs
- * and warms before answering — a provider constructed directly must be warmed
- * before its first `for`, or it answers `{}` for every country.
+ * Prefer {@linkcode OSMRegionDatabaseProvider.create}, which constructs and warms before answering.
+ *
+ * A provider constructed directly must be warmed before its first `for`,
+ * or it answers `{}` for every country.
  */
 export class OSMRegionDatabaseProvider implements Disposable {
 	readonly #dataRoot: string
@@ -54,8 +55,8 @@ export class OSMRegionDatabaseProvider implements Disposable {
 	/**
 	 * Construct a provider and warm its existence map before answering.
 	 *
-	 * The constructor cannot await the probe, so this static factory does. a caller that
-	 * constructs directly must {@linkcode warm} before the first `for`.
+	 * The constructor cannot await the probe, so this static factory does.
+	 * A caller that constructs directly must {@linkcode warm} before the first `for`.
 	 */
 	static async create(dataRoot: string): Promise<OSMRegionDatabaseProvider> {
 		const provider = new OSMRegionDatabaseProvider(dataRoot)
@@ -103,7 +104,7 @@ export class OSMRegionDatabaseProvider implements Disposable {
 
 		let entry: OSMExtracts = {}
 
-		// Only countries with a registered street locale and an on-disk extract — never key with the wrong rules.
+		// Only countries with a registered street locale and an on-disk extract, never key with the wrong rules.
 		if (supportedOSMCountries().includes(cc)) {
 			const path = this.#addressPointsPath(cc)
 

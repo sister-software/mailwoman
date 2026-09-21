@@ -47,7 +47,8 @@ export type ConceptID = Tagged<string, "GeographicConceptID">
 /**
  * Brand a raw string as a {@link ConceptID}.
  *
- * Purely a compile-time assertion. the string is unchanged.
+ * Purely a compile-time assertion.
+ * The string is unchanged.
  */
 export function toConceptID(id: string): ConceptID {
 	return id as ConceptID
@@ -63,7 +64,8 @@ export type RelationID = Tagged<string, "GeographicRelationID">
 /**
  * Brand a raw string as a {@link RelationID}.
  *
- * Purely a compile-time assertion. the string is unchanged.
+ * Purely a compile-time assertion.
+ * The string is unchanged.
  */
 export function toRelationID(id: string): RelationID {
 	return id as RelationID
@@ -79,7 +81,8 @@ export type RuleID = Tagged<string, "GeographicRuleID">
 /**
  * Brand a raw string as a {@link RuleID}.
  *
- * Purely a compile-time assertion. the string is unchanged.
+ * Purely a compile-time assertion.
+ * The string is unchanged.
  */
 export function toRuleID(id: string): RuleID {
 	return id as RuleID
@@ -95,7 +98,8 @@ export type MappingID = Tagged<string, "GeographicMappingID">
 /**
  * Brand a raw string as a {@link MappingID}.
  *
- * Purely a compile-time assertion. the string is unchanged.
+ * Purely a compile-time assertion.
+ * The string is unchanged.
  */
 export function toMappingID(id: string): MappingID {
 	return id as MappingID
@@ -111,7 +115,8 @@ export type ObservationID = Tagged<string, "GeographicObservationID">
 /**
  * Brand a raw string as an {@link ObservationID}.
  *
- * Purely a compile-time assertion. the string is unchanged.
+ * Purely a compile-time assertion.
+ * The string is unchanged.
  */
 export function toObservationID(id: string): ObservationID {
 	return id as ObservationID
@@ -127,7 +132,8 @@ export type DerivedFactID = Tagged<string, "GeographicDerivedFactID">
 /**
  * Brand a raw string as a {@link DerivedFactID}.
  *
- * Purely a compile-time assertion. the string is unchanged.
+ * Purely a compile-time assertion.
+ * The string is unchanged.
  */
 export function toDerivedFactID(id: string): DerivedFactID {
 	return id as DerivedFactID
@@ -153,7 +159,8 @@ export const ConceptKind = {
 	/**
 	 * Something a person does, e.g. `obtain_medication`.
 	 *
-	 * The identifier is owned here. any statistics fitted against it are owned by #1683.
+	 * The identifier is owned here.
+	 * Any statistics fitted against it are owned by #1683.
 	 */
 	Activity: "activity",
 } as const
@@ -169,7 +176,9 @@ export type ConceptKind = (typeof ConceptKind)[keyof typeof ConceptKind]
  */
 export const Modality = {
 	/**
-	 * Holds in every instance. a counter-example falsifies the record rather than qualifying it.
+	 * Holds in every instance.
+	 *
+	 * A counter-example falsifies the record rather than qualifying it.
 	 */
 	Necessary: "necessary",
 	/**
@@ -219,7 +228,8 @@ export const ConceptStatus = {
 	Draft: "draft",
 	Active: "active",
 	/**
-	 * Kept so existing references resolve. no new reference should be authored against it.
+	 * Kept so existing references resolve.
+	 * No new reference should be authored against it.
 	 */
 	Deprecated: "deprecated",
 } as const
@@ -229,8 +239,8 @@ export type ConceptStatus = (typeof ConceptStatus)[keyof typeof ConceptStatus]
 /**
  * The external vocabularies a concept can be mapped into.
  *
- * One today, and the mapping record below is typed against it directly. a second vocabulary
- * turns {@link ExternalMappingRecord} into a union discriminated on `vocabulary`.
+ * One today, and the mapping record below is typed against it directly.
+ * A second vocabulary turns {@link ExternalMappingRecord} into a union discriminated on `vocabulary`.
  */
 export const ExternalVocabulary = {
 	/**
@@ -300,8 +310,8 @@ export interface RelationRecord {
 /**
  * One authored claim, attached to the concept it is about.
  *
- * This is curated semantics — what a curator states holds rather than what a
- * dataset was observed to contain.
+ * This is curated semantics.
+ * What a curator states holds rather than what a dataset was observed to contain.
  */
 export interface RelationAssertion {
 	id: RuleID
@@ -329,7 +339,8 @@ export interface ConceptRecord {
 	/**
 	 * Broader concepts this one is a kind of.
 	 *
-	 * May be empty. may not name this concept, directly or around a cycle.
+	 * May be empty.
+	 * May not name this concept, directly or around a cycle.
 	 */
 	isA: ConceptID[]
 	assertions: RelationAssertion[]
@@ -361,8 +372,9 @@ export interface ExternalMappingRecord {
  * A proposition a named external source states, recorded in this model's vocabulary.
  *
  * It is kept out of the concept table on purpose.
- * An observation is evidence about the world that someone else collected. promoting
- * one into an authored assertion is a curation decision that has to be made
+ * An observation is evidence about the world that someone else collected.
+ *
+ * Promoting one into an authored assertion is a curation decision that has to be made
  * and provenanced explicitly, never by the record sitting in a convenient place.
  */
 export interface SourceObservationRecord {
@@ -413,8 +425,9 @@ export type DerivationInput =
  * derivation is unnamed or whose inputs do not resolve.
  *
  * There is no provenance field.
- * The derivation plus the inputs is the provenance and the stronger kind —
- * a source string can be copied onto a record that did not come from it,
+ * The derivation plus the inputs is the provenance and the stronger kind.
+ *
+ * A source string can be copied onto a record that did not come from it,
  * while an input list either resolves or the document does not validate.
  */
 export interface DerivedFactRecord {
@@ -440,9 +453,10 @@ export interface DerivedFactRecord {
  * One authored document: the whole record set a validator, and later a compiler, reads at once.
  *
  * All six fields are required, `derivedFacts` included.
- * A hand-authored file therefore writes `"derivedFacts": []`, which is the point — an absent table
- * and an empty table are different claims, and the format that allows the first to stand in for
- * the second is the format where a dropped table reads as a world with no derived facts in it.
+ * A hand-authored file therefore writes `"derivedFacts": []`, which is the point.
+ *
+ * An absent table and an empty table are different claims, and the format that allows the first to stand
+ * in for the second is the format where a dropped table reads as a world with no derived facts in it.
  */
 export interface GeographicModelDocument {
 	/**

@@ -75,7 +75,7 @@ describe("resolveWeights — the data-root overlay rung", () => {
 	it("refuses a half-populated overlay rather than resolving one binary", async () => {
 		const root = await scratch()
 
-		// A tokenizer without a model is not a weaker answer, it is a broken one — and the
+		// A tokenizer without a model is not a weaker answer, it is a broken one, and the
 		// failure it would otherwise produce arrives much later, inside the ONNX session.
 		await weightsDir(root, ABSENT, { "tokenizer.model": "sp" })
 

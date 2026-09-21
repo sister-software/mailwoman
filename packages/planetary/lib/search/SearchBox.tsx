@@ -23,8 +23,8 @@ export interface SearchBoxProps {
 
 export function SearchBox({ search, placeholder, onSelect }: SearchBoxProps) {
 	const [text, setText] = useState("")
-	// The hook picks by suggestion value, a string. the hits behind the last answer
-	// are kept here so a pick maps back to the feature it named.
+	// The hook picks by suggestion value, a string.
+	// The hits behind the last answer are kept here so a pick maps back to the feature it named.
 	const lastHits = useRef<Map<string, SearchHit>>(new Map())
 
 	const query = useCallback(

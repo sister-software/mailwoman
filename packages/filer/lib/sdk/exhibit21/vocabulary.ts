@@ -156,9 +156,9 @@ export const FOOTNOTE_MARKER_PATTERN = /^[([]?\d{1,3}[)\]]?$|^\*{1,3}$/
  * `["inc"]`, while `"South Carolina"`, `"Delaware"`, `"British Columbia, Canada"`,
  * `"England and Wales"` and `"DE"` all → `[]`.
  *
- * Used by {@linkcode isMultiValueCell} and the name-over-name table rule to tell an
- * entity name from a place — never on its own, always alongside a second condition,
- * because a jurisdiction can carry one (Charter writes `"Delaware limited liability company"`).
+ * Used by {@linkcode isMultiValueCell} and the name-over-name table rule to tell an entity
+ * name from a place, never on its own, always alongside a second condition, because a
+ * jurisdiction can carry one (Charter writes `"Delaware limited liability company"`).
  */
 export function carriesLegalDesignation(value: string): boolean {
 	return (canonicalizeOrganizationName(value)?.designations.length ?? 0) > 0

@@ -349,8 +349,8 @@ describe("resolveTree", () => {
 
 		// No candidate at all, so nothing refuses and the recovery pass is the wanted behaviour.
 		// Asserted on the lookup it issues rather than on a recovered node,
-		// because the fixture has no place under this name to find — what must hold is
-		// that the refusal check did not disable the pass in general.
+		// because the fixture has no place under this name to find.
+		// What must hold is that the refusal check did not disable the pass in general.
 		const input = tree("Nowhere", [node("locality", "Nowhere", 0, 7)])
 
 		await resolver.resolveTree(input)
@@ -437,7 +437,8 @@ describe("resolveTree", () => {
 
 describe("resolveTree — alternatives (candidate-list API)", () => {
 	const AMBIG_PLACES: ResolvedPlace[] = [
-		// Three Springfields: same name, different states. The Springfield-class ambiguity.
+		// Three Springfields: same name, different states.
+		// The Springfield-class ambiguity.
 		{
 			id: 101_727_113,
 			name: "Springfield",
@@ -568,7 +569,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		// ("VT" is both Vermont and Viterbo; "ME" both Maine and Messina); modeled here as
 		// two same-named regions so the fake backend's name-substring match returns both.
 		// The non-US region scores higher on name/BM25, so without a signal the wrong
-		// country wins — and because resolveTree resolves region first and inherits
+		// country wins, and because resolveTree resolves region first and inherits
 		// its country down, that poisons the locality too.
 		// The postcode posterior breaks the tie at the region.
 		const regions: ResolvedPlace[] = [

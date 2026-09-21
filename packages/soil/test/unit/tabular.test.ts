@@ -32,7 +32,7 @@ const MSTAB = [
 
 /**
  * `mstabcol.txt` is fourteen columns, and one of its descriptions carries an embedded
- * newline — which is the whole point of the fixture.
+ * newline, which is the whole point of the fixture.
  */
 const MSTABCOL = [
 	'"widget"|1|"widget_key"|"widget_key"|"Key"|"String"|"Yes"|30||||||"The key."',

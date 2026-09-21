@@ -148,7 +148,7 @@ describe("postcodePrefixResolvedPlace — the synthetic place (B3-2/B3-3)", () =
 		// The B3-2 tier: the node resolves to the index node's coordinate…
 		expect(postcode.lat).toBe(54.577232)
 		expect(postcode.lon).toBe(-5.94725)
-		// …and the metadata interface rides along: prefix, ancestry, radius —
+		// …and the metadata interface rides along: prefix, ancestry, radius,
 		// never read a coordinate without its radius (M-3's 200× receipt).
 		expect(postcode.metadata?.["postcode_prefix"]).toBe("BT9")
 

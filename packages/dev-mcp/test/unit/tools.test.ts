@@ -72,7 +72,8 @@ const LITERAL = {
 
 describe("mwdev_job", () => {
 	/**
-	 * A child that prints a gauntlet-shaped log and exits 1 — what a completed run grading `fail` looks like.
+	 * A child that prints a gauntlet-shaped log and exits 1.
+	 * What a completed run grading `fail` looks like.
 	 */
 	const FAIL_SCRIPT =
 		'console.log("=== Gauntlet · regression (350/354 counted cases pass, 203 tracked) ===");' +

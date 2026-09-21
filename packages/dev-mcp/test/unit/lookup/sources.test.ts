@@ -62,7 +62,9 @@ function memoryDatabase<DB>(): DatabaseClient<DB> {
  * false absences plus the NL PC6 pair whose stem hides the unit code.
  */
 const CANDIDATE_ROWS: Array<Partial<CandidateTable> & Pick<CandidateTable, "name_key" | "spr_id">> = [
-	// Each key is minted from the surface the build folds, never written folded by hand — for an alias row that surface is the alias rather than the display `name`, which is why "Balearic Islands" keys under `illes balears`.
+	// Each key is minted from the surface the build folds, never written folded by hand,
+	// for an alias row that surface is the alias rather than the display `name`,
+	// which is why "Balearic Islands" keys under `illes balears`.
 	{ name_key: nameKey("Porto Petro"), name: "Porto Petro", placetype_id: 1, country_id: 1, spr_id: 1, population: 0 },
 	{
 		name_key: nameKey("Illes Balears"),
@@ -153,7 +155,8 @@ async function candidateFixture(): Promise<DatabaseClient<CandidateDatabase>> {
 			row.name ?? null,
 			row.population ?? 0,
 			row.is_primary ?? 1,
-			// `importance` stays NULL unless the fixture row gives one. The unmeasured case is the point.
+			// `importance` stays NULL unless the fixture row gives one.
+			// The unmeasured case is the point.
 			row.importance ?? null
 		)
 	}

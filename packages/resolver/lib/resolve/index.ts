@@ -210,7 +210,7 @@ class WOFResolver implements Resolver {
 		// (the shape verdict above is pure-sync, backend-free), and the only mechanism
 		// allowed to override `defaultCountry`.
 		// Its three sibling coherence passes re-pick nodes after the walk.
-		// That shape cannot work here, because what needs correcting is the walk's country scope —
+		// That shape cannot work here, because what needs correcting is the walk's country scope,
 		// which poisons the postcode node's own resolution, the postcode-consistency fallback that
 		// then drags the locality onto it, and the hard `country` filter on every admin lookup.
 		// So the verdict is taken once, up front, and the walk runs under the corrected country.
@@ -804,7 +804,7 @@ class WOFResolver implements Resolver {
 		// collisions a country posterior can break.
 		// The region case is the one #447's window fix couldn't reach: a bare 2-letter abbreviation
 		// is shared across countries ("VT" is both Vermont and Viterbo; "ME" both Maine and Messina),
-		// so with no country signal the score picks the wrong one — and because resolveTree resolves
+		// so with no country signal the score picks the wrong one, and because resolveTree resolves
 		// region first and inherits its country down, a wrong region poisons the locality too.
 		// The postcode posterior breaks the tie at the region, and the right country
 		// then flows to the locality.

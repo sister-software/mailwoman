@@ -54,8 +54,8 @@ describe("buildGoogleComponents", () => {
 
 		expect(components).toEqual({
 			house_number: "1600",
-			// `route` takes the long name — the abbreviation is Google's display convenience
-			// rather than the form a parser sees in input.
+			// `route` takes the long name.
+			// The abbreviation is Google's display convenience rather than the form a parser sees in input.
 			street: "Amphitheatre Parkway",
 			locality: "Mountain View",
 			subregion: "Santa Clara County",

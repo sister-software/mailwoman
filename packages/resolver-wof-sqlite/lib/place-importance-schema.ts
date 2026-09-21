@@ -140,10 +140,11 @@ export async function createPlaceImportanceTable(db: Kysely<PlaceImportanceDatab
  *
  * The value is bracketed by two decided contests, measured on the 2026-08-24 staging build:
  *
- * - `> 0.2282`, or bare `Whitby` stops answering Whitby GB (pop 13,130, referential 0.2729, encyclopedic 0.5496) over
- *   Whitby CA (pop 128,377, referential 0.5011) — the #28 design case the fame prior exists to serve.
- * - `< 0.2790`, or bare `Tó`/`To` answers Tó PT (pop 136, referential 0.0131, encyclopedic 0.3375) over Tô BF (pop
- *   16,026, no article) — the `bf-gloss-to-*` board pair.
+ * - `> 0.2282`, or bare `Whitby` stops answering Whitby GB
+ *   (pop 13,130, referential 0.2729, encyclopedic 0.5496) over Whitby CA
+ *   (pop 128,377, referential 0.5011) — the #28 design case the fame prior exists to serve.
+ * - `< 0.2790`, or bare `Tó`/`To` answers Tó PT (pop 136, referential 0.0131, encyclopedic 0.3375)
+ *   over Tô BF (pop 16,026, no article) — the `bf-gloss-to-*` board pair.
  *
  * 0.25 sits mid-interval with ~0.02 margin to each bound.
  */
@@ -154,13 +155,14 @@ export const ENCYCLOPEDIC_BOOST_CAP = 0.25
  * derived from the two split channels:
  *
  * - No article → the referential score.
- * - No population evidence (`referential` 0) → the encyclopedic score stands alone: there is nothing to bound the
- *   article's claim against, and a constant cap would demote every famous place WOF records no population for
- *   (meaning-of-zero: referential 0 is "unmeasured", not "tiny").
- * - Both present → the encyclopedic value clamped to at most {@link ENCYCLOPEDIC_BOOST_CAP} above the referential score,
- *   and never below it. The floor half repairs the downward inversion (the Seine-Saint-Denis suburb's weak article
- *   scored 0.1173 and replaced its referential 0.4716 under the old `coalesce`, so a 418-person Aude hamlet outranked
- *   it 4.8x); the cap half repairs the upward one (`Tó`, above).
+ * - No population evidence (`referential` 0) → the encyclopedic score stands alone: there is nothing
+ *   to bound the article's claim against, and a constant cap would demote every famous place
+ *   WOF records no population for (meaning-of-zero: referential 0 is "unmeasured", not "tiny").
+ * - Both present → the encyclopedic value clamped to at most {@link ENCYCLOPEDIC_BOOST_CAP}
+ *   above the referential score, and never below it.
+ *   The floor half repairs the downward inversion (the Seine-Saint-Denis suburb's weak article
+ *   scored 0.1173 and replaced its referential 0.4716 under the old `coalesce`, so a 418-person
+ *   Aude hamlet outranked it 4.8x); the cap half repairs the upward one (`Tó`, above).
  *
  * Scale of the clamp on the 2026-08-24 staging build: of 628,202 article-containing rows,
  * 209,738 sit above the cap and 13,888 sit below their referential floor.
@@ -325,7 +327,7 @@ export interface ImportanceSplit {
 	/**
 	 * WOF id → encyclopedic importance.
 	 *
-	 * Sparse, and absence is absence — never fill a 0 in.
+	 * Sparse, and absence is absence, never fill a 0 in.
 	 */
 	encyclopedic: Map<number, number>
 	source: ImportanceSplitSource

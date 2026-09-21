@@ -120,7 +120,7 @@ describe("#1108 loud weights fallback — weights ABSENT (non-interactive / pipe
 		expect(code).toBe(0)
 		expect(stderr).toContain("neural weights not found")
 		expect(stderr).toContain(ABSENT_PACKAGE)
-		// The encoder-less structural fallback still produced output — not silent rather than empty.
+		// The encoder-less structural fallback still produced output, not silent rather than empty.
 		const parsed = parseStdoutJSON(stdout) as Record<string, unknown>
 		expect(parsed).toBeTypeOf("object")
 		expect(parsed["postcode"]).toBe("10118")

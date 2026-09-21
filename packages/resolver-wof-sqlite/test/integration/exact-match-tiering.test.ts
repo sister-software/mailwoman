@@ -235,7 +235,7 @@ describe("findPlace — exact-match tiering", () => {
 		expect(gb).toHaveLength(0)
 	})
 
-	// The 48026 rule (proximity bias): two same-name postcode rows on different continents —
+	// The 48026 rule (proximity bias): two same-name postcode rows on different continents,
 	// with no hints, population-first picks the bigger one.
 	// With a bias point near the smaller, the prominence sort follows the hint.
 	// Soft only: both candidates still return.

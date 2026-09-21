@@ -59,7 +59,8 @@ let result: BuildZoningResult
 let lookup: ZoningLookup
 
 /**
- * A point inside the first fixture zone — where both plans have a polygon.
+ * A point inside the first fixture zone.
+ * Where both plans have a polygon.
  */
 const INSIDE_ZONE_A = {
 	latitude: FIXTURE_ORIGIN.lat + FIXTURE_SIDE / 2,
@@ -213,7 +214,7 @@ describe("the vocabulary decision", () => {
 		const reading = lookup.lookup(unzonedCentre.latitude, unzonedCentre.longitude)
 
 		expect(reading.designations[0]!.crosswalk?.declared).toBe(false)
-		// Its label is the code itself, because the row carried no description —
+		// Its label is the code itself, because the row carried no description,
 		// never a label this package wrote for a code the publisher never declared.
 		expect(reading.designations[0]!.crosswalk?.label).toBe("N/A")
 	})
@@ -257,7 +258,7 @@ describe("the vocabulary decision", () => {
 	})
 
 	it("measures the crosswalk as NON-FUNCTIONAL over an (authority, code) pair", () => {
-		// The same local code assigned two different generic types by the same authority — which is
+		// The same local code assigned two different generic types by the same authority, which is
 		// the whole argument for carrying the local code verbatim and for the edge table being empty.
 		// Nationally: 52 of 795 pairs.
 		expect(result.crosswalk.pairs).toBeGreaterThan(0)

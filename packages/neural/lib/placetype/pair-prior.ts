@@ -326,19 +326,25 @@ import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
 import type { TokenLike } from "#query-shape-prior"
 
 /**
- * /** `probeMode` selects the candidate-building strategy — see the module docstring's
- * "Probe mode" section for the 2026-07-22 venue-confound falsifier verdict
- * and the 2026-07-24 anchored adjacent-pair design.
+ * /** `probeMode` selects the candidate-building strategy.
  *
- * - `"auto"` (**default**) — the production probe chain: segment path when the input has ≥2 comma-delimited segments
- *   (byte-identical to explicit `"segment"` there, by construction), else the anchored-adjacent path.
- * - `"segment"` — a candidate is a whole comma-delimited segment, folded as one unit. Requires `inputText` to find
- *   segment boundaries (see {@link PlacetypePairPriorOpts.inputText}); without it, the entire input is treated as one
- *   segment (matches the documented comma-free-input degradation rather than a distinct failure mode).
- * - `"anchored"` — the anchored adjacent-pair path alone (see the module docstring's "Anchored mode" section). Explicit
- *   value for harness use. The chain reaches it only on comma-free input.
- * - `"window"` — the sliding 1..{@link WINDOW_MAX_WORDS}-word behavior. Opt-in only. Re-enabling as a default requires a
- *   venue-aware suppression mechanism and a re-measured venue-confound FP=0 (see the module docstring).
+ * See the module docstring's "Probe mode" section for the 2026-07-22 venue-confound
+ * falsifier verdict and the 2026-07-24 anchored adjacent-pair design.
+ *
+ * - `"auto"` (**default**) — the production probe chain: segment path when the input has ≥2
+ *   comma-delimited segments (byte-identical to explicit `"segment"` there, by construction),
+ *   else the anchored-adjacent path.
+ * - `"segment"` — a candidate is a whole comma-delimited segment, folded as one unit.
+ *   Requires `inputText` to find segment boundaries (see {@link PlacetypePairPriorOpts.inputText});
+ *   without it, the entire input is treated as one segment
+ *   (matches the documented comma-free-input degradation rather than a distinct failure mode).
+ * - `"anchored"` — the anchored adjacent-pair path alone (see the module docstring's "Anchored mode" section).
+ *   Explicit value for harness use.
+ *   The chain reaches it only on comma-free input.
+ * - `"window"` — the sliding 1..{@link WINDOW_MAX_WORDS}-word behavior.
+ *   Opt-in only.
+ *   Re-enabling as a default requires a venue-aware suppression mechanism
+ *   and a re-measured venue-confound FP=0 (see the module docstring).
  */
 type PlacetypePairProbeMode = "auto" | "segment" | "anchored" | "window"
 
@@ -431,10 +437,10 @@ export interface PlacetypePairPriorOpts {
 	/**
 	 * Candidate-building strategy.
 	 *
-	 * Default `"auto"` (the segment→anchored probe chain) — see {@link PlacetypePairProbeMode}
-	 * and the module docstring's "Probe mode" section for the 52.1% venue-confound
-	 * FP measurement (2026-07-22) that set the v1 segment path, and the 2026-07-24
-	 * anchored adjacent-pair design that added the comma-free leg.
+	 * Default `"auto"` (the segment→anchored probe chain).
+	 * See {@link PlacetypePairProbeMode} and the module docstring's "Probe mode" section for
+	 * the 52.1% venue-confound FP measurement (2026-07-22) that set the v1 segment path,
+	 * and the 2026-07-24 anchored adjacent-pair design that added the comma-free leg.
 	 */
 	probeMode?: PlacetypePairProbeMode
 	/**
@@ -613,8 +619,8 @@ function makeCensusParentRecorder(
 }
 
 /**
- * Probe `index` for the `(x, y)` pair under every combination of their space-joined/concatenated
- * key forms — see the module docstring's "dual-key probe" section.
+ * Probe `index` for the `(x, y)` pair under every combination of their space-joined/concatenated key forms.
+ * See the module docstring's "dual-key probe" section.
  *
  * Tries space/space, space/concat, concat/space, concat/concat in that order and returns the first hit.
  * A window's two forms collapse to one string when it's a single word,
@@ -719,7 +725,7 @@ function resolveAnchorParentEnd(
  * The anchored adjacent-pair probe (see the module docstring's "Anchored mode" section):
  * parent windows of 1..{@link WINDOW_MAX_WORDS} words ending at `parentEnd`,
  * child windows of 1..{@link ANCHORED_CHILD_MAX_WORDS} words immediately left of
- * the parent (`child.endPos + 1 === parent.startPos`), both tried longest-first —
+ * the parent (`child.endPos + 1 === parent.startPos`), both tried longest-first,
  * which is what implements the left-maximality rule: for a given parent, the longest child
  * pairing with it is found (and returned) before any of its right-suffixes can be probed.
  *
@@ -867,8 +873,8 @@ function applyParentTagBias(
 	parentTag: ComponentTag,
 	parentDelta: number
 ): void {
-	// The KEY's span rather than the whole segment — see `CandidateWindow.keyPieceIndices`
-	// for the FR measurement that forced the distinction.
+	// The KEY's span rather than the whole segment.
+	// See `CandidateWindow.keyPieceIndices` for the FR measurement that forced the distinction.
 	// The child write keeps the whole segment.
 	// Only the parent needs the narrower one, because only the parent's segment carries a same-field postcode.
 	writeSpanBias(matrix, labelToCol, parent.keyPieceIndices ?? parent.pieceIndices, parentTag, parentDelta)

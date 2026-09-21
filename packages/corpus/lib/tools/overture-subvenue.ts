@@ -51,18 +51,23 @@ import type { SubVenueHarvestRow } from "#tools/sub/venue/lexicon"
  *
  * Rejected, with the number that rejected them — do not re-add without a fresh census:
  *
- * - `gas_station` (12,996 hits) — all `station` inside a brand name (Holiday Station, Chevron Station Seward).
- * - `fire_station` (10,377) — same, plus 330 `hall` from fire halls, which are venues rather than sub-venues.
+ * - `gas_station` (12,996 hits) — all `station` inside a brand name
+ *   (Holiday Station, Chevron Station Seward).
+ * - `fire_station` (10,377) — same, plus 330 `hall` from fire halls,
+ *   which are venues rather than sub-venues.
  * - `town_hall` (5,528) — `City Hall` is a whole building, the `venue` tier rather than interior structure.
  * - `building_supply_store` (4,030) — `building` inside "Allied Building Products".
- * - `jehovahs_witness_place_of_worship` (2,334). Every hit is "Kingdom Hall of Jehovah's Witnesses".
- * - `shoe_store` (909, of which 708 `wing`) — Red Wing. This one is a confound board entry rather than a source.
- * - `college_university` (3,697) — 2,082 `campus`, but the row names the whole institution; `campus_building` is the
- *   interior subset and is kept instead.
- * - `airport` (6,000 rows, 4,302 hits) — 4,071 of them are the token `airport` in the aerodrome's own name. Venue tier,
- *   already covered by OurAirports, and it drowns the interior signal.
+ * - `jehovahs_witness_place_of_worship` (2,334).
+ *   Every hit is "Kingdom Hall of Jehovah's Witnesses".
+ * - `shoe_store` (909, of which 708 `wing`) — Red Wing.
+ *   This one is a confound board entry rather than a source.
+ * - `college_university` (3,697) — 2,082 `campus`, but the row names the whole institution;
+ *   `campus_building` is the interior subset and is kept instead.
+ * - `airport` (6,000 rows, 4,302 hits) — 4,071 of them are the token `airport` in the aerodrome's own name.
+ *   Venue tier, already covered by OurAirports, and it drowns the interior signal.
  * - `transport_interchange` (1 row), `rail_facility_or_service` (81 rows, 2 hits) — too small to matter.
- * - `public_transit_facility_or_service` (2,274 rows, 185 hits) — 161 are `station` naming the station itself.
+ * - `public_transit_facility_or_service` (2,274 rows, 185 hits) — 161 are
+ *   `station` naming the station itself.
  */
 export const OVERTURE_SUBVENUE_CATEGORIES: Readonly<Record<string, string>> = {
 	// 1,022 rows / 669 hits — terminal 266, concourse 19, gate 13, hall 4.

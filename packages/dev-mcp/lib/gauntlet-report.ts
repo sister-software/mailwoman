@@ -81,7 +81,7 @@ export interface GauntletReport {
  * Both wanted an ambiguous quantifier to express (`(.*pins.*|.*=.*)$` and `(.*?)\s+now passes`),
  * which backtracks quadratically on a long non-matching line and which CodeQL flags as polynomial ReDoS.
  *
- * A gauntlet log is our own output rather than hostile input, so the practical exposure was small —
+ * A gauntlet log is our own output rather than hostile input, so the practical exposure was small,
  * but the string version is both shorter and unconditionally linear, so there was nothing to trade away.
  */
 const HEADER = /^=== Gauntlet · (\S+) \((\d+)\/(\d+) counted cases pass(?:, (\d+) tracked)?\)/

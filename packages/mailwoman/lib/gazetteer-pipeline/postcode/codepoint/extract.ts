@@ -154,11 +154,7 @@ export interface ExtractCodePointResult {
 	/**
 	 * `Doc/licence.txt` verbatim, so the database's provenance quotes OS's own words rather than ours.
 	 *
-	 * Decoded as **Latin-1**, and that is required rather than fussy. The archive declares no encoding, and the file's
-	 * only non-ascii byte is `0xA9`. Latin-1 `©`, which is not valid UTF-8 on its own. Reading it as UTF-8 turns every
-	 * copyright symbol into U+fffd, so the first build baked `Contains Ordnance Survey data � Crown copyright` into the
-	 * database's `meta`. Mojibake in a decorative string is cosmetic. Mojibake in the attribution text a redistributor is
-	 * legally required to carry is not.
+	 * Decoded as **Latin-1**, and that is required rather than fussy. The archive declares no encoding, and the file's only non-ascii byte is `0xA9`. Latin-1 `©`, which is not valid UTF-8 on its own. Reading it as UTF-8 turns every copyright symbol into U+fffd, so the first build baked `Contains Ordnance Survey data � Crown copyright` into the database's `meta`. Mojibake in a decorative string is cosmetic. Mojibake in the attribution text a redistributor is legally required to carry is not.
 	 */
 	licenseText: string
 	totalBytes: number

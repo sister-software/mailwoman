@@ -89,7 +89,7 @@ describe("verifyReleaseMetadata", () => {
 	it("refuses a status page outside the tree the site publishes", async () => {
 		const repoRoot = await plant({ status: "docs/records/site-2026-08/status.mdx" })
 
-		// The archived copy cites the shipped model, so without the constraint this run would pass —
+		// The archived copy cites the shipped model, so without the constraint this run would pass,
 		// which is exactly how the live page went four releases without being read.
 		await expect(
 			verifyReleaseMetadata({ repoRoot, status: "docs/records/site-2026-08/status.mdx", log: () => {} })

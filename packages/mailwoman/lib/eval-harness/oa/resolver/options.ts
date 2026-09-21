@@ -51,7 +51,8 @@ export interface OAResolverEvalOptions {
 	 * This is the tree's only FST-sensitive eval.
 	 * `eval gauntlet` grades through `parseForGeocode`, which takes no FST at all.
 	 *
-	 * Therefore, an FST change is invisible to it — see the note on `assembledPipeline` below.
+	 * Therefore, an FST change is invisible to it.
+	 * See the note on `assembledPipeline` below.
 	 */
 	adminFST?: string
 	/**

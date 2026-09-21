@@ -124,8 +124,8 @@ async function parseFeature(
 	// with a geom:longitude would be a point on neither centroid.
 	//
 	// The label point carries its own upstream defects (#1905: WOF's lbl: for Washington DC is 7.8 km out),
-	// so when both pairs exist and disagree widely, the record's GeoNames concordance
-	// adjudicates — see choosePoint's rule and the census in label-point-adjudicator.ts.
+	// so when both pairs exist and disagree widely, the record's GeoNames concordance adjudicates.
+	// See choosePoint's rule and the census in label-point-adjudicator.ts.
 	// No anchor, no disagreement, or no decisive separation → the label preference, byte-identical to before.
 	const hasLbl = typeof props["lbl:latitude"] === "number" && typeof props["lbl:longitude"] === "number"
 	const hasGeom = typeof props["geom:latitude"] === "number" && typeof props["geom:longitude"] === "number"

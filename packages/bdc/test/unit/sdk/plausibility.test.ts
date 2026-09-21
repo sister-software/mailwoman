@@ -218,7 +218,7 @@ async function buildPOILookupFixture(rows: readonly POIFixtureRow[]): Promise<PO
 }
 
 /**
- * A `layerschemadatabase`-only fixture standing in for poi.db's own manifest/coverage —
+ * A `layerschemadatabase`-only fixture standing in for poi.db's own manifest/coverage,
  * not poi.db's actual file (mirrors `nearest-infrastructure.test.ts`'s decoupled `openemptyschemadb`),
  * but with a realistic recorded `spineKeys.h3.resolution` (9, matching `POI_H3_RESOLUTION`)
  * by default so `assertLayerSpineResolution` passes in the happy-path tests.

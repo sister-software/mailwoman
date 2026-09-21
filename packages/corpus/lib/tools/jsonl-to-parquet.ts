@@ -115,7 +115,7 @@ export interface JSONLToParquetSummary {
 /**
  * Enforce the #519 span interface per row: all three present, parallel lengths.
  *
- * A row with span_starts but no span_tags is a corrupt row — never a silent fallback.
+ * A row with span_starts but no span_tags is a corrupt row, never a silent fallback.
  */
 function assertSpanTriple(row: Record<string, unknown>, lineNo: number): void {
 	const present = SPAN_COLUMNS.filter((c) => row[c] != null)
@@ -156,7 +156,7 @@ export async function jsonlToParquet(
 	// Stage the validated rows to a temp ndjson, then let DuckDB type + write them.
 	// Streaming keeps memory O(1) on the Node side (the Python original buffered every column into memory first).
 	// The staging directory owns the write stream, so it is closed before the directory
-	// is removed — and a mid-stream span-triple failure leaves no orphan.
+	// is removed, and a mid-stream span-triple failure leaves no orphan.
 	await using staging = await temporaryDirectory("mw-jsonl-to-parquet-")
 	const stagePath = join(staging.path, "rows.ndjson")
 	const stage = staging.use(openWriteStream(stagePath, { encoding: "utf8" }))

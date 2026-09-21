@@ -112,7 +112,9 @@ describe("probeVenueNearAnchor (#1684's venue tier)", () => {
 
 	it("answers the single exact-name entity near the anchor — local uniqueness, not worldwide", () => {
 		const lookup = stubLookup([
-			// The local bearer plus a same-named entity in another city: the fork probe would abstain on this pair. The anchored probe must not, because the anchor separates them.
+			// The local bearer plus a same-named entity in another city: the fork
+			// probe would abstain on this pair.
+			// The anchored probe must not, because the anchor separates them.
 			{ name: "Nine Elms Tavern", categoryID: "pub", lat: 51.48223, lon: -0.13718, country: "GB" },
 			{ name: "Nine Elms Tavern", categoryID: "pub", lat: 40.7, lon: -74, country: "US" },
 		])

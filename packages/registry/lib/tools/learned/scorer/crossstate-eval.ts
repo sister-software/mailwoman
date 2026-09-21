@@ -176,7 +176,8 @@ export async function scorerCrossStateEval(
 
 	const fs = armOver(
 		Array.from({ length: 26 }, (_, i) => i),
-		// learnedScorer:false — the FS baseline is the baseline (the learned scorer is now default-on, so without this the "FS arm" would silently be the GBT).
+		// learnedScorer:false — the FS baseline is the baseline
+		// (the learned scorer is now default-on, so without this the "FS arm" would silently be the GBT).
 		(t) => ({ addressFrequency, collapseSpatial: true, trainEM: true, threshold: t, learnedScorer: false })
 	)
 

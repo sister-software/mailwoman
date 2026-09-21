@@ -40,7 +40,7 @@ export const TIGERClassCode = {
 
 	/**
 	 * An area from which commercial minerals are or were removed from the Earth.
-	 * not including an oilfield or gas field.
+	 * Not including an oilfield or gas field.
 	 */
 	QuarryOpenPitMine: "C3026",
 
@@ -499,16 +499,18 @@ export const TIGERClassCode = {
 	OceanSea: "H2053",
 
 	/**
-	 * A body of ice moving outward and down slope from an area of accumulation. an area of
-	 * relatively permanent snow or ice on the top or side of a mountain or mountainous area.
+	 * A body of ice moving outward and down slope from an area of accumulation.
+	 *
+	 * An area of relatively permanent snow or ice on the top or side of a mountain or mountainous area.
 	 *
 	 * [includes ice field and ice patch]
 	 */
 	Glacier: "H2081",
 
 	/**
-	 * A natural flowing waterway. [includes anabranch, awawa, branch, brook, creek, distributary, fork, kill, pup, rio,
-	 * and run]
+	 * A natural flowing waterway.
+	 *
+	 * [includes anabranch, awawa, branch, brook, creek, distributary, fork, kill, pup, rio, and run]
 	 */
 	StreamRiver: "H3010",
 
@@ -576,8 +578,9 @@ export const TIGERClassCode = {
 	NursingHomeRetirementHomeHomeForTheAged: "K1233",
 
 	/**
-	 * A facility (correctional or non-correctional) where groups of juveniles reside. this
-	 * includes training schools, detention centers, residential treatment centers and orphanages.
+	 * A facility (correctional or non-correctional) where groups of juveniles reside.
+	 *
+	 * This includes training schools, detention centers, residential treatment centers and orphanages.
 	 */
 	JuvenileInstitution: "K1235",
 
@@ -758,8 +761,10 @@ export const TIGERClassCode = {
 
 	/**
 	 * A facility where one or more modes of transportation can be accessed by people
-	 * or for the shipment of goods. examples of such a facility include marine terminal,
-	 * bus station, train station, airport and truck warehouse.
+	 * or for the shipment of goods.
+	 *
+	 * Examples of such a facility include marine terminal, bus station, train station,
+	 * airport and truck warehouse.
 	 */
 	TransportationTerminal: "K2400",
 
@@ -868,7 +873,7 @@ export const TIGERClassCode = {
 
 	/**
 	 * A sanctified place or structure where people gather for religious worship.
-	 * examples include church, synagogue, temple, and mosque.
+	 * Examples include church, synagogue, temple, and mosque.
 	 */
 	PlaceOfWorship: "K3544",
 
@@ -901,8 +906,9 @@ export const TIGERClassCode = {
 	RidgeLine: "L4121",
 
 	/**
-	 * A very steep or vertical slope. [including bluff, crag, head, headland, nose, palisades, precipice, promontory,
-	 * rim, and rimrock]
+	 * A very steep or vertical slope.
+	 *
+	 * [including bluff, crag, head, headland, nose, palisades, precipice, promontory, rim, and rimrock]
 	 */
 	CliffEscarpment: "L4125",
 
@@ -982,7 +988,7 @@ export const TIGERClassCode = {
 
 	/**
 	 * Secondary roads are main arteries that are not limited access, usually in the
-	 * U.S. highway, state highway, or county highway systems.
+	 * U.S. Highway, state highway, or county highway systems.
 	 *
 	 * These roads have one or more lanes of traffic in each direction, may or may not be divided,
 	 * and usually have at-grade intersections with many other roads and driveways.

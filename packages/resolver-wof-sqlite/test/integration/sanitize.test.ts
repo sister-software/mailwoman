@@ -143,7 +143,7 @@ describe("sanitizeFTSQuery — intra-token punctuation SPLITS for non-postcode q
 		// A spaced/hyphenated postcode query must still fuse per token.
 		// The postal names are stored collapsed.
 		// `62-701` fused per-token is `62701`, matching the stored row.
-		// Split it would be `"62" "701"`, which unicode61 also tokenizes to match —
+		// Split it would be `"62" "701"`, which unicode61 also tokenizes to match,
 		// but the fuse is the interface the geonames-postal name law was built against.
 		// Therefore, pin it explicitly.
 		const r = await lookup.findPlace({ text: "62-701", placetype: "postalcode" })

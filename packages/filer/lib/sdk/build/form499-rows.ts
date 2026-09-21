@@ -31,8 +31,8 @@ import type { Form499Lifecycle } from "#sdk/form499/notes"
  * last filing, **3,916 predate it**, and 76 fall on the same day.
  *
  * Writing `valid_to = ceasedAt` unconditionally against `valid_from = lastFiledAt`
- * would produce an inverted or empty window on those 3,992 — and the half-open
- * predicate `valid_from <= t < valid_to` matches nothing across one.
+ * would produce an inverted or empty window on those 3,992, and the half-open predicate
+ * `valid_from <= t < valid_to` matches nothing across one.
  * Every affected filer would vanish from every `asOf` read, silently, with no error
  * and no missing row to notice.
  *
@@ -76,8 +76,8 @@ export interface Form499LifecycleTotals {
  * One 499 row's lifecycle writes: a `ceased_at` attribute, one `cessation_reason` attribute
  * per recognized reason, and a `SupersededBy` edge when the FCC named a successor filer.
  *
- * Returns the `valid_to` the caller should stamp on that row's relationship edges —
- * see {@linkcode closeableCessationDate} for when that is `null` and why.
+ * Returns the `valid_to` the caller should stamp on that row's relationship edges.
+ * See {@linkcode closeableCessationDate} for when that is `null` and why.
  *
  * Its own function for the same reason {@linkcode processForm499FRNRelationships} is: inlined
  * into the 499 loop, it pushes `buildFilerDatabase` past the linter's `max-statements` ceiling.
@@ -129,7 +129,8 @@ export function processForm499Lifecycle(
 			FilerRelationship.SupersededBy,
 			"form-499",
 			lastFiledAt,
-			// The supersession takes effect when the filer ceased, when the FCC said so. Falling back to the filing date keeps `valid_from` mandatory (decision 7) without inventing a date.
+			// The supersession takes effect when the filer ceased, when the FCC said so.
+			// Falling back to the filing date keeps `valid_from` mandatory (decision 7) without inventing a date.
 			ceasedAt ?? lastFiledAt,
 			null,
 			null,
@@ -167,8 +168,9 @@ export interface Form499FRNContext {
 /**
  * One 499 row's FRN-anchored writes: `FRN↔form499ID` (always),
  * `FRN↔holdingCompanyName`/`FRN↔managementCompanyName`
- * (when the corresponding field is non-empty, each its own edge + `filer_family` row) —
- * see `build-filer.ts`'s module docstring, "Edges emitted" section.
+ * (when the corresponding field is non-empty, each its own edge + `filer_family` row).
+ *
+ * See `build-filer.ts`'s module docstring, "Edges emitted" section.
  *
  * Also records this row's legal name into `legalNameByFRN` for {@linkcode processEdgarSubsidiaryRow}'s
  * corroboration match, keeping the latest `lastFiledAt` per FRN.

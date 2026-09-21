@@ -88,7 +88,7 @@ export interface Form499Row {
 	 */
 	form499ID: string
 	/**
-	 * `null` when the raw field doesn't parse to a valid 10-digit FRN ({@linkcode toFRN}) —
+	 * `null` when the raw field doesn't parse to a valid 10-digit FRN ({@linkcode toFRN}),
 	 * never thrown, since a missing/invalid FRN on an otherwise well-formed row is common in the wild
 	 * (a filer not yet registered in cores) and is not the "malformed row" decision 8 guards against.
 	 */

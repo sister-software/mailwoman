@@ -28,8 +28,8 @@ import { WORKING_TREE_REF } from "#worktree/arm"
 /**
  * How one arm answers one raw query string, whichever kind of arm it is.
  *
- * Lives beside the arm specs rather than inside the comparison, so a new arm kind can
- * be implemented in its own module without that module importing the comparison —
+ * Lives beside the arm specs rather than inside the comparison, so a new arm kind
+ * can be implemented in its own module without that module importing the comparison,
  * which would close a cycle, since the comparison must import it back.
  */
 export interface ArmRunner {
@@ -98,7 +98,7 @@ export interface RecordedArm {
  *
  * The kind a source change needs and the other four cannot express.
  * A `mailwoman` arm runs whatever this process imported, so two of them can only differ by
- * config — which does cover the model, via `weights_cache`, but never the code that loads it.
+ * config, which does cover the model, via `weights_cache`, but never the code that loads it.
  *
  * A `recorded` arm replays a past run but cannot produce a new one at an old ref.
  *

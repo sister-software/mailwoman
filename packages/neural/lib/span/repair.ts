@@ -131,7 +131,7 @@ export function createLabelSetter(tokens: DecoderToken[]): {
 
 /**
  * The ADD-path safety check: a span may be created only over `O` tokens and the tags
- * in `addOverTags` — never over a confident structural label.
+ * in `addOverTags`, never over a confident structural label.
  *
  * Each pass declares its own `addOverTags` set.
  * That set is a change and stays with the pass.
@@ -181,7 +181,7 @@ export function tagOf(label: string): string | null {
 export interface RepairResult {
 	tokens: DecoderToken[]
 	/**
-	 * Number of token labels changed — for telemetry / logging.
+	 * Number of token labels changed, for telemetry / logging.
 	 */
 	changed: number
 }

@@ -68,7 +68,7 @@ export interface SoilAgreementRow {
 	 * Metres from the point to the nearest edge of the delineation the artifact matched.
 	 *
 	 * Carried on every row rather than only the tolerated ones, because it is what
-	 * separates a real defect from two channels rendering the same edge differently —
+	 * separates a real defect from two channels rendering the same edge differently,
 	 * and a receipt that omits it forces a re-run.
 	 */
 	nearestEdgeMetres?: number
@@ -105,7 +105,7 @@ export interface VerifySoilResult {
  * cannot name is a coordinate nobody can check.
  *
  * Every neighbouring state is included, because the failure this half catches is a
- * footprint that leaked past the survey-area outlines — and a footprint accidentally
+ * footprint that leaked past the survey-area outlines, and a footprint accidentally
  * clipped to "the Midwest" would pass a one-state check.
  * Two of these sit close to the Iowa border on purpose: the outline test is conservative,
  * so a near-border point must read unknown rather than borrow Iowa's coverage.

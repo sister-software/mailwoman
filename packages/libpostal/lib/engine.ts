@@ -28,8 +28,10 @@ export interface ParseMatch {
 }
 
 /**
- * Mailwoman `ComponentTag` → libpostal label. libpostal's label set is OSM-derived. ours is close
- * but not identical, so map the overlap and pass unmapped classifications through unchanged.
+ * Mailwoman `ComponentTag` → libpostal label.
+ *
+ * Libpostal's label set is OSM-derived.
+ * Ours is close but not identical, so map the overlap and pass unmapped classifications through unchanged.
  */
 export const COMPONENT_TO_LIBPOSTAL: Record<string, string> = {
 	house_number: "house_number",

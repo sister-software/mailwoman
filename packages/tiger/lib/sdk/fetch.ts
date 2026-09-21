@@ -202,7 +202,8 @@ async function discoverCounties(state: string, vintage: number): Promise<string[
 /**
  * Fetch one state's tiger data at `level` into a SQLite DB.
  *
- * Yields progress. returns the final tally.
+ * Yields progress.
+ * Returns the final tally.
  */
 export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<FetchTIGEREvent, FetchTIGERResult> {
 	const level = options.level ?? "tabblock20"
@@ -213,16 +214,17 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 	const table = LEVEL_TABLE[level]
 
 	const cacheDir = join(dataRoot, "tiger", String(vintage), state)
-	// Default to a stable, vintage-agnostic `tiger.db` — the filename the corpus `tiger`
-	// adapter reads (run-corpus-build → `${root}/tiger/tiger.db`).
-	// The vintage is a content detail rather than a path one. the per-table idempotent
-	// delete keeps a re-fetch (newer vintage) clean.
+	// Default to a stable, vintage-agnostic `tiger.db`.
+	// The filename the corpus `tiger` adapter reads (run-corpus-build → `${root}/tiger/tiger.db`).
+	// The vintage is a content detail rather than a path one.
+	// The per-table idempotent delete keeps a re-fetch (newer vintage) clean.
 	// The download cache stays vintage-partitioned below so zips don't collide across vintages.
 	const outPath = options.outPath ?? join(dataRoot, "tiger", "tiger.db")
 	await makeDirectories(cacheDir)
 	await makeDirectories(dirname(outPath))
 
-	// Source units: one (per-state) for block/place. one per county for addrfeat.
+	// Source units: one (per-state) for block/place.
+	// One per county for addrfeat.
 	const geoCodes = level === "addrfeat" ? await discoverCounties(state, vintage) : [""]
 
 	if (level === "addrfeat" && !geoCodes.length) {
@@ -237,8 +239,8 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 	 * `level` picks the table and the row shape, but nothing ties them at the type level:
 	 * {@link buildRow} returns the union and Kysely needs the arm's concrete row.
 	 *
-	 * The narrowings below are sound only because `buildRow` switches on the same `level` —
-	 * keep the two switches in step, or a row shape reaches the wrong table.
+	 * The narrowings below are sound only because `buildRow` switches on the same `level`.
+	 * Keep the two switches in step, or a row shape reaches the wrong table.
 	 */
 	const insertBatch = async (rows: Row[]): Promise<void> => {
 		if (level === "tabblock20") {

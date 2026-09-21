@@ -452,7 +452,7 @@ function collectIssues(input: unknown): ValidationIssue[] {
 /**
  * Validate an authored geographic-model document.
  *
- * Returns the document whole, or every reason it is not one.
+ * @returns the document whole, or every reason it is not one.
  * Issues arrive in traversal order — shape issues per record in table order,
  * then whole-table reference issues — so two runs over the same input produce the same list.
  */
@@ -461,7 +461,8 @@ export function validateGeographicModelDocument(input: unknown): ValidationResul
 
 	if (issues.length) return { ok: false, issues }
 
-	// A clean input is the document — the validator reads, it never rewrites.
+	// A clean input is the document.
+	// The validator reads, it never rewrites.
 	// Keeping the assertion in this function, where `input` is still `unknown`,
 	// is what makes it a single step rather than a cast through `unknown`.
 	return { ok: true, document: input as GeographicModelDocument }

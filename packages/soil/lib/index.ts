@@ -389,9 +389,9 @@ function readIdentity(
 	>
 
 	// The name's suffix names the region a build covers, so the reader checks the prefix
-	// rather than a whole name — which is why it asserts its own identity
-	// instead of taking `parseManifestRows`: one authority, one product, one rating
-	// vocabulary per artifact, over whichever survey areas were built.
+	// rather than a whole name, which is why it asserts its own identity instead of
+	// taking `parseManifestRows`: one authority, one product, one rating vocabulary
+	// per artifact, over whichever survey areas were built.
 	const row = singleManifestRow(manifestRows, `soil reader: ${databasePath}`)
 	const name = String(row.name)
 

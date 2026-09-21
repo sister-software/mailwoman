@@ -65,7 +65,9 @@ export type CoastalCellContainment = (typeof CoastalCellContainment)[keyof typeo
  */
 export interface CoastalZoneAreaTable {
 	/**
-	 * `<scenario key>:<objectid>` — see this file's header for why the frontage id cannot serve.
+	 * `<scenario key>:<objectid>`.
+	 *
+	 * See this file's header for why the frontage id cannot serve.
 	 */
 	area_id: string
 	/**
@@ -137,7 +139,8 @@ export interface CoastalZoneAreaTable {
 	max_lat: number
 	max_lon: number
 	/**
-	 * The authority's ring coordinates, unsimplified — see `rings.ts` for the layout and the point test.
+	 * The authority's ring coordinates, unsimplified.
+	 * See `rings.ts` for the layout and the point test.
 	 */
 	rings: Uint8Array
 }

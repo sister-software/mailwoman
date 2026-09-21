@@ -56,7 +56,8 @@ export interface CanonicalizeOptions {
 	 *
 	 * Adds that country's legal forms — including collision-prone ones held out
 	 * of the base — to the strip-set.
-	 * Case-insensitive. unknown codes add nothing.
+	 * Case-insensitive.
+	 * Unknown codes add nothing.
 	 */
 	jurisdiction?: string
 	/**
@@ -69,16 +70,19 @@ export interface CanonicalizeOptions {
 }
 
 /**
- * Universal legal-entity designations — the forms that are safe to strip regardless of
- * jurisdiction or domain because they don't collide with common domain abbreviations.
+ * Universal legal-entity designations.
+ *
+ * The forms that are safe to strip regardless of jurisdiction or domain
+ * because they don't collide with common domain abbreviations.
  *
  * Normalized to lowercase with punctuation removed (so `L.L.C.` → `llc`).
  * Drawn from the ISO 20275 register + `cleanco`'s common set.
  *
  * Stripped as whole tokens wherever they occur.
  * Deliberately excludes name-meaningful words (`group`, `holdings`, `partners`, `associates`)
- * and the collision-prone forms (`pt`, `sca`, `scs`) — those last live in
- * {@link JURISDICTION_DESIGNATIONS}, admitted only behind a known jurisdiction.
+ * and the collision-prone forms (`pt`, `sca`, `scs`).
+ *
+ * Those last live in {@link JURISDICTION_DESIGNATIONS}, admitted only behind a known jurisdiction.
  */
 const BASE_DESIGNATIONS = new Set([
 	"inc",
@@ -141,9 +145,10 @@ const BASE_DESIGNATIONS = new Set([
  *
  * This is where the collision-prone tokens live: `pt` (Indonesia), `sca` / `scs`
  * (French/Belgian/Luxembourg commandite forms).
- * Stripping these is correct only when we know the org's country — never in the universal base.
+ * Stripping these is correct only when we know the org's country, never in the universal base.
  *
- * Grounded seeds rather than exhaustive. extend per ISO 20275.
+ * Grounded seeds rather than exhaustive.
+ * Extend per ISO 20275.
  */
 const JURISDICTION_DESIGNATIONS: Record<string, readonly string[]> = {
 	ID: ["pt", "tbk", "ud"], // Perseroan Terbatas / Terbuka (listed) / Usaha Dagang
@@ -172,7 +177,7 @@ const DOMAIN_PROTECTED: Record<DesignationDomain, readonly string[]> = {
  * Compute the effective designation strip-set for the given
  * context: `(base ∪ jurisdiction-pack) − domain-guard-pack`.
  *
- * Returns the shared base set unchanged when no context is given (the byte-stable default),
+ * @returns the shared base set unchanged when no context is given (the byte-stable default),
  * so the common path allocates nothing.
  */
 function resolveDesignations(options?: CanonicalizeOptions): ReadonlySet<string> {
@@ -208,7 +213,7 @@ const DBA_PATTERN = /\s+(?:d\/b\/a|dba|doing business as|t\/a|trading as|a\/k\/a
  * Canonicalize one name fragment: lowercase, strip accents, connectives → `and`,
  * drop punctuation, remove a leading `the`, strip legal designations, collapse whitespace.
  *
- * Returns the key plus the designations it removed.
+ * @returns the key plus the designations it removed.
  */
 function canonicalizeFragment(
 	fragment: string,

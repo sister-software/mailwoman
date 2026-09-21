@@ -42,8 +42,10 @@ export interface LatLng {
 /**
  * H3 resolution for the locality cell — coarse on purpose (~edge 174 m).
  *
- * The same place geocoded a few metres apart (situs vs interpolation, geocode jitter) lands
- * in the same cell, so the key is stable. the address hash carries the precise identity.
+ * The same place geocoded a few metres apart (situs vs interpolation, geocode jitter)
+ * lands in the same cell, so the key is stable.
+ * The address hash carries the precise identity.
+ *
  * Self-contained here (not via `@mailwoman/spatial`. It isn't a published package).
  *
  * Therefore, this stays cleanly publishable.
@@ -84,7 +86,8 @@ export interface CreatePostalAddressIDInput {
 	/**
 	 * 2-letter region/state for the prefix.
 	 *
-	 * When omitted, plucked from the address's ZIP. else `xx`.
+	 * When omitted, plucked from the address's ZIP.
+	 * Else `xx`.
 	 */
 	state?: string
 	/**
@@ -118,7 +121,7 @@ function canonicalizeForHash(address: string): string {
  * (codex's `pluckStateZIPCode` anchors to a bare snippet, so it can't read a full address)
  * and take the last valid one — addresses end with the state + ZIP.
  *
- * Returns the uppercase abbreviation or null.
+ * @returns the uppercase abbreviation or null.
  */
 function deriveState(address: string): string | null {
 	const candidates = [...address.matchAll(/\b([A-Za-z]{2})[ ,]+\d{5}(?:-\d{4})?\b/g)]
@@ -136,10 +139,10 @@ function deriveState(address: string): string | null {
  * Build a stable {@link PostalAddressID} from a geocoded, canonicalizable address.
  *
  * Deterministic: the same (coordinate-cell, canonical address, state) always yields the same key.
- * Two records that resolve to the same place and share a canonical address get the
- * same id — a join/dedup key that needs no matcher.
+ * Two records that resolve to the same place and share a canonical address get the same id.
+ * A join/dedup key that needs no matcher.
  *
- * (Distinct canonical address strings → distinct keys. semantic equivalence that isn't
+ * (Distinct canonical address strings → distinct keys. Semantic equivalence that isn't
  * string-identical is the fuzzy matcher's job rather than this one's.)
  */
 export function createPostalAddressID(input: CreatePostalAddressIDInput): PostalAddressID {

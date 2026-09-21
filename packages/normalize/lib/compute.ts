@@ -102,7 +102,8 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput {
 
 		if (lc !== text) {
 			text = lc
-			// Case-fold is identity-length for ascii + most Latin. map unchanged.
+			// Case-fold is identity-length for ascii + most Latin.
+			// Map unchanged.
 			transforms.push({ kind: "case_fold", locale: opts.locale ?? "und" })
 		}
 	}

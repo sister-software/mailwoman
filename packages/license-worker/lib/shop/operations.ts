@@ -54,7 +54,8 @@ const ProvisionInputSchema = z.object({
 /**
  * Carry the ids Stripe answered into `ids.json`, the one file that names them.
  *
- * The webhook secret is never written. it goes to `wrangler secret put`.
+ * The webhook secret is never written.
+ * It goes to `wrangler secret put`.
  */
 async function recordShopIDs(mode: ShopMode, report: ProvisionReport): Promise<string | undefined> {
 	const idsPath = resolvePackagePath("@mailwoman/license-worker", "lib", "shop", "ids.json")

@@ -24,10 +24,12 @@ const REGISTRANTS: ReadonlyArray<readonly [string, string, string, boolean]> = [
 	["Cable One", "0001632127", "4841", true],
 	["Liberty Broadband", "0001611983", "4841", true],
 	["Gogo", "0001537054", "4899", true],
-	// The two false matches. Name scores were 0.829 and 0.886 — confident, and pointing at the wrong company.
+	// The two false matches.
+	// Name scores were 0.829 and 0.886 — confident, and pointing at the wrong company.
 	["AlTi Global (matched 'Altice USA')", "0001838615", "6282", false],
 	["WidePoint (matched 'WideOpenWest')", "0001034760", "7373", false],
-	// Real carriers SEC files under software classifications. The check's known cost.
+	// Real carriers SEC files under software classifications.
+	// The check's known cost.
 	["Bandwidth", "0001514416", "7372", false],
 	["Ooma", "0001327688", "7374", false],
 ]
@@ -116,7 +118,7 @@ describe("the allowlist itself", () => {
 
 	it("excludes the software classifications, because including them readmits WidePoint", () => {
 		// 7372 (Bandwidth) and 7374 (Ooma) sit beside 7373 (WidePoint, a false match).
-		// There is no range that admits the first two and excludes the third — which is why pins exist.
+		// There is no range that admits the first two and excludes the third, which is why pins exist.
 		for (const sic of ["7372", "7373", "7374"]) {
 			expect(TELECOM_SIC_CODES.has(sic)).toBe(false)
 		}

@@ -54,8 +54,8 @@ async function fixture(name: string): Promise<string> {
 }
 
 /**
- * The document as the parser's own preprocessing leaves it — what the substring
- * invariant is measured against.
+ * The document as the parser's own preprocessing leaves it.
+ * What the substring invariant is measured against.
  */
 function normalized(html: string): string {
 	return normalizeWhitespace(htmlToLayoutText(html))
@@ -108,7 +108,7 @@ describe("parseExhibit21 — real EDGAR filings, fabrication audit", () => {
 	 * Each of these was emitted as a subsidiary name by the 2026-08-03 run.
 	 *
 	 * They are all literal substrings of their document, so the substring invariant admits
-	 * every one of them — which is exactly why this assertion exists separately from it.
+	 * every one of them, which is exactly why this assertion exists separately from it.
 	 */
 	const NEVER_A_SUBSIDIARY_NAME = [
 		/^ex-?21(\.\d+)?$/i,

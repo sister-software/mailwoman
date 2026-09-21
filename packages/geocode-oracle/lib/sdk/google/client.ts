@@ -67,8 +67,8 @@ import {
 /**
  * The Geocoding API endpoint every request in this file is issued against.
  *
- * Forward and reverse geocoding and place-ID lookup are all this one URL —
- * they differ only in which of `address` / `latlng` / `place_id` is supplied.
+ * Forward and reverse geocoding and place-ID lookup are all this one URL.
+ * They differ only in which of `address` / `latlng` / `place_id` is supplied.
  */
 export const GOOGLE_GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json"
 
@@ -86,8 +86,10 @@ export const GOOGLE_GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/
  * and costs nothing on a warm one.
  *
  * Raise it via {@linkcode CreateGoogleGeocoderClientOptions.requestsPerMinute} for a genuinely large sweep.
- * This is a default rather than a clamp — unlike `SEC_DEFAULT_REQUESTS_PER_SECOND`,
- * which clamps because SEC's limit is policed and verifiable in fetchable html.
+ * This is a default rather than a clamp.
+ *
+ * Unlike `SEC_DEFAULT_REQUESTS_PER_SECOND`, which clamps because SEC's limit is policed
+ * and verifiable in fetchable html.
  *
  * Google's is enforced by returning `OVER_QUERY_LIMIT` under a 200, which this client already retries.
  */
@@ -111,8 +113,8 @@ const MS_PER_MINUTE = 60_000
  * the result for provenance and is not what any assertion is pinned to.
  *
  * Not permanent, either.
- * `sec-client.ts` warrants a century-long TTL because a filed SEC document is
- * immutable by law. nothing here is.
+ * `sec-client.ts` warrants a century-long TTL because a filed SEC document is immutable by law.
+ * Nothing here is.
  *
  * Thirty days bounds how long a re-authored case can disagree with a fresh geocode without
  * anyone noticing, and deleting the cache directory is always the override.
@@ -134,7 +136,8 @@ const DEFAULT_BASE_RETRY_DELAY_MS = 500
 /**
  * Per-attempt socket-inactivity timeout, in milliseconds.
  *
- * A geocode response is a few kilobytes. anything slower than this has stalled.
+ * A geocode response is a few kilobytes.
+ * Anything slower than this has stalled.
  */
 const DEFAULT_REQUEST_TIMEOUT_MS = 30_000
 
@@ -181,7 +184,8 @@ export interface CreateGoogleGeocoderClientOptions {
 	/**
 	 * Time source powering the pacer, the cooldown timer, and both retry backoffs.
 	 *
-	 * Defaults to the system clock. tests inject a fake one so no suite ever sleeps on the wall clock.
+	 * Defaults to the system clock.
+	 * Tests inject a fake one so no suite ever sleeps on the wall clock.
 	 */
 	clock?: ClockLike
 	/**
@@ -225,8 +229,10 @@ export interface CreateGoogleGeocoderClientOptions {
 	 */
 	language?: string
 	/**
-	 * Axios overrides, merged over this client's own defaults. the test injection point: every
-	 * test passes an `adapter` here, so no test in this workspace performs a live network call.
+	 * Axios overrides, merged over this client's own defaults.
+	 *
+	 * The test injection point: every test passes an `adapter` here, so no test in
+	 * this workspace performs a live network call.
 	 *
 	 * Overriding `params` wholesale would drop the API key, so don't.
 	 */
@@ -236,15 +242,15 @@ export interface CreateGoogleGeocoderClientOptions {
 /**
  * Per-request overrides.
  *
- * These are the biasing changes the isp-nexus original hardcoded. see
- * {@linkcode GeocodeRequestOptions.bounds} for the one that mattered.
+ * These are the biasing changes the isp-nexus original hardcoded.
+ * See {@linkcode GeocodeRequestOptions.bounds} for the one that mattered.
  */
 export interface GeocodeRequestOptions {
 	/**
 	 * Restrict results to a country, as an ISO-3166 alpha-2 code.
 	 *
-	 * Sent as Google's `components=country:XX` filter, which is a hard restriction
-	 * rather than a bias — a match outside the country is not returned at all.
+	 * Sent as Google's `components=country:XX` filter, which is a hard restriction rather than a bias.
+	 * A match outside the country is not returned at all.
 	 *
 	 * This is the change a per-country oracle sweep wants: it stops `"Springfield"`
 	 * resolving to Illinois when the case under authorship is Neuseeland's.
@@ -315,12 +321,13 @@ type GeocodeParams = Record<string, string>
  *
  * Two things this provides, in order of how much they matter:
  *
- * 1. **The cache survives key rotation.** The key is an instance-level Axios `params` default, so the interceptor's stock
- *    key generator would fold it in and a rotated key would silently orphan every entry — on an API where a miss is a
- *    charge.
- * 2. **No key material is derivable from anything on disk.** Already true without this (`buildDiskStorage` names files by
- *    the SHA-256 of the key, and `axios-cache-interceptor` persists `data`/`ttl`/`createdAt`/`state`, never `config`),
- *    but a secret that is never put into the string in the first place cannot leak from it later.
+ * 1. **The cache survives key rotation.** The key is an instance-level Axios `params` default,
+ *    so the interceptor's stock key generator would fold it in and a rotated key would
+ *    silently orphan every entry — on an API where a miss is a charge.
+ * 2. **No key material is derivable from anything on disk.** Already true without this
+ *    (`buildDiskStorage` names files by the SHA-256 of the key, and `axios-cache-interceptor`
+ *    persists `data`/`ttl`/`createdAt`/`state`, never `config`), but a secret that is
+ *    never put into the string in the first place cannot leak from it later.
  *
  * The remaining params are serialized through a sorted key list so two requests
  * differing only in property order share an entry.
@@ -340,8 +347,10 @@ export function geocodeCacheKey(config: { method?: string; url?: string; params?
  * Whether a decoded response body is one worth persisting.
  *
  * Only `OK` and `ZERO_RESULTS` are.
- * `ZERO_RESULTS` is included deliberately — it is a real, stable answer ("this string does not geocode"),
- * and re-asking it tomorrow costs a charge to learn the same thing.
+ * `ZERO_RESULTS` is included deliberately.
+ *
+ * It is a real, stable answer ("this string does not geocode"), and re-asking it
+ * tomorrow costs a charge to learn the same thing.
  *
  * Everything else describes the request or the account rather than the address:
  * a `REQUEST_DENIED` cached under a thirty-day TTL would make an unbilled key look like
@@ -386,8 +395,10 @@ function statusMapping(status: string): { httpStatus: number; reason: string } {
  * `REQUEST_DENIED` gets the long explanation, for the same reason `sec-client.ts` explains a 403
  * and `bdc/sdk/client.ts` explains a 401: the bare status reads as "the address is bad"
  * and sends the reader down the wrong path, when the cause is almost always the key.
- * Google's own `error_message` is appended when present — it names the actual problem
- * ("This API project is not authorized to use this API") and never contains the key.
+ * Google's own `error_message` is appended when present.
+ *
+ * It names the actual problem ("This API project is not authorized to use this API")
+ * and never contains the key.
  */
 export function statusToResourceError(body: GoogleGeocodeResponse, description: string): ResourceError {
 	const { httpStatus, reason } = statusMapping(body.status)
@@ -439,10 +450,12 @@ export class GoogleGeocoderClient extends APIClient<GoogleGeocoderClientConfig> 
 	/**
 	 * Reverse-geocode a coordinate.
 	 *
-	 * The input is validated through `GeoPoint.from`, which since #1487 is strict: it neither transposes a `[latitude,
-	 * longitude]` pair back into GeoJSON order nor repairs an off-globe magnitude, and returns `null` for both. A
-	 * rejected coordinate raises here rather than being sent, because a silently transposed pair produces a confident,
-	 * wrong, billed answer — and the whole point of an oracle is that its answers are trustworthy.
+	 * The input is validated through `GeoPoint.from`, which since #1487 is strict:
+	 * it neither transposes a `[latitude, longitude]` pair back into GeoJSON order
+	 * nor repairs an off-globe magnitude, and returns `null` for both.
+	 * A rejected coordinate raises here rather than being sent, because a silently
+	 * transposed pair produces a confident, wrong, billed answer, and the whole point
+	 * of an oracle is that its answers are trustworthy.
 	 */
 	public async reverseGeocode(
 		input: GeoPointInput,
@@ -536,8 +549,9 @@ export class GoogleGeocoderClient extends APIClient<GoogleGeocoderClientConfig> 
 		// which a one-word place name like "Paris" satisfies.
 		// A real Place ID is 27+ characters and always carries at least one `_` or `-`;
 		// requiring both is what keeps an address out of the place-ID branch.
-		// Anything that fails either test is free text, which is the safe default — a Place ID sent as
-		// an `address` still geocodes, while an address sent as a `place_id` is an INVALID_REQUEST.
+		// Anything that fails either test is free text, which is the safe default.
+		// A Place ID sent as an `address` still geocodes, while an address sent as
+		// a `place_id` is an INVALID_REQUEST.
 		if (trimmed.length >= GOOGLE_PLACE_ID_MIN_LENGTH && /[_-]/.test(trimmed) && isGooglePlaceID(trimmed)) {
 			return this.geocodePlaceID(trimmed, options)
 		}
@@ -614,7 +628,7 @@ export class GoogleGeocoderClient extends APIClient<GoogleGeocoderClientConfig> 
  *
  * See the file header for the full rationale.
  *
- * Throws immediately, before any request is made, when constructed without an
+ * @throws immediately, before any request is made, when constructed without an
  * explicit `apiKey` and without `GOOGLE_MAPS_API_KEY` set.
  */
 export function createGoogleGeocoderClient(options: CreateGoogleGeocoderClientOptions = {}): GoogleGeocoderClient {
@@ -664,7 +678,7 @@ export function createGoogleGeocoderClient(options: CreateGoogleGeocoderClientOp
 		axios: {
 			// the KEY lives here rather than IN the URL.
 			// An instance-level `params` default is merged into every request by Axios
-			// before the interceptor chain runs, so the key reaches the wire — while `config.url`,
+			// before the interceptor chain runs, so the key reaches the wire, while `config.url`,
 			// which is what `APIClient` logs and what `delegateAxiosError` interpolates
 			// into timeout/DNS messages, stays free of it.
 			params: { key: apiKey },

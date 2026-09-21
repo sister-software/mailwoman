@@ -94,9 +94,9 @@ export interface SpanRescoreOptions {
 	 */
 	bareToponymCountryWeight?: number
 	/**
-	 * Admit a proper sub-span only when every token it leaves behind is a subdivision code
-	 * or a number — see `remainderIsContext` in this module for the rule
-	 * and the five rows a blanket refusal would lose.
+	 * Admit a proper sub-span only when every token it leaves behind is a subdivision code or a number.
+	 *
+	 * See `remainderIsContext` in this module for the rule and the five rows a blanket refusal would lose.
 	 *
 	 * Default false.
 	 */
@@ -144,7 +144,7 @@ export interface RescoreCandidate {
 	 *
 	 * #1537: these were being discarded. A name the model reads as a `street` ("Springfield", "Berlin", "Manchester",
 	 * "Moscow", "Fulda") never reaches the admin walk, so the whole tree comes back unresolved
-	 * and this tier is what recovers it — and it decorated the injected node with no alternatives at all.
+	 * and this tier is what recovers it, and it decorated the injected node with no alternatives at all.
 	 * The result was that the geocode path's `candidates` array held one entry, and the
 	 * top-1-vs-top-2 dominance margin that `declared_ambiguity` reads was uncomputable,
 	 * for exactly the famous-homonym class that marker exists for.
@@ -252,7 +252,7 @@ function resolvedWeakly(node: AddressNode, reading: WeakResolutionReading): bool
  * the brake, so span rescore may run against a tree that nominally resolved.
  *
  * Lifting the brake unconditionally is measured and refused, so the question is never
- * whether to lift it but on which evidence — which is what `weakReading` names.
+ * whether to lift it but on which evidence, which is what `weakReading` names.
  * {@linkcode WeakResolutionReading} carries what the board measured for each reading.
  */
 export function hasResolvedPlace(
@@ -449,7 +449,7 @@ export async function findRescoreCandidate(
 	const streets = streetRanges(roots)
 
 	// A span touching a hard range is refused.
-	// A span touching an affix is refused unless it strictly contains that affix —
+	// A span touching an affix is refused unless it strictly contains that affix,
 	// which is what separates `Ave` (the span is the suffix) from `Eden Prairie`
 	// (the suffix is one token inside a longer name).
 	// The rest of such a span still has to clear the hard ranges, so a `5th Ave` sitting
@@ -519,7 +519,7 @@ export async function findRescoreCandidate(
 	/**
 	 * The tokens a sub-span probe leaves behind, when they read as an administrative qualifier.
 	 *
-	 * `WA Sammamish` recovers `Sammamish` and discards `WA` — and `WA` is the
+	 * `WA Sammamish` recovers `Sammamish` and discards `WA`, and `WA` is the
 	 * token that decides which Sammamish.
 	 * The backend already answers containment through `regionQualifier`; nothing was asking it.
 	 *

@@ -29,7 +29,8 @@ import type { RegionDatabases } from "#geocode/regions"
  * keys those surfaces on both sides.
  */
 const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
-	// The Taiwanese civil-affairs registers: 縣市 + 鄉鎮市區 scope the point, no postcode, full-width digits and a trailing 號 on the number, kanji road-section numerals (`一段`).
+	// The Taiwanese civil-affairs registers: 縣市 + 鄉鎮市區 scope the point, no postcode,
+	// full-width digits and a trailing 號 on the number, kanji road-section numerals (`一段`).
 	["tw", "zh"],
 ])
 

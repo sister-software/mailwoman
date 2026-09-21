@@ -29,12 +29,14 @@ export interface LocaleCandidate {
 /**
  * Script-class scorer: maps the dominant character class to a default locale per script.
  *
- * - Cjk → ja-JP. The character class cannot tell Japanese from Chinese or Korean Han text, and the CJK weights are one
- *   family (`@mailwoman/neural-weights-cjk`, with `ja-jp` and `zh-cn` data-only overlays): the char encoder collapses
- *   `ja`/`zh`/`ko` to that family, so the model loaded is the same whichever tag stands here. What this tag does decide
- *   is the label a consumer reads off the hint — a Chinese-script address reports `ja-JP` — and that is a known limit
- *   of the hint's interface rather than a routing choice.
- * - Cyrillic → ru-RU (not currently shipped. signal is still useful)
+ * - Cjk → ja-JP.
+ *   The character class cannot tell Japanese from Chinese or Korean Han text, and the CJK weights are
+ *   one family (`@mailwoman/neural-weights-cjk`, with `ja-jp` and `zh-cn` data-only overlays):
+ *   the char encoder collapses `ja`/`zh`/`ko` to that family, so the model loaded
+ *   is the same whichever tag stands here.
+ *   What this tag does decide is the label a consumer reads off the hint — a Chinese-script address
+ *   reports `ja-JP` — and that is a known limit of the hint's interface rather than a routing choice.
+ * - Cyrillic → ru-RU (not currently shipped. Signal is still useful)
  * - Arabic → ar (similar)
  * - Alpha / alphanumeric / numeric → no script-based commit (other scorers decide)
  */
@@ -54,9 +56,10 @@ export function scoreByScript(shape: QueryShapeFormatsView): LocaleCandidate | n
 /**
  * Postcode-format scorer: maps a high-confidence postcode format hit to the country it implies.
  *
- * Ambiguous 5-digit hits (`us_zip`/`fr_postcode`/`de_postcode` all matching at confidence 0.6) are treated as
- * low-confidence US (the most common 5-digit reading globally) — the caller can override with `--locale
- * fr-FR`/`--locale de-DE` when the disambiguating context isn't in the string.
+ * Ambiguous 5-digit hits (`us_zip`/`fr_postcode`/`de_postcode` all matching at confidence 0.6)
+ * are treated as low-confidence US (the most common 5-digit reading globally).
+ * The caller can override with `--locale fr-FR`/`--locale de-DE` when the
+ * disambiguating context isn't in the string.
  */
 export function scoreByPostcode(shape: QueryShapeFormatsView): LocaleCandidate | null {
 	// Prefer unambiguous (confidence ≥ 0.9) hits over ambiguous (0.6) — among them,
@@ -87,8 +90,8 @@ export function scoreByPostcode(shape: QueryShapeFormatsView): LocaleCandidate |
 
 	if (fivedigit) {
 		// Low confidence — US is the global plurality interpretation.
-		// Returns en-US so a downstream consumer without a stronger signal still gets
-		// a sensible default. alternatives surface FR/DE.
+		// Returns en-US so a downstream consumer without a stronger signal still gets a sensible default.
+		// Alternatives surface FR/DE.
 		return { locale: "en-US", confidence: 0.5, reason: "ambiguous-5digit-postcode" }
 	}
 

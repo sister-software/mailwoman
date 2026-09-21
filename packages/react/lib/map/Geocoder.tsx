@@ -129,8 +129,8 @@ function GeocoderInner({
 	// (pan + zoom past the bias threshold) before submitting, and a browser test cannot reach a React ref.
 	// So the same handle is republished on `globalThis.__mailwomanMapCanvas`,
 	// and cleared on unmount so a torn-down geocoder leaves no stale handle.
-	// The id of the lowest basemap layer that draws data — where the graticule is inserted,
-	// so the grid sits under the map rather than over it.
+	// The id of the lowest basemap layer that draws data.
+	// Where the graticule is inserted, so the grid sits under the map rather than over it.
 	// Read from the loaded style rather than hardcoded: the basemap is a published artifact
 	// and its first layer is its business rather than ours.
 	// `background` is skipped because inserting before it would put the grid behind

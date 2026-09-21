@@ -43,7 +43,7 @@ const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
  * A GB unit's inward code is always the last three characters (`\d[A-Z]{2}`);
  * the outward district is everything before it.
  *
- * Structural rather than a guess — and unlike a space split it holds on a
+ * Structural rather than a guess, and unlike a space split it holds on a
  * database that stores the glued form.
  */
 const GB_INWARD_LENGTH = 3
@@ -103,7 +103,8 @@ export const POSTCODE_BINARY_SOURCES: readonly PostcodeBinarySource[] = [
 	{ country: "DE", database: "postalcode-intl.db" },
 	{ country: "ES", database: "postalcode-intl.db" },
 	{ country: "IT", database: "postalcode-intl.db" },
-	// Code-Point Open (OGL v3.0): the unit set is train-faithful and 20 MB. Only the districts fit a browser bundle.
+	// Code-Point Open (OGL v3.0): the unit set is train-faithful and 20 MB.
+	// Only the districts fit a browser bundle.
 	{ country: "GB", database: "postalcode-gb-codepoint.db", browserGranularity: "outward" },
 ]
 
@@ -265,7 +266,7 @@ export function buildPostcodeBinaryEntries(
  *
  * Each floor is half the measured count, rounded down to a round number.
  * Half, because these floors exist to catch a collapse (a derivation that stopped
- * matching the database's storage form, a country filter that stopped selecting) —
+ * matching the database's storage form, a country filter that stopped selecting),
  * not to pin a count that legitimately moves with every upstream refresh.
  *
  * A build that comes back at 51% of what the database holds is still wrong,

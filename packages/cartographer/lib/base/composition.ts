@@ -75,7 +75,8 @@ export interface StyleSpecificationComposition {
 	/**
 	 * The layer list every `layers` entry inserts into.
 	 *
-	 * Earth's basemap layers by default. a body with no roads, water or buildings brings its own.
+	 * Earth's basemap layers by default.
+	 * A body with no roads, water or buildings brings its own.
 	 */
 	baseLayers?: LayerSpecification[]
 	/**

@@ -78,7 +78,7 @@ export interface AgreementRow {
 	 * Metres from the point to the nearest edge of any polygon the service returned nearby.
 	 *
 	 * Carried on every row rather than only the tolerated ones, because it is what
-	 * separates a real defect from the two channels rendering the same edge differently —
+	 * separates a real defect from the two channels rendering the same edge differently,
 	 * and a receipt that omits it forces a re-run.
 	 * `undefined` means the service returned no polygon at all near the point.
 	 */
@@ -344,9 +344,8 @@ export function sampleAgreementPoints(
 	using database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
 	// ordered BY the authority first, so a stride walks across the 30 of them rather than down one.
-	// A stride over `area_id` alone would follow the publisher's own feature numbering,
-	// which is grouped by authority — and would draw every sample from whichever
-	// authorities happen to sit on the stride.
+	// A stride over `area_id` alone would follow the publisher's own feature numbering, which is grouped
+	// by authority, and would draw every sample from whichever authorities happen to sit on the stride.
 	const areaIDs = (
 		database.prepare("SELECT area_id FROM zoning_area ORDER BY jurisdiction_id, area_id").all() as Array<{
 			area_id: string

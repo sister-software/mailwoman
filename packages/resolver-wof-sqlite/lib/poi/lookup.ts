@@ -324,7 +324,7 @@ export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposab
 	 * Distance-sorts if one is given anyway.
 	 *
 	 * Hydration is one batched `where name_key IN (...)` query over the FTS hits' unique `name_key`s
-	 * rather than a per-hit probe — with up to `limit` FTS hits, a per-hit probe was up to
+	 * rather than a per-hit probe, with up to `limit` FTS hits, a per-hit probe was up to
 	 * `limit` full table scans before `createPOINameKeyIndex` (poi-schema.ts) + this batching.
 	 */
 	#searchByName(name: string, limit: number, center?: { latitude: number; longitude: number }): POISearchHit[] {

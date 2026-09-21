@@ -16,9 +16,10 @@
  * the PTY smoke test drive the real bin and a unit test drive the parser with neither.
  *
  * Signal handling is not optional here.
- * This is a raw-mode app on the alternate screen with mouse reporting on, and there is
- * no framework underneath to put any of that back — a process killed between `start`
- * and `restore` leaves the user with an unusable shell.
+ * This is a raw-mode app on the alternate screen with mouse reporting on,
+ * and there is no framework underneath to put any of that back.
+ *
+ * A process killed between `start` and `restore` leaves the user with an unusable shell.
  *
  * So `restore` is wired to sigint, sigterm and `exit`, and it is idempotent for exactly that reason.
  */
@@ -129,8 +130,9 @@ async function main(): Promise<number> {
 
 	let opened: TileSource
 
-	// A bad `--tiles` path is a usage error rather than a crash — the guard stays around the open,
-	// and ownership passes to the `using` declaration only once the open succeeded.
+	// A bad `--tiles` path is a usage error rather than a crash.
+	// The guard stays around the open, and ownership passes to the `using`
+	// declaration only once the open succeeded.
 	try {
 		opened = await openTiles(args.tiles)
 	} catch (error) {

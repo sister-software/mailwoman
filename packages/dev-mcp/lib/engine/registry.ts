@@ -192,7 +192,7 @@ export function effectiveKeyFor(declared: string): string {
 export type EffectiveConfig = { [Key in keyof GeocodeSessionOptions]: GeocodeSessionOptions[Key] }
 
 export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
-	// The production defaults, from the geocode command's own factory — never re-typed here (#1732).
+	// The production defaults, from the geocode command's own factory, never re-typed here (#1732).
 	// The hand-copied table this replaces drifted on three values (postcodeShapeCoherence,
 	// postcodeContainmentCoherence, placeCountryThreshold: true/true/0.5 vs the shipped false/false/0.9),
 	// so every unset-change measurement graded a configuration production does not ship.
@@ -232,7 +232,7 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
  *
  * `resolveWeights` honours an explicit `cacheRoot` only when that directory holds
  * `model.onnx` and `tokenizer.model`, and otherwise walks on to the installed
- * workspace package — which in this repo always resolves.
+ * workspace package, which in this repo always resolves.
  * So the failure mode of a mis-typed or half-staged candidate is not an error: it is a full
  * run of the shipped model, reported under the candidate's label, with every number plausible.
  *
@@ -312,7 +312,7 @@ export interface EngineSummary {
  *
  * The tools take this rather than {@linkcode EngineRegistry}, for one reason a test
  * finds immediately: the class carries private fields, so no object literal can ever be
- * assignable to it, and every stub in this package's tests had to assert through `unknown` —
+ * assignable to it, and every stub in this package's tests had to assert through `unknown`,
  * which then keeps compiling after a method is renamed or its signature changes,
  * and the stub silently stops standing for the thing it doubles.
  * `OracleGeocoderLike` in `oracle-arm.ts` is the same idea, arrived at earlier.
@@ -345,7 +345,7 @@ export class EngineRegistry implements EngineRegistryLike {
 	/**
 	 * Compute the boot fingerprint, then construct.
 	 *
-	 * The boot fingerprint is the tree the process imported — not the tree any
+	 * The boot fingerprint is the tree the process imported, not the tree any
 	 * individual engine was built from.
 	 * Those differ after a reload, and the difference is required: a registry with no resident
 	 * engine has nothing stale to compare against, so without this the first call after a

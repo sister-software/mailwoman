@@ -110,7 +110,7 @@ describe("gradeCase — results expectation", () => {
 
 		const grade = gradeCase(resultsFixture, outcome)
 
-		// Nearest distance is ~0 even though the top result is far — but the top-category check still
+		// Nearest distance is ~0 even though the top result is far, but the top-category check still
 		// applies to the TOP result, so this fixture (both results categoryID "cafe") still passes.
 		expect(grade.nearestKm).toBeLessThan(1)
 	})

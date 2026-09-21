@@ -39,7 +39,8 @@ function kindsOf(text: string): Set<QueryKind> {
 /**
  * Both registers of one query.
  *
- * Lowercase is not a variant here — it is the register most users type in.
+ * Lowercase is not a variant here.
+ * It is the register most users type in.
  */
 function registers(text: string): string[] {
 	return text === text.toLowerCase() ? [text] : [text, text.toLowerCase()]
@@ -126,7 +127,8 @@ describe("route_pair — two toponyms, no grammar between them", () => {
 	}
 
 	const NEGATIVE = [
-		// Toponymic head particles: one place, two tokens. The class this guard exists for.
+		// Toponymic head particles: one place, two tokens.
+		// The class this guard exists for.
 		"New York",
 		"San Francisco",
 		"Santa Monica",
@@ -142,7 +144,8 @@ describe("route_pair — two toponyms, no grammar between them", () => {
 		"12 rue de Rome Paris",
 		"10118",
 		"Paris London Berlin",
-		// A comma is the admin-context marker. the hard-case board's `comma_control` register.
+		// A comma is the admin-context marker.
+		// The hard-case board's `comma_control` register.
 		"Athens, Georgia",
 		"Portland, ME",
 	]

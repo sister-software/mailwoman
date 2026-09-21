@@ -60,7 +60,8 @@ test.describe("Demo — production functional smoke @smoke", () => {
 
 		const { markerCount } = await demo.readResult()
 
-		// The tell: NL Amsterdam is ~52.37, 4.90. the pre-v5.4.0 mis-parse landed on Amsterdam, NY (~42.94, -74.19).
+		// The tell: NL Amsterdam is ~52.37, 4.90.
+		// The pre-v5.4.0 mis-parse landed on Amsterdam, NY (~42.94, -74.19).
 		demo.expectNear(await demo.readCoords(), { lat: 52.35, lon: 4.9 }, 0.2)
 		expect(markerCount, "no marker rendered").toBeGreaterThan(0)
 		demo.console.assertNoFailEvents()

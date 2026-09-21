@@ -220,7 +220,7 @@ export async function readWOFSourceIdentity(
 }
 
 /**
- * Memo for {@link readWOFSourceIdentity}, keyed on (path, mtimeMs, size) —
+ * Memo for {@link readWOFSourceIdentity}, keyed on (path, mtimeMs, size),
  * not on path alone, for the same reason `computeSurfaceCountryCounts` isn't:
  * the admin DB is a sealed artifact that a rebuild replaces, so a path-only memo would
  * serve a stale digest against a new file for the life of the process.

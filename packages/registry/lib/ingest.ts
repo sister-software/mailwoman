@@ -311,8 +311,10 @@ export function normalizeCSV(
 }
 
 /**
- * The subset of mailwoman's `GeocodeResult` the adapter consumes — kept structural so this
- * package never imports the heavy geocoder, yet a real `GeocodeResult` maps straight in.
+ * The subset of mailwoman's `GeocodeResult` the adapter consumes.
+ *
+ * Kept structural so this package never imports the heavy geocoder,
+ * yet a real `GeocodeResult` maps straight in.
  */
 export interface RawGeocode {
 	lat: number | null

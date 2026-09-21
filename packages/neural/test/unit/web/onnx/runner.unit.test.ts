@@ -364,7 +364,7 @@ describe("cross-runner parity (#727 span read)", () => {
 
 		// The node runner's read, replicated from neural/onnx-runner.ts.
 		// If that file's loop changes and this expectation still passes,
-		// the two hosts have diverged — which is the point.
+		// the two hosts have diverged, which is the point.
 		const expected: number[][][] = []
 
 		for (let t = 0; t < SEQ_LEN; t++) {

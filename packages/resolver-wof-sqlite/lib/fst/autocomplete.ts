@@ -81,7 +81,7 @@ const PER_BRANCH = 4
 /**
  * The top-`k` entries by referential likelihood (descending).
  *
- * Avoids sorting/allocating when `entries` is small — and that shortcut is part
+ * Avoids sorting/allocating when `entries` is small, and that shortcut is part
  * of the observable interface: at or under `k` the insertion order is served,
  * which decides suggestion order among referential ties.
  */

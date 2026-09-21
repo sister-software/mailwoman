@@ -359,8 +359,8 @@ export async function copyFileTo(source: PathBuilderLike, destination: PathBuild
 /**
  * Move a file or directory, creating the destination's parent directory first.
  *
- * Rename only, so it does not cross a filesystem boundary — which is the
- * property an atomic publish depends on.
+ * Rename only, so it does not cross a filesystem boundary, which is the property
+ * an atomic publish depends on.
  * Use {@linkcode copyPath} followed by {@linkcode removePathIfPresent}
  * where the two ends may live on different devices.
  */

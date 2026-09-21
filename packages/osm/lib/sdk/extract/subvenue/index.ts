@@ -90,7 +90,7 @@ export {
  * names contain them (`"name"=>"Terminal 1, Departures"`) — so this is a character
  * scanner that only leaves a quoted string on an unescaped quote.
  *
- * Returns an empty dict for `null`/empty input rather than throwing: `other_tags` is absent
+ * @returns an empty dict for `null`/empty input rather than throwing: `other_tags` is absent
  * whenever every tag on a feature was promoted, which is an ordinary outcome rather than a fault.
  */
 export function parseOSMHstore(text: string | null | undefined): Record<string, string> {
@@ -103,7 +103,7 @@ export function parseOSMHstore(text: string | null | undefined): Record<string, 
 	/**
 	 * Read one `"…"` literal starting at the next quote, honoring backslash escapes.
 	 *
-	 * Returns `null` at end of input.
+	 * @returns `null` at end of input.
 	 */
 	const readQuoted = (): string | null => {
 		while (i < text.length && text[i] !== '"') {
@@ -120,8 +120,9 @@ export function parseOSMHstore(text: string | null | undefined): Record<string, 
 			const ch = text[i]!
 
 			if (ch === "\\") {
-				// A backslash escapes the next character verbatim — the only two gdal emits are `\"`
-				// and `\\`, but passing anything else through unchanged is the lossless choice.
+				// A backslash escapes the next character verbatim.
+				// The only two gdal emits are `\"` and `\\`, but passing anything else
+				// through unchanged is the lossless choice.
 				if (i + 1 < text.length) {
 					value += text[i + 1]
 				}
@@ -151,7 +152,8 @@ export function parseOSMHstore(text: string | null | undefined): Record<string, 
 
 		if (key === null) break
 
-		// Step over the `=>` separator. a malformed pair just resolves to the next quoted run.
+		// Step over the `=>` separator.
+		// A malformed pair just resolves to the next quoted run.
 		const value = readQuoted()
 
 		if (value === null) break
@@ -373,13 +375,14 @@ export interface WriteSubVenueJSONLOptions {
  *
  * The step between a Geofabrik download and `mailwoman corpus sub-venue-lexicon`,
  * factored out of the ad-hoc script wave 1 used because wave 2 runs it five times.
- * Backpressure is honoured (`drain`) — the Japan extract is 184,000 rows and 40 MB,
- * and an unawaited `write` loop buffers all of it.
+ * Backpressure is honoured (`drain`).
+ *
+ * The Japan extract is 184,000 rows and 40 MB, and an unawaited `write` loop buffers all of it.
  *
  * Measured on this box: 340 MB of Hessen produced 27,234 rows in 44 s, 2.5 GB of Japan
  * produced 183,999 in 371 s, both dominated by ogr2ogr rather than by this loop.
  *
- * Returns the row count.
+ * @returns the row count.
  */
 export async function writeSubVenueJSONL(options: WriteSubVenueJSONLOptions): Promise<number> {
 	await using out = createNewlineWriter(options.outPath)

@@ -44,8 +44,9 @@ export interface AuthoritativeQueryComponent {
 }
 
 /**
- * The structured evidence Mailwoman hands to a provider — everything the pipeline
- * already produced, so an adapter never re-parses.
+ * The structured evidence Mailwoman hands to a provider.
+ *
+ * Everything the pipeline already produced, so an adapter never re-parses.
  */
 export interface AuthoritativeQuery {
 	/**

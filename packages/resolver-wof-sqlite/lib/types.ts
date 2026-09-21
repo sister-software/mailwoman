@@ -84,8 +84,8 @@ export interface PlaceCandidate {
 	 * (the exact-match tier from {@link RankingWeights.exactMatchTiering}).
 	 *
 	 * Surfaced so a downstream country re-rank (#369's postcode anchor in `resolveTree`)
-	 * can pin the country without crossing the tier — see the `exactMatch` field
-	 * on `@mailwoman/core`'s `ResolvedPlace`.
+	 * can pin the country without crossing the tier.
+	 * See the `exactMatch` field on `@mailwoman/core`'s `ResolvedPlace`.
 	 */
 	exactMatch?: boolean
 	/**

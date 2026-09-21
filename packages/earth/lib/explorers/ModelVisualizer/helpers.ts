@@ -16,7 +16,7 @@ const MASK_SENTINEL_FLOOR = -1e8
 /**
  * Largest |value| in a matrix, ignoring mask sentinels.
  *
- * Returns 1 for empty input (safe divisor).
+ * @returns 1 for empty input (safe divisor).
  */
 export function matrixAbsMax(matrix: number[][]): number {
 	let max = 0
@@ -46,7 +46,8 @@ export function isMasked(value: number): boolean {
 /**
  * Diverging heat color: positive → teal, negative → orange, 0 → transparent.
  *
- * `value` is clamped to ±absMax. intensity rides the alpha channel so the cell text stays legible.
+ * `value` is clamped to ±absMax.
+ * Intensity rides the alpha channel so the cell text stays legible.
  */
 export function emissionColor(value: number, absMax: number): string {
 	const t = Math.max(-1, Math.min(1, value / absMax))

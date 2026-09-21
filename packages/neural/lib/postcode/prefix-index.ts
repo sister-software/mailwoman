@@ -131,7 +131,7 @@ export interface PostcodePrefixNode {
 	/**
 	 * Admin ancestry the prefix asserts, coarsest-first.
 	 *
-	 * Empty when the prefix asserts none — which is a real answer rather than a build failure:
+	 * Empty when the prefix asserts none, which is a real answer rather than a build failure:
 	 * a GB outward code in one of the two documented border-straddling postcode
 	 * areas asserts the United Kingdom and nothing finer.
 	 */

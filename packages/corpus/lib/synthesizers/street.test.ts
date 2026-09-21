@@ -20,9 +20,9 @@ describe("synthesizeStreetRow", () => {
 		expect(row!.components.locality).toBe("Burlington")
 		expect(row!.components.region).toBe("VT")
 		expect(row!.components.postcode).toBe("05401")
-		// `country` is intentionally omitted from `components` — see the note in
-		// `synthesizers/street.ts` about the aligner's edit-distance-2 fuzzy match spuriously
-		// pairing "US" with arbitrary 2-char tokens (e.g. A house number "45").
+		// `country` is intentionally omitted from `components`.
+		// See the note in `synthesizers/street.ts` about the aligner's edit-distance-2 fuzzy
+		// match spuriously pairing "US" with arbitrary 2-char tokens (e.g. A house number "45").
 		// The base country is consumed only to condition the synthesizer (US-only)
 		// and to select the locale tag.
 		expect(row!.components.country).toBeUndefined()

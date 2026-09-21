@@ -16,7 +16,7 @@
  * only the fallback for artifacts that predate the manifest.
  *
  * Meaning-of-zero discipline: a country absent from the coverage map was never
- * measured — never "measured and failed".
+ * measured, never "measured and failed".
  * A measured-and-failed country is present with `hardFilterSafe: false` (e.g. FI at 69.5% hard-resolve),
  * so the negative result is a first-class record, distinguishable from ignorance.
  */
@@ -71,9 +71,11 @@ export interface CountryBBoxFact {
 }
 
 /**
- * Facts a loaded gazetteer artifact declares about itself — read from the artifact's own
- * manifest tables at open time, carried on the {@link ResolverBackend}/{@link Resolver} handle
- * so consumers read the facts from the artifact they are actually resolving against.
+ * Facts a loaded gazetteer artifact declares about itself.
+ *
+ * Read from the artifact's own manifest tables at open time, carried on the
+ * {@link ResolverBackend}/{@link Resolver} handle so consumers read the facts from
+ * the artifact they are actually resolving against.
  *
  * `undefined` on the handle = the artifact predates the manifest → consumers fall
  * back to the code constants (byte-identical legacy behavior).

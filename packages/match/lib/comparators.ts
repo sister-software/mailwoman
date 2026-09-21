@@ -80,9 +80,11 @@ export function jaro(a: string, b: string): number {
 }
 
 /**
- * Jaro-Winkler similarity in [0, 1]: Jaro with a bonus for a shared prefix — `jw = jaro + prefix * weight * (1 -
- * jaro)`, prefix capped at `maxPrefix` (Winkler's standard 4), `weight` the scaling factor (standard 0.1). Only boosts
- * when `jaro` already clears `boostThreshold` (0.7), per Winkler.
+ * Jaro-Winkler similarity in [0, 1]: Jaro with a bonus for a shared prefix —
+ * `jw = jaro + prefix * weight * (1 - jaro)`, prefix capped at `maxPrefix`
+ * (Winkler's standard 4), `weight` the scaling factor (standard 0.1).
+ *
+ * Only boosts when `jaro` already clears `boostThreshold` (0.7), per Winkler.
  */
 export function jaroWinkler(
 	a: string,
@@ -111,9 +113,10 @@ export function jaroWinkler(
  * Jaccard similarity between two token sets in [0, 1]: `|a ∩ b| / |a ∪ b|`.
  *
  * The set-of-tokens complement to the string comparators above.
- * Where {@link nameSimilarity} asks how close two names look, this asks how much two token
- * bags overlap — the right question for organization names and address bags, where word order
- * carries no information and a shared rare token is worth more than character-level proximity.
+ * Where {@link nameSimilarity} asks how close two names look, this asks how much two token bags overlap.
+ *
+ * The right question for organization names and address bags, where word order carries no
+ * information and a shared rare token is worth more than character-level proximity.
  *
  * Either side empty scores 0 rather than 1: an empty bag agrees with nothing, and treating
  * "no evidence" as "perfect agreement" is how a blocking pass floods with false pairs.
@@ -148,10 +151,10 @@ export function levenshteinSimilarity(a: string, b: string): number {
  *
  * Jaro-Winkler by default, with the compound-surname fallback the literature prescribes:
  *
- * - If one name's tokens are a strict subset of the other's (`Lopez` ⊂ `Garcia Lopez`), that is strong partial agreement
- *   J-W misses — floor the score at 0.9.
- * - Otherwise return the better of Jaro-Winkler and normalized edit similarity, so a single token that is a substring of
- *   a longer compound (`Garcia` vs `Garcialopez`) still scores sensibly.
+ * - If one name's tokens are a strict subset of the other's (`Lopez` ⊂ `Garcia Lopez`),
+ *   that is strong partial agreement J-W misses — floor the score at 0.9.
+ * - Otherwise return the better of Jaro-Winkler and normalized edit similarity, so a single token
+ *   that is a substring of a longer compound (`Garcia` vs `Garcialopez`) still scores sensibly.
  *
  * Case- and whitespace-insensitive.
  * Empty input scores 0.

@@ -53,7 +53,8 @@ describe("decodeInputChunk", () => {
 		expect(eventsOf("q")).toEqual([{ kind: "quit" }])
 		// An ESC whose next byte cannot continue a sequence is the Esc KEY
 		// (here it quits twice — once for the Esc, once for the `q`).
-		// A trailing ESC is held instead. the escape-fragment suite below covers that.
+		// A trailing ESC is held instead.
+		// The escape-fragment suite below covers that.
 		expect(eventsOf(`${ESC}q`)).toEqual([{ kind: "quit" }, { kind: "quit" }])
 		expect(eventsOf("\u0003")).toEqual([{ kind: "interrupt" }])
 	})
@@ -103,7 +104,8 @@ describe("decodeInputChunk", () => {
 	// Every case here quit the browser.
 	describe("escape sequences the decoder has no rule for", () => {
 		it("swallows an SS3 function key instead of quitting", () => {
-			// F1..F4 on xterm are ESC O P..S — two bytes shorter than a CSI, so the CSI sweep never saw them.
+			// F1..F4 on xterm are ESC O P..S.
+			// Two bytes shorter than a CSI, so the CSI sweep never saw them.
 			for (const final of ["P", "Q", "R", "S"]) {
 				expect(eventsOf(`${ESC}O${final}`)).toEqual([])
 			}
@@ -113,7 +115,8 @@ describe("decodeInputChunk", () => {
 		})
 
 		it("swallows an OSC reply the terminal sent unasked", () => {
-			// A colour query answer, BEL-terminated. and a clipboard answer, ST-terminated.
+			// A colour query answer, BEL-terminated.
+			// And a clipboard answer, ST-terminated.
 			// Neither is a keypress, and the `q` inside a DCS body must not quit either.
 			expect(eventsOf(`${ESC}]11;rgb:1e1e/1e1e/1e1e${BEL}`)).toEqual([])
 			expect(eventsOf(`${ESC}]52;c;cXVpdA==${ESC}\\`)).toEqual([])

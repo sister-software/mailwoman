@@ -38,14 +38,16 @@ test("toFeatureCollection: wraps results as a GeoJSON FeatureCollection (geometr
 	const fc = toFeatureCollection([r, { ...r, lat: "", lon: "" }])
 
 	expect(fc.type).toBe("FeatureCollection")
-	// the row without a coordinate is dropped — a Feature needs a geometry.
+	// the row without a coordinate is dropped.
+	// A Feature needs a geometry.
 	expect(fc.features).toHaveLength(1)
 	const f = fc.features[0]!
 	expect(f.type).toBe("Feature")
 	expect(f.geometry).toEqual({ type: "Point", coordinates: [-77.0365, 38.8977] })
 	// boundingbox [south, north, west, east] → GeoJSON bbox [west, south, east, north]
 	expect(f.bbox).toEqual([-77.04, 38.89, -77.03, 38.9])
-	// the coordinate + boundingbox move OUT of properties. the rest stays.
+	// the coordinate + boundingbox move OUT of properties.
+	// The rest stays.
 	expect(f.properties["display_name"]).toBeDefined()
 	expect(f.properties["lat"]).toBeUndefined()
 	expect(f.properties["boundingbox"]).toBeUndefined()

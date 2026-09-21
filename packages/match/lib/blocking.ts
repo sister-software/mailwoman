@@ -105,7 +105,8 @@ export function exactKey<R>(
  *
  * A record is keyed by every combination of one sub-key from each input,
  * so two records co-block only when they agree on _all_ inputs.
- * Tighter blocks, lower recall — use when a single rule is too loose.
+ * Tighter blocks, lower recall.
+ * Use when a single rule is too loose.
  */
 export function conjunction<R>(...keys: BlockingKey<R>[]): BlockingKey<R> {
 	return (record) => {
@@ -127,7 +128,7 @@ export function conjunction<R>(...keys: BlockingKey<R>[]): BlockingKey<R> {
  */
 export interface BlockResult<R> {
 	/**
-	 * Deduplicated candidate pairs (no self-pairs. a pair caught by multiple keys appears once).
+	 * Deduplicated candidate pairs (no self-pairs. A pair caught by multiple keys appears once).
 	 */
 	pairs: Array<[R, R]>
 	/**

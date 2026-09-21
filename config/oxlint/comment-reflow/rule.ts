@@ -32,6 +32,13 @@ const containers = new Set([
 	"TSEnumBody",
 	"JSXOpeningElement",
 	"JSXEmptyExpression",
+	// A comment on its own line inside a data literal is prose like any other.
+	// Upstream's list stopped at objects, which left every ignore list, pattern table and tuple in this
+	// repository unformatted — and a sweep that joins such a paragraph has nothing to re-break it.
+	"ArrayExpression",
+	"TSTupleType",
+	"CallExpression",
+	"NewExpression",
 ])
 const statements = new Set([
 	"VariableDeclaration",

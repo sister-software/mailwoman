@@ -17,7 +17,8 @@ import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
 import { describe, expect, test, vi } from "vitest"
 
 /**
- * Wall-clock budget for a CLI spawn — see the note in `mailwoman/commands/geocode.test.ts`.
+ * Wall-clock budget for a CLI spawn.
+ * See the note in `mailwoman/commands/geocode.test.ts`.
  *
  * A single spawn costs ~5.6 s, 2.7 s of it node boot alone.
  */
@@ -38,8 +39,8 @@ const CLI_TEST_TIMEOUT_MS = 90_000
  * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs
  * seconds before any assertion runs and then queues behind {@link withCLISpawnLockAsync}.
  * A per-test annotation has to be remembered on each new test, and the one that forgets
- * inherits the global 15s — which kills the test before the thing being measured
- * can report, surfacing as a bare timeout with no attribution.
+ * inherits the global 15s, which kills the test before the thing being measured can report,
+ * surfacing as a bare timeout with no attribution.
  */
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 

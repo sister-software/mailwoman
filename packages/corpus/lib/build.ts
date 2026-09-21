@@ -589,7 +589,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 async function* streamJSONL<T>(path: string): AsyncIterable<T> {
 	// JSONSpliterator yields already-parsed rows (skipEmpty is on by default, so blank
-	// lines are dropped at the row level) and throws SyntaxError on a malformed row —
-	// same fail-loud behavior as the prior readline + bare `JSON.parse`.
+	// lines are dropped at the row level) and throws SyntaxError on a malformed row.
+	// Same fail-loud behavior as the prior readline + bare `JSON.parse`.
 	yield* JSONSpliterator.fromAsync<T>(path)
 }

@@ -41,8 +41,8 @@ const MIN_ZOOM = 0
 /**
  * Deepest zoom the Web-Mercator tile pyramid is defined for.
  *
- * The archive's own `maxZoom` clamps further at runtime. this is only the range a
- * flag value must fall inside to be meaningful at all.
+ * The archive's own `maxZoom` clamps further at runtime.
+ * This is only the range a flag value must fall inside to be meaningful at all.
  */
 const MAX_ZOOM = 24
 
@@ -98,8 +98,9 @@ export interface CLIEnvironment {
 /**
  * `--help` output.
  *
- * It doubles as the package's key reference, so the bindings listed here and the ones ./input.ts
- * decodes are the same list said twice — a key added there without a line here is a key nobody finds.
+ * It doubles as the package's key reference, so the bindings listed here
+ * and the ones ./input.ts decodes are the same list said twice.
+ * A key added there without a line here is a key nobody finds.
  */
 export const HELP_TEXT = `map-tui — the whole world in your terminal
 
@@ -155,8 +156,9 @@ const NUMERIC_FLAGS = new Set(["--lat", "--lon", "--zoom"])
 /**
  * Joins `--lon -122.6` into `--lon=-122.6` before `parseArgs` sees it.
  *
- * `node:util`'s parser refuses a separate value that starts with a dash — it cannot tell
- * a negative number from a mistyped flag, and says so ("argument is ambiguous").
+ * `node:util`'s parser refuses a separate value that starts with a dash.
+ * It cannot tell a negative number from a mistyped flag, and says so ("argument is ambiguous").
+ *
  * Half the planet has a negative longitude, so the space-form has to work.
  *
  * The join is conditional on the next token parsing as a finite number, which leaves a

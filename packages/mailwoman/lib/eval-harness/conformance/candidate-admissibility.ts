@@ -46,17 +46,22 @@ import type { ResolveCandidateTrace, ResolveNodeTrace } from "@mailwoman/core/re
  * Every candidate observed on either side gets exactly one, and the name states
  * what was read rather than what it implies for the verdict.
  *
- * - `held` — present in both pools. Its rank may have moved. A rank change is reported and never fails, because the law
- *   is about admissibility and a reordering leaves every candidate admissible.
- * - `contradicted` — gone, and the refined lookup ran under a country scope the candidate's own country fails. The
- *   removal is explained by the information the query added, which is the one removal the law permits.
- * - `rescoped` — gone (or new), and the refined lookup ran through a hierarchy path the base's did not: a `parentID` or a
- *   region qualifier the coarse query could not supply. The pool is a different population, and the account names the
- *   path that made it one.
- * - `beyond_window` — gone (or new), and the table on the other side was sitting at its recorded fetch window, so the
- *   candidate may be one row past the edge. An observation rather than a finding.
- * - `unexplained` — gone (or new) with no contradiction, no re-scope, and a table that had room to spare. On a removal
- *   this is the law failing. On an addition it is the unrelated candidate-set expansion the law also refuses.
+ * - `held` — present in both pools.
+ *   Its rank may have moved.
+ *   A rank change is reported and never fails, because the law is about admissibility
+ *   and a reordering leaves every candidate admissible.
+ * - `contradicted` — gone, and the refined lookup ran under a country scope
+ *   the candidate's own country fails.
+ *   The removal is explained by the information the query added, which is the one removal the law permits.
+ * - `rescoped` — gone (or new), and the refined lookup ran through a hierarchy path the
+ *   base's did not: a `parentID` or a region qualifier the coarse query could not supply.
+ *   The pool is a different population, and the account names the path that made it one.
+ * - `beyond_window` — gone (or new), and the table on the other side was sitting at its
+ *   recorded fetch window, so the candidate may be one row past the edge.
+ *   An observation rather than a finding.
+ * - `unexplained` — gone (or new) with no contradiction, no re-scope, and a table that had room to spare.
+ *   On a removal this is the law failing.
+ *   On an addition it is the unrelated candidate-set expansion the law also refuses.
  */
 export const CANDIDATE_ACCOUNTS = ["held", "contradicted", "rescoped", "beyond_window", "unexplained"] as const
 
@@ -309,10 +314,11 @@ export type CandidateAccountCounts = Record<CandidateAccount, number>
  */
 export interface RefinementReading {
 	/**
-	 * - `refines` — every removal is accounted for and every addition is explained. The law holds over the observed pool.
+	 * - `refines` — every removal is accounted for and every addition is explained.
+	 *   The law holds over the observed pool.
 	 * - `diverges` — a candidate left the pool unexplained, or one entered it unexplained.
-	 * - `unmeasured` — no unexplained movement, but at least one removal sat at a fetch window, so the law is unproven
-	 *   rather than holding.
+	 * - `unmeasured` — no unexplained movement, but at least one removal sat at a
+	 *   fetch window, so the law is unproven rather than holding.
 	 * - `undecidable` — no lookup ran on both sides, so there is no pool to compare.
 	 */
 	relation: "refines" | "diverges" | "unmeasured" | "undecidable"

@@ -59,7 +59,7 @@ test("matchOSMPOITagRule: telecom_cabinet requires BOTH tags (AND, not OR)", () 
 
 test("matchOSMPOITagRule: tower_comms requires BOTH man_made=mast AND tower:type=communication", () => {
 	expect(matchOSMPOITagRule({ man_made: "mast", "tower:type": "communication" })).toBe("tower_comms")
-	// a mast with no comms qualifier (e.g. a lighting mast) must not match
+	// a mast with no comms qualifier (e.g. A lighting mast) must not match
 	expect(matchOSMPOITagRule({ man_made: "mast" })).toBeNull()
 	expect(matchOSMPOITagRule({ man_made: "mast", "tower:type": "lighting" })).toBeNull()
 })
@@ -89,7 +89,8 @@ test("buildTelecomPOISQL: selects promoted columns bare and hstore keys via hsto
 	expect(sql).toContain("SELECT name,")
 	expect(sql).toMatch(/\bman_made='telephone_exchange'/)
 	expect(sql).toMatch(/\bman_made AS man_made\b/)
-	// custom telecom tags aren't promoted — they're read out of the other_tags hstore.
+	// custom telecom tags aren't promoted.
+	// They're read out of the other_tags hstore.
 	expect(sql).toContain(`hstore_get_value(other_tags,'telecom') AS telecom`)
 	expect(sql).toContain(`hstore_get_value(other_tags,'street_cabinet') AS street_cabinet`)
 	// tower:type's colon can't survive as a bare alias, so it's laundered.

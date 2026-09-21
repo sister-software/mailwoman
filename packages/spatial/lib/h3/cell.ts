@@ -155,7 +155,7 @@ export function shortCellToInt(cell: H3Cell): number {
  * The one resolution a set of stored short cells was captured at.
  *
  * A short cell drops the resolution nibble, so a table of them does not say what resolution it
- * is keyed at — and every `layer_coverage` reader needs that number to derive a probe's coverage cell.
+ * is keyed at, and every `layer_coverage` reader needs that number to derive a probe's coverage cell.
  * It is recoverable because {@link expandH3Cell} validates: a short cell expands to
  * a valid index at exactly one resolution, so trying all sixteen and keeping the one
  * that survives is an exact answer rather than an inference.

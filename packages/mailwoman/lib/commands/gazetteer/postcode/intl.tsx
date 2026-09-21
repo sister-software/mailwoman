@@ -99,7 +99,7 @@ async function readGeonames(file: PathBuilderLike, want: Set<string>): Promise<M
 
 	// TSV cols: 0=country 1=postcode 2=place 3..8=admin 9=lat 10=lon 11=accuracy.
 	// The GeoNames allCountries postal dump is headerless (header: false) and LF-only upstream,
-	// so field indices map straight through — and empty admin columns are preserved
+	// so field indices map straight through, and empty admin columns are preserved
 	// (v3 no longer drops them), keeping the offsets aligned.
 	for await (const fields of TSVSpliterator.fromAsync(file, { header: false, mode: "array" })) {
 		const countryCode = fields[0]

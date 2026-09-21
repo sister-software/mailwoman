@@ -150,7 +150,7 @@ export interface ZoningPlan {
 	/**
 	 * The publisher's `CURRENT_PLAN` flag, carried as published.
 	 *
-	 * `1` means not superseded — not "in force today".
+	 * `1` means not superseded, not "in force today".
 	 */
 	currentPlan: number
 }
@@ -323,9 +323,8 @@ interface PlanRow {
  * Everything that would make the reader answer a well-formed wrong thing is refused at construction
  * rather than at query time: a manifest naming a different layer, a coverage table with no rows,
  * a coverage row whose basis would support an exclusion, an empty jurisdiction table.
- * Each of those would otherwise present as a reader that quietly always answers
- * `unknown` — or, in the exclusion case, as a reader that confidently reports
- * unzoned-and-unmapped land as free of restriction.
+ * Each of those would otherwise present as a reader that quietly always answers `unknown`, or, in the
+ * exclusion case, as a reader that confidently reports unzoned-and-unmapped land as free of restriction.
  */
 export class ZoningLookup implements Disposable {
 	readonly identity: ZoningLayerIdentity

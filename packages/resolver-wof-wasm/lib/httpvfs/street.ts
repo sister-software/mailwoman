@@ -136,7 +136,8 @@ export interface StreetInterpHit {
 /**
  * Tiger-range interpolation — async twin of `StreetInterpolator`.
  *
- * Postcode-scoped. abstains on cross-ZIP ambiguity.
+ * Postcode-scoped.
+ * Abstains on cross-ZIP ambiguity.
  */
 export class HTTPVFSInterpolator {
 	#worker: HTTPVFSDB
@@ -227,7 +228,7 @@ export interface StreetResolution {
 	lon: number
 	tier: "address_point" | "interpolated"
 	/**
-	 * Calibrated uncertainty radius in meters (10 m situs floor. interp = uncertaintyM × the region factor).
+	 * Calibrated uncertainty radius in meters (10 m situs floor. Interp = uncertaintyM × the region factor).
 	 */
 	uncertaintyM: number
 }
@@ -256,7 +257,7 @@ interface InterpLike {
  * Street tier: exact situs point first (10 m floor), then tiger interpolation (honest calibrated radius),
  * else null so the caller falls back to the admin cascade ({@link runCascade}).
  *
- * Mirrors the node `geocode-core` tier order (address_point > interpolated > admin) —
+ * Mirrors the node `geocode-core` tier order (address_point > interpolated > admin),
  * but async, on the main thread, over the demo's httpvfs handles.
  * `interpRadiusCalibration` is the per-region conformal factor
  * (#374 / data/calibration/interp-radius-conformal.json); default 1.95

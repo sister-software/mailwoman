@@ -40,7 +40,7 @@ export interface EdgarSubsidiaryRow {
 	 */
 	cik: string
 	/**
-	 * The subsidiary's name exactly as Exhibit 21 spelled it — never normalized before minting
+	 * The subsidiary's name exactly as Exhibit 21 spelled it, never normalized before minting
 	 * its node (mirrors `mintHoldingCompanyNodeID`'s identical "raw string" precedent).
 	 */
 	subsidiaryName: string

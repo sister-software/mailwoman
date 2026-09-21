@@ -20,25 +20,24 @@ const config = createOxlintConfig({
 	// Left off here to match the repo's prior behavior.
 	headers: false,
 	restrictProcessGlobals: true,
-	// A number used as a comparison threshold needs a name. data tables
-	// (bbox rows, codepoint ranges, status maps) are left alone, which is why `no-magic-numbers` stays off.
+	// A number used as a comparison threshold needs a name.
+	// Data tables (bbox rows, codepoint ranges, status maps) are left alone,
+	// which is why `no-magic-numbers` stays off.
 	unnamedThresholds: true,
-	// Exported module-level constants carry a JSDoc block saying what the value means and where it came
-	// from — provenance rather than a restatement of the identifier. Scoped to exported only: on the local
-	// SCREAMING_CASE constants the name is usually the documentation already (`STREET_TYPES_FILENAME`,
-	// `SVG_WIDTH`), and requiring a sentence there produces restatements, which cost the next reader
-	// more than the missing comment did. Public surface is where a reader has no other context.
+	// Exported module-level constants carry a JSDoc block saying what the value means and where it came from — provenance rather than a restatement of the identifier. Scoped to exported only: on the local SCREAMING_CASE constants the name is usually the documentation already (`STREET_TYPES_FILENAME`, `SVG_WIDTH`), and requiring a sentence there produces restatements, which cost the next reader more than the missing comment did. Public surface is where a reader has no other context.
 	constantDocs: {
 		scope: "exported",
-		// Command modules export these as framework metadata. the `description` string is the `--help` text.
+		// Command modules export these as framework metadata.
+		// The `description` string is the `--help` text.
 		// A JSDoc block above them can only restate it.
 		ignoreNames: ["description", "args", "options", "alias", "isDefault"],
 	},
 	// An acronym is capitalized as a whole camelCase component: `parseJSON`,
 	// `POILookup`, `createWOFResolver`.
-	// The shipped list covers general programming vocabulary. everything below is this project's own,
-	// and the list is worth widening on sight — `outHtml` sat in three sibling files for months
-	// because a hand-maintained list only contains the acronyms someone thought to add.
+	// The shipped list covers general programming vocabulary.
+	// Everything below is this project's own, and the list is worth widening on sight —
+	// `outHtml` sat in three sibling files for months because a hand-maintained list
+	// only contains the acronyms someone thought to add.
 	acronymCasing: {
 		extraAcronyms: [
 			"BIO",
@@ -61,24 +60,25 @@ const config = createOxlintConfig({
 		// Prefer a scoped disable comment at the one site that needs it — an entry here
 		// silently covers every future declaration of the same name.
 		ignoreNames: [
-			// kysely's own dialect classes are `SqliteAdapter`/`SqliteDialect`/`SqliteDriver`; ours
-			// implement its interfaces and read as a matched pair only if they follow suit.
+			// kysely's own dialect classes are `SqliteAdapter`/`SqliteDialect`/`SqliteDriver`;
+			// ours implement its interfaces and read as a matched pair only if they follow suit.
 			"SqliteAdapter",
 			"SqliteDialect",
 			"SqliteDialectConfig",
 			"SqliteDriver",
-			// `LedgerAppendOptions` receives the CLI option bag verbatim — its fields are the
-			// `--run-id` flag names, and the house form is derived at the boundary.
+			// `LedgerAppendOptions` receives the CLI option bag verbatim.
+			// Its fields are the `--run-id` flag names, and the house form is derived at the boundary.
 			"runId",
 		],
 	},
 	ignorePatterns: [
-		// `**/coverage` is dropped and re-added anchored, for the reason `.gitignore` records at its own
-		// coverage entry: bare, it matches a directory of that name at any depth, and this repository has four
-		// that are source — `mailwoman/lib/coverage/`, `mailwoman/lib/commands/coverage/`,
-		// `mailwoman/test/unit/coverage/` and `cartographer/lib/coverage/`. Those files were never linted, and
-		// because the pre-commit hook hands oxlint the staged paths and oxlint errors when a path list resolves
-		// to nothing, staging one of them refused the commit outright.
+		// `**/coverage` is dropped and re-added anchored, for the reason `.gitignore` records at its
+		// own coverage entry: bare, it matches a directory of that name at any depth, and this repository
+		// has four that are source — `mailwoman/lib/coverage/`, `mailwoman/lib/commands/coverage/`,
+		// `mailwoman/test/unit/coverage/` and `cartographer/lib/coverage/`.
+		// Those files were never linted, and because the pre-commit hook hands oxlint
+		// the staged paths and oxlint errors when a path list resolves to nothing,
+		// staging one of them refused the commit outright.
 		...DefaultIgnorePatterns.filter((pattern) => pattern !== "**/coverage"),
 		"/coverage/",
 		".pi",
@@ -103,8 +103,9 @@ const config = createOxlintConfig({
  * which reaches the classifier and every soft-feature channel behind it.
  *
  * So the browser-reachable set is the package minus its Node tier, stated that way round
- * because the Node tier is the short, stable list — an enumeration of the browser half needs
- * an edit every time a module is added, and gets one only if its author remembered this file.
+ * because the Node tier is the short, stable list.
+ * An enumeration of the browser half needs an edit every time a module is added,
+ * and gets one only if its author remembered this file.
  *
  * A value import of a Node-only module from here breaks the client bundle:
  * webpack follows it eagerly and chokes on `onnxruntime-node`'s binary assets.
@@ -144,9 +145,10 @@ const NODE_ONLY_NEURAL_MODULES = [
 	"./weights.ts",
 	"./scorer.ts",
 	"onnxruntime-node",
-	// `$public` reaches node:util/node:fs/node:path. The `node:*` pattern below cannot catch it: the rule matches
-	// specifiers, and this module launders the builtins behind its own name. `./env.ts` extends it and is the same
-	// module one hop further away.
+	// `$public` reaches node:util/node:fs/node:path.
+	// The `node:*` pattern below cannot catch it: the rule matches specifiers,
+	// and this module launders the builtins behind its own name.
+	// `./env.ts` extends it and is the same module one hop further away.
 	"@mailwoman/core/env",
 	"./env.ts",
 	"#env",
@@ -213,8 +215,9 @@ export default {
 			},
 		},
 		{
-			// `packages/core/lib/json.ts` is what both redirects point at — the printers and the parsers are
-			// where the builtin is named, and each call inside them is the wrapper the rule recommends.
+			// `packages/core/lib/json.ts` is what both redirects point at.
+			// The printers and the parsers are where the builtin is named, and each call
+			// inside them is the wrapper the rule recommends.
 			files: ["packages/core/lib/json.ts"],
 			rules: {
 				"no-restricted-properties": restrictedPropertiesExcept(JSON_PARSE, JSON_STRINGIFY),
@@ -224,15 +227,15 @@ export default {
 			// A redirect to `@mailwoman/core` is only actionable where the import is,
 			// and these files cannot take it.
 			// The reason is structural rather than per-call, so it is stated once here
-			// instead of as a disable comment on every line — which is what these files carried
+			// instead of as a disable comment on every line, which is what these files carried
 			// before, each repeating this paragraph in miniature.
 			//
 			// `docs/static/**` ships standalone: the benchmark harnesses and the published server example
 			// run on node builtins with no monorepo install, which is what lets a reader copy them.
-			// `ancestrie`, `annotations` and `un-locode-lookup` are leaf packages that declare
-			// no `@mailwoman/core` dependency, and taking one drags core's ~11 MB of shipped
-			// data behind it — the same trade that keeps `un-locode-lookup` re-implementing
-			// the ray cast rather than importing `@mailwoman/spatial`.
+			// `ancestrie`, `annotations` and `un-locode-lookup` are leaf packages that declare no
+			// `@mailwoman/core` dependency, and taking one drags core's ~11 MB of shipped data behind it.
+			// The same trade that keeps `un-locode-lookup` re-implementing the ray cast
+			// rather than importing `@mailwoman/spatial`.
 			//
 			// Only the printer entry is lifted.
 			// `JSON.parse` still binds, because these files already answer it per site with something
@@ -276,8 +279,9 @@ export default {
 			},
 		},
 		{
-			// A test file imports the package under test through its public exports and a helper by
-			// relative path. the `#` map is the package's private naming and stays inside `lib/`.
+			// A test file imports the package under test through its public exports
+			// and a helper by relative path.
+			// The `#` map is the package's private naming and stays inside `lib/`.
 			files: [
 				"packages/*/test/**/*.ts",
 				"packages/*/test/**/*.tsx",
@@ -380,8 +384,8 @@ export default {
 		// The shared base sets this to `warn`.
 		// It every run prints and no run refuses.
 		// Therefore, an unused binding accumulates.
-		// `tsc` does not catch it either — `noUnusedLocals` and `noUnusedParameters`
-		// are off in `@sister.software/tsconfig`.
+		// `tsc` does not catch it either.
+		// `noUnusedLocals` and `noUnusedParameters` are off in `@sister.software/tsconfig`.
 		// Measured before promoting: those two flags over every package's source
 		// and test project report zero, so this refuses the next one rather than a backlog.
 		// The base's options are repeated verbatim because setting a severity alone drops them, and every

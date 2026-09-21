@@ -16,7 +16,8 @@ export const PLANETARY_BODIES = ["moon", "mars"] as const
 export type PlanetaryBody = (typeof PLANETARY_BODIES)[number]
 
 /**
- * Injected by the Vite `define` from `PLANETARY_BODY` at build time. a source run outside Vite has no value.
+ * Injected by the Vite `define` from `PLANETARY_BODY` at build time.
+ * A source run outside Vite has no value.
  */
 declare const __PLANETARY_BODY__: PlanetaryBody
 

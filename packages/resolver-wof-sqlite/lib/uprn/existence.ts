@@ -56,7 +56,7 @@ export interface UPRNAbsenceInput {
 
 /**
  * The coverage cell a coordinate falls in, derived from its stored res-9 cell exactly as the builder
- * derives it — never from the centroid, which lands in a different parent for a fraction of cells.
+ * derives it, never from the centroid, which lands in a different parent for a fraction of cells.
  */
 export function uprnCoverageCell(latitude: number, longitude: number): number {
 	return shortCellToParentInt(uprnH3Cell(latitude, longitude), UPRN_H3_RESOLUTION, UPRN_COVERAGE_H3_RESOLUTION)

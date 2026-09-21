@@ -187,8 +187,9 @@ export function createMapLinkResolver(options: CreateMapLinkResolverOptions = {}
 		/**
 		 * Resolve one link.
 		 *
-		 * Never throws for an unresolvable link — that is a reported row, because a batch that
-		 * drops rows silently produces a case file whose denominator nobody can reconstruct.
+		 * Never throws for an unresolvable link.
+		 * That is a reported row, because a batch that drops rows silently produces a
+		 * case file whose denominator nobody can reconstruct.
 		 */
 		async resolve(url: string): Promise<MapLinkResolution> {
 			try {

@@ -30,8 +30,8 @@ import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/
 import { Globerator } from "spliterator/node/fs"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-// note: `./sec-client.ts` is imported dynamically below, after `vi.resetModules()` —
-// see the shared-graph guard under the env mock.
+// note: `./sec-client.ts` is imported dynamically below, after `vi.resetModules()`.
+// See the shared-graph guard under the env mock.
 // A static import here would bind the module before the reset and reintroduce
 // the flake this file used to carry.
 
@@ -58,8 +58,8 @@ vi.mock("@mailwoman/filer/env", async (importOriginal) => {
 // so the next file in this fork never inherits our mocked env module.
 //
 // Without this the UA fail-fast test passes in isolation and in a serialized run,
-// then fails whenever unrelated test files shift the worker's scheduling —
-// which is exactly how it surfaced (2026-08-02), long after it was introduced.
+// then fails whenever unrelated test files shift the worker's scheduling, which is
+// exactly how it surfaced (2026-08-02), long after it was introduced.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
@@ -738,7 +738,9 @@ describe("createSECClient: bounded retry with backoff on 429/5xx and network-cla
 		["numeric", "60", 60_000],
 		["clamped", "999999", 60_000],
 		["unparseable (fails LONG, never the short exponential)", "not-a-valid-value", 60_000],
-		// RFC 9110's `delay-seconds` is `1*digit` only. `Number()` is laxer than the grammar, so a naive parse would silently honor either of these as a plausible-looking wait.
+		// RFC 9110's `delay-seconds` is `1*digit` only.
+		// `Number()` is laxer than the grammar, so a naive parse would silently honor
+		// either of these as a plausible-looking wait.
 		["hex-looking", "0x10", 60_000],
 		["fractional", "1.5", 60_000],
 	])("honors a %s Retry-After over the default exponential backoff", async (_label, header, expected) => {
@@ -790,7 +792,7 @@ describe("createSECClient: bounded retry with backoff on 429/5xx and network-cla
 })
 
 // The interface tasks 6-8 depend on.
-// Each branch is decided from `status` and `isTransientResourceError()` alone —
+// Each branch is decided from `status` and `isTransientResourceError()` alone,
 // never from message text, which is the trap the standalone client's own suite fell
 // into (it matched `/network error/i` to identify a transport failure).
 describe("createSECClient: the caller's failure taxonomy, decided without reading any message", () => {

@@ -117,7 +117,8 @@ describe("verifyFloodDatabase", () => {
 
 		expect(result.disagreed).toBe(1)
 		expect(result.boundaryTolerance).toBe(0)
-		// The distance rides on the row even though it was not acted on — it is what triage starts from.
+		// The distance rides on the row even though it was not acted on.
+		// It is what triage starts from.
 		expect(result.agreement[0]!.nearestEdgeMetres).toBeGreaterThan(0)
 	})
 
@@ -134,7 +135,8 @@ describe("verifyFloodDatabase", () => {
 	})
 
 	it("reports a containing polygon with no zone label as service_unlabelled, never as agreement", async () => {
-		// The artifact reads FZ3 here. the service's polygon contains the point and says nothing.
+		// The artifact reads FZ3 here.
+		// The service's polygon contains the point and says nothing.
 		// Reading that as `null` would let it agree with an absence reading elsewhere,
 		// which is the manufactured Zone 1 the interface forbids.
 		const result = await verifyFloodDatabase({

@@ -69,8 +69,10 @@
  * File magic, "anct" (ANCestry Trie).
  *
  * A reader rejects anything not starting with these four bytes.
- * Deliberately not "FST\0" — this format shares ancestry with `@mailwoman/resolver-wof-sqlite`'s
- * FST gazetteer but is its own interface.
+ * Deliberately not "FST\0".
+ *
+ * This format shares ancestry with `@mailwoman/resolver-wof-sqlite`'s FST gazetteer
+ * but is its own interface.
  */
 export const ANCESTRIE_MAGIC: readonly number[] = [0x41, 0x4e, 0x43, 0x54]
 
@@ -121,7 +123,8 @@ export const ENTRY_FLAG_HAS_PAYLOAD = 1
 
 /**
  * Entry flags bit 1: the payload bytes are UTF-8 JSON and the reader parses them.
- * unset means the payload is opaque bytes handed back verbatim.
+ *
+ * Unset means the payload is opaque bytes handed back verbatim.
  */
 export const ENTRY_FLAG_PAYLOAD_JSON = 2
 
@@ -175,8 +178,8 @@ export interface AncestrieSections {
 /**
  * Compute every section offset from the header counts.
  *
- * The single source of section math — the builder sizes and writes with it,
- * the reader locates with it, so the two ends cannot drift.
+ * The single source of section math.
+ * The builder sizes and writes with it, the reader locates with it, so the two ends cannot drift.
  */
 export function computeSections(counts: AncestrieCounts): AncestrieSections {
 	const stringOffsets = HEADER_SIZE
@@ -240,7 +243,8 @@ export function writeHeader(view: DataView, header: AncestrieHeader): void {
 /**
  * Validate the magic and version, then decode the header.
  *
- * Throws on anything this module cannot read. never guesses at an unknown version's layout.
+ * @throws on anything this module cannot read.
+ * Never guesses at an unknown version's layout.
  */
 export function readHeader(view: DataView): AncestrieHeader {
 	if (view.byteLength < HEADER_SIZE) {

@@ -84,7 +84,7 @@ const SWEDISH_MUNICIPALITIES = [
  * `gr/b/municipality_of_kalamaria.csv` is the archive's only Greek member and it
  * declares a `postcode` column carrying nothing: 0 values in 10,877 rows.
  * `gr_postcode` shares `NNN NN` with the three below, so a Greek reader is served by what
- * they teach until a Greek source with postcodes exists — but no row here claims to be Greek.
+ * they teach until a Greek source with postcodes exists, but no row here claims to be Greek.
  */
 const SOURCES: PostcodeSource[] = [
 	{ csv: join(EXTRACTED, "cz", "countrywide.csv"), country: "CZ" },
@@ -110,12 +110,15 @@ const SOURCES: PostcodeSource[] = [
  * `SW1A 1AA` opens with letters and was never in doubt, so GB is deliberately absent.
  */
 const WRITTEN_FORMS: ReadonlyMap<string, { locale: string; render: (compact: string) => string[] }> = new Map([
-	// `NNN NN`, written with the space. The four countries share the shape, which is why `detectKnownFormats` answers all four for one string and why the label is the same for each.
+	// `NNN NN`, written with the space.
+	// The four countries share the shape, which is why `detectKnownFormats` answers all
+	// four for one string and why the label is the same for each.
 	["CZ", { locale: "cs-CZ", render: spacedThree }],
 	["SK", { locale: "sk-SK", render: spacedThree }],
 	["SE", { locale: "sv-SE", render: spacedThree }],
 	["GR", { locale: "el-GR", render: spacedThree }],
-	// `nnnn LL`. Both spellings are attested and the spaced one is what fails.
+	// `nnnn LL`.
+	// Both spellings are attested and the spaced one is what fails.
 	[
 		"NL",
 		{
@@ -194,8 +197,10 @@ export function detectedAsPostcode(surface: string): boolean {
 }
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour
- * it exists to exercise, and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder.
+ *
+ * See the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
  */
 export const barePostcodeRecipe: CorpusRecipe = {
 	name: "bare-postcode",

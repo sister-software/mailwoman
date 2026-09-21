@@ -62,7 +62,7 @@ export const VariableIsolation = {
 	 * The arms are different geocoders.
 	 *
 	 * No configuration record can express what differs, because the dominant variable is the index each
-	 * one holds — and no configuration record can isolate a change here, however carefully declared.
+	 * one holds, and no configuration record can isolate a change here, however carefully declared.
 	 */
 	CrossEngine: "cross_engine",
 } as const

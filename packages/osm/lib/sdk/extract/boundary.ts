@@ -35,8 +35,9 @@ const BOUNDARY_LAYER = "multipolygons"
  * Same allowlist discipline as `extract-poi.ts`'s `SAFE_TAG_TOKEN`, widened to the
  * characters a real place name carries (`Île-de-France`, `Provence-Alpes-Côte d'Azur`).
  *
- * The value is interpolated into an ogrsql string literal, so an apostrophe is admissible only
- * because it is doubled below. every other quoting metacharacter is refused outright.
+ * The value is interpolated into an ogrsql string literal, so an apostrophe is
+ * admissible only because it is doubled below.
+ * Every other quoting metacharacter is refused outright.
  */
 const SAFE_NAME = /^[\p{L}\p{N} '’\-.()/]+$/u
 
@@ -74,7 +75,7 @@ export interface OSMBoundary extends OSMBoundaryQuery {
  *
  * Exported for unit testing — no `ogr2ogr` involved.
  *
- * Throws if `name` or `adminLevel` falls outside the allowlists above,
+ * @throws if `name` or `adminLevel` falls outside the allowlists above,
  * before any string concatenation happens.
  */
 export function buildBoundarySQL(query: OSMBoundaryQuery): string {
@@ -103,7 +104,7 @@ export function buildBoundarySQL(query: OSMBoundaryQuery): string {
 /**
  * Read the one boundary matching `query` out of `pbfPath`.
  *
- * Throws when the extract holds no match or more than one.
+ * @throws when the extract holds no match or more than one.
  */
 export async function extractOSMBoundary(pbfPath: string, query: OSMBoundaryQuery): Promise<OSMBoundary> {
 	const sql = buildBoundarySQL(query)

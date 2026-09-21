@@ -28,7 +28,7 @@ export const test = base.extend<E2EFixtures>({
 	// `console` fixture is set up first so it captures messages emitted during
 	// the geocoder fixture's own page.goto().
 	// Playwright resolves the dependency graph by the order arguments are destructured.
-	// we destructure `console` before `page` in GeocoderFixture.
+	// We destructure `console` before `page` in GeocoderFixture.
 	console: async ({ page }, use) => {
 		const fixture = new ConsoleFixture(page)
 		await use(fixture)

@@ -33,8 +33,8 @@ const Z_CRITICAL_95 = 1.96
  * Project a committed seed row into the table shape {@link checkCase} reads.
  *
  * Written with named fields on purpose.
- * `build-regression-db.ts` inserts the same mapping positionally for bulk-load speed, so it cannot be
- * shared as-is — but naming every field here means a column added to {@link GauntletCaseTable}
+ * `build-regression-db.ts` inserts the same mapping positionally for bulk-load speed, so it cannot
+ * be shared as-is, but naming every field here means a column added to {@link GauntletCaseTable}
  * is a compile error against this function rather than a silently-null column at grade time.
  */
 export function seedToCaseTable(seed: SeedCase): GauntletCaseTable {

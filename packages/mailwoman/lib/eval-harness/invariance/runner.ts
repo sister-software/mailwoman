@@ -160,8 +160,8 @@ function compareForTransform(
  * True when any CRITICAL_TAGS value is present (non-blank).
  *
  * The row-level gained-capability detector in `runInvarianceSuite` keys on this: a baseline
- * whose original parse carries no critical component never parsed the row's core address —
- * everything the candidate does afterwards is a gain rather than a loss.
+ * whose original parse carries no critical component never parsed the row's core address.
+ * Everything the candidate does afterwards is a gain rather than a loss.
  */
 function hasCriticalComponent(components: Record<string, string>): boolean {
 	return CRITICAL_TAGS.some((tag) => (components[tag] ?? "").trim().length)

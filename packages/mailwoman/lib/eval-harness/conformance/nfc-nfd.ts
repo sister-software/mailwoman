@@ -55,11 +55,11 @@ export const CANONICAL_FORM_LAW = "canonical-form-invariance"
 /**
  * The two canonical normalization forms this law states, and the only two a committed row may name.
  *
- * - `nfd` — canonical decomposition: every composed character split into its base plus its combining marks, and every
- *   Hangul syllable split into jamo. The register a macOS filesystem API, some input methods and some text pipelines
- *   produce.
- * - `nfc` — canonical composition: the inverse, and the form the web platform, most databases and this pipeline's own
- *   Stage 1 emit.
+ * - `nfd` — canonical decomposition: every composed character split into its base plus
+ *   its combining marks, and every Hangul syllable split into jamo.
+ *   The register a macOS filesystem API, some input methods and some text pipelines produce.
+ * - `nfc` — canonical composition: the inverse, and the form the web platform,
+ *   most databases and this pipeline's own Stage 1 emit.
  *
  * Compatibility normalization (`nfkc` / `nfkd`) is deliberately absent.
  * It rewrites characters that are not canonically equal — `ﬁ` to `fi`, `Ⅻ` to `XII`,
@@ -146,13 +146,17 @@ export function classifyCanonicalTransformation(base: string, variant: string): 
 /**
  * The declared reasons a canonical transformation is not stateable over a given row.
  *
- * - `no-canonical-variance` — the query's two canonical forms are the same bytes, so neither arm moves anything. Plain
- *   ascii, and every script whose characters carry no canonical decomposition, land here. Such a row is the identity
- *   law wearing a canonical-form label, and its holding would be counted as evidence that the forms are handled.
- * - `already-in-target-form` — the query is canonically variant, and it is already written in the form this arm composes
- *   or decomposes toward, so this arm alone is the identity while its sibling states the law. Reported apart from the
- *   first reading because "this query has nothing to decompose" and "this query is already decomposed" are different
- *   absences, and the second one says which direction the row does state.
+ * - `no-canonical-variance` — the query's two canonical forms are the same bytes,
+ *   so neither arm moves anything.
+ *   Plain ascii, and every script whose characters carry no canonical decomposition, land here.
+ *   Such a row is the identity law wearing a canonical-form label, and its holding
+ *   would be counted as evidence that the forms are handled.
+ * - `already-in-target-form` — the query is canonically variant, and it is already
+ *   written in the form this arm composes or decomposes toward, so this arm alone
+ *   is the identity while its sibling states the law.
+ *   Reported apart from the first reading because "this query has nothing to
+ *   decompose" and "this query is already decomposed" are different absences,
+ *   and the second one says which direction the row does state.
  */
 export const CANONICAL_APPLICABILITY_RULES = ["no-canonical-variance", "already-in-target-form"] as const
 
@@ -352,7 +356,7 @@ export function auditCanonicalFormSuite(fixtures: readonly ConformanceFixture[])
 /**
  * The transformation label a report line carries, e.g. `nfd`.
  *
- * `?` when the pair does not classify — which the audit refuses, so it can only
+ * `?` when the pair does not classify, which the audit refuses, so it can only
  * appear on a hand-built fixture that skipped the loader.
  */
 export function describeCanonicalTransformation(fixture: ConformanceFixture): string {

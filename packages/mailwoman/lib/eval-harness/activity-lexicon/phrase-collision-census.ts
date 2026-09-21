@@ -148,8 +148,9 @@ const FUNCTION_WORDS = new Set([
  *
  * - `declared-phrase` — a surface form exactly as the lexicon writes it.
  * - `phrase-prefix` — a prefix of a declared phrase, where the phrase itself carries an anchor separator.
- * - `carrier-prefix` — a candidate subject of a committed query that ends in a declared phrase. This is the family the
- *   `Somewhere` collision lives in, and no amount of reading the lexicon alone would find it.
+ * - `carrier-prefix` — a candidate subject of a committed query that ends in a declared phrase.
+ *   This is the family the `Somewhere` collision lives in, and no amount of
+ *   reading the lexicon alone would find it.
  */
 export type ProbeFamily = "declared-phrase" | "phrase-prefix" | "carrier-prefix"
 

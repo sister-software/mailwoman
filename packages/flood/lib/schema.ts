@@ -45,7 +45,8 @@ export const FloodCellContainment = {
 	/**
 	 * The zone boundary crosses the cell.
 	 *
-	 * The index has narrowed the candidate polygons. the point test decides.
+	 * The index has narrowed the candidate polygons.
+	 * The point test decides.
 	 */
 	Partial: "partial",
 } as const
@@ -53,13 +54,15 @@ export const FloodCellContainment = {
 export type FloodCellContainment = (typeof FloodCellContainment)[keyof typeof FloodCellContainment]
 
 /**
- * One authority polygon, verbatim. A plain rowid table: it holds a geometry blob, which is the one shape `without
- * rowid` hurts.
+ * One authority polygon, verbatim.
+ *
+ * A plain rowid table: it holds a geometry blob, which is the one shape `without rowid` hurts.
  */
 export interface FloodZoneAreaTable {
 	/**
-	 * The authority's own feature id — the EA's `objectid`, as text so a source that
-	 * publishes a non-numeric id needs no schema change.
+	 * The authority's own feature id.
+	 *
+	 * The EA's `objectid`, as text so a source that publishes a non-numeric id needs no schema change.
 	 */
 	area_id: string
 	/**
@@ -104,7 +107,8 @@ export interface FloodZoneAreaTable {
 	max_lat: number
 	max_lon: number
 	/**
-	 * The authority's ring coordinates, unsimplified — see `rings.ts` for the layout and the point test.
+	 * The authority's ring coordinates, unsimplified.
+	 * See `rings.ts` for the layout and the point test.
 	 */
 	rings: Uint8Array
 }
@@ -140,7 +144,8 @@ export interface FloodZoneCellTable {
  * For a `partial` cell only: which polygons reach into it.
  *
  * This is the bbox-pruned candidate list the runtime ray cast walks, precomputed.
- * A `whole` cell has no row here and needs none — it is answered by {@link FloodZoneCellTable} alone.
+ * A `whole` cell has no row here and needs none.
+ * It is answered by {@link FloodZoneCellTable} alone.
  */
 export interface FloodZoneCellAreaTable {
 	h3_cell: number
@@ -149,14 +154,16 @@ export interface FloodZoneCellAreaTable {
 }
 
 /**
- * The authority's mapped footprint — one row per statement, never derived from the hazard polygons.
+ * The authority's mapped footprint.
+ *
+ * One row per statement, never derived from the hazard polygons.
  *
  * Deriving it from the polygon union is the error this whole layer is built to avoid:
  * Zone 1 is the mapped area minus the polygons, so a footprint taken from the
  * polygons reports every Zone 1 location as unmapped.
  * What is stored is the authority's own coverage sentence, where it is published, and the
- * boundary artifact used to realize "England" as a cell set — because the sentence names a
- * country and a cell set needs an outline, and which outline that was is part of the claim.
+ * boundary artifact used to realize "England" as a cell set, because the sentence names a country
+ * and a cell set needs an outline, and which outline that was is part of the claim.
  *
  * The machine-readable footprint is `layer_coverage`: a cell with a row is
  * inside the statement, a cell without is not.
@@ -167,8 +174,9 @@ export interface FloodMapExtentTable {
 	/**
 	 * What the authority says about this footprint.
 	 *
-	 * `mapped` for the EA's England statement. a source with an availability layer of its
-	 * own (fema's is layer 0) writes its published categories here instead.
+	 * `mapped` for the EA's England statement.
+	 * A source with an availability layer of its own (fema's is layer 0) writes
+	 * its published categories here instead.
 	 */
 	status: string
 	/**
@@ -195,8 +203,9 @@ export interface FloodMapExtentTable {
 	max_lat: number
 	max_lon: number
 	/**
-	 * How many `layer_coverage` rows this statement produced, and at what resolution —
-	 * the two numbers a reader needs to check the footprint without re-deriving it.
+	 * How many `layer_coverage` rows this statement produced, and at what resolution.
+	 *
+	 * The two numbers a reader needs to check the footprint without re-deriving it.
 	 */
 	coverage_cells: number
 	coverage_resolution: number
@@ -235,7 +244,8 @@ export type FloodSchemaHandle = Pick<Kysely<FloodDatabase>, "schema">
 /**
  * Create `flood_zone_area`.
  *
- * A plain rowid table on purpose — the `rings` blob is exactly the payload `without rowid` penalizes.
+ * A plain rowid table on purpose.
+ * The `rings` blob is exactly the payload `without rowid` penalizes.
  */
 export async function createFloodZoneAreaTable(db: FloodSchemaHandle): Promise<void> {
 	const table = db.schema
@@ -261,7 +271,7 @@ export async function createFloodZoneCellTable(db: FloodSchemaHandle): Promise<v
 
 	await addCellIndexColumns(table, "zone_code")
 		.addPrimaryKeyConstraint("flood_zone_cell_pk", ["h3_cell", "zone_code"])
-		// `without rowid` has no first-class builder. the raw modifier is the idiomatic fallback.
+		// `without rowid` has no first-class builder. The raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }

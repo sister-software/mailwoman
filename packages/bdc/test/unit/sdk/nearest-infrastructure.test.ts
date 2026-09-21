@@ -138,7 +138,7 @@ function cellFor(latitude: number, longitude: number): number {
 }
 
 /**
- * Builds a minimal poi.db fixture straight against `poi-schema.ts` (the `poi-lookup.test.ts` idiom) —
+ * Builds a minimal poi.db fixture straight against `poi-schema.ts` (the `poi-lookup.test.ts` idiom),
  * not `buildPOIDatabase`, see this file's header docstring for why.
  */
 async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promise<void> {
@@ -187,7 +187,7 @@ async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promi
 }
 
 /**
- * A minimal `layerschemadatabase`-only fixture — not poi.db's own coverage table.
+ * A minimal `layerschemadatabase`-only fixture, not poi.db's own coverage table.
  *
  * Proves the coverage join runs against whatever database the caller passes,
  * independent of poi.db's own coverage.
@@ -303,8 +303,8 @@ describe("nearestInfrastructure", () => {
 			expect(hit.coverage).toEqual({
 				h3Cell: res9ShortCellToRes6Parent(hit.h3Cell),
 				completeness: 0.75,
-				// The fixture writes no basis, so it reads back as the weakest one —
-				// which is also the reason a 0.75 here cannot license an exclusion on its own.
+				// The fixture writes no basis, so it reads back as the weakest one, which is
+				// also the reason a 0.75 here cannot license an exclusion on its own.
 				basis: CoverageBasis.SourcePresent,
 				observedRows: 42,
 			})

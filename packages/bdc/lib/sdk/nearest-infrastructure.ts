@@ -56,15 +56,14 @@ export const NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS = 32
  * One k-nearest telecom-infrastructure hit, paired with the res-6 coverage cell it falls in.
  *
  * `coverage: undefined` means `schemadb`'s layer has never surveyed that area
- * (the meaning-of-zero rule. See `@mailwoman/core/layers`) — never conflate
- * it with a covered-but-empty cell.
+ * (the meaning-of-zero rule. See `@mailwoman/core/layers`), never conflate it with a covered-but-empty cell.
  */
 export interface InfrastructureHit {
 	categoryID: string
 	name: string | null
 	distanceM: number
 	/**
-	 * Res-9 short H3 cell of the hit itself — not the (coarser) coverage cell.
+	 * Res-9 short H3 cell of the hit itself, not the (coarser) coverage cell.
 	 * See `coverage.h3Cell` for that.
 	 */
 	h3Cell: number
@@ -84,7 +83,7 @@ export interface NearestInfrastructureOptions {
 	/**
 	 * Ring budget.
 	 *
-	 * Default {@link NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS} (32) — not `POILookup`'s
+	 * Default {@link NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS} (32), not `POILookup`'s
 	 * own internal default (16); see this module's docstring.
 	 */
 	maxRings?: number

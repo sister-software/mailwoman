@@ -162,8 +162,9 @@ export async function rerankByResolution<T>(
 		try {
 			resolved = await resolveTree(candidate.tree)
 		} catch {
-			// A resolver failure is not evidence against the parse — treat it as "no evidence" and let
-			// the model's rank stand, rather than vetoing a possibly-correct hypothesis on an outage.
+			// A resolver failure is not evidence against the parse.
+			// Treat it as "no evidence" and let the model's rank stand, rather than
+			// vetoing a possibly-correct hypothesis on an outage.
 			ranked.push({ ...candidate, resolved: null, implausible: false })
 
 			continue

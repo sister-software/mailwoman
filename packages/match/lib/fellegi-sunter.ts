@@ -82,9 +82,10 @@ export interface Comparison<R> {
 /**
  * Per-value term-frequency adjustment for a comparison (the Splink/Winkler mechanism).
  *
- * `m` is unchanged. on an agreement level the effective `u` becomes the value's
- * own frequency, adding `log2(u_level / frequency)` to the weight — large
- * and positive for rare values, negative for common ones.
+ * `m` is unchanged.
+ * On an agreement level the effective `u` becomes the value's own frequency, adding
+ * `log2(u_level / frequency)` to the weight — large and positive for rare values, negative for common ones.
+ *
  * Floored at {@link TermFrequencyAdjustment.minimumFrequency} so an ultra-rare
  * value can't produce an unbounded boost.
  */

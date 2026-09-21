@@ -75,7 +75,7 @@ const SOURCE_EXTENSION = /\.tsx?$/u
  *
  * A test spawns `packages/mailwoman/out/cli/index.js`, a workflow runs one, a docstring names one.
  * None of those is the source path, so a sweep over source paths alone leaves them
- * naming an output `tsc` no longer produces — and `tsc -b` does not delete the file
+ * naming an output `tsc` no longer produces, and `tsc -b` does not delete the file
  * it used to produce, so the stale one answers instead of failing.
  */
 export function emittedMoves(moves: readonly ModuleMove[]): ModuleMove[] {

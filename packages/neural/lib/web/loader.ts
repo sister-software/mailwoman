@@ -672,7 +672,7 @@ function warnOnUnfedTrainedChannels(
  * Fetch + parse an optional JSON asset tolerantly: a missing file
  * (404, any non-OK status, or a network failure) returns null — the caller decides whether that matters.
  *
- * A present-but-malformed payload throws loudly via `parse` — never silently zero-fill off bad data.
+ * A present-but-malformed payload throws loudly via `parse`, never silently zero-fill off bad data.
  */
 async function fetchTolerantJSON<T>(
 	url: string,
@@ -755,8 +755,10 @@ function labelsFromModelCard(card: Record<string, unknown>, url: string): readon
  *
  * Browsers + Node 18+ both have `btoa(String.fromCharCode(...))` but String.fromCharCode
  * chokes on long arrays (call-stack overflow on a few MB of bytes).
- * The chunked loop avoids that — kept here rather than imported because both browser
- * and Node need it and adding a dep for ~5 lines is silly.
+ * The chunked loop avoids that.
+ *
+ * Kept here rather than imported because both browser and Node need it
+ * and adding a dep for ~5 lines is silly.
  */
 function toBase64(bytes: Uint8Array): string {
 	const chunkSize = 0x80_00

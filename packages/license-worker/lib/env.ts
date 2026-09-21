@@ -19,7 +19,9 @@ export interface LicenseWorkerBindings {
 	 */
 	EMAIL_API_KEY?: string
 	/**
-	 * Cloudflare's `send_email` binding. present, the worker sends through it and needs no email key.
+	 * Cloudflare's `send_email` binding.
+	 *
+	 * Present, the worker sends through it and needs no email key.
 	 */
 	EMAIL_SENDER?: SendEmail
 	LICENSE_SIGNING_KID: string
@@ -53,7 +55,7 @@ export interface LicenseWorkerEnv extends LicenseWorkerBindings {
 /**
  * Validate the vars and derive the two booleans.
  *
- * Throws on a placeholder, which the Worker's `fetch` turns into a 503:
+ * @throws on a placeholder, which the Worker's `fetch` turns into a 503:
  * a deploy with an unfilled var must refuse, never mint.
  */
 export function readEnv(bindings: LicenseWorkerBindings): LicenseWorkerEnv {

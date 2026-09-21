@@ -44,7 +44,9 @@ beforeAll(async () => {
 	dir = await temporaryDirectory("geonames-alias-script-")
 
 	const lines = [
-		// Tuen Mun, a Hong Kong district. Its `alternatenames` column carries the Chinese form beside the romanizations, exactly as the shipped HK dump does.
+		// Tuen Mun, a Hong Kong district.
+		// Its `alternatenames` column carries the Chinese form beside the romanizations,
+		// exactly as the shipped HK dump does.
 		row({
 			0: "1818446",
 			1: "Tuen Mun",
@@ -70,7 +72,8 @@ beforeAll(async () => {
 			8: "HK",
 			14: "431090",
 		}),
-		// The packing noise the admission rule still has to refuse — parenthesized asides and bracketed qualifiers GeoNames puts in the same column.
+		// The packing noise the admission rule still has to refuse — parenthesized asides
+		// and bracketed qualifiers GeoNames puts in the same column.
 		row({
 			0: "1818999",
 			1: "Noise Town",

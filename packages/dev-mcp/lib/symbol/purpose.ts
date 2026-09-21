@@ -182,7 +182,7 @@ function terms(phrase: string): string[] {
 async function readEntries(repoRoot: string): Promise<PurposeEntry[]> {
 	// The pathspec names a directory and the shape is filtered here.
 	// A pathspec with a globstar inside it silently drops every file sitting directly in `lib/`,
-	// because git's wildmatch requires a separator after one — which is how `packages/core/lib/stats.ts`
+	// because git's wildmatch requires a separator after one, which is how `packages/core/lib/stats.ts`
 	// and `packages/spatial/lib/distance.ts` went missing from the first index.
 	const files = await trackedFiles(repoRoot, ["packages"])
 	const entries: PurposeEntry[] = []

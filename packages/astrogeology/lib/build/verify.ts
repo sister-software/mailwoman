@@ -20,7 +20,8 @@ import { PlanetaryBuildManifestSchema } from "#schema/manifest"
 /**
  * Verify one body's build.
  *
- * Answers one line per output. throws naming the first difference.
+ * Answers one line per output.
+ * Throws naming the first difference.
  */
 export async function verifyBody(body: BuildableBodyID, out: string | undefined): Promise<string[]> {
 	const directory = buildDirectory(body, out)

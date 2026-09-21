@@ -17,8 +17,8 @@ export interface PlanetaryView {
 /**
  * Everything one body's build needs that the other's differs in.
  *
- * The artifact URLs pin one pipeline publish, the way Earth's resource versions pin
- * one gazetteer build. a republish moves the pin by a commit here.
+ * The artifact URLs pin one pipeline publish, the way Earth's resource versions pin one gazetteer build.
+ * A republish moves the pin by a commit here.
  */
 export interface PlanetaryMapConfig {
 	body: PlanetaryBody

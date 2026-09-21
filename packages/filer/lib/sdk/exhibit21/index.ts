@@ -66,9 +66,9 @@ interface ColumnMapping {
  * The narrowest header row that establishes a mapping, counted in the row's own cells
  * before blank columns are dropped.
  *
- * A two-cell header has nothing to map that the generic "first value is the name, second is
- * the jurisdiction" rule does not already read the same way, so requiring three costs no
- * fixture a single subsidiary — and it keeps a two-cell header from claiming to describe
+ * A two-cell header has nothing to map that the generic "first value is the name, second
+ * is the jurisdiction" rule does not already read the same way, so requiring three costs
+ * no fixture a single subsidiary, and it keeps a two-cell header from claiming to describe
  * a wider data row it never mentions, which is `exhibit21-mangled.html`'s shape exactly:
  * a `Name of Subsidiary`/`State` header over a row whose third cell is `"Note: pending name change"`.
  * That row is unreadable and must stay unreadable
@@ -156,7 +156,7 @@ const MINIMUM_NAME_OVER_NAME_ROWS = 4
  *
  * IDT's two-across name table is 5/5.
  * A genuine jurisdiction column is 0/N except where the filer spells the entity type
- * out (Charter's `"Delaware limited liability company"`, 135/135) — which is what
+ * out (Charter's `"Delaware limited liability company"`, 135/135), which is what
  * {@linkcode DISTINCT_SECOND_VALUE_RATIO} is there to separate.
  */
 const DESIGNATED_SECOND_VALUE_RATIO = 0.5
@@ -467,12 +467,14 @@ const COLUMN_GAP_PATTERN = /[ \t\u00A0]{2,}/
  *
  * 1. A 2+-space (or tab) column gap — the fixed-width plain-text convention.
  * 2. A trailing `(Jurisdiction)` parenthetical — the common nested-list-item convention.
- * 3. Exactly one comma — `"Acme Fiber LLC, Delaware"`. Zero or 2+ commas is not split this way (a legal name can itself
- *    contain a comma, e.g. `"Acme Fiber, LLC"`, so 2+ commas is genuinely ambiguous about where the name ends) —
- *    decision 6 abstains from the split rather than from recording the line. Nor is a single comma split when the text
- *    after it is just a corporate designator (`{@linkcode isBareLegalDesignation}` — `canonicalizeOrganizationName`
- *    reduces `"Inc."` to an empty canonical name) — `"Horizon Services, Inc."` is one entity's whole legal name, and
- *    "Inc." is not a place a comma could plausibly be introducing.
+ * 3. Exactly one comma — `"Acme Fiber LLC, Delaware"`.
+ *    Zero or 2+ commas is not split this way (a legal name can itself contain a comma,
+ *    e.g. `"Acme Fiber, LLC"`, so 2+ commas is genuinely ambiguous about where the name ends) —
+ *    decision 6 abstains from the split rather than from recording the line.
+ *    Nor is a single comma split when the text after it is just a corporate designator
+ *    (`{@linkcode isBareLegalDesignation}` — `canonicalizeOrganizationName` reduces
+ *    `"Inc."` to an empty canonical name) — `"Horizon Services, Inc."` is one entity's
+ *    whole legal name, and "Inc." is not a place a comma could plausibly be introducing.
  *
  * Falls through to `{name: <the whole cleaned line>}` when none of the above apply.
  * An honest "no jurisdiction found", never a fabricated one.
@@ -529,8 +531,9 @@ function splitCandidateLine(line: string): { name: string; jurisdiction?: string
 const LIST_MARKER_PATTERN = /^[•●▪◦∙·*–—-]+\s*/
 
 /**
- * Whole-line, case-insensitive shapes that are a document title or section heading,
- * never an entity name — see the module docstring's "Line/list refinements" paragraph.
+ * Whole-line, case-insensitive shapes that are a document title or section heading, never an entity name.
+ *
+ * See the module docstring's "Line/list refinements" paragraph.
  *
  * Deliberately whole-string patterns rather than keyword sniffing, for the same
  * reason `KNOWN_HEADER_LABELS` (`exhibit21-vocabulary.ts`) is an exact-match set:
@@ -657,10 +660,12 @@ function isEntirelyBlankTable(tables: readonly TableCell[][][]): boolean {
  * (a real Exhibit 21 uses one consistent format throughout, so there's no ambiguity
  * in picking the first match rather than trying all three and merging):
  *
- * 1. An html `<table>` — the common modern shape. A table every one of whose cells is blank
- *    ({@linkcode isEntirelyBlankTable}) is treated as no table at all and falls through to shape 2/3 instead.
- * 2. A `<li>`-based list (nested subsidiary trees included, flattened) — see {@linkcode extractListItemOwnText}'s
- *    docstring for how nesting is handled without a real html parser.
+ * 1. An html `<table>` — the common modern shape.
+ *    A table every one of whose cells is blank ({@linkcode isEntirelyBlankTable}) is
+ *    treated as no table at all and falls through to shape 2/3 instead.
+ * 2. A `<li>`-based list (nested subsidiary trees included, flattened).
+ *    See {@linkcode extractListItemOwnText}'s docstring for how nesting is
+ *    handled without a real html parser.
  * 3. Plain fixed-width text (no recognized markup at all) — the older sgml-era shape.
  */
 export function parseExhibit21(html: string): ParsedExhibit21 {

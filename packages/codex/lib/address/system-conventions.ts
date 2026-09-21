@@ -42,7 +42,7 @@ export interface AddressSystemConventions {
 }
 
 /**
- * Per-address-system ordering and formatting conventions — which component leads a line,
+ * Per-address-system ordering and formatting conventions, which component leads a line,
  * whether the postcode precedes the locality, and so on.
  *
  * Keyed by address system rather than country, since several share one.

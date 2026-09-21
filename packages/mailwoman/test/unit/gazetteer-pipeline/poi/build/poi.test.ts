@@ -263,7 +263,7 @@ describe("bboxCoverageCells", () => {
 /**
  * The `--source osm` build-local branch (decisions 3/5): same `rows:` injection point as
  * the default Overture path, but `source`/`tier` swap the manifest to build-local/ODbL
- * and `coverageCellsOverride` replaces the rows-derived coverage with the bbox polyfill above —
+ * and `coverageCellsOverride` replaces the rows-derived coverage with the bbox polyfill above,
  * including a zero-observed-rows cell, which must round-trip through `writeLayerCoverage`
  * / `readLayerCoverage` (never silently dropped, never conflated with "unsurveyed").
  */

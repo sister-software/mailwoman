@@ -25,8 +25,8 @@ const PrivateShopEnvSchema = z.object({
 		description: "Test-mode Stripe secret key used by `mwops shop … --mode test`.",
 	}),
 	/**
-	 * The live-mode secret key (`sk_live_…`), held apart from the test one so a live write is a deliberate act: `mwops
-	 * shop … --mode live` reads this and refuses any other prefix.
+	 * The live-mode secret key (`sk_live_…`), held apart from the test one so a live write is
+	 * a deliberate act: `mwops shop … --mode live` reads this and refuses any other prefix.
 	 */
 	MAILWOMAN_STRIPE_LIVE_SECRET_KEY: z.string().optional().meta({
 		title: "Stripe live-mode secret key",

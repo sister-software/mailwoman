@@ -112,7 +112,8 @@ async function resolveDefaultLexicon(
  *
  * Returns `undefined` when neither exists (the scorer then fails closed on a declared-required anchor, as before).
  *
- * The one exception is a `shaped` card, which inverts the default order — see the comment on that branch.
+ * The one exception is a `shaped` card, which inverts the default order.
+ * See the comment on that branch.
  */
 async function resolveAnchorSource(
 	pinned: PathBuilderLike | undefined,
@@ -122,7 +123,7 @@ async function resolveAnchorSource(
 	// A caller-pinned path wins, and its format is read off the extension:
 	// a `.bin` is PCB1, anything else is the JSON pilot dump.
 	// The option used to be documented "always JSON" and pointing it at a candidate's
-	// own `postcode-<cc>.bin` threw a parse error — which left no way to grade a
+	// own `postcode-<cc>.bin` threw a parse error, which left no way to grade a
 	// candidate against the anchor artifact it actually ships.
 	if (pinned) return { path: pinned, binary: pinned.endsWith(".bin") }
 
@@ -267,7 +268,7 @@ export interface CreateScorerOpts {
 	 * a classifier from explicit artifact paths and had no way to say which FST goes with them.
 	 *
 	 * Every eval that pins a candidate model goes through this constructor, so every
-	 * one of them was assembling a pipeline whose gazetteer prior was silently off —
+	 * one of them was assembling a pipeline whose gazetteer prior was silently off,
 	 * which is why an FST change could not be measured by any eval in the tree.
 	 */
 	fstPath?: PathBuilderLike
@@ -380,7 +381,7 @@ class CapabilityViolationError extends Error {
  *
  * A forbidden tag with no capability entry (model not certified there), or one whose
  * `maskOnF1` shows the mask leaves it intact (small/zero/negative delta), is legal.
- * When `maskOnF1` is absent for a certified tag, the mask's effect was never measured — and since the
+ * When `maskOnF1` is absent for a certified tag, the mask's effect was never measured, and since the
  * mask is a hard −1e9 emission ban, we conservatively assume full destruction (delta = maskOffF1 − 0).
  *
  * That's the #719 shape: FR `street_prefix` certified at maskOff 80.0, no benign

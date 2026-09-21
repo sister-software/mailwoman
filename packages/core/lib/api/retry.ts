@@ -110,8 +110,9 @@ export interface RetryDirective {
  * Returns `null` only when the header is absent.
  * When the header is present, this always returns a number: the parsed
  * (and {@linkcode MAX_RETRY_AFTER_MS}-clamped) value on success, or `MAX_RETRY_AFTER_MS`
- * itself when the value is present but matches neither valid form — see the constant's
- * docstring for why unparseable fails open toward caution rather than speed.
+ * itself when the value is present but matches neither valid form.
+ *
+ * See the constant's docstring for why unparseable fails open toward caution rather than speed.
  *
  * The http-date branch compares against real wall-clock time (`Date.now()`), not an injectable clock.
  * An http-date is an absolute calendar timestamp, which only means something

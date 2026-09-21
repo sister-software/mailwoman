@@ -214,7 +214,7 @@ test("backfillAncestorsFromHierarchy: leaves a place whose SOURCE hierarchy stop
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
 
 	// Fatumafuti, American Samoa: WOF itself gives it {country_id, locality_id} and no region.
-	// The artifact matching that is correct rather than truncated — and because it has a
+	// The artifact matching that is correct rather than truncated, and because it has a
 	// country ancestor it is not a candidate at all, so no geojson probe happens for it.
 	const id = 101_734_391
 	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'locality')").run(id)

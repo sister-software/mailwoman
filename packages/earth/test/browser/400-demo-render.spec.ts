@@ -36,9 +36,10 @@ test.describe("Demo — structural render", () => {
 		await expect(page.getByRole("group", { name: "Example addresses" })).toBeVisible()
 		await expect(page.getByRole("button", { name: "Space Needle" })).toBeVisible()
 
-		// The About explainer is a control in the map chrome, and its copy renders in the
-		// sheet that control opens — `MapControlButton` carries its name as `aria-label`
-		// on an icon button, so the name is a label and not text.
+		// The About explainer is a control in the map chrome, and its copy renders
+		// in the sheet that control opens.
+		// `MapControlButton` carries its name as `aria-label` on an icon button,
+		// so the name is a label and not text.
 		// Asserted last: the sheet it opens overlays the chrome the assertions above read.
 		await expect(page.getByLabel("About this geocoder")).toBeVisible()
 		await page.getByLabel("About this geocoder").click()

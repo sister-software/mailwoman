@@ -109,7 +109,8 @@ const PLACES: FixturePlace[] = [
 	},
 	// The check anchor for the namesake group — resolves next to id 11 (IL).
 	{ id: 901, name: "62701", placetype: "postalcode", country: "US", lat: 39.79, lon: -89.65, score: 1 },
-	// A lone namesake: one place, one name. The "absent rather than empty" case.
+	// A lone namesake: one place, one name.
+	// The "absent rather than empty" case.
 	{
 		id: 20,
 		name: "Grudziądzek",
@@ -170,7 +171,9 @@ const PLACES: FixturePlace[] = [
 		prominence: 7,
 		exactMatch: true,
 	},
-	// The "Ave, France" guard's own place, and the name that must survive it: `Prairie` is a street suffix and the tail of a real locality, so the two cases differ only in whether the probed span is the affix or merely contains it.
+	// The "Ave, France" guard's own place, and the name that must survive it: `Prairie`
+	// is a street suffix and the tail of a real locality, so the two cases differ only in
+	// whether the probed span is the affix or merely contains it.
 	{ id: 60, name: "Ave", placetype: "locality", country: "FR", lat: 43.7, lon: 4.6, score: 2, exactMatch: true },
 	{
 		id: 61,

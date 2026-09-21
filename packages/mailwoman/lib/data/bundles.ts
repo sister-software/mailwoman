@@ -38,7 +38,7 @@ export interface BundleArtifact {
 	 */
 	md5Sidecar: boolean
 	/**
-	 * Byte size at survey time — for the dry-run plan and `data status`'s human-readable sizes only.
+	 * Byte size at survey time, for the dry-run plan and `data status`'s human-readable sizes only.
 	 *
 	 * Not a integrity check target (a rebuild at the same dated path would be a bug,
 	 * since these paths are meant to be immutable, but this field is not how a mismatch
@@ -142,7 +142,8 @@ export interface BundleRights {
 }
 
 /**
- * A named, downloadable subset of Mailwoman's public data — what `mailwoman data pull <name>` fetches.
+ * A named, downloadable subset of Mailwoman's public data.
+ * What `mailwoman data pull <name>` fetches.
  */
 export interface DataBundle {
 	name: string
@@ -469,8 +470,9 @@ export function filterArtifacts(artifacts: readonly BundleArtifact[], only: stri
 }
 
 /**
- * What's on disk for one artifact, gathered by the caller (a `statSync` + optional `md5File`) —
- * kept separate from the gathering itself so {@link needsDownload} stays pure
+ * What's on disk for one artifact, gathered by the caller (a `statSync` + optional `md5File`).
+ *
+ * Kept separate from the gathering itself so {@link needsDownload} stays pure
  * and unit-testable without a filesystem.
  */
 export interface LocalArtifactState {

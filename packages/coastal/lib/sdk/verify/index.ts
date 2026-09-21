@@ -65,7 +65,7 @@ export interface AgreementRow {
 	 * Metres from the point to the nearest edge of any polygon the service returned nearby.
 	 *
 	 * Carried on every row rather than only the tolerated ones, because it is what
-	 * separates a real defect from the two channels rendering the same edge differently —
+	 * separates a real defect from the two channels rendering the same edge differently,
 	 * and a receipt that omits it forces a re-run.
 	 * `undefined` means the service returned no polygon at all near the point.
 	 */

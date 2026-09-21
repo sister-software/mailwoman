@@ -23,7 +23,8 @@ export interface POIBoardOptions {
 	/**
 	 * Sealed poi.db to query.
 	 *
-	 * Defaults to the standard data-root layer path — see `gazetteer build poi`'s own default.
+	 * Defaults to the standard data-root layer path.
+	 * See `gazetteer build poi`'s own default.
 	 */
 	db?: PathBuilderLike
 	/**

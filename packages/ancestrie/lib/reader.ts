@@ -59,8 +59,8 @@ export class Ancestrie implements AncestrieReaderLike {
 	/**
 	 * Open a sealed artifact.
 	 *
-	 * Validates magic, version, and that the buffer covers the layout the header
-	 * declares. throws rather than reading past either.
+	 * Validates magic, version, and that the buffer covers the layout the header declares.
+	 * Throws rather than reading past either.
 	 */
 	static from(data: Uint8Array): Ancestrie {
 		const view = new DataView(data.buffer, data.byteOffset, data.byteLength)
@@ -135,7 +135,8 @@ export class Ancestrie implements AncestrieReaderLike {
 	/**
 	 * The entries accepting at a state, highest rank first (the stored order — no query-time sort).
 	 *
-	 * `limit` caps how many are decoded. an out-of-range state yields `[]`.
+	 * `limit` caps how many are decoded.
+	 * An out-of-range state yields `[]`.
 	 */
 	entriesAt(stateID: number, limit?: number): AncestrieRecord[] {
 		if (stateID < 0 || stateID >= this.header.stateCount) return []
@@ -235,8 +236,8 @@ export class Ancestrie implements AncestrieReaderLike {
 	 * O(1) containment over the primary-parent forest: is `descendantID` inside `ancestorID`'s subtree?
 	 *
 	 * An entry contains itself.
-	 * Secondary (non-primary) parent edges do not contribute — see the
-	 * DAG-canonicalization rule in `format.ts`.
+	 * Secondary (non-primary) parent edges do not contribute.
+	 * See the DAG-canonicalization rule in `format.ts`.
 	 *
 	 * Unknown ids answer `false`.
 	 */
@@ -281,7 +282,7 @@ export class Ancestrie implements AncestrieReaderLike {
 	/**
 	 * Binary search the state's sorted edges for an exact token.
 	 *
-	 * Returns the target state, or −1.
+	 * @returns the target state, or −1.
 	 */
 	private findEdge(stateID: number, token: string): number {
 		if (stateID < 0 || stateID >= this.header.stateCount) return -1
@@ -311,7 +312,7 @@ export class Ancestrie implements AncestrieReaderLike {
 	/**
 	 * Binary search the id index.
 	 *
-	 * Returns the entry's ordinal, or −1.
+	 * @returns the entry's ordinal, or −1.
 	 */
 	private ordinalOf(id: number): number {
 		let lo = 0

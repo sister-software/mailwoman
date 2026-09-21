@@ -19,8 +19,9 @@ import { registerLibpostalRoutes } from "#routes"
 /**
  * 100 KiB — express.json's default cap, the closest thing to a legacy precedent for this endpoint.
  *
- * There is no legacy 413 interface to match. the `{ error: "request body too large" }` envelope
- * below is a recorded free choice, shaped like the rest of this API's error responses.
+ * There is no legacy 413 interface to match.
+ * The `{ error: "request body too large" }` envelope below is a recorded free choice,
+ * shaped like the rest of this API's error responses.
  */
 const MAX_BODY_BYTES = 102_400
 
@@ -42,8 +43,8 @@ export interface LibpostalAppOptions {
 	 * The engine stamp behind the `Server` + `Link: rel="license"` headers on every response.
 	 *
 	 * Headers only: `/parse` answers a bare array by protocol, so there is no body field to carry it.
-	 * Absent when an embedding application builds the app without the `mailwoman`
-	 * package. the `libpostal` bin always passes one.
+	 * Absent when an embedding application builds the app without the `mailwoman` package.
+	 * The `libpostal` bin always passes one.
 	 */
 	engine?: EngineStamp
 }

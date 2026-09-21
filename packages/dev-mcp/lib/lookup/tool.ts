@@ -257,8 +257,8 @@ export async function runLookup(
 }
 
 /**
- * The candidate gazetteer, resolved exactly as the session resolves it —
- * with the one thing `resolveCandidateDBPath` cannot say folded back in.
+ * The candidate gazetteer, resolved exactly as the session resolves it, with the one
+ * thing `resolveCandidateDBPath` cannot say folded back in.
  *
  * That function answers `undefined` for three different situations: nothing was pinned and the convention
  * path is absent, `none` was pinned to force the FTS backend, and a pinned path does not exist.

@@ -72,7 +72,8 @@ const WALES_AREAS = [
  *
  * England is intentionally absent: it is the default (the great majority of UK areas are English),
  * so listing it would be both enormous and a maintenance trap.
- * Keeping only the non-England set makes the default transparent — anything not named here is England.
+ * Keeping only the non-England set makes the default transparent.
+ * Anything not named here is England.
  */
 export const GB_POSTCODE_AREA_COUNTRY: Record<string, UkCountryCode> = {
 	...Object.fromEntries(NORTHERN_IRELAND_AREAS.map((a) => [a, "NIR" as const])),

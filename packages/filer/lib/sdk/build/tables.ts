@@ -23,8 +23,9 @@ import {
 } from "#schema"
 
 /**
- * Create the build-only `filer_attribute_stage` table — see `build-filer.ts`'s module
- * docstring for why `value` is part of the composite PK.
+ * Create the build-only `filer_attribute_stage` table.
+ *
+ * See `build-filer.ts`'s module docstring for why `value` is part of the composite PK.
  *
  * Deliberately not part of the public {@link FilerDatabase} interface, mirroring
  * `build-bdc.ts`'s `bdc_stage` (dropped before the artifact seals).

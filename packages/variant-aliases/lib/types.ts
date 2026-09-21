@@ -9,10 +9,11 @@
 /**
  * The semantic kind of a variant — either a generic amenity category or a specific brand.
  *
- * - `amenity` aliases resolve to a category (`fuel`, `pharmacy`, `convenience`, ...). Several variants can map to the
- *   same category ("servo" and "petrol station" both → `fuel`).
- * - `brand` aliases resolve to a canonical brand name. Multiple regional variants of the same brand ("Macca's", "McDo",
- *   "Mickey D's", "マクド") all map to `McDonald's`.
+ * - `amenity` aliases resolve to a category (`fuel`, `pharmacy`, `convenience`, ...).
+ *   Several variants can map to the same category ("servo" and "petrol station" both → `fuel`).
+ * - `brand` aliases resolve to a canonical brand name.
+ *   Multiple regional variants of the same brand ("Macca's", "McDo", "Mickey D's", "マクド")
+ *   all map to `McDonald's`.
  */
 export type VariantKind = "amenity" | "brand"
 
@@ -33,7 +34,9 @@ interface VariantAliasBase {
 	/**
 	 * Free-form regional refinement within the locale (e.g. "NYC", "Kansai", "Quebec").
 	 *
-	 * Not used for matching today. informational.
+	 * Not used for matching today.
+	 * Informational.
+	 *
 	 * A future enhancement could combine this with a coarse geolocation signal to further disambiguate.
 	 */
 	regionHint?: string
@@ -68,8 +71,8 @@ export interface VariantAliasTable {
  *
  * - `unscoped` — the record declares no locales and answers under any.
  * - `exact` — the query's locale tag is one the record declares.
- * - `language` — only the language subtag agrees. Weaker on purpose: a regional phrasing reached through its language
- *   alone is a guess about the region.
+ * - `language` — only the language subtag agrees.
+ *   Weaker on purpose: a regional phrasing reached through its language alone is a guess about the region.
  */
 export type LocaleScope = "unscoped" | "exact" | "language"
 

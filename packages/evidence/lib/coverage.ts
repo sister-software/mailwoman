@@ -51,7 +51,8 @@ export const CoverageBasis = {
 export type CoverageBasis = (typeof CoverageBasis)[keyof typeof CoverageBasis]
 
 /**
- * Whether a coverage reading can support an exclusion — a claim that the thing asked for is not there.
+ * Whether a coverage reading can support an exclusion.
+ * A claim that the thing asked for is not there.
  *
  * Presence is supportable from any basis.
  * Absence is not: `source_present` records that the source returned rows,
@@ -94,7 +95,7 @@ export interface RequireExclusionInput {
 	/**
 	 * The layer's coverage row for this cell.
 	 *
-	 * `undefined` means the cell is absent from `layer_coverage`, which is unknown —
+	 * `undefined` means the cell is absent from `layer_coverage`, which is unknown,
 	 * never a zero-completeness record (the meaning-of-zero rule).
 	 */
 	cell: { basis?: CoverageBasis | null } | undefined
@@ -126,7 +127,7 @@ export interface RequireExclusionInput {
 /**
  * The only constructor for an {@link Exclusion}.
  *
- * Returns `null` — never throws — on every refusal, because a refusal is the ordinary case
+ * @returns `null` — never throws — on every refusal, because a refusal is the ordinary case
  * and a caller must fail open to whatever ranking it already had.
  */
 export function requireExclusionBasis(input: RequireExclusionInput): Exclusion | null {
@@ -181,7 +182,8 @@ export const FOLD_PROBE_CORPUS: readonly string[] = [
 const IDENTITY_SEPARATOR = "\u0001"
 
 /**
- * Identify a fold by its behavior over {@link FOLD_PROBE_CORPUS} — a name cannot do this job.
+ * Identify a fold by its behavior over {@link FOLD_PROBE_CORPUS}.
+ * A name cannot do this job.
  *
  * Two folds that compute the same answers are interchangeable and share an identity,
  * which is the property the exclusion check needs: it is asking "was this key built by a

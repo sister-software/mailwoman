@@ -139,8 +139,9 @@ export interface SubVenueSurface {
 	 * Whether a human has approved this surface for parsing use IN its region.
 	 *
 	 * Everything machine-derived starts `false` and is flipped only by a matching {@link SubVenuePromotion}.
-	 * A consumer that gates a parse must filter on this — see `sub-venue-lexicon.ts`'s
-	 * module docstring for what a promotion decides and why it is per-locale.
+	 * A consumer that gates a parse must filter on this.
+	 *
+	 * See `sub-venue-lexicon.ts`'s module docstring for what a promotion decides and why it is per-locale.
 	 */
 	curated: boolean
 	/**
@@ -159,8 +160,8 @@ export interface SubVenueSurface {
 	 *
 	 * A `hall` on a `terminal` row is a real German departure hall.
 	 *
-	 * Without it, a surface's `observations` count is a magnitude with no sign —
-	 * see the repo's "meaning of zero" rule, which applies just as hard to a large number.
+	 * Without it, a surface's `observations` count is a magnitude with no sign.
+	 * See the repo's "meaning of zero" rule, which applies just as hard to a large number.
 	 */
 	context: Record<string, number>
 }

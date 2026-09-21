@@ -152,7 +152,8 @@ export function generateMermaidMarkup(placetype: Placetype, options: GenerateMer
 			(role) =>
 				`  classDef ${role} fill:${palette[role].fill},stroke:${palette[role].stroke},color:${palette[role].text},font-weight:bold`
 		),
-		// The root is never the target of an emitted edge, so declare it standalone so it picks up the role classDef and renders alongside the others.
+		// The root is never the target of an emitted edge, so declare it standalone
+		// so it picks up the role classDef and renders alongside the others.
 		`  ${placetype.name}:::${placetype.role}`,
 	]
 

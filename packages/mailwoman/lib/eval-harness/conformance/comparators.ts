@@ -62,8 +62,8 @@ export interface ConformanceOutcome {
 	 * The observer supplies the labels.
 	 * This module compares them and reports what it was given.
 	 *
-	 * `undefined` means no account was attached — see the module docstring for
-	 * why that is not an empty account.
+	 * `undefined` means no account was attached.
+	 * See the module docstring for why that is not an empty account.
 	 */
 	mechanismShapes?: readonly string[]
 	/**
@@ -86,7 +86,7 @@ export interface ConformanceOutcome {
  * and says so rather than reporting the agreement of two absences.
  *
  * `unmeasured` is the narrower one, and only `candidate_admissibility` can report it.
- * The comparator read its axis and found nothing that violates the law — but the observation
+ * The comparator read its axis and found nothing that violates the law, but the observation
  * window was too small to prove the law either, so the reading is neither a hold nor a failure.
  *
  * Both are counted apart from the verdict by `summarizeConformanceRun`: an unmeasured

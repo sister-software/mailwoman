@@ -150,7 +150,7 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 
 					// `owner` is the directory, and it stays upstream even when the bytes come from our fork.
 					// The destination is `<root>/<owner>/<name>`, so keying it on the resolved
-					// org would give one repo two homes — and `ingestWOF` globs the whole root,
+					// org would give one repo two homes, and `ingestWOF` globs the whole root,
 					// so the build would read both and resolve the conflict by FastGlob enumeration
 					// order (`repos-audit.ts` documents that hazard).
 					// One repo, one directory, whichever remote filled it.

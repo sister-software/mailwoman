@@ -105,7 +105,7 @@ function printableRun(input: string): string {
  *
  * Whitespace-delimited (readline's `unix-word-rubout`, the tty's own `werase`) rather than
  * alphanumeric-delimited (`backward-kill-word`), because the text being edited is an address:
- * one press should take `or`, then `Portland,`, then `St` — not stop inside `Portland` at the comma.
+ * one press should take `or`, then `Portland,`, then `St`, not stop inside `Portland` at the comma.
  */
 export function wordStart(value: string, cursor: number): number {
 	let index = Math.max(0, Math.min(cursor, value.length))

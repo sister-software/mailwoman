@@ -159,7 +159,10 @@ const FIXED_NOTE_PATTERNS = [
 	],
 	[/^all assets of this company have been sold to another party\.$/i, Form499CessationReason.AssetsSold],
 	[
-		// `accout` is the source's typo and is matched as spelled. A tolerant `accou?nt` would also admit a corrected future spelling, but silently. A vintage that fixes the typo should surface as an `unrecognized` count so the change is noticed rather than absorbed.
+		// `accout` is the source's typo and is matched as spelled.
+		// A tolerant `accou?nt` would also admit a corrected future spelling, but silently.
+		// A vintage that fixes the typo should surface as an `unrecognized` count
+		// so the change is noticed rather than absorbed.
 		/^this legal entity accout has been closed because their form \d+ filing is now submitted on a consolidated basis\.$/i,
 		Form499CessationReason.AccountConsolidated,
 	],

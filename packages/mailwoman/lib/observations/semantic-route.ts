@@ -232,7 +232,7 @@ export interface SemanticObservationRoute {
 
 export interface SemanticObservationRouteOptions {
 	/**
-	 * Override the compiled artifact — for a test that wants a synthetic model.
+	 * Override the compiled artifact, for a test that wants a synthetic model.
 	 *
 	 * Absent reads the committed one.
 	 */
@@ -370,7 +370,7 @@ function observationKey(observation: SemanticObservation): string {
  * The record that attests one declared phrase, flattened to the two fields a receipt reads.
  *
  * `derived-form` points at another entry rather than at an outside record, so its
- * reference is that base — which is what a reader following the chain needs next.
+ * reference is that base, which is what a reader following the chain needs next.
  */
 function attestationOf(entry: ActivityPhraseEntry): { kind: string; reference: string } {
 	const { attestation } = entry

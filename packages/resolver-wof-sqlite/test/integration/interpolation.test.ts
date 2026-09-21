@@ -153,7 +153,8 @@ beforeAll(() => {
 				[0.001, 4],
 			],
 		},
-		// Stored under the canonical route key (as the builder writes it from tiger's "State Rte 100"). The query side must fold "VT route 100" to the same key.
+		// Stored under the canonical route key (as the builder writes it from tiger's "State Rte 100").
+		// The query side must fold "VT route 100" to the same key.
 		{
 			street_norm: "state route 100",
 			side: "L",
@@ -368,7 +369,8 @@ describe("StreetInterpolator — parity-first ambiguity, near tie-break, key var
 						[0.001, 0.18],
 					],
 				},
-				// The register-split pair: NYC-style key in 33333, saint-style keys in two far ZIPs so the `saint` variant alone can never answer.
+				// The register-split pair: NYC-style key in 33333, saint-style keys in two far ZIPs
+				// so the `saint` variant alone can never answer.
 				{
 					street_norm: "st pauls place",
 					side: "R",

@@ -97,7 +97,7 @@ describe("takeInventory — the four states stay distinct", () => {
 		const report = await takeInventory({ dataRoot: root })
 
 		// Counting a third party's build as our debt makes the number unimprovable,
-		// so it is skipped rather than classified — and the skip is reported,
+		// so it is skipped rather than classified, and the skip is reported,
 		// because a silently bounded walk reads as coverage.
 		expect(report.skippedForeign).toBe(1)
 		expect(report.entries.some((e) => e.path.startsWith("pelias-rig"))).toBe(false)

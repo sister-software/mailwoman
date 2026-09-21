@@ -45,9 +45,11 @@ const SCORERS: ReadonlyArray<KindScorer> = [
 	{ kind: "postcode_only", score: scorePostcodeOnly },
 	{ kind: "locality_only", score: scoreLocalityOnly },
 	{ kind: "structured_address", score: scoreStructuredAddress },
-	// ROAD_TO_V9 §4. Ordinary members of the same list — intent is vocabulary rather than a stage. `bare_toponym` and
-	// `route_pair` are scored under `locality_only` on purpose (see `intent-rules.ts`), so their position here is
-	// cosmetic. the sort below is what decides.
+	// ROAD_TO_V9 §4.
+	// Ordinary members of the same list — intent is vocabulary rather than a stage.
+	// `bare_toponym` and `route_pair` are scored under `locality_only` on purpose
+	// (see `intent-rules.ts`), so their position here is cosmetic.
+	// The sort below is what decides.
 	{ kind: "bare_toponym", score: scoreBareToponym },
 	{ kind: "route_pair", score: scoreRoutePair },
 	{ kind: "near_me", score: scoreNearMe },
@@ -104,8 +106,9 @@ function withIntentMarkers(
 }
 
 /**
- * Classify the query shape into a `QueryKind`. Synchronous + pure — produces the same result for the same `(input,
- * shape)` pair.
+ * Classify the query shape into a `QueryKind`.
+ *
+ * Synchronous + pure — produces the same result for the same `(input, shape)` pair.
  */
 export function classifyKindSync(input: NormalizedInputLite, shape: QueryShapeLike): QueryKindResult {
 	const scored = SCORERS.map((s) => ({ kind: s.kind, confidence: s.score(input, shape) })).filter(

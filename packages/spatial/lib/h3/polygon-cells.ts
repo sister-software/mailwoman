@@ -235,8 +235,8 @@ export function classifyFeatureCells(
 
 	// the budget is A prediction and the retry is what makes IT NON-fatal.
 	// `estimateCellCount` is a bounding-box approximation of what h3 will reserve, and h3's
-	// own reservation depends on the polygon's shape and on what the wasm heap already holds —
-	// measured over the EA product, a run that had classified 350,000 features threw
+	// own reservation depends on the polygon's shape and on what the wasm heap already holds.
+	// Measured over the EA product, a run that had classified 350,000 features threw
 	// `Memory allocation failed (code: 13)` on a feature that classified cleanly on its own.
 	// So an allocation failure steps the resolution down and tries again rather than ending
 	// the build, and only a feature that fails at {@link MIN_INDEX_RESOLUTION} is refused:
@@ -273,7 +273,7 @@ export function classifyFeatureCells(
 
 				// An empty answer for a real part is an allocator failure wearing a result's clothes,
 				// and it has to be caught here rather than after the whole feature. h3-js sizes its
-				// output buffer with `_calloc`, and a `_calloc` that fails returns the null pointer —
+				// output buffer with `_calloc`, and a `_calloc` that fails returns the null pointer,
 				// which in wasm is ordinary writable memory, so the call reports success
 				// and the reader hands back an array of zeros, i.e. nothing.
 				// Every part with a non-degenerate bounding box touches at least one cell,

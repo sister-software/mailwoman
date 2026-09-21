@@ -32,7 +32,7 @@ import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 /**
  * A file the recipe names that can be materialized by copying or linking it.
  *
- * `shippedName` is the filename the artifact must carry in a weights directory — not its source basename.
+ * `shippedName` is the filename the artifact must carry in a weights directory, not its source basename.
  * They differ, and the difference is the interface: `resolveFromPackageDir` finds
  * siblings by fixed name, so an artifact placed under its source name resolves to nothing
  * and reports absence rather than failing.
@@ -52,13 +52,13 @@ export interface LinkableArtifact {
  * `pairIndexByCountry[cc]` names a tuples CSV behind `pair-index-<cc>.bin`.
  *
  * A consumer that treated either as linkable would place a database where the resolver expects
- * a binary — and since every sibling degrades `existsSync → undefined`, the resolver would
+ * a binary, and since every sibling degrades `existsSync → undefined`, the resolver would
  * then report the artifact as missing rather than wrong, which is the harder failure to see.
  */
 export interface BuildableArtifact {
 	shippedName: string
 	/**
-	 * The build's input, resolved — or `""` when the build takes several inputs
+	 * The build's input, resolved, or `""` when the build takes several inputs
 	 * and per-country tuning rather than one path.
 	 *
 	 * Empty means "this build is owed", never "the input is missing".

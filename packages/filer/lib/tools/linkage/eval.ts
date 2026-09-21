@@ -117,7 +117,7 @@ export interface LeakageCensus {
 	 * Every `filer_family` row in the artifact.
 	 *
 	 * Published alongside the splits so a relationship class nobody anticipated cannot
-	 * hide between them — and, since the three splits are exhaustive by construction,
+	 * hide between them, and, since the three splits are exhaustive by construction,
 	 * so the reader can check they sum to this.
 	 */
 	familyRows: number
@@ -255,8 +255,9 @@ export function assertNoOwnershipLeak(census: LeakageCensus): void {
  */
 interface RegistrantFamilies {
 	/**
-	 * Family ids the prediction treats as evidence of shared ownership —
-	 * everything except a membership this node holds only by way of a relationship
+	 * Family ids the prediction treats as evidence of shared ownership.
+	 *
+	 * Everything except a membership this node holds only by way of a relationship
 	 * that does not assert ownership (see the module docstring).
 	 */
 	predicted: Map<FRN, string[]>
@@ -364,7 +365,7 @@ export interface LinkageEvalRun {
 	 */
 	predictedFamilyIDsOf: Map<FRN, string[]>
 	/**
-	 * Per scored registrant, every family id `filer_family` places its nodes in —
+	 * Per scored registrant, every family id `filer_family` places its nodes in,
 	 * including the management-company families the prediction deliberately ignores.
 	 */
 	observedFamilyIDsOf: Map<FRN, string[]>
@@ -472,7 +473,7 @@ export interface FilerLinkageEvalOptions {
 	 */
 	outMd?: string
 	/**
-	 * Overrides the report's dated H1 — for regenerating the committed scorecard on
+	 * Overrides the report's dated H1, for regenerating the committed scorecard on
 	 * a later day, and for reproducibility tests that need byte-identical markdown
 	 * across two runs that don't fall on the same wall-clock date.
 	 *
@@ -504,7 +505,8 @@ export interface FilerLinkageEvalResult {
 }
 
 /**
- * Run the corporate-family recovery eval — see the module docstring for the experiment design.
+ * Run the corporate-family recovery eval.
+ * See the module docstring for the experiment design.
  *
  * Builds two scratch `filer.db` artifacts from the same corpus
  * (one with `holdingCompany` withheld, one without), scores each against the

@@ -372,7 +372,8 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 	})
 
 	it("normalizes a non-NFC raw to NFC instead of throwing (keeps the row; spans over the NFC raw)", () => {
-		// NFD: "é" as base letter + combining acute — two code units where NFC has one.
+		// NFD: "é" as base letter + combining acute.
+		// Two code units where NFC has one.
 		const nfdRaw = "10 Rue de la Re\u0301publique, 75008 Paris"
 		expect(nfdRaw.normalize("NFC")).not.toBe(nfdRaw)
 

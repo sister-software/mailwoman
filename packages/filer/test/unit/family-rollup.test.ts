@@ -427,7 +427,7 @@ describe("familyRollup — general reader interface", () => {
 	 */
 	describe("display_names — the naming-provenance join", () => {
 		const HOLDING_NODE_ONE_SPELLING = `${FilerIdentifierType.HoldingCompanyName}:Solo Spelling Inc`
-		// The real canonicalized family_id — not an arbitrary constant.
+		// The real canonicalized family_id, not an arbitrary constant.
 		// A made-up one is satisfied by a join that never checks whether an edge's target canonicalizes
 		// to the family_id at all, which is how the cross-family leak hides from a fixture.
 		const FAMILY_ID_SOLO = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Solo Spelling Inc")!

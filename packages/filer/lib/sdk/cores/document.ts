@@ -34,8 +34,8 @@ export function coresDetailURL(frn: FRN): string {
 /**
  * Fetch and parse one FRN's registration.
  *
- * `null` when cores has no record to state — see {@linkcode parseCORESRegistration} for
- * when that happens and why it is not an error.
+ * `null` when cores has no record to state.
+ * See {@linkcode parseCORESRegistration} for when that happens and why it is not an error.
  */
 export async function fetchCORESRegistration(client: CORESDocumentClient, frn: FRN): Promise<CORESRegistration | null> {
 	if (!isFRN(frn)) {

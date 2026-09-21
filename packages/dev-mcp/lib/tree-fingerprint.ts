@@ -29,7 +29,7 @@ import { Globerator } from "spliterator/node/fs"
  *
  * Deliberately a list rather than "every workspace": a docs or a `bdc` edit cannot
  * change a geocode, and treating it as though it could would evict engines on every
- * unrelated commit — which trains the operator to ignore the signal.
+ * unrelated commit, which trains the operator to ignore the signal.
  */
 export const FINGERPRINTED_WORKSPACES = [
 	"packages/mailwoman",

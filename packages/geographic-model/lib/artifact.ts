@@ -95,8 +95,9 @@ export interface CompiledGeographicModel {
 /**
  * The artifact's stated order: UTF-16 code point, ascending.
  *
- * `String.prototype.localeCompare` is the trap this exists to avoid — its answer depends on the
- * machine's collation, so an artifact ordered with it is reproducible only on the machine that built it.
+ * `String.prototype.localeCompare` is the trap this exists to avoid.
+ * Its answer depends on the machine's collation, so an artifact ordered with it
+ * is reproducible only on the machine that built it.
  */
 
 /**
@@ -195,7 +196,8 @@ function artifactProblem(value: unknown): string | undefined {
  *
  * It checks the format version and the presence of every table, and does not re-validate the records.
  * An artifact is generated from a document that `parseGeographicModelDocument` already accepted.
- * re-checking every record here would be a second validator, and the version check is what catches
+ *
+ * Re-checking every record here would be a second validator, and the version check is what catches
  * the failure this reader can actually meet — an artifact written by a different compiler.
  */
 export function parseCompiledGeographicModel(input: unknown): CompiledGeographicModel {

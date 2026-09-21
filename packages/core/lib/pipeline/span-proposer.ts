@@ -303,12 +303,13 @@ function findSameCharPairs(text: string, ch: string): Array<{ open: number; clos
 /**
  * Shape-derived annotation confidence (M2: "confidence from balance + content shape"):
  *
- * - Content that is exactly a strong designator + identifier ("Suite 9") is probably a real component written in brackets
- *   (gold convention 2) → very low annotation confidence, letting the designator cue own the span.
- * - Lowercase- or digit-leading content ("rear entrance", "2nd floor", "code 2580") is the instruction/aside shape →
- *   high.
- * - A short capitalized group at the very END of the input ("(Australia)", "[New Zealand]") is the trailing-component
- *   shape (often a country) → low, below typical consumer floors.
+ * - Content that is exactly a strong designator + identifier ("Suite 9") is probably
+ *   a real component written in brackets (gold convention 2) → very low annotation
+ *   confidence, letting the designator cue own the span.
+ * - Lowercase- or digit-leading content ("rear entrance", "2nd floor", "code 2580")
+ *   is the instruction/aside shape → high.
+ * - A short capitalized group at the very END of the input ("(Australia)", "[New Zealand]")
+ *   is the trailing-component shape (often a country) → low, below typical consumer floors.
  * - Everything else (capitalized mid-string: "[Building A]", "(The White House)") → moderate.
  */
 function annotationConfidence(content: string, atEndOfInput: boolean, lexicon: SpanProposerLexicon): number {
@@ -367,7 +368,8 @@ function proposePairedDelimiters(text: string, lexicon: SpanProposerLexicon): Pr
 		() => findSameCharPairs(text, '"'),
 		() => findBalancedPairs(text, "“", "”"), // “ ”
 		() => findBalancedPairs(text, "«", "»"), // « »
-		// „…“ (low-9 opener, German/Czech): closes with “ — only scanned when a „ is present, so the “ ” class above (which would see a stray “) is skipped for such inputs.
+		// „…“ (low-9 opener, German/Czech): closes with “ — only scanned when a „ is present,
+		// so the “ ” class above (which would see a stray “) is skipped for such inputs.
 	]
 
 	const hasLow9 = text.includes("„")
@@ -652,7 +654,7 @@ function proposeNumericReadings(
 		const hyphen = HYPHEN_COMPOUND.exec(t.stripped)
 
 		if (hyphen) {
-			// ZIP+4 shape is a postcode rather than a house number — never propose a reading for it.
+			// ZIP+4 shape is a postcode rather than a house number, never propose a reading for it.
 			if (hyphen[1]!.length === ZIP5_LENGTH) continue
 			const next = i + 1 < tokens.length ? tokens[i + 1] : undefined
 			const leftEnd = t.strippedStart + hyphen[1]!.length

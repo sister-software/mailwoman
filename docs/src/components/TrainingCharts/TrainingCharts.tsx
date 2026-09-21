@@ -50,7 +50,8 @@ const RESIDUAL_LOOSE = 7
 const SCIENTIFIC_NOTATION_BELOW = 0.001
 
 /**
- * Magnitude below which a tick keeps one decimal place. above it the value is abbreviated.
+ * Magnitude below which a tick keeps one decimal place.
+ * Above it the value is abbreviated.
  */
 const COMPACT_NOTATION_ABOVE = 10_000
 
@@ -276,9 +277,9 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 
 		if (!isLog) return { xMin: xmn, xMax: xmx, yMin: innerYMinData, yMax: yMaxData, yMinData: innerYMinData }
 		// Log scale: the floor must come from the smallest *positive* data value
-		// rather than the linearly-padded minimum — otherwise a metric that touches/approaches
-		// zero (F1 scores start near 0, val_loss can be tiny) drags the floor to ~0
-		// and the axis spans many empty decades, squashing the real data into a sliver.
+		// rather than the linearly-padded minimum.
+		// Otherwise a metric that touches/approaches zero (F1 scores start near 0, val_loss can be tiny)
+		// drags the floor to ~0 and the axis spans many empty decades, squashing the real data into a sliver.
 		// Pad in log-space rather than linear.
 		let posMin = Infinity
 
@@ -292,7 +293,8 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 			posMin = 1e-6
 		}
 
-		// all values non-positive. nominal floor
+		// all values non-positive.
+		// Nominal floor
 		const posMax = Math.max(ymx, posMin * 10)
 		const logMin = Math.log10(posMin)
 		const logMax = Math.log10(posMax)

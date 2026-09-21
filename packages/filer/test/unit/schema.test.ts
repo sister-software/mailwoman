@@ -331,8 +331,8 @@ describe("filer schema", () => {
 		})
 
 		/**
-		 * The counterpart to the two tests above — and the reason `naming_node_id` is
-		 * IN the primary key rather than a payload column beside it.
+		 * The counterpart to the two tests above, and the reason `naming_node_id` is IN
+		 * the primary key rather than a payload column beside it.
 		 *
 		 * `relationship` is excluded from the key because two values for one pair
 		 * at one instant are a contradiction.

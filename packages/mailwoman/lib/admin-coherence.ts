@@ -296,8 +296,8 @@ export function adminCoherenceField(
 		{
 			tag: picked.tag,
 			countryCode: (picked.metadata?.["resolver_country"] as string | undefined)?.trim() || undefined,
-			// The resolver's #404 stamp — present when the geocode path opted in
-			// and the backend's artifact carries an ancestors table.
+			// The resolver's #404 stamp.
+			// Present when the geocode path opted in and the backend's artifact carries an ancestors table.
 			// Its absence is what the verdicts report as `unverifiable`.
 			ancestry: picked.metadata?.["ancestors"] as readonly AdminAncestor[] | undefined,
 		}

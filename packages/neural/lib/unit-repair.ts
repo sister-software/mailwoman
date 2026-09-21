@@ -62,7 +62,11 @@ const UNIT_DESIGNATORS =
 	"APARTMENT|APT|SUITE|STE|UNIT|ROOM|RM|FLOOR|FLR|FL|BUILDING|BLDG|DEPARTMENT|DEPT|LOT|TRAILER|TRLR|SLIP|HANGAR|PIER|FLAT|PH|PENTHOUSE"
 
 const UNIT_PATTERNS: Array<{ label: string; re: RegExp }> = [
-	// Designator + optional "#"/"No." + identifier, e.g. "Apt 4B", "Ste 12", "STE D", "Unit 9400", "Suite 100", "Rm 5", "Flat 2", "Apartment #3", "Bldg C". The `\b` after the designator is essential: it stops "Unit" matching inside "United", "Fl" inside "Florida", etc. The trailing `\b` on the identifier stops "Apt Main" capturing the "M" of "Main" (single-letter ident only fires on a standalone token like "STE D").
+	// Designator + optional "#"/"No." + identifier, e.g. "Apt 4B", "Ste 12", "STE D",
+	// "Unit 9400", "Suite 100", "Rm 5", "Flat 2", "Apartment #3", "Bldg C".
+	// The `\b` after the designator is essential: it stops "Unit" matching inside "United",
+	// "Fl" inside "Florida", etc. The trailing `\b` on the identifier stops "Apt Main" capturing
+	// the "M" of "Main" (single-letter ident only fires on a standalone token like "STE D").
 	{
 		label: "designator",
 		re: new RegExp(
@@ -70,7 +74,8 @@ const UNIT_PATTERNS: Array<{ label: string; re: RegExp }> = [
 			"gi"
 		),
 	},
-	// Bare hash + identifier, e.g. "#104", "# 4B". Common US secondary-unit form.
+	// Bare hash + identifier, e.g. "#104", "# 4B".
+	// Common US secondary-unit form.
 	{ label: "hash", re: /#\s*\d{1,5}[A-Za-z]?\b/g },
 ]
 
@@ -83,7 +88,7 @@ const OUTSIDE = "O" as DecoderToken["label"]
  *
  * The v0.7.2 arena showed the dominant failure for bare designator-led units
  * ("Flat 2 14 Smith St", "APT 2 …") is the model labeling the whole designator+identifier
- * run as `locality` — not leaving it `O`.
+ * run as `locality`, not leaving it `O`.
  * An explicit designator + identifier is a high-confidence "this is a unit" shape
  * (a real locality/suburb name never has that form), so — exactly like postcode-repair's
  * ADD_OVER_TAGS — we let it reclaim a `locality`/`dependent_locality` span.

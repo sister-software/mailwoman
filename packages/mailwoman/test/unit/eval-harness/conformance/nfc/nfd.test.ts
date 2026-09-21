@@ -351,7 +351,7 @@ describe("a seeded normalization regression", () => {
 	 * The composing one applies Stage 1 first, which is what the shipped one does.
 	 *
 	 * Seeding the regression rather than waiting for one is what proves the failure line
-	 * carries enough to diagnose from — and running one fixture through both is what
+	 * carries enough to diagnose from, and running one fixture through both is what
 	 * shows the reading is about Stage 1 rather than about the row.
 	 */
 	function observer(stage1: (query: string) => string): ConformanceObserver {

@@ -34,8 +34,8 @@ export interface PhotonAppOptions {
 	 * The engine stamp to carry on every response: `engine` as a foreign member of each
 	 * FeatureCollection, and the `Server` + `Link: rel="license"` headers everywhere.
 	 *
-	 * Absent when an embedding application builds the app without the `mailwoman`
-	 * package. the `photon` bin always passes one.
+	 * Absent when an embedding application builds the app without the `mailwoman` package.
+	 * The `photon` bin always passes one.
 	 */
 	engine?: EngineStamp
 }

@@ -170,10 +170,12 @@ export function buildEmissionPriors(
  * cannot reach the venue/street inputs the old walk broke on.
  * Guards, in order:
  *
- * 1. No digits anywhere in the input. Any house number / postcode means this is not an admin-only query, and the M1
+ * 1. No digits anywhere in the input.
+ *    Any house number / postcode means this is not an admin-only query, and the M1
  *    failure class ("… 26 Cedar Lane, Danville VT") always carries digits.
  * 2. The abbreviation is the final token — the doubleton shape rather than a mid-sentence state mention.
- * 3. At most 4 tokens precede it ("Salt Lake City, UT" fits; "Community Health Service Inc - Grafton ND" does not).
+ * 3. At most 4 tokens precede it ("Salt Lake City, UT" fits; "Community Health
+ *    Service Inc - Grafton ND" does not).
  *
  * The retired version also carried a "name is the region" guard ("Washington, WA" stays region).
  * It was dead in production.

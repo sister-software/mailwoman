@@ -29,9 +29,9 @@ const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url))
  * The docs package root, taken as the part of this module's path before its
  * `scripts/` segment rather than by counting `..` upward.
  *
- * A count encodes how deep under `scripts/` this file happens to sit, so moving it down
- * one level resolves to a directory that does not exist — the failure this replaces,
- * where the content root read as `docs/scripts/docs/articles`.
+ * A count encodes how deep under `scripts/` this file happens to sit, so moving it
+ * down one level resolves to a directory that does not exist.
+ * The failure this replaces, where the content root read as `docs/scripts/docs/articles`.
  * Truncating at the segment holds at any depth.
  */
 const DOCS_ROOT = SCRIPT_DIR.slice(0, SCRIPT_DIR.lastIndexOf(`${path.sep}scripts${path.sep}`))
@@ -85,7 +85,7 @@ function unquote(value: string): string {
 /**
  * Parse the leading `---`-fenced frontmatter block of a markdown source.
  *
- * Returns top-level scalar fields plus the set of all declared top-level keys.
+ * @returns top-level scalar fields plus the set of all declared top-level keys.
  */
 export function parseFrontmatter(source: string): { fields: Map<string, string>; declaredKeys: Set<string> } {
 	const fields = new Map<string, string>()
@@ -154,9 +154,10 @@ export async function collectDocPages(): Promise<DocPage[]> {
 }
 
 /**
- * Mirrors the docs plugin's `exclude` globs in `docs/docusaurus.config.ts` (search for `exclude:` under `path:
- * "articles"`) — pages the build never publishes, so they can't collide or orphan on the live site. Keep the two in
- * sync when the config's exclusions change.
+ * Mirrors the docs plugin's `exclude` globs in `docs/docusaurus.config.ts`
+ * (search for `exclude:` under `path: "articles"`) — pages the build never publishes,
+ * so they can't collide or orphan on the live site.
+ * Keep the two in sync when the config's exclusions change.
  */
 export function isExcludedFromBuild(page: DocPage): boolean {
 	if (page.relativePath.startsWith("reviews/")) return true
@@ -175,7 +176,8 @@ export function isExcludedFromBuild(page: DocPage): boolean {
  * boundary in `docs/superpowers/plans/2026-07-14-documentation-architecture-cleanup.md`);
  * their role/status adoption ships with its own check.
  *
- * Only the duplicate-title check reads them — a title collision is site-wide by nature.
+ * Only the duplicate-title check reads them.
+ * A title collision is site-wide by nature.
  */
 export function isDelegatedWorkstream(page: DocPage): boolean {
 	return page.relativePath.startsWith("evals/") || page.relativePath.startsWith("retrospectives/")

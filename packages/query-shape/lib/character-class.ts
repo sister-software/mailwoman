@@ -12,9 +12,12 @@ import type { CharacterClass, ScriptCode, ScriptShare, SpanRange, TokenCharacter
 export type CodepointClass = TokenCharacterClass | "whitespace" | "connector" | "other"
 
 const CJK_RANGES: ReadonlyArray<[number, number]> = [
-	// The Han characters inside the CJK symbols block. It this list began at 0x3040. Therefore, never held. `々` means
-	// "repeat the previous character" and appears inside a name — 代々木, 佐々木, 酒々井町, 野々市市 — so classifying it
-	// `other` made `tokenizeForClass` break the name at the one position that is not a boundary.
+	// The Han characters inside the CJK symbols block.
+	// It this list began at 0x3040.
+	// Therefore, never held.
+	// `々` means "repeat the previous character" and appears inside a name — 代々木,
+	// 佐々木, 酒々井町, 野々市市 — so classifying it `other` made `tokenizeForClass` break the
+	// name at the one position that is not a boundary.
 	[0x30_05, 0x30_05],
 	[0x30_07, 0x30_07],
 	[0x30_21, 0x30_29],
@@ -49,9 +52,11 @@ const ARABIC_RANGES: ReadonlyArray<[number, number]> = [
  * Codepoint ranges per ISO 15924 script, most specific first.
  *
  * Why these exist beside `CJK_RANGES`.
- * The class above buckets Kana, Han and Hangul as one `cjk` value, and that bucket is what every
- * consumer of a folded shape has to reason with — so `서울특별시 종로구` and `東京都千代田区` are the same
- * input as far as anything downstream can tell, and the locale hint answers `ja-JP` for both.
+ * The class above buckets Kana, Han and Hangul as one `cjk` value, and that bucket
+ * is what every consumer of a folded shape has to reason with.
+ *
+ * So `서울특별시 종로구` and `東京都千代田区` are the same input as far as anything downstream can tell,
+ * and the locale hint answers `ja-JP` for both.
  *
  * The classes are not wrong for what they are for: the tokenizer breaks a token at a
  * script transition and the decoder wants to know whether a run is ideographic.
@@ -174,7 +179,7 @@ const SCRIPT_RANGES: ReadonlyArray<readonly [ScriptCode, ReadonlyArray<[number, 
 /**
  * Codepoints Unicode calls `Common` that sit inside blocks this file otherwise reads as a script.
  *
- * They answer `Zyyy`, which takes them out of both halves of every share —
+ * They answer `Zyyy`, which takes them out of both halves of every share,
  * and that is what makes the share readable.
  * `ブロードウェイ` is seven characters, two of them the prolonged sound mark `ー`; folding that mark into
  * neither script reports `Kana 1.00`, and the first version of this table, which had no entry for it,
@@ -185,17 +190,19 @@ const SCRIPT_RANGES: ReadonlyArray<readonly [ScriptCode, ReadonlyArray<[number, 
  */
 const COMMON_RANGES: ReadonlyArray<[number, number]> = [
 	[0x06_40, 0x06_40], // Arabic tatweel ـ — a letter-joining stretch rather than a letter
-	// CJK symbols and punctuation, minus the characters in that block Unicode assigns to Han: 々 (U+3005), 〇 (U+3007),
-	// the Hangzhou numerals (U+3021..3029) and the ideographic marks U+3038..303B. The first version of this list took
-	// the block whole and answered `Zyyy` for the iteration mark, which appears in 代々木 and 佐々木 and 酒々井町.
+	// CJK symbols and punctuation, minus the characters in that block Unicode assigns to Han: 々 (U+3005),
+	// 〇 (U+3007), the Hangzhou numerals (U+3021..3029) and the ideographic marks U+3038..303B.
+	// The first version of this list took the block whole and answered `Zyyy` for the
+	// iteration mark, which appears in 代々木 and 佐々木 and 酒々井町.
 	[0x30_00, 0x30_04],
 	[0x30_06, 0x30_06],
 	[0x30_08, 0x30_20],
 	[0x30_2a, 0x30_2d], // Ideographic tone marks. U+302E..302F beside them are HANGUL tone marks
 	[0x30_30, 0x30_37],
 	[0x30_3c, 0x30_3f],
-	// The voiced marks and the katakana-hiragana double hyphen, minus U+309D..309F, which are Hiragana: the iteration
-	// marks ゝゞ and the digraph yori. Same defect as the block above, one range over.
+	// The voiced marks and the katakana-hiragana double hyphen, minus U+309D..309F,
+	// which are Hiragana: the iteration marks ゝゞ and the digraph yori.
+	// Same defect as the block above, one range over.
 	[0x30_99, 0x30_9c],
 	[0x30_a0, 0x30_a0],
 	[0x30_fb, 0x30_fc], // Katakana middle dot ・ and prolonged sound mark ー
@@ -508,7 +515,7 @@ export function foldInputClass(tokens: ReadonlyArray<TokenClass>): CharacterClas
  * The answer for a whole string is not the answer for its parts, and for an
  * address the parts are what a caller usually has.
  * `逊克二分场四队, heilongjiang, china` is `Latn` 0.71 / `Hani` 0.29 as a string,
- * because the romanized province and country outweigh the Han unit — but its first
+ * because the romanized province and country outweigh the Han unit, but its first
  * segment is `Hani`, its second and third are `Latn`, and a rule about how to render
  * or route the unit wants the first of those rather than the average of all three.
  *

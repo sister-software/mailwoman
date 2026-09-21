@@ -37,9 +37,11 @@ export function applyStagingPragmas<DB>(db: DatabaseClient<DB>): void {
 }
 
 /**
- * Remove a staging database and its WAL/SHM sidecars — run before a build
- * (a stale partial staging file would be reopened as a half-ingested database) and after the `vacuum into`
- * publish (the staging tree is scratch, and the sidecars would otherwise outlive the file they belong to).
+ * Remove a staging database and its WAL/SHM sidecars.
+ *
+ * Run before a build (a stale partial staging file would be reopened as a half-ingested database)
+ * and after the `vacuum into` publish (the staging tree is scratch, and the sidecars
+ * would otherwise outlive the file they belong to).
  */
 export async function removeStagingArtifacts(ingestPath: string): Promise<void> {
 	for (const stale of [ingestPath, `${ingestPath}-wal`, `${ingestPath}-shm`]) {

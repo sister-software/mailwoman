@@ -171,7 +171,7 @@ function layoutSource(
 	// "Above" is the envelope's sense — nearer the street than the locality is — and
 	// which side of the locality line that is depends on the skeleton's direction.
 	// A smallest-first skeleton prints the street before the locality, so the line goes before the locality.
-	// A largest-first one prints the locality before the street, so the line goes after it —
+	// A largest-first one prints the locality before the street, so the line goes after it,
 	// and after the whole line, since a skeleton like `%S%C` keeps the region and the locality
 	// together, and a district spliced ahead of that line would print above the region.
 	// A skeleton that puts the street and the locality on one line (`%A %C`) takes the

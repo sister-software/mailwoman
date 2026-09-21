@@ -180,8 +180,9 @@ describe("scoreHyphenatedCompound", () => {
 
 describe("scoreStreetPhrase", () => {
 	it("emits STREET_PHRASE for name + suffix, EXCLUDING the leading house number (#565)", () => {
-		// The house number is not part of the street phrase — the numeric rule proposes it separately,
-		// so the reconciler can type the number and the street as distinct nodes instead of fusing them.
+		// The house number is not part of the street phrase.
+		// The numeric rule proposes it separately, so the reconciler can type the number
+		// and the street as distinct nodes instead of fusing them.
 		const out = scoreStreetPhrase(tokenizeSegment("350 5th Ave", 0), "350 5th Ave")
 		expect(out).toHaveLength(1)
 		expect(out[0]!.span.body).toBe("5th Ave")

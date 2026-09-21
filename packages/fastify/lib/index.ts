@@ -66,7 +66,7 @@ export interface MailwomanFastifyOptions {
 	 * Path to a WOF gazetteer database (a `candidate.db` or an admin `wof.db`)
 	 * for the lazy-built pipeline's resolver.
 	 *
-	 * Omitted → the lazy pipeline parses without a resolver (parse works. geocode returns no coordinates).
+	 * Omitted → the lazy pipeline parses without a resolver (parse works. Geocode returns no coordinates).
 	 * Ignored when a pre-built `pipeline` is injected.
 	 */
 	resolveDatabasePath?: string
@@ -131,7 +131,7 @@ export interface MailwomanDecorator {
 	/**
 	 * Run the POI-query path.
 	 *
-	 * Returns the pipeline's `POIIntentOutcome` (intent / abstain, with results when a poi.db is wired)
+	 * @returns the pipeline's `POIIntentOutcome` (intent / abstain, with results when a poi.db is wired)
 	 * or {@link NotPOIQuery} when the input wasn't POI-shaped.
 	 * Throws {@link POINotConfiguredError} when the plugin was registered without `poiDatabasePath`.
 	 */
@@ -176,8 +176,8 @@ async function loadHelpers(): Promise<PipelineHelpers> {
 }
 
 /**
- * Build the runtime pipeline lazily from the plugin options — the path taken
- * when no `pipeline` was injected.
+ * Build the runtime pipeline lazily from the plugin options.
+ * The path taken when no `pipeline` was injected.
  *
  * Loads the neural classifier via `@mailwoman/neural`'s standard weight resolution, opens a WOF resolver
  * when `resolveDatabasePath` is set, and wires POI execution when `poiDatabasePath` is set.
@@ -221,8 +221,10 @@ function withLocale(opts: PipelineOpts | undefined, locale: string): PipelineOpt
 }
 
 /**
- * Read + validate the `{ text }` body. On a missing / blank / non-string `text`, sends a `400` through the native `{
- * error }` envelope and returns `null` so the handler bails.
+ * Read + validate the `{ text }` body.
+ *
+ * On a missing / blank / non-string `text`, sends a `400` through the native
+ * `{ error }` envelope and returns `null` so the handler bails.
  */
 function readText(request: FastifyRequest, reply: FastifyReply): string | null {
 	const body = request.body as { text?: unknown } | undefined
@@ -241,14 +243,15 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 	const locale = opts.locale ?? "en-US"
 	const prefix = opts.routePrefix ?? ""
 	// POI route availability is an explicit config decision: it's on iff `poiDatabasePath` was supplied.
-	// A pipeline injected without it still parses/geocodes, but `post /poi` answers a clean 501
-	// (and `mailwoman.poi` throws) — so the route's availability is deterministic
-	// regardless of how the injected pipeline was wired.
+	// A pipeline injected without it still parses/geocodes, but `post /poi` answers
+	// a clean 501 (and `mailwoman.poi` throws).
+	// So the route's availability is deterministic regardless of how the injected pipeline was wired.
 	const poiEnabled = opts.poiDatabasePath !== undefined
 
 	// The pipeline + helpers resolve once, lazily.
-	// An injected pipeline is used as-is. otherwise it's built on the first request
-	// (never at registration) so `fastify.register` stays cheap and side-effect-free.
+	// An injected pipeline is used as-is.
+	// Otherwise it's built on the first request (never at registration)
+	// so `fastify.register` stays cheap and side-effect-free.
 	let pipelinePromise: Promise<RuntimePipeline> | undefined
 
 	const getPipeline = (): Promise<RuntimePipeline> => {

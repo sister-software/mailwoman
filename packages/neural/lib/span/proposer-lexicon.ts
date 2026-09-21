@@ -96,8 +96,9 @@ export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "a
 	// unconditionally: unlike the postal tables above they are not a property of any mail
 	// system, so keying them on a codex `system` would make "Terminal 5" parse in the US
 	// and not in the UK for no reason anyone could defend.
-	// The formatter still renders through Pub 28 — see core/resources/whosonfirst/placetypes/venue-structure.ts
-	// for why the decode and format vocabularies are deliberately different sizes.
+	// The formatter still renders through Pub 28.
+	// See core/resources/whosonfirst/placetypes/venue-structure.ts for why the decode
+	// and format vocabularies are deliberately different sizes.
 	const unitDesignators = new Set<string>(VENUE_STRUCTURE_DESIGNATORS)
 	const levelDesignators = new Set<string>()
 	const weakDesignators = new Set<string>()

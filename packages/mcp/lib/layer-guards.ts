@@ -32,7 +32,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
  * Open a bdc.db, or return `undefined` when `databasePath` is unset
- * or the file is missing — never a raw sqlite throw.
+ * or the file is missing, never a raw sqlite throw.
  *
  * See the module header.
  */
@@ -45,10 +45,12 @@ export async function openBDCDatabaseIfPresent(
 }
 
 /**
- * Same graceful discipline as {@link openBDCDatabaseIfPresent}, for the
- * poi.db side of `plausibilityCheck`'s deps — `undefined` here becomes the
- * `{type:"abstain", reason:"requires_build_local_layer"}` entry `plausibilityCheck` already
- * produces when a claimed technology's physical-plant categories can't be searched.
+ * Same graceful discipline as {@link openBDCDatabaseIfPresent}, for the poi.db
+ * side of `plausibilityCheck`'s deps.
+ *
+ * `undefined` here becomes the `{type:"abstain", reason:"requires_build_local_layer"}`
+ * entry `plausibilityCheck` already produces when a claimed technology's
+ * physical-plant categories can't be searched.
  *
  * `POILookup` is dynamically imported (matching `cli.ts`'s existing `resolver-wof-sqlite` laziness)
  * since it's only ever needed when a caller actually wires a poi.db.
@@ -84,7 +86,7 @@ export async function assertBDCDatabaseExists(toolName: string, databasePath: st
 }
 
 /**
- * Open a filer.db, or return `undefined` when `databasePath` is unset or the file is missing —
+ * Open a filer.db, or return `undefined` when `databasePath` is unset or the file is missing,
  * never a raw sqlite throw (mirroring {@link openBDCDatabaseIfPresent}).
  *
  * Used by `cli.ts`'s `mailwoman_filer_lookup` handler after {@link assertFilerDatabaseExists}

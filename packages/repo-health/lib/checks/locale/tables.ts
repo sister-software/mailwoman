@@ -191,8 +191,8 @@ export async function findLocaleTables(context: {
  * The `locale-tables` check: one error per entry whose country key disagrees
  * with its locale's region subtag.
  *
- * Completeness was the second invariant and is retired — see the file header,
- * and the note where it used to run.
+ * Completeness was the second invariant and is retired.
+ * See the file header, and the note where it used to run.
  */
 export const localeTablesCheck: RepoCheck = {
 	id: "locale-tables",

@@ -82,7 +82,8 @@ export const US_STREET_SUFFIX_LOOKUP: ReadonlyMap<string, USStreetSuffix> = (() 
  * Preferred USPS abbreviation per canonical (`avenue → "AVE"`, `street → "ST"`).
  */
 export const US_STREET_SUFFIX_PREFERRED_ABBR: Readonly<Record<USStreetSuffix, string>> = Object.fromEntries(
-	// Every Pub-28 canonical carries >= 1 variant (the preferred abbreviation is first); the JSON import types values as string[], so assert the head's presence.
+	// Every Pub-28 canonical carries >= 1 variant (the preferred abbreviation is first);
+	// the JSON import types values as string[], so assert the head's presence.
 	(Object.keys(US_STREET_SUFFIX_VARIANTS) as USStreetSuffix[]).map((k) => [k, US_STREET_SUFFIX_VARIANTS[k][0]!])
 ) as Readonly<Record<USStreetSuffix, string>>
 

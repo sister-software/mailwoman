@@ -135,10 +135,12 @@ export interface GazetteerPaths {
 /**
  * Locate the gazetteer for a geocoding drop-in, with both of the #1009 friendly failures:
  *
- * - An explicit `--candidate-db` that does not exist errors loudly. It must never silently fall back to whatever ambient
- *   data-root file happens to be present. A typo'd path would otherwise serve the wrong gazetteer without a word.
- * - No candidate DB and no databases prints the named-artifact message with the one command that fixes it, instead of
- *   letting the resolver throw its internal "resolveExtracts: at least one database is required".
+ * - An explicit `--candidate-db` that does not exist errors loudly.
+ *   It must never silently fall back to whatever ambient data-root file happens to be present.
+ *   A typo'd path would otherwise serve the wrong gazetteer without a word.
+ * - No candidate DB and no databases prints the named-artifact message with the
+ *   one command that fixes it, instead of letting the resolver throw its internal
+ *   "resolveExtracts: at least one database is required".
  */
 export async function resolveGazetteerOrExit(candidateDBFlag: string | undefined): Promise<GazetteerPaths> {
 	if (candidateDBFlag && !(await pathExists(candidateDBFlag))) {
@@ -168,8 +170,8 @@ export function corsBannerLine(cors: boolean): string {
 }
 
 /**
- * The `wof:` + `resolver:` lines of a geocoding drop-in's startup banner — which gazetteer
- * the process actually opened, and (when it fell back to admin-only) the flag that widens it.
+ * The `wof:` + `resolver:` lines of a geocoding drop-in's startup banner, which gazetteer the
+ * process actually opened, and (when it fell back to admin-only) the flag that widens it.
  */
 export function gazetteerBannerLines({ adminDBPath, candidateDB }: GazetteerPaths): string[] {
 	return [

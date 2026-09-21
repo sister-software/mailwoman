@@ -11,7 +11,7 @@ import { TileSetSourceID } from "#styles/sources"
 /**
  * Identifier for the Mailwoman base tileset.
  *
- * Matches the R2 object basename (`nexus-assets/tiles/basemap-v4.pmtiles`) —
+ * Matches the R2 object basename (`nexus-assets/tiles/basemap-v4.pmtiles`).
  * `tiles.mailwoman.ai/basemap-v4.json` returns its tilejson,
  * `tiles.mailwoman.ai/basemap-v4/{z}/{x}/{y}.mvt` returns vector tiles.
  */

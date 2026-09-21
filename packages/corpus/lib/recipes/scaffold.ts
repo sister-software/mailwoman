@@ -40,12 +40,13 @@ export function recipeSourceID(adapterID: string, parts: Record<string, string |
  *
  * Each is attested by a gauntlet board row, which is the bar for adding another:
  *
- * - `leading` — `«postcode» «locality», «region»`. `Rua da Praia, 15, 8600-315 Lagos, Algarve, Portugal`
- *   (`pt_structured`). The default, and what every tuple written before this field existed means.
- * - `after_locality` — `«locality» «postcode», «region»`. `…, Barcelona 6001, Anzoátegui, Venezuela`
- *   (`ve_city_postcode_trailing_state`).
- * - `after_region` — `«locality», «region» «postcode»`. `12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India`
- *   (`in_structured`).
+ * - `leading` — `«postcode» «locality», «region»`.
+ *   `Rua da Praia, 15, 8600-315 Lagos, Algarve, Portugal` (`pt_structured`).
+ *   The default, and what every tuple written before this field existed means.
+ * - `after_locality` — `«locality» «postcode», «region»`.
+ *   `…, Barcelona 6001, Anzoátegui, Venezuela` (`ve_city_postcode_trailing_state`).
+ * - `after_region` — `«locality», «region» «postcode»`.
+ *   `12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India` (`in_structured`).
  */
 export type PostcodePlacement = "leading" | "after_locality" | "after_region"
 
@@ -80,8 +81,8 @@ export interface RecipeTuple {
  * `@mailwoman/core/utils` so a recipe keeps importing everything it needs from this one scaffold module.
  *
  * - `makeLcg` (`s = s*1664525 + 1013904223 mod 2^32`) — what the street/po-box/anchor builders seeded.
- * - `makeMulberry32` — what the majority of them used (german, locale, boundary-stress, unit, fr-order, country-balanced,
- *   intersection, fr-admin-split, street-affix, street-bare, po-box-cedex).
+ * - `makeMulberry32` — what the majority of them used (german, locale, boundary-stress, unit, fr-order,
+ *   country-balanced, intersection, fr-admin-split, street-affix, street-bare, po-box-cedex).
  *
  * A recipe must seed the same one its `.mjs` did, the same way it did
  * (usually `seed`, but some derive a per-stream seed), or `--seed N` stops being byte-reproducible.
@@ -188,7 +189,7 @@ export const SYNTHETIC_TUPLE_LICENSE = "Synthetic — derived from CC-BY / publi
  * The surface key shared by the Norwegian recipes (`no-fragment`, `no-street-led`).
  *
  * Must match the Norwegian digit board's `norm_surface`: NFC, lowercase,
- * collapse whitespace — and keep diacritics.
+ * collapse whitespace, and keep diacritics.
  * Fr-fragment's norm strips them (NFD + combining-mark removal), which is right for French
  * but would collapse `Tømmerlien` → `tommerlien` here.
  *

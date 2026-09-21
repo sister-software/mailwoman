@@ -51,7 +51,8 @@ export interface ReconcileReport {
 	refused: Array<{ invoiceID: string; reason: string }>
 	corrected: Array<{ lid: string; from: LicenseState; to: LicenseState }>
 	/**
-	 * Items that failed on their own. each is retried by the next pass.
+	 * Items that failed on their own.
+	 * Each is retried by the next pass.
 	 */
 	failed: ReconcileFailure[]
 	/**
@@ -181,7 +182,8 @@ export async function reconcileLedger(
 }
 
 /**
- * Mint one listed invoice unless the ledger already holds its token. a failure is this invoice's alone.
+ * Mint one listed invoice unless the ledger already holds its token.
+ * A failure is this invoice's alone.
  */
 async function mintIfUnminted(
 	env: LicenseWorkerEnv,
@@ -243,8 +245,8 @@ async function fullyRefunded(stripe: Stripe, invoiceID: string): Promise<boolean
  * which a refund leaves `active`: a license minted by the missed-invoice sweep,
  * or one whose `charge.refunded` event never arrived, is revoked here at the cost
  * of two Stripe reads per active license per pass.
- * A dispute that Stripe has ruled `won` hands the license back to its subscription's
- * state. any other dispute outcome leaves it revoked.
+ * A dispute that Stripe has ruled `won` hands the license back to its subscription's state.
+ * Any other dispute outcome leaves it revoked.
  */
 async function stateStripeSays(
 	stripe: Stripe,

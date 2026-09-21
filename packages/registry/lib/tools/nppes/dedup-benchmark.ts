@@ -281,7 +281,7 @@ export async function nppesDedupBenchmark(
 	// The shipped out-of-box default (#86): no setting config at all → resolveEntities
 	// auto-computes an input-scoped address-frequency table + collapsed spatial.
 	// On this deliberately-sub-sampled corpus the auto table is sparse (few repeats), so the
-	// inverse-frequency signal is near-inert and F1 collapses to ≈baseline — not a regression,
+	// inverse-frequency signal is near-inert and F1 collapses to ≈baseline, not a regression,
 	// just the honest truth that IDF is a corpus statistic you can't synthesize from a sample.
 	// On a full-dataset dedup the input is the corpus and this default reaches the baseline.
 	// The CLI passes a corpus-wide table built from the full source files

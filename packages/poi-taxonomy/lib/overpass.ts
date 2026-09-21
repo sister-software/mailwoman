@@ -54,7 +54,8 @@ function escapeQL(value: string): string {
 }
 
 /**
- * Escape regex metacharacters — the `~` operator's value is a regex rather than a literal.
+ * Escape regex metacharacters.
+ * The `~` operator's value is a regex rather than a literal.
  */
 function escapeQLRegex(value: string): string {
 	return escapeQL(value.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"))
@@ -65,8 +66,9 @@ export interface EmitOverpassOpts {
 	 * One `key=value` OSM tag per category the subject reaches (from `CategoryRecord.osmTag`),
 	 * in the subject's own order.
 	 *
-	 * A subject reaching several categories emits an OverpassQL union over them — Overpass answers the
-	 * same set the POI branch searches, and the emitter states no preference between the members.
+	 * A subject reaching several categories emits an OverpassQL union over them.
+	 * Overpass answers the same set the POI branch searches, and the emitter
+	 * states no preference between the members.
 	 */
 	osmTags?: string[]
 	/**
@@ -79,8 +81,9 @@ export interface EmitOverpassOpts {
  * Render an OverpassQL query for the intent.
  *
  * Category subjects need `opts.osmTags`; name/brand subjects render a case-insensitive name regex.
- * A resolved anchor locality becomes an area scope. otherwise the query is global
- * (Overpass-turbo users add their own bbox).
+ * A resolved anchor locality becomes an area scope.
+ *
+ * Otherwise the query is global (Overpass-turbo users add their own bbox).
  *
  * Several filters become an OverpassQL union block — `( … ; … ; );` —
  * which is the language's own way of saying "the rows under either tag",

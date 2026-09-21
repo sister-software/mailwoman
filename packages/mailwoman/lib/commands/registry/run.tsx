@@ -141,7 +141,7 @@ async function resolveWOFPath(options: Options): Promise<string> {
  * Construct the heavy geocoder once (neural parser + WOF resolver + per-state databases)
  * and wire it into the matcher's {@link GeocodeAddress} interface.
  *
- * Returns it plus a disposal hook for the database handles.
+ * @returns it plus a disposal hook for the database handles.
  * Shared by the single-CSV and multi-source paths.
  */
 async function buildGeocoder(options: Options): Promise<{ geocodeAddress: GeocodeAddress } & Disposable> {

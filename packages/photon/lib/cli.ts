@@ -58,7 +58,9 @@ const PLACETYPE_TO_KEY: Record<string, keyof PhotonProperties> = {
 }
 
 /**
- * A real address fits comfortably. longer is malformed input (and would exceed the model's window).
+ * A real address fits comfortably.
+ *
+ * Longer is malformed input (and would exceed the model's window).
  */
 const MAX_QUERY_LEN = 512
 
@@ -99,7 +101,8 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 
 	const engine: PhotonEngine = {
 		async search(params) {
-			// Empty/whitespace → no query. absurdly long → not an address (and would blow the model's input).
+			// Empty/whitespace → no query.
+			// Absurdly long → not an address (and would blow the model's input).
 			const query = params.q?.trim()
 
 			if (!query || query.length > MAX_QUERY_LEN) return photonCollection([])
@@ -143,11 +146,13 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			// highway/street osm tags (the parallel of the #1041 house treatment).
 			const streetGrade = result.resolution_tier === "street"
 
-			// The register row's own scope tags (result.rooftop) decorate a house-grade answer whose
-			// hierarchy carries no locality/postcode — the register attests the rooftop's commune
-			// and postcode even when the query never named them, and #1014's decorate-from-the-resolved-place
-			// doctrine covers register attestations exactly as it covers gazetteer rows.
-			// The key form is normalized. title-case it for display (the extracts store no display-cased locality).
+			// The register row's own scope tags (result.rooftop) decorate a house-grade
+			// answer whose hierarchy carries no locality/postcode.
+			// The register attests the rooftop's commune and postcode even when the query
+			// never named them, and #1014's decorate-from-the-resolved-place doctrine covers
+			// register attestations exactly as it covers gazetteer rows.
+			// The key form is normalized.
+			// Title-case it for display (the extracts store no display-cased locality).
 			const places = result.hierarchy.map((h) => ({ tag: h.tag, name: h.name }))
 
 			if (result.rooftop?.localityNorm && !places.some((p) => p.tag === "locality")) {
@@ -156,9 +161,9 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				places.push({ tag: "locality", name: pyTitle(result.rooftop.localityNorm) })
 			}
 
-			// Locality→postcode enrichment: an admin answer for a place whose
-			// containing postcode is unambiguous (exactly one) carries that postcode —
-			// the register/WOF attests it, the query simply never said it.
+			// Locality→postcode enrichment: an admin answer for a place whose containing
+			// postcode is unambiguous (exactly one) carries that postcode.
+			// The register/WOF attests it, the query simply never said it.
 			// Multi-postcode cities (Paris) get nothing: the exactly-one rule is the
 			// abstention, per the registry doctrine.
 			// Keyed by the resolved place's WOF id, so no name matching is involved.

@@ -249,7 +249,7 @@ function readCoordinate(value: unknown, isValid: (candidate: number) => boolean)
  * Typed and validated through `@mailwoman/spatial` (`GeoFeatureCollection`, `isPointLiteral`)
  * rather than through either drop-in's own schema.
  * `@mailwoman/photon` and `@mailwoman/nominatim` do define the response shapes,
- * and reusing one here would have been the obvious economy — but this client exists to
+ * and reusing one here would have been the obvious economy, but this client exists to
  * measure an upstream engine, and parsing its answer through our reimplementation's idea
  * of the format would make it blind to exactly the divergences the comparison is for.
  *

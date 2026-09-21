@@ -103,8 +103,8 @@ describe("the anchor-artifact presence assertion", () => {
 
 	it("reports EVERY missing package, not just the first", async () => {
 		// One fixture root cannot hold two locales' packages under the cache layout `resolveWeights`
-		// probes, so the multi-locale case is posed as two calls against the same root —
-		// what matters is that the message is per-locale and carries the locale tag,
+		// probes, so the multi-locale case is posed as two calls against the same root.
+		// What matters is that the message is per-locale and carries the locale tag,
 		// which is what makes a six-overlay run diagnosable.
 		const root = await fixtureWeights("zz-zz", { files: { postcode_anchor: "postcode-zz.bin" } })
 

@@ -101,8 +101,7 @@ export const NSUL_LICENSE_INFO_URL = "https://www.ons.gov.uk/methodology/geograp
 export const NSUL_PORTAL_URL = "https://geoportal.statistics.gov.uk"
 
 /**
- * The four attribution statements the nsul User Guide requires of anyone redistributing an address product derived from
- * AddressBase, in the guide's wording and order. `year` is the copyright year of the data rather than the build year.
+ * The four attribution statements the nsul User Guide requires of anyone redistributing an address product derived from AddressBase, in the guide's wording and order. `year` is the copyright year of the data rather than the build year.
  */
 export function nsulAttribution(year: number): string {
 	return (

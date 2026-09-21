@@ -110,7 +110,8 @@ export class GeographicModelCompileError extends Error {
 /**
  * The order derivation inputs are listed in.
  *
- * Grouping by table first keeps a long input list readable. the identifier breaks ties inside a table.
+ * Grouping by table first keeps a long input list readable.
+ * The identifier breaks ties inside a table.
  */
 const DERIVATION_INPUT_ORDER: readonly DerivationInputKind[] = [
 	DerivationInputKind.Concept,
@@ -145,8 +146,9 @@ function compareByID(left: { id: string }, right: { id: string }): number {
  *
  * Breadth-first over a visited set: each concept is expanded once, so the walk terminates
  * on any graph and the answer does not depend on how the parents were authored.
- * The concept itself is never in its own list — it could only get there around a cycle,
- * and the validator refuses those before the compiler runs.
+ * The concept itself is never in its own list.
+ *
+ * It could only get there around a cycle, and the validator refuses those before the compiler runs.
  */
 function ancestorsOfConcept(
 	conceptID: ConceptID,
@@ -174,8 +176,8 @@ function ancestorsOfConcept(
  *
  * Drafts are keyed by the proposition they state, so two ancestors asserting the same
  * thing produce one fact naming both of them as inputs, while two ancestors asserting
- * the same triple under different modality produce two facts — a contradiction a
- * consumer can see, rather than a silent choice between them.
+ * the same triple under different modality produce two facts.
+ * A contradiction a consumer can see, rather than a silent choice between them.
  */
 interface DerivedDraft {
 	subject: ConceptID
@@ -254,7 +256,8 @@ function deriveInheritedFacts(
 
 			// Validation refuses an `isA` naming an undeclared concept, and an assertion naming
 			// an undeclared relation, so both resolve for any document that reached the compiler.
-			// The guards keep the walk total. they do not describe a state the artifact can hold.
+			// The guards keep the walk total.
+			// They do not describe a state the artifact can hold.
 			if (!ancestor) continue
 
 			for (const assertion of ancestor.assertions) {

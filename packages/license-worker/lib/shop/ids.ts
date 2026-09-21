@@ -26,7 +26,8 @@ export interface ShopIDs {
 export type ShopIDsByMode = Record<ShopMode, ShopIDs>
 
 /**
- * The recorded ids per Stripe mode, as `ids.json` holds them. the provisioner is the only writer.
+ * The recorded ids per Stripe mode, as `ids.json` holds them.
+ * The provisioner is the only writer.
  */
 export const SHOP_IDS: ShopIDsByMode = ids
 

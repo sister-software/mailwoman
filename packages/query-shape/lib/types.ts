@@ -37,8 +37,10 @@ export type CharacterClass = "numeric" | "alpha" | "alphanumeric" | "cjk" | "cyr
  * hint needs: `서울특별시` and `東京都` are the same `CharacterClass` and are `Hang` and `Hani`.
  *
  * `Zyyy` (Common) and `Zzzz` (Unknown) are Unicode's own codes and are answers rather than failures.
- * A digit is genuinely script-neutral. a codepoint in a script this file carries no ranges for
- * is genuinely unknown, and saying so beats folding it into a script that happens to be nearby.
+ * A digit is genuinely script-neutral.
+ *
+ * A codepoint in a script this file carries no ranges for is genuinely unknown,
+ * and saying so beats folding it into a script that happens to be nearby.
  */
 export type ScriptCode = "Latn" | "Hani" | "Hira" | "Kana" | "Hang" | "Cyrl" | "Arab" | "Yiii" | "Zyyy" | "Zzzz"
 
@@ -154,9 +156,11 @@ export interface QueryShape {
 	 * Every ISO 15924 script the input is written in, ranked by share of its script-containing codepoints.
 	 *
 	 * This is what `characterClass` cannot say.
-	 * The class folds Kana, Han and Hangul to one `cjk` value, and answers `mixed` for an input carrying
-	 * a non-Latin span beside a Latin one — so a Han venue inside a London address, and a Korean
-	 * address against a Japanese one, are indistinguishable to a consumer reading the fold alone.
+	 * The class folds Kana, Han and Hangul to one `cjk` value, and answers `mixed`
+	 * for an input carrying a non-Latin span beside a Latin one.
+	 *
+	 * So a Han venue inside a London address, and a Korean address against a Japanese one,
+	 * are indistinguishable to a consumer reading the fold alone.
 	 */
 	scripts: ScriptShare[]
 	tokenClasses: TokenClass[]

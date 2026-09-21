@@ -122,9 +122,11 @@ export interface CensusTigerLine {
 	 */
 	side: "L" | "R"
 	/**
-	 * The tiger/Line segment identifier. note the wire key is `tigerLineId` with a
-	 * lowercase `d` — a string interface, so the house acronym-casing rule does not
-	 * apply to it. the TS property name must match the wire.
+	 * The tiger/Line segment identifier.
+	 *
+	 * Note the wire key is `tigerLineId` with a lowercase `d`.
+	 * A string interface, so the house acronym-casing rule does not apply to it.
+	 * The TS property name must match the wire.
 	 *
 	 * @pattern ^\d+$
 	 */
@@ -188,7 +190,8 @@ export interface CensusAddressComponents {
 	/**
 	 * The ZIP code.
 	 *
-	 * The geocoder returns the five-digit form. the plus-four variant is admitted for completeness.
+	 * The geocoder returns the five-digit form.
+	 * The plus-four variant is admitted for completeness.
 	 */
 	zip: ZipCode | ZipCodePlusFour | string
 	/**
@@ -209,9 +212,10 @@ export interface CensusAddressMatch {
 	 * The address as matched — the USPS-normalized single line,
 	 * e.g. `4600 silver hill RD, washington, DC, 20233`.
 	 *
-	 * Typed `string`, unlike the isp-nexus original, which annotated this field as
-	 * `PostalAddressPart.FormattedAddress` — an enum member used in type position,
-	 * which is the literal type of that member's value.
+	 * Typed `string`, unlike the isp-nexus original, which annotated this field
+	 * as `PostalAddressPart.FormattedAddress`.
+	 * An enum member used in type position, which is the literal type of that member's value.
+	 *
 	 * The field was therefore declared to hold the string `"formattedAddress"` rather than an address.
 	 *
 	 * It typechecked because every consumer only passed it on to something taking a `string`.
@@ -220,9 +224,10 @@ export interface CensusAddressMatch {
 	addressComponents: CensusAddressComponents
 	tigerLine: CensusTigerLine
 	/**
-	 * `{ x: longitude, y: latitude }` — the Census geocoder's own axis naming,
-	 * which is `InternalPointCoordinates` in `@mailwoman/spatial` and is accepted
-	 * directly by `GeoPoint`'s constructor.
+	 * `{ x: longitude, y: latitude }`.
+	 *
+	 * The Census geocoder's own axis naming, which is `InternalPointCoordinates` in
+	 * `@mailwoman/spatial` and is accepted directly by `GeoPoint`'s constructor.
 	 */
 	coordinates: InternalPointCoordinates
 }
@@ -230,7 +235,8 @@ export interface CensusAddressMatch {
 /**
  * A `Census Blocks` entry from a `geographies/*` lookup.
  *
- * Every field is a tiger attribute. the types come from `@mailwoman/tiger`.
+ * Every field is a tiger attribute.
+ * The types come from `@mailwoman/tiger`.
  */
 export interface CensusBlockGeography {
 	/**
@@ -284,8 +290,9 @@ export interface CensusGeographyMatch extends CensusAddressMatch {
 /**
  * The response envelope.
  *
- * `input` is nested inside `result`. The isp-nexus original declared it as a sibling (`{ input, result: {
- * addressMatches } }`), which typechecked only because nothing ever read it.
+ * `input` is nested inside `result`.
+ * The isp-nexus original declared it as a sibling (`{ input, result: { addressMatches } }`),
+ * which typechecked only because nothing ever read it.
  */
 export interface CensusGeocodeResponse<Match extends CensusAddressMatch = CensusAddressMatch> {
 	result: {

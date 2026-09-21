@@ -109,7 +109,7 @@ export interface RealizeExtentOptions {
  *
  * A collection must contain exactly one feature.
  * Every export tool writes a `FeatureCollection`, so refusing the shape outright would refuse
- * the ordinary case — but taking the first of several would silently choose which country the
+ * the ordinary case, but taking the first of several would silently choose which country the
  * coverage claim is about, and the claim is only as good as the outline it was clipped to.
  *
  * @throws {TypeError} When the document holds no geometry, or a collection
@@ -174,8 +174,9 @@ export function realizeFloodMapExtent(options: RealizeExtentOptions): FloodMapEx
 }
 
 /**
- * The outline's bounding rectangle, holes included — a coarse descriptor for
- * the receipt, never the footprint itself.
+ * The outline's bounding rectangle, holes included.
+ *
+ * A coarse descriptor for the receipt, never the footprint itself.
  */
 function geometryBounds(geometry: ParsedGeometry): {
 	minLat: number

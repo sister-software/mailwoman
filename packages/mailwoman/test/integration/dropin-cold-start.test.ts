@@ -84,8 +84,8 @@ const LIBPOSTAL_TEST_PORT = 29_381
  * Wall-clock budget for the missing-data preflight to exit.
  *
  * It fails fast (before touching the neural runtime), so this is a generous ceiling
- * rather than the measured cost — see `mailwoman/commands/geocode.test.ts` for the
- * node-boot baseline (~2.7 s) this margins against.
+ * rather than the measured cost.
+ * See `mailwoman/commands/geocode.test.ts` for the node-boot baseline (~2.7 s) this margins against.
  */
 const PREFLIGHT_TIMEOUT_MS = 30_000
 
@@ -98,8 +98,10 @@ const PREFLIGHT_TIMEOUT_MS = 30_000
 const HEALTHY_TIMEOUT_MS = 30_000
 
 /**
- * Vitest's own per-test ceiling — see the note in `corpus-cli.test.ts`: must exceed the child's
- * own timeout plus whatever this test queues behind the CLI-spawn lock (up to 120 s under contention).
+ * Vitest's own per-test ceiling.
+ *
+ * See the note in `corpus-cli.test.ts`: must exceed the child's own timeout plus whatever
+ * this test queues behind the CLI-spawn lock (up to 120 s under contention).
  *
  * Generous costs nothing on a passing test.
  */
@@ -360,7 +362,7 @@ describe.skipIf(!hasLibpostalCLI)("mailwoman-libpostal serve — cold start, zer
 		async (ctx) => {
 			const dataRoot = await freshDataRoot()
 
-			// The claim under test is "weights only, zero data artifacts" —
+			// The claim under test is "weights only, zero data artifacts",
 			// not "the workspace package carries weights".
 			// A consumer install satisfies the weights half natively
 			// (the published package ships the binaries. The clean-install smoke owns that claim).

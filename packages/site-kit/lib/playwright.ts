@@ -27,9 +27,9 @@ export function previewConfig(options: PreviewConfigOptions): PlaywrightTestConf
 
 	return defineConfig({
 		testDir: "./test/browser",
-		// A cold load fetches a 25 MB model and range-reads a gazetteer before the first query
-		// can run, so the per-test budget, the navigation budget and the per-action budget all
-		// leave room for that. one worker keeps the loads from competing for the same bandwidth.
+		// A cold load fetches a 25 MB model and range-reads a gazetteer before the first query can run,
+		// so the per-test budget, the navigation budget and the per-action budget all leave room for that.
+		// One worker keeps the loads from competing for the same bandwidth.
 		timeout: 120_000,
 		workers: 1,
 		fullyParallel: false,

@@ -62,7 +62,8 @@ export async function readCommands(
 			// A prefix directory is layout rather than a command path: every command under it
 			// declares the directory's own name as its prefix, so `build/postcode/codepoint.js` is
 			// `build postcode-codepoint` and the directory itself is not something a user types.
-			// A namespace directory looks identical from outside. the declared names decide.
+			// A namespace directory looks identical from outside.
+			// The declared names decide.
 			const nested = [...children.values()]
 
 			if (nested.length && nested.every((child) => !child.commands && child.name.startsWith(`${entry}-`))) {

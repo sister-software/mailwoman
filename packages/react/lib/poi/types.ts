@@ -53,8 +53,8 @@ export interface POICategorySubject extends POISubjectBase {
 /**
  * A resolved POI subject that names a chain brand (`chevron`, `applebee's`).
  *
- * Brands carry a Wikidata QID and are searched by that QID rather than by category k-ring —
- * see `@mailwoman/poi-taxonomy`'s brand table + the layer's `brand_wikidata` index.
+ * Brands carry a Wikidata QID and are searched by that QID rather than by category k-ring.
+ * See `@mailwoman/poi-taxonomy`'s brand table + the layer's `brand_wikidata` index.
  */
 export interface POIBrandSubject extends POISubjectBase {
 	kind: "brand"

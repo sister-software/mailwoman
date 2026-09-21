@@ -182,9 +182,10 @@ async function main(): Promise<void> {
 					number,
 					null,
 					rec.postcode,
-					// Arrondissement communes fold to the base city ("paris 13e arrondissement" → "paris") —
-					// the same both-sides discipline the #1042 street-centroid key uses, so a query's
-					// "Paris" hits directly (fr-chevaleret-bare). No-op for every other commune.
+					// Arrondissement communes fold to the base city ("paris 13e arrondissement" → "paris").
+					// The same both-sides discipline the #1042 street-centroid key uses,
+					// so a query's "Paris" hits directly (fr-chevaleret-bare).
+					// No-op for every other commune.
 					rec.city ? stripArrondissement(normalizeLocalityForKey(rec.city)) : null,
 					rec.street,
 					rec.lat,

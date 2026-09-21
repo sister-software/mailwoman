@@ -64,8 +64,8 @@ export interface WordConsistencyOpts {
 	/**
 	 * Skip healing any word containing a raw byte-fallback piece (`<0xNN>`).
 	 *
-	 * On byte-soup words the confidence-weighted-vote premise ("the surviving pieces are trustworthy")
-	 * breaks — see the module docstring's outcome outcome.
+	 * On byte-soup words the confidence-weighted-vote premise ("the surviving pieces are trustworthy") breaks.
+	 * See the module docstring's outcome outcome.
 	 * Default false.
 	 */
 	skipByteFallbackWords?: boolean

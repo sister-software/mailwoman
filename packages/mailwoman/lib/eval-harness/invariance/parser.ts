@@ -108,7 +108,7 @@ async function buildClassifier(opts: ModelSelectOptions): Promise<NeuralAddressC
  * That is the point of the probe: the release Gauntlet measures the user-visible pipeline,
  * and a metamorphic probe that bypasses it (no #690 case normalization, no locale-hint,
  * no kind/grouping stages, no weights-package FST auto-load) manufactures violations the shipped
- * path never exhibits — and misses the D-rule regressions that do ride the pipeline stages.
+ * path never exhibits, and misses the D-rule regressions that do ride the pipeline stages.
  *
  * With a `weightsCache` classifier this is fully production-faithful: `loadFromWeights`
  * surfaces `fstPath`, which `createRuntimePipeline`'s `autoLoadWeightsFST` uses

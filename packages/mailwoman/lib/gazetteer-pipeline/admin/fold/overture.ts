@@ -89,7 +89,7 @@ const NAME_MAX_LENGTH = 120
  * Admission never tests which script writes it.
  *
  * The rule this replaced kept Latin-script entries only, reasoning that the local-script
- * form survives as `names.primary` — which it does, and required: Russia keeps Москва
+ * form survives as `names.primary`, which it does, and required: Russia keeps Москва
  * because Москва is Overture's primary for Moscow.
  * That premise fails for a country whose primary is already Latin, where `common`
  * is the only place the local script lives.
@@ -272,7 +272,7 @@ export function prepareInserts(db: DatabaseClient<WOFDatabase>): {
  * The Overture sub-tree is self-contained (locality → region → county via `parent_division_id`);
  * a division whose parent we didn't ingest tops out at -1.
  *
- * Country scoping rides `spr.country` (set on every row), not the ancestry —
+ * Country scoping rides `spr.country` (set on every row), not the ancestry,
  * but the `country` subtype ships the country node too (#1015).
  *
  * The heavy native `@duckdb/node-api` dependency is loaded lazily (the `overture-ingest.tsx` convention)
@@ -285,9 +285,7 @@ export async function ingestOvertureDivisions(
 	countries: readonly string[],
 	release: string,
 	/**
-	 * Starting synthetic id. Defaults to {@link OVERTURE_ID_BASE} (a single full build). An incremental augment of a DB
-	 * that already holds Overture rows must pass `max(spr.id) + 1` so the new ids don't collide with — and `insert or
-	 * replace` clobber — the existing ones.
+	 * Starting synthetic id. Defaults to {@link OVERTURE_ID_BASE} (a single full build). An incremental augment of a DB that already holds Overture rows must pass `max(spr.id) + 1` so the new ids don't collide with — and `insert or replace` clobber — the existing ones.
 	 */
 	idBase: number = OVERTURE_ID_BASE
 ): Promise<number> {
@@ -397,7 +395,8 @@ export async function ingestOvertureDivisions(
 		// Overture `common` is the standard name per language (no variant axis),
 		// so #936 officialness is the language test alone.
 		if (r.common_json) {
-			// A malformed common map nulls out — keep the primary, skip aliases.
+			// A malformed common map nulls out.
+			// Keep the primary, skip aliases.
 			const common = tryParsingJSON<Record<string, string>>(String(r.common_json))
 
 			if (common) {

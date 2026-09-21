@@ -77,8 +77,8 @@ const { values } = parseArguments({
 /**
  * The street of a coordinate row, with its house number removed.
  *
- * The reverse arm needs a street that stands where a locality would, and a house
- * number in front of it is the very cue that makes the shape unambiguous —
+ * The reverse arm needs a street that stands where a locality would, and a
+ * house number in front of it is the very cue that makes the shape unambiguous,
  * leaving it in would measure the arm that already works.
  */
 function streetWithoutNumber(input: string): string | undefined {

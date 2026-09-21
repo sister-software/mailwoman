@@ -54,7 +54,8 @@ export interface PLBlockTable {
 	/**
 	 * H1 occupied.
 	 *
-	 * `occupied + vacant === housing_units` by construction. the reader refuses a row where it is not.
+	 * `occupied + vacant === housing_units` by construction.
+	 * The reader refuses a row where it is not.
 	 */
 	occupied: number
 	/**
@@ -117,9 +118,10 @@ PRAGMA journal_mode = WAL;
  * Create the tiger tables + indexes via the Kysely schema-builder (the house idiom).
  *
  * Idempotent (`if not exists`).
- * Pass a {@link DatabaseClient} (or any `Kysely`) over the tiger DB. run {@link TIGER_PRAGMAS} first.
+ * Pass a {@link DatabaseClient} (or any `Kysely`) over the tiger DB.
+ * Run {@link TIGER_PRAGMAS} first.
  *
- * `us_state`/`tract` aren't in {@link TIGERDatabase} (created here but not queried via Kysely) —
+ * `us_state`/`tract` aren't in {@link TIGERDatabase} (created here but not queried via Kysely).
  * `createTable` takes any table name, so that's fine.
  *
  * The `text(N)` length hints in the prior raw DDL were documentary only
@@ -223,8 +225,7 @@ export async function initializeTIGERSchema(db: Kysely<TIGERDatabase>): Promise<
 		.addColumn("housing_units", "integer", (c) => c.notNull())
 		.addColumn("occupied", "integer", (c) => c.notNull())
 		.addColumn("vacant", "integer", (c) => c.notNull())
-		// pl_block is small (no geometry) and always probed by its geoid PK (1:1 join to tabblock20), so
-		// cluster it without rowid — one B-tree probe per join, no separate rowid + PK-index pair.
+		// pl_block is small (no geometry) and always probed by its geoid PK (1:1 join to tabblock20), so cluster it without rowid — one B-tree probe per join, no separate rowid + PK-index pair.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 

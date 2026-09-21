@@ -72,7 +72,7 @@ export interface AddressPointLookup {
 }
 
 /**
- * One interpolated coordinate estimate (#483) — never an exact situs point
+ * One interpolated coordinate estimate (#483), never an exact situs point
  * (`uncertaintyM` prices the estimate honestly).
  *
  * Structural mirror of `InterpolatedHit` in `resolver-wof-sqlite/interpolation.ts`; keep this

@@ -72,7 +72,7 @@ export interface AgreementRow {
 	 * which is how a rendering difference gets reported as a conversion defect.
 	 *
 	 * Carried on every row rather than only the tolerated ones, because it is what
-	 * separates a real defect from the two channels rendering the same edge differently —
+	 * separates a real defect from the two channels rendering the same edge differently,
 	 * and a receipt that omits it forces a re-run.
 	 * `undefined` means the service returned no polygon at all near the point.
 	 */
@@ -88,7 +88,8 @@ export interface OutsideRow {
 	longitude: number
 	kind: FloodReadingKind
 	/**
-	 * True when the artifact answered `unknown` — the only acceptable reading outside England.
+	 * True when the artifact answered `unknown`.
+	 * The only acceptable reading outside England.
 	 */
 	passed: boolean
 }
@@ -204,11 +205,13 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
 }
 
 /**
- * What zone the service's own geometry assigns at a point, decided here with the same even-odd
- * rule the artifact's reader uses — so what is compared is a verdict against a verdict.
+ * What zone the service's own geometry assigns at a point, decided here with the
+ * same even-odd rule the artifact's reader uses.
+ * So what is compared is a verdict against a verdict.
  *
- * `zone` is `null` only when no returned polygon contains the point. a containing polygon with
- * no `flood_zone` sets `insideUnlabelled` instead, so the two readings never share a value.
+ * `zone` is `null` only when no returned polygon contains the point.
+ * A containing polygon with no `flood_zone` sets `insideUnlabelled` instead,
+ * so the two readings never share a value.
  */
 async function readServiceZone(
 	readServiceFeatures: ServiceFeatureReader,

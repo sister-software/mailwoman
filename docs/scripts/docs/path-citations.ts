@@ -84,14 +84,16 @@ const DATED_FILENAME = /(^|\/)\d{4}-\d{2}-\d{2}[-.]/
  * carry no date, each with the reason.
  *
  * A record states what was true when it was written, so a path it names is evidence
- * rather than a claim about the current tree — the same exemption `agents.md` gives
- * dated records from the acronym-casing convention and the banned vocabulary.
+ * rather than a claim about the current tree.
+ * The same exemption `agents.md` gives dated records from the acronym-casing
+ * convention and the banned vocabulary.
+ *
  * This declares a class of document rather than a list of broken citations: a new stale path
  * inside one of these trees is still out of scope, and a new one outside them still fails.
  */
 const RECORD_TREES = new Map([
-	// `agents.md`: "The old implementation plan (`plan/readme.mdx`) and the phase directory are historical design
-	// records — rationale rather than current state."
+	// `agents.md`: "The old implementation plan (`plan/readme.mdx`) and the phase directory
+	// are historical design records — rationale rather than current state."
 	["docs/records/plan/", "the superseded implementation plan"],
 	["docs/records/retrospectives/", "retrospectives, written about a campaign that has ended"],
 	// The inventories the same campaign produced, each a snapshot of the tree at its phase.
@@ -223,7 +225,7 @@ export function citationTarget(text: string): string {
  * Census the backticked repository paths in `files`, resolving each against `repoRoot`.
  *
  * Every citation is repository-rooted, so it resolves against the repository root
- * rather than the citing file's directory — which is what separates this from `./links.ts`
+ * rather than the citing file's directory, which is what separates this from `./links.ts`
  * and is why the two cannot share a resolver.
  */
 export async function censusPathCitations(

@@ -85,7 +85,7 @@ describe("stripArrondissement", () => {
 	it("is a no-op for every other commune", () => {
 		expect(stripArrondissement(normalizeLocalityForKey("Bordeaux"))).toBe("bordeaux")
 		// The fold keeps hyphens (only the street normalizer splits them), so the stored commune
-		// key is hyphenated — and a commune merely containing "paris" is never stripped.
+		// key is hyphenated, and a commune merely containing "paris" is never stripped.
 		expect(stripArrondissement(normalizeLocalityForKey("Le Touquet-Paris-Plage"))).toBe("le touquet-paris-plage")
 		expect(stripArrondissement(normalizeLocalityForKey(""))).toBe("")
 	})
@@ -99,7 +99,8 @@ describe("StreetCentroidSqliteLookup", () => {
 
 	beforeAll(async () => {
 		fixture = await seedExtract([
-			// "Place Bellecour" split across two arrondissement/postcode rows, both base-commune "lyon". The weighted centroid over the two rows weights by point_count (10 @ lon 4.83, 30 @ lon 4.85).
+			// "Place Bellecour" split across two arrondissement/postcode rows, both base-commune "lyon".
+			// The weighted centroid over the two rows weights by point_count (10 @ lon 4.83, 30 @ lon 4.85).
 			{
 				street_norm: "place bellecour",
 				postcode: "69002",

@@ -87,7 +87,7 @@ export type ForkProbe = (org: string, repo: string) => Promise<ForkState>
  * A GitHub fork does not track its parent, so a fork carrying none of our commits is a
  * point-in-time snapshot that drifts further from upstream every day it sits there.
  *
- * Preferring one would read older data for no benefit, silently, on every fresh clone —
+ * Preferring one would read older data for no benefit, silently, on every fresh clone,
  * which is why a clean fork resolves upstream and says why.
  * "Prefer our fork" always meant "prefer the remote our corrections are on";
  * `diverged` is that, stated so a machine can check it.

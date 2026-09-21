@@ -193,7 +193,8 @@ export function renderSGRegister(row: SGRow, random: () => number, register?: SG
 }
 
 /**
- * Recipe registered with the corpus builder — see the file header for the registers and why each is here.
+ * Recipe registered with the corpus builder.
+ * See the file header for the registers and why each is here.
  */
 export const sgRegisterRecipe: CorpusRecipe = {
 	name: "sg-register",

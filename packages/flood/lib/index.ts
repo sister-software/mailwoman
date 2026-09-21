@@ -65,8 +65,8 @@ export const FloodReadingKind = {
 	 */
 	Designated: "designated",
 	/**
-	 * The authority determined here and assigns no zone — a designated absence,
-	 * which for this product is Zone 1.
+	 * The authority determined here and assigns no zone.
+	 * A designated absence, which for this product is Zone 1.
 	 */
 	DesignatedAbsence: "designated_absence",
 	/**
@@ -83,11 +83,13 @@ export type FloodReadingKind = (typeof FloodReadingKind)[keyof typeof FloodReadi
  */
 export const FloodContainmentPath = {
 	/**
-	 * The cell lies wholly inside the zone. no geometry was read.
+	 * The cell lies wholly inside the zone.
+	 * No geometry was read.
 	 */
 	WholeCell: "whole_cell",
 	/**
-	 * The cell is crossed by a boundary. the point was ray-cast against a named polygon.
+	 * The cell is crossed by a boundary.
+	 * The point was ray-cast against a named polygon.
 	 */
 	RayCast: "ray_cast",
 	/**
@@ -106,7 +108,8 @@ export interface FloodZoneReading {
 	/**
 	 * The authority's zone code, verbatim.
 	 *
-	 * Present on a `designated` reading. absent on the other two.
+	 * Present on a `designated` reading.
+	 * Absent on the other two.
 	 */
 	zoneCode?: string
 	/**
@@ -246,8 +249,9 @@ export class FloodZoneLookup implements Disposable {
 
 		// coverage qualifies the absence and nothing else — the same asymmetry `supportsExclusion` carries.
 		// A polygon containing the point is the authority's determination at that location,
-		// and needs no coverage row to be true. an empty answer needs one, because without
-		// it the emptiness is a statement about our map rather than theirs.
+		// and needs no coverage row to be true.
+		// An empty answer needs one, because without it the emptiness is a statement
+		// about our map rather than theirs.
 		if (zone.zoneCode) {
 			const definition = this.#definitions.get(zone.zoneCode)
 

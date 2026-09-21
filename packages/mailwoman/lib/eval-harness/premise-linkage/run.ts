@@ -259,7 +259,7 @@ function isErrored(row: PremiseLinkageResultRow): boolean {
  * Refusals leave only under `abstain_ok`, because an arm that was permitted to
  * abstain was not asked to be right on those rows.
  *
- * Under `unique_required` they stay in the denominator and count against the exact rate —
+ * Under `unique_required` they stay in the denominator and count against the exact rate,
  * while remaining `refused` in the row itself.
  */
 function eligibleRows(

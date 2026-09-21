@@ -43,14 +43,16 @@ const MIN_POSTCODE_COVERAGE = 0.7
 export const MAX_LOCALITY_ONLY_LENGTH = 30
 
 /**
- * Word count of a short capitalized phrase — the shape of a venue name like `Empire State Building`.
+ * Word count of a short capitalized phrase.
+ * The shape of a venue name like `Empire State Building`.
  *
  * Wider than this and the phrase is more likely a full address line.
  */
 const VENUE_PHRASE_MIN_WORDS = 2
 
 /**
- * Upper bound of the short-phrase venue window. see {@link VENUE_PHRASE_MIN_WORDS}.
+ * Upper bound of the short-phrase venue window.
+ * See {@link VENUE_PHRASE_MIN_WORDS}.
  */
 const VENUE_PHRASE_MAX_WORDS = 4
 
@@ -95,7 +97,8 @@ const INTERSECTION_PATTERNS = [
 /**
  * `po_box` rule: high-confidence iff QueryShape detected a po_box format hit.
  *
- * Confidence comes directly from the hit. covers all locale variants (US "PO Box 123", FR "BP 42", etc.).
+ * Confidence comes directly from the hit.
+ * Covers all locale variants (US "PO Box 123", FR "BP 42", etc.).
  */
 export function scorePoBox(_input: NormalizedInputLite, shape: QueryShapeLike): number {
 	const hit = shape.knownFormats.find((f) => f.format === "po_box")
@@ -146,9 +149,10 @@ export function wordsOf(text: string): string[] {
 }
 
 /**
- * True when a word is USPS street-suffix vocabulary that unambiguously signals
- * an address — the full Pub-28 table via `@mailwoman/codex`, minus its curated
- * name-prone canonicals (park, field, hill, lake, …).
+ * True when a word is USPS street-suffix vocabulary that unambiguously signals an address.
+ *
+ * The full Pub-28 table via `@mailwoman/codex`, minus its curated name-prone
+ * canonicals (park, field, hill, lake, …).
  *
  * Those double as ordinary proper-name heads ("Wrigley Field", "Menlo Park"), and disqualifying
  * on them would reject the very venue and place names the rules below exist to capture.
@@ -349,11 +353,13 @@ export function scorePostcodeOnly(input: NormalizedInputLite, shape: QueryShapeL
  * Distinguishes from `structured_address` (carries a house number, or more segments
  * than an admin tail needs) and `vague` (long or mixed-class).
  *
- * Every test below reads the input with its postcode spans removed. Reading the whole input instead made a postcode
- * decide the verdict: it flips the character class to `alphanumeric` and registers a known-format hit, so `Thomas, WV
- * 26292` scored 0 here while `Thomas, WV` scored 0.85, and the two differ by nothing that bears on whether a street is
- * present. That verdict chooses the parse register, and the register decides whether the decoder is fed the lexicons
- * that separate a place name from a street name (#2342).
+ * Every test below reads the input with its postcode spans removed.
+ * Reading the whole input instead made a postcode decide the verdict: it flips the character class
+ * to `alphanumeric` and registers a known-format hit, so `Thomas, WV 26292` scored 0 here while
+ * `Thomas, WV` scored 0.85, and the two differ by nothing that bears on whether a street is present.
+ *
+ * That verdict chooses the parse register, and the register decides whether the decoder
+ * is fed the lexicons that separate a place name from a street name (#2342).
  */
 export function scoreLocalityOnly(input: NormalizedInputLite, shape: QueryShapeLike): number {
 	// A non-postcode format hit is evidence of some other structure, and nothing removes it.
@@ -369,8 +375,8 @@ export function scoreLocalityOnly(input: NormalizedInputLite, shape: QueryShapeL
 		return 0
 	}
 
-	// A postcode this rule cannot place in the last segment is a format hit like any other,
-	// so it rejects — the reading this rule had before #2342.
+	// A postcode this rule cannot place in the last segment is a format hit like any other, so it rejects.
+	// The reading this rule had before #2342.
 	// Treating it as absent instead would admit an input whose postcode sits wherever the
 	// detector found it, which is what the last-segment restriction exists to refuse.
 	const removable = carriesPostcode ? mergedPostcodeSpans(shape) : []
@@ -457,7 +463,8 @@ export function scoreStructuredAddress(input: NormalizedInputLite, shape: QueryS
 /**
  * `vague` rule: nothing else fired with high confidence — input is ambiguous.
  *
- * Returns a moderate baseline so `vague` always shows up as an alternative, even when other rules dominate.
+ * @returns a moderate baseline so `vague` always shows up as an alternative,
+ * even when other rules dominate.
  * The coordinator decides whether to trust vague as the primary kind.
  */
 export function scoreVague(_input: NormalizedInputLite, _shape: QueryShapeLike): number {

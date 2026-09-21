@@ -227,7 +227,7 @@ const HTTPVFS_CHUNK_SIZE = 65_536
  *
  * Headless Chromium ships WebGPU behind this flag and grants an adapter only
  * where the host exposes a GPU, so on a headless CI box the probe still comes back empty
- * and the arm skips — which is the honest outcome rather than a failure.
+ * and the arm skips, which is the honest outcome rather than a failure.
  * The adapter's own identity goes in the receipt, because a software adapter
  * and a discrete GPU are different arms wearing the same name.
  */
@@ -924,7 +924,7 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 
 	// The byte table is snapshotted here rather than after the explicit fetches: onnxruntime-web
 	// pulls its `.wasm` during session creation and sql.js-httpvfs pulls its worker + wasm
-	// when the gazetteer page opens, so an earlier snapshot reports both classes as zero —
+	// when the gazetteer page opens, so an earlier snapshot reports both classes as zero,
 	// which reads as "this session downloads no wasm" rather than "the snapshot was early".
 	// Everything after this line is deliberately excluded: a second session on the
 	// WebGPU arm re-fetches artifacts a cold user session pays for once.

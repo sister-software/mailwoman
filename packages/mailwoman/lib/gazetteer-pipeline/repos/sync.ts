@@ -214,7 +214,7 @@ export async function inspectClone(directory: string): Promise<CloneState> {
 
 	// Compared against origin's branch rather than `@{u}`.
 	// `git remote rename origin upstream` rewrites `branch.<name>.remote`, so after a re-point
-	// the tracked upstream is the remote we moved away from — and a clone sitting exactly level
+	// the tracked upstream is the remote we moved away from, and a clone sitting exactly level
 	// with its fork reports as carrying unpushed commits, which the planner then refuses to touch.
 	// Measured on the GB checkout the moment the re-point landed: `head...@{u}` answered `35 0`
 	// while `head` and `origin/master` were the same sha.

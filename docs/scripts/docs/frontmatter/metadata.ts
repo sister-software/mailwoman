@@ -31,8 +31,9 @@ export const PAGE_ROLES = ["tutorial", "guide", "reference", "explanation", "lan
 export type PageRole = (typeof PAGE_ROLES)[number]
 
 /**
- * Roles that must carry `verified-with:` — a task/guide's captured command output
- * is only as good as the version it was run against.
+ * Roles that must carry `verified-with:`.
+ *
+ * A task/guide's captured command output is only as good as the version it was run against.
  */
 const VERIFIED_WITH_ROLES = new Set<PageRole>(["tutorial", "guide"])
 
@@ -55,10 +56,10 @@ function isDeclared(frontmatter: Record<string, unknown>, key: string): boolean 
 /**
  * Validate one page's frontmatter against the six-role interface.
  *
- * Returns human-readable failure strings prefixed with `path`, or `[]` when the page is valid.
- * A missing or unrecognized `role:` short-circuits — the role-conditional field rules
- * below don't apply until the role itself is known-good, so each of those cases returns
- * a single failure rather than compounding with the field-level checks.
+ * @returns human-readable failure strings prefixed with `path`, or `[]` when the page is valid.
+ * A missing or unrecognized `role:` short-circuits.
+ * The role-conditional field rules below don't apply until the role itself is known-good,
+ * so each of those cases returns a single failure rather than compounding with the field-level checks.
  */
 export function validatePage(frontmatter: Record<string, unknown>, path: string): string[] {
 	if (!isDeclared(frontmatter, "role")) {

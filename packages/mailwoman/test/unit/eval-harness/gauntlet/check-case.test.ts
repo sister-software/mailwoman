@@ -150,7 +150,7 @@ describe("the place-identity check (#1507)", () => {
 		// The Gaborone class, verbatim: the parse is perfect and `locality` echoes it,
 		// while the resolver returned an Austrian hamlet.
 		// `expect_components.locality` is green on this result.
-		// Only the place check can see the failure — which is what makes reading `hierarchy[0].name` required.
+		// Only the place check can see the failure, which is what makes reading `hierarchy[0].name` required.
 		const c = storedCase({
 			expect_components: stringifyJSON({ locality: "Gaborone" }),
 			expect_place_name: "Gaborone",

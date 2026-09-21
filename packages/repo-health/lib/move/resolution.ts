@@ -52,7 +52,7 @@ export interface MoveResolver {
  *
  * `contents` overrides what a file reads as, keyed by repo-relative path.
  * The manifests belong in it: a subpath KEY survives a move while its target changes,
- * so `@mailwoman/core/decoder/serialize-json` still names the moved file afterwards —
+ * so `@mailwoman/core/decoder/serialize-json` still names the moved file afterwards,
  * and a resolver reading the manifest as it stands would report that specifier
  * unrepointable and refuse a plan that is in fact complete.
  */
@@ -81,7 +81,7 @@ export function createMoveResolver(
 	 * The real path a probe names, for a probe that goes through a symlink.
 	 *
 	 * A workspace is reached as `node_modules/@mailwoman/x/…`, which is a different
-	 * string for the same file — and for a file the plan has not written yet,
+	 * string for the same file, and for a file the plan has not written yet,
 	 * `realpath` cannot answer at all, because nothing is there to resolve.
 	 * So the walk trims trailing segments until it reaches something that exists,
 	 * resolves that, and puts the trimmed segments back.

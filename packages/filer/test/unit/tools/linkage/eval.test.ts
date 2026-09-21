@@ -184,7 +184,7 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 		// that registrant's label is fully determined by its own accumulated set.
 		// Therefore, deleting the roll-up leaves it green.
 		// Here A names only P1 while B names P1 and P2.
-		// P1 unions them into one component, so the truth partition says one family —
+		// P1 unions them into one component, so the truth partition says one family,
 		// and both labels must therefore read `P1 + P2`.
 		// Without the roll-up A reads `P1` and B reads `P2 + P1`, the strings differ,
 		// and `groupPredicateFromMap` scores them as different truth families while the
@@ -234,9 +234,9 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 		// component roll-up and mask the bug.
 		//
 		// both orientations are asserted, and that is the whole test.
-		// `union` merges toward the lexicographically smaller root, so exactly one ordering
-		// of any two parent names re-roots the component away from the key the first id
-		// was filed under — and only that one orphans anything.
+		// `union` merges toward the lexicographically smaller root, so exactly one
+		// ordering of any two parent names re-roots the component away from the key the
+		// first id was filed under, and only that one orphans anything.
 		// The first version of this test fixed the Form 499 parent as "Northbridge" and the
 		// provider parent as "Southgate", which is the safe ordering: the second union re-rooted
 		// onto the existing key, nothing was dropped, and the test passed against the unfixed code.
@@ -493,8 +493,9 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 	it("moves the score off zero when ownership arrives as filer_family rows", async () => {
 		const injected = await runInjected()
 
-		// 3 of the 6 truth-positive pairs are the Cascade ones. none of the Meridian pairs is reachable
-		// from this injection, so recall lands at exactly one half with nothing falsely merged.
+		// 3 of the 6 truth-positive pairs are the Cascade ones.
+		// None of the Meridian pairs is reachable from this injection, so recall lands
+		// at exactly one half with nothing falsely merged.
 		expect(injected.score.truePositivePairs).toBe(3)
 		expect(injected.score.falsePositivePairs).toBe(0)
 		expect(injected.score.recall).toBe(0.5)
@@ -584,7 +585,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 
 		// The plan and this eval's own page both assert, as a measured fact,
 		// that wiring edgar in as inferred `Subsidiary` edges leaves recall at 0.000
-		// and only `filer_family` rows move it — with nothing in-repo to re-derive it from.
+		// and only `filer_family` rows move it, with nothing in-repo to re-derive it from.
 		// This test is that artifact: the exact edge shape an edgar importer emits.
 		const injected = await runLinkagePass({
 			inputs: buildFilteredEvalInputs(),

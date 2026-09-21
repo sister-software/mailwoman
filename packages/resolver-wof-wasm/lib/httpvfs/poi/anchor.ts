@@ -45,11 +45,14 @@ export interface AnchorCenter {
 /**
  * Split an anchor string into a locality + an optional region qualifier, without a neural parse.
  *
- * Two forms: a comma ("Springfield, IL") splits there. otherwise a trailing US state
- * abbreviation token ("Springfield IL" — the common comma-less form) splits on whitespace.
- * Anything else is treated as a bare locality name — no disambiguation region, population-first candidate
- * ranking wins (which is exactly the ambiguity a query like "Springfield" alone has: this tester
- * makes no claim to resolve it "correctly", only consistently with the `/demo` cascade's default).
+ * Two forms: a comma ("Springfield, IL") splits there.
+ * Otherwise a trailing US state abbreviation token
+ * ("Springfield IL" — the common comma-less form) splits on whitespace.
+ *
+ * Anything else is treated as a bare locality name.
+ * No disambiguation region, population-first candidate ranking wins
+ * (which is exactly the ambiguity a query like "Springfield" alone has: this tester makes no
+ * claim to resolve it "correctly", only consistently with the `/demo` cascade's default).
  */
 function splitAnchor(text: string): { localityText: string; regionText?: string } {
 	const commaIndex = text.indexOf(",")

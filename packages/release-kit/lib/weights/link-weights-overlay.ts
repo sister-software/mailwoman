@@ -120,7 +120,7 @@ export async function linkWeightsOverlay(options: LinkWeightsOverlayOptions): Pr
 		// copied rather than linked.
 		// Every other overlay entry points at the data root, which outlives any checkout.
 		// A symlink to the card would make the whole overlay depend on one working tree
-		// still existing at that path — and a worktree removed after linking would leave
+		// still existing at that path, and a worktree removed after linking would leave
 		// the overlay resolving a dangling card, which degrades to STAGE2_BIO_LABELS
 		// against a 33-logit model rather than to an error.
 		if ((await pathExists(cardSource)) && !plan) {

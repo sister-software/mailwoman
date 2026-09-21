@@ -134,7 +134,7 @@ async function serveFromDerivedStore(context: MaterializationContext, dir: strin
 
 	// Unlink first.
 	// `fs.copyFile` follows a symlink at the destination and writes through it, leaving the
-	// symlink in place — and the registry refuses a tarball containing one (http 415, YN0035).
+	// symlink in place, and the registry refuses a tarball containing one (http 415, YN0035).
 	// Same discipline as the rest of this module.
 	// See agents.md "symlinks in the publish tarball".
 	await removePathIfPresent(dest)
@@ -241,7 +241,7 @@ export async function copyWeights({
 		const tokenizerDest = resolvePath(dir, "tokenizer.model")
 		// Unlink first so a pre-existing symlink (from link-dev-weights.ts) is replaced with a real file.
 		// Otherwise copyFile follows the symlink and writes through it, leaving the symlink in
-		// place — which yarn refuses to publish (npm registry rejects symlinks with http 415).
+		// place, which yarn refuses to publish (npm registry rejects symlinks with http 415).
 		await removePathIfPresent(modelDest)
 		await removePathIfPresent(tokenizerDest)
 		await copyFileTo(sourceModel, modelDest)
@@ -350,8 +350,8 @@ async function materializeStreetMorphology(context: MaterializationContext, work
  * Materialize the #718 D1 soft-feed artifacts into a weights workspace:
  * the gazetteer-anchor lexicon (a verbatim copy)
  *
- * - The per-country PCB1 postcode-anchor binary (built fresh from the WOF extract). Both `removeIfPresent` first — same
- *   symlink-in-tarball trap the model/tokenizer copy guards against.
+ * - The per-country PCB1 postcode-anchor binary (built fresh from the WOF extract).
+ *   Both `removeIfPresent` first — same symlink-in-tarball trap the model/tokenizer copy guards against.
  */
 async function materializeSoftFeed(context: MaterializationContext, workspace: string, dir: string) {
 	// Repo-committed lexicons (gazetteer #464, country #1104, street-type Option-A) — verbatim copies,

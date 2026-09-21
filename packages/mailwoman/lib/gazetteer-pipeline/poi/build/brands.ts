@@ -49,7 +49,9 @@ export { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "#gazetteer-pipeline/poi/def
 export const BRAND_TABLE_VERSION = "0.2.0"
 
 /**
- * Default `poi.db` read location — same default `build/poi.tsx`'s command uses for its `--out`.
+ * Default `poi.db` read location.
+ *
+ * Same default `build/poi.tsx`'s command uses for its `--out`.
  */
 export function defaultPOIDatabasePath(): PathBuilder {
 	return dataRootPath("poi", "poi.db")
@@ -79,8 +81,8 @@ export interface BrandNameCount {
 }
 
 /**
- * Reads the exact aggregate the design calls for: `select brand_wikidata, name, count(*) n from poi where
- * brand_wikidata is not NULL and name is not NULL group BY brand_wikidata, name`.
+ * Reads the exact aggregate the design calls for:
+ * `select brand_wikidata, name, count(*) n from poi where brand_wikidata is not NULL and name is not NULL group BY brand_wikidata, name`.
  *
  * Opens `dbPath` read-only.
  * This builder only ever reads a sealed `poi.db`, never writes one.

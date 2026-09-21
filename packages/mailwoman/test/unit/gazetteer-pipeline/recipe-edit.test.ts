@@ -39,7 +39,7 @@ describe("addCountry", () => {
 
 	it("does not separate a comment block from the entry it belongs to", () => {
 		// "IL" sorts before "IN", so a naive insertion lands between the prose and the entry
-		// it explains — leaving a comment that now describes the wrong country.
+		// it explains, leaving a comment that now describes the wrong country.
 		const result = addCountry(LIST, "DEFAULT_OVERTURE_COUNTRIES", "IL")
 
 		expect(result.ok).toBe(true)

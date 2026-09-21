@@ -89,7 +89,7 @@ export interface AbsenceProbeReceipt {
 
 export interface AbsenceProbeOptions extends POIBoardOptions {
 	/**
-	 * Override the frozen pre-registration — for a test that wants a synthetic definition.
+	 * Override the frozen pre-registration, for a test that wants a synthetic definition.
 	 *
 	 * A run with no override reads the committed one.
 	 */

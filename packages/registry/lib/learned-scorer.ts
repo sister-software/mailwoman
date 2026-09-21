@@ -127,8 +127,9 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 /**
  * Wrap a trained {@link GBT} into the `(a, b) => number` link scorer for {@link ResolveConfig.scorer}.
  *
- * The returned weight is the model's logit — same threshold-comparable units as the Fellegi-Sunter
- * weight it replaces, so the pipeline's clustering + threshold semantics are unchanged.
+ * The returned weight is the model's logit.
+ * Same threshold-comparable units as the Fellegi-Sunter weight it replaces,
+ * so the pipeline's clustering + threshold semantics are unchanged.
  */
 export function createGBTScorer(
 	config: LearnedFeatureConfig & { model: GBT }

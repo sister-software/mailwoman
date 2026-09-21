@@ -59,7 +59,7 @@ export const MAPPED_LEGACY_CLASSIFICATIONS = Object.keys(LEGACY_TO_COMPONENT) as
 /**
  * Inverse of {@link LEGACY_TO_COMPONENT}.
  *
- * Picks the first legacy entry that maps to each component — for tags with multiple legacy
+ * Picks the first legacy entry that maps to each component, for tags with multiple legacy
  * aliases (e.g. `intersection_a` and `intersection_b` both come from legacy `intersection`),
  * the deterministic "first wins" rule is documented and tested.
  */

@@ -38,7 +38,7 @@ import { inputSetProvenance, provenanceFor } from "#tool-kit"
 /**
  * Mechanisms whose L1 zero is expected, each with the reason a reader can check.
  *
- * The census reports them as `allowlisted`, never as inert — and an allowlisted mechanism
+ * The census reports them as `allowlisted`, never as inert, and an allowlisted mechanism
  * that unexpectedly fires is reported loudly, because the reason on file is then stale.
  */
 export const CENSUS_ALLOWLIST: Partial<Record<string, string>> = {
@@ -53,8 +53,10 @@ export const CENSUS_ALLOWLIST: Partial<Record<string, string>> = {
 }
 
 /**
- * One row's entry in the census — kept so a reader can go from an inert mechanism to the
- * rows that should have fired it, and from a starvation count to the exact inputs.
+ * One row's entry in the census.
+ *
+ * Kept so a reader can go from an inert mechanism to the rows that should have fired it,
+ * and from a starvation count to the exact inputs.
  */
 export interface CensusRow {
 	id: string

@@ -23,8 +23,10 @@ import {
 } from "#schema"
 
 /**
- * A friendly html landing page for `GET /` (#1022). libpostal's own rest server has no
- * root page, so there's no wire interface to match — pure courtesy for browser visitors.
+ * A friendly html landing page for `GET /` (#1022).
+ *
+ * Libpostal's own rest server has no root page, so there's no wire interface to match —
+ * pure courtesy for browser visitors.
  *
  * Relative example URLs so they resolve against whatever host/port serves this.
  */
@@ -61,7 +63,7 @@ footer { margin-top: 2rem; font-size: .9rem; opacity: .8 }
 `
 
 /**
- * Query-side request schema, shared by the GET routes (documented. presence enforced in-handler).
+ * Query-side request schema, shared by the GET routes (documented. Presence enforced in-handler).
  */
 const parseQueryParams = z.object({
 	query: z.string().optional().openapi({ description: "The address to parse. `address` is accepted as an alias." }),
@@ -147,12 +149,13 @@ const expandPostRoute = createRoute({
 })
 
 /**
- * Read the JSON body if present and parseable. a missing/malformed body is `{}` (legacy tolerance).
+ * Read the JSON body if present and parseable.
+ * A missing/malformed body is `{}` (legacy tolerance).
  *
  * The try/catch here re-guards what `canonicalizeJSONBody` already guarantees
  * (well-formed JSON, string-only interface fields) — deliberate defense in depth.
- * Don't drop this side's tolerance just because the middleware upstream makes it
- * look redundant. the two are meant to fail safe independently.
+ * Don't drop this side's tolerance just because the middleware upstream makes it look redundant.
+ * The two are meant to fail safe independently.
  */
 async function readBody(c: Context): Promise<Record<string, unknown>> {
 	try {
@@ -165,9 +168,10 @@ async function readBody(c: Context): Promise<Record<string, unknown>> {
 }
 
 /**
- * Coalesce candidate params by raw presence rather than truthiness — an empty-but-present
- * string must survive coalescing so it wins precedence over a lower-priority param
- * (legacy wire parity: the old handler trimmed after coalescing).
+ * Coalesce candidate params by raw presence rather than truthiness.
+ *
+ * An empty-but-present string must survive coalescing so it wins precedence over a
+ * lower-priority param (legacy wire parity: the old handler trimmed after coalescing).
  *
  * The `typeof value === "string"` check re-guards what `canonicalizeJSONBody` already
  * guarantees (only string-typed interface fields survive) — deliberate defense in depth

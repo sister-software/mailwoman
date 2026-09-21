@@ -234,7 +234,7 @@ export interface LatencyBand {
 export interface ArmSummary {
 	arm: LadderArm
 	/**
-	 * Headline rows the arm could answer — for `fst`, those whose country has an FST.
+	 * Headline rows the arm could answer, for `fst`, those whose country has an FST.
 	 */
 	rows: number
 	/**

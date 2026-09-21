@@ -53,7 +53,8 @@ export interface SubVenueHarvestRow {
 	/**
 	 * The designator the source's rule assigned to the feature.
 	 *
-	 * Not necessarily the record a matched phrase names — see this file's header on phrase attribution.
+	 * Not necessarily the record a matched phrase names.
+	 * See this file's header on phrase attribution.
 	 * Carried into {@link SubVenueSurface.context}.
 	 */
 	designatorID: string
@@ -107,7 +108,7 @@ export function classifyIdentifier(ref: string): string {
 const IDENTIFIER_EXAMPLES_PER_SHAPE = 8
 
 /**
- * Options for one harvest pass — which source stamp its surfaces carry and
+ * Options for one harvest pass, which source stamp its surfaces carry and
  * which region they were attested in.
  *
  * Both default to the OSM/unknown-region values wave 1 hardcoded, so an existing caller is unchanged.

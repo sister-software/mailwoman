@@ -17,7 +17,8 @@ export interface LicenseEmail {
 	issued: string
 	expires: string
 	/**
-	 * The agreement version the license was bought under. the message links its page.
+	 * The agreement version the license was bought under.
+	 * The message links its page.
 	 */
 	agreement: string
 	/**

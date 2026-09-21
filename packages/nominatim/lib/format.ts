@@ -37,7 +37,8 @@ export interface NominatimFeatureCollection {
  * Nominatim moves the coordinate into `geometry` (a Point, or the place polygon when one is present),
  * `boundingbox` ([south, north, west, east]) into a GeoJSON `bbox` ([west, south, east, north]),
  * and the remaining result fields into `properties`.
- * Rows without a coordinate are dropped — a Feature needs a geometry.
+ * Rows without a coordinate are dropped.
+ * A Feature needs a geometry.
  */
 export function toFeatureCollection(results: readonly NominatimResult[]): NominatimFeatureCollection {
 	const features: NominatimFeatureCollection["features"] = []
@@ -70,8 +71,9 @@ export function toFeatureCollection(results: readonly NominatimResult[]): Nomina
 /**
  * A resolved address in a neutral shape, the input to {@link toNominatimResult}.
  *
- * The engine maps its native geocode/reverse result into this. the formatter
- * renders it as a Nominatim result.
+ * The engine maps its native geocode/reverse result into this.
+ * The formatter renders it as a Nominatim result.
+ *
  * This is the #804 mapping boundary, kept dependency-free (no `@mailwoman/*` import)
  * so it stays unit-testable.
  */
@@ -80,7 +82,8 @@ export interface ResolvedAddress {
 	lon: number | null
 	address: NominatimAddressDetails
 	/**
-	 * Pre-rendered display name. falls back to the address values joined by ", ".
+	 * Pre-rendered display name.
+	 * Falls back to the address values joined by ", ".
 	 */
 	displayName?: string
 	category?: string

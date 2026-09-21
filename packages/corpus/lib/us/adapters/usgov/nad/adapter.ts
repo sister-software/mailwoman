@@ -250,7 +250,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 				if (opts.signal?.aborted) break
 				// TextSpliterator streams string lines.
 				// The per-line tryParsingJSON below keeps the reader tolerant of malformed rows (skip silently),
-				// so TextSpliterator + a non-throwing parse — not JSONSpliterator, which would throw.
+				// so TextSpliterator + a non-throwing parse, not JSONSpliterator, which would throw.
 				// The path string lets the lib own + dispose each file's handle,
 				// including on the `break outer` early exit.
 				const lines = TextSpliterator.fromAsync(join(opts.inputPath, file))

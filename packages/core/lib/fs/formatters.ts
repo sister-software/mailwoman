@@ -34,10 +34,11 @@ export interface ByteFormatterOptions {
  * and the label is the only thing telling a reader which it did.
  * So the choice is named at the call site:
  *
- * - {@linkcode ByteFormatter.formatIEC} for anything a machine measured — heap, file size on disk, buffer length.
- * - {@linkcode ByteFormatter.formatSI} for a size a vendor reports. Disk capacity, download sizes and GitHub's own API
- *   are quoted in powers of ten. Rendering GitHub's `41.3 GB` as `38.5 GiB` is correct arithmetic and the wrong
- *   answer.
+ * - {@linkcode ByteFormatter.formatIEC} for anything a machine measured — heap,
+ *   file size on disk, buffer length.
+ * - {@linkcode ByteFormatter.formatSI} for a size a vendor reports.
+ *   Disk capacity, download sizes and GitHub's own API are quoted in powers of ten.
+ *   Rendering GitHub's `41.3 GB` as `38.5 GiB` is correct arithmetic and the wrong answer.
  *
  * Rendering goes through `Intl.NumberFormat`, so the unit and the decimal separator follow the locale.
  * Pass an explicit locale when a caller needs a stable string — a test asserting

@@ -35,8 +35,9 @@ export interface PlacetypeGraphLink {
 /**
  * Node-link projection of the placetype DAG rooted at a given placetype.
  *
- * Each node and each (parent, child) edge appears exactly once — see {@linkcode generatePlacetypeGraph}
- * for why this is the preferred shape when the root has many shared descendants (e.g. `planet`).
+ * Each node and each (parent, child) edge appears exactly once.
+ * See {@linkcode generatePlacetypeGraph} for why this is the preferred shape
+ * when the root has many shared descendants (e.g. `planet`).
  */
 export interface PlacetypeGraph {
 	root: string

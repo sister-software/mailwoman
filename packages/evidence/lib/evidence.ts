@@ -63,7 +63,8 @@ export function observation(source: string, vintage: string | null, value: unkno
 }
 
 /**
- * A relation stated by a source is authoritative and carries no score. one we concluded is inferred and may.
+ * A relation stated by a source is authoritative and carries no score.
+ * One we concluded is inferred and may.
  *
  * A score on an authoritative relation is refused, because it means the link
  * was concluded rather than stated.

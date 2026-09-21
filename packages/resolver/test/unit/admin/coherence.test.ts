@@ -308,7 +308,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 		// "Georgia" names both a country and a US state, but the fall-through must never fire
 		// when the pair is genuinely domestic.
 		// Atlanta resolves under the US state in the walk, so reconcileAdminPair's
-		// unresolved-locality branch never runs — and even if it did, a Springfield-style
+		// unresolved-locality branch never runs, and even if it did, a Springfield-style
 		// US token ("Illinois"/"ME") returns null from matchCountry.
 		// Guards byte-stability on the domestic path.
 		const usGeorgia = {

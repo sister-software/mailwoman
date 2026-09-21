@@ -49,7 +49,7 @@ describe("npx mailwoman parse --resolve error paths", () => {
 		// the runtime pipeline handles classification + resolution end-to-end.
 		// The remaining error path is "no gazetteer available", which means both backends
 		// unreachable: no WOF database and no candidate.db.
-		// `MAILWOMAN_CANDIDATE_DB=none` is what pins the second one off — leaving it unset lets
+		// `MAILWOMAN_CANDIDATE_DB=none` is what pins the second one off, leaving it unset lets
 		// the convention path answer, and on any machine that has run `data pull candidate`
 		// the command then succeeds and this test's premise is gone.
 		await expect(

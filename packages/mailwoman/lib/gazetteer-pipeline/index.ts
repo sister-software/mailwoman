@@ -58,8 +58,9 @@ import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest
  * The canonical postcode-database set (filenames under `<data-root>/wof/`):
  * US + the WOF intl database (NL/FR/DE/ES/IT)
  *
- * - The GeoNames intl database (PT/AU) + the OS Code-Point Open GB database + the OSM Northern Ireland database + the
- *   GeoNames-postal tail database (nine countries) + Overture postcode centroids (CA + the EU-coverage locales).
+ * - The GeoNames intl database (PT/AU) + the OS Code-Point Open GB database + the OSM
+ *   Northern Ireland database + the GeoNames-postal tail database (nine countries) +
+ *   Overture postcode centroids (CA + the EU-coverage locales).
  *   Missing databases are skipped rather than fatal.
  *
  * That skip is not merely tolerant.
@@ -76,7 +77,7 @@ import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest
  * Every member is spelled `postalcode-`, and that is a routing interface rather than a house style.
  * `deriveSchemaName` (`resolver-wof-sqlite/extracts.ts`) turns the filename into
  * the attached SQL schema name, and `pickExtractsForPlacetype` selects by testing
- * that name against the placetype — which is `postalcode`.
+ * that name against the placetype, which is `postalcode`.
  *
  * A database added here as `postcode-<cc>.db` builds the candidate table
  * fine (the builders read `spr` directly) and is then unreachable to any
@@ -89,13 +90,33 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	"postalcode-us.db",
 	"postalcode-intl.db",
 	"postalcode-geonames-intl.db",
-	// GB via OS Code-Point Open under OGL v3 (operator licence ruling 2026-08-05): 1,746,976 unit postcodes, England+Scotland+Wales — no Northern Ireland (excluded from every permissive UK grant. See the codepoint builder's NI note). Replaces the GeoNames GB rows, which the 2026-08-05 parity check measured as the same survey (max coordinate delta 6.6 m over 1.75M joined rows) under a muddled licence. Rebuild: `mailwoman gazetteer build postcode-codepoint`.
+	// GB via OS Code-Point Open under OGL v3 (operator licence ruling 2026-08-05):
+	// 1,746,976 unit postcodes, England+Scotland+Wales — no Northern Ireland
+	// (excluded from every permissive UK grant. See the codepoint builder's NI note).
+	// Replaces the GeoNames GB rows, which the 2026-08-05 parity check measured as the same
+	// survey (max coordinate delta 6.6 m over 1.75M joined rows) under a muddled licence.
+	// Rebuild: `mailwoman gazetteer build postcode-codepoint`.
 	"postalcode-gb-codepoint.db",
-	// Northern Ireland (BT), the hole Code-Point Open leaves — 4,757 of 50,032 live NI postcodes (9.5 %), 250/886 sectors, 80/80 districts, from OpenStreetMap `addr:postcode` (2026-08-05 extract). A miss on a BT code means not attested IN OSM rather than that the code does not exist. Since #1480 an unknown postcode abstains, so the partial database is strictly additive.
+	// Northern Ireland (BT), the hole Code-Point Open leaves — 4,757 of 50,032 live NI postcodes (9.5 %),
+	// 250/886 sectors, 80/80 districts, from OpenStreetMap `addr:postcode` (2026-08-05 extract).
+	// A miss on a BT code means not attested IN OSM rather than that the code does not exist.
+	// Since #1480 an unknown postcode abstains, so the partial database is strictly additive.
 	//
-	// build-local tier — ODbL 1.0 is share-alike on a Derived Database, so this artifact is never published to npm, R2 or the demo. It is present only on a machine that built it, and the `pathExists` filter in `resolvePostcodeDatabases` is that tier's mechanism: a deployment without the file simply has no NI coverage, exactly as before. Rebuild: `mailwoman gazetteer build postcode-ni-osm` (add `--offline` to rebuild from the saved Overpass response rather than re-querying a volunteer endpoint).
+	// build-local tier — ODbL 1.0 is share-alike on a Derived Database, so this
+	// artifact is never published to npm, R2 or the demo.
+	// It is present only on a machine that built it, and the `pathExists` filter in
+	// `resolvePostcodeDatabases` is that tier's mechanism: a deployment without the
+	// file simply has no NI coverage, exactly as before.
+	// Rebuild: `mailwoman gazetteer build postcode-ni-osm` (add `--offline` to rebuild from
+	// the saved Overpass response rather than re-querying a volunteer endpoint).
 	"postalcode-ni-osm.db",
-	// Japan's 7-digit codes from WOF (142,604 rows. 48,216 carry the 0,0 unlocated sentinel, which the candidate fold skips by construction). The located 94,388 answer a 町域 centroid: on 637 postcode-containing JP board rows the centroid sits 0.52 km (p50) / 2.31 km (p90) from the entrance point, against the 15–19 km municipality centroid the admin walk otherwise reaches. Every located row passes @15 km and 36 of 2,000 that failed on the municipality pass on the code. The fold arrives with the next candidate rebuild.
+	// Japan's 7-digit codes from WOF (142,604 rows. 48,216 carry the 0,0 unlocated sentinel,
+	// which the candidate fold skips by construction).
+	// The located 94,388 answer a 町域 centroid: on 637 postcode-containing JP board
+	// rows the centroid sits 0.52 km (p50) / 2.31 km (p90) from the entrance point,
+	// against the 15–19 km municipality centroid the admin walk otherwise reaches.
+	// Every located row passes @15 km and 36 of 2,000 that failed on the municipality pass on the code.
+	// The fold arrives with the next candidate rebuild.
 	"postalcode-jp.db",
 	// #920: the GeoNames-postal tail database. TEN countries in ingest order FI/CZ/SK/SI/DK/no/HR/PL/SE/be (57,221 rows. Belgium joined 2026-08-12 with 1,146 codes after the Overture Belgium parquet measured too thin — 203 codes, none of the eu-mixed panel's). GB rode in this database 2026-07-03 → 2026-08-05 and moved to Code-Point Open above. The swap is parity-conditional: the nine prior countries re-joined byte-identical (56,075 rows, worst coordinate delta 0). Rebuild: `mailwoman gazetteer build postcode-geonames --countries FI,CZ,SK,SI,DK,no,HR,PL,SE,be`.
 	"postalcode-geonames-tail.db",
@@ -103,7 +124,10 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	...["at", "be", "ch", "cz", "dk", "es", "fi", "hr", "lt", "lu", "lv", "no", "pl", "pt", "si", "sk"].map(
 		(cc) => `postalcode-${cc}-overture.db`
 	),
-	// Singapore: a six-digit postcode names one building, so the per-postcode centroid of the Overture rows (123,883 codes from the OneMap / Singapore Land Authority register, Singapore Open Data Licence 1.0 under Overture's cdla-Permissive-2.0) answers at rooftop grade with no training. Rebuild: `mailwoman eval es-postcode-centroids --country SG --pc-len 0 --parquet <overture>/addresses-sg.parquet`.
+	// Singapore: a six-digit postcode names one building, so the per-postcode centroid of the Overture
+	// rows (123,883 codes from the OneMap / Singapore Land Authority register, Singapore Open Data
+	// Licence 1.0 under Overture's cdla-Permissive-2.0) answers at rooftop grade with no training.
+	// Rebuild: `mailwoman eval es-postcode-centroids --country SG --pc-len 0 --parquet <overture>/addresses-sg.parquet`.
 	"postalcode-sg-overture.db",
 ]
 
@@ -174,9 +198,14 @@ export async function resolvePostcodeDatabases(
  */
 export const DEFAULT_LOCALITY_DATABASES: readonly string[] = [
 	"localities-nz-linz.db",
-	// The Prague municipal districts (`Praha 9` — the #42 pair rung's missing locality half. 22 rows from GeoNames CZ, `gazetteer build cz-districts`). Verified 2026-08-12: the Chabeřická panel row moved from a 6,733 km US answer to CZ at ~400 m.
+	// The Prague municipal districts (`Praha 9` — the #42 pair rung's missing locality
+	// half. 22 rows from GeoNames CZ, `gazetteer build cz-districts`).
+	// Verified 2026-08-12: the Chabeřická panel row moved from a 6,733 km US answer to CZ at ~400 m.
 	"localities-cz-districts.db",
-	// Taiwan's 鄉鎮市區 from the civil-affairs address register (`gazetteer build tw-districts`), each row carrying its 縣市's WOF region as an `ancestors` row so the fold stamps the region scope. The admin artifact's own copies of the tier are unusable for a Han query: the Han-keyed record has no parent, the parented one no Han name.
+	// Taiwan's 鄉鎮市區 from the civil-affairs address register (`gazetteer build tw-districts`),
+	// each row carrying its 縣市's WOF region as an `ancestors` row so the fold stamps the region scope.
+	// The admin artifact's own copies of the tier are unusable for a Han query:
+	// the Han-keyed record has no parent, the parented one no Han name.
 	"localities-tw-districts.db",
 ]
 
@@ -219,7 +248,8 @@ export async function resolveImportanceDB(
 
 export interface FoldOptions {
 	/**
-	 * Source admin (unified-WOF) DB — read via the copy, never mutated.
+	 * Source admin (unified-WOF) DB.
+	 * Read via the copy, never mutated.
 	 */
 	adminIn: string
 	/**
@@ -337,7 +367,7 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 
 	opts.onPhase?.("copy", `copying admin DB → ${opts.adminOut}`)
 	// The admin source is sealed 0444 (sealDatabase is every builder's last step), and copyFileTo stamps
-	// the source mode onto a fresh copy — or writes through an existing destination keeping its mode.
+	// the source mode onto a fresh copy, or writes through an existing destination keeping its mode.
 	// Remove any stale copy, then restore the write bit: the copy is fold staging rather than the
 	// sealed artifact (2026-08-04: first candidate build against a sealed admin died on this).
 	await removePathIfPresent(opts.adminOut)
@@ -450,8 +480,8 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 
 	// The layer interface's manifest, alongside the coverage one and for the same reason:
 	// facts about the artifact live IN the artifact.
-	// It names its ancestor rather than restating the ancestor's sources —
-	// see candidate-manifest.ts for why a derived layer's provenance has to be a chain.
+	// It names its ancestor rather than restating the ancestor's sources.
+	// See candidate-manifest.ts for why a derived layer's provenance has to be a chain.
 	opts.onProgress?.("layer-manifest", "stamping provenance")
 	const sha = buildSHA(String(repoRootPath()))
 
@@ -487,7 +517,7 @@ export async function promoteCandidate(candidateDB: string, dataRoot: string = m
 	if (!(await pathExists(candidateDB))) throw new Error(`candidate DB not found: ${candidateDB}`)
 	const linkPath = join(wofDir(dataRoot), "candidate.db")
 
-	// Replace any existing pointer (symlink or stray file) — never the build it points at.
+	// Replace any existing pointer (symlink or stray file), never the build it points at.
 	try {
 		if (await statLink(linkPath)) {
 			await removePath(linkPath)

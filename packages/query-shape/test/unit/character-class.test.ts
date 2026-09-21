@@ -207,21 +207,24 @@ describe("scriptForCodepoint", () => {
 	 * The converse, and the direction the first version of this suite did not check.
 	 *
 	 * Asserting only that what we claim is a script really is one stops the table over-claiming
-	 * and says nothing about what it misses — and a range cannot express an exception,
+	 * and says nothing about what it misses, and a range cannot express an exception,
 	 * so a block holding two scripts gets drawn through.
 	 * Both of this file's misses were that: `COMMON_RANGES` took `0x3000..0x303f` whole,
-	 * and Unicode assigns 々 (U+3005) and 〇 (U+3007) inside it to Han. it took
-	 * `0x3099..0x30a0` whole, and U+309D..309F are Hiragana.
+	 * and Unicode assigns 々 (U+3005) and 〇 (U+3007) inside it to Han.
+	 *
+	 * It took `0x3099..0x30a0` whole, and U+309D..309F are Hiragana.
 	 *
 	 * The allowance is per script rather than global, and each number is a measurement
 	 * of what is left uncovered rather than a target.
-	 * Tightening one is a change with its own evidence. a number that grows is a
-	 * script the table stopped answering for.
+	 * Tightening one is a change with its own evidence.
+	 *
+	 * A number that grows is a script the table stopped answering for.
 	 */
 	const UNCOVERED_ALLOWANCE: Readonly<Record<string, number>> = {
 		// Hentaigana, the historic hiragana variants, at U+1B002 and above.
 		Hira: 291,
-		// Circled and squared katakana words — U+32D0.. and U+3300.., typographic rather than written.
+		// Circled and squared katakana words — U+32D0..
+		// And U+3300.., typographic rather than written.
 		Kana: 157,
 		Hang: 0,
 		// Ideographic symbols and punctuation in the supplementary plane, U+16FE2 and U+16FF0..16FF6.

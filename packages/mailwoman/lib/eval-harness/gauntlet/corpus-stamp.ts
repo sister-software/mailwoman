@@ -46,7 +46,7 @@ export type CorpusStamp = Pick<GauntletMetaTable, "corpus_hash" | "case_count" |
  *
  * The builder's own guard, and the one the hash cannot provide.
  * A compiled tree pointing at a `cases/` directory with no country dirs loads cleanly,
- * returns `[]`, and builds a perfectly valid empty DB — which then grades 0/0 and passes.
+ * returns `[]`, and builds a perfectly valid empty DB, which then grades 0/0 and passes.
  */
 export function assertCorpusIsNonEmpty(rows: readonly SeedCase[], dir: PathBuilderLike = CASES_DIR): void {
 	if (rows.length) return

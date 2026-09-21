@@ -56,8 +56,9 @@ export function mean(xs: readonly number[]): number | null {
 }
 
 /**
- * {@link percentile} over an already-sorted ascending list — same nearest-rank convention,
- * no copy, for the callers that sort once and read many percentiles.
+ * {@link percentile} over an already-sorted ascending list.
+ *
+ * Same nearest-rank convention, no copy, for the callers that sort once and read many percentiles.
  */
 export function percentileSorted(sorted: readonly number[], p: number): number | null {
 	if (!sorted.length) return null

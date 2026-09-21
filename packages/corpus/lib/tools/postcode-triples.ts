@@ -120,7 +120,9 @@ export const POSTCODE_CONVENTIONS: ReadonlyMap<
 	string,
 	{ placement: PostcodePlacement; locale: string; localityColumn?: GeonamesLocalityColumn }
 > = new Map([
-	// `Rue de l'Église, 3, 29217 Plougonvelin, Bretagne, France` and its siblings — `fr_structured`, `de_structured`, `es_structured`, `it_structured`, `pt_structured`, `mx_supermanzana`, `nl-op4-p-r-sloterdijk`.
+	// `Rue de l'Église, 3, 29217 Plougonvelin, Bretagne, France` and its siblings —
+	// `fr_structured`, `de_structured`, `es_structured`, `it_structured`, `pt_structured`,
+	// `mx_supermanzana`, `nl-op4-p-r-sloterdijk`.
 	["FR", { placement: "leading", locale: "fr-FR" }],
 	["DE", { placement: "leading", locale: "de-DE" }],
 	["ES", { placement: "leading", locale: "es-ES" }],
@@ -128,13 +130,25 @@ export const POSTCODE_CONVENTIONS: ReadonlyMap<
 	["NL", { placement: "leading", locale: "nl-NL" }],
 	["PT", { placement: "leading", locale: "pt-PT" }],
 	["MX", { placement: "leading", locale: "es-MX" }],
-	// `…, Barcelona 6001, Anzoátegui, Venezuela` — the four `ve_city_postcode_trailing_state` rows. No postcode source on disk and GeoNames does not publish VE, so this entry currently yields nothing. It is here because the placement is what makes the absence legible.
+	// `…, Barcelona 6001, Anzoátegui, Venezuela` — the four `ve_city_postcode_trailing_state` rows.
+	// No postcode source on disk and GeoNames does not publish VE, so this entry currently yields nothing.
+	// It is here because the placement is what makes the absence legible.
 	["VE", { placement: "after_locality", locale: "es-VE" }],
-	// `12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India` — three `in_*` rows, and `agents.md` says the same ("en-IN is absent because the PIN goes last"). The one trailing placement with real data behind it.
+	// `12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India`.
+	// Three `in_*` rows, and `agents.md` says the same ("en-IN is absent because the PIN goes last").
+	// The one trailing placement with real data behind it.
 	["IN", { placement: "after_region", locale: "en-IN" }],
-	// `Washington, DC 20003` — the #2303 class, and the same placement as IN. Attested by the four `us_city_state_postcode` board rows, which is the bar this table sets. The US had no entry here at all, so no recipe emitted a US city in front of a state code and a ZIP without a street ahead of it, and the model reads the bare city as a street 45.7% of the time. `localityColumn` is what keeps it from training counties.
+	// `Washington, DC 20003` — the #2303 class, and the same placement as IN.
+	// Attested by the four `us_city_state_postcode` board rows, which is the bar this table sets.
+	// The US had no entry here at all, so no recipe emitted a US city in front of a state code and a ZIP
+	// without a street ahead of it, and the model reads the bare city as a street 45.7% of the time.
+	// `localityColumn` is what keeps it from training counties.
 	["US", { placement: "after_region", locale: "en-US", localityColumn: "place" }],
-	// `shcs Superquadra Sul 308 - Asa Sul, Brasília - Federal District, 70390-100, Brazil` and `Estrada do Imigrante, s/n — 3ª Légua / Galópolis — Caxias do Sul, RS 95090-020, Brazil` — two `br_*` rows, each carrying locality, region and CEP in that order, which is the bar. The default `admin2` column is right here and the US override would be wrong: BR's export writes the municipality in column 3 and admin2 alike, with the state in admin1.
+	// `shcs Superquadra Sul 308 - Asa Sul, Brasília - Federal District, 70390-100, Brazil`
+	// and `Estrada do Imigrante, s/n — 3ª Légua / Galópolis — Caxias do Sul, RS 95090-020, Brazil` —
+	// two `br_*` rows, each carrying locality, region and CEP in that order, which is the bar.
+	// The default `admin2` column is right here and the US override would be wrong:
+	// BR's export writes the municipality in column 3 and admin2 alike, with the state in admin1.
 	//
 	//     BR  69945-000  Acrelândia  Acre  01  Acrelândia  1200013
 	["BR", { placement: "after_region", locale: "pt-BR" }],
@@ -427,8 +441,9 @@ interface SurfaceReader {
 	 */
 	region: (cc: string, id: number, sprName: string) => string[]
 	/**
-	 * The one surface the locality is written as — see {@link localityWrittenForm}
-	 * for why it is one and not a fan-out.
+	 * The one surface the locality is written as.
+	 *
+	 * See {@link localityWrittenForm} for why it is one and not a fan-out.
 	 */
 	locality: (cc: string, id: number, sprName: string) => string
 }
@@ -627,7 +642,7 @@ export async function createKnownLocalityCheck(country: string, adminDB?: string
  * so is PT (`Abrigada` inside `Alenquer`).
  * Reading column 3 as the locality is how the v4.8.0 recipe output came to teach street names as cities.
  *
- * So `admin2` is the locality, `admin1` the region, and column 3 the dependent locality —
+ * So `admin2` is the locality, `admin1` the region, and column 3 the dependent locality,
  * which is also the left context the recipe needs.
  *
  * Which countries this reader can serve.
@@ -692,7 +707,7 @@ export async function readTriplesFromGeonames(
 
 		if (!postcode || !locality || !region) continue
 
-		// The check applies to the locality rather than to the other column — which for PT/MX/IN is expected
+		// The check applies to the locality rather than to the other column, which for PT/MX/IN is expected
 		// to be a street or a colonia and is emitted as the dependent locality rather than dropped.
 		// A US county is not emitted as a dependent locality: it is an administrative tier the
 		// address line does not write, and teaching it as one would attest a segment nobody types.

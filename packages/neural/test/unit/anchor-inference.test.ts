@@ -84,10 +84,10 @@ describe("buildAnchorFeatures — alignment onto SP pieces", () => {
  *
  * Two obligations:
  *
- * 1. The default stays byte-identical to the pre-fix scan — graded against a verbatim copy of it rather than against a
- *    hash, so the oracle is readable.
- * 2. `spanMode: "shaped"` keys a span exactly the way `mailwoman_train/tokenizer.py::_paint_anchor_chars` does
- *    (`raw[begin:end].replace(" ", "").upper()`) and paints the span's full extent.
+ * 1. The default stays byte-identical to the pre-fix scan — graded against a verbatim
+ *    copy of it rather than against a hash, so the oracle is readable.
+ * 2. `spanMode: "shaped"` keys a span exactly the way `mailwoman_train/tokenizer.py::_paint_anchor_chars`
+ *    does (`raw[begin:end].replace(" ", "").upper()`) and paints the span's full extent.
  */
 describe("buildAnchorFeatures — span modes", () => {
 	/**
@@ -273,7 +273,7 @@ describe("buildAnchorFeatures — span modes", () => {
  * lowercase and the shaped keyer fired 0/120 on the gb-golden board when case normalization was off.
  *
  * The default parse path never saw it because `normalizeInputCase` restores GB postcode
- * casing first (every GB letter run is ≤2 characters, which `restoreLowerInput` uppercases) —
+ * casing first (every GB letter run is ≤2 characters, which `restoreLowerInput` uppercases),
  * but lowercase is the user register, and a `normalizeCase: false` parse lost
  * the entire GB/NL anchor channel in silence.
  */

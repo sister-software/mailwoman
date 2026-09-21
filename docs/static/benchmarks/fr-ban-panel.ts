@@ -1,47 +1,31 @@
 #!/usr/bin/env node
 //
-// fr-ban-panel — a 100-address French panel drawn from the Base Adresse Nationale, graded against
-// BAN's own rooftop coordinate, in two surface forms.
+// fr-ban-panel — a 100-address French panel drawn from the Base Adresse Nationale, graded against BAN's own rooftop coordinate, in two surface forms.
 //
 // what this measures, and what IT does not
 //
-// The French rooftop tier is the Base Adresse Nationale. `mailwoman data pull fr` downloads a extract
-// built from BAN, and this panel grades Mailwoman's answer against the same register the answer was
-// looked up in. That is circular, and it is stated on the published page beside every number it
-// touches. What survives the circularity is still worth measuring: whether the pipeline parses the
-// address into the spans the rooftop probe needs, whether it scopes the probe to the right commune,
-// and whether it does both when the surface form is rearranged. A miss here is a parse or a routing
-// failure, never a coordinate-accuracy failure. So read this panel as "does the address find its own
-// row", not as "how accurate is the coordinate".
+// The French rooftop tier is the Base Adresse Nationale. `mailwoman data pull fr` downloads a extract built from BAN, and this panel grades Mailwoman's answer against the same register the answer was looked up in. That is circular, and it is stated on the published page beside every number it touches. What survives the circularity is still worth measuring: whether the pipeline parses the address into the spans the rooftop probe needs, whether it scopes the probe to the right commune, and whether it does both when the surface form is rearranged. A miss here is a parse or a routing failure, never a coordinate-accuracy failure. So read this panel as "does the address find its own row", not as "how accurate is the coordinate".
 //
 // two arms
 //
-//   clean      "28 Avenue de l'Opéra, 75002 Paris"      — the canonical French order.
-//   reordered  "75002 Paris, 28 Avenue de l'Opéra"      — postcode and commune moved to the front.
+//   clean "28 Avenue de l'Opéra, 75002 Paris" — the canonical French order. Reordered "75002 Paris, 28 Avenue de l'Opéra" — postcode and commune moved to the front.
 //
-// The second arm is the surface-form robustness test. Nothing about the target changed. only the
-// order of the same tokens did.
+// The second arm is the surface-form robustness test. Nothing about the target changed. Only the order of the same tokens did.
 //
 // determinism
 //
-// The panel is a committed file (`fr-ban-sample.json`), not a fresh draw, so two runs on two machines
-// grade the same 100 rows. `--resample` regenerates it from a local BAN extract using the seed below.
-// the draw is a seeded pass over rowids, so the same seed against the same BAN release reproduces the
-// same panel byte for byte. A different BAN release renumbers the rows and will produce a different
-// panel — which is why the sample is committed rather than drawn at run time.
+// The panel is a committed file (`fr-ban-sample.json`), not a fresh draw, so two runs on two machines grade the same 100 rows. `--resample` regenerates it from a local BAN extract using the seed below. The draw is a seeded pass over rowids, so the same seed against the same BAN release reproduces the same panel byte for byte. A different BAN release renumbers the rows and will produce a different panel, which is why the sample is committed rather than drawn at run time.
 //
 // usage
 //
 //   npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-fr-fr \
 //               @mailwoman/resolver @mailwoman/resolver-wof-sqlite @mailwoman/ban \
 //               @mailwoman/core @mailwoman/spatial
-//   mailwoman data pull candidate fr
-//   node fr-ban-panel.mjs --data-root <DATA_ROOT> --out fr-ban-results.json
+//   mailwoman data pull candidate fr node fr-ban-panel.mjs --data-root <DATA_ROOT> --out fr-ban-results.json
 //
-//   node fr-ban-panel.mjs --resample --data-root <DATA_ROOT>   # regenerate fr-ban-sample.json
+//   node fr-ban-panel.mjs --resample --data-root <DATA_ROOT> # regenerate fr-ban-sample.json
 //
-// `--data-root` defaults to $MAILWOMAN_DATA_ROOT. The candidate gazetteer is read from
-// <DATA_ROOT>/wof/candidate.db and the BAN extract from <DATA_ROOT>/ban/address-points-fr.db.
+// `--data-root` defaults to $MAILWOMAN_DATA_ROOT. The candidate gazetteer is read from <DATA_ROOT>/wof/candidate.db and the BAN extract from <DATA_ROOT>/ban/address-points-fr.db.
 
 import { BANRegionDatabaseProvider } from "@mailwoman/ban/sdk"
 import { readLocalJSONFile, realPath } from "@mailwoman/core/fs/readers"
@@ -299,8 +283,8 @@ async function resample(): Promise<void> {
  * Without them a reader whose numbers disagree with the published ones cannot tell data drift
  * from code drift, which is the whole value of publishing the result file next to the script.
  *
- * `resolveWeights` runs the same resolution order the classifier does, so this
- * reports the artifact that was loaded rather than the one that was asked for —
+ * `resolveWeights` runs the same resolution order the classifier does,
+ * so this reports the artifact that was loaded rather than the one that was asked for,
  * including the base-package fallback the `fr-FR` overlay takes for its `model.onnx`.
  * Paths are dereferenced because a development checkout symlinks them into the workspace,
  * and the symlink name says nothing about which checkpoint is behind it.
@@ -338,8 +322,8 @@ function summarize(records: GradedRecord[]) {
 	// Bucketed on the tier that answered, which is `none` for a row that returned no coordinate:
 	// `resolution_tier` reports where the cascade ended rather than whether it produced anything.
 	// Therefore, it still reads "admin" on a row that answered nothing.
-	// Every row on this panel resolved, so the two bucketings agree here — the guard
-	// is in place so they cannot silently disagree on a future run.
+	// Every row on this panel resolved, so the two bucketings agree here.
+	// The guard is in place so they cannot silently disagree on a future run.
 	const tiers: Record<string, number> = {}
 
 	for (const record of records) {

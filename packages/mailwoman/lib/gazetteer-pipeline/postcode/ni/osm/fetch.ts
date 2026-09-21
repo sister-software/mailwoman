@@ -52,7 +52,7 @@ export const OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter"
  * The Kumi Systems mirror, recorded as a checked negative rather than as a fallback.
  *
  * It is the mirror the OSM wiki points at for heavy queries, so it is the obvious thing
- * to reach for when the main instance 504s — and on 2026-08-05 it was the wrong move.
+ * to reach for when the main instance 504s, and on 2026-08-05 it was the wrong move.
  * Three of three attempts returned http 504: the whole-NI area query at 97 s,
  * the whole-NI bbox query at 115 s, and — decisively — a two-tenths-of-a-degree probe bbox
  * at 95 s that `overpass-api.de` answered 200 in 8 s from the same machine minutes later.
@@ -207,7 +207,7 @@ export interface OverpassResponse {
  *
  * Retry is deliberately off (the `APIClient` default): an Overpass 429/504 means the
  * server is shedding load, and the correct response to that is to come back later by hand
- * rather than to have a script re-issue a whole-region scan — which is exactly what happened
+ * rather than to have a script re-issue a whole-region scan, which is exactly what happened
  * on 2026-08-05, when the instance flapped through five 504s and a 429 before answering.
  * `timeout` is 10 minutes, comfortably past the query's own `[timeout:300]` plus
  * the transfer of a ~7 MB body (measured: 36 s end to end).

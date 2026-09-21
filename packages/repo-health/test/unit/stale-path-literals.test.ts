@@ -124,7 +124,8 @@ describe("findStalePathLiterals", () => {
 			"packages/thing/lib/reader.ts": [
 				// Written by this module when it runs, so it is absent until then.
 				'export const OUTPUT = "data/eval/calibration/confidences.jsonl"',
-				// Planted by a test elsewhere. It names no real file and never did.
+				// Planted by a test elsewhere.
+				// It names no real file and never did.
 				'export const INVENTED = "packages/foo/new.ts"',
 				"",
 			].join("\n"),

@@ -212,7 +212,7 @@ const countChar = (s: string, c: string): number => s.split(c).length - 1
 /**
  * Parse a full name into components.
  *
- * Returns `null` for empty input.
+ * @returns `null` for empty input.
  * Best-effort and non-throwing — ambiguous input degrades gracefully rather than erroring.
  */
 export function parsePersonName(input: string | null | undefined): PersonName | null {
@@ -280,7 +280,8 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 
 	if (!tokens.length) return result
 
-	// 5. Locate the surname particle run. everything from it onward is the (particled) surname.
+	// 5. Locate the surname particle run.
+	//    Everything from it onward is the (particled) surname.
 	let particleStart = -1
 
 	for (let i = 0; i < tokens.length; i++) {
@@ -343,8 +344,9 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 const NAME_ORDER: readonly (keyof PersonName)[] = ["prefix", "given", "middle", "familyParticle", "family", "suffix"]
 
 /**
- * The parts {@linkcode formatPersonName} prints for the short style — what a person
- * is addressed by, without the title, the nickname or the letters after.
+ * The parts {@linkcode formatPersonName} prints for the short style.
+ *
+ * What a person is addressed by, without the title, the nickname or the letters after.
  */
 const SHORT_NAME_ORDER: readonly (keyof PersonName)[] = ["given", "familyParticle", "family"]
 

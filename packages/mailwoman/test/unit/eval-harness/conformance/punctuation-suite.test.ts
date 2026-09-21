@@ -62,8 +62,10 @@ function splitRowRef(rowRef: string): { file: string; caseID: string } {
 }
 
 /**
- * The component values a committed row asserts — what a text-reading comparator would grade,
- * and therefore what decides whether a removal arm could be reported by the echo of its own mark.
+ * The component values a committed row asserts.
+ *
+ * What a text-reading comparator would grade, and therefore what decides
+ * whether a removal arm could be reported by the echo of its own mark.
  */
 function assertedSpans(seedCase: SeedCase): string[] {
 	return Object.values(seedCase.expectComponents ?? {}).filter((value) => typeof value === "string")

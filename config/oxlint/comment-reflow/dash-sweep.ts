@@ -28,17 +28,41 @@ import ts from "typescript"
 const FINITE =
 	/\b(is|are|was|were|be|been|has|have|had|does|do|did|will|would|can|could|should|must|makes?|leaves?|reads?|names?|holds?|keeps?|gives?|takes?|means?|stays?|comes?|goes?|sits?|carries|carry|returns?|fires?|fails?|needs?|wants?|uses?|writes?|reports?|answers?|drops?|adds?|counts?|costs?|buys?|pays?|prefers?|refuses?|never|only|already|still)\b/i
 
-/**
- * Words a clause can open a sentence with.
- *
- * `so` and `unlike` are here because a dash in front of either is the same joint under
- * another name, and both read as openers once the dash is a full stop.
- */
+/** Words a clause can open a sentence with, once the dash in front of it is a full stop. */
 const OPENERS =
-	/^(?:the|a|an|it|this|that|they|we|you|there|each|every|nothing|nobody|its|their|those|these|both|neither|either|one|most|some|any|no|so|unlike|without|once|when|if|after|before|together|instead|otherwise)\b/i
+	/^(?:the|a|an|it|this|that|they|we|you|there|each|every|nothing|nobody|its|their|those|these|both|neither|either|one|two|three|most|some|any|no|so|see|read|unlike|without|once|when|if|after|before|together|instead|otherwise|measured|present|kept|held|anything|everything|same|what|where|whatever|here)\b/i
 
-/** A line that carries its own layout: a list item, a fence, a tag, an indented block, a table row. */
-const STRUCTURAL = /^(?:\s{4}|\t|\s*[*+->|]\s|\s*\d+[.)]\s|\s*#{1,6}\s|\s*`{3}|\s*~{3}|\s*\[[^\]]+\]:|@)/
+/** A verb the sentence can open with, where the clause behind the dash is an instruction rather than a statement. */
+const IMPERATIVES = /^(?:see|read|revisit|compare|note|use|prefer|check|run|treat|measure|keep|expect)\b/i
+
+/**
+ * A clause that cannot open a sentence, but reads correctly once the dash is a comma.
+ *
+ * `which` opens a relative clause and `and` a coordination, so a full stop in front
+ * of either stands a fragment up where the sentence only wanted a comma.
+ * `never`, `only` and `not` head an antithesis and take the same comma.
+ */
+const COMMA_OPENERS =
+	/^(?:which|and|but|or|nor|yet|rather|while|whereas|though|although|because|since|including|not|never|with|for|leaving|making|giving|taking)\b/i
+
+/**
+ * A line that carries its own layout, in `mailwoman/comment-reflow`'s own terms.
+ *
+ * The rule's test is copied here rather than approximated.
+ * A line it treats as structural is one it will never re-wrap, so a paragraph this script joins
+ * and that rule declines to break stays joined, as one very long line.
+ */
+const STRUCTURAL_LINE: readonly RegExp[] = [
+	/^\s*https?:\/\/\S+\s*$/i,
+	/^(?:\s{4}|\t|\s*[*+-]\s|\s*\d+[.)]\s|\s*[#>|]|\s*\[[^\]]+\]:|\s*(?:---+|===+)\s*$|\s*`{3}|\s*~{3}|\s*@)/,
+	/^\s*<(?:[!?]|[^>]*$|.*>\s*$)/,
+	/(?: {2}|\\)$/,
+	/^\s*type\s+[\w$]+(?:\s*<.*>)?\s*=/,
+	/^\s*(?:const |let |var |function |class |import |export |return |if\s*\(|\/\/|\{(?!@)|\})/,
+	/^[^{}[\]`]*\s\|\s|^[\w.$]+\(.*\)[;]?$|^[\w.$]+\s*=\s*\S/,
+]
+
+const isStructural = (line: string) => STRUCTURAL_LINE.some((pattern) => pattern.test(line))
 
 const LIST_ITEM = /^(\s{0,3}(?:[-+*]|\d+[.)])\s+)(.*)$/
 
@@ -93,8 +117,19 @@ export function sweepSentence(sentence: string): string {
 
 	const words = after.replace(/[.!?]+$/, "").split(/\s+/)
 
-	if (words.length < 5 || !FINITE.test(after)) return sentence
-	if (!OPENERS.test(after) && !/^[`A-Z]/.test(after)) return sentence
+	// A coordination, a relative clause or an antithesis takes the comma the
+	// sentence wanted, and keeps its own case.
+	// None of them needs a verb of its own, which is why this runs ahead of the clause tests below.
+	if (COMMA_OPENERS.test(after)) return words.length < 3 ? sentence : `${before}, ${after}`
+
+	if (words.length < 5) return sentence
+	if (!FINITE.test(after) && !IMPERATIVES.test(after)) return sentence
+
+	// A right half ending on its own verb is a gloss rather than a statement:
+	// "the form an override uses" names the thing before the dash instead of saying
+	// something new about it, and a full stop would stand a fragment up.
+	if (FINITE.test(words.at(-1)!)) return sentence
+	if (!OPENERS.test(after) && !IMPERATIVES.test(after) && !/^[`A-Z]/.test(after)) return sentence
 
 	const head = /[.!?][)"'\]`]*$/.test(before) ? before : `${before}.`
 
@@ -163,7 +198,7 @@ function sweepBody(lines: readonly string[]): string[] {
 			continue
 		}
 
-		if (!line.trim() || STRUCTURAL.test(line)) {
+		if (!line.trim() || isStructural(line)) {
 			flushParagraph()
 			flushItem()
 			output.push(line)
@@ -207,9 +242,7 @@ function liftTagSentence(body: readonly string[], tags: readonly string[]) {
 	return {
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- The same block, re-split after the join above.
 		body: paragraphs.slice(0, -1).join("\n\n").split("\n"),
-		// The case stays as the sentence had it. oxfmt capitalises tag descriptions itself,
-		// and lowering it here only gave the two something to disagree about.
-		tags: [...tags, `@${name} ${rest}`],
+		tags: [...tags, `@${name} ${rest ? rest.charAt(0).toLowerCase() + rest.slice(1) : rest}`],
 	}
 }
 

@@ -122,8 +122,10 @@ function tailWithoutCommas(tail: string): string[] {
 const SOURCE = "coarse-placer-cn-units"
 
 /**
- * Recipe registered with the corpus builder — see the file header for the rows it labels
- * and why every label is a reading of a generic rather than a guess.
+ * Recipe registered with the corpus builder.
+ *
+ * See the file header for the rows it labels and why every label is a reading
+ * of a generic rather than a guess.
  */
 export const cnOrganizationalUnitsRecipe: CorpusRecipe = {
 	name: "cn-organizational-units",

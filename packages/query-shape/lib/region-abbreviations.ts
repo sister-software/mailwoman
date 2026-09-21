@@ -39,7 +39,7 @@ export function isRegionAbbreviationToken(token: string, options: RegionAbbrevia
  * A hit is a 2-letter all-uppercase token that appears after a comma-separated segment
  * boundary — the canonical "City, ST" or "City, ST ZIP" tail pattern.
  *
- * Returns empty array for non-Western locales or inputs without comma segmentation.
+ * @returns empty array for non-Western locales or inputs without comma segmentation.
  */
 export function detectRegionAbbreviations(
 	tokens: ReadonlyArray<TokenClass>,
@@ -57,8 +57,8 @@ export function detectRegionAbbreviations(
 
 	for (const seg of segments) {
 		// Advance on every segment rather than just the comma ones below.
-		// A non-comma segment between two comma segments still contains tokens. leaving
-		// the pointer behind it desyncs the walk.
+		// A non-comma segment between two comma segments still contains tokens.
+		// Leaving the pointer behind it desyncs the walk.
 		while (t < tokens.length && tokens[t]!.span.start < seg.span.start) {
 			t++
 		}

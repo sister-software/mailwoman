@@ -48,7 +48,8 @@ export interface CommittedQueryAttestation {
 	/**
 	 * The committed query verbatim.
 	 *
-	 * A reader can grep for it. a test can require the phrase to end it.
+	 * A reader can grep for it.
+	 * A test can require the phrase to end it.
 	 */
 	detail: string
 }
@@ -63,15 +64,16 @@ export type ActivityPhraseDerivation = "plural" | "nominalization" | "verb-phras
 /**
  * The phrase is a regular transformation of another entry in this lexicon.
  *
- * The base carries the authority. the derivation names the transformation.
+ * The base carries the authority.
+ * The derivation names the transformation.
  */
 export interface DerivedFormAttestation {
 	kind: "derived-form"
 	/**
 	 * Another entry's `phrase`.
 	 *
-	 * The base may not itself be derived — an attestation chain that never reaches
-	 * a committed record attests nothing.
+	 * The base may not itself be derived.
+	 * An attestation chain that never reaches a committed record attests nothing.
 	 */
 	base: string
 	derivation: ActivityPhraseDerivation
@@ -175,8 +177,8 @@ export interface ActivityPhraseLexicon {
  *
  * - `unscoped` — the entry declares no locales and answers under any.
  * - `exact` — the query's locale tag is one the entry declares.
- * - `language` — only the language subtag agrees. Weaker on purpose: a regional phrasing reached through its language
- *   alone is a guess about the region.
+ * - `language` — only the language subtag agrees.
+ *   Weaker on purpose: a regional phrasing reached through its language alone is a guess about the region.
  */
 export type ActivityPhraseLocaleScope = "unscoped" | "exact" | "language"
 
@@ -186,8 +188,10 @@ export type ActivityPhraseLocaleScope = "unscoped" | "exact" | "language"
 export interface ActivityPhraseLocaleMatch {
 	scope: ActivityPhraseLocaleScope
 	/**
-	 * `1` for `unscoped` and `exact`, `0.5` for `language` — the numbers `@mailwoman/variant-aliases`
-	 * reports for the same three cases, carried over rather than chosen here.
+	 * `1` for `unscoped` and `exact`, `0.5` for `language`.
+	 *
+	 * The numbers `@mailwoman/variant-aliases` reports for the same three cases,
+	 * carried over rather than chosen here.
 	 */
 	confidence: number
 }

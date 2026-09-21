@@ -80,7 +80,8 @@ export function toCorpusRow(record: OSMAddrRecord): OSMCorpusRow | null {
 /**
  * Write the corpus jsonl for one extract.
  *
- * The output directory is created. an existing file is replaced.
+ * The output directory is created.
+ * An existing file is replaced.
  */
 export async function writeOSMCorpusJSONL(pbfPath: string, outPath: PathBuilderLike): Promise<OSMCorpusJSONLStats> {
 	await makeDirectories(dirname(outPath))

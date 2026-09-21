@@ -9,9 +9,10 @@
  *
  * `rasterizeToFrame` turns an `RGBAGrid` (drawn by ./raster.ts) into a `MapFrame`:
  * one codepoint and one packed color per cell.
- * The braille dither/luminance work is asciify's — `FrameRasterizer` subclasses
- * `AsciifyTerminal` with a no-op sink purely to reach its guarded `_computeBrailleCells`,
- * `_cellChars`, `_cellColors`, so this module never re-implements the dot math.
+ * The braille dither/luminance work is asciify's.
+ *
+ * `FrameRasterizer` subclasses `AsciifyTerminal` with a no-op sink purely to reach its guarded
+ * `_computeBrailleCells`, `_cellChars`, `_cellColors`, so this module never re-implements the dot math.
  *
  * `frameToANSILines` and `overlayText` then work on the plain `MapFrame` value, with no further
  * asciify dependency; `blitFrame` is the path back the other way, for callers driving a live terminal.
@@ -29,7 +30,7 @@ export interface MapFrame {
 	columns: number
 	rows: number
 	/**
-	 * Codepoint per cell, row-major (braille U+2800.. or overlay text).
+	 * Codepoint per cell, row-major (braille U+2800.. Or overlay text).
 	 */
 	chars: Uint32Array
 	/**
@@ -195,8 +196,9 @@ const SPACE_CODEPOINT = 0x20
  * Call `flush()` afterwards to emit the damage.
  *
  * The frame's packed color is the exact representation asciify canonicalizes truecolor to,
- * so this is a copy and not a conversion — the channels are unpacked here only
- * because {@linkcode AsciifyTerminal.setCell} takes them apart.
+ * so this is a copy and not a conversion.
+ * The channels are unpacked here only because {@linkcode AsciifyTerminal.setCell} takes them apart.
+ *
  * Cells beyond the terminal's own grid are dropped by `setCell`, so a frame
  * larger than the pane clips rather than throws.
  */

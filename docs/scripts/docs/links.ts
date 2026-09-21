@@ -47,7 +47,8 @@ const SKIP_DIRECTORIES = new Set(["node_modules", "build", ".docusaurus", "stati
  * A markdown inline link whose target starts with `./` or `../`, with any `#anchor`
  * captured separately so it can be discarded.
  *
- * Reference-style definitions (`[id]: ../x.md`) are out of scope. the docs tree writes none.
+ * Reference-style definitions (`[id]: ../x.md`) are out of scope.
+ * The docs tree writes none.
  */
 const RELATIVE_LINK = /\]\((\.\.?\/[^)#\s]+)(#[^)\s]*)?\)/g
 

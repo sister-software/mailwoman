@@ -128,9 +128,9 @@ test("the Moon fixture builds a nomenclature archive whose tiles carry the five 
 })
 
 /**
- * `runFile` decodes a tool's output as UTF-8, so the PNG signature's first byte
- * (0x89) reads as the replacement character and the seven bytes after it survive
- * verbatim. that is enough to tell a PNG from anything else.
+ * `runFile` decodes a tool's output as UTF-8, so the PNG signature's first byte (0x89)
+ * reads as the replacement character and the seven bytes after it survive verbatim.
+ * That is enough to tell a PNG from anything else.
  */
 const PNG_SIGNATURE_AS_UTF8 = "�PNG\r\n\n"
 

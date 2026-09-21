@@ -78,7 +78,8 @@ test.describe("Chrome — the floating controls", () => {
 		const sheet = page.locator(".mw-map-sheet--side")
 		await expect(sheet).toBeVisible()
 
-		// The panel is over the whole map, so the opening control is underneath it — its own close is the way out.
+		// The panel is over the whole map, so the opening control is underneath it.
+		// Its own close is the way out.
 		await sheet.locator(".mw-map-sheet__close").click()
 		await expect(sheet).toHaveCount(0)
 	})
@@ -91,7 +92,8 @@ test.describe("Chrome — the floating controls", () => {
 
 	test("a pointer move never queries every layer in the style", async ({ page }) => {
 		// The real basemap, because the canned runtime's style carries no label layers
-		// and the hook returns before it queries anything — a pass there would mean nothing.
+		// and the hook returns before it queries anything.
+		// A pass there would mean nothing.
 		// The basemap arrives well before the model, so this waits on the style having layers
 		// rather than on the geocoder being ready.
 		await page.goto("/")
@@ -148,7 +150,8 @@ test.describe("Chrome — the floating controls", () => {
 		// reachable rather than merely visible.
 		// The popover shipped in the DOM carrying the right credits while the footer
 		// strip's own `overflow-x` clipped it away, and both a `textContent` read
-		// and a `toBeVisible` assertion passed over that — a clipped element keeps its box.
+		// and a `toBeVisible` assertion passed over that.
+		// A clipped element keeps its box.
 		// Only hit-testing tells the difference.
 		await expectReachable(page, ".mw-map-footer__popover")
 		await expect(popover).toContainText("OpenStreetMap")

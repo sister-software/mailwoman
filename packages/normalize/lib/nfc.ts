@@ -34,7 +34,8 @@ export function applyNFC(input: string): NFCResult {
 /**
  * Estimate per-output-codepoint offsets.
  *
- * Walks both strings in parallel. emits the next source index for each output position.
+ * Walks both strings in parallel.
+ * Emits the next source index for each output position.
  */
 function estimateNFCMap(input: string, output: string): number[] {
 	const map: number[] = []
@@ -45,7 +46,8 @@ function estimateNFCMap(input: string, output: string): number[] {
 		const outCp = output.codePointAt(outIdx)!
 		const outStep = outCp > 0xff_ff ? 2 : 1
 
-		// Walk the input forward by at least one codepoint. absorb any combining marks (0x0300–0x036f).
+		// Walk the input forward by at least one codepoint.
+		// Absorb any combining marks (0x0300–0x036f).
 		if (inIdx < input.length) {
 			const inCp = input.codePointAt(inIdx)!
 			inIdx += inCp > 0xff_ff ? 2 : 1

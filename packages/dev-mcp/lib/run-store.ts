@@ -37,7 +37,8 @@ import { Globerator } from "spliterator/node/fs"
 /**
  * Where runs land.
  *
- * Under the data root, never the repo — see the module docstring on cache-versus-record.
+ * Under the data root, never the repo.
+ * See the module docstring on cache-versus-record.
  */
 export const RUN_STORE_DIR = dataRootPath("dev-mcp", "runs")
 
@@ -172,7 +173,7 @@ export async function tryPutRun(run: StoredRun, dir: PathBuilderLike, now: Date)
  * Read one run back, or `null` when it is absent or unreadable.
  *
  * `null` here means pruned, never stored, or unreadable, and those are not distinguishable
- * after the fact — which is why {@link RETENTION_DAYS} is documented rather than silent.
+ * after the fact, which is why {@link RETENTION_DAYS} is documented rather than silent.
  * A caller that finds nothing has to re-measure.
  */
 export async function getRun(runID: string, dir: PathBuilderLike = RUN_STORE_DIR): Promise<StoredRun | null> {

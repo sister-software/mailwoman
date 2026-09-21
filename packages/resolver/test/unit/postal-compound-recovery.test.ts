@@ -36,7 +36,8 @@ const PLACES: ResolvedPlace[] = [
 		exactMatch: true,
 	},
 	{ id: 900, name: "1382", placetype: "postalcode", country: "SI", lat: 45.82, lon: 14.42, score: 1 },
-	// A distant same-named decoy in another country. The check + country constraint must hold.
+	// A distant same-named decoy in another country.
+	// The check + country constraint must hold.
 	{
 		id: 2,
 		name: "Kožljek",

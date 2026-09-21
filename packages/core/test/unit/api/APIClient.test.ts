@@ -122,7 +122,7 @@ describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", ()
 	})
 
 	it("delivers no more than requestsPerMinute inside any sliding minute", async () => {
-		// The rate, which is what the option promises — not the schedule,
+		// The rate, which is what the option promises, not the schedule,
 		// which is what every other test here asserts.
 		// That gap is how a 10x overrun shipped: the budget released N back to back
 		// then waited `60000/N` ms, so a stated 10/minute sustained 100/minute,
@@ -174,7 +174,7 @@ describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", ()
 		await client.fetch(get("/serial/0.json"))
 		await client.fetch(get("/serial/1.json"))
 
-		// The budget is spent, so the third must stall — and does not dispatch on its own.
+		// The budget is spent, so the third must stall, and does not dispatch on its own.
 		const third = client.fetch(get("/serial/2.json"))
 
 		await drainMicrotasks()

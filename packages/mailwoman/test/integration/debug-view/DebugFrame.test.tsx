@@ -168,7 +168,7 @@ describe("DebugFrame", () => {
 		)
 
 		// The rows keep their place (the input area's height is fixed) and each says it has
-		// nothing — never a fabricated system, an empty token list, or a zeroed channel.
+		// nothing, never a fabricated system, an empty token list, or a zeroed channel.
 		expect(text).toContain("locale-head")
 		expect(text).not.toContain("us (auto)")
 		expect(text).not.toContain("not fed")

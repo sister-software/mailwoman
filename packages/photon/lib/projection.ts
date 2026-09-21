@@ -39,24 +39,30 @@ export interface PhotonForwardInput {
 	 */
 	places: ReadonlyArray<{ tag: string; name: string }>
 	/**
-	 * A house-grade result (#1041): set only when the resolver produced a specific building coordinate —
-	 * the `address_point` (rooftop) or `interpolated` tier fired rather than an admin centroid.
-	 * {@link photonForwardProperties} then re-tags the schema `osm_key: place` / `osm_value: house` / `type: house` and
-	 * surfaces the parsed `housenumber` + `street`, matching upstream komoot/photon's own bare-address-point shape
-	 * (verified against `photon.komoot.io`: a residential rooftop returns `{osm_key:"place", osm_value:"house",
-	 * type:"house", housenumber, street}` with no `name`). Absent → the result keeps its admin-ancestry schema. Without
-	 * it a rooftop reads as `type: city` and a client zooms to city scale (or paints a city marker) on a doorstep match —
-	 * the #1041 regression.
+	 * A house-grade result (#1041): set only when the resolver produced a specific
+	 * building coordinate — the `address_point` (rooftop) or `interpolated` tier fired
+	 * rather than an admin centroid. {@link photonForwardProperties} then re-tags the
+	 * schema `osm_key: place` / `osm_value: house` / `type: house` and surfaces the parsed
+	 * `housenumber` + `street`, matching upstream komoot/photon's own bare-address-point
+	 * shape (verified against `photon.komoot.io`: a residential rooftop returns
+	 * `{osm_key:"place", osm_value:"house", type:"house", housenumber, street}` with no `name`).
+	 *
+	 * Absent → the result keeps its admin-ancestry schema.
+	 * Without it a rooftop reads as `type: city` and a client zooms to city scale
+	 * (or paints a city marker) on a doorstep match — the #1041 regression.
 	 */
 	house?: { number?: string | null; street?: string | null } | null
 	/**
-	 * A street-grade result (#1050): set when the street-centroid tier (#1042/#1046) fired — a street-level coordinate,
-	 * below rooftop/interp, above admin. {@link photonForwardProperties} re-tags it `osm_key: highway` / `osm_value:
-	 * residential` / `type: street` with the full assembled street name in `name` — matching upstream komoot's street
-	 * results (verified live 2026-07-10: a street primary returns `{osm_key:"highway", osm_value:<class>, type:"street",
-	 * name:"Rue de la République", city, …}`; the street name rides `name`, not `street`). Without it a street centroid
-	 * reads `type: city` with the city's name — the #1050 regression. `house` wins when both are set (a numbered query
-	 * never street-tiers).
+	 * A street-grade result (#1050): set when the street-centroid tier (#1042/#1046)
+	 * fired — a street-level coordinate, below rooftop/interp, above admin.
+	 * {@link photonForwardProperties} re-tags it `osm_key: highway` / `osm_value: residential`
+	 * / `type: street` with the full assembled street name in `name` — matching upstream
+	 * komoot's street results (verified live 2026-07-10: a street primary returns
+	 * `{osm_key:"highway", osm_value:<class>, type:"street", name:"Rue de la République", city, …}`;
+	 * the street name rides `name`, not `street`).
+	 *
+	 * Without it a street centroid reads `type: city` with the city's name — the #1050 regression.
+	 * `house` wins when both are set (a numbered query never street-tiers).
 	 */
 	street?: { name?: string | null } | null
 }
@@ -202,7 +208,8 @@ export interface PhotonForwardResult {
 	 */
 	primary: PhotonForwardInput
 	/**
-	 * Ranked alternative places (Springfield MA / IL / …), each a single-place input. excludes the primary.
+	 * Ranked alternative places (Springfield MA / IL / …), each a single-place input.
+	 * Excludes the primary.
 	 */
 	alternatives: PhotonForwardInput[]
 }

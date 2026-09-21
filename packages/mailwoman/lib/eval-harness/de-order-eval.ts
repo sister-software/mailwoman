@@ -131,7 +131,7 @@ export interface DeOrderEvalOptions {
 	 *
 	 * Profiling only.
 	 * The six corpora are 3,000 rows each except the US no-regression run at 10,000,
-	 * and a capped run reads the first N rows in file order — which is not a stratified sample.
+	 * and a capped run reads the first N rows in file order, which is not a stratified sample.
 	 *
 	 * A capped run's locality percentages are therefore not comparable with a floor reading,
 	 * and `promotion-eval.ts` never passes this.

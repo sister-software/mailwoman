@@ -86,13 +86,17 @@ async function shippedLexiconGenerations(dir: PathBuilder, prefix: string): Prom
  *
  * The ladder, and why each rung is shaped the way it is:
  *
- * 1. The card names a generation and the package ships that exact file → resolve it. The train/serve congruent case.
- * 2. The card names a generation, the package ships none of that family → `undefined`. Absence is absence: a pre-bundle
- *    package simply doesn't carry the channel, and `createScorer` already fails closed if the card also declares it
- *    required. (`neural-weights-base-latn` is the live example — it symlinks en-us's card and ships no lexicons.)
- * 3. The card names a generation, the package ships a different one → throw. This is the #1510 defect exactly, and it is
- *    the only rung where guessing would be a silent downgrade rather than a plain absence.
- * 4. The card names nothing → the legacy filename, with a one-time warning. Every bundle published before 2026-08-06.
+ * 1. The card names a generation and the package ships that exact file → resolve it.
+ *    The train/serve congruent case.
+ * 2. The card names a generation, the package ships none of that family → `undefined`.
+ *    Absence is absence: a pre-bundle package simply doesn't carry the channel,
+ *    and `createScorer` already fails closed if the card also declares it required.
+ *    (`neural-weights-base-latn` is the live example — it symlinks en-us's card and ships no lexicons.)
+ * 3. The card names a generation, the package ships a different one → throw.
+ *    This is the #1510 defect exactly, and it is the only rung where guessing would
+ *    be a silent downgrade rather than a plain absence.
+ * 4. The card names nothing → the legacy filename, with a one-time warning.
+ *    Every bundle published before 2026-08-06.
  *
  * Package-dir only — deliberately not the `baseWeights` fallback the model card and
  * `fst-street-morphology.bin` take, even though the lexicons are locale-general and the dedup would "work".

@@ -86,7 +86,7 @@ export const DEFAULT_COUNTRY_PRIOR_WEIGHT = 2
  *
  * That is also what the §2 referential policy (ROAD_TO_V9) says: within a
  * country the geocoder ranks referentially.
- * The blended prior's job is the cross-country question — which country's bearer a bare query meant.
+ * The blended prior's job is the cross-country question, which country's bearer a bare query meant.
  *
  * A band enforces the referential policy up to a fixed gap only, so every same-country pair
  * whose importance and population disagree by more than 0.02 is decided against that policy.
@@ -96,10 +96,10 @@ export const DEFAULT_COUNTRY_PRIOR_WEIGHT = 2
  * Two ends of that class, and why neither widening the band nor scoping importance
  * to cross-country pairs was taken:
  *
- * - `Irvington` — NJ (population 61,323, importance 0.4258) against NY (6,417, 0.4565), a 0.0307 gap. The policy wants
- *   the town of 61,323 and the band is 0.011 too narrow to reach it.
- * - `Aurangabad` — regresses under a per-country arm that would satisfy Irvington, while 15 of the 16 ratified bare rows
- *   hold.
+ * - `Irvington` — NJ (population 61,323, importance 0.4258) against NY (6,417, 0.4565), a 0.0307 gap.
+ *   The policy wants the town of 61,323 and the band is 0.011 too narrow to reach it.
+ * - `Aurangabad` — regresses under a per-country arm that would satisfy Irvington,
+ *   while 15 of the 16 ratified bare rows hold.
  *
  * No measured feature separates them: widening to cover Irvington breaks Aurangabad,
  * and so does the scoped arm.
@@ -162,9 +162,10 @@ const measured = (c: Rankable): boolean => typeof c.importance === "number" && N
 /**
  * Reorder only the measured candidates, and only among the positions they already occupy.
  *
- * This is what "positive evidence only" has to mean when coverage is partial,
- * which it always is — measured on the shipped importance artifact, the four bare GB
- * panel rows have 2/7, 8/10, 8/10 and 9/10 of their candidates scored.
+ * This is what "positive evidence only" has to mean when coverage is partial, which it always is.
+ * Measured on the shipped importance artifact, the four bare GB panel rows have 2/7,
+ * 8/10, 8/10 and 9/10 of their candidates scored.
+ *
  * A blanket "abstain unless everything is measured" throws the signal away on all four.
  *
  * Treating absent as 0 would let a scored hamlet leapfrog an unscored metropolis.

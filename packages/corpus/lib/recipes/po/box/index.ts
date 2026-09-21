@@ -21,8 +21,10 @@ import {
 import { synthesizeMilitaryPoBoxRow, synthesizePoBoxRow, type PoBoxBaseTuple } from "#synthesizers/po-box"
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour
- * it exists to exercise, and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder.
+ *
+ * See the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
  */
 export const poBoxRecipe: CorpusRecipe = {
 	name: "po-box",

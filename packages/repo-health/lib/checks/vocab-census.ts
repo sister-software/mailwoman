@@ -155,8 +155,9 @@ function locate(
  *
  * Pure, so the fixture test states its cases inline rather than writing files.
  *
- * Only the modifier a hit is bucketed by comes from the indexed line, so a stray offset
- * mislabels a bucket rather than losing a site — read the line before editing it.
+ * Only the modifier a hit is bucketed by comes from the indexed line, so a stray
+ * offset mislabels a bucket rather than losing a site.
+ * Read the line before editing it.
  */
 export function classify(hitLines: readonly string[], sources: ReadonlyMap<string, readonly string[]>): Hit[] {
 	const hits: Hit[] = []

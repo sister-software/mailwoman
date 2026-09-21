@@ -39,7 +39,7 @@
  */
 export interface CoastalTermDefinition {
 	/**
-	 * The value as it appears in the source file — never re-spelled, never normalized.
+	 * The value as it appears in the source file, never re-spelled, never normalized.
 	 */
 	value: string
 	/**
@@ -82,15 +82,9 @@ export const NCERM_SERVICE_SLUG = "ncern-national-2024"
 /**
  * The attribution string the record's structured licence field carries, trimmed of its trailing space.
  *
- * OGL v3.0 requires a re-user to "acknowledge the source of the Information in your product or application by including
- * or linking to any attribution statement specified by the Information Provider(s)", so this string is the licence
- * condition rather than decoration, and it rides in `layer_manifest.attribution`.
+ * OGL v3.0 requires a re-user to "acknowledge the source of the Information in your product or application by including or linking to any attribution statement specified by the Information Provider(s)", so this string is the licence condition rather than decoration, and it rides in `layer_manifest.attribution`.
  *
- * Taken from the structured field, never from the abstract. The abstract ends with a doubled and malformed pair — "…©
- * Environment Agency copyright and/or database right Attribution statement: © Environment Agency copyright and/or
- * database right 2025. All rights reserved. " — whose first copy is inherited from the superseded 2018–2021 record and
- * carries no year. The ISO record has no `gmd:credit` element at all. `parseAttributionStatement` in `sdk/client.ts` is
- * the reader that refuses the yearless copy.
+ * Taken from the structured field, never from the abstract. The abstract ends with a doubled and malformed pair — "…© Environment Agency copyright and/or database right Attribution statement: © Environment Agency copyright and/or database right 2025. All rights reserved. " — whose first copy is inherited from the superseded 2018–2021 record and carries no year. The ISO record has no `gmd:credit` element at all. `parseAttributionStatement` in `sdk/client.ts` is the reader that refuses the yearless copy.
  */
 export const NCERM_ATTRIBUTION = "© Environment Agency copyright and/or database right 2025. All rights reserved."
 
@@ -178,8 +172,8 @@ export interface CoastalScenario {
 	 * Its name varies PER layer and that is the trap: `nfi2055_0` on NFI/2055/0CC,
 	 * `smp2105_95` on SMP/2105/95CC.
 	 * A builder that read one fixed column name would find the column missing on eleven of the twelve
-	 * layers, which `ogr2ogr` reports as a SQL error rather than as a silent null — but a builder that
-	 * coalesced it would write NULL distances for eleven scenarios and report a successful build.
+	 * layers, which `ogr2ogr` reports as a SQL error rather than as a silent null, but a builder
+	 * that coalesced it would write NULL distances for eleven scenarios and report a successful build.
 	 */
 	distanceColumn: string
 	label: string

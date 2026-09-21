@@ -241,7 +241,8 @@ describe("mwdev_compare — a truthless comparison", () => {
 				arm_b: { kind: "oracle", provider: "census" },
 				variable: ["engine"],
 			},
-			// The oracle answers Paris. The mailwoman stub answers Andorra. ~800 km apart.
+			// The oracle answers Paris.
+			// The mailwoman stub answers Andorra. ~800 km apart.
 			{ createOracleClient: () => oracleAt({ lat: 48.8566, lon: 2.3522 }), runStoreDir: RUN_STORE.path }
 		)) as Record<string, unknown>
 

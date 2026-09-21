@@ -209,7 +209,8 @@ describe("a failure names the file", () => {
 
 		const [issue] = issuesOf(() => mergeGeographicModelFiles(files)).issues
 
-		// Second concept in the merged table, second file on disk — an author can only act on the second address.
+		// Second concept in the merged table, second file on disk.
+		// An author can only act on the second address.
 		expect(issue?.path).toBe("$.concepts[1].kind")
 		expect(issue?.file).toBe("concepts/zz-broken.json")
 		expect(issue?.code).toBe(ValidationIssueCode.UnknownConceptKind)

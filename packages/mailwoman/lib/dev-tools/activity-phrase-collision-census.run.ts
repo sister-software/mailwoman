@@ -42,8 +42,8 @@ using database = new DatabaseClient<POIDatabase>(databasePath, { readOnly: true 
 using lookup = new POILookup({ database })
 const shippedRung = createPOINameLookup(lookup)
 
-// A complete key scan rather than a ranked read — see `CensusPOIReader` for the
-// measurement that made the ranked one inadmissible.
+// A complete key scan rather than a ranked read.
+// See `CensusPOIReader` for the measurement that made the ranked one inadmissible.
 // `like` is a superset filter.
 // The census applies whole-token containment to what comes back.
 // One scan for the whole probe set: the predicate is unindexable either way,

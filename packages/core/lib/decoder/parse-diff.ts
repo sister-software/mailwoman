@@ -127,7 +127,7 @@ function toFlat(tree: AddressTree | null | undefined): Flat[] {
  * How much of the shorter span the two share, in [0, 1].
  *
  * Overlap rather than equality because the interesting failures move a boundary by a token
- * or two, and an equality-keyed match reports those as a delete plus an insert —
+ * or two, and an equality-keyed match reports those as a delete plus an insert,
  * which is exactly the information loss this file exists to prevent.
  */
 function overlap(a: Flat, b: Flat): number {

@@ -66,7 +66,8 @@ describe("createPostcodeLocalityTable", () => {
 			{ cid: 1, name: "country", type: "TEXT", notnull: 1 },
 			{ cid: 2, name: "locality_id", type: "INTEGER", notnull: 1 },
 			{ cid: 3, name: "locality_name", type: "TEXT", notnull: 1 },
-			// The only nullable column. A `|`-joined alt-name list the CJK builds may have nothing for.
+			// The only nullable column.
+			// A `|`-joined alt-name list the CJK builds may have nothing for.
 			{ cid: 4, name: "aliases", type: "TEXT", notnull: 0 },
 			{ cid: 5, name: "distance_km", type: "REAL", notnull: 1 },
 			{ cid: 6, name: "is_containing", type: "INTEGER", notnull: 1 },

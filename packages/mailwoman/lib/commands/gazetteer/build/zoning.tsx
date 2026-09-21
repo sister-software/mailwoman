@@ -48,8 +48,8 @@ import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 const DEFAULT_COVERAGE_RESOLUTION = "6"
 
 /**
- * Index resolution, chosen from the candidates-per-cell and zero-cell measurement —
- * see the workspace readme for the table and the reasoning.
+ * Index resolution, chosen from the candidates-per-cell and zero-cell measurement.
+ * See the workspace readme for the table and the reasoning.
  *
  * `--measure-resolutions` re-derives it.
  */
@@ -196,7 +196,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 
 		// A narrowed RUN counts itself first.
 		// `ogrinfo` reports the layer's total and nothing narrower, so a build whose declared count
-		// was the whole product's would refuse every smoke run — and the declared-count check is
+		// was the whole product's would refuse every smoke run, and the declared-count check is
 		// the thing that turns a truncated read into a failure rather than into a smaller country.
 		// Counting is one extra pass over a file the build reads anyway.
 		let narrowedCount = 0

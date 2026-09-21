@@ -250,7 +250,7 @@ function isNoMapping(musym: string, muname: string, componentCount: number): boo
  * Coercing it to a nearest neighbour or to NULL converts "the source changed" into "there is nothing here".
  *
  * A blank is not a violation: NULL is a real state in every one of these columns and means something
- * specific — for `nirrcapcl` it means the survey did not rate the component, which is not class 8.
+ * specific, for `nirrcapcl` it means the survey did not rate the component, which is not class 8.
  */
 function assertDeclared(declared: ReadonlySet<string>, value: string | undefined, domain: string, where: string): void {
 	if (!value) return

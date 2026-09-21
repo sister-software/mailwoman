@@ -125,8 +125,10 @@ export const BDC_SPEED_BUCKET_THRESHOLD_100_MBPS = 100
 export const BDC_SPEED_BUCKET_THRESHOLD_GIGABIT_MBPS = 1000
 
 /**
- * Pure mirror of the SQL `case` expression below ({@link speedBucketCaseSQL}) — same thresholds,
- * same labels, exported so the boundary logic can be asserted directly without a database round trip.
+ * Pure mirror of the SQL `case` expression below ({@link speedBucketCaseSQL}).
+ *
+ * Same thresholds, same labels, exported so the boundary logic can be asserted
+ * directly without a database round trip.
  */
 export function speedBucketForDownloadSpeed(maxAdvertisedDownloadSpeed: number): string {
 	if (maxAdvertisedDownloadSpeed < BDC_SPEED_BUCKET_THRESHOLD_25_MBPS) return BDC_SPEED_BUCKET_UNDER_25
@@ -150,8 +152,9 @@ const speedBucketCaseSQL = sql<string>`CASE
 END`
 
 /**
- * Reconstruct the res-6 ancestor of a res-9 short-cell int without a centroid —
- * see the module docstring for why the centroid is the wrong input.
+ * Reconstruct the res-6 ancestor of a res-9 short-cell int without a centroid.
+ *
+ * See the module docstring for why the centroid is the wrong input.
  *
  * Exported so tests can assert this agrees, cell-for-cell, with `build-bdc.ts`'s own
  * coverage-cell derivation (the two must share this derivation — see that file's docstring).

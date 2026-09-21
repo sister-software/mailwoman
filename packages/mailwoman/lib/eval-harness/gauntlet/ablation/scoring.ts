@@ -32,7 +32,7 @@ function foldValue(value: string | null): string {
  * What the ablated arm did with the deleted component's slot.
  *
  * `substituted` is the S-2 finding-3 class and the one a completion nudge has to fear:
- * the slot reads as filled, so a naive layer abstains — or confirms a house number as a postcode.
+ * the slot reads as filled, so a naive layer abstains, or confirms a house number as a postcode.
  */
 export function classifySlot(deleted: string, emitted: string | null): SlotOutcome {
 	const got = foldValue(emitted)

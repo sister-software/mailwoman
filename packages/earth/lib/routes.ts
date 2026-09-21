@@ -38,8 +38,8 @@ export function routeForPath(pathname: string): Route | null {
 /**
  * Which runtime the page mounts.
  *
- * `fake` is the canned runtime the shell smoke and the stories use. every other value,
- * and no value, is the real geocoder.
+ * `fake` is the canned runtime the shell smoke and the stories use.
+ * Every other value, and no value, is the real geocoder.
  */
 export type RuntimeMode = "real" | "fake"
 
@@ -66,8 +66,9 @@ export function queryFromSearch(search: string): string | null {
  *
  * It returns a string rather than writing history, so the caller decides between `pushState`
  * and `replaceState` and this stays testable without a document.
- * Every other parameter is carried through untouched — a viewport or a runtime
- * flag in the address bar must survive a search.
+ * Every other parameter is carried through untouched.
+ *
+ * A viewport or a runtime flag in the address bar must survive a search.
  */
 export function searchWithQuery(url: URL, query: string): string {
 	const next = new URL(url)

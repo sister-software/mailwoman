@@ -85,7 +85,8 @@ const PLACES: ResolvedPlace[] = [
 		lon: 140.45,
 		score: 9,
 	},
-	// The town under its prefecture. The county 猿島郡 has no record at all.
+	// The town under its prefecture.
+	// The county 猿島郡 has no record at all.
 	{
 		id: GOKA,
 		name: "五霞町",

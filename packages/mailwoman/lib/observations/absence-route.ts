@@ -188,21 +188,25 @@ export interface AbsenceObservation {
  */
 export const ABSENCE_REFUSALS = [
 	/**
-	 * The coordinator never took the POI branch, or took it and abstained. There is no answer to qualify.
+	 * The coordinator never took the POI branch, or took it and abstained.
+	 * There is no answer to qualify.
 	 */
 	"no_poi_answer",
 	/**
-	 * The POI branch answered, but the executor never ran (intent-only mode). A search that did not happen returns
-	 * nothing for a reason that has nothing to do with the world.
+	 * The POI branch answered, but the executor never ran (intent-only mode).
+	 *
+	 * A search that did not happen returns nothing for a reason that has nothing to do with the world.
 	 */
 	"executor_did_not_run",
 	/**
-	 * The subject was a brand or a free-text name. The artifact maps categories, so a non-category subject reaches no
-	 * assertion.
+	 * The subject was a brand or a free-text name.
+	 *
+	 * The artifact maps categories, so a non-category subject reaches no assertion.
 	 */
 	"subject_not_a_category",
 	/**
-	 * The compiled artifact carries no concept that both maps to this category and asserts `affords` against an activity.
+	 * The compiled artifact carries no concept that both maps to this category
+	 * and asserts `affords` against an activity.
 	 */
 	"no_affordance_assertion",
 	/**
@@ -214,23 +218,28 @@ export const ABSENCE_REFUSALS = [
 	 */
 	"no_search_center",
 	/**
-	 * The layer carries no coverage row for the cell the search was centred on — unmapped, which is unknown and never
-	 * absence.
+	 * The layer carries no coverage row for the cell the search was centred on —
+	 * unmapped, which is unknown and never absence.
 	 */
 	"cell_unsurveyed",
 	/**
-	 * The cell has a coverage row whose basis is `source_present`. The source looked and returned rows. That is presence
-	 * evidence and supports no exclusion.
+	 * The cell has a coverage row whose basis is `source_present`.
+	 *
+	 * The source looked and returned rows.
+	 * That is presence evidence and supports no exclusion.
 	 */
 	"basis_supports_no_exclusion",
 	/**
-	 * The layer holds rows in the cell, so the cell is not empty. Whether the search reached them is a retrieval question
-	 * rather than an absence.
+	 * The layer holds rows in the cell, so the cell is not empty.
+	 *
+	 * Whether the search reached them is a retrieval question rather than an absence.
 	 */
 	"cell_not_empty",
 	/**
-	 * The layer's coverage row says the cell is empty and the answer returned a row inside it. The two readers disagree,
-	 * and an absence claim asserted over a disagreement is the confident wrong answer this whole route exists to avoid.
+	 * The layer's coverage row says the cell is empty and the answer returned a row inside it.
+	 *
+	 * The two readers disagree, and an absence claim asserted over a disagreement is
+	 * the confident wrong answer this whole route exists to avoid.
 	 */
 	"coverage_contradicted_by_answer",
 ] as const
@@ -291,7 +300,7 @@ export interface AbsenceObservationRouteOptions {
 	 */
 	coverageDatabasePath: string
 	/**
-	 * Override the compiled artifact — for a test that wants a synthetic model.
+	 * Override the compiled artifact, for a test that wants a synthetic model.
 	 *
 	 * Absent reads the committed one.
 	 */
@@ -420,7 +429,10 @@ export async function createAbsenceObservationRoute(
 		const coverageResolution = recoverCoverageResolution(cellRows.map((row) => row.h3_cell))
 
 		const exclusionGradeEmptyCells = cellRows.filter(
-			// A NULL column is an artifact built before `basis` existed. It was recording source presence, so that is what it counts as here — never a stronger basis than the builder actually had, which is the resolution `readLayerCoverage` applies to the same column.
+			// A NULL column is an artifact built before `basis` existed.
+			// It was recording source presence, so that is what it counts as here,
+			// never a stronger basis than the builder actually had, which is the resolution
+			// `readLayerCoverage` applies to the same column.
 			(row) => row.observed_rows === 0 && supportsExclusion({ basis: row.basis ?? CoverageBasis.SourcePresent })
 		).length
 
@@ -500,7 +512,7 @@ async function decide(outcome: POIIntentOutcome | undefined, context: DecisionCo
 	if (!cell) return { fired: false, refusal: "cell_unsurveyed" }
 
 	// `readLayerCoverage` resolves a NULL column to `source_present`, so a cell that
-	// reaches here always names its basis — but the field is optional on the parsed type,
+	// reaches here always names its basis, but the field is optional on the parsed type,
 	// and `supportsExclusion` is what narrows it to the two that qualify.
 	const basis = cell.basis
 

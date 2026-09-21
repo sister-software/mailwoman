@@ -189,7 +189,7 @@ const COMPONENT_FOR_KNOWN_FORMAT = {
 /**
  * The subset of a {@link GeocodeRun}'s fields an account reads, declared structurally.
  *
- * A `GeocodeRun` satisfies this by shape, so `runDiagnose` passes one straight through —
+ * A `GeocodeRun` satisfies this by shape, so `runDiagnose` passes one straight through,
  * and the assembly stays testable without constructing a whole `GeocodeResult`,
  * which is twenty-five fields of which six matter here.
  */
@@ -253,7 +253,7 @@ export interface ParseFacts {
 	 * Why {@link ParseFacts.kind} is null, when it is.
 	 *
 	 * The classifier is skipped when a caller pinned the register, which is a fact
-	 * about the call — not a zero-confidence verdict.
+	 * about the call, not a zero-confidence verdict.
 	 */
 	kind_absent_reason?: string
 	input_mode: string

@@ -187,7 +187,7 @@ describe("buildPlacetypePairPriors — window-key fold (space-join rather than c
 		// pieces here, so this exercises normalizeFSTToken's fold-then-join pipeline against
 		// a real multi-piece word rather than a hand-rolled approximation.
 		// A third word ("Lancashire") is needed so the 2-word "St Helens" window has a disjoint
-		// partner to probe against — with only two words total there's no room left for any pairing.
+		// partner to probe against, with only two words total there's no room left for any pairing.
 		const tokenizer = await MailwomanTokenizer.loadFromFile(
 			workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 		)
@@ -402,7 +402,7 @@ describe("buildPlacetypePairPriors — dual-key tie-break", () => {
 
 describe("buildPlacetypePairPriors — end-to-end cross-form regression (real PIX1 round trip)", () => {
 	// A real PairIndexBuilder-shaped entry, through a real tokenizer, through the real PIX1
-	// serialize/deserialize round trip — not a hand-built `PairIndexLike` double.
+	// serialize/deserialize round trip, not a hand-built `PairIndexLike` double.
 	// Mock-only coverage cannot reach this case at all: `makePieces` emits one synthetic
 	// ▁-per-word piece, so it can never reproduce a genuine bare-▁-orphan split.
 	//
@@ -469,7 +469,7 @@ describe("buildPlacetypePairPriors — segment mode (the v1 default, now the ≥
 		// Queens Park Academy Chestnut Avenue, Chester, MK40 4HA" wrongly emitted
 		// dependent_locality=["Queens Park"] because window mode probes every 1..3-word sub-run,
 		// including "Queens Park" inside the longer venue phrase.
-		// Segment mode's only candidate for that field is the whole 3-word segment "queens park academy" —
+		// Segment mode's only candidate for that field is the whole 3-word segment "queens park academy",
 		// which never equals the census's 2-word "queens park" entry, under either fold form.
 		const index = mockPairIndex({ "queens park|chester": "dependent_locality" }, 6)
 		const text = "Queens Park Academy, Chestnut Avenue, Chester"
@@ -616,7 +616,7 @@ describe("buildPlacetypePairPriors — segment-parent same-field postcode strip 
 
 	it("a segment that IS only a postcode is never stripped to nothing and never a spurious parent", () => {
 		// "5026" occupies its own field (single token).
-		// The strip guard (tokens.length < 2 → unchanged) must leave it verbatim —
+		// The strip guard (tokens.length < 2 → unchanged) must leave it verbatim,
 		// never emptied, never treated as a place-name parent.
 		const index = mockPairIndex({ "plimmerton|porirua": "dependent_locality" }, 6, undefined, "nz")
 		const text = "Plimmerton, 5026"
@@ -670,7 +670,7 @@ describe("buildPlacetypePairPriors — marker suppression must not cross segment
 	it('reviewer repro: "Fishburn, 5 Fishburn Road" biases Fishburn — successor "5" is in the NEXT segment, so it must never suppress', () => {
 		// Segment 0 is "Fishburn" alone.
 		// Segment 1 is the whole 3-word "5 Fishburn Road" (no internal comma).
-		// Before the fix, `isMarkerSuppressed` read `nonEmptyGroups[x.endPos + 1]` unconditionally —
+		// Before the fix, `isMarkerSuppressed` read `nonEmptyGroups[x.endPos + 1]` unconditionally,
 		// for segment 0's candidate ("Fishburn"), that's segment 1's first word ("5"),
 		// a house-number shape, which wrongly vetoed "Fishburn" before it was ever probed.
 		// The comma between them means "5" can never be a suffix of "Fishburn" in the
@@ -1248,8 +1248,8 @@ describe("buildPlacetypePairPriors — transition adjustments (TRANSITION-BETA b
 
 	it("window mode: overlapping candidates sharing a first piece dedupe to ONE max'd adjustment rather than a stacked pair", () => {
 		// Both "shoreditch east" (2-word window) and "shoreditch" (1-word window) resolve
-		// against "london"; both start at piece 0, so both applyWindowBias calls target the
-		// same (pieceIndex, toLabel) cell — which must compose by max (a single entry),
+		// against "london"; both start at piece 0, so both applyWindowBias calls target
+		// the same (pieceIndex, toLabel) cell, which must compose by max (a single entry),
 		// mirroring the emission write's own Math.max discipline.
 		const index = mockPairIndex(
 			{ "shoreditch east|london": "dependent_locality", "shoreditch|london": "dependent_locality" },

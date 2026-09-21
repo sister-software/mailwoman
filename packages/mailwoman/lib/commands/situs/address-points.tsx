@@ -340,7 +340,9 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 					lon,
 					OA_MODE ? "openaddresses" : `overture:${r.dataset}`,
 					OA_MODE ? "openaddresses-latest" : String(options.release),
-					// The US and OA sources state no commune key. A national build carries the third admin level (the Taiwanese 村里) here, the finest place the register names below the scope pair.
+					// The US and OA sources state no commune key.
+					// A national build carries the third admin level (the Taiwanese 村里) here,
+					// the finest place the register names below the scope pair.
 					r.admin_code ? String(r.admin_code) : null,
 					null
 				)

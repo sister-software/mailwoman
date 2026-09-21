@@ -138,7 +138,8 @@ export interface CoverageMismatches {
 	 */
 	trainedButUnmeasured: string[]
 	/**
-	 * Board rows exist but the country trains on nothing — measured against a capability we never taught.
+	 * Board rows exist but the country trains on nothing.
+	 * Measured against a capability we never taught.
 	 */
 	measuredButUntrained: string[]
 }
@@ -335,7 +336,7 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
  * carries the `v` prefix the directory does (`v0.31.0-region-code-and-unit`),
  * and {@linkcode readConfiguredCorpusVersion} strips it.
  * Comparing the raw strings declares a mismatch on every correct pairing, and a warning that
- * fires when nothing is wrong stops being read — which costs the reading it exists to give.
+ * fires when nothing is wrong stops being read, which costs the reading it exists to give.
  */
 export function sameCorpusVersion(a: string, b: string): boolean {
 	const bare = (version: string): string => version.trim().replace(/^v/, "")
@@ -381,7 +382,7 @@ export async function readConfiguredCorpusVersion(configPath: string): Promise<s
 /**
  * Read `country_weights` out of a training config without a YAML dependency.
  *
- * The block is a flat `CC: weight` list, so a line scan is enough — and it preserves the
+ * The block is a flat `CC: weight` list, so a line scan is enough, and it preserves the
  * one thing a YAML parser would destroy here: a bare `no` key stays the string `"no"`
  * rather than becoming the boolean `false`.
  * That retyping is the exact bug this file exists partly to surface, so the reader must not reproduce it.

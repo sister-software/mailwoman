@@ -114,7 +114,7 @@ describe("matchPOISubject", () => {
  * is an answer or an invented ordering.
  *
  * The committed phrase index returns the categories one typed phrase could name,
- * most specific first, and the first entry is the subject — which category a typed
+ * most specific first, and the first entry is the subject, which category a typed
  * phrase reaches is #1933's question and is unchanged here.
  * An affordance rung returns every kind that affords one activity, in an enumeration
  * that is not a preference, and flags each member `searchAsSet`; the whole set is
@@ -170,8 +170,8 @@ describe("a lookup returning several hits", () => {
 		expect(m?.remainder).toBe("")
 	})
 
-	// `match` is the hit the subject scores under, and it is always the head of `matches` —
-	// two names for one value, so a scorer reading the kind and a branch reading the
+	// `match` is the hit the subject scores under, and it is always the head of `matches`.
+	// Two names for one value, so a scorer reading the kind and a branch reading the
 	// set can never disagree about which subject was matched.
 	it("scores under the head of the set", () => {
 		const m = matchPOISubject("prescription near Denver CO", "en-US", affordedSet)
@@ -185,8 +185,9 @@ describe("a lookup returning several hits", () => {
  *
  * The separator regex was linearized (`\s*,\s*|\s+(?:…)\s+` → `,\s*|\s(?:…)\s+`)
  * to clear CodeQL's `js/polynomial-redos` alert.
- * `matchPOISubject` trims both the subject and the remainder, so surrounding whitespace
- * on the separator is redundant — the split behaviour must be byte-identical.
+ * `matchPOISubject` trims both the subject and the remainder, so surrounding
+ * whitespace on the separator is redundant.
+ * The split behaviour must be byte-identical.
  *
  * These cases pin the split point, subject, remainder, and match for every branch,
  * anchor word, and whitespace shape.
@@ -257,7 +258,8 @@ describe("ANCHOR_SEPARATOR split behaviour (byte-identical across the linearizat
 	})
 
 	it("skips a leading separator (index === 0 guard) — no split before the first token", () => {
-		// Leading comma: the sole separator is at index 0 and is skipped. the whole-input path already missed → null.
+		// Leading comma: the sole separator is at index 0 and is skipped.
+		// The whole-input path already missed → null.
 		expect(matchPOISubject(", Boston", "en-US", subjectLookup)).toBeNull()
 	})
 
@@ -339,8 +341,9 @@ describe("ANCHOR_SEPARATOR is linear (ReDoS safety)", () => {
 		const m = matchPOISubject(pathological, "en-US", neverHits)
 		const elapsed = performance.now() - start
 		expect(m).toBeNull()
-		// The old O(n²) form took seconds on 1e5 chars. the linear form completes in single-digit
-		// ms. 100ms is a generous ceiling that still fails loudly if quadratic backtracking returns.
+		// The old O(n²) form took seconds on 1e5 chars.
+		// The linear form completes in single-digit ms. 100ms is a generous ceiling that
+		// still fails loudly if quadratic backtracking returns.
 		expect(elapsed).toBeLessThan(100)
 	})
 
@@ -359,8 +362,8 @@ describe("createKindClassifier with a poi lexicon", () => {
 
 	// ROAD_TO_V9 §4.4 split this row's population off `poi_query`: a bare category is
 	// `poi_category` now, and `poi_query` stays underneath it as the alternative.
-	// Both kinds take the coordinator's POI branch, so the routing this test was protecting
-	// is unchanged — `core/pipeline/poi-branch.test.ts` is where that is asserted.
+	// Both kinds take the coordinator's POI branch, so the routing this test was protecting is unchanged.
+	// `core/pipeline/poi-branch.test.ts` is where that is asserted.
 	it("emits poi_category for a bare category phrase, with poi_query underneath", async () => {
 		const result = await classify(input("hospital"), shape(), LOCALE)
 		expect(result.kind).toBe("poi_category")

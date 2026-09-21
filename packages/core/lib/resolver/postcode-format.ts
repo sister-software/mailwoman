@@ -23,13 +23,22 @@
  * Feeds the `postcodeCountryPrior` change (conditional, default-off pending its check).
  */
 export const POSTCODE_FORMAT_COUNTRY: ReadonlyArray<{ readonly re: RegExp; readonly country: string }> = [
-	// GB `E4 9AZ` — letters-first, ends `\d[A-Z]{2}`. Never matches a US ZIP / NL / FR / CA code.
+	// GB `E4 9AZ` — letters-first, ends `\d[A-Z]{2}`.
+	// Never matches a US ZIP / NL / FR / CA code.
 	{ re: /^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/i, country: "GB" },
-	// CA `K2P 1L4` — `A#A #A#`, ends `\d[A-Z]\d` (distinct from GB's `\d[A-Z]{2}`). The placer conflates CA with US (English) / FR (Québec) at 0.9–1.0 confidence, same failure as GB. The format is unambiguous.
+	// CA `K2P 1L4` — `A#A #A#`, ends `\d[A-Z]\d` (distinct from GB's `\d[A-Z]{2}`).
+	// The placer conflates CA with US (English) / FR (Québec) at 0.9–1.0 confidence, same failure as GB.
+	// The format is unambiguous.
 	{ re: /^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/i, country: "CA" },
-	// IE Eircode `D02 AF30` — routing key (letter + 2 digits, or the D6W special) + a 4-alnum unique part. The 4-char unique part is what separates it from GB's 3-char `\d[A-Z]{2}` inward (no real-code overlap. Belfast `BT1 5GS` stays GB. Northern Ireland uses GB postcodes). The placer mis-routes IE 5/5 (Cork→US 0.99, Drogheda→US 1.00) — the same conflation class as GB/CA.
+	// IE Eircode `D02 AF30` — routing key (letter + 2 digits, or the D6W special) + a 4-alnum unique part.
+	// The 4-char unique part is what separates it from GB's 3-char `\d[A-Z]{2}` inward
+	// (no real-code overlap. Belfast `BT1 5GS` stays GB. Northern Ireland uses GB postcodes).
+	// The placer mis-routes IE 5/5 (Cork→US 0.99, Drogheda→US 1.00) — the same conflation class as GB/CA.
 	{ re: /^(?:[A-Z]\d{2}|D6W)\s?[A-Z\d]{4}$/i, country: "IE" },
-	// NL PC6 is deliberately absent: `\d{4} [A-Z]{2}` is forgeable in parse context. A US house-number + directional fragment (`1234 NE`, `8990 SW`) matches it exactly, and this table feeds recognizeBarePostcode, which must never touch a street name. NL lives in countriesFromPostcodeFormat instead, whose consumers check on a bare-postcode tree.
+	// NL PC6 is deliberately absent: `\d{4} [A-Z]{2}` is forgeable in parse context.
+	// A US house-number + directional fragment (`1234 NE`, `8990 SW`) matches it exactly,
+	// and this table feeds recognizeBarePostcode, which must never touch a street name.
+	// NL lives in countriesFromPostcodeFormat instead, whose consumers check on a bare-postcode tree.
 ]
 
 /**

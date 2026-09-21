@@ -79,8 +79,10 @@ export function isCodePostal(input: unknown): input is CodePostal {
  *
  * The clean rule plus its two exceptions:
  *
- * - `20xxx` → Corsica. The split is by the rest of the code: roughly `20000`–`20199` → `2A` (Ajaccio side), `20200`+ →
- *   `2B` (Bastia side). Approximate at the boundary, exact for the bulk.
+ * - `20xxx` → Corsica.
+ *   The split is by the rest of the code: roughly `20000`–`20199` → `2A` (Ajaccio side),
+ *   `20200`+ → `2B` (Bastia side).
+ *   Approximate at the boundary, exact for the bulk.
  * - `970`–`976`xx → an overseas DOM, keyed by the three-digit prefix (`971`–`974`, `976`).
  * - Otherwise the first two digits are the département number.
  *

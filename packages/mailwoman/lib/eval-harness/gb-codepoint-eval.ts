@@ -135,7 +135,10 @@ function legsFor(postcode: string): Array<{ leg: string; input: string }> {
 		{ leg: "as_published", input: postcode },
 		{ leg: "lower_unspaced", input: postcode.toLowerCase().replaceAll(" ", "") },
 		{ leg: "uk_suffixed", input: `${postcode}, UK` },
-		// The leg that can fail, with the pass condition depending on whether the mutant exists: a real neighbouring unit must resolve like any postcode. A mutant absent from the register demands abstention. A "corrected" postcode is a different postcode (the BT3 9QQ → S3 9QQ trap class).
+		// The leg that can fail, with the pass condition depending on whether the mutant exists:
+		// a real neighbouring unit must resolve like any postcode.
+		// A mutant absent from the register demands abstention.
+		// A "corrected" postcode is a different postcode (the BT3 9QQ → S3 9QQ trap class).
 		{ leg: "typo", input: mutateFinalLetter(postcode) },
 	]
 }

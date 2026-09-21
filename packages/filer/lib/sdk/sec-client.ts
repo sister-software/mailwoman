@@ -97,7 +97,7 @@ export const SEC_MAX_REQUESTS_PER_SECOND = 10
  * lands 0-2 ms late and tips one grant across the boundary (the preceding second then holds 9).
  *
  * Against a true sliding-window limiter that is a violation, and it happens on a schedule that is
- * arithmetically compliant — which is exactly the kind of correctness nobody can debug after a block.
+ * arithmetically compliant, which is exactly the kind of correctness nobody can debug after a block.
  *
  * One request per second of headroom costs ~10% throughput on a crawl that is already cache-heavy,
  * and provides a schedule that stays inside the published limit even when the event loop is late.
@@ -236,8 +236,9 @@ export interface CreateSECClientOptions {
 	 * Desired requests/second.
 	 *
 	 * Clamped to `[1, SEC_MAX_REQUESTS_PER_SECOND]` regardless of what's passed.
-	 * Defaults to {@linkcode SEC_DEFAULT_REQUESTS_PER_SECOND}, which is one below the
-	 * policy ceiling on purpose — see that constant for the measurement behind it.
+	 * Defaults to {@linkcode SEC_DEFAULT_REQUESTS_PER_SECOND}, which is one below
+	 * the policy ceiling on purpose.
+	 * See that constant for the measurement behind it.
 	 */
 	requestsPerSecond?: number
 	/**
@@ -428,16 +429,18 @@ function responseTTL(response: { config: { url?: string } }, mutableTTLMs: numbe
  *
  * Two shapes are worth caching, and the same edgar host serves both depending on the endpoint:
  *
- * - A JSON object/array (every `get<T>` call — the submissions index, the ticker map, `browse-edgar`). Axios already
- *   rejects an unparseable body via `transitional.silentJSONParsing` (see the `axios` config below), so this is the
- *   second check rather than the first. A decoded body that isn't an object means the upstream served something other
- *   than what it claimed.
- * - A non-empty string (every `getDocument` call — a filing document is html/text, never JSON): admits the body
- *   `getDocument`'s `responseType: "text"` override actually produces. A `typeof === "object"` test alone would reject
- *   it outright, since a string is never `typeof "object"`. `.length > 0` is the truncated/empty guard on this shape.
- *   `getDocument` has no Axios-level parse step to lean on the way the JSON path does, so this predicate is the only
- *   check standing between a truncated/empty document and a permanent (`/Archives/edgar/data/`) cache entry with no
- *   self-healing path short of hand-deleting a hash-named file.
+ * - A JSON object/array (every `get<T>` call — the submissions index, the ticker map, `browse-edgar`).
+ *   Axios already rejects an unparseable body via `transitional.silentJSONParsing`
+ *   (see the `axios` config below), so this is the second check rather than the first.
+ *   A decoded body that isn't an object means the upstream served something other than what it claimed.
+ * - A non-empty string (every `getDocument` call — a filing document is html/text, never JSON):
+ *   admits the body `getDocument`'s `responseType: "text"` override actually produces.
+ *   A `typeof === "object"` test alone would reject it outright, since a string is never `typeof "object"`.
+ *   `.length > 0` is the truncated/empty guard on this shape.
+ *   `getDocument` has no Axios-level parse step to lean on the way the JSON path does,
+ *   so this predicate is the only check standing between a truncated/empty document
+ *   and a permanent (`/Archives/edgar/data/`) cache entry with no self-healing
+ *   path short of hand-deleting a hash-named file.
  *
  * An `/Archives/` entry cached under the permanent TTL has no self-healing path
  * short of hand-deleting a hash-named file, which is why both branches exist

@@ -70,10 +70,12 @@ const COVERAGE_RADIUS_KM = 10
 /**
  * Why a record is not in the index.
  *
- * - `deprecated_no_successor` — `is_deprecated` with `is_superseded = 0`. The upstream-mistake shape: a deprecation that
- *   names no replacement. 4,137 admin records globally on the 2026-08-19 artifact.
- * - `not_current_unstated` — `is_current = 0` with neither deprecation nor supersession. Ten times larger (43,755) and
- *   dominated by legal-form duplicates, which is why it is a separate class rather than more of the same.
+ * - `deprecated_no_successor` — `is_deprecated` with `is_superseded = 0`.
+ *   The upstream-mistake shape: a deprecation that names no replacement. 4,137
+ *   admin records globally on the 2026-08-19 artifact.
+ * - `not_current_unstated` — `is_current = 0` with neither deprecation nor supersession.
+ *   Ten times larger (43,755) and dominated by legal-form duplicates, which is why
+ *   it is a separate class rather than more of the same.
  */
 export const CurrencyClass = {
 	DeprecatedNoSuccessor: "deprecated_no_successor",
@@ -86,14 +88,18 @@ export type CurrencyClass = (typeof CurrencyClass)[keyof typeof CurrencyClass]
  * Whether a live record already serves this place, and by what evidence.
  *
  * - `covered_exact` — a live record of the same folded name within {@link COVERAGE_RADIUS_KM}.
- * - `covered_containment` — a live neighbour whose name this one contains: `Town of Gilbert` over live `Gilbert`,
- *   `Arrondissement de Lyon` over live `Lyon`. This verdict is what keeps the legal-form class out of the hole count. A
- *   same-name-string test alone called 21,010 US rows holes, and the samples were `Commonwealth of Pennsylvania` and
- *   `Town of Cary`. Directional: `Telford` inside live `Telford and Wrekin` is not a cover, because no query for
- *   Telford resolves through it.
- * - `covered_cross_band` — a live record of the same name nearby, but at a different placetype: the place answers at
- *   coarser granularity and loses its in-band race. `Swansea` and `Newport` are the measured cases.
- * - `uncovered` — no live record nearby bears or contains the name. The class a reviewer must judge (`Telford`).
+ * - `covered_containment` — a live neighbour whose name this one contains:
+ *   `Town of Gilbert` over live `Gilbert`, `Arrondissement de Lyon` over live `Lyon`.
+ *   This verdict is what keeps the legal-form class out of the hole count.
+ *   A same-name-string test alone called 21,010 US rows holes, and the samples were
+ *   `Commonwealth of Pennsylvania` and `Town of Cary`.
+ *   Directional: `Telford` inside live `Telford and Wrekin` is not a cover,
+ *   because no query for Telford resolves through it.
+ * - `covered_cross_band` — a live record of the same name nearby, but at a different placetype:
+ *   the place answers at coarser granularity and loses its in-band race.
+ *   `Swansea` and `Newport` are the measured cases.
+ * - `uncovered` — no live record nearby bears or contains the name.
+ *   The class a reviewer must judge (`Telford`).
  */
 export const CoverageVerdict = {
 	CoveredExact: "covered_exact",
@@ -230,8 +236,8 @@ function fold(value: string): string {
 /**
  * Does a live neighbour cover this place?
  *
- * Exact name first, then containment in either direction — see {@link CoverageVerdict}
- * for why containment is the required half.
+ * Exact name first, then containment in either direction.
+ * See {@link CoverageVerdict} for why containment is the required half.
  */
 function judgeCoverage(
 	dead: { key: string; words: Set<string>; lat: number; lon: number; placetype: string },
@@ -247,7 +253,7 @@ function judgeCoverage(
 
 		if (live.key === dead.key) {
 			// Same band is a true cover.
-			// Another band answers the query at a coarser grain and is reported as such — but only
+			// Another band answers the query at a coarser grain and is reported as such, but only
 			// after the whole neighbourhood is searched, since an in-band cover may follow.
 			if (live.placetype === dead.placetype) {
 				return {

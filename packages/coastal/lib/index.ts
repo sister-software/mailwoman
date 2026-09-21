@@ -285,7 +285,7 @@ interface AreaRow {
  * Everything that would make the reader answer a well-formed wrong thing is refused at construction
  * rather than at query time: a manifest naming a different layer, a coverage table with no rows,
  * a coverage row whose basis would support an exclusion, an empty scenario vocabulary.
- * Each of those would otherwise present as a reader that quietly always answers `unknown` — or,
+ * Each of those would otherwise present as a reader that quietly always answers `unknown`, or,
  * in the exclusion case, as a reader that confidently reports England as free of coastal erosion.
  */
 export class CoastalErosionLookup implements Disposable {

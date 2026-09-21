@@ -258,7 +258,7 @@ async function declaredArtifacts(packageDir: PathBuilderLike): Promise<string[]>
  *
  * The eval's own failure here is deliberate and stays in place: `promotion-eval.ts` names the
  * package directory rather than calling `resolveWeights({cacheRoot})` precisely so a mis-staged
- * candidate dies on an enoent instead of falling through to the installed workspace package —
+ * candidate dies on an enoent instead of falling through to the installed workspace package,
  * which in this repo always resolves, and would grade the shipped model under the candidate's label.
  * This check runs before the spawn only so the reader learns the expected shape
  * from a sentence rather than from a stack trace.

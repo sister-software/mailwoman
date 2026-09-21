@@ -284,7 +284,7 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 		// so "Diego Garcia" is a landmark and "diego garcia" is a locality.
 		// That is a PRE-existing case-keyed rule, unchanged here and recorded because it is
 		// exactly the kind of thing this receipt would otherwise be read as having introduced.
-		// What matters for the D-rule is that the same two kinds come out with and without §4 —
+		// What matters for the D-rule is that the same two kinds come out with and without §4,
 		// which the byte-identical routing test above already pinned.
 		expect(new Set(marked.map((m) => m.kind))).toEqual(new Set<QueryKind>(["landmark", "locality_only"]))
 	})

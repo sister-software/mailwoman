@@ -26,7 +26,7 @@ import { useMap } from "react-map-gl/maplibre"
 import type { MapCameraTarget } from "#map/place-render"
 
 /**
- * The `fitBounds` options for a `bounds` target — and the reason this is a named function
+ * The `fitBounds` options for a `bounds` target, and the reason this is a named function
  * rather than an object literal at the call site.
  *
  * `duration` is present only on the non-animated path, and its absence on the animated one is required.
@@ -42,7 +42,7 @@ import type { MapCameraTarget } from "#map/place-render"
  * Measured 2026-08-05 against maplibre-gl 5.24.0, same bounds and same map:
  * `{padding: 40, duration: undefined}` → `map._easeOptions.duration = NaN` + the throw;
  * `{padding: 40}` → `3937.7 ms` + a normal flight.
- * So pass the key or don't — never pass it holding `undefined`.
+ * So pass the key or don't, never pass it holding `undefined`.
  */
 export function fitBoundsOptionsFor(padding: number, animate: boolean): FitBoundsOptions {
 	return animate ? { padding } : { padding, duration: 0 }

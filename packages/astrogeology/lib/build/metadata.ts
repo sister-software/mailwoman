@@ -27,7 +27,8 @@ export async function readPMTilesMetadata(archivePath: string): Promise<Record<s
 }
 
 /**
- * The block an archive carries, validated. throws when the archive carries none or a malformed one.
+ * The block an archive carries, validated.
+ * Throws when the archive carries none or a malformed one.
  */
 export async function readMailwomanMetadata(archivePath: string): Promise<PMTilesMetadata> {
 	const metadata = await readPMTilesMetadata(archivePath)

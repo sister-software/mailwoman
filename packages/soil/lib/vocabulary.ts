@@ -114,7 +114,7 @@ export const SSURGO_PRODUCT_LIMITS: ReadonlyArray<string> = [
  * The coverage statement a `designated` basis rests on: what nrcs declares
  * complete inside a published survey area.
  *
- * It is the mapping at the survey's own scale rather than a site-specific determination —
+ * It is the mapping at the survey's own scale rather than a site-specific determination,
  * which is why the observation reports what the survey assigns to the map unit
  * covering a location and never whether the land can be farmed.
  */
@@ -189,7 +189,7 @@ export function farmlandScope(value: string | null | undefined): FarmlandScope {
 	// first, because it contains the phrase the federal test looks for.
 	// `Not prime farmland` is a declared value stating no farmland importance at all,
 	// and a substring test that ran the other way round would call it federally
-	// comparable prime farmland — which it is the exact negation of.
+	// comparable prime farmland, which it is the exact negation of.
 	// It is also the most common value in the domain: 192,120 of the 339,191 national map units carry it.
 	if (lowered.startsWith("not prime farmland")) return FarmlandScope.None
 

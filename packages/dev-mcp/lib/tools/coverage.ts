@@ -119,7 +119,7 @@ export const coverageTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
  *
  * Pure and exported so the projection can be tested.
  * It builds its result field by field, which means a field the report grows and this function
- * does not name is dropped in silence — and the consumer reads that as the field not existing.
+ * does not name is dropped in silence, and the consumer reads that as the field not existing.
  *
  * The corpus-mismatch guard shipped inert for exactly that reason: the census computed it,
  * fifteen tests passed, and the first live call showed nothing, because this function did not carry it.

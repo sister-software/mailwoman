@@ -44,7 +44,9 @@ const GLOBAL_EXTENT_TOLERANCE = 0.005
 const WHOLE_BODY_ULLR = ["-180", "90", "180", "-90"] as const
 
 /**
- * Pixels along a tile edge. at zoom z the whole-body grid is 2^z tiles wide and 2^(z−1) tall in epsg:4326.
+ * Pixels along a tile edge.
+ *
+ * At zoom z the whole-body grid is 2^z tiles wide and 2^(z−1) tall in epsg:4326.
  */
 const TILE_PIXELS = 256
 
@@ -93,7 +95,8 @@ export interface HillshadeBuildOptions {
 	demPath: PathBuilderLike
 	outPath: PathBuilderLike
 	/**
-	 * The deepest zoom the archive carries. overviews run from it down to zoom 0.
+	 * The deepest zoom the archive carries.
+	 * Overviews run from it down to zoom 0.
 	 */
 	maxZoom: number
 }
@@ -250,17 +253,17 @@ export async function buildHillshadePMTiles(
 	await runFile("gdal_translate", materialize)
 
 	// 3. MBTiles with PNG tiles at the source's zoom, then overviews down to zoom 0, then PMTiles.
-	//    The driver's zoom estimate for a grid of exactly 256·2^z pixels sits a hair
-	//    under z: measured on blank whole-globe rasters, auto and lower answered 5
-	//    for 16,384 pixels and lower answered 1 for 1,024, while upper answered 6
-	//    and 2. upper is the strategy that lands on the requested zoom.
+	//    The driver's zoom estimate for a grid of exactly 256·2^z pixels sits a hair under z:
+	//    measured on blank whole-globe rasters, auto and lower answered 5 for 16,384 pixels
+	//    and lower answered 1 for 1,024, while upper answered 6 and 2.
+	//    Upper is the strategy that lands on the requested zoom.
 	// MBTiles is a Web Mercator format, so this step reprojects from the epsg:4326
-	// grid above — and a reprojection resamples.
+	// grid above, and a reprojection resamples.
 	// `-r nearest` is stated rather than inherited: it is `gdal_translate`'s default today,
 	// and the encoded bytes are a base-256 numeral that any interpolating kernel would
 	// turn into heights that are not samples of anything.
-	// Verified by decoding the built archive at named places — Olympus Mons reads 20,009
-	// m against the source's 20,012 m, Hellas Planitia −6,044 m against −6,044 m.
+	// Verified by decoding the built archive at named places.
+	// Olympus Mons reads 20,009 m against the source's 20,012 m, Hellas Planitia −6,044 m against −6,044 m.
 	const tile = [
 		"-of",
 		"MBTILES",
@@ -276,7 +279,8 @@ export async function buildHillshadePMTiles(
 
 	await runFile("gdal_translate", tile)
 
-	// The driver's zoom is read back rather than assumed. the resample above is what makes it the requested one.
+	// The driver's zoom is read back rather than assumed.
+	// The resample above is what makes it the requested one.
 	const zoom = await readMBTilesZoom(mbtiles)
 
 	if (zoom !== options.maxZoom) {
@@ -284,10 +288,10 @@ export async function buildHillshadePMTiles(
 	}
 
 	// Overviews run from that zoom down to 0, resampled nearest.
-	// The bytes are a base-256 numeral by now: averaging
-	//    the high byte of two neighbours answers an elevation that is neither of them,
-	//    and the error is a whole 256 m step wherever the two straddle a boundary.
-	//    Decimation keeps every overview pixel a real sample.
+	// The bytes are a base-256 numeral by now: averaging the high byte of two
+	// neighbours answers an elevation that is neither of them, and the error is a
+	// whole 256 m step wherever the two straddle a boundary.
+	// Decimation keeps every overview pixel a real sample.
 	const overviews = ["-r", "nearest", mbtiles, ...Array.from({ length: zoom }, (_, index) => String(2 ** (index + 1)))]
 
 	if (zoom > 0) {

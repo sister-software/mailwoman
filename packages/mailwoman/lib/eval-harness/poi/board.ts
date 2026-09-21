@@ -85,8 +85,10 @@ export const POI_BOARD_FIXTURES = "packages/mailwoman/lib/eval-harness/fixtures/
  * restated here because this board grades an assembled answer rather than a law relation
  * and must not import a law schema to say so.
  *
- * - `pass` — the default, and the only status the floors read. A `pass` row that fails lowers the floor rates.
- * - `known_fail` — the row fails because of a live defect: the default path answers, and the answer is wrong.
+ * - `pass` — the default, and the only status the floors read.
+ *   A `pass` row that fails lowers the floor rates.
+ * - `known_fail` — the row fails because of a live defect: the default path answers,
+ *   and the answer is wrong.
  * - `improvement_target` — the row fails because a capability it needs is not on the default path at all.
  *
  * The difference between the two tracked statuses is what would move the row:
@@ -136,7 +138,7 @@ export interface POIBoardFixture {
  *
  * An unknown key is refused rather than dropped: a plain object silently discards a
  * misspelled field, so a row meant to be tracked would reach the floors while reading
- * as authored — and the board would then turn red for a reason nobody wrote.
+ * as authored, and the board would then turn red for a reason nobody wrote.
  */
 const FIXTURE_KEYS = new Set<string>(["id", "query", "locale", "expect", "status", "bugRef", "rowRef", "note"])
 
@@ -214,8 +216,9 @@ export function auditFixtures(fixtures: readonly POIBoardFixture[]): string[] {
 }
 
 /**
- * The subset of a `PipelineResult` grading needs — kept narrow so tests can
- * hand in a fake without building a tree.
+ * The subset of a `PipelineResult` grading needs.
+ *
+ * Kept narrow so tests can hand in a fake without building a tree.
  */
 export interface POIBoardOutcome {
 	path: PipelineResult["path"]
@@ -333,9 +336,9 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 	const withinRange = nearestKm <= expect.maxNearestKm
 
 	// Brand and category checks use the same "top field, mismatch phrase"
-	// shape (`top <field> <got> !== expected <want>`) — kept as two branches
-	// (not a single templated string) so the category branch's exact wording stays
-	// byte-stable against v1 assertions (`top category X !== expected Y`).
+	// shape (`top <field> <got> !== expected <want>`).
+	// Kept as two branches (not a single templated string) so the category branch's exact
+	// wording stays byte-stable against v1 assertions (`top category X !== expected Y`).
 	const topCategoryID = results[0]!.categoryID
 	const topBrandWikidata = results[0]!.brandWikidata
 
@@ -469,12 +472,14 @@ export interface QuantileStats {
  * it moves the committed total and leaves the counted set the floors read exactly where it was.
  * A row that would move these numbers is a row being counted, and that is the change to argue for.
  *
- * - `overall` ≥ 0.90 — the assembled-answer pass rate over the rows the floors read. A soft floor: coverage gaps in
- *   poi.db (the `trail`/`supermarket` holdouts) are allowed to cost a few points without failing the board.
- * - `abstain` = 1.00 — every abstain case must abstain for the right reason. A hard floor: an abstain miss means the poi
- *   branch claimed a query poi.db structurally cannot answer, the exact false-positive this board guards.
- * - `address` = 1.00 — every address-guard case must stay on the address path. A hard floor for the same reason: the poi
- *   branch must never hijack a full address.
+ * - `overall` ≥ 0.90 — the assembled-answer pass rate over the rows the floors read.
+ *   A soft floor: coverage gaps in poi.db (the `trail`/`supermarket` holdouts) are
+ *   allowed to cost a few points without failing the board.
+ * - `abstain` = 1.00 — every abstain case must abstain for the right reason.
+ *   A hard floor: an abstain miss means the poi branch claimed a query poi.db structurally
+ *   cannot answer, the exact false-positive this board guards.
+ * - `address` = 1.00 — every address-guard case must stay on the address path.
+ *   A hard floor for the same reason: the poi branch must never hijack a full address.
  */
 export const POI_BOARD_FLOORS = {
 	overall: 0.9,
@@ -521,7 +526,8 @@ export interface FloorEvaluation {
 }
 
 /**
- * The subset of a report `evaluateFloors` reads — kept narrow so tests can hand in a synthetic result set.
+ * The subset of a report `evaluateFloors` reads.
+ * Kept narrow so tests can hand in a synthetic result set.
  */
 export interface FloorInput {
 	overallPassRate: number

@@ -145,7 +145,7 @@ export interface Phase2Receipt {
 
 export interface Phase2RunOptions extends POIBoardOptions {
 	/**
-	 * Override the frozen pre-registration — for a test that wants a synthetic definition.
+	 * Override the frozen pre-registration, for a test that wants a synthetic definition.
 	 *
 	 * A run with no override reads the committed one.
 	 */

@@ -124,8 +124,8 @@ export interface NTIARecord {
 	/**
 	 * 2-character state abbreviation from the postal address.
 	 *
-	 * Loosely typed as `string` — see {@linkcode FCCStateID} for why the tiger-backed
-	 * literal union is deferred to task 2c.
+	 * Loosely typed as `string`.
+	 * See {@linkcode FCCStateID} for why the tiger-backed literal union is deferred to task 2c.
 	 *
 	 * @example
 	 * 	CA

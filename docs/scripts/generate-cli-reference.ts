@@ -291,9 +291,10 @@ function collectCommands(node: CommandNode, prefix: readonly string[], into: CLI
 }
 
 // The package root rather than the directory of the package's entry file.
-// `dirname(resolveModulePath("mailwoman"))` answered the same thing only while the entry sat
-// at the package root. once source moved under `lib/` it started answering `mailwoman/lib`,
-// and the `out/` joins below silently became `mailwoman/lib/out/…`.
+// `dirname(resolveModulePath("mailwoman"))` answered the same thing only
+// while the entry sat at the package root.
+// Once source moved under `lib/` it started answering `mailwoman/lib`, and the
+// `out/` joins below silently became `mailwoman/lib/out/…`.
 const packagePath = resolvePackageDirectory("mailwoman")
 
 /**
@@ -577,7 +578,7 @@ export const OUTPUT_PATH = repoRootPath("docs", "articles", "developers", "refer
 /**
  * Render the page and write it.
  *
- * Returns the rendered text so a caller can compare rather than write.
+ * @returns the rendered text so a caller can compare rather than write.
  */
 export async function generateCLIReference(): Promise<string> {
 	const surface = await collectCLISurface()

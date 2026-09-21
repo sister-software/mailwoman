@@ -121,8 +121,10 @@ const REVERSED_VARIANT_B_CUTOFF = 0.5
 const REVERSED_VARIANT_C_CUTOFF = 0.75
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour
- * it exists to exercise, and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder.
+ *
+ * See the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
  */
 export const frOrderRecipe: CorpusRecipe = {
 	name: "fr-order",

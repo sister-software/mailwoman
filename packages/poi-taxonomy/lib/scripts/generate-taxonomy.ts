@@ -98,15 +98,17 @@ export interface CuratedOverlay {
  * A handful of Overture rows (4 as of the v1.17.0 snapshot — `aircraft_repair`,
  * `ev_charging_station`, `custom_t_shirt_store`, `community_services_non_profits`) carry
  * a display path whose leaf label differs from the category code the db actually stores.
- * for those the code is appended as the true leaf so the invariant `lookup.ts`'s integrity
+ *
+ * For those the code is appended as the true leaf so the invariant `lookup.ts`'s integrity
  * test relies on (`hierarchy.at(-1) === id`) holds while the display ancestry is preserved.
  *
- * Throws only on a structurally broken row (no code / empty path) or a repeated code.
+ * @throws only on a structurally broken row (no code / empty path) or a repeated code.
  */
 export function parseOvertureCSV(csvText: string): OvertureSnapshotRow[] {
 	const rows: OvertureSnapshotRow[] = []
 	const seen = new Set<string>()
-	// The header is row 1. the first emitted record is row 2.
+	// The header is row 1.
+	// The first emitted record is row 2.
 	let rowNumber = 1
 
 	for (const fields of CSVSpliterator.from<string[]>(csvText, {

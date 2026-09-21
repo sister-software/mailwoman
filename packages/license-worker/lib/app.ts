@@ -30,7 +30,8 @@ export interface AppDependencies {
 	ledger: Ledger
 	email: EmailProvider
 	/**
-	 * Built from the environment when absent. a test injects one over a fetch stub.
+	 * Built from the environment when absent.
+	 * A test injects one over a fetch stub.
 	 */
 	stripe?: Stripe
 	now?: () => number

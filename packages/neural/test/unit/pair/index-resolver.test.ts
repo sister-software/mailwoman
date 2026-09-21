@@ -39,7 +39,7 @@ const HEADER_AS_WRITTEN: PairIndexHeader = { ...HEADER, schemaVersion: 3, tagTab
 /**
  * Hand-build a PIX1 binary independent of `serializePairIndex`, so tests can express
  * states the serializer refuses to produce (legacy headers without `tagTable`,
- * foreign tag tables, out-of-range indices, records missing the schema-3 parent byte) —
+ * foreign tag tables, out-of-range indices, records missing the schema-3 parent byte),
  * and so the layout-conformance block below checks the serializer against the documented
  * format (docs/engineering/reference/pix1.ksy) rather than against itself.
  *

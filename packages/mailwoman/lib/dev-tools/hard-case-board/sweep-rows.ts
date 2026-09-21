@@ -36,7 +36,9 @@ export const SWEEP_ROWS: Array<{
 	probeSurface: string
 	note: string
 }> = [
-	// country_structure — the sweep's highest-hit class (13/31 = 42%, the addressing structures nothing in the corpus had ever exercised). All outside the four FST countries, so they also carry reach evidence.
+	// country_structure — the sweep's highest-hit class
+	// (13/31 = 42%, the addressing structures nothing in the corpus had ever exercised).
+	// All outside the four FST countries, so they also carry reach evidence.
 	{
 		cc: "br",
 		caseID: "br-cs-rua-augusta-1000-cerqueira",
@@ -108,7 +110,9 @@ export const SWEEP_ROWS: Array<{
 		note: "PH barangay structure — 'San Antonio' is also a major US city, and the sweep landed 13,532 km away on it.",
 	},
 
-	// fst_out_of_reach — family-C namesake rows whose country no shipped FST covers. These pin the reach limit itself: they cannot discriminate, and reporting them separately is what stops "the arms tied" from being read as "the change is harmless".
+	// fst_out_of_reach — family-C namesake rows whose country no shipped FST covers.
+	// These pin the reach limit itself: they cannot discriminate, and reporting them
+	// separately is what stops "the arms tied" from being read as "the change is harmless".
 	{
 		cc: "bw",
 		caseID: "bw-cs-gaborone",

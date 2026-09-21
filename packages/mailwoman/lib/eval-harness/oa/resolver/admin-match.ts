@@ -91,14 +91,15 @@ const STATE_NAME_TO_ABBR: Record<string, string> = Object.fromEntries(
  * Three paths, tried in order:
  *
  * 1. Verbatim — both already the same string (US `Berlin`==`Berlin`, or two identical abbrevs).
- * 2. US — the resolver returns a state's canonical full name (`California`) while OA's expected is the USPS abbrev (`CA`);
- *    map full name → abbrev so they compare.
- * 3. DE — the resolver returns WOF's english exonym (`Saxony`) while OA's expected is the German name (`Sachsen`);
- *    `lookupGermanState` folds code / German name / English name → one ISO 3166-2:DE code on both sides. Strict:
- *    distinct states (Bavaria vs Saxony) still miss, so this corrects the cross-language mismatch without loosening a
- *    genuine wrong-region.
- * 4. FR — `lookupFrenchRegion` folds an ISO 3166-2:FR code or a région name (accents optional) to one code on both sides,
- *    the same diacritic-insensitive fix for `Île-de-France` vs `Ile-de-France`.
+ * 2. US — the resolver returns a state's canonical full name (`California`) while OA's
+ *    expected is the USPS abbrev (`CA`); map full name → abbrev so they compare.
+ * 3. DE — the resolver returns WOF's english exonym (`Saxony`) while OA's expected
+ *    is the German name (`Sachsen`); `lookupGermanState` folds code / German name
+ *    / English name → one ISO 3166-2:DE code on both sides.
+ *    Strict: distinct states (Bavaria vs Saxony) still miss, so this corrects the
+ *    cross-language mismatch without loosening a genuine wrong-region.
+ * 4. FR — `lookupFrenchRegion` folds an ISO 3166-2:FR code or a région name (accents optional) to one
+ *    code on both sides, the same diacritic-insensitive fix for `Île-de-France` vs `Ile-de-France`.
  *
  * The code spaces don't overlap on real inputs (a USPS abbrev is never a German
  * or French region name, and the German/French names are disjoint), so trying all
@@ -141,7 +142,7 @@ export type LocalityMatcher = (expected: string | undefined, locNode: Resolved |
 export function buildLocalityMatcher(adminDatabasePath: string): LocalityMatcher {
 	// Gazetteer-alias locality matching.
 	// A resolved place counts as a locality match if OA's expected name equals any of that
-	// place's WOF `names` rows (normalized) — not just its single canonical name.
+	// place's WOF `names` rows (normalized), not just its single canonical name.
 	// This credits forms WOF records as the same place (Butte ↔ Butte-Silver Bow,
 	// Saint ↔ St. Johnsbury, Mt ↔ Mount Pleasant) without loosening genuine wrong-place misses:
 	// different WOF ids carry disjoint name sets, so Saint Albans never matches St. Johnsbury.

@@ -120,7 +120,7 @@ export const NZ_PRIVATE_BOX_ALIAS = {
 	 */
 	type: "Private Box",
 	/**
-	 * The description of validity status — not a valid ADV358 Delivery Service Type.
+	 * The description of validity status, not a valid ADV358 Delivery Service Type.
 	 *
 	 * A colloquial NZ synonym for a numbered PO Box (same format as "PO Box <number>").
 	 */
@@ -139,7 +139,7 @@ export const NZ_PRIVATE_BOX_ALIAS = {
  * Per-type surface patterns (designator phrase only).
  *
  * Recognition is deliberately wider than the prescriptive standard — mail in the wild writes "P.O.
- * Box" even though ADV358 says `PO` is punctuation-free — but it does not admit
+ * Box" even though ADV358 says `PO` is punctuation-free, but it does not admit
  * forms the standard names as errors of type (`PB`).
  *
  * The colloquial "Private Box" alias is included for recognition
@@ -203,7 +203,7 @@ export interface NZDeliveryServiceMatch {
 	 */
 	id?: string
 	/**
-	 * True when the matched form is the colloquial "Private Box" alias —
+	 * True when the matched form is the colloquial "Private Box" alias,
 	 * not a valid ADV358 Delivery Service Type.
 	 *
 	 * Absent (undefined) for all standard ADV358 types.

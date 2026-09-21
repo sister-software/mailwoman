@@ -31,7 +31,7 @@ import { createReadStream } from "spliterator/node/fs"
  */
 export interface BANAddrRecord {
 	/**
-	 * `numero` — the house number (numeric in BAN. the `rep` suffix is carried separately).
+	 * `numero` — the house number (numeric in BAN. The `rep` suffix is carried separately).
 	 */
 	numero: string
 	/**
@@ -51,12 +51,13 @@ export interface BANAddrRecord {
 	 */
 	city: string | null
 	/**
-	 * `nom_ld` ("nom du lieu-dit") — the hamlet/place name below the commune,
-	 * cleaned via {@link cleanLieuDit}.
+	 * `nom_ld` ("nom du lieu-dit").
 	 *
-	 * Filled on 6.94% of BAN rows nationally. null on the rest and on any row whose raw
-	 * value is junk/duplicate (see {@link cleanLieuDit} for the filter breakdown — survey:
-	 * `.superpowers/sdd/deploc-world-survey.md`, FR section, 2026-07-22).
+	 * The hamlet/place name below the commune, cleaned via {@link cleanLieuDit}.
+	 *
+	 * Filled on 6.94% of BAN rows nationally.
+	 * Null on the rest and on any row whose raw value is junk/duplicate (see {@link cleanLieuDit} for
+	 * the filter breakdown — survey: `.superpowers/sdd/deploc-world-survey.md`, FR section, 2026-07-22).
 	 */
 	lieuDit: string | null
 	lon: number
@@ -66,8 +67,8 @@ export interface BANAddrRecord {
 	 */
 	codeInsee: string | null
 	/**
-	 * `certification_commune` — 1 when the commune certified the address, 0
-	 * when it did not. null when the column is blank.
+	 * `certification_commune` — 1 when the commune certified the address, 0 when it did not.
+	 * Null when the column is blank.
 	 *
 	 * Carried verbatim so a coverage basis can be computed per commune rather than inferred from a share.
 	 */
@@ -102,7 +103,7 @@ const CSV_READ_HIGH_WATER_MARK = 64 * 1024
 const LIEU_DIT_HEADER_LEAK = "lieudit_complement_nom"
 
 /**
- * Placeholder sentinel (`_1`, `_23`, …) — not a place name (survey: 1,671 rows, 0.09% of filled).
+ * Placeholder sentinel (`_1`, `_23`, …), not a place name (survey: 1,671 rows, 0.09% of filled).
  */
 const LIEU_DIT_PLACEHOLDER_PATTERN = /^_[0-9]+$/
 
@@ -111,8 +112,8 @@ const LIEU_DIT_PLACEHOLDER_PATTERN = /^_[0-9]+$/
  * but the survey explicitly flags it as needing a strip/parse step rather than
  * raw-label use (survey: 3,709 rows, 0.2% of filled).
  *
- * Dropped here rather than mis-emitted as a literal lieu-dit surface. parsing this
- * bucket into its own signal is deferred, unscoped work.
+ * Dropped here rather than mis-emitted as a literal lieu-dit surface.
+ * Parsing this bucket into its own signal is deferred, unscoped work.
  */
 const LIEU_DIT_ANCIENNE_COMMUNE_PREFIX_PATTERN = /^ancienne commune\s*:/i
 
@@ -120,8 +121,9 @@ const LIEU_DIT_ANCIENNE_COMMUNE_PREFIX_PATTERN = /^ancienne commune\s*:/i
  * Clean a raw `nom_ld` value against the survey's junk/dup breakdown.
  *
  * Of the 6.94% of BAN rows carrying a `nom_ld` value, ~6.6% of those are junk
- * or an exact duplicate of the commune name — this filters them out so only the clean
- * ~93.4% (~1.69M rows nationally) survive to {@link BANAddrRecord.lieuDit}.
+ * or an exact duplicate of the commune name.
+ * This filters them out so only the clean ~93.4% (~1.69M rows nationally)
+ * survive to {@link BANAddrRecord.lieuDit}.
  * Exported for testing.
  */
 export function cleanLieuDit(raw: string | undefined, commune: string | null): string | null {
@@ -135,16 +137,16 @@ export function cleanLieuDit(raw: string | undefined, commune: string | null): s
 
 	if (LIEU_DIT_ANCIENNE_COMMUNE_PREFIX_PATTERN.test(trimmed)) return null
 
-	// Exact duplicate of the commune name (case-insensitive) — no new signal,
-	// would just relabel locality twice (survey: 89,977 rows, 5.0% of filled).
+	// Exact duplicate of the commune name (case-insensitive).
+	// No new signal, would just relabel locality twice (survey: 89,977 rows, 5.0% of filled).
 	if (commune && trimmed.localeCompare(commune, undefined, { sensitivity: "base" }) === 0) return null
 
 	return trimmed
 }
 
 /**
- * Throw if the dump's header is missing a required column — a rename upstream
- * must not silently skip every row.
+ * Throw if the dump's header is missing a required column.
+ * A rename upstream must not silently skip every row.
  */
 function assertRequiredColumns(row: Record<string, unknown>): void {
 	for (const name of REQUIRED_COLUMNS) {

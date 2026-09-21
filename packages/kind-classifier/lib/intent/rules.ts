@@ -132,9 +132,10 @@ const TOPONYM_HEAD_PARTICLES: ReadonlySet<string> = new Set([
 	"sint",
 	// Definite article as a head — "The Valley" (Anguilla), "The Hague", "The Bottom".
 	"the",
-	// Generic toponymic heads outside the Latin/Germanic families, added because the 306-case corpus measured them
-	// (see `mailwoman/test/kind-intent-invariance.test.ts`): each is a common noun in its own language — Semitic "tel"
-	// (mound), Malay "kuala" (confluence), Khmer "phnom" (hill) — that heads a place name the way "mount" does.
+	// Generic toponymic heads outside the Latin/Germanic families, added because the
+	// 306-case corpus measured them (see `mailwoman/test/kind-intent-invariance.test.ts`):
+	// each is a common noun in its own language — Semitic "tel" (mound), Malay "kuala"
+	// (confluence), Khmer "phnom" (hill) — that heads a place name the way "mount" does.
 	"tel",
 	"kuala",
 	"phnom",
@@ -183,8 +184,10 @@ const TOPONYM_TAIL_NOUNS: ReadonlySet<string> = new Set([
  *
  * The class is `preposition + a reference to the asker`, which is why it is bounded
  * and why it is safe: `me`, `here`, `my <noun>` are function words rather than places.
- * Anchored to the END of the string (`$`) on purpose — the whole point of the kind is that
- * the query names no anchor, so anything after the locator is an anchor and disqualifies it.
+ * Anchored to the END of the string (`$`) on purpose.
+ *
+ * The whole point of the kind is that the query names no anchor, so anything
+ * after the locator is an anchor and disqualifies it.
  *
  * Linear by construction: every alternative begins with a required literal, and the only
  * quantifiers are bounded `\s+` runs between two required literals or trailing before `$`.
@@ -195,7 +198,8 @@ const DEICTIC_LOCATOR_TAIL =
 	/\b(?:near|close\s+to|next\s+to|around|by|closest\s+to|nearest\s+to)\s+(?:me|us|here|my\s+(?:location|position|area|place|house|home))\s*$/
 
 /**
- * The adverbial half of the same class — no preposition, the deixis is baked into the word.
+ * The adverbial half of the same class.
+ * No preposition, the deixis is baked into the word.
  */
 const DEICTIC_ADVERB_TAIL =
 	/\b(?:nearby|near\s?by|close\s+by|around\s+here|in\s+my\s+(?:area|neighborhood|neighbourhood))\s*$/
@@ -211,11 +215,12 @@ function hasDeicticTail(lowercased: string): boolean {
  * The conditions `bare_toponym` and `route_pair` share: no address grammar of any kind,
  * one segment, alpha throughout.
  *
- * Returns the word list when the input clears them, `null` when it does not.
+ * @returns the word list when the input clears them, `null` when it does not.
  * Deliberately a superset of `scoreLocalityOnly`'s conditions (which admit two segments),
  * so `bare_toponym` is a strict refinement of `locality_only` and can never fire
- * where `locality_only` did not — the property `intent-rules.test.ts` asserts
- * and the reason the ranking discipline above is enough to keep the top kind pinned.
+ * where `locality_only` did not.
+ * The property `intent-rules.test.ts` asserts and the reason the ranking discipline
+ * above is enough to keep the top kind pinned.
  */
 function bareNameWords(input: NormalizedInputLite, shape: QueryShapeLike): string[] | null {
 	const text = input.normalized.trim()
@@ -226,8 +231,8 @@ function bareNameWords(input: NormalizedInputLite, shape: QueryShapeLike): strin
 	// Nothing bare survives this.
 	if (shape.knownFormats.length) return null
 
-	// `alpha` excludes every house number and every postcode by construction —
-	// the cheapest available statement of "no address grammar", and it costs no lexicon.
+	// `alpha` excludes every house number and every postcode by construction.
+	// The cheapest available statement of "no address grammar", and it costs no lexicon.
 	// It is silent about whether a name is present, so the letter test stands beside it:
 	// `foldInputClass` answers `alpha` for input carrying no classified token,
 	// and `"???"` would otherwise reach this rule as a bare toponym.
@@ -256,9 +261,10 @@ function bareNameWords(input: NormalizedInputLite, shape: QueryShapeLike): strin
  * `bare_toponym` rule: a single coherent place-name carrying no address grammar.
  *
  * Feeds the declared-ambiguity path.
- * The rule itself asserts nothing about which place — that is the resolver's question,
- * and `mailwoman/query-intent.ts` is where the answer's dominance margin decides
- * whether the ambiguity gets declared.
+ * The rule itself asserts nothing about which place.
+ *
+ * That is the resolver's question, and `mailwoman/query-intent.ts` is where the answer's
+ * dominance margin decides whether the ambiguity gets declared.
  */
 export function scoreBareToponym(input: NormalizedInputLite, shape: QueryShapeLike): number {
 	return bareNameWords(input, shape) ? BARE_TOPONYM_CONFIDENCE : 0
@@ -322,7 +328,9 @@ export function scoreNearMe(input: NormalizedInputLite, _shape: QueryShapeLike):
 }
 
 /**
- * The subject of a `near_me` query — the category or thing the asker wants, with the locator stripped.
+ * The subject of a `near_me` query.
+ *
+ * The category or thing the asker wants, with the locator stripped.
  *
  * Empty string when the rule would not have fired.
  * Used to build the marker's evidence, never to route.

@@ -222,7 +222,7 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 		//
 		// Before the split this ran as two passes over one column: Wikipedia scores,
 		// then an `insert or ignore` population fallback for whatever Wikipedia missed.
-		// That made the column a conflation nothing downstream could take apart —
+		// That made the column a conflation nothing downstream could take apart,
 		// which is how encyclopedic importance became the de-facto ranking signal.
 		// Now each place gets one row carrying both scores in their own columns,
 		// and the legacy `importance` column is written by `blendImportance`.

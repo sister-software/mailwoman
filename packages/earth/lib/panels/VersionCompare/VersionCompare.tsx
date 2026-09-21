@@ -76,7 +76,8 @@ interface CompareRow {
  *
  * Row identity is by source-order position (primary-first, then interleaving).
  * For each primary node we look for a compare node covering the same character span.
- * when the tag differs, both sides are shown as a "tag-changed" row.
+ *
+ * When the tag differs, both sides are shown as a "tag-changed" row.
  */
 function computeCompareRows(primary: ParseResult, compare: ParseResult): CompareRow[] {
 	const rows: CompareRow[] = []
@@ -96,7 +97,8 @@ function computeCompareRows(primary: ParseResult, compare: ParseResult): Compare
 		}
 	}
 
-	// Walk primary nodes. paired compare nodes are removed from the map so leftovers surface as compare-only.
+	// Walk primary nodes.
+	// Paired compare nodes are removed from the map so leftovers surface as compare-only.
 	// Unspanned nodes are matched positionally.
 	const handledSpans = new Set<string>()
 	let cUnspannedIdx = 0

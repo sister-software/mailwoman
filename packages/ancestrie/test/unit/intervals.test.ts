@@ -130,7 +130,8 @@ describe("declared-but-absent parents", () => {
 		builder.add({ tokens: ["orphan"], id: 7, parentIDs: [999], rank: 0.5 })
 		const trie = Ancestrie.from(builder.seal())
 
-		// The chain includes the declared parent, then stops — it cannot be walked further.
+		// The chain includes the declared parent, then stops.
+		// It cannot be walked further.
 		expect(trie.ancestorsOf(7)).toEqual([999])
 		expect(trie.parentsOf(7)).toEqual([999])
 		// Interval containment answers over artifact-resident entries only.

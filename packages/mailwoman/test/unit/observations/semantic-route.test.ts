@@ -518,7 +518,7 @@ describe("the assertion's country scope", () => {
 	 * is taken away, so `drugstore` is the only mapped kind affording the activity
 	 * and a scope refusing it empties the answer rather than shortening it.
 	 *
-	 * That is what makes silence readable here — with `pharmacy` still in the set, every one
+	 * That is what makes silence readable here, with `pharmacy` still in the set, every one
 	 * of these queries would answer something and the scope's effect would be a length.
 	 *
 	 * Nothing about the scope itself is synthetic.
@@ -576,7 +576,7 @@ describe("the assertion's country scope", () => {
 		expect(observation!.localeCountry).toBe("FR")
 	})
 
-	// The committed pharmacy assertion is unscoped and carries no `countryScope` key at all — never an empty list.
+	// The committed pharmacy assertion is unscoped and carries no `countryScope` key at all, never an empty list.
 	it("leaves an unscoped assertion carrying no scope, beside a scoped one that does", () => {
 		const hits = committedRoute.lookup("prescription", "fr-FR")
 

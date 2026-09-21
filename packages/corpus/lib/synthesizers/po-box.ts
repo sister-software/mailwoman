@@ -323,7 +323,7 @@ export function synthesizeMilitaryPoBoxRow(opts: PoBoxSynthesisOpts = {}): Synth
 const PO_BOX_TEMPLATE_LOCALES: ReadonlySet<string> = new Set(PO_BOX_LOCALE_TEMPLATES.map((t) => t.locale))
 
 /**
- * The locale whose PO-BOX vocabulary a country's rows are written in — which is a narrower question
+ * The locale whose PO-BOX vocabulary a country's rows are written in, which is a narrower question
  * than `countryToLocale`'s, and the reason this carries its own name rather than shadowing it.
  *
  * A locale the shared map resolves but {@link PO_BOX_LOCALE_TEMPLATES} does not carry falls back

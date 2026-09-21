@@ -154,9 +154,11 @@ export const M2_PER_KM2 = 1_000_000
  * so the two axes are comparable.
  *
  * Measure TO the edge rather than TO the nearest vertex.
- * A point a centimetre from a long edge can be metres from every vertex of it, so a vertex
- * distance overstates the gap without bound — measured on the flood layer's verification,
- * one near-miss read 1.58 m to vertices and 0.009 m to edges, a 9 mm difference overstated 175-fold.
+ * A point a centimetre from a long edge can be metres from every vertex of it,
+ * so a vertex distance overstates the gap without bound.
+ *
+ * Measured on the flood layer's verification, one near-miss read 1.58 m to vertices
+ * and 0.009 m to edges, a 9 mm difference overstated 175-fold.
  *
  * That is the difference between "two channels rendered the same edge slightly
  * differently" and "the conversion is wrong".
@@ -192,9 +194,10 @@ export function segmentDistanceMetres(
  * `Infinity` when the geometry bounds no area or carries no segment.
  *
  * To the edge rather than to the nearest vertex: a point a centimetre from a long edge can
- * be metres from every vertex of it, so a vertex distance overstates the gap without bound —
- * measured on the flood layer's verification, one near-miss read 1.58 m to vertices
+ * be metres from every vertex of it, so a vertex distance overstates the gap without bound.
+ * Measured on the flood layer's verification, one near-miss read 1.58 m to vertices
  * and 0.009 m to edges, a 9 mm difference overstated 175-fold.
+ *
  * Every polygon layer's two-path verification measures its boundary tolerance with this.
  *
  * @category Position

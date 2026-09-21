@@ -88,7 +88,8 @@ test("composeStreetAddress: collapses housenumber + street + unit into one numbe
 	expect(composeStreetAddress({ houseNumber: "8", street: "Boulevard du Palais" })).toBe("8 Boulevard du Palais")
 	// The lossy collapse: unit rides the same opaque string (schema.org has no unit slot).
 	expect(composeStreetAddress({ houseNumber: "350", street: "5th Ave", unit: "Apt 4B" })).toBe("350 5th Ave Apt 4B")
-	// Blank parts drop out. an all-empty input is "".
+	// Blank parts drop out.
+	// An all-empty input is "".
 	expect(composeStreetAddress({ street: "5th Ave" })).toBe("5th Ave")
 	expect(composeStreetAddress({ houseNumber: "  ", street: "" })).toBe("")
 })

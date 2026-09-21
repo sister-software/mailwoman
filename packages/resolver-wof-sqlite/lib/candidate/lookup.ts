@@ -324,9 +324,10 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 		this.#variantAliasExemption = opts.variantAliasExemption === true
 		this.#roleSelect = this.#hasNameRole ? ", name_role" : ""
 
-		// Ancestors sidecar (#1717): existence-restricted like the probes above, and the
-		// capability checks with it — see the `ancestors` property doc for why an older artifact
-		// must read as "no ancestors()" rather than as a method that answers [] everywhere.
+		// Ancestors sidecar (#1717): existence-restricted like the probes above,
+		// and the capability checks with it.
+		// See the `ancestors` property doc for why an older artifact must read as "no
+		// ancestors()" rather than as a method that answers [] everywhere.
 		if (hasTable(this.#db, CANDIDATE_ANCESTOR_TABLE)) {
 			this.#ancestorsProbe = this.#db.prepare(
 				`SELECT parent_spr_id, parent_placetype_id, parent_name FROM ${CANDIDATE_ANCESTOR_TABLE}` +
@@ -465,18 +466,22 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	 *
 	 * Three steps, each additive:
 	 *
-	 * 1. Resolve the qualifier to its region-band rows ({@link #qualifierRegionIDs}) and stamp every existing row's
-	 *    `containedByQualifier`. The stamp is the trace surface, written even when nothing reorders.
-	 * 2. Inject contained same-key candidates the country scope hid: the deciding-site measurement (2026-08-18, the #1729
-	 *    lesson re-confirmed) showed `Weimar, Thüringen` under the en-US locale probes `country_id = US`, so the DE row
-	 *    is not IN the list and no reorder of the list can reach it. The injection probe runs the same exact fold (and,
-	 *    on a contained-miss, the qualifier-strip variant restricted to primary keys — the #1626 alias-scrape guard)
-	 *    under the shape conds only, appends contained rows not already present, and never removes anything — recall can
-	 *    only widen. The typo-fuzzy tier is deliberately not probed: a qualifier cannot vouch for a name the gazetteer
-	 *    does not carry.
-	 * 3. Partition contained-first — the shared {@link partitionByContainment} (tier-safe, stable. The resolver walk runs
-	 *    the same function after its fame re-rank, one function at both deciding sites per the #861 rule) — then
-	 *    re-window to `limit`.
+	 * 1. Resolve the qualifier to its region-band rows ({@link #qualifierRegionIDs})
+	 *    and stamp every existing row's `containedByQualifier`.
+	 *    The stamp is the trace surface, written even when nothing reorders.
+	 * 2. Inject contained same-key candidates the country scope hid: the deciding-site
+	 *    measurement (2026-08-18, the #1729 lesson re-confirmed) showed `Weimar, Thüringen`
+	 *    under the en-US locale probes `country_id = US`, so the DE row is not IN the list
+	 *    and no reorder of the list can reach it.
+	 *    The injection probe runs the same exact fold (and, on a contained-miss,
+	 *    the qualifier-strip variant restricted to primary keys — the #1626 alias-scrape guard)
+	 *    under the shape conds only, appends contained rows not already present,
+	 *    and never removes anything — recall can only widen.
+	 *    The typo-fuzzy tier is deliberately not probed: a qualifier cannot vouch
+	 *    for a name the gazetteer does not carry.
+	 * 3. Partition contained-first — the shared {@link partitionByContainment}
+	 *    (tier-safe, stable. The resolver walk runs the same function after its fame re-rank,
+	 *    one function at both deciding sites per the #861 rule) — then re-window to `limit`.
 	 *
 	 * A qualifier that matches nothing stamps `false` everywhere and reorders nothing —
 	 * byte-identical answers, and the walk's verdict reads `no_contained_candidate`
@@ -732,7 +737,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 		filters.push(...shapeFilters)
 		filterParams.push(...shapeParams)
 
-		// Region scope: when the cascade resolves a region and passes it down as `parentID` (the walk sets `query.parentID = parentResolved.id`), the candidate build stamps each place's region-tier ancestor id into `region_id` (build-candidate.ts `regionOf`), and that id equals the resolved region's WOF id — so `region_id = parentID` scopes the probe to in-region rows. Without it a bare same-name probe is population-first and "Springfield, IL" (parentID = Illinois) drops to the larger Springfield, MO. Kept OUT of the shared `filters` so a region miss falls back to the unscoped cascade below: a country/non-region parent (no `region_id` match), a `region_id=0` row (place with no region ancestor), or a wrong parent degrades to today's behavior — never worse, recall-safe by construction.
+		// Region scope: when the cascade resolves a region and passes it down as `parentID` (the walk sets `query.parentID = parentResolved.id`), the candidate build stamps each place's region-tier ancestor id into `region_id` (build-candidate.ts `regionOf`), and that id equals the resolved region's WOF id — so `region_id = parentID` scopes the probe to in-region rows. Without it a bare same-name probe is population-first and "Springfield, IL" (parentID = Illinois) drops to the larger Springfield, MO. Kept OUT of the shared `filters` so a region miss falls back to the unscoped cascade below: a country/non-region parent (no `region_id` match), a `region_id=0` row (place with no region ancestor), or a wrong parent degrades to today's behavior, never worse, recall-safe by construction.
 		const regionParentID = query.parentID || undefined
 
 		const probe = (nk: string, regionID: number | undefined, countryID?: number): Array<RankedRow<CandidateRow>> => {

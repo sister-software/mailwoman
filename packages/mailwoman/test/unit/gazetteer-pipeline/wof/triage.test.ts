@@ -106,7 +106,7 @@ describe("triageWOFCurrency", () => {
 		expect(byName.get("Gillingham")?.currencyClass).toBe(CurrencyClass.DeprecatedNoSuccessor)
 		expect(byName.get("Medway")?.currencyClass).toBe(CurrencyClass.NotCurrentUnstated)
 
-		// Chatham is live, so it is not a subject at all — and no live record bears the other three names.
+		// Chatham is live, so it is not a subject at all, and no live record bears the other three names.
 		expect(byName.has("Chatham")).toBe(false)
 
 		for (const name of ["Rochester", "Gillingham", "Medway"]) {

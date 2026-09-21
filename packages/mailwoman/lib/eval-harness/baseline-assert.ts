@@ -89,8 +89,10 @@ export interface RegisteredBaseline {
 	/**
 	 * Absolute tolerance.
 	 *
-	 * Takes precedence over `tolerance_rel` when declared — use it for small-count metrics
-	 * whose relative band is meaningless (one fixture out of 63 moves a rate of 1/63 by 100%).
+	 * Takes precedence over `tolerance_rel` when declared.
+	 * Use it for small-count metrics whose relative band is meaningless
+	 * (one fixture out of 63 moves a rate of 1/63 by 100%).
+	 *
 	 * Required when `value` is 0, where relative deviation is undefined.
 	 */
 	tolerance_abs?: number

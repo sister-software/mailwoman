@@ -42,7 +42,8 @@ const model: FellegiSunterModel<Clinic> = {
 describe("block → score → cluster", () => {
 	it("links two records at the same place despite different address strings, and isolates a third", () => {
 		const records: Clinic[] = [
-			// Same person/place — note the address strings differ. only the location agrees.
+			// Same person/place — note the address strings differ.
+			// Only the location agrees.
 			{
 				id: "1",
 				given: "Robert",

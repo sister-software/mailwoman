@@ -37,7 +37,8 @@ export const ACTIVITY_LEXICON_PATH: string = await resolvePackagedDataPath(modul
 /**
  * Normalize a phrase for comparison: nfkc, trimmed, whitespace collapsed, lowercased.
  *
- * Uses locale-independent lowercasing. locale scope is resolved separately.
+ * Uses locale-independent lowercasing.
+ * Locale scope is resolved separately.
  */
 export function normalizeActivityPhrase(phrase: string): string {
 	return phrase.normalize("NFKC").trim().replaceAll(/\s+/g, " ").toLowerCase()
@@ -194,8 +195,8 @@ let committed: ActivityPhraseLexicon | undefined
 /**
  * Read the lexicon, refusing one the audit rejects.
  *
- * The committed read is memoized. an explicit path is read fresh, which is
- * what a test asserting a refusal needs.
+ * The committed read is memoized.
+ * An explicit path is read fresh, which is what a test asserting a refusal needs.
  */
 export async function readActivityLexicon(path: string = ACTIVITY_LEXICON_PATH): Promise<ActivityPhraseLexicon> {
 	if (path === ACTIVITY_LEXICON_PATH && committed) return committed

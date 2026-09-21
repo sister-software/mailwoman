@@ -132,7 +132,7 @@ export async function generateSBOM(options: GenerateSBOMOptions): Promise<Genera
 	const pkgDir = tmp.resolve("mailwoman")
 	await movePath(tmp.resolve("package"), pkgDir)
 
-	// Strip devDependencies (the unpublished, dev-only `@mailwoman/osm`) — never part of the consumer closure.
+	// Strip devDependencies (the unpublished, dev-only `@mailwoman/osm`), never part of the consumer closure.
 	const manifestPath = join(pkgDir, "package.json")
 	const manifest = await readPackageJSON(manifestPath)
 	delete manifest.devDependencies

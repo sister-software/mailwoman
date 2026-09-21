@@ -14,8 +14,8 @@ import type { FRN } from "#frn"
  * Every field is optional because the page omits a row rather than emitting an empty one,
  * and an absent contact fax says nothing about the entity.
  *
- * No field here is interpreted, derived or classified — see the file header's note 2
- * on why Nexus's name-sniffing classification is not carried over.
+ * No field here is interpreted, derived or classified.
+ * See the file header's note 2 on why Nexus's name-sniffing classification is not carried over.
  */
 export interface CORESRegistration {
 	frn: FRN

@@ -23,7 +23,7 @@
 
 export interface GroupPhrasesOpts {
 	/**
-	 * Reserved for future tunables (e.g. confidence floor, per-kind biasing).
+	 * Reserved for future tunables (e.g. Confidence floor, per-kind biasing).
 	 *
 	 * Currently unused.
 	 */

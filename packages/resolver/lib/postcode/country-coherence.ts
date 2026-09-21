@@ -125,13 +125,14 @@ export const POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM = 25
  * The firing receipt, so a reader of a scoped result can tell a two-sided agreement
  * from a one-sided uniqueness claim without re-deriving it.
  *
- * - `pair` — postcode and locality both resolve in this country, within the radius. The strongest rung and the only one
- *   that existed before #24.
- * - `locality` — the locality names exactly one country in the whole gazetteer, and the postcode names none that
- *   contradict it. This is the CH/be class: the gazetteer carries no Swiss or Belgian postcodes at all, so the pair
- *   test can never fire there no matter how good the locality evidence is.
- * - `postcode` — the postcode is held in exactly one country and the locality is in no gazetteer at all. The `Praha 3`
- *   class: a municipal district nobody's admin gazetteer names.
+ * - `pair` — postcode and locality both resolve in this country, within the radius.
+ *   The strongest rung and the only one that existed before #24.
+ * - `locality` — the locality names exactly one country in the whole gazetteer,
+ *   and the postcode names none that contradict it.
+ *   This is the CH/be class: the gazetteer carries no Swiss or Belgian postcodes at all,
+ *   so the pair test can never fire there no matter how good the locality evidence is.
+ * - `postcode` — the postcode is held in exactly one country and the locality is in no gazetteer at all.
+ *   The `Praha 3` class: a municipal district nobody's admin gazetteer names.
  */
 export type PostcodeCountryScopeEvidence = "pair" | "locality" | "postcode"
 
@@ -188,7 +189,7 @@ export interface PostcodeCountryScopeOpts {
 	 */
 	postcode: string
 	/**
-	 * The country the caller's `defaultCountry` would hard-filter to — or `undefined`
+	 * The country the caller's `defaultCountry` would hard-filter to, or `undefined`
 	 * when no default is in force (the browser cascade), where the pass constrains
 	 * instead of overriding: the default-coherence short-circuit is vacuous
 	 * and the exactly-one-country abstention carries the safety alone.
@@ -438,7 +439,7 @@ async function coherenceIn(
 
 /**
  * The country in which this address's postcode and locality are geographically
- * consistent — or `null` to abstain.
+ * consistent, or `null` to abstain.
  *
  * Order matters and is the whole safety argument.
  * The caller's `defaultCountry` is tested first.
@@ -515,7 +516,7 @@ export async function findPostcodeCountryScope(
 	//      when #31 Mechanism 1 supplied one — a pure subset of it), and
 	//    - the countries the gazetteer actually holds this postcode in (#24).
 	//      Exhaustive at the measured cardinality, and the only source that can name
-	//      a country codex has no address system for — which was the whole reason the
+	//      a country codex has no address system for, which was the whole reason the
 	//      CZ/CH/be/DK/AT/NL block of the 2026-08-09 panel resolved to US namesakes
 	//      while their own postcodes sat in the shipped gazetteer within 4 km of truth.
 	//
@@ -677,7 +678,7 @@ async function holdsLocality(backend: ResolverBackend, locality: string, country
 
 /**
  * Stamp the adopted scope onto the tree's postcode and locality nodes, so a consumer can see that
- * the walk's country was not the one the caller asked for — and which evidence bought the change.
+ * the walk's country was not the one the caller asked for, and which evidence bought the change.
  *
  * Additive: identity and coordinates are untouched, this only writes `metadata`.
  */

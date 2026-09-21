@@ -190,7 +190,7 @@ export const CODEPOINT_COVERAGE_NOTE =
  * or otherwise part with this Licence").
  *
  * Shipping BT rows in a published package is therefore out under any reading, commercial
- * or not — and that applies equally to the onspd re-publishers (doogal, FreeMapTools),
+ * or not, and that applies equally to the onspd re-publishers (doogal, FreeMapTools),
  * whose own terms reproduce the same exclusion.
  * Nisra's Central Postcode Directory is free but no better: its MOU forbids passing copies
  * to third parties and permits only internal use and non-commercial statistics.
@@ -266,9 +266,10 @@ export const NORTHERN_IRELAND_OPTIONS_NOTE =
  *
  * `APIClient` per `agents.md`: these are small JSON API requests, which is
  * exactly the population the rule binds.
- * Pacing is set anyway even though OS publishes no documented limit for the open
- * Downloads API — two requests per acquisition cannot approach any ceiling,
- * and an unpaced client is a trap for the next caller who loops it.
+ * Pacing is set anyway even though OS publishes no documented limit for the open Downloads API.
+ *
+ * Two requests per acquisition cannot approach any ceiling, and an unpaced client
+ * is a trap for the next caller who loops it.
  *
  * Retry is bounded because a transient 5xx on a metadata call should not fail a
  * 14 MB acquisition that has not started yet.
@@ -400,8 +401,9 @@ export async function downloadCodePointOpen(options: DownloadCodePointOptions): 
 	await makeDirectories(destDir)
 	const archivePath = String(join(destDir, download.fileName))
 
-	// Reuse-by-md5, near-verbatim in `uprn-layer.ts`'s `downloadOpenUPRN` — kept separate
-	// because that one (re)writes the acquisition sidecars on the reuse path and this one does not.
+	// Reuse-by-md5, near-verbatim in `uprn-layer.ts`'s `downloadOpenUPRN`.
+	// Kept separate because that one (re)writes the acquisition sidecars on the
+	// reuse path and this one does not.
 	if (reuseExisting) {
 		const existing = await md5File(archivePath).catch(() => null)
 

@@ -100,13 +100,15 @@ function hasFiniteTiming(value: NotEmptyStorageValue): boolean {
  *
  * An in-process overlay Map sits in front of the files, and it is required for two reasons:
  *
- * 1. `loading` markers live there instead of on disk. That keeps the interceptor's stampede guard working (a concurrent
- *    second request for the same key sees `loading` and waits on the first) without a file write per request, and
- *    without an interrupted process leaving a `loading` marker on disk forever.
- * 2. A value being written stays there until its `rename` lands. Without that, `set()` clearing the `loading` marker
- *    before the file exists opens a window where the key is in neither place, and a concurrent reader gets `empty` for
- *    a response that is already in hand — measured as 3 dispatches for 3 concurrent requests to one URL, i.e. the
- *    stampede guard fully defeated.
+ * 1. `loading` markers live there instead of on disk.
+ *    That keeps the interceptor's stampede guard working (a concurrent second request for
+ *    the same key sees `loading` and waits on the first) without a file write per request,
+ *    and without an interrupted process leaving a `loading` marker on disk forever.
+ * 2. A value being written stays there until its `rename` lands.
+ *    Without that, `set()` clearing the `loading` marker before the file exists opens a window
+ *    where the key is in neither place, and a concurrent reader gets `empty` for a
+ *    response that is already in hand — measured as 3 dispatches for 3 concurrent
+ *    requests to one URL, i.e. the stampede guard fully defeated.
  */
 export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 	const { directory, validate } = options

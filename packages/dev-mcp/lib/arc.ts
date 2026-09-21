@@ -77,7 +77,7 @@ export interface ArcLeg {
 	/**
 	 * The addresses that improved.
 	 *
-	 * Carried for the same reason as the regressions, and originally omitted — which made every report
+	 * Carried for the same reason as the regressions, and originally omitted, which made every report
 	 * from this tool one-sided: "35 regressed" with the 37 wins reduced to a count nobody could inspect.
 	 * A candidate is a trade, and a reader cannot price a trade with one side hidden.
 	 */

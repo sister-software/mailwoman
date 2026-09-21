@@ -396,7 +396,7 @@ export function GeocoderControls({
 	// A permalink answers on arrival.
 	// `runtime.ready` holds it back.
 	// The parse pipeline drops a submit made before the model is loaded.
-	// It is exactly the window a cold permalink lands in — and the ref makes it once-only.
+	// It is exactly the window a cold permalink lands in, and the ref makes it once-only.
 	// Therefore, a later re-render (or the visitor clearing the field) cannot
 	// re-run the URL's query over their own work.
 	const autoRanInitialQuery = useRef(false)
@@ -617,7 +617,7 @@ export function GeocoderControls({
 								onChange={(event) => geocode.setText(event.target.value)}
 								// The field ships pre-filled with the demo address, so the first click used to drop a
 								// caret in the middle of it and the visitor typed into someone else's address.
-								// Select the seed on focus so one keystroke replaces it — and only
+								// Select the seed on focus so one keystroke replaces it, and only
 								// while it is the untouched seed, so this never eats real work.
 								onFocus={(event) => {
 									if (placeholder && event.currentTarget.value === placeholder) {

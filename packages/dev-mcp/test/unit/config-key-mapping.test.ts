@@ -17,7 +17,7 @@ import { describe, expect, it } from "vitest"
 
 describe("EFFECTIVE_KEY_FOR", () => {
 	it("covers every key the tool schema accepts", () => {
-		// The schema is what a caller can actually type, so it is the population that matters —
+		// The schema is what a caller can actually type, so it is the population that matters,
 		// not the TS interface, which a `satisfies` clause already checks at compile time.
 		const schemaKeys = Object.keys(ENGINE_CONFIG_SCHEMA.shape).toSorted()
 		const mapped = Object.keys(EFFECTIVE_KEY_FOR)

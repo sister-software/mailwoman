@@ -155,7 +155,7 @@ export function patternDirectory(workspace: string, target: string): string {
 }
 
 /**
- * The diagnostic one target earns, or null when a tracked file satisfies it — and,
+ * The diagnostic one target earns, or null when a tracked file satisfies it, and,
  * for a target under `out/`, when the workspace's compile scope emits that file.
  */
 function judgeTarget(

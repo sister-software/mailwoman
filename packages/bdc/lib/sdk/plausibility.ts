@@ -209,25 +209,19 @@ export type PlausibilitySharedEvidence =
 export type PlausibilityCoverageAxisState =
 	| "covered"
 	/**
-	 * The required dependency (`deps.bdcDB` for filing, `deps.poi` for physical) was never wired at all — the
-	 * `requires_bdc_layer` / `requires_build_local_layer` abstain precedent.
+	 * The required dependency (`deps.bdcDB` for filing, `deps.poi` for physical) was never wired at all — the `requires_bdc_layer` / `requires_build_local_layer` abstain precedent.
 	 */
 	| "layer_missing"
 	/**
-	 * The dependency is wired, but the specific queried block/cell carries no survey coverage of its own. The
-	 * `insufficient_survey_data` abstain precedent (filing), or an absent `readLayerCoverage` read (physical).
+	 * The dependency is wired, but the specific queried block/cell carries no survey coverage of its own. The `insufficient_survey_data` abstain precedent (filing), or an absent `readLayerCoverage` read (physical).
 	 */
 	| "cell_unsurveyed"
 	/**
-	 * Physical axis only: the claim resolved no coordinate (a geoid-only claim — see the module docstring's
-	 * claim-resolution note), so no physical-evidence search point exists. A genuine capability gap rather than a missing
-	 * layer — distinct from `"layer_missing"` even though both degrade `coverage_confidence` the same way.
+	 * Physical axis only: the claim resolved no coordinate (a geoid-only claim — see the module docstring's claim-resolution note), so no physical-evidence search point exists. A genuine capability gap rather than a missing layer — distinct from `"layer_missing"` even though both degrade `coverage_confidence` the same way.
 	 */
 	| "no_coordinate"
 	/**
-	 * Physical axis only: the claimed technology maps to no physical-plant category at all (see
-	 * {@link PLAUSIBILITY_TECH_PHYSICAL_CATEGORIES}). There is no applicable second channel for this tech, ever,
-	 * regardless of layer availability. Distinct from every other state: this claim can never warrant `"high"`.
+	 * Physical axis only: the claimed technology maps to no physical-plant category at all (see {@link PLAUSIBILITY_TECH_PHYSICAL_CATEGORIES}). There is no applicable second channel for this tech, ever, regardless of layer availability. Distinct from every other state: this claim can never warrant `"high"`.
 	 */
 	| "not_applicable"
 
@@ -346,7 +340,7 @@ const SPEED_BUCKET_RANK: Readonly<Record<string, number>> = {
  * `true` when `filing` corroborates the claim: same `technology_code`,
  * and `filing.speed_bucket` ranks at or above the claimed download speed's own bucket.
  *
- * A different tech, or a same-tech but lesser filing, is `false` — never disproof,
+ * A different tech, or a same-tech but lesser filing, is `false`, never disproof,
  * just non-corroborating (spec §3.2 step 2).
  */
 function filingCorroborates(filing: ProviderFilingSummary, claim: PlausibilityClaim): boolean {
@@ -354,7 +348,7 @@ function filingCorroborates(filing: ProviderFilingSummary, claim: PlausibilityCl
 
 	const filingRank = SPEED_BUCKET_RANK[filing.speed_bucket]
 
-	// An unrecognized speed_bucket (a corrupted/foreign row) can't corroborate — never guess a rank for it.
+	// An unrecognized speed_bucket (a corrupted/foreign row) can't corroborate, never guess a rank for it.
 	if (filingRank === undefined) return false
 
 	const claimedRank = SPEED_BUCKET_RANK[speedBucketForDownloadSpeed(claim.claimedDownloadMbps)]!
@@ -377,8 +371,9 @@ function confidenceStateForAxis(state: PlausibilityCoverageAxisState): "covered"
 }
 
 /**
- * Combine the two layers' coverage states into the bundle's `coverage_confidence` —
- * see the module docstring for the `"not_applicable"` extension's reasoning
+ * Combine the two layers' coverage states into the bundle's `coverage_confidence`.
+ *
+ * See the module docstring for the `"not_applicable"` extension's reasoning
  * (deliberately conservative: never `"high"` without a real, applicable two-channel opportunity).
  */
 function combineCoverage(
@@ -407,7 +402,7 @@ function combineCoverage(
  * the filing-lookup cell (bdc side, via `pointCell`) and the coverage-cell join key
  * `readLayerCoverage` is read against (poi side, via `res9ShortCellToRes6Parent(pointCell)`).
  *
- * Checked independently per layer, whenever that layer is wired — not only
+ * Checked independently per layer, whenever that layer is wired, not only
  * when `bdcDB` and `poi` are wired together.
  * A poi-only call still needs poi's own recorded resolution checked, because `pointCell` is computed
  * unconditionally from `BDC_H3_RESOLUTION` and still drives the poi coverage-cell read below.
@@ -436,12 +431,12 @@ async function assertLayerSpineResolution(
 }
 
 /**
- * Compose filing evidence + physical evidence into one `{ claim, evidence_found, coverage_confidence }`
- * bundle — see the module docstring for the full composition rules.
+ * Compose filing evidence + physical evidence into one `{ claim, evidence_found, coverage_confidence }` bundle.
+ * See the module docstring for the full composition rules.
  *
  * Never emits anything expressible as "implausible": absence of a filing
  * or of nearby plant only ever surfaces as an abstain, an omitted evidence entry,
- * or a degraded `coverage_confidence` — never a negative verdict.
+ * or a degraded `coverage_confidence`, never a negative verdict.
  */
 export async function plausibilityCheck(claim: PlausibilityClaim, deps: PlausibilityDeps): Promise<PlausibilityBundle> {
 	// 1. Resolve a coordinate for physical-evidence search
@@ -475,7 +470,8 @@ export async function plausibilityCheck(claim: PlausibilityClaim, deps: Plausibi
 		? shortCellToInt(latLngToCell(point.coordinates[1], point.coordinates[0], BDC_H3_RESOLUTION) as H3Cell)
 		: undefined
 
-	// Cheap, one-time per-layer sanity check — see the module docstring's coverage-resolution note.
+	// Cheap, one-time per-layer sanity check.
+	// See the module docstring's coverage-resolution note.
 	// Runs independently per wired layer rather than only when both are present:
 	// a poi-only call still joins poi's coverage table against a BDC_H3_RESOLUTION-derived
 	// cell (below) and must not do so unchecked.
@@ -529,7 +525,8 @@ export async function plausibilityCheck(claim: PlausibilityClaim, deps: Plausibi
 			physicalCoverage = "layer_missing"
 			evidence.push({ type: "abstain", reason: "requires_build_local_layer", layer: "poi" })
 		} else if (!point) {
-			// Geoid-only claim, no coordinate resolvable — see the module docstring's claim-resolution note.
+			// Geoid-only claim, no coordinate resolvable.
+			// See the module docstring's claim-resolution note.
 			// A real capability gap rather than a missing-layer abstain: no evidence entry is fabricated,
 			// but the axis still degrades honestly for coverage_confidence, naming its own reason in
 			// `coverage_detail` rather than folding into the same generic "unknown" as `"layer_missing"`.

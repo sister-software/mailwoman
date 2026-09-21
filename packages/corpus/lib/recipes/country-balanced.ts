@@ -109,7 +109,9 @@ const SOURCES: readonly CountrySource[] = [
 		region: "",
 		order: "fr",
 	},
-	// ES uses the Spanish IGN schema rather than the OA standard columns — skipped here (codex still recognizes "España"/"Spain"). A dedicated IGN adapter is a follow-up.
+	// ES uses the Spanish IGN schema rather than the OA standard columns —
+	// skipped here (codex still recognizes "España"/"Spain").
+	// A dedicated IGN adapter is a follow-up.
 	{
 		zip: dataRootPath("oa-cache", "it__countrywide.zip"),
 		csv: "it/countrywide.csv",
@@ -411,8 +413,10 @@ const HOMOGRAPH_FRAC = 0.22
 const ABBREV_FRAC = 0.08
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour
- * it exists to exercise, and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder.
+ *
+ * See the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
  */
 export const countryBalancedRecipe: CorpusRecipe = {
 	name: "country-balanced",

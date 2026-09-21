@@ -147,7 +147,8 @@ describe("runCascade (shared resolveTree over the candidate lookup)", () => {
 		// `N7 0BT` resolves its own full unit code (~15 addresses) — categorically tighter
 		// than the London centroid, so it pins above the locality, same as Node's ladder.
 		const lookup = stubLookup([
-			// `nameKeys` carries the spaced query surface; `name` stays the gazetteer's canonical unspaced form — the exact pair isUnitGradePostcodeHit compares.
+			// `nameKeys` carries the spaced query surface; `name` stays the gazetteer's
+			// canonical unspaced form — the exact pair isUnitGradePostcodeHit compares.
 			{
 				id: 30,
 				name: "N70BT",

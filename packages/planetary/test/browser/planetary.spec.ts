@@ -83,7 +83,7 @@ test("the footer carries the docs link and the commit the build was made from", 
 
 /**
  * MapLibre parses vector tiles and rasterizes glyph ranges inside a web worker.
- * only raster tiles decode on the main thread.
+ * Only raster tiles decode on the main thread.
  *
  * So a worker that never runs leaves the hillshade drawing and every label missing, and it says
  * nothing: the worker's script URL is served by the SPA fallback as index.html at status 200,

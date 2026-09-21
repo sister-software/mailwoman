@@ -23,9 +23,10 @@ export interface DecodedTile {
 }
 
 /**
- * What a renderer needs from a tile archive — the read surface of {@link TileSource},
- * separated so a renderer can be driven by any provider: a single archive,
- * a stub in tests, or a composite over several archives.
+ * What a renderer needs from a tile archive.
+ *
+ * The read surface of {@link TileSource}, separated so a renderer can be driven by any
+ * provider: a single archive, a stub in tests, or a composite over several archives.
  */
 export interface TileProvider {
 	readonly minZoom: number
@@ -94,9 +95,11 @@ function htmlText(html: string): string {
 }
 
 /**
- * A single LRU cache slot. Wrapping the decoded tile in an object lets `getTile` tell "cached and known absent" (`{
- * tile: null }`) apart from "not yet cached" (no entry in the Map) using plain presence, with no comparison against
- * `undefined` needed.
+ * A single LRU cache slot.
+ *
+ * Wrapping the decoded tile in an object lets `getTile` tell "cached and known absent"
+ * (`{ tile: null }`) apart from "not yet cached" (no entry in the Map) using plain
+ * presence, with no comparison against `undefined` needed.
  */
 interface CacheEntry {
 	tile: DecodedTile | null
@@ -153,7 +156,8 @@ export class TileSource implements TileProvider, AsyncDisposable {
 	}
 
 	/**
-	 * Decoded tile, LRU-cached (64 entries). null = tile absent from the archive.
+	 * Decoded tile, LRU-cached (64 entries).
+	 * Null = tile absent from the archive.
 	 */
 	async getTile(z: number, x: number, y: number): Promise<DecodedTile | null> {
 		const key = `${z}/${x}/${y}`

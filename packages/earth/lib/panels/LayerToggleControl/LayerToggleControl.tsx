@@ -37,12 +37,14 @@ const LAYER_GROUP_PATTERNS: ReadonlyArray<{ name: string; match: RegExp }> = [
 	{ name: "Hillshade", match: /^hillshade(?:\/|$|-)/ },
 	{ name: "TIGER (tracts)", match: /^tiger-tracts/ },
 	{ name: "TIGER (blocks)", match: /^tiger-blocks/ },
-	// Address-coverage fog overlay (#coverage). Two separate groups so each fog reading gets its own
-	// checkbox — turn on "optimistic" (looks covered, reveals gaps on zoom) or the measured fraction.
+	// Address-coverage fog overlay (#coverage).
+	// Two separate groups so each fog reading gets its own checkbox — turn on "optimistic"
+	// (looks covered, reveals gaps on zoom) or the measured fraction.
 	{ name: "Coverage · optimistic fog", match: /^coverage-opt/ },
 	{ name: "Coverage · measured fog", match: /^coverage-honest/ },
-	// Race-by-dot-density overlay (#race-dots). Per-category default-off layers → one checkbox each, so
-	// you can show the full mosaic or isolate a single group's geography.
+	// Race-by-dot-density overlay (#race-dots).
+	// Per-category default-off layers → one checkbox each, so you can show the full mosaic
+	// or isolate a single group's geography.
 	{ name: "Race · White", match: /^race-dots-white/ },
 	{ name: "Race · Black", match: /^race-dots-black/ },
 	{ name: "Race · Hispanic", match: /^race-dots-hispanic/ },
@@ -136,7 +138,8 @@ export function LayerToggleControl({ map }: LayerToggleControlProps) {
 			const visibility = group.visible ? "none" : "visible"
 
 			for (const layerID of group.layerIDs) {
-				// A layer can leave the style between the read and the click. the group's other layers still switch.
+				// A layer can leave the style between the read and the click.
+				// The group's other layers still switch.
 				try {
 					map.setLayoutProperty(layerID, "visibility", visibility)
 				} catch {

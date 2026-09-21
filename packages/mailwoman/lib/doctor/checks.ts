@@ -296,7 +296,7 @@ export function localeOverlayCheck(o: LocaleOverlayObservation): DoctorCheck {
  */
 export interface DataRootObservation {
 	/**
-	 * The path from the blessed `@mailwoman/core/utils` helper — never re-derived here.
+	 * The path from the blessed `@mailwoman/core/utils` helper, never re-derived here.
 	 */
 	path: string
 	exists: boolean

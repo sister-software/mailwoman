@@ -91,8 +91,8 @@ describe("weights_cache — the setting", () => {
 
 	it("makes two candidates two engines", async () => {
 		// The whole point of the setting: shipped-vs-candidate must not share a warm session.
-		// `engineID` hashes the effective config, so this holds automatically —
-		// and this test is what notices if the key ever stops being part of that config.
+		// `engineID` hashes the effective config, so this holds automatically, and this
+		// test is what notices if the key ever stops being part of that config.
 		const fingerprint = await computeTreeFingerprint(process.cwd())
 		const shipped = engineID(resolveConfig({}), fingerprint)
 		const candidate = engineID(resolveConfig({ weights_cache: "/tmp/v440-cache" }), fingerprint)

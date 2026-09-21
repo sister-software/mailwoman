@@ -26,7 +26,7 @@ import { Globerator } from "spliterator/node/fs"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // `$private` is a live getter over `{ ...dotEnv, ...process.env }`, and `dotEnv` is read from the
-// repo's real `.env` once at module load — which on this machine does carry a `GOOGLE_MAPS_API_KEY`.
+// repo's real `.env` once at module load, which on this machine does carry a `GOOGLE_MAPS_API_KEY`.
 // A `vi.stubEnv(..., undefined)` cannot hide it: the merge falls back to `dotEnv`
 // regardless of what the test puts on `process.env`.
 // Mocking the module is the only way to make the missing-key test test anything.
@@ -81,8 +81,9 @@ const OK_BODY = {
 /**
  * Await a call that must reject and hand back its {@linkcode ResourceError}.
  *
- * Fails loudly if it resolves — a `.catch(error => error)` inline would silently
- * turn "it did not throw" into an assertion against `undefined`.
+ * Fails loudly if it resolves.
+ * A `.catch(error => error)` inline would silently turn "it did not throw"
+ * into an assertion against `undefined`.
  */
 async function captureError(promise: Promise<unknown>): Promise<ResourceErrorShape> {
 	try {
@@ -351,9 +352,9 @@ describe("input dispatch", () => {
 	it("treats a bare coordinate STRING as an address rather than a point", async () => {
 		// Deliberate.
 		// `"48.85, 2.29"` means latitude-then-longitude to Google's `latlng` parameter
-		// and longitude-then-latitude to GeoJSON, and `GeoPoint.from` resolves that as
-		// GeoJSON without a heuristic — so reading the string as a point would silently
-		// reverse-geocode Somalia for someone who typed Paris.
+		// and longitude-then-latitude to GeoJSON, and `GeoPoint.from` resolves that
+		// as GeoJSON without a heuristic.
+		// So reading the string as a point would silently reverse-geocode Somalia for someone who typed Paris.
 		const transport = stubTransport([{ body: OK_BODY }])
 
 		await using client = createGoogleGeocoderClient({ apiKey: API_KEY, cacheDir, axios: transport.axios })
@@ -408,8 +409,8 @@ describe("pacing", () => {
 		await Promise.all([client.geocodeAddress("a"), client.geocodeAddress("b"), client.geocodeAddress("c")])
 
 		// 60000 / 60 = 1000ms.
-		// `requestsPerMinute` alone would have let all three go out at once —
-		// it is a budget rather than a rate.
+		// `requestsPerMinute` alone would have let all three go out at once.
+		// It is a budget rather than a rate.
 		// See `bdc/sdk/client.ts` for the measurement.
 		expect(transport.dispatchTimes).toEqual([0, 1000, 2000])
 	})

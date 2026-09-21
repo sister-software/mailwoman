@@ -46,8 +46,8 @@
 /**
  * {@linkcode scorePairwiseGrouping}'s result.
  *
- * Every count is over unordered pairs drawn from the `ids` passed in — see the
- * module docstring for why pairs rather than aligned clusters.
+ * Every count is over unordered pairs drawn from the `ids` passed in.
+ * See the module docstring for why pairs rather than aligned clusters.
  */
 export interface PairwiseGroupingScore {
 	/**
@@ -76,8 +76,8 @@ export interface PairwiseGroupingScore {
 	 */
 	totalPairs: number
 	/**
-	 * `truePositivePairs / predictedPositivePairs`, or `null` when the prediction made zero
-	 * positive calls — see the module docstring's "zero-denominator convention".
+	 * `truePositivePairs / predictedPositivePairs`, or `null` when the prediction made zero positive calls.
+	 * See the module docstring's "zero-denominator convention".
 	 */
 	precision: number | null
 	/**

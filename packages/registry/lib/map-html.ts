@@ -81,8 +81,8 @@ export interface MapHTMLOptions {
 	/**
 	 * How to color the markers:
 	 *
-	 * - `"auto"` (default) — by `bucket` if any feature carries one (reconciliation output), else by cross-dataset-link
-	 *   status.
+	 * - `"auto"` (default) — by `bucket` if any feature carries one (reconciliation output),
+	 *   else by cross-dataset-link status.
 	 * - `"sources"` — always by cross-dataset-link status (≥2 sources stand out).
 	 * - `"bucket"` — always by the `bucket` property.
 	 */

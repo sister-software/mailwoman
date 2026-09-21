@@ -74,8 +74,9 @@ const BASE_URL = "https://download.geonames.org/export/zip"
 /**
  * Countries fetched when the caller names none.
  *
- * These are the ones the corpus wants and cannot get from `postalcode-intl.db`'s `parent_id`
- * route — see the header for why that route covers exactly five countries.
+ * These are the ones the corpus wants and cannot get from `postalcode-intl.db`'s `parent_id` route.
+ * See the header for why that route covers exactly five countries.
+ *
  * Venezuela is deliberately absent because GeoNames does not publish it.
  */
 export const GEONAMES_POSTAL_DEFAULT_COUNTRIES = ["PT", "AU", "NZ", "IE", "BR", "ZA", "MX"] as const

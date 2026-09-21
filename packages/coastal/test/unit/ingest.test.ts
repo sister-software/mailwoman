@@ -51,7 +51,7 @@ function identityFor(layer: string, fields: readonly string[]): CoastalLayerIden
 
 /**
  * Drive the generator far enough to build and issue its `select`, and report what
- * it threw — or `null` where `ogr2ogr` was reached, which on a machine with no
+ * it threw, or `null` where `ogr2ogr` was reached, which on a machine with no
  * geodatabase at the given path is a different failure.
  */
 async function selectFailure(scenarioKey: string, identity: CoastalLayerIdentity): Promise<string | null> {

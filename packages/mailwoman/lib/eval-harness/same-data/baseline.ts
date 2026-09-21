@@ -93,8 +93,9 @@ export interface BaselineSelection {
 	 */
 	subject: string | null
 	/**
-	 * A monotone map of {@link BaselineScoreComponents.total} into [0, 1], for the calibration table. Registered as `total
-	 * / 8` capped at 1, where 8 is the maximum the weights below can reach.
+	 * A monotone map of {@link BaselineScoreComponents.total} into [0, 1], for the calibration table.
+	 *
+	 * Registered as `total / 8` capped at 1, where 8 is the maximum the weights below can reach.
 	 */
 	confidence: number
 	components: BaselineScoreComponents | null

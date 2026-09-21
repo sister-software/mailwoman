@@ -68,7 +68,7 @@ const host = new WorkerHost({
 })
 
 /**
- * The one tool the shim owns, so it exists whatever state the worker is in —
+ * The one tool the shim owns, so it exists whatever state the worker is in,
  * including crashed, degraded, or holding a tree so broken the worker cannot boot
  * (start() failures surface here as the restart error, stderr tail included).
  */

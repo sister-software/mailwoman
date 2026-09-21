@@ -121,7 +121,8 @@ export const HARD_PLACE_COUNTRY_SAFELIST: ReadonlySet<string> = new Set([
 	"FR",
 	"GB",
 	"CA",
-	// AU added with the #244 AU placer class (2026-07-06): 150k-row G-NAF training → AU test-acc 100%, and the hard filter is recall-safe on the AU panel (unresolved 4→2 while abroad 43→20).
+	// AU added with the #244 AU placer class (2026-07-06): 150k-row G-NAF training → AU test-acc 100%,
+	// and the hard filter is recall-safe on the AU panel (unresolved 4→2 while abroad 43→20).
 	"AU",
 ])
 
@@ -145,8 +146,8 @@ export function isBareLocalityTree(tree: AddressTree): boolean {
  * #1589's sibling of the #912 guard: true when the tree's only value-containing node is a `postcode`.
  *
  * A bare postcode under a locale-inferred country scope is the same disaster shape as a bare
- * locality: `SW1A 1AA` under the default en-US locale gets a hard `defaultCountry: "US"` that
- * filters the GB postalcode row the gazetteer holds, and the query resolves to nothing —
+ * locality: `SW1A 1AA` under the default en-US locale gets a hard `defaultCountry: "US"`
+ * that filters the GB postalcode row the gazetteer holds, and the query resolves to nothing,
  * while the identical query under `--locale en-GB` answers 38 m from the rooftop.
  *
  * The postcode's own format is harder evidence than the locale hint (the #928 table's premise), so the
@@ -321,7 +322,8 @@ function buildFastPathTree(text: string, kind: QueryKindResult, shape: QueryShap
  * 2. Compute QueryShape (or empty)
  * 3. `@mailwoman/locale-hint` (or caller-trust)
  * 4. Kind classifier (or default structured_address)
- * 5. Branch: fast-path → resolver. Full → classifier → resolver
+ * 5. Branch: fast-path → resolver.
+ *    Full → classifier → resolver
  *
  * Per-stage timing recorded on `result.timing`.
  * Fast-path stages are absent from the timing map.
@@ -591,7 +593,7 @@ function recordFault(faults: PipelineFault[], stage: PipelineFaultStage, cause: 
 
 /**
  * Defensive wrapper: if the classifier throws, return an empty tree rather than abort the
- * pipeline — and record the throw on `faults` so the degrade is visible to the caller.
+ * pipeline, and record the throw on `faults` so the degrade is visible to the caller.
  *
  * The measured reason this matters (mailfail, 2026-08-02): with the 128-piece `pieces`/`logits`
  * desync live, 10 of 110 probe inputs crashed the classifier while the pipeline reported success.

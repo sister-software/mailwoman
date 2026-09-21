@@ -83,7 +83,7 @@ export interface BuildOutlierOAResult {
 }
 
 /**
- * The in-map countries the coarse-placer routes to — never appear in `other`.
+ * The in-map countries the coarse-placer routes to, never appear in `other`.
  */
 const IN_MAP = new Set<string>(COUNTRIES)
 
@@ -149,7 +149,9 @@ export async function buildOutlierOA(
 
 		try {
 			res = await duck.runAndReadAll(
-				// union_by_name aligns the differing per-source schemas. Lower the header access so number / number both resolve. Pull a generous superset, dedup+cap in JS.
+				// union_by_name aligns the differing per-source schemas.
+				// Lower the header access so number / number both resolve.
+				// Pull a generous superset, dedup+cap in JS.
 				`SELECT COLUMNS('(?i)^(number|street|city|postcode)$') FROM read_csv_auto('${glob}', union_by_name=true, ignore_errors=true, sample_size=-1) LIMIT ${PER * 8}`
 			)
 		} catch (error) {

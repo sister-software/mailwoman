@@ -49,7 +49,7 @@ export interface GauntletLayerOptions {
 	 *
 	 * A declared ablation.
 	 * The choreography pairs with the train-time half, so a board run under `false`
-	 * measures what the channel is worth on every tag at once — which is the only way to
+	 * measures what the channel is worth on every tag at once, which is the only way to
 	 * price the locality it recovers against the postcode it was added to guard.
 	 */
 	suppressGazetteerNearPostcode?: boolean

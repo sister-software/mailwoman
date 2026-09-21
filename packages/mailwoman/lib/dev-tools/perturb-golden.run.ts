@@ -59,7 +59,7 @@ interface GoldenRow {
  *
  * Driven by the row's own components rather than by a shape.
  * `\b([A-Z]{2})\s+(\d{5})\b` matches a US region code and a five-digit ZIP
- * and nothing else, so it read every non-US row as unperturbable — and this tool
+ * and nothing else, so it read every non-US row as unperturbable, and this tool
  * runs over the whole golden directory, `fr.jsonl` included.
  *
  * A country whose layout writes the postcode first, or writes no region, still produces

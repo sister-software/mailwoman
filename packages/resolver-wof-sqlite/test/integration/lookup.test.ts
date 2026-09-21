@@ -178,7 +178,12 @@ const FIXTURE: FixturePlace[] = [
 		ancestor_ids: [85_633_723],
 	},
 
-	// The Brooklyn pair: WOF files Brooklyn-the-borough (NYC, pop 2.5M) as placetype `borough`, not `locality`. A locality query must still reach it via the shared placetype expansion (core/resolver PLACETYPE_FILTER_GROUPS). Otherwise the only locality-typed match is the fuzzy "Brooklyn Park" and the resolver mislocates to Minnesota.
+	// The Brooklyn pair: WOF files Brooklyn-the-borough (NYC, pop 2.5M) as
+	// placetype `borough`, not `locality`.
+	// A locality query must still reach it via the shared placetype expansion
+	// (core/resolver PLACETYPE_FILTER_GROUPS).
+	// Otherwise the only locality-typed match is the fuzzy "Brooklyn Park"
+	// and the resolver mislocates to Minnesota.
 	{
 		id: 421_205_765,
 		parent_id: 85_633_147,
@@ -203,7 +208,9 @@ const FIXTURE: FixturePlace[] = [
 		ancestor_ids: [85_633_147],
 	},
 
-	// Alias-bag boundary fixture (#523): two aliases whose concatenation straddles the phrase "York New". The exact tier must never promote this place for that straddling query, while each alias on its own ("New City") still warrants the exact tier.
+	// Alias-bag boundary fixture (#523): two aliases whose concatenation straddles the phrase "York New".
+	// The exact tier must never promote this place for that straddling query,
+	// while each alias on its own ("New City") still warrants the exact tier.
 	{
 		id: 999_000_001,
 		parent_id: 85_633_147,

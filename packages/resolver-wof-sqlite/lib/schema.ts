@@ -39,8 +39,8 @@ export interface PlaceSearchTable {
  * (modern Who's On First) and `is_current = 1` (legacy Mapzen-era).
  * Only `is_current = 0` means "not current".
  *
- * Filters in `lookup.ts` and `fts.ts` use `is_current != 0 and is_deprecated = 0` —
- * see #91 for the diagnostic that uncovered the mixed-convention reality.
+ * Filters in `lookup.ts` and `fts.ts` use `is_current != 0 and is_deprecated = 0`.
+ * See #91 for the diagnostic that uncovered the mixed-convention reality.
  *
  * Lat/lon live directly on this row — no GeoJSON extraction needed for centroid resolution.
  * `min_*` / `max_*` form a bounding box if callers want one (Phase 4.3 candidate).

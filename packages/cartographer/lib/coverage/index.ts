@@ -80,7 +80,8 @@ function fogFill(id: string, fogProperty: "fog" | "fog_opt"): FillLayerSpecifica
 		layout: { visibility: "none" },
 		paint: {
 			"fill-color": COVERAGE_FOG_COLOR,
-			// Opacity tracks the cell's fog value. coalesce guards a missing prop to 0 (fully clear).
+			// Opacity tracks the cell's fog value.
+			// Coalesce guards a missing prop to 0 (fully clear).
 			"fill-opacity": ["*", ["coalesce", ["to-number", ["get", fogProperty]], 0], COVERAGE_MAX_FOG_OPACITY],
 		},
 	}

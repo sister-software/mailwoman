@@ -44,7 +44,7 @@ export interface IntentMarkerContext {
  * Reading only the top kind would make them invisible, which is the mistake
  * this signature exists to prevent.
  *
- * Returns `[]` when no intent kind fired.
+ * @returns `[]` when no intent kind fired.
  * Callers surface that empty array rather than dropping the field: an empty
  * array is the classifier stating it looked.
  */
@@ -70,8 +70,8 @@ export function deriveIntentMarkers(
 				/**
 				 * Both readings, named.
 				 *
-				 * The order is stable (pair first, then the admin reading) so a consumer can
-				 * index it. it is not a ranking, and nothing downstream reads it as one.
+				 * The order is stable (pair first, then the admin reading) so a consumer can index it.
+				 * It is not a ranking, and nothing downstream reads it as one.
 				 */
 				interpretations: ["two_toponyms", "locality_with_admin_context"],
 			},
@@ -91,8 +91,9 @@ export function deriveIntentMarkers(
 				/**
 				 * The plug point, named but not wired (ROAD_TO_V9 §4.4 scopes v9 to classification).
 				 *
-				 * Photon's `/api` already accepts `lat`/`lon` location-bias params — `photon/` is the
-				 * eventual consumer of this marker, and this string is the note that says where it plugs in.
+				 * Photon's `/api` already accepts `lat`/`lon` location-bias params.
+				 * `photon/` is the eventual consumer of this marker, and this string is
+				 * the note that says where it plugs in.
 				 */
 				focusParameter: "photon:lat/lon",
 			},

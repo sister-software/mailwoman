@@ -36,8 +36,8 @@ import { join } from "path-ts"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, splitCountryCodes, useCommandTask } from "#cli-kit"
 // Overture prunes old releases from the bucket (the 2026-08-19 listing held exactly one),
 // so a stale pin fails the default ingest outright.
-// Moves together with `gazetteer-pipeline/poi/defaults.ts`'s pin — see its docstring
-// for why the two constants stay independent.
+// Moves together with `gazetteer-pipeline/poi/defaults.ts`'s pin.
+// See its docstring for why the two constants stay independent.
 const DEFAULT_RELEASE = "2026-07-22.0"
 
 const S3_GLOB = (release: string) =>

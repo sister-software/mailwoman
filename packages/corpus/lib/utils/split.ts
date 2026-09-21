@@ -124,13 +124,14 @@ export interface SplitManifest {
  *
  * - US: Vermont, Wyoming, North Dakota (low density, easy to identify in WOF/admin sources).
  * - FR: Corse, Lozère, Creuse (small departments / regions).
- * - DE (added 2026-06-11, night-11): Saarland + Mecklenburg-Vorpommern — small Länder so the training cost is low while
- *   the holdout clears the honest-eval 1000-row trust floor. DE has had no trustable honest-eval holdout since the
- *   harness shipped (flagged 2026-06-08); this takes effect at the next base corpus rebuild — existing versioned
- *   corpora keep their committed SPLIT_MANIFESTs (a holdout added after a corpus is built is leakage-laundering rather
- *   than a holdout).
- * - GB (added 2026-09-21, #2353): Cornwall, north Wales and Halifax, keyed on the postcode area. GB had no entry at all,
- *   so both its splits held zero rows and `macro_f1` said nothing about it.
+ * - DE (added 2026-06-11, night-11): Saarland + Mecklenburg-Vorpommern — small Länder
+ *   so the training cost is low while the holdout clears the honest-eval 1000-row trust floor.
+ *   DE has had no trustable honest-eval holdout since the harness shipped
+ *   (flagged 2026-06-08); this takes effect at the next base corpus rebuild —
+ *   existing versioned corpora keep their committed SPLIT_MANIFESTs
+ *   (a holdout added after a corpus is built is leakage-laundering rather than a holdout).
+ * - GB (added 2026-09-21, #2353): Cornwall, north Wales and Halifax, keyed on the postcode area.
+ *   GB had no entry at all, so both its splits held zero rows and `macro_f1` said nothing about it.
  *
  * Every entry takes effect at the next base corpus rebuild, for the reason the DE note gives.
  */

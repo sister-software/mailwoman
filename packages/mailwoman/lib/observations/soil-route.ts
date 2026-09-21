@@ -124,8 +124,8 @@ export const SOIL_DESIGNATION_REFUSALS = [
 	 */
 	"no_coordinate",
 	/**
-	 * The layer holds no coverage row for the location — outside every published survey area the artifact was built over,
-	 * which is unknown and never a low-capability reading.
+	 * The layer holds no coverage row for the location — outside every published survey area
+	 * the artifact was built over, which is unknown and never a low-capability reading.
 	 */
 	"outside_surveyed_area",
 ] as const

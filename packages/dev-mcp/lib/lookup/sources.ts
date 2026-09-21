@@ -94,7 +94,7 @@ export interface CandidateLookupOptions {
 	 * diagnosis reads both channels beside the blend instead of scripting the join.
 	 * The id join is same-generation only: a cross-era pair re-keys Overture-minted ids,
 	 * and the miss surfaces as `importance_split: null` on rows whose blended `importance`
-	 * is measured — which is why the caller's note reports the join rate.
+	 * is measured, which is why the caller's note reports the join rate.
 	 */
 	importance?: { db: DatabaseClient<PlaceImportanceDatabase>; artifact: string }
 }
@@ -122,7 +122,7 @@ interface CandidateEntry extends PlaceIDProvenance {
 	 * when {@link CandidateLookupOptions.importance} was provided: an object
 	 * when the source holds a row, `null` when it does not.
 	 *
-	 * Absent when no importance DB was given — never conflate the two.
+	 * Absent when no importance DB was given, never conflate the two.
 	 */
 	importance_split?: { referential: number; encyclopedic: number | null } | null
 	/**
@@ -159,11 +159,13 @@ function candidateSelect(hasNameRole: boolean): string {
  *
  * Two values in a hit are zeros that must not be read as absences, and two absences are not zeros:
  *
- * - `importance: null` is unmeasured — the score source had no row for that place — while `population: 0` and a `(0, 0)`
- *   centroid are the build's own written values (the latter its unlocated sentinel).
- * - A `country` naming no `country_codes` entry means the artifact carries no rows for that country at all, so the miss
- *   is a coverage gap. A country it does carry, with rows under the key elsewhere, is a filter miss and reports the
- *   third state (`hit`, no entries).
+ * - `importance: null` is unmeasured — the score source had no row for that place —
+ *   while `population: 0` and a `(0, 0)` centroid are the build's own written
+ *   values (the latter its unlocated sentinel).
+ * - A `country` naming no `country_codes` entry means the artifact carries no rows
+ *   for that country at all, so the miss is a coverage gap.
+ *   A country it does carry, with rows under the key elsewhere, is a filter miss
+ *   and reports the third state (`hit`, no entries).
  */
 export function lookupCandidate<DB>(
 	db: DatabaseClient<DB>,
@@ -264,7 +266,7 @@ export function lookupCandidate<DB>(
 
 		// The runtime's own extra keys, IN its order.
 		// The whitespace fold comes first because `findPlace` applies it at the top,
-		// before the cascade — and the order is required rather than cosmetic: measured against
+		// before the cascade, and the order is required rather than cosmetic: measured against
 		// the shipped candidate.db, "1012 LG" strips to `1012` and resolves the NL PC6 unit
 		// to the 4-digit stem in NL *and* DK, while its own row sits under `1012lg`.
 		// Strip-first coarsens a hit it should never have reached.
@@ -598,7 +600,7 @@ function wofStatements(from: string, order: string, scoped: boolean): { rows: st
  * Read the returned `name`.
  *
  * The `names` route is byte-exact under the index's binary collation, so case and punctuation matter
- * there — which is why a double miss says what was checked rather than "WOF does not have it".
+ * there, which is why a double miss says what was checked rather than "WOF does not have it".
  */
 export function lookupWOF<DB>(
 	extracts: WOFExtract<DB>[],
@@ -923,12 +925,13 @@ export interface PostcodeLookupOptions {
  * which is what makes `SW1A 2AA` reachable at all.
  * Two readings this must keep apart:
  *
- * - A record whose lat and lon are both 0 is a measured zero: the postcode is a member, the artifact holds no centroid
- *   for it, and the channel feeds a country posterior with a (0, 0) centroid. 414 of `postcode-us.bin`'s 42,317 keys
- *   are like this.
- * - Under a card declaring `alnum-run`, a key containing a space-joined pair is present in the artifact and unreachable
- *   at serve. The scan produces `SW1A` and `2AA` separately and never the joined key. The row is a hit and the note
- *   says the running model is not fed it, because those are different facts.
+ * - A record whose lat and lon are both 0 is a measured zero: the postcode is a member,
+ *   the artifact holds no centroid for it, and the channel feeds a country posterior
+ *   with a (0, 0) centroid. 414 of `postcode-us.bin`'s 42,317 keys are like this.
+ * - Under a card declaring `alnum-run`, a key containing a space-joined pair is
+ *   present in the artifact and unreachable at serve.
+ *   The scan produces `SW1A` and `2AA` separately and never the joined key.
+ *   The row is a hit and the note says the running model is not fed it, because those are different facts.
  */
 export function lookupPostcodeAnchor(
 	resolver: PostcodeAnchorResolver,

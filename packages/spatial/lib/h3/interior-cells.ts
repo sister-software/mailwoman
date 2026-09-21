@@ -113,8 +113,8 @@ export function regionCoverageCells(geometry: ParsedGeometry, resolution: number
 }
 
 /**
- * The cells of {@link regionCoverageCells} that lie wholly inside `geometry` —
- * see the module docstring for why both tests are applied.
+ * The cells of {@link regionCoverageCells} that lie wholly inside `geometry`.
+ * See the module docstring for why both tests are applied.
  */
 export function interiorCoverageCells(geometry: ParsedGeometry, resolution: number): H3Cell[] {
 	const polyfilled = new Set<string>(regionCoverageCells(geometry, resolution))

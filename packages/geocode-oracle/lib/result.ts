@@ -73,8 +73,9 @@ export interface OracleGeocodeResult<Raw = unknown> {
 	 * The match as a canonical mailwoman address record: `ComponentTag`-keyed components, the formatter's
 	 * `canonicalKey`, a `formatted` single line, and a `geocode` carrying the coordinate + tier.
 	 *
-	 * `geocode` is always populated here — a reference geocoder that returned no coordinate
-	 * is not a match, and the clients raise rather than hand back a coordinate-less record.
+	 * `geocode` is always populated here.
+	 * A reference geocoder that returned no coordinate is not a match, and the clients raise
+	 * rather than hand back a coordinate-less record.
 	 */
 	address: PostalAddress
 	/**
@@ -83,8 +84,9 @@ export interface OracleGeocodeResult<Raw = unknown> {
 	 */
 	addressID: PostalAddressID
 	/**
-	 * The provider's own admission that the match is approximate — Google's `partial_match`,
-	 * which it sets when it had to fall back from the query it was given.
+	 * The provider's own admission that the match is approximate.
+	 *
+	 * Google's `partial_match`, which it sets when it had to fall back from the query it was given.
 	 *
 	 * Always `false` for the Census geocoder, which has no equivalent signal.
 	 *
@@ -106,8 +108,8 @@ export interface OracleGeocodeResult<Raw = unknown> {
 	/**
 	 * The provider's untouched match.
 	 *
-	 * Read this whenever the component mapping's judgement calls matter —
-	 * it is the override that keeps those calls from being lossy.
+	 * Read this whenever the component mapping's judgement calls matter.
+	 * It is the override that keeps those calls from being lossy.
 	 */
 	raw: Raw
 }
@@ -118,7 +120,7 @@ export interface OracleGeocodeResult<Raw = unknown> {
  *
  * `createPostalAddressID` interpolates `state` into the key without validating it,
  * while `parsePostalAddressID` and `isPostalAddressID` both require `^[a-z]{2}\.`.
- * Handing it `Île-de-France` therefore mints an ID that the package's own parser rejects —
+ * Handing it `Île-de-France` therefore mints an ID that the package's own parser rejects,
  * and an ID that cannot be read back is strictly worse than one that says `xx`.
  *
  * Only a bare two-letter code passes (`NY` yes, `NSW` correctly no).

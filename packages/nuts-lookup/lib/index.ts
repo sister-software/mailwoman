@@ -52,8 +52,9 @@ export type MultiPolygonCoords = number[][][][]
  * Eleven megabytes for fifteen lines is the wrong trade for a leaf lookup package.
  * If this package ever gains a real spatial dependency, delete these and import them.
  *
- * Repo-health-ignore private-name-shadows-export -- kept local so a leaf lookup package
- * stays off @mailwoman/core's ~11 MB of shipped data. see the docstring
+ * Repo-health-ignore private-name-shadows-export -- kept local so a leaf lookup
+ * package stays off @mailwoman/core's ~11 MB of shipped data.
+ * See the docstring
  */
 function pointInRing(lon: number, lat: number, ring: number[][]): boolean {
 	let inside = false
@@ -72,8 +73,9 @@ function pointInRing(lon: number, lat: number, ring: number[][]): boolean {
 	return inside
 }
 
-// repo-health-ignore private-name-shadows-export -- kept local so a leaf lookup package
-// stays off @mailwoman/core's ~11 MB of shipped data. see the docstring
+// repo-health-ignore private-name-shadows-export -- kept local so a leaf lookup
+// package stays off @mailwoman/core's ~11 MB of shipped data.
+// See the docstring
 function pointInPolygon(lon: number, lat: number, polygon: number[][][]): boolean {
 	if (!polygon[0] || !pointInRing(lon, lat, polygon[0])) return false
 
@@ -131,9 +133,10 @@ export class NUTSLookup implements Disposable {
 	/**
 	 * Parsed geometry by nuts id, most recently used last.
 	 *
-	 * The table is read-only, so an entry never goes stale. the cache is bounded because the
-	 * shipped `nuts.db` carries 14.3 MB of geometry JSON over 2,010 regions, and a lookup
-	 * service that answers points across the whole EU would otherwise hold every region parsed.
+	 * The table is read-only, so an entry never goes stale.
+	 * The cache is bounded because the shipped `nuts.db` carries 14.3 MB of geometry
+	 * JSON over 2,010 regions, and a lookup service that answers points across the
+	 * whole EU would otherwise hold every region parsed.
 	 */
 	readonly #geometryCache = new Map<string, MultiPolygonCoords>()
 
@@ -144,9 +147,9 @@ export class NUTSLookup implements Disposable {
 		this.#db = "database" in opts ? opts.database : this.#ownedDatabase!
 
 		this.#byLevelBox = this.#db.prepare(
-			// The explicit alias pins the JS key: for a bare column ref, sqlite3_column_name returns the
-			// schema's declared casing (`nutsId` in every shipped nuts.db — plus `nutsID` from builds made
-			// in the window the casing sweep had renamed the DDL), not the query's spelling.
+			// The explicit alias pins the JS key: for a bare column ref, sqlite3_column_name returns
+			// the schema's declared casing (`nutsId` in every shipped nuts.db — plus `nutsID` from
+			// builds made in the window the casing sweep had renamed the DDL), not the query's spelling.
 			`SELECT nutsId AS nutsID, geom FROM nuts_regions
 			 WHERE level = ? AND minLat <= ? AND maxLat >= ? AND minLon <= ? AND maxLon >= ?`
 		)

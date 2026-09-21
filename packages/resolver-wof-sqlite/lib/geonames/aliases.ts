@@ -447,8 +447,8 @@ export async function ingestGeonamesAliases(
 			namesInsert.run(nid, name, "locality", cc, "", "", 0, 0)
 
 			// The self row is unconditional (#1514).
-			// `populateAncestors` writes one for every spr row it sees, so a full build's freeze phase
-			// produces it either way — but the freeze does not run on the fold-on-copy path, and
+			// `populateAncestors` writes one for every spr row it sees, so a full build's freeze
+			// phase produces it either way, but the freeze does not run on the fold-on-copy path, and
 			// since the purge now clears this range the fold has to emit everything the closure would.
 			// Measured on the 161-country fold: 212,993 self rows, exactly the non-gap countries'
 			// localities, which is what the base artifact carried and a fold-on-copy lost.

@@ -150,7 +150,7 @@ export class CoastalCellIndex {
 	 * The compacted count here is an approximation of what the build stores and is reported as one:
 	 * the build compacts each feature's whole set, while this compacts the scenario's union of them.
 	 * The union can only compact at least as far, so this is a lower bound on the
-	 * stored row count — which is the direction a size estimate should err in,
+	 * stored row count, which is the direction a size estimate should err in,
 	 * and the build's own receipt reports the real number.
 	 */
 	finish(): CellIndexMeasurement {
@@ -199,8 +199,10 @@ export class CoastalCellIndex {
 }
 
 /**
- * The per-scenario measurement as markdown table rows — what a build receipt carries,
- * one line per element so a caller printing them never has to split a joined string back apart.
+ * The per-scenario measurement as markdown table rows.
+ *
+ * What a build receipt carries, one line per element so a caller printing them
+ * never has to split a joined string back apart.
  */
 export function formatScenarioMeasurementRows(measurements: readonly CellIndexMeasurement[]): string[] {
 	const lines = [

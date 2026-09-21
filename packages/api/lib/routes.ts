@@ -55,7 +55,7 @@ import {
  *
  * This is the standalone-engine default rather than derived from env —
  * `mailwoman serve` always passes the env-derived value explicitly
- * (`$public.MAILWOMAN_BATCH_MAX`, default 1000. see `mailwoman/lib/env/schema.ts`).
+ * (`$public.MAILWOMAN_BATCH_MAX`, default 1000. See `mailwoman/lib/env/schema.ts`).
  */
 export const DEFAULT_BATCH_MAX = 500
 
@@ -373,8 +373,8 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 			}
 
 			// Whole-call latency, recorded under the "batch" tier.
-			// Per-row tier metrics are the engine's responsibility (phase 4b) —
-			// this app only times the call as a unit.
+			// Per-row tier metrics are the engine's responsibility (phase 4b).
+			// This app only times the call as a unit.
 			const t0 = performance.now()
 
 			try {
@@ -382,9 +382,9 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 				const outcome = await engine.batch(addresses, { inputMode: input_mode ?? "formatted" })
 				recordTimed(performance.now() - t0, "batch")
 
-				// Same wire-vs-domain cast as `/v1/geocode` above — `BatchRow`'s `GeocodeOutcome`
-				// half is a `Record<string, unknown>` passthrough; `BatchResponseSchema` now
-				// types its `GeocodeOutcome` union member as the real shape.
+				// Same wire-vs-domain cast as `/v1/geocode` above.
+				// `BatchRow`'s `GeocodeOutcome` half is a `Record<string, unknown>` passthrough;
+				// `BatchResponseSchema` now types its `GeocodeOutcome` union member as the real shape.
 				return c.json(withEngineStamp(outcome as z.infer<typeof BatchResponseSchema>, stamp), 200)
 			} catch (error) {
 				recordTimed(performance.now() - t0, "error")
@@ -400,12 +400,14 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 
 	app.openapi(
 		resolveRoute,
-		// Metrics are the engine's responsibility here (phase 4b): the express predecessor recorded the
-		// street node's stamped resolution tier per call — the wired engine must carry that over, and
-		// must trim batch rows the same way (the route passes raw input through).
+		// Metrics are the engine's responsibility here (phase 4b): the express predecessor
+		// recorded the street node's stamped resolution tier per call.
+		// The wired engine must carry that over, and must trim batch rows the same
+		// way (the route passes raw input through).
 		async (c) => {
-			// `resolver`, not `geocoder` — the missing method is `engine.resolveTree`,
-			// and the 503's `error` value is what a caller branches on.
+			// `resolver`, not `geocoder`.
+			// The missing method is `engine.resolveTree`, and the 503's `error` value
+			// is what a caller branches on.
 			if (!engine.resolveTree) {
 				return geocoderUnavailableError(c, "resolver")
 			}

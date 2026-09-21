@@ -4,8 +4,9 @@
 // rather than the Paris admin centroid (~5 km off).
 // The truth coord is the extract's row (arrondissement communes fold to the base city
 // on both sides, so the bare "Paris" locality probe hits directly).
-// Guards: the national fallback slug dispatch, the fr street-key locale, the commune fold,
-// and the hosted artifact — any one missing falls back to the admin centroid and fails the tolerance.
+// Guards: the national fallback slug dispatch, the fr street-key locale,
+// the commune fold, and the hosted artifact.
+// Any one missing falls back to the admin centroid and fails the tolerance.
 import { expect, test } from "../e2e/index.ts"
 
 const TOL = 0.006

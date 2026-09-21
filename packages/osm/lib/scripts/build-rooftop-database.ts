@@ -181,8 +181,9 @@ async function main(): Promise<void> {
 				recovered++
 			}
 
-			// Per-surface locale routing (the Québec finishing move): a French-lead surface folds under the
-			// fr rules whatever the country default. the probe side routes with the same shared function.
+			// Per-surface locale routing (the Québec finishing move): a French-lead surface
+			// folds under the fr rules whatever the country default.
+			// The probe side routes with the same shared function.
 			const streetNorm = normalizeStreetForKeyLocale(street, streetLocaleForSurface(street, locale))
 			const number = rec.housenumber.trim().toLowerCase()
 

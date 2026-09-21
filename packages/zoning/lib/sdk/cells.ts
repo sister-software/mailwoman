@@ -249,8 +249,10 @@ export class ZoningCellIndex {
 }
 
 /**
- * The measurement as markdown table rows — what a build receipt carries, one line per element
- * so a caller printing them never has to split a joined string back apart.
+ * The measurement as markdown table rows.
+ *
+ * What a build receipt carries, one line per element so a caller printing them
+ * never has to split a joined string back apart.
  *
  * The zero-cell column is first after the counts, because it is the column the resolution is
  * chosen on and the one a reader most needs to see is not zero for the alternative index.

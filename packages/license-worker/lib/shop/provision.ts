@@ -44,7 +44,8 @@ export interface ProvisionInput {
 	 */
 	siteOrigin: string
 	/**
-	 * The deployed worker's origin. the webhook destination is created only when it is known.
+	 * The deployed worker's origin.
+	 * The webhook destination is created only when it is known.
 	 */
 	workerOrigin?: string
 	/**
@@ -70,8 +71,10 @@ const ProvisionedObjectSchema = z.object({
 	id: z.string().optional(),
 	action: ProvisionActionSchema,
 	/**
-	 * How the object Stripe holds still differs from the catalog after this run: everything found,
-	 * under a read-only run. under `apply`, only what no update or replacement here can change.
+	 * How the object Stripe holds still differs from the catalog after this run:
+	 * everything found, under a read-only run.
+	 *
+	 * Under `apply`, only what no update or replacement here can change.
 	 */
 	drift: z.array(z.string()).optional(),
 })
@@ -393,8 +396,8 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 		portal = portalReport(created, "created")
 	}
 
-	// The webhook destination, once the worker has an origin: found by URL, held to the
-	// event list. its API version cannot change, and a new destination is a new secret,
+	// The webhook destination, once the worker has an origin: found by URL, held to the event list.
+	// Its API version cannot change, and a new destination is a new secret,
 	// so that difference is reported and left to the operator.
 	let webhook: ProvisionReport["webhook"]
 

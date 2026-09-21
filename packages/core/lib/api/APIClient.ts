@@ -272,9 +272,10 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	 * The pacer is re-acquired on every pass of the loop rather than taken once up front.
 	 * A grant is a claim on a specific instant.
 	 *
-	 * Blocking on a cooldown after taking one leaves it stale, and every caller holding a
-	 * stale grant spends it the moment the cooldown lifts — measured as four pairs dispatching
-	 * 0ms apart against a documented 100ms minimum when both limits were configured together.
+	 * Blocking on a cooldown after taking one leaves it stale, and every caller holding
+	 * a stale grant spends it the moment the cooldown lifts.
+	 * Measured as four pairs dispatching 0ms apart against a documented 100ms minimum
+	 * when both limits were configured together.
 	 *
 	 * Re-acquiring discards the stale grant (the pacer under-issues by one per cooldown wait,
 	 * which is the safe direction) and takes a fresh one for the instant we actually dispatch.

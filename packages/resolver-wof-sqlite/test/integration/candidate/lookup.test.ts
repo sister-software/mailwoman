@@ -1291,7 +1291,7 @@ describe("admin-containment re-rank through findPlace (#1717 stage 2)", () => {
 
 		const hits = await lk.findPlace({ text: "Marwei", placetype: "locality", regionQualifier: "Thuria", limit: 5 })
 
-		// Population-first, unmoved — and no stamp, so the walk reports the setting `unavailable`
+		// Population-first, unmoved, and no stamp, so the walk reports the setting `unavailable`
 		// rather than reading the absence as "not contained" (meaning-of-zero).
 		expect(hits.map((h) => h.id)).toEqual([902, 901])
 		expect(hits.every((h) => !("containedByQualifier" in h))).toBe(true)

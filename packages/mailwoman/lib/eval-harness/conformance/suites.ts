@@ -149,7 +149,7 @@ export function describeLaw(fixture: ConformanceFixture): string {
  * The directory the committed suites live in — what `conformance-suites.test.ts`
  * walks to find a suite file the register does not name.
  *
- * Derived from a suite path rather than from `import.meta.url`, which under a compiled tree names
- * `out/` — where no `.jsonl` is emitted, so a walk would find nothing and report a clean register.
+ * Derived from a suite path rather than from `import.meta.url`, which under a compiled tree names `out/`.
+ * Where no `.jsonl` is emitted, so a walk would find nothing and report a clean register.
  */
 export const CONFORMANCE_SUITE_DIR = dirname(CASE_FOLDING_SUITE_PATH)

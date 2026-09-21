@@ -25,8 +25,8 @@ function seal(entries: readonly AncestrieEntry[]): Ancestrie {
 	return Ancestrie.from(builder.seal())
 }
 
-// The synthetic trie the FST suite used:
-//   root --new--> [york → New York. london → New London ×2 (city 2 + county 3)]
+// The synthetic trie the FST suite used: root
+// --new--> [york → New York. London → New London ×2 (city 2 + county 3)]
 //        --san--> [francisco → San Francisco]
 //        --chicago--> Chicago
 const CITIES = seal([
@@ -53,9 +53,9 @@ describe("char-level partial completion + BFS (#587 ports)", () => {
 	})
 
 	it("a complete-token walk must not SHADOW the partial interpretation", () => {
-		// The live FST artifact held a place literally named "Chic" — the typed prefix
-		// is both a complete edge and a partial of "chicago", and letting the successful
-		// walk short-circuit silently dropped every longer completion.
+		// The live FST artifact held a place literally named "Chic".
+		// The typed prefix is both a complete edge and a partial of "chicago", and letting
+		// the successful walk short-circuit silently dropped every longer completion.
 		const shadowed = seal([
 			{ tokens: ["chic"], id: 10, parentIDs: [], rank: 0.1 },
 			{ tokens: ["chicago"], id: 11, parentIDs: [], rank: 0.85 },
@@ -179,7 +179,8 @@ describe("the normalizeToken boundary", () => {
 		const trie = Ancestrie.from(builder.seal())
 
 		expect(autocomplete(trie, ["NEW", "YOR"], { normalizeToken: fold }).suggestions.map((s) => s.id)).toEqual([1])
-		// Without the query-side normalizer the cased query misses — the normalization boundary is the caller's interface.
+		// Without the query-side normalizer the cased query misses.
+		// The normalization boundary is the caller's interface.
 		expect(autocomplete(trie, ["NEW", "YOR"]).suggestions).toEqual([])
 	})
 })

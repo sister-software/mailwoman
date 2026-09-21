@@ -159,7 +159,7 @@ export interface FRParseRecallOptions {
 	 * The enforced floor, in percent.
 	 *
 	 * When set, {@linkcode FRParseRecallResult.pass} is false if the bare-intact rate falls
-	 * below it — which is how the leg's old `process.exit(1)` reaches the runner now.
+	 * below it, which is how the leg's old `process.exit(1)` reaches the runner now.
 	 */
 	floor?: string
 }

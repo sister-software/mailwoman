@@ -84,7 +84,7 @@ export interface CompanyTickerEntry {
  * Validates + types the raw `company_tickers.json` payload (an object keyed by row index,
  * e.g. `{"0": {...}, "1": {...}}` — SEC's own shape rather than an array).
  *
- * Throws a descriptive error naming the offending row key on a structural mismatch
+ * @throws a descriptive error naming the offending row key on a structural mismatch
  * (decision 8's "malformed input must be loud" discipline, carried from `form499.ts`/`provider-list.ts`).
  * This is SEC's own canonical reference file, so a row that doesn't fit the documented shape
  * is a real signal something changed upstream rather than a case worth silently skipping.
@@ -184,7 +184,7 @@ export function parseCIKLookupData(text: string): CompanyTickerEntry[] {
 }
 
 /**
- * One name→CIK candidate {@linkcode resolveCIKCandidates} reports — never the answer,
+ * One name→CIK candidate {@linkcode resolveCIKCandidates} reports, never the answer,
  * just a scored possibility.
  *
  * See the module docstring for why this function refuses to pick a single winner.
@@ -192,7 +192,7 @@ export function parseCIKLookupData(text: string): CompanyTickerEntry[] {
 export interface CIKCandidate {
 	cik: CIK
 	/**
-	 * The company's name exactly as `company_tickers.json` spells it (`title`) —
+	 * The company's name exactly as `company_tickers.json` spells it (`title`),
 	 * never canonicalized, so a caller sees what SEC actually published.
 	 */
 	companyName: string
@@ -202,7 +202,7 @@ export interface CIKCandidate {
 	 * both reduced through {@linkcode canonicalizeOrganizationName} before comparison
 	 * ({@linkcode nameSimilarity}, `@mailwoman/match`).
 	 *
-	 * `1` means the two names are identical once legal designations are stripped — which is
+	 * `1` means the two names are identical once legal designations are stripped, which is
 	 * exactly the case that can still mean two different companies (see the module docstring),
 	 * so a score of `1` is not itself a license to pick.
 	 */
@@ -243,7 +243,7 @@ function canonicalOf(name: string): string {
 /**
  * Score every `tickers` entry against `companyName` (both sides reduced through
  * {@linkcode canonicalizeOrganizationName} before comparison) and return every candidate at
- * or above `minScore`, highest score first — never a single pick.
+ * or above `minScore`, highest score first, never a single pick.
  *
  * See the module docstring for the false-identity-link rationale.
  *

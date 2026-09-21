@@ -86,8 +86,10 @@ export async function measureFloodCellResolutions(
 }
 
 /**
- * The measurement as markdown table rows — what a build receipt carries, one line per element
- * so a caller printing them never has to split a joined string back apart.
+ * The measurement as markdown table rows.
+ *
+ * What a build receipt carries, one line per element so a caller printing them
+ * never has to split a joined string back apart.
  */
 export function formatResolutionMeasurementRows(measurements: readonly CellIndexMeasurement[]): string[] {
 	return [

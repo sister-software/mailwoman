@@ -170,9 +170,11 @@ export interface BuildBDCOptions {
 	 * build is untouched: every code path this option touches is conditioned behind
 	 * `if (options.providers)`, so omitting it changes nothing.
 	 * When present, `buildBDCDatabase` groups rows by `providerID` and inserts one
-	 * `bdc_provider` row per distinct provider — see {@link BuildBDCOptions.filerDB} for how
-	 * the primary FRN is picked when a provider carries more than one, and `schema.ts`'s
-	 * `BDCProviderTable` docstring for the full lossy-denormalization rationale (decision 6).
+	 * `bdc_provider` row per distinct provider.
+	 *
+	 * See {@link BuildBDCOptions.filerDB} for how the primary FRN is picked
+	 * when a provider carries more than one, and `schema.ts`'s `BDCProviderTable`
+	 * docstring for the full lossy-denormalization rationale (decision 6).
 	 */
 	providers?: Iterable<ProviderListRow> | AsyncIterable<ProviderListRow>
 	/**
@@ -401,25 +403,32 @@ async function groupProviderListRows(
 }
 
 /**
- * Populate `bdc_provider` from `options.providers` (2a decision 8 / 3a decision 6) —
- * see `schema.ts`'s `BDCProviderTable` docstring for the full lossy-denormalization rationale.
+ * Populate `bdc_provider` from `options.providers` (2a decision 8 / 3a decision 6).
+ *
+ * See `schema.ts`'s `BDCProviderTable` docstring for the full lossy-denormalization rationale.
  *
  * For each distinct `provider_id`:
  *
- * - Exactly one `frn` among its rows → that FRN is primary by construction. No `filerDB` query needed at all.
- * - More than one distinct `frn` → `readFRNFilingCandidates` (`@mailwoman/filer/sdk`, lazily imported — see below) reads
- *   each FRN's own most recent IN-force `form-499` filing edge from `filerDB`, `asOf` the given date, and
- *   `pickPrimaryFRN` picks the winner (decision 6: most recent 499 filing date wins). A `provider_id` whose FRNs carry
- *   no 499 filing to rank by inserts `frn: NULL` rather than guessing — `pickPrimaryFRN` throws on empty input, so this
- *   checks `candidates.length` first, mirroring `filerLookup`'s own `primary_frn: null` handling of the same case.
- * - `filerDB` is required the instant a multi-FRN `provider_id` is encountered. Its absence throws immediately, naming
- *   the offending `provider_id`, rather than silently picking an arbitrary FRN.
- * - `holding_company` gets the identical single-distinct-value shortcut `frn` gets: exactly one distinct non-null
- *   `holdingCompany` across a provider's rows means there's no conflict to resolve, so it's populated directly, no rule
- *   needed. Two or more distinct values is the real conflict decision 6 refuses to paper over with last-wins. That case
- *   inserts NULL, and every value stays recoverable from `filer.db`. A `null` `holdingCompany` on some rows doesn't
- *   count as a competing value (a row simply not stating it isn't a conflicting assertion) — only distinct NON-NULL
- *   strings are compared.
+ * - Exactly one `frn` among its rows → that FRN is primary by construction.
+ *   No `filerDB` query needed at all.
+ * - More than one distinct `frn` → `readFRNFilingCandidates`
+ *   (`@mailwoman/filer/sdk`, lazily imported — see below) reads each FRN's own most
+ *   recent IN-force `form-499` filing edge from `filerDB`, `asOf` the given date,
+ *   and `pickPrimaryFRN` picks the winner (decision 6: most recent 499 filing date wins).
+ *   A `provider_id` whose FRNs carry no 499 filing to rank by inserts `frn: NULL` rather than
+ *   guessing — `pickPrimaryFRN` throws on empty input, so this checks `candidates.length` first,
+ *   mirroring `filerLookup`'s own `primary_frn: null` handling of the same case.
+ * - `filerDB` is required the instant a multi-FRN `provider_id` is encountered.
+ *   Its absence throws immediately, naming the offending `provider_id`,
+ *   rather than silently picking an arbitrary FRN.
+ * - `holding_company` gets the identical single-distinct-value shortcut `frn` gets:
+ *   exactly one distinct non-null `holdingCompany` across a provider's rows means there's
+ *   no conflict to resolve, so it's populated directly, no rule needed.
+ *   Two or more distinct values is the real conflict decision 6 refuses to paper over with last-wins.
+ *   That case inserts NULL, and every value stays recoverable from `filer.db`.
+ *   A `null` `holdingCompany` on some rows doesn't count as a competing
+ *   value (a row simply not stating it isn't a conflicting assertion) —
+ *   only distinct NON-NULL strings are compared.
  *
  * `brand_name` is always inserted NULL.
  * The provider list carries no brand-name column at all, so there is nothing to
@@ -437,8 +446,8 @@ async function groupProviderListRows(
  * `filer-lookup.ts` alone imports only `@mailwoman/sqlite/client`, `#schema`
  * and `#frn` (measured 2026-09-01), so the heavy graph is no longer on this path at all.
  *
- * The laziness is kept because it also defers opening the filer database, and a
- * static import here is now a viable simplification if someone wants to measure it —
+ * The laziness is kept because it also defers opening the filer database,
+ * and a static import here is now a viable simplification if someone wants to measure it,
  * but it is no longer required for import time.
  */
 async function populateBDCProviderTable(
@@ -654,7 +663,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 
 				resolved = centroid
 					? (() => {
-							// Coverage cell must be derived as the res-9 cell's H3 hierarchy parent —
+							// Coverage cell must be derived as the res-9 cell's H3 hierarchy parent,
 							// not a second, independent `latLngToCell(centroid, 6)` call.
 							// H3's cell hierarchy is not geometrically exact: a point's directly-indexed res-6 cell
 							// and its res-9 cell's `cellToParent(…, 6)` disagree for a real fraction of
@@ -686,7 +695,8 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			insAvailability.run(
 				resolved.h3Cell,
 				row.geoid,
-				// wof_id stays NULL here — WOF point-in-polygon resolution against the block centroid is a later registry-join task, the same decision-8 scoping schema.ts documents for `bdc_provider`.
+				// wof_id stays NULL here — WOF point-in-polygon resolution against the block centroid is a
+				// later registry-join task, the same decision-8 scoping schema.ts documents for `bdc_provider`.
 				null,
 				row.provider_id,
 				row.technology_code,
@@ -716,8 +726,9 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		progress("geoid index (index-after-load — see schema.ts)")
 		await createBDCGeoidIndex(db)
 
-		// Coverage is source-level rather than survey completeness — same convention build-poi.ts
-		// documents: a res-6 cell we have availability rows in is recorded at completeness 1.0.
+		// Coverage is source-level rather than survey completeness.
+		// Same convention build-poi.ts documents: a res-6 cell we have availability
+		// rows in is recorded at completeness 1.0.
 		// A cell absent from `layer_coverage` means no rows were observed there at all
 		// (the meaning-of-zero rule — missing = unknown, never `{completeness: 0}`).
 		const coverageCells = sourcePresentCoverageCells(coverage)

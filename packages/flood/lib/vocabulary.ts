@@ -32,7 +32,7 @@
  */
 export interface FloodZoneDefinition {
 	/**
-	 * The code as it appears in the source file — never re-spelled, never normalized.
+	 * The code as it appears in the source file, never re-spelled, never normalized.
 	 */
 	code: string
 	/**
@@ -80,8 +80,8 @@ export const EA_FLOOD_ZONE_CODES: ReadonlySet<string> = new Set(EA_FLOOD_ZONE_DE
 /**
  * Zone 1, which the product represents by absence.
  *
- * Not a row in `flood_zone_vocabulary`, because the authority ships no Zone 1 polygon. carried here
- * so a reader rendering a designated-absence answer can quote the definition it rests on.
+ * Not a row in `flood_zone_vocabulary`, because the authority ships no Zone 1 polygon.
+ * Carried here so a reader rendering a designated-absence answer can quote the definition it rests on.
  */
 export const FLOOD_ZONE_1: FloodZoneDefinition = {
 	code: "FZ1",
@@ -109,10 +109,10 @@ export const EA_FLOOD_LAYER = "Flood_Zones_2_3_Rivers_and_Sea"
 /**
  * The attribution string the ISO metadata specifies.
  *
- * OGL v3.0 requires a re-user to "acknowledge the source of the Information in
- * your product or application by including or linking to any attribution statement
- * specified by the Information Provider(s)", so this string is not decoration —
- * it is the licence condition, and it rides in `layer_manifest.attribution`.
+ * OGL v3.0 requires a re-user to "acknowledge the source of the Information in your product
+ * or application by including or linking to any attribution statement specified by
+ * the Information Provider(s)", so this string is not decoration.
+ * It is the licence condition, and it rides in `layer_manifest.attribution`.
  */
 export const EA_FLOOD_ATTRIBUTION = "© Environment Agency copyright and/or database right 2025. All rights reserved."
 
@@ -127,8 +127,10 @@ export const EA_FLOOD_LICENSE = "OGL-UK-3.0"
 export const EA_FLOOD_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 
 /**
- * The authority's coverage statement — the sentence that makes `CoverageBasis.Designated`
- * reachable at all, and the only thing `flood_map_extent` is derived from.
+ * The authority's coverage statement.
+ *
+ * The sentence that makes `CoverageBasis.Designated` reachable at all,
+ * and the only thing `flood_map_extent` is derived from.
  *
  * The union of hazard polygons is not the mapped area: Zone 1 is the mapped area minus
  * the polygons, so a footprint derived from the polygons would report every Zone 1
@@ -158,8 +160,8 @@ export const EA_PRODUCT_LIMITS: ReadonlyArray<string> = [
 ]
 
 /**
- * The bounding box the OGC API Features collection declares for the published layer, in CRS84 order `[minLon, minLat,
- * maxLon, maxLat]`.
+ * The bounding box the OGC API Features collection declares for the published layer,
+ * in CRS84 order `[minLon, minLat, maxLon, maxLat]`.
  *
  * The ingest asserts the reprojected data lands inside this, which is the check
  * that catches a coordinate-order or projection mistake before 813,627 polygons

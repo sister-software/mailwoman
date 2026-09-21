@@ -77,7 +77,7 @@ describe("rerankByResolution", () => {
 
 		expect(out.best.payload).toBe("rank2-real")
 		expect(out.changed).toBe(true)
-		// The vetoed one is retained, with its reason — never silently dropped.
+		// The vetoed one is retained, with its reason, never silently dropped.
 		const vetoed = out.ranked.find((r) => r.implausible)!
 		expect(vetoed.payload).toBe("rank1-garbage")
 		expect(vetoed.reason).toBe("country-centroid")

@@ -240,7 +240,7 @@ function crossesOdd(coordinates: Float64Array, offset: number, pointCount: numbe
 }
 
 /**
- * Unpack the blob back into per-polygon flat coordinate runs — for tests, for a debug render,
+ * Unpack the blob back into per-polygon flat coordinate runs, for tests, for a debug render,
  * and for the round-trip check a build's fixtures assert.
  */
 export function decodeRings(blob: Uint8Array): DecodedRings {
@@ -415,10 +415,12 @@ export interface EncodedArea {
  *
  * Shared BY every polygon layer'S verify, because it is bounding-box arithmetic
  * over the ring blob and knows nothing about any product.
- * `gridSteps` is the one thing that differs between them: a layer whose polygons are narrow
- * strips needs a finer grid than one whose polygons are compact, and the value is part
- * of a layer's sampling receipt — two runs of the same layer must draw the same points,
- * so it is a caller's choice rather than a shared default nobody owns.
+ * `gridSteps` is the one thing that differs between them: a layer whose polygons
+ * are narrow strips needs a finer grid than one whose polygons are compact,
+ * and the value is part of a layer's sampling receipt.
+ *
+ * Two runs of the same layer must draw the same points, so it is a caller's choice
+ * rather than a shared default nobody owns.
  *
  * @param gridSteps Grid divisions per axis.
  * Only `steps − 1` interior lines are tested, so 7 gives a 6 × 6 grid.

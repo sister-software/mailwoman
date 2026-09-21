@@ -52,9 +52,10 @@ const MAX_ABS_LONGITUDE = 180
  * How the deepest returned place was confirmed:
  *
  * - `"polygon"` — the point ray-cast inside the place's real (DP-simplified) admin boundary.
- * - `"approximate"` — the place has no polygon on record. It won by nearest-centroid among the candidates whose bbox (or
- *   parent) contains the point. The same honesty convention as the demo's approximate circles — country-dependent data
- *   reality, surfaced instead of hidden.
+ * - `"approximate"` — the place has no polygon on record.
+ *   It won by nearest-centroid among the candidates whose bbox (or parent) contains the point.
+ *   The same honesty convention as the demo's approximate circles — country-dependent
+ *   data reality, surfaced instead of hidden.
  */
 export type ContainmentKind = "polygon" | "approximate"
 
@@ -468,7 +469,8 @@ export class WOFReverseGeocoder implements Disposable {
 		}
 
 		const row = this.#polygons.prepare(`SELECT geom FROM polygons WHERE id = ?`).get(id) as { geom: string } | undefined
-		// Malformed row parses to null — treat as no-polygon rather than failing the query.
+		// Malformed row parses to null.
+		// Treat as no-polygon rather than failing the query.
 		const geometry = row ? tryParsingJSON<ParsedGeometry>(row.geom) : null
 
 		this.#geometryCache.set(id, geometry)

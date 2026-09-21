@@ -242,7 +242,8 @@ export interface BDCFile {
 	/**
 	 * The state or territory FIPS code.
 	 *
-	 * Loosely typed as `string` — see {@linkcode RawBDCFile} for the deferral.
+	 * Loosely typed as `string`.
+	 * See {@linkcode RawBDCFile} for the deferral.
 	 * Empty string when the raw `state_fips` was `null`.
 	 */
 	stateCode: string

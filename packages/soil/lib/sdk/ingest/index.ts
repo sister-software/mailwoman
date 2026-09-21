@@ -111,8 +111,8 @@ export interface SoilIngestOptions {
 	 */
 	expectEPSG?: number
 	/**
-	 * Read only the shapefile's own FIDs in `[fidFrom, fidTo]`, inclusive —
-	 * what makes a bounded chunk possible.
+	 * Read only the shapefile's own FIDs in `[fidFrom, fidTo]`, inclusive.
+	 * What makes a bounded chunk possible.
 	 */
 	fidFrom?: number
 	fidTo?: number
@@ -191,7 +191,9 @@ export async function* readSoilDelineations(
 		"-f",
 		"GeoJSONSeq",
 		"/vsistdout/",
-		// The output projection. `expectEPSG` is the assertion `readSoilSourceIdentity` makes about the source and is not the same thing: the consumer reads WGS84, whatever the shapefile declares.
+		// The output projection.
+		// `expectEPSG` is the assertion `readSoilSourceIdentity` makes about the source
+		// and is not the same thing: the consumer reads WGS84, whatever the shapefile declares.
 		"-t_srs",
 		"EPSG:4326",
 		"-lco",

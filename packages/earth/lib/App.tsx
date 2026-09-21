@@ -46,8 +46,9 @@ function NotFound({ pathname }: { pathname: string }) {
 /**
  * The real geocoder, with the host panels.
  *
- * The map renders at the default centre at once. the geolocation answer moves the bias
- * when it arrives, so nothing waits on the network before the first paint.
+ * The map renders at the default centre at once.
+ * The geolocation answer moves the bias when it arrives, so nothing waits on
+ * the network before the first paint.
  */
 function RealGeocoder({ route, query }: { route: Route; query: string | null }) {
 	const initialCenter = useBrowserGeolocation(PRODUCTION_CONFIG)
@@ -107,9 +108,9 @@ function writeQueryToURL(query: string): void {
  * The app's identity and source credits.
  *
  * They belong to the page rather than to the runtime, so the canned runtime the smoke
- * and the stories mount shows the same footer the real one does — the same component
- * the real panels use rather than a second copy of it, which is how the commit link
- * came to render here and nowhere a visitor could see it.
+ * and the stories mount shows the same footer the real one does.
+ * The same component the real panels use rather than a second copy of it, which is how
+ * the commit link came to render here and nowhere a visitor could see it.
  */
 const IDENTITY_PANELS: GeocoderPanels = {
 	footer: <EarthFooter />,

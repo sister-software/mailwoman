@@ -30,8 +30,9 @@ const WHITESPACE = /\s+/
 export const NEUTRAL_PROPOSAL_CONFIDENCE = 0.55
 
 /**
- * Single-token US state/territory names, derived from the codex roster. single-token
- * scope on purpose: the non-tail region-name penalty below reads one token at a time,
+ * Single-token US state/territory names, derived from the codex roster.
+ *
+ * Single-token scope on purpose: the non-tail region-name penalty below reads one token at a time,
  * and a multi-word name ("New York", "North Carolina") can never match a single token —
  * deriving only the single-token names keeps the set equal to what the check can ever see.
  */

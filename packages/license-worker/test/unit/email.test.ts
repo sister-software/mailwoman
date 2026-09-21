@@ -74,7 +74,8 @@ describe("the license message", () => {
 		const text = renderLicenseEmail(first, site)
 		const html = renderLicenseEmailHTML(first, site, "licenses@mailwoman.ai")
 
-		// React escapes quotes in text nodes. the command is read back as a person copies it.
+		// React escapes quotes in text nodes.
+		// The command is read back as a person copies it.
 		const unescaped = html.replaceAll("&quot;", '"').replaceAll("&#x27;", "'")
 
 		for (const body of [text, unescaped]) {

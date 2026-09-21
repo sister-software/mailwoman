@@ -100,7 +100,8 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 */
 	poiVenueTier?: boolean
 	/**
-	 * Street-morphology token test (the #1315 check's matcher) — check 2 of the fork→entity probe.
+	 * Street-morphology token test (the #1315 check's matcher).
+	 * Check 2 of the fork→entity probe.
 	 *
 	 * Absent = no probe: an unrestricted probe is the Savile Row hijack, so degrading
 	 * the guard degrades the whole mechanism, never just the guard.
@@ -211,8 +212,8 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 * So `--locale en-GB "Whitby"` and `--default-country GB "Whitby"` disagree, and only the second is gold.
 	 * This field is that form.
 	 *
-	 * Ignored when {@link defaultCountry} is set (a hard scope makes the prior a no-op), and OPT-IN at
-	 * the CLI — see `ResolveOpts.localeCountryPrior` for the measured reason it is not a default.
+	 * Ignored when {@link defaultCountry} is set (a hard scope makes the prior a no-op), and OPT-IN at the CLI.
+	 * See `ResolveOpts.localeCountryPrior` for the measured reason it is not a default.
 	 */
 	localeCountryPrior?: string
 	/**
@@ -279,11 +280,13 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 * and this option is not consulted for it.
 	 * The two remaining roles:
 	 *
-	 * - A per-region {@link InterpCalibrationTable}. The legacy-database fallback, selected by the parsed region (DC 1.44 …
-	 *   AZ 3.12, `default` otherwise, #584), applied only when the database predates the metadata table (the artifact is
-	 *   silent).
-	 * - A single number — an explicit instrument override forced everywhere, artifact value included (the CLI's
-	 *   `--interp-calibration`). `1` or `undefined` + artifact-silent keeps the raw half-segment heuristic.
+	 * - A per-region {@link InterpCalibrationTable}.
+	 *   The legacy-database fallback, selected by the parsed region
+	 *   (DC 1.44 … AZ 3.12, `default` otherwise, #584), applied only when the database
+	 *   predates the metadata table (the artifact is silent).
+	 * - A single number — an explicit instrument override forced everywhere,
+	 *   artifact value included (the CLI's `--interp-calibration`).
+	 *   `1` or `undefined` + artifact-silent keeps the raw half-segment heuristic.
 	 *
 	 * See `docs/articles/evals/calibration/2026-06-14-interp-multiregion-recalibration.md`.
 	 */
@@ -298,8 +301,9 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 *
 	 * **Default-on (#244 M2, after the misroute check):**
 	 *
-	 * - `undefined` (default) → the bundled placer ({@link loadDefaultPlaceCountry}, open-set @ 0.9) is lazy-loaded and
-	 *   applied. Degrades to no prior if the model can't be resolved.
+	 * - `undefined` (default) → the bundled placer ({@link loadDefaultPlaceCountry}, open-set @ 0.9)
+	 *   is lazy-loaded and applied.
+	 *   Degrades to no prior if the model can't be resolved.
 	 * - A function → use it (a custom placer / threshold).
 	 * - `false` → disabled (no prior. The pre-M2 byte-stable behavior).
 	 */
@@ -324,11 +328,7 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	hardCountrySafelist?: ReadonlySet<string>
 	/**
 	 * #928: when the parsed postcode's format unambiguously implies a country ({@link POSTCODE_FORMAT_COUNTRY} — GB `E4
-	 * 9AZ`, CA `K2P 1L4`), use it as the country prior IN place OF the coarse placer, which conflates GB/CA with US on
-	 * shared English patterns and mis-routes them to US namesakes at high confidence (London E4 → London, Ohio).
-	 * **default-on** (promoted 2026-07-06. Check: GB 63→90% ok, CA 42→67%, US byte-identical 0/150. The formats never
-	 * match a US ZIP / NL / FR code). Only fires when no explicit `defaultCountry`. Pass `false` to opt out (the
-	 * pre-promote behavior). A format is a stronger, unforgeable signal than the language model.
+	 * 9AZ`, CA `K2P 1L4`), use it as the country prior IN place OF the coarse placer, which conflates GB/CA with US on shared English patterns and mis-routes them to US namesakes at high confidence (London E4 → London, Ohio). **default-on** (promoted 2026-07-06. Check: GB 63→90% ok, CA 42→67%, US byte-identical 0/150. The formats never match a US ZIP / NL / FR code). Only fires when no explicit `defaultCountry`. Pass `false` to opt out (the pre-promote behavior). A format is a stronger, unforgeable signal than the language model.
 	 */
 	postcodeCountryPrior?: boolean
 	/**

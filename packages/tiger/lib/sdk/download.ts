@@ -24,8 +24,10 @@ import { verifyZipIntegrity } from "@mailwoman/core/fs/zip"
  *
  * Returns `true` when the cache was reused, `false` when a download happened.
  *
- * "Valid" means every member's CRC-32 checks out — an existence check alone is not enough, because an
- * interrupted download leaves a plausible-looking file that fails only much later, inside ogr2ogr.
+ * "Valid" means every member's CRC-32 checks out.
+ * An existence check alone is not enough, because an interrupted download leaves a
+ * plausible-looking file that fails only much later, inside ogr2ogr.
+ *
  * Writes to a `.tmp` sibling and renames, so `dest` is never a partial archive.
  */
 export async function downloadIfNeeded(url: string, dest: string): Promise<boolean> {

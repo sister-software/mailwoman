@@ -27,21 +27,23 @@ const GENERATED_TREES = "(?:^|/)(?:out|dist|node_modules|public/sqljs|sentencepi
  * Each entry states who does the loading.
  */
 const LOADED_WITHOUT_AN_IMPORT = [
-	// Test-runner and build-tool configs. The preset exempts babel and webpack by name; these are the ones this
-	// repository runs. `.storybook/main.ts` sits under a dotted directory, which the preset's dotfile pattern
+	// Test-runner and build-tool configs.
+	// The preset exempts babel and webpack by name; these are the ones this repository runs.
+	// `.storybook/main.ts` sits under a dotted directory, which the preset's dotfile pattern
 	// (`(^|/)\.[^/]+\.(js|cjs|mjs|ts|json)$`) matches only as a dotted file.
 	"(^|/)(?:vitest|vitest[.]node|vite|playwright|styleframe)[.]config[.](?:js|cjs|mjs|ts)$",
 	"(^|/)[.]storybook/",
 	// Playwright specs: the runner collects them from disk by glob.
 	"(^|/)test/browser/[^/]+[.]spec[.]ts$",
-	// A worker script must be a real file on disk for the runtime to spawn by path —
+	// A worker script must be a real file on disk for the runtime to spawn by path.
 	// `packages/mailwoman/test/unit/geocode/stream.test.ts` hands this one to a worker, and
 	// `@mailwoman/site-kit/vite/pwa` names `lib/service-worker.ts` as the `injectManifest` entry.
 	"(^|/)lib/test-fixtures/[^/]+-worker[.](?:js|ts)$",
 	"(^|/)lib/service-worker[.]ts$",
-	// The `browser` condition's target for a subpath whose `node` condition resolves elsewhere. This cruise
-	// declares `conditionNames: ["node", "import", "default"]`, so the browser half is a real entry point that
-	// nothing in the Node graph can reach — `@mailwoman/neural`'s `./onnx-runner` is the case.
+	// The `browser` condition's target for a subpath whose `node` condition resolves elsewhere.
+	// This cruise declares `conditionNames: ["node", "import", "default"]`, so the browser
+	// half is a real entry point that nothing in the Node graph can reach.
+	// `@mailwoman/neural`'s `./onnx-runner` is the case.
 	"(^|/)lib/onnx/runner/browser[.]ts$",
 ]
 
@@ -150,10 +152,11 @@ const config = {
 		preserveSymlinks: false,
 		progress: { type: "none" },
 		tsConfig: { fileName: "tsconfig.json" },
-		// Type-only imports are erased at compile time, so the default (false) hides every edge into a
-		// `types.ts` and reports it as an orphan. It also makes `no-circular`'s `dependencyTypesNot:
-		// ["type-only"]` inert, since no type-only edge exists to exclude. 48 modules / 63 dependencies
-		// -> 76 / 138 across locale-hint, query-shape, normalize and variant-aliases alone.
+		// Type-only imports are erased at compile time, so the default (false) hides
+		// every edge into a `types.ts` and reports it as an orphan.
+		// It also makes `no-circular`'s `dependencyTypesNot: ["type-only"]` inert,
+		// since no type-only edge exists to exclude. 48 modules / 63 dependencies -> 76 /
+		// 138 across locale-hint, query-shape, normalize and variant-aliases alone.
 		tsPreCompilationDeps: true,
 	},
 }

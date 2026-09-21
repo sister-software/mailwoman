@@ -88,7 +88,7 @@ export interface GeocodeDiff {
 	/**
 	 * Kilometres the final answer moved.
 	 *
-	 * Undefined when either arm returned no coordinate — which is a different event
+	 * Undefined when either arm returned no coordinate, which is a different event
 	 * from moving zero kilometres and must not read as one.
 	 */
 	movedKm?: number

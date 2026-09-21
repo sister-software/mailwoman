@@ -119,7 +119,8 @@ export interface PowerReading {
 	/**
 	 * The sentence.
 	 *
-	 * Callers put this in `summary` verbatim — see the module docstring for why it is prose.
+	 * Callers put this in `summary` verbatim.
+	 * See the module docstring for why it is prose.
 	 */
 	sentence: string
 	/**

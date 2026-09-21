@@ -48,9 +48,10 @@ export const CASE_FOLDING_LAW = "case-folding-invariance"
  *
  * - `upper` — the shouting register: a pasted spreadsheet cell, a scanned form, a legacy mainframe export.
  * - `lower` — the mobile register, and the one the house treats as first-class rather than degraded.
- * - `mixed` — title case, the autocapitalize register: every token's first cased character capitalized, the rest folded
- *   down. Named `mixed` rather than `title` because what the law tests is a case pattern that is neither extreme, and
- *   title case is the reproducible member of that class a user actually produces.
+ * - `mixed` — title case, the autocapitalize register: every token's first cased
+ *   character capitalized, the rest folded down.
+ *   Named `mixed` rather than `title` because what the law tests is a case pattern that is neither
+ *   extreme, and title case is the reproducible member of that class a user actually produces.
  */
 export const CASE_TRANSFORMATIONS = ["upper", "lower", "mixed"] as const
 
@@ -81,8 +82,8 @@ function titleCaseToken(token: string): string {
  * Pure, total, and the source the suite's variants are re-derived from.
  *
  * `mixed` splits on the whitespace runs themselves (the capturing split keeps them),
- * so the transformation cannot collapse or insert whitespace — which would take
- * the pair out of this law and into the whitespace one.
+ * so the transformation cannot collapse or insert whitespace, which would take the
+ * pair out of this law and into the whitespace one.
  */
 export const CASE_TRANSFORMATION_BY_NAME: Record<CaseTransformationName, (text: string) => string> = {
 	upper: (text) => text.toUpperCase(),
@@ -113,8 +114,9 @@ export function caseFoldKey(text: string): string {
  *
  * Derived from the pair rather than stored on the fixture: a stored transformation name is
  * a second copy of something the two strings already say, and the copy is what goes stale.
- * Only pairs that are genuinely case-only classify — anything else answers `null`,
- * and the audit reports it as a row that does not belong to this law.
+ * Only pairs that are genuinely case-only classify.
+ *
+ * Anything else answers `null`, and the audit reports it as a row that does not belong to this law.
  */
 export function classifyCaseTransformation(base: string, variant: string): CaseTransformationName | null {
 	if (base === variant || caseFoldKey(base) !== caseFoldKey(variant)) return null
@@ -129,14 +131,16 @@ export function classifyCaseTransformation(base: string, variant: string): CaseT
 /**
  * The declared reasons a case transformation is not a semantic equivalent for a given row.
  *
- * - `identity-transformation` — the transformation returns the text unchanged, either because the script has no case
- *   (Japanese, Chinese, Thai, Hebrew, Arabic) or because the text is already written in the target case (`N7 0BT`
- *   uppercased). Such a row is the identity law wearing a case-folding label: it would hold whatever the pipeline does
- *   with casing, and its holding would be counted as evidence that casing is handled.
- * - `locale-sensitive-casing` — the row's locale maps the cases of a letter differently from the root locale, so a
- *   root-locale transformation changes which letter is written. Turkish and Azeri separate dotted `i`/`İ` from dotless
- *   `ı`/`I`, and Lithuanian retains the dot on a lowercase `i`/`j` under an accent. Unicode records all three in
- *   `SpecialCasing.txt` as the only locale-conditional casing rules.
+ * - `identity-transformation` — the transformation returns the text unchanged, either
+ *   because the script has no case (Japanese, Chinese, Thai, Hebrew, Arabic) or
+ *   because the text is already written in the target case (`N7 0BT` uppercased).
+ *   Such a row is the identity law wearing a case-folding label: it would hold whatever the
+ *   pipeline does with casing, and its holding would be counted as evidence that casing is handled.
+ * - `locale-sensitive-casing` — the row's locale maps the cases of a letter differently
+ *   from the root locale, so a root-locale transformation changes which letter is written.
+ *   Turkish and Azeri separate dotted `i`/`İ` from dotless `ı`/`I`, and Lithuanian
+ *   retains the dot on a lowercase `i`/`j` under an accent.
+ *   Unicode records all three in `SpecialCasing.txt` as the only locale-conditional casing rules.
  */
 export const CASE_APPLICABILITY_RULES = ["identity-transformation", "locale-sensitive-casing"] as const
 
@@ -231,7 +235,7 @@ export const CASE_FOLDING_SUITE_PATH: string = resolvePackagePath(
  * Everything that must be true of a case-folding row, checked without running anything.
  *
  * Returns one message per problem, each naming the fixture.
- * Empty means the suite states this law and only this law — which is the claim the
+ * Empty means the suite states this law and only this law, which is the claim the
  * DoD's fourth item makes, and the only form of it that is executable.
  *
  * The `caseCountry` requirement is not bookkeeping.
@@ -283,7 +287,7 @@ export function auditCaseFoldingSuite(fixtures: readonly ConformanceFixture[]): 
 /**
  * The transformation label a report line carries, e.g. `upper`.
  *
- * `?` when the pair does not classify — which the audit refuses, so it can only
+ * `?` when the pair does not classify, which the audit refuses, so it can only
  * appear on a hand-built fixture that skipped the loader.
  */
 export function describeCaseTransformation(fixture: ConformanceFixture): string {

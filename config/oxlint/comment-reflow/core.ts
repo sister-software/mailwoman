@@ -517,8 +517,11 @@ export function reflowText(
 				const completeMarkup = [parts.description, ...lines.slice(i + 1, end)].every(
 					(value) => words(value) !== undefined
 				)
+				// A tag's continuation sits flush with the star rather than indented under the tag,
+				// because that is where oxfmt puts it, and an indent it strips is a line
+				// this rule would report again on the next run.
 				output.push(
-					...((completeMarkup ? wrapProse(text, limits, parts.prefix, "  ") : undefined) ?? lines.slice(i, end))
+					...((completeMarkup ? wrapProse(text, limits, parts.prefix, "") : undefined) ?? lines.slice(i, end))
 				)
 				leadPending = false
 				i = end

@@ -50,9 +50,9 @@ export async function readFileHead(path: PathBuilderLike, byteSize: number): Pro
 /**
  * Read `length` bytes from `path`, starting at `offset`.
  *
- * The shape a header peek has: a magic number, a version, an offset to a trailer,
- * then the trailer itself — three reads at three positions, where reading the whole
- * file would mean loading a multi-gigabyte artifact to look at sixteen bytes.
+ * The shape a header peek has: a magic number, a version, an offset to a trailer, then the trailer itself.
+ * Three reads at three positions, where reading the whole file would mean loading
+ * a multi-gigabyte artifact to look at sixteen bytes.
  *
  * Answers what it actually read, which is shorter than `length` at end of file.
  *

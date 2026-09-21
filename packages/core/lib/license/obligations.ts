@@ -16,10 +16,10 @@ import type { LicenseKeyPublication } from "#license/publication"
  * The responsibility classes the summary reports.
  *
  * - `attribution`: credit the source where results derived from it are shown or redistributed.
- * - `share_alike`: a derived work or derived database carries the same license (ODbL's Derived Database. Agpl's copyleft
- *   on modifications).
- * - `source_offer`: users who interact with the software over a network must be offered its source, including
- *   modifications (AGPL-3.0 section 13).
+ * - `share_alike`: a derived work or derived database carries the same license
+ *   (ODbL's Derived Database. Agpl's copyleft on modifications).
+ * - `source_offer`: users who interact with the software over a network must be offered
+ *   its source, including modifications (AGPL-3.0 section 13).
  */
 export const LicenseObligation = {
 	Attribution: "attribution",
@@ -56,7 +56,9 @@ const KNOWN_OBLIGATIONS: ReadonlyMap<string, readonly LicenseObligation[]> = new
 	["LicenseRef-USGov-Public-Domain", []],
 	// Licence Ouverte 2.0 (etalab), BAN's elected license.
 	["etalab-2.0", [LicenseObligation.Attribution]],
-	// 政府資料開放授權條款－第1版, the Taiwanese civil-affairs address registers behind Overture-TW. Attribution is the condition of the grant itself: the license voids without the 顯名聲明, so the per-agency list travels with the data.
+	// 政府資料開放授權條款－第1版, the Taiwanese civil-affairs address registers behind Overture-TW.
+	// Attribution is the condition of the grant itself: the license voids without the 顯名聲明,
+	// so the per-agency list travels with the data.
 	["OGDL-Taiwan-1.0", [LicenseObligation.Attribution]],
 	["MIT", [LicenseObligation.Attribution]],
 	["Apache-2.0", [LicenseObligation.Attribution]],

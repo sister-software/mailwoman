@@ -61,8 +61,9 @@ const NO_MATCH_BODY = { result: { addressMatches: [] } }
 /**
  * Await a call that must reject and hand back its {@linkcode ResourceError}.
  *
- * Fails loudly if it resolves — a `.catch(error => error)` inline would silently
- * turn "it did not throw" into an assertion against `undefined`.
+ * Fails loudly if it resolves.
+ * A `.catch(error => error)` inline would silently turn "it did not throw"
+ * into an assertion against `undefined`.
  */
 async function captureError(promise: Promise<unknown>): Promise<ResourceErrorShape> {
 	try {

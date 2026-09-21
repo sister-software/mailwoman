@@ -20,15 +20,15 @@ export interface PlanetaryPalette {
 	 * The body's own surface tone, under the relief.
 	 *
 	 * Named `space` for the layer it feeds, which paints the sphere under globe projection
-	 * rather than the area around it — the field around the globe is the page behind
-	 * a transparent canvas, and the app's stylesheet paints it.
+	 * rather than the area around it.
+	 * The field around the globe is the page behind a transparent canvas, and the app's stylesheet paints it.
 	 */
 	space: string
 	/**
 	 * Where a slope faces the light.
 	 *
-	 * With `shadow` and `accent` these are what make one body's relief differ from
-	 * another's. the tiles carry encoded elevation and no colour of their own.
+	 * With `shadow` and `accent` these are what make one body's relief differ from another's.
+	 * The tiles carry encoded elevation and no colour of their own.
 	 */
 	reliefHighlight: string
 	/**
@@ -82,8 +82,8 @@ const PLANETARY_NAMESPACE = "planetary"
  * The body's surface tone, under the relief.
  *
  * Under globe projection a background layer paints the sphere rather than the viewport,
- * so this is the ground the hillshade shades and not the field around the globe. the
- * app's stylesheet paints that behind a transparent canvas.
+ * so this is the ground the hillshade shades and not the field around the globe.
+ * The app's stylesheet paints that behind a transparent canvas.
  */
 export const PlanetarySpaceLayerID = LayerID(PLANETARY_NAMESPACE, "space")
 

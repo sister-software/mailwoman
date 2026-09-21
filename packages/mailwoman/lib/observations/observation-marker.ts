@@ -349,7 +349,7 @@ export function soilCapabilityMarker(
  *
  * The message also records the coverage limit, because this layer's silence is not a reassurance.
  * The Environment Agency publishes no coverage statement for ncerm, so an absent designation
- * says nothing — and the marker only ever fires on a present one, which is why the limit
+ * says nothing, and the marker only ever fires on a present one, which is why the limit
  * rides on the evidence rather than being implied by the marker's absence.
  *
  * The message reports what the authority'S mapping assigns at a location,

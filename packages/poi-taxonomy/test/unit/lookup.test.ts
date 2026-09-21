@@ -114,7 +114,8 @@ describe("resolveOvertureCategories", () => {
 	it("fans a mismatched seed id out over its Overture leaves", () => {
 		const supermarket = resolveOvertureCategories("supermarket")
 		expect(supermarket).toContain("grocery_store")
-		// The curated seed id itself is not a stored Overture leaf — it must not leak into the probe list.
+		// The curated seed id itself is not a stored Overture leaf.
+		// It must not leak into the probe list.
 		expect(supermarket).not.toContain("supermarket")
 
 		const trail = resolveOvertureCategories("trail")
@@ -162,7 +163,8 @@ describe("full Overture snapshot + curated overlay", () => {
 	})
 
 	it("carries brand-new Overture identity categories that the seed taxonomy never had", () => {
-		// `acupuncture` is a real Overture leaf with no curated overlay — it must resolve identity-style (#1206 fallback).
+		// `acupuncture` is a real Overture leaf with no curated overlay.
+		// It must resolve identity-style (#1206 fallback).
 		const acupuncture = getPOICategory("acupuncture")
 		expect(acupuncture?.source).toBe("overture")
 		expect(acupuncture?.hierarchy.at(-1)).toBe("acupuncture")
@@ -177,8 +179,8 @@ describe("full Overture snapshot + curated overlay", () => {
 		expect(resolveOvertureCategories("cafe")).toEqual(["cafe", "coffee_shop"])
 
 		// The Overture leaves those curated records absorb (`coffee_shop`, `grocery_store`, `hiking_trail`)
-		// are not emitted as standalone categories — otherwise their id-phrase would
-		// shadow the curated synonym in the index.
+		// are not emitted as standalone categories.
+		// Otherwise their id-phrase would shadow the curated synonym in the index.
 		expect(getPOICategory("coffee_shop")).toBeUndefined()
 		expect(getPOICategory("grocery_store")).toBeUndefined()
 		expect(getPOICategory("hiking_trail")).toBeUndefined()
@@ -220,7 +222,8 @@ describe("full Overture snapshot + curated overlay", () => {
 			["drugstore", "identity"],
 		])
 
-		// The `drugstore → pharmacy` row is scoped to en-US. elsewhere the phrase means the category it names.
+		// The `drugstore → pharmacy` row is scoped to en-US.
+		// Elsewhere the phrase means the category it names.
 		expect(lookupPOICategory("drugstore", "en-GB")[0]?.category.id).toBe("drugstore")
 		expect(lookupPOICategory("drugstore")[0]?.category.id).toBe("drugstore")
 

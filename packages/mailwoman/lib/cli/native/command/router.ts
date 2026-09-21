@@ -33,8 +33,8 @@ const commandURL = (parts: readonly string[], index = false): URL =>
 	new URL(`${parts.join("/")}${index ? "/index" : ""}.js`, COMMANDS_ROOT)
 
 /**
- * The command names one directory of the compiled tree offers — what a user types
- * rather than what the files are called.
+ * The command names one directory of the compiled tree offers.
+ * What a user types rather than what the files are called.
  *
  * A prefix directory contributes its children as `<directory>-<child>`
  * rather than itself, because that is the name they answer to.

@@ -11,7 +11,8 @@ import type { KnownFormat, KnownFormatHit, TokenClass } from "#types"
  *
  * Each entry is a regex that matches a token (or a small sequence of tokens joined by a single space)
  * and the format it represents.
- * Keep these patterns structural. place-name dictionaries belong elsewhere.
+ * Keep these patterns structural.
+ * Place-name dictionaries belong elsewhere.
  */
 interface FormatPattern {
 	format: KnownFormat
@@ -35,10 +36,11 @@ const PATTERNS: ReadonlyArray<FormatPattern> = [
 	// Unambiguous single-token patterns first.
 	{ format: "us_zip4", pattern: /^\d{5}-\d{4}$/, tokenSpan: 1, confidence: 0.95 },
 	{ format: "ca_postcode", pattern: /^[A-Z]\d[A-Z]\d[A-Z]\d$/i, tokenSpan: 1, confidence: 0.95 },
-	// The leading 〒 (U+3012 POSTAL MARK) is optional because it is how a Japanese postcode is ordinarily written, and
-	// the tokenizer keeps it attached to the digits. Anchoring without it read `〒150-0001 Tokyo, Shibuya` as carrying
-	// no known format at all while the same address written `Tokyo 150-0001` scored `jp_postcode` at 0.95 — the more
-	// explicitly Japanese spelling was the one the detector could not see.
+	// The leading 〒 (U+3012 POSTAL MARK) is optional because it is how a Japanese postcode
+	// is ordinarily written, and the tokenizer keeps it attached to the digits.
+	// Anchoring without it read `〒150-0001 Tokyo, Shibuya` as carrying no known format at all
+	// while the same address written `Tokyo 150-0001` scored `jp_postcode` at 0.95.
+	// The more explicitly Japanese spelling was the one the detector could not see.
 	{ format: "jp_postcode", pattern: /^〒?\d{3}-\d{4}$/, tokenSpan: 1, confidence: 0.95 },
 	// UK postcode is 2 tokens when split on space (e.g. "SW1A 1AA"), 1 token otherwise.
 	{ format: "uk_postcode", pattern: /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/i, tokenSpan: 1, confidence: 0.9 },
@@ -47,19 +49,23 @@ const PATTERNS: ReadonlyArray<FormatPattern> = [
 	// NL postcode: four digits followed by two letters.
 	{ format: "nl_postcode", pattern: /^\d{4} [A-Z]{2}$/i, tokenSpan: 2, confidence: 0.9 },
 	{ format: "nl_postcode", pattern: /^\d{4}[A-Z]{2}$/i, tokenSpan: 1, confidence: 0.9 },
-	// Ambiguous 5-digit (US/FR/DE). Tag as us_zip with reduced confidence. caller disambiguates by
-	// locale prior. Multiple format hits on the same span are possible.
+	// Ambiguous 5-digit (US/FR/DE).
+	// Tag as us_zip with reduced confidence.
+	// Caller disambiguates by locale prior.
+	// Multiple format hits on the same span are possible.
 	{ format: "us_zip", pattern: /^\d{5}$/, tokenSpan: 1, confidence: 0.6 },
 	{ format: "fr_postcode", pattern: /^\d{5}$/, tokenSpan: 1, confidence: 0.6 },
 	{ format: "de_postcode", pattern: /^\d{5}$/, tokenSpan: 1, confidence: 0.6 },
-	// Spaced NNN NN (CZ/SK/SE/GR shared space — #1589's `100 00`). The same multi-hit discipline as
-	// the 5-digit trio: every country whose system writes this shape surfaces, and the caller
-	// disambiguates. Two tokens only — the unspaced five-digit form already rides the trio above.
+	// Spaced NNN NN (CZ/SK/SE/GR shared space — #1589's `100 00`).
+	// The same multi-hit discipline as the 5-digit trio: every country whose system
+	// writes this shape surfaces, and the caller disambiguates.
+	// Two tokens only — the unspaced five-digit form already rides the trio above.
 	{ format: "cz_postcode", pattern: /^\d{3} \d{2}$/, tokenSpan: 2, confidence: 0.6 },
 	{ format: "sk_postcode", pattern: /^\d{3} \d{2}$/, tokenSpan: 2, confidence: 0.6 },
 	{ format: "se_postcode", pattern: /^\d{3} \d{2}$/, tokenSpan: 2, confidence: 0.6 },
 	{ format: "gr_postcode", pattern: /^\d{3} \d{2}$/, tokenSpan: 2, confidence: 0.6 },
-	// PO Box variants (US + FR). The pattern matches across 2-3 tokens — handled separately.
+	// PO Box variants (US + FR).
+	// The pattern matches across 2-3 tokens — handled separately.
 ]
 
 const PO_BOX_LEADERS = new Set(["po", "p.o.", "p.o", "box", "bp", "b.p.", "b.p", "casilla", "apartado"])
@@ -70,8 +76,10 @@ const PO_BOX_LEADERS = new Set(["po", "p.o.", "p.o", "box", "bp", "b.p.", "b.p",
  * Every entry in {@link patterns} is one, and the names follow one convention — `us_zip`,
  * `us_zip4`, or `<cc>_postcode` — which is what this reads, so a format added to the
  * table is a postcode to every consumer the moment it is named that way.
- * The convention rather than a set, because `@mailwoman/core`'s runtime pipeline cannot depend on
- * this package and reads the same names. the test over {@link patterns} pins every table entry to it.
+ * The convention rather than a set, because `@mailwoman/core`'s runtime pipeline
+ * cannot depend on this package and reads the same names.
+ *
+ * The test over {@link patterns} pins every table entry to it.
  *
  * `us_zip4` is the trap a naive `endsWith("_zip")` would miss.
  */
@@ -120,8 +128,7 @@ export function detectKnownFormats(text: string, tokens: ReadonlyArray<TokenClas
 		}
 	}
 
-	// PO Box detection — handled separately because the leader can be 1-3 tokens
-	// and the number can be alphanumeric.
+	// PO Box detection — handled separately because the leader can be 1-3 tokens and the number can be alphanumeric.
 	const poHit = detectPoBox(text, tokens)
 
 	if (poHit) {

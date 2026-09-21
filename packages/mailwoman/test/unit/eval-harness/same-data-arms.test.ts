@@ -64,7 +64,7 @@ function tree(raw: string, value: string): AddressTree {
  * and the two bare-toponym races that check whether the token names a country or a region.
  *
  * A fixture holding only the first starves the walk, which is the superset requirement
- * in miniature — and the recorder meets it by recording under every arm's options.
+ * in miniature, and the recorder meets it by recording under every arm's options.
  */
 function lookupsFor(text: string, candidates: SameDataCandidate[]) {
 	const queries = [

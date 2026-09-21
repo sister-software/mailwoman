@@ -45,8 +45,9 @@ const SearchPayloadSchema = z.object({
 	id: z.string().min(1),
 	name: z.string().min(1),
 	featureType: z.string().min(1),
-	// Optional because the gazetteer leaves them unset for some features. an artifact built
-	// before they were written still loads, and the camera reads a missing diameter as unknown.
+	// Optional because the gazetteer leaves them unset for some features.
+	// An artifact built before they were written still loads, and the camera
+	// reads a missing diameter as unknown.
 	featureTypeCode: z.string().min(1).optional(),
 	diameterKm: z.number().optional(),
 	centerLon: z.number(),
@@ -56,14 +57,18 @@ const SearchPayloadSchema = z.object({
 const DEFAULT_LIMIT = 8
 
 /**
- * The BFS collects more than it answers so the rank-descending sort has real choices. a name
- * and its alias both match a shared prefix and collapse to one hit, which is why the surplus is needed.
+ * The BFS collects more than it answers so the rank-descending sort has real choices.
+ *
+ * A name and its alias both match a shared prefix and collapse to one hit,
+ * which is why the surplus is needed.
  */
 const CANDIDATE_MULTIPLIER = 3
 
 /**
- * How many tokens past the typed prefix a suggestion may run. A nomenclature name is at most a few words (`Marco Polo
- * P`, `Mare Tranquillitatis`), so a first-token prefix must reach the whole name.
+ * How many tokens past the typed prefix a suggestion may run.
+ *
+ * A nomenclature name is at most a few words (`Marco Polo P`, `Mare Tranquillitatis`),
+ * so a first-token prefix must reach the whole name.
  */
 const MAX_EXPANSION_DEPTH = 6
 
@@ -123,7 +128,8 @@ export interface LoadSearchIndexOptions {
 	/**
 	 * How the artifact's bytes are read.
 	 *
-	 * `fetch` by default. a test reads a fixture from disk.
+	 * `fetch` by default.
+	 * A test reads a fixture from disk.
 	 */
 	readBytes?: (url: string) => Promise<Uint8Array>
 }
@@ -131,7 +137,7 @@ export interface LoadSearchIndexOptions {
 /**
  * Fetch the artifact and open it.
  *
- * Throws on a failed fetch or bytes that are not a sealed ancestrie, so a wrong version
+ * @throws on a failed fetch or bytes that are not a sealed ancestrie, so a wrong version
  * pin fails at startup rather than answering nothing to every query.
  */
 export async function loadSearchIndex(url: string, options: LoadSearchIndexOptions = {}): Promise<PlanetarySearch> {

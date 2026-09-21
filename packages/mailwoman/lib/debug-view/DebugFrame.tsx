@@ -105,7 +105,7 @@ export interface DebugFrameProps {
 	/**
 	 * First visible line of the output pane's list.
 	 *
-	 * The pane owns the window so the caller's `data` identity stays stable across a scroll —
+	 * The pane owns the window so the caller's `data` identity stays stable across a scroll,
 	 * which is what keeps the map frame from re-rendering on an arrow key.
 	 */
 	scrollOffset?: number

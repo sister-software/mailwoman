@@ -46,7 +46,7 @@ export interface AblationPlace {
  * Where a rung's radius came from.
  *
  * Recorded per rung so the artifact can be re-graded against different numbers without
- * re-running the pipeline — and so a reader can tell a measured extent from a placetype prior.
+ * re-running the pipeline, and so a reader can tell a measured extent from a placetype prior.
  */
 export type RungRadiusSource = "row-tolerance" | "bbox" | "placetype-floor"
 
@@ -125,7 +125,7 @@ export type ExpectedRung =
  * It exists because the alternative is a confident wrong expectation.
  * `Daniel's Head Beach Park, Scotts Hill` survives a country deletion: `Scotts Hill`
  * alone is a 3-way tie whose top-ranked place is in Austria, so the name cascade would
- * demand abstention — and the pipeline correctly answers Bermuda, off the venue.
+ * demand abstention, and the pipeline correctly answers Bermuda, off the venue.
  *
  * Declining to constrain that row is honest.
  * Demanding abstention would have scored a correct answer as overconfident.
@@ -244,7 +244,7 @@ const PLACETYPE_CONTAINMENT_DEPTH: Readonly<Record<string, number>> = {
 	microhood: 11,
 	// finer than any admin grain on purpose.
 	// A postcode is a point-grade pin, and `matchRung` refuses to match a pin against a rung
-	// finer than itself — with `postalcode` at the unknown-placetype 0, a surviving postcode
+	// finer than itself, with `postalcode` at the unknown-placetype 0, a surviving postcode
 	// pinned nothing and every postcode-containing variant read as a homonym takeover.
 	// Caught by the "holds the rooftop when a postcode and the street evidence both
 	// survive" test, which is the case the whole layer is about.
@@ -311,12 +311,14 @@ export function rungRadiusKm(place: AblationPlace): { radiusKM: number; radiusSo
  *
  * Two rules warrant their keep here:
  *
- * - **Radii are made monotonic going up.** A locality with a real 30 km bbox inside a county whose bbox is degenerate
- *   (floor 75 km) is fine, but the reverse happens too. An ancestor whose recorded extent is tighter than its child's,
- *   which would make a correct coarsening fail at the coarser rung and pass at the finer one. The running max removes
- *   that, and the pre-max value stays visible via `radiusSource`.
- * - **A place with no usable radius is dropped, loudly.** It becomes an {@linkcode AblationLadderGap}, so a two-rung
- *   ladder is attributable to the gazetteer rather than read as "this address has no ancestry".
+ * - **Radii are made monotonic going up.** A locality with a real 30 km bbox inside a
+ *   county whose bbox is degenerate (floor 75 km) is fine, but the reverse happens too.
+ *   An ancestor whose recorded extent is tighter than its child's, which would make a
+ *   correct coarsening fail at the coarser rung and pass at the finer one.
+ *   The running max removes that, and the pre-max value stays visible via `radiusSource`.
+ * - **A place with no usable radius is dropped, loudly.** It becomes an
+ *   {@linkcode AblationLadderGap}, so a two-rung ladder is attributable to the gazetteer
+ *   rather than read as "this address has no ancestry".
  */
 export function ablationLadderFromChain(
 	anchor: { lat: number; lon: number },
@@ -473,8 +475,7 @@ export function deriveExpectedRung(
 	ladder: AblationLadder,
 	gz: AblationGazetteerProbe,
 	/**
-	 * Words left in the ablated input that no surviving component accounts for ({@linkcode residualWords}). Untyped
-	 * evidence: it can only stop an abstain expectation, never deepen a rung one.
+	 * Words left in the ablated input that no surviving component accounts for ({@linkcode residualWords}). Untyped evidence: it can only stop an abstain expectation, never deepen a rung one.
 	 */
 	residual: readonly string[] = []
 ): ExpectedRung {
@@ -537,7 +538,8 @@ export function deriveExpectedRung(
 		remaining["street"]?.trim(),
 		regionName && !regionPlace ? `region "${regionName}" (unresolved)` : undefined,
 		countryName && !countryPlace ? `country "${countryName}" (unresolved)` : undefined,
-		// Untyped words still in the input. Third kind, same consequence — see `residualWords`.
+		// Untyped words still in the input.
+		// Third kind, same consequence — see `residualWords`.
 		residual.length ? `${residual.length} untyped input word(s) (${residual.slice(0, 3).join(", ")})` : undefined,
 	].filter((entry) => entry != null && entry.length)
 
@@ -839,8 +841,8 @@ const RESIDUAL_MIN_WORD_LENGTH = 3
  * The corpus types what a case chose to assert, and most rows assert two
  * or three tags out of an address that carries six.
  * `fr-chevaleret-rooftop` asserts `{postcode: "75013"}` and nothing else,
- * so deleting its postcode leaves the model with an empty component set —
- * and an empty component set reads as "nothing names a place", i.e. abstain.
+ * so deleting its postcode leaves the model with an empty component set, and an empty
+ * component set reads as "nothing names a place", i.e. abstain.
  *
  * The input at that point is `181 Rue du Chevaleret, Paris`, the pipeline resolves
  * the rooftop, and the model calls that overconfident.
@@ -908,7 +910,7 @@ export interface ExpectedRungDescription {
  * comfortably inside it and no coherence check could catch it.
  *
  * Containment removes the class: a chain derived from the coordinate cannot disagree with the coordinate.
- * It also removes the last circularity — with an asserted coordinate,
+ * It also removes the last circularity, with an asserted coordinate,
  * nothing in the ladder comes from the parser at all.
  *
  * `null` (with the reason) whenever the ladder would still be a fiction: no coordinate
@@ -923,8 +925,7 @@ export function buildCaseLadder(
 	 */
 	expected?: { lat: number | null; lon: number | null },
 	/**
-	 * The row's stated country (the corpus's `country` column, ISO-3166 alpha-2) — corpus metadata, never a pipeline
-	 * output, and the only independent check on the containment walk available here.
+	 * The row's stated country (the corpus's `country` column, ISO-3166 alpha-2) — corpus metadata, never a pipeline output, and the only independent check on the containment walk available here.
 	 */
 	statedCountry?: string
 ): { ladder: AblationLadder; anchorSource: "corpus-expected" | "pipeline-anchor" } | { ladder: null; reason: string } {
@@ -1002,8 +1003,9 @@ export function expectFor(input: {
 	pin: string | undefined
 	gz: AblationGazetteerProbe
 	/**
-	 * The variant's input text — read only to find words no surviving component
-	 * accounts for ({@linkcode residualWords}).
+	 * The variant's input text.
+	 *
+	 * Read only to find words no surviving component accounts for ({@linkcode residualWords}).
 	 *
 	 * Not the variant's output.
 	 * The expectation stays non-circular.

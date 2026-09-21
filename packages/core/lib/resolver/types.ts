@@ -45,8 +45,8 @@ export type {
 /**
  * One candidate place returned by a resolver.
  *
- * Mirrors the shape used by `@mailwoman/core/resolver-wof-sqlite`'s `PlaceCandidate` —
- * kept structurally compatible so a callsite holding a `PlaceCandidate` can be passed
+ * Mirrors the shape used by `@mailwoman/core/resolver-wof-sqlite`'s `PlaceCandidate`.
+ * Kept structurally compatible so a callsite holding a `PlaceCandidate` can be passed
  * where a `ResolvedPlace` is expected.
  */
 export interface ResolvedPlace {
@@ -198,8 +198,8 @@ export interface ResolvedPlace {
 	 * TRI-state, and the absence is required (meaning-of-zero): `true` = the backend's
 	 * ancestors sidecar vouches that this candidate sits under the query's parsed region
 	 * qualifier; `false` = the backend evaluated containment and could not vouch for it;
-	 * `undefined` = the question was never asked — the setting is off, the query carried
-	 * no qualifier, or the backend/artifact cannot answer (no sidecar).
+	 * `undefined` = the question was never asked.
+	 * The setting is off, the query carried no qualifier, or the backend/artifact cannot answer (no sidecar).
 	 *
 	 * Set only by backends implementing `FindPlaceQuery.regionQualifier`; consumed by the resolver
 	 * walk's `adminContainmentRerank` partition, which must never read `undefined` as "not contained".
@@ -349,7 +349,7 @@ export interface ResolverBackend {
 /**
  * An optional {@link ResolverBackend} method the loaded backend does not implement, and what that costs.
  *
- * Optional methods let a backend be valid while omitting a capability — but the options they
+ * Optional methods let a backend be valid while omitting a capability, but the options they
  * serve can still default to on, in which case the feature reports success and does nothing.
  * This type carries the absence as data so a caller can read it instead of
  * inferring it from a result that looks complete.
@@ -413,10 +413,11 @@ export interface CoincidentLocality extends ResolvedPlace {
  * Which reading of "resolved weakly" lifts the #685 span-rescore brake,
  * or `false` to take a `placeID` at face value.
  *
- * - `score` — the pick carries `resolver_score: 0`, which the candidate backend writes when the gazetteer records no
- *   population for it.
- * - `containment` — `admin_containment` reads `no_contained_candidate`: the query named a qualifier, the probe ran, and
- *   no candidate sat inside it. `unavailable` is not this, because the backend could not answer.
+ * - `score` — the pick carries `resolver_score: 0`, which the candidate backend writes
+ *   when the gazetteer records no population for it.
+ * - `containment` — `admin_containment` reads `no_contained_candidate`: the query
+ *   named a qualifier, the probe ran, and no candidate sat inside it.
+ *   `unavailable` is not this, because the backend could not answer.
  * - `either` — either reading.
  *
  * The two are different claims about the same pick, so a rule has to say which it acts on.
@@ -694,7 +695,7 @@ export interface ResolveOpts {
 	 * "after the exact-point fall-through" semantics.
 	 *
 	 * On hit, stamps the estimate onto the street node's metadata under a distinct key
-	 * (`interpolated_point`, `resolution_tier: "interpolated"`, `uncertainty_m`) — never `address_point`,
+	 * (`interpolated_point`, `resolution_tier: "interpolated"`, `uncertainty_m`), never `address_point`,
 	 * so a consumer reading the exact key never gets an estimate mislabeled as exact.
 	 * Opt-in.
 	 * Absent = byte-stable.
@@ -732,7 +733,7 @@ export interface ResolveOpts {
 	 * nor the interpolation tier can serve.
 	 *
 	 * On a hit, injects/stamps a resolved `street` node carrying the street's centroid under a
-	 * distinct metadata key (`street_centroid`, `resolution_tier: "street"`, `uncertainty_m`) —
+	 * distinct metadata key (`street_centroid`, `resolution_tier: "street"`, `uncertainty_m`),
 	 * never `address_point`/`interpolated_point`, so a consumer reading the exact keys
 	 * never gets a coarse centroid mislabeled as a rooftop.
 	 * The thoroughfare + commune are recovered raw-text-first
@@ -814,7 +815,7 @@ export interface ResolveOpts {
 	 * What refuses the default is a shape none of those carries in its counted rows:
 	 * a remainder that is another place name.
 	 * `Lagoa da Conceição, Florianópolis` and `Morro Dois Irmãos, Rio de Janeiro` recover
-	 * the city from the last segment, and the remainder is a neighbourhood or a venue —
+	 * the city from the last segment, and the remainder is a neighbourhood or a venue,
 	 * not a qualifier the rule can admit, and not a word of the recovered name either.
 	 *
 	 * Both lose their locality with this on.
@@ -1240,7 +1241,7 @@ export interface ResolveCandidateTrace {
 }
 
 /**
- * One `ResolveNodeTrace` per backend lookup the walk performed (#1721) — and one per
+ * One `ResolveNodeTrace` per backend lookup the walk performed (#1721), and one per
  * post-walk recovery that answers off the walk (`span_rescore`, `postal_compound_recovery`),
  * so no resolved coordinate is off the record.
  *
@@ -1304,7 +1305,7 @@ export interface ResolveNodeTrace {
 export interface Resolver {
 	resolveTree(tree: AddressTree, opts?: ResolveOpts): Promise<AddressTree>
 	/**
-	 * Direct gazetteer probe, passed through from the {@link ResolverBackend} —
+	 * Direct gazetteer probe, passed through from the {@link ResolverBackend},
 	 * for pipeline-level consumers that need one lookup outside a tree walk
 	 * (the #1738 dominant-bearer guard on the coarse placer's hard-country promotion is the first).
 	 *

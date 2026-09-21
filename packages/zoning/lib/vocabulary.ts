@@ -60,7 +60,7 @@ export const GZT_SERVICE_URL = `https://services.arcgis.com/${GZT_ORG_ID}/arcgis
 export const GZT_ITEM_URL = `https://www.arcgis.com/home/item.html?id=${GZT_ITEM_ID}`
 
 /**
- * The Department's own zoning map viewer, which is where its coverage detail is published —
+ * The Department's own zoning map viewer, which is where its coverage detail is published,
  * and the reason `zoning_mapped_extent` ships empty (see {@link GZT_COVERAGE_LIMIT}).
  */
 export const GZT_MAP_VIEWER_URL = "https://www.myplan.ie/zoning-map-viewer/"
@@ -165,7 +165,7 @@ export function localSchemeFor(authorityCode: string): string {
  */
 export interface ZoningTermDefinition {
 	/**
-	 * The code as the publisher spells it — never re-spelled, never normalized.
+	 * The code as the publisher spells it, never re-spelled, never normalized.
 	 */
 	code: string
 	label: string

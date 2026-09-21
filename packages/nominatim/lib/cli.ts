@@ -67,8 +67,9 @@ const PLACETYPE_TO_KEY: Record<string, keyof NominatimAddressDetails> = {
 }
 
 /**
- * A real address fits comfortably. anything longer is malformed input
- * (and would exceed the model's input window).
+ * A real address fits comfortably.
+ *
+ * Anything longer is malformed input (and would exceed the model's input window).
  *
  * Cap defensively so a giant query returns no results instead of faulting.
  */
@@ -116,7 +117,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	// so forcing "US" resolved every non-US query to its US namesake (Berlin→Berlin NH).
 	// We let the placer decide instead.
 	// This is the fallback used only to annotate the flag/currency/calling-code
-	// when the resolved hierarchy omits the country tag — which on US-centric data
+	// when the resolved hierarchy omits the country tag, which on US-centric data
 	// (no candidate DB) happens for US results, where "US" is the right guess.
 	// Non-US results carry the country tag, so the fallback never mislabels them.
 	const annotationCountryFallback = candidateDB ? undefined : "US"
@@ -144,7 +145,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 
 	// Read once, at boot, from the artifacts themselves (#997).
 	// The handles above are held for the life of the process, so this describes what the
-	// endpoint is serving from for as long as it serves — and every artifact appears,
+	// endpoint is serving from for as long as it serves, and every artifact appears,
 	// including one carrying no manifest.
 	// It says so rather than being left out.
 	const status = nominatimStatus(await gazetteerFreshness(gazetteer))
@@ -155,13 +156,15 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				params.q ?? joinNonEmpty(params.street, params.city, params.state, params.postalcode, params.country)
 			)?.trim()
 
-			// Empty/whitespace → no query. absurdly long → not an address (and would blow the model's input).
+			// Empty/whitespace → no query.
+			// Absurdly long → not an address (and would blow the model's input).
 			if (!query || query.length > MAX_QUERY_LEN) return []
 			// A caller-supplied `countrycodes` is an explicit hard restriction (Nominatim semantics):
 			// honor it as the country constraint, even to the point of no result.
 			// It doubles as the manual override for the #822 placer frontier —
 			// `countrycodes=au` lands Sydney in Australia.
-			// One country is the common (geopy) case. for a list we apply the first.
+			// One country is the common (geopy) case.
+			// For a list we apply the first.
 			const userCountry = params.countrycodes?.[0]?.toUpperCase()
 
 			const result = await geocodeAddress(query, {

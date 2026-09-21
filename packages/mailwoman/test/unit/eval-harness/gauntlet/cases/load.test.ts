@@ -158,7 +158,7 @@ const CORPUS_SIZE = 1029
  * Moved again by the bare-street-name retry guard: `us-street-name-ocean-parkway-south`
  * and `fr-street-name-rue-du-faubourg-saint-honore` flip improvement_target → pass once a
  * parse that read its whole input as a street name stops earning an alternate-register retry.
- * Two status flips and no new rows, so CORPUS_SIZE and the board id both hold —
+ * Two status flips and no new rows, so CORPUS_SIZE and the board id both hold,
  * which is the content-addressing working as intended.
  *
  * Moved 2026-08-18 — by the 11-row `gloss_key` board (#1730): places primarily named by a

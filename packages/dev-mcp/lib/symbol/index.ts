@@ -93,7 +93,7 @@ const RIPGREP_NO_MATCH = 1
 const OUTPUT_LINE_PATTERN = /^([^\n:]+):(\d+):(.*)$/gm
 
 /**
- * A name that is not a bare identifier cannot be a declaration name, so dropping it costs nothing —
+ * A name that is not a bare identifier cannot be a declaration name, so dropping it costs nothing,
  * and it means the alternation below is built only from `\w+`, which needs no regex escaping.
  */
 function isIdentifier(name: string): boolean {
@@ -295,7 +295,9 @@ function runRipgrep(
 		"--no-heading",
 		"--color",
 		"never",
-		// Not `--type ts`: ripgrep's `ts` type covers `*.tsx` as well, and a React component is a different reuse question with a different answer. Inclusion first, exclusions after — a later glob wins.
+		// Not `--type ts`: ripgrep's `ts` type covers `*.tsx` as well, and a React component
+		// is a different reuse question with a different answer.
+		// Inclusion first, exclusions after — a later glob wins.
 		"--glob",
 		"*.ts",
 		"--glob",

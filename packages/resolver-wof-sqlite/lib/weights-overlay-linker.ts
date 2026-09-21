@@ -300,7 +300,7 @@ export interface PairIndexCalibration {
  * Covers the format (schemaVersion) and every calibrated magnitude. source-md5 freshness stays with the
  * caller, because each base linker passes a different set of sources and only it knows what they are.
  *
- * One place so a magnitude added to the header cannot be checked by some linkers and not others —
+ * One place so a magnitude added to the header cannot be checked by some linkers and not others,
  * which is exactly how three of the four base linkers ended up unable to notice a schema bump.
  */
 export function pairIndexStaleReason(

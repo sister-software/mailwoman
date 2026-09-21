@@ -36,8 +36,8 @@ export type Section = Span
  *
  * - `rule`: emitted by a legacy rule classifier through the adapter.
  * - `neural`: emitted by an ONNX-backed sequence classifier.
- * - `merged`: synthetic source for a merger that fused proposals from multiple classifiers (rare. Mostly for telemetry on
- *   `merged` ids).
+ * - `merged`: synthetic source for a merger that fused proposals from multiple
+ *   classifiers (rare. Mostly for telemetry on `merged` ids).
  */
 export type ClassificationProposalSource = "rule" | "neural" | "merged"
 

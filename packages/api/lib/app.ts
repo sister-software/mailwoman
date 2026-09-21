@@ -61,15 +61,15 @@ export interface MailwomanAPIOptions {
 	 * The engine stamp to carry on every response: `engine` in each `/v1` body
 	 * and the `Server` + `Link: rel="license"` headers everywhere.
 	 *
-	 * Absent when an embedding application builds the app without the `mailwoman`
-	 * package. the `mailwoman serve` command always passes one.
+	 * Absent when an embedding application builds the app without the `mailwoman` package.
+	 * The `mailwoman serve` command always passes one.
 	 */
 	engine?: EngineStamp
 }
 
 /**
- * Short, single-line summary of a zod validation failure for the envelope's `detail`
- * field — not the full `ZodError`, which is multi-line and carries internal
+ * Short, single-line summary of a zod validation failure for the envelope's
+ * `detail` field, not the full `ZodError`, which is multi-line and carries internal
  * path/code detail not meant for a wire response.
  */
 function summarizeValidationError(error: { issues: Array<{ path: PropertyKey[]; message: string }> }): string {
@@ -112,8 +112,8 @@ export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = Geoco
 ): OpenAPIHono {
 	const app = new OpenAPIHono({
 		// This surface is ours (no vendor interface to preserve): every declared body/query
-		// schema is validator-enforced, and a failure maps through the shared api-kit
-		// envelope — never the raw zod `{success, error}` shape.
+		// schema is validator-enforced, and a failure maps through the shared api-kit envelope,
+		// never the raw zod `{success, error}` shape.
 		// Individual routes (routes.ts) override this per-call to answer their own
 		// friendly business message (e.g. "address is required"); this is the fallback
 		// for the rest (currently just `/v1/format`).
@@ -138,8 +138,8 @@ export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = Geoco
 	}
 
 	// Safety net: an engine fault answers the native envelope, never a crash.
-	// `detail` carries the raw message — this surface is ours to design,
-	// so (unlike the vendor-constrained drop-in envelopes) we can be helpful.
+	// `detail` carries the raw message.
+	// This surface is ours to design, so (unlike the vendor-constrained drop-in envelopes) we can be helpful.
 	app.onError((error, c) => {
 		// A malformed request body is a client-side syntax error rather than a server fault —
 		// Hono's zod-openapi validator throws before a route's own hook ever sees the body,

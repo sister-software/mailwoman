@@ -92,7 +92,7 @@ const HOUSE_NUMBERS = [
 const ALNUM_SUFFIXES = ["bis", "ter", "A", "B"]
 
 // Recipe-fidelity: this accent-stripping fold is the surface key every committed
-// fr-fragment recipe output and the fragment board's reserved list were built with —
+// fr-fragment recipe output and the fragment board's reserved list were built with,
 // not the diacritic-keeping `foldNOSurface` the Norwegian recipes share.
 const norm = (value: string): string =>
 	value
@@ -166,8 +166,10 @@ const DATEISH =
 const ALNUM_HOUSE_NUMBER_SHARE = 0.25
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour
- * it exists to exercise, and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder.
+ *
+ * See the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
  */
 export const frFragmentRecipe: CorpusRecipe = {
 	name: "fr-fragment",

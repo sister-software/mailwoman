@@ -3,8 +3,9 @@ import type { SidebarsConfig } from "@docusaurus/plugin-content-docs"
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 //
 // One sidebar per top-level door.
-// The docs sub-header (src/components/DocsSubHeader) is the door switcher, so a sidebar never wraps
-// its contents in a collapsible section category — every doc sits at the top level of its own sidebar.
+// The docs sub-header (src/components/DocsSubHeader) is the door switcher,
+// so a sidebar never wraps its contents in a collapsible section category.
+// Every doc sits at the top level of its own sidebar.
 // The ids here are the authority the switcher reads
 // (src/components/DocsSubHeader/sections.ts must list the same ids, in display order).
 // Each doc belongs to exactly one sidebar, so Docusaurus picks the right one automatically.
@@ -27,8 +28,11 @@ import type { SidebarsConfig } from "@docusaurus/plugin-content-docs"
 const sidebars: SidebarsConfig = {
 	// Evaluation order, and every page here routes rather than instructs: a reader arrives
 	// deciding whether Mailwoman fits rather than building against it.
-	// Overview defines the thing. capabilities answers what it does. deployment options answers where it
-	// runs. drop-in replacements answers what it can stand in for. data products answers what you carry.
+	// Overview defines the thing.
+	// Capabilities answers what it does.
+	// Deployment options answers where it runs.
+	// Drop-in replacements answers what it can stand in for.
+	// Data products answers what you carry.
 	// Each page hands off into the `developers` door, so this sidebar is the shallow end
 	// rather than a parallel set of instructions.
 	//
@@ -49,8 +53,9 @@ const sidebars: SidebarsConfig = {
 	//
 	// Order is by how early the question lands in an evaluation: cost is the question
 	// that starts one, storage rights and residency are the two that stop one,
-	// and the last two are workload-shaped rather than commercial — they are read by someone
-	// who has already decided the commercial part and is now checking a specific job.
+	// and the last two are workload-shaped rather than commercial.
+	// They are read by someone who has already decided the commercial part
+	// and is now checking a specific job.
 	//
 	// Flat, no lead category, for the same reason as `product`: the switcher tab resolves
 	// through `useLayoutDocsSidebar("solutions").link` to the first entry.
@@ -195,14 +200,15 @@ const sidebars: SidebarsConfig = {
 					label: "Geocoding",
 					// Reading order, and it builds the same way the postal shelf does.
 					// The first page defines the job (forward and reverse, place against coordinate, precision tiers);
-					// the second is the shelf's argument — the two ways the job is built,
-					// and what each costs to run. the third is the place database both designs sit on.
+					// the second is the shelf's argument.
+					// The two ways the job is built, and what each costs to run.
+					// The third is the place database both designs sit on.
 					// Those three are the implementation.
 					// The last three are the judgment calls that follow from it: how to decide
 					// whether a coordinate is good enough, how to choose among the shapes on the market,
 					// and why the parsing half resists rules in the first place.
-					// `why-addresses-are-hard` sits last for the same reason `falsehoods` does next door —
-					// it is the distillation, and it reads better once the implementation is familiar.
+					// `why-addresses-are-hard` sits last for the same reason `falsehoods` does next door.
+					// It is the distillation, and it reads better once the implementation is familiar.
 					items: [
 						"developers/knowledge-base/geocoding/what-geocoding-is",
 						"developers/knowledge-base/geocoding/the-two-architectures",
@@ -216,14 +222,15 @@ const sidebars: SidebarsConfig = {
 					type: "category",
 					label: "Address intelligence",
 					// Reading order, and it follows one parse from end to end.
-					// The first page is the whole chain on one messy input. the
-					// next three take a stage each in the order the parse runs them
+					// The first page is the whole chain on one messy input.
+					// The next three take a stage each in the order the parse runs them
 					// (pieces and labels, the gazetteer prior on the scores, the decode that picks a reading).
 					// Calibration comes fifth because it is about the number the first four produce,
 					// and training sixth because it explains where all of it was learned.
 					// `what-the-model-cannot-do` sits last for the same reason `falsehoods`
-					// and `why-addresses-are-hard` do on the shelves above — it is the distillation,
-					// and its limits read as limits rather than as a list once the implementation is familiar.
+					// and `why-addresses-are-hard` do on the shelves above.
+					// It is the distillation, and its limits read as limits rather than as
+					// a list once the implementation is familiar.
 					items: [
 						"developers/knowledge-base/address-intelligence/how-a-model-reads-an-address",
 						"developers/knowledge-base/address-intelligence/tokens-and-labels",
@@ -241,8 +248,9 @@ const sidebars: SidebarsConfig = {
 	],
 	about: ["about/mission", "about/security-and-compliance", "about/contact", "pricing"],
 	// The evidence door.
-	// Benchmarks lead because they are the door's claim — the pages carry numbers, and every
-	// number's script, inputs and result file are published beside it under `static/benchmarks/`.
+	// Benchmarks lead because they are the door's claim.
+	// The pages carry numbers, and every number's script, inputs and result file are
+	// published beside it under `static/benchmarks/`.
 	// Compare follows because a reader who has read a measurement is better equipped
 	// to read a capability comparison than the other way round.
 	//
@@ -260,8 +268,9 @@ const sidebars: SidebarsConfig = {
 			label: "Benchmarks",
 			// Reading order: the door's front page, then the two panels in the order
 			// they were run, then the reading guide.
-			// The guide sits last on purpose — it is written against the two panels above it and illustrates
-			// every trap with one of their numbers, so it lands better once the measurements are familiar.
+			// The guide sits last on purpose.
+			// It is written against the two panels above it and illustrates every trap with one
+			// of their numbers, so it lands better once the measurements are familiar.
 			// It is reachable cold from either panel.
 			items: [
 				"resources/benchmarks/index",

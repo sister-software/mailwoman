@@ -59,14 +59,17 @@ export const PUNCTUATION_LAW = "punctuation-invariance"
 /**
  * The five punctuation transformations this law states, and the only five a committed row may use.
  *
- * - `comma-removed` — every separating comma deleted (`Portland, or` → `Portland or`). The headline register: a user who
- *   types an address as a phrase rather than as fields. The comma goes and the spacing stays, so the tokens keep their
- *   text and their order and only the field separator is gone.
- * - `period-removed` — every separating point deleted (`Neusser Str. 12` → `Neusser Str 12`). The abbreviation register,
- *   where one source writes `Str.` / `Jr.` / `Co.` and the next writes it bare.
- * - `terminal-period` — one full stop appended (`Portland, or` → `Portland, or.`). The sentence register, and the
- *   executable statement that Stage 1's trailing trim still takes the sentence punctuation a user appends.
- * - `apostrophe-typographic` — every `'` replaced by `’`: what a word processor does to a straight apostrophe.
+ * - `comma-removed` — every separating comma deleted (`Portland, or` → `Portland or`).
+ *   The headline register: a user who types an address as a phrase rather than as fields.
+ *   The comma goes and the spacing stays, so the tokens keep their text and their order
+ *   and only the field separator is gone.
+ * - `period-removed` — every separating point deleted (`Neusser Str. 12` → `Neusser Str 12`).
+ *   The abbreviation register, where one source writes `Str.` / `Jr.` / `Co.` and the next writes it bare.
+ * - `terminal-period` — one full stop appended (`Portland, or` → `Portland, or.`).
+ *   The sentence register, and the executable statement that Stage 1's trailing
+ *   trim still takes the sentence punctuation a user appends.
+ * - `apostrophe-typographic` — every `'` replaced by `’`: what a word processor
+ *   does to a straight apostrophe.
  * - `apostrophe-ascii` — every `’` replaced by `'`: what a plain keyboard and a CSV export produce instead.
  *
  * The apostrophe pair is two names rather than one because the two are different
@@ -233,16 +236,21 @@ export function classifyPunctuationTransformation(base: string, variant: string)
 /**
  * The declared reasons a punctuation transformation is not stateable over a given row.
  *
- * - `identity-transformation` — the transformation returns the text unchanged because the query holds nothing of the kind
- *   it acts on: no comma to drop, no straight apostrophe to curl, a query that already ends in a full stop. Such a row
- *   is the identity law wearing a punctuation label. It would hold whatever the pipeline does with punctuation.
- * - `mark-inside-token` — the query does carry the mark, and every occurrence sits inside a token (`comer parís.méxico`,
- *   `and more...,`). Removing it would rewrite the token's text and change what the query names, which is the opt-out
- *   this law's narrowness exists for. Reported apart from the identity reading because "this query has no point" and
- *   "this query's point is part of a name" are different absences.
- * - `text-echoing-comparator` — the removal takes a mark that the parser quotes back inside a component value, and the
- *   row is graded on a comparator that reads those values. The comparator would then report the transformation itself,
- *   which reads as a pipeline defect and is nothing of the kind.
+ * - `identity-transformation` — the transformation returns the text unchanged
+ *   because the query holds nothing of the kind it acts on: no comma to drop,
+ *   no straight apostrophe to curl, a query that already ends in a full stop.
+ *   Such a row is the identity law wearing a punctuation label.
+ *   It would hold whatever the pipeline does with punctuation.
+ * - `mark-inside-token` — the query does carry the mark, and every occurrence sits
+ *   inside a token (`comer parís.méxico`, `and more...,`).
+ *   Removing it would rewrite the token's text and change what the query names,
+ *   which is the opt-out this law's narrowness exists for.
+ *   Reported apart from the identity reading because "this query has no point"
+ *   and "this query's point is part of a name" are different absences.
+ * - `text-echoing-comparator` — the removal takes a mark that the parser quotes back inside
+ *   a component value, and the row is graded on a comparator that reads those values.
+ *   The comparator would then report the transformation itself, which reads as
+ *   a pipeline defect and is nothing of the kind.
  */
 export const PUNCTUATION_APPLICABILITY_RULES = [
 	"identity-transformation",
@@ -420,7 +428,7 @@ export function auditPunctuationSuite(fixtures: readonly ConformanceFixture[]): 
 /**
  * The transformation label a report line carries, e.g. `comma-removed`.
  *
- * `?` when the pair does not classify — which the audit refuses, so it can only
+ * `?` when the pair does not classify, which the audit refuses, so it can only
  * appear on a hand-built fixture that skipped the loader.
  */
 export function describePunctuationTransformation(fixture: ConformanceFixture): string {

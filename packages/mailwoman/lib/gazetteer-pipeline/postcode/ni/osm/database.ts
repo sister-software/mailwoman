@@ -377,10 +377,13 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
  * check learned the hard way that a tolerance derived from the failure it is meant to
  * catch catches nothing, so every check here is against a fixed number.
  *
- * 1. Every tagged element is either a point or an accounted drop. A parser that silently skips a shape fails here.
- * 2. Districts ≤ 80 and sectors ≤ 886, the national totals. Exceeding either means the validator is admitting codes that
- *    are not NI. The failure mode of loosening {@link NI_UNIT_POSTCODE} to make more rows pass.
- * 3. Every record has at least one attestation, so a zero can only mean "not in OSM", never "in OSM with no evidence".
+ * 1. Every tagged element is either a point or an accounted drop.
+ *    A parser that silently skips a shape fails here.
+ * 2. Districts ≤ 80 and sectors ≤ 886, the national totals.
+ *    Exceeding either means the validator is admitting codes that are not NI.
+ *    The failure mode of loosening {@link NI_UNIT_POSTCODE} to make more rows pass.
+ * 3. Every record has at least one attestation, so a zero can only mean "not in OSM",
+ *    never "in OSM with no evidence".
  */
 function reconcile(
 	stats: NIOSMParseStats,
@@ -461,7 +464,8 @@ async function writeDatabaseMeta<DB extends DatabaseMetaDatabase>(
 		["source_query_md5", input.queryMD5],
 		["source_response_md5", input.responseMD5],
 		["source_retrieved_at", input.retrievedAt],
-		// The data extract, which is the date that matters. `source_retrieved_at` only says when we asked.
+		// The data extract, which is the date that matters.
+		// `source_retrieved_at` only says when we asked.
 		["source_osm_timestamp", input.osmTimestamp],
 		["license", OSM_LICENSE],
 		["license_url", OSM_LICENSE_URL],

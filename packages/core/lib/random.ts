@@ -36,7 +36,7 @@
  *
  * The thunk exists because callers inject a `random` option and want a bare function;
  * `SeededRandom` below is the same generator behind the Python-shaped class surface.
- * Reach for whichever matches the call site — for one seed they produce identical streams.
+ * Reach for whichever matches the call site, for one seed they produce identical streams.
  */
 export function mulberry32(seed: number): () => number {
 	let a = seed >>> 0
@@ -119,7 +119,7 @@ const GLIBC_LCG_INCREMENT = 12_345
  * So this produces a different sequence from {@link makeGlibcLcgInt32} despite the identical constants.
  *
  * Measured over every seed from 1 to 2,000,000, the draw the two first disagree on is the 2nd
- * for 1,963,788 seeds, the 3rd for 35,967, the 4th for 242 and the 5th for 3 — never the 1st,
+ * for 1,963,788 seeds, the 3rd for 35,967, the 4th for 242 and the 5th for 3, never the 1st,
  * because a seed under 2⁵³/1103515245 = 8,162,279 keeps that first product exact.
  * Above it they part on the first draw, which is where this file's own caller sits:
  * the conformal seed mixes to 192,663,848.

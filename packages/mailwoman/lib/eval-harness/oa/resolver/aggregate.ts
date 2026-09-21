@@ -24,8 +24,8 @@ export interface ArmOutcome {
 /**
  * One arm's counters.
  *
- * `errs` is the raw per-row coordinate error list (km) the percentiles are taken over —
- * kept whole rather than streamed, because the report needs p50/p90/p99 from the same sample.
+ * `errs` is the raw per-row coordinate error list (km) the percentiles are taken over.
+ * Kept whole rather than streamed, because the report needs p50/p90/p99 from the same sample.
  */
 export interface Agg {
 	n: number

@@ -33,8 +33,8 @@ export interface NominatimAppOptions {
 	 * The engine stamp to carry on every response: `engine` on each jsonv2 result
 	 * and geojson collection, and the `Server` + `Link: rel="license"` headers everywhere.
 	 *
-	 * Absent when an embedding application builds the app without the `mailwoman`
-	 * package. the `nominatim` bin always passes one.
+	 * Absent when an embedding application builds the app without the `mailwoman` package.
+	 * The `nominatim` bin always passes one.
 	 */
 	engine?: EngineStamp
 }

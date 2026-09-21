@@ -108,7 +108,8 @@ test("/status omits data_updated when nothing is stamped, and still names the ar
 	expect(body.data_updated).toBeUndefined()
 	expect("data_updated" in body).toBe(false)
 
-	// The artifacts are still listed — an omitted entry cannot be told apart from one nobody opened.
+	// The artifacts are still listed.
+	// An omitted entry cannot be told apart from one nobody opened.
 	expect(body.mailwoman?.artifacts.map((artifact) => artifact.manifest)).toEqual(["absent", "absent"])
 	expect(body.mailwoman?.artifacts.map((artifact) => artifact.name)).toEqual(["gazetteer", "reverse-admin"])
 })

@@ -50,7 +50,7 @@ function Probe(): ReactElement {
 }
 
 // Ink resolves `interactive` from `is-in-ci` and `stdout.isTTY`, so a CI environment
-// variable makes it non-interactive even under a real pty — and a non-interactive
+// variable makes it non-interactive even under a real pty, and a non-interactive
 // Ink writes only the final frame at unmount.
 // The test reads the field's edit history out of the pty capture, so the frames have to be forced on.
 render(h(Probe), { interactive: true })

@@ -76,8 +76,9 @@ export interface PipelineOpts {
 	 * Threaded to `ClassifierOpts.normalizeCase`.
 	 * Detection-restricted
 	 *
-	 * - **Default-on** (#895 settled drift D2. The classifier applies it when unset) — byte-stable for mixed-case input
-	 *   either way. Pass `false` to restore the raw-case parse.
+	 * - **Default-on** (#895 settled drift D2. The classifier applies it when unset) —
+	 *   byte-stable for mixed-case input either way.
+	 *   Pass `false` to restore the raw-case parse.
 	 */
 	normalizeCase?: boolean
 	/**
@@ -101,7 +102,7 @@ export interface PipelineOpts {
 	 * (ambiguous DK↔no stay soft), the country is in the coverage `HARD_PLACE_COUNTRY_SAFELIST`
 	 * (or a {@link hardCountrySafelist} override), and no caller `hardCountry`/`defaultCountry`
 	 * is already set. **Default-on** in the shipped `createRuntimePipeline`/`geocodeAddress`
-	 * (#743, 2026-06-22) — but the safelist confines the hard filter to well-covered countries,
+	 * (#743, 2026-06-22), but the safelist confines the hard filter to well-covered countries,
 	 * so the low-coverage tail (FI/PL) keeps its recall on the soft path with no regression.
 	 * Pass `false` to force the pre-#194 soft-only behavior.
 	 */
@@ -233,39 +234,24 @@ export type QueryKind =
 	| "poi_query"
 	| "vague"
 	/**
-	 * ROAD_TO_V9 §4 — the query-intent vocabulary. Four kinds that describe what the user is asking FOR rather than what
-	 * their string is shaped like. They are ordinary members of this union (intent is vocabulary of the existing Stage
-	 * 2.5, never a new stage), and each one, when it fires, attaches a {@link QueryIntentMarker} to the result.
+	 * ROAD_TO_V9 §4 — the query-intent vocabulary. Four kinds that describe what the user is asking FOR rather than what their string is shaped like. They are ordinary members of this union (intent is vocabulary of the existing Stage 2.5, never a new stage), and each one, when it fires, attaches a {@link QueryIntentMarker} to the result.
 	 *
-	 * Two of the four are deliberately ranked below their structural incumbent and therefore surface in
-	 * {@link QueryKindResult.alternatives} rather than as the top kind — see the individual docstrings in
-	 * `@mailwoman/kind-classifier`'s `intent-rules.ts`. That is the D-rule discharge: the top kind is the only thing the
-	 * coordinator routes on (`deriveInputMode`, `canShortCircuit`, the POI branch), so leaving it untouched is what makes
-	 * the addition provably answer-neutral on the populations those incumbents already own.
+	 * Two of the four are deliberately ranked below their structural incumbent and therefore surface in {@link QueryKindResult.alternatives} rather than as the top kind. See the individual docstrings in `@mailwoman/kind-classifier`'s `intent-rules.ts`. That is the D-rule discharge: the top kind is the only thing the coordinator routes on (`deriveInputMode`, `canShortCircuit`, the POI branch), so leaving it untouched is what makes the addition provably answer-neutral on the populations those incumbents already own.
 	 */
 	/**
-	 * A single coherent place-name carrying no address grammar — no house number, no postcode, no street-type word. A
-	 * strict refinement of `locality_only` (which also admits an admin tail: `Paris, FR`), scored just below it so the
-	 * top kind never moves. Feeds the declared-ambiguity path: a bare toponym whose resolved candidates are not decisive
-	 * gets a `declared_ambiguity` marker at geocode time.
+	 * A single coherent place-name carrying no address grammar — no house number, no postcode, no street-type word. A strict refinement of `locality_only` (which also admits an admin tail: `Paris, FR`), scored just below it so the top kind never moves. Feeds the declared-ambiguity path: a bare toponym whose resolved candidates are not decisive gets a `declared_ambiguity` marker at geocode time.
 	 */
 	| "bare_toponym"
 	/**
-	 * Two coherent toponyms with no address grammar between them — `Paris London`. Classification plus a declared fork,
-	 * never a router (ROAD_TO_V9 §4.3): structure alone cannot separate a route pair from a comma-free locality+region
-	 * fragment (`Moscow Idaho`), so both interpretations are named in the marker and neither wins.
+	 * Two coherent toponyms with no address grammar between them — `Paris London`. Classification plus a declared fork, never a router (ROAD_TO_V9 §4.3): structure alone cannot separate a route pair from a comma-free locality+region fragment (`Moscow Idaho`), so both interpretations are named in the marker and neither wins.
 	 */
 	| "route_pair"
 	/**
-	 * Preposition/deictic locator with no anchor — `gas station near me`, `restaurants nearby`. The query names a
-	 * category and a relation to the asker, and the asker's position is not in the string. Classification only in v9: the
-	 * marker states that a focus point is required and absent.
+	 * Preposition/deictic locator with no anchor — `gas station near me`, `restaurants nearby`. The query names a category and a relation to the asker, and the asker's position is not in the string. Classification only in v9: the marker states that a focus point is required and absent.
 	 */
 	| "near_me"
 	/**
-	 * A bare POI category with nowhere to search — `tacos`, `grocery store`. The anchorless subset of `poi_query`,
-	 * carrying the resolved `@mailwoman/poi-taxonomy` category id on its marker. Routes exactly as `poi_query` does (the
-	 * coordinator's POI branch accepts both); resolution against `poi.db` is out of scope.
+	 * A bare POI category with nowhere to search — `tacos`, `grocery store`. The anchorless subset of `poi_query`, carrying the resolved `@mailwoman/poi-taxonomy` category id on its marker. Routes exactly as `poi_query` does (the coordinator's POI branch accepts both); resolution against `poi.db` is out of scope.
 	 */
 	| "poi_category"
 
@@ -487,7 +473,7 @@ export interface POIIntent {
 				 * reached category carried a country scope.
 				 *
 				 * `anchorCountry` is the resolved anchor's ISO 3166-1 alpha-2 country, or `null`
-				 * when no anchor resolved to one — and `null` admits no scoped claim.
+				 * when no anchor resolved to one, and `null` admits no scoped claim.
 				 * `excludedCategoryIDs` are the categories every one of whose authorities
 				 * scoped its claim to countries that do not include it.
 				 *
@@ -567,7 +553,7 @@ export type POIIntentOutcome =
  *
  * Taxonomy is purely structural — no place-name knowledge.
  * A `LOCALITY_PHRASE` proposal is "this looks shaped like a multi-word capitalized
- * phrase that could be a city name" — not "this is New York."
+ * phrase that could be a city name", not "this is New York."
  *
  * Typing the span is the classifier's job.
  *
@@ -589,7 +575,8 @@ export type PhraseKind =
  *
  * - `span`: the input span (a sub-span of the tokenized input) the proposal applies to.
  * - `kindHypothesis`: structural shape this span looks like.
- * - `confidence`: 0..1 score. Used by downstream stages to weight proposals.
+ * - `confidence`: 0..1 score.
+ *   Used by downstream stages to weight proposals.
  *
  * Per "possibilities not constraints", emit a proposal whenever a rule fires — overlapping proposals
  * over the same tokens are expected (e.g. `Saint Petersburg` may surface as one `LOCALITY_PHRASE`
@@ -675,8 +662,8 @@ export interface ClassifierOpts {
 	 * Per-word BIO consistency repair (#727): force each SentencePiece word whose pieces
 	 * disagree in type to one tag via a confidence-weighted vote.
 	 *
-	 * Structural mirror of `@mailwoman/neural`'s `WordConsistencyOpts` (core carries no neural dependency) —
-	 * see `neural/word-consistency.ts` for the semantics of each check.
+	 * Structural mirror of `@mailwoman/neural`'s `WordConsistencyOpts` (core carries no neural dependency).
+	 * See `neural/word-consistency.ts` for the semantics of each check.
 	 */
 	enforceWordConsistency?:
 		| boolean

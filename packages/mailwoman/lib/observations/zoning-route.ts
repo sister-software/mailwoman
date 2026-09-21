@@ -121,9 +121,11 @@ export const ZONING_REFUSALS = [
 	 */
 	"no_coordinate",
 	/**
-	 * No adopted plan in this product assigns a zoning designation here. Not an absence claim: the location may be
-	 * outside any plan area, inside one on land the plan does not zone, in a jurisdiction that has never zoned, or in one
-	 * whose records are not published — and the product cannot tell those apart.
+	 * No adopted plan in this product assigns a zoning designation here.
+	 *
+	 * Not an absence claim: the location may be outside any plan area, inside one on land
+	 * the plan does not zone, in a jurisdiction that has never zoned, or in one whose
+	 * records are not published, and the product cannot tell those apart.
 	 */
 	"no_designation_here",
 ] as const

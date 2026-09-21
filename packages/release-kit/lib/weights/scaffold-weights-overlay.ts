@@ -134,7 +134,7 @@ export async function scaffoldWeightsOverlay(
 				directory: `packages/neural-weights-${slug}`,
 			},
 			// `!scripts/**` keeps the dev linker out of the tarball.
-			// It imports the shared builder by relative path, which fails after unpacking —
+			// It imports the shared builder by relative path, which fails after unpacking,
 			// and a data-only overlay has no use for a dev script anyway.
 			files: [
 				"model-card.json",

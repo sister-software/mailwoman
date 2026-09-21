@@ -26,7 +26,7 @@ export interface PipelineLoadingState {
 	 *
 	 * The step index alone cannot report this download.
 	 * The model is fetched before the first step is entered, so a step-derived
-	 * bar sits at one-third for the whole of a 38 MB transfer and then jumps —
+	 * bar sits at one-third for the whole of a 38 MB transfer and then jumps,
 	 * which reads as a hung page rather than a loading one.
 	 *
 	 * This is the only channel that moves during the wait that actually takes the time.

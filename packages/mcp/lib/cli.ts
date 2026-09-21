@@ -96,8 +96,8 @@ const poiDatabasePath = values["poi-db"]
  * The shared classifier + resolver, built exactly once on the first call that
  * needs them (see the module header).
  *
- * `NeuralAddressClassifier.loadFromWeights` auto-resolves the bundled `en-US` weights. the
- * resolver backend prefers a configured candidate gazetteer (`$MAILWOMAN_CANDIDATE_DB`)
+ * `NeuralAddressClassifier.loadFromWeights` auto-resolves the bundled `en-US` weights.
+ * The resolver backend prefers a configured candidate gazetteer (`$MAILWOMAN_CANDIDATE_DB`)
  * and otherwise falls back to the admin-only WOF extracts already on the data root —
  * same selection `nominatim`/`photon`'s CLIs make.
  */
@@ -142,7 +142,7 @@ function loadCore(): Promise<{
 
 		// #1009 friendly-failure discipline, the MCP shape of it. `server.ts` turns a thrown Error into an
 		// `isError` tool result carrying `error.message`, so the message an agent reads is whatever
-		// is thrown here — which made the raw internal `resolveExtracts: at least one extract is required`
+		// is thrown here, which made the raw internal `resolveExtracts: at least one extract is required`
 		// the first thing a stranger saw from `mailwoman_parse` on a fresh install
 		// (measured 2026-08-03 against a standalone `npm install @mailwoman/mcp`).
 		// Same preflight as `photon`/`nominatim`/`mailwoman serve`, and the same discovery:
@@ -190,9 +190,11 @@ type Pipeline = (raw: string) => Promise<PipelineResult>
 
 let plainPipeline: Pipeline | undefined
 /**
- * Keyed by the poi.db path used to build it (`""` = intent-only, no db) — `mailwoman_poi_search`
- * can be called with a `poiDatabasePath` that differs from the server's `--poi-db`, in which case
- * a fresh one-off pipeline is built and cached under that path instead of reusing the default.
+ * Keyed by the poi.db path used to build it (`""` = intent-only, no db).
+ *
+ * `mailwoman_poi_search` can be called with a `poiDatabasePath` that differs
+ * from the server's `--poi-db`, in which case a fresh one-off pipeline is built
+ * and cached under that path instead of reusing the default.
  */
 const poiPipelines = new Map<string, Pipeline>()
 
@@ -258,8 +260,9 @@ const deps: MCPToolDeps = {
 	},
 
 	async overpassExport(query) {
-		// Intent-only is enough here — the export just needs the parsed subject/anchor,
-		// never executed results ("we print the query. we never run it", poi-overpass.ts).
+		// Intent-only is enough here.
+		// The export just needs the parsed subject/anchor, never executed results
+		// ("we print the query. We never run it", poi-overpass.ts).
 		// Reuses the server's wired poi pipeline (a real poi.db doesn't change the emitted OverpassQL)
 		// instead of forcing a second one-off pipeline.
 		const pipeline = await getPoiPipeline(poiDatabasePath)
@@ -309,7 +312,7 @@ const deps: MCPToolDeps = {
 	async bdcFilingLandscape(q) {
 		// Decision 6: `mailwoman_bdc_filing_landscape` requires bdc.db unconditionally
 		// (no optional-dep abstain shape exists for this tool), so a missing file becomes a friendly thrown
-		// Error naming the layer — never the raw `node:sqlite` "unable to open database file" message.
+		// Error naming the layer, never the raw `node:sqlite` "unable to open database file" message.
 		await assertBDCDatabaseExists("mailwoman_bdc_filing_landscape", q.databasePath)
 
 		using db = new DatabaseClient<BDCDatabase>(q.databasePath, { readOnly: true })

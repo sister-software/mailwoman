@@ -91,15 +91,18 @@ const SECONDARY_DESIGNATOR_WORDS = new Set(["apt", "ste", "suite", "unit", "fl",
  * Heuristic Saint-prefix guard for a candidate "st" token — two discriminators,
  * both must clear for the guard to fire:
  *
- * 1. The "st" token itself must not be phrase-final (no trailing comma/period of its own). A Saint-prefix is always
- *    immediately adjacent to the name it prefixes ("St Andrews", "St Ives") and so never carries its own trailing
- *    punctuation. A street suffix often closes a phrase right before the next address component ("...Salmon St,
- *    Portland, ..."). This is what lets the guard tell "St Andrews" apart from "...Salmon St, Portland" even though
- *    both have "St" followed by a capitalized non-suffix word.
- * 2. The next token must be capitalized and not itself a street-suffix word or a secondary-address designator — the shape
- *    of "St Andrews", "St Ives", "St Bedes". This is a following-token heuristic rather than a positional one: a
- *    Saint-prefix isn't always string-initial (`"The Vicarage, St Andrews Street"` has "St" as the third token rather
- *    than index 0 — a purely positional guard misses it and corrupts the name).
+ * 1. The "st" token itself must not be phrase-final (no trailing comma/period of its own).
+ *    A Saint-prefix is always immediately adjacent to the name it prefixes
+ *    ("St Andrews", "St Ives") and so never carries its own trailing punctuation.
+ *    A street suffix often closes a phrase right before the next address component
+ *    ("...Salmon St, Portland, ...").
+ *    This is what lets the guard tell "St Andrews" apart from "...Salmon St, Portland" even
+ *    though both have "St" followed by a capitalized non-suffix word.
+ * 2. The next token must be capitalized and not itself a street-suffix word
+ *    or a secondary-address designator — the shape of "St Andrews", "St Ives", "St Bedes".
+ *    This is a following-token heuristic rather than a positional one: a Saint-prefix isn't
+ *    always string-initial (`"The Vicarage, St Andrews Street"` has "St" as the third token
+ *    rather than index 0 — a purely positional guard misses it and corrupts the name).
  *
  * Known limits: this still can't distinguish a genuine Saint-prefix from a street-suffix
  * "St" immediately followed, mid-phrase (no comma), by an ordinary capitalized word

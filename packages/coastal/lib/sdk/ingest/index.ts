@@ -144,7 +144,7 @@ export interface CoastalIngestOptions {
 }
 
 /**
- * What one layer declares about itself — including the attribute fields IT actually has,
+ * What one layer declares about itself, including the attribute fields IT actually has,
  * because the fourteen published layers do not share one schema.
  */
 export interface CoastalLayerIdentity {

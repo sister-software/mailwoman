@@ -238,9 +238,12 @@ export const GAUNTLET_CASE_COLUMNS = [
 	"added_at",
 	"bug_ref",
 	"note",
-	// Appended 2026-08-05 (the ablation expectation model). Append-only: this list is the positional insert order, so a new column goes on the END or every existing row shifts.
+	// Appended 2026-08-05 (the ablation expectation model).
+	// Append-only: this list is the positional insert order, so a new column goes
+	// on the END or every existing row shifts.
 	"ablation_expect",
-	// Appended 2026-08-11 (the per-row multi-script rendering interface). Same append-only rule.
+	// Appended 2026-08-11 (the per-row multi-script rendering interface).
+	// Same append-only rule.
 	"expect_component_renderings",
 	// Appended 2026-08-11 (the #1585 fuzzy-scope board: per-row locale arm + the abstain interface).
 	"locale",

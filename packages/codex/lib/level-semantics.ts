@@ -71,18 +71,18 @@
  * See the module header for the rationale behind each non-obvious kind.
  *
  * - `"ground"` — always ordinal 0 (RDC, EG, planta baja, …).
- * - `"basement"` — ordinal is the negation of the trailing number, defaulting to 1 when the designator appears bare
- *   ("Basement" alone → -1, same as "B1").
- * - `"numbered"` — ordinal depends on the locale's {@link LevelOrdinalConvention} (US/CA/JP-style vs
- *   continental-European/imdf-style); requires a number.
- * - `"fractionalAboveGround"` — conceptually between ground and the first numbered level (mezzanine, entresol/entresuelo,
- *   upper ground, German Zwischengeschoss); floors to ordinal 0.
- * - `"fractionalBelowGround"` — conceptually between the first basement level and ground (UK lower ground, Italian
- *   seminterrato); floors to ordinal -1.
- * - `"special"` — named by relationship to a specific building's top (penthouse, roof, attic); no locale-independent
- *   ordinal exists. {@link levelToOrdinal} returns `undefined`.
- * - `"fixedOrdinal"` — a specific named floor with its own fixed ordinal, independent of any number the caller supplies
- *   (Spanish principal is always ordinal 1).
+ * - `"basement"` — ordinal is the negation of the trailing number, defaulting to 1
+ *   when the designator appears bare ("Basement" alone → -1, same as "B1").
+ * - `"numbered"` — ordinal depends on the locale's {@link LevelOrdinalConvention}
+ *   (US/CA/JP-style vs continental-European/imdf-style); requires a number.
+ * - `"fractionalAboveGround"` — conceptually between ground and the first numbered level
+ *   (mezzanine, entresol/entresuelo, upper ground, German Zwischengeschoss); floors to ordinal 0.
+ * - `"fractionalBelowGround"` — conceptually between the first basement level
+ *   and ground (UK lower ground, Italian seminterrato); floors to ordinal -1.
+ * - `"special"` — named by relationship to a specific building's top (penthouse, roof, attic);
+ *   no locale-independent ordinal exists. {@link levelToOrdinal} returns `undefined`.
+ * - `"fixedOrdinal"` — a specific named floor with its own fixed ordinal, independent
+ *   of any number the caller supplies (Spanish principal is always ordinal 1).
  */
 export type LevelDesignatorKind =
 	| "ground"
@@ -404,8 +404,8 @@ export const SV_LEVEL_DESIGNATORS = [
 /**
  * Norwegian floor/level vocabulary.
  *
- * Gateplan ("street level") is a lower-confidence, regional inclusion for the
- * ground-floor row — see the module header's Nordic-vocabulary caveat.
+ * Gateplan ("street level") is a lower-confidence, regional inclusion for the ground-floor row.
+ * See the module header's Nordic-vocabulary caveat.
  */
 export const NO_LEVEL_DESIGNATORS = [
 	{ code: "ETASJE", name: "Etasje (Floor)", variants: ["ETASJE"], kind: "numbered", requiresNumber: true },
@@ -651,8 +651,8 @@ export function isLevelDesignatorToken(input: unknown, locale: string): boolean 
  * - `locale`'s language family has no lexicon in this module,
  * - `designator` isn't a recognized token in that family,
  * - The designator is `"special"` (penthouse/roof/attic — no locale-independent ordinal exists), or
- * - The designator is `"numbered"` but either `number` is missing or the locale has no resolvable ordinal convention (a
- *   bare "en" locale, for example).
+ * - The designator is `"numbered"` but either `number` is missing or the locale has
+ *   no resolvable ordinal convention (a bare "en" locale, for example).
  *
  * @example
  * 	levelToOrdinal("FL", 1, "en-US") // → 0 (US: 1st floor is ground)

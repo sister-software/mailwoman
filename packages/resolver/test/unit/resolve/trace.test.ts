@@ -124,7 +124,7 @@ describe("resolver-interior trace (#1721)", () => {
 
 	it("records the span-rescore rescue — the famous-name class no longer answers off the record", async () => {
 		// A street-tagged famous name never enters the walk (street is not in the placetype map),
-		// so the span-rescore tier is the only thing that resolves it — and before the #1721
+		// so the span-rescore tier is the only thing that resolves it, and before the #1721
 		// follow-up it answered with an empty trace beside a real coordinate.
 		const backend = new StubBackend(WHITBY_PLACES)
 		const records: ResolveNodeTrace[] = []

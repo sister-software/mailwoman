@@ -33,7 +33,7 @@ import { assertISODate } from "#sdk/guards"
  * The guard is unreachable on that path rather than merely redundant.
  * On the provider-list path `ProviderListRow.frn` is typed as always-present (`FRN`, never `FRN | null`),
  * and {@linkcode parseProviderList} validates it via `toFRN` on the production (file-reading)
- * route — but the `providerRows` test injection point bypasses that parser entirely.
+ * route, but the `providerRows` test injection point bypasses that parser entirely.
  *
  * Without this guard, two rows for two different, unrelated providers each carrying a
  * blank `frn` would silently mint and share one degenerate `frn:` node.
@@ -89,8 +89,9 @@ export function mintSubsidiaryNameNodeID(name: string): string {
 }
 
 /**
- * Mints the `form499_id:` node id, throwing when `form499ID` is blank —
- * see `build-filer.ts`'s module docstring, "malformed input is loud" section.
+ * Mints the `form499_id:` node id, throwing when `form499ID` is blank.
+ *
+ * See `build-filer.ts`'s module docstring, "malformed input is loud" section.
  *
  * An empty string is not a legitimate missing value here (unlike a `null` `frn`):
  * every 499 row has some `form499ID` in the real file, so a blank one signals a malformed row,
@@ -112,7 +113,7 @@ export function mintForm499NodeID(form499ID: string, rowIndex: number): string {
  * Validates `lastFiledAt` is non-blank before it is written into both
  * `filer_edge.source_vintage`/`valid_from` and every attribute's `source_vintage` for this row.
  *
- * Decision 7 / criterion 1 make `valid_from` mandatory on every edge — but `Form499Row.lastFiledAt` is a
+ * Decision 7 / criterion 1 make `valid_from` mandatory on every edge, but `Form499Row.lastFiledAt` is a
  * raw, unvalidated TSV string (`form499.ts`'s own docstring: "no `Date` parsing happens at this layer"),
  * and SQLite's `not NULL` does not reject an empty string.
  * An unguarded blank `lastFiledAt` would silently write `source_vintage: ""`/`valid_from: ""`

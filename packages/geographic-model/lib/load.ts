@@ -76,7 +76,8 @@ export const LoadIssueCode = {
 	/**
 	 * A source file could not be parsed as JSON.
 	 *
-	 * Emitted by the loader alone. the document validator is handed values, never text.
+	 * Emitted by the loader alone.
+	 * The document validator is handed values, never text.
 	 */
 	MalformedJSON: "malformed_json",
 } as const
@@ -149,8 +150,8 @@ export class GeographicModelLoadError extends Error {
 interface RecordOrigin {
 	file: string
 	/**
-	 * The table the record was appended to, or `assertions` for one nested inside a concept —
-	 * the namespace its identifier is unique within.
+	 * The table the record was appended to, or `assertions` for one nested inside a concept.
+	 * The namespace its identifier is unique within.
 	 */
 	table: string
 	id?: string
@@ -176,9 +177,11 @@ function sourced(file: string, issues: readonly ValidationIssue[]): SourcedIssue
 /**
  * Parse one source file, or report why it could not be parsed.
  *
- * The house wrapper lives in `@mailwoman/core/objects`, and this package takes no
- * dependency on `@mailwoman/core` — the boundary record keeps world semantics out of core,
- * and a build-time loader is not the reason to reverse it.
+ * The house wrapper lives in `@mailwoman/core/objects`, and this package takes
+ * no dependency on `@mailwoman/core`.
+ * The boundary record keeps world semantics out of core, and a build-time
+ * loader is not the reason to reverse it.
+ *
  * The parser's own message is also the useful half of the report here,
  * which a wrapper returning a fallback discards.
  */
@@ -321,8 +324,8 @@ function attribute(state: MergeState, issue: ValidationIssue): SourcedIssue {
  *
  * The files are sorted by path before anything is read, so any enumeration order
  * produces the same tables in the same order.
- * Throws {@link GeographicModelLoadError} with every issue, each addressed to
- * its source file. returns nothing partial.
+ * Throws {@link GeographicModelLoadError} with every issue, each addressed to its source file.
+ * Returns nothing partial.
  */
 export function mergeGeographicModelFiles(files: readonly GeographicModelSourceFile[]): GeographicModelDocument {
 	const state: MergeState = {
@@ -407,7 +410,7 @@ async function listSourceFiles(root: string, prefix = ""): Promise<string[]> {
 /**
  * Load a model directory: read every `*.json` file under it, merge them, and validate the merged document.
  *
- * Throws {@link GeographicModelLoadError} with every issue, each addressed to its source file.
+ * @throws {@link GeographicModelLoadError} with every issue, each addressed to its source file.
  */
 export async function loadGeographicModelDirectory(root: string): Promise<GeographicModelDocument> {
 	const paths = await listSourceFiles(root)

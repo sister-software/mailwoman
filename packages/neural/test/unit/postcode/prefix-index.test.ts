@@ -188,7 +188,8 @@ describe("PFX1 layout conformance (docs/engineering/reference/pfx1.ksy)", () => 
 			const prefix = decoder.decode(bytes.subarray(o, o + prefixLen))
 			o += prefixLen
 
-			// Sorted ascending by prefix — what makes the build byte-deterministic.
+			// Sorted ascending by prefix.
+			// What makes the build byte-deterministic.
 			expect(prefix > previousPrefix).toBe(true)
 			previousPrefix = prefix
 

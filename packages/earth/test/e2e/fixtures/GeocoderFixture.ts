@@ -59,9 +59,11 @@ export class GeocoderFixture {
 	 *
 	 * A load error the page reports ends the wait at once, with that text, instead of running out the budget.
 	 *
-	 * Readiness is the address field being enabled, because `GeocoderControls` binds that field's
-	 * `disabled` to `runtime.ready` — the same state the search pill's submit button used to carry before
-	 * the pill dropped it (a `type="search"` field submits on Enter and brings its own clear control).
+	 * Readiness is the address field being enabled, because `GeocoderControls` binds
+	 * that field's `disabled` to `runtime.ready`.
+	 * The same state the search pill's submit button used to carry before the pill dropped
+	 * it (a `type="search"` field submits on Enter and brings its own clear control).
+	 *
 	 * Waiting on an element that the chrome is free to restyle away turns "the
 	 * classifier loaded" into "never true" with no error to report, which is how this
 	 * wait ran out its budget on every case for two days.

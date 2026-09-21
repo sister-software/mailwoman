@@ -43,8 +43,10 @@ const FR_VOIE_ABBREV: Record<string, string> = Object.fromEntries(
 const BARE_STREET_ONLY_FORM = 3
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour
- * it exists to exercise, and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder.
+ *
+ * See the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
  */
 export const frBareStreetRecipe: CorpusRecipe = {
 	name: "fr-bare-street",
@@ -74,7 +76,7 @@ export const frBareStreetRecipe: CorpusRecipe = {
 			const { prefix, street } = decomposeFrStreet(fullStreet)
 
 			// A no-prefix nom_voie ("La Ville Mois") is not the prefix-led class the numbered
-			// forms exercise — but as a bare surface it is exactly the non-voie-led counterweight
+			// forms exercise, but as a bare surface it is exactly the non-voie-led counterweight
 			// the v4.5.1 probe showed missing ('Savile Row'-shaped spans still fell to the
 			// trailing-locality prior. The voie-led bare form guarded only voie-led spans).
 			// Alternate rows emit the whole span as a bare street.

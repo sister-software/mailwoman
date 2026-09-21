@@ -623,7 +623,7 @@ describe("downloadBDCFile: end to end over the migrated client", () => {
 })
 
 // The interface an ingestion run depends on.
-// Each branch is decided from `status` and `isTransientResourceError()` alone — never from message text.
+// Each branch is decided from `status` and `isTransientResourceError()` alone, never from message text.
 describe("createBDCClient: the caller's failure taxonomy, decided without reading any message", () => {
 	async function failureFor(outcomes: StubOutcome[], maxAttempts = 2): Promise<unknown> {
 		const client = clientFor(bdcTransport(outcomes), { maxAttempts, baseRetryDelayMs: 1 })

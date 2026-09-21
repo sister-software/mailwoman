@@ -70,7 +70,7 @@ describe("geocodeAddress — national (BAN) rooftop tier wiring (#1012)", () => 
 
 		expect(seen[0]?.addressPoints).toBe(banLookup)
 		// Bbox fall-through is enabled for the national tier (2026-07-10): the register's rows carry
-		// postcode + commune, but the query often doesn't — and BAN communes are insee-arrondissement-
+		// postcode + commune, but the query often doesn't, and BAN communes are insee-arrondissement-
 		// granular, so a city-level locality probe ("paris") misses "paris 13e arrondissement".
 		// The resolved locality's box scopes the (street, number) probe instead (fr-chevaleret-bare).
 		expect(seen[0]?.addressPointBboxFallback).toBe(true)

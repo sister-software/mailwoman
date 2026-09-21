@@ -78,8 +78,9 @@ export interface H1Counts {
 /**
  * The three H1 counts from one segment-2 row.
  *
- * The last field carries crlf's trailing CR when the file has one, so each field is trimmed
- * before it is read as a number. a row whose counts do not add up is refused rather than stored.
+ * The last field carries crlf's trailing CR when the file has one, so each field
+ * is trimmed before it is read as a number.
+ * A row whose counts do not add up is refused rather than stored.
  */
 export function parseH1(fields: readonly string[]): H1Counts {
 	if (fields.length !== SEG2_FIELD_COUNT) {
@@ -165,11 +166,11 @@ export interface FetchRedistrictingResult {
 	inserted: number
 }
 
-// Pipe-delimited, fixed field-offset census rows — the manual `split("|")` at each call
-// site stays (the parse indexes by position rather than by header). spliterator keeps
-// crlf's trailing CR where readline stripped it, but every field this parser reads
-// (geo geocode/logrecno ≤ 9, segment-1 logrecno + P2 ≤ 86) sits well before the final column,
-// so the retained CR only ever lands on an unread trailing field.
+// Pipe-delimited, fixed field-offset census rows.
+// The manual `split("|")` at each call site stays (the parse indexes by position rather than by header).
+// Spliterator keeps crlf's trailing CR where readline stripped it, but every field
+// this parser reads (geo geocode/logrecno ≤ 9, segment-1 logrecno + P2 ≤ 86) sits well
+// before the final column, so the retained CR only ever lands on an unread trailing field.
 async function eachLine(path: string, fn: (line: string) => void): Promise<void> {
 	for await (const line of TextSpliterator.fromAsync(path)) {
 		if (line) {
@@ -181,7 +182,8 @@ async function eachLine(path: string, fn: (line: string) => void): Promise<void>
 /**
  * Fetch one state's P.L. 94-171 block race counts into `pl_block`.
  *
- * Yields progress. returns the tally.
+ * Yields progress.
+ * Returns the tally.
  */
 export async function* fetchRedistricting(
 	options: FetchRedistrictingOptions
@@ -235,8 +237,8 @@ export async function* fetchRedistricting(
 	yield { phase: "header", blocks: total }
 
 	// Pass 1b: segment 2 → H1 housing counts for the mapped LOGRECNOs.
-	// Read before segment 1 so a block's P2 and H1 land in one row. a mapped block with
-	// no segment-2 row is a data defect the load refuses, never a zero.
+	// Read before segment 1 so a block's P2 and H1 land in one row.
+	// A mapped block with no segment-2 row is a data defect the load refuses, never a zero.
 	const h1ByLogrecno = new Map<string, H1Counts>()
 
 	await eachLine(seg2Path, (line) => {

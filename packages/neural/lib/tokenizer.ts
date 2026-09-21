@@ -180,8 +180,10 @@ export class MailwomanTokenizer {
 	 *
 	 * The returned `pieces[i].piece` matches what the Python `sp.EncodeAsPieces(text)[i]`
 	 * returns, and `pieces[i].id` matches `sp.EncodeAsIDs(text)[i]`.
-	 * Offsets come from SentencePiece's own `SentencePieceText` proto (byte positions), converted to
-	 * UTF-16 and whitespace-trimmed — see the file header for the two conventions this layer owns.
+	 * Offsets come from SentencePiece's own `SentencePieceText` proto (byte positions),
+	 * converted to UTF-16 and whitespace-trimmed.
+	 *
+	 * See the file header for the two conventions this layer owns.
 	 */
 	encode(text: string): EncodeResult {
 		const raw = this.processor.encodeWithOffsets(text)

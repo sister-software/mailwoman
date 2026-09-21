@@ -55,9 +55,10 @@ const FR_FR_DICT: ReadonlyArray<AbbreviationEntry> = [
 ]
 
 const ES_ES_DICT: ReadonlyArray<AbbreviationEntry> = [
-	// Spanish writes Avenida short as `Av.`, `Avda.` or `Avd.`. English never abbreviates it `Av` (it
-	// uses `Ave`), so there is no en collision — but french does, and there it means Avenue. That
-	// collision is why this table has to exist rather than the entry being folded into a shared set:
+	// Spanish writes Avenida short as `Av.`, `Avda.` or `Avd.`.
+	// English never abbreviates it `Av` (it uses `Ave`), so there is no en collision,
+	// but french does, and there it means Avenue.
+	// That collision is why this table has to exist rather than the entry being folded into a shared set:
 	// the same three letters resolve to different words, and only the locale can decide which.
 	{ from: "Av", to: "Avenida" },
 	{ from: "Avda", to: "Avenida" },
@@ -102,8 +103,8 @@ const LOCALE_UNKNOWN_DICT: ReadonlyArray<AbbreviationEntry> = [
 function getDictionary(locale: string | undefined): ReadonlyArray<AbbreviationEntry> {
 	const lc = (locale ?? "en-US").toLowerCase()
 
-	// BCP-47 "und" (undetermined) — the caller knows it does not know the locale
-	// yet (the geocode path expands before the parse).
+	// BCP-47 "und" (undetermined).
+	// The caller knows it does not know the locale yet (the geocode path expands before the parse).
 	// Only the collision-free multi-locale set applies; `undefined` keeps its historical en-US default.
 	if (lc === "und") return LOCALE_UNKNOWN_DICT
 
@@ -111,8 +112,8 @@ function getDictionary(locale: string | undefined): ReadonlyArray<AbbreviationEn
 
 	// Every `es-*` region: es-ES, es-MX, es-AR, … all abbreviate Avenida the same way.
 	// Before this existed they fell through to en-US, whose table has no `Av` entry,
-	// so `Av.` simply survived — the visible symptom was "nothing happens",
-	// which is why the collision only surfaced on the `und` path.
+	// so `Av.` simply survived.
+	// The visible symptom was "nothing happens", which is why the collision only surfaced on the `und` path.
 	if (lc.startsWith("es")) return ES_ES_DICT
 
 	return EN_US_DICT
@@ -194,7 +195,8 @@ export function expandAbbreviations(input: string, locale?: string): Abbreviatio
 			continue
 		}
 
-		// Emit expansion. map every char back to start of source token.
+		// Emit expansion.
+		// Map every char back to start of source token.
 		for (let k = 0; k < expansion.length; k++) {
 			out.push(expansion[k]!)
 			map.push(start + Math.min(k, token.length - 1))

@@ -25,7 +25,8 @@ test("applyPunctuation: the ellipsis expands 1→3 and the offset map points all
 	const r = applyPunctuation("a…b") // "a…b"
 	expect(r.text).toBe("a...b")
 	expect(r.replacements).toBe(1)
-	// output: a . . . b  → source: 0 1 1 1 2  (the three dots all came from input index 1)
+	// output: a . . .
+	// B → source: 0 1 1 1 2 (the three dots all came from input index 1)
 	expect(r.map).toEqual([0, 1, 1, 1, 2])
 })
 

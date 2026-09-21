@@ -71,7 +71,7 @@ export async function runIngestChunkScript<
 
 	// A second, lenient parse over only the shared flags: the strict parse above is
 	// typed by the script's own generic config, whose conditional value type does
-	// not resolve inside this generic body — while this one is concretely typed,
+	// not resolve inside this generic body, while this one is concretely typed,
 	// and non-strict parsing reads the known flags identically.
 	// Non-strict parsing widens every value to `string | boolean`, so the string-typed
 	// flags are narrowed back before use.

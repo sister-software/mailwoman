@@ -111,13 +111,15 @@ export interface CandidateTable {
 	 *
 	 * Two build-time detectors stamp `is_primary = 0` rows only:
 	 *
-	 * - `'abbr'` — provenance-based: the surface is a WOF `variant` name in one of the place's country's official languages
-	 *   (or English) — the #936 signal, measured at a 13× key-collision rate vs preferred names.
-	 * - `'gloss'` — anomaly-based: the row belongs to a place whose key count crosses the gloss threshold with a non-admin
-	 *   placetype and no measured prominence (population absent and importance unmeasured) — the translation-gloss
-	 *   fingerprint (#1730's sweep; `Poisson` → a US fish-name place). Provenance cannot separate a gloss from an exonym
-	 *   (WOF imported both as `x_preferred`), which is why this detector is an anomaly test and stamps only the certain
-	 *   core.
+	 * - `'abbr'` — provenance-based: the surface is a WOF `variant` name in one of
+	 *   the place's country's official languages (or English) — the #936 signal,
+	 *   measured at a 13× key-collision rate vs preferred names.
+	 * - `'gloss'` — anomaly-based: the row belongs to a place whose key count crosses
+	 *   the gloss threshold with a non-admin placetype and no measured prominence
+	 *   (population absent and importance unmeasured) — the translation-gloss fingerprint
+	 *   (#1730's sweep; `Poisson` → a US fish-name place).
+	 *   Provenance cannot separate a gloss from an exonym (WOF imported both as `x_preferred`),
+	 *   which is why this detector is an anomaly test and stamps only the certain core.
 	 *
 	 * NULL = no role detected. The column is write-only in this build generation: no ranking consumer reads it. A rank
 	 * penalty is its own future, D-rule-conditional step with the `gloss_key` board as regression check.
@@ -188,7 +190,8 @@ export const CANDIDATE_COLUMNS = [
 	"max_lon",
 	"population",
 	"is_primary",
-	// Appended, never inserted mid-list: the first six entries are the clustered primary key, and the positional `insert into cand_stage values (…)` in the builder binds by position.
+	// Appended, never inserted mid-list: the first six entries are the clustered primary key,
+	// and the positional `insert into cand_stage values (…)` in the builder binds by position.
 	"importance",
 	"name_role",
 ] as const

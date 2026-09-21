@@ -56,10 +56,12 @@ export interface NeuralAddressClassifierConfig {
 	/**
 	 * Decoding strategy:
 	 *
-	 * - `"viterbi"` (default) — linear-chain CRF Viterbi with the BIO structural mask. Prevents orphan-`I-*` sequences. If
-	 *   `transitions` is provided, uses learned scores on top.
-	 * - `"argmax"` — per-token argmax. Faster but produces structurally invalid sequences. Use only for debugging /
-	 *   comparison.
+	 * - `"viterbi"` (default) — linear-chain CRF Viterbi with the BIO structural mask.
+	 *   Prevents orphan-`I-*` sequences.
+	 *   If `transitions` is provided, uses learned scores on top.
+	 * - `"argmax"` — per-token argmax.
+	 *   Faster but produces structurally invalid sequences.
+	 *   Use only for debugging / comparison.
 	 */
 	decode?: "viterbi" | "argmax"
 	/**
@@ -136,7 +138,7 @@ export interface NeuralAddressClassifierConfig {
 	 * Optional postcode-anchor lookup (#239/#240).
 	 *
 	 * When set, `parse` builds per-piece anchor features from the text + this lookup
-	 * and feeds them to the runner — for models trained with the anchor channel
+	 * and feeds them to the runner, for models trained with the anchor channel
 	 * (exported with the `anchor_features`/`anchor_confidence` ONNX inputs).
 	 * Omit for plain models.
 	 *
@@ -156,7 +158,7 @@ export interface NeuralAddressClassifierConfig {
 	 * Optional gazetteer-anchor lexicon (#464, knowledge-ladder rung 3.2).
 	 *
 	 * When set, `parse` builds per-token candidate-tag-set clues (country/region/po_box/cedex/homograph)
-	 * from the text + this lexicon and feeds them to the runner — for models trained with the
+	 * from the text + this lexicon and feeds them to the runner, for models trained with the
 	 * gazetteer-anchor channel (exported with the `gazetteer_features`/`gazetteer_confidence` ONNX inputs).
 	 * Omit for plain models.
 	 *
@@ -167,7 +169,7 @@ export interface NeuralAddressClassifierConfig {
 	 * Optional country-lexicon (#1104).
 	 *
 	 * When set, `parse` builds per-piece country-surface clues (`[country_surface, country_ambiguous]`)
-	 * from the text + this lexicon and feeds them to the runner — for models trained with the
+	 * from the text + this lexicon and feeds them to the runner, for models trained with the
 	 * country channel (exported with the `country_features`/`country_confidence` ONNX inputs).
 	 * Omit for plain models.
 	 *
@@ -178,7 +180,7 @@ export interface NeuralAddressClassifierConfig {
 	/**
 	 * Optional street-type evidence lexicon (Option-A bundle, Phase 2).
 	 *
-	 * When set, `parse` paints per-piece street-type clues and feeds them to the runner — for bundle-trained
+	 * When set, `parse` paints per-piece street-type clues and feeds them to the runner, for bundle-trained
 	 * models (exported with the `street_type_features`/`street_type_confidence` ONNX inputs).
 	 * Same JSON schema + parser as the gazetteer lexicon.
 	 */
@@ -225,7 +227,7 @@ export interface NeuralAddressClassifierConfig {
 	 *
 	 * When set, every parse runs `proposeSpans` (`@mailwoman/core/pipeline`) over the raw text
 	 * and consumes the typed proposals two ways: (a) as additive emission priors — the phrase-prior path.
-	 * The classifier conditions on the boundary hypotheses and can still disagree —
+	 * The classifier conditions on the boundary hypotheses and can still disagree,
 	 * and (b) annotation/quoted span boundaries feed the span bridge as merge-crossing
 	 * constraints (no same-tag merge may straddle a structural delimiter).
 	 *
@@ -478,11 +480,12 @@ export interface ParseOpts {
 	/**
 	 * Address-system conventions enforcement (#511 Tier A / the rules-as-constraints part of #478).
 	 *
-	 * - `"auto"` — detect the system from the model's locale head (`locale_logits` output, v1.1.0+ exports. Silently no-ops
-	 *   on models without it) and apply that system's codex conventions: forbidden tags become a hard emission mask
+	 * - `"auto"` — detect the system from the model's locale head
+	 *   (`locale_logits` output, v1.1.0+ exports. Silently no-ops on models without it)
+	 *   and apply that system's codex conventions: forbidden tags become a hard emission mask
 	 *   before Viterbi, and a conventions postcode shape enables the snap-only postcode repair pass.
-	 * - A `SystemCode` (`"fr"`, `"us"`, …) — apply that system's conventions unconditionally (callers that already know the
-	 *   locale, e.g. the pipeline's BCP-47 region).
+	 * - A `SystemCode` (`"fr"`, `"us"`, …) — apply that system's conventions unconditionally
+	 *   (callers that already know the locale, e.g. the pipeline's BCP-47 region).
 	 * - Omit — byte-stable default: no detection, no mask (pre-#511 behavior).
 	 *
 	 * The detection threshold is deliberately high (0.8): the mask must never fire on a guess.

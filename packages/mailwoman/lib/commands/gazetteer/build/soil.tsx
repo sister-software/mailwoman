@@ -48,7 +48,8 @@ import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 const DEFAULT_COVERAGE_RESOLUTION = "6"
 
 /**
- * Index resolution, chosen from the measurement — see the workspace readme for the table and the reasoning.
+ * Index resolution, chosen from the measurement.
+ * See the workspace readme for the table and the reasoning.
  *
  * `--measure-resolutions` re-derives it.
  */

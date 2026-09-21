@@ -18,7 +18,7 @@
  * Verb paths that only read.
  *
  * Matched against the leading arguments, so `eval` covers `eval gauntlet`, `eval promote`
- * and the rest — with the one exception carved out below.
+ * and the rest, with the one exception carved out below.
  */
 const ALLOWED_PREFIXES: readonly string[][] = [
 	["parse"],

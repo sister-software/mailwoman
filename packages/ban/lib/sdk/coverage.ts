@@ -34,7 +34,8 @@ export interface CoveragePoint {
 /**
  * Which communes the register declares whole: every point carries `certified = 1`.
  *
- * A commune with a null flag anywhere is not whole — an absent statement is not a statement.
+ * A commune with a null flag anywhere is not whole.
+ * An absent statement is not a statement.
  *
  * @param flags Per commune, the minimum of its points' `certified` values with null treated as the minimum.
  */
@@ -54,7 +55,7 @@ export function wholeCommunes(flags: ReadonlyMap<string, number | null>): Readon
  * Fold the register's points into coverage cells.
  *
  * A cell is `designated` only when every point in it belongs to a whole commune.
- * one point from a partial or unflagged commune makes the cell `source_present`,
+ * One point from a partial or unflagged commune makes the cell `source_present`,
  * because a designated basis licenses an exclusion and one uncertified street inside
  * the cell is exactly the address such an exclusion would deny.
  */

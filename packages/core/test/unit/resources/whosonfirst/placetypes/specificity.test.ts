@@ -111,8 +111,9 @@ describe("the table", () => {
 		// Two survive, and neither is an admin rung.
 		// `building+campus+venue` are three names for a thing at an address,
 		// and `country+dependency` is WOF's own sovereignty hedge.
-		// The admin ladder itself is now strictly ordered, because a tie there is a silent
-		// disagreement with containment — see the agreement suite below.
+		// The admin ladder itself is now strictly ordered, because a tie there is
+		// a silent disagreement with containment.
+		// See the agreement suite below.
 		const byRank = new Map<number, string[]>()
 
 		for (const [placetype, rank] of Object.entries(PLACETYPE_SPECIFICITY)) {

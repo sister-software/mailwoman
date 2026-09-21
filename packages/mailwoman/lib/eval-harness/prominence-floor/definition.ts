@@ -214,7 +214,7 @@ export function auditProminenceDefinition(definition: ProminenceFloorDefinition)
 	for (const [index, band] of ordered.entries()) {
 		// `bandRule` registers that a row with no recorded population is in no band.
 		// `bandFor` enforces that by refusing `undefined`, but a band starting at 0 would admit
-		// a row the register counted as zero, which is the same absence wearing a number —
+		// a row the register counted as zero, which is the same absence wearing a number,
 		// and the reader `readCities` supplies turns an empty column into exactly that.
 		if (band.min < 1) {
 			problems.push(

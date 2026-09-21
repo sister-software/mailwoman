@@ -18,8 +18,8 @@ import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolv
  * ISO-3166 alpha-2 (lowercase) → the street-normalization locale a BAN extract was built with.
  *
  * FR-only: BAN is the French national register.
- * Adding a country here means shipping that country's national register on the shared schema and having
- * a matching branch in `normalizeStreetForKeyLocale` — never a silent fold with the wrong rules.
+ * Adding a country here means shipping that country's national register on the shared schema and
+ * having a matching branch in `normalizeStreetForKeyLocale`, never a silent fold with the wrong rules.
  */
 const BAN_COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([["fr", "fr"]])
 
@@ -31,7 +31,7 @@ const registry = createStreetLocaleRegistry(
 /**
  * Resolve the street-normalization locale for a BAN country.
  *
- * Throws for an unsupported country rather than silently folding with the wrong rules — a extract
+ * @throws for an unsupported country rather than silently folding with the wrong rules — a extract
  * built with the wrong normalizer keys every street incorrectly and looks fine until a probe misses.
  * Add the country to {@link BAN_COUNTRY_TO_STREET_LOCALE}
  * (and a branch in `normalizeStreetForKeyLocale`) before building its extract.

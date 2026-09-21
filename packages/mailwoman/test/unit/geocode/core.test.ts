@@ -727,7 +727,7 @@ describe("#1537: a famous namesake the model reads as a `street` keeps its candi
 				query.text.trim().toLowerCase() === "springfield" ? SPRINGFIELDS.map((p) => ({ ...p })) : [],
 		}),
 		// No placer: this test is about the resolver's candidate list rather than the
-		// country prior — and loading the bundled placer model in a unit test would
+		// country prior, and loading the bundled placer model in a unit test would
 		// be a several-hundred-millisecond side quest.
 		placeCountry: false,
 	})

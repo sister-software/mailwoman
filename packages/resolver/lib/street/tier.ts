@@ -29,7 +29,7 @@ const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_part
  * Reassemble the full street string from the street node's subtree (#483 coverage fix).
  *
  * The parser nests the directional/suffix as `street_prefix`/`street_suffix` children of `street`
- * (containment.ts), so `street.value` alone is the bare base name ("Sheldon" for "East Sheldon Rd") —
+ * (containment.ts), so `street.value` alone is the bare base name ("Sheldon" for "East Sheldon Rd"),
  * which misses the coordinate extracts keyed on the full normalized name.
  * Collect street + its prefix/particle/suffix descendants
  * (not house_number/unit, which also nest under street), order by span offset, and join.
@@ -231,7 +231,7 @@ export function applyInterpolation(
 
 	if (!pairs.length) return
 
-	// The fall-through check: an exact situs point already won — never override it with an estimate.
+	// The fall-through check: an exact situs point already won, never override it with an estimate.
 	if (pairs.some((pair) => pair.street.metadata?.["resolution_tier"] === "address_point")) return
 
 	const near = postcode ? undefined : localityCoord
@@ -295,9 +295,11 @@ export function applyInterpolation(
  * so it does not belong in the postal reference.
  */
 const FR_GENEROUS_VOIE_TOKENS: ReadonlySet<string> = new Set([
-	// Not a voie type: an address quarter, admitted because a span reading `Quartier …` is a thoroughfare often enough to be worth the lookup.
+	// Not a voie type: an address quarter, admitted because a span reading `Quartier …`
+	// is a thoroughfare often enough to be worth the lookup.
 	"quartier",
-	// `foldVoieTokens` splits on the hyphen, so `Rond-Point de …` arrives here as `rond`, which the codex set holds only as the whole token `rond-point`.
+	// `foldVoieTokens` splits on the hyphen, so `Rond-Point de …` arrives here as `rond`,
+	// which the codex set holds only as the whole token `rond-point`.
 	"rond",
 ])
 

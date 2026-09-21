@@ -208,7 +208,7 @@ describe("normalizeStreetForKeyLocale — the pl/vn/id branches (the 2026-08-19 
 		expect(normalizeStreetForKeyLocale("Marszałkowska", "pl")).toBe("marszalkowska")
 		expect(normalizeStreetForKeyLocale("al. Jerozolimskie", "pl")).toBe("jerozolimskie")
 		expect(normalizeStreetForKeyLocale("Plac Zamkowy", "pl")).toBe("zamkowy")
-		// The type alone is a name rather than a prefix — never stripped to nothing.
+		// The type alone is a name rather than a prefix, never stripped to nothing.
 		expect(normalizeStreetForKeyLocale("Ulica", "pl")).toBe("ulica")
 	})
 

@@ -81,13 +81,24 @@ export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string; country:
 	{ label: "Berlin (native order)", address: "Straußstraße 27, 12623 Berlin", country: "de" },
 	{ label: "Berlin city-state (int'l order)", address: "5 Hauptstraße, Berlin, Berlin 10115", country: "de" },
 	{ label: "Paris (street fall-through)", address: "181 Rue du Chevaleret, Paris", country: "fr" },
-	// GB dependent_locality (placetype-pair-prior arc) — a verified `gb-golden` board row (mailwoman/eval-harness/fixtures/gb-golden.jsonl). "Henbury" flips to dependent_locality via the en-gb pair-index prior. The `country: "gb"` pin selects it even if the user edits away the postcode (and structural detection also picks gb while the UK postcode is present).
+	// GB dependent_locality (placetype-pair-prior arc) — a verified `gb-golden` board
+	// row (mailwoman/eval-harness/fixtures/gb-golden.jsonl).
+	// "Henbury" flips to dependent_locality via the en-gb pair-index prior.
+	// The `country: "gb"` pin selects it even if the user edits away the postcode
+	// (and structural detection also picks gb while the UK postcode is present).
 	{
 		label: "Macclesfield (GB dependent_locality)",
 		address: "41 Hightree Drive, Henbury, Macclesfield, SK11 9PD",
 		country: "gb",
 	},
-	// NZ dependent_locality (en-nz pair-prior arc). Plimmerton is a suburb (dependent_locality) of Porirua. Postcode deliberately omitted: a trailing "Porirua 5026" puts the postcode in the parent's comma-field, so segment mode folds "porirua 5026" and misses the index's bare "porirua" key (the shipped GB artifact misses the same way) — tracked as #1308. The `country: "nz"` pin is required here: locale-check can't structurally detect NZ (4-digit postcode isn't a distinctive format), so only the preset pin selects the nz index — free-typed NZ stays unfired.
+	// NZ dependent_locality (en-nz pair-prior arc).
+	// Plimmerton is a suburb (dependent_locality) of Porirua.
+	// Postcode deliberately omitted: a trailing "Porirua 5026" puts the postcode in the
+	// parent's comma-field, so segment mode folds "porirua 5026" and misses the index's bare
+	// "porirua" key (the shipped GB artifact misses the same way) — tracked as #1308.
+	// The `country: "nz"` pin is required here: locale-check can't structurally
+	// detect NZ (4-digit postcode isn't a distinctive format), so only the preset pin
+	// selects the nz index — free-typed NZ stays unfired.
 	{ label: "Plimmerton (NZ dependent_locality)", address: "35 Steyne Avenue, Plimmerton, Porirua", country: "nz" },
 ]
 
@@ -144,7 +155,7 @@ export interface ClassifyStageResult {
  * The neural classify front-half, shared by both demo parse paths
  * (the `/demo` map's `runParseWithBias` and the MDX-embed `PipelineExplorer`'s `runParse`):
  * the 4-way pipeline import, the query-shape + kind pass, the neural `runPipeline`,
- * and the tree flatten — with the two front-half timings captured.
+ * and the tree flatten, with the two front-half timings captured.
  *
  * The caller owns resolution (`runCascade`, plus the map path's street tier / anchor fallback)
  * and the staged `onStage` progress ticks.
@@ -158,7 +169,7 @@ export interface ClassifyStageResult {
  * the shape the web loader's `LoadResult.selectPairIndexForText` exposes.
  *
  * Given the input text it runs locale-check over the text shape (postcode format / script, never place names)
- * and returns the matching loaded index wrapped as an opaque `placetypePair` opt —
+ * and returns the matching loaded index wrapped as an opaque `placetypePair` opt,
  * or `undefined` when no loaded index matches (byte-stable no-prior).
  * Typed opaquely here because the docs bundle carries no neural type dependency;
  * `runClassifyStage` threads the result verbatim into the pipeline's `placetypePair` opt.
@@ -248,7 +259,8 @@ export async function runClassifyStage(
 			fst: (deps.fst ?? undefined) as Parameters<typeof runPipeline>[1]["fst"],
 			streetMorphology: (deps.streetMorphology ?? undefined) as Parameters<typeof runPipeline>[1]["streetMorphology"],
 		},
-		// Decision A endpoint default: the demo search box is a human typing fragments — the fragmented register, so the evidence-bundle channels feed (once a bundle model ships).
+		// Decision A endpoint default: the demo search box is a human typing fragments —
+		// the fragmented register, so the evidence-bundle channels feed (once a bundle model ships).
 		{ inputMode: "fragmented", ...(placetypePair !== undefined ? { placetypePair } : {}) }
 	)
 

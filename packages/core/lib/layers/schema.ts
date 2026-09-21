@@ -174,7 +174,7 @@ export async function createLayerCoverageTable(db: layerschemahandle): Promise<v
 		.createTable("layer_coverage")
 		.addColumn("h3_cell", "integer", (c) => c.primaryKey())
 		.addColumn("completeness", "real", (c) => c.notNull())
-		// Nullable on purpose: artifacts built before this column exist and read back as NULL, which `readLayerCoverage` resolves to `source_present` — what they were in fact recording.
+		// Nullable on purpose: artifacts built before this column exist and read back as NULL, which `readLayerCoverage` resolves to `source_present`. What they were in fact recording.
 		.addColumn("basis", "text")
 		.addColumn("observed_rows", "integer", (c) => c.notNull())
 		// `without rowid` has no first-class builder. The raw modifier is the idiomatic fallback.

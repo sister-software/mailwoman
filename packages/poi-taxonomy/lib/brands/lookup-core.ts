@@ -14,7 +14,8 @@ import type { BrandRecord, POIBrandTable } from "#types"
 export interface BrandMatch {
 	brand: BrandRecord
 	/**
-	 * The lexicon phrase that matched (lowercased) — the brand's `name` or one of its `aliases`.
+	 * The lexicon phrase that matched (lowercased).
+	 * The brand's `name` or one of its `aliases`.
 	 */
 	matchedPhrase: string
 	/**

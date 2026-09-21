@@ -125,7 +125,7 @@ interface GeonamesPostcode {
  * the per-country directory is populated for the locales fetched one at a time,
  * and the combined file is the one that carries the US.
  * Without the fallback the US pass finds no file, `existsSync` short-circuits,
- * and the whole thing silently no-ops — which is why `postalcode-us.db` shipped
+ * and the whole thing silently no-ops, which is why `postalcode-us.db` shipped
  * with 42,318 postcodes and an empty `names` table.
  */
 const geonamesCache = new Map<string, Map<string, GeonamesPostcode>>()

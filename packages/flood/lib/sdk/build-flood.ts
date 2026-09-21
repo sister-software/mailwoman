@@ -82,8 +82,8 @@ export type BuildFloodInput =
 			/**
 			 * A feature source consumed IN this process.
 			 *
-			 * Correct for a fixture and for anything small. it is what the batched form
-			 * falls back to per chunk, so the two share one implementation.
+			 * Correct for a fixture and for anything small.
+			 * It is what the batched form falls back to per chunk, so the two share one implementation.
 			 */
 			source: FloodFeatureSource
 	  }
@@ -171,9 +171,10 @@ export interface BuildFloodResult {
 	partialCellRows: number
 	candidateRows: number
 	/**
-	 * `partialCellRows / (wholeCellRows + partialCellRows)` at the built resolution,
-	 * over the stored rows — the whole side is compacted, so this is not the same number
-	 * the resolution was chosen on and is reported separately.
+	 * `partialCellRows / (wholeCellRows + partialCellRows)` at the built resolution, over the stored rows.
+	 *
+	 * The whole side is compacted, so this is not the same number the resolution
+	 * was chosen on and is reported separately.
 	 */
 	storedPartialShare: number
 	/**
@@ -425,8 +426,9 @@ async function runBatchedIngest(
 						String(from),
 						"--object-id-to",
 						String(to),
-						// A range's own count is not knowable up front — `ogrinfo` reports the layer's total and nothing narrower —
-						// so the chunk asserts nothing about its size and the parent checks the sum against the whole file.
+						// A range's own count is not knowable up front — `ogrinfo` reports the layer's
+						// total and nothing narrower — so the chunk asserts nothing about its size
+						// and the parent checks the sum against the whole file.
 						"--declared-feature-count",
 						String(0),
 					],
@@ -473,9 +475,9 @@ function resolveCells(database: DatabaseClient<FloodDatabase>): {
 
 	// One group per (zone, resolution): `compactCells` takes a single resolution,
 	// and an adaptively-indexed layer has several.
-	// Pooling them throws. compacting only the target group would silently drop every
-	// coarsened feature's interior — the shape of failure this repo keeps writing down,
-	// because the artifact would still build.
+	// Pooling them throws.
+	// Compacting only the target group would silently drop every coarsened feature's interior.
+	// The shape of failure this repo keeps writing down, because the artifact would still build.
 	for (const { zone_code: zoneCode, resolution } of zones) {
 		const wholeShort = database
 			.prepare("SELECT DISTINCT h3_cell FROM build_cell_touch WHERE zone_code = ? AND resolution = ? AND is_full = 1")

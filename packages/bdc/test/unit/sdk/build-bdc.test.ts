@@ -58,8 +58,9 @@ function blockCentroids(geoid: string): { lat: number; lon: number } | undefined
 }
 
 /**
- * 5 raw rows: row 1 + its exact duplicate (row 2) share the natural key `(geoid, provider_id, technology_code,
- * location_id)`; row 5's geoid is deliberately absent from {@link centroids}.
+ * 5 raw rows: row 1 + its exact duplicate (row 2) share the natural key
+ * `(geoid, provider_id, technology_code, location_id)`; row 5's geoid is
+ * deliberately absent from {@link centroids}.
  */
 function fixtureRows(): BDCAvailabilityRow[] {
 	return [
@@ -499,7 +500,9 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 					match_score: null,
 					evidence: null,
 				},
-				// and two conflicting holding_company_name edges. The identical cardinality problem, unresolved by decision 6, so bdc_provider.holding_company stays NULL and both stay recoverable here.
+				// and two conflicting holding_company_name edges.
+				// The identical cardinality problem, unresolved by decision 6,
+				// so bdc_provider.holding_company stays NULL and both stay recoverable here.
 				{
 					from_node_id: PROVIDER_NODE,
 					to_node_id: HC_ALPHA_NODE,
@@ -524,7 +527,8 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 					match_score: null,
 					evidence: null,
 				},
-				// Each FRN's own most recent form-499 filing. FRN_LATE's is the later filing date.
+				// Each FRN's own most recent form-499 filing.
+				// FRN_LATE's is the later filing date.
 				{
 					from_node_id: FRN_EARLY_NODE,
 					to_node_id: FORM_EARLY,
@@ -558,7 +562,9 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 			{ providerID: 700_001, frn: FRN_EARLY, holdingCompany: "Alpha Holdco" },
 			{ providerID: 700_001, frn: FRN_LATE, holdingCompany: "Alpha Holdco Renamed" },
 			{ providerID: 700_002, frn: FRN_SOLO, holdingCompany: "Solo Broadband" },
-			// Two rows, same frn and same holding_company — proves the single-distinct-value shortcut looks at the distinct set across every row rather than just "there happened to be one row" (700002's trivial case above).
+			// Two rows, same frn and same holding_company — proves the single-distinct-value
+			// shortcut looks at the distinct set across every row rather than just "there
+			// happened to be one row" (700002's trivial case above).
 			{ providerID: 700_004, frn: FRN_SOLO, holdingCompany: "Repeat Holdco" },
 			{ providerID: 700_004, frn: FRN_SOLO, holdingCompany: "Repeat Holdco" },
 		]

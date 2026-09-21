@@ -35,8 +35,8 @@ export interface ReleaseTool {
 
 /**
  * What every tool answers: the operation's output beside the effect it declared,
- * the dry-run flag it ran under, and the progress lines the operation logged —
- * a receipt a reader can check without a terminal.
+ * the dry-run flag it ran under, and the progress lines the operation logged.
+ * A receipt a reader can check without a terminal.
  */
 export interface ReleaseToolResult {
 	operation: string
@@ -122,8 +122,9 @@ export function buildReleaseToolTable(
 
 /**
  * The one tool that is not an operation: the registry itself, with the effect of
- * every operation and whether this server exposes it — so an agent that cannot see
- * a publishing tool learns that it exists and why it is absent.
+ * every operation and whether this server exposes it.
+ *
+ * So an agent that cannot see a publishing tool learns that it exists and why it is absent.
  */
 export function registryTool(
 	registry: ReadonlyArray<ReleaseOperation<unknown, unknown>>,

@@ -136,7 +136,7 @@ export interface ZoningAreaTable {
 	max_lat: number
 	max_lon: number
 	/**
-	 * How many rings the source published for this feature — with `signed_area_m2`,
+	 * How many rings the source published for this feature, with `signed_area_m2`,
 	 * the ingest's own receipt that the orientation was read rather than assumed.
 	 */
 	ring_count: number
@@ -145,8 +145,9 @@ export interface ZoningAreaTable {
 	 */
 	signed_area_m2: number
 	/**
-	 * The authority's ring coordinates, unsimplified, with hole roles resolved —
-	 * see `ring-roles.ts` for the resolution and `rings.ts` for the layout and the point test.
+	 * The authority's ring coordinates, unsimplified, with hole roles resolved.
+	 *
+	 * See `ring-roles.ts` for the resolution and `rings.ts` for the layout and the point test.
 	 */
 	rings: Uint8Array
 }
@@ -212,7 +213,7 @@ export interface ZoningVocabularyTable {
 	 * The publisher's own words.
 	 *
 	 * For an observed-but-undeclared code this is the description the data carries on its rows,
-	 * or the code itself where the data carries none — never a label this package wrote.
+	 * or the code itself where the data carries none, never a label this package wrote.
 	 */
 	label: string
 	/**
@@ -305,10 +306,10 @@ export interface ZoningCellTable {
  * Empty IN this edition, and its emptiness is the claim.
  * The Department states "Awaiting data for some Local Authorities
  *
- * - Please see map viewer for coverage details" and publishes that detail only inside a map application, so there is no
- *   footprint to record and `layer_coverage` carries `basis = source_present`. Donegal County Council's absence — the
- *   one local authority of 31 missing from the layer — was recovered by measuring `LA_CODE`, not read from a
- *   statement.
+ * - Please see map viewer for coverage details" and publishes that detail only inside a map application,
+ *   so there is no footprint to record and `layer_coverage` carries `basis = source_present`.
+ *   Donegal County Council's absence — the one local authority of 31 missing from the layer —
+ *   was recovered by measuring `LA_CODE`, not read from a statement.
  *
  * Deriving a footprint from the union of the zoning polygons is forbidden: the union of zoned areas is
  * not the area the authority examined, and the difference is the whole content of a negative answer.

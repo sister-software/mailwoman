@@ -50,8 +50,10 @@ export interface GeoBiasRowProps {
  * faded the right edge of a single button for no reason.
  *
  * A failure gets a line of its own.
- * The pressed state cannot carry it — a denial turns the chip back off, which looks
- * identical to the visitor turning it off, and the browser will not prompt a second time.
+ * The pressed state cannot carry it.
+ *
+ * A denial turns the chip back off, which looks identical to the visitor turning it off,
+ * and the browser will not prompt a second time.
  *
  * Therefore, pressing again appeared to do nothing at all.
  */

@@ -79,7 +79,9 @@ const PLAIN_VENUES: ReadonlyArray<string> = [
 	"Maple Leaf Cafe",
 	"Riverside Garden Center",
 	"Tech Solutions Inc",
-	// FR-flavored venue names (the run-2 contingency): the failing gauntlet fixtures carry international/English names at FR addresses, but native forms must appear too — the register mixes both in real Paris data.
+	// FR-flavored venue names (the run-2 contingency): the failing gauntlet fixtures carry
+	// international/English names at FR addresses, but native forms must appear too —
+	// the register mixes both in real Paris data.
 	"Café de la Poste",
 	"Boulangerie Saint-Michel",
 	"Le Petit Bistrot",

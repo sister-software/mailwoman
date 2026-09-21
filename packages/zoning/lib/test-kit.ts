@@ -134,7 +134,7 @@ export function fixtureFeature(
  * And a zone the authority states as unzoned.
  *
  * The overlap between plans is the point.
- * A point inside the first zone must answer with both rows, each naming its own plan —
+ * A point inside the first zone must answer with both rows, each naming its own plan,
  * which is what proves a plan is part of the claim rather than a parameter of it.
  */
 export function fixtureFeatures(): ZoningSourceFeature[] {
@@ -143,7 +143,7 @@ export function fixtureFeatures(): ZoningSourceFeature[] {
 	const zoneA = exteriorRing(lon, lat, lon + FIXTURE_SIDE, lat + FIXTURE_SIDE)
 	const zoneB = exteriorRing(lon + FIXTURE_SIDE, lat, lon + 2 * FIXTURE_SIDE, lat + FIXTURE_SIDE)
 
-	// the hole is A separate part rather than a nested ring — which is how the
+	// the hole is A separate part rather than a nested ring, which is how the
 	// real service encodes it on the features that carry one, and the encoding a
 	// nesting-aware reader turns into a second zoned area.
 	const holed: MultiPolygonRings = [
@@ -195,7 +195,9 @@ export function fixtureFeatures(): ZoningSourceFeature[] {
 			crosswalkDescription: null,
 			crosswalkRollup: "N/A",
 		}),
-		// The same ground as zone A under a second plan, and the same local code mapped to a different generic type — which is the shape that makes the crosswalk non-functional over an (authority, code) pair.
+		// The same ground as zone A under a second plan, and the same local code mapped
+		// to a different generic type, which is the shape that makes the crosswalk
+		// non-functional over an (authority, code) pair.
 		fixtureFeature(6, [[zoneA]], {
 			planID: localAreaPlan.id,
 			planName: localAreaPlan.name,

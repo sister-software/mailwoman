@@ -46,7 +46,7 @@ export interface OvertureListingClient {
  * S3 returns at most 1,000 keys per `ListObjectsV2` response and reports the truncation in `IsTruncated`.
  *
  * A reader that only matches `<Prefix>` cannot see that field, so a truncated first page
- * reads as the whole bucket — and every release past the truncation reads as pruned,
+ * reads as the whole bucket, and every release past the truncation reads as pruned,
  * which is the one answer this module exists to give correctly.
  */
 const LISTING_PAGE_LIMIT = 100
@@ -144,7 +144,7 @@ export async function checkOvertureRelease(release: string, client?: OvertureLis
 
 	// An empty listing is not an empty bucket.
 	// Overture has never held zero releases, so nothing-found means the query was wrong
-	// or the response was not the listing — and the first version of this file proved the
+	// or the response was not the listing, and the first version of this file proved the
 	// point by dropping its own query parameters and then reporting a live pin as pruned.
 	// Zero is treated as no answer, never as absence.
 	if (!available.length) {

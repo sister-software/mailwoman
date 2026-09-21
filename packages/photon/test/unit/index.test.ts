@@ -129,10 +129,11 @@ test("forward: a house-grade (rooftop) result decorates type:house + housenumber
 	expect(props.osm_value).toBe("house")
 	expect(props.housenumber).toBe("8")
 	expect(props.street).toBe("Boulevard du Palais")
-	// name is dropped (upstream has none for a bare address point. keeping the city here
+	// name is dropped (upstream has none for a bare address point. Keeping the city here
 	// would double it in the QGIS FLF label "Paris 8 Boulevard du Palais Paris 75001").
 	expect(props.name).toBeUndefined()
-	// The admin fields the ancestry filled are retained — a house result still carries city/postcode/country.
+	// The admin fields the ancestry filled are retained.
+	// A house result still carries city/postcode/country.
 	expect(props.city).toBe("Paris")
 	expect(props.postcode).toBe("75001")
 	expect(props.country).toBe("France")
@@ -171,7 +172,7 @@ test("forward: street-grade re-tags highway/street with the FULL name in `name` 
 	})
 
 	// Matches upstream komoot's street results (verified live 2026-07-10): full name in `name`,
-	// highway osm_key, type street — never the locality's type:city / first-token truncation.
+	// highway osm_key, type street, never the locality's type:city / first-token truncation.
 	expect(props.type).toBe("street")
 	expect(props.osm_key).toBe("highway")
 	expect(props.osm_value).toBe("residential")
@@ -223,7 +224,7 @@ test("photonOSMTags: every /reverse descent tier has a projection (#1041 close-o
 	// ladder (county → localadmin → locality → borough → neighbourhood → microhood —
 	// keep this list in sync with resolver-wof-sqlite/reverse.ts).
 	// A reverse result can never be address-grade: the ladder caps at microhood, so the issue's
-	// "/reverse parity for address points" checkbox is structurally moot — but every tier the
+	// "/reverse parity for address points" checkbox is structurally moot, but every tier the
 	// ladder can return must decorate with real tags, never the `place/yes/other` default.
 	const descentTiers = ["county", "localadmin", "locality", "borough", "neighbourhood", "microhood"]
 

@@ -63,7 +63,7 @@ function tableCells(line: string): string[] {
 
 /**
  * Read a named column for a named arena row from the arena summary pipe-table,
- * by header — never a fixed offset.
+ * by header, never a fixed offset.
  *
  * The table shape is not stable across the arena's own history: before the
  * #1151 rules-parser deletion the summary carried the v0 comparison columns
@@ -128,7 +128,7 @@ function tableCell(md: string, headerPattern: RegExp, column: string, row: strin
  * Sidecar-first reads (the scorers emit JSON beside the markdown since night-11.
  * The regex fallback keeps old out-dirs replayable).
  *
- * A sidecar that exists but can't parse is a loud throw — never a silent fallback to presentation parsing.
+ * A sidecar that exists but can't parse is a loud throw, never a silent fallback to presentation parsing.
  */
 /**
  * Parsed scorer sidecar JSON — only the fields this check reads are modeled.
@@ -144,7 +144,7 @@ interface ScorerSidecar {
 export interface PromotionVerdict {
 	label: string
 	/**
-	 * Which artifact the floors were read from — not which flag was passed.
+	 * Which artifact the floors were read from, not which flag was passed.
 	 *
 	 * `weights-cache` is its own value because a package-shaped cache's `model.onnx` is whatever
 	 * the package ships (int8, in every shipped weights package), and calling that "fp32"
@@ -292,7 +292,7 @@ export async function assemblePromotionVerdict(
 	let failed = false
 
 	// A leg-handled floor is enforced by its leg but was absent from `results` entirely,
-	// so a reader counting floors here saw 17 where the spec declares 18 — and a floor
+	// so a reader counting floors here saw 17 where the spec declares 18, and a floor
 	// that is missing from a report reads as a floor that did not run.
 	// Enforcement stays with the leg.
 	// This only completes the record, from the sidecar the leg already writes.

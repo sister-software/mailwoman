@@ -81,7 +81,7 @@ interface RungReading {
 	/**
 	 * What changed against the previous rung.
 	 *
-	 * Null on step 0, where there is no previous rung — which is a different fact from a
+	 * Null on step 0, where there is no previous rung, which is a different fact from a
 	 * delta whose every list is empty, and the rendering keeps them apart.
 	 */
 	delta: RungDelta | null

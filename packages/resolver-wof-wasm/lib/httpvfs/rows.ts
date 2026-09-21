@@ -42,8 +42,9 @@ export function tableExists(worker: SQLExecutor, name: string): Promise<boolean>
 }
 
 /**
- * Memoize a zero-argument async probe as its in-flight promise so concurrent callers share
- * one round trip. a rejection clears the memo so a transient failure can retry.
+ * Memoize a zero-argument async probe as its in-flight promise so concurrent callers share one round trip.
+ *
+ * A rejection clears the memo so a transient failure can retry.
  */
 export function memoizeResettable<T>(fn: () => Promise<T>): () => Promise<T> {
 	let memo: Promise<T> | undefined

@@ -187,7 +187,7 @@ export function parseGeonamesCentroids(text: string): Map<string, ZCTACentroid> 
  * Fill `(0,0)`-placeholder US postcode rows from GeoNames postal centroids,
  * stamping provenance as `geonames-us`.
  *
- * Runs only on rows that are still `(0,0)` — never overwrites a census-zcta or WOF coordinate.
+ * Runs only on rows that are still `(0,0)`, never overwrites a census-zcta or WOF coordinate.
  * Idempotent (the update re-checks `latitude=0 and longitude=0`).
  *
  * Returns the number of rows filled.

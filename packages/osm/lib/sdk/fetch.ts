@@ -39,7 +39,7 @@ export function geofabrikURL(regionPath: string): string {
 /**
  * Download a Geofabrik extract to `destPath`, streaming (these run to several GB for a whole country).
  *
- * Returns the byte count written.
+ * @returns the byte count written.
  * The caller owns where the file lands (typically `$MAILWOMAN_DATA_ROOT/osm/geofabrik/`).
  */
 export async function downloadExtract(regionPath: string, destPath: string): Promise<number> {

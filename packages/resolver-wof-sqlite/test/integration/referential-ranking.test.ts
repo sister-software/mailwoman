@@ -202,7 +202,7 @@ describe("Saint-Denis — ranking is referential", () => {
 		// which pins the Seine-Saint-Denis suburb as truth: that row encodes "Metropolitan
 		// France", which is a different claim from "referentially dominant".
 		// The row fails identically under all four FST arms including no-FST, so it is a
-		// board-authoring question for §3 rather than a regression here — but a test that
+		// board-authoring question for §3 rather than a regression here, but a test that
 		// quietly omitted Réunion would be asserting a world that does not exist.
 		const withReunion: FixturePlace[] = [
 			...SAINT_DENIS,

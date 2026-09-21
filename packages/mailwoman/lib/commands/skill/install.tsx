@@ -92,7 +92,8 @@ async function installSkill(dest: string | undefined): Promise<InstallOutcome> {
 		const sourceDir = await resolveSkillSourceDir()
 		const destDir = resolvePath(dest ?? ".", ".claude", "skills", "mailwoman")
 
-		// Clean-slate rather than merge — see the module docstring for why a bare cpSync isn't enough.
+		// Clean-slate rather than merge.
+		// See the module docstring for why a bare cpSync isn't enough.
 		await removePathIfPresent(destDir)
 		await copyPath(sourceDir, destDir)
 

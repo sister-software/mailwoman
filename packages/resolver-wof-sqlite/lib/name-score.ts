@@ -9,7 +9,7 @@
  */
 
 /**
- * Case-fold + strip diacritics + collapse punctuation — for the coord-first soft name match.
+ * Case-fold + strip diacritics + collapse punctuation, for the coord-first soft name match.
  */
 export function cfNormalize(s: string): string {
 	return s

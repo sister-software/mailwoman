@@ -85,7 +85,7 @@ describe.skipIf(!classifier)("venue-structure confound board", () => {
 	}
 
 	// `test.fails` inverts the assertion, so a row listed here that starts passing
-	// turns the suite red — which is the point.
+	// turns the suite red, which is the point.
 	// An xfail nobody is forced to revisit is just a deleted test with extra steps.
 	for (const row of rows.filter((r) => r.xfail)) {
 		test.fails(`[${row.class}] XFAIL (${row.xfail}): ${row.raw}`, async () => {

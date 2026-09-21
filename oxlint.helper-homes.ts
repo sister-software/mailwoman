@@ -18,12 +18,7 @@
  *
  * `signature` is what a re-typed copy looks like in the AST.
  *
- * Five signature kinds cover every row. A `method-chain` names the method calls of the outermost call innermost-first,
- * matched as a suffix of the chain the call stands on (`new Date().toISOString().slice(0, 10)` is `["toISOString",
- * "slice"]`), optionally with the literal arguments the outer call must carry. A `numeric-literal` names the constants
- * a re-typed algorithm cannot avoid writing: Earth's mean radius, a generator's multiplier. A `string-literal` names a
- * substring a re-typed shell-out cannot avoid: the git subcommand it runs, in a plain string, a template literal, or a
- * `$\`…`` command.
+ * Five signature kinds cover every row. A `method-chain` names the method calls of the outermost call innermost-first, matched as a suffix of the chain the call stands on (`new Date().toISOString().slice(0, 10)` is `["toISOString", "slice"]`), optionally with the literal arguments the outer call must carry. A `numeric-literal` names the constants a re-typed algorithm cannot avoid writing: Earth's mean radius, a generator's multiplier. A `string-literal` names a substring a re-typed shell-out cannot avoid: the git subcommand it runs, in a plain string, a template literal, or a `$\`…`` command.
  *
  * A `descending-swap-loop` names a control shape rather than a token, for the helpers
  * whose re-typed copy carries no distinctive literal at all.
@@ -50,8 +45,8 @@ export interface HelperHome {
 /**
  * Every helper shape the `prefer-home` rule knows.
  *
- * Each row was added by a review that found the same helper typed twice. the rule
- * then reports the third copy at commit time.
+ * Each row was added by a review that found the same helper typed twice.
+ * The rule then reports the third copy at commit time.
  */
 export const HELPER_HOMES: readonly HelperHome[] = [
 	{

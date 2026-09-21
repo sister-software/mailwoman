@@ -54,7 +54,7 @@ export function useScratchDir(slug: string): ScratchDir {
 	// The directory is owned by the test, never by a module-scoped stack.
 	// Under `isolate: false` this module is shared across every corpus adapter suite in a fork,
 	// so a stack disposed by the first file's `afterAll` left every later file calling `use()`
-	// on a disposed stack — which is what "Cannot call AsyncDisposableStack.prototype.use on an
+	// on a disposed stack, which is what "Cannot call AsyncDisposableStack.prototype.use on an
 	// already-disposed DisposableStack" was, across a different set of adapter suites on each run.
 	//
 	// Teardown swallows its own errors: a test that already removed the directory, or a platform

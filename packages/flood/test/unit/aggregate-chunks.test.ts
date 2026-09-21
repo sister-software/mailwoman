@@ -61,7 +61,8 @@ describe("aggregateChunks", () => {
 	})
 
 	it("computes the area gap over the SUMMED totals, not per chunk", () => {
-		// Each chunk is 1% out on its own and they cancel. the whole-file reading is what the tolerance is about.
+		// Each chunk is 1% out on its own and they cancel.
+		// The whole-file reading is what the tolerance is about.
 		const result = aggregateChunks([
 			chunk({ area: { sourceM2: 1_000_000, nestedM2: 1_010_000, allExteriorM2: 1_100_000 } }),
 			chunk({ area: { sourceM2: 1_000_000, nestedM2: 990_000, allExteriorM2: 1_100_000 } }),

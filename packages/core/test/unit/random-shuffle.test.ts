@@ -135,7 +135,7 @@ describe("shuffleWith", () => {
 
 	it("reproduces the modulo-indexed walk through shuffleBy, and not through shuffleWith", () => {
 		// `conformal-calibrate.run.ts` derives its index as `state % (i + 1)` over a raw glibc LCG state.
-		// That is the same walk with a different sampler, so `shuffleBy` reproduces it —
+		// That is the same walk with a different sampler, so `shuffleBy` reproduces it,
 		// which is why that call site no longer keeps a loop.
 		for (const size of [2, 17, 64, 500]) {
 			for (const seed of SEEDS) {

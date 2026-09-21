@@ -250,8 +250,9 @@ export interface BuildFilerOptions {
 	 */
 	providerRows?: AsyncIterable<ProviderListRow> | Iterable<ProviderListRow>
 	/**
-	 * Injected edgar Exhibit 21 subsidiary-disclosure source — see the module
-	 * docstring's "edgar Exhibit 21 ingest" section.
+	 * Injected edgar Exhibit 21 subsidiary-disclosure source.
+	 *
+	 * See the module docstring's "edgar Exhibit 21 ingest" section.
 	 *
 	 * Subsidiary-name→FRN corroboration is matched against this same call's
 	 * `form499Rows` (their `legalNameOfCarrier`).
@@ -300,7 +301,7 @@ export interface BuildFilerOptions {
 	 * a separate field from {@link BuildFilerOptions.sourceVintage}, never derived from it.
 	 *
 	 * The provider list carries no per-row date, which makes the whole-file `sourceVintage` the
-	 * tempting single source for both `source_vintage` and `valid_from` — but `sourceVintage`
+	 * tempting single source for both `source_vintage` and `valid_from`, but `sourceVintage`
 	 * is a free-text human vintage label (e.g. `"2026-Q2"`), not guaranteed ISO-sortable,
 	 * while `valid_from` participates in every downstream `asOf`-scoped predicate
 	 * (`filer-lookup.ts`'s `valid_from <= asOf`) as a plain string comparison.
@@ -364,8 +365,9 @@ export interface BuildFilerResult {
 	 */
 	skipped: number
 	/**
-	 * `filer_edge` rows whose `valid_to` was closed from a Form 499 cessation note —
-	 * see `closeableCessationDate` (`build/form499-rows.ts`) for which ones qualify.
+	 * `filer_edge` rows whose `valid_to` was closed from a Form 499 cessation note.
+	 *
+	 * See `closeableCessationDate` (`build/form499-rows.ts`) for which ones qualify.
 	 */
 	closedByCessation: number
 	/**
@@ -450,8 +452,8 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 		)
 
 		// relationship: FRN<->form499ID and bdcProviderID<->FRN assert identity (SameEntity);
-		// the holding-/management-company edges below assert HoldingCompany/ManagementCompany —
-		// see the module docstring's "relationship is fully typed" section.
+		// the holding-/management-company edges below assert HoldingCompany/ManagementCompany.
+		// See the module docstring's "relationship is fully typed" section.
 		const insEdge = kdb.prepare(
 			`INSERT OR IGNORE INTO filer_edge (
 				from_node_id, to_node_id, assertion, relationship, source, source_vintage, valid_from, valid_to, match_score, evidence
@@ -511,8 +513,8 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 			const form499NodeID = mintForm499NodeID(row.form499ID, form499RowIndex)
 			insNode.run(form499NodeID, FilerIdentifierType.Form499ID, row.form499ID)
 
-			// Guarded once per row, before anything below writes it into source_vintage/valid_from —
-			// see the docstring above assertLastFiledAt.
+			// Guarded once per row, before anything below writes it into source_vintage/valid_from.
+			// See the docstring above assertLastFiledAt.
 			// ISO-validated too: this same value becomes valid_from on every edge this row emits,
 			// and valid_from must always be ISO-sortable — see assertISODate's docstring.
 			const lastFiledAt = assertISODate(
@@ -698,7 +700,8 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 			.insertInto("filer_manifest")
 			.values({
 				name: "filer",
-				// filer.db has no independent versioning yet — same deferral build-bdc.ts makes for bdc.db's `release`.
+				// filer.db has no independent versioning yet.
+				// Same deferral build-bdc.ts makes for bdc.db's `release`.
 				version: options.sourceVintage,
 				// The current schema version from filer/schema.ts — bumped to 3
 				// when SupersededBy and valid_to semantics landed.

@@ -106,7 +106,7 @@ const APPEND_COUNTRY_SHARE = 0.2
  * Render one admin-split variant.
  *
  * The core teaching signal: the département, even as a full word after a comma
- * or a space, is `region` — never folded into `locality`.
+ * or a space, is `region`, never folded into `locality`.
  * Variants 1-3 are the failure class. 4-5 are canonical-FR preservation so the model
  * doesn't over-fire region on every trailing token (and the bare commune still resolves).
  */
@@ -156,8 +156,10 @@ function render(random: () => number, c: CommuneRow): AdminSplitVariant {
 }
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour
- * it exists to exercise, and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder.
+ *
+ * See the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
  */
 export const frAdminSplitRecipe: CorpusRecipe = {
 	name: "fr-admin-split",

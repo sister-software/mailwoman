@@ -58,7 +58,8 @@ export const GoogleGeocoderStatus = {
 	 */
 	OverDailyLimit: "OVER_DAILY_LIMIT",
 	/**
-	 * The per-second/per-minute request rate was exceeded. transient — the one status here worth retrying.
+	 * The per-second/per-minute request rate was exceeded.
+	 * Transient — the one status here worth retrying.
 	 */
 	OverQueryLimit: "OVER_QUERY_LIMIT",
 	/**
@@ -87,8 +88,8 @@ export type GoogleGeocoderStatus = (typeof GoogleGeocoderStatus)[keyof typeof Go
 /**
  * How precise Google considers the returned coordinate.
  *
- * Maps onto mailwoman's `ResolutionTier` in `google-parser.ts` — that mapping is
- * what lets an oracle run fill a `SeedCase.expectTier`.
+ * Maps onto mailwoman's `ResolutionTier` in `google-parser.ts`.
+ * That mapping is what lets an oracle run fill a `SeedCase.expectTier`.
  */
 export const GoogleLocationType = {
 	/**
@@ -96,8 +97,9 @@ export const GoogleLocationType = {
 	 */
 	Rooftop: "ROOFTOP",
 	/**
-	 * Interpolated between two precise points along a street segment — the same technique
-	 * the Census geocoder uses for every one of its matches.
+	 * Interpolated between two precise points along a street segment.
+	 *
+	 * The same technique the Census geocoder uses for every one of its matches.
 	 */
 	RangeInterpolated: "RANGE_INTERPOLATED",
 	/**

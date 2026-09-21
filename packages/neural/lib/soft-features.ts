@@ -43,18 +43,21 @@ export interface SoftFeatureChannel {
  */
 export interface SoftFeatures {
 	/**
-	 * Postcode-anchor channel (#239/#240) — present iff `postcodeAnchorLookup` was supplied.
+	 * Postcode-anchor channel (#239/#240).
+	 * Present iff `postcodeAnchorLookup` was supplied.
 	 */
 	anchor?: SoftFeatureChannel
 	/**
-	 * Gazetteer-anchor channel (#464) — present iff `gazetteerLexicon` was supplied.
+	 * Gazetteer-anchor channel (#464).
+	 * Present iff `gazetteerLexicon` was supplied.
 	 *
 	 * Already choreographed: when `suppressGazetteerNearPostcode` is set and an anchor channel
 	 * exists, the clue is zeroed adjacent to postcode-anchor hits before it's returned here.
 	 */
 	gazetteer?: SoftFeatureChannel
 	/**
-	 * Country-lexicon channel (#1104) — present iff `countryLexicon` was supplied.
+	 * Country-lexicon channel (#1104).
+	 * Present iff `countryLexicon` was supplied.
 	 *
 	 * Deliberately not subject to `suppressGazetteerNearPostcode`: unlike the
 	 * gazetteer's country slot, this channel fires on a trailing "…12345 USA"
@@ -64,7 +67,8 @@ export interface SoftFeatures {
 	 */
 	country?: SoftFeatureChannel
 	/**
-	 * Street-type evidence channel (Option-A bundle, Phase 2) — present iff `streetTypeLexicon` was supplied.
+	 * Street-type evidence channel (Option-A bundle, Phase 2).
+	 * Present iff `streetTypeLexicon` was supplied.
 	 *
 	 * Painted by the same generic painter as the gazetteer channel
 	 * (the lexicons share one schema); no choreography.
@@ -73,8 +77,8 @@ export interface SoftFeatures {
 	 */
 	streetType?: SoftFeatureChannel
 	/**
-	 * Locality-surface evidence channel (Option-A bundle, Phase 2) — present iff
-	 * `localitySurfaceLexicon` was supplied.
+	 * Locality-surface evidence channel (Option-A bundle, Phase 2).
+	 * Present iff `localitySurfaceLexicon` was supplied.
 	 */
 	localitySurface?: SoftFeatureChannel
 }
@@ -148,8 +152,10 @@ export interface SoftFeatureSources {
  *
  * 1. Anchor channel from `postcodeAnchorLookup` (no-op when unset).
  * 2. Gazetteer channel from `gazetteerLexicon` (no-op when unset).
- * 3. If both channels exist and `suppressGazetteerNearPostcode`, zero the gazetteer clue adjacent to postcode-anchor hits.
- * 4. Country channel from `countryLexicon` (no-op when unset) — independent of the near-postcode choreography.
+ * 3. If both channels exist and `suppressGazetteerNearPostcode`, zero the gazetteer
+ *    clue adjacent to postcode-anchor hits.
+ * 4. Country channel from `countryLexicon` (no-op when unset) — independent
+ *    of the near-postcode choreography.
  *
  * Pure + byte-stable: the returned channels are identical to the pre-#718 inline path,
  * so wiring this into `#decode` is a behavior-preserving refactor.
@@ -161,7 +167,7 @@ export function buildSoftFeatures(
 ): SoftFeatures {
 	// ship obligation (A2 of ROAD_TO_V9 §1).
 	// This is the one place in the codebase where the loaded lookup and the card-declared span
-	// mode are both in hand, so it is where the mispairing can be seen — and it covers every
+	// mode are both in hand, so it is where the mispairing can be seen, and it covers every
 	// construction path (Node loader, browser loader, a harness building a classifier by hand),
 	// not just the one loader a check in `loadFromWeights` would have caught.
 	// Latched to once per process, so the per-parse cost is a boolean read.

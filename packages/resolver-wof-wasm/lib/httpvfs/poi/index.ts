@@ -79,7 +79,9 @@ export interface POISearchOpts {
 	 * Fan-out leaves — the Overture `taxonomy.primary` ids this canonical category rolls up into
 	 * (`supermarket` → `grocery_store`, …), from `@mailwoman/poi-taxonomy`'s `resolveOvertureCategories`.
 	 *
-	 * When set, every resolvable leaf is probed per cell and the rows are unioned. unknown leaves are skipped.
+	 * When set, every resolvable leaf is probed per cell and the rows are unioned.
+	 * Unknown leaves are skipped.
+	 *
 	 * Absent ⇒ probe `categoryID` alone (identity) — matching the Node reader's back-compat.
 	 */
 	categoryIDs?: string[]
@@ -89,8 +91,9 @@ export interface POISearchOpts {
 	 * a live cross-check against a real Springfield-IL cafe cluster found its nearest hit only
 	 * at k=3, so a smaller default returned zero results for a perfectly ordinary query).
 	 *
-	 * Still well under the Node reader's 12-ring/~4 km default — the tester issues one explicit-click
-	 * search rather than a per-keystroke probe, so the request count stays bounded either way.
+	 * Still well under the Node reader's 12-ring/~4 km default.
+	 * The tester issues one explicit-click search rather than a per-keystroke probe,
+	 * so the request count stays bounded either way.
 	 */
 	maxRings?: number
 	limit?: number
@@ -140,15 +143,16 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 
 		for (const cell of newCells) {
 			seenCells.add(cell)
-			// The same packing as poi-lookup.ts: the shared @mailwoman/spatial `shortCellToInt`
-			// 48-bit packer — `poi.h3_cell` is the shortened cell.
+			// The same packing as poi-lookup.ts: the shared @mailwoman/spatial `shortCellToInt` 48-bit packer.
+			// `poi.h3_cell` is the shortened cell.
 			const shortCell = shortCellToInt(cell as H3Cell)
 
 			// Country is appended to the per-cell probe (beyond the spec's literal 4-column SQL)
 			// so the tester's results list can show it — same where/order/limit + packing, one extra column.
 			// `category_id IN (…)` unions the fan-out leaves in one probe per cell
-			// (the ids are dictionary ints, never user input — no injection surface). limit still
-			// caps the per-cell pull. the outer ring loop + final sort trim to the nearest `limit`.
+			// (the ids are dictionary ints, never user input — no injection surface).
+			// Limit still caps the per-cell pull.
+			// The outer ring loop + final sort trim to the nearest `limit`.
 			const sql =
 				`SELECT name, latitude, longitude, confidence, country FROM poi ` +
 				`WHERE h3_cell = ${shortCell} AND category_id IN (${categoryIDList}) ORDER BY neg_rank ASC LIMIT ${limit}`

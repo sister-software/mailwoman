@@ -39,8 +39,8 @@ const PARITY_FIXTURES_RELATIVE_PATH = "packages/mailwoman/lib/eval-harness/fixtu
 /**
  * A reference to an input set.
  *
- * Discriminated so a caller cannot pass a bare array by accident — see the module
- * docstring for why the hand-picked case is deliberately the wordy one.
+ * Discriminated so a caller cannot pass a bare array by accident.
+ * See the module docstring for why the hand-picked case is deliberately the wordy one.
  */
 export type InputSetRef =
 	| { kind: "board"; country?: string; address_kind?: string; status?: string }
@@ -460,8 +460,8 @@ async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): P
 
 	// A row may carry its own truth point.
 	// That is what turns this from an observation set into the authoring loop for a new board row:
-	// measure the candidates against real coordinates first, then write the case file with the
-	// status you measured — rather than writing rows and discovering the score afterwards.
+	// measure the candidates against real coordinates first, then write the case file with
+	// the status you measured, rather than writing rows and discovering the score afterwards.
 	const rows: ResolvedInput[] = ref.inputs.map((entry, index) =>
 		typeof entry === "string"
 			? { id: String(index), input: entry }

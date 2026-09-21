@@ -24,8 +24,9 @@
  * - Street-level (Phase 2): house_number, street, street_prefix*, street_suffix, intersection_a/b, unit
  * - Venue-level (Phase 3): venue, attention, po_box
  * - FR-specific: cedex
- * - JP-specific (activated at CJK Phase 2, 2026-07-29 — the JP char model's 47-label head trains against them. The Latin
- *   model never emits them): prefecture, municipality, district, block, sub_block, building_number, building_name
+ * - JP-specific (activated at CJK Phase 2, 2026-07-29 — the JP char model's 47-label head
+ *   trains against them. The Latin model never emits them): prefecture, municipality,
+ *   district, block, sub_block, building_number, building_name
  */
 export const COMPONENT_TAGS = [
 	// Universal
@@ -58,7 +59,14 @@ export const COMPONENT_TAGS = [
 	"sub_block",
 	"building_number",
 	"building_name",
-	// CN-specific (#2034): the organizational ladder China's rural addresses carry below the named settlement — state-farm sub-farms (分场), production brigades and teams (大队, 队, 生产队), xpcc regiments and companies (团, 连), villager groups (组). One contiguous span holds the whole ordinal chain (`三分场八队`); which rung each generic names is a deterministic reading of the suffix rather than a label distinction, so the tag stays one and the split is derived. The named head unit (`孟定农场`, `新合`) is `dependent_locality`. Emitted by the CJK sibling model only.
+	// CN-specific (#2034): the organizational ladder China's rural addresses carry
+	// below the named settlement — state-farm sub-farms (分场), production brigades
+	// and teams (大队, 队, 生产队), xpcc regiments and companies (团, 连), villager groups (组).
+	// One contiguous span holds the whole ordinal chain (`三分场八队`); which rung each generic
+	// names is a deterministic reading of the suffix rather than a label distinction,
+	// so the tag stays one and the split is derived.
+	// The named head unit (`孟定农场`, `新合`) is `dependent_locality`.
+	// Emitted by the CJK sibling model only.
 	"locality_unit",
 ] as const
 

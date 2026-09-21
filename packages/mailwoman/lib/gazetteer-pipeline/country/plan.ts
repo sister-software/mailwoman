@@ -45,7 +45,7 @@ export interface SourceCensus {
  * Read the per-source row counts for one country out of an admin gazetteer.
  *
  * The band arithmetic is the measurement: nothing in `spr` records which fold wrote a row,
- * so the id range is the only evidence — which is also how the #1015 recipe had
+ * so the id range is the only evidence, which is also how the #1015 recipe had
  * to be reconstructed after the manifest lagged.
  */
 export function censusForCountry(adminDBPath: string, country: string): SourceCensus {
@@ -142,7 +142,7 @@ export interface CountryPlan {
  * Compute the plan for moving `country` to `target`.
  *
  * Pure: every input is passed in, so the plan is testable without a gazetteer, a network,
- * or a GitHub token — which is also what lets `--plan` run in CI.
+ * or a GitHub token, which is also what lets `--plan` run in CI.
  */
 export function planCountryMove(options: {
 	country: string

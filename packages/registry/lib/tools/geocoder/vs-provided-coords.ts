@@ -80,7 +80,7 @@ export interface GeocoderVsProvidedCoordsOptions {
  * What remains is not a defect and not negotiable.
  *
  * This source writes `latitude,longitude`; `GeoPoint` reads GeoJSON `[longitude, latitude]`,
- * so `31.5,-89.5` is a Mississippi row here and a South-Atlantic point there — and `GeoPoint.from`
+ * so `31.5,-89.5` is a Mississippi row here and a South-Atlantic point there, and `GeoPoint.from`
  * maps 0,0 to null, which moves Null Island out of the measured outliers and into the skipped bucket.
  * The report below attributes part of its p99/max tail to malformed provided coordinates,
  * so those rows have to stay rejected or measured as-is, never rewritten.

@@ -41,7 +41,7 @@ export const REFERENTIAL_LOG2_SCALE = 14
  * (Tokyo ~37 M vs Delhi ~33 M) tie at 1.0.
  *
  * Any ranking keyed on referential alone must break that tie on raw population to stay
- * ordering-identical to the population-first path — which is exactly what {@link compareReferential}
+ * ordering-identical to the population-first path, which is exactly what {@link compareReferential}
  * does, and why it exists rather than a bare subtraction at each call site.
  */
 export const REFERENTIAL_SATURATION_POPULATION = (2 ** REFERENTIAL_LOG2_SCALE - 1) * REFERENTIAL_POPULATION_DIVISOR

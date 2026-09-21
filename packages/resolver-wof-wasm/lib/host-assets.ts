@@ -86,8 +86,8 @@ export async function stageSQLJSAssets(destDir: PathBuilderLike): Promise<boolea
 		const dest = resolvePath(destDir, f)
 
 		// Idempotent stage — syncArtifact skips a size-identical copy.
-		// This runs in loadContent(), which the Docusaurus dev server (`yarn start`) re-invokes
-		// on reload — and `destDir` lives under the watched `static/` tree.
+		// This runs in loadContent(), which the Docusaurus dev server (`yarn start`)
+		// re-invokes on reload, and `destDir` lives under the watched `static/` tree.
 		// An unconditional copy rewrites the file (fresh mtime) even when the bytes are identical,
 		// the watcher sees a "change" and reloads, loadContent() re-runs and re-copies… a
 		// reload loop that shows up as the /demo page flickering during `start`.

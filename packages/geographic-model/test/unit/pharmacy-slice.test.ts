@@ -60,8 +60,8 @@ const AFFORDS = toRelationID("affords")
 /**
  * The external category the record set maps into.
  *
- * The mapping names it as a string. this is the same string, resolved through
- * the package that owns the vocabulary.
+ * The mapping names it as a string.
+ * This is the same string, resolved through the package that owns the vocabulary.
  */
 const POI_CATEGORY = toPOICategoryID("pharmacy")
 
@@ -186,7 +186,7 @@ describe("the committed artifact", () => {
 
 		// `drugstore` is a kind of `establishment` directly.
 		// The external hierarchy puts it under `retail`, disjoint from `health_and_medical`,
-		// and `healthcare_facility` is premises that exist to provide healthcare —
+		// and `healthcare_facility` is premises that exist to provide healthcare,
 		// which retail premises with a dispensing counter do not.
 		// Placing it there would give every later healthcare class a retail ancestor.
 		expect(closure.get(String(DRUGSTORE))).toEqual(["establishment", "place"])
@@ -297,8 +297,8 @@ describe("reading the record set through the runtime lookups", () => {
 	it("distinguishes a concept it carries from one it has never heard of", async () => {
 		const index = createGeographicModelIndex(await readCompiledGeographicModel())
 
-		// The model carries `pharmacy` and has derived nothing about it. it does not carry
-		// `chemist` at all, which is a different answer and stays a different answer.
+		// The model carries `pharmacy` and has derived nothing about it.
+		// It does not carry `chemist` at all, which is a different answer and stays a different answer.
 		expect(index.derivedFactsAbout(PHARMACY)).toEqual([])
 		expect(index.derivedFactsAbout(toConceptID("chemist"))).toBeUndefined()
 	})
@@ -307,7 +307,7 @@ describe("reading the record set through the runtime lookups", () => {
 	// `derivedFactsAbout` returning `[]` reads like the external lookup returning `[]`
 	// and a reader meeting one alone would take it for the other.
 	// The model carries the concept and states what it affords, its external identifier
-	// does translate into it since W1-3 landed, and nothing has been derived about it —
+	// does translate into it since W1-3 landed, and nothing has been derived about it,
 	// which is an empty derivation rather than an unmapped class.
 	it("carries `drugstore`, translates its external identifier, and has derived nothing about it", async () => {
 		const index = createGeographicModelIndex(await readCompiledGeographicModel())

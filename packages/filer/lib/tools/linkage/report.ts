@@ -71,7 +71,7 @@ function isPopulated(value: unknown): boolean {
  * Hand assertion gets this wrong in the most misleading direction available: `hqAddress`,
  * both `customerInquiries*` fields and all five `dcAgent*` fields look like channels "given to
  * the matcher" while being `""` on every row, which is the opposite of the impression a reader
- * takes from that column — and those are the same channels the caveats name as the way forward.
+ * takes from that column, and those are the same channels the caveats name as the way forward.
  */
 // repo-health-ignore private-name-shadows-export -- a name collision rather than a copy:
 // this counts populated corpus rows for one field and answers a markdown cell, where

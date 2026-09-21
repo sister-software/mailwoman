@@ -239,10 +239,11 @@ function loadGBCodePoint(): Map<string, Centroid> {
  *
  * Two consumers want them, and neither is the common path:
  *
- * - The inference parity fix's outward fallback. A unit that misses (a new-build code, or an NI `BT` code Code-Point Open
- *   does not carry) still anchors its full span from the district;
- * - A bare outward code in the text, which the train painter never looks up (`collect_matches`'s GB pattern requires the
- *   inward half) but the default alnum-run inference scan does.
+ * - The inference parity fix's outward fallback.
+ *   A unit that misses (a new-build code, or an NI `BT` code Code-Point Open does not carry)
+ *   still anchors its full span from the district;
+ * - A bare outward code in the text, which the train painter never looks up
+ *   (`collect_matches`'s GB pattern requires the inward half) but the default alnum-run inference scan does.
  *
  * Outward keys cannot collide with anything else in the lookup: they are letter-initial and ≤4 chars,
  * unit keys are ≥5, NL keys are digit-initial, and every numeric system's keys are digits only.
@@ -534,7 +535,7 @@ export async function buildAnchorLookup(args: AnchorLookupOptions): Promise<Anch
 
 	// Serialize from the sorted key array, streaming: JS hoists integer-like string
 	// keys (e.g. "10000") ahead of insertion order, so an object's own iteration order
-	// would unsort the output — and at the v2 set's ~2.2M keys, materializing every row
+	// would unsort the output, and at the v2 set's ~2.2M keys, materializing every row
 	// before writing costs more memory than the build.
 	const output = openWriteStream(args.output)
 	let buffer = "{"

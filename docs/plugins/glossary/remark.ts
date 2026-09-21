@@ -74,8 +74,8 @@ function matchableForms(entry: string): string[] {
 /**
  * Is this matched surface suppressed by the homonym guard?
  *
- * Exported so the backlink scan in plugin.ts applies the same rule against raw text —
- * the two must agree or the glossary page lists pages that render no tooltip.
+ * Exported so the backlink scan in plugin.ts applies the same rule against raw text.
+ * The two must agree or the glossary page lists pages that render no tooltip.
  */
 export function isSuppressedSurface(display: string, noAutoLink: readonly string[]): boolean {
 	if (!noAutoLink.length) return false

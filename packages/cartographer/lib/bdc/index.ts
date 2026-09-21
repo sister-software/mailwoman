@@ -131,8 +131,7 @@ export const BroadbandDataCollectionLayers: BDCLayerSpecificationInput[] = [
 			// ],
 			"fill-color": "hsl(60deg, 100%, 50%)",
 			"fill-opacity": [
-				// Underserved areas are emphasized to their level importance,
-				// relative to the impact of the underservice.
+				// Underserved areas are emphasized to their level importance, relative to the impact of the underservice.
 				"let",
 				"internet_speed_impact",
 				["/", ["to-number", ["get", "average_download_speed"]], GIGABIT_BROADBAND_SPEED],

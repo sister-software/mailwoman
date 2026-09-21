@@ -127,8 +127,8 @@ export interface FamilyRollupMember {
  *
  * `display_names` (`family_id` alone is a canonicalized slug, and losing the raw name entirely
  * was a real product loss for the headline "these filers report holding company H" output)
- * is {@linkcode readFamilyDisplayNames}'s output over this family's current members —
- * see that function's docstring for the exact join and for why a multi-spelling family
+ * is {@linkcode readFamilyDisplayNames}'s output over this family's current members.
+ * See that function's docstring for the exact join and for why a multi-spelling family
  * (two raw names canonicalizing to the same `family_id`) surfaces every spelling,
  * sorted, rather than picking one.
  */
@@ -184,9 +184,10 @@ async function readFamilyRollup(
 }
 
 /**
- * Read every corporate family a `familyID`/`nodeID` resolves to — see the module
- * docstring for the full interface (XOR query, manifest-first, schema-version guard,
- * temporal scoping, the always-array return shape).
+ * Read every corporate family a `familyID`/`nodeID` resolves to.
+ *
+ * See the module docstring for the full interface (XOR query, manifest-first,
+ * schema-version guard, temporal scoping, the always-array return shape).
  *
  * A `familyID` query returns at most one element.
  * A `nodeID` query may return more than one (a node legitimately belonging to more
@@ -218,8 +219,8 @@ export async function familyRollup(
 
 	const nodeID = query.nodeID!
 
-	// Resolve every family this node belongs to as of asOf — same half-open predicate
-	// as every other temporal read in this module.
+	// Resolve every family this node belongs to as of asOf.
+	// Same half-open predicate as every other temporal read in this module.
 	// Never throws on >1 result: a node carrying both a HoldingCompany and a ManagementCompany
 	// family membership is a normal, builder-emitted shape.
 	const nodeFamilyRows = await db

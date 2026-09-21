@@ -77,8 +77,7 @@ export interface AlignOptions {
 export type AlignmentResult = { kind: "labeled"; row: LabeledRow } | { kind: "quarantined"; row: QuarantinedRow }
 
 /**
- * One located char-offset label span over a row's `raw` ([start, end) in UTF-16 code units). The element type behind
- * the parallel `span_starts[]`/`span_ends[]`/`span_tags[]` triple on `LabeledRow` (#519).
+ * One located char-offset label span over a row's `raw` ([start, end) in UTF-16 code units). The element type behind the parallel `span_starts[]`/`span_ends[]`/`span_tags[]` triple on `LabeledRow` (#519).
  */
 export interface ComponentSpan {
 	tag: ComponentTag

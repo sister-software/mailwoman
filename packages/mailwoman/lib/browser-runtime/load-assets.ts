@@ -224,7 +224,8 @@ export async function loadReleaseAssets(
 			try {
 				streetMorphologyMatcher = await loadStreetMorphologyFST(DEFAULT_LOCALE, release.version)
 			} catch {
-				// Corrupt/unfetchable artifact — treat as absent (check off).
+				// Corrupt/unfetchable artifact.
+				// Treat as absent (check off).
 			}
 		}
 	}

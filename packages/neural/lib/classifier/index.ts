@@ -149,7 +149,7 @@ export class NeuralAddressClassifier {
 	 *
 	 * Read-only and deliberately narrow in intent: a channel-coverage report needs to see
 	 * which lexicons and indexes were actually wired, and the alternative it
-	 * replaces is a script asserting its way into `#cfg` — which then keeps working
+	 * replaces is a script asserting its way into `#cfg`, which then keeps working
 	 * after the field is renamed, and reports every channel as absent.
 	 */
 	get config(): Readonly<NeuralAddressClassifierConfig> {
@@ -245,10 +245,7 @@ export class NeuralAddressClassifier {
 	/**
 	 * One-call factory — see `classifier-loader.ts`, where the whole resolution lives.
 	 *
-	 * **Node-only.** `#classifier/loader` carries a `browser` condition that resolves to a refusing module, so a browser
-	 * bundle that follows this import stays free of `onnxruntime-node` and the fs-reading weights resolver, and calling
-	 * it there throws. The `webpackIgnore` comment keeps webpack's SSR bundle, which resolves the `node` condition, from
-	 * following the Node half.
+	 * **Node-only.** `#classifier/loader` carries a `browser` condition that resolves to a refusing module, so a browser bundle that follows this import stays free of `onnxruntime-node` and the fs-reading weights resolver, and calling it there throws. The `webpackIgnore` comment keeps webpack's SSR bundle, which resolves the `node` condition, from following the Node half.
 	 *
 	 * Browser callers use `loadNeuralClassifierFromURLs`.
 	 */
@@ -332,7 +329,8 @@ export class NeuralAddressClassifier {
 	 * `parse(text)`'s tree exactly — modulo `opts.calibrate`, which `parse` forwards into
 	 * the tree build to recalibrate node confidences and which the trace does not carry
 	 * (tokens/labels/spans still match. Re-pass the calibrator to the rebuild if calibrated confidences matter).
-	 * Serializable by construction — see `./trace.js` for the schema and the spec reference.
+	 * Serializable by construction.
+	 * See `./trace.js` for the schema and the spec reference.
 	 */
 	async traceParse(text: string, opts?: ParseOpts): Promise<NeuralParseTrace> {
 		const labels = [...this.labels] as string[]
@@ -393,7 +391,7 @@ export class NeuralAddressClassifier {
 	 * The decode path (#481): tokenize → anchor/gazetteer features → infer →
 	 * priors → CRF/argmax → tokens → repairs.
 	 *
-	 * Both `parse` and `parseWithLogits` consume this — never fork it.
+	 * Both `parse` and `parseWithLogits` consume this, never fork it.
 	 * The 2026-06 audit found three drift surfaces across duplicated copies of this path.
 	 */
 	// Deliberately one function, long on purpose — every caller funnels through here so there is nowhere
@@ -485,7 +483,7 @@ export class NeuralAddressClassifier {
 		// The alternative is throwing on a valid address.
 		// Note the tail is lost rather than deferred — components past the window never reach the model at all.
 		//
-		// `logits.length`, not a literal 128, so this holds for any `fixedSeqLen` — including models
+		// `logits.length`, not a literal 128, so this holds for any `fixedSeqLen`, including models
 		// whose window differs, and non-Latin scripts that reach it at far shorter character counts.
 		if (pieces.length > logits.length) {
 			pieces = pieces.slice(0, logits.length)
@@ -609,8 +607,8 @@ export class NeuralAddressClassifier {
 
 		// (defaultProposer lives below decode helpers — one lazy build per classifier instance.)
 
-		// Placetype-pair prior (placetype-pair-prior arc): retrieval-augmented complement to
-		// the encoder — see placetype-pair-prior.ts for the full windowing/matching interface.
+		// Placetype-pair prior (placetype-pair-prior arc): retrieval-augmented complement to the encoder.
+		// See placetype-pair-prior.ts for the full windowing/matching interface.
 		// Config-level default set by loadFromWeights (its country-restricted construction);
 		// per-call opts override it, same "opts ??
 		// Cfg default" shape as bridgePunctuationGaps/enforceWordConsistency below.

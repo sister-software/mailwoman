@@ -194,9 +194,11 @@ export interface FilerLookupInferredLink {
  * (`holding_company`, `management_company`, `parent_company`, `subsidiary` — never `same_entity`,
  * which is reserved for entity-cluster edges and never written to `filer_family`).
  *
- * Deliberately carries no `members` field and no `cluster_id`-shaped key — see the module docstring's
- * "families is a separate rollup" section for why that shape difference is the whole point:
- * a family membership must never be confusable with, or foldable into, an entity-cluster member.
+ * Deliberately carries no `members` field and no `cluster_id`-shaped key.
+ * See the module docstring's "families is a separate rollup" section for why that shape
+ * difference is the whole point: a family membership must never be confusable with,
+ * or foldable into, an entity-cluster member.
+ *
  * Use {@linkcode familyRollup} (`family-rollup.ts`) to read a family's full membership list.
  *
  * This field only answers "which families does this node belong to, and under what relationship."
@@ -248,16 +250,17 @@ export interface FilerLookupResult {
 	 * see that function's docstring for the "lexicographically greatest rather than date-parsed" caveat).
 	 *
 	 * Every value here is a real `filer_attribute` row with its own `source`/`source_vintage`
-	 * provenance — never a computed value (see {@link FilerLookupResult.primary_frn} for
+	 * provenance, never a computed value (see {@link FilerLookupResult.primary_frn} for
 	 * the derived counterpart, kept structurally separate on purpose).
 	 */
 	attributes: Record<string, string>
 	cluster: FilerLookupCluster | null
 	inferred_links: FilerLookupInferredLink[]
 	/**
-	 * Every corporate-family membership the queried node carries, `asOf` the query's
-	 * date (§7-3b criterion 1, required) — read exclusively from `filer_family`,
-	 * a query that never shares a code path with `cluster` above.
+	 * Every corporate-family membership the queried node carries, `asOf` the
+	 * query's date (§7-3b criterion 1, required).
+	 *
+	 * Read exclusively from `filer_family`, a query that never shares a code path with `cluster` above.
 	 *
 	 * A family membership can never appear here as a `cluster` entry, and a `cluster`
 	 * member can never appear here unless `filer_family` independently asserts it.
@@ -271,10 +274,11 @@ export interface FilerLookupResult {
 	 * there is no analogous "never computed" state for `families`, since every
 	 * `filer_family` row is a direct fact rather than a derived snapshot.
 	 *
-	 * **One entry per distinct `(family_id, relationship, assertion, match_score)` rather than
-	 * one per `filer_family` row.** A single membership can be asserted by several rows —
-	 * two sources reporting it, or two raw spellings that canonicalize to one `family_id`
+	 * **One entry per distinct `(family_id, relationship, assertion, match_score)` rather
+	 * than one per `filer_family` row.** A single membership can be asserted by several rows.
+	 * Two sources reporting it, or two raw spellings that canonicalize to one `family_id`
 	 * (`filer_family`'s PK carries `naming_node_id`, so those stay separate rows).
+	 *
 	 * The rule is that the dedup key is exactly the projected tuple: two rows this
 	 * shape cannot tell apart would arrive as byte-identical entries, and a caller
 	 * counting the array would read repetition as multiplicity.
@@ -294,8 +298,9 @@ export interface FilerLookupResult {
 	 *
 	 * `null` otherwise (including when cardinality is >1 but none of the FRNs has a form-499 filing to rank by).
 	 *
-	 * A derived conclusion, never a sourced fact — see the module docstring's "A derived
-	 * conclusion…" section for why this is its own field rather than an `attributes` entry.
+	 * A derived conclusion, never a sourced fact.
+	 * See the module docstring's "A derived conclusion…" section for why this is
+	 * its own field rather than an `attributes` entry.
 	 */
 	primary_frn: FilerLookupPrimaryFRN | null
 	/**
@@ -724,7 +729,7 @@ function nodeOrThrow(byID: ReadonlyMap<string, FilerNodeTable>, nodeID: string):
  * assignment as of that date, so this reports "no cluster observed" rather than
  * asserting one the caller has no `asOf`-scoped evidence for.
  * Otherwise returns the reachable subset, sorted (mirrors `cluster-filers.ts`'s own
- * `.orderBy("node_id")`/`.toSorted()` convention) — which may be a proper subset of
+ * `.orderBy("node_id")`/`.toSorted()` convention), which may be a proper subset of
  * `candidateMembers` when the full component only partially held together as of that date.
  *
  * `relationship: "same_entity"` is required on this edge query too — the same fix
@@ -823,8 +828,10 @@ function assertFRNIdentifier(value: string): FRN {
 }
 
 /**
- * Read the identity crosswalk for one identifier — see the module docstring for the full interface
- * (XOR query, manifest-first, temporal scoping, the authoritative/inferred split, and the primary-FRN rule).
+ * Read the identity crosswalk for one identifier.
+ *
+ * See the module docstring for the full interface (XOR query, manifest-first,
+ * temporal scoping, the authoritative/inferred split, and the primary-FRN rule).
  */
 export async function filerLookup(
 	db: DatabaseClient<FilerDatabase>,
@@ -1015,8 +1022,8 @@ export async function filerLookup(
 	// Criterion 3 / decision 6: when the queried node carries more than one FRN
 	// identifier (the multi-FRN provider_id cardinality case), pick a primary via
 	// each FRN's own most recent form-499 filing edge.
-	// Reported as its own top-level field (never folded into `attributes`) —
-	// see the module docstring's "A derived conclusion…" section.
+	// Reported as its own top-level field (never folded into `attributes`).
+	// See the module docstring's "A derived conclusion…" section.
 	const frnIdentifiers = identifiers.filter((identifier) => identifier.type === FilerIdentifierType.FRN)
 
 	let primaryFRN: FilerLookupPrimaryFRN | null = null

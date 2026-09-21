@@ -45,7 +45,9 @@ export const LibpostalComponentSchema = z
 export const ParseResponseSchema = z.array(LibpostalComponentSchema)
 
 /**
- * Response body of `/expand` — the expanded address permutations, as libpostal returns them.
+ * Response body of `/expand`.
+ *
+ * The expanded address permutations, as libpostal returns them.
  */
 export const ExpandResponseSchema = z
 	.object({

@@ -11,8 +11,8 @@
 //
 // here rather than on each client, which is where `filer/sdk/sec-client.ts`
 // and `bdc/sdk/client.ts` put theirs.
-// Those are one client per package, so the convenience re-export cannot collide. this
-// package holds two, and `export *` over two modules that both re-export `ResourceError`
+// Those are one client per package, so the convenience re-export cannot collide.
+// This package holds two, and `export *` over two modules that both re-export `ResourceError`
 // makes the name ambiguous and drops it from the barrel entirely — silently.
 
 export * from "#sdk/census/client"

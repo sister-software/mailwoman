@@ -81,7 +81,7 @@ export interface FSTProvenance {
 	/**
 	 * How many places carried an encyclopedic score at build time.
 	 *
-	 * `undefined` on a pre-split build — which is not the same as 0 (a v5 build against a
+	 * `undefined` on a pre-split build, which is not the same as 0 (a v5 build against a
 	 * population-only database), so the freshness report says the two in different words.
 	 */
 	encyclopedicMatches?: number

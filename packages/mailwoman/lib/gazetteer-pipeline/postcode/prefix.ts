@@ -502,7 +502,7 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
 	}
 
 	// A coordinate carrying units from different prefixes is a placeholder the source reached for
-	// when it had no location — never a real one, since two sectional centres do not share a point.
+	// when it had no location, never a real one, since two sectional centres do not share a point.
 	// Units of the same prefix sharing a point are ordinary (a city's PO-box codes all sit downtown),
 	// so the test is deliberately cross-prefix only.
 	const byCoordinate = new Map<string, Set<string>>()

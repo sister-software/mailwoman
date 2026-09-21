@@ -79,8 +79,8 @@ export interface POISourceRow {
  * One telecom-category match rule: `categoryID` wins when every `[key, value]` pair
  * in `all` is present on the feature (a conjunction within a rule).
  *
- * A disjunction across tags is expressed as multiple rules sharing a `categoryID` —
- * see {@link TELECOM_TAG_RULES}'s two `telecom_exchange` rules and two `data_center` rules.
+ * A disjunction across tags is expressed as multiple rules sharing a `categoryID`.
+ * See {@link TELECOM_TAG_RULES}'s two `telecom_exchange` rules and two `data_center` rules.
  */
 export interface OSMPOITagRule {
 	categoryID: string
@@ -205,9 +205,10 @@ function distinctPredicateKeys(rules: readonly OSMPOITagRule[]): string[] {
  * and the JS-side matcher re-checks the same rule table before a row is ever yielded,
  * so no false positive can slip through even if the pushdown predicate were imprecise.
  *
- * Throws via {@link assertSafeTagRules} if `rules` contains a key/value outside the OSM
- * tag-token allowlist — `rules` is a public, caller-suppliable parameter, so this validates
- * before any interpolation rather than trusting the hardcoded default table's shape.
+ * @throws via {@link assertSafeTagRules} if `rules` contains a key/value
+ * outside the OSM tag-token allowlist.
+ * `rules` is a public, caller-suppliable parameter, so this validates before any interpolation
+ * rather than trusting the hardcoded default table's shape.
  */
 export function buildTelecomPOISQL(layer: string, rules: readonly OSMPOITagRule[] = TELECOM_TAG_RULES): string {
 	assertSafeTagRules(rules, "buildTelecomPOISQL")
@@ -230,8 +231,8 @@ export function buildTelecomPOISQL(layer: string, rules: readonly OSMPOITagRule[
  * Pure tag-rule matcher (decision 2): the first rule whose `all` conjunction is
  * fully satisfied by `tags` wins, `null` when none match.
  *
- * `tags` is a plain key -> value dict (a decoded feature's promoted-column/`other_tags` values) —
- * no OGR/ogr2ogr involved, so this is unit-testable over synthetic dicts alone.
+ * `tags` is a plain key -> value dict (a decoded feature's promoted-column/`other_tags` values).
+ * No OGR/ogr2ogr involved, so this is unit-testable over synthetic dicts alone.
  */
 export function matchOSMPOITagRule(
 	tags: Readonly<Record<string, string | undefined>>,

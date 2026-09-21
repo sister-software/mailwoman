@@ -381,8 +381,8 @@ export function stripAnsi(value: string): string {
 }
 
 /**
- * The shape every polygon-layer verification result shares — see `@mailwoman/flood`,
- * `soil`, `coastal`, `zoning`.
+ * The shape every polygon-layer verification result shares.
+ * See `@mailwoman/flood`, `soil`, `coastal`, `zoning`.
  */
 export interface LayerVerificationLike<Row extends { outcome: string; label: string }> {
 	agreement: readonly Row[]
@@ -483,8 +483,8 @@ export function runProcessOrFail(
  * Two failure modes are distinguished:
  *
  * - Weights absent (package not installed / carries no binaries) → an install hint, no scary error text.
- * - Weights present but the encoder failed to load (corrupt / partial bundle, a bad explicit path) → the underlying error
- *   is surfaced rather than swallowed.
+ * - Weights present but the encoder failed to load (corrupt / partial bundle, a bad explicit path)
+ *   → the underlying error is surfaced rather than swallowed.
  *
  * `onDegrade` receives the warning line.
  * Callers send it to stderr so piped stdout parsing is unaffected.

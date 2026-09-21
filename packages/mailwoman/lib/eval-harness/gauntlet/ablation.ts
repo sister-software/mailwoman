@@ -202,14 +202,20 @@ export function deleteSpan(input: string, at: number, length: number): string {
  *
  * Four refusals, each one a class the corpus actually contains:
  *
- * 1. `empty` — the asserted value is the empty string. `us-dc-pennsylvania` asserts `postcode: ""` to pin that the slot
- *    stays empty. There is nothing to delete, and treating it as a deletion would manufacture support.
- * 2. `not-verbatim` — the asserted value is not in the input (an assertion about the resolved value, e.g. `country:
- *    "United States"` against an input saying `USA`). Deleting it would require guessing which span it came from.
- * 3. `ambiguous` — more than one boundary-safe occurrence, or the same value asserted for a second component. Either way
- *    the deletion is not attributable to one component, which is the only thing this map measures.
- * 4. `nested` — the value is a proper substring of another asserted component's value (`York` inside `New York`). Deleting
- *    it damages the neighbour, so the row would measure a two-component deletion under one component's name.
+ * 1. `empty` — the asserted value is the empty string.
+ *    `us-dc-pennsylvania` asserts `postcode: ""` to pin that the slot stays empty.
+ *    There is nothing to delete, and treating it as a deletion would manufacture support.
+ * 2. `not-verbatim` — the asserted value is not in the input (an assertion about the
+ *    resolved value, e.g. `country: "United States"` against an input saying `USA`).
+ *    Deleting it would require guessing which span it came from.
+ * 3. `ambiguous` — more than one boundary-safe occurrence, or the same value
+ *    asserted for a second component.
+ *    Either way the deletion is not attributable to one component,
+ *    which is the only thing this map measures.
+ * 4. `nested` — the value is a proper substring of another asserted component's
+ *    value (`York` inside `New York`).
+ *    Deleting it damages the neighbour, so the row would measure a two-component
+ *    deletion under one component's name.
  */
 export function ablationVariants(
 	input: string,
@@ -423,7 +429,8 @@ export async function runAblationLayer(
 		.orderBy("id")
 		.execute()) as CaseRow[]
 
-	// Read the pins off the same handle before it closes — see `ablationOverrides` for why the column may not be there.
+	// Read the pins off the same handle before it closes.
+	// See `ablationOverrides` for why the column may not be there.
 	const overrides = await ablationOverrides(kdb)
 
 	await kdb.destroy()
@@ -720,7 +727,7 @@ function printSummary(
 
 	// The headline the operator asked for, in one line each: the old verdict,
 	// the new one, and the size of the difference between them.
-	// Printed even at zero, because "0 rows were misgraded" is a measurement here — but only
+	// Printed even at zero, because "0 rows were misgraded" is a measurement here, but only
 	// when the ladder actually graded something, which the `ungraded` count states outright.
 	const ungraded = rows.length - ladderGraded.length
 	const trueFail = ladderGraded.filter((r) => !PASSING_GRADES.has(r.grade))

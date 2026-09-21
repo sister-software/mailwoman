@@ -86,7 +86,12 @@ const ADMITTED = new Set([
 	// Version control and the forge.
 	"gh",
 	"git",
-	// A directory has no content to take from the agent, so the symbol precheck has nothing to check: `mkdir` cannot write a helper. It cannot overwrite a file either — `mkdir` on an existing path raises eexist and `-p` is a no-op — and git tracks no empty directory, so nothing reaches a commit through it. Held out of the tree it refused `git mv` into a new directory, and refused the `mkdir -p .claude/state` the `task-intake` skill documents.
+	// A directory has no content to take from the agent, so the symbol precheck has
+	// nothing to check: `mkdir` cannot write a helper.
+	// It cannot overwrite a file either — `mkdir` on an existing path raises eexist and `-p`
+	// is a no-op — and git tracks no empty directory, so nothing reaches a commit through it.
+	// Held out of the tree it refused `git mv` into a new directory, and refused the
+	// `mkdir -p .claude/state` the `task-intake` skill documents.
 	"mkdir",
 	// Toolchain and this repository's own commands.
 	"docker",
@@ -108,7 +113,8 @@ const ADMITTED = new Set([
 	"sqlite3",
 	"tar",
 	"tsc",
-	// The python toolchain, the same shape as `yarn` beside it: `uv run` and `uvx` resolve an environment and run a named tool, deriving the venv they write rather than taking content.
+	// The python toolchain, the same shape as `yarn` beside it: `uv run` and `uvx` resolve an
+	// environment and run a named tool, deriving the venv they write rather than taking content.
 	"uv",
 	"uvx",
 	"vale",
@@ -257,7 +263,9 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 	},
 	{ head: "git", pattern: /(?:^|\s)config\s+-f/u, because: "`git config -f` writes an arbitrary file" },
 	{ head: "npm", pattern: /(?:^|\s)pkg\s+set\b/u, because: "`npm pkg set` writes a manifest" },
-	// The subcommand has to be a whole argument. `\b` ends a word at a hyphen too, so the old pattern read `yarn mwops health node-modules-reacharound` as `yarn node …` and refused a read-only check by its own name.
+	// The subcommand has to be a whole argument.
+	// `\b` ends a word at a hyphen too, so the old pattern read `yarn mwops health node-modules-reacharound`
+	// as `yarn node …` and refused a read-only check by its own name.
 	{
 		head: "yarn",
 		pattern: /(?:^|\s)(?:dlx|exec|node)(?=\s|$)/u,
@@ -267,7 +275,11 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 	{ head: "vitest", pattern: /(?:^|\s)(?:-u\b|--update\b)/u, because: "`vitest -u` rewrites snapshots" },
 	// The same tool arrives through the package manager, where `yarn` is the command word.
 	{ head: "yarn", pattern: /(?:^|\s)vitest\b[^\n]*(?:\s-u\b|--update\b)/u, because: "`vitest -u` rewrites snapshots" },
-	// `oxlint --fix` and `oxfmt --write` are admitted on the same ground as the formatter over its inputs: what they write they derive from the rule set, and no content the agent supplies passes through them. A snapshot update is different in kind. `vitest -u` writes whatever the code under test produced, which is the assertion being replaced.
+	// `oxlint --fix` and `oxfmt --write` are admitted on the same ground as the
+	// formatter over its inputs: what they write they derive from the rule set,
+	// and no content the agent supplies passes through them.
+	// A snapshot update is different in kind.
+	// `vitest -u` writes whatever the code under test produced, which is the assertion being replaced.
 ]
 
 /**
@@ -407,9 +419,9 @@ function expandHome(path: string): string {
  * Where a target resolves, or null when this cannot read it: a stripped quote
  * and a variable are both opaque.
  *
- * Every caller takes its own refusing branch on null, so no reader of a
- * target has to re-derive the resolution — and `resolvePath` normalizes `..`,
- * which is what stops `out/../lib` from reading as derived output.
+ * Every caller takes its own refusing branch on null, so no reader of a target has
+ * to re-derive the resolution, and `resolvePath` normalizes `..`, which is what
+ * stops `out/../lib` from reading as derived output.
  */
 function resolveTarget(raw: string, cwd: string): string | null {
 	if (!raw || raw === "QUOTED" || raw === "HEREDOC" || raw.includes("$")) return null

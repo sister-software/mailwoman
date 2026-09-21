@@ -68,15 +68,16 @@ export interface ProvenanceReport {
 	/**
 	 * Read from the stamp `gazetteer repos-sync` writes.
 	 *
-	 * Absent when that has never been run here — which is reported as absence
+	 * Absent when that has never been run here, which is reported as absence
 	 * rather than as "the repos are current".
 	 */
 	repos: RepoVintage[] | null
 	reposStampPath: string
 	reposStampAge: string | null
 	/**
-	 * The last entries of the admin build log — what was built, from which Overture
-	 * release, and whether it was swapped.
+	 * The last entries of the admin build log.
+	 *
+	 * What was built, from which Overture release, and whether it was swapped.
 	 */
 	buildLog: string[]
 	notes: string[]

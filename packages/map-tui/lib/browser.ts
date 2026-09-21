@@ -81,8 +81,9 @@ const MIN_PANE_ROWS = 1
 const PAN_FRACTION = 0.125
 
 /**
- * Web-Mercator's latitude cutoff — the projection is undefined at the poles,
- * and the square tile pyramid ends here.
+ * Web-Mercator's latitude cutoff.
+ *
+ * The projection is undefined at the poles, and the square tile pyramid ends here.
  */
 const MERCATOR_LATITUDE_LIMIT = 85.05112878
 
@@ -133,8 +134,10 @@ interface DragAnchor {
 }
 
 /**
- * Clips a string to a cell budget, counting codepoints — the status bar's arrows are one
- * cell each but two UTF-16 units, and `String.prototype.slice` would split one in half.
+ * Clips a string to a cell budget, counting codepoints.
+ *
+ * The status bar's arrows are one cell each but two UTF-16 units,
+ * and `String.prototype.slice` would split one in half.
  */
 function clipToCells(text: string, cells: number): string {
 	const codePoints = Array.from(text)
@@ -353,8 +356,9 @@ export class MapBrowser {
 	/**
 	 * Zooms one or more whole levels.
 	 *
-	 * With an anchor cell (the wheel's pointer), the center shifts so whatever was under
-	 * the pointer stays under it. without one, the pane center holds.
+	 * With an anchor cell (the wheel's pointer), the center shifts so whatever
+	 * was under the pointer stays under it.
+	 * Without one, the pane center holds.
 	 */
 	private zoomBy(delta: number, anchor: { column: number; row: number } | null): void {
 		const next = clamp(this.zoom + delta, this.source.minZoom, this.source.maxZoom)
@@ -505,8 +509,8 @@ export class MapBrowser {
 		try {
 			const frame = await this.renderer.renderFrame(viewport)
 
-			// The terminal may have been restored while the tiles were in flight. writing
-			// then would paint over the user's shell.
+			// The terminal may have been restored while the tiles were in flight.
+			// Writing then would paint over the user's shell.
 			if (this.restored) return
 
 			// A resize between the request and now leaves the frame the wrong shape for the pane —

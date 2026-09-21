@@ -304,7 +304,7 @@ function looksLikeStreetWord(token: string, systems: ReadonlySet<string>): boole
  * code sharing its comma-delimited segment with a street word.
  *
  * This is the structural prior that lets the anchor tell a leading `12345 Main St` house
- * number from a trailing `San Francisco 94105` postcode with no model in the loop —
+ * number from a trailing `San Francisco 94105` postcode with no model in the loop,
  * and lets a consumer pick the right span by confidence instead of by raw position.
  *
  * `systems` narrows the street vocabularies to the ones this code plausibly belongs to

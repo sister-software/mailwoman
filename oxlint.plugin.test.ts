@@ -253,7 +253,8 @@ function destructuredSwap(base: string): TestNode {
 }
 
 /**
- * `tmp = base[i]; base[i] = base[j]; base[j] = tmp` — two index writes to one base.
+ * `tmp = base[i]; base[i] = base[j]; base[j] = tmp`.
+ * Two index writes to one base.
  */
 function temporarySwap(base: string): TestNode {
 	const write = (index: string): TestNode => ({
@@ -316,8 +317,8 @@ test("prefer-home stays silent on loops that are not a shuffle", () => {
 
 	// Heapsort's extraction phase: counts down from the last index, stops at 1,
 	// swaps two computed indices of one array.
-	// It satisfies every clause except that one index is the literal 0 — a shuffle swaps
-	// the loop variable with a drawn index, and neither is a constant.
+	// It satisfies every clause except that one index is the literal 0.
+	// A shuffle swaps the loop variable with a drawn index, and neither is a constant.
 	const heapsort: TestNode = {
 		type: "BlockStatement",
 		range: [0, 0],

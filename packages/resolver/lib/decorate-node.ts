@@ -81,7 +81,7 @@ export function decorateNode(
 	// The winner's prominence, when the backend computed one.
 	// `alternatives` below are full `ResolvedPlace`s and already carry theirs.
 	// Without this stamp the winner's is the one value in the ranked list that gets dropped,
-	// which makes a top-1-vs-top-2 margin uncomputable from the tree — and that margin is what
+	// which makes a top-1-vs-top-2 margin uncomputable from the tree, and that margin is what
 	// `mailwoman/query-intent.ts` reads to decide whether a bare-toponym answer was a clear win.
 	// Additive metadata only.
 	// Nothing in the resolve reads it back.

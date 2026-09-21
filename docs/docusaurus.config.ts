@@ -12,18 +12,21 @@ import glossaryRemarkPlugin from "./plugins/glossary/remark.ts"
  *
  * Two false-positive classes warrant a word a place here, both measured across the built site:
  *
- * 1. A common English word that is also a glossary alias. `state` is an alias of `region`, so every ordinary use — "the
- *    state of the pipeline", "stateless", "US state law" — tooltipped the address component. It fired on 38 pages, and
- *    almost none of them meant the component.
- * 2. A common English word that is also a glossary term in a narrower sense. `tier` is defined as the model's label tier,
- *    but the site's own vocabulary uses the word for geocode-cascade tiers, locale tiers and pricing tiers. It fired on
- *    39 pages including pricing.mdx, where the definition on offer is the wrong one every time.
+ * 1. A common English word that is also a glossary alias.
+ *    `state` is an alias of `region`, so every ordinary use — "the state of the pipeline",
+ *    "stateless", "US state law" — tooltipped the address component.
+ *    It fired on 38 pages, and almost none of them meant the component.
+ * 2. A common English word that is also a glossary term in a narrower sense.
+ *    `tier` is defined as the model's label tier, but the site's own vocabulary uses
+ *    the word for geocode-cascade tiers, locale tiers and pricing tiers.
+ *    It fired on 39 pages including pricing.mdx, where the definition on offer is the wrong one every time.
  *
  * Suppression is by surface rather than by term: `region` still links, and
  * so does a multi-word phrase that merely contains a suppressed word, like the FST
  * alias `finite-state transducer` (contains "state", still links in full).
- * Multi-word terms like `input register` are untouched — they carry their sense in
- * the phrase, which is exactly what keeps them out of this list.
+ * Multi-word terms like `input register` are untouched.
+ *
+ * They carry their sense in the phrase, which is exactly what keeps them out of this list.
  */
 const GLOSSARY_NO_AUTO_LINK = ["state", "tier"] as const
 
@@ -76,11 +79,14 @@ const config: Config = {
 				href: "https://public.mailwoman.ai",
 			},
 		},
-		// The four faces that paint above the fold, preloaded. Without these the chain is
-		// html -> styles.css -> parse -> discover @font-face -> cross-origin fetch, which measured ~1.57 s to first
-		// font byte on a warm cache. with `font-display: swap` on every face that is a guaranteed flash of the
-		// fallback plus a full-page reflow. `preconnect` above only removes the handshake rather than the discovery.
-		// Any face not listed here still loads lazily off the stylesheet, which is what we want for the other 44.
+		// The four faces that paint above the fold, preloaded.
+		// Without these the chain is html -> styles.css -> parse -> discover @font-face ->
+		// cross-origin fetch, which measured ~1.57 s to first font byte on a warm cache.
+		// With `font-display: swap` on every face that is a guaranteed flash of the
+		// fallback plus a full-page reflow.
+		// `preconnect` above only removes the handshake rather than the discovery.
+		// Any face not listed here still loads lazily off the stylesheet,
+		// which is what we want for the other 44.
 		...(
 			[
 				"IoveskaNexus/WOFF2/IosevkaNexus-Regular.woff2",
@@ -116,8 +122,9 @@ const config: Config = {
 
 	future: {
 		v4: true,
-		// rspack bundles the site now that every @mailwoman/* subpath the client reaches carries a
-		// browser condition. the geocoder page passes its cold-load and resolve specs on rspack's output.
+		// rspack bundles the site now that every @mailwoman/* subpath the client
+		// reaches carries a browser condition.
+		// The geocoder page passes its cold-load and resolve specs on rspack's output.
 		// Both bundlers report maplibre-gl's dynamic `import()` of an expression twice as
 		// a "Critical dependency" warning, so that is not a bundler difference.
 		// The persistent cache stays off until a build has been measured with it.
@@ -144,16 +151,17 @@ const config: Config = {
 
 	plugins: [
 		[
-			// `/docs` is `routeBasePath`, not a page: the docs plugin routes `/docs/<slug>` and leaves the
-			// bare prefix with nothing on it, so a reader who trims the path to `/docs` — or follows the
-			// link that changelog.md used to carry — gets a 404 on a site that is up. This sends it to the
-			// first page of the get-started trio, which is where the sidebar opens anyway.
+			// `/docs` is `routeBasePath`, not a page: the docs plugin routes `/docs/<slug>`
+			// and leaves the bare prefix with nothing on it, so a reader who trims the path to `/docs` —
+			// or follows the link that changelog.md used to carry — gets a 404 on a site that is up.
+			// This sends it to the first page of the get-started trio, which is where the sidebar opens anyway.
 			"@docusaurus/plugin-client-redirects",
 			{
 				redirects: [
 					{ from: "/docs", to: "/docs/developers/get-started/what-mailwoman-is" },
-					// The navbar labels this door "Pricing", so `/pricing` is the URL a visitor guesses and the one a
-					// colleague types from memory. It 404'd on a site that has the page.
+					// The navbar labels this door "Pricing", so `/pricing` is the URL a visitor
+					// guesses and the one a colleague types from memory.
+					// It 404'd on a site that has the page.
 					{ from: "/pricing", to: "/docs/pricing" },
 					// Same for the license page, which is the only route that can take money.
 					{ from: ["/licensing", "/licenses"], to: "/license" },
@@ -162,8 +170,9 @@ const config: Config = {
 		],
 		"./plugins/runtime-assets/plugin.ts",
 		[
-			// Wraps docusaurus-plugin-glossary: same validation/tooltips/remark, custom page with
-			// tag filters + category TOC. See plugins/glossary/plugin.ts.
+			// Wraps docusaurus-plugin-glossary: same validation/tooltips/remark,
+			// custom page with tag filters + category TOC.
+			// See plugins/glossary/plugin.ts.
 			"./plugins/glossary/plugin.ts",
 			{
 				glossaryPath: "glossary/glossary.json",
@@ -211,8 +220,9 @@ const config: Config = {
 				},
 				pages: {
 					// Files in src/pages/ are auto-routed.
-					// Co-located `.ts` helpers (e.g. demo/map-helpers.ts) are not pages and SSG-fail
-					// ("no default export") if routed — a latent break the install-blocked CI never surfaced.
+					// Co-located `.ts` helpers (e.g. demo/map-helpers.ts) are not pages
+					// and SSG-fail ("no default export") if routed.
+					// A latent break the install-blocked CI never surfaced.
 					// Pages here are all .tsx/.md/.mdx, so exclude `.ts`.
 					// The other entries reproduce Docusaurus's defaults (a custom `exclude` replaces them).
 					exclude: [
@@ -245,7 +255,8 @@ const config: Config = {
 					// Internal utility pages — keep them reachable but out of the sitemap
 					// (and thus out of crawler discovery).
 					// Patterns cover both slash forms.
-					// Redirect pages to earth.mailwoman.ai. reachable, but not for crawlers.
+					// Redirect pages to earth.mailwoman.ai.
+					// Reachable, but not for crawlers.
 					ignorePatterns: ["/demo", "/demo/", "/debug", "/debug/", "/trace", "/trace/"],
 				},
 				theme: {
@@ -268,8 +279,8 @@ const config: Config = {
 	],
 
 	themeConfig: {
-		// Default og:image / twitter:card for every page. the same card is uploaded
-		// as the GitHub repo social preview.
+		// Default og:image / twitter:card for every page.
+		// The same card is uploaded as the GitHub repo social preview.
 		// Regenerate via docs/scripts/social-card.html.
 		image: "img/social-card.png",
 		colorMode: {
@@ -292,8 +303,9 @@ const config: Config = {
 			title: "Mailwoman",
 			logo: {
 				alt: "Mailwoman 〒 hanko seal",
-				// Magenta seal on the navy navbar in both themes — the design system brief calls
-				// magenta the primary mark. navy/blue alts ship under /img for use on lighter surfaces.
+				// Magenta seal on the navy navbar in both themes.
+				// The design system brief calls magenta the primary mark. navy/blue alts
+				// ship under /img for use on lighter surfaces.
 				src: "img/mailwoman-seal-magenta.svg",
 			},
 			// The doors, in reading order.
@@ -372,9 +384,10 @@ const config: Config = {
 					items: [
 						{ label: "Earth", href: "https://earth.mailwoman.ai/" },
 						{ label: "Field notes", to: "/research" },
-						// /training is a published page with no other route into it since the navbar
-						// was trimmed back to the doors. This is the smallest fix for that rather than a
-						// considered placement — revisit when the Resources door lands.
+						// /training is a published page with no other route into it
+						// since the navbar was trimmed back to the doors.
+						// This is the smallest fix for that rather than a considered placement —
+						// revisit when the Resources door lands.
 						{ label: "Training", to: "/training" },
 					],
 				},

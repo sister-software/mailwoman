@@ -48,8 +48,8 @@ const STATUS_TAGLINES: Record<string, string> = {
 
 function DocRecordChrome(): ReactNode {
 	const { frontMatter } = useDoc()
-	// `DocFrontMatter` types only the Docusaurus-owned fields. the record-class fields are
-	// site-specific pass-throughs, so they're read as `unknown` and narrowed.
+	// `DocFrontMatter` types only the Docusaurus-owned fields.
+	// The record-class fields are site-specific pass-throughs, so they're read as `unknown` and narrowed.
 	const status: unknown = (frontMatter as Record<string, unknown>).status
 
 	if (typeof status !== "string" || !(status in STATUS_LABELS)) return null

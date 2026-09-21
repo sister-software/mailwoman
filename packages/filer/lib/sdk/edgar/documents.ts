@@ -67,7 +67,7 @@ const MANIFEST_FIELD_PATTERN = /^<([a-z][a-z-]*)>(.*)$/i
 
 /**
  * Reads every document out of one accession's sgml manifest
- * (`headerHTML`, the `…-index-headers.html` body) — not only the exhibits, so a caller
+ * (`headerHTML`, the `…-index-headers.html` body), not only the exhibits, so a caller
  * wanting a different document type later doesn't need a second parser.
  *
  * The manifest is edgar's own sgml, html-escaped inside the index page

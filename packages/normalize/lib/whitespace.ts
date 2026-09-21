@@ -30,8 +30,9 @@ export interface WhitespaceResult {
 	text: string
 	map: number[]
 	/**
-	 * How many inline-whitespace runs were rewritten — a run longer than one character,
-	 * or a one-character run that was not already an ascii space.
+	 * How many inline-whitespace runs were rewritten.
+	 *
+	 * A run longer than one character, or a one-character run that was not already an ascii space.
 	 *
 	 * A run that was already a single space is not one of them.
 	 */
@@ -68,8 +69,9 @@ export function collapseWhitespace(input: string): WhitespaceResult {
 			}
 
 			// A one-character run counts too when the character is not already an ascii space:
-			// the tab→space rewrite emitted above is a real edit, and `changed` is what decides whether the
-			// caller ever receives it — the early return below hands back the untouched input otherwise.
+			// the tab→space rewrite emitted above is a real edit, and `changed` is what decides
+			// whether the caller ever receives it.
+			// The early return below hands back the untouched input otherwise.
 			if (i - start > 1 || ch !== " ") {
 				changed = true
 				runs += 1

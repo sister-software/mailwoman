@@ -86,7 +86,7 @@ export const SOIL_SCHEMA_VERSION = 1
  * features as h3's wasm heap fragmented. 100,000 leaves five times that margin,
  * and the cost of a smaller number is one interpreter start per chunk.
  * Iowa's largest survey area holds well under it, so on this build the bound costs one
- * process per area — which is what makes an area's failure nameable.
+ * process per area, which is what makes an area's failure nameable.
  */
 export const DEFAULT_CHUNK_SIZE = 100_000
 

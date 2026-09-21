@@ -40,9 +40,9 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const host = values.host ?? "0.0.0.0"
 
 	// The neural BIO tagger is the sole engine (v7 rules-parser excision).
-	// Note that unlike `@mailwoman/photon`/`@mailwoman/nominatim`, this package does not declare
-	// `@mailwoman/neural-weights-en-us` as a dependency (see the package.json comment) —
-	// a bare `npx @mailwoman/libpostal serve` resolves it only when it happens to already be
+	// Note that unlike `@mailwoman/photon`/`@mailwoman/nominatim`, this package does not
+	// declare `@mailwoman/neural-weights-en-us` as a dependency (see the package.json comment).
+	// A bare `npx @mailwoman/libpostal serve` resolves it only when it happens to already be
 	// installed alongside, so the friendly-failure guard warrants its keep here more than anywhere.
 	const classifier = await loadClassifierOrExit()
 
@@ -51,15 +51,17 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			// Decision A endpoint default: libpostal consumers submit full postal addresses (the record register).
 			const tree = await classifier.parse(query, { postcodeRepair: true, inputMode: "formatted" })
 
-			// `treeToParseMatches` collapses the street-name family into one `road`-bound match and yields
-			// reading-order `{ classification, value }` pairs. the app maps them to libpostal labels.
+			// `treeToParseMatches` collapses the street-name family into one `road`-bound match
+			// and yields reading-order `{ classification, value }` pairs.
+			// The app maps them to libpostal labels.
 			return treeToParseMatches(tree)
 		},
 		async expand(address) {
 			const normalized = normalize(address).normalized
 			const expanded = expandAbbreviations(normalized).text
 
-			// Deterministic forms only. dedup while preserving order.
+			// Deterministic forms only.
+			// Dedup while preserving order.
 			return [...new Set([address, normalized, expanded])]
 		},
 	}

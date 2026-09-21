@@ -17,7 +17,8 @@ import {
 import { describe, expect, it } from "vitest"
 
 /**
- * What `@mailwoman/neural-weights-en-in@8.6.0` actually shipped — read back off the registry.
+ * What `@mailwoman/neural-weights-en-in@8.6.0` actually shipped.
+ * Read back off the registry.
  */
 const EN_IN_SHIPPED = new Set(["./README.md", "./model-card.json", "./package.json", "./scripts/link-dev-weights.ts"])
 

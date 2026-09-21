@@ -109,8 +109,9 @@ export interface PairIndexEntry {
 	 *
 	 * Required: {@link serializePairIndex} refuses an entry that omits it
 	 * or names something outside `COMPONENT_TAGS`.
-	 * A builder that cannot state its parent's tag from its source's own semantics must not
-	 * guess one — see `mailwoman/gazetteer-pipeline/borough-pairs.ts` for the worked case
+	 * A builder that cannot state its parent's tag from its source's own semantics must not guess one.
+	 *
+	 * See `mailwoman/gazetteer-pipeline/borough-pairs.ts` for the worked case
 	 * (the WOF parent row's placetype, projected through `PLACETYPE_PROJECTION`).
 	 */
 	parentTag: ComponentTag
@@ -352,7 +353,7 @@ export function peekPairIndexHeader(bytes: Uint8Array): PairIndexHeader {
  * Shared magic+header decode used by both {@link peekPairIndexHeader} and the
  * {@link PairIndexResolver} constructor, so the two can never drift on what counts as a valid header.
  *
- * Returns the parsed header and the byte offset immediately following it, so the constructor
+ * @returns the parsed header and the byte offset immediately following it, so the constructor
  * can resume entry parsing from exactly where this left off without re-decoding.
  */
 function readHeaderBlock(bytes: Uint8Array): { header: PairIndexHeader; cursor: ByteCursor } {

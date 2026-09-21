@@ -140,7 +140,7 @@ export const US_UNIT_DESIGNATOR_REQUIRES_RANGE: Readonly<Record<USUnitDesignator
  * If the first whitespace-separated word of `unit` is a known USPS designator variant,
  * return the canonical key and the matched word.
  *
- * Returns null if the leading word isn't a known designator (e.g. A bare `"4B"` or `"#210"`).
+ * @returns null if the leading word isn't a known designator (e.g. A bare `"4B"` or `"#210"`).
  * Leading-word-only — designators introduce the unit, unlike street suffixes which trail.
  */
 export function matchLeadingDesignator(unit: string): { canonical: USUnitDesignator; matched: string } | null {

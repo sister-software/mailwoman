@@ -68,7 +68,12 @@ const REQUIRED_FILES: RequiredFile[] = [
 	{ option: "model", remoteName: "model.onnx", description: "ONNX classifier" },
 	{ option: "tokenizer", remoteName: "tokenizer.model", description: "SentencePiece tokenizer" },
 	{ option: "model-card", remoteName: "model-card.json", description: "Model card JSON" },
-	// The slim wof-hot.db was retired 2026-06-20: the demo's admin tier now byte-range-resolves against the global candidate table, hosted version-independently at mailwoman/gazetteer/<ver>/candidate.db (not a per-release asset — it's model-independent). See releasing.md + project-candidate-table-byte-range. `hasWOFDB` in releases.json stays true (it now means "this version has admin resolution", which the version-independent gazetteer always provides).
+	// The slim wof-hot.db was retired 2026-06-20: the demo's admin tier now
+	// byte-range-resolves against the global candidate table, hosted version-independently at
+	// mailwoman/gazetteer/<ver>/candidate.db (not a per-release asset — it's model-independent).
+	// See releasing.md + project-candidate-table-byte-range.
+	// `hasWOFDB` in releases.json stays true (it now means "this version has admin resolution",
+	// which the version-independent gazetteer always provides).
 ]
 
 /**
@@ -106,7 +111,7 @@ const BUCKET_PATH = "hf://buckets/sister-software/mailwoman"
  * The `.sh`/`.mjs`→`.ts` conversion keeps that exact behavior so release output is byte-identical.
  *
  * The real fix is to head-probe `${DEMO_BASE}/${locale}/${version}/${name}`
- * and return `r.ok` — but that can flip `hasAnchor` / `hasPolygons` in releases.json
+ * and return `r.ok`, but that can flip `hasAnchor` / `hasPolygons` in releases.json
  * (only in the postcodeBins-empty / no-`--polygons` fallback path), so it needs a deliberate
  * review before a release dispatch rather than a silent change inside a cleanup.
  */

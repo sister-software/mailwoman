@@ -128,7 +128,7 @@ test("a re-fold rewrites the range wholesale — no row survives from the previo
 	await ingestGeonamesAliases(db, ["AT"], dir.path, () => {})
 
 	// Fold B declared AT only.
-	// Nothing from BW may remain — not an spr row rather than a name rather than a population.
+	// Nothing from BW may remain, not an spr row rather than a name rather than a population.
 	// A surviving row is a row no run is accountable for.
 	const leftovers = db
 		.prepare(

@@ -25,7 +25,9 @@ import {
 import { describe, expect, test } from "vitest"
 
 /**
- * Minimal duck-typed Section — see proposal-classifier.ts for why we don't construct real Spans.
+ * Minimal duck-typed Section.
+ *
+ * See proposal-classifier.ts for why we don't construct real Spans.
  */
 function makeSection(body: string, start = 0): Section {
 	return { body, start, end: start + body.length } as Section

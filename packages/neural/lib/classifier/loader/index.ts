@@ -35,8 +35,9 @@ import type { ResolvedWeights, ResolveWeightsOpts } from "#weights"
  * **Node-only.** The dynamic imports keep `ONNXRunner` (onnxruntime-node) +
  * `resolveWeights` (uses Node fs) out of the static dependency graph, so this file can
  * be bundled for the browser through `@mailwoman/neural/web-loader`.
- * Calling this method in a browser will throw at runtime — use
- * `loadNeuralClassifierFromURLs` from that subpath instead.
+ * Calling this method in a browser will throw at runtime.
+ *
+ * Use `loadNeuralClassifierFromURLs` from that subpath instead.
  */
 /**
  * {@link loadClassifierFromWeights} for the caller's locale, wrapped so an input whose script

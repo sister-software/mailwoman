@@ -27,7 +27,7 @@ export function tagAlias(key: string): string {
  * The SQL expression reading a tag's value on `layer`: a bare column when that layer
  * promotes the key, an `other_tags` hstore lookup otherwise.
  *
- * Throws on a layer with no promoted-key list.
+ * @throws on a layer with no promoted-key list.
  * Falling back to the hstore expression for an unknown layer would produce SQL that runs
  * and matches nothing, which is the failure the table exists to prevent.
  */
@@ -48,8 +48,9 @@ export function tagSelectExpr(promotedKeysByLayer: PromotedKeysByLayer, layer: s
  * OSM tag key/value shape: letters, digits, underscore, colon, dot, hyphen.
  *
  * The SQL builders interpolate rule keys/values directly into ogrsql strings,
- * and rule tables are public, caller-suppliable parameters — so every token is checked
- * against this allowlist before any of it reaches a template string.
+ * and rule tables are public, caller-suppliable parameters.
+ * So every token is checked against this allowlist before any of it reaches a template string.
+ *
  * A hostile value such as `a' or 1=1 --` would otherwise close the `'...'`
  * literal early and inject arbitrary ogrsql.
  *

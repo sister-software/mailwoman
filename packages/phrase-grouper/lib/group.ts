@@ -33,7 +33,7 @@ import type { GroupPhrasesOpts } from "#types"
  * Walk every QueryShape segment and emit one `tokens-by-segment` list.
  *
  * Falls back to treating the whole input as a single segment when QueryShape didn't supply
- * segmentation (e.g. callers wiring the grouper into a path that bypasses QueryShape).
+ * segmentation (e.g. Callers wiring the grouper into a path that bypasses QueryShape).
  */
 function tokensPerSegment(
 	text: string,
@@ -64,8 +64,9 @@ function tokensPerSegment(
  *
  * Emits overlapping proposals freely — the consumer (Stage 5 reconcile) picks the best
  * non-overlapping subset under semantic+hierarchical constraints.
- * Confidence is a [0,1] score per proposal. relative ordering is what matters
- * more than absolute calibration at v0.5.0.
+ * Confidence is a [0,1] score per proposal.
+ *
+ * Relative ordering is what matters more than absolute calibration at v0.5.0.
  *
  * The `_locale` parameter is reserved for future locale-aware rule packs
  * (Japanese postcode/honorific patterns, French preposition-bound localities) — currently unused.

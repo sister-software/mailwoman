@@ -11,18 +11,22 @@
  * It stays pure — the caller owns the only state there is, the unresolved trailing fragment
  * the function hands back — so one chunk in gives the same events out every time.
  *
- * The fallback is the dangerous part. An ESC this decoder had no rule for used to mean "the Esc key", i.e. quit, which
- * made every unrecognized escape sequence a quit: F1 (`ESC O P`), an OSC reply the terminal sends unasked (`ESC ] 11 ;
- * rgb:… BEL`), and — worst, because it needs no exotic key at all — a mouse report split across two stdin reads, whose
- * first half ends inside the sequence. So the fallback now separates three cases:
+ * The fallback is the dangerous part.
+ * An ESC this decoder had no rule for used to mean "the Esc key", i.e. quit, which made
+ * every unrecognized escape sequence a quit: F1 (`ESC O P`), an OSC reply the terminal sends
+ * unasked (`ESC ] 11 ; rgb:… BEL`), and — worst, because it needs no exotic key at all —
+ * a mouse report split across two stdin reads, whose first half ends inside the sequence.
+ * So the fallback now separates three cases:
  *
  * - A sequence this decoder recognizes is consumed and acted on (arrows, SGR mouse).
- * - A sequence it does not recognize is consumed whole and ignored: CSI (`ESC [ … final`), SS3 (`ESC O final`), and the
- *   string family (OSC/DCS/SOS/PM/APC, terminated by BEL or ST). Re-scanning their bodies as characters is how a `q`
- *   inside a cursor-position report quit the app.
- * - A chunk that ends mid-sequence — including a lone trailing ESC, which is byte-for-byte the start of one — is not
- *   decoded at all: it comes back as {@link DecodedInput.pending} for the caller to prepend to the next chunk. Quit is
- *   emitted only for an ESC that is neither, i.e. one whose following byte cannot continue a sequence.
+ * - A sequence it does not recognize is consumed whole and ignored: CSI (`ESC [ … final`),
+ *   SS3 (`ESC O final`), and the string family (OSC/DCS/SOS/PM/APC, terminated by BEL or ST).
+ *   Re-scanning their bodies as characters is how a `q` inside a cursor-position report quit the app.
+ * - A chunk that ends mid-sequence — including a lone trailing ESC, which is
+ *   byte-for-byte the start of one — is not decoded at all: it comes back as
+ *   {@link DecodedInput.pending} for the caller to prepend to the next chunk.
+ *   Quit is emitted only for an ESC that is neither, i.e. one whose following
+ *   byte cannot continue a sequence.
  *
  * Holding costs a lone Esc keypress its effect until the next byte arrives.
  * That is the right side of the trade for a browser whose advertised quit keys are `q`
@@ -124,7 +128,8 @@ const PARTIAL_PATTERNS = [/\u001BO?$/y, /\u001B\[[\d;<>?]*[\u0020-\u002F]*$/y, /
 /* oxlint-enable no-control-regex */
 
 /**
- * Wheel reports set bit 6 of the button field. the low bit then separates up (0) from down (1).
+ * Wheel reports set bit 6 of the button field.
+ * The low bit then separates up (0) from down (1).
  */
 const WHEEL_FLAG = 64
 
@@ -234,8 +239,9 @@ function mouseInput(button: number, column: number, row: number, final: string):
 /**
  * Decodes one raw-mode stdin chunk into input events.
  *
- * Unrecognized bytes are dropped. an unresolved trailing escape fragment is returned
- * rather than decoded, and the caller passes it back as `pending` with the next chunk.
+ * Unrecognized bytes are dropped.
+ * An unresolved trailing escape fragment is returned rather than decoded,
+ * and the caller passes it back as `pending` with the next chunk.
  */
 export function decodeInputChunk(chunk: string, pending = ""): DecodedInput {
 	const events: MapTUIInput[] = []

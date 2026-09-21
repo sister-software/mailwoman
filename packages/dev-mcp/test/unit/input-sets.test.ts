@@ -225,7 +225,7 @@ describe.skipIf(!haveHoldoutUS)("resolveInputSet — holdout", () => {
 		// `source` arrives from an MCP tool call as untrusted JSON, so the refusal is
 		// a runtime check on a value the signature forbids.
 		// `Reflect.set` puts the value in the field the way the transport does, without asserting to
-		// the compiler that "de" is a HoldoutSource — which is the claim under test, and a false one.
+		// the compiler that "de" is a HoldoutSource, which is the claim under test, and a false one.
 		const unknownSource: Extract<InputSetRef, { kind: "holdout" }> = { kind: "holdout" }
 
 		Reflect.set(unknownSource, "source", "de")

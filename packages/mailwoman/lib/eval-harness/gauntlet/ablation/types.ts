@@ -173,7 +173,7 @@ export interface AblationCell {
 	/**
 	 * Additive: how far down the ladder the passing rows landed (0 = held at the base).
 	 *
-	 * `null` when no row in this cell was graded against a ladder — never 0,
+	 * `null` when no row in this cell was graded against a ladder, never 0,
 	 * which would read as "nothing degraded".
 	 */
 	degradedRungsP50: number | null

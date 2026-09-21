@@ -119,9 +119,10 @@ const PLACETYPE_RANK: Record<string, number> = {
 const POSTCODE_CONVENTION_RANK: Record<string, number> = { ...PLACETYPE_RANK, postalcode: 6, locality: 5 }
 
 /**
- * Deliberately local rather than tree-hits' `mostSpecific`, which delegates to the production
- * conditional ladder (`mostSpecificResolved`): this eval grades on the flat #945 convention
- * tables above — see the `PLACETYPE_RANK` docstring for why migrating needs a panel count first.
+ * Deliberately local rather than tree-hits' `mostSpecific`, which delegates to the production conditional
+ * ladder (`mostSpecificResolved`): this eval grades on the flat #945 convention tables above.
+ *
+ * See the `PLACETYPE_RANK` docstring for why migrating needs a panel count first.
  */
 function mostSpecific(rs: Resolved[], rank: Record<string, number> = PLACETYPE_RANK): Resolved | null {
 	let best: Resolved | null = null

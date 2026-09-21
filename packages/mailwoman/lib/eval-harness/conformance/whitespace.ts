@@ -66,14 +66,15 @@ export const WHITESPACE_LAW = "whitespace-invariance"
 /**
  * The six whitespace transformations this law states, and the only six a committed row may use.
  *
- * - `leading` / `trailing` — the pasted-cell registers: one ascii space bolted onto an end. Separate names because Stage
- *   1 reaches them through separate code — the leading trim takes whitespace only, the trailing trim takes whitespace
- *   and the sentence punctuation a user appends — so one can regress without the other.
+ * - `leading` / `trailing` — the pasted-cell registers: one ascii space bolted onto an end.
+ *   Separate names because Stage 1 reaches them through separate code — the leading
+ *   trim takes whitespace only, the trailing trim takes whitespace and the sentence
+ *   punctuation a user appends — so one can regress without the other.
  * - `repeated` — every safe internal run doubled: the concatenated-column register.
- * - `tabbed` — every safe internal run replaced by one tab: the TSV-export register, and the arm that states the collapse
- *   still shields the segmentation grammar (see the module docstring).
- * - `separator-tightened` — the whitespace after each comma deleted (`Portland, or` → `Portland,or`). The comma survives,
- *   so the fields stay separated and the token order is untouched.
+ * - `tabbed` — every safe internal run replaced by one tab: the TSV-export register, and the arm
+ *   that states the collapse still shields the segmentation grammar (see the module docstring).
+ * - `separator-tightened` — the whitespace after each comma deleted (`Portland, or` → `Portland,or`).
+ *   The comma survives, so the fields stay separated and the token order is untouched.
  * - `separator-loosened` — one space inserted before each comma (`Portland, or` → `Portland , or`).
  */
 export const WHITESPACE_TRANSFORMATIONS = [
@@ -238,12 +239,15 @@ export function classifyWhitespaceTransformation(base: string, variant: string):
 /**
  * The declared reasons a whitespace transformation is not stateable over a given row.
  *
- * - `identity-transformation` — the transformation returns the text unchanged because the query holds nothing of the kind
- *   it acts on: no comma for a separator transformation, no whitespace at all for a run one. Such a row is the identity
- *   law wearing a whitespace label. It would hold whatever the pipeline does with spacing.
- * - `structural-identifier-space` — the query's every whitespace run sits inside a structured identifier whose format
- *   grammar fixes it (`N7 0BT`), so a run transformation has no safe run to act on. Reported apart from the identity
- *   reading because the two absences say different things, and the difference is the one this law's tradeoff turns on.
+ * - `identity-transformation` — the transformation returns the text unchanged
+ *   because the query holds nothing of the kind it acts on: no comma for a separator
+ *   transformation, no whitespace at all for a run one.
+ *   Such a row is the identity law wearing a whitespace label.
+ *   It would hold whatever the pipeline does with spacing.
+ * - `structural-identifier-space` — the query's every whitespace run sits inside a structured identifier
+ *   whose format grammar fixes it (`N7 0BT`), so a run transformation has no safe run to act on.
+ *   Reported apart from the identity reading because the two absences say different things,
+ *   and the difference is the one this law's tradeoff turns on.
  */
 export const WHITESPACE_APPLICABILITY_RULES = ["identity-transformation", "structural-identifier-space"] as const
 
@@ -382,7 +386,7 @@ export function auditWhitespaceSuite(fixtures: readonly ConformanceFixture[]): s
 /**
  * The transformation label a report line carries, e.g. `tabbed`.
  *
- * `?` when the pair does not classify — which the audit refuses, so it can only
+ * `?` when the pair does not classify, which the audit refuses, so it can only
  * appear on a hand-built fixture that skipped the loader.
  */
 export function describeWhitespaceTransformation(fixture: ConformanceFixture): string {

@@ -49,7 +49,8 @@ const child = spawnProcess("node", ["packages/nominatim/out/cli.js", "serve", "-
 try {
 	const deadline = Date.now() + 180_000
 
-	// Model + gazetteer boot takes a while. poll /status until the server answers.
+	// Model + gazetteer boot takes a while.
+	// Poll /status until the server answers.
 	for (;;) {
 		try {
 			const res = await fetch(`${BASE}/status`)

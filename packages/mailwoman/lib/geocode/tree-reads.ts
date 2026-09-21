@@ -58,7 +58,7 @@ export function variantAliasExemptionOf(tree: AddressTree): true | undefined {
 
 /**
  * The country #42's postcode-country coherence pass scoped the walk to,
- * read back off the resolved tree's `postcode_country_scope` stamp — or the #1735
+ * read back off the resolved tree's `postcode_country_scope` stamp, or the #1735
  * explicit-country pre-scope, whose receipt exists precisely so a tree that was right
  * from the start still gets its country's rooftop database loaded.
  *
@@ -96,8 +96,8 @@ export function treePostcodeValue(tree: AddressTree): string | undefined {
  *
  * - The tree carries no postcode node already (never second-guess a parse that found one),
  * - The retagged node is the only value-containing node in the tree, and
- * - Its value matches a format that is unforgeable across the systems we resolve ({@link POSTCODE_FORMAT_COUNTRY} —
- *   GB/CA/IE, the same table #928 already trusts to name a country outright).
+ * - Its value matches a format that is unforgeable across the systems we resolve
+ *   ({@link POSTCODE_FORMAT_COUNTRY} — GB/CA/IE, the same table #928 already trusts to name a country outright).
  *
  * So it fires on `N7 0BT` and `K2P 1L4` and on nothing that is also a plausible street, venue or city name.
  * A US ZIP is out of scope by construction: `90210` alone is five digits, which the model
@@ -109,7 +109,7 @@ export function recognizeBarePostcode(tree: AddressTree): AddressTree {
 	const valued: AddressNode[] = []
 
 	for (const n of walkNodes(tree.roots)) {
-		// The parse already found a postcode — never second-guess it.
+		// The parse already found a postcode, never second-guess it.
 		if (n.tag === "postcode") return tree
 
 		if (n.value.trim().length) {

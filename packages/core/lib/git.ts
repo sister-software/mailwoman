@@ -97,7 +97,7 @@ export async function trackedFiles(repoRoot: PathBuilderLike, pathspecs: string[
  * and the untracked ones an ignore rule does not cover, optionally narrowed by git pathspecs.
  *
  * The set a checker over the repository's own contents wants. {@linkcode trackedFiles}
- * answers what is committed, so a file written a minute ago is absent from it —
+ * answers what is committed, so a file written a minute ago is absent from it,
  * and a checker reading that list reports a clean result for a file it never opened.
  * `--exclude-standard` applies `.gitignore`, so a build output stays out
  * and only a file somebody intends to commit comes in.

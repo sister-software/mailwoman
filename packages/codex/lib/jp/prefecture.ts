@@ -128,8 +128,9 @@ export function isJapanesePrefectureCode(input: unknown): input is JapanesePrefe
 /**
  * Fold a romaji surface form so `Tōkyō`, `Tokyo`, and `Tokyo-to` all key alike: strip macrons (NFD
  *
- * - Drop the combining marks), lowercase, peel off an appended `-to`/`-do`/`-fu`/`-ken` type-suffix, then drop everything
- *   but `a-z`. `Tōkyō-to` and `tokyo` both → `tokyo`.
+ * - Drop the combining marks), lowercase, peel off an appended `-to`/`-do`/`-fu`/`-ken`
+ *   type-suffix, then drop everything but `a-z`.
+ *   `Tōkyō-to` and `tokyo` both → `tokyo`.
  *
  * The suffix is only stripped when it is a genuine appendage — separated by a hyphen/space/middle-dot
  * (`Tokyo-to`, `Osaka fu`) or trailing the macron-containing long-vowel form.
@@ -183,8 +184,8 @@ export const JP_PREFECTURE_NAME_TO_CODE: ReadonlyMap<string, JapanesePrefectureC
  * Resolve a Japanese prefecture surface form to its ISO 3166-2:JP code, accepting:
  *
  * - A code directly (`"13"` → `"13"`),
- * - A romaji name, case-insensitive, macrons optional, with or without the romaji type-suffix (`Tōkyō` / `Tokyo` /
- *   `tokyo` / `Tokyo-to` → `"13"`),
+ * - A romaji name, case-insensitive, macrons optional, with or without the romaji
+ *   type-suffix (`Tōkyō` / `Tokyo` / `tokyo` / `Tokyo-to` → `"13"`),
  * - A kanji name, with or without its 都/道/府/県 suffix (`東京都` / `東京` → `"13"`).
  *
  * @returns Null for anything it cannot place.

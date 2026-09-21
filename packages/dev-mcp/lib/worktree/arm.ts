@@ -54,7 +54,7 @@ import { FINGERPRINTED_WORKSPACES } from "#tree-fingerprint"
 export const WORKING_TREE_REF = "WORKTREE"
 
 /**
- * Written into whichever checkout the arm runs in — including,
+ * Written into whichever checkout the arm runs in, including,
  * for {@link WORKING_TREE_REF}, the operator's own.
  *
  * Named with a leading dot and removed in a `finally` so a crashed child cannot leave it in a tracked tree.
@@ -146,7 +146,7 @@ async function linkNodeModules(mainRoot: string, worktree: string): Promise<void
  * The script the child runs, written into the worktree rather than committed.
  *
  * Written rather than committed on purpose: a committed runner would only exist at refs
- * that already have it, so the arm could not reach backwards past its own introduction —
+ * that already have it, so the arm could not reach backwards past its own introduction,
  * which is most of the refs anyone wants to compare against.
  * Its imports resolve inside the worktree, so it is the ref's pipeline that answers.
  *
@@ -209,8 +209,8 @@ export interface WorktreeArmResult {
  *
  * The worktree is removed in `finally`, including on a child crash.
  * `git worktree add --detach` never moves the caller's head and never touches the working tree,
- * so a comparison cannot disturb uncommitted work — which is the property that makes
- * this safe to run mid-edit, and the reason it is a worktree rather than a stash.
+ * so a comparison cannot disturb uncommitted work, which is the property that makes this
+ * safe to run mid-edit, and the reason it is a worktree rather than a stash.
  */
 export async function runWorktreeArm(args: {
 	repoRoot: string

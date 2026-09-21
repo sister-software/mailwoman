@@ -74,7 +74,8 @@ export function foldExtract(ctx: {
 	ptID: (pt: string | null) => number
 	stageRow: StageRow
 	/**
-	 * The admin places pass 1 staged — what an extract's region ancestry is resolved against.
+	 * The admin places pass 1 staged.
+	 * What an extract's region ancestry is resolved against.
 	 *
 	 * Absent, no extract row takes a region scope (the postcode extracts, which carry none).
 	 */

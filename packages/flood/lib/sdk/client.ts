@@ -100,9 +100,9 @@ export class EAFloodClient extends APIClient<APIClientConfig> {
 	/**
 	 * The catalogue entry: reference dates, licence, and the direct file URLs.
 	 *
-	 * The download URL is read from here rather than assembled, because the EA's file
-	 * service keys on an opaque `fileDataSetId` that has no relationship to the dataset id —
-	 * a hard-coded URL survives a republish by pointing at a file that is no longer the product.
+	 * The download URL is read from here rather than assembled, because the EA's file service
+	 * keys on an opaque `fileDataSetId` that has no relationship to the dataset id.
+	 * A hard-coded URL survives a republish by pointing at a file that is no longer the product.
 	 *
 	 * @throws {Error} When the entry names a different dataset, carries no `revision`
 	 * reference date, or names a licence other than {@link EA_EXPECTED_CATALOGUE_LICENCE}.
@@ -117,8 +117,9 @@ export class EAFloodClient extends APIClient<APIClientConfig> {
 	}
 
 	/**
-	 * The feature count the WFS reports for the flood-zone layer — `resultType=hits`,
-	 * which returns the count without a single geometry.
+	 * The feature count the WFS reports for the flood-zone layer.
+	 *
+	 * `resultType=hits`, which returns the count without a single geometry.
 	 *
 	 * This is the second path in the build's two-path agreement check: the same authority,
 	 * a different distribution channel.
@@ -167,8 +168,9 @@ export function createEAFloodClient(options: CreateFloodClientOptions = {}): EAF
 /**
  * The ONS Open Geography boundary service — where "England" comes from.
  *
- * The EA states that its mapping "covers all of England" and does not publish
- * where England is. the national statistical authority does.
+ * The EA states that its mapping "covers all of England" and does not publish where England is.
+ * The national statistical authority does.
+ *
  * Realizing the coverage statement therefore takes a second authority's artifact, and
  * which one it was is written into `flood_map_extent` rather than left implicit.
  */

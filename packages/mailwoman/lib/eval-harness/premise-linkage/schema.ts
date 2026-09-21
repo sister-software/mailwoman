@@ -246,7 +246,7 @@ export interface PremiseLinkageCount {
  * Under `abstain_ok` a refusal leaves the eligible set, because an arm that
  * declined was not asked to be right.
  *
- * Under `unique_required` it stays in the denominator — and it is still recorded
+ * Under `unique_required` it stays in the denominator, and it is still recorded
  * as `refused`, never rewritten to `wrong`.
  * The policy changes what a rate is measured over.
  * It never changes what an arm did.
@@ -348,7 +348,7 @@ export interface PremiseLinkageReport {
 	 * How many cells the writer removed.
 	 *
 	 * Zero means none were removed, which is a different statement from "no cells were
-	 * small" only if you can see this number — which is why it is always present.
+	 * small" only if you can see this number, which is why it is always present.
 	 */
 	suppressedCells: number
 	arms: PremiseLinkageArmReport[]

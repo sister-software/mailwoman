@@ -74,8 +74,8 @@ interface PendingLabel {
 }
 
 /**
- * Origin of the render's subpixel grid, in world (Mercator) pixels — everything
- * projected onto the grid is offset by this pair.
+ * Origin of the render's subpixel grid, in world (Mercator) pixels.
+ * Everything projected onto the grid is offset by this pair.
  */
 interface GridOrigin {
 	x: number
@@ -83,16 +83,18 @@ interface GridOrigin {
 }
 
 /**
- * Everything a point projection needs, bundled so the per-feature rasterizers below
- * take one parameter instead of four — that's what keeps `rasterizeFeature` under
- * `max-params` (8) once `style`, `renderZoom`, and `pendingLabels` join it.
+ * Everything a point projection needs, bundled so the per-feature rasterizers
+ * below take one parameter instead of four.
+ *
+ * That's what keeps `rasterizeFeature` under `max-params` (8) once `style`,
+ * `renderZoom`, and `pendingLabels` join it.
  *
  * Threaded through as a value rather than closed over so those rasterizers stay free
  * functions (no nesting inside `renderFrame` deep enough to trip `max-depth`).
  *
- * `worldX`/`worldY` are the tile's top-left corner in render-zoom world pixels — for a native tile that is `tileX *
- * TILE_SIZE`, for an overzoomed parent it is scaled by the tile's span, so the projection needs no zoom arithmetic of
- * its own.
+ * `worldX`/`worldY` are the tile's top-left corner in render-zoom world pixels,
+ * for a native tile that is `tileX * TILE_SIZE`, for an overzoomed parent it is scaled
+ * by the tile's span, so the projection needs no zoom arithmetic of its own.
  */
 interface TileProjection {
 	worldX: number
@@ -106,8 +108,9 @@ interface TileProjection {
  * otherwise the nearest ancestor that exists.
  *
  * `span` is how many render-zoom world pixels the tile covers
- * (`TILE_SIZE << dz` for an ancestor `dz` levels up) — a spatially sparse archive
- * (deep zooms only where people are) degrades to coarse geometry instead of blank cells.
+ * (`TILE_SIZE << dz` for an ancestor `dz` levels up).
+ * A spatially sparse archive (deep zooms only where people are) degrades to
+ * coarse geometry instead of blank cells.
  */
 interface ResolvedTile {
 	tile: DecodedTile
@@ -173,9 +176,9 @@ function collectLabels(
 /**
  * Rasterizes (or, for labels, collects) one feature under one style.
  *
- * The `style.kind` dispatch is the only branching here — the actual per-kind work lives
- * in {@link rasterizeFill}/{@link rasterizeLine}/{@link collectLabels} so this stays a
- * flat one-level `if`/`else` regardless of how deeply its caller is already nested.
+ * The `style.kind` dispatch is the only branching here.
+ * The actual per-kind work lives in {@link rasterizeFill}/{@link rasterizeLine}/{@link collectLabels}
+ * so this stays a flat one-level `if`/`else` regardless of how deeply its caller is already nested.
  */
 function rasterizeFeature(
 	grid: RGBAGrid,
@@ -234,8 +237,8 @@ function rasterizeTileForKind(
  * Walks a viewport's rendering pipeline: tile fetch, style-ordered rasterization,
  * braille conversion, then overlay annotations (ring, labels, markers).
  *
- * One `MapRenderer` can render any number of viewports against the same `TileSource` —
- * it holds no per-frame state itself.
+ * One `MapRenderer` can render any number of viewports against the same `TileSource`.
+ * It holds no per-frame state itself.
  */
 export class MapRenderer {
 	private readonly source: TileProvider

@@ -28,7 +28,7 @@ import type { Comparison, ComparisonLevel } from "#fellegi-sunter"
  *
  * The formula's one true home is `@mailwoman/spatial`; this is a thin domain-typed
  * adapter from `match`'s `LatLon` ({ latitude, longitude }) onto the canonical
- * scalar helper — not a second implementation.
+ * scalar helper, not a second implementation.
  */
 export const haversineKm = (a: LatLon, b: LatLon): number =>
 	greatCircleKm(a.latitude, a.longitude, b.latitude, b.longitude)
@@ -92,16 +92,19 @@ export const DEFAULT_DISTANCE_LEVELS: ComparisonLevel[] = [
  *
  * This folds them into one comparison:
  *
- * - **level 0 `same-key`** — an exact canonical-key match: the strongest tier, and the one the inverse-address-frequency
- *   adjustment rides ({@link withTermFrequency} on level 0), so agreement on a crowded shared key is down-weighted
- *   toward worthless while a rare one keeps full weight.
- * - **levels 1…n** — great-circle distance buckets for pairs whose keys differ, so "123 Main St" vs "123 Main Street Apt
- *   2" that geocode to the same rooftop still warrants near-agreement (the geo-first point of the whole design).
+ * - **level 0 `same-key`** — an exact canonical-key match: the strongest tier, and the one the
+ *   inverse-address-frequency adjustment rides ({@link withTermFrequency} on level 0), so agreement on
+ *   a crowded shared key is down-weighted toward worthless while a rare one keeps full weight.
+ * - **levels 1…n** — great-circle distance buckets for pairs whose keys differ,
+ *   so "123 Main St" vs "123 Main Street Apt 2" that geocode to the same rooftop still
+ *   warrants near-agreement (the geo-first point of the whole design).
  * - Keys differ and no usable coordinate → no evidence.
  *
  * Exactly one spatial vote, no redundancy.
- * Pass {@link DEFAULT_SPATIAL_LEVELS} or your own. index 0 must be the exact-key tier,
- * indices 1…n the distance buckets nearest → far by `maxKm` (last = `far`).
+ * Pass {@link DEFAULT_SPATIAL_LEVELS} or your own.
+ *
+ * Index 0 must be the exact-key tier, indices 1…n the distance buckets nearest
+ * → far by `maxKm` (last = `far`).
  */
 export function spatialComparison<R>(config: {
 	name: string
@@ -140,7 +143,7 @@ export function spatialComparison<R>(config: {
 /**
  * Default levels for {@link spatialComparison}: an exact same-key tier on top of the distance buckets.
  *
- * `m`/`u` are EM-estimable seeds (m decreasing, u increasing down the tiers. each column ≈ sums to 1).
+ * `m`/`u` are EM-estimable seeds (m decreasing, u increasing down the tiers. Each column ≈ sums to 1).
  */
 export const DEFAULT_SPATIAL_LEVELS: ComparisonLevel[] = [
 	{ label: "same-key", m: 0.85, u: 0.01 },

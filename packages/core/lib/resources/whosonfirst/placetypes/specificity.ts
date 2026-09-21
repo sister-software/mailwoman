@@ -102,9 +102,10 @@ export function isAtLeastAsSpecific(
  * "Does this live row cover that dead one" wants the equal case to count as covering:
  * a live `locality` covers a dead `locality` of the same name.
  *
- * Asking `isAtLeastAsSpecific(live, dead)` and negating it answers "is the live row strictly
- * coarser", which quietly drops the equal case — measured on the real artifact, that turned
- * 973 blocked rows into 18 and would have resurrected 955 places that are already alive.
+ * Asking `isAtLeastAsSpecific(live, dead)` and negating it answers "is the live row
+ * strictly coarser", which quietly drops the equal case.
+ * Measured on the real artifact, that turned 973 blocked rows into 18 and would
+ * have resurrected 955 places that are already alive.
  *
  * `undefined` when either placetype is unranked.
  * A caller filtering on this should treat that as "not strictly finer".

@@ -88,7 +88,9 @@ export const EXCLUSION_POLICY_ID =
  * language whose libpostal stopword file lacks the bare form.
  */
 export const SUPPLEMENTAL_DEGENERATE_SURFACES: ReadonlySet<string> = new Set([
-	// Dutch/Danish preposition ("op de hoek", "op til") — absent from libpostal nl/da stopwords.txt as a bare word. Shipped-index victim: the Overland Park "OP" initialism alias (wof 85945755).
+	// Dutch/Danish preposition ("op de hoek", "op til") — absent from libpostal
+	// nl/da stopwords.txt as a bare word.
+	// Shipped-index victim: the Overland Park "OP" initialism alias (wof 85945755).
 	"op",
 ])
 
@@ -110,7 +112,9 @@ export const FST_LOCALES: ReadonlyMap<string, string[]> = new Map([
 	["de-de", ["DE"]],
 	["es-es", ["ES"]],
 	["it-it", ["IT"]],
-	// The CJK three (#1493): the autocomplete tier's place FST per locale, built from the same admin DB. The char-path model reads no FST prior (channel-free by interface); these serve `mailwoman eval autocomplete`'s `fst` arm and the Photon drop-in's type-ahead.
+	// The CJK three (#1493): the autocomplete tier's place FST per locale, built from the same admin DB.
+	// The char-path model reads no FST prior (channel-free by interface); these serve
+	// `mailwoman eval autocomplete`'s `fst` arm and the Photon drop-in's type-ahead.
 	["ja-jp", ["JP"]],
 	["zh-cn", ["CN"]],
 	["ko-kr", ["KR"]],
@@ -378,7 +382,7 @@ function scanSurfaceCountryCounts(dbPath: string): Map<string, number> {
 	// and a Set per surface OOMs a default heap.
 	// Most surfaces are single-country, so store the first country as a bare string
 	// and promote to an overflow Set only on the second distinct country.
-	// Rows stream via iterate() — never materialize the rowset.
+	// Rows stream via iterate(), never materialize the rowset.
 	const first = new Map<string, string>()
 	const overflow = new Map<string, Set<string>>()
 

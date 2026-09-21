@@ -302,7 +302,7 @@ export function geometryContains(
  * pairs this with {@link reversedRing} to make a hole.
  *
  * A copy whose hole is wound the same way as its exterior produces a fixture that
- * passes every structural check and tests nothing about hole handling — which is the
+ * passes every structural check and tests nothing about hole handling, which is the
  * exact failure the area cross-check exists to catch in production data.
  */
 export function rectangleRing(minLon: number, minLat: number, maxLon: number, maxLat: number): number[][] {

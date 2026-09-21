@@ -11,8 +11,10 @@
 
 import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
 /**
- * Comma-segment ceiling for a POI-led query. Past it the input is a venue plus a full address (`X, 350 5th Ave, New
- * York, NY`), which the structured-address scorer should claim instead.
+ * Comma-segment ceiling for a POI-led query.
+ *
+ * Past it the input is a venue plus a full address (`X, 350 5th Ave, New York, NY`),
+ * which the structured-address scorer should claim instead.
  */
 const MAX_POI_SEGMENTS = 3
 
@@ -23,10 +25,11 @@ export interface POIPhraseMatch {
 	/**
 	 * The matched subject's identifier string.
 	 *
-	 * For `kind: "category"`, a `@mailwoman/poi-taxonomy` category id. for `kind: "brand"`
-	 * or `kind: "name"`, the canonical display name.
-	 * `matchPOISubject` treats it opaquely. the caller (`mailwoman`'s `poi-intent.ts`)
-	 * interprets it per `kind`.
+	 * For `kind: "category"`, a `@mailwoman/poi-taxonomy` category id.
+	 * For `kind: "brand"` or `kind: "name"`, the canonical display name.
+	 *
+	 * `matchPOISubject` treats it opaquely.
+	 * The caller (`mailwoman`'s `poi-intent.ts`) interprets it per `kind`.
 	 */
 	categoryID: string
 	matchedPhrase: string
@@ -69,8 +72,8 @@ export interface POIPhraseMatch {
 	 * A scope is a statement about establishments, so it is judged against the country of
 	 * the place being searched rather than the caller's locale: the locale is the lens the
 	 * phrase is read through, and it says nothing about where the condition is true.
-	 * `matchPOISubject` carries the value untouched. the POI intent stage binds
-	 * it once the anchor has resolved.
+	 * `matchPOISubject` carries the value untouched.
+	 * The POI intent stage binds it once the anchor has resolved.
 	 */
 	countryScope?: readonly string[]
 }
@@ -78,7 +81,8 @@ export interface POIPhraseMatch {
 /**
  * Injected phrase→category lookup.
  *
- * Exact-phrase, locale-aware. returns [] on miss.
+ * Exact-phrase, locale-aware.
+ * Returns [] on miss.
  */
 export type POIPhraseLookup = (phrase: string, locale?: string) => ReadonlyArray<POIPhraseMatch>
 
@@ -141,8 +145,9 @@ export interface POISubjectMatch {
  * The comma alternative starts at the literal `,`; the anchor alternative starts
  * at a single `\s` immediately before a fixed anchor word.
  *
- * Every remaining quantifier (`,\s*`, `…\s+`) is _trailing_ — it runs only after the
- * required literal has already matched and nothing follows it, so it never backtracks.
+ * Every remaining quantifier (`,\s*`, `…\s+`) is _trailing_.
+ * It runs only after the required literal has already matched and nothing
+ * follows it, so it never backtracks.
  * Each start offset does O(1) work, making `matchAll` O(n).
  *
  * Behaviour is byte-identical to the previous `\s*,\s*|\s+(?:…)\s+` because `matchPOISubject`
@@ -183,7 +188,7 @@ function reachedMatches(hits: ReadonlyArray<POIPhraseMatch>): POIPhraseMatch[] {
  *
  * Scans separator occurrences left-to-right — a lexicon phrase may itself contain a bare separator
  * word (e.g. "walk in clinic"), so the first separator isn't necessarily the right split point.
- * Returns null when the lexicon never fires — including comma-ridden full addresses
+ * Returns null when the lexicon never fires, including comma-ridden full addresses
  * whose leading segment isn't a lexicon phrase.
  *
  * The winning candidate's hits are carried per {@link reachedMatches}: the first hit,
@@ -218,7 +223,8 @@ export function matchPOISubject(
 
 		const subject = trimmed.slice(0, separator.index).trim()
 
-		// Subjects only grow as the scan moves right — once over budget, later splits are too.
+		// Subjects only grow as the scan moves right.
+		// Once over budget, later splits are too.
 		// Whitespace-only split rather than `wordsOf`: a comma inside a subject is
 		// real content here rather than a separator to erase.
 		if (subject.split(/\s+/).length > MAX_SUBJECT_TOKENS) break
@@ -297,10 +303,12 @@ export function createScorePOIQuery(
 /**
  * Confidence band for a bare category.
  *
- * One notch above `poi_query`'s whole-input band (0.92) so the anchorless subset takes the top slot
- * from it, and only from it — every anchored POI query keeps scoring `poi_query` exactly as before.
- * The coordinator's POI branch accepts both kinds, so the routing is identical either
- * way. the split exists so the marker can say "you named a category and no place",
+ * One notch above `poi_query`'s whole-input band (0.92) so the anchorless subset
+ * takes the top slot from it, and only from it.
+ * Every anchored POI query keeps scoring `poi_query` exactly as before.
+ *
+ * The coordinator's POI branch accepts both kinds, so the routing is identical either way.
+ * The split exists so the marker can say "you named a category and no place",
  * which is a different thing to tell a caller.
  */
 const POI_CATEGORY_CONFIDENCE = 0.93
@@ -310,9 +318,10 @@ const POI_CATEGORY_CONFIDENCE = 0.93
  * to search: "tacos", "grocery store", "drinking fountain".
  *
  * Fires only on a whole-input lexicon hit (`remainder === ""`) whose subject is a category.
- * A brand (`kind: "brand"`) is excluded: a bare "Starbucks" is a name lookup
- * rather than a category, and the taxonomy id a category marker promises to carry does not
- * exist for it — `POIPhraseMatch.categoryID` holds the brand's display name in that case,
+ * A brand (`kind: "brand"`) is excluded: a bare "Starbucks" is a name lookup rather than a
+ * category, and the taxonomy id a category marker promises to carry does not exist for it.
+ *
+ * `POIPhraseMatch.categoryID` holds the brand's display name in that case,
  * which would make the marker's `categoryID` evidence a lie.
  */
 export function createScorePOICategory(

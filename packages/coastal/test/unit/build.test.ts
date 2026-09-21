@@ -54,7 +54,8 @@ let result: BuildCoastalResult
 let lookup: CoastalErosionLookup
 
 /**
- * A point inside the first fixture band — where both scenarios have a polygon.
+ * A point inside the first fixture band.
+ * Where both scenarios have a polygon.
  */
 const INSIDE_BAND_A = {
 	latitude: FIXTURE_ORIGIN.lat + FIXTURE_SIDE / 2,
@@ -377,7 +378,8 @@ describe("the area cross-check", () => {
 			9,
 			FIXTURE_SCENARIOS.noIntervention,
 			[[rectangleRing(lon, lat, lon + FIXTURE_SIDE, lat + FIXTURE_SIDE)]],
-			// Twice the area the rings actually cover. The shape a hole read as an exterior ring produces.
+			// Twice the area the rings actually cover.
+			// The shape a hole read as an exterior ring produces.
 			{ sourceAreaM2: 2 * 1_200_000 }
 		)
 

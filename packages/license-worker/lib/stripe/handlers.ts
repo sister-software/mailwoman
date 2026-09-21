@@ -21,8 +21,8 @@ import { idOf, invoiceSubscriptionID } from "#stripe/shapes"
 /**
  * The invoice a charge paid.
  *
- * A charge no longer names its invoice. the link runs through the PaymentIntent,
- * and the invoice-payments list is the one query that answers it.
+ * A charge no longer names its invoice.
+ * The link runs through the PaymentIntent, and the invoice-payments list is the one query that answers it.
  */
 async function invoiceIDForCharge(stripe: Stripe, charge: Stripe.Charge): Promise<string | undefined> {
 	const paymentIntent = idOf(charge.payment_intent)

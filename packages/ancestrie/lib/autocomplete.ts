@@ -70,9 +70,10 @@ interface BFSItem {
 /**
  * Autocomplete from the current token prefix.
  *
- * Returns suggestions ranked rank-descending, each with its full token path and its ancestor chain.
- * Takes any {@link AncestrieReaderLike} — a sealed {@link Ancestrie} or a consumer's adapter over
- * its own storage. the order interfaces the algorithm relies on are documented on the interface.
+ * @returns suggestions ranked rank-descending, each with its full token path and its ancestor chain.
+ * Takes any {@link AncestrieReaderLike} — a sealed {@link Ancestrie}
+ * or a consumer's adapter over its own storage.
+ * The order interfaces the algorithm relies on are documented on the interface.
  */
 export function autocomplete<TPayload = Uint8Array | JSONValue>(
 	trie: AncestrieReaderLike<TPayload>,
@@ -119,12 +120,13 @@ export function autocomplete<TPayload = Uint8Array | JSONValue>(
 
 	if (prefixState !== undefined) {
 		// partial-token interpretation: complete the last token by prefix-filtering the continuation edges.
-		// The exact edge is skipped — when it exists, the complete-token seeding
-		// above already covered that state.
+		// The exact edge is skipped.
+		// When it exists, the complete-token seeding above already covered that state.
 		for (const cont of trie.continuations(prefixState)) {
 			if (cont.token === partial || !cont.token.startsWith(partial)) continue
 
-			// This edge completes the typed partial token — its target is a real match at depth+1.
+			// This edge completes the typed partial token.
+			// Its target is a real match at depth+1.
 			for (const record of trie.entriesAt(cont.targetState, perBranchLimit)) {
 				addSuggestion(trie, seen, record, complete.length + 1, normalized, [cont.token])
 			}
@@ -209,7 +211,8 @@ function addSuggestion<TPayload>(
 /**
  * Keep one suggestion per key — the highest-ranked.
  *
- * Input is already rank-sorted, so the first occurrence per key wins. order is preserved.
+ * Input is already rank-sorted, so the first occurrence per key wins.
+ * Order is preserved.
  */
 function dedupe<TPayload>(
 	suggestions: AncestrieSuggestion<TPayload>[],

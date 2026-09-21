@@ -181,7 +181,8 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 	const rt = useReleaseRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets, disposeAssets })
 
-	// The service worker keeps one release's gazetteer chunks. tell it which.
+	// The service worker keeps one release's gazetteer chunks.
+	// Tell it which.
 	useEffect(() => {
 		if (rt.selectedVersion) {
 			pruneDBRangeCache(rt.selectedVersion)
@@ -435,9 +436,9 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 			// Street-level coordinate wins the pin (more precise than any admin centroid).
 			// id=0 → not a WOF place. The `tier` + `uncertaintyM` ride on the candidate
-			// itself (`ResolvedPlaceView` carries both) so the result panel renders
-			// the "precision ≈ interpolated · ±N m" row instead of a "WOF id 0" —
-			// the map render still reads them back through `extrasRef` below.
+			// itself (`ResolvedPlaceView` carries both) so the result panel renders the
+			// "precision ≈ interpolated · ±N m" row instead of a "WOF id 0".
+			// The map render still reads them back through `extrasRef` below.
 			if (streetResolution) {
 				const streetCandidate: ResolvedPlaceView & { tier: StreetResolution["tier"]; uncertaintyM: number } = {
 					id: 0,
@@ -524,8 +525,8 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			}
 
 			// Crisp admin polygon (like `_app.tsx`): only for a real WOF place with no precise street tier.
-			// The pure `computeMapPlaceRenderSpec` cascade prefers `geometry` when present. the
-			// async fetch stays here (a runtime concern), populating a cache + bumping a nonce
+			// The pure `computeMapPlaceRenderSpec` cascade prefers `geometry` when present.
+			// The async fetch stays here (a runtime concern), populating a cache + bumping a nonce
 			// so the enricher re-runs with the geometry in hand.
 			const release = rt.selectedRelease
 			const version = rt.selectedVersion
@@ -598,7 +599,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		[config.tileWorkerURL]
 	)
 
-	// ── Version + backend surface (mirror the loader state. the picker/backend controls drive these) ─────────
+	// ── Version + backend surface (mirror the loader state. The picker/backend controls drive these) ─────────
 	const availableVersions = useMemo(
 		() => (rt.manifest?.releases ?? []).map((r) => ({ version: r.version, label: r.label })),
 		[rt.manifest]

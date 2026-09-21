@@ -36,7 +36,10 @@ const RUN_ROW_FIELDS = [
 	"components",
 	"lat",
 	"lon",
-	// Haversine kilometres from the row's truth point, for the sets that carry one — board, panel, golden, parity, and a literal set whose caller pinned coordinates. `null` on a row with no truth and on a row that resolved nothing, which are different facts: read it beside `lat`.
+	// Haversine kilometres from the row's truth point, for the sets that carry one — board,
+	// panel, golden, parity, and a literal set whose caller pinned coordinates.
+	// `null` on a row with no truth and on a row that resolved nothing,
+	// which are different facts: read it beside `lat`.
 	"km",
 	"tier",
 	"admin_coherence",
@@ -123,8 +126,8 @@ export const runTool = ({ registry }: DevToolDeps): DevTool => ({
 							: haversineKm(run.result.lat, run.result.lon, item.truthLat, item.truthLon),
 					tier: run.result.resolution_tier,
 					admin_coherence: run.result.admin_coherence ?? null,
-					// The resolved winner identities (name + placeID per rung) — what the
-					// chimera triage (#1731) otherwise drops to the CLI for.
+					// The resolved winner identities (name + placeID per rung).
+					// What the chimera triage (#1731) otherwise drops to the CLI for.
 					// Coordinate diffs alone cannot see a wrong-instance win.
 					hierarchy: run.result.hierarchy ?? null,
 					timing_ms: run.timing,

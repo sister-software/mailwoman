@@ -506,30 +506,37 @@ export function buildFSTEmissionPriors(
  * (nothing is open, and the next real content should start one fresh, whatever piece it arrives on).
  * Three kinds of piece, crossed with that state, is the whole state machine:
  *
- * 1. **`▁`-prefixed, with alnum content** (a genuine new word, e.g. `"▁Stock"`, `"▁Tyne"`): always closes whatever
- *    `current` holds (pushing it to `groups`) and opens a fresh one. This is the only case that unconditionally starts
- *    a word. Every other case below is conditioned on whether one is already open or pending.
- * 2. **`▁`-prefixed, no alnum content** (a bare `"▁"` — a lone space tokenized as its own piece with nothing attached — or
- *    a punctuation piece the tokenizer fused with its own leading space): closes whatever `current` holds, same as case
- *    1, but does not open a new word — it also gets its own empty placeholder group (`{ fstToken: "", pieceIndices: [i]
- *    }`, preserving index alignment) and leaves the state pending (`current = null`) for whatever piece comes next.
+ * 1. **`▁`-prefixed, with alnum content** (a genuine new word, e.g. `"▁Stock"`, `"▁Tyne"`):
+ *    always closes whatever `current` holds (pushing it to `groups`) and opens a fresh one.
+ *    This is the only case that unconditionally starts a word.
+ *    Every other case below is conditioned on whether one is already open or pending.
+ * 2. **`▁`-prefixed, no alnum content** (a bare `"▁"` — a lone space tokenized as its own piece with
+ *    nothing attached — or a punctuation piece the tokenizer fused with its own leading space):
+ *    closes whatever `current` holds, same as case 1, but does not open a new word — it also gets its
+ *    own empty placeholder group (`{ fstToken: "", pieceIndices: [i] }`, preserving index alignment)
+ *    and leaves the state pending (`current = null`) for whatever piece comes next.
  * 3. **Not `▁`-prefixed** (interior to whatever's already true — nothing here is itself a boundary):
  *
- *    - **Alnum** (a SentencePiece subword split, e.g. `"ton"` after `"▁Stock"`): if a word is open (`current` is non-null),
- *      this is an ordinary continuation — appended onto it. If a word is pending (`current` is `null` — because the last
- *      piece was case 2's bare `▁`, or a run of case-3-punctuation with nothing to attach to, or this is the very first
- *      piece), this piece is the actual start of the pending word: nothing else marks the boundary, so it opens `current`
- *      fresh here instead of being dropped. **Opening on a non-`▁` piece is required rather than a nicety**: restrict
- *      word-opening to `▁`-prefixed pieces (or `i === 0`) and a pending word whose first piece happens to lack its own `▁`
- *      vanishes silently — that is the exact shape a SentencePiece vocab produces for a short/common word never learned as
- *      a merged `"▁word"` token (`"on"`, `"upon"`, `"super"`, bare `"IL"` after a lone `"▁"` before it — all observed on
- *      the production `v0.9.0-multisplice` tokenizer, so not a fixture-vocab quirk).
- *    - **Punctuation-only** (`"-"`, `"'"`, a bare `","`): if a word is open, it's interior punctuation — absorbed into
- *      `current.pieceIndices` (contributing nothing to `fstToken`; `normalizeFSTToken` strips punctuation anyway) but
- *      never resetting it, so the pieces that follow still have a `current` to land on ("Stockton-on-Tees", "Bishop's
- *      Stortford"). If a word is pending, this punctuation piece has nothing to attach to either — same empty-placeholder
- *      treatment as case 2 — and the state stays pending. The punctuation doesn't consume or clear the pending word, it
- *      just has nothing of its own to open.
+ *    - **Alnum** (a SentencePiece subword split, e.g. `"ton"` after `"▁Stock"`): if a word
+ *      is open (`current` is non-null), this is an ordinary continuation — appended onto it.
+ *      If a word is pending (`current` is `null` — because the last piece was case 2's bare `▁`,
+ *      or a run of case-3-punctuation with nothing to attach to, or this is the very first piece),
+ *      this piece is the actual start of the pending word: nothing else marks the boundary,
+ *      so it opens `current` fresh here instead of being dropped. **Opening on a non-`▁`
+ *      piece is required rather than a nicety**: restrict word-opening to `▁`-prefixed
+ *      pieces (or `i === 0`) and a pending word whose first piece happens to lack
+ *      its own `▁` vanishes silently — that is the exact shape a SentencePiece vocab
+ *      produces for a short/common word never learned as a merged `"▁word"` token
+ *      (`"on"`, `"upon"`, `"super"`, bare `"IL"` after a lone `"▁"` before it — all observed
+ *      on the production `v0.9.0-multisplice` tokenizer, so not a fixture-vocab quirk).
+ *    - **Punctuation-only** (`"-"`, `"'"`, a bare `","`): if a word is open,
+ *      it's interior punctuation — absorbed into `current.pieceIndices`
+ *      (contributing nothing to `fstToken`; `normalizeFSTToken` strips punctuation anyway)
+ *      but never resetting it, so the pieces that follow still have a `current` to
+ *      land on ("Stockton-on-Tees", "Bishop's Stortford").
+ *      If a word is pending, this punctuation piece has nothing to attach to either —
+ *      same empty-placeholder treatment as case 2 — and the state stays pending.
+ *      The punctuation doesn't consume or clear the pending word, it just has nothing of its own to open.
  *
  * The pending state is what keeps `"Stockton , Lancashire"` from fusing "Stockton" and "Lancashire"
  * into one group: however many raw empty-placeholder groups the comma/space sequence produces
@@ -664,11 +671,13 @@ function adjacentNonEmptyIndex(groups: WordGroup[], from: number, direction: 1 |
  * `streetContext.positiveScale` (default 0.25) when either syntactic condition holds,
  * else 1.0 (byte-identical to the unrestricted path):
  *
- * 1. **Street-type adjacency**. The word-group immediately after (suffix locales: "Washington Blvd") or before (prefix
- *    locales: "Rue de Rivoli") the matched span is a street-type token per the morphology FST.
- * 2. **House-number left** — the word-group immediately before the match is house-number-shaped (`/^\d{1,6}[a-z]?$/` —
- *    "500 Washington" is street-headed, #1143). A house number before a street-type prefix ("500 rue …") needs no extra
- *    case: the prefix itself already satisfies condition 1.
+ * 1. **Street-type adjacency**.
+ *    The word-group immediately after (suffix locales: "Washington Blvd") or before
+ *    (prefix locales: "Rue de Rivoli") the matched span is a street-type token per the morphology FST.
+ * 2. **House-number left** — the word-group immediately before the match is house-number-shaped
+ *    (`/^\d{1,6}[a-z]?$/` — "500 Washington" is street-headed, #1143).
+ *    A house number before a street-type prefix ("500 rue …") needs no extra case:
+ *    the prefix itself already satisfies condition 1.
  *
  * Composes with #1173's length-scaling inside {@linkcode applyBias} (length = weak lone
  * match. Context = strong match in a street position); the suppression path is untouched.

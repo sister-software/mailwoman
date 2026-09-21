@@ -120,7 +120,7 @@ export interface CIKCorroborationOptions {
 	 * SIC codes accepted as corroborating.
 	 *
 	 * Defaults to {@linkcode TELECOM_SIC_CODES}.
-	 * Overridable so a caller working a different vertical does not have to fork the check —
+	 * Overridable so a caller working a different vertical does not have to fork the check,
 	 * not so a telecom run can quietly widen it.
 	 */
 	acceptedSICCodes?: ReadonlySet<string>

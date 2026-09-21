@@ -37,8 +37,9 @@ interface SectionLinkProps {
 /**
  * One section tab.
  *
- * Its own hook (`useLayoutDocsSidebar`) resolves the destination from the _target_ sidebar's entry
- * link — so cross-section links work even though only the active sidebar's items are in context.
+ * Its own hook (`useLayoutDocsSidebar`) resolves the destination from the _target_ sidebar's entry link.
+ * So cross-section links work even though only the active sidebar's items are in context.
+ *
  * One hook per instance keeps the rules-of-hooks interface clean across the fixed `DOCS_SECTIONS` list.
  */
 const SectionLink: FC<SectionLinkProps> = ({ section, active }) => {
@@ -77,8 +78,8 @@ export interface DocsSubHeaderProps {
  * (mounted from the ejected `theme/DocRoot/Layout`).
  *
  * Each section is its own sidebar (see sidebars.ts), so this bar — not a collapsible
- * sidebar category — is how a reader moves between sections. the active sidebar's
- * contents sit one level shallower as a result.
+ * sidebar category — is how a reader moves between sections.
+ * The active sidebar's contents sit one level shallower as a result.
  */
 export const DocsSubHeader: FC<DocsSubHeaderProps> = ({ navbarRef, hidden }) => {
 	const activeName = useDocsSidebar()?.name

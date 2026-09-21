@@ -93,7 +93,7 @@ export const PLAN_LEVEL_SCHEME = "IE-PLAN-LEVEL"
  * Sized against the measured ceiling on a sibling product rather than guessed: single-process runs
  * over that layer died after roughly 510,000 and 798,000 features as h3's wasm heap fragmented.
  * This product holds 85,330 features, so this default puts the whole country
- * in one process — and it is the ceiling that makes the build reproducible
+ * in one process, and it is the ceiling that makes the build reproducible
  * rather than the fact that this product happens to sit below it.
  *
  * A smaller chunk costs A full pass each.

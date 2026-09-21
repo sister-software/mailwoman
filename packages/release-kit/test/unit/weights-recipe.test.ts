@@ -130,7 +130,7 @@ describe("readWeightsRecipe — buildable is not linkable", () => {
 describe("readWeightsRecipe — the dev-only FSTs", () => {
 	it("names both FSTs even though the release config does not", async () => {
 		// They are dev-only: copy-weights.ts ships neither, so a weights directory has them only
-		// because a linker put them there — and their absence resolves the gazetteer
+		// because a linker put them there, and their absence resolves the gazetteer
 		// and street-context priors off with no error.
 		const { repoRoot, dataRoot } = await fixture(CONFIG)
 

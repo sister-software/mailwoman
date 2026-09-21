@@ -479,7 +479,7 @@ describe("groupPiecesIntoWords — interior punctuation (real fixture tokenizer)
 describe("groupPiecesIntoWords — byte-fallback placeholder never leaks into fstToken (paired-punctuation audit)", () => {
 	// The small fixture tokenizer's deliberately tiny vocab hits SentencePiece
 	// byte-fallback (`<0xHH>` pieces) on curly quotes, guillemets, and even ascii
-	// braces/brackets — not just non-Latin scripts.
+	// braces/brackets, not just non-Latin scripts.
 	// `hasAlnum` must never read the placeholder text ("<0x7B>" — hex digits and letters) as real
 	// alnum content: it would inject garbage into fstToken ("0x7bblock" instead of "block"),
 	// corrupting every FST/pair-index probe key for a place name written with one of these characters.

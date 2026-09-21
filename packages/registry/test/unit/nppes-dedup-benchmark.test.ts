@@ -98,7 +98,8 @@ describe("scoreEntities", () => {
 		const entities = [entity("e1", [record("a-1"), record("a-2"), record("b-1"), record("b-2")])]
 		const s = scoreEntities(entities, npiLabel, 4)
 
-		// 2 true pairs recovered out of 6 predicted. both true pairs found.
+		// 2 true pairs recovered out of 6 predicted.
+		// Both true pairs found.
 		expect(s.precision).toBeCloseTo(2 / 6, 12)
 		expect(s.recall).toBe(1)
 		expect(s.f1).toBeCloseTo(0.5, 12)

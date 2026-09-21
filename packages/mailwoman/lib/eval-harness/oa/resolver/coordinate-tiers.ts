@@ -171,7 +171,7 @@ export function anchorCoordinateFor(input: string, sources: AnchorSources): { la
 		const placed = a.candidates.filter((c) => c.lat !== 0 || c.lon !== 0)
 
 		if (!placed.length) continue
-		// When the eval fixes a country, accept only a placed candidate from it —
+		// When the eval fixes a country, accept only a placed candidate from it,
 		// never fall back to another country's centroid (a US ZIP that is coordless here
 		// but a valid 5-digit shape in DE/FR/IT must not borrow Europe's point).
 		// With no country fixed, take the first placed.

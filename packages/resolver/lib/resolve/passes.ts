@@ -239,7 +239,7 @@ export interface ResolutionState {
 	/**
 	 * #1589 — the countries the parsed postcode's format implies (the #928 singles plus the shared `NNN NN` family). When
 	 * set and no explicit country selection applies, the `postalcode` lookup probes
-	 * exactly these countries and abstains if all miss — never falling through to
+	 * exactly these countries and abstains if all miss, never falling through to
 	 * an unconstrained probe, whose space-stripped fold collides across systems
 	 * (`100 00` folded to `10000` answers Troyes FR while Prague sits in the artifact under both keyings).
 	 */
@@ -460,7 +460,7 @@ export async function applySpanRescore(
 
 	// #1537: the same-span namesake runner-ups rather than an empty list. A name the model reads as a `street` ("Springfield", "Berlin", "Moscow") never reaches the admin walk, so this tier is the only thing that resolves it — and decorating with `[]` meant the geocode path's `candidates` held one entry and the dominance margin `declared_ambiguity` reads was uncomputable for exactly the famous-homonym class. The winner is unchanged (see findRescoreCandidate); this is additive.
 	decorateNode(node, hit.place, hit.alternatives)
-	// `rescore_postcode_verified` carries the check's precision signal as an explicit handle —
+	// `rescore_postcode_verified` carries the check's precision signal as an explicit handle,
 	// not folded into the calibrated `confidence`, which would violate the isotonic bound
 	// (a true calibrated 0.83 must not be confused with a rescore plug-in estimate. DeepSeek 2026-06-23).
 	// True = postcode check fired (high-precision); false = unrestricted
@@ -542,13 +542,14 @@ export const DEFAULT_POSTCODE_MAX_MOVE_KM = 300
  * because the coordinate-picker prefers the (wrong) locality node and never cross- checks it.
  * This post-walk pass closes that loop, backend-agnostically and with no extra query:
  *
- * 1. Find the resolved postcode's coordinate (the trustworthy anchor — a postcode is unambiguous within a country in a way
- *    a town name is not).
- * 2. For each resolved locality node farther than `thresholdKm` from it: re-pick the same-named candidate from the node's
- *    already-captured `alternatives` that is nearest the postcode and within the radius. This keeps locality
- *    granularity at the correct instance.
- * 3. If no alternative reconciles, the locality instance is unreliable — fall its coordinate back to the postcode point
- *    (right area, the safe answer) and flag `postcode_city_mismatch`.
+ * 1. Find the resolved postcode's coordinate (the trustworthy anchor — a postcode is
+ *    unambiguous within a country in a way a town name is not).
+ * 2. For each resolved locality node farther than `thresholdKm` from it:
+ *    re-pick the same-named candidate from the node's already-captured `alternatives`
+ *    that is nearest the postcode and within the radius.
+ *    This keeps locality granularity at the correct instance.
+ * 3. If no alternative reconciles, the locality instance is unreliable — fall its coordinate
+ *    back to the postcode point (right area, the safe answer) and flag `postcode_city_mismatch`.
  *
  * Step 3 rests on the postcode being the more reliable of the two, which holds
  * while the postcode is correct.
@@ -556,8 +557,10 @@ export const DEFAULT_POSTCODE_MAX_MOVE_KM = 300
  * and the step relocates the answer there; `maxMoveKm` bounds that relocation,
  * at {@link DEFAULT_POSTCODE_MAX_MOVE_KM} unless a caller names one.
  *
- * Past the bound the coordinate stays on the selected locality and the node is still flagged,
- * because the components did disagree — what changes is which one the answer follows.
+ * Past the bound the coordinate stays on the selected locality and the node is
+ * still flagged, because the components did disagree.
+ * What changes is which one the answer follows.
+ *
  * Unbounded, the step moved `Nawāda, 744301` 1,914 km onto Port Blair while keeping Nawada's place id.
  *
  * Only fires where the postcode resolved to a point, so it composes with postcode coverage

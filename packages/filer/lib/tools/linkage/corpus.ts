@@ -90,19 +90,21 @@ function evalForm499Row(
  *
  * What it deliberately covers:
  *
- * - **Two multi-filer corporate families.** "Cascade Fiber Holdings, Inc." (3 members) and "Meridian Communications Group
- *   LLC" (3 members, counting the shared registrant below). One member of each reports a spelling-drifted
- *   holding-company name, so both the truth construction and the builder have to canonicalize rather than
- *   string-match.
+ * - **Two multi-filer corporate families.** "Cascade Fiber Holdings, Inc."
+ *   (3 members) and "Meridian Communications Group LLC" (3 members, counting the shared registrant below).
+ *   One member of each reports a spelling-drifted holding-company name, so both the truth
+ *   construction and the builder have to canonicalize rather than string-match.
  * - **Four standalone filers**, no holding company — true negatives for the pairwise score.
- * - **A same-canonical-name/different-entity trap.** "American Fiber Partners LLC" / "American Fiber Partners, LLC"
- *   canonicalize identically and are not the same company. Nothing in this crosswalk may merge them.
- * - **One registrant holding two FRNs** (`9100000010`/`9100000011`, joined by a shared `bdc_provider_id` in
- *   {@linkcode buildLinkageEvalProviderRows}), where only the second of the two discloses the parent. Its family
- *   membership therefore has to be found through the registrant rather than through whichever FRN happens to sort
- *   first.
- * - **Two filers reporting the same management company** (`9100000003`/`9100000012`) — the case the management-exclusion
- *   decision in the module docstring exists to handle.
+ * - **A same-canonical-name/different-entity trap.** "American Fiber Partners LLC" /
+ *   "American Fiber Partners, LLC" canonicalize identically and are not the same company.
+ *   Nothing in this crosswalk may merge them.
+ * - **One registrant holding two FRNs** (`9100000010`/`9100000011`, joined by
+ *   a shared `bdc_provider_id` in {@linkcode buildLinkageEvalProviderRows}),
+ *   where only the second of the two discloses the parent.
+ *   Its family membership therefore has to be found through the registrant
+ *   rather than through whichever FRN happens to sort first.
+ * - **Two filers reporting the same management company** (`9100000003`/`9100000012`) —
+ *   the case the management-exclusion decision in the module docstring exists to handle.
  *
  * No `legalNameOfCarrier`/`doingBusinessAs` value here contains another row's
  * `holdingCompany` string — deliberately, so withholding that field can't be defeated

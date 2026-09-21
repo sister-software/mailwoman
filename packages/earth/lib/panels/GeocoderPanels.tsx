@@ -43,8 +43,9 @@ export interface GeocoderPanelsOptions {
  * What the loader is fetching, as one line for the footer: the named step,
  * then the loader's own progress text.
  *
- * Each part is tested for on its own rather than filtered out of a list — an absent step and an
- * absent progress line are different readings, and a filter would report the same string for both.
+ * Each part is tested for on its own rather than filtered out of a list.
+ * An absent step and an absent progress line are different readings,
+ * and a filter would report the same string for both.
  */
 function describeLoad(loading: NonNullable<GeocoderRuntimeHandle["runtime"]["loading"]>): string {
 	const step = loading.stepLabels[loading.stepIndex]
@@ -77,7 +78,8 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 	/* oxlint-disable react/no-unstable-nested-components -- render props rather than components: the controls call each member (`panels.result({…})`) rather than mounting it */
 	return useMemo<GeocoderPanels>(
 		() => ({
-			// The sheet's own title and its capsule button are the disclosure. a second one inside would repeat them.
+			// The sheet's own title and its capsule button are the disclosure.
+			// A second one inside would repeat them.
 			header: <About collapsible={false} />,
 			releaseInfo: selectedRelease ? (
 				<p style={{ margin: "0 0 0.75rem", fontSize: "0.85rem", opacity: 0.75 }}>
@@ -132,9 +134,9 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			),
 			// The feature inspector and its longitude/latitude/zoom readout are developer
 			// tooling, and were mounted for every visitor.
-			// They sit in MapLibre's bottom-right corner, directly above the footer strip, so on a
-			// narrow window the readout ran along the same edge as the Sources button — two unrelated
-			// things sharing one line, one of which nobody outside this repository has a use for.
+			// They sit in MapLibre's bottom-right corner, directly above the footer strip,
+			// so on a narrow window the readout ran along the same edge as the Sources button.
+			// Two unrelated things sharing one line, one of which nobody outside this repository has a use for.
 			// Shown under the same condition as the decode-path drawer.
 			mapControls: devMode ? <MapControls /> : null,
 			layers: ({ map }) => <LayerToggleControl map={map} />,

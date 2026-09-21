@@ -78,7 +78,8 @@ export const POSTAL_CITY_CANDIDATE_COLUMNS = [
  * so the resolve is a single exact probe.
  *
  * Idempotent (`if not exists`); pass a {@link DatabaseClient} (or any `Kysely`) over the candidate DB.
- * The Kysely schema-builder is the house idiom for table creation — see `agents.md` (inline-SQL → Kysely).
+ * The Kysely schema-builder is the house idiom for table creation.
+ * See `agents.md` (inline-SQL → Kysely).
  */
 export async function createPostalCityCandidateTable(db: Kysely<PostalCityCandidateDatabase>): Promise<void> {
 	await db.schema
