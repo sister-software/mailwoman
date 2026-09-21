@@ -22,6 +22,7 @@ import { plan } from "#operations/plan"
 import { preflight } from "#operations/preflight"
 import { prepareVersion } from "#operations/prepare-version"
 import { publishWorkspaceOperation } from "#operations/publish-workspace"
+import { rightsAudit } from "#operations/rights-audit"
 import { sbom } from "#operations/sbom"
 import { scaffoldWeightsOverlayOperation } from "#operations/scaffold-weights-overlay"
 import { smokeCleanInstallOperation } from "#operations/smoke/clean-install"
@@ -38,6 +39,7 @@ export const operations: ReadonlyArray<ReleaseOperation<unknown, unknown>> = [
 	plan,
 	verifyMetadata,
 	checkParity,
+	rightsAudit,
 	cleanOperation,
 	prepareVersion,
 	generatedSurfaces,

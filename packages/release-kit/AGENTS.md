@@ -82,6 +82,22 @@ inputs. An artifact with no digest reads `unrecorded` rather than verified. And
 `@mailwoman/neural-weights-en-gb`, and the entry attributing it to HM Land Registry Price Paid Data under OGL v3.0 sits
 in `@mailwoman/neural-weights-en-us`'s card.
 
+## One pass over the whole rights chain
+
+`mwops release rights-audit` reads the source register, every published weights package's record, and any frozen
+training manifest, and prints what the chain from a source's terms to a published tarball establishes and what it
+leaves open. It changes nothing and takes no input.
+
+Read it before a release and read the `Unresolved` section first. The report is not a verdict: an empty `Unresolved`
+list would mean the pass found nothing it could not read, which is not a statement that an artifact is cleared for a
+use. As of 2026-09-21 the list is not empty — no register source is eligible for ingest, no package has a frozen
+training manifest, and four attribution entries name no license this reader could find.
+
+The per-check invariants stay where they are. `weights-rights` holds the generated files equal to their writer's
+output, `third-party-notices` holds the three notice copies equal, and `rights-chain` holds every rights document to
+naming the licensor. This operation composes their inputs into one report; it does not replace them, and a release
+still runs `yarn lint`.
+
 ## Recovering from a partial release
 
 The runbook is in [`RELEASING.md`](../../RELEASING.md#recovering-from-a-partial-release).

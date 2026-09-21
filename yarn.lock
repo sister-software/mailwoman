@@ -6559,6 +6559,7 @@ __metadata:
   resolution: "@mailwoman/release-kit@workspace:packages/release-kit"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/corpus": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@types/semver": "npm:^7.8.0"
