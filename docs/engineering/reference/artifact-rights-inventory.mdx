@@ -360,6 +360,37 @@ The text behind each of those readings is committed under `packages/corpus/data/
 2026-09-21. A publisher's page moves and a grant is versioned where the page carrying it is not, so a
 reading recorded against what a page said cannot be rechecked once it says something else.
 
+### `@mailwoman/core` ships a trained model no record names
+
+Measured 2026-09-21 by unpacking `@mailwoman/core@10.0.0` from the registry. Its `data/` directory
+holds four families, and the notices named three.
+
+| directory                     | files | named in the notices                          |
+| ----------------------------- | ----: | --------------------------------------------- |
+| `data/libpostal/`             |   825 | yes                                           |
+| `data/chromium-i18n/`         |   253 | yes                                           |
+| `data/internal/dictionaries/` |    34 | libpostal yes, Who's On First at a wrong path |
+| `data/coarse-placer/`         |     2 | no                                            |
+
+`data/coarse-placer/` is `weights.bin` and `meta.json`: a multinomial logistic-regression classifier
+over 29 country classes on a 65,536-dimension hashed feature space, trained by
+`mailwoman placer train`. It is first-party work, so no third-party license attaches to the artifact.
+What it was trained on is recorded nowhere. Three places would carry it and each is silent: the
+notices files describe the third-party data beside it, no model card exists for it, and
+`packages/core/data/` holds no `PROVENANCE.md`. It is the same gap the twelve weights packages
+carry, in the one package every consumer of Mailwoman installs.
+
+The check that would have found it is scoped not to look. `data-provenance` reads every `data/`
+directory **that already carries a `PROVENANCE.md`** and reports each artifact the file omits.
+`packages/core/data/` has no such file, so the directory is outside the check by construction, which
+its own header states. Four packages carry one: `activity-lexicon`, `corpus`, `geographic-model` and
+`poi-taxonomy`.
+
+The Who's On First path was also wrong. Both notice copies said the dictionaries are under
+`data/whosonfirst/`, which holds **0 files** in the tarball; they are at
+`data/internal/dictionaries/whosonfirst/`. A consumer following the notice to find the material found
+nothing. Both copies are corrected.
+
 ### The `us` bundle carries its own publisher list, and the record had the wrong majority
 
 Every row in every `address-points-us-*.db` has a `source` column the build stamps. Censused across

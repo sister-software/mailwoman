@@ -70,8 +70,9 @@ License: `core/data/chromium-i18n/LICENSE`.
 ### Who's On First — community/various
 
 Reference dictionaries derived from [Who's On First](https://whosonfirst.org/), under
-`core/data/whosonfirst/`. WOF data draws on several sources with their own licenses; see the
-[Who's On First licenses](https://www.whosonfirst.org/docs/licenses/).
+`core/data/internal/dictionaries/whosonfirst/`. WOF data draws on several sources with their own
+licenses; see the [Who's On First licenses](https://www.whosonfirst.org/docs/licenses/), archived as
+retrieved at `packages/corpus/data/licenses/whosonfirst-licenses.md`.
 
 ## The model
 
