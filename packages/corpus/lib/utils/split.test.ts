@@ -175,6 +175,29 @@ describe("defaultHoldouts", () => {
 		// The same three places, in the component BAN emits. Corse 20, Creuse 23, Lozère 48.
 		expect(policyOf(defaultHoldouts().FR).postcodePrefixes).toEqual(["20", "23", "48"])
 	})
+
+	it("names GB by postcode area, since 93.6% of its street rows carry no region", () => {
+		// Measured on `v0.17.0-batch`: 825,083 GB street rows, 771,987 of them with no `region`
+		// component. GB carried no entry at all before this, so both its splits held zero rows.
+		const gb = policyOf(defaultHoldouts().GB)
+
+		expect(gb.postcodePrefixes).toEqual(["TR", "LL", "HX"])
+		expect(gb.regions).toEqual(["Cornwall"])
+	})
+
+	it("gives every GB prefix two letters, so one area cannot swallow another", () => {
+		// `L` is Liverpool and `LL` is Llandudno. A one-letter prefix matches by `startsWith`, so it
+		// would hold out both, and the holdout would be larger than the one anybody reviewed.
+		const prefixes = policyOf(defaultHoldouts().GB).postcodePrefixes ?? []
+
+		for (const prefix of prefixes) {
+			expect(prefix).toHaveLength(2)
+		}
+
+		for (const prefix of prefixes) {
+			expect(prefixes.filter((other) => other !== prefix && prefix.startsWith(other))).toEqual([])
+		}
+	})
 })
 
 describe("the holdout predicate reaches a row whose source emits no region (#2353)", () => {
@@ -209,6 +232,25 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 	it("reads a bare array as a region list, which is what every manifest built before this carries", () => {
 		expect(splitForRow(row("us-vt", "US", "Vermont"), { US: ["Vermont"] })).not.toBe("train")
 		expect(splitForRow(row("us-or", "US", "Oregon"), { US: ["Vermont"] })).toBe("train")
+	})
+
+	it("holds out a GB street row by its postcode area, and trains on every other area", () => {
+		// The same shape as BAN's, in GB's components: a street row with a postcode and no region.
+		const gbRow = (id: string, postcode: string): MinRow => ({
+			source_id: id,
+			country: "GB",
+			corpus_version: "0.1.0",
+			components: { postcode, locality: "Truro", street: "Lemon Street", house_number: "12" },
+		})
+
+		expect(splitForRow(gbRow("gb-truro", "TR1 2LS"))).not.toBe("train")
+		expect(splitForRow(gbRow("gb-llandudno", "LL30 2NB"))).not.toBe("train")
+		expect(splitForRow(gbRow("gb-halifax", "HX1 1UG"))).not.toBe("train")
+
+		expect(splitForRow(gbRow("gb-london", "SW1A 1AA"))).toBe("train")
+		expect(splitForRow(gbRow("gb-manchester", "M1 1AE"))).toBe("train")
+		// Liverpool, which a one-letter `L` prefix would have taken along with Llandudno.
+		expect(splitForRow(gbRow("gb-liverpool", "L1 8JQ"))).toBe("train")
 	})
 
 	it("holds out nothing for a country whose policy declares no matcher", () => {

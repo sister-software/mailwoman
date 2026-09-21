@@ -119,6 +119,10 @@ export interface SplitManifest {
  *   harness shipped (flagged 2026-06-08); this takes effect at the next base corpus rebuild — existing versioned
  *   corpora keep their committed SPLIT_MANIFESTs (a holdout added after a corpus is built is leakage-laundering rather
  *   than a holdout).
+ * - GB (added 2026-09-21, #2353): Cornwall, north Wales and Halifax, keyed on the postcode area. GB had no entry at all,
+ *   so both its splits held zero rows and `macro_f1` said nothing about it.
+ *
+ * Every entry takes effect at the next base corpus rebuild, for the reason the DE note gives.
  */
 export function defaultHoldouts(): Record<string, CountryHoldout> {
 	return {
@@ -131,6 +135,27 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 			postcodePrefixes: ["20", "23", "48"],
 		},
 		DE: ["Saarland", "SL", "Mecklenburg-Vorpommern", "MV"],
+		GB: {
+			// Measured on `v0.17.0-batch`, the one corpus in the lab data root carrying GB street rows: 825,083 of
+			// them, and 771,987 — 93.6% — carry no `region` component at all. A region-keyed holdout reaches the
+			// other 6.4%, which is why GB is keyed on the postcode area the way FR is keyed on the department.
+			//
+			// The three areas are Truro (Cornwall) 3,469 street rows, Llandudno (north Wales) 5,400, and Halifax
+			// 2,278: 11,147 of the 706,340 GB street rows carrying a postcode, or 1.58%. Small and geographically
+			// coherent on the same principle as FR's Corse, Creuse and Lozère, and eleven times the honest-eval
+			// 1000-row trust floor.
+			//
+			// Two letters each, and no one of them is a prefix of another. A single-letter area would be: `L` is
+			// Liverpool and `startsWith("L")` would take Llandudno with it.
+			//
+			// Scotland cannot supply a peripheral area here. ZE, HS, KW, IV, DG, PA, PH and AB all read 0 street
+			// rows in that corpus, so its GB street coverage is England and Wales.
+			postcodePrefixes: ["TR", "LL", "HX"],
+			// Cornwall alone, so the admin rows held out name the same place as the street rows. The Welsh counties
+			// carry 77 to 109 rows each and West Yorkshire carries 2,269 — holding the latter out for Halifax's
+			// 2,278 street rows would hold out a county for a town.
+			regions: ["Cornwall"],
+		},
 	}
 }
 
