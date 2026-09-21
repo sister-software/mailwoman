@@ -345,12 +345,12 @@ three ways a source fails to permit an act. No released model was built from a c
 The four downloadable bundles are the third record this document keeps apart, and they reach an
 operator through nothing the npm tarball carries.
 
-| bundle      | publishers                                     | terms as named                                                     |
-| ----------- | ---------------------------------------------- | ------------------------------------------------------------------ |
-| `candidate` | Who's On First, GeoNames                       | CC0 over Mapzen's own work; GeoNames CC-BY                         |
-| `poi`       | Overture Maps Foundation                       | CDLA-Permissive-2.0                                                |
-| `fr`        | DINUM and IGN, for Base Adresse Nationale      | Licence Ouverte 2.0, the attribution-only half of a dual grant     |
-| `us`        | US Census Bureau for TIGER/Line, OpenAddresses | a work of the US Government under 17 U.S.C. § 105; OA terms differ |
+| bundle      | publishers                                                                                          | terms as named                                                                      |
+| ----------- | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `candidate` | Who's On First, GeoNames                                                                            | CC0 over Mapzen's own work; GeoNames CC-BY                                          |
+| `poi`       | Overture Maps Foundation                                                                            | CDLA-Permissive-2.0                                                                 |
+| `fr`        | DINUM and IGN, for Base Adresse Nationale                                                           | Licence Ouverte 2.0, the attribution-only half of a dual grant                      |
+| `us`        | US DOT for the National Address Database, 119 OpenAddresses bodies, US Census Bureau for TIGER/Line | no copyright under 17 U.S.C. § 105 for NAD and TIGER/Line; OA terms differ per body |
 
 `mailwoman data pull` prints each bundle's publishers, terms, obligations and open questions before
 the transfer, and `--dry-run` prints the same lines. The declaration is required on the type, so a
@@ -359,6 +359,39 @@ bundle added without one fails to compile rather than downloading with its oblig
 The text behind each of those readings is committed under `packages/corpus/data/licenses/`, retrieved
 2026-09-21. A publisher's page moves and a grant is versioned where the page carrying it is not, so a
 reading recorded against what a page said cannot be rechecked once it says something else.
+
+### The `us` bundle carries its own publisher list, and the record had the wrong majority
+
+Every row in every `address-points-us-*.db` has a `source` column the build stamps. Censused across
+all 52 state databases on 2026-09-21, 125,276,536 address points:
+
+| stamp                      |       rows | share | what it names                                          |
+| -------------------------- | ---------: | ----: | ------------------------------------------------------ |
+| `overture:NAD`             | 85,482,142 | 68.2% | the US DOT National Address Database, through Overture |
+| `overture:OpenAddresses/…` | 39,446,017 | 31.5% | 119 county and state bodies, through Overture          |
+| `openaddresses`            |    348,377 |  0.3% | Hawaii alone, built through the `--oa-csv` path        |
+
+The record named the Census Bureau and OpenAddresses. The publisher of 68.2% of the rows was absent,
+and its open question asked which OpenAddresses source supplied each state's rows while saying a
+per-state answer needed a list the bundle did not have. The bundle had it on every row.
+
+Thirty-six states are NAD-only, eleven are mixed, and four carry a single non-NAD source: Colorado,
+Hawaii, Massachusetts and Nevada. Hawaii's rows carry release `openaddresses-latest` rather than the
+dated Overture release, so the fleet is not one build.
+
+**Scope.** The census read this machine's data root. Those files match the bytes `bundles.ts` records
+from a survey of the live bucket exactly on all four states checked: `ak` at 78,602,240, `ca` at
+3,471,339,520, `hi` at 77,320,192 and `ny` at 1,440,923,648. The same is not true of the other three
+bundles — the local `poi.db` is 4,149,665,792 bytes against a recorded 3,889,184,768 and its manifest
+reads version `2026-07-22.0` against a published path of `poi/2026-07-20a/` — so no claim here is made
+about those from a local read.
+
+Retrieving the National Address Database's disclaimer found a second omission. The page states the
+data carries no copyright under 17 U.S.C. § 105 and is available for re-use without limitation, and
+it also states that the data "is not intended for use as a mailing list and is subject to individual
+state statutes that prohibit it's use as a mailing list". That restriction does not arise from
+copyright, so a record stating the copyright status alone loses it, and a postal-address product is
+what such a use is about.
 
 ### One grant addresses a trained model in its own text
 
